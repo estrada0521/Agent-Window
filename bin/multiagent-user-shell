@@ -46,7 +46,19 @@ save() {
   "$MULTIAGENT_BIN_DIR/multiagent" save --session "$MULTIAGENT_SESSION"
 }
 
-echo "[multiagent] shortcuts: brief, follow, idx, kill, save"
+auto-mode() {
+  local current action
+  current="$("$MULTIAGENT_BIN_DIR/multiagent-auto-mode" status --session "$MULTIAGENT_SESSION" 2>/dev/null || echo "off")"
+  case "${1:-toggle}" in
+    on)     action="on" ;;
+    off)    action="off" ;;
+    toggle) [[ "$current" == "on" ]] && action="off" || action="on" ;;
+    *)      echo "Usage: auto-mode [on|off|toggle]"; return 1 ;;
+  esac
+  "$MULTIAGENT_BIN_DIR/multiagent-auto-mode" "$action" --session "$MULTIAGENT_SESSION"
+}
+
+echo "[multiagent] shortcuts: brief, follow, idx, kill, save, auto-mode"
 EOF
 }
 
