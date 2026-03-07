@@ -701,7 +701,7 @@ if [[ "$MODE" == "save" ]]; then
   fi
   hook_script="/tmp/multiagent_save_${SESSION_NAME}.sh"
   if [[ -x "$hook_script" ]]; then
-    "$hook_script" save
+    "$hook_script" save || true
     echo "Saved logs for session: $SESSION_NAME"
   else
     echo "No save hook found for session: $SESSION_NAME (logging may be disabled)" >&2
@@ -1293,7 +1293,9 @@ save_to_dir() {
 }
 
 save_to_dir "\$workspace_log_dir"
-[[ "\$workspace_log_dir" != "\$central_log_dir" ]] && save_to_dir "\$central_log_dir"
+if [[ "\$workspace_log_dir" != "\$central_log_dir" ]]; then
+  save_to_dir "\$central_log_dir"
+fi
 HOOKEOF
   chmod +x "$_hook_script"
   tmux set-hook -t "$SESSION_NAME" before-kill-session "run-shell '$_hook_script kill'" 2>/dev/null || true

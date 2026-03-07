@@ -1121,6 +1121,7 @@ HTML = """<!doctype html>
           message.value = "";
         }
         setStatus(isShortcut ? `${shortcutLabel}${shortcutScope} completed` : `sent to ${target}`);
+        if (shortcut === "save") setTimeout(() => setStatus(""), 2000);
         await refresh({ forceScroll: true });
         return true;
       } catch (error) {
