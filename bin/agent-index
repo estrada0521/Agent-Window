@@ -505,7 +505,30 @@ HTML = """<!doctype html>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ansi_up@5.1.0/ansi_up.min.js"></script>
   <style>
+    .trace-tooltip {
+      position: fixed;
+      background: rgba(10, 13, 17, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 11px;
+      line-height: 1.4;
+      color: #d7dde5;
+      white-space: pre-wrap;
+      word-break: break-all;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      pointer-events: none;
+      width: max-content;
+      max-width: 600px;
+      max-height: 600px;
+      overflow: hidden;
+    }
     :root {
       color-scheme: dark;
       --bg: #050608;
@@ -1091,6 +1114,7 @@ HTML = """<!doctype html>
   </style>
 </head>
 <body>
+  <div id="traceTooltip" class="trace-tooltip"></div>
   <section class="shell">
     <header>
       <div class="header-main">
@@ -1549,7 +1573,7 @@ HTML = """<!doctype html>
       const root = document.getElementById("agentStatusPanel");
       if (!root) return;
       root.innerHTML = Object.entries(statuses).map(([agent, status]) => (
-        `<div class="agent-row">` +
+        `<div class="agent-row" data-agent="${escapeHtml(agent)}">` +
           `<span class="status-dot ${escapeHtml(status)}"></span>` +
           `<span class="agent-label">${escapeHtml(agent)}</span>` +
           `<span class="agent-status-text">${escapeHtml(status)}</span>` +
@@ -1562,6 +1586,69 @@ HTML = """<!doctype html>
         if (res.ok) renderAgentStatus(await res.json());
       } catch (_) {}
     };
+    const traceTooltip = document.getElementById("traceTooltip");
+    let currentHoverAgent = null;
+    let ansiUp = null;
+    try { ansiUp = new AnsiUp(); } catch(e) {}
+
+    const fetchAndRenderTrace = async (agent) => {
+      try {
+        const res = await fetch(`/trace?agent=${encodeURIComponent(agent)}&ts=${Date.now()}`);
+        if (!res.ok) throw new Error("fetch failed");
+        const data = await res.json();
+        if (currentHoverAgent !== agent) return;
+        if (ansiUp) {
+            traceTooltip.innerHTML = ansiUp.ansi_to_html(data.content || "No output");
+        } else {
+            traceTooltip.textContent = data.content || "No output";
+        }
+      } catch (err) {
+        if (currentHoverAgent === agent) {
+          traceTooltip.textContent = "Error loading trace";
+        }
+      }
+    };
+
+    const showTraceTooltip = (agent, rect) => {
+      currentHoverAgent = agent;
+      traceTooltip.style.display = "block";
+      traceTooltip.textContent = "Loading trace...";
+      traceTooltip.style.right = (window.innerWidth - rect.left + 12) + "px";
+      traceTooltip.style.top = Math.max(10, rect.top) + "px";
+      fetchAndRenderTrace(agent);
+    };
+
+    const hideTraceTooltip = () => {
+      currentHoverAgent = null;
+      traceTooltip.style.display = "none";
+      traceTooltip.innerHTML = "";
+    };
+
+    setInterval(() => {
+      if (currentHoverAgent) {
+        fetchAndRenderTrace(currentHoverAgent);
+      }
+    }, 1000);
+
+    document.getElementById("agentStatusPanel").addEventListener("mouseover", (e) => {
+      const row = e.target.closest(".agent-row");
+      if (row) {
+        const agent = row.dataset.agent;
+        if (currentHoverAgent !== agent) {
+          const rect = row.getBoundingClientRect();
+          showTraceTooltip(agent, rect);
+        }
+      }
+    });
+    document.getElementById("agentStatusPanel").addEventListener("mouseout", (e) => {
+      const row = e.target.closest(".agent-row");
+      if (row) {
+        if (!row.contains(e.relatedTarget)) {
+          hideTraceTooltip();
+        }
+      }
+    });
+
     setTimeout(() => {
       refreshAgentStatus();
       setInterval(refreshAgentStatus, 3000);
@@ -1636,6 +1723,35 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/messages":
             body = payload()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if parsed.path == "/trace":
+            qs = parse_qs(parsed.query)
+            agent = qs.get("agent", [""])[0].lower()
+            pane_var = f"MULTIAGENT_PANE_{agent.upper()}"
+            content_str = ""
+            try:
+                r = subprocess.run(
+                    [*tmux_prefix, "show-environment", "-t", session_name, pane_var],
+                    capture_output=True, text=True, timeout=2, check=False,
+                )
+                line = r.stdout.strip()
+                if r.returncode == 0 and "=" in line:
+                    pane_id = line.split("=", 1)[1]
+                    content_str = subprocess.run(
+                        [*tmux_prefix, "capture-pane", "-p", "-e", "-t", pane_id],
+                        capture_output=True, text=True, timeout=2, check=False,
+                    ).stdout
+                else:
+                    content_str = "Offline"
+            except Exception as e:
+                content_str = f"Error: {e}"
+            body = json.dumps({"content": content_str}, ensure_ascii=True).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Cache-Control", "no-store")
