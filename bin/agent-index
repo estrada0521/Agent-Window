@@ -1028,6 +1028,43 @@ HTML = """<!doctype html>
     .reply-preview-block .reply-sender.codex   { color: var(--codex-accent); }
     .reply-preview-block .reply-sender.gemini  { color: var(--gemini-accent); }
     .reply-preview-block .reply-sender.copilot { color: var(--copilot-accent); }
+    .search-input {
+      height: 26px;
+      padding: 0 9px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      font: 12px/1 "SF Pro Text","Segoe UI",sans-serif;
+      outline: none;
+      width: 140px;
+      transition: border-color 120ms ease, background 120ms ease, width 200ms ease;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus {
+      border-color: rgba(255,255,255,0.28);
+      background: rgba(255,255,255,0.08);
+      width: 200px;
+    }
+    .agent-filter-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+    .filter-chip {
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font: 600 11px/1.2 "SF Pro Text","Segoe UI",sans-serif;
+      cursor: pointer;
+      text-transform: capitalize;
+      transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
+    }
+    .filter-chip:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+    .filter-chip.active {
+      color: #d6dce4;
+      background: rgba(214,220,228,0.14);
+      border-color: rgba(214,220,228,0.3);
+    }
+    #messages article.message-row.filtered-out { display: none; }
   </style>
 </head>
 <body>
@@ -1043,6 +1080,8 @@ HTML = """<!doctype html>
           <span class="pill" id="state">state: active</span>
           <span class="pill" id="source">source: -</span>
           <button id="autoModeBtn" type="button" title="Toggle auto-mode">Auto: off</button>
+          <input type="search" id="searchInput" class="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
+          <div class="agent-filter-chips" id="agentFilterChips"></div>
         </div>
       </div>
       <div class="agent-status-panel" id="agentStatusPanel"></div>
@@ -1130,6 +1169,33 @@ HTML = """<!doctype html>
     let sessionActive = true;
     let pendingReplyTo = null;
     let availableTargets = [];
+    let filterKeyword = "";
+    let filterAgentFilter = "";
+    const applyFilter = () => {
+      const kw = filterKeyword.toLowerCase();
+      const ag = filterAgentFilter.toLowerCase();
+      document.querySelectorAll("#messages article.message-row").forEach(article => {
+        const sender = (article.dataset.sender || "").toLowerCase();
+        const raw = (article.querySelector(".message-wrap")?.dataset.raw || "").toLowerCase();
+        const ok = (!ag || sender === ag) && (!kw || sender.includes(kw) || raw.includes(kw));
+        article.classList.toggle("filtered-out", !ok);
+      });
+    };
+    const renderAgentFilterChips = (agents) => {
+      const root = document.getElementById("agentFilterChips");
+      if (!root) return;
+      root.innerHTML = ["all", "user", ...agents].map(a => {
+        const active = (a === "all" ? filterAgentFilter === "" : filterAgentFilter === a) ? " active" : "";
+        return `<button type="button" class="filter-chip${active}" data-agent="${escapeHtml(a)}">${escapeHtml(a)}</button>`;
+      }).join("");
+      root.querySelectorAll(".filter-chip").forEach(btn => {
+        btn.addEventListener("click", () => {
+          filterAgentFilter = btn.dataset.agent === "all" ? "" : btn.dataset.agent;
+          renderAgentFilterChips(agents);
+          applyFilter();
+        });
+      });
+    };
     const escapeHtml = (value) => value
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
@@ -1181,6 +1247,7 @@ HTML = """<!doctype html>
         selectedTargets = data.targets.includes("claude") ? ["claude"] : (data.targets[0] ? [data.targets[0]] : []);
         picker.dataset.loaded = "1";
         renderAgentStatus(Object.fromEntries(data.targets.map((t) => [t, "idle"])));
+        renderAgentFilterChips(data.targets);
       }
       availableTargets = sessionActive ? data.targets : [];
       renderTargetPicker(availableTargets);
@@ -1281,6 +1348,7 @@ HTML = """<!doctype html>
       if (shouldStickToBottom) {
         timeline.scrollTo({ top: timeline.scrollHeight, behavior: forceScroll ? "smooth" : "auto" });
       }
+      applyFilter();
     };
     const refresh = async (options = {}) => {
       try {
@@ -1482,6 +1550,11 @@ HTML = """<!doctype html>
     });
     refreshAutoMode();
     setInterval(refreshAutoMode, 3000);
+
+    document.getElementById("searchInput").addEventListener("input", e => {
+      filterKeyword = e.target.value;
+      applyFilter();
+    });
 
     refresh({ forceScroll: true });
     if (followMode) {
