@@ -397,7 +397,7 @@ def send_message(target, message):
     env["MULTIAGENT_BIN_DIR"] = str(Path(agent_send_path).parent)
     env["MULTIAGENT_TMUX_SOCKET"] = tmux_socket
     bin_dir = Path(agent_send_path).parent
-    if message in {"brief", "kill"}:
+    if message in {"brief", "kill", "save"}:
         command = [str(bin_dir / "multiagent"), message, "--session", session_name]
         if message == "brief" and target:
             command.extend(["--agent", target])
@@ -898,6 +898,7 @@ HTML = """<!doctype html>
       <div class="target-picker" id="targetPicker"></div>
       <div class="quick-actions">
         <button type="button" class="quick-action" data-shortcut="brief">Brief</button>
+        <button type="button" class="quick-action" data-shortcut="save">Save</button>
         <button type="button" class="quick-action" data-shortcut="kill">Kill</button>
       </div>
       <div class="composer-shell">
@@ -975,7 +976,7 @@ HTML = """<!doctype html>
     const stripSenderPrefix = (value) => value.replace(/^\[From:\s*[^\]]+\]\s*/i, "");
     const shortcutName = (value) => {
       const normalized = (value || "").trim().toLowerCase();
-      return ["brief", "kill"].includes(normalized) ? normalized : "";
+      return ["brief", "kill", "save"].includes(normalized) ? normalized : "";
     };
     const renderTargetPicker = (targets) => {
       const root = document.getElementById("targetPicker");

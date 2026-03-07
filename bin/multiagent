@@ -378,6 +378,7 @@ Options:
                        agent-index, and agent-send so they can be run from anywhere
   list                 List active sessions for this multiagent install
   brief                Send the agent communication briefing manually
+  save                 Save pane logs for an existing session
   status               Show session status without starting or changing anything
   resume               Attach to an existing session without creating a new one
   kill                 Kill an existing session explicitly
@@ -591,6 +592,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     list)        MODE="list"; shift ;;
     brief)       MODE="brief"; shift ;;
+    save)        MODE="save"; shift ;;
     status)      MODE="status"; shift ;;
     resume)      MODE="resume"; shift ;;
     kill)        MODE="kill"; shift ;;
@@ -680,6 +682,30 @@ if [[ "$MODE" == "brief" ]]; then
     echo "Sent briefing to agents ($AGENTS_ARG) in session: $SESSION_NAME"
   else
     echo "Sent briefing to agents in session: $SESSION_NAME"
+  fi
+  exit 0
+fi
+
+if [[ "$MODE" == "save" ]]; then
+  command -v tmux >/dev/null 2>&1 || { echo "tmux is required." >&2; exit 1; }
+  if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
+    SESSION_NAME="$(resolve_target_session_name)" || exit 1
+  fi
+  if [[ -z "$SESSION_NAME" ]]; then
+    echo "Session does not exist" >&2
+    exit 1
+  fi
+  if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+    echo "Session does not exist: $SESSION_NAME" >&2
+    exit 1
+  fi
+  hook_script="/tmp/multiagent_save_${SESSION_NAME}.sh"
+  if [[ -x "$hook_script" ]]; then
+    "$hook_script" save
+    echo "Saved logs for session: $SESSION_NAME"
+  else
+    echo "No save hook found for session: $SESSION_NAME (logging may be disabled)" >&2
+    exit 1
   fi
   exit 0
 fi

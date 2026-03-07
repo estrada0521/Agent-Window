@@ -42,7 +42,11 @@ kill() {
   command kill "$@"
 }
 
-echo "[multiagent] shortcuts: brief, follow, idx, kill"
+save() {
+  "$MULTIAGENT_BIN_DIR/multiagent" save --session "$MULTIAGENT_SESSION"
+}
+
+echo "[multiagent] shortcuts: brief, follow, idx, kill, save"
 EOF
 }
 
