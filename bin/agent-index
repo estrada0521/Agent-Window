@@ -993,6 +993,20 @@ HTML = """<!doctype html>
       color: var(--muted);
       line-height: 1.4;
       overflow: hidden;
+      cursor: pointer;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+    .reply-preview-block:hover {
+      background: rgba(255,255,255,0.08);
+      border-left-color: rgba(255,255,255,0.35);
+    }
+    @keyframes msg-highlight {
+      0%   { box-shadow: 0 0 0 2px rgba(127,155,200,0.7); }
+      100% { box-shadow: 0 0 0 2px rgba(127,155,200,0); }
+    }
+    .msg-highlight {
+      animation: msg-highlight 1.2s ease-out forwards;
+      border-radius: 20px;
     }
     .reply-preview-block .reply-arrow {
       font-size: 11px;
@@ -1243,7 +1257,7 @@ HTML = """<!doctype html>
         }
         if (!previewText && !senderName) return "";
         const senderCls = roleClass(senderName);
-        return `<div class="reply-preview-block">
+        return `<div class="reply-preview-block" role="button" tabindex="0" data-replyto="${escapeHtml(entry.reply_to)}">
           <span class="reply-arrow">↩</span>
           ${senderName ? `<span class="reply-sender ${senderCls}">${escapeHtml(senderName)}</span>` : ""}
           <span class="reply-preview-text">${escapeHtml(previewText)}</span>
@@ -1390,6 +1404,19 @@ HTML = """<!doctype html>
       setReplyTo(null, "", "");
     });
     document.getElementById("messages").addEventListener("click", (e) => {
+      const replyBlock = e.target.closest(".reply-preview-block");
+      if (replyBlock) {
+        const targetId = replyBlock.dataset.replyto;
+        const target = document.querySelector(`[data-msgid="${CSS.escape(targetId)}"]`);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "center" });
+          target.classList.remove("msg-highlight");
+          void target.offsetWidth; // reflow to restart animation
+          target.classList.add("msg-highlight");
+          target.addEventListener("animationend", () => target.classList.remove("msg-highlight"), { once: true });
+        }
+        return;
+      }
       const replyBtn = e.target.closest(".reply-btn");
       if (replyBtn) {
         const msgId = replyBtn.dataset.msgid;
