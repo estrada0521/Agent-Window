@@ -742,6 +742,7 @@ if [[ "$MODE" == "kill" ]]; then
       [[ -z "$session" ]] && continue
       hook_script="/tmp/multiagent_save_${session}.sh"
       [[ -x "$hook_script" ]] && "$hook_script" kill || true
+      rm -f "/tmp/multiagent_${TMUX_SOCKET_NAME}_panes" 2>/dev/null || true
       tmux kill-session -t "$session"
       echo "Killed tmux session: $session"
       killed=1
@@ -762,6 +763,7 @@ if [[ "$MODE" == "kill" ]]; then
   fi
   hook_script="/tmp/multiagent_save_${SESSION_NAME}.sh"
   [[ -x "$hook_script" ]] && "$hook_script" kill || true
+  rm -f "/tmp/multiagent_${TMUX_SOCKET_NAME}_panes" 2>/dev/null || true
   tmux kill-session -t "$SESSION_NAME"
   echo "Killed tmux session: $SESSION_NAME"
   exit 0
@@ -1051,6 +1053,17 @@ for (( i=0; i<NUM_AGENTS; i++ )); do
   upper=$(echo "$agent" | tr '[:lower:]' '[:upper:]')
   tmux set-environment -t "$SESSION_NAME" "MULTIAGENT_PANE_${upper}" "$pane"
 done
+
+# Write state file so agent-send can resolve pane IDs even in sandboxed
+# environments (e.g. Codex CLI) that do not inherit tmux env vars.
+{
+  printf 'MULTIAGENT_SESSION=%s\n' "$SESSION_NAME"
+  for (( i=0; i<NUM_AGENTS; i++ )); do
+    printf 'MULTIAGENT_PANE_%s=%s\n' \
+      "$(echo "${SELECTED_AGENTS[$i]}" | tr '[:lower:]' '[:upper:]')" \
+      "${PANES[$i]}"
+  done
+} > "/tmp/multiagent_${TMUX_SOCKET_NAME}_panes"
 
 ensure_codex_agent_send_rules() {
   local rules_file="${CODEX_HOME:-$HOME/.codex}/rules/default.rules"

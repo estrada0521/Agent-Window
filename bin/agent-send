@@ -180,6 +180,17 @@ resolve_session_name() {
     return 1
   fi
 
+  # Last resort: state file written by multiagent at startup
+  local state_file="/tmp/multiagent_${TMUX_SOCKET_NAME}_panes"
+  if [[ -f "$state_file" ]]; then
+    local hint_session
+    hint_session="$(sed -n 's/^MULTIAGENT_SESSION=//p' "$state_file" 2>/dev/null | head -1)"
+    if [[ -n "$hint_session" ]] && tmux has-session -t "$hint_session" 2>/dev/null; then
+      printf '%s\n' "$hint_session"
+      return 0
+    fi
+  fi
+
   echo "No active multiagent session found for this workspace." >&2
   return 1
 }
@@ -195,7 +206,13 @@ PAYLOAD="$*"
 IFS=',' read -r -a TARGETS <<< "$TARGET"
 
 resolve_pane() {
-  tmux show-environment -t "$SESSION_NAME" "$1" 2>/dev/null | sed 's/^[^=]*=//'
+  local result
+  result="$(tmux show-environment -t "$SESSION_NAME" "$1" 2>/dev/null | sed 's/^[^=]*=//')"
+  if [[ -z "$result" ]]; then
+    local state_file="/tmp/multiagent_${TMUX_SOCKET_NAME}_panes"
+    [[ -f "$state_file" ]] && result="$(sed -n "s/^${1}=//p" "$state_file" 2>/dev/null | head -1)"
+  fi
+  printf '%s\n' "$result"
 }
 
 resolve_agent_name() {
