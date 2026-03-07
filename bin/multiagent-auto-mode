@@ -99,6 +99,10 @@ case "$ACTION" in
       local pane="${1//%/_}"
       printf '%s' "/tmp/multiagent_auto_last_${SESSION_NAME}_${pane}"
     }
+    hash_file() {
+      local pane="${1//%/_}"
+      printf '%s' "/tmp/multiagent_auto_hash_${SESSION_NAME}_${pane}"
+    }
 
     while true; do
       auto_val="$(_tmux show-environment -t "$SESSION_NAME" MULTIAGENT_AUTO_MODE 2>/dev/null \
@@ -135,8 +139,14 @@ case "$ACTION" in
         esac
 
         if [[ "$needs_approval" -eq 1 ]]; then
-          _tmux send-keys -t "$pane_id" "" Enter
-          echo "$now" > "$(ts_file "$pane_id")"
+          content_hash="$(printf '%s' "$content" | cksum | cut -d' ' -f1)"
+          last_hash="$(cat "$(hash_file "$pane_id")" 2>/dev/null || echo "")"
+          if [[ "$content_hash" != "$last_hash" ]]; then
+            _tmux send-keys -t "$pane_id" "" Enter
+            echo "$now" > "$(ts_file "$pane_id")"
+            echo "$content_hash" > "$(hash_file "$pane_id")"
+            printf '%s\n' "$agent" | tr '[:upper:]' '[:lower:]' > "/tmp/multiagent_auto_approved_${SESSION_NAME}" 2>/dev/null || true
+          fi
         fi
       done
 
@@ -145,6 +155,7 @@ case "$ACTION" in
 
     # Cleanup
     rm -f "/tmp/multiagent_auto_last_${SESSION_NAME}_"* 2>/dev/null || true
+    rm -f "/tmp/multiagent_auto_hash_${SESSION_NAME}_"* 2>/dev/null || true
     rm -f "$(pid_file)" 2>/dev/null || true
     ;;
 esac
