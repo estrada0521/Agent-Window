@@ -369,7 +369,10 @@ def read_entries():
             line = line.strip()
             if not line:
                 continue
-            entry = json.loads(line)
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
             if matches(entry):
                 entries.append(entry)
     return entries[-limit:]
@@ -1215,28 +1218,11 @@ HTML = """<!doctype html>
           </div>
         </article>`;
       };
-      // Build msg_id map and thread structure
+      // Build msg_id map for reply preview lookups
       const msgMap = new Map();
       data.entries.forEach(e => { if (e.msg_id) msgMap.set(e.msg_id, e); });
-      const threads = [];
-      const assignedAsReply = new Set();
-      data.entries.forEach(e => {
-        if (!e.reply_to) {
-          threads.push({ root: e, replies: [] });
-        }
-      });
-      data.entries.forEach(e => {
-        if (e.reply_to) {
-          const parent = threads.find(t => t.root.msg_id === e.reply_to);
-          if (parent) {
-            parent.replies.push(e);
-            assignedAsReply.add(e);
-          } else {
-            threads.push({ root: e, replies: [] });
-          }
-        }
-      });
       const buildReplyPreviewHTML = (entry) => {
+        if (!entry.reply_to) return "";
         let senderName = "";
         let previewText = "";
         if (entry.reply_preview) {
@@ -1247,7 +1233,7 @@ HTML = """<!doctype html>
           } else {
             previewText = entry.reply_preview;
           }
-        } else if (entry.reply_to) {
+        } else {
           const parent = msgMap.get(entry.reply_to);
           if (parent) {
             senderName = parent.sender || "";
@@ -1263,12 +1249,10 @@ HTML = """<!doctype html>
           <span class="reply-preview-text">${escapeHtml(previewText)}</span>
         </div>`;
       };
-      root.innerHTML = `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` + threads.map(({ root: rootEntry, replies }) => {
-        const rootHTML = buildMsgHTML(rootEntry, rootEntry.reply_to ? buildReplyPreviewHTML(rootEntry) : "");
-        if (!replies.length) return rootHTML;
-        const repliesHTML = replies.map(r => buildMsgHTML(r, buildReplyPreviewHTML(r))).join("");
-        return `<div class="thread-group">${rootHTML}<div class="thread-replies">${repliesHTML}</div></div>`;
-      }).join("");
+      // Render in chronological order — no thread grouping
+      root.innerHTML = `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` + data.entries.map(entry =>
+        buildMsgHTML(entry, buildReplyPreviewHTML(entry))
+      ).join("");
       if (typeof renderMathInElement !== "undefined") {
         renderMathInElement(root, {
           delimiters: [
@@ -1285,8 +1269,11 @@ HTML = """<!doctype html>
       }
     };
     const refresh = async (options = {}) => {
-      const res = await fetch(`/messages?ts=${Date.now()}`, { cache: "no-store" });
-      render(await res.json(), options);
+      try {
+        const res = await fetch(`/messages?ts=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) return;
+        render(await res.json(), options);
+      } catch (_) {}
     };
     const setStatus = (text, isError = false) => {
       const node = document.getElementById("statusline");
@@ -1589,7 +1576,7 @@ PYEOF
   SESSION_IS_ACTIVE="$SESSION_IS_ACTIVE" nohup python3 "$CHAT_SERVER_SCRIPT" "$INDEX_FILE" "$LIMIT" "$FILTER_AGENT" "$SESSION_NAME" "$FOLLOW_MODE" "$CHAT_PORT" "$SCRIPT_DIR/agent-send" "$SESSION_WORKSPACE" "$CHAT_LOG_DIR" "$CHAT_TARGETS" "$TMUX_SOCKET_NAME" >"$CHAT_LOG" 2>&1 </dev/null &
   disown || true
   sleep 0.2
-  CHAT_URL="http://127.0.0.1:${CHAT_PORT}/?follow=${FOLLOW_MODE}"
+  CHAT_URL="http://127.0.0.1:${CHAT_PORT}/?follow=1"
   open_chat_window "$CHAT_URL" || true
   echo "Opened chat view: $CHAT_URL"
   exit 0
