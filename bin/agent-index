@@ -518,15 +518,15 @@ HTML = """<!doctype html>
       font-size: 11px;
       line-height: 1.4;
       color: #d7dde5;
-      white-space: pre-wrap;
-      word-break: break-all;
+      white-space: pre;
+      overflow-wrap: normal;
+      word-break: normal;
       z-index: 1000;
       display: none;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       pointer-events: none;
       width: max-content;
-      max-width: 600px;
-      max-height: 600px;
+      max-height: calc(100vh - 40px);
       overflow: hidden;
     }
     :root {
@@ -1613,6 +1613,8 @@ HTML = """<!doctype html>
       currentHoverAgent = agent;
       traceTooltip.style.display = "block";
       traceTooltip.textContent = "Loading trace...";
+      const availableWidth = rect.left - 24;
+      traceTooltip.style.maxWidth = Math.min(1000, Math.max(400, availableWidth)) + "px";
       traceTooltip.style.right = (window.innerWidth - rect.left + 12) + "px";
       traceTooltip.style.top = Math.max(10, rect.top) + "px";
       fetchAndRenderTrace(agent);
@@ -1743,10 +1745,12 @@ class Handler(BaseHTTPRequestHandler):
                 line = r.stdout.strip()
                 if r.returncode == 0 and "=" in line:
                     pane_id = line.split("=", 1)[1]
-                    content_str = subprocess.run(
+                    raw = subprocess.run(
                         [*tmux_prefix, "capture-pane", "-p", "-e", "-t", pane_id],
                         capture_output=True, text=True, timeout=2, check=False,
                     ).stdout
+                    # Keep tmux's visual line breaks; only drop right-padding spaces.
+                    content_str = "\n".join(l.rstrip() for l in raw.splitlines())
                 else:
                     content_str = "Offline"
             except Exception as e:
