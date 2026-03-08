@@ -53,20 +53,28 @@ resolve_session_log_dir_for_base() {
   if [[ "$log_dir" == "/logs" || -z "$log_dir" ]]; then
     log_dir="${REPO_ROOT}/logs"
   fi
-  created_epoch="$(tmux display-message -p -t "$SESSION_NAME" '#{session_created}' 2>/dev/null || true)"
-  if [[ -n "$created_epoch" ]]; then
-    created_key="$(date -r "$created_epoch" '+%y%m%d' 2>/dev/null || date '+%y%m%d')"
-  else
-    created_key="$(date '+%y%m%d')"
-  fi
-  updated_key="$(date '+%y%m%d')"
   mkdir -p "$log_dir"
-  existing_dir="$(find "$log_dir" -maxdepth 1 -type d -name "${SESSION_NAME}_${created_key}_*" | head -n 1)"
-  session_dir="${log_dir}/${SESSION_NAME}_${created_key}_${updated_key}"
-  if [[ -n "$existing_dir" ]] && [[ "$existing_dir" != "$session_dir" ]]; then
-    mv "$existing_dir" "$session_dir"
-  else
-    mkdir -p "$session_dir"
+  session_dir="${log_dir}/${SESSION_NAME}"
+  # Migrate from old dated-directory format if needed
+  if [[ ! -d "$session_dir" ]]; then
+    old_dir=""
+    while IFS= read -r jsonl; do
+      [[ -f "$jsonl" ]] || continue
+      dir="$(dirname "$jsonl")"
+      if [[ -z "$old_dir" ]]; then
+        old_dir="$dir"
+      else
+        [[ $(wc -c < "$jsonl") -gt $(wc -c < "${old_dir}/.agent-index.jsonl") ]] && old_dir="$dir"
+      fi
+    done < <(find "$log_dir" -maxdepth 2 -name ".agent-index.jsonl" -path "*/${SESSION_NAME}_*" 2>/dev/null)
+    if [[ -z "$old_dir" ]]; then
+      old_dir="$(find "$log_dir" -maxdepth 1 -type d -name "${SESSION_NAME}_*" 2>/dev/null | sort | tail -n 1)"
+    fi
+    if [[ -n "$old_dir" ]]; then
+      mv "$old_dir" "$session_dir"
+    else
+      mkdir -p "$session_dir"
+    fi
   fi
   printf '%s\n' "$session_dir"
 }

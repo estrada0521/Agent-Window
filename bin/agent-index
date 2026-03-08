@@ -174,22 +174,29 @@ resolve_session_log_dir() {
   if [[ "$log_dir" == "/logs" || -z "$log_dir" ]]; then
     log_dir="${REPO_ROOT}/logs"
   fi
-  created_epoch="$(tmux display-message -p -t "$SESSION_NAME" '#{session_created}' 2>/dev/null || true)"
-  if [[ -n "$created_epoch" ]]; then
-    created_key="$(date -r "$created_epoch" '+%y%m%d' 2>/dev/null || date '+%y%m%d')"
-  else
-    created_key="$(date '+%y%m%d')"
+  session_dir="${log_dir}/${SESSION_NAME}"
+  if [[ -d "$session_dir" ]]; then
+    printf '%s\n' "$session_dir"
+    return
   fi
-  updated_key="$(date '+%y%m%d')"
-  existing_dir="$(find "$log_dir" -maxdepth 1 -type d -name "${SESSION_NAME}_${created_key}_*" 2>/dev/null | head -n 1)"
+  # Fallback: look for old dated-directory format, prefer largest .agent-index.jsonl
+  existing_dir=""
+  while IFS= read -r jsonl; do
+    [[ -f "$jsonl" ]] || continue
+    dir="$(dirname "$jsonl")"
+    if [[ -z "$existing_dir" ]]; then
+      existing_dir="$dir"
+    else
+      [[ $(wc -c < "$jsonl") -gt $(wc -c < "${existing_dir}/.agent-index.jsonl") ]] && existing_dir="$dir"
+    fi
+  done < <(find "$log_dir" -maxdepth 2 -name ".agent-index.jsonl" -path "*/${SESSION_NAME}_*" 2>/dev/null)
   if [[ -z "$existing_dir" ]]; then
     existing_dir="$(find "$log_dir" -maxdepth 1 -type d -name "${SESSION_NAME}_*" 2>/dev/null | sort | tail -n 1)"
   fi
   if [[ -z "$existing_dir" ]]; then
     existing_dir="$(find "${MULTIAGENT_WORKSPACE:-$PWD}" -maxdepth 3 -type d -name "${SESSION_NAME}_*" 2>/dev/null | sort | tail -n 1)"
   fi
-  session_dir="${log_dir}/${SESSION_NAME}_${created_key}_${updated_key}"
-  if [[ -n "$existing_dir" ]] && [[ "$existing_dir" != "$session_dir" ]]; then
+  if [[ -n "$existing_dir" ]]; then
     printf '%s\n' "$existing_dir"
   else
     printf '%s\n' "$session_dir"
@@ -1273,6 +1280,114 @@ HTML = """<!doctype html>
     .file-card-name { font-weight: 600; font-size: 0.85em; flex-shrink: 0; }
     .file-card-path { color: var(--dim); font-family: "SF Mono","Fira Code",monospace; font-size: 0.75em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
     .file-card-open { font-size: 0.8em; color: var(--dim); flex-shrink: 0; }
+    body.file-modal-open {
+      overflow: hidden;
+    }
+    .file-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10020;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .file-modal.visible {
+      display: flex;
+    }
+    .file-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(5, 7, 10, 0.76);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .file-modal-dialog {
+      position: relative;
+      width: min(1200px, calc(100vw - 40px));
+      height: min(860px, calc(100vh - 40px));
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(12, 14, 18, 0.98);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+    }
+    .file-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(22, 26, 33, 0.96);
+    }
+    .file-modal-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .file-modal-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.06);
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .file-modal-text {
+      min-width: 0;
+    }
+    .file-modal-title {
+      font: 700 14px/1.2 "SF Pro Text","Segoe UI",sans-serif;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-modal-path {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font: 12px/1.35 "SF Mono","Fira Code",monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-modal-close {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .file-modal-close:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .file-modal-body {
+      position: relative;
+      min-height: 0;
+      background: #0b0e13;
+    }
+    .file-modal-frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #0b0e13;
+    }
     .copy-btn {
       flex-shrink: 0;
       align-self: flex-start;
@@ -1476,11 +1591,58 @@ HTML = """<!doctype html>
       align-self: center;
     }
     .search-count:empty { display: none; }
+    @media (max-width: 700px) {
+      .file-modal {
+        padding: 10px;
+      }
+      .file-modal-dialog {
+        width: calc(100vw - 20px);
+        height: calc(100vh - 20px);
+        border-radius: 14px;
+      }
+      .file-modal-header {
+        padding: 10px 11px;
+      }
+      .file-modal-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+      .file-modal-title {
+        font-size: 13px;
+      }
+      .file-modal-path {
+        font-size: 11px;
+      }
+      .file-modal-close {
+        width: 30px;
+        height: 30px;
+      }
+    }
   </style>
 </head>
 <body>
   <div id="traceTooltip" class="trace-tooltip"></div>
   <div id="fileDropdown"></div>
+  <div id="fileModal" class="file-modal" hidden>
+    <div class="file-modal-backdrop" data-close-file-modal></div>
+    <div class="file-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="fileModalTitle">
+      <div class="file-modal-header">
+        <div class="file-modal-meta">
+          <span id="fileModalIcon" class="file-modal-icon">📄</span>
+          <div class="file-modal-text">
+            <div id="fileModalTitle" class="file-modal-title">Preview</div>
+            <code id="fileModalPath" class="file-modal-path"></code>
+          </div>
+        </div>
+        <button type="button" id="fileModalClose" class="file-modal-close" aria-label="Close file preview" data-close-file-modal>×</button>
+      </div>
+      <div class="file-modal-body">
+        <iframe id="fileModalFrame" class="file-modal-frame" title="File preview"></iframe>
+      </div>
+    </div>
+  </div>
   <section class="shell">
     <header>
       <div class="header-main">
@@ -1584,6 +1746,46 @@ HTML = """<!doctype html>
     };
     const followMode = new URLSearchParams(window.location.search).get("follow") === "1";
     const timeline = document.getElementById("messages");
+    const fileModal = document.getElementById("fileModal");
+    const fileModalFrame = document.getElementById("fileModalFrame");
+    const fileModalTitle = document.getElementById("fileModalTitle");
+    const fileModalPath = document.getElementById("fileModalPath");
+    const fileModalIcon = document.getElementById("fileModalIcon");
+    let lastFocusedElement = null;
+    const closeFileModal = () => {
+      if (fileModal.hidden) return;
+      fileModal.classList.remove("visible");
+      fileModal.hidden = true;
+      fileModalFrame.removeAttribute("src");
+      document.body.classList.remove("file-modal-open");
+      if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+        lastFocusedElement.focus({ preventScroll: true });
+      }
+      lastFocusedElement = null;
+    };
+    const openFileModal = (path, ext, sourceEl) => {
+      const normalizedExt = (ext || "").toLowerCase();
+      const filename = (path.split("/").pop() || path || "Preview").trim();
+      fileModalTitle.textContent = filename;
+      fileModalPath.textContent = path;
+      fileModalIcon.textContent = FILE_ICONS[normalizedExt] || "📄";
+      lastFocusedElement = sourceEl || document.activeElement;
+      fileModalFrame.src = `/file-view?path=${encodeURIComponent(path)}`;
+      fileModal.hidden = false;
+      fileModal.classList.add("visible");
+      document.body.classList.add("file-modal-open");
+    };
+    fileModal.addEventListener("click", (event) => {
+      if (event.target.closest("[data-close-file-modal]")) {
+        closeFileModal();
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !fileModal.hidden) {
+        event.preventDefault();
+        closeFileModal();
+      }
+    });
     const scrollToBottomBtn = document.getElementById("scrollToBottomBtn");
     scrollToBottomBtn.addEventListener("click", () => {
       timeline.scrollTo({ top: timeline.scrollHeight, behavior: "smooth" });
@@ -2053,13 +2255,7 @@ HTML = """<!doctype html>
         e.stopPropagation();
         const path = fileCard.dataset.filepath;
         const ext = fileCard.dataset.ext || "";
-        const rawExts = new Set(["pdf","mp4","mov","webm","avi","mkv","mp3","wav","ogg","m4a","flac"]);
-        const url = rawExts.has(ext)
-          ? `/file-raw?path=${encodeURIComponent(path)}`
-          : `/file-view?path=${encodeURIComponent(path)}`;
-        const features = isCompactMobile() ? "" :
-          `width=${Math.min(window.screen.width,1200)},height=${Math.min(window.screen.height,900)},menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes`;
-        window.open(url, "_blank", features);
+        openFileModal(path, ext, fileCard);
         return;
       }
       const replyBlock = e.target.closest(".reply-preview-block");
@@ -2472,6 +2668,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             import html as _html
             _IMAGE_EXTS = {".png",".jpg",".jpeg",".gif",".webp",".svg",".ico"}
+            _PDF_EXTS = {".pdf"}
             _VIDEO_EXTS = {".mp4":"video/mp4",".mov":"video/quicktime",".webm":"video/webm",
                            ".avi":"video/x-msvideo",".mkv":"video/x-matroska"}
             _AUDIO_EXTS = {".mp3":"audio/mpeg",".wav":"audio/wav",".ogg":"audio/ogg",
@@ -2486,6 +2683,8 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 if ext in _IMAGE_EXTS:
                     page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:16px}}img{{max-width:100%;max-height:100%;object-fit:contain}}</style></head><body><div class="hdr"><span>🖼️</span><span class="fn">{_html.escape(filename)}</span><span class="fp">{_html.escape(rel)}</span></div><div class="wrap"><img src="{raw_url}" alt="{_html.escape(filename)}"></div></body></html>'
+                elif ext in _PDF_EXTS:
+                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;min-height:0;background:#11161f}}iframe{{width:100%;height:100%;border:0;background:#11161f}}</style></head><body><div class="hdr"><span>📕</span><span class="fn">{_html.escape(filename)}</span><span class="fp">{_html.escape(rel)}</span></div><div class="wrap"><iframe src="{raw_url}" title="{_html.escape(filename)}"></iframe></div></body></html>'
                 elif ext in _VIDEO_EXTS:
                     page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;background:#000}}video{{max-width:100%;max-height:100%}}</style></head><body><div class="hdr"><span>🎬</span><span class="fn">{_html.escape(filename)}</span><span class="fp">{_html.escape(rel)}</span></div><div class="wrap"><video controls src="{raw_url}"></video></div></body></html>'
                 elif ext in _AUDIO_EXTS:
@@ -2661,8 +2860,37 @@ print(f"http://127.0.0.1:{port}/?follow={'1' if follow_mode else '0'}", flush=Tr
 server.serve_forever()
 PYEOF
   SESSION_IS_ACTIVE="$SESSION_IS_ACTIVE" nohup python3 "$CHAT_SERVER_SCRIPT" "$INDEX_FILE" "$LIMIT" "$FILTER_AGENT" "$SESSION_NAME" "$FOLLOW_MODE" "$CHAT_PORT" "$SCRIPT_DIR/agent-send" "$SESSION_WORKSPACE" "$CHAT_LOG_DIR" "$CHAT_TARGETS" "$TMUX_SOCKET_NAME" >"$CHAT_LOG" 2>&1 </dev/null &
-  disown || true
-  sleep 0.2
+  CHAT_SERVER_PID=$!
+  disown "$CHAT_SERVER_PID" || true
+  CHAT_READY=0
+  for _ in $(seq 1 50); do
+    if python3 - "$CHAT_PORT" <<'PYEOF'
+import sys
+import urllib.error
+import urllib.request
+
+port = int(sys.argv[1])
+try:
+    with urllib.request.urlopen(f"http://127.0.0.1:{port}/messages", timeout=0.25) as response:
+        if response.status == 200:
+            sys.exit(0)
+except Exception:
+    pass
+sys.exit(1)
+PYEOF
+    then
+      CHAT_READY=1
+      break
+    fi
+    if ! kill -0 "$CHAT_SERVER_PID" 2>/dev/null; then
+      break
+    fi
+    sleep 0.1
+  done
+  if [[ "$CHAT_READY" -ne 1 ]]; then
+    echo "Chat server failed to start. Check log: $CHAT_LOG" >&2
+    exit 1
+  fi
   CHAT_URL="http://127.0.0.1:${CHAT_PORT}/?follow=1"
   LOCAL_IP="$(python3 -c "import socket; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.connect(('8.8.8.8',80)); print(s.getsockname()[0]); s.close()" 2>/dev/null || echo "")"
   open_chat_window "$CHAT_URL" || true
