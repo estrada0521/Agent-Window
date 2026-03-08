@@ -37,6 +37,7 @@ LIMIT=500
 JSON_MODE=0
 FOLLOW_MODE=0
 CHAT_MODE=0
+NO_OPEN=0
 FILTER_AGENT=""
 SESSION_WORKSPACE="${MULTIAGENT_WORKSPACE:-$PWD}"
 SESSION_IS_ACTIVE=0
@@ -282,6 +283,7 @@ while [[ $# -gt 0 ]]; do
     --follow)  FOLLOW_MODE=1; shift ;;
     --json)    JSON_MODE=1; shift ;;
     --chat)    CHAT_MODE=1; shift ;;
+    --no-open) NO_OPEN=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 1 ;;
   esac
@@ -314,12 +316,11 @@ fi
 
 if [[ "$CHAT_MODE" -eq 1 ]]; then
   CHAT_TARGETS="$(available_agents)"
-  CHAT_PORT="$(python3 - <<'PYEOF'
-import socket
-s = socket.socket()
-s.bind(("127.0.0.1", 0))
-print(s.getsockname()[1])
-s.close()
+  CHAT_PORT="$(python3 - "$SESSION_NAME" <<'PYEOF'
+import sys, hashlib
+name = sys.argv[1] if len(sys.argv) > 1 else "default"
+h = int(hashlib.md5(name.encode()).hexdigest(), 16)
+print(8200 + (h % 700))
 PYEOF
 )"
   CHAT_LOG="$(mktemp "${TMPDIR:-/tmp}/agent-index-chat.${SESSION_NAME}.XXXXXX")"
@@ -394,6 +395,25 @@ def payload():
         "targets": targets,
         "entries": read_entries(),
     }, ensure_ascii=True).encode("utf-8")
+
+_caffeinate_proc = None
+
+def caffeinate_status():
+    global _caffeinate_proc
+    if _caffeinate_proc is not None and _caffeinate_proc.poll() is None:
+        return {"active": True}
+    _caffeinate_proc = None
+    return {"active": False}
+
+def caffeinate_toggle():
+    global _caffeinate_proc
+    if caffeinate_status()["active"]:
+        _caffeinate_proc.terminate()
+        _caffeinate_proc = None
+        return {"active": False}
+    else:
+        _caffeinate_proc = subprocess.Popen(["caffeinate", "-s"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return {"active": True}
 
 def auto_mode_status():
     try:
@@ -863,6 +883,37 @@ HTML = """<!doctype html>
       background: rgba(74, 222, 128, 0.08);
     }
     #autoModeBtn.auto-on:hover { background: rgba(74, 222, 128, 0.15); }
+    #caffeinateBtn {
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font: 600 11px/1.4 "SF Pro Text","Segoe UI",sans-serif;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+    }
+    #caffeinateBtn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+    #caffeinateBtn.awake-on {
+      border-color: rgba(251, 191, 36, 0.5);
+      color: #fbbf24;
+      background: rgba(251, 191, 36, 0.08);
+    }
+    #caffeinateBtn.awake-on:hover { background: rgba(251, 191, 36, 0.15); }
+    #newChatBtn {
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font: 600 11px/1.4 "SF Pro Text","Segoe UI",sans-serif;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: background 120ms ease, color 120ms ease;
+    }
+    #newChatBtn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+    #newChatBtn:disabled { opacity: 0.4; cursor: default; }
     .target-chip:hover:not(.active) {
       background: rgba(255,255,255,0.08);
       border-color: rgba(255,255,255,0.25);
@@ -979,7 +1030,7 @@ HTML = """<!doctype html>
     }
     #scrollToBottomBtn {
       position: absolute;
-      bottom: 120px;
+      bottom: var(--scroll-btn-bottom, 150px);
       left: 50%;
       transform: translateX(-50%);
       width: 36px;
@@ -995,7 +1046,7 @@ HTML = """<!doctype html>
       align-items: center;
       justify-content: center;
       box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-      transition: opacity 150ms ease, transform 150ms ease;
+      transition: opacity 150ms ease;
       z-index: 100;
       backdrop-filter: blur(6px);
     }
@@ -1719,6 +1770,8 @@ HTML = """<!doctype html>
           <span class="pill" id="state">state: active</span>
           <span class="pill" id="source">source: -</span>
           <button id="autoModeBtn" type="button" title="Toggle auto-mode">Auto: off</button>
+          <button id="caffeinateBtn" type="button" title="Toggle sleep prevention">Awake: off</button>
+          <button id="newChatBtn" type="button" title="Restart chat server">↺ New Chat</button>
           <input type="search" id="searchInput" class="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
           <span id="searchCount" class="search-count"></span>
           <div class="agent-filter-chips" id="agentFilterChips"></div>
@@ -1859,6 +1912,12 @@ HTML = """<!doctype html>
     scrollToBottomBtn.addEventListener("click", () => {
       timeline.scrollTo({ top: timeline.scrollHeight, behavior: "smooth" });
     });
+    const updateScrollBtnPos = () => {
+      const h = document.getElementById("composer").offsetHeight;
+      document.querySelector(".shell").style.setProperty("--scroll-btn-bottom", (h + 12) + "px");
+    };
+    updateScrollBtnPos();
+    new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("composer"));
     const roleClass = (sender) => {
       sender = (sender || "").toLowerCase();
       if (["user","claude","codex","gemini","copilot"].includes(sender)) return sender;
@@ -2553,6 +2612,36 @@ HTML = """<!doctype html>
     refreshAutoMode();
     setInterval(refreshAutoMode, 3000);
 
+    const caffeinateBtn = document.getElementById("caffeinateBtn");
+    const setCaffeinateBtn = (active) => {
+      caffeinateBtn.textContent = active ? "Awake: on" : "Awake: off";
+      caffeinateBtn.classList.toggle("awake-on", active);
+    };
+    const refreshCaffeinate = async () => {
+      try {
+        const res = await fetch("/caffeinate", { cache: "no-store" });
+        if (res.ok) { const d = await res.json(); setCaffeinateBtn(d.active); }
+      } catch (_) {}
+    };
+    caffeinateBtn.addEventListener("click", async () => {
+      try {
+        const res = await fetch("/caffeinate", { method: "POST" });
+        if (res.ok) { const d = await res.json(); setCaffeinateBtn(d.active); }
+      } catch (_) {}
+    });
+    refreshCaffeinate();
+    setInterval(refreshCaffeinate, 5000);
+
+    document.getElementById("newChatBtn").addEventListener("click", async () => {
+      const btn = document.getElementById("newChatBtn");
+      btn.disabled = true;
+      btn.textContent = "↺ Restarting…";
+      try {
+        await fetch("/new-chat", { method: "POST" });
+      } catch (_) {}
+      setTimeout(() => { window.location.reload(); }, 3000);
+    });
+
     // Memory button — sends silently (not logged in chat)
     document.getElementById("memoryBtn").addEventListener("click", async () => {
       const targets = selectedTargets.length > 0 ? selectedTargets : ["claude"];
@@ -2810,6 +2899,15 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
+        if parsed.path == "/caffeinate":
+            body = json.dumps(caffeinate_status(), ensure_ascii=True).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if parsed.path == "/auto-mode":
             body = json.dumps(auto_mode_status(), ensure_ascii=True).encode("utf-8")
             self.send_response(200)
@@ -2864,6 +2962,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
+        if parsed.path == "/caffeinate":
+            self._send_json(200, caffeinate_toggle())
+            return
         if parsed.path == "/auto-mode":
             current = auto_mode_status()
             action = "off" if current["active"] else "on"
@@ -2877,6 +2978,19 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(500, {"ok": False, "error": str(exc)})
                 return
             self._send_json(200, {"ok": True, "active": not current["active"]})
+            return
+        if parsed.path == "/new-chat":
+            bin_dir = Path(agent_send_path).parent
+            try:
+                subprocess.Popen(
+                    [str(bin_dir / "agent-index"), "--follow", "--chat", "--no-open", "--session", session_name],
+                    env=os.environ.copy(), start_new_session=True,
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+            except Exception as exc:
+                self._send_json(500, {"ok": False, "error": str(exc)})
+                return
+            self._send_json(200, {"ok": True, "port": port})
             return
         if parsed.path == "/log-system":
             try:
@@ -2928,6 +3042,8 @@ server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
 print(f"http://127.0.0.1:{port}/?follow={'1' if follow_mode else '0'}", flush=True)
 server.serve_forever()
 PYEOF
+  # Kill any existing server on this port before starting a new one
+  lsof -ti :"$CHAT_PORT" 2>/dev/null | xargs kill -9 2>/dev/null || true
   SESSION_IS_ACTIVE="$SESSION_IS_ACTIVE" nohup python3 "$CHAT_SERVER_SCRIPT" "$INDEX_FILE" "$LIMIT" "$FILTER_AGENT" "$SESSION_NAME" "$FOLLOW_MODE" "$CHAT_PORT" "$SCRIPT_DIR/agent-send" "$SESSION_WORKSPACE" "$CHAT_LOG_DIR" "$CHAT_TARGETS" "$TMUX_SOCKET_NAME" >"$CHAT_LOG" 2>&1 </dev/null &
   CHAT_SERVER_PID=$!
   disown "$CHAT_SERVER_PID" || true
@@ -2962,7 +3078,7 @@ PYEOF
   fi
   CHAT_URL="http://127.0.0.1:${CHAT_PORT}/?follow=1"
   LOCAL_IP="$(python3 -c "import socket; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.connect(('8.8.8.8',80)); print(s.getsockname()[0]); s.close()" 2>/dev/null || echo "")"
-  open_chat_window "$CHAT_URL" || true
+  [[ "$NO_OPEN" -eq 0 ]] && { open_chat_window "$CHAT_URL" || true; }
   echo "Opened chat view: $CHAT_URL"
   if [[ -n "$LOCAL_IP" ]]; then
     echo "Network access:   http://${LOCAL_IP}:${CHAT_PORT}/?follow=1"
