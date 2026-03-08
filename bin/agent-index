@@ -509,21 +509,23 @@ HTML = """<!doctype html>
   <style>
     .trace-tooltip {
       position: fixed;
-      background: rgba(10, 13, 17, 0.45);
+      background: rgb(23, 25, 29);
       backdrop-filter: blur(4px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.28);
       border-radius: 8px;
-      padding: 10px;
+      padding: 11px 12px;
       font-family: "SF Mono", "Fira Code", monospace;
-      font-size: 11px;
-      line-height: 1.4;
+      font-size: 13px;
+      line-height: 1.45;
       color: #d7dde5;
       white-space: pre;
       overflow-wrap: normal;
       word-break: normal;
       z-index: 1000;
       display: none;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.08),
+        0 10px 30px rgba(0,0,0,0.5);
       pointer-events: none;
       width: max-content;
       max-height: calc(100vh - 40px);
