@@ -2044,7 +2044,8 @@ HTML = """<!doctype html>
     const render = (data, { forceScroll = false } = {}) => {
       const shouldStickToBottom = forceScroll || isNearBottom();
       document.getElementById("title").textContent = data.session;
-      document.getElementById("count").textContent = `messages: ${data.entries.length}`;
+      const displayEntries = isCompactMobile() ? data.entries.slice(-100) : data.entries;
+      document.getElementById("count").textContent = `messages: ${displayEntries.length}`;
       document.getElementById("filter").textContent = `filter: ${data.filter}`;
       document.getElementById("mode").textContent = `mode: ${followMode ? "follow" : "snapshot"}`;
       document.getElementById("state").textContent = `state: ${data.active ? "active" : "archived"}`;
@@ -2064,15 +2065,15 @@ HTML = """<!doctype html>
       if (!sessionActive) {
         setStatus("archived session is read-only");
       }
-      const sig = `${data.entries.length}:${data.entries.at(-1)?.timestamp ?? ""}`;
+      const sig = `${displayEntries.length}:${displayEntries.at(-1)?.timestamp ?? ""}`;
       if (!forceScroll && sig === lastMessagesSig) return;
       lastMessagesSig = sig;
       const root = document.getElementById("messages");
-      if (!data.entries.length) {
+      if (!displayEntries.length) {
         root.innerHTML = `<div class="daybreak">Conversation</div><article class="message-row system"><div class="avatar">A</div><div class="message-wrap"><div class="message system"><div class="meta"><span class="sender">agent-index</span></div><pre>No matching messages.</pre></div></div></article>`;
         return;
       }
-      const firstTimestamp = data.entries[0]?.timestamp || "";
+      const firstTimestamp = displayEntries[0]?.timestamp || "";
       const copyIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
       const replyIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
       const buildMsgHTML = (entry, replyPreviewHTML) => {
@@ -2112,7 +2113,7 @@ HTML = """<!doctype html>
       };
       // Build msg_id map for reply preview lookups
       const msgMap = new Map();
-      data.entries.forEach(e => { if (e.msg_id) msgMap.set(e.msg_id, e); });
+      displayEntries.forEach(e => { if (e.msg_id) msgMap.set(e.msg_id, e); });
       const buildReplyPreviewHTML = (entry) => {
         if (!entry.reply_to) return "";
         let senderName = "";
@@ -2142,7 +2143,7 @@ HTML = """<!doctype html>
         </div>`;
       };
       // Render in chronological order — no thread grouping
-      root.innerHTML = `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` + data.entries.map(entry =>
+      root.innerHTML = `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` + displayEntries.map(entry =>
         buildMsgHTML(entry, buildReplyPreviewHTML(entry))
       ).join("");
       if (typeof renderMathInElement !== "undefined") {
