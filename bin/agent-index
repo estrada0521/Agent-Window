@@ -572,10 +572,10 @@ HTML = """<!doctype html>
       --text: #d7dde5;
       --muted: #88919b;
       --user-accent: #b7c2d0;
-      --claude-accent: #8f9fb5;
-      --codex-accent: #7f9bc8;
-      --gemini-accent: #938ab8;
-      --copilot-accent: #81a79f;
+      --claude-accent: #b7c2d0;
+      --codex-accent: #b7c2d0;
+      --gemini-accent: #b7c2d0;
+      --copilot-accent: #b7c2d0;
       --system-accent: #6a7078;
     }
     * { box-sizing: border-box; }
@@ -1025,30 +1025,14 @@ HTML = """<!doctype html>
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
     }
-    .message.user {
-      background: rgba(108, 135, 170, 0.08);
-      border-color: rgba(160, 184, 214, 0.25);
-      box-shadow: 0 12px 36px rgba(0,0,0,0.3), inset 0 1px 1px rgba(160, 184, 214, 0.2);
-    }
-    .message.claude {
-      background: rgba(143, 159, 181, 0.04);
-      border-color: rgba(143, 159, 181, 0.25);
-      box-shadow: 0 12px 36px rgba(0,0,0,0.3), inset 0 1px 1px rgba(143, 159, 181, 0.12);
-    }
-    .message.codex {
-      background: rgba(127, 155, 200, 0.04);
-      border-color: rgba(127, 155, 200, 0.25);
-      box-shadow: 0 12px 36px rgba(0,0,0,0.3), inset 0 1px 1px rgba(127, 155, 200, 0.12);
-    }
-    .message.gemini {
-      background: rgba(147, 138, 184, 0.04);
-      border-color: rgba(147, 138, 184, 0.25);
-      box-shadow: 0 12px 36px rgba(0,0,0,0.3), inset 0 1px 1px rgba(147, 138, 184, 0.12);
-    }
+    .message.user,
+    .message.claude,
+    .message.codex,
+    .message.gemini,
     .message.copilot {
-      background: rgba(129, 167, 159, 0.04);
-      border-color: rgba(129, 167, 159, 0.25);
-      box-shadow: 0 12px 36px rgba(0,0,0,0.3), inset 0 1px 1px rgba(129, 167, 159, 0.12);
+      background: rgba(6, 7, 9, 0.94);
+      border-color: rgba(255,255,255,0.1);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
     }
     .message.system {
       background: rgba(255,255,255,0.03);
