@@ -890,6 +890,9 @@ HTML = """<!doctype html>
       background: rgba(74, 222, 128, 0.08);
     }
     #autoModeBtn.auto-on:hover { background: rgba(74, 222, 128, 0.15); }
+    .mobile-kill-btn {
+      display: none;
+    }
     #caffeinateBtn {
       padding: 3px 10px;
       border-radius: 999px;
@@ -1359,7 +1362,19 @@ HTML = """<!doctype html>
       .quick-action .action-mobile {
         display: inline;
       }
-      .quick-action[data-shortcut="kill"] { margin-left: 0; }
+      .quick-action[data-shortcut="kill"] { display: none; }
+      .mobile-kill-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(239, 68, 68, 0.45);
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        font: 600 11px/1.4 "SF Pro Text","Segoe UI",sans-serif;
+        cursor: pointer;
+      }
       .composer textarea { font-size: 16px !important; min-height: 48px; padding-right: 52px; }
       .send-btn { display: flex; }
       main { padding: 10px 8px; }
@@ -1780,6 +1795,7 @@ HTML = """<!doctype html>
           <button id="autoModeBtn" type="button" title="Toggle auto-mode">Auto: off</button>
           <button id="caffeinateBtn" type="button" title="Toggle sleep prevention">Awake: off</button>
           <button id="newChatBtn" type="button" title="Restart chat server">↺ New Chat</button>
+          <button type="button" class="mobile-kill-btn" id="mobileKillBtn" data-shortcut="kill" title="Kill process">🛑 Kill</button>
           <input type="search" id="searchInput" class="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
           <span id="searchCount" class="search-count"></span>
           <div class="agent-filter-chips" id="agentFilterChips"></div>
@@ -2221,6 +2237,16 @@ HTML = """<!doctype html>
         }
         if (!overrideMessage) {
           message.value = "";
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+            setTimeout(() => {
+              window.scrollTo(0, 0);
+              timeline.scrollTo({ top: timeline.scrollHeight, behavior: "smooth" });
+            }, 100);
+            setTimeout(() => {
+              timeline.scrollTo({ top: timeline.scrollHeight, behavior: "auto" });
+            }, 300);
+          }
         }
         if (!isShortcut) setReplyTo(null, "", "");
         setStatus(isShortcut ? `${shortcutLabel}${shortcutScope} completed` : `sent to ${target}`);
@@ -2242,7 +2268,7 @@ HTML = """<!doctype html>
       event.preventDefault();
       await submitMessage();
     });
-    document.querySelectorAll(".quick-action:not(.memory-btn):not(.brief-btn)").forEach((node) => {
+    document.querySelectorAll(".quick-action:not(.memory-btn):not(.brief-btn), .mobile-kill-btn").forEach((node) => {
       node.addEventListener("click", async () => {
         await submitMessage({ overrideMessage: node.dataset.shortcut || "" });
       });
