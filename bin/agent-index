@@ -514,10 +514,10 @@ HTML = """<!doctype html>
       border: 1px solid rgba(255, 255, 255, 0.28);
       border-radius: 8px;
       padding: 11px 12px;
-      font-family: "SF Mono", "Fira Code", monospace;
-      font-size: 13px;
-      line-height: 1.45;
-      color: #d7dde5;
+      font-family: Menlo, Monaco, "Cascadia Mono", "SF Mono", monospace;
+      font-size: 12.5px;
+      line-height: 1.28;
+      color: rgb(161, 168, 179);
       white-space: pre;
       overflow-wrap: normal;
       word-break: normal;
@@ -1592,6 +1592,9 @@ HTML = """<!doctype html>
     let currentHoverAgent = null;
     let ansiUp = null;
     try { ansiUp = new AnsiUp(); } catch(e) {}
+    const normalizeTraceAnsi = (value) => value
+      .replace(/\u001b\[2m/g, "\u001b[38;2;98;101;109m")
+      .replace(/\u001b\[(?:0;)?22m/g, "\u001b[39m");
 
     const fetchAndRenderTrace = async (agent) => {
       try {
@@ -1599,10 +1602,11 @@ HTML = """<!doctype html>
         if (!res.ok) throw new Error("fetch failed");
         const data = await res.json();
         if (currentHoverAgent !== agent) return;
+        const content = normalizeTraceAnsi(data.content || "No output");
         if (ansiUp) {
-            traceTooltip.innerHTML = ansiUp.ansi_to_html(data.content || "No output");
+            traceTooltip.innerHTML = ansiUp.ansi_to_html(content);
         } else {
-            traceTooltip.textContent = data.content || "No output";
+            traceTooltip.textContent = content;
         }
       } catch (err) {
         if (currentHoverAgent === agent) {
