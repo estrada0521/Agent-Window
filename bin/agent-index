@@ -595,6 +595,7 @@ HTML = """<!doctype html>
       color: var(--text);
     }
     .shell {
+      position: relative;
       width: min(100%, calc(100vw - 12px));
       max-width: calc(100vw - 12px);
       height: min(920px, calc(100vh - 12px));
@@ -878,6 +879,29 @@ HTML = """<!doctype html>
         linear-gradient(180deg, rgba(255,255,255,0.012), transparent 22%),
         linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.02));
     }
+    #scrollToBottomBtn {
+      position: absolute;
+      bottom: 80px;
+      right: 20px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(20,24,30,0.88);
+      color: var(--text);
+      font-size: 17px;
+      line-height: 1;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      transition: opacity 150ms ease, transform 150ms ease;
+      z-index: 100;
+      backdrop-filter: blur(6px);
+    }
+    #scrollToBottomBtn:hover { background: rgba(40,46,56,0.95); border-color: rgba(255,255,255,0.3); }
+    #scrollToBottomBtn.visible { display: flex; }
     .daybreak {
       align-self: center;
       padding: 6px 12px;
@@ -1395,6 +1419,7 @@ HTML = """<!doctype html>
       <div class="agent-status-panel" id="agentStatusPanel"></div>
     </header>
     <main id="messages"></main>
+    <button type="button" id="scrollToBottomBtn" title="Scroll to bottom">↓</button>
     <form class="composer" id="composer">
       <div class="target-picker" id="targetPicker"></div>
       <div class="quick-actions">
@@ -1452,6 +1477,10 @@ HTML = """<!doctype html>
     };
     const followMode = new URLSearchParams(window.location.search).get("follow") === "1";
     const timeline = document.getElementById("messages");
+    const scrollToBottomBtn = document.getElementById("scrollToBottomBtn");
+    scrollToBottomBtn.addEventListener("click", () => {
+      timeline.scrollTo({ top: timeline.scrollHeight, behavior: "smooth" });
+    });
     const roleClass = (sender) => {
       sender = (sender || "").toLowerCase();
       if (["user","claude","codex","gemini","copilot"].includes(sender)) return sender;
@@ -1562,6 +1591,10 @@ HTML = """<!doctype html>
       const threshold = 80;
       return timeline.scrollTop + timeline.clientHeight >= timeline.scrollHeight - threshold;
     };
+    const updateScrollBtn = () => {
+      scrollToBottomBtn.classList.toggle("visible", !isNearBottom());
+    };
+    timeline.addEventListener("scroll", updateScrollBtn, { passive: true });
     let lastMessagesSig = "";
     const render = (data, { forceScroll = false } = {}) => {
       const shouldStickToBottom = forceScroll || isNearBottom();
@@ -1682,6 +1715,7 @@ HTML = """<!doctype html>
         timeline.scrollTo({ top: timeline.scrollHeight, behavior: forceScroll ? "smooth" : "auto" });
       }
       applyFilter();
+      updateScrollBtn();
     };
     const refresh = async (options = {}) => {
       try {
