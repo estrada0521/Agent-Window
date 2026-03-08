@@ -588,7 +588,6 @@ brief_session_agents() {
     upper="$(printf '%s' "$agent" | tr '[:lower:]' '[:upper:]')"
     pane_id="$(tmux show-environment -t "$session" "MULTIAGENT_PANE_${upper}" 2>/dev/null | sed 's/^[^=]*=//' || true)"
     [[ -n "$pane_id" ]] || continue
-    wait_for_agent_ready "$pane_id" "$agent"
     send_agent_capability_briefing "$pane_id" "$agent"
   done
 }

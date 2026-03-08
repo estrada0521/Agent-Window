@@ -406,7 +406,7 @@ def auto_mode_status():
         last_approval_agent = ""
     return {"active": active, "last_approval": last_approval, "last_approval_agent": last_approval_agent}
 
-def send_message(target, message, reply_to=""):
+def send_message(target, message, reply_to="", silent=False):
     target = (target or "").strip()
     message = (message or "").strip()
     reply_to = (reply_to or "").strip()
@@ -424,6 +424,10 @@ def send_message(target, message, reply_to=""):
         if message == "brief" and target:
             command.extend(["--agent", target])
         try:
+            if message == "brief":
+                # Run asynchronously so the UI doesn't block
+                subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env)
+                return 200, {"ok": True, "mode": message}
             result = subprocess.run(
                 command,
                 capture_output=True,
@@ -438,6 +442,34 @@ def send_message(target, message, reply_to=""):
         return 200, {"ok": True, "mode": message}
     if not target:
         return 400, {"ok": False, "error": "target is required"}
+    if silent:
+        # Send directly via tmux without JSONL logging
+        try:
+            pane_var = f"MULTIAGENT_PANE_{target.upper()}"
+            res = subprocess.run(
+                [*tmux_prefix, "show-environment", "-t", session_name, pane_var],
+                capture_output=True, text=True, check=False,
+            )
+            pane_id = res.stdout.strip().split("=", 1)[-1] if "=" in res.stdout else ""
+            if not pane_id:
+                return 400, {"ok": False, "error": f"pane not found for {target}"}
+            buf_name = f"mem_{target}_{os.getpid()}"
+            subprocess.run(
+                [*tmux_prefix, "load-buffer", "-b", buf_name, "-"],
+                input=message + "\n", text=True, capture_output=True, check=False,
+            )
+            subprocess.run(
+                [*tmux_prefix, "paste-buffer", "-b", buf_name, "-d", "-t", pane_id],
+                capture_output=True, check=False,
+            )
+            import time; time.sleep(0.3)
+            subprocess.run(
+                [*tmux_prefix, "send-keys", "-t", pane_id, "", "Enter"],
+                capture_output=True, check=False,
+            )
+        except Exception as exc:
+            return 500, {"ok": False, "error": str(exc)}
+        return 200, {"ok": True}
     try:
         cmd = [agent_send_path]
         if reply_to:
@@ -1163,9 +1195,9 @@ HTML = """<!doctype html>
     <form class="composer" id="composer">
       <div class="target-picker" id="targetPicker"></div>
       <div class="quick-actions">
-        <button type="button" class="quick-action" data-shortcut="brief">Brief</button>
+        <button type="button" class="quick-action brief-btn" id="briefBtn">Brief</button>
         <button type="button" class="quick-action" data-shortcut="save">Save</button>
-        <button type="button" class="quick-action" id="memoryBtn">Memory</button>
+        <button type="button" class="quick-action memory-btn" id="memoryBtn">Memory</button>
         <button type="button" class="quick-action" data-shortcut="kill">Kill</button>
       </div>
       <div class="composer-shell">
@@ -1449,7 +1481,7 @@ HTML = """<!doctype html>
       node.textContent = text;
       node.style.color = isError ? "#fda4af" : "";
     };
-    const submitMessage = async ({ overrideMessage = null } = {}) => {
+    const submitMessage = async ({ overrideMessage = null, overrideTarget = null } = {}) => {
       if (sendLocked || Date.now() - lastSubmitAt < 500) {
         return false;
       }
@@ -1457,7 +1489,7 @@ HTML = """<!doctype html>
       lastSubmitAt = Date.now();
       const message = document.getElementById("message");
       const payload = (overrideMessage ?? message.value).trim();
-      const target = selectedTargets.join(",");
+      const target = overrideTarget ?? selectedTargets.join(",");
       const shortcut = shortcutName(payload);
       const isShortcut = !!shortcut;
       if (!isShortcut && !target) {
@@ -1508,10 +1540,27 @@ HTML = """<!doctype html>
       event.preventDefault();
       await submitMessage();
     });
-    document.querySelectorAll(".quick-action").forEach((node) => {
+    document.querySelectorAll(".quick-action:not(.memory-btn):not(.brief-btn)").forEach((node) => {
       node.addEventListener("click", async () => {
         await submitMessage({ overrideMessage: node.dataset.shortcut || "" });
       });
+    });
+    // Brief button — runs asynchronously, not logged in chat
+    document.getElementById("briefBtn").addEventListener("click", async () => {
+      const target = selectedTargets.join(",");
+      setStatus(`briefing${target ? " " + target : ""}...`);
+      try {
+        await fetch("/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target, message: "brief" }),
+        });
+        setStatus("brief sent");
+        setTimeout(() => setStatus(""), 2000);
+      } catch (_) {
+        setStatus("brief failed", true);
+        setTimeout(() => setStatus(""), 3000);
+      }
     });
     let composing = false;
     const messageInput = document.getElementById("message");
@@ -1799,16 +1848,25 @@ HTML = """<!doctype html>
     refreshAutoMode();
     setInterval(refreshAutoMode, 3000);
 
-    // Memory button
+    // Memory button — sends silently (not logged in chat)
     document.getElementById("memoryBtn").addEventListener("click", async () => {
-      const target = selectedTargets.length === 1 ? selectedTargets[0] : "claude";
+      const targets = selectedTargets.length > 0 ? selectedTargets : ["claude"];
+      setStatus(`sending memory instruction to ${targets.join(",")}...`);
       try {
-        const res = await fetch(`/memory-path?agent=${encodeURIComponent(target)}`);
-        if (!res.ok) return;
-        const { path } = await res.json();
-        const instruction = `Please update your session memory file at: ${path}\n\nRead the existing content if the file exists, then rewrite it with key context from this conversation: important facts, user preferences, decisions made, and work in progress. Keep it concise (under 100 lines).`;
-        // Send via submitMessage so it's logged as a user message in the chat
-        await submitMessage({ overrideMessage: instruction });
+        for (const target of targets) {
+          const res = await fetch(`/memory-path?agent=${encodeURIComponent(target)}`);
+          if (!res.ok) continue;
+          const { path } = await res.json();
+          const instruction = `Please update your session memory file at: ${path}\n\nDo not ask for clarification. Read the existing content if the file exists, rewrite it with key context from this conversation: important facts, user preferences, decisions made, and work in progress. Max 100 lines. Do NOT save memory on your own — only save when explicitly instructed by the user (i.e. when this message is sent).\nAfter saving, run: agent-send user "Memory saved"`;
+          await fetch("/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ target, message: instruction, silent: true }),
+          });
+          await new Promise(r => setTimeout(r, 600));
+        }
+        setStatus("memory instruction sent");
+        setTimeout(() => setStatus(""), 3000);
       } catch (_) {
         setStatus("memory instruction failed", true);
         setTimeout(() => setStatus(""), 3000);
@@ -1996,7 +2054,7 @@ class Handler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             self._send_json(400, {"ok": False, "error": "invalid json"})
             return
-        status, body = send_message(data.get("target", ""), data.get("message", ""), data.get("reply_to", ""))
+        status, body = send_message(data.get("target", ""), data.get("message", ""), data.get("reply_to", ""), silent=bool(data.get("silent", False)))
         self._send_json(status, body)
 
 server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
