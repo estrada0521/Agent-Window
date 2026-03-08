@@ -926,6 +926,22 @@ HTML = """<!doctype html>
     .message-row.system .message::after {
       background: rgba(255,255,255,0.03);
     }
+    .sysmsg-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 4px 0;
+      color: rgba(180, 185, 195, 0.85);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+    }
+    .sysmsg-row::before, .sysmsg-row::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.15);
+    }
     .meta {
       display: flex;
       gap: 8px;
@@ -1388,6 +1404,9 @@ HTML = """<!doctype html>
       const copyIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
       const replyIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
       const buildMsgHTML = (entry, replyPreviewHTML) => {
+        if (entry.sender === "system") {
+          return `<div class="sysmsg-row" data-msgid="${escapeHtml(entry.msg_id || "")}" data-sender="system">${escapeHtml(entry.message || "")}</div>`;
+        }
         const cls = roleClass(entry.sender);
         const targetSpans = (entry.targets?.length > 0
           ? entry.targets.map(t => `<span class="target-name ${roleClass(t)}">${escapeHtml(t)}</span>`)
@@ -1482,6 +1501,11 @@ HTML = """<!doctype html>
       node.textContent = text;
       node.style.color = isError ? "#fda4af" : "";
     };
+    const logSystem = (message) => fetch("/log-system", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
     const submitMessage = async ({ overrideMessage = null, overrideTarget = null } = {}) => {
       if (sendLocked || Date.now() - lastSubmitAt < 500) {
         return false;
@@ -1526,7 +1550,10 @@ HTML = """<!doctype html>
         }
         if (!isShortcut) setReplyTo(null, "", "");
         setStatus(isShortcut ? `${shortcutLabel}${shortcutScope} completed` : `sent to ${target}`);
-        if (shortcut === "save") setTimeout(() => setStatus(""), 2000);
+        if (shortcut === "save") {
+          await logSystem("Save Log");
+          setTimeout(() => setStatus(""), 2000);
+        }
         await refresh({ forceScroll: true });
         return true;
       } catch (error) {
@@ -1556,6 +1583,8 @@ HTML = """<!doctype html>
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ target, message: "brief" }),
         });
+        await logSystem(`Send Brief${target ? " → " + target : ""}`);
+        await refresh({ forceScroll: true });
         setStatus("brief sent");
         setTimeout(() => setStatus(""), 2000);
       } catch (_) {
@@ -1866,6 +1895,8 @@ HTML = """<!doctype html>
           });
           await new Promise(r => setTimeout(r, 600));
         }
+        await logSystem(`Save Memory → ${targets.join(",")}`);
+        await refresh({ forceScroll: true });
         setStatus("memory instruction sent");
         setTimeout(() => setStatus(""), 3000);
       } catch (_) {
@@ -1896,6 +1927,8 @@ HTML = """<!doctype html>
           });
           await new Promise(r => setTimeout(r, 600));
         }
+        await logSystem(`Load Memory → ${targets.join(",")}`);
+        await refresh({ forceScroll: true });
         setStatus("memory sent to agent");
         setTimeout(() => setStatus(""), 3000);
       } catch (_) {
@@ -2072,6 +2105,35 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(500, {"ok": False, "error": str(exc)})
                 return
             self._send_json(200, {"ok": True, "active": not current["active"]})
+            return
+        if parsed.path == "/log-system":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                length = 0
+            raw = self.rfile.read(length)
+            try:
+                data = json.loads(raw.decode("utf-8") or "{}")
+            except json.JSONDecodeError:
+                self._send_json(400, {"ok": False, "error": "invalid json"})
+                return
+            msg = (data.get("message") or "").strip()
+            if not msg:
+                self._send_json(400, {"ok": False, "error": "message required"})
+                return
+            import uuid as _uuid
+            from datetime import datetime as _dt
+            entry = {
+                "timestamp": _dt.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "session": session_name,
+                "sender": "system",
+                "targets": [],
+                "message": msg,
+                "msg_id": _uuid.uuid4().hex[:12],
+            }
+            with index_path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            self._send_json(200, {"ok": True})
             return
         if parsed.path != "/send":
             self.send_response(404)
