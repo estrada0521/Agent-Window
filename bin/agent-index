@@ -1165,6 +1165,7 @@ HTML = """<!doctype html>
       <div class="quick-actions">
         <button type="button" class="quick-action" data-shortcut="brief">Brief</button>
         <button type="button" class="quick-action" data-shortcut="save">Save</button>
+        <button type="button" class="quick-action" id="memoryBtn">Memory</button>
         <button type="button" class="quick-action" data-shortcut="kill">Kill</button>
       </div>
       <div class="composer-shell">
@@ -1798,6 +1799,22 @@ HTML = """<!doctype html>
     refreshAutoMode();
     setInterval(refreshAutoMode, 3000);
 
+    // Memory button
+    document.getElementById("memoryBtn").addEventListener("click", async () => {
+      const target = selectedTargets.length === 1 ? selectedTargets[0] : "claude";
+      try {
+        const res = await fetch(`/memory-path?agent=${encodeURIComponent(target)}`);
+        if (!res.ok) return;
+        const { path } = await res.json();
+        const instruction = `Please update your session memory file at: ${path}\n\nRead the existing content if the file exists, then rewrite it with key context from this conversation: important facts, user preferences, decisions made, and work in progress. Keep it concise (under 100 lines).`;
+        // Send via submitMessage so it's logged as a user message in the chat
+        await submitMessage({ overrideMessage: instruction });
+      } catch (_) {
+        setStatus("memory instruction failed", true);
+        setTimeout(() => setStatus(""), 3000);
+      }
+    });
+
     document.getElementById("searchInput").addEventListener("input", e => {
       filterKeyword = e.target.value;
       applyFilter();
@@ -1901,6 +1918,18 @@ class Handler(BaseHTTPRequestHandler):
             return
         if parsed.path == "/auto-mode":
             body = json.dumps(auto_mode_status(), ensure_ascii=True).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if parsed.path == "/memory-path":
+            qs = parse_qs(parsed.query)
+            agent = qs.get("agent", ["claude"])[0].lower()
+            mem_path = str(index_path.parent / f"{agent}_memory.md")
+            body = json.dumps({"path": mem_path}, ensure_ascii=True).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Cache-Control", "no-store")
