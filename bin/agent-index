@@ -1376,6 +1376,10 @@ HTML = """<!doctype html>
         cursor: pointer;
       }
       .composer textarea { font-size: 16px !important; min-height: 48px; padding-right: 52px; }
+      .md-body { font: 12px/1.5 "SF Pro Text","Segoe UI",sans-serif; }
+      .md-body pre { font-size: 11px; padding: 8px 10px; }
+      .md-body code { font-size: 11px; }
+      .message-plain { font-size: 12px; }
       .send-btn { display: flex; }
       main { padding: 10px 8px; }
       .message-wrap { max-width: calc(100% - 42px); }
