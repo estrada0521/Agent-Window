@@ -1271,6 +1271,7 @@ HTML = """<!doctype html>
       max-width: 100%;
       animation: slideUpFade 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+    #messages.no-anim .message-row { animation: none !important; }
     .message-row.user {
       justify-content: flex-end;
     }
@@ -2238,6 +2239,7 @@ HTML = """<!doctype html>
     let availableTargets = [];
     let filterKeyword = "";
     let filterAgents = new Set(); // empty = show all
+    let _renderedIds = new Set(); // incremental render tracking
     const applyFilter = () => {
       const kw = filterKeyword.toLowerCase();
       const isFiltering = kw || filterAgents.size > 0;
@@ -2480,6 +2482,7 @@ HTML = """<!doctype html>
       initialLoadDone = true;
       const root = document.getElementById("messages");
       if (!displayEntries.length) {
+        _renderedIds.clear();
         root.innerHTML = `<div class="daybreak">Conversation</div><article class="message-row system"><div class="avatar">A</div><div class="message-wrap"><div class="message system"><div class="meta"><span class="sender">agent-index</span></div><pre>No matching messages.</pre></div></div></article>`;
         return;
       }
@@ -2552,20 +2555,39 @@ HTML = """<!doctype html>
           <span class="reply-preview-text">${escapeHtml(previewText)}</span>
         </div>`;
       };
-      // Render in chronological order — no thread grouping
-      root.innerHTML = `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` + displayEntries.map(entry =>
-        buildMsgHTML(entry, buildReplyPreviewHTML(entry))
-      ).join("");
-      if (typeof renderMathInElement !== "undefined") {
-        renderMathInElement(root, {
-          delimiters: [
-            {left: '$$', right: '$$', display: true},
-            {left: '$', right: '$', display: false},
-            {left: '\\(', right: '\\)', display: false},
-            {left: '\\[', right: '\\]', display: true}
-          ],
-          throwOnError: false
-        });
+      // Incremental rendering: only append new messages to avoid re-animating existing ones
+      const displayIdSet = new Set(displayEntries.map(e => e.msg_id));
+      const newEntriesToRender = displayEntries.filter(e => !_renderedIds.has(e.msg_id));
+      const hasRemovals = _renderedIds.size > 0 && [..._renderedIds].some(id => !displayIdSet.has(id));
+      if (!hasRemovals && _renderedIds.size > 0 && newEntriesToRender.length > 0) {
+        // Append only new messages — no animation suppression needed (new DOM nodes animate naturally)
+        const frag = document.createDocumentFragment();
+        for (const entry of newEntriesToRender) {
+          const tmpl = document.createElement("template");
+          tmpl.innerHTML = buildMsgHTML(entry, buildReplyPreviewHTML(entry));
+          frag.appendChild(tmpl.content);
+          _renderedIds.add(entry.msg_id);
+        }
+        root.appendChild(frag);
+      } else {
+        // Full re-render: suppress animation on all existing messages
+        root.classList.add("no-anim");
+        root.innerHTML = `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` + displayEntries.map(entry =>
+          buildMsgHTML(entry, buildReplyPreviewHTML(entry))
+        ).join("");
+        _renderedIds = new Set(displayEntries.map(e => e.msg_id));
+        if (typeof renderMathInElement !== "undefined") {
+          renderMathInElement(root, {
+            delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+            ],
+            throwOnError: false
+          });
+        }
+        requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("no-anim")));
       }
       if (shouldStickToBottom) {
         timeline.scrollTo({ top: timeline.scrollHeight, behavior: forceScroll ? "smooth" : "auto" });
