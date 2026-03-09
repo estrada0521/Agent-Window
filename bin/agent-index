@@ -901,6 +901,18 @@ HTML = """<!doctype html>
       gap: 6px;
       min-width: 0;
     }
+    .quick-more {
+      display: contents;
+    }
+    .quick-more > summary {
+      display: none;
+    }
+    .quick-more-menu {
+      display: contents;
+    }
+    .composer-plus-menu {
+      display: none;
+    }
     .target-chip {
       display: inline-flex;
       align-items: center;
@@ -1606,19 +1618,16 @@ HTML = """<!doctype html>
         gap: 6px;
       }
       .composer-stack {
-        display: grid;
-        gap: 1.5px;
-        padding: 8px 10px 10px;
-        background: rgba(10, 12, 16, 0.62);
-        border: 1px solid rgba(255,255,255,0.2);
-        border-radius: 28px;
-        box-shadow:
-          0 10px 26px rgba(0,0,0,0.28),
-          inset 0 1px 0 rgba(255,255,255,0.14),
-          0 0 16px rgba(210, 220, 238, 0.08),
-          0 0 5px rgba(255,255,255,0.05);
-        backdrop-filter: blur(12px) saturate(110%);
-        -webkit-backdrop-filter: blur(12px) saturate(110%);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
       }
       .target-picker {
         justify-content: stretch;
@@ -1626,25 +1635,115 @@ HTML = """<!doctype html>
         margin-bottom: 6px;
       }
       .quick-actions {
-        margin-top: 0;
-        padding: 0;
-        background: transparent;
-        border: none;
-        border-radius: 0;
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
+        display: none;
+      }
+      .quick-more {
+        position: relative;
+        display: block;
+        margin-left: 0;
+      }
+      .quick-more > summary {
+        display: inline-flex;
+        list-style: none;
+      }
+      .quick-more > summary::-webkit-details-marker {
+        display: none;
+      }
+      .quick-more-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        bottom: calc(100% + 8px);
+        min-width: 124px;
+        padding: 6px;
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 16px;
+        background: rgba(10, 12, 16, 0.92);
+        box-shadow: 0 14px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.08);
+        backdrop-filter: blur(12px) saturate(120%);
+        -webkit-backdrop-filter: blur(12px) saturate(120%);
+        flex-direction: column;
+        gap: 4px;
+        z-index: 30;
+      }
+      .quick-more[open] .quick-more-menu {
+        display: flex;
+      }
+      .quick-more-menu .quick-action {
+        width: 100%;
+        justify-content: flex-start;
+        margin-left: 0;
+      }
+      .quick-more-toggle {
+        padding-inline: 12px;
       }
       .composer-shell {
+        flex: 1 1 auto;
         margin-bottom: 0;
+        min-width: 0;
       }
       .composer-field {
-        border-radius: 0;
-        background: transparent;
-        border: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 24px;
+        background: rgba(10, 12, 16, 0.62);
+        border: 1px solid rgba(255,255,255,0.12);
         overflow: visible;
-        box-shadow: none;
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
+        box-shadow:
+          0 8px 18px rgba(0,0,0,0.22),
+          inset 0 1px 0 rgba(255,255,255,0.08);
+        backdrop-filter: blur(12px) saturate(110%);
+        -webkit-backdrop-filter: blur(12px) saturate(110%);
+      }
+      .composer-plus-menu {
+        position: relative;
+        display: block;
+        flex: 0 0 auto;
+      }
+      .composer-plus-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.18);
+        background: rgba(255,255,255,0.05);
+        color: rgba(236, 241, 248, 0.92);
+        font: 600 20px/1 "SF Pro Text","Segoe UI",sans-serif;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.16);
+        list-style: none;
+        cursor: pointer;
+      }
+      .composer-plus-toggle::-webkit-details-marker {
+        display: none;
+      }
+      .composer-plus-panel {
+        display: none;
+        position: absolute;
+        left: 0;
+        bottom: calc(100% + 8px);
+        min-width: 132px;
+        padding: 6px;
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 16px;
+        background: rgba(10, 12, 16, 0.94);
+        box-shadow: 0 14px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.08);
+        backdrop-filter: blur(12px) saturate(120%);
+        -webkit-backdrop-filter: blur(12px) saturate(120%);
+        flex-direction: column;
+        gap: 4px;
+        z-index: 30;
+      }
+      .composer-plus-menu[open] .composer-plus-panel {
+        display: flex;
+      }
+      .composer-plus-panel .quick-action {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 7px 10px;
+        font-size: 11px;
       }
       .reply-banner {
         margin-bottom: 0;
@@ -1677,8 +1776,8 @@ HTML = """<!doctype html>
       }
       .quick-action {
         min-width: 0;
-        padding: 9px 12px;
-        font-size: 12px;
+        padding: 7px 11px;
+        font-size: 11px;
         gap: 4px;
       }
       .quick-action .action-label {
@@ -1691,20 +1790,21 @@ HTML = """<!doctype html>
         display: inline;
       }
       .composer textarea {
+        flex: 1 1 auto;
         font-size: 16px !important;
-        min-height: 74px;
-        max-height: 74px;
-        padding-top: 13px;
-        padding-right: 52px;
-        padding-bottom: 20px;
+        min-height: 44px;
+        max-height: 44px;
+        padding-top: 11px;
+        padding-right: 8px;
+        padding-bottom: 11px;
         border: none;
-        border-radius: 0;
+        border-radius: 24px;
         background: transparent;
         box-shadow: none;
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
         resize: none;
-        overflow-y: auto;
+        overflow-y: hidden;
         outline: none;
       }
       .composer textarea:focus {
@@ -1714,9 +1814,7 @@ HTML = """<!doctype html>
         outline: none;
       }
       .send-btn {
-        top: 50%;
-        bottom: auto;
-        transform: translateY(-50%);
+        display: none;
       }
       .statusline {
         margin-top: 0;
@@ -1726,7 +1824,7 @@ HTML = """<!doctype html>
       .md-body pre { font-size: 11px; padding: 30px 10px 10px; background-position: 10px 10px; }
       .md-body code { font-size: 11px; }
       .message-plain { font-size: 12px; }
-      .send-btn { display: flex; }
+      .send-btn { display: none !important; }
       main { padding: 10px 8px 200px; }
       .message-wrap { max-width: calc(100% - 42px); }
       .avatar { width: 28px; height: 28px; flex-basis: 28px; font-size: 11px; }
@@ -2198,6 +2296,17 @@ HTML = """<!doctype html>
     <form class="composer" id="composer">
       <div class="target-picker" id="targetPicker"></div>
       <div class="composer-stack">
+        <details class="composer-plus-menu" id="composerPlusMenu">
+          <summary class="composer-plus-toggle" aria-label="Open commands">+</summary>
+          <div class="composer-plus-panel">
+            <button type="button" class="quick-action" data-forward-action="briefBtn">Brief</button>
+            <button type="button" class="quick-action" data-forward-action="readMemoryBtn">Load</button>
+            <button type="button" class="quick-action" data-forward-action="memoryBtn">Memory</button>
+            <button type="button" class="quick-action" data-forward-action="save">Save</button>
+            <button type="button" class="quick-action" data-forward-action="rawSendBtn">Raw</button>
+            <button type="button" class="quick-action" data-forward-action="interrupt">Esc</button>
+          </div>
+        </details>
         <div class="composer-shell">
           <div class="reply-banner" id="replyBanner">
             <span class="reply-banner-arrow">↩</span>
@@ -2205,17 +2314,22 @@ HTML = """<!doctype html>
             <button type="button" class="reply-cancel-btn" id="replyCancelBtn" title="返信キャンセル">✕</button>
           </div>
           <div class="composer-field">
-            <textarea id="message" placeholder="Write a message. Enter sends. Shift+Enter makes a new line."></textarea>
+            <textarea id="message" placeholder="Write a message"></textarea>
             <button type="submit" class="send-btn" aria-label="Send">↑</button>
           </div>
         </div>
         <div class="quick-actions">
-          <button type="button" class="quick-action brief-btn" id="briefBtn"><span class="action-emoji">🧭</span><span class="action-label">Send Brief</span><span class="action-mobile">Brief</span></button>
-          <button type="button" class="quick-action read-btn" id="readMemoryBtn"><span class="action-emoji">📥</span><span class="action-label">Load Memory</span><span class="action-mobile">Load</span></button>
-          <button type="button" class="quick-action memory-btn" id="memoryBtn"><span class="action-emoji">💾</span><span class="action-label">Save Memory</span><span class="action-mobile">Memory</span></button>
-          <button type="button" class="quick-action" data-shortcut="save"><span class="action-emoji">📝</span><span class="action-label">Save Log</span><span class="action-mobile">Save</span></button>
           <button type="button" class="quick-action raw-send-btn" id="rawSendBtn" title="Send without [From: User] or msg-id"><span class="action-emoji">↪</span><span class="action-label">Raw Send</span><span class="action-mobile">Raw</span></button>
-          <button type="button" class="quick-action" data-shortcut="interrupt" title="Send Escape to selected agents"><span class="action-emoji">⎋</span><span class="action-label">Interrupt</span><span class="action-mobile">Esc</span></button>
+          <details class="quick-more">
+            <summary class="quick-action quick-more-toggle"><span class="action-emoji">⋯</span><span class="action-label">Cmd</span><span class="action-mobile">Cmd</span></summary>
+            <div class="quick-more-menu">
+              <button type="button" class="quick-action brief-btn" id="briefBtn"><span class="action-emoji">🧭</span><span class="action-label">Send Brief</span><span class="action-mobile">Brief</span></button>
+              <button type="button" class="quick-action read-btn" id="readMemoryBtn"><span class="action-emoji">📥</span><span class="action-label">Load Memory</span><span class="action-mobile">Load</span></button>
+              <button type="button" class="quick-action memory-btn" id="memoryBtn"><span class="action-emoji">💾</span><span class="action-label">Save Memory</span><span class="action-mobile">Memory</span></button>
+              <button type="button" class="quick-action" data-shortcut="save"><span class="action-emoji">📝</span><span class="action-label">Save Log</span><span class="action-mobile">Save</span></button>
+              <button type="button" class="quick-action" data-shortcut="interrupt" title="Send Escape to selected agents"><span class="action-emoji">⎋</span><span class="action-label">Interrupt</span><span class="action-mobile">Esc</span></button>
+            </div>
+          </details>
         </div>
       </div>
       <div class="statusline" id="statusline"></div>
@@ -2830,12 +2944,39 @@ HTML = """<!doctype html>
       event.preventDefault();
       await submitMessage();
     });
-    document.querySelectorAll(".quick-action:not(.memory-btn):not(.brief-btn):not(.raw-send-btn), .kill-btn").forEach((node) => {
+    const quickMore = document.querySelector(".quick-more");
+    const composerPlusMenu = document.getElementById("composerPlusMenu");
+    const closeQuickMore = () => {
+      if (quickMore) quickMore.open = false;
+      if (composerPlusMenu) composerPlusMenu.open = false;
+    };
+    document.addEventListener("click", (event) => {
+      if (quickMore && quickMore.open && !quickMore.contains(event.target)) {
+        quickMore.open = false;
+      }
+      if (composerPlusMenu && composerPlusMenu.open && !composerPlusMenu.contains(event.target)) {
+        composerPlusMenu.open = false;
+      }
+    });
+    document.querySelectorAll("[data-forward-action]").forEach((node) => {
       node.addEventListener("click", async () => {
+        const target = node.dataset.forwardAction || "";
+        closeQuickMore();
+        if (target === "save" || target === "interrupt") {
+          await submitMessage({ overrideMessage: target });
+          return;
+        }
+        document.getElementById(target)?.click();
+      });
+    });
+    document.querySelectorAll(".quick-action:not(.memory-btn):not(.brief-btn):not(.raw-send-btn):not(.quick-more-toggle), .kill-btn").forEach((node) => {
+      node.addEventListener("click", async () => {
+        closeQuickMore();
         await submitMessage({ overrideMessage: node.dataset.shortcut || "" });
       });
     });
     document.getElementById("rawSendBtn").addEventListener("click", () => {
+      closeQuickMore();
       rawSendEnabled = !rawSendEnabled;
       renderRawSendButton();
       const statusText = rawSendEnabled ? "raw send enabled" : "raw send disabled";
@@ -2848,6 +2989,7 @@ HTML = """<!doctype html>
     });
     // Brief button — runs asynchronously, not logged in chat
     document.getElementById("briefBtn").addEventListener("click", async () => {
+      closeQuickMore();
       const target = selectedTargets.join(",");
       setStatus(`briefing${target ? " " + target : ""}...`);
       try {
@@ -3352,6 +3494,7 @@ HTML = """<!doctype html>
 
     // Memory button — sends silently (not logged in chat)
     document.getElementById("memoryBtn").addEventListener("click", async () => {
+      closeQuickMore();
       const targets = selectedTargets.length > 0 ? selectedTargets : ["claude"];
       setStatus(`sending memory instruction to ${targets.join(",")}...`);
       try {
@@ -3379,6 +3522,7 @@ HTML = """<!doctype html>
 
     // Read Memory button — sends memory content to agent silently
     document.getElementById("readMemoryBtn").addEventListener("click", async () => {
+      closeQuickMore();
       const targets = selectedTargets.length > 0 ? selectedTargets : ["claude"];
       setStatus(`sending memory to ${targets.join(",")}...`);
       try {
