@@ -865,14 +865,12 @@ HTML = """<!doctype html>
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       background: linear-gradient(0deg,
-        rgba(0,0,0,0.95) 0%,
-        rgba(0,0,0,0.7)  6%,
-        rgba(0,0,0,0.15) 18%,
-        rgba(0,0,0,0.02) 35%,
+        rgba(0,0,0,1.0) 0%,
+        rgba(0,0,0,0.88) 18%,
+        rgba(0,0,0,0.58) 42%,
+        rgba(0,0,0,0.18) 68%,
         transparent 100%
       );
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
       mask-image: linear-gradient(0deg, black 35%, transparent 100%);
       -webkit-mask-image: linear-gradient(0deg, black 35%, transparent 100%);
       z-index: -1;
@@ -1194,7 +1192,7 @@ HTML = """<!doctype html>
       display: block;
       width: 100%;
       border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(8, 12, 22, 0.35);
+      background: rgba(0, 0, 0, 0.52);
       color: var(--text);
       border-radius: 22px;
       font: inherit;
@@ -1212,7 +1210,7 @@ HTML = """<!doctype html>
     }
     .composer textarea:focus {
       outline: none;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.68);
       border-color: rgba(255, 255, 255, 0.45);
       box-shadow:
         inset 0 2px 6px rgba(0,0,0,0.5),
@@ -1595,7 +1593,7 @@ HTML = """<!doctype html>
         background: linear-gradient(180deg,
           rgba(0,0,0,1.0)  0%,
           rgba(0,0,0,0.85) 30%,
-          rgba(0,0,0,0.3)  65%,
+          rgba(0,0,0,0.5)  65%,
           transparent      100%
         );
         z-index: 19;
@@ -1679,12 +1677,12 @@ HTML = """<!doctype html>
         padding: 5px 12px;
         font-size: 13px;
         border: 1px solid rgba(255,255,255,0.16);
-        background: rgba(10, 12, 16, 0.5);
+        background: rgba(0, 0, 0, 0.24);
         backdrop-filter: blur(12px) saturate(110%);
         -webkit-backdrop-filter: blur(12px) saturate(110%);
         box-shadow:
-          inset 0 1px 0 rgba(255,255,255,0.08),
-          0 6px 18px rgba(0,0,0,0.18);
+          0 6px 18px rgba(0,0,0,0.18),
+          inset 0 1px 0 rgba(255,255,255,0.06);
       }
       h1 { font-size: 22px; line-height: 1.2; margin-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .sub { display: none; }
@@ -1709,7 +1707,9 @@ HTML = """<!doctype html>
         height: 40px;
         border-radius: 999px;
         border: 1px solid rgba(255,255,255,0.18);
-        background: rgba(255,255,255,0.05);
+        background: rgba(0, 0, 0, 0.24);
+        backdrop-filter: blur(12px) saturate(110%);
+        -webkit-backdrop-filter: blur(12px) saturate(110%);
         color: rgba(236, 241, 248, 0.92);
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.16);
         list-style: none;
@@ -1751,8 +1751,8 @@ HTML = """<!doctype html>
         gap: 0;
         z-index: 10010;
         border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.16);
-        background: rgba(10, 12, 16, 0.5);
+        border: 1px solid rgba(255,255,255,0.04);
+        background: rgba(0, 0, 0, 0.58);
         backdrop-filter: blur(12px) saturate(110%);
         -webkit-backdrop-filter: blur(12px) saturate(110%);
         box-shadow:
@@ -1862,12 +1862,12 @@ HTML = """<!doctype html>
         box-sizing: border-box;
         border: 1px solid rgba(255,255,255,0.16);
         border-radius: 18px;
-        background: rgba(10, 12, 16, 0.5);
+        background: rgba(0, 0, 0, 0.24);
         backdrop-filter: blur(12px) saturate(110%);
         -webkit-backdrop-filter: blur(12px) saturate(110%);
         box-shadow:
-          inset 0 1px 0 rgba(255,255,255,0.08),
-          0 6px 18px rgba(0,0,0,0.18);
+          0 6px 18px rgba(0,0,0,0.18),
+          inset 0 1px 0 rgba(255,255,255,0.06);
         justify-content: space-between;
       }
       .agent-row {
@@ -1894,7 +1894,7 @@ HTML = """<!doctype html>
         line-height: 1.1;
         border-radius: 18px;
         border: 1px solid rgba(255,255,255,0.16);
-        background: rgba(10, 12, 16, 0.5);
+        background: rgba(0, 0, 0, 0.58);
         backdrop-filter: blur(12px) saturate(110%);
         -webkit-backdrop-filter: blur(12px) saturate(110%);
         box-shadow:
@@ -1923,7 +1923,7 @@ HTML = """<!doctype html>
         left: var(--tail-x, 50%);
         transform: translateX(-50%);
         border: 7px solid transparent;
-        border-bottom-color: rgba(10, 12, 16, 0.95);
+        border-bottom-color: rgba(0, 0, 0, 0.95);
         margin-bottom: -1px;
         pointer-events: none;
       }
@@ -1994,7 +1994,7 @@ HTML = """<!doctype html>
         padding: 6px;
         border: 1px solid rgba(255,255,255,0.14);
         border-radius: 16px;
-        background: rgba(10, 12, 16, 0.92);
+        background: rgba(0, 0, 0, 0.92);
         box-shadow: 0 14px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.08);
         backdrop-filter: blur(12px) saturate(120%);
         -webkit-backdrop-filter: blur(12px) saturate(120%);
@@ -2023,7 +2023,7 @@ HTML = """<!doctype html>
         align-items: center;
         gap: 8px;
         border-radius: 24px;
-        background: rgba(10, 12, 16, 0.5);
+        background: rgba(0, 0, 0, 0.58);
         border: 1px solid rgba(255,255,255,0.16);
         overflow: visible;
         box-shadow:
@@ -2045,7 +2045,9 @@ HTML = """<!doctype html>
         height: 44px;
         border-radius: 999px;
         border: 1px solid rgba(255,255,255,0.16);
-        background: rgba(10, 12, 16, 0.5);
+        background: rgba(0, 0, 0, 0.24);
+        backdrop-filter: blur(12px) saturate(110%);
+        -webkit-backdrop-filter: blur(12px) saturate(110%);
         color: rgba(236, 241, 248, 0.92);
         font: 500 18px/1 "SF Pro Text","Segoe UI",sans-serif;
         letter-spacing: -0.02em;
@@ -2071,7 +2073,7 @@ HTML = """<!doctype html>
         z-index: 30;
         border-radius: 20px;
         border: 1px solid rgba(255,255,255,0.16);
-        background: rgba(10, 12, 16, 0.5);
+        background: rgba(0, 0, 0, 0.58);
         backdrop-filter: blur(12px) saturate(110%);
         -webkit-backdrop-filter: blur(12px) saturate(110%);
         box-shadow:
@@ -2166,7 +2168,7 @@ HTML = """<!doctype html>
         padding: 8px 6px;
         border-radius: 20px;
         border-color: rgba(255,255,255,0.16);
-        background: rgba(10, 12, 16, 0.5);
+        background: rgba(0, 0, 0, 0.58);
         box-shadow:
           inset 0 1px 0 rgba(255,255,255,0.08),
           0 6px 18px rgba(0,0,0,0.18);
