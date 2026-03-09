@@ -706,12 +706,20 @@ HTML = """<!doctype html>
       z-index: -1;
       pointer-events: none;
     }
-    .header-main { min-width: 0; }
+    .header-main {
+      min-width: 0;
+      padding: 10px 10px 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      background: rgba(8,9,11,0.8);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
     .agent-status-panel {
       display: flex;
       flex-direction: column;
       gap: 6px;
       padding-top: 4px;
+      padding-bottom: 6px;
       flex-shrink: 0;
     }
     .agent-row {
@@ -722,10 +730,9 @@ HTML = """<!doctype html>
       color: var(--muted);
       padding: 4px 8px;
       border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.04);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(8,9,11,0.8);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
@@ -1086,14 +1093,14 @@ HTML = """<!doctype html>
       display: block;
       width: 100%;
       border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(0, 0, 0, 0.2);
+      background: rgba(8, 12, 22, 0.35);
       color: var(--text);
       border-radius: 30px;
       font: inherit;
       min-height: 52px;
       max-height: 140px;
       resize: vertical;
-      padding: 14px 16px;
+      padding: 16px 20px 16px 16px;
       font: 16px/1.45 "SF Pro Text","Segoe UI",sans-serif;
       box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
       backdrop-filter: blur(12px);
@@ -1351,8 +1358,9 @@ HTML = """<!doctype html>
         gap: 6px;
         padding: 4px 8px;
         border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.08);
-        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(8,9,11,0.8);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
         font-size: 12px;
       }
       .agent-row .agent-icon,
@@ -1383,6 +1391,7 @@ HTML = """<!doctype html>
         opacity: 0.6;
       }
       .eyebrow { display: none; }
+      .header-main { width: 100%; }
       h1 { font-size: 18px; }
       .sub {
         width: 100%;
@@ -1398,19 +1407,7 @@ HTML = """<!doctype html>
       .search-input { display: none; }
       .search-count { display: none; }
       .agent-filter-chips {
-        display: flex;
-        order: 99;
-        width: 100%;
-        gap: 5px;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        scroll-snap-type: x proximity;
-        padding: 0 0 2px;
-        padding-left: 8px;
-        mask-image: linear-gradient(to right, transparent 0, black 20px, black calc(100% - 12px), transparent 100%);
+        display: none;
       }
       .trace-tooltip {
         padding: 7px 8px;
@@ -1425,6 +1422,7 @@ HTML = """<!doctype html>
       }
       .composer {
         grid-template-columns: 1fr;
+        gap: 4px;
         padding: 8px 8px 0;
         padding-bottom: env(safe-area-inset-bottom, 0px);
       }
@@ -1470,12 +1468,16 @@ HTML = """<!doctype html>
         cursor: pointer;
       }
       .composer textarea { font-size: 16px !important; min-height: 48px; padding-right: 52px; }
+      .statusline {
+        margin-top: 0;
+        padding-bottom: 0;
+      }
       .md-body { font: 12px/1.5 "SF Pro Text","Segoe UI",sans-serif; }
       .md-body pre { font-size: 11px; padding: 8px 10px; }
       .md-body code { font-size: 11px; }
       .message-plain { font-size: 12px; }
       .send-btn { display: flex; }
-      main { padding: 10px 8px; }
+      main { padding: 10px 8px 200px; }
       .message-wrap { max-width: calc(100% - 42px); }
       .avatar { width: 28px; height: 28px; flex-basis: 28px; font-size: 11px; }
     }
@@ -1749,7 +1751,7 @@ HTML = """<!doctype html>
       box-shadow: 0 0 12px rgba(127, 155, 200, 0.15), inset 0 1px 2px rgba(0,0,0,0.1);
       width: 200px;
     }
-    .agent-filter-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+    .agent-filter-chips { display: none; gap: 5px; flex-wrap: wrap; }
     .agent-filter-chips::-webkit-scrollbar { display: none; }
     .filter-chip {
       display: inline-flex;
@@ -2097,6 +2099,10 @@ HTML = """<!doctype html>
     const renderAgentFilterChips = (agents) => {
       const root = document.getElementById("agentFilterChips");
       if (!root) return;
+      if (isCompactMobile()) {
+        root.innerHTML = "";
+        return;
+      }
       root.innerHTML = ["all", "user", ...agents].map(a => {
         const active = (a === "all" ? filterAgents.size === 0 : filterAgents.has(a)) ? " active" : "";
         const icon = a === "user" ? "" : iconImg(a, "filter-icon");
@@ -2777,7 +2783,7 @@ HTML = """<!doctype html>
     // Auto-mode button
     const autoBtn = document.getElementById("autoModeBtn");
     const setAutoBtn = (active) => {
-      autoBtn.textContent = active ? "Auto: on" : "Auto: off";
+      autoBtn.textContent = isCompactMobile() ? "Auto" : (active ? "Auto: on" : "Auto: off");
       autoBtn.classList.toggle("auto-on", active);
     };
     let lastApprovalTs = 0;
@@ -2817,7 +2823,7 @@ HTML = """<!doctype html>
 
     const caffeinateBtn = document.getElementById("caffeinateBtn");
     const setCaffeinateBtn = (active) => {
-      caffeinateBtn.textContent = active ? "Awake: on" : "Awake: off";
+      caffeinateBtn.textContent = isCompactMobile() ? "Awake" : (active ? "Awake: on" : "Awake: off");
       caffeinateBtn.classList.toggle("awake-on", active);
     };
     const refreshCaffeinate = async () => {
