@@ -2305,6 +2305,7 @@ HTML = """<!doctype html>
           } else {
             selectedTargets = [...selectedTargets, target];
           }
+          saveTargetSelection(document.getElementById("title").textContent, selectedTargets);
           renderTargetPicker(targets);
         });
       });
@@ -2329,6 +2330,25 @@ HTML = """<!doctype html>
       button.title = rawSendEnabled
         ? "Raw send enabled: send without [From: User] or msg-id"
         : "Raw send disabled";
+    };
+    const targetSelectionStorageKey = (session) => `targetSelection:${session || "default"}`;
+    const saveTargetSelection = (session, targets) => {
+      if (!session) return;
+      try {
+        localStorage.setItem(targetSelectionStorageKey(session), JSON.stringify(targets || []));
+      } catch (_) {}
+    };
+    const loadTargetSelection = (session, availableTargets = []) => {
+      if (!session) return [];
+      try {
+        const raw = localStorage.getItem(targetSelectionStorageKey(session));
+        const parsed = JSON.parse(raw || "[]");
+        if (!Array.isArray(parsed)) return [];
+        const allowed = new Set(availableTargets);
+        return parsed.filter((item) => typeof item === "string" && allowed.has(item));
+      } catch (_) {
+        return [];
+      }
     };
     timeline.addEventListener("scroll", updateScrollBtn, { passive: true });
     let lastMessagesSig = "";
@@ -2462,12 +2482,23 @@ HTML = """<!doctype html>
       sessionActive = !!data.active;
       const picker = document.getElementById("targetPicker");
       if (!picker.dataset.loaded) {
-        selectedTargets = data.targets.includes("claude") ? ["claude"] : (data.targets[0] ? [data.targets[0]] : []);
+        const restoredTargets = loadTargetSelection(data.session, data.targets);
+        selectedTargets = restoredTargets.length
+          ? restoredTargets
+          : (data.targets.includes("claude") ? ["claude"] : (data.targets[0] ? [data.targets[0]] : []));
         picker.dataset.loaded = "1";
         renderAgentStatus(Object.fromEntries(data.targets.map((t) => [t, "idle"])));
         renderAgentFilterChips(data.targets);
       }
       availableTargets = sessionActive ? data.targets : [];
+      selectedTargets = selectedTargets.filter((target) => availableTargets.includes(target));
+      if (!selectedTargets.length && availableTargets.length) {
+        const restoredTargets = loadTargetSelection(data.session, availableTargets);
+        selectedTargets = restoredTargets.length
+          ? restoredTargets
+          : (availableTargets.includes("claude") ? ["claude"] : [availableTargets[0]]);
+      }
+      saveTargetSelection(data.session, selectedTargets);
       renderTargetPicker(availableTargets);
       document.getElementById("message").disabled = !sessionActive;
       setQuickActionsDisabled(!sessionActive);
