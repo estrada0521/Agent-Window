@@ -1196,17 +1196,19 @@ HTML = """<!doctype html>
       border: 1px solid rgba(255,255,255,0.18);
       background: rgba(8, 12, 22, 0.35);
       color: var(--text);
-      border-radius: 30px;
+      border-radius: 22px;
       font: inherit;
-      min-height: 52px;
-      max-height: 140px;
-      resize: vertical;
-      padding: 16px 20px 16px 16px;
-      font: 16px/1.45 "SF Pro Text","Segoe UI",sans-serif;
+      min-height: 44px;
+      max-height: 400px;
+      resize: none;
+      padding: 11px 20px 11px 16px;
+      font: 16px/1.5 "SF Pro Text","Segoe UI",sans-serif;
       box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       transition: box-shadow 200ms ease, background-color 200ms ease, border-color 200ms ease;
+      overflow-y: hidden;
+      box-sizing: border-box;
     }
     .composer textarea:focus {
       outline: none;
@@ -1889,10 +1891,10 @@ HTML = """<!doctype html>
         flex: 1 1 auto;
         font-size: 16px !important;
         min-height: 44px;
-        max-height: 44px;
-        padding-top: 11px;
-        padding-right: 8px;
-        padding-bottom: 11px;
+        height: 44px;
+        max-height: 200px;
+        padding: 10px 12px;
+        line-height: 1.5;
         border: none;
         border-radius: 24px;
         background: transparent;
@@ -1902,6 +1904,7 @@ HTML = """<!doctype html>
         resize: none;
         overflow-y: hidden;
         outline: none;
+        box-sizing: border-box;
       }
       .composer textarea:focus {
         background: transparent;
@@ -3017,6 +3020,7 @@ HTML = """<!doctype html>
         }
         if (!overrideMessage) {
           message.value = "";
+          autoResizeTextarea();
           if (document.activeElement instanceof HTMLElement) {
             document.activeElement.blur();
             setTimeout(() => {
@@ -3174,6 +3178,16 @@ HTML = """<!doctype html>
       const item = e.target.closest(".file-item");
       if (item) { e.preventDefault(); selectFile(item.dataset.path); }
     });
+    const autoResizeTextarea = () => {
+      messageInput.style.height = "44px"; // Reset to min-height to get correct scrollHeight
+      const scrollH = messageInput.scrollHeight;
+      if (scrollH > 44) {
+        messageInput.style.height = (scrollH + 2) + "px"; // +2px to avoid tiny scroll jumps
+      }
+    };
+    messageInput.addEventListener("input", autoResizeTextarea);
+    window.addEventListener("resize", autoResizeTextarea);
+
     messageInput.addEventListener("input", async () => {
       const pos = messageInput.selectionStart;
       const before = messageInput.value.slice(0, pos);
