@@ -913,6 +913,9 @@ HTML = """<!doctype html>
     .composer-plus-menu {
       display: none;
     }
+    .header-plus-menu {
+      display: none;
+    }
     .target-chip {
       display: inline-flex;
       align-items: center;
@@ -1537,19 +1540,98 @@ HTML = """<!doctype html>
         -webkit-backdrop-filter: none;
       }
       .title-row { display: flex; justify-content: flex-start; align-items: center; width: 100%; gap: 8px; }
-      h1 { font-size: 22px; line-height: 1.2; margin-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .sub {
-        width: 100%;
-        gap: 5px;
-        margin-top: 2px;
-        min-width: 0;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
+      .title-row #newChatBtn {
+        margin-left: auto;
+        padding: 5px 12px;
+        font-size: 12px;
       }
+      h1 { font-size: 22px; line-height: 1.2; margin-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .sub { display: none; }
       .pill { font-size: 10px; padding: 3px 7px; white-space: nowrap; }
       #source, #mode, #state, #filter, .search-input, .search-count, .agent-filter-chips { display: none; }
-      .sub #count { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .sub #count { display: none; }
+      .sub #autoModeBtn,
+      .sub #caffeinateBtn,
+      .sub #soundBtn,
+      .sub #killBtn {
+        display: none;
+      }
+      .header-plus-menu {
+        position: relative;
+        display: block;
+      }
+      .header-plus-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.18);
+        background: rgba(255,255,255,0.05);
+        color: rgba(236, 241, 248, 0.92);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.16);
+        list-style: none;
+        cursor: pointer;
+        padding: 0;
+        text-indent: 0;
+        position: relative;
+      }
+      .header-plus-toggle::-webkit-details-marker {
+        display: none;
+      }
+      .header-plus-toggle::before,
+      .header-plus-toggle::after {
+        content: "";
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        height: 2px;
+        border-radius: 999px;
+        background: currentColor;
+        opacity: 0.95;
+      }
+      .header-plus-toggle::before {
+        top: 14px;
+      }
+      .header-plus-toggle::after {
+        top: 22px;
+      }
+      .header-plus-panel {
+        display: none;
+        position: absolute;
+        left: 0;
+        top: calc(100% + 8px);
+        min-width: 132px;
+        padding: 6px;
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 16px;
+        background: rgba(10, 12, 16, 0.94);
+        box-shadow: 0 14px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.08);
+        backdrop-filter: blur(12px) saturate(120%);
+        -webkit-backdrop-filter: blur(12px) saturate(120%);
+        flex-direction: column;
+        gap: 4px;
+        z-index: 30;
+      }
+      .header-plus-menu[open] .header-plus-panel {
+        display: flex;
+      }
+      .header-plus-panel .quick-action {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 7px 10px;
+        font-size: 11px;
+      }
+      .title-row .header-plus-menu {
+        order: -1;
+      }
+      .agent-status-panel {
+        width: calc(100% + 24px);
+        margin-left: -12px;
+        margin-right: -12px;
+        border-radius: 0;
+      }
       .agent-status-panel {
         display: flex;
         flex-direction: row;
@@ -1558,6 +1640,7 @@ HTML = """<!doctype html>
         padding: 8px 10px;
         margin: 0;
         width: 100%;
+        box-sizing: border-box;
         border: 1px solid rgba(255,255,255,0.16);
         border-radius: 18px;
         background: rgba(10, 12, 16, 0.5);
@@ -1687,11 +1770,11 @@ HTML = """<!doctype html>
         align-items: center;
         gap: 8px;
         border-radius: 24px;
-        background: rgba(10, 12, 16, 0.62);
-        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(10, 12, 16, 0.5);
+        border: 1px solid rgba(255,255,255,0.16);
         overflow: visible;
         box-shadow:
-          0 8px 18px rgba(0,0,0,0.22),
+          0 6px 18px rgba(0,0,0,0.18),
           inset 0 1px 0 rgba(255,255,255,0.08);
         backdrop-filter: blur(12px) saturate(110%);
         -webkit-backdrop-filter: blur(12px) saturate(110%);
@@ -1705,16 +1788,18 @@ HTML = """<!doctype html>
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 34px;
-        height: 34px;
+        width: 44px;
+        height: 44px;
         border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.18);
-        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.16);
+        background: rgba(10, 12, 16, 0.5);
         color: rgba(236, 241, 248, 0.92);
-        font: 600 20px/1 "SF Pro Text","Segoe UI",sans-serif;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.16);
+        font: 500 18px/1 "SF Pro Text","Segoe UI",sans-serif;
+        letter-spacing: -0.02em;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 6px 18px rgba(0,0,0,0.18);
         list-style: none;
         cursor: pointer;
+        padding: 0;
       }
       .composer-plus-toggle::-webkit-details-marker {
         display: none;
@@ -1754,11 +1839,11 @@ HTML = """<!doctype html>
         justify-content: center;
         padding: 8px 6px;
         border-radius: 20px;
-        border-color: rgba(255,255,255,0.22);
+        border-color: rgba(255,255,255,0.16);
         background: rgba(10, 12, 16, 0.5);
         box-shadow:
-          inset 0 1px 0 rgba(255,255,255,0.14),
-          0 0 14px rgba(210, 220, 238, 0.08);
+          inset 0 1px 0 rgba(255,255,255,0.08),
+          0 6px 18px rgba(0,0,0,0.18);
         color: rgba(214, 221, 232, 0.88);
         font-size: 13px;
         gap: 6px;
@@ -2270,6 +2355,15 @@ HTML = """<!doctype html>
         <div class="header-left">
           <div class="eyebrow">Multiagent Chat View</div>
           <div class="title-row">
+            <details class="header-plus-menu" id="headerPlusMenu">
+              <summary class="header-plus-toggle" aria-label="Open header controls"></summary>
+              <div class="header-plus-panel">
+                <button type="button" class="quick-action" data-forward-action="autoModeBtn">Auto</button>
+                <button type="button" class="quick-action" data-forward-action="caffeinateBtn">Awake</button>
+                <button type="button" class="quick-action" data-forward-action="soundBtn">Sound</button>
+                <button type="button" class="quick-action" data-forward-action="killBtn">Kill</button>
+              </div>
+            </details>
             <h1 id="title">agent-index</h1>
             <button id="newChatBtn" type="button" title="Restart chat server">↺ New Chat</button>
           </div>
@@ -2297,7 +2391,7 @@ HTML = """<!doctype html>
       <div class="target-picker" id="targetPicker"></div>
       <div class="composer-stack">
         <details class="composer-plus-menu" id="composerPlusMenu">
-          <summary class="composer-plus-toggle" aria-label="Open commands">+</summary>
+          <summary class="composer-plus-toggle" aria-label="Open commands">＋</summary>
           <div class="composer-plus-panel">
             <button type="button" class="quick-action" data-forward-action="briefBtn">Brief</button>
             <button type="button" class="quick-action" data-forward-action="readMemoryBtn">Load</button>
@@ -2946,9 +3040,11 @@ HTML = """<!doctype html>
     });
     const quickMore = document.querySelector(".quick-more");
     const composerPlusMenu = document.getElementById("composerPlusMenu");
+    const headerPlusMenu = document.getElementById("headerPlusMenu");
     const closeQuickMore = () => {
       if (quickMore) quickMore.open = false;
       if (composerPlusMenu) composerPlusMenu.open = false;
+      if (headerPlusMenu) headerPlusMenu.open = false;
     };
     document.addEventListener("click", (event) => {
       if (quickMore && quickMore.open && !quickMore.contains(event.target)) {
@@ -2956,6 +3052,9 @@ HTML = """<!doctype html>
       }
       if (composerPlusMenu && composerPlusMenu.open && !composerPlusMenu.contains(event.target)) {
         composerPlusMenu.open = false;
+      }
+      if (headerPlusMenu && headerPlusMenu.open && !headerPlusMenu.contains(event.target)) {
+        headerPlusMenu.open = false;
       }
     });
     document.querySelectorAll("[data-forward-action]").forEach((node) => {
