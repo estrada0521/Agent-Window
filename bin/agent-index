@@ -708,9 +708,9 @@ HTML = """<!doctype html>
     }
     .header-main {
       min-width: 0;
-      padding: 12px 14px 10px;
+      padding: 14px 16px 12px;
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
+      border-radius: 24px;
       background: linear-gradient(180deg, rgba(20, 24, 30, 0.65), rgba(10, 12, 16, 0.8));
       box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
       backdrop-filter: blur(16px);
@@ -1257,9 +1257,10 @@ HTML = """<!doctype html>
       -webkit-backdrop-filter: blur(24px) saturate(150%);
     }
     .message.user {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.3);
-      box-shadow: 0 16px 40px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+      background: rgba(240, 248, 255, 0.15);
+      border-color: rgba(220, 235, 255, 0.35);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.4), inset 0 1px 1px rgba(230, 240, 255, 0.5);
+      color: #f8faff;
     }
     .message.claude,
     .message.codex,
@@ -1410,7 +1411,7 @@ HTML = """<!doctype html>
         opacity: 0.6;
       }
       .eyebrow { display: none; }
-      .header-main { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+      .header-main { width: 100%; display: flex; flex-direction: column; gap: 6px; border-radius: 20px; padding: 12px; }
       h1 { font-size: 18px; line-height: 1.2; margin-bottom: 0; }
       .sub {
         width: 100%;
