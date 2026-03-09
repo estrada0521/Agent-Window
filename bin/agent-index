@@ -714,15 +714,14 @@ HTML = """<!doctype html>
       background: rgba(8,9,11,0.8);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
       flex: 1;
+      display: flex;
+      flex-direction: column;
     }
-    .header-main-inner {
+    .title-area {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 16px;
-    }
-    .title-area {
-      min-width: 0;
     }
     .agent-status-panel {
       display: flex;
@@ -1405,17 +1404,12 @@ HTML = """<!doctype html>
         opacity: 0.6;
       }
       .eyebrow { display: none; }
-      .header-main { width: 100%; }
-      .header-main-inner {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
+      .header-main { width: 100%; display: flex; flex-direction: column; gap: 6px; }
       h1 { font-size: 18px; line-height: 1.2; margin-bottom: 0; }
       .sub {
         width: 100%;
         gap: 5px;
-        margin-top: 6px;
+        margin-top: 2px;
         min-width: 0;
         flex-wrap: wrap;
         align-items: center;
@@ -1432,19 +1426,28 @@ HTML = """<!doctype html>
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 5px;
         padding: 0;
         margin: 0;
         width: 100%;
       }
       .agent-row {
-        gap: 6px;
-        padding: 4px 8px;
+        gap: 4px;
+        padding: 3px 10px;
         border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.12);
         background: rgba(255,255,255,0.04);
         box-shadow: none;
-        font-size: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: var(--muted);
+      }
+      .agent-row.active {
+        background: rgba(255,255,255,0.12) !important;
+        border-color: rgba(255,255,255,0.28) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.15) !important;
       }
       .trace-tooltip {
         padding: 7px 8px;
@@ -1921,13 +1924,8 @@ HTML = """<!doctype html>
   <section class="shell">
     <header>
       <div class="header-main">
-        <div class="header-main-inner">
-          <div class="title-area">
-            <div class="eyebrow">Multiagent Chat View</div>
-            <h1 id="title">agent-index</h1>
-          </div>
-          <div class="agent-status-panel" id="agentStatusPanel"></div>
-        </div>
+        <div class="eyebrow">Multiagent Chat View</div>
+        <h1 id="title">agent-index</h1>
         <div class="sub">
           <span class="pill" id="count">messages: 0</span>
           <span class="pill" id="filter">filter: all</span>
@@ -1942,6 +1940,7 @@ HTML = """<!doctype html>
           <span id="searchCount" class="search-count"></span>
           <div class="agent-filter-chips" id="agentFilterChips"></div>
         </div>
+        <div class="agent-status-panel" id="agentStatusPanel"></div>
       </div>
     </header>
     <main id="messages"></main>
