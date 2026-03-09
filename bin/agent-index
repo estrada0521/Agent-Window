@@ -3280,6 +3280,15 @@ HTML = """<!doctype html>
     if (followMode) {
       setInterval(refresh, 1000);
     }
+    // iOS keyboard: adjust shell height via visualViewport to prevent cursor offset
+    if (isCompactMobile() && window.visualViewport) {
+      const shell = document.querySelector(".shell");
+      const adjustShell = () => {
+        shell.style.height = window.visualViewport.height + "px";
+      };
+      window.visualViewport.addEventListener("resize", adjustShell);
+      window.visualViewport.addEventListener("scroll", adjustShell);
+    }
   </script>
 </body>
 </html>
