@@ -1265,7 +1265,7 @@ HTML = """<!doctype html>
       align-self: center;
       padding: 6px 12px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.045);
+      background: rgba(0,0,0,0.58);
       border: 1px solid rgba(255,255,255,0.08);
       color: var(--muted);
       font-size: 11px;
@@ -1364,8 +1364,14 @@ HTML = """<!doctype html>
       max-width: 100%;
       padding: 8px 16px 9px 16px;
       border-radius: 24px;
-      background: rgba(255,255,255,0.15);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow:
+        0 0 8px rgba(255,255,255,0.05),
+        inset 0 1px 0 rgba(255,255,255,0.06),
+        0 6px 18px rgba(0,0,0,0.1);
+      backdrop-filter: blur(12px) saturate(110%);
+      -webkit-backdrop-filter: blur(12px) saturate(110%);
     }
     .message-body-row {
       display: flex;
@@ -1392,6 +1398,7 @@ HTML = """<!doctype html>
     .message.user .md-body p,
     .message.user .md-body li {
       font-weight: 700;
+      text-shadow: 0 0 6px rgba(255,255,255,0.08);
     }
     .message.claude .md-body pre,
     .message.claude .md-body p,
@@ -2271,11 +2278,16 @@ HTML = """<!doctype html>
         z-index: 2;
       }
       #scrollToBottomBtn {
-        background: rgba(0,0,0,0.9);
+        background: rgba(0,0,0,0.38);
         border-color: rgba(255,255,255,0.12);
+        backdrop-filter: blur(12px) saturate(110%);
+        -webkit-backdrop-filter: blur(12px) saturate(110%);
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
       }
       #scrollToBottomBtn:hover {
-        background: rgba(0,0,0,0.96);
+        background: rgba(0,0,0,0.48);
         border-color: rgba(255,255,255,0.2);
       }
       .statusline {
@@ -2288,7 +2300,7 @@ HTML = """<!doctype html>
       .md-body code { font-size: 11px; }
       .message-plain { font-size: 12px; }
       .send-btn { display: none !important; }
-      main { padding: 10px 8px 200px; }
+      main { padding: 180px 8px 200px; }
       .message-wrap { max-width: calc(100% - 42px); }
       .avatar { width: 28px; height: 28px; flex-basis: 28px; font-size: 11px; }
       
