@@ -901,7 +901,7 @@ HTML = """<!doctype html>
       gap: 6px;
       position: relative;
       padding: 7px 10px;
-      border-radius: 10px;
+      border-radius: 16px;
       border: 1px solid rgba(255,255,255,0.08);
       background: rgba(255,255,255,0.03);
       color: #7f8893;
@@ -1573,8 +1573,17 @@ HTML = """<!doctype html>
       .composer {
         grid-template-columns: 1fr;
         gap: 4px;
-        padding: 8px 8px 0;
-        padding-bottom: env(safe-area-inset-bottom, 0px);
+        margin: 0;
+        width: 100%;
+        padding: 14px 12px 0;
+        padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+        border: none;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        overflow: visible;
       }
       .target-picker,
       .quick-actions {
@@ -1582,9 +1591,19 @@ HTML = """<!doctype html>
         flex-wrap: wrap;
         gap: 6px;
       }
+      .target-picker {
+        justify-content: stretch;
+        gap: 8px;
+      }
+      .quick-actions {
+        margin-top: 6px;
+      }
       .target-chip {
+        flex: 1 1 0;
         min-width: 0;
-        padding: 8px 10px;
+        justify-content: center;
+        padding: 8px 6px;
+        border-radius: 20px;
         font-size: 13px;
         gap: 6px;
       }
