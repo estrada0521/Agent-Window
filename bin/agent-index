@@ -1373,10 +1373,54 @@ HTML = """<!doctype html>
       background: rgba(255,255,255,0.15);
       box-shadow: 0 6px 18px rgba(0,0,0,0.1);
     }
+    .message-body-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      min-width: 0;
+    }
+    .message.user .message-body-row {
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+    }
+    .message.user .message-body-row .copy-btn {
+      margin-top: 8px;
+    }
     .message.user .md-body pre,
     .message.user .md-body p,
     .message.user .md-body li {
       font-weight: 700;
+    }
+    .message.claude .md-body pre,
+    .message.claude .md-body p,
+    .message.claude .md-body li,
+    .message.codex .md-body pre,
+    .message.codex .md-body p,
+    .message.codex .md-body li,
+    .message.gemini .md-body pre,
+    .message.gemini .md-body p,
+    .message.gemini .md-body li,
+    .message.copilot .md-body pre,
+    .message.copilot .md-body p,
+    .message.copilot .md-body li {
+      font-weight: 700;
+    }
+    .message-time-below {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: left;
+      opacity: 0.75;
+    }
+    .message-meta-below {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      opacity: 0.75;
     }
     .message-row.user .message-wrap {
       order: 1;
@@ -1479,7 +1523,7 @@ HTML = """<!doctype html>
       margin-bottom: 8px;
     }
     .message-row.user .meta {
-      justify-content: flex-start;
+      justify-content: flex-end;
     }
     .sender {
       padding: 2px 0;
@@ -2355,7 +2399,7 @@ HTML = """<!doctype html>
     .copy-btn {
       flex-shrink: 0;
       align-self: flex-start;
-      margin-top: 10px;
+      margin-top: 2px;
       background: none;
       border: none;
       padding: 4px;
@@ -2382,6 +2426,12 @@ HTML = """<!doctype html>
     }
     .reply-btn:hover { color: var(--muted); background: rgba(255,255,255,0.08); }
     .reply-btn.active { color: var(--codex-accent); }
+    .message-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      align-items: flex-start;
+    }
     .reply-banner {
       display: none;
       align-items: center;
@@ -3133,22 +3183,24 @@ HTML = """<!doctype html>
         const msgId = escapeHtml(entry.msg_id || "");
         const sender = escapeHtml(entry.sender || "unknown");
         const isActive = pendingReplyTo?.msgId === entry.msg_id;
+        const timestamp = escapeHtml(entry.timestamp || "");
+        const isUser = cls === "user";
         return `<article class="message-row ${cls}" data-msgid="${msgId}" data-sender="${sender}">
           <div class="avatar${av.cls ? ` ${av.cls}` : ""}">${av.html}</div>
           <div class="message-wrap" data-raw="${rawAttr}" data-preview="${previewAttr}">
           <div class="message ${cls}">
           ${replyPreviewHTML}
           <div class="meta">
-            <span class="sender">${sender}</span>
+            ${isUser ? `<span class="sender">${sender}</span>
             <span class="arrow">to</span>
-            <span class="targets">${targetSpans}</span>
-            <time>${escapeHtml(entry.timestamp || "")}</time>
+            <span class="targets">${targetSpans}</span>` : ""}
+            ${isUser ? `<time>${timestamp}</time>` : ""}
           </div>
-          <div class="md-body">${renderMarkdown(body)}</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;">
+          <div class="message-body-row">
+            <div class="md-body">${renderMarkdown(body)}</div>
             <button class="copy-btn" type="button" title="コピー">${copyIcon}</button>
-            ${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}
+          </div>
+          ${isUser ? "" : `<div class="message-meta-below"><span class="sender">${sender}</span><span class="arrow">to</span><span class="targets">${targetSpans}</span><time>${timestamp}</time></div>`}
           </div>
           </div>
         </article>`;
