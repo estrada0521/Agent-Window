@@ -826,14 +826,16 @@ HTML = """<!doctype html>
       position: relative;
       padding: 7px 10px;
       border-radius: 6px;
-      border: 1px solid var(--line);
-      background: var(--panel-strong);
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
       color: #7f8893;
       font-size: 13px;
       line-height: 1.2;
       letter-spacing: 0.01em;
       cursor: pointer;
-      transition: color 120ms ease, border-color 120ms ease, background 120ms ease, transform 120ms ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: color 150ms ease, border-color 150ms ease, background 150ms ease, transform 150ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 150ms ease;
     }
     .target-chip .target-icon {
       width: 15px;
@@ -868,11 +870,13 @@ HTML = """<!doctype html>
       padding: 5px 9px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.04);
+      background: rgba(255,255,255,0.03);
       color: var(--muted);
       font: 600 12px/1.2 "SF Pro Text","Segoe UI",sans-serif;
       cursor: pointer;
-      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background 150ms ease, color 150ms ease, border-color 150ms ease, transform 150ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 150ms ease;
     }
     .quick-action .action-emoji {
       font-size: 13px;
@@ -884,6 +888,9 @@ HTML = """<!doctype html>
     .quick-action:hover:not(:disabled) {
       background: rgba(255,255,255,0.08);
       color: var(--text);
+      border-color: rgba(255,255,255,0.25);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     .quick-action:disabled {
       opacity: 0.4;
@@ -1030,8 +1037,8 @@ HTML = """<!doctype html>
     .composer textarea {
       display: block;
       width: 100%;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(7, 9, 12, 0.7);
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0, 0, 0, 0.35);
       color: var(--text);
       border-radius: 16px;
       font: inherit;
@@ -1040,17 +1047,17 @@ HTML = """<!doctype html>
       resize: vertical;
       padding: 14px 16px;
       font: 16px/1.45 "SF Pro Text","Segoe UI",sans-serif;
-      box-shadow: inset 0 2px 6px rgba(0,0,0,0.2);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
       transition: box-shadow 200ms ease, background-color 200ms ease, border-color 200ms ease;
     }
     .composer textarea:focus {
       outline: none;
-      background: rgba(10, 13, 17, 0.9);
-      border-color: rgba(255, 255, 255, 0.35);
+      background: rgba(0, 0, 0, 0.5);
+      border-color: rgba(255, 255, 255, 0.45);
       box-shadow:
-        inset 0 2px 6px rgba(0,0,0,0.2),
+        inset 0 2px 6px rgba(0,0,0,0.5),
         0 0 0 1px rgba(255, 255, 255, 0.2),
-        0 0 12px rgba(255, 255, 255, 0.06);
+        0 0 16px rgba(255, 255, 255, 0.1);
     }
     .composer textarea::placeholder {
       color: rgba(136, 145, 155, 0.82);
