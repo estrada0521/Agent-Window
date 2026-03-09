@@ -1603,12 +1603,22 @@ HTML = """<!doctype html>
         display: none;
         position: absolute;
         left: 0;
-        top: calc(100% + 8px);
-        min-width: 132px;
-        padding: 4px 0;
+        top: calc(100% + 60px);
+        min-width: 160px;
+        width: max-content;
+        max-width: calc(100vw - 24px);
+        padding: 8px;
         flex-direction: column;
-        gap: 6px;
-        z-index: 30;
+        gap: 2px;
+        z-index: 10010;
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.16);
+        background: rgba(10, 12, 16, 0.5);
+        backdrop-filter: blur(12px) saturate(110%);
+        -webkit-backdrop-filter: blur(12px) saturate(110%);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.08),
+          0 12px 32px rgba(0,0,0,0.45);
       }
       .header-plus-menu[open] .header-plus-panel {
         display: flex;
@@ -1616,14 +1626,40 @@ HTML = """<!doctype html>
       .header-plus-panel .quick-action {
         width: 100%;
         justify-content: flex-start;
-        padding: 8px 12px;
-        font-size: 13px;
-        gap: 8px;
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.16);
-        background: rgba(10, 12, 16, 0.5);
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 6px 18px rgba(0,0,0,0.18);
-        color: rgba(214, 221, 232, 0.88);
+        padding: 12px 16px;
+        font-size: 14px;
+        border-radius: 16px;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+        color: rgba(214, 221, 232, 0.95);
+        position: relative;
+      }
+      .header-plus-panel .quick-action:active {
+        background: rgba(255,255,255,0.05);
+      }
+      .header-plus-panel .quick-action::after {
+        content: "";
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-left: auto;
+        transition: all 150ms ease;
+      }
+      .header-plus-panel .quick-action.auto-on::after { background: #4ade80; box-shadow: 0 0 8px #4ade80; border-color: #4ade80; }
+      .header-plus-panel .quick-action.awake-on::after { background: #fbbf24; box-shadow: 0 0 8px #fbbf24; border-color: #fbbf24; }
+      .header-plus-panel .quick-action.sound-on::after { background: #63cab7; box-shadow: 0 0 8px #63cab7; border-color: #63cab7; }
+      .header-plus-panel .quick-action.raw-on::after { background: #a5d6ff; box-shadow: 0 0 8px #a5d6ff; border-color: #a5d6ff; }
+      
+      .header-plus-panel .quick-action.auto-on,
+      .header-plus-panel .quick-action.awake-on,
+      .header-plus-panel .quick-action.sound-on,
+      .header-plus-panel .quick-action.raw-on {
+        background: rgba(255,255,255,0.08);
+        border-color: rgba(255,255,255,0.25);
       }
       .title-row .header-plus-menu {
         order: -1;
@@ -1686,6 +1722,27 @@ HTML = """<!doctype html>
         overflow-y: auto;
         word-break: break-all;
         white-space: pre-wrap;
+      }
+      .trace-tooltip::before {
+        content: "";
+        position: absolute;
+        bottom: 100%;
+        left: var(--tail-x, 50%);
+        transform: translateX(-50%);
+        border: 8px solid transparent;
+        border-bottom-color: rgba(255,255,255,0.16);
+        pointer-events: none;
+      }
+      .trace-tooltip::after {
+        content: "";
+        position: absolute;
+        bottom: 100%;
+        left: var(--tail-x, 50%);
+        transform: translateX(-50%);
+        border: 7px solid transparent;
+        border-bottom-color: rgba(10, 12, 16, 0.95);
+        margin-bottom: -1px;
+        pointer-events: none;
       }
       .filter-chip {
         flex: 0 0 auto;
@@ -1821,12 +1878,22 @@ HTML = """<!doctype html>
         display: none;
         position: absolute;
         left: 0;
-        bottom: calc(100% + 8px);
-        min-width: 132px;
-        padding: 4px 0;
+        bottom: calc(100% + 60px);
+        min-width: 160px;
+        width: max-content;
+        max-width: calc(100vw - 24px);
+        padding: 8px;
         flex-direction: column;
-        gap: 6px;
+        gap: 2px;
         z-index: 30;
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.16);
+        background: rgba(10, 12, 16, 0.5);
+        backdrop-filter: blur(12px) saturate(110%);
+        -webkit-backdrop-filter: blur(12px) saturate(110%);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.08),
+          0 12px 32px rgba(0,0,0,0.45);
       }
       .composer-plus-menu[open] .composer-plus-panel {
         display: flex;
@@ -1834,14 +1901,37 @@ HTML = """<!doctype html>
       .composer-plus-panel .quick-action {
         width: 100%;
         justify-content: flex-start;
-        padding: 8px 12px;
-        font-size: 13px;
-        gap: 8px;
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.16);
-        background: rgba(10, 12, 16, 0.5);
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 6px 18px rgba(0,0,0,0.18);
-        color: rgba(214, 221, 232, 0.88);
+        padding: 12px 16px;
+        font-size: 14px;
+        border-radius: 16px;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+        color: rgba(214, 221, 232, 0.95);
+        position: relative;
+      }
+      .composer-plus-panel .quick-action:active {
+        background: rgba(255,255,255,0.05);
+      }
+      .composer-plus-panel .quick-action::after {
+        content: "";
+        display: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-left: auto;
+        transition: all 150ms ease;
+      }
+      /* Only show switch for toggles */
+      .composer-plus-panel .quick-action[data-forward-action="rawSendBtn"]::after { display: inline-block; }
+      .composer-plus-panel .quick-action.raw-on::after { background: #a5d6ff; box-shadow: 0 0 8px #a5d6ff; border-color: #a5d6ff; }
+      .composer-plus-panel .quick-action.raw-on { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); }
+      
+      .composer-plus-panel .quick-action[data-forward-action="killBtn"] {
+        border-color: rgba(239, 68, 68, 0.35);
+        color: #ef4444;
       }
       .reply-banner {
         margin-bottom: 0;
@@ -2372,10 +2462,10 @@ HTML = """<!doctype html>
             <details class="header-plus-menu" id="headerPlusMenu">
               <summary class="header-plus-toggle" aria-label="Open header controls"></summary>
               <div class="header-plus-panel">
-                <button type="button" class="quick-action" data-forward-action="autoModeBtn"><span class="action-emoji">🤖</span> Auto</button>
-                <button type="button" class="quick-action" data-forward-action="caffeinateBtn"><span class="action-emoji">☕</span> Awake</button>
-                <button type="button" class="quick-action" data-forward-action="soundBtn"><span class="action-emoji">🔔</span> Sound</button>
-                <button type="button" class="quick-action" data-forward-action="killBtn"><span class="action-emoji">🛑</span> Kill</button>
+                <button type="button" class="quick-action" data-forward-action="autoModeBtn">Auto</button>
+                <button type="button" class="quick-action" data-forward-action="caffeinateBtn">Awake</button>
+                <button type="button" class="quick-action" data-forward-action="soundBtn">Sound</button>
+                <button type="button" class="quick-action" data-forward-action="rawSendBtn">Raw</button>
               </div>
             </details>
             <h1 id="title">agent-index</h1>
@@ -2407,12 +2497,12 @@ HTML = """<!doctype html>
         <details class="composer-plus-menu" id="composerPlusMenu">
           <summary class="composer-plus-toggle" aria-label="Open commands">＋</summary>
           <div class="composer-plus-panel">
-            <button type="button" class="quick-action" data-forward-action="briefBtn"><span class="action-emoji">🧭</span> Brief</button>
-            <button type="button" class="quick-action" data-forward-action="readMemoryBtn"><span class="action-emoji">📥</span> Load</button>
-            <button type="button" class="quick-action" data-forward-action="memoryBtn"><span class="action-emoji">💾</span> Memory</button>
-            <button type="button" class="quick-action" data-forward-action="save"><span class="action-emoji">📝</span> Save</button>
-            <button type="button" class="quick-action" data-forward-action="rawSendBtn"><span class="action-emoji">↪</span> Raw</button>
-            <button type="button" class="quick-action" data-forward-action="interrupt"><span class="action-emoji">⎋</span> Esc</button>
+            <button type="button" class="quick-action" data-forward-action="briefBtn">Brief</button>
+            <button type="button" class="quick-action" data-forward-action="readMemoryBtn">Load</button>
+            <button type="button" class="quick-action" data-forward-action="memoryBtn">Memory</button>
+            <button type="button" class="quick-action" data-forward-action="save">Save</button>
+            <button type="button" class="quick-action" data-forward-action="killBtn">Kill</button>
+            <button type="button" class="quick-action" data-forward-action="interrupt">Esc</button>
           </div>
         </details>
         <div class="composer-shell">
@@ -3021,13 +3111,7 @@ HTML = """<!doctype html>
         if (!overrideMessage) {
           message.value = "";
           autoResizeTextarea();
-          if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-            setTimeout(() => {
-              window.scrollTo(0, 0);
-              timeline.scrollTo({ top: timeline.scrollHeight, behavior: "smooth" });
-            }, 100);
-          }
+          timeline.scrollTo({ top: timeline.scrollHeight, behavior: "auto" });
         }
         if (!isShortcut) setReplyTo(null, "", "");
         setStatus(
@@ -3077,11 +3161,12 @@ HTML = """<!doctype html>
     document.querySelectorAll("[data-forward-action]").forEach((node) => {
       node.addEventListener("click", async () => {
         const target = node.dataset.forwardAction || "";
-        closeQuickMore();
         if (target === "save" || target === "interrupt") {
+          closeQuickMore();
           await submitMessage({ overrideMessage: target });
           return;
         }
+        if (target === "killBtn") closeQuickMore();
         document.getElementById(target)?.click();
       });
     });
@@ -3428,7 +3513,7 @@ HTML = """<!doctype html>
       soundBtn.classList.toggle("sound-on", on);
       document.querySelectorAll('[data-forward-action="soundBtn"]').forEach(n => {
         n.classList.toggle("sound-on", on);
-        n.innerHTML = `<span class="action-emoji">🔔</span> Sound: ${on ? 'on' : 'off'}`;
+        n.innerHTML = `Sound: ${on ? 'on' : 'off'}`;
       });
     };
     setSoundBtn(soundEnabled);
@@ -3476,11 +3561,14 @@ HTML = """<!doctype html>
       traceTooltip.style.display = "block";
       traceTooltip.textContent = "Loading trace...";
       if (isCompactMobile()) {
-        traceTooltip.style.left = "8px";
+        const left = 8;
+        const centerX = rect.left + rect.width / 2;
+        traceTooltip.style.left = left + "px";
         traceTooltip.style.right = "8px";
         traceTooltip.style.width = "calc(100vw - 16px)";
         traceTooltip.style.maxWidth = "calc(100vw - 16px)";
         traceTooltip.style.top = Math.min(window.innerHeight - 250, rect.bottom + 20) + "px";
+        traceTooltip.style.setProperty("--tail-x", (centerX - left) + "px");
       } else {
         const availableWidth = rect.left - 24;
         traceTooltip.style.left = "";
@@ -3566,7 +3654,7 @@ HTML = """<!doctype html>
       autoBtn.classList.toggle("auto-on", active);
       document.querySelectorAll('[data-forward-action="autoModeBtn"]').forEach(n => {
         n.classList.toggle("auto-on", active);
-        n.innerHTML = `<span class="action-emoji">🤖</span> Auto: ${active ? 'on' : 'off'}`;
+        n.innerHTML = `Auto: ${active ? 'on' : 'off'}`;
       });
     };
     let lastApprovalTs = 0;
@@ -3611,7 +3699,7 @@ HTML = """<!doctype html>
       caffeinateBtn.classList.toggle("awake-on", active);
       document.querySelectorAll('[data-forward-action="caffeinateBtn"]').forEach(n => {
         n.classList.toggle("awake-on", active);
-        n.innerHTML = `<span class="action-emoji">☕</span> Awake: ${active ? 'on' : 'off'}`;
+        n.innerHTML = `Awake: ${active ? 'on' : 'off'}`;
       });
     };
     const refreshCaffeinate = async () => {
