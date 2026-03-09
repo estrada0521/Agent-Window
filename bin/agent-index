@@ -3416,6 +3416,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             import html as _html
             _IMAGE_EXTS = {".png",".jpg",".jpeg",".gif",".webp",".svg",".ico"}
+            _TEXT_EXTS = {".py",".js",".json",".yaml",".yml",".sh",".sql",".html",".css",".tex"}
             _PDF_EXTS = {".pdf"}
             _VIDEO_EXTS = {".mp4":"video/mp4",".mov":"video/quicktime",".webm":"video/webm",
                            ".avi":"video/x-msvideo",".mkv":"video/x-matroska"}
@@ -3438,6 +3439,61 @@ class Handler(BaseHTTPRequestHandler):
                     page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;background:#000}}video{{max-width:100%;max-height:100%}}</style></head><body>{_header.format(icon="🎬")}<div class="wrap"><video controls src="{raw_url}"></video></div></body></html>'
                 elif ext in _AUDIO_EXTS:
                     page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;padding:32px}}audio{{width:100%;max-width:500px}}</style></head><body>{_header.format(icon="🎵")}<div class="wrap"><audio controls src="{raw_url}"></audio></div></body></html>'
+                elif ext in _TEXT_EXTS:
+                    with open(full, "r", encoding="utf-8", errors="replace") as f:
+                        content = f.read()
+                    import re
+                    esc = _html.escape(content)
+                    theme_bg = "#23272e"
+                    theme_fg = "#abb2bf"
+                    theme_gutter = "#495162"
+                    theme_comment = "#5c6370"
+                    theme_keyword = "#c678dd"
+                    theme_string = "#98c379"
+                    theme_number = "#d19a66"
+                    theme_func = "#61afef"
+                    theme_type = "#e5c07b"
+                    theme_prop = "#56b6c2"
+                    theme_tag = "#e06c75"
+                    theme_punct = "#7f848e"
+                    theme_builtin = "#56b6c2"
+                    # Helper: apply regex only to text nodes (skip HTML tag internals)
+                    def _hl(pat, rep, s):
+                        parts = re.split(r'(<[^>]*>)', s)
+                        return ''.join(re.sub(pat, rep, p) if not p.startswith('<') else p for p in parts)
+                    # 1. Comments first (line-start only; no spans exist yet, so safe to use plain re.sub)
+                    if ext in {".py", ".sh", ".yaml", ".yml"}:
+                        esc = re.sub(r'(^[ \t]*#[^\n]*)', rf'<span style="color:{theme_comment}">\1</span>', esc, flags=re.MULTILINE)
+                    elif ext in {".js", ".ts", ".css", ".sql", ".json"}:
+                        esc = re.sub(r'(//[^\n]*)', rf'<span style="color:{theme_comment}">\1</span>', esc)
+                    elif ext == ".tex":
+                        esc = re.sub(r'(^[ \t]*%[^\n]*)', rf'<span style="color:{theme_comment}">\1</span>', esc, flags=re.MULTILINE)
+                    # 2. Strings / numbers before structural tokens
+                    esc = _hl(r'("(?:[^"\\<\n]|\\.)*"|\'(?:[^\'\\<\n]|\\.)*\')', rf'<span style="color:{theme_string}">\1</span>', esc)
+                    esc = _hl(r'(?<![\w#])(-?\d+(?:\.\d+)?)', rf'<span style="color:{theme_number}">\1</span>', esc)
+                    # 3. Keys / commands / tags / decorators
+                    if ext in {".json", ".yaml", ".yml"}:
+                        esc = _hl(r'(^[ \t-]*)([A-Za-z_][\w.-]*)(\s*:)', rf'\1<span style="color:{theme_prop}">\2</span>\3', esc)
+                    if ext == ".tex":
+                        esc = _hl(r'(\\[A-Za-z@]+)', rf'<span style="color:{theme_tag}">\1</span>', esc)
+                    if ext == ".html":
+                        esc = _hl(r'(&lt;/?)([A-Za-z][\w:-]*)', rf'\1<span style="color:{theme_tag}">\2</span>', esc)
+                        esc = _hl(r'([A-Za-z_:][\w:.-]*)(=)(&quot;.*?&quot;)', rf'<span style="color:{theme_prop}">\1</span>\2<span style="color:{theme_string}">\3</span>', esc)
+                    if ext == ".css":
+                        esc = _hl(r'(^[ \t]*)([.#]?[A-Za-z_-][\w:-]*)(\s*\{)', rf'\1<span style="color:{theme_tag}">\2</span>\3', esc)
+                        esc = _hl(r'([A-Za-z-]+)(\s*:)', rf'<span style="color:{theme_prop}">\1</span>\2', esc)
+                    if ext in {".py", ".js", ".sh", ".sql"}:
+                        esc = _hl(r'(^[ \t]*@[\w.]+)', rf'<span style="color:{theme_tag}">\1</span>', esc)
+                    # 4. Keywords / builtins / types / functions / properties
+                    esc = _hl(r'\b(def|class|import|from|return|if|else|elif|for|while|try|except|with|as|yield|await|async|function|const|let|var|type|interface|enum|public|private|protected|static|readonly|do|switch|case|default|break|continue|new|delete|typeof|instanceof|void|this|super|in|of|null|undefined|true|false)\b', rf'<span style="color:{theme_keyword}">\1</span>', esc)
+                    esc = _hl(r'\b(str|int|float|bool|list|dict|tuple|set|None|self|cls|SELECT|FROM|WHERE|GROUP|ORDER|BY|JOIN|LEFT|RIGHT|INNER|OUTER|LIMIT|INSERT|UPDATE|DELETE|CREATE|TABLE|VALUES)\b', rf'<span style="color:{theme_type}">\1</span>', esc)
+                    esc = _hl(r'\b(print|len|range|echo|printf|console|log)\b', rf'<span style="color:{theme_builtin}">\1</span>', esc)
+                    esc = _hl(r'\b([A-Za-z_][\w]*)(?=\()', rf'<span style="color:{theme_func}">\1</span>', esc)
+                    esc = _hl(r'(?<=\.)\b([A-Za-z_][\w]*)\b', rf'<span style="color:{theme_prop}">\1</span>', esc)
+                    esc = _hl(r'([{}()[\],.:;=+\-/*<>])', rf'<span style="color:{theme_punct}">\1</span>', esc)
+                    
+                    h = "100vh" if embed else "calc(100vh - 43px)"
+                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}body{{background:{theme_bg};color:{theme_fg}}}.hdr{{background:#1b1f26;border-bottom-color:#2f3440}}.fn{{color:{theme_fg}}}.fp{{color:{theme_gutter}}}pre{{margin:0;padding:16px;white-space:pre;overflow:auto;height:{h};font-family:"SF Mono","Fira Code",monospace;font-size:13px;line-height:1.5;background:{theme_bg};color:{theme_fg}}}</style></head><body>{_header.format(icon="📄")}<pre>{esc}</pre></body></html>'
                 elif ext == ".md":
                     with open(full, "r", encoding="utf-8", errors="replace") as f:
                         content = f.read()
