@@ -726,18 +726,30 @@ HTML = """<!doctype html>
       background: rgba(255,255,255,0.04);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      cursor: default;
-      transition: background 120ms ease, border-color 120ms ease;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+    }
+    .agent-row.active {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.28);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.15);
     }
     @media (hover: hover) and (pointer: fine) {
       .agent-row:hover {
         background: rgba(255,255,255,0.09);
         border-color: rgba(255,255,255,0.18);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       }
     }
     .agent-row:active {
-      background: rgba(255,255,255,0.13);
-      border-color: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.12) !important;
+      border-color: rgba(255,255,255,0.28) !important;
+      transform: translateY(-2px) !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.15) !important;
     }
     .agent-row .agent-icon,
     .filter-chip .filter-icon {
@@ -1076,7 +1088,7 @@ HTML = """<!doctype html>
       border: 1px solid rgba(255,255,255,0.18);
       background: rgba(0, 0, 0, 0.2);
       color: var(--text);
-      border-radius: 24px;
+      border-radius: 30px;
       font: inherit;
       min-height: 52px;
       max-height: 140px;
@@ -1103,6 +1115,7 @@ HTML = """<!doctype html>
     .statusline {
       grid-column: 1 / -1;
       margin-top: -10px;
+      padding-left: 42px;
       min-height: 0;
       color: var(--muted);
       font-size: 11px;
@@ -2608,7 +2621,7 @@ HTML = """<!doctype html>
       currentAgentStatuses = { ...statuses };
       const root = document.getElementById("agentStatusPanel");
       if (!root) return;
-      root.innerHTML = Object.entries(currentAgentStatuses).map(([agent, status]) => {
+      Object.entries(currentAgentStatuses).forEach(([agent, status]) => {
         let statusText = status;
         let elapsed = "";
         if (status === "running") {
@@ -2618,16 +2631,23 @@ HTML = """<!doctype html>
           const total = agentTotalThinkingTime[agent] || 0;
           elapsed = total > 0 ? formatAgentElapsed(total) : "";
         }
-        return (
-        `<div class="agent-row" data-agent="${escapeHtml(agent)}">` +
+        let row = root.querySelector(`.agent-row[data-agent="${CSS.escape(agent)}"]`);
+        if (!row) {
+          row = document.createElement("div");
+          row.className = "agent-row";
+          row.dataset.agent = agent;
+          root.appendChild(row);
+        }
+        // preserve .active class
+        const isActive = row.classList.contains("active");
+        row.innerHTML =
           iconImg(agent, "agent-icon") +
           `<span class="status-dot ${escapeHtml(status)}"></span>` +
           `<span class="agent-label">${escapeHtml(agent)}</span>` +
           (statusText ? `<span class="agent-status-text">${escapeHtml(statusText)}</span>` : "") +
-          (elapsed ? `<span class="agent-status-elapsed">${escapeHtml(elapsed)}</span>` : "") +
-        `</div>`
-        );
-      }).join("");
+          (elapsed ? `<span class="agent-status-elapsed">${escapeHtml(elapsed)}</span>` : "");
+        if (isActive) row.classList.add("active");
+      });
     };
     const refreshAgentStatus = async () => {
       try {
@@ -2640,6 +2660,10 @@ HTML = """<!doctype html>
     let ansiUp = null;
     try { ansiUp = new AnsiUp(); } catch(e) {}
     const isCompactMobile = () => window.matchMedia("(max-width: 700px)").matches;
+    const setActiveAgentRow = (row) => {
+      document.querySelectorAll(".agent-row.active").forEach((node) => node.classList.remove("active"));
+      if (row) row.classList.add("active");
+    };
     const normalizeTraceAnsi = (value) => value
       .replace(/\u001b\[2m/g, "\u001b[38;2;98;101;109m")
       .replace(/\u001b\[(?:0;)?22m/g, "\u001b[39m");
@@ -2684,14 +2708,15 @@ HTML = """<!doctype html>
       fetchAndRenderTrace(agent);
     };
 
-    const hideTraceTooltip = () => {
-      currentHoverAgent = null;
-      traceTooltip.style.display = "none";
-      traceTooltip.innerHTML = "";
-      traceTooltip.style.left = "";
-      traceTooltip.style.right = "";
-      traceTooltip.style.width = "";
-    };
+  const hideTraceTooltip = () => {
+    currentHoverAgent = null;
+    traceTooltip.style.display = "none";
+    traceTooltip.innerHTML = "";
+    traceTooltip.style.left = "";
+    traceTooltip.style.right = "";
+    traceTooltip.style.width = "";
+    setActiveAgentRow(null);
+  };
 
     setInterval(() => {
       if (currentHoverAgent) {
@@ -2725,9 +2750,11 @@ HTML = """<!doctype html>
       if (!row) return;
       const agent = row.dataset.agent;
       if (currentHoverAgent === agent) {
+        setActiveAgentRow(null);
         hideTraceTooltip();
         return;
       }
+      setActiveAgentRow(row);
       showTraceTooltip(agent, row.getBoundingClientRect());
     });
     document.addEventListener("click", (e) => {
