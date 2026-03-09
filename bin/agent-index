@@ -744,14 +744,14 @@ HTML = """<!doctype html>
       display: flex;
       align-items: center;
       gap: 4px;
-      font: 600 11px/1.4 "SF Pro Text","Segoe UI",sans-serif;
+      font: 500 12px/1.4 "SF Pro Text","Segoe UI",sans-serif;
       color: var(--muted);
-      padding: 3px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.04);
+      padding: 3px 6px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
       box-shadow: none;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
@@ -835,7 +835,7 @@ HTML = """<!doctype html>
     .title-row {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 12px;
       margin-bottom: 0;
     }
     h1 { margin: 0; font-size: clamp(22px, 3vw, 30px); line-height: 1; }
@@ -1449,8 +1449,13 @@ HTML = """<!doctype html>
         opacity: 0.6;
       }
       .eyebrow { display: none; }
-      .header-main { width: 100%; display: flex; flex-direction: column; gap: 6px; border-radius: 20px; padding: 12px; }
-      .title-row { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 4px; }
+      .header-main { 
+        width: 100%; display: flex; flex-direction: column; gap: 6px; border-radius: 20px; padding: 12px;
+        background: rgba(5, 5, 5, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      }
+      .title-row { display: flex; justify-content: flex-start; align-items: center; width: 100%; gap: 8px; }
       h1 { font-size: 22px; line-height: 1.2; margin-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .sub {
         width: 100%;
@@ -1481,19 +1486,19 @@ HTML = """<!doctype html>
         gap: 4px;
         padding: 3px 10px;
         border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.12);
-        background: rgba(255,255,255,0.04);
-        box-shadow: none;
+        border: 1px solid rgba(255,255,255,0.25);
+        background: rgba(255,255,255,0.08);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.5);
         font-size: 11px;
         font-weight: 600;
         letter-spacing: 0.02em;
-        color: var(--muted);
+        color: var(--text);
       }
       .agent-row.active {
-        background: rgba(255,255,255,0.12) !important;
-        border-color: rgba(255,255,255,0.28) !important;
+        background: rgba(255,255,255,0.18) !important;
+        border-color: rgba(255,255,255,0.4) !important;
         transform: translateY(-2px) !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.15) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.2) !important;
       }
       .trace-tooltip {
         padding: 7px 8px;
