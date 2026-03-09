@@ -3463,7 +3463,7 @@ HTML = """<!doctype html>
         traceTooltip.style.right = "8px";
         traceTooltip.style.width = "calc(100vw - 16px)";
         traceTooltip.style.maxWidth = "calc(100vw - 16px)";
-        traceTooltip.style.top = Math.min(window.innerHeight - 220, rect.bottom + 6) + "px";
+        traceTooltip.style.top = Math.min(window.innerHeight - 250, rect.bottom + 20) + "px";
       } else {
         const availableWidth = rect.left - 24;
         traceTooltip.style.left = "";
