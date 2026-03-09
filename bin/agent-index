@@ -597,10 +597,11 @@ HTML = """<!doctype html>
   <style>
     .trace-tooltip {
       position: fixed;
-      background: rgb(23, 25, 29);
-      backdrop-filter: blur(4px);
-      border: 1px solid rgba(255, 255, 255, 0.28);
-      border-radius: 8px;
+      background: rgba(15, 18, 22, 0.85);
+      backdrop-filter: blur(24px) saturate(150%);
+      -webkit-backdrop-filter: blur(24px) saturate(150%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
       padding: 11px 12px;
       font-family: Menlo, Monaco, "Cascadia Mono", "SF Mono", monospace;
       font-size: 12.5px;
@@ -612,8 +613,8 @@ HTML = """<!doctype html>
       z-index: 1000;
       display: none;
       box-shadow:
-        0 0 0 1px rgba(255, 255, 255, 0.08),
-        0 10px 30px rgba(0,0,0,0.5);
+        0 0 0 1px rgba(255, 255, 255, 0.04),
+        0 16px 40px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
       pointer-events: none;
       width: max-content;
       max-height: calc(100vh - 40px);
