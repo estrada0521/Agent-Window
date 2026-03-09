@@ -2303,14 +2303,24 @@ HTML = """<!doctype html>
     let _lastSoundAt = 0;
     const SOUND_COOLDOWN_MS = 700;
     const buildNotificationSamples = (sampleRate = 22050) => {
-      const duration = 0.34;
+      const duration = 0.55;
       const frameCount = Math.floor(sampleRate * duration);
       const samples = new Float32Array(frameCount);
+      // Two-note ascending chime: E5(659Hz) then G5(784Hz), bell-like decay
+      const notes = [
+        { freq: 659, start: 0.0,  amp: 0.17, decay: 8  },
+        { freq: 784, start: 0.13, amp: 0.15, decay: 9  },
+      ];
       for (let i = 0; i < frameCount; i++) {
         const t = i / sampleRate;
-        const envelope = Math.min(t * 20, (duration - t) * 12, 1);
-        const freq = 660 - 120 * Math.min(t / duration, 1);
-        samples[i] = 0.16 * envelope * Math.sin(2 * Math.PI * freq * t);
+        let s = 0;
+        for (const n of notes) {
+          const dt = t - n.start;
+          if (dt < 0) continue;
+          const env = Math.min(dt * 250, 1) * Math.exp(-dt * n.decay);
+          s += n.amp * env * Math.sin(2 * Math.PI * n.freq * t);
+        }
+        samples[i] = s;
       }
       return samples;
     };
