@@ -1434,6 +1434,11 @@ HTML = """<!doctype html>
       margin-right: 2px;
       align-self: center;
     }
+    .message-meta-below .reply-btn {
+      margin-top: 0;
+      margin-right: 4px;
+      align-self: center;
+    }
     .message-row.user .message-wrap {
       order: 1;
       flex-direction: row-reverse;
@@ -3212,7 +3217,7 @@ HTML = """<!doctype html>
             <div class="md-body">${renderMarkdown(body)}</div>
             ${isUser ? `<button class="copy-btn" type="button" title="コピー">${copyIcon}</button>` : ""}
           </div>
-          ${isUser ? "" : `<div class="message-meta-below"><button class="copy-btn" type="button" title="コピー">${copyIcon}</button><span class="sender">${sender}</span><span class="arrow">to</span><span class="targets">${targetSpans}</span><time>${timestamp}</time></div>`}
+          ${isUser ? "" : `<div class="message-meta-below"><button class="copy-btn" type="button" title="コピー">${copyIcon}</button>${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}<span class="sender">${sender}</span><span class="arrow">to</span><span class="targets">${targetSpans}</span><time>${timestamp}</time></div>`}
           </div>
           </div>
         </article>`;
