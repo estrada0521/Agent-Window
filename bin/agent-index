@@ -3041,9 +3041,6 @@ HTML = """<!doctype html>
     const quickMore = document.querySelector(".quick-more");
     const composerPlusMenu = document.getElementById("composerPlusMenu");
     const headerPlusMenu = document.getElementById("headerPlusMenu");
-    // Desktop: force quick-more open so Brief/Load/Memory/Save/Esc are always visible
-    // (display:contents alone can't override <details> UA hiding behavior)
-    if (!isCompactMobile() && quickMore) quickMore.open = true;
     const closeQuickMore = () => {
       if (quickMore) quickMore.open = false;
       if (composerPlusMenu) composerPlusMenu.open = false;
