@@ -3591,6 +3591,58 @@ HTML = """<!doctype html>
     let _dropActiveIdx = -1;
     const _dropItems = () => fileDrop.querySelectorAll(".file-item");
     const closeDrop = () => { fileDrop.style.display = "none"; _dropActiveIdx = -1; };
+    const basename = (path) => {
+      const parts = String(path || "").split("/");
+      return parts[parts.length - 1] || path;
+    };
+    const subsequenceScore = (text, query) => {
+      let qi = 0;
+      let spanStart = -1;
+      let lastMatch = -1;
+      let gaps = 0;
+      for (let i = 0; i < text.length && qi < query.length; i++) {
+        if (text[i] !== query[qi]) continue;
+        if (spanStart === -1) spanStart = i;
+        if (lastMatch !== -1) gaps += i - lastMatch - 1;
+        lastMatch = i;
+        qi += 1;
+      }
+      if (qi !== query.length) return null;
+      const span = lastMatch - spanStart + 1;
+      return { spanStart, span, gaps };
+    };
+    const scoreFileMatch = (path, rawQuery) => {
+      const query = (rawQuery || "").trim().toLowerCase();
+      if (!query) return null;
+      const full = String(path || "").toLowerCase();
+      const base = basename(full);
+      const stem = base.replace(/\.[^.]+$/, "");
+      const segments = full.split(/[\\/._\\-\\s]+/).filter(Boolean);
+      if (base === query) return 1000;
+      if (stem === query) return 980;
+      if (base.startsWith(query)) return 900 - (base.length - query.length);
+      if (stem.startsWith(query)) return 880 - (stem.length - query.length);
+      if (segments.includes(query)) return 860;
+      const baseIdx = base.indexOf(query);
+      if (baseIdx !== -1) return 760 - baseIdx;
+      const stemIdx = stem.indexOf(query);
+      if (stemIdx !== -1) return 740 - stemIdx;
+      const fullIdx = full.indexOf(query);
+      if (fullIdx !== -1) return 640 - Math.min(fullIdx, 200);
+      const stemSubseq = subsequenceScore(stem, query);
+      if (stemSubseq) return 540 - stemSubseq.gaps * 3 - stemSubseq.spanStart * 2 - stemSubseq.span;
+      const baseSubseq = subsequenceScore(base, query);
+      if (baseSubseq) return 520 - baseSubseq.gaps * 3 - baseSubseq.spanStart * 2 - baseSubseq.span;
+      const fullSubseq = subsequenceScore(full, query);
+      if (fullSubseq) return 360 - fullSubseq.gaps * 2 - fullSubseq.spanStart - fullSubseq.span;
+      return null;
+    };
+    const findFileMatches = (files, query) => files
+      .map((path) => ({ path, score: scoreFileMatch(path, query) }))
+      .filter((item) => item.score !== null)
+      .sort((a, b) => b.score - a.score || a.path.length - b.path.length || a.path.localeCompare(b.path))
+      .slice(0, 30)
+      .map((item) => item.path);
     const selectFile = (path) => {
       const ta = messageInput;
       const pos = ta.selectionStart;
@@ -3624,7 +3676,7 @@ HTML = """<!doctype html>
       if (atIdx === -1 || /\s/.test(before.slice(atIdx + 1))) return closeDrop();
       const query = before.slice(atIdx + 1).toLowerCase();
       const files = await loadFiles();
-      const matches = files.filter(f => f.toLowerCase().includes(query)).slice(0, 30);
+      const matches = findFileMatches(files, query);
       if (!matches.length) return closeDrop();
       fileDrop.innerHTML = matches.map(f =>
         `<div class="file-item" data-path="${escapeHtml(f)}">${escapeHtml(f)}</div>`
@@ -4371,7 +4423,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_error(404)
             return
         if parsed.path == "/files":
-            _skip_dirs = {".git", "node_modules", "__pycache__", "logs", ".venv", "venv", ".mypy_cache"}
+            _skip_dirs = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache"}
             files = []
             try:
                 for root, dirs, filenames in os.walk(workspace):
