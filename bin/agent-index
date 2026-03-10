@@ -4116,7 +4116,7 @@ HTML = """<!doctype html>
       const target = overrideTarget ?? selectedTargets.join(",");
       const shortcut = shortcutName(payload);
       const isShortcut = !!shortcut;
-      if (!target) {
+      if (!target && shortcut !== "save" && shortcut !== "kill") {
         setStatus("select at least one target", true);
         sendLocked = false;
         return false;
