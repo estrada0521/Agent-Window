@@ -889,7 +889,7 @@ HTML = """<!doctype html>
     }
     #fileDropdown {
       position: fixed;
-      background: rgba(0, 0, 0, 0.72);
+      background: rgba(0, 0, 0, 0.92);
       backdrop-filter: blur(28px) saturate(160%);
       -webkit-backdrop-filter: blur(28px) saturate(160%);
       border: 1px solid rgba(255,255,255,0.12);
@@ -911,7 +911,7 @@ HTML = """<!doctype html>
       padding: 10px 16px;
       border-radius: 0;
       font: 500 12px/1.4 "SF Mono", "Fira Code", "Menlo", "Consolas", monospace;
-      color: rgba(255,255,255,0.78);
+      color: rgba(255,255,255,0.45);
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
@@ -4399,6 +4399,7 @@ HTML = """<!doctype html>
       ta.focus();
       closeDrop();
     };
+    fileDrop.addEventListener("click", (e) => e.stopPropagation());
     fileDrop.addEventListener("mousedown", (e) => {
       const item = e.target.closest(".file-item");
       if (item) { e.preventDefault(); selectFile(item.dataset.path); }
