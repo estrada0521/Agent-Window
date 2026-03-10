@@ -4620,7 +4620,8 @@ HTML = """<!doctype html>
       if (
         target.closest(".reply-btn") ||
         target.closest(".reply-banner") ||
-        target.closest("#composer")
+        target.closest("#composer") ||
+        target.closest("#fileDropdown")
       ) {
         return;
       }
