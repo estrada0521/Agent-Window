@@ -899,7 +899,7 @@ HTML = """<!doctype html>
       z-index: 9998;
       display: none;
       box-shadow: 0 12px 32px rgba(0,0,0,0.45);
-      padding: 6px;
+      padding: 0;
       box-sizing: border-box;
       animation: dropdownIn 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
       will-change: transform, opacity;
@@ -908,8 +908,8 @@ HTML = """<!doctype html>
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 14px;
-      border-radius: 10px;
+      padding: 10px 16px;
+      border-radius: 0;
       font: 500 12px/1.4 "SF Mono", "Fira Code", "Menlo", "Consolas", monospace;
       color: rgba(255,255,255,0.78);
       cursor: pointer;
@@ -929,7 +929,7 @@ HTML = """<!doctype html>
       text-overflow: ellipsis;
     }
     .file-item:not(:last-child) {
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
     }
     .file-item:hover, .file-item.active {
       background: rgba(255,255,255,0.1);
