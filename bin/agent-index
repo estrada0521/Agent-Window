@@ -4222,7 +4222,7 @@ HTML = """<!doctype html>
       if (quickMore && isCompactMobile() && quickMore.open && !quickMore.contains(event.target)) {
         quickMore.open = false;
       }
-      if (composerPlusMenu && composerPlusMenu.open && !composerPlusMenu.contains(event.target)) {
+      if (composerPlusMenu && composerPlusMenu.open && !composerPlusMenu.contains(event.target) && !event.target.closest(".target-chip")) {
         composerPlusMenu.open = false;
       }
       if (headerPlusMenu && headerPlusMenu.open && !headerPlusMenu.contains(event.target)) {
@@ -4530,6 +4530,7 @@ HTML = """<!doctype html>
     }, true);
     messageInput.addEventListener("blur", () => {
       document.body.classList.remove("composing");
+      if (composerPlusMenu) composerPlusMenu.open = false;
       setTimeout(closeDrop, 150);
     });
 
