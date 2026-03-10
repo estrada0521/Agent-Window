@@ -2596,7 +2596,7 @@ HTML = """<!doctype html>
       }
       .composer-field {
         display: flex;
-        align-items: center;
+        align-items: flex-start; /* Changed from center */
         gap: 8px;
         min-height: 44px;
         box-sizing: border-box;
@@ -2621,6 +2621,7 @@ HTML = """<!doctype html>
         width: 44px;
         height: 44px;
         z-index: 10010;
+        margin-top: 0; /* Aligned to top */
       }
       .composer-plus-toggle {
         display: inline-flex;
