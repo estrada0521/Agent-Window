@@ -1361,14 +1361,14 @@ HTML = """<!doctype html>
     }
     .delete-btn {
       position: absolute;
-      right: 12px;
+      right: 6px;
       top: 50%;
       transform: translateY(-50%) scale(0.8);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       border: 1px solid rgba(255,255,255,0.14);
       background: rgba(0, 0, 0, 0.32);
@@ -1377,7 +1377,7 @@ HTML = """<!doctype html>
       opacity: 0;
       pointer-events: none;
       transition: all 180ms cubic-bezier(0.2, 0.9, 0.2, 1);
-      z-index: 2;
+      z-index: 10;
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
@@ -3561,7 +3561,7 @@ HTML = """<!doctype html>
           <div class="composer-field">
             <textarea id="message" placeholder="Write a message"></textarea>
             <button type="button" class="delete-btn" id="deleteBtn" aria-label="Clear input">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
             <button type="submit" class="send-btn" aria-label="Send">↑</button>
           </div>
