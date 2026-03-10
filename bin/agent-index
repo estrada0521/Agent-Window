@@ -1578,6 +1578,17 @@ HTML = """<!doctype html>
       border: none;
     }
     .targets { opacity: 0.9; }
+    .reply-jump-inline {
+      all: unset;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      color: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .reply-jump-inline:hover {
+      opacity: 1;
+    }
     .target-name {
       font-weight: 700;
       text-transform: capitalize;
@@ -3331,7 +3342,7 @@ HTML = """<!doctype html>
           return `<div class="sysmsg-row" data-msgid="${escapeHtml(entry.msg_id || "")}" data-sender="system">${escapeHtml(entry.message || "")}</div>`;
         }
         const cls = roleClass(entry.sender);
-        const targetSpans = (entry.targets?.length > 0
+      const targetSpans = (entry.targets?.length > 0
           ? entry.targets.map(t => `<span class="target-name ${roleClass(t)}">${escapeHtml(t)}</span>`)
           : [`<span class="target-name">no target</span>`]).join(", ");
         const body = stripSenderPrefix(entry.message || "");
@@ -3339,6 +3350,10 @@ HTML = """<!doctype html>
         const previewAttr = escapeHtml(body.slice(0, 80)).replaceAll('"', "&quot;");
         const av = senderAvatar(entry.sender || "unknown");
         const msgId = escapeHtml(entry.msg_id || "");
+        const replyToAttr = entry.reply_to ? escapeHtml(entry.reply_to).replaceAll('"', "&quot;") : "";
+        const targetMeta = replyToAttr
+          ? `<button class="reply-jump-inline" type="button" title="返信元へ移動" data-replyto="${replyToAttr}">${targetSpans}</button>`
+          : `<span class="targets">${targetSpans}</span>`;
         const sender = escapeHtml(entry.sender || "unknown");
         const isActive = pendingReplyTo?.msgId === entry.msg_id;
         const timestamp = escapeHtml(entry.timestamp || "");
@@ -3350,7 +3365,7 @@ HTML = """<!doctype html>
           <div class="meta">
             ${isUser ? `<span class="sender">${sender}</span>
             <span class="arrow">to</span>
-            <span class="targets">${targetSpans}</span>` : ""}
+            ${targetMeta}` : ""}
             ${isUser ? `<time>${timestamp}</time>` : ""}
           </div>
           ${isUser ? replyPreviewHTML : ""}
@@ -3359,7 +3374,7 @@ HTML = """<!doctype html>
             <div class="md-body">${renderMarkdown(body)}</div>
             ${isUser ? `<button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>` : ""}
           </div>
-          ${isUser ? "" : `<div class="message-meta-below"><button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}<span class="sender">${sender}</span><span class="arrow">to</span><span class="targets">${targetSpans}</span><time>${timestamp}</time></div>`}
+          ${isUser ? "" : `<div class="message-meta-below"><button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}<span class="sender">${sender}</span><span class="arrow">to</span>${targetMeta}<time>${timestamp}</time></div>`}
           </div>
           </div>
         </article>`;
@@ -3845,6 +3860,17 @@ HTML = """<!doctype html>
         ]);
       }, 1500);
     };
+    const jumpToReplySource = (targetId) => {
+      if (!targetId) return;
+      const target = document.querySelector(`[data-msgid="${CSS.escape(targetId)}"]`);
+      if (!target) return;
+      const bodyTarget = target.querySelector(".md-body") || target.querySelector(".message") || target;
+      bodyTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+      bodyTarget.classList.remove("msg-highlight");
+      void bodyTarget.offsetWidth;
+      bodyTarget.classList.add("msg-highlight");
+      bodyTarget.addEventListener("animationend", () => bodyTarget.classList.remove("msg-highlight"), { once: true });
+    };
     document.getElementById("messages").addEventListener("click", (e) => {
       const fileCard = e.target.closest(".file-card");
       if (fileCard) {
@@ -3852,6 +3878,11 @@ HTML = """<!doctype html>
         const path = fileCard.dataset.filepath;
         const ext = fileCard.dataset.ext || "";
         openFileModal(path, ext, fileCard);
+        return;
+      }
+      const replyJumpInline = e.target.closest(".reply-jump-inline");
+      if (replyJumpInline) {
+        jumpToReplySource(replyJumpInline.dataset.replyto);
         return;
       }
       const replyBlock = e.target.closest(".reply-preview-block");
