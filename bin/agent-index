@@ -1399,10 +1399,6 @@ HTML = """<!doctype html>
       color: var(--muted);
       font-size: 11px;
     }
-    .keyboard-locked main {
-      overflow: hidden !important;
-      overscroll-behavior: none !important;
-    }
     main {
       grid-area: 1 / 1;
       padding: 100px 14px 200px;
@@ -2923,11 +2919,24 @@ HTML = """<!doctype html>
         z-index: 10;
         opacity: 0;
         pointer-events: none;
+        touch-action: none;
+        overscroll-behavior: none;
         transition: opacity 300ms ease;
       }
       body.composing .composer-overlay {
         opacity: 1;
         pointer-events: auto;
+      }
+      html.composing-lock,
+      html.composing-lock body {
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
+      body.composing main {
+        overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: none;
+        pointer-events: none;
       }
       body.composing .composer {
         z-index: 21;
@@ -3942,7 +3951,7 @@ HTML = """<!doctype html>
       }
     });
     const render = (data, { forceScroll = false } = {}) => {
-      const shouldStickToBottom = forceScroll || isNearBottom() || document.body.classList.contains("keyboard-locked");
+      const shouldStickToBottom = forceScroll || isNearBottom() || document.body.classList.contains("composing");
       document.getElementById("title").textContent = data.session;
       const headerPanelTitle = document.getElementById("headerPanelTitle");
       if (headerPanelTitle) headerPanelTitle.textContent = data.session;
@@ -4319,6 +4328,28 @@ HTML = """<!doctype html>
     });
     let composing = false;
     const messageInput = document.getElementById("message");
+    const composerOverlay = document.getElementById("composerOverlay");
+    const pinTimelineToBottom = () => {
+      timeline.scrollTo({ top: timeline.scrollHeight, behavior: "auto" });
+    };
+    const syncComposeLock = (locked) => {
+      const active = locked && isCompactMobile();
+      document.body.classList.toggle("composing", active);
+      document.documentElement.classList.toggle("composing-lock", active);
+      if (active) pinTimelineToBottom();
+    };
+    const swallowComposeScroll = (event) => {
+      if (!isCompactMobile() || !document.body.classList.contains("composing")) return;
+      if (event.target?.closest?.(".composer")) return;
+      if (event.cancelable) event.preventDefault();
+      event.stopPropagation();
+      pinTimelineToBottom();
+    };
+    ["touchstart", "touchmove", "wheel"].forEach((type) => {
+      composerOverlay?.addEventListener(type, swallowComposeScroll, { passive: false });
+    });
+    window.addEventListener("touchmove", swallowComposeScroll, { passive: false, capture: true });
+    window.addEventListener("wheel", swallowComposeScroll, { passive: false, capture: true });
     messageInput.addEventListener("keydown", async (event) => {
       if (event.key !== "Enter" || event.shiftKey || composing) {
         return;
@@ -4455,25 +4486,6 @@ HTML = """<!doctype html>
     };
     messageInput.addEventListener("input", autoResizeTextarea);
     window.addEventListener("resize", autoResizeTextarea);
-    if (window.visualViewport) {
-      const updateViewportScroll = () => {
-        const vv = window.visualViewport;
-        const isKeyboardOpen = vv.height < window.innerHeight * 0.9;
-        document.body.classList.toggle("keyboard-locked", isKeyboardOpen);
-        if (isKeyboardOpen) {
-          timeline.scrollTo({ top: timeline.scrollHeight, behavior: "auto" });
-        }
-      };
-      window.visualViewport.addEventListener("resize", updateViewportScroll);
-      window.visualViewport.addEventListener("scroll", updateViewportScroll);
-    }
-    // Prevent touch scroll when locked
-    timeline.addEventListener("touchmove", (e) => {
-      if (document.body.classList.contains("keyboard-locked")) {
-        e.preventDefault();
-      }
-    }, { passive: false });
-
     const updateFileAutocomplete = async () => {
       const pos = messageInput.selectionEnd;
       const val = messageInput.value;
@@ -4528,7 +4540,7 @@ HTML = """<!doctype html>
     messageInput.addEventListener("click", () => setTimeout(updateFileAutocomplete, 10));
     messageInput.addEventListener("focus", () => {
       updateFileAutocomplete();
-      if (isCompactMobile()) document.body.classList.add("composing");
+      syncComposeLock(true);
     });
     messageInput.addEventListener("keydown", (e) => {
       if (fileDrop.style.display === "none") return;
@@ -4554,7 +4566,7 @@ HTML = """<!doctype html>
       }
     }, true);
     messageInput.addEventListener("blur", () => {
-      document.body.classList.remove("composing");
+      syncComposeLock(false);
       closePlusMenu();
       setTimeout(closeDrop, 150);
     });
