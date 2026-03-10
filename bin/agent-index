@@ -1797,15 +1797,30 @@ HTML = """<!doctype html>
       .title-row { display: flex; justify-content: flex-start; align-items: center; width: 100%; gap: 8px; }
       .title-row #newChatBtn {
         margin-left: auto;
-        padding: 5px 12px;
-        font-size: 13px;
-        border: 1px solid rgba(255,255,255,0.16);
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        font-size: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 999px;
         background: rgba(0, 0, 0, 0.24);
+        color: rgba(236, 241, 248, 0.92);
         backdrop-filter: blur(12px) saturate(110%);
         -webkit-backdrop-filter: blur(12px) saturate(110%);
         box-shadow:
-          0 6px 18px rgba(0,0,0,0.18),
-          inset 0 1px 0 rgba(255,255,255,0.06);
+          inset 0 1px 0 rgba(255,255,255,0.08),
+          0 4px 12px rgba(0,0,0,0.16);
+        transition: transform 100ms ease;
+      }
+      .title-row #newChatBtn::before {
+        content: "↺";
+        display: inline-block;
+        font-size: 21px;
+        line-height: 1;
+        transform: translateY(-0.5px);
       }
       h1 { font-size: 22px; line-height: 1.2; margin-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .sub { display: none; }
@@ -1826,8 +1841,8 @@ HTML = """<!doctype html>
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         border-radius: 999px;
         border: 1px solid rgba(255,255,255,0.18);
         background: rgba(0, 0, 0, 0.24);
@@ -1857,10 +1872,10 @@ HTML = """<!doctype html>
         opacity: 0.95;
       }
       .header-plus-toggle::before {
-        top: 14px;
+        top: 16px;
       }
       .header-plus-toggle::after {
-        top: 22px;
+        top: 25px;
       }
       .header-plus-panel {
         display: flex;
@@ -2476,6 +2491,12 @@ HTML = """<!doctype html>
       .message-plain { font-size: 12px; }
       .message-row.user .message-wrap {
         padding-left: 20px;
+      }
+      .message-row.claude,
+      .message-row.codex,
+      .message-row.gemini,
+      .message-row.copilot {
+        padding-right: 12px;
       }
       .send-btn { display: none !important; }
       main { padding: 180px 8px 200px; }
