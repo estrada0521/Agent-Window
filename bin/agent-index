@@ -4116,7 +4116,7 @@ HTML = """<!doctype html>
       const target = overrideTarget ?? selectedTargets.join(",");
       const shortcut = shortcutName(payload);
       const isShortcut = !!shortcut;
-      if (!isShortcut && !target) {
+      if (!target) {
         setStatus("select at least one target", true);
         sendLocked = false;
         return false;
@@ -4326,6 +4326,7 @@ HTML = """<!doctype html>
     });
     messageInput.addEventListener("compositionend", () => {
       composing = false;
+      setTimeout(updateFileAutocomplete, 10);
     });
     messageInput.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" || event.shiftKey) {
@@ -4501,6 +4502,7 @@ HTML = """<!doctype html>
     };
 
     messageInput.addEventListener("input", updateFileAutocomplete);
+    messageInput.addEventListener("click", () => setTimeout(updateFileAutocomplete, 10));
     messageInput.addEventListener("focus", () => {
       // Delay slightly to ensure selectionEnd is updated by the browser
       setTimeout(updateFileAutocomplete, 10);
