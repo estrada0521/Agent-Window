@@ -2953,6 +2953,10 @@ HTML = """<!doctype html>
       from { opacity: 0; }
       to { opacity: 1; }
     }
+    @keyframes modalFadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
     @keyframes modalScaleIn {
       from {
         opacity: 0;
@@ -2963,6 +2967,18 @@ HTML = """<!doctype html>
         opacity: 1;
         transform: translate(0, 0) scale(1);
         filter: blur(0);
+      }
+    }
+    @keyframes modalScaleOut {
+      from {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+        filter: blur(0);
+      }
+      to {
+        opacity: 0;
+        transform: translate(calc(var(--file-modal-enter-x, 0px) * 0.72), calc(var(--file-modal-enter-y, 18px) * 0.72)) scale(0.88);
+        filter: blur(10px);
       }
     }
     .file-modal {
@@ -2985,17 +3001,17 @@ HTML = """<!doctype html>
       animation: modalScaleIn 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     .file-modal.closing .file-modal-backdrop {
-      animation: modalFadeIn 250ms cubic-bezier(0.4, 0, 0.2, 1) reverse forwards;
+      animation: modalFadeOut 260ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
     .file-modal.closing .file-modal-dialog {
-      animation: modalScaleIn 250ms cubic-bezier(0.4, 0, 0.2, 1) reverse forwards;
+      animation: modalScaleOut 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
     .file-modal-backdrop {
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.32);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(10px) saturate(108%);
+      -webkit-backdrop-filter: blur(10px) saturate(108%);
     }
     .file-modal-dialog {
       position: relative;
@@ -3003,15 +3019,14 @@ HTML = """<!doctype html>
       height: min(860px, calc(100vh - 40px));
       display: grid;
       grid-template-rows: auto minmax(0, 1fr);
-      border-radius: 20px;
+      border-radius: 18px;
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: #0b0d11; /* Solid base to prevent white flash */
-      background: rgba(11, 13, 17, 0.6);
-      backdrop-filter: blur(32px) saturate(120%);
-      -webkit-backdrop-filter: blur(32px) saturate(120%);
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(12px) saturate(110%);
+      -webkit-backdrop-filter: blur(12px) saturate(110%);
       box-shadow:
-        0 32px 64px rgba(0,0,0,0.45),
+        0 24px 56px rgba(0,0,0,0.34),
         inset 0 1px 0 rgba(255,255,255,0.06);
       will-change: transform, opacity, filter;
       --file-modal-enter-x: 0px;
@@ -3084,6 +3099,29 @@ HTML = """<!doctype html>
       background: rgba(255,255,255,0.08);
     }
     .file-modal-close:active {
+      transform: scale(0.96);
+    }
+    .file-modal-share {
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.82);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex: 0 0 auto;
+      cursor: pointer;
+      font: 400 16px/1 "SF Pro Text","Segoe UI",sans-serif;
+      transition: background 150ms ease, border-color 150ms ease, transform 100ms ease;
+    }
+    .file-modal-share:hover {
+      background: rgba(255,255,255,0.08);
+    }
+    .file-modal-share:active {
       transform: scale(0.96);
     }
     .file-modal-body {
@@ -3376,6 +3414,7 @@ HTML = """<!doctype html>
             <code id="fileModalPath" class="file-modal-path"></code>
           </div>
         </div>
+        <button type="button" id="fileModalShare" class="file-modal-share" title="Share file">⎋</button>
         <button type="button" class="file-modal-close" aria-label="Close file preview" data-close-file-modal>×</button>
       </div>
       <div class="file-modal-body">
@@ -3554,6 +3593,7 @@ HTML = """<!doctype html>
     const fileModalTitle = document.getElementById("fileModalTitle");
     const fileModalPath = document.getElementById("fileModalPath");
     const fileModalIcon = document.getElementById("fileModalIcon");
+    const fileModalShare = document.getElementById("fileModalShare");
     let lastFocusedElement = null;
     const closeFileModal = () => {
       if (fileModal.hidden) return;
@@ -3568,7 +3608,7 @@ HTML = """<!doctype html>
           lastFocusedElement.focus({ preventScroll: true });
         }
         lastFocusedElement = null;
-      }, 250);
+      }, 300);
     };
     const setFileModalEnterOffset = (sourceEl, triggerEvent) => {
       let originX = window.innerWidth / 2;
@@ -3601,6 +3641,7 @@ HTML = """<!doctype html>
       fileModalPath.textContent = parentPath;
       fileModalPath.style.display = parentPath ? "" : "none";
       fileModalIcon.textContent = FILE_ICONS[normalizedExt] || "📄";
+      fileModalShare.dataset.currentPath = path;
       lastFocusedElement = sourceEl || document.activeElement;
       setFileModalEnterOffset(sourceEl, triggerEvent);
       
@@ -3619,6 +3660,30 @@ HTML = """<!doctype html>
     fileModal.addEventListener("click", (event) => {
       if (event.target.closest("[data-close-file-modal]")) {
         closeFileModal();
+      }
+    });
+    fileModalShare.addEventListener("click", async () => {
+      const path = fileModalShare.dataset.currentPath;
+      if (!path) return;
+      const url = `${window.location.origin}/file-raw?path=${encodeURIComponent(path)}`;
+      const title = path.split("/").pop() || "File";
+      
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, url });
+        } catch (err) {
+          if (err.name !== "AbortError") console.error("Share failed:", err);
+        }
+      } else {
+        // Fallback: Copy URL to clipboard
+        try {
+          await navigator.clipboard.writeText(url);
+          const oldText = fileModalShare.textContent;
+          fileModalShare.textContent = "✓";
+          setTimeout(() => { fileModalShare.textContent = oldText; }, 2000);
+        } catch (err) {
+          console.error("Copy failed:", err);
+        }
       }
     });
     document.addEventListener("keydown", (event) => {
@@ -5118,30 +5183,30 @@ class Handler(BaseHTTPRequestHandler):
             filename = os.path.basename(rel)
             raw_url = f"/file-raw?path={url_quote(rel)}"
             _pane_bg = "rgb(23, 25, 29)"
+            _embed_bg = "transparent" if embed else _pane_bg
             _pane_fg = "rgb(161, 168, 179)"
             _pane_muted = "rgb(98, 101, 109)"
             _pane_line = "rgba(255,255,255,0.08)"
-            # Use solid background even if embed=1 to prevent browser-default white flash
-            _CSS = f":root{{color-scheme: dark;}}*{{box-sizing:border-box}}html,body{{margin:0;background:{_pane_bg};color:{_pane_fg};font-family:sans-serif;display:flex;flex-direction:column;height:100vh}}.hdr{{padding:10px 16px;background:{_pane_bg};border-bottom:1px solid {_pane_line};display:flex;align-items:center;gap:8px;flex-shrink:0}}.fn{{font-weight:700;font-size:14px;color:{_pane_fg}}}.fp{{color:{_pane_muted};font-size:12px}}"
+            _CSS = f":root{{color-scheme: dark;}}*{{box-sizing:border-box}}html,body{{margin:0;background:{_embed_bg};color:{_pane_fg};font-family:sans-serif;display:flex;flex-direction:column;height:100vh}}.hdr{{padding:10px 16px;background:{_embed_bg};border-bottom:1px solid {_pane_line};display:flex;align-items:center;gap:8px;flex-shrink:0}}.fn{{font-weight:700;font-size:14px;color:{_pane_fg}}}.fp{{color:{_pane_muted};font-size:12px}}"
             _header = "" if embed else f'<div class="hdr"><span>{{icon}}</span><span class="fn">{_html.escape(filename)}</span><span class="fp">{_html.escape(rel)}</span></div>'
             try:
                 if not os.path.exists(full):
                     self.send_error(404)
                     return
                 if ext in _IMAGE_EXTS:
-                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:16px;background:{_pane_bg}}}img{{max-width:100%;max-height:100%;object-fit:contain}}</style></head><body>{_header.format(icon="🖼️")}<div class="wrap"><img src="{raw_url}" alt="{_html.escape(filename)}"></div></body></html>'
+                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:16px;background:{_embed_bg}}}img{{max-width:100%;max-height:100%;object-fit:contain}}</style></head><body>{_header.format(icon="🖼️")}<div class="wrap"><img src="{raw_url}" alt="{_html.escape(filename)}"></div></body></html>'
                 elif ext in _PDF_EXTS:
-                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;min-height:0;background:{_pane_bg}}}iframe{{width:100%;height:100%;border:0;background:{_pane_bg}}}</style></head><body>{_header.format(icon="📕")}<div class="wrap"><iframe src="{raw_url}" title="{_html.escape(filename)}"></iframe></div></body></html>'
+                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;min-height:0;background:{_embed_bg}}}iframe{{width:100%;height:100%;border:0;background:{_embed_bg}}}</style></head><body>{_header.format(icon="📕")}<div class="wrap"><iframe src="{raw_url}" title="{_html.escape(filename)}"></iframe></div></body></html>'
                 elif ext in _VIDEO_EXTS:
-                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;background:{_pane_bg}}}video{{max-width:100%;max-height:100%}}</style></head><body>{_header.format(icon="🎬")}<div class="wrap"><video controls src="{raw_url}"></video></div></body></html>'
+                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;background:{_embed_bg}}}video{{max-width:100%;max-height:100%}}</style></head><body>{_header.format(icon="🎬")}<div class="wrap"><video controls src="{raw_url}"></video></div></body></html>'
                 elif ext in _AUDIO_EXTS:
-                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;padding:32px;background:{_pane_bg}}}audio{{width:100%;max-width:500px}}</style></head><body>{_header.format(icon="🎵")}<div class="wrap"><audio controls src="{raw_url}"></audio></div></body></html>'
+                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;padding:32px;background:{_embed_bg}}}audio{{width:100%;max-width:500px}}</style></head><body>{_header.format(icon="🎵")}<div class="wrap"><audio controls src="{raw_url}"></audio></div></body></html>'
                 elif ext in _TEXT_EXTS:
                     with open(full, "r", encoding="utf-8", errors="replace") as f:
                         content = f.read()
                     import re
                     esc = _html.escape(content)
-                    theme_bg = _pane_bg
+                    theme_bg = _embed_bg
                     theme_fg = _pane_fg
                     theme_gutter = _pane_muted
                     theme_comment = "#5c6370"
@@ -5196,7 +5261,7 @@ class Handler(BaseHTTPRequestHandler):
                         content = f.read()
                     escaped_js = content.replace("\\","\\\\").replace("`","\\`").replace("$","\\$")
                     md_height = "100vh" if embed else "calc(100vh - 43px)"
-                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script><style>{_CSS}.md{{padding:24px 32px;max-width:860px;overflow:auto;height:{md_height};font-family:-apple-system,sans-serif;font-size:15px;line-height:1.7;background:{_pane_bg}}}h1,h2{{border-bottom:1px solid {_pane_line};padding-bottom:.3em}}code{{font-family:"SF Mono",monospace;font-size:.88em;background:rgba(255,255,255,.09);border-radius:4px;padding:1px 5px}}pre{{background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px 16px;overflow-x:auto}}pre code{{background:none;padding:0}}a{{color:#58a6ff}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid {_pane_line};padding:6px 12px}}th{{background:rgba(255,255,255,.06)}}</style></head><body>{_header.format(icon="📝")}<div class="md" id="out"></div><script>document.getElementById("out").innerHTML=marked.parse(`{escaped_js}`,{{breaks:true,gfm:true}});</script></body></html>'
+                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script><style>{_CSS}.md{{padding:24px 32px;max-width:860px;overflow:auto;height:{md_height};font-family:-apple-system,sans-serif;font-size:15px;line-height:1.7;background:{_embed_bg}}}h1,h2{{border-bottom:1px solid {_pane_line};padding-bottom:.3em}}code{{font-family:"SF Mono",monospace;font-size:.88em;background:rgba(255,255,255,.09);border-radius:4px;padding:1px 5px}}pre{{background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px 16px;overflow-x:auto}}pre code{{background:none;padding:0}}a{{color:#58a6ff}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid {_pane_line};padding:6px 12px}}th{{background:rgba(255,255,255,.06)}}</style></head><body>{_header.format(icon="📝")}<div class="md" id="out"></div><script>document.getElementById("out").innerHTML=marked.parse(`{escaped_js}`,{{breaks:true,gfm:true}});</script></body></html>'
                 else:
                     with open(full, "r", encoding="utf-8", errors="replace") as f:
                         content = f.read()
