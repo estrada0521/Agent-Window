@@ -3942,7 +3942,7 @@ HTML = """<!doctype html>
       }
     });
     const render = (data, { forceScroll = false } = {}) => {
-      const shouldStickToBottom = forceScroll || isNearBottom();
+      const shouldStickToBottom = forceScroll || isNearBottom() || document.body.classList.contains("keyboard-locked");
       document.getElementById("title").textContent = data.session;
       const headerPanelTitle = document.getElementById("headerPanelTitle");
       if (headerPanelTitle) headerPanelTitle.textContent = data.session;
@@ -4458,7 +4458,7 @@ HTML = """<!doctype html>
     if (window.visualViewport) {
       const updateViewportScroll = () => {
         const vv = window.visualViewport;
-        const isKeyboardOpen = vv.height < window.innerHeight * 0.85; // Heuristic for keyboard
+        const isKeyboardOpen = vv.height < window.innerHeight * 0.9;
         document.body.classList.toggle("keyboard-locked", isKeyboardOpen);
         if (isKeyboardOpen) {
           timeline.scrollTo({ top: timeline.scrollHeight, behavior: "auto" });
@@ -4467,6 +4467,12 @@ HTML = """<!doctype html>
       window.visualViewport.addEventListener("resize", updateViewportScroll);
       window.visualViewport.addEventListener("scroll", updateViewportScroll);
     }
+    // Prevent touch scroll when locked
+    timeline.addEventListener("touchmove", (e) => {
+      if (document.body.classList.contains("keyboard-locked")) {
+        e.preventDefault();
+      }
+    }, { passive: false });
 
     const updateFileAutocomplete = async () => {
       const pos = messageInput.selectionEnd;
