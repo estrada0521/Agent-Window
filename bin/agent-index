@@ -1082,9 +1082,9 @@ HTML = """<!doctype html>
       position: relative;
       padding: 7px 10px;
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.03);
-      color: #7f8893;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255, 255, 255, 0.92);
       font-size: 13px;
       line-height: 1.2;
       letter-spacing: 0.01em;
@@ -2816,8 +2816,8 @@ HTML = """<!doctype html>
         justify-content: center;
         padding: 8px 6px;
         border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.22);
-        background: rgba(0, 0, 0, 0.58);
+        border: 1px solid rgba(255,255,255,0.28);
+        background: rgba(255, 255, 255, 0.08);
         box-shadow:
           inset 0 1px 0 rgba(255,255,255,0.08),
           0 6px 18px rgba(0,0,0,0.18);
@@ -2830,11 +2830,11 @@ HTML = """<!doctype html>
         height: 18px;
       }
       .target-chip.active {
-        background: rgba(255, 255, 255, 0.95);
-        border-color: rgba(255,255,255,0.42);
-        color: #000;
+        background: #ffffff !important;
+        border-color: #ffffff !important;
+        color: #000000 !important;
         box-shadow:
-          0 6px 18px rgba(220, 225, 232, 0.18),
+          0 8px 24px rgba(255, 255, 255, 0.15),
           inset 0 1px 0 rgba(255,255,255,0.85);
       }
       .quick-action {
@@ -2900,13 +2900,15 @@ HTML = """<!doctype html>
         font-weight: 700;
       }
       #scrollToBottomBtn {
-        background: rgba(0,0,0,0.38);
-        border-color: rgba(255,255,255,0.12);
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.28);
+        color: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(12px) saturate(110%);
         -webkit-backdrop-filter: blur(12px) saturate(110%);
         width: 44px;
         height: 44px;
         font-size: 20px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
       }
       #scrollToBottomBtn:hover {
         background: rgba(0,0,0,0.48);
