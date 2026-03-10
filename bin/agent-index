@@ -1472,6 +1472,12 @@ HTML = """<!doctype html>
       z-index: 100;
       backdrop-filter: blur(6px);
     }
+    #scrollToBottomBtn svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+      stroke: currentColor;
+    }
     #scrollToBottomBtn:hover { background: rgba(40,46,56,0.95); border-color: rgba(255,255,255,0.3); }
     #scrollToBottomBtn.visible { display: flex; }
     .daybreak {
@@ -2159,7 +2165,7 @@ HTML = """<!doctype html>
         opacity: 0.6;
       }
       .message.user .md-body {
-        background: rgb(25, 25, 25);
+        background: rgb(22, 22, 22);
       }
       .eyebrow { display: none; }
       .header-main {
@@ -2553,7 +2559,7 @@ HTML = """<!doctype html>
       }
       .target-picker {
         justify-content: flex-start;
-        gap: 8px;
+        gap: 10px;
         margin-bottom: 6px;
       }
       .quick-actions {
@@ -2686,7 +2692,7 @@ HTML = """<!doctype html>
         gap: 2px;
         z-index: 30;
         border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.92);
         background: rgba(0, 0, 0, 0.48);
         backdrop-filter: blur(24px) saturate(160%);
         -webkit-backdrop-filter: blur(24px) saturate(160%);
@@ -2790,14 +2796,23 @@ HTML = """<!doctype html>
         justify-content: center;
         padding: 0;
         border-radius: 999px;
-        border: none;
-        background: rgb(38, 39, 41);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.18);
+        background: rgb(25, 25, 25);
+        box-shadow:
+          0 0 8px rgba(255,255,255,0.05),
+          inset 0 1px 0 rgba(255,255,255,0.06),
+          0 6px 18px rgba(0,0,0,0.1);
         color: rgba(255, 255, 255, 0.95);
         font-size: 13px;
         gap: 0;
         backdrop-filter: blur(12px) saturate(110%);
         -webkit-backdrop-filter: blur(12px) saturate(110%);
+        transition:
+          transform 120ms ease,
+          background 120ms ease,
+          border-color 160ms ease,
+          box-shadow 160ms ease,
+          color 120ms ease;
       }
       .target-chip .target-icon {
         width: 22px;
@@ -2806,11 +2821,23 @@ HTML = """<!doctype html>
       .target-chip .target-label {
         display: none;
       }
+      .target-chip:active:not(.active) {
+        transform: scale(0.97);
+        background: rgb(25, 25, 25);
+        border-color: rgba(255,255,255,0.24);
+        box-shadow:
+          0 0 8px rgba(255,255,255,0.05),
+          inset 0 1px 0 rgba(255,255,255,0.06),
+          0 4px 10px rgba(0,0,0,0.1);
+      }
       .target-chip.active {
         background: #ffffff !important;
         border-color: transparent !important;
         color: #000000 !important;
-        box-shadow: 0 8px 24px rgba(255, 255, 255, 0.15);
+        transform: translateY(-1px);
+        box-shadow:
+          0 8px 22px rgba(255, 255, 255, 0.12),
+          inset 0 1px 0 rgba(255,255,255,0.62);
       }
       .quick-action {
         min-width: 0;
@@ -3514,7 +3541,7 @@ HTML = """<!doctype html>
       </div>
     </header>
     <main id="messages"></main>
-    <button type="button" id="scrollToBottomBtn" title="Scroll to bottom">↓</button>
+    <button type="button" id="scrollToBottomBtn" title="Scroll to bottom" aria-label="Scroll to bottom"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
     <form class="composer" id="composer">
       <div class="mobile-bottom-frost" aria-hidden="true">
         <span></span>
