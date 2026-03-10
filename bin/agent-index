@@ -1150,10 +1150,26 @@ HTML = """<!doctype html>
       font: 600 11px/1.4 "SF Pro Text","Segoe UI",sans-serif;
       cursor: pointer;
       letter-spacing: 0.02em;
-      transition: background 120ms ease, color 120ms ease;
+      transition: background 120ms ease, color 120ms ease, transform 100ms ease;
     }
     #newChatBtn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
     #newChatBtn:disabled { opacity: 0.4; cursor: default; }
+    
+    /* Tactile button animations */
+    .target-chip:active:not(:disabled),
+    .quick-action:active:not(:disabled),
+    #newChatBtn:active:not(:disabled),
+    .copy-btn:active,
+    .reply-btn:active,
+    .reply-cancel-btn:active,
+    .header-plus-toggle:active,
+    .composer-plus-toggle:active {
+      transform: scale(0.96);
+    }
+    #scrollToBottomBtn:active {
+      transform: translateX(-50%) scale(0.92);
+    }
+    
     @media (hover: hover) and (pointer: fine) {
       .target-chip:hover:not(.active) {
         background: rgba(255,255,255,0.08);
@@ -1331,11 +1347,12 @@ HTML = """<!doctype html>
       align-items: flex-start;
       gap: 12px;
       max-width: 100%;
-      animation: msgReveal 550ms cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
       transform-origin: left center;
       will-change: transform, opacity, filter;
     }
-    #messages.no-anim .message-row { animation: none !important; }
+    .message-row.animate-in {
+      animation: msgReveal 550ms cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+    }
     .message-row.user {
       justify-content: flex-end;
       transform-origin: right center;
@@ -1798,6 +1815,7 @@ HTML = """<!doctype html>
         padding: 0;
         text-indent: 0;
         position: relative;
+        transition: transform 100ms ease;
       }
       .header-plus-toggle::-webkit-details-marker {
         display: none;
@@ -2158,6 +2176,7 @@ HTML = """<!doctype html>
         list-style: none;
         cursor: pointer;
         padding: 0;
+        transition: transform 100ms ease;
       }
       .composer-plus-toggle::-webkit-details-marker {
         display: none;
@@ -2610,7 +2629,7 @@ HTML = """<!doctype html>
       color: rgba(255,255,255,0.28);
       line-height: 1;
       border-radius: 4px;
-      transition: color 80ms ease;
+      transition: color 80ms ease, transform 100ms ease;
       -webkit-tap-highlight-color: transparent;
     }
     .copy-btn:hover { color: var(--muted); background: rgba(255,255,255,0.08); }
@@ -2626,7 +2645,7 @@ HTML = """<!doctype html>
       color: rgba(255,255,255,0.28);
       line-height: 1;
       border-radius: 4px;
-      transition: color 150ms ease, background 150ms ease;
+      transition: color 150ms ease, background 150ms ease, transform 100ms ease;
     }
     .reply-btn:hover { color: var(--muted); background: rgba(255,255,255,0.08); }
     .reply-btn.active { color: var(--codex-accent); }
@@ -2667,7 +2686,7 @@ HTML = """<!doctype html>
     .reply-cancel-btn {
       cursor: pointer; background: none; border: none; color: var(--muted);
       padding: 2px 4px; border-radius: 4px; font-size: 13px; line-height: 1;
-      transition: color 120ms ease;
+      transition: color 120ms ease, transform 100ms ease;
     }
     .reply-cancel-btn:hover { color: var(--text); }
     .thread-group {
@@ -3440,18 +3459,19 @@ HTML = """<!doctype html>
       const newEntriesToRender = displayEntries.filter(e => !_renderedIds.has(e.msg_id));
       const hasRemovals = _renderedIds.size > 0 && [..._renderedIds].some(id => !displayIdSet.has(id));
       if (!hasRemovals && _renderedIds.size > 0 && newEntriesToRender.length > 0) {
-        // Append only new messages — no animation suppression needed (new DOM nodes animate naturally)
+        // Append only new messages and animate them
         const frag = document.createDocumentFragment();
         for (const entry of newEntriesToRender) {
           const tmpl = document.createElement("template");
           tmpl.innerHTML = buildMsgHTML(entry, buildReplyPreviewHTML(entry));
+          const row = tmpl.content.firstElementChild;
+          if (row) row.classList.add("animate-in");
           frag.appendChild(tmpl.content);
           _renderedIds.add(entry.msg_id);
         }
         root.appendChild(frag);
       } else {
-        // Full re-render: suppress animation on all existing messages
-        root.classList.add("no-anim");
+        // Full re-render: do not animate existing messages
         root.innerHTML = `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` + displayEntries.map(entry =>
           buildMsgHTML(entry, buildReplyPreviewHTML(entry))
         ).join("");
@@ -3467,7 +3487,6 @@ HTML = """<!doctype html>
             throwOnError: false
           });
         }
-        requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("no-anim")));
       }
       if (shouldStickToBottom) {
         timeline.scrollTo({ top: timeline.scrollHeight, behavior: forceScroll ? "smooth" : "auto" });
