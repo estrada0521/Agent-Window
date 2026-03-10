@@ -928,6 +928,9 @@ HTML = """<!doctype html>
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .file-item:not(:last-child) {
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
     .file-item:hover, .file-item.active {
       background: rgba(255,255,255,0.1);
       color: #fff;
