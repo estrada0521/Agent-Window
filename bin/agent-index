@@ -2256,12 +2256,15 @@ HTML = """<!doctype html>
         width: 44px;
         height: 44px;
         border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.22);
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(4px) saturate(110%);
-        -webkit-backdrop-filter: blur(4px) saturate(110%);
+        border: 1px solid rgba(255,255,255,0.04);
+        background: rgb(25, 25, 25);
+        backdrop-filter: blur(12px) saturate(110%);
+        -webkit-backdrop-filter: blur(12px) saturate(110%);
         color: rgba(255, 255, 255, 0.95);
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.16);
+        box-shadow:
+          0 0 8px rgba(255,255,255,0.05),
+          inset 0 1px 0 rgba(255,255,255,0.06),
+          0 6px 18px rgba(0,0,0,0.1);
         list-style: none;
         cursor: pointer;
         padding: 0;
@@ -2275,8 +2278,8 @@ HTML = """<!doctype html>
       }
       .header-plus-menu[open] .header-plus-toggle {
         transform: scale(0.92);
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255,255,255,0.3);
+        background: rgb(25, 25, 25);
+        border-color: rgba(255,255,255,0.08);
       }
       .header-plus-panel {
         display: flex;
@@ -2532,7 +2535,11 @@ HTML = """<!doctype html>
         flex-wrap: wrap;
         gap: 6px;
       }
+      .target-picker {
+        order: 1;
+      }
       .composer-stack {
+        order: 3;
         display: flex;
         align-items: flex-start;
         gap: 8px;
@@ -2545,9 +2552,9 @@ HTML = """<!doctype html>
         -webkit-backdrop-filter: none;
       }
       .target-picker {
-        justify-content: stretch;
+        justify-content: flex-start;
         gap: 8px;
-        margin-bottom: 9px;
+        margin-bottom: 6px;
       }
       .quick-actions {
         display: none;
@@ -2615,19 +2622,16 @@ HTML = """<!doctype html>
         min-height: 46px;
         box-sizing: border-box;
         border-radius: 24px;
-        background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255,255,255,0.16);
+        background: rgb(38, 39, 41);
+        border: none;
         overflow: visible;
-        box-shadow:
-          0 8px 24px rgba(0,0,0,0.32),
-          inset 0 1px 0 rgba(255,255,255,0.05);
-        backdrop-filter: blur(20px) saturate(160%);
-        -webkit-backdrop-filter: blur(20px) saturate(160%);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        backdrop-filter: blur(12px) saturate(110%);
+        -webkit-backdrop-filter: blur(12px) saturate(110%);
         transition: border-color 140ms ease, background-color 140ms ease;
       }
       .composer-field:focus-within {
-        border-color: rgba(255,255,255,0.28);
-        background: rgba(255, 255, 255, 0.18);
+        background: rgb(38, 39, 41);
       }
       .composer-plus-menu {
         position: relative;
@@ -2645,12 +2649,15 @@ HTML = """<!doctype html>
         width: 46px;
         height: 46px;
         border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.16);
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(20px) saturate(160%);
-        -webkit-backdrop-filter: blur(20px) saturate(160%);
+        border: 1px solid rgba(255,255,255,0.04);
+        background: rgb(25, 25, 25);
+        backdrop-filter: blur(12px) saturate(110%);
+        -webkit-backdrop-filter: blur(12px) saturate(110%);
         color: #ffffff;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 6px 18px rgba(0,0,0,0.2);
+        box-shadow:
+          0 0 8px rgba(255,255,255,0.05),
+          inset 0 1px 0 rgba(255,255,255,0.06),
+          0 6px 18px rgba(0,0,0,0.1);
         list-style: none;
         cursor: pointer;
         padding: 0;
@@ -2663,8 +2670,8 @@ HTML = """<!doctype html>
       }
       .composer-plus-menu[open] .composer-plus-toggle {
         transform: scale(0.92);
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255,255,255,0.3);
+        background: rgb(25, 25, 25);
+        border-color: rgba(255,255,255,0.08);
       }
       .composer-plus-panel {
         display: flex;
@@ -2777,31 +2784,33 @@ HTML = """<!doctype html>
         margin-bottom: 0;
       }
       .target-chip {
-        flex: 1 1 0;
-        min-width: 0;
+        flex: 0 0 auto;
+        width: 46px;
+        height: 46px;
         justify-content: center;
-        padding: 8px 6px;
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.28);
-        background: rgba(255, 255, 255, 0.12);
-        box-shadow:
-          inset 0 1px 0 rgba(255,255,255,0.08),
-          0 6px 18px rgba(0,0,0,0.18);
+        padding: 0;
+        border-radius: 999px;
+        border: none;
+        background: rgb(38, 39, 41);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.1);
         color: rgba(255, 255, 255, 0.95);
         font-size: 13px;
-        gap: 6px;
+        gap: 0;
+        backdrop-filter: blur(12px) saturate(110%);
+        -webkit-backdrop-filter: blur(12px) saturate(110%);
       }
       .target-chip .target-icon {
-        width: 18px;
-        height: 18px;
+        width: 22px;
+        height: 22px;
+      }
+      .target-chip .target-label {
+        display: none;
       }
       .target-chip.active {
         background: #ffffff !important;
-        border-color: #ffffff !important;
+        border-color: transparent !important;
         color: #000000 !important;
-        box-shadow:
-          0 8px 24px rgba(255, 255, 255, 0.15),
-          inset 0 1px 0 rgba(255,255,255,0.85);
+        box-shadow: 0 8px 24px rgba(255, 255, 255, 0.15);
       }
       .quick-action {
         min-width: 0;
@@ -2866,24 +2875,32 @@ HTML = """<!doctype html>
         font-weight: 700;
       }
       #scrollToBottomBtn {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.28);
+        left: auto;
+        right: 12px;
+        bottom: var(--scroll-btn-bottom-mobile, var(--scroll-btn-bottom, 150px));
+        transform: none;
+        background: rgb(25, 25, 25);
+        border-color: rgba(255, 255, 255, 0.04);
         color: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(12px) saturate(110%);
         -webkit-backdrop-filter: blur(12px) saturate(110%);
         width: 44px;
         height: 44px;
         font-size: 20px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        box-shadow:
+          0 0 8px rgba(255,255,255,0.05),
+          inset 0 1px 0 rgba(255,255,255,0.06),
+          0 6px 18px rgba(0,0,0,0.1);
       }
       #scrollToBottomBtn:hover {
-        background: rgba(0,0,0,0.48);
-        border-color: rgba(255,255,255,0.2);
+        background: rgb(25, 25, 25);
+        border-color: rgba(255,255,255,0.08);
       }
       .statusline {
+        order: 2;
         margin-top: 0;
         padding-bottom: 0;
-        min-height: 1.3em;
+        min-height: 1.15em;
       }
       .md-body { font: 12px/1.5 "SF Pro Text","Segoe UI",sans-serif; }
       .message.user .md-body pre,
@@ -3702,11 +3719,26 @@ HTML = """<!doctype html>
       timeline.scrollTo({ top: timeline.scrollHeight, behavior: "smooth" });
     });
     const updateScrollBtnPos = () => {
-      const h = document.getElementById("composer").offsetHeight;
-      document.querySelector(".shell").style.setProperty("--scroll-btn-bottom", (h + 12) + "px");
+      const shell = document.querySelector(".shell");
+      const composer = document.getElementById("composer");
+      const h = composer.offsetHeight;
+      shell.style.setProperty("--scroll-btn-bottom", (h + 12) + "px");
+      if (window.matchMedia("(max-width: 700px)").matches) {
+        const picker = document.getElementById("targetPicker");
+        const shellRect = shell.getBoundingClientRect();
+        const pickerRect = picker.getBoundingClientRect();
+        const btnSize = scrollToBottomBtn.offsetHeight || 44;
+        const centerY = pickerRect.top + (pickerRect.height / 2);
+        const bottom = Math.max(12, Math.round(shellRect.bottom - centerY - (btnSize / 2)));
+        shell.style.setProperty("--scroll-btn-bottom-mobile", `${bottom}px`);
+        return;
+      }
+      shell.style.removeProperty("--scroll-btn-bottom-mobile");
     };
     updateScrollBtnPos();
     new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("composer"));
+    new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("targetPicker"));
+    window.addEventListener("resize", updateScrollBtnPos);
     const roleClass = (sender) => {
       sender = (sender || "").toLowerCase();
       if (["user","claude","codex","gemini","copilot"].includes(sender)) return sender;
@@ -4045,8 +4077,7 @@ HTML = """<!doctype html>
           <div class="message-wrap" data-raw="${rawAttr}" data-preview="${previewAttr}">
           <div class="message ${cls}">
           <div class="meta">
-            ${isUser ? `<span class="sender">${sender}</span>
-            <span class="arrow">to</span>
+            ${isUser ? `<span class="arrow">to</span>
             ${targetMeta}` : ""}
             ${isUser ? `<time>${timestamp}</time>` : ""}
           </div>
@@ -4056,7 +4087,7 @@ HTML = """<!doctype html>
             <div class="md-body">${renderMarkdown(body)}</div>
             ${isUser ? `<button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>` : ""}
           </div>
-          ${isUser ? "" : `<div class="message-meta-below"><button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}<span class="sender">${sender}</span><span class="arrow">to</span>${targetMeta}<time>${timestamp}</time></div>`}
+          ${isUser ? "" : `<div class="message-meta-below"><button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}<span class="arrow">to</span>${targetMeta}<time>${timestamp}</time></div>`}
           </div>
           </div>
         </article>`;
