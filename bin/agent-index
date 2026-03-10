@@ -2854,8 +2854,8 @@ HTML = """<!doctype html>
         flex: 1 1 auto;
         font-size: 16px !important;
         font-weight: 700;
-        min-height: 42px;
-        height: 42px;
+        min-height: 44px;
+        height: 44px;
         max-height: 200px;
         padding: 11px 16px;
         line-height: 1.5;
@@ -4490,7 +4490,7 @@ HTML = """<!doctype html>
       if (item) { e.preventDefault(); selectFile(item.dataset.path); }
     });
     const autoResizeTextarea = () => {
-      const baseHeight = isCompactMobile() ? 42 : 44;
+      const baseHeight = 44;
       messageInput.style.height = baseHeight + "px"; // Reset to min-height to get correct scrollHeight
       const scrollH = messageInput.scrollHeight;
       if (scrollH > baseHeight) {
