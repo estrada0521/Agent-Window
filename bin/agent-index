@@ -911,11 +911,11 @@ HTML = """<!doctype html>
       will-change: transform, opacity;
     }
     #fileDropdown.visible {
-      display: block;
+      display: block !important;
       animation: dropdownIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     #fileDropdown.closing {
-      display: block;
+      display: block !important;
       animation: dropdownOut 200ms ease-in forwards;
     }
     .file-item {
