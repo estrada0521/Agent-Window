@@ -2850,7 +2850,7 @@ HTML = """<!doctype html>
         position: absolute;
         left: 0;
         right: 0;
-        bottom: calc(100% + 9px); /* Equal to initial picker margin */
+        bottom: calc(100% + 4px); /* Closer to input, further from chips */
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
