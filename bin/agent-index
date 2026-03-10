@@ -3936,6 +3936,18 @@ HTML = """<!doctype html>
         markCopied(btn);
       }).catch(() => {});
     });
+    document.addEventListener("click", (event) => {
+      if (!pendingReplyTo) return;
+      const target = event.target;
+      if (
+        target.closest(".reply-btn") ||
+        target.closest(".reply-banner") ||
+        target.closest("#composer")
+      ) {
+        return;
+      }
+      setReplyTo(null, "", "");
+    });
     let currentAgentStatuses = {};
     let agentStatusSince = {};
     let agentTotalThinkingTime = {};
