@@ -5070,7 +5070,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             import html as _html
             _IMAGE_EXTS = {".png",".jpg",".jpeg",".gif",".webp",".svg",".ico"}
-            _TEXT_EXTS = {".py",".js",".json",".yaml",".yml",".sh",".sql",".html",".css",".tex"}
+            _TEXT_EXTS = {".py",".js",".json",".yaml",".yml",".sh",".sql",".html",".css",".tex",".txt",".csv",".log"}
             _PDF_EXTS = {".pdf"}
             _VIDEO_EXTS = {".mp4":"video/mp4",".mov":"video/quicktime",".webm":"video/webm",
                            ".avi":"video/x-msvideo",".mkv":"video/x-matroska"}
@@ -5079,7 +5079,7 @@ class Handler(BaseHTTPRequestHandler):
             ext = os.path.splitext(rel)[1].lower()
             filename = os.path.basename(rel)
             raw_url = f"/file-raw?path={url_quote(rel)}"
-            _pane_bg = "transparent" if embed else "rgb(23, 25, 29)"
+            _pane_bg = "rgb(23, 25, 29)"
             _pane_fg = "rgb(161, 168, 179)"
             _pane_muted = "rgb(98, 101, 109)"
             _pane_line = "rgba(255,255,255,0.08)"
@@ -5163,7 +5163,7 @@ class Handler(BaseHTTPRequestHandler):
                         content = f.read()
                     escaped = _html.escape(content)
                     pre_height = "100vh" if embed else "calc(100vh - 43px)"
-                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>*{{box-sizing:border-box}}body{{margin:0;background:{_pane_bg};color:{_pane_fg};font-family:"SF Mono","Fira Code",monospace;font-size:13px}}.hdr{{padding:10px 16px;background:{_pane_bg};border-bottom:1px solid {_pane_line};display:flex;align-items:center;gap:8px}}.fn{{font-weight:700;font-size:14px;color:{_pane_fg}}}.fp{{color:{_pane_muted};font-size:12px}}pre{{margin:0;padding:16px;white-space:pre;overflow:auto;height:{pre_height};background:{_pane_bg}}}</style></head><body>{_header.format(icon="📄")}<pre>{escaped}</pre></body></html>'
+                    page = f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{_html.escape(filename)}</title><style>{_CSS}body{{background:{_pane_bg};color:{_pane_fg};font-family:"SF Mono","Fira Code",monospace;font-size:13px}}.hdr{{padding:10px 16px;background:{_pane_bg};border-bottom:1px solid {_pane_line};display:flex;align-items:center;gap:8px}}.fn{{font-weight:700;font-size:14px;color:{_pane_fg}}}.fp{{color:{_pane_muted};font-size:12px}}pre{{margin:0;padding:16px;white-space:pre;overflow:auto;height:{pre_height};background:{_pane_bg}}}</style></head><body>{_header.format(icon="📄")}<pre>{escaped}</pre></body></html>'
                 body = page.encode("utf-8")
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
