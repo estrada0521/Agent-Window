@@ -1571,40 +1571,48 @@ HTML = """<!doctype html>
     }
     .sender {
       padding: 2px 0;
-      color: var(--text);
+      color: var(--muted) !important;
       font-weight: 700;
       text-transform: capitalize;
       background: transparent;
       border: none;
     }
-    .targets { opacity: 0.9; }
+    .arrow { color: var(--muted) !important; }
+    .targets { color: var(--muted) !important; }
     .reply-jump-inline {
       all: unset;
       display: inline-flex;
       align-items: center;
       cursor: pointer;
-      color: inherit;
+      color: var(--muted) !important;
+      border-radius: 6px;
       -webkit-tap-highlight-color: transparent;
+      transition: all 120ms ease;
     }
     .reply-jump-inline:hover {
+      color: var(--text) !important;
       opacity: 1;
+      text-shadow: 0 0 8px rgba(255,255,255,0.15);
+    }
+    .reply-jump-inline:active {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    @keyframes inline-flash {
+      0% { color: #fff !important; text-shadow: 0 0 12px rgba(255,255,255,0.8); }
+      100% { color: var(--muted) !important; text-shadow: none; }
+    }
+    .reply-jump-inline.click-flash {
+      animation: inline-flash 250ms ease-out;
+    }
+    .reply-jump-inline .target-name {
+      color: inherit !important;
     }
     .target-name {
       font-weight: 700;
       text-transform: capitalize;
+      color: var(--muted) !important;
     }
-    .target-name.user    { color: var(--user-accent); }
-    .target-name.claude  { color: var(--claude-accent); }
-    .target-name.codex   { color: var(--codex-accent); }
-    .target-name.gemini  { color: var(--gemini-accent); }
-    .target-name.copilot { color: var(--copilot-accent); }
-    time { opacity: 0.75; }
-    .message.user .sender { color: var(--user-accent); }
-    .message.claude .sender { color: var(--claude-accent); }
-    .message.codex .sender { color: var(--codex-accent); }
-    .message.gemini .sender { color: var(--gemini-accent); }
-    .message.copilot .sender { color: var(--copilot-accent); }
-    .message.system .sender { color: var(--system-accent); }
+    time { opacity: 0.75; color: var(--muted) !important; }
     pre {
       margin: 0;
       white-space: pre-wrap;
@@ -3343,7 +3351,7 @@ HTML = """<!doctype html>
         }
         const cls = roleClass(entry.sender);
       const targetSpans = (entry.targets?.length > 0
-          ? entry.targets.map(t => `<span class="target-name ${roleClass(t)}">${escapeHtml(t)}</span>`)
+          ? entry.targets.map(t => `<span class="target-name">${escapeHtml(t)}</span>`)
           : [`<span class="target-name">no target</span>`]).join(", ");
         const body = stripSenderPrefix(entry.message || "");
         const rawAttr = escapeHtml(body).replaceAll('"', "&quot;");
@@ -3882,6 +3890,8 @@ HTML = """<!doctype html>
       }
       const replyJumpInline = e.target.closest(".reply-jump-inline");
       if (replyJumpInline) {
+        replyJumpInline.classList.add("click-flash");
+        setTimeout(() => replyJumpInline.classList.remove("click-flash"), 250);
         jumpToReplySource(replyJumpInline.dataset.replyto);
         return;
       }
