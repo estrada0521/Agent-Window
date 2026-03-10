@@ -2222,6 +2222,9 @@ HTML = """<!doctype html>
         transform: scale(1.35);
         box-shadow: 0 0 10px rgba(255,255,255,0.18);
       }
+      .copy-btn:hover {
+        background: none;
+      }
       .reply-banner {
         margin-bottom: 0;
       }
@@ -2531,8 +2534,8 @@ HTML = """<!doctype html>
       border-radius: 4px;
       transition: color 80ms ease;
     }
-    .copy-btn:hover { color: var(--muted); background: none; }
-    .copy-btn.copied { color: #4ade80; }
+    .copy-btn:hover { color: var(--muted); background: rgba(255,255,255,0.08); }
+    .copy-btn.copied { color: var(--muted); }
     .reply-btn {
       flex-shrink: 0;
       align-self: flex-start;
@@ -3283,6 +3286,7 @@ HTML = """<!doctype html>
       }
       const firstTimestamp = displayEntries[0]?.timestamp || "";
       const copyIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+      const checkIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
       const replyIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
       const buildMsgHTML = (entry, replyPreviewHTML) => {
         if (entry.sender === "system") {
@@ -3315,9 +3319,9 @@ HTML = """<!doctype html>
           ${isUser ? "" : replyPreviewHTML}
           <div class="message-body-row">
             <div class="md-body">${renderMarkdown(body)}</div>
-            ${isUser ? `<button class="copy-btn" type="button" title="コピー">${copyIcon}</button>` : ""}
+            ${isUser ? `<button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>` : ""}
           </div>
-          ${isUser ? "" : `<div class="message-meta-below"><button class="copy-btn" type="button" title="コピー">${copyIcon}</button>${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}<span class="sender">${sender}</span><span class="arrow">to</span><span class="targets">${targetSpans}</span><time>${timestamp}</time></div>`}
+          ${isUser ? "" : `<div class="message-meta-below"><button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}<span class="sender">${sender}</span><span class="arrow">to</span><span class="targets">${targetSpans}</span><time>${timestamp}</time></div>`}
           </div>
           </div>
         </article>`;
@@ -3788,8 +3792,14 @@ HTML = """<!doctype html>
     };
     const markCopied = (btn) => {
       if (!btn) return;
+      const copyIcon = btn.dataset.copyIcon || btn.innerHTML;
+      const checkIcon = btn.dataset.checkIcon || btn.innerHTML;
+      btn.innerHTML = checkIcon;
       btn.classList.add("copied");
-      setTimeout(() => { btn.classList.remove("copied"); }, 280);
+      setTimeout(() => {
+        btn.classList.remove("copied");
+        btn.innerHTML = copyIcon;
+      }, 1500);
     };
     document.getElementById("messages").addEventListener("click", (e) => {
       const fileCard = e.target.closest(".file-card");
