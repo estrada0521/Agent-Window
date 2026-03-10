@@ -4195,6 +4195,9 @@ HTML = """<!doctype html>
     const quickMore = document.querySelector(".quick-more");
     const composerPlusMenu = document.getElementById("composerPlusMenu");
     composerPlusMenu?.querySelector(".composer-plus-toggle")?.addEventListener("mousedown", (e) => e.preventDefault());
+    composerPlusMenu?.addEventListener("toggle", () => {
+      if (composerPlusMenu.open) closeDrop();
+    });
     const headerPlusMenu = document.getElementById("headerPlusMenu");
     let keepHeaderMenuThroughForwardClick = "";
     const closeQuickMore = () => {
@@ -4218,6 +4221,7 @@ HTML = """<!doctype html>
       }
     });
     document.querySelectorAll("[data-forward-action]").forEach((node) => {
+      node.addEventListener("mousedown", (e) => e.preventDefault());
       node.addEventListener("click", async () => {
         const target = node.dataset.forwardAction || "";
         const keepComposerOpen = !!(composerPlusMenu && composerPlusMenu.contains(node));
@@ -4459,7 +4463,10 @@ HTML = """<!doctype html>
       const availableSpace = compRect.top - 20;
       
       fileDrop.style.maxHeight = Math.min(240, availableSpace) + "px";
-      fileDrop.style.display = "block";
+      if (fileDrop.style.display !== "block") {
+        fileDrop.style.display = "block";
+        if (composerPlusMenu) composerPlusMenu.open = false;
+      }
       fileDrop.style.left = taRect.left + "px";
       fileDrop.style.bottom = (window.innerHeight - pickerRect.top + 9) + "px";
       fileDrop.style.width = taRect.width + "px";
