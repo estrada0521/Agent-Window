@@ -1457,7 +1457,7 @@ HTML = """<!doctype html>
     .message-meta-below .arrow,
     .message-meta-below .targets,
     .message-meta-below time {
-      opacity: 0.75;
+      opacity: 1;
     }
     .message-meta-below .reply-btn {
       margin-top: 0;
@@ -1585,6 +1585,7 @@ HTML = """<!doctype html>
       align-items: center;
       cursor: pointer;
       color: var(--muted) !important;
+      opacity: 1;
       border-radius: 6px;
       -webkit-tap-highlight-color: transparent;
       transition: all 120ms ease;
@@ -1612,7 +1613,7 @@ HTML = """<!doctype html>
       text-transform: capitalize;
       color: var(--muted) !important;
     }
-    time { opacity: 0.75; color: var(--muted) !important; }
+    time { opacity: 1; color: var(--muted) !important; }
     pre {
       margin: 0;
       white-space: pre-wrap;
