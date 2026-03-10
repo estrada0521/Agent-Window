@@ -4057,6 +4057,7 @@ HTML = """<!doctype html>
     const quickMore = document.querySelector(".quick-more");
     const composerPlusMenu = document.getElementById("composerPlusMenu");
     const headerPlusMenu = document.getElementById("headerPlusMenu");
+    let keepHeaderMenuThroughForwardClick = "";
     const closeQuickMore = () => {
       if (quickMore) quickMore.open = isCompactMobile() ? false : true;
       if (composerPlusMenu) composerPlusMenu.open = false;
@@ -4070,6 +4071,10 @@ HTML = """<!doctype html>
         composerPlusMenu.open = false;
       }
       if (headerPlusMenu && headerPlusMenu.open && !headerPlusMenu.contains(event.target)) {
+        if (keepHeaderMenuThroughForwardClick && event.target?.id === keepHeaderMenuThroughForwardClick) {
+          keepHeaderMenuThroughForwardClick = "";
+          return;
+        }
         headerPlusMenu.open = false;
       }
     });
@@ -4104,6 +4109,12 @@ HTML = """<!doctype html>
           return;
         }
         if (target === "killBtn" && !keepComposerOpen) closeQuickMore();
+        if (keepHeaderOpen) {
+          keepHeaderMenuThroughForwardClick = target;
+          setTimeout(() => {
+            if (keepHeaderMenuThroughForwardClick === target) keepHeaderMenuThroughForwardClick = "";
+          }, 0);
+        }
         document.getElementById(target)?.click();
         if (keepComposerOpen && composerPlusMenu) {
           requestAnimationFrame(() => { composerPlusMenu.open = true; });
