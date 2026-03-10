@@ -1722,12 +1722,16 @@ HTML = """<!doctype html>
         height: 220px;
         background: linear-gradient(180deg,
           rgba(0,0,0,1.0)  0%,
-          rgba(0,0,0,0.85) 30%,
-          rgba(0,0,0,0.5)  65%,
+          rgba(0,0,0,1.0)  14%,
+          rgba(0,0,0,0.5)  38%,
+          rgba(0,0,0,0.12) 68%,
           transparent      100%
         );
         z-index: 19;
         pointer-events: none;
+      }
+      header::before {
+        display: none;
       }
       header {
         padding: max(10px, calc(env(safe-area-inset-top) + 6px)) 10px 10px;
