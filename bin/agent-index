@@ -4771,7 +4771,8 @@ HTML = """<!doctype html>
         target.closest(".reply-btn") ||
         target.closest(".reply-banner") ||
         target.closest("#composer") ||
-        target.closest("#fileDropdown")
+        target.closest("#fileDropdown") ||
+        target.closest(".target-chip")
       ) {
         return;
       }
