@@ -1359,6 +1359,42 @@ HTML = """<!doctype html>
       box-shadow: none;
       filter: none;
     }
+    .delete-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%) scale(0.8);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0, 0, 0, 0.32);
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 180ms cubic-bezier(0.2, 0.9, 0.2, 1);
+      z-index: 2;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .delete-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(-50%) scale(1);
+    }
+    .delete-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255, 255, 255, 0.9);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .delete-btn:active {
+      transform: translateY(-50%) scale(0.92);
+      background: rgba(255,255,255,0.15);
+    }
     .composer textarea {
       display: block;
       width: 100%;
@@ -1370,7 +1406,7 @@ HTML = """<!doctype html>
       height: 44px;
       max-height: 200px;
       resize: none;
-      padding: 11px 20px 11px 16px;
+      padding: 11px 82px 11px 16px;
       font: 400 16px/1.5 "SF Pro Text","Segoe UI",sans-serif;
       box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
       backdrop-filter: blur(12px);
@@ -2822,7 +2858,7 @@ HTML = """<!doctype html>
         min-height: 42px;
         height: 42px;
         max-height: 200px;
-        padding: 9px 12px;
+        padding: 9px 78px 9px 12px;
         line-height: 1.5;
         border: none;
         border-radius: 24px;
@@ -3524,6 +3560,9 @@ HTML = """<!doctype html>
           </div>
           <div class="composer-field">
             <textarea id="message" placeholder="Write a message"></textarea>
+            <button type="button" class="delete-btn" id="deleteBtn" aria-label="Clear input">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
             <button type="submit" class="send-btn" aria-label="Send">↑</button>
           </div>
         </div>
@@ -4319,6 +4358,11 @@ HTML = """<!doctype html>
     });
     let composing = false;
     const messageInput = document.getElementById("message");
+    const deleteBtn = document.getElementById("deleteBtn");
+    const renderDeleteButton = () => {
+      if (!deleteBtn) return;
+      deleteBtn.classList.toggle("visible", !!messageInput.value);
+    };
     messageInput.addEventListener("keydown", async (event) => {
       if (event.key !== "Enter" || event.shiftKey || composing) {
         return;
@@ -4453,7 +4497,10 @@ HTML = """<!doctype html>
         messageInput.style.height = (scrollH + 2) + "px"; // +2px to avoid tiny scroll jumps
       }
     };
-    messageInput.addEventListener("input", autoResizeTextarea);
+    messageInput.addEventListener("input", () => {
+      autoResizeTextarea();
+      renderDeleteButton();
+    });
     window.addEventListener("resize", autoResizeTextarea);
     if (window.visualViewport) {
       const updateViewportScroll = () => {
@@ -4529,6 +4576,7 @@ HTML = """<!doctype html>
     messageInput.addEventListener("focus", () => {
       updateFileAutocomplete();
       if (isCompactMobile()) document.body.classList.add("composing");
+      renderDeleteButton();
     });
     messageInput.addEventListener("keydown", (e) => {
       if (fileDrop.style.display === "none") return;
@@ -4558,6 +4606,16 @@ HTML = """<!doctype html>
       closePlusMenu();
       setTimeout(closeDrop, 150);
     });
+    deleteBtn?.addEventListener("mousedown", (e) => e.preventDefault());
+    deleteBtn?.addEventListener("click", () => {
+      messageInput.value = "";
+      autoResizeTextarea();
+      renderDeleteButton();
+      closeDrop();
+      messageInput.focus();
+      setTimeout(updateFileAutocomplete, 10);
+    });
+    renderDeleteButton();
 
     const setReplyTo = (msgId, sender, previewText) => {
       const banner = document.getElementById("replyBanner");
