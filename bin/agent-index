@@ -1293,8 +1293,8 @@ HTML = """<!doctype html>
     @keyframes msgReveal {
       0% {
         opacity: 0;
-        transform: translateY(12px) scale(0.98);
-        filter: blur(4px);
+        transform: translateY(16px) scale(0.9);
+        filter: blur(8px);
       }
       100% {
         opacity: 1;
@@ -1307,13 +1307,14 @@ HTML = """<!doctype html>
       align-items: flex-start;
       gap: 12px;
       max-width: 100%;
-      animation: msgReveal 550ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-      transform-origin: bottom center;
+      animation: msgReveal 550ms cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+      transform-origin: left center;
       will-change: transform, opacity, filter;
     }
     #messages.no-anim .message-row { animation: none !important; }
     .message-row.user {
       justify-content: flex-end;
+      transform-origin: right center;
     }
     .message-row.user .avatar {
       display: none;
