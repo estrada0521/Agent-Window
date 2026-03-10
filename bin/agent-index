@@ -681,7 +681,8 @@ HTML = """<!doctype html>
       color: var(--text);
     }
     .shell {
-      position: relative;
+      position: absolute;
+      inset: 0;
       width: 100vw;
       max-width: 100vw;
       height: 100vh;
@@ -4451,6 +4452,22 @@ HTML = """<!doctype html>
     };
     messageInput.addEventListener("input", autoResizeTextarea);
     window.addEventListener("resize", autoResizeTextarea);
+    if (window.visualViewport) {
+      const updateViewport = () => {
+        const vv = window.visualViewport;
+        const offset = window.innerHeight - vv.height;
+        const shell = document.querySelector(".shell");
+        if (shell) {
+          // Push shell up by keyboard height
+          shell.style.setProperty("--keyboard-offset", offset + "px");
+          // On some iOS versions, we also need to handle scroll offset
+          shell.style.bottom = offset + "px";
+          shell.style.height = vv.height + "px";
+        }
+      };
+      window.visualViewport.addEventListener("resize", updateViewport);
+      window.visualViewport.addEventListener("scroll", updateViewport);
+    }
 
     const updateFileAutocomplete = async () => {
       const pos = messageInput.selectionEnd;
