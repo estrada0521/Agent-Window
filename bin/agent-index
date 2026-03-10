@@ -2950,7 +2950,6 @@ HTML = """<!doctype html>
               <button id="autoModeBtn" type="button" title="Toggle auto-mode">Auto: off</button>
               <button id="caffeinateBtn" type="button" title="Toggle sleep prevention">Awake: off</button>
               <button id="soundBtn" type="button" title="Toggle sound notifications">Sound: off</button>
-              <button type="button" class="kill-btn" id="killBtn" data-shortcut="kill" title="Kill process">🛑 Kill</button>
               <input type="search" id="searchInput" class="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
               <span id="searchCount" class="search-count"></span>
               <div class="agent-filter-chips" id="agentFilterChips"></div>
@@ -2973,8 +2972,8 @@ HTML = """<!doctype html>
             <button type="button" class="quick-action" data-forward-action="readMemoryBtn">Load</button>
             <button type="button" class="quick-action" data-forward-action="memoryBtn">Memory</button>
             <button type="button" class="quick-action" data-forward-action="save">Save</button>
-            <button type="button" class="quick-action" data-forward-action="killBtn">Kill</button>
             <button type="button" class="quick-action" data-forward-action="interrupt">Esc</button>
+            <button type="button" class="quick-action" data-forward-action="killBtn">Kill</button>
           </div>
         </details>
         <div class="composer-shell">
@@ -2998,6 +2997,7 @@ HTML = """<!doctype html>
               <button type="button" class="quick-action memory-btn" id="memoryBtn"><span class="action-emoji">💾</span><span class="action-label">Save Memory</span><span class="action-mobile">Memory</span></button>
               <button type="button" class="quick-action" data-shortcut="save"><span class="action-emoji">📝</span><span class="action-label">Save Log</span><span class="action-mobile">Save</span></button>
               <button type="button" class="quick-action" data-shortcut="interrupt" title="Send Escape to selected agents"><span class="action-emoji">⎋</span><span class="action-label">Interrupt</span><span class="action-mobile">Esc</span></button>
+              <button type="button" class="quick-action kill-btn" id="killBtn" data-shortcut="kill" title="Kill process"><span class="action-emoji">🛑</span><span class="action-label">Kill</span><span class="action-mobile">Kill</span></button>
             </div>
           </details>
         </div>
