@@ -2615,19 +2615,19 @@ HTML = """<!doctype html>
         min-height: 46px;
         box-sizing: border-box;
         border-radius: 24px;
-        background: rgba(255, 255, 255, 0.12);
-        border: 1px solid rgba(255,255,255,0.24);
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255,255,255,0.16);
         overflow: visible;
         box-shadow:
           0 8px 24px rgba(0,0,0,0.32),
-          inset 0 1px 0 rgba(255,255,255,0.08);
+          inset 0 1px 0 rgba(255,255,255,0.05);
         backdrop-filter: blur(20px) saturate(160%);
         -webkit-backdrop-filter: blur(20px) saturate(160%);
         transition: border-color 140ms ease, background-color 140ms ease;
       }
       .composer-field:focus-within {
-        border-color: rgba(255,255,255,0.5);
-        background: rgba(255, 255, 255, 0.16);
+        border-color: rgba(255,255,255,0.28);
+        background: rgba(255, 255, 255, 0.18);
       }
       .composer-plus-menu {
         position: relative;
@@ -2645,12 +2645,12 @@ HTML = """<!doctype html>
         width: 46px;
         height: 46px;
         border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.24);
-        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255,255,255,0.16);
+        background: rgba(255, 255, 255, 0.15);
         backdrop-filter: blur(20px) saturate(160%);
         -webkit-backdrop-filter: blur(20px) saturate(160%);
         color: #ffffff;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 6px 18px rgba(0,0,0,0.2);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 6px 18px rgba(0,0,0,0.2);
         list-style: none;
         cursor: pointer;
         padding: 0;
