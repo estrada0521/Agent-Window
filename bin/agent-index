@@ -1301,7 +1301,7 @@ HTML = """<!doctype html>
       border-radius: 8px; /* Reduced roundness */
       border: 0.5px solid rgba(255,255,255,0.18);
       background: rgba(255,255,255,0.06);
-      color: rgba(255, 255, 255, 0.92);
+      color: rgb(156, 154, 147);
       font-size: 13px;
       line-height: 1.2;
       letter-spacing: 0.01em;
@@ -1315,8 +1315,8 @@ HTML = """<!doctype html>
       height: 15px;
       flex-shrink: 0;
       display: block;
-      filter: grayscale(1) contrast(0) brightness(0.72);
-      opacity: 0.85;
+      filter: brightness(0) invert(0.61) !important;
+      opacity: 1;
     }
     .target-chip[data-target="codex"] .target-icon,
     .target-chip[data-target="copilot"] .target-icon,
@@ -1524,14 +1524,14 @@ HTML = """<!doctype html>
       border-color: rgba(255,255,255,0.28);
     }
     .target-chip.active {
-      color: rgb(186, 184, 176) !important;
+      color: rgb(235, 235, 230) !important;
       background: rgb(31, 30, 29) !important;
       border: none !important;
       transform: none !important;
       box-shadow: none !important;
     }
     .target-chip.active .target-icon {
-      filter: grayscale(1) contrast(0) brightness(1.1) !important;
+      filter: brightness(0) invert(0.92) !important;
       opacity: 1 !important;
     }
     .composer-shell {
@@ -1656,7 +1656,7 @@ HTML = """<!doctype html>
       .target-chip {
         border: 0.5px solid transparent;
         background: transparent; /* Transparent until hovered */
-        color: rgb(186, 184, 176);
+        color: rgb(156, 154, 147);
         box-shadow: none;
         font-size: 13px; /* Shrunk */
         padding: 6px 12px; /* Shrunk */
@@ -1674,7 +1674,7 @@ HTML = """<!doctype html>
       }
       .target-chip.active:hover {
         background: rgb(31, 30, 29) !important;
-        color: rgb(186, 184, 176) !important;
+        color: rgb(235, 235, 230) !important;
         cursor: default;
       }
       .target-chip:active:not(.active) {
@@ -1684,12 +1684,12 @@ HTML = """<!doctype html>
       .target-chip.active {
         border: none !important;
         background: rgb(31, 30, 29) !important;
-        color: rgb(186, 184, 176) !important;
+        color: rgb(235, 235, 230) !important;
         transform: none !important;
         box-shadow: none !important;
       }
       .target-chip.active .target-icon {
-        filter: grayscale(1) contrast(0) brightness(1.1) !important;
+        filter: brightness(0) invert(0.92) !important;
         opacity: 1 !important;
       }
       .composer-main-shell {
