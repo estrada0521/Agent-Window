@@ -1697,10 +1697,10 @@ HTML = """<!doctype html>
       }
       .target-chip.active {
         border: none;
-        background: rgba(255, 255, 255, 0.92) !important;
+        background: rgb(186, 184, 177) !important;
         color: #000000 !important;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+        box-shadow: 0 4px 12px rgba(186, 184, 177, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.8);
       }
       .composer-main-shell {
         position: relative; /* Make container relative for send-btn */
@@ -1745,7 +1745,7 @@ HTML = """<!doctype html>
         align-self: stretch;
       }
       .composer-field {
-        position: static; /* Allow send-btn to position relative to main shell */
+        position: relative;
       }
       .composer-plus-menu {
         grid-area: plus;
@@ -1791,10 +1791,20 @@ HTML = """<!doctype html>
         display: flex !important;
         position: absolute;
         right: 14px;
-        bottom: 12px; /* Positioned on the bottom row */
+        bottom: -40px; /* Positioned on the bottom row */
         width: 34px;
         height: 34px;
+        border-radius: 8px;
+        background: rgb(186, 184, 177) !important;
+        color: #000000 !important;
         z-index: 100;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      }
+      .delete-btn {
+        display: flex !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
       }
     }
     .keyboard-locked main {
@@ -3333,7 +3343,7 @@ HTML = """<!doctype html>
       .md-body code { font-size: 11px; }
       .message-plain { font-size: 12px; }
       .message-row.user {
-        margin-bottom: 6px;
+        margin-bottom: 14px;
       }
       .message-row.user .message-wrap {
         padding-left: 20px;
