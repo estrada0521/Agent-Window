@@ -6124,16 +6124,6 @@ HTML = """<!doctype html>
     refreshCaffeinate();
     setInterval(refreshCaffeinate, 5000);
 
-    document.getElementById("newChatBtn").addEventListener("click", async () => {
-      const btn = document.getElementById("newChatBtn");
-      btn.disabled = true;
-      btn.textContent = "↺ Restarting…";
-      try {
-        await fetch("/new-chat", { method: "POST" });
-      } catch (_) {}
-      setTimeout(() => { window.location.reload(); }, 3000);
-    });
-
     // Memory button — sends silently (not logged in chat)
     document.getElementById("memoryBtn").addEventListener("click", async () => {
       closeQuickMore();
