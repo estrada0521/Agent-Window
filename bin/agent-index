@@ -1752,6 +1752,15 @@ HTML = """<!doctype html>
       :root {
         --text: rgb(250, 249, 246);
       }
+      .agent-status-panel {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        margin: 0;
+        padding: 0;
+        z-index: 100;
+        pointer-events: none;
+      }
       header::before {
         content: "";
         position: absolute;
