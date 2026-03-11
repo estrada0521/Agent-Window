@@ -1782,6 +1782,9 @@ HTML = """<!doctype html>
         right: 0;
         transform-origin: top right;
       }
+      .agent-status-panel {
+        margin-top: -14px;
+      }
       .header-plus-toggle {
         padding: 0;
         width: 38px;
