@@ -3845,11 +3845,11 @@ HTML = """<!doctype html>
     }
     .table-scroll {
       display: block;
-      width: calc(100vw - 44px) !important;
-      max-width: calc(100vw - 44px) !important;
+      width: calc(100vw - 40px) !important;
+      max-width: calc(100vw - 40px) !important;
       position: relative;
       left: 50%;
-      transform: translateX(calc(-50% + 10px));
+      transform: translateX(-50%);
       margin-top: 0.5em;
       margin-bottom: 0.5em;
       overflow-x: auto;
@@ -3883,11 +3883,11 @@ HTML = """<!doctype html>
     }
     .md-body pre {
       display: block;
-      width: calc(100vw - 44px) !important;
-      max-width: calc(100vw - 44px) !important;
+      width: calc(100vw - 40px) !important;
+      max-width: calc(100vw - 40px) !important;
       position: relative;
       left: 50%;
-      transform: translateX(calc(-50% + 10px));
+      transform: translateX(-50%);
       box-sizing: border-box;
       background: rgb(43, 43, 41);
       border: 0.5px solid rgb(73, 73, 68);
