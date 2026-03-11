@@ -3644,6 +3644,10 @@ HTML = """<!doctype html>
         line-height: 22px;
         font-style: normal;
         font-weight: 400;
+        letter-spacing: -0.01em;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-synthesis-weight: none;
         font-optical-sizing: auto;
         font-variation-settings: "wght" 400, "opsz" 16;
       }
@@ -3654,8 +3658,8 @@ HTML = """<!doctype html>
       .message.user .md-body h3,
       .message.user .md-body h4,
       .message.user .md-body blockquote {
-        font-weight: 300;
-        font-variation-settings: "wght" 300, "opsz" 16;
+        font-weight: 400;
+        font-variation-settings: "wght" 400, "opsz" 16;
       }
       .message.claude .md-body,
       .message.codex .md-body,
