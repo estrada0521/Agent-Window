@@ -1718,6 +1718,7 @@ HTML = """<!doctype html>
       }
       .title-row .header-plus-menu {
         margin-left: -14px;
+        margin-top: -6px;
       }
       .header-plus-toggle {
         padding: 0;
