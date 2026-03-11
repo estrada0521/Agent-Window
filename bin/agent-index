@@ -1374,23 +1374,6 @@ HTML = """<!doctype html>
       background-size: calc(100% - 24px) 1px;
       background-position: 12px 0;
     }
-    .header-plus-panel .quick-action::after {
-      content: "";
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      margin-left: auto;
-      background: rgba(255,255,255,0.12);
-      transition: background 90ms ease, box-shadow 90ms ease, transform 90ms ease;
-    }
-    .header-plus-panel .quick-action.auto-on::after,
-    .header-plus-panel .quick-action.awake-on::after,
-    .header-plus-panel .quick-action.sound-on::after,
-    .header-plus-panel .quick-action.raw-on::after {
-      background: #4ade80;
-      box-shadow: 0 0 6px rgba(74,222,128,0.5);
-    }
     .header-plus-panel .quick-action.toggle-flash {
       color: #f8fbff;
       text-shadow: 0 0 10px rgba(255,255,255,0.14);
@@ -1494,15 +1477,22 @@ HTML = """<!doctype html>
       color: #eef3fb;
     }
     .quick-action.raw-on {
-      background: rgba(214, 222, 235, 0.14);
-      border-color: rgba(214, 222, 235, 0.42);
-      color: #e5ecf6;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.12);
+      background: transparent !important;
+      border-color: transparent !important;
+      color: rgb(250, 249, 245) !important;
+      box-shadow: none !important;
     }
-    .quick-action.raw-on:hover:not(:disabled) {
-      background: rgba(214, 222, 235, 0.2);
-      border-color: rgba(214, 222, 235, 0.55);
-      color: #f3f6fb;
+    .quick-action.raw-on::after {
+      content: "";
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 6px;
+      background: #4ade80;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
     }
     .quick-action[data-shortcut="kill"] {
       border-color: rgba(239, 68, 68, 0.45);
@@ -3069,34 +3059,6 @@ HTML = """<!doctype html>
         border-color: transparent !important;
         box-shadow: none !important;
         transform: none !important;
-      }
-      .header-plus-panel .quick-action::after {
-        content: "";
-        display: inline-block;
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        margin-left: auto;
-        background: rgba(255,255,255,0.12);
-        box-shadow: none;
-        transition: background 90ms ease, box-shadow 90ms ease, transform 90ms ease;
-      }
-      .header-plus-panel .quick-action.auto-on::after,
-      .header-plus-panel .quick-action.awake-on::after,
-      .header-plus-panel .quick-action.sound-on::after,
-      .header-plus-panel .quick-action.raw-on::after {
-        background: #4ade80;
-        box-shadow: 0 0 6px rgba(74,222,128,0.5);
-      }
-      .header-plus-panel .quick-action.auto-on,
-      .header-plus-panel .quick-action.awake-on,
-      .header-plus-panel .quick-action.sound-on,
-      .header-plus-panel .quick-action.raw-on {
-        background-color: transparent !important;
-        border-color: transparent !important;
-        box-shadow: none !important;
-        color: rgba(182, 188, 198, 0.9);
-        font-weight: 700;
       }
       .header-plus-panel .quick-action.toggle-flash {
         color: #f8fbff;
@@ -5300,7 +5262,8 @@ HTML = """<!doctype html>
         if (target === "rawSendBtn") {
           rawSendEnabled = !rawSendEnabled;
           renderRawSendButton();
-          flashHeaderToggle("rawSendBtn");
+          if (keepComposerOpen) flashComposerAction(target);
+          if (keepHeaderOpen) flashHeaderToggle(target);
           const statusText = rawSendEnabled ? "raw send enabled" : "raw send disabled";
           setStatus(statusText);
           setTimeout(() => {
@@ -5308,7 +5271,10 @@ HTML = """<!doctype html>
               setStatus("");
             }
           }, 1200);
-          if (headerPlusMenu) {
+          if (keepComposerOpen && composerPlusMenu) {
+            requestAnimationFrame(() => { composerPlusMenu.open = true; });
+          }
+          if (keepHeaderOpen && headerPlusMenu) {
             requestAnimationFrame(() => { headerPlusMenu.open = true; });
           }
           return;
