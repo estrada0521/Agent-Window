@@ -2059,6 +2059,7 @@ HTML = """<!doctype html>
     }
     .message.user .user-message-meta {
       width: fit-content;
+      margin-top: 8px;
       margin-left: auto;
       justify-content: flex-end;
     }
