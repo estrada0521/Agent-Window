@@ -1970,8 +1970,8 @@ HTML = """<!doctype html>
       width: 38px;
       height: 38px;
       border-radius: 10px;
-      border: 0.5px solid rgba(255, 255, 255, 0.1);
-      background: rgba(24, 24, 23, 0.72);
+      border: 0.5px solid rgba(255, 255, 255, 0.12);
+      background: rgba(38, 38, 36, 0.72);
       color: rgb(235, 235, 230);
       font-size: 17px;
       line-height: 1;
@@ -1995,11 +1995,11 @@ HTML = """<!doctype html>
       stroke-width: 1.7;
     }
     #scrollToBottomBtn:hover {
-      background: rgb(31, 31, 30);
+      background: rgba(48, 48, 46, 0.85);
       filter: brightness(1.1);
     }
     #scrollToBottomBtn:active {
-      background: rgb(20, 20, 19);
+      background: rgb(31, 31, 29);
       transform: translateX(-50%) scale(0.96);
     }
     #scrollToBottomBtn.visible { display: flex; }
