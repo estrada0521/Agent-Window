@@ -1364,12 +1364,18 @@ HTML = """<!doctype html>
       position: absolute;
       left: 50%;
       top: calc(100% + 6px);
-      transform: translateX(-50%);
+      transform: translate(-50%, 4px);
       color: var(--chrome-muted);
       font-size: 11px;
       line-height: 1;
       white-space: nowrap;
       pointer-events: none;
+      opacity: 0;
+      transition: opacity 220ms ease, transform 220ms ease;
+    }
+    .target-chip.auto-approval-notice.auto-approval-notice-visible::after {
+      opacity: 1;
+      transform: translate(-50%, 0);
     }
     .quick-action {
       display: inline-flex;
@@ -3885,12 +3891,10 @@ HTML = """<!doctype html>
       box-sizing: border-box;
       background: rgb(43, 43, 41);
       border: 0.5px solid rgb(73, 73, 68);
-      border-left: none;
-      border-right: none;
-      border-radius: 0;
+      border-radius: 10px;
       padding: 12px 16px;
       margin: 12px 0;
-      overflow-x: hidden; /* Prevent horizontal scroll when wrapping */
+      overflow-x: hidden;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
       word-break: normal;
@@ -6062,14 +6066,22 @@ HTML = """<!doctype html>
         : null;
       if (!chip) return;
       document.querySelectorAll(".target-chip.auto-approval-notice").forEach((node) => {
-        if (node._autoApprovalNoticeTimer) clearTimeout(node._autoApprovalNoticeTimer);
+        if (node._autoApprovalNoticeHideTimer) clearTimeout(node._autoApprovalNoticeHideTimer);
+        if (node._autoApprovalNoticeCleanupTimer) clearTimeout(node._autoApprovalNoticeCleanupTimer);
+        node.classList.remove("auto-approval-notice-visible");
         node.classList.remove("auto-approval-notice");
       });
       chip.classList.add("auto-approval-notice");
-      chip._autoApprovalNoticeTimer = setTimeout(() => {
-        chip.classList.remove("auto-approval-notice");
-        chip._autoApprovalNoticeTimer = null;
-      }, 1800);
+      void chip.offsetWidth;
+      chip.classList.add("auto-approval-notice-visible");
+      chip._autoApprovalNoticeHideTimer = setTimeout(() => {
+        chip.classList.remove("auto-approval-notice-visible");
+        chip._autoApprovalNoticeCleanupTimer = setTimeout(() => {
+          chip.classList.remove("auto-approval-notice");
+          chip._autoApprovalNoticeCleanupTimer = null;
+          chip._autoApprovalNoticeHideTimer = null;
+        }, 220);
+      }, 1600);
     };
     const refreshAutoMode = async () => {
       try {
