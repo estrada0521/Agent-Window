@@ -3066,19 +3066,21 @@ HTML = """<!doctype html>
       }
       .agent-row {
         display: inline-flex !important;
+        flex-direction: column !important;
         align-items: center !important;
-        gap: 10px !important;
-        padding: 0 10px !important;
+        justify-content: center !important;
+        gap: 2px !important;
+        padding: 4px 10px !important;
         border-radius: 10px !important;
         border: none !important;
         background: transparent !important;
         box-shadow: none !important;
-        font-size: 14px !important;
+        font-size: 13px !important;
         font-weight: 600 !important;
         letter-spacing: 0.02em !important;
         color: rgb(156, 154, 147) !important;
         white-space: nowrap !important;
-        height: 100% !important;
+        height: auto !important;
         cursor: pointer !important;
         transition: background 150ms ease, color 150ms ease !important;
         transform: none !important;
@@ -3091,7 +3093,11 @@ HTML = """<!doctype html>
       .agent-row .agent-icon {
         width: 17px !important;
         height: 17px !important;
-        margin-top: 0 !important;
+        margin: 0 !important;
+      }
+      .agent-status-elapsed {
+        font-size: 11px !important;
+        line-height: 1 !important;
       }
       .agent-row[data-status="idle"] .agent-status-elapsed {
         display: none !important;
