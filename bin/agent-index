@@ -1964,7 +1964,7 @@ HTML = """<!doctype html>
     }
     #scrollToBottomBtn {
       position: absolute;
-      bottom: 120px;
+      bottom: 150px;
       left: 50%;
       transform: translateX(-50%);
       width: 38px;
@@ -3596,7 +3596,7 @@ HTML = """<!doctype html>
       #scrollToBottomBtn {
         left: auto;
         right: 16px;
-        bottom: 120px;
+        bottom: 150px;
         transform: none;
       }
       #scrollToBottomBtn:active {
