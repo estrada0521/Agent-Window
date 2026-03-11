@@ -1709,11 +1709,11 @@ HTML = """<!doctype html>
         margin-left: -10px;
       }
       .header-plus-toggle {
-        padding: 10px 14px;
+        padding: 8px 14px;
         width: auto;
         height: auto;
         min-width: 44px;
-        min-height: 44px;
+        min-height: 38px;
         border: none;
         background: transparent;
         box-shadow: none;
@@ -1728,7 +1728,7 @@ HTML = """<!doctype html>
         color: rgb(215, 215, 210);
       }
       .header-plus-toggle:active {
-        background: rgb(24, 24, 23);
+        background: rgb(20, 20, 19);
         border-color: transparent;
         color: rgb(235, 235, 230);
       }
@@ -1738,7 +1738,7 @@ HTML = """<!doctype html>
         stroke-width: 1.7;
       }
       .header-plus-menu[open] .header-plus-toggle {
-        background: rgb(24, 24, 23);
+        background: rgb(20, 20, 19);
         border: none;
         box-shadow: none;
         color: rgb(235, 235, 230);
@@ -1777,25 +1777,26 @@ HTML = """<!doctype html>
         filter: brightness(0) invert(0.61) !important;
       }
       .target-chip.active:hover {
-        background: rgb(31, 31, 30) !important;
-        color: rgb(235, 235, 230) !important;
+        background: transparent !important;
+        border-color: rgba(255,255,255,0.18) !important;
+        color: rgb(156, 154, 147) !important;
         cursor: default;
       }
       .target-chip:active:not(.active) {
-        background: rgb(46, 46, 44);
-        border-color: transparent;
-        color: rgb(215, 215, 210);
+        background: transparent;
+        border-color: rgba(255,255,255,0.12);
+        color: rgb(156, 154, 147);
         box-shadow: none;
       }
       .target-chip.active {
-        border-color: rgba(255,255,255,0.08) !important;
-        background: rgb(31, 31, 30) !important;
-        color: rgb(235, 235, 230) !important;
+        border-color: rgba(255,255,255,0.18) !important;
+        background: transparent !important;
+        color: rgb(156, 154, 147) !important;
         transform: none !important;
         box-shadow: none !important;
       }
       .target-chip.active .target-icon {
-        filter: brightness(0) invert(0.92) !important;
+        filter: brightness(0) invert(0.61) !important;
         opacity: 1 !important;
       }
       .composer-main-shell {
@@ -3457,28 +3458,32 @@ HTML = """<!doctype html>
         transform: none;
       }
       .target-chip:active:not(.active)::before {
-        inset: 2px;
+        inset: 6px;
         background: rgb(25, 25, 25);
         border-color: rgba(255,255,255,0.24);
         box-shadow:
           0 0 8px rgba(255,255,255,0.05),
           inset 0 1px 0 rgba(255,255,255,0.06),
-          0 4px 10px rgba(0,0,0,0.1);
+          0 6px 18px rgba(0,0,0,0.1);
       }
       .target-chip.active {
         background: transparent !important;
         border-color: transparent !important;
-        color: #000000 !important;
+        color: rgba(255, 255, 255, 0.95) !important;
         transform: none;
         box-shadow: none;
       }
       .target-chip.active::before {
-        inset: 2px;
-        background: #ffffff !important;
-        border-color: transparent !important;
+        inset: 6px;
+        background: rgb(25, 25, 25) !important;
+        border-color: rgba(255,255,255,0.3) !important;
         box-shadow:
-          0 8px 22px rgba(255, 255, 255, 0.12),
-          inset 0 1px 0 rgba(255,255,255,0.62);
+          0 0 8px rgba(255,255,255,0.05),
+          inset 0 1px 0 rgba(255,255,255,0.06),
+          0 6px 18px rgba(0,0,0,0.1);
+      }
+      .target-chip.active .target-icon {
+        filter: brightness(0) invert(0.61) !important;
       }
       .quick-action {
         min-width: 0;
