@@ -723,12 +723,12 @@ HTML = """<!doctype html>
       top: 0; left: 0; right: 0; bottom: 0;
       background: linear-gradient(180deg,
         rgba(20,20,19,1.0)  0%,
-        rgba(20,20,19,1.0)  14%,
-        rgba(20,20,19,0.82) 28%,
-        transparent      44%
+        rgba(20,20,19,1.0)  48%,
+        rgba(20,20,19,0.82) 84%,
+        transparent      100%
       );
-      mask-image: linear-gradient(180deg, black 0%, black 26%, transparent 44%);
-      -webkit-mask-image: linear-gradient(180deg, black 0%, black 26%, transparent 44%);
+      mask-image: linear-gradient(180deg, black 0%, black 74%, transparent 100%);
+      -webkit-mask-image: linear-gradient(180deg, black 0%, black 74%, transparent 100%);
       z-index: -1;
       pointer-events: none;
     }
@@ -1670,9 +1670,9 @@ HTML = """<!doctype html>
         grid-template-areas:
           "input input input"
           "plus targets status";
-        row-gap: 0;
+        row-gap: 6px; /* Increased from 0 */
         column-gap: 10px;
-        padding: 8px 12px 14px; /* Increased padding */
+        padding: 8px 12px 14px 18px; /* Increased left padding to 18px */
         border-radius: 28px;
         background: rgb(36, 36, 34);
         border: 0.5px solid rgb(45, 45, 44);
@@ -1680,14 +1680,14 @@ HTML = """<!doctype html>
       .target-picker {
         grid-area: targets;
         width: 100%;
-        margin: -4px 0 4px 0; /* Margin below chips */
+        margin: 2px 0 4px 0; /* Changed from negative to positive margin */
         justify-self: start;
         align-self: center;
         justify-content: flex-start;
       }
       .statusline {
         grid-area: status;
-        margin: -4px 0 4px 0;
+        margin: 2px 0 4px 0; /* Changed from negative to positive margin */
         padding-left: 0;
         min-height: 1.1em;
         font-size: 11px;
@@ -1711,7 +1711,7 @@ HTML = """<!doctype html>
         align-self: center;
         width: 24px;
         height: 24px;
-        margin: -4px 0 4px 0;
+        margin: 2px 0 4px 0; /* Changed from negative to positive margin */
       }
       .composer-plus-toggle {
         width: 24px;
@@ -1724,9 +1724,9 @@ HTML = """<!doctype html>
         -webkit-backdrop-filter: none;
       }
       .composer-plus-toggle svg {
-        width: 20px;
-        height: 20px;
-        stroke-width: 3;
+        width: 18px;
+        height: 18px;
+        stroke-width: 2.2; /* Thinner plus sign */
       }
       .composer-plus-menu[open] .composer-plus-toggle {
         border: none;
@@ -1898,9 +1898,9 @@ HTML = """<!doctype html>
       max-width: 100%;
       padding: 8px 16px 9px 16px;
       border-radius: 12px;
-      background: #d6d6d6; /* Light gray instead of whitish */
-      color: #1a1a1a !important;
-      border: 1px solid rgba(0,0,0,0.15);
+      background: rgb(54, 54, 52); /* Darker gray to blend with black bg */
+      color: #e5e5e5 !important;
+      border: 1px solid rgb(76, 76, 74);
       box-shadow: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
@@ -1911,7 +1911,7 @@ HTML = """<!doctype html>
     .message.user .md-body h2,
     .message.user .md-body h3,
     .message.user .md-body h4 {
-      color: #1a1a1a !important;
+      color: #e5e5e5 !important;
     }
     .message-body-row {
       display: flex;
@@ -2276,8 +2276,13 @@ HTML = """<!doctype html>
         content: "";
         position: absolute;
         top: 0; left: 0; right: 0;
-        height: 60pt;
-        background: linear-gradient(180deg, rgba(20,20,19,1) 0%, rgba(20,20,19,0) 100%);
+        height: 120pt;
+        background: linear-gradient(180deg,
+          rgba(20,20,19,1) 0%,
+          rgba(20,20,19,1) 40%,
+          rgba(20,20,19,0.58) 72%,
+          rgba(20,20,19,0) 100%
+        );
         z-index: 20;
         pointer-events: none;
       }
