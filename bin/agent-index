@@ -1731,6 +1731,7 @@ HTML = """<!doctype html>
         background: rgb(20, 20, 19);
         border-color: transparent;
         color: rgb(235, 235, 230);
+        transform: none;
       }
       .header-plus-toggle svg {
         width: 20px;
@@ -1880,6 +1881,7 @@ HTML = """<!doctype html>
         background: rgb(20, 20, 19);
         border-color: transparent;
         color: rgb(235, 235, 230);
+        transform: none;
       }
       .composer-plus-toggle svg {
         width: 20px;
@@ -1890,6 +1892,7 @@ HTML = """<!doctype html>
         border: none;
         background: rgb(20, 20, 19);
         color: rgb(235, 235, 230);
+        transform: none;
       }
       .composer textarea {
         background: transparent;
