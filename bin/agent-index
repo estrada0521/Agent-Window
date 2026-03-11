@@ -964,7 +964,7 @@ HTML = """<!doctype html>
       display: block;
       padding: 4px 12px 10px;
       font: 500 12px/1.4 "SF Pro Text","Segoe UI",sans-serif;
-      color: rgba(180, 185, 195, 0.72);
+      color: var(--chrome-muted);
       letter-spacing: 0.02em;
     }
     h1 { margin: 0; font-size: clamp(22px, 3vw, 30px); line-height: 1; }
@@ -2974,7 +2974,7 @@ HTML = """<!doctype html>
         display: block;
         padding: 4px 12px 10px;
         font: 400 11px/1.4 "SF Pro Text","Segoe UI",sans-serif;
-        color: rgba(180, 185, 195, 0.72);
+        color: var(--chrome-muted);
         letter-spacing: 0.02em;
       }
       .title-row h1 {
@@ -3066,21 +3066,21 @@ HTML = """<!doctype html>
       }
       .agent-row {
         display: inline-flex !important;
-        flex-direction: column !important;
+        flex-direction: row !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 2px !important;
-        padding: 4px 10px !important;
+        gap: 10px !important;
+        padding: 0 10px !important;
         border-radius: 10px !important;
         border: none !important;
         background: transparent !important;
         box-shadow: none !important;
-        font-size: 13px !important;
+        font-size: 14px !important;
         font-weight: 600 !important;
         letter-spacing: 0.02em !important;
         color: rgb(156, 154, 147) !important;
         white-space: nowrap !important;
-        height: auto !important;
+        height: 100% !important;
         cursor: pointer !important;
         transition: background 150ms ease, color 150ms ease !important;
         transform: none !important;
@@ -3093,11 +3093,11 @@ HTML = """<!doctype html>
       .agent-row .agent-icon {
         width: 17px !important;
         height: 17px !important;
-        margin: 0 !important;
+        margin-top: 0 !important;
       }
       .agent-status-elapsed {
-        font-size: 11px !important;
-        line-height: 1 !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
       }
       .agent-row[data-status="idle"] .agent-status-elapsed {
         display: none !important;
