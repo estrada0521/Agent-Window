@@ -1697,7 +1697,10 @@ HTML = """<!doctype html>
       }
       .target-chip.active {
         border: none;
-        background: rgb(56, 55, 53); /* Active background */
+        background: rgba(255, 255, 255, 0.92) !important;
+        color: #000000 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.8);
       }
       .composer-main-shell {
         position: relative; /* Make container relative for send-btn */
@@ -3329,6 +3332,9 @@ HTML = """<!doctype html>
       .md-body pre { font-size: 11px; padding: 30px 10px 10px; background-position: 10px 10px; }
       .md-body code { font-size: 11px; }
       .message-plain { font-size: 12px; }
+      .message-row.user {
+        margin-bottom: 6px;
+      }
       .message-row.user .message-wrap {
         padding-left: 20px;
       }
