@@ -4795,6 +4795,7 @@ HTML = """<!doctype html>
         const timestamp = escapeHtml(entry.timestamp || "");
         const isUser = cls === "user";
         const userTimestampHtml = timestamp ? `<time>${timestamp}</time>` : "";
+        const copyButtonHtml = `<button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
         const senderHtml = `<span class="sender-label ${cls}">${sender}</span>`;
 
         return `<article class="message-row ${cls}" data-msgid="${msgId}" data-sender="${sender}">
