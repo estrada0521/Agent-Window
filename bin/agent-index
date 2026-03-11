@@ -654,8 +654,10 @@ HTML = """<!doctype html>
       font-display: swap;
     }
     @font-face {
-      font-family: "JetBrains Mono";
-      src: url("/font/jetbrains-mono.ttf") format("truetype-variations"),
+      font-family: "jetbrainsMono";
+      src: local("JetBrains Mono"),
+           local("JetBrainsMono-Regular"),
+           url("/font/jetbrains-mono.ttf") format("truetype-variations"),
            url("/font/jetbrains-mono.ttf") format("truetype");
       font-style: normal;
       font-weight: 100 800;
@@ -3791,11 +3793,12 @@ HTML = """<!doctype html>
     .md-body li { margin: 0.15em 0; }
     .md-body li p { margin: 0; }
     .md-body code {
-      font-family: "JetBrains Mono", "SF Mono", "Fira Code", monospace !important;
+      font-family: "JetBrains Mono", monospace !important;
       font-style: normal;
       font-size: 14px;
       font-weight: 360;
       font-synthesis-weight: none;
+      font-stretch: normal;
       font-variation-settings: "wght" 360;
       color: rgb(254, 129, 129);
       line-height: 26px;
