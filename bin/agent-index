@@ -1706,7 +1706,7 @@ HTML = """<!doctype html>
         --text: rgb(250, 249, 246);
       }
       .title-row .header-plus-menu {
-        margin-left: -10px;
+        margin-left: -14px;
       }
       .header-plus-toggle {
         padding: 0;
@@ -1854,7 +1854,7 @@ HTML = """<!doctype html>
         align-self: center;
         width: 38px;
         height: 38px;
-        margin: 0 0 4px 16px;
+        margin: 0 0 4px 12px;
       }
       .composer-plus-toggle {
         display: inline-flex;
