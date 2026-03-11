@@ -1747,13 +1747,13 @@ HTML = """<!doctype html>
         grid-area: plus;
         justify-self: start;
         align-self: center;
-        width: 32px;
-        height: 32px;
-        margin: 4px 0 4px 8px; /* Reduced left margin */
+        width: 28px; /* Slightly smaller */
+        height: 28px; /* Slightly smaller */
+        margin: 0 0 4px 16px; /* Moved up (margin-top: 0) and right (margin-left: 16px) */
       }
       .composer-plus-toggle {
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
         border: none;
         background: transparent;
         color: rgb(186, 184, 176);
@@ -1762,8 +1762,8 @@ HTML = """<!doctype html>
         -webkit-backdrop-filter: none;
       }
       .composer-plus-toggle svg {
-        width: 28px;
-        height: 28px;
+        width: 24px; /* Slightly smaller */
+        height: 24px; /* Slightly smaller */
         stroke-width: 1.2;
       }
       .composer-plus-menu[open] .composer-plus-toggle {
