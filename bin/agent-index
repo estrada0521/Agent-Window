@@ -2100,7 +2100,7 @@ HTML = """<!doctype html>
       padding: 12px 16px 13px 16px;
       border-radius: 12px;
       background: rgb(20, 20, 19);
-      color: #e5e5e5 !important;
+      color: rgb(250, 249, 245) !important;
       border: none;
       box-shadow: none;
       backdrop-filter: none;
@@ -2112,7 +2112,7 @@ HTML = """<!doctype html>
     .message.user .md-body h2,
     .message.user .md-body h3,
     .message.user .md-body h4 {
-      color: #e5e5e5 !important;
+      color: rgb(250, 249, 245) !important;
     }
     .message-body-row {
       display: flex;
@@ -3643,9 +3643,9 @@ HTML = """<!doctype html>
         font-size: 16px;
         line-height: 22px;
         font-style: normal;
-        font-weight: 300;
+        font-weight: 400;
         font-optical-sizing: auto;
-        font-variation-settings: "wght" 300, "opsz" 16;
+        font-variation-settings: "wght" 400, "opsz" 16;
       }
       .message.user .md-body p,
       .message.user .md-body li,
