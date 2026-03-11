@@ -2275,13 +2275,16 @@ HTML = """<!doctype html>
       stroke-width: 1.45;
     }
     @media (min-width: 701px) and (hover: hover) and (pointer: fine) {
-      .message.user .user-message-meta {
+      .message.user .user-message-meta,
+      .message:not(.user) .message-meta-below {
         opacity: 0;
         pointer-events: none;
         transition: opacity 120ms ease;
       }
       .message-row.user:hover .user-message-meta,
-      .message-row.user:focus-within .user-message-meta {
+      .message-row.user:focus-within .user-message-meta,
+      .message-row:not(.user):hover .message-meta-below,
+      .message-row:not(.user):focus-within .message-meta-below {
         opacity: 1;
         pointer-events: auto;
       }
