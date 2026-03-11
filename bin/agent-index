@@ -719,6 +719,7 @@ HTML = """<!doctype html>
       --mobile-message-inline-pad: 8px;
       --mobile-user-row-gutter: 28px;
       --math-display-inline-pad: 2px;
+      --viewport-center-gutter: clamp(12px, 3vw, 28px);
       --user-accent: #b7c2d0;
       --claude-accent: #b7c2d0;
       --codex-accent: #b7c2d0;
@@ -1726,6 +1727,22 @@ HTML = """<!doctype html>
     @media (min-width: 701px) {
       :root {
         --text: rgb(250, 249, 246);
+      }
+      header::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 100px;
+        background: linear-gradient(180deg, 
+          rgba(38, 38, 36, 0.92) 0%, 
+          rgba(38, 38, 36, 0.6) 65%, 
+          transparent 100%);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        mask-image: linear-gradient(180deg, black 0%, black 60%, transparent 100%);
+        -webkit-mask-image: linear-gradient(180deg, black 0%, black 60%, transparent 100%);
+        z-index: -1;
+        pointer-events: none;
       }
       .title-row .header-plus-menu {
         margin-left: -10px;
@@ -3812,14 +3829,32 @@ HTML = """<!doctype html>
       font-weight: 400;
       line-height: 23px;
     }
+    .viewport-centered-block {
+      position: relative;
+      width: min(100%, var(--viewport-centered-width, 100%));
+      max-width: calc(100vw - (var(--viewport-center-gutter) * 2));
+      transform: translateX(var(--viewport-centered-shift, 0px));
+      transform-origin: center center;
+    }
+    .viewport-centered-block.viewport-centered-table {
+      margin: 0.5em 0;
+    }
+    .viewport-centered-scroll {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
     .katex-display {
       display: block;
       margin: 1.2em 0;
-      max-width: 100%;
-      padding-inline: var(--math-display-inline-pad);
+      width: min(100%, var(--viewport-centered-width, 100%));
+      max-width: calc(100vw - (var(--viewport-center-gutter) * 2));
+      padding-inline: 0;
       overflow-x: auto;
       overflow-y: hidden;
       text-align: left;
+      transform: translateX(var(--viewport-centered-shift, 0px));
       -webkit-overflow-scrolling: touch;
     }
     .katex-display > .katex {
@@ -3843,7 +3878,7 @@ HTML = """<!doctype html>
     .md-body pre code { background: none; padding: 0; font-size: 13px; border-radius: 0; }
     .md-body blockquote { border-left: 3px solid rgba(255,255,255,0.2); margin: 0.5em 0; padding: 0.3em 0.8em; opacity: 0.85; }
     .md-body hr { border: none; border-top: 1px solid var(--line); margin: 0.8em 0; }
-    .md-body table { border-collapse: collapse; width: 100%; margin: 0.5em 0; font-size: 13px; }
+    .md-body table { border-collapse: collapse; width: max-content; max-width: none; margin: 0 auto; font-size: 13px; }
     .md-body th, .md-body td { border: 1px solid rgba(255,255,255,0.12); padding: 6px 10px; text-align: left; }
     .md-body th { background: rgba(255,255,255,0.06); }
     .md-body a { color: var(--codex-accent); text-decoration: none; }
@@ -4594,10 +4629,77 @@ HTML = """<!doctype html>
       }
       shell.style.removeProperty("--scroll-btn-bottom-mobile");
     };
+    const mathRenderOptions = {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false},
+        {left: '\\[', right: '\\]', display: true}
+      ],
+      throwOnError: false
+    };
+    const renderMathInScope = (node) => {
+      if (!node || typeof renderMathInElement === "undefined") return;
+      renderMathInElement(node, mathRenderOptions);
+    };
+    const viewportCenterGutter = () => {
+      const raw = getComputedStyle(document.documentElement).getPropertyValue("--viewport-center-gutter");
+      const parsed = Number.parseFloat(raw);
+      return Number.isFinite(parsed) ? parsed : 24;
+    };
+    const ensureViewportCenteredTables = (scope = document) => {
+      scope.querySelectorAll(".md-body table").forEach((table) => {
+        if (table.closest(".viewport-centered-table")) return;
+        const parent = table.parentNode;
+        if (!parent) return;
+        const outer = document.createElement("div");
+        outer.className = "viewport-centered-block viewport-centered-table";
+        const scroll = document.createElement("div");
+        scroll.className = "viewport-centered-scroll";
+        parent.insertBefore(outer, table);
+        outer.appendChild(scroll);
+        scroll.appendChild(table);
+      });
+    };
+    const updateViewportCenteredBlocks = (scope = document) => {
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      if (!viewportWidth) return;
+      const gutter = viewportCenterGutter();
+      const maxWidth = Math.max(160, Math.floor(viewportWidth - (gutter * 2)));
+      scope.querySelectorAll(".katex-display, .viewport-centered-block").forEach((block) => {
+        const content = block.matches(".katex-display")
+          ? block.querySelector(".katex")
+          : block.querySelector("table");
+        if (!content) return;
+        block.style.removeProperty("--viewport-centered-width");
+        block.style.removeProperty("--viewport-centered-shift");
+        const contentWidth = Math.ceil(content.scrollWidth || content.getBoundingClientRect().width || 0);
+        const targetWidth = Math.min(maxWidth, Math.max(0, contentWidth));
+        if (targetWidth > 0) {
+          block.style.setProperty("--viewport-centered-width", `${targetWidth}px`);
+        }
+        const rect = block.getBoundingClientRect();
+        const shift = Math.round((viewportWidth / 2) - (rect.left + (rect.width / 2)));
+        block.style.setProperty("--viewport-centered-shift", `${shift}px`);
+      });
+    };
+    let viewportCenteredBlocksRaf = 0;
+    const scheduleViewportCenteredBlocks = (scope = document) => {
+      ensureViewportCenteredTables(scope);
+      if (viewportCenteredBlocksRaf) cancelAnimationFrame(viewportCenteredBlocksRaf);
+      viewportCenteredBlocksRaf = requestAnimationFrame(() => {
+        viewportCenteredBlocksRaf = 0;
+        updateViewportCenteredBlocks(scope);
+      });
+    };
     updateScrollBtnPos();
     new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("composer"));
     new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("targetPicker"));
     window.addEventListener("resize", updateScrollBtnPos);
+    window.addEventListener("resize", () => scheduleViewportCenteredBlocks(document));
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(() => scheduleViewportCenteredBlocks(document)).catch(() => {});
+    }
     const roleClass = (sender) => {
       sender = (sender || "").toLowerCase();
       if (["user","claude","codex","gemini","copilot"].includes(sender)) return sender;
@@ -4973,32 +5075,27 @@ HTML = """<!doctype html>
       if (!hasRemovals && _renderedIds.size > 0 && newEntriesToRender.length > 0) {
         // Append only new messages and animate them
         const frag = document.createDocumentFragment();
+        const appendedRows = [];
         for (const entry of newEntriesToRender) {
           const tmpl = document.createElement("template");
           tmpl.innerHTML = buildMsgHTML(entry, buildReplyPreviewHTML(entry));
           const row = tmpl.content.firstElementChild;
           if (row) row.classList.add("animate-in");
+          if (row) appendedRows.push(row);
           frag.appendChild(tmpl.content);
           _renderedIds.add(entry.msg_id);
         }
         root.appendChild(frag);
+        appendedRows.forEach((row) => renderMathInScope(row));
+        scheduleViewportCenteredBlocks(root);
       } else {
         // Full re-render: do not animate existing messages
         root.innerHTML = `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` + displayEntries.map(entry =>
           buildMsgHTML(entry, buildReplyPreviewHTML(entry))
         ).join("");
         _renderedIds = new Set(displayEntries.map(e => e.msg_id));
-        if (typeof renderMathInElement !== "undefined") {
-          renderMathInElement(root, {
-            delimiters: [
-              {left: '$$', right: '$$', display: true},
-              {left: '$', right: '$', display: false},
-              {left: '\\(', right: '\\)', display: false},
-              {left: '\\[', right: '\\]', display: true}
-            ],
-            throwOnError: false
-          });
-        }
+        renderMathInScope(root);
+        scheduleViewportCenteredBlocks(root);
       }
       if (shouldStickToBottom) {
         timeline.scrollTo({ top: timeline.scrollHeight, behavior: forceScroll ? "smooth" : "auto" });
