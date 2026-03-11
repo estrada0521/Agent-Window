@@ -1860,6 +1860,8 @@ HTML = """<!doctype html>
       background: transparent;
       border-color: transparent;
       box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
       color: #f7f9fc;
     }
     .message.user .md-body {
@@ -3758,6 +3760,9 @@ HTML = """<!doctype html>
         filter: none !important;
         text-shadow: none !important;
       }
+      .message.user .md-body * {
+        text-shadow: none !important;
+      }
       .message.user {
         background: transparent !important;
         border: none !important;
@@ -3765,6 +3770,19 @@ HTML = """<!doctype html>
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
         padding: 0 !important;
+      }
+      .message-row.user .message-wrap {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+      .message-row.user.animate-in {
+        filter: none !important;
+        animation: none !important; /* Or redefine animation without blur if needed */
+        opacity: 1;
+        transform: none;
       }
     }
   </style>
