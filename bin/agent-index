@@ -1646,13 +1646,6 @@ HTML = """<!doctype html>
       :root {
         --text: rgb(250, 249, 246);
       }
-      .message.user .md-body {
-        background: rgb(38, 38, 36);
-        border: none;
-        box-shadow: none;
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
-      }
       .composer-main-shell {
         grid-template-columns: 46px minmax(0, 1fr) auto;
         grid-template-areas:
@@ -2521,7 +2514,7 @@ HTML = """<!doctype html>
         height: 256px;
         border-radius: 20px;
         border: 1px solid rgba(255,255,255,0.16);
-        background: rgba(0, 0, 0, 0.58);
+        background: rgba(0, 0, 0, 0.88);
         backdrop-filter: blur(12px) saturate(110%);
         -webkit-backdrop-filter: blur(12px) saturate(110%);
         box-shadow:
@@ -2531,10 +2524,10 @@ HTML = """<!doctype html>
         transform: scale(0.25, 0.171875);
         transform-origin: 22px 22px;
         transition:
-          opacity 180ms ease,
-          transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
-          box-shadow 260ms ease,
-          background 260ms ease;
+          opacity 160ms ease,
+          transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
+          box-shadow 200ms ease,
+          background 200ms ease;
         pointer-events: none;
       }
       .header-plus-menu[open]::before {
@@ -2548,15 +2541,12 @@ HTML = """<!doctype html>
         width: 44px;
         height: 44px;
         border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.04);
-        background: rgb(25, 25, 25);
-        backdrop-filter: blur(12px) saturate(110%);
-        -webkit-backdrop-filter: blur(12px) saturate(110%);
+        border: 1px solid rgba(255,255,255,0.16);
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
         color: rgba(255, 255, 255, 0.95);
-        box-shadow:
-          0 0 8px rgba(255,255,255,0.05),
-          inset 0 1px 0 rgba(255,255,255,0.06),
-          0 6px 18px rgba(0,0,0,0.1);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 12px rgba(0,0,0,0.16);
         list-style: none;
         cursor: pointer;
         padding: 0;
@@ -2570,8 +2560,8 @@ HTML = """<!doctype html>
       }
       .header-plus-menu[open] .header-plus-toggle {
         transform: scale(0.92);
-        background: rgb(25, 25, 25);
-        border-color: rgba(255,255,255,0.08);
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255,255,255,0.3);
       }
       .header-plus-panel {
         display: flex;
@@ -2584,22 +2574,24 @@ HTML = """<!doctype html>
         padding: 8px;
         flex-direction: column;
         gap: 2px;
-        z-index: 1;
+        z-index: 30;
         border-radius: 20px;
-        border: none;
-        background: transparent;
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
-        box-shadow: none;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(0, 0, 0, 0.88);
+        backdrop-filter: blur(24px) saturate(160%);
+        -webkit-backdrop-filter: blur(24px) saturate(160%);
+        box-shadow:
+          inset 0 2px 10px rgba(0, 0, 0, 0.6),
+          0 12px 32px rgba(0, 0, 0, 0.4);
         opacity: 0;
         visibility: hidden;
-        transform: translateY(-4px) scale(0.96);
+        transform: translateY(-12px) scale(0.97);
         transform-origin: top left;
         pointer-events: none;
         transition:
-          opacity 220ms ease,
-          transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
-          visibility 0s linear 320ms;
+          opacity 200ms ease-in,
+          transform 200ms ease-in,
+          visibility 0s linear 200ms;
       }
       .header-plus-menu[open] .header-plus-panel {
         opacity: 1;
@@ -2607,8 +2599,8 @@ HTML = """<!doctype html>
         transform: translateY(0) scale(1);
         pointer-events: auto;
         transition:
-          opacity 220ms ease,
-          transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+          opacity 250ms cubic-bezier(0.16, 1, 0.3, 1),
+          transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
           visibility 0s;
       }
       .header-plus-title {
@@ -3755,6 +3747,21 @@ HTML = """<!doctype html>
         width: 30px;
         height: 30px;
       }
+    @media (min-width: 701px) {
+      .message.user .md-body {
+        background: rgb(38, 38, 36) !important;
+        border: 0.5px solid rgb(53, 53, 51) !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background-image: none !important;
+        filter: none !important;
+        text-shadow: none !important;
+      }
+      .message.user {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
     }
   </style>
 </head>
@@ -3802,6 +3809,9 @@ HTML = """<!doctype html>
           <div class="title-row">
             <details class="header-plus-menu" id="headerPlusMenu">
               <summary class="header-plus-toggle" aria-label="Open header controls">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+              </summary>
+
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
               </summary>
               <div class="header-plus-panel">
