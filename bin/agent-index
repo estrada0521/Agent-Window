@@ -2063,6 +2063,10 @@ HTML = """<!doctype html>
       margin-left: auto;
       justify-content: flex-end;
     }
+    .message.user .user-message-meta time {
+      color: rgb(156, 154, 147) !important;
+      white-space: nowrap;
+    }
     .message.user .user-message-meta .copy-btn {
       margin-right: 0;
     }
@@ -4512,6 +4516,7 @@ HTML = """<!doctype html>
         const isActive = pendingReplyTo?.msgId === entry.msg_id;
         const timestamp = escapeHtml(entry.timestamp || "");
         const isUser = cls === "user";
+        const userTimestampHtml = timestamp ? `<time>${timestamp}</time>` : "";
         const copyButtonHtml = `<button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
         return `<article class="message-row ${cls}" data-msgid="${msgId}" data-sender="${sender}">
           <div class="avatar${av.cls ? ` ${av.cls}` : ""}">${av.html}</div>
@@ -4522,7 +4527,7 @@ HTML = """<!doctype html>
           <div class="message-body-row">
             <div class="md-body">${renderMarkdown(body)}</div>
           </div>
-          ${isUser ? `<div class="message-meta-below user-message-meta">${copyButtonHtml}</div>` : `<div class="message-meta-below">${copyButtonHtml}${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}<span class="arrow">to</span>${targetMeta}</div>`}
+          ${isUser ? `<div class="message-meta-below user-message-meta">${userTimestampHtml}${copyButtonHtml}</div>` : `<div class="message-meta-below">${copyButtonHtml}${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}<span class="arrow">to</span>${targetMeta}</div>`}
           </div>
           </div>
         </article>`;
