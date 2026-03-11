@@ -2035,12 +2035,12 @@ HTML = """<!doctype html>
       height: 24px;
       flex: 0 0 24px;
       align-self: flex-start;
-      margin-top: 4px;
       border: none;
       background: transparent;
       box-shadow: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
+      margin-top: 2px;
     }
     .message-row.claude .avatar img,
     .message-row.codex .avatar img,
@@ -2118,14 +2118,14 @@ HTML = """<!doctype html>
       background: transparent;
       border: none;
     }
-    .arrow { color: var(--muted) !important; }
-    .targets { color: var(--muted) !important; }
+    .arrow { color: rgb(156, 154, 147) !important; }
+    .targets { color: rgb(156, 154, 147) !important; }
     .reply-jump-inline {
       all: unset;
       display: inline-flex;
       align-items: center;
       cursor: pointer;
-      color: var(--muted) !important;
+      color: rgb(156, 154, 147) !important;
       opacity: 1;
       border-radius: 6px;
       -webkit-tap-highlight-color: transparent;
@@ -2141,18 +2141,19 @@ HTML = """<!doctype html>
     }
     @keyframes inline-flash {
       0% { color: #fff !important; text-shadow: 0 0 12px rgba(255,255,255,0.8); }
-      100% { color: var(--muted) !important; text-shadow: none; }
+      100% { color: rgb(156, 154, 147) !important; text-shadow: none; }
     }
     .reply-jump-inline.click-flash {
       animation: inline-flash 250ms ease-out;
     }
     .reply-jump-inline .target-name {
       color: inherit !important;
+      font-weight: normal;
     }
     .target-name {
-      font-weight: 700;
+      font-weight: normal;
       text-transform: capitalize;
-      color: var(--muted) !important;
+      color: rgb(156, 154, 147) !important;
     }
     time { opacity: 1; color: var(--muted) !important; }
     pre {
@@ -3544,14 +3545,14 @@ HTML = """<!doctype html>
       border: none;
       padding: 4px;
       cursor: pointer;
-      color: rgba(255,255,255,0.28);
+      color: rgb(156, 154, 147);
       line-height: 1;
       border-radius: 4px;
       transition: color 80ms ease, transform 100ms ease;
       -webkit-tap-highlight-color: transparent;
     }
-    .copy-btn:hover { color: var(--muted); background: rgba(255,255,255,0.08); }
-    .copy-btn.copied { color: var(--muted); }
+    .copy-btn:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+    .copy-btn.copied { color: var(--text); }
     .reply-btn {
       flex-shrink: 0;
       align-self: flex-start;
@@ -3560,12 +3561,12 @@ HTML = """<!doctype html>
       border: none;
       padding: 4px;
       cursor: pointer;
-      color: rgba(255,255,255,0.28);
+      color: rgb(156, 154, 147);
       line-height: 1;
       border-radius: 4px;
       transition: color 150ms ease, background 150ms ease, transform 100ms ease;
     }
-    .reply-btn:hover { color: var(--muted); background: rgba(255,255,255,0.08); }
+    .reply-btn:hover { color: var(--text); background: rgba(255,255,255,0.08); }
     .reply-btn.active { color: var(--codex-accent); }
     .message-actions {
       display: flex;
@@ -4422,9 +4423,9 @@ HTML = """<!doctype html>
         return;
       }
       const firstTimestamp = displayEntries[0]?.timestamp || "";
-      const copyIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-      const checkIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
-      const replyIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
+      const copyIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+      const checkIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+      const replyIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
       const buildMsgHTML = (entry, replyPreviewHTML) => {
         if (entry.sender === "system") {
           return `<div class="sysmsg-row" data-msgid="${escapeHtml(entry.msg_id || "")}" data-sender="system">${escapeHtml(entry.message || "")}</div>`;
