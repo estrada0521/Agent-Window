@@ -1709,11 +1709,11 @@ HTML = """<!doctype html>
         margin-left: -10px;
       }
       .header-plus-toggle {
-        padding: 8px 14px;
+        padding: 10px 14px;
         width: auto;
         height: auto;
         min-width: 44px;
-        min-height: 38px;
+        min-height: 44px;
         border: none;
         background: transparent;
         box-shadow: none;
@@ -1728,7 +1728,7 @@ HTML = """<!doctype html>
         color: rgb(215, 215, 210);
       }
       .header-plus-toggle:active {
-        background: rgb(20, 20, 19);
+        background: rgb(24, 24, 23);
         border-color: transparent;
         color: rgb(235, 235, 230);
       }
@@ -1738,7 +1738,7 @@ HTML = """<!doctype html>
         stroke-width: 1.7;
       }
       .header-plus-menu[open] .header-plus-toggle {
-        background: rgb(20, 20, 19);
+        background: rgb(24, 24, 23);
         border: none;
         box-shadow: none;
         color: rgb(235, 235, 230);
