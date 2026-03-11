@@ -2170,6 +2170,7 @@ HTML = """<!doctype html>
       align-self: center;
     }
     .message:not(.user) .message-meta-below {
+      margin-top: 12px;
       gap: 7px;
       font-size: 13px;
     }
@@ -3227,6 +3228,7 @@ HTML = """<!doctype html>
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        box-sizing: border-box;
         width: 46px;
         height: 46px;
         border-radius: 999px;
@@ -3241,7 +3243,7 @@ HTML = """<!doctype html>
           0 6px 18px rgba(0,0,0,0.1);
         list-style: none;
         cursor: pointer;
-        padding: 0;
+        padding: 11px;
         position: relative;
         z-index: 2;
         transition: all 180ms cubic-bezier(0.2, 0.9, 0.2, 1);
@@ -3266,6 +3268,10 @@ HTML = """<!doctype html>
           0 0 8px rgba(255,255,255,0.05),
           inset 0 1px 0 rgba(255,255,255,0.06),
           0 4px 10px rgba(0,0,0,0.1);
+      }
+      .composer-plus-toggle svg {
+        width: 20px;
+        height: 20px;
       }
       .composer-plus-panel {
         display: flex;
@@ -3379,10 +3385,11 @@ HTML = """<!doctype html>
       }
       .target-chip {
         flex: 0 0 auto;
+        box-sizing: border-box;
         width: 46px;
         height: 46px;
         justify-content: center;
-        padding: 0;
+        padding: 11px;
         border-radius: 999px;
         border: 1px solid rgba(255,255,255,0.18);
         background: rgb(25, 25, 25);
@@ -3403,8 +3410,8 @@ HTML = """<!doctype html>
           color 120ms ease;
       }
       .target-chip .target-icon {
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
       }
       .target-chip .target-label {
         display: none;
