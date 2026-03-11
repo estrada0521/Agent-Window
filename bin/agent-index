@@ -2069,7 +2069,8 @@ HTML = """<!doctype html>
     .message-row.user .message-wrap {
       order: 1;
       flex-direction: row-reverse;
-      padding-left: 48px;
+      padding-left: 8px;
+      margin-right: -16px;
       gap: 8px;
       max-width: 100%;
     }
