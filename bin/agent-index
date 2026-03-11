@@ -1964,13 +1964,23 @@ HTML = """<!doctype html>
       will-change: transform, opacity, filter;
       margin-bottom: 8px;
     }
-    /* エージェントメッセージの後にユーザーメッセージが来る場合、間隔を広げる */
+    /* エージェントメッセージのアイコンを上に配置 */
+    .message-row:not(.user) {
+      flex-direction: column;
+      gap: 5px;
+      /* アイコンが上に移動した分、食い込ませて本文位置を維持 */
+      margin-top: -16px;
+    }
+    .message-row:first-child:not(.user) {
+      margin-top: 0;
+    }
+    /* エージェントメッセージの後にユーザーメッセージが来る場合 */
     .message-row:not(.user) + .message-row.user {
       margin-top: 14px;
     }
-    /* ユーザーメッセージの後にエージェントメッセージが来る場合、間隔を詰める */
+    /* ユーザーメッセージの後にエージェントメッセージが来る場合 */
     .message-row.user + .message-row:not(.user) {
-      margin-top: 0px;
+      margin-top: -12px;
     }
     .message-row.animate-in {
       animation: msgReveal 550ms cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
