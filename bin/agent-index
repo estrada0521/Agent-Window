@@ -1665,6 +1665,26 @@ HTML = """<!doctype html>
       .message.copilot .md-body {
         font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", Georgia, serif;
       }
+      .message.user .message-body-row {
+        padding-left: 0;
+      }
+      .message.user .message-body-row .copy-btn {
+        left: auto;
+        top: auto;
+        right: 8px;
+        bottom: 8px;
+        opacity: 0;
+        pointer-events: none;
+        background: transparent;
+        transition: opacity 140ms ease, background 200ms ease, color 150ms ease, transform 100ms ease;
+      }
+      .message-row.user:hover .message-body-row .copy-btn,
+      .message.user .message-body-row .copy-btn:hover,
+      .message.user .message-body-row .copy-btn:focus,
+      .message.user .message-body-row .copy-btn:focus-visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
       .target-chip {
         border: 0.5px solid transparent;
         background: transparent; /* Transparent until hovered */
@@ -3360,6 +3380,7 @@ HTML = """<!doctype html>
       }
       .message-row.user .message-wrap {
         padding-left: 20px;
+        margin-right: 0;
       }
       .message-row.claude,
       .message-row.codex,
