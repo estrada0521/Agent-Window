@@ -1577,14 +1577,14 @@ HTML = """<!doctype html>
     }
     
     @media (hover: hover) and (pointer: fine) {
-      .target-chip:hover:not(.active):not(.hover-suppressed) {
+      .target-chip:hover:not(.active) {
         background: rgb(36, 35, 34); /* Nearly identical to active (31,30,29) */
         border-color: rgba(255,255,255,0.32);
         color: rgb(215, 215, 210); /* Brighter text on hover */
         transform: none;
         box-shadow: none;
       }
-      .target-chip:hover:not(.active):not(.hover-suppressed) .target-icon {
+      .target-chip:hover:not(.active) .target-icon {
         filter: brightness(0) invert(0.82) !important; /* Brighter icon on hover */
       }
       /* Ensure absolute stability when hovering an active chip */
@@ -1754,14 +1754,14 @@ HTML = """<!doctype html>
         width: 18px; /* Shrunk */
         height: 18px;
       }
-      .target-chip:hover:not(.active):not(.hover-suppressed) {
+      .target-chip:hover:not(.active) {
         background: rgb(36, 35, 34); /* Nearly identical to active (31,30,29) */
         border-color: transparent;
         color: rgb(215, 215, 210); /* Brighter text on hover */
         box-shadow: none;
         transform: none;
       }
-      .target-chip:hover:not(.active):not(.hover-suppressed) .target-icon {
+      .target-chip:hover:not(.active) .target-icon {
         filter: brightness(0) invert(0.82) !important; /* Brighter icon on hover */
       }
       .target-chip.active:hover {
@@ -1974,16 +1974,36 @@ HTML = """<!doctype html>
       will-change: transform, opacity, filter;
       margin-bottom: 8px;
     }
-    /* エージェントメッセージのアイコンを上に配置 */
     .message-row:not(.user) {
       flex-direction: column;
-      gap: 5px;
-      /* アイコンが上に移動した分、食い込ませて本文位置を維持 */
-      margin-top: -16px;
+      gap: 0;
+      margin-top: 0;
       padding-left: 14px;
       padding-right: 28px;
       box-sizing: border-box;
     }
+    .message-row:not(.user) .avatar {
+      display: none;
+    }
+    .agent-msg-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 2px;
+      padding-left: 4px;
+      opacity: 0.9;
+    }
+    .sender-label {
+      font-weight: 700;
+      text-transform: capitalize;
+    }
+    .sender-label.claude { color: var(--claude-accent); }
+    .sender-label.codex { color: var(--codex-accent); }
+    .sender-label.gemini { color: var(--gemini-accent); }
+    .sender-label.copilot { color: var(--copilot-accent); }
+
     .message-row:first-child:not(.user) {
       margin-top: 0;
     }
@@ -1993,7 +2013,7 @@ HTML = """<!doctype html>
     }
     /* ユーザーメッセージの後にエージェントメッセージが来る場合 */
     .message-row.user + .message-row:not(.user) {
-      margin-top: -12px;
+      margin-top: 2px;
     }
     .message-row.animate-in {
       animation: msgReveal 550ms cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
@@ -4466,7 +4486,6 @@ HTML = """<!doctype html>
       return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     };
     let selectedTargets = [];
-    let suppressedTargetHover = new Set();
     let sendLocked = false;
     let lastSubmitAt = 0;
     let sessionActive = true;
@@ -4531,39 +4550,34 @@ HTML = """<!doctype html>
     };
     const renderTargetPicker = (targets) => {
       const root = document.getElementById("targetPicker");
-      suppressedTargetHover = new Set([...suppressedTargetHover].filter((target) => targets.includes(target)));
-      const renderSig = JSON.stringify({
-        targets,
-        selected: [...new Set(selectedTargets)].sort(),
-        suppressed: [...suppressedTargetHover].sort(),
-      });
+      const selectedSet = new Set(selectedTargets);
+      const targetsSig = JSON.stringify(targets);
+      const selectionSig = JSON.stringify([...selectedSet].sort());
+      const renderSig = `${targetsSig}|${selectionSig}`;
       if (root.dataset.renderSig === renderSig) return;
-      root.dataset.renderSig = renderSig;
-      root.innerHTML = targets.map((target) => {
-        const active = selectedTargets.includes(target) ? "active" : "";
-        const suppressed = !active && suppressedTargetHover.has(target) ? " hover-suppressed" : "";
-        return `<button type="button" class="target-chip ${active}${suppressed}" data-target="${target}" title="${escapeHtml(target)}"><img class="target-icon" src="/icon/${encodeURIComponent(target)}" alt="${escapeHtml(target)}"><span class="target-label">${escapeHtml(target)}</span></button>`;
-      }).join("");
+      if (root.dataset.targetsSig !== targetsSig) {
+        root.dataset.targetsSig = targetsSig;
+        root.innerHTML = targets.map((target) => {
+          return `<button type="button" class="target-chip" data-target="${target}" title="${escapeHtml(target)}"><img class="target-icon" src="/icon/${encodeURIComponent(target)}" alt="${escapeHtml(target)}"><span class="target-label">${escapeHtml(target)}</span></button>`;
+        }).join("");
+        root.querySelectorAll(".target-chip").forEach((node) => {
+          node.addEventListener("mousedown", (e) => e.preventDefault());
+          node.addEventListener("click", () => {
+            const target = node.dataset.target;
+            if (selectedTargets.includes(target)) {
+              selectedTargets = selectedTargets.filter((item) => item !== target);
+            } else {
+              selectedTargets = [...selectedTargets, target];
+            }
+            saveTargetSelection(document.getElementById("title").textContent, selectedTargets);
+            renderTargetPicker(availableTargets);
+          });
+        });
+      }
       root.querySelectorAll(".target-chip").forEach((node) => {
-        node.addEventListener("mousedown", (e) => e.preventDefault());
-        node.addEventListener("mouseleave", () => {
-          const target = node.dataset.target;
-          if (!suppressedTargetHover.delete(target)) return;
-          node.classList.remove("hover-suppressed");
-        });
-        node.addEventListener("click", () => {
-          const target = node.dataset.target;
-          if (selectedTargets.includes(target)) {
-            selectedTargets = selectedTargets.filter((item) => item !== target);
-            suppressedTargetHover.add(target);
-          } else {
-            selectedTargets = [...selectedTargets, target];
-            suppressedTargetHover.delete(target);
-          }
-          saveTargetSelection(document.getElementById("title").textContent, selectedTargets);
-          renderTargetPicker(targets);
-        });
+        node.classList.toggle("active", selectedSet.has(node.dataset.target));
       });
+      root.dataset.renderSig = renderSig;
     };
     const setQuickActionsDisabled = (disabled) => {
       document.querySelectorAll(".quick-action").forEach((node) => {
@@ -4787,16 +4801,18 @@ HTML = """<!doctype html>
         const isUser = cls === "user";
         const userTimestampHtml = timestamp ? `<time>${timestamp}</time>` : "";
         const copyButtonHtml = `<button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
+        const senderHtml = `<span class="sender-label ${cls}">${sender}</span>`;
+        const agentHeaderHtml = `<div class="agent-msg-header">${senderHtml}<span class="arrow">to</span>${targetMeta}${timestamp ? `<time>${timestamp}</time>` : ""}${copyButtonHtml}${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}</div>`;
+
         return `<article class="message-row ${cls}" data-msgid="${msgId}" data-sender="${sender}">
           <div class="avatar${av.cls ? ` ${av.cls}` : ""}">${av.html}</div>
           <div class="message-wrap" data-raw="${rawAttr}" data-preview="${previewAttr}">
           <div class="message ${cls}">
-          ${isUser ? replyPreviewHTML : ""}
-          ${isUser ? "" : replyPreviewHTML}
+          ${isUser ? replyPreviewHTML : agentHeaderHtml + replyPreviewHTML}
           <div class="message-body-row">
             <div class="md-body">${renderMarkdown(body)}</div>
           </div>
-          ${isUser ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${userTargetMeta}${userTimestampHtml}${copyButtonHtml}</div>` : `<div class="message-meta-below">${copyButtonHtml}${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}<span class="arrow">to</span>${targetMeta}</div>`}
+          ${isUser ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${userTargetMeta}${userTimestampHtml}${copyButtonHtml}</div>` : ""}
           </div>
           </div>
         </article>`;
