@@ -1709,12 +1709,12 @@ HTML = """<!doctype html>
         border-radius: 4px;
       }
       .header-plus-toggle:hover {
-        background: rgb(31, 30, 29);
+        background: rgb(20, 20, 19);
         border-color: transparent;
         color: rgb(215, 215, 210);
       }
       .header-plus-toggle:active {
-        background: rgb(31, 30, 29);
+        background: rgb(20, 20, 19);
         border-color: transparent;
         color: rgb(235, 235, 230);
       }
@@ -1724,7 +1724,7 @@ HTML = """<!doctype html>
         stroke-width: 1.7;
       }
       .header-plus-menu[open] .header-plus-toggle {
-        background: rgb(31, 30, 29);
+        background: rgb(20, 20, 19);
         border: none;
         box-shadow: none;
         color: rgb(235, 235, 230);
