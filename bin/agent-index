@@ -683,8 +683,8 @@ HTML = """<!doctype html>
       border-radius: 18px;
       padding: 11px 12px;
       font-family: Menlo, Monaco, "Cascadia Mono", "SF Mono", monospace;
-      font-size: 12.5px;
-      line-height: 1.16;
+      font-size: 10px;
+      line-height: 1.2;
       color: rgb(161, 168, 179);
       white-space: pre-wrap;
       overflow-wrap: anywhere;
@@ -1787,8 +1787,8 @@ HTML = """<!doctype html>
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%) !important;
-        width: min(760px, calc(100vw - 64px)) !important;
-        max-width: min(760px, calc(100vw - 64px)) !important;
+        width: min(820px, calc(100vw - 64px)) !important;
+        max-width: min(820px, calc(100vw - 64px)) !important;
       }
       .header-plus-toggle {
         padding: 0;
