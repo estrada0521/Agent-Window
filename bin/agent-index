@@ -2070,6 +2070,18 @@ HTML = """<!doctype html>
     .message.user .user-message-meta .copy-btn {
       margin-right: 0;
     }
+    @media (min-width: 701px) and (hover: hover) and (pointer: fine) {
+      .message.user .user-message-meta {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 120ms ease;
+      }
+      .message-row.user:hover .user-message-meta,
+      .message-row.user:focus-within .user-message-meta {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
     .message-row.user .message-wrap {
       order: 1;
       flex-direction: row-reverse;
