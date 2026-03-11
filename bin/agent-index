@@ -5270,8 +5270,17 @@ HTML = """<!doctype html>
           }
           return;
         }
-        if (target === "killBtn" && !keepComposerOpen) closeQuickMore();
-        if (keepHeaderOpen) {
+        if (target === "newChatBtn") {
+          const btn = node;
+          btn.disabled = true;
+          btn.textContent = "↺ Restarting…";
+          try {
+            await fetch("/new-chat", { method: "POST" });
+          } catch (_) {}
+          setTimeout(() => { window.location.reload(); }, 3000);
+          return;
+        }
+        if (target === "killBtn" && !keepComposerOpen) closeQuickMore();        if (keepHeaderOpen) {
           keepHeaderMenuThroughForwardClick = target;
           setTimeout(() => {
             if (keepHeaderMenuThroughForwardClick === target) keepHeaderMenuThroughForwardClick = "";
