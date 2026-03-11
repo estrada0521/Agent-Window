@@ -1759,8 +1759,14 @@ HTML = """<!doctype html>
         margin-left: -10px;
         margin-top: -14px;
       }
-      #newChatBtn {
+      .right-menu {
+        margin-left: 8px;
         margin-top: -14px;
+      }
+      .right-menu .header-plus-panel {
+        left: auto;
+        right: 0;
+        transform-origin: top right;
       }
       .header-plus-toggle {
         padding: 0;
@@ -4420,7 +4426,12 @@ HTML = """<!doctype html>
               <div class="agent-filter-chips" id="agentFilterChips"></div>
             </div>
             <div class="agent-status-panel" id="agentStatusPanel"></div>
-            <button id="newChatBtn" type="button" title="Restart chat server">⋯</button>
+            <details class="header-plus-menu right-menu" id="rightMenu">
+              <summary class="header-plus-toggle" id="newChatBtn" title="Menu">⋯</summary>
+              <div class="header-plus-panel">
+                <button type="button" class="quick-action" data-forward-action="reloadChat">Reload</button>
+              </div>
+            </details>
           </div>
         </div>
       </div>
@@ -5237,11 +5248,13 @@ HTML = """<!doctype html>
       if (composerPlusMenu.open) closeDrop();
     });
     const headerPlusMenu = document.getElementById("headerPlusMenu");
+    const rightMenu = document.getElementById("rightMenu");
     let keepHeaderMenuThroughForwardClick = "";
     const closeQuickMore = () => {
       if (quickMore) quickMore.open = isCompactMobile() ? false : true;
       closePlusMenu();
       if (headerPlusMenu) headerPlusMenu.open = false;
+      if (rightMenu) rightMenu.open = false;
     };
     document.addEventListener("click", (event) => {
       if (quickMore && isCompactMobile() && quickMore.open && !quickMore.contains(event.target)) {
@@ -5257,8 +5270,10 @@ HTML = """<!doctype html>
         }
         headerPlusMenu.open = false;
       }
-    });
-    document.querySelectorAll("[data-forward-action]").forEach((node) => {
+      if (rightMenu && rightMenu.open && !rightMenu.contains(event.target)) {
+        rightMenu.open = false;
+      }
+    });    document.querySelectorAll("[data-forward-action]").forEach((node) => {
       node.addEventListener("mousedown", (e) => e.preventDefault());
       node.addEventListener("click", async () => {
         const target = node.dataset.forwardAction || "";
@@ -5289,16 +5304,16 @@ HTML = """<!doctype html>
           }
           return;
         }
-        if (target === "newChatBtn") {
-          const btn = node;
-          btn.disabled = true;
-          btn.textContent = "↺ Restarting…";
-          try {
-            await fetch("/new-chat", { method: "POST" });
-          } catch (_) {}
-          setTimeout(() => { window.location.reload(); }, 3000);
-          return;
-        }
+         if (target === "newChatBtn" || target === "reloadChat") {
+           const btn = node;
+           btn.disabled = true;
+           btn.textContent = "↺ Restarting…";
+           try {
+             await fetch("/new-chat", { method: "POST" });
+           } catch (_) {}
+           setTimeout(() => { window.location.reload(); }, 3000);
+           return;
+         }
         if (target === "killBtn" && !keepComposerOpen) closeQuickMore();        if (keepHeaderOpen) {
           keepHeaderMenuThroughForwardClick = target;
           setTimeout(() => {
