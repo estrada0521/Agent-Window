@@ -3748,6 +3748,15 @@ HTML = """<!doctype html>
         height: 30px;
       }
     }
+    @media (min-width: 701px) {
+      .message.user .md-body,
+      .message.user .md-body p,
+      .message.user .md-body li,
+      .message.user .md-body pre,
+      .message.user .md-body code {
+        color: rgb(138, 136, 130) !important;
+      }
+    }
   </style>
 </head>
 <body>
