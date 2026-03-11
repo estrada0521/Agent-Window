@@ -1709,6 +1709,11 @@ HTML = """<!doctype html>
         margin-left: -10px;
       }
       .header-plus-toggle {
+        padding: 10px 14px;
+        width: auto;
+        height: auto;
+        min-width: 44px;
+        min-height: 44px;
         border: none;
         background: transparent;
         box-shadow: none;
@@ -1718,12 +1723,12 @@ HTML = """<!doctype html>
         border-radius: 4px;
       }
       .header-plus-toggle:hover {
-        background: rgb(20, 20, 19);
+        background: rgb(24, 24, 23);
         border-color: transparent;
         color: rgb(215, 215, 210);
       }
       .header-plus-toggle:active {
-        background: rgb(20, 20, 19);
+        background: rgb(24, 24, 23);
         border-color: transparent;
         color: rgb(235, 235, 230);
       }
@@ -1733,7 +1738,7 @@ HTML = """<!doctype html>
         stroke-width: 1.7;
       }
       .header-plus-menu[open] .header-plus-toggle {
-        background: rgb(20, 20, 19);
+        background: rgb(24, 24, 23);
         border: none;
         box-shadow: none;
         color: rgb(235, 235, 230);
@@ -1746,13 +1751,14 @@ HTML = """<!doctype html>
         font-family: "anthropicSerif", "Anthropic Serif", "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", Georgia, serif;
       }
       .target-chip {
+        padding: 10px 16px;
         border: 0.5px solid transparent;
         background: transparent; /* Transparent until hovered */
         color: rgb(156, 154, 147);
         box-shadow: none;
         font-size: 13px; /* Shrunk */
-        padding: 6px 12px; /* Shrunk */
-        transition: background 150ms ease, color 150ms ease;
+        border-radius: 12px;
+        transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
       }
       .target-chip .target-icon {
         width: 18px; /* Shrunk */
@@ -1771,7 +1777,7 @@ HTML = """<!doctype html>
         filter: brightness(0) invert(0.82) !important; /* Brighter icon on hover */
       }
       .target-chip.active:hover {
-        background: rgb(33, 32, 31) !important;
+        background: rgb(31, 31, 30) !important;
         color: rgb(235, 235, 230) !important;
         cursor: default;
       }
@@ -1782,8 +1788,8 @@ HTML = """<!doctype html>
         box-shadow: none;
       }
       .target-chip.active {
-        border-color: rgba(255,255,255,0.18) !important;
-        background: rgb(33, 32, 31) !important;
+        border-color: rgba(255,255,255,0.08) !important;
+        background: rgb(31, 31, 30) !important;
         color: rgb(235, 235, 230) !important;
         transform: none !important;
         box-shadow: none !important;
