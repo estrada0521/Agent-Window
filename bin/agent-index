@@ -3135,31 +3135,33 @@ HTML = """<!doctype html>
         z-index: 25;
       }
       .agent-row {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 0 10px;
-        border-radius: 10px;
-        border: none;
-        background: transparent;
-        box-shadow: none;
-        font-size: 14px;
-        font-weight: 600;
-        letter-spacing: 0.02em;
-        color: rgb(156, 154, 147);
-        white-space: nowrap;
-        height: 100%;
-        cursor: pointer;
-        transition: background 150ms ease, color 150ms ease;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        padding: 0 10px !important;
+        border-radius: 10px !important;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.02em !important;
+        color: rgb(156, 154, 147) !important;
+        white-space: nowrap !important;
+        height: 100% !important;
+        cursor: pointer !important;
+        transition: background 150ms ease, color 150ms ease !important;
+        transform: none !important;
       }
       .agent-row:hover {
-        background: rgb(24, 24, 23);
-        color: rgb(215, 215, 210);
+        background: rgb(24, 24, 23) !important;
+        color: rgb(215, 215, 210) !important;
+        transform: none !important;
       }
       .agent-row .agent-icon {
-        width: 17px;
-        height: 17px;
-        margin-top: 0;
+        width: 17px !important;
+        height: 17px !important;
+        margin-top: 0 !important;
       }
       .agent-row[data-status="idle"] .agent-status-elapsed {
         display: none !important;
