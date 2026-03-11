@@ -736,7 +736,7 @@ HTML = """<!doctype html>
       min-height: 100dvh;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
-      background: rgb(38, 38, 36);
+      background: var(--bg);
     }
     body {
       margin: 0;
@@ -1798,9 +1798,9 @@ HTML = """<!doctype html>
         filter: brightness(0) invert(0.61) !important;
       }
       .target-chip.active:hover {
-        background: transparent !important;
-        border-color: var(--chip-border-active) !important;
-        color: var(--chrome-muted) !important;
+        background: rgb(33, 32, 31) !important;
+        border-color: rgba(255,255,255,0.18) !important;
+        color: rgb(235, 235, 230) !important;
         cursor: default;
       }
       .target-chip:active:not(.active) {
@@ -1810,14 +1810,14 @@ HTML = """<!doctype html>
         box-shadow: none;
       }
       .target-chip.active {
-        border-color: var(--chip-border-active) !important;
-        background: transparent !important;
-        color: var(--chrome-muted) !important;
+        border-color: rgba(255,255,255,0.08) !important;
+        background: rgb(33, 32, 31) !important;
+        color: rgb(235, 235, 230) !important;
         transform: none !important;
         box-shadow: none !important;
       }
       .target-chip.active .target-icon {
-        filter: brightness(0) invert(0.61) !important;
+        filter: brightness(0) invert(0.92) !important;
         opacity: 1 !important;
       }
       .composer-main-shell {
@@ -3532,7 +3532,7 @@ HTML = """<!doctype html>
       .target-chip:active:not(.active)::before {
         inset: 6px;
         background: rgb(25, 25, 25);
-        border-color: rgba(255,255,255,0.24);
+        border-color: var(--chip-border-pressed);
         box-shadow:
           0 0 8px rgba(255,255,255,0.05),
           inset 0 1px 0 rgba(255,255,255,0.06),
@@ -3548,7 +3548,7 @@ HTML = """<!doctype html>
       .target-chip.active::before {
         inset: 6px;
         background: rgb(25, 25, 25) !important;
-        border-color: rgba(255,255,255,0.3) !important;
+        border-color: var(--chip-border-mobile-active) !important;
         box-shadow:
           0 0 8px rgba(255,255,255,0.05),
           inset 0 1px 0 rgba(255,255,255,0.06),
@@ -3656,10 +3656,16 @@ HTML = """<!doctype html>
       .md-body code { font-size: 13px; }
       .message-plain { font-size: 12px; }
       .message-row.user {
+        padding-left: var(--mobile-user-row-gutter);
+        padding-right: var(--mobile-message-inline-pad);
         margin-bottom: 14px;
       }
+      .message-row:not(.user) {
+        padding-left: var(--mobile-message-inline-pad);
+        padding-right: 12px;
+      }
       .message-row.user .message-wrap {
-        padding-left: 20px;
+        padding-left: 12px;
         margin-right: 0;
       }
       .message-row.claude,
@@ -3669,14 +3675,14 @@ HTML = """<!doctype html>
         padding-right: 12px;
       }
       .send-btn { display: none !important; }
-      main { padding: 180px 8px 200px; }
+      main { padding: 180px 8px calc(200px + env(safe-area-inset-bottom, 0px)); }
       .message-wrap { max-width: calc(100% - 42px); }
       .avatar { width: 28px; height: 28px; flex-basis: 28px; font-size: 11px; }
       
       .composer-overlay {
         position: fixed;
         inset: 0;
-        background: linear-gradient(180deg, #000000 0%, #000000 40%, rgba(0, 0, 0, 0.4) 100%);
+        background: linear-gradient(180deg, rgba(var(--bg-rgb), 1) 0%, rgba(var(--bg-rgb), 1) 40%, rgba(var(--bg-rgb), 0.42) 100%);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         z-index: 10;
@@ -3802,13 +3808,19 @@ HTML = """<!doctype html>
     }
     .katex-display {
       display: block;
-      text-align: center;
       margin: 1.2em 0;
-      /* Windowの中央に配置するための設定 */
-      width: 90vw;
-      position: relative;
-      left: 50%;
-      transform: translateX(-50%);
+      max-width: 100%;
+      padding-inline: var(--math-display-inline-pad);
+      overflow-x: auto;
+      overflow-y: hidden;
+      text-align: left;
+      -webkit-overflow-scrolling: touch;
+    }
+    .katex-display > .katex {
+      display: table;
+      width: max-content;
+      max-width: none;
+      margin: 0 auto;
     }
     .md-body pre {
       background-color: #0b0e13;
