@@ -2057,6 +2057,29 @@ HTML = """<!doctype html>
       margin-right: 4px;
       align-self: center;
     }
+    .message:not(.user) .message-meta-below {
+      gap: 7px;
+      font-size: 13px;
+    }
+    .message:not(.user) .message-meta-below .copy-btn,
+    .message:not(.user) .message-meta-below .reply-btn {
+      padding: 5px;
+    }
+    .message:not(.user) .message-meta-below .copy-btn {
+      margin-right: 0;
+    }
+    .message:not(.user) .message-meta-below .reply-btn {
+      margin-right: 0;
+    }
+    .message:not(.user) .message-meta-below .copy-btn svg,
+    .message:not(.user) .message-meta-below .reply-btn svg {
+      width: 17px;
+      height: 17px;
+    }
+    .message:not(.user) .message-meta-below .copy-btn svg *,
+    .message:not(.user) .message-meta-below .reply-btn svg * {
+      stroke-width: 1.8;
+    }
     .message.user .user-message-meta {
       width: fit-content;
       margin-top: 8px;
