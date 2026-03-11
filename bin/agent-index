@@ -1115,7 +1115,11 @@ HTML = """<!doctype html>
       list-style: none;
       backdrop-filter: blur(4px) saturate(110%);
       -webkit-backdrop-filter: blur(4px) saturate(110%);
-      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      transition: transform 120ms ease, border-color 120ms ease, background 250ms ease;
+    }
+    .composer-plus-toggle:hover {
+      background: rgb(20, 20, 19);
+      border-color: rgba(255,255,255,0.18);
     }
     .composer-plus-toggle::-webkit-details-marker {
       display: none;
@@ -1206,7 +1210,11 @@ HTML = """<!doctype html>
       list-style: none;
       backdrop-filter: blur(4px) saturate(110%);
       -webkit-backdrop-filter: blur(4px) saturate(110%);
-      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      transition: transform 120ms ease, border-color 120ms ease, background 250ms ease;
+    }
+    .header-plus-toggle:hover {
+      background: rgb(20, 20, 19);
+      border-color: rgba(255,255,255,0.18);
     }
     .header-plus-toggle::-webkit-details-marker {
       display: none;
@@ -1499,7 +1507,7 @@ HTML = """<!doctype html>
     .reply-cancel-btn:active,
     .header-plus-toggle:active,
     .composer-plus-toggle:active {
-      transform: scale(0.96);
+      transform: none;
     }
     #scrollToBottomBtn:active {
       transform: translateX(-50%) scale(0.92);
@@ -1507,15 +1515,19 @@ HTML = """<!doctype html>
     
     @media (hover: hover) and (pointer: fine) {
       .target-chip:hover:not(.active) {
-        background: rgba(255,255,255,0.08);
-        border-color: rgba(255,255,255,0.25);
+        background: rgb(36, 35, 34); /* Nearly identical to active (31,30,29) */
+        border-color: rgba(255,255,255,0.32);
+        color: rgb(215, 215, 210); /* Brighter text on hover */
         transform: none;
         box-shadow: none;
+      }
+      .target-chip:hover:not(.active) .target-icon {
+        filter: brightness(0) invert(0.82) !important; /* Brighter icon on hover */
       }
       /* Ensure absolute stability when hovering an active chip */
       .target-chip.active:hover {
         background: rgb(31, 30, 29) !important;
-        color: rgb(186, 184, 176) !important;
+        color: rgb(235, 235, 230) !important;
         cursor: default;
       }
     }
@@ -1667,10 +1679,14 @@ HTML = """<!doctype html>
         height: 18px;
       }
       .target-chip:hover:not(.active) {
-        background: rgb(56, 55, 53); /* Background on hover */
+        background: rgb(36, 35, 34); /* Nearly identical to active (31,30,29) */
         border-color: transparent;
+        color: rgb(215, 215, 210); /* Brighter text on hover */
         box-shadow: none;
         transform: none;
+      }
+      .target-chip:hover:not(.active) .target-icon {
+        filter: brightness(0) invert(0.82) !important; /* Brighter icon on hover */
       }
       .target-chip.active:hover {
         background: rgb(31, 30, 29) !important;
@@ -1762,7 +1778,8 @@ HTML = """<!doctype html>
         transition: background 150ms ease, color 150ms ease;
       }
       .composer-plus-toggle:hover {
-        background: rgba(255, 255, 255, 0.08); /* Background on hover */
+        background: rgb(20, 20, 19);
+        border-color: rgba(255, 255, 255, 0.12);
       }
       .composer-plus-toggle svg {
         width: 24px; /* Slightly smaller */
@@ -3588,33 +3605,33 @@ HTML = """<!doctype html>
       flex-shrink: 0;
       align-self: flex-start;
       margin-top: 2px;
-      background: none;
+      background: rgba(20, 20, 19, 0); /* Transparent by default */
       border: none;
       padding: 4px;
       cursor: pointer;
       color: rgb(156, 154, 147);
       line-height: 1;
       border-radius: 4px;
-      transition: color 80ms ease, transform 100ms ease;
+      transition: color 150ms ease, background 250ms ease, transform 100ms ease;
       -webkit-tap-highlight-color: transparent;
     }
-    .copy-btn:hover { color: var(--text); background: rgba(255,255,255,0.08); }
-    .copy-btn.copied { color: var(--text); }
+    .copy-btn:hover { color: #e5e5e5; background: rgb(20, 20, 19); }
+    .copy-btn.copied { color: #e5e5e5; }
     .reply-btn {
       flex-shrink: 0;
       align-self: flex-start;
       margin-top: 4px;
-      background: none;
+      background: rgba(20, 20, 19, 0); /* Transparent by default */
       border: none;
       padding: 4px;
       cursor: pointer;
       color: rgb(156, 154, 147);
       line-height: 1;
       border-radius: 4px;
-      transition: color 150ms ease, background 150ms ease, transform 100ms ease;
+      transition: color 150ms ease, background 250ms ease, transform 100ms ease;
     }
-    .reply-btn:hover { color: var(--text); background: rgba(255,255,255,0.08); }
-    .reply-btn.active { color: var(--codex-accent); }
+    .reply-btn:hover { color: #e5e5e5; background: rgb(20, 20, 19); }
+    .reply-btn.active { color: #e5e5e5; }
     .message-actions {
       display: flex;
       flex-direction: column;
