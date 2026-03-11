@@ -2033,7 +2033,7 @@ HTML = """<!doctype html>
       max-width: 100%;
       transform-origin: left center;
       will-change: transform, opacity, filter;
-      margin-bottom: 2px;
+      margin-bottom: 0px;
     }
     .message-row:not(.user) {
       padding-left: 10px;
@@ -2063,7 +2063,7 @@ HTML = """<!doctype html>
     .message-row.user {
       justify-content: flex-end;
       transform-origin: right center;
-      margin-bottom: 2px;
+      margin-bottom: 0px;
       padding-left: 64px;
       padding-right: 12px;
       box-sizing: border-box;
