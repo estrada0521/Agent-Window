@@ -1471,6 +1471,8 @@ HTML = """<!doctype html>
       transition: opacity 150ms ease;
       z-index: 100;
       backdrop-filter: blur(6px);
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     #scrollToBottomBtn svg {
       width: 16px;
@@ -1589,7 +1591,7 @@ HTML = """<!doctype html>
       max-width: 100%;
       padding: 8px 16px 9px 16px;
       border-radius: 24px;
-      background: rgb(32, 33, 34);
+      background: rgb(38, 39, 41);
       border: 1px solid rgba(255,255,255,0.04);
       box-shadow:
         0 0 8px rgba(255,255,255,0.05),
@@ -2165,7 +2167,7 @@ HTML = """<!doctype html>
         opacity: 0.6;
       }
       .message.user .md-body {
-        background: rgb(22, 22, 22);
+        background: rgb(38, 39, 41);
       }
       .eyebrow { display: none; }
       .header-main {
@@ -2903,7 +2905,7 @@ HTML = """<!doctype html>
       }
       #scrollToBottomBtn {
         left: auto;
-        right: 12px;
+        right: 16px;
         bottom: var(--scroll-btn-bottom-mobile, var(--scroll-btn-bottom, 150px));
         transform: none;
         background: rgb(25, 25, 25);
@@ -2911,8 +2913,8 @@ HTML = """<!doctype html>
         color: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(12px) saturate(110%);
         -webkit-backdrop-filter: blur(12px) saturate(110%);
-        width: 44px;
-        height: 44px;
+        width: 52px;
+        height: 52px;
         font-size: 20px;
         box-shadow:
           0 0 8px rgba(255,255,255,0.05),
@@ -2922,6 +2924,9 @@ HTML = """<!doctype html>
       #scrollToBottomBtn:hover {
         background: rgb(25, 25, 25);
         border-color: rgba(255,255,255,0.08);
+      }
+      #scrollToBottomBtn:active {
+        transform: scale(0.94);
       }
       .statusline {
         order: 2;
@@ -4103,18 +4108,13 @@ HTML = """<!doctype html>
           <div class="avatar${av.cls ? ` ${av.cls}` : ""}">${av.html}</div>
           <div class="message-wrap" data-raw="${rawAttr}" data-preview="${previewAttr}">
           <div class="message ${cls}">
-          <div class="meta">
-            ${isUser ? `<span class="arrow">to</span>
-            ${targetMeta}` : ""}
-            ${isUser ? `<time>${timestamp}</time>` : ""}
-          </div>
           ${isUser ? replyPreviewHTML : ""}
           ${isUser ? "" : replyPreviewHTML}
           <div class="message-body-row">
             <div class="md-body">${renderMarkdown(body)}</div>
             ${isUser ? `<button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>` : ""}
           </div>
-          ${isUser ? "" : `<div class="message-meta-below"><button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}<span class="arrow">to</span>${targetMeta}<time>${timestamp}</time></div>`}
+          ${isUser ? "" : `<div class="message-meta-below"><button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}<span class="arrow">to</span>${targetMeta}</div>`}
           </div>
           </div>
         </article>`;
