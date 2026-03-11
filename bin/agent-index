@@ -1787,8 +1787,8 @@ HTML = """<!doctype html>
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%) !important;
-        width: min(1000px, calc(100vw - 64px)) !important;
-        max-width: min(1000px, calc(100vw - 64px)) !important;
+        width: calc(100vw - 32px) !important;
+        max-width: calc(100vw - 32px) !important;
       }
       .header-plus-toggle {
         padding: 0;
