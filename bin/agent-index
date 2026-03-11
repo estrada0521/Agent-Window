@@ -686,8 +686,8 @@ HTML = """<!doctype html>
       font-size: 12.5px;
       line-height: 1.16;
       color: rgb(161, 168, 179);
-      white-space: pre;
-      overflow-wrap: normal;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
       word-break: normal;
       z-index: 1000;
       display: none;
@@ -1787,7 +1787,8 @@ HTML = """<!doctype html>
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%) !important;
-        max-width: min(1000px, calc(100vw - 64px)) !important;
+        width: min(760px, calc(100vw - 64px)) !important;
+        max-width: min(760px, calc(100vw - 64px)) !important;
       }
       .header-plus-toggle {
         padding: 0;
