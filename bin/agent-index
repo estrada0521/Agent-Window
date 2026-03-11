@@ -1669,7 +1669,7 @@ HTML = """<!doctype html>
         grid-template-areas:
           "input input input"
           "plus targets status";
-        row-gap: 4px;
+        row-gap: 0;
         column-gap: 10px;
         padding: 8px 10px;
         border-radius: 28px;
@@ -1679,14 +1679,14 @@ HTML = """<!doctype html>
       .target-picker {
         grid-area: targets;
         width: 100%;
-        margin: 0;
+        margin: -4px 0 0 0;
         justify-self: start;
         align-self: center;
         justify-content: flex-start;
       }
       .statusline {
         grid-area: status;
-        margin-top: 0;
+        margin-top: -4px;
         padding-left: 0;
         min-height: 1.1em;
         font-size: 10px;
@@ -1705,8 +1705,13 @@ HTML = """<!doctype html>
         grid-area: plus;
         justify-self: start;
         align-self: center;
+        width: 24px;
+        height: 24px;
+        margin: -4px 0 0 0;
       }
       .composer-plus-toggle {
+        width: 24px;
+        height: 24px;
         border: none;
         background: transparent;
         color: rgb(186, 184, 176);
