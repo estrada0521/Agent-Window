@@ -1832,7 +1832,7 @@ HTML = """<!doctype html>
         bottom: 12px;
         padding: 4px 8px;
         font-size: 11px;
-        color: var(--muted);
+        color: rgb(156, 154, 147);
         text-align: right;
         z-index: 1000;
         pointer-events: none;
