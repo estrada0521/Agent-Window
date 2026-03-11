@@ -1902,8 +1902,8 @@ HTML = """<!doctype html>
       }
       .statusline {
         position: fixed;
-        right: 12px;
-        bottom: 0;
+        right: 16px;
+        bottom: 3px;
         padding: 4px 8px;
         font-size: 11px;
         color: var(--chrome-muted);
@@ -5266,7 +5266,7 @@ HTML = """<!doctype html>
       node.addEventListener("click", async () => {
         const target = node.dataset.forwardAction || "";
         const keepComposerOpen = !!(composerPlusMenu && composerPlusMenu.contains(node));
-        const keepHeaderOpen = target === "autoModeBtn" || target === "caffeinateBtn" || target === "soundBtn" || target === "rawSendBtn";
+        const keepHeaderOpen = !!((headerPlusMenu && headerPlusMenu.contains(node)) || (rightMenu && rightMenu.contains(node)));
         if (keepComposerOpen) flashComposerAction(target);
         if (target === "save" || target === "interrupt") {
           if (!keepComposerOpen) closeQuickMore();
@@ -5277,7 +5277,6 @@ HTML = """<!doctype html>
           return;
         }
         if (target === "rawSendBtn") {
-          console.log("Raw toggle clicked, originating from:", keepComposerOpen ? "composer" : "header");
           rawSendEnabled = !rawSendEnabled;
           renderRawSendButton();
           if (keepComposerOpen) flashComposerAction(target);
@@ -5290,11 +5289,9 @@ HTML = """<!doctype html>
             }
           }, 1200);
           if (keepComposerOpen && composerPlusMenu) {
-            console.log("Reopening composer menu");
             requestAnimationFrame(() => { composerPlusMenu.open = true; });
           }
           if (keepHeaderOpen && headerPlusMenu) {
-            console.log("Reopening header menu");
             requestAnimationFrame(() => { headerPlusMenu.open = true; });
           }
           return;
