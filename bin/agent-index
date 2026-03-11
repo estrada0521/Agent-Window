@@ -1902,8 +1902,8 @@ HTML = """<!doctype html>
       }
       .statusline {
         position: fixed;
-        right: 30px;
-        bottom: 14px;
+        right: 12px;
+        bottom: 0;
         padding: 4px 8px;
         font-size: 11px;
         color: var(--chrome-muted);
