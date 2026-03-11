@@ -1903,7 +1903,7 @@ HTML = """<!doctype html>
       .statusline {
         position: fixed;
         right: 12px;
-        bottom: 2px;
+        bottom: 0;
         padding: 4px 8px;
         font-size: 11px;
         color: var(--chrome-muted);
@@ -5277,6 +5277,7 @@ HTML = """<!doctype html>
           return;
         }
         if (target === "rawSendBtn") {
+          console.log("Raw toggle clicked, originating from:", keepComposerOpen ? "composer" : "header");
           rawSendEnabled = !rawSendEnabled;
           renderRawSendButton();
           if (keepComposerOpen) flashComposerAction(target);
@@ -5289,9 +5290,11 @@ HTML = """<!doctype html>
             }
           }, 1200);
           if (keepComposerOpen && composerPlusMenu) {
+            console.log("Reopening composer menu");
             requestAnimationFrame(() => { composerPlusMenu.open = true; });
           }
           if (keepHeaderOpen && headerPlusMenu) {
+            console.log("Reopening header menu");
             requestAnimationFrame(() => { headerPlusMenu.open = true; });
           }
           return;
@@ -5329,8 +5332,8 @@ HTML = """<!doctype html>
         await submitMessage({ overrideMessage: node.dataset.shortcut || "" });
       });
     });
-    document.getElementById("rawSendBtn").addEventListener("click", () => {
-      closeQuickMore();
+    document.getElementById("rawSendBtn").addEventListener("click", (e) => {
+      if (e.detail > 0) closeQuickMore();
       rawSendEnabled = !rawSendEnabled;
       renderRawSendButton();
       const statusText = rawSendEnabled ? "raw send enabled" : "raw send disabled";
