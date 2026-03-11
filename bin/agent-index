@@ -3769,7 +3769,11 @@ HTML = """<!doctype html>
       display: block;
       text-align: center;
       margin: 1.2em 0;
-      width: 100%;
+      /* Windowの中央に配置するための設定 */
+      width: 90vw;
+      position: relative;
+      left: 50%;
+      transform: translateX(-50%);
     }
     .md-body pre {
       background-color: #0b0e13;
