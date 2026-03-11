@@ -1710,6 +1710,8 @@ HTML = """<!doctype html>
         align-items: center !important;
         gap: 16px !important;
         margin-top: -4px;
+        width: auto !important;
+        flex-shrink: 0 !important;
       }
       .trace-tooltip {
         left: 50% !important;
