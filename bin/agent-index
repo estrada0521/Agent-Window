@@ -1908,14 +1908,25 @@ HTML = """<!doctype html>
         position: absolute;
         right: 8px; /* Aligned with + button area */
         bottom: -36px; /* Raised */
-        width: 28px; /* Standardized to 28px */
-        height: 28px; /* Standardized to 28px */
-        border-radius: 8px;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
         background: rgb(186, 184, 176) !important;
         color: rgb(26, 25, 24) !important;
         z-index: 100;
         border: none;
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition: transform 120ms ease, background 150ms ease, filter 150ms ease;
+      }
+      .send-btn:hover {
+        filter: brightness(1.08);
+      }
+      .send-btn:active {
+        transform: none;
+        filter: brightness(0.92);
       }
     }
     .keyboard-locked main {
