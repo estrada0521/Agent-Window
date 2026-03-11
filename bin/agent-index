@@ -1980,6 +1980,9 @@ HTML = """<!doctype html>
       gap: 5px;
       /* アイコンが上に移動した分、食い込ませて本文位置を維持 */
       margin-top: -16px;
+      padding-left: 14px;
+      padding-right: 28px;
+      box-sizing: border-box;
     }
     .message-row:first-child:not(.user) {
       margin-top: 0;
