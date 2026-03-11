@@ -1677,17 +1677,18 @@ HTML = """<!doctype html>
         background: rgb(56, 55, 53);
         color: rgb(186, 184, 176);
         box-shadow: none;
-        font-size: 14.5px;
-        padding: 8px 14px;
+        font-size: 13px; /* Shrunk */
+        padding: 6px 12px; /* Shrunk */
       }
       .target-chip .target-icon {
-        width: 22px;
-        height: 22px;
+        width: 18px; /* Shrunk */
+        height: 18px;
       }
       .target-chip:hover:not(.active) {
         background: rgb(56, 55, 53);
         border-color: transparent;
         box-shadow: none;
+        transform: none;
       }
       .target-chip:active:not(.active) {
         background: rgb(48, 47, 46);
@@ -1697,13 +1698,14 @@ HTML = """<!doctype html>
         border: none;
       }
       .composer-main-shell {
-        grid-template-columns: 64px minmax(0, 1fr) auto; /* Widened first column to accommodate margin */
+        position: relative; /* Make container relative for send-btn */
+        grid-template-columns: 46px minmax(0, 1fr) auto; /* Reverted to 46px */
         grid-template-areas:
           "input input input"
           "plus targets status";
-        row-gap: 8px; /* Increased from 6px */
+        row-gap: 8px;
         column-gap: 10px;
-        padding: 8px 12px 14px 12px; /* Reverted left padding */
+        padding: 8px 12px 14px 12px;
         border-radius: 28px;
         background: rgb(36, 36, 34);
         border: 0.5px solid rgb(45, 45, 44);
@@ -1711,7 +1713,7 @@ HTML = """<!doctype html>
       .target-picker {
         grid-area: targets;
         width: 100%;
-        margin: 4px 0 4px 0; /* More top margin to separate from input */
+        margin: 4px 0 4px 0;
         justify-self: start;
         align-self: center;
         justify-content: flex-start;
@@ -1737,13 +1739,16 @@ HTML = """<!doctype html>
         grid-area: input;
         align-self: stretch;
       }
+      .composer-field {
+        position: static; /* Allow send-btn to position relative to main shell */
+      }
       .composer-plus-menu {
         grid-area: plus;
         justify-self: start;
         align-self: center;
         width: 32px;
         height: 32px;
-        margin: 4px 0 4px 32px; /* Extremely large left margin */
+        margin: 4px 0 4px 8px; /* Reduced left margin */
       }
       .composer-plus-toggle {
         width: 32px;
@@ -1758,7 +1763,7 @@ HTML = """<!doctype html>
       .composer-plus-toggle svg {
         width: 28px;
         height: 28px;
-        stroke-width: 1.2; /* Thinner plus sign */
+        stroke-width: 1.2;
       }
       .composer-plus-menu[open] .composer-plus-toggle {
         border: none;
@@ -1766,17 +1771,20 @@ HTML = """<!doctype html>
       }
       .composer textarea {
         background: transparent;
-        padding-left: 16px; /* Reverted left padding */
-        padding-right: 64px; /* Room for send button on the right */
+        padding-left: 16px;
+        padding-right: 48px; /* Room for delete button only */
       }
       .composer textarea:focus {
         background: transparent;
       }
       .send-btn {
         display: flex !important;
-        left: auto;
-        right: 12px;
-        bottom: 4px;
+        position: absolute;
+        right: 14px;
+        bottom: 12px; /* Positioned on the bottom row */
+        width: 34px;
+        height: 34px;
+        z-index: 100;
       }
     }
     .keyboard-locked main {
