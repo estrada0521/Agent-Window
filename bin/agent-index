@@ -793,7 +793,7 @@ HTML = """<!doctype html>
     header::before {
       content: "";
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0; left: 0; right: right; bottom: 0;
       background: linear-gradient(180deg,
         rgba(38,38,36,1.0)  0%,
         rgba(38,38,36,1.0)  48%,
@@ -816,22 +816,17 @@ HTML = """<!doctype html>
       -webkit-backdrop-filter: none;
       flex: 1;
       display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
     }
     .header-left {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       min-width: 0;
-    }
-    .header-right {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      flex-shrink: 0;
+      width: 100%;
+      flex: 1;
     }
     .title-area {
       min-width: 0;
@@ -1756,13 +1751,6 @@ HTML = """<!doctype html>
     @media (min-width: 701px) {
       :root {
         --text: rgb(250, 249, 246);
-      }
-      .agent-status-panel {
-        position: static;
-        margin: 0;
-        padding: 0;
-        z-index: 10;
-        pointer-events: auto;
       }
       header::before {
         content: "";
@@ -4400,6 +4388,9 @@ HTML = """<!doctype html>
               <summary class="header-plus-toggle" aria-label="Open header controls">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
               </summary>
+
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+              </summary>
               <div class="header-plus-panel">
                 <div class="header-plus-title" id="headerPanelTitle">agent-index</div>
                 <button type="button" class="quick-action" data-forward-action="autoModeBtn">Auto</button>
@@ -4413,7 +4404,7 @@ HTML = """<!doctype html>
               <span class="pill" id="filter">filter: all</span>
               <span class="pill" id="mode">mode: snapshot</span>
               <span class="pill" id="state">state: active</span>
-              <span class="pill" id="source: -">source: -</span>
+              <span class="pill" id="source">source: -</span>
               <button id="autoModeBtn" type="button" title="Toggle auto-mode">Auto: off</button>
               <button id="caffeinateBtn" type="button" title="Toggle sleep prevention">Awake: off</button>
               <button id="soundBtn" type="button" title="Toggle sound notifications">Sound: off</button>
@@ -4421,17 +4412,15 @@ HTML = """<!doctype html>
               <span id="searchCount" class="search-count"></span>
               <div class="agent-filter-chips" id="agentFilterChips"></div>
             </div>
+            <div class="agent-status-panel" id="agentStatusPanel"></div>
+            <details class="header-plus-menu right-menu" id="rightMenu">
+              <summary class="header-plus-toggle" id="newChatBtn" title="Menu">⋯</summary>
+              <div class="header-plus-panel">
+                <button type="button" class="quick-action" data-forward-action="reloadChat">Reload</button>
+                <button type="button" class="quick-action" data-forward-action="killBtn" style="color: rgba(248, 113, 113, 0.96);">Kill</button>
+              </div>
+            </details>
           </div>
-        </div>
-        <div class="header-right">
-          <div class="agent-status-panel" id="agentStatusPanel"></div>
-          <details class="header-plus-menu right-menu" id="rightMenu">
-            <summary class="header-plus-toggle" id="newChatBtn" title="Menu">⋯</summary>
-            <div class="header-plus-panel">
-              <button type="button" class="quick-action" data-forward-action="reloadChat">Reload</button>
-              <button type="button" class="quick-action" data-forward-action="killBtn" style="color: rgba(248, 113, 113, 0.96);">Kill</button>
-            </div>
-          </details>
         </div>
       </div>
     </header>
