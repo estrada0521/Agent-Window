@@ -1591,7 +1591,7 @@ HTML = """<!doctype html>
       }
       /* Ensure absolute stability when hovering an active chip */
       .target-chip.active:hover {
-        background: rgb(31, 30, 29) !important;
+        background: rgb(33, 32, 31) !important;
         color: rgb(235, 235, 230) !important;
         cursor: default;
       }
@@ -1604,8 +1604,8 @@ HTML = """<!doctype html>
     }
     .target-chip.active {
       color: rgb(235, 235, 230) !important;
-      background: rgb(31, 30, 29) !important;
-      border-color: transparent !important;
+      background: rgb(33, 32, 31) !important;
+      border-color: rgba(255,255,255,0.18) !important;
       transform: none !important;
       box-shadow: none !important;
     }
@@ -1771,7 +1771,7 @@ HTML = """<!doctype html>
         filter: brightness(0) invert(0.82) !important; /* Brighter icon on hover */
       }
       .target-chip.active:hover {
-        background: rgb(31, 30, 29) !important;
+        background: rgb(33, 32, 31) !important;
         color: rgb(235, 235, 230) !important;
         cursor: default;
       }
@@ -1782,8 +1782,8 @@ HTML = """<!doctype html>
         box-shadow: none;
       }
       .target-chip.active {
-        border-color: transparent !important;
-        background: rgb(31, 30, 29) !important;
+        border-color: rgba(255,255,255,0.18) !important;
+        background: rgb(33, 32, 31) !important;
         color: rgb(235, 235, 230) !important;
         transform: none !important;
         box-shadow: none !important;
@@ -1980,7 +1980,7 @@ HTML = """<!doctype html>
       max-width: 100%;
       transform-origin: left center;
       will-change: transform, opacity, filter;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .message-row:not(.user) {
       padding-left: 14px;
@@ -1998,11 +1998,11 @@ HTML = """<!doctype html>
     }
     /* エージェントメッセージの後にユーザーメッセージが来る場合 */
     .message-row:not(.user) + .message-row.user {
-      margin-top: 16px;
+      margin-top: 14px;
     }
     /* ユーザーメッセージの後にエージェントメッセージが来る場合 */
     .message-row.user + .message-row:not(.user) {
-      margin-top: 0px;
+      margin-top: 2px;
     }
     .message-row.animate-in {
       animation: msgReveal 550ms cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
@@ -2010,7 +2010,7 @@ HTML = """<!doctype html>
     .message-row.user {
       justify-content: flex-end;
       transform-origin: right center;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
     .message-row.user .avatar {
       display: none;
