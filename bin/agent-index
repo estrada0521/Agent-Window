@@ -1263,7 +1263,7 @@ HTML = """<!doctype html>
       transition: transform 120ms ease, border-color 120ms ease, background 250ms ease;
     }
     .header-plus-toggle:hover {
-      background: rgb(36, 35, 34);
+      background: rgb(31, 30, 29);
       border-color: rgba(255,255,255,0.32);
       color: rgb(215, 215, 210);
       box-shadow: none;
@@ -1709,7 +1709,7 @@ HTML = """<!doctype html>
         border-radius: 4px;
       }
       .header-plus-toggle:hover {
-        background: rgb(36, 35, 34);
+        background: rgb(31, 30, 29);
         border-color: transparent;
         color: rgb(215, 215, 210);
       }
