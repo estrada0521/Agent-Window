@@ -1646,6 +1646,24 @@ HTML = """<!doctype html>
       :root {
         --text: rgb(250, 249, 246);
       }
+      .target-chip {
+        border: none;
+        background: rgb(48, 47, 46);
+        color: rgb(186, 184, 176);
+        box-shadow: none;
+      }
+      .target-chip:hover:not(.active) {
+        background: rgb(48, 47, 46);
+        border-color: transparent;
+        box-shadow: none;
+      }
+      .target-chip:active:not(.active) {
+        background: rgb(48, 47, 46);
+        border-color: transparent;
+      }
+      .target-chip.active {
+        border: none;
+      }
       .composer-main-shell {
         grid-template-columns: 46px minmax(0, 1fr) auto;
         grid-template-areas:
@@ -1691,6 +1709,7 @@ HTML = """<!doctype html>
       .composer-plus-toggle {
         border: none;
         background: transparent;
+        color: rgb(186, 184, 176);
         box-shadow: none;
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
