@@ -1250,9 +1250,12 @@ HTML = """<!doctype html>
       align-items: center;
       width: 100%;
       padding: 9px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      color: rgb(156, 154, 147);
+      font-family: "anthropicSans", sans-serif;
+      font-style: normal;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20px;
+      color: rgb(250, 249, 245);
       position: relative;
       cursor: pointer;
       transition: color 150ms ease;
@@ -1328,7 +1331,7 @@ HTML = """<!doctype html>
       gap: 2px;
       min-width: 168px;
       padding: 8px;
-      border-radius: 18px;
+      border-radius: 10px;
       border: 0.5px solid rgb(58, 58, 56);
       background: rgba(48, 48, 46, 0.82);
       box-shadow: 0 12px 32px rgba(0,0,0,0.36);
@@ -1355,9 +1358,15 @@ HTML = """<!doctype html>
       align-items: center;
       width: 100%;
       padding: 9px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      color: rgba(182, 188, 198, 0.92);
+      font-family: "anthropicSans", sans-serif;
+      font-style: normal;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20px;
+      color: rgb(250, 249, 245);
+      position: relative;
+      cursor: pointer;
+    }
       position: relative;
       cursor: pointer;
     }
@@ -1742,15 +1751,15 @@ HTML = """<!doctype html>
         content: "";
         position: absolute;
         top: 0; left: 0; right: 0;
-        height: 100px;
+        height: 72px;
         background: linear-gradient(180deg, 
           rgba(38, 38, 36, 0.92) 0%, 
-          rgba(38, 38, 36, 0.6) 65%, 
+          rgba(38, 38, 36, 0.6) 52%, 
           transparent 100%);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
-        mask-image: linear-gradient(180deg, black 0%, black 60%, transparent 100%);
-        -webkit-mask-image: linear-gradient(180deg, black 0%, black 60%, transparent 100%);
+        mask-image: linear-gradient(180deg, black 0%, black 46%, transparent 100%);
+        -webkit-mask-image: linear-gradient(180deg, black 0%, black 46%, transparent 100%);
         z-index: -1;
         pointer-events: none;
       }
@@ -3476,10 +3485,12 @@ HTML = """<!doctype html>
         align-items: center;
         justify-content: flex-start;
         padding: 10px 12px;
+        font-family: "anthropicSans", sans-serif;
+        font-style: normal;
         font-size: 14px;
-        line-height: 1.25;
-        font-weight: 700;
-        color: rgb(156, 154, 147);
+        line-height: 20px;
+        font-weight: 400;
+        color: rgb(250, 249, 245);
         position: relative;
         cursor: pointer;
         transition: color 150ms ease;
