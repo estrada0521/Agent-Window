@@ -702,6 +702,9 @@ HTML = """<!doctype html>
       transform-origin: top center;
       will-change: transform, opacity, filter;
     }
+    .trace-tooltip.centered {
+      transform-origin: center center;
+    }
     :root {
       color-scheme: dark;
       --bg-rgb: 38, 38, 36;
@@ -1568,13 +1571,14 @@ HTML = """<!doctype html>
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      width: 38px;
       height: 38px;
-      padding: 0 14px;
+      padding: 0;
       border-radius: 10px;
       border: none;
       background: transparent;
       color: rgb(156, 154, 147);
-      font-size: 13px;
+      font-size: 18px;
       font-weight: 600;
       cursor: pointer;
       transition: background 150ms ease, color 150ms ease;
@@ -3189,6 +3193,10 @@ HTML = """<!doctype html>
         border-bottom-color: transparent;
         pointer-events: none;
       }
+      .trace-tooltip.centered::before,
+      .trace-tooltip.centered::after {
+        display: none;
+      }
       .trace-tooltip::after {
         content: "";
         position: absolute;
@@ -4412,7 +4420,7 @@ HTML = """<!doctype html>
               <div class="agent-filter-chips" id="agentFilterChips"></div>
             </div>
             <div class="agent-status-panel" id="agentStatusPanel"></div>
-            <button id="newChatBtn" type="button" title="Restart chat server">Reload</button>
+            <button id="newChatBtn" type="button" title="Restart chat server">⋯</button>
           </div>
         </div>
       </div>
@@ -5945,35 +5953,29 @@ HTML = """<!doctype html>
       currentHoverAgent = agent;
       traceTooltip.style.display = "block";
       traceTooltip.textContent = "Loading trace...";
-      if (isCompactMobile()) {
-        const left = 8;
-        const centerX = rect.left + rect.width / 2;
-        traceTooltip.style.left = left + "px";
-        traceTooltip.style.right = "8px";
-        traceTooltip.style.width = "calc(100vw - 16px)";
-        traceTooltip.style.maxWidth = "calc(100vw - 16px)";
-        traceTooltip.style.top = Math.min(window.innerHeight - 250, rect.bottom + 20) + "px";
-        traceTooltip.style.setProperty("--tail-x", (centerX - left) + "px");
-      } else {
-        traceTooltip.style.left = "50%";
-        traceTooltip.style.right = "";
-        traceTooltip.style.width = "auto";
-        traceTooltip.style.maxWidth = "min(1000px, calc(100vw - 32px))";
-        traceTooltip.style.top = Math.min(window.innerHeight - 250, rect.bottom + 20) + "px";
-        traceTooltip.style.transform = "translateX(-50%)";
-        traceTooltip.style.setProperty("--tail-x", "50%");
-      }
+      traceTooltip.classList.add("centered");
+      traceTooltip.style.left = "50%";
+      traceTooltip.style.right = "";
+      traceTooltip.style.top = "50%";
+      traceTooltip.style.width = isCompactMobile() ? "calc(100vw - 16px)" : "auto";
+      traceTooltip.style.maxWidth = isCompactMobile()
+        ? "calc(100vw - 16px)"
+        : "min(1000px, calc(100vw - 32px))";
+      traceTooltip.style.transform = "translate(-50%, -50%)";
+      traceTooltip.style.setProperty("--tail-x", "50%");
       fetchAndRenderTrace(agent);
     };
 
   const hideTraceTooltip = () => {
     currentHoverAgent = null;
     traceTooltip.style.display = "none";
+    traceTooltip.classList.remove("centered");
     traceTooltip.innerHTML = "";
     traceTooltip.style.left = "";
     traceTooltip.style.right = "";
     traceTooltip.style.width = "";
     traceTooltip.style.top = "";
+    traceTooltip.style.maxWidth = "";
     traceTooltip.style.transform = "";
     setActiveAgentRow(null);
   };
