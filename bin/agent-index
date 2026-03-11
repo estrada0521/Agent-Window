@@ -1989,8 +1989,8 @@ HTML = """<!doctype html>
       margin-bottom: 8px;
     }
     .message-row:not(.user) {
-      padding-left: 32px;
-      padding-right: 28px;
+      padding-left: 10px;
+      padding-right: 20px;
       box-sizing: border-box;
     }
     .sender-label {
@@ -2017,6 +2017,9 @@ HTML = """<!doctype html>
       justify-content: flex-end;
       transform-origin: right center;
       margin-bottom: 2px;
+      padding-left: 32px;
+      padding-right: 28px;
+      box-sizing: border-box;
     }
     .message-row.user .avatar {
       display: none;
@@ -2195,7 +2198,9 @@ HTML = """<!doctype html>
       width: 17px;
       height: 17px;
     }
-    .message:not(.user) .message-meta-below .copy-btn svg *,
+    .message:not(.user) .message-meta-below .copy-btn svg * {
+      stroke-width: 1.45;
+    }
     .message:not(.user) .message-meta-below .reply-btn svg * {
       stroke-width: 1.8;
     }
@@ -2220,7 +2225,7 @@ HTML = """<!doctype html>
       height: 17px;
     }
     .message.user .user-message-meta .copy-btn svg * {
-      stroke-width: 1.8;
+      stroke-width: 1.45;
     }
     @media (min-width: 701px) and (hover: hover) and (pointer: fine) {
       .message.user .user-message-meta {
