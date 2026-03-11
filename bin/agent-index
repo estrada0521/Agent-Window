@@ -1870,14 +1870,11 @@ HTML = """<!doctype html>
       max-width: 100%;
       padding: 8px 16px 9px 16px;
       border-radius: 24px;
-      background: rgb(38, 39, 41);
-      border: 1px solid rgba(255,255,255,0.04);
-      box-shadow:
-        0 0 8px rgba(255,255,255,0.05),
-        inset 0 1px 0 rgba(255,255,255,0.06),
-        0 6px 18px rgba(0,0,0,0.1);
-      backdrop-filter: blur(12px) saturate(110%);
-      -webkit-backdrop-filter: blur(12px) saturate(110%);
+      background: rgb(38, 38, 36);
+      border: 0.5px solid rgb(53, 53, 51);
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
     .message-body-row {
       display: flex;
@@ -1904,7 +1901,7 @@ HTML = """<!doctype html>
     .message.user .md-body p,
     .message.user .md-body li {
       font-weight: 400;
-      text-shadow: 0 0 6px rgba(255,255,255,0.08);
+      text-shadow: none;
     }
     .message.claude .md-body pre,
     .message.claude .md-body p,
@@ -2446,7 +2443,8 @@ HTML = """<!doctype html>
         opacity: 0.6;
       }
       .message.user .md-body {
-        background: rgb(38, 39, 41);
+        background: rgb(38, 38, 36);
+        border: 0.5px solid rgb(53, 53, 51);
       }
       .eyebrow { display: none; }
       .header-main {
@@ -3748,41 +3746,6 @@ HTML = """<!doctype html>
       .file-modal-close {
         width: 30px;
         height: 30px;
-      }
-    @media (min-width: 701px) {
-      .message.user .md-body {
-        background: rgb(38, 38, 36) !important;
-        border: 0.5px solid rgb(53, 53, 51) !important;
-        box-shadow: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        background-image: none !important;
-        filter: none !important;
-        text-shadow: none !important;
-      }
-      .message.user .md-body * {
-        text-shadow: none !important;
-      }
-      .message.user {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        padding: 0 !important;
-      }
-      .message-row.user .message-wrap {
-        background: transparent !important;
-        box-shadow: none !important;
-        border: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-      }
-      .message-row.user.animate-in {
-        filter: none !important;
-        animation: none !important; /* Or redefine animation without blur if needed */
-        opacity: 1;
-        transform: none;
       }
     }
   </style>
