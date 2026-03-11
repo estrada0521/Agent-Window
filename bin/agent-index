@@ -1802,10 +1802,10 @@ HTML = """<!doctype html>
       }
       .composer-main-shell {
         position: relative; /* Make container relative for send-btn */
-        grid-template-columns: 46px minmax(0, 1fr) auto; /* Reverted to 46px */
+        grid-template-columns: 46px minmax(0, 1fr);
         grid-template-areas:
-          "input input input"
-          "plus targets status";
+          "input input"
+          "plus targets";
         row-gap: 2px;
         column-gap: 10px;
         padding: 6px 12px 10px 12px;
@@ -1827,16 +1827,17 @@ HTML = """<!doctype html>
         gap: 10px;
       }
       .statusline {
-        grid-area: status;
-        margin: 4px 0 4px 0;
-        padding-left: 0;
-        min-height: 1.1em;
+        position: fixed;
+        right: 12px;
+        bottom: 12px;
+        padding: 4px 8px;
         font-size: 11px;
-        align-self: end;
-        justify-self: end;
+        color: var(--muted);
         text-align: right;
-      }
-      .composer-stack {
+        z-index: 1000;
+        pointer-events: none;
+        background: transparent;
+      }      .composer-stack {
         display: contents;
       }
       .composer {
