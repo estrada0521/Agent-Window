@@ -4181,7 +4181,8 @@ HTML = """<!doctype html>
       .right-menu {
         margin-right: 3px !important;
       }
-      .composer-shell {
+      .composer-main-shell,
+      .composer-field {
         margin-right: 4px !important;
         margin-left: 4px !important;
       }
