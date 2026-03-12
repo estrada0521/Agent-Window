@@ -3993,14 +3993,29 @@ HTML = """<!doctype html>
         min-width: 160px !important;
         width: auto !important;
         max-width: calc(100vw - 24px) !important;
+        display: flex !important;
+        flex-direction: column !important;
         padding: 8px !important;
         gap: 2px !important;
-        border-radius: 20px !important;
+        border-radius: 10px !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
         background: rgba(38, 38, 36, 0.72) !important;
         box-shadow: none !important;
         backdrop-filter: blur(16px) saturate(140%) !important;
         -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        transform: translateY(4px) scale(0.98) !important;
+        transform-origin: bottom left !important;
+        pointer-events: none !important;
+        transition: opacity 140ms ease, transform 180ms ease, visibility 0s linear 180ms !important;
+      }
+      .composer-plus-menu[open] .composer-plus-panel {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateY(0) scale(1) !important;
+        pointer-events: auto !important;
+        transition: opacity 140ms ease, transform 180ms ease, visibility 0s !important;
       }
       .composer-plus-panel .quick-action {
         all: unset !important;
@@ -4030,9 +4045,10 @@ HTML = """<!doctype html>
       }
       .composer-plus-panel .quick-action + .quick-action {
         border-top: none !important;
-        background-image: none !important;
+        background-image: linear-gradient(to right, rgba(255,255,255,0.08), rgba(255,255,255,0.08)) !important;
         background-repeat: no-repeat !important;
-        background-size: 0 0 !important;
+        background-size: calc(100% - 24px) 1px !important;
+        background-position: 12px 0 !important;
       }
       .has-hover .composer-plus-panel .quick-action:hover:not(:disabled),
       .composer-plus-panel .quick-action:active {
