@@ -1530,6 +1530,10 @@ HTML = """<!doctype html>
       opacity: 0.4;
       cursor: not-allowed;
     }
+    .quick-action.restarting:disabled {
+      opacity: 1;
+      cursor: default;
+    }
     .quick-action[data-shortcut="interrupt"] {
       margin-left: auto;
       border-color: rgba(245, 158, 11, 0.32);
