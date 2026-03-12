@@ -1465,11 +1465,40 @@ HTML = """<!doctype html>
     #scrollToBottomBtn {
       -webkit-tap-highlight-color: transparent;
     }
+    .quick-action:focus,
+    .quick-action:focus-visible,
+    .header-plus-toggle:focus,
+    .header-plus-toggle:focus-visible,
+    .composer-plus-toggle:focus,
+    .composer-plus-toggle:focus-visible,
+    .target-chip:focus,
+    .target-chip:focus-visible,
+    .copy-btn:focus,
+    .copy-btn:focus-visible,
+    .reply-btn:focus,
+    .reply-btn:focus-visible,
+    .reply-cancel-btn:focus,
+    .reply-cancel-btn:focus-visible,
+    .reply-jump-inline:focus,
+    .reply-jump-inline:focus-visible,
+    .file-card:focus,
+    .file-card:focus-visible,
+    .file-modal-close:focus,
+    .file-modal-close:focus-visible,
+    .filter-chip:focus,
+    .filter-chip:focus-visible,
+    .send-btn:focus,
+    .send-btn:focus-visible,
+    #scrollToBottomBtn:focus,
+    #scrollToBottomBtn:focus-visible {
+      outline: none !important;
+      -webkit-focus-ring-color: transparent !important;
+    }
     .has-hover .quick-action:hover:not(:disabled) {
       background: transparent;
       color: #fff;
       border-color: rgba(255,255,255,0.25);
-      transform: translateY(-1px);
+      transform: none;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     .quick-action:disabled {
@@ -3214,7 +3243,7 @@ HTML = """<!doctype html>
       }
       .header-plus-panel .quick-action.toggle-flash {
         color: #f8fbff;
-        transform: translateY(-1px);
+        transform: none;
         text-shadow: 0 0 10px rgba(255,255,255,0.14);
       }
       .header-plus-panel .quick-action.toggle-flash::before {
@@ -3642,7 +3671,7 @@ HTML = """<!doctype html>
       }
       .composer-plus-panel .quick-action.toggle-flash {
         color: #f8fbff;
-        transform: translateY(-1px);
+        transform: none;
         text-shadow: 0 0 10px rgba(255,255,255,0.14);
       }
       .composer-plus-panel .quick-action.toggle-flash::before {
@@ -6031,8 +6060,35 @@ HTML = """<!doctype html>
     const isCompactMobile = () => window.matchMedia("(max-width: 359px)").matches;
     const hoverCapabilityMedia = window.matchMedia("(hover: hover) and (pointer: fine)");
     const canUseHoverInteractions = () => hoverCapabilityMedia.matches;
+    const touchBlurSelector = [
+      ".quick-action",
+      ".header-plus-toggle",
+      ".composer-plus-toggle",
+      ".target-chip",
+      ".copy-btn",
+      ".reply-btn",
+      ".reply-cancel-btn",
+      ".reply-jump-inline",
+      ".file-card",
+      ".file-modal-close",
+      ".filter-chip",
+      ".send-btn",
+      "#scrollToBottomBtn"
+    ].join(", ");
     const syncHoverCapabilityClass = () => {
       document.documentElement.classList.toggle("has-hover", canUseHoverInteractions());
+    };
+    const blurTouchControlAfterTap = (event) => {
+      if (canUseHoverInteractions()) return;
+      const control = event.target?.closest?.(touchBlurSelector);
+      if (!control) return;
+      setTimeout(() => {
+        if (typeof control.blur === "function") control.blur();
+        const active = document.activeElement;
+        if (active && active.matches?.(touchBlurSelector) && typeof active.blur === "function") {
+          active.blur();
+        }
+      }, 0);
     };
     syncHoverCapabilityClass();
     if (hoverCapabilityMedia.addEventListener) {
@@ -6081,6 +6137,7 @@ HTML = """<!doctype html>
     };
     document.addEventListener("touchstart", primeSoundOnGesture, { passive: true });
     document.addEventListener("click", primeSoundOnGesture);
+    document.addEventListener("click", blurTouchControlAfterTap, true);
     const setActiveAgentRow = (row) => {
       document.querySelectorAll(".agent-row.active").forEach((node) => node.classList.remove("active"));
       if (row) row.classList.add("active");
