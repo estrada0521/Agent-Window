@@ -2183,6 +2183,15 @@ HTML = """<!doctype html>
         display: block !important;
         width: 100% !important;
       }
+      .message.user .message-body-row {
+        width: fit-content !important;
+        max-width: 100% !important;
+        margin-left: auto !important;
+      }
+      .message.user .message-body-row.has-wide-block,
+      .message.user .message-body-row.has-structured-block {
+        width: 100% !important;
+      }
       .md-body ul, .md-body ol {
         display: block !important;
         width: 100% !important;
@@ -3996,6 +4005,15 @@ HTML = """<!doctype html>
       .md-body { font: 12px/1.5 "SF Pro Text","Segoe UI",sans-serif; }
       .message-body-row {
         display: block !important;
+        width: 100% !important;
+      }
+      .message.user .message-body-row {
+        width: fit-content !important;
+        max-width: 100% !important;
+        margin-left: auto !important;
+      }
+      .message.user .message-body-row.has-wide-block,
+      .message.user .message-body-row.has-structured-block {
         width: 100% !important;
       }
       .md-body ul,
