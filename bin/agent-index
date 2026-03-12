@@ -1495,7 +1495,7 @@ HTML = """<!doctype html>
       -webkit-focus-ring-color: transparent !important;
     }
     .has-hover .quick-action:hover:not(:disabled) {
-      background: rgb(20, 20, 19);
+      background: rgb(25, 25, 24);
       color: #fff;
       border-color: rgba(255,255,255,0.25);
       transform: none;
@@ -2179,7 +2179,7 @@ HTML = """<!doctype html>
         box-shadow: 0 4px 16px rgba(0,0,0,0.2);
       }
       .composer-main-shell {
-        background: rgb(24, 24, 23);
+        background: rgb(30, 30, 28);
         border-color: rgba(255, 255, 255, 0.12);
         backdrop-filter: blur(18px) saturate(135%);
         -webkit-backdrop-filter: blur(18px) saturate(135%);
@@ -3496,7 +3496,7 @@ HTML = """<!doctype html>
         min-height: 46px;
         box-sizing: border-box;
         border-radius: 24px;
-        background: rgb(24, 24, 23);
+        background: rgb(30, 30, 28);
         border: none;
         overflow: visible;
         box-shadow: 0 6px 18px rgba(0,0,0,0.1);
