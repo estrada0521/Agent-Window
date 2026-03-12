@@ -2178,6 +2178,10 @@ HTML = """<!doctype html>
         border-color: rgba(255, 255, 255, 0.25) !important;
         transform: scale(1.15);
       }
+      .message-body-row {
+        display: block !important;
+        width: 100% !important;
+      }
       .md-body ul, .md-body ol {
         display: block !important;
         width: 100% !important;
@@ -2187,8 +2191,8 @@ HTML = """<!doctype html>
       .md-body li {
         display: list-item !important;
         white-space: normal !important;
-        word-break: break-word !important;
-        overflow-wrap: break-word !important;
+        word-break: normal !important;
+        overflow-wrap: anywhere !important;
       }
       .composer-plus-menu {
         width: 44px;
@@ -3989,28 +3993,29 @@ HTML = """<!doctype html>
         min-height: 1.15em;
       }
       .md-body { font: 12px/1.5 "SF Pro Text","Segoe UI",sans-serif; }
+      .message-body-row {
+        display: block !important;
+        width: 100% !important;
+      }
       .md-body ul,
       .md-body ol,
       .md-body li,
       .md-body li > p,
       .md-body blockquote,
       .md-body blockquote > p {
+        display: block !important;
         white-space: normal !important;
-        overflow-wrap: anywhere;
-        word-break: break-word;
-      }
-      .md-body ul,
-      .md-body ol {
-        display: block;
-        width: auto;
-        max-width: 100%;
-        box-sizing: border-box;
-        padding-right: 0.9em;
+        overflow-wrap: anywhere !important;
+        word-break: normal !important;
       }
       .md-body li {
         display: list-item !important;
-        width: auto;
-        max-width: 100%;
+        padding-left: 0.2em;
+      }
+      .md-body ul,
+      .md-body ol {
+        padding-left: 1.2em !important;
+        margin: 0.5em 0 !important;
       }
       .table-scroll { width: calc(100% + 24px); margin-left: -12px; margin-right: -12px; }
       .md-body pre { font-size: 11px; padding: 30px 12px 10px; background-position: 10px 10px; width: calc(100% + 24px); margin-left: -12px; margin-right: -12px; border-left: none; border-right: none; border-radius: 0; }
