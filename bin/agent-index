@@ -789,13 +789,15 @@ HTML = """<!doctype html>
     header::before {
       content: "";
       position: absolute;
-      top: 0; left: 0; right: right; bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       background: linear-gradient(180deg,
         rgba(38,38,36,1.0)  0%,
         rgba(38,38,36,1.0)  48%,
         rgba(38,38,36,0.82) 84%,
         transparent      100%
       );
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
       mask-image: linear-gradient(180deg, black 0%, black 74%, transparent 100%);
       -webkit-mask-image: linear-gradient(180deg, black 0%, black 74%, transparent 100%);
       z-index: -1;
@@ -1027,6 +1029,8 @@ HTML = """<!doctype html>
         rgba(38,38,36,0.18) 68%,
         transparent 100%
       );
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
       mask-image: linear-gradient(0deg, black 35%, transparent 100%);
       -webkit-mask-image: linear-gradient(0deg, black 35%, transparent 100%);
       z-index: -1;
@@ -2804,267 +2808,6 @@ HTML = """<!doctype html>
         box-shadow: none;
         background: var(--bg);
       }
-      .mobile-top-frost {
-        display: block;
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 60pt;
-        z-index: 18;
-        pointer-events: none;
-      }
-      .mobile-top-frost > span {
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 3pt;
-        z-index: 18;
-      }
-      .mobile-top-frost > span:nth-child(1) {
-        top: 0pt;
-        background: rgba(0, 0, 0, 0.05);
-        backdrop-filter: blur(2.2px) saturate(108%);
-        -webkit-backdrop-filter: blur(2.2px) saturate(108%);
-      }
-      .mobile-top-frost > span:nth-child(2) {
-        top: 6pt;
-        background: rgba(0, 0, 0, 0.044);
-        backdrop-filter: blur(1.7px) saturate(107%);
-        -webkit-backdrop-filter: blur(1.7px) saturate(107%);
-      }
-      .mobile-top-frost > span:nth-child(3) {
-        top: 12pt;
-        background: rgba(0, 0, 0, 0.038);
-        backdrop-filter: blur(1.3px) saturate(107%);
-        -webkit-backdrop-filter: blur(1.3px) saturate(107%);
-      }
-      .mobile-top-frost > span:nth-child(4) {
-        top: 18pt;
-        background: rgba(0, 0, 0, 0.032);
-        backdrop-filter: blur(1px) saturate(106%);
-        -webkit-backdrop-filter: blur(1px) saturate(106%);
-      }
-      .mobile-top-frost > span:nth-child(5) {
-        top: 24pt;
-        background: rgba(0, 0, 0, 0.026);
-        backdrop-filter: blur(0.75px) saturate(105%);
-        -webkit-backdrop-filter: blur(0.75px) saturate(105%);
-      }
-      .mobile-top-frost > span:nth-child(6) {
-        top: 30pt;
-        background: rgba(0, 0, 0, 0.02);
-        backdrop-filter: blur(0.5px) saturate(104%);
-        -webkit-backdrop-filter: blur(0.5px) saturate(104%);
-      }
-      .mobile-top-frost > span:nth-child(7) {
-        top: 36pt;
-        background: rgba(0, 0, 0, 0.016);
-        backdrop-filter: blur(0.35px) saturate(103%);
-        -webkit-backdrop-filter: blur(0.35px) saturate(103%);
-      }
-      .mobile-top-frost > span:nth-child(8) {
-        top: 42pt;
-        background: rgba(0, 0, 0, 0.012);
-        backdrop-filter: blur(0.2px) saturate(102%);
-        -webkit-backdrop-filter: blur(0.2px) saturate(102%);
-      }
-      .mobile-top-frost > span:nth-child(9) {
-        top: 48pt;
-        background: rgba(0, 0, 0, 0.008);
-        backdrop-filter: blur(0.1px) saturate(101%);
-        -webkit-backdrop-filter: blur(0.1px) saturate(101%);
-      }
-      .mobile-top-frost > span:nth-child(10) {
-        top: 54pt;
-        background: rgba(0, 0, 0, 0.005);
-        backdrop-filter: blur(0px) saturate(100%);
-        -webkit-backdrop-filter: blur(0px) saturate(100%);
-      }
-      .mobile-top-frost > span:nth-child(11) {
-        display: none;
-      }
-      .mobile-top-frost > span:nth-child(12) {
-        display: none;
-      }
-      .mobile-top-frost > span:nth-child(13) {
-        display: none;
-      }
-      .mobile-top-frost > span:nth-child(14) {
-        display: none;
-      }
-      .mobile-top-frost > span:nth-child(15) {
-        display: none;
-      }
-      .mobile-top-frost > span:nth-child(16) {
-        display: none;
-      }
-      .mobile-top-frost > span:nth-child(17) {
-        display: none;
-      }
-      .mobile-top-frost > span:nth-child(18) {
-        display: none;
-      }
-      .mobile-top-frost > span:nth-child(19) {
-        display: none;
-      }
-      .mobile-top-frost > span:nth-child(20) {
-        display: none;
-      }
-      .mobile-top-frost::after {
-        content: "";
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 60pt;
-        background: rgba(0, 0, 0, 0.012);
-        backdrop-filter: blur(0.6px) saturate(103%);
-        -webkit-backdrop-filter: blur(0.6px) saturate(103%);
-        z-index: 19;
-        pointer-events: none;
-      }
-      .mobile-top-frost::before {
-        content: "";
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 120pt;
-        background: linear-gradient(180deg,
-          rgba(0,0,0,1) 0%,
-          rgba(0,0,0,1) 40%,
-          rgba(0,0,0,0.58) 72%,
-          rgba(0,0,0,0) 100%
-        );
-        z-index: 20;
-        pointer-events: none;
-      }
-      .mobile-bottom-frost {
-        display: block;
-        position: absolute;
-        left: 0; right: 0; bottom: 0;
-        height: 60pt;
-        z-index: 18;
-        pointer-events: none;
-      }
-      .mobile-bottom-frost > span {
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 3pt;
-        z-index: 18;
-      }
-      .mobile-bottom-frost > span:nth-child(1) {
-        bottom: 0pt;
-        background: rgba(0, 0, 0, 0.05);
-        backdrop-filter: blur(2.2px) saturate(108%);
-        -webkit-backdrop-filter: blur(2.2px) saturate(108%);
-      }
-      .mobile-bottom-frost > span:nth-child(2) {
-        bottom: 6pt;
-        background: rgba(0, 0, 0, 0.044);
-        backdrop-filter: blur(1.7px) saturate(107%);
-        -webkit-backdrop-filter: blur(1.7px) saturate(107%);
-      }
-      .mobile-bottom-frost > span:nth-child(3) {
-        bottom: 12pt;
-        background: rgba(0, 0, 0, 0.038);
-        backdrop-filter: blur(1.3px) saturate(107%);
-        -webkit-backdrop-filter: blur(1.3px) saturate(107%);
-      }
-      .mobile-bottom-frost > span:nth-child(4) {
-        bottom: 18pt;
-        background: rgba(0, 0, 0, 0.032);
-        backdrop-filter: blur(1px) saturate(106%);
-        -webkit-backdrop-filter: blur(1px) saturate(106%);
-      }
-      .mobile-bottom-frost > span:nth-child(5) {
-        bottom: 24pt;
-        background: rgba(0, 0, 0, 0.026);
-        backdrop-filter: blur(0.75px) saturate(105%);
-        -webkit-backdrop-filter: blur(0.75px) saturate(105%);
-      }
-      .mobile-bottom-frost > span:nth-child(6) {
-        bottom: 30pt;
-        background: rgba(0, 0, 0, 0.02);
-        backdrop-filter: blur(0.5px) saturate(104%);
-        -webkit-backdrop-filter: blur(0.5px) saturate(104%);
-      }
-      .mobile-bottom-frost > span:nth-child(7) {
-        bottom: 36pt;
-        background: rgba(0, 0, 0, 0.016);
-        backdrop-filter: blur(0.35px) saturate(103%);
-        -webkit-backdrop-filter: blur(0.35px) saturate(103%);
-      }
-      .mobile-bottom-frost > span:nth-child(8) {
-        bottom: 42pt;
-        background: rgba(0, 0, 0, 0.012);
-        backdrop-filter: blur(0.2px) saturate(102%);
-        -webkit-backdrop-filter: blur(0.2px) saturate(102%);
-      }
-      .mobile-bottom-frost > span:nth-child(9) {
-        bottom: 48pt;
-        background: rgba(0, 0, 0, 0.008);
-        backdrop-filter: blur(0.1px) saturate(101%);
-        -webkit-backdrop-filter: blur(0.1px) saturate(101%);
-      }
-      .mobile-bottom-frost > span:nth-child(10) {
-        bottom: 54pt;
-        background: rgba(0, 0, 0, 0.005);
-        backdrop-filter: blur(0px) saturate(100%);
-        -webkit-backdrop-filter: blur(0px) saturate(100%);
-      }
-      .mobile-bottom-frost > span:nth-child(11) {
-        display: none;
-      }
-      .mobile-bottom-frost > span:nth-child(12) {
-        display: none;
-      }
-      .mobile-bottom-frost > span:nth-child(13) {
-        display: none;
-      }
-      .mobile-bottom-frost > span:nth-child(14) {
-        display: none;
-      }
-      .mobile-bottom-frost > span:nth-child(15) {
-        display: none;
-      }
-      .mobile-bottom-frost > span:nth-child(16) {
-        display: none;
-      }
-      .mobile-bottom-frost > span:nth-child(17) {
-        display: none;
-      }
-      .mobile-bottom-frost > span:nth-child(18) {
-        display: none;
-      }
-      .mobile-bottom-frost > span:nth-child(19) {
-        display: none;
-      }
-      .mobile-bottom-frost > span:nth-child(20) {
-        display: none;
-      }
-      .mobile-bottom-frost::after {
-        content: "";
-        position: absolute;
-        left: 0; right: 0; bottom: 0;
-        height: 60pt;
-        background: rgba(0, 0, 0, 0.012);
-        backdrop-filter: blur(0.6px) saturate(103%);
-        -webkit-backdrop-filter: blur(0.6px) saturate(103%);
-        z-index: 19;
-        pointer-events: none;
-      }
-      .mobile-bottom-frost::before {
-        content: "";
-        position: absolute;
-        left: 0; right: 0; bottom: 0;
-        height: 60pt;
-        background: linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
-        z-index: 20;
-        pointer-events: none;
-      }
-      header::before {
-        display: none;
-      }
-      .composer::before {
-        display: none;
-      }
       header {
         padding: max(10px, calc(env(safe-area-inset-top) + 6px)) 10px 10px;
         display: flex;
@@ -4165,6 +3908,9 @@ HTML = """<!doctype html>
       }
     }
     @media (min-width: 701px) {
+      .header-main {
+        transform: translateY(-5px);
+      }
       .composer-main-shell {
         row-gap: 10px;
         column-gap: 10px;
@@ -4183,41 +3929,44 @@ HTML = """<!doctype html>
       }
       header::before {
         display: block !important;
-        top: 0;
-        right: 0;
-        bottom: auto;
-        left: 0;
-        height: 56px;
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        height: auto !important;
         background: linear-gradient(180deg,
-          rgba(var(--bg-rgb), 1) 0%,
-          rgba(var(--bg-rgb), 1) 94%,
-          transparent 100%
-        );
-        mask-image: none;
-        -webkit-mask-image: none;
+          rgba(38,38,36,1.0)  0%,
+          rgba(38,38,36,1.0)  48%,
+          rgba(38,38,36,0.82) 84%,
+          transparent      100%
+        ) !important;
+        backdrop-filter: blur(24px) saturate(160%) !important;
+        -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+        mask-image: linear-gradient(180deg, black 0%, black 74%, transparent 100%) !important;
+        -webkit-mask-image: linear-gradient(180deg, black 0%, black 74%, transparent 100%) !important;
+        z-index: -1;
       }
       .composer::before {
         display: block !important;
-        top: auto;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        height: calc(68px + env(safe-area-inset-bottom, 0px));
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        height: auto !important;
         background: linear-gradient(0deg,
-          rgba(var(--bg-rgb), 1) 0,
-          rgba(var(--bg-rgb), 1) calc(env(safe-area-inset-bottom, 0px) + 8px),
-          rgba(var(--bg-rgb), 0.88) calc(env(safe-area-inset-bottom, 0px) + 26px),
-          rgba(var(--bg-rgb), 0.52) calc(env(safe-area-inset-bottom, 0px) + 52px),
+          rgba(38,38,36,1.0) 0%,
+          rgba(38,38,36,0.88) 18%,
+          rgba(38,38,36,0.58) 42%,
+          rgba(38,38,36,0.18) 68%,
           transparent 100%
-        );
-        mask-image: none;
-        -webkit-mask-image: none;
+        ) !important;
+        backdrop-filter: blur(24px) saturate(160%) !important;
+        -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+        mask-image: linear-gradient(0deg, black 35%, transparent 100%) !important;
+        -webkit-mask-image: linear-gradient(0deg, black 35%, transparent 100%) !important;
+        z-index: -1;
       }
       header {
         padding-top: env(safe-area-inset-top, 0px) !important;
-        padding-right: calc(env(safe-area-inset-right, 0px) + 6px) !important;
+        padding-right: calc(env(safe-area-inset-right, 0px) + 10px) !important;
         padding-bottom: 0 !important;
-        padding-left: calc(env(safe-area-inset-left, 0px) + 6px) !important;
+        padding-left: calc(env(safe-area-inset-left, 0px) + 10px) !important;
       }
       .header-main {
         padding: 0 !important;
@@ -4227,17 +3976,32 @@ HTML = """<!doctype html>
         margin: 0 !important;
       }
       .right-menu {
-        margin-right: 3px !important;
+        margin-right: 6px !important;
+      }
+      .statusline {
+        position: fixed !important;
+        right: 12px !important;
+        bottom: 0 !important;
+        order: initial !important;
+        margin-top: 0 !important;
+        padding: 4px 8px !important;
+        min-height: 0 !important;
+        font-size: 11px !important;
+        color: var(--chrome-muted) !important;
+        text-align: right !important;
+        z-index: 1000 !important;
+        pointer-events: none !important;
+        background: transparent !important;
       }
       .composer-main-shell,
       .composer-field {
-        margin-right: 4px !important;
-        margin-left: 4px !important;
+        margin-right: 6px !important;
+        margin-left: 6px !important;
       }
       .composer {
         padding-top: 0 !important;
         padding-right: env(safe-area-inset-right, 0px) !important;
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px) !important;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 22px) !important;
         padding-left: env(safe-area-inset-left, 0px) !important;
       }
     }
@@ -4796,18 +4560,6 @@ HTML = """<!doctype html>
     </div>
   </div>
   <section class="shell">
-    <div class="mobile-top-frost" aria-hidden="true">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
     <header>
       <div class="header-main">
         <div class="header-left">
@@ -4855,21 +4607,8 @@ HTML = """<!doctype html>
     <main id="messages"></main>
     <button type="button" id="scrollToBottomBtn" title="Scroll to bottom" aria-label="Scroll to bottom"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
     <form class="composer" id="composer">
-      <div class="mobile-bottom-frost" aria-hidden="true">
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
       <div class="composer-main-shell">
         <div class="target-picker" id="targetPicker"></div>
-        <div class="statusline" id="statusline"></div>
         <div class="composer-stack">
           <details class="composer-plus-menu" id="composerPlusMenu">
             <summary class="composer-plus-toggle" aria-label="Open command menu">
@@ -4914,6 +4653,7 @@ HTML = """<!doctype html>
           </div>
         </div>
       </div>
+      <div class="statusline" id="statusline"></div>
     </form>
   </section>
   <script>
