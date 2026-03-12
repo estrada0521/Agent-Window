@@ -3119,6 +3119,51 @@ HTML = """<!doctype html>
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
+    .conversation-empty {
+      display: grid;
+      justify-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 10px 12px 6px;
+      box-sizing: border-box;
+    }
+    .conversation-empty-card {
+      width: min(720px, 100%);
+      padding: 18px 18px 16px;
+      border-radius: 18px;
+      background: rgba(25, 25, 24, 0.9);
+      border: 0.5px solid rgba(255,255,255,0.08);
+      box-shadow: none;
+      color: var(--chrome-muted);
+      backdrop-filter: blur(16px) saturate(140%);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+    }
+    .conversation-empty-title {
+      margin: 0 0 6px;
+      color: rgb(250, 249, 245);
+      font: 400 18px/1.25 "anthropicSans", sans-serif;
+      letter-spacing: -0.02em;
+    }
+    .conversation-empty-copy {
+      margin: 0;
+      color: var(--chrome-muted);
+      font: 400 14px/1.6 "anthropicSans", sans-serif;
+    }
+    @media (max-width: 430px) {
+      .conversation-empty {
+        padding: 8px 10px 6px;
+      }
+      .conversation-empty-card {
+        padding: 15px 14px 14px;
+        border-radius: 16px;
+      }
+      .conversation-empty-title {
+        font-size: 16px;
+      }
+      .conversation-empty-copy {
+        font-size: 13px;
+      }
+    }
     @keyframes msgReveal {
       0% {
         opacity: 0;
@@ -5903,6 +5948,15 @@ HTML = """<!doctype html>
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;");
+    const emptyConversationHTML = () => {
+      return `<div class="conversation-empty">
+        <div class="daybreak">Conversation</div>
+        <section class="conversation-empty-card" aria-label="Empty conversation">
+          <h2 class="conversation-empty-title">New session</h2>
+          <p class="conversation-empty-copy">This session has no messages yet. Send the first message when you are ready.</p>
+        </section>
+      </div>`;
+    };
     const stripSenderPrefix = (value) => value.replace(/^\[From:\s*[^\]]+\]\s*/i, "");
     const shortcutName = (value) => {
       const normalized = (value || "").trim().toLowerCase();
@@ -6156,7 +6210,7 @@ HTML = """<!doctype html>
       const root = document.getElementById("messages");
       if (!displayEntries.length) {
         _renderedIds.clear();
-        root.innerHTML = `<div class="daybreak">Conversation</div><article class="message-row system"><div class="avatar">A</div><div class="message-wrap"><div class="message system"><div class="meta"><span class="sender">agent-index</span></div><pre>No matching messages.</pre></div></div></article>`;
+        root.innerHTML = emptyConversationHTML();
         return;
       }
       const firstTimestamp = displayEntries[0]?.timestamp || "";
