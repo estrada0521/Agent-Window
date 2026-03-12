@@ -2121,38 +2121,38 @@ HTML = """<!doctype html>
         min-width: 48px;
         min-height: 48px;
         border-radius: 999px;
-        background: rgba(38, 38, 36, 0.72) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        background: rgba(20, 20, 19, 0.48) !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
         backdrop-filter: blur(12px) saturate(160%);
         -webkit-backdrop-filter: blur(12px) saturate(160%);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important;
+        box-shadow: none !important;
         color: rgb(235, 235, 230) !important;
         -webkit-tap-highlight-color: transparent;
-        transition: none !important; /* Disable all transitions */
+        transition: none !important;
         outline: none !important;
       }
       .header-plus-toggle:focus,
       .header-plus-toggle:active {
         outline: none !important;
-        background: rgba(38, 38, 36, 0.72) !important;
-        border-color: rgba(255, 255, 255, 0.12) !important;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important;
+        background: rgba(20, 20, 19, 0.48) !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+        box-shadow: none !important;
       }
       .header-plus-toggle svg {
         width: 22px;
         height: 22px;
       }
       .header-plus-menu[open] .header-plus-toggle {
-        background: rgba(38, 38, 36, 0.72) !important;
-        border-color: rgba(255, 255, 255, 0.12) !important;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important;
+        background: rgba(20, 20, 19, 0.48) !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+        box-shadow: none !important;
         transform: none !important;
       }
       .header-plus-menu:not([open]) .header-plus-toggle:active {
         transform: none !important;
-        background: rgba(38, 38, 36, 0.72) !important;
-        border-color: rgba(255, 255, 255, 0.12) !important;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important;
+        background: rgba(20, 20, 19, 0.48) !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+        box-shadow: none !important;
       }
       .composer-plus-menu {
         width: 44px;
@@ -2208,9 +2208,11 @@ HTML = """<!doctype html>
       }
       body:not(.keyboard-locked) .target-chip {
         background: transparent !important;
+        border-color: transparent !important;
       }
       body:not(.keyboard-locked) .target-chip.active {
         background: transparent !important;
+        border-color: transparent !important;
         box-shadow: none !important;
       }
       .composer-main-shell:focus-within {
@@ -3520,10 +3522,12 @@ HTML = """<!doctype html>
       }
       body:not(.keyboard-locked) .target-chip::before {
         background: transparent;
+        border-color: transparent;
         box-shadow: none;
       }
       body:not(.keyboard-locked) .target-chip.active::before {
         background: transparent !important;
+        border-color: transparent !important;
         box-shadow: none !important;
       }
       .composer-field:focus-within {
