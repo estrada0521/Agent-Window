@@ -5160,7 +5160,7 @@ HTML = """<!doctype html>
       const headerPanelTitle = document.getElementById("headerPanelTitle");
       if (headerPanelTitle) headerPanelTitle.textContent = data.session;
       loadThinkingTime(data.session);
-      const displayEntries = isCompactMobile() ? data.entries.slice(-100) : data.entries;
+      const displayEntries = window.matchMedia("(max-width: 430px)").matches ? data.entries.slice(-50) : data.entries;
       document.getElementById("count").textContent = `messages: ${displayEntries.length}`;
       document.getElementById("filter").textContent = `filter: ${data.filter}`;
       document.getElementById("mode").textContent = `mode: ${followMode ? "follow" : "snapshot"}`;
