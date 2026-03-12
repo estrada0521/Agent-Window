@@ -1309,6 +1309,11 @@ HTML = """<!doctype html>
       pointer-events: auto;
       transition: opacity 140ms ease, transform 180ms ease, visibility 0s;
     }
+    .right-menu .header-plus-panel {
+      left: auto;
+      right: 0;
+      transform-origin: top right;
+    }
     .header-plus-panel .quick-action {
       all: unset;
       box-sizing: border-box;
@@ -2292,8 +2297,8 @@ HTML = """<!doctype html>
         height: 20px;
       }
       .composer-plus-panel {
-        backdrop-filter: blur(36px) saturate(160%) !important;
-        -webkit-backdrop-filter: blur(36px) saturate(160%) !important;
+        backdrop-filter: blur(24px) saturate(160%) !important;
+        -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
       }
       .composer-plus-menu[open] .composer-plus-toggle {
         background: rgb(20, 20, 19) !important;
@@ -3505,8 +3510,8 @@ HTML = """<!doctype html>
         border-radius: 10px;
         border: 1px solid rgba(255, 255, 255, 0.12);
         background: rgba(38, 38, 36, 0.72);
-        backdrop-filter: blur(16px) saturate(140%);
-        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        backdrop-filter: blur(24px) saturate(160%);
+        -webkit-backdrop-filter: blur(24px) saturate(160%);
         box-shadow: none;
         opacity: 0;
         visibility: hidden;
