@@ -1992,7 +1992,7 @@ HTML = """<!doctype html>
           "plus targets";
         row-gap: 0;
         column-gap: 4px;
-        padding: 2px 4px 4px 4px;
+        padding: 3px 5px 5px 5px;
         border-radius: 20px; /* Adjusted to be less square */
         background: rgb(48, 48, 46);
         border: 0.5px solid rgb(58, 58, 56);
@@ -2762,7 +2762,7 @@ HTML = """<!doctype html>
       justify-content: center;
       gap: 10px;
       padding: 4px 0;
-      color: rgba(180, 185, 195, 0.85);
+      color: var(--chrome-muted);
       font-size: 12px;
       letter-spacing: 0.02em;
     }
@@ -3997,7 +3997,7 @@ HTML = """<!doctype html>
         gap: 2px !important;
         border-radius: 20px !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        background: rgba(38, 38, 36, 0.92) !important;
+        background: rgba(38, 38, 36, 0.72) !important;
         box-shadow: none !important;
         backdrop-filter: blur(16px) saturate(140%) !important;
         -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
@@ -4065,10 +4065,17 @@ HTML = """<!doctype html>
         margin-left: 6px !important;
       }
       .composer {
+        z-index: auto !important;
         padding-top: 0 !important;
         padding-right: env(safe-area-inset-right, 0px) !important;
         padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 22px) !important;
         padding-left: env(safe-area-inset-left, 0px) !important;
+      }
+      .composer-plus-menu {
+        z-index: auto !important;
+      }
+      .composer::before {
+        z-index: 0 !important;
       }
     }
     .md-body > *:first-child { margin-top: 0; }
@@ -4405,23 +4412,19 @@ HTML = """<!doctype html>
       from { opacity: 0; transform: translateY(10px) scale(0.98); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
-    @keyframes replyBannerOut {
-      from { opacity: 1; transform: translateY(0) scale(1); }
-      to { opacity: 0; transform: translateY(10px) scale(0.98); }
-    }
     .reply-banner {
       display: none;
       align-items: center;
       gap: 8px;
       padding: 6px 14px;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(20px) saturate(160%);
-      -webkit-backdrop-filter: blur(20px) saturate(160%);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      background: rgb(20, 20, 19);
+      border: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
       font-size: 13px;
-      color: var(--muted);
+      color: rgb(156, 154, 147);
       margin-bottom: 8px;
       transform-origin: bottom center;
       will-change: transform, opacity;
@@ -4430,19 +4433,15 @@ HTML = """<!doctype html>
       display: flex;
       animation: replyBannerIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    .reply-banner.closing {
-      display: flex;
-      animation: replyBannerOut 200ms ease-in forwards;
-    }
-    .reply-banner-arrow { opacity: 0.6; font-size: 13px; }
+    .reply-banner-arrow { opacity: 1; font-size: 13px; color: rgb(156, 154, 147); }
     .reply-banner-text { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .reply-banner-sender { font-weight: 500; text-transform: capitalize; margin-right: 2px; color: var(--text); }
+    .reply-banner-sender { font-weight: 500; text-transform: capitalize; margin-right: 2px; color: rgb(156, 154, 147); }
     .reply-cancel-btn {
-      cursor: pointer; background: none; border: none; color: var(--muted);
+      cursor: pointer; background: none; border: none; color: rgb(156, 154, 147);
       padding: 2px 4px; border-radius: 4px; font-size: 13px; line-height: 1;
       transition: color 120ms ease, transform 100ms ease;
     }
-    .has-hover .reply-cancel-btn:hover { color: var(--text); }
+    .has-hover .reply-cancel-btn:hover { color: rgb(156, 154, 147); }
     .thread-group {
       display: flex;
       flex-direction: column;
@@ -5879,16 +5878,9 @@ HTML = """<!doctype html>
         }
         document.getElementById("message").focus();
       } else {
-        if (banner.classList.contains("visible")) {
-          banner.classList.remove("visible");
-          banner.classList.add("closing");
-          setTimeout(() => {
-            banner.classList.remove("closing");
-            pendingReplyTo = null;
-          }, 200);
-        } else {
-          pendingReplyTo = null;
-        }
+        banner.classList.remove("visible");
+        banner.classList.remove("closing");
+        pendingReplyTo = null;
         composerShell?.classList.remove("has-reply");
         composerStack?.classList.remove("has-reply");
         document.querySelectorAll(".reply-btn.active").forEach(b => b.classList.remove("active"));
