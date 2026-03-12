@@ -935,8 +935,15 @@ HTML = """<!doctype html>
       gap: 10px;
       padding: 10px 16px;
       border-radius: 0;
-      font: 700 12px/1.4 "SF Mono", "Fira Code", "Menlo", "Consolas", monospace;
-      color: rgba(255,255,255,0.42);
+      font-family: "JetBrains Mono", monospace;
+      font-style: normal;
+      font-size: 10px;
+      font-weight: 360;
+      font-synthesis-weight: none;
+      font-stretch: normal;
+      font-variation-settings: "wght" 360;
+      line-height: 16px;
+      color: rgb(156, 154, 147);
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
@@ -1158,7 +1165,7 @@ HTML = """<!doctype html>
     }
     .composer-plus-panel {
       position: absolute;
-      left: 8px;
+      left: 24px;
       bottom: calc(100% + 12px);
       display: flex;
       flex-direction: column;
@@ -3975,18 +3982,18 @@ HTML = """<!doctype html>
         margin-right: 4px !important;
       }
       .composer-plus-panel {
-        left: 8px !important;
+        left: -4px !important;
         min-width: 160px !important;
         width: auto !important;
         max-width: calc(100vw - 24px) !important;
         padding: 8px !important;
         gap: 2px !important;
-        border-radius: 10px !important;
+        border-radius: 20px !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        background: rgba(38, 38, 36, 0.85) !important;
+        background: rgb(38, 38, 36) !important;
         box-shadow: none !important;
-        backdrop-filter: blur(24px) saturate(160%) !important;
-        -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
       }
       .composer-plus-panel .quick-action {
         all: unset !important;
