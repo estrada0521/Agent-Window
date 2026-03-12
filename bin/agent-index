@@ -5179,11 +5179,8 @@ HTML = """<!doctype html>
       nodes.forEach((node) => {
         if (node.classList.contains("animating")) return;
         node.classList.add("animating");
-        // Disable subsequent taps during animation
-        node.style.pointerEvents = "none";
         setTimeout(() => {
           node.classList.remove("animating");
-          node.style.pointerEvents = "";
         }, 500);
       });
     };
@@ -6277,9 +6274,14 @@ HTML = """<!doctype html>
     document.addEventListener("pointerdown", (e) => {
       const toggle = e.target.closest(".header-plus-toggle, .composer-plus-toggle, .quick-action");
       if (toggle) {
+        if (toggle.classList.contains("animating")) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
         flashHeaderToggle(toggle);
       }
-    }, { passive: true });
+    });
     document.addEventListener("touchstart", primeSoundOnGesture, { passive: true });
     document.addEventListener("click", primeSoundOnGesture);
     document.addEventListener("click", blurTouchControlAfterTap, true);
