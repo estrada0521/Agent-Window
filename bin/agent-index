@@ -5356,7 +5356,7 @@ HTML = """<!doctype html>
       main {
         grid-area: auto !important;
         min-height: 0 !important;
-        padding: 0 8px 12px !important;
+        padding: 0 8px calc(var(--mobile-composer-reserve, 0px) + 220px) !important;
         overflow: visible !important;
         overscroll-behavior: auto !important;
       }
@@ -5383,6 +5383,12 @@ HTML = """<!doctype html>
         left: 6px !important;
         z-index: 25 !important;
         pointer-events: auto !important;
+        will-change: bottom !important;
+        transition:
+          bottom var(--mobile-keyboard-transition-duration, 260ms) cubic-bezier(0.22, 1, 0.36, 1),
+          border-color 140ms ease,
+          background 140ms ease,
+          box-shadow 180ms ease !important;
       }
       .statusline {
         position: fixed !important;
@@ -6210,15 +6216,27 @@ HTML = """<!doctype html>
     const syncMobileKeyboardOffset = () => {
       if (!useDocumentFlowMobile()) {
         document.documentElement.style.setProperty("--mobile-keyboard-offset", "0px");
+        document.documentElement.style.setProperty("--mobile-keyboard-transition-duration", "260ms");
         return;
       }
       const vv = window.visualViewport;
       if (!vv) {
         document.documentElement.style.setProperty("--mobile-keyboard-offset", "0px");
+        document.documentElement.style.setProperty("--mobile-keyboard-transition-duration", "260ms");
         return;
       }
-      const bottomOffset = Math.max(0, window.innerHeight - (vv.offsetTop + vv.height));
+      const layoutViewportHeight = window.innerHeight || vv.height || 0;
+      const keyboardOpen = vv.height < layoutViewportHeight * 0.9;
+      const bottomOffset = keyboardOpen
+        ? Math.max(0, Math.round(layoutViewportHeight - vv.height - vv.offsetTop))
+        : 0;
+      document.documentElement.style.setProperty("--mobile-keyboard-transition-duration", bottomOffset > 0 ? "260ms" : "180ms");
       document.documentElement.style.setProperty("--mobile-keyboard-offset", `${bottomOffset}px`);
+    };
+    const releaseMobileKeyboardOffset = () => {
+      if (!useDocumentFlowMobile()) return;
+      document.documentElement.style.setProperty("--mobile-keyboard-transition-duration", "180ms");
+      document.documentElement.style.setProperty("--mobile-keyboard-offset", "0px");
     };
     const focusMessageInputWithoutScroll = (selectionStart = null, selectionEnd = selectionStart) => {
       const anchorY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
@@ -6323,6 +6341,10 @@ HTML = """<!doctype html>
       const composer = document.getElementById("composer");
       const composerBox = document.querySelector(".composer-main-shell");
       const h = useDocumentFlowMobile() ? (composerBox?.offsetHeight || 0) : composer.offsetHeight;
+      document.documentElement.style.setProperty(
+        "--mobile-composer-reserve",
+        useDocumentFlowMobile() ? `${Math.max(0, Math.ceil(h + 18))}px` : "0px",
+      );
       shell.style.setProperty("--scroll-btn-bottom", (h + 12) + "px");
       if (window.matchMedia("(max-width: 359px)").matches) {
         const picker = document.getElementById("targetPicker");
@@ -6412,6 +6434,7 @@ HTML = """<!doctype html>
     };
     updateScrollBtnPos();
     new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("composer"));
+    new ResizeObserver(updateScrollBtnPos).observe(document.querySelector(".composer-main-shell"));
     new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("targetPicker"));
     window.addEventListener("resize", updateScrollBtnPos);
     window.addEventListener("resize", () => scheduleViewportCenteredBlocks(document));
@@ -6854,10 +6877,10 @@ HTML = """<!doctype html>
         renderMathInScope(root);
         scheduleViewportCenteredBlocks(root);
       }
+      applyFilter();
       if (shouldStickToBottom) {
         scrollConversationToBottom(forceScroll ? "smooth" : "auto");
       }
-      applyFilter();
       updateScrollBtn();
       if (typeof updateSendBtnVisibility === "function") updateSendBtnVisibility();
     };
@@ -6928,7 +6951,10 @@ HTML = """<!doctype html>
           message.value = "";
           updateSendBtnVisibility();
           autoResizeTextarea();
-          if (isCompactMobile()) {
+          if (useDocumentFlowMobile()) {
+            releaseMobileKeyboardOffset();
+            message.blur();
+          } else if (isCompactMobile()) {
             message.blur();
           }
           scrollConversationToBottom("auto");
@@ -7278,21 +7304,26 @@ HTML = """<!doctype html>
     });
     window.addEventListener("resize", autoResizeTextarea);
     if (window.visualViewport) {
+      let viewportUpdateRaf = 0;
       const updateViewportScroll = () => {
         const vv = window.visualViewport;
         const compactMobile = useDocumentFlowMobile();
         const isKeyboardOpen = vv.height < window.innerHeight * 0.9;
         document.body.classList.toggle("keyboard-locked", !compactMobile && isKeyboardOpen);
         syncMobileKeyboardOffset();
-        if (compactMobile) {
-          requestAnimationFrame(syncMobileKeyboardOffset);
-        }
         if (isKeyboardOpen && !compactMobile) {
           scrollConversationToBottom("auto");
         }
       };
-      window.visualViewport.addEventListener("resize", updateViewportScroll);
-      window.visualViewport.addEventListener("scroll", updateViewportScroll);
+      const scheduleViewportScrollUpdate = () => {
+        if (viewportUpdateRaf) return;
+        viewportUpdateRaf = requestAnimationFrame(() => {
+          viewportUpdateRaf = 0;
+          updateViewportScroll();
+        });
+      };
+      window.visualViewport.addEventListener("resize", scheduleViewportScrollUpdate);
+      window.visualViewport.addEventListener("scroll", scheduleViewportScrollUpdate);
       updateViewportScroll();
     }
     // Prevent touch scroll when locked
@@ -7384,6 +7415,7 @@ HTML = """<!doctype html>
     messageInput.addEventListener("blur", () => {
       document.body.classList.remove("composing");
       closePlusMenu();
+      releaseMobileKeyboardOffset();
       setTimeout(closeDrop, 150);
     });
 
