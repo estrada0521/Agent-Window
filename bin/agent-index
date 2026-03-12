@@ -2116,7 +2116,7 @@ HTML = """<!doctype html>
         height: 48px;
       }
       @keyframes headerPop {
-        0% { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25); }
+        0% { background: rgba(24, 24, 23, 0.85); border-color: rgba(255, 255, 255, 0.25); }
         100% { background: rgba(20, 20, 19, 0.48); border-color: rgba(255, 255, 255, 0.18); }
       }
       .header-plus-toggle {
@@ -2140,7 +2140,7 @@ HTML = """<!doctype html>
         z-index: 10011;
       }
       .header-plus-toggle:active {
-        background: rgba(255, 255, 255, 0.12) !important;
+        background: rgba(24, 24, 23, 0.85) !important;
         transform: none !important;
         box-shadow: none !important;
       }
@@ -2158,7 +2158,7 @@ HTML = """<!doctype html>
         transform: none;
       }
       .header-plus-menu:not([open]) .header-plus-toggle:active {
-        background: rgba(255, 255, 255, 0.12) !important;
+        background: rgba(24, 24, 23, 0.85) !important;
         border-color: rgba(255, 255, 255, 0.25) !important;
         transform: none !important;
       }
@@ -2208,9 +2208,8 @@ HTML = """<!doctype html>
           inset 0 1px 0 rgba(255,255,255,0.08),
           0 10px 28px rgba(0,0,0,0.18);
       }
-      body:not(.keyboard-locked) .composer-main-shell {
+      body:not(.keyboard-locked) .composer-main-shell:not(:focus-within) {
         background: rgba(20, 20, 19, 0.48);
-        border-color: rgba(255, 255, 255, 0.18);
       }
       .target-chip:not(.active) {
         background: transparent !important;
@@ -3124,7 +3123,7 @@ HTML = """<!doctype html>
         transform: scale(1);
       }
       @keyframes headerPopSmall {
-        0% { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25); }
+        0% { background: rgba(24, 24, 23, 0.85); border-color: rgba(255, 255, 255, 0.25); }
         100% { background: rgba(20, 20, 19, 0.48); border-color: rgba(255, 255, 255, 0.18); }
       }
       .header-plus-toggle {
@@ -3158,7 +3157,7 @@ HTML = """<!doctype html>
       .header-plus-toggle:active {
         outline: none !important;
         box-shadow: none !important;
-        background: rgba(255, 255, 255, 0.12) !important;
+        background: rgba(24, 24, 23, 0.85) !important;
         transform: none !important;
       }
       .header-plus-toggle::-webkit-details-marker {
@@ -3527,14 +3526,12 @@ HTML = """<!doctype html>
         -webkit-backdrop-filter: blur(12px) saturate(110%);
         transition: border-color 140ms ease, background-color 140ms ease;
       }
-      body:not(.keyboard-locked) .composer-field {
-        background: rgba(20, 20, 19, 0.48);
-        border-color: rgba(255,255,255,0.14);
-        box-shadow:
-          inset 0 1px 0 rgba(255,255,255,0.08),
-          0 6px 18px rgba(0,0,0,0.1);
-        backdrop-filter: blur(12px) saturate(110%);
-        -webkit-backdrop-filter: blur(12px) saturate(110%);
+      body:not(.keyboard-locked) .composer-field:not(:focus-within) {
+        background: transparent;
+        border-color: transparent;
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
       }
       .target-chip:not(.active)::before {
         background: transparent;
