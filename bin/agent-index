@@ -814,11 +814,17 @@ HUB_HTML = """<!doctype html>
       line-height: 1;
       letter-spacing: 0.08em;
       text-transform: uppercase;
+      transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
     }
     .card-link.danger {
       color: var(--bad);
       background: var(--panel-2);
       border-color: rgba(214, 124, 124, 0.28);
+    }
+    .card-link.danger:hover {
+      color: rgb(232, 146, 146);
+      background: rgb(36, 30, 30);
+      border-color: rgba(214, 124, 124, 0.4);
     }
     .empty {
       padding: 22px 16px;
