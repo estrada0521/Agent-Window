@@ -2987,6 +2987,10 @@ HTML = """<!doctype html>
       font-size: 12px;
       letter-spacing: 0.02em;
     }
+    .sysmsg-text {
+      display: block;
+      min-width: 0;
+    }
     .sysmsg-row::before, .sysmsg-row::after {
       content: "";
       flex: 1;
@@ -4360,6 +4364,18 @@ HTML = """<!doctype html>
       .composer-plus-menu {
         z-index: 10010 !important;
       }
+      .sysmsg-row[data-kind="git-commit"] .sysmsg-text {
+        flex: 1 1 auto;
+        width: 0;
+        max-width: calc(100vw - 64px);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sysmsg-row[data-kind="git-commit"]::before,
+      .sysmsg-row[data-kind="git-commit"]::after {
+        flex: 0 0 10px;
+      }
     }
     .md-body > *:first-child { margin-top: 0; }
     .md-body > *:last-child { margin-bottom: 0; }
@@ -5668,7 +5684,9 @@ HTML = """<!doctype html>
       const replyIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
       const buildMsgHTML = (entry, replyPreviewHTML) => {
         if (entry.sender === "system") {
-          return `<div class="sysmsg-row" data-msgid="${escapeHtml(entry.msg_id || "")}" data-sender="system">${escapeHtml(entry.message || "")}</div>`;
+          const systemMessage = escapeHtml(entry.message || "");
+          const systemTitle = systemMessage.replaceAll('"', "&quot;");
+          return `<div class="sysmsg-row" data-msgid="${escapeHtml(entry.msg_id || "")}" data-sender="system" data-kind="${escapeHtml(entry.kind || "")}"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
         }
         const cls = roleClass(entry.sender);
       const targetSpans = (entry.targets?.length > 0
