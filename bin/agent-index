@@ -3402,24 +3402,22 @@ HTML = """<!doctype html>
         position: relative;
         display: block;
         flex: 0 0 auto;
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
         z-index: 10010;
         margin-top: 0;
       }
       .composer-plus-toggle {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
         border-radius: 999px;
         background: transparent;
-        color: rgba(255, 255, 255, 0.95);
+        color: rgb(235, 235, 230);
         -webkit-tap-highlight-color: transparent;
-        position: relative;
-        transition: transform 200ms ease;
-        outline: none !important;
+      }
+      .composer-plus-toggle svg {
+        width: 20px;
+        height: 20px;
       }
       .composer-plus-toggle::before {
         content: "";
@@ -3430,37 +3428,27 @@ HTML = """<!doctype html>
         background: rgba(38, 38, 36, 0.72);
         backdrop-filter: blur(12px) saturate(160%);
         -webkit-backdrop-filter: blur(12px) saturate(160%);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-        transition: background 200ms ease, border-color 200ms ease;
-      }
-      .composer-plus-toggle.animating {
-        animation: headerPopSmall 500ms cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
-        z-index: 10011;
-      }
-      .composer-plus-toggle:active::before {
-        background: rgba(24, 24, 23, 0.85) !important;
-        border-color: rgba(255, 255, 255, 0.25) !important;
-      }
-      .composer-plus-toggle svg {
-        position: relative;
-        z-index: 1;
-        width: 22px;
-        height: 22px;
-        stroke: currentColor;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
       }
       .composer-plus-panel {
         backdrop-filter: blur(24px) saturate(160%) !important;
         -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
       }
       .composer-plus-menu[open] .composer-plus-toggle {
-        background: transparent !important;
-        transform: none !important;
+        background: transparent;
+        transform: none;
       }
       .composer-plus-menu:not([open]) .composer-plus-toggle:active {
-        transform: scale(1.15) !important;
-        background: rgba(24, 24, 23, 0.85) !important;
-        border-color: rgba(255, 255, 255, 0.25) !important;
-        box-shadow: none !important;
+        background: transparent;
+        color: rgb(235, 235, 230);
+        transform: none;
+      }
+      .composer-plus-menu:not([open]) .composer-plus-toggle:active::before {
+        inset: 6px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(38, 38, 36, 0.72);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
       }
       .composer-plus-panel {
         display: flex;
@@ -5044,7 +5032,7 @@ HTML = """<!doctype html>
         : "Raw send disabled";
     };
     const flashHeaderToggle = (targetNode) => {
-      const nodes = targetNode ? [targetNode] : document.querySelectorAll(`#headerPlusMenu summary, #rightMenu summary, #composerPlusMenu summary`);
+      const nodes = targetNode ? [targetNode] : document.querySelectorAll(`#headerPlusMenu summary, #rightMenu summary`);
       nodes.forEach((node) => {
         if (node.classList.contains("animating")) return;
         node.classList.add("animating");
