@@ -315,6 +315,8 @@ from urllib.parse import parse_qs, quote as url_quote, urlparse
 repo_root = Path(sys.argv[1]).resolve()
 script_path = Path(sys.argv[2]).resolve()
 script_dir = script_path.parent
+multiagent_path = script_dir / "multiagent"
+central_log_dir = repo_root / "logs"
 port = int(sys.argv[3])
 tmux_socket = sys.argv[4]
 
@@ -331,6 +333,36 @@ def tmux_env(session_name, key):
     if result.returncode == 0 and "=" in line:
         return line.split("=", 1)[1]
     return ""
+
+def parse_session_dir(name):
+    parts = name.split("_")
+    if len(parts) >= 3 and all(len(part) == 6 and part.isdigit() for part in parts[-2:]):
+        return "_".join(parts[:-2]) or name
+    return name
+
+def safe_mtime(path):
+    try:
+        return path.stat().st_mtime
+    except Exception:
+        return 0
+
+def parse_saved_time(value):
+    if not value:
+        return 0
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+        try:
+            return dt.datetime.strptime(value, fmt).timestamp()
+        except Exception:
+            pass
+    return 0
+
+def format_epoch(epoch):
+    if not epoch:
+        return ""
+    try:
+        return dt.datetime.fromtimestamp(epoch).strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        return ""
 
 def chat_port_for_session(session_name):
     digest = int(hashlib.md5(session_name.encode()).hexdigest(), 16)
@@ -393,6 +425,81 @@ def repo_sessions():
     sessions.sort(key=lambda item: item["created_epoch"], reverse=True)
     return sessions
 
+def archived_sessions(active_names=None):
+    active_names = set(active_names or [])
+    records = {}
+    if not central_log_dir.is_dir():
+        return []
+    for entry in central_log_dir.iterdir():
+        if not entry.is_dir():
+            continue
+        meta_path = entry / ".meta"
+        index_path = entry / ".agent-index.jsonl"
+        if not meta_path.exists() and not index_path.exists():
+            continue
+        meta = {}
+        if meta_path.exists():
+            try:
+                meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            except Exception:
+                meta = {}
+        session_name = (meta.get("session") or parse_session_dir(entry.name) or "").strip()
+        if not session_name or session_name in active_names:
+            continue
+        workspace = (meta.get("workspace") or "").strip() or str(repo_root)
+        created_epoch = parse_saved_time(meta.get("created_at", ""))
+        updated_epoch = parse_saved_time(meta.get("updated_at", ""))
+        updated_epoch = max(updated_epoch, safe_mtime(meta_path), safe_mtime(index_path))
+        if not created_epoch:
+            created_epoch = updated_epoch
+        agents = [
+            agent
+            for agent in ("claude", "codex", "gemini", "copilot")
+            if (entry / f"{agent}.log").exists() or (entry / f"{agent}.ans").exists()
+        ]
+        if not agents and index_path.exists():
+            inferred = set()
+            try:
+                with index_path.open("r", encoding="utf-8") as handle:
+                    for line in handle:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            item = json.loads(line)
+                        except Exception:
+                            continue
+                        sender = (item.get("sender") or "").strip().lower()
+                        if sender in {"claude", "codex", "gemini", "copilot"}:
+                            inferred.add(sender)
+                        for target in item.get("targets") or []:
+                            target = (target or "").strip().lower()
+                            if target in {"claude", "codex", "gemini", "copilot"}:
+                                inferred.add(target)
+            except Exception:
+                inferred = set()
+            agents = [agent for agent in ("claude", "codex", "gemini", "copilot") if agent in inferred]
+        record = {
+            "name": session_name,
+            "workspace": workspace,
+            "created_at": meta.get("created_at") or format_epoch(created_epoch),
+            "created_epoch": int(created_epoch or 0),
+            "updated_at": meta.get("updated_at") or format_epoch(updated_epoch),
+            "updated_epoch": int(updated_epoch or 0),
+            "dead_panes": 0,
+            "attached": 0,
+            "agents": agents,
+            "status": "archived",
+            "chat_port": chat_port_for_session(session_name),
+            "log_dir": str(entry),
+        }
+        existing = records.get(session_name)
+        if existing is None or record["updated_epoch"] > existing["updated_epoch"]:
+            records[session_name] = record
+    sessions = list(records.values())
+    sessions.sort(key=lambda item: item["updated_epoch"], reverse=True)
+    return sessions
+
 def chat_ready(chat_port):
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{chat_port}/messages", timeout=0.35) as response:
@@ -424,6 +531,47 @@ def ensure_chat_server(session_name):
         import time
         time.sleep(0.1)
     return False, chat_port, "chat server did not become ready"
+
+def revive_archived_session(session_name):
+    active = {item["name"] for item in repo_sessions()}
+    if session_name in active:
+        return True, ""
+    archived = {item["name"]: item for item in archived_sessions(active)}
+    record = archived.get(session_name)
+    if not record:
+        return False, "That archived session is not available in this repo."
+    workspace = (record.get("workspace") or "").strip()
+    if not workspace or not Path(workspace).is_dir():
+        return False, f"Saved workspace is unavailable: {workspace or 'unknown'}"
+    env = os.environ.copy()
+    if tmux_socket:
+        env["MULTIAGENT_TMUX_SOCKET"] = tmux_socket
+    cmd = [
+        str(multiagent_path),
+        "--session", session_name,
+        "--workspace", workspace,
+        "--detach",
+    ]
+    agents = record.get("agents") or []
+    if agents:
+        cmd.extend(["--agents", ",".join(agents)])
+    try:
+        subprocess.Popen(
+            cmd,
+            cwd=workspace,
+            env=env,
+            start_new_session=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception as exc:
+        return False, str(exc)
+    import time
+    for _ in range(80):
+        if session_name in {item["name"] for item in repo_sessions()}:
+            return True, ""
+        time.sleep(0.15)
+    return False, f"Session {session_name} did not come up in time."
 
 HUB_HTML = """<!doctype html>
 <html lang="en">
@@ -506,6 +654,17 @@ HUB_HTML = """<!doctype html>
       display: grid;
       gap: 10px;
     }
+    .section-block {
+      display: grid;
+      gap: 10px;
+    }
+    .section-label {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 2px 0;
+    }
     .session-card {
       display: block;
       text-decoration: none;
@@ -515,12 +674,36 @@ HUB_HTML = """<!doctype html>
       border-radius: 16px;
       padding: 14px 14px 13px;
     }
+    .archived-card {
+      padding: 0;
+      overflow: clip;
+    }
     .session-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       margin-bottom: 8px;
+    }
+    .archived-summary {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 14px 13px;
+      cursor: pointer;
+    }
+    .archived-summary::-webkit-details-marker {
+      display: none;
+    }
+    .archived-card[open] .archived-summary {
+      border-bottom: 0.5px solid var(--line);
+    }
+    .archived-body {
+      padding: 12px 14px 13px;
+      display: grid;
+      gap: 10px;
     }
     .session-name {
       font-size: 18px;
@@ -562,6 +745,25 @@ HUB_HTML = """<!doctype html>
       color: var(--fg);
       font-weight: 500;
     }
+    .card-action {
+      margin-top: 12px;
+      color: var(--fg);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .card-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 0.5px solid var(--line-strong);
+      background: var(--panel-2);
+      color: var(--fg);
+      text-decoration: none;
+      font-size: 13px;
+      line-height: 1.2;
+    }
     .empty {
       padding: 22px 16px;
       border-radius: 16px;
@@ -588,6 +790,7 @@ HUB_HTML = """<!doctype html>
   <script>
     const list = document.getElementById("list");
     const summary = document.getElementById("summary");
+    const openArchived = new Set();
     const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
       "<": "&lt;",
@@ -595,17 +798,17 @@ HUB_HTML = """<!doctype html>
       '"': "&quot;",
       "'": "&#39;"
     }[char]));
-    const render = (sessions) => {
-      summary.textContent = sessions.length ? `${sessions.length} active session${sessions.length === 1 ? "" : "s"}` : "No active multiagent sessions";
+    const renderActiveCards = (sessions, { href, emptyText, actionLabel, showUpdated = false } = {}) => {
       if (!sessions.length) {
-        list.innerHTML = `<div class="empty">No active multiagent tmux sessions were found for this repo. Start one from the Mac first, then come back here.</div>`;
-        return;
+        return `<div class="empty">${escapeHtml(emptyText)}</div>`;
       }
-      list.innerHTML = sessions.map((session) => {
+      return sessions.map((session) => {
         const agents = session.agents.length ? session.agents.join(", ") : "none";
         const dead = session.dead_panes ? `, ${session.dead_panes} dead pane${session.dead_panes === 1 ? "" : "s"}` : "";
+        const timeLabel = showUpdated ? "Updated" : "Created";
+        const timeValue = showUpdated ? (session.updated_at || "unknown") : (session.created_at || "unknown");
         return `
-          <a class="session-card" href="/open-session?session=${encodeURIComponent(session.name)}">
+          <a class="session-card" href="${href(session)}">
             <div class="session-head">
               <div class="session-name">${escapeHtml(session.name)}</div>
               <div class="badge ${escapeHtml(session.status)}">${escapeHtml(session.status)}</div>
@@ -613,19 +816,74 @@ HUB_HTML = """<!doctype html>
             <div class="path">${escapeHtml(session.workspace || "workspace unavailable")}</div>
             <div class="meta">
               <span><strong>Agents</strong> ${escapeHtml(agents)}</span>
-              <span><strong>Created</strong> ${escapeHtml(session.created_at || "unknown")}</span>
+              <span><strong>${timeLabel}</strong> ${escapeHtml(timeValue)}</span>
               <span><strong>Chat</strong> :${escapeHtml(session.chat_port)}</span>
               <span><strong>State</strong> ${escapeHtml(session.status)}${escapeHtml(dead)}</span>
             </div>
+            <div class="card-action">${escapeHtml(actionLabel)}</div>
           </a>`;
       }).join("");
+    };
+    const renderArchivedCards = (sessions) => {
+      if (!sessions.length) {
+        return `<div class="empty">No archived sessions with reusable logs were found yet.</div>`;
+      }
+      return sessions.map((session) => {
+        const agents = session.agents.length ? session.agents.join(", ") : "none";
+        const isOpen = openArchived.has(session.name) ? " open" : "";
+        return `
+          <details class="session-card archived-card"${isOpen} data-session-name="${escapeHtml(session.name)}">
+            <summary class="archived-summary">
+              <div class="session-name">${escapeHtml(session.name)}</div>
+              <div class="badge archived">archived</div>
+            </summary>
+            <div class="archived-body">
+              <div class="path">${escapeHtml(session.workspace || "workspace unavailable")}</div>
+              <div class="meta">
+                <span><strong>Agents</strong> ${escapeHtml(agents)}</span>
+                <span><strong>Updated</strong> ${escapeHtml(session.updated_at || "unknown")}</span>
+                <span><strong>Chat</strong> :${escapeHtml(session.chat_port)}</span>
+              </div>
+              <div class="card-action">
+                <a class="card-link" href="/revive-session?session=${encodeURIComponent(session.name)}">Revive and open</a>
+              </div>
+            </div>
+          </details>`;
+      }).join("");
+    };
+    const render = (activeSessions, archivedSessions) => {
+      const activeCount = activeSessions.length;
+      const archivedCount = archivedSessions.length;
+      summary.textContent = `${activeCount} active · ${archivedCount} archived`;
+      list.innerHTML = `
+        <section class="section-block">
+          <div class="section-label">Active Sessions</div>
+          ${renderActiveCards(activeSessions, {
+            href: (session) => `/open-session?session=${encodeURIComponent(session.name)}`,
+            emptyText: "No active multiagent tmux sessions were found for this repo.",
+            actionLabel: "Open chat",
+            showUpdated: false
+          })}
+        </section>
+        <section class="section-block">
+          <div class="section-label">Archived Sessions</div>
+          ${renderArchivedCards(archivedSessions)}
+        </section>`;
+      list.querySelectorAll(".archived-card").forEach((item) => {
+        item.addEventListener("toggle", () => {
+          const name = item.dataset.sessionName || "";
+          if (!name) return;
+          if (item.open) openArchived.add(name);
+          else openArchived.delete(name);
+        });
+      });
     };
     const refresh = async () => {
       try {
         const res = await fetch(`/sessions?ts=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) throw new Error("failed to load sessions");
         const data = await res.json();
-        render(data.sessions || []);
+        render(data.active_sessions || data.sessions || [], data.archived_sessions || []);
       } catch (error) {
         summary.textContent = "Failed to load sessions";
         list.innerHTML = `<div class="empty">${escapeHtml(error.message || "unknown error")}</div>`;
@@ -665,7 +923,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path == "/sessions":
-            self._send_json(200, {"sessions": repo_sessions()})
+            active = repo_sessions()
+            archived = archived_sessions({item["name"] for item in active})
+            self._send_json(200, {"sessions": active, "active_sessions": active, "archived_sessions": archived})
             return
         if parsed.path == "/open-session":
             qs = parse_qs(parsed.query)
@@ -673,6 +933,26 @@ class Handler(BaseHTTPRequestHandler):
             available = {item["name"] for item in repo_sessions()}
             if not session_name or session_name not in available:
                 self._send_html(404, error_page("That session is not available in this repo."))
+                return
+            ok, chat_port, detail = ensure_chat_server(session_name)
+            if not ok:
+                self._send_html(500, error_page(f"Failed to start chat for {session_name}: {detail}"))
+                return
+            host = host_without_port(self.headers.get("Host", "127.0.0.1"))
+            location = f"http://{host}:{chat_port}/?follow=1"
+            self.send_response(302)
+            self.send_header("Location", location)
+            self.end_headers()
+            return
+        if parsed.path == "/revive-session":
+            qs = parse_qs(parsed.query)
+            session_name = (qs.get("session", [""])[0] or "").strip()
+            if not session_name:
+                self._send_html(404, error_page("That archived session is not available in this repo."))
+                return
+            ok, detail = revive_archived_session(session_name)
+            if not ok:
+                self._send_html(500, error_page(f"Failed to revive {session_name}: {detail}"))
                 return
             ok, chat_port, detail = ensure_chat_server(session_name)
             if not ok:
