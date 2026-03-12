@@ -3951,6 +3951,10 @@ HTML = """<!doctype html>
         margin-top: 6px !important;
         margin-right: 4px !important;
       }
+      .agent-row:active,
+      .agent-row.active {
+        background: rgb(20, 20, 19) !important;
+      }
       .statusline {
         position: fixed !important;
         right: 12px !important;
