@@ -3942,15 +3942,43 @@ HTML = """<!doctype html>
         top: 0; left: 0; right: 0; bottom: 0;
         height: auto !important;
         background: linear-gradient(180deg,
-          rgba(38,38,36,1.0)  0%,
-          rgba(38,38,36,1.0)  48%,
-          rgba(38,38,36,0.82) 84%,
-          transparent      100%
+          rgba(var(--bg-rgb), 1.0) 0%,
+          rgba(var(--bg-rgb), 0.98) 42%,
+          rgba(var(--bg-rgb), 0.94) 62%,
+          rgba(var(--bg-rgb), 0.88) 76%,
+          rgba(var(--bg-rgb), 0.75) 88%,
+          rgba(var(--bg-rgb), 0.50) 95%,
+          rgba(var(--bg-rgb), 0.30) 97.5%,
+          rgba(var(--bg-rgb), 0.20) 98.6%,
+          rgba(var(--bg-rgb), 0.10) 99.3%,
+          transparent 100%
         ) !important;
         backdrop-filter: blur(24px) saturate(160%) !important;
         -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
-        mask-image: linear-gradient(180deg, black 0%, black 74%, transparent 100%) !important;
-        -webkit-mask-image: linear-gradient(180deg, black 0%, black 74%, transparent 100%) !important;
+        mask-image: linear-gradient(180deg,
+          rgba(0,0,0,1.0) 0%,
+          rgba(0,0,0,0.98) 48%,
+          rgba(0,0,0,0.94) 68%,
+          rgba(0,0,0,0.88) 80%,
+          rgba(0,0,0,0.75) 89%,
+          rgba(0,0,0,0.50) 95.5%,
+          rgba(0,0,0,0.30) 97.8%,
+          rgba(0,0,0,0.20) 98.8%,
+          rgba(0,0,0,0.10) 99.4%,
+          transparent 100%
+        ) !important;
+        -webkit-mask-image: linear-gradient(180deg,
+          rgba(0,0,0,1.0) 0%,
+          rgba(0,0,0,0.98) 48%,
+          rgba(0,0,0,0.94) 68%,
+          rgba(0,0,0,0.88) 80%,
+          rgba(0,0,0,0.75) 89%,
+          rgba(0,0,0,0.50) 95.5%,
+          rgba(0,0,0,0.30) 97.8%,
+          rgba(0,0,0,0.20) 98.8%,
+          rgba(0,0,0,0.10) 99.4%,
+          transparent 100%
+        ) !important;
         z-index: -1;
       }
       .composer::before {
