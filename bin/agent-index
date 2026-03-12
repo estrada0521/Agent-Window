@@ -1844,6 +1844,7 @@ HTML = """<!doctype html>
         align-self: center;
         margin-left: 8px;
         margin-top: 0;
+        margin-right: -10px;
       }
       .right-menu .header-plus-panel {
         left: auto;
