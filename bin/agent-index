@@ -858,8 +858,8 @@ HTML = """<!doctype html>
       transition: background 150ms ease, box-shadow 150ms ease;
     }
     .agent-row[data-status="running"] .agent-icon::before {
-      background: #4ade80;
-      box-shadow: 0 0 6px rgba(74, 222, 128, 0.6);
+      background: transparent;
+      box-shadow: 0 0 4px transparent;
     }
     .agent-row[data-status="running"] .agent-icon {
       background-color: rgb(250, 249, 245);
