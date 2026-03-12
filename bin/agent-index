@@ -2410,9 +2410,9 @@ HTML = """<!doctype html>
       align-self: center;
       padding: 6px 12px;
       border-radius: 999px;
-      background: rgba(0,0,0,0.58);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: var(--muted);
+      background: rgb(30, 30, 29);
+      border: none;
+      color: var(--chrome-muted);
       font-size: 11px;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -3727,7 +3727,7 @@ HTML = """<!doctype html>
         display: none;
       }
       .reply-banner-text {
-        font-weight: 500;
+        font-weight: 400;
       }
       #scrollToBottomBtn {
         left: auto;
@@ -4024,6 +4024,9 @@ HTML = """<!doctype html>
       .right-menu {
         margin-top: 6px !important;
         margin-right: 4px !important;
+      }
+      .reply-banner-arrow {
+        display: none !important;
       }
       .header-plus-panel {
         backdrop-filter: blur(16px) saturate(140%) !important;
@@ -4479,6 +4482,15 @@ HTML = """<!doctype html>
       box-shadow: none;
       font-size: 13px;
       color: rgb(156, 154, 147);
+      font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif;
+      font-style: normal;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-synthesis-weight: none;
+      font-optical-sizing: auto;
+      font-variation-settings: "wght" 400, "opsz" 16;
       margin-bottom: 8px;
       transform-origin: bottom center;
       will-change: transform, opacity;
@@ -4488,8 +4500,8 @@ HTML = """<!doctype html>
       animation: replyBannerIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     .reply-banner-arrow { opacity: 1; font-size: 13px; color: rgb(156, 154, 147); }
-    .reply-banner-text { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .reply-banner-sender { font-weight: 500; text-transform: capitalize; margin-right: 2px; color: rgb(156, 154, 147); }
+    .reply-banner-text { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 400; }
+    .reply-banner-sender { font-weight: 400; text-transform: capitalize; margin-right: 2px; color: rgb(156, 154, 147); }
     .reply-cancel-btn {
       cursor: pointer; background: none; border: none; color: rgb(156, 154, 147);
       padding: 2px 4px; border-radius: 4px; font-size: 13px; line-height: 1;
@@ -4524,6 +4536,15 @@ HTML = """<!doctype html>
       background: rgba(0,0,0,0.22);
       font-size: 12px;
       color: var(--muted);
+      font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif;
+      font-style: normal;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-synthesis-weight: none;
+      font-optical-sizing: auto;
+      font-variation-settings: "wght" 400, "opsz" 16;
       line-height: 1.4;
       overflow: hidden;
       cursor: pointer;
