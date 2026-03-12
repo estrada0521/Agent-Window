@@ -5162,8 +5162,7 @@ HTML = """<!doctype html>
     const flashHeaderToggle = (targetNode) => {
       const nodes = targetNode ? [targetNode] : document.querySelectorAll(`#headerPlusMenu summary, #rightMenu summary`);
       nodes.forEach((node) => {
-        node.classList.remove("animating");
-        void node.offsetWidth;
+        if (node.classList.contains("animating")) return; // Don't interrupt running animation
         node.classList.add("animating");
         setTimeout(() => node.classList.remove("animating"), 500);
       });
