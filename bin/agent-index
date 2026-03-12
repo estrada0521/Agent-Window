@@ -1180,10 +1180,10 @@ HTML = """<!doctype html>
       color: rgb(250, 249, 245);
       position: relative;
       cursor: pointer;
+      border-radius: 10px;
       transition: color 150ms ease;
     }
     .has-hover .composer-plus-panel .quick-action:hover {
-      background: transparent !important;
       color: #fff;
     }
     .composer-plus-panel .quick-action + .quick-action {
@@ -1289,9 +1289,9 @@ HTML = """<!doctype html>
       position: relative;
       cursor: pointer;
       background: transparent;
+      border-radius: 10px;
     }
     .header-plus-panel .quick-action:hover {
-      background: transparent !important;
       color: #fff;
     }
       position: relative;
@@ -1432,7 +1432,7 @@ HTML = """<!doctype html>
       justify-content: center;
       gap: 6px;
       padding: 5px 9px;
-      border-radius: 999px;
+      border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.08);
       background: rgba(255,255,255,0.03);
       color: var(--muted);
@@ -1495,7 +1495,7 @@ HTML = """<!doctype html>
       -webkit-focus-ring-color: transparent !important;
     }
     .has-hover .quick-action:hover:not(:disabled) {
-      background: transparent;
+      background: rgb(20, 20, 19);
       color: #fff;
       border-color: rgba(255,255,255,0.25);
       transform: none;
@@ -2179,13 +2179,16 @@ HTML = """<!doctype html>
         box-shadow: 0 4px 16px rgba(0,0,0,0.2);
       }
       .composer-main-shell {
-        background: rgba(38, 38, 36, 0.58);
+        background: rgb(24, 24, 23);
         border-color: rgba(255, 255, 255, 0.12);
         backdrop-filter: blur(18px) saturate(135%);
         -webkit-backdrop-filter: blur(18px) saturate(135%);
         box-shadow:
           inset 0 1px 0 rgba(255,255,255,0.06),
           0 10px 28px rgba(0,0,0,0.18);
+      }
+      .composer-main-shell:focus-within {
+        background: rgba(38, 38, 36, 0.58);
       }
       .has-hover .composer-main-shell:hover {
         border-color: rgba(255, 255, 255, 0.16) !important;
@@ -3493,7 +3496,7 @@ HTML = """<!doctype html>
         min-height: 46px;
         box-sizing: border-box;
         border-radius: 24px;
-        background: rgb(42, 42, 40);
+        background: rgb(24, 24, 23);
         border: none;
         overflow: visible;
         box-shadow: 0 6px 18px rgba(0,0,0,0.1);
