@@ -2108,6 +2108,10 @@ HTML = """<!doctype html>
         overflow-x: clip;
         overscroll-behavior-x: none;
       }
+      .composer {
+        padding: 6px 4px 0;
+        padding-bottom: max(4px, env(safe-area-inset-bottom, 0px));
+      }
       main {
         overflow-x: clip;
         overscroll-behavior-x: none;
@@ -3094,19 +3098,19 @@ HTML = """<!doctype html>
         width: 48px;
         height: 48px;
         border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.12);
-        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255,255,255,0.12) !important;
+        background: rgba(255, 255, 255, 0.12) !important;
         backdrop-filter: blur(20px) saturate(160%);
         -webkit-backdrop-filter: blur(20px) saturate(160%);
         color: rgba(255, 255, 255, 0.95);
-        box-shadow: none;
+        box-shadow: none !important;
         list-style: none;
         cursor: pointer;
         padding: 0;
         text-indent: 0;
         position: relative;
         z-index: 2;
-        transition: transform 140ms ease, background 180ms ease, border-color 180ms ease;
+        transition: transform 140ms ease !important; /* Only transform */
         -webkit-tap-highlight-color: transparent;
         outline: none !important;
       }
@@ -3114,6 +3118,7 @@ HTML = """<!doctype html>
       .header-plus-toggle:active {
         outline: none !important;
         box-shadow: none !important;
+        background: rgba(255, 255, 255, 0.12) !important;
         border-color: rgba(255,255,255,0.12) !important;
       }
       .header-plus-toggle::-webkit-details-marker {
@@ -3125,15 +3130,15 @@ HTML = """<!doctype html>
       }
       .header-plus-menu[open] .header-plus-toggle {
         transform: scale(0.92);
-        background: rgb(25, 25, 25);
-        border-color: rgba(255,255,255,0.16);
-        box-shadow: none;
+        background: rgba(255, 255, 255, 0.12) !important;
+        border-color: rgba(255,255,255,0.12) !important;
+        box-shadow: none !important;
       }
       .header-plus-menu:not([open]) .header-plus-toggle:active {
         transform: none;
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255,255,255,0.12);
-        box-shadow: none;
+        background: rgba(255, 255, 255, 0.12) !important;
+        border-color: rgba(255,255,255,0.12) !important;
+        box-shadow: none !important;
       }
       .header-plus-panel {
         display: flex;
@@ -3362,8 +3367,8 @@ HTML = """<!doctype html>
         gap: 1.5px;
         margin: 0;
         width: 100%;
-        padding: 14px 12px 0;
-        padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+        padding: 6px 4px 0;
+        padding-bottom: max(4px, env(safe-area-inset-bottom, 0px));
         border: none;
         border-radius: 0;
         background: transparent;
