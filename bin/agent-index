@@ -4061,7 +4061,7 @@ HTML = """<!doctype html>
     .message-thinking-glow--copilot { animation-delay: -0.75s; }
     @keyframes thinking-glow-follow {
       0%   { transform: scale(0.5); opacity: 0; }
-      50%  { transform: scale(2.0); opacity: 0.4; }
+      50%  { transform: scale(1.4); opacity: 0.12; }
       100% { transform: scale(0.5); opacity: 0; }
     }
     .message-thinking-icon {
@@ -4088,14 +4088,16 @@ HTML = """<!doctype html>
     }
     .thinking-char {
       color: rgba(250, 249, 245, 0.42);
-      animation: thinking-char-pulse 2.5s ease-in-out infinite;
+      animation: thinking-char-pulse 2.0s linear infinite;
       animation-delay: calc(var(--char-i) * 0.18s);
     }
     @keyframes thinking-char-pulse {
-      0%        { color: rgba(250, 249, 245, 0.42); }
-      8%        { color: rgba(250, 249, 245, 0.82); }
-      20%       { color: rgba(250, 249, 245, 0.42); }
-      100%      { color: rgba(250, 249, 245, 0.42); }
+      0%   { color: rgba(250, 249, 245, 0.55); }
+      6%   { color: rgba(250, 249, 245, 0.82); }
+      15%  { color: rgba(250, 249, 245, 0.55); }
+      24%  { color: rgba(250, 249, 245, 0.42); }
+      91%  { color: rgba(250, 249, 245, 0.42); }
+      100% { color: rgba(250, 249, 245, 0.55); }
     }
     @media (prefers-reduced-motion: reduce) {
       .message-thinking-icon { animation: none; filter: brightness(0) invert(0.75); }
