@@ -5423,6 +5423,13 @@ HTML = """<!doctype html>
         overflow: visible !important;
         overscroll-behavior: auto !important;
       }
+      .message-row.user {
+        padding-right: 12px !important;
+      }
+      .message-row.user .message-wrap {
+        box-sizing: border-box !important;
+        padding-right: 8px !important;
+      }
       .composer {
         position: static !important;
         height: 0 !important;
@@ -6250,6 +6257,15 @@ HTML = """<!doctype html>
       });
     };
     const followMode = new URLSearchParams(window.location.search).get("follow") === "1";
+    const reconnectingStatusText = "reconnecting...";
+    let messageRefreshFailures = 0;
+    let reconnectStatusVisible = false;
+    let refreshInFlight = false;
+    let pendingRefreshOptions = null;
+    let reloadInFlight = false;
+    let traceFetchInFlight = false;
+    const traceCache = new Map();
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const timeline = document.getElementById("messages");
     const useDocumentFlowMobile = () => window.matchMedia("(max-width: 430px)").matches;
     const getScrollMetrics = () => {
@@ -6984,17 +7000,72 @@ HTML = """<!doctype html>
       updateScrollBtn();
       if (typeof updateSendBtnVisibility === "function") updateSendBtnVisibility();
     };
-    const refresh = async (options = {}) => {
-      try {
-        const res = await fetch(`/messages?ts=${Date.now()}`, { cache: "no-store" });
-        if (!res.ok) return;
-        render(await res.json(), options);
-      } catch (_) {}
-    };
     const setStatus = (text, isError = false) => {
       const node = document.getElementById("statusline");
       node.textContent = text;
       node.style.color = isError ? "#fda4af" : "";
+    };
+    const setReconnectStatus = (active) => {
+      const node = document.getElementById("statusline");
+      const current = node.textContent || "";
+      if (active) {
+        if (reconnectStatusVisible || !current || current === reconnectingStatusText) {
+          setStatus(reconnectingStatusText);
+          reconnectStatusVisible = true;
+        }
+        return;
+      }
+      if (reconnectStatusVisible || current === reconnectingStatusText) {
+        setStatus("");
+      }
+      reconnectStatusVisible = false;
+    };
+    const waitForChatReady = async (timeoutMs = 15000) => {
+      const deadline = Date.now() + timeoutMs;
+      while (Date.now() < deadline) {
+        try {
+          const res = await fetch(`/messages?ts=${Date.now()}`, { cache: "no-store" });
+          if (res.ok) return true;
+        } catch (_) {}
+        await sleep(200);
+      }
+      return false;
+    };
+    const navigateToFreshChat = () => {
+      const params = new URLSearchParams(window.location.search);
+      params.set("follow", followMode ? "1" : "0");
+      params.set("ts", String(Date.now()));
+      window.location.replace(`${window.location.pathname}?${params.toString()}`);
+    };
+    const mergeRefreshOptions = (current = {}, next = {}) => ({
+      forceScroll: !!(current.forceScroll || next.forceScroll),
+    });
+    const refresh = async (options = {}) => {
+      if (refreshInFlight) {
+        pendingRefreshOptions = mergeRefreshOptions(pendingRefreshOptions, options);
+        return;
+      }
+      refreshInFlight = true;
+      try {
+        const res = await fetch(`/messages?ts=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("messages unavailable");
+        const data = await res.json();
+        messageRefreshFailures = 0;
+        setReconnectStatus(false);
+        render(data, options);
+      } catch (_) {
+        messageRefreshFailures += 1;
+        if (followMode && messageRefreshFailures >= 3) {
+          setReconnectStatus(true);
+        }
+      } finally {
+        refreshInFlight = false;
+        if (pendingRefreshOptions) {
+          const nextOptions = pendingRefreshOptions;
+          pendingRefreshOptions = null;
+          queueMicrotask(() => refresh(nextOptions));
+        }
+      }
     };
     const logSystem = (message) => fetch("/log-system", {
       method: "POST",
@@ -7170,6 +7241,8 @@ HTML = """<!doctype html>
           return;
         }
         if (target === "reloadChat") {
+           if (reloadInFlight) return;
+           reloadInFlight = true;
            const btn = node;
            btn.disabled = true;
            btn.classList.add("restarting");
@@ -7177,7 +7250,8 @@ HTML = """<!doctype html>
            try {
              await fetch("/new-chat", { method: "POST" });
            } catch (_) {}
-           setTimeout(() => { window.location.reload(); }, 3000);
+           await waitForChatReady();
+           navigateToFreshChat();
            return;
          }
         if (target === "openHub") {
@@ -7928,29 +8002,47 @@ HTML = """<!doctype html>
       .replace(/\u001b\[2m/g, "\u001b[38;2;98;101;109m")
       .replace(/\u001b\[(?:0;)?22m/g, "\u001b[39m");
 
+    const renderTraceContent = (content) => {
+      if (ansiUp) {
+        traceTooltip.innerHTML = ansiUp.ansi_to_html(content);
+      } else {
+        traceTooltip.textContent = content;
+      }
+    };
     const fetchAndRenderTrace = async (agent) => {
+      if (traceFetchInFlight || currentHoverAgent !== agent) return;
+      traceFetchInFlight = true;
       try {
         const res = await fetch(`/trace?agent=${encodeURIComponent(agent)}&ts=${Date.now()}`);
         if (!res.ok) throw new Error("fetch failed");
         const data = await res.json();
         if (currentHoverAgent !== agent) return;
         const content = normalizeTraceAnsi(data.content || "No output");
-        if (ansiUp) {
-            traceTooltip.innerHTML = ansiUp.ansi_to_html(content);
-        } else {
-            traceTooltip.textContent = content;
-        }
+        traceCache.set(agent, content);
+        renderTraceContent(content);
       } catch (err) {
         if (currentHoverAgent === agent) {
-          traceTooltip.textContent = "Error loading trace";
+          const cached = traceCache.get(agent);
+          if (cached) {
+            renderTraceContent(cached);
+          } else {
+            traceTooltip.textContent = "Trace unavailable";
+          }
         }
+      } finally {
+        traceFetchInFlight = false;
       }
     };
 
     const showTraceTooltip = (agent, rect) => {
       currentHoverAgent = agent;
       traceTooltip.style.display = "block";
-      traceTooltip.textContent = "Loading trace...";
+      const cached = traceCache.get(agent);
+      if (cached) {
+        renderTraceContent(cached);
+      } else {
+        traceTooltip.textContent = "Loading trace...";
+      }
       if (isCompactMobile()) {
         const left = 8;
         const centerX = rect.left + rect.width / 2;
@@ -7989,7 +8081,7 @@ HTML = """<!doctype html>
       if (currentHoverAgent) {
         fetchAndRenderTrace(currentHoverAgent);
       }
-    }, 300);
+    }, 1000);
 
     document.getElementById("agentStatusPanel").addEventListener("mouseover", (e) => {
       if (!canUseHoverInteractions()) return;
