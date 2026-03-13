@@ -4018,9 +4018,14 @@ HTML = """<!doctype html>
     }
     .message-thinking-dots {
       display: inline-block;
-      width: 0;
+      width: 3ch;
+      text-align: left;
+    }
+    .message-thinking-dots::after {
+      content: "...";
+      display: inline-block;
       overflow: hidden;
-      white-space: nowrap;
+      vertical-align: bottom;
       animation: message-thinking-dots 1.1s steps(4, end) infinite;
     }
     .message-thinking-elapsed {
