@@ -6558,6 +6558,19 @@ HTML = """<!doctype html>
         z-index: 35 !important;
         pointer-events: auto !important;
       }
+      #attachedFilesMenu {
+        position: fixed !important;
+        top: 6px !important;
+        right: 66px !important;
+        margin: 0 !important;
+        z-index: 35 !important;
+        pointer-events: auto !important;
+      }
+      #attachedFilesMenu .header-plus-panel {
+        left: auto !important;
+        right: 0 !important;
+        transform-origin: top right !important;
+      }
       main {
         grid-area: auto !important;
         min-height: 0 !important;
