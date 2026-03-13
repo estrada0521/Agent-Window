@@ -373,6 +373,16 @@ def format_epoch(epoch):
     except Exception:
         return ""
 
+def parse_entry_epoch(value):
+    if not value:
+        return 0
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+        try:
+            return dt.datetime.strptime(value, fmt).timestamp()
+        except Exception:
+            pass
+    return 0
+
 def session_index_path(session_name, workspace="", explicit_log_dir=""):
     roots = []
     for candidate in (explicit_log_dir, str(Path(workspace) / "logs") if workspace else "", str(central_log_dir)):
@@ -539,6 +549,70 @@ def archived_sessions(active_names=None):
     sessions = list(records.values())
     sessions.sort(key=lambda item: item["updated_epoch"], reverse=True)
     return sessions
+
+def compute_hub_stats(active_sessions, archived_sessions):
+    all_sessions = [*active_sessions, *archived_sessions]
+    day_start = dt.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    total_chats = sum(int(item.get("chat_count") or 0) for item in all_sessions)
+    workspaces = {
+        (item.get("workspace") or "").strip()
+        for item in all_sessions
+        if (item.get("workspace") or "").strip()
+    }
+    today_messages = 0
+    today_commits = 0
+    seen_paths = set()
+    index_paths = []
+    for session in active_sessions:
+        index_path = session_index_path(
+            session.get("name", ""),
+            session.get("workspace", ""),
+            tmux_env(session.get("name", ""), "MULTIAGENT_LOG_DIR"),
+        )
+        if index_path and index_path.is_file():
+            key = str(index_path.resolve())
+            if key not in seen_paths:
+                seen_paths.add(key)
+                index_paths.append(index_path)
+    for session in archived_sessions:
+        log_dir = (session.get("log_dir") or "").strip()
+        if not log_dir:
+            continue
+        index_path = Path(log_dir) / ".agent-index.jsonl"
+        if index_path.is_file():
+            key = str(index_path.resolve())
+            if key not in seen_paths:
+                seen_paths.add(key)
+                index_paths.append(index_path)
+    for index_path in index_paths:
+        try:
+            with index_path.open("r", encoding="utf-8") as handle:
+                for line in handle:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        entry = json.loads(line)
+                    except Exception:
+                        continue
+                    if parse_entry_epoch(entry.get("timestamp")) < day_start:
+                        continue
+                    if entry.get("sender") == "system":
+                        if entry.get("kind") == "git-commit":
+                            today_commits += 1
+                        continue
+                    today_messages += 1
+        except Exception:
+            continue
+    return {
+        "active_sessions": len(active_sessions),
+        "archived_sessions": len(archived_sessions),
+        "total_sessions": len(all_sessions),
+        "total_chats": total_chats,
+        "today_messages": today_messages,
+        "today_commits": today_commits,
+        "workspace_count": len(workspaces),
+    }
 
 def chat_ready(chat_port):
     try:
@@ -733,6 +807,38 @@ HUB_HTML = """<!doctype html>
       font-size: 13px;
       line-height: 1.5;
     }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .stat-card {
+      background: var(--panel);
+      border: 0.5px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 13px;
+      min-width: 0;
+    }
+    .stat-label {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      font-weight: 600;
+    }
+    .stat-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      margin-top: 6px;
+    }
     .list {
       display: grid;
       gap: 10px;
@@ -887,11 +993,13 @@ HUB_HTML = """<!doctype html>
     <div class="toolbar">
       <div id="summary">Checking active sessions...</div>
     </div>
+    <div class="stats-grid" id="stats"></div>
     <div class="list" id="list"></div>
   </div>
   <script>
     const list = document.getElementById("list");
     const summary = document.getElementById("summary");
+    const stats = document.getElementById("stats");
     const openArchived = new Set();
     const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
@@ -956,11 +1064,53 @@ HUB_HTML = """<!doctype html>
           </details>`;
       }).join("");
     };
-    const render = (activeSessions, archivedSessions) => {
+    const renderStats = (statsData = {}) => {
+      const cards = [
+        {
+          label: "Active",
+          value: Number(statsData.active_sessions || 0),
+          note: "Live tmux sessions in this repo"
+        },
+        {
+          label: "Archived",
+          value: Number(statsData.archived_sessions || 0),
+          note: "Reusable sessions with saved logs"
+        },
+        {
+          label: "Chats",
+          value: Number(statsData.total_chats || 0),
+          note: "Indexed entries across active and archived"
+        },
+        {
+          label: "Messages Today",
+          value: Number(statsData.today_messages || 0),
+          note: "Non-system messages sent today"
+        },
+        {
+          label: "Commits Today",
+          value: Number(statsData.today_commits || 0),
+          note: "System commit notices logged today"
+        },
+        {
+          label: "Workspaces",
+          value: Number(statsData.workspace_count || 0),
+          note: "Distinct workspaces represented here"
+        }
+      ];
+      stats.innerHTML = cards.map((card) => `
+        <div class="stat-card">
+          <div class="stat-label">${escapeHtml(card.label)}</div>
+          <div class="stat-value">${escapeHtml(card.value)}</div>
+          <div class="stat-note">${escapeHtml(card.note)}</div>
+        </div>
+      `).join("");
+    };
+    const render = (activeSessions, archivedSessions, statsData) => {
       const activeCount = activeSessions.length;
       const archivedCount = archivedSessions.length;
       const totalChats = [...activeSessions, ...archivedSessions].reduce((sum, session) => sum + Number(session.chat_count || 0), 0);
       summary.textContent = `${activeCount} active · ${archivedCount} archived · ${totalChats} chats`;
+      renderStats(statsData);
       list.innerHTML = `
         <section class="section-block">
           <div class="section-label">Active Sessions</div>
@@ -1002,9 +1152,10 @@ HUB_HTML = """<!doctype html>
         const res = await fetch(`/sessions?ts=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) throw new Error("failed to load sessions");
         const data = await res.json();
-        render(data.active_sessions || data.sessions || [], data.archived_sessions || []);
+        render(data.active_sessions || data.sessions || [], data.archived_sessions || [], data.stats || {});
       } catch (error) {
         summary.textContent = "Failed to load sessions";
+        stats.innerHTML = "";
         list.innerHTML = `<div class="empty">${escapeHtml(error.message || "unknown error")}</div>`;
       }
     };
@@ -1060,7 +1211,8 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/sessions":
             active = repo_sessions()
             archived = archived_sessions({item["name"] for item in active})
-            self._send_json(200, {"sessions": active, "active_sessions": active, "archived_sessions": archived})
+            stats = compute_hub_stats(active, archived)
+            self._send_json(200, {"sessions": active, "active_sessions": active, "archived_sessions": archived, "stats": stats})
             return
         if parsed.path == "/open-session":
             qs = parse_qs(parsed.query)
@@ -7658,10 +7810,14 @@ HTML = """<!doctype html>
           const btn = node;
           const origLabel = btn.querySelector(".action-label")?.textContent;
           if (btn.dataset.exporting) return;
+          const userLimit = window.prompt("How many recent chats to export? (0 for all)", "100");
+          if (userLimit === null) return;
+          const limit = parseInt(userLimit, 10);
+          const limitParam = isNaN(limit) ? 100 : limit;
           btn.dataset.exporting = "1";
           if (btn.querySelector(".action-label")) btn.querySelector(".action-label").textContent = "Exporting…";
           try {
-            const res = await fetch("/export");
+            const res = await fetch(`/export?limit=${limitParam}`);
             if (res.ok) {
               const blob = await res.blob();
               const url = URL.createObjectURL(blob);
