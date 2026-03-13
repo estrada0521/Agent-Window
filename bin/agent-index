@@ -1246,6 +1246,7 @@ import os
 import shlex
 import subprocess
 import sys
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse, quote as url_quote
@@ -1263,6 +1264,7 @@ log_dir = sys.argv[9]
 targets = [item for item in sys.argv[10].split(",") if item]
 tmux_socket = sys.argv[11]
 hub_port = int(sys.argv[12])
+server_instance = uuid.uuid4().hex
 
 _repo_root = Path(agent_send_path).parent.parent
 tmux_prefix = ["tmux"]
@@ -1442,6 +1444,7 @@ def read_entries():
 def payload():
     ensure_commit_announcements()
     return json.dumps({
+        "server_instance": server_instance,
         "session": session_name,
         "filter": filter_agent or "all",
         "follow": follow_mode,
@@ -3982,8 +3985,8 @@ HTML = """<!doctype html>
       gap: 10px;
       padding: 8px 20px 6px 42px;
       color: var(--chrome-muted);
-      font-size: 13px;
-      line-height: 1.4;
+      font-size: 15px;
+      line-height: 1.45;
       pointer-events: none;
     }
     .message-thinking-icons {
@@ -3993,8 +3996,8 @@ HTML = """<!doctype html>
       flex-shrink: 0;
     }
     .message-thinking-icon {
-      width: 18px;
-      height: 18px;
+      width: 21px;
+      height: 21px;
       object-fit: contain;
       opacity: 0.92;
     }
@@ -6320,6 +6323,8 @@ HTML = """<!doctype html>
     const traceCache = new Map();
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const AGENT_ICON_DATA = __ICON_DATA_URIS__;
+    const SERVER_INSTANCE_SEED = "__SERVER_INSTANCE__";
+    let currentServerInstance = SERVER_INSTANCE_SEED;
     const timeline = document.getElementById("messages");
     const useDocumentFlowMobile = () => window.matchMedia("(max-width: 430px)").matches;
     const getScrollMetrics = () => {
@@ -7084,12 +7089,19 @@ HTML = """<!doctype html>
       }
       reconnectStatusVisible = false;
     };
-    const waitForChatReady = async (timeoutMs = 15000) => {
+    const waitForChatReady = async (timeoutMs = 15000, expectedPreviousInstance = "") => {
       const deadline = Date.now() + timeoutMs;
       while (Date.now() < deadline) {
         try {
           const res = await fetch(`/messages?ts=${Date.now()}`, { cache: "no-store" });
-          if (res.ok) return true;
+          if (res.ok) {
+            const data = await res.json();
+            const instance = data?.server_instance || "";
+            if (!expectedPreviousInstance || (instance && instance !== expectedPreviousInstance)) {
+              if (instance) currentServerInstance = instance;
+              return true;
+            }
+          }
         } catch (_) {}
         await sleep(200);
       }
@@ -7118,6 +7130,7 @@ HTML = """<!doctype html>
         const res = await fetch(`/messages?ts=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) throw new Error("messages unavailable");
         const data = await res.json();
+        if (data?.server_instance) currentServerInstance = data.server_instance;
         messageRefreshFailures = 0;
         setReconnectStatus(false);
         render(data, options);
@@ -7315,10 +7328,19 @@ HTML = """<!doctype html>
            btn.disabled = true;
            btn.classList.add("restarting");
            btn.textContent = "Restarting…";
+           const previousInstance = currentServerInstance;
            try {
              await fetch("/new-chat", { method: "POST" });
            } catch (_) {}
-           await waitForChatReady();
+           const ready = await waitForChatReady(15000, previousInstance);
+           if (!ready) {
+             reloadInFlight = false;
+             btn.disabled = false;
+             btn.classList.remove("restarting");
+             btn.textContent = "Reload";
+             setStatus("reload timed out", true);
+             return;
+           }
            navigateToFreshChat();
            return;
          }
@@ -8735,6 +8757,7 @@ class Handler(BaseHTTPRequestHandler):
             body = (
                 HTML
                 .replace("__ICON_DATA_URIS__", json.dumps(ICON_DATA_URIS, ensure_ascii=True))
+                .replace("__SERVER_INSTANCE__", server_instance)
                 .replace("__HUB_PORT__", str(hub_port))
                 .replace("mode: snapshot", f"mode: {'follow' if follow == '1' else 'snapshot'}")
             ).encode("utf-8")
