@@ -3103,7 +3103,7 @@ HTML = """<!doctype html>
       font-stretch: normal;
       font-variation-settings: "wght" 360;
       line-height: 16px;
-      color: rgb(156, 154, 147);
+      color: rgb(250, 249, 245);
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
@@ -5294,6 +5294,7 @@ HTML = """<!doctype html>
       }
     }
     @media (min-width: 701px) {
+      #fileDropdown { border-radius: 16px 16px 0 0; z-index: 15; }
       .message-thinking-row {
         gap: 14px;
         padding: 8px 20px 6px 20px;
@@ -9108,9 +9109,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         fileDrop.classList.add("visible");
         closePlusMenu();
       }
-      fileDrop.style.left = taRect.left + "px";
-      fileDrop.style.bottom = (window.innerHeight - pickerRect.top + 72) + "px";
-      fileDrop.style.width = taRect.width + "px";
+      const isPC = window.innerWidth >= 701;
+      const dropWidth = isPC ? Math.min(660, taRect.width) : taRect.width;
+      fileDrop.style.left = (taRect.left + (taRect.width - dropWidth) / 2) + "px";
+      fileDrop.style.bottom = (window.innerHeight - pickerRect.top + (isPC ? 64 : 72)) + "px";
+      fileDrop.style.width = dropWidth + "px";
       fileDrop.style.minWidth = "0";
     };
 
