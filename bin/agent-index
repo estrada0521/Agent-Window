@@ -4201,6 +4201,14 @@ HTML = """<!doctype html>
     .message-meta-below .meta-agent .target-name {
       color: inherit !important;
     }
+    .message:not(.user) .message-meta-below .meta-agent,
+    .message:not(.user) .message-meta-below .meta-agent-sep,
+    .message:not(.user) .message-meta-below .reply-jump-inline {
+      color: var(--chrome-muted) !important;
+    }
+    .message:not(.user) .message-meta-below .meta-agent-icon {
+      background-color: var(--chrome-muted);
+    }
     time { opacity: 1; color: var(--muted) !important; }
     @media (max-width: 359px) {
       html { width: 100vw; max-width: 100vw; height: 100%; overflow-x: hidden; overflow-y: hidden; background: var(--bg); }
