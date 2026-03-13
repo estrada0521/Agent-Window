@@ -4019,20 +4019,38 @@ HTML = """<!doctype html>
       filter: invert(1) grayscale(1) brightness(1.35) !important;
     }
     .message-thinking-label {
+      position: relative;
       display: inline-flex;
       align-items: baseline;
       gap: 0;
       white-space: nowrap;
       font-size: 16px;
-      background: linear-gradient(90deg, rgba(250, 249, 245, 0.25) 0%, rgba(250, 249, 245, 0.25) 40%, rgb(250, 249, 245) 50%, rgba(250, 249, 245, 0.25) 60%, rgba(250, 249, 245, 0.25) 100%);
-      background-size: 290% 100%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: rgba(250, 249, 245, 0.25);
+      -webkit-text-fill-color: rgba(250, 249, 245, 0.25);
+    }
+    .message-thinking-label::after {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      color: rgb(250, 249, 245);
+      -webkit-text-fill-color: rgb(250, 249, 245);
+      font-size: inherit;
+      font-family: inherit;
+      font-weight: inherit;
+      letter-spacing: inherit;
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, white 50%, transparent 100%);
+      mask-image: linear-gradient(90deg, transparent 0%, white 50%, transparent 100%);
+      -webkit-mask-size: 60px 100%;
+      mask-size: 60px 100%;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: -60px 0;
+      mask-position: -60px 0;
       animation: thinking-shimmer 2.4s infinite linear;
     }
     @keyframes thinking-shimmer {
-      0% { background-position: 100% 0; }
-      100% { background-position: 0% 0; }
+      0%   { -webkit-mask-position: -60px 0; mask-position: -60px 0; }
+      100% { -webkit-mask-position: 300px 0; mask-position: 300px 0; }
     }
     @keyframes thinking-icon-pulse {
       0% { opacity: 0.5; }
@@ -4043,10 +4061,12 @@ HTML = """<!doctype html>
         animation: none;
       }
       .message-thinking-label {
+        color: rgba(250, 249, 245, 0.6);
+        -webkit-text-fill-color: rgba(250, 249, 245, 0.6);
+      }
+      .message-thinking-label::after {
         animation: none;
-        background: none;
-        color: rgb(250, 249, 245);
-        -webkit-text-fill-color: initial;
+        display: none;
       }
     }
     .meta {
@@ -7962,7 +7982,7 @@ HTML = """<!doctype html>
           <span class="message-thinking-icons">
             ${iconImg(agent, `message-thinking-icon message-thinking-icon--${agent}`)}
           </span>
-          <span class="message-thinking-label">thinking</span>
+          <span class="message-thinking-label" data-text="thinking">thinking</span>
         `;
         frag.appendChild(row);
       });
