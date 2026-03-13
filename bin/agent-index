@@ -320,6 +320,7 @@ script_dir = script_path.parent
 multiagent_path = script_dir / "multiagent"
 central_log_dir = repo_root / "logs"
 hub_settings_path = central_log_dir / ".hub-settings.json"
+thinking_stats_path = central_log_dir / ".thinking-time.json"
 
 HUB_SETTINGS_DEFAULTS = {
     "theme": "default",
@@ -558,17 +559,53 @@ def archived_sessions(active_names=None):
     sessions.sort(key=lambda item: item["updated_epoch"], reverse=True)
     return sessions
 
+
+def load_hub_thinking_totals():
+    totals = {agent: 0 for agent in ("claude", "codex", "gemini", "copilot")}
+    session_count = 0
+    if not thinking_stats_path.is_file():
+        return {"total_seconds": 0, "by_agent": totals, "session_count": 0}
+    try:
+        raw = json.loads(thinking_stats_path.read_text(encoding="utf-8"))
+    except Exception:
+        raw = {}
+    sessions = raw.get("sessions") if isinstance(raw, dict) else {}
+    if not isinstance(sessions, dict):
+        sessions = {}
+    for session_data in sessions.values():
+        if not isinstance(session_data, dict):
+            continue
+        agents = session_data.get("agents")
+        if not isinstance(agents, dict):
+            continue
+        used = False
+        for agent in totals:
+            try:
+                value = int(agents.get(agent, 0) or 0)
+            except Exception:
+                value = 0
+            value = max(0, value)
+            if value:
+                used = True
+            totals[agent] += value
+        if used:
+            session_count += 1
+    return {
+        "total_seconds": sum(totals.values()),
+        "by_agent": totals,
+        "session_count": session_count,
+    }
+
 def compute_hub_stats(active_sessions, archived_sessions):
     all_sessions = [*active_sessions, *archived_sessions]
-    day_start = dt.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
     total_chats = sum(int(item.get("chat_count") or 0) for item in all_sessions)
     workspaces = {
         (item.get("workspace") or "").strip()
         for item in all_sessions
         if (item.get("workspace") or "").strip()
     }
-    today_messages = 0
-    today_commits = 0
+    total_messages = 0
+    total_commits = 0
     seen_paths = set()
     index_paths = []
     for session in active_sessions:
@@ -603,23 +640,25 @@ def compute_hub_stats(active_sessions, archived_sessions):
                         entry = json.loads(line)
                     except Exception:
                         continue
-                    if parse_entry_epoch(entry.get("timestamp")) < day_start:
-                        continue
                     if entry.get("sender") == "system":
                         if entry.get("kind") == "git-commit":
-                            today_commits += 1
+                            total_commits += 1
                         continue
-                    today_messages += 1
+                    total_messages += 1
         except Exception:
             continue
+    thinking_totals = load_hub_thinking_totals()
     return {
         "active_sessions": len(active_sessions),
         "archived_sessions": len(archived_sessions),
         "total_sessions": len(all_sessions),
         "total_chats": total_chats,
-        "today_messages": today_messages,
-        "today_commits": today_commits,
+        "total_messages": total_messages,
+        "total_commits": total_commits,
         "workspace_count": len(workspaces),
+        "total_thinking_seconds": thinking_totals["total_seconds"],
+        "thinking_by_agent": thinking_totals["by_agent"],
+        "thinking_session_count": thinking_totals["session_count"],
     }
 
 def load_hub_settings():
@@ -890,6 +929,38 @@ HUB_APP_HTML = """<!doctype html>
       padding: 12px 13px;
       min-width: 0;
     }
+    details.stat-card {
+      padding: 0;
+      overflow: clip;
+    }
+    .stat-summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 13px;
+    }
+    .stat-summary::-webkit-details-marker { display: none; }
+    .stat-breakdown {
+      display: grid;
+      gap: 8px;
+      padding: 0 13px 12px;
+      border-top: 0.5px solid var(--line);
+    }
+    .stat-breakdown-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .stat-breakdown-label {
+      color: var(--muted);
+      text-transform: capitalize;
+    }
+    .stat-breakdown-value {
+      color: var(--fg);
+      font-variant-numeric: tabular-nums;
+    }
     .stat-label {
       color: var(--muted);
       font-size: 11px;
@@ -1083,6 +1154,7 @@ HUB_APP_HTML = """<!doctype html>
     const summary = document.getElementById("summary");
     const stats = document.getElementById("stats");
     const openArchived = new Set();
+    const openStatCards = new Set();
     const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
       "<": "&lt;",
@@ -1147,6 +1219,23 @@ HUB_APP_HTML = """<!doctype html>
       }).join("");
     };
     const renderStats = (statsData = {}) => {
+      const formatStatDuration = (seconds) => {
+        const total = Math.max(0, Number(seconds || 0));
+        if (total < 60) return `${Math.round(total)}s`;
+        const mins = Math.floor(total / 60);
+        const hours = Math.floor(mins / 60);
+        if (hours > 0) {
+          const restMins = mins % 60;
+          return `${hours}h ${restMins}m`;
+        }
+        return `${mins}m`;
+      };
+      const thinkingBreakdown = Object.entries(statsData.thinking_by_agent || {})
+        .filter(([, value]) => Number(value || 0) > 0)
+        .map(([agent, value]) => ({
+          label: agent,
+          value: formatStatDuration(value),
+        }));
       const cards = [
         {
           label: "Active",
@@ -1164,28 +1253,67 @@ HUB_APP_HTML = """<!doctype html>
           note: "Indexed entries across active and archived"
         },
         {
-          label: "Messages Today",
-          value: Number(statsData.today_messages || 0),
-          note: "Non-system messages sent today"
+          label: "Messages",
+          value: Number(statsData.total_messages || 0),
+          note: "Non-system messages across all stored sessions"
         },
         {
-          label: "Commits Today",
-          value: Number(statsData.today_commits || 0),
-          note: "System commit notices logged today"
+          label: "Commits",
+          value: Number(statsData.total_commits || 0),
+          note: "System commit notices logged across all sessions"
         },
         {
           label: "Workspaces",
           value: Number(statsData.workspace_count || 0),
           note: "Distinct workspaces represented here"
+        },
+        {
+          label: "Thinking Time",
+          value: formatStatDuration(statsData.total_thinking_seconds || 0),
+          note: thinkingBreakdown.length
+            ? `Cumulative agent runtime across ${Number(statsData.thinking_session_count || 0)} session${Number(statsData.thinking_session_count || 0) === 1 ? "" : "s"}`
+            : "No recorded runtime yet",
+          key: "thinking-time",
+          breakdown: thinkingBreakdown
         }
       ];
-      stats.innerHTML = cards.map((card) => `
-        <div class="stat-card">
-          <div class="stat-label">${escapeHtml(card.label)}</div>
-          <div class="stat-value">${escapeHtml(card.value)}</div>
-          <div class="stat-note">${escapeHtml(card.note)}</div>
-        </div>
-      `).join("");
+      stats.innerHTML = cards.map((card) => {
+        if (!card.breakdown) {
+          return `
+            <div class="stat-card">
+              <div class="stat-label">${escapeHtml(card.label)}</div>
+              <div class="stat-value">${escapeHtml(card.value)}</div>
+              <div class="stat-note">${escapeHtml(card.note)}</div>
+            </div>
+          `;
+        }
+        const open = openStatCards.has(card.key) ? " open" : "";
+        return `
+          <details class="stat-card"${open} data-stat-key="${escapeHtml(card.key)}">
+            <summary class="stat-summary">
+              <div class="stat-label">${escapeHtml(card.label)}</div>
+              <div class="stat-value">${escapeHtml(card.value)}</div>
+              <div class="stat-note">${escapeHtml(card.note)}</div>
+            </summary>
+            <div class="stat-breakdown">
+              ${card.breakdown.map((item) => `
+                <div class="stat-breakdown-row">
+                  <div class="stat-breakdown-label">${escapeHtml(item.label)}</div>
+                  <div class="stat-breakdown-value">${escapeHtml(item.value)}</div>
+                </div>
+              `).join("")}
+            </div>
+          </details>
+        `;
+      }).join("");
+      stats.querySelectorAll("details[data-stat-key]").forEach((node) => {
+        node.addEventListener("toggle", () => {
+          const key = node.dataset.statKey;
+          if (!key) return;
+          if (node.open) openStatCards.add(key);
+          else openStatCards.delete(key);
+        });
+      });
     };
     const render = (activeSessions, archivedSessions, statsData) => {
       const activeCount = activeSessions.length;
@@ -1829,6 +1957,7 @@ server_instance = uuid.uuid4().hex
 
 _repo_root = Path(agent_send_path).parent.parent
 chat_settings_path = _repo_root / "logs" / ".hub-settings.json"
+thinking_stats_path = _repo_root / "logs" / ".thinking-time.json"
 CHAT_SETTINGS_DEFAULTS = {
     "theme": "default",
     "agent_font_mode": "serif",
@@ -1918,6 +2047,35 @@ def chat_agent_font_mode_inline_style(font_mode):
       line-height: 22px !important;
     }
     """
+
+
+def persist_thinking_totals(session_name, workspace, totals):
+    agents = {}
+    for agent in ("claude", "codex", "gemini", "copilot"):
+        try:
+            value = int(totals.get(agent, 0) or 0)
+        except Exception:
+            value = 0
+        agents[agent] = max(0, value)
+    payload = {}
+    if thinking_stats_path.is_file():
+        try:
+            payload = json.loads(thinking_stats_path.read_text(encoding="utf-8"))
+        except Exception:
+            payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+    sessions = payload.get("sessions")
+    if not isinstance(sessions, dict):
+        sessions = {}
+    sessions[session_name] = {
+        "workspace": workspace,
+        "updated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "agents": agents,
+    }
+    payload["sessions"] = sessions
+    thinking_stats_path.parent.mkdir(parents=True, exist_ok=True)
+    thinking_stats_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 tmux_prefix = ["tmux"]
 if tmux_socket:
@@ -3239,6 +3397,26 @@ HTML = """<!doctype html>
       left: auto;
       right: 0;
       transform-origin: top right;
+    }
+    #attachedFilesMenu .header-plus-panel {
+      min-width: 220px;
+      max-height: min(400px, 60vh);
+      overflow-y: auto;
+    }
+    .attached-files-badge {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      background: rgba(99, 179, 237, 0.88);
+      color: rgb(10, 12, 16);
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+      padding: 2px 4px;
+      min-width: 16px;
+      text-align: center;
+      pointer-events: none;
     }
     .header-plus-panel .quick-action {
       all: unset;
@@ -7114,6 +7292,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         </div>
         <div class="header-right">
 
+          <details class="header-plus-menu" id="attachedFilesMenu">
+            <summary class="header-plus-toggle" title="Attached files" aria-label="Attached files">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            </summary>
+            <div class="header-plus-panel" id="attachedFilesPanel"></div>
+          </details>
+
           <details class="header-plus-menu right-menu" id="rightMenu">
             <summary class="header-plus-toggle" title="Menu">⋯</summary>
             <div class="header-plus-panel">
@@ -7970,6 +8155,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
       lastNotifiedMsgId = displayEntries.at(-1)?.msg_id || lastNotifiedMsgId;
       initialLoadDone = true;
+      updateAttachedFilesPanel(data.entries);
       const root = document.getElementById("messages");
       if (!displayEntries.length) {
         _renderedIds.clear();
@@ -8287,12 +8473,65 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     });
     const headerPlusMenu = document.getElementById("headerPlusMenu");
     const rightMenu = document.getElementById("rightMenu");
+    const attachedFilesMenu = document.getElementById("attachedFilesMenu");
+    const attachedFilesPanel = document.getElementById("attachedFilesPanel");
+    const updateAttachedFilesPanel = (entries) => {
+      if (!attachedFilesPanel) return;
+      const seen = new Set();
+      const files = [];
+      for (const entry of (entries || [])) {
+        const msg = entry.message || "";
+        for (const m of msg.matchAll(/\[Attached:\s*([^\]]+)\]/g)) {
+          const path = m[1].trim();
+          if (!seen.has(path)) { seen.add(path); files.push(path); }
+        }
+      }
+      let badge = attachedFilesMenu?.querySelector(".attached-files-badge");
+      if (attachedFilesMenu) {
+        if (files.length > 0) {
+          if (!badge) {
+            badge = document.createElement("span");
+            badge.className = "attached-files-badge";
+            attachedFilesMenu.querySelector(".header-plus-toggle")?.appendChild(badge);
+          }
+          badge.textContent = files.length > 99 ? "99+" : String(files.length);
+          badge.hidden = false;
+        } else if (badge) {
+          badge.hidden = true;
+        }
+      }
+      attachedFilesPanel.innerHTML = "";
+      if (!files.length) {
+        const empty = document.createElement("div");
+        empty.style.cssText = "padding:8px 12px;color:var(--dim);font-size:13px;";
+        empty.textContent = "No attached files";
+        attachedFilesPanel.appendChild(empty);
+        return;
+      }
+      for (const path of files) {
+        const filename = path.split("/").pop() || path;
+        const ext = filename.includes(".") ? filename.split(".").pop().toLowerCase() : "";
+        const icon = FILE_ICONS[ext] || "📄";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "quick-action";
+        btn.title = path;
+        btn.innerHTML = `<span class="action-icon" aria-hidden="true" style="font-size:1.1em;min-width:24px;text-align:center;">${icon}</span><span class="action-label" style="font-size:13px;font-family:var(--mono-font,'JetBrains Mono',monospace);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">${escapeHtml(filename)}</span>`;
+        btn.addEventListener("mousedown", (e) => e.preventDefault());
+        btn.addEventListener("click", (e) => {
+          if (attachedFilesMenu) attachedFilesMenu.open = false;
+          openFileModal(path, ext, btn, e);
+        });
+        attachedFilesPanel.appendChild(btn);
+      }
+    };
     let keepHeaderMenuThroughForwardClick = "";
     const closeQuickMore = () => {
       if (quickMore) quickMore.open = isCompactMobile() ? false : true;
       closePlusMenu();
       if (headerPlusMenu) headerPlusMenu.open = false;
       if (rightMenu) rightMenu.open = false;
+      if (attachedFilesMenu) attachedFilesMenu.open = false;
     };
     document.addEventListener("click", (event) => {
       if (quickMore && isCompactMobile() && quickMore.open && !quickMore.contains(event.target)) {
@@ -8310,6 +8549,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
       if (rightMenu && rightMenu.open && !rightMenu.contains(event.target)) {
         rightMenu.open = false;
+      }
+      if (attachedFilesMenu && attachedFilesMenu.open && !attachedFilesMenu.contains(event.target)) {
+        attachedFilesMenu.open = false;
       }
     });    document.querySelectorAll("[data-forward-action]").forEach((node) => {
       node.addEventListener("mousedown", (e) => e.preventDefault());
@@ -8953,26 +9195,60 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let agentStatusSince = {};
     let agentTotalThinkingTime = {};
     let thinkingTimeSession = "";
+    let lastThinkingSyncAt = 0;
+    let lastThinkingSyncPayload = "";
+    const collectThinkingTimeTotals = () => {
+      const totals = { ...agentTotalThinkingTime };
+      const now = Date.now();
+      Object.entries(currentAgentStatuses).forEach(([agent, status]) => {
+        if (status === "running" && agentStatusSince[agent]) {
+          totals[agent] = (totals[agent] || 0) + Math.floor((now - agentStatusSince[agent]) / 1000);
+        }
+      });
+      return totals;
+    };
+    const syncThinkingTimeToServer = (force = false) => {
+      if (!thinkingTimeSession) return;
+      const totals = collectThinkingTimeTotals();
+      const body = JSON.stringify({ totals });
+      const now = Date.now();
+      if (!force) {
+        if (body === lastThinkingSyncPayload && now - lastThinkingSyncAt < 15000) return;
+        if (now - lastThinkingSyncAt < 5000) return;
+      }
+      lastThinkingSyncPayload = body;
+      lastThinkingSyncAt = now;
+      if (force && navigator.sendBeacon) {
+        try {
+          const blob = new Blob([body], { type: "application/json" });
+          navigator.sendBeacon("/thinking-time", blob);
+          return;
+        } catch (_) {}
+      }
+      fetch("/thinking-time", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+      }).catch(() => {});
+    };
     const loadThinkingTime = (session) => {
       if (!session || thinkingTimeSession === session) return;
       thinkingTimeSession = session;
+      lastThinkingSyncAt = 0;
+      lastThinkingSyncPayload = "";
       try {
         const saved = localStorage.getItem(`thinkingTime:${session}`);
         if (saved) agentTotalThinkingTime = JSON.parse(saved);
       } catch(_) {}
+      syncThinkingTimeToServer(true);
     };
     const saveThinkingTime = () => {
       if (!thinkingTimeSession) return;
       try {
-        const toSave = { ...agentTotalThinkingTime };
-        const now = Date.now();
-        Object.entries(currentAgentStatuses).forEach(([agent, status]) => {
-          if (status === "running" && agentStatusSince[agent]) {
-            toSave[agent] = (toSave[agent] || 0) + Math.floor((now - agentStatusSince[agent]) / 1000);
-          }
-        });
+        const toSave = collectThinkingTimeTotals();
         localStorage.setItem(`thinkingTime:${thinkingTimeSession}`, JSON.stringify(toSave));
       } catch(_) {}
+      syncThinkingTimeToServer();
     };
     const formatAgentElapsed = (seconds, short = false) => {
       if (!Number.isFinite(seconds) || seconds < 0) return "";
@@ -9365,9 +9641,17 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     setInterval(() => {
       if (Object.keys(currentAgentStatuses).length) {
         renderAgentStatus(currentAgentStatuses);
-        if (Object.keys(agentTotalThinkingTime).length) saveThinkingTime();
+        if (THINKING_AGENT_ORDER.some((agent) => currentAgentStatuses[agent] === "running") || Object.keys(agentTotalThinkingTime).length) {
+          saveThinkingTime();
+        }
       }
     }, 1000);
+    window.addEventListener("pagehide", () => {
+      if (Object.keys(agentTotalThinkingTime).length || Object.keys(currentAgentStatuses).length) {
+        saveThinkingTime();
+        syncThinkingTimeToServer(true);
+      }
+    });
 
     // Auto-mode button
     const autoBtn = document.getElementById("autoModeBtn");
@@ -9973,6 +10257,28 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(400, {"ok": False, "error": "message required"})
                 return
             append_system_entry(msg)
+            self._send_json(200, {"ok": True})
+            return
+        if parsed.path == "/thinking-time":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                length = 0
+            raw = self.rfile.read(length)
+            try:
+                data = json.loads(raw.decode("utf-8") or "{}")
+            except json.JSONDecodeError:
+                self._send_json(400, {"ok": False, "error": "invalid json"})
+                return
+            totals = data.get("totals")
+            if not isinstance(totals, dict):
+                self._send_json(400, {"ok": False, "error": "totals required"})
+                return
+            try:
+                persist_thinking_totals(session_name, workspace, totals)
+            except Exception as exc:
+                self._send_json(500, {"ok": False, "error": str(exc)})
+                return
             self._send_json(200, {"ok": True})
             return
         if parsed.path != "/send":

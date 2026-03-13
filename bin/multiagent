@@ -864,27 +864,28 @@ done
 
 # --- Save logs from a session ---
 # Layout:
-#   <base>/<session>_<created-day>_<updated-day>/*.ans|*.log
-#   <base>/<session>_<created-day>_<updated-day>/.meta
+#   <base>/<session>/*.ans|*.log
+#   <base>/<session>/.meta
 # Detailed timestamps and overwrite history are stored in .meta.
 _session_log_dir() {
   local session="$1" base_dir="$2"
-  local created_epoch created_key updated_key created_at updated_at existing_dir session_dir
+  local created_epoch created_at updated_at old_dir session_dir
   created_epoch="$(tmux display-message -p -t "$session" '#{session_created}' 2>/dev/null || true)"
   if [[ -n "$created_epoch" ]]; then
-    created_key="$(date -r "$created_epoch" '+%y%m%d' 2>/dev/null || date '+%y%m%d')"
     created_at="$(date -r "$created_epoch" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date '+%Y-%m-%d %H:%M:%S')"
   else
-    created_key="$(date '+%y%m%d')"
     created_at="$(date '+%Y-%m-%d %H:%M:%S')"
   fi
-  updated_key="$(date '+%y%m%d')"
   updated_at="$(date '+%Y-%m-%d %H:%M:%S')"
   mkdir -p "$base_dir"
-  existing_dir="$(find "$base_dir" -maxdepth 1 -type d -name "${session}_${created_key}_*" | head -n 1)"
-  session_dir="${base_dir}/${session}_${created_key}_${updated_key}"
-  if [[ -n "$existing_dir" ]] && [[ "$existing_dir" != "$session_dir" ]]; then
-    mv "$existing_dir" "$session_dir"
+  session_dir="${base_dir}/${session}"
+  if [[ ! -d "$session_dir" ]]; then
+    old_dir="$(find "$base_dir" -maxdepth 1 -type d -name "${session}_*" 2>/dev/null | sort | tail -n 1)"
+    if [[ -n "$old_dir" ]] && [[ "$old_dir" != "$session_dir" ]]; then
+      mv "$old_dir" "$session_dir"
+    else
+      mkdir -p "$session_dir"
+    fi
   else
     mkdir -p "$session_dir"
   fi
@@ -1263,22 +1264,23 @@ tmux() {
 
 session_log_dir() {
   local base_dir="\$1"
-  local created_epoch created_key updated_key created_at updated_at existing_dir session_dir
+  local created_epoch created_at updated_at old_dir session_dir
   created_epoch="\$(tmux display-message -p -t "\$session" '#{session_created}' 2>/dev/null || true)"
   if [[ -n "\$created_epoch" ]]; then
-    created_key="\$(date -r "\$created_epoch" '+%y%m%d' 2>/dev/null || date '+%y%m%d')"
     created_at="\$(date -r "\$created_epoch" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date '+%Y-%m-%d %H:%M:%S')"
   else
-    created_key="\$(date '+%y%m%d')"
     created_at="\$(date '+%Y-%m-%d %H:%M:%S')"
   fi
-  updated_key="\$(date '+%y%m%d')"
   updated_at="\$(date '+%Y-%m-%d %H:%M:%S')"
   mkdir -p "\$base_dir"
-  existing_dir="\$(find "\$base_dir" -maxdepth 1 -type d -name "\${session}_\${created_key}_*" | head -n 1)"
-  session_dir="\${base_dir}/\${session}_\${created_key}_\${updated_key}"
-  if [[ -n "\$existing_dir" ]] && [[ "\$existing_dir" != "\$session_dir" ]]; then
-    mv "\$existing_dir" "\$session_dir"
+  session_dir="\${base_dir}/\${session}"
+  if [[ ! -d "\$session_dir" ]]; then
+    old_dir="\$(find \"\$base_dir\" -maxdepth 1 -type d -name \"\${session}_*\" 2>/dev/null | sort | tail -n 1)"
+    if [[ -n "\$old_dir" ]] && [[ "\$old_dir" != "\$session_dir" ]]; then
+      mv "\$old_dir" "\$session_dir"
+    else
+      mkdir -p "\$session_dir"
+    fi
   else
     mkdir -p "\$session_dir"
   fi
