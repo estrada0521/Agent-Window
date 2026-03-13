@@ -736,7 +736,7 @@ def kill_repo_session(session_name):
         time.sleep(0.1)
     return False, f"Session {session_name} did not go away in time."
 
-HUB_HTML = """<!doctype html>
+HUB_APP_HTML = """<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -806,6 +806,28 @@ HUB_HTML = """<!doctype html>
       color: var(--muted);
       font-size: 13px;
       line-height: 1.5;
+    }
+    .hub-nav {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .hub-nav a {
+      color: var(--muted);
+      text-decoration: none;
+      border: 0.5px solid var(--line);
+      background: var(--panel);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      line-height: 1;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .hub-nav a.active {
+      color: var(--fg);
+      border-color: var(--line-strong);
     }
     .stats-grid {
       display: grid;
@@ -981,14 +1003,25 @@ HUB_HTML = """<!doctype html>
       color: var(--muted);
       line-height: 1.6;
     }
+    .hub-view-resume #stats {
+      display: none;
+    }
+    .hub-view-stats #list {
+      display: none;
+    }
   </style>
 </head>
-<body>
+<body class="hub-view-__HUB_VIEW__">
   <div class="shell">
     <section class="hero">
       <div class="eyebrow">multiagent</div>
-      <h1>Resume Session</h1>
-      <div class="sub">Reopen an existing session from this phone. Tap a card to restart its chat view on the Mac and jump back in.</div>
+      <h1>__HUB_TITLE__</h1>
+      <div class="sub">__HUB_SUB__</div>
+      <div class="hub-nav">
+        <a href="/" class="__HUB_NAV_HOME__">Hub</a>
+        <a href="/resume" class="__HUB_NAV_RESUME__">Resume Sessions</a>
+        <a href="/stats" class="__HUB_NAV_STATS__">Stats</a>
+      </div>
     </section>
     <div class="toolbar">
       <div id="summary">Checking active sessions...</div>
@@ -1166,6 +1199,148 @@ HUB_HTML = """<!doctype html>
 </html>
 """
 
+HUB_RESUME_HTML = (
+    HUB_APP_HTML
+    .replace("__HUB_VIEW__", "resume")
+    .replace("__HUB_TITLE__", "Resume Sessions")
+    .replace("__HUB_SUB__", "Reopen an existing session from this phone. Tap a card to restart its chat view on the Mac and jump back in.")
+    .replace("__HUB_NAV_HOME__", "")
+    .replace("__HUB_NAV_RESUME__", "active")
+    .replace("__HUB_NAV_STATS__", "")
+)
+
+HUB_STATS_HTML = (
+    HUB_APP_HTML
+    .replace("__HUB_VIEW__", "stats")
+    .replace("__HUB_TITLE__", "Stats")
+    .replace("__HUB_SUB__", "A quick view of what is active in this repo right now, plus a few cross-session counts from existing logs.")
+    .replace("__HUB_NAV_HOME__", "")
+    .replace("__HUB_NAV_RESUME__", "")
+    .replace("__HUB_NAV_STATS__", "active")
+)
+
+HUB_HOME_HTML = """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="rgb(38, 38, 36)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Session Hub">
+  <link rel="manifest" href="/hub.webmanifest">
+  <title>Session Hub</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: rgb(38, 38, 36);
+      --panel: rgb(25, 25, 24);
+      --panel-2: rgb(30, 30, 29);
+      --line: rgba(255,255,255,0.09);
+      --line-strong: rgba(255,255,255,0.14);
+      --fg: rgb(240, 239, 235);
+      --muted: rgb(156, 154, 147);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "SF Pro Text", "Segoe UI", sans-serif;
+    }
+    body {
+      padding: max(18px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom)) 14px;
+    }
+    .shell {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .hero {
+      padding: 8px 2px 18px 2px;
+    }
+    .eyebrow {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 40px);
+      line-height: 1.02;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+    .sub {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      max-width: 40rem;
+    }
+    .home-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .home-card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: var(--panel);
+      border: 0.5px solid var(--line);
+      border-radius: 18px;
+      padding: 16px 16px 15px;
+    }
+    .home-label {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .home-title {
+      font-size: 22px;
+      line-height: 1.1;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+    .home-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 10px;
+      max-width: 34rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="eyebrow">multiagent</div>
+      <h1>Hub</h1>
+      <div class="sub">A home page for existing sessions. Resume work, inspect cross-session stats, and grow this into the control layer for the whole multiagent system.</div>
+    </section>
+    <div class="home-grid">
+      <a class="home-card" href="/resume">
+        <div class="home-label">Resume</div>
+        <div class="home-title">Resume Sessions</div>
+        <div class="home-note">Open active sessions, browse archived ones, revive old work, and jump back into chat.</div>
+      </a>
+      <a class="home-card" href="/stats">
+        <div class="home-label">Stats</div>
+        <div class="home-title">Session Stats</div>
+        <div class="home-note">See active versus archived sessions, how many chats exist, today’s messages and commits, and how many workspaces are represented.</div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
 def error_page(message):
     text = html.escape(message)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Session Hub</title><style>:root{{color-scheme:dark}}body{{margin:0;background:rgb(38,38,36);color:rgb(240,239,235);font-family:'SF Pro Text','Segoe UI',sans-serif;padding:24px}}.panel{{max-width:680px;margin:0 auto;background:rgb(25,25,24);border:0.5px solid rgba(255,255,255,0.09);border-radius:16px;padding:18px 18px 16px}}a{{color:rgb(240,239,235)}}</style></head><body><div class="panel"><h1 style="margin:0 0 10px;font-size:24px">Session Hub</h1><p style="margin:0 0 14px;color:rgb(156,154,147);line-height:1.6">{text}</p><p style="margin:0"><a href=\"/\">Back</a></p></div></body></html>"""
@@ -1266,7 +1441,13 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             return
         if parsed.path == "/" or parsed.path == "/index.html":
-            self._send_html(200, HUB_HTML)
+            self._send_html(200, HUB_HOME_HTML)
+            return
+        if parsed.path == "/resume":
+            self._send_html(200, HUB_RESUME_HTML)
+            return
+        if parsed.path == "/stats":
+            self._send_html(200, HUB_STATS_HTML)
             return
         self.send_response(404)
         self.end_headers()
