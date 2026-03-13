@@ -4007,19 +4007,19 @@ HTML = """<!doctype html>
       height: 34px;
       object-fit: contain;
       opacity: 0.92;
-      animation: thinking-icon-float 2.8s ease-in-out infinite;
+      animation: thinking-icon-glow 2.8s ease-in-out infinite;
     }
     .message-thinking-icon--claude  { animation-delay: 0s; }
-    .message-thinking-icon--codex   { animation-delay: -0.7s; }
+    .message-thinking-icon--codex   { animation-delay: -0.7s; animation-name: thinking-icon-glow-inv; }
     .message-thinking-icon--gemini  { animation-delay: -1.4s; }
-    .message-thinking-icon--copilot { animation-delay: -2.1s; }
-    @keyframes thinking-icon-float {
-      0%, 100% { transform: translateY(0)    scale(1); }
-      50%       { transform: translateY(-4px) scale(1.07); }
+    .message-thinking-icon--copilot { animation-delay: -2.1s; animation-name: thinking-icon-glow-inv; }
+    @keyframes thinking-icon-glow {
+      0%, 100% { filter: brightness(0.75); }
+      50%       { filter: brightness(1.2) drop-shadow(0 0 6px rgba(255, 255, 255, 0.45)); }
     }
-    .message-thinking-icon--codex,
-    .message-thinking-icon--copilot {
-      filter: invert(1) grayscale(1) brightness(1.35) !important;
+    @keyframes thinking-icon-glow-inv {
+      0%, 100% { filter: invert(1) grayscale(1) brightness(1.0); }
+      50%       { filter: invert(1) grayscale(1) brightness(1.7) drop-shadow(0 0 6px rgba(255, 255, 255, 0.45)); }
     }
     .message-thinking-label {
       position: relative;
