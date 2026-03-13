@@ -4035,20 +4035,14 @@ HTML = """<!doctype html>
       animation: thinking-icon-heartbeat 2.4s linear infinite;
     }
     .message-thinking-icon--claude  { animation-delay: 0s; }
-    .message-thinking-icon--codex   { animation-delay: -0.6s;  animation-name: thinking-icon-heartbeat-inv; }
+    .message-thinking-icon--codex   { animation-delay: -0.6s; }
     .message-thinking-icon--gemini  { animation-delay: -1.2s; }
-    .message-thinking-icon--copilot { animation-delay: -1.8s; animation-name: thinking-icon-heartbeat-inv; }
+    .message-thinking-icon--copilot { animation-delay: -1.8s; }
     @keyframes thinking-icon-heartbeat {
-      0%   { transform: translateY(0);    filter: grayscale(1) brightness(0.62); animation-timing-function: cubic-bezier(0.15, 0, 0.35, 1); }
-      18%  { transform: translateY(-6px); filter: grayscale(1) brightness(1.55); animation-timing-function: cubic-bezier(0.65, 0, 1, 1); }
-      35%  { transform: translateY(0);    filter: grayscale(1) brightness(0.62); }
-      100% { transform: translateY(0);    filter: grayscale(1) brightness(0.62); }
-    }
-    @keyframes thinking-icon-heartbeat-inv {
-      0%   { transform: translateY(0);    filter: invert(1) grayscale(1) brightness(0.85); animation-timing-function: cubic-bezier(0.15, 0, 0.35, 1); }
-      18%  { transform: translateY(-6px); filter: invert(1) grayscale(1) brightness(2.0);  animation-timing-function: cubic-bezier(0.65, 0, 1, 1); }
-      35%  { transform: translateY(0);    filter: invert(1) grayscale(1) brightness(0.85); }
-      100% { transform: translateY(0);    filter: invert(1) grayscale(1) brightness(0.85); }
+      0%   { transform: translateY(0);    filter: brightness(0) invert(0.61); animation-timing-function: cubic-bezier(0.15, 0, 0.35, 1); }
+      18%  { transform: translateY(-6px); filter: brightness(0) invert(0.98); animation-timing-function: cubic-bezier(0.65, 0, 1, 1); }
+      35%  { transform: translateY(0);    filter: brightness(0) invert(0.61); }
+      100% { transform: translateY(0);    filter: brightness(0) invert(0.61); }
     }
     .message-thinking-label {
       position: relative;
@@ -4086,7 +4080,7 @@ HTML = """<!doctype html>
       100% { -webkit-mask-position: 300px 0; mask-position: 300px 0; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .message-thinking-icon { animation: none; filter: grayscale(1) brightness(0.85); }
+      .message-thinking-icon { animation: none; filter: brightness(0) invert(0.75); }
       .message-thinking-glow { animation: none; display: none; }
       .message-thinking-label {
         color: rgba(250, 249, 245, 0.6);
