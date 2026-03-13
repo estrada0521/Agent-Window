@@ -3996,8 +3996,8 @@ HTML = """<!doctype html>
       flex-shrink: 0;
     }
     .message-thinking-icon {
-      width: 30px;
-      height: 30px;
+      width: 34px;
+      height: 34px;
       object-fit: contain;
       opacity: 0.92;
       animation: thinking-icon-pulse 1.2s ease-in-out infinite alternate;
@@ -4017,11 +4017,11 @@ HTML = """<!doctype html>
       gap: 0;
       white-space: nowrap;
       font-size: 16px;
-      background: linear-gradient(90deg, rgba(250, 249, 245, 0.25) 0%, rgba(250, 249, 245, 0.25) 40%, rgb(250, 249, 245) 50%, rgba(250, 249, 245, 0.25) 60%, rgba(250, 249, 245, 0.25) 100%);
-      background-size: 300% 100%;
+      background: linear-gradient(90deg, rgba(250, 249, 245, 0.25) 0%, rgba(250, 249, 245, 0.25) 30%, rgb(250, 249, 245) 50%, rgba(250, 249, 245, 0.25) 70%, rgba(250, 249, 245, 0.25) 100%);
+      background-size: 200% 100%;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      animation: thinking-shimmer 2.8s infinite linear;
+      animation: thinking-shimmer 2.2s infinite linear;
     }
     @keyframes thinking-shimmer {
       0% { background-position: 100% 0; }
