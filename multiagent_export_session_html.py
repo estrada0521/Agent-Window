@@ -102,8 +102,8 @@ def load_icon_map(repo_root: Path):
 
 def extract_html_template(agent_index_path: Path):
     text = agent_index_path.read_text(encoding="utf-8")
-    marker = 'HTML = """<!doctype html>'
-    start = text.index(marker) + len('HTML = """')
+    marker = '\nHTML = """<!doctype html>'
+    start = text.index(marker) + len('\nHTML = """')
     end = text.index('</html>\n"""', start) + len('</html>')
     return text[start:end]
 
