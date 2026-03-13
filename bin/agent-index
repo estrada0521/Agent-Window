@@ -4102,7 +4102,7 @@ HTML = """<!doctype html>
       margin: 2px 20px 10px 54px;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 18px;
-      background: rgba(38, 38, 36, 0.72);
+      background: rgb(20, 20, 19);
       backdrop-filter: blur(16px) saturate(140%);
       -webkit-backdrop-filter: blur(16px) saturate(140%);
       box-shadow: none;
@@ -4113,13 +4113,17 @@ HTML = """<!doctype html>
       max-height: 320px;
       overflow: auto;
       padding: 11px 12px;
-      font-family: Menlo, Monaco, "Cascadia Mono", "SF Mono", monospace;
+      font-family: "SF Mono", "Cascadia Mono", "Menlo", "Monaco", "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", monospace, sans-serif;
       font-size: 10px;
+      font-weight: 580;
+      font-synthesis-weight: none;
+      font-variation-settings: "wght" 580;
       line-height: 1.2;
       color: rgb(161, 168, 179);
       white-space: pre-wrap;
       overflow-wrap: anywhere;
       word-break: normal;
+      font-kerning: none;
     }
     .message-thinking-icons {
       display: inline-flex;
@@ -4236,7 +4240,7 @@ HTML = """<!doctype html>
         margin: 2px 2px 10px 4px;
         border: none;
         border-radius: 18px;
-        background: rgb(25, 24, 23);
+        background: rgb(20, 20, 19);
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
       }
@@ -4263,7 +4267,7 @@ HTML = """<!doctype html>
         width: calc(100% - 40px);
         max-width: min(980px, calc(100vw - 220px));
         margin: 2px 20px 10px 20px;
-        background: rgba(38, 38, 36, 0.84);
+        background: rgb(20, 20, 19);
       }
       .message-thinking-pane-body {
         min-height: 120px;
@@ -5704,7 +5708,7 @@ HTML = """<!doctype html>
       main {
         grid-area: auto !important;
         min-height: 0 !important;
-        padding: 0 8px calc(var(--mobile-composer-reserve, 0px) + 220px) !important;
+        padding: 0 8px calc(var(--mobile-composer-reserve, 0px) + var(--mobile-latest-anchor-gap, 220px)) !important;
         overflow: visible !important;
         overscroll-behavior: auto !important;
       }
@@ -6597,13 +6601,19 @@ HTML = """<!doctype html>
       timeline.scrollTo({ top: scrollHeight, behavior });
     };
     const scrollLatestMessageBottomToCenter = (behavior = "auto") => {
-      if (useDocumentFlowMobile()) {
-        scrollConversationToBottom(behavior);
-        return;
-      }
       const lastMessage = timeline.querySelector("article.message-row:last-of-type");
       if (!lastMessage) {
         scrollConversationToBottom(behavior);
+        return;
+      }
+      if (useDocumentFlowMobile()) {
+        const messageRect = lastMessage.getBoundingClientRect();
+        const mobileBottomAnchorRatio = 0.45;
+        const targetTop = Math.max(
+          0,
+          (window.scrollY || document.documentElement.scrollTop || 0) + messageRect.bottom - (window.innerHeight * mobileBottomAnchorRatio),
+        );
+        window.scrollTo({ top: targetTop, behavior });
         return;
       }
       const timelineRect = timeline.getBoundingClientRect();
@@ -6769,14 +6779,33 @@ HTML = """<!doctype html>
     scrollToBottomBtn.addEventListener("click", () => {
       scrollConversationToBottom("smooth");
     });
+    const MOBILE_LATEST_MESSAGE_BOTTOM_RATIO = 0.45;
     const updateScrollBtnPos = () => {
       const shell = document.querySelector(".shell");
       const composer = document.getElementById("composer");
       const composerBox = document.querySelector(".composer-main-shell");
       const h = useDocumentFlowMobile() ? (composerBox?.offsetHeight || 0) : composer.offsetHeight;
+      const mobileComposerReserve = Math.max(0, Math.ceil(h + 18));
+      if (useDocumentFlowMobile()) {
+        const vv = window.visualViewport;
+        const layoutHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+        const keyboardOpen = !!(vv && layoutHeight > 0 && vv.height < layoutHeight * 0.9);
+        if (!keyboardOpen && layoutHeight > 0) {
+          const targetBottomReserve = Math.max(
+            mobileComposerReserve,
+            Math.round(layoutHeight * (1 - MOBILE_LATEST_MESSAGE_BOTTOM_RATIO)),
+          );
+          document.documentElement.style.setProperty(
+            "--mobile-latest-anchor-gap",
+            `${Math.max(0, targetBottomReserve - mobileComposerReserve)}px`,
+          );
+        }
+      } else {
+        document.documentElement.style.setProperty("--mobile-latest-anchor-gap", "0px");
+      }
       document.documentElement.style.setProperty(
         "--mobile-composer-reserve",
-        useDocumentFlowMobile() ? `${Math.max(0, Math.ceil(h + 18))}px` : "0px",
+        useDocumentFlowMobile() ? `${mobileComposerReserve}px` : "0px",
       );
       shell.style.setProperty("--scroll-btn-bottom", (h + 12) + "px");
       if (window.matchMedia("(max-width: 359px)").matches) {
@@ -7364,11 +7393,7 @@ HTML = """<!doctype html>
       syncUserMessageCollapse(root);
       if (shouldStickToBottom) {
         const scrollBehavior = useDocumentFlowMobile() ? "auto" : (forceScroll ? "smooth" : "auto");
-        if (useDocumentFlowMobile()) {
-          scrollConversationToBottom(scrollBehavior);
-        } else {
-          scrollLatestMessageBottomToCenter(scrollBehavior);
-        }
+        scrollLatestMessageBottomToCenter(scrollBehavior);
       }
       updateScrollBtn();
       if (typeof updateSendBtnVisibility === "function") updateSendBtnVisibility();
@@ -8500,12 +8525,29 @@ HTML = """<!doctype html>
     };
     const normalizeTraceAnsi = (value) => value
       .replace(/\u001b\[2m/g, "\u001b[38;2;98;101;109m")
+      .replace(/\u001b\[(?:0;)?37m/g, "\u001b[38;2;138;142;148m")
+      .replace(/\u001b\[(?:0;)?97m/g, "\u001b[38;2;162;166;172m")
       .replace(/\u001b\[(?:0;)?22m/g, "\u001b[39m");
+    const normalizeTraceHtmlColors = (target) => {
+      if (!target) return;
+      const nodes = [target, ...target.querySelectorAll("*")];
+      nodes.forEach((node) => {
+        const color = window.getComputedStyle(node).color || "";
+        const match = color.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+        if (!match) return;
+        const [r, g, b] = match.slice(1).map((value) => Number.parseInt(value, 10));
+        const luminance = (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+        if (Number.isFinite(luminance) && luminance >= 150) {
+          node.style.color = "rgb(136, 140, 146)";
+        }
+      });
+    };
 
     const renderTraceContentInto = (target, content) => {
       if (!target) return;
       if (ansiUp) {
         target.innerHTML = ansiUp.ansi_to_html(content);
+        normalizeTraceHtmlColors(target);
       } else {
         target.textContent = content;
       }
