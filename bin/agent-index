@@ -1246,6 +1246,7 @@ import os
 import shlex
 import subprocess
 import sys
+import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -1703,6 +1704,8 @@ def send_message(target, message, reply_to="", silent=False, raw=False):
 
 # pane_id -> last captured content (for change detection)
 _pane_snapshots = {}
+_pane_last_change = {}
+RUNNING_GRACE_SECONDS = 8.0
 
 def agent_statuses():
     result = {}
@@ -1725,17 +1728,21 @@ def agent_statuses():
             if dead == "1":
                 result[agent] = "dead"
                 _pane_snapshots.pop(pane_id, None)
+                _pane_last_change.pop(pane_id, None)
                 continue
             content = subprocess.run(
                 [*tmux_prefix, "capture-pane", "-p", "-S", "-20", "-t", pane_id],
                 capture_output=True, text=True, timeout=2, check=False,
             ).stdout
+            now = time.monotonic()
             prev = _pane_snapshots.get(pane_id)
             _pane_snapshots[pane_id] = content
             if prev is not None and content != prev:
+                _pane_last_change[pane_id] = now
                 result[agent] = "running"
             else:
-                result[agent] = "idle"
+                last_change = _pane_last_change.get(pane_id, 0.0)
+                result[agent] = "running" if (now - last_change) < RUNNING_GRACE_SECONDS else "idle"
         except Exception:
             result[agent] = "offline"
     return result
@@ -4018,10 +4025,10 @@ HTML = """<!doctype html>
       white-space: nowrap;
       font-size: 16px;
       background: linear-gradient(90deg, rgba(250, 249, 245, 0.25) 0%, rgba(250, 249, 245, 0.25) 30%, rgb(250, 249, 245) 50%, rgba(250, 249, 245, 0.25) 70%, rgba(250, 249, 245, 0.25) 100%);
-      background-size: 250% 100%;
+      background-size: 290% 100%;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      animation: thinking-shimmer 2.5s infinite linear;
+      animation: thinking-shimmer 2.7s infinite linear;
     }
     @keyframes thinking-shimmer {
       0% { background-position: 100% 0; }
