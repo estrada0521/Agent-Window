@@ -3585,7 +3585,7 @@ HTML = """<!doctype html>
       margin-top: 0px;
     }
     .message-row.animate-in {
-      animation: msgReveal 550ms cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+      animation: msgReveal 180ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
     .message-row.user {
       justify-content: flex-end;
@@ -6238,6 +6238,36 @@ HTML = """<!doctype html>
       document.documentElement.style.setProperty("--mobile-keyboard-transition-duration", "180ms");
       document.documentElement.style.setProperty("--mobile-keyboard-offset", "0px");
     };
+    const dismissMobileKeyboardImmediately = (inputEl = null) => {
+      if (!useDocumentFlowMobile()) return;
+      document.documentElement.style.setProperty("--mobile-keyboard-transition-duration", "0ms");
+      document.documentElement.style.setProperty("--mobile-keyboard-offset", "0px");
+      const activeEl = document.activeElement;
+      if (inputEl) {
+        inputEl.readOnly = true;
+      }
+      if (activeEl && typeof activeEl.blur === "function") {
+        activeEl.blur();
+      }
+      if (inputEl && typeof inputEl.blur === "function") {
+        inputEl.blur();
+      }
+      setTimeout(() => {
+        if (inputEl) {
+          inputEl.readOnly = false;
+        }
+        document.documentElement.style.setProperty("--mobile-keyboard-transition-duration", "180ms");
+      }, 40);
+    };
+    const isMobileKeyboardOpen = () => {
+      if (!useDocumentFlowMobile()) return false;
+      const vv = window.visualViewport;
+      if (!vv) return false;
+      const layoutViewportHeight = window.innerHeight || vv.height || 0;
+      return vv.height < layoutViewportHeight * 0.9;
+    };
+    let pendingMobileSendBottomScroll = false;
+    let mobileSendTriggeredByButton = false;
     const focusMessageInputWithoutScroll = (selectionStart = null, selectionEnd = selectionStart) => {
       const anchorY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
       try {
@@ -6738,7 +6768,9 @@ HTML = """<!doctype html>
       }
     });
     const render = (data, { forceScroll = false } = {}) => {
-      const shouldStickToBottom = forceScroll || isNearBottom() || (!useDocumentFlowMobile() && document.body.classList.contains("keyboard-locked"));
+      const mobileKeyboardOpen = isMobileKeyboardOpen();
+      const suppressMobileSendScroll = mobileKeyboardOpen && pendingMobileSendBottomScroll;
+      const shouldStickToBottom = (forceScroll && !suppressMobileSendScroll) || (!mobileKeyboardOpen && (isNearBottom() || (!useDocumentFlowMobile() && document.body.classList.contains("keyboard-locked"))));
       document.getElementById("title").textContent = data.session;
       const headerPanelTitle = document.getElementById("headerPanelTitle");
       if (headerPanelTitle) headerPanelTitle.textContent = data.session;
@@ -6853,6 +6885,9 @@ HTML = """<!doctype html>
       const newEntriesToRender = displayEntries.filter(e => !_renderedIds.has(e.msg_id));
       const hasRemovals = _renderedIds.size > 0 && [..._renderedIds].some(id => !displayIdSet.has(id));
       if (!hasRemovals && _renderedIds.size > 0 && newEntriesToRender.length > 0) {
+        if (useDocumentFlowMobile() && shouldStickToBottom) {
+          scrollConversationToBottom("auto");
+        }
         // Append only new messages and animate them
         const frag = document.createDocumentFragment();
         const appendedRows = [];
@@ -6879,7 +6914,8 @@ HTML = """<!doctype html>
       }
       applyFilter();
       if (shouldStickToBottom) {
-        scrollConversationToBottom(forceScroll ? "smooth" : "auto");
+        const scrollBehavior = useDocumentFlowMobile() ? "auto" : (forceScroll ? "smooth" : "auto");
+        scrollConversationToBottom(scrollBehavior);
       }
       updateScrollBtn();
       if (typeof updateSendBtnVisibility === "function") updateSendBtnVisibility();
@@ -6932,7 +6968,19 @@ HTML = """<!doctype html>
             ? `sending raw to ${target}...`
             : `sending to ${target}...`
       );
+      if (!overrideMessage && useDocumentFlowMobile()) {
+        const keyboardWasOpen = isMobileKeyboardOpen();
+        dismissMobileKeyboardImmediately(message);
+        if (keyboardWasOpen && !mobileSendTriggeredByButton) {
+          pendingMobileSendBottomScroll = true;
+        } else {
+          pendingMobileSendBottomScroll = false;
+          scrollConversationToBottom("auto");
+        }
+      }
       try {
+        const deferBottomScrollUntilKeyboardCloses =
+          !overrideMessage && useDocumentFlowMobile() && pendingMobileSendBottomScroll;
         const res = await fetch("/send", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -6953,11 +7001,12 @@ HTML = """<!doctype html>
           autoResizeTextarea();
           if (useDocumentFlowMobile()) {
             releaseMobileKeyboardOffset();
-            message.blur();
           } else if (isCompactMobile()) {
             message.blur();
           }
-          scrollConversationToBottom("auto");
+          if (!deferBottomScrollUntilKeyboardCloses) {
+            scrollConversationToBottom("auto");
+          }
         }
         if (!isShortcut) setReplyTo(null, "", "");
         setStatus(
@@ -6971,7 +7020,7 @@ HTML = """<!doctype html>
           await logSystem("Save Log");
           setTimeout(() => setStatus(""), 2000);
         }
-        await refresh({ forceScroll: true });
+        await refresh({ forceScroll: !deferBottomScrollUntilKeyboardCloses });
         return true;
       } catch (error) {
         setStatus(error.message, true);
@@ -6979,6 +7028,7 @@ HTML = """<!doctype html>
       } finally {
         setQuickActionsDisabled(!sessionActive);
         sendLocked = false;
+        mobileSendTriggeredByButton = false;
       }
     };
     document.getElementById("composer").addEventListener("submit", async (event) => {
@@ -7152,6 +7202,20 @@ HTML = """<!doctype html>
         sendBtn.classList.toggle("visible", messageInput.value.trim().length > 0);
       }
     };
+    sendBtn?.addEventListener("touchstart", () => {
+      if (!useDocumentFlowMobile() || !isMobileKeyboardOpen()) return;
+      mobileSendTriggeredByButton = true;
+      pendingMobileSendBottomScroll = false;
+      dismissMobileKeyboardImmediately(messageInput);
+      scrollConversationToBottom("auto");
+    }, { passive: true });
+    sendBtn?.addEventListener("mousedown", () => {
+      if (!useDocumentFlowMobile() || !isMobileKeyboardOpen()) return;
+      mobileSendTriggeredByButton = true;
+      pendingMobileSendBottomScroll = false;
+      dismissMobileKeyboardImmediately(messageInput);
+      scrollConversationToBottom("auto");
+    });
     messageInput.addEventListener("input", updateSendBtnVisibility);
 
     messageInput.addEventListener("keydown", async (event) => {
@@ -7311,6 +7375,10 @@ HTML = """<!doctype html>
         const isKeyboardOpen = vv.height < window.innerHeight * 0.9;
         document.body.classList.toggle("keyboard-locked", !compactMobile && isKeyboardOpen);
         syncMobileKeyboardOffset();
+        if (compactMobile && pendingMobileSendBottomScroll && !isKeyboardOpen) {
+          pendingMobileSendBottomScroll = false;
+          scrollConversationToBottom("auto");
+        }
         if (isKeyboardOpen && !compactMobile) {
           scrollConversationToBottom("auto");
         }
@@ -8064,7 +8132,7 @@ HTML = """<!doctype html>
     renderRawSendButton();
     refresh({ forceScroll: true });
     if (followMode) {
-      setInterval(refresh, 1000);
+      setInterval(refresh, 250);
     }
   </script>
 </body>
