@@ -1705,7 +1705,7 @@ def send_message(target, message, reply_to="", silent=False, raw=False):
 # pane_id -> last captured content (for change detection)
 _pane_snapshots = {}
 _pane_last_change = {}
-RUNNING_GRACE_SECONDS = 8.0
+RUNNING_GRACE_SECONDS = 2.0
 
 def agent_statuses():
     result = {}
@@ -1814,7 +1814,7 @@ HTML = """<!doctype html>
     }
     .trace-tooltip {
       position: fixed;
-      background: rgba(38, 38, 36, 0.72);
+      background: rgba(38, 38, 36, 0.69);
       backdrop-filter: blur(16px) saturate(140%);
       -webkit-backdrop-filter: blur(16px) saturate(140%);
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -3077,7 +3077,7 @@ HTML = """<!doctype html>
         color: rgb(215, 215, 210);
       }
       .header-plus-toggle:active {
-        background: rgb(20, 20, 19);
+        background: rgba(20, 20, 19, 0.92);
         border-color: transparent;
         color: rgb(235, 235, 230);
         transform: none;
@@ -3850,14 +3850,17 @@ HTML = """<!doctype html>
     .message-meta-below .meta-agent {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       color: inherit;
       white-space: nowrap;
     }
+    .message-meta-below .meta-agent.icon-right .meta-agent-icon {
+      order: 2;
+    }
     .message-meta-below .meta-agent-icon {
-      width: 12px;
-      height: 12px;
-      flex: 0 0 12px;
+      width: 17px;
+      height: 17px;
+      flex: 0 0 17px;
       display: block;
       background-color: currentColor;
       -webkit-mask: var(--agent-icon-mask) center / contain no-repeat;
@@ -3879,7 +3882,8 @@ HTML = """<!doctype html>
     .message-meta-below time {
       opacity: 1;
     }
-    .message-meta-below .reply-btn {
+    .message-meta-below .reply-btn,
+    .message-meta-below .reply-target-jump-btn {
       margin-top: 0;
       margin-right: 4px;
       align-self: center;
@@ -3890,24 +3894,28 @@ HTML = """<!doctype html>
       font-size: 13px;
     }
     .message:not(.user) .message-meta-below .copy-btn,
-    .message:not(.user) .message-meta-below .reply-btn {
+    .message:not(.user) .message-meta-below .reply-btn,
+    .message:not(.user) .message-meta-below .reply-target-jump-btn {
       padding: 5px;
     }
     .message:not(.user) .message-meta-below .copy-btn {
       margin-right: 0;
     }
-    .message:not(.user) .message-meta-below .reply-btn {
+    .message:not(.user) .message-meta-below .reply-btn,
+    .message:not(.user) .message-meta-below .reply-target-jump-btn {
       margin-right: 0;
     }
     .message:not(.user) .message-meta-below .copy-btn svg,
-    .message:not(.user) .message-meta-below .reply-btn svg {
+    .message:not(.user) .message-meta-below .reply-btn svg,
+    .message:not(.user) .message-meta-below .reply-target-jump-btn svg {
       width: 17px;
       height: 17px;
     }
     .message:not(.user) .message-meta-below .copy-btn svg * {
       stroke-width: 1.45;
     }
-    .message:not(.user) .message-meta-below .reply-btn svg * {
+    .message:not(.user) .message-meta-below .reply-btn svg *,
+    .message:not(.user) .message-meta-below .reply-target-jump-btn svg * {
       stroke-width: 1.8;
     }
     .message.user .user-message-meta {
@@ -3926,12 +3934,23 @@ HTML = """<!doctype html>
       margin-right: 0;
       padding: 5px;
     }
+    .message.user .user-message-meta .reply-target-jump-btn {
+      margin-right: 0;
+      padding: 5px;
+    }
     .message.user .user-message-meta .copy-btn svg {
+      width: 17px;
+      height: 17px;
+    }
+    .message.user .user-message-meta .reply-target-jump-btn svg {
       width: 17px;
       height: 17px;
     }
     .message.user .user-message-meta .copy-btn svg * {
       stroke-width: 1.45;
+    }
+    .message.user .user-message-meta .reply-target-jump-btn svg * {
+      stroke-width: 1.8;
     }
     @media (min-width: 360px) and (hover: hover) and (pointer: fine) {
       .message.user .user-message-meta,
@@ -4054,7 +4073,53 @@ HTML = """<!doctype html>
       color: var(--chrome-muted);
       font-size: 16px;
       line-height: 1.45;
-      pointer-events: none;
+      cursor: pointer;
+    }
+    .thinking-expand-btn {
+      background: none;
+      border: none;
+      padding: 2px;
+      margin: 0;
+      cursor: pointer;
+      color: inherit;
+      opacity: 0.55;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 220ms ease, opacity 150ms ease;
+    }
+    .thinking-expand-btn svg {
+      display: block;
+      width: 16px;
+      height: 16px;
+    }
+    .message-thinking-row.pane-open .thinking-expand-btn {
+      transform: rotate(90deg);
+      opacity: 0.85;
+    }
+    .message-thinking-pane {
+      margin: 2px 20px 10px 54px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      background: rgba(38, 38, 36, 0.72);
+      backdrop-filter: blur(16px) saturate(140%);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      box-shadow: none;
+      animation: paneReveal 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      overflow: hidden;
+    }
+    .message-thinking-pane-body {
+      max-height: 320px;
+      overflow: auto;
+      padding: 11px 12px;
+      font-family: Menlo, Monaco, "Cascadia Mono", "SF Mono", monospace;
+      font-size: 10px;
+      line-height: 1.2;
+      color: rgb(161, 168, 179);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: normal;
     }
     .message-thinking-icons {
       display: inline-flex;
@@ -4167,6 +4232,22 @@ HTML = """<!doctype html>
       .message-thinking-row {
         padding: 8px 14px 6px 20px;
       }
+      .message-thinking-pane {
+        margin: 2px 2px 10px 4px;
+        border: none;
+        border-radius: 18px;
+        background: rgb(25, 24, 23);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+      }
+      .message-thinking-pane-body {
+        max-height: min(240px, 45vh);
+        padding: 6px 8px;
+        font-size: 7px;
+        line-height: 1.1;
+        color: rgba(214, 221, 232, 0.9);
+        word-break: break-all;
+      }
     }
     @media (min-width: 701px) {
       .message-thinking-row {
@@ -4176,6 +4257,16 @@ HTML = """<!doctype html>
       }
       .message-thinking-icons {
         margin-left: -4px;
+      }
+      .message-thinking-pane {
+        align-self: flex-start;
+        width: calc(100% - 40px);
+        max-width: min(980px, calc(100vw - 220px));
+        margin: 2px 20px 10px 20px;
+        background: rgba(38, 38, 36, 0.84);
+      }
+      .message-thinking-pane-body {
+        min-height: 120px;
       }
     }
     .reply-jump-inline:active {
@@ -4208,6 +4299,11 @@ HTML = """<!doctype html>
     }
     .message:not(.user) .message-meta-below .meta-agent-icon {
       background-color: var(--chrome-muted);
+    }
+    @media (max-width: 430px) {
+      .message-meta-below .meta-agent-icon {
+        display: none;
+      }
     }
     time { opacity: 1; color: var(--muted) !important; }
     @media (max-width: 359px) {
@@ -5673,6 +5769,16 @@ HTML = """<!doctype html>
     }
     .md-body > *:first-child { margin-top: 0; }
     .md-body > *:last-child { margin-bottom: 0; }
+    .md-body,
+    .md-body p,
+    .md-body li,
+    .md-body li p,
+    .md-body blockquote,
+    .md-body blockquote p {
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
     .md-body p { margin: 0 0 0.6em; }
     .md-body h1, .md-body h2, .md-body h3, .md-body h4 { margin: 0.8em 0 0.3em; font-weight: 530; line-height: 1.2; }
     .md-body h1 { font-size: 22px; }
@@ -5791,12 +5897,12 @@ HTML = """<!doctype html>
     .has-hover .md-body a:hover { text-decoration: underline; }
     .md-body strong { font-weight: 530; }
     .md-body em { font-style: italic; }
-    .file-card { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; margin: 4px 0; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; background: rgba(0,0,0,0.28); cursor: pointer; color: var(--text); text-align: left; max-width: 100%; font-family: "jetbrainsMono", "JetBrains Mono", monospace; font-style: normal; font-size: 14px; font-weight: 360; font-synthesis-weight: none; font-variation-settings: "wght" 360; line-height: 23px; }
+    .file-card { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 5px 10px; margin: 4px 0; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; background: rgba(0,0,0,0.28); cursor: pointer; color: var(--text); text-align: left; max-width: 100%; font-family: "jetbrainsMono", "JetBrains Mono", monospace; font-style: normal; font-size: 14px; font-weight: 360; font-synthesis-weight: none; font-variation-settings: "wght" 360; line-height: 23px; }
     .has-hover .file-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
     .file-card-icon { font-size: 0.9em; flex-shrink: 0; }
     .file-card-name { font-size: inherit; font-weight: inherit; line-height: inherit; flex-shrink: 0; }
-    .file-card-path { color: var(--dim); font-family: inherit; font-size: inherit; font-weight: inherit; line-height: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
-    .file-card-open { font-size: inherit; font-weight: inherit; line-height: inherit; color: var(--dim); flex-shrink: 0; }
+    .file-card-path { order: 3; flex: 0 0 100%; display: block; margin-top: -2px; padding-left: calc(0.9em + 6px); max-width: 100%; color: var(--dim); font-family: inherit; font-size: inherit; font-weight: inherit; line-height: inherit; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; word-break: normal; }
+    .file-card-open { order: 2; margin-left: auto; font-size: inherit; font-weight: inherit; line-height: inherit; color: var(--dim); flex-shrink: 0; }
     @media (min-width: 701px) {
       .file-card {
         gap: 7px;
@@ -5940,9 +6046,11 @@ HTML = """<!doctype html>
       margin-top: 3px;
       color: var(--muted);
       font: 12px/1.35 "SF Mono","Fira Code",monospace;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: pre-wrap;
+      overflow: visible;
+      text-overflow: clip;
+      overflow-wrap: anywhere;
+      word-break: normal;
     }
     .file-modal-close {
       appearance: none;
@@ -5995,7 +6103,8 @@ HTML = """<!doctype html>
     }
     .has-hover .copy-btn:hover { color: #e5e5e5; background: rgb(20, 20, 19); }
     .copy-btn.copied { color: #e5e5e5; }
-    .reply-btn {
+    .reply-btn,
+    .reply-target-jump-btn {
       flex-shrink: 0;
       align-self: flex-start;
       margin-top: 4px;
@@ -6008,7 +6117,8 @@ HTML = """<!doctype html>
       border-radius: 4px;
       transition: color 150ms ease, background 250ms ease, transform 100ms ease;
     }
-    .has-hover .reply-btn:hover { color: #e5e5e5; background: rgb(20, 20, 19); }
+    .has-hover .reply-btn:hover,
+    .has-hover .reply-target-jump-btn:hover { color: #e5e5e5; background: rgb(20, 20, 19); }
     .reply-btn.active { color: #e5e5e5; }
     .message-actions {
       display: flex;
@@ -6454,6 +6564,8 @@ HTML = """<!doctype html>
     let reloadInFlight = false;
     let traceFetchInFlight = false;
     const traceCache = new Map();
+    let currentTraceTarget = null;
+    let openThinkingPaneAgent = "";
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const AGENT_ICON_DATA = __ICON_DATA_URIS__;
     const SERVER_INSTANCE_SEED = "__SERVER_INSTANCE__";
@@ -6789,13 +6901,14 @@ HTML = """<!doctype html>
       if (!AGENT_ICON_NAMES.has(s)) return "";
       return `<span class="${cls}" aria-hidden="true" style="--agent-icon-mask:url('${escapeHtml(agentIconSrc(s))}')"></span>`;
     };
-    const metaAgentLabel = (name, textClass) => {
+    const metaAgentLabel = (name, textClass, iconSide = "right") => {
       const raw = (name || "").trim() || "unknown";
       const s = raw.toLowerCase();
       const icon = AGENT_ICON_NAMES.has(s)
         ? `<span class="meta-agent-icon" aria-hidden="true" style="--agent-icon-mask:url('${escapeHtml(agentIconSrc(s))}')"></span>`
         : "";
-      return `<span class="meta-agent">${icon}<span class="${textClass}">${escapeHtml(raw)}</span></span>`;
+      const sideClass = iconSide === "right" ? " icon-right" : "";
+      return `<span class="meta-agent${sideClass}">${icon}<span class="${textClass}">${escapeHtml(raw)}</span></span>`;
     };
     const senderAvatar = (sender) => {
       const s = (sender || "").toLowerCase();
@@ -7152,6 +7265,15 @@ HTML = """<!doctype html>
       const copyIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
       const checkIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
       const replyIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
+      const replyUpIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><polyline points="7 10 12 5 17 10"/></svg>`;
+      const replyDownIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><polyline points="7 14 12 19 17 14"/></svg>`;
+      const replyChildrenMap = new Map();
+      displayEntries.forEach((entry) => {
+        const parentId = (entry.reply_to || "").trim();
+        const childId = (entry.msg_id || "").trim();
+        if (!parentId || !childId || replyChildrenMap.has(parentId)) return;
+        replyChildrenMap.set(parentId, childId);
+      });
       const buildMsgHTML = (entry, replyPreviewHTML) => {
         if (entry.sender === "system") {
           const systemMessage = escapeHtml(entry.message || "");
@@ -7160,17 +7282,18 @@ HTML = """<!doctype html>
         }
         const cls = roleClass(entry.sender);
         const targetSpans = (entry.targets?.length > 0
-          ? entry.targets.map(t => metaAgentLabel(t, "target-name"))
-          : [metaAgentLabel("no target", "target-name")]).join(`<span class="meta-agent-sep">,</span>`);
+          ? entry.targets.map(t => metaAgentLabel(t, "target-name", "right"))
+          : [metaAgentLabel("no target", "target-name", "right")]).join(`<span class="meta-agent-sep">,</span>`);
         const body = stripSenderPrefix(entry.message || "");
         const rawAttr = escapeHtml(body).replaceAll('"', "&quot;");
         const previewAttr = escapeHtml(body.slice(0, 80)).replaceAll('"', "&quot;");
         const av = senderAvatar(entry.sender || "unknown");
         const msgId = escapeHtml(entry.msg_id || "");
         const replyToAttr = entry.reply_to ? escapeHtml(entry.reply_to).replaceAll('"', "&quot;") : "";
-        const targetMeta = replyToAttr
-          ? `<button class="reply-jump-inline" type="button" title="返信元へ移動" data-replyto="${replyToAttr}">${targetSpans}</button>`
-          : `<span class="targets">${targetSpans}</span>`;
+        const targetMeta = `<span class="targets">${targetSpans}</span>`;
+        const replySourceJumpHtml = replyToAttr
+          ? `<button class="reply-jump-inline reply-target-jump-btn" type="button" title="返信元へ移動" data-replyto="${replyToAttr}">${replyUpIcon}</button>`
+          : "";
         const userTargetMeta = `<span class="targets">${targetSpans}</span>`;
         const sender = escapeHtml(entry.sender || "unknown");
         const isActive = pendingReplyTo?.msgId === entry.msg_id;
@@ -7178,7 +7301,11 @@ HTML = """<!doctype html>
         const isUser = cls === "user";
         const userTimestampHtml = timestamp ? `<time>${timestamp}</time>` : "";
         const copyButtonHtml = `<button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
-        const senderHtml = metaAgentLabel(entry.sender || "unknown", "sender-label");
+        const firstReplyId = msgId ? replyChildrenMap.get(entry.msg_id || "") || "" : "";
+        const replyTargetJumpHtml = firstReplyId
+          ? `<button class="reply-target-jump-btn" type="button" title="返信先へ移動" data-replytarget="${escapeHtml(firstReplyId).replaceAll('"', "&quot;")}">${replyDownIcon}</button>`
+          : "";
+        const senderHtml = metaAgentLabel(entry.sender || "unknown", "sender-label", "right");
 
         return `<article class="message-row ${cls}" data-msgid="${msgId}" data-sender="${sender}">
           ${isUser ? `<div class="avatar${av.cls ? ` ${av.cls}` : ""}">${av.html}</div>` : ""}
@@ -7189,7 +7316,7 @@ HTML = """<!doctype html>
             <div class="md-body">${renderMarkdown(body)}</div>
             ${isUser ? `<button class="user-collapse-toggle" type="button" hidden>More</button>` : ""}
           </div>
-          ${isUser ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${userTargetMeta}${userTimestampHtml}${copyButtonHtml}</div>` : `<div class="message-meta-below">${copyButtonHtml}${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}${senderHtml}<span class="arrow">to</span>${targetMeta}</div>`}
+          ${isUser ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${userTargetMeta}${userTimestampHtml}${replyTargetJumpHtml}${copyButtonHtml}</div>` : `<div class="message-meta-below">${copyButtonHtml}${replyTargetJumpHtml}${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}${senderHtml}<span class="arrow">to</span>${targetMeta}${replySourceJumpHtml}</div>`}
           </div>
           </div>
         </article>`;
@@ -8029,6 +8156,11 @@ HTML = """<!doctype html>
         jumpToReplySource(replyJumpInline.dataset.replyto);
         return;
       }
+      const replyTargetJump = e.target.closest(".reply-target-jump-btn");
+      if (replyTargetJump) {
+        jumpToReplySource(replyTargetJump.dataset.replytarget);
+        return;
+      }
       const replyBlock = e.target.closest(".reply-preview-block");
       if (replyBlock) {
         return;
@@ -8111,6 +8243,8 @@ HTML = """<!doctype html>
       const existingRows = Array.from(root.querySelectorAll(".message-thinking-row"));
       if (!root.querySelector("article.message-row") || !runningAgents.length) {
         existingRows.forEach((row) => row.remove());
+        document.querySelectorAll(".message-thinking-pane").forEach((node) => node.remove());
+        openThinkingPaneAgent = "";
         root.dataset.thinkingAgents = "";
         return;
       }
@@ -8118,6 +8252,7 @@ HTML = """<!doctype html>
       if (root.dataset.thinkingAgents === nextThinkingAgents && existingRows.length === runningAgents.length) {
         return;
       }
+      document.querySelectorAll(".message-thinking-pane").forEach((node) => node.remove());
       existingRows.forEach((row) => row.remove());
       const frag = document.createDocumentFragment();
       const THINKING_TEXT = "thinking...";
@@ -8127,6 +8262,7 @@ HTML = """<!doctype html>
       runningAgents.forEach((agent) => {
         const row = document.createElement("div");
         row.className = "message-thinking-row";
+        row.dataset.agent = agent;
         row.innerHTML = `
           <span class="message-thinking-icons">
             <span class="message-thinking-icon-wrap">
@@ -8135,11 +8271,27 @@ HTML = """<!doctype html>
             </span>
           </span>
           <span class="message-thinking-label">${charSpans}</span>
+          <button class="thinking-expand-btn" type="button" aria-label="ペインを開く" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
         `;
         frag.appendChild(row);
       });
       root.appendChild(frag);
       root.dataset.thinkingAgents = nextThinkingAgents;
+      if (openThinkingPaneAgent && runningAgents.includes(openThinkingPaneAgent)) {
+        const activeRow = root.querySelector(`.message-thinking-row[data-agent="${CSS.escape(openThinkingPaneAgent)}"]`);
+        if (activeRow) {
+          activeRow.classList.add("pane-open");
+          const paneBody = mountThinkingTracePane(activeRow, openThinkingPaneAgent);
+          currentTraceTarget = paneBody;
+          const cached = traceCache.get(openThinkingPaneAgent);
+          if (cached) {
+            renderTraceContent(cached);
+          } else {
+            renderTraceContent("Loading trace...");
+            fetchAndRenderTrace(openThinkingPaneAgent);
+          }
+        }
+      }
     };
     const syncUserMessageCollapse = (scope = document) => {
       const rows = scope?.matches?.("article.message-row.user")
@@ -8245,6 +8397,7 @@ HTML = """<!doctype html>
     };
     const traceTooltip = document.getElementById("traceTooltip");
     let currentHoverAgent = null;
+    let traceOpenedByThinkingRow = false;
     let ansiUp = null;
     try { ansiUp = new AnsiUp(); } catch(e) {}
     const isCompactMobile = () => window.matchMedia("(max-width: 359px)").matches;
@@ -8349,12 +8502,16 @@ HTML = """<!doctype html>
       .replace(/\u001b\[2m/g, "\u001b[38;2;98;101;109m")
       .replace(/\u001b\[(?:0;)?22m/g, "\u001b[39m");
 
-    const renderTraceContent = (content) => {
+    const renderTraceContentInto = (target, content) => {
+      if (!target) return;
       if (ansiUp) {
-        traceTooltip.innerHTML = ansiUp.ansi_to_html(content);
+        target.innerHTML = ansiUp.ansi_to_html(content);
       } else {
-        traceTooltip.textContent = content;
+        target.textContent = content;
       }
+    };
+    const renderTraceContent = (content) => {
+      renderTraceContentInto(currentTraceTarget || traceTooltip, content);
     };
     const fetchAndRenderTrace = async (agent) => {
       if (traceFetchInFlight || currentHoverAgent !== agent) return;
@@ -8383,6 +8540,7 @@ HTML = """<!doctype html>
 
     const showTraceTooltip = (agent, rect) => {
       currentHoverAgent = agent;
+      currentTraceTarget = traceTooltip;
       traceTooltip.style.display = "block";
       const cached = traceCache.get(agent);
       if (cached) {
@@ -8413,13 +8571,23 @@ HTML = """<!doctype html>
 
   const hideTraceTooltip = () => {
     currentHoverAgent = null;
+    traceOpenedByThinkingRow = false;
+    openThinkingPaneAgent = "";
+    currentTraceTarget = null;
+    document.querySelectorAll(".message-thinking-row.pane-open").forEach(r => r.classList.remove("pane-open"));
+    document.querySelectorAll(".message-thinking-pane").forEach((node) => node.remove());
     traceTooltip.style.display = "none";
     traceTooltip.innerHTML = "";
     traceTooltip.style.left = "";
     traceTooltip.style.right = "";
     traceTooltip.style.width = "";
     traceTooltip.style.top = "";
+    traceTooltip.style.bottom = "";
+    traceTooltip.style.background = "";
     traceTooltip.style.maxWidth = "";
+    traceTooltip.style.maxHeight = "";
+    traceTooltip.style.overflow = "";
+    traceTooltip.style.pointerEvents = "";
     traceTooltip.style.transform = "";
     setActiveAgentRow(null);
   };
@@ -8443,6 +8611,7 @@ HTML = """<!doctype html>
     });
     document.getElementById("agentStatusPanel").addEventListener("mouseout", (e) => {
       if (!canUseHoverInteractions()) return;
+      if (traceOpenedByThinkingRow) return;
       const row = e.target.closest(".agent-row");
       if (row) {
         if (!row.contains(e.relatedTarget)) {
@@ -8464,9 +8633,56 @@ HTML = """<!doctype html>
       showTraceTooltip(agent, row.getBoundingClientRect());
     });
     document.addEventListener("click", (e) => {
-      if (canUseHoverInteractions() || !currentHoverAgent) return;
-      if (e.target.closest("#agentStatusPanel") || e.target.closest("#traceTooltip")) return;
+      if (!currentHoverAgent) return;
+      if (e.target.closest(".message-thinking-row") || e.target.closest(".message-thinking-pane") || e.target.closest("#traceTooltip")) return;
+      if (!traceOpenedByThinkingRow && canUseHoverInteractions()) return;
+      if (e.target.closest("#agentStatusPanel")) return;
       hideTraceTooltip();
+    });
+
+    const clearThinkingPaneOpen = () => {
+      document.querySelectorAll(".message-thinking-row.pane-open").forEach(r => r.classList.remove("pane-open"));
+      document.querySelectorAll(".message-thinking-pane").forEach((node) => node.remove());
+      openThinkingPaneAgent = "";
+    };
+    const mountThinkingTracePane = (row, agent) => {
+      if (!row || !agent) return null;
+      const pane = document.createElement("div");
+      pane.className = "message-thinking-pane";
+      pane.dataset.agent = agent;
+      pane.innerHTML = `<div class="message-thinking-pane-body">Loading trace...</div>`;
+      row.insertAdjacentElement("afterend", pane);
+      return pane.querySelector(".message-thinking-pane-body");
+    };
+    const showThinkingTrace = (agent, row) => {
+      clearThinkingPaneOpen();
+      if (row) row.classList.add("pane-open");
+      traceOpenedByThinkingRow = true;
+      currentHoverAgent = agent;
+      openThinkingPaneAgent = agent;
+      traceTooltip.style.display = "none";
+      const paneBody = mountThinkingTracePane(row, agent);
+      currentTraceTarget = paneBody;
+      const cached = traceCache.get(agent);
+      if (cached) {
+        renderTraceContent(cached);
+      } else {
+        renderTraceContent("Loading trace...");
+      }
+      fetchAndRenderTrace(agent);
+    };
+
+    document.getElementById("messages").addEventListener("click", (e) => {
+      const row = e.target.closest(".message-thinking-row");
+      if (!row) return;
+      const agent = row.dataset.agent;
+      if (!agent) return;
+      if (traceOpenedByThinkingRow && currentHoverAgent === agent) {
+        clearThinkingPaneOpen();
+        hideTraceTooltip();
+        return;
+      }
+      showThinkingTrace(agent, row);
     });
 
     refreshAgentStatus();
