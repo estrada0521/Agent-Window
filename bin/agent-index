@@ -4006,6 +4006,11 @@ HTML = """<!doctype html>
       white-space: nowrap;
       color: var(--chrome-muted);
     }
+    .message-thinking-elapsed {
+      white-space: nowrap;
+      color: var(--chrome-muted);
+      opacity: 0.92;
+    }
     .meta {
       display: flex;
       gap: 8px;
@@ -6659,8 +6664,9 @@ HTML = """<!doctype html>
         article.classList.toggle("filtered-out", !ok);
         if (ok) visible++;
       });
-      const thinkingRow = document.querySelector("#messages .message-thinking-row");
-      if (thinkingRow) thinkingRow.style.display = visible > 0 ? "" : "none";
+      document.querySelectorAll("#messages .message-thinking-row").forEach((row) => {
+        row.style.display = visible > 0 ? "" : "none";
+      });
       const countEl = document.getElementById("searchCount");
       if (countEl) countEl.textContent = isFiltering ? `${visible} hits` : "";
     };
@@ -7887,19 +7893,27 @@ HTML = """<!doctype html>
     const renderThinkingIndicator = () => {
       const root = document.getElementById("messages");
       if (!root) return;
-      root.querySelector(".message-thinking-row")?.remove();
+      root.querySelectorAll(".message-thinking-row").forEach((row) => row.remove());
       if (!root.querySelector("article.message-row")) return;
       const runningAgents = THINKING_AGENT_ORDER.filter((agent) => currentAgentStatuses[agent] === "running");
       if (!runningAgents.length) return;
-      const row = document.createElement("div");
-      row.className = "message-thinking-row";
-      row.innerHTML = `
-        <span class="message-thinking-icons">
-          ${runningAgents.map((agent) => iconImg(agent, `message-thinking-icon message-thinking-icon--${agent}`)).join("")}
-        </span>
-        <span class="message-thinking-label">thinking</span>
-      `;
-      root.appendChild(row);
+      const frag = document.createDocumentFragment();
+      runningAgents.forEach((agent) => {
+        const elapsed = formatAgentElapsed(
+          Math.floor((Date.now() - (agentStatusSince[agent] || Date.now())) / 1000)
+        );
+        const row = document.createElement("div");
+        row.className = "message-thinking-row";
+        row.innerHTML = `
+          <span class="message-thinking-icons">
+            ${iconImg(agent, `message-thinking-icon message-thinking-icon--${agent}`)}
+          </span>
+          <span class="message-thinking-label">thinking</span>
+          <span class="message-thinking-elapsed">${elapsed}</span>
+        `;
+        frag.appendChild(row);
+      });
+      root.appendChild(frag);
     };
     const renderAgentStatus = (statuses) => {
       const now = Date.now();
