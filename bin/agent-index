@@ -4033,17 +4033,23 @@ HTML = """<!doctype html>
       height: 1.55em;
       object-fit: contain;
       position: relative;
-      animation: thinking-icon-heartbeat 1s linear infinite;
+      animation: thinking-icon-move 1s linear infinite,
+                 thinking-icon-brightness 1s linear infinite;
     }
-    .message-thinking-icon--claude  { animation-delay: 0s; }
-    .message-thinking-icon--codex   { animation-delay: -0.25s; }
-    .message-thinking-icon--gemini  { animation-delay: -0.5s; }
-    .message-thinking-icon--copilot { animation-delay: -0.75s; }
-    @keyframes thinking-icon-heartbeat {
-      0%   { transform: translateY(0);    filter: brightness(0) invert(0.61); animation-timing-function: cubic-bezier(0.1, 0, 0.35, 1); }
-      65%  { transform: translateY(-1px); filter: brightness(0) invert(0.98); animation-timing-function: cubic-bezier(0.75, 0, 1, 1); }
-      72%  { transform: translateY(0);    filter: brightness(0) invert(0.61); }
-      100% { transform: translateY(0);    filter: brightness(0) invert(0.61); }
+    .message-thinking-icon--claude  { animation-delay: 0s,      0s; }
+    .message-thinking-icon--codex   { animation-delay: -0.25s, -0.25s; }
+    .message-thinking-icon--gemini  { animation-delay: -0.5s,  -0.5s; }
+    .message-thinking-icon--copilot { animation-delay: -0.75s, -0.75s; }
+    @keyframes thinking-icon-move {
+      0%   { transform: translateY(0);    animation-timing-function: cubic-bezier(0.1, 0, 0.35, 1); }
+      65%  { transform: translateY(-1px); animation-timing-function: cubic-bezier(0.75, 0, 1, 1); }
+      72%  { transform: translateY(0); }
+      100% { transform: translateY(0); }
+    }
+    @keyframes thinking-icon-brightness {
+      0%   { filter: brightness(0) invert(0.61); animation-timing-function: cubic-bezier(0.1, 0, 0.35, 1); }
+      65%  { filter: brightness(0) invert(0.98); animation-timing-function: cubic-bezier(0.1, 0, 0.4, 1); }
+      100% { filter: brightness(0) invert(0.61); }
     }
     .message-thinking-label {
       position: relative;
