@@ -1858,6 +1858,67 @@ def load_chat_settings():
                 settings[key] = max(10, min(limit if limit > 0 else 500, value))
     return settings
 
+
+def chat_agent_font_mode_inline_style(font_mode):
+    if str(font_mode).strip().lower() != "gothic":
+        return ""
+    return """
+    .message.claude .md-body,
+    .message.codex .md-body,
+    .message.gemini .md-body,
+    .message.copilot .md-body {
+      font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif !important;
+      font-size: 16px !important;
+      line-height: 22px !important;
+      font-style: normal !important;
+      font-weight: 360 !important;
+      letter-spacing: -0.01em !important;
+      -webkit-font-smoothing: antialiased !important;
+      -moz-osx-font-smoothing: grayscale !important;
+      font-synthesis-weight: none !important;
+      font-optical-sizing: auto !important;
+      font-variation-settings: "wght" 360, "opsz" 16 !important;
+    }
+    .message.claude .md-body p,
+    .message.claude .md-body li,
+    .message.claude .md-body h1,
+    .message.claude .md-body h2,
+    .message.claude .md-body h3,
+    .message.claude .md-body h4,
+    .message.claude .md-body blockquote,
+    .message.codex .md-body p,
+    .message.codex .md-body li,
+    .message.codex .md-body h1,
+    .message.codex .md-body h2,
+    .message.codex .md-body h3,
+    .message.codex .md-body h4,
+    .message.codex .md-body blockquote,
+    .message.gemini .md-body p,
+    .message.gemini .md-body li,
+    .message.gemini .md-body h1,
+    .message.gemini .md-body h2,
+    .message.gemini .md-body h3,
+    .message.gemini .md-body h4,
+    .message.gemini .md-body blockquote,
+    .message.copilot .md-body p,
+    .message.copilot .md-body li,
+    .message.copilot .md-body h1,
+    .message.copilot .md-body h2,
+    .message.copilot .md-body h3,
+    .message.copilot .md-body h4,
+    .message.copilot .md-body blockquote {
+      font-family: inherit !important;
+      font-weight: 360 !important;
+      font-variation-settings: "wght" 360, "opsz" 16 !important;
+    }
+    .message.claude .md-body li,
+    .message.codex .md-body li,
+    .message.gemini .md-body li,
+    .message.copilot .md-body li {
+      line-height: 22px !important;
+    }
+    """
+
 tmux_prefix = ["tmux"]
 if tmux_socket:
     tmux_prefix.extend(["-L", tmux_socket])
@@ -5967,13 +6028,13 @@ HTML = """<!doctype html>
         font-size: 16px;
         line-height: 22px;
         font-style: normal;
-        font-weight: 400;
+        font-weight: 360;
         letter-spacing: -0.01em;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         font-synthesis-weight: none;
         font-optical-sizing: auto;
-        font-variation-settings: "wght" 400, "opsz" 16;
+        font-variation-settings: "wght" 360, "opsz" 16;
       }
       html[data-agent-font-mode="gothic"] .message.claude .md-body p,
       html[data-agent-font-mode="gothic"] .message.claude .md-body li,
@@ -6003,8 +6064,8 @@ HTML = """<!doctype html>
       html[data-agent-font-mode="gothic"] .message.copilot .md-body h3,
       html[data-agent-font-mode="gothic"] .message.copilot .md-body h4,
       html[data-agent-font-mode="gothic"] .message.copilot .md-body blockquote {
-        font-weight: 400;
-        font-variation-settings: "wght" 400, "opsz" 16;
+        font-weight: 360;
+        font-variation-settings: "wght" 360, "opsz" 16;
       }
       html[data-agent-font-mode="gothic"] .message.claude .md-body li,
       html[data-agent-font-mode="gothic"] .message.codex .md-body li,
@@ -6991,6 +7052,7 @@ HTML = """<!doctype html>
         height: 30px;
       }
     }
+__AGENT_FONT_MODE_INLINE_STYLE__
   </style>
 </head>
 <body>
@@ -9848,6 +9910,7 @@ class Handler(BaseHTTPRequestHandler):
                 .replace("__HUB_PORT__", str(hub_port))
                 .replace("__CHAT_THEME__", chat_settings["theme"])
                 .replace("__AGENT_FONT_MODE__", chat_settings["agent_font_mode"])
+                .replace("__AGENT_FONT_MODE_INLINE_STYLE__", chat_agent_font_mode_inline_style(chat_settings["agent_font_mode"]))
                 .replace("__MOBILE_MESSAGE_LIMIT__", str(chat_settings["mobile_message_limit"]))
                 .replace("__DESKTOP_MESSAGE_LIMIT__", str(chat_settings["desktop_message_limit"]))
                 .replace("mode: snapshot", f"mode: {'follow' if follow == '1' else 'snapshot'}")
