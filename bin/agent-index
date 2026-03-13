@@ -302,6 +302,7 @@ if [[ "$HUB_MODE" -eq 1 ]]; then
 import datetime as dt
 import hashlib
 import html
+import base64
 import json
 import os
 import signal
@@ -1238,6 +1239,7 @@ PYEOF
   CHAT_SERVER_SCRIPT="${CHAT_SERVER_SCRIPT}.py"
   CHAT_LOG_DIR="$(dirname "$SESSION_LOG_DIR")"
   cat > "$CHAT_SERVER_SCRIPT" <<'PYEOF'
+import base64
 import html
 import json
 import os
@@ -1272,6 +1274,17 @@ ICON_FILES = {
     "gemini":  _repo_root / "gemini-color.svg",
     "copilot": _repo_root / "github.svg",
 }
+def icon_data_uri(name):
+    icon_path = ICON_FILES.get(name)
+    if not icon_path or not icon_path.exists():
+        return ""
+    try:
+        raw = icon_path.read_bytes()
+    except Exception:
+        return ""
+    return "data:image/svg+xml;base64," + base64.b64encode(raw).decode("ascii")
+
+ICON_DATA_URIS = {name: icon_data_uri(name) for name in ICON_FILES}
 FONT_FILES = {
     "anthropic-serif-roman.ttf": [
         Path.home() / "Library/Fonts/AnthropicSerif-Romans-Variable-25x258.ttf",
@@ -6266,6 +6279,7 @@ HTML = """<!doctype html>
     let traceFetchInFlight = false;
     const traceCache = new Map();
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const AGENT_ICON_DATA = __ICON_DATA_URIS__;
     const timeline = document.getElementById("messages");
     const useDocumentFlowMobile = () => window.matchMedia("(max-width: 430px)").matches;
     const getScrollMetrics = () => {
@@ -6558,20 +6572,24 @@ HTML = """<!doctype html>
     };
     const senderBadge = (sender) => ((sender || "?").trim()[0] || "?").toUpperCase();
     const AGENT_ICON_NAMES = new Set(["claude", "codex", "gemini", "copilot"]);
+    const agentIconSrc = (name) => {
+      const s = (name || "").toLowerCase();
+      return AGENT_ICON_DATA[s] || `/icon/${encodeURIComponent(s)}`;
+    };
     const iconImg = (name, cls) => {
       const s = (name || "").toLowerCase();
       if (!AGENT_ICON_NAMES.has(s)) return "";
-      return `<img class="${cls}" src="/icon/${encodeURIComponent(s)}" alt="${escapeHtml(s)}">`;
+      return `<img class="${cls}" src="${escapeHtml(agentIconSrc(s))}" alt="${escapeHtml(s)}">`;
     };
     const statusIcon = (name, cls) => {
       const s = (name || "").toLowerCase();
       if (!AGENT_ICON_NAMES.has(s)) return "";
-      return `<span class="${cls}" aria-hidden="true" style="--agent-icon-mask:url('/icon/${encodeURIComponent(s)}')"></span>`;
+      return `<span class="${cls}" aria-hidden="true" style="--agent-icon-mask:url('${escapeHtml(agentIconSrc(s))}')"></span>`;
     };
     const senderAvatar = (sender) => {
       const s = (sender || "").toLowerCase();
       if (AGENT_ICON_NAMES.has(s)) {
-        return { cls: "avatar-icon", html: `<img src="/icon/${s}" alt="${escapeHtml(s)}" width="28" height="28">` };
+        return { cls: "avatar-icon", html: `<img src="${escapeHtml(agentIconSrc(s))}" alt="${escapeHtml(s)}" width="28" height="28">` };
       }
       return { cls: "", html: escapeHtml(senderBadge(sender)) };
     };
@@ -6686,7 +6704,7 @@ HTML = """<!doctype html>
       if (root.dataset.targetsSig !== targetsSig) {
         root.dataset.targetsSig = targetsSig;
         root.innerHTML = targets.map((target) => {
-          return `<button type="button" class="target-chip" data-target="${target}" title="${escapeHtml(target)}"><img class="target-icon" src="/icon/${encodeURIComponent(target)}" alt="${escapeHtml(target)}"><span class="target-label">${escapeHtml(target)}</span></button>`;
+          return `<button type="button" class="target-chip" data-target="${target}" title="${escapeHtml(target)}"><img class="target-icon" src="${escapeHtml(agentIconSrc(target))}" alt="${escapeHtml(target)}"><span class="target-label">${escapeHtml(target)}</span></button>`;
         }).join("");
         root.querySelectorAll(".target-chip").forEach((node) => {
           node.addEventListener("mousedown", (e) => e.preventDefault());
@@ -7037,9 +7055,13 @@ HTML = """<!doctype html>
       params.set("ts", String(Date.now()));
       window.location.replace(`${window.location.pathname}?${params.toString()}`);
     };
-    const mergeRefreshOptions = (current = {}, next = {}) => ({
-      forceScroll: !!(current.forceScroll || next.forceScroll),
-    });
+    const mergeRefreshOptions = (current = {}, next = {}) => {
+      const currentOptions = current || {};
+      const nextOptions = next || {};
+      return {
+        forceScroll: !!(currentOptions.forceScroll || nextOptions.forceScroll),
+      };
+    };
     const refresh = async (options = {}) => {
       if (refreshInFlight) {
         pendingRefreshOptions = mergeRefreshOptions(pendingRefreshOptions, options);
@@ -8640,6 +8662,7 @@ class Handler(BaseHTTPRequestHandler):
             follow = "1" if qs.get("follow", ["0"])[0] == "1" else "0"
             body = (
                 HTML
+                .replace("__ICON_DATA_URIS__", json.dumps(ICON_DATA_URIS, ensure_ascii=True))
                 .replace("__HUB_PORT__", str(hub_port))
                 .replace("mode: snapshot", f"mode: {'follow' if follow == '1' else 'snapshot'}")
             ).encode("utf-8")
