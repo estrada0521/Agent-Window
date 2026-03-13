@@ -3812,7 +3812,10 @@ HTML = """<!doctype html>
     }
     .message.user .user-collapse-toggle {
       display: none;
-      margin: 8px 2px 2px auto;
+      position: absolute;
+      right: 12px;
+      bottom: 10px;
+      z-index: 2;
       padding: 0;
       border: none;
       background: transparent;
@@ -4038,31 +4041,6 @@ HTML = """<!doctype html>
       gap: 6px;
       flex-shrink: 0;
     }
-    .message-thinking-icon-wrap {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .message-thinking-glow {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(250,249,245,0.85) 0%, rgba(250,249,245,0) 65%);
-      transform: scale(0.8);
-      opacity: 0;
-      pointer-events: none;
-      animation: thinking-glow-burst 1s linear infinite;
-    }
-    .message-thinking-glow--claude  { animation-delay: 0s; }
-    .message-thinking-glow--codex   { animation-delay: -0.25s; }
-    .message-thinking-glow--gemini  { animation-delay: -0.5s; }
-    .message-thinking-glow--copilot { animation-delay: -0.75s; }
-    @keyframes thinking-glow-burst {
-      0%   { transform: scale(0.8); opacity: 0.5; }
-      16%  { transform: scale(2.8); opacity: 0; }
-      100% { transform: scale(2.8); opacity: 0; }
-    }
     .message-thinking-icon {
       width: 1.55em;
       height: 1.55em;
@@ -4107,7 +4085,7 @@ HTML = """<!doctype html>
       mask-repeat: no-repeat;
       -webkit-mask-position: -60px 0;
       mask-position: -60px 0;
-      animation: thinking-shimmer 1s infinite linear;
+      animation: thinking-shimmer 4s infinite linear;
       animation-delay: var(--thinking-shimmer-delay, 0ms);
     }
     @keyframes thinking-shimmer {
@@ -4116,7 +4094,6 @@ HTML = """<!doctype html>
     }
     @media (prefers-reduced-motion: reduce) {
       .message-thinking-icon { animation: none; filter: brightness(0) invert(0.75); }
-      .message-thinking-glow { animation: none; display: none; }
       .message-thinking-label {
         color: rgba(250, 249, 245, 0.6);
         -webkit-text-fill-color: rgba(250, 249, 245, 0.6);
@@ -6485,7 +6462,7 @@ HTML = """<!doctype html>
       }
       const timelineRect = timeline.getBoundingClientRect();
       const messageRect = lastMessage.getBoundingClientRect();
-      const desktopBottomAnchorRatio = 0.5;
+      const desktopBottomAnchorRatio = 0.9;
       const targetTop = Math.max(
         0,
         timeline.scrollTop + (messageRect.bottom - timelineRect.top) - (timeline.clientHeight * desktopBottomAnchorRatio),
@@ -7165,8 +7142,9 @@ HTML = """<!doctype html>
           ${replyPreviewHTML}
           <div class="message-body-row">
             <div class="md-body">${renderMarkdown(body)}</div>
+            ${isUser ? `<button class="user-collapse-toggle" type="button" hidden>More</button>` : ""}
           </div>
-          ${isUser ? `<button class="user-collapse-toggle" type="button" hidden>More</button><div class="message-meta-below user-message-meta"><span class="arrow">to</span>${userTargetMeta}${userTimestampHtml}${copyButtonHtml}</div>` : `<div class="message-meta-below">${copyButtonHtml}${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}${senderHtml}<span class="arrow">to</span>${targetMeta}</div>`}
+          ${isUser ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${userTargetMeta}${userTimestampHtml}${copyButtonHtml}</div>` : `<div class="message-meta-below">${copyButtonHtml}${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}${senderHtml}<span class="arrow">to</span>${targetMeta}</div>`}
           </div>
           </div>
         </article>`;
@@ -8110,10 +8088,7 @@ HTML = """<!doctype html>
         row.className = "message-thinking-row";
         row.innerHTML = `
           <span class="message-thinking-icons">
-            <span class="message-thinking-icon-wrap">
-              <span class="message-thinking-glow message-thinking-glow--${agent}"></span>
-              ${thinkingIconImg(agent, `message-thinking-icon message-thinking-icon--${agent}`)}
-            </span>
+            ${thinkingIconImg(agent, `message-thinking-icon message-thinking-icon--${agent}`)}
           </span>
           <span class="message-thinking-label" data-text="thinking" style="--thinking-shimmer-delay:${shimmerDelay}">thinking</span>
         `;
@@ -8123,7 +8098,10 @@ HTML = """<!doctype html>
       root.dataset.thinkingAgents = nextThinkingAgents;
     };
     const syncUserMessageCollapse = (scope = document) => {
-      scope.querySelectorAll("article.message-row.user").forEach((row) => {
+      const rows = scope?.matches?.("article.message-row.user")
+        ? [scope]
+        : Array.from(scope.querySelectorAll("article.message-row.user"));
+      rows.forEach((row) => {
         const bodyRow = row.querySelector(".message-body-row");
         const body = row.querySelector(".md-body");
         const toggle = row.querySelector(".user-collapse-toggle");
