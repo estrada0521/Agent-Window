@@ -4088,15 +4088,15 @@ HTML = """<!doctype html>
     }
     .thinking-char {
       color: rgba(250, 249, 245, 0.42);
-      animation: thinking-char-pulse 2.0s linear infinite;
+      animation: thinking-char-pulse 1.5s linear infinite;
       animation-delay: calc(var(--char-i) * 0.18s);
     }
     @keyframes thinking-char-pulse {
       0%   { color: rgba(250, 249, 245, 0.62); }
       10%  { color: rgba(250, 249, 245, 0.82); }
-      19%  { color: rgba(250, 249, 245, 0.62); }
-      28%  { color: rgba(250, 249, 245, 0.42); }
-      92%  { color: rgba(250, 249, 245, 0.42); }
+      22%  { color: rgba(250, 249, 245, 0.62); }
+      34%  { color: rgba(250, 249, 245, 0.42); }
+      88%  { color: rgba(250, 249, 245, 0.42); }
       100% { color: rgba(250, 249, 245, 0.62); }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -4150,11 +4150,11 @@ HTML = """<!doctype html>
     @media (min-width: 701px) {
       .message-thinking-row {
         gap: 18px;
-        padding: 8px 20px 6px 26px;
+        padding: 8px 20px 6px 20px;
         font-size: 18px;
       }
       .message-thinking-icons {
-        margin-left: -2px;
+        margin-left: -6px;
       }
     }
     .reply-jump-inline:active {
