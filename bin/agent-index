@@ -4000,7 +4000,13 @@ HTML = """<!doctype html>
       height: 30px;
       object-fit: contain;
       opacity: 0.92;
+      animation: thinking-icon-pulse 2s ease-in-out infinite;
+      will-change: opacity;
     }
+    .message-thinking-icon--claude { animation-duration: 2.3s; animation-delay: -0.15s; }
+    .message-thinking-icon--codex { animation-duration: 2.1s; animation-delay: -0.5s; }
+    .message-thinking-icon--gemini { animation-duration: 2.5s; animation-delay: -0.8s; }
+    .message-thinking-icon--copilot { animation-duration: 2.0s; animation-delay: -1.2s; }
     .message-thinking-icon--codex,
     .message-thinking-icon--copilot {
       filter: invert(1) grayscale(1) brightness(1.35) !important;
@@ -4017,16 +4023,22 @@ HTML = """<!doctype html>
       -webkit-text-fill-color: transparent;
       animation: thinking-shimmer 2.8s infinite linear;
     }
-    .message-thinking-elapsed {
-      white-space: nowrap;
-      color: rgb(250, 249, 245);
-      opacity: 0.92;
-    }
     @keyframes thinking-shimmer {
       0% { background-position: 100% 0; }
       100% { background-position: -100% 0; }
     }
+    @keyframes thinking-icon-pulse {
+      0%, 100% {
+        opacity: 0.6;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
     @media (prefers-reduced-motion: reduce) {
+      .message-thinking-icon {
+        animation: none;
+      }
       .message-thinking-label {
         animation: none;
         background: none;
@@ -7941,9 +7953,6 @@ HTML = """<!doctype html>
       if (!runningAgents.length) return;
       const frag = document.createDocumentFragment();
       runningAgents.forEach((agent) => {
-        const elapsed = formatAgentElapsed(
-          Math.floor((Date.now() - (agentStatusSince[agent] || Date.now())) / 1000)
-        );
         const row = document.createElement("div");
         row.className = "message-thinking-row";
         row.innerHTML = `
@@ -7951,7 +7960,6 @@ HTML = """<!doctype html>
             ${iconImg(agent, `message-thinking-icon message-thinking-icon--${agent}`)}
           </span>
           <span class="message-thinking-label">thinking</span>
-          <span class="message-thinking-elapsed">${elapsed}</span>
         `;
         frag.appendChild(row);
       });
