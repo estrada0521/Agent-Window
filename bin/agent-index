@@ -4041,6 +4041,29 @@ HTML = """<!doctype html>
       gap: 6px;
       flex-shrink: 0;
     }
+    .message-thinking-icon-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .message-thinking-glow {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(250,249,245,0.65) 0%, rgba(250,249,245,0) 70%);
+      pointer-events: none;
+      animation: thinking-glow-follow 1s ease-in-out infinite;
+    }
+    .message-thinking-glow--claude  { animation-delay: 0s; }
+    .message-thinking-glow--codex   { animation-delay: -0.25s; }
+    .message-thinking-glow--gemini  { animation-delay: -0.5s; }
+    .message-thinking-glow--copilot { animation-delay: -0.75s; }
+    @keyframes thinking-glow-follow {
+      0%   { transform: scale(0.5); opacity: 0; }
+      50%  { transform: scale(2.0); opacity: 0.4; }
+      100% { transform: scale(0.5); opacity: 0; }
+    }
     .message-thinking-icon {
       width: 1.55em;
       height: 1.55em;
@@ -4058,50 +4081,26 @@ HTML = """<!doctype html>
       100% { transform: translateY(0);    filter: brightness(0) invert(0.61); }
     }
     .message-thinking-label {
-      position: relative;
       display: inline-flex;
       align-items: baseline;
-      gap: 0;
       white-space: nowrap;
       font-size: 1em;
-      color: rgba(250, 249, 245, 0.60);
-      -webkit-text-fill-color: rgba(250, 249, 245, 0.60);
     }
-    .message-thinking-label::after {
-      content: attr(data-text);
-      position: absolute;
-      inset: 0;
-      color: rgba(250, 249, 245, 0.65);
-      -webkit-text-fill-color: rgba(250, 249, 245, 0.65);
-      font-size: inherit;
-      font-family: inherit;
-      font-weight: inherit;
-      letter-spacing: inherit;
-      -webkit-mask-image: linear-gradient(90deg, transparent 0%, white 50%, transparent 100%);
-      mask-image: linear-gradient(90deg, transparent 0%, white 50%, transparent 100%);
-      -webkit-mask-size: 60px 100%;
-      mask-size: 60px 100%;
-      -webkit-mask-repeat: no-repeat;
-      mask-repeat: no-repeat;
-      -webkit-mask-position: -60px 0;
-      mask-position: -60px 0;
-      animation: thinking-shimmer 4s infinite linear;
-      animation-delay: var(--thinking-shimmer-delay, 0ms);
+    .thinking-char {
+      color: rgba(250, 249, 245, 0.42);
+      animation: thinking-char-pulse 2.5s ease-in-out infinite;
+      animation-delay: calc(var(--char-i) * 0.18s);
     }
-    @keyframes thinking-shimmer {
-      0%   { -webkit-mask-position: -60px 0; mask-position: -60px 0; }
-      100% { -webkit-mask-position: 300px 0; mask-position: 300px 0; }
+    @keyframes thinking-char-pulse {
+      0%        { color: rgba(250, 249, 245, 0.42); }
+      8%        { color: rgba(250, 249, 245, 0.82); }
+      20%       { color: rgba(250, 249, 245, 0.42); }
+      100%      { color: rgba(250, 249, 245, 0.42); }
     }
     @media (prefers-reduced-motion: reduce) {
       .message-thinking-icon { animation: none; filter: brightness(0) invert(0.75); }
-      .message-thinking-label {
-        color: rgba(250, 249, 245, 0.6);
-        -webkit-text-fill-color: rgba(250, 249, 245, 0.6);
-      }
-      .message-thinking-label::after {
-        animation: none;
-        display: none;
-      }
+      .message-thinking-glow { animation: none; display: none; }
+      .thinking-char { animation: none; color: rgba(250, 249, 245, 0.6); }
     }
     .meta {
       display: flex;
@@ -6462,7 +6461,7 @@ HTML = """<!doctype html>
       }
       const timelineRect = timeline.getBoundingClientRect();
       const messageRect = lastMessage.getBoundingClientRect();
-      const desktopBottomAnchorRatio = 0.9;
+      const desktopBottomAnchorRatio = 0.95;
       const targetTop = Math.max(
         0,
         timeline.scrollTop + (messageRect.bottom - timelineRect.top) - (timeline.clientHeight * desktopBottomAnchorRatio),
@@ -6905,10 +6904,13 @@ HTML = """<!doctype html>
       });
     };
     const isNearBottom = () => {
-      const threshold = 80;
       const { scrollTop, clientHeight, scrollHeight } = getScrollMetrics();
-      const activeThreshold = useDocumentFlowMobile() ? threshold : clientHeight * 0.8;
-      return scrollTop + clientHeight >= scrollHeight - activeThreshold;
+      if (useDocumentFlowMobile()) {
+        return scrollTop + clientHeight >= scrollHeight - 80;
+      }
+      // On desktop, we consider it "near bottom" if the scroll is within half a screen of the total height.
+      // This is because we have large padding and a centered anchor.
+      return scrollTop + clientHeight >= scrollHeight - (clientHeight * 1.5);
     };
     const updateScrollBtn = () => {
       scrollToBottomBtn.classList.toggle("visible", !isNearBottom());
@@ -8075,22 +8077,21 @@ HTML = """<!doctype html>
       }
       existingRows.forEach((row) => row.remove());
       const frag = document.createDocumentFragment();
-      // Icon animation: 1000ms cycle, landing at 68% = 680ms
-      // Shimmer delay per agent: align shimmer wave start with landing moment
-      const ICON_CYCLE = 1000;
-      const LANDING_PCT = 1.0;
-      const ICON_DELAYS = { claude: 0, codex: -250, gemini: -500, copilot: -750 };
+      const THINKING_TEXT = "thinking...";
+      const charSpans = [...THINKING_TEXT].map((ch, i) =>
+        `<span class="thinking-char" style="--char-i:${i}">${ch}</span>`
+      ).join("");
       runningAgents.forEach((agent) => {
-        const iconDelay = ICON_DELAYS[agent] || 0;
-        const landingFromT0 = ((ICON_CYCLE * LANDING_PCT + iconDelay) % ICON_CYCLE + ICON_CYCLE) % ICON_CYCLE;
-        const shimmerDelay = `-${(ICON_CYCLE - landingFromT0) % ICON_CYCLE}ms`;
         const row = document.createElement("div");
         row.className = "message-thinking-row";
         row.innerHTML = `
           <span class="message-thinking-icons">
-            ${thinkingIconImg(agent, `message-thinking-icon message-thinking-icon--${agent}`)}
+            <span class="message-thinking-icon-wrap">
+              <span class="message-thinking-glow message-thinking-glow--${agent}"></span>
+              ${thinkingIconImg(agent, `message-thinking-icon message-thinking-icon--${agent}`)}
+            </span>
           </span>
-          <span class="message-thinking-label" data-text="thinking" style="--thinking-shimmer-delay:${shimmerDelay}">thinking</span>
+          <span class="message-thinking-label">${charSpans}</span>
         `;
         frag.appendChild(row);
       });
