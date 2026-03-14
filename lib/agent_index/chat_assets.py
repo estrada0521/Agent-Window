@@ -1012,7 +1012,8 @@ CHAT_HTML = r"""<!doctype html>
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      color: var(--muted);      font: 400 12px/1.4 "SF Pro Text","Segoe UI",sans-serif;
+      color: var(--muted);
+      font: 400 12px/1.4 "SF Pro Text","Segoe UI",sans-serif;
       cursor: pointer;
       letter-spacing: 0.02em;
     }
@@ -1062,7 +1063,8 @@ CHAT_HTML = r"""<!doctype html>
     }
     .has-hover #soundBtn:hover { color: var(--text); }
     .has-hover #soundBtn.sound-on:hover { background: rgba(99, 202, 183, 0.15); }
-    /* Tactile button animations */    .target-chip:active:not(:disabled),
+    /* Tactile button animations */
+    .target-chip:active:not(:disabled),
     .quick-action:active:not(:disabled),
     .copy-btn:active,
     .reply-btn:active,
@@ -4739,19 +4741,20 @@ __AGENT_FONT_MODE_INLINE_STYLE__
                 <button type="button" class="quick-action" data-forward-action="autoModeBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4"></path><path d="M12 17v4"></path><path d="m5.6 5.6 2.8 2.8"></path><path d="m15.6 15.6 2.8 2.8"></path><path d="M3 12h4"></path><path d="M17 12h4"></path><path d="m5.6 18.4 2.8-2.8"></path><path d="m15.6 8.4 2.8-2.8"></path><circle cx="12" cy="12" r="2.5"></circle></svg></span><span class="action-label">Auto</span><span class="action-mobile">Auto</span></button>
                 <button type="button" class="quick-action" data-forward-action="caffeinateBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg></span><span class="action-label">Awake</span><span class="action-mobile">Awake</span></button>
                 <button type="button" class="quick-action" data-forward-action="soundBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 9 9 9 14 5 14 19 9 15 5 15 5 9"></polygon><path d="M18 9a5 5 0 0 1 0 6"></path></svg></span><span class="action-label">Sound</span><span class="action-mobile">Sound</span></button>
-                </div>
-                </details>
-                <h1 id="title">agent-index</h1>
-                <div class="sub">
-                <span class="pill" id="count">messages: 0</span>
-                <span class="pill" id="filter">filter: all</span>
-                <span class="pill" id="mode">mode: snapshot</span>
-                <span class="pill" id="state">state: active</span>
-                <span class="pill" id="source">source: -</span>
-                <button id="autoModeBtn" type="button" title="Toggle auto-mode">Auto: off</button>
-                <button id="caffeinateBtn" type="button" title="Toggle sleep prevention">Awake: off</button>
-                <button id="soundBtn" type="button" title="Toggle sound notifications">Sound: off</button>
-                <input type="search" id="searchInput" class="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">              <span id="searchCount" class="search-count"></span>
+              </div>
+            </details>
+            <h1 id="title">agent-index</h1>
+            <div class="sub">
+              <span class="pill" id="count">messages: 0</span>
+              <span class="pill" id="filter">filter: all</span>
+              <span class="pill" id="mode">mode: snapshot</span>
+              <span class="pill" id="state">state: active</span>
+              <span class="pill" id="source">source: -</span>
+              <button id="autoModeBtn" type="button" title="Toggle auto-mode">Auto: off</button>
+              <button id="caffeinateBtn" type="button" title="Toggle sleep prevention">Awake: off</button>
+              <button id="soundBtn" type="button" title="Toggle sound notifications">Sound: off</button>
+              <input type="search" id="searchInput" class="search-input" placeholder="Search…" autocomplete="off" spellcheck="false">
+              <span id="searchCount" class="search-count"></span>
               <div class="agent-filter-chips" id="agentFilterChips"></div>
             </div>
           </div>
@@ -5620,9 +5623,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const newEntries = lastSeenIndex >= 0
           ? displayEntries.slice(lastSeenIndex + 1)
           : (lastNotifiedMsgId ? displayEntries.slice(-1) : []);
-        const agentEntries = newEntries.filter((e) => e.sender !== "user" && e.sender !== "system");
-        if (agentEntries.length > 0) {
-          if (soundEnabled) playNotificationSound();
+        if (newEntries.some((e) => e.sender !== "user" && e.sender !== "system")) {
+          playNotificationSound();
         }
       }
       lastNotifiedMsgId = displayEntries.at(-1)?.msg_id || lastNotifiedMsgId;
@@ -6246,9 +6248,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         micBtn.classList.remove("listening");
         messageInput.value = finalTranscript;
         updateSendBtnVisibility();
-        if (finalTranscript.trim()) {
-          setTimeout(() => submitMessage(), 100);
-        }
       };
       recognition.onerror = () => {
         isListening = false;
@@ -7059,7 +7058,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       setSoundBtn(newState, true);
       await primeSound(); // always prime on click (iOS unlock)
     });
-
     // Auto-prime on first user gesture if sound is on
     const primeSoundOnGesture = async () => {
       if (!soundEnabled || _audioPrimed) return;
