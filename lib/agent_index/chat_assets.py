@@ -69,7 +69,7 @@ CHAT_HTML = r"""<!doctype html>
     }
     .trace-tooltip {
       position: fixed;
-      background: rgba(38, 38, 36, 0.69);
+      background: rgba(var(--bg-rgb), 0.69);
       backdrop-filter: blur(16px) saturate(140%);
       -webkit-backdrop-filter: blur(16px) saturate(140%);
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -121,15 +121,15 @@ CHAT_HTML = r"""<!doctype html>
     }
     [data-theme="black-hole"] {
       color-scheme: dark;
-      --bg-rgb: 0, 0, 0;
+      --bg-rgb: 5, 5, 5;
       --bg: rgb(var(--bg-rgb));
-      --panel: rgba(6, 6, 6, 0.98);
-      --panel-strong: rgba(3, 3, 3, 0.99);
-      --line: rgba(255, 255, 255, 0.06);
-      --line-strong: rgba(255, 255, 255, 0.10);
-      --text: #e2e6ea;
-      --muted: #6a7078;
-      --chrome-muted: rgb(120, 118, 112);
+      --panel: rgba(20, 20, 20, 0.98);
+      --panel-strong: rgba(15, 15, 15, 0.99);
+      --line: rgba(255, 255, 255, 0.07);
+      --line-strong: rgba(255, 255, 255, 0.12);
+      --text: rgb(252, 252, 252);
+      --muted: rgb(158, 158, 158);
+      --chrome-muted: rgb(158, 158, 158);
       --chip-border-idle: rgba(255, 255, 255, 0.09);
       --chip-border-active: rgba(255, 255, 255, 0.15);
       --chip-border-pressed: rgba(255, 255, 255, 0.20);
@@ -138,12 +138,12 @@ CHAT_HTML = r"""<!doctype html>
       --mobile-user-row-gutter: 28px;
       --math-display-inline-pad: 2px;
       --viewport-center-gutter: clamp(12px, 3vw, 28px);
-      --user-accent: #9aa3ad;
-      --claude-accent: #9aa3ad;
-      --codex-accent: #9aa3ad;
-      --gemini-accent: #9aa3ad;
-      --copilot-accent: #9aa3ad;
-      --system-accent: #4a5058;
+      --user-accent: #b0b8c0;
+      --claude-accent: #b0b8c0;
+      --codex-accent: #b0b8c0;
+      --gemini-accent: #b0b8c0;
+      --copilot-accent: #b0b8c0;
+      --system-accent: #5a6068;
     }
     * { box-sizing: border-box; }
     ::-webkit-scrollbar { width: 14px; height: 14px; }
@@ -168,7 +168,7 @@ CHAT_HTML = r"""<!doctype html>
       align-items: stretch;
       justify-content: center;
       font-family: "SF Pro Display", "Segoe UI", sans-serif;
-      background: rgb(38, 38, 36);
+      background: var(--bg);
       color: var(--text);
     }
     .shell {
@@ -185,7 +185,7 @@ CHAT_HTML = r"""<!doctype html>
       border: none;
       border-radius: 0;
       overflow: hidden;
-      background: rgb(38, 38, 36);
+      background: var(--bg);
       box-shadow: none;
     }
     .mobile-top-frost {
@@ -213,9 +213,9 @@ CHAT_HTML = r"""<!doctype html>
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       background: linear-gradient(180deg,
-        rgba(38,38,36,1.0)  0%,
-        rgba(38,38,36,1.0)  48%,
-        rgba(38,38,36,0.82) 84%,
+        rgba(var(--bg-rgb),1.0)  0%,
+        rgba(var(--bg-rgb),1.0)  48%,
+        rgba(var(--bg-rgb),0.82) 84%,
         transparent      100%
       );
       backdrop-filter: blur(24px) saturate(160%);
@@ -453,10 +453,10 @@ CHAT_HTML = r"""<!doctype html>
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       background: linear-gradient(0deg,
-        rgba(38,38,36,1.0) 0%,
-        rgba(38,38,36,0.88) 18%,
-        rgba(38,38,36,0.58) 42%,
-        rgba(38,38,36,0.18) 68%,
+        rgba(var(--bg-rgb),1.0) 0%,
+        rgba(var(--bg-rgb),0.88) 18%,
+        rgba(var(--bg-rgb),0.58) 42%,
+        rgba(var(--bg-rgb),0.18) 68%,
         transparent 100%
       );
       backdrop-filter: blur(24px) saturate(160%);
@@ -581,7 +581,7 @@ CHAT_HTML = r"""<!doctype html>
       padding: 8px;
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(38, 38, 36, 0.72);
+      background: rgba(var(--bg-rgb), 0.72);
       box-shadow: none;
       backdrop-filter: blur(16px) saturate(140%);
       -webkit-backdrop-filter: blur(16px) saturate(140%);
@@ -693,7 +693,7 @@ CHAT_HTML = r"""<!doctype html>
       padding: 8px;
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(38, 38, 36, 0.72);
+      background: rgba(var(--bg-rgb), 0.72);
       box-shadow: none;
       backdrop-filter: blur(16px) saturate(140%);
       -webkit-backdrop-filter: blur(16px) saturate(140%);
@@ -719,18 +719,18 @@ CHAT_HTML = r"""<!doctype html>
     #attachedFilesMenu .header-plus-panel {
       min-width: 220px;
       max-height: 40vh;
-      padding: 12px 8px;
+      padding: 16px 8px;
+      gap: 12px;
       overflow-y: auto;
       left: auto;
       right: 0;
       transform-origin: top right;
     }    #attachedFilesPanel .quick-action {
-      padding: 12px 16px !important;
+      padding: 20px 16px !important;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-    #attachedFilesPanel .file-item-icon {
+    }    #attachedFilesPanel .file-item-icon {
       width: 14px;
       height: 14px;
       display: inline-flex;
@@ -1289,7 +1289,7 @@ CHAT_HTML = r"""<!doctype html>
       height: 80px;
       border-radius: 8px;
       border: 1px solid rgba(255,255,255,0.1);
-      background: rgb(38,38,36);
+      background: var(--bg);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1895,7 +1895,7 @@ CHAT_HTML = r"""<!doctype html>
         box-shadow: none !important;
       }
       .composer-main-shell:focus-within {
-        background: rgba(38, 38, 36, 0.58);
+        background: rgba(var(--bg-rgb), 0.58);
         border-color: rgba(255, 255, 255, 0.2);
       }
       .has-hover .composer-main-shell:hover {
@@ -1957,7 +1957,7 @@ CHAT_HTML = r"""<!doctype html>
       height: 38px;
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(38, 38, 36, 0.72);
+      background: rgba(var(--bg-rgb), 0.72);
       color: rgb(235, 235, 230);
       font-size: 17px;
       line-height: 1;
@@ -2929,7 +2929,7 @@ CHAT_HTML = r"""<!doctype html>
         z-index: 30;
         border-radius: 20px;
         border: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(38, 38, 36, 0.72);
+        background: rgba(var(--bg-rgb), 0.72);
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
         box-shadow: none;
@@ -3267,7 +3267,7 @@ CHAT_HTML = r"""<!doctype html>
         z-index: 30;
         border-radius: 10px;
         border: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(38, 38, 36, 0.72);
+        background: rgba(var(--bg-rgb), 0.72);
         backdrop-filter: blur(24px) saturate(160%);
         -webkit-backdrop-filter: blur(24px) saturate(160%);
         box-shadow: none;
@@ -4774,89 +4774,117 @@ CHAT_HTML = r"""<!doctype html>
     }
 __AGENT_FONT_MODE_INLINE_STYLE__
     /* ── Black Hole theme overrides ─────────────────────────────────────── */
-    [data-theme="black-hole"] body {
-      background: rgb(0, 0, 0);
+    /* composer-main-shell: all states */
+    [data-theme="black-hole"] .composer-main-shell,
+    [data-theme="black-hole"] body:not(.keyboard-locked) .composer-main-shell:not(:focus-within),
+    [data-theme="black-hole"] .composer-main-shell:focus-within {
+      background: rgb(20, 20, 20) !important;
     }
-    [data-theme="black-hole"] .shell {
-      background: rgb(0, 0, 0);
+    /* user message box */
+    [data-theme="black-hole"] .message.user .md-body {
+      background: rgb(20, 20, 20);
+      color: rgb(252, 252, 252) !important;
     }
-    [data-theme="black-hole"] header::before {
-      background: linear-gradient(180deg,
-        rgba(0,0,0,1.0)  0%,
-        rgba(0,0,0,1.0)  48%,
-        rgba(0,0,0,0.82) 84%,
-        transparent      100%
-      );
+    [data-theme="black-hole"] .message.user .md-body p,
+    [data-theme="black-hole"] .message.user .md-body li,
+    [data-theme="black-hole"] .message.user .md-body h1,
+    [data-theme="black-hole"] .message.user .md-body h2,
+    [data-theme="black-hole"] .message.user .md-body h3,
+    [data-theme="black-hole"] .message.user .md-body h4 {
+      color: rgb(252, 252, 252) !important;
     }
-    [data-theme="black-hole"] .trace-tooltip {
-      background: rgba(0, 0, 0, 0.85);
+    /* user message collapse gradient */
+    [data-theme="black-hole"] .message.user .message-body-row.is-collapsed::after {
+      background: linear-gradient(180deg, rgba(20,20,20,0) 0%, rgb(20,20,20) 78%);
     }
-    [data-theme="black-hole"] .has-hover .quick-action:hover:not(:disabled) {
-      background: rgb(8, 8, 8);
-    }
-    [data-theme="black-hole"] #fileDropdown {
-      background: rgb(4, 4, 4);
-    }
-    [data-theme="black-hole"] .file-item:hover {
-      background: rgb(3, 3, 3);
-    }
-    [data-theme="black-hole"] .has-hover .composer-plus-toggle:hover {
-      background: rgb(6, 6, 6);
-    }
-    [data-theme="black-hole"] .has-hover .header-plus-toggle:hover {
-      background: rgb(5, 5, 5);
-    }
-    [data-theme="black-hole"] .header-plus-toggle:active {
-      background: rgb(3, 3, 3);
-    }
-    [data-theme="black-hole"] .header-plus-menu[open] .header-plus-toggle {
-      background: rgb(5, 5, 5);
-    }
+    /* input box */
     [data-theme="black-hole"] .composer textarea,
     [data-theme="black-hole"] .composer textarea:focus {
-      background: rgb(5, 5, 5);
+      background: rgb(20, 20, 20);
     }
-    [data-theme="black-hole"] #scrollToBottomBtn {
-      background: rgba(0, 0, 0, 0.72);
+    /* mobile composer shell border */
+    @media (max-width: 430px) {
+      [data-theme="black-hole"] .composer-main-shell {
+        border-color: rgba(255,255,255,0.08) !important;
+      }
     }
-    [data-theme="black-hole"] .has-hover #scrollToBottomBtn:hover {
-      background: rgba(12, 12, 12, 0.85);
+    /* tap / hover interactive color */
+    [data-theme="black-hole"] .has-hover .quick-action:hover:not(:disabled),
+    [data-theme="black-hole"] #fileDropdown,
+    [data-theme="black-hole"] .file-item:hover,
+    [data-theme="black-hole"] .has-hover .composer-plus-toggle:hover,
+    [data-theme="black-hole"] .has-hover .header-plus-toggle:hover,
+    [data-theme="black-hole"] .header-plus-toggle:active,
+    [data-theme="black-hole"] .header-plus-menu[open] .header-plus-toggle,
+    [data-theme="black-hole"] .daybreak,
+    [data-theme="black-hole"] .has-hover .copy-btn:hover,
+    [data-theme="black-hole"] .has-hover .reply-target-jump-btn:hover,
+    [data-theme="black-hole"] #scrollToBottomBtn:active,
+    [data-theme="black-hole"] .target-chip.active,
+    [data-theme="black-hole"] .has-hover .target-chip.active:hover,
+    [data-theme="black-hole"] .target-chip:hover:not(.active),
+    [data-theme="black-hole"] .target-chip:active:not(.active),
+    [data-theme="black-hole"] .attach-card-remove {
+      background: rgb(25, 25, 25) !important;
     }
-    [data-theme="black-hole"] #scrollToBottomBtn:active {
-      background: rgb(5, 5, 5);
+    /* panels / popups */
+    [data-theme="black-hole"] .header-plus-panel,
+    [data-theme="black-hole"] .composer-plus-panel {
+      background: rgba(15, 15, 15, 0.96) !important;
     }
-    [data-theme="black-hole"] .daybreak {
-      background: rgb(5, 5, 5);
+    [data-theme="black-hole"] .trace-tooltip {
+      background: rgba(var(--bg-rgb), 0.92);
     }
     [data-theme="black-hole"] .conversation-empty-card {
-      background: rgba(6, 6, 6, 0.9);
+      background: rgba(20, 20, 20, 0.9);
     }
-    [data-theme="black-hole"] .attach-card-ext {
-      background: rgb(0, 0, 0);
-    }
-    [data-theme="black-hole"] .attach-card-remove {
-      background: rgb(4, 4, 4);
+    [data-theme="black-hole"] .attach-card-ext,
+    [data-theme="black-hole"] .file-card {
+      background: rgb(20, 20, 20);
     }
     [data-theme="black-hole"] .md-body pre {
-      background: rgb(10, 10, 10);
+      background: rgb(15, 15, 15);
     }
-    [data-theme="black-hole"] .file-card {
-      background: rgb(5, 5, 5);
+    /* scroll button */
+    [data-theme="black-hole"] #scrollToBottomBtn {
+      background: rgba(var(--bg-rgb), 0.72);
     }
+    [data-theme="black-hole"] .has-hover #scrollToBottomBtn:hover {
+      background: rgba(25, 25, 25, 0.88);
+    }
+    /* mobile target chip ::before (mobile modal chips) */
     [data-theme="black-hole"] .target-chip::before,
-    [data-theme="black-hole"] .target-chip:active:not(.active)::before {
-      background: rgb(6, 6, 6);
-    }
+    [data-theme="black-hole"] .target-chip:active:not(.active)::before,
     [data-theme="black-hole"] .target-chip.active::before {
-      background: rgb(6, 6, 6) !important;
+      background: rgb(20, 20, 20) !important;
     }
-    [data-theme="black-hole"] .has-hover .copy-btn:hover,
-    [data-theme="black-hole"] .has-hover .reply-target-jump-btn:hover {
-      background: rgb(3, 3, 3);
+    /* filter chips */
+    [data-theme="black-hole"] .filter-chip {
+      background: rgba(255,255,255,0.02);
     }
-    [data-theme="black-hole"] .composer-plus-panel,
-    [data-theme="black-hole"] .header-plus-panel {
-      background: rgba(0, 0, 0, 0.88);
+    [data-theme="black-hole"] .filter-chip.active {
+      background: rgba(255,255,255,0.07);
+    }
+    /* open toggle states */
+    [data-theme="black-hole"] .header-plus-menu[open] .header-plus-toggle {
+      background: rgba(25, 25, 25, 0.72) !important;
+    }
+    [data-theme="black-hole"] .composer-plus-menu[open] .composer-plus-toggle,
+    [data-theme="black-hole"] .composer-plus-menu:not([open]) .composer-plus-toggle:active {
+      background: rgb(25, 25, 25) !important;
+    }
+    /* mobile composer shell */
+    @media (max-width: 430px) {
+      [data-theme="black-hole"] .composer-plus-toggle:active,
+      [data-theme="black-hole"] .composer-plus-menu[open] .composer-plus-toggle {
+        background: rgb(25, 25, 25) !important;
+      }
+      [data-theme="black-hole"] .header-plus-toggle:active {
+        background: rgba(25, 25, 25, 0.92) !important;
+      }
+      [data-theme="black-hole"] .header-plus-menu[open] .header-plus-toggle {
+        background: rgb(25, 25, 25) !important;
+      }
     }
   </style>
 </head>
