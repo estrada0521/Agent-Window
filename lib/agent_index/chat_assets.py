@@ -1243,6 +1243,14 @@ CHAT_HTML = r"""<!doctype html>
     .has-hover .image-attach-remove:hover {
       filter: brightness(1.2);
     }
+    .image-attach-name {
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .composer textarea {
       display: block;
       width: 100%;
@@ -4765,7 +4773,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
 
             <div class="composer-plus-panel">
               <button type="button" class="quick-action divider-after" id="cameraBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></span><span class="action-label">Camera</span><span class="action-mobile">Camera</span></button>
-              <input type="file" id="cameraInput" accept="image/*" style="display:none">
+              <input type="file" id="cameraInput" style="display:none">
               <button type="button" class="quick-action divider-after" data-forward-action="rawSendBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17 10 12 4 7"></path><path d="M12 17h8"></path></svg></span><span class="action-label">Raw</span><span class="action-mobile">Raw</span></button>
               <button type="button" class="quick-action" data-forward-action="briefBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="m12 8 2.5 3.5L12 16l-2.5-4.5L12 8Z"></path></svg></span><span class="action-label">Brief</span><span class="action-mobile">Brief</span></button>
               <button type="button" class="quick-action" data-forward-action="readMemoryBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"></path><path d="m8 10 4 4 4-4"></path><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path></svg></span><span class="action-label">Load</span><span class="action-mobile">Load</span></button>
@@ -4785,6 +4793,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             </div>
             <div id="imageAttachPreview" class="image-attach-preview" style="display:none">
               <img id="imageAttachThumb" src="" alt="preview">
+              <span id="imageAttachName" class="image-attach-name"></span>
               <button type="button" id="imageAttachRemove" class="image-attach-remove" aria-label="Remove image">✕</button>
             </div>
             <div class="composer-field">
@@ -6254,7 +6263,16 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           const data = await res.json();
           if (!res.ok || !data.ok) throw new Error(data.error || "upload failed");
           pendingImagePath = data.path;
-          imageAttachThumb.src = URL.createObjectURL(file);
+          const nameEl = document.getElementById("imageAttachName");
+          if (file.type.startsWith("image/")) {
+            imageAttachThumb.src = URL.createObjectURL(file);
+            imageAttachThumb.style.display = "";
+            if (nameEl) nameEl.textContent = "";
+          } else {
+            imageAttachThumb.src = "";
+            imageAttachThumb.style.display = "none";
+            if (nameEl) nameEl.textContent = file.name;
+          }
           imageAttachPreview.style.display = "flex";
           setStatus("");
         } catch (err) {
