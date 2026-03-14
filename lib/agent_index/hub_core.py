@@ -6,7 +6,6 @@ import os
 import signal
 import subprocess
 import time
-import urllib.request
 from pathlib import Path
 
 from .state_core import load_hub_settings as load_shared_hub_settings
@@ -342,10 +341,11 @@ class HubRuntime:
         return save_shared_hub_settings(self.repo_root, raw)
 
     def chat_ready(self, chat_port: int) -> bool:
+        import socket as _sock
         try:
-            with urllib.request.urlopen(f"http://127.0.0.1:{chat_port}/messages", timeout=0.35) as response:
-                return response.status == 200
-        except Exception:
+            with _sock.create_connection(('127.0.0.1', chat_port), timeout=0.35):
+                return True
+        except OSError:
             return False
 
     def stop_chat_server(self, session_name: str):

@@ -288,10 +288,23 @@ while [[ $# -gt 0 ]]; do
     --hub)     HUB_MODE=1; shift ;;
     --hub-port) HUB_PORT="$2"; shift 2 ;;
     --no-open) NO_OPEN=1; shift ;;
+    --https) HTTPS_MODE=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 1 ;;
   esac
 done
+
+# Auto-detect or enable HTTPS certs
+if [[ -z "${MULTIAGENT_CERT_FILE:-}" ]]; then
+  if [[ -f "$REPO_ROOT/certs/cert.pem" ]] && [[ -f "$REPO_ROOT/certs/key.pem" ]]; then
+    export MULTIAGENT_CERT_FILE="$REPO_ROOT/certs/cert.pem"
+    export MULTIAGENT_KEY_FILE="$REPO_ROOT/certs/key.pem"
+  fi
+fi
+HTTPS_SCHEME="http"
+if [[ -n "${MULTIAGENT_CERT_FILE:-}" ]]; then
+  HTTPS_SCHEME="https"
+fi
 
 if [[ "$HUB_MODE" -eq 1 ]]; then
   HUB_LOG="$(mktemp "${TMPDIR:-/tmp}/agent-index-hub.XXXXXX")"
@@ -301,6 +314,8 @@ if [[ "$HUB_MODE" -eq 1 ]]; then
   cat > "$HUB_SERVER_SCRIPT" <<'PYEOF'
 import html
 import json
+import os
+import ssl
 import subprocess
 import sys
 import threading
@@ -1815,7 +1830,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_html(500, error_page(f"Failed to start chat for {session_name}: {detail}"))
                 return
             host = host_without_port(self.headers.get("Host", "127.0.0.1"))
-            location = f"http://{host}:{chat_port}/?follow=1"
+            location = f"{_scheme}://{host}:{chat_port}/?follow=1"
             self.send_response(302)
             self.send_header("Location", location)
             self.end_headers()
@@ -1835,7 +1850,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_html(500, error_page(f"Failed to start chat for {session_name}: {detail}"))
                 return
             host = host_without_port(self.headers.get("Host", "127.0.0.1"))
-            location = f"http://{host}:{chat_port}/?follow=1"
+            location = f"{_scheme}://{host}:{chat_port}/?follow=1"
             self.send_response(302)
             self.send_header("Location", location)
             self.end_headers()
@@ -1965,30 +1980,35 @@ class Handler(BaseHTTPRequestHandler):
             ok, chat_port, detail = ensure_chat_server(session_name)
             host = host_without_port(self.headers.get("Host", "127.0.0.1"))
             if ok:
-                self._send_json(200, {"ok": True, "session": session_name, "chat_url": f"http://{host}:{chat_port}/?follow=1"})
+                self._send_json(200, {"ok": True, "session": session_name, "chat_url": f"{_scheme}://{host}:{chat_port}/?follow=1"})
             else:
                 self._send_json(500, {"ok": False, "error": detail})
             return
         self.send_response(404)
         self.end_headers()
 
+_cert = os.environ.get("MULTIAGENT_CERT_FILE", "")
+_key = os.environ.get("MULTIAGENT_KEY_FILE", "")
+_use_https = bool(_cert and _key)
+_scheme = "https" if _use_https else "http"
 ThreadingHTTPServer.allow_reuse_address = True
 hub_server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
-print(f"http://127.0.0.1:{port}/", flush=True)
+if _use_https:
+    _ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    _ctx.load_cert_chain(_cert, _key)
+    hub_server.socket = _ctx.wrap_socket(hub_server.socket, server_side=True)
+print(f"{_scheme}://127.0.0.1:{port}/", flush=True)
 hub_server.serve_forever()
 PYEOF
 
   HUB_READY=0
   if python3 - "$HUB_PORT" <<'PYEOF'
-import sys
-import urllib.request
-
+import socket, sys
 port = int(sys.argv[1])
 try:
-    with urllib.request.urlopen(f"http://127.0.0.1:{port}/sessions", timeout=0.25) as response:
-        if response.status == 200:
-            sys.exit(0)
-except Exception:
+    with socket.create_connection(('127.0.0.1', port), timeout=0.25):
+        sys.exit(0)
+except OSError:
     pass
 sys.exit(1)
 PYEOF
@@ -2015,15 +2035,12 @@ PYEOF
 )"
     for _ in $(seq 1 50); do
       if python3 - "$HUB_PORT" <<'PYEOF'
-import sys
-import urllib.request
-
+import socket, sys
 port = int(sys.argv[1])
 try:
-    with urllib.request.urlopen(f"http://127.0.0.1:{port}/sessions", timeout=0.25) as response:
-        if response.status == 200:
-            sys.exit(0)
-except Exception:
+    with socket.create_connection(('127.0.0.1', port), timeout=0.25):
+        sys.exit(0)
+except OSError:
     pass
 sys.exit(1)
 PYEOF
@@ -2043,12 +2060,12 @@ PYEOF
     exit 1
   fi
 
-  HUB_URL="http://127.0.0.1:${HUB_PORT}/"
+  HUB_URL="${HTTPS_SCHEME}://127.0.0.1:${HUB_PORT}/"
   LOCAL_IP="$(python3 -c "import socket; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.connect(('8.8.8.8',80)); print(s.getsockname()[0]); s.close()" 2>/dev/null || echo "")"
   [[ "$NO_OPEN" -eq 0 ]] && { open_chat_window "$HUB_URL" || true; }
   echo "Opened session hub: $HUB_URL"
   if [[ -n "$LOCAL_IP" ]]; then
-    echo "Network access:     http://${LOCAL_IP}:${HUB_PORT}/"
+    echo "Network access:     ${HTTPS_SCHEME}://${LOCAL_IP}:${HUB_PORT}/"
   fi
   exit 0
 fi
@@ -2493,8 +2510,18 @@ class Handler(BaseHTTPRequestHandler):
         )
         self._send_json(status, body)
 
+import os as _os, ssl as _ssl
+_cert = _os.environ.get("MULTIAGENT_CERT_FILE", "")
+_key = _os.environ.get("MULTIAGENT_KEY_FILE", "")
 server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
-print(f"http://127.0.0.1:{port}/?follow={'1' if follow_mode else '0'}", flush=True)
+if _cert and _key:
+    _ctx = _ssl.SSLContext(_ssl.PROTOCOL_TLS_SERVER)
+    _ctx.load_cert_chain(_cert, _key)
+    server.socket = _ctx.wrap_socket(server.socket, server_side=True)
+    _scheme = "https"
+else:
+    _scheme = "http"
+print(f"{_scheme}://127.0.0.1:{port}/?follow={'1' if follow_mode else '0'}", flush=True)
 server.serve_forever()
 PYEOF
   # Kill any existing server on this port before starting a new one
@@ -2505,16 +2532,12 @@ PYEOF
   CHAT_READY=0
   for _ in $(seq 1 50); do
     if python3 - "$CHAT_PORT" <<'PYEOF'
-import sys
-import urllib.error
-import urllib.request
-
+import socket, sys
 port = int(sys.argv[1])
 try:
-    with urllib.request.urlopen(f"http://127.0.0.1:{port}/messages", timeout=0.25) as response:
-        if response.status == 200:
-            sys.exit(0)
-except Exception:
+    with socket.create_connection(('127.0.0.1', port), timeout=0.25):
+        sys.exit(0)
+except OSError:
     pass
 sys.exit(1)
 PYEOF
@@ -2531,12 +2554,12 @@ PYEOF
     echo "Chat server failed to start. Check log: $CHAT_LOG" >&2
     exit 1
   fi
-  CHAT_URL="http://127.0.0.1:${CHAT_PORT}/?follow=1"
+  CHAT_URL="${HTTPS_SCHEME}://127.0.0.1:${CHAT_PORT}/?follow=1"
   LOCAL_IP="$(python3 -c "import socket; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.connect(('8.8.8.8',80)); print(s.getsockname()[0]); s.close()" 2>/dev/null || echo "")"
   [[ "$NO_OPEN" -eq 0 ]] && { open_chat_window "$CHAT_URL" || true; }
   echo "Opened chat view: $CHAT_URL"
   if [[ -n "$LOCAL_IP" ]]; then
-    echo "Network access:   http://${LOCAL_IP}:${CHAT_PORT}/?follow=1"
+    echo "Network access:   ${HTTPS_SCHEME}://${LOCAL_IP}:${CHAT_PORT}/?follow=1"
   fi
   echo "Log file:         $INDEX_FILE"
   exit 0
