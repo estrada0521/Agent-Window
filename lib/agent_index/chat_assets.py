@@ -1209,48 +1209,69 @@ CHAT_HTML = r"""<!doctype html>
       50% { box-shadow: 0 0 0 7px rgba(255, 60, 60, 0), 0 10px 24px rgba(0,0,0,0.28); }
     }
     .mic-btn.no-speech { display: none; }
-    .image-attach-preview {
-      position: relative;
-      display: inline-block;
-      padding: 6px 10px 4px;
+    .attach-preview-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 10px 4px;
     }
-    .image-attach-preview img {
-      width: 56px;
-      height: 56px;
-      object-fit: cover;
+    .attach-card {
+      position: relative;
+      width: 60px;
+      flex-shrink: 0;
+    }
+    .attach-card-thumb {
+      width: 60px;
+      height: 60px;
       border-radius: 8px;
       border: 1px solid rgba(255,255,255,0.1);
+      object-fit: cover;
       display: block;
     }
-    .image-attach-remove {
+    .attach-card-ext {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgb(38,38,36);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      color: rgb(180,178,170);
+      text-transform: uppercase;
+    }
+    .attach-card-name {
+      font-size: 10px;
+      color: var(--muted);
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-top: 3px;
+      max-width: 60px;
+    }
+    .attach-card-remove {
       position: absolute;
-      top: -2px;
-      left: -2px;
+      top: -5px;
+      left: -5px;
       background: rgb(20, 20, 19);
       border: none;
       color: rgb(250, 249, 245);
-      width: 26px;
-      height: 26px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 11px;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0;
       line-height: 1;
     }
-    .has-hover .image-attach-remove:hover {
-      filter: brightness(1.2);
-    }
-    .image-attach-name {
-      font-size: 12px;
-      color: var(--muted);
-      max-width: 140px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+    .has-hover .attach-card-remove:hover { filter: brightness(1.3); }
     .composer textarea {
       display: block;
       width: 100%;
@@ -4773,7 +4794,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
 
             <div class="composer-plus-panel">
               <button type="button" class="quick-action divider-after" id="cameraBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></span><span class="action-label">Camera</span><span class="action-mobile">Camera</span></button>
-              <input type="file" id="cameraInput" style="display:none">
+              <input type="file" id="cameraInput" multiple style="display:none">
               <button type="button" class="quick-action divider-after" data-forward-action="rawSendBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17 10 12 4 7"></path><path d="M12 17h8"></path></svg></span><span class="action-label">Raw</span><span class="action-mobile">Raw</span></button>
               <button type="button" class="quick-action" data-forward-action="briefBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="m12 8 2.5 3.5L12 16l-2.5-4.5L12 8Z"></path></svg></span><span class="action-label">Brief</span><span class="action-mobile">Brief</span></button>
               <button type="button" class="quick-action" data-forward-action="readMemoryBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"></path><path d="m8 10 4 4 4-4"></path><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path></svg></span><span class="action-label">Load</span><span class="action-mobile">Load</span></button>
@@ -4791,11 +4812,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
               <span class="reply-banner-text"><span class="reply-banner-sender" id="replyBannerSender"></span><span id="replyBannerPreview"></span></span>
               <button type="button" class="reply-cancel-btn" id="replyCancelBtn" title="返信キャンセル">✕</button>
             </div>
-            <div id="imageAttachPreview" class="image-attach-preview" style="display:none">
-              <img id="imageAttachThumb" src="" alt="preview">
-              <span id="imageAttachName" class="image-attach-name"></span>
-              <button type="button" id="imageAttachRemove" class="image-attach-remove" aria-label="Remove image">✕</button>
-            </div>
+            <div id="attachPreviewRow" class="attach-preview-row" style="display:none"></div>
             <div class="composer-field">
               <textarea id="message" placeholder="Write a message"></textarea>
               <button type="button" id="micBtn" class="mic-btn" aria-label="Voice input">
@@ -5285,7 +5302,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let lastSubmitAt = 0;
     let sessionActive = true;
     let pendingReplyTo = null;
-    let pendingImagePath = "";
+    let pendingAttachments = []; // [{path, name}]
     let rawSendEnabled = false;
     let availableTargets = [];
     let filterKeyword = "";
@@ -5882,7 +5899,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             target,
-            message: isShortcut ? shortcut : (payload + (pendingImagePath && !overrideMessage ? "\n[Attached: " + pendingImagePath + "]" : "")),
+            message: isShortcut ? shortcut : (payload + (!overrideMessage && pendingAttachments.length ? pendingAttachments.map(a => "\n[Attached: " + a.path + "]").join("") : "")),
             ...(raw ? { raw: true } : {}),
             ...((!isShortcut && pendingReplyTo) ? { reply_to: pendingReplyTo.msgId } : {}),
           }),
@@ -5893,10 +5910,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         }
         if (!overrideMessage) {
           message.value = "";
-          if (pendingImagePath) {
-            pendingImagePath = "";
-            const prev = document.getElementById("imageAttachPreview");
-            if (prev) { prev.style.display = "none"; document.getElementById("imageAttachThumb").src = ""; }
+          if (pendingAttachments.length) {
+            pendingAttachments = [];
+            const row = document.getElementById("attachPreviewRow");
+            if (row) { row.innerHTML = ""; row.style.display = "none"; }
           }
           updateSendBtnVisibility();
           autoResizeTextarea();
@@ -6241,49 +6258,68 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       micBtn.classList.add("no-speech");
     }
 
-    // Camera
+    // Camera / file attach
     const cameraBtn = document.getElementById("cameraBtn");
     const cameraInput = document.getElementById("cameraInput");
-    const imageAttachPreview = document.getElementById("imageAttachPreview");
-    const imageAttachThumb = document.getElementById("imageAttachThumb");
-    const imageAttachRemove = document.getElementById("imageAttachRemove");
-    if (cameraBtn && cameraInput) {
+    const attachPreviewRow = document.getElementById("attachPreviewRow");
+    if (cameraBtn && cameraInput && attachPreviewRow) {
+      const addCard = (file, path) => {
+        const card = document.createElement("div");
+        card.className = "attach-card";
+        card.dataset.path = path;
+        if (file.type.startsWith("image/")) {
+          const img = document.createElement("img");
+          img.className = "attach-card-thumb";
+          img.src = URL.createObjectURL(file);
+          img.alt = file.name;
+          card.appendChild(img);
+        } else {
+          const ext = document.createElement("div");
+          ext.className = "attach-card-ext";
+          ext.textContent = file.name.split(".").pop().slice(0, 5) || "FILE";
+          card.appendChild(ext);
+        }
+        const name = document.createElement("div");
+        name.className = "attach-card-name";
+        name.textContent = file.name;
+        card.appendChild(name);
+        const rmBtn = document.createElement("button");
+        rmBtn.type = "button";
+        rmBtn.className = "attach-card-remove";
+        rmBtn.setAttribute("aria-label", "Remove");
+        rmBtn.textContent = "\u2715";
+        rmBtn.addEventListener("click", () => {
+          pendingAttachments = pendingAttachments.filter(a => a.path !== path);
+          card.remove();
+          if (!attachPreviewRow.children.length) attachPreviewRow.style.display = "none";
+        });
+        card.appendChild(rmBtn);
+        attachPreviewRow.appendChild(card);
+        attachPreviewRow.style.display = "flex";
+      };
       cameraBtn.addEventListener("click", () => { closePlusMenu(); cameraInput.click(); });
       cameraInput.addEventListener("change", async () => {
-        const file = cameraInput.files[0];
-        if (!file) return;
+        const files = Array.from(cameraInput.files);
+        if (!files.length) return;
         cameraInput.value = "";
-        setStatus("uploading image...");
+        setStatus(`uploading ${files.length > 1 ? files.length + " files" : files[0].name}...`);
         try {
-          const res = await fetch("/upload", {
-            method: "POST",
-            headers: { "Content-Type": file.type || "application/octet-stream", "X-Filename": file.name },
-            body: file,
-          });
-          const data = await res.json();
-          if (!res.ok || !data.ok) throw new Error(data.error || "upload failed");
-          pendingImagePath = data.path;
-          const nameEl = document.getElementById("imageAttachName");
-          if (file.type.startsWith("image/")) {
-            imageAttachThumb.src = URL.createObjectURL(file);
-            imageAttachThumb.style.display = "";
-            if (nameEl) nameEl.textContent = "";
-          } else {
-            imageAttachThumb.src = "";
-            imageAttachThumb.style.display = "none";
-            if (nameEl) nameEl.textContent = file.name;
-          }
-          imageAttachPreview.style.display = "flex";
+          await Promise.all(files.map(async (file) => {
+            const res = await fetch("/upload", {
+              method: "POST",
+              headers: { "Content-Type": file.type || "application/octet-stream", "X-Filename": file.name },
+              body: file,
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) throw new Error(data.error || "upload failed");
+            pendingAttachments.push({ path: data.path, name: file.name });
+            addCard(file, data.path);
+          }));
           setStatus("");
         } catch (err) {
           setStatus("upload failed: " + err.message, true);
           setTimeout(() => setStatus(""), 3000);
         }
-      });
-      imageAttachRemove?.addEventListener("click", () => {
-        pendingImagePath = "";
-        imageAttachThumb.src = "";
-        imageAttachPreview.style.display = "none";
       });
     }
 
