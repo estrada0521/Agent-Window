@@ -28,15 +28,14 @@ usage() {
   cat <<'USAGEEOF'
 Usage: agent-send [--session NAME] [--reply MSG_ID] [--stdin] <target> [text...]
 
-Message body is preferably read from stdin.
-Inline text is still accepted temporarily for simple messages.
+Message body should be sent on stdin.
+Legacy inline text is still accepted temporarily, but deprecated.
 
 Examples:
   printf '%s' 'hello' | agent-send --stdin user
   agent-send --reply abc123 --stdin codex <<'MSGEOF'
   [From: user] hello
   MSGEOF
-  agent-send user "hello"
 
 Targets:
   claude | codex | gemini | copilot | user | others
@@ -231,6 +230,7 @@ if [[ $# -gt 0 && "$READ_STDIN" -eq 1 ]]; then
 fi
 
 if [[ $# -gt 0 ]]; then
+  echo "agent-send: warning: inline text is deprecated; use --stdin" >&2
   PAYLOAD="$*"
 elif [[ -t 0 ]]; then
   cat >&2 <<'EOF'
@@ -238,7 +238,7 @@ agent-send requires a message body, either on stdin or as inline text.
 
 Examples:
   printf '%s' 'hello' | agent-send --stdin user
-  agent-send user "hello"
+  printf '%s' '[From: codex] hello' | agent-send --reply <msg-id> --stdin user
 EOF
   exit 1
 else
