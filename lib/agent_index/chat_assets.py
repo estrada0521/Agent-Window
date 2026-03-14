@@ -1210,9 +1210,8 @@ CHAT_HTML = r"""<!doctype html>
     }
     .mic-btn.no-speech { display: none; }
     .image-attach-preview {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      position: relative;
+      display: inline-block;
       padding: 6px 10px 4px;
     }
     .image-attach-preview img {
@@ -1221,16 +1220,20 @@ CHAT_HTML = r"""<!doctype html>
       object-fit: cover;
       border-radius: 8px;
       border: 1px solid rgba(255,255,255,0.1);
+      display: block;
     }
     .image-attach-remove {
-      background: rgba(255,255,255,0.1);
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      background: rgb(20, 20, 19);
       border: none;
-      color: var(--text);
-      width: 22px;
-      height: 22px;
+      color: rgb(250, 249, 245);
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       cursor: pointer;
-      font-size: 11px;
+      font-size: 13px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1238,7 +1241,7 @@ CHAT_HTML = r"""<!doctype html>
       line-height: 1;
     }
     .has-hover .image-attach-remove:hover {
-      background: rgba(255,255,255,0.2);
+      filter: brightness(1.2);
     }
     .composer textarea {
       display: block;
