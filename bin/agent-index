@@ -4974,7 +4974,7 @@ HTML = """<!doctype html>
     .md-body { font: 15px/1.65 "SF Pro Text","Segoe UI",sans-serif; color: rgb(250, 249, 245); }
     @media (min-width: 360px) {
       .message.user .md-body {
-        font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif;
+        font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif;
         font-size: 16px;
         line-height: 22px;
         font-style: normal;
@@ -4983,6 +4983,7 @@ HTML = """<!doctype html>
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         font-synthesis-weight: none;
+        font-synthesis-style: none;
         font-optical-sizing: auto;
         font-variation-settings: "wght" 400, "opsz" 16;
       }
@@ -5009,6 +5010,7 @@ HTML = """<!doctype html>
         font-weight: 360;
         color: rgb(250, 249, 245);
         font-synthesis-weight: none;
+        font-synthesis-style: none;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         font-optical-sizing: auto;
@@ -5061,7 +5063,7 @@ HTML = """<!doctype html>
       html[data-agent-font-mode="gothic"] .message.codex .md-body,
       html[data-agent-font-mode="gothic"] .message.gemini .md-body,
       html[data-agent-font-mode="gothic"] .message.copilot .md-body {
-        font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif;
+        font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif;
         font-size: 16px;
         line-height: 22px;
         font-style: normal;
@@ -5070,6 +5072,7 @@ HTML = """<!doctype html>
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         font-synthesis-weight: none;
+        font-synthesis-style: none;
         font-optical-sizing: auto;
         font-variation-settings: "wght" 360, "opsz" 16;
       }
@@ -6569,7 +6572,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       delimiters: [
         {left: '$$', right: '$$', display: true},
         {left: '$', right: '$', display: false},
-        {left: '\\(', right: '\\)', display: false},
         {left: '\\[', right: '\\]', display: true}
       ],
       throwOnError: false
