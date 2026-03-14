@@ -4782,7 +4782,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             </div>
             <div id="imageAttachPreview" class="image-attach-preview" style="display:none">
               <img id="imageAttachThumb" src="" alt="preview">
-              <button type="button" id="imageAttachRemove" class="image-attach-remove" aria-label="Remove image">\u2715</button>
+              <button type="button" id="imageAttachRemove" class="image-attach-remove" aria-label="Remove image">✕</button>
             </div>
             <div class="composer-field">
               <textarea id="message" placeholder="Write a message"></textarea>
