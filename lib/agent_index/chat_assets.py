@@ -719,14 +719,14 @@ CHAT_HTML = r"""<!doctype html>
     #attachedFilesMenu .header-plus-panel {
       min-width: 220px;
       max-height: 40vh;
-      padding: 16px 8px;
-      gap: 12px;
+      padding: 24px 8px;
+      gap: 20px;
       overflow-y: auto;
       left: auto;
       right: 0;
       transform-origin: top right;
     }    #attachedFilesPanel .quick-action {
-      padding: 20px 16px !important;
+      padding: 32px 16px !important;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
