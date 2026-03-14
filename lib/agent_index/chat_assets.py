@@ -1217,20 +1217,20 @@ CHAT_HTML = r"""<!doctype html>
     }
     .attach-card {
       position: relative;
-      width: 60px;
+      width: 80px;
       flex-shrink: 0;
     }
     .attach-card-thumb {
-      width: 60px;
-      height: 60px;
+      width: 80px;
+      height: 80px;
       border-radius: 8px;
       border: 1px solid rgba(255,255,255,0.1);
       object-fit: cover;
       display: block;
     }
     .attach-card-ext {
-      width: 60px;
-      height: 60px;
+      width: 80px;
+      height: 80px;
       border-radius: 8px;
       border: 1px solid rgba(255,255,255,0.1);
       background: rgb(38,38,36);
@@ -1251,7 +1251,7 @@ CHAT_HTML = r"""<!doctype html>
       text-overflow: ellipsis;
       white-space: nowrap;
       margin-top: 3px;
-      max-width: 60px;
+      max-width: 80px;
     }
     .attach-card-remove {
       position: absolute;
