@@ -1166,6 +1166,49 @@ CHAT_HTML = r"""<!doctype html>
       box-shadow: none;
       filter: none;
     }
+    .mic-btn {
+      position: absolute;
+      right: 9px;
+      bottom: 9px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid rgba(215, 225, 238, 0.18);
+      background:
+        linear-gradient(180deg, rgba(245, 248, 252, 0.98) 0%, rgba(215, 225, 238, 0.98) 100%);
+      color: #0f1318;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      box-shadow:
+        0 10px 24px rgba(0,0,0,0.28),
+        inset 0 1px 0 rgba(255,255,255,0.45);
+      transition: transform 120ms ease, box-shadow 150ms ease, filter 150ms ease, opacity 150ms ease;
+    }
+    .has-hover .mic-btn:hover {
+      filter: brightness(1.03);
+    }
+    .mic-btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+    .mic-btn.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.95);
+    }
+    .mic-btn.listening {
+      background: linear-gradient(180deg, rgba(255, 80, 80, 0.95) 0%, rgba(210, 30, 30, 0.95) 100%);
+      color: #fff;
+      border-color: transparent;
+      animation: micPulse 1s ease-in-out infinite;
+    }
+    @keyframes micPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 60, 60, 0.5), 0 10px 24px rgba(0,0,0,0.28); }
+      50% { box-shadow: 0 0 0 7px rgba(255, 60, 60, 0), 0 10px 24px rgba(0,0,0,0.28); }
+    }
+    .mic-btn.no-speech { display: none; }
     .composer textarea {
       display: block;
       width: 100%;
@@ -1537,6 +1580,40 @@ CHAT_HTML = r"""<!doctype html>
       .send-btn:active {
         transform: scale(0.96);
         filter: brightness(0.92);
+      }
+      .mic-btn {
+        display: flex !important;
+        position: absolute;
+        right: 4px;
+        bottom: -40px;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgb(186, 184, 176) !important;
+        color: rgb(26, 25, 24) !important;
+        z-index: 100;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+        transition:
+          opacity 150ms ease,
+          transform 150ms ease,
+          background 150ms ease;
+      }
+      .mic-btn.hidden {
+        opacity: 0;
+        transform: translateY(8px) scale(0.95);
+        pointer-events: none;
+      }
+      .mic-btn.listening {
+        background: rgb(210, 50, 50) !important;
+        color: #fff !important;
+        animation: micPulse 1s ease-in-out infinite;
       }
     }
     @media (min-width: 360px) and (max-width: 430px) {
@@ -4672,6 +4749,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             </div>
             <div class="composer-field">
               <textarea id="message" placeholder="Write a message"></textarea>
+              <button type="button" id="micBtn" class="mic-btn" aria-label="Voice input">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+              </button>
               <button type="submit" class="send-btn" aria-label="Send">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
               </button>
@@ -6050,6 +6130,62 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let composing = false;
     const messageInput = document.getElementById("message");
     const sendBtn = document.querySelector(".send-btn");
+    const micBtn = document.getElementById("micBtn");
+
+    // Web Speech API setup
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition && micBtn) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = navigator.language || "ja-JP";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      let isListening = false;
+      let finalTranscript = "";
+
+      micBtn.addEventListener("click", () => {
+        if (isListening) {
+          recognition.stop();
+        } else {
+          finalTranscript = messageInput.value;
+          try { recognition.start(); } catch (_) {}
+        }
+      });
+      micBtn.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        micBtn.click();
+      }, { passive: false });
+
+      recognition.onstart = () => {
+        isListening = true;
+        micBtn.classList.add("listening");
+      };
+      recognition.onresult = (event) => {
+        let interim = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interim += event.results[i][0].transcript;
+          }
+        }
+        messageInput.value = finalTranscript + interim;
+        updateSendBtnVisibility();
+        messageInput.dispatchEvent(new Event("input"));
+      };
+      recognition.onend = () => {
+        isListening = false;
+        micBtn.classList.remove("listening");
+        messageInput.value = finalTranscript;
+        updateSendBtnVisibility();
+      };
+      recognition.onerror = () => {
+        isListening = false;
+        micBtn.classList.remove("listening");
+      };
+    } else if (micBtn) {
+      micBtn.classList.add("no-speech");
+    }
+
     messageInput.addEventListener("touchstart", (event) => {
       if (!useDocumentFlowMobile() || document.activeElement === messageInput) return;
       event.preventDefault();
@@ -6063,9 +6199,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       focusMessageInputWithoutScroll(pos, pos);
     });
     const updateSendBtnVisibility = () => {
-      if (sendBtn) {
-        sendBtn.classList.toggle("visible", messageInput.value.trim().length > 0);
-      }
+      const hasText = messageInput.value.trim().length > 0;
+      if (sendBtn) sendBtn.classList.toggle("visible", hasText);
+      if (micBtn) micBtn.classList.toggle("hidden", hasText);
     };
     sendBtn?.addEventListener("touchstart", (event) => {
       if (!useDocumentFlowMobile() || !isMobileKeyboardOpen()) return;
