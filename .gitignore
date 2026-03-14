@@ -1,6 +1,8 @@
 logs/
 logs-dev/
 .DS_Store
+certs/
+__pycache__/
 .claude/settings.local.json
 .gemini/settings.json
 .github/copilot-instructions.md
