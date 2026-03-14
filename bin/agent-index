@@ -423,8 +423,8 @@ HUB_APP_HTML = """<!doctype html>
       --panel-2: rgb(30, 30, 29);
       --line: rgba(255,255,255,0.09);
       --line-strong: rgba(255,255,255,0.14);
-      --fg: rgb(240, 239, 235);
-      --muted: rgb(156, 154, 147);
+      --fg: rgb(252, 252, 252);
+      --muted: rgb(158, 158, 158);
       --ok: rgb(170, 190, 172);
       --warn: rgb(226, 195, 119);
       --bad: rgb(214, 124, 124);
@@ -436,8 +436,8 @@ HUB_APP_HTML = """<!doctype html>
       --panel-2: rgb(15, 15, 15);
       --line: rgba(255,255,255,0.06);
       --line-strong: rgba(255,255,255,0.10);
-      --fg: rgb(240, 239, 235);
-      --muted: rgb(120, 118, 112);
+      --fg: rgb(252, 252, 252);
+      --muted: rgb(158, 158, 158);
       --ok: rgb(150, 172, 152);
       --warn: rgb(200, 172, 98);
       --bad: rgb(190, 100, 100);
@@ -1312,8 +1312,8 @@ HUB_HOME_HTML = """<!doctype html>
       --panel-2: rgb(30, 30, 29);
       --line: rgba(255,255,255,0.09);
       --line-strong: rgba(255,255,255,0.14);
-      --fg: rgb(240, 239, 235);
-      --muted: rgb(156, 154, 147);
+      --fg: rgb(252, 252, 252);
+      --muted: rgb(158, 158, 158);
     }
     [data-theme="black-hole"] {
       color-scheme: dark;
@@ -1322,8 +1322,8 @@ HUB_HOME_HTML = """<!doctype html>
       --panel-2: rgb(15, 15, 15);
       --line: rgba(255,255,255,0.06);
       --line-strong: rgba(255,255,255,0.10);
-      --fg: rgb(240, 239, 235);
-      --muted: rgb(120, 118, 112);
+      --fg: rgb(252, 252, 252);
+      --muted: rgb(158, 158, 158);
     }
     * { box-sizing: border-box; }
     html, body {
@@ -1531,8 +1531,8 @@ def hub_settings_html(saved=False):
       --panel-2: rgb(30, 30, 29);
       --line: rgba(255,255,255,0.09);
       --line-strong: rgba(255,255,255,0.14);
-      --fg: rgb(240, 239, 235);
-      --muted: rgb(156, 154, 147);
+      --fg: rgb(252, 252, 252);
+      --muted: rgb(158, 158, 158);
     }}
     [data-theme="black-hole"] {{
       color-scheme: dark;
@@ -1541,8 +1541,8 @@ def hub_settings_html(saved=False):
       --panel-2: rgb(15, 15, 15);
       --line: rgba(255,255,255,0.06);
       --line-strong: rgba(255,255,255,0.10);
-      --fg: rgb(240, 239, 235);
-      --muted: rgb(120, 118, 112);
+      --fg: rgb(252, 252, 252);
+      --muted: rgb(158, 158, 158);
     }}
     * {{ box-sizing: border-box; }}
     html, body {{
@@ -1745,8 +1745,8 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
       --panel-2: rgb(30, 30, 29);
       --line: rgba(255,255,255,0.09);
       --line-strong: rgba(255,255,255,0.14);
-      --fg: rgb(240, 239, 235);
-      --muted: rgb(156, 154, 147);
+      --fg: rgb(252, 252, 252);
+      --muted: rgb(158, 158, 158);
       --accent: rgb(44, 132, 219);
     }
     [data-theme="black-hole"] {
@@ -1756,8 +1756,8 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
       --panel-2: rgb(15, 15, 15);
       --line: rgba(255,255,255,0.06);
       --line-strong: rgba(255,255,255,0.10);
-      --fg: rgb(240, 239, 235);
-      --muted: rgb(120, 118, 112);
+      --fg: rgb(252, 252, 252);
+      --muted: rgb(158, 158, 158);
       --accent: rgb(44, 132, 219);
     }
     * { box-sizing: border-box; }

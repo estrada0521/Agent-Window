@@ -103,7 +103,7 @@ CHAT_HTML = r"""<!doctype html>
       --line-strong: rgba(255, 255, 255, 0.13);
       --text: #d7dde5;
       --muted: #88919b;
-      --chrome-muted: rgb(156, 154, 147);
+      --chrome-muted: rgb(158, 158, 158);
       --chip-border-idle: rgba(255, 255, 255, 0.12);
       --chip-border-active: rgba(255, 255, 255, 0.18);
       --chip-border-pressed: rgba(255, 255, 255, 0.24);
@@ -259,7 +259,7 @@ CHAT_HTML = r"""<!doctype html>
     }
     .agent-icon {
       position: relative;
-      background-color: rgb(156, 154, 147);
+      background-color: rgb(158, 158, 158);
       -webkit-mask: var(--agent-icon-mask) center / contain no-repeat;
       mask: var(--agent-icon-mask) center / contain no-repeat;
       filter: none;
@@ -289,7 +289,7 @@ CHAT_HTML = r"""<!doctype html>
     }
     @keyframes restartingPulse {
       0%, 100% {
-        color: rgb(250, 249, 245);
+        color: rgb(252, 252, 252);
         background-color: rgba(255, 255, 255, 0.02);
         box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 0 0 rgba(255, 255, 255, 0);
         text-shadow: none;
@@ -341,7 +341,7 @@ CHAT_HTML = r"""<!doctype html>
       line-height: 20px;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      color: rgb(250, 249, 245);
+      color: rgb(252, 252, 252);
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
@@ -372,7 +372,7 @@ CHAT_HTML = r"""<!doctype html>
     }
     .has-hover .file-item:hover, .file-item.active {
       background: rgb(20, 20, 19);
-      color: rgb(250, 249, 245);
+      color: rgb(252, 252, 252);
     }
     .eyebrow {
       color: var(--muted);
@@ -612,7 +612,7 @@ CHAT_HTML = r"""<!doctype html>
       font-size: 14px;
       font-weight: 400;
       line-height: 20px;
-      color: rgb(250, 249, 245);
+      color: rgb(252, 252, 252);
       position: relative;
       cursor: pointer;
       border-radius: 10px;
@@ -648,7 +648,7 @@ CHAT_HTML = r"""<!doctype html>
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.12);
       background: transparent;
-      color: rgb(156, 154, 147);
+      color: rgb(158, 158, 158);
       box-shadow: none;
       cursor: pointer;
       list-style: none;
@@ -760,7 +760,7 @@ CHAT_HTML = r"""<!doctype html>
       top: 3px;
       right: 3px;
       background: rgb(44, 132, 219);
-      color: rgb(250, 249, 245);
+      color: rgb(252, 252, 252);
       border-radius: 999px;
       font-size: 10px;
       font-weight: 700;
@@ -783,7 +783,7 @@ CHAT_HTML = r"""<!doctype html>
       font-size: 14px;
       font-weight: 400;
       line-height: 20px;
-      color: rgb(250, 249, 245);
+      color: rgb(252, 252, 252);
       position: relative;
       cursor: pointer;
       background: transparent;
@@ -872,7 +872,7 @@ CHAT_HTML = r"""<!doctype html>
       border-radius: 8px; /* Reduced roundness */
       border: 0.5px solid rgba(255,255,255,0.18);
       background: rgba(255,255,255,0.06);
-      color: rgb(156, 154, 147);
+      color: rgb(158, 158, 158);
       font-size: 13px;
       line-height: 1.2;
       letter-spacing: 0.01em;
@@ -1321,7 +1321,7 @@ CHAT_HTML = r"""<!doctype html>
       left: -5px;
       background: rgb(20, 20, 19);
       border: none;
-      color: rgb(250, 249, 245);
+      color: rgb(252, 252, 252);
       width: 20px;
       height: 20px;
       border-radius: 50%;
@@ -1459,7 +1459,7 @@ CHAT_HTML = r"""<!doctype html>
         box-shadow: none;
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
-        color: rgb(156, 154, 147);
+        color: rgb(158, 158, 158);
         border-radius: 10px;
       }
       .has-hover .header-plus-toggle:hover {
@@ -1526,7 +1526,7 @@ CHAT_HTML = r"""<!doctype html>
       .target-chip:active:not(.active) {
         background: transparent;
         border-color: rgba(255,255,255,0.12);
-        color: rgb(156, 154, 147);
+        color: rgb(158, 158, 158);
         box-shadow: none;
       }
       .target-chip.active {
@@ -1613,7 +1613,7 @@ CHAT_HTML = r"""<!doctype html>
         padding: 0;
         border: none;
         background: transparent;
-        color: rgb(156, 154, 147);
+        color: rgb(158, 158, 158);
         box-shadow: none;
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
@@ -1843,7 +1843,7 @@ CHAT_HTML = r"""<!doctype html>
         padding: 0;
         border: none !important;
         background: transparent !important;
-        color: rgb(156, 154, 147);
+        color: rgb(158, 158, 158);
         box-shadow: none !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
@@ -2027,7 +2027,7 @@ CHAT_HTML = r"""<!doctype html>
     }
     .conversation-empty-title {
       margin: 0 0 6px;
-      color: rgb(250, 249, 245);
+      color: rgb(252, 252, 252);
       font: 400 18px/1.25 "anthropicSans", sans-serif;
       letter-spacing: -0.02em;
     }
@@ -2184,7 +2184,7 @@ CHAT_HTML = r"""<!doctype html>
       padding: 12px 16px 13px 16px;
       border-radius: 12px;
       background: rgb(20, 20, 19);
-      color: rgb(250, 249, 245) !important;
+      color: rgb(252, 252, 252) !important;
       border: none;
       box-shadow: none;
       backdrop-filter: none;
@@ -2196,7 +2196,7 @@ CHAT_HTML = r"""<!doctype html>
     .message.user .md-body h2,
     .message.user .md-body h3,
     .message.user .md-body h4 {
-      color: rgb(250, 249, 245) !important;
+      color: rgb(252, 252, 252) !important;
     }
     .message-body-row {
       display: flex;
@@ -2244,7 +2244,7 @@ CHAT_HTML = r"""<!doctype html>
       padding: 0;
       border: none;
       background: transparent;
-      color: rgb(156, 154, 147);
+      color: rgb(158, 158, 158);
       font: 600 12px/1 "SF Pro Text","Segoe UI",sans-serif;
       letter-spacing: 0.01em;
       cursor: pointer;
@@ -2254,7 +2254,7 @@ CHAT_HTML = r"""<!doctype html>
       display: block;
     }
     .has-hover .message.user .user-collapse-toggle:hover {
-      color: rgb(250, 249, 245);
+      color: rgb(252, 252, 252);
     }
     .message-time-below {
       margin-top: 3px;
@@ -2601,22 +2601,22 @@ CHAT_HTML = r"""<!doctype html>
       font-size: 1em;
     }
     .thinking-char {
-      color: rgba(250, 249, 245, 0.42);
+      color: rgba(252, 252, 252, 0.42);
       animation: thinking-char-pulse 1.5s linear infinite;
       animation-delay: calc(var(--char-i) * 0.18s);
     }
     @keyframes thinking-char-pulse {
-      0%   { color: rgba(250, 249, 245, 0.62); }
-      10%  { color: rgba(250, 249, 245, 0.82); }
-      22%  { color: rgba(250, 249, 245, 0.62); }
-      34%  { color: rgba(250, 249, 245, 0.42); }
-      88%  { color: rgba(250, 249, 245, 0.42); }
-      100% { color: rgba(250, 249, 245, 0.62); }
+      0%   { color: rgba(252, 252, 252, 0.62); }
+      10%  { color: rgba(252, 252, 252, 0.82); }
+      22%  { color: rgba(252, 252, 252, 0.62); }
+      34%  { color: rgba(252, 252, 252, 0.42); }
+      88%  { color: rgba(252, 252, 252, 0.42); }
+      100% { color: rgba(252, 252, 252, 0.62); }
     }
     @media (prefers-reduced-motion: reduce) {
       .message-thinking-icon { animation: none; filter: brightness(0) invert(0.75); }
       .message-thinking-glow { animation: none; display: none; }
-      .thinking-char { animation: none; color: rgba(250, 249, 245, 0.6); }
+      .thinking-char { animation: none; color: rgba(252, 252, 252, 0.6); }
     }
     .meta {
       display: flex;
@@ -2638,14 +2638,14 @@ CHAT_HTML = r"""<!doctype html>
       background: transparent;
       border: none;
     }
-    .arrow { color: rgb(156, 154, 147) !important; }
-    .targets { color: rgb(156, 154, 147) !important; }
+    .arrow { color: rgb(158, 158, 158) !important; }
+    .targets { color: rgb(158, 158, 158) !important; }
     .reply-jump-inline {
       all: unset;
       display: inline-flex;
       align-items: center;
       cursor: pointer;
-      color: rgb(156, 154, 147) !important;
+      color: rgb(158, 158, 158) !important;
       opacity: 1;
       border-radius: 6px;
       -webkit-tap-highlight-color: transparent;
@@ -2704,7 +2704,7 @@ CHAT_HTML = r"""<!doctype html>
     }
     @keyframes inline-flash {
       0% { color: #fff !important; text-shadow: 0 0 12px rgba(255,255,255,0.8); }
-      100% { color: rgb(156, 154, 147) !important; text-shadow: none; }
+      100% { color: rgb(158, 158, 158) !important; text-shadow: none; }
     }
     .reply-jump-inline.click-flash {
       animation: inline-flash 250ms ease-out;
@@ -2716,7 +2716,7 @@ CHAT_HTML = r"""<!doctype html>
     .target-name {
       font-weight: normal;
       text-transform: capitalize;
-      color: rgb(156, 154, 147) !important;
+      color: rgb(158, 158, 158) !important;
     }
     .message-meta-below .meta-agent .sender-label,
     .message-meta-below .meta-agent .target-name {
@@ -3232,7 +3232,7 @@ CHAT_HTML = r"""<!doctype html>
         padding: 0;
         border: none !important;
         background: transparent !important;
-        color: rgb(156, 154, 147);
+        color: rgb(158, 158, 158);
         box-shadow: none !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
@@ -3320,7 +3320,7 @@ CHAT_HTML = r"""<!doctype html>
         font-size: 14px;
         line-height: 20px;
         font-weight: 400;
-        color: rgb(250, 249, 245);
+        color: rgb(252, 252, 252);
         position: relative;
         cursor: pointer;
         transition: color 150ms ease;
@@ -3625,7 +3625,7 @@ CHAT_HTML = r"""<!doctype html>
         z-index: 5;
       }
     }
-    .md-body { font: 15px/1.65 "SF Pro Text","Segoe UI",sans-serif; color: rgb(250, 249, 245); }
+    .md-body { font: 15px/1.65 "SF Pro Text","Segoe UI",sans-serif; color: rgb(252, 252, 252); }
     @media (min-width: 360px) {
       .message.user .md-body {
         font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif;
@@ -3662,7 +3662,7 @@ CHAT_HTML = r"""<!doctype html>
         font-size: 16px;
         line-height: 24px;
         font-weight: 360;
-        color: rgb(250, 249, 245);
+        color: rgb(252, 252, 252);
         font-synthesis-weight: none;
         font-synthesis-style: none;
         -webkit-font-smoothing: antialiased;
@@ -3937,7 +3937,7 @@ CHAT_HTML = r"""<!doctype html>
         font-size: 14px !important;
         font-weight: 400 !important;
         line-height: 20px !important;
-        color: rgb(250, 249, 245) !important;
+        color: rgb(252, 252, 252) !important;
         position: relative !important;
         cursor: pointer !important;
         border-radius: 10px !important;
@@ -3951,7 +3951,7 @@ CHAT_HTML = r"""<!doctype html>
         color: rgba(245, 201, 96, 0.95) !important;
       }
       .composer-plus-panel .quick-action[data-forward-action="killBtn"] {
-        color: rgb(250, 249, 245) !important;
+        color: rgb(252, 252, 252) !important;
       }
       .composer-plus-panel .quick-action.divider-after {
         border-bottom: none !important;
@@ -4508,7 +4508,7 @@ CHAT_HTML = r"""<!doctype html>
       border: none;
       padding: 4px;
       cursor: pointer;
-      color: rgb(156, 154, 147);
+      color: rgb(158, 158, 158);
       line-height: 1;
       border-radius: 4px;
       transition: color 150ms ease, background 250ms ease, transform 100ms ease;
@@ -4525,7 +4525,7 @@ CHAT_HTML = r"""<!doctype html>
       border: none;
       padding: 4px;
       cursor: pointer;
-      color: rgb(156, 154, 147);
+      color: rgb(158, 158, 158);
       line-height: 1;
       border-radius: 4px;
       transition: color 150ms ease, background 250ms ease, transform 100ms ease;
@@ -4555,7 +4555,7 @@ CHAT_HTML = r"""<!doctype html>
       -webkit-backdrop-filter: none;
       box-shadow: none;
       font-size: 13px;
-      color: rgb(156, 154, 147);
+      color: rgb(158, 158, 158);
       font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif;
       font-style: normal;
       font-weight: 400;
@@ -4573,15 +4573,15 @@ CHAT_HTML = r"""<!doctype html>
       display: flex;
       animation: replyBannerIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    .reply-banner-arrow { opacity: 1; font-size: 13px; color: rgb(156, 154, 147); }
+    .reply-banner-arrow { opacity: 1; font-size: 13px; color: rgb(158, 158, 158); }
     .reply-banner-text { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 400; }
-    .reply-banner-sender { font-weight: 400; text-transform: capitalize; margin-right: 2px; color: rgb(156, 154, 147); }
+    .reply-banner-sender { font-weight: 400; text-transform: capitalize; margin-right: 2px; color: rgb(158, 158, 158); }
     .reply-cancel-btn {
-      cursor: pointer; background: none; border: none; color: rgb(156, 154, 147);
+      cursor: pointer; background: none; border: none; color: rgb(158, 158, 158);
       padding: 2px 4px; border-radius: 4px; font-size: 13px; line-height: 1;
       transition: color 120ms ease, transform 100ms ease;
     }
-    .has-hover .reply-cancel-btn:hover { color: rgb(156, 154, 147); }
+    .has-hover .reply-cancel-btn:hover { color: rgb(158, 158, 158); }
     .thread-group {
       display: flex;
       flex-direction: column;
