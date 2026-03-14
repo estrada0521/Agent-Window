@@ -7060,7 +7060,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       await primeSound(); // always prime on click (iOS unlock)
     });
 
-    // Auto-prime on first user gesture if sound is on    const primeSoundOnGesture = async () => {
+    // Auto-prime on first user gesture if sound is on
+    const primeSoundOnGesture = async () => {
       if (!soundEnabled || _audioPrimed) return;
       await primeSound();
     };
