@@ -7105,6 +7105,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let _ttsLastSpokenLenMap = new Map(); // msg_id -> last spoken length
     let _ttsHeartbeatTimer = null;
 
+    const _ttsGetBestVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      return voices.find(v => v.lang.startsWith("ja") && (v.name.includes("Siri") || v.name.includes("Kyoko")))
+             || voices.find(v => v.lang.startsWith("ja")) 
+             || null;
+    };
+
     const _ttsNext = () => {
       if (!hasTTS || !ttsEnabled) { 
         _ttsSpeaking = false; 
@@ -7120,6 +7127,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           if (ttsEnabled && !_ttsSpeaking && _ttsQueue.length === 0) {
             const heartbeat = new SpeechSynthesisUtterance(" ");
             heartbeat.volume = 0;
+            heartbeat.voice = _ttsGetBestVoice();
             heartbeat.onend = () => _ttsNext();
             heartbeat.onerror = () => { _ttsSpeaking = false; };
             _ttsSpeaking = true;
@@ -7134,6 +7142,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const utt = new SpeechSynthesisUtterance(text);
       utt.lang = "ja-JP";
       utt.rate = 1.5;
+      utt.pitch = 1.3;
+      utt.voice = _ttsGetBestVoice();
       utt.onend = () => _ttsNext();
       utt.onerror = () => { _ttsSpeaking = false; _ttsNext(); };
       window.speechSynthesis.speak(utt);
@@ -7150,6 +7160,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           const primer = new SpeechSynthesisUtterance("読み上げを有効にしました");
           primer.lang = "ja-JP";
           primer.rate = 1.5;
+          primer.pitch = 1.3;
+          primer.voice = _ttsGetBestVoice();
           primer.onend = () => _ttsNext();          primer.onerror = () => { _ttsSpeaking = false; };
           window.speechSynthesis.speak(primer);
         } else {
