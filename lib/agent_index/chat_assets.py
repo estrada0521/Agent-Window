@@ -719,17 +719,23 @@ CHAT_HTML = r"""<!doctype html>
     #attachedFilesMenu .header-plus-panel {
       min-width: 220px;
       max-height: 40vh;
-      padding: 24px 8px;
-      gap: 20px;
+      padding: 8px;
+      gap: 0;
       overflow-y: auto;
       left: auto;
       right: 0;
       transform-origin: top right;
     }    #attachedFilesPanel .quick-action {
-      padding: 32px 16px !important;
+      padding: 16px 16px !important;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    #attachedFilesPanel .quick-action + .quick-action {
+      background-image: linear-gradient(to right, rgba(255,255,255,0.08), rgba(255,255,255,0.08));
+      background-repeat: no-repeat;
+      background-size: calc(100% - 24px) 1px;
+      background-position: center top;
     }    #attachedFilesPanel .file-item-icon {
       width: 14px;
       height: 14px;
