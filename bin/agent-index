@@ -2499,9 +2499,10 @@ class Handler(BaseHTTPRequestHandler):
             data = self.rfile.read(length)
             upload_dir = Path(log_dir) / session_name / "uploads"
             upload_dir.mkdir(parents=True, exist_ok=True)
+            import uuid as _uuid
             ts = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
             ext = Path(filename).suffix or ".jpg"
-            save_name = f"{ts}{ext}"
+            save_name = f"{ts}_{_uuid.uuid4().hex[:6]}{ext}"
             save_path = upload_dir / save_name
             save_path.write_bytes(data)
             try:
