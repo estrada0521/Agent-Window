@@ -4990,8 +4990,9 @@ HTML = """<!doctype html>
       .message.user .md-body h2,
       .message.user .md-body h3,
       .message.user .md-body h4 {
-        font-weight: 530;
+        font-weight: 600;
         font-variation-settings: "wght" 530, "opsz" 16;
+        font-synthesis: weight;
       }
       .message.user .md-body blockquote {
         font-weight: 400;
@@ -5031,8 +5032,9 @@ HTML = """<!doctype html>
       .message.copilot .md-body h2,
       .message.copilot .md-body h3,
       .message.copilot .md-body h4 {
-        font-weight: 530;
+        font-weight: 600;
         font-variation-settings: "wght" 530;
+        font-synthesis: weight;
       }
       .message.claude .md-body p,
       .message.claude .md-body li,
@@ -5510,7 +5512,7 @@ HTML = """<!doctype html>
       word-break: normal;
     }
     .md-body p { margin: 0 0 0.6em; }
-    .md-body h1, .md-body h2, .md-body h3, .md-body h4 { margin: 0.8em 0 0.3em; font-weight: 530; font-variation-settings: "wght" 530; line-height: 1.2; }
+    .md-body h1, .md-body h2, .md-body h3, .md-body h4 { margin: 0.8em 0 0.3em; font-weight: 600; font-variation-settings: "wght" 530; font-synthesis: weight; line-height: 1.2; }
     .md-body h1 { font-size: 22px; }
     .md-body h2 { font-size: 18px; }
     .md-body h3 { font-size: 1.05em; }
