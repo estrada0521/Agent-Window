@@ -2607,6 +2607,7 @@ CHAT_HTML = r"""<!doctype html>
       box-shadow: none;
       animation: paneReveal 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
       max-height: 320px;
+      min-height: 40px;
       overflow: auto;
     }
     .message-thinking-pane-body {
@@ -2735,20 +2736,20 @@ CHAT_HTML = r"""<!doctype html>
         padding: 8px 14px 6px 20px;
       }
       .message-thinking-pane {
-        margin: 2px 2px 10px 4px;
-        border: none;
+        margin: 2px 4px 10px 4px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 18px;
         background: rgb(20, 20, 19);
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
-      }
-      .message-thinking-pane {
-        max-height: min(240px, 45vh);
+        min-height: 200px;
+        max-height: min(400px, 55vh);
+        width: calc(100% - 8px);
       }
       .message-thinking-pane-body {
-        padding: 6px 8px;
-        font-size: 7px;
-        line-height: 1.1;
+        padding: 11px 12px;
+        font-size: 10px;
+        line-height: 1.2;
         color: rgba(214, 221, 232, 0.9);
         word-break: break-all;
       }
@@ -3102,16 +3103,16 @@ CHAT_HTML = r"""<!doctype html>
         margin: -10px 0 0 -6px;
       }
       .trace-tooltip {
-        padding: 6px 8px;
-        font-size: 7px;
-        line-height: 1.1;
+        padding: 11px 12px;
+        font-size: 10px;
+        line-height: 1.2;
         border-radius: 18px;
-        border: none;
+        border: 1px solid rgba(255, 255, 255, 0.12);
         background: rgb(20, 20, 19);
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
         box-shadow: none;
-        max-height: min(240px, 45vh);
+        max-height: min(400px, 55vh);
         color: rgba(214, 221, 232, 0.9);
         overflow-y: auto;
         word-break: break-all;
@@ -4071,10 +4072,13 @@ CHAT_HTML = r"""<!doctype html>
         margin-right: 6px !important;
         margin-left: 6px !important;
       }
+      .composer-field {
+        border-radius: 24px !important;
+      }
       .composer {
         padding-top: 0 !important;
         padding-right: env(safe-area-inset-right, 0px) !important;
-        padding-bottom: 22px !important;
+        padding-bottom: 38px !important;
         padding-left: env(safe-area-inset-left, 0px) !important;
       }
       .composer-plus-menu {
@@ -4233,8 +4237,9 @@ CHAT_HTML = r"""<!doctype html>
       .composer-main-shell {
         position: fixed !important;
         right: 6px !important;
-        bottom: calc(6px + var(--mobile-keyboard-offset, 0px)) !important;
+        bottom: calc(14px + var(--mobile-keyboard-offset, 0px)) !important;
         left: 6px !important;
+        border-radius: 24px !important;
         z-index: 25 !important;
         pointer-events: auto !important;
         will-change: bottom !important;
@@ -7007,10 +7012,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     document.getElementById("replyCancelBtn").addEventListener("click", () => {
       setReplyTo(null, "", "");
     });
-    const doCopyText = (text) => {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        return navigator.clipboard.writeText(text);
-      }
+    const doCopyFallback = (text) => {
       const ta = document.createElement("textarea");
       ta.value = text;
       ta.style.cssText = "position:fixed;opacity:0;top:0;left:0";
@@ -7019,6 +7021,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       try { document.execCommand("copy"); } catch(_) {}
       document.body.removeChild(ta);
       return Promise.resolve();
+    };
+    const doCopyText = (text) => {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).catch(() => doCopyFallback(text));
+      }
+      return doCopyFallback(text);
     };
     const markCopied = (btn) => {
       if (!btn) return;
@@ -7672,6 +7680,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       pane.dataset.agent = agent;
       pane.innerHTML = `<div class="message-thinking-pane-body">Loading trace...</div>`;
       row.insertAdjacentElement("afterend", pane);
+      requestAnimationFrame(() => {
+        pane.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
       return pane.querySelector(".message-thinking-pane-body");
     };
     let _mobileTraceRow = null;
