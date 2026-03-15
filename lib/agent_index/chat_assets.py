@@ -121,7 +121,7 @@ CHAT_HTML = r"""<!doctype html>
     }
     [data-theme="black-hole"] {
       color-scheme: dark;
-      --bg-rgb: 0, 0, 0;
+      --bg-rgb: 10, 10, 10;
       --bg: rgb(var(--bg-rgb));
       --panel: rgba(20, 20, 20, 0.98);
       --panel-strong: rgba(15, 15, 15, 0.99);
@@ -156,7 +156,7 @@ CHAT_HTML = r"""<!doctype html>
       pointer-events: none;
     }
     [data-theme="black-hole"] #starfield {
-      display: block;
+      display: none;
     }
     [data-theme="black-hole"] body {
       background: transparent !important;
@@ -3962,8 +3962,8 @@ CHAT_HTML = r"""<!doctype html>
         margin: 6px 0 0 !important;
       }
       .right-menu {
-        margin-top: 6px !important;
-        margin-right: 4px !important;
+        margin-top: 0 !important;
+        margin-right: 0 !important;
       }
       .reply-banner-arrow {
         display: none !important;
@@ -4157,10 +4157,18 @@ CHAT_HTML = r"""<!doctype html>
         z-index: 35 !important;
         pointer-events: auto !important;
       }
+      #hubBtn {
+        position: fixed !important;
+        top: 42px !important;
+        left: 16px !important;
+        margin: 0 !important;
+        z-index: 35 !important;
+        pointer-events: auto !important;
+      }
       .right-menu {
         position: fixed !important;
-        top: 6px !important;
-        right: 10px !important;
+        top: 42px !important;
+        right: 16px !important;
         margin: 0 !important;
         z-index: 35 !important;
         pointer-events: auto !important;
@@ -4168,8 +4176,8 @@ CHAT_HTML = r"""<!doctype html>
       #fileDropdown { border-radius: 16px 16px 0 0; z-index: 20; }
       #attachedFilesMenu {
         position: fixed !important;
-        top: 6px !important;
-        right: 66px !important;
+        top: 42px !important;
+        right: 72px !important;
         margin: 0 !important;
         z-index: 35 !important;
         pointer-events: auto !important;
@@ -5039,18 +5047,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         <div class="header-left">
           <div class="eyebrow">Multiagent Chat View</div>
           <div class="title-row">
-            <details class="header-plus-menu" id="headerPlusMenu">
-              <summary class="header-plus-toggle" aria-label="Open header controls">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-              </summary>
-              <div class="header-plus-panel">
-                <div class="header-plus-title" id="headerPanelTitle">agent-index</div>
-                <button type="button" class="quick-action" data-forward-action="autoModeBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4"></path><path d="M12 17v4"></path><path d="m5.6 5.6 2.8 2.8"></path><path d="m15.6 15.6 2.8 2.8"></path><path d="M3 12h4"></path><path d="M17 12h4"></path><path d="m5.6 18.4 2.8-2.8"></path><path d="m15.6 8.4 2.8-2.8"></path><circle cx="12" cy="12" r="2.5"></circle></svg></span><span class="action-label">Auto</span><span class="action-mobile">Auto</span></button>
-                <button type="button" class="quick-action" data-forward-action="caffeinateBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg></span><span class="action-label">Awake</span><span class="action-mobile">Awake</span></button>
-                <button type="button" class="quick-action" data-forward-action="soundBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 9 9 9 14 5 14 19 9 15 5 15 5 9"></polygon><path d="M18 9a5 5 0 0 1 0 6"></path></svg></span><span class="action-label">Sound</span><span class="action-mobile">Sound</span></button>
-                <button type="button" class="quick-action" data-forward-action="ttsBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 18.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Z"></path><path d="M9.5 9.5h.01"></path><path d="M14.5 9.5h.01"></path><path d="M9 13.5s1 1.5 3 1.5 3-1.5 3-1.5"></path></svg></span><span class="action-label">Read</span><span class="action-mobile">Read</span></button>
-              </div>
-            </details>
+            <button type="button" class="header-plus-toggle" id="hubBtn" data-forward-action="openHub" title="Hub" aria-label="Hub" style="color:#fff;flex-shrink:0;font-size:11px;font-weight:700;letter-spacing:0.08em;padding:4px 8px;font-family:'anthropicSans',sans-serif">HUB</button>
             <h1 id="title">agent-index</h1>
             <div class="sub">
               <span class="pill" id="count">messages: 0</span>
@@ -5080,9 +5077,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           <details class="header-plus-menu right-menu" id="rightMenu">
             <summary class="header-plus-toggle" title="Menu">⋯</summary>
             <div class="header-plus-panel">
-              <button type="button" class="quick-action" data-forward-action="openHub" style="color: rgba(96, 165, 250, 0.95);"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"></path><path d="M12 4v16"></path><circle cx="12" cy="12" r="8"></circle></svg></span><span class="action-label">Hub</span><span class="action-mobile">Hub</span></button>
               <button type="button" class="quick-action" data-forward-action="reloadChat"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3v6h-6"></path><path d="M20 9a8 8 0 1 0 2 5.3"></path></svg></span><span class="action-label">Reload</span><span class="action-mobile">Reload</span></button>
-              <button type="button" class="quick-action" data-forward-action="save"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h10l2 2v14H6z"></path><path d="M9 4v6h6V4"></path><path d="M9 16h6"></path></svg></span><span class="action-label">Save</span><span class="action-mobile">Save</span></button>
               <button type="button" class="quick-action pc-only" data-forward-action="openTerminal"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></span><span class="action-label">Terminal</span><span class="action-mobile">Terminal</span></button>
               <button type="button" class="quick-action" data-forward-action="exportBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span><span class="action-label">Export</span><span class="action-mobile">Export</span></button>
               <button type="button" class="quick-action" data-forward-action="killBtn" style="color: rgba(248, 113, 113, 0.96);"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="m9 9 6 6"></path><path d="m15 9-6 6"></path></svg></span><span class="action-label">Kill</span><span class="action-mobile">Kill</span></button>
@@ -6473,8 +6468,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           return;
         }
         if (target === "openHub") {
-          const hubHost = window.location.hostname || "127.0.0.1";
-          window.location.href = `${window.location.protocol}//${hubHost}:__HUB_PORT__/`;
+          if (window.self !== window.top) {
+            window.parent.postMessage("hub_close_chat", "*");
+          } else {
+            const hubHost = window.location.hostname || "127.0.0.1";
+            window.location.href = `${window.location.protocol}//${hubHost}:__HUB_PORT__/`;
+          }
           return;
         }
         if (target === "openTerminal") {
@@ -7814,6 +7813,24 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     refreshCaffeinate();
     setInterval(refreshCaffeinate, 5000);
 
+    // Auto-save every 5 minutes silently (same as Save button but silent=true)
+    setInterval(() => {
+      fetch("/send", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target: "others", message: "save", silent: true }) }).catch(() => {});
+    }, 5 * 60 * 1000);
+
+    // Apply Hub Settings defaults on load
+    fetch("/hub-settings", { cache: "no-store" }).then(r => r.json()).then(d => {
+      setSoundBtn(!!d.chat_sound);
+      if (hasTTS) setTtsBtn(!!d.chat_tts);
+      if (d.chat_auto_mode) {
+        fetch("/auto-mode", { method: "POST" }).then(r => r.json()).then(data => setAutoBtn(data.active)).catch(() => {});
+      }
+      if (d.chat_awake) {
+        fetch("/caffeinate", { method: "POST" }).then(r => r.json()).then(data => setCaffeinateBtn(data.active)).catch(() => {});
+      }
+    }).catch(() => {});
+
     // Memory button — sends silently (not logged in chat)
     document.getElementById("memoryBtn").addEventListener("click", async () => {
       closeQuickMore();
@@ -7971,19 +7988,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       starAnimationId = requestAnimationFrame(animateStars);
     }
     const updateStarAnimationState = () => {
-      const isBlackHole = document.documentElement.dataset.theme === "black-hole";
-      if (isBlackHole && !isStarAnimationRunning) {
-        isStarAnimationRunning = true;
-        resizeStarCanvas();
-        animateStars();
-      } else if (!isBlackHole && isStarAnimationRunning) {
+      if (isStarAnimationRunning) {
         isStarAnimationRunning = false;
         cancelAnimationFrame(starAnimationId);
       }
     };
-    window.addEventListener("resize", () => { if (isStarAnimationRunning) resizeStarCanvas(); });
-    const themeObserver = new MutationObserver(updateStarAnimationState);
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     updateStarAnimationState();
   </script>
 </body>

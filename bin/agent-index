@@ -403,6 +403,155 @@ def queue_hub_restart():
     threading.Thread(target=worker, daemon=True).start()
     return True
 
+import base64 as _base64
+try:
+    _fontbolt_file = repo_root / "fontbolt.png"
+    _FONTBOLT_PNG_B64 = _base64.b64encode(_fontbolt_file.read_bytes()).decode("ascii") if _fontbolt_file.is_file() else ""
+except Exception:
+    _FONTBOLT_PNG_B64 = ""
+
+_HUB_PAGE_HEADER_CSS = """
+    @font-face {
+      font-family: "anthropicSans";
+      src: url("/font/anthropic-sans-roman.ttf") format("truetype");
+      font-style: normal; font-weight: 300 800; font-display: swap;
+    }
+    @font-face {
+      font-family: "anthropicSans";
+      src: url("/font/anthropic-sans-italic.ttf") format("truetype");
+      font-style: italic; font-weight: 300 800; font-display: swap;
+    }
+    html, body { font-family: "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif !important; }
+    /* ── Hub page header (shared across all hub pages) ── */
+    .hub-page-header {
+      display: flex; flex-direction: column;
+      position: relative; z-index: 2;
+      background: transparent;
+    }
+    .hub-page-header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: max(22px, env(safe-area-inset-top)) 16px 10px;
+      max-width: 760px; width: 100%; margin: 0 auto; box-sizing: border-box;
+    }
+    @media (max-width: 500px) {
+      .hub-page-header-top { padding: max(10px, env(safe-area-inset-top)) 8px 8px; }
+    }
+    .hub-page-title {
+      display: flex; align-items: center; text-decoration: none; opacity: 1;
+    }
+    .hub-page-title:hover { opacity: 1; }
+    .hub-page-logo { height: 22px; width: auto; display: block; filter: invert(1); margin-top: 10px; }
+    @media (max-width: 500px) {
+      .hub-page-logo { height: 14px; }
+    }
+    @media (min-width: 600px) {
+      .hub-page-logo { height: 18px; }
+      .hub-page-menu-item { font-size: 15px !important; padding: 14px 18px !important; }
+      .hub-page-menu-btn { width: 48px !important; height: 48px !important; }
+      .eyebrow { font-size: 14px !important; }
+      h1 { font-size: clamp(34px, 4vw, 48px) !important; }
+      .sub { font-size: 17px !important; }
+      .toolbar { font-size: 15px !important; }
+      .hub-nav a, .hub-nav button { font-size: 15px !important; padding: 8px 14px !important; }
+      .stat-card { padding: 16px 18px !important; }
+      .stat-label { font-size: 14px !important; }
+      .stat-val { font-size: 28px !important; }
+      .stat-breakdown-heading { font-size: 13px !important; }
+      .stat-breakdown-label { font-size: 15px !important; }
+      .stat-breakdown-val { font-size: 15px !important; }
+      .mob-row-name { font-size: 30px !important; }
+      .mob-row-path { font-size: 15px !important; }
+      .mob-row-meta { font-size: 14px !important; }
+      .mob-badge { font-size: 12px !important; }
+      .mob-kill-link { font-size: 13px !important; }
+      .mob-empty { font-size: 17px !important; }
+    }
+    @keyframes hubPageRestartPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .hub-page-menu-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: transparent; border: none; color: #fff;
+      cursor: pointer; font: inherit; -webkit-appearance: none;
+    }
+    .hub-page-menu-btn:hover { color: #fff; }
+    .hub-page-menu-btn:active, .hub-page-menu-btn.open { color: #fff; }
+    .hub-page-menu-btn svg { display: block; }
+    .hub-page-menu-btn.restarting { animation: hubPageRestartPulse 900ms ease-in-out infinite; pointer-events: none; }
+    .hub-page-menu-panel {
+      max-height: 0; overflow: hidden;
+      transition: max-height 260ms ease;
+      border-top: 0.5px solid transparent;
+    }
+    .hub-page-menu-panel.open { max-height: 300px; border-top-color: var(--line); }
+    .hub-page-menu-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; font-size: 14px; color: rgba(255,255,255,0.88);
+      text-decoration: none; cursor: pointer; border: none;
+      border-bottom: 0.5px solid var(--line); background: transparent;
+      width: 100%; text-align: left; font: inherit; -webkit-appearance: none;
+      box-sizing: border-box; max-width: 760px; margin: 0 auto;
+      transition: color 120ms ease;
+    }
+    .hub-page-menu-item:last-child { border-bottom: none; }
+    .hub-page-menu-item:hover { color: var(--fg); }
+    .hub-page-menu-item:active { color: #fff !important; }
+    body { padding-top: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
+    .shell { padding-left: 14px; padding-right: 14px; }
+    html { scrollbar-width: none; -ms-overflow-style: none; }
+    html::-webkit-scrollbar { display: none; }
+    .hero .eyebrow { display: none; }
+"""
+
+_HUB_PAGE_HEADER_HTML = """
+  <div class="hub-page-header">
+    <div class="hub-page-header-top">
+      <a href="/" class="hub-page-title" id="hubPageTitleLink"><img src="data:image/png;base64,__FONTBOLT_B64__" alt="Multiagent Session Hub" class="hub-page-logo"></a>
+      <button class="hub-page-menu-btn" id="hubPageMenuBtn">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><line x1="3" y1="8" x2="21" y2="8"/><line x1="6" y1="16" x2="21" y2="16"/></svg>
+      </button>
+    </div>
+    <div class="hub-page-menu-panel" id="hubPageMenuPanel">
+      <a href="/new-session" class="hub-page-menu-item"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Session</a>
+      <a href="/stats" class="hub-page-menu-item"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Statistics</a>
+      <a href="/settings" class="hub-page-menu-item"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
+      <button class="hub-page-menu-item" id="hubPageRestartBtn"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.62"/></svg>Reload</button>
+    </div>
+  </div>
+"""
+
+_HUB_PAGE_HEADER_JS = """
+  (function() {
+    var menuBtn = document.getElementById("hubPageMenuBtn");
+    var menuPanel = document.getElementById("hubPageMenuPanel");
+    var restartBtn = document.getElementById("hubPageRestartBtn");
+    var titleLink = document.getElementById("hubPageTitleLink");
+    if (titleLink) {
+      titleLink.addEventListener("click", function() {
+        try { sessionStorage.removeItem("hub_chat_frame"); } catch(_) {}
+      });
+    }
+    if (menuBtn && menuPanel) {
+      menuBtn.addEventListener("click", function(e) { e.stopPropagation(); menuPanel.classList.toggle("open"); menuBtn.classList.toggle("open"); });
+      document.addEventListener("click", function() { menuPanel.classList.remove("open"); menuBtn.classList.remove("open"); });
+      menuPanel.addEventListener("click", function(e) { e.stopPropagation(); });
+    }
+    if (restartBtn) {
+      restartBtn.addEventListener("click", async function() {
+        if (restartBtn.classList.contains("restarting")) return;
+        restartBtn.classList.add("restarting"); restartBtn.disabled = true;
+        try { await fetch("/restart-hub", { method: "POST" }); } catch (_) {}
+        var t0 = Date.now();
+        var poll = async function() {
+          try { var r = await fetch("/sessions?ts=" + Date.now(), { cache: "no-store" }); if (r.ok) { window.location.replace("/"); return; } } catch (_) {}
+          if (Date.now() - t0 < 20000) { setTimeout(poll, 500); } else { window.location.reload(); }
+        };
+        setTimeout(poll, 700);
+      });
+    }
+  })();
+"""
+_HUB_PAGE_HEADER_HTML = _HUB_PAGE_HEADER_HTML.replace("__FONTBOLT_B64__", _FONTBOLT_PNG_B64)
+
 HUB_APP_HTML = """<!doctype html>
 <html lang="en" data-theme="__CHAT_THEME__" data-agent-font-mode="__AGENT_FONT_MODE__">
 <head>
@@ -434,7 +583,7 @@ HUB_APP_HTML = """<!doctype html>
     }
     [data-theme="black-hole"] {
       color-scheme: dark;
-      --bg: rgb(5, 5, 5);
+      --bg: rgb(10, 10, 10);
       --panel: rgb(20, 20, 20);
       --panel-2: rgb(15, 15, 15);
       --line: rgba(255,255,255,0.06);
@@ -454,11 +603,13 @@ HUB_APP_HTML = """<!doctype html>
       font-family: "SF Pro Text", "Segoe UI", sans-serif;
     }
     body {
-      padding: max(18px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom)) 14px;
+      padding: 0 0 max(20px, env(safe-area-inset-bottom)) 0;
     }
     .shell {
       max-width: 760px;
       margin: 0 auto;
+      padding-left: 14px;
+      padding-right: 14px;
     }
     .hero {
       padding: 8px 2px 18px 2px;
@@ -846,56 +997,53 @@ HUB_APP_HTML = """<!doctype html>
       display: none;
     }
     .nav-short { display: none; }
-    @media (max-width: 500px) {
-      .hub-nav { display: none !important; }
-      /* ── Card → flat row ── */
-      .list { gap: 0; }
-      .section-block { gap: 0; }
-      .session-card {
-        background: transparent !important;
-        border: none !important;
-        border-bottom: 0.5px solid var(--line) !important;
-        border-radius: 0 !important;
-        padding: 12px 0 !important;
-      }
-      .section-label + .session-card,
-      .section-label + .empty { border-top: 0.5px solid var(--line) !important; }
-      .archived-card {
-        background: transparent !important;
-        border: none !important;
-        border-bottom: 0.5px solid var(--line) !important;
-        border-radius: 0 !important;
-        overflow: visible !important;
-        padding: 0 !important;
-      }
-      .archived-summary { padding: 12px 0 !important; }
-      .archived-card[open] .archived-summary { border-bottom: none; }
-      .archived-body { padding: 0 0 12px !important; }
-      .empty {
-        background: transparent !important;
-        border: none !important;
-        border-bottom: 0.5px solid var(--line) !important;
-        border-radius: 0 !important;
-      }
-      .card-link { background: transparent; }
-      /* ── Stats grid → flat list ── */
-      .stats-grid { display: block !important; gap: 0 !important; }
-      .stats-column { display: block; }
-      .stat-card {
-        background: transparent !important;
-        border: none !important;
-        border-bottom: 0.5px solid var(--line) !important;
-        border-radius: 0 !important;
-        padding: 10px 0 !important;
-        overflow: visible !important;
-      }
-      .stats-column:first-child .stat-card:first-child { border-top: 0.5px solid var(--line) !important; }
-      details.stat-card { padding: 0 !important; }
-      .stat-summary { padding: 10px 0 !important; }
-      .stat-breakdown { padding: 0 0 10px !important; border-top: none; }
-      /* ── Activity grid: scroll horizontal on mobile ── */
-      .activity-grid-wrap { margin-bottom: 14px; }
+    /* ── Card → flat row (all viewports) ── */
+    .hub-nav { display: none !important; }
+    .list { gap: 0; }
+    .section-block { gap: 0; }
+    .session-card {
+      background: transparent !important;
+      border: none !important;
+      border-bottom: 0.5px solid var(--line) !important;
+      border-radius: 0 !important;
+      padding: 12px 0 !important;
     }
+    .section-label + .session-card,
+    .section-label + .empty { border-top: 0.5px solid var(--line) !important; }
+    .archived-card {
+      background: transparent !important;
+      border: none !important;
+      border-bottom: 0.5px solid var(--line) !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+      padding: 0 !important;
+    }
+    .archived-summary { padding: 12px 0 !important; }
+    .archived-card[open] .archived-summary { border-bottom: none; }
+    .archived-body { padding: 0 0 12px !important; }
+    .empty {
+      background: transparent !important;
+      border: none !important;
+      border-bottom: 0.5px solid var(--line) !important;
+      border-radius: 0 !important;
+    }
+    .card-link { background: transparent; }
+    /* ── Stats grid → flat list ── */
+    .stats-grid { display: block !important; gap: 0 !important; }
+    .stats-column { display: block; }
+    .stat-card {
+      background: transparent !important;
+      border: none !important;
+      border-bottom: 0.5px solid var(--line) !important;
+      border-radius: 0 !important;
+      padding: 10px 0 !important;
+      overflow: visible !important;
+    }
+    .stats-column:first-child .stat-card:first-child { border-top: 0.5px solid var(--line) !important; }
+    details.stat-card { padding: 0 !important; }
+    .stat-summary { padding: 10px 0 !important; }
+    .stat-breakdown { padding: 0 0 10px !important; border-top: none; }
+    .activity-grid-wrap { margin-bottom: 14px; }
     @keyframes hubRestartingPulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.4; }
@@ -925,7 +1073,7 @@ HUB_APP_HTML = """<!doctype html>
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8) !important;
     }
     [data-theme="black-hole"] .hub-nav a.active {
-      background: rgb(5, 5, 5) !important;
+      background: rgb(10, 10, 10) !important;
       border-color: rgba(255, 255, 255, 0.2) !important;
     }
     [data-theme="black-hole"] .activity-cell[data-level="1"] { background: rgba(252,252,252,0.25); }
@@ -959,64 +1107,67 @@ HUB_APP_HTML = """<!doctype html>
       background: transparent !important;
     }
     [data-theme="black-hole"] html {
-      background: rgb(5, 5, 5) !important;
+      background: rgb(10, 10, 10) !important;
     }
     [data-theme="black-hole"] .shell {
       background: transparent !important;
       position: relative;
       z-index: 2;
     }
-    /* Mobile overrides after Black Hole to cancel glass effect on flat rows */
-    @media (max-width: 500px) {
-      [data-theme="black-hole"] .session-card,
-      [data-theme="black-hole"] .archived-card,
-      [data-theme="black-hole"] .stat-card,
-      [data-theme="black-hole"] .empty {
-        background: transparent !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        border: none !important;
-        border-bottom: 0.5px solid rgba(255,255,255,0.08) !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-      }
-      [data-theme="black-hole"] .section-label + .session-card,
-      [data-theme="black-hole"] .section-label + .empty,
-      [data-theme="black-hole"] .stats-column:first-child .stat-card:first-child {
-        border-top: 0.5px solid rgba(255,255,255,0.08) !important;
-      }
+    /* Black Hole: cancel glass effect on flat rows */
+    [data-theme="black-hole"] .session-card,
+    [data-theme="black-hole"] .archived-card,
+    [data-theme="black-hole"] .stat-card,
+    [data-theme="black-hole"] .empty {
+      background: transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      border: none !important;
+      border-bottom: 0.5px solid rgba(255,255,255,0.08) !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
     }
-    /* Mobile Stats: hide home-duplicated cards, show remaining large and centered */
-    @media (max-width: 500px) {
-      .hub-view-stats [data-stat-key="activated-agents"] { display: none !important; }
-      .hub-view-stats .stat-card {
-        text-align: center !important;
-        padding: 32px 0 !important;
-      }
-      .hub-view-stats .stat-label {
-        font-size: 13px !important;
-        opacity: 0.6 !important;
-        margin-bottom: 8px !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.06em !important;
-      }
-      .hub-view-stats .stat-value {
-        font-family: 'Inter', system-ui, sans-serif !important;
-        font-size: 52px !important;
-        font-weight: 700 !important;
-        font-style: normal !important;
-        letter-spacing: -0.03em !important;
-        line-height: 1 !important;
-        display: block !important;
-      }
-      .hub-view-stats .stat-note { display: none !important; }
-      .hub-view-stats details.stat-card > summary { justify-content: center !important; }
-      .hub-view-stats details.stat-card > summary .stat-value { display: block !important; }
+    [data-theme="black-hole"] .section-label + .session-card,
+    [data-theme="black-hole"] .section-label + .empty,
+    [data-theme="black-hole"] .stats-column:first-child .stat-card:first-child {
+      border-top: 0.5px solid rgba(255,255,255,0.08) !important;
     }
+    /* Stats: hide home-duplicated cards, show remaining large and centered */
+    .hub-view-stats [data-stat-key="activated-agents"] { display: none !important; }
+    .hub-view-stats .stat-card { text-align: center !important; padding: 32px 0 !important; }
+    .hub-view-stats .stat-label {
+      font-size: 13px !important;
+      opacity: 0.6 !important;
+      margin-bottom: 8px !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.06em !important;
+    }
+    .hub-view-stats .stat-value {
+      font-family: 'Inter', system-ui, sans-serif !important;
+      font-size: 52px !important;
+      font-weight: 700 !important;
+      font-style: normal !important;
+      letter-spacing: -0.03em !important;
+      line-height: 1 !important;
+      display: block !important;
+    }
+    .hub-view-stats .stat-note { display: none !important; }
+    .hub-view-stats details.stat-card > summary { justify-content: center !important; }
+    .hub-view-stats details.stat-card > summary .stat-value { display: block !important; }
+    .hub-view-stats .stat-card, .hub-view-stats details.stat-card > summary { -webkit-tap-highlight-color: transparent; }
+    @keyframes statBreakdownIn {
+      0%   { opacity: 0; transform: translateY(-14px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .hub-view-stats details[open] .stat-breakdown {
+      animation: statBreakdownIn 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  __HUB_HEADER_CSS__
   </style>
 </head>
 <body class="hub-view-__HUB_VIEW__">
   <canvas id="starfield"></canvas>
+  __HUB_HEADER_HTML__
   <div class="shell">
     <section class="hero">
       <div class="eyebrow">multiagent</div>
@@ -1026,7 +1177,7 @@ HUB_APP_HTML = """<!doctype html>
         <a href="/" class="__HUB_NAV_HOME__">Hub</a>
         <a href="/new-session" class="__HUB_NAV_NEW__"><span class="nav-full">New Session</span><span class="nav-short">New</span></a>
         <a href="/resume" class="__HUB_NAV_RESUME__"><span class="nav-full">Resume Sessions</span><span class="nav-short">Resume</span></a>
-        <a href="/stats" class="__HUB_NAV_STATS__">Stats</a>
+        <a href="/stats" class="__HUB_NAV_STATS__">Statistics</a>
         <a href="/settings" class="__HUB_NAV_SETTINGS__">Settings</a>
         <form class="hub-restart-form" method="post" action="/restart-hub"><button type="submit">Restart Hub</button></form>
       </div>
@@ -1440,7 +1591,7 @@ HUB_APP_HTML = """<!doctype html>
       if (!isStarAnimationRunning) return;
       const centerX = starCanvas.width;
       const centerY = starCanvas.height;
-      starCtx.fillStyle = "rgb(5, 5, 5)";
+      starCtx.fillStyle = "rgb(10, 10, 10)";
       starCtx.fillRect(0, 0, starCanvas.width, starCanvas.height);
       stars.forEach((star, i) => {
         star.angle += star.speed;
@@ -1485,6 +1636,7 @@ HUB_APP_HTML = """<!doctype html>
     const themeObserver = new MutationObserver(updateStarAnimationState);
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     updateStarAnimationState();
+  __HUB_HEADER_JS__
   </script>
 </body>
 </html>
@@ -1500,18 +1652,24 @@ HUB_RESUME_HTML = (
     .replace("__HUB_NAV_STATS__", "")
     .replace("__HUB_NAV_SETTINGS__", "")
     .replace("__HUB_NAV_NEW__", "")
+    .replace("__HUB_HEADER_CSS__", _HUB_PAGE_HEADER_CSS)
+    .replace("__HUB_HEADER_HTML__", _HUB_PAGE_HEADER_HTML)
+    .replace("__HUB_HEADER_JS__", _HUB_PAGE_HEADER_JS)
 )
 
 HUB_STATS_HTML = (
     HUB_APP_HTML
     .replace("__HUB_VIEW__", "stats")
-    .replace("__HUB_TITLE__", "Stats")
+    .replace("__HUB_TITLE__", "Statistics")
     .replace("__HUB_SUB__", "A quick view of what is active in this repo right now, plus a few cross-session counts from existing logs.")
     .replace("__HUB_NAV_HOME__", "")
     .replace("__HUB_NAV_RESUME__", "")
     .replace("__HUB_NAV_STATS__", "active")
     .replace("__HUB_NAV_SETTINGS__", "")
     .replace("__HUB_NAV_NEW__", "")
+    .replace("__HUB_HEADER_CSS__", _HUB_PAGE_HEADER_CSS)
+    .replace("__HUB_HEADER_HTML__", _HUB_PAGE_HEADER_HTML)
+    .replace("__HUB_HEADER_JS__", _HUB_PAGE_HEADER_JS)
 )
 
 HUB_HOME_HTML = """<!doctype html>
@@ -1542,7 +1700,7 @@ HUB_HOME_HTML = """<!doctype html>
     }
     [data-theme="black-hole"] {
       color-scheme: dark;
-      --bg: rgb(5, 5, 5);
+      --bg: rgb(10, 10, 10);
       --panel: rgb(20, 20, 20);
       --panel-2: rgb(15, 15, 15);
       --line: rgba(255,255,255,0.06);
@@ -1559,11 +1717,13 @@ HUB_HOME_HTML = """<!doctype html>
       font-family: "SF Pro Text", "Segoe UI", sans-serif;
     }
     body {
-      padding: max(18px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom)) 14px;
+      padding: 0 0 max(20px, env(safe-area-inset-bottom)) 0;
     }
     .shell {
       max-width: 760px;
       margin: 0 auto;
+      padding-left: 14px;
+      padding-right: 14px;
     }
     .hero {
       padding: 8px 2px 18px 2px;
@@ -1671,271 +1831,150 @@ HUB_HOME_HTML = """<!doctype html>
       max-width: 34rem;
     }
     [data-theme="black-hole"] .hub-nav a.active {
-      background: rgb(5, 5, 5) !important;
+      background: rgb(10, 10, 10) !important;
       border-color: rgba(255, 255, 255, 0.2) !important;
     }
-    /* ── Mobile: LINE/WhatsApp-style session list ─────────────────────── */
-    .mob-header { display: none; }
-    .mob-list-wrap { display: none; }
-    @keyframes mobRestartPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    /* ── Hub home layout ── */
+    body { padding: 0; }
+    .shell { max-width: none; }
+    .hero, .home-grid, .hub-nav { display: none !important; }
     @keyframes mobSlideOutLeft {
       from { transform: translateX(0); opacity: 1; }
       to   { transform: translateX(-28%); opacity: 0; }
     }
     .mob-navigating { animation: mobSlideOutLeft 120ms cubic-bezier(0.4, 0, 0.6, 1) forwards; pointer-events: none; }
-    @media (max-width: 500px) {
-      body { padding: 0 !important; }
-      .shell { max-width: none; }
-      .hero, .home-grid, .hub-nav { display: none !important; }
-      .mob-header {
-        display: flex;
-        flex-direction: column;
-        position: sticky;
-        top: 0;
-        z-index: 50;
-        background: transparent;
-      }
-      .mob-header-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: max(10px, env(safe-area-inset-top)) 8px 8px;
-      }
-      .mob-header-title {
-        font-size: 17px;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-        color: var(--muted);
-        padding-left: 8px;
-      }
-      .mob-icon-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        background: transparent;
-        border: none;
-        color: var(--muted);
-        cursor: pointer;
-        text-decoration: none;
-        font: inherit;
-        -webkit-appearance: none;
-        appearance: none;
-        transition: color 120ms ease;
-      }
-      .mob-icon-btn:active { color: var(--fg); }
-      .mob-icon-btn svg { display: block; }
-      .mob-icon-btn.restarting { animation: mobRestartPulse 900ms ease-in-out infinite; pointer-events: none; }
-      .mob-menu-panel {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 260ms ease;
-        border-top: 0.5px solid transparent;
-      }
-      .mob-menu-panel.open {
-        max-height: 300px;
-        border-top-color: var(--line);
-      }
-      .mob-menu-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 14px 16px;
-        font-size: 15px;
-        color: var(--fg);
-        text-decoration: none;
-        cursor: pointer;
-        border: none;
-        border-bottom: 0.5px solid var(--line);
-        background: transparent;
-        width: 100%;
-        text-align: left;
-        font: inherit;
-        -webkit-appearance: none;
-        box-sizing: border-box;
-      }
-      .mob-menu-item:last-child { border-bottom: none; }
-      .mob-menu-item:active { opacity: 0.6; }
-      .mob-menu-item.restarting { opacity: 0.4; pointer-events: none; animation: mobRestartPulse 900ms ease-in-out infinite; }
-      .mob-list-wrap {
-        display: block;
-        padding-bottom: max(20px, env(safe-area-inset-bottom));
-      }
-      .mob-section-label {
-        padding: 12px 16px 4px;
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--muted);
-      }
-      .mob-session-row {
-        display: block;
-        padding: 12px 16px;
-        border-bottom: 0.5px solid var(--line);
-        cursor: pointer;
-        text-decoration: none;
-        color: inherit;
-        -webkit-tap-highlight-color: transparent;
-        transition: background 80ms ease;
-      }
-      .mob-session-row:active { background: var(--panel-2); }
-      .mob-row-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        margin-bottom: 5px;
-      }
-      .mob-row-name {
-        font-size: 16px;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-        min-width: 0;
-        word-break: break-word;
-      }
-      .mob-row-tools {
-        flex: 0 0 auto;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .mob-badge {
-        font-size: 10px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        padding: 2px 7px;
-        border-radius: 999px;
-        border: 0.5px solid var(--line-strong);
-        color: var(--muted);
-      }
-      .mob-badge.idle { color: var(--ok); }
-      .mob-badge.attached { color: var(--warn); }
-      .mob-badge.degraded { color: var(--bad); }
-      .mob-kill-link {
-        font-size: 11px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        padding: 2px 7px;
-        border-radius: 8px;
-        border: 0.5px solid rgba(214, 124, 124, 0.4);
-        color: var(--bad);
-        text-decoration: none;
-      }
-      .mob-row-path {
-        font-size: 12px;
-        color: var(--muted);
-        word-break: break-all;
-        margin-bottom: 5px;
-        line-height: 1.4;
-      }
-      .mob-row-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 3px 10px;
-        font-size: 12px;
-        color: var(--muted);
-        line-height: 1.4;
-      }
-      .mob-row-meta strong { color: var(--fg); font-weight: 500; }
-      .mob-session-row.archived-row { opacity: 0.7; }
-      .mob-empty {
-        padding: 32px 16px;
-        color: var(--muted);
-        font-size: 14px;
-        text-align: center;
-      }
-      /* ── Stats bar ── */
-      .mob-stats-bar {
-        display: flex;
-        align-items: center;
-        gap: 0;
-        padding: 8px 16px;
-        border-bottom: 0.5px solid var(--line);
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .mob-stats-bar .mob-stat {
-        display: flex;
-        align-items: baseline;
-        gap: 4px;
-      }
-      .mob-stats-bar .mob-stat + .mob-stat::before {
-        content: "·";
-        margin: 0 8px;
-        color: var(--line-strong);
-      }
-      .mob-stats-bar .mob-stat-val {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--fg);
-        letter-spacing: -0.02em;
-      }
-      /* ── Swipe-to-reveal ── */
-      .swipe-row { position: relative; overflow: hidden; }
-      .swipe-act {
-        position: absolute; top: 0; bottom: 0;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        min-width: 80px; padding: 0 18px; gap: 5px;
-        font-size: 12px; font-weight: 600; color: #fff;
-        user-select: none; -webkit-user-select: none; cursor: pointer;
-      }
-      .swipe-act svg { display: block; }
-      .swipe-act-left  { left: 0; background: rgb(52, 199, 89); }
-      .swipe-act-left.unpin { background: rgb(120, 120, 130); }
-      .swipe-act-left.revive-act { background: rgb(44, 132, 219); }
-      .swipe-act-right { right: 0; background: rgb(255, 59, 48); }
-      .mob-session-row {
-        background: var(--bg);
-        position: relative; z-index: 1;
-        will-change: transform;
-      }
-      .mob-session-row.pinned-row .mob-row-name::before {
-        content: "📌 "; font-size: 12px;
-      }
+    __HUB_HEADER_CSS__
+    .mob-stats-bar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 8px 16px;
+      border-bottom: 0.5px solid var(--line);
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+      box-sizing: border-box;
     }
-    [data-theme="black-hole"] .mob-header { background: transparent !important; }
-    [data-theme="black-hole"] .mob-menu-item { border-bottom-color: rgba(255,255,255,0.08) !important; }
-    [data-theme="black-hole"] .mob-menu-panel.open { border-top-color: rgba(255,255,255,0.08) !important; }
-    [data-theme="black-hole"] .mob-session-row { background: rgb(5, 5, 5); }
+    .mob-stats-bar .mob-stat { display: flex; align-items: baseline; gap: 4px; }
+    .mob-stats-bar .mob-stat + .mob-stat::before { content: "·"; margin: 0 8px; color: var(--line-strong); }
+    .mob-stats-bar .mob-stat-val { font-size: 14px; font-weight: 600; color: var(--fg); letter-spacing: -0.02em; }
+    .mob-list-wrap {
+      display: block;
+      max-width: 760px;
+      margin: 0 auto;
+      width: 100%;
+      padding-bottom: max(40px, env(safe-area-inset-bottom));
+    }
+    .mob-section-label {
+      padding: 14px 16px 5px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .mob-session-row {
+      display: block;
+      padding: 14px 16px;
+      border-bottom: none;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 80ms ease;
+    }
+    .mob-session-row:hover { background: var(--panel-2); }
+    .mob-row-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+    .mob-row-name { font-size: 36px; font-weight: 600; letter-spacing: -0.02em; min-width: 0; word-break: break-word; }
+    .mob-row-tools { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+    .mob-badge { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; border: 0.5px solid var(--line-strong); color: var(--muted); }
+    .mob-badge.idle { color: var(--ok); }
+    .mob-badge.attached { color: var(--warn); }
+    .mob-badge.degraded { color: var(--bad); }
+    .mob-kill-link { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 8px; border: 0.5px solid rgba(214,124,124,0.4); color: var(--bad); text-decoration: none; }
+    .mob-row-path { font-size: 12px; color: var(--muted); word-break: break-all; margin-bottom: 5px; line-height: 1.4; }
+    .mob-row-meta { display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 12px; color: var(--muted); line-height: 1.4; }
+    .mob-row-meta strong { color: var(--fg); font-weight: 500; }
+    .mob-session-row.archived-row .mob-row-name,
+    .mob-session-row.archived-row .mob-row-path,
+    .mob-session-row.archived-row .mob-row-meta,
+    .mob-session-row.archived-row .mob-badge { opacity: 0.55; }
+    .mob-empty { padding: 48px 16px; color: var(--muted); font-size: 14px; text-align: center; }
+    /* ── Swipe-to-reveal (touch only) ── */
+    .swipe-row { position: relative; overflow: hidden; border-bottom: 0.5px solid var(--line); }
+    .swipe-act {
+      position: absolute; top: 0; bottom: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-width: 80px; padding: 0 18px; gap: 5px;
+      font-size: 12px; font-weight: 600; color: #fff;
+      user-select: none; -webkit-user-select: none; cursor: pointer;
+    }
+    .swipe-act svg { display: block; }
+    .swipe-act-left  { left: 0; background: rgb(52, 199, 89); }
+    .swipe-act-left.unpin { background: rgb(120, 120, 130); }
+    .swipe-act-left.revive-act { background: rgb(44, 132, 219); }
+    .swipe-act-right { right: 0; background: rgb(255, 59, 48); }
+    .mob-session-row { background: var(--bg); position: relative; z-index: 1; will-change: transform; }
+    .mob-session-row.pinned-row .mob-row-name::before { content: "📌 "; font-size: 12px; }
+    @media (min-width: 501px) {
+      .swipe-act { display: none !important; }
+    }
+    /* ── Desktop hover actions ── */
+    .mob-row-hover-actions {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .mob-session-row:hover .mob-row-hover-actions { display: flex; }
+    .mob-hover-btn {
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      padding: 3px 9px;
+      border-radius: 8px;
+      border: 0.5px solid var(--line-strong);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: inherit;
+      -webkit-appearance: none;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .mob-hover-btn:hover { color: var(--fg); border-color: rgba(255,255,255,0.25); }
+    .mob-hover-btn.kill { border-color: rgba(214,124,124,0.4); color: var(--bad); }
+    .mob-hover-btn.kill:hover { border-color: rgba(214,124,124,0.7); }
+    .mob-hover-btn.pin { border-color: rgba(52,199,89,0.4); color: var(--ok); }
+    .mob-hover-btn.pin:hover { border-color: rgba(52,199,89,0.7); }
+    @media (max-width: 500px) {
+      .mob-row-hover-actions { display: none !important; }
+    }
+    [data-theme="black-hole"] .mob-session-row { background: rgb(10, 10, 10); border-bottom: none; }
+    [data-theme="black-hole"] .swipe-row { border-bottom: 1px solid rgba(255,255,255,0.1); }
     [data-theme="black-hole"] #starfield { display: block; }
     [data-theme="black-hole"] body { background: transparent !important; }
-    [data-theme="black-hole"] html { background: rgb(5, 5, 5) !important; }
+    [data-theme="black-hole"] html { background: rgb(10, 10, 10) !important; }
     [data-theme="black-hole"] .shell { background: transparent !important; position: relative; z-index: 2; }
     [data-theme="black-hole"] .mob-list-wrap { position: relative; z-index: 2; }
+    /* ── Chat iframe overlay ── */
+    #chatOverlay { position: fixed; inset: 0; z-index: 9999; background: #000; }
+    #chatOverlay[hidden] { display: none !important; }
+    #chatFrame { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: block; }
   </style>
 </head>
 <body>
   <canvas id="starfield" style="position:fixed;top:0;left:0;z-index:1;width:100%;height:100%;display:none;pointer-events:none;"></canvas>
-  <div class="mob-header">
-    <div class="mob-header-top">
-      <span class="mob-header-title">Multiagent Session Hub</span>
-      <button class="mob-icon-btn" id="mobMenuBtn" title="Menu">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="mob-menu-panel" id="mobMenuPanel">
-      <a href="/new-session" class="mob-menu-item">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        New Session
-      </a>
-      <a href="/stats" class="mob-menu-item">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        Statistics
-      </a>
-      <a href="/settings" class="mob-menu-item">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        Settings
-      </a>
-      <button class="mob-menu-item" id="mobRestartBtn">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.62"/></svg>
-        Reload
-      </button>
-    </div>
-  </div>
-  <div class="mob-stats-bar" id="mobStatsBar"></div>
+  __HUB_HEADER_HTML__
+  <div id="chatOverlay" hidden><iframe id="chatFrame" src="about:blank"></iframe></div>
+<div class="mob-stats-bar" id="mobStatsBar"></div>
   <div class="mob-list-wrap" id="mobListWrap">
     <div class="mob-empty" id="mobLoading">Loading sessions\u2026</div>
   </div>
@@ -1948,7 +1987,7 @@ HUB_HOME_HTML = """<!doctype html>
         <a href="/">Hub</a>
         <a href="/new-session"><span class="nav-full">New Session</span><span class="nav-short">New</span></a>
         <a href="/resume"><span class="nav-full">Resume Sessions</span><span class="nav-short">Resume</span></a>
-        <a href="/stats">Stats</a>
+        <a href="/stats">Statistics</a>
         <a href="/settings">Settings</a>
         <form class="hub-restart-form" method="post" action="/restart-hub"><button type="submit">Restart Hub</button></form>
       </div>
@@ -1965,7 +2004,7 @@ HUB_HOME_HTML = """<!doctype html>
         <div class="home-note">Open active sessions, browse archived ones, revive old work, and jump back into chat.</div>
       </a>
       <a class="home-card" href="/stats">
-        <div class="home-label">Stats</div>
+        <div class="home-label">Statistics</div>
         <div class="home-title">Session Stats</div>
         <div class="home-note">See active versus archived sessions, how many chats exist, today’s messages and commits, and how many workspaces are represented.</div>
       </a>
@@ -1977,43 +2016,53 @@ HUB_HOME_HTML = """<!doctype html>
     </div>
   </div>
   <script>
-    document.querySelector(".hub-restart-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const btn = e.currentTarget.querySelector("button");
-      if (btn.classList.contains("restarting")) return;
-      btn.classList.add("restarting");
-      btn.disabled = true;
-      btn.textContent = "Restarting\u2026";
-      try { await fetch("/restart-hub", { method: "POST" }); } catch (_) {}
-      const started = Date.now();
-      const poll = async () => {
-        try {
-          const res = await fetch(`/sessions?ts=${Date.now()}`, { cache: "no-store" });
-          if (res.ok) { window.location.replace(window.location.pathname); return; }
-        } catch (_) {}
-        if (Date.now() - started < 20000) { setTimeout(poll, 500); } else { window.location.reload(); }
-      };
-      setTimeout(poll, 700);
-    });
+    // ── Chat iframe overlay ──
+    const _chatOverlay = document.getElementById("chatOverlay");
+    const _chatFrame = document.getElementById("chatFrame");
+    function _fitChatOverlay() {
+      if (_chatOverlay.hidden) return;
+      const vv = window.visualViewport;
+      if (!vv) return;
+      _chatOverlay.style.top = vv.offsetTop + "px";
+      _chatOverlay.style.height = vv.height + "px";
+    }
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", _fitChatOverlay);
+      window.visualViewport.addEventListener("scroll", _fitChatOverlay);
+    }
+    function openChatInFrame(url, name) {
+      _chatFrame.src = url;
+      _chatOverlay.hidden = false;
+      _fitChatOverlay();
+      try { sessionStorage.setItem("hub_chat_frame", JSON.stringify({url, name})); } catch(_) {}
+    }
+    function closeChatFrame() {
+      _chatOverlay.hidden = true;
+      _chatOverlay.style.top = "";
+      _chatOverlay.style.height = "";
+      _chatFrame.src = "about:blank";
+      try { sessionStorage.removeItem("hub_chat_frame"); } catch(_) {}
+    }
+    function openSessionFrame(openHref, name) {
+      const url = openHref + (openHref.includes("?") ? "&" : "?") + "format=json";
+      fetch(url)
+        .then(r => r.json())
+        .then(d => { if (d.chat_url) openChatInFrame(d.chat_url, name); else window.location.href = openHref; })
+        .catch(() => { window.location.href = openHref; });
+    }
+    window.addEventListener("message", function(e) { if (e.data === "hub_close_chat") closeChatFrame(); });
+    // Restore active chat on PWA re-launch
+    try {
+      const saved = sessionStorage.getItem("hub_chat_frame");
+      if (saved) { const {url, name} = JSON.parse(saved); if (url) openChatInFrame(url, name); }
+    } catch(_) {}
 
     // --- Mobile session list ---
     (function() {
       const wrap = document.getElementById("mobListWrap");
       const statsBar = document.getElementById("mobStatsBar");
-      const restartBtn = document.getElementById("mobRestartBtn");
-      const menuBtn = document.getElementById("mobMenuBtn");
-      const menuPanel = document.getElementById("mobMenuPanel");
       if (!wrap) return;
 
-      // ── Menu panel (accordion) ──
-      if (menuBtn && menuPanel) {
-        menuBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          menuPanel.classList.toggle("open");
-        });
-        document.addEventListener("click", () => menuPanel.classList.remove("open"));
-        menuPanel.addEventListener("click", (e) => e.stopPropagation());
-      }
       const esc = (v) => String(v || "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
       // ── Pin storage ──
@@ -2085,7 +2134,7 @@ HUB_HOME_HTML = """<!doctype html>
           e.stopPropagation();
           const action = actL.dataset.action, n = sr.dataset.sessionName;
           if (action === "pin") { togglePin(n); refresh(); }
-          else if (action === "revive") { window.location.href = `/revive-session?session=${encodeURIComponent(n)}`; }
+          else if (action === "revive") { openSessionFrame(`/revive-session?session=${encodeURIComponent(n)}`, n); }
           closeRow(sr, true); anyOpen = null;
         });
         // tap on row body navigates (unless swipe was happening)
@@ -2093,10 +2142,7 @@ HUB_HOME_HTML = """<!doctype html>
           if (sr._snap !== 0) { closeRow(sr, true); anyOpen = null; e.stopPropagation(); return; }
           if (e.target.closest(".swipe-act")) return;
           const href = inner.dataset.openHref;
-          if (href) {
-            document.body.classList.add("mob-navigating");
-            setTimeout(() => { window.location.href = href; }, 100);
-          }
+          if (href) openSessionFrame(href, sr.dataset.sessionName || "");
         });
       };
 
@@ -2136,7 +2182,13 @@ HUB_HOME_HTML = """<!doctype html>
               `<div class="swipe-act swipe-act-right" data-action="kill">${trashSvg}<span>Kill</span></div>` +
               `<div class="mob-session-row${isPinned ? " pinned-row" : ""}" data-open-href="/open-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
                 `<div class="mob-row-head"><div class="mob-row-name">${esc(s.name)}</div>` +
-                `<div class="mob-row-tools"><span class="mob-badge ${esc(s.status)}">${esc(s.status)}</span></div></div>` +
+                `<div class="mob-row-tools">` +
+                  `<span class="mob-badge ${esc(s.status)}">${esc(s.status)}</span>` +
+                  `<div class="mob-row-hover-actions">` +
+                    `<button class="mob-hover-btn pin" data-action="pin">${isPinned ? "Unpin" : "Pin"}</button>` +
+                    `<a class="mob-hover-btn kill" href="/kill-session?session=${encodeURIComponent(s.name)}" onclick="return confirm('Kill ${esc(s.name)}?')">Kill</a>` +
+                  `</div>` +
+                `</div></div>` +
                 `<div class="mob-row-path">${esc(s.workspace || "workspace unavailable")}</div>` +
                 `<div class="mob-row-meta">` +
                   `<span><strong>Agents</strong> ${esc(agents)}</span>` +
@@ -2156,7 +2208,12 @@ HUB_HOME_HTML = """<!doctype html>
               `<div class="swipe-act swipe-act-left revive-act" data-action="revive">${reviveSvg}<span>Revive</span></div>` +
               `<div class="mob-session-row archived-row" data-open-href="/revive-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
                 `<div class="mob-row-head"><div class="mob-row-name">${esc(s.name)}</div>` +
-                `<div class="mob-row-tools"><span class="mob-badge">archived</span></div></div>` +
+                `<div class="mob-row-tools">` +
+                  `<span class="mob-badge">archived</span>` +
+                  `<div class="mob-row-hover-actions">` +
+                    `<a class="mob-hover-btn pin" href="/revive-session?session=${encodeURIComponent(s.name)}">Revive</a>` +
+                  `</div>` +
+                `</div></div>` +
                 `<div class="mob-row-path">${esc(s.workspace || "workspace unavailable")}</div>` +
                 `<div class="mob-row-meta">` +
                   `<span><strong>Agents</strong> ${esc(agents)}</span>` +
@@ -2172,6 +2229,15 @@ HUB_HOME_HTML = """<!doctype html>
         }
         wrap.innerHTML = html;
         wrap.querySelectorAll(".swipe-row").forEach(initSwipeRow);
+        // Desktop hover pin buttons
+        wrap.querySelectorAll(".mob-hover-btn[data-action='pin']").forEach(btn => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const row = btn.closest(".swipe-row");
+            const n = row ? row.dataset.sessionName : null;
+            if (n) { togglePin(n); refresh(); }
+          });
+        });
       };
       const refresh = async () => {
         try {
@@ -2183,27 +2249,8 @@ HUB_HOME_HTML = """<!doctype html>
           wrap.innerHTML = `<div class="mob-empty">Failed to load sessions</div>`;
         }
       };
-      if (window.matchMedia("(max-width: 500px)").matches) {
-        refresh();
-        setInterval(refresh, 5000);
-      }
-      if (restartBtn) {
-        restartBtn.addEventListener("click", async () => {
-          if (restartBtn.classList.contains("restarting")) return;
-          restartBtn.classList.add("restarting");
-          restartBtn.disabled = true;
-          try { await fetch("/restart-hub", { method: "POST" }); } catch (_) {}
-          const t0 = Date.now();
-          const poll = async () => {
-            try {
-              const r = await fetch(`/sessions?ts=${Date.now()}`, { cache: "no-store" });
-              if (r.ok) { window.location.replace("/"); return; }
-            } catch (_) {}
-            if (Date.now() - t0 < 20000) setTimeout(poll, 500); else window.location.reload();
-          };
-          setTimeout(poll, 700);
-        });
-      }
+      refresh();
+      setInterval(refresh, 5000);
     })();
 
     // --- Starfield Animation ---
@@ -2247,7 +2294,7 @@ HUB_HOME_HTML = """<!doctype html>
       if (!isStarAnimationRunning) return;
       const centerX = starCanvas.width;
       const centerY = starCanvas.height;
-      starCtx.fillStyle = "rgb(5, 5, 5)";
+      starCtx.fillStyle = "rgb(10, 10, 10)";
       starCtx.fillRect(0, 0, starCanvas.width, starCanvas.height);
       stars.forEach((star, i) => {
         star.angle += star.speed;
@@ -2293,10 +2340,17 @@ HUB_HOME_HTML = """<!doctype html>
     const themeObserver = new MutationObserver(updateStarAnimationState);
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     updateStarAnimationState();
+  __HUB_HEADER_JS__
   </script>
 </body>
 </html>
 """
+HUB_HOME_HTML = (
+    HUB_HOME_HTML
+    .replace("__HUB_HEADER_CSS__", _HUB_PAGE_HEADER_CSS)
+    .replace("__HUB_HEADER_HTML__", _HUB_PAGE_HEADER_HTML)
+    .replace("__HUB_HEADER_JS__", _HUB_PAGE_HEADER_JS)
+)
 
 def hub_settings_html(saved=False):
     settings = load_hub_settings()
@@ -2304,8 +2358,12 @@ def hub_settings_html(saved=False):
     font_mode = settings["agent_font_mode"]
     mobile_limit = settings["mobile_message_limit"]
     desktop_limit = settings["desktop_message_limit"]
+    chat_auto = settings.get("chat_auto_mode", False)
+    chat_awake = settings.get("chat_awake", False)
+    chat_sound = settings.get("chat_sound", False)
+    chat_tts = settings.get("chat_tts", False)
     notice = '<div style="margin:0 0 14px;color:rgb(170,190,172);font-size:13px;line-height:1.5;">Saved.</div>' if saved else ""
-    return f"""<!doctype html>
+    _html = f"""<!doctype html>
 <html lang="en" data-theme="{theme}">
 <head>
   <meta charset="utf-8">
@@ -2326,7 +2384,7 @@ def hub_settings_html(saved=False):
     }}
     [data-theme="black-hole"] {{
       color-scheme: dark;
-      --bg: rgb(5, 5, 5);
+      --bg: rgb(10, 10, 10);
       --panel: rgb(20, 20, 20);
       --panel-2: rgb(15, 15, 15);
       --line: rgba(255,255,255,0.06);
@@ -2352,7 +2410,7 @@ def hub_settings_html(saved=False):
       background: transparent !important;
     }}
     [data-theme="black-hole"] html {{
-      background: rgb(5, 5, 5) !important;
+      background: rgb(10, 10, 10) !important;
     }}
     [data-theme="black-hole"] .shell {{
       background: transparent !important;
@@ -2368,9 +2426,9 @@ def hub_settings_html(saved=False):
       font-family: "SF Pro Text", "Segoe UI", sans-serif;
     }}
     body {{
-      padding: max(18px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom)) 14px;
+      padding: 0 0 max(20px, env(safe-area-inset-bottom)) 0;
     }}
-    .shell {{ max-width: 760px; margin: 0 auto; }}
+    .shell {{ max-width: 760px; margin: 0 auto; padding-left: 14px; padding-right: 14px; }}
     .hero {{ padding: 8px 2px 18px 2px; }}
     .eyebrow {{ color: var(--muted); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }}
     h1 {{ margin: 0; font-size: clamp(28px, 5vw, 40px); line-height: 1.02; font-weight: 600; letter-spacing: -0.03em; }}
@@ -2467,41 +2525,48 @@ def hub_settings_html(saved=False):
       pointer-events: none;
     }}
     [data-theme="black-hole"] .hub-nav a.active {{
-      background: rgb(5, 5, 5) !important;
+      background: rgb(10, 10, 10) !important;
       border-color: rgba(255, 255, 255, 0.2) !important;
     }}
-    @media (max-width: 500px) {{
-      .hub-nav {{ display: none !important; }}
-      .panel {{
-        background: transparent !important;
-        border: none !important;
-        border-radius: 0 !important;
-        padding: 0 !important;
-      }}
-      .field {{
-        padding: 12px 0;
-        border-bottom: 0.5px solid var(--line);
-      }}
-      .field + .field {{ margin-top: 0; }}
-      .field:first-child {{ border-top: 0.5px solid var(--line); }}
-      .save {{
-        background: transparent !important;
-        border: none !important;
-        border-radius: 0 !important;
-        padding: 14px 0 !important;
-        color: var(--accent, rgb(44, 132, 219)) !important;
-        font-size: 15px !important;
-        text-transform: none !important;
-        letter-spacing: 0 !important;
-        width: 100%;
-        text-align: center;
-        border-top: 0.5px solid var(--line) !important;
-        margin-top: 0 !important;
-      }}
+    .hub-nav {{ display: none !important; }}
+    __HUB_HEADER_CSS__
+    .panel {{
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+    }}
+    .field {{
+      padding: 12px 0;
+      border-bottom: 0.5px solid var(--line);
+    }}
+    .field + .field {{ margin-top: 0; }}
+    .field:first-child {{ border-top: 0.5px solid var(--line); }}
+    .chat-toggles {{ display: flex; flex-direction: column; gap: 2px; }}
+    .toggle-row {{ display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid var(--line); font-size: 15px; cursor: pointer; }}
+    .toggle-row:last-child {{ border-bottom: none; }}
+    .toggle-row input[type="checkbox"] {{ width: 44px; height: 26px; -webkit-appearance: none; appearance: none; background: var(--line-strong); border-radius: 999px; cursor: pointer; transition: background 200ms; position: relative; flex-shrink: 0; }}
+    .toggle-row input[type="checkbox"]:checked {{ background: var(--accent, rgb(44,132,219)); }}
+    .toggle-row input[type="checkbox"]::before {{ content: ""; position: absolute; width: 22px; height: 22px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: transform 200ms; }}
+    .toggle-row input[type="checkbox"]:checked::before {{ transform: translateX(18px); }}
+    .save {{
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      padding: 14px 0 !important;
+      color: var(--accent, rgb(44, 132, 219)) !important;
+      font-size: 15px !important;
+      text-transform: none !important;
+      letter-spacing: 0 !important;
+      width: 100%;
+      text-align: center;
+      border-top: 0.5px solid var(--line) !important;
+      margin-top: 0 !important;
     }}
   </style>
 </head>
 <body>
+  __HUB_HEADER_HTML__
   <div class="shell">
     <section class="hero">
       <div class="eyebrow">multiagent</div>
@@ -2511,7 +2576,7 @@ def hub_settings_html(saved=False):
         <a href="/">Hub</a>
         <a href="/new-session"><span class="nav-full">New Session</span><span class="nav-short">New</span></a>
         <a href="/resume"><span class="nav-full">Resume Sessions</span><span class="nav-short">Resume</span></a>
-        <a href="/stats">Stats</a>
+        <a href="/stats">Statistics</a>
         <a href="/settings" class="active">Settings</a>
         <form class="hub-restart-form" method="post" action="/restart-hub"><button type="submit">Restart Hub</button></form>
       </div>
@@ -2548,6 +2613,28 @@ def hub_settings_html(saved=False):
         </div>
         <div class="hint">These are display defaults. Desktop is currently bounded by the chat server's existing limit, so 500 is the practical ceiling.</div>
       </div>
+      <div class="field">
+        <div class="label">Chat Defaults</div>
+        <div class="hint" style="margin-bottom:10px">Applied when a chat opens. Toggling from chat UI is disabled.</div>
+        <div class="chat-toggles">
+          <label class="toggle-row">
+            <span>Auto mode</span>
+            <input type="checkbox" name="chat_auto_mode" value="on"{' checked' if chat_auto else ''}>
+          </label>
+          <label class="toggle-row">
+            <span>Awake (prevent sleep)</span>
+            <input type="checkbox" name="chat_awake" value="on"{' checked' if chat_awake else ''}>
+          </label>
+          <label class="toggle-row">
+            <span>Sound notifications</span>
+            <input type="checkbox" name="chat_sound" value="on"{' checked' if chat_sound else ''}>
+          </label>
+          <label class="toggle-row">
+            <span>Read aloud (TTS)</span>
+            <input type="checkbox" name="chat_tts" value="on"{' checked' if chat_tts else ''}>
+          </label>
+        </div>
+      </div>
       <button class="save" type="submit">Save Settings</button>
     </form>
   </div>
@@ -2570,9 +2657,16 @@ def hub_settings_html(saved=False):
       }};
       setTimeout(poll, 700);
     }});
+  __HUB_HEADER_JS__
   </script>
 </body>
 </html>"""
+    return (
+        _html
+        .replace("__HUB_HEADER_CSS__", _HUB_PAGE_HEADER_CSS)
+        .replace("__HUB_HEADER_HTML__", _HUB_PAGE_HEADER_HTML)
+        .replace("__HUB_HEADER_JS__", _HUB_PAGE_HEADER_JS)
+    )
 
 HUB_NEW_SESSION_HTML = """<!doctype html>
 <html lang="en" data-theme="__CHAT_THEME__">
@@ -2599,7 +2693,7 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
     }
     [data-theme="black-hole"] {
       color-scheme: dark;
-      --bg: rgb(5, 5, 5);
+      --bg: rgb(10, 10, 10);
       --panel: rgb(20, 20, 20);
       --panel-2: rgb(15, 15, 15);
       --line: rgba(255,255,255,0.06);
@@ -2625,7 +2719,7 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
       background: transparent !important;
     }
     [data-theme="black-hole"] html {
-      background: rgb(5, 5, 5) !important;
+      background: rgb(10, 10, 10) !important;
     }
     [data-theme="black-hole"] .shell {
       background: transparent !important;
@@ -2634,8 +2728,8 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); font-family: "SF Pro Text", "Segoe UI", sans-serif; }
-    body { padding: max(18px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom)) 14px; }
-    .shell { max-width: 760px; margin: 0 auto; }
+    body { padding: 0 0 max(20px, env(safe-area-inset-bottom)) 0; }
+    .shell { max-width: 760px; margin: 0 auto; padding-left: 14px; padding-right: 14px; }
     .hero { padding: 8px 2px 18px 2px; }
     .eyebrow { color: var(--muted); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
     h1 { margin: 0; font-size: clamp(26px, 5vw, 38px); line-height: 1.02; font-weight: 600; letter-spacing: -0.03em; }
@@ -2650,25 +2744,16 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
     @keyframes hubRestartingPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     .hub-nav button.restarting { animation: hubRestartingPulse 900ms ease-in-out infinite; pointer-events: none; }
     .nav-short { display: none; }
-    @media (max-width: 500px) {
-      .hub-nav { display: none !important; }
-      .form-panel {
-        background: transparent !important;
-        border: none !important;
-        border-bottom: 0.5px solid var(--line) !important;
-        border-radius: 0 !important;
-        padding: 14px 0 !important;
-        margin-bottom: 0 !important;
-      }
-      .form-panel:first-of-type { border-top: 0.5px solid var(--line) !important; }
-      .recent-item {
-        border-radius: 8px;
-      }
-      .dir-browser { border-radius: 10px; }
-      .start-btn { border-radius: 10px; margin-top: 16px; }
-      .error-msg { border-radius: 8px; }
+    .hub-nav { display: none !important; }
+    .form-panel {
+      background: transparent !important;
+      border: none !important;
+      border-bottom: 0.5px solid var(--line) !important;
+      border-radius: 0 !important;
+      padding: 14px 0 !important;
+      margin-bottom: 0 !important;
     }
-    .form-panel { background: var(--panel); border: 0.5px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 12px; }
+    .form-panel:first-of-type { border-top: 0.5px solid var(--line) !important; }
     .field-label { display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
     .field-label .opt { opacity: 0.55; text-transform: none; font-size: 11px; letter-spacing: 0; }
     input[type="text"] { width: 100%; border: 0.5px solid var(--line-strong); background: var(--panel-2); color: var(--fg); border-radius: 12px; padding: 11px 13px; font-size: 15px; line-height: 1.2; outline: none; font-family: inherit; }
@@ -2706,12 +2791,14 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
     .start-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .error-msg { margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: rgba(214,124,124,0.12); border: 0.5px solid rgba(214,124,124,0.3); color: rgb(214,124,124); font-size: 14px; }
     [data-theme="black-hole"] .hub-nav a.active {
-      background: rgb(5, 5, 5) !important;
+      background: rgb(10, 10, 10) !important;
       border-color: rgba(255, 255, 255, 0.2) !important;
     }
+  __HUB_HEADER_CSS__
   </style>
 </head>
 <body>
+  __HUB_HEADER_HTML__
   <div class="shell">
     <section class="hero">
       <div class="eyebrow">multiagent</div>
@@ -2721,7 +2808,7 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
         <a href="/">Hub</a>
         <a href="/new-session" class="active"><span class="nav-full">New Session</span><span class="nav-short">New</span></a>
         <a href="/resume"><span class="nav-full">Resume Sessions</span><span class="nav-short">Resume</span></a>
-        <a href="/stats">Stats</a>
+        <a href="/stats">Statistics</a>
         <a href="/settings">Settings</a>
         <form class="hub-restart-form" method="post" action="/restart-hub"><button type="submit">Restart Hub</button></form>
       </div>
@@ -2970,7 +3057,7 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
       if (!isStarAnimationRunning) return;
       const centerX = starCanvas.width;
       const centerY = starCanvas.height;
-      starCtx.fillStyle = "rgb(5, 5, 5)";
+      starCtx.fillStyle = "rgb(10, 10, 10)";
       starCtx.fillRect(0, 0, starCanvas.width, starCanvas.height);
       stars.forEach((star, i) => {
         star.angle += star.speed;
@@ -3015,10 +3102,17 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
     const themeObserver = new MutationObserver(updateStarAnimationState);
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     updateStarAnimationState();
+  __HUB_HEADER_JS__
   </script>
 </body>
 </html>
 """
+HUB_NEW_SESSION_HTML = (
+    HUB_NEW_SESSION_HTML
+    .replace("__HUB_HEADER_CSS__", _HUB_PAGE_HEADER_CSS)
+    .replace("__HUB_HEADER_HTML__", _HUB_PAGE_HEADER_HTML)
+    .replace("__HUB_HEADER_JS__", _HUB_PAGE_HEADER_JS)
+)
 
 def error_page(message):
     text = html.escape(message)
@@ -3073,39 +3167,62 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/open-session":
             qs = parse_qs(parsed.query)
             session_name = (qs.get("session", [""])[0] or "").strip()
+            fmt = qs.get("format", [""])[0]
             available = {item["name"] for item in repo_sessions()}
             if not session_name or session_name not in available:
-                self._send_html(404, error_page("That session is not available in this repo."))
+                if fmt == "json":
+                    self._send_json(404, {"ok": False, "error": "Session not found"})
+                else:
+                    self._send_html(404, error_page("That session is not available in this repo."))
                 return
             ok, chat_port, detail = ensure_chat_server(session_name)
             if not ok:
-                self._send_html(500, error_page(f"Failed to start chat for {session_name}: {detail}"))
+                if fmt == "json":
+                    self._send_json(500, {"ok": False, "error": detail})
+                else:
+                    self._send_html(500, error_page(f"Failed to start chat for {session_name}: {detail}"))
                 return
             host = host_without_port(self.headers.get("Host", "127.0.0.1"))
             location = f"{_scheme}://{host}:{chat_port}/?follow=1"
-            self.send_response(302)
-            self.send_header("Location", location)
-            self.end_headers()
+            if fmt == "json":
+                self._send_json(200, {"ok": True, "chat_url": location})
+            else:
+                self.send_response(302)
+                self.send_header("Location", location)
+                self.end_headers()
             return
         if parsed.path == "/revive-session":
             qs = parse_qs(parsed.query)
             session_name = (qs.get("session", [""])[0] or "").strip()
+            fmt = qs.get("format", [""])[0]
             if not session_name:
-                self._send_html(404, error_page("That archived session is not available in this repo."))
+                if fmt == "json":
+                    self._send_json(404, {"ok": False, "error": "Session not found"})
+                else:
+                    self._send_html(404, error_page("That archived session is not available in this repo."))
                 return
             ok, detail = revive_archived_session(session_name)
             if not ok:
-                self._send_html(500, error_page(f"Failed to revive {session_name}: {detail}"))
+                if fmt == "json":
+                    self._send_json(500, {"ok": False, "error": detail})
+                else:
+                    self._send_html(500, error_page(f"Failed to revive {session_name}: {detail}"))
                 return
             ok, chat_port, detail = ensure_chat_server(session_name)
             if not ok:
-                self._send_html(500, error_page(f"Failed to start chat for {session_name}: {detail}"))
+                if fmt == "json":
+                    self._send_json(500, {"ok": False, "error": detail})
+                else:
+                    self._send_html(500, error_page(f"Failed to start chat for {session_name}: {detail}"))
                 return
             host = host_without_port(self.headers.get("Host", "127.0.0.1"))
             location = f"{_scheme}://{host}:{chat_port}/?follow=1"
-            self.send_response(302)
-            self.send_header("Location", location)
-            self.end_headers()
+            if fmt == "json":
+                self._send_json(200, {"ok": True, "chat_url": location})
+            else:
+                self.send_response(302)
+                self.send_header("Location", location)
+                self.end_headers()
             return
         if parsed.path == "/kill-session":
             qs = parse_qs(parsed.query)
@@ -3596,6 +3713,21 @@ class Handler(BaseHTTPRequestHandler):
             return
         if parsed.path == "/auto-mode":
             body = json.dumps(auto_mode_status(), ensure_ascii=True).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if parsed.path == "/hub-settings":
+            s = load_hub_settings()
+            body = json.dumps({
+                "chat_auto_mode": bool(s.get("chat_auto_mode", False)),
+                "chat_awake":     bool(s.get("chat_awake", False)),
+                "chat_sound":     bool(s.get("chat_sound", False)),
+                "chat_tts":       bool(s.get("chat_tts", False)),
+            }, ensure_ascii=True).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Cache-Control", "no-store")
