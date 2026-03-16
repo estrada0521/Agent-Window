@@ -78,6 +78,7 @@ window.AnsiUp=window.AnsiUp||class{ansi_to_html(t){
             "codex": self.repo_root / "codex-color.svg",
             "gemini": self.repo_root / "gemini-color.svg",
             "copilot": self.repo_root / "github.svg",
+            "grok": self.repo_root / "grok.svg",
         }
         self.font_files = {
             "anthropic-serif-roman.ttf": [

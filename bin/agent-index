@@ -156,7 +156,7 @@ available_agents() {
   fi
   # Fallback for old sessions
   local agents=() agent upper pane log_file
-  for agent in claude codex gemini copilot; do
+  for agent in claude codex gemini copilot grok; do
     upper="$(printf '%s' "$agent" | tr '[:lower:]' '[:upper:]')"
     pane="$(tmux show-environment -t "$SESSION_NAME" "MULTIAGENT_PANE_${upper}" 2>/dev/null | sed 's/^[^=]*=//' || true)"
     if [[ -n "$pane" ]]; then
@@ -167,7 +167,7 @@ available_agents() {
     [[ -f "$log_file" ]] && agents+=("$agent")
   done
   if [[ ${#agents[@]} -eq 0 ]]; then
-    agents=(claude codex gemini copilot)
+    agents=(claude codex gemini copilot grok)
   fi
   printf '%s\n' "$(IFS=,; echo "${agents[*]}")"
 }
@@ -1407,11 +1407,11 @@ HUB_APP_HTML = """<!doctype html>
             label: labelMapper(label),
             value: formatter(value),
           }));
-      const messageSenderRows = ["user", "claude", "codex", "gemini", "copilot"]
+      const messageSenderRows = ["user", "claude", "codex", "gemini", "copilot", "grok"]
         .map((key) => ({ label: formatLabel(key), value: Number((statsData.messages_by_sender || {})[key] || 0) }))
         .filter((item) => item.value > 0)
         .map((item) => ({ label: item.label, value: String(item.value) }));
-      const activatedAgentCount = ["claude", "codex", "gemini", "copilot"]
+      const activatedAgentCount = ["claude", "codex", "gemini", "copilot", "grok"]
         .filter((key) => Number((statsData.messages_by_sender || {})[key] || 0) >= ACTIVATED_AGENT_THRESHOLD)
         .length;
       const messageSessionRows = sortedCountRows(statsData.messages_by_session || {}, (value) => String(value), (label) => label);
@@ -3311,8 +3311,10 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
     .agent-sliders { display: flex; flex-direction: column; }
     .agent-slider-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid var(--line); }
     .agent-slider-row:last-child { border-bottom: none; }
-    .agent-slider-name { font-size: 15px; color: var(--fg); min-width: 64px; }
+    .agent-slider-name { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: var(--fg); min-width: 92px; }
     .agent-slider-name.zero { color: var(--muted); }
+    .agent-slider-icon { width: 16px; height: 16px; object-fit: contain; flex-shrink: 0; }
+    .agent-slider-icon.invert { filter: invert(1) grayscale(1) brightness(1.35); }
     .agent-slider-wrap { flex: 1; display: flex; align-items: center; gap: 10px; }
     .agent-slider-input {
       flex: 1; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px;
@@ -3381,28 +3383,35 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
       <span class="field-label">Agents</span>
       <div class="agent-sliders">
         <div class="agent-slider-row" data-agent="claude">
-          <span class="agent-slider-name">Claude</span>
+          <span class="agent-slider-name"><img class="agent-slider-icon" src="/icon/claude" alt=""><span>Claude</span></span>
           <div class="agent-slider-wrap">
             <input type="range" class="agent-slider-input" min="0" max="20" value="1">
             <span class="agent-slider-val">1</span>
           </div>
         </div>
         <div class="agent-slider-row" data-agent="codex">
-          <span class="agent-slider-name">Codex</span>
+          <span class="agent-slider-name"><img class="agent-slider-icon invert" src="/icon/codex" alt=""><span>Codex</span></span>
           <div class="agent-slider-wrap">
             <input type="range" class="agent-slider-input" min="0" max="20" value="1">
             <span class="agent-slider-val">1</span>
           </div>
         </div>
         <div class="agent-slider-row" data-agent="gemini">
-          <span class="agent-slider-name">Gemini</span>
+          <span class="agent-slider-name"><img class="agent-slider-icon" src="/icon/gemini" alt=""><span>Gemini</span></span>
           <div class="agent-slider-wrap">
             <input type="range" class="agent-slider-input" min="0" max="20" value="1">
             <span class="agent-slider-val">1</span>
           </div>
         </div>
         <div class="agent-slider-row" data-agent="copilot">
-          <span class="agent-slider-name">Copilot</span>
+          <span class="agent-slider-name"><img class="agent-slider-icon invert" src="/icon/copilot" alt=""><span>Copilot</span></span>
+          <div class="agent-slider-wrap">
+            <input type="range" class="agent-slider-input" min="0" max="20" value="1">
+            <span class="agent-slider-val">1</span>
+          </div>
+        </div>
+        <div class="agent-slider-row" data-agent="grok">
+          <span class="agent-slider-name"><img class="agent-slider-icon" src="/icon/grok" alt=""><span>Grok</span></span>
           <div class="agent-slider-wrap">
             <input type="range" class="agent-slider-input" min="0" max="20" value="1">
             <span class="agent-slider-val">1</span>
@@ -3890,14 +3899,14 @@ class Handler(BaseHTTPRequestHandler):
                 return
             workspace = (data.get("workspace") or "").strip()
             session_name = (data.get("session_name") or "").strip()
-            agents = [a for a in (data.get("agents") or []) if a in ("claude", "codex", "gemini", "copilot")]
+            agents = [a for a in (data.get("agents") or []) if a in ("claude", "codex", "gemini", "copilot", "grok")]
             if not workspace or not Path(workspace).is_dir():
                 self._send_json(400, {"ok": False, "error": f"Invalid workspace: {workspace or '(empty)'}"})
                 return
             if not session_name:
                 session_name = Path(workspace).name
             session_name = _re.sub(r"[^a-zA-Z0-9_.\-]", "-", session_name)[:64]
-            agents_str = ",".join(agents) if agents else "claude,codex,gemini,copilot"
+            agents_str = ",".join(agents) if agents else "claude,codex,gemini,copilot,grok"
             multiagent_bin = str(script_path.parent / "multiagent")
             try:
                 subprocess.Popen(

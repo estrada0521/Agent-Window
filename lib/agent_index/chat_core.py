@@ -99,7 +99,8 @@ class ChatRuntime:
     .message.claude .md-body,
     .message.codex .md-body,
     .message.gemini .md-body,
-    .message.copilot .md-body {{
+    .message.copilot .md-body,
+    .message.grok .md-body {{
       font-family: {agent_family} !important;
     }}
     [data-theme="black-hole"] .message.user .md-body {{
@@ -117,7 +118,8 @@ class ChatRuntime:
     [data-theme="black-hole"] .message.claude .md-body,
     [data-theme="black-hole"] .message.codex .md-body,
     [data-theme="black-hole"] .message.gemini .md-body,
-    [data-theme="black-hole"] .message.copilot .md-body {{
+    [data-theme="black-hole"] .message.copilot .md-body,
+    [data-theme="black-hole"] .message.grok .md-body {{
       color: var(--agent-message-blackhole-color) !important;
     }}
     [data-theme="black-hole"] .message.claude .md-body p,
@@ -147,7 +149,14 @@ class ChatRuntime:
     [data-theme="black-hole"] .message.copilot .md-body h2,
     [data-theme="black-hole"] .message.copilot .md-body h3,
     [data-theme="black-hole"] .message.copilot .md-body h4,
-    [data-theme="black-hole"] .message.copilot .md-body blockquote {{
+    [data-theme="black-hole"] .message.copilot .md-body blockquote,
+    [data-theme="black-hole"] .message.grok .md-body p,
+    [data-theme="black-hole"] .message.grok .md-body li,
+    [data-theme="black-hole"] .message.grok .md-body h1,
+    [data-theme="black-hole"] .message.grok .md-body h2,
+    [data-theme="black-hole"] .message.grok .md-body h3,
+    [data-theme="black-hole"] .message.grok .md-body h4,
+    [data-theme="black-hole"] .message.grok .md-body blockquote {{
       color: var(--agent-message-blackhole-color) !important;
     }}
     """
@@ -363,7 +372,7 @@ class ChatRuntime:
                 return [a for a in line.split("=", 1)[1].split(",") if a]
         except Exception:
             pass
-        return list(self.targets) if self.targets else ["claude", "codex", "gemini", "copilot"]
+        return list(self.targets) if self.targets else ["claude", "codex", "gemini", "copilot", "grok"]
 
     def pane_id_for_agent(self, agent_name):
         pane_var = f"MULTIAGENT_PANE_{agent_name.upper().replace('-', '_')}"

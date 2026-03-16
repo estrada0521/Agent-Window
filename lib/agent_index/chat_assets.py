@@ -1609,7 +1609,8 @@ CHAT_HTML = r"""<!doctype html>
       .message.claude .md-body,
       .message.codex .md-body,
       .message.gemini .md-body,
-      .message.copilot .md-body {
+      .message.copilot .md-body,
+      .message.grok .md-body {
         font-family: "anthropicSerif", "Anthropic Serif", "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", Georgia, serif;
       }
       .target-chip {
@@ -2267,6 +2268,7 @@ CHAT_HTML = r"""<!doctype html>
     .message-row.codex .avatar { color: var(--codex-accent); }
     .message-row.gemini .avatar { color: var(--gemini-accent); }
     .message-row.copilot .avatar { color: var(--copilot-accent); }
+    .message-row.grok .avatar { color: var(--copilot-accent); }
     .message-row.system .avatar { color: var(--system-accent); }
     .message-wrap {
       display: flex;
@@ -2524,7 +2526,8 @@ CHAT_HTML = r"""<!doctype html>
     .message.claude,
     .message.codex,
     .message.gemini,
-    .message.copilot {
+    .message.copilot,
+    .message.grok {
       background: rgba(0, 0, 0, 0.68);
       border-color: rgba(255, 255, 255, 0.12);
       box-shadow: 0 10px 24px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
@@ -2532,13 +2535,15 @@ CHAT_HTML = r"""<!doctype html>
     .message-row.claude,
     .message-row.codex,
     .message-row.gemini,
-    .message-row.copilot {
+    .message-row.copilot,
+    .message-row.grok {
       gap: 8px;
     }
     .message-row.claude .avatar,
     .message-row.codex .avatar,
     .message-row.gemini .avatar,
-    .message-row.copilot .avatar {
+    .message-row.copilot .avatar,
+    .message-row.grok .avatar {
       display: grid;
       width: 24px;
       height: 24px;
@@ -2554,20 +2559,23 @@ CHAT_HTML = r"""<!doctype html>
     .message-row.claude .avatar img,
     .message-row.codex .avatar img,
     .message-row.gemini .avatar img,
-    .message-row.copilot .avatar img {
+    .message-row.copilot .avatar img,
+    .message-row.grok .avatar img {
       width: 22px;
       height: 22px;
     }
     .message-row.claude .message-wrap,
     .message-row.codex .message-wrap,
     .message-row.gemini .message-wrap,
-    .message-row.copilot .message-wrap {
+    .message-row.copilot .message-wrap,
+    .message-row.grok .message-wrap {
       max-width: 100%;
     }
     .message-row.claude .message,
     .message-row.codex .message,
     .message-row.gemini .message,
-    .message-row.copilot .message {
+    .message-row.copilot .message,
+    .message-row.grok .message {
       width: 100%;
       padding: 0 0 10px;
       border: none;
@@ -2580,7 +2588,8 @@ CHAT_HTML = r"""<!doctype html>
     .message-row.claude .meta,
     .message-row.codex .meta,
     .message-row.gemini .meta,
-    .message-row.copilot .meta {
+    .message-row.copilot .meta,
+    .message-row.grok .meta {
       margin-bottom: 4px;
     }
     .message.system {
@@ -3720,7 +3729,8 @@ CHAT_HTML = r"""<!doctype html>
       .message-row.claude,
       .message-row.codex,
       .message-row.gemini,
-      .message-row.copilot {
+      .message-row.copilot,
+      .message-row.grok {
         padding-right: 12px;
       }
       .send-btn { display: none !important; }
@@ -3782,7 +3792,8 @@ CHAT_HTML = r"""<!doctype html>
       .message.claude .md-body,
       .message.codex .md-body,
       .message.gemini .md-body,
-      .message.copilot .md-body {
+      .message.copilot .md-body,
+      .message.grok .md-body {
         font-family: "anthropicSerif", "anthropicSerif Fallback", "Anthropic Serif", "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", Georgia, "Times New Roman", Times, serif;
         font-style: normal;
         font-size: 16px;
@@ -3813,7 +3824,11 @@ CHAT_HTML = r"""<!doctype html>
       .message.copilot .md-body h1,
       .message.copilot .md-body h2,
       .message.copilot .md-body h3,
-      .message.copilot .md-body h4 {
+      .message.copilot .md-body h4,
+      .message.grok .md-body h1,
+      .message.grok .md-body h2,
+      .message.grok .md-body h3,
+      .message.grok .md-body h4 {
         font-weight: 600;
         font-variation-settings: "wght" 530;
         font-synthesis: weight;
@@ -3829,20 +3844,25 @@ CHAT_HTML = r"""<!doctype html>
       .message.gemini .md-body blockquote,
       .message.copilot .md-body p,
       .message.copilot .md-body li,
-      .message.copilot .md-body blockquote {
+      .message.copilot .md-body blockquote,
+      .message.grok .md-body p,
+      .message.grok .md-body li,
+      .message.grok .md-body blockquote {
         font-weight: 360;
         font-variation-settings: "wght" 360;
       }
       .message.claude .md-body li,
       .message.codex .md-body li,
       .message.gemini .md-body li,
-      .message.copilot .md-body li {
+      .message.copilot .md-body li,
+      .message.grok .md-body li {
         line-height: 26px;
       }
       html[data-agent-font-mode="gothic"] .message.claude .md-body,
       html[data-agent-font-mode="gothic"] .message.codex .md-body,
       html[data-agent-font-mode="gothic"] .message.gemini .md-body,
-      html[data-agent-font-mode="gothic"] .message.copilot .md-body {
+      html[data-agent-font-mode="gothic"] .message.copilot .md-body,
+      html[data-agent-font-mode="gothic"] .message.grok .md-body {
         font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif;
         font-size: 16px;
         line-height: 22px;
@@ -3883,14 +3903,22 @@ CHAT_HTML = r"""<!doctype html>
       html[data-agent-font-mode="gothic"] .message.copilot .md-body h2,
       html[data-agent-font-mode="gothic"] .message.copilot .md-body h3,
       html[data-agent-font-mode="gothic"] .message.copilot .md-body h4,
-      html[data-agent-font-mode="gothic"] .message.copilot .md-body blockquote {
+      html[data-agent-font-mode="gothic"] .message.copilot .md-body blockquote,
+      html[data-agent-font-mode="gothic"] .message.grok .md-body p,
+      html[data-agent-font-mode="gothic"] .message.grok .md-body li,
+      html[data-agent-font-mode="gothic"] .message.grok .md-body h1,
+      html[data-agent-font-mode="gothic"] .message.grok .md-body h2,
+      html[data-agent-font-mode="gothic"] .message.grok .md-body h3,
+      html[data-agent-font-mode="gothic"] .message.grok .md-body h4,
+      html[data-agent-font-mode="gothic"] .message.grok .md-body blockquote {
         font-weight: 360;
         font-variation-settings: "wght" 360, "opsz" 16;
       }
       html[data-agent-font-mode="gothic"] .message.claude .md-body li,
       html[data-agent-font-mode="gothic"] .message.codex .md-body li,
       html[data-agent-font-mode="gothic"] .message.gemini .md-body li,
-      html[data-agent-font-mode="gothic"] .message.copilot .md-body li {
+      html[data-agent-font-mode="gothic"] .message.copilot .md-body li,
+      html[data-agent-font-mode="gothic"] .message.grok .md-body li {
         line-height: 22px;
       }
     }
@@ -5596,11 +5624,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     if (document.fonts?.ready) {
       document.fonts.ready.then(() => scheduleViewportCenteredBlocks(document)).catch(() => {});
     }
-    const AGENT_ICON_NAMES = new Set(["claude", "codex", "gemini", "copilot"]);
+    const AGENT_ICON_NAMES = new Set(["claude", "codex", "gemini", "copilot", "grok"]);
     const agentBaseName = (name) => (name || "").toLowerCase().replace(/-\d+$/, "");
     const roleClass = (sender) => {
       const base = agentBaseName(sender);
-      if (["user","claude","codex","gemini","copilot"].includes(base)) return base;
+      if (["user","claude","codex","gemini","copilot","grok"].includes(base)) return base;
       return "system";
     };
     const senderBadge = (sender) => ((sender || "?").trim()[0] || "?").toUpperCase();
