@@ -797,28 +797,20 @@ CHAT_HTML = r"""<!doctype html>
       transform-origin: top right;
     }
     #attachedFilesMenu .header-plus-panel {
-      min-width: 248px;
+      min-width: 168px;
       max-height: 40vh;
-      padding: 10px;
-      gap: 6px;
+      padding: 8px;
+      gap: 2px;
       overflow-y: auto;
       left: auto;
       right: 0;
       transform-origin: top right;
     }
-    #attachedFilesPanel .quick-action {
-      padding: 11px 14px;
-      font-size: 14px;
-      line-height: 20px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
     #attachedFilesPanel .quick-action + .quick-action {
       background-image: linear-gradient(to right, rgba(255,255,255,0.08), rgba(255,255,255,0.08));
       background-repeat: no-repeat;
-      background-size: calc(100% - 28px) 1px;
-      background-position: 14px 0;
+      background-size: calc(100% - 24px) 1px;
+      background-position: 12px 0;
     }
     #attachedFilesPanel .file-item-icon {
       width: 14px;
@@ -826,18 +818,66 @@ CHAT_HTML = r"""<!doctype html>
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      opacity: 0.85;
+      opacity: 1;
+      color: rgb(252, 252, 252);
       flex-shrink: 0;
     }
     #attachedFilesPanel .file-item-icon svg {
       width: 100%;
       height: 100%;
-      stroke-width: 2.2px;
+      stroke: currentColor;
+      stroke-width: 1.2px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    #attachedFilesPanel .quick-action {
+      color: rgb(252, 252, 252);
     }
     #attachedFilesPanel .file-item-path {
       flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    #attachedFilesPanel .file-menu-section {
+      padding: 9px 12px 5px;
+      color: rgba(255,255,255,0.56);
+      font: 600 11px/1.2 "SF Pro Text","Segoe UI",sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    #attachedFilesPanel .file-menu-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      min-width: 0;
+    }
+    #attachedFilesPanel .file-menu-star {
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: rgba(255,255,255,0.34);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      cursor: pointer;
+      padding: 0;
+      transition: color 140ms ease, background 140ms ease, transform 90ms ease;
+    }
+    #attachedFilesPanel .file-menu-star.is-favorite {
+      color: rgb(255, 204, 84);
+    }
+    .has-hover #attachedFilesPanel .file-menu-star:hover {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.9);
+    }
+    #attachedFilesPanel .file-menu-star:active {
+      transform: scale(0.92);
     }
     .attached-files-badge {
       position: absolute;
@@ -4945,6 +4985,23 @@ CHAT_HTML = r"""<!doctype html>
     [data-theme="black-hole"] .message.user .message-body-row.is-collapsed::after {
       background: linear-gradient(180deg, rgba(20,20,20,0) 0%, rgb(20,20,20) 78%);
     }
+    [data-theme="black-hole"] .md-body :not(pre) > code {
+      color: rgb(200, 180, 110);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      padding: 1px 8px;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        0 0 0 1px rgba(255,255,255,0.03);
+      letter-spacing: 0.01em;
+    }
+    [data-theme="black-hole"] .message.user .md-body :not(pre) > code {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.04) 100%);
+      border-color: rgba(255,255,255,0.14);
+    }
     /* input box */
     [data-theme="black-hole"] .composer textarea,
     [data-theme="black-hole"] .composer textarea:focus {
@@ -6002,6 +6059,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       document.getElementById("title").textContent = data.session;
       const headerPanelTitle = document.getElementById("headerPanelTitle");
       if (headerPanelTitle) headerPanelTitle.textContent = data.session;
+      attachedFilesSession = data.session || "";
       loadThinkingTime(data.session);
       const displayEntries = window.matchMedia("(max-width: 430px)").matches
         ? data.entries.slice(-__MOBILE_MESSAGE_LIMIT__)
@@ -6425,6 +6483,77 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const rightMenu = document.getElementById("rightMenu");
     const attachedFilesMenu = document.getElementById("attachedFilesMenu");
     const attachedFilesPanel = document.getElementById("attachedFilesPanel");
+    let attachedFilesSession = "";
+    const attachedFavoritesStorageKey = (session) => `attachedFavorites:${session || "default"}`;
+    const loadAttachedFavorites = (session) => {
+      if (!session) return [];
+      try {
+        const raw = localStorage.getItem(attachedFavoritesStorageKey(session));
+        const parsed = JSON.parse(raw || "[]");
+        return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : [];
+      } catch (_) {
+        return [];
+      }
+    };
+    const saveAttachedFavorites = (session, favorites) => {
+      if (!session) return;
+      try {
+        localStorage.setItem(attachedFavoritesStorageKey(session), JSON.stringify(Array.from(new Set(favorites))));
+      } catch (_) {}
+    };
+    const fileMenuSectionForExt = (ext) => {
+      if (["png", "jpg", "jpeg", "gif", "webp", "svg", "ico", "mp4", "mov", "webm", "avi", "mkv", "mp3", "wav", "ogg", "m4a", "flac"].includes(ext)) return "Media";
+      if (["html", "htm", "pdf"].includes(ext)) return "Web";
+      if (["json", "yaml", "yml", "csv", "sql", "toml", "ini", "cfg", "conf"].includes(ext)) return "Data";
+      if (["md", "txt", "log", "tex", "rst"].includes(ext)) return "Documents";
+      if (["py", "js", "ts", "tsx", "jsx", "sh", "css"].includes(ext)) return "Code";
+      return "Other";
+    };
+    const buildFileMenuRow = (path, ext, isFavorite, onFavoriteToggle) => {
+      const filename = path.split("/").pop() || path;
+      const icon = FILE_ICONS[ext] || FILE_SVG_ICONS.file;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "quick-action";
+      btn.title = path;
+      const row = document.createElement("span");
+      row.className = "file-menu-row";
+      const iconSpan = document.createElement("span");
+      iconSpan.className = "file-item-icon";
+      iconSpan.setAttribute("aria-hidden", "true");
+      iconSpan.innerHTML = icon;
+      const pathSpan = document.createElement("span");
+      pathSpan.className = "file-item-path";
+      pathSpan.textContent = filename;
+      const starBtn = document.createElement("span");
+      starBtn.className = `file-menu-star${isFavorite ? " is-favorite" : ""}`;
+      starBtn.setAttribute("role", "button");
+      starBtn.setAttribute("tabindex", "0");
+      starBtn.setAttribute("aria-label", isFavorite ? "Unfavorite" : "Favorite");
+      starBtn.setAttribute("title", isFavorite ? "Unfavorite" : "Favorite");
+      starBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="${isFavorite ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.1 8.6 22 9.3 17 14.1 18.3 21 12 17.5 5.7 21 7 14.1 2 9.3 8.9 8.6 12 2"></polygon></svg>`;
+      row.append(iconSpan, pathSpan, starBtn);
+      btn.appendChild(row);
+      btn.addEventListener("mousedown", (e) => e.preventDefault());
+      btn.addEventListener("click", async (e) => {
+        if (e.target.closest(".file-menu-star")) return;
+        if (attachedFilesMenu) attachedFilesMenu.open = false;
+        await openFileSurface(path, ext, btn, e);
+      });
+      starBtn?.addEventListener("mousedown", (e) => e.preventDefault());
+      starBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onFavoriteToggle(path);
+      });
+      starBtn?.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        e.stopPropagation();
+        onFavoriteToggle(path);
+      });
+      return btn;
+    };
     const updateAttachedFilesPanel = async (entries) => {
       if (!attachedFilesPanel) return;
       const seen = new Set();
@@ -6473,21 +6602,35 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         attachedFilesPanel.appendChild(empty);
         return;
       }
+      const favorites = new Set(loadAttachedFavorites(attachedFilesSession).filter((path) => files.includes(path)));
+      const orderedSections = ["Favorites", "Documents", "Code", "Web", "Media", "Data", "Other"];
+      const grouped = Object.fromEntries(orderedSections.map((name) => [name, []]));
       for (const path of files) {
         const filename = path.split("/").pop() || path;
         const ext = filename.includes(".") ? filename.split(".").pop().toLowerCase() : "";
-        const icon = FILE_ICONS[ext] || FILE_SVG_ICONS.file;
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "quick-action";
-        btn.title = path;
-        btn.innerHTML = `<span class="file-item-icon" aria-hidden="true">${icon}</span><span class="file-item-path">${escapeHtml(filename)}</span>`;
-        btn.addEventListener("mousedown", (e) => e.preventDefault());
-        btn.addEventListener("click", async (e) => {
-          if (attachedFilesMenu) attachedFilesMenu.open = false;
-          await openFileSurface(path, ext, btn, e);
-        });
-        attachedFilesPanel.appendChild(btn);
+        if (favorites.has(path)) {
+          grouped.Favorites.push({ path, ext });
+        }
+        grouped[fileMenuSectionForExt(ext)].push({ path, ext });
+      }
+      const rerender = () => updateAttachedFilesPanel(entries);
+      const toggleFavorite = (path) => {
+        const next = new Set(loadAttachedFavorites(attachedFilesSession));
+        if (next.has(path)) next.delete(path);
+        else next.add(path);
+        saveAttachedFavorites(attachedFilesSession, Array.from(next));
+        rerender();
+      };
+      for (const sectionName of orderedSections) {
+        const items = grouped[sectionName] || [];
+        if (!items.length) continue;
+        const section = document.createElement("div");
+        section.className = "file-menu-section";
+        section.textContent = sectionName;
+        attachedFilesPanel.appendChild(section);
+        for (const item of items) {
+          attachedFilesPanel.appendChild(buildFileMenuRow(item.path, item.ext, favorites.has(item.path), toggleFavorite));
+        }
       }
     };
     let keepHeaderMenuThroughForwardClick = "";
