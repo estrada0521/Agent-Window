@@ -582,7 +582,7 @@ _HUB_PAGE_HEADER_JS = """
 _HUB_PAGE_HEADER_HTML = _HUB_PAGE_HEADER_HTML.replace("__FONTBOLT_B64__", _FONTBOLT_PNG_B64)
 
 HUB_APP_HTML = """<!doctype html>
-<html lang="en" data-theme="__CHAT_THEME__" data-agent-font-mode="__AGENT_FONT_MODE__">
+<html lang="en" data-theme="__CHAT_THEME__"__STARFIELD_ATTR__ data-agent-font-mode="__AGENT_FONT_MODE__">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -718,6 +718,33 @@ HUB_APP_HTML = """<!doctype html>
       margin-bottom: 18px;
       overflow-x: auto;
     }
+    .activity-filter-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+      padding: 4px;
+      border: 0.5px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+    }
+    .activity-filter-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font: inherit;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 140ms ease, color 140ms ease;
+    }
+    .activity-filter-btn.active {
+      background: var(--panel-2);
+      color: var(--fg);
+    }
     .activity-grid-label {
       font-size: 11px;
       font-weight: 600;
@@ -800,6 +827,35 @@ HUB_APP_HTML = """<!doctype html>
       border-radius: 14px;
       padding: 12px 13px;
       min-width: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-content {
+      position: relative;
+      z-index: 1;
+    }
+    .stat-trend {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    .stat-trend svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .stat-trend .trend-fill {
+      fill: rgba(255,255,255,0.04);
+    }
+    .stat-trend .trend-line {
+      fill: none;
+      stroke: rgba(255,255,255,0.22);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
     details.stat-card {
       padding: 0;
@@ -1113,6 +1169,12 @@ HUB_APP_HTML = """<!doctype html>
     [data-theme="black-hole"] .activity-cell:hover::after {
       background: rgba(0, 0, 0, 0.95);
     }
+    [data-theme="black-hole"] .stat-trend .trend-fill {
+      fill: rgba(255,255,255,0.045);
+    }
+    [data-theme="black-hole"] .stat-trend .trend-line {
+      stroke: rgba(255,255,255,0.3);
+    }
     [data-theme="black-hole"] .card-link.danger:hover {
       background: rgb(10, 4, 4);
     }
@@ -1126,16 +1188,16 @@ HUB_APP_HTML = """<!doctype html>
       display: none;
       pointer-events: none;
     }
-    [data-theme="black-hole"] #starfield {
+    [data-theme="black-hole"]:not([data-starfield="off"]) #starfield {
       display: block;
     }
-    [data-theme="black-hole"] body {
+    [data-theme="black-hole"]:not([data-starfield="off"]) body {
       background: transparent !important;
     }
-    [data-theme="black-hole"] html {
+    [data-theme="black-hole"]:not([data-starfield="off"]) html {
       background: rgb(10, 10, 10) !important;
     }
-    [data-theme="black-hole"] .shell {
+    [data-theme="black-hole"]:not([data-starfield="off"]) .shell {
       background: transparent !important;
       position: relative;
       z-index: 2;
@@ -1178,6 +1240,8 @@ HUB_APP_HTML = """<!doctype html>
       display: block !important;
     }
     .hub-view-stats .stat-note { display: none !important; }
+    .hub-view-stats .stat-content { padding: 0 14px; }
+    .hub-view-stats .stat-trend { inset: 8px 0 0 0; }
     .hub-view-stats details.stat-card > summary { justify-content: center !important; }
     .hub-view-stats details.stat-card > summary .stat-value { display: block !important; }
     .hub-view-stats .stat-card, .hub-view-stats details.stat-card > summary { -webkit-tap-highlight-color: transparent; }
@@ -1210,6 +1274,11 @@ HUB_APP_HTML = """<!doctype html>
     </section>
     <div class="stats-grid" id="stats"></div>
     <div class="activity-grid-wrap" id="activityWrap" style="display:none">
+      <div class="activity-filter-row" id="activityFilterRow">
+        <button type="button" class="activity-filter-btn active" data-scope="all">All</button>
+        <button type="button" class="activity-filter-btn" data-scope="agent">Agent</button>
+        <button type="button" class="activity-filter-btn" data-scope="user">User</button>
+      </div>
       <div class="activity-grid-label">Messages per day</div>
       <div class="activity-month-labels" id="activityMonthLabels"></div>
       <div class="activity-grid" id="activityGrid"></div>
@@ -1221,8 +1290,10 @@ HUB_APP_HTML = """<!doctype html>
   <script>
     const list = document.getElementById("list");
     const stats = document.getElementById("stats");
+    const activityFilterRow = document.getElementById("activityFilterRow");
     const openArchived = new Set();
     const openStatCards = new Set();
+    let activityScope = "all";
     const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
       "<": "&lt;",
@@ -1298,6 +1369,27 @@ HUB_APP_HTML = """<!doctype html>
         return `${mins}m`;
       };
       const formatLabel = (value) => String(value || "").replace(/(^|-)([a-z])/g, (_, prefix, char) => `${prefix}${char.toUpperCase()}`);
+      const buildTrendSvg = (series = []) => {
+        if (!series.length) return "";
+        const values = series.map((point) => Math.max(0, Number(point.value || 0)));
+        const width = 320;
+        const height = 124;
+        const padX = 10;
+        const padY = 12;
+        const maxVal = Math.max(...values, 1);
+        const minVal = Math.min(...values, 0);
+        const usableW = width - padX * 2;
+        const usableH = height - padY * 2;
+        const points = values.map((value, index) => {
+          const x = padX + (values.length === 1 ? usableW / 2 : (usableW * index) / (values.length - 1));
+          const ratio = maxVal === minVal ? 0.5 : (value - minVal) / (maxVal - minVal);
+          const y = height - padY - ratio * usableH;
+          return [x, y];
+        });
+        const linePath = points.map(([x, y], index) => `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`).join(" ");
+        const areaPath = `${linePath} L ${points[points.length - 1][0].toFixed(2)} ${(height - padY).toFixed(2)} L ${points[0][0].toFixed(2)} ${(height - padY).toFixed(2)} Z`;
+        return `<div class="stat-trend" aria-hidden="true"><svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><path class="trend-fill" d="${areaPath}"></path><path class="trend-line" d="${linePath}"></path></svg></div>`;
+      };
       const sortedCountRows = (source = {}, formatter = (value) => String(value), labelMapper = (value) => value) =>
         Object.entries(source)
           .filter(([, value]) => Number(value || 0) > 0)
@@ -1335,6 +1427,7 @@ HUB_APP_HTML = """<!doctype html>
           value: Number(statsData.total_messages || 0),
           note: "Non-system messages across all stored sessions",
           key: "messages",
+          trend: statsData.cumulative_messages_all || [],
           sections: [
             { label: "By sender", rows: messageSenderRows },
             { label: "By session", rows: messageSessionRows },
@@ -1347,6 +1440,7 @@ HUB_APP_HTML = """<!doctype html>
             ? `Cumulative agent runtime across ${Number(statsData.thinking_session_count || 0)} session${Number(statsData.thinking_session_count || 0) === 1 ? "" : "s"}`
             : "No recorded runtime yet",
           key: "thinking-time",
+          trend: statsData.cumulative_thinking || [],
           sections: [
             { label: "By agent", rows: thinkingAgentRows },
             { label: "By session", rows: thinkingSessionRows },
@@ -1362,6 +1456,7 @@ HUB_APP_HTML = """<!doctype html>
           value: Number(statsData.total_commits || 0),
           note: "Unique commits deduped across stored sessions",
           key: "commits",
+          trend: statsData.cumulative_commits || [],
           sections: [
             { label: "By session", rows: commitSessionRows },
           ].filter((section) => section.rows.length)
@@ -1372,19 +1467,25 @@ HUB_APP_HTML = """<!doctype html>
           const statKey = card.key || card.label.toLowerCase().replace(/\s+/g, "-");
           return `
             <div class="stat-card" data-stat-key="${escapeHtml(statKey)}">
-              <div class="stat-label">${escapeHtml(card.label)}</div>
-              <div class="stat-value">${escapeHtml(card.value)}</div>
-              <div class="stat-note">${escapeHtml(card.note)}</div>
+              ${buildTrendSvg(card.trend || [])}
+              <div class="stat-content">
+                <div class="stat-label">${escapeHtml(card.label)}</div>
+                <div class="stat-value">${escapeHtml(card.value)}</div>
+                <div class="stat-note">${escapeHtml(card.note)}</div>
+              </div>
             </div>
           `;
         }
         const open = openStatCards.has(card.key) ? " open" : "";
         return `
           <details class="stat-card"${open} data-stat-key="${escapeHtml(card.key)}">
+            ${buildTrendSvg(card.trend || [])}
             <summary class="stat-summary">
-              <div class="stat-label">${escapeHtml(card.label)}</div>
-              <div class="stat-value">${escapeHtml(card.value)}</div>
-              <div class="stat-note">${escapeHtml(card.note)}</div>
+              <div class="stat-content">
+                <div class="stat-label">${escapeHtml(card.label)}</div>
+                <div class="stat-value">${escapeHtml(card.value)}</div>
+                <div class="stat-note">${escapeHtml(card.note)}</div>
+              </div>
             </summary>
             <div class="stat-breakdown">
               ${card.sections.map((section) => `
@@ -1420,12 +1521,19 @@ HUB_APP_HTML = """<!doctype html>
         });
       });
     };
-    const renderActivityGrid = (dailyMessages = {}, dailyThinking = {}) => {
+    const renderActivityGrid = (statsData = {}) => {
       const wrap = document.getElementById("activityWrap");
       const grid = document.getElementById("activityGrid");
       const thinkingGrid = document.getElementById("thinkingGrid");
       const monthLabels = document.getElementById("activityMonthLabels");
       if (!wrap || !grid) return;
+      const scopeMap = {
+        all: statsData.daily_messages_all || statsData.daily_messages || {},
+        agent: statsData.daily_messages_agent || {},
+        user: statsData.daily_messages_user || {},
+      };
+      const dailyMessages = scopeMap[activityScope] || scopeMap.all;
+      const dailyThinking = statsData.daily_thinking || {};
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const year = today.getFullYear();
@@ -1500,13 +1608,19 @@ HUB_APP_HTML = """<!doctype html>
         ).join("");
       }
       wrap.style.display = Object.keys(dailyMessages).length ? "" : "none";
+      if (activityFilterRow) {
+        activityFilterRow.querySelectorAll("[data-scope]").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.scope === activityScope);
+        });
+      }
     };
     const render = (activeSessions, archivedSessions, statsData) => {
       const activeCount = activeSessions.length;
       const archivedCount = archivedSessions.length;
       const totalMessages = Number(statsData.total_messages || 0);
+      window._lastStatsData = statsData;
       renderStats(statsData);
-      renderActivityGrid(statsData.daily_messages || {}, statsData.daily_thinking || {});
+      renderActivityGrid(statsData);
       list.innerHTML = `
         <section class="section-block">
           <div class="section-label">Active Sessions</div>
@@ -1550,7 +1664,11 @@ HUB_APP_HTML = """<!doctype html>
         const data = await res.json();
         
         // Prevent layout thrashing and animation re-triggering if data hasn't changed
-        const sig = JSON.stringify({ active: data.active_sessions || data.sessions || [], archived: data.archived_sessions || [] });
+        const sig = JSON.stringify({
+          active: data.active_sessions || data.sessions || [],
+          archived: data.archived_sessions || [],
+          stats: data.stats || {},
+        });
         if (window._lastRenderSig === sig) return;
         window._lastRenderSig = sig;
         
@@ -1563,6 +1681,16 @@ HUB_APP_HTML = """<!doctype html>
     };
     refresh();
     setInterval(refresh, 5000);
+    if (activityFilterRow) {
+      activityFilterRow.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-scope]");
+        if (!btn) return;
+        const nextScope = btn.dataset.scope || "all";
+        if (nextScope === activityScope) return;
+        activityScope = nextScope;
+        if (window._lastStatsData) renderActivityGrid(window._lastStatsData);
+      });
+    }
     const hubRestartForm = document.querySelector(".hub-restart-form");
     if (hubRestartForm) {
       hubRestartForm.addEventListener("submit", async (e) => {
@@ -1655,19 +1783,20 @@ HUB_APP_HTML = """<!doctype html>
       starAnimationId = requestAnimationFrame(animateStars);
     }
     const updateStarAnimationState = () => {
-      const isBlackHole = document.documentElement.dataset.theme === "black-hole";
-      if (isBlackHole && !isStarAnimationRunning) {
+      const shouldRun = document.documentElement.dataset.theme === "black-hole"
+        && document.documentElement.dataset.starfield !== "off";
+      if (shouldRun && !isStarAnimationRunning) {
         isStarAnimationRunning = true;
         resizeStarCanvas();
         animateStars();
-      } else if (!isBlackHole && isStarAnimationRunning) {
+      } else if (!shouldRun && isStarAnimationRunning) {
         isStarAnimationRunning = false;
         cancelAnimationFrame(starAnimationId);
       }
     };
     window.addEventListener("resize", () => { if (isStarAnimationRunning) resizeStarCanvas(); });
     const themeObserver = new MutationObserver(updateStarAnimationState);
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-starfield"] });
     updateStarAnimationState();
   __HUB_HEADER_JS__
   </script>
@@ -1706,7 +1835,7 @@ HUB_STATS_HTML = (
 )
 
 HUB_HOME_HTML = """<!doctype html>
-<html lang="en" data-theme="__CHAT_THEME__">
+<html lang="en" data-theme="__CHAT_THEME__"__STARFIELD_ATTR__>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -1902,21 +2031,48 @@ HUB_HOME_HTML = """<!doctype html>
     .mob-navigating { animation: mobSlideOutLeft 120ms cubic-bezier(0.4, 0, 0.6, 1) forwards; pointer-events: none; }
     __HUB_HEADER_CSS__
     .mob-stats-bar {
-      display: flex;
-      align-items: center;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0;
-      padding: 8px 16px;
+      padding: 10px 16px 11px;
       border-bottom: 0.5px solid var(--line);
+      border-top: 0.5px solid var(--line);
       font-size: 12px;
       color: var(--muted);
       max-width: 760px;
       width: 100%;
       margin: 0 auto;
       box-sizing: border-box;
+      background: color-mix(in srgb, var(--bg) 84%, transparent);
+      position: relative;
+      z-index: 2;
     }
-    .mob-stats-bar .mob-stat { display: flex; align-items: baseline; gap: 4px; }
-    .mob-stats-bar .mob-stat + .mob-stat::before { content: "·"; margin: 0 8px; color: var(--line-strong); }
-    .mob-stats-bar .mob-stat-val { font-size: 14px; font-weight: 600; color: var(--fg); letter-spacing: -0.02em; }
+    .mob-stats-bar .mob-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      min-width: 0;
+    }
+    .mob-stats-bar .mob-stat + .mob-stat {
+      padding-left: 14px;
+      border-left: 0.5px solid var(--line);
+    }
+    .mob-stats-bar .mob-stat-label {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .mob-stats-bar .mob-stat-val {
+      font-size: 16px;
+      font-weight: 650;
+      color: var(--fg);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .mob-stats-bar.is-empty { display: none; }
     .mob-list-wrap {
       display: block;
       max-width: 760px;
@@ -1951,6 +2107,20 @@ HUB_HOME_HTML = """<!doctype html>
       margin-bottom: 5px;
     }
     .mob-row-name { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; min-width: 0; word-break: break-word; flex: 1; }
+    .mob-row-preview {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .mob-row-preview .sender {
+      color: var(--fg);
+      opacity: 0.72;
+    }
     .mob-row-tools { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
     .mob-badge { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; border: 0.5px solid var(--line-strong); color: var(--muted); }
     .mob-badge.idle { color: var(--ok); }
@@ -2023,11 +2193,12 @@ HUB_HOME_HTML = """<!doctype html>
     }
     [data-theme="black-hole"] .mob-session-row { background: rgb(10, 10, 10); border-bottom: none; }
     [data-theme="black-hole"] .swipe-row { border-bottom: 1px solid rgba(255,255,255,0.1); }
-    [data-theme="black-hole"] #starfield { display: block; }
-    [data-theme="black-hole"] body { background: transparent !important; }
-    [data-theme="black-hole"] html { background: rgb(10, 10, 10) !important; }
-    [data-theme="black-hole"] .shell { background: transparent !important; position: relative; z-index: 2; }
-    [data-theme="black-hole"] .mob-list-wrap { position: relative; z-index: 2; }
+    #starfield { position: fixed; top: 0; left: 0; z-index: 1; width: 100%; height: 100%; display: none; pointer-events: none; }
+    [data-theme="black-hole"]:not([data-starfield="off"]) #starfield { display: block; }
+    [data-theme="black-hole"]:not([data-starfield="off"]) body { background: transparent !important; }
+    [data-theme="black-hole"]:not([data-starfield="off"]) html { background: rgb(10, 10, 10) !important; }
+    [data-theme="black-hole"]:not([data-starfield="off"]) .shell { background: transparent !important; position: relative; z-index: 2; }
+    [data-theme="black-hole"]:not([data-starfield="off"]) .mob-list-wrap { position: relative; z-index: 2; }
     /* ── Chat iframe overlay ── */
     #chatOverlay { position: fixed; inset: 0; z-index: 9999; background: #000; }
     #chatOverlay[hidden] { display: none !important; }
@@ -2035,7 +2206,7 @@ HUB_HOME_HTML = """<!doctype html>
   </style>
 </head>
 <body>
-  <canvas id="starfield" style="position:fixed;top:0;left:0;z-index:1;width:100%;height:100%;display:none;pointer-events:none;"></canvas>
+  <canvas id="starfield"></canvas>
   __HUB_HEADER_HTML__
   <div id="chatOverlay" hidden><iframe id="chatFrame" src="about:blank" allow="microphone; clipboard-write"></iframe></div>
 <div class="mob-stats-bar" id="mobStatsBar"></div>
@@ -2235,14 +2406,14 @@ HUB_HOME_HTML = """<!doctype html>
 
       const updateStatsBar = (active, archived) => {
         if (!statsBar) return;
-        const agentSet = new Set();
-        active.forEach(s => (s.agents || []).forEach(a => agentSet.add(a)));
+        const activeAgentCount = active.reduce((sum, session) => sum + ((session.agents || []).length || 0), 0);
         const stat = (val, label) =>
-          `<div class="mob-stat"><span class="mob-stat-val">${val}</span><span>${label}</span></div>`;
+          `<div class="mob-stat"><span class="mob-stat-label">${label}</span><span class="mob-stat-val">${val}</span></div>`;
         statsBar.innerHTML =
-          stat(active.length, "active") +
-          stat(archived.length, "archived") +
-          stat(agentSet.size, "agent" + (agentSet.size !== 1 ? "s" : ""));
+          stat(active.length, "Active") +
+          stat(archived.length, "Archived") +
+          stat(activeAgentCount, "Agents");
+        statsBar.classList.toggle("is-empty", active.length === 0 && archived.length === 0);
       };
 
       const renderRows = (active, archived) => {
@@ -2264,6 +2435,7 @@ HUB_HOME_HTML = """<!doctype html>
             const agents = (s.agents && s.agents.length) ? s.agents.join(", ") : "none";
             const dead = s.dead_panes ? `, ${s.dead_panes} dead pane${s.dead_panes === 1 ? "" : "s"}` : "";
             const isPinned = pinned.includes(s.name);
+            const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
             return `<div class="swipe-row" data-session-name="${esc(s.name)}">` +
               `<div class="swipe-act swipe-act-left${isPinned ? " unpin" : ""}" data-action="pin">${pinSvg}<span>${isPinned ? "Unpin" : "Pin"}</span></div>` +
               `<div class="swipe-act swipe-act-right" data-action="kill">${trashSvg}<span>Kill</span></div>` +
@@ -2278,6 +2450,7 @@ HUB_HOME_HTML = """<!doctype html>
                     `<a class="mob-hover-btn kill" href="/kill-session?session=${encodeURIComponent(s.name)}" onclick="return confirm('Kill ${esc(s.name)}?')">Kill</a>` +
                   `</div>` +
                 `</div></div>` +
+                preview +
                 `<div class="mob-row-detail">` +
                   `<div class="mob-row-path">${esc(s.workspace || "workspace unavailable")}</div>` +
                   `<div class="mob-row-meta">` +
@@ -2295,6 +2468,7 @@ HUB_HOME_HTML = """<!doctype html>
           html += `<div class="mob-section-label">Archived</div>`;
           html += archived.map((s) => {
             const agents = (s.agents && s.agents.length) ? s.agents.join(", ") : "none";
+            const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
             return `<div class="swipe-row" data-session-name="${esc(s.name)}">` +
               `<div class="swipe-act swipe-act-left revive-act" data-action="revive">${reviveSvg}<span>Revive</span></div>` +
               `<div class="mob-session-row archived-row" data-open-href="/revive-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
@@ -2307,6 +2481,7 @@ HUB_HOME_HTML = """<!doctype html>
                     `<a class="mob-hover-btn pin" href="/revive-session?session=${encodeURIComponent(s.name)}">Revive</a>` +
                   `</div>` +
                 `</div></div>` +
+                preview +
                 `<div class="mob-row-detail">` +
                   `<div class="mob-row-path">${esc(s.workspace || "workspace unavailable")}</div>` +
                   `<div class="mob-row-meta">` +
@@ -2428,19 +2603,20 @@ HUB_HOME_HTML = """<!doctype html>
     }
     const updateStarAnimationState = () => {
       if (!starCanvas) return;
-      const isBlackHole = document.documentElement.dataset.theme === "black-hole";
-      if (isBlackHole && !isStarAnimationRunning) {
+      const shouldRun = document.documentElement.dataset.theme === "black-hole"
+        && document.documentElement.dataset.starfield !== "off";
+      if (shouldRun && !isStarAnimationRunning) {
         isStarAnimationRunning = true;
         resizeStarCanvas();
         animateStars();
-      } else if (!isBlackHole && isStarAnimationRunning) {
+      } else if (!shouldRun && isStarAnimationRunning) {
         isStarAnimationRunning = false;
         cancelAnimationFrame(starAnimationId);
       }
     };
     window.addEventListener("resize", () => { if (isStarAnimationRunning) resizeStarCanvas(); });
     const themeObserver = new MutationObserver(updateStarAnimationState);
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-starfield"] });
     updateStarAnimationState();
   __HUB_HEADER_JS__
   </script>
@@ -2464,9 +2640,11 @@ def hub_settings_html(saved=False):
     chat_awake = settings.get("chat_awake", False)
     chat_sound = settings.get("chat_sound", False)
     chat_tts = settings.get("chat_tts", False)
+    starfield = settings.get("starfield", False)
     notice = '<div style="margin:0 0 14px;color:rgb(170,190,172);font-size:13px;line-height:1.5;">Saved.</div>' if saved else ""
+    sf_attr = "" if starfield else ' data-starfield="off"'
     _html = f"""<!doctype html>
-<html lang="en" data-theme="{theme}">
+<html lang="en" data-theme="{theme}"{sf_attr}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -2505,16 +2683,17 @@ def hub_settings_html(saved=False):
       display: none;
       pointer-events: none;
     }}
-    [data-theme="black-hole"] #starfield {{
+    [data-starfield="on"] #starfield,
+    [data-theme="black-hole"]:not([data-starfield="off"]) #starfield {{
       display: block;
     }}
-    [data-theme="black-hole"] body {{
+    [data-theme="black-hole"]:not([data-starfield="off"]) body {{
       background: transparent !important;
     }}
-    [data-theme="black-hole"] html {{
+    [data-theme="black-hole"]:not([data-starfield="off"]) html {{
       background: rgb(10, 10, 10) !important;
     }}
-    [data-theme="black-hole"] .shell {{
+    [data-theme="black-hole"]:not([data-starfield="off"]) .shell {{
       background: transparent !important;
       position: relative;
       z-index: 2;
@@ -2668,6 +2847,7 @@ def hub_settings_html(saved=False):
   </style>
 </head>
 <body>
+  <canvas id="starfield"></canvas>
   __HUB_HEADER_HTML__
   <div class="shell">
     <section class="hero">
@@ -2737,6 +2917,16 @@ def hub_settings_html(saved=False):
           </label>
         </div>
       </div>
+      <div class="field">
+        <div class="label">Visual Effects</div>
+        <div class="chat-toggles">
+          <label class="toggle-row">
+            <span>Starfield background</span>
+            <input type="checkbox" name="starfield" value="on"{' checked' if starfield else ''}>
+          </label>
+        </div>
+        <div class="hint">Animated starfield on Black Hole theme. Uncheck to disable. Claude theme never shows starfield.</div>
+      </div>
       <button class="save" type="submit">Save Settings</button>
     </form>
   </div>
@@ -2762,6 +2952,96 @@ def hub_settings_html(saved=False):
         setTimeout(poll, 700);
       }});
     }}
+
+    // --- Starfield Animation ---
+    const starCanvas = document.getElementById("starfield");
+    const starCtx = starCanvas ? starCanvas.getContext("2d") : null;
+    let stars = [];
+    let shootingStars = [];
+    const numStars = 360;
+    let starAnimationId;
+    let isStarAnimationRunning = false;
+
+    function resizeStarCanvas() {{
+      if (!starCanvas) return;
+      starCanvas.width = window.innerWidth;
+      starCanvas.height = window.innerHeight;
+      initStars();
+    }}
+    function initStars() {{
+      if (!starCanvas) return;
+      const diagonal = Math.sqrt(starCanvas.width ** 2 + starCanvas.height ** 2);
+      stars = Array.from({{ length: numStars }}, () => ({{
+        angle: Math.random() * Math.PI * 2,
+        radius: Math.random() * diagonal,
+        speed: Math.random() * 0.0003 + 0.00015,
+        size: Math.random() * 1.2 + 0.5,
+      }}));
+    }}
+    function spawnShootingStar() {{
+      if (shootingStars.length === 0 && Math.random() < 0.01) {{
+        shootingStars.push({{
+          x: Math.random() * starCanvas.width * 0.5,
+          y: Math.random() * starCanvas.height * 0.5,
+          vx: 3 + Math.random() * 2,
+          vy: 1 + Math.random() * 1.5,
+          life: 80,
+          initialLife: 80,
+        }});
+      }}
+    }}
+    function animateStars() {{
+      if (!isStarAnimationRunning) return;
+      const centerX = starCanvas.width;
+      const centerY = starCanvas.height;
+      starCtx.fillStyle = "rgb(10, 10, 10)";
+      starCtx.fillRect(0, 0, starCanvas.width, starCanvas.height);
+      stars.forEach((star, i) => {{
+        star.angle += star.speed;
+        const x = centerX + star.radius * Math.cos(star.angle);
+        const y = centerY + star.radius * Math.sin(star.angle);
+        const flicker = 0.4 + Math.abs(Math.sin(Date.now() * 0.0015 + i)) * 0.5;
+        starCtx.beginPath();
+        starCtx.fillStyle = `rgba(255, 255, 255, ${{flicker}})`;
+        starCtx.arc(x, y, star.size, 0, Math.PI * 2);
+        starCtx.fill();
+      }});
+      spawnShootingStar();
+      for (let i = shootingStars.length - 1; i >= 0; i--) {{
+        const s = shootingStars[i];
+        const opacity = s.life / s.initialLife;
+        const grad = starCtx.createLinearGradient(s.x, s.y, s.x - s.vx * 35, s.y - s.vy * 35);
+        grad.addColorStop(0, `rgba(255, 255, 255, ${{opacity}})`);
+        grad.addColorStop(1, `rgba(255, 255, 255, 0)`);
+        starCtx.strokeStyle = grad;
+        starCtx.lineWidth = 2;
+        starCtx.beginPath();
+        starCtx.moveTo(s.x, s.y);
+        starCtx.lineTo(s.x - s.vx * 18, s.y - s.vy * 18);
+        starCtx.stroke();
+        s.x += s.vx; s.y += s.vy; s.life -= 1;
+        if (s.life <= 0) shootingStars.splice(i, 1);
+      }}
+      starAnimationId = requestAnimationFrame(animateStars);
+    }}
+    const updateStarAnimationState = () => {{
+      if (!starCanvas) return;
+      const shouldRun = document.documentElement.dataset.theme === "black-hole"
+        && document.documentElement.dataset.starfield !== "off";
+      if (shouldRun && !isStarAnimationRunning) {{
+        isStarAnimationRunning = true;
+        resizeStarCanvas();
+        animateStars();
+      }} else if (!shouldRun && isStarAnimationRunning) {{
+        isStarAnimationRunning = false;
+        cancelAnimationFrame(starAnimationId);
+      }}
+    }};
+    window.addEventListener("resize", () => {{ if (isStarAnimationRunning) resizeStarCanvas(); }});
+    const themeObserver = new MutationObserver(updateStarAnimationState);
+    themeObserver.observe(document.documentElement, {{ attributes: true, attributeFilter: ["data-theme", "data-starfield"] }});
+    updateStarAnimationState();
+
   __HUB_HEADER_JS__
   </script>
 </body>
@@ -2774,7 +3054,7 @@ def hub_settings_html(saved=False):
     )
 
 HUB_NEW_SESSION_HTML = """<!doctype html>
-<html lang="en" data-theme="__CHAT_THEME__">
+<html lang="en" data-theme="__CHAT_THEME__"__STARFIELD_ATTR__>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -2817,16 +3097,16 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
       display: none;
       pointer-events: none;
     }
-    [data-theme="black-hole"] #starfield {
+    [data-theme="black-hole"]:not([data-starfield="off"]) #starfield {
       display: block;
     }
-    [data-theme="black-hole"] body {
+    [data-theme="black-hole"]:not([data-starfield="off"]) body {
       background: transparent !important;
     }
-    [data-theme="black-hole"] html {
+    [data-theme="black-hole"]:not([data-starfield="off"]) html {
       background: rgb(10, 10, 10) !important;
     }
-    [data-theme="black-hole"] .shell {
+    [data-theme="black-hole"]:not([data-starfield="off"]) .shell {
       background: transparent !important;
       position: relative;
       z-index: 2;
@@ -2917,7 +3197,7 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
   </style>
 </head>
 <body>
-  <canvas id="starfield" style="position:fixed;top:0;left:0;z-index:1;width:100%;height:100%;display:none;pointer-events:none;"></canvas>
+  <canvas id="starfield"></canvas>
   __HUB_HEADER_HTML__
   <div class="shell">
     <section class="hero">
@@ -3220,19 +3500,20 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
       starAnimationId = requestAnimationFrame(animateStars);
     }
     const updateStarAnimationState = () => {
-      const isBlackHole = document.documentElement.dataset.theme === "black-hole";
-      if (isBlackHole && !isStarAnimationRunning) {
+      const shouldRun = document.documentElement.dataset.theme === "black-hole"
+        && document.documentElement.dataset.starfield !== "off";
+      if (shouldRun && !isStarAnimationRunning) {
         isStarAnimationRunning = true;
         resizeStarCanvas();
         animateStars();
-      } else if (!isBlackHole && isStarAnimationRunning) {
+      } else if (!shouldRun && isStarAnimationRunning) {
         isStarAnimationRunning = false;
         cancelAnimationFrame(starAnimationId);
       }
     };
     window.addEventListener("resize", () => { if (isStarAnimationRunning) resizeStarCanvas(); });
     const themeObserver = new MutationObserver(updateStarAnimationState);
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-starfield"] });
     updateStarAnimationState();
   __HUB_HEADER_JS__
   </script>
@@ -3262,7 +3543,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def _send_html(self, status, page):
         if "__CHAT_THEME__" in page:
-            page = page.replace("__CHAT_THEME__", load_hub_settings().get("theme", "claude"))
+            settings = load_hub_settings()
+            page = page.replace("__CHAT_THEME__", settings.get("theme", "claude"))
+            sf_attr = "" if settings.get("starfield", True) else ' data-starfield="off"'
+            page = page.replace("__STARFIELD_ATTR__", sf_attr)
         body = page.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -4046,6 +4330,24 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(200, {"ok": True})
             except Exception as exc:
                 self._send_json(500, {"ok": False, "error": str(exc)})
+            return
+        if parsed.path == "/files-exist":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                length = 0
+            raw = self.rfile.read(length)
+            try:
+                data = json.loads(raw.decode("utf-8") or "{}")
+            except json.JSONDecodeError:
+                self._send_json(400, {"ok": False, "error": "invalid json"})
+                return
+            paths = data.get("paths", [])
+            if not isinstance(paths, list):
+                self._send_json(400, {"ok": False, "error": "paths must be a list"})
+                return
+            result = file_runtime.files_exist(paths)
+            self._send_json(200, result)
             return
         if parsed.path != "/send":
             self.send_response(404)

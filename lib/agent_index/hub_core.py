@@ -56,6 +56,40 @@ def format_epoch(epoch: float) -> str:
         return ""
 
 
+def latest_message_preview(index_path: Path | None) -> dict[str, str]:
+    if not index_path or not index_path.is_file():
+        return {"sender": "", "text": ""}
+    last_sender = ""
+    last_text = ""
+    try:
+        with index_path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except Exception:
+                    continue
+                sender = (entry.get("sender") or "").strip()
+                if sender == "system":
+                    continue
+                message = str(entry.get("message") or "").strip()
+                if not message:
+                    continue
+                compact = re.sub(r"^\[From:\s*[^\]]+\]\s*", "", message, flags=re.IGNORECASE)
+                compact = re.sub(r"^\[[^\]]*msg-id:[^\]]+\]\s*", "", compact, flags=re.IGNORECASE)
+                compact = re.sub(r"\s+", " ", compact)
+                compact = re.sub(r"\[Attached:\s*[^\]]+\]", "", compact).strip()
+                compact = compact[:140].rstrip()
+                if compact:
+                    last_sender = sender
+                    last_text = compact
+    except Exception:
+        return {"sender": "", "text": ""}
+    return {"sender": last_sender, "text": last_text}
+
+
 class HubRuntime:
     def __init__(self, repo_root: Path | str, script_path: Path | str, tmux_socket: str = ""):
         self.repo_root = Path(repo_root).resolve()
@@ -162,6 +196,7 @@ class HubRuntime:
             else:
                 status = "idle"
             index_path = self.session_index_path(name, workspace, explicit_log_dir)
+            preview = latest_message_preview(index_path)
             sessions.append({
                 "name": name,
                 "workspace": workspace,
@@ -173,6 +208,8 @@ class HubRuntime:
                 "status": status,
                 "chat_port": self.chat_port_for_session(name),
                 "chat_count": count_nonempty_lines(index_path) if index_path else 0,
+                "latest_message_sender": preview["sender"],
+                "latest_message_preview": preview["text"],
             })
         sessions.sort(key=lambda item: item["created_epoch"], reverse=True)
         return sessions
@@ -235,6 +272,7 @@ class HubRuntime:
                 except Exception:
                     inferred = set()
                 agents = sorted(inferred)
+            preview = latest_message_preview(index_path) if index_path.exists() else {"sender": "", "text": ""}
             record = {
                 "name": session_name,
                 "workspace": workspace,
@@ -249,6 +287,8 @@ class HubRuntime:
                 "chat_port": self.chat_port_for_session(session_name),
                 "log_dir": str(entry),
                 "chat_count": count_nonempty_lines(index_path) if index_path.exists() else 0,
+                "latest_message_sender": preview["sender"],
+                "latest_message_preview": preview["text"],
             }
             existing = records.get(session_name)
             if existing is None or record["updated_epoch"] > existing["updated_epoch"]:
@@ -267,6 +307,8 @@ class HubRuntime:
         message_by_session = {}
         commit_first_seen = {}
         daily_messages = {}
+        daily_messages_user = {}
+        daily_messages_agent = {}
         seen_paths = set()
         index_records = []
         for session in active_sessions:
@@ -327,18 +369,40 @@ class HubRuntime:
                         if ts and len(ts) >= 10:
                             date_key = ts[:10]
                             daily_messages[date_key] = daily_messages.get(date_key, 0) + 1
+                            if sender == "user":
+                                daily_messages_user[date_key] = daily_messages_user.get(date_key, 0) + 1
+                            else:
+                                daily_messages_agent[date_key] = daily_messages_agent.get(date_key, 0) + 1
             except Exception:
                 continue
         commits_by_session = {}
+        daily_commits = {}
         for commit in commit_first_seen.values():
             commit_session = commit["session"]
             commits_by_session[commit_session] = commits_by_session.get(commit_session, 0) + 1
+            ts = (commit.get("timestamp") or "").strip()
+            if ts and len(ts) >= 10:
+                date_key = ts[:10]
+                daily_commits[date_key] = daily_commits.get(date_key, 0) + 1
         thinking_totals = self.load_hub_thinking_totals()
+        daily_thinking = thinking_totals.get("daily_thinking", {})
+
+        def cumulative_series(daily_source):
+            total = 0
+            series = []
+            for date_key in sorted(daily_source):
+                total += max(0, int(daily_source.get(date_key, 0) or 0))
+                series.append({"date": date_key, "value": total})
+            return series
+
         return {
             "active_sessions": len(active_sessions),
             "archived_sessions": len(archived_sessions_data),
             "total_sessions": len(all_sessions),
             "daily_messages": daily_messages,
+            "daily_messages_all": daily_messages,
+            "daily_messages_user": daily_messages_user,
+            "daily_messages_agent": daily_messages_agent,
             "total_messages": total_messages,
             "messages_by_sender": message_by_sender,
             "messages_by_session": message_by_session,
@@ -348,7 +412,13 @@ class HubRuntime:
             "thinking_by_agent": thinking_totals["by_agent"],
             "thinking_by_session": thinking_totals["by_session"],
             "thinking_session_count": thinking_totals["session_count"],
-            "daily_thinking": thinking_totals.get("daily_thinking", {}),
+            "daily_thinking": daily_thinking,
+            "daily_commits": daily_commits,
+            "cumulative_messages_all": cumulative_series(daily_messages),
+            "cumulative_messages_user": cumulative_series(daily_messages_user),
+            "cumulative_messages_agent": cumulative_series(daily_messages_agent),
+            "cumulative_thinking": cumulative_series(daily_thinking),
+            "cumulative_commits": cumulative_series(daily_commits),
         }
 
     def load_hub_settings(self):
