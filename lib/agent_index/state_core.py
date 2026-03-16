@@ -14,12 +14,17 @@ def _base_agent_name(name: str) -> str:
 HUB_SETTINGS_DEFAULTS = {
     "theme": "default",
     "agent_font_mode": "serif",
+    "user_message_font": "preset-gothic",
+    "agent_message_font": "preset-mincho",
+    "user_message_opacity_blackhole": 1.0,
+    "agent_message_opacity_blackhole": 1.0,
     "mobile_message_limit": 50,
     "desktop_message_limit": 500,
     "chat_auto_mode": False,
     "chat_awake": False,
     "chat_sound": False,
     "chat_tts": False,
+    "starfield": True,
 }
 
 
@@ -50,6 +55,24 @@ def load_hub_settings(repo_root: Path | str, *, mobile_limit_cap: int = 500, des
             agent_font_mode = str(raw.get("agent_font_mode") or settings["agent_font_mode"]).strip().lower()
             if agent_font_mode in {"serif", "gothic"}:
                 settings["agent_font_mode"] = agent_font_mode
+            user_message_font = str(raw.get("user_message_font") or settings["user_message_font"]).strip()
+            if user_message_font:
+                settings["user_message_font"] = user_message_font
+            agent_message_font = str(raw.get("agent_message_font") or "").strip()
+            if agent_message_font:
+                settings["agent_message_font"] = agent_message_font
+                if agent_message_font == "preset-gothic":
+                    settings["agent_font_mode"] = "gothic"
+                elif agent_message_font == "preset-mincho":
+                    settings["agent_font_mode"] = "serif"
+            else:
+                settings["agent_message_font"] = "preset-gothic" if agent_font_mode == "gothic" else "preset-mincho"
+            for key in ("user_message_opacity_blackhole", "agent_message_opacity_blackhole"):
+                try:
+                    value = float(raw.get(key, settings[key]))
+                except Exception:
+                    value = float(settings[key])
+                settings[key] = max(0.2, min(1.0, value))
             for key, default, cap in (
                 ("mobile_message_limit", 50, mobile_limit_cap),
                 ("desktop_message_limit", 500, desktop_limit_cap),
@@ -59,7 +82,7 @@ def load_hub_settings(repo_root: Path | str, *, mobile_limit_cap: int = 500, des
                 except Exception:
                     value = default
                 settings[key] = max(10, min(cap, value))
-            for key in ("chat_auto_mode", "chat_awake", "chat_sound", "chat_tts"):
+            for key in ("chat_auto_mode", "chat_awake", "chat_sound", "chat_tts", "starfield"):
                 v = raw.get(key, settings[key])
                 settings[key] = v in (True, "true", "1", "on") if not isinstance(v, bool) else v
     return settings
@@ -73,6 +96,22 @@ def save_hub_settings(repo_root: Path | str, raw, *, mobile_limit_cap: int = 500
     agent_font_mode = str(raw.get("agent_font_mode") or settings["agent_font_mode"]).strip().lower()
     if agent_font_mode in {"serif", "gothic"}:
         settings["agent_font_mode"] = agent_font_mode
+    user_message_font = str(raw.get("user_message_font") or settings["user_message_font"]).strip()
+    if user_message_font:
+        settings["user_message_font"] = user_message_font
+    agent_message_font = str(raw.get("agent_message_font") or settings["agent_message_font"]).strip()
+    if agent_message_font:
+        settings["agent_message_font"] = agent_message_font
+        if agent_message_font == "preset-gothic":
+            settings["agent_font_mode"] = "gothic"
+        elif agent_message_font == "preset-mincho":
+            settings["agent_font_mode"] = "serif"
+    for key in ("user_message_opacity_blackhole", "agent_message_opacity_blackhole"):
+        try:
+            value = float(raw.get(key, settings[key]))
+        except Exception:
+            value = float(settings[key])
+        settings[key] = max(0.2, min(1.0, value))
     for key, cap in (
         ("mobile_message_limit", mobile_limit_cap),
         ("desktop_message_limit", desktop_limit_cap),
@@ -82,7 +121,7 @@ def save_hub_settings(repo_root: Path | str, raw, *, mobile_limit_cap: int = 500
         except Exception:
             value = settings[key]
         settings[key] = max(10, min(cap, value))
-    for key in ("chat_auto_mode", "chat_awake", "chat_sound", "chat_tts"):
+    for key in ("chat_auto_mode", "chat_awake", "chat_sound", "chat_tts", "starfield"):
         v = raw.get(key, settings[key])
         settings[key] = v in (True, "true", "1", "on") if not isinstance(v, bool) else v
     path = hub_settings_path(repo_root)

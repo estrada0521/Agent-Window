@@ -322,6 +322,7 @@ if [[ "$HUB_MODE" -eq 1 ]]; then
 import html
 import json
 import os
+import re
 import ssl
 import subprocess
 import sys
@@ -727,6 +728,13 @@ HUB_APP_HTML = """<!doctype html>
       border: 0.5px solid var(--line);
       border-radius: 999px;
       background: var(--panel);
+    }
+    .activity-filter-note {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      max-width: 42rem;
     }
     .activity-filter-btn {
       border: none;
@@ -1279,6 +1287,7 @@ HUB_APP_HTML = """<!doctype html>
         <button type="button" class="activity-filter-btn" data-scope="agent">Agent</button>
         <button type="button" class="activity-filter-btn" data-scope="user">User</button>
       </div>
+      <div class="activity-filter-note">Switch the message heatmap between all non-system traffic, agent-only output, and user-only prompts. Thinking time stays repo-wide.</div>
       <div class="activity-grid-label">Messages per day</div>
       <div class="activity-month-labels" id="activityMonthLabels"></div>
       <div class="activity-grid" id="activityGrid"></div>
@@ -1808,7 +1817,7 @@ HUB_RESUME_HTML = (
     HUB_APP_HTML
     .replace("__HUB_VIEW__", "resume")
     .replace("__HUB_TITLE__", "Resume Sessions")
-    .replace("__HUB_SUB__", "Reopen an existing session from this phone. Tap a card to restart its chat view on the Mac and jump back in.")
+    .replace("__HUB_SUB__", "Return to work that is already in motion. Active sessions reopen immediately, while archived sessions can be revived from their saved logs and workspace metadata.")
     .replace("__HUB_NAV_HOME__", "")
     .replace("__HUB_NAV_RESUME__", "active")
     .replace("__HUB_NAV_STATS__", "")
@@ -1823,7 +1832,7 @@ HUB_STATS_HTML = (
     HUB_APP_HTML
     .replace("__HUB_VIEW__", "stats")
     .replace("__HUB_TITLE__", "Statistics")
-    .replace("__HUB_SUB__", "A quick view of what is active in this repo right now, plus a few cross-session counts from existing logs.")
+    .replace("__HUB_SUB__", "A cross-session view built from saved multiagent logs. The counters summarize non-system messages, recorded thinking time, and unique commits, while the grids show how activity changed over time.")
     .replace("__HUB_NAV_HOME__", "")
     .replace("__HUB_NAV_RESUME__", "")
     .replace("__HUB_NAV_STATS__", "active")
@@ -2231,22 +2240,22 @@ HUB_HOME_HTML = """<!doctype html>
       <a class="home-card" href="/new-session">
         <div class="home-label">New</div>
         <div class="home-title">New Session</div>
-        <div class="home-note">Pick a workspace, choose your agents, and start a fresh multiagent session from here.</div>
+        <div class="home-note">Start a clean working room for a new task. Choose the workspace, set the session name, and decide how many agent panes you want up front.</div>
       </a>
       <a class="home-card" href="/resume">
         <div class="home-label">Resume</div>
         <div class="home-title">Resume Sessions</div>
-        <div class="home-note">Open active sessions, browse archived ones, revive old work, and jump back into chat.</div>
+        <div class="home-note">Jump back into something already running, or reopen archived work without hunting through tmux sessions and log folders by hand.</div>
       </a>
       <a class="home-card" href="/stats">
         <div class="home-label">Statistics</div>
         <div class="home-title">Session Stats</div>
-        <div class="home-note">See active versus archived sessions, how many chats exist, today’s messages and commits, and how many workspaces are represented.</div>
+        <div class="home-note">Read the repo-wide activity trail: message volume, commits, thinking time, and daily movement pulled from the session logs you have already accumulated.</div>
       </a>
       <a class="home-card" href="/settings">
         <div class="home-label">Settings</div>
         <div class="home-title">Global Settings</div>
-        <div class="home-note">Set the default theme, agent font mode, and mobile/desktop message counts used when chats are reloaded.</div>
+        <div class="home-note">Tune defaults once for the whole Hub, including theme, fonts, message limits, and visual behavior that should stay consistent across sessions.</div>
       </a>
     </div>
   </div>
@@ -2630,10 +2639,54 @@ HUB_HOME_HTML = (
     .replace("__HUB_HEADER_JS__", _HUB_PAGE_HEADER_JS)
 )
 
+
+def _normalized_font_label(name: str) -> str:
+    label = re.sub(r"\.(ttf|ttc|otf)$", "", name, flags=re.IGNORECASE)
+    label = re.sub(r"[-_](Variable|Italic|Italics|Roman|Romans|Regular|Medium|Light|Bold|Heavy|Black|Condensed|Rounded|Mono)\b", "", label, flags=re.IGNORECASE)
+    label = re.sub(r"\s+", " ", label).strip(" -_")
+    return label
+
+
+def available_chat_font_choices():
+    seen = set()
+    choices = [
+        ("preset-gothic", "Default Gothic"),
+        ("preset-mincho", "Default Mincho"),
+    ]
+    for root in (
+        Path("/System/Library/Fonts"),
+        Path("/Library/Fonts"),
+        Path.home() / "Library/Fonts",
+    ):
+        if not root.exists():
+            continue
+        for path in sorted(root.rglob("*")):
+            if not path.is_file():
+                continue
+            if path.suffix.lower() not in {".ttf", ".ttc", ".otf"}:
+                continue
+            label = _normalized_font_label(path.name)
+            if not label:
+                continue
+            key = label.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            choices.append((f"system:{label}", label))
+            if len(choices) >= 44:
+                break
+        if len(choices) >= 44:
+            break
+    return choices
+
 def hub_settings_html(saved=False):
     settings = load_hub_settings()
     theme = settings["theme"]
     font_mode = settings["agent_font_mode"]
+    user_message_font = settings.get("user_message_font", "preset-gothic")
+    agent_message_font = settings.get("agent_message_font", "preset-mincho")
+    user_message_opacity_blackhole = float(settings.get("user_message_opacity_blackhole", 1.0) or 1.0)
+    agent_message_opacity_blackhole = float(settings.get("agent_message_opacity_blackhole", 1.0) or 1.0)
     mobile_limit = settings["mobile_message_limit"]
     desktop_limit = settings["desktop_message_limit"]
     chat_auto = settings.get("chat_auto_mode", False)
@@ -2641,6 +2694,11 @@ def hub_settings_html(saved=False):
     chat_sound = settings.get("chat_sound", False)
     chat_tts = settings.get("chat_tts", False)
     starfield = settings.get("starfield", False)
+    font_choices = available_chat_font_choices()
+    font_options = lambda selected: "".join(
+        f'<option value="{html.escape(value)}"' + (' selected' if value == selected else '') + f'>{html.escape(label)}</option>'
+        for value, label in font_choices
+    )
     notice = '<div style="margin:0 0 14px;color:rgb(170,190,172);font-size:13px;line-height:1.5;">Saved.</div>' if saved else ""
     sf_attr = "" if starfield else ' data-starfield="off"'
     _html = f"""<!doctype html>
@@ -2853,7 +2911,7 @@ def hub_settings_html(saved=False):
     <section class="hero">
       <div class="eyebrow">multiagent</div>
       <h1>Settings</h1>
-      <div class="sub">Global defaults that apply when chats are reloaded. This is the right place for cross-session preferences, not one-off controls.</div>
+      <div class="sub">Set the defaults that shape every chat reopen: look and feel, message density, device behavior, and effects that should feel consistent across the whole Hub.</div>
       <div class="hub-nav">
         <a href="/">Hub</a>
         <a href="/new-session"><span class="nav-full">New Session</span><span class="nav-short">New</span></a>
@@ -2874,13 +2932,24 @@ def hub_settings_html(saved=False):
         <div class="hint">Claude: warm dark gray. Black Hole: pure black.</div>
       </div>
       <div class="field">
-        <label class="label" for="agent_font_mode">Agent Font Mode</label>
-        <select id="agent_font_mode" name="agent_font_mode">
-          <option value="serif"{' selected' if font_mode == 'serif' else ''}>Serif</option>
-          <option value="gothic"{' selected' if font_mode == 'gothic' else ''}>Gothic</option>
-        </select>
-        <div class="hint">User messages stay unchanged. This only switches the default font of agent messages.</div>
+        <div class="label">Chat Fonts</div>
+        <div class="row">
+          <div>
+            <label class="label" for="user_message_font">User Messages</label>
+            <select id="user_message_font" name="user_message_font">
+              {font_options(user_message_font)}
+            </select>
+          </div>
+          <div>
+            <label class="label" for="agent_message_font">Agent Messages</label>
+            <select id="agent_message_font" name="agent_message_font">
+              {font_options(agent_message_font)}
+            </select>
+          </div>
+        </div>
+        <div class="hint">Pick independently for user and agent bubbles. The two built-in presets match the current Gothic and Mincho defaults, and the remaining choices come from fonts installed on this Mac.</div>
       </div>
+      <input type="hidden" name="agent_font_mode" value="{font_mode}">
       <div class="field">
         <div class="label">Default Message Count</div>
         <div class="row">
@@ -2926,6 +2995,20 @@ def hub_settings_html(saved=False):
           </label>
         </div>
         <div class="hint">Animated starfield on Black Hole theme. Uncheck to disable. Claude theme never shows starfield.</div>
+      </div>
+      <div class="field">
+        <div class="label">Black Hole Text Opacity</div>
+        <div class="row">
+          <div>
+            <label class="label" for="user_message_opacity_blackhole">User Messages</label>
+            <input id="user_message_opacity_blackhole" name="user_message_opacity_blackhole" type="number" min="0.2" max="1" step="0.05" value="{user_message_opacity_blackhole:.2f}">
+          </div>
+          <div>
+            <label class="label" for="agent_message_opacity_blackhole">Agent Messages</label>
+            <input id="agent_message_opacity_blackhole" name="agent_message_opacity_blackhole" type="number" min="0.2" max="1" step="0.05" value="{agent_message_opacity_blackhole:.2f}">
+          </div>
+        </div>
+        <div class="hint">Black Hole only. Lower values soften bright white text into gray without changing the rest of the theme.</div>
       </div>
       <button class="save" type="submit">Save Settings</button>
     </form>
@@ -3203,7 +3286,7 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
     <section class="hero">
       <div class="eyebrow">multiagent</div>
       <h1>New Session</h1>
-      <div class="sub">Pick a workspace, name the session, and choose your agents.</div>
+      <div class="sub">Create a new working room for the repo you want to explore. Pick the folder, decide how many agents should join, and launch straight into chat.</div>
       <div class="hub-nav">
         <a href="/">Hub</a>
         <a href="/new-session" class="active"><span class="nav-full">New Session</span><span class="nav-short">New</span></a>

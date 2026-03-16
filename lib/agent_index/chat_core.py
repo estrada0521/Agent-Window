@@ -61,65 +61,57 @@ class ChatRuntime:
         return load_shared_hub_settings(self.repo_root, mobile_limit_cap=cap, desktop_limit_cap=cap)
 
     @staticmethod
-    def chat_agent_font_mode_inline_style(font_mode):
-        if str(font_mode).strip().lower() != "gothic":
-            return ""
-        return """
+    def _font_family_stack(selection: str, role: str) -> str:
+        value = str(selection or "").strip()
+        sans_stack = '"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif'
+        serif_stack = '"anthropicSerif", "anthropicSerif Fallback", "Anthropic Serif", "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", Georgia, "Times New Roman", Times, serif'
+        default_stack = sans_stack if role == "user" else serif_stack
+        if value == "preset-gothic":
+            return sans_stack
+        if value == "preset-mincho":
+            return serif_stack
+        if value.startswith("system:"):
+            family = value.split(":", 1)[1].strip()
+            if family:
+                return f'"{family}", {default_stack}'
+        return default_stack
+
+    @classmethod
+    def chat_font_settings_inline_style(cls, settings):
+        user_family = cls._font_family_stack(settings.get("user_message_font", "preset-gothic"), "user")
+        agent_family = cls._font_family_stack(settings.get("agent_message_font", "preset-mincho"), "agent")
+        try:
+            user_opacity = max(0.2, min(1.0, float(settings.get("user_message_opacity_blackhole", 1.0))))
+        except Exception:
+            user_opacity = 1.0
+        try:
+            agent_opacity = max(0.2, min(1.0, float(settings.get("agent_message_opacity_blackhole", 1.0))))
+        except Exception:
+            agent_opacity = 1.0
+        return f"""
+    .message.user .md-body {{
+      font-family: {user_family} !important;
+    }}
     .message.claude .md-body,
     .message.codex .md-body,
     .message.gemini .md-body,
-    .message.copilot .md-body {
-      font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif !important;
-      font-size: 16px !important;
-      line-height: 22px !important;
-      font-style: normal !important;
-      font-weight: 360 !important;
-      letter-spacing: -0.01em !important;
-      -webkit-font-smoothing: antialiased !important;
-      -moz-osx-font-smoothing: grayscale !important;
-      font-synthesis-weight: none !important;
-      font-optical-sizing: auto !important;
-      font-variation-settings: "wght" 360, "opsz" 16 !important;
-    }
-    .message.claude .md-body p,
-    .message.claude .md-body li,
-    .message.claude .md-body h1,
-    .message.claude .md-body h2,
-    .message.claude .md-body h3,
-    .message.claude .md-body h4,
-    .message.claude .md-body blockquote,
-    .message.codex .md-body p,
-    .message.codex .md-body li,
-    .message.codex .md-body h1,
-    .message.codex .md-body h2,
-    .message.codex .md-body h3,
-    .message.codex .md-body h4,
-    .message.codex .md-body blockquote,
-    .message.gemini .md-body p,
-    .message.gemini .md-body li,
-    .message.gemini .md-body h1,
-    .message.gemini .md-body h2,
-    .message.gemini .md-body h3,
-    .message.gemini .md-body h4,
-    .message.gemini .md-body blockquote,
-    .message.copilot .md-body p,
-    .message.copilot .md-body li,
-    .message.copilot .md-body h1,
-    .message.copilot .md-body h2,
-    .message.copilot .md-body h3,
-    .message.copilot .md-body h4,
-    .message.copilot .md-body blockquote {
-      font-family: inherit !important;
-      font-weight: 360 !important;
-      font-variation-settings: "wght" 360, "opsz" 16 !important;
-    }
-    .message.claude .md-body li,
-    .message.codex .md-body li,
-    .message.gemini .md-body li,
-    .message.copilot .md-body li {
-      line-height: 22px !important;
-    }
+    .message.copilot .md-body {{
+      font-family: {agent_family} !important;
+    }}
+    [data-theme="black-hole"] .message.user .md-body {{
+      color: rgba(252, 252, 252, {user_opacity:.2f}) !important;
+    }}
+    [data-theme="black-hole"] .message.claude .md-body,
+    [data-theme="black-hole"] .message.codex .md-body,
+    [data-theme="black-hole"] .message.gemini .md-body,
+    [data-theme="black-hole"] .message.copilot .md-body {{
+      color: rgba(252, 252, 252, {agent_opacity:.2f}) !important;
+    }}
     """
+
+    @staticmethod
+    def chat_agent_font_mode_inline_style(settings):
+        return ChatRuntime.chat_font_settings_inline_style(settings)
 
     def persist_thinking_totals(self, totals):
         persist_shared_thinking_totals(self.repo_root, self.session_name, self.workspace, totals)

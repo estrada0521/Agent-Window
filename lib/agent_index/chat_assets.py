@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 CHAT_HTML = r"""<!doctype html>
-<html lang="en" data-theme="__CHAT_THEME__">
+<html lang="en" data-theme="__CHAT_THEME__"__STARFIELD_ATTR__>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -155,17 +155,19 @@ CHAT_HTML = r"""<!doctype html>
       display: none;
       pointer-events: none;
     }
-    [data-theme="black-hole"] #starfield {
-      display: none;
+    [data-theme="black-hole"]:not([data-starfield="off"]) #starfield {
+      display: block;
     }
-    [data-theme="black-hole"] body {
+    [data-theme="black-hole"]:not([data-starfield="off"]) body {
       background: transparent !important;
     }
-    [data-theme="black-hole"] html {
+    [data-theme="black-hole"]:not([data-starfield="off"]) html {
       background: rgb(5, 5, 5) !important;
     }
-    [data-theme="black-hole"] .shell {
-      background: transparent !important;
+    [data-theme="black-hole"]:not([data-starfield="off"]) .header,
+    [data-theme="black-hole"]:not([data-starfield="off"]) #messages,
+    [data-theme="black-hole"]:not([data-starfield="off"]) #composer,
+    [data-theme="black-hole"]:not([data-starfield="off"]) .shell {
       position: relative;
       z-index: 2;
     }
@@ -794,13 +796,15 @@ CHAT_HTML = r"""<!doctype html>
       min-width: 220px;
       max-height: 40vh;
       padding: 8px;
-      gap: 0;
+      gap: 2px;
       overflow-y: auto;
       left: auto;
       right: 0;
       transform-origin: top right;
     }    #attachedFilesPanel .quick-action {
-      padding: 20px 16px !important;
+      padding: 9px 12px;
+      font-size: 14px;
+      line-height: 20px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -809,7 +813,7 @@ CHAT_HTML = r"""<!doctype html>
       background-image: linear-gradient(to right, rgba(255,255,255,0.08), rgba(255,255,255,0.08));
       background-repeat: no-repeat;
       background-size: calc(100% - 24px) 1px;
-      background-position: center top;
+      background-position: 12px 0;
     }    #attachedFilesPanel .file-item-icon {
       width: 14px;
       height: 14px;
@@ -6272,10 +6276,28 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     });
     const quickMore = document.querySelector(".quick-more");
     const composerPlusMenu = document.getElementById("composerPlusMenu");
+    let keepComposerPlusMenuOnBlur = false;
     composerPlusMenu && composerPlusMenu.addEventListener("toggle", () => {
       if (!composerPlusMenu.open) {
         composerPlusMenu.querySelectorAll(".plus-submenu").forEach(sub => { sub.open = false; });
       }
+    });
+    composerPlusMenu?.addEventListener("pointerdown", () => {
+      keepComposerPlusMenuOnBlur = true;
+      setTimeout(() => { keepComposerPlusMenuOnBlur = false; }, 240);
+    });
+    composerPlusMenu?.addEventListener("touchstart", () => {
+      keepComposerPlusMenuOnBlur = true;
+      setTimeout(() => { keepComposerPlusMenuOnBlur = false; }, 240);
+    }, { passive: true });
+    composerPlusMenu?.addEventListener("click", (event) => {
+      const keepFocusTarget = event.target.closest(".plus-submenu-toggle, .composer-plus-panel .quick-action");
+      if (!keepFocusTarget || !useDocumentFlowMobile()) return;
+      requestAnimationFrame(() => {
+        if (document.activeElement !== messageInput) {
+          focusMessageInputWithoutScroll();
+        }
+      });
     });
     composerPlusMenu && composerPlusMenu.querySelectorAll(".plus-submenu").forEach(sub => {
       sub.addEventListener("toggle", () => {
@@ -6303,16 +6325,31 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const rightMenu = document.getElementById("rightMenu");
     const attachedFilesMenu = document.getElementById("attachedFilesMenu");
     const attachedFilesPanel = document.getElementById("attachedFilesPanel");
-    const updateAttachedFilesPanel = (entries) => {
+    const updateAttachedFilesPanel = async (entries) => {
       if (!attachedFilesPanel) return;
       const seen = new Set();
-      const files = [];
+      const allFiles = [];
       for (const entry of (entries || [])) {
         const msg = entry.message || "";
         for (const m of msg.matchAll(/\[Attached:\s*([^\]]+)\]/g)) {
           const path = m[1].trim();
-          if (!seen.has(path)) { seen.add(path); files.push(path); }
+          if (!seen.has(path)) { seen.add(path); allFiles.push(path); }
         }
+      }
+      // Check which files actually exist on disk
+      let files = allFiles;
+      if (allFiles.length > 0) {
+        try {
+          const res = await fetch("/files-exist", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paths: allFiles }),
+          });
+          if (res.ok) {
+            const exists = await res.json();
+            files = allFiles.filter(p => exists[p]);
+          }
+        } catch (_) {}
       }
       let badge = attachedFilesMenu?.querySelector(".attached-files-badge");
       if (attachedFilesMenu) {
@@ -6999,9 +7036,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         closeDrop();
       }
     }, true);
-    messageInput.addEventListener("blur", () => {
+    messageInput.addEventListener("blur", (event) => {
       document.body.classList.remove("composing");
-      closePlusMenu();
+      const nextTarget = event.relatedTarget;
+      const keepPlusMenuOpen = keepComposerPlusMenuOnBlur
+        || !!(nextTarget && composerPlusMenu && composerPlusMenu.contains(nextTarget));
+      if (!keepPlusMenuOpen) closePlusMenu();
       releaseMobileKeyboardOffset();
       setTimeout(closeDrop, 150);
     });
@@ -8027,11 +8067,18 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       starAnimationId = requestAnimationFrame(animateStars);
     }
     const updateStarAnimationState = () => {
-      if (isStarAnimationRunning) {
+      const shouldRun = document.documentElement.dataset.theme === "black-hole"
+        && document.documentElement.dataset.starfield !== "off";
+      if (shouldRun && !isStarAnimationRunning) {
+        isStarAnimationRunning = true;
+        resizeStarCanvas();
+        animateStars();
+      } else if (!shouldRun && isStarAnimationRunning) {
         isStarAnimationRunning = false;
         cancelAnimationFrame(starAnimationId);
       }
     };
+    window.addEventListener("resize", () => { if (isStarAnimationRunning) resizeStarCanvas(); });
     updateStarAnimationState();
   </script>
 </body>
@@ -8046,8 +8093,9 @@ def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings
         .replace("__SERVER_INSTANCE__", server_instance)
         .replace("__HUB_PORT__", str(hub_port))
         .replace("__CHAT_THEME__", chat_settings["theme"])
+        .replace("__STARFIELD_ATTR__", "" if chat_settings.get("starfield", True) else ' data-starfield="off"')
         .replace("__AGENT_FONT_MODE__", chat_settings["agent_font_mode"])
-        .replace("__AGENT_FONT_MODE_INLINE_STYLE__", agent_font_mode_inline_style(chat_settings["agent_font_mode"]))
+        .replace("__AGENT_FONT_MODE_INLINE_STYLE__", agent_font_mode_inline_style(chat_settings))
         .replace("__MOBILE_MESSAGE_LIMIT__", str(chat_settings["mobile_message_limit"]))
         .replace("__DESKTOP_MESSAGE_LIMIT__", str(chat_settings["desktop_message_limit"]))
         .replace("mode: snapshot", f"mode: {'follow' if follow == '1' else 'snapshot'}")
