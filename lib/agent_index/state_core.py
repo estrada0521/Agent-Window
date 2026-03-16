@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from pathlib import Path
+
+
+def _base_agent_name(name: str) -> str:
+    """Strip instance suffix: 'claude-1' → 'claude', 'gemini' → 'gemini'."""
+    return re.sub(r"-\d+$", "", name)
 
 
 HUB_SETTINGS_DEFAULTS = {
@@ -92,7 +98,8 @@ def persist_thinking_totals(repo_root: Path | str, session_name: str, workspace:
             value = int(totals.get(agent, 0) or 0)
         except Exception:
             value = 0
-        agents[agent] = max(0, value)
+        base = _base_agent_name(agent)
+        agents[base] = agents.get(base, 0) + max(0, value)
     path = thinking_stats_path(repo_root)
     payload = {}
     if path.is_file():
@@ -106,9 +113,14 @@ def persist_thinking_totals(repo_root: Path | str, session_name: str, workspace:
     if not isinstance(sessions, dict):
         sessions = {}
     # Compute delta vs previously stored values for this session (for daily tracking)
-    prev_agents = {}
+    prev_agents_raw = {}
     if session_name in sessions and isinstance(sessions[session_name].get("agents"), dict):
-        prev_agents = sessions[session_name]["agents"]
+        prev_agents_raw = sessions[session_name]["agents"]
+    # Aggregate previous values by base name for correct delta calculation
+    prev_agents = {}
+    for k, v in prev_agents_raw.items():
+        base = _base_agent_name(k)
+        prev_agents[base] = prev_agents.get(base, 0) + max(0, int(v or 0))
     today = time.strftime("%Y-%m-%d")
     daily = payload.get("daily")
     if not isinstance(daily, dict):
@@ -165,7 +177,8 @@ def load_hub_thinking_totals(repo_root: Path | str):
             value = max(0, value)
             if value:
                 used = True
-            totals[agent] = totals.get(agent, 0) + value
+            base = _base_agent_name(agent)
+            totals[base] = totals.get(base, 0) + value
             session_total += value
         if used:
             session_count += 1

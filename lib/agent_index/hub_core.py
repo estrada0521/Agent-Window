@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import re
 import signal
 import subprocess
 import time
@@ -320,7 +321,8 @@ class HubRuntime:
                         total_messages += 1
                         message_by_session[session_name] = message_by_session.get(session_name, 0) + 1
                         if sender and sender != "system":
-                            message_by_sender[sender] = message_by_sender.get(sender, 0) + 1
+                            base_sender = re.sub(r"-\d+$", "", sender)
+                            message_by_sender[base_sender] = message_by_sender.get(base_sender, 0) + 1
                         ts = (entry.get("timestamp") or "").strip()
                         if ts and len(ts) >= 10:
                             date_key = ts[:10]

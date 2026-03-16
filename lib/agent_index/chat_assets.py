@@ -7187,12 +7187,18 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let lastThinkingSyncAt = 0;
     let lastThinkingSyncPayload = "";
     const collectThinkingTimeTotals = () => {
-      const totals = { ...agentTotalThinkingTime };
+      const raw = { ...agentTotalThinkingTime };
       const now = Date.now();
       Object.entries(currentAgentStatuses).forEach(([agent, status]) => {
         if (status === "running" && agentStatusSince[agent]) {
-          totals[agent] = (totals[agent] || 0) + Math.floor((now - agentStatusSince[agent]) / 1000);
+          raw[agent] = (raw[agent] || 0) + Math.floor((now - agentStatusSince[agent]) / 1000);
         }
+      });
+      // Aggregate by base agent name (e.g. claude-1 + claude-2 → claude)
+      const totals = {};
+      Object.entries(raw).forEach(([agent, secs]) => {
+        const base = agentBaseName(agent);
+        totals[base] = (totals[base] || 0) + secs;
       });
       return totals;
     };
