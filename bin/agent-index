@@ -349,6 +349,7 @@ compute_hub_stats = hub.compute_hub_stats
 ensure_chat_server = hub.ensure_chat_server
 revive_archived_session = hub.revive_archived_session
 kill_repo_session = hub.kill_repo_session
+delete_archived_session = hub.delete_archived_session
 host_without_port = hub.host_without_port
 restart_lock = threading.Lock()
 restart_pending = False
@@ -2405,7 +2406,18 @@ HUB_HOME_HTML = """<!doctype html>
           document.addEventListener("mousemove", onMove);
           document.addEventListener("mouseup", onUp);
         });
-        if (actR) actR.addEventListener("click", (e) => { e.stopPropagation(); const n = sr.dataset.sessionName; if (confirm("Kill " + n + "?")) window.location.href = `/kill-session?session=${encodeURIComponent(n)}`; });
+        if (actR) actR.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const n = sr.dataset.sessionName;
+          const action = actR.dataset.action;
+          if (action === "delete-archived") {
+            if (confirm("Delete archived logs for " + n + "? This cannot be undone.")) {
+              window.location.href = `/delete-archived-session?session=${encodeURIComponent(n)}`;
+            }
+            return;
+          }
+          if (confirm("Kill " + n + "?")) window.location.href = `/kill-session?session=${encodeURIComponent(n)}`;
+        });
         if (actL) actL.addEventListener("click", (e) => {
           e.stopPropagation();
           const action = actL.dataset.action, n = sr.dataset.sessionName;
@@ -2497,6 +2509,7 @@ HUB_HOME_HTML = """<!doctype html>
             const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
             return `<div class="swipe-row" data-session-name="${esc(s.name)}">` +
               `<div class="swipe-act swipe-act-left revive-act" data-action="revive">${reviveSvg}<span>Revive</span></div>` +
+              `<div class="swipe-act swipe-act-right" data-action="delete-archived">${trashSvg}<span>Delete</span></div>` +
               `<div class="mob-session-row archived-row" data-open-href="/revive-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
                 `<div class="mob-row-head">` +
                   `<button class="mob-row-expand-btn" data-expand="1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>` +
@@ -2505,6 +2518,7 @@ HUB_HOME_HTML = """<!doctype html>
                   `<span class="mob-badge">archived</span>` +
                   `<div class="mob-row-hover-actions">` +
                     `<a class="mob-hover-btn pin" href="/revive-session?session=${encodeURIComponent(s.name)}">Revive</a>` +
+                    `<a class="mob-hover-btn kill" href="/delete-archived-session?session=${encodeURIComponent(s.name)}" onclick="return confirm('Delete archived logs for ${esc(s.name)}? This cannot be undone.')">Delete</a>` +
                   `</div>` +
                 `</div></div>` +
                 preview +
@@ -3825,6 +3839,20 @@ class Handler(BaseHTTPRequestHandler):
             ok, detail = kill_repo_session(session_name)
             if not ok:
                 self._send_html(500, error_page(f"Failed to kill {session_name}: {detail}"))
+                return
+            self.send_response(302)
+            self.send_header("Location", "/")
+            self.end_headers()
+            return
+        if parsed.path == "/delete-archived-session":
+            qs = parse_qs(parsed.query)
+            session_name = (qs.get("session", [""])[0] or "").strip()
+            if not session_name:
+                self._send_html(404, error_page("That archived session is not available in this repo."))
+                return
+            ok, detail = delete_archived_session(session_name)
+            if not ok:
+                self._send_html(500, error_page(f"Failed to delete archived session {session_name}: {detail}"))
                 return
             self.send_response(302)
             self.send_header("Location", "/")

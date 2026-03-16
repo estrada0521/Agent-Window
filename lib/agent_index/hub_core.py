@@ -5,12 +5,16 @@ import json
 import os
 import re
 import signal
+import shutil
 import subprocess
 import time
 from pathlib import Path
 
 from .state_core import load_hub_settings as load_shared_hub_settings
 from .state_core import load_hub_thinking_totals as load_shared_hub_thinking_totals
+from .state_core import local_runtime_log_dir
+from .state_core import local_state_dir
+from .state_core import local_workspace_log_dir
 from .state_core import save_hub_settings as save_shared_hub_settings
 
 
@@ -90,13 +94,30 @@ def latest_message_preview(index_path: Path | None) -> dict[str, str]:
     return {"sender": last_sender, "text": last_text}
 
 
+def latest_message_preview_from_paths(index_paths: list[Path]) -> dict[str, str]:
+    best_sender = ""
+    best_text = ""
+    best_epoch = -1.0
+    for index_path in index_paths:
+        preview = latest_message_preview(index_path)
+        if not preview["text"]:
+            continue
+        epoch = safe_mtime(index_path)
+        if epoch >= best_epoch:
+            best_epoch = epoch
+            best_sender = preview["sender"]
+            best_text = preview["text"]
+    return {"sender": best_sender, "text": best_text}
+
+
 class HubRuntime:
     def __init__(self, repo_root: Path | str, script_path: Path | str, tmux_socket: str = ""):
         self.repo_root = Path(repo_root).resolve()
         self.script_path = Path(script_path).resolve()
         self.script_dir = self.script_path.parent
         self.multiagent_path = self.script_dir / "multiagent"
-        self.central_log_dir = self.repo_root / "logs"
+        self.central_log_dir = local_runtime_log_dir(self.repo_root)
+        self.legacy_log_dir = self.repo_root / "logs"
         self.tmux_socket = tmux_socket
         self.tmux_prefix = ["tmux"]
         if tmux_socket:
@@ -119,9 +140,24 @@ class HubRuntime:
         digest = int(hashlib.md5(session_name.encode()).hexdigest(), 16)
         return 8200 + (digest % 700)
 
-    def session_index_path(self, session_name: str, workspace: str = "", explicit_log_dir: str = ""):
+    def session_index_paths(self, session_name: str, workspace: str = "", explicit_log_dir: str = ""):
         roots = []
-        for candidate in (explicit_log_dir, str(Path(workspace) / "logs") if workspace else "", str(self.central_log_dir)):
+        workspace = (workspace or "").strip()
+        workspace_candidates = []
+        if workspace:
+            workspace_path = Path(workspace)
+            workspace_candidates.extend(
+                [
+                    str(local_workspace_log_dir(self.repo_root, workspace_path)),
+                    str(workspace_path / "logs"),
+                ]
+            )
+        for candidate in (
+            explicit_log_dir,
+            *workspace_candidates,
+            str(self.central_log_dir),
+            str(self.legacy_log_dir),
+        ):
             candidate = (candidate or "").strip()
             if not candidate:
                 continue
@@ -131,8 +167,8 @@ class HubRuntime:
                 continue
             if root not in roots:
                 roots.append(root)
-        best_path = None
-        best_epoch = -1
+        found = []
+        seen = set()
         for root in roots:
             if not root.is_dir():
                 continue
@@ -140,11 +176,17 @@ class HubRuntime:
             for index_path in candidates:
                 if not index_path.is_file():
                     continue
-                epoch = safe_mtime(index_path)
-                if epoch >= best_epoch:
-                    best_path = index_path
-                    best_epoch = epoch
-        return best_path
+                resolved = str(index_path.resolve())
+                if resolved in seen:
+                    continue
+                seen.add(resolved)
+                found.append(index_path)
+        found.sort(key=lambda path: (safe_mtime(path), path.stat().st_size if path.exists() else 0), reverse=True)
+        return found
+
+    def session_index_path(self, session_name: str, workspace: str = "", explicit_log_dir: str = ""):
+        paths = self.session_index_paths(session_name, workspace, explicit_log_dir)
+        return paths[0] if paths else None
 
     @staticmethod
     def host_without_port(host_header: str) -> str:
@@ -195,8 +237,8 @@ class HubRuntime:
                 status = "attached"
             else:
                 status = "idle"
-            index_path = self.session_index_path(name, workspace, explicit_log_dir)
-            preview = latest_message_preview(index_path)
+            index_paths = self.session_index_paths(name, workspace, explicit_log_dir)
+            preview = latest_message_preview_from_paths(index_paths)
             sessions.append({
                 "name": name,
                 "workspace": workspace,
@@ -207,7 +249,7 @@ class HubRuntime:
                 "agents": agents,
                 "status": status,
                 "chat_port": self.chat_port_for_session(name),
-                "chat_count": count_nonempty_lines(index_path) if index_path else 0,
+                "chat_count": sum(count_nonempty_lines(path) for path in index_paths),
                 "latest_message_sender": preview["sender"],
                 "latest_message_preview": preview["text"],
             })
@@ -217,82 +259,99 @@ class HubRuntime:
     def archived_sessions(self, active_names=None):
         active_names = set(active_names or [])
         records = {}
-        if not self.central_log_dir.is_dir():
+        log_roots = []
+        for candidate in (
+            self.central_log_dir,
+            self.legacy_log_dir,
+            local_state_dir(self.repo_root) / "workspaces",
+        ):
+            if not candidate or not Path(candidate).is_dir():
+                continue
+            root = Path(candidate)
+            if root not in log_roots:
+                log_roots.append(root)
+        if not log_roots:
             return []
-        for entry in self.central_log_dir.iterdir():
-            if not entry.is_dir():
-                continue
-            meta_path = entry / ".meta"
-            index_path = entry / ".agent-index.jsonl"
-            if not meta_path.exists() and not index_path.exists():
-                continue
-            meta = {}
-            if meta_path.exists():
-                try:
-                    meta = json.loads(meta_path.read_text(encoding="utf-8"))
-                except Exception:
-                    meta = {}
-            session_name = (meta.get("session") or parse_session_dir(entry.name) or "").strip()
-            if not session_name or session_name in active_names:
-                continue
-            workspace = (meta.get("workspace") or "").strip() or str(self.repo_root)
-            created_epoch = parse_saved_time(meta.get("created_at", ""))
-            updated_epoch = parse_saved_time(meta.get("updated_at", ""))
-            updated_epoch = max(updated_epoch, safe_mtime(meta_path), safe_mtime(index_path))
-            if not created_epoch:
-                created_epoch = updated_epoch
-            # Detect agents from log/ans files (supports instance names like claude-1)
-            agents = []
-            seen_agents = set()
-            for f in sorted(entry.iterdir()):
-                if f.suffix in (".log", ".ans") and not f.name.startswith("."):
-                    name_stem = f.stem
-                    if name_stem not in seen_agents:
-                        seen_agents.add(name_stem)
-                        agents.append(name_stem)
-            if not agents and index_path.exists():
-                inferred = set()
-                try:
-                    with index_path.open("r", encoding="utf-8") as handle:
-                        for line in handle:
-                            line = line.strip()
-                            if not line:
-                                continue
-                            try:
-                                item = json.loads(line)
-                            except Exception:
-                                continue
-                            sender = (item.get("sender") or "").strip().lower()
-                            if sender and sender != "user":
-                                inferred.add(sender)
-                            for target in item.get("targets") or []:
-                                target = (target or "").strip().lower()
-                                if target and target != "user":
-                                    inferred.add(target)
-                except Exception:
+        for log_root in log_roots:
+            entry_iter = log_root.iterdir()
+            if log_root.name == "workspaces":
+                workspace_roots = [entry for entry in entry_iter if entry.is_dir()]
+                entries = []
+                for workspace_root in workspace_roots:
+                    entries.extend(child for child in workspace_root.iterdir() if child.is_dir())
+            else:
+                entries = [entry for entry in entry_iter if entry.is_dir()]
+            for entry in entries:
+                meta_path = entry / ".meta"
+                index_path = entry / ".agent-index.jsonl"
+                if not meta_path.exists() and not index_path.exists():
+                    continue
+                meta = {}
+                if meta_path.exists():
+                    try:
+                        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                    except Exception:
+                        meta = {}
+                session_name = (meta.get("session") or parse_session_dir(entry.name) or "").strip()
+                if not session_name or session_name in active_names:
+                    continue
+                workspace = (meta.get("workspace") or "").strip() or str(self.repo_root)
+                created_epoch = parse_saved_time(meta.get("created_at", ""))
+                updated_epoch = parse_saved_time(meta.get("updated_at", ""))
+                updated_epoch = max(updated_epoch, safe_mtime(meta_path), safe_mtime(index_path))
+                if not created_epoch:
+                    created_epoch = updated_epoch
+                agents = []
+                seen_agents = set()
+                for f in sorted(entry.iterdir()):
+                    if f.suffix in (".log", ".ans") and not f.name.startswith("."):
+                        name_stem = f.stem
+                        if name_stem not in seen_agents:
+                            seen_agents.add(name_stem)
+                            agents.append(name_stem)
+                if not agents and index_path.exists():
                     inferred = set()
-                agents = sorted(inferred)
-            preview = latest_message_preview(index_path) if index_path.exists() else {"sender": "", "text": ""}
-            record = {
-                "name": session_name,
-                "workspace": workspace,
-                "created_at": meta.get("created_at") or format_epoch(created_epoch),
-                "created_epoch": int(created_epoch or 0),
-                "updated_at": meta.get("updated_at") or format_epoch(updated_epoch),
-                "updated_epoch": int(updated_epoch or 0),
-                "dead_panes": 0,
-                "attached": 0,
-                "agents": agents,
-                "status": "archived",
-                "chat_port": self.chat_port_for_session(session_name),
-                "log_dir": str(entry),
-                "chat_count": count_nonempty_lines(index_path) if index_path.exists() else 0,
-                "latest_message_sender": preview["sender"],
-                "latest_message_preview": preview["text"],
-            }
-            existing = records.get(session_name)
-            if existing is None or record["updated_epoch"] > existing["updated_epoch"]:
-                records[session_name] = record
+                    try:
+                        with index_path.open("r", encoding="utf-8") as handle:
+                            for line in handle:
+                                line = line.strip()
+                                if not line:
+                                    continue
+                                try:
+                                    item = json.loads(line)
+                                except Exception:
+                                    continue
+                                sender = (item.get("sender") or "").strip().lower()
+                                if sender and sender != "user":
+                                    inferred.add(sender)
+                                for target in item.get("targets") or []:
+                                    target = (target or "").strip().lower()
+                                    if target and target != "user":
+                                        inferred.add(target)
+                    except Exception:
+                        inferred = set()
+                    agents = sorted(inferred)
+                preview = latest_message_preview(index_path) if index_path.exists() else {"sender": "", "text": ""}
+                record = {
+                    "name": session_name,
+                    "workspace": workspace,
+                    "created_at": meta.get("created_at") or format_epoch(created_epoch),
+                    "created_epoch": int(created_epoch or 0),
+                    "updated_at": meta.get("updated_at") or format_epoch(updated_epoch),
+                    "updated_epoch": int(updated_epoch or 0),
+                    "dead_panes": 0,
+                    "attached": 0,
+                    "agents": agents,
+                    "status": "archived",
+                    "chat_port": self.chat_port_for_session(session_name),
+                    "log_dir": str(entry),
+                    "chat_count": count_nonempty_lines(index_path) if index_path.exists() else 0,
+                    "latest_message_sender": preview["sender"],
+                    "latest_message_preview": preview["text"],
+                }
+                existing = records.get(session_name)
+                if existing is None or record["updated_epoch"] > existing["updated_epoch"]:
+                    records[session_name] = record
         sessions = list(records.values())
         sessions.sort(key=lambda item: item["updated_epoch"], reverse=True)
         return sessions
@@ -310,24 +369,30 @@ class HubRuntime:
         daily_messages_user = {}
         daily_messages_agent = {}
         seen_paths = set()
+        seen_message_keys = set()
         index_records = []
         for session in active_sessions:
-            index_path = self.session_index_path(
+            index_paths = self.session_index_paths(
                 session.get("name", ""),
                 session.get("workspace", ""),
                 self.tmux_env(session.get("name", ""), "MULTIAGENT_LOG_DIR"),
             )
-            if index_path and index_path.is_file():
+            for index_path in index_paths:
+                if not index_path.is_file():
+                    continue
                 key = str(index_path.resolve())
                 if key not in seen_paths:
                     seen_paths.add(key)
                     index_records.append((session.get("name", ""), index_path))
         for session in archived_sessions_data:
-            log_dir = (session.get("log_dir") or "").strip()
-            if not log_dir:
-                continue
-            index_path = Path(log_dir) / ".agent-index.jsonl"
-            if index_path.is_file():
+            index_paths = self.session_index_paths(
+                session.get("name", ""),
+                session.get("workspace", ""),
+                session.get("log_dir", ""),
+            )
+            for index_path in index_paths:
+                if not index_path.is_file():
+                    continue
                 key = str(index_path.resolve())
                 if key not in seen_paths:
                     seen_paths.add(key)
@@ -343,6 +408,21 @@ class HubRuntime:
                             entry = json.loads(line)
                         except Exception:
                             continue
+                        msg_key = (
+                            (entry.get("msg_id") or "").strip()
+                            or "|".join(
+                                [
+                                    session_name,
+                                    (entry.get("timestamp") or "").strip(),
+                                    (entry.get("sender") or "").strip(),
+                                    json.dumps(entry.get("targets") or [], ensure_ascii=False, sort_keys=True),
+                                    (entry.get("message") or "").strip(),
+                                ]
+                            )
+                        )
+                        if msg_key in seen_message_keys:
+                            continue
+                        seen_message_keys.add(msg_key)
                         sender = (entry.get("sender") or "").strip().lower()
                         if sender == "system":
                             if entry.get("kind") == "git-commit":
@@ -545,3 +625,29 @@ class HubRuntime:
                 return True, ""
             time.sleep(0.1)
         return False, f"Session {session_name} did not go away in time."
+
+    def delete_archived_session(self, session_name: str):
+        active = {item["name"] for item in self.repo_sessions()}
+        archived = {item["name"]: item for item in self.archived_sessions(active)}
+        record = archived.get(session_name)
+        if not record:
+            return False, "That archived session is not available in this repo."
+        log_dir = Path((record.get("log_dir") or "").strip())
+        if not log_dir.exists():
+            return False, "Archived log directory no longer exists."
+        allowed_roots = [
+            self.central_log_dir.resolve(),
+            self.legacy_log_dir.resolve(),
+            (local_state_dir(self.repo_root) / "workspaces").resolve(),
+        ]
+        try:
+            resolved = log_dir.resolve()
+        except Exception:
+            return False, "Archived log directory could not be resolved."
+        if not any(root == resolved or root in resolved.parents for root in allowed_roots):
+            return False, "Refusing to delete a path outside multiagent log roots."
+        try:
+            shutil.rmtree(resolved)
+        except Exception as exc:
+            return False, str(exc)
+        return True, ""

@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
+import hashlib
+import sys
 from pathlib import Path
 
 
@@ -32,12 +35,67 @@ def central_log_dir(repo_root: Path | str) -> Path:
     return Path(repo_root).resolve() / "logs"
 
 
+def local_state_dir(repo_root: Path | str) -> Path:
+    repo = str(Path(repo_root).resolve())
+    repo_hash = hashlib.sha1(repo.encode("utf-8")).hexdigest()[:12]
+    mac_root = Path.home() / "Library" / "Application Support" / "multiagent"
+    xdg_root = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state")) / "multiagent"
+    base = mac_root if sys.platform == "darwin" else xdg_root
+    return base / repo_hash
+
+
+def local_runtime_log_dir(repo_root: Path | str) -> Path:
+    return local_state_dir(repo_root) / "logs"
+
+
+def local_workspace_log_dir(repo_root: Path | str, workspace: Path | str) -> Path:
+    workspace_real = str(Path(workspace).resolve())
+    workspace_hash = hashlib.sha1(workspace_real.encode("utf-8")).hexdigest()[:12]
+    name = Path(workspace_real).name or "workspace"
+    return local_state_dir(repo_root) / "workspaces" / f"{name}-{workspace_hash}"
+
+
 def hub_settings_path(repo_root: Path | str) -> Path:
-    return central_log_dir(repo_root) / ".hub-settings.json"
+    local_path = local_state_dir(repo_root) / ".hub-settings.json"
+    legacy_path = central_log_dir(repo_root) / ".hub-settings.json"
+    if not local_path.exists() and legacy_path.exists():
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            local_path.write_text(legacy_path.read_text(encoding="utf-8"), encoding="utf-8")
+        except Exception:
+            pass
+    return local_path
 
 
 def thinking_stats_path(repo_root: Path | str) -> Path:
-    return central_log_dir(repo_root) / ".thinking-time.json"
+    local_path = local_state_dir(repo_root) / ".thinking-time.json"
+    legacy_path = central_log_dir(repo_root) / ".thinking-time.json"
+    if not local_path.exists() and legacy_path.exists():
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            local_path.write_text(legacy_path.read_text(encoding="utf-8"), encoding="utf-8")
+        except Exception:
+            pass
+    return local_path
+
+
+def thinking_stats_paths(repo_root: Path | str) -> list[Path]:
+    local_path = local_state_dir(repo_root) / ".thinking-time.json"
+    legacy_path = central_log_dir(repo_root) / ".thinking-time.json"
+    paths = []
+    for path in (local_path, legacy_path):
+        try:
+            resolved = path.resolve()
+        except Exception:
+            resolved = path
+        if resolved not in paths and path.exists():
+            paths.append(resolved)
+    return paths
+
+
+def _session_storage_key(session_name: str, workspace: str) -> str:
+    workspace_real = str(Path(workspace or "").expanduser().resolve()) if workspace else ""
+    return f"{session_name}::{workspace_real}"
 
 
 def load_hub_settings(repo_root: Path | str, *, mobile_limit_cap: int = 500, desktop_limit_cap: int = 500):
@@ -122,8 +180,11 @@ def save_hub_settings(repo_root: Path | str, raw, *, mobile_limit_cap: int = 500
             value = settings[key]
         settings[key] = max(10, min(cap, value))
     for key in ("chat_auto_mode", "chat_awake", "chat_sound", "chat_tts", "starfield"):
-        v = raw.get(key, settings[key])
-        settings[key] = v in (True, "true", "1", "on") if not isinstance(v, bool) else v
+        if key in raw:
+            v = raw.get(key)
+            settings[key] = v in (True, "true", "1", "on") if not isinstance(v, bool) else v
+        else:
+            settings[key] = False
     path = hub_settings_path(repo_root)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -153,8 +214,9 @@ def persist_thinking_totals(repo_root: Path | str, session_name: str, workspace:
         sessions = {}
     # Compute delta vs previously stored values for this session (for daily tracking)
     prev_agents_raw = {}
-    if session_name in sessions and isinstance(sessions[session_name].get("agents"), dict):
-        prev_agents_raw = sessions[session_name]["agents"]
+    session_key = _session_storage_key(session_name, workspace)
+    if session_key in sessions and isinstance(sessions[session_key].get("agents"), dict):
+        prev_agents_raw = sessions[session_key]["agents"]
     # Aggregate previous values by base name for correct delta calculation
     prev_agents = {}
     for k, v in prev_agents_raw.items():
@@ -175,7 +237,8 @@ def persist_thinking_totals(repo_root: Path | str, session_name: str, workspace:
             day_entry[agent] = int(day_entry.get(agent, 0) or 0) + delta
     if day_entry:
         daily[today] = day_entry
-    sessions[session_name] = {
+    sessions[session_key] = {
+        "session_name": session_name,
         "workspace": workspace,
         "updated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "agents": agents,
@@ -188,57 +251,83 @@ def persist_thinking_totals(repo_root: Path | str, session_name: str, workspace:
 
 def load_hub_thinking_totals(repo_root: Path | str):
     totals = {}
-    session_count = 0
     by_session = {}
-    path = thinking_stats_path(repo_root)
-    if not path.is_file():
-        return {"total_seconds": 0, "by_agent": totals, "by_session": by_session, "session_count": 0}
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        raw = {}
-    sessions = raw.get("sessions") if isinstance(raw, dict) else {}
-    if not isinstance(sessions, dict):
-        sessions = {}
-    for session_name, session_data in sessions.items():
-        if not isinstance(session_data, dict):
+    daily_thinking = {}
+    session_agents = {}
+    session_meta = {}
+    for path in thinking_stats_paths(repo_root):
+        if not path.is_file():
             continue
-        agents = session_data.get("agents")
-        if not isinstance(agents, dict):
-            continue
-        used = False
-        session_total = 0
-        for agent, raw_value in agents.items():
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            raw = {}
+        if not isinstance(raw, dict):
+            raw = {}
+        sessions = raw.get("sessions")
+        if isinstance(sessions, dict):
+            session_items = sessions.items()
+        else:
+            # Legacy format: top-level keys are session names, values are agent→seconds maps.
+            session_items = [
+                (key, value) for key, value in raw.items()
+                if key != "daily" and isinstance(value, dict)
+            ]
+        for session_key, session_data in session_items:
+            if not isinstance(session_data, dict):
+                continue
+            agents = session_data.get("agents") if "agents" in session_data else session_data
+            if not isinstance(agents, dict):
+                continue
+            display_name = (session_data.get("session_name") or session_key.split("::", 1)[0] or session_key).strip()
+            workspace = (session_data.get("workspace") or "").strip()
+            updated_at = (session_data.get("updated_at") or "").strip()
+            if display_name not in session_agents:
+                session_agents[display_name] = {}
+                session_meta[display_name] = {"workspace": workspace, "updated_at": updated_at}
+            else:
+                if workspace and not session_meta[display_name].get("workspace"):
+                    session_meta[display_name]["workspace"] = workspace
+                if updated_at and updated_at > session_meta[display_name].get("updated_at", ""):
+                    session_meta[display_name]["updated_at"] = updated_at
+            for agent, raw_value in agents.items():
+                try:
+                    value = int(raw_value or 0)
+                except Exception:
+                    value = 0
+                value = max(0, value)
+                base = _base_agent_name(agent)
+                session_agents[display_name][base] = max(session_agents[display_name].get(base, 0), value)
+        daily_raw = raw.get("daily")
+        if not isinstance(daily_raw, dict):
+            daily_raw = {}
+        for date_key, day_data in daily_raw.items():
+            if not isinstance(day_data, dict):
+                continue
             try:
-                value = int(raw_value or 0)
+                day_total = sum(max(0, int(v or 0)) for v in day_data.values())
             except Exception:
-                value = 0
-            value = max(0, value)
+                continue
+            if day_total:
+                daily_thinking[date_key] = max(daily_thinking.get(date_key, 0), day_total)
+    session_count = 0
+    for display_name, agents in session_agents.items():
+        session_total = 0
+        used = False
+        for agent, value in agents.items():
+            value = max(0, int(value or 0))
             if value:
                 used = True
-            base = _base_agent_name(agent)
-            totals[base] = totals.get(base, 0) + value
+            totals[agent] = totals.get(agent, 0) + value
             session_total += value
         if used:
             session_count += 1
-            by_session[session_name] = {
+            meta = session_meta.get(display_name, {})
+            by_session[display_name] = {
                 "seconds": session_total,
-                "workspace": (session_data.get("workspace") or "").strip(),
-                "updated_at": (session_data.get("updated_at") or "").strip(),
+                "workspace": (meta.get("workspace") or "").strip(),
+                "updated_at": (meta.get("updated_at") or "").strip(),
             }
-    daily_raw = raw.get("daily") if isinstance(raw, dict) else {}
-    if not isinstance(daily_raw, dict):
-        daily_raw = {}
-    daily_thinking = {}
-    for date_key, day_data in daily_raw.items():
-        if not isinstance(day_data, dict):
-            continue
-        try:
-            day_total = sum(max(0, int(v or 0)) for v in day_data.values())
-        except Exception:
-            continue
-        if day_total:
-            daily_thinking[date_key] = day_total
     return {
         "total_seconds": sum(totals.values()),
         "by_agent": totals,
