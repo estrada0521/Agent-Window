@@ -26,7 +26,7 @@ HUB_PAGE_HEADER_CSS = """
     }
     .hub-page-header-top {
       display: flex; align-items: center; justify-content: space-between;
-      padding: max(16px, env(safe-area-inset-top)) var(--page-side-pad) 0;
+      padding: max(8px, env(safe-area-inset-top)) var(--page-side-pad) 0;
       box-sizing: border-box;
     }
     .hub-page-title {

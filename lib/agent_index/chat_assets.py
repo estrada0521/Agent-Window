@@ -132,6 +132,9 @@ CHAT_HTML = r"""<!doctype html>
       width: 100%;
       z-index: 100;
       overflow: visible;
+      background: rgba(var(--bg-rgb, 38, 38, 36), 0.42);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
     }
     .shell > .hub-page-header > .hub-page-menu-panel {
       position: absolute;
@@ -142,6 +145,9 @@ CHAT_HTML = r"""<!doctype html>
       max-height: 0;
       overflow: hidden;
       border-top: 0.5px solid transparent;
+      background: rgb(var(--bg-rgb));
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
       opacity: 0;
       transform: translateY(-6px);
       pointer-events: none;
@@ -532,12 +538,12 @@ CHAT_HTML = r"""<!doctype html>
       border-radius: 20px 20px 0 0;
       border: 1px solid rgba(255,255,255,0.12);
       border-bottom: none;
-      background: rgba(20, 20, 19, 0.22);
+      background: rgba(20, 20, 19, 0.12);
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.06),
-        0 10px 28px rgba(0,0,0,0.18);
-      backdrop-filter: blur(24px) saturate(160%);
-      -webkit-backdrop-filter: blur(24px) saturate(160%);
+        0 10px 28px rgba(0,0,0,0.12);
+      backdrop-filter: blur(14px) saturate(125%);
+      -webkit-backdrop-filter: blur(14px) saturate(125%);
       transition: border-color 0.4s ease;
       position: relative;
     }
@@ -2642,9 +2648,9 @@ CHAT_HTML = r"""<!doctype html>
     /* composer-main-shell: all states */
     [data-theme="black-hole"] .composer-main-shell,
     [data-theme="black-hole"] .composer-main-shell:focus-within {
-      background: rgba(20, 20, 20, 0.72) !important;
-      backdrop-filter: blur(20px) saturate(160%) !important;
-      -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+      background: rgba(20, 20, 20, 0.16) !important;
+      backdrop-filter: blur(14px) saturate(125%) !important;
+      -webkit-backdrop-filter: blur(14px) saturate(125%) !important;
     }
     /* user message box */
     [data-theme="black-hole"] .message.user .md-body {
