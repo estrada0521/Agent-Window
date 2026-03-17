@@ -124,6 +124,33 @@ CHAT_HTML = r"""<!doctype html>
       --inline-code-pad-y: 3px;
       --inline-code-pad-x: 5px;
     }
+    .shell > .hub-page-header {
+      position: sticky;
+      overflow: visible;
+    }
+    .shell > .hub-page-header > .hub-page-menu-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      z-index: 140;
+      max-height: none;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+    .shell > .hub-page-header > .hub-page-menu-panel.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .shell > .hub-page-header > #attachedFilesPanel.open {
+      max-height: min(360px, 50vh);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
     [data-theme="black-hole"] {
       color-scheme: dark;
       --bg-rgb: 10, 10, 10;
@@ -397,12 +424,18 @@ CHAT_HTML = r"""<!doctype html>
       letter-spacing: 0;
       pointer-events: none;
     }
+    #attachedFilesMenuBtn {
+      position: relative;
+    }
     .hub-page-menu-item.danger {
       color: rgba(248, 113, 113, 0.96);
     }
     .hub-page-menu-item.danger:hover,
     .hub-page-menu-item.danger:active {
       color: rgba(252, 165, 165, 1);
+    }
+    .hub-page-menu-item .action-mobile {
+      display: none;
     }
     .file-item:not(:last-child) {
       border-bottom: 1px solid rgba(255,255,255,0.08);
@@ -3979,6 +4012,9 @@ __HUB_HEADER_CSS__
     };
     const updateAttachedFilesPanel = async (entries) => {
       if (!attachedFilesPanel) return;
+      document.querySelectorAll(".hub-page-menu-btn .attached-files-badge").forEach((node) => {
+        if (node.parentElement !== attachedFilesMenuBtn) node.remove();
+      });
       const seen = new Set();
       const allFiles = [];
       for (const entry of (entries || [])) {
