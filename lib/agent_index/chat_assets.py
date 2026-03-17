@@ -153,12 +153,16 @@ CHAT_HTML = r"""<!doctype html>
     .shell > .hub-page-header > .hub-page-menu-panel.open {
       max-height: 400px;
       border-top-color: rgba(255,255,255,0.05);
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.32);
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
     }
     .shell > .hub-page-header > #attachedFilesPanel.open {
       max-height: min(360px, 50vh);
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.32);
       overflow-y: auto;
       overflow-x: hidden;
     }
