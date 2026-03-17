@@ -130,18 +130,27 @@ CHAT_HTML = r"""<!doctype html>
     }
     .shell > .hub-page-header > .hub-page-menu-panel {
       position: absolute;
-      top: calc(100% + 8px);
+      top: 100%;
       left: 0;
       right: 0;
       z-index: 140;
-      max-height: none;
+      max-height: 0;
       overflow: hidden;
+      border-top: 0.5px solid transparent;
+      background: rgb(var(--bg-rgb));
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
       opacity: 0;
       transform: translateY(-6px);
       pointer-events: none;
-      transition: opacity 180ms ease, transform 180ms ease;
+      transition:
+        max-height 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 180ms ease,
+        transform 180ms ease;
     }
     .shell > .hub-page-header > .hub-page-menu-panel.open {
+      max-height: 400px;
+      border-top-color: rgba(255,255,255,0.05);
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
@@ -373,11 +382,28 @@ CHAT_HTML = r"""<!doctype html>
       text-overflow: ellipsis;
     }
     .file-menu-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       padding: 10px 20px 6px;
       color: rgba(255,255,255,0.5);
       font: 600 11px/1.2 "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif;
       letter-spacing: 0.08em;
       text-transform: uppercase;
+    }
+    .file-menu-section-icon {
+      width: 12px;
+      height: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.72;
+      flex: 0 0 auto;
+    }
+    .file-menu-section-icon svg {
+      width: 100%;
+      height: 100%;
+      stroke-width: 2.2px;
     }
     .file-menu-row {
       display: flex;
@@ -436,6 +462,22 @@ CHAT_HTML = r"""<!doctype html>
     }
     .hub-page-menu-item .action-mobile {
       display: none;
+    }
+    .hub-page-menu-item .action-icon {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      color: currentColor;
+    }
+    .hub-page-menu-item .action-icon svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      stroke: currentColor;
+      fill: none;
     }
     .file-item:not(:last-child) {
       border-bottom: 1px solid rgba(255,255,255,0.08);
@@ -4087,7 +4129,7 @@ __HUB_HEADER_CSS__
         if (!items.length) continue;
         const section = document.createElement("div");
         section.className = "file-menu-section";
-        section.textContent = sectionName;
+        section.innerHTML = `<span class="file-menu-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h7l2 2h9"></path><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2"></path></svg></span><span>${escapeHtml(sectionName)}</span>`;
         attachedFilesPanel.appendChild(section);
         for (const item of items) {
           attachedFilesPanel.appendChild(buildFileMenuRow(item.path, item.ext, favorites.has(item.path), toggleFavorite));
