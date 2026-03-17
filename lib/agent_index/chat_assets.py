@@ -123,9 +123,14 @@ CHAT_HTML = r"""<!doctype html>
       --inline-code-radius: 4px;
       --inline-code-pad-y: 3px;
       --inline-code-pad-x: 5px;
+      --latest-message-offset: 34vh;
     }
     .shell > .hub-page-header {
-      position: sticky;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 100;
       overflow: visible;
     }
     .shell > .hub-page-header > .hub-page-menu-panel {
@@ -137,9 +142,6 @@ CHAT_HTML = r"""<!doctype html>
       max-height: 0;
       overflow: hidden;
       border-top: 0.5px solid transparent;
-      background: rgb(var(--bg-rgb));
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
       opacity: 0;
       transform: translateY(-6px);
       pointer-events: none;
@@ -414,24 +416,6 @@ CHAT_HTML = r"""<!doctype html>
     }
     .file-menu-row .file-item-path {
       min-width: 0;
-    }
-    .file-menu-star {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 18px;
-      height: 18px;
-      flex: 0 0 auto;
-      color: rgba(255,255,255,0.38);
-      border-radius: 6px;
-      transition: color 140ms ease, background 140ms ease;
-    }
-    .file-menu-star.is-favorite {
-      color: rgba(255,255,255,0.92);
-    }
-    .has-hover .file-menu-star:hover {
-      color: rgba(255,255,255,0.92);
-      background: rgba(255,255,255,0.06);
     }
     .attached-files-badge {
       position: absolute;
@@ -1191,7 +1175,7 @@ CHAT_HTML = r"""<!doctype html>
     }
     main {
       grid-area: 1 / 1;
-      padding: 0 14px calc(var(--composer-height, 96px) + 12px);
+      padding: calc(56px + env(safe-area-inset-top)) 14px calc(var(--composer-height, 96px) + var(--latest-message-offset, 34vh));
       display: flex;
       flex: 1;
       flex-direction: column;
@@ -3978,23 +3962,6 @@ __HUB_HEADER_CSS__
     const attachedFilesMenuBtn = document.getElementById("attachedFilesMenuBtn");
     const attachedFilesPanel = document.getElementById("attachedFilesPanel");
     let attachedFilesSession = "";
-    const attachedFavoritesStorageKey = (session) => `attachedFavorites:${session || "default"}`;
-    const loadAttachedFavorites = (session) => {
-      if (!session) return [];
-      try {
-        const raw = localStorage.getItem(attachedFavoritesStorageKey(session));
-        const parsed = JSON.parse(raw || "[]");
-        return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : [];
-      } catch (_) {
-        return [];
-      }
-    };
-    const saveAttachedFavorites = (session, favorites) => {
-      if (!session) return;
-      try {
-        localStorage.setItem(attachedFavoritesStorageKey(session), JSON.stringify(Array.from(new Set(favorites))));
-      } catch (_) {}
-    };
     const fileMenuSectionForExt = (ext) => {
       if (["png", "jpg", "jpeg", "gif", "webp", "svg", "ico", "mp4", "mov", "webm", "avi", "mkv", "mp3", "wav", "ogg", "m4a", "flac"].includes(ext)) return "Media";
       if (["html", "htm", "pdf"].includes(ext)) return "Web";
@@ -4003,7 +3970,7 @@ __HUB_HEADER_CSS__
       if (["py", "js", "ts", "tsx", "jsx", "sh", "css"].includes(ext)) return "Code";
       return "Other";
     };
-    const buildFileMenuRow = (path, ext, isFavorite, onFavoriteToggle) => {
+    const buildFileMenuRow = (path, ext) => {
       const filename = path.split("/").pop() || path;
       const icon = FILE_ICONS[ext] || FILE_SVG_ICONS.file;
       const btn = document.createElement("button");
@@ -4019,36 +3986,16 @@ __HUB_HEADER_CSS__
       const pathSpan = document.createElement("span");
       pathSpan.className = "file-item-path";
       pathSpan.textContent = filename;
-      const starBtn = document.createElement("span");
-      starBtn.className = `file-menu-star${isFavorite ? " is-favorite" : ""}`;
-      starBtn.setAttribute("role", "button");
-      starBtn.setAttribute("tabindex", "0");
-      starBtn.setAttribute("aria-label", isFavorite ? "Unfavorite" : "Favorite");
-      starBtn.setAttribute("title", isFavorite ? "Unfavorite" : "Favorite");
-      starBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="${isFavorite ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.1 8.6 22 9.3 17 14.1 18.3 21 12 17.5 5.7 21 7 14.1 2 9.3 8.9 8.6 12 2"></polygon></svg>`;
-      row.append(iconSpan, pathSpan, starBtn);
+      row.append(iconSpan, pathSpan);
       btn.appendChild(row);
       btn.addEventListener("mousedown", (e) => e.preventDefault());
       btn.addEventListener("click", async (e) => {
-        if (e.target.closest(".file-menu-star")) return;
         if (attachedFilesPanel) {
           attachedFilesPanel.hidden = true;
           attachedFilesPanel.classList.remove("open");
         }
         attachedFilesMenuBtn?.classList.remove("open");
         await openFileSurface(path, ext, btn, e);
-      });
-      starBtn?.addEventListener("mousedown", (e) => e.preventDefault());
-      starBtn?.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onFavoriteToggle(path);
-      });
-      starBtn?.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        e.preventDefault();
-        e.stopPropagation();
-        onFavoriteToggle(path);
       });
       return btn;
     };
@@ -4105,25 +4052,13 @@ __HUB_HEADER_CSS__
         attachedFilesPanel.appendChild(empty);
         return;
       }
-      const favorites = new Set(loadAttachedFavorites(attachedFilesSession).filter((path) => files.includes(path)));
-      const orderedSections = ["Favorites", "Documents", "Code", "Web", "Media", "Data", "Other"];
+      const orderedSections = ["Documents", "Code", "Web", "Media", "Data", "Other"];
       const grouped = Object.fromEntries(orderedSections.map((name) => [name, []]));
       for (const path of files) {
         const filename = path.split("/").pop() || path;
         const ext = filename.includes(".") ? filename.split(".").pop().toLowerCase() : "";
-        if (favorites.has(path)) {
-          grouped.Favorites.push({ path, ext });
-        }
         grouped[fileMenuSectionForExt(ext)].push({ path, ext });
       }
-      const rerender = () => updateAttachedFilesPanel(entries);
-      const toggleFavorite = (path) => {
-        const next = new Set(loadAttachedFavorites(attachedFilesSession));
-        if (next.has(path)) next.delete(path);
-        else next.add(path);
-        saveAttachedFavorites(attachedFilesSession, Array.from(next));
-        rerender();
-      };
       for (const sectionName of orderedSections) {
         const items = grouped[sectionName] || [];
         if (!items.length) continue;
@@ -4132,7 +4067,7 @@ __HUB_HEADER_CSS__
         section.innerHTML = `<span class="file-menu-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h7l2 2h9"></path><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2"></path></svg></span><span>${escapeHtml(sectionName)}</span>`;
         attachedFilesPanel.appendChild(section);
         for (const item of items) {
-          attachedFilesPanel.appendChild(buildFileMenuRow(item.path, item.ext, favorites.has(item.path), toggleFavorite));
+          attachedFilesPanel.appendChild(buildFileMenuRow(item.path, item.ext));
         }
       }
     };
