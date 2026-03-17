@@ -14,6 +14,15 @@ def _base_agent_name(name: str) -> str:
     return re.sub(r"-\d+$", "", name)
 
 
+def _coerce_message_limit(raw: dict, fallback: int, cap: int) -> int:
+    candidate = raw.get("message_limit")
+    try:
+        value = int(candidate)
+    except Exception:
+        value = fallback
+    return max(10, min(cap, value))
+
+
 HUB_SETTINGS_DEFAULTS = {
     "theme": "default",
     "agent_font_mode": "serif",
@@ -21,8 +30,7 @@ HUB_SETTINGS_DEFAULTS = {
     "agent_message_font": "preset-mincho",
     "user_message_opacity_blackhole": 1.0,
     "agent_message_opacity_blackhole": 1.0,
-    "mobile_message_limit": 50,
-    "desktop_message_limit": 500,
+    "message_limit": 500,
     "chat_auto_mode": False,
     "chat_awake": False,
     "chat_sound": False,
@@ -98,7 +106,7 @@ def _session_storage_key(session_name: str, workspace: str) -> str:
     return f"{session_name}::{workspace_real}"
 
 
-def load_hub_settings(repo_root: Path | str, *, mobile_limit_cap: int = 500, desktop_limit_cap: int = 500):
+def load_hub_settings(repo_root: Path | str, *, message_limit_cap: int = 500):
     settings = dict(HUB_SETTINGS_DEFAULTS)
     path = hub_settings_path(repo_root)
     if path.is_file():
@@ -131,23 +139,15 @@ def load_hub_settings(repo_root: Path | str, *, mobile_limit_cap: int = 500, des
                 except Exception:
                     value = float(settings[key])
                 settings[key] = max(0.2, min(1.0, value))
-            for key, default, cap in (
-                ("mobile_message_limit", 50, mobile_limit_cap),
-                ("desktop_message_limit", 500, desktop_limit_cap),
-            ):
-                try:
-                    value = int(raw.get(key, settings[key]))
-                except Exception:
-                    value = default
-                settings[key] = max(10, min(cap, value))
+            settings["message_limit"] = _coerce_message_limit(raw, settings["message_limit"], message_limit_cap)
             for key in ("chat_auto_mode", "chat_awake", "chat_sound", "chat_tts", "starfield"):
                 v = raw.get(key, settings[key])
                 settings[key] = v in (True, "true", "1", "on") if not isinstance(v, bool) else v
     return settings
 
 
-def save_hub_settings(repo_root: Path | str, raw, *, mobile_limit_cap: int = 500, desktop_limit_cap: int = 500):
-    settings = load_hub_settings(repo_root, mobile_limit_cap=mobile_limit_cap, desktop_limit_cap=desktop_limit_cap)
+def save_hub_settings(repo_root: Path | str, raw, *, message_limit_cap: int = 500):
+    settings = load_hub_settings(repo_root, message_limit_cap=message_limit_cap)
     theme = str(raw.get("theme") or settings["theme"]).strip().lower()
     if theme in {"default", "claude", "black-hole"}:
         settings["theme"] = theme
@@ -170,15 +170,7 @@ def save_hub_settings(repo_root: Path | str, raw, *, mobile_limit_cap: int = 500
         except Exception:
             value = float(settings[key])
         settings[key] = max(0.2, min(1.0, value))
-    for key, cap in (
-        ("mobile_message_limit", mobile_limit_cap),
-        ("desktop_message_limit", desktop_limit_cap),
-    ):
-        try:
-            value = int(raw.get(key, settings[key]))
-        except Exception:
-            value = settings[key]
-        settings[key] = max(10, min(cap, value))
+    settings["message_limit"] = _coerce_message_limit(raw, settings["message_limit"], message_limit_cap)
     for key in ("chat_auto_mode", "chat_awake", "chat_sound", "chat_tts", "starfield"):
         if key in raw:
             v = raw.get(key)

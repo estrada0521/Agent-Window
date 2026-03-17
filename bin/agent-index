@@ -337,6 +337,7 @@ script_path = Path(sys.argv[2]).resolve()
 port = int(sys.argv[3])
 tmux_socket = sys.argv[4]
 
+sys.path.insert(0, str(repo_root))
 sys.path.insert(0, str(repo_root / "lib"))
 from agent_index.hub_core import HubRuntime
 
@@ -413,6 +414,11 @@ def queue_hub_restart():
     return True
 
 import base64 as _base64
+from lib.agent_index.hub_header_assets import (
+    HUB_PAGE_HEADER_CSS,
+    HUB_PAGE_HEADER_JS,
+    render_hub_page_header,
+)
 try:
     _fontbolt_file = repo_root / "69b8dae91dba9.webp"
     _FONTBOLT_PNG_B64 = _base64.b64encode(_fontbolt_file.read_bytes()).decode("ascii") if _fontbolt_file.is_file() else ""
@@ -435,173 +441,10 @@ _HUB_ICON_URIS = {
     "copilot": _icon_data_uri("github.svg"),
     "grok": _icon_data_uri("grok.svg"),
 }
-
-_HUB_PAGE_HEADER_CSS = """
-    @font-face {
-      font-family: "anthropicSans";
-      src: url("/font/anthropic-sans-roman.ttf") format("truetype");
-      font-style: normal; font-weight: 300 800; font-display: swap;
-    }
-    @font-face {
-      font-family: "anthropicSans";
-      src: url("/font/anthropic-sans-italic.ttf") format("truetype");
-      font-style: italic; font-weight: 300 800; font-display: swap;
-    }
-    html, body { font-family: "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif !important; }
-    /* ── Hub page header (shared across all hub pages) ── */
-    .hub-page-header {
-      display: flex; flex-direction: column;
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(var(--bg-rgb), 0.65);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
-      border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    }
-    .hub-page-header-top {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: max(16px, env(safe-area-inset-top)) 16px 16px;
-      max-width: 760px; width: 100%; margin: 0 auto; box-sizing: border-box;
-    }
-    @media (max-width: 500px) {
-      .hub-page-header-top { padding: max(14px, env(safe-area-inset-top)) 16px 14px; }
-    }
-    .hub-page-title {
-      display: flex; align-items: center; text-decoration: none; opacity: 1;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-    }
-    .hub-page-title:hover { opacity: 0.8; transform: scale(0.98); }
-    .hub-page-logo {
-      height: 32px; width: auto; display: block; margin-top: 0px;
-      filter: invert(1) grayscale(1) brightness(1.04) contrast(1.04);
-    }
-    @media (max-width: 500px) {
-      .hub-page-logo { height: 22px; }
-    }
-    @media (min-width: 600px) {
-      .hub-page-logo { height: 26px; }
-      .hub-page-menu-item { font-size: 15px !important; padding: 14px 18px !important; }
-      .hub-page-menu-btn { width: 48px !important; height: 48px !important; }
-      .eyebrow { font-size: 14px !important; }
-      h1 { font-size: clamp(34px, 4vw, 48px) !important; }
-      .sub { font-size: 17px !important; }
-      .toolbar { font-size: 15px !important; }
-      .hub-nav a, .hub-nav button { font-size: 15px !important; padding: 8px 14px !important; }
-      .stat-card { padding: 16px 18px !important; }
-      .stat-label { font-size: 14px !important; }
-      .stat-val { font-size: 28px !important; }
-      .stat-breakdown-heading { font-size: 13px !important; }
-      .stat-breakdown-label { font-size: 15px !important; }
-      .stat-breakdown-val { font-size: 15px !important; }
-      .mob-row-name { font-size: 26px !important; }
-      .mob-row-path { font-size: 15px !important; }
-      .mob-row-meta { font-size: 14px !important; }
-      .mob-badge { font-size: 12px !important; }
-      .mob-kill-link { font-size: 13px !important; }
-      .mob-empty { font-size: 17px !important; }
-    }
-    @keyframes hubPageRestartPulse { 0%, 100% { opacity: 1; filter: drop-shadow(0 0 8px rgba(255,255,255,0.5)); } 50% { opacity: 0.4; filter: drop-shadow(0 0 0 rgba(255,255,255,0)); } }
-    .hub-page-menu-btn {
-      display: flex; align-items: center; justify-content: center;
-      width: 44px; height: 44px; border-radius: 50%;
-      background: rgba(255, 255, 255, 0.05); border: 0.5px solid rgba(255, 255, 255, 0.1); color: #fff;
-      cursor: pointer; font: inherit; -webkit-appearance: none;
-      transition: background 0.2s ease, transform 0.2s ease;
-    }
-    .hub-page-menu-btn:hover { background: rgba(255, 255, 255, 0.1); transform: scale(1.05); }
-    .hub-page-menu-btn:active, .hub-page-menu-btn.open { background: rgba(255, 255, 255, 0.15); transform: scale(0.95); }
-    .hub-page-menu-btn svg { display: block; width: 20px; height: 20px; }
-    .hub-page-menu-btn.restarting { animation: hubPageRestartPulse 1.2s ease-in-out infinite; pointer-events: none; border-color: transparent; background: transparent; }
-    .hub-page-menu-panel {
-      max-height: 0; overflow: hidden;
-      transition: max-height 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
-      border-top: 0.5px solid transparent;
-      background: rgba(0, 0, 0, 0.2);
-    }
-    .hub-page-menu-panel.open { max-height: 400px; border-top-color: rgba(255,255,255,0.05); }
-    .hub-page-menu-item {
-      display: flex; align-items: center; gap: 12px;
-      padding: 16px 20px; font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.88);
-      text-decoration: none; cursor: pointer; border: none;
-      border-bottom: 0.5px solid rgba(255,255,255,0.05); background: transparent;
-      width: 100%; text-align: left; font: inherit; -webkit-appearance: none;
-      box-sizing: border-box; max-width: 760px; margin: 0 auto;
-      transition: color 0.15s ease, background 0.15s ease, padding-left 0.2s ease;
-    }
-    .hub-page-menu-item:last-child { border-bottom: none; }
-    .hub-page-menu-item:hover { color: #fff; background: rgba(255,255,255,0.03); padding-left: 24px; }
-    .hub-page-menu-item:active { color: #fff !important; background: rgba(255,255,255,0.08); }
-    body { padding-top: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
-    .shell { padding-left: 14px; padding-right: 14px; }
-    html { scrollbar-width: none; -ms-overflow-style: none; }
-    html::-webkit-scrollbar { display: none; }
-    .hero .eyebrow { display: none; }
-    @keyframes hubFadeSlideUp {
-      0% { opacity: 0; transform: translateY(16px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    .animate-in { animation: hubFadeSlideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
-    .home-card, .form-panel, .panel, .stat-card, .session-card {
-      animation: hubFadeSlideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-    }
-    .home-card:nth-child(1), .form-panel:nth-child(1), .stat-card:nth-child(1), .session-card:nth-child(1) { animation-delay: 0.05s; }
-    .home-card:nth-child(2), .form-panel:nth-child(2), .stat-card:nth-child(2), .session-card:nth-child(2) { animation-delay: 0.10s; }
-    .home-card:nth-child(3), .form-panel:nth-child(3), .stat-card:nth-child(3), .session-card:nth-child(3) { animation-delay: 0.15s; }
-    .home-card:nth-child(4), .form-panel:nth-child(4), .stat-card:nth-child(4), .session-card:nth-child(4) { animation-delay: 0.20s; }
-    .home-card:nth-child(5), .form-panel:nth-child(5), .stat-card:nth-child(5), .session-card:nth-child(5) { animation-delay: 0.25s; }
-    .home-card:nth-child(n+6), .form-panel:nth-child(n+6), .stat-card:nth-child(n+6), .session-card:nth-child(n+6) { animation-delay: 0.30s; }
-    .start-btn { animation: hubFadeSlideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards 0.20s; }
-"""
-
-_HUB_PAGE_HEADER_HTML = """
-  <div class="hub-page-header">
-    <div class="hub-page-header-top">
-      <a href="/" class="hub-page-title" id="hubPageTitleLink"><img src="data:image/webp;base64,__FONTBOLT_B64__" alt="Multiagent Session Hub" class="hub-page-logo"></a>
-      <button class="hub-page-menu-btn" id="hubPageMenuBtn">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><line x1="3" y1="8" x2="21" y2="8"/><line x1="6" y1="16" x2="21" y2="16"/></svg>
-      </button>
-    </div>
-    <div class="hub-page-menu-panel" id="hubPageMenuPanel">
-      <a href="/new-session" class="hub-page-menu-item"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Session</a>
-      <a href="/stats" class="hub-page-menu-item"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Statistics</a>
-      <a href="/settings" class="hub-page-menu-item"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
-      <button class="hub-page-menu-item" id="hubPageRestartBtn"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.62"/></svg>Reload</button>
-    </div>
-  </div>
-"""
-
-_HUB_PAGE_HEADER_JS = """
-  (function() {
-    var menuBtn = document.getElementById("hubPageMenuBtn");
-    var menuPanel = document.getElementById("hubPageMenuPanel");
-    var restartBtn = document.getElementById("hubPageRestartBtn");
-    var titleLink = document.getElementById("hubPageTitleLink");
-    if (titleLink) {
-      titleLink.addEventListener("click", function() {
-        try { sessionStorage.removeItem("hub_chat_frame"); } catch(_) {}
-      });
-    }
-    if (menuBtn && menuPanel) {
-      menuBtn.addEventListener("click", function(e) { e.stopPropagation(); menuPanel.classList.toggle("open"); menuBtn.classList.toggle("open"); });
-      document.addEventListener("click", function() { menuPanel.classList.remove("open"); menuBtn.classList.remove("open"); });
-      menuPanel.addEventListener("click", function(e) { e.stopPropagation(); });
-    }
-    if (restartBtn) {
-      restartBtn.addEventListener("click", async function() {
-        if (restartBtn.classList.contains("restarting")) return;
-        restartBtn.classList.add("restarting"); restartBtn.disabled = true;
-        try { await fetch("/restart-hub", { method: "POST" }); } catch (_) {}
-        var t0 = Date.now();
-        var poll = async function() {
-          try { var r = await fetch("/sessions?ts=" + Date.now(), { cache: "no-store" }); if (r.ok) { window.location.replace("/"); return; } } catch (_) {}
-          if (Date.now() - t0 < 20000) { setTimeout(poll, 500); } else { window.location.reload(); }
-        };
-        setTimeout(poll, 700);
-      });
-    }
-  })();
-"""
-_HUB_PAGE_HEADER_HTML = _HUB_PAGE_HEADER_HTML.replace("__FONTBOLT_B64__", _FONTBOLT_PNG_B64)
+_HUB_LOGO_DATA_URI = f"data:image/webp;base64,{_FONTBOLT_PNG_B64}" if _FONTBOLT_PNG_B64 else "/hub-logo"
+_HUB_PAGE_HEADER_CSS = HUB_PAGE_HEADER_CSS
+_HUB_PAGE_HEADER_HTML = render_hub_page_header(logo_data_uri=_HUB_LOGO_DATA_URI)
+_HUB_PAGE_HEADER_JS = HUB_PAGE_HEADER_JS
 
 HUB_APP_HTML = """<!doctype html>
 <html lang="en" data-theme="__CHAT_THEME__"__STARFIELD_ATTR__ data-agent-font-mode="__AGENT_FONT_MODE__">
@@ -622,6 +465,7 @@ HUB_APP_HTML = """<!doctype html>
     :root, [data-theme="default"], [data-theme="claude"] {
       color-scheme: dark;
       --bg: rgb(38, 38, 36);
+      --bg-rgb: 38, 38, 36;
       --panel: rgba(30, 30, 34, 0.7);
       --panel-2: rgba(40, 40, 46, 0.85);
       --line: rgba(255,255,255,0.08);
@@ -636,6 +480,7 @@ HUB_APP_HTML = """<!doctype html>
     [data-theme="black-hole"] {
       color-scheme: dark;
       --bg: rgb(10, 10, 10);
+      --bg-rgb: 10, 10, 10;
       --panel: rgba(18, 18, 20, 0.7);
       --panel-2: rgba(25, 25, 28, 0.8);
       --line: rgba(255,255,255,0.06);
@@ -661,6 +506,8 @@ HUB_APP_HTML = """<!doctype html>
     .shell {
       max-width: 760px;
       margin: 0 auto;
+    }
+    .shell > :not(.hub-page-header) {
       padding-left: 14px;
       padding-right: 14px;
     }
@@ -1110,7 +957,6 @@ HUB_APP_HTML = """<!doctype html>
     .hub-view-stats #list {
       display: none;
     }
-    .nav-short { display: none; }
     /* ── Card → flat row (all viewports) ── */
     .hub-nav { display: none !important; }
     .list { gap: 0; }
@@ -1290,16 +1136,16 @@ HUB_APP_HTML = """<!doctype html>
 </head>
 <body class="hub-view-__HUB_VIEW__">
   <canvas id="starfield"></canvas>
-  __HUB_HEADER_HTML__
   <div class="shell">
+    __HUB_HEADER_HTML__
     <section class="hero">
       <div class="eyebrow">multiagent</div>
       <h1>__HUB_TITLE__</h1>
       <div class="sub">__HUB_SUB__</div>
       <div class="hub-nav">
         <a href="/" class="__HUB_NAV_HOME__">Hub</a>
-        <a href="/new-session" class="__HUB_NAV_NEW__"><span class="nav-full">New Session</span><span class="nav-short">New</span></a>
-        <a href="/resume" class="__HUB_NAV_RESUME__"><span class="nav-full">Resume Sessions</span><span class="nav-short">Resume</span></a>
+        <a href="/new-session" class="__HUB_NAV_NEW__">New Session</a>
+        <a href="/resume" class="__HUB_NAV_RESUME__">Resume Sessions</a>
         <a href="/stats" class="__HUB_NAV_STATS__">Statistics</a>
         <a href="/settings" class="__HUB_NAV_SETTINGS__">Settings</a>
         <form class="hub-restart-form" method="post" action="/restart-hub"><button type="submit">Restart Hub</button></form>
@@ -1909,6 +1755,7 @@ HUB_HOME_HTML = """<!doctype html>
     :root, [data-theme="default"], [data-theme="claude"] {
       color-scheme: dark;
       --bg: rgb(38, 38, 36);
+      --bg-rgb: 38, 38, 36;
       --panel: rgba(30, 30, 34, 0.65);
       --panel-2: rgba(40, 40, 46, 0.8);
       --line: rgba(255,255,255,0.08);
@@ -1919,6 +1766,7 @@ HUB_HOME_HTML = """<!doctype html>
     [data-theme="black-hole"] {
       color-scheme: dark;
       --bg: rgb(10, 10, 10);
+      --bg-rgb: 10, 10, 10;
       --panel: rgba(18, 18, 20, 0.7);
       --panel-2: rgba(25, 25, 28, 0.8);
       --line: rgba(255,255,255,0.06);
@@ -1940,6 +1788,8 @@ HUB_HOME_HTML = """<!doctype html>
     .shell {
       max-width: 760px;
       margin: 0 auto;
+    }
+    .shell > :not(.hub-page-header):not(.mob-stats-bar):not(.mob-list-wrap) {
       padding-left: 14px;
       padding-right: 14px;
     }
@@ -2017,8 +1867,6 @@ HUB_HOME_HTML = """<!doctype html>
     .hub-nav .hub-restart-form button { color: rgb(44, 132, 219); }
     @keyframes hubRestartingPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     .hub-nav button.restarting { animation: hubRestartingPulse 900ms ease-in-out infinite; pointer-events: none; }
-    .nav-short { display: none; }
-    @media (max-width: 500px) { .nav-full { display: none; } .nav-short { display: inline; } .hub-nav .hub-restart-form { position: fixed; top: max(14px, env(safe-area-inset-top)); right: 14px; margin-left: 0; } }
     .home-card {
       display: block;
       text-decoration: none;
@@ -2078,7 +1926,6 @@ HUB_HOME_HTML = """<!doctype html>
     }
     /* ── Hub home layout ── */
     body { padding: 0; }
-    .shell { max-width: none; }
     .hero, .home-grid, .hub-nav { display: none !important; }
     @keyframes mobSlideOutLeft {
       from { transform: translateX(0); opacity: 1; }
@@ -2090,7 +1937,7 @@ HUB_HOME_HTML = """<!doctype html>
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0;
-      padding: 10px 16px 11px;
+      padding: 10px 14px 11px;
       border-bottom: 0.5px solid var(--line);
       border-top: 0.5px solid var(--line);
       font-size: 12px;
@@ -2137,7 +1984,7 @@ HUB_HOME_HTML = """<!doctype html>
       padding-bottom: max(40px, env(safe-area-inset-bottom));
     }
     .mob-section-label {
-      padding: 14px 16px 5px;
+      padding: 14px 14px 5px;
       font-size: 11px;
       font-weight: 600;
       letter-spacing: 0.08em;
@@ -2146,7 +1993,7 @@ HUB_HOME_HTML = """<!doctype html>
     }
     .mob-session-row {
       display: block;
-      padding: 14px 16px;
+      padding: 14px;
       border-bottom: none;
       cursor: pointer;
       text-decoration: none;
@@ -2217,36 +2064,6 @@ HUB_HOME_HTML = """<!doctype html>
     .swipe-act-right { right: 0; background: rgb(255, 59, 48); }
     .mob-session-row { background: var(--bg); position: relative; z-index: 1; will-change: transform; }
     .mob-session-row.pinned-row .mob-row-name::before { content: "📌 "; font-size: 12px; }
-    /* ── Desktop hover actions ── */
-    .mob-row-hover-actions {
-      display: none;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-    .mob-session-row:hover .mob-row-hover-actions { display: flex; }
-    .mob-hover-btn {
-      font-size: 11px;
-      letter-spacing: 0.04em;
-      padding: 3px 9px;
-      border-radius: 8px;
-      border: 0.5px solid var(--line-strong);
-      background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      font-family: inherit;
-      -webkit-appearance: none;
-      white-space: nowrap;
-      text-decoration: none;
-    }
-    .mob-hover-btn:hover { color: var(--fg); border-color: rgba(255,255,255,0.25); }
-    .mob-hover-btn.kill { border-color: rgba(214,124,124,0.4); color: var(--bad); }
-    .mob-hover-btn.kill:hover { border-color: rgba(214,124,124,0.7); }
-    .mob-hover-btn.pin { border-color: rgba(52,199,89,0.4); color: var(--ok); }
-    .mob-hover-btn.pin:hover { border-color: rgba(52,199,89,0.7); }
-    @media (max-width: 500px) {
-      .mob-row-hover-actions { display: none !important; }
-    }
     [data-theme="black-hole"] .mob-session-row { background: rgb(10, 10, 10); border-bottom: none; }
     [data-theme="black-hole"] .swipe-row { border-bottom: 1px solid rgba(255,255,255,0.1); }
     #starfield { position: fixed; top: 0; left: 0; z-index: 1; width: 100%; height: 100%; display: none; pointer-events: none; }
@@ -2263,21 +2080,21 @@ HUB_HOME_HTML = """<!doctype html>
 </head>
 <body>
   <canvas id="starfield"></canvas>
-  __HUB_HEADER_HTML__
   <div id="chatOverlay" hidden><iframe id="chatFrame" src="about:blank" allow="microphone; clipboard-write"></iframe></div>
-<div class="mob-stats-bar" id="mobStatsBar"></div>
-  <div class="mob-list-wrap" id="mobListWrap">
-    <div class="mob-empty" id="mobLoading">Loading sessions\u2026</div>
-  </div>
   <div class="shell">
+    __HUB_HEADER_HTML__
+    <div class="mob-stats-bar" id="mobStatsBar"></div>
+    <div class="mob-list-wrap" id="mobListWrap">
+      <div class="mob-empty" id="mobLoading">Loading sessions\u2026</div>
+    </div>
     <section class="hero">
       <div class="eyebrow">multiagent</div>
       <h1>Hub</h1>
       <div class="sub">A home page for existing sessions. Resume work, inspect cross-session stats, and grow this into the control layer for the whole multiagent system.</div>
       <div class="hub-nav">
         <a href="/">Hub</a>
-        <a href="/new-session"><span class="nav-full">New Session</span><span class="nav-short">New</span></a>
-        <a href="/resume"><span class="nav-full">Resume Sessions</span><span class="nav-short">Resume</span></a>
+        <a href="/new-session">New Session</a>
+        <a href="/resume">Resume Sessions</a>
         <a href="/stats">Statistics</a>
         <a href="/settings">Settings</a>
         <form class="hub-restart-form" method="post" action="/restart-hub"><button type="submit">Restart Hub</button></form>
@@ -2427,7 +2244,7 @@ HUB_HOME_HTML = """<!doctype html>
         inner.addEventListener("touchend", endDrag, { passive: true });
         // Mouse events (PC swipe)
         inner.addEventListener("mousedown", (e) => {
-          if (e.target.closest(".mob-row-expand-btn, .mob-row-hover-actions, a, button")) return;
+          if (e.target.closest(".mob-row-expand-btn, a, button")) return;
           e.preventDefault();
           startDrag(e.clientX, e.clientY);
           const onMove = (me) => moveDrag(me.clientX, me.clientY, () => me.preventDefault());
@@ -2512,10 +2329,6 @@ HUB_HOME_HTML = """<!doctype html>
                   `<div class="mob-row-name">${esc(s.name)}</div>` +
                 `<div class="mob-row-tools">` +
                   `<span class="mob-badge ${esc(s.status)}">${esc(s.status)}</span>` +
-                  `<div class="mob-row-hover-actions">` +
-                    `<button class="mob-hover-btn pin" data-action="pin">${isPinned ? "Unpin" : "Pin"}</button>` +
-                    `<a class="mob-hover-btn kill" href="/kill-session?session=${encodeURIComponent(s.name)}" onclick="return confirm('Kill ${esc(s.name)}?')">Kill</a>` +
-                  `</div>` +
                 `</div></div>` +
                 preview +
                 `<div class="mob-row-detail">` +
@@ -2545,10 +2358,6 @@ HUB_HOME_HTML = """<!doctype html>
                   `<div class="mob-row-name">${esc(s.name)}</div>` +
                 `<div class="mob-row-tools">` +
                   `<span class="mob-badge">archived</span>` +
-                  `<div class="mob-row-hover-actions">` +
-                    `<a class="mob-hover-btn pin" href="/revive-session?session=${encodeURIComponent(s.name)}">Revive</a>` +
-                    `<a class="mob-hover-btn kill" href="/delete-archived-session?session=${encodeURIComponent(s.name)}" onclick="return confirm('Delete archived logs for ${esc(s.name)}? This cannot be undone.')">Delete</a>` +
-                  `</div>` +
                 `</div></div>` +
                 preview +
                 `<div class="mob-row-detail">` +
@@ -2568,15 +2377,6 @@ HUB_HOME_HTML = """<!doctype html>
         }
         wrap.innerHTML = html;
         wrap.querySelectorAll(".swipe-row").forEach(initSwipeRow);
-        // Desktop hover pin buttons
-        wrap.querySelectorAll(".mob-hover-btn[data-action='pin']").forEach(btn => {
-          btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const row = btn.closest(".swipe-row");
-            const n = row ? row.dataset.sessionName : null;
-            if (n) { togglePin(n); refresh(); }
-          });
-        });
       };
       const refresh = async (force) => {
         try {
@@ -2772,8 +2572,7 @@ def hub_settings_html(saved=False):
     agent_message_font = settings.get("agent_message_font", "preset-mincho")
     user_message_opacity_blackhole = float(settings.get("user_message_opacity_blackhole", 1.0) or 1.0)
     agent_message_opacity_blackhole = float(settings.get("agent_message_opacity_blackhole", 1.0) or 1.0)
-    mobile_limit = settings["mobile_message_limit"]
-    desktop_limit = settings["desktop_message_limit"]
+    message_limit = settings["message_limit"]
     chat_auto = settings.get("chat_auto_mode", False)
     chat_awake = settings.get("chat_awake", False)
     chat_sound = settings.get("chat_sound", False)
@@ -2797,6 +2596,7 @@ def hub_settings_html(saved=False):
     :root, [data-theme="default"], [data-theme="claude"] {{
       color-scheme: dark;
       --bg: rgb(38, 38, 36);
+      --bg-rgb: 38, 38, 36;
       --panel: rgb(25, 25, 24);
       --panel-2: rgb(30, 30, 29);
       --line: rgba(255,255,255,0.09);
@@ -2808,6 +2608,7 @@ def hub_settings_html(saved=False):
     [data-theme="black-hole"] {{
       color-scheme: dark;
       --bg: rgb(10, 10, 10);
+      --bg-rgb: 10, 10, 10;
       --panel: rgb(20, 20, 20);
       --panel-2: rgb(15, 15, 15);
       --line: rgba(255,255,255,0.06);
@@ -2852,7 +2653,8 @@ def hub_settings_html(saved=False):
     body {{
       padding: 0 0 max(20px, env(safe-area-inset-bottom)) 0;
     }}
-    .shell {{ max-width: 760px; margin: 0 auto; padding-left: 14px; padding-right: 14px; }}
+    .shell {{ max-width: 760px; margin: 0 auto; }}
+    .shell > :not(.hub-page-header) {{ padding-left: 14px; padding-right: 14px; }}
     .hero {{ padding: 8px 2px 18px 2px; }}
     .eyebrow {{ color: var(--muted); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }}
     h1 {{ margin: 0; font-size: clamp(28px, 5vw, 40px); line-height: 1.02; font-weight: 600; letter-spacing: -0.03em; }}
@@ -2897,8 +2699,6 @@ def hub_settings_html(saved=False):
     }}
     .hub-nav .hub-restart-form button {{ color: rgb(44, 132, 219); }}
     .hub-nav a.active {{ color: var(--fg); border-color: var(--line-strong); }}
-    .nav-short {{ display: none; }}
-    @media (max-width: 500px) {{ .nav-full {{ display: none; }} .nav-short {{ display: inline; }} .hub-nav .hub-restart-form {{ position: fixed; top: max(14px, env(safe-area-inset-top)); right: 14px; margin-left: 0; }} }}
     .panel {{
       background: var(--panel);
       border: 0.5px solid var(--line);
@@ -3037,16 +2837,16 @@ def hub_settings_html(saved=False):
 </head>
 <body>
   <canvas id="starfield"></canvas>
-  __HUB_HEADER_HTML__
   <div class="shell">
+    __HUB_HEADER_HTML__
     <section class="hero">
       <div class="eyebrow">multiagent</div>
       <h1>Settings</h1>
       <div class="sub">Set the defaults that shape every chat reopen: look and feel, message density, device behavior, and effects that should feel consistent across the whole Hub.</div>
       <div class="hub-nav">
         <a href="/">Hub</a>
-        <a href="/new-session"><span class="nav-full">New Session</span><span class="nav-short">New</span></a>
-        <a href="/resume"><span class="nav-full">Resume Sessions</span><span class="nav-short">Resume</span></a>
+        <a href="/new-session">New Session</a>
+        <a href="/resume">Resume Sessions</a>
         <a href="/stats">Statistics</a>
         <a href="/settings" class="active">Settings</a>
         <form class="hub-restart-form" method="post" action="/restart-hub"><button type="submit">Restart Hub</button></form>
@@ -3082,18 +2882,9 @@ def hub_settings_html(saved=False):
       </div>
       <input type="hidden" name="agent_font_mode" value="{font_mode}">
       <div class="field">
-        <div class="label">Default Message Count</div>
-        <div class="row">
-          <div>
-            <label class="label" for="mobile_message_limit">Mobile</label>
-            <input id="mobile_message_limit" name="mobile_message_limit" type="number" min="10" max="500" step="10" value="{mobile_limit}">
-          </div>
-          <div>
-            <label class="label" for="desktop_message_limit">Desktop</label>
-            <input id="desktop_message_limit" name="desktop_message_limit" type="number" min="10" max="500" step="10" value="{desktop_limit}">
-          </div>
-        </div>
-        <div class="hint">These are display defaults. Desktop is currently bounded by the chat server's existing limit, so 500 is the practical ceiling.</div>
+        <label class="label" for="message_limit">Default Message Count</label>
+        <input id="message_limit" name="message_limit" type="number" min="10" max="500" step="10" value="{message_limit}">
+        <div class="hint">Single display default for chat reopen. Current practical ceiling is 500.</div>
       </div>
       <div class="field">
         <div class="label">Chat Defaults</div>
@@ -3299,6 +3090,7 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
     :root, [data-theme="default"], [data-theme="claude"] {
       color-scheme: dark;
       --bg: rgb(38, 38, 36);
+      --bg-rgb: 38, 38, 36;
       --panel: rgb(25, 25, 24);
       --panel-2: rgb(30, 30, 29);
       --line: rgba(255,255,255,0.09);
@@ -3310,6 +3102,7 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
     [data-theme="black-hole"] {
       color-scheme: dark;
       --bg: rgb(10, 10, 10);
+      --bg-rgb: 10, 10, 10;
       --panel: rgb(20, 20, 20);
       --panel-2: rgb(15, 15, 15);
       --line: rgba(255,255,255,0.06);
@@ -3345,7 +3138,8 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); font-family: "SF Pro Text", "Segoe UI", sans-serif; }
     body { padding: 0 0 max(20px, env(safe-area-inset-bottom)) 0; }
-    .shell { max-width: 760px; margin: 0 auto; padding-left: 14px; padding-right: 14px; }
+    .shell { max-width: 760px; margin: 0 auto; }
+    .shell > :not(.hub-page-header) { padding-left: 14px; padding-right: 14px; }
     .hero { padding: 8px 2px 18px 2px; }
     .eyebrow { color: var(--fg); opacity: 0.8; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
     h1 { margin: 0; font-size: clamp(26px, 5vw, 38px); line-height: 1.02; font-weight: 600; letter-spacing: -0.03em; }
@@ -3359,7 +3153,6 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
     .hub-nav .hub-restart-form button { color: var(--accent); opacity: 1; }
     @keyframes hubRestartingPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     .hub-nav button.restarting { animation: hubRestartingPulse 900ms ease-in-out infinite; pointer-events: none; }
-    .nav-short { display: none; }
     .hub-nav { display: none !important; }
     .form-panel {
       background: transparent !important;
@@ -3430,16 +3223,16 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
 </head>
 <body>
   <canvas id="starfield"></canvas>
-  __HUB_HEADER_HTML__
   <div class="shell">
+    __HUB_HEADER_HTML__
     <section class="hero">
       <div class="eyebrow">multiagent</div>
       <h1>New Session</h1>
       <div class="sub">Create a new working room for the repo you want to explore. Pick the folder, decide how many agents should join, and launch straight into chat.</div>
       <div class="hub-nav">
         <a href="/">Hub</a>
-        <a href="/new-session" class="active"><span class="nav-full">New Session</span><span class="nav-short">New</span></a>
-        <a href="/resume"><span class="nav-full">Resume Sessions</span><span class="nav-short">Resume</span></a>
+        <a href="/new-session" class="active">New Session</a>
+        <a href="/resume">Resume Sessions</a>
         <a href="/stats">Statistics</a>
         <a href="/settings">Settings</a>
         <form class="hub-restart-form" method="post" action="/restart-hub"><button type="submit">Restart Hub</button></form>
@@ -4414,7 +4207,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
         if parsed.path == "/hub-settings":
-            s = load_hub_settings()
+            s = load_chat_settings()
             body = json.dumps({
                 "chat_auto_mode": bool(s.get("chat_auto_mode", False)),
                 "chat_awake":     bool(s.get("chat_awake", False)),
@@ -4490,7 +4283,7 @@ class Handler(BaseHTTPRequestHandler):
             chat_settings = load_chat_settings()
             body = render_chat_html(
                 icon_data_uris=export_runtime.icon_data_uris,
-                logo_data_uri="",
+                logo_data_uri="/hub-logo",
                 server_instance=server_instance,
                 hub_port=hub_port,
                 chat_settings=chat_settings,

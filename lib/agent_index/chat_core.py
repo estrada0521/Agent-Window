@@ -58,7 +58,7 @@ class ChatRuntime:
 
     def load_chat_settings(self):
         cap = self.limit if self.limit > 0 else 500
-        return load_shared_hub_settings(self.repo_root, mobile_limit_cap=cap, desktop_limit_cap=cap)
+        return load_shared_hub_settings(self.repo_root, message_limit_cap=cap)
 
     @staticmethod
     def _font_family_stack(selection: str, role: str) -> str:
