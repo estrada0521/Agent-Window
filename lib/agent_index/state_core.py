@@ -155,9 +155,156 @@ def thinking_stats_paths(repo_root: Path | str) -> list[Path]:
     return [path] if path.exists() else []
 
 
+def thinking_runtime_path(repo_root: Path | str) -> Path:
+    path = local_state_dir(repo_root) / ".thinking-runtime.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _read_json_dict(path: Path) -> dict:
+    if not path.is_file():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return raw if isinstance(raw, dict) else {}
+
+
 def _session_storage_key(session_name: str, workspace: str) -> str:
     workspace_real = str(Path(workspace or "").expanduser().resolve()) if workspace else ""
     return f"{session_name}::{workspace_real}"
+
+
+def load_session_thinking_totals(repo_root: Path | str, session_name: str, workspace: str) -> dict[str, int]:
+    session_key = _session_storage_key(session_name, workspace)
+    payload = _read_json_dict(thinking_stats_path(repo_root))
+    sessions = payload.get("sessions")
+    if not isinstance(sessions, dict):
+        return {}
+    session_data = sessions.get(session_key)
+    if not isinstance(session_data, dict):
+        return {}
+    agents = session_data.get("agents")
+    if not isinstance(agents, dict):
+        return {}
+    totals = {}
+    for agent, raw_value in agents.items():
+        try:
+            value = max(0, int(raw_value or 0))
+        except Exception:
+            value = 0
+        if value:
+            totals[_base_agent_name(agent)] = value
+    return totals
+
+
+def update_thinking_totals_from_statuses(
+    repo_root: Path | str,
+    session_name: str,
+    workspace: str,
+    statuses: dict[str, str],
+    *,
+    now: float | None = None,
+):
+    if not session_name:
+        return
+    now_ts = float(now if now is not None else time.time())
+    today = time.strftime("%Y-%m-%d", time.localtime(now_ts))
+    session_key = _session_storage_key(session_name, workspace)
+
+    runtime_path = thinking_runtime_path(repo_root)
+    runtime_payload = _read_json_dict(runtime_path)
+    runtime_sessions = runtime_payload.get("sessions")
+    if not isinstance(runtime_sessions, dict):
+        runtime_sessions = {}
+
+    runtime_entry = runtime_sessions.get(session_key)
+    if not isinstance(runtime_entry, dict):
+        runtime_entry = {
+            "session_name": session_name,
+            "workspace": workspace,
+            "running_agents": {},
+        }
+    running_agents = runtime_entry.get("running_agents")
+    if not isinstance(running_agents, dict):
+        running_agents = {}
+
+    stats_path = thinking_stats_path(repo_root)
+    stats_payload = _read_json_dict(stats_path)
+    sessions = stats_payload.get("sessions")
+    if not isinstance(sessions, dict):
+        sessions = {}
+    daily = stats_payload.get("daily")
+    if not isinstance(daily, dict):
+        daily = {}
+    day_entry = daily.get(today)
+    if not isinstance(day_entry, dict):
+        day_entry = {}
+
+    session_entry = sessions.get(session_key)
+    if not isinstance(session_entry, dict):
+        session_entry = {
+            "session_name": session_name,
+            "workspace": workspace,
+            "updated_at": "",
+            "agents": {},
+        }
+    agent_totals = session_entry.get("agents")
+    if not isinstance(agent_totals, dict):
+        agent_totals = {}
+
+    changed = False
+
+    def flush_agent(agent_name: str, last_tick: float):
+        nonlocal changed
+        delta = int(max(0, now_ts - float(last_tick or now_ts)))
+        if delta <= 0:
+            return
+        base = _base_agent_name(agent_name)
+        agent_totals[base] = max(0, int(agent_totals.get(base, 0) or 0)) + delta
+        day_entry[base] = max(0, int(day_entry.get(base, 0) or 0)) + delta
+        changed = True
+
+    tracked_agents = list(running_agents.keys())
+    for agent_name in tracked_agents:
+        status = str(statuses.get(agent_name) or "").strip().lower()
+        meta = running_agents.get(agent_name)
+        if not isinstance(meta, dict):
+            meta = {}
+        last_tick = float(meta.get("last_tick") or now_ts)
+        flush_agent(agent_name, last_tick)
+        if status == "running":
+            running_agents[agent_name] = {"last_tick": now_ts}
+        else:
+            running_agents.pop(agent_name, None)
+            changed = True
+
+    for agent_name, status in statuses.items():
+        if str(status).strip().lower() != "running":
+            continue
+        if agent_name not in running_agents:
+            running_agents[agent_name] = {"last_tick": now_ts}
+            changed = True
+
+    runtime_entry["session_name"] = session_name
+    runtime_entry["workspace"] = workspace
+    runtime_entry["running_agents"] = running_agents
+    runtime_sessions[session_key] = runtime_entry
+    runtime_payload["sessions"] = runtime_sessions
+    runtime_path.write_text(json.dumps(runtime_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    if changed:
+        session_entry["session_name"] = session_name
+        session_entry["workspace"] = workspace
+        session_entry["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(now_ts))
+        session_entry["agents"] = agent_totals
+        sessions[session_key] = session_entry
+        if day_entry:
+            daily[today] = day_entry
+        stats_payload["sessions"] = sessions
+        stats_payload["daily"] = daily
+        stats_path.write_text(json.dumps(stats_payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def load_hub_settings(repo_root: Path | str, *, message_limit_cap: int = 500):

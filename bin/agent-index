@@ -4391,6 +4391,12 @@ class Handler(BaseHTTPRequestHandler):
             append_system_entry(msg)
             self._send_json(200, {"ok": True})
             return
+        if parsed.path == "/thinking-time" and self.command == "GET":
+            try:
+                self._send_json(200, {"ok": True, "totals": runtime.load_thinking_totals()})
+            except Exception as exc:
+                self._send_json(500, {"ok": False, "error": str(exc)})
+            return
         if parsed.path == "/thinking-time":
             try:
                 length = int(self.headers.get("Content-Length", "0"))

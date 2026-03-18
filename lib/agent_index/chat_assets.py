@@ -4863,8 +4863,6 @@ __HUB_HEADER_CSS__
     let agentStatusSince = {};
     let agentTotalThinkingTime = {};
     let thinkingTimeSession = "";
-    let lastThinkingSyncAt = 0;
-    let lastThinkingSyncPayload = "";
     const collectThinkingTimeTotals = () => {
       const raw = { ...agentTotalThinkingTime };
       const now = Date.now();
@@ -4881,49 +4879,20 @@ __HUB_HEADER_CSS__
       });
       return totals;
     };
-    const syncThinkingTimeToServer = (force = false) => {
-      if (!thinkingTimeSession) return;
-      const totals = collectThinkingTimeTotals();
-      const body = JSON.stringify({ totals });
-      const now = Date.now();
-      if (!force) {
-        if (body === lastThinkingSyncPayload && now - lastThinkingSyncAt < 15000) return;
-        if (now - lastThinkingSyncAt < 5000) return;
-      }
-      lastThinkingSyncPayload = body;
-      lastThinkingSyncAt = now;
-      if (force && navigator.sendBeacon) {
-        try {
-          const blob = new Blob([body], { type: "application/json" });
-          navigator.sendBeacon("/thinking-time", blob);
-          return;
-        } catch (_) {}
-      }
-      fetch("/thinking-time", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-      }).catch(() => {});
-    };
     const loadThinkingTime = (session) => {
       if (!session || thinkingTimeSession === session) return;
       thinkingTimeSession = session;
-      lastThinkingSyncAt = 0;
-      lastThinkingSyncPayload = "";
-      try {
-        const saved = localStorage.getItem(`thinkingTime:${session}`);
-        if (saved) agentTotalThinkingTime = JSON.parse(saved);
-      } catch(_) {}
-      syncThinkingTimeToServer(true);
+      agentTotalThinkingTime = {};
+      fetch("/thinking-time", { cache: "no-store" })
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          if (!data || typeof data !== "object" || !data.totals || typeof data.totals !== "object") return;
+          agentTotalThinkingTime = data.totals;
+          renderThinkingIndicator();
+        })
+        .catch(() => {});
     };
-    const saveThinkingTime = () => {
-      if (!thinkingTimeSession) return;
-      try {
-        const toSave = collectThinkingTimeTotals();
-        localStorage.setItem(`thinkingTime:${thinkingTimeSession}`, JSON.stringify(toSave));
-      } catch(_) {}
-      syncThinkingTimeToServer();
-    };
+    const saveThinkingTime = () => {};
     const formatAgentElapsed = (seconds, short = false) => {
       if (!Number.isFinite(seconds) || seconds < 0) return "";
       if (seconds < 60) return `${seconds}s`;
@@ -5364,7 +5333,6 @@ __HUB_HEADER_CSS__
     window.addEventListener("pagehide", () => {
       if (Object.keys(agentTotalThinkingTime).length || Object.keys(currentAgentStatuses).length) {
         saveThinkingTime();
-        syncThinkingTimeToServer(true);
       }
     });
 

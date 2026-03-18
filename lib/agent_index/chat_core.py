@@ -10,7 +10,9 @@ from datetime import datetime as dt_datetime
 from pathlib import Path
 
 from .state_core import load_hub_settings as load_shared_hub_settings
+from .state_core import load_session_thinking_totals as load_shared_session_thinking_totals
 from .state_core import persist_thinking_totals as persist_shared_thinking_totals
+from .state_core import update_thinking_totals_from_statuses as update_shared_thinking_totals_from_statuses
 
 
 class ChatRuntime:
@@ -167,6 +169,9 @@ class ChatRuntime:
 
     def persist_thinking_totals(self, totals):
         persist_shared_thinking_totals(self.repo_root, self.session_name, self.workspace, totals)
+
+    def load_thinking_totals(self):
+        return load_shared_session_thinking_totals(self.repo_root, self.session_name, self.workspace)
 
     def append_system_entry(self, message, **extra):
         entry = {
@@ -598,6 +603,15 @@ class ChatRuntime:
                     result[agent] = "running" if (now - last_change) < self.running_grace_seconds else "idle"
             except Exception:
                 result[agent] = "offline"
+        try:
+            update_shared_thinking_totals_from_statuses(
+                self.repo_root,
+                self.session_name,
+                self.workspace,
+                result,
+            )
+        except Exception:
+            pass
         return result
 
     def trace_content(self, agent):

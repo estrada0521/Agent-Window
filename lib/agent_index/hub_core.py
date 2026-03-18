@@ -16,6 +16,7 @@ from .state_core import local_runtime_log_dir
 from .state_core import local_state_dir
 from .state_core import local_workspace_log_dir
 from .state_core import save_hub_settings as save_shared_hub_settings
+from .state_core import update_thinking_totals_from_statuses as update_shared_thinking_totals_from_statuses
 
 
 def parse_session_dir(name: str) -> str:
@@ -122,6 +123,9 @@ class HubRuntime:
         self.tmux_prefix = ["tmux"]
         if tmux_socket:
             self.tmux_prefix.extend(["-L", tmux_socket])
+        self._pane_snapshots = {}
+        self._pane_last_change = {}
+        self.running_grace_seconds = 2.0
 
     def tmux_run(self, args, timeout=2):
         return subprocess.run([*self.tmux_prefix, *args], capture_output=True, text=True, timeout=timeout, check=False)
@@ -359,7 +363,47 @@ class HubRuntime:
     def load_hub_thinking_totals(self):
         return load_shared_hub_thinking_totals(self.repo_root)
 
+    def session_agent_statuses(self, session_name: str, agents: list[str]):
+        result = {}
+        for agent in agents:
+            pane_var = f"MULTIAGENT_PANE_{agent.upper().replace('-', '_')}"
+            try:
+                pane_id = self.tmux_env(session_name, pane_var)
+                if not pane_id:
+                    result[agent] = "offline"
+                    continue
+                dead = self.tmux_run(["display-message", "-p", "-t", pane_id, "#{pane_dead}"]).stdout.strip()
+                if dead == "1":
+                    result[agent] = "dead"
+                    self._pane_snapshots.pop(pane_id, None)
+                    self._pane_last_change.pop(pane_id, None)
+                    continue
+                content = self.tmux_run(["capture-pane", "-p", "-S", "-20", "-t", pane_id]).stdout
+                now = time.monotonic()
+                prev = self._pane_snapshots.get(pane_id)
+                self._pane_snapshots[pane_id] = content
+                if prev is not None and content != prev:
+                    self._pane_last_change[pane_id] = now
+                    result[agent] = "running"
+                else:
+                    last_change = self._pane_last_change.get(pane_id, 0.0)
+                    result[agent] = "running" if (now - last_change) < self.running_grace_seconds else "idle"
+            except Exception:
+                result[agent] = "offline"
+        return result
+
     def compute_hub_stats(self, active_sessions, archived_sessions_data):
+        for session in active_sessions:
+            try:
+                statuses = self.session_agent_statuses(session.get("name", ""), list(session.get("agents") or []))
+                update_shared_thinking_totals_from_statuses(
+                    self.repo_root,
+                    session.get("name", ""),
+                    session.get("workspace", ""),
+                    statuses,
+                )
+            except Exception:
+                pass
         all_sessions = [*active_sessions, *archived_sessions_data]
         total_messages = 0
         message_by_sender = {}
