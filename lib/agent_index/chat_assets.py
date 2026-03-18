@@ -1007,7 +1007,6 @@ CHAT_HTML = r"""<!doctype html>
       border-radius: 24px;
     }
     .send-btn {
-      display: none;
       position: absolute;
       right: 9px;
       bottom: 9px;
@@ -1024,7 +1023,15 @@ CHAT_HTML = r"""<!doctype html>
       justify-content: center;
       padding: 0;
       box-shadow: none;
-      transition: transform 120ms ease, filter 150ms ease, background 150ms ease;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.95);
+      transition: transform 120ms ease, filter 150ms ease, background 150ms ease, opacity 150ms ease;
+    }
+    .send-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
     }
     .has-hover .send-btn:hover {
       filter: brightness(1.03);
@@ -4430,7 +4437,7 @@ __HUB_HEADER_CSS__
     const updateSendBtnVisibility = () => {
       const hasText = messageInput.value.trim().length > 0;
       if (sendBtn) sendBtn.classList.toggle("visible", hasText);
-      if (micBtn) micBtn.classList.remove("hidden");
+      if (micBtn) micBtn.classList.toggle("hidden", hasText);
     };
     messageInput.addEventListener("input", updateSendBtnVisibility);
 
