@@ -319,9 +319,6 @@ fi
 if [[ -z "${MULTIAGENT_PUBLIC_HUB_PORT:-}" ]]; then
   export MULTIAGENT_PUBLIC_HUB_PORT="443"
 fi
-if [[ -z "${MULTIAGENT_PUBLIC_CHAT_PORT:-}" ]]; then
-  export MULTIAGENT_PUBLIC_CHAT_PORT="8443"
-fi
 HTTPS_SCHEME="http"
 if [[ -n "${MULTIAGENT_CERT_FILE:-}" ]]; then
   HTTPS_SCHEME="https"
@@ -368,7 +365,6 @@ delete_archived_session = hub.delete_archived_session
 host_without_port = hub.host_without_port
 PUBLIC_HOST = (os.environ.get("MULTIAGENT_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
 PUBLIC_HUB_PORT = int(os.environ.get("MULTIAGENT_PUBLIC_HUB_PORT", "443") or "443")
-PUBLIC_CHAT_PORT = int(os.environ.get("MULTIAGENT_PUBLIC_CHAT_PORT", "8443") or "8443")
 restart_lock = threading.Lock()
 
 
@@ -378,7 +374,7 @@ def external_host_and_port(host_header: str, local_port: int) -> tuple[str, int]
     if (PUBLIC_HOST and host_lc == PUBLIC_HOST) or host_lc.endswith(".ts.net"):
         if local_port == port:
             return host, PUBLIC_HUB_PORT
-        return host, PUBLIC_CHAT_PORT
+        return host, local_port
     return host, local_port
 
 
@@ -387,6 +383,33 @@ def format_external_url(host_header: str, local_port: int, path: str) -> str:
     default_port = 443 if _scheme == "https" else 80
     port_part = "" if external_port == default_port else f":{external_port}"
     return f"{_scheme}://{host}{port_part}{path}"
+
+
+def ensure_public_chat_proxy(host_header: str, chat_port: int) -> tuple[bool, str]:
+    host = host_without_port(host_header or "127.0.0.1").lower()
+    if not ((PUBLIC_HOST and host == PUBLIC_HOST) or host.endswith(".ts.net")):
+        return True, ""
+    try:
+        result = subprocess.run(
+            [
+                "tailscale",
+                "serve",
+                "--bg",
+                "--https",
+                str(chat_port),
+                f"https+insecure://127.0.0.1:{chat_port}",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=8,
+            check=False,
+        )
+    except Exception as exc:
+        return False, str(exc)
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "failed to configure tailscale serve").strip()
+        return False, detail
+    return True, ""
 restart_pending = False
 hub_server = None
 
@@ -3705,6 +3728,13 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     self._send_html(500, error_page(f"Failed to start chat for {session_name}: {detail}"))
                 return
+            ok, detail = ensure_public_chat_proxy(self.headers.get("Host", "127.0.0.1"), chat_port)
+            if not ok:
+                if fmt == "json":
+                    self._send_json(500, {"ok": False, "error": detail})
+                else:
+                    self._send_html(500, error_page(f"Failed to expose chat for {session_name}: {detail}"))
+                return
             location = format_external_url(
                 self.headers.get("Host", "127.0.0.1"),
                 chat_port,
@@ -3740,6 +3770,13 @@ class Handler(BaseHTTPRequestHandler):
                     self._send_json(500, {"ok": False, "error": detail})
                 else:
                     self._send_html(500, error_page(f"Failed to start chat for {session_name}: {detail}"))
+                return
+            ok, detail = ensure_public_chat_proxy(self.headers.get("Host", "127.0.0.1"), chat_port)
+            if not ok:
+                if fmt == "json":
+                    self._send_json(500, {"ok": False, "error": detail})
+                else:
+                    self._send_html(500, error_page(f"Failed to expose chat for {session_name}: {detail}"))
                 return
             location = format_external_url(
                 self.headers.get("Host", "127.0.0.1"),
@@ -3890,6 +3927,8 @@ class Handler(BaseHTTPRequestHandler):
                 return
             time.sleep(2.5)
             ok, chat_port, detail = ensure_chat_server(session_name)
+            if ok:
+                ok, detail = ensure_public_chat_proxy(self.headers.get("Host", "127.0.0.1"), chat_port)
             if ok:
                 self._send_json(
                     200,
