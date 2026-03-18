@@ -2148,10 +2148,11 @@ HUB_HOME_HTML = """<!doctype html>
       window.visualViewport.addEventListener("scroll", _fitChatOverlay);
     }
     function openChatInFrame(url, name) {
-      _chatFrame.src = url;
+      const freshUrl = url + (url.includes("?") ? "&" : "?") + "ts=" + Date.now();
+      _chatFrame.src = freshUrl;
       _chatOverlay.hidden = false;
       _fitChatOverlay();
-      try { sessionStorage.setItem("hub_chat_frame", JSON.stringify({url, name})); } catch(_) {}
+      try { sessionStorage.setItem("hub_chat_frame", JSON.stringify({url: freshUrl, name})); } catch(_) {}
     }
     function closeChatFrame() {
       _chatOverlay.hidden = true;

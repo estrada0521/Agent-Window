@@ -78,27 +78,81 @@ def hub_settings_path(repo_root: Path | str) -> Path:
 def thinking_stats_path(repo_root: Path | str) -> Path:
     local_path = local_state_dir(repo_root) / ".thinking-time.json"
     legacy_path = central_log_dir(repo_root) / ".thinking-time.json"
-    if not local_path.exists() and legacy_path.exists():
-        local_path.parent.mkdir(parents=True, exist_ok=True)
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+    merged = {"sessions": {}, "daily": {}}
+    saw_source = False
+    for path in (legacy_path, local_path):
+        if not path.exists():
+            continue
         try:
-            local_path.write_text(legacy_path.read_text(encoding="utf-8"), encoding="utf-8")
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(raw, dict):
+            continue
+        saw_source = True
+        sessions = raw.get("sessions")
+        if isinstance(sessions, dict):
+            session_items = sessions.items()
+        else:
+            session_items = [
+                (key, value) for key, value in raw.items()
+                if key != "daily" and isinstance(value, dict)
+            ]
+        for session_key, session_data in session_items:
+            if not isinstance(session_data, dict):
+                continue
+            agents_raw = session_data.get("agents") if "agents" in session_data else session_data
+            if not isinstance(agents_raw, dict):
+                continue
+            session_name = (session_data.get("session_name") or session_key.split("::", 1)[0] or session_key).strip()
+            workspace = (session_data.get("workspace") or "").strip()
+            canonical_key = _session_storage_key(session_name, workspace) if workspace else session_name
+            target = merged["sessions"].setdefault(
+                canonical_key,
+                {
+                    "session_name": session_name,
+                    "workspace": workspace,
+                    "updated_at": "",
+                    "agents": {},
+                },
+            )
+            updated_at = (session_data.get("updated_at") or "").strip()
+            if updated_at > target.get("updated_at", ""):
+                target["updated_at"] = updated_at
+            if workspace and not target.get("workspace"):
+                target["workspace"] = workspace
+            for agent, raw_value in agents_raw.items():
+                try:
+                    value = max(0, int(raw_value or 0))
+                except Exception:
+                    value = 0
+                base = _base_agent_name(agent)
+                target["agents"][base] = max(target["agents"].get(base, 0), value)
+        daily = raw.get("daily")
+        if isinstance(daily, dict):
+            for date_key, day_data in daily.items():
+                if not isinstance(day_data, dict):
+                    continue
+                target_day = merged["daily"].setdefault(date_key, {})
+                for agent, raw_value in day_data.items():
+                    try:
+                        value = max(0, int(raw_value or 0))
+                    except Exception:
+                        value = 0
+                    base = _base_agent_name(agent)
+                    target_day[base] = max(target_day.get(base, 0), value)
+    if saw_source:
+        try:
+            local_path.write_text(json.dumps(merged, ensure_ascii=False, indent=2), encoding="utf-8")
         except Exception:
             pass
     return local_path
 
 
 def thinking_stats_paths(repo_root: Path | str) -> list[Path]:
-    local_path = local_state_dir(repo_root) / ".thinking-time.json"
-    legacy_path = central_log_dir(repo_root) / ".thinking-time.json"
-    paths = []
-    for path in (local_path, legacy_path):
-        try:
-            resolved = path.resolve()
-        except Exception:
-            resolved = path
-        if resolved not in paths and path.exists():
-            paths.append(resolved)
-    return paths
+    path = thinking_stats_path(repo_root)
+    return [path] if path.exists() else []
 
 
 def _session_storage_key(session_name: str, workspace: str) -> str:
