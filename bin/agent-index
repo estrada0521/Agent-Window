@@ -2741,6 +2741,51 @@ def hub_settings_html(saved=False):
       display: grid;
       gap: 10px;
     }}
+    input[type="range"] {{
+      -webkit-appearance: none;
+      appearance: none;
+      accent-color: rgb(252, 252, 252);
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.92);
+      outline: none;
+      cursor: pointer;
+    }}
+    input[type="range"]::-webkit-slider-runnable-track {{
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.92);
+    }}
+    input[type="range"]::-moz-range-track {{
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.92);
+    }}
+    input[type="range"]::-moz-range-progress {{
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.92);
+    }}
+    input[type="range"]::-webkit-slider-thumb {{
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgb(252, 252, 252);
+      border: none;
+      cursor: pointer;
+      margin-top: -8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }}
+    input[type="range"]::-moz-range-thumb {{
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgb(252, 252, 252);
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }}
     .slider-topline {{
       display: flex;
       align-items: center;
