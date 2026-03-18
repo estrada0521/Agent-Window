@@ -313,6 +313,15 @@ if [[ -z "${MULTIAGENT_CERT_FILE:-}" ]]; then
     export MULTIAGENT_KEY_FILE="$REPO_ROOT/certs/key.pem"
   fi
 fi
+if [[ -z "${MULTIAGENT_PUBLIC_HOST:-}" ]] && [[ -f "$REPO_ROOT/certs/tailscale-host.txt" ]]; then
+  export MULTIAGENT_PUBLIC_HOST="$(tr -d '\r\n' < "$REPO_ROOT/certs/tailscale-host.txt")"
+fi
+if [[ -z "${MULTIAGENT_PUBLIC_HUB_PORT:-}" ]]; then
+  export MULTIAGENT_PUBLIC_HUB_PORT="443"
+fi
+if [[ -z "${MULTIAGENT_PUBLIC_CHAT_PORT:-}" ]]; then
+  export MULTIAGENT_PUBLIC_CHAT_PORT="8443"
+fi
 HTTPS_SCHEME="http"
 if [[ -n "${MULTIAGENT_CERT_FILE:-}" ]]; then
   HTTPS_SCHEME="https"
@@ -357,7 +366,27 @@ revive_archived_session = hub.revive_archived_session
 kill_repo_session = hub.kill_repo_session
 delete_archived_session = hub.delete_archived_session
 host_without_port = hub.host_without_port
+PUBLIC_HOST = (os.environ.get("MULTIAGENT_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
+PUBLIC_HUB_PORT = int(os.environ.get("MULTIAGENT_PUBLIC_HUB_PORT", "443") or "443")
+PUBLIC_CHAT_PORT = int(os.environ.get("MULTIAGENT_PUBLIC_CHAT_PORT", "8443") or "8443")
 restart_lock = threading.Lock()
+
+
+def external_host_and_port(host_header: str, local_port: int) -> tuple[str, int]:
+    host = host_without_port(host_header or "127.0.0.1")
+    host_lc = host.lower()
+    if (PUBLIC_HOST and host_lc == PUBLIC_HOST) or host_lc.endswith(".ts.net"):
+        if local_port == port:
+            return host, PUBLIC_HUB_PORT
+        return host, PUBLIC_CHAT_PORT
+    return host, local_port
+
+
+def format_external_url(host_header: str, local_port: int, path: str) -> str:
+    host, external_port = external_host_and_port(host_header, local_port)
+    default_port = 443 if _scheme == "https" else 80
+    port_part = "" if external_port == default_port else f":{external_port}"
+    return f"{_scheme}://{host}{port_part}{path}"
 restart_pending = False
 hub_server = None
 
@@ -3676,8 +3705,11 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     self._send_html(500, error_page(f"Failed to start chat for {session_name}: {detail}"))
                 return
-            host = host_without_port(self.headers.get("Host", "127.0.0.1"))
-            location = f"{_scheme}://{host}:{chat_port}/?follow=1&ts={int(time.time() * 1000)}"
+            location = format_external_url(
+                self.headers.get("Host", "127.0.0.1"),
+                chat_port,
+                f"/?follow=1&ts={int(time.time() * 1000)}",
+            )
             if fmt == "json":
                 self._send_json(200, {"ok": True, "chat_url": location})
             else:
@@ -3709,8 +3741,11 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     self._send_html(500, error_page(f"Failed to start chat for {session_name}: {detail}"))
                 return
-            host = host_without_port(self.headers.get("Host", "127.0.0.1"))
-            location = f"{_scheme}://{host}:{chat_port}/?follow=1&ts={int(time.time() * 1000)}"
+            location = format_external_url(
+                self.headers.get("Host", "127.0.0.1"),
+                chat_port,
+                f"/?follow=1&ts={int(time.time() * 1000)}",
+            )
             if fmt == "json":
                 self._send_json(200, {"ok": True, "chat_url": location})
             else:
@@ -3855,9 +3890,19 @@ class Handler(BaseHTTPRequestHandler):
                 return
             time.sleep(2.5)
             ok, chat_port, detail = ensure_chat_server(session_name)
-            host = host_without_port(self.headers.get("Host", "127.0.0.1"))
             if ok:
-                self._send_json(200, {"ok": True, "session": session_name, "chat_url": f"{_scheme}://{host}:{chat_port}/?follow=1"})
+                self._send_json(
+                    200,
+                    {
+                        "ok": True,
+                        "session": session_name,
+                        "chat_url": format_external_url(
+                            self.headers.get("Host", "127.0.0.1"),
+                            chat_port,
+                            "/?follow=1",
+                        ),
+                    },
+                )
             else:
                 self._send_json(500, {"ok": False, "error": detail})
             return
@@ -4012,6 +4057,8 @@ targets = [item for item in sys.argv[10].split(",") if item]
 tmux_socket = sys.argv[11]
 hub_port = int(sys.argv[12])
 server_instance = uuid.uuid4().hex
+PUBLIC_HOST = (os.environ.get("MULTIAGENT_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
+PUBLIC_HUB_PORT = int(os.environ.get("MULTIAGENT_PUBLIC_HUB_PORT", "443") or "443")
 
 _repo_root = Path(agent_send_path).parent.parent
 sys.path.insert(0, str(_repo_root / "lib"))
@@ -4322,11 +4369,18 @@ class Handler(BaseHTTPRequestHandler):
             qs = parse_qs(parsed.query)
             follow = "1" if qs.get("follow", ["0"])[0] == "1" else "0"
             chat_settings = load_chat_settings()
+            request_host = (self.headers.get("Host", "") or "").strip()
+            request_host_only = request_host.split(":", 1)[0].rstrip(".").lower()
+            effective_hub_port = (
+                PUBLIC_HUB_PORT
+                if ((PUBLIC_HOST and request_host_only == PUBLIC_HOST) or request_host_only.endswith(".ts.net"))
+                else hub_port
+            )
             body = render_chat_html(
                 icon_data_uris=export_runtime.icon_data_uris,
                 logo_data_uri="/hub-logo",
                 server_instance=server_instance,
-                hub_port=hub_port,
+                hub_port=effective_hub_port,
                 chat_settings=chat_settings,
                 agent_font_mode_inline_style=chat_agent_font_mode_inline_style,
                 follow=follow,
