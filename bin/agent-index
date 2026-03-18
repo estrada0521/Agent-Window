@@ -1241,12 +1241,13 @@ HUB_APP_HTML = """<!doctype html>
         const total = Math.max(0, Number(seconds || 0));
         if (total < 60) return `${Math.round(total)}s`;
         const mins = Math.floor(total / 60);
+        const secs = Math.floor(total % 60);
         const hours = Math.floor(mins / 60);
         if (hours > 0) {
           const restMins = mins % 60;
-          return `${hours}h ${restMins}m`;
+          return `${hours}h ${restMins}m ${secs}s`;
         }
-        return `${mins}m`;
+        return `${mins}m ${secs}s`;
       };
       const formatLabel = (value) => String(value || "").replace(/(^|-)([a-z])/g, (_, prefix, char) => `${prefix}${char.toUpperCase()}`);
       const buildTrendSvg = (series = []) => {

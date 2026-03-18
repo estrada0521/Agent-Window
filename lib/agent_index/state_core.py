@@ -227,6 +227,10 @@ def persist_thinking_totals(repo_root: Path | str, session_name: str, workspace:
         delta = max(0, new_val - prev_val)
         if delta:
             day_entry[agent] = int(day_entry.get(agent, 0) or 0) + delta
+        agents[agent] = max(prev_val, new_val)
+    for agent, prev_val in prev_agents.items():
+        if agent not in agents:
+            agents[agent] = max(0, int(prev_val or 0))
     if day_entry:
         daily[today] = day_entry
     sessions[session_key] = {
