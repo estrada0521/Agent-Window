@@ -14,9 +14,11 @@ NAMED_CONFIG_FILE="$CF_DIR/config.yml"
 NAMED_META_FILE="$CF_DIR/named-tunnel.json"
 HUB_PORT="${MULTIAGENT_HUB_PORT:-8788}"
 HUB_HOST="${MULTIAGENT_HUB_HOST:-127.0.0.1}"
-ORIGIN_URL="https://${HUB_HOST}:${HUB_PORT}"
+PUBLIC_EDGE_PORT="${MULTIAGENT_PUBLIC_EDGE_PORT:-8790}"
+ORIGIN_URL="http://127.0.0.1:${PUBLIC_EDGE_PORT}"
 CF_TMUX_SESSION="${MULTIAGENT_CLOUDFLARE_SESSION:-multiagent-cloudflare}"
 HUB_TMUX_SESSION="${MULTIAGENT_CLOUDFLARE_HUB_SESSION:-multiagent-cloudflare-hub}"
+EDGE_TMUX_SESSION="${MULTIAGENT_CLOUDFLARE_EDGE_SESSION:-multiagent-cloudflare-edge}"
 
 mkdir -p "$CF_DIR"
 
@@ -87,6 +89,26 @@ restart_hub() {
     sleep 1
   done
   echo "Hub failed to restart on port ${HUB_PORT}" >&2
+  return 1
+}
+
+restart_public_edge() {
+  local pid
+  pid="$(lsof -tiTCP:${PUBLIC_EDGE_PORT} -sTCP:LISTEN 2>/dev/null | head -n 1 || true)"
+  if [[ -n "$pid" ]]; then
+    kill "$pid" 2>/dev/null || true
+    sleep 1
+  fi
+  tmux kill-session -t "$EDGE_TMUX_SESSION" 2>/dev/null || true
+  tmux new-session -d -s "$EDGE_TMUX_SESSION" -c "$REPO_ROOT" "exec '$BIN_DIR/multiagent-public-edge' '$REPO_ROOT' '$BIN_DIR/agent-index' '$HUB_PORT' '$PUBLIC_EDGE_PORT' '' >'$CF_DIR/public-edge.log' 2>&1"
+  local attempt
+  for attempt in $(seq 1 20); do
+    if curl -s "http://127.0.0.1:${PUBLIC_EDGE_PORT}" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "public edge failed to start on port ${PUBLIC_EDGE_PORT}" >&2
   return 1
 }
 
@@ -266,16 +288,16 @@ command_quick_start() {
   printf '%s\n' "$url" >"$URL_FILE"
   write_public_host "${url#https://}"
   write_mode "quick"
-  restart_hub
+  restart_public_edge
   printf '%s\n' "$url"
 }
 
 command_quick_stop() {
   tmux kill-session -t "$CF_TMUX_SESSION" 2>/dev/null || true
+  tmux kill-session -t "$EDGE_TMUX_SESSION" 2>/dev/null || true
   rm -f "$PID_FILE" "$URL_FILE"
   clear_public_host
   clear_mode
-  restart_hub
 }
 
 command_named_login() {
@@ -328,7 +350,6 @@ PY
   write_named_config "$tunnel_id" "$credentials_file" "$hostname"
   write_public_host "$hostname"
   write_mode "named"
-  restart_hub
   printf 'tunnel_name=%s\n' "$tunnel_name"
   printf 'tunnel_id=%s\n' "$tunnel_id"
   printf 'hostname=%s\n' "$hostname"
@@ -345,10 +366,14 @@ command_named_start() {
     command_status
     exit 0
   fi
-  local cf_bin hostname
+  local cf_bin hostname tunnel_id credentials_file
   cf_bin="$(cloudflared_bin)"
   hostname="$(named_meta_field hostname)"
+  tunnel_id="$(named_meta_field tunnel_id)"
+  credentials_file="$(named_meta_field credentials_file)"
+  write_named_config "$tunnel_id" "$credentials_file" "$hostname"
   : >"$LOG_FILE"
+  restart_public_edge
   tmux new-session -d -s "$CF_TMUX_SESSION" -c "$REPO_ROOT" "exec '$cf_bin' tunnel --config '$NAMED_CONFIG_FILE' run >'$LOG_FILE' 2>&1"
   local pid
   pid="$(tmux display-message -p -t "$CF_TMUX_SESSION:0.0" '#{pane_pid}' 2>/dev/null || true)"
@@ -361,10 +386,10 @@ command_named_start() {
 
 command_named_stop() {
   tmux kill-session -t "$CF_TMUX_SESSION" 2>/dev/null || true
+  tmux kill-session -t "$EDGE_TMUX_SESSION" 2>/dev/null || true
   rm -f "$PID_FILE"
   clear_public_host
   clear_mode
-  restart_hub
 }
 
 command_status() {
@@ -375,6 +400,8 @@ command_status() {
   local mode
   mode="$(current_mode)"
   printf 'hub_origin=%s\n' "$ORIGIN_URL"
+  printf 'public_edge_port=%s\n' "$PUBLIC_EDGE_PORT"
+  printf 'public_edge_alive=%s\n' "$(tmux_session_alive "$EDGE_TMUX_SESSION" && echo yes || echo no)"
   printf 'mode=%s\n' "${mode:-}"
   printf 'cloudflared_pid=%s\n' "${pid:-}"
   printf 'cloudflared_alive=%s\n' "$(tmux_session_alive "$CF_TMUX_SESSION" && echo yes || echo no)"

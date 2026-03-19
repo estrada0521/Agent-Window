@@ -2870,6 +2870,11 @@ __HUB_HEADER_CSS__
   <script>
     const CHAT_BASE_PATH = "__CHAT_BASE_PATH__";
     const CHAT_ASSET_BASE = CHAT_BASE_PATH || "";
+    const withChatBase = (path) => {
+      const raw = String(path || "");
+      if (!CHAT_BASE_PATH || !raw.startsWith("/") || raw.startsWith("//")) return raw;
+      return `${CHAT_BASE_PATH}${raw}`;
+    };
     if (CHAT_BASE_PATH) {
       const __origFetch = window.fetch.bind(window);
       window.fetch = (input, init) => {
@@ -3055,8 +3060,8 @@ __HUB_HEADER_CSS__
       const filename = (path.split("/").pop() || path || "Preview").trim();
       const parentPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
       const viewerUrl = (normalizedExt === "html" || normalizedExt === "htm")
-        ? `/file-raw?path=${encodeURIComponent(path)}`
-        : `/file-view?path=${encodeURIComponent(path)}&embed=1`;
+        ? withChatBase(`/file-raw?path=${encodeURIComponent(path)}`)
+        : withChatBase(`/file-view?path=${encodeURIComponent(path)}&embed=1`);
       fileModalCurrentPath = path;
       fileModalTitle.textContent = filename;
       fileModalPath.textContent = parentPath;
@@ -3066,7 +3071,7 @@ __HUB_HEADER_CSS__
       setFileModalEnterOffset(sourceEl, triggerEvent);
       if (fileModalOpenEditorBtn) {
         fileModalOpenEditorBtn.hidden = true;
-        fetch(`/file-openability?path=${encodeURIComponent(path)}`)
+        fetch(withChatBase(`/file-openability?path=${encodeURIComponent(path)}`))
           .then((res) => res.ok ? res.json() : null)
           .then((data) => {
             if (fileModalCurrentPath !== path || !fileModalOpenEditorBtn) return;
@@ -3100,7 +3105,7 @@ __HUB_HEADER_CSS__
     const tryOpenFileInEditor = async (path) => {
       if (!shouldPreferExternalEditor()) return false;
       try {
-        const res = await fetch("/open-file-in-editor", {
+        const res = await fetch(withChatBase("/open-file-in-editor"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ path }),
@@ -3121,7 +3126,7 @@ __HUB_HEADER_CSS__
       if (!rawHref || rawHref.startsWith("#") || rawHref.startsWith("//")) return "";
       try {
         const url = new URL(rawHref, window.location.href);
-        if (url.origin === window.location.origin && (url.pathname === "/file-raw" || url.pathname === "/file-view")) {
+        if (url.origin === window.location.origin && ((CHAT_BASE_PATH && (url.pathname === `${CHAT_BASE_PATH}/file-raw` || url.pathname === `${CHAT_BASE_PATH}/file-view`)) || url.pathname === "/file-raw" || url.pathname === "/file-view")) {
           return url.searchParams.get("path") || "";
         }
       } catch (_) {}
@@ -3137,7 +3142,7 @@ __HUB_HEADER_CSS__
     const openFileSurface = async (path, ext, sourceEl, triggerEvent) => {
       const normalizedExt = (ext || "").toLowerCase();
       if (!shouldPreferExternalEditor() && ["html", "htm", "pdf"].includes(normalizedExt)) {
-        const href = `/file-raw?path=${encodeURIComponent(path)}`;
+        const href = withChatBase(`/file-raw?path=${encodeURIComponent(path)}`);
         const link = document.createElement("a");
         link.href = href;
         link.target = "_blank";
@@ -3165,7 +3170,7 @@ __HUB_HEADER_CSS__
     fileModalOpenEditorBtn?.addEventListener("click", async () => {
       if (!fileModalCurrentPath) return;
       try {
-        const res = await fetch("/open-file-in-editor", {
+        const res = await fetch(withChatBase("/open-file-in-editor"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ path: fileModalCurrentPath }),

@@ -307,14 +307,15 @@ end tell
         escaped_text = hl(r"([{}()[\],.:;=+\-/*<>])", rf'<span style="color:{theme_punct}">\1</span>', escaped_text)
         return escaped_text
 
-    def file_view(self, rel: str, *, embed: bool = False) -> str:
+    def file_view(self, rel: str, *, embed: bool = False, base_path: str = "") -> str:
         full = self._resolve_path(rel)
         if not os.path.exists(full):
             raise FileNotFoundError(full)
 
         ext = os.path.splitext(rel)[1].lower()
         filename = os.path.basename(rel)
-        raw_url = f"/file-raw?path={url_quote(rel)}"
+        prefix = (base_path or "").rstrip("/")
+        raw_url = f"{prefix}/file-raw?path={url_quote(rel)}"
         pane_bg = "rgb(20, 20, 19)"
         embed_bg = "transparent" if embed else pane_bg
         pane_fg = "rgb(161, 168, 179)"

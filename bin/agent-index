@@ -2194,7 +2194,16 @@ HUB_HOME_HTML = """<!doctype html>
       window.visualViewport.addEventListener("resize", _fitChatOverlay);
       window.visualViewport.addEventListener("scroll", _fitChatOverlay);
     }
+    function shouldUseChatOverlay() {
+      const host = window.location.hostname || "";
+      return host === "127.0.0.1" || host === "localhost" || host.startsWith("192.168.");
+    }
     function openChatInFrame(url, name) {
+      const useOverlay = shouldUseChatOverlay();
+      if (!useOverlay) {
+        window.location.href = url;
+        return;
+      }
       const freshUrl = url + (url.includes("?") ? "&" : "?") + "ts=" + Date.now();
       _chatFrame.src = freshUrl;
       _chatOverlay.hidden = false;
@@ -2209,6 +2218,14 @@ HUB_HOME_HTML = """<!doctype html>
       try { sessionStorage.removeItem("hub_chat_frame"); } catch(_) {}
     }
     function openSessionFrame(openHref, name) {
+      if (!shouldUseChatOverlay()) {
+        if (name && openHref.startsWith("/open-session")) {
+          window.location.href = `/session/${encodeURIComponent(name)}/?follow=1&ts=${Date.now()}`;
+        } else {
+          window.location.href = openHref;
+        }
+        return;
+      }
       const url = openHref + (openHref.includes("?") ? "&" : "?") + "format=json";
       fetch(url)
         .then(r => r.json())
@@ -2219,7 +2236,12 @@ HUB_HOME_HTML = """<!doctype html>
     // Restore active chat on PWA re-launch
     try {
       const saved = sessionStorage.getItem("hub_chat_frame");
-      if (saved) { const {url, name} = JSON.parse(saved); if (url) openChatInFrame(url, name); }
+      if (!shouldUseChatOverlay()) {
+        sessionStorage.removeItem("hub_chat_frame");
+      } else if (saved) {
+        const {url, name} = JSON.parse(saved);
+        if (url) openChatInFrame(url, name);
+      }
     } catch(_) {}
 
     // --- Mobile session list ---
@@ -4304,7 +4326,11 @@ class Handler(BaseHTTPRequestHandler):
             rel = qs.get("path", [""])[0]
             embed = qs.get("embed", [""])[0] == "1"
             try:
-                page = file_runtime.file_view(rel, embed=embed)
+                page = file_runtime.file_view(
+                    rel,
+                    embed=embed,
+                    base_path=(self.headers.get("X-Forwarded-Prefix", "") or "").rstrip("/"),
+                )
             except PermissionError:
                 self.send_error(403)
                 return
@@ -4459,14 +4485,24 @@ class Handler(BaseHTTPRequestHandler):
             chat_settings = load_chat_settings()
             request_host = (self.headers.get("Host", "") or "").strip()
             request_host_only = request_host.split(":", 1)[0].rstrip(".").lower()
+            forwarded_public_host = (self.headers.get("X-Forwarded-Public-Host", "") or "").strip()
+            forwarded_public_proto = (self.headers.get("X-Forwarded-Public-Proto", "") or "").strip().lower()
             effective_hub_port = (
                 PUBLIC_HUB_PORT
-                if ((PUBLIC_HOST and request_host_only == PUBLIC_HOST) or request_host_only.endswith(".ts.net"))
+                if (
+                    forwarded_public_host
+                    or ((PUBLIC_HOST and request_host_only == PUBLIC_HOST) or request_host_only.endswith(".ts.net"))
+                )
                 else hub_port
+            )
+            logo_data_uri = (
+                f"{(self.headers.get('X-Forwarded-Prefix', '') or '').rstrip('/')}/hub-logo"
+                if forwarded_public_host
+                else "/hub-logo"
             )
             body = render_chat_html(
                 icon_data_uris=export_runtime.icon_data_uris,
-                logo_data_uri="/hub-logo",
+                logo_data_uri=logo_data_uri,
                 server_instance=server_instance,
                 hub_port=effective_hub_port,
                 chat_settings=chat_settings,
