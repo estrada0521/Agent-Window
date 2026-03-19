@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BIN_DIR="$REPO_ROOT/bin"
+LOG_DIR="$REPO_ROOT/logs"
+CF_DIR="$LOG_DIR/cloudflare"
+PID_FILE="$CF_DIR/cloudflared.pid"
+URL_FILE="$CF_DIR/cloudflared-url.txt"
+HOST_FILE="$REPO_ROOT/certs/public-host.txt"
+LOG_FILE="$CF_DIR/cloudflared.log"
+HUB_PORT="${MULTIAGENT_HUB_PORT:-8788}"
+HUB_HOST="${MULTIAGENT_HUB_HOST:-127.0.0.1}"
+ORIGIN_URL="https://${HUB_HOST}:${HUB_PORT}"
+CF_TMUX_SESSION="${MULTIAGENT_CLOUDFLARE_SESSION:-multiagent-cloudflare}"
+HUB_TMUX_SESSION="${MULTIAGENT_CLOUDFLARE_HUB_SESSION:-multiagent-cloudflare-hub}"
+
+mkdir -p "$CF_DIR"
+
+usage() {
+  cat <<EOF
+Usage: bin/multiagent-cloudflare <command>
+
+Commands:
+  quick-start           Start a Cloudflare Quick Tunnel to the local Hub.
+  quick-stop            Stop the running Quick Tunnel and clear public host override.
+  status                Show tunnel status and current public URL if present.
+  set-host <hostname>   Set a fixed public host override and restart Hub.
+  clear-host            Remove the fixed public host override and restart Hub.
+EOF
+}
+
+cloudflared_bin() {
+  if command -v cloudflared >/dev/null 2>&1; then
+    command -v cloudflared
+    return
+  fi
+  if [[ -x "/opt/homebrew/bin/cloudflared" ]]; then
+    printf '%s\n' "/opt/homebrew/bin/cloudflared"
+    return
+  fi
+  echo "cloudflared not found" >&2
+  exit 1
+}
+
+tmux_session_alive() {
+  local name="${1:-}"
+  [[ -n "$name" ]] || return 1
+  tmux has-session -t "$name" 2>/dev/null || return 1
+  tmux list-panes -t "$name" -F '#{pane_dead}' 2>/dev/null | grep -qx '0'
+}
+
+restart_hub() {
+  local pid
+  pid="$(lsof -tiTCP:${HUB_PORT} -sTCP:LISTEN 2>/dev/null | head -n 1 || true)"
+  if [[ -n "$pid" ]]; then
+    kill "$pid" 2>/dev/null || true
+    sleep 1
+  fi
+  tmux kill-session -t "$HUB_TMUX_SESSION" 2>/dev/null || true
+  tmux new-session -d -s "$HUB_TMUX_SESSION" -c "$REPO_ROOT" "exec '$BIN_DIR/agent-index' --hub --no-open >'$CF_DIR/hub-restart.log' 2>&1"
+  local attempt
+  for attempt in $(seq 1 30); do
+    if curl -sk "https://127.0.0.1:${HUB_PORT}/" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "Hub failed to restart on port ${HUB_PORT}" >&2
+  return 1
+}
+
+extract_url_from_log() {
+  python3 - "$LOG_FILE" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+if not path.exists():
+    raise SystemExit(1)
+text = path.read_text(encoding="utf-8", errors="ignore")
+match = re.search(r"https://[a-z0-9.-]+\.trycloudflare\.com", text, re.I)
+if not match:
+    raise SystemExit(1)
+print(match.group(0))
+PY
+}
+
+write_public_host() {
+  local raw_host="$1"
+  printf '%s\n' "${raw_host}" > "$HOST_FILE"
+}
+
+clear_public_host() {
+  rm -f "$HOST_FILE"
+}
+
+command_quick_start() {
+  if tmux has-session -t "$CF_TMUX_SESSION" 2>/dev/null && ! tmux_session_alive "$CF_TMUX_SESSION"; then
+    tmux kill-session -t "$CF_TMUX_SESSION" 2>/dev/null || true
+  fi
+  if tmux_session_alive "$CF_TMUX_SESSION"; then
+    echo "Cloudflare tunnel already running"
+    command_status
+    exit 0
+  fi
+  rm -f "$PID_FILE" "$URL_FILE"
+  : >"$LOG_FILE"
+  local cf_bin
+  cf_bin="$(cloudflared_bin)"
+  tmux new-session -d -s "$CF_TMUX_SESSION" -c "$REPO_ROOT" "exec '$cf_bin' tunnel --url '$ORIGIN_URL' --no-autoupdate >'$LOG_FILE' 2>&1"
+  local pid
+  pid="$(tmux display-message -p -t "$CF_TMUX_SESSION:0.0" '#{pane_pid}' 2>/dev/null || true)"
+  [[ -n "$pid" ]] && printf '%s\n' "$pid" >"$PID_FILE"
+
+  local url=""
+  local attempt
+  for attempt in $(seq 1 60); do
+    if ! tmux_session_alive "$CF_TMUX_SESSION"; then
+      echo "cloudflared exited early" >&2
+      tail -n 40 "$LOG_FILE" >&2 || true
+      exit 1
+    fi
+    if url="$(extract_url_from_log 2>/dev/null)"; then
+      break
+    fi
+    sleep 1
+  done
+  if [[ -z "$url" ]]; then
+    echo "timed out waiting for Cloudflare Quick Tunnel URL" >&2
+    tail -n 40 "$LOG_FILE" >&2 || true
+    exit 1
+  fi
+  printf '%s\n' "$url" >"$URL_FILE"
+  write_public_host "${url#https://}"
+  restart_hub
+  printf '%s\n' "$url"
+}
+
+command_quick_stop() {
+  tmux kill-session -t "$CF_TMUX_SESSION" 2>/dev/null || true
+  rm -f "$PID_FILE" "$URL_FILE"
+  clear_public_host
+  restart_hub
+}
+
+command_status() {
+  local pid url host
+  pid="$(tmux display-message -p -t "$CF_TMUX_SESSION:0.0" '#{pane_pid}' 2>/dev/null || true)"
+  url="$(cat "$URL_FILE" 2>/dev/null || true)"
+  host="$(cat "$HOST_FILE" 2>/dev/null || true)"
+  printf 'hub_origin=%s\n' "$ORIGIN_URL"
+  printf 'cloudflared_pid=%s\n' "${pid:-}"
+  printf 'cloudflared_alive=%s\n' "$(tmux_session_alive "$CF_TMUX_SESSION" && echo yes || echo no)"
+  printf 'public_host=%s\n' "${host:-}"
+  printf 'public_url=%s\n' "${url:-}"
+}
+
+command_set_host() {
+  local host="${1:-}"
+  if [[ -z "$host" ]]; then
+    echo "hostname required" >&2
+    exit 1
+  fi
+  write_public_host "$host"
+  restart_hub
+}
+
+command_clear_host() {
+  clear_public_host
+  restart_hub
+}
+
+cmd="${1:-}"
+case "$cmd" in
+  quick-start) shift; command_quick_start "$@" ;;
+  quick-stop) shift; command_quick_stop "$@" ;;
+  status) shift; command_status "$@" ;;
+  set-host) shift; command_set_host "$@" ;;
+  clear-host) shift; command_clear_host "$@" ;;
+  ""|-h|--help) usage ;;
+  *)
+    echo "unknown command: $cmd" >&2
+    usage >&2
+    exit 1
+    ;;
+esac

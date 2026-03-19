@@ -14,7 +14,7 @@ CHAT_HTML = r"""<!doctype html>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="agent-index chat">
-  <link rel="manifest" href="/app.webmanifest">
+  <link rel="manifest" href="__CHAT_BASE_PATH__/app.webmanifest">
   <title>agent-index chat</title>
   <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
@@ -24,28 +24,28 @@ CHAT_HTML = r"""<!doctype html>
   <style>
     @font-face {
       font-family: "anthropicSerif";
-      src: url("/font/anthropic-serif-roman.ttf") format("truetype");
+      src: url("__CHAT_BASE_PATH__/font/anthropic-serif-roman.ttf") format("truetype");
       font-style: normal;
       font-weight: 300 800;
       font-display: swap;
     }
     @font-face {
       font-family: "anthropicSerif";
-      src: url("/font/anthropic-serif-italic.ttf") format("truetype");
+      src: url("__CHAT_BASE_PATH__/font/anthropic-serif-italic.ttf") format("truetype");
       font-style: italic;
       font-weight: 300 800;
       font-display: swap;
     }
     @font-face {
       font-family: "anthropicSans";
-      src: url("/font/anthropic-sans-roman.ttf") format("truetype");
+      src: url("__CHAT_BASE_PATH__/font/anthropic-sans-roman.ttf") format("truetype");
       font-style: normal;
       font-weight: 300 800;
       font-display: swap;
     }
     @font-face {
       font-family: "anthropicSans";
-      src: url("/font/anthropic-sans-italic.ttf") format("truetype");
+      src: url("__CHAT_BASE_PATH__/font/anthropic-sans-italic.ttf") format("truetype");
       font-style: italic;
       font-weight: 300 800;
       font-display: swap;
@@ -54,8 +54,8 @@ CHAT_HTML = r"""<!doctype html>
       font-family: "jetbrainsMono";
       src: local("JetBrains Mono"),
            local("JetBrainsMono-Regular"),
-           url("/font/jetbrains-mono.ttf") format("truetype-variations"),
-           url("/font/jetbrains-mono.ttf") format("truetype");
+           url("__CHAT_BASE_PATH__/font/jetbrains-mono.ttf") format("truetype-variations"),
+           url("__CHAT_BASE_PATH__/font/jetbrains-mono.ttf") format("truetype");
       font-style: normal;
       font-weight: 100 800;
       font-display: swap;
@@ -2868,6 +2868,23 @@ __HUB_HEADER_CSS__
     </form>
   </section>
   <script>
+    const CHAT_BASE_PATH = "__CHAT_BASE_PATH__";
+    if (CHAT_BASE_PATH) {
+      const __origFetch = window.fetch.bind(window);
+      window.fetch = (input, init) => {
+        if (typeof input === "string" && input.startsWith("/") && !input.startsWith("//")) {
+          return __origFetch(`${CHAT_BASE_PATH}${input}`, init);
+        }
+        if (input instanceof Request) {
+          const url = input.url || "";
+          if (url.startsWith(window.location.origin + "/")) {
+            const nextUrl = `${window.location.origin}${CHAT_BASE_PATH}${url.slice(window.location.origin.length)}`;
+            return __origFetch(new Request(nextUrl, input), init);
+          }
+        }
+        return __origFetch(input, init);
+      };
+    }
     const renderMarkdown = (text) => {
       if (typeof marked !== "undefined") {
         try {
@@ -5585,7 +5602,7 @@ CHAT_HEADER_PANELS_HTML = """
 """
 
 
-def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, follow):
+def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, follow, chat_base_path=""):
     chat_header_html = render_hub_page_header(
         logo_data_uri=logo_data_uri,
         title_href="/",
@@ -5604,6 +5621,7 @@ def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port
         html
         .replace("__ICON_DATA_URIS__", json.dumps(icon_data_uris, ensure_ascii=True))
         .replace("__HUB_LOGO_DATA_URI__", logo_data_uri)
+        .replace("__CHAT_BASE_PATH__", chat_base_path.rstrip("/"))
         .replace("__SERVER_INSTANCE__", server_instance)
         .replace("__HUB_PORT__", str(hub_port))
         .replace("__CHAT_THEME__", chat_settings["theme"])
