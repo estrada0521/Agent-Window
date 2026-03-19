@@ -2285,9 +2285,9 @@ CHAT_HTML = r"""<!doctype html>
       inset: 0;
       z-index: 10020;
       display: none;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 20px 28px;
+      padding: 44px 28px 20px;
       color-scheme: dark;
     }
     .file-modal.visible, .file-modal.closing {
@@ -2313,7 +2313,7 @@ CHAT_HTML = r"""<!doctype html>
     .file-modal-dialog {
       position: relative;
       width: min(1180px, calc(100vw - 56px));
-      height: min(860px, calc(100vh - 40px));
+      height: min(820px, calc(100vh - 72px));
       display: grid;
       grid-template-rows: auto minmax(0, 1fr);
       border-radius: 18px;
@@ -2362,10 +2362,11 @@ CHAT_HTML = r"""<!doctype html>
     }
     .file-modal-text {
       min-width: 0;
+      color: rgb(252, 252, 252);
     }
     .file-modal-title {
       font: 700 14px/1.2 "SF Pro Text","Segoe UI",sans-serif;
-      color: var(--text);
+      color: rgb(252, 252, 252);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -2373,7 +2374,7 @@ CHAT_HTML = r"""<!doctype html>
     .file-modal-path {
       display: block;
       margin-top: 3px;
-      color: var(--muted);
+      color: rgb(252, 252, 252);
       font: 12px/1.35 "SF Mono","Fira Code",monospace;
       white-space: pre-wrap;
       overflow: visible;
@@ -2388,7 +2389,7 @@ CHAT_HTML = r"""<!doctype html>
       border-radius: 10px;
       border: none;
       background: rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.85);
+      color: rgb(252, 252, 252);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -2412,7 +2413,7 @@ CHAT_HTML = r"""<!doctype html>
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.1);
       background: rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.9);
+      color: rgb(252, 252, 252);
       display: inline-flex;
       align-items: center;
       justify-content: center;
