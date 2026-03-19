@@ -8,6 +8,7 @@ import time
 import uuid
 from datetime import datetime as dt_datetime
 from pathlib import Path
+import shutil
 
 from .state_core import load_hub_settings as load_shared_hub_settings
 from .state_core import load_session_thinking_totals as load_shared_session_thinking_totals
@@ -406,8 +407,15 @@ class ChatRuntime:
 
     def agent_launch_cmd(self, agent_name):
         bin_dir = Path(self.agent_send_path).parent
+        agent_exec_path = Path(self.resolve_agent_executable(agent_name))
+        path_prefix = ":".join(
+            [
+                shlex.quote(str(bin_dir)),
+                shlex.quote(str(agent_exec_path.parent)),
+            ]
+        )
         env_parts = [
-            f"PATH={shlex.quote(str(bin_dir))}:$PATH",
+            f"PATH={path_prefix}:$PATH",
             f"MULTIAGENT_SESSION={shlex.quote(self.session_name)}",
             f"MULTIAGENT_BIN_DIR={shlex.quote(str(bin_dir))}",
             f"MULTIAGENT_WORKSPACE={shlex.quote(self.workspace)}",
@@ -415,16 +423,24 @@ class ChatRuntime:
             f"MULTIAGENT_AGENT_NAME={shlex.quote(agent_name)}",
         ]
         env_exports = "export " + " ".join(env_parts)
+        agent_exec = shlex.quote(str(agent_exec_path))
         if agent_name == "claude":
-            return f"{env_exports}; exec env -u CLAUDECODE claude"
+            return f"{env_exports}; exec env -u CLAUDECODE {agent_exec}"
         if agent_name == "copilot":
-            return f"{env_exports}; export COPILOT_ALLOW_ALL=1; exec copilot --allow-all-tools"
-        return f"{env_exports}; exec {shlex.quote(agent_name)}"
+            return f"{env_exports}; export COPILOT_ALLOW_ALL=1; exec {agent_exec} --allow-all-tools"
+        return f"{env_exports}; exec {agent_exec}"
 
     def agent_resume_cmd(self, agent_name):
         bin_dir = Path(self.agent_send_path).parent
+        agent_exec_path = Path(self.resolve_agent_executable(agent_name))
+        path_prefix = ":".join(
+            [
+                shlex.quote(str(bin_dir)),
+                shlex.quote(str(agent_exec_path.parent)),
+            ]
+        )
         env_parts = [
-            f"PATH={shlex.quote(str(bin_dir))}:$PATH",
+            f"PATH={path_prefix}:$PATH",
             f"MULTIAGENT_SESSION={shlex.quote(self.session_name)}",
             f"MULTIAGENT_BIN_DIR={shlex.quote(str(bin_dir))}",
             f"MULTIAGENT_WORKSPACE={shlex.quote(self.workspace)}",
@@ -432,15 +448,41 @@ class ChatRuntime:
             f"MULTIAGENT_AGENT_NAME={shlex.quote(agent_name)}",
         ]
         env_exports = "export " + " ".join(env_parts)
+        agent_exec = shlex.quote(str(agent_exec_path))
         if agent_name == "claude":
-            return f"{env_exports}; exec env -u CLAUDECODE claude --continue"
+            return f"{env_exports}; exec env -u CLAUDECODE {agent_exec} --continue"
         if agent_name == "codex":
-            return f"{env_exports}; exec codex resume --last"
+            return f"{env_exports}; exec {agent_exec} resume --last"
         if agent_name == "gemini":
-            return f"{env_exports}; exec gemini --resume latest"
+            return f"{env_exports}; exec {agent_exec} --resume latest"
         if agent_name == "copilot":
-            return f"{env_exports}; export COPILOT_ALLOW_ALL=1; exec copilot --continue --allow-all-tools"
+            return f"{env_exports}; export COPILOT_ALLOW_ALL=1; exec {agent_exec} --continue --allow-all-tools"
         return self.agent_launch_cmd(agent_name)
+
+    @staticmethod
+    def resolve_agent_executable(agent_name: str) -> str:
+        found = shutil.which(agent_name)
+        if found:
+            return found
+        home = Path.home()
+        fallbacks = {
+            "claude": [
+                home / ".local" / "bin" / "claude",
+            ],
+            "codex": [
+                home / ".nvm" / "versions" / "node" / "v24.14.0" / "bin" / "codex",
+            ],
+            "gemini": [
+                home / ".nvm" / "versions" / "node" / "v24.14.0" / "bin" / "gemini",
+            ],
+            "copilot": [
+                home / ".nvm" / "versions" / "node" / "v24.14.0" / "bin" / "copilot",
+            ],
+        }
+        for candidate in fallbacks.get(agent_name, []):
+            if candidate.exists():
+                return str(candidate)
+        return agent_name
 
     def restart_agent_pane(self, agent_name):
         pane_id = self.pane_id_for_agent(agent_name)
