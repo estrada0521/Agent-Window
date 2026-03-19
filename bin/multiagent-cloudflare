@@ -104,7 +104,8 @@ restart_public_edge() {
     sleep 1
   fi
   tmux kill-session -t "$EDGE_TMUX_SESSION" 2>/dev/null || true
-  tmux new-session -d -s "$EDGE_TMUX_SESSION" -c "$REPO_ROOT" "exec '$BIN_DIR/multiagent-public-edge' '$REPO_ROOT' '$BIN_DIR/agent-index' '$HUB_PORT' '$PUBLIC_EDGE_PORT' '' >'$CF_DIR/public-edge.log' 2>&1"
+  : >"$CF_DIR/public-edge.log"
+  tmux new-session -d -s "$EDGE_TMUX_SESSION" -c "$REPO_ROOT" "exec bash '$BIN_DIR/multiagent-public-edge-supervisor' '$REPO_ROOT' '$BIN_DIR/agent-index' '$HUB_PORT' '$PUBLIC_EDGE_PORT' '' '$CF_DIR/public-edge.log'"
   local attempt
   for attempt in $(seq 1 20); do
     if curl -s "http://127.0.0.1:${PUBLIC_EDGE_PORT}" >/dev/null 2>&1; then
