@@ -20,6 +20,15 @@ ORIGIN_URL="http://127.0.0.1:${PUBLIC_EDGE_PORT}"
 CF_TMUX_SESSION="${MULTIAGENT_CLOUDFLARE_SESSION:-multiagent-cloudflare}"
 HUB_TMUX_SESSION="${MULTIAGENT_CLOUDFLARE_HUB_SESSION:-multiagent-cloudflare-hub}"
 EDGE_TMUX_SESSION="${MULTIAGENT_CLOUDFLARE_EDGE_SESSION:-multiagent-cloudflare-edge}"
+LAUNCH_AGENT_LABEL="${MULTIAGENT_CLOUDFLARE_LAUNCH_LABEL:-com.okadaharuto.multiagent-cloudflare}"
+LAUNCH_AGENT_DIR="$HOME/Library/LaunchAgents"
+LAUNCH_AGENT_PLIST="$LAUNCH_AGENT_DIR/${LAUNCH_AGENT_LABEL}.plist"
+LAUNCH_AGENT_SOURCE="$CF_DIR/${LAUNCH_AGENT_LABEL}.plist"
+LAUNCH_RUNNER_DIR="$HOME/Library/Application Support/multiagent-cloudflare"
+LAUNCH_RUNNER_PATH="$LAUNCH_RUNNER_DIR/watchdog.sh"
+LAUNCH_EDGE_RUNNER_PATH="$LAUNCH_RUNNER_DIR/public-edge.py"
+LAUNCH_LOG_DIR="$LAUNCH_RUNNER_DIR/logs"
+TMUX_SOCKET_PATH_FILE="$CF_DIR/tmux-socket-path.txt"
 
 mkdir -p "$CF_DIR"
 
@@ -35,6 +44,9 @@ Commands:
                         Create or reuse a named tunnel, route DNS, and write config.
   named-start           Start the configured named tunnel.
   named-stop            Stop the running named tunnel.
+  daemon-install        Install a login LaunchAgent that keeps the public tunnel alive.
+  daemon-uninstall      Remove the login LaunchAgent for the public tunnel.
+  daemon-status         Show LaunchAgent install/load status.
   access-enable <team-name> <aud-tag>
                         Require Cloudflare Access on the named hostname.
   access-disable        Remove Cloudflare Access requirement from the named hostname config.
@@ -74,6 +86,124 @@ clear_mode() {
 
 current_mode() {
   cat "$MODE_FILE" 2>/dev/null || true
+}
+
+write_launch_agent_plist() {
+  cat >"$LAUNCH_AGENT_SOURCE" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>${LAUNCH_AGENT_LABEL}</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>${LAUNCH_RUNNER_PATH}</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>${HOME}</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>${LAUNCH_LOG_DIR}/launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>${LAUNCH_LOG_DIR}/launchd.err.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+</dict>
+</plist>
+EOF
+}
+
+write_launch_runner() {
+  mkdir -p "$LAUNCH_RUNNER_DIR"
+  mkdir -p "$LAUNCH_LOG_DIR"
+  cp "$BIN_DIR/multiagent-public-edge" "$LAUNCH_EDGE_RUNNER_PATH"
+  chmod +x "$LAUNCH_EDGE_RUNNER_PATH"
+  local tmux_socket_path=""
+  tmux_socket_path="$(tmux display-message -p '#{socket_path}' 2>/dev/null || true)"
+  printf '%s\n' "$tmux_socket_path" >"$TMUX_SOCKET_PATH_FILE"
+  cat >"$LAUNCH_RUNNER_PATH" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="${REPO_ROOT}"
+CF_DIR="${CF_DIR}"
+LOG_FILE="${LOG_FILE}"
+NAMED_CONFIG_FILE="${NAMED_CONFIG_FILE}"
+PUBLIC_EDGE_PORT="${PUBLIC_EDGE_PORT}"
+HUB_PORT="${HUB_PORT}"
+CF_TMUX_SESSION="${CF_TMUX_SESSION}"
+EDGE_TMUX_SESSION="${EDGE_TMUX_SESSION}"
+LAUNCH_EDGE_RUNNER_PATH="${LAUNCH_EDGE_RUNNER_PATH}"
+LAUNCH_LOG_DIR="${LAUNCH_LOG_DIR}"
+WATCHDOG_LOG="${LAUNCH_LOG_DIR}/watchdog.log"
+PUBLIC_EDGE_LOG="${LAUNCH_LOG_DIR}/public-edge.log"
+CLOUDFLARED_LOG="${LAUNCH_LOG_DIR}/cloudflared.log"
+TMUX_SOCKET_PATH="${tmux_socket_path}"
+
+mkdir -p "\$LAUNCH_LOG_DIR"
+
+cloudflared_bin() {
+  if command -v cloudflared >/dev/null 2>&1; then
+    command -v cloudflared
+    return
+  fi
+  if [[ -x "/opt/homebrew/bin/cloudflared" ]]; then
+    printf '%s\n' "/opt/homebrew/bin/cloudflared"
+    return
+  fi
+  return 1
+}
+
+tmux_session_alive() {
+  local name="\${1:-}"
+  [[ -n "\$name" ]] || return 1
+  tmux -S "\$TMUX_SOCKET_PATH" has-session -t "\$name" 2>/dev/null || return 1
+  tmux -S "\$TMUX_SOCKET_PATH" list-panes -t "\$name" -F '#{pane_dead}' 2>/dev/null | grep -qx '0'
+}
+
+restart_public_edge() {
+  local pid
+  pid="\$(lsof -tiTCP:\${PUBLIC_EDGE_PORT} -sTCP:LISTEN 2>/dev/null | head -n 1 || true)"
+  if [[ -n "\$pid" ]]; then
+    kill "\$pid" 2>/dev/null || true
+    sleep 1
+  fi
+  tmux -S "\$TMUX_SOCKET_PATH" kill-session -t "\$EDGE_TMUX_SESSION" 2>/dev/null || true
+  : >"\$PUBLIC_EDGE_LOG"
+  tmux -S "\$TMUX_SOCKET_PATH" new-session -d -s "\$EDGE_TMUX_SESSION" -c "\$HOME" "exec python3 '\$LAUNCH_EDGE_RUNNER_PATH' '\$REPO_ROOT' '\$REPO_ROOT/bin/agent-index' '\$HUB_PORT' '\$PUBLIC_EDGE_PORT' '\$TMUX_SOCKET_PATH' >>'\$PUBLIC_EDGE_LOG' 2>&1"
+}
+
+ensure_named_tunnel() {
+  [[ -f "\$NAMED_CONFIG_FILE" ]] || return 0
+  if ! tmux_session_alive "\$EDGE_TMUX_SESSION"; then
+    restart_public_edge
+  fi
+  if ! tmux_session_alive "\$CF_TMUX_SESSION"; then
+    local cf_bin
+    cf_bin="\$(cloudflared_bin || true)"
+    [[ -n "\$cf_bin" ]] || return 0
+    : >"\$CLOUDFLARED_LOG"
+    tmux -S "\$TMUX_SOCKET_PATH" new-session -d -s "\$CF_TMUX_SESSION" -c "\$HOME" "exec '\$cf_bin' tunnel --config '\$NAMED_CONFIG_FILE' run >'\$CLOUDFLARED_LOG' 2>&1"
+  fi
+}
+
+while true; do
+  {
+    printf '[%s] launchd watchdog tick\n' "\$(date '+%Y-%m-%d %H:%M:%S')"
+    ensure_named_tunnel
+  } >>"\$WATCHDOG_LOG" 2>&1
+  sleep 10
+done
+EOF
+  chmod +x "$LAUNCH_RUNNER_PATH"
 }
 
 restart_hub() {
@@ -411,6 +541,9 @@ command_named_start() {
     tmux kill-session -t "$CF_TMUX_SESSION" 2>/dev/null || true
   fi
   if tmux_session_alive "$CF_TMUX_SESSION"; then
+    if ! tmux_session_alive "$EDGE_TMUX_SESSION"; then
+      restart_public_edge
+    fi
     echo "Cloudflare tunnel already running"
     command_status
     exit 0
@@ -439,6 +572,41 @@ command_named_stop() {
   rm -f "$PID_FILE"
   clear_public_host
   clear_mode
+}
+
+command_daemon_install() {
+  ensure_named_config_present
+  write_launch_runner
+  write_launch_agent_plist
+  mkdir -p "$LAUNCH_AGENT_DIR"
+  cp "$LAUNCH_AGENT_SOURCE" "$LAUNCH_AGENT_PLIST"
+  launchctl bootout "gui/$(id -u)" "$LAUNCH_AGENT_PLIST" >/dev/null 2>&1 || true
+  launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST"
+  launchctl enable "gui/$(id -u)/${LAUNCH_AGENT_LABEL}" >/dev/null 2>&1 || true
+  command_named_start >/dev/null
+  printf 'launch_agent=%s\n' "$LAUNCH_AGENT_PLIST"
+  printf 'label=%s\n' "$LAUNCH_AGENT_LABEL"
+}
+
+command_daemon_uninstall() {
+  launchctl bootout "gui/$(id -u)" "$LAUNCH_AGENT_PLIST" >/dev/null 2>&1 || true
+  rm -f "$LAUNCH_AGENT_PLIST"
+  rm -f "$LAUNCH_RUNNER_PATH"
+  printf 'launch_agent_removed=%s\n' "$LAUNCH_AGENT_PLIST"
+}
+
+command_daemon_status() {
+  printf 'launch_agent_label=%s\n' "$LAUNCH_AGENT_LABEL"
+  printf 'launch_agent_source=%s\n' "$LAUNCH_AGENT_SOURCE"
+  printf 'launch_agent_installed=%s\n' "$([[ -f "$LAUNCH_AGENT_PLIST" ]] && echo yes || echo no)"
+  printf 'launch_runner=%s\n' "$LAUNCH_RUNNER_PATH"
+  printf 'launch_runner_installed=%s\n' "$([[ -f "$LAUNCH_RUNNER_PATH" ]] && echo yes || echo no)"
+  printf 'launch_edge_runner=%s\n' "$LAUNCH_EDGE_RUNNER_PATH"
+  printf 'launch_edge_runner_installed=%s\n' "$([[ -f "$LAUNCH_EDGE_RUNNER_PATH" ]] && echo yes || echo no)"
+  printf 'tmux_socket_path=%s\n' "$(cat "$TMUX_SOCKET_PATH_FILE" 2>/dev/null || true)"
+  launchctl print "gui/$(id -u)/${LAUNCH_AGENT_LABEL}" >/dev/null 2>&1 \
+    && printf 'launch_agent_loaded=yes\n' \
+    || printf 'launch_agent_loaded=no\n'
 }
 
 command_access_enable() {
@@ -520,6 +688,9 @@ case "$cmd" in
   named-setup) shift; command_named_setup "$@" ;;
   named-start) shift; command_named_start "$@" ;;
   named-stop) shift; command_named_stop "$@" ;;
+  daemon-install) shift; command_daemon_install "$@" ;;
+  daemon-uninstall) shift; command_daemon_uninstall "$@" ;;
+  daemon-status) shift; command_daemon_status "$@" ;;
   access-enable) shift; command_access_enable "$@" ;;
   access-disable) shift; command_access_disable "$@" ;;
   status) shift; command_status "$@" ;;

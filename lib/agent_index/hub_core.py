@@ -125,7 +125,10 @@ class HubRuntime:
         self.tmux_socket = tmux_socket
         self.tmux_prefix = ["tmux"]
         if tmux_socket:
-            self.tmux_prefix.extend(["-L", tmux_socket])
+            if "/" in tmux_socket:
+                self.tmux_prefix.extend(["-S", tmux_socket])
+            else:
+                self.tmux_prefix.extend(["-L", tmux_socket])
         self._pane_snapshots = {}
         self._pane_last_change = {}
         self.running_grace_seconds = 2.0
