@@ -57,6 +57,13 @@ class ChatRuntime:
         self._pane_snapshots = {}
         self._pane_last_change = {}
         self.running_grace_seconds = 2.0
+        self._caffeinate_args = ["caffeinate", "-dimu"]
+        try:
+            settings = self.load_chat_settings()
+        except Exception:
+            settings = {}
+        if bool(settings.get("chat_awake", False)):
+            self.ensure_caffeinate_active()
 
     def load_chat_settings(self):
         cap = self.limit if self.limit > 0 else 500
@@ -342,8 +349,13 @@ class ChatRuntime:
             else:
                 subprocess.run(["killall", "caffeinate"], capture_output=True, check=False)
             return {"active": False}
-        self._caffeinate_proc = subprocess.Popen(["caffeinate", "-s"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.ensure_caffeinate_active()
         return {"active": True}
+
+    def ensure_caffeinate_active(self):
+        if self.caffeinate_status()["active"]:
+            return
+        self._caffeinate_proc = subprocess.Popen(self._caffeinate_args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def auto_mode_status(self):
         try:

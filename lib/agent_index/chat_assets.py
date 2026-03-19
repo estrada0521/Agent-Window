@@ -1178,17 +1178,20 @@ CHAT_HTML = r"""<!doctype html>
       color: var(--chrome-muted);
     }
     .statusline {
-      position: fixed;
-      right: 12px;
-      bottom: calc(var(--composer-height, 96px) + 8px);
-      padding: 4px 8px;
+      position: absolute;
+      left: 50%;
+      bottom: 2px;
+      width: min(760px, calc(100vw - 16px));
+      padding: 0 10px 2px;
       min-height: 1.3em;
       color: var(--chrome-muted);
       font-size: 11px;
       text-align: right;
       pointer-events: none;
-      z-index: 1000;
+      transform: translateX(-50%);
+      z-index: 2;
       background: transparent;
+      box-sizing: border-box;
     }
     main {
       grid-area: 1 / 1;
@@ -5564,7 +5567,7 @@ __HUB_HEADER_CSS__
 
 CHAT_HEADER_ACTIONS_HTML = """
 <button type="button" class="hub-page-menu-btn" id="attachedFilesMenuBtn" title="Attached files" aria-label="Attached files">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
 </button>
 <button type="button" class="hub-page-menu-btn" id="hubPageMenuBtn" title="Menu" aria-label="Menu">
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><line x1="3" y1="8" x2="21" y2="8"/><line x1="6" y1="16" x2="21" y2="16"/></svg>
