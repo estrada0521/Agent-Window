@@ -1081,6 +1081,15 @@ CHAT_HTML = r"""<!doctype html>
       box-shadow: none;
       filter: none;
     }
+    .static-export-composer {
+      opacity: 0.92;
+    }
+    .static-export-composer .composer-main-shell {
+      filter: saturate(0.8);
+    }
+    .static-export-composer textarea {
+      cursor: default;
+    }
     .mic-btn {
       position: absolute;
       right: 9px;
@@ -5525,8 +5534,23 @@ __HUB_HEADER_CSS__
     renderRawSendButton();
     if (window.__STATIC_EXPORT__) {
       const comp = document.getElementById("composer");
-      if (comp) comp.style.display = "none";
-      document.querySelector(".hub-page-header")?.querySelectorAll("button, details")?.forEach(el => { el.disabled = true; el.style.pointerEvents = "none"; });
+      const message = document.getElementById("message");
+      if (message) {
+        message.readOnly = true;
+        message.value = "";
+        message.placeholder = "Static export preview";
+      }
+      if (comp) {
+        comp.classList.add("static-export-composer");
+        comp.querySelectorAll("button, input, textarea, summary, details").forEach((el) => {
+          if (el.tagName === "TEXTAREA") return;
+          el.disabled = true;
+          el.style.pointerEvents = "none";
+        });
+      }
+      document.querySelector(".hub-page-header")?.querySelectorAll("button, details, summary")?.forEach(el => { el.disabled = true; el.style.pointerEvents = "none"; });
+      const status = document.getElementById("statusline");
+      if (status) status.textContent = "Static export";
     }
     refresh({ forceScroll: true });
     if (followMode && !window.__STATIC_EXPORT__) {
