@@ -925,6 +925,38 @@ CHAT_HTML = r"""<!doctype html>
       background: rgba(214, 222, 235, 0.045);
       color: rgba(214, 222, 235, 0.82);
     }
+    .quick-action .raw-switch {
+      margin-left: auto;
+      position: relative;
+      width: 30px;
+      height: 18px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      flex: 0 0 auto;
+      transition: background 150ms ease, border-color 150ms ease;
+    }
+    .quick-action .raw-switch::after {
+      content: "";
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(252, 252, 252, 0.92);
+      transition: transform 150ms ease, background 150ms ease;
+    }
+    .quick-action.raw-on .raw-switch,
+    .quick-action[data-forward-action="rawSendBtn"].raw-on .raw-switch {
+      background: rgba(252, 252, 252, 0.3);
+      border-color: rgba(252, 252, 252, 0.42);
+    }
+    .quick-action.raw-on .raw-switch::after,
+    .quick-action[data-forward-action="rawSendBtn"].raw-on .raw-switch::after {
+      transform: translateX(12px);
+      background: rgb(252, 252, 252);
+    }
     .has-hover .quick-action.raw-send-btn:hover:not(:disabled) {
       background: rgba(214, 222, 235, 0.1);
       border-color: rgba(214, 222, 235, 0.34);
@@ -2807,7 +2839,7 @@ __HUB_HEADER_CSS__
             <div class="composer-plus-panel">
               <button type="button" class="quick-action divider-after" id="cameraBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></span><span class="action-label">Import</span><span class="action-mobile">Import</span></button>
               <input type="file" id="cameraInput" multiple style="display:none">
-              <button type="button" class="quick-action divider-after" data-forward-action="rawSendBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17 10 12 4 7"></path><path d="M12 17h8"></path></svg></span><span class="action-label">Raw</span><span class="action-mobile">Raw</span></button>
+              <button type="button" class="quick-action divider-after" data-forward-action="rawSendBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17 10 12 4 7"></path><path d="M12 17h8"></path></svg></span><span class="action-label">Raw</span><span class="action-mobile">Raw</span><span class="raw-switch" aria-hidden="true"></span></button>
               <details class="plus-submenu divider-after">
                 <summary class="quick-action plus-submenu-toggle"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M6 20v-2a6 6 0 0 1 12 0v2"></path></svg></span><span class="action-label">Agent</span><span class="action-mobile">Agent</span><span class="submenu-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span></summary>
                 <div class="plus-submenu-panel">
