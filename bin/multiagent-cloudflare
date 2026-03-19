@@ -12,6 +12,7 @@ LOG_FILE="$CF_DIR/cloudflared.log"
 MODE_FILE="$CF_DIR/mode.txt"
 NAMED_CONFIG_FILE="$CF_DIR/config.yml"
 NAMED_META_FILE="$CF_DIR/named-tunnel.json"
+ACCESS_META_FILE="$CF_DIR/access.json"
 HUB_PORT="${MULTIAGENT_HUB_PORT:-8788}"
 HUB_HOST="${MULTIAGENT_HUB_HOST:-127.0.0.1}"
 PUBLIC_EDGE_PORT="${MULTIAGENT_PUBLIC_EDGE_PORT:-8790}"
@@ -34,6 +35,9 @@ Commands:
                         Create or reuse a named tunnel, route DNS, and write config.
   named-start           Start the configured named tunnel.
   named-stop            Stop the running named tunnel.
+  access-enable <team-name> <aud-tag>
+                        Require Cloudflare Access on the named hostname.
+  access-disable        Remove Cloudflare Access requirement from the named hostname config.
   status                Show tunnel status and current public URL if present.
   set-host <hostname>   Set a fixed public host override and restart Hub.
   clear-host            Remove the fixed public host override and restart Hub.
@@ -225,10 +229,46 @@ print(data.get(field, ""))
 PY
 }
 
+write_access_meta() {
+  local team_name="$1"
+  local aud_tag="$2"
+  named_tunnel_meta_python "$ACCESS_META_FILE" "$team_name" "$aud_tag" <<'PY'
+import json, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+payload = {
+    "team_name": sys.argv[2],
+    "aud_tag": sys.argv[3],
+}
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+PY
+}
+
+clear_access_meta() {
+  rm -f "$ACCESS_META_FILE"
+}
+
+access_meta_field() {
+  local field="$1"
+  named_tunnel_meta_python "$ACCESS_META_FILE" "$field" <<'PY'
+import json, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+field = sys.argv[2]
+if not path.exists():
+    raise SystemExit(1)
+data = json.loads(path.read_text(encoding="utf-8"))
+print(data.get(field, ""))
+PY
+}
+
 write_named_config() {
   local tunnel_id="$1"
   local credentials_file="$2"
   local hostname="$3"
+  local team_name aud_tag
+  team_name="$(access_meta_field team_name 2>/dev/null || true)"
+  aud_tag="$(access_meta_field aud_tag 2>/dev/null || true)"
   cat > "$NAMED_CONFIG_FILE" <<EOF
 tunnel: ${tunnel_id}
 credentials-file: ${credentials_file}
@@ -238,6 +278,14 @@ ingress:
     originRequest:
       noTLSVerify: true
       http2Origin: true
+$(if [[ -n "$team_name" && -n "$aud_tag" ]]; then cat <<EOA
+      access:
+        required: true
+        teamName: ${team_name}
+        audTag:
+          - ${aud_tag}
+EOA
+fi)
   - service: http_status:404
 EOF
 }
@@ -392,6 +440,36 @@ command_named_stop() {
   clear_mode
 }
 
+command_access_enable() {
+  local team_name="${1:-}"
+  local aud_tag="${2:-}"
+  if [[ -z "$team_name" || -z "$aud_tag" ]]; then
+    echo "usage: bin/multiagent-cloudflare access-enable <team-name> <aud-tag>" >&2
+    exit 1
+  fi
+  ensure_named_config_present
+  write_access_meta "$team_name" "$aud_tag"
+  local tunnel_id credentials_file hostname
+  tunnel_id="$(named_meta_field tunnel_id)"
+  credentials_file="$(named_meta_field credentials_file)"
+  hostname="$(named_meta_field hostname)"
+  write_named_config "$tunnel_id" "$credentials_file" "$hostname"
+  printf 'access_enabled=yes\n'
+  printf 'team_name=%s\n' "$team_name"
+  printf 'aud_tag=%s\n' "$aud_tag"
+}
+
+command_access_disable() {
+  ensure_named_config_present
+  clear_access_meta
+  local tunnel_id credentials_file hostname
+  tunnel_id="$(named_meta_field tunnel_id)"
+  credentials_file="$(named_meta_field credentials_file)"
+  hostname="$(named_meta_field hostname)"
+  write_named_config "$tunnel_id" "$credentials_file" "$hostname"
+  printf 'access_enabled=no\n'
+}
+
 command_status() {
   local pid url host
   pid="$(tmux display-message -p -t "$CF_TMUX_SESSION:0.0" '#{pane_pid}' 2>/dev/null || true)"
@@ -413,6 +491,9 @@ command_status() {
     printf 'named_hostname=%s\n' "$(named_meta_field hostname)"
     printf 'named_config=%s\n' "$NAMED_CONFIG_FILE"
   fi
+  printf 'access_enabled=%s\n' "$([[ -f "$ACCESS_META_FILE" ]] && echo yes || echo no)"
+  printf 'access_team_name=%s\n' "$(access_meta_field team_name 2>/dev/null || true)"
+  printf 'access_aud_tag=%s\n' "$(access_meta_field aud_tag 2>/dev/null || true)"
 }
 
 command_set_host() {
@@ -438,6 +519,8 @@ case "$cmd" in
   named-setup) shift; command_named_setup "$@" ;;
   named-start) shift; command_named_start "$@" ;;
   named-stop) shift; command_named_stop "$@" ;;
+  access-enable) shift; command_access_enable "$@" ;;
+  access-disable) shift; command_access_disable "$@" ;;
   status) shift; command_status "$@" ;;
   set-host) shift; command_set_host "$@" ;;
   clear-host) shift; command_clear_host "$@" ;;
