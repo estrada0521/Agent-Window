@@ -4386,21 +4386,44 @@ __HUB_HEADER_CSS__
     });
     // Brief button — runs asynchronously, not logged in chat
     document.getElementById("briefBtn").addEventListener("click", async () => {
-      const target = selectedTargets.join(",");
-      if (!target) {
+      const targets = selectedTargets.length > 0 ? selectedTargets : [];
+      if (!targets.length) {
         setStatus("select target(s) for brief", true);
         setTimeout(() => setStatus(""), 2000);
         return;
       }
       closePlusMenu();
-      setStatus(`briefing ${target}...`);
+      setStatus(`briefing ${targets.join(",")}...`);
       try {
-        await fetch("/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ target, message: "brief" }),
-        });
-        await logSystem(`Send Brief → ${target}`);
+        for (const target of targets) {
+          const instruction = `Multiagent session note for ${target}:
+- You are running inside a tmux-based multiagent session. agent-send targets panes in this session.
+- To message other agents or the human inbox, prefer stdin. Example: printf '%s' '[From: ${target}] hello' | agent-send --stdin user
+- Legacy inline form still works temporarily for simple text, but stdin is the standard path going forward.
+- To inspect message history, use: agent-index or agent-index --agent <name>. Do NOT run agent-index --follow — it blocks forever and will hang your pane.
+- IMPORTANT: Always use --reply when responding to a specific message. Every message you receive includes a msg-id in its header: [From: sender | msg-id: xxxxxxxxxxxx]. Use that ID like this: printf '%s' '[From: ${target}] ...' | agent-send --reply <msg-id> --stdin <target>. This keeps conversations threaded and readable. Only omit --reply when broadcasting a new topic to multiple agents.
+- agent-send user writes to the human inbox in agent-index/chat view. It does not inject text into the terminal pane.
+- Messages sent via agent-send are displayed in the chat UI (agent-index --chat) with Markdown rendering. You may use Markdown in your messages: **bold**, \`inline code\`, \`\`\`code blocks\`\`\`, headers, lists, tables, etc.
+- The chat UI also renders LaTeX math via KaTeX. Use $...$ for inline math and $$...$$ for display (block) math. Standard LaTeX commands and environments such as cases, pmatrix, bmatrix, align, aligned, and array are generally supported. stdin/heredoc is safe for these messages; legacy inline form is risky for shell-sensitive content.
+- To attach a file reference in your message, include [Attached: path/to/file] anywhere in the text. The chat UI will render it as a clickable file card. Example: printf '%s' '[From: ${target}] Here is the result [Attached: src/main.py]' | agent-send --stdin user
+- After this briefing, when another agent asks you to reply, you must reply with agent-send. Do not reply only in this pane.
+- Every normal reply sent with agent-send must start with [From: ${target}] so the sender is explicit.
+- Normal replies must contain actual content. Do not reply with only a single word unless explicitly asked.
+- Do not start greeting loops or casual chatter unless explicitly instructed.
+- For normal replies, identify the sender and use stdin with agent-send, e.g. printf '%s' '[From: ${target}] ...' | agent-send --stdin <sender>
+- To confirm you have read this briefing, run now: printf '%s' '[From: ${target}] Briefing received.' | agent-send --stdin user`;
+          const res = await fetch("/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ target, message: instruction, silent: true }),
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || `brief failed for ${target}`);
+          }
+          await new Promise((r) => setTimeout(r, 600));
+        }
+        await logSystem(`Send Brief → ${targets.join(",")}`);
         await refresh({ forceScroll: true });
         setStatus("brief sent");
         setTimeout(() => setStatus(""), 2000);
