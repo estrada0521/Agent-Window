@@ -2869,6 +2869,7 @@ __HUB_HEADER_CSS__
   </section>
   <script>
     const CHAT_BASE_PATH = "__CHAT_BASE_PATH__";
+    const CHAT_ASSET_BASE = CHAT_BASE_PATH || "";
     if (CHAT_BASE_PATH) {
       const __origFetch = window.fetch.bind(window);
       window.fetch = (input, init) => {
@@ -3284,7 +3285,7 @@ __HUB_HEADER_CSS__
     const senderBadge = (sender) => ((sender || "?").trim()[0] || "?").toUpperCase();
     const agentIconSrc = (name) => {
       const s = agentBaseName(name);
-      return AGENT_ICON_DATA[s] || `/icon/${encodeURIComponent(s)}`;
+      return AGENT_ICON_DATA[s] || `${CHAT_ASSET_BASE}/icon/${encodeURIComponent(s)}`;
     };
     const iconImg = (name, cls) => {
       const base = agentBaseName(name);
@@ -3294,7 +3295,7 @@ __HUB_HEADER_CSS__
     const thinkingIconImg = (name, cls) => {
       const base = agentBaseName(name);
       if (!AGENT_ICON_NAMES.has(base)) return "";
-      const src = base === "codex" ? "/icon/codex" : agentIconSrc(name);
+      const src = base === "codex" ? `${CHAT_ASSET_BASE}/icon/codex` : agentIconSrc(name);
       return `<img class="${cls}" src="${escapeHtml(src)}" alt="${escapeHtml(base)}">`;
     };
     const statusIcon = (name, cls) => {
@@ -5603,8 +5604,10 @@ CHAT_HEADER_PANELS_HTML = """
 
 
 def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, follow, chat_base_path=""):
+    base_path = chat_base_path.rstrip("/")
+    logo_src = f"{base_path}/hub-logo" if base_path else logo_data_uri
     chat_header_html = render_hub_page_header(
-        logo_data_uri=logo_data_uri,
+        logo_data_uri=logo_src,
         title_href="/",
         title_id="hubPageTitleLink",
         title_aria_label="Hub",
@@ -5620,8 +5623,8 @@ def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port
     return (
         html
         .replace("__ICON_DATA_URIS__", json.dumps(icon_data_uris, ensure_ascii=True))
-        .replace("__HUB_LOGO_DATA_URI__", logo_data_uri)
-        .replace("__CHAT_BASE_PATH__", chat_base_path.rstrip("/"))
+        .replace("__HUB_LOGO_DATA_URI__", logo_src)
+        .replace("__CHAT_BASE_PATH__", base_path)
         .replace("__SERVER_INSTANCE__", server_instance)
         .replace("__HUB_PORT__", str(hub_port))
         .replace("__CHAT_THEME__", chat_settings["theme"])

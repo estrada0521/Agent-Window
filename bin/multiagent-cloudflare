@@ -9,6 +9,9 @@ PID_FILE="$CF_DIR/cloudflared.pid"
 URL_FILE="$CF_DIR/cloudflared-url.txt"
 HOST_FILE="$REPO_ROOT/certs/public-host.txt"
 LOG_FILE="$CF_DIR/cloudflared.log"
+MODE_FILE="$CF_DIR/mode.txt"
+NAMED_CONFIG_FILE="$CF_DIR/config.yml"
+NAMED_META_FILE="$CF_DIR/named-tunnel.json"
 HUB_PORT="${MULTIAGENT_HUB_PORT:-8788}"
 HUB_HOST="${MULTIAGENT_HUB_HOST:-127.0.0.1}"
 ORIGIN_URL="https://${HUB_HOST}:${HUB_PORT}"
@@ -24,6 +27,11 @@ Usage: bin/multiagent-cloudflare <command>
 Commands:
   quick-start           Start a Cloudflare Quick Tunnel to the local Hub.
   quick-stop            Stop the running Quick Tunnel and clear public host override.
+  named-login           Open Cloudflare login flow for a named tunnel.
+  named-setup <tunnel-name> <hostname>
+                        Create or reuse a named tunnel, route DNS, and write config.
+  named-start           Start the configured named tunnel.
+  named-stop            Stop the running named tunnel.
   status                Show tunnel status and current public URL if present.
   set-host <hostname>   Set a fixed public host override and restart Hub.
   clear-host            Remove the fixed public host override and restart Hub.
@@ -48,6 +56,18 @@ tmux_session_alive() {
   [[ -n "$name" ]] || return 1
   tmux has-session -t "$name" 2>/dev/null || return 1
   tmux list-panes -t "$name" -F '#{pane_dead}' 2>/dev/null | grep -qx '0'
+}
+
+write_mode() {
+  printf '%s\n' "$1" > "$MODE_FILE"
+}
+
+clear_mode() {
+  rm -f "$MODE_FILE"
+}
+
+current_mode() {
+  cat "$MODE_FILE" 2>/dev/null || true
 }
 
 restart_hub() {
@@ -96,6 +116,117 @@ clear_public_host() {
   rm -f "$HOST_FILE"
 }
 
+named_tunnel_meta_python() {
+  python3 - "$@"
+}
+
+named_origincert_path() {
+  local candidate
+  for candidate in \
+    "${TUNNEL_ORIGIN_CERT:-}" \
+    "$HOME/.cloudflared/cert.pem" \
+    "$HOME/.cloudflare-warp/cert.pem"
+  do
+    if [[ -n "$candidate" && -f "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+named_tunnel_lookup() {
+  local tunnel_name="$1"
+  local cf_bin origincert
+  cf_bin="$(cloudflared_bin)"
+  origincert="$(named_origincert_path)" || return 1
+  "$cf_bin" tunnel --origincert "$origincert" list -o json --name "$tunnel_name"
+}
+
+named_tunnel_id() {
+  local tunnel_name="$1"
+  named_tunnel_lookup "$tunnel_name" | named_tunnel_meta_python <<'PY'
+import json, sys
+data = json.load(sys.stdin)
+if not data:
+    raise SystemExit(1)
+first = data[0]
+print(first.get("id") or first.get("ID") or "")
+PY
+}
+
+named_credentials_path() {
+  local tunnel_id="$1"
+  local candidate
+  for candidate in \
+    "$CF_DIR/${tunnel_id}.json" \
+    "$HOME/.cloudflared/${tunnel_id}.json"
+  do
+    if [[ -f "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+write_named_meta() {
+  local tunnel_name="$1"
+  local tunnel_id="$2"
+  local hostname="$3"
+  local credentials_file="$4"
+  named_tunnel_meta_python "$NAMED_META_FILE" "$tunnel_name" "$tunnel_id" "$hostname" "$credentials_file" <<'PY'
+import json, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+payload = {
+    "tunnel_name": sys.argv[2],
+    "tunnel_id": sys.argv[3],
+    "hostname": sys.argv[4],
+    "credentials_file": sys.argv[5],
+}
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+PY
+}
+
+named_meta_field() {
+  local field="$1"
+  named_tunnel_meta_python "$NAMED_META_FILE" "$field" <<'PY'
+import json, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+field = sys.argv[2]
+if not path.exists():
+    raise SystemExit(1)
+data = json.loads(path.read_text(encoding="utf-8"))
+print(data.get(field, ""))
+PY
+}
+
+write_named_config() {
+  local tunnel_id="$1"
+  local credentials_file="$2"
+  local hostname="$3"
+  cat > "$NAMED_CONFIG_FILE" <<EOF
+tunnel: ${tunnel_id}
+credentials-file: ${credentials_file}
+ingress:
+  - hostname: ${hostname}
+    service: ${ORIGIN_URL}
+    originRequest:
+      noTLSVerify: true
+      http2Origin: true
+  - service: http_status:404
+EOF
+}
+
+ensure_named_config_present() {
+  [[ -f "$NAMED_CONFIG_FILE" ]] || {
+    echo "named tunnel config not found; run: bin/multiagent-cloudflare named-setup <tunnel-name> <hostname>" >&2
+    exit 1
+  }
+}
+
 command_quick_start() {
   if tmux has-session -t "$CF_TMUX_SESSION" 2>/dev/null && ! tmux_session_alive "$CF_TMUX_SESSION"; then
     tmux kill-session -t "$CF_TMUX_SESSION" 2>/dev/null || true
@@ -134,6 +265,7 @@ command_quick_start() {
   fi
   printf '%s\n' "$url" >"$URL_FILE"
   write_public_host "${url#https://}"
+  write_mode "quick"
   restart_hub
   printf '%s\n' "$url"
 }
@@ -142,6 +274,96 @@ command_quick_stop() {
   tmux kill-session -t "$CF_TMUX_SESSION" 2>/dev/null || true
   rm -f "$PID_FILE" "$URL_FILE"
   clear_public_host
+  clear_mode
+  restart_hub
+}
+
+command_named_login() {
+  local cf_bin origincert
+  cf_bin="$(cloudflared_bin)"
+  origincert="$(named_origincert_path || true)"
+  if [[ -n "$origincert" ]]; then
+    echo "origin cert already exists: $origincert"
+    return 0
+  fi
+  exec "$cf_bin" tunnel login
+}
+
+command_named_setup() {
+  local tunnel_name="${1:-}"
+  local hostname="${2:-}"
+  if [[ -z "$tunnel_name" || -z "$hostname" ]]; then
+    echo "usage: bin/multiagent-cloudflare named-setup <tunnel-name> <hostname>" >&2
+    exit 1
+  fi
+  local cf_bin origincert tunnel_id credentials_file
+  cf_bin="$(cloudflared_bin)"
+  origincert="$(named_origincert_path)" || {
+    echo "origin cert not found; run: bin/multiagent-cloudflare named-login" >&2
+    exit 1
+  }
+  tunnel_id="$(named_tunnel_id "$tunnel_name" 2>/dev/null || true)"
+  if [[ -z "$tunnel_id" ]]; then
+    "$cf_bin" tunnel --origincert "$origincert" create --output json "$tunnel_name" > "$CF_DIR/create-output.json"
+    tunnel_id="$(named_tunnel_meta_python "$CF_DIR/create-output.json" <<'PY'
+import json, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+data = json.loads(path.read_text(encoding='utf-8'))
+print(data.get('id') or data.get('ID') or '')
+PY
+)"
+  fi
+  if [[ -z "$tunnel_id" ]]; then
+    echo "failed to resolve tunnel id for $tunnel_name" >&2
+    exit 1
+  fi
+  credentials_file="$(named_credentials_path "$tunnel_id" || true)"
+  if [[ -z "$credentials_file" ]]; then
+    echo "credentials file for tunnel $tunnel_id not found" >&2
+    exit 1
+  fi
+  "$cf_bin" tunnel --origincert "$origincert" route dns "$tunnel_name" "$hostname"
+  write_named_meta "$tunnel_name" "$tunnel_id" "$hostname" "$credentials_file"
+  write_named_config "$tunnel_id" "$credentials_file" "$hostname"
+  write_public_host "$hostname"
+  write_mode "named"
+  restart_hub
+  printf 'tunnel_name=%s\n' "$tunnel_name"
+  printf 'tunnel_id=%s\n' "$tunnel_id"
+  printf 'hostname=%s\n' "$hostname"
+  printf 'config=%s\n' "$NAMED_CONFIG_FILE"
+}
+
+command_named_start() {
+  ensure_named_config_present
+  if tmux has-session -t "$CF_TMUX_SESSION" 2>/dev/null && ! tmux_session_alive "$CF_TMUX_SESSION"; then
+    tmux kill-session -t "$CF_TMUX_SESSION" 2>/dev/null || true
+  fi
+  if tmux_session_alive "$CF_TMUX_SESSION"; then
+    echo "Cloudflare tunnel already running"
+    command_status
+    exit 0
+  fi
+  local cf_bin hostname
+  cf_bin="$(cloudflared_bin)"
+  hostname="$(named_meta_field hostname)"
+  : >"$LOG_FILE"
+  tmux new-session -d -s "$CF_TMUX_SESSION" -c "$REPO_ROOT" "exec '$cf_bin' tunnel --config '$NAMED_CONFIG_FILE' run >'$LOG_FILE' 2>&1"
+  local pid
+  pid="$(tmux display-message -p -t "$CF_TMUX_SESSION:0.0" '#{pane_pid}' 2>/dev/null || true)"
+  [[ -n "$pid" ]] && printf '%s\n' "$pid" >"$PID_FILE"
+  write_public_host "$hostname"
+  write_mode "named"
+  restart_hub
+  printf 'https://%s\n' "$hostname"
+}
+
+command_named_stop() {
+  tmux kill-session -t "$CF_TMUX_SESSION" 2>/dev/null || true
+  rm -f "$PID_FILE"
+  clear_public_host
+  clear_mode
   restart_hub
 }
 
@@ -150,11 +372,20 @@ command_status() {
   pid="$(tmux display-message -p -t "$CF_TMUX_SESSION:0.0" '#{pane_pid}' 2>/dev/null || true)"
   url="$(cat "$URL_FILE" 2>/dev/null || true)"
   host="$(cat "$HOST_FILE" 2>/dev/null || true)"
+  local mode
+  mode="$(current_mode)"
   printf 'hub_origin=%s\n' "$ORIGIN_URL"
+  printf 'mode=%s\n' "${mode:-}"
   printf 'cloudflared_pid=%s\n' "${pid:-}"
   printf 'cloudflared_alive=%s\n' "$(tmux_session_alive "$CF_TMUX_SESSION" && echo yes || echo no)"
   printf 'public_host=%s\n' "${host:-}"
   printf 'public_url=%s\n' "${url:-}"
+  if [[ -f "$NAMED_META_FILE" ]]; then
+    printf 'named_tunnel_name=%s\n' "$(named_meta_field tunnel_name)"
+    printf 'named_tunnel_id=%s\n' "$(named_meta_field tunnel_id)"
+    printf 'named_hostname=%s\n' "$(named_meta_field hostname)"
+    printf 'named_config=%s\n' "$NAMED_CONFIG_FILE"
+  fi
 }
 
 command_set_host() {
@@ -176,6 +407,10 @@ cmd="${1:-}"
 case "$cmd" in
   quick-start) shift; command_quick_start "$@" ;;
   quick-stop) shift; command_quick_stop "$@" ;;
+  named-login) shift; command_named_login "$@" ;;
+  named-setup) shift; command_named_setup "$@" ;;
+  named-start) shift; command_named_start "$@" ;;
+  named-stop) shift; command_named_stop "$@" ;;
   status) shift; command_status "$@" ;;
   set-host) shift; command_set_host "$@" ;;
   clear-host) shift; command_clear_host "$@" ;;

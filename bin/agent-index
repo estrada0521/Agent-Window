@@ -3860,6 +3860,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
+        if parsed.path.startswith("/session/"):
+            self._proxy_session_request("POST", parsed)
+            return
         if parsed.path == "/restart-hub":
             queue_hub_restart()
             self.send_response(200)
