@@ -3566,7 +3566,7 @@ __HUB_HEADER_CSS__
     let lastMessagesSig = "";
     let initialLoadDone = false;
     let lastNotifiedMsgId = "";
-    let soundEnabled = (() => { try { return localStorage.getItem("soundEnabled") === "1"; } catch(_) { return false; } })();
+    let soundEnabled = __CHAT_SOUND_ENABLED__;
     let _audioCtx = null;
     let _beepBuffer = null;
     let _notificationBuffers = [];
@@ -5205,16 +5205,14 @@ __HUB_HEADER_CSS__
     }
     // Sound
     const setSoundBtn = (on) => {
-      soundEnabled = on;
-      try { localStorage.setItem("soundEnabled", on ? "1" : "0"); } catch(_) {}
+      soundEnabled = !!on;
     };
     setSoundBtn(soundEnabled);
     // TTS (Read Aloud)
-    let ttsEnabled = (() => { try { return localStorage.getItem("ttsEnabled") === "1"; } catch(_) { return false; } })();
+    let ttsEnabled = __CHAT_TTS_ENABLED__;
     const hasTTS = typeof window.speechSynthesis !== "undefined";
     const setTtsBtn = (on) => {
-      ttsEnabled = on;
-      try { localStorage.setItem("ttsEnabled", on ? "1" : "0"); } catch(_) {}
+      ttsEnabled = !!on;
     };
     // TTS queue — iOS Safari only allows speak() from user-gesture or utterance.onend chains
     let _ttsQueue = [];
@@ -5282,6 +5280,10 @@ __HUB_HEADER_CSS__
       } catch (_) {}
     };
     syncChatNotificationDefaults();
+    setInterval(syncChatNotificationDefaults, 30000);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) syncChatNotificationDefaults();
+    });
     const speakEntry = (entry) => {
       if (!hasTTS || !ttsEnabled) return;
       if (entry.sender === "user" || entry.sender === "system") return;
@@ -5789,6 +5791,8 @@ def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port
         .replace("__HUB_PORT__", str(hub_port))
         .replace("__CHAT_THEME__", chat_settings["theme"])
         .replace("__STARFIELD_ATTR__", "" if chat_settings.get("starfield", True) else ' data-starfield="off"')
+        .replace("__CHAT_SOUND_ENABLED__", "true" if chat_settings.get("chat_sound", False) else "false")
+        .replace("__CHAT_TTS_ENABLED__", "true" if chat_settings.get("chat_tts", False) else "false")
         .replace("__AGENT_FONT_MODE__", chat_settings["agent_font_mode"])
         .replace("__AGENT_FONT_MODE_INLINE_STYLE__", agent_font_mode_inline_style(chat_settings))
         .replace("__HUB_HEADER_CSS__", HUB_PAGE_HEADER_CSS)
