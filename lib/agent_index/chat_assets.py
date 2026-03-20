@@ -2617,38 +2617,6 @@ CHAT_HTML = r"""<!doctype html>
       border-left: 2px solid rgba(255,255,255,0.08);
       margin-left: 17px;
     }
-    .reply-preview-block {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      width: fit-content;
-      max-width: 100%;
-      min-width: 0;
-      padding: 4px 8px;
-      margin-top: 4px;
-      margin-bottom: 4px;
-      margin-right: auto;
-      border-radius: 8px;
-      background: rgba(0,0,0,0.22);
-      font-size: 12px;
-      color: var(--muted);
-      font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif;
-      font-style: normal;
-      font-weight: 400;
-      letter-spacing: -0.01em;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      font-synthesis-weight: none;
-      font-optical-sizing: auto;
-      font-variation-settings: "wght" 400, "opsz" 16;
-      line-height: 1.4;
-      overflow: hidden;
-      cursor: pointer;
-      transition: background 120ms ease;
-    }
-    .has-hover .reply-preview-block:hover {
-      background: rgba(0,0,0,0.32);
-    }
     @keyframes msg-highlight {
       0%   { box-shadow: 0 0 0 2px rgba(255,255,255,0.35); }
       100% { box-shadow: 0 0 0 2px rgba(255,255,255,0); }
@@ -2656,25 +2624,6 @@ CHAT_HTML = r"""<!doctype html>
     .msg-highlight {
       animation: msg-highlight 1.2s ease-out forwards;
       border-radius: 20px;
-    }
-    .reply-preview-block .reply-arrow {
-      font-size: 16px;
-      opacity: 0.85;
-      flex-shrink: 0;
-    }
-    .reply-preview-block .reply-preview-text {
-      flex: 1;
-      min-width: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .message.user .reply-preview-block {
-      width: fit-content;
-      margin-left: auto;
-      margin-right: 0;
-      max-width: 100%;
-      min-width: 50%;
     }
     .search-input {
       height: 26px;
@@ -3925,12 +3874,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           </div>
         </article>`;
       };
-      // Build msg_id map for reply preview lookups
-      const msgMap = new Map();
-      displayEntries.forEach(e => { if (e.msg_id) msgMap.set(e.msg_id, e); });
-      const buildReplyPreviewHTML = (entry) => {
-        return "";
-      };
       // Incremental rendering: only append new messages to avoid re-animating existing ones
       const displayIdSet = new Set(displayEntries.map(e => e.msg_id));
       const newEntriesToRender = displayEntries.filter(e => !_renderedIds.has(e.msg_id));
@@ -3944,7 +3887,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const appendedRows = [];
         for (const entry of newEntriesToRender) {
           const tmpl = document.createElement("template");
-          tmpl.innerHTML = buildMsgHTML(entry, buildReplyPreviewHTML(entry));
+          tmpl.innerHTML = buildMsgHTML(entry, "");
           const row = tmpl.content.firstElementChild;
           if (row) row.classList.add("animate-in");
           if (row) appendedRows.push(row);
@@ -3957,7 +3900,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       } else {
         // Full re-render: do not animate existing messages
         root.innerHTML = `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` + displayEntries.map(entry =>
-          buildMsgHTML(entry, buildReplyPreviewHTML(entry))
+          buildMsgHTML(entry, "")
         ).join("");
         _renderedIds = new Set(displayEntries.map(e => e.msg_id));
         renderMathInScope(root);
@@ -5108,10 +5051,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const replyTargetJump = e.target.closest(".reply-target-jump-btn");
       if (replyTargetJump) {
         jumpToReplySource(replyTargetJump.dataset.replytarget);
-        return;
-      }
-      const replyBlock = e.target.closest(".reply-preview-block");
-      if (replyBlock) {
         return;
       }
       const replyBtn = e.target.closest(".reply-btn");
