@@ -62,7 +62,7 @@ class ChatRuntime:
         self._pane_snapshots = {}
         self._pane_last_change = {}
         self.running_grace_seconds = 2.0
-        self._caffeinate_args = ["caffeinate", "-dimu"]
+        self._caffeinate_args = ["caffeinate", "-s"]
         try:
             settings = self.load_chat_settings()
         except Exception:
