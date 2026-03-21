@@ -385,11 +385,11 @@ class HubRuntime:
                                 except Exception:
                                     continue
                                 sender = (item.get("sender") or "").strip().lower()
-                                if sender and sender != "user":
+                                if sender and sender not in ("user", "system"):
                                     inferred.add(sender)
                                 for target in item.get("targets") or []:
                                     target = (target or "").strip().lower()
-                                    if target and target != "user":
+                                    if target and target not in ("user", "system"):
                                         inferred.add(target)
                     except Exception:
                         inferred = set()
