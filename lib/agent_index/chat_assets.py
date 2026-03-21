@@ -5486,11 +5486,16 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         sessionActive = data.active;
       }
       if (Array.isArray(data.targets)) {
-        availableTargets = sessionActive ? data.targets : [];
-        selectedTargets = selectedTargets.filter((target) => availableTargets.includes(target));
-        saveTargetSelection(currentSessionName, selectedTargets);
-        renderTargetPicker(availableTargets);
-        renderAgentFilterChips(availableTargets);
+        const nextTargets = sessionActive ? data.targets : [];
+        const nextTargetsSig = JSON.stringify(nextTargets);
+        const currentTargetsSig = JSON.stringify(availableTargets);
+        if (nextTargetsSig !== currentTargetsSig) {
+          availableTargets = nextTargets;
+          selectedTargets = selectedTargets.filter((target) => availableTargets.includes(target));
+          saveTargetSelection(currentSessionName, selectedTargets);
+          renderTargetPicker(availableTargets);
+          renderAgentFilterChips(availableTargets);
+        }
       }
       if (data.totals && typeof data.totals === "object") {
         agentTotalThinkingTime = { ...data.totals };

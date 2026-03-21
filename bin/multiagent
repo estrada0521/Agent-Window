@@ -1169,13 +1169,9 @@ if [[ "$MODE" == "add-agent" ]]; then
     exit 1
   }
 
-  case "$base_agent" in
-    codex)   ensure_codex_agent_send_rules ;;
-    gemini)  ensure_gemini_agent_send_rules ;;
-    claude)  ensure_claude_agent_send_rules ;;
-    copilot) ensure_copilot_agent_send_rules ;;
-    cursor|grok) : ;;  # No extra agent-send rules needed today.
-  esac
+  # Note: ensure_*_agent_send_rules are defined later in the startup flow
+  # and not available here. Rules are already configured at session creation
+  # time, so we skip them for add-agent.
 
   target_pane="$(primary_agent_pane_id "$SESSION_NAME")"
   [[ -n "$target_pane" ]] || { echo "No agent pane found in session: $SESSION_NAME" >&2; exit 1; }
@@ -1183,6 +1179,7 @@ if [[ "$MODE" == "add-agent" ]]; then
   [[ -n "$new_pane" ]] || { echo "Failed to create pane" >&2; exit 1; }
   tmux set-option -pt "$new_pane" remain-on-exit on 2>/dev/null || true
   tmux set-option -pt "$new_pane" mouse on 2>/dev/null || true
+  tmux select-layout -t "$SESSION_NAME":0 tiled >/dev/null 2>&1 || true
 
   current_agents="$(session_agents_value "$SESSION_NAME")"
   [[ "$current_agents" == "-" ]] && current_agents=""
