@@ -2655,6 +2655,7 @@ def hub_settings_html(saved=False):
     font_mode = settings["agent_font_mode"]
     user_message_font = settings.get("user_message_font", "preset-gothic")
     agent_message_font = settings.get("agent_message_font", "preset-mincho")
+    message_text_size = int(settings.get("message_text_size", 13) or 13)
     user_message_opacity_blackhole = float(settings.get("user_message_opacity_blackhole", 1.0) or 1.0)
     agent_message_opacity_blackhole = float(settings.get("agent_message_opacity_blackhole", 1.0) or 1.0)
     message_limit = settings["message_limit"]
@@ -3000,6 +3001,11 @@ def hub_settings_html(saved=False):
           </div>
         </div>
         <div class="hint">Pick independently for user and agent bubbles. The two built-in presets match the current Gothic and Mincho defaults, and the remaining choices come from fonts installed on this Mac.</div>
+      </div>
+      <div class="field">
+        <label class="label" for="message_text_size">Message Text Size</label>
+        <input id="message_text_size" name="message_text_size" type="number" min="11" max="18" step="1" value="{message_text_size}">
+        <div class="hint">Applied in one shot to user and agent message bodies, file cards, inline code, code blocks, and tables.</div>
       </div>
       <input type="hidden" name="agent_font_mode" value="{font_mode}">
       <div class="field">

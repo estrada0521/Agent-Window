@@ -442,7 +442,7 @@ CHAT_HTML = r"""<!doctype html>
       cursor: pointer;
       padding: 0;
       font: inherit;
-      font-size: 15px;
+      font-size: 13px;
       line-height: 1;
     }
     .has-hover .file-menu-jump:hover {
@@ -2016,8 +2016,8 @@ CHAT_HTML = r"""<!doctype html>
     .md-body { font: 15px/1.65 "SF Pro Text","Segoe UI",sans-serif; color: rgb(252, 252, 252); }
     .message.user .md-body {
       font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif;
-      font-size: 16px;
-      line-height: 22px;
+      font-size: var(--message-text-size, 13px);
+      line-height: var(--message-text-line-height, 22px);
       font-style: normal;
       font-weight: 400;
       letter-spacing: -0.01em;
@@ -2047,8 +2047,8 @@ CHAT_HTML = r"""<!doctype html>
     .message.grok .md-body {
       font-family: "anthropicSerif", "anthropicSerif Fallback", "Anthropic Serif", "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", Georgia, "Times New Roman", Times, serif;
       font-style: normal;
-      font-size: 16px;
-      line-height: 24px;
+      font-size: var(--message-text-size, 13px);
+      line-height: var(--message-text-line-height, 22px);
       font-weight: 360;
       color: rgb(252, 252, 252);
       font-synthesis-weight: none;
@@ -2107,7 +2107,7 @@ CHAT_HTML = r"""<!doctype html>
     .message.gemini .md-body li,
     .message.copilot .md-body li,
     .message.grok .md-body li {
-      line-height: 26px;
+      line-height: calc(var(--message-text-line-height, 22px) + 2px);
     }
     html[data-agent-font-mode="gothic"] .message.claude .md-body,
     html[data-agent-font-mode="gothic"] .message.codex .md-body,
@@ -2115,8 +2115,8 @@ CHAT_HTML = r"""<!doctype html>
     html[data-agent-font-mode="gothic"] .message.copilot .md-body,
     html[data-agent-font-mode="gothic"] .message.grok .md-body {
       font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif;
-      font-size: 16px;
-      line-height: 22px;
+      font-size: var(--message-text-size, 13px);
+      line-height: var(--message-text-line-height, 22px);
       font-style: normal;
       font-weight: 360;
       letter-spacing: -0.01em;
@@ -2170,7 +2170,7 @@ CHAT_HTML = r"""<!doctype html>
     html[data-agent-font-mode="gothic"] .message.gemini .md-body li,
     html[data-agent-font-mode="gothic"] .message.copilot .md-body li,
     html[data-agent-font-mode="gothic"] .message.grok .md-body li {
-      line-height: 22px;
+      line-height: var(--message-text-line-height, 22px);
     }
     .md-body > *:first-child { margin-top: 0; }
     .md-body > *:last-child { margin-bottom: 0; }
@@ -2195,13 +2195,13 @@ CHAT_HTML = r"""<!doctype html>
     .md-body code {
       font-family: "jetbrainsMono", "JetBrains Mono", monospace !important;
       font-style: normal;
-      font-size: 16px;
+      font-size: var(--message-text-size, 13px);
       font-weight: 240;
       font-synthesis-weight: none;
       font-stretch: normal;
       font-variation-settings: "wght" 240;
       color: var(--inline-code-fg);
-      line-height: 26px;
+      line-height: 21px;
       background: var(--inline-code-bg);
       border: 0.5px solid var(--inline-code-border);
       border-radius: var(--inline-code-radius);
@@ -2280,11 +2280,11 @@ CHAT_HTML = r"""<!doctype html>
     .md-body pre code {
       font-family: "jetbrainsMono", "JetBrains Mono", monospace !important;
       font-style: normal;
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 240;
       font-synthesis-weight: none;
       font-variation-settings: "wght" 240;
-      line-height: 23px;
+      line-height: 20px;
       color: rgb(234, 236, 240);
       background: none;
       border: none;
@@ -2297,15 +2297,15 @@ CHAT_HTML = r"""<!doctype html>
     .md-body .mermaid-container svg { display: block; margin: 0 auto; height: auto; }
     .md-body blockquote { border-left: 3px solid rgba(255,255,255,0.2); margin: 0.5em 0; padding: 0.3em 0.8em; opacity: 0.85; }
     .md-body hr { border: none; border-top: 1px solid var(--line); margin: 0.8em 0; }
-    .md-body table { border-collapse: collapse; width: 100%; margin: 0; font-size: 14px; line-height: 24px; }
-    .md-body th, .md-body td { border-top: 1.5px solid rgba(255,255,255,0.12); border-bottom: 1.5px solid rgba(255,255,255,0.12); border-left: none; border-right: none; padding: 7.5px 1px !important; text-align: left; font-size: 14px; line-height: 24px; }
+    .md-body table { border-collapse: collapse; width: 100%; margin: 0; font-size: var(--message-text-size, 13px); line-height: 21px; }
+    .md-body th, .md-body td { border-top: 1.5px solid rgba(255,255,255,0.12); border-bottom: 1.5px solid rgba(255,255,255,0.12); border-left: none; border-right: none; padding: 7.5px 1px !important; text-align: left; font-size: var(--message-text-size, 13px); line-height: 21px; }
     .md-body th { background: transparent; font-weight: 530; border-top: none; border-bottom-color: rgba(255,255,255,0.28); }
     .md-body td { font-weight: 360; }
     .md-body a { color: var(--codex-accent); text-decoration: none; }
     .has-hover .md-body a:hover { text-decoration: underline; }
     .md-body strong { font-weight: 530; }
     .md-body em { font-style: italic; }
-    .file-card { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 5px 10px; margin: 4px 0; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; background: rgb(25, 24, 23); cursor: pointer; color: var(--text); text-align: left; max-width: 100%; font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif; font-style: normal; font-size: 14px; font-weight: 400; line-height: 23px; }
+    .file-card { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 5px 10px; margin: 4px 0; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; background: rgb(25, 24, 23); cursor: pointer; color: var(--text); text-align: left; max-width: 100%; font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif; font-style: normal; font-size: var(--message-text-size, 13px); font-weight: 400; line-height: 21px; }
     .has-hover .file-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
     .file-card-icon {
       width: 1.1em;

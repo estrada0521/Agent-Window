@@ -95,6 +95,10 @@ class ChatRuntime:
         user_family = cls._font_family_stack(settings.get("user_message_font", "preset-gothic"), "user")
         agent_family = cls._font_family_stack(settings.get("agent_message_font", "preset-mincho"), "agent")
         try:
+            message_text_size = max(11, min(18, int(settings.get("message_text_size", 13))))
+        except Exception:
+            message_text_size = 13
+        try:
             user_opacity = max(0.2, min(1.0, float(settings.get("user_message_opacity_blackhole", 1.0))))
         except Exception:
             user_opacity = 1.0
@@ -104,6 +108,8 @@ class ChatRuntime:
             agent_opacity = 1.0
         return f"""
     :root {{
+      --message-text-size: {message_text_size}px;
+      --message-text-line-height: {message_text_size + 9}px;
       --user-message-blackhole-color: rgba(252, 252, 252, {user_opacity:.2f});
       --agent-message-blackhole-color: rgba(252, 252, 252, {agent_opacity:.2f});
     }}

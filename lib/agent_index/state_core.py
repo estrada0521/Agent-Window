@@ -29,6 +29,7 @@ HUB_SETTINGS_DEFAULTS = {
     "agent_font_mode": "serif",
     "user_message_font": "preset-gothic",
     "agent_message_font": "preset-mincho",
+    "message_text_size": 13,
     "user_message_opacity_blackhole": 1.0,
     "agent_message_opacity_blackhole": 1.0,
     "message_limit": 500,
@@ -478,6 +479,11 @@ def load_hub_settings(repo_root: Path | str, *, message_limit_cap: int = 500):
                     settings["agent_font_mode"] = "serif"
             else:
                 settings["agent_message_font"] = "preset-gothic" if agent_font_mode == "gothic" else "preset-mincho"
+            try:
+                message_text_size = int(raw.get("message_text_size", settings["message_text_size"]))
+            except Exception:
+                message_text_size = int(settings["message_text_size"])
+            settings["message_text_size"] = max(11, min(18, message_text_size))
             for key in ("user_message_opacity_blackhole", "agent_message_opacity_blackhole"):
                 try:
                     value = float(raw.get(key, settings[key]))
@@ -509,6 +515,11 @@ def save_hub_settings(repo_root: Path | str, raw, *, message_limit_cap: int = 50
             settings["agent_font_mode"] = "gothic"
         elif agent_message_font == "preset-mincho":
             settings["agent_font_mode"] = "serif"
+    try:
+        message_text_size = int(raw.get("message_text_size", settings["message_text_size"]))
+    except Exception:
+        message_text_size = int(settings["message_text_size"])
+    settings["message_text_size"] = max(11, min(18, message_text_size))
     for key in ("user_message_opacity_blackhole", "agent_message_opacity_blackhole"):
         try:
             value = float(raw.get(key, settings[key]))
