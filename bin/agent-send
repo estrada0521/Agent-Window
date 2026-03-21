@@ -478,7 +478,6 @@ for target in "${TARGETS[@]}"; do
         IFS=',' read -ra _others_list <<< "$_others_agents_str"
         for instance in "${_others_list[@]}"; do
           [[ "$sender_role" != "user" && "$instance" == "$sender_role" ]] && continue
-          local upper pane
           upper="$(echo "$instance" | tr '[:lower:]-' '[:upper:]_')"
           pane="$(resolve_pane "MULTIAGENT_PANE_${upper}" 2>/dev/null || true)"
           if [[ -n "$pane" ]]; then

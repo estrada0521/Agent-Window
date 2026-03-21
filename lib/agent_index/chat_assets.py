@@ -477,8 +477,8 @@ CHAT_HTML = r"""<!doctype html>
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      top: calc(100% + 3px);
-      height: calc(100% - 4px);
+      top: calc(100% + 4px);
+      height: calc(100% - 8px);
       width: 0.5px;
       background: rgb(252,252,252);
       z-index: 0;
@@ -496,6 +496,9 @@ CHAT_HTML = r"""<!doctype html>
       object-fit: contain;
       position: relative;
       z-index: 1;
+    }
+    .git-commit-icon.invert {
+      filter: invert(1);
     }
     .git-commit-icon-placeholder {
       width: 18px; height: 18px;
@@ -3925,6 +3928,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         }
         await ensureNotificationBuffer();
         await ensureCommitSoundBuffer();
+        loadScheduledSounds();
       } catch(e) { console.error("Audio prime failed", e); }
     };
     const playNotificationSound = () => {
@@ -3950,6 +3954,54 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         _audioCtx.resume().catch(() => {});
       }
     });
+    // --- Scheduled sound auto-play ---
+    // Files named like "HH-MM.ogg" (e.g. 20-30.ogg, 8-00.ogg, 1-00.ogg) play at that time daily.
+    const _scheduledSoundsPlayed = new Set();
+    const _scheduledSoundFiles = [];
+    let _scheduledSoundsLoaded = false;
+    const loadScheduledSounds = async () => {
+      if (_scheduledSoundsLoaded) return;
+      _scheduledSoundsLoaded = true;
+      try {
+        const res = await fetch("/notify-sounds-all");
+        if (!res.ok) return;
+        const all = await res.json();
+        if (!Array.isArray(all)) return;
+        const pat = /^(\d{1,2})-(\d{2})\.ogg$/;
+        for (const name of all) {
+          const m = pat.exec(name);
+          if (m) {
+            _scheduledSoundFiles.push({ name, hour: parseInt(m[1], 10), minute: parseInt(m[2], 10) });
+          }
+        }
+      } catch (_) {}
+    };
+    const checkScheduledSounds = async () => {
+      if (!_audioPrimed || !_audioCtx || !soundEnabled) return;
+      const now = new Date();
+      const hh = now.getHours();
+      const mm = now.getMinutes();
+      for (const entry of _scheduledSoundFiles) {
+        if (entry.hour === hh && entry.minute === mm) {
+          const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+          const key = `${entry.name}:${today}`;
+          if (_scheduledSoundsPlayed.has(key)) continue;
+          _scheduledSoundsPlayed.add(key);
+          try {
+            if (_audioCtx.state === "suspended") await _audioCtx.resume();
+            const res = await fetch(notificationSoundUrl(entry.name));
+            if (!res.ok) continue;
+            const buf = await res.arrayBuffer();
+            const audioBuffer = await _audioCtx.decodeAudioData(buf.slice(0));
+            const src = _audioCtx.createBufferSource();
+            src.buffer = audioBuffer;
+            src.connect(_audioCtx.destination);
+            src.start();
+          } catch (_) {}
+        }
+      }
+    };
+    setInterval(checkScheduledSounds, 15000);
     const render = (data, { forceScroll = false } = {}) => {
       const shouldStickToBottom = forceScroll || isNearBottom();
       currentSessionName = data.session || "";
@@ -4379,7 +4431,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           const agent = c.agent || "";
           let iconInner;
           if (agent && AGENT_ICON_NAMES.has(agent)) {
-            iconInner = `<img class="git-commit-icon" src="${escapeHtml(agentIconSrc(agent))}" alt="${escapeHtml(agent)}">`;
+            const invertCls = (agent === "codex" || agent === "copilot") ? " invert" : "";
+            iconInner = `<img class="git-commit-icon${invertCls}" src="${escapeHtml(agentIconSrc(agent))}" alt="${escapeHtml(agent)}">`;
           } else {
             iconInner = '<span class="git-commit-icon-placeholder">U</span>';
           }
