@@ -416,7 +416,7 @@ PYEOF
 
 for target in "${TARGETS[@]}"; do
   case "$target" in
-    claude*|codex*|gemini*|copilot*|cursor*|1|2|3|4|5)
+    claude*|codex*|gemini*|copilot*|cursor*|grok*|1|2|3|4|5|6)
       # Resolve base agent name and optional index
       base_name=""
       case "$target" in
@@ -425,6 +425,7 @@ for target in "${TARGETS[@]}"; do
         gemini*|3) base_name="gemini" ;;
         copilot*|4) base_name="copilot" ;;
         cursor*|5) base_name="cursor" ;;
+        grok*|6) base_name="grok" ;;
       esac
 
       if [[ "$target" =~ -[0-9]+$ ]]; then
@@ -489,7 +490,7 @@ for target in "${TARGETS[@]}"; do
         done
       else
         # Fallback for old sessions
-        for agent in CLAUDE CODEX GEMINI COPILOT; do
+        for agent in CLAUDE CODEX GEMINI COPILOT CURSOR GROK; do
           if [[ "$sender_role" != "user" && "$(echo "$agent" | tr '[:upper:]' '[:lower:]')" == "$sender_role" ]]; then
             continue
           fi

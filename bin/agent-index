@@ -227,6 +227,11 @@ session_workspace_value() {
   tmux show-environment -t "$session" MULTIAGENT_WORKSPACE 2>/dev/null | sed 's/^[^=]*=//' || true
 }
 
+session_log_dir_value() {
+  local session="$1"
+  tmux show-environment -t "$session" MULTIAGENT_LOG_DIR 2>/dev/null | sed 's/^[^=]*=//' || true
+}
+
 session_bin_dir_value() {
   local session="$1"
   tmux show-environment -t "$session" MULTIAGENT_BIN_DIR 2>/dev/null | sed 's/^[^=]*=//' || true
@@ -4794,7 +4799,9 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/session-state":
             try:
                 body = json.dumps({
+                    "session": session_name,
                     "active": bool(runtime.session_is_active),
+                    "targets": runtime.active_agents(),
                     "statuses": runtime.agent_statuses(),
                     "totals": runtime.load_thinking_totals(),
                 }, ensure_ascii=True).encode("utf-8")
@@ -5015,6 +5022,45 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(500, {"ok": False, "error": str(exc)})
                 return
             self._send_json(200, {"ok": True, "port": port})
+            return
+        if parsed.path == "/add-agent":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                length = 0
+            raw = self.rfile.read(length)
+            try:
+                data = json.loads(raw.decode("utf-8") or "{}")
+            except json.JSONDecodeError:
+                self._send_json(400, {"ok": False, "error": "invalid json"})
+                return
+            agent = (data.get("agent") or "").strip().lower()
+            if not agent:
+                self._send_json(400, {"ok": False, "error": "agent required"})
+                return
+            bin_dir = Path(agent_send_path).parent
+            try:
+                proc = subprocess.run(
+                    [str(bin_dir / "multiagent"), "add-agent", "--session", session_name, "--agent", agent],
+                    capture_output=True,
+                    text=True,
+                    env=os.environ.copy(),
+                    check=False,
+                )
+            except Exception as exc:
+                self._send_json(500, {"ok": False, "error": str(exc)})
+                return
+            stdout = (proc.stdout or "").strip()
+            stderr = (proc.stderr or "").strip()
+            if proc.returncode != 0:
+                self._send_json(500, {"ok": False, "error": stderr or stdout or f"add-agent failed ({proc.returncode})"})
+                return
+            self._send_json(200, {
+                "ok": True,
+                "agent": agent,
+                "message": stdout or f"Added agent {agent}",
+                "targets": runtime.active_agents(),
+            })
             return
         if parsed.path == "/log-system":
             try:

@@ -3474,6 +3474,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       document.fonts.ready.then(() => scheduleViewportCenteredBlocks(document)).catch(() => {});
     }
     const AGENT_ICON_NAMES = new Set(["claude", "codex", "gemini", "copilot", "cursor", "grok"]);
+    const ALL_BASE_AGENTS = ["claude", "codex", "gemini", "copilot", "cursor", "grok"];
     const agentBaseName = (name) => (name || "").toLowerCase().replace(/-\d+$/, "");
     const roleClass = (sender) => {
       const base = agentBaseName(sender);
@@ -4774,6 +4775,44 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           fetch("/open-terminal", { method: "POST" }).catch(() => {});
           return;
         }
+        if (target === "addAgent") {
+          closeQuickMore();
+          if (!sessionActive) {
+            setStatus("archived session is read-only", true);
+            setTimeout(() => setStatus(""), 2000);
+            return;
+          }
+          const candidates = ALL_BASE_AGENTS;
+          const choice = window.prompt(`Add agent (${candidates.join(", ")})`, candidates[0]);
+          if (choice === null) return;
+          const selected = String(choice || "").trim().toLowerCase();
+          if (!candidates.includes(selected)) {
+            setStatus("invalid agent", true);
+            setTimeout(() => setStatus(""), 2000);
+            return;
+          }
+          setStatus(`adding ${selected}...`);
+          try {
+            const res = await fetch("/add-agent", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ agent: selected }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.ok) {
+              throw new Error(data.error || "failed to add agent");
+            }
+            await logSystem(`Add Agent → ${selected}`);
+            await new Promise((resolve) => setTimeout(resolve, 700));
+            await refreshSessionState();
+            setStatus(`${selected} added`);
+            setTimeout(() => setStatus(""), 1800);
+          } catch (err) {
+            setStatus(err?.message || "add agent failed", true);
+            setTimeout(() => setStatus(""), 2600);
+          }
+          return;
+        }
         if (target === "killBtn" && !keepComposerOpen) closeQuickMore();
         if (target !== "rawSendBtn") {
           document.getElementById(target)?.click();
@@ -5440,11 +5479,21 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let thinkingTimeSession = "";
     const applySessionState = (data) => {
       if (!data || typeof data !== "object") return;
-      if (data.totals && typeof data.totals === "object") {
-        agentTotalThinkingTime = { ...data.totals };
+      if (typeof data.session === "string" && data.session) {
+        currentSessionName = data.session;
       }
       if (typeof data.active === "boolean") {
         sessionActive = data.active;
+      }
+      if (Array.isArray(data.targets)) {
+        availableTargets = sessionActive ? data.targets : [];
+        selectedTargets = selectedTargets.filter((target) => availableTargets.includes(target));
+        saveTargetSelection(currentSessionName, selectedTargets);
+        renderTargetPicker(availableTargets);
+        renderAgentFilterChips(availableTargets);
+      }
+      if (data.totals && typeof data.totals === "object") {
+        agentTotalThinkingTime = { ...data.totals };
       }
       if (data.statuses && typeof data.statuses === "object") {
         renderAgentStatus(data.statuses);
@@ -6200,6 +6249,7 @@ CHAT_HEADER_PANELS_HTML = """
 <div class="hub-page-menu-panel" id="attachedFilesPanel" hidden></div>
 <div class="hub-page-menu-panel" id="hubPageMenuPanel" hidden>
   <button type="button" class="hub-page-menu-item" data-forward-action="reloadChat"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3v6h-6"></path><path d="M20 9a8 8 0 1 0 2 5.3"></path></svg></span><span class="action-label">Reload</span><span class="action-mobile">Reload</span></button>
+  <button type="button" class="hub-page-menu-item" data-forward-action="addAgent"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path><circle cx="12" cy="12" r="9"></circle></svg></span><span class="action-label">Add Agent</span><span class="action-mobile">Add Agent</span></button>
   <button type="button" class="hub-page-menu-item" data-forward-action="openTerminal"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></span><span class="action-label">Terminal</span><span class="action-mobile">Terminal</span></button>
   <button type="button" class="hub-page-menu-item" data-forward-action="exportBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span><span class="action-label">Export</span><span class="action-mobile">Export</span></button>
   <button type="button" class="hub-page-menu-item danger" data-forward-action="killBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="m9 9 6 6"></path><path d="m15 9-6 6"></path></svg></span><span class="action-label">Kill</span><span class="action-mobile">Kill</span></button>
