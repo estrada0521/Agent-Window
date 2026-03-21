@@ -3763,7 +3763,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const wrap = document.createElement("div");
         wrap.className = "commit-blob-wrap";
         const cv = document.createElement("canvas");
-        const SIZE = 120;
+        const SIZE = 60;
         const dpr = Math.max(1, devicePixelRatio || 1);
         cv.width = Math.round(SIZE * dpr);
         cv.height = Math.round(SIZE * dpr);
