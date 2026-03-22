@@ -127,7 +127,6 @@ CHAT_HTML = r"""<!doctype html>
       --chip-border-active: rgba(255, 255, 255, 0.18);
       --chip-border-pressed: rgba(255, 255, 255, 0.24);
       --math-display-inline-pad: 2px;
-      --viewport-center-gutter: clamp(12px, 3vw, 28px);
       --user-accent: #b7c2d0;
 __AGENT_ACCENT_CSS_DEFAULT__
       --system-accent: #6a7078;
@@ -216,7 +215,6 @@ __AGENT_ACCENT_CSS_DEFAULT__
       --chip-border-active: rgba(255, 255, 255, 0.15);
       --chip-border-pressed: rgba(255, 255, 255, 0.20);
       --math-display-inline-pad: 2px;
-      --viewport-center-gutter: clamp(12px, 3vw, 28px);
       --user-accent: #b0b8c0;
 __AGENT_ACCENT_CSS_BLACKHOLE__
       --system-accent: #5a6068;
@@ -1904,14 +1902,17 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       display: flex;
       align-items: flex-start;
       gap: 12px;
+      width: 100%;
       max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
       transform-origin: left center;
       will-change: transform, opacity, filter;
       margin-bottom: 0px;
     }
     .message-row:not(.user) {
-      padding-left: 10px;
-      padding-right: 20px;
+      padding-left: 0;
+      padding-right: 0;
       box-sizing: border-box;
     }
     .sender-label {
@@ -1939,7 +1940,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       transform-origin: right center;
       margin-bottom: 0px;
       padding-left: 64px;
-      padding-right: 12px;
+      padding-right: 0;
       box-sizing: border-box;
     }
     .message-row.user .avatar {
@@ -2048,9 +2049,6 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       width: fit-content;
       max-width: 100%;
       margin-left: auto;
-    }
-    .message.user .message-body-row.has-wide-block {
-      width: 100%;
     }
     .message.user .message-body-row.has-structured-block {
       width: 100%;
@@ -2234,8 +2232,8 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     .message-row.user .message-wrap {
       order: 1;
       flex-direction: row-reverse;
-      padding-left: 24px;
-      margin-right: -16px;
+      padding-left: 12px;
+      margin-right: 0;
       gap: 8px;
       max-width: 100%;
     }
@@ -2548,7 +2546,7 @@ __AGENT_THINKING_GLOW_CSS__
       background-color: var(--chrome-muted);
     }
     time { opacity: 1; color: var(--muted) !important; }
-    .md-body { font: 15px/1.65 "SF Pro Text","Segoe UI",sans-serif; color: rgb(252, 252, 252); }
+    .md-body { flex: 1; min-width: 0; font: 15px/1.65 "SF Pro Text","Segoe UI",sans-serif; color: rgb(252, 252, 252); }
     .message.user .md-body {
       font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif;
       font-size: var(--message-text-size, 13px);
@@ -2665,36 +2663,33 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     }
     .viewport-centered-block {
       position: relative;
-      width: min(100%, var(--viewport-centered-width, 100%));
-      max-width: calc(100vw - (var(--viewport-center-gutter) * 2));
-      transform: translateX(var(--viewport-centered-shift, 0px));
-      transform-origin: center center;
+      width: 100%;
+      max-width: 100%;
     }
     .table-scroll {
       display: block;
-      width: calc(100vw - 60px) !important;
-      max-width: calc(100vw - 60px) !important;
-      position: relative;
-      left: 50%;
-      transform: translateX(calc(-50% + 2px));
-      margin-top: 0.5em;
-      margin-bottom: 0.5em;
+      width: 100%;
+      max-width: 100%;
       overflow-x: auto;
       overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
+      margin: 0.5em 0;
+    }
+    .table-scroll > table {
+      width: 100%;
+      margin: 0;
     }
     .katex-display {
       display: block;
       margin: 1.2em 0;
-      width: min(100%, var(--viewport-centered-width, 100%));
-      max-width: calc(100vw - (var(--viewport-center-gutter) * 2));
+      width: 100%;
+      max-width: 100%;
       padding-inline: 0;
       overflow-x: auto;
       overflow-y: hidden;
       scrollbar-width: none;
       -ms-overflow-style: none;
       text-align: left;
-      transform: translateX(var(--viewport-centered-shift, 0px));
       -webkit-overflow-scrolling: touch;
     }
     .katex-display::-webkit-scrollbar {
@@ -2710,22 +2705,19 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     }
     .md-body pre {
       display: block;
-      width: calc(100vw - 60px) !important;
-      max-width: calc(100vw - 60px) !important;
-      position: relative;
-      left: 50%;
-      transform: translateX(calc(-50% + 2px));
+      width: 100%;
+      max-width: 100%;
       box-sizing: border-box;
       background: rgb(43, 43, 41);
       border: 0.5px solid rgb(73, 73, 68);
       border-radius: 10px;
       padding: 12px 16px;
       margin: 12px 0;
-      overflow-x: hidden;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
+      overflow-x: auto;
+      white-space: pre;
       word-break: normal;
       box-shadow: none;
+      -webkit-overflow-scrolling: touch;
     }
     .md-body pre code {
       font-family: "jetbrainsMono", "JetBrains Mono", monospace !important;
@@ -2740,8 +2732,9 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       border: none;
       padding: 0;
       border-radius: 0;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
+      white-space: pre;
+      word-break: normal;
+      overflow-wrap: normal;
     }
     /* Prism syntax highlighting — muted cool tones for BlackHole */
     .md-body pre code .token.comment,
@@ -2782,7 +2775,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .md-body blockquote { border-left: 3px solid rgba(255,255,255,0.2); margin: 0.5em 0; padding: 0.3em 0.8em; opacity: 0.85; }
     .md-body hr { border: none; border-top: 1px solid var(--line); margin: 0.8em 0; }
     .md-body table { border-collapse: collapse; width: 100%; margin: 0; font-size: var(--message-text-size, 13px); line-height: 21px; }
-    .md-body th, .md-body td { border-top: 1.5px solid rgba(255,255,255,0.12); border-bottom: 1.5px solid rgba(255,255,255,0.12); border-left: none; border-right: none; padding: 7.5px 1px !important; text-align: left; font-size: var(--message-text-size, 13px); line-height: 21px; }
+    .md-body th, .md-body td { white-space: nowrap; border-top: 1.5px solid rgba(255,255,255,0.12); border-bottom: 1.5px solid rgba(255,255,255,0.12); border-left: none; border-right: none; padding: 7.5px 12px !important; text-align: left; font-size: var(--message-text-size, 13px); line-height: 21px; }
     .md-body th { background: transparent; font-weight: 530; border-top: none; border-bottom-color: rgba(255,255,255,0.28); }
     .md-body td { font-weight: 360; }
     .md-body a { color: var(--codex-accent); text-decoration: none; }
@@ -3796,11 +3789,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       _mermaidQueue.push(() => doRenderMermaid(scope));
       loadMermaid();
     };
-    const viewportCenterGutter = () => {
-      const raw = getComputedStyle(document.documentElement).getPropertyValue("--viewport-center-gutter");
-      const parsed = Number.parseFloat(raw);
-      return Number.isFinite(parsed) ? parsed : 24;
-    };
     const ensureWideTables = (scope = document) => {
       scope.querySelectorAll(".md-body table").forEach((table) => {
         if (table.closest(".table-scroll")) return;
@@ -3813,49 +3801,15 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       });
     };
     const syncWideBlockRows = (scope = document) => {
+      ensureWideTables(scope);
       scope.querySelectorAll(".message-body-row").forEach((row) => {
         const body = row.querySelector(".md-body");
-        const hasWideBlock = !!body?.querySelector("pre, .table-scroll");
-        const hasStructuredBlock = !!body?.querySelector("ul, ol, blockquote");
-        row.classList.toggle("has-wide-block", hasWideBlock);
+        const hasStructuredBlock = !!body?.querySelector("ul, ol, blockquote, pre, .table-scroll, .katex-display");
         row.classList.toggle("has-structured-block", hasStructuredBlock);
       });
     };
-    const updateViewportCenteredBlocks = (scope = document) => {
-      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
-      if (!viewportWidth) return;
-      const gutter = viewportCenterGutter();
-      const maxWidth = Math.max(160, Math.floor(viewportWidth - (gutter * 2)));
-      scope.querySelectorAll(".katex-display, .viewport-centered-block").forEach((block) => {
-        const content = block.matches(".katex-display")
-          ? block.querySelector(".katex")
-          : block.querySelector("table");
-        if (!content) return;
-        block.style.removeProperty("--viewport-centered-width");
-        block.style.removeProperty("--viewport-centered-shift");
-        const rawWidth = Math.max(
-          content.scrollWidth || 0,
-          Math.ceil(content.getBoundingClientRect().width || 0),
-        );
-        const overflowCushion = block.matches(".katex-display") ? 2 : 0;
-        const targetWidth = Math.min(maxWidth, Math.max(0, rawWidth + overflowCushion));
-        if (targetWidth > 0) {
-          block.style.setProperty("--viewport-centered-width", `${targetWidth}px`);
-        }
-        const rect = block.getBoundingClientRect();
-        const shift = Math.round((viewportWidth / 2) - (rect.left + (rect.width / 2)));
-        block.style.setProperty("--viewport-centered-shift", `${shift}px`);
-      });
-    };
-    let viewportCenteredBlocksRaf = 0;
     const scheduleViewportCenteredBlocks = (scope = document) => {
-      ensureWideTables(scope);
       syncWideBlockRows(scope);
-      if (viewportCenteredBlocksRaf) cancelAnimationFrame(viewportCenteredBlocksRaf);
-      viewportCenteredBlocksRaf = requestAnimationFrame(() => {
-        viewportCenteredBlocksRaf = 0;
-        updateViewportCenteredBlocks(scope);
-      });
     };
     updateScrollBtnPos();
     new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("composer"));
