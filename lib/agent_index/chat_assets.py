@@ -1787,7 +1787,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     }
     main {
       grid-area: 1 / 1;
-      padding: calc(56px + env(safe-area-inset-top)) 14px calc(var(--composer-height, 96px) + var(--latest-message-offset, 34vh));
+      padding: calc(56px + env(safe-area-inset-top)) 6px calc(var(--composer-height, 96px) + var(--latest-message-offset, 34vh)) 20px;
       display: flex;
       flex: 1;
       flex-direction: column;
@@ -1797,13 +1797,11 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
       background: transparent;
       z-index: 1;
     }
-    main::-webkit-scrollbar {
-      display: none;
+    html[data-mobile="1"] main {
+      padding-right: 20px;
     }
     #scrollToBottomBtn {
       position: absolute;
@@ -5594,6 +5592,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     messageInput.addEventListener("input", updateSendBtnVisibility);
 
     const _isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
+    if (_isMobile) {
+      document.documentElement.dataset.mobile = "1";
+    } else {
+      delete document.documentElement.dataset.mobile;
+    }
 
     /* ── Mobile virtual-keyboard compensation ── */
     if (_isMobile && window.visualViewport) {
