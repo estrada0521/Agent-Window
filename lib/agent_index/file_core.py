@@ -145,7 +145,7 @@ class FileRuntime:
         return result.returncode == 0
 
     @staticmethod
-    def _editor_command(full: str) -> tuple[list[str], str]:
+    def _editor_command(full: str, line: int = 0) -> tuple[list[str], str]:
         configured = (os.environ.get("MULTIAGENT_EXTERNAL_EDITOR") or "").strip()
         if configured:
             if "{path}" in configured:
@@ -154,19 +154,23 @@ class FileRuntime:
         browser_cmd = FileRuntime._pdf_browser_command(full) if full.lower().endswith((".html", ".htm", ".pdf")) else None
         if browser_cmd:
             return browser_cmd, "system"
+        line_arg = f":{line}" if line > 0 else ""
         if sys.platform == "darwin":
             if FileRuntime._macos_app_exists("CotEditor"):
-                return ["open", "-na", "CotEditor", full], "lightweight"
+                cmd = ["open", "-na", "CotEditor", full]
+                if line > 0:
+                    cmd = ["open", f"coteditor://open?url=file://{full}&line={line}"]
+                return cmd, "lightweight"
             if FileRuntime._macos_app_exists("Sublime Text"):
-                return ["open", "-na", "Sublime Text", full], "lightweight"
+                return ["open", "-na", "Sublime Text", f"{full}{line_arg}"], "lightweight"
             if FileRuntime._macos_app_exists("TextMate"):
                 return ["open", "-na", "TextMate", full], "lightweight"
             if FileRuntime._macos_app_exists("BBEdit"):
                 return ["open", "-na", "BBEdit", full], "lightweight"
         if shutil.which("code"):
-            return ["code", "--new-window", "-g", full], "vscode"
+            return ["code", "--new-window", "-g", f"{full}{line_arg}"], "vscode"
         if sys.platform == "darwin":
-            return ["open", "-na", "Visual Studio Code", "--args", "--new-window", "--goto", full], "vscode"
+            return ["open", "-na", "Visual Studio Code", "--args", "--new-window", "--goto", f"{full}{line_arg}"], "vscode"
         return ["xdg-open", full], "system"
 
     @staticmethod
@@ -229,14 +233,14 @@ end tell
             except Exception:
                 time.sleep(0.15)
 
-    def open_in_editor(self, rel: str):
+    def open_in_editor(self, rel: str, line: int = 0):
         full = self._resolve_path(rel, allow_workspace_root=True)
         if not os.path.isfile(full):
             raise FileNotFoundError(full)
         ext = os.path.splitext(full)[1].lower()
         if ext not in self.EDITABLE_TEXT_EXTS and ext not in {".html", ".htm", ".pdf"} and not self._is_probably_text_file(full):
             raise ValueError("Only text files can be opened in an external editor.")
-        cmd, mode = self._editor_command(full)
+        cmd, mode = self._editor_command(full, line=line)
         subprocess.Popen(
             cmd,
             stdout=subprocess.DEVNULL,

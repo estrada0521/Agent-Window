@@ -544,26 +544,60 @@ CHAT_HTML = r"""<!doctype html>
     .git-commit-stat .ins { color: rgb(125, 210, 125); }
     .git-commit-stat .del { color: rgb(220, 130, 130); }
     .git-commit-row { cursor: pointer; }
+    .git-commit-row:hover, .git-commit-row.active {
+      background: rgba(255,255,255,0.06);
+    }
+    .git-commit-diff-wrap {
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+    .git-commit-diff-toolbar {
+      display: flex;
+      gap: 6px;
+      padding: 8px 16px;
+      background: rgb(var(--bg-rgb));
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      flex-wrap: wrap;
+    }
+    .git-commit-diff-file-btn {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: transparent;
+      color: rgba(252, 252, 252, 0.55);
+      font-family: "jetbrainsMono", "JetBrains Mono", monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+    }
+    .git-commit-diff-file-btn:hover, .git-commit-diff-file-btn:active {
+      background: rgba(255,255,255,0.08);
+      color: rgb(252, 252, 252);
+      border-color: rgba(255,255,255,0.2);
+    }
     .git-commit-diff {
-      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
       padding: 8px 12px;
-      background: rgb(18, 18, 18);
-      border-top: 1px solid rgba(255,255,255,0.05);
+      background: rgb(var(--bg-rgb));
       font-family: "jetbrainsMono", "JetBrains Mono", "SF Mono", monospace;
       font-size: 11px;
-      line-height: 1.4;
-      color: rgba(252, 252, 252, 0.7);
+      line-height: 18px;
+      color: rgba(252, 252, 252, 0.5);
       white-space: pre-wrap;
       overflow-x: auto;
       max-height: 320px;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
-    .git-commit-diff .diff-add { color: rgb(250, 230, 100); background: rgb(2, 40, 2); display: block; margin: 0 -12px; padding: 0 12px; }
-    .git-commit-diff .diff-add .diff-sign { color: rgb(34, 197, 94); }
-    .git-commit-diff .diff-del { color: rgba(252,252,252,0.7); background: rgb(61, 1, 0); display: block; margin: 0 -12px; padding: 0 12px; }
-    .git-commit-diff .diff-del .diff-sign { color: rgb(239, 68, 68); }
-    .git-commit-diff .diff-hunk { color: rgb(100, 160, 240); }
+    .git-commit-diff .diff-add { color: rgba(252, 252, 252, 0.8); background: rgba(255,255,255,0.04); display: block; margin: 0 -12px; padding: 0 12px; line-height: 18px; }
+    .git-commit-diff .diff-add .diff-sign { color: rgba(252, 252, 252, 0.35); }
+    .git-commit-diff .diff-del { color: rgba(252, 252, 252, 0.3); background: transparent; display: block; margin: 0 -12px; padding: 0 12px; line-height: 18px; text-decoration: line-through; text-decoration-color: rgba(252,252,252,0.15); }
+    .git-commit-diff .diff-del .diff-sign { color: rgba(252, 252, 252, 0.2); }
+    .git-commit-diff .diff-hunk { color: rgba(252, 252, 252, 0.3); display: block; }
+    .git-commit-diff .diff-meta { color: rgba(252,252,252,0.2); display: block; }
+    .git-commit-diff .diff-ctx { display: block; }
+    .git-commit-diff .diff-ln { color: rgba(252,252,252,0.18); user-select: none; font-size: 10px; }
     .attached-files-badge {
       position: absolute;
       top: 7px;
@@ -4895,31 +4929,112 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     if (gitBranchPanel) {
       gitBranchPanel.addEventListener("click", async (e) => {
+        // Handle edit button clicks
+        const editBtn = e.target.closest(".git-commit-diff-file-btn");
+        if (editBtn) {
+          e.stopPropagation();
+          e.preventDefault();
+          const filePath = editBtn.dataset.file;
+          const line = parseInt(editBtn.dataset.line || "0", 10);
+          if (filePath) {
+            try {
+              const r = await fetch("/open-file-in-editor", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ path: filePath, line }),
+              });
+              if (!r.ok) {
+                const d = await r.json().catch(() => ({}));
+                setStatus(d.error || "open failed", true);
+              }
+            } catch (err) {
+              setStatus("open failed", true);
+            }
+          }
+          return;
+        }
+        // Ignore clicks inside diff wrap (don't toggle row)
+        if (e.target.closest(".git-commit-diff-wrap")) return;
         const row = e.target.closest(".git-commit-row");
         if (!row) return;
         const hash = row.dataset.hash;
         if (!hash) return;
         // Toggle: if diff already shown, remove it
         const existing = row.nextElementSibling;
-        if (existing && existing.classList.contains("git-commit-diff")) {
+        if (existing && existing.classList.contains("git-commit-diff-wrap")) {
           existing.remove();
           return;
         }
         // Close any other open diffs
-        gitBranchPanel.querySelectorAll(".git-commit-diff").forEach(d => d.remove());
+        gitBranchPanel.querySelectorAll(".git-commit-diff-wrap").forEach(d => d.remove());
+        const wrapEl = document.createElement("div");
+        wrapEl.className = "git-commit-diff-wrap";
         const diffEl = document.createElement("div");
         diffEl.className = "git-commit-diff";
         diffEl.textContent = "Loading...";
-        row.after(diffEl);
+        wrapEl.appendChild(diffEl);
+        row.after(wrapEl);
         try {
           const res = await fetch(`/git-diff?hash=${encodeURIComponent(hash)}`, { cache: "no-store" });
           const data = await res.json();
           const diff = (data.diff || "").trim();
           if (!diff) { diffEl.textContent = "No diff"; return; }
+          // Parse files and first changed line from diff
+          const files = [];
+          let currentFile = "";
+          let firstLine = 0;
+          diff.split("\n").forEach(line => {
+            const fileMatch = line.match(/^diff --git a\/(.+) b\//);
+            if (fileMatch) {
+              if (currentFile) files.push({ path: currentFile, line: firstLine });
+              currentFile = fileMatch[1];
+              firstLine = 0;
+            }
+            if (!firstLine) {
+              const hunkMatch = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)/);
+              if (hunkMatch) firstLine = parseInt(hunkMatch[1], 10);
+            }
+          });
+          if (currentFile) files.push({ path: currentFile, line: firstLine });
+          // Add toolbar with file buttons
+          if (files.length) {
+            const toolbar = document.createElement("div");
+            toolbar.className = "git-commit-diff-toolbar";
+            files.forEach(f => {
+              const btn = document.createElement("button");
+              btn.className = "git-commit-diff-file-btn";
+              btn.dataset.file = f.path;
+              btn.dataset.line = String(f.line || 0);
+              btn.textContent = f.path.split("/").pop();
+              btn.title = f.path;
+              toolbar.appendChild(btn);
+            });
+            wrapEl.insertBefore(toolbar, diffEl);
+          }
+          let oldLine = 0, newLine = 0;
           diffEl.innerHTML = diff.split("\n").map(line => {
-            if (line.startsWith("+") && !line.startsWith("+++")) return `<span class="diff-add"><span class="diff-sign">+</span>${escapeHtml(line.slice(1))}</span>`;
-            if (line.startsWith("-") && !line.startsWith("---")) return `<span class="diff-del"><span class="diff-sign">-</span>${escapeHtml(line.slice(1))}</span>`;
-            if (line.startsWith("@@")) return `<span class="diff-hunk">${escapeHtml(line)}</span>`;
+            const hunkMatch = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)/);
+            if (hunkMatch) {
+              oldLine = parseInt(hunkMatch[1], 10);
+              newLine = parseInt(hunkMatch[2], 10);
+              return `<span class="diff-hunk">${escapeHtml(line)}</span>`;
+            }
+            if (line.startsWith("diff ") || line.startsWith("index ") || line.startsWith("---") || line.startsWith("+++")) {
+              return `<span class="diff-meta">${escapeHtml(line)}</span>`;
+            }
+            if (line.startsWith("+")) {
+              const ln = newLine > 0 ? String(newLine++).padStart(4) : "    ";
+              return `<span class="diff-add"><span class="diff-ln">    ${ln}</span><span class="diff-sign">+</span>${escapeHtml(line.slice(1))}</span>`;
+            }
+            if (line.startsWith("-")) {
+              const ln = oldLine > 0 ? String(oldLine++).padStart(4) : "    ";
+              return `<span class="diff-del"><span class="diff-ln">${ln}    </span><span class="diff-sign">-</span>${escapeHtml(line.slice(1))}</span>`;
+            }
+            if (oldLine > 0 || newLine > 0) {
+              const oln = oldLine > 0 ? String(oldLine++).padStart(4) : "    ";
+              const nln = newLine > 0 ? String(newLine++).padStart(4) : "    ";
+              return `<span class="diff-ctx"><span class="diff-ln">${oln} ${nln}</span> ${escapeHtml(line.slice(1))}</span>`;
+            }
             return escapeHtml(line);
           }).join("\n");
         } catch (err) {

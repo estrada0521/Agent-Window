@@ -5203,11 +5203,12 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(400, {"ok": False, "error": "invalid json"})
                 return
             rel = (data.get("path") or "").strip()
+            line = int(data.get("line", 0) or 0)
             if not rel:
                 self._send_json(400, {"ok": False, "error": "path required"})
                 return
             try:
-                result = file_runtime.open_in_editor(rel)
+                result = file_runtime.open_in_editor(rel, line=line)
             except PermissionError:
                 self._send_json(403, {"ok": False, "error": "outside workspace"})
                 return
