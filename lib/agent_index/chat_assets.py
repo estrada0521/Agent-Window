@@ -97,7 +97,7 @@ CHAT_HTML = r"""<!doctype html>
       font-family: Menlo, Monaco, "Cascadia Mono", "SF Mono", monospace;
       font-size: 10px;
       line-height: 1.2;
-      color: rgb(161, 168, 179);
+      color: var(--muted);
       white-space: pre-wrap;
       overflow-wrap: anywhere;
       word-break: normal;
@@ -112,30 +112,38 @@ CHAT_HTML = r"""<!doctype html>
       transform-origin: top center;
       will-change: opacity, filter;
     }
-    :root, [data-theme="default"], [data-theme="claude"] {
+    :root {
       color-scheme: dark;
-      --bg-rgb: 38, 38, 36;
+      --bg-rgb: 10, 10, 10;
       --bg: rgb(var(--bg-rgb));
-      --panel: rgba(0, 0, 0, 0.96);
-      --panel-strong: rgba(0, 0, 0, 0.98);
-      --line: rgba(255, 255, 255, 0.08);
-      --line-strong: rgba(255, 255, 255, 0.13);
-      --text: #d7dde5;
-      --muted: #88919b;
+      --panel: rgba(20, 20, 20, 0.98);
+      --panel-strong: rgba(15, 15, 15, 0.99);
+      --line: rgba(255, 255, 255, 0.07);
+      --line-strong: rgba(255, 255, 255, 0.12);
+      --text: rgb(252, 252, 252);
+      --fg-bright: rgb(255, 255, 255);
+      --muted: rgb(158, 158, 158);
       --chrome-muted: rgb(158, 158, 158);
-      --chip-border-idle: rgba(255, 255, 255, 0.12);
-      --chip-border-active: rgba(255, 255, 255, 0.18);
-      --chip-border-pressed: rgba(255, 255, 255, 0.24);
+      --chip-border-idle: rgba(255, 255, 255, 0.09);
+      --chip-border-active: rgba(255, 255, 255, 0.15);
+      --chip-border-pressed: rgba(255, 255, 255, 0.20);
       --math-display-inline-pad: 2px;
-      --user-accent: #b7c2d0;
-__AGENT_ACCENT_CSS_DEFAULT__
-      --system-accent: #6a7078;
-      --inline-code-fg: rgb(254, 129, 129);
-      --inline-code-bg: rgb(46, 46, 43);
-      --inline-code-border: rgb(73, 73, 68);
+      --user-accent: #b0b8c0;
+__AGENT_ACCENT_CSS_BLACKHOLE__
+      --system-accent: #5a6068;
+      --surface: rgb(20, 20, 19);
+      --surface-alt: rgb(25, 25, 24);
+      --bg-hover: rgb(30, 30, 29);
+      --inline-code-fg: rgb(255, 255, 255);
+      --inline-code-bg: rgb(31, 31, 31);
+      --inline-code-border: rgb(64, 64, 64);
       --inline-code-radius: 4px;
-      --inline-code-pad-y: 3px;
+      --inline-code-pad-y: 1px;
       --inline-code-pad-x: 5px;
+      --warn: #fbbf24;
+      --warn-bright: #fcd34d;
+      --error: #ef4444;
+      --error-bright: #f87171;
       --latest-message-offset: 34vh;
     }
     .shell > .hub-page-header {
@@ -200,31 +208,6 @@ __AGENT_ACCENT_CSS_DEFAULT__
       overflow-y: auto;
       overflow-x: hidden;
     }
-    [data-theme="black-hole"] {
-      color-scheme: dark;
-      --bg-rgb: 10, 10, 10;
-      --bg: rgb(var(--bg-rgb));
-      --panel: rgba(20, 20, 20, 0.98);
-      --panel-strong: rgba(15, 15, 15, 0.99);
-      --line: rgba(255, 255, 255, 0.07);
-      --line-strong: rgba(255, 255, 255, 0.12);
-      --text: rgb(252, 252, 252);
-      --muted: rgb(158, 158, 158);
-      --chrome-muted: rgb(158, 158, 158);
-      --chip-border-idle: rgba(255, 255, 255, 0.09);
-      --chip-border-active: rgba(255, 255, 255, 0.15);
-      --chip-border-pressed: rgba(255, 255, 255, 0.20);
-      --math-display-inline-pad: 2px;
-      --user-accent: #b0b8c0;
-__AGENT_ACCENT_CSS_BLACKHOLE__
-      --system-accent: #5a6068;
-      --inline-code-fg: rgb(255, 255, 255);
-      --inline-code-bg: rgb(31, 31, 31);
-      --inline-code-border: rgb(64, 64, 64);
-      --inline-code-radius: 4px;
-      --inline-code-pad-y: 1px;
-      --inline-code-pad-x: 5px;
-    }
     #starfield {
       position: fixed;
       top: 0;
@@ -235,27 +218,27 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       display: none;
       pointer-events: none;
     }
-    [data-theme="black-hole"]:not([data-starfield="off"]) #starfield {
+    :not([data-starfield="off"]) #starfield {
       display: block;
     }
-    [data-theme="black-hole"]:not([data-starfield="off"]) body {
+    :not([data-starfield="off"]) body {
       background: transparent !important;
     }
-    [data-theme="black-hole"]:not([data-starfield="off"]) html {
-      background: rgb(10, 10, 10) !important;
+    :not([data-starfield="off"]) html {
+      background: var(--bg) !important;
     }
-    [data-theme="black-hole"]:not([data-starfield="off"]) #messages,
-    [data-theme="black-hole"]:not([data-starfield="off"]) #composer,
-    [data-theme="black-hole"]:not([data-starfield="off"]) .shell {
+    :not([data-starfield="off"]) #messages,
+    :not([data-starfield="off"]) #composer,
+    :not([data-starfield="off"]) .shell {
       position: relative;
       z-index: 2;
     }
-    [data-theme="black-hole"]:not([data-starfield="off"]) .shell,
-    [data-theme="black-hole"]:not([data-starfield="off"]) .composer {
+    :not([data-starfield="off"]) .shell,
+    :not([data-starfield="off"]) .composer {
       background: transparent !important;
     }
-    [data-theme="black-hole"]:not([data-starfield="off"]) main {
-      background: rgb(10, 10, 10) !important;
+    :not([data-starfield="off"]) main {
+      background: var(--bg) !important;
     }
     * { box-sizing: border-box; }
     ::-webkit-scrollbar { width: 14px; height: 14px; }
@@ -309,7 +292,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     }
     .agent-icon {
       position: relative;
-      background-color: rgb(158, 158, 158);
+      background-color: var(--muted);
       -webkit-mask: var(--agent-icon-mask) center / contain no-repeat;
       mask: var(--agent-icon-mask) center / contain no-repeat;
       filter: none;
@@ -339,13 +322,13 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     }
     @keyframes restartingPulse {
       0%, 100% {
-        color: rgb(252, 252, 252);
+        color: var(--text);
         background-color: rgba(255, 255, 255, 0.02);
         box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 0 0 rgba(255, 255, 255, 0);
         text-shadow: none;
       }
       50% {
-        color: #ffffff;
+        color: var(--fg-bright);
         background-color: rgba(255, 255, 255, 0.07);
         box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 14px rgba(255, 255, 255, 0.08);
         text-shadow: 0 0 12px rgba(255, 255, 255, 0.16);
@@ -353,7 +336,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     }
     #fileDropdown {
       position: fixed;
-      background: rgb(10, 10, 10);
+      background: var(--bg);
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
       border: 0.5px solid rgba(255,255,255,0.22);
@@ -391,7 +374,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       line-height: 20px;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
@@ -482,7 +465,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       font-size: 14px;
       font-weight: 400;
       line-height: 20px;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       border-bottom: 0.5px solid rgba(255,255,255,0.05);
       min-width: 0;
       position: relative;
@@ -547,7 +530,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       flex-shrink: 0;
       width: 38px;
       font-size: 13px;
-      color: var(--muted, rgb(158, 158, 158));
+      color: var(--muted);
       font-variant-numeric: tabular-nums;
       font-family: "jetbrainsMono", "JetBrains Mono", monospace;
     }
@@ -579,7 +562,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     .git-commit-row:has(+ .git-commit-diff-wrap) .git-commit-stat-bar { display: none; }
     .git-commit-stat-num { display: none; }
     .git-commit-row:has(+ .git-commit-diff-wrap) .git-commit-stat-num { display: inline; }
-    .git-commit-stat-num.ins { color: rgb(252, 252, 252); }
+    .git-commit-stat-num.ins { color: var(--text); }
     .git-commit-stat-num.del { color: rgba(220, 80, 80, 0.7); }
     .git-commit-stat-bar {
       height: 100%;
@@ -600,7 +583,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     .git-commit-row:hover .git-commit-subject,
     .git-commit-row:hover .git-commit-time,
     .git-commit-row:hover .git-commit-stat {
-      color: rgb(252, 252, 252);
+      color: var(--text);
     }
     .git-commit-diff-wrap {
     }
@@ -630,7 +613,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     .git-commit-diff-file-btn {
       border: none;
       background: transparent;
-      color: rgb(158, 158, 158);
+      color: var(--muted);
       font-family: "jetbrainsMono", "JetBrains Mono", monospace;
       font-size: 11px;
       padding: 10px 14px;
@@ -642,9 +625,9 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       transition: color 250ms ease, transform 250ms ease;
       transform-origin: center bottom;
     }
-    .git-commit-diff-file-btn:hover { color: rgb(200, 200, 200); }
+    .git-commit-diff-file-btn:hover { color: var(--muted); }
     .git-commit-diff-file-btn.active {
-      color: rgb(252, 252, 252);
+      color: var(--text);
       transform: scale(1.06);
     }
     .git-commit-diff-carousel {
@@ -697,7 +680,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       align-items: center;
       justify-content: center;
       background: rgba(255,255,255,0.92);
-      color: rgb(18, 18, 17);
+      color: var(--bg);
       font: 700 10px/1 "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif;
       letter-spacing: 0;
       pointer-events: none;
@@ -735,8 +718,8 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       border-bottom: 0.5px solid rgba(255,255,255,0.05);
     }
     .has-hover .file-item:hover, .file-item.active {
-      background: rgb(20, 20, 19);
-      color: rgb(252, 252, 252);
+      background: var(--surface);
+      color: var(--text);
     }
     #cmdDropdown {
       position: fixed;
@@ -794,7 +777,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       line-height: 20px;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
@@ -809,12 +792,12 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       border-bottom: 0.5px solid rgba(255,255,255,0.05);
     }
     .has-hover .cmd-item:hover, .cmd-item.active {
-      background: rgb(20, 20, 19);
-      color: rgb(252, 252, 252);
+      background: var(--surface);
+      color: var(--text);
     }
     .cmd-item-name {
       font-size: 14px;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       flex-shrink: 0;
       transition: color 120ms ease;
     }
@@ -831,7 +814,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     .cmd-item.active .cmd-item-name,
     .has-hover .cmd-item:hover .cmd-item-desc,
     .cmd-item.active .cmd-item-desc {
-      color: rgb(252, 252, 252);
+      color: var(--text);
     }
     .pill {
       padding: 5px 9px;
@@ -960,7 +943,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       border-radius: 10px;
       border: none;
       background: transparent;
-      color: rgb(158, 158, 158);
+      color: var(--muted);
       box-shadow: none;
       cursor: pointer;
       list-style: none;
@@ -969,9 +952,9 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       transition: transform 120ms ease, border-color 120ms ease, background 250ms ease;
     }
     .has-hover .composer-plus-toggle:hover {
-      background: rgb(36, 35, 34);
+      background: var(--bg-hover);
       border-color: rgba(255,255,255,0.32);
-      color: rgb(215, 215, 210);
+      color: var(--text);
     }
     .composer-plus-toggle:active {
       background: rgba(255,255,255,0.1);
@@ -989,8 +972,8 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     .composer-plus-menu[open] .composer-plus-toggle {
       transform: none;
       border: none;
-      background: rgb(20, 20, 19);
-      color: rgb(235, 235, 230);
+      background: var(--surface);
+      color: var(--text);
     }
     .composer-plus-panel {
       position: absolute;
@@ -1034,14 +1017,14 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       font-size: 14px;
       font-weight: 400;
       line-height: 20px;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       position: relative;
       cursor: pointer;
       border-radius: 10px;
       transition: color 150ms ease;
     }
     .has-hover .composer-plus-panel .quick-action:hover {
-      color: #fff;
+      color: var(--fg-bright);
     }
     .composer-plus-panel .quick-action[data-forward-action="interrupt"] {
       color: rgba(245, 201, 96, 0.95);
@@ -1112,7 +1095,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       border-radius: 8px;
       border: 1px solid transparent;
       background: transparent;
-      color: rgb(158, 158, 158);
+      color: var(--muted);
       font-size: 14px;
       line-height: 1.2;
       letter-spacing: 0.01em;
@@ -1244,8 +1227,8 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       -webkit-focus-ring-color: transparent !important;
     }
     .has-hover .quick-action:hover:not(:disabled) {
-      background: rgb(25, 25, 24);
-      color: #fff;
+      background: var(--surface-alt);
+      color: var(--fg-bright);
       border-color: rgba(255,255,255,0.25);
       transform: none;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
@@ -1261,12 +1244,12 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     .quick-action[data-shortcut="interrupt"] {
       margin-left: auto;
       border-color: rgba(245, 158, 11, 0.32);
-      color: #fbbf24;
+      color: var(--warn);
     }
     .has-hover .quick-action[data-shortcut="interrupt"]:hover:not(:disabled) {
       background: rgba(245, 158, 11, 0.12);
       border-color: rgba(245, 158, 11, 0.55);
-      color: #fcd34d;
+      color: var(--warn-bright);
     }
     .quick-action.raw-send-btn {
       border-style: dashed;
@@ -1304,27 +1287,27 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     .quick-action.raw-on .raw-switch::after,
     .quick-action[data-forward-action="rawSendBtn"].raw-on .raw-switch::after {
       transform: translateX(12px);
-      background: rgb(252, 252, 252);
+      background: var(--fg-bright);
     }
     .has-hover .quick-action.raw-send-btn:hover:not(:disabled) {
       background: rgba(214, 222, 235, 0.1);
       border-color: rgba(214, 222, 235, 0.34);
-      color: #eef3fb;
+      color: var(--text);
     }
     .quick-action[data-shortcut="kill"] {
       border-color: rgba(239, 68, 68, 0.45);
-      color: #ef4444;
+      color: var(--error);
     }
     .has-hover .quick-action[data-shortcut="kill"]:hover:not(:disabled) {
       background: rgba(239, 68, 68, 0.1);
       border-color: rgba(239, 68, 68, 0.8);
-      color: #f87171;
+      color: var(--error-bright);
     }
     .kill-btn {
-      color: #ef4444;
+      color: var(--error);
     }
     .has-hover .kill-btn:hover {
-      color: #f87171;
+      color: var(--error-bright);
     }
     /* Tactile button animations */
     .target-chip:active:not(:disabled),
@@ -1344,7 +1327,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       .target-chip:active:not(.active) {
         background: transparent;
         border-color: transparent;
-        color: rgb(215, 215, 210); /* Brighter text on hover */
+        color: var(--text); /* Brighter text on hover */
         transform: none;
         box-shadow: none;
       }
@@ -1355,18 +1338,18 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       /* Ensure absolute stability when hovering an active chip */
     .target-chip.active:hover {
         background: rgba(255,255,255,0.96) !important;
-        color: rgb(18, 18, 17) !important;
+        color: var(--bg) !important;
         cursor: default;
       }
     }
     .target-chip:active:not(.active) {
       background: transparent;
       border-color: transparent;
-      color: rgb(215, 215, 210);
+      color: var(--text);
       box-shadow: none;
     }
     .target-chip.active {
-      color: rgb(18, 18, 17) !important;
+      color: var(--bg) !important;
       background: rgba(255,255,255,0.96) !important;
       border-color: rgba(255,255,255,0.96) !important;
       transform: none !important;
@@ -1394,7 +1377,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       pointer-events: auto;
     }
     .add-agent-panel {
-      background: rgb(10, 10, 10);
+      background: var(--bg);
       border: 1px solid rgba(252, 252, 252, 0.06);
       border-radius: 12px;
       padding: 16px;
@@ -1404,7 +1387,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     .add-agent-panel h3 {
       margin: 0 0 12px;
       font: 600 14px/1.2 "SF Pro Text", "Segoe UI", sans-serif;
-      color: rgb(158, 158, 158);
+      color: var(--muted);
     }
     .add-agent-grid {
       display: flex;
@@ -1420,17 +1403,17 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       border-radius: 8px;
       border: 1px solid transparent;
       background: transparent;
-      color: rgb(158, 158, 158);
+      color: var(--muted);
       font: 400 14px/1.2 "SF Pro Text", "Segoe UI", sans-serif;
       cursor: pointer;
       transition: background 100ms ease, color 100ms ease;
     }
     .add-agent-chip:hover {
       background: rgba(252, 252, 252, 0.04);
-      color: rgb(252, 252, 252);
+      color: var(--text);
     }
     .add-agent-chip.selected {
-      color: rgb(10, 10, 10);
+      color: var(--bg);
       background: rgba(252, 252, 252, 0.96);
       border-color: rgba(252, 252, 252, 0.96);
       box-shadow: 0 1px 8px rgba(0, 0, 0, 0.12);
@@ -1458,22 +1441,22 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       border-radius: 8px;
       border: 1px solid rgba(252, 252, 252, 0.08);
       background: transparent;
-      color: rgb(158, 158, 158);
+      color: var(--muted);
       font: 500 14px/1.2 "SF Pro Text", "Segoe UI", sans-serif;
       cursor: pointer;
       transition: color 100ms ease, border-color 100ms ease;
     }
     .add-agent-actions button:hover {
       border-color: rgba(252, 252, 252, 0.2);
-      color: rgb(252, 252, 252);
+      color: var(--text);
     }
     .add-agent-actions .add-agent-confirm {
-      background: rgb(252, 252, 252);
-      color: rgb(10, 10, 10);
-      border-color: rgb(252, 252, 252);
+      background: var(--fg-bright);
+      color: var(--bg);
+      border-color: var(--text);
     }
     .add-agent-actions .add-agent-confirm:hover {
-      background: rgb(230, 230, 230);
+      background: var(--text);
     }
     .add-agent-actions .add-agent-confirm:disabled {
       opacity: 0.2;
@@ -1487,7 +1470,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       left: 0;
       right: 0;
       z-index: 900;
-      background: rgb(10, 10, 10);
+      background: var(--bg);
       border-bottom: 1px solid rgba(252, 252, 252, 0.06);
       max-height: 40vh;
       flex-direction: column;
@@ -1524,7 +1507,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       padding: 12px 18px;
       border: none;
       background: transparent;
-      color: rgb(158, 158, 158);
+      color: var(--muted);
       font: 500 14px/1 "SF Pro Text", "Segoe UI", sans-serif;
       cursor: pointer;
       white-space: nowrap;
@@ -1535,7 +1518,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       transform-origin: center bottom;
     }
     .pane-viewer-tab.active {
-      color: rgb(252, 252, 252);
+      color: var(--text);
       transform: scale(1.08);
     }
     .pane-viewer-carousel {
@@ -1558,7 +1541,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       font-family: "SF Mono", "Cascadia Mono", "Menlo", "Monaco", monospace;
       font-size: 10px;
       line-height: 1.2;
-      color: rgb(161, 168, 179);
+      color: var(--muted);
       white-space: pre-wrap;
       overflow-wrap: anywhere;
       word-break: normal;
@@ -1570,7 +1553,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       left: 10px;
       border: none;
       background: transparent;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       cursor: pointer;
       padding: 10px 0;
       z-index: 2;
@@ -1599,7 +1582,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       border: 1px solid rgba(215, 225, 238, 0.18);
       background:
         linear-gradient(180deg, rgba(245, 248, 252, 0.98) 0%, rgba(215, 225, 238, 0.98) 100%);
-      color: #0f1318;
+      color: var(--bg);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -1651,7 +1634,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       border: 1px solid rgba(215, 225, 238, 0.18);
       background:
         linear-gradient(180deg, rgba(245, 248, 252, 0.98) 0%, rgba(215, 225, 238, 0.98) 100%);
-      color: #0f1318;
+      color: var(--bg);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -1673,7 +1656,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     }
     .mic-btn.listening {
       background: linear-gradient(135deg, rgba(200, 60, 80, 0.92) 0%, rgba(150, 30, 55, 0.95) 100%);
-      color: #fff;
+      color: var(--fg-bright);
       border-color: rgba(255, 120, 130, 0.25);
       animation: none;
     }
@@ -1709,7 +1692,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       font-size: 11px;
       font-weight: 600;
       letter-spacing: .04em;
-      color: rgb(180,178,170);
+      color: var(--muted);
       text-transform: uppercase;
     }
     .attach-card-name {
@@ -1726,9 +1709,9 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       position: absolute;
       top: -5px;
       left: -5px;
-      background: rgb(20, 20, 19);
+      background: var(--surface);
       border: none;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       width: 20px;
       height: 20px;
       border-radius: 50%;
@@ -1813,7 +1796,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.12);
       background: rgba(var(--bg-rgb), 0.72);
-      color: rgb(235, 235, 230);
+      color: var(--text);
       font-size: 17px;
       line-height: 1;
       cursor: pointer;
@@ -1840,7 +1823,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       filter: brightness(1.1);
     }
     #scrollToBottomBtn:active {
-      background: rgb(31, 31, 29);
+      background: var(--inline-code-bg);
       transform: translateX(-50%) scale(0.96);
     }
     #scrollToBottomBtn.visible { display: flex; }
@@ -1848,7 +1831,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       align-self: center;
       padding: 6px 12px;
       border-radius: 999px;
-      background: rgb(30, 30, 29);
+      background: var(--bg-hover);
       border: none;
       color: var(--chrome-muted);
       font-size: 11px;
@@ -1876,7 +1859,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     }
     .conversation-empty-title {
       margin: 0 0 6px;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       font: 400 18px/1.25 "anthropicSans", sans-serif;
       letter-spacing: -0.02em;
     }
@@ -1970,7 +1953,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       box-shadow: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
-      color: #f7f9fc;
+      color: var(--text);
     }
     .message.user .md-body {
       display: block;
@@ -1978,8 +1961,8 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       max-width: 100%;
       padding: 12px 16px 13px 16px;
       border-radius: 12px;
-      background: rgb(20, 20, 19);
-      color: rgb(252, 252, 252) !important;
+      background: var(--surface);
+      color: var(--text) !important;
       border: none;
       box-shadow: none;
       backdrop-filter: none;
@@ -1991,7 +1974,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     .message.user .md-body h2,
     .message.user .md-body h3,
     .message.user .md-body h4 {
-      color: rgb(252, 252, 252) !important;
+      color: var(--text) !important;
     }
     .message-body-row {
       display: flex;
@@ -2025,7 +2008,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       pointer-events: none;
       border-bottom-left-radius: 12px;
       border-bottom-right-radius: 12px;
-      background: linear-gradient(180deg, rgba(20, 20, 19, 0) 0%, rgb(20, 20, 19) 78%);
+      background: linear-gradient(180deg, rgba(20, 20, 19, 0) 0%, var(--surface) 78%);
     }
     .message.user .user-collapse-toggle {
       display: none;
@@ -2036,7 +2019,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       padding: 0;
       border: none;
       background: transparent;
-      color: rgb(158, 158, 158);
+      color: var(--muted);
       font: 600 12px/1 "SF Pro Text","Segoe UI",sans-serif;
       letter-spacing: 0.01em;
       cursor: pointer;
@@ -2046,7 +2029,7 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       display: block;
     }
     .has-hover .message.user .user-collapse-toggle:hover {
-      color: rgb(252, 252, 252);
+      color: var(--text);
     }
     .message-time-below {
       margin-top: 3px;
@@ -2307,7 +2290,7 @@ __AGENT_MESSAGE_SELECTORS__ {
       margin: -5px 4px 10px 4px;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 18px;
-      background: rgb(20, 20, 19);
+      background: var(--surface);
       backdrop-filter: blur(16px) saturate(140%);
       -webkit-backdrop-filter: blur(16px) saturate(140%);
       box-shadow: none;
@@ -2324,7 +2307,7 @@ __AGENT_MESSAGE_SELECTORS__ {
       font-synthesis-weight: none;
       font-variation-settings: "wght" 580;
       line-height: 1.2;
-      color: rgb(161, 168, 179);
+      color: var(--muted);
       white-space: pre-wrap;
       overflow-wrap: anywhere;
       word-break: normal;
@@ -2416,14 +2399,14 @@ __AGENT_THINKING_GLOW_CSS__
       background: transparent;
       border: none;
     }
-    .arrow { color: rgb(158, 158, 158) !important; }
-    .targets { color: rgb(158, 158, 158) !important; }
+    .arrow { color: var(--muted) !important; }
+    .targets { color: var(--muted) !important; }
     .reply-jump-inline {
       all: unset;
       display: inline-flex;
       align-items: center;
       cursor: pointer;
-      color: rgb(158, 158, 158) !important;
+      color: var(--muted) !important;
       opacity: 1;
       border-radius: 6px;
       -webkit-tap-highlight-color: transparent;
@@ -2438,8 +2421,8 @@ __AGENT_THINKING_GLOW_CSS__
       background: rgba(255, 255, 255, 0.08);
     }
     @keyframes inline-flash {
-      0% { color: #fff !important; text-shadow: 0 0 12px rgba(255,255,255,0.8); }
-      100% { color: rgb(158, 158, 158) !important; text-shadow: none; }
+      0% { color: var(--fg-bright) !important; text-shadow: 0 0 12px rgba(255,255,255,0.8); }
+      100% { color: var(--muted) !important; text-shadow: none; }
     }
     .reply-jump-inline.click-flash {
       animation: inline-flash 250ms ease-out;
@@ -2451,7 +2434,7 @@ __AGENT_THINKING_GLOW_CSS__
     .target-name {
       font-weight: normal;
       text-transform: capitalize;
-      color: rgb(158, 158, 158) !important;
+      color: var(--muted) !important;
     }
     .message-meta-below .meta-agent .sender-label,
     .message-meta-below .meta-agent .target-name {
@@ -2466,7 +2449,7 @@ __AGENT_THINKING_GLOW_CSS__
       background-color: var(--chrome-muted);
     }
     time { opacity: 1; color: var(--muted) !important; }
-    .md-body { flex: 1; min-width: 0; font: 15px/1.65 "SF Pro Text","Segoe UI",sans-serif; color: rgb(252, 252, 252); }
+    .md-body { flex: 1; min-width: 0; font: 15px/1.65 "SF Pro Text","Segoe UI",sans-serif; color: var(--text); }
     .message.user .md-body {
       font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif;
       font-size: var(--message-text-size, 13px);
@@ -2499,7 +2482,7 @@ __AGENT_SEL_MD_BODY__ {
       font-size: var(--message-text-size, 13px);
       line-height: var(--message-text-line-height, 22px);
       font-weight: 360;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       font-synthesis-weight: none;
       font-synthesis-style: none;
       -webkit-font-smoothing: antialiased;
@@ -2625,8 +2608,8 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
-      background: rgb(43, 43, 41);
-      border: 0.5px solid rgb(73, 73, 68);
+      background: var(--bg-hover);
+      border: 0.5px solid var(--inline-code-border);
       border-radius: 10px;
       padding: 12px 16px;
       margin: 12px 0;
@@ -2644,7 +2627,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       font-synthesis-weight: none;
       font-variation-settings: "wght" 240;
       line-height: 20px;
-      color: rgb(234, 236, 240);
+      color: var(--text);
       background: none;
       border: none;
       padding: 0;
@@ -2687,7 +2670,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .md-body .diff-add .diff-sign { color: rgb(34, 197, 94); }
     .md-body .diff-del { background: rgb(61, 1, 0); display: block; margin: 0 -16px; padding: 0 16px; line-height: 20px; }
     .md-body .diff-del .diff-sign { color: rgb(239, 68, 68); }
-    .md-body .mermaid-container { display: block; background: rgb(10, 10, 10); border: 0.5px solid rgba(252, 252, 252, 0.15); border-radius: 10px; padding: 16px; margin: 12px 0; overflow: hidden; box-sizing: border-box; }
+    .md-body .mermaid-container { display: block; background: var(--bg); border: 0.5px solid rgba(252, 252, 252, 0.15); border-radius: 10px; padding: 16px; margin: 12px 0; overflow: hidden; box-sizing: border-box; }
     .md-body .mermaid-container svg { display: block; margin: 0 auto; height: auto; }
     .md-body blockquote { border-left: 3px solid rgba(255,255,255,0.2); margin: 0.5em 0; padding: 0.3em 0.8em; opacity: 0.85; }
     .md-body hr { border: none; border-top: 1px solid var(--line); margin: 0.8em 0; }
@@ -2792,7 +2775,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       border-radius: 18px;
       overflow: hidden;
       border: 0.5px solid rgba(255,255,255,0.16);
-      background: rgb(10, 10, 10);
+      background: var(--bg);
       box-shadow:
         0 24px 56px rgba(0,0,0,0.34),
         inset 0 1px 0 rgba(255,255,255,0.06);
@@ -2808,7 +2791,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       min-width: 0;
       padding: 12px 14px;
       border-bottom: 0.5px solid rgba(255,255,255,0.05);
-      background: rgb(10, 10, 10);
+      background: var(--bg);
     }
     .file-modal-meta {
       display: flex;
@@ -2835,11 +2818,11 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     }
     .file-modal-text {
       min-width: 0;
-      color: rgb(252, 252, 252);
+      color: var(--text);
     }
     .file-modal-title {
       font: 700 14px/1.2 "SF Pro Text","Segoe UI",sans-serif;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -2847,7 +2830,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .file-modal-path {
       display: block;
       margin-top: 3px;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       font: 12px/1.35 "SF Mono","Fira Code",monospace;
       white-space: pre-wrap;
       overflow: visible;
@@ -2862,7 +2845,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       border-radius: 10px;
       border: none;
       background: rgba(255,255,255,0.06);
-      color: rgb(252, 252, 252);
+      color: var(--text);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -2886,7 +2869,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.1);
       background: rgba(255,255,255,0.06);
-      color: rgb(252, 252, 252);
+      color: var(--text);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -2909,14 +2892,14 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .file-modal-body {
       position: relative;
       min-height: 0;
-      background: rgb(10, 10, 10);
+      background: var(--bg);
     }
     .file-modal-frame {
       width: 100%;
       height: 100%;
       border: 0;
       display: block;
-      background: rgb(10, 10, 10);
+      background: var(--bg);
     }
     .copy-btn {
       flex-shrink: 0;
@@ -2926,14 +2909,14 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       border: none;
       padding: 4px;
       cursor: pointer;
-      color: rgb(158, 158, 158);
+      color: var(--muted);
       line-height: 1;
       border-radius: 4px;
       transition: color 150ms ease, background 250ms ease, transform 100ms ease;
       -webkit-tap-highlight-color: transparent;
     }
-    .has-hover .copy-btn:hover { color: #e5e5e5; background: rgb(20, 20, 19); }
-    .copy-btn.copied { color: #e5e5e5; }
+    .has-hover .copy-btn:hover { color: var(--text); background: var(--surface); }
+    .copy-btn.copied { color: var(--text); }
     .reply-btn,
     .reply-target-jump-btn {
       flex-shrink: 0;
@@ -2943,14 +2926,14 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       border: none;
       padding: 4px;
       cursor: pointer;
-      color: rgb(158, 158, 158);
+      color: var(--muted);
       line-height: 1;
       border-radius: 4px;
       transition: color 150ms ease, background 250ms ease, transform 100ms ease;
     }
     .has-hover .reply-btn:hover,
-    .has-hover .reply-target-jump-btn:hover { color: #e5e5e5; background: rgb(20, 20, 19); }
-    .reply-btn.active { color: #e5e5e5; }
+    .has-hover .reply-target-jump-btn:hover { color: var(--text); background: var(--surface); }
+    .reply-btn.active { color: var(--text); }
     .message-actions {
       display: flex;
       flex-direction: column;
@@ -2967,13 +2950,13 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       gap: 8px;
       padding: 6px 14px;
       border-radius: 12px;
-      background: rgb(10, 10, 10);
+      background: var(--bg);
       border: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
       box-shadow: none;
       font-size: 13px;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif;
       font-style: normal;
       font-weight: 400;
@@ -2996,7 +2979,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       align-items: center;
       justify-content: center;
       opacity: 1;
-      color: rgb(252, 252, 252);
+      color: var(--text);
       flex-shrink: 0;
     }
     .reply-banner-arrow svg {
@@ -3005,13 +2988,13 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       display: block;
     }
     .reply-banner-text { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 400; }
-    .reply-banner-sender { font-weight: 400; text-transform: capitalize; margin-right: 2px; color: rgb(252, 252, 252); }
+    .reply-banner-sender { font-weight: 400; text-transform: capitalize; margin-right: 2px; color: var(--text); }
     .reply-cancel-btn {
-      cursor: pointer; background: none; border: none; color: rgb(252, 252, 252);
+      cursor: pointer; background: none; border: none; color: var(--text);
       padding: 2px 4px; border-radius: 4px; font-size: 13px; line-height: 1;
       transition: color 120ms ease, transform 100ms ease;
     }
-    .has-hover .reply-cancel-btn:hover { color: rgb(252, 252, 252); }
+    .has-hover .reply-cancel-btn:hover { color: var(--text); }
     .thread-group {
       display: flex;
       flex-direction: column;
@@ -3075,7 +3058,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       border-color: rgba(255,255,255,0.25);
     }
     .filter-chip.active {
-      color: #fff;
+      color: var(--fg-bright);
       background: rgba(255,255,255,0.14);
       border-color: rgba(255,255,255,0.3);
       box-shadow: 0 0 10px rgba(255,255,255,0.08), inset 0 1px 1px rgba(255,255,255,0.1);
@@ -3089,44 +3072,43 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       align-self: center;
     }
     .search-count:empty { display: none; }
-    /* ── Black Hole theme overrides ─────────────────────────────────────── */
     /* composer-main-shell: all states */
-    [data-theme="black-hole"] .composer-main-shell,
-    [data-theme="black-hole"] .composer-main-shell:focus-within {
+    .composer-main-shell,
+    .composer-main-shell:focus-within {
       background: rgba(20, 20, 20, 0.16) !important;
       backdrop-filter: blur(14px) saturate(125%) !important;
       -webkit-backdrop-filter: blur(14px) saturate(125%) !important;
     }
     /* user message box */
-    [data-theme="black-hole"] .message.user .md-body {
-      background: rgb(20, 20, 20);
+    .message.user .md-body {
+      background: var(--surface);
       background-image: none !important;
       border: none;
-      color: var(--user-message-blackhole-color, rgb(252, 252, 252)) !important;
+      color: var(--text) !important;
     }
-    [data-theme="black-hole"] .message.user .md-body::before,
-    [data-theme="black-hole"] .message.user .md-body::after,
-    [data-theme="black-hole"] .message.user .message-body-row::before,
-    [data-theme="black-hole"] .message.user .message-body-row::after {
+    .message.user .md-body::before,
+    .message.user .md-body::after,
+    .message.user .message-body-row::before,
+    .message.user .message-body-row::after {
       background-image: none !important;
       content: none !important;
       box-shadow: none !important;
       filter: none !important;
     }
-    [data-theme="black-hole"] .message.user .md-body p,
-    [data-theme="black-hole"] .message.user .md-body li,
-    [data-theme="black-hole"] .message.user .md-body h1,
-    [data-theme="black-hole"] .message.user .md-body h2,
-    [data-theme="black-hole"] .message.user .md-body h3,
-    [data-theme="black-hole"] .message.user .md-body h4 {
-      color: var(--user-message-blackhole-color, rgb(252, 252, 252)) !important;
+    .message.user .md-body p,
+    .message.user .md-body li,
+    .message.user .md-body h1,
+    .message.user .md-body h2,
+    .message.user .md-body h3,
+    .message.user .md-body h4 {
+      color: var(--text) !important;
     }
     /* user message collapse gradient */
-    [data-theme="black-hole"] .message.user .message-body-row.is-collapsed::after {
+    .message.user .message-body-row.is-collapsed::after {
       background: linear-gradient(180deg, rgba(20,20,20,0) 0%, rgb(20,20,20) 78%);
     }
-    [data-theme="black-hole"] .md-body :not(pre) > code,
-    [data-theme="black-hole"] .message.user .md-body :not(pre) > code {
+    .md-body :not(pre) > code,
+    .message.user .md-body :not(pre) > code {
       color: var(--inline-code-fg);
       background: var(--inline-code-bg);
       border-color: var(--inline-code-border);
@@ -3135,62 +3117,61 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       letter-spacing: 0;
     }
     /* input box */
-    [data-theme="black-hole"] .mic-btn,
-    [data-theme="black-hole"] .send-btn {
-      background: rgb(252, 252, 252) !important;
-      color: rgb(20, 20, 20) !important;
+    .mic-btn,
+    .send-btn {
+      background: var(--fg-bright) !important;
+      color: var(--surface) !important;
     }
     /* thinking pane background */
-    [data-theme="black-hole"] .message-thinking-pane {
+    .message-thinking-pane {
       background: transparent !important;
       border: none !important;
     }
     /* tap / hover interactive color */
-    [data-theme="black-hole"] .has-hover .quick-action:hover:not(:disabled),
-    [data-theme="black-hole"] .file-item:hover,
-    [data-theme="black-hole"] .has-hover .composer-plus-toggle:hover,
-    [data-theme="black-hole"] .daybreak,
-    [data-theme="black-hole"] .has-hover .copy-btn:hover,
-    [data-theme="black-hole"] .has-hover .reply-target-jump-btn:hover,
-    [data-theme="black-hole"] #scrollToBottomBtn:active,
-    [data-theme="black-hole"] .attach-card-remove {
-      background: rgb(25, 25, 25) !important;
+    .has-hover .quick-action:hover:not(:disabled),
+    .file-item:hover,
+    .has-hover .composer-plus-toggle:hover,
+    .daybreak,
+    .has-hover .copy-btn:hover,
+    .has-hover .reply-target-jump-btn:hover,
+    #scrollToBottomBtn:active,
+    .attach-card-remove {
+      background: var(--surface-alt) !important;
     }
-    [data-theme="black-hole"] #fileDropdown {
-      background: rgb(10, 10, 10) !important;
+    #fileDropdown {
+      background: var(--bg) !important;
     }
-    [data-theme="black-hole"] .trace-tooltip {
+    .trace-tooltip {
       background: rgba(var(--bg-rgb), 0.92);
     }
-    [data-theme="black-hole"] .conversation-empty-card {
+    .conversation-empty-card {
       background: rgba(20, 20, 20, 0.9);
     }
-    [data-theme="black-hole"] .attach-card-ext,
-    [data-theme="black-hole"] .file-card {
-      background: rgb(20, 20, 20);
+    .attach-card-ext,
+    .file-card {
+      background: var(--surface);
     }
-    [data-theme="black-hole"] .md-body pre {
-      background: rgb(15, 15, 15);
+    .md-body pre {
+      background: var(--panel-strong);
     }
     /* scroll button */
-    [data-theme="black-hole"] #scrollToBottomBtn {
+    #scrollToBottomBtn {
       background: rgba(var(--bg-rgb), 0.72);
     }
-    [data-theme="black-hole"] .has-hover #scrollToBottomBtn:hover {
+    .has-hover #scrollToBottomBtn:hover {
       background: rgba(25, 25, 25, 0.88);
     }
-    /* mobile target chip ::before (mobile modal chips) */
     /* filter chips */
-    [data-theme="black-hole"] .filter-chip {
+    .filter-chip {
       background: rgba(255,255,255,0.02);
     }
-    [data-theme="black-hole"] .filter-chip.active {
+    .filter-chip.active {
       background: rgba(255,255,255,0.07);
     }
     /* selected / open states */
-    [data-theme="black-hole"] .composer-plus-menu[open] .composer-plus-toggle,
-    [data-theme="black-hole"] .composer-plus-menu:not([open]) .composer-plus-toggle:active {
-      background: rgb(10, 10, 10) !important;
+    .composer-plus-menu[open] .composer-plus-toggle,
+    .composer-plus-menu:not([open]) .composer-plus-toggle:active {
+      background: var(--bg) !important;
     }
 __HUB_HEADER_CSS__
   </style>
@@ -7032,7 +7013,6 @@ def _agent_css_selectors() -> dict[str, str]:
         return ",\n".join(parts)
     gothic = 'html[data-agent-font-mode="gothic"] '
     return {
-        "__AGENT_ACCENT_CSS_DEFAULT__": generate_accent_css("default"),
         "__AGENT_ACCENT_CSS_BLACKHOLE__": generate_accent_css("black-hole"),
         "__AGENT_MESSAGE_SELECTORS__": _sel(),
         "__AGENT_THINKING_GLOW_CSS__": generate_thinking_glow_css(),

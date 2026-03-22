@@ -15,13 +15,13 @@ from .agent_registry import AGENTS, ALL_AGENT_NAMES, generate_agent_message_sele
 from .state_core import load_hub_settings as load_shared_hub_settings
 from .state_core import load_session_thinking_totals as load_shared_session_thinking_totals
 
-def _bh_agent_detail_selectors() -> str:
-    """Generate [data-theme="black-hole"] .message.{agent} .md-body {p,li,h1..h4,blockquote} selectors."""
+def _bh_agent_detail_selectors(prefix: str = "") -> str:
+    """Generate .message.{agent} .md-body {p,li,h1..h4,blockquote} selectors."""
     subs = ["p", "li", "h1", "h2", "h3", "h4", "blockquote"]
     parts = []
     for name in ALL_AGENT_NAMES:
         for sub in subs:
-            parts.append(f'    [data-theme="black-hole"] .message.{name} .md-body {sub}')
+            parts.append(f'    {prefix}.message.{name} .md-body {sub}')
     return ",\n".join(parts)
 from .state_core import update_thinking_totals_from_statuses as update_shared_thinking_totals_from_statuses
 
@@ -128,22 +128,22 @@ class ChatRuntime:
 {generate_agent_message_selectors(" .md-body")} {{
       font-family: {agent_family} !important;
     }}
-    [data-theme="black-hole"] .message.user .md-body {{
+    .message.user .md-body {{
       color: var(--user-message-blackhole-color) !important;
     }}
-    [data-theme="black-hole"] .message.user .md-body p,
-    [data-theme="black-hole"] .message.user .md-body li,
-    [data-theme="black-hole"] .message.user .md-body h1,
-    [data-theme="black-hole"] .message.user .md-body h2,
-    [data-theme="black-hole"] .message.user .md-body h3,
-    [data-theme="black-hole"] .message.user .md-body h4,
-    [data-theme="black-hole"] .message.user .md-body blockquote {{
+    .message.user .md-body p,
+    .message.user .md-body li,
+    .message.user .md-body h1,
+    .message.user .md-body h2,
+    .message.user .md-body h3,
+    .message.user .md-body h4,
+    .message.user .md-body blockquote {{
       color: var(--user-message-blackhole-color) !important;
     }}
-{generate_agent_message_selectors(" .md-body", prefix='[data-theme="black-hole"] ')} {{
+{generate_agent_message_selectors(" .md-body")} {{
       color: var(--agent-message-blackhole-color) !important;
     }}
-{_bh_agent_detail_selectors()} {{
+{_bh_agent_detail_selectors(prefix="")} {{
       color: var(--agent-message-blackhole-color) !important;
     }}
     """

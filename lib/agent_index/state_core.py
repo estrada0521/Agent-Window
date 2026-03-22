@@ -78,7 +78,7 @@ def _apply_hub_settings(raw: dict, settings: dict, *, message_limit_cap: int, mi
 
 
 HUB_SETTINGS_DEFAULTS = {
-    "theme": "default",
+    "theme": "black-hole",
     "agent_font_mode": "serif",
     "user_message_font": "preset-gothic",
     "agent_message_font": "preset-mincho",
