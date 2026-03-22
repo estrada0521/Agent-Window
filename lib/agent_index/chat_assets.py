@@ -141,9 +141,17 @@ CHAT_HTML = r"""<!doctype html>
       width: 100%;
       z-index: 100;
       overflow: visible;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .shell > .hub-page-header > .hub-page-header-top {
       background: rgba(var(--bg-rgb, 38, 38, 36), 0.42);
       backdrop-filter: blur(28px) saturate(190%);
       -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+      padding-bottom: 8px;
     }
     .shell > .hub-page-header > .hub-page-menu-panel {
       position: absolute;
@@ -154,9 +162,9 @@ CHAT_HTML = r"""<!doctype html>
       max-height: 0;
       overflow: hidden;
       border-top: 0.5px solid transparent;
-      background: rgb(var(--bg-rgb));
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
+      background: rgba(var(--bg-rgb, 38, 38, 36), 0.72);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
       opacity: 0;
       transform: translateY(-6px);
       pointer-events: none;

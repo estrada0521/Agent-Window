@@ -18,16 +18,21 @@ HUB_PAGE_HEADER_CSS = """
       width: 100%;
       margin: 0;
       position: sticky; top: 0; z-index: 100;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-bottom: none;
+      box-shadow: none;
+    }
+    .hub-page-header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: max(8px, env(safe-area-inset-top)) var(--page-side-pad) 8px;
+      box-sizing: border-box;
       background: rgba(var(--bg-rgb, 38, 38, 36), 0.42);
       backdrop-filter: blur(28px) saturate(190%);
       -webkit-backdrop-filter: blur(28px) saturate(190%);
       border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
-    }
-    .hub-page-header-top {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: max(8px, env(safe-area-inset-top)) var(--page-side-pad) 0;
-      box-sizing: border-box;
     }
     .hub-page-title {
       display: flex; align-items: center; text-decoration: none; opacity: 1;
@@ -92,9 +97,9 @@ HUB_PAGE_HEADER_CSS = """
       max-height: 0; overflow: hidden;
       transition: max-height 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
       border-top: 0.5px solid transparent;
-      background: rgba(var(--bg-rgb, 38, 38, 36), 0.42);
-      backdrop-filter: blur(28px) saturate(190%);
-      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      background: rgba(var(--bg-rgb, 38, 38, 36), 0.72);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
     }
     .hub-page-menu-panel.open { max-height: 400px; border-top-color: rgba(255,255,255,0.05); }
     .hub-page-menu-item {
