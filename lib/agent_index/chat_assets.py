@@ -554,11 +554,11 @@ CHAT_HTML = r"""<!doctype html>
     }
     .git-commit-stat {
       flex-shrink: 0;
-      font-size: 11px;
+      font-size: 13px;
       font-family: "jetbrainsMono", "JetBrains Mono", monospace;
       display: flex; gap: 4px;
     }
-    .git-commit-stat .ins { color: rgba(252, 252, 252, 0.5); }
+    .git-commit-stat .ins { color: rgb(252, 252, 252); }
     .git-commit-stat .del { color: rgba(252, 252, 252, 0.35); }
     .git-commit-row { cursor: pointer; }
     .git-commit-row:hover .git-commit-subject,
@@ -702,17 +702,19 @@ CHAT_HTML = r"""<!doctype html>
       background: rgb(20, 20, 19);
       color: rgb(252, 252, 252);
     }
-    /* Slash command dropdown */
     #cmdDropdown {
       position: fixed;
       background: rgb(10, 10, 10);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
       border: 1px solid rgba(252, 252, 252, 0.18);
       border-radius: 16px 16px 0 0;
       overflow-y: auto;
       overflow-x: hidden;
-      max-height: 320px;
+      max-height: 200px;
       z-index: 19;
       display: none;
+      box-shadow: none;
       padding: 0;
       box-sizing: border-box;
       will-change: transform, opacity;
@@ -729,24 +731,38 @@ CHAT_HTML = r"""<!doctype html>
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 16px;
+      padding: 10px 18px;
+      border-radius: 0;
+      font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif;
+      font-style: normal;
+      font-size: 14px;
+      font-weight: 400;
+      font-variation-settings: "wght" 400, "opsz" 14;
+      letter-spacing: -0.01em;
+      line-height: 20px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      color: rgb(252, 252, 252);
       cursor: pointer;
-      transition: background 120ms ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: background 120ms ease, color 120ms ease;
     }
     .cmd-item:not(:last-child) {
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
     }
     .has-hover .cmd-item:hover, .cmd-item.active {
       background: rgb(20, 20, 19);
+      color: rgb(252, 252, 252);
     }
     .cmd-item-name {
-      font-family: "jetbrainsMono", "JetBrains Mono", monospace;
-      font-size: 13px;
+      font-size: 14px;
       color: rgb(252, 252, 252);
       flex-shrink: 0;
     }
     .cmd-item-desc {
-      font-size: 12px;
+      font-size: 14px;
       color: rgba(252, 252, 252, 0.45);
       overflow: hidden;
       text-overflow: ellipsis;
@@ -6058,12 +6074,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const taRect = messageInput.getBoundingClientRect();
       const compRect = document.getElementById("composer").getBoundingClientRect();
       const pickerRect = document.getElementById("targetPicker").getBoundingClientRect();
-      const dropWidth = Math.min(420, Math.max(280, taRect.width - 24));
+      const dropWidth = Math.min(620, Math.max(280, taRect.width - 24));
       cmdDrop.style.left = (taRect.left + (taRect.width - dropWidth) / 2) + "px";
       cmdDrop.style.bottom = (window.innerHeight - pickerRect.top + 66) + "px";
       cmdDrop.style.width = dropWidth + "px";
+      cmdDrop.style.minWidth = "0";
       const availableSpace = compRect.top - 20;
-      cmdDrop.style.maxHeight = Math.min(320, availableSpace) + "px";
+      cmdDrop.style.maxHeight = Math.min(208, availableSpace) + "px";
       if (!cmdDrop.classList.contains("visible")) {
         if (_cmdTimeout) { clearTimeout(_cmdTimeout); _cmdTimeout = null; }
         cmdDrop.classList.remove("closing");
