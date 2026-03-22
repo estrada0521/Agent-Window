@@ -31,7 +31,7 @@ def _apply_hub_settings(raw: dict, settings: dict, *, message_limit_cap: int, mi
         return settings
 
     theme = str(raw.get("theme") or settings["theme"]).strip().lower()
-    if theme in {"default", "claude", "black-hole"}:
+    if theme in {"black-hole"}:
         settings["theme"] = theme
 
     agent_font_mode = str(raw.get("agent_font_mode") or settings["agent_font_mode"]).strip().lower()
