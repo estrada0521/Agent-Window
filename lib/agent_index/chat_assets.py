@@ -489,7 +489,7 @@ CHAT_HTML = r"""<!doctype html>
       top: calc(100% + 4px);
       height: calc(100% - 8px);
       width: 0.5px;
-      background: rgb(252,252,252);
+      background: rgba(252,252,252,0.15);
       z-index: 0;
       pointer-events: none;
     }
@@ -505,9 +505,12 @@ CHAT_HTML = r"""<!doctype html>
       object-fit: contain;
       position: relative;
       z-index: 1;
+      filter: brightness(0) invert(0.61);
+      transition: filter 200ms ease;
     }
-    .git-commit-icon.invert {
-      filter: invert(1);
+    .git-commit-row:hover .git-commit-icon,
+    .git-commit-row:has(+ .git-commit-diff-wrap) .git-commit-icon {
+      filter: brightness(0) invert(1);
     }
     .git-commit-icon-placeholder {
       width: 18px; height: 18px;
@@ -553,29 +556,60 @@ CHAT_HTML = r"""<!doctype html>
     }
     .git-commit-diff-toolbar {
       display: flex;
-      gap: 6px;
-      padding: 6px 16px;
-      background: rgb(var(--bg-rgb));
-      flex-wrap: wrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      gap: 0;
+      padding: 0 8px;
+      flex-shrink: 0;
+      justify-content: center;
+      position: relative;
+      background: rgba(var(--bg-rgb), 0.42);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+    }
+    .git-commit-diff-toolbar::-webkit-scrollbar { display: none; }
+    .git-commit-diff-tab-indicator {
+      position: absolute;
+      bottom: 6px;
+      height: calc(100% - 12px);
+      background: rgba(252, 252, 252, 0.04);
+      border-radius: 8px;
+      transition: left 350ms cubic-bezier(0.4, 0, 0.2, 1), width 350ms cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
     }
     .git-commit-diff-file-btn {
       border: none;
       background: transparent;
-      color: rgba(252, 252, 252, 0.4);
+      color: rgb(158, 158, 158);
       font-family: "jetbrainsMono", "JetBrains Mono", monospace;
       font-size: 11px;
-      padding: 2px 0;
+      padding: 10px 14px;
       cursor: pointer;
-      transition: color 120ms ease;
-      text-decoration: underline;
-      text-decoration-color: rgba(252,252,252,0.15);
-      text-underline-offset: 2px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+      transition: color 250ms ease, transform 250ms ease;
+      transform-origin: center bottom;
     }
-    .git-commit-diff-file-btn:hover, .git-commit-diff-file-btn:active {
+    .git-commit-diff-file-btn:hover { color: rgb(200, 200, 200); }
+    .git-commit-diff-file-btn.active {
       color: rgb(252, 252, 252);
-      text-decoration-color: rgba(252,252,252,0.5);
+      transform: scale(1.06);
     }
+    .git-commit-diff-carousel {
+      display: flex;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+    }
+    .git-commit-diff-carousel::-webkit-scrollbar { display: none; }
     .git-commit-diff {
+      flex: 0 0 100%;
+      scroll-snap-align: start;
       display: flex;
       flex-direction: column;
       gap: 0;
@@ -590,6 +624,7 @@ CHAT_HTML = r"""<!doctype html>
       max-height: 320px;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      box-sizing: border-box;
     }
     .git-commit-diff .diff-add { color: rgba(252, 252, 252, 0.8); background: rgba(255,255,255,0.04); display: block; margin: 0 -12px; padding: 0 12px; line-height: 18px; }
     .git-commit-diff .diff-add .diff-sign { color: rgba(252, 252, 252, 0.35); margin-right: 8px; }
@@ -4904,8 +4939,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           const agent = c.agent || "";
           let iconInner;
           if (agent && AGENT_ICON_NAMES.has(agent)) {
-            const invertCls = (agent === "codex" || agent === "copilot") ? " invert" : "";
-            iconInner = `<img class="git-commit-icon${invertCls}" src="${escapeHtml(agentIconSrc(agent))}" alt="${escapeHtml(agent)}">`;
+            iconInner = `<img class="git-commit-icon" src="${escapeHtml(agentIconSrc(agent))}" alt="${escapeHtml(agent)}">`;
           } else {
             iconInner = '<span class="git-commit-icon-placeholder">U</span>';
           }
@@ -4975,76 +5009,168 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         gitBranchPanel.querySelectorAll(".git-commit-diff-wrap").forEach(d => d.remove());
         const wrapEl = document.createElement("div");
         wrapEl.className = "git-commit-diff-wrap";
-        const diffEl = document.createElement("div");
-        diffEl.className = "git-commit-diff";
-        diffEl.textContent = "Loading...";
-        wrapEl.appendChild(diffEl);
+        const loadingEl = document.createElement("div");
+        loadingEl.className = "git-commit-diff";
+        loadingEl.textContent = "Loading...";
+        wrapEl.appendChild(loadingEl);
         row.after(wrapEl);
         try {
           const res = await fetch(`/git-diff?hash=${encodeURIComponent(hash)}`, { cache: "no-store" });
           const data = await res.json();
           const diff = (data.diff || "").trim();
-          if (!diff) { diffEl.textContent = "No diff"; return; }
-          // Parse files and first changed line from diff
-          const files = [];
-          let currentFile = "";
-          let firstLine = 0;
+          if (!diff) { loadingEl.textContent = "No diff"; return; }
+          // Split diff into per-file chunks
+          const fileChunks = [];
+          let currentChunk = { path: "", line: 0, lines: [] };
           diff.split("\n").forEach(line => {
             const fileMatch = line.match(/^diff --git a\/(.+) b\//);
             if (fileMatch) {
-              if (currentFile) files.push({ path: currentFile, line: firstLine });
-              currentFile = fileMatch[1];
-              firstLine = 0;
+              if (currentChunk.path) fileChunks.push(currentChunk);
+              currentChunk = { path: fileMatch[1], line: 0, lines: [] };
             }
-            if (!firstLine) {
+            if (!currentChunk.line) {
               const hunkMatch = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)/);
-              if (hunkMatch) firstLine = parseInt(hunkMatch[1], 10);
+              if (hunkMatch) currentChunk.line = parseInt(hunkMatch[1], 10);
             }
+            currentChunk.lines.push(line);
           });
-          if (currentFile) files.push({ path: currentFile, line: firstLine });
-          // Add toolbar with file buttons
-          if (files.length) {
-            const toolbar = document.createElement("div");
+          if (currentChunk.path) fileChunks.push(currentChunk);
+          // Render diff lines for a chunk
+          const renderChunk = (chunk) => {
+            let oldLine = 0, newLine = 0;
+            return chunk.lines.map(line => {
+              const hunkMatch = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)/);
+              if (hunkMatch) {
+                oldLine = parseInt(hunkMatch[1], 10);
+                newLine = parseInt(hunkMatch[2], 10);
+                return `<span class="diff-hunk">${escapeHtml(line)}</span>`;
+              }
+              if (line.startsWith("diff ") || line.startsWith("index ") || line.startsWith("---") || line.startsWith("+++")) {
+                return `<span class="diff-meta">${escapeHtml(line)}</span>`;
+              }
+              if (line.startsWith("+")) {
+                const ln = newLine > 0 ? String(newLine++).padStart(4) : "    ";
+                return `<span class="diff-add"><span class="diff-ln">    ${ln}</span><span class="diff-sign">+</span>${escapeHtml(line.slice(1))}</span>`;
+              }
+              if (line.startsWith("-")) {
+                const ln = oldLine > 0 ? String(oldLine++).padStart(4) : "    ";
+                return `<span class="diff-del"><span class="diff-ln">${ln}    </span><span class="diff-sign">-</span>${escapeHtml(line.slice(1))}</span>`;
+              }
+              if (oldLine > 0 || newLine > 0) {
+                const oln = oldLine > 0 ? String(oldLine++).padStart(4) : "    ";
+                const nln = newLine > 0 ? String(newLine++).padStart(4) : "    ";
+                return `<span class="diff-ctx"><span class="diff-ln">${oln} ${nln}</span> ${escapeHtml(line.slice(1))}</span>`;
+              }
+              return escapeHtml(line);
+            }).join("\n");
+          };
+          loadingEl.remove();
+          // Toolbar with indicator (pane-viewer style)
+          let toolbar = null;
+          const moveDiffIndicator = (idx) => {
+            if (!toolbar) return;
+            const indicator = toolbar.querySelector(".git-commit-diff-tab-indicator");
+            const btns = Array.from(toolbar.querySelectorAll(".git-commit-diff-file-btn"));
+            if (!indicator || !btns[idx]) return;
+            const btn = btns[idx];
+            indicator.style.left = btn.offsetLeft + "px";
+            indicator.style.width = btn.offsetWidth + "px";
+          };
+          if (fileChunks.length > 0) {
+            toolbar = document.createElement("div");
             toolbar.className = "git-commit-diff-toolbar";
-            files.forEach(f => {
+            toolbar.innerHTML = '<div class="git-commit-diff-tab-indicator"></div>';
+            fileChunks.forEach((f, i) => {
               const btn = document.createElement("button");
-              btn.className = "git-commit-diff-file-btn";
+              btn.className = "git-commit-diff-file-btn" + (i === 0 ? " active" : "");
               btn.dataset.file = f.path;
               btn.dataset.line = String(f.line || 0);
+              btn.dataset.idx = String(i);
               btn.textContent = f.path.split("/").pop();
               btn.title = f.path;
               toolbar.appendChild(btn);
             });
-            wrapEl.insertBefore(toolbar, diffEl);
+            wrapEl.appendChild(toolbar);
+            requestAnimationFrame(() => moveDiffIndicator(0));
           }
-          let oldLine = 0, newLine = 0;
-          diffEl.innerHTML = diff.split("\n").map(line => {
-            const hunkMatch = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)/);
-            if (hunkMatch) {
-              oldLine = parseInt(hunkMatch[1], 10);
-              newLine = parseInt(hunkMatch[2], 10);
-              return `<span class="diff-hunk">${escapeHtml(line)}</span>`;
-            }
-            if (line.startsWith("diff ") || line.startsWith("index ") || line.startsWith("---") || line.startsWith("+++")) {
-              return `<span class="diff-meta">${escapeHtml(line)}</span>`;
-            }
-            if (line.startsWith("+")) {
-              const ln = newLine > 0 ? String(newLine++).padStart(4) : "    ";
-              return `<span class="diff-add"><span class="diff-ln">    ${ln}</span><span class="diff-sign">+</span>${escapeHtml(line.slice(1))}</span>`;
-            }
-            if (line.startsWith("-")) {
-              const ln = oldLine > 0 ? String(oldLine++).padStart(4) : "    ";
-              return `<span class="diff-del"><span class="diff-ln">${ln}    </span><span class="diff-sign">-</span>${escapeHtml(line.slice(1))}</span>`;
-            }
-            if (oldLine > 0 || newLine > 0) {
-              const oln = oldLine > 0 ? String(oldLine++).padStart(4) : "    ";
-              const nln = newLine > 0 ? String(newLine++).padStart(4) : "    ";
-              return `<span class="diff-ctx"><span class="diff-ln">${oln} ${nln}</span> ${escapeHtml(line.slice(1))}</span>`;
-            }
-            return escapeHtml(line);
-          }).join("\n");
+          // Carousel
+          const carousel = document.createElement("div");
+          carousel.className = "git-commit-diff-carousel";
+          fileChunks.forEach(chunk => {
+            const slide = document.createElement("div");
+            slide.className = "git-commit-diff";
+            slide.innerHTML = renderChunk(chunk);
+            carousel.appendChild(slide);
+          });
+          wrapEl.appendChild(carousel);
+          // Sync tabs + indicator on swipe
+          carousel.addEventListener("scroll", () => {
+            const idx = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+            wrapEl.querySelectorAll(".git-commit-diff-file-btn").forEach((btn, i) => {
+              btn.classList.toggle("active", i === idx);
+            });
+            moveDiffIndicator(idx);
+          }, { passive: true });
+          // PC mouse drag to swipe carousel
+          {
+            let dragging = false, startX = 0, startScroll = 0, didDrag = false;
+            carousel.addEventListener("mousedown", (e) => {
+              dragging = true; didDrag = false;
+              startX = e.pageX; startScroll = carousel.scrollLeft;
+              carousel.style.scrollSnapType = "none";
+              carousel.style.scrollBehavior = "auto";
+              carousel.style.cursor = "grabbing";
+              e.preventDefault();
+            });
+            document.addEventListener("mousemove", (e) => {
+              if (!dragging) return;
+              if (Math.abs(e.pageX - startX) > 3) didDrag = true;
+              carousel.scrollLeft = startScroll - (e.pageX - startX);
+            });
+            document.addEventListener("mouseup", (e) => {
+              if (!dragging) return;
+              dragging = false;
+              carousel.style.cursor = "";
+              const idx = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+              carousel.style.scrollSnapType = "x mandatory";
+              carousel.style.scrollBehavior = "smooth";
+              carousel.scrollTo({ left: idx * carousel.offsetWidth });
+              if (didDrag) {
+                e.stopPropagation();
+                // Suppress any click that follows this drag
+                carousel.addEventListener("click", (ce) => { ce.stopPropagation(); ce.preventDefault(); }, { once: true, capture: true });
+              }
+            });
+          }
+          // Tab click: first click → navigate to slide, second click (already active) → open editor
+          wrapEl.querySelectorAll(".git-commit-diff-file-btn").forEach(btn => {
+            btn.addEventListener("click", (ev) => {
+              ev.stopPropagation();
+              ev.preventDefault();
+              const idx = parseInt(btn.dataset.idx, 10);
+              if (!btn.classList.contains("active")) {
+                // Navigate to this file's slide
+                carousel.scrollTo({ left: idx * carousel.offsetWidth, behavior: "smooth" });
+                return;
+              }
+              // Already active → open in editor
+              const filePath = btn.dataset.file;
+              const line = parseInt(btn.dataset.line || "0", 10);
+              if (filePath) {
+                setStatus(`opening ${filePath}:${line}...`);
+                fetch("/open-file-in-editor", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ path: filePath, line }),
+                }).then(r => {
+                  if (r.ok) { setStatus(`opened ${filePath}`); setTimeout(() => setStatus(""), 2000); }
+                  else r.json().catch(() => ({})).then(d => setStatus(d.error || "open failed", true));
+                }).catch(err => setStatus(`open error: ${err.message}`, true));
+              }
+            });
+          });
         } catch (err) {
-          diffEl.textContent = "Failed to load diff";
+          loadingEl.textContent = "Failed to load diff";
         }
       });
     }
