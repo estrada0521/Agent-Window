@@ -1139,10 +1139,6 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     .target-chip.active[data-base-agent="copilot"] .target-icon {
       filter: none;
     }
-    .avatar-icon img[alt="codex"],
-    .avatar-icon img[alt="copilot"] {
-      filter: invert(1) grayscale(1) brightness(1.35);
-    }
     .target-chip .target-label {
       display: none;
     }
@@ -1801,8 +1797,13 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
       background: transparent;
       z-index: 1;
+    }
+    main::-webkit-scrollbar {
+      display: none;
     }
     #scrollToBottomBtn {
       position: absolute;
@@ -1939,61 +1940,17 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
       justify-content: flex-end;
       transform-origin: right center;
       margin-bottom: 0px;
-      padding-left: 64px;
+      padding-left: 0;
       padding-right: 0;
       box-sizing: border-box;
     }
-    .message-row.user .avatar {
-      display: none;
-    }
-    .avatar {
-      width: 34px;
-      height: 34px;
-      flex: 0 0 34px;
-      display: grid;
-      place-items: center;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.03);
-      color: var(--text);
-      font: 700 12px/1 "SF Pro Text", "Segoe UI", sans-serif;
-      text-transform: uppercase;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.05);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      position: relative;
-      z-index: 1;
-      margin-top: -8px; /* Higher */
-    }
-    .avatar.avatar-icon {
-      background: none;
-      border-color: transparent;
-      box-shadow: none;
-    }
-    .avatar img {
-      width: 28px;
-      height: 28px;
-      object-fit: contain;
-    }
-    .message-row.codex .avatar img,
-    .message-row.copilot .avatar img {
-      filter: invert(1) grayscale(1) brightness(1.35) !important;
-    }
-    .message-row.user .avatar { color: var(--user-accent); }
-    .message-row.claude .avatar { color: var(--claude-accent); }
-    .message-row.codex .avatar { color: var(--codex-accent); }
-    .message-row.gemini .avatar { color: var(--gemini-accent); }
-    .message-row.copilot .avatar { color: var(--copilot-accent); }
-    .message-row.grok .avatar { color: var(--copilot-accent); }
-    .message-row.cursor .avatar { color: var(--gemini-accent); }
-    .message-row.system .avatar { color: var(--system-accent); }
     .message-wrap {
       display: flex;
       align-items: flex-start;
       gap: 6px;
-      max-width: min(760px, calc(100% - 46px));
       min-width: 0;
-      width: 100%;
+      width: auto;
+      flex: 0 1 auto;
     }
     .message {
       position: relative;
@@ -2232,50 +2189,14 @@ __AGENT_ACCENT_CSS_BLACKHOLE__
     .message-row.user .message-wrap {
       order: 1;
       flex-direction: row-reverse;
-      padding-left: 12px;
       margin-right: 0;
       gap: 8px;
-      max-width: 100%;
+      width: min(760px, 100%);
     }
 __AGENT_MESSAGE_SELECTORS__ {
       background: rgba(0, 0, 0, 0.68);
       border-color: rgba(255, 255, 255, 0.12);
       box-shadow: 0 10px 24px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    }
-    .message-row.claude,
-    .message-row.codex,
-    .message-row.gemini,
-    .message-row.copilot,
-    .message-row.grok,
-    .message-row.cursor {
-      gap: 8px;
-    }
-    .message-row.claude .avatar,
-    .message-row.codex .avatar,
-    .message-row.gemini .avatar,
-    .message-row.copilot .avatar,
-    .message-row.grok .avatar,
-    .message-row.cursor .avatar {
-      display: grid;
-      width: 24px;
-      height: 24px;
-      flex: 0 0 24px;
-      align-self: flex-start;
-      border: none;
-      background: transparent;
-      box-shadow: none;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      margin-top: 1px;
-    }
-    .message-row.claude .avatar img,
-    .message-row.codex .avatar img,
-    .message-row.gemini .avatar img,
-    .message-row.copilot .avatar img,
-    .message-row.grok .avatar img,
-    .message-row.cursor .avatar img {
-      width: 22px;
-      height: 22px;
     }
     .message-row.claude .message-wrap,
     .message-row.codex .message-wrap,
@@ -2283,6 +2204,7 @@ __AGENT_MESSAGE_SELECTORS__ {
     .message-row.copilot .message-wrap,
     .message-row.grok .message-wrap,
     .message-row.cursor .message-wrap {
+      width: min(760px, 100%);
       max-width: 100%;
     }
     .message-row.claude .message,
@@ -3851,13 +3773,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const sideClass = iconSide === "right" ? " icon-right" : "";
       return `<span class="meta-agent${sideClass}">${icon}<span class="${textClass}">${escapeHtml(raw)}</span></span>`;
     };
-    const senderAvatar = (sender) => {
-      const base = agentBaseName(sender);
-      if (AGENT_ICON_NAMES.has(base)) {
-        return { cls: "avatar-icon", html: `<img src="${escapeHtml(agentIconSrc(sender))}" alt="${escapeHtml(base)}" width="28" height="28">` };
-      }
-      return { cls: "", html: escapeHtml(senderBadge(sender)) };
-    };
     const formatDayLabel = (value) => {
       const date = value ? new Date(value) : null;
       if (!date || Number.isNaN(date.getTime())) {
@@ -4455,7 +4370,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const body = stripSenderPrefix(entry.message || "");
         const rawAttr = escapeHtml(body).replaceAll('"', "&quot;");
         const previewAttr = escapeHtml(body.slice(0, 80)).replaceAll('"', "&quot;");
-        const av = senderAvatar(entry.sender || "unknown");
         const msgId = escapeHtml(entry.msg_id || "");
         const replyToAttr = entry.reply_to ? escapeHtml(entry.reply_to).replaceAll('"', "&quot;") : "";
         const targetMeta = `<span class="targets">${targetSpans}</span>`;
@@ -4476,7 +4390,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const senderHtml = metaAgentLabel(entry.sender || "unknown", "sender-label", "right");
 
         return `<article class="message-row ${cls}" data-msgid="${msgId}" data-sender="${sender}">
-          ${isUser ? `<div class="avatar${av.cls ? ` ${av.cls}` : ""}">${av.html}</div>` : ""}
           <div class="message-wrap" data-raw="${rawAttr}" data-preview="${previewAttr}">
           <div class="message ${cls}">
           ${replyPreviewHTML}
