@@ -18,21 +18,30 @@ HUB_PAGE_HEADER_CSS = """
       width: 100%;
       margin: 0;
       position: sticky; top: 0; z-index: 100;
-      background: transparent;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
+      background: linear-gradient(rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 95%);
       border-bottom: none;
       box-shadow: none;
+      transition: opacity 0.3s ease;
+    }
+    .hub-page-header.header-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .hub-page-header-shadow {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      width: 100%; height: 300px;
+      background: linear-gradient(rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 100%);
+      pointer-events: none;
+      z-index: -1;
+    }
+    .header-hidden .hub-page-header-shadow {
+      display: none;
     }
     .hub-page-header-top {
       display: flex; align-items: center; justify-content: space-between;
       padding: max(8px, env(safe-area-inset-top)) var(--page-side-pad) 8px;
       box-sizing: border-box;
-      background: rgba(var(--bg-rgb, 38, 38, 36), 0.42);
-      backdrop-filter: blur(28px) saturate(190%);
-      -webkit-backdrop-filter: blur(28px) saturate(190%);
-      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
     }
     .hub-page-title {
       display: flex; align-items: center; text-decoration: none; opacity: 1;
@@ -136,6 +145,7 @@ HUB_PAGE_HEADER_CSS = """
 
 HUB_PAGE_HEADER_HTML_TEMPLATE = """
   <div class="hub-page-header">
+    <div class="hub-page-header-shadow"></div>
     <div class="hub-page-header-top">
       <a href="__TITLE_HREF__" class="hub-page-title" id="__TITLE_ID__" aria-label="__TITLE_ARIA_LABEL__"><img src="__HUB_LOGO_DATA_URI__" alt="__TITLE_ALT__" class="hub-page-logo"><span class="hub-page-env-badge" id="hubPageEnvBadge"></span></a>
       <script>!function(){var b=document.getElementById("hubPageEnvBadge");if(b){var h=location.hostname;b.textContent=(h==="localhost"||h==="127.0.0.1"||h==="[::1]"||h.startsWith("192.168.")||h.startsWith("10.")||/^172\.(1[6-9]|2\d|3[01])\./.test(h))?"Local":"Public"}}()</script>
@@ -217,5 +227,21 @@ HUB_PAGE_HEADER_JS = """
         setTimeout(poll, 700);
       });
     }
+  })();
+  /* ── Header hide on scroll ── */
+  (function() {
+    var header = document.querySelector(".hub-page-header");
+    if (!header) return;
+    var prevY = window.scrollY;
+    var HIDE_THRESHOLD = 50;
+    window.addEventListener("scroll", function() {
+      var y = window.scrollY;
+      if (y > prevY && y > HIDE_THRESHOLD) {
+        header.classList.add("header-hidden");
+      } else if (y < prevY) {
+        header.classList.remove("header-hidden");
+      }
+      prevY = y;
+    }, { passive: true });
   })();
 """

@@ -148,21 +148,9 @@ __AGENT_ACCENT_CSS__
     }
     .shell > .hub-page-header {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 100;
       overflow: visible;
-      background: transparent;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
     }
     .shell > .hub-page-header > .hub-page-header-top {
-      background: rgba(var(--bg-rgb, 38, 38, 36), 0.42);
-      backdrop-filter: blur(28px) saturate(190%);
-      -webkit-backdrop-filter: blur(28px) saturate(190%);
-      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
       padding-bottom: 8px;
     }
     .shell > .hub-page-header > .hub-page-menu-panel {
@@ -3953,6 +3941,24 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
     };
     timeline.addEventListener("scroll", updateScrollBtn, { passive: true });
+
+    /* ── SpaceX-style header hide on scroll ── */
+    {
+      const header = document.querySelector(".hub-page-header");
+      let prevScrollTop = 0;
+      const HIDE_THRESHOLD = 50;
+      timeline.addEventListener("scroll", () => {
+        const st = timeline.scrollTop;
+        const goingDown = st > prevScrollTop;
+        if (goingDown && st > HIDE_THRESHOLD) {
+          header.classList.add("header-hidden");
+        } else if (!goingDown) {
+          header.classList.remove("header-hidden");
+        }
+        prevScrollTop = st;
+      }, { passive: true });
+    }
+
     let lastMessagesSig = "";
     let initialLoadDone = false;
     let lastNotifiedMsgId = "";
