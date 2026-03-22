@@ -348,7 +348,7 @@ CHAT_HTML = r"""<!doctype html>
       background: rgb(10, 10, 10);
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
-      border: 1px solid rgba(252, 252, 252, 0.18);
+      border: 0.5px solid rgba(255,255,255,0.22);
       border-radius: 16px 16px 0 0;
       overflow-y: auto;
       overflow-x: hidden;
@@ -383,7 +383,7 @@ CHAT_HTML = r"""<!doctype html>
       line-height: 20px;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      color: rgb(252, 252, 252);
+      color: rgba(252, 252, 252, 0.72);
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
@@ -696,7 +696,7 @@ CHAT_HTML = r"""<!doctype html>
       fill: none;
     }
     .file-item:not(:last-child) {
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 0.5px solid rgba(255,255,255,0.05);
     }
     .has-hover .file-item:hover, .file-item.active {
       background: rgb(20, 20, 19);
@@ -707,7 +707,7 @@ CHAT_HTML = r"""<!doctype html>
       background: rgb(10, 10, 10);
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
-      border: 1px solid rgba(252, 252, 252, 0.18);
+      border: 0.5px solid rgba(255,255,255,0.22);
       border-radius: 16px 16px 0 0;
       overflow-y: auto;
       overflow-x: hidden;
@@ -730,7 +730,7 @@ CHAT_HTML = r"""<!doctype html>
     .cmd-item {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       padding: 10px 18px;
       border-radius: 0;
       font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif;
@@ -742,15 +742,19 @@ CHAT_HTML = r"""<!doctype html>
       line-height: 20px;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      color: rgb(252, 252, 252);
+      color: rgba(252, 252, 252, 0.72);
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      width: 100%;
+      box-sizing: border-box;
+      max-width: 100%;
+      margin: 0;
       transition: background 120ms ease, color 120ms ease;
     }
     .cmd-item:not(:last-child) {
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 0.5px solid rgba(255,255,255,0.05);
     }
     .has-hover .cmd-item:hover, .cmd-item.active {
       background: rgb(20, 20, 19);
@@ -758,15 +762,24 @@ CHAT_HTML = r"""<!doctype html>
     }
     .cmd-item-name {
       font-size: 14px;
-      color: rgb(252, 252, 252);
+      color: rgba(252, 252, 252, 0.72);
       flex-shrink: 0;
+      transition: color 120ms ease;
     }
     .cmd-item-desc {
+      display: none;
       font-size: 14px;
       color: rgba(252, 252, 252, 0.45);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      transition: color 120ms ease;
+    }
+    .has-hover .cmd-item:hover .cmd-item-name,
+    .cmd-item.active .cmd-item-name,
+    .has-hover .cmd-item:hover .cmd-item-desc,
+    .cmd-item.active .cmd-item-desc {
+      color: rgb(252, 252, 252);
     }
     .pill {
       padding: 5px 9px;
@@ -5962,9 +5975,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         fileDrop.classList.add("visible");
         closePlusMenu();
       }
-      const dropWidth = Math.min(620, Math.max(280, taRect.width - 24));
-      fileDrop.style.left = (taRect.left + (taRect.width - dropWidth) / 2) + "px";
-      fileDrop.style.bottom = (window.innerHeight - pickerRect.top + 66) + "px";
+      const dropWidth = window.innerWidth;
+      fileDrop.style.left = "0px";
+      fileDrop.style.bottom = (window.innerHeight - pickerRect.top + 56) + "px";
       fileDrop.style.width = dropWidth + "px";
       fileDrop.style.minWidth = "0";
     };
@@ -6074,11 +6087,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const taRect = messageInput.getBoundingClientRect();
       const compRect = document.getElementById("composer").getBoundingClientRect();
       const pickerRect = document.getElementById("targetPicker").getBoundingClientRect();
-      const dropWidth = Math.min(620, Math.max(280, taRect.width - 24));
-      cmdDrop.style.left = (taRect.left + (taRect.width - dropWidth) / 2) + "px";
-      cmdDrop.style.bottom = (window.innerHeight - pickerRect.top + 66) + "px";
-      cmdDrop.style.width = dropWidth + "px";
-      cmdDrop.style.minWidth = "0";
+      cmdDrop.style.left = "18px";
+      cmdDrop.style.bottom = (window.innerHeight - pickerRect.top + 56) + "px";
+      cmdDrop.style.width = "max-content";
+      cmdDrop.style.maxWidth = (window.innerWidth - 18) + "px";
+      cmdDrop.style.minWidth = "100px";
       const availableSpace = compRect.top - 20;
       cmdDrop.style.maxHeight = Math.min(208, availableSpace) + "px";
       if (!cmdDrop.classList.contains("visible")) {
