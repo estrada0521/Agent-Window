@@ -480,6 +480,20 @@ CHAT_HTML = r"""<!doctype html>
       position: relative;
     }
     .git-commit-row:last-child { border-bottom: none; }
+    .git-commit-row:has(+ .git-commit-diff-wrap) { border-bottom: none; }
+    .git-commit-chevron {
+      width: 14px; height: 14px;
+      flex-shrink: 0;
+      color: rgba(252, 252, 252, 0.3);
+      transition: transform 220ms ease, color 200ms ease;
+    }
+    .git-commit-row:has(+ .git-commit-diff-wrap) .git-commit-chevron {
+      transform: rotate(90deg);
+      color: rgba(252, 252, 252, 0.7);
+    }
+    .git-commit-row:hover .git-commit-chevron {
+      color: rgba(252, 252, 252, 0.7);
+    }
     /* Branch line connecting icons */
     .git-commit-row:not(:last-child) .git-commit-icon-wrap::after {
       content: "";
@@ -4951,7 +4965,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           if (c.ins) statParts.push(`<span class="ins">+${c.ins}</span>`);
           if (c.dels) statParts.push(`<span class="del">-${c.dels}</span>`);
           if (statParts.length) statHtml = `<span class="git-commit-stat">${statParts.join(" ")}</span>`;
-          rows.push(`<div class="git-commit-row" data-hash="${escapeHtml(c.hash || "")}">${iconHtml}${timeHtml}${subjHtml}${statHtml}</div>`);
+          const chevron = `<svg class="git-commit-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>`;
+          rows.push(`<div class="git-commit-row" data-hash="${escapeHtml(c.hash || "")}">${chevron}${iconHtml}${timeHtml}${subjHtml}${statHtml}</div>`);
         });
         if (!rows.length) {
           rows.push('<div class="hub-page-menu-item" style="cursor:default;opacity:0.52">No commits</div>');
