@@ -2875,7 +2875,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     }
     .file-modal-dialog {
       position: relative;
-      width: min(1180px, calc(100vw - 56px));
+      width: min(760px, calc(100vw - 56px));
       height: min(820px, calc(100vh - 72px));
       display: grid;
       grid-template-rows: auto minmax(0, 1fr);
@@ -4921,6 +4921,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const data = await res.json();
         const commits = Array.isArray(data.recent_commits) ? data.recent_commits : [];
         const rows = [];
+        const maxTotal = commits.reduce((mx, c) => Math.max(mx, (parseInt(c.ins) || 0) + (parseInt(c.dels) || 0)), 0);
         commits.forEach((c) => {
           const agent = c.agent || "";
           let iconInner;
@@ -4938,7 +4939,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           if (ins || dels) {
             const total = ins + dels;
             const maxW = 48;
-            const scale = total > 0 ? Math.min(1, maxW / total) : 0;
+            const scale = maxTotal > 0 ? maxW / maxTotal : 0;
             const insW = Math.max(ins > 0 ? 2 : 0, Math.round(ins * scale));
             const delW = Math.max(dels > 0 ? 2 : 0, Math.round(dels * scale));
             statHtml = `<span class="git-commit-stat" title="+${ins} -${dels}">` +
@@ -5092,7 +5093,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
               toolbar.appendChild(btn);
             });
             wrapEl.appendChild(toolbar);
-            requestAnimationFrame(() => moveDiffIndicator(0));
+            requestAnimationFrame(() => {
+              moveDiffIndicator(0);
+              const firstBtn = toolbar.querySelector(".git-commit-diff-file-btn");
+              if (firstBtn) firstBtn.scrollIntoView({ inline: "center", block: "nearest" });
+            });
           }
           // Carousel
           const carousel = document.createElement("div");
