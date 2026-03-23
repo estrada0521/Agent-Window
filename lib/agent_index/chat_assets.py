@@ -216,9 +216,11 @@ __AGENT_ACCENT_CSS__
       background: var(--bg) !important;
     }
     :not([data-starfield="off"]) #messages,
-    :not([data-starfield="off"]) #composer,
     :not([data-starfield="off"]) .shell {
       position: relative;
+      z-index: 2;
+    }
+    :not([data-starfield="off"]) .composer {
       z-index: 2;
     }
     :not([data-starfield="off"]) .shell,
@@ -823,22 +825,22 @@ __AGENT_ACCENT_CSS__
       border-top: none;
       background: transparent;
       z-index: 20;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .composer.composer-hidden {
+      opacity: 0;
+      transform: translateY(120%);
+      pointer-events: none;
     }
     .composer::before {
       content: "";
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(0deg,
-        rgba(var(--bg-rgb),1.0) 0%,
-        rgba(var(--bg-rgb),0.88) 18%,
-        rgba(var(--bg-rgb),0.58) 42%,
-        rgba(var(--bg-rgb),0.18) 68%,
-        transparent 100%
+      background: linear-gradient(
+        transparent 0%,
+        rgba(var(--bg-rgb), 0.7) 60%,
+        rgba(var(--bg-rgb), 0.92) 100%
       );
-      backdrop-filter: blur(24px) saturate(160%);
-      -webkit-backdrop-filter: blur(24px) saturate(160%);
-      mask-image: linear-gradient(0deg, black 35%, transparent 100%);
-      -webkit-mask-image: linear-gradient(0deg, black 35%, transparent 100%);
       z-index: -1;
       pointer-events: none;
     }
@@ -3942,19 +3944,33 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     timeline.addEventListener("scroll", updateScrollBtn, { passive: true });
 
-    /* ── SpaceX-style header hide on scroll ── */
+    /* ── SpaceX-style header hide and composer hide on scroll ── */
     {
       const header = document.querySelector(".hub-page-header");
+      const composer = document.querySelector(".composer");
       let prevScrollTop = 0;
       const HIDE_THRESHOLD = 50;
       timeline.addEventListener("scroll", () => {
         const st = timeline.scrollTop;
         const goingDown = st > prevScrollTop;
-        if (goingDown && st > HIDE_THRESHOLD) {
-          header.classList.add("header-hidden");
-        } else if (!goingDown) {
-          header.classList.remove("header-hidden");
+        
+        const isAtBottom = st + timeline.clientHeight >= timeline.scrollHeight - 30;
+        const isComposerFocused = composer && composer.contains(document.activeElement);
+        
+        // Header hides on scroll down (unless at bottom/focused)
+        if (goingDown && st > HIDE_THRESHOLD && !isAtBottom && !isComposerFocused) {
+          if (header) header.classList.add("header-hidden");
+        } else if (!goingDown || isAtBottom || isComposerFocused || st <= HIDE_THRESHOLD) {
+          if (header) header.classList.remove("header-hidden");
         }
+        
+        // Composer hides on scroll up (opposite of header)
+        if (!goingDown && st > HIDE_THRESHOLD && !isAtBottom && !isComposerFocused) {
+          if (composer) composer.classList.add("composer-hidden");
+        } else if (goingDown || isAtBottom || isComposerFocused || st <= HIDE_THRESHOLD) {
+          if (composer) composer.classList.remove("composer-hidden");
+        }
+        
         prevScrollTop = st;
       }, { passive: true });
     }
