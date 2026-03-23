@@ -2978,37 +2978,6 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       display: block;
       background: transparent;
     }
-    .file-modal-rich-body {
-      height: 100%;
-      overflow: auto;
-      padding: 14px 18px 20px;
-      box-sizing: border-box;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255,255,255,0.28) transparent;
-    }
-    .file-modal-rich-body::-webkit-scrollbar {
-      width: 10px;
-      height: 10px;
-    }
-    .file-modal-rich-body::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .file-modal-rich-body::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.28);
-      border-radius: 999px;
-    }
-    .file-modal-rich-body::-webkit-scrollbar-thumb:hover {
-      background: rgba(255,255,255,0.42);
-    }
-    .file-modal-rich-body[hidden] {
-      display: none !important;
-    }
-    .file-modal-rich-body .md-body {
-      font: 400 var(--message-text-size, 13px)/21px "SF Pro Text","Segoe UI",sans-serif;
-      color: var(--text);
-      max-width: min(760px, 100%);
-      margin: 0 auto;
-    }
     .copy-btn {
       flex-shrink: 0;
       align-self: flex-start;
@@ -3342,7 +3311,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       </div>
       <div class="file-modal-body">
         <iframe id="fileModalFrame" class="file-modal-frame" title="File preview"></iframe>
-        <div id="fileModalRichBody" class="file-modal-rich-body" hidden></div>
       </div>
     </div>
   </div>
@@ -3599,15 +3567,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const fileModalPath = document.getElementById("fileModalPath");
     const fileModalIcon = document.getElementById("fileModalIcon");
     const fileModalOpenEditorBtn = document.getElementById("fileModalOpenEditorBtn");
-    const fileModalRichBody = document.getElementById("fileModalRichBody");
     let fileModalCurrentPath = "";
     let lastFocusedElement = null;
-    const isMarkdownLikeExt = (ext) => ["md", "markdown", "mdx", "txt", "rst"].includes((ext || "").toLowerCase());
-    const setFileModalDisplayMode = (mode) => {
-      const rich = mode === "rich";
-      fileModalFrame.hidden = rich;
-      fileModalRichBody.hidden = !rich;
-    };
     const updateFileModalViewportMetrics = () => {
       const headerRoot = document.querySelector(".hub-page-header");
       if (!headerRoot) return;
@@ -3631,7 +3592,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         fileModal.hidden = true;
         fileModal.classList.remove("closing");
         fileModalFrame.removeAttribute("src");
-        if (fileModalRichBody) fileModalRichBody.innerHTML = "";
         fileModalCurrentPath = "";
         if (fileModalOpenEditorBtn) fileModalOpenEditorBtn.hidden = true;
         document.body.classList.remove("file-modal-open");
@@ -3659,7 +3619,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       fileModal.style.setProperty("--file-modal-enter-x", `${offsetX}px`);
       fileModal.style.setProperty("--file-modal-enter-y", `${offsetY}px`);
     };
-    const openFileModal = async (path, ext, sourceEl, triggerEvent) => {
+    const openFileModal = (path, ext, sourceEl, triggerEvent) => {
       const normalizedExt = (ext || "").toLowerCase();
       const filename = (path.split("/").pop() || path || "Preview").trim();
       const parentPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
@@ -3684,19 +3644,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           .catch(() => {});
       }
       
-      if (isMarkdownLikeExt(normalizedExt)) {
-        setFileModalDisplayMode("rich");
-        fileModalRichBody.innerHTML = `<article class="md-body"><p>Loading...</p></article>`;
-      } else {
-        setFileModalDisplayMode("iframe");
-        // Prevent white flash by hiding iframe until it loads
-        fileModalFrame.style.opacity = "0";
-        fileModalFrame.onload = () => {
-          fileModalFrame.style.transition = "opacity 200ms ease-out";
-          fileModalFrame.style.opacity = "1";
-        };
-        fileModalFrame.src = viewerUrl;
-      }
+      // Prevent white flash by hiding iframe until it loads
+      fileModalFrame.style.opacity = "0";
+      fileModalFrame.onload = () => {
+        fileModalFrame.style.transition = "opacity 200ms ease-out";
+        fileModalFrame.style.opacity = "1";
+      };
+      fileModalFrame.src = viewerUrl;
 
       updateFileModalViewportMetrics();
       fileModal.hidden = false;
@@ -3704,22 +3658,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       document.body.classList.add("file-modal-open");
       window.addEventListener("resize", syncFileModalViewportMetrics);
       window.addEventListener("scroll", syncFileModalViewportMetrics, { passive: true, capture: true });
-      if (isMarkdownLikeExt(normalizedExt)) {
-        try {
-          const res = await fetch(withChatBase(`/file-raw?path=${encodeURIComponent(path)}`));
-          if (!res.ok) throw new Error("Failed to load markdown");
-          const buf = await res.arrayBuffer();
-          const text = new TextDecoder("utf-8").decode(buf);
-          if (fileModalCurrentPath !== path || fileModal.hidden) return;
-          fileModalRichBody.innerHTML = `<article class="md-body">${renderMarkdown(text || "")}</article>`;
-          renderMathInScope(fileModalRichBody);
-          renderMermaidInScope(fileModalRichBody);
-          scheduleViewportCenteredBlocks(fileModalRichBody);
-        } catch (err) {
-          if (fileModalCurrentPath !== path || fileModal.hidden) return;
-          fileModalRichBody.innerHTML = `<article class="md-body"><p>Failed to load preview.</p></article>`;
-        }
-      }
     };
     const extFromPath = (path) => {
       const cleanPath = String(path || "").split(/[?#]/, 1)[0];
