@@ -149,50 +149,81 @@ __AGENT_ACCENT_CSS__
     .shell > .hub-page-header {
       position: absolute;
       overflow: visible;
+      z-index: 155;
+    }
+    .shell > .hub-page-header::before {
+      content: "";
+      position: absolute;
+      left: -10px;
+      right: -10px;
+      top: -10px;
+      bottom: -10px;
+      border-radius: 18px;
+      background: rgba(var(--bg-rgb, 38, 38, 36), 0);
+      border: 0.5px solid transparent;
+      box-shadow: 0 0 0 rgba(0,0,0,0);
+      backdrop-filter: blur(0px) saturate(100%);
+      -webkit-backdrop-filter: blur(0px) saturate(100%);
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        opacity 220ms ease,
+        background 220ms ease,
+        border-color 220ms ease,
+        box-shadow 220ms ease,
+        backdrop-filter 220ms ease,
+        -webkit-backdrop-filter 220ms ease;
+    }
+    .shell > .hub-page-header.menu-focus::before {
+      background: rgba(var(--bg-rgb, 38, 38, 36), 0.72);
+      border-color: rgba(255,255,255,0.06);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      opacity: 1;
     }
     .shell > .hub-page-header > .hub-page-header-top {
+      position: relative;
+      z-index: 2;
       padding-bottom: 8px;
     }
     .shell > .hub-page-header > .hub-page-menu-panel {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      z-index: 140;
-      max-height: 0;
-      overflow: hidden;
+      position: fixed;
+      top: var(--header-menu-top, 72px);
+      left: var(--header-menu-left, 0px);
+      width: var(--header-menu-width, 100vw);
+      height: calc(100dvh - var(--header-menu-top, 72px));
+      min-height: calc(100dvh - var(--header-menu-top, 72px));
+      max-height: none !important;
+      bottom: auto;
+      z-index: 150;
+      overflow-x: hidden;
+      overflow-y: auto;
       border-top: 0.5px solid transparent;
+      border-bottom: 0.5px solid transparent;
       background: rgba(var(--bg-rgb, 38, 38, 36), 0.72);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
       opacity: 0;
-      transform: translateY(-6px);
+      transform: translateY(-8px);
       pointer-events: none;
+      padding: 8px 0 calc(18px + env(safe-area-inset-bottom, 0px));
       transition:
-        max-height 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
         opacity 180ms ease,
-        transform 180ms ease;
+        transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        border-color 180ms ease,
+        box-shadow 180ms ease;
     }
     .shell > .hub-page-header > .hub-page-menu-panel.open {
-      max-height: 400px;
       border-top-color: rgba(255,255,255,0.05);
-      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+      border-bottom-color: rgba(255, 255, 255, 0.1);
       box-shadow: 0 8px 32px rgba(0,0,0,0.32);
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
     }
-    .shell > .hub-page-header > #attachedFilesPanel.open {
-      max-height: min(360px, 50vh);
-      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.32);
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
+    .shell > .hub-page-header > #attachedFilesPanel.open,
     .shell > .hub-page-header > #gitBranchPanel.open {
-      max-height: min(360px, 50vh);
-      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.32);
       overflow-y: auto;
       overflow-x: hidden;
     }
@@ -324,6 +355,9 @@ __AGENT_ACCENT_CSS__
         text-shadow: 0 0 12px rgba(255, 255, 255, 0.16);
       }
     }
+    body.composer-overlay-open {
+      overflow: hidden;
+    }
     #fileDropdown {
       position: fixed;
       background: var(--bg);
@@ -334,7 +368,7 @@ __AGENT_ACCENT_CSS__
       overflow-y: auto;
       overflow-x: hidden;
       max-height: 200px;
-      z-index: 19;
+      z-index: 390;
       display: none;
       box-shadow: none;
       padding: 0;
@@ -812,40 +846,94 @@ __AGENT_ACCENT_CSS__
       background: var(--panel-strong);
       border: 1px solid var(--line);
     }
-    .composer {
+    .composer-overlay {
       position: fixed;
-      right: 0;
-      bottom: 0;
-      left: 0;
+      inset: 0;
+      z-index: 280;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 12px;
+      background: rgba(0, 0, 0, 0.10);
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 240ms ease, background 320ms ease, backdrop-filter 320ms ease, -webkit-backdrop-filter 320ms ease;
+    }
+    .composer-overlay[hidden] {
+      display: none !important;
+    }
+    .composer-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+      background: rgba(0, 0, 0, 0.16);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .composer-overlay.closing {
+      opacity: 0;
+      pointer-events: none;
+      background: rgba(0, 0, 0, 0.02);
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+      transition: opacity 90ms linear, background 90ms linear, backdrop-filter 90ms linear, -webkit-backdrop-filter 90ms linear;
+    }
+    .composer {
+      position: relative !important;
+      right: auto !important;
+      bottom: auto !important;
+      left: auto !important;
+      inset: auto !important;
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       justify-items: center;
       gap: 10px;
-      padding-bottom: 0;
+      width: min(760px, calc(100vw - 24px));
+      max-width: 760px;
+      padding: 0 !important;
+      margin: 0;
       border-top: none;
-      background: transparent;
-      z-index: 20;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      will-change: transform, opacity;
+      background: transparent !important;
+      z-index: 1;
+      opacity: 0;
+      filter: blur(18px);
+      transform: translateY(42px) scale(0.952);
+      transition: opacity 320ms ease, transform 620ms cubic-bezier(0.18, 0.9, 0.22, 1), filter 520ms ease;
+      will-change: transform, opacity, filter;
     }
+    .composer-overlay.visible .composer {
+      opacity: 1;
+      filter: blur(0);
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .composer-overlay.closing .composer,
     .composer.composer-hidden {
       opacity: 0;
-      transform: scale(0.98);
+      filter: blur(6px);
+      transform: translateY(6px) scale(0.992);
       pointer-events: none;
+      transition: opacity 70ms linear, transform 70ms ease, filter 70ms linear;
+    }
+    .composer.composer-focus-hack {
+      position: fixed !important;
+      inset: max(0px, env(safe-area-inset-top)) auto auto 0 !important;
+      top: max(0px, env(safe-area-inset-top)) !important;
+      right: auto !important;
+      bottom: auto !important;
+      left: 0 !important;
+      width: 100vw !important;
+      max-width: none !important;
+      margin: 0 !important;
+      opacity: 0 !important;
+      transform: none !important;
+      transition: none !important;
+      pointer-events: none !important;
+      z-index: 0 !important;
     }
     .composer::before {
-      content: "";
-      position: absolute;
-      top: -40px; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(
-        to top,
-        rgba(var(--bg-rgb), 0.95) 0%,
-        rgba(var(--bg-rgb), 0.8) 45%,
-        rgba(var(--bg-rgb), 0.4) 75%,
-        transparent 100%
-      );
-      z-index: -1;
-      pointer-events: none;
+      content: none !important;
     }
     .composer > * {
       z-index: 1;
@@ -869,6 +957,22 @@ __AGENT_ACCENT_CSS__
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
       position: relative;
+      isolation: isolate;
+    }
+    .composer-main-shell::before {
+      content: "";
+      position: absolute;
+      inset: 6px 8px 8px;
+      border-radius: 30px;
+      background: radial-gradient(circle at 50% 18%, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.045) 34%, rgba(255,255,255,0.012) 58%, rgba(255,255,255,0) 76%);
+      filter: blur(18px);
+      opacity: 0.82;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .composer-main-shell > * {
+      position: relative;
+      z-index: 1;
     }
     .has-hover .composer-main-shell:hover {
       border-color: rgba(255, 255, 255, 0.6) !important;
@@ -1183,7 +1287,8 @@ __AGENT_ACCENT_CSS__
     .file-modal-close,
     .filter-chip,
     .send-btn,
-    #scrollToBottomBtn {
+    #scrollToBottomBtn,
+    #composerFabBtn {
       -webkit-tap-highlight-color: transparent;
     }
     .quick-action:focus,
@@ -1209,7 +1314,9 @@ __AGENT_ACCENT_CSS__
     .send-btn:focus,
     .send-btn:focus-visible,
     #scrollToBottomBtn:focus,
-    #scrollToBottomBtn:focus-visible {
+    #scrollToBottomBtn:focus-visible,
+    #composerFabBtn:focus,
+    #composerFabBtn:focus-visible {
       outline: none !important;
       -webkit-focus-ring-color: transparent !important;
     }
@@ -1305,7 +1412,8 @@ __AGENT_ACCENT_CSS__
     .composer-plus-toggle:active {
       transform: none;
     }
-    #scrollToBottomBtn:active {
+    #scrollToBottomBtn:active,
+    #composerFabBtn:active {
       transform: translateX(-50%) scale(0.92);
     }
     
@@ -1761,7 +1869,7 @@ __AGENT_ACCENT_CSS__
       left: 0;
       right: 0;
       bottom: 0;
-      padding: calc(56px + env(safe-area-inset-top)) 6px calc(var(--composer-height, 96px) + var(--latest-message-offset, 34vh)) 20px;
+      padding: calc(56px + env(safe-area-inset-top)) 6px calc(var(--composer-height, 0px) + var(--latest-message-offset, 34vh)) 20px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -1774,9 +1882,10 @@ __AGENT_ACCENT_CSS__
     html[data-mobile="1"] main {
       padding-right: 20px;
     }
-    #scrollToBottomBtn {
-      position: absolute;
-      bottom: 150px;
+    #scrollToBottomBtn,
+    #composerFabBtn {
+      position: fixed;
+      bottom: var(--floating-btn-bottom, 160px);
       left: 50%;
       transform: translateX(-50%);
       width: 38px;
@@ -1799,22 +1908,26 @@ __AGENT_ACCENT_CSS__
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
-    #scrollToBottomBtn svg {
+    #scrollToBottomBtn svg,
+    #composerFabBtn svg {
       width: 20px;
       height: 20px;
       display: block;
       stroke: currentColor;
       stroke-width: 1.7;
     }
-    .has-hover #scrollToBottomBtn:hover {
+    .has-hover #scrollToBottomBtn:hover,
+    .has-hover #composerFabBtn:hover {
       background: rgba(48, 48, 46, 0.85);
       filter: brightness(1.1);
     }
-    #scrollToBottomBtn:active {
+    #scrollToBottomBtn:active,
+    #composerFabBtn:active {
       background: var(--inline-code-bg);
       transform: translateX(-50%) scale(0.96);
     }
-    #scrollToBottomBtn.visible { display: flex; }
+    #scrollToBottomBtn.visible,
+    #composerFabBtn.visible { display: flex; }
     .daybreak {
       align-self: center;
       padding: 6px 12px;
@@ -3136,10 +3249,12 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       background: var(--panel-strong);
     }
     /* scroll button */
-    #scrollToBottomBtn {
+    #scrollToBottomBtn,
+    #composerFabBtn {
       background: rgba(var(--bg-rgb), 0.72);
     }
-    .has-hover #scrollToBottomBtn:hover {
+    .has-hover #scrollToBottomBtn:hover,
+    .has-hover #composerFabBtn:hover {
       background: rgba(25, 25, 25, 0.88);
     }
     /* filter chips */
@@ -3166,7 +3281,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
   <div id="paneViewer" class="pane-viewer"><button class="pane-viewer-close" id="paneViewerClose"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><div class="pane-viewer-tabs" id="paneViewerTabs"></div><div class="pane-viewer-carousel" id="paneViewerCarousel"></div></div>
   <div id="fileDropdown"></div>
   <div id="cmdDropdown"></div>
-  <div class="composer-overlay" id="composerOverlay"></div>
   <div id="fileModal" class="file-modal" hidden>
     <div class="file-modal-backdrop" data-close-file-modal></div>
     <div class="file-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="fileModalTitle">
@@ -3197,6 +3311,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     __CHAT_HEADER_HTML__
     <main id="messages"></main>
     <button type="button" id="scrollToBottomBtn" title="Scroll to bottom" aria-label="Scroll to bottom"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+    <button type="button" id="composerFabBtn" title="Open composer" aria-label="Open composer"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7.25"></circle></svg></button>
+    <div class="composer-overlay" id="composerOverlay" hidden>
     <form class="composer" id="composer">
       <div class="composer-main-shell">
         <div class="target-picker" id="targetPicker"></div>
@@ -3269,6 +3385,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       </div>
       <div class="statusline" id="statusline"></div>
     </form>
+    </div>
   </section>
   <script>
     const CHAT_BASE_PATH = "__CHAT_BASE_PATH__";
@@ -3422,6 +3539,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       timeline.scrollTo({ top: targetTop, behavior });
     };
     const focusMessageInputWithoutScroll = (selectionStart = null, selectionEnd = selectionStart) => {
+      if (typeof isComposerOverlayOpen === "function" && typeof openComposerOverlay === "function" && !isComposerOverlayOpen()) {
+        openComposerOverlay();
+        return;
+      }
       try {
         messageInput.focus({ preventScroll: true });
       } catch (_) {
@@ -3547,6 +3668,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (event.key === "Escape" && !fileModal.hidden) {
         event.preventDefault();
         closeFileModal();
+        return;
+      }
+      if (event.key === "Escape" && isComposerOverlayOpen()) {
+        event.preventDefault();
+        closeComposerOverlay({ restoreFocus: true });
       }
     });
     fileModalOpenEditorBtn?.addEventListener("click", async () => {
@@ -3570,15 +3696,137 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
     });
     const scrollToBottomBtn = document.getElementById("scrollToBottomBtn");
+    const composerFabBtn = document.getElementById("composerFabBtn");
+    const composerOverlay = document.getElementById("composerOverlay");
+    const composerForm = document.getElementById("composer");
+    const isComposerOverlayOpen = () => !!composerOverlay && !composerOverlay.hidden && composerOverlay.classList.contains("visible");
+    let composerBlurCloseTimer = null;
+    const clearComposerBlurCloseTimer = () => {
+      if (composerBlurCloseTimer) {
+        clearTimeout(composerBlurCloseTimer);
+        composerBlurCloseTimer = null;
+      }
+    };
+    const setComposerCaretToEnd = () => {
+      if (!messageInput) return;
+      const end = messageInput.value.length;
+      if (typeof messageInput.setSelectionRange === "function") {
+        try {
+          messageInput.setSelectionRange(end, end);
+        } catch (_) {}
+      }
+    };
+    const focusComposerTextarea = ({ sync = false } = {}) => {
+      if (!messageInput) return;
+      const applyFocus = () => {
+        try {
+          messageInput.focus({ preventScroll: true });
+        } catch (_) {
+          messageInput.focus();
+        }
+        setComposerCaretToEnd();
+      };
+      if (sync) {
+        if (_isMobile && composerForm) {
+          composerForm.classList.add("composer-focus-hack");
+          applyFocus();
+          let restored = false;
+          const restore = () => {
+            if (restored) return;
+            restored = true;
+            composerForm.classList.remove("composer-focus-hack");
+            setComposerCaretToEnd();
+          };
+          requestAnimationFrame(() => requestAnimationFrame(restore));
+          setTimeout(restore, 120);
+          return;
+        }
+        applyFocus();
+        setTimeout(applyFocus, 0);
+        requestAnimationFrame(applyFocus);
+        return;
+      }
+      requestAnimationFrame(() => {
+        applyFocus();
+        setTimeout(applyFocus, 0);
+      });
+    };
+    const openComposerOverlay = ({ immediateFocus = false } = {}) => {
+      if (!composerOverlay) return;
+      if (isComposerOverlayOpen()) {
+        focusComposerTextarea({ sync: immediateFocus });
+        return;
+      }
+      composerOverlay.hidden = false;
+      composerOverlay.classList.remove("closing");
+      document.body.classList.add("composer-overlay-open");
+      updateScrollBtn();
+      if (immediateFocus) {
+        focusComposerTextarea({ sync: true });
+      }
+      requestAnimationFrame(() => {
+        composerOverlay.classList.add("visible");
+        if (!immediateFocus) {
+          focusComposerTextarea();
+        }
+      });
+    };
+    const closeComposerOverlay = ({ restoreFocus = false } = {}) => {
+      if (!composerOverlay || composerOverlay.hidden) return;
+      clearComposerBlurCloseTimer();
+      composerOverlay.classList.remove("visible");
+      composerOverlay.classList.add("closing");
+      document.body.classList.remove("composer-overlay-open");
+      setTimeout(() => {
+        if (!composerOverlay.classList.contains("visible")) {
+          composerOverlay.hidden = true;
+          composerOverlay.classList.remove("closing");
+        }
+      }, 90);
+      updateScrollBtn();
+      if (restoreFocus && composerFabBtn && typeof composerFabBtn.focus === "function") {
+        try {
+          composerFabBtn.focus({ preventScroll: true });
+        } catch (_) {
+          composerFabBtn.focus();
+        }
+      }
+    };
     scrollToBottomBtn.addEventListener("click", () => {
       scrollConversationToBottom("smooth");
     });
+    const openComposerOverlayFromTap = (event) => {
+      if (event?.pointerType === "mouse") return;
+      event?.preventDefault?.();
+      openComposerOverlay({ immediateFocus: true });
+    };
+    composerFabBtn?.addEventListener("pointerdown", openComposerOverlayFromTap);
+    composerFabBtn?.addEventListener("touchstart", openComposerOverlayFromTap, { passive: false });
+    composerFabBtn?.addEventListener("click", () => {
+      openComposerOverlay({ immediateFocus: true });
+    });
+    composerOverlay?.addEventListener("click", (event) => {
+      if (event.target === composerOverlay) {
+        closeComposerOverlay({ restoreFocus: true });
+      }
+    });
+    const shouldIgnoreComposerMouseShortcut = (target) => !!target?.closest?.("a, button, input, textarea, select, summary, label, [contenteditable='true'], .pane-viewer, .file-modal-dialog, #fileDropdown, #cmdDropdown");
+    document.addEventListener("mousedown", (event) => {
+      if (_isMobile || event.button !== 1) return;
+      if (shouldIgnoreComposerMouseShortcut(event.target)) return;
+      event.preventDefault();
+      openComposerOverlay({ immediateFocus: true });
+    }, { capture: true });
+    document.addEventListener("auxclick", (event) => {
+      if (_isMobile || event.button !== 1) return;
+      if (shouldIgnoreComposerMouseShortcut(event.target)) return;
+      event.preventDefault();
+    }, { capture: true });
     const updateScrollBtnPos = () => {
       const shell = document.querySelector(".shell");
-      const composer = document.getElementById("composer");
-      const h = composer.offsetHeight;
-      shell.style.setProperty("--scroll-btn-bottom", (h + 12) + "px");
-      shell.style.removeProperty("--scroll-btn-bottom-mobile");
+      const buttonBottom = 160;
+      shell.style.setProperty("--floating-btn-bottom", buttonBottom + "px");
+      shell.style.setProperty("--composer-height", "0px");
     };
     const mathRenderOptions = {
       delimiters: [
@@ -3881,7 +4129,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       return scrollTop + clientHeight >= scrollHeight - (clientHeight * 1.5);
     };
     const updateScrollBtn = () => {
-      scrollToBottomBtn.classList.toggle("visible", !isNearBottom());
+      const nearBottom = isNearBottom();
+      const overlayOpen = isComposerOverlayOpen();
+      scrollToBottomBtn.classList.toggle("visible", !nearBottom && !overlayOpen);
+      composerFabBtn?.classList.toggle("visible", nearBottom && !overlayOpen);
     };
     const renderRawSendButton = () => {
       const button = document.getElementById("rawSendBtn");
@@ -3935,33 +4186,24 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     timeline.addEventListener("scroll", updateScrollBtn, { passive: true });
 
-    /* ── SpaceX-style header hide and composer hide on scroll ── */
+    /* ── SpaceX-style header hide on scroll ── */
     {
       const header = document.querySelector(".hub-page-header");
-      const composer = document.querySelector(".composer");
       let prevScrollTop = 0;
       const HIDE_THRESHOLD = 50;
       timeline.addEventListener("scroll", () => {
         const st = timeline.scrollTop;
         const goingDown = st > prevScrollTop;
-        
         const isAtBottom = st + timeline.clientHeight >= timeline.scrollHeight - 30;
-        const isComposerFocused = composer && composer.contains(document.activeElement);
-        
-        // Header hides on scroll down (unless at bottom/focused)
-        if (goingDown && st > HIDE_THRESHOLD && !isAtBottom && !isComposerFocused) {
+        const isComposerFocused = isComposerOverlayOpen() && document.getElementById("composer")?.contains(document.activeElement);
+        const isHeaderMenuOpen = !!document.querySelector(".hub-page-header > .hub-page-menu-panel.open");
+
+        if (goingDown && st > HIDE_THRESHOLD && !isAtBottom && !isComposerFocused && !isHeaderMenuOpen) {
           if (header) header.classList.add("header-hidden");
-        } else if (!goingDown || isAtBottom || isComposerFocused || st <= HIDE_THRESHOLD) {
+        } else if (!goingDown || isAtBottom || isComposerFocused || isHeaderMenuOpen || st <= HIDE_THRESHOLD) {
           if (header) header.classList.remove("header-hidden");
         }
-        
-        // Composer hides on scroll up (opposite of header)
-        if (!goingDown && st > HIDE_THRESHOLD && !isAtBottom && !isComposerFocused) {
-          if (composer) composer.classList.add("composer-hidden");
-        } else if (goingDown || isAtBottom || isComposerFocused || st <= HIDE_THRESHOLD) {
-          if (composer) composer.classList.remove("composer-hidden");
-        }
-        
+
         prevScrollTop = st;
       }, { passive: true });
     }
@@ -4600,7 +4842,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),
     });
-    const submitMessage = async ({ overrideMessage = null, overrideTarget = null, raw = rawSendEnabled } = {}) => {
+    const submitMessage = async ({ overrideMessage = null, overrideTarget = null, raw = rawSendEnabled, closeOverlayOnStart = false } = {}) => {
       if (sendLocked || Date.now() - lastSubmitAt < 500) {
         return false;
       }
@@ -4635,6 +4877,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         return false;
       }
       setQuickActionsDisabled(true);
+      if (closeOverlayOnStart && isComposerOverlayOpen()) {
+        if (_isMobile) message.blur();
+        closeComposerOverlay();
+      }
       const shortcutDisplay = shortcutLabel(shortcut || payload);
       const shortcutScope = (shortcut === "brief" || shortcut === "interrupt" || shortcut === "restart" || shortcut === "resume" || shortcut === "ctrlc" || shortcut === "enter") && target ? ` for ${target}` : "";
       setStatus(
@@ -4669,6 +4915,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           updateSendBtnVisibility();
           autoResizeTextarea();
           if (_isMobile) message.blur();
+          closeComposerOverlay();
           scrollConversationToBottom("auto");
         }
         if (!isShortcut) setReplyTo(null, "", "");
@@ -4695,7 +4942,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     document.getElementById("composer").addEventListener("submit", async (event) => {
       event.preventDefault();
-      await submitMessage();
+      const submitter = event.submitter;
+      const closeOverlayOnStart = !!(submitter && submitter.classList && submitter.classList.contains("send-btn"));
+      await submitMessage({ closeOverlayOnStart });
     });
     const quickMore = document.querySelector(".quick-more");
     const composerPlusMenu = document.getElementById("composerPlusMenu");
@@ -4760,6 +5009,23 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const gitBranchPanel = document.getElementById("gitBranchPanel");
     const attachedFilesMenuBtn = document.getElementById("attachedFilesMenuBtn");
     const attachedFilesPanel = document.getElementById("attachedFilesPanel");
+    const headerRoot = document.querySelector(".hub-page-header");
+    const hasOpenHeaderMenu = () => !!(gitBranchPanel?.classList.contains("open") || rightMenuPanel?.classList.contains("open") || attachedFilesPanel?.classList.contains("open"));
+    const updateHeaderMenuViewportMetrics = () => {
+      if (!headerRoot) return;
+      const rect = headerRoot.getBoundingClientRect();
+      const top = Math.max(0, Math.round(rect.bottom));
+      const left = Math.max(0, Math.round(rect.left));
+      const width = Math.max(0, Math.round(rect.width));
+      document.documentElement.style.setProperty("--header-menu-top", `${top}px`);
+      document.documentElement.style.setProperty("--header-menu-left", `${left}px`);
+      document.documentElement.style.setProperty("--header-menu-width", `${width}px`);
+    };
+    const syncHeaderMenuFocus = () => {
+      const focused = hasOpenHeaderMenu();
+      headerRoot?.classList.toggle("menu-focus", focused);
+      if (focused) updateHeaderMenuViewportMetrics();
+    };
     const envBadge = document.getElementById("hubPageEnvBadge");
     if (envBadge) {
       const host = String(location.hostname || "");
@@ -5179,6 +5445,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       gitBranchMenuBtn?.classList.remove("open");
       rightMenuBtn?.classList.remove("open");
       attachedFilesMenuBtn?.classList.remove("open");
+      syncHeaderMenuFocus();
     };
     const toggleHeaderMenu = (panel, button, otherPanel, otherButton) => {
       if (!panel || !button) return;
@@ -5188,9 +5455,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         otherPanel.classList.remove("open");
       }
       otherButton?.classList.remove("open");
+      if (nextOpen) updateHeaderMenuViewportMetrics();
       panel.hidden = !nextOpen;
       panel.classList.toggle("open", nextOpen);
       button.classList.toggle("open", nextOpen);
+      syncHeaderMenuFocus();
     };
     rightMenuBtn?.addEventListener("click", (event) => {
       event.preventDefault();
@@ -5201,6 +5470,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         attachedFilesPanel.classList.remove("open");
       }
       attachedFilesMenuBtn?.classList.remove("open");
+      syncHeaderMenuFocus();
     });
     gitBranchMenuBtn?.addEventListener("click", async (event) => {
       event.preventDefault();
@@ -5211,6 +5481,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         rightMenuPanel.classList.remove("open");
       }
       rightMenuBtn?.classList.remove("open");
+      syncHeaderMenuFocus();
       if (gitBranchPanel && !gitBranchPanel.hidden) {
         const currentSession = currentSessionName || "";
         if (gitBranchLoadedFor !== currentSession) {
@@ -5227,12 +5498,19 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         rightMenuPanel.classList.remove("open");
       }
       rightMenuBtn?.classList.remove("open");
+      syncHeaderMenuFocus();
     });
     const closeQuickMore = () => {
       if (quickMore) quickMore.open = false;
       closePlusMenu();
       closeHeaderMenus();
     };
+    window.addEventListener("resize", () => {
+      if (hasOpenHeaderMenu()) updateHeaderMenuViewportMetrics();
+    });
+    window.addEventListener("scroll", () => {
+      if (hasOpenHeaderMenu()) updateHeaderMenuViewportMetrics();
+    }, { passive: true });
     document.addEventListener("click", (event) => {
       if (quickMore && quickMore.open && !quickMore.contains(event.target)) {
         quickMore.open = false;
@@ -5432,6 +5710,23 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const messageInput = document.getElementById("message");
     const sendBtn = document.querySelector(".send-btn");
     const micBtn = document.getElementById("micBtn");
+    const scheduleComposerCloseFromKeyboardDismiss = () => {
+      if (!_isMobile) return;
+      clearComposerBlurCloseTimer();
+      composerBlurCloseTimer = setTimeout(() => {
+        if (!isComposerOverlayOpen()) return;
+        const active = document.activeElement;
+        if (active === messageInput) return;
+        if (composerForm && active && composerForm.contains(active)) return;
+        closeComposerOverlay();
+      }, 140);
+    };
+    messageInput?.addEventListener("focus", () => {
+      clearComposerBlurCloseTimer();
+    });
+    messageInput?.addEventListener("blur", () => {
+      scheduleComposerCloseFromKeyboardDismiss();
+    });
 
     // Web Speech API setup
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -5596,12 +5891,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       delete document.documentElement.dataset.mobile;
     }
 
-    /* ── Mobile virtual-keyboard compensation ── */
+    /* ── Mobile viewport sync: do not move the overlay for the keyboard ── */
     if (_isMobile && window.visualViewport) {
-      const composer = document.querySelector(".composer");
       const onVVResize = () => {
-        const offsetBottom = window.innerHeight - visualViewport.height - visualViewport.offsetTop;
-        composer.style.bottom = offsetBottom > 0 ? offsetBottom + "px" : "0";
+        updateScrollBtnPos();
       };
       visualViewport.addEventListener("resize", onVVResize);
       visualViewport.addEventListener("scroll", onVVResize);
