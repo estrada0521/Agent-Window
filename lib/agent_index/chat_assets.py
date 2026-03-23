@@ -1992,6 +1992,7 @@ __AGENT_ACCENT_CSS__
       transform-origin: left center;
       will-change: transform, opacity, filter;
       margin-bottom: 0px;
+      position: relative;
     }
     .message-row:not(.user) {
       padding-left: 0;
@@ -3116,6 +3117,27 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .msg-highlight {
       animation: msg-highlight 1.2s ease-out forwards;
       border-radius: 20px;
+    }
+    @keyframes msg-highlight-rail {
+      0%   { opacity: 0; }
+      20%  { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .msg-highlight-rail {
+      position: relative;
+    }
+    .msg-highlight-rail::before {
+      content: "";
+      position: absolute;
+      left: -20px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      border-radius: 0;
+      background: rgba(255,255,255,0.8);
+      box-shadow: 0 0 14px rgba(255,255,255,0.28);
+      animation: msg-highlight-rail 1.1s ease-out forwards;
+      pointer-events: none;
     }
     .search-input {
       height: 26px;
@@ -6350,8 +6372,20 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (!targetId) return;
       const target = document.querySelector(`[data-msgid="${CSS.escape(targetId)}"]`);
       if (!target) return;
-      const bodyTarget = target.querySelector(".md-body") || target.querySelector(".message") || target;
+      const rowTarget = target.closest("article.message-row") || target;
+      const messageBodyRow = target.querySelector(".message-body-row");
+      const messageBox = target.querySelector(".message") || target;
+      const isAgentMessage = rowTarget.classList?.contains("message-row") && !rowTarget.classList.contains("user");
+      const bodyTarget = target.querySelector(".md-body") || messageBox || target;
       bodyTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (isAgentMessage) {
+        const railTarget = messageBodyRow || messageBox;
+        railTarget.classList.remove("msg-highlight-rail");
+        void railTarget.offsetWidth;
+        railTarget.classList.add("msg-highlight-rail");
+        railTarget.addEventListener("animationend", () => railTarget.classList.remove("msg-highlight-rail"), { once: true });
+        return;
+      }
       bodyTarget.classList.remove("msg-highlight");
       void bodyTarget.offsetWidth;
       bodyTarget.classList.add("msg-highlight");
