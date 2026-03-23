@@ -1666,6 +1666,7 @@ __AGENT_ACCENT_CSS__
     .composer-field {
       position: relative;
       border-radius: 24px;
+      min-height: 54px;
     }
     .send-btn {
       position: absolute;
@@ -2807,84 +2808,57 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     body.file-modal-open {
       overflow: hidden;
     }
-    @keyframes modalFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes modalFadeOut {
-      from { opacity: 1; }
-      to { opacity: 0; }
-    }
-    @keyframes modalScaleIn {
-      from {
-        opacity: 0;
-        transform: translate(var(--file-modal-enter-x, 0px), var(--file-modal-enter-y, 18px)) scale(0.92);
-        filter: blur(8px);
-      }
-      to {
-        opacity: 1;
-        transform: translate(0, 0) scale(1);
-        filter: blur(0);
-      }
-    }
-    @keyframes modalScaleOut {
-      from {
-        opacity: 1;
-        transform: translate(0, 0) scale(1);
-        filter: blur(0);
-      }
-      to {
-        opacity: 0;
-        transform: translate(calc(var(--file-modal-enter-x, 0px) * 0.72), calc(var(--file-modal-enter-y, 18px) * 0.72)) scale(0.88);
-        filter: blur(10px);
-      }
+    body.file-modal-open .shell > .hub-page-header::before {
+      background: rgba(var(--bg-rgb, 38, 38, 36), 0.72);
+      border-color: rgba(255,255,255,0.06);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      opacity: 1;
     }
     .file-modal {
       position: fixed;
       inset: 0;
       z-index: 10020;
       display: none;
-      align-items: flex-start;
+      align-items: stretch;
       justify-content: center;
-      padding: 44px 28px 20px;
+      padding: 0;
       color-scheme: dark;
+      --file-modal-top: 72px;
+      --file-modal-left: 0px;
+      --file-modal-width: 100vw;
     }
     .file-modal.visible, .file-modal.closing {
       display: flex;
     }
-    .file-modal.visible .file-modal-backdrop {
-      animation: modalFadeIn 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    }
     .file-modal.visible .file-modal-dialog {
-      animation: modalScaleIn 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    .file-modal.closing .file-modal-backdrop {
-      animation: modalFadeOut 260ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      opacity: 1;
     }
     .file-modal.closing .file-modal-dialog {
-      animation: modalScaleOut 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      opacity: 0;
     }
     .file-modal-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(5, 5, 5, 0.92);
+      display: none !important;
     }
     .file-modal-dialog {
-      position: relative;
-      width: min(760px, calc(100vw - 56px));
-      height: min(820px, calc(100vh - 72px));
+      position: fixed;
+      top: var(--file-modal-top);
+      left: var(--file-modal-left);
+      width: var(--file-modal-width);
+      height: calc(100dvh - var(--file-modal-top));
       display: grid;
       grid-template-rows: auto minmax(0, 1fr);
-      border-radius: 18px;
+      border-radius: 0;
       overflow: hidden;
-      border: 0.5px solid rgba(255,255,255,0.16);
-      background: var(--bg);
-      box-shadow:
-        0 24px 56px rgba(0,0,0,0.34),
-        inset 0 1px 0 rgba(255,255,255,0.06);
-      will-change: transform, opacity, filter;
-      --file-modal-enter-x: 0px;
-      --file-modal-enter-y: 18px;
+      border: none;
+      background: rgba(var(--bg-rgb, 38, 38, 36), 0.72);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      box-shadow: none;
+      opacity: 0;
+      transition: opacity 180ms ease;
+      will-change: opacity;
     }
     .file-modal-header {
       display: flex;
@@ -2894,7 +2868,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       min-width: 0;
       padding: 12px 14px;
       border-bottom: 0.5px solid rgba(255,255,255,0.05);
-      background: var(--bg);
+      background: transparent;
     }
     .file-modal-meta {
       display: flex;
@@ -2995,14 +2969,45 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .file-modal-body {
       position: relative;
       min-height: 0;
-      background: var(--bg);
+      background: transparent;
     }
     .file-modal-frame {
       width: 100%;
       height: 100%;
       border: 0;
       display: block;
-      background: var(--bg);
+      background: transparent;
+    }
+    .file-modal-rich-body {
+      height: 100%;
+      overflow: auto;
+      padding: 14px 18px 20px;
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.28) transparent;
+    }
+    .file-modal-rich-body::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    .file-modal-rich-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .file-modal-rich-body::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.28);
+      border-radius: 999px;
+    }
+    .file-modal-rich-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.42);
+    }
+    .file-modal-rich-body[hidden] {
+      display: none !important;
+    }
+    .file-modal-rich-body .md-body {
+      font: 400 var(--message-text-size, 13px)/21px "SF Pro Text","Segoe UI",sans-serif;
+      color: var(--text);
+      max-width: min(760px, 100%);
+      margin: 0 auto;
     }
     .copy-btn {
       flex-shrink: 0;
@@ -3337,6 +3342,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       </div>
       <div class="file-modal-body">
         <iframe id="fileModalFrame" class="file-modal-frame" title="File preview"></iframe>
+        <div id="fileModalRichBody" class="file-modal-rich-body" hidden></div>
       </div>
     </div>
   </div>
@@ -3593,8 +3599,30 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const fileModalPath = document.getElementById("fileModalPath");
     const fileModalIcon = document.getElementById("fileModalIcon");
     const fileModalOpenEditorBtn = document.getElementById("fileModalOpenEditorBtn");
+    const fileModalRichBody = document.getElementById("fileModalRichBody");
     let fileModalCurrentPath = "";
     let lastFocusedElement = null;
+    const isMarkdownLikeExt = (ext) => ["md", "markdown", "mdx", "txt", "rst"].includes((ext || "").toLowerCase());
+    const setFileModalDisplayMode = (mode) => {
+      const rich = mode === "rich";
+      fileModalFrame.hidden = rich;
+      fileModalRichBody.hidden = !rich;
+    };
+    const updateFileModalViewportMetrics = () => {
+      const headerRoot = document.querySelector(".hub-page-header");
+      if (!headerRoot) return;
+      const rect = headerRoot.getBoundingClientRect();
+      const top = Math.max(0, Math.round(rect.bottom));
+      const left = Math.max(0, Math.round(rect.left));
+      const width = Math.max(0, Math.round(rect.width));
+      fileModal.style.setProperty("--file-modal-top", `${top}px`);
+      fileModal.style.setProperty("--file-modal-left", `${left}px`);
+      fileModal.style.setProperty("--file-modal-width", `${width}px`);
+    };
+    const syncFileModalViewportMetrics = () => {
+      if (fileModal.hidden) return;
+      updateFileModalViewportMetrics();
+    };
     const closeFileModal = () => {
       if (fileModal.hidden) return;
       fileModal.classList.remove("visible");
@@ -3603,9 +3631,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         fileModal.hidden = true;
         fileModal.classList.remove("closing");
         fileModalFrame.removeAttribute("src");
+        if (fileModalRichBody) fileModalRichBody.innerHTML = "";
         fileModalCurrentPath = "";
         if (fileModalOpenEditorBtn) fileModalOpenEditorBtn.hidden = true;
         document.body.classList.remove("file-modal-open");
+        window.removeEventListener("resize", syncFileModalViewportMetrics);
+        window.removeEventListener("scroll", syncFileModalViewportMetrics, { capture: true });
         if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
           lastFocusedElement.focus({ preventScroll: true });
         }
@@ -3628,7 +3659,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       fileModal.style.setProperty("--file-modal-enter-x", `${offsetX}px`);
       fileModal.style.setProperty("--file-modal-enter-y", `${offsetY}px`);
     };
-    const openFileModal = (path, ext, sourceEl, triggerEvent) => {
+    const openFileModal = async (path, ext, sourceEl, triggerEvent) => {
       const normalizedExt = (ext || "").toLowerCase();
       const filename = (path.split("/").pop() || path || "Preview").trim();
       const parentPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
@@ -3653,17 +3684,42 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           .catch(() => {});
       }
       
-      // Prevent white flash by hiding iframe until it loads
-      fileModalFrame.style.opacity = "0";
-      fileModalFrame.onload = () => {
-        fileModalFrame.style.transition = "opacity 200ms ease-out";
-        fileModalFrame.style.opacity = "1";
-      };
-      fileModalFrame.src = viewerUrl;
+      if (isMarkdownLikeExt(normalizedExt)) {
+        setFileModalDisplayMode("rich");
+        fileModalRichBody.innerHTML = `<article class="md-body"><p>Loading...</p></article>`;
+      } else {
+        setFileModalDisplayMode("iframe");
+        // Prevent white flash by hiding iframe until it loads
+        fileModalFrame.style.opacity = "0";
+        fileModalFrame.onload = () => {
+          fileModalFrame.style.transition = "opacity 200ms ease-out";
+          fileModalFrame.style.opacity = "1";
+        };
+        fileModalFrame.src = viewerUrl;
+      }
 
+      updateFileModalViewportMetrics();
       fileModal.hidden = false;
       fileModal.classList.add("visible");
       document.body.classList.add("file-modal-open");
+      window.addEventListener("resize", syncFileModalViewportMetrics);
+      window.addEventListener("scroll", syncFileModalViewportMetrics, { passive: true, capture: true });
+      if (isMarkdownLikeExt(normalizedExt)) {
+        try {
+          const res = await fetch(withChatBase(`/file-raw?path=${encodeURIComponent(path)}`));
+          if (!res.ok) throw new Error("Failed to load markdown");
+          const buf = await res.arrayBuffer();
+          const text = new TextDecoder("utf-8").decode(buf);
+          if (fileModalCurrentPath !== path || fileModal.hidden) return;
+          fileModalRichBody.innerHTML = `<article class="md-body">${renderMarkdown(text || "")}</article>`;
+          renderMathInScope(fileModalRichBody);
+          renderMermaidInScope(fileModalRichBody);
+          scheduleViewportCenteredBlocks(fileModalRichBody);
+        } catch (err) {
+          if (fileModalCurrentPath !== path || fileModal.hidden) return;
+          fileModalRichBody.innerHTML = `<article class="md-body"><p>Failed to load preview.</p></article>`;
+        }
+      }
     };
     const extFromPath = (path) => {
       const cleanPath = String(path || "").split(/[?#]/, 1)[0];
@@ -6100,12 +6156,15 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (item) { e.preventDefault(); selectFile(item.dataset.path); }
     });
     const autoResizeTextarea = () => {
-      const baseHeight = 46;
-      messageInput.style.height = baseHeight + "px"; // Reset to min-height to get correct scrollHeight
+      const baseHeight = 54;
+      messageInput.style.marginTop = "0px";
+      messageInput.style.height = baseHeight + "px"; // Reset first to measure natural content height
       const scrollH = messageInput.scrollHeight;
-      if (scrollH > baseHeight) {
-        messageInput.style.height = (scrollH + 2) + "px"; // +2px to avoid tiny scroll jumps
-      }
+      const maxHeight = 200;
+      const nextHeight = Math.min(maxHeight, Math.max(baseHeight, scrollH + 2)); // +2px avoids tiny scroll jumps
+      messageInput.style.height = nextHeight + "px";
+      // Keep bottom edge fixed; grow upward when content exceeds one line.
+      messageInput.style.marginTop = (baseHeight - nextHeight) + "px";
     };
     messageInput.addEventListener("input", () => {
       autoResizeTextarea();
