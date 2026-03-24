@@ -122,7 +122,7 @@ _register(
         ready_pattern=r"OpenCode|opencode|/help|/connect|/models",
         number_alias=7,
         thinking_glow_delay="-1s",
-        fallback_paths=("~/.local/bin/opencode",),
+        fallback_paths=("~/.opencode/bin/opencode",),
     ),
 )
 

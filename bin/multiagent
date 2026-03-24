@@ -58,6 +58,55 @@ agent_var() {
   eval "printf '%s' \"\${${var_name}:-}\""
 }
 
+resolve_agent_executable() {
+  local agent="$1"
+  python3 - "$REPO_ROOT" "$agent" <<'PYEOF'
+import os
+import shutil
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1]).resolve()
+agent_name = sys.argv[2]
+
+sys.path.insert(0, str(repo_root / "lib"))
+from agent_index.agent_registry import AGENTS
+
+base = agent_name.split("-", 1)[0]
+adef = AGENTS.get(base)
+exe_name = adef.exe if adef else agent_name
+
+found = shutil.which(exe_name)
+if found:
+    print(found)
+    raise SystemExit(0)
+
+if adef:
+    for p in adef.fallback_paths:
+        candidate = Path(p).expanduser()
+        if candidate.is_file():
+            print(candidate)
+            raise SystemExit(0)
+
+if adef and adef.fallback_nvm:
+    home = Path.home()
+    nvm_bin = Path(os.environ.get("NVM_BIN", "")).expanduser()
+    candidates = []
+    if nvm_bin.is_dir():
+        candidates.append(nvm_bin / exe_name)
+    candidates.extend(
+        sorted((home / ".nvm" / "versions" / "node").glob(f"*/bin/{exe_name}"), reverse=True)
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            print(candidate)
+            raise SystemExit(0)
+
+print(exe_name)
+raise SystemExit(1)
+PYEOF
+}
+
 tmux() {
   command tmux -L "$TMUX_SOCKET_NAME" "$@"
 }
@@ -975,9 +1024,12 @@ for agent in "${SELECTED_AGENTS[@]}"; do
   case ",$_checked_cmds," in
     *,"$agent",*) ;;
     *)
-      check_cmd="$(agent_var AGENT_EXECUTABLE "$agent")"
-      [[ -n "$check_cmd" ]] || check_cmd="$agent"
-      command -v "$check_cmd" >/dev/null 2>&1 || { echo "Required command not found: $check_cmd" >&2; exit 1; }
+      check_cmd="$(resolve_agent_executable "$agent")" || {
+        check_cmd="$(agent_var AGENT_EXECUTABLE "$agent")"
+        [[ -n "$check_cmd" ]] || check_cmd="$agent"
+        echo "Required command not found: $check_cmd" >&2
+        exit 1
+      }
       _checked_cmds="${_checked_cmds:+$_checked_cmds,}$agent"
       ;;
   esac
@@ -1098,8 +1150,10 @@ start_agent() {
   fi
   local base_name="${agent_name%%-[0-9]*}"
   local executable launch_extra launch_flags launch_env
-  executable="$(agent_var AGENT_EXECUTABLE "$base_name")"
-  [[ -n "$executable" ]] || executable="$base_name"
+  executable="$(resolve_agent_executable "$base_name")" || {
+    executable="$(agent_var AGENT_EXECUTABLE "$base_name")"
+    [[ -n "$executable" ]] || executable="$base_name"
+  }
   launch_extra="$(agent_var AGENT_LAUNCH_EXTRA "$base_name")"
   launch_flags="$(agent_var AGENT_LAUNCH_FLAGS "$base_name")"
   launch_env="$(agent_var AGENT_LAUNCH_ENV "$base_name")"
@@ -1173,9 +1227,9 @@ if [[ "$MODE" == "add-agent" ]]; then
     unset LOG_DIR
   fi
 
-  required_cmd="$(agent_var AGENT_EXECUTABLE "$base_agent")"
-  [[ -n "$required_cmd" ]] || required_cmd="$base_agent"
-  command -v "$required_cmd" >/dev/null 2>&1 || {
+  required_cmd="$(resolve_agent_executable "$base_agent")" || {
+    required_cmd="$(agent_var AGENT_EXECUTABLE "$base_agent")"
+    [[ -n "$required_cmd" ]] || required_cmd="$base_agent"
     echo "Required command not found for $base_agent: $required_cmd" >&2
     exit 1
   }
