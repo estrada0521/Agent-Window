@@ -28,24 +28,45 @@ HUB_PAGE_HEADER_CSS = """
     html[data-theme="soft-light"] .hub-page-header {
       background: linear-gradient(rgba(255, 255, 255, 0.9) 0%, rgba(244, 244, 242, 0) 100%);
     }
-    /* メニュー展開時: パネルとトップ行だけ同色（親全体に blur を付けない＝パネルが透ける事故を避ける） */
+    .hub-page-header::before {
+      content: none;
+    }
+    /* メニュー展開時: トップ＋パネルを一枚の ::before で覆いぼかす（二重 backdrop で境目が切れるのを防ぐ） */
     .hub-page-header:has(.hub-page-menu-panel.open) {
       background: transparent;
     }
     html[data-theme="soft-light"] .hub-page-header:has(.hub-page-menu-panel.open) {
       background: transparent;
     }
-    .hub-page-header:has(.hub-page-menu-panel.open) .hub-page-header-top {
-      position: relative;
-      z-index: 1;
+    .hub-page-header:has(.hub-page-menu-panel.open)::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      border-radius: 0 0 14px 14px;
       background: rgba(var(--bg-rgb, 38, 38, 36), 0.72);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
     }
-    html[data-theme="soft-light"] .hub-page-header:has(.hub-page-menu-panel.open) .hub-page-header-top {
+    html[data-theme="soft-light"] .hub-page-header:has(.hub-page-menu-panel.open)::before {
       background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(12px) saturate(120%);
       -webkit-backdrop-filter: blur(12px) saturate(120%);
+    }
+    .hub-page-header:has(.hub-page-menu-panel.open) .hub-page-header-top {
+      position: relative;
+      z-index: 1;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .hub-page-header:has(.hub-page-menu-panel.open) .hub-page-menu-panel {
+      position: relative;
+      z-index: 1;
+      background: transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
     }
     .hub-page-header:has(.hub-page-menu-panel.open) .hub-page-header-shadow {
       opacity: 0;
