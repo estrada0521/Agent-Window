@@ -2062,9 +2062,9 @@ __AGENT_ACCENT_CSS__
       display: block;
       width: 100%;
       max-width: 100%;
-      padding: 12px 16px 13px 16px;
-      border-radius: 12px;
-      background: var(--surface);
+      padding: 2px 0 6px 0;
+      border-radius: 0;
+      background: transparent;
       color: var(--text) !important;
       border: none;
       box-shadow: none;
@@ -2109,9 +2109,9 @@ __AGENT_ACCENT_CSS__
       bottom: 0;
       height: 44px;
       pointer-events: none;
-      border-bottom-left-radius: 12px;
-      border-bottom-right-radius: 12px;
-      background: linear-gradient(180deg, rgba(20, 20, 19, 0) 0%, var(--surface) 78%);
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, var(--bg) 78%);
     }
     .message.user .user-collapse-toggle {
       display: none;
@@ -2223,12 +2223,26 @@ __AGENT_ACCENT_CSS__
       stroke-width: 1.8;
     }
     .message.user .user-message-meta {
-      width: fit-content;
-      margin-top: 8px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      margin-top: 6px;
       margin-left: auto;
+      padding-top: 8px;
       gap: 7px;
       font-size: 13px;
       justify-content: flex-end;
+      /* Rule between body and meta row (right-aligned band; same as message column) */
+      background-image: linear-gradient(
+        to right,
+        transparent 0,
+        transparent max(0px, calc(100% - 760px)),
+        var(--muted) max(0px, calc(100% - 760px)),
+        var(--muted) 100%
+      );
+      background-size: 100% 1px;
+      background-repeat: no-repeat;
+      background-position: 0 0;
     }
     .message.user .user-message-meta time {
       color: var(--chrome-muted) !important;
@@ -2889,9 +2903,13 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       border-radius: 10px;
       display: grid;
       place-items: center;
-      background: rgba(255,255,255,0.06);
+      background: transparent;
       font-size: 16px;
       flex-shrink: 0;
+      cursor: pointer;
+    }
+    .file-modal-icon svg {
+      stroke-width: 1.08 !important;
     }
     .file-modal-text {
       min-width: 0;
@@ -2917,11 +2935,11 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     }
     .file-modal-close {
       appearance: none;
-      width: 34px;
-      height: 34px;
+      width: 38px;
+      height: 38px;
       border-radius: 10px;
       border: none;
-      background: rgba(255,255,255,0.06);
+      background: transparent;
       color: var(--text);
       display: inline-flex;
       align-items: center;
@@ -2933,7 +2951,11 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       transition: background 150ms ease, transform 100ms ease;
     }
     .has-hover .file-modal-close:hover {
-      background: rgba(255,255,255,0.12);
+      background: transparent;
+    }
+    .file-modal-close svg {
+      width: 20px;
+      height: 20px;
     }
     .file-modal-close:active {
       transform: scale(0.94);
@@ -3188,9 +3210,9 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       align-self: center;
     }
     .search-count:empty { display: none; }
-    /* user message box */
+    /* user message: no bubble — plain text on timeline */
     .message.user .md-body {
-      background: var(--surface);
+      background: transparent;
       background-image: none !important;
       border: none;
       color: var(--text) !important;
@@ -3205,7 +3227,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     }
     /* user message collapse gradient */
     .message.user .message-body-row.is-collapsed::after {
-      background: linear-gradient(180deg, rgba(20,20,20,0) 0%, rgb(20,20,20) 78%);
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, var(--bg) 78%);
     }
     .md-body :not(pre) > code,
     .message.user .md-body :not(pre) > code {
@@ -3293,7 +3315,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     <div class="file-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="fileModalTitle">
       <div class="file-modal-header">
         <div class="file-modal-meta">
-          <span id="fileModalIcon" class="file-modal-icon"></span>
+          <span id="fileModalIcon" class="file-modal-icon" role="button" tabindex="0" title="Back to attached files" aria-label="Back to attached files"></span>
           <div class="file-modal-text">
             <div id="fileModalTitle" class="file-modal-title">Preview</div>
             <code id="fileModalPath" class="file-modal-path"></code>
@@ -5553,6 +5575,28 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       rightMenuBtn?.classList.remove("open");
       syncHeaderMenuFocus();
     });
+    const returnToAttachedFilesMenu = () => {
+      if (!attachedFilesPanel || !attachedFilesMenuBtn) return;
+      closeFileModal();
+      toggleHeaderMenu(attachedFilesPanel, attachedFilesMenuBtn, gitBranchPanel, gitBranchMenuBtn);
+      if (rightMenuPanel) {
+        rightMenuPanel.hidden = true;
+        rightMenuPanel.classList.remove("open");
+      }
+      rightMenuBtn?.classList.remove("open");
+      syncHeaderMenuFocus();
+    };
+    fileModalIcon?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      returnToAttachedFilesMenu();
+    });
+    fileModalIcon?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      event.stopPropagation();
+      returnToAttachedFilesMenu();
+    });
     const closeQuickMore = () => {
       if (quickMore) quickMore.open = false;
       closePlusMenu();
@@ -5728,7 +5772,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
 - To message other agents or the human inbox, prefer stdin. Example: printf '%s' '[From: ${target}] hello' | agent-send --stdin user
 - Legacy inline form still works temporarily for simple text, but stdin is the standard path going forward.
 - To inspect message history, use: agent-index or agent-index --agent <name>. Do NOT run agent-index --follow — it blocks forever and will hang your pane.
-- IMPORTANT: Always use --reply when responding to a specific message. Every message you receive includes a msg-id in its header: [From: sender | msg-id: xxxxxxxxxxxx]. Use that ID like this: printf '%s' '[From: ${target}] ...' | agent-send --reply <msg-id> --stdin <target>. This keeps conversations threaded and readable. Only omit --reply when broadcasting a new topic to multiple agents.
+- IMPORTANT: Always use --reply when responding to a specific message. Every message you receive includes a msg-id in its header: [From: sender | msg-id: xxxxxxxxxxxx]. Use that ID like this: printf '%s' '[From: ${target}] ...' | agent-send --reply <msg-id> --stdin user. Chat replies always go to the human inbox; use user as the target, not other agent names. Only omit --reply when starting a new topic that should not attach to a prior msg-id.
 - agent-send user writes to the human inbox in agent-index/chat view. It does not inject text into the terminal pane.
 - Messages sent via agent-send are displayed in the chat UI (agent-index --chat) with Markdown rendering. You may use Markdown in your messages: **bold**, \`inline code\`, \`\`\`code blocks\`\`\`, headers, lists, tables, etc.
 - The chat UI also renders LaTeX math via KaTeX. Use $...$ for inline math and $$...$$ for display (block) math. Standard LaTeX commands and environments such as cases, pmatrix, bmatrix, align, aligned, and array are generally supported. stdin/heredoc is safe for these messages; legacy inline form is risky for shell-sensitive content.
@@ -5737,7 +5781,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
 - Every normal reply sent with agent-send must start with [From: ${target}] so the sender is explicit.
 - Normal replies must contain actual content. Do not reply with only a single word unless explicitly asked.
 - Do not start greeting loops or casual chatter unless explicitly instructed.
-- For normal replies, identify the sender and use stdin with agent-send, e.g. printf '%s' '[From: ${target}] ...' | agent-send --stdin <sender>
+- For normal chat replies, use stdin with agent-send and user as the target, e.g. printf '%s' '[From: ${target}] ...' | agent-send --reply <msg-id> --stdin user
 - To confirm you have read this briefing, run now: printf '%s' '[From: ${target}] Briefing received.' | agent-send --stdin user`;
           const res = await fetch("/send", {
             method: "POST",

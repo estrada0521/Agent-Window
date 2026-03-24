@@ -525,7 +525,7 @@ end tell
             return (
                 f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
                 '<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>'
-                f'<style>{base_css}.md{{padding:24px 32px;max-width:860px;overflow:auto;height:{md_height};font-family:-apple-system,sans-serif;font-size:15px;line-height:1.7;background:{embed_bg}}}'
+                f'<style>{base_css}.md{{padding:24px 32px;max-width:860px;overflow:auto;height:{md_height};font-family:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP",serif;font-size:15px;line-height:1.7;background:{embed_bg}}}'
                 f'h1,h2{{border-bottom:1px solid {pane_line};padding-bottom:.3em}}'
                 'code{font-family:"SF Mono",monospace;font-size:.88em;background:rgba(255,255,255,.09);border-radius:4px;padding:1px 5px}'
                 'pre{background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px 16px;overflow-x:auto}'

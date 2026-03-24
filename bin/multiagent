@@ -643,7 +643,7 @@ send_agent_capability_briefing() {
     "- To message other agents or the human inbox, prefer stdin. Example: printf '%s' '[From: ${agent_name}] hello' | agent-send --stdin user" \
     "- Legacy inline form still works temporarily for simple text, but stdin is the standard path going forward." \
     "- To inspect message history, use: agent-index or agent-index --agent <name>. Do NOT run agent-index --follow — it blocks forever and will hang your pane." \
-    "- IMPORTANT: Always use --reply when responding to a specific message. Every message you receive includes a msg-id in its header: [From: sender | msg-id: xxxxxxxxxxxx]. Use that ID like this: printf '%s' '[From: ${agent_name}] ...' | agent-send --reply <msg-id> --stdin <target>. This keeps conversations threaded and readable. Only omit --reply when broadcasting a new topic to multiple agents." \
+    "- IMPORTANT: Always use --reply when responding to a specific message. Every message you receive includes a msg-id in its header: [From: sender | msg-id: xxxxxxxxxxxx]. Use that ID like this: printf '%s' '[From: ${agent_name}] ...' | agent-send --reply <msg-id> --stdin user. Chat replies always go to the human inbox; use user as the target, not other agent names. Only omit --reply when starting a new topic that should not attach to a prior msg-id." \
     "- agent-send user writes to the human inbox in agent-index/chat view. It does not inject text into the terminal pane." \
     "- Messages sent via agent-send are displayed in the chat UI (agent-index --chat) with Markdown rendering. You may use Markdown in your messages: **bold**, \`inline code\`, \`\`\`code blocks\`\`\`, headers, lists, tables, etc." \
     "- The chat UI also renders LaTeX math via KaTeX. Use \$...\$ for inline math and \$\$...\$\$ for display (block) math. Standard LaTeX commands and environments such as cases, pmatrix, bmatrix, align, aligned, and array are generally supported. stdin/heredoc is safe for these messages; legacy inline form is risky for shell-sensitive content." \
@@ -653,7 +653,7 @@ send_agent_capability_briefing() {
     "- Every normal reply sent with agent-send must start with [From: ${agent_name}] so the sender is explicit." \
     "- Normal replies must contain actual content. Do not reply with only a single word unless explicitly asked." \
     "- Do not start greeting loops or casual chatter unless explicitly instructed." \
-    "- For normal replies, identify the sender and use stdin with agent-send, e.g. printf '%s' '[From: ${agent_name}] ...' | agent-send --stdin <sender>" \
+    "- For normal chat replies, use stdin with agent-send and user as the target, e.g. printf '%s' '[From: ${agent_name}] ...' | agent-send --reply <msg-id> --stdin user" \
     "- To confirm you have read this briefing, run now: printf '%s' '[From: ${agent_name}] Briefing received.' | agent-send --stdin user"
   send_text_to_pane "$pane_id" "$briefing"
 }
