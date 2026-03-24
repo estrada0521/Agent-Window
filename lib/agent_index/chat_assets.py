@@ -1679,7 +1679,7 @@ __AGENT_ACCENT_CSS__
       backdrop-filter: blur(8px) saturate(120%);
       -webkit-backdrop-filter: blur(8px) saturate(120%);
       opacity: 0;
-      transition: opacity 180ms ease;
+      transition: opacity 380ms cubic-bezier(0.22, 1, 0.36, 1);
       pointer-events: none;
     }
     .add-agent-overlay.visible {
@@ -1693,14 +1693,32 @@ __AGENT_ACCENT_CSS__
       padding: 16px;
       min-width: 220px;
       max-width: 300px;
-      transform: translateY(6px) scale(0.985);
-      filter: blur(1.5px);
-      transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 180ms ease, box-shadow 180ms ease;
+      opacity: 0;
+      transform: translateY(18px) scale(0.94);
+      filter: blur(2px);
+      transition:
+        opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+        transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+        filter 420ms ease,
+        box-shadow 420ms ease;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+      will-change: transform, opacity, filter;
     }
     .add-agent-overlay.visible .add-agent-panel {
+      opacity: 1;
       transform: translateY(0) scale(1);
       filter: blur(0);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .add-agent-overlay {
+        transition-duration: 80ms;
+      }
+      .add-agent-panel {
+        opacity: 1;
+        transform: none;
+        filter: none;
+        transition-duration: 80ms;
+      }
     }
     .add-agent-panel h3 {
       margin: 0 0 12px;
@@ -1855,66 +1873,33 @@ __AGENT_ACCENT_CSS__
       flex-shrink: 0;
       position: relative;
       z-index: 1;
-      overflow: visible;
       transition: color 250ms ease;
-    }
-    /* 選択ハイライト .pane-viewer-tab-indicator と同じ縦位置・高さ（bottom:6px / height:calc(100%-12px)）に枠＋Glow */
-    .pane-viewer-tab::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 6px;
-      height: calc(100% - 12px);
-      border-radius: 8px;
-      border: 1px solid transparent;
-      box-sizing: border-box;
-      pointer-events: none;
-      z-index: -1;
-      opacity: 0;
-      transition: opacity 180ms ease;
     }
     .pane-viewer-tab.active {
       color: var(--text);
     }
-    .pane-viewer-tab.pane-viewer-tab-thinking::after {
-      opacity: 1;
-      border-color: rgba(255, 255, 255, 0.45);
-      animation: pane-viewer-tab-thinking-glow-after 2.2s ease-in-out infinite;
+    .pane-viewer-tab-char {
+      display: inline;
     }
-    @keyframes pane-viewer-tab-thinking-glow-after {
-      0%, 100% {
-        box-shadow:
-          0 0 4px rgba(255, 255, 255, 0.2),
-          0 0 12px rgba(255, 255, 255, 0.1);
-      }
-      50% {
-        box-shadow:
-          0 0 10px rgba(255, 255, 255, 0.45),
-          0 0 22px rgba(255, 255, 255, 0.22),
-          0 0 34px rgba(255, 255, 255, 0.08);
-      }
+    .pane-viewer-tab:not(.pane-viewer-tab-thinking) .pane-viewer-tab-char {
+      color: inherit;
     }
-    html[data-theme="soft-light"] .pane-viewer-tab.pane-viewer-tab-thinking::after {
-      border-color: rgba(15, 20, 30, 0.35);
-      animation-name: pane-viewer-tab-thinking-glow-after-soft;
+    /* thinking 中は message の thinking... と同じ文字波アニメ（枠線・Glow は使わない） */
+    .pane-viewer-tab.pane-viewer-tab-thinking .pane-viewer-tab-char {
+      color: rgba(252, 252, 252, 0.42);
+      animation: thinking-char-pulse 1.5s linear infinite;
+      animation-delay: calc(var(--char-i) * 0.18s);
     }
-    @keyframes pane-viewer-tab-thinking-glow-after-soft {
-      0%, 100% {
-        box-shadow:
-          0 0 4px rgba(15, 20, 30, 0.14),
-          0 0 10px rgba(15, 20, 30, 0.08);
-      }
-      50% {
-        box-shadow:
-          0 0 10px rgba(15, 20, 30, 0.32),
-          0 0 20px rgba(15, 20, 30, 0.16);
-      }
+    html[data-theme="soft-light"] .pane-viewer-tab.pane-viewer-tab-thinking .pane-viewer-tab-char {
+      color: rgba(26, 30, 36, 0.5);
     }
     @media (prefers-reduced-motion: reduce) {
-      .pane-viewer-tab.pane-viewer-tab-thinking::after {
+      .pane-viewer-tab.pane-viewer-tab-thinking .pane-viewer-tab-char {
         animation: none;
-        box-shadow: none;
+        color: rgba(252, 252, 252, 0.6);
+      }
+      html[data-theme="soft-light"] .pane-viewer-tab.pane-viewer-tab-thinking .pane-viewer-tab-char {
+        color: rgba(26, 30, 36, 0.6);
       }
     }
     .pane-viewer-carousel {
@@ -3433,6 +3418,50 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .msg-highlight {
       animation: msg-highlight 1.2s ease-out forwards;
       border-radius: 20px;
+    }
+    /* ユーザーメッセージへの返信ジャンプ: 本文ではなく本文下の区切り線がふんわり発光 */
+    @keyframes msg-highlight-user-divider {
+      0% {
+        background: rgba(255, 255, 255, 0.55);
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.42), 0 0 24px rgba(255, 255, 255, 0.16);
+      }
+      45% {
+        background: rgba(255, 255, 255, 0.22);
+        box-shadow: 0 0 6px rgba(255, 255, 255, 0.22);
+      }
+      100% {
+        background: var(--muted);
+        box-shadow: none;
+      }
+    }
+    @keyframes msg-highlight-user-divider-soft {
+      0% {
+        background: rgba(15, 20, 30, 0.38);
+        box-shadow: 0 0 10px rgba(15, 20, 30, 0.22), 0 0 22px rgba(15, 20, 30, 0.1);
+      }
+      45% {
+        background: rgba(15, 20, 30, 0.16);
+        box-shadow: 0 0 6px rgba(15, 20, 30, 0.12);
+      }
+      100% {
+        background: var(--muted);
+        box-shadow: none;
+      }
+    }
+    .message.user .user-message-divider.msg-highlight-user-divider {
+      animation: msg-highlight-user-divider 1.35s ease-out forwards;
+    }
+    html[data-theme="soft-light"] .message.user .user-message-divider.msg-highlight-user-divider {
+      animation-name: msg-highlight-user-divider-soft;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .message.user .user-message-divider.msg-highlight-user-divider {
+        animation: msg-highlight-user-divider-reduced 0.9s ease-out forwards;
+      }
+      @keyframes msg-highlight-user-divider-reduced {
+        0%, 100% { opacity: 1; background: var(--muted); box-shadow: none; }
+        40% { opacity: 0.45; }
+      }
     }
     @keyframes msg-highlight-rail {
       0%   { opacity: 0; }
@@ -5200,7 +5229,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }).join("");
       overlay.innerHTML = `<div class="add-agent-panel"><h3>Add Agent</h3><div class="add-agent-grid">${chipsHtml}</div><div class="add-agent-actions"><button type="button" class="add-agent-cancel">Cancel</button><button type="button" class="add-agent-confirm" disabled>Add</button></div></div>`;
       document.body.appendChild(overlay);
-      requestAnimationFrame(() => overlay.classList.add("visible"));
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => overlay.classList.add("visible"));
+      });
       const confirmBtn = overlay.querySelector(".add-agent-confirm");
       overlay.querySelectorAll(".add-agent-chip").forEach((chip) => {
         chip.addEventListener("click", () => {
@@ -5212,7 +5243,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       });
       const closeModal = () => {
         overlay.classList.remove("visible");
-        setTimeout(() => overlay.remove(), 200);
+        setTimeout(() => overlay.remove(), 420);
       };
       overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
       overlay.querySelector(".add-agent-cancel").addEventListener("click", closeModal);
@@ -6924,13 +6955,24 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const messageBox = target.querySelector(".message") || target;
       const isAgentMessage = rowTarget.classList?.contains("message-row") && !rowTarget.classList.contains("user");
       const bodyTarget = target.querySelector(".md-body") || messageBox || target;
-      bodyTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+      const scrollTarget = messageBodyRow || messageBox || target;
+      scrollTarget.scrollIntoView({ behavior: "smooth", block: "center" });
       if (isAgentMessage) {
         const railTarget = messageBodyRow || messageBox;
         railTarget.classList.remove("msg-highlight-rail");
         void railTarget.offsetWidth;
         railTarget.classList.add("msg-highlight-rail");
         railTarget.addEventListener("animationend", () => railTarget.classList.remove("msg-highlight-rail"), { once: true });
+        return;
+      }
+      if (rowTarget.classList?.contains("user")) {
+        const dividerTarget = target.querySelector(".user-message-divider");
+        if (dividerTarget) {
+          dividerTarget.classList.remove("msg-highlight-user-divider");
+          void dividerTarget.offsetWidth;
+          dividerTarget.classList.add("msg-highlight-user-divider");
+          dividerTarget.addEventListener("animationend", () => dividerTarget.classList.remove("msg-highlight-user-divider"), { once: true });
+        }
         return;
       }
       bodyTarget.classList.remove("msg-highlight");
@@ -7576,10 +7618,18 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (idx < 0) return;
       paneViewerCarousel.scrollTo({ left: idx * paneViewerCarousel.offsetWidth, behavior: "smooth" });
     };
+    const paneViewerTabCharsHtml = (name) => {
+      let idx = 0;
+      return [...String(name)].map((ch) => {
+        const i = idx++;
+        const inner = ch === " " ? "&nbsp;" : escapeHtml(ch);
+        return `<span class="pane-viewer-tab-char" style="--char-i:${i}">${inner}</span>`;
+      }).join("");
+    };
     const buildPaneViewer = () => {
       paneViewerAgents = availableTargets.filter(t => t !== "others");
       paneViewerTabs.innerHTML = `<div class="pane-viewer-tab-indicator"></div>` + paneViewerAgents.map((a, i) =>
-        `<button class="pane-viewer-tab${i === 0 ? " active" : ""}" data-agent="${escapeHtml(a)}">${escapeHtml(a)}</button>`
+        `<button class="pane-viewer-tab${i === 0 ? " active" : ""}" data-agent="${escapeHtml(a)}">${paneViewerTabCharsHtml(a)}</button>`
       ).join("");
       paneViewerCarousel.innerHTML = paneViewerAgents.map(a =>
         `<div class="pane-viewer-slide" data-agent="${escapeHtml(a)}">Loading...</div>`
