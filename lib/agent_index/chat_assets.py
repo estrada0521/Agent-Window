@@ -265,7 +265,7 @@ __AGENT_ACCENT_CSS__
     .shell > .hub-page-header > .hub-page-header-top {
       position: relative;
       z-index: 2;
-      padding-bottom: 8px;
+      padding-bottom: 0;
     }
     .shell > .hub-page-header > .hub-page-menu-panel {
       position: fixed;
@@ -285,9 +285,9 @@ __AGENT_ACCENT_CSS__
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
       opacity: 0;
-      transform: translateY(-8px);
+      transform: translateY(0);
       pointer-events: none;
-      padding: 8px 0 calc(18px + env(safe-area-inset-bottom, 0px));
+      padding: 0 0 calc(18px + env(safe-area-inset-bottom, 0px));
       transition:
         opacity 180ms ease,
         transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -525,10 +525,10 @@ __AGENT_ACCENT_CSS__
     }
     #fileDropdown {
       position: fixed;
-      background: var(--bg);
+      background: transparent;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
-      border: 0.5px solid rgba(255,255,255,0.22);
+      border: none;
       border-radius: 16px 16px 0 0;
       overflow-y: auto;
       overflow-x: hidden;
@@ -927,44 +927,28 @@ __AGENT_ACCENT_CSS__
     }
     #cmdDropdown {
       position: fixed;
-      left: 0;
-      bottom: 0;
-      width: auto;
-      max-width: 280px;
-      background: rgba(var(--bg-rgb, 10, 10, 10), 0.72);
-      backdrop-filter: blur(40px) saturate(180%);
-      -webkit-backdrop-filter: blur(40px) saturate(180%);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-left: none;
-      border-radius: 0 16px 16px 0;
-      box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border: none;
+      border-radius: 16px 16px 0 0;
       overflow-y: auto;
       overflow-x: hidden;
-      scrollbar-width: none;
-      z-index: 950;
+      max-height: 200px;
+      z-index: 390;
       display: none;
       padding: 0;
       box-sizing: border-box;
       will-change: transform, opacity;
-      transform: translateX(-100%);
-      opacity: 0;
     }
     #cmdDropdown::-webkit-scrollbar { display: none; }
     #cmdDropdown.visible {
       display: block !important;
-      animation: cmdSlideIn 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: dropdownIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     #cmdDropdown.closing {
       display: block !important;
-      animation: cmdSlideOut 200ms ease-in forwards;
-    }
-    @keyframes cmdSlideIn {
-      from { transform: translateX(-100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes cmdSlideOut {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(-100%); opacity: 0; }
+      animation: dropdownOut 150ms ease-in forwards;
     }
     .cmd-item {
       display: flex;
@@ -3457,7 +3441,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       background: var(--surface-alt) !important;
     }
     #fileDropdown {
-      background: var(--bg) !important;
+      background: transparent !important;
     }
     .trace-tooltip {
       background: rgba(var(--bg-rgb), 0.92);
@@ -6397,7 +6381,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       
       const query = match[0].slice(1).toLowerCase();
       const files = await loadFiles();
-      const matches = findFileMatches(files, query);
+      const matches = query
+        ? findFileMatches(files, query)
+        : files.slice(0, 30);
       
       if (!matches.length) {
         closeDrop();
@@ -6540,12 +6526,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const taRect = messageInput.getBoundingClientRect();
       const compRect = document.getElementById("composer").getBoundingClientRect();
       const pickerRect = document.getElementById("targetPicker").getBoundingClientRect();
-      const composerH = document.getElementById("composer").offsetHeight;
-      const shell = document.querySelector(".shell");
-      const shellRect = shell ? shell.getBoundingClientRect() : { left: 0 };
-      cmdDrop.style.left = shellRect.left + "px";
-      cmdDrop.style.bottom = (composerH + 16) + "px";
-      cmdDrop.style.maxHeight = Math.min(200, window.innerHeight - composerH - 8) + "px";
+      const availableSpace = compRect.top - 20;
+      cmdDrop.style.left = taRect.left + "px";
+      cmdDrop.style.width = taRect.width + "px";
+      cmdDrop.style.minWidth = "0";
+      cmdDrop.style.bottom = (window.innerHeight - pickerRect.top + 56) + "px";
+      cmdDrop.style.maxHeight = Math.min(208, availableSpace) + "px";
       if (!cmdDrop.classList.contains("visible")) {
         if (_cmdTimeout) { clearTimeout(_cmdTimeout); _cmdTimeout = null; }
         cmdDrop.classList.remove("closing");
@@ -6776,7 +6762,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         target.closest(".reply-btn") ||
         target.closest(".reply-banner") ||
         target.closest("#composer") ||
-        target.closest("#fileDropdown")
+        target.closest("#fileDropdown") ||
+        target.closest("#cmdDropdown")
       ) {
         return;
       }
