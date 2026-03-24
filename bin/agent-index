@@ -2381,9 +2381,11 @@ HUB_HOME_HTML = """<!doctype html>
     :not([data-starfield="off"]) .shell { background: transparent !important; position: relative; z-index: 2; }
     :not([data-starfield="off"]) .mob-list-wrap { position: relative; z-index: 2; }
     /* ── Chat iframe overlay ── */
-    #chatOverlay { position: fixed; inset: 0; z-index: 9999; background: #000; }
+    #chatOverlay { position: fixed; inset: 0; z-index: 9999; background: #000; overscroll-behavior-y: contain; }
     #chatOverlay[hidden] { display: none !important; }
     #chatFrame { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: block; }
+    /* チャット iframe 表示中: 親ページの縦バウンスで全体が引っ張られるのを抑える（Local のみこの body クラス） */
+    body.hub-chat-overlay-active { overscroll-behavior-y: none; }
   </style>
 </head>
 <body>
@@ -2435,6 +2437,40 @@ HUB_HOME_HTML = """<!doctype html>
     // ── Chat iframe overlay ──
     const _chatOverlay = document.getElementById("chatOverlay");
     const _chatFrame = document.getElementById("chatFrame");
+    let _hubChatParentLayoutMax = 0;
+    let _hubVVBridgeHandler = null;
+    function _bumpHubChatParentLayoutMax() {
+      if (_chatOverlay.hidden) return;
+      const ih = window.innerHeight || 0;
+      const ch = document.documentElement.clientHeight || 0;
+      _hubChatParentLayoutMax = Math.max(_hubChatParentLayoutMax, ih, ch);
+      _postHubLayoutToChat();
+    }
+    function _postHubLayoutToChat() {
+      const w = _chatFrame.contentWindow;
+      if (!w || _chatOverlay.hidden) return;
+      try {
+        w.postMessage({ type: "multiagent-hub-layout", layoutHeight: _hubChatParentLayoutMax }, "*");
+      } catch (_) {}
+    }
+    function _attachHubViewportBridge() {
+      if (_hubVVBridgeHandler) return;
+      _hubVVBridgeHandler = () => { _bumpHubChatParentLayoutMax(); };
+      window.addEventListener("resize", _hubVVBridgeHandler, { passive: true });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", _hubVVBridgeHandler);
+        window.visualViewport.addEventListener("scroll", _hubVVBridgeHandler);
+      }
+    }
+    function _detachHubViewportBridge() {
+      if (!_hubVVBridgeHandler) return;
+      window.removeEventListener("resize", _hubVVBridgeHandler);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", _hubVVBridgeHandler);
+        window.visualViewport.removeEventListener("scroll", _hubVVBridgeHandler);
+      }
+      _hubVVBridgeHandler = null;
+    }
     function _fitChatOverlay() {
       if (_chatOverlay.hidden) return;
       // 以前は visualViewport に合わせて #chatOverlay の top/height を縮めていた。
@@ -2456,12 +2492,22 @@ HUB_HOME_HTML = """<!doctype html>
         return;
       }
       const freshUrl = url + (url.includes("?") ? "&" : "?") + "ts=" + Date.now();
+      _hubChatParentLayoutMax = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
+      _chatFrame.onload = function() {
+        _bumpHubChatParentLayoutMax();
+        _postHubLayoutToChat();
+      };
+      _attachHubViewportBridge();
+      document.body.classList.add("hub-chat-overlay-active");
       _chatFrame.src = freshUrl;
       _chatOverlay.hidden = false;
       _fitChatOverlay();
       try { sessionStorage.setItem("hub_chat_frame", JSON.stringify({url: freshUrl, name})); } catch(_) {}
     }
     function closeChatFrame() {
+      _detachHubViewportBridge();
+      document.body.classList.remove("hub-chat-overlay-active");
+      _chatFrame.onload = null;
       _chatOverlay.hidden = true;
       _chatOverlay.style.top = "";
       _chatOverlay.style.height = "";
@@ -2483,7 +2529,13 @@ HUB_HOME_HTML = """<!doctype html>
         .then(d => { if (d.chat_url) openChatInFrame(d.chat_url, name); else window.location.href = openHref; })
         .catch(() => { window.location.href = openHref; });
     }
-    window.addEventListener("message", function(e) { if (e.data === "hub_close_chat") closeChatFrame(); });
+    window.addEventListener("message", function(e) {
+      if (e.data === "hub_close_chat") closeChatFrame();
+      if (e.data && e.data.type === "multiagent-chat-request-hub-layout" && e.source === _chatFrame.contentWindow) {
+        _bumpHubChatParentLayoutMax();
+        _postHubLayoutToChat();
+      }
+    });
     // Restore active chat on PWA re-launch
     try {
       const saved = sessionStorage.getItem("hub_chat_frame");

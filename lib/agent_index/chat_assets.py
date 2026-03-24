@@ -1061,6 +1061,14 @@ __AGENT_ACCENT_CSS__
       height: var(--hub-iframe-lock-height, 100dvh);
       min-height: var(--hub-iframe-lock-height, 100dvh);
     }
+    /* iframe 内: 親ページへバウンスが伝播しにくくし、タイムラインは縦スクロールのみ */
+    html[data-hub-iframe-chat="1"],
+    html[data-hub-iframe-chat="1"] body {
+      overscroll-behavior-y: contain;
+    }
+    html[data-hub-iframe-chat="1"] main {
+      overscroll-behavior-y: contain;
+    }
     .composer {
       position: relative !important;
       right: auto !important;
@@ -3759,23 +3767,43 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let currentServerInstance = SERVER_INSTANCE_SEED;
     const timeline = document.getElementById("messages");
     let _hubIframeLayoutMaxH = 0;
+    let _hubIframeLayoutFromParent = 0;
+    const applyHubIframeLockHeight = () => {
+      if (!window.frameElement) return;
+      const local = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
+      _hubIframeLayoutMaxH = Math.max(_hubIframeLayoutMaxH, local);
+      const h = Math.max(_hubIframeLayoutMaxH, _hubIframeLayoutFromParent);
+      if (h > 0) {
+        document.documentElement.style.setProperty("--hub-iframe-lock-height", h + "px");
+      }
+    };
     const bumpHubIframeLayoutLock = () => {
       if (!window.frameElement) return;
-      _hubIframeLayoutMaxH = Math.max(
-        _hubIframeLayoutMaxH,
-        window.innerHeight || 0,
-        document.documentElement.clientHeight || 0
-      );
-      document.documentElement.style.setProperty("--hub-iframe-lock-height", _hubIframeLayoutMaxH + "px");
+      applyHubIframeLockHeight();
+    };
+    const requestHubParentLayout = () => {
+      if (!window.frameElement) return;
+      try {
+        window.parent.postMessage({ type: "multiagent-chat-request-hub-layout" }, "*");
+      } catch (_) {}
     };
     if (window.frameElement) {
       document.documentElement.dataset.hubIframeChat = "1";
+      window.addEventListener("message", (e) => {
+        if (!e.data || e.data.type !== "multiagent-hub-layout") return;
+        if (e.source !== window.parent) return;
+        const lh = Number(e.data.layoutHeight) || 0;
+        if (lh <= 0) return;
+        _hubIframeLayoutFromParent = lh;
+        applyHubIframeLockHeight();
+      });
       bumpHubIframeLayoutLock();
       window.addEventListener("resize", bumpHubIframeLayoutLock, { passive: true });
       if (window.visualViewport) {
         window.visualViewport.addEventListener("resize", bumpHubIframeLayoutLock);
         window.visualViewport.addEventListener("scroll", bumpHubIframeLayoutLock);
       }
+      requestHubParentLayout();
     }
     const getScrollMetrics = () => {
       return {
@@ -4042,6 +4070,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         focusComposerTextarea({ sync: immediateFocus });
         return;
       }
+      requestHubParentLayout();
       bumpHubIframeLayoutLock();
       composerOverlay.hidden = false;
       composerOverlay.classList.remove("closing");
