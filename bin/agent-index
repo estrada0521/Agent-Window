@@ -2449,8 +2449,18 @@ HUB_HOME_HTML = """<!doctype html>
     function _postHubLayoutToChat() {
       const w = _chatFrame.contentWindow;
       if (!w || _chatOverlay.hidden) return;
+      const vv = window.visualViewport;
+      const vvH = vv ? vv.height : window.innerHeight;
       try {
-        w.postMessage({ type: "multiagent-hub-layout", layoutHeight: _hubChatParentLayoutMax }, "*");
+        w.postMessage(
+          {
+            type: "multiagent-hub-layout",
+            layoutHeight: _hubChatParentLayoutMax,
+            parentInnerHeight: window.innerHeight,
+            parentVvHeight: vvH,
+          },
+          "*"
+        );
       } catch (_) {}
     }
     function _attachHubViewportBridge() {

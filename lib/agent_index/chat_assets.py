@@ -1068,6 +1068,12 @@ __AGENT_ACCENT_CSS__
     }
     html[data-hub-iframe-chat="1"] main {
       overscroll-behavior-y: contain;
+      /* 親 Hub の innerHeight と visualViewport.height の差 ≒ Safari 上下クロム。引っ込むと gap→0 で下端が Public に近づく */
+      padding-bottom: calc(var(--composer-height, 0px) + var(--latest-message-offset, 34vh) + var(--hub-parent-chrome-gap, 0px));
+    }
+    html[data-hub-iframe-chat="1"] #scrollToBottomBtn,
+    html[data-hub-iframe-chat="1"] #composerFabBtn {
+      bottom: calc(var(--floating-btn-bottom, 160px) + var(--hub-parent-chrome-gap, 0px));
     }
     .composer {
       position: relative !important;
@@ -3793,9 +3799,16 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         if (!e.data || e.data.type !== "multiagent-hub-layout") return;
         if (e.source !== window.parent) return;
         const lh = Number(e.data.layoutHeight) || 0;
-        if (lh <= 0) return;
-        _hubIframeLayoutFromParent = lh;
-        applyHubIframeLockHeight();
+        if (lh > 0) {
+          _hubIframeLayoutFromParent = lh;
+          applyHubIframeLockHeight();
+        }
+        const pih = Number(e.data.parentInnerHeight);
+        const pvh = Number(e.data.parentVvHeight);
+        if (pih > 0 && pvh >= 0) {
+          const gap = Math.max(0, Math.round(pih - pvh));
+          document.documentElement.style.setProperty("--hub-parent-chrome-gap", gap + "px");
+        }
       });
       bumpHubIframeLayoutLock();
       window.addEventListener("resize", bumpHubIframeLayoutLock, { passive: true });
