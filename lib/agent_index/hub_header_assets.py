@@ -28,6 +28,28 @@ HUB_PAGE_HEADER_CSS = """
     html[data-theme="soft-light"] .hub-page-header {
       background: linear-gradient(rgba(255, 255, 255, 0.9) 0%, rgba(244, 244, 242, 0) 100%);
     }
+    /* メニュー展開時: パネルとトップ行だけ同色（親全体に blur を付けない＝パネルが透ける事故を避ける） */
+    .hub-page-header:has(.hub-page-menu-panel.open) {
+      background: transparent;
+    }
+    html[data-theme="soft-light"] .hub-page-header:has(.hub-page-menu-panel.open) {
+      background: transparent;
+    }
+    .hub-page-header:has(.hub-page-menu-panel.open) .hub-page-header-top {
+      position: relative;
+      z-index: 1;
+      background: rgba(var(--bg-rgb, 38, 38, 36), 0.72);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+    }
+    html[data-theme="soft-light"] .hub-page-header:has(.hub-page-menu-panel.open) .hub-page-header-top {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px) saturate(120%);
+      -webkit-backdrop-filter: blur(12px) saturate(120%);
+    }
+    .hub-page-header:has(.hub-page-menu-panel.open) .hub-page-header-shadow {
+      opacity: 0;
+    }
     .hub-page-header.header-hidden {
       opacity: 0;
       pointer-events: none;
