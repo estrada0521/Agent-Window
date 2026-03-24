@@ -292,12 +292,25 @@ class ChatRuntime:
             return entries[-l:]
         return entries
 
+    def tmux_session_active(self) -> bool:
+        """True if the tmux session still exists (live multiagent session)."""
+        try:
+            r = subprocess.run(
+                [*self.tmux_prefix, "has-session", "-t", self.session_name],
+                capture_output=True,
+                timeout=2,
+                check=False,
+            )
+            return r.returncode == 0
+        except Exception:
+            return self.session_is_active
+
     def session_metadata(self):
         session_slug = quote(self.session_name, safe="")
         return {
             "server_instance": self.server_instance,
             "session": self.session_name,
-            "active": self.session_is_active,
+            "active": self.tmux_session_active(),
             "source": str(self.index_path),
             "workspace": self.workspace,
             "log_dir": self.log_dir,
@@ -310,12 +323,18 @@ class ChatRuntime:
     def payload(self, limit_override=None):
         self.ensure_commit_announcements()
         meta = self.session_metadata()
+        live = meta["active"]
+        # When the tmux session is up, always use live MULTIAGENT_AGENTS so target chips match panes.
+        if live:
+            targets_out = self.active_agents()
+        else:
+            targets_out = list(self.targets) if self.targets else self.active_agents()
         return json.dumps(
             {
                 **meta,
                 "filter": self.filter_agent or "all",
                 "follow": self.follow_mode,
-                "targets": self.targets,
+                "targets": targets_out,
                 "entries": self.read_entries(limit_override=limit_override),
             },
             ensure_ascii=True,

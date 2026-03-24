@@ -4548,7 +4548,10 @@ if [[ -z "$SESSION_WORKSPACE" ]]; then
 fi
 SESSION_LOG_DIR="$(resolve_session_log_dir)"
 INDEX_FILE="${SESSION_LOG_DIR}/.agent-index.jsonl"
-if [[ ! -f "$INDEX_FILE" ]]; then
+# If the canonical index is missing but tmux still has this session, keep the canonical path
+# (empty log) instead of reusing an older archived log for the same session name — that
+# mismatch made new sessions look "archived" and cleared target chips.
+if [[ ! -f "$INDEX_FILE" ]] && ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
   INDEX_FILE="$(latest_archived_index_file "$SESSION_NAME" || true)"
 fi
 
@@ -4993,10 +4996,11 @@ class Handler(BaseHTTPRequestHandler):
             return
         if parsed.path == "/session-state":
             try:
+                _live = runtime.tmux_session_active()
                 body = json.dumps({
                     "session": session_name,
-                    "active": bool(runtime.session_is_active),
-                    "targets": runtime.active_agents(),
+                    "active": _live,
+                    "targets": runtime.active_agents() if _live else (runtime.targets or runtime.active_agents()),
                     "statuses": runtime.agent_statuses(),
                     "totals": runtime.load_thinking_totals(),
                 }, ensure_ascii=True).encode("utf-8")
