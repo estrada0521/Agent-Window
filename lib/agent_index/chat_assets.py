@@ -145,6 +145,8 @@ __AGENT_ACCENT_CSS__
       --error: #ef4444;
       --error-bright: #f87171;
       --latest-message-offset: 34vh;
+      /* Extra leading gutter for user messages (left; adds to main padding). */
+      --user-message-inline-start: max(96px, env(safe-area-inset-left, 0px));
     }
     .shell > .hub-page-header {
       position: absolute;
@@ -2020,12 +2022,15 @@ __AGENT_ACCENT_CSS__
     .message-row.animate-in {
       animation: msgReveal 180ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
+    /* User messages: large fixed inset on the left; content left-aligned within the row. */
     .message-row.user {
-      justify-content: flex-end;
-      transform-origin: right center;
-      margin-bottom: 0px;
-      padding-left: 0;
+      justify-content: flex-start;
+      width: 100%;
+      min-width: 0;
+      padding-left: var(--user-message-inline-start);
       padding-right: 0;
+      transform-origin: left center;
+      margin-bottom: 0px;
       box-sizing: border-box;
     }
     .message-wrap {
@@ -2070,6 +2075,7 @@ __AGENT_ACCENT_CSS__
       box-shadow: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
+      text-align: left;
     }
     .message.user .md-body p,
     .message.user .md-body li,
@@ -2089,7 +2095,8 @@ __AGENT_ACCENT_CSS__
       display: block;
       width: fit-content;
       max-width: 100%;
-      margin-left: auto;
+      margin-left: 0;
+      margin-right: auto;
     }
     .message.user .message-body-row.has-structured-block {
       width: 100%;
@@ -2116,7 +2123,8 @@ __AGENT_ACCENT_CSS__
     .message.user .user-collapse-toggle {
       display: none;
       position: absolute;
-      right: 12px;
+      left: 0;
+      right: auto;
       bottom: 10px;
       z-index: 2;
       padding: 0;
@@ -2227,19 +2235,14 @@ __AGENT_ACCENT_CSS__
       max-width: 100%;
       box-sizing: border-box;
       margin-top: 6px;
-      margin-left: auto;
+      margin-left: 0;
+      margin-right: auto;
       padding-top: 8px;
       gap: 7px;
       font-size: 13px;
-      justify-content: flex-end;
-      /* Rule between body and meta row (right-aligned band; same as message column) */
-      background-image: linear-gradient(
-        to right,
-        transparent 0,
-        transparent max(0px, calc(100% - 760px)),
-        var(--muted) max(0px, calc(100% - 760px)),
-        var(--muted) 100%
-      );
+      justify-content: flex-start;
+      /* Rule between body and meta row (full width of user column inside padding) */
+      background-image: linear-gradient(var(--muted), var(--muted));
       background-size: 100% 1px;
       background-repeat: no-repeat;
       background-position: 0 0;
@@ -2287,10 +2290,14 @@ __AGENT_ACCENT_CSS__
     }
     .message-row.user .message-wrap {
       order: 1;
-      flex-direction: row-reverse;
-      margin-right: 0;
+      flex-direction: row;
+      align-items: flex-start;
+      margin-right: auto;
+      margin-left: 0;
       gap: 8px;
-      width: min(760px, 100%);
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
     }
 __AGENT_MESSAGE_SELECTORS__ {
       background: rgba(0, 0, 0, 0.68);
@@ -2507,7 +2514,7 @@ __AGENT_THINKING_GLOW_CSS__
       margin-bottom: 8px;
     }
     .message-row.user .meta {
-      justify-content: flex-end;
+      justify-content: flex-start;
     }
     .sender {
       padding: 2px 0;
