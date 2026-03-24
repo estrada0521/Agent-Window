@@ -367,6 +367,7 @@ tmux_socket = sys.argv[4]
 sys.path.insert(0, str(repo_root))
 sys.path.insert(0, str(repo_root / "lib"))
 from agent_index.hub_core import HubRuntime
+from agent_index.state_core import available_theme_choices, theme_description
 
 hub = HubRuntime(repo_root, script_path, tmux_socket)
 load_hub_settings = hub.load_hub_settings
@@ -2693,6 +2694,12 @@ def hub_settings_html(saved=False):
     chat_tts = settings.get("chat_tts", False)
     starfield = settings.get("starfield", False)
     font_choices = available_chat_font_choices()
+    theme_choices = available_theme_choices()
+    theme_options = "".join(
+        f'<option value="{html.escape(value)}"' + (' selected' if value == theme else '') + f'>{html.escape(label)}</option>'
+        for value, label in theme_choices
+    )
+    theme_hint = theme_description(theme) or "Theme preset."
     font_options = lambda selected: "".join(
         f'<option value="{html.escape(value)}"' + (' selected' if value == selected else '') + f'>{html.escape(label)}</option>'
         for value, label in font_choices
@@ -2995,9 +3002,9 @@ def hub_settings_html(saved=False):
       <div class="field">
         <label class="label" for="theme">Theme</label>
         <select id="theme" name="theme">
-          <option value="black-hole" selected>Black Hole</option>
+          {theme_options}
         </select>
-        <div class="hint">Pure black theme.</div>
+        <div class="hint">{html.escape(theme_hint)}</div>
       </div>
       <div class="field">
         <div class="label">Chat Fonts</div>

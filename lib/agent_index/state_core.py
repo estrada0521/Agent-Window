@@ -11,6 +11,22 @@ import sys
 import socket
 from pathlib import Path
 
+THEME_PRESETS = {
+    "black-hole": {
+        "label": "Black Hole",
+        "description": "Pure black theme.",
+    },
+}
+
+
+def available_theme_choices() -> list[tuple[str, str]]:
+    return [(key, str(meta.get("label") or key)) for key, meta in THEME_PRESETS.items()]
+
+
+def theme_description(theme_key: str) -> str:
+    meta = THEME_PRESETS.get(str(theme_key or "").strip().lower(), {})
+    return str(meta.get("description") or "")
+
 
 def _base_agent_name(name: str) -> str:
     """Strip instance suffix: 'claude-1' → 'claude', 'gemini' → 'gemini'."""
@@ -31,7 +47,7 @@ def _apply_hub_settings(raw: dict, settings: dict, *, message_limit_cap: int, mi
         return settings
 
     theme = str(raw.get("theme") or settings["theme"]).strip().lower()
-    if theme in {"black-hole"}:
+    if theme in THEME_PRESETS:
         settings["theme"] = theme
 
     agent_font_mode = str(raw.get("agent_font_mode") or settings["agent_font_mode"]).strip().lower()
