@@ -2437,14 +2437,13 @@ HUB_HOME_HTML = """<!doctype html>
     const _chatFrame = document.getElementById("chatFrame");
     function _fitChatOverlay() {
       if (_chatOverlay.hidden) return;
-      const vv = window.visualViewport;
-      if (!vv) return;
-      _chatOverlay.style.top = vv.offsetTop + "px";
-      _chatOverlay.style.height = vv.height + "px";
-    }
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", _fitChatOverlay);
-      window.visualViewport.addEventListener("scroll", _fitChatOverlay);
+      // 以前は visualViewport に合わせて #chatOverlay の top/height を縮めていた。
+      // その結果 iframe 内の window.innerHeight / 100vh も「キーボード上の帯」だけになり、
+      // チャットの .composer-overlay（flex 中央）が「画面全体の中央」ではなく
+      // 「押し上げ後の領域の中央」に寄る。Public（トップレベル）との差の主因だった。
+      // オーバーレイは CSS の position:fixed; inset:0 のままフルレイアウト高さを維持する。
+      _chatOverlay.style.top = "";
+      _chatOverlay.style.height = "";
     }
     function shouldUseChatOverlay() {
       const host = window.location.hostname || "";
