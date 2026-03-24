@@ -309,6 +309,26 @@ __AGENT_ACCENT_CSS__
       overflow-y: auto;
       overflow-x: hidden;
     }
+    /* ハンバーガー第1層 + Pane Trace 第2層（git ブランチ→差分と同じスタック） */
+    #hubPageMenuPanel.open.hub-menu-mode-pane {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+    #hubPageMenuPanel.open.hub-menu-mode-pane .hub-main-menu-stack {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    #hubPageMenuPanel.open.hub-menu-mode-pane .hub-main-menu-list-view {
+      display: none;
+    }
+    .hub-main-menu-stack {
+      display: block;
+    }
     #gitBranchPanel.git-branch-mode-detail.open {
       overflow: hidden;
       display: flex;
@@ -1764,23 +1784,22 @@ __AGENT_ACCENT_CSS__
       opacity: 0.2;
       cursor: default;
     }
-    /* Mobile Pane Viewer（.hub-page-menu-panel と同じ面・全高／body 直下のまま） */
+    /* Pane Trace: タブ＋カルーセルのみ（戻る行なし・ハンバーガーで一覧へ）。下余白は親パネル＋スライド safe-area */
     .pane-viewer {
       display: none;
-      position: fixed;
-      top: var(--header-menu-top, calc(44px + env(safe-area-inset-top)));
-      left: var(--header-menu-left, 0px);
-      width: var(--header-menu-width, 100vw);
-      right: auto;
-      bottom: 0;
-      z-index: 900;
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+      z-index: 1;
+      overflow: hidden;
       background: rgba(var(--bg-rgb, 38, 38, 36), 0.72);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border-top: 0.5px solid rgba(255, 255, 255, 0.05);
+      border-top: none;
       border-bottom: none;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.32);
-      padding: 0 0 calc(18px + env(safe-area-inset-bottom, 0px));
+      box-shadow: none;
+      padding: 0;
       box-sizing: border-box;
       flex-direction: column;
     }
@@ -1793,6 +1812,7 @@ __AGENT_ACCENT_CSS__
     }
     .pane-viewer.visible {
       display: flex;
+      flex-direction: column;
     }
     .pane-viewer-tabs {
       display: flex;
@@ -1859,6 +1879,7 @@ __AGENT_ACCENT_CSS__
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       padding: 10px 12px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
       font-family: "jetbrainsMono", Menlo, Monaco, "Cascadia Mono", "SF Mono", monospace;
       font-size: 10px;
       line-height: 1.35;
@@ -1867,20 +1888,6 @@ __AGENT_ACCENT_CSS__
       overflow-wrap: anywhere;
       word-break: normal;
       box-sizing: border-box;
-    }
-    .pane-viewer-close {
-      position: absolute;
-      top: -4px;
-      left: 10px;
-      border: none;
-      background: transparent;
-      color: var(--text);
-      cursor: pointer;
-      padding: 10px 0;
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
     .composer-shell {
       display: grid;
@@ -3556,7 +3563,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
 <body>
   <canvas id="starfield"></canvas>
   <div id="traceTooltip" class="trace-tooltip"></div>
-  <div id="paneViewer" class="pane-viewer"><button class="pane-viewer-close" id="paneViewerClose" type="button" aria-label="Close terminal trace"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><div class="pane-viewer-tabs" id="paneViewerTabs"></div><div class="pane-viewer-carousel" id="paneViewerCarousel"></div></div>
   <div id="fileDropdown"></div>
   <div id="cmdDropdown"></div>
   <div id="fileModal" class="file-modal" hidden>
@@ -5422,6 +5428,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     });
     const rightMenuBtn = document.getElementById("hubPageMenuBtn");
     const rightMenuPanel = document.getElementById("hubPageMenuPanel");
+    let paneViewerInterval = null;
     const gitBranchMenuBtn = document.getElementById("gitBranchMenuBtn");
     const gitBranchPanel = document.getElementById("gitBranchPanel");
     const attachedFilesMenuBtn = document.getElementById("attachedFilesMenuBtn");
@@ -5446,6 +5453,16 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     const needsHeaderViewportMetrics = () =>
       hasOpenHeaderMenu() || !!document.getElementById("paneViewer")?.classList.contains("visible");
+    function exitPaneTraceMode() {
+      const paneEl = document.getElementById("paneViewer");
+      if (paneEl) paneEl.classList.remove("visible");
+      rightMenuPanel?.classList.remove("hub-menu-mode-pane");
+      if (paneViewerInterval) {
+        clearInterval(paneViewerInterval);
+        paneViewerInterval = null;
+      }
+      syncHeaderMenuFocus();
+    }
     const envBadge = document.getElementById("hubPageEnvBadge");
     if (envBadge) {
       const host = String(location.hostname || "");
@@ -5892,6 +5909,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     const closeHeaderMenus = () => {
       closeGitBranchInlineDiff();
+      exitPaneTraceMode();
       gitBranchPanel?.classList.remove("open");
       rightMenuPanel?.classList.remove("open");
       attachedFilesPanel?.classList.remove("open");
@@ -5915,11 +5933,16 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       panel.hidden = !nextOpen;
       panel.classList.toggle("open", nextOpen);
       button.classList.toggle("open", nextOpen);
+      if (!nextOpen && panel === rightMenuPanel) exitPaneTraceMode();
       syncHeaderMenuFocus();
     };
     rightMenuBtn?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (rightMenuPanel?.classList.contains("open") && rightMenuPanel.classList.contains("hub-menu-mode-pane")) {
+        exitPaneTraceMode();
+        return;
+      }
       toggleHeaderMenu(rightMenuPanel, rightMenuBtn, gitBranchPanel, gitBranchMenuBtn);
       if (attachedFilesPanel) {
         attachedFilesPanel.hidden = true;
@@ -5933,6 +5956,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       event.stopPropagation();
       toggleHeaderMenu(gitBranchPanel, gitBranchMenuBtn, attachedFilesPanel, attachedFilesMenuBtn);
       if (rightMenuPanel) {
+        exitPaneTraceMode();
         rightMenuPanel.hidden = true;
         rightMenuPanel.classList.remove("open");
       }
@@ -5950,6 +5974,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       event.stopPropagation();
       toggleHeaderMenu(attachedFilesPanel, attachedFilesMenuBtn, gitBranchPanel, gitBranchMenuBtn);
       if (rightMenuPanel) {
+        exitPaneTraceMode();
         rightMenuPanel.hidden = true;
         rightMenuPanel.classList.remove("open");
       }
@@ -5961,6 +5986,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       closeFileModal();
       toggleHeaderMenu(attachedFilesPanel, attachedFilesMenuBtn, gitBranchPanel, gitBranchMenuBtn);
       if (rightMenuPanel) {
+        exitPaneTraceMode();
         rightMenuPanel.hidden = true;
         rightMenuPanel.classList.remove("open");
       }
@@ -7428,9 +7454,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       showThinkingTrace(agent, row);
     });
 
-    // Mobile Pane Viewer
+    // Mobile Pane Viewer（ハンバーガーパネル内の第2層）
     let paneViewerAgents = [];
-    let paneViewerInterval = null;
     const paneViewerEl = document.getElementById("paneViewer");
     const paneViewerTabs = document.getElementById("paneViewerTabs");
     const paneViewerCarousel = document.getElementById("paneViewerCarousel");
@@ -7486,24 +7511,34 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       requestAnimationFrame(() => movePaneViewerIndicator(0));
     };
     const togglePaneViewer = () => {
+      if (!paneViewerEl) return;
       if (paneViewerEl.classList.contains("visible")) {
-        paneViewerEl.classList.remove("visible");
-        if (paneViewerInterval) { clearInterval(paneViewerInterval); paneViewerInterval = null; }
-        syncHeaderMenuFocus();
+        exitPaneTraceMode();
         return;
       }
+      if (gitBranchPanel) {
+        gitBranchPanel.hidden = true;
+        gitBranchPanel.classList.remove("open");
+      }
+      gitBranchMenuBtn?.classList.remove("open");
+      if (attachedFilesPanel) {
+        attachedFilesPanel.hidden = true;
+        attachedFilesPanel.classList.remove("open");
+      }
+      attachedFilesMenuBtn?.classList.remove("open");
+      updateHeaderMenuViewportMetrics();
+      if (rightMenuPanel) {
+        rightMenuPanel.hidden = false;
+        rightMenuPanel.classList.add("open");
+        rightMenuPanel.classList.add("hub-menu-mode-pane");
+      }
+      rightMenuBtn?.classList.add("open");
       buildPaneViewer();
       paneViewerEl.classList.add("visible");
       syncHeaderMenuFocus();
       fetchAllPaneViewerSlides();
       paneViewerInterval = setInterval(fetchAllPaneViewerSlides, 1500);
     };
-    document.getElementById("paneViewerClose")?.addEventListener("click", () => {
-      paneViewerEl.classList.remove("visible");
-      if (paneViewerInterval) { clearInterval(paneViewerInterval); paneViewerInterval = null; }
-      syncHeaderMenuFocus();
-    });
-
     refreshSessionState();
     setInterval(refreshSessionState, 1500);
     setInterval(() => {
@@ -7768,11 +7803,21 @@ CHAT_HEADER_PANELS_HTML = """
 <div class="hub-page-menu-panel" id="gitBranchPanel" hidden></div>
 <div class="hub-page-menu-panel" id="attachedFilesPanel" hidden></div>
 <div class="hub-page-menu-panel" id="hubPageMenuPanel" hidden>
-  <button type="button" class="hub-page-menu-item" data-forward-action="reloadChat"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3v6h-6"></path><path d="M20 9a8 8 0 1 0 2 5.3"></path></svg></span><span class="action-label">Reload</span><span class="action-mobile">Reload</span></button>
-  <button type="button" class="hub-page-menu-item" data-forward-action="addAgent"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path><circle cx="12" cy="12" r="9"></circle></svg></span><span class="action-label">Add Agent</span><span class="action-mobile">Add Agent</span></button>
-  <button type="button" class="hub-page-menu-item" data-forward-action="openTerminal"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></span><span class="action-label">Terminal</span><span class="action-mobile">Terminal</span></button>
-  <button type="button" class="hub-page-menu-item" data-forward-action="exportBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span><span class="action-label">Export</span><span class="action-mobile">Export</span></button>
-  <button type="button" class="hub-page-menu-item danger" data-forward-action="killBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="m9 9 6 6"></path><path d="m15 9-6 6"></path></svg></span><span class="action-label">Kill</span><span class="action-mobile">Kill</span></button>
+  <div class="hub-main-menu-stack">
+    <div class="hub-main-menu-list-view">
+      <button type="button" class="hub-page-menu-item" data-forward-action="reloadChat"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3v6h-6"></path><path d="M20 9a8 8 0 1 0 2 5.3"></path></svg></span><span class="action-label">Reload</span><span class="action-mobile">Reload</span></button>
+      <button type="button" class="hub-page-menu-item" data-forward-action="addAgent"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path><circle cx="12" cy="12" r="9"></circle></svg></span><span class="action-label">Add Agent</span><span class="action-mobile">Add Agent</span></button>
+      <button type="button" class="hub-page-menu-item" data-forward-action="openTerminal"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></span><span class="action-label">Terminal</span><span class="action-mobile">Terminal</span></button>
+      <button type="button" class="hub-page-menu-item" data-forward-action="exportBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span><span class="action-label">Export</span><span class="action-mobile">Export</span></button>
+      <button type="button" class="hub-page-menu-item danger" data-forward-action="killBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="m9 9 6 6"></path><path d="m15 9-6 6"></path></svg></span><span class="action-label">Kill</span><span class="action-mobile">Kill</span></button>
+    </div>
+    <div id="paneViewer" class="pane-viewer">
+      <div class="git-commit-detail-body pane-viewer-detail-body">
+        <div class="pane-viewer-tabs" id="paneViewerTabs"></div>
+        <div class="pane-viewer-carousel" id="paneViewerCarousel"></div>
+      </div>
+    </div>
+  </div>
 </div>
 """
 
