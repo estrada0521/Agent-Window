@@ -5401,7 +5401,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if parsed.path == "/hub-logo":
             try:
-                body = (_repo_root / "69b8dae91dba9.webp").read_bytes()
+                body = (_repo_root / "hub-header-logo.webp").read_bytes()
             except Exception:
                 self.send_response(404)
                 self.end_headers()

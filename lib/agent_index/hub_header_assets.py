@@ -4,7 +4,7 @@ import base64
 from pathlib import Path
 
 # Repo ルートの WebP。Hub / チャットのヘッダ `<img>` 用（bin/agent-index と同じファイル名）。
-HUB_HEADER_LOGO_WEBP_NAME = "69b8dae91dba9.webp"
+HUB_HEADER_LOGO_WEBP_NAME = "hub-header-logo.webp"
 
 
 def hub_header_logo_data_uri(repo_root: Path | str) -> str:
