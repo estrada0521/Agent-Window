@@ -65,6 +65,7 @@ LIST_VERBOSE=0
 ALL_SESSIONS=0
 LATEST_SESSION=0
 RENAME_TO=""
+CONTEXT_JSON=0
 # LOG_DIR intentionally left unset; set below based on --log-dir flag
 
 default_tmux_socket_name() {
@@ -656,6 +657,7 @@ usage() {
 Usage:
   multiagent list [--verbose] [--all]
   multiagent [status] [--session NAME] [--all]
+  multiagent context [--session NAME] [--json]
   multiagent brief [--session NAME]
   multiagent add-agent --session NAME --agent AGENT
   multiagent remove-agent --session NAME --agent INSTANCE
@@ -693,6 +695,7 @@ Options:
   --install            Create symlinks in ~/.local/bin for multiagent,
                        agent-index, and agent-send so they can be run from anywhere
   list                 List active sessions for this multiagent install
+  context              Print session/workspace/agent-pane summary for the current pane (or --session)
   brief                Send the agent communication briefing manually
   add-agent            Add a new agent to an existing session
   remove-agent         Remove one agent pane (INSTANCE e.g. claude, gemini-2); chat jsonl is untouched
@@ -814,6 +817,94 @@ show_status() {
   done
 }
 
+print_agent_context() {
+  local session="$1" resolved_note="$2"
+  local workspace bin_dir log_dir agents_str inst upper pane_id pane_title pane_dead pane_cmd
+  local current_pane instance_guess user_panes_csv sock
+
+  workspace="$(tmux show-environment -t "$session" MULTIAGENT_WORKSPACE 2>/dev/null | sed 's/^[^=]*=//' || true)"
+  bin_dir="$(tmux show-environment -t "$session" MULTIAGENT_BIN_DIR 2>/dev/null | sed 's/^[^=]*=//' || true)"
+  log_dir="$(tmux show-environment -t "$session" MULTIAGENT_LOG_DIR 2>/dev/null | sed 's/^[^=]*=//' || true)"
+  sock="$(tmux show-environment -t "$session" MULTIAGENT_TMUX_SOCKET 2>/dev/null | sed 's/^[^=]*=//' || true)"
+  [[ -z "$sock" ]] && sock="$TMUX_SOCKET_NAME"
+  agents_str="$(session_agents_value "$session")"
+  [[ "$agents_str" == "-" ]] && agents_str=""
+
+  current_pane="${TMUX_PANE:-}"
+  instance_guess="${MULTIAGENT_AGENT_NAME:-}"
+  if [[ -z "$instance_guess" && -n "$current_pane" && -n "$agents_str" ]]; then
+    IFS=',' read -ra _ctx_agents <<< "$agents_str"
+    for inst in "${_ctx_agents[@]}"; do
+      [[ -n "$inst" ]] || continue
+      upper="$(printf '%s' "$inst" | tr '[:lower:]-' '[:upper:]_')"
+      pane_id="$(tmux show-environment -t "$session" "MULTIAGENT_PANE_${upper}" 2>/dev/null | sed 's/^[^=]*=//' || true)"
+      [[ "$pane_id" == "$current_pane" ]] && instance_guess="$inst" && break
+    done
+  fi
+  user_panes_csv="$(session_user_pane_value "$session")"
+  if [[ -z "$instance_guess" && -n "$current_pane" && -n "$user_panes_csv" ]]; then
+    case ",${user_panes_csv}," in
+      *,"${current_pane}",*) instance_guess="(user/terminal pane)" ;;
+    esac
+  fi
+
+  if [[ "$CONTEXT_JSON" -eq 1 ]]; then
+    python3 - "$session" "$resolved_note" "$sock" "${MULTIAGENT_SESSION:-}" "$workspace" "$bin_dir" "$log_dir" \
+      "$agents_str" "$current_pane" "$instance_guess" "$user_panes_csv" "$CENTRAL_LOG_DIR" <<'PYEOF'
+import json
+import os
+import sys
+
+session, resolved_note, sock, mult_session, workspace, bin_dir, log_dir = sys.argv[1:8]
+agents_str, current_pane, instance_guess, user_panes_csv, central_log = sys.argv[8:13]
+
+agents = [a.strip() for a in agents_str.split(",") if a.strip()] if agents_str else []
+out = {
+    "tmux_session": session,
+    "session_resolved_via": resolved_note or None,
+    "tmux_socket_effective": sock or None,
+    "MULTIAGENT_SESSION_env": mult_session or None,
+    "workspace": workspace or None,
+    "MULTIAGENT_BIN_DIR": bin_dir or None,
+    "MULTIAGENT_LOG_DIR": log_dir or None,
+    "central_log_repo": central_log or None,
+    "MULTIAGENT_AGENTS": agents,
+    "current_tmux_pane": current_pane or None,
+    "this_pane_role": instance_guess or None,
+    "user_panes_env_csv": user_panes_csv or None,
+}
+print(json.dumps(out, indent=2, ensure_ascii=False))
+PYEOF
+    return 0
+  fi
+
+  printf '%s\n' "## multiagent context"
+  printf '%s\n' ""
+  printf '%s\n' "- **tmux session**: ${session}"
+  printf '%s\n' "- **session resolved via**: ${resolved_note:-unknown}"
+  printf '%s\n' "- **tmux socket (effective)**: ${sock}"
+  [[ -n "${MULTIAGENT_SESSION:-}" ]] && printf '%s\n' "- **MULTIAGENT_SESSION (env)**: ${MULTIAGENT_SESSION}"
+  [[ -n "$workspace" ]] && printf '%s\n' "- **MULTIAGENT_WORKSPACE**: ${workspace}"
+  [[ -n "$bin_dir" ]] && printf '%s\n' "- **MULTIAGENT_BIN_DIR**: ${bin_dir}"
+  [[ -n "$log_dir" ]] && printf '%s\n' "- **MULTIAGENT_LOG_DIR**: ${log_dir}"
+  printf '%s\n' "- **repo central logs**: ${CENTRAL_LOG_DIR}"
+  printf '%s\n' "- **MULTIAGENT_AGENTS**: ${agents_str:-<unset>}"
+  [[ -n "$current_pane" ]] && printf '%s\n' "- **this tmux pane (TMUX_PANE)**: ${current_pane}"
+  [[ -n "$instance_guess" ]] && printf '%s\n' "- **this pane as agent instance (best effort)**: ${instance_guess}"
+  [[ -n "$user_panes_csv" ]] && printf '%s\n' "- **user panes (env csv)**: ${user_panes_csv}"
+  printf '%s\n' ""
+  printf '%s\n' "### Agent panes"
+  if [[ -n "$agents_str" ]]; then
+    session_agent_state_lines "$session"
+  else
+    printf '%s\n' "  (MULTIAGENT_AGENTS unset and no fallback; use \`multiagent status --session '${session}'\`.)"
+  fi
+  printf '%s\n' ""
+  printf '%s\n' "### Hints"
+  printf '%s\n' "- \`agent-send\` uses \`MULTIAGENT_SESSION\` (and tmux); targets come from MULTIAGENT_AGENTS and MULTIAGENT_PANE_* in this session."
+  printf '%s\n' "- Chat jsonl usually lives under **MULTIAGENT_LOG_DIR** / \`<workspace>/logs/<session>/\` (see your layout)."
+}
+
 send_text_to_pane() {
   local pane_id="$1" payload="$2"
   tmux set-buffer -- "$payload"
@@ -917,6 +1008,7 @@ brief_session_agents() {
 while [[ $# -gt 0 ]]; do
   case "$1" in
     list)        MODE="list"; shift ;;
+    context)     MODE="context"; shift ;;
     brief)       MODE="brief"; shift ;;
     add-agent)   MODE="add-agent"; shift ;;
     remove-agent) MODE="remove-agent"; shift ;;
@@ -935,6 +1027,7 @@ while [[ $# -gt 0 ]]; do
     --latest)    LATEST_SESSION=1; shift ;;
     --to)        RENAME_TO="$2"; shift 2 ;;
     --verbose)   LIST_VERBOSE=1; shift ;;
+    --json)      CONTEXT_JSON=1; shift ;;
     --agents|--agent) AGENTS_ARG="$2"; shift 2 ;;
     --layout)    echo "Warning: --layout is deprecated; grid is always used" >&2; shift 2 ;;
     --user-pane) USER_PANE="$2"; shift 2 ;;
@@ -986,6 +1079,47 @@ if [[ "$MODE" == "status" ]]; then
     exit 1
   fi
   show_status "$SESSION_NAME"
+  exit 0
+fi
+
+if [[ "$MODE" == "context" ]]; then
+  command -v tmux >/dev/null 2>&1 || { echo "tmux is required." >&2; exit 1; }
+  resolved_note=""
+  if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
+    if [[ -n "${MULTIAGENT_SESSION:-}" ]]; then
+      SESSION_NAME="$MULTIAGENT_SESSION"
+    elif [[ -n "${MULTIAGENT_SESSION_NAME:-}" ]]; then
+      SESSION_NAME="$MULTIAGENT_SESSION_NAME"
+    fi
+  fi
+  if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
+    if [[ -n "${TMUX:-}" ]]; then
+      SESSION_NAME="$(tmux display-message -p '#{session_name}' 2>/dev/null || true)"
+    fi
+  fi
+  if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
+    SESSION_NAME="$(resolve_target_session_name)" || exit 1
+  fi
+  if [[ -z "$SESSION_NAME" ]]; then
+    echo "Session does not exist or could not be resolved (set MULTIAGENT_SESSION or run inside tmux)." >&2
+    exit 1
+  fi
+  if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+    echo "tmux session not found: $SESSION_NAME" >&2
+    exit 1
+  fi
+  if [[ "$SESSION_NAME_EXPLICIT" -eq 1 ]]; then
+    resolved_note="--session"
+  elif [[ -n "${MULTIAGENT_SESSION:-}" && "$SESSION_NAME" == "${MULTIAGENT_SESSION}" ]]; then
+    resolved_note="MULTIAGENT_SESSION"
+  elif [[ -n "${MULTIAGENT_SESSION_NAME:-}" && "$SESSION_NAME" == "${MULTIAGENT_SESSION_NAME}" ]]; then
+    resolved_note="MULTIAGENT_SESSION_NAME"
+  elif [[ -n "${TMUX:-}" ]]; then
+    resolved_note="tmux client (#{session_name})"
+  else
+    resolved_note="resolve_target_session_name"
+  fi
+  print_agent_context "$SESSION_NAME" "$resolved_note"
   exit 0
 fi
 
