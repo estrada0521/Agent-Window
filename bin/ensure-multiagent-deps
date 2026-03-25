@@ -23,13 +23,25 @@ OS="$(uname -s 2>/dev/null || echo unknown)"
 case "$OS" in
   Darwin)
     if ! command -v brew >/dev/null 2>&1; then
-      echo "multiagent: python3 または tmux がありません。macOS では Homebrew を入れてから:" >&2
-      echo "  brew install ${need[*]}" >&2
-      echo "https://brew.sh" >&2
-      exit 1
+      echo "multiagent: Homebrew がありません。NONINTERACTIVE でインストールします…" >&2
+      export NONINTERACTIVE=1
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || {
+        echo "multiagent: Homebrew のインストールに失敗しました。https://brew.sh を手動で確認してください。" >&2
+        exit 1
+      }
     fi
+    # 同じセッションの後続コマンド向け（brew が PATH に無いことがある）
+    if [[ -x /opt/homebrew/bin/brew ]]; then
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [[ -x /usr/local/bin/brew ]]; then
+      eval "$(/usr/local/bin/brew shellenv)"
+    fi
+    command -v brew >/dev/null 2>&1 || {
+      echo "multiagent: brew が PATH に見つかりません。ターミナルを開き直すか、手動で brew を PATH に追加してください。" >&2
+      exit 1
+    }
     echo "multiagent: 不足しているため Homebrew でインストールします: ${need[*]}" >&2
-    exec brew install "${need[@]}"
+    brew install "${need[@]}"
     ;;
   Linux)
     if [[ -r /etc/os-release ]]; then

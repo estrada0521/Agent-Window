@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Best-effort: install registry agent CLIs (npm/Homebrew) when missing.
-# Skip with MULTIAGENT_SKIP_AGENT_CLI_INSTALL=1.
+# 未導入の各エージェント CLI を対話（--interactive / Y/N）で入れる。既に PATH にあればスキップ。
+# 一括スキップ: MULTIAGENT_SKIP_AGENT_CLI_INSTALL=1
 set -euo pipefail
 
 if [[ "${MULTIAGENT_SKIP_AGENT_CLI_INSTALL:-}" == "1" ]]; then

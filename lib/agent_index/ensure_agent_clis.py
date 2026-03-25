@@ -1,7 +1,7 @@
-"""Best-effort install of third-party agent CLIs when missing from PATH.
+"""Prompt-based install of third-party agent CLIs when missing.
 
-Invoked from bin/ensure-multiagent-agent-clis. Skipped when
-MULTIAGENT_SKIP_AGENT_CLI_INSTALL=1. Does not replace vendor auth / API keys.
+Skipped when MULTIAGENT_SKIP_AGENT_CLI_INSTALL=1.
+Does not replace vendor auth / API keys.
 """
 
 from __future__ import annotations
@@ -69,7 +69,6 @@ Installer = Callable[[], bool]
 
 
 def _installers_for(agent: str) -> list[Installer]:
-    """Return ordered install attempts (try brew/cask before npm where sensible)."""
     brew = _have_brew()
     out: list[Installer] = []
 
@@ -118,27 +117,56 @@ def _installers_for(agent: str) -> list[Installer]:
         return out
 
     if agent == "grok":
-        # Executable name is grok; several community packages exist — try common npm name.
         out.append(lambda: _run_logged(["npm", "install", "-g", "grok-cli"]))
         return out
 
     return []
 
 
-def ensure_node_via_brew() -> bool:
+def ensure_node_npm_for_npm_agents() -> bool:
     if shutil.which("npm"):
         return True
-    if not _have_brew():
+    if _have_brew():
+        return _run_logged(["brew", "install", "node"])
+    if shutil.which("apt-get"):
+        subprocess.run(
+            ["sudo", "apt-get", "update", "-y"],
+            text=True,
+            check=False,
+        )
+        return _run_logged(["sudo", "apt-get", "install", "-y", "nodejs", "npm"])
+    if shutil.which("dnf"):
+        return _run_logged(["sudo", "dnf", "install", "-y", "nodejs", "npm"])
+    if shutil.which("apk"):
+        return _run_logged(["sudo", "apk", "add", "--no-cache", "nodejs", "npm"])
+    print(
+        "multiagent: npm が無く、brew/apt/dnf/apk でも導入できませんでした。Node.js を手動で入れてください。",
+        file=sys.stderr,
+    )
+    return False
+
+
+def prompt_yes(question: str) -> bool:
+    if not sys.stdin.isatty():
+        print(
+            f"multiagent: （TTY ではないためスキップ）{question.strip()} → いいえとして扱います",
+            file=sys.stderr,
+            flush=True,
+        )
         return False
-    return _run_logged(["brew", "install", "node"])
+    try:
+        reply = input(question).strip().lower()
+    except EOFError:
+        return False
+    return reply in ("y", "yes")
 
 
-def ensure_agents(
-    repo_root: Path,
-    agents: Sequence[str] | None,
-    *,
-    install_cursor_hint: bool = True,
-) -> int:
+def _may_need_npm_later(agent: str) -> bool:
+    """aider は brew / pip のみ。それ以外は npm 系のフォールバックがありうる。"""
+    return agent != "aider"
+
+
+def ensure_agents_interactive(repo_root: Path, agents: Sequence[str] | None) -> int:
     want = list(agents) if agents else list(ALL_AGENT_NAMES)
     seen: set[str] = set()
     bases: list[str] = []
@@ -148,50 +176,42 @@ def ensure_agents(
             seen.add(base)
             bases.append(base)
 
-    if not shutil.which("npm") and _have_brew():
-        print("multiagent: npm が無いため Homebrew で node を入れます…", file=sys.stderr, flush=True)
-        if not ensure_node_via_brew():
-            print(
-                "multiagent: node/npm を入れられませんでした。"
-                "手動で Node 20+ をインストールしてから再試行してください。",
-                file=sys.stderr,
-            )
-            return 1
-
-    if not shutil.which("npm"):
-        print(
-            "multiagent: npm が PATH にありません。Node.js / npm を入れてから再試行してください。",
-            file=sys.stderr,
-        )
-        return 1
-
-    failed: list[str] = []
+    npm_bootstrapped = False
 
     for base in bases:
         if base not in ALL_AGENT_NAMES:
             continue
+        disp = AGENTS[base].display_name if base in AGENTS else base
+
         if resolve_agent_executable(repo_root, base):
+            print(f"multiagent: {disp} ({base}): 既に CLI あり → スキップ", file=sys.stderr, flush=True)
             continue
 
         if base == "cursor":
-            if install_cursor_hint:
-                print(
-                    "multiagent: cursor 用の `agent` CLI は Cursor 側のセットアップが必要です。"
-                    "ここではスキップします（未導入なら multiagent が当該ペインを省略します）。",
-                    file=sys.stderr,
-                    flush=True,
-                )
+            print(
+                f"multiagent: {disp} ({base}): Cursor の `agent` CLI は Cursor アプリ側の導入が必要です → スキップ",
+                file=sys.stderr,
+                flush=True,
+            )
             continue
 
         strategies = _installers_for(base)
         if not strategies:
             print(
-                f"multiagent: {base} の自動インストール手順が未定義です。手動で入れてください。",
+                f"multiagent: {base}: 自動インストール手順未定義 → スキップ（手動で入れてください）",
                 file=sys.stderr,
                 flush=True,
             )
-            failed.append(base)
             continue
+
+        if not prompt_yes(f"{disp} ({base}) の CLI をインストールしますか？ [y/N] "):
+            print(f"multiagent: {base}: インストールを見送りました", file=sys.stderr, flush=True)
+            continue
+
+        if _may_need_npm_later(base) and not shutil.which("npm") and not npm_bootstrapped:
+            if not ensure_node_npm_for_npm_agents():
+                return 1
+            npm_bootstrapped = True
 
         ok = False
         for step in strategies:
@@ -200,27 +220,43 @@ def ensure_agents(
                     ok = True
                     break
         if not ok:
-            failed.append(base)
-
-    if failed:
-        names = ", ".join(sorted(set(failed)))
-        print(
-            f"multiagent: 次のエージェント CLI を解決できませんでした: {names}\n"
-            "README や各ベンダーの公式手順で入れてから、不要なエージェントは "
-            "`multiagent --agents claude,codex,...` で限定してください。",
-            file=sys.stderr,
-        )
-        return 1
+            print(
+                f"multiagent: {base}: インストールを試みましたが CLI が見つかりません（ネットワークや公式手順を確認）",
+                file=sys.stderr,
+                flush=True,
+            )
+            return 1
 
     return 0
+
+
+def _filter_argv(argv: list[str]) -> tuple[list[str], bool]:
+    interactive = False
+    out: list[str] = []
+    for a in argv[1:]:
+        if a in ("--interactive", "-i"):
+            interactive = True
+        else:
+            out.append(a)
+    return out, interactive
 
 
 def main(argv: list[str]) -> int:
     if os.environ.get("MULTIAGENT_SKIP_AGENT_CLI_INSTALL") == "1":
         return 0
+    pos, interactive = _filter_argv(argv)
     repo_root = _repo_root()
-    agents = argv[1:] if len(argv) > 1 else None
-    return ensure_agents(repo_root, agents)
+    agents = pos if pos else None
+
+    if not interactive:
+        if sys.stdin.isatty():
+            print(
+                "multiagent: エージェント CLI の確認には --interactive を付けてください",
+                file=sys.stderr,
+            )
+        return 0
+
+    return ensure_agents_interactive(repo_root, agents)
 
 
 if __name__ == "__main__":

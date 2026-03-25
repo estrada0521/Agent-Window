@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-shot: optional tmux/python3 install, symlink CLI into ~/.local/bin, then start the Hub.
+# このリポジトリのエントリは基本この1本: tmux/python3 →（対話）CLI → symlink → Hub
 set -euo pipefail
 _HERE="${BASH_SOURCE[0]:-$0}"
 while [[ -L "$_HERE" ]]; do
@@ -10,10 +10,22 @@ while [[ -L "$_HERE" ]]; do
 done
 _BIN="$(cd "$(dirname "$_HERE")" && pwd)"
 ROOT="$(cd "$_BIN/.." && pwd)"
+
 if [[ "${MULTIAGENT_SKIP_DEPS_CHECK:-}" != "1" ]]; then
   if ! command -v python3 >/dev/null 2>&1 || ! command -v tmux >/dev/null 2>&1; then
     bash "$ROOT/bin/ensure-multiagent-deps"
   fi
+fi
+for _hp in /opt/homebrew/bin /usr/local/bin; do
+  case ":${PATH:-}:" in *:"${_hp}":*) ;; *)
+    [[ -d "$_hp" ]] && PATH="${_hp}:$PATH"
+    ;;
+  esac
+done
+export PATH
+
+if [[ "${MULTIAGENT_SKIP_AGENT_CLI_INSTALL:-}" != "1" ]] && [[ -f "$ROOT/bin/ensure-multiagent-agent-clis" ]]; then
+  bash "$ROOT/bin/ensure-multiagent-agent-clis" --interactive || exit 1
 fi
 "$ROOT/bin/multiagent" --install
 exec "$ROOT/bin/agent-index" --hub
