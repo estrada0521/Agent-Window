@@ -9,11 +9,17 @@
 ### 前提
 
 - **macOS または Linux**
-- **tmux** — このリポジトリにバインドルは含みません。各 OS のパッケージで入れてください（例: `brew install tmux`、`sudo apt install tmux`）
-- **Python 3**
+- **macOS の場合: Homebrew が入っていること**（`brew --version` が通る）。このリポジトリから Homebrew 本体のインストールは行いません。初回だけ次の **1 行**をターミナルで実行（管理者パスワードの入力が求められます）。終了後、表示に従い `brew shellenv` を `~/.zprofile` へ追記し、ターミナルを開き直してください。
+
+  ```bash
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  ```
+
+- **tmux** — バインドルは含みません。macOS では `brew install tmux`（無い場合 `ensure-multiagent-deps` が確認）。Linux は各パッケージ（例: `sudo apt install tmux`）。
+- **Python 3** — macOS では `brew install python3` で可（同様に `ensure-multiagent-deps` が確認）。
 - **各エージェントの CLI**（Claude Code、Codex CLI、Gemini CLI など、使いたいもの）は別途インストール済みであること
 
-`./bin/quickstart` や `multiagent` を叩いた時点で **Python 3 や tmux が無い**場合、macOS（Homebrew 導入済み）や主要な Linux では **`bin/ensure-multiagent-deps`** が自動実行され、足りないパッケージのインストールを試みます（`sudo` やパスワードが求められることがあります）。自動チェックを止めたいときは環境変数 `MULTIAGENT_SKIP_DEPS_CHECK=1`。Windows ネイティブや未対応のディストリビューションでは手動インストールが必要です。
+`./bin/quickstart` や `multiagent` を叩いた時点で **Python 3 や tmux が無い**場合、macOS（**Homebrew が PATH にあること**）や主要な Linux では **`bin/ensure-multiagent-deps`** が自動実行され、足りないパッケージのインストールを試みます（Linux では `sudo` が必要なことがあります）。自動チェックを止めたいときは環境変数 `MULTIAGENT_SKIP_DEPS_CHECK=1`。Windows ネイティブや未対応のディストリビューションでは手動インストールが必要です。
 
 通知音を使う場合は、好きな **OGG ファイルを `sounds/` に置いてください**（clone 直後は無音で動きます）。ファイル名と意味は [sounds/README.md](sounds/README.md) を参照。
 

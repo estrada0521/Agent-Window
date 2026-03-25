@@ -44,17 +44,15 @@ OS="$(uname -s 2>/dev/null || echo unknown)"
 
 case "$OS" in
   Darwin)
+    # Homebrew は事前インストール前提（公式 install.sh の自動実行は sudo 要件などで失敗しやすい）。
     if ! command -v brew >/dev/null 2>&1; then
-      if ! multiagent_prompt_yes "Homebrew をインストールしますか？（tmux / python3 の取得に使います）"; then
-        echo "multiagent: Homebrew なしでは続行できません。https://brew.sh を参照してください。" >&2
-        exit 1
-      fi
-      echo "multiagent: Homebrew を NONINTERACTIVE でインストールします…" >&2
-      export NONINTERACTIVE=1
-      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || {
-        echo "multiagent: Homebrew のインストールに失敗しました。" >&2
-        exit 1
-      }
+      brew_shellenv
+    fi
+    if ! command -v brew >/dev/null 2>&1; then
+      echo "multiagent: macOS では先に Homebrew を入れてください（README の 1 行コマンドまたは https://brew.sh ）。" >&2
+      echo "multiagent: インストール後、Apple シリコンなら ~/.zprofile に: eval \"\$(/opt/homebrew/bin/brew shellenv)\"" >&2
+      echo "multiagent: ターミナルを開き直し \`brew --version\` が通ってから再度実行してください。" >&2
+      exit 1
     fi
     brew_shellenv
     command -v brew >/dev/null 2>&1 || {
