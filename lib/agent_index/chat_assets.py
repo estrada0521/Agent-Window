@@ -1501,6 +1501,8 @@ __AGENT_ACCENT_CSS__
       color: var(--muted);
       font: 600 12px/1.2 "SF Pro Text","Segoe UI",sans-serif;
       cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       transition: background 150ms ease, color 150ms ease, border-color 150ms ease, transform 150ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 150ms ease;
@@ -1980,9 +1982,9 @@ __AGENT_ACCENT_CSS__
       align-self: stretch;
     }
     .composer-input-anchor {
-      display: flex;
-      flex-direction: column-reverse;
-      align-items: stretch;
+      /* 添付プレビューはフロー外（absolute）にし、高さを入力欄分に固定。オーバーレイ中央揃えでブロックが縦に
+         伸びても入力欄が下にずれない（スマホでキーボードと被しにくくする）。 */
+      position: relative;
       min-width: 0;
     }
     .composer-field {
@@ -2080,10 +2082,21 @@ __AGENT_ACCENT_CSS__
     }
     .mic-btn.no-speech { display: none !important; }
     .attach-preview-row {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 100%;
+      margin-bottom: 6px;
+      z-index: 4;
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      padding: 4px 10px 10px;
+      padding: 8px 10px 0;
+      max-height: min(38vh, 260px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      box-sizing: border-box;
     }
     /* PC ブラウザは display:none の file input に対する input.click() を拒否することがある */
     .attach-file-input {
@@ -3699,7 +3712,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             </summary>
 
             <div class="composer-plus-panel">
-              <button type="button" class="quick-action divider-after" id="cameraBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></span><span class="action-label">Import</span><span class="action-mobile">Import</span></button>
+              <label for="cameraInput" id="cameraBtn" class="quick-action divider-after" tabindex="0"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></span><span class="action-label">Import</span><span class="action-mobile">Import</span></label>
               <input type="file" id="cameraInput" class="attach-file-input" multiple>
               <button type="button" class="quick-action divider-after" data-forward-action="rawSendBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17 10 12 4 7"></path><path d="M12 17h8"></path></svg></span><span class="action-label">Raw</span><span class="action-mobile">Raw</span><span class="raw-switch" aria-hidden="true"></span></button>
               <details class="plus-submenu divider-after">
@@ -4005,7 +4018,19 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     const focusMessageInputWithoutScroll = (selectionStart = null, selectionEnd = selectionStart) => {
       if (typeof isComposerOverlayOpen === "function" && typeof openComposerOverlay === "function" && !isComposerOverlayOpen()) {
-        openComposerOverlay();
+        openComposerOverlay({ immediateFocus: false });
+        requestAnimationFrame(() => {
+          try {
+            messageInput.focus({ preventScroll: true });
+          } catch (_) {
+            messageInput.focus();
+          }
+          if (selectionStart !== null && typeof messageInput.setSelectionRange === "function") {
+            try {
+              messageInput.setSelectionRange(selectionStart, selectionEnd ?? selectionStart);
+            } catch (_) {}
+          }
+        });
         return;
       }
       try {
@@ -5490,6 +5515,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     composerPlusMenu?.addEventListener("click", (event) => {
       const keepFocusTarget = event.target.closest(".plus-submenu-toggle, .composer-plus-panel .quick-action");
       if (!keepFocusTarget) return;
+      if (event.target.closest("#cameraBtn")) return;
       requestAnimationFrame(() => {
         if (document.activeElement !== messageInput) {
           focusMessageInputWithoutScroll();
@@ -6313,11 +6339,15 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const messageInput = document.getElementById("message");
     const sendBtn = document.querySelector(".send-btn");
     const micBtn = document.getElementById("micBtn");
+    let _fileImportInProgress = false;
+    let _fileImportClearTimer = null;
     const scheduleComposerCloseFromKeyboardDismiss = () => {
       if (!_isMobile) return;
+      if (_fileImportInProgress) return;
       clearComposerBlurCloseTimer();
       composerBlurCloseTimer = setTimeout(() => {
         if (!isComposerOverlayOpen()) return;
+        if (_fileImportInProgress) return;
         const active = document.activeElement;
         if (active === messageInput) return;
         if (composerForm && active && composerForm.contains(active)) return;
@@ -6456,7 +6486,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       };
       const uploadAttachedFiles = async (fileList) => {
         const files = Array.from(fileList || []).filter((f) => f && typeof f.name === "string");
-        if (!files.length) return;
+        if (!files.length) return false;
+        /* iOS: 最初の await 前にフォーカス（非同期続きではキーボードが出にくい）。 */
+        if (_isMobile && messageInput && isComposerOverlayOpen()) {
+          focusComposerTextarea({ sync: true });
+        }
         setStatus(files.length > 1 ? `uploading ${files.length} files...` : `uploading ${files[0].name}...`);
         try {
           await Promise.all(files.map(async (file) => {
@@ -6474,9 +6508,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             addCard(file, data.path);
           }));
           setStatus("");
+          return true;
         } catch (err) {
           setStatus("upload failed: " + err.message, true);
           setTimeout(() => setStatus(""), 3000);
+          return false;
         }
       };
       const dtHasFiles = (dt) => dt && [...dt.types].includes("Files");
@@ -6484,8 +6520,21 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const maybeOpenComposerForAttachDrag = () => {
         if (!isComposerOverlayOpen()) openComposerOverlay({ immediateFocus: false });
       };
-      cameraBtn.addEventListener("click", () => { closePlusMenu(); cameraInput.click(); });
+      cameraBtn.addEventListener("click", () => {
+        closePlusMenu();
+        _fileImportInProgress = true;
+        if (_fileImportClearTimer) clearTimeout(_fileImportClearTimer);
+        _fileImportClearTimer = setTimeout(() => {
+          _fileImportInProgress = false;
+          _fileImportClearTimer = null;
+        }, 20000);
+      });
       cameraInput.addEventListener("change", async () => {
+        _fileImportInProgress = false;
+        if (_fileImportClearTimer) {
+          clearTimeout(_fileImportClearTimer);
+          _fileImportClearTimer = null;
+        }
         const files = Array.from(cameraInput.files);
         cameraInput.value = "";
         await uploadAttachedFiles(files);
@@ -7725,11 +7774,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     refreshCaffeinate();
     setInterval(refreshCaffeinate, 5000);
 
-    const autosaveSessionLogs = () => {
-      if (!followMode) return;
-      fetch("/save-logs?reason=autosave", { cache: "no-store" }).catch(() => {});
-    };
-    setInterval(autosaveSessionLogs, 10 * 60 * 1000);
+    // Pane log autosave runs on the chat server (~2 min, first after 3s) so it is not
+    // throttled when the browser tab is in the background.
 
     // Memory button — sends silently (not logged in chat)
     document.getElementById("memoryBtn").addEventListener("click", async () => {

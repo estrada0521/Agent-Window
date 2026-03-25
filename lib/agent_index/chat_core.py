@@ -349,6 +349,40 @@ class ChatRuntime:
             return
         self._caffeinate_proc = subprocess.Popen(self._caffeinate_args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+    def save_logs(self, *, reason: str = "autosave"):
+        """Run multiagent save to capture panes to workspace/central logs (overwrites)."""
+        reason = (reason or "autosave").strip()[:64] or "autosave"
+        if not self.session_is_active:
+            return 409, {"ok": False, "error": "session inactive", "reason": reason}
+        bin_dir = Path(self.agent_send_path).parent.resolve()
+        multiagent = bin_dir / "multiagent"
+        if not multiagent.is_file():
+            return 500, {"ok": False, "error": "multiagent not found", "reason": reason}
+        env = os.environ.copy()
+        env["MULTIAGENT_SESSION"] = self.session_name
+        env["MULTIAGENT_WORKSPACE"] = self.workspace
+        env["MULTIAGENT_BIN_DIR"] = str(bin_dir)
+        if self.tmux_socket:
+            env["MULTIAGENT_TMUX_SOCKET"] = self.tmux_socket
+        if self.log_dir:
+            env["MULTIAGENT_LOG_DIR"] = self.log_dir
+        try:
+            proc = subprocess.run(
+                [str(multiagent), "save", "--session", self.session_name],
+                capture_output=True,
+                text=True,
+                timeout=120,
+                env=env,
+                cwd=self.workspace or None,
+                check=False,
+            )
+        except Exception as exc:
+            return 500, {"ok": False, "error": str(exc), "reason": reason}
+        if proc.returncode != 0:
+            err = (proc.stderr or proc.stdout or "").strip() or f"exit {proc.returncode}"
+            return 500, {"ok": False, "error": err, "reason": reason}
+        return 200, {"ok": True, "reason": reason}
+
     def auto_mode_status(self):
         try:
             result = subprocess.run(

@@ -4807,6 +4807,7 @@ import os
 import shlex
 import subprocess
 import sys
+import threading
 import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -4854,6 +4855,22 @@ runtime = ChatRuntime(
     repo_root=_repo_root,
     session_is_active=(os.environ.get("SESSION_IS_ACTIVE", "0") == "1"),
 )
+
+_LOG_AUTOSAVE_INTERVAL_SEC = 120  # ~2 min: lighter than 45s, still fresher than 5–10 min
+
+
+def _periodic_log_autosave():
+    time.sleep(3)
+    while True:
+        try:
+            if runtime.session_is_active:
+                runtime.save_logs(reason="autosave")
+        except Exception:
+            pass
+        time.sleep(_LOG_AUTOSAVE_INTERVAL_SEC)
+
+
+threading.Thread(target=_periodic_log_autosave, daemon=True, name="log-autosave").start()
 server_instance = runtime.server_instance
 load_chat_settings = runtime.load_chat_settings
 chat_font_settings_inline_style = runtime.chat_font_settings_inline_style
@@ -5536,6 +5553,16 @@ class Handler(BaseHTTPRequestHandler):
                 return
             append_system_entry(msg)
             self._send_json(200, {"ok": True})
+            return
+        if parsed.path == "/save-logs":
+            qs = parse_qs(parsed.query)
+            reason = (qs.get("reason", ["autosave"])[0] or "autosave").strip()[:64]
+            try:
+                status, payload = runtime.save_logs(reason=reason)
+            except Exception as exc:
+                self._send_json(500, {"ok": False, "error": str(exc), "reason": reason})
+                return
+            self._send_json(status, payload)
             return
         if parsed.path == "/thinking-time" and self.command == "GET":
             try:
