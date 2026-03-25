@@ -5496,11 +5496,8 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 else hub_port
             )
-            logo_data_uri = (
-                f"{(self.headers.get('X-Forwarded-Prefix', '') or '').rstrip('/')}/hub-logo"
-                if forwarded_public_host
-                else "/hub-logo"
-            )
+            # Use same cache-busted URL as Hub (do not hardcode "/hub-logo" — browser keeps stale bitmap).
+            logo_data_uri = hub_logo_url_path(_repo_root)
             body = render_chat_html(
                 icon_data_uris=export_runtime.icon_data_uris,
                 logo_data_uri=logo_data_uri,
