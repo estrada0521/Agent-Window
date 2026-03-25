@@ -150,6 +150,19 @@ _register(
         fallback_paths=("/opt/homebrew/bin/qwen", "/usr/local/bin/qwen", "~/.local/bin/qwen"),
         fallback_nvm=True,
     ),
+    AgentDef(
+        name="aider",
+        display_name="Aider",
+        icon_file="aider.svg",
+        accent_color="#22c55e",
+        executable="aider",
+        launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
+        resume_flag="--restore-chat-history",
+        ready_pattern=r"Aider|aider>|https://aider\.chat|Repository maps|Git repo|\.aider",
+        number_alias=9,
+        thinking_glow_delay="-1.5s",
+        fallback_paths=("~/.local/bin/aider", "/opt/homebrew/bin/aider", "/usr/local/bin/aider"),
+    ),
 )
 
 # ---------------------------------------------------------------------------
