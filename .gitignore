@@ -31,3 +31,8 @@ SpaceX*.md
 
 # Personal or machine-specific runbooks (re-add generic variants under docs/ if needed)
 docs/backblaze-b2-restic-backup.md
+
+# Local agent / chat exports / desktop captures
+.aider.chat.history.md
+docs/cursor-to-user-chat.md
+*スクリーンショット*.png
