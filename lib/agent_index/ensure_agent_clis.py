@@ -127,7 +127,13 @@ def try_ensure_node_npm() -> str:
     """Return ok | declined | failed."""
     if shutil.which("npm"):
         return "ok"
-    if not prompt_yes("Node.js / npm をインストールしますか？（このエージェントの CLI 取得に必要です） [y/N] "):
+    if os.environ.get("MULTIAGENT_ASSUME_YES_DEPS") == "1":
+        print(
+            "multiagent: （MULTIAGENT_ASSUME_YES_DEPS=1）Node.js / npm を導入します",
+            file=sys.stderr,
+            flush=True,
+        )
+    elif not prompt_yes("Node.js / npm をインストールしますか？（このエージェントの CLI 取得に必要です） [y/N] "):
         print("multiagent: Node / npm の導入を見送りました。", file=sys.stderr, flush=True)
         return "declined"
     if _have_brew():
@@ -164,9 +170,6 @@ def try_ensure_node_npm() -> str:
 
 
 def prompt_yes(question: str) -> bool:
-    if os.environ.get("MULTIAGENT_ASSUME_YES_DEPS") == "1":
-        print(f"multiagent: （MULTIAGENT_ASSUME_YES_DEPS=1）はい → {question.strip()}", file=sys.stderr, flush=True)
-        return True
     if not sys.stdin.isatty():
         print(
             f"multiagent: （TTY ではないためスキップ）{question.strip()} → いいえとして扱います",
