@@ -35,9 +35,32 @@ CHAT_HTML = r"""<!doctype html>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/toolbar/prism-toolbar.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <script>
+  (function () {
+    if (typeof Prism === "undefined" || !Prism.hooks) return;
+    Prism.hooks.add("complete", function (env) {
+      var pre = env.element.parentNode;
+      if (!pre || pre.nodeName !== "PRE") return;
+      var btn = pre.querySelector(".copy-to-clipboard-button");
+      if (!btn || btn.getAttribute("data-bi-copy")) return;
+      btn.setAttribute("data-bi-copy", "1");
+      btn.setAttribute("type", "button");
+      btn.setAttribute("title", "コピー");
+      btn.textContent = "";
+      var i = document.createElement("i");
+      i.className = "bi bi-clipboard";
+      i.setAttribute("aria-hidden", "true");
+      btn.appendChild(i);
+    });
+  })();
+  </script>
   <style>
     @font-face {
       font-family: "anthropicSerif";
@@ -3069,6 +3092,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
+      position: relative;
       background: var(--bg-hover);
       border: 0.5px solid var(--inline-code-border);
       border-radius: 10px;
@@ -3079,6 +3103,37 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       word-break: normal;
       box-shadow: none;
       -webkit-overflow-scrolling: touch;
+    }
+    .md-body pre:has(.prism-toolbar) {
+      padding-top: 40px;
+    }
+    .md-body pre .prism-toolbar {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      height: auto;
+      opacity: 1;
+    }
+    .md-body pre .copy-to-clipboard-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      min-height: 30px;
+      padding: 4px 8px;
+      margin: 0;
+      font-size: 15px;
+      line-height: 1;
+      color: var(--muted);
+      background: var(--surface);
+      border: 0.5px solid var(--inline-code-border);
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: none;
+    }
+    .has-hover .md-body pre .copy-to-clipboard-button:hover {
+      color: var(--text);
+      background: var(--bg-hover);
     }
     .md-body pre code {
       font-family: "jetbrainsMono", "JetBrains Mono", monospace !important;
