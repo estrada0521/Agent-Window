@@ -372,12 +372,12 @@ session_log_dir() {
 }
 
 update_meta() {
-  local session_dir="\$1" created_at="\$2" updated_at="\$3"
+  local session_dir="\$1" created_at="\$2" updated_at="\$3" agents_csv="\${4:-}"
   local meta_file="\${session_dir}/.meta"
-  python3 - "\$meta_file" "\$session" "\$workspace" "\$created_at" "\$updated_at" "\$reason" <<'PYEOF'
+  python3 - "\$meta_file" "\$session" "\$workspace" "\$created_at" "\$updated_at" "\$reason" "\$agents_csv" <<'PYEOF'
 import json, os, sys
 
-path, session, workspace, created_at, updated_at, reason = sys.argv[1:7]
+path, session, workspace, created_at, updated_at, reason, agents_csv = sys.argv[1:8]
 if os.path.exists(path):
     with open(path, "r") as f:
         data = json.load(f)
@@ -391,6 +391,8 @@ data["updated_at"] = updated_at
 overwrites = data.setdefault("overwrites", [])
 overwrites.append({"timestamp": updated_at, "reason": reason})
 data["overwrite_count"] = len(overwrites)
+if agents_csv.strip():
+    data["agents"] = [a.strip() for a in agents_csv.split(",") if a.strip()]
 
 with open(path, "w") as f:
     json.dump(data, f, indent=2, ensure_ascii=True)
@@ -419,7 +421,7 @@ save_to_dir() {
     saved=1
   done
   if [[ "\$saved" -eq 1 ]]; then
-    update_meta "\$session_dir" "\$created_at" "\$updated_at"
+    update_meta "\$session_dir" "\$created_at" "\$updated_at" "\$agents_str"
     echo "[multiagent] Session log dir: \$session_dir" >&2
   fi
 }
@@ -1205,12 +1207,12 @@ _session_log_dir() {
 }
 
 _update_session_meta() {
-  local session_dir="$1" session="$2" workspace="$3" created_at="$4" updated_at="$5" reason="${6:-manual}"
+  local session_dir="$1" session="$2" workspace="$3" created_at="$4" updated_at="$5" reason="${6:-manual}" agents_csv="${7:-}"
   local meta_file="${session_dir}/.meta"
-  python3 - "$meta_file" "$session" "$workspace" "$created_at" "$updated_at" "$reason" <<'PYEOF'
+  python3 - "$meta_file" "$session" "$workspace" "$created_at" "$updated_at" "$reason" "$agents_csv" <<'PYEOF'
 import json, os, sys
 
-path, session, workspace, created_at, updated_at, reason = sys.argv[1:7]
+path, session, workspace, created_at, updated_at, reason, agents_csv = sys.argv[1:8]
 if os.path.exists(path):
     with open(path, "r") as f:
         data = json.load(f)
@@ -1224,6 +1226,8 @@ data["updated_at"] = updated_at
 overwrites = data.setdefault("overwrites", [])
 overwrites.append({"timestamp": updated_at, "reason": reason})
 data["overwrite_count"] = len(overwrites)
+if agents_csv.strip():
+    data["agents"] = [a.strip() for a in agents_csv.split(",") if a.strip()]
 
 with open(path, "w") as f:
     json.dump(data, f, indent=2, ensure_ascii=True)
@@ -1253,7 +1257,7 @@ _save_pane_logs_to_dir() {
     saved=1
   done
   if [[ "$saved" -eq 1 ]]; then
-    _update_session_meta "$session_dir" "$session" "$WORKSPACE" "$created_at" "$updated_at" "$reason"
+    _update_session_meta "$session_dir" "$session" "$WORKSPACE" "$created_at" "$updated_at" "$reason" "$agents_str"
     echo "[multiagent] Session log dir: $session_dir" >&2
   fi
 }

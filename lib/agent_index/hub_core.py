@@ -368,12 +368,20 @@ class HubRuntime:
                     created_epoch = updated_epoch
                 agents = []
                 seen_agents = set()
-                for f in sorted(entry.iterdir()):
-                    if f.suffix in (".log", ".ans") and not f.name.startswith("."):
-                        name_stem = f.stem
-                        if name_stem not in seen_agents:
-                            seen_agents.add(name_stem)
-                            agents.append(name_stem)
+                meta_agents = meta.get("agents")
+                if isinstance(meta_agents, list) and meta_agents:
+                    for a in meta_agents:
+                        name = str(a).strip()
+                        if name and name not in seen_agents:
+                            seen_agents.add(name)
+                            agents.append(name)
+                if not agents:
+                    for f in sorted(entry.iterdir()):
+                        if f.suffix in (".log", ".ans") and not f.name.startswith("."):
+                            name_stem = f.stem
+                            if name_stem not in seen_agents:
+                                seen_agents.add(name_stem)
+                                agents.append(name_stem)
                 if not agents and index_path.exists():
                     inferred = set()
                     try:
