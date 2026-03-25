@@ -1,47 +1,38 @@
 from __future__ import annotations
 
-import base64
 from pathlib import Path
 
-# Repo-root webp is often gitignored; fresh clones need an inline fallback for the Hub header <img>.
-# Dark theme applies `.hub-page-logo { filter: invert(1) ... }`, so use dark fills here so inversion reads as light marks on the header.
-_HUB_LOGO_FALLBACK_SVG = (
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="">'
-    '<circle cx="9" cy="11" r="3.5" fill="#3a3a3c"/>'
-    '<circle cx="23" cy="11" r="3.5" fill="#3a3a3c"/>'
-    '<circle cx="16" cy="20" r="3.5" fill="#3a3a3c"/>'
-    "</svg>"
-)
-HUB_LOGO_FALLBACK_SVG_BYTES = _HUB_LOGO_FALLBACK_SVG.encode("utf-8")
-HUB_LOGO_FALLBACK_DATA_URI = (
-    "data:image/svg+xml;base64,"
-    + base64.b64encode(HUB_LOGO_FALLBACK_SVG_BYTES).decode("ascii")
-)
-
-HUB_LOGO_WEBP_NAME = "69b8dae91dba9.webp"
+# Optional repo-root override (legacy filename). Otherwise serve bundled WebP from this package.
+HUB_LOGO_ROOT_WEBP_NAME = "69b8dae91dba9.webp"
+_BUNDLED_HUB_LOGO = Path(__file__).resolve().parent / "assets" / "hub-logo.webp"
 
 
-def hub_logo_inline_data_uri(repo_root: Path) -> str:
-    """img[src] for Hub header: embed webp when present, else bundled SVG data URI."""
-    path = repo_root / HUB_LOGO_WEBP_NAME
-    if path.is_file():
-        try:
-            b64 = base64.b64encode(path.read_bytes()).decode("ascii")
-            return f"data:image/webp;base64,{b64}"
-        except OSError:
-            pass
-    return HUB_LOGO_FALLBACK_DATA_URI
+def hub_logo_url_path() -> str:
+    """Always fetch the logo over HTTP so Reload always gets a proper image/webp (no giant data: URIs)."""
+    return "/hub-logo"
+
+
+def hub_logo_file_for_read(repo_root: Path) -> Path | None:
+    root_logo = (repo_root / HUB_LOGO_ROOT_WEBP_NAME).resolve()
+    try:
+        if root_logo.is_file() and root_logo.parent == Path(repo_root).resolve():
+            return root_logo
+    except OSError:
+        pass
+    if _BUNDLED_HUB_LOGO.is_file():
+        return _BUNDLED_HUB_LOGO
+    return None
 
 
 def hub_logo_http_body(repo_root: Path) -> tuple[bytes, str] | None:
-    """Body and Content-Type for GET /hub-logo, or None if unreadable."""
-    path = repo_root / HUB_LOGO_WEBP_NAME
-    if path.is_file():
-        try:
-            return path.read_bytes(), "image/webp"
-        except OSError:
-            return None
-    return HUB_LOGO_FALLBACK_SVG_BYTES, "image/svg+xml"
+    """Body and Content-Type for GET /hub-logo."""
+    path = hub_logo_file_for_read(repo_root)
+    if not path:
+        return None
+    try:
+        return path.read_bytes(), "image/webp"
+    except OSError:
+        return None
 
 HUB_PAGE_HEADER_CSS = """
     :root { --page-side-pad: 14px; }
