@@ -1995,11 +1995,24 @@ __AGENT_ACCENT_CSS__
       grid-area: input;
       min-width: 0;
       align-self: stretch;
+      position: relative;
+      overflow: visible;
     }
     .composer-input-anchor {
-      /* 添付プレビューはフロー外（absolute）にし、高さを入力欄分に固定。オーバーレイ中央揃えでブロックが縦に
-         伸びても入力欄が下にずれない（スマホでキーボードと被しにくくする）。 */
+      /* オーバーレイの縦位置の基準は入力欄（.composer-field）のみ。返信・添付は .composer-above-input で上に積む。 */
       position: relative;
+      min-width: 0;
+    }
+    .composer-above-input {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(100% + 8px);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      z-index: 3;
       min-width: 0;
     }
     .composer-field {
@@ -2097,16 +2110,10 @@ __AGENT_ACCENT_CSS__
     }
     .mic-btn.no-speech { display: none !important; }
     .attach-preview-row {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 100%;
-      margin-bottom: 6px;
-      z-index: 4;
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      padding: 8px 10px 0;
+      padding: 0 4px;
       max-height: min(38vh, 260px);
       overflow-y: auto;
       overflow-x: hidden;
@@ -3406,13 +3413,18 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       font-synthesis-weight: none;
       font-optical-sizing: auto;
       font-variation-settings: "wght" 400, "opsz" 16;
-      margin-bottom: 8px;
+      margin-bottom: 0;
       transform-origin: bottom center;
       will-change: transform, opacity;
     }
     .reply-banner.visible {
       display: flex;
       animation: replyBannerIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    html[data-mobile="1"] .reply-banner.visible {
+      padding: 5px 10px;
+      font-size: 12px;
+      line-height: 1.25;
     }
     .reply-banner-arrow {
       display: inline-flex;
@@ -3751,22 +3763,24 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             </div>
           </details>
           <div class="composer-shell">
-            <div class="reply-banner" id="replyBanner">
-              <span class="reply-banner-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg></span>
-              <span class="reply-banner-text"><span class="reply-banner-sender" id="replyBannerSender"></span><span id="replyBannerPreview"></span></span>
-              <button type="button" class="reply-cancel-btn" id="replyCancelBtn" title="返信キャンセル">✕</button>
+            <div class="composer-above-input">
+              <div class="reply-banner" id="replyBanner">
+                <span class="reply-banner-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg></span>
+                <span class="reply-banner-text"><span class="reply-banner-sender" id="replyBannerSender"></span><span id="replyBannerPreview"></span></span>
+                <button type="button" class="reply-cancel-btn" id="replyCancelBtn" title="返信キャンセル">✕</button>
+              </div>
+              <div id="attachPreviewRow" class="attach-preview-row" style="display:none"></div>
             </div>
             <div class="composer-input-anchor">
-            <div class="composer-field">
-              <textarea id="message" placeholder="Write a message"></textarea>
-              <button type="button" id="micBtn" class="mic-btn" aria-label="Voice input">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-              </button>
-              <button type="submit" class="send-btn" aria-label="Send">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
-              </button>
-            </div>
-            <div id="attachPreviewRow" class="attach-preview-row" style="display:none"></div>
+              <div class="composer-field">
+                <textarea id="message" placeholder="Write a message"></textarea>
+                <button type="button" id="micBtn" class="mic-btn" aria-label="Voice input">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                </button>
+                <button type="submit" class="send-btn" aria-label="Send">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                </button>
+              </div>
             </div>
           </div>
           <div class="quick-actions">
@@ -4032,19 +4046,15 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     const focusMessageInputWithoutScroll = (selectionStart = null, selectionEnd = selectionStart) => {
       if (typeof isComposerOverlayOpen === "function" && typeof openComposerOverlay === "function" && !isComposerOverlayOpen()) {
-        openComposerOverlay({ immediateFocus: false });
-        requestAnimationFrame(() => {
-          try {
-            messageInput.focus({ preventScroll: true });
-          } catch (_) {
-            messageInput.focus();
-          }
-          if (selectionStart !== null && typeof messageInput.setSelectionRange === "function") {
+        /* immediateFocus: mobile OSes need focus in the same user-gesture turn; deferring with rAF often skips the keyboard. */
+        openComposerOverlay({ immediateFocus: true });
+        if (selectionStart !== null && typeof messageInput.setSelectionRange === "function") {
+          requestAnimationFrame(() => {
             try {
               messageInput.setSelectionRange(selectionStart, selectionEnd ?? selectionStart);
             } catch (_) {}
-          }
-        });
+          });
+        }
         return;
       }
       try {
