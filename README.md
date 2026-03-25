@@ -8,9 +8,12 @@
 
 ### 前提
 
-- **macOS または Linux**（tmux が使えること）
+- **macOS または Linux**
+- **tmux** — このリポジトリにバインドルは含みません。各 OS のパッケージで入れてください（例: `brew install tmux`、`sudo apt install tmux`）
 - **Python 3**
 - **各エージェントの CLI**（Claude Code、Codex CLI、Gemini CLI など、使いたいもの）は別途インストール済みであること
+
+通知音を使う場合は、好きな **OGG ファイルを `sounds/` に置いてください**（clone 直後は無音で動きます）。ファイル名と意味は [sounds/README.md](sounds/README.md) を参照。
 
 ### 1 コマンドで「インストール → Hub 起動」
 

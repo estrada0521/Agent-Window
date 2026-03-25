@@ -36,3 +36,6 @@ docs/backblaze-b2-restic-backup.md
 .aider.chat.history.md
 docs/cursor-to-user-chat.md
 *スクリーンショット*.png
+
+# Notification sounds — add your own OGG files (see sounds/README.md)
+sounds/*.ogg
