@@ -5072,7 +5072,16 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/trace":
             qs = parse_qs(parsed.query)
             agent = qs.get("agent", [""])[0].lower()
-            content_str = runtime.trace_content(agent)
+            tail_raw = (qs.get("lines", qs.get("tail", [""]))[0] or "").strip()
+            tail_lines = None
+            if tail_raw:
+                try:
+                    tail_lines = int(tail_raw)
+                except ValueError:
+                    tail_lines = None
+                if tail_lines is not None:
+                    tail_lines = max(1, min(tail_lines, 10_000))
+            content_str = runtime.trace_content(agent, tail_lines=tail_lines)
             body = json.dumps({"content": content_str}, ensure_ascii=True).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")

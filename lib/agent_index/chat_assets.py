@@ -7669,7 +7669,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const fetchPaneViewerSlide = async (agent, slide, scrollToBottomAfter) => {
       if (!slide) return;
       try {
-        const res = await fetch(`/trace?agent=${encodeURIComponent(agent)}&ts=${Date.now()}`);
+        /* Pane Viewer はモバイル専用導線（Terminal ボタンはデスクトップでは /open-terminal）。常に軽量 tail。 */
+        const res = await fetch(`/trace?agent=${encodeURIComponent(agent)}&lines=96&ts=${Date.now()}`);
         if (!res.ok) return;
         const data = await res.json();
         slide.innerHTML = paneTraceHtml(data.content || "No output");
@@ -7831,7 +7832,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       schedulePaneViewerScrollAlign();
       syncHeaderMenuFocus();
       fetchAllPaneViewerSlides(true);
-      paneViewerInterval = setInterval(() => fetchAllPaneViewerSlides(false), 1500);
+      /* Pane Viewer はモバイル専用（デスクトップは実ペイン）。Hub 内トレースの更新間隔。 */
+      const paneTracePollMs = 100;
+      paneViewerInterval = setInterval(() => fetchAllPaneViewerSlides(false), paneTracePollMs);
     };
     const togglePaneViewer = () => {
       if (!paneViewerEl) return;
