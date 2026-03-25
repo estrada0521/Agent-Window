@@ -3832,52 +3832,71 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     }
     const renderMarkdown = (text) => {
       const raw = String(text ?? "");
-      if (typeof marked !== "undefined" && typeof marked.parse === "function") {
-        try {
-          const mathBlocks = [];
-          let placeholderCount = 0;
-          
-          // Protection: replace math with spans that marked.js will ignore or pass through
-          let processedText = raw.replace(/(\$\$[\s\S]+?\$\$|\$[\s\S]+?\$)/g, (match) => {
-            const id = `math-placeholder-${placeholderCount++}`;
-            mathBlocks.push({ id, content: match });
-            return `<span class="MATH_SAFE_BLOCK" data-id="${id}"></span>`;
-          });
-
-          let html = marked.parse(processedText, { breaks: true, gfm: true });
-          
-          // Restoration: replace the safe spans back with original math content
-          const tempDiv = document.createElement("div");
-          tempDiv.innerHTML = html;
-          tempDiv.querySelectorAll(".MATH_SAFE_BLOCK").forEach(span => {
-            const block = mathBlocks.find(b => b.id === span.dataset.id);
-            if (block) {
-              // We use textContent to ensure it's not double-parsed by HTML
-              span.outerHTML = block.content;
-            }
-          });
-          // Prism syntax highlighting (skip diff blocks — handled separately)
-          if (typeof Prism !== "undefined") {
-            tempDiv.querySelectorAll('code[class*="language-"]').forEach(codeEl => {
-              if (codeEl.classList.contains("language-diff")) return;
-              Prism.highlightElement(codeEl);
-            });
+      const parseOpts = { breaks: true, gfm: true };
+      const runMarked = (src) => {
+        if (typeof marked === "undefined") return null;
+        if (typeof marked.parse === "function") {
+          try {
+            return marked.parse(src, parseOpts);
+          } catch (_) {
+            return null;
           }
-          // Diff syntax highlighting
-          tempDiv.querySelectorAll('code.language-diff').forEach(codeEl => {
-            const raw = codeEl.textContent;
-            codeEl.innerHTML = raw.split("\n").map(line => {
-              if (line.startsWith("+")) return `<span class="diff-add"><span class="diff-sign">+</span>${escapeHtml(line.slice(1))}</span>`;
-              if (line.startsWith("-")) return `<span class="diff-del"><span class="diff-sign">-</span>${escapeHtml(line.slice(1))}</span>`;
-              return escapeHtml(line);
-            }).join("\n");
-          });
+        }
+        if (typeof marked === "function") {
+          try {
+            return marked(src, parseOpts);
+          } catch (_) {
+            return null;
+          }
+        }
+        return null;
+      };
+      try {
+        const mathBlocks = [];
+        let placeholderCount = 0;
+        // Protection: replace math with spans that marked.js will ignore or pass through
+        let processedText = raw.replace(/(\$\$[\s\S]+?\$\$|\$[\s\S]+?\$)/g, (match) => {
+          const id = `math-placeholder-${placeholderCount++}`;
+          mathBlocks.push({ id, content: match });
+          return `<span class="MATH_SAFE_BLOCK" data-id="${id}"></span>`;
+        });
 
-          return injectFileCards(tempDiv.innerHTML);
-        } catch (_) { /* fall through to plain pre */ }
+        const htmlFromMarked = runMarked(processedText);
+        if (htmlFromMarked == null) {
+          return injectFileCards(raw.length ? "<pre>" + escapeHtml(raw) + "</pre>" : "");
+        }
+        let html = htmlFromMarked;
+
+        // Restoration: replace the safe spans back with original math content
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = html;
+        tempDiv.querySelectorAll(".MATH_SAFE_BLOCK").forEach(span => {
+          const block = mathBlocks.find(b => b.id === span.dataset.id);
+          if (block) {
+            span.outerHTML = block.content;
+          }
+        });
+        // Prism syntax highlighting (skip diff blocks — handled separately)
+        if (typeof Prism !== "undefined") {
+          tempDiv.querySelectorAll('code[class*="language-"]').forEach(codeEl => {
+            if (codeEl.classList.contains("language-diff")) return;
+            Prism.highlightElement(codeEl);
+          });
+        }
+        // Diff syntax highlighting
+        tempDiv.querySelectorAll("code.language-diff").forEach(codeEl => {
+          const diffRaw = codeEl.textContent;
+          codeEl.innerHTML = diffRaw.split("\n").map(line => {
+            if (line.startsWith("+")) return `<span class="diff-add"><span class="diff-sign">+</span>${escapeHtml(line.slice(1))}</span>`;
+            if (line.startsWith("-")) return `<span class="diff-del"><span class="diff-sign">-</span>${escapeHtml(line.slice(1))}</span>`;
+            return escapeHtml(line);
+          }).join("\n");
+        });
+
+        return injectFileCards(tempDiv.innerHTML);
+      } catch (_) {
+        return injectFileCards(raw.length ? "<pre>" + escapeHtml(raw) + "</pre>" : "");
       }
-      // fallback: plain text
-      return injectFileCards("<pre>" + escapeHtml(raw) + "</pre>");
     };
     const wrapFileIcon = (path) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
     const FILE_SVG_ICONS = {
@@ -4592,6 +4611,16 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       </div>`;
     };
     const stripSenderPrefix = (value) => value.replace(/^\[From:\s*[^\]]+\]\s*/i, "");
+    const entryText = (entry) => String(
+      entry?.message ?? entry?.text ?? entry?.body ?? entry?.content ?? ""
+    );
+    const djb2Hash = (s) => {
+      let h = 5381;
+      for (let i = 0; i < s.length; i++) {
+        h = ((h << 5) + h) ^ s.charCodeAt(i);
+      }
+      return (h >>> 0).toString(36);
+    };
     const shortcutName = (value) => {
       const normalized = (value || "").trim().toLowerCase();
       const mapped = {
@@ -5055,7 +5084,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       currentSessionName = data.session || "";
       attachedFilesSession = currentSessionName;
       loadThinkingTime(currentSessionName);
-      const displayEntries = data.entries.slice(-__MESSAGE_LIMIT__);
+      const rawEntries = Array.isArray(data?.entries) ? data.entries : [];
+      const displayEntries = rawEntries.slice(-__MESSAGE_LIMIT__);
       sessionActive = !!data.active;
       const picker = document.getElementById("targetPicker");
       if (!picker.dataset.loaded) {
@@ -5083,8 +5113,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         setStatus("archived session is read-only");
       }
       const tail = displayEntries.at(-1);
-      const tailMsg = tail ? String(tail.message ?? tail.text ?? tail.body ?? "") : "";
-      const sig = `${displayEntries.length}:${tail?.timestamp ?? ""}:${tail?.msg_id ?? ""}:${tailMsg.length}`;
+      const tailMsg = tail ? entryText(tail) : "";
+      const sig = `${displayEntries.length}:${tail?.timestamp ?? ""}:${tail?.msg_id ?? ""}:${djb2Hash(tailMsg)}`;
       if (!forceScroll && sig === lastMessagesSig) return;
       lastMessagesSig = sig;
       if (initialLoadDone && (soundEnabled || ttsEnabled)) {
@@ -5104,7 +5134,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
       lastNotifiedMsgId = displayEntries.at(-1)?.msg_id || lastNotifiedMsgId;
       initialLoadDone = true;
-      updateAttachedFilesPanel(data.entries);
+      updateAttachedFilesPanel(rawEntries);
       const root = document.getElementById("messages");
       if (!displayEntries.length) {
         _renderedIds.clear();
@@ -5127,7 +5157,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       });
       const buildMsgHTML = (entry, replyPreviewHTML) => {
         if (entry.sender === "system") {
-          const systemMessage = escapeHtml(String(entry.message ?? entry.text ?? entry.body ?? ""));
+          const systemMessage = escapeHtml(entryText(entry));
           const systemTitle = systemMessage.replaceAll('"', "&quot;");
           return `<div class="sysmsg-row" data-msgid="${escapeHtml(entry.msg_id || "")}" data-sender="system" data-kind="${escapeHtml(entry.kind || "")}"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
         }
@@ -5135,7 +5165,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const targetSpans = (entry.targets?.length > 0
           ? entry.targets.map(t => metaAgentLabel(t, "target-name", "right"))
           : [metaAgentLabel("no target", "target-name", "right")]).join(`<span class="meta-agent-sep">,</span>`);
-        const body = stripSenderPrefix(String(entry.message ?? entry.text ?? entry.body ?? ""));
+        const body = stripSenderPrefix(entryText(entry));
         const rawAttr = escapeHtml(body).replaceAll('"', "&quot;");
         const previewAttr = escapeHtml(body.slice(0, 80)).replaceAll('"', "&quot;");
         const msgId = escapeHtml(entry.msg_id || "");
@@ -5418,7 +5448,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         if (data?.server_instance) currentServerInstance = data.server_instance;
         messageRefreshFailures = 0;
         setReconnectStatus(false);
-        render(data, options);
+        try {
+          render(data, options);
+        } catch (err) {
+          console.error("chat render failed", err);
+          setStatus("chat render error — hard-reload or check console", true);
+        }
       } catch (_) {
         messageRefreshFailures += 1;
         if (followMode && messageRefreshFailures >= 3) {
@@ -6056,7 +6091,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const seen = new Set();
       const allFiles = [];
       for (const entry of (entries || [])) {
-        const msg = entry.message || "";
+        const msg = entryText(entry);
         for (const m of msg.matchAll(/\[Attached:\s*([^\]]+)\]/g)) {
           const path = m[1].trim();
           if (!seen.has(path)) {
@@ -7567,7 +7602,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const msgId = entry.msg_id;
       if (!msgId) return;
       
-      const raw = (entry.message || "").replace(/\[Attached:[^\]]*\]/g, "").trim();
+      const raw = entryText(entry).replace(/\[Attached:[^\]]*\]/g, "").trim();
       if (!raw) return;
       
       const lastLen = _ttsLastSpokenLenMap.get(msgId) || 0;
