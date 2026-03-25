@@ -4915,6 +4915,33 @@ export_runtime.render_html_fn = lambda: render_chat_html(
     chat_base_path="",
 )
 
+def _chat_notification_sound_filenames(sounds_dir: Path) -> list[str]:
+    """Rotating chat chime list: prefer notify_*.ogg; older single-user installs may use another prefix."""
+    if not sounds_dir.is_dir():
+        return []
+    names: list[str] = []
+    for path in sorted(sounds_dir.glob("notify_*.ogg")):
+        if path.is_file():
+            names.append(path.name)
+    if not names:
+        for path in sorted(sounds_dir.glob("sizuku_*.ogg")):
+            if path.is_file():
+                names.append(path.name)
+    if not names:
+        for fallback in ("notify_default.ogg", "sizuku_check.ogg"):
+            if (sounds_dir / fallback).is_file():
+                return [fallback]
+    return names
+
+
+def _default_session_notify_sound_basename(sounds_dir: Path) -> str:
+    if (sounds_dir / "notify_default.ogg").is_file():
+        return "notify_default.ogg"
+    if (sounds_dir / "sizuku_check.ogg").is_file():
+        return "sizuku_check.ogg"
+    return "notify_default.ogg"
+
+
 def git_branch_overview():
     root = Path(workspace or _repo_root)
     def _run(*args):
@@ -5396,13 +5423,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if parsed.path == "/notify-sounds":
             _sounds_dir = _repo_root / "sounds"
-            names = []
-            if _sounds_dir.is_dir():
-                for path in sorted(_sounds_dir.glob("sizuku_*.ogg")):
-                    if path.is_file():
-                        names.append(path.name)
-            if not names and (_sounds_dir / "sizuku_check.ogg").is_file():
-                names.append("sizuku_check.ogg")
+            names = _chat_notification_sound_filenames(_sounds_dir)
             body = json.dumps(names, ensure_ascii=True).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -5429,9 +5450,9 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/notify-sound":
             qs = parse_qs(parsed.query)
             name = (qs.get("name", [""])[0] or "").strip()
-            if not name:
-                name = "sizuku_check.ogg"
             _sounds_dir = _repo_root / "sounds"
+            if not name:
+                name = _default_session_notify_sound_basename(_sounds_dir)
             path = (_sounds_dir / name).resolve()
             try:
                 if path.parent != _sounds_dir.resolve() or path.suffix.lower() != ".ogg":
