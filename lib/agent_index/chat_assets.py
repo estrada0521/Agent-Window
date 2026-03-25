@@ -5695,11 +5695,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
       syncHeaderMenuFocus();
     }
+    const isLocalHubHostname = (host = String(location.hostname || "")) =>
+      host === "127.0.0.1" || host === "localhost" || host === "[::1]" || host.startsWith("192.168.") || host.startsWith("10.") || /^172\\.(1[6-9]|2\\d|3[01])\\./.test(host);
     const envBadge = document.getElementById("hubPageEnvBadge");
     if (envBadge) {
-      const host = String(location.hostname || "");
-      const isLocal = host === "127.0.0.1" || host === "localhost" || host.startsWith("192.168.") || host.startsWith("10.") || /^172\\.(1[6-9]|2\\d|3[01])\\./.test(host);
-      envBadge.textContent = isLocal ? "Local" : "Public";
+      envBadge.textContent = isLocalHubHostname() ? "Local" : "Public";
     }
     let attachedFilesSession = "";
     let gitBranchLoadedFor = "";
@@ -7677,11 +7677,26 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         if (scrollToBottomAfter) scrollPaneSlideToBottom(slide);
       } catch (_) {}
     };
-    const fetchAllPaneViewerSlides = (scrollToBottomAfter = false) => {
-      paneViewerAgents.forEach((agent, i) => {
-        const slide = paneViewerCarousel.children[i];
-        if (slide) fetchPaneViewerSlide(agent, slide, scrollToBottomAfter);
-      });
+    const fetchPaneViewerSlideByIndex = (idx, scrollToBottomAfter = false) => {
+      if (!paneViewerCarousel || !paneViewerAgents.length) return;
+      const i = Math.max(0, Math.min(paneViewerAgents.length - 1, idx));
+      const agent = paneViewerAgents[i];
+      const slide = paneViewerCarousel.children[i];
+      if (agent && slide) fetchPaneViewerSlide(agent, slide, scrollToBottomAfter);
+    };
+    /* カルーセルの見えているタブだけポーリング（全エージェント並列 /trace しない）。 */
+    const fetchVisiblePaneViewerSlide = (scrollToBottomAfter = false) => {
+      if (!paneViewerCarousel || !paneViewerAgents.length) return;
+      const width = paneViewerCarousel.offsetWidth;
+      if (!width) {
+        fetchPaneViewerSlideByIndex(lastPaneViewerTabIdx, scrollToBottomAfter);
+        return;
+      }
+      const scrollLeft = paneViewerCarousel.scrollLeft;
+      let idx = Math.round(scrollLeft / width);
+      if (!Number.isFinite(idx)) idx = 0;
+      idx = Math.max(0, Math.min(paneViewerAgents.length - 1, idx));
+      fetchPaneViewerSlideByIndex(idx, scrollToBottomAfter);
     };
     function movePaneViewerIndicator(idx, { scrollTabIntoView = false } = {}) {
       const indicator = paneViewerTabs.querySelector(".pane-viewer-tab-indicator");
@@ -7720,6 +7735,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       paneViewerTabScrollEndTimer = setTimeout(() => {
         paneViewerTabScrollEndTimer = null;
         movePaneViewerIndicator(lastPaneViewerTabIdx, { scrollTabIntoView: true });
+        fetchVisiblePaneViewerSlide(false);
       }, 120);
     };
     const schedulePaneViewerScrollAlign = () => {
@@ -7748,10 +7764,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const idx = paneViewerAgents.indexOf(agent);
       if (idx < 0) return;
       lastPaneViewerTabIdx = idx;
+      paneViewerLastAgent = agent;
       paneViewerCarousel.scrollTo({ left: idx * paneViewerCarousel.offsetWidth, behavior: "smooth" });
       const tabs = Array.from(paneViewerTabs.querySelectorAll(".pane-viewer-tab"));
       tabs.forEach((t, i) => t.classList.toggle("active", i === idx));
       movePaneViewerIndicator(idx, { scrollTabIntoView: true });
+      fetchPaneViewerSlideByIndex(idx, true);
     };
     const paneViewerTabCharsHtml = (name) => {
       let idx = 0;
@@ -7804,9 +7822,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (paneViewerEl.classList.contains("visible")) {
         if (resolved && paneViewerAgents.includes(resolved)) {
           scrollToAgent(resolved);
-          const idx = paneViewerAgents.indexOf(resolved);
-          const slide = paneViewerCarousel?.children[idx];
-          if (slide) fetchPaneViewerSlide(resolved, slide, true);
         }
         return;
       }
@@ -7831,10 +7846,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       paneViewerEl.classList.add("visible");
       schedulePaneViewerScrollAlign();
       syncHeaderMenuFocus();
-      fetchAllPaneViewerSlides(true);
-      /* Pane Viewer はモバイル専用（デスクトップは実ペイン）。Hub 内トレースの更新間隔。 */
-      const paneTracePollMs = 100;
-      paneViewerInterval = setInterval(() => fetchAllPaneViewerSlides(false), paneTracePollMs);
+      fetchPaneViewerSlideByIndex(lastPaneViewerTabIdx, true);
+      /* LAN/Local: 100ms。Public は 1.5s。開いているタブのエージェントだけ /trace。 */
+      const paneTracePollMs = isLocalHubHostname() ? 100 : 1500;
+      paneViewerInterval = setInterval(() => fetchVisiblePaneViewerSlide(false), paneTracePollMs);
     };
     const togglePaneViewer = () => {
       if (!paneViewerEl) return;

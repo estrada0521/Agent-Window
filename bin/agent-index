@@ -4764,10 +4764,13 @@ PYEOF
   HUB_URL="${HTTPS_SCHEME}://127.0.0.1:${HUB_PORT}/"
   LOCAL_IP="$(detect_local_ip || true)"
   [[ "$NO_OPEN" -eq 0 ]] && { open_chat_window "$HUB_URL" || true; }
-  echo "Opened session hub: $HUB_URL"
+  echo "Hub:                $HUB_URL"
   if [[ -n "$LOCAL_IP" ]]; then
-    echo "Network access:     ${HTTPS_SCHEME}://${LOCAL_IP}:${HUB_PORT}/"
+    echo "Hub (LAN / phone): ${HTTPS_SCHEME}://${LOCAL_IP}:${HUB_PORT}/"
+  else
+    echo "Tip (phone): open Hub using this Mac's LAN IP instead of 127.0.0.1 (same Wi‑Fi)."
   fi
+  echo "From Hub: New Session, Resume, Settings, … — see README if HTTPS warns on iPhone."
   exit 0
 fi
 

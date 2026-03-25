@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# One-shot: symlink CLI into ~/.local/bin, then start the Hub (browser + URL hints).
+set -euo pipefail
+_REAL_SCRIPT="$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$0" 2>/dev/null || echo "$0")"
+_BIN="$(cd "$(dirname "$_REAL_SCRIPT")" && pwd)"
+ROOT="$(cd "$_BIN/.." && pwd)"
+"$ROOT/bin/multiagent" --install
+exec "$ROOT/bin/agent-index" --hub
