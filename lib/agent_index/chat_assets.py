@@ -35,37 +35,9 @@ CHAT_HTML = r"""<!doctype html>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/toolbar/prism-toolbar.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-  <script>
-  (function () {
-    if (typeof Prism === "undefined" || !Prism.plugins || !Prism.plugins.toolbar || typeof Prism.plugins.toolbar.registerButton !== "function") return;
-    var COPY_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-    var CHECK_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
-    function escAttr(s) {
-      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    }
-    Prism.plugins.toolbar.registerButton("chat-code-copy", function (env) {
-      var btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "prism-chat-copy-btn";
-      btn.title = "コピー";
-      btn.setAttribute("data-copy-icon", escAttr(COPY_SVG));
-      btn.setAttribute("data-check-icon", escAttr(CHECK_SVG));
-      btn.innerHTML = COPY_SVG;
-      btn.addEventListener("click", function (ev) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        var text = (env.element && env.element.textContent) || "";
-        if (window.__chatPrismToolbarCopy) window.__chatPrismToolbarCopy(btn, text);
-      });
-      return btn;
-    });
-  })();
-  </script>
   <style>
     @font-face {
       font-family: "anthropicSerif";
@@ -3108,41 +3080,6 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       word-break: normal;
       box-shadow: none;
       -webkit-overflow-scrolling: touch;
-    }
-    .md-body pre:has(.prism-toolbar) {
-      padding-top: 40px;
-    }
-    .md-body pre .prism-toolbar {
-      position: absolute;
-      top: 8px;
-      right: 10px;
-      height: auto;
-      opacity: 1;
-    }
-    .md-body pre .prism-chat-copy-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 32px;
-      min-height: 30px;
-      padding: 4px 8px;
-      margin: 0;
-      font-size: 15px;
-      line-height: 1;
-      color: var(--muted);
-      background: var(--surface);
-      border: 0.5px solid var(--inline-code-border);
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .has-hover .md-body pre .prism-chat-copy-btn:hover {
-      color: var(--text);
-      background: var(--bg-hover);
-    }
-    .md-body pre .prism-chat-copy-btn.copied {
-      color: var(--text);
     }
     .md-body pre code {
       font-family: "jetbrainsMono", "JetBrains Mono", monospace !important;
@@ -7148,7 +7085,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       ta.style.cssText = "position:fixed;opacity:0;top:0;left:0";
       document.body.appendChild(ta);
       ta.focus(); ta.select();
-      try { document.execCommand("copy"); } catch(_) {}
+      try { document.execCommand("copy"); } catch (_) {}
       document.body.removeChild(ta);
       return Promise.resolve();
     };
@@ -7194,11 +7131,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           { opacity: 0, transform: "scale(1.08)" }
         ]);
       }, 1500);
-    };
-    window.__chatPrismToolbarCopy = (btn, text) => {
-      doCopyText(text).then(() => {
-        markCopied(btn);
-      }).catch(() => {});
     };
     const jumpToReplySource = (targetId) => {
       if (!targetId) return;
