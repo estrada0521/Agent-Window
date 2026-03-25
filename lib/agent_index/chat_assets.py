@@ -3064,20 +3064,6 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       max-width: none;
       margin: 0 auto;
     }
-    .md-body .code-block-wrap {
-      position: relative;
-      margin: 12px 0;
-    }
-    .md-body .code-block-wrap pre {
-      margin: 0;
-      padding: 12px 42px 12px 16px;
-    }
-    .md-body .code-block-wrap .code-block-copy-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 3;
-    }
     .md-body pre {
       display: block;
       width: 100%;
@@ -4478,32 +4464,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         row.classList.toggle("has-structured-block", hasStructuredBlock);
       });
     };
-    const CODE_BLOCK_COPY_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-    const CODE_BLOCK_CHECK_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
-    const installCodeBlockCopyButtons = (scope) => {
-      if (!scope || !scope.querySelectorAll) return;
-      scope.querySelectorAll(".md-body pre").forEach((pre) => {
-        if (pre.classList.contains("code-block-copy-installed")) return;
-        const codeEl = pre.querySelector(":scope > code");
-        if (!codeEl) return;
-        pre.classList.add("code-block-copy-installed");
-        const wrap = document.createElement("div");
-        wrap.className = "code-block-wrap";
-        pre.parentNode.insertBefore(wrap, pre);
-        wrap.appendChild(pre);
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "copy-btn code-block-copy-btn";
-        btn.title = "コピー";
-        btn.setAttribute("data-copy-icon", escapeHtml(CODE_BLOCK_COPY_ICON).replaceAll('"', "&quot;"));
-        btn.setAttribute("data-check-icon", escapeHtml(CODE_BLOCK_CHECK_ICON).replaceAll('"', "&quot;"));
-        btn.innerHTML = CODE_BLOCK_COPY_ICON;
-        wrap.appendChild(btn);
-      });
-    };
     const scheduleViewportCenteredBlocks = (scope = document) => {
       syncWideBlockRows(scope);
-      installCodeBlockCopyButtons(scope);
     };
     updateScrollBtnPos();
     new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("composer"));
@@ -7277,14 +7239,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
       const btn = e.target.closest(".copy-btn");
       if (!btn) return;
-      if (btn.classList.contains("code-block-copy-btn")) {
-        const codeEl = btn.closest(".code-block-wrap")?.querySelector("pre code");
-        const text = codeEl ? codeEl.textContent : "";
-        doCopyText(text).then(() => {
-          markCopied(btn);
-        }).catch(() => {});
-        return;
-      }
       const raw = btn.closest(".message-wrap")?.dataset.raw ?? "";
       doCopyText(raw).then(() => {
         markCopied(btn);
