@@ -3642,9 +3642,8 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       background: var(--fg-bright) !important;
       color: var(--surface) !important;
     }
-    /* tap / hover interactive color */
+    /* tap / hover interactive color (file-item uses same rgba as cmd-item; see .has-hover .file-item:hover) */
     .has-hover .quick-action:hover:not(:disabled),
-    .file-item:hover,
     .has-hover .composer-plus-toggle:hover,
     .daybreak,
     .has-hover .copy-btn:hover,
@@ -5248,7 +5247,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const iconSrc = agentIconSrc(agent);
         return `<button type="button" class="add-agent-chip" data-agent="${agent}"><img class="add-agent-chip-icon" src="${escapeHtml(iconSrc)}" alt="${escapeHtml(agent)}"><span>${escapeHtml(agent)}</span></button>`;
       }).join("");
-      overlay.innerHTML = `<div class="add-agent-panel"><h3>Add Agent</h3><div class="add-agent-grid">${chipsHtml}</div><div class="add-agent-actions"><button type="button" class="add-agent-cancel">Cancel</button><button type="button" class="add-agent-confirm" disabled>Add</button></div></div>`;
+      overlay.innerHTML = `<div class="add-agent-panel"><h3>Add Agent</h3><p style="margin:0 0 0.75rem;font-size:13px;opacity:0.85;line-height:1.45">Adds a new pane for this agent in the current session. Existing chat history in .jsonl is unchanged.</p><div class="add-agent-grid">${chipsHtml}</div><div class="add-agent-actions"><button type="button" class="add-agent-cancel">Cancel</button><button type="button" class="add-agent-confirm" disabled>Add</button></div></div>`;
       document.body.appendChild(overlay);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => overlay.classList.add("visible"));
@@ -8211,7 +8210,7 @@ def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port
         .replace("__SERVER_INSTANCE__", server_instance)
         .replace("__HUB_PORT__", str(hub_port))
         .replace("__CHAT_THEME__", chat_settings["theme"])
-        .replace("__STARFIELD_ATTR__", "" if chat_settings.get("starfield", True) else ' data-starfield="off"')
+        .replace("__STARFIELD_ATTR__", "" if chat_settings.get("starfield", False) else ' data-starfield="off"')
         .replace("__CHAT_SOUND_ENABLED__", "true" if chat_settings.get("chat_sound", False) else "false")
         .replace("__CHAT_TTS_ENABLED__", "true" if chat_settings.get("chat_tts", False) else "false")
         .replace("__AGENT_FONT_MODE__", chat_settings["agent_font_mode"])

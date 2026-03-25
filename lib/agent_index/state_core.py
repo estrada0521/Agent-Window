@@ -110,7 +110,7 @@ HUB_SETTINGS_DEFAULTS = {
     "chat_awake": False,
     "chat_sound": False,
     "chat_tts": False,
-    "starfield": True,
+    "starfield": False,
 }
 
 

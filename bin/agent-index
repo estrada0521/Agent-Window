@@ -4392,7 +4392,7 @@ class Handler(BaseHTTPRequestHandler):
         if "__CHAT_THEME__" in page:
             settings = load_hub_settings()
             page = page.replace("__CHAT_THEME__", settings.get("theme", "claude"))
-            sf_attr = "" if settings.get("starfield", True) else ' data-starfield="off"'
+            sf_attr = "" if settings.get("starfield", False) else ' data-starfield="off"'
             page = page.replace("__STARFIELD_ATTR__", sf_attr)
         body = page.encode("utf-8")
         self.send_response(status)
