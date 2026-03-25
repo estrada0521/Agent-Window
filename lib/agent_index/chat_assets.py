@@ -2651,13 +2651,14 @@ __AGENT_ACCENT_CSS__
         pointer-events: none;
         transition: opacity 120ms ease;
       }
-      .message.user .user-message-meta > * {
+      /* One container opacity (like agent meta); per-child rules avoid fighting `time` etc. */
+      .message.user .user-message-meta {
         opacity: 0;
         pointer-events: none;
         transition: opacity 120ms ease;
       }
-      .message-row.user:hover .user-message-meta > *,
-      .message-row.user:focus-within .user-message-meta > * {
+      .message-row.user:hover .user-message-meta,
+      .message-row.user:focus-within .user-message-meta {
         opacity: 1;
         pointer-events: auto;
       }
