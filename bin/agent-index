@@ -5536,6 +5536,45 @@ class Handler(BaseHTTPRequestHandler):
                 "targets": runtime.active_agents(),
             })
             return
+        if parsed.path == "/remove-agent":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                length = 0
+            raw = self.rfile.read(length)
+            try:
+                data = json.loads(raw.decode("utf-8") or "{}")
+            except json.JSONDecodeError:
+                self._send_json(400, {"ok": False, "error": "invalid json"})
+                return
+            agent = (data.get("agent") or "").strip()
+            if not agent:
+                self._send_json(400, {"ok": False, "error": "agent required"})
+                return
+            bin_dir = Path(agent_send_path).parent
+            try:
+                proc = subprocess.run(
+                    [str(bin_dir / "multiagent"), "remove-agent", "--session", session_name, "--agent", agent],
+                    capture_output=True,
+                    text=True,
+                    env=os.environ.copy(),
+                    check=False,
+                )
+            except Exception as exc:
+                self._send_json(500, {"ok": False, "error": str(exc)})
+                return
+            stdout = (proc.stdout or "").strip()
+            stderr = (proc.stderr or "").strip()
+            if proc.returncode != 0:
+                self._send_json(500, {"ok": False, "error": stderr or stdout or f"remove-agent failed ({proc.returncode})"})
+                return
+            self._send_json(200, {
+                "ok": True,
+                "agent": agent,
+                "message": stdout or f"Removed agent {agent}",
+                "targets": runtime.active_agents(),
+            })
+            return
         if parsed.path == "/log-system":
             try:
                 length = int(self.headers.get("Content-Length", "0"))

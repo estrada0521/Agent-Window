@@ -21,6 +21,18 @@ PYEOF
 
 TMUX_SOCKET_NAME="${MULTIAGENT_TMUX_SOCKET:-$(default_tmux_socket_name)}"
 
+multiagent_panes_state_path() {
+  local sock="${1:-$TMUX_SOCKET_NAME}"
+  case "$sock" in
+    /*)
+      python3 -c "import hashlib,sys; print('/tmp/multiagent_sock_' + hashlib.sha1(sys.argv[1].encode()).hexdigest()[:20] + '_panes')" "$sock"
+      ;;
+    *)
+      printf '/tmp/multiagent_%s_panes\n' "$sock"
+      ;;
+  esac
+}
+
 tmux() {
   if [[ "$TMUX_SOCKET_NAME" == */* ]]; then
     command tmux -S "$TMUX_SOCKET_NAME" "$@"
@@ -223,7 +235,8 @@ resolve_session_name() {
   fi
 
   # Last resort: state file written by multiagent at startup
-  local state_file="/tmp/multiagent_${TMUX_SOCKET_NAME}_panes"
+  local state_file
+  state_file="$(multiagent_panes_state_path)"
   if [[ -f "$state_file" ]]; then
     local hint_session
     hint_session="$(sed -n 's/^MULTIAGENT_SESSION=//p' "$state_file" 2>/dev/null | head -1)"
@@ -273,7 +286,8 @@ resolve_pane() {
   local result
   result="$(tmux show-environment -t "$SESSION_NAME" "$1" 2>/dev/null | sed 's/^[^=]*=//')"
   if [[ -z "$result" ]]; then
-    local state_file="/tmp/multiagent_${TMUX_SOCKET_NAME}_panes"
+    local state_file
+    state_file="$(multiagent_panes_state_path)"
     [[ -f "$state_file" ]] && result="$(sed -n "s/^${1}=//p" "$state_file" 2>/dev/null | head -1)"
   fi
   printf '%s\n' "$result"

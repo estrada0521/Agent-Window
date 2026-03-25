@@ -1842,6 +1842,15 @@ __AGENT_ACCENT_CSS__
       opacity: 0.2;
       cursor: default;
     }
+    .add-agent-actions .add-agent-confirm.remove-agent-confirm:not(:disabled) {
+      background: rgba(239, 68, 68, 0.28);
+      color: var(--text);
+      border-color: rgba(239, 68, 68, 0.55);
+    }
+    .add-agent-actions .add-agent-confirm.remove-agent-confirm:not(:disabled):hover {
+      background: rgba(239, 68, 68, 0.42);
+      border-color: rgba(239, 68, 68, 0.72);
+    }
     /* Pane Trace: タブ＋カルーセルのみ（戻る行なし・ハンバーガーで一覧へ）。下余白は親パネル＋スライド safe-area */
     .pane-viewer {
       display: none;
@@ -5298,6 +5307,68 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         }
       });
     };
+    const showRemoveAgentModal = () => {
+      const instances = (availableTargets || []).filter(Boolean);
+      if (instances.length <= 1) {
+        setStatus("need at least 2 agents to remove one", true);
+        setTimeout(() => setStatus(""), 2400);
+        return;
+      }
+      let overlay = document.getElementById("removeAgentOverlay");
+      if (overlay) { overlay.remove(); }
+      overlay = document.createElement("div");
+      overlay.id = "removeAgentOverlay";
+      overlay.className = "add-agent-overlay";
+      let selected = null;
+      const chipsHtml = instances.map((agent) => {
+        const iconSrc = agentIconSrc(agent);
+        return `<button type="button" class="add-agent-chip" data-agent="${escapeHtml(agent)}"><img class="add-agent-chip-icon" src="${escapeHtml(iconSrc)}" alt="${escapeHtml(agent)}"><span>${escapeHtml(agent)}</span></button>`;
+      }).join("");
+      overlay.innerHTML = `<div class="add-agent-panel"><h3>Remove Agent</h3><p style="margin:0 0 0.75rem;font-size:13px;opacity:0.85;line-height:1.45">Removes the pane from this session. Chat history in .jsonl is not deleted.</p><div class="add-agent-grid">${chipsHtml}</div><div class="add-agent-actions"><button type="button" class="add-agent-cancel">Cancel</button><button type="button" class="add-agent-confirm remove-agent-confirm" disabled>Remove</button></div></div>`;
+      document.body.appendChild(overlay);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => overlay.classList.add("visible"));
+      });
+      const confirmBtn = overlay.querySelector(".add-agent-confirm");
+      overlay.querySelectorAll(".add-agent-chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          overlay.querySelectorAll(".add-agent-chip").forEach((c) => c.classList.remove("selected"));
+          chip.classList.add("selected");
+          selected = chip.dataset.agent;
+          confirmBtn.disabled = false;
+        });
+      });
+      const closeModal = () => {
+        overlay.classList.remove("visible");
+        setTimeout(() => overlay.remove(), 420);
+      };
+      overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
+      overlay.querySelector(".add-agent-cancel").addEventListener("click", closeModal);
+      confirmBtn.addEventListener("click", async () => {
+        if (!selected) return;
+        closeModal();
+        setStatus(`removing ${selected}...`);
+        try {
+          const res = await fetch("/remove-agent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent: selected }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) {
+            throw new Error(data.error || "failed to remove agent");
+          }
+          await logSystem(`Remove Agent \u2192 ${selected}`);
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          await refreshSessionState();
+          setStatus(`${selected} removed`);
+          setTimeout(() => setStatus(""), 1800);
+        } catch (err) {
+          setStatus(err?.message || "remove agent failed", true);
+          setTimeout(() => setStatus(""), 2600);
+        }
+      });
+    };
     const fetchWithTimeout = async (url, options = {}, timeoutMs = 1500) => {
       let timer = null;
       const controller = typeof AbortController === "function" ? new AbortController() : null;
@@ -6251,6 +6322,16 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             return;
           }
           showAddAgentModal();
+          return;
+        }
+        if (target === "removeAgent") {
+          closeQuickMore();
+          if (!sessionActive) {
+            setStatus("archived session is read-only", true);
+            setTimeout(() => setStatus(""), 2000);
+            return;
+          }
+          showRemoveAgentModal();
           return;
         }
         if (target === "killBtn" && !keepComposerOpen) closeQuickMore();
@@ -7981,6 +8062,7 @@ CHAT_HEADER_PANELS_HTML = """
     <div class="hub-main-menu-list-view">
       <button type="button" class="hub-page-menu-item" data-forward-action="reloadChat"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3v6h-6"></path><path d="M20 9a8 8 0 1 0 2 5.3"></path></svg></span><span class="action-label">Reload</span><span class="action-mobile">Reload</span></button>
       <button type="button" class="hub-page-menu-item" data-forward-action="addAgent"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path><circle cx="12" cy="12" r="9"></circle></svg></span><span class="action-label">Add Agent</span><span class="action-mobile">Add Agent</span></button>
+      <button type="button" class="hub-page-menu-item danger" data-forward-action="removeAgent"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="22" y1="11" x2="16" y2="11"></line></svg></span><span class="action-label">Remove Agent</span><span class="action-mobile">Remove</span></button>
       <button type="button" class="hub-page-menu-item" data-forward-action="openTerminal"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></span><span class="action-label">Terminal</span><span class="action-mobile">Terminal</span></button>
       <button type="button" class="hub-page-menu-item" data-forward-action="exportBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span><span class="action-label">Export</span><span class="action-mobile">Export</span></button>
       <button type="button" class="hub-page-menu-item danger" data-forward-action="killBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="m9 9 6 6"></path><path d="m15 9-6 6"></path></svg></span><span class="action-label">Kill</span><span class="action-mobile">Kill</span></button>

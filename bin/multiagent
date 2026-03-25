@@ -43,6 +43,20 @@ PYEOF
 
 TMUX_SOCKET_NAME="${MULTIAGENT_TMUX_SOCKET:-$(default_tmux_socket_name)}"
 
+# Path for pane env snapshot used by agent-send. Absolute socket paths may contain '/',
+# so they are hashed instead of embedded in the filename.
+multiagent_panes_state_path() {
+  local sock="${1:-$TMUX_SOCKET_NAME}"
+  case "$sock" in
+    /*)
+      python3 -c "import hashlib,sys; print('/tmp/multiagent_sock_' + hashlib.sha1(sys.argv[1].encode()).hexdigest()[:20] + '_panes')" "$sock"
+      ;;
+    *)
+      printf '/tmp/multiagent_%s_panes\n' "$sock"
+      ;;
+  esac
+}
+
 agent_in_registry() {
   local candidate="$1" agent
   for agent in "${ALL_AGENTS[@]}"; do
@@ -298,7 +312,7 @@ write_session_state_file() {
         [[ -n "$pane" ]] && printf 'MULTIAGENT_PANE_%s=%s\n' "$upper" "$pane"
       done
     fi
-  } > "/tmp/multiagent_${TMUX_SOCKET_NAME}_panes"
+  } > "$(multiagent_panes_state_path)"
 }
 
 session_agent_state_lines() {
@@ -600,6 +614,7 @@ Usage:
   multiagent [status] [--session NAME] [--all]
   multiagent brief [--session NAME]
   multiagent add-agent --session NAME --agent AGENT
+  multiagent remove-agent --session NAME --agent INSTANCE
   multiagent resume [--session NAME | --latest] [--detach]
   multiagent kill [--session NAME | --all]
   multiagent rename --session NAME --to NEW_NAME
@@ -636,6 +651,7 @@ Options:
   list                 List active sessions for this multiagent install
   brief                Send the agent communication briefing manually
   add-agent            Add a new agent to an existing session
+  remove-agent         Remove one agent pane (INSTANCE e.g. claude, gemini-2); chat jsonl is untouched
   save                 Save pane logs for an existing session
   refresh-save-hooks   Rewrite /tmp/multiagent_save_*.sh and tmux hooks for all active repo sessions
   status               Show session status without starting or changing anything
@@ -859,6 +875,7 @@ while [[ $# -gt 0 ]]; do
     list)        MODE="list"; shift ;;
     brief)       MODE="brief"; shift ;;
     add-agent)   MODE="add-agent"; shift ;;
+    remove-agent) MODE="remove-agent"; shift ;;
     save)        MODE="save"; shift ;;
     refresh-save-hooks) MODE="refresh-save-hooks"; shift ;;
     status)      MODE="status"; shift ;;
@@ -1037,7 +1054,7 @@ if [[ "$MODE" == "kill" ]]; then
       [[ -z "$session" ]] && continue
       hook_script="/tmp/multiagent_save_${session}.sh"
       [[ -x "$hook_script" ]] && "$hook_script" kill || true
-      rm -f "/tmp/multiagent_${TMUX_SOCKET_NAME}_panes" 2>/dev/null || true
+      rm -f "$(multiagent_panes_state_path)" 2>/dev/null || true
       tmux kill-session -t "$session"
       echo "Killed tmux session: $session"
       killed=1
@@ -1058,7 +1075,7 @@ if [[ "$MODE" == "kill" ]]; then
   fi
   hook_script="/tmp/multiagent_save_${SESSION_NAME}.sh"
   [[ -x "$hook_script" ]] && "$hook_script" kill || true
-  rm -f "/tmp/multiagent_${TMUX_SOCKET_NAME}_panes" 2>/dev/null || true
+  rm -f "$(multiagent_panes_state_path)" 2>/dev/null || true
   tmux kill-session -t "$SESSION_NAME"
   echo "Killed tmux session: $SESSION_NAME"
   exit 0
@@ -1414,6 +1431,109 @@ if [[ "$MODE" == "add-agent" ]]; then
   exit 0
 fi
 
+if [[ "$MODE" == "remove-agent" ]]; then
+  command -v tmux >/dev/null 2>&1 || { echo "tmux is required." >&2; exit 1; }
+  [[ -n "$AGENTS_ARG" ]] || { echo "--agent is required for remove-agent" >&2; exit 1; }
+  if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
+    SESSION_NAME="$(resolve_target_session_name)" || exit 1
+  fi
+  if [[ -z "$SESSION_NAME" ]]; then
+    echo "Session does not exist" >&2
+    exit 1
+  fi
+  if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+    echo "Session does not exist: $SESSION_NAME" >&2
+    exit 1
+  fi
+
+  instance_name="$(printf '%s' "$AGENTS_ARG" | tr '[:upper:]' '[:lower:]')"
+  session_workspace="$(session_workspace_value "$SESSION_NAME")"
+  session_bin_dir="$(session_bin_dir_value "$SESSION_NAME")"
+  session_log_dir="$(tmux show-environment -t "$SESSION_NAME" MULTIAGENT_LOG_DIR 2>/dev/null | sed 's/^[^=]*=//' || true)"
+  session_socket="$(tmux show-environment -t "$SESSION_NAME" MULTIAGENT_TMUX_SOCKET 2>/dev/null | sed 's/^[^=]*=//' || true)"
+  [[ -n "$session_workspace" && "$session_workspace" != "-" ]] && WORKSPACE="$session_workspace"
+  [[ -n "$session_bin_dir" && "$session_bin_dir" != "-" ]] && SCRIPT_DIR="$session_bin_dir"
+  if [[ -n "$session_socket" ]]; then
+    TMUX_SOCKET_NAME="$session_socket"
+  fi
+  if [[ -n "$session_log_dir" && "$session_log_dir" != "-" ]]; then
+    LOG_DIR="$session_log_dir"
+  else
+    unset LOG_DIR
+  fi
+
+  current_agents="$(session_agents_value "$SESSION_NAME")"
+  [[ "$current_agents" == "-" ]] && current_agents=""
+  canonical=""
+  IFS=',' read -ra _cur <<< "$current_agents"
+  for a in "${_cur[@]}"; do
+    [[ -z "$a" ]] && continue
+    al="$(printf '%s' "$a" | tr '[:upper:]' '[:lower:]')"
+    if [[ "$al" == "$instance_name" ]]; then
+      canonical="$a"
+      break
+    fi
+  done
+  if [[ -z "$canonical" ]]; then
+    echo "Agent instance not in this session: $AGENTS_ARG (current: ${current_agents:-none})" >&2
+    exit 1
+  fi
+
+  remaining=0
+  for a in "${_cur[@]}"; do
+    [[ -z "$a" ]] && continue
+    [[ "$a" == "$canonical" ]] && continue
+    remaining=$((remaining + 1))
+  done
+  if [[ "$remaining" -lt 1 ]]; then
+    echo "Cannot remove the last agent pane" >&2
+    exit 1
+  fi
+
+  upper_instance="$(printf '%s' "$canonical" | tr '[:lower:]-' '[:upper:]_')"
+  pane_id="$(tmux show-environment -t "$SESSION_NAME" "MULTIAGENT_PANE_${upper_instance}" 2>/dev/null | sed 's/^[^=]*=//' || true)"
+  if [[ -z "$pane_id" ]]; then
+    echo "No tmux pane recorded for instance: $canonical" >&2
+    exit 1
+  fi
+  user_panes_csv="$(session_user_pane_value "$SESSION_NAME")"
+  if [[ -n "$user_panes_csv" ]]; then
+    IFS=',' read -ra _up_ids <<< "$user_panes_csv"
+    for _up in "${_up_ids[@]}"; do
+      [[ -n "$_up" && "$_up" == "$pane_id" ]] && { echo "Refusing to remove a user/terminal pane" >&2; exit 1; }
+    done
+  fi
+
+  if ! tmux kill-pane -t "$pane_id" 2>/dev/null; then
+    echo "tmux kill-pane failed for $pane_id" >&2
+    exit 1
+  fi
+
+  new_agents=()
+  for a in "${_cur[@]}"; do
+    [[ -z "$a" ]] && continue
+    [[ "$a" == "$canonical" ]] && continue
+    new_agents+=("$a")
+  done
+  updated_agents="$(IFS=,; echo "${new_agents[*]}")"
+
+  tmux set-environment -t "$SESSION_NAME" -u "MULTIAGENT_PANE_${upper_instance}" 2>/dev/null || true
+  tmux set-environment -t "$SESSION_NAME" MULTIAGENT_AGENTS "$updated_agents"
+
+  user_panes_csv="$(session_user_pane_value "$SESSION_NAME")"
+  tmux select-layout -t "$SESSION_NAME":0 tiled >/dev/null 2>&1 || true
+  if [[ -n "$user_panes_csv" ]]; then
+    IFS=',' read -ra _up_ids <<< "$user_panes_csv"
+    for _up in "${_up_ids[@]}"; do
+      [[ -n "$_up" ]] && tmux resize-pane -t "$_up" -y 2 2>/dev/null || true
+    done
+  fi
+
+  write_session_state_file "$SESSION_NAME"
+  echo "Removed agent $canonical from session: $SESSION_NAME"
+  exit 0
+fi
+
 
 if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
   echo "Session already exists: $SESSION_NAME" >&2
@@ -1560,7 +1680,7 @@ tmux set-environment -t "$SESSION_NAME" MULTIAGENT_AGENTS "$(IFS=,; echo "${INST
       "$(echo "${INSTANCE_NAMES[$i]}" | tr '[:lower:]-' '[:upper:]_')" \
       "${PANES[$i]}"
   done
-} > "/tmp/multiagent_${TMUX_SOCKET_NAME}_panes"
+} > "$(multiagent_panes_state_path)"
 
 ensure_codex_agent_send_rules() {
   local rules_file="${CODEX_HOME:-$HOME/.codex}/rules/default.rules"
