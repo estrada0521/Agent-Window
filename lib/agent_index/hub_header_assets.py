@@ -20,9 +20,19 @@ def _logo_mime(path: Path) -> str:
     return "application/octet-stream"
 
 
-def hub_logo_url_path() -> str:
-    """Fetch the logo over HTTP (avoids huge inline data: URIs)."""
-    return "/hub-logo"
+def hub_logo_url_path(repo_root: Path | None = None) -> str:
+    """Fetch the logo over HTTP. Query busts caches when the file on disk changes."""
+    base = "/hub-logo"
+    if repo_root is None:
+        return base
+    path = hub_logo_file_for_read(repo_root)
+    if not path:
+        return base
+    try:
+        v = int(path.stat().st_mtime)
+        return f"{base}?v={v}"
+    except OSError:
+        return base
 
 
 def hub_logo_file_for_read(repo_root: Path) -> Path | None:
