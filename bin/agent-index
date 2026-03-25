@@ -4055,50 +4055,50 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
         <div class="agent-slider-row" data-agent="gemini">
           <span class="agent-slider-name"><img class="agent-slider-icon" src="__GEMINI_ICON__" alt=""><span>Gemini</span></span>
           <div class="agent-slider-wrap">
-            <input type="range" class="agent-slider-input" min="0" max="20" value="1">
-            <span class="agent-slider-val">1</span>
+            <input type="range" class="agent-slider-input" min="0" max="20" value="0">
+            <span class="agent-slider-val">0</span>
           </div>
         </div>
         <div class="agent-slider-row" data-agent="copilot">
           <span class="agent-slider-name"><img class="agent-slider-icon invert" src="__COPILOT_ICON__" alt=""><span>Copilot</span></span>
           <div class="agent-slider-wrap">
-            <input type="range" class="agent-slider-input" min="0" max="20" value="1">
-            <span class="agent-slider-val">1</span>
+            <input type="range" class="agent-slider-input" min="0" max="20" value="0">
+            <span class="agent-slider-val">0</span>
           </div>
         </div>
         <div class="agent-slider-row" data-agent="cursor">
           <span class="agent-slider-name"><img class="agent-slider-icon" src="__CURSOR_ICON__" alt=""><span>Cursor</span></span>
           <div class="agent-slider-wrap">
-            <input type="range" class="agent-slider-input" min="0" max="20" value="1">
-            <span class="agent-slider-val">1</span>
+            <input type="range" class="agent-slider-input" min="0" max="20" value="0">
+            <span class="agent-slider-val">0</span>
           </div>
         </div>
         <div class="agent-slider-row" data-agent="grok">
           <span class="agent-slider-name"><img class="agent-slider-icon" src="__GROK_ICON__" alt=""><span>Grok</span></span>
           <div class="agent-slider-wrap">
-            <input type="range" class="agent-slider-input" min="0" max="20" value="1">
-            <span class="agent-slider-val">1</span>
+            <input type="range" class="agent-slider-input" min="0" max="20" value="0">
+            <span class="agent-slider-val">0</span>
           </div>
         </div>
         <div class="agent-slider-row" data-agent="opencode">
           <span class="agent-slider-name"><img class="agent-slider-icon" src="__OPENCODE_ICON__" alt=""><span>OpenCode</span></span>
           <div class="agent-slider-wrap">
-            <input type="range" class="agent-slider-input" min="0" max="20" value="1">
-            <span class="agent-slider-val">1</span>
+            <input type="range" class="agent-slider-input" min="0" max="20" value="0">
+            <span class="agent-slider-val">0</span>
           </div>
         </div>
         <div class="agent-slider-row" data-agent="qwen">
           <span class="agent-slider-name"><img class="agent-slider-icon" src="__QWEN_ICON__" alt=""><span>Qwen</span></span>
           <div class="agent-slider-wrap">
-            <input type="range" class="agent-slider-input" min="0" max="20" value="1">
-            <span class="agent-slider-val">1</span>
+            <input type="range" class="agent-slider-input" min="0" max="20" value="0">
+            <span class="agent-slider-val">0</span>
           </div>
         </div>
         <div class="agent-slider-row" data-agent="aider">
           <span class="agent-slider-name"><img class="agent-slider-icon" src="__AIDER_ICON__" alt=""><span>Aider</span></span>
           <div class="agent-slider-wrap">
-            <input type="range" class="agent-slider-input" min="0" max="20" value="1">
-            <span class="agent-slider-val">1</span>
+            <input type="range" class="agent-slider-input" min="0" max="20" value="0">
+            <span class="agent-slider-val">0</span>
           </div>
         </div>
       </div>
