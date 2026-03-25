@@ -1,82 +1,102 @@
 # Multiagent（ローカル）
 
-複数の AI エージェントを **tmux** 上で動き、**Hub** と **チャット UI** からまとめて操作するためのツール群です。
+複数の AI エージェントを **tmux** 上で動かし、**Hub** と **チャット UI** からまとめて扱うためのツールです。
+
+**→ English:** [README.en.md](README.en.md)
+
+この README は **ブラウザで Hub とチャットだけ触る人**向けです。ターミナルでの具体的なコマンドやセットアップ手順は、管理者向けに別資料（例: [OVERVIEW.md](OVERVIEW.md)）へまとめる想定です。
 
 ---
 
-## 最短で始める（受け取った人向け）
+## 最初にやること（マスト）
 
-### 前提
+新しいセッションを立ち上げたあと、次の順で一通り触れると運用がスムーズです。
 
-- **macOS または Linux**
-- **macOS の場合: Homebrew が入っていること**（`brew --version` が通る）。このリポジトリから Homebrew 本体のインストールは行いません。初回だけ次の **1 行**をターミナルで実行（管理者パスワードの入力が求められます）。終了後、表示に従い `brew shellenv` を `~/.zprofile` へ追記し、ターミナルを開き直してください。
+1. **Hub を開く**  
+   管理者から共有された URL をブラウザで開きます。セッション一覧や各種メニューがあるホーム画面です。
 
-  ```bash
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  ```
+2. **New Session**  
+   Hub から新規セッションを作成します（ワークスペースや参加エージェント数などは画面の指示に従います）。
 
-- **tmux** — バインドルは含みません。macOS では `brew install tmux`（無い場合 `ensure-multiagent-deps` が確認）。Linux は各パッケージ（例: `sudo apt install tmux`）。
-- **Python 3** — macOS では `brew install python3` で可（同様に `ensure-multiagent-deps` が確認）。
-- **各エージェントの CLI**（Claude Code、Codex CLI、Gemini CLI など、使いたいもの）は別途インストール済みであること
+3. **チャット画面が開く**  
+   作成完了後、そのセッション用の **チャット UI** に移ります。ここがエージェントへの指示や受信の主な場所です。
 
-`./bin/quickstart` や `multiagent` を叩いた時点で **Python 3 や tmux が無い**場合、macOS（**Homebrew が PATH にあること**）や主要な Linux では **`bin/ensure-multiagent-deps`** が自動実行され、足りないパッケージのインストールを試みます（Linux では `sudo` が必要なことがあります）。自動チェックを止めたいときは環境変数 `MULTIAGENT_SKIP_DEPS_CHECK=1`。Windows ネイティブや未対応のディストリビューションでは手動インストールが必要です。
+4. **ハンバーガーメニュー → Terminal**  
+   チャット画面上部の **ハンバーガー（三本線）** を開き、**Terminal** を選びます。各エージェントの **tmux ペイン**に相当する出力を、ブラウザ上で直接確認できます（エージェントが実際に何をしているかの生ログの確認用です）。  
+   ※画面幅が狭い場合は、同じメニュー内でペイン一覧がパネル表示される動きになります。
 
-通知音を使う場合は、好きな **OGG ファイルを `sounds/` に置いてください**（clone 直後は無音で動きます）。ファイル名と意味は [sounds/README.md](sounds/README.md) を参照。
-
-### 1 コマンドで「インストール → Hub 起動」
-
-```bash
-git clone <GitHub の Code からコピーした HTTPS/SSH URL> multiagent
-cd multiagent
-./bin/quickstart
-```
-
-`quickstart` は次を順に実行します。
-
-1. 不足していれば **`bin/ensure-multiagent-deps`** — macOS では **Homebrew 前提**で `tmux` / `python3` を確認
-2. **`bin/ensure-multiagent-agent-clis --interactive`** — 未導入のエージェント CLI を [y/N] で確認。**macOS + Homebrew では Cursor も `brew install --cask cursor` と `cursor-cli` で入れられます**（スキップ可）
-3. `multiagent --install` — `~/.local/bin` に `multiagent` / `agent-index` / `agent-send` などへのシンボリックリンクを作成（既にあればスキップ表示）
-4. `agent-index --hub` — **ローカル Hub** を起動し、可能ならブラウザで開く
-
-ターミナルに **Hub の URL** が出ます（例: `Hub:` と `Hub (LAN / phone):`）。**スマホでは LAN IP 側の Hub URL** を Safari で開いてください。Hub に入れば **New Session** や **Resume** は画面から進められます。
-
-**補足（tmux）:** Hub の起動自体は **tmux が無くても**進みますが、**セッションを作って各エージェントのペインを起動する処理は tmux 必須**です。画面にセッションが出ず実行に失敗する場合は、`tmux` が PATH にあるか確認してください。
-
-### HTTPS と iPhone（証明書）
-
-Mac 側に **mkcert** があると、Hub は `certs/cert.pem` を自動生成し **`https://`** で待ち受けることがあります。ブラウザは Mac では問題なくても、**iPhone は同じルート CA を信頼していない**ため、接続時に証明書警告が出ることがあります。
-
-次のような対応が一般的です。
-
-1. Mac で mkcert の CA フォルダを確認: `mkcert -CAROOT`（例: `rootCA.pem`）
-2. その **ルート証明書** を AirDrop・ファイル共有などで iPhone に送る
-3. iPhone でインストールし、**設定 → 一般 → 情報 → 証明書信頼設定** でその CA を **フル信頼** にする
-4. 再度、ターミナルに表示された **Hub の `https://<LAN-IP>:ポート/`** を開く
-
-**HTTP のまま**（mkcert が無い、または `certs/` に鍵がない）運用なら、多くの場合 **平文の `http://`** で LAN から Hub を開けます（上記の手間は不要）。
-
-Let's Encrypt など **ブラウザが既に信頼する CA** で Public 向けに終端 TLS する構成は、別途リバースプロキシ／トンネル側の話です（下記ドキュメント参照）。
+5. **＋（プラス）→ Agent → Brief**  
+   チャット入力まわりの **＋** メニューを開き、**Agent** サブメニューから **Brief** を実行します。各エージェントのペインに、**このマルチエージェント環境の使い方**などの説明が送られ、以降の連携が安定しやすくなります。
 
 ---
 
-## インターネット越し（Public / 独自ドメイン）
+## Hub でできること（概要）
 
-**同じ Wi‑Fi 以外**から Hub を開きたい場合は、自分で **リバースプロキシ・トンネル・DNS** を用意する必要があります。リポジトリには特定の個人ドメインは含めません（例: ご自身の `example.com` や Cloudflare のホスト名など）。
-
-参考ドキュメント（内容は環境に合わせて読み替えてください）:
-
-- [docs/cloudflare-quick-tunnel.md](docs/cloudflare-quick-tunnel.md) — クイックトンネル例
-- [docs/cloudflare-access.md](docs/cloudflare-access.md) — Access 前に置く例
-- [docs/cloudflare-daemon.md](docs/cloudflare-daemon.md) — 常時系のメモ
-
-Hub 側では `MULTIAGENT_PUBLIC_HOST` などで「外から見えるホスト名」を伝える構成になっています（各ドキュメント・`bin/agent-index` 内のコメント参照）。
+| 領域 | 内容 |
+|------|------|
+| **ホーム** | アクティブ／アーカイブのセッション一覧、統計のざっくり表示（モバイルではリスト中心のレイアウトになります）。 |
+| **New Session** | 新しい作業部屋を作り、チャットへ進みます。 |
+| **Resume** | 過去のセッションを再開します。 |
+| **Statistics** | メッセージ数・思考時間など、リポジトリ横断の集計ビューです。 |
+| **Settings** | テーマやフォントなど、見た目・挙動に関する設定です。 |
+| **上部メニュー（ハンバーガー）** | Hub では New Session / Statistics / Settings / **Reload** など。チャット画面では **Reload**、**Terminal**、会話の **Export**、セッションへの **Add Agent** / **Remove Agent** などもここから選べます。 |
+| **ロゴ** | Hub のトップへ戻る動作（環境によりチャットのオーバーレイを閉じる意味合いもあります）。 |
 
 ---
 
-## その他
+## チャットでできること（概要）
 
-- 全体像・コマンド一覧: [OVERVIEW.md](OVERVIEW.md)
-- エージェント定義・拡張: `lib/agent_index/agent_registry.py`
+| 領域 | 内容 |
+|------|------|
+| **メッセージ** | 人間からエージェントへ指示を送ります。**返信**すると、特定のメッセージに紐づけてスレッド的に続けられます。 |
+| **送信相手** | ヘッダ付近の **ターゲット**で、どのエージェントに送るか選べます（複数選択可）。 |
+| **コピー** | 各メッセージの **コピー**で本文をクリップボードに取れます。 |
+| **Markdown** | 見出し・コードブロック・表など、一般的な Markdown が使えます。 |
+| **数式** | `$...$`（インライン）や `$$...$$`（ディスプレイ）で **KaTeX** による数式表示ができます。 |
+| **Mermaid** | `mermaid` 付きコードブロックでフロー図などを描けます。 |
+| **ファイル** | メッセージに添付パスを書くと **ファイルカード**になり、プレビューやエディタ連携の導線に繋がります。 |
+| **フィルタ** | エージェント別にタイムラインを絞り込めます。 |
+| **エージェント状態** | 思考中などのステータスが表示されます（モバイルではタイムライン上の行をタップすると詳細を開けることがあります）。 |
+| **＋ メニュー** | **Import**（ファイル）、**Raw**、**Agent**（Brief / Load / Memory）、**Command**（Restart / Resume / Ctrl+C / Enter）、**Esc**（割り込み）など、セッション操作系のショートカットがまとまっています。 |
+| **Composer** | 画面下部の入力エリア。**O 型のボタン**（フローティング）で入力パネルの表示を切り替えられることがあります。長い会話で下まで来ているときなどに現れます。 |
+| **その他のヘッダアイコン** | 添付ファイル一覧・ブランチ／コミット関連のパネルなど、セッションに紐づく情報へアクセスできます。 |
+
+---
+
+## 通知音
+
+`clone` 直後は無音です。使う場合は **OGG ファイルを `sounds/` に置いてください**。ファイル名の意味は [sounds/README.md](sounds/README.md) を参照してください。
+
+---
+
+## 管理者向け：初回セットアップの入口
+
+リポジトリの取得・依存関係・Hub 起動などは **ターミナル作業**になります。手順の詳細は [OVERVIEW.md](OVERVIEW.md) など、コマンドをまとめたドキュメント側に書く想定です。  
+macOS では **Homebrew が既に入っていること**、`quickstart` 実行時に **tmux / Python 3 / 各エージェント CLI** の有無が対話で確認される流れになっています。
+
+---
+
+## スマホ・HTTPS（証明書）
+
+Mac で **mkcert** などにより **HTTPS** で Hub が動いている場合、**iPhone などは同じルート CA を信頼していない**ことがあり、警告が出ます。Mac で CA をエクスポートし、端末側で信頼設定するのが一般的です。  
+**HTTP** のまま運用している場合は、同じ Wi‑Fi 内からは比較的そのまま開けます。
+
+---
+
+## インターネット越し（Public）
+
+自宅／オフィス外から Hub を開くには、**トンネル・リバースプロキシ・DNS** などを自分で用意する必要があります。例として次のメモがあります（内容は環境に合わせて読み替えてください）。
+
+- [docs/cloudflare-quick-tunnel.md](docs/cloudflare-quick-tunnel.md)
+- [docs/cloudflare-access.md](docs/cloudflare-access.md)
+- [docs/cloudflare-daemon.md](docs/cloudflare-daemon.md)
+
+---
+
+## 参考リンク
+
+- 全体像・コマンド寄りの説明: [OVERVIEW.md](OVERVIEW.md)
+- エージェント定義のコード: `lib/agent_index/agent_registry.py`
 
 ---
 
