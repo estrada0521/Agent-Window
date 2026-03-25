@@ -18,10 +18,12 @@
 ### 1 コマンドで「インストール → Hub 起動」
 
 ```bash
-git clone <このリポジトリのURL> multiagent
+git clone https://github.com/estrada0521/okadaharuto-site.git multiagent
 cd multiagent
 ./bin/quickstart
 ```
+
+（別のフォーク・ミラーなら URL を読み替えてください。）
 
 `quickstart` は次を順に実行します。
 
@@ -29,6 +31,8 @@ cd multiagent
 2. `agent-index --hub` — **ローカル Hub** を起動し、可能ならブラウザで開く
 
 ターミナルに **Hub の URL** が出ます（例: `Hub:` と `Hub (LAN / phone):`）。**スマホでは LAN IP 側の Hub URL** を Safari で開いてください。Hub に入れば **New Session** や **Resume** は画面から進められます。
+
+**補足（tmux）:** Hub の起動自体は **tmux が無くても**進みますが、**セッションを作って各エージェントのペインを起動する処理は tmux 必須**です。画面にセッションが出ず実行に失敗する場合は、`tmux` が PATH にあるか確認してください。
 
 ### HTTPS と iPhone（証明書）
 
