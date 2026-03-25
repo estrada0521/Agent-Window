@@ -1,5 +1,24 @@
 from __future__ import annotations
 
+import base64
+from pathlib import Path
+
+# Repo ルートの WebP。Hub / チャットのヘッダ `<img>` 用（bin/agent-index と同じファイル名）。
+HUB_HEADER_LOGO_WEBP_NAME = "69b8dae91dba9.webp"
+
+
+def hub_header_logo_data_uri(repo_root: Path | str) -> str:
+    """WebP を data URI にしたもの。無い・読めないときは `/hub-logo`（GET は別途配信）。"""
+    path = Path(repo_root).resolve() / HUB_HEADER_LOGO_WEBP_NAME
+    if path.is_file():
+        try:
+            b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+            return f"data:image/webp;base64,{b64}"
+        except OSError:
+            pass
+    return "/hub-logo"
+
+
 HUB_PAGE_HEADER_CSS = """
     :root { --page-side-pad: 14px; }
     @font-face {

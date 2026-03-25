@@ -594,13 +594,9 @@ from lib.agent_index.agent_registry import (
 from lib.agent_index.hub_header_assets import (
     HUB_PAGE_HEADER_CSS,
     HUB_PAGE_HEADER_JS,
+    hub_header_logo_data_uri,
     render_hub_page_header,
 )
-try:
-    _fontbolt_file = repo_root / "69b8dae91dba9.webp"
-    _FONTBOLT_PNG_B64 = _base64.b64encode(_fontbolt_file.read_bytes()).decode("ascii") if _fontbolt_file.is_file() else ""
-except Exception:
-    _FONTBOLT_PNG_B64 = ""
 
 def _icon_data_uri(filename: str) -> str:
     try:
@@ -615,7 +611,7 @@ def _icon_data_uri(filename: str) -> str:
         return ""
 
 _HUB_ICON_URIS = {name: _icon_data_uri(fname) for name, fname in _icon_filename_map().items()}
-_HUB_LOGO_DATA_URI = f"data:image/webp;base64,{_FONTBOLT_PNG_B64}" if _FONTBOLT_PNG_B64 else "/hub-logo"
+_HUB_LOGO_DATA_URI = hub_header_logo_data_uri(repo_root)
 _HUB_PAGE_HEADER_CSS = HUB_PAGE_HEADER_CSS
 _HUB_PAGE_HEADER_HTML = render_hub_page_header(logo_data_uri=_HUB_LOGO_DATA_URI)
 _HUB_PAGE_HEADER_JS = HUB_PAGE_HEADER_JS
@@ -4854,6 +4850,7 @@ from agent_index.chat_assets import CHAT_HTML, render_chat_html
 from agent_index.chat_core import ChatRuntime
 from agent_index.export_core import ExportRuntime
 from agent_index.file_core import FileRuntime
+from agent_index.hub_header_assets import hub_header_logo_data_uri
 
 runtime = ChatRuntime(
     index_path=index_path,
@@ -4873,6 +4870,8 @@ runtime = ChatRuntime(
 )
 
 _LOG_AUTOSAVE_INTERVAL_SEC = 120  # ~2 min: lighter than 45s, still fresher than 5–10 min
+
+_CHAT_HUB_LOGO_DATA_URI = hub_header_logo_data_uri(_repo_root)
 
 
 def _periodic_log_autosave():
@@ -4907,7 +4906,7 @@ export_runtime = ExportRuntime(
 )
 export_runtime.render_html_fn = lambda: render_chat_html(
     icon_data_uris=export_runtime.icon_data_uris,
-    logo_data_uri="/hub-logo",
+    logo_data_uri=_CHAT_HUB_LOGO_DATA_URI,
     server_instance=server_instance,
     hub_port=hub_port,
     chat_settings=load_chat_settings(),
@@ -5484,14 +5483,9 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 else hub_port
             )
-            logo_data_uri = (
-                f"{(self.headers.get('X-Forwarded-Prefix', '') or '').rstrip('/')}/hub-logo"
-                if forwarded_public_host
-                else "/hub-logo"
-            )
             body = render_chat_html(
                 icon_data_uris=export_runtime.icon_data_uris,
-                logo_data_uri=logo_data_uri,
+                logo_data_uri=_CHAT_HUB_LOGO_DATA_URI,
                 server_instance=server_instance,
                 hub_port=effective_hub_port,
                 chat_settings=chat_settings,

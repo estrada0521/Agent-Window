@@ -8177,7 +8177,10 @@ def _agent_css_selectors(theme: str = "black-hole") -> dict[str, str]:
 
 def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, follow, chat_base_path=""):
     base_path = chat_base_path.rstrip("/")
-    logo_src = f"{base_path}/hub-logo" if base_path else logo_data_uri
+    if base_path and logo_data_uri == "/hub-logo":
+        logo_src = f"{base_path}/hub-logo"
+    else:
+        logo_src = logo_data_uri
     chat_header_html = render_hub_page_header(
         logo_data_uri=logo_src,
         title_href="/",
