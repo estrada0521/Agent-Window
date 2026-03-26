@@ -1,79 +1,45 @@
 # multiagent-chat
 
-A local tmux-based multi-agent chat/workbench. It runs multiple AI agents side by side and exposes a Hub plus chat UI for messaging, routing, and session log inspection.
+`multiagent-chat` is a local tmux-based workbench for running multiple AI agents side by side inside one session and controlling that session from a Hub plus chat UI. `bin/multiagent` creates tmux sessions and panes, `bin/agent-index` serves the Hub / chat UI / log viewer, and `bin/agent-send` moves structured messages between the user, agents, and other agents.
+
+Conversation history is stored in `.agent-index.jsonl`, while pane output is stored separately as `.log` and `.ans`. The Hub handles session creation, resume, stats, and settings. The chat UI handles target selection, replies, file references, briefs, memory, pane actions, and export. The same Hub and chat UI can also be opened from a phone on the same LAN.
 
 ## What It Can Do
 
-### 0. Overview / Remote Control
+| Area | Contents |
+|------|------|
+| Hub | active / archived session lists, New Session, Resume, Stats, Settings |
+| Chat UI | user-to-agent and agent-to-agent conversation, replies, attachments, file references, brief / memory, pane actions |
+| Logs | structured `.agent-index.jsonl` message log, pane captures in `.log` / `.ans`, static HTML export |
+| Backend | Auto mode, Awake, Sound notifications, Read aloud, optional Cloudflare-based exposure |
 
-The Hub and chat UI can be opened from a phone on the same LAN. The model stays the same on desktop and phone: `Hub = session overview`, `chat UI = one session workspace`. Phone access covers both Hub and chat UI on the same LAN.
+The current agent registry includes `claude`, `codex`, `gemini`, `copilot`, `cursor`, `grok`, `opencode`, `qwen`, and `aider`. The same base agent can be started more than once, and duplicate instances receive names such as `claude-1` and `claude-2`.
 
-### 1. New Session / Body
-
-New sessions are created from the Hub. Workspace paths can be entered from the UI, including from mobile. The same base agent can be summoned more than once, and duplicate instances get suffixes such as `-1` and `-2`. The message body is not limited to user-to-agent traffic. Agent-to-agent conversation is also supported.
+### 1. New Session / Message Body
 
 <p align="center">
   <img src="screenshot/new_session-portrait.png" alt="Create new session" width="320">
   <img src="screenshot/message_body-portrait.png" alt="Chat message body" width="320">
 </p>
 
-The message body exposes navigation and utility controls such as copy, reply, jump to reply source, jump to reply target, and opening attached or referenced files. The renderer handles headings, paragraphs, lists, blockquotes, inline code, fenced code blocks, tables, KaTeX / LaTeX math, and Mermaid diagrams. Agent-to-agent traffic is also part of the session.
+New sessions are created from the Hub. The workspace path is entered from the UI and can also be typed from mobile. Duplicate agent launches are supported, so the same base CLI can back multiple panes inside one session. Instance suffixes are added automatically when needed.
+
+The message body shows not only user-to-agent requests, but also agent-to-agent traffic in the same timeline. Each message carries sender, targets, `msg-id`, and optional `reply-to` metadata. The UI exposes copy, reply start, jump-to-reply-source, jump-to-reply-target, and navigation into attached or referenced files.
+
+The renderer supports headings, paragraphs, lists, blockquotes, inline code, fenced code blocks, tables, KaTeX / LaTeX math, and Mermaid diagrams. Messages sent through `agent-send` share the same structured log regardless of whether they are user-to-agent, agent-to-user, or agent-to-agent messages. Multi-target sends also preserve their `targets` and `reply-to` linkage in JSONL, so the session history does not depend only on pane output.
 
 ### 1.5. Thinking / Pane Trace
-
-Thinking rows are shown while agents are running. Pane Trace refreshes every 100ms on LAN / local access and falls back to 1.5s polling on public access. On desktop, `Terminal` opens the actual terminal window.
 
 <p align="center">
   <img src="screenshot/thinking.png" alt="Thinking state" width="320">
   <img src="screenshot/Pane_trace-portrait.png" alt="Pane trace" width="320">
 </p>
 
-Pane Trace is the pane-side counterpart to the structured chat log.
+Thinking rows appear while agents are running. On mobile, tapping a thinking row opens Pane Trace. Pane Trace is a lightweight viewer for the pane side of the session. It refreshes every 100ms on local / LAN access and every 1.5 seconds on public access. If the JSONL log is the structured message history, Pane Trace is the live pane-side tail.
 
-### 2. Input Modes
+On desktop, the `Terminal` action opens the real terminal window. On mobile, the same action opens Pane Trace instead, so pane activity can still be monitored from a phone.
 
-On mobile, the composer opens from the round `O` button. On desktop, it also opens via middle-mouse click. This keeps the message area larger while the composer is closed.
-
-#### Slash commands
-
-Current slash commands:
-
-| Command | Behavior |
-|------|------|
-| `/memo [text]` | self memo; body may be omitted when Import attachments exist |
-| `/silent <text>` | one-shot raw send without the normal header |
-| `/brief` / `/brief set <name>` | show or edit a brief |
-| `/restart` | restart selected agents |
-| `/resume` | resume selected agents |
-| `/interrupt` | send Escape to selected agents |
-| `/enter` | send Enter to selected agents |
-
-#### `@` commands
-
-`@` uses file path autocomplete inside the workspace.
-
-#### Import
-
-Import uploads files from the local device into the workspace. On mobile, this includes photos or other files stored on the phone. On desktop, drag and drop is also supported. Images get thumbnail cards; other files get extension cards.
-
-#### Brief
-
-Brief is the reusable session-local template layer. It is stored per session. Permanent rules belong in `docs/AGENT.md`, while session-specific context belongs in brief files.
-
-Difference from `docs/AGENT.md`:
-
-| File | Role |
-|------|------|
-| `docs/AGENT.md` | repo-wide and environment-wide permanent rules |
-| brief | session-local instructions, templates, and reusable context |
-
-Input methods:
-
-| Action | Behavior |
-|------|------|
-| `/brief` | open the `default` brief |
-| `/brief set <name>` | open `brief_<name>.md` |
-| Brief button | choose a saved brief and send it to selected targets |
+### 2. Composer / Input Modes
 
 <p align="center">
   <img src="screenshot/slash_command-portrait.png" alt="Slash commands" width="180">
@@ -82,26 +48,28 @@ Input methods:
   <img src="screenshot/brief-portrait.png" alt="Brief workflow" width="180">
 </p>
 
-Slash commands are the entry point for changing send mode or session state inside the composer. `@` inserts references to workspace files into the conversation. Import brings local-device files into the workspace. Brief stores and resends session-local templates or additional instructions. Permanent rules belong in `docs/AGENT.md`, while session-local context belongs in brief.
+The composer opens as an overlay. On mobile it opens from the round `O` button. On desktop it opens from the same button or with a middle click. This keeps the message area larger while the composer is closed.
+
+Slash commands are the entry point for send-mode and pane actions. The current commands are `/memo`, `/silent`, `/brief`, `/restart`, `/resume`, `/interrupt`, and `/enter`. `/memo` is a self memo and can be sent with only Import attachments. `/silent` performs a raw one-shot send without the normal header. `/brief` opens the `default` brief, while `/brief set <name>` opens `brief_<name>.md`. `/restart`, `/resume`, `/interrupt`, and `/enter` act on the currently selected agent panes.
+
+`@` provides file-path autocomplete inside the workspace, so a relative path can be inserted directly into the conversation. Import is not a workspace lookup. It uploads files from the local device into the session uploads area. On mobile this includes photos or files stored on the phone. On desktop it also supports drag and drop. Images appear as thumbnails and other files appear as extension cards.
+
+Brief is the reusable session-local template layer. It is different from `docs/AGENT.md`, which holds permanent repo- or environment-level rules. Briefs are stored under `logs/<session>/brief/brief_<name>.md`, can be edited through `/brief` or `/brief set <name>`, and can be sent to the selected targets from the Brief button. `docs/AGENT.md` is the durable operating guide; brief is the session-specific working context.
+
+The same quick-action row also exposes `Load` and `Save Memory`. Memory keeps the current per-agent state in `logs/<session>/memory/<agent>/memory.md`, while pre-update states accumulate in `memory.jsonl` snapshots. Brief is the shared session-local instruction layer; memory is the per-agent summary layer.
 
 ### 3. Header
 
-The header contains the branch menu, file menu, and add / remove agent actions.
-
 #### 3-1. Branch Menu
-
-The branch menu shows current git state, commit history, and diffs. File names in the diff open the external editor.
 
 <p align="center">
   <img src="screenshot/branch_menu.png" alt="Branch menu" width="300">
   <img src="screenshot/Git_diff-portrait.png" alt="Git diff view" width="300">
 </p>
 
-The branch menu shows current git state, commit history, and diffs. File names in the diff open the external editor.
+The branch menu shows the current branch, git state, recent commits, and diffs. File names inside the diff are also links into the external editor, so a file mentioned by the conversation or shown in the diff can be opened without leaving the session flow.
 
 #### 3-2. File Menu
-
-The file menu covers referenced-file listing, Markdown / code / sound-oriented previews, external editor handoff, and jumping back to the source message from the right-side arrow.
 
 <p align="center">
   <img src="screenshot/file_menu.png" alt="File menu" width="240">
@@ -109,50 +77,20 @@ The file menu covers referenced-file listing, Markdown / code / sound-oriented p
   <img src="screenshot/sound.png" alt="Sound file preview" width="240">
 </p>
 
-The file menu covers referenced-file listing, Markdown / code / sound-oriented previews, external editor handoff, and jumping back to the source message from the right-side arrow.
+The file menu collects files referenced inside the session. It supports previews for Markdown, code, images, audio, and other referenced files, plus `Open in Editor` for external-editor handoff. The right-side arrow jumps back to the source message that referenced the file.
+
+The Markdown preview uses typography close to the chat renderer and resolves local relative image references such as `![...](path)`. Code-oriented files open in a plain viewer, and sound files have a dedicated preview. This makes the file menu the read-side counterpart to the file references that appear in the chat body.
 
 #### 3-3. Add / Remove Agent
-
-After add / remove agent, a `Reload` is recommended.
 
 <p align="center">
   <img src="screenshot/Add_agent-portrait.png" alt="Add agent" width="320">
   <img src="screenshot/remove_agent-portrait.png" alt="Remove agent" width="320">
 </p>
 
-Duplicate base agents are supported through suffixed instance names.
+Agents can be added or removed from the header menu. These actions change the pane layout without deleting the existing `.agent-index.jsonl` history. Duplicate base agents are also handled here. After a layout change, a `Reload` is recommended so the visible targets and UI state are refreshed together.
 
-### 4. HubTop / Stats / Settings
-
-#### HubTop
-
-HubTop covers active / archived session lists, recent previews, entry points into chats, New Session, Stats, and Settings.
-
-#### Stats
-
-| Card | Contents |
-|------|------|
-| Messages | total messages, by sender, by session |
-| Thinking Time | total thinking time, by agent, by session |
-| Activated Agents | agents above the message threshold |
-| Commits | total commits, by session |
-
-Daily grids:
-
-- Messages per day
-- Thinking time per day
-
-#### Settings
-
-| Group | Items |
-|------|------|
-| Theme | Theme |
-| Chat Fonts | User Messages, Agent Messages |
-| Text | Message Text Size |
-| Reopen default | Default Message Count |
-| Chat Defaults | Auto mode, Awake, Sound notifications, Read aloud (TTS) |
-| Visual Effects | Starfield background |
-| Black Hole Text Opacity | User Messages, Agent Messages |
+### 4. Hub / Stats / Settings
 
 <p align="center">
   <img src="screenshot/Hub_Top-portrait.png" alt="Hub top" width="240">
@@ -160,59 +98,38 @@ Daily grids:
   <img src="screenshot/settings-portrait.png" alt="Settings" width="240">
 </p>
 
-HubTop covers active / archived session lists, recent previews, entry points into chats, New Session, Stats, and Settings. Stats shows total messages, thinking time, activated agents, and commits, plus daily grids for messages and thinking time. Settings covers Theme, Chat Fonts, Message Text Size, Default Message Count, Auto mode, Awake, Sound notifications, Read aloud (TTS), Starfield background, and Black Hole Text Opacity.
+The Hub is the entry point for active and archived sessions. Active sessions show workspace path, agent set, chat count, and chat port. Archived sessions stay visible in a separate list and can be revived when their stored state is reusable. The Hub also links to New Session, Resume Sessions, Stats, and Settings.
 
-### 5. Logging
+Stats shows four top-level cards: Messages, Thinking Time, Activated Agents, and Commits. Messages are broken down by sender and by session. Thinking Time is broken down by agent and by session. Commits are broken down by session. In addition, the page renders daily grids for `Messages per day` and `Thinking time per day`.
 
-Logging has two layers.
+Settings centralizes the default Hub and chat behavior.
 
-| File | Role |
+| Setting | Meaning |
 |------|------|
-| `.agent-index.jsonl` | structured chat log |
-| `*.log` / `*.ans` | pane-side logs |
+| Theme | switch Hub / chat theme |
+| User Messages / Agent Messages | choose fonts independently for user and agent bubbles |
+| Message Text Size | applies to message bodies, file cards, inline code, code blocks, and tables |
+| Default Message Count | initial reopen count when a chat is loaded |
+| Auto mode | default auto-mode state when a chat opens |
+| Awake (prevent sleep) | keep the machine awake |
+| Sound notifications | play notification sounds |
+| Read aloud (TTS) | browser-based speech output |
+| Starfield background | animated background for the Black Hole theme |
+| Black Hole Text Opacity | separate opacity controls for user and agent text in the Black Hole theme |
 
-The first captures message routing and reply structure. The second captures terminal-side behavior.
+### 5. Logs / Export
 
-### 6. Access From Outside
+This repo keeps message routing and pane capture as separate logs. Messages sent through `agent-send` are appended to `.agent-index.jsonl` with `sender`, `targets`, `msg-id`, and `reply-to`. Pane-side captures are stored as `*.ans` and `*.log`, with a `.meta` file tracking update timestamps and overwrite history.
 
-The Hub can be opened from a phone on the same Wi-Fi / LAN, and sessions can be created and used from the phone. Custom-domain / Cloudflare-based exposure requires additional setup.
+The chat server autosaves pane logs roughly every two minutes for active sessions, and the `Save Log` action can force an immediate snapshot from the UI. That makes Pane Trace the live tail, while `.log` / `.ans` remain the stored snapshots.
 
-## Typical Flow
+The `Export` action in the header menu downloads a static HTML snapshot of the recent chat history. The prompt controls how many recent messages are included, including the option to export all available messages.
 
-1. Start the Hub with `./bin/quickstart`
-2. Open a session from the Hub
-3. Pick target agents in the chat UI and send instructions
-4. Use Brief / Memory when you want to stabilize context or reusable instructions
-5. Leave the session and logs in place so the work can be resumed later
+### 6. LAN / Public Access
 
-## Typical Use Cases
+The default mode is local or same-LAN use. When the Hub starts it also prints a LAN URL, so the same Hub and chat UI can be opened from a phone on the same Wi-Fi. Session browsing, new-session creation, workspace-path entry, and chat interaction are all available there.
 
-- delegate research or implementation to multiple agents in parallel
-- keep user/agent/agent-to-agent conversation in one session
-- periodically stabilize context with Brief / Memory
-- monitor or resume work from a phone
-- preserve results as logs or exported HTML
-
-## Main Concepts
-
-### Session-Based
-
-The main unit of work is a tmux session. Each agent runs in its own pane, and the Hub treats active and archived sessions as first-class objects.
-
-### Chat UI and Logs
-
-The chat UI is more than a message box: it combines target selection, message history, session state, quick actions, and attachment flows. Logs are stored in `.agent-index.jsonl`, so they can be searched and revisited later.
-
-### Brief and Memory
-
-- Brief: reusable session-specific instruction templates
-- Memory: per-agent summarized state
-
-Briefs can be sent to selected targets. Memory is split into the current `memory.md` and historical snapshots in `memory.jsonl`.
-
-### Local-First, Public When Needed
-
-The default mode is local use. If needed, the Hub can be exposed through Cloudflare without turning the whole system into a public-first service.
+Public exposure is optional. When needed, `bin/multiagent-cloudflare` together with `docs/cloudflare-quick-tunnel.md`, `docs/cloudflare-access.md`, and `docs/cloudflare-daemon.md` adds Quick Tunnel, named tunnel, Cloudflare Access, and daemonized recovery. This extends the local-first workflow rather than replacing it.
 
 ## Quickstart
 
@@ -222,13 +139,7 @@ cd ~/multiagent-chat
 ./bin/quickstart
 ```
 
-`./bin/quickstart` will:
-
-- verify that `python3` and `tmux` exist
-- guide or interactively install missing dependencies when possible
-- check agent CLIs
-- set up a multiagent session
-- launch the Hub / chat UI
+`./bin/quickstart` checks for `python3` and `tmux`, offers dependency guidance when needed, checks agent CLIs, and then starts a `multiagent` session plus the Hub. In the normal case it leaves the Hub ready to open immediately.
 
 ## Requirements
 
@@ -240,10 +151,13 @@ Homebrew is the easiest path on macOS.
 
 ## Main Commands
 
-- `./bin/quickstart`: start the Hub with dependency checks
-- `./bin/multiagent`: create, resume, and control sessions
-- `./bin/agent-index`: browse sessions, open chat UI, inspect logs
-- `./bin/agent-send`: send messages to the user inbox or other agents
+| Command | Purpose |
+|------|------|
+| `./bin/quickstart` | start the Hub with dependency checks |
+| `./bin/multiagent` | create, resume, list, save, and reconfigure sessions |
+| `./bin/agent-index` | Hub, chat UI, Stats, Settings, log viewer |
+| `./bin/agent-send` | send messages to the user inbox or other agents |
+| `./bin/multiagent-cloudflare` | optional public-access workflow |
 
 ## Docs
 
