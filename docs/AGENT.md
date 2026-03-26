@@ -17,6 +17,14 @@
 env | rg '^MULTIAGENT|^TMUX'
 ```
 
+この文書や、workspace 側の `docs/AGENT.md` を user から送られて読んだ場合は、読み終えたあとに **内容を把握したことを user へ 1 回報告する**。報告も pane 直打ちではなく `agent-send` で送る。
+
+例:
+
+```bash
+printf '%s' '[From: codex] docs/AGENT.md を読みました。この環境での返答経路、--reply、添付、ログ参照の前提を把握しました。' | agent-send --reply <msg-id> --stdin user
+```
+
 ここで分かる主な情報:
 
 | 変数 | 意味 |
