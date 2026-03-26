@@ -155,6 +155,7 @@ Optional public access is handled by `bin/multiagent-cloudflare`. Quick Tunnel m
 ## Related Docs
 
 - [README.en.md](../README.en.md): public-facing feature overview
+- [docs/design-philosophy.en.md](design-philosophy.en.md): why the system is shaped this way
 - [docs/AGENT.md](AGENT.md): operating guide for agents inside this environment
 - [docs/cloudflare-quick-tunnel.md](cloudflare-quick-tunnel.md): Quick Tunnel / named tunnel
 - [docs/cloudflare-access.md](cloudflare-access.md): public Hub with Cloudflare Access

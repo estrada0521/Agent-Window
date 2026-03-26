@@ -271,6 +271,7 @@ macOS では Homebrew が入っていると導入しやすいです。
 
 - [docs/AGENT.md](docs/AGENT.md): この環境で動く agent 向けの運用ガイド
 - [docs/chat-commands.md](docs/chat-commands.md): chat UI の command、Pane Trace、quick action 一覧
+- [docs/design-philosophy.md](docs/design-philosophy.md): なぜ tmux、chat、mobile、layered logs をこの形で組み合わせているか
 - [docs/technical-details.md](docs/technical-details.md): 実装構成、message transport、log / export / state の技術詳細
 - [docs/cloudflare-quick-tunnel.md](docs/cloudflare-quick-tunnel.md): Cloudflare Quick Tunnel / named tunnel
 - [docs/cloudflare-access.md](docs/cloudflare-access.md): public Hub を Cloudflare Access で保護する方法
