@@ -277,13 +277,11 @@ end tell
     def list_files(self):
         files = []
         for root, dirs, filenames in os.walk(self.workspace):
-            dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d not in self.SKIP_DIRS)
+            dirs[:] = sorted(d for d in dirs if d not in self.SKIP_DIRS)
             depth = root[len(self.workspace):].count(os.sep)
             if depth >= 3:
                 dirs.clear()
             for filename in sorted(filenames):
-                if filename.startswith("."):
-                    continue
                 rel = os.path.join(root, filename)[len(self.workspace):].lstrip(os.sep)
                 files.append(rel)
         return files
