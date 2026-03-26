@@ -7966,109 +7966,17 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const hit = allowed.find((t) => t === base || agentBaseName(t) === base);
       return hit || null;
     };
-    let desktopPaneTracePopup = null;
-    let desktopPaneTraceAgent = null;
-    let desktopPaneTraceTimer = null;
-    const ensureDesktopPaneTracePopup = (agent) => {
-      const popup = desktopPaneTracePopup;
-      if (popup && !popup.closed) return popup;
-      const rootStyles = getComputedStyle(document.documentElement);
-      const popupBg = (rootStyles.getPropertyValue("--bg") || "").trim() || "rgb(10, 10, 10)";
-      const popupText = (rootStyles.getPropertyValue("--text") || "").trim() || "rgb(252, 252, 252)";
-      const next = window.open("", "multiagent-pane-trace", "popup=yes,width=660,height=720,resizable=yes,scrollbars=yes");
-      if (!next) return null;
-      next.document.write(`<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pane Trace</title>
-  <style>
-    :root { color-scheme: dark; }
-    html, body {
-      margin: 0;
-      background: ${popupBg};
-      color: ${popupText};
-      font-family: "jetbrainsMono", Menlo, Monaco, "Cascadia Mono", "SF Mono", monospace;
-      height: 100%;
-    }
-    body {
-      display: flex;
-      flex-direction: column;
-    }
-    .pane-trace-head {
-      padding: 10px 14px;
-      border-bottom: 0.5px solid rgba(255,255,255,0.1);
-      font: 600 12px/1.4 "anthropicSans", "SF Pro Text", sans-serif;
-      letter-spacing: 0.04em;
-      color: rgba(255,255,255,0.74);
-      background: rgba(0,0,0,0.18);
-      flex: 0 0 auto;
-    }
-    .pane-trace-body {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: auto;
-      padding: 10px 12px;
-      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-      font-family: "jetbrainsMono", Menlo, Monaco, "Cascadia Mono", "SF Mono", monospace;
-      font-size: 12px;
-      line-height: 1.5;
-      color: rgba(252,252,252,0.78);
-      white-space: pre-wrap;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-      box-sizing: border-box;
-      -webkit-overflow-scrolling: touch;
-    }
-    .pane-trace-body .ansi-bright-black-fg { color: rgba(255,255,255,0.38); }
-  </style>
-</head>
-<body>
-  <div class="pane-trace-head" id="paneTracePopupTitle"></div>
-  <div class="pane-trace-body" id="paneTracePopupBody">Loading...</div>
-</body>
-</html>`);
-      next.document.close();
-      desktopPaneTracePopup = next;
-      return next;
-    };
-    const renderDesktopPaneTrace = async (agent, { scrollToBottom = false } = {}) => {
-      const popup = ensureDesktopPaneTracePopup(agent);
-      if (!popup || popup.closed) return;
-      desktopPaneTraceAgent = agent;
-      try {
-        popup.document.title = `${agent} Pane Trace`;
-        const titleEl = popup.document.getElementById("paneTracePopupTitle");
-        const bodyEl = popup.document.getElementById("paneTracePopupBody");
-        if (titleEl) titleEl.textContent = `${agent} Pane Trace`;
-        if (!bodyEl) return;
-        const res = await fetch(`/trace?agent=${encodeURIComponent(agent)}&lines=96&ts=${Date.now()}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        bodyEl.innerHTML = paneTraceHtml(data.content || "No output");
-        if (scrollToBottom) bodyEl.scrollTop = bodyEl.scrollHeight;
-      } catch (_) {}
-    };
     const openDesktopPaneTracePopup = (rawAgent) => {
       const agent = resolvePaneFocusAgent(rawAgent);
       if (!agent) return;
-      const popup = ensureDesktopPaneTracePopup(agent);
-      if (!popup) return;
-      try { popup.focus(); } catch (_) {}
-      renderDesktopPaneTrace(agent, { scrollToBottom: true });
-      if (desktopPaneTraceTimer) clearInterval(desktopPaneTraceTimer);
-      const paneTracePollMs = isLocalHubHostname() ? 100 : 1500;
-      desktopPaneTraceTimer = setInterval(() => {
-        if (!desktopPaneTracePopup || desktopPaneTracePopup.closed) {
-          clearInterval(desktopPaneTraceTimer);
-          desktopPaneTraceTimer = null;
-          desktopPaneTracePopup = null;
-          desktopPaneTraceAgent = null;
-          return;
-        }
-        if (desktopPaneTraceAgent) renderDesktopPaneTrace(desktopPaneTraceAgent);
-      }, paneTracePollMs);
+      const rootStyles = getComputedStyle(document.documentElement);
+      const params = new URLSearchParams({
+        agent,
+        bg: (rootStyles.getPropertyValue("--bg") || "").trim(),
+        text: (rootStyles.getPropertyValue("--text") || "").trim(),
+      });
+      const popup = window.open(`/pane-trace-popup?${params.toString()}`, "multiagent-pane-trace", "popup=yes,width=660,height=720,resizable=yes,scrollbars=yes");
+      try { popup?.focus?.(); } catch (_) {}
     };
     const showPaneTraceViewer = (focusAgent) => {
       if (!paneViewerEl) return;
@@ -8506,3 +8414,127 @@ def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port
         .replace("__MESSAGE_LIMIT__", str(chat_settings["message_limit"]))
         .replace("mode: snapshot", f"mode: {'follow' if follow == '1' else 'snapshot'}")
     )
+
+
+def render_pane_trace_popup_html(*, agent: str, bg: str, text: str, chat_base_path: str = "") -> str:
+    base_path = chat_base_path.rstrip("/")
+    ansi_src = f"{base_path}/font/jetbrains-mono.ttf" if base_path else "/font/jetbrains-mono.ttf"
+    bg_value = (bg or "").strip() or "rgb(10, 10, 10)"
+    text_value = (text or "").strip() or "rgb(252, 252, 252)"
+    agent_json = json.dumps(str(agent or ""), ensure_ascii=True)
+    bg_json = json.dumps(bg_value, ensure_ascii=True)
+    text_json = json.dumps(text_value, ensure_ascii=True)
+    trace_path_prefix = base_path or ""
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="{bg_value}">
+  <title>{agent} Pane Trace</title>
+  <script src="https://cdn.jsdelivr.net/npm/ansi_up@5.1.0/ansi_up.min.js"></script>
+  <style>
+    @font-face {{
+      font-family: "jetbrainsMono";
+      src: local("JetBrains Mono"),
+           local("JetBrainsMono-Regular"),
+           url("{ansi_src}") format("truetype-variations"),
+           url("{ansi_src}") format("truetype");
+      font-style: normal;
+      font-weight: 100 800;
+      font-display: swap;
+    }}
+    :root {{
+      color-scheme: dark;
+      --popup-bg: {bg_value};
+      --popup-text: {text_value};
+    }}
+    html, body {{
+      margin: 0;
+      background: var(--popup-bg);
+      color: var(--popup-text);
+      height: 100%;
+      font-family: "jetbrainsMono", Menlo, Monaco, "Cascadia Mono", "SF Mono", monospace;
+    }}
+    body {{
+      display: flex;
+      flex-direction: column;
+    }}
+    .pane-trace-head {{
+      padding: 10px 14px;
+      border-bottom: 0.5px solid rgba(255,255,255,0.1);
+      font: 600 12px/1.4 "anthropicSans", "SF Pro Text", sans-serif;
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.74);
+      background: rgba(0,0,0,0.18);
+      flex: 0 0 auto;
+    }}
+    .pane-trace-body {{
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      padding: 10px 12px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      box-sizing: border-box;
+      -webkit-overflow-scrolling: touch;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      color: rgba(252,252,252,0.78);
+    }}
+    .pane-trace-body .ansi-bright-black-fg {{ color: rgba(255,255,255,0.38); }}
+  </style>
+</head>
+<body>
+  <div class="pane-trace-head" id="paneTracePopupTitle"></div>
+  <div class="pane-trace-body" id="paneTracePopupBody">Loading...</div>
+  <script>
+    const agent = {agent_json};
+    const bg = {bg_json};
+    const text = {text_json};
+    document.documentElement.style.setProperty("--popup-bg", bg);
+    document.documentElement.style.setProperty("--popup-text", text);
+    document.title = `${{agent}} Pane Trace`;
+    document.getElementById("paneTracePopupTitle").textContent = `${{agent}} Pane Trace`;
+    let ansiUp = null;
+    const stripAnsi = (value) => String(value ?? "")
+      .replace(/\\u001b\\[[0-?]*[ -/]*[@-~]/g, "")
+      .replace(/\\u001b\\][^\\u0007]*\\u0007/g, "");
+    const traceHtml = (raw) => {{
+      const text = String(raw ?? "No output");
+      if (!ansiUp) {{
+        try {{
+          if (typeof AnsiUp === "function") ansiUp = new AnsiUp();
+        }} catch (_) {{
+          ansiUp = null;
+        }}
+      }}
+      if (ansiUp) {{
+        try {{
+          return ansiUp.ansi_to_html(text);
+        }} catch (_) {{}}
+      }}
+      const plain = stripAnsi(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      return plain.replace(/\\n/g, "<br>");
+    }};
+    const bodyEl = document.getElementById("paneTracePopupBody");
+    const fetchTrace = async (scrollToBottom = false) => {{
+      try {{
+        const res = await fetch(`{trace_path_prefix}/trace?agent=${{encodeURIComponent(agent)}}&lines=96&ts=${{Date.now()}}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        bodyEl.innerHTML = traceHtml(data.content || "No output");
+        if (scrollToBottom) bodyEl.scrollTop = bodyEl.scrollHeight;
+      }} catch (_) {{}}
+    }};
+    fetchTrace(true);
+    const pollMs = (location.hostname === "127.0.0.1" || location.hostname === "localhost") ? 100 : 1500;
+    setInterval(() => fetchTrace(false), pollMs);
+  </script>
+</body>
+</html>"""
