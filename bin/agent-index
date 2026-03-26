@@ -2349,22 +2349,43 @@ HUB_HOME_HTML = """<!doctype html>
     .hub-local-ca-modal {
       position: fixed;
       inset: 0;
-      z-index: 11000;
+      z-index: 9999;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
-      background: rgba(5, 7, 10, 0.62);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px) saturate(120%);
+      -webkit-backdrop-filter: blur(8px) saturate(120%);
+      opacity: 0;
+      transition: opacity 380ms cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+    }
+    .hub-local-ca-modal.visible {
+      opacity: 1;
+      pointer-events: auto;
     }
     .hub-local-ca-card {
-      width: min(560px, calc(100vw - 32px));
-      background: color-mix(in srgb, var(--panel-2) 88%, rgb(8, 8, 10));
-      border: 0.5px solid var(--line-strong);
-      border-radius: 22px;
-      padding: 22px 22px 18px;
-      box-shadow: 0 24px 54px rgba(0, 0, 0, 0.32);
+      width: min(380px, calc(100vw - 32px));
+      background: var(--bg);
+      border: 1px solid rgba(252, 252, 252, 0.06);
+      border-radius: 12px;
+      padding: 16px;
+      opacity: 0;
+      transform: translateY(18px) scale(0.94);
+      filter: blur(2px);
+      transition:
+        opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+        transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+        filter 420ms ease,
+        box-shadow 420ms ease;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+      will-change: transform, opacity, filter;
+    }
+    .hub-local-ca-modal.visible .hub-local-ca-card {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
     }
     .hub-local-ca-eyebrow {
       color: var(--muted);
@@ -2376,66 +2397,140 @@ HUB_HOME_HTML = """<!doctype html>
     }
     .hub-local-ca-title {
       margin: 0;
-      font-size: 26px;
+      font-size: 22px;
       line-height: 1.08;
       letter-spacing: -0.04em;
     }
     .hub-local-ca-note {
-      margin: 12px 0 0;
+      margin: 10px 0 0;
       color: var(--muted);
-      font-size: 14px;
-      line-height: 1.6;
+      font-size: 13px;
+      line-height: 1.5;
     }
     .hub-local-ca-steps {
-      margin: 16px 0 0;
+      margin: 14px 0 0;
       padding-left: 18px;
       color: var(--fg);
-      font-size: 14px;
-      line-height: 1.6;
+      font-size: 13px;
+      line-height: 1.55;
     }
     .hub-local-ca-steps li + li { margin-top: 4px; }
     .hub-local-ca-path {
       margin-top: 14px;
-      padding: 12px 13px;
-      border-radius: 14px;
-      border: 0.5px solid var(--line);
-      background: rgba(0, 0, 0, 0.16);
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(252, 252, 252, 0.08);
+      background: rgba(255, 255, 255, 0.03);
       color: var(--muted);
       font-size: 12px;
-      line-height: 1.5;
+      line-height: 1.45;
       word-break: break-all;
     }
     .hub-local-ca-actions {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 16px;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 14px;
     }
     .hub-local-ca-btn {
-      border: none;
-      border-radius: 999px;
-      padding: 11px 15px;
-      font: inherit;
-      font-size: 13px;
-      font-weight: 600;
+      flex: 1;
+      padding: 10px 0;
+      border-radius: 8px;
+      border: 1px solid rgba(252, 252, 252, 0.08);
+      background: transparent;
+      color: var(--muted);
+      font: 500 14px/1.2 "SF Pro Text", "Segoe UI", sans-serif;
       cursor: pointer;
-      transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
+      transition: color 100ms ease, border-color 100ms ease, background 100ms ease, transform 120ms ease, box-shadow 120ms ease;
+    }
+    .hub-local-ca-btn:hover {
+      border-color: rgba(252, 252, 252, 0.2);
+      color: var(--fg);
     }
     .hub-local-ca-btn:active { transform: translateY(1px); }
     .hub-local-ca-btn.primary {
-      background: rgb(44, 132, 219);
-      color: white;
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+    }
+    .hub-local-ca-btn.primary:hover {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
     }
     .hub-local-ca-btn.secondary {
-      background: rgba(255,255,255,0.08);
-      color: var(--fg);
-      border: 0.5px solid var(--line);
+      background: transparent;
+      color: var(--muted);
     }
     .hub-local-ca-hint {
       margin-top: 10px;
       color: var(--muted);
       font-size: 12px;
       line-height: 1.5;
+    }
+    .local-ca-dock[hidden] { display: none !important; }
+    .local-ca-dock {
+      cursor: default;
+    }
+    .local-ca-dock:hover {
+      transform: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+      border-color: var(--line);
+      background: var(--panel);
+    }
+    .local-ca-dock-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .local-ca-dock-btn {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(252, 252, 252, 0.08);
+      background: transparent;
+      color: var(--muted);
+      font: 500 14px/1.2 "SF Pro Text", "Segoe UI", sans-serif;
+      cursor: pointer;
+      transition: color 100ms ease, border-color 100ms ease, background 100ms ease, transform 120ms ease, box-shadow 120ms ease;
+    }
+    .local-ca-dock-btn:hover {
+      border-color: rgba(252, 252, 252, 0.2);
+      color: var(--fg);
+    }
+    .local-ca-dock-btn.primary {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+    }
+    .local-ca-dock-btn.primary:hover {
+      background: var(--fg);
+      color: var(--bg);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+    }
+    .local-ca-dock-path {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      word-break: break-all;
+    }
+    .local-ca-dock-hint {
+      margin-top: 10px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hub-local-ca-modal {
+        transition-duration: 80ms;
+      }
+      .hub-local-ca-card {
+        opacity: 1;
+        transform: none;
+        filter: none;
+        transition-duration: 80ms;
+      }
     }
     html[data-theme="soft-light"] .home-card {
       background: linear-gradient(145deg, rgb(255, 255, 255) 0%, rgb(246, 246, 244) 100%);
@@ -2721,6 +2816,17 @@ HUB_HOME_HTML = """<!doctype html>
       </div>
     </section>
     <div class="home-grid">
+      <div id="localCaDock" class="home-card local-ca-dock" hidden>
+        <div class="home-label">Local HTTPS</div>
+        <div class="home-title">iPhone Certificate</div>
+        <div class="home-note">Reveal <code>rootCA.pem</code> in Finder, AirDrop it to iPhone / iPad, then enable trust on the device.</div>
+        <div id="localCaDockPath" class="local-ca-dock-path"></div>
+        <div class="local-ca-dock-actions">
+          <button type="button" id="localCaDockRevealBtn" class="local-ca-dock-btn primary">Reveal in Finder</button>
+          <button type="button" id="localCaDockStepsBtn" class="local-ca-dock-btn">Show Steps</button>
+        </div>
+        <div id="localCaDockHint" class="hub-local-ca-hint local-ca-dock-hint">Only <code>rootCA.pem</code> should be shared. Never share <code>rootCA-key.pem</code>.</div>
+      </div>
       <a class="home-card" href="/new-session">
         <div class="home-label">New</div>
         <div class="home-title">New Session</div>
@@ -2915,10 +3021,29 @@ HUB_HOME_HTML = """<!doctype html>
       const dismissBtn = document.getElementById("localCaDismissBtn");
       const pathEl = document.getElementById("localCaPath");
       const hintEl = document.getElementById("localCaHint");
+      const dock = document.getElementById("localCaDock");
+      const dockRevealBtn = document.getElementById("localCaDockRevealBtn");
+      const dockStepsBtn = document.getElementById("localCaDockStepsBtn");
+      const dockPathEl = document.getElementById("localCaDockPath");
+      const dockHintEl = document.getElementById("localCaDockHint");
       if (!modal || !revealBtn || !dismissBtn || !pathEl || !hintEl) return;
 
       const isDesktopLike = !/iPhone|iPad|Android/i.test(navigator.userAgent || "");
-      const closeModal = () => { modal.hidden = true; };
+      let modalHideTimer = 0;
+      const openModal = () => {
+        clearTimeout(modalHideTimer);
+        modal.hidden = false;
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => modal.classList.add("visible"));
+        });
+      };
+      const closeModal = () => {
+        modal.classList.remove("visible");
+        clearTimeout(modalHideTimer);
+        modalHideTimer = window.setTimeout(() => {
+          modal.hidden = true;
+        }, 420);
+      };
       const markSeen = (fingerprint) => {
         if (!fingerprint) return;
         try { localStorage.setItem(`multiagent_local_ca_help:${fingerprint}`, "1"); } catch (_) {}
@@ -2926,6 +3051,44 @@ HUB_HOME_HTML = """<!doctype html>
       const wasSeen = (fingerprint) => {
         if (!fingerprint) return false;
         try { return localStorage.getItem(`multiagent_local_ca_help:${fingerprint}`) === "1"; } catch (_) { return false; }
+      };
+      const setHint = (message) => {
+        hintEl.textContent = message;
+        if (dockHintEl) dockHintEl.textContent = message;
+      };
+      const setRevealButtonsBusy = (busy, label) => {
+        [revealBtn, dockRevealBtn].forEach((btn) => {
+          if (!btn) return;
+          btn.disabled = busy;
+          btn.textContent = label;
+        });
+      };
+      const applyAssistInfo = (info) => {
+        const active = !!(info && info.ok && info.active && isDesktopLike);
+        if (dock) dock.hidden = !active;
+        if (dockRevealBtn) dockRevealBtn.hidden = !(active && info.can_reveal);
+        if (dockStepsBtn) dockStepsBtn.hidden = !active;
+        modal.dataset.fingerprint = (info && info.fingerprint) || "";
+        const caPath = (info && info.ca_path) || "rootCA.pem";
+        pathEl.textContent = caPath;
+        if (dockPathEl) dockPathEl.textContent = caPath;
+      };
+      const revealLocalCa = async () => {
+        const fp = modal.dataset.fingerprint || "";
+        setRevealButtonsBusy(true, "Opening Finder…");
+        try {
+          const res = await fetch("/reveal-local-ca", { method: "POST" });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) throw new Error(data.error || "reveal failed");
+          markSeen(fp);
+          setHint("Finder opened. AirDrop rootCA.pem to iPhone / iPad, then enable trust on the device.");
+          setTimeout(closeModal, 650);
+        } catch (err) {
+          setHint(`Could not open Finder automatically: ${err.message}`);
+          openModal();
+        } finally {
+          setRevealButtonsBusy(false, "Reveal in Finder");
+        }
       };
       dismissBtn.addEventListener("click", () => {
         const fp = modal.dataset.fingerprint || "";
@@ -2939,33 +3102,17 @@ HUB_HOME_HTML = """<!doctype html>
           closeModal();
         }
       });
-      revealBtn.addEventListener("click", async () => {
-        const fp = modal.dataset.fingerprint || "";
-        revealBtn.disabled = true;
-        revealBtn.textContent = "Opening Finder…";
-        try {
-          const res = await fetch("/reveal-local-ca", { method: "POST" });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok || !data.ok) throw new Error(data.error || "reveal failed");
-          markSeen(fp);
-          hintEl.textContent = "Finder opened. AirDrop rootCA.pem to iPhone / iPad, then enable trust on the device.";
-          setTimeout(closeModal, 650);
-        } catch (err) {
-          hintEl.textContent = `Could not open Finder automatically: ${err.message}`;
-        } finally {
-          revealBtn.disabled = false;
-          revealBtn.textContent = "Reveal in Finder";
-        }
-      });
+      revealBtn.addEventListener("click", revealLocalCa);
+      if (dockRevealBtn) dockRevealBtn.addEventListener("click", revealLocalCa);
+      if (dockStepsBtn) dockStepsBtn.addEventListener("click", openModal);
 
       fetch("/local-https-assist", { cache: "no-store" })
         .then((res) => res.json())
         .then((info) => {
-          if (!info || !info.ok || !info.active || !info.can_reveal || !isDesktopLike) return;
+          if (!info || !info.ok || !info.active || !isDesktopLike) return;
+          applyAssistInfo(info);
           if (wasSeen(info.fingerprint || "")) return;
-          modal.dataset.fingerprint = info.fingerprint || "";
-          pathEl.textContent = info.ca_path || "rootCA.pem";
-          modal.hidden = false;
+          openModal();
         })
         .catch(() => {});
     })();
