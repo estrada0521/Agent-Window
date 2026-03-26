@@ -69,6 +69,19 @@ show_ios_trust_help() {
   echo >&2
 }
 
+reveal_root_ca_in_finder() {
+  local mkcert_bin="$1"
+  local caroot="" root_ca=""
+  [[ "$(uname -s 2>/dev/null || true)" == "Darwin" ]] || return 0
+  command -v open >/dev/null 2>&1 || return 0
+  caroot="$("$mkcert_bin" -CAROOT 2>/dev/null || true)"
+  [[ -n "$caroot" ]] || return 0
+  root_ca="${caroot}/rootCA.pem"
+  [[ -f "$root_ca" ]] || return 0
+  echo "multiagent: revealing rootCA.pem in Finder..." >&2
+  open -R "$root_ca" >/dev/null 2>&1 || true
+}
+
 emit_mode() {
   printf '%s\n' "$1"
 }
@@ -108,6 +121,8 @@ install_mkcert_linux() {
 need_local_https() {
   cat >&2 <<'EOF'
 multiagent: local HTTPS を有効にすると、同じ Wi-Fi 上の iPhone / iPad で次が使いやすくなります。
+multiagent: - no  -> HTTP のまま。same-WiFi の Safari / browser 利用向け
+multiagent: - yes -> HTTPS。iPhone / iPad では rootCA.pem の導入と trust が必要
 multiagent: - Home Screen web app
 multiagent: - microphone / secure browser APIs
 multiagent: - 将来の service worker / push 系機能
@@ -146,6 +161,7 @@ main() {
   fi
   echo "multiagent: installing local CA into the system trust store..." >&2
   "$mkcert_bin" -install >&2
+  reveal_root_ca_in_finder "$mkcert_bin"
   show_ios_trust_help "$mkcert_bin"
   emit_mode enabled
 }

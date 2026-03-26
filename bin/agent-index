@@ -549,7 +549,6 @@ if [[ "$HUB_MODE" -eq 1 ]]; then
 from __future__ import annotations
 
 import html
-import hashlib
 import json
 import os
 import re
@@ -630,94 +629,6 @@ def format_session_chat_url(host_header: str, session_name: str, local_port: int
 
 restart_pending = False
 hub_server = None
-
-
-def _mkcert_binary() -> str:
-    for candidate in (
-        shutil.which("mkcert"),
-        "/opt/homebrew/bin/mkcert",
-        "/usr/local/bin/mkcert",
-    ):
-        if candidate and Path(candidate).exists():
-            return candidate
-    return ""
-
-
-def _local_ca_pem_path() -> Path | None:
-    direct = (os.environ.get("MULTIAGENT_LOCAL_CA_PEM", "") or "").strip()
-    if direct:
-        path = Path(direct).expanduser()
-        if path.is_file():
-            return path
-    mkcert_bin = _mkcert_binary()
-    if not mkcert_bin:
-        return None
-    try:
-        proc = subprocess.run(
-            [mkcert_bin, "-CAROOT"],
-            capture_output=True,
-            text=True,
-            timeout=1.2,
-            check=False,
-        )
-        caroot = (proc.stdout or "").strip()
-    except Exception:
-        return None
-    if not caroot:
-        return None
-    path = Path(caroot).expanduser() / "rootCA.pem"
-    if path.is_file():
-        return path
-    return None
-
-
-def _is_local_origin_host(host_header: str) -> bool:
-    host = host_without_port(host_header or "127.0.0.1").lower()
-    return (
-        host == "127.0.0.1"
-        or host == "localhost"
-        or host.startswith("192.168.")
-        or host.startswith("10.")
-        or bool(re.match(r"^172\.(1[6-9]|2\d|3[01])\.", host))
-    )
-
-
-def local_https_assist_payload(host_header: str) -> dict[str, object]:
-    ca_path = _local_ca_pem_path()
-    fingerprint = ""
-    if ca_path:
-        try:
-            fingerprint = hashlib.sha256(ca_path.read_bytes()).hexdigest()
-        except Exception:
-            fingerprint = ""
-    active = bool(_use_https and ca_path and _is_local_origin_host(host_header) and not is_public_host(host_header))
-    return {
-        "ok": True,
-        "active": active,
-        "can_reveal": bool(active and sys.platform == "darwin" and shutil.which("open")),
-        "ca_path": str(ca_path) if ca_path else "",
-        "fingerprint": fingerprint,
-    }
-
-
-def reveal_local_ca_in_finder(host_header: str) -> tuple[bool, str]:
-    payload = local_https_assist_payload(host_header)
-    if not payload.get("active"):
-        return False, "local HTTPS onboarding is not active for this origin"
-    ca_path = (payload.get("ca_path") or "").strip()
-    if not ca_path:
-        return False, "rootCA.pem not found"
-    if sys.platform != "darwin":
-        return False, "Finder reveal is only supported on macOS"
-    try:
-        subprocess.Popen(
-            ["open", "-R", ca_path],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        return True, ""
-    except Exception as exc:
-        return False, str(exc)
 
 
 def restarting_page():
@@ -2345,193 +2256,6 @@ HUB_HOME_HTML = """<!doctype html>
     .home-card:hover::before {
       opacity: 1;
     }
-    .hub-local-ca-modal[hidden] { display: none !important; }
-    .hub-local-ca-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(8px) saturate(120%);
-      -webkit-backdrop-filter: blur(8px) saturate(120%);
-      opacity: 0;
-      transition: opacity 380ms cubic-bezier(0.22, 1, 0.36, 1);
-      pointer-events: none;
-    }
-    .hub-local-ca-modal.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .hub-local-ca-card {
-      width: min(380px, calc(100vw - 32px));
-      background: var(--bg);
-      border: 1px solid rgba(252, 252, 252, 0.06);
-      border-radius: 12px;
-      padding: 16px;
-      opacity: 0;
-      transform: translateY(18px) scale(0.94);
-      filter: blur(2px);
-      transition:
-        opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
-        transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
-        filter 420ms ease,
-        box-shadow 420ms ease;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
-      will-change: transform, opacity, filter;
-    }
-    .hub-local-ca-modal.visible .hub-local-ca-card {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-      filter: blur(0);
-    }
-    .hub-local-ca-eyebrow {
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .hub-local-ca-title {
-      margin: 0;
-      font-size: 22px;
-      line-height: 1.08;
-      letter-spacing: -0.04em;
-    }
-    .hub-local-ca-note {
-      margin: 10px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-    .hub-local-ca-steps {
-      margin: 14px 0 0;
-      padding-left: 18px;
-      color: var(--fg);
-      font-size: 13px;
-      line-height: 1.55;
-    }
-    .hub-local-ca-steps li + li { margin-top: 4px; }
-    .hub-local-ca-path {
-      margin-top: 14px;
-      padding: 11px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(252, 252, 252, 0.08);
-      background: rgba(255, 255, 255, 0.03);
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-      word-break: break-all;
-    }
-    .hub-local-ca-actions {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      margin-top: 14px;
-    }
-    .hub-local-ca-btn {
-      flex: 1;
-      padding: 10px 0;
-      border-radius: 8px;
-      border: 1px solid rgba(252, 252, 252, 0.08);
-      background: transparent;
-      color: var(--muted);
-      font: 500 14px/1.2 "SF Pro Text", "Segoe UI", sans-serif;
-      cursor: pointer;
-      transition: color 100ms ease, border-color 100ms ease, background 100ms ease, transform 120ms ease, box-shadow 120ms ease;
-    }
-    .hub-local-ca-btn:hover {
-      border-color: rgba(252, 252, 252, 0.2);
-      color: var(--fg);
-    }
-    .hub-local-ca-btn:active { transform: translateY(1px); }
-    .hub-local-ca-btn.primary {
-      background: var(--fg);
-      color: var(--bg);
-      border-color: var(--fg);
-    }
-    .hub-local-ca-btn.primary:hover {
-      background: var(--fg);
-      color: var(--bg);
-      border-color: var(--fg);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
-    }
-    .hub-local-ca-btn.secondary {
-      background: transparent;
-      color: var(--muted);
-    }
-    .hub-local-ca-hint {
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.5;
-    }
-    .local-ca-dock[hidden] { display: none !important; }
-    .local-ca-dock {
-      cursor: default;
-    }
-    .local-ca-dock:hover {
-      transform: none;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.05);
-      border-color: var(--line);
-      background: var(--panel);
-    }
-    .local-ca-dock-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 14px;
-    }
-    .local-ca-dock-btn {
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid rgba(252, 252, 252, 0.08);
-      background: transparent;
-      color: var(--muted);
-      font: 500 14px/1.2 "SF Pro Text", "Segoe UI", sans-serif;
-      cursor: pointer;
-      transition: color 100ms ease, border-color 100ms ease, background 100ms ease, transform 120ms ease, box-shadow 120ms ease;
-    }
-    .local-ca-dock-btn:hover {
-      border-color: rgba(252, 252, 252, 0.2);
-      color: var(--fg);
-    }
-    .local-ca-dock-btn.primary {
-      background: var(--fg);
-      color: var(--bg);
-      border-color: var(--fg);
-    }
-    .local-ca-dock-btn.primary:hover {
-      background: var(--fg);
-      color: var(--bg);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
-    }
-    .local-ca-dock-path {
-      margin-top: 12px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-      word-break: break-all;
-    }
-    .local-ca-dock-hint {
-      margin-top: 10px;
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .hub-local-ca-modal {
-        transition-duration: 80ms;
-      }
-      .hub-local-ca-card {
-        opacity: 1;
-        transform: none;
-        filter: none;
-        transition-duration: 80ms;
-      }
-    }
     html[data-theme="soft-light"] .home-card {
       background: linear-gradient(145deg, rgb(255, 255, 255) 0%, rgb(246, 246, 244) 100%);
       border-color: rgba(15,20,30,0.14);
@@ -2778,24 +2502,6 @@ HUB_HOME_HTML = """<!doctype html>
 <body>
   <canvas id="starfield"></canvas>
   <div id="chatOverlay" hidden><iframe id="chatFrame" src="about:blank" allow="microphone; clipboard-write"></iframe></div>
-  <div id="localCaModal" class="hub-local-ca-modal" hidden>
-    <div class="hub-local-ca-card" role="dialog" aria-modal="true" aria-labelledby="localCaTitle">
-      <div class="hub-local-ca-eyebrow">Local HTTPS</div>
-      <h2 id="localCaTitle" class="hub-local-ca-title">Send the iPhone certificate with one more step</h2>
-      <p class="hub-local-ca-note">`rootCA.pem` is the file you need to AirDrop to iPhone / iPad. After Finder opens, AirDrop that file, then enable trust on the device.</p>
-      <ol class="hub-local-ca-steps">
-        <li>Click <strong>Reveal in Finder</strong>.</li>
-        <li>AirDrop <code>rootCA.pem</code> to the phone.</li>
-        <li>On iPhone / iPad, install the profile and enable trust in <code>Settings &gt; General &gt; About &gt; Certificate Trust Settings</code>.</li>
-      </ol>
-      <div id="localCaPath" class="hub-local-ca-path"></div>
-      <div class="hub-local-ca-actions">
-        <button type="button" id="localCaRevealBtn" class="hub-local-ca-btn primary">Reveal in Finder</button>
-        <button type="button" id="localCaDismissBtn" class="hub-local-ca-btn secondary">Later</button>
-      </div>
-      <div id="localCaHint" class="hub-local-ca-hint">Only <code>rootCA.pem</code> should be shared. Never share <code>rootCA-key.pem</code>.</div>
-    </div>
-  </div>
   <div class="shell">
     __HUB_HEADER_HTML__
     <div class="mob-stats-bar" id="mobStatsBar"></div>
@@ -2816,17 +2522,6 @@ HUB_HOME_HTML = """<!doctype html>
       </div>
     </section>
     <div class="home-grid">
-      <div id="localCaDock" class="home-card local-ca-dock" hidden>
-        <div class="home-label">Local HTTPS</div>
-        <div class="home-title">iPhone Certificate</div>
-        <div class="home-note">Reveal <code>rootCA.pem</code> in Finder, AirDrop it to iPhone / iPad, then enable trust on the device.</div>
-        <div id="localCaDockPath" class="local-ca-dock-path"></div>
-        <div class="local-ca-dock-actions">
-          <button type="button" id="localCaDockRevealBtn" class="local-ca-dock-btn primary">Reveal in Finder</button>
-          <button type="button" id="localCaDockStepsBtn" class="local-ca-dock-btn">Show Steps</button>
-        </div>
-        <div id="localCaDockHint" class="hub-local-ca-hint local-ca-dock-hint">Only <code>rootCA.pem</code> should be shared. Never share <code>rootCA-key.pem</code>.</div>
-      </div>
       <a class="home-card" href="/new-session">
         <div class="home-label">New</div>
         <div class="home-title">New Session</div>
@@ -3014,108 +2709,6 @@ HUB_HOME_HTML = """<!doctype html>
         if (url) openChatInFrame(url, name);
       }
     } catch (_) {}
-
-    (function() {
-      const modal = document.getElementById("localCaModal");
-      const revealBtn = document.getElementById("localCaRevealBtn");
-      const dismissBtn = document.getElementById("localCaDismissBtn");
-      const pathEl = document.getElementById("localCaPath");
-      const hintEl = document.getElementById("localCaHint");
-      const dock = document.getElementById("localCaDock");
-      const dockRevealBtn = document.getElementById("localCaDockRevealBtn");
-      const dockStepsBtn = document.getElementById("localCaDockStepsBtn");
-      const dockPathEl = document.getElementById("localCaDockPath");
-      const dockHintEl = document.getElementById("localCaDockHint");
-      if (!modal || !revealBtn || !dismissBtn || !pathEl || !hintEl) return;
-
-      const isDesktopLike = !/iPhone|iPad|Android/i.test(navigator.userAgent || "");
-      let modalHideTimer = 0;
-      const openModal = () => {
-        clearTimeout(modalHideTimer);
-        modal.hidden = false;
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => modal.classList.add("visible"));
-        });
-      };
-      const closeModal = () => {
-        modal.classList.remove("visible");
-        clearTimeout(modalHideTimer);
-        modalHideTimer = window.setTimeout(() => {
-          modal.hidden = true;
-        }, 420);
-      };
-      const markSeen = (fingerprint) => {
-        if (!fingerprint) return;
-        try { localStorage.setItem(`multiagent_local_ca_help:${fingerprint}`, "1"); } catch (_) {}
-      };
-      const wasSeen = (fingerprint) => {
-        if (!fingerprint) return false;
-        try { return localStorage.getItem(`multiagent_local_ca_help:${fingerprint}`) === "1"; } catch (_) { return false; }
-      };
-      const setHint = (message) => {
-        hintEl.textContent = message;
-        if (dockHintEl) dockHintEl.textContent = message;
-      };
-      const setRevealButtonsBusy = (busy, label) => {
-        [revealBtn, dockRevealBtn].forEach((btn) => {
-          if (!btn) return;
-          btn.disabled = busy;
-          btn.textContent = label;
-        });
-      };
-      const applyAssistInfo = (info) => {
-        const active = !!(info && info.ok && info.active && isDesktopLike);
-        if (dock) dock.hidden = !active;
-        if (dockRevealBtn) dockRevealBtn.hidden = !(active && info.can_reveal);
-        if (dockStepsBtn) dockStepsBtn.hidden = !active;
-        modal.dataset.fingerprint = (info && info.fingerprint) || "";
-        const caPath = (info && info.ca_path) || "rootCA.pem";
-        pathEl.textContent = caPath;
-        if (dockPathEl) dockPathEl.textContent = caPath;
-      };
-      const revealLocalCa = async () => {
-        const fp = modal.dataset.fingerprint || "";
-        setRevealButtonsBusy(true, "Opening Finder…");
-        try {
-          const res = await fetch("/reveal-local-ca", { method: "POST" });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok || !data.ok) throw new Error(data.error || "reveal failed");
-          markSeen(fp);
-          setHint("Finder opened. AirDrop rootCA.pem to iPhone / iPad, then enable trust on the device.");
-          setTimeout(closeModal, 650);
-        } catch (err) {
-          setHint(`Could not open Finder automatically: ${err.message}`);
-          openModal();
-        } finally {
-          setRevealButtonsBusy(false, "Reveal in Finder");
-        }
-      };
-      dismissBtn.addEventListener("click", () => {
-        const fp = modal.dataset.fingerprint || "";
-        markSeen(fp);
-        closeModal();
-      });
-      modal.addEventListener("click", (event) => {
-        if (event.target === modal) {
-          const fp = modal.dataset.fingerprint || "";
-          markSeen(fp);
-          closeModal();
-        }
-      });
-      revealBtn.addEventListener("click", revealLocalCa);
-      if (dockRevealBtn) dockRevealBtn.addEventListener("click", revealLocalCa);
-      if (dockStepsBtn) dockStepsBtn.addEventListener("click", openModal);
-
-      fetch("/local-https-assist", { cache: "no-store" })
-        .then((res) => res.json())
-        .then((info) => {
-          if (!info || !info.ok || !info.active || !isDesktopLike) return;
-          applyAssistInfo(info);
-          if (wasSeen(info.fingerprint || "")) return;
-          openModal();
-        })
-        .catch(() => {});
-    })();
 
     // --- Mobile session list ---
     (function() {
@@ -4884,9 +4477,6 @@ class Handler(BaseHTTPRequestHandler):
             stats = compute_hub_stats(active, archived)
             self._send_json(200, {"sessions": active, "active_sessions": active, "archived_sessions": archived, "stats": stats})
             return
-        if parsed.path == "/local-https-assist":
-            self._send_json(200, local_https_assist_payload(self.headers.get("Host", "127.0.0.1")))
-            return
         if parsed.path == "/notify-sound":
             qs = parse_qs(parsed.query)
             name = (qs.get("name", [""])[0] or "").strip()
@@ -5083,13 +4673,6 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(b'{"ok":true}')
-            return
-        if parsed.path == "/reveal-local-ca":
-            ok, error = reveal_local_ca_in_finder(self.headers.get("Host", "127.0.0.1"))
-            if ok:
-                self._send_json(200, {"ok": True})
-            else:
-                self._send_json(400, {"ok": False, "error": error})
             return
         if parsed.path == "/settings":
             try:
