@@ -72,7 +72,7 @@ The JSONL append happens before the text is pasted into tmux panes. That orderin
 
 ### `/send` and the raw path
 
-Normal sends from the chat UI go through `POST /send`, and `ChatRuntime.send_message()` then calls `agent-send --stdin`. Raw or silent sends take a different route. They bypass `agent-send` and paste directly into tmux panes with a temporary tmux buffer. This is what powers the `Raw Send` button and `/silent`: a one-shot paste without the normal `[From: User]` header or `msg-id`.
+Normal sends from the chat UI go through `POST /send`, and `ChatRuntime.send_message()` then calls `agent-send --stdin`. Raw or silent sends take a different route. They bypass `agent-send` and paste directly into tmux panes with a temporary tmux buffer. This is what powers the `Raw Send` button and `/raw`: a one-shot paste without the normal `[From: User]` header or `msg-id`.
 
 ## 1.5. Thinking / Pane Trace
 
@@ -93,9 +93,12 @@ Slash commands are defined in the front-end `SLASH_COMMANDS` array. Their backen
 | Command | Technical behavior |
 |------|------|
 | `/memo [text]` | self-send to `user`; Import attachments are enough even without body text |
-| `/silent <text>` | `POST /send` with `silent=true`, then direct tmux paste |
+| `/raw <text>` | `POST /send` with `silent=true`, then direct tmux paste |
 | `/brief` | open the `default` brief editor modal |
 | `/brief set <name>` | open `brief_<name>.md` |
+| `/model` | send `model` to the target pane |
+| `/up [count]` | send up-navigation to the target pane |
+| `/down [count]` | send down-navigation to the target pane |
 | `/restart` | call `ChatRuntime.restart_agent_pane()` |
 | `/resume` | resume the pane using the agent registry resume flag |
 | `/interrupt` | send `Escape` to the target pane |

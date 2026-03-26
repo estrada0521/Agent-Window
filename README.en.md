@@ -26,7 +26,7 @@ The same Hub and chat UI can be opened from a desktop browser or a phone browser
 | Hub | active / archived session lists, New Session, Resume, Stats, Settings |
 | Chat UI | user-to-agent and agent-to-agent conversation, replies, attachments, file references, brief / memory, pane actions |
 | Logs | structured `.agent-index.jsonl` message log, pane captures in `.log` / `.ans`, static HTML export |
-| Backend | Auto mode, Awake, Sound notifications, Read aloud, optional Cloudflare-based exposure |
+| Backend | Auto mode, Awake, Sound notifications, Read aloud, optional public exposure with a ready-to-use Cloudflare path |
 
 The current agent registry includes `claude`, `codex`, `gemini`, `copilot`, `cursor`, `grok`, `opencode`, `qwen`, and `aider`. The same base agent can be started more than once, and duplicate instances receive names such as `claude-1` and `claude-2`.
 
@@ -52,7 +52,7 @@ The renderer supports headings, paragraphs, lists, blockquotes, inline code, fen
   <img src="screenshot/Pane_trace-portrait.png" alt="Pane trace" width="320">
 </p>
 
-Thinking rows appear while agents are running. On mobile, tapping a thinking row opens Pane Trace. Pane Trace is a lightweight viewer for the pane side of the session. It refreshes every 100ms on local / LAN access and every 1.5 seconds on public access. If the JSONL log is the structured message history, Pane Trace is the live pane-side tail.
+Thinking rows appear while agents are running. On mobile, tapping a thinking row opens the embedded Pane Trace viewer. On desktop, the same click opens the selected agent's Pane Trace in a popup window. Pane Trace is a lightweight viewer for the pane side of the session. It refreshes every 100ms on local / LAN access and every 1.5 seconds on public access. If the JSONL log is the structured message history, Pane Trace is the live pane-side tail.
 
 On desktop, the `Terminal` action opens the real terminal window. On mobile, the same action opens Pane Trace instead, so pane activity can still be monitored from a phone.
 
@@ -67,7 +67,17 @@ On desktop, the `Terminal` action opens the real terminal window. On mobile, the
 
 The composer opens as an overlay. On mobile it opens from the round `O` button. On desktop it opens from the same button or with a middle click. This keeps the message area larger while the composer is closed.
 
-Slash commands are the entry point for send-mode and pane actions. The current commands are `/memo`, `/silent`, `/brief`, `/restart`, `/resume`, `/interrupt`, and `/enter`. `/memo` is a self memo and can be sent with only Import attachments. `/silent` performs a raw one-shot send without the normal header. `/brief` opens the `default` brief, while `/brief set <name>` opens `brief_<name>.md`. `/restart`, `/resume`, `/interrupt`, and `/enter` act on the currently selected agent panes.
+Slash commands are the entry point for send-mode and pane actions. The current commands are:
+
+- `/memo`: a self memo; it can be sent with only Import attachments
+- `/raw <text>`: a raw one-shot send without the normal header
+- `/brief`: open the `default` brief
+- `/brief set <name>`: open `brief_<name>.md`
+- `/model`: send `model` to the selected pane
+- `/up [count]` / `/down [count]`: send repeated up/down navigation to the selected pane
+- `/restart` / `/resume` / `/interrupt` / `/enter`: act on the currently selected agent panes
+
+The fuller command and quick-action list lives in [docs/chat-commands.en.md](docs/chat-commands.en.md). README keeps only the overview.
 
 `@` provides file-path autocomplete inside the workspace, so a relative path can be inserted directly into the conversation. Import is not a workspace lookup. It uploads files from the local device into the session uploads area. On mobile this includes photos or files stored on the phone. On desktop it also supports drag and drop. Images appear as thumbnails and other files appear as extension cards.
 
@@ -148,20 +158,6 @@ The chat server autosaves pane logs roughly every two minutes for active session
 
 The `Export` action in the header menu downloads a static HTML snapshot of the recent chat history. The prompt controls how many recent messages are included, including the option to export all available messages.
 
-### 6. LAN / Public Access
-
-<p align="center">
-  <img src="cloudflare-color.svg" alt="Cloudflare" width="84">
-</p>
-
-The default mode is local or same-LAN use. When the Hub starts it also prints a LAN URL, so the same Hub and chat UI can be opened from a phone on the same Wi-Fi. Session browsing, new-session creation, workspace-path entry, and chat interaction are all available there.
-
-Public exposure is optional. For temporary access, `bin/multiagent-cloudflare quick-start` uses a Quick Tunnel. For stable access on your own domain, run `bin/multiagent-cloudflare named-login`, `bin/multiagent-cloudflare named-setup multiagent <your-hostname>`, and `bin/multiagent-cloudflare named-start`. The Hub then stays at `https://<your-hostname>/`, and each chat stays under `/session/<name>/...`.
-
-If needed, `bin/multiagent-cloudflare access-enable <team-name> <aud-tag>` adds Cloudflare Access in front of that public hostname. This keeps the same Hub and chat paths while requiring Access at the edge. Once that is configured, the same browser-based workflow can be used outside the LAN as well. A phone alone can open the public hostname, browse existing sessions, create new sessions, enter workspace paths, and operate the chat UI in the same way.
-
-For always-on public access, `bin/multiagent-cloudflare daemon-install` can keep the named tunnel recovered in the background. See `docs/cloudflare-quick-tunnel.md`, `docs/cloudflare-access.md`, and `docs/cloudflare-daemon.md` for the detailed flow.
-
 ## Quickstart
 
 ```bash
@@ -186,6 +182,73 @@ After creating the first session, send the workspace copy of `docs/AGENT.md` to 
 
 Auto mode, Awake, Sound notifications, and Read aloud (TTS) start off on the first launch. Turn on only the ones you want from Hub Settings.
 
+## Public Access (Optional)
+
+<p align="center">
+  <img src="cloudflare-color.svg" alt="Cloudflare" width="84">
+</p>
+
+By the time `./bin/quickstart` is done, local or same-LAN use is already set up. Public exposure is an extra layer you add afterward. Once a public URL is added, the same Hub and chat UI can be opened from outside your LAN in a normal browser. Public exposure does not have to use Cloudflare, but this repo already ships a ready-to-use Cloudflare path with commands and docs. The flow below is the shortest route if you choose Cloudflare.
+
+What a public URL enables:
+- open the Hub from outside the LAN at `https://<your-hostname>/`
+- keep each chat under `/session/<name>/...`
+- do the same phone-based session browsing, creation, workspace-path entry, and chat operations from outside the LAN
+- keep this separate from local HTTPS / `mkcert`; a public URL does not require installing the local CA on iPhone
+
+What you need to prepare for the Cloudflare path:
+- `cloudflared` on the Mac
+- for a stable hostname, your own domain already managed as a Cloudflare zone
+- Cloudflare Zero Trust / Access settings so the public hostname is restricted
+- a setup that keeps the Mac awake while you want outside access
+
+The practical Cloudflare flow is:
+
+1. Try temporary public access first
+```sh
+bin/multiagent-cloudflare quick-start
+```
+- this gives you a temporary `https://...trycloudflare.com` URL through Quick Tunnel
+- use `bin/multiagent-cloudflare quick-stop` to return to local-only mode
+- this is for short-lived testing only; it is not the recommended way to keep a Mac reachable from outside
+
+2. Move to a stable hostname on your own domain
+```sh
+bin/multiagent-cloudflare named-login
+bin/multiagent-cloudflare named-setup multiagent <your-hostname>
+bin/multiagent-cloudflare named-start
+```
+- `named-login` runs the Cloudflare browser login and installs the origin cert
+- `named-setup` creates or reuses the tunnel, routes DNS, and writes the config
+- after `named-start`, the Hub lives at `https://<your-hostname>/`
+
+3. Put Cloudflare Access in front of it
+```sh
+bin/multiagent-cloudflare access-enable <team-name> <aud-tag>
+```
+- this keeps the public Hub limited to your own or other allowed identities
+- since this ultimately reaches your Mac, Access should be the default recommendation unless you have a specific reason not to use it
+
+4. Install the daemon if you want it to stay up continuously
+```sh
+bin/multiagent-cloudflare daemon-install
+```
+- this keeps the named tunnel recovered in the background after login
+
+5. Keep the Mac awake
+- once the Mac goes to sleep, the public URL stops being reachable
+- if you want stable long-lived access, keep the Mac on power and prevent sleep while the tunnel is meant to stay available
+- one practical setup is to leave the Mac connected to a power-delivering external display and let only the screen go dark while the Mac itself stays awake
+
+Typical usage pattern:
+- use `./bin/quickstart` for local / same-LAN work
+- add Cloudflare only when you want to reach the same Hub from outside
+- use Quick Tunnel only for short tests
+- use named tunnel + your own domain + Cloudflare Access for real public access
+- keep the Mac awake while you expect outside access to work
+
+If you prefer another reverse proxy or tunnel, the conceptual model is the same: put a public hostname in front of the local/LAN Hub and add access control in front when needed. See [docs/cloudflare-quick-tunnel.md](docs/cloudflare-quick-tunnel.md), [docs/cloudflare-access.md](docs/cloudflare-access.md), and [docs/cloudflare-daemon.md](docs/cloudflare-daemon.md) for the detailed Cloudflare steps.
+
 ## Requirements
 
 - `python3`
@@ -207,6 +270,7 @@ Homebrew is the easiest path on macOS.
 ## Docs
 
 - [docs/AGENT.md](docs/AGENT.md): operating guide for agents running inside this environment
+- [docs/chat-commands.en.md](docs/chat-commands.en.md): chat UI commands, Pane Trace behavior, and quick actions
 - [docs/technical-details.en.md](docs/technical-details.en.md): technical layout of sessions, message transport, logs, export, and state
 - [docs/cloudflare-quick-tunnel.md](docs/cloudflare-quick-tunnel.md): Cloudflare Quick Tunnel / named tunnel setup
 - [docs/cloudflare-access.md](docs/cloudflare-access.md): protect the public Hub with Cloudflare Access
