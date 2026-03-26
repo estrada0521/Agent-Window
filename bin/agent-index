@@ -257,11 +257,11 @@ try:
         conn = http.client.HTTPSConnection(
             "127.0.0.1",
             port,
-            timeout=0.35,
+            timeout=1.2,
             context=ssl._create_unverified_context(),
         )
     else:
-        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=0.35)
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=1.2)
     conn.request("GET", path, headers={"Host": f"127.0.0.1:{port}"})
     resp = conn.getresponse()
     resp.read(1)
@@ -515,7 +515,14 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Auto-detect or enable HTTPS certs
-if [[ -z "${MULTIAGENT_CERT_FILE:-}" ]]; then
+if [[ "$HTTPS_MODE" -eq 1 ]]; then
+  export MULTIAGENT_ENABLE_LOCAL_HTTPS=1
+  unset MULTIAGENT_DISABLE_LOCAL_HTTPS
+fi
+if [[ "${MULTIAGENT_DISABLE_LOCAL_HTTPS:-0}" == "1" ]]; then
+  unset MULTIAGENT_CERT_FILE
+  unset MULTIAGENT_KEY_FILE
+elif [[ -z "${MULTIAGENT_CERT_FILE:-}" ]]; then
   ensure_repo_https_cert
 fi
 if [[ -z "${MULTIAGENT_PUBLIC_HOST:-}" ]] && [[ -f "$REPO_ROOT/certs/public-host.txt" ]]; then
@@ -5076,7 +5083,7 @@ hub_server.serve_forever()
 PYEOF
 
   HUB_READY=0
-  if port_serves_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/sessions?ts=0"
+  if port_serves_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/hub.webmanifest"
   then
     HUB_READY=1
   else
@@ -5099,7 +5106,7 @@ print(proc.pid)
 PYEOF
 )"
     for _ in $(seq 1 50); do
-      if port_serves_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/sessions?ts=0"
+      if port_serves_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/hub.webmanifest"
       then
         HUB_READY=1
         break
@@ -6336,7 +6343,7 @@ PYEOF
   disown "$CHAT_SERVER_PID" || true
   CHAT_READY=0
   for _ in $(seq 1 50); do
-    if port_serves_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/messages"
+    if port_serves_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/app.webmanifest"
     then
       CHAT_READY=1
       break

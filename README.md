@@ -170,11 +170,11 @@ cd ~/multiagent-chat
 ./bin/quickstart
 ```
 
-`./bin/quickstart` は `python3` と `tmux` を確認し、必要なら依存導入の案内を出し、利用できる agent CLI の導入も対話で確認したうえで、必要なら `mkcert` による local HTTPS も案内し、`~/.local/bin` に `multiagent` / `agent-index` / `agent-send` を配置して Hub を起動します。この段階では agent session はまだ作成されません。New Session を作る段階でも、未導入の agent を選んだ場合は改めて確認が入ります。
+`./bin/quickstart` は `python3` と `tmux` を確認し、必要なら依存導入の案内を出し、利用できる agent CLI の導入も対話で確認したうえで、local HTTPS を有効にするかを 1 回だけ尋ね、必要なら既存の `mkcert` を使うか新規導入して、`~/.local/bin` に `multiagent` / `agent-index` / `agent-send` を配置して Hub を起動します。この段階では agent session はまだ作成されません。New Session を作る段階でも、未導入の agent を選んだ場合は改めて確認が入ります。
 
 起動後は terminal に `Hub:` と `Hub (LAN / phone):` が表示されます。PC では `Hub:` の URL を開いてブックマークしておくと再訪しやすく、同じ Wi-Fi 上のスマホでは `Hub (LAN / phone):` の URL を開くと同じ session 一覧と chat UI を使えます。スマホ側でも New Session の作成、workspace path の入力、既存 session への復帰ができます。
 
-local HTTPS は任意です。same-WiFi のスマホブラウザ利用だけなら HTTP のままでも動きます。iPhone / iPad で Home Screen web app、microphone、その他 secure browser features を使いたい場合は、quickstart 中に `mkcert` を有効化してください。
+local HTTPS は任意です。same-WiFi のスマホブラウザ利用だけなら HTTP のままでも動きます。iPhone / iPad で Home Screen web app、microphone、その他 secure browser features を使いたい場合は、quickstart 中の local HTTPS の確認で `yes` を選んでください。`mkcert` が既に入っている Mac でも、この確認で `no` を選べば HTTP のまま起動します。
 
 `mkcert` を有効化した場合、Mac 側では local CA が system trust に入ります。iPhone / iPad で LAN の `https://...` を使うには、`rootCA.pem` を端末へ送り、証明書プロファイルをインストールしたうえで `Settings > General > About > Certificate Trust Settings` から trust を有効化する必要があります。`rootCA-key.pem` は共有しないでください。
 

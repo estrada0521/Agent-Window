@@ -69,6 +69,10 @@ show_ios_trust_help() {
   echo >&2
 }
 
+emit_mode() {
+  printf '%s\n' "$1"
+}
+
 install_mkcert_mac() {
   brew_shellenv
   if ! command -v brew >/dev/null 2>&1; then
@@ -76,25 +80,25 @@ install_mkcert_mac() {
     echo "multiagent: 先に brew を入れてから、再度 ./bin/quickstart を実行してください。" >&2
     return 1
   fi
-  brew install mkcert
+  brew install mkcert >&2
 }
 
 install_mkcert_linux() {
   if command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update -y
-    sudo apt-get install -y mkcert
+    sudo apt-get update -y >&2
+    sudo apt-get install -y mkcert >&2
     return 0
   fi
   if command -v dnf >/dev/null 2>&1; then
-    sudo dnf install -y mkcert
+    sudo dnf install -y mkcert >&2
     return 0
   fi
   if command -v yum >/dev/null 2>&1; then
-    sudo yum install -y mkcert
+    sudo yum install -y mkcert >&2
     return 0
   fi
   if command -v apk >/dev/null 2>&1; then
-    sudo apk add --no-cache mkcert
+    sudo apk add --no-cache mkcert >&2
     return 0
   fi
   echo "multiagent: この Linux では mkcert の自動導入に未対応です。手動で mkcert を入れてください。" >&2
@@ -116,33 +120,34 @@ main() {
   local os mkcert_bin=""
   os="$(uname -s 2>/dev/null || echo unknown)"
 
-  if mkcert_bin="$(mkcert_cmd 2>/dev/null)"; then
-    echo "multiagent: mkcert already installed -> local HTTPS can be enabled by agent-index." >&2
-    show_ios_trust_help "$mkcert_bin"
-    exit 0
-  fi
-
   if ! need_local_https; then
+    emit_mode disabled
     exit 0
   fi
 
-  case "$os" in
-    Darwin)
-      install_mkcert_mac
-      ;;
-    Linux)
-      install_mkcert_linux
-      ;;
-    *)
-      echo "multiagent: OS (${os}) では mkcert の自動導入未対応です。" >&2
-      exit 1
-      ;;
-  esac
+  if mkcert_bin="$(mkcert_cmd 2>/dev/null)"; then
+    echo "multiagent: using existing mkcert for local HTTPS." >&2
+  else
 
-  mkcert_bin="$(mkcert_cmd)"
+    case "$os" in
+      Darwin)
+        install_mkcert_mac
+        ;;
+      Linux)
+        install_mkcert_linux
+        ;;
+      *)
+        echo "multiagent: OS (${os}) では mkcert の自動導入未対応です。" >&2
+        exit 1
+        ;;
+    esac
+
+    mkcert_bin="$(mkcert_cmd)"
+  fi
   echo "multiagent: installing local CA into the system trust store..." >&2
-  "$mkcert_bin" -install
+  "$mkcert_bin" -install >&2
   show_ios_trust_help "$mkcert_bin"
+  emit_mode enabled
 }
 
 main "$@"
