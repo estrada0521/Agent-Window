@@ -239,6 +239,41 @@ open_chat_window() {
   return 1
 }
 
+port_serves_expected_url() {
+  local scheme="$1"
+  local port="$2"
+  local path="$3"
+  python3 - "$scheme" "$port" "$path" <<'PYEOF'
+import http.client
+import ssl
+import sys
+
+scheme = sys.argv[1]
+port = int(sys.argv[2])
+path = sys.argv[3]
+
+try:
+    if scheme == "https":
+        conn = http.client.HTTPSConnection(
+            "127.0.0.1",
+            port,
+            timeout=0.35,
+            context=ssl._create_unverified_context(),
+        )
+    else:
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=0.35)
+    conn.request("GET", path, headers={"Host": f"127.0.0.1:{port}"})
+    resp = conn.getresponse()
+    resp.read(1)
+    conn.close()
+    if 200 <= resp.status < 500:
+        sys.exit(0)
+except Exception:
+    pass
+sys.exit(1)
+PYEOF
+}
+
 repo_log_roots() {
   local roots=() candidate resolved existing
   while IFS= read -r candidate; do
@@ -504,11 +539,13 @@ if [[ "$HUB_MODE" -eq 1 ]]; then
   HUB_SERVER_SCRIPT="${HUB_SERVER_SCRIPT}.py"
   cat > "$HUB_SERVER_SCRIPT" <<'PYEOF'
 import html
+import hashlib
 import json
 import os
 import re
 import ssl
 import subprocess
+import shutil
 import sys
 import threading
 import time
@@ -583,6 +620,94 @@ def format_session_chat_url(host_header: str, session_name: str, local_port: int
 
 restart_pending = False
 hub_server = None
+
+
+def _mkcert_binary() -> str:
+    for candidate in (
+        shutil.which("mkcert"),
+        "/opt/homebrew/bin/mkcert",
+        "/usr/local/bin/mkcert",
+    ):
+        if candidate and Path(candidate).exists():
+            return candidate
+    return ""
+
+
+def _local_ca_pem_path() -> Path | None:
+    direct = (os.environ.get("MULTIAGENT_LOCAL_CA_PEM", "") or "").strip()
+    if direct:
+        path = Path(direct).expanduser()
+        if path.is_file():
+            return path
+    mkcert_bin = _mkcert_binary()
+    if not mkcert_bin:
+        return None
+    try:
+        proc = subprocess.run(
+            [mkcert_bin, "-CAROOT"],
+            capture_output=True,
+            text=True,
+            timeout=1.2,
+            check=False,
+        )
+        caroot = (proc.stdout or "").strip()
+    except Exception:
+        return None
+    if not caroot:
+        return None
+    path = Path(caroot).expanduser() / "rootCA.pem"
+    if path.is_file():
+        return path
+    return None
+
+
+def _is_local_origin_host(host_header: str) -> bool:
+    host = host_without_port(host_header or "127.0.0.1").lower()
+    return (
+        host == "127.0.0.1"
+        or host == "localhost"
+        or host.startswith("192.168.")
+        or host.startswith("10.")
+        or bool(re.match(r"^172\.(1[6-9]|2\d|3[01])\.", host))
+    )
+
+
+def local_https_assist_payload(host_header: str) -> dict[str, object]:
+    ca_path = _local_ca_pem_path()
+    fingerprint = ""
+    if ca_path:
+        try:
+            fingerprint = hashlib.sha256(ca_path.read_bytes()).hexdigest()
+        except Exception:
+            fingerprint = ""
+    active = bool(_use_https and ca_path and _is_local_origin_host(host_header) and not is_public_host(host_header))
+    return {
+        "ok": True,
+        "active": active,
+        "can_reveal": bool(active and sys.platform == "darwin" and shutil.which("open")),
+        "ca_path": str(ca_path) if ca_path else "",
+        "fingerprint": fingerprint,
+    }
+
+
+def reveal_local_ca_in_finder(host_header: str) -> tuple[bool, str]:
+    payload = local_https_assist_payload(host_header)
+    if not payload.get("active"):
+        return False, "local HTTPS onboarding is not active for this origin"
+    ca_path = (payload.get("ca_path") or "").strip()
+    if not ca_path:
+        return False, "rootCA.pem not found"
+    if sys.platform != "darwin":
+        return False, "Finder reveal is only supported on macOS"
+    try:
+        subprocess.Popen(
+            ["open", "-R", ca_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return True, ""
+    except Exception as exc:
+        return False, str(exc)
 
 
 def restarting_page():
@@ -2210,6 +2335,98 @@ HUB_HOME_HTML = """<!doctype html>
     .home-card:hover::before {
       opacity: 1;
     }
+    .hub-local-ca-modal[hidden] { display: none !important; }
+    .hub-local-ca-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 11000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(5, 7, 10, 0.62);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .hub-local-ca-card {
+      width: min(560px, calc(100vw - 32px));
+      background: color-mix(in srgb, var(--panel-2) 88%, rgb(8, 8, 10));
+      border: 0.5px solid var(--line-strong);
+      border-radius: 22px;
+      padding: 22px 22px 18px;
+      box-shadow: 0 24px 54px rgba(0, 0, 0, 0.32);
+    }
+    .hub-local-ca-eyebrow {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .hub-local-ca-title {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+    .hub-local-ca-note {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .hub-local-ca-steps {
+      margin: 16px 0 0;
+      padding-left: 18px;
+      color: var(--fg);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .hub-local-ca-steps li + li { margin-top: 4px; }
+    .hub-local-ca-path {
+      margin-top: 14px;
+      padding: 12px 13px;
+      border-radius: 14px;
+      border: 0.5px solid var(--line);
+      background: rgba(0, 0, 0, 0.16);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+    .hub-local-ca-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .hub-local-ca-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 11px 15px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
+    }
+    .hub-local-ca-btn:active { transform: translateY(1px); }
+    .hub-local-ca-btn.primary {
+      background: rgb(44, 132, 219);
+      color: white;
+    }
+    .hub-local-ca-btn.secondary {
+      background: rgba(255,255,255,0.08);
+      color: var(--fg);
+      border: 0.5px solid var(--line);
+    }
+    .hub-local-ca-hint {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
     html[data-theme="soft-light"] .home-card {
       background: linear-gradient(145deg, rgb(255, 255, 255) 0%, rgb(246, 246, 244) 100%);
       border-color: rgba(15,20,30,0.14);
@@ -2456,6 +2673,24 @@ HUB_HOME_HTML = """<!doctype html>
 <body>
   <canvas id="starfield"></canvas>
   <div id="chatOverlay" hidden><iframe id="chatFrame" src="about:blank" allow="microphone; clipboard-write"></iframe></div>
+  <div id="localCaModal" class="hub-local-ca-modal" hidden>
+    <div class="hub-local-ca-card" role="dialog" aria-modal="true" aria-labelledby="localCaTitle">
+      <div class="hub-local-ca-eyebrow">Local HTTPS</div>
+      <h2 id="localCaTitle" class="hub-local-ca-title">Send the iPhone certificate with one more step</h2>
+      <p class="hub-local-ca-note">`rootCA.pem` is the file you need to AirDrop to iPhone / iPad. After Finder opens, AirDrop that file, then enable trust on the device.</p>
+      <ol class="hub-local-ca-steps">
+        <li>Click <strong>Reveal in Finder</strong>.</li>
+        <li>AirDrop <code>rootCA.pem</code> to the phone.</li>
+        <li>On iPhone / iPad, install the profile and enable trust in <code>Settings &gt; General &gt; About &gt; Certificate Trust Settings</code>.</li>
+      </ol>
+      <div id="localCaPath" class="hub-local-ca-path"></div>
+      <div class="hub-local-ca-actions">
+        <button type="button" id="localCaRevealBtn" class="hub-local-ca-btn primary">Reveal in Finder</button>
+        <button type="button" id="localCaDismissBtn" class="hub-local-ca-btn secondary">Later</button>
+      </div>
+      <div id="localCaHint" class="hub-local-ca-hint">Only <code>rootCA.pem</code> should be shared. Never share <code>rootCA-key.pem</code>.</div>
+    </div>
+  </div>
   <div class="shell">
     __HUB_HEADER_HTML__
     <div class="mob-stats-bar" id="mobStatsBar"></div>
@@ -2663,6 +2898,67 @@ HUB_HOME_HTML = """<!doctype html>
         if (url) openChatInFrame(url, name);
       }
     } catch (_) {}
+
+    (function() {
+      const modal = document.getElementById("localCaModal");
+      const revealBtn = document.getElementById("localCaRevealBtn");
+      const dismissBtn = document.getElementById("localCaDismissBtn");
+      const pathEl = document.getElementById("localCaPath");
+      const hintEl = document.getElementById("localCaHint");
+      if (!modal || !revealBtn || !dismissBtn || !pathEl || !hintEl) return;
+
+      const isDesktopLike = !/iPhone|iPad|Android/i.test(navigator.userAgent || "");
+      const closeModal = () => { modal.hidden = true; };
+      const markSeen = (fingerprint) => {
+        if (!fingerprint) return;
+        try { localStorage.setItem(`multiagent_local_ca_help:${fingerprint}`, "1"); } catch (_) {}
+      };
+      const wasSeen = (fingerprint) => {
+        if (!fingerprint) return false;
+        try { return localStorage.getItem(`multiagent_local_ca_help:${fingerprint}`) === "1"; } catch (_) { return false; }
+      };
+      dismissBtn.addEventListener("click", () => {
+        const fp = modal.dataset.fingerprint || "";
+        markSeen(fp);
+        closeModal();
+      });
+      modal.addEventListener("click", (event) => {
+        if (event.target === modal) {
+          const fp = modal.dataset.fingerprint || "";
+          markSeen(fp);
+          closeModal();
+        }
+      });
+      revealBtn.addEventListener("click", async () => {
+        const fp = modal.dataset.fingerprint || "";
+        revealBtn.disabled = true;
+        revealBtn.textContent = "Opening Finder…";
+        try {
+          const res = await fetch("/reveal-local-ca", { method: "POST" });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) throw new Error(data.error || "reveal failed");
+          markSeen(fp);
+          hintEl.textContent = "Finder opened. AirDrop rootCA.pem to iPhone / iPad, then enable trust on the device.";
+          setTimeout(closeModal, 650);
+        } catch (err) {
+          hintEl.textContent = `Could not open Finder automatically: ${err.message}`;
+        } finally {
+          revealBtn.disabled = false;
+          revealBtn.textContent = "Reveal in Finder";
+        }
+      });
+
+      fetch("/local-https-assist", { cache: "no-store" })
+        .then((res) => res.json())
+        .then((info) => {
+          if (!info || !info.ok || !info.active || !info.can_reveal || !isDesktopLike) return;
+          if (wasSeen(info.fingerprint || "")) return;
+          modal.dataset.fingerprint = info.fingerprint || "";
+          pathEl.textContent = info.ca_path || "rootCA.pem";
+          modal.hidden = false;
+        })
+        .catch(() => {});
+    })();
 
     // --- Mobile session list ---
     (function() {
@@ -4431,6 +4727,9 @@ class Handler(BaseHTTPRequestHandler):
             stats = compute_hub_stats(active, archived)
             self._send_json(200, {"sessions": active, "active_sessions": active, "archived_sessions": archived, "stats": stats})
             return
+        if parsed.path == "/local-https-assist":
+            self._send_json(200, local_https_assist_payload(self.headers.get("Host", "127.0.0.1")))
+            return
         if parsed.path == "/notify-sound":
             qs = parse_qs(parsed.query)
             name = (qs.get("name", [""])[0] or "").strip()
@@ -4628,6 +4927,13 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"ok":true}')
             return
+        if parsed.path == "/reveal-local-ca":
+            ok, error = reveal_local_ca_in_finder(self.headers.get("Host", "127.0.0.1"))
+            if ok:
+                self._send_json(200, {"ok": True})
+            else:
+                self._send_json(400, {"ok": False, "error": error})
+            return
         if parsed.path == "/settings":
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -4770,16 +5076,7 @@ hub_server.serve_forever()
 PYEOF
 
   HUB_READY=0
-  if python3 - "$HUB_PORT" <<'PYEOF'
-import socket, sys
-port = int(sys.argv[1])
-try:
-    with socket.create_connection(('127.0.0.1', port), timeout=0.25):
-        sys.exit(0)
-except OSError:
-    pass
-sys.exit(1)
-PYEOF
+  if port_serves_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/sessions?ts=0"
   then
     HUB_READY=1
   else
@@ -4802,16 +5099,7 @@ print(proc.pid)
 PYEOF
 )"
     for _ in $(seq 1 50); do
-      if python3 - "$HUB_PORT" <<'PYEOF'
-import socket, sys
-port = int(sys.argv[1])
-try:
-    with socket.create_connection(('127.0.0.1', port), timeout=0.25):
-        sys.exit(0)
-except OSError:
-    pass
-sys.exit(1)
-PYEOF
+      if port_serves_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/sessions?ts=0"
       then
         HUB_READY=1
         break
@@ -4824,7 +5112,7 @@ PYEOF
   fi
 
   if [[ "$HUB_READY" -ne 1 ]]; then
-    echo "Hub server failed to start. Check log: $HUB_LOG" >&2
+    echo "Hub server failed to start or a stale server with the wrong scheme is still listening on port $HUB_PORT. Check log: $HUB_LOG" >&2
     exit 1
   fi
 
@@ -6048,16 +6336,7 @@ PYEOF
   disown "$CHAT_SERVER_PID" || true
   CHAT_READY=0
   for _ in $(seq 1 50); do
-    if python3 - "$CHAT_PORT" <<'PYEOF'
-import socket, sys
-port = int(sys.argv[1])
-try:
-    with socket.create_connection(('127.0.0.1', port), timeout=0.25):
-        sys.exit(0)
-except OSError:
-    pass
-sys.exit(1)
-PYEOF
+    if port_serves_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/messages"
     then
       CHAT_READY=1
       break
@@ -6068,7 +6347,7 @@ PYEOF
     sleep 0.1
   done
   if [[ "$CHAT_READY" -ne 1 ]]; then
-    echo "Chat server failed to start. Check log: $CHAT_LOG" >&2
+    echo "Chat server failed to start or a stale server with the wrong scheme is still listening on port $CHAT_PORT. Check log: $CHAT_LOG" >&2
     exit 1
   fi
   CHAT_URL="${HTTPS_SCHEME}://127.0.0.1:${CHAT_PORT}/?follow=1"
