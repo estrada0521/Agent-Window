@@ -123,45 +123,15 @@ repo_root = Path(sys.argv[1]).resolve()
 agent_name = sys.argv[2]
 
 sys.path.insert(0, str(repo_root / "lib"))
-from agent_index.agent_registry import AGENTS
+from agent_index.ensure_agent_clis import resolve_agent_executable
 
-base = agent_name.split("-", 1)[0]
-adef = AGENTS.get(base)
-exe_name = adef.exe if adef else agent_name
-
-found = shutil.which(exe_name)
-if found:
-    print(found)
+resolved = resolve_agent_executable(repo_root, agent_name)
+if resolved:
+    print(resolved)
     raise SystemExit(0)
 
-if base == "cursor":
-    found = shutil.which("cursor-agent")
-    if found:
-        print(found)
-        raise SystemExit(0)
-
-if adef:
-    for p in adef.fallback_paths:
-        candidate = Path(p).expanduser()
-        if candidate.is_file():
-            print(candidate)
-            raise SystemExit(0)
-
-if adef and adef.fallback_nvm:
-    home = Path.home()
-    nvm_bin = Path(os.environ.get("NVM_BIN", "")).expanduser()
-    candidates = []
-    if nvm_bin.is_dir():
-        candidates.append(nvm_bin / exe_name)
-    candidates.extend(
-        sorted((home / ".nvm" / "versions" / "node").glob(f"*/bin/{exe_name}"), reverse=True)
-    )
-    for candidate in candidates:
-        if candidate.is_file():
-            print(candidate)
-            raise SystemExit(0)
-
-print(exe_name)
+base = agent_name.split("-", 1)[0]
+print(base)
 raise SystemExit(1)
 PYEOF
 }

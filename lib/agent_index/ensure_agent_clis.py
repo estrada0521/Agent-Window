@@ -20,6 +20,38 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+def _npm_package_name_for_executable(executable_path: str | Path) -> str:
+    try:
+        resolved = Path(executable_path).expanduser().resolve()
+    except Exception:
+        return ""
+    current = resolved.parent
+    for _ in range(8):
+        pkg = current / "package.json"
+        if pkg.is_file():
+            try:
+                import json
+
+                data = json.loads(pkg.read_text(encoding="utf-8"))
+            except Exception:
+                return ""
+            return str(data.get("name") or "").strip()
+        parent = current.parent
+        if parent == current:
+            break
+        current = parent
+    return ""
+
+
+def _is_valid_agent_executable(base: str, executable_path: str | Path) -> bool:
+    if base != "grok":
+        return True
+    package_name = _npm_package_name_for_executable(executable_path)
+    if package_name == "grok-cli":
+        return False
+    return True
+
+
 def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
     """Mirror bin/multiagent resolve_agent_executable (base name, NVM, fallbacks)."""
     base = agent_name.split("-", 1)[0]
@@ -27,7 +59,7 @@ def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
     exe_name = adef.exe if adef else agent_name
 
     found = shutil.which(exe_name)
-    if found:
+    if found and _is_valid_agent_executable(base, found):
         return found
 
     # Homebrew の cursor-cli は `cursor-agent` を PATH に載せる（レジストリの exe は agent）
@@ -39,7 +71,7 @@ def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
     if adef:
         for p in adef.fallback_paths:
             candidate = Path(p).expanduser()
-            if candidate.is_file():
+            if candidate.is_file() and _is_valid_agent_executable(base, candidate):
                 return str(candidate)
 
     if adef and adef.fallback_nvm:
@@ -55,7 +87,7 @@ def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
             )
         )
         for candidate in candidates:
-            if candidate.is_file():
+            if candidate.is_file() and _is_valid_agent_executable(base, candidate):
                 return str(candidate)
 
     return None
@@ -123,6 +155,14 @@ def _installers_for(agent: str) -> list[Installer]:
         if brew:
             out.append(lambda: _run_logged(["brew", "install", "copilot-cli"]))
         out.append(lambda: _run_logged(["npm", "install", "-g", "@github/copilot"]))
+        return out
+
+    if agent == "grok":
+        out.append(
+            lambda: _run_shell_logged(
+                "npm uninstall -g grok-cli >/dev/null 2>&1 || true; npm install -g @vibe-kit/grok-cli"
+            )
+        )
         return out
 
     if agent == "opencode":
@@ -242,12 +282,6 @@ def ensure_agents_interactive(repo_root: Path, agents: Sequence[str] | None) -> 
                 print(
                     "multiagent: Cursor: 自動インストールは macOS / Linux の公式 install script を前提にしています。"
                     " それ以外は https://cursor.com から手動で入れてください → スキップ",
-                    file=sys.stderr,
-                    flush=True,
-                )
-            elif base == "grok":
-                print(
-                    "multiagent: Grok: 自動インストールは行いません。利用する場合は vendor 側の手順で CLI を手動導入してください → スキップ",
                     file=sys.stderr,
                     flush=True,
                 )
