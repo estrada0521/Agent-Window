@@ -569,6 +569,7 @@ tmux_socket = sys.argv[4]
 sys.path.insert(0, str(repo_root))
 sys.path.insert(0, str(repo_root / "lib"))
 from agent_index.hub_core import HubRuntime
+from agent_index.ensure_agent_clis import agent_launch_readiness
 from agent_index.state_core import available_theme_choices, theme_description
 
 hub = HubRuntime(repo_root, script_path, tmux_socket)
