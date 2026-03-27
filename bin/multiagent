@@ -882,8 +882,8 @@ print_agent_context() {
   [[ "$agents_str" == "-" ]] && agents_str=""
 
   current_pane="${TMUX_PANE:-}"
-  instance_guess="${MULTIAGENT_AGENT_NAME:-}"
-  if [[ -z "$instance_guess" && -n "$current_pane" && -n "$agents_str" ]]; then
+  instance_guess=""
+  if [[ -n "$current_pane" && -n "$agents_str" ]]; then
     IFS=',' read -ra _ctx_agents <<< "$agents_str"
     for inst in "${_ctx_agents[@]}"; do
       [[ -n "$inst" ]] || continue
@@ -892,6 +892,7 @@ print_agent_context() {
       [[ "$pane_id" == "$current_pane" ]] && instance_guess="$inst" && break
     done
   fi
+  [[ -n "$instance_guess" ]] || instance_guess="${MULTIAGENT_AGENT_NAME:-}"
   user_panes_csv="$(session_user_pane_value "$session")"
   if [[ -z "$instance_guess" && -n "$current_pane" && -n "$user_panes_csv" ]]; then
     case ",${user_panes_csv}," in

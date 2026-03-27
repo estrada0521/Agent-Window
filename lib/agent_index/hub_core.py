@@ -14,6 +14,8 @@ from pathlib import Path
 from urllib.parse import quote
 
 from .agent_registry import ALL_AGENT_NAMES
+from .instance_core import agents_from_tmux_env_output
+from .instance_core import expected_instance_names as resolve_expected_instance_names
 from .state_core import load_hub_settings as load_shared_hub_settings
 from .state_core import load_hub_thinking_totals as load_shared_hub_thinking_totals
 from .state_core import local_runtime_log_dir
@@ -154,23 +156,7 @@ class HubRuntime:
             return [a.strip() for a in agents_str.split(",") if a.strip()]
         result = self.tmux_run(["show-environment", "-t", session_name])
         if result.returncode == 0:
-            agents = []
-            seen = set()
-            for raw_line in result.stdout.splitlines():
-                line = raw_line.strip()
-                if not line.startswith("MULTIAGENT_PANE_"):
-                    continue
-                key = line.split("=", 1)[0]
-                suffix = key[len("MULTIAGENT_PANE_"):]
-                if not suffix or suffix == "USER":
-                    continue
-                lower = suffix.lower()
-                match = re.fullmatch(r"(.+)_([0-9]+)", lower)
-                agent = f"{match.group(1)}-{match.group(2)}" if match else lower
-                if agent in seen:
-                    continue
-                seen.add(agent)
-                agents.append(agent)
+            agents = agents_from_tmux_env_output(result.stdout)
             if agents:
                 return agents
         agents = []
@@ -178,22 +164,11 @@ class HubRuntime:
             pane = self.tmux_env(session_name, f"MULTIAGENT_PANE_{agent.upper()}")
             if pane:
                 agents.append(agent)
-        return agents or list(ALL_AGENT_NAMES)
+        return agents
 
     @staticmethod
     def expected_instance_names(base_agents: list[str]) -> list[str]:
-        counts: dict[str, int] = {}
-        for agent in base_agents:
-            counts[agent] = counts.get(agent, 0) + 1
-        indices: dict[str, int] = {}
-        resolved = []
-        for agent in base_agents:
-            if counts.get(agent, 0) > 1:
-                indices[agent] = indices.get(agent, 0) + 1
-                resolved.append(f"{agent}-{indices[agent]}")
-            else:
-                resolved.append(agent)
-        return resolved
+        return resolve_expected_instance_names(base_agents)
 
     def session_has_expected_panes(self, session_name: str, expected_instances: list[str]) -> bool:
         if self.tmux_run(["has-session", "-t", session_name], timeout=1).returncode != 0:
@@ -205,7 +180,7 @@ class HubRuntime:
         return True
 
     def wait_for_session_instances(self, session_name: str, base_agents: list[str], timeout_seconds: float = 12.0) -> bool:
-        expected_instances = self.expected_instance_names(base_agents or list(ALL_AGENT_NAMES))
+        expected_instances = self.expected_instance_names(base_agents)
         deadline = time.time() + max(0.5, timeout_seconds)
         while time.time() < deadline:
             if self.session_has_expected_panes(session_name, expected_instances):

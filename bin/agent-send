@@ -283,12 +283,17 @@ MSG_ID="$(python3 -c 'import uuid; print(uuid.uuid4().hex[:12])')"
 IFS=',' read -r -a TARGETS <<< "$TARGET"
 
 resolve_pane() {
-  local result
+  local key="$1" result
   result="$(tmux show-environment -t "$SESSION_NAME" "$1" 2>/dev/null | sed 's/^[^=]*=//')"
   if [[ -z "$result" ]]; then
-    local state_file
+    local state_file state_session
     state_file="$(multiagent_panes_state_path)"
-    [[ -f "$state_file" ]] && result="$(sed -n "s/^${1}=//p" "$state_file" 2>/dev/null | head -1)"
+    if [[ -f "$state_file" ]]; then
+      state_session="$(sed -n 's/^MULTIAGENT_SESSION=//p' "$state_file" 2>/dev/null | head -1)"
+      if [[ -n "$SESSION_NAME" && "$state_session" == "$SESSION_NAME" ]]; then
+        result="$(sed -n "s/^${key}=//p" "$state_file" 2>/dev/null | head -1)"
+      fi
+    fi
   fi
   printf '%s\n' "$result"
 }
@@ -464,11 +469,11 @@ for target in "${TARGETS[@]}"; do
 
       if [[ "$_resolved_name" =~ -[0-9]+$ ]]; then
         # Specific instance
-        upper=$(echo "$target" | tr '[:lower:]-' '[:upper:]_')
+        upper=$(echo "$_resolved_name" | tr '[:lower:]-' '[:upper:]_')
         pane="$(resolve_pane "MULTIAGENT_PANE_${upper}")"
-        [[ -n "$pane" ]] || { echo "Target pane not found: $target" >&2; exit 1; }
+        [[ -n "$pane" ]] || { echo "Target pane not found: $_resolved_name" >&2; exit 1; }
         queue_pane "$pane"
-        queue_target "$target"
+        queue_target "$_resolved_name"
       else
         # All instances of this agent
         agents_str="$(tmux show-environment -t "$SESSION_NAME" MULTIAGENT_AGENTS 2>/dev/null | sed 's/^[^=]*=//' || true)"

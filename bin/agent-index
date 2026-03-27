@@ -370,9 +370,6 @@ available_agents() {
     log_file="${SESSION_LOG_DIR}/${agent}.log"
     [[ -f "$log_file" ]] && agents+=("$agent")
   done
-  if [[ ${#agents[@]} -eq 0 ]]; then
-    agents=("${_ALL_AGENTS_ARR[@]}")
-  fi
   printf '%s\n' "$(IFS=,; echo "${agents[*]}")"
 }
 
@@ -4709,7 +4706,8 @@ class Handler(BaseHTTPRequestHandler):
             if not session_name:
                 session_name = Path(workspace).name
             session_name = _re.sub(r"[^a-zA-Z0-9_.\-]", "-", session_name)[:64]
-            agents_str = ",".join(agents) if agents else ",".join(ALL_AGENT_NAMES)
+            launch_agents = agents or list(ALL_AGENT_NAMES)
+            agents_str = ",".join(launch_agents)
             multiagent_bin = str(script_path.parent / "multiagent")
             try:
                 subprocess.Popen(
@@ -4719,7 +4717,7 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as exc:
                 self._send_json(500, {"ok": False, "error": str(exc)})
                 return
-            if not wait_for_session_instances(session_name, agents):
+            if not wait_for_session_instances(session_name, launch_agents):
                 self._send_json(500, {"ok": False, "error": "session panes did not become ready"})
                 return
             ok, chat_port, detail = ensure_chat_server(session_name)

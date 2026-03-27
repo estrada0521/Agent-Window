@@ -13,6 +13,8 @@ import shutil
 from urllib.parse import quote
 
 from .agent_registry import AGENTS, ALL_AGENT_NAMES, generate_agent_message_selectors
+from .instance_core import agents_from_tmux_env_output
+from .instance_core import resolve_target_agents as resolve_target_agent_names
 from .state_core import load_hub_settings as load_shared_hub_settings
 from .state_core import load_session_thinking_totals as load_shared_session_thinking_totals
 
@@ -419,7 +421,7 @@ class ChatRuntime:
         pane_agents = self._agents_from_pane_env()
         if pane_agents:
             return pane_agents
-        return list(self.targets) if self.targets else list(ALL_AGENT_NAMES)
+        return list(self.targets) if self.targets else []
 
     def _agents_from_pane_env(self):
         """Recover instance names from MULTIAGENT_PANE_* while MULTIAGENT_AGENTS is still settling."""
@@ -435,47 +437,10 @@ class ChatRuntime:
             return []
         if r.returncode != 0:
             return []
-        agents = []
-        seen = set()
-        for raw_line in r.stdout.splitlines():
-            line = raw_line.strip()
-            if not line.startswith("MULTIAGENT_PANE_"):
-                continue
-            key = line.split("=", 1)[0]
-            suffix = key[len("MULTIAGENT_PANE_"):]
-            if not suffix or suffix == "USER":
-                continue
-            lower = suffix.lower()
-            match = re.fullmatch(r"(.+)_([0-9]+)", lower)
-            agent = f"{match.group(1)}-{match.group(2)}" if match else lower
-            if agent in seen:
-                continue
-            seen.add(agent)
-            agents.append(agent)
-        return agents
+        return agents_from_tmux_env_output(r.stdout)
 
     def resolve_target_agents(self, target: str) -> list[str]:
-        available = self.active_agents()
-        available_set = set(available)
-        resolved = []
-        seen = set()
-        for raw in [item.strip().lower() for item in (target or "").split(",") if item.strip()]:
-            if raw in {"user", "others"}:
-                candidates = [raw]
-            elif raw in available_set:
-                candidates = [raw]
-            elif re.fullmatch(r".+-\d+", raw):
-                candidates = [raw]
-            else:
-                candidates = [agent for agent in available if agent == raw or agent.startswith(f"{raw}-")]
-                if not candidates:
-                    candidates = [raw]
-            for agent in candidates:
-                if agent in seen:
-                    continue
-                seen.add(agent)
-                resolved.append(agent)
-        return resolved
+        return resolve_target_agent_names(target, self.active_agents())
 
     def pane_id_for_agent(self, agent_name):
         pane_var = f"MULTIAGENT_PANE_{agent_name.upper().replace('-', '_')}"
