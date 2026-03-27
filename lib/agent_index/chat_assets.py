@@ -7846,7 +7846,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (!slide) return;
       try {
         /* Pane Viewer はモバイル専用導線（Terminal ボタンはデスクトップでは /open-terminal）。常に軽量 tail。 */
-        const res = await fetch(`/trace?agent=${encodeURIComponent(agent)}&lines=96&ts=${Date.now()}`);
+        const res = await fetch(`/trace?agent=${encodeURIComponent(agent)}&lines=192&ts=${Date.now()}`);
         if (!res.ok) return;
         const data = await res.json();
         slide.innerHTML = paneTraceHtml(data.content || "No output");
@@ -8000,7 +8000,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         bg: (rootStyles.getPropertyValue("--bg") || "").trim(),
         text: (rootStyles.getPropertyValue("--text") || "").trim(),
       });
-      const popup = window.open(`/pane-trace-popup?${params.toString()}`, "multiagent-pane-trace", "popup=yes,width=660,height=720,resizable=yes,scrollbars=yes");
+      const popupName = `multiagent-pane-trace-${agent}`;
+      const popup = window.open(`/pane-trace-popup?${params.toString()}`, popupName, "popup=yes,width=660,height=720,resizable=yes,scrollbars=yes");
       try { popup?.focus?.(); } catch (_) {}
     };
     const showPaneTraceViewer = (focusAgent) => {
@@ -8550,7 +8551,7 @@ def render_pane_trace_popup_html(*, agent: str, bg: str, text: str, chat_base_pa
     const bodyEl = document.getElementById("paneTracePopupBody");
     const fetchTrace = async (scrollToBottom = false) => {{
       try {{
-        const res = await fetch(`{trace_path_prefix}/trace?agent=${{encodeURIComponent(agent)}}&lines=96&ts=${{Date.now()}}`);
+        const res = await fetch(`{trace_path_prefix}/trace?agent=${{encodeURIComponent(agent)}}&lines=192&ts=${{Date.now()}}`);
         if (!res.ok) return;
         const data = await res.json();
         bodyEl.innerHTML = traceHtml(data.content || "No output");
