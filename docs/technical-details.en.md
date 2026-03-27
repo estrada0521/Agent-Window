@@ -70,6 +70,16 @@ Each send generates a fresh `msg_id`. If the payload starts with `[From: ...]`, 
 
 The JSONL append happens before the text is pasted into tmux panes. That ordering means the routing attempt itself is preserved even if the downstream CLI later fails or ignores the pasted text.
 
+### Transport / Sandbox Note
+
+The ideal behavior of `agent-send` is that a simple call like `agent-send --stdin claude` is enough, without users or agents having to think about tmux sockets or sandbox quirks. The canonical source of truth is still the tmux session environment plus the tmux socket, and the transport layer is intentionally meant to stay thin.
+
+As of 2026-03-27, however, Codex-style sandbox shells were observed to lose `MULTIAGENT_*` environment variables while still preserving `TMUX`. In that situation, older `agent-send` behavior fell back to a repo-hash-derived socket name when `MULTIAGENT_TMUX_SOCKET` was missing, which could point at the wrong tmux server.
+
+The first-step fix for that was intentionally small: before falling back to the repo hash, `agent-send` now recovers the socket from `TMUX` when `MULTIAGENT_TMUX_SOCKET` is absent. For sockets under the standard tmux directories (`/private/tmp/tmux-*/*`, `/tmp/tmux-*/*`), it normalizes to the basename so the state-file path remains compatible. Only custom `-S` sockets are kept as absolute paths. This makes minimal forms like `agent-send --stdin claude` much more likely to work even inside the sandbox.
+
+The state-file fallback is still kept for now. There are three reasons: the fix has not yet been observed across enough sessions to call it fully stable, state files are still a last-resort path for edge cases where `TMUX` recovery does not apply, and removing the fallback should stay in a separate commit so bisection remains easy. The current direction is therefore not to add a new transport, but to move closer to tmux as the single source of truth, reduce the situations where fallback is needed, and only then remove the `resolve_session_name` / `resolve_pane` state-file fallbacks in later steps.
+
 ### `/send` and the raw path
 
 Normal sends from the chat UI go through `POST /send`, and `ChatRuntime.send_message()` then calls `agent-send --stdin`. Raw or silent sends take a different route. They bypass `agent-send` and paste directly into tmux panes with a temporary tmux buffer. This is what powers the `Raw Send` button and `/raw`: a one-shot paste without the normal `[From: User]` header or `msg-id`.

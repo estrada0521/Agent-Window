@@ -19,7 +19,28 @@ print(f"multiagent-{digest}")
 PYEOF
 }
 
-TMUX_SOCKET_NAME="${MULTIAGENT_TMUX_SOCKET:-$(default_tmux_socket_name)}"
+tmux_socket_from_env() {
+  local socket_path
+  if [[ -n "${MULTIAGENT_TMUX_SOCKET:-}" ]]; then
+    printf '%s\n' "$MULTIAGENT_TMUX_SOCKET"
+    return 0
+  fi
+  if [[ -n "${TMUX:-}" ]]; then
+    socket_path="${TMUX%%,*}"
+    case "$socket_path" in
+      /private/tmp/tmux-*/*|/tmp/tmux-*/*)
+        printf '%s\n' "${socket_path##*/}"
+        ;;
+      *)
+        printf '%s\n' "$socket_path"
+        ;;
+    esac
+    return 0
+  fi
+  default_tmux_socket_name
+}
+
+TMUX_SOCKET_NAME="$(tmux_socket_from_env)"
 
 multiagent_panes_state_path() {
   local sock="${1:-$TMUX_SOCKET_NAME}"

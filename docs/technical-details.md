@@ -70,6 +70,16 @@ session の解決順は `MULTIAGENT_SESSION`、現在の tmux session、workspac
 
 `agent-send` は JSONL へ追記してから tmux pane へ paste-buffer で本文を流します。順序がこのようになっているため、pane 側の CLI が失敗した場合でも、少なくとも message routing の試行自体は log に残ります。
 
+### transport / sandbox note
+
+`agent-send` の理想は、`agent-send --stdin claude` のような単純な呼び出しだけで安定して動き、利用者や agent が tmux socket や sandbox を意識しなくて済むことです。実装上の正本も tmux session environment と tmux socket で、message transport 自体はできるだけ薄く保つ方針です。
+
+ただし 2026-03-27 時点では、Codex 系の sandbox shell では `MULTIAGENT_*` 環境変数が落ち、`TMUX` だけが残るケースが確認されました。このため以前の `agent-send` は `MULTIAGENT_TMUX_SOCKET` が見えないと repo hash 由来の socket 名へ落ち、正しい tmux server に届かないことがありました。
+
+この問題に対して入れた first step は、`MULTIAGENT_TMUX_SOCKET` が無いときに repo hash へ落ちる前に `TMUX` 変数から socket を復元する、という 1 点だけです。標準 tmux directory (`/private/tmp/tmux-*/*`, `/tmp/tmux-*/*`) の socket は basename に正規化し、state file path の互換を維持します。custom `-S` socket だけは absolute path のまま扱います。これにより、sandbox 内でも `agent-send --stdin claude` のような最小形が成立しやすくなります。
+
+一方で、state file fallback はまだ残しています。理由は 3 つあります。1 つ目は、この fix がまだ「数セッション安定している」とまでは言えていないこと、2 つ目は `TMUX` 復元が効かない edge case では state file が最後の砦であること、3 つ目は fallback 削除を別コミットに分けた方が bisect しやすいことです。したがって現在の方針は、「新しい transport を足す」のではなく、「tmux 正本へ寄せて fallback が必要になる条件を減らし、十分に安定を観察してから `resolve_session_name` / `resolve_pane` の state file fallback を順に消す」です。
+
 ### `/send` と raw path
 
 chat UI からの通常送信は `POST /send` を通り、`ChatRuntime.send_message()` から `agent-send --stdin` を呼びます。これに対して raw / silent path は `agent-send` を経由せず、tmux pane へ直接 paste-buffer します。`Raw Send` ボタンや `/raw` は、`[From: User]` や `msg-id` を付けずに text を一度だけ流したいときのための分岐です。
