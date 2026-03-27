@@ -13,7 +13,6 @@ import time
 from pathlib import Path
 from urllib.parse import quote
 
-from .agent_registry import ALL_AGENT_NAMES
 from .instance_core import agents_from_tmux_env_output
 from .instance_core import expected_instance_names as resolve_expected_instance_names
 from .state_core import load_hub_settings as load_shared_hub_settings
@@ -159,12 +158,7 @@ class HubRuntime:
             agents = agents_from_tmux_env_output(result.stdout)
             if agents:
                 return agents
-        agents = []
-        for agent in ALL_AGENT_NAMES:
-            pane = self.tmux_env(session_name, f"MULTIAGENT_PANE_{agent.upper()}")
-            if pane:
-                agents.append(agent)
-        return agents
+        return []
 
     @staticmethod
     def expected_instance_names(base_agents: list[str]) -> list[str]:
@@ -592,7 +586,7 @@ class HubRuntime:
                             continue
                         total_messages += 1
                         message_by_session[session_name] = message_by_session.get(session_name, 0) + 1
-                        if sender and sender != "system":
+                        if sender:
                             base_sender = re.sub(r"-\d+$", "", sender)
                             message_by_sender[base_sender] = message_by_sender.get(base_sender, 0) + 1
                         ts = (entry.get("timestamp") or "").strip()
@@ -630,7 +624,6 @@ class HubRuntime:
             "archived_sessions": len(archived_sessions_data),
             "total_sessions": len(all_sessions),
             "daily_messages": daily_messages,
-            "daily_messages_all": daily_messages,
             "daily_messages_user": daily_messages_user,
             "daily_messages_agent": daily_messages_agent,
             "total_messages": total_messages,
@@ -697,7 +690,7 @@ class HubRuntime:
             return False
         expected_agents = self.session_agents(session_name)
         reported_agents = [str(a).strip() for a in (state.get("targets") or []) if str(a).strip()]
-        if expected_agents and reported_agents and expected_agents != reported_agents:
+        if expected_agents and reported_agents and set(expected_agents) != set(reported_agents):
             return False
         if expected_agents and not reported_agents:
             return False

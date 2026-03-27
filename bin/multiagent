@@ -415,7 +415,7 @@ session_agent_state_lines() {
   local session="$1" instance upper pane_id pane_title pane_dead pane_current_command
   local agents_str
   agents_str="$(session_agents_value "$session")"
-  [[ "$agents_str" == "-" ]] && agents_str="$ALL_AGENTS_CSV"
+  [[ "$agents_str" == "-" ]] && return 0
   IFS=',' read -ra agent_list <<< "$agents_str"
   for instance in "${agent_list[@]}"; do
     upper="$(printf '%s' "$instance" | tr '[:lower:]-' '[:upper:]_')"

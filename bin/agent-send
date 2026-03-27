@@ -58,11 +58,6 @@ USAGEEOF
   printf 'Targets:\n'
   printf '  %s | user | others\n' "$ALL_AGENTS_DISPLAY"
   printf '  '
-  for _a in "${ALL_AGENTS[@]}"; do
-    _n="AGENT_NUMBER_ALIAS_${_a}"
-    _v="$(eval "printf '%s' \"\${${_n}:-}\"")"
-    [[ -n "$_v" ]] && printf '%s ' "$_v"
-  done
   # Print number aliases from AGENT_NUMBER_ALIAS_N variables
   for _n in 1 2 3 4 5 6 7 8 9; do
     _var="AGENT_NUMBER_ALIAS_${_n}"
@@ -123,7 +118,7 @@ resolve_session_log_dir_for_base() {
 }
 
 index_log_dirs() {
-  local dirs=() candidate resolved existing
+  local dirs=() candidate resolved existing seen_candidate
   for candidate in \
     "${MULTIAGENT_LOG_DIR:-}" \
     "$(session_log_dir_value "$SESSION_NAME")" \
@@ -133,8 +128,8 @@ index_log_dirs() {
     [[ -n "$candidate" ]] || continue
     resolved="$(realpath_or_echo "$candidate")"
     existing=0
-    for candidate in "${dirs[@]:-}"; do
-      if [[ "$candidate" == "$resolved" ]]; then
+    for seen_candidate in "${dirs[@]:-}"; do
+      if [[ "$seen_candidate" == "$resolved" ]]; then
         existing=1
         break
       fi
@@ -250,10 +245,6 @@ resolve_session_name() {
   return 1
 }
 
-# Auto-detect session: env var → tmux current session → unique workspace session
-if [[ -z "$SESSION_NAME" && -n "${TMUX:-}" ]]; then
-  SESSION_NAME="$(tmux display-message -p '#{session_name}' 2>/dev/null || true)"
-fi
 SESSION_NAME="$(resolve_session_name)"
 
 TARGET="$1"; shift
