@@ -5172,6 +5172,21 @@ def git_branch_overview():
             encoding="utf-8",
             errors="replace",
         )
+    def _parse_numstat(res):
+        added = 0
+        deleted = 0
+        if res.returncode != 0:
+            return added, deleted
+        for line in (res.stdout or "").splitlines():
+            parts = line.split("\t", 2)
+            if len(parts) < 3:
+                continue
+            ins, dels = parts[0], parts[1]
+            if ins.isdigit():
+                added += int(ins)
+            if dels.isdigit():
+                deleted += int(dels)
+        return added, deleted
     branch_res = _run("rev-parse", "--abbrev-ref", "HEAD")
     branch = (branch_res.stdout or "").strip() if branch_res.returncode == 0 else "unknown"
     upstream_res = _run("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}")
@@ -5191,6 +5206,18 @@ def git_branch_overview():
             if not line or line.startswith("## "):
                 continue
             status_lines.append(line)
+    worktree_added = 0
+    worktree_deleted = 0
+    diff_head_res = _run("diff", "--numstat", "HEAD", "--")
+    worktree_has_diff = False
+    if diff_head_res.returncode == 0:
+        worktree_added, worktree_deleted = _parse_numstat(diff_head_res)
+        worktree_has_diff = bool((diff_head_res.stdout or "").strip())
+    else:
+        unstaged_add, unstaged_del = _parse_numstat(_run("diff", "--numstat", "--"))
+        staged_add, staged_del = _parse_numstat(_run("diff", "--numstat", "--cached", "--"))
+        worktree_added = unstaged_add + staged_add
+        worktree_deleted = unstaged_del + staged_del
     # Structured commit info with agent detection from multiple sources
     _agent_names = tuple(ALL_AGENT_NAMES)
     def _detect_agent(*fields):
@@ -5273,6 +5300,10 @@ def git_branch_overview():
         "branch": branch,
         "upstream": upstream,
         "ahead_behind": ahead_behind,
+        "worktree_added": worktree_added,
+        "worktree_deleted": worktree_deleted,
+        "worktree_has_diff": worktree_has_diff,
+        "worktree_changed_paths": len(status_lines),
         "status_lines": status_lines[:8],
         "recent_commits": recent_commits,
     }
@@ -5570,16 +5601,10 @@ class Handler(BaseHTTPRequestHandler):
                     )
                 else:
                     result = subprocess.run(
-                        ["git", "-C", str(root), "diff"],
+                        ["git", "-C", str(root), "diff", "HEAD", "--"],
                         capture_output=True, text=True, timeout=10, check=False,
                     )
                 diff_text = result.stdout or ""
-                if not diff_text.strip() and not commit_hash:
-                    result2 = subprocess.run(
-                        ["git", "-C", str(root), "diff", "--cached"],
-                        capture_output=True, text=True, timeout=10, check=False,
-                    )
-                    diff_text = result2.stdout or ""
                 body = json.dumps({"diff": diff_text}, ensure_ascii=True).encode("utf-8")
             except Exception as exc:
                 body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")

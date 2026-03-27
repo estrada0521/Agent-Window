@@ -356,7 +356,8 @@ __AGENT_ACCENT_CSS__
     .hub-main-menu-stack {
       display: block;
     }
-    #gitBranchPanel.git-branch-mode-detail.open {
+    .shell > .hub-page-header > #gitBranchPanel.git-branch-transitioning.open,
+    .shell > .hub-page-header > #gitBranchPanel.git-branch-mode-detail.open {
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -386,6 +387,16 @@ __AGENT_ACCENT_CSS__
     .git-branch-stack {
       display: block;
     }
+    .git-branch-list-view {
+      display: block;
+    }
+    .git-branch-summary-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      border-bottom: 0.5px solid rgba(255,255,255,0.06);
+      background: rgb(var(--bg-rgb));
+    }
     .git-branch-detail-view {
       display: none;
       flex-direction: column;
@@ -405,6 +416,9 @@ __AGENT_ACCENT_CSS__
     }
     .git-commit-detail-head .git-commit-row {
       border-bottom: none;
+      pointer-events: none;
+    }
+    .git-commit-detail-head .git-branch-summary-row {
       pointer-events: none;
     }
     .git-commit-detail-head .git-commit-chevron {
@@ -809,6 +823,79 @@ __AGENT_ACCENT_CSS__
     .git-commit-row:hover .git-commit-time,
     .git-commit-row:hover .git-commit-stat {
       color: var(--text);
+    }
+    .git-branch-summary-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 18px 7px 8px;
+      font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--text);
+      cursor: default;
+    }
+    .git-branch-summary-row.clickable {
+      cursor: pointer;
+    }
+    .git-branch-summary-row.clickable:hover .git-branch-summary-label,
+    .git-branch-summary-row.clickable:hover .git-branch-summary-counts {
+      color: var(--text);
+    }
+    .git-branch-summary-label {
+      flex: 1;
+      min-width: 0;
+      color: rgba(252, 252, 252, 0.72);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 13px;
+      font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif;
+      font-weight: 360;
+      font-variation-settings: "wght" 360, "opsz" 16;
+    }
+    .git-branch-summary-icon-wrap {
+      position: relative;
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      z-index: 1;
+    }
+    .git-branch-summary-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      color: rgba(252, 252, 252, 0.52);
+    }
+    .git-branch-summary-row.clickable:hover .git-branch-summary-icon {
+      color: rgba(252, 252, 252, 0.88);
+    }
+    .git-branch-summary-row .git-commit-chevron {
+      color: rgba(252, 252, 252, 0.22);
+      transition: color 200ms ease;
+      flex-shrink: 0;
+    }
+    .git-branch-summary-row.clickable:hover .git-commit-chevron {
+      color: rgba(252, 252, 252, 0.7);
+    }
+    .git-branch-summary-counts {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      font-family: "jetbrainsMono", "JetBrains Mono", monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 12px;
+      margin-left: auto;
+    }
+    .git-branch-summary-counts.clean {
+      color: rgba(252, 252, 252, 0.42);
+    }
+    .git-branch-summary-count.ins {
+      color: rgba(252, 252, 252, 0.88);
+    }
+    .git-branch-summary-count.del {
+      color: rgba(220, 80, 80, 0.82);
     }
     .git-commit-diff-wrap.git-commit-diff-wrap-stacked {
       display: flex;
@@ -6101,6 +6188,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     const closeGitBranchInlineDiff = () => {
       if (!gitBranchPanel) return;
+      gitBranchPanel.classList.remove("git-branch-transitioning");
       gitBranchPanel.classList.remove("git-branch-mode-detail");
       const body = gitBranchPanel.querySelector(".git-commit-detail-body");
       if (body) body.innerHTML = "";
@@ -6117,6 +6205,27 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const data = await res.json();
         const commits = Array.isArray(data.recent_commits) ? data.recent_commits : [];
         const rows = [];
+        const changedPaths = parseInt(data.worktree_changed_paths) || 0;
+        const worktreeAdded = parseInt(data.worktree_added) || 0;
+        const worktreeDeleted = parseInt(data.worktree_deleted) || 0;
+        const worktreeClickable = !!data.worktree_has_diff;
+        const worktreeLabel = changedPaths
+          ? `Uncommitted changes · ${changedPaths} ${changedPaths === 1 ? "path" : "paths"}`
+          : "Working tree clean";
+        const worktreeCounts = changedPaths
+          ? `<span class="git-branch-summary-counts"><span class="git-branch-summary-count ins">+${worktreeAdded}</span><span class="git-branch-summary-count del">-${worktreeDeleted}</span></span>`
+          : '<span class="git-branch-summary-counts clean">+0 -0</span>';
+        const summaryIcon = '<span class="git-branch-summary-icon-wrap"><svg class="git-branch-summary-icon" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="5" cy="4.5" r="1.35" fill="currentColor" opacity="0.92"/><circle cx="5" cy="13.5" r="1.35" fill="currentColor" opacity="0.56"/><path d="M5 5.95v6.1" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" opacity="0.34"/><path d="M7.6 5.95h5.45" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" opacity="0.9"/><path d="M7.6 10.15h3.7" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" opacity="0.68"/><path d="M12.95 8.6v3.1" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" opacity="0.82"/></svg></span>';
+        const summaryChevron = worktreeClickable
+          ? '<svg class="git-commit-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>'
+          : "";
+        const summaryHtml =
+          `<div class="git-branch-summary-row${worktreeClickable ? " clickable" : ""}"${worktreeClickable ? ' data-diff-kind="worktree"' : ""}>` +
+          summaryChevron +
+          summaryIcon +
+          `<span class="git-branch-summary-label">${escapeHtml(worktreeLabel)}</span>` +
+          worktreeCounts +
+          `</div>`;
         const STAT_BAR_CAP = 500;
         const maxTotal = commits.reduce((mx, c) => {
           const ins = Math.min(parseInt(c.ins) || 0, STAT_BAR_CAP);
@@ -6161,7 +6270,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const listHtml = rows.join("");
         gitBranchPanel.innerHTML = `
           <div class="git-branch-stack">
-            <div class="git-branch-list-view">${listHtml}</div>
+            <div class="git-branch-list-view">
+              <div class="git-branch-summary-wrap">${summaryHtml}</div>
+              ${listHtml}
+            </div>
             <div class="git-branch-detail-view">
               <button type="button" class="git-commit-detail-head" aria-label="コミット一覧に戻る"></button>
               <div class="git-commit-detail-body"></div>
@@ -6209,13 +6321,17 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           return;
         }
         if (gitBranchPanel.classList.contains("git-branch-mode-detail")) return;
-        const row = e.target.closest(".git-commit-row");
+        const row = e.target.closest(".git-commit-row, .git-branch-summary-row");
         if (!row) return;
+        const diffKind = row.dataset.diffKind || "";
         const hash = row.dataset.hash;
-        if (!hash) return;
+        if (!hash && !diffKind) return;
         e.stopPropagation();
         closeGitBranchInlineDiff();
-        const subject = row.querySelector(".git-commit-subject")?.textContent?.trim() || hash.slice(0, 7);
+        gitBranchPanel.classList.add("git-branch-transitioning");
+        const subject = diffKind === "worktree"
+          ? (row.querySelector(".git-branch-summary-label")?.textContent?.trim() || "Uncommitted changes")
+          : (row.querySelector(".git-commit-subject")?.textContent?.trim() || hash.slice(0, 7));
         const headEl = gitBranchPanel.querySelector(".git-commit-detail-head");
         const bodyEl = gitBranchPanel.querySelector(".git-commit-detail-body");
         if (headEl) {
@@ -6228,8 +6344,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         bodyEl.appendChild(wrapEl);
         gitBranchPanel.classList.add("git-branch-mode-detail");
         gitBranchPanel.scrollTop = 0;
+        requestAnimationFrame(() => {
+          gitBranchPanel?.classList.remove("git-branch-transitioning");
+        });
         try {
-          await renderGitCommitDiffInto(wrapEl, hash);
+          await renderGitCommitDiffInto(wrapEl, diffKind === "worktree" ? "" : hash);
         } catch (err) {
           wrapEl.innerHTML = '<div class="git-commit-diff">Failed to load diff</div>';
         }
