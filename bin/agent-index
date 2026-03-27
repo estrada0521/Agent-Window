@@ -96,6 +96,19 @@ detect_local_host_name() {
   printf '%s\n' "$local_name"
 }
 
+read_local_https_extra_names() {
+  local extra_names_file="$REPO_ROOT/certs/local-https-extra-names.txt"
+  local line=""
+  [[ -f "$extra_names_file" ]] || return 0
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%%#*}"
+    line="${line//$'\r'/}"
+    line="$(printf '%s' "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    [[ -n "$line" ]] || continue
+    printf '%s\n' "$line"
+  done < "$extra_names_file"
+}
+
 cert_has_san_entry() {
   local cert_file="$1"
   local san_kind="$2"
@@ -134,6 +147,7 @@ ensure_repo_https_cert() {
   local current_ip local_name ts
   local required_missing=0
   local names=()
+  local extra_name=""
   local name
 
   command -v mkcert >/dev/null 2>&1 || return 0
@@ -147,6 +161,10 @@ ensure_repo_https_cert() {
     names+=("$local_name")
     [[ "$local_name" != *.local ]] && names+=("${local_name}.local")
   fi
+  while IFS= read -r extra_name; do
+    [[ -n "$extra_name" ]] || continue
+    names+=("$extra_name")
+  done < <(read_local_https_extra_names)
 
   if [[ -f "$cert_file" && -f "$key_file" ]]; then
     for name in "${names[@]}"; do
