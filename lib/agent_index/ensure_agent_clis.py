@@ -129,8 +129,14 @@ def agent_launch_readiness(repo_root: Path, agent_name: str) -> dict[str, str]:
             "agent": base,
             "status": "missing_auth",
             "error": (
-                "Grok CLI is installed but not authenticated on this Mac. "
-                "Set GROK_API_KEY or add apiKey to ~/.grok/user-settings.json first."
+                "Grok CLI はインストール済みですが、API キーが未設定です。\n"
+                "\n"
+                "設定手順:\n"
+                "1. https://console.x.ai/ でアカウントを作成し API キーを取得\n"
+                "2. ターミナルで以下を実行:\n"
+                '   mkdir -p ~/.grok && echo \'{"apiKey":"ここにキーを貼る"}\' > ~/.grok/user-settings.json\n'
+                "\n"
+                "または環境変数でも可: export GROK_API_KEY=xai-..."
             ),
         }
     return {"agent": base, "status": "ok", "executable": executable}
@@ -153,6 +159,38 @@ def _run_shell_logged(command: str) -> bool:
 
 
 Installer = Callable[[], bool]
+
+
+def _ensure_local_bin_in_path() -> None:
+    """Add ~/.local/bin to PATH (current process) and shell profile if missing."""
+    local_bin = Path.home() / ".local" / "bin"
+    local_bin_str = str(local_bin)
+
+    # Add to current process PATH
+    current_path = os.environ.get("PATH", "")
+    if local_bin_str not in current_path.split(os.pathsep):
+        os.environ["PATH"] = local_bin_str + os.pathsep + current_path
+
+    # Add to shell profile for future sessions
+    shell = os.environ.get("SHELL", "")
+    if "zsh" in shell:
+        profile = Path.home() / ".zshrc"
+    else:
+        profile = Path.home() / ".profile"
+
+    path_line = f'export PATH="$HOME/.local/bin:$PATH"'
+    try:
+        existing = profile.read_text(encoding="utf-8") if profile.is_file() else ""
+    except Exception:
+        existing = ""
+    if ".local/bin" not in existing:
+        with open(profile, "a", encoding="utf-8") as f:
+            f.write(f"\n# Added by multiagent quickstart\n{path_line}\n")
+        print(
+            f"multiagent: {profile.name} に ~/.local/bin を PATH 追加しました",
+            file=sys.stderr,
+            flush=True,
+        )
 
 
 def _installers_for_cursor() -> list[Installer]:
@@ -375,6 +413,9 @@ def ensure_agents_interactive(repo_root: Path, agents: Sequence[str] | None) -> 
         ok = False
         for step in strategies:
             if step():
+                # Cursor installs to ~/.local/bin which may not be in PATH
+                if base == "cursor":
+                    _ensure_local_bin_in_path()
                 if resolve_agent_executable(repo_root, base):
                     ok = True
                     break
