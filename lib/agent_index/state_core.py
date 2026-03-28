@@ -486,7 +486,7 @@ def update_thinking_totals_from_statuses(
             _write_json_atomic(stats_path, stats_payload)
 
 
-def load_hub_settings(repo_root: Path | str, *, message_limit_cap: int = 500):
+def load_hub_settings(repo_root: Path | str, *, message_limit_cap: int = 2000):
     settings = dict(HUB_SETTINGS_DEFAULTS)
     path = hub_settings_path(repo_root)
     if path.is_file():
@@ -498,7 +498,7 @@ def load_hub_settings(repo_root: Path | str, *, message_limit_cap: int = 500):
     return settings
 
 
-def save_hub_settings(repo_root: Path | str, raw, *, message_limit_cap: int = 500):
+def save_hub_settings(repo_root: Path | str, raw, *, message_limit_cap: int = 2000):
     settings = load_hub_settings(repo_root, message_limit_cap=message_limit_cap)
     settings = _apply_hub_settings(raw, settings, message_limit_cap=message_limit_cap, missing_flags_false=True)
     path = hub_settings_path(repo_root)

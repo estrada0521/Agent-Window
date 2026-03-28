@@ -108,7 +108,6 @@ __AGENT_ACCENT_CSS__
       --warn-bright: #fcd34d;
       --error: #ef4444;
       --error-bright: #f87171;
-      --latest-message-offset: 70vh;
       /* Extra leading gutter for user messages (left; adds to main padding). */
       --user-message-inline-start: max(96px, env(safe-area-inset-left, 0px));
     }
@@ -1231,7 +1230,7 @@ __AGENT_ACCENT_CSS__
     html[data-hub-iframe-chat="1"] main {
       overscroll-behavior-y: contain;
       /* 親 Hub の innerHeight と visualViewport.height の差 ≒ Safari 上下クロム。引っ込むと gap→0 で下端が Public に近づく */
-      padding-bottom: calc(var(--composer-height, 0px) + var(--latest-message-offset, 34vh) + var(--hub-parent-chrome-gap, 0px));
+      padding-bottom: calc(var(--composer-height, 0px) + var(--hub-parent-chrome-gap, 0px));
     }
     html[data-hub-iframe-chat="1"] #scrollToBottomBtn,
     html[data-hub-iframe-chat="1"] #composerFabBtn {
@@ -2388,7 +2387,7 @@ __AGENT_ACCENT_CSS__
       left: 0;
       right: 0;
       bottom: 0;
-      padding: calc(56px + env(safe-area-inset-top)) 6px calc(var(--composer-height, 0px) + var(--latest-message-offset, 34vh)) 20px;
+      padding: calc(56px + env(safe-area-inset-top)) 6px 0 20px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -2397,6 +2396,12 @@ __AGENT_ACCENT_CSS__
       overscroll-behavior: contain;
       background: transparent;
       z-index: 1;
+    }
+    main::after {
+      content: "";
+      display: block;
+      min-height: 70vh;
+      flex-shrink: 0;
     }
     html[data-mobile="1"] main {
       padding-right: 20px;
@@ -4224,32 +4229,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       timeline.addEventListener("scroll", hubPingParentForSafariChrome, { passive: true });
       requestHubParentLayout();
     }
-    const getScrollMetrics = () => {
-      return {
-        scrollTop: timeline.scrollTop,
-        clientHeight: timeline.clientHeight,
-        scrollHeight: timeline.scrollHeight,
-      };
-    };
     const scrollConversationToBottom = (behavior = "auto") => {
-      const { scrollHeight } = getScrollMetrics();
-      timeline.scrollTo({ top: scrollHeight, behavior });
-    };
-    const scrollLatestMessageBottomToCenter = (behavior = "auto") => {
-      requestAnimationFrame(() => {
-        const lastMessage = timeline.querySelector("article.message-row:last-of-type");
-        if (!lastMessage) {
-          scrollConversationToBottom(behavior);
-          return;
-        }
-        const timelineRect = timeline.getBoundingClientRect();
-        const messageRect = lastMessage.getBoundingClientRect();
-        const targetTop = Math.max(
-          0,
-          timeline.scrollTop + (messageRect.top - timelineRect.top) - (timeline.clientHeight * 0.3),
-        );
-        timeline.scrollTo({ top: targetTop, behavior });
-      });
+      _programmaticScroll = true;
+      timeline.scrollTo({ top: timeline.scrollHeight, behavior });
+      requestAnimationFrame(() => { _programmaticScroll = false; });
     };
     const focusMessageInputWithoutScroll = (selectionStart = null, selectionEnd = selectionStart) => {
       if (typeof isComposerOverlayOpen === "function" && typeof openComposerOverlay === "function" && !isComposerOverlayOpen()) {
@@ -4536,6 +4519,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
     };
     scrollToBottomBtn.addEventListener("click", () => {
+      _stickyToBottom = true;
       scrollConversationToBottom("smooth");
     });
     composerFabBtn?.addEventListener("click", () => {
@@ -4560,8 +4544,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     }, { capture: true });
     const updateScrollBtnPos = () => {
       const shell = document.querySelector(".shell");
-      const buttonBottom = 160;
-      shell.style.setProperty("--floating-btn-bottom", buttonBottom + "px");
+      shell.style.setProperty("--floating-btn-bottom", "160px");
       shell.style.setProperty("--composer-height", "0px");
     };
     const mathRenderOptions = {
@@ -4672,9 +4655,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         row.classList.toggle("has-structured-block", hasStructuredBlock);
       });
     };
-    const scheduleViewportCenteredBlocks = (scope = document) => {
-      syncWideBlockRows(scope);
-    };
     let stableCodeBlocksRaf = 0;
     const stableCodeBlockScopes = new Set();
     const queueStableCodeBlockSync = (scope = document) => {
@@ -4720,15 +4700,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       });
     };
     updateScrollBtnPos();
-    new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("composer"));
-    new ResizeObserver(updateScrollBtnPos).observe(document.querySelector(".composer-main-shell"));
-    new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("targetPicker"));
-    window.addEventListener("resize", updateScrollBtnPos);
-    window.addEventListener("resize", () => scheduleViewportCenteredBlocks(document));
-    window.addEventListener("resize", () => queueStableCodeBlockSync(document));
+    window.addEventListener("resize", () => { syncWideBlockRows(document); queueStableCodeBlockSync(document); });
     if (document.fonts?.ready) {
       document.fonts.ready.then(() => {
-        scheduleViewportCenteredBlocks(document);
+        syncWideBlockRows(document);
         queueStableCodeBlockSync(document);
       }).catch(() => {});
     }
@@ -4918,17 +4893,22 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         node.disabled = disabled;
       });
     };
+    const STICKY_THRESHOLD = 100;
+    let _stickyToBottom = true;
+    let _programmaticScroll = false;
     const isNearBottom = () => {
-      const { scrollTop, clientHeight, scrollHeight } = getScrollMetrics();
-      return scrollTop + clientHeight >= scrollHeight - (clientHeight * 0.3);
+      return timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight < STICKY_THRESHOLD;
     };
+    const updateStickyState = () => {
+      if (_programmaticScroll) return;
+      _stickyToBottom = isNearBottom();
+    };
+    timeline.addEventListener("scroll", updateStickyState, { passive: true });
     const updateScrollBtn = () => {
-      const nearBottom = isNearBottom();
       const overlayOpen = isComposerOverlayOpen();
-      // New session などメッセージ 0 件のプレースホルダー表示中は、下にスクロールしていなくても O（composer 起動）を出す
       const emptyPlaceholder = !!document.querySelector("#messages .conversation-empty");
-      scrollToBottomBtn.classList.toggle("visible", !nearBottom && !overlayOpen && !emptyPlaceholder);
-      composerFabBtn?.classList.toggle("visible", (nearBottom || emptyPlaceholder) && !overlayOpen);
+      scrollToBottomBtn.classList.toggle("visible", !_stickyToBottom && !overlayOpen && !emptyPlaceholder);
+      composerFabBtn?.classList.toggle("visible", (_stickyToBottom || emptyPlaceholder) && !overlayOpen);
     };
     let centeredRowRaf = 0;
     const updateCenteredMessageRow = () => {
@@ -5318,27 +5298,101 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
     };
     setInterval(checkScheduledSounds, 15000);
-    const render = (data, { forceScroll = false } = {}) => {
-      const shouldStickToBottom = forceScroll || isNearBottom();
+    const copyIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    const checkIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+    const replyIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
+    const replyUpIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><polyline points="7 10 12 5 17 10"/></svg>`;
+    const replyDownIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><polyline points="7 14 12 19 17 14"/></svg>`;
+    const postRenderScope = (scope) => {
+      renderMathInScope(scope);
+      renderMermaidInScope(scope);
+      syncWideBlockRows(scope);
+      syncUserMessageCollapse(scope);
+    };
+    const notifyNewMessages = (displayEntries) => {
+      if (!initialLoadDone || (!soundEnabled && !ttsEnabled)) return;
+      const lastSeenIndex = lastNotifiedMsgId
+        ? displayEntries.findIndex((e) => e.msg_id === lastNotifiedMsgId)
+        : -1;
+      const newEntries = lastSeenIndex >= 0
+        ? displayEntries.slice(lastSeenIndex + 1)
+        : (lastNotifiedMsgId ? displayEntries.slice(-1) : []);
+      if (newEntries.some((e) => e.kind === "git-commit") && soundEnabled) playCommitSound();
+      const agentEntries = newEntries.filter((e) => e.sender !== "user" && e.sender !== "system");
+      if (agentEntries.length > 0) {
+        if (soundEnabled) playNotificationSound();
+        if (ttsEnabled) speakEntry(agentEntries[agentEntries.length - 1]);
+      }
+    };
+    const buildReplyChildrenMap = (entries) => {
+      const map = new Map();
+      entries.forEach((entry) => {
+        const parentId = (entry.reply_to || "").trim();
+        const childId = (entry.msg_id || "").trim();
+        if (parentId && childId && !map.has(parentId)) map.set(parentId, childId);
+      });
+      return map;
+    };
+    const buildMsgHTML = (entry, replyChildrenMap) => {
+      if (entry.sender === "system") {
+        const systemMessage = escapeHtml(entry.message || "");
+        const systemTitle = systemMessage.replaceAll('"', "&quot;");
+        return `<div class="sysmsg-row" data-msgid="${escapeHtml(entry.msg_id || "")}" data-sender="system" data-kind="${escapeHtml(entry.kind || "")}"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
+      }
+      const cls = roleClass(entry.sender);
+      const targetSpans = (entry.targets?.length > 0
+        ? entry.targets.map(t => metaAgentLabel(t, "target-name", "right"))
+        : [metaAgentLabel("no target", "target-name", "right")]).join(`<span class="meta-agent-sep">,</span>`);
+      const body = stripSenderPrefix(entry.message || "");
+      const rawAttr = escapeHtml(body).replaceAll('"', "&quot;");
+      const previewAttr = escapeHtml(body.slice(0, 80)).replaceAll('"', "&quot;");
+      const msgId = escapeHtml(entry.msg_id || "");
+      const replyToAttr = entry.reply_to ? escapeHtml(entry.reply_to).replaceAll('"', "&quot;") : "";
+      const targetMeta = `<span class="targets">${targetSpans}</span>`;
+      const replySourceJumpHtml = replyToAttr
+        ? `<button class="reply-jump-inline reply-target-jump-btn" type="button" title="返信元へ移動" data-replyto="${replyToAttr}">${replyUpIcon}</button>`
+        : "";
+      const sender = escapeHtml(entry.sender || "unknown");
+      const isActive = pendingReplyTo?.msgId === entry.msg_id;
+      const timestamp = escapeHtml(entry.timestamp || "");
+      const isUser = cls === "user";
+      const userTimestampHtml = timestamp ? `<time>${timestamp}</time>` : "";
+      const copyButtonHtml = `<button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
+      const firstReplyId = msgId ? replyChildrenMap.get(entry.msg_id || "") || "" : "";
+      const replyTargetJumpHtml = firstReplyId
+        ? `<button class="reply-target-jump-btn" type="button" title="返信先へ移動" data-replytarget="${escapeHtml(firstReplyId).replaceAll('"', "&quot;")}">${replyDownIcon}</button>`
+        : "";
+      const senderHtml = metaAgentLabel(entry.sender || "unknown", "sender-label", "right");
+
+      return `<article class="message-row ${cls}" data-msgid="${msgId}" data-sender="${sender}">
+        <div class="message-wrap" data-raw="${rawAttr}" data-preview="${previewAttr}">
+        <div class="message ${cls}">
+        ${isUser ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${targetMeta}${userTimestampHtml}${replyTargetJumpHtml}${copyButtonHtml}</div>` : `<div class="message-meta-below">${senderHtml}<span class="arrow">to</span>${targetMeta}${replySourceJumpHtml}${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}${copyButtonHtml}${replyTargetJumpHtml}</div>`}
+        <div class="message-body-row">
+          <div class="md-body">${renderMarkdown(body)}</div>
+          ${isUser ? `<button class="user-collapse-toggle" type="button" hidden>More</button>` : ""}
+        </div>
+        ${isUser ? `<div class="user-message-divider" aria-hidden="true"></div>` : ``}
+        </div>
+        </div>
+      </article>`;
+    };
+    const updateSessionUI = (data, displayEntries) => {
       currentSessionName = data.session || "";
       attachedFilesSession = currentSessionName;
       loadThinkingTime(currentSessionName);
-      const displayEntries = data.entries.slice(-__MESSAGE_LIMIT__);
       sessionActive = !!data.active;
       const picker = document.getElementById("targetPicker");
       if (!picker.dataset.loaded) {
         const restoredTargets = loadTargetSelection(currentSessionName, data.targets);
-        selectedTargets = restoredTargets.length
-          ? restoredTargets
-          : [];
+        selectedTargets = restoredTargets.length ? restoredTargets : [];
         picker.dataset.loaded = "1";
         renderAgentStatus(Object.fromEntries(data.targets.map((t) => [t, "idle"])));
         renderAgentFilterChips(data.targets);
       }
       const nextTargets = sessionActive ? data.targets : [];
       const nextTargetsSig = JSON.stringify(nextTargets);
-      const currentTargetsSig = JSON.stringify(availableTargets);
-      if (nextTargetsSig !== currentTargetsSig) {
+      if (nextTargetsSig !== JSON.stringify(availableTargets)) {
         availableTargets = nextTargets;
         selectedTargets = selectedTargets.filter((target) => availableTargets.includes(target));
         saveTargetSelection(data.session, selectedTargets);
@@ -5347,30 +5401,23 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
       document.getElementById("message").disabled = !sessionActive;
       setQuickActionsDisabled(!sessionActive);
-      if (!sessionActive) {
-        setStatus("archived session is read-only");
-      }
-      const sig = `${displayEntries.length}:${displayEntries.at(-1)?.timestamp ?? ""}`;
-      if (!forceScroll && sig === lastMessagesSig) return;
-      lastMessagesSig = sig;
-      if (initialLoadDone && (soundEnabled || ttsEnabled)) {
-        const lastSeenIndex = lastNotifiedMsgId
-          ? displayEntries.findIndex((e) => e.msg_id === lastNotifiedMsgId)
-          : -1;
-        const newEntries = lastSeenIndex >= 0
-          ? displayEntries.slice(lastSeenIndex + 1)
-          : (lastNotifiedMsgId ? displayEntries.slice(-1) : []);
-        const commitEntries = newEntries.filter((e) => e.kind === "git-commit");
-        if (commitEntries.length > 0 && soundEnabled) playCommitSound();
-        const agentEntries = newEntries.filter((e) => e.sender !== "user" && e.sender !== "system");
-        if (agentEntries.length > 0) {
-          if (soundEnabled) playNotificationSound();
-          if (ttsEnabled) speakEntry(agentEntries[agentEntries.length - 1]);
-        }
-      }
+      if (!sessionActive) setStatus("archived session is read-only");
+      updateAttachedFilesPanel(displayEntries);
+    };
+    const render = (data, { forceScroll = false } = {}) => {
+      const shouldStick = forceScroll || _stickyToBottom;
+      const displayEntries = data.entries.slice(-__MESSAGE_LIMIT__);
+
+      updateSessionUI(data, displayEntries);
+
+      const lastMsgId = displayEntries.at(-1)?.msg_id ?? "";
+      if (!forceScroll && lastMsgId === lastMessagesSig) return;
+      lastMessagesSig = lastMsgId;
+
+      notifyNewMessages(displayEntries);
       lastNotifiedMsgId = displayEntries.at(-1)?.msg_id || lastNotifiedMsgId;
       initialLoadDone = true;
-      updateAttachedFilesPanel(data.entries);
+
       const root = document.getElementById("messages");
       if (!displayEntries.length) {
         _renderedIds.clear();
@@ -5379,108 +5426,37 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         updateScrollBtn();
         return;
       }
-      const firstTimestamp = displayEntries[0]?.timestamp || "";
-      const copyIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-      const checkIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
-      const replyIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>`;
-      const replyUpIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><polyline points="7 10 12 5 17 10"/></svg>`;
-      const replyDownIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><polyline points="7 14 12 19 17 14"/></svg>`;
-      const replyChildrenMap = new Map();
-      displayEntries.forEach((entry) => {
-        const parentId = (entry.reply_to || "").trim();
-        const childId = (entry.msg_id || "").trim();
-        if (!parentId || !childId || replyChildrenMap.has(parentId)) return;
-        replyChildrenMap.set(parentId, childId);
-      });
-      const buildMsgHTML = (entry, replyPreviewHTML) => {
-        if (entry.sender === "system") {
-          const systemMessage = escapeHtml(entry.message || "");
-          const systemTitle = systemMessage.replaceAll('"', "&quot;");
-          return `<div class="sysmsg-row" data-msgid="${escapeHtml(entry.msg_id || "")}" data-sender="system" data-kind="${escapeHtml(entry.kind || "")}"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
-        }
-        const cls = roleClass(entry.sender);
-        const targetSpans = (entry.targets?.length > 0
-          ? entry.targets.map(t => metaAgentLabel(t, "target-name", "right"))
-          : [metaAgentLabel("no target", "target-name", "right")]).join(`<span class="meta-agent-sep">,</span>`);
-        const body = stripSenderPrefix(entry.message || "");
-        const rawAttr = escapeHtml(body).replaceAll('"', "&quot;");
-        const previewAttr = escapeHtml(body.slice(0, 80)).replaceAll('"', "&quot;");
-        const msgId = escapeHtml(entry.msg_id || "");
-        const replyToAttr = entry.reply_to ? escapeHtml(entry.reply_to).replaceAll('"', "&quot;") : "";
-        const targetMeta = `<span class="targets">${targetSpans}</span>`;
-        const replySourceJumpHtml = replyToAttr
-          ? `<button class="reply-jump-inline reply-target-jump-btn" type="button" title="返信元へ移動" data-replyto="${replyToAttr}">${replyUpIcon}</button>`
-          : "";
-        const userTargetMeta = `<span class="targets">${targetSpans}</span>`;
-        const sender = escapeHtml(entry.sender || "unknown");
-        const isActive = pendingReplyTo?.msgId === entry.msg_id;
-        const timestamp = escapeHtml(entry.timestamp || "");
-        const isUser = cls === "user";
-        const userTimestampHtml = timestamp ? `<time>${timestamp}</time>` : "";
-        const copyButtonHtml = `<button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
-        const firstReplyId = msgId ? replyChildrenMap.get(entry.msg_id || "") || "" : "";
-        const replyTargetJumpHtml = firstReplyId
-          ? `<button class="reply-target-jump-btn" type="button" title="返信先へ移動" data-replytarget="${escapeHtml(firstReplyId).replaceAll('"', "&quot;")}">${replyDownIcon}</button>`
-          : "";
-        const senderHtml = metaAgentLabel(entry.sender || "unknown", "sender-label", "right");
 
-        return `<article class="message-row ${cls}" data-msgid="${msgId}" data-sender="${sender}">
-          <div class="message-wrap" data-raw="${rawAttr}" data-preview="${previewAttr}">
-          <div class="message ${cls}">
-          ${replyPreviewHTML}
-          ${isUser ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${userTargetMeta}${userTimestampHtml}${replyTargetJumpHtml}${copyButtonHtml}</div>` : `<div class="message-meta-below">${senderHtml}<span class="arrow">to</span>${targetMeta}${replySourceJumpHtml}${msgId ? `<button class="reply-btn${isActive ? ' active' : ''}" type="button" title="返信" data-msgid="${msgId}" data-sender="${sender}" data-preview="${previewAttr}">${replyIcon}</button>` : ""}${copyButtonHtml}${replyTargetJumpHtml}</div>`}
-          <div class="message-body-row">
-            <div class="md-body">${renderMarkdown(body)}</div>
-            ${isUser ? `<button class="user-collapse-toggle" type="button" hidden>More</button>` : ""}
-          </div>
-          ${isUser ? `<div class="user-message-divider" aria-hidden="true"></div>` : ``}
-          </div>
-          </div>
-        </article>`;
-      };
-      // Incremental rendering: only append new messages to avoid re-animating existing ones
+      const replyChildren = buildReplyChildrenMap(displayEntries);
       const displayIdSet = new Set(displayEntries.map(e => e.msg_id));
-      const newEntriesToRender = displayEntries.filter(e => !_renderedIds.has(e.msg_id));
+      const newEntries = displayEntries.filter(e => !_renderedIds.has(e.msg_id));
       const hasRemovals = _renderedIds.size > 0 && [..._renderedIds].some(id => !displayIdSet.has(id));
-      const hasNewMessages = newEntriesToRender.length > 0;
-      if (!hasRemovals && _renderedIds.size > 0 && hasNewMessages) {
-        // Append only new messages and animate them
+
+      if (!hasRemovals && _renderedIds.size > 0 && newEntries.length > 0) {
         const frag = document.createDocumentFragment();
-        const appendedRows = [];
-        for (const entry of newEntriesToRender) {
+        for (const entry of newEntries) {
           const tmpl = document.createElement("template");
-          tmpl.innerHTML = buildMsgHTML(entry, "");
+          tmpl.innerHTML = buildMsgHTML(entry, replyChildren);
           const row = tmpl.content.firstElementChild;
           if (row) row.classList.add("animate-in");
-          if (row) appendedRows.push(row);
           frag.appendChild(tmpl.content);
           _renderedIds.add(entry.msg_id);
         }
         root.appendChild(frag);
-        appendedRows.forEach((row) => {
-          renderMathInScope(row);
-          renderMermaidInScope(row);
-          scheduleViewportCenteredBlocks(row);
-          syncUserMessageCollapse(row);
-        });
-        queueStableCodeBlockSync(root);
+        postRenderScope(root);
       } else {
-        // Full re-render: do not animate existing messages
+        const firstTimestamp = displayEntries[0]?.timestamp || "";
         root.innerHTML = `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` + displayEntries.map(entry =>
-          buildMsgHTML(entry, "")
+          buildMsgHTML(entry, replyChildren)
         ).join("");
         _renderedIds = new Set(displayEntries.map(e => e.msg_id));
-        renderMathInScope(root);
-        renderMermaidInScope(root);
-        scheduleViewportCenteredBlocks(root);
-        syncUserMessageCollapse(root);
-        queueStableCodeBlockSync(root);
+        postRenderScope(root);
       }
+
+      queueStableCodeBlockSync(root);
       renderThinkingIndicator();
       applyFilter();
-      if (hasNewMessages || shouldStickToBottom) {
-        scrollLatestMessageBottomToCenter("smooth");
-      }
+      if (forceScroll) { timeline.scrollTop = timeline.scrollHeight; }
       updateScrollBtn();
       requestCenteredMessageRowUpdate();
       if (typeof updateSendBtnVisibility === "function") updateSendBtnVisibility();
@@ -5764,7 +5740,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             await new Promise((r) => setTimeout(r, 600));
           }
           await logSystem(`Send Brief(${selected}) → ${targets.join(",")}`);
-          await refresh({ forceScroll: true });
+          await refresh();
           setStatus(`brief ${selected} sent`);
           setTimeout(() => setStatus(""), 2000);
         } catch (err) {
@@ -5967,7 +5943,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           autoResizeTextarea();
           if (_isMobile && !shortcutMeta?.keepComposerOpen) message.blur();
           if (!shortcutMeta?.keepComposerOpen) closeComposerOverlay();
-          scrollConversationToBottom("auto");
+          _stickyToBottom = true;
         }
         if (!isShortcut) setReplyTo(null, "", "");
         setStatus(
@@ -5981,7 +5957,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           await logSystem("Save Log");
           setTimeout(() => setStatus(""), 2000);
         }
-        await refresh({ forceScroll: true });
+        await refresh();
         return true;
       } catch (error) {
         setStatus(error.message, true);
@@ -6113,6 +6089,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       envBadge.textContent = isLocalHubHostname() ? "Local" : "Public";
     }
     let attachedFilesSession = "";
+    let attachedFilesPanelRenderSig = "";
+    let attachedFilesPanelUpdateSeq = 0;
     let gitBranchLoadedFor = "";
     const renderGitCommitDiffInto = async (wrapEl, hash) => {
       const loadingEl = document.createElement("div");
@@ -6521,6 +6499,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     const updateAttachedFilesPanel = async (entries) => {
       if (!attachedFilesPanel) return;
+      const updateSeq = ++attachedFilesPanelUpdateSeq;
       document.querySelectorAll(".hub-page-menu-btn .attached-files-badge").forEach((node) => {
         if (node.parentElement !== attachedFilesMenuBtn) node.remove();
       });
@@ -6551,6 +6530,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           }
         } catch (_) {}
       }
+      if (updateSeq !== attachedFilesPanelUpdateSeq) return;
+      const nextRenderSig = JSON.stringify({
+        session: attachedFilesSession || currentSessionName || "",
+        files: files.map((item) => [item.path, item.msgId || ""]),
+      });
       let badge = attachedFilesMenuBtn?.querySelector(".attached-files-badge");
       if (attachedFilesMenuBtn) {
         if (files.length > 0) {
@@ -6565,6 +6549,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           badge.hidden = true;
         }
       }
+      if (nextRenderSig === attachedFilesPanelRenderSig) return;
+      attachedFilesPanelRenderSig = nextRenderSig;
       attachedFilesPanel.innerHTML = "";
       if (!files.length) {
         const empty = document.createElement("div");
@@ -8432,7 +8418,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           await new Promise(r => setTimeout(r, 600));
         }
         await logSystem(`Save Memory → ${targets.join(",")}`);
-        await refresh({ forceScroll: true });
+        await refresh();
         setStatus("memory instruction sent");
         setTimeout(() => setStatus(""), 3000);
       } catch (_) {
@@ -8470,7 +8456,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           await new Promise(r => setTimeout(r, 600));
         }
         await logSystem(`Load Memory → ${targets.join(",")}`);
-        await refresh({ forceScroll: true });
+        await refresh();
         setStatus("memory sent to agent");
         setTimeout(() => setStatus(""), 3000);
       } catch (_) {
@@ -8767,12 +8753,20 @@ def render_pane_trace_popup_html(*, agent: str, agents: list[str] | None = None,
       z-index: 10;
       display: flex;
       align-items: flex-end;
+      --pane-trace-tab-overlap: 1px;
+      --pane-trace-tab-strip-bg: rgb(10,10,10);
       gap: 2px;
       padding: 0 8px;
-      height: 34px;
-      background: rgb(10,10,10);
+      height: 35px;
+      margin-bottom: calc(-1 * var(--pane-trace-tab-overlap));
+      background: linear-gradient(
+        to bottom,
+        var(--pane-trace-tab-strip-bg) 0 calc(100% - var(--pane-trace-tab-overlap)),
+        transparent calc(100% - var(--pane-trace-tab-overlap))
+      );
       flex: 0 0 auto;
       overflow-x: auto;
+      overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
       -webkit-app-region: drag;
     }}
@@ -8782,7 +8776,7 @@ def render_pane_trace_popup_html(*, agent: str, agents: list[str] | None = None,
       display: flex;
       align-items: center;
       padding: 0 16px;
-      height: 32px;
+      height: 34px;
       box-sizing: border-box;
       font: 500 12px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
       color: rgba(255,255,255,0.5);
@@ -8794,7 +8788,7 @@ def render_pane_trace_popup_html(*, agent: str, agents: list[str] | None = None,
       transition: all 0.2s ease;
       min-width: 0;
       max-width: 200px;
-      overflow: hidden;
+      overflow: visible;
       text-overflow: ellipsis;
       -webkit-app-region: no-drag;
     }}
@@ -8806,6 +8800,27 @@ def render_pane_trace_popup_html(*, agent: str, agents: list[str] | None = None,
       color: #fff;
       background: {bg_effective};
       box-shadow: none;
+      z-index: 2;
+      margin-bottom: calc(-1 * var(--pane-trace-tab-overlap));
+      border-radius: 10px 10px 0 0;
+      overflow: visible;
+    }}
+    .pane-trace-tab.active::before,
+    .pane-trace-tab.active::after {{
+      content: "";
+      position: absolute;
+      bottom: 0;
+      width: 10px;
+      height: 10px;
+      pointer-events: none;
+    }}
+    .pane-trace-tab.active::before {{
+      left: -10px;
+      background: radial-gradient(circle at 0 0, transparent 10px, {bg_effective} 10px);
+    }}
+    .pane-trace-tab.active::after {{
+      right: -10px;
+      background: radial-gradient(circle at 100% 0, transparent 10px, {bg_effective} 10px);
     }}
     .pane-trace-tab-label {{
       display: inline-flex;

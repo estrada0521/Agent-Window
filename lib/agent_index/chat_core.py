@@ -83,7 +83,7 @@ class ChatRuntime:
             self.ensure_caffeinate_active()
 
     def load_chat_settings(self):
-        cap = self.limit if self.limit > 0 else 500
+        cap = self.limit if self.limit > 0 else 2000
         return load_shared_hub_settings(self.repo_root, message_limit_cap=cap)
 
     @staticmethod
