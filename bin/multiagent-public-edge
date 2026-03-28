@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import json
 import ssl
 import subprocess
 import sys
+import time
+from http.client import RemoteDisconnected
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -25,6 +28,13 @@ ensure_chat_server = hub.ensure_chat_server
 repo_sessions = hub.repo_sessions
 revive_archived_session = hub.revive_archived_session
 host_without_port = hub.host_without_port
+
+SESSION_GET_RETRY_WINDOW = 3.0
+SESSION_GET_RETRY_DELAY = 0.15
+SESSION_RESTART_WAIT_WINDOW = 5.0
+SESSION_STATE_TIMEOUT = 1.2
+UPSTREAM_TIMEOUT = 30.0
+TRANSIENT_UPSTREAM_ERRORS = (URLError, OSError, TimeoutError, RemoteDisconnected)
 
 
 def external_session_url(host_header: str, session_name: str, path: str) -> str:
@@ -52,7 +62,15 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self._safe_write(body)
 
-    def _proxy(self, method: str, upstream: str, *, forwarded_prefix: str = ""):
+    def _send_bad_gateway(self, exc: Exception):
+        body = f"Bad gateway: {exc}".encode("utf-8")
+        self.send_response(502)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self._safe_write(body)
+
+    def _read_request_body(self, method: str) -> bytes | None:
         body = None
         if method == "POST":
             try:
@@ -60,8 +78,11 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError:
                 length = 0
             body = self.rfile.read(length)
+        return body
+
+    def _forward_headers(self, *, forwarded_prefix: str = "", host_override: str = "") -> dict[str, str]:
         headers = {}
-        external_host = self.headers.get("Host", "")
+        external_host = host_override or self.headers.get("Host", "")
         for key, value in self.headers.items():
             key_lc = key.lower()
             if key_lc in {"host", "content-length", "connection", "accept-encoding"}:
@@ -73,10 +94,13 @@ class Handler(BaseHTTPRequestHandler):
             headers["X-Forwarded-Prefix"] = forwarded_prefix
             headers["X-Forwarded-Public-Host"] = external_host
             headers["X-Forwarded-Public-Proto"] = "https"
+        return headers
+
+    def _request_upstream(self, method: str, upstream: str, *, body: bytes | None = None, headers: dict[str, str] | None = None, timeout: float = UPSTREAM_TIMEOUT) -> dict:
         req = Request(upstream, data=body, method=method, headers=headers)
         ctx = ssl._create_unverified_context()
         try:
-            resp = urlopen(req, context=ctx, timeout=30)
+            resp = urlopen(req, context=ctx, timeout=timeout)
             resp_body = resp.read()
             status = resp.status
             resp_headers = resp.headers
@@ -84,15 +108,12 @@ class Handler(BaseHTTPRequestHandler):
             resp_body = exc.read()
             status = exc.code
             resp_headers = exc.headers
-        except URLError as exc:
-            msg = f"Bad gateway: {exc}"
-            body = msg.encode("utf-8")
-            self.send_response(502)
-            self.send_header("Content-Type", "text/plain; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self._safe_write(body)
-            return
+        return {"status": status, "headers": resp_headers, "body": resp_body}
+
+    def _relay_upstream(self, response: dict):
+        status = int(response.get("status", 502))
+        resp_headers = response.get("headers") or {}
+        resp_body = response.get("body") or b""
         self.send_response(status)
         for key, value in resp_headers.items():
             key_lc = key.lower()
@@ -102,6 +123,47 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(resp_body)))
         self.end_headers()
         self._safe_write(resp_body)
+
+    def _proxy(self, method: str, upstream: str, *, forwarded_prefix: str = ""):
+        body = self._read_request_body(method)
+        headers = self._forward_headers(forwarded_prefix=forwarded_prefix)
+        try:
+            response = self._request_upstream(method, upstream, body=body, headers=headers)
+        except TRANSIENT_UPSTREAM_ERRORS as exc:
+            self._send_bad_gateway(exc)
+            return
+        self._relay_upstream(response)
+
+    def _read_chat_session_state(self, chat_port: int) -> dict | None:
+        upstream = f"https://127.0.0.1:{chat_port}/session-state?ts={int(time.time() * 1000)}"
+        headers = self._forward_headers(host_override=f"127.0.0.1:{chat_port}")
+        try:
+            response = self._request_upstream("GET", upstream, headers=headers, timeout=SESSION_STATE_TIMEOUT)
+        except TRANSIENT_UPSTREAM_ERRORS:
+            return None
+        if int(response.get("status", 0)) != 200:
+            return None
+        try:
+            return json.loads((response.get("body") or b"{}").decode("utf-8", errors="replace"))
+        except Exception:
+            return None
+
+    def _wait_for_chat_restart(self, session_name: str, previous_instance: str = ""):
+        deadline = time.time() + SESSION_RESTART_WAIT_WINDOW
+        saw_disconnect = False
+        while time.time() < deadline:
+            ok, chat_port, _detail = ensure_chat_server(session_name)
+            if ok:
+                payload = self._read_chat_session_state(chat_port)
+                instance = str((payload or {}).get("server_instance") or "")
+                if not previous_instance or (instance and instance != previous_instance) or saw_disconnect:
+                    return True
+            else:
+                payload = None
+            if not payload:
+                saw_disconnect = True
+            time.sleep(SESSION_GET_RETRY_DELAY)
+        return False
 
     def _proxy_hub(self, method: str):
         parsed = urlparse(self.path)
@@ -128,19 +190,42 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
             return
-        ok, chat_port, detail = ensure_chat_server(session_name)
-        if not ok:
-            body = f"Failed to start chat for {session_name}: {detail}".encode("utf-8")
-            self.send_response(500)
-            self.send_header("Content-Type", "text/plain; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self._safe_write(body)
+        body = self._read_request_body(method)
+        forwarded_prefix = f"/session/{session_name}"
+        headers = self._forward_headers(forwarded_prefix=forwarded_prefix)
+        previous_instance = ""
+        deadline = time.time() + SESSION_GET_RETRY_WINDOW if method == "GET" else time.time()
+        while True:
+            ok, chat_port, detail = ensure_chat_server(session_name)
+            if not ok:
+                body_bytes = f"Failed to start chat for {session_name}: {detail}".encode("utf-8")
+                self.send_response(500)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Length", str(len(body_bytes)))
+                self.end_headers()
+                self._safe_write(body_bytes)
+                return
+            if method == "POST" and suffix == "/new-chat" and not previous_instance:
+                payload = self._read_chat_session_state(chat_port)
+                previous_instance = str((payload or {}).get("server_instance") or "")
+            upstream = f"https://127.0.0.1:{chat_port}{suffix}"
+            if parsed.query:
+                upstream += f"?{parsed.query}"
+            try:
+                response = self._request_upstream(method, upstream, body=body, headers=headers)
+            except TRANSIENT_UPSTREAM_ERRORS as exc:
+                if method == "GET" and time.time() < deadline:
+                    time.sleep(SESSION_GET_RETRY_DELAY)
+                    continue
+                self._send_bad_gateway(exc)
+                return
+            if method == "GET" and int(response.get("status", 0)) in {502, 503, 504} and time.time() < deadline:
+                time.sleep(SESSION_GET_RETRY_DELAY)
+                continue
+            if method == "POST" and suffix == "/new-chat" and 200 <= int(response.get("status", 0)) < 300:
+                self._wait_for_chat_restart(session_name, previous_instance)
+            self._relay_upstream(response)
             return
-        upstream = f"https://127.0.0.1:{chat_port}{suffix}"
-        if parsed.query:
-            upstream += f"?{parsed.query}"
-        self._proxy(method, upstream, forwarded_prefix=f"/session/{session_name}")
 
     def _handle_open_session(self):
         parsed = urlparse(self.path)

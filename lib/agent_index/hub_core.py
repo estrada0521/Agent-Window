@@ -700,7 +700,7 @@ class HubRuntime:
         chat_port = self.chat_port_for_session(session_name)
         try:
             result = subprocess.run(
-                ["lsof", "-ti", f":{chat_port}"],
+                ["lsof", "-nP", "-tiTCP", f":{chat_port}", "-sTCP:LISTEN"],
                 capture_output=True,
                 text=True,
                 timeout=1,
