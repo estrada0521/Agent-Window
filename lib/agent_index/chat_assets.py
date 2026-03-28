@@ -3252,6 +3252,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       transition: opacity 0.15s, background 0.15s;
     }
     .md-body .code-block-wrap:hover .code-copy-btn { opacity: 1; }
+    @media (pointer: coarse) { .md-body .code-block-wrap .code-copy-btn { opacity: 0.6; } }
     .md-body .code-block-wrap .code-copy-btn:hover { background: var(--bg-hover); color: var(--text); }
     .md-body .code-block-wrap .code-copy-btn svg { width: 15px; height: 15px; }
     .md-body pre code {
@@ -8236,18 +8237,28 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const hit = allowed.find((t) => t === base || agentBaseName(t) === base);
       return hit || null;
     };
+    let _paneTracePopup = null;
     const openDesktopPaneTracePopup = (rawAgent) => {
       const agent = resolvePaneFocusAgent(rawAgent);
       if (!agent) return;
+      const agents = availableTargets.filter(t => t !== "others");
       const rootStyles = getComputedStyle(document.documentElement);
       const params = new URLSearchParams({
         agent,
+        agents: agents.join(","),
         bg: (rootStyles.getPropertyValue("--bg") || "").trim(),
         text: (rootStyles.getPropertyValue("--text") || "").trim(),
       });
-      const popupName = `multiagent-pane-trace-${agent}`;
-      const popup = window.open(`/pane-trace-popup?${params.toString()}`, popupName, "popup=yes,width=660,height=720,resizable=yes,scrollbars=yes");
-      try { popup?.focus?.(); } catch (_) {}
+      const popupName = "multiagent-pane-trace";
+      if (_paneTracePopup && !_paneTracePopup.closed) {
+        try {
+          _paneTracePopup.postMessage({ type: "switchAgent", agent }, "*");
+          _paneTracePopup.focus();
+        } catch (_) {}
+        return;
+      }
+      _paneTracePopup = window.open(`/pane-trace-popup?${params.toString()}`, popupName, "popup=yes,width=660,height=720,resizable=yes,scrollbars=yes");
+      try { _paneTracePopup?.focus?.(); } catch (_) {}
     };
     const showPaneTraceViewer = (focusAgent) => {
       if (!paneViewerEl) return;
@@ -8687,12 +8698,15 @@ def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port
     )
 
 
-def render_pane_trace_popup_html(*, agent: str, bg: str, text: str, chat_base_path: str = "") -> str:
+def render_pane_trace_popup_html(*, agent: str, agents: list[str] | None = None, bg: str, text: str, chat_base_path: str = "") -> str:
     base_path = chat_base_path.rstrip("/")
     ansi_src = f"{base_path}/font/jetbrains-mono.ttf" if base_path else "/font/jetbrains-mono.ttf"
     bg_value = (bg or "").strip() or "rgb(10, 10, 10)"
     text_value = (text or "").strip() or "rgb(252, 252, 252)"
-    agent_json = json.dumps(str(agent or ""), ensure_ascii=True)
+    all_agents = agents or ([agent] if agent else [])
+    initial_agent = agent or (all_agents[0] if all_agents else "")
+    agents_json = json.dumps(all_agents, ensure_ascii=True)
+    initial_agent_json = json.dumps(initial_agent, ensure_ascii=True)
     bg_json = json.dumps(bg_value, ensure_ascii=True)
     text_json = json.dumps(text_value, ensure_ascii=True)
     trace_path_prefix = base_path or ""
@@ -8702,7 +8716,7 @@ def render_pane_trace_popup_html(*, agent: str, bg: str, text: str, chat_base_pa
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="{bg_value}">
-  <title>{agent} Pane Trace</title>
+  <title>Pane Trace</title>
   <script src="https://cdn.jsdelivr.net/npm/ansi_up@5.1.0/ansi_up.min.js"></script>
   <style>
     @font-face {{
@@ -8731,14 +8745,97 @@ def render_pane_trace_popup_html(*, agent: str, bg: str, text: str, chat_base_pa
       display: flex;
       flex-direction: column;
     }}
-    .pane-trace-head {{
-      padding: 10px 14px;
-      border-bottom: 0.5px solid rgba(255,255,255,0.1);
-      font: 600 12px/1.4 "anthropicSans", "SF Pro Text", sans-serif;
-      letter-spacing: 0.04em;
-      color: rgba(255,255,255,0.74);
-      background: rgba(0,0,0,0.18);
+    .pane-trace-tabs {{
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      padding: 0 8px;
+      height: 34px;
+      background: rgba(0,0,0,0.4);
       flex: 0 0 auto;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      -webkit-app-region: drag;
+    }}
+    .pane-trace-tabs::-webkit-scrollbar {{ display: none; }}
+    .pane-trace-tab {{
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      height: 32px;
+      box-sizing: border-box;
+      font: 500 12px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+      color: rgba(255,255,255,0.5);
+      background: transparent;
+      border: none;
+      border-radius: 10px 10px 0 0;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      min-width: 0;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      -webkit-app-region: no-drag;
+    }}
+    .pane-trace-tab:hover {{
+      color: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.1);
+    }}
+    .pane-trace-tab.active {{
+      color: #fff;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.12), rgba(255,255,255,0)), var(--popup-bg);
+      box-shadow: none;
+    }}
+    .pane-trace-tab-spacer {{ flex: 1 1 auto; }}
+    .pane-trace-split-btn {{
+      padding: 4px 8px;
+      margin: 0 4px;
+      align-self: center;
+      font: 500 11px/1 -apple-system, BlinkMacSystemFont, sans-serif;
+      color: rgba(255,255,255,0.4);
+      background: none;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s;
+    }}
+    .pane-trace-split-btn:hover {{ color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }}
+    .pane-trace-split-btn.active {{ color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.5); }}
+    .pane-trace-content {{
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: row;
+    }}
+    .pane-trace-pane {{
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }}
+    .pane-trace-pane + .pane-trace-pane {{
+      border-left: 0.5px solid rgba(255,255,255,0.1);
+    }}
+    .pane-trace-pane-head {{
+      padding: 4px 12px;
+      font: 600 10px/1.4 -apple-system, BlinkMacSystemFont, sans-serif;
+      color: rgba(255,255,255,0.5);
+      background: rgba(0,0,0,0.12);
+      border-bottom: 0.5px solid rgba(255,255,255,0.06);
+      display: none;
+    }}
+    .split .pane-trace-pane-head {{ display: none; }}
+    .pane-trace-pane-head select {{
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.8);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px;
+      font: 500 10px/1.4 -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 2px 4px;
+      cursor: pointer;
     }}
     .pane-trace-body {{
       flex: 1 1 auto;
@@ -8759,22 +8856,58 @@ def render_pane_trace_popup_html(*, agent: str, bg: str, text: str, chat_base_pa
   </style>
 </head>
 <body>
-  <div class="pane-trace-head" id="paneTracePopupTitle"></div>
-  <div class="pane-trace-body" id="paneTracePopupBody">Loading...</div>
+  <div class="pane-trace-tabs" id="paneTraceTabs"></div>
+  <div class="pane-trace-content" id="paneTraceContent">
+    <div class="pane-trace-pane" id="paneLeft">
+      <div class="pane-trace-pane-head" id="paneLeftHead"></div>
+      <div class="pane-trace-body" id="paneLeftBody">Loading...</div>
+    </div>
+  </div>
   <script>
-    const agent = {agent_json};
+    const agents = {agents_json};
+    let activeAgent = {initial_agent_json};
+    let splitMode = false;
+    let rightAgent = null;
+    let rightInterval = null;
     const bg = {bg_json};
     const text = {text_json};
     document.documentElement.style.setProperty("--popup-bg", bg);
     document.documentElement.style.setProperty("--popup-text", text);
-    document.title = `${{agent}} Pane Trace`;
-    document.getElementById("paneTracePopupTitle").textContent = `${{agent}} Pane Trace`;
+
+    const tabsEl = document.getElementById("paneTraceTabs");
+    const contentEl = document.getElementById("paneTraceContent");
+    const leftBody = document.getElementById("paneLeftBody");
+    const leftHead = document.getElementById("paneLeftHead");
+
+    contentEl.addEventListener("dragover", e => e.preventDefault());
+    contentEl.addEventListener("drop", e => {{
+      e.preventDefault();
+      const agent = e.dataTransfer.getData("text/plain");
+      if (!agent || !agents.includes(agent)) return;
+      const rect = contentEl.getBoundingClientRect();
+      const isRight = (e.clientX - rect.left) > (rect.width / 2);
+      if (!splitMode && isRight) {{
+        toggleSplit();
+        rightAgent = agent;
+        const rb = document.getElementById("paneRightBody");
+        if (rb) {{ rb.innerHTML = "Loading..."; fetchTo(rightAgent, rb, true); }}
+        updateSplitHeads();
+      }} else if (splitMode && isRight) {{
+        rightAgent = agent;
+        const rb = document.getElementById("paneRightBody");
+        if (rb) {{ rb.innerHTML = "Loading..."; fetchTo(rightAgent, rb, true); }}
+        updateSplitHeads();
+      }} else {{
+        switchAgent(agent);
+      }}
+    }});
+
     let ansiUp = null;
     const stripAnsi = (value) => String(value ?? "")
       .replace(/\\u001b\\[[0-?]*[ -/]*[@-~]/g, "")
       .replace(/\\u001b\\][^\\u0007]*\\u0007/g, "");
     const traceHtml = (raw) => {{
-      const text = String(raw ?? "No output");
+      const txt = String(raw ?? "No output");
       if (!ansiUp) {{
         try {{
           if (typeof AnsiUp === "function") ansiUp = new AnsiUp();
@@ -8784,17 +8917,17 @@ def render_pane_trace_popup_html(*, agent: str, bg: str, text: str, chat_base_pa
       }}
       if (ansiUp) {{
         try {{
-          return ansiUp.ansi_to_html(text);
+          return ansiUp.ansi_to_html(txt);
         }} catch (_) {{}}
       }}
-      const plain = stripAnsi(text)
+      const plain = stripAnsi(txt)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
       return plain.replace(/\\n/g, "<br>");
     }};
-    const bodyEl = document.getElementById("paneTracePopupBody");
-    const fetchTrace = async (scrollToBottom = false) => {{
+
+    const fetchTo = async (agent, bodyEl, scrollToBottom = false) => {{
       try {{
         const res = await fetch(`{trace_path_prefix}/trace?agent=${{encodeURIComponent(agent)}}&lines=192&ts=${{Date.now()}}`);
         if (!res.ok) return;
@@ -8803,9 +8936,90 @@ def render_pane_trace_popup_html(*, agent: str, bg: str, text: str, chat_base_pa
         if (scrollToBottom) bodyEl.scrollTop = bodyEl.scrollHeight;
       }} catch (_) {{}}
     }};
-    fetchTrace(true);
+
+    const buildTabs = () => {{
+      const splitBtn = `<span class="pane-trace-tab-spacer"></span><button class="pane-trace-split-btn${{splitMode ? " active" : ""}}" id="splitBtn" title="Split View">Split</button>`;
+      tabsEl.innerHTML = agents.map(a =>
+        `<button class="pane-trace-tab${{a === activeAgent ? " active" : ""}}" data-agent="${{a}}" draggable="true">${{a}}</button>`
+      ).join("") + splitBtn;
+      tabsEl.querySelectorAll(".pane-trace-tab").forEach(tab => {{
+        tab.addEventListener("click", () => switchAgent(tab.dataset.agent));
+        tab.addEventListener("dragstart", (e) => {{
+          e.dataTransfer.setData("text/plain", tab.dataset.agent);
+          e.dataTransfer.effectAllowed = "copyMove";
+        }});
+      }});
+      document.getElementById("splitBtn").addEventListener("click", toggleSplit);
+    }};
+
+    const switchAgent = (agent) => {{
+      if (!agents.includes(agent)) return;
+      activeAgent = agent;
+      document.title = splitMode ? "Pane Trace (Split)" : `${{agent}} Pane Trace`;
+      tabsEl.querySelectorAll(".pane-trace-tab").forEach(t =>
+        t.classList.toggle("active", t.dataset.agent === agent)
+      );
+      if (splitMode) updateSplitHeads();
+      leftBody.innerHTML = "Loading...";
+      fetchTo(activeAgent, leftBody, true);
+    }};
+
+    const buildSelect = (selected, onChange) => {{
+      const sel = document.createElement("select");
+      agents.forEach(a => {{
+        const opt = document.createElement("option");
+        opt.value = a;
+        opt.textContent = a;
+        if (a === selected) opt.selected = true;
+        sel.appendChild(opt);
+      }});
+      sel.addEventListener("change", () => onChange(sel.value));
+      return sel;
+    }};
+
+    const updateSplitHeads = () => {{
+      // Heads with selects are removed as requested. Drag-and-drop handles split switching.
+    }};
+
+    const toggleSplit = () => {{
+      splitMode = !splitMode;
+      const existing = document.getElementById("paneRight");
+      if (splitMode) {{
+        contentEl.classList.add("split");
+        rightAgent = agents.find(a => a !== activeAgent) || agents[0];
+        const pane = document.createElement("div");
+        pane.className = "pane-trace-pane";
+        pane.id = "paneRight";
+        pane.innerHTML = `<div class="pane-trace-pane-head" id="paneRightHead"></div><div class="pane-trace-body" id="paneRightBody">Loading...</div>`;
+        contentEl.appendChild(pane);
+        updateSplitHeads();
+        document.title = "Pane Trace (Split)";
+        fetchTo(rightAgent, document.getElementById("paneRightBody"), true);
+        rightInterval = setInterval(() => {{
+          const rb = document.getElementById("paneRightBody");
+          if (rb && rightAgent) fetchTo(rightAgent, rb, false);
+        }}, pollMs);
+      }} else {{
+        contentEl.classList.remove("split");
+        if (existing) existing.remove();
+        if (rightInterval) {{ clearInterval(rightInterval); rightInterval = null; }}
+        leftHead.innerHTML = "";
+        document.title = `${{activeAgent}} Pane Trace`;
+      }}
+      buildTabs();
+    }};
+
+    window.addEventListener("message", (e) => {{
+      if (e.data && e.data.type === "switchAgent" && e.data.agent) {{
+        switchAgent(e.data.agent);
+      }}
+    }});
+
+    buildTabs();
+    document.title = `${{activeAgent}} Pane Trace`;
+    fetchTo(activeAgent, leftBody, true);
     const pollMs = (location.hostname === "127.0.0.1" || location.hostname === "localhost") ? 100 : 1500;
-    setInterval(() => fetchTrace(false), pollMs);
+    setInterval(() => fetchTo(activeAgent, leftBody, false), pollMs);
   </script>
 </body>
 </html>"""

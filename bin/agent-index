@@ -3520,8 +3520,8 @@ def hub_settings_html(saved=False):
       <input type="hidden" name="agent_font_mode" value="{font_mode}">
       <div class="field">
         <label class="label" for="message_limit">Default Message Count</label>
-        <input id="message_limit" name="message_limit" type="number" min="10" max="500" step="10" value="{message_limit}">
-        <div class="hint">Single display default for chat reopen. Current practical ceiling is 500.</div>
+        <input id="message_limit" name="message_limit" type="number" min="10" max="2000" step="10" value="{message_limit}">
+        <div class="hint">Single display default for chat reopen. Current practical ceiling is 2000.</div>
       </div>
       <div class="field">
         <div class="label">Chat Defaults</div>
@@ -5352,9 +5352,11 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/pane-trace-popup":
             qs = parse_qs(parsed.query)
             agent = (qs.get("agent", [""])[0] or "").strip()
+            agents_str = (qs.get("agents", [""])[0] or "").strip()
+            agents = [a.strip() for a in agents_str.split(",") if a.strip()] if agents_str else [agent] if agent else []
             bg = (qs.get("bg", [""])[0] or "").strip()
             text = (qs.get("text", [""])[0] or "").strip()
-            body = render_pane_trace_popup_html(agent=agent, bg=bg, text=text).encode("utf-8")
+            body = render_pane_trace_popup_html(agent=agent, agents=agents, bg=bg, text=text).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Cache-Control", "no-store")
