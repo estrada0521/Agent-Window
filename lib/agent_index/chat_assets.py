@@ -3228,6 +3228,31 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       box-shadow: none;
       -webkit-overflow-scrolling: touch;
     }
+    .md-body .code-block-wrap {
+      position: relative;
+    }
+    .md-body .code-block-wrap .code-copy-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      z-index: 1;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--meta);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s, background 0.15s;
+    }
+    .md-body .code-block-wrap:hover .code-copy-btn { opacity: 1; }
+    .md-body .code-block-wrap .code-copy-btn:hover { background: var(--bg-hover); color: var(--text); }
+    .md-body .code-block-wrap .code-copy-btn svg { width: 15px; height: 15px; }
     .md-body pre code {
       font-family: "jetbrainsMono", "JetBrains Mono", monospace !important;
       font-style: normal;
@@ -4038,6 +4063,16 @@ __AGENT_FONT_MODE_INLINE_STYLE__
               if (line.startsWith("-")) return `<span class="diff-del"><span class="diff-sign">-</span>${escapeHtml(line.slice(1))}</span>`;
               return escapeHtml(line);
             }).join("\n");
+          });
+
+          // Inject copy button into each <pre> block
+          const copySvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+          tempDiv.querySelectorAll("pre").forEach(pre => {
+            const wrap = document.createElement("div");
+            wrap.className = "code-block-wrap";
+            pre.parentNode.insertBefore(wrap, pre);
+            wrap.appendChild(pre);
+            wrap.insertAdjacentHTML("beforeend", `<button class="code-copy-btn" title="Copy">${copySvg}</button>`);
           });
 
           return injectFileCards(tempDiv.innerHTML);
@@ -7946,6 +7981,20 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     document.addEventListener("touchstart", primeSoundOnGesture, { passive: true });
     document.addEventListener("click", primeSoundOnGesture);
     document.addEventListener("click", blurTouchControlAfterTap, true);
+    // Delegated handler for code block copy buttons
+    const codeCopySvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    const codeCheckSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".code-copy-btn");
+      if (!btn) return;
+      const wrap = btn.closest(".code-block-wrap");
+      if (!wrap) return;
+      const code = wrap.querySelector("code") || wrap.querySelector("pre");
+      navigator.clipboard.writeText(code.textContent).then(() => {
+        btn.innerHTML = codeCheckSvg;
+        setTimeout(() => { btn.innerHTML = codeCopySvg; }, 1500);
+      });
+    });
     /** Strip ANSI escapes (fallback when ansi_up is unavailable). */
     const stripAnsiForTrace = (value) => String(value ?? "")
       .replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "")
