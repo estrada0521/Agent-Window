@@ -2,15 +2,16 @@
 from __future__ import annotations
 
 import json
+import os
 import ssl
-import subprocess
 import sys
 import time
 from http.client import RemoteDisconnected
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from html import escape as html_escape
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote as url_quote, urlparse
+from urllib.parse import parse_qs, quote as url_quote, urlencode, urlparse
 from urllib.request import Request, urlopen
 
 repo_root = Path(sys.argv[1]).resolve()
@@ -21,20 +22,25 @@ tmux_socket = sys.argv[5] if len(sys.argv) > 5 else ""
 
 sys.path.insert(0, str(repo_root))
 sys.path.insert(0, str(repo_root / "lib"))
+from agent_index.file_core import FileRuntime
 from agent_index.hub_core import HubRuntime
 
 hub = HubRuntime(repo_root, script_path, tmux_socket)
 ensure_chat_server = hub.ensure_chat_server
-repo_sessions = hub.repo_sessions
 revive_archived_session = hub.revive_archived_session
 host_without_port = hub.host_without_port
 
 SESSION_GET_RETRY_WINDOW = 3.0
 SESSION_GET_RETRY_DELAY = 0.15
-SESSION_RESTART_WAIT_WINDOW = 5.0
+SESSION_POST_RETRY_WINDOW = 0.6
+SESSION_RESTART_WAIT_WINDOW = 2.5
 SESSION_STATE_TIMEOUT = 1.2
 UPSTREAM_TIMEOUT = 30.0
 TRANSIENT_UPSTREAM_ERRORS = (URLError, OSError, TimeoutError, RemoteDisconnected)
+STREAM_CHUNK_SIZE = 64 * 1024
+PUBLIC_INLINE_PREVIEW_MAX_BYTES = 512 * 1024
+PUBLIC_MESSAGE_LIMIT = 100
+PUBLIC_TEXT_PREVIEW_CHUNK_BYTES = 128 * 1024
 
 
 def external_session_url(host_header: str, session_name: str, path: str) -> str:
@@ -96,21 +102,27 @@ class Handler(BaseHTTPRequestHandler):
             headers["X-Forwarded-Public-Proto"] = "https"
         return headers
 
-    def _request_upstream(self, method: str, upstream: str, *, body: bytes | None = None, headers: dict[str, str] | None = None, timeout: float = UPSTREAM_TIMEOUT) -> dict:
+    def _open_upstream(self, method: str, upstream: str, *, body: bytes | None = None, headers: dict[str, str] | None = None, timeout: float = UPSTREAM_TIMEOUT):
         req = Request(upstream, data=body, method=method, headers=headers)
         ctx = ssl._create_unverified_context()
         try:
             resp = urlopen(req, context=ctx, timeout=timeout)
-            resp_body = resp.read()
-            status = resp.status
-            resp_headers = resp.headers
+            return int(getattr(resp, "status", 200) or 200), resp.headers, resp
         except HTTPError as exc:
-            resp_body = exc.read()
-            status = exc.code
-            resp_headers = exc.headers
+            return exc.code, exc.headers, exc
+
+    def _request_upstream(self, method: str, upstream: str, *, body: bytes | None = None, headers: dict[str, str] | None = None, timeout: float = UPSTREAM_TIMEOUT) -> dict:
+        status, resp_headers, resp = self._open_upstream(method, upstream, body=body, headers=headers, timeout=timeout)
+        try:
+            resp_body = resp.read()
+        finally:
+            try:
+                resp.close()
+            except Exception:
+                pass
         return {"status": status, "headers": resp_headers, "body": resp_body}
 
-    def _relay_upstream(self, response: dict):
+    def _relay_upstream(self, response: dict, *, extra_headers: dict[str, str] | None = None):
         status = int(response.get("status", 502))
         resp_headers = response.get("headers") or {}
         resp_body = response.get("body") or b""
@@ -120,19 +132,323 @@ class Handler(BaseHTTPRequestHandler):
             if key_lc in {"transfer-encoding", "connection", "content-length", "content-encoding"}:
                 continue
             self.send_header(key, value)
+        for key, value in (extra_headers or {}).items():
+            self.send_header(key, value)
         self.send_header("Content-Length", str(len(resp_body)))
         self.end_headers()
         self._safe_write(resp_body)
+
+    def _relay_upstream_stream(self, status: int, resp_headers, resp):
+        try:
+            self.send_response(status)
+            for key, value in resp_headers.items():
+                if key.lower() in {"transfer-encoding", "connection"}:
+                    continue
+                self.send_header(key, value)
+            self.end_headers()
+            while True:
+                chunk = resp.read(STREAM_CHUNK_SIZE)
+                if not chunk:
+                    break
+                if not self._safe_write(chunk):
+                    break
+        finally:
+            try:
+                resp.close()
+            except Exception:
+                pass
 
     def _proxy(self, method: str, upstream: str, *, forwarded_prefix: str = ""):
         body = self._read_request_body(method)
         headers = self._forward_headers(forwarded_prefix=forwarded_prefix)
         try:
-            response = self._request_upstream(method, upstream, body=body, headers=headers)
+            status, resp_headers, resp = self._open_upstream(method, upstream, body=body, headers=headers)
         except TRANSIENT_UPSTREAM_ERRORS as exc:
             self._send_bad_gateway(exc)
             return
-        self._relay_upstream(response)
+        self._relay_upstream_stream(status, resp_headers, resp)
+
+    def _active_session_record(self, session_name: str, *, revive: bool = True) -> dict | None:
+        record = hub.active_session_records().get(session_name)
+        if record is not None or not revive:
+            return record
+        ok, _detail = revive_archived_session(session_name)
+        if not ok:
+            return None
+        return hub.active_session_records().get(session_name)
+
+    def _session_file_runtime(self, session_name: str, record: dict | None = None) -> FileRuntime | None:
+        record = record or self._active_session_record(session_name)
+        if record is None:
+            return None
+        workspace = (record.get("workspace") or "").strip() or str(repo_root)
+        return FileRuntime(workspace=workspace)
+
+    @staticmethod
+    def _public_message_limit(query: str) -> int:
+        qs = parse_qs(query, keep_blank_values=True)
+        try:
+            requested = int((qs.get("limit", [""])[0] or "").strip())
+        except ValueError:
+            requested = PUBLIC_MESSAGE_LIMIT
+        if requested <= 0:
+            requested = PUBLIC_MESSAGE_LIMIT
+        return min(requested, PUBLIC_MESSAGE_LIMIT)
+
+    @staticmethod
+    def _with_query_limit(suffix: str, query: str, limit: int) -> str:
+        qs = parse_qs(query, keep_blank_values=True)
+        qs["limit"] = [str(limit)]
+        qs["light"] = ["1"]
+        next_query = urlencode(qs, doseq=True)
+        return suffix + (f"?{next_query}" if next_query else "")
+
+    def _relay_public_messages(self, response: dict, *, limit: int):
+        status = int(response.get("status", 502))
+        if status != 200:
+            self._relay_upstream(response)
+            return
+        try:
+            payload_body = json.loads((response.get("body") or b"{}").decode("utf-8", errors="replace"))
+        except Exception:
+            self._relay_upstream(response)
+            return
+        entries = payload_body.get("entries")
+        if isinstance(entries, list) and limit > 0 and len(entries) > limit:
+            payload_body["entries"] = entries[-limit:]
+            payload_body["has_older"] = True
+        body = json.dumps(payload_body, ensure_ascii=True).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self._safe_write(body)
+
+    @staticmethod
+    def _format_size(size: int) -> str:
+        value = float(size)
+        for unit in ("B", "KB", "MB", "GB", "TB"):
+            if value < 1024.0 or unit == "TB":
+                if unit == "B":
+                    return f"{int(value)} {unit}"
+                return f"{value:.1f} {unit}"
+            value /= 1024.0
+        return f"{size} B"
+
+    @staticmethod
+    def _content_type_for_rel(rel: str) -> str:
+        ext = os.path.splitext(rel)[1].lower()
+        return FileRuntime.MIME_TYPES.get(ext, "application/octet-stream")
+
+    def _render_public_progressive_text_preview(self, rel: str, *, size: int, raw_url: str, embed: bool) -> str:
+        filename = os.path.basename(rel) or rel or "file"
+        bg = "transparent" if embed else "rgb(20, 20, 19)"
+        panel = "rgba(255,255,255,0.04)"
+        border = "rgba(255,255,255,0.08)"
+        fg = "rgb(252, 252, 252)"
+        muted = "rgba(252,252,252,0.72)"
+        chunk_bytes = PUBLIC_TEXT_PREVIEW_CHUNK_BYTES
+        return (
+            "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
+            f"<title>{html_escape(filename)}</title>"
+            "<style>"
+            ":root{color-scheme:dark;}*{box-sizing:border-box}"
+            f"html,body{{margin:0;height:100%;background:{bg};color:{fg};font-family:ui-sans-serif,system-ui,sans-serif}}"
+            "body{display:flex;flex-direction:column}"
+            f".shell{{display:flex;flex-direction:column;min-height:100%;background:{bg}}}"
+            f".hdr{{padding:12px 14px;border-bottom:1px solid {border};background:{panel};display:flex;gap:12px;align-items:flex-start;justify-content:space-between}}"
+            ".title{font-size:14px;font-weight:700;margin:0 0 4px}"
+            f".meta{{margin:0;color:{muted};font-size:12px;line-height:1.5}}"
+            f".wrap{{flex:1;min-height:0;overflow:auto;padding:0 0 24px}}"
+            f".status{{position:sticky;top:0;z-index:1;padding:8px 14px;background:linear-gradient(to bottom, rgba(20,20,19,0.96), rgba(20,20,19,0.72));border-bottom:1px solid {border};color:{muted};font-size:12px}}"
+            f".viewer{{margin:0;padding:14px;white-space:pre-wrap;word-break:break-word;font:12px/1.6 'JetBrains Mono', 'SFMono-Regular', Menlo, monospace;color:{fg}}}"
+            f".actions{{display:flex;gap:10px;align-items:center;flex-wrap:wrap}}"
+            f".cta{{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;border:1px solid {border};color:{fg};text-decoration:none;font-size:12px}}"
+            "</style></head><body>"
+            "<div class=\"shell\">"
+            "<div class=\"hdr\">"
+            "<div>"
+            f"<p class=\"title\">Progressive public preview</p>"
+            f"<p class=\"meta\">{html_escape(rel)} &middot; {self._format_size(size)} &middot; loads more as you scroll down</p>"
+            "</div>"
+            f"<div class=\"actions\"><a class=\"cta\" href=\"{raw_url}\" target=\"_blank\" rel=\"noopener noreferrer\">Open raw file</a></div>"
+            "</div>"
+            "<div class=\"wrap\" id=\"wrap\">"
+            "<div class=\"status\" id=\"status\">Loading preview...</div>"
+            "<pre class=\"viewer\" id=\"viewer\"></pre>"
+            "</div>"
+            "<script>"
+            f"const rawUrl={json.dumps(raw_url)};"
+            f"const totalBytes={size};"
+            f"const chunkBytes={chunk_bytes};"
+            "const wrap=document.getElementById('wrap');"
+            "const viewer=document.getElementById('viewer');"
+            "const status=document.getElementById('status');"
+            "const textNode=document.createTextNode('');"
+            "viewer.appendChild(textNode);"
+            "const decoder=new TextDecoder();"
+            "let offset=0;let loading=false;let done=false;"
+            "const setStatus=(text)=>{status.textContent=text;};"
+            "const maybeLoad=()=>{if(done||loading)return;if((wrap.scrollTop+wrap.clientHeight) >= (wrap.scrollHeight-320)){void loadNext();}};"
+            "const loadNext=async()=>{"
+            " if(done||loading)return;"
+            " loading=true;"
+            " const start=offset;const end=Math.min(totalBytes-1,start+chunkBytes-1);"
+            " setStatus(`Loading ${Math.min(totalBytes,end+1).toLocaleString()} / ${totalBytes.toLocaleString()} bytes...`);"
+            " try{"
+            "  const res=await fetch(rawUrl,{cache:'no-store',headers:{Range:`bytes=${start}-${end}`}});"
+            "  if(!(res.ok||res.status===206)) throw new Error('preview failed');"
+            "  const buf=await res.arrayBuffer();"
+            "  if(buf.byteLength===0){done=true;setStatus(`Loaded ${offset.toLocaleString()} / ${totalBytes.toLocaleString()} bytes`);return;}"
+            "  offset += buf.byteLength;"
+            "  const finalChunk = offset >= totalBytes;"
+            "  textNode.appendData(decoder.decode(buf,{stream:!finalChunk}));"
+            "  if(finalChunk){textNode.appendData(decoder.decode());done=true;setStatus(`Loaded ${totalBytes.toLocaleString()} bytes`);}else{setStatus(`Loaded ${offset.toLocaleString()} / ${totalBytes.toLocaleString()} bytes`);}"
+            " }catch(err){setStatus('Preview load failed. Use Open raw file.');}"
+            " finally{loading=false;if(!done && wrap.scrollHeight <= wrap.clientHeight + 48){setTimeout(maybeLoad,0);}}"
+            "};"
+            "wrap.addEventListener('scroll',maybeLoad,{passive:true});"
+            "window.addEventListener('resize',maybeLoad,{passive:true});"
+            "void loadNext();"
+            "</script>"
+            "</div></body></html>"
+        )
+
+    @staticmethod
+    def _parse_single_range(range_header: str, size: int):
+        if not range_header:
+            return 0, max(0, size - 1), False
+        if size <= 0 or not range_header.startswith("bytes="):
+            raise ValueError("invalid range")
+        spec = range_header[6:].strip()
+        if not spec or "," in spec or "-" not in spec:
+            raise ValueError("invalid range")
+        start_raw, end_raw = spec.split("-", 1)
+        if not start_raw:
+            suffix_length = int(end_raw or "0")
+            if suffix_length <= 0:
+                raise ValueError("invalid range")
+            start = max(0, size - suffix_length)
+            end = size - 1
+        else:
+            start = int(start_raw)
+            end = size - 1 if not end_raw else int(end_raw)
+            if start < 0 or end < start or start >= size:
+                raise ValueError("invalid range")
+            end = min(end, size - 1)
+        return start, end, True
+
+    def _send_file_stream(self, full_path: str, content_type: str):
+        size = os.path.getsize(full_path)
+        range_header = self.headers.get("Range", "")
+        try:
+            start, end, is_partial = self._parse_single_range(range_header, size)
+        except ValueError:
+            self.send_response(416)
+            self.send_header("Accept-Ranges", "bytes")
+            self.send_header("Content-Range", f"bytes */{size}")
+            self.end_headers()
+            return
+        if size == 0:
+            start = 0
+            end = -1
+            is_partial = False
+        length = 0 if end < start else (end - start + 1)
+        self.send_response(206 if is_partial else 200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Accept-Ranges", "bytes")
+        if is_partial:
+            self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+        self.send_header("Content-Length", str(length))
+        self.end_headers()
+        if length <= 0:
+            return
+        with open(full_path, "rb") as handle:
+            handle.seek(start)
+            remaining = length
+            while remaining > 0:
+                chunk = handle.read(min(STREAM_CHUNK_SIZE, remaining))
+                if not chunk:
+                    break
+                remaining -= len(chunk)
+                if not self._safe_write(chunk):
+                    break
+
+    def _handle_session_file_request(self, session_name: str, suffix: str, parsed, *, record: dict | None = None) -> bool:
+        if suffix not in {"/file-raw", "/file-view", "/file-openability"}:
+            return False
+        runtime = self._session_file_runtime(session_name, record)
+        if runtime is None:
+            self.send_response(404)
+            self.end_headers()
+            return True
+        qs = parse_qs(parsed.query)
+        rel = qs.get("path", [""])[0]
+        try:
+            full_path = runtime._resolve_path(rel)
+        except PermissionError:
+            self.send_error(403)
+            return True
+        except FileNotFoundError:
+            self.send_error(404)
+            return True
+        if not os.path.exists(full_path):
+            self.send_error(404)
+            return True
+        if suffix == "/file-openability":
+            try:
+                payload_body = {"editable": runtime.can_open_in_editor(rel)}
+            except PermissionError:
+                self.send_error(403)
+                return True
+            except FileNotFoundError:
+                self.send_error(404)
+                return True
+            body = json.dumps(payload_body, ensure_ascii=True).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self._safe_write(body)
+            return True
+        if suffix == "/file-raw":
+            self._send_file_stream(full_path, self._content_type_for_rel(rel))
+            return True
+        embed = qs.get("embed", [""])[0] == "1"
+        ext = os.path.splitext(rel)[1].lower()
+        try:
+            size = os.path.getsize(full_path)
+        except OSError:
+            self.send_error(404)
+            return True
+        is_text_like = ext in FileRuntime.EDITABLE_TEXT_EXTS or runtime._is_probably_text_file(full_path)
+        if is_text_like and size > PUBLIC_INLINE_PREVIEW_MAX_BYTES:
+            page = self._render_public_progressive_text_preview(
+                rel,
+                size=size,
+                raw_url=f"/session/{url_quote(session_name)}/file-raw?path={url_quote(rel)}",
+                embed=embed,
+            )
+        else:
+            try:
+                page = runtime.file_view(rel, embed=embed, base_path=f"/session/{url_quote(session_name)}")
+            except PermissionError:
+                self.send_error(403)
+                return True
+            except FileNotFoundError:
+                self.send_error(404)
+                return True
+        body = page.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self._safe_write(body)
+        return True
 
     def _read_chat_session_state(self, chat_port: int) -> dict | None:
         upstream = f"https://127.0.0.1:{chat_port}/session-state?ts={int(time.time() * 1000)}"
@@ -181,20 +497,20 @@ class Handler(BaseHTTPRequestHandler):
             return
         session_name = parts[2]
         suffix = "/" if len(parts) < 4 or not parts[3] else f"/{parts[3]}"
-        available = {item["name"] for item in repo_sessions()}
-        if session_name not in available:
-            ok, _detail = revive_archived_session(session_name)
-            if ok:
-                available = {item["name"] for item in repo_sessions()}
-        if session_name not in available:
+        record = self._active_session_record(session_name)
+        if record is None:
             self.send_response(404)
             self.end_headers()
+            return
+        if method == "GET" and self._handle_session_file_request(session_name, suffix, parsed, record=record):
             return
         body = self._read_request_body(method)
         forwarded_prefix = f"/session/{session_name}"
         headers = self._forward_headers(forwarded_prefix=forwarded_prefix)
         previous_instance = ""
         deadline = time.time() + SESSION_GET_RETRY_WINDOW if method == "GET" else time.time()
+        post_deadline = time.time() + SESSION_POST_RETRY_WINDOW if method == "POST" and suffix == "/new-chat" else time.time()
+        public_message_limit = self._public_message_limit(parsed.query) if method == "GET" and suffix == "/messages" else 0
         while True:
             ok, chat_port, detail = ensure_chat_server(session_name)
             if not ok:
@@ -208,37 +524,57 @@ class Handler(BaseHTTPRequestHandler):
             if method == "POST" and suffix == "/new-chat" and not previous_instance:
                 payload = self._read_chat_session_state(chat_port)
                 previous_instance = str((payload or {}).get("server_instance") or "")
-            upstream = f"https://127.0.0.1:{chat_port}{suffix}"
-            if parsed.query:
-                upstream += f"?{parsed.query}"
+            upstream_suffix = self._with_query_limit(suffix, parsed.query, public_message_limit) if public_message_limit else suffix
+            if not public_message_limit and parsed.query:
+                upstream_suffix += f"?{parsed.query}"
+            upstream = f"https://127.0.0.1:{chat_port}{upstream_suffix}"
             try:
-                response = self._request_upstream(method, upstream, body=body, headers=headers)
+                if method == "POST" and suffix == "/new-chat":
+                    response = self._request_upstream(method, upstream, body=body, headers=headers)
+                elif public_message_limit:
+                    response = self._request_upstream(method, upstream, body=body, headers=headers)
+                else:
+                    status, resp_headers, resp = self._open_upstream(method, upstream, body=body, headers=headers)
             except TRANSIENT_UPSTREAM_ERRORS as exc:
                 if method == "GET" and time.time() < deadline:
                     time.sleep(SESSION_GET_RETRY_DELAY)
                     continue
+                if method == "POST" and suffix == "/new-chat" and time.time() < post_deadline:
+                    time.sleep(SESSION_GET_RETRY_DELAY)
+                    continue
                 self._send_bad_gateway(exc)
                 return
-            if method == "GET" and int(response.get("status", 0)) in {502, 503, 504} and time.time() < deadline:
+            if method == "POST" and suffix == "/new-chat":
+                ready = False
+                if 200 <= int(response.get("status", 0)) < 300:
+                    ready = self._wait_for_chat_restart(session_name, previous_instance)
+                self._relay_upstream(
+                    response,
+                    extra_headers={"X-Multiagent-Chat-Ready": "1" if ready else "0"},
+                )
+                return
+            if public_message_limit:
+                if method == "GET" and int(response.get("status", 0)) in {502, 503, 504} and time.time() < deadline:
+                    time.sleep(SESSION_GET_RETRY_DELAY)
+                    continue
+                self._relay_public_messages(response, limit=public_message_limit)
+                return
+            if method == "GET" and status in {502, 503, 504} and time.time() < deadline:
+                try:
+                    resp.close()
+                except Exception:
+                    pass
                 time.sleep(SESSION_GET_RETRY_DELAY)
                 continue
-            if method == "POST" and suffix == "/new-chat" and 200 <= int(response.get("status", 0)) < 300:
-                self._wait_for_chat_restart(session_name, previous_instance)
-            self._relay_upstream(response)
+            self._relay_upstream_stream(status, resp_headers, resp)
             return
 
     def _handle_open_session(self):
         parsed = urlparse(self.path)
-        qs = {}
-        for chunk in parsed.query.split("&"):
-            if "=" not in chunk:
-                continue
-            k, v = chunk.split("=", 1)
-            qs.setdefault(k, []).append(v)
+        qs = parse_qs(parsed.query)
         session_name = (qs.get("session", [""])[0] or "").strip()
         fmt = qs.get("format", [""])[0]
-        available = {item["name"] for item in repo_sessions()}
-        if not session_name or session_name not in available:
+        if not session_name or self._active_session_record(session_name) is None:
             payload = '{"ok": false, "error": "Session not found"}'
             self._send_json(404, payload)
             return

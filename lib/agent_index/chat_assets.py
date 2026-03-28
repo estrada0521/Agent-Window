@@ -3324,6 +3324,30 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .has-hover .md-body a:hover { text-decoration: underline; }
     .md-body strong { font-weight: 530; }
     .md-body em { font-style: italic; }
+    .message-deferred-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .message-deferred-btn {
+      border: 0.5px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font: 12px/1.2 "anthropicSans", "Anthropic Sans", "SF Pro Text", sans-serif;
+      cursor: pointer;
+      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+    }
+    .has-hover .message-deferred-btn:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .message-deferred-btn[disabled] {
+      opacity: 0.6;
+      cursor: default;
+    }
     .file-card { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 5px 10px; margin: 4px 0; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; background: rgb(25, 24, 23); cursor: pointer; color: var(--text); text-align: left; max-width: 100%; font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif; font-style: normal; font-size: var(--message-text-size, 13px); font-weight: 400; line-height: 21px; }
     .has-hover .file-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
     .file-card-icon {
@@ -4137,6 +4161,18 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const AGENT_ICON_DATA = __ICON_DATA_URIS__;
     const SERVER_INSTANCE_SEED = "__SERVER_INSTANCE__";
     let currentServerInstance = SERVER_INSTANCE_SEED;
+    const isPublicChatView = !(() => {
+      const host = String(location.hostname || "");
+      return host === "127.0.0.1" || host === "localhost" || host === "[::1]" || host.startsWith("192.168.") || host.startsWith("10.") || /^172\\.(1[6-9]|2\\d|3[01])\\./.test(host);
+    })();
+    const PUBLIC_MESSAGE_BATCH = 100;
+    let latestPayloadData = null;
+    let publicOlderEntries = [];
+    let publicOlderHasMore = false;
+    let publicOlderLoading = false;
+    let publicFullEntryCache = new Map();
+    let publicDeferredLoading = new Set();
+    let publicDeferredObserver = null;
     const timeline = document.getElementById("messages");
     let _hubIframeLayoutMaxH = 0;
     let _hubIframeLayoutFromParent = 0;
@@ -4894,6 +4930,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       });
     };
     const STICKY_THRESHOLD = 100;
+    const PUBLIC_OLDER_AUTOLOAD_THRESHOLD = 120;
     let _stickyToBottom = true;
     let _programmaticScroll = false;
     const isNearBottom = () => {
@@ -4904,6 +4941,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       _stickyToBottom = isNearBottom();
     };
     timeline.addEventListener("scroll", updateStickyState, { passive: true });
+    timeline.addEventListener("scroll", () => {
+      if (!isPublicChatView || publicOlderLoading || !publicOlderHasMore) return;
+      if (timeline.scrollTop > PUBLIC_OLDER_AUTOLOAD_THRESHOLD) return;
+      void loadOlderMessages();
+    }, { passive: true });
     const updateScrollBtn = () => {
       const overlayOpen = isComposerOverlayOpen();
       const emptyPlaceholder = !!document.querySelector("#messages .conversation-empty");
@@ -5308,6 +5350,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       renderMermaidInScope(scope);
       syncWideBlockRows(scope);
       syncUserMessageCollapse(scope);
+      observeDeferredMessages(scope);
     };
     const notifyNewMessages = (displayEntries) => {
       if (!initialLoadDone || (!soundEnabled && !ttsEnabled)) return;
@@ -5332,6 +5375,44 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         if (parentId && childId && !map.has(parentId)) map.set(parentId, childId);
       });
       return map;
+    };
+    const overrideDisplayEntry = (entry) => {
+      const msgId = String(entry?.msg_id || "");
+      return (msgId && publicFullEntryCache.get(msgId)) || entry;
+    };
+    const mergeEntriesById = (...groups) => {
+      const merged = [];
+      const seen = new Set();
+      for (const group of groups) {
+        for (const rawEntry of (group || [])) {
+          const entry = overrideDisplayEntry(rawEntry);
+          const msgId = String(entry?.msg_id || "");
+          if (msgId) {
+            if (seen.has(msgId)) continue;
+            seen.add(msgId);
+          }
+          merged.push(entry);
+        }
+      }
+      return merged;
+    };
+    const displayEntriesForData = (data) => {
+      const baseEntries = Array.isArray(data?.entries) ? data.entries : [];
+      if (!isPublicChatView) return baseEntries.slice(-__MESSAGE_LIMIT__);
+      return mergeEntriesById(publicOlderEntries, baseEntries).slice(-__MESSAGE_LIMIT__);
+    };
+    const messagesFetchUrl = (extra = {}) => {
+      const params = new URLSearchParams();
+      params.set("ts", String(Date.now()));
+      if (isPublicChatView) {
+        params.set("limit", String(PUBLIC_MESSAGE_BATCH));
+        params.set("light", "1");
+      }
+      Object.entries(extra || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === "") return;
+        params.set(key, String(value));
+      });
+      return `/messages?${params.toString()}`;
     };
     const buildMsgHTML = (entry, replyChildrenMap) => {
       if (entry.sender === "system") {
@@ -5363,6 +5444,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         ? `<button class="reply-target-jump-btn" type="button" title="返信先へ移動" data-replytarget="${escapeHtml(firstReplyId).replaceAll('"', "&quot;")}">${replyDownIcon}</button>`
         : "";
       const senderHtml = metaAgentLabel(entry.sender || "unknown", "sender-label", "right");
+      const deferredBodyHtml = entry.deferred_body && msgId
+        ? `<div class="message-deferred-actions"><button class="message-deferred-btn" type="button" data-load-full-message="${msgId}">Load full message</button></div>`
+        : "";
 
       return `<article class="message-row ${cls}" data-msgid="${msgId}" data-sender="${sender}">
         <div class="message-wrap" data-raw="${rawAttr}" data-preview="${previewAttr}">
@@ -5372,6 +5456,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           <div class="md-body">${renderMarkdown(body)}</div>
           ${isUser ? `<button class="user-collapse-toggle" type="button" hidden>More</button>` : ""}
         </div>
+        ${deferredBodyHtml}
         ${isUser ? `<div class="user-message-divider" aria-hidden="true"></div>` : ``}
         </div>
         </div>
@@ -5404,9 +5489,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (!sessionActive) setStatus("archived session is read-only");
       updateAttachedFilesPanel(displayEntries);
     };
-    const render = (data, { forceScroll = false } = {}) => {
+    const render = (data, { forceScroll = false, forceFullRender = false } = {}) => {
       const shouldStick = forceScroll || _stickyToBottom;
-      const displayEntries = data.entries.slice(-__MESSAGE_LIMIT__);
+      const displayEntries = displayEntriesForData(data);
 
       updateSessionUI(data, displayEntries);
 
@@ -5432,7 +5517,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const newEntries = displayEntries.filter(e => !_renderedIds.has(e.msg_id));
       const hasRemovals = _renderedIds.size > 0 && [..._renderedIds].some(id => !displayIdSet.has(id));
 
-      if (!hasRemovals && _renderedIds.size > 0 && newEntries.length > 0) {
+      if (!forceFullRender && !hasRemovals && _renderedIds.size > 0 && newEntries.length > 0) {
         const frag = document.createDocumentFragment();
         for (const entry of newEntries) {
           const tmpl = document.createElement("template");
@@ -5446,9 +5531,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         postRenderScope(root);
       } else {
         const firstTimestamp = displayEntries[0]?.timestamp || "";
-        root.innerHTML = `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` + displayEntries.map(entry =>
-          buildMsgHTML(entry, replyChildren)
-        ).join("");
+        const daybreakHtml = displayEntries.length ? `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` : "";
+        root.innerHTML = daybreakHtml + displayEntries.map(entry => buildMsgHTML(entry, replyChildren)).join("");
         _renderedIds = new Set(displayEntries.map(e => e.msg_id));
         postRenderScope(root);
       }
@@ -5797,7 +5881,102 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const nextOptions = next || {};
       return {
         forceScroll: !!(currentOptions.forceScroll || nextOptions.forceScroll),
+        forceFullRender: !!(currentOptions.forceFullRender || nextOptions.forceFullRender),
       };
+    };
+    const rerenderCurrentMessages = () => {
+      if (!latestPayloadData) return;
+      lastMessagesSig = "";
+      render(latestPayloadData, { forceFullRender: true });
+    };
+    const ensurePublicDeferredObserver = () => {
+      if (!isPublicChatView || publicDeferredObserver || typeof IntersectionObserver !== "function") return;
+      publicDeferredObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const button = entry.target.closest("[data-load-full-message]") || entry.target.querySelector("[data-load-full-message]");
+          if (!button) return;
+          void loadFullMessageEntry(button.dataset.loadFullMessage || "", button);
+        });
+      }, {
+        root: timeline,
+        rootMargin: "220px 0px 220px 0px",
+        threshold: 0.01,
+      });
+    };
+    const observeDeferredMessages = (scope) => {
+      if (!isPublicChatView) return;
+      ensurePublicDeferredObserver();
+      if (!publicDeferredObserver) return;
+      (scope || document).querySelectorAll("[data-load-full-message]").forEach((button) => {
+        const msgId = String(button.dataset.loadFullMessage || "");
+        if (!msgId || publicFullEntryCache.has(msgId) || publicDeferredLoading.has(msgId)) return;
+        publicDeferredObserver.observe(button);
+      });
+    };
+    const loadOlderMessages = async () => {
+      if (!isPublicChatView || publicOlderLoading || !latestPayloadData) return;
+      const firstMsgId = displayEntriesForData(latestPayloadData)[0]?.msg_id || "";
+      if (!firstMsgId) {
+        publicOlderHasMore = false;
+        rerenderCurrentMessages();
+        return;
+      }
+      publicOlderLoading = true;
+      const prevHeight = timeline.scrollHeight;
+      const prevTop = timeline.scrollTop;
+      rerenderCurrentMessages();
+      try {
+        const res = await fetchWithTimeout(messagesFetchUrl({ before_msg_id: firstMsgId }));
+        if (!res.ok) throw new Error("older messages unavailable");
+        const data = await res.json();
+        const olderEntries = Array.isArray(data?.entries) ? data.entries : [];
+        publicOlderHasMore = !!data?.has_older;
+        if (olderEntries.length) {
+          publicOlderEntries = mergeEntriesById(olderEntries, publicOlderEntries);
+        }
+      } catch (_) {
+      } finally {
+        publicOlderLoading = false;
+        rerenderCurrentMessages();
+        const delta = timeline.scrollHeight - prevHeight;
+        timeline.scrollTop = prevTop + delta;
+        updateScrollBtn();
+      }
+    };
+    const loadFullMessageEntry = async (msgId, button) => {
+      const targetMsgId = String(msgId || "").trim();
+      if (!isPublicChatView || !targetMsgId) return;
+      if (publicFullEntryCache.has(targetMsgId)) {
+        rerenderCurrentMessages();
+        return;
+      }
+      if (publicDeferredLoading.has(targetMsgId)) return;
+      publicDeferredLoading.add(targetMsgId);
+      if (publicDeferredObserver && button) {
+        try { publicDeferredObserver.unobserve(button); } catch (_) {}
+      }
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Loading...";
+      }
+      try {
+        const res = await fetch(`/message-entry?msg_id=${encodeURIComponent(targetMsgId)}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("message body unavailable");
+        const data = await res.json().catch(() => ({}));
+        if (data?.entry) {
+          publicFullEntryCache.set(targetMsgId, data.entry);
+          rerenderCurrentMessages();
+          return;
+        }
+      } catch (_) {
+      } finally {
+        publicDeferredLoading.delete(targetMsgId);
+      }
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Retry full message";
+      }
     };
     const refresh = async (options = {}) => {
       if (window.__STATIC_EXPORT__) { render(window.__EXPORT_PAYLOAD__, options); return; }
@@ -5807,10 +5986,21 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
       refreshInFlight = true;
       try {
-        const res = await fetchWithTimeout(`/messages?ts=${Date.now()}`);
+        const res = await fetchWithTimeout(messagesFetchUrl());
         if (!res.ok) throw new Error("messages unavailable");
         const data = await res.json();
-        if (data?.server_instance) currentServerInstance = data.server_instance;
+        const nextServerInstance = data?.server_instance || "";
+        if (nextServerInstance && currentServerInstance && nextServerInstance !== currentServerInstance) {
+          publicOlderEntries = [];
+          publicOlderHasMore = false;
+          publicFullEntryCache = new Map();
+          publicDeferredLoading = new Set();
+        }
+        if (nextServerInstance) currentServerInstance = nextServerInstance;
+        latestPayloadData = data;
+        if (isPublicChatView && !publicOlderEntries.length) {
+          publicOlderHasMore = !!data?.has_older;
+        }
         messageRefreshFailures = 0;
         setReconnectStatus(false);
         render(data, options);
@@ -5828,6 +6018,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         }
       }
     };
+    timeline.addEventListener("click", async (event) => {
+      const fullBtn = event.target.closest("[data-load-full-message]");
+      if (fullBtn) {
+        event.preventDefault();
+        await loadFullMessageEntry(fullBtn.dataset.loadFullMessage || "", fullBtn);
+      }
+    });
     const logSystem = (message) => fetch("/log-system", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -6506,9 +6703,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const seen = new Set();
       const allFiles = [];
       for (const entry of (entries || [])) {
-        const msg = entry.message || "";
-        for (const m of msg.matchAll(/\[Attached:\s*([^\]]+)\]/g)) {
-          const path = m[1].trim();
+        const attachedPaths = Array.isArray(entry.attached_paths) && entry.attached_paths.length
+          ? entry.attached_paths
+          : Array.from((entry.message || "").matchAll(/\[Attached:\s*([^\]]+)\]/g), (m) => m[1].trim());
+        for (const path of attachedPaths) {
           if (!seen.has(path)) {
             seen.add(path);
             allFiles.push({ path, msgId: entry.msg_id || "" });
@@ -6726,10 +6924,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
            btn.classList.add("restarting");
            btn.textContent = "Restarting…";
            const previousInstance = currentServerInstance;
+           let edgeReady = false;
            try {
-             await fetch("/new-chat", { method: "POST" });
+             const res = await fetch("/new-chat", { method: "POST", cache: "no-store" });
+             edgeReady = res.ok && res.headers.get("X-Multiagent-Chat-Ready") === "1";
            } catch (_) {}
-           const ready = await waitForChatReady(3000, previousInstance);
+           const ready = edgeReady || await waitForChatReady(3000, previousInstance);
            if (!ready) {
              navigateToFreshChat();
              return;

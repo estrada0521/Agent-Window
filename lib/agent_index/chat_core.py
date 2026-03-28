@@ -30,6 +30,10 @@ from .state_core import update_thinking_totals_from_statuses as update_shared_th
 
 
 class ChatRuntime:
+    PUBLIC_LIGHT_MESSAGE_CHAR_LIMIT = 1500
+    PUBLIC_LIGHT_CODE_THRESHOLD = 800
+    PUBLIC_LIGHT_ATTACHMENT_PREVIEW_LIMIT = 2
+
     def __init__(
         self,
         *,
@@ -278,7 +282,12 @@ class ChatRuntime:
             return True
         return any(t.lower() == self.filter_agent for t in entry.get("targets", []))
 
-    def read_entries(self, limit_override=None):
+    @staticmethod
+    def attachment_paths(message: str) -> list[str]:
+        text = str(message or "")
+        return [match.strip() for match in re.findall(r"\[Attached:\s*([^\]]+)\]", text)]
+
+    def _matched_entries(self):
         if not self.index_path.exists():
             return []
         entries = []
@@ -293,10 +302,62 @@ class ChatRuntime:
                     continue
                 if self.matches(entry):
                     entries.append(entry)
-        l = limit_override if limit_override is not None else self.limit
-        if l and l > 0:
-            return entries[-l:]
         return entries
+
+    def _entry_window(self, *, limit_override=None, before_msg_id: str = ""):
+        entries = self._matched_entries()
+        if before_msg_id:
+            target = before_msg_id.strip()
+            idx = next((i for i, entry in enumerate(entries) if str(entry.get("msg_id") or "") == target), -1)
+            if idx < 0:
+                return [], False
+            entries = entries[:idx]
+        l = limit_override if limit_override is not None else self.limit
+        has_older = False
+        if l and l > 0:
+            has_older = len(entries) > l
+            return entries[-l:], has_older
+        return entries, False
+
+    def _light_entry(self, entry):
+        summary = dict(entry)
+        message = str(summary.get("message") or "")
+        attached_paths = self.attachment_paths(message)
+        if attached_paths:
+            summary["attached_paths"] = attached_paths
+        body_only = re.sub(r"(?:\n)?\[Attached:\s*[^\]]+\]", "", message).strip()
+        heavy_code = "```" in body_only and len(body_only) > self.PUBLIC_LIGHT_CODE_THRESHOLD
+        truncated = len(body_only) > self.PUBLIC_LIGHT_MESSAGE_CHAR_LIMIT
+        if not truncated and not heavy_code:
+            return summary
+        preview = body_only[:self.PUBLIC_LIGHT_MESSAGE_CHAR_LIMIT].rstrip()
+        notes = ["[Public preview truncated. Load full message.]"]
+        if attached_paths:
+            preview_paths = attached_paths[:self.PUBLIC_LIGHT_ATTACHMENT_PREVIEW_LIMIT]
+            notes.extend([f"[Attached: {path}]" for path in preview_paths])
+            remaining = len(attached_paths) - len(preview_paths)
+            if remaining > 0:
+                notes.append(f"(+{remaining} more attachments)")
+        summary["message"] = (preview + ("\n\n" if preview else "") + "\n".join(notes)).strip()
+        summary["deferred_body"] = True
+        summary["message_length"] = len(message)
+        return summary
+
+    def read_entries(self, limit_override=None, before_msg_id: str = "", light_mode: bool = False):
+        entries, _has_older = self._entry_window(limit_override=limit_override, before_msg_id=before_msg_id)
+        if light_mode:
+            return [self._light_entry(entry) for entry in entries]
+        return entries
+
+    def entry_by_id(self, msg_id: str, *, light_mode: bool = False):
+        target = (msg_id or "").strip()
+        if not target:
+            return None
+        for entry in reversed(self._matched_entries()):
+            if str(entry.get("msg_id") or "") != target:
+                continue
+            return self._light_entry(entry) if light_mode else entry
+        return None
 
     def session_metadata(self):
         session_slug = quote(self.session_name, safe="")
@@ -313,16 +374,21 @@ class ChatRuntime:
             "follow_path": f"/session/{session_slug}/?follow=1",
         }
 
-    def payload(self, limit_override=None):
+    def payload(self, limit_override=None, before_msg_id: str = "", light_mode: bool = False):
         self.ensure_commit_announcements()
         meta = self.session_metadata()
+        entries, has_older = self._entry_window(limit_override=limit_override, before_msg_id=before_msg_id)
+        if light_mode:
+            entries = [self._light_entry(entry) for entry in entries]
         return json.dumps(
             {
                 **meta,
                 "filter": self.filter_agent or "all",
                 "follow": self.follow_mode,
                 "targets": self.active_agents(),
-                "entries": self.read_entries(limit_override=limit_override),
+                "has_older": has_older,
+                "light_mode": bool(light_mode),
+                "entries": entries,
             },
             ensure_ascii=True,
         ).encode("utf-8")
