@@ -4035,6 +4035,53 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         return __origFetch(input, init);
       };
     }
+    const loadExternalScriptOnce = (() => {
+      const pending = new Map();
+      return (src) => {
+        const raw = String(src || "").trim();
+        if (!raw) return Promise.resolve(false);
+        const href = new URL(raw, window.location.href).href;
+        for (const script of document.scripts) {
+          if ((script.src || "") === href) return Promise.resolve(true);
+        }
+        if (pending.has(href)) return pending.get(href);
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = href;
+          script.onload = () => resolve(true);
+          script.onerror = () => reject(new Error(`failed to load ${href}`));
+          document.head.appendChild(script);
+        }).catch(() => false);
+        pending.set(href, promise);
+        return promise;
+      };
+    })();
+    const loadExternalStylesheetOnce = (() => {
+      const pending = new Map();
+      return (href) => {
+        const raw = String(href || "").trim();
+        if (!raw) return Promise.resolve(false);
+        const absHref = new URL(raw, window.location.href).href;
+        for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {
+          if ((link.href || "") === absHref) return Promise.resolve(true);
+        }
+        if (pending.has(absHref)) return pending.get(absHref);
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement("link");
+          link.rel = "stylesheet";
+          link.href = absHref;
+          link.onload = () => resolve(true);
+          link.onerror = () => reject(new Error(`failed to load ${absHref}`));
+          document.head.appendChild(link);
+        }).catch(() => false);
+        pending.set(absHref, promise);
+        return promise;
+      };
+    })();
+    const ANSI_UP_SRC = "https://cdn.jsdelivr.net/npm/ansi_up@5.1.0/ansi_up.min.js";
+    const KATEX_CSS_HREF = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+    const KATEX_JS_SRC = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+    const KATEX_AUTO_RENDER_SRC = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
     const renderMarkdown = (text) => {
       if (typeof marked !== "undefined") {
         try {
@@ -4056,8 +4103,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           processedText = processedText.replace(/(?<!\$)\$([A-Z_][A-Z0-9_]+)/g, '<span class="no-math">&#36;$1</span>');
           processedText = processedText.replace(/\$([{(][^})\n]*[})])/g, '<span class="no-math">&#36;$1</span>');
 
-          // Phase 3: extract math from remaining $ patterns
-          processedText = processedText.replace(/(\$\$[\s\S]+?\$\$|\$[\s\S]+?\$)/g, (match) => {
+          // Phase 3: extract math before marked.js inserts <br> into multiline blocks
+          processedText = processedText.replace(/(\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$\$[\s\S]+?\$\$|\$[\s\S]+?\$)/g, (match) => {
             const id = `math-placeholder-${placeholderCount++}`;
             mathBlocks.push({ id, content: match });
             return `<span class="MATH_SAFE_BLOCK" data-id="${id}"></span>`;
@@ -4081,6 +4128,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
               span.outerHTML = block.content;
             }
           });
+          if (mathBlocks.length) {
+            const marker = document.createElement("span");
+            marker.className = "math-render-needed";
+            marker.hidden = true;
+            tempDiv.prepend(marker);
+          }
           // Prism syntax highlighting (skip diff blocks — handled separately)
           if (typeof Prism !== "undefined") {
             tempDiv.querySelectorAll('code[class*="language-"]').forEach(codeEl => {
@@ -4593,9 +4646,36 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       ignoredClasses: ["no-math"],
       throwOnError: false
     };
+    let katexLoadPromise = null;
+    const scopeNeedsMathRender = (node) => !!node?.querySelector?.(".math-render-needed");
+    const clearMathMarkers = (node) => {
+      node?.querySelectorAll?.(".math-render-needed").forEach((marker) => marker.remove());
+    };
+    const ensureKatexReady = async () => {
+      if (typeof renderMathInElement === "function") return true;
+      if (katexLoadPromise) return katexLoadPromise;
+      katexLoadPromise = (async () => {
+        const cssReady = await loadExternalStylesheetOnce(KATEX_CSS_HREF);
+        const katexReady = await loadExternalScriptOnce(KATEX_JS_SRC);
+        const autoRenderReady = katexReady ? await loadExternalScriptOnce(KATEX_AUTO_RENDER_SRC) : false;
+        return cssReady && katexReady && autoRenderReady && typeof renderMathInElement === "function";
+      })().catch(() => false);
+      return katexLoadPromise;
+    };
     const renderMathInScope = (node) => {
-      if (!node || typeof renderMathInElement === "undefined") return;
-      renderMathInElement(node, mathRenderOptions);
+      if (!node || !scopeNeedsMathRender(node)) return;
+      const applyMath = () => {
+        if (typeof renderMathInElement === "undefined") return;
+        renderMathInElement(node, mathRenderOptions);
+        clearMathMarkers(node);
+      };
+      if (typeof renderMathInElement === "function") {
+        applyMath();
+        return;
+      }
+      ensureKatexReady().then((ready) => {
+        if (ready) applyMath();
+      });
     };
     // Mermaid diagram rendering — lazy-loaded only when a mermaid block appears
     let _mermaidReady = false;
@@ -8241,6 +8321,31 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       .replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "")
       .replace(/\u001b\][^\u0007]*\u0007/g, "");
     let paneTraceAnsiUp = null;
+    let paneTraceAnsiLoadPromise = null;
+    const ensurePaneTraceAnsiUp = async () => {
+      if (paneTraceAnsiUp) return true;
+      try {
+        if (typeof AnsiUp === "function") {
+          paneTraceAnsiUp = new AnsiUp();
+          return true;
+        }
+      } catch (_) {
+        paneTraceAnsiUp = null;
+      }
+      if (paneTraceAnsiLoadPromise) return paneTraceAnsiLoadPromise;
+      paneTraceAnsiLoadPromise = loadExternalScriptOnce(ANSI_UP_SRC).then((ready) => {
+        if (!ready) return false;
+        try {
+          if (typeof AnsiUp === "function") paneTraceAnsiUp = new AnsiUp();
+        } catch (_) {
+          paneTraceAnsiUp = null;
+        }
+        return !!paneTraceAnsiUp;
+      }).finally(() => {
+        if (!paneTraceAnsiUp) paneTraceAnsiLoadPromise = null;
+      });
+      return paneTraceAnsiLoadPromise;
+    };
     const paneTraceHtml = (raw) => {
       const text = String(raw ?? "No output");
       if (!paneTraceAnsiUp) {
@@ -8277,9 +8382,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (!slide) return;
       try {
         /* Pane Viewer はモバイル専用導線（Terminal ボタンはデスクトップでは /open-terminal）。常に軽量 tail。 */
+        const ansiReady = ensurePaneTraceAnsiUp();
         const res = await fetch(`/trace?agent=${encodeURIComponent(agent)}&lines=192&ts=${Date.now()}`);
         if (!res.ok) return;
         const data = await res.json();
+        await ansiReady;
         slide.innerHTML = paneTraceHtml(data.content || "No output");
         if (scrollToBottomAfter) scrollPaneSlideToBottom(slide);
       } catch (_) {}
@@ -8811,6 +8918,14 @@ CHAT_HEADER_PANELS_HTML = """
 """
 
 
+CHAT_ANSI_UP_HEAD_TAG = '  <script src="https://cdn.jsdelivr.net/npm/ansi_up@5.1.0/ansi_up.min.js"></script>\n'
+CHAT_KATEX_HEAD_TAGS = (
+    '  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">\n'
+    '  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>\n'
+    '  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>\n'
+)
+
+
 _CHAT_APP_SCRIPT_OPEN = "  <script>\n"
 _CHAT_APP_SCRIPT_CLOSE = "  </script>\n"
 _chat_app_script_start = CHAT_HTML.rfind(_CHAT_APP_SCRIPT_OPEN)
@@ -8968,7 +9083,7 @@ def chat_style_asset_url(chat_base_path: str = "") -> str:
     return f"{asset_path}?v={CHAT_MAIN_STYLE_VERSION}"
 
 
-def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, follow, chat_base_path="", externalize_app_script=False, externalize_main_style=False):
+def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, follow, chat_base_path="", externalize_app_script=False, externalize_main_style=False, eager_optional_vendors=True):
     base_path = chat_base_path.rstrip("/")
     if base_path and logo_data_uri == "/hub-logo":
         logo_src = f"{base_path}/hub-logo"
@@ -8984,6 +9099,9 @@ def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port
         panels_html=CHAT_HEADER_PANELS_HTML,
     )
     html = CHAT_HTML
+    if not eager_optional_vendors:
+        html = html.replace(CHAT_ANSI_UP_HEAD_TAG, "", 1)
+        html = html.replace(CHAT_KATEX_HEAD_TAGS, "", 1)
     if externalize_main_style:
         html = html.replace(
             CHAT_MAIN_STYLE_BLOCK,

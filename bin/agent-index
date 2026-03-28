@@ -5850,6 +5850,7 @@ class Handler(BaseHTTPRequestHandler):
                 chat_base_path=(self.headers.get("X-Forwarded-Prefix", "") or "").rstrip("/"),
                 externalize_app_script=True,
                 externalize_main_style=True,
+                eager_optional_vendors=False,
             ).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
