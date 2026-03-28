@@ -1,71 +1,71 @@
-# Multiagent 環境: エージェント向けガイド
+# Multiagent Environment: Agent Guide
 
-この文書は、このリポジトリの **tmux ベース multiagent セッション内で動くエージェント**向けの運用メモです。
+This document is an operational reference for **agents running inside a tmux-based multiagent session** in this repository.
 
-> **優先順位:** チャット、プロジェクト固有指示、エディタ内指示、システム指示に矛盾がある場合は、常にそちらを優先する。
+> **Priority:** If there is a conflict between chat instructions, project-specific instructions, editor-level instructions, and system instructions, always follow those over this document.
 
 ---
 
-## 1. 最初に把握すること
+## 1. First Things to Know
 
-この環境では、エージェントは通常それぞれ独立した tmux pane で動く。
-ユーザーや他エージェントへの返答は、pane に直接打つのではなく **`agent-send` で送る**。
+In this environment each agent typically runs in its own tmux pane.
+Replies to the user or other agents must be sent via **`agent-send`**, not printed directly into the pane.
 
-まず最低限、次を確認する。
+Start by checking the basics:
 
 ```bash
 env | rg '^MULTIAGENT|^TMUX'
 ```
 
-この文書や、workspace 側の `docs/AGENT.md` を user から送られて読んだ場合は、読み終えたあとに **内容を把握したことを user へ 1 回報告する**。報告も pane 直打ちではなく `agent-send` で送る。
+If you receive this document (or the workspace-side `docs/AGENT.md`) from the user, **report back once** that you have read and understood it. Use `agent-send` for the report as well.
 
-例:
+Example:
 
 ```bash
-printf '%s' 'docs/AGENT.md を読みました。この環境での返答経路、添付、ログ参照の前提を把握しました。' | agent-send user
+printf '%s' 'I have read docs/AGENT.md. I understand the reply routing, attachments, and log conventions in this environment.' | agent-send user
 ```
 
-ここで分かる主な情報:
+Key environment variables:
 
-| 変数 | 意味 |
-|------|------|
-| `MULTIAGENT_SESSION` | 現在のセッション名 |
-| `MULTIAGENT_AGENT_NAME` | 自分のエージェント名 |
-| `MULTIAGENT_AGENTS` | 参加エージェント一覧 |
-| `MULTIAGENT_WORKSPACE` | ワークスペース |
-| `MULTIAGENT_LOG_DIR` | ログディレクトリ |
-| `MULTIAGENT_TMUX_SOCKET` | tmux ソケット |
-| `MULTIAGENT_PANE_*` | 各エージェント・ユーザーの pane ID |
-| `TMUX_PANE` | 自分の pane ID |
+| Variable | Meaning |
+|----------|---------|
+| `MULTIAGENT_SESSION` | Current session name |
+| `MULTIAGENT_AGENT_NAME` | Your agent name |
+| `MULTIAGENT_AGENTS` | List of participating agents |
+| `MULTIAGENT_WORKSPACE` | Workspace path |
+| `MULTIAGENT_LOG_DIR` | Log directory |
+| `MULTIAGENT_TMUX_SOCKET` | tmux socket |
+| `MULTIAGENT_PANE_*` | Pane IDs for each agent and user |
+| `TMUX_PANE` | Your own pane ID |
 
-現在のセッション構成を機械的に見たいときは:
+To inspect the current session layout programmatically:
 
 ```bash
 multiagent context --json
 ```
 
-`multiagent context` が失敗する場合は `MULTIAGENT_SESSION` がずれていることがある。その場合は `--session <name>` を付けるか、環境変数を確認する。
+If `multiagent context` fails, `MULTIAGENT_SESSION` may be stale. Pass `--session <name>` explicitly or check your environment variables.
 
 ---
 
-## 2. コミュニケーションの原則
+## 2. Communication Rules
 
-### 必ず守ること
+### Must follow
 
-| ルール | 内容 |
-|--------|------|
-| **返答経路** | **`user` や他エージェントへの返答は必ず `agent-send` で送る**。pane にユーザー向け本文を直接出さない |
-| **本文の渡し方** | 特殊文字や改行を壊さないため、本文は **stdin で渡す** |
-| **添付の書き方** | ファイル添付はオプションではなく、本文に **`[Attached: relative/path]`** と書く |
-| **`$` を含む語** | シェル変数やパスなど `$` を含む語は **必ずインラインコード（`` ` ``）で囲む**。囲まないと Hub 上で数式として変換される。例: `` `$HOME` ``, `` `$PATH` `` |
+| Rule | Details |
+|------|---------|
+| **Reply routing** | **Always send replies to `user` or other agents via `agent-send`**. Never print user-facing text directly into the pane |
+| **Message body** | Pass the body via **stdin** to avoid breaking special characters and newlines |
+| **Attachments** | Include **`[Attached: relative/path]`** in the message body |
+| **Words containing `$`** | Shell variables, paths, and other words containing `$` **must be wrapped in inline code (`` ` ``)**. Otherwise the Hub renders them as math. Examples: `` `$HOME` ``, `` `$PATH` `` |
 
-### 基本形
+### Basic form
 
 ```bash
-printf '%s' '本文' | agent-send <target>
+printf '%s' 'message body' | agent-send <target>
 ```
 
-宛先例:
+Target examples:
 
 - `user`
 - `claude`
@@ -75,118 +75,118 @@ printf '%s' '本文' | agent-send <target>
 
 ---
 
-## 3. `agent-send` の実践
+## 3. Using `agent-send`
 
-### `user` へ送る
-
-```bash
-printf '%s' '確認しました。' | agent-send user
-```
-
-### 他エージェントへ送る
+### Send to `user`
 
 ```bash
-printf '%s' '該当箇所はここです。' | agent-send gemini
+printf '%s' 'Confirmed.' | agent-send user
 ```
 
-### 新規トピックとして送る
+### Send to another agent
 
 ```bash
-printf '%s' '追加調査を始めます。' | agent-send user
+printf '%s' 'The relevant section is here.' | agent-send gemini
 ```
 
-### PATH が通っていないとき
+### Send as a new topic
 
-`[Attached: ...]` の話と、`agent-send` コマンド自体のパスの話は別です。コマンドが見つからないだけなら、**コマンドの絶対パス**で呼ぶ。
+```bash
+printf '%s' 'Starting additional investigation.' | agent-send user
+```
+
+### When `agent-send` is not in PATH
+
+The `[Attached: ...]` syntax and the `agent-send` command path are separate concerns. If the command is simply not found, **use its absolute path**.
 
 ```bash
 printf '%s' 'hello' | /path/to/repo/bin/agent-send user
 ```
 
-## 4. 添付ファイルの書き方
+## 4. Attaching Files
 
-### 原則
+### Principle
 
-`agent-send` に `--attach` のような添付専用オプションはない。**本文中に `[Attached: path]` を書く**のが正規手順。
+`agent-send` has no `--attach` flag. The correct way is to **write `[Attached: path]` in the message body**.
 
-### 守るべき点
+### Guidelines
 
-| 方針 | 内容 |
-|------|------|
-| **相対パス** | **ワークスペース相対で書く**。絶対パスはうまく解決されないことがある |
-| **単独行** | `[Attached: docs/AGENT.md]` は単独行で置くと安定しやすい |
-| **本文に含める** | 「Attached と書くだけ」ではだめ。**`[Attached: ...]` の形そのもの**が必要 |
+| Guideline | Details |
+|-----------|---------|
+| **Relative paths** | **Use workspace-relative paths**. Absolute paths may not resolve correctly |
+| **Own line** | `[Attached: docs/AGENT.md]` works best on its own line |
+| **Inside the body** | Just writing "Attached" is not enough. The exact **`[Attached: ...]` syntax** is required |
 
-良い例:
+Good example:
 
 ```bash
-printf '%s' '変更しました。
+printf '%s' 'Changes applied.
 
 [Attached: docs/AGENT.md]' | agent-send user
 ```
 
-避けたい例:
+Bad example:
 
 ```bash
-printf '%s' '変更しました。
+printf '%s' 'Changes applied.
 
 [Attached: /absolute/path/to/docs/AGENT.md]' | agent-send user
 ```
 
 ---
 
-## 5. `agent-index` とログの見方
+## 5. Viewing Logs with `agent-index`
 
-### 会話履歴を見る
+### View conversation history
 
 ```bash
 agent-index
 ```
 
-特定エージェントだけを見る:
+Filter by agent:
 
 ```bash
 agent-index --agent codex
 ```
 
-`jsonl` を直接読む場合、通常の保存先は次です。
+To read the raw `jsonl`, the default location is:
 
 ```text
 <MULTIAGENT_LOG_DIR>/<MULTIAGENT_SESSION>/.agent-index.jsonl
 ```
 
-### 重要な注意
+### Important note
 
 ```bash
 agent-index --follow
 ```
 
-これは**ブロックして戻らない**ので、調査目的で常用しない。特に pane 内で実行すると、その pane を張り付かせやすい。
+This **blocks and never returns**, so do not use it casually. Running it inside a pane will lock that pane.
 
 ---
 
 ## 6. Session Brief
 
-この環境では、`docs/AGENT.md` とは別に **session 固有 brief** を持てる。
+This environment supports **session-specific briefs** in addition to `docs/AGENT.md`.
 
-役割の違い:
+Role comparison:
 
-| ファイル種別 | 役割 |
-|------|------|
-| `docs/AGENT.md` | repo / multiagent 環境の**恒久ルール** |
-| session brief | その session だけで使う**追加指示・テンプレート** |
+| File type | Role |
+|-----------|------|
+| `docs/AGENT.md` | **Permanent rules** for the repo / multiagent environment |
+| session brief | **Additional instructions / templates** scoped to a single session |
 
-session brief は、**特定 agent 固有の設定**というより、session 内で再利用できる brief テンプレート群として扱う。
+Session briefs are reusable templates that can be sent to multiple agents, rather than per-agent configuration.
 
-### 保存先
+### Storage location
 
-通常は次のように保存される:
+Briefs are typically saved under:
 
 ```text
-<ログディレクトリ>/<セッション名>/brief/brief_<name>.md
+<log directory>/<session name>/brief/brief_<name>.md
 ```
 
-例:
+Examples:
 
 ```text
 logs/multiagent/brief/brief_default.md
@@ -194,51 +194,51 @@ logs/multiagent/brief/brief_strict.md
 logs/multiagent/brief/brief_research.md
 ```
 
-### 運用方針
+### Guidelines
 
-- brief は **session 固有**。恒久ルールはできるだけ `docs/AGENT.md` に寄せる
-- brief は **再利用可能なテンプレート**。必要に応じて複数 agent に送ってよい
-- brief は人間が作ってもよいし、必要なら **エージェントが作成・更新してもよい**
-- ただし、repo 全体で通用する常設ルールを brief に溜めすぎない
+- Briefs are **session-scoped**. Push permanent rules into `docs/AGENT.md` whenever possible
+- Briefs are **reusable templates**. Send them to multiple agents as needed
+- Briefs can be created or updated by humans or agents
+- Avoid accumulating repo-wide permanent rules inside briefs
 
-### UI とコマンド
+### UI and commands
 
-- chat UI の `/brief` や `/brief set <name>` は、保存済み brief の表示・編集に使う
-- Brief ボタンは、保存済み brief から選んで selected target に送るために使う
-- つまり、**表示・編集・送信は同じ brief 正本を参照する**
-
----
-
-## 7. セッション・tmux・ログ
-
-| 項目 | 内容 |
-|------|------|
-| 既定セッション名 | 通常は `multiagent` |
-| 別セッション指定 | `MULTIAGENT_SESSION` または `agent-send --session <name>` |
-| ソケット | `MULTIAGENT_TMUX_SOCKET` |
-| ログ保存先 | 通常は `<ログディレクトリ>/<セッション名>/.agent-index.jsonl` |
-| ワークスペース | `MULTIAGENT_WORKSPACE` |
-
-tmux や複数クローンをまたいで作業しているときは、**ソケット**と**ワークスペース**の取り違えに注意する。
+- `/brief` or `/brief set <name>` in the chat UI opens saved briefs for viewing and editing
+- The Brief button sends a saved brief to the currently selected target
+- Viewing, editing, and sending all reference the same brief source
 
 ---
 
-## 8. 最低限の運用フロー
+## 7. Session, tmux, and Logs
 
-1. `env | rg '^MULTIAGENT|^TMUX'` で自分のセッションを確認する
-2. `agent-send` で user や他エージェントへ送る
-3. ファイルを共有するなら本文に `[Attached: relative/path]` を入れる
-4. 履歴確認は `agent-index` か `.agent-index.jsonl` を使う
+| Item | Details |
+|------|---------|
+| Default session name | Usually `multiagent` |
+| Override session | `MULTIAGENT_SESSION` or `agent-send --session <name>` |
+| Socket | `MULTIAGENT_TMUX_SOCKET` |
+| Log location | Usually `<log directory>/<session name>/.agent-index.jsonl` |
+| Workspace | `MULTIAGENT_WORKSPACE` |
+
+When working across tmux sessions or multiple clones, watch out for **socket** and **workspace** mismatches.
 
 ---
 
-## 9. 関連ドキュメント
+## 8. Minimum Operational Flow
 
-| パス | 内容 |
-|------|------|
-| `README.md` | public 向けの概要と起動方法 |
-| `docs/cloudflare-quick-tunnel.md` | public 公開まわりの基本手順 |
-| `docs/cloudflare-access.md` | public Hub を Cloudflare Access で保護する方法 |
-| `docs/cloudflare-daemon.md` | public tunnel の常駐運用 |
+1. Run `env | rg '^MULTIAGENT|^TMUX'` to confirm your session
+2. Send messages to user or other agents via `agent-send`
+3. To share files, include `[Attached: relative/path]` in the body
+4. Check history with `agent-index` or `.agent-index.jsonl`
 
-internal な補助メモや editor / agent 固有の指示ファイルは、必要なら別管理にする。public 向けの恒久文書からは安易に参照しない。
+---
+
+## 9. Related Documents
+
+| Path | Description |
+|------|-------------|
+| `README.md` | Public overview and quickstart |
+| `docs/cloudflare-quick-tunnel.md` | Cloudflare quick tunnel setup |
+| `docs/cloudflare-access.md` | Protecting the public Hub with Cloudflare Access |
+| `docs/cloudflare-daemon.md` | Running the public tunnel as a daemon |
+
+Internal notes and editor/agent-specific instruction files should be managed separately. Do not casually reference them from public-facing permanent docs.
