@@ -3227,6 +3227,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       word-break: normal;
       box-shadow: none;
       -webkit-overflow-scrolling: touch;
+      min-height: var(--code-scroll-stable-height, auto);
     }
     .md-body .code-block-wrap {
       position: relative;
@@ -4671,14 +4672,62 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const scheduleViewportCenteredBlocks = (scope = document) => {
       syncWideBlockRows(scope);
     };
+    let stableCodeBlocksRaf = 0;
+    const stableCodeBlockScopes = new Set();
+    const queueStableCodeBlockSync = (scope = document) => {
+      if (scope) stableCodeBlockScopes.add(scope);
+      if (stableCodeBlocksRaf) return;
+      stableCodeBlocksRaf = requestAnimationFrame(() => {
+        stableCodeBlocksRaf = 0;
+        const scopes = Array.from(stableCodeBlockScopes);
+        stableCodeBlockScopes.clear();
+        const seen = new Set();
+        const pres = [];
+        scopes.forEach((target) => {
+          if (!target) return;
+          const list = target?.matches?.(".md-body pre")
+            ? [target]
+            : Array.from(target.querySelectorAll?.(".md-body pre") || []);
+          list.forEach((pre) => {
+            if (!pre || !pre.isConnected || seen.has(pre)) return;
+            seen.add(pre);
+            pres.push(pre);
+          });
+        });
+        pres.forEach((pre) => {
+          const width = pre.clientWidth || 0;
+          const prevWidth = Number.parseFloat(pre.dataset.stableWidth || "0");
+          const widthChanged = Math.abs(width - prevWidth) > 0.5;
+          if (widthChanged) {
+            pre.style.removeProperty("--code-scroll-stable-height");
+          }
+          const hasHorizontalScroll = (pre.scrollWidth - pre.clientWidth) > 1;
+          if (hasHorizontalScroll) {
+            pre.style.setProperty("--code-scroll-stable-height", `${pre.offsetHeight}px`);
+            pre.dataset.stableWidth = String(width);
+            pre.dataset.stableCodeScroll = "1";
+          } else if (widthChanged || pre.dataset.stableCodeScroll === "1") {
+            pre.style.removeProperty("--code-scroll-stable-height");
+            pre.dataset.stableWidth = String(width);
+            delete pre.dataset.stableCodeScroll;
+          } else {
+            pre.dataset.stableWidth = String(width);
+          }
+        });
+      });
+    };
     updateScrollBtnPos();
     new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("composer"));
     new ResizeObserver(updateScrollBtnPos).observe(document.querySelector(".composer-main-shell"));
     new ResizeObserver(updateScrollBtnPos).observe(document.getElementById("targetPicker"));
     window.addEventListener("resize", updateScrollBtnPos);
     window.addEventListener("resize", () => scheduleViewportCenteredBlocks(document));
+    window.addEventListener("resize", () => queueStableCodeBlockSync(document));
     if (document.fonts?.ready) {
-      document.fonts.ready.then(() => scheduleViewportCenteredBlocks(document)).catch(() => {});
+      document.fonts.ready.then(() => {
+        scheduleViewportCenteredBlocks(document);
+        queueStableCodeBlockSync(document);
+      }).catch(() => {});
     }
     const AGENT_ICON_NAMES = __AGENT_ICON_NAMES_JS_SET__;
     const ALL_BASE_AGENTS = __ALL_BASE_AGENTS_JS_ARRAY__;
@@ -5407,8 +5456,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           _renderedIds.add(entry.msg_id);
         }
         root.appendChild(frag);
-        appendedRows.forEach((row) => { renderMathInScope(row); renderMermaidInScope(row); });
-        scheduleViewportCenteredBlocks(root);
+        appendedRows.forEach((row) => {
+          renderMathInScope(row);
+          renderMermaidInScope(row);
+          scheduleViewportCenteredBlocks(row);
+          syncUserMessageCollapse(row);
+        });
+        queueStableCodeBlockSync(root);
       } else {
         // Full re-render: do not animate existing messages
         root.innerHTML = `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` + displayEntries.map(entry =>
@@ -5418,10 +5472,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         renderMathInScope(root);
         renderMermaidInScope(root);
         scheduleViewportCenteredBlocks(root);
+        syncUserMessageCollapse(root);
+        queueStableCodeBlockSync(root);
       }
       renderThinkingIndicator();
       applyFilter();
-      syncUserMessageCollapse(root);
       if (shouldStickToBottom) {
         const scrollBehavior = "auto";
         scrollLatestMessageBottomToCenter(scrollBehavior);
