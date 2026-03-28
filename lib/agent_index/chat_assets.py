@@ -4165,11 +4165,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const host = String(location.hostname || "");
       return host === "127.0.0.1" || host === "localhost" || host === "[::1]" || host.startsWith("192.168.") || host.startsWith("10.") || /^172\\.(1[6-9]|2\\d|3[01])\\./.test(host);
     })();
-    const PUBLIC_MESSAGE_BATCH = 100;
+    const MESSAGE_BATCH = 100;
     let latestPayloadData = null;
-    let publicOlderEntries = [];
-    let publicOlderHasMore = false;
-    let publicOlderLoading = false;
+    let olderEntries = [];
+    let olderHasMore = false;
+    let olderLoading = false;
     let publicFullEntryCache = new Map();
     let publicDeferredLoading = new Set();
     let publicDeferredObserver = null;
@@ -4942,7 +4942,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     timeline.addEventListener("scroll", updateStickyState, { passive: true });
     timeline.addEventListener("scroll", () => {
-      if (!isPublicChatView || publicOlderLoading || !publicOlderHasMore) return;
+      if (olderLoading || !olderHasMore) return;
       if (timeline.scrollTop > PUBLIC_OLDER_AUTOLOAD_THRESHOLD) return;
       void loadOlderMessages();
     }, { passive: true });
@@ -5398,16 +5398,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     const displayEntriesForData = (data) => {
       const baseEntries = Array.isArray(data?.entries) ? data.entries : [];
-      if (!isPublicChatView) return baseEntries.slice(-__MESSAGE_LIMIT__);
-      return mergeEntriesById(publicOlderEntries, baseEntries).slice(-__MESSAGE_LIMIT__);
+      return mergeEntriesById(olderEntries, baseEntries).slice(-__MESSAGE_LIMIT__);
     };
     const messagesFetchUrl = (extra = {}) => {
       const params = new URLSearchParams();
       params.set("ts", String(Date.now()));
-      if (isPublicChatView) {
-        params.set("limit", String(PUBLIC_MESSAGE_BATCH));
-        params.set("light", "1");
-      }
+      params.set("limit", String(MESSAGE_BATCH));
+      if (isPublicChatView) params.set("light", "1");
       Object.entries(extra || {}).forEach(([key, value]) => {
         if (value === undefined || value === null || value === "") return;
         params.set(key, String(value));
@@ -5915,14 +5912,14 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       });
     };
     const loadOlderMessages = async () => {
-      if (!isPublicChatView || publicOlderLoading || !latestPayloadData) return;
+      if (olderLoading || !latestPayloadData) return;
       const firstMsgId = displayEntriesForData(latestPayloadData)[0]?.msg_id || "";
       if (!firstMsgId) {
-        publicOlderHasMore = false;
+        olderHasMore = false;
         rerenderCurrentMessages();
         return;
       }
-      publicOlderLoading = true;
+      olderLoading = true;
       const prevHeight = timeline.scrollHeight;
       const prevTop = timeline.scrollTop;
       rerenderCurrentMessages();
@@ -5930,14 +5927,14 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const res = await fetchWithTimeout(messagesFetchUrl({ before_msg_id: firstMsgId }));
         if (!res.ok) throw new Error("older messages unavailable");
         const data = await res.json();
-        const olderEntries = Array.isArray(data?.entries) ? data.entries : [];
-        publicOlderHasMore = !!data?.has_older;
-        if (olderEntries.length) {
-          publicOlderEntries = mergeEntriesById(olderEntries, publicOlderEntries);
+        const olderBatch = Array.isArray(data?.entries) ? data.entries : [];
+        olderHasMore = !!data?.has_older;
+        if (olderBatch.length) {
+          olderEntries = mergeEntriesById(olderBatch, olderEntries);
         }
       } catch (_) {
       } finally {
-        publicOlderLoading = false;
+        olderLoading = false;
         rerenderCurrentMessages();
         const delta = timeline.scrollHeight - prevHeight;
         timeline.scrollTop = prevTop + delta;
@@ -5991,15 +5988,15 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const data = await res.json();
         const nextServerInstance = data?.server_instance || "";
         if (nextServerInstance && currentServerInstance && nextServerInstance !== currentServerInstance) {
-          publicOlderEntries = [];
-          publicOlderHasMore = false;
+          olderEntries = [];
+          olderHasMore = false;
           publicFullEntryCache = new Map();
           publicDeferredLoading = new Set();
         }
         if (nextServerInstance) currentServerInstance = nextServerInstance;
         latestPayloadData = data;
-        if (isPublicChatView && !publicOlderEntries.length) {
-          publicOlderHasMore = !!data?.has_older;
+        if (!olderEntries.length) {
+          olderHasMore = !!data?.has_older;
         }
         messageRefreshFailures = 0;
         setReconnectStatus(false);

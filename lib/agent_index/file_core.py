@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 import shlex
@@ -15,6 +16,9 @@ from .file_preview_3d import render_3d_preview
 
 
 class FileRuntime:
+    INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES = 512 * 1024
+    RAW_STREAM_CHUNK_BYTES = 64 * 1024
+    PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES = 128 * 1024
     MIME_TYPES = {
         ".png": "image/png",
         ".jpg": "image/jpeg",
@@ -95,6 +99,93 @@ class FileRuntime:
         with open(full, "rb") as f:
             raw = f.read()
         return self.MIME_TYPES.get(ext, "application/octet-stream"), raw
+
+    @classmethod
+    def content_type_for_rel(cls, rel: str) -> str:
+        ext = os.path.splitext(rel)[1].lower()
+        return cls.MIME_TYPES.get(ext, "application/octet-stream")
+
+    @staticmethod
+    def _format_size(size: int) -> str:
+        value = float(size)
+        for unit in ("B", "KB", "MB", "GB", "TB"):
+            if value < 1024.0 or unit == "TB":
+                if unit == "B":
+                    return f"{int(value)} {unit}"
+                return f"{value:.1f} {unit}"
+            value /= 1024.0
+        return f"{size} B"
+
+    @staticmethod
+    def _parse_single_range(range_header: str, size: int):
+        if not range_header:
+            return 0, max(0, size - 1), False
+        if size <= 0 or not range_header.startswith("bytes="):
+            raise ValueError("invalid range")
+        spec = range_header[6:].strip()
+        if not spec or "," in spec or "-" not in spec:
+            raise ValueError("invalid range")
+        start_raw, end_raw = spec.split("-", 1)
+        if not start_raw:
+            suffix_length = int(end_raw or "0")
+            if suffix_length <= 0:
+                raise ValueError("invalid range")
+            start = max(0, size - suffix_length)
+            end = size - 1
+        else:
+            start = int(start_raw)
+            end = size - 1 if not end_raw else int(end_raw)
+            if start < 0 or end < start or start >= size:
+                raise ValueError("invalid range")
+            end = min(end, size - 1)
+        return start, end, True
+
+    def raw_response_metadata(self, rel: str, range_header: str = "") -> dict:
+        full = self._resolve_path(rel)
+        size = os.path.getsize(full)
+        try:
+            start, end, is_partial = self._parse_single_range(range_header, size)
+        except ValueError:
+            return {
+                "status": 416,
+                "size": size,
+                "content_type": self.content_type_for_rel(rel),
+                "full_path": full,
+            }
+        if size == 0:
+            start = 0
+            end = -1
+            is_partial = False
+        length = 0 if end < start else (end - start + 1)
+        return {
+            "status": 206 if is_partial else 200,
+            "size": size,
+            "start": start,
+            "end": end,
+            "length": length,
+            "is_partial": is_partial,
+            "content_type": self.content_type_for_rel(rel),
+            "content_range": f"bytes {start}-{end}/{size}" if is_partial else "",
+            "full_path": full,
+        }
+
+    @classmethod
+    def stream_raw_response(cls, metadata: dict, write):
+        length = int(metadata.get("length", 0) or 0)
+        if length <= 0:
+            return
+        full_path = str(metadata.get("full_path") or "")
+        start = int(metadata.get("start", 0) or 0)
+        with open(full_path, "rb") as handle:
+            handle.seek(start)
+            remaining = length
+            while remaining > 0:
+                chunk = handle.read(min(cls.RAW_STREAM_CHUNK_BYTES, remaining))
+                if not chunk:
+                    break
+                remaining -= len(chunk)
+                if write(chunk) is False:
+                    break
 
     def file_content(self, rel: str):
         full = self._resolve_path(rel, allow_workspace_root=True)
@@ -297,6 +388,7 @@ delay 0.2
         filename = os.path.basename(rel)
         prefix = (base_path or "").rstrip("/")
         raw_url = f"{prefix}/file-raw?path={url_quote(rel)}"
+        size = os.path.getsize(full)
         pane_bg = "rgb(20, 20, 19)"
         embed_bg = "transparent" if embed else pane_bg
         pane_fg = "rgb(252, 252, 252)"
@@ -470,6 +562,84 @@ delay 0.2
                 embed_bg=embed_bg,
                 pane_muted=pane_muted,
                 pane_line=pane_line,
+            )
+        is_text_like = ext in self.EDITABLE_TEXT_EXTS or self._is_probably_text_file(full)
+        if is_text_like and size > self.INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES:
+            chunk_bytes = self.PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES
+            border = "rgba(255,255,255,0.08)"
+            muted = "rgba(252,252,252,0.72)"
+            return (
+                f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
+                "<style>"
+                ":root{color-scheme:dark;}*{box-sizing:border-box}"
+                f"html,body{{margin:0;height:100%;background:{embed_bg};color:{pane_fg};font-family:ui-sans-serif,system-ui,sans-serif}}"
+                "body{display:flex;flex-direction:column}"
+                f".shell{{display:flex;flex-direction:column;min-height:100%;background:{embed_bg}}}"
+                f".wrap{{flex:1;min-height:100%;overflow:auto;padding:0 0 24px}}"
+                f".status{{position:sticky;top:0;z-index:1;padding:8px 14px;background:linear-gradient(to bottom, rgba(20,20,19,0.96), rgba(20,20,19,0.72));border-bottom:1px solid {border};color:{muted};font-size:12px}}"
+                f'.viewer{{margin:0;padding:14px;white-space:pre-wrap;word-break:break-word;font:12px/1.6 "JetBrains Mono","SFMono-Regular",Menlo,monospace;color:{pane_fg}}}'
+                "</style></head><body>"
+                "<div class=\"shell\">"
+                "<div class=\"wrap\" id=\"wrap\">"
+                "<div class=\"status\" id=\"status\">Loading preview...</div>"
+                "<pre class=\"viewer\" id=\"viewer\"></pre>"
+                "</div>"
+                "<script>"
+                f"const rawUrl={json.dumps(raw_url)};"
+                f"const fileExt={json.dumps(ext)};"
+                f"const totalBytes={size};"
+                f"const chunkBytes={chunk_bytes};"
+                "const wrap=document.getElementById('wrap');"
+                "const viewer=document.getElementById('viewer');"
+                "const status=document.getElementById('status');"
+                "const decoder=new TextDecoder();"
+                "let offset=0;let loading=false;let done=false;"
+                "const setStatus=(text)=>{status.textContent=text;};"
+                "const escapeHtml=(text)=>String(text||'').replace(/[&<>\"']/g,(char)=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[char]||char));"
+                "const applyOutsideTags=(value,pattern,replacement)=>value.split(/(<[^>]*>)/g).map((part)=>part.startsWith('<')?part:part.replace(pattern,replacement)).join('');"
+                "const highlightText=(text,ext)=>{"
+                " let out=escapeHtml(text);"
+                " if(['.py','.sh','.yaml','.yml'].includes(ext)){out=out.replace(/(^[ \\t]*#[^\\n]*)/gm,'<span style=\"color:#5c6370\">$1</span>');}"
+                " else if(['.js','.ts','.css','.sql','.json'].includes(ext)){out=out.replace(/(\\/\\/[^\\n]*)/g,'<span style=\"color:#5c6370\">$1</span>');}"
+                " else if(ext==='.tex'){out=out.replace(/(^[ \\t]*%[^\\n]*)/gm,'<span style=\"color:#5c6370\">$1</span>');}"
+                " out=applyOutsideTags(out,/(\"(?:[^\"\\\\<\\n]|\\\\.)*\"|'(?:[^'\\\\<\\n]|\\\\.)*')/g,'<span style=\"color:#98c379\">$1</span>');"
+                " out=applyOutsideTags(out,/(^|[^\\w#])(-?\\d+(?:\\.\\d+)?)/g,'$1<span style=\"color:#d19a66\">$2</span>');"
+                " if(['.json','.yaml','.yml'].includes(ext)){out=applyOutsideTags(out,/(^[ \\t-]*)([A-Za-z_][\\w.-]*)(\\s*:)/gm,'$1<span style=\"color:#56b6c2\">$2</span>$3');}"
+                " if(ext==='.tex'){out=applyOutsideTags(out,/(\\\\[A-Za-z@]+)/g,'<span style=\"color:#e06c75\">$1</span>');}"
+                " if(ext==='.html'){out=applyOutsideTags(out,/(&lt;\\/?)([A-Za-z][\\w:-]*)/g,'$1<span style=\"color:#e06c75\">$2</span>');out=applyOutsideTags(out,/([A-Za-z_:][\\w:.-]*)(=)(&quot;.*?&quot;)/g,'<span style=\"color:#56b6c2\">$1</span>$2<span style=\"color:#98c379\">$3</span>');}"
+                " if(ext==='.css'){out=applyOutsideTags(out,/(^[ \\t]*)([.#]?[A-Za-z_-][\\w:-]*)(\\s*\\{)/gm,'$1<span style=\"color:#e06c75\">$2</span>$3');out=applyOutsideTags(out,/([A-Za-z-]+)(\\s*:)/g,'<span style=\"color:#56b6c2\">$1</span>$2');}"
+                " if(['.py','.js','.sh','.sql'].includes(ext)){out=applyOutsideTags(out,/(^[ \\t]*@[\\w.]+)/gm,'<span style=\"color:#e06c75\">$1</span>');}"
+                " out=applyOutsideTags(out,/\\b(def|class|import|from|return|if|else|elif|for|while|try|except|with|as|yield|await|async|function|const|let|var|type|interface|enum|public|private|protected|static|readonly|do|switch|case|default|break|continue|new|delete|typeof|instanceof|void|this|super|in|of|null|undefined|true|false)\\b/g,'<span style=\"color:#c678dd\">$1</span>');"
+                " out=applyOutsideTags(out,/\\b(str|int|float|bool|list|dict|tuple|set|None|self|cls|SELECT|FROM|WHERE|GROUP|ORDER|BY|JOIN|LEFT|RIGHT|INNER|OUTER|LIMIT|INSERT|UPDATE|DELETE|CREATE|TABLE|VALUES)\\b/g,'<span style=\"color:#e5c07b\">$1</span>');"
+                " out=applyOutsideTags(out,/\\b(print|len|range|echo|printf|console|log)\\b/g,'<span style=\"color:#56b6c2\">$1</span>');"
+                " out=applyOutsideTags(out,/\\b([A-Za-z_][\\w]*)(?=\\()/g,'<span style=\"color:#61afef\">$1</span>');"
+                " out=applyOutsideTags(out,/([{}()[\\],.:;=+\\-/*<>])/g,'<span style=\"color:#7f848e\">$1</span>');"
+                " return out;"
+                "};"
+                "const maybeLoad=()=>{if(done||loading)return;if((wrap.scrollTop+wrap.clientHeight)>=(wrap.scrollHeight-320)){void loadNext();}};"
+                "const loadNext=async()=>{"
+                " if(done||loading)return;"
+                " loading=true;"
+                " const start=offset;const end=Math.min(totalBytes-1,start+chunkBytes-1);"
+                " setStatus(`Loading ${Math.min(totalBytes,end+1).toLocaleString()} / ${totalBytes.toLocaleString()} bytes...`);"
+                " try{"
+                "  const res=await fetch(rawUrl,{cache:'no-store',headers:{Range:`bytes=${start}-${end}`}});"
+                "  if(!(res.ok||res.status===206)) throw new Error('preview failed');"
+                "  const buf=await res.arrayBuffer();"
+                "  if(buf.byteLength===0){done=true;setStatus(`Loaded ${offset.toLocaleString()} / ${totalBytes.toLocaleString()} bytes`);return;}"
+                "  offset += buf.byteLength;"
+                "  const finalChunk = offset >= totalBytes;"
+                "  const textChunk=decoder.decode(buf,{stream:!finalChunk});"
+                "  viewer.insertAdjacentHTML('beforeend',highlightText(textChunk,fileExt));"
+                "  if(finalChunk){const tail=decoder.decode();if(tail)viewer.insertAdjacentHTML('beforeend',highlightText(tail,fileExt));done=true;setStatus(`Loaded ${totalBytes.toLocaleString()} bytes`);}else{setStatus(`Loaded ${offset.toLocaleString()} / ${totalBytes.toLocaleString()} bytes`);}"
+                " }catch(err){setStatus('Preview load failed.');}"
+                " finally{loading=false;if(!done && wrap.scrollHeight <= wrap.clientHeight + 48){setTimeout(maybeLoad,0);}}"
+                "};"
+                "wrap.addEventListener('scroll',maybeLoad,{passive:true});"
+                "window.addEventListener('resize',maybeLoad,{passive:true});"
+                "void loadNext();"
+                "</script>"
+                "</div></body></html>"
             )
         if ext in self.TEXT_EXTS:
             with open(full, "r", encoding="utf-8", errors="replace") as f:
