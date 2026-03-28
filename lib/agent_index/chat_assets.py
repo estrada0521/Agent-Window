@@ -8928,7 +8928,47 @@ def _agent_css_selectors(theme: str = "black-hole") -> dict[str, str]:
     }
 
 
-def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, follow, chat_base_path="", externalize_app_script=False):
+_CHAT_MAIN_STYLE_OPEN = "  <style>\n"
+_CHAT_MAIN_STYLE_CLOSE = "  </style>\n"
+_chat_main_style_start = CHAT_HTML.find(_CHAT_MAIN_STYLE_OPEN)
+if _chat_main_style_start < 0:
+    raise ValueError("chat main style block not found")
+_chat_main_style_end = CHAT_HTML.find(_CHAT_MAIN_STYLE_CLOSE, _chat_main_style_start)
+if _chat_main_style_end < 0:
+    raise ValueError("chat main style close tag not found")
+CHAT_MAIN_STYLE_BLOCK = CHAT_HTML[
+    _chat_main_style_start:_chat_main_style_end + len(_CHAT_MAIN_STYLE_CLOSE)
+]
+CHAT_MAIN_STYLE_TEMPLATE = CHAT_HTML[
+    _chat_main_style_start + len(_CHAT_MAIN_STYLE_OPEN):_chat_main_style_end
+]
+CHAT_MAIN_STYLE_ASSET = CHAT_MAIN_STYLE_TEMPLATE
+for _font_name in (
+    "anthropic-serif-roman.ttf",
+    "anthropic-serif-italic.ttf",
+    "anthropic-sans-roman.ttf",
+    "anthropic-sans-italic.ttf",
+    "jetbrains-mono.ttf",
+):
+    CHAT_MAIN_STYLE_ASSET = CHAT_MAIN_STYLE_ASSET.replace(
+        f'"__CHAT_BASE_PATH__/font/{_font_name}"',
+        f'"../font/{_font_name}"',
+    )
+for _placeholder, _value in {
+    **_agent_css_selectors(),
+    "__HUB_HEADER_CSS__": HUB_PAGE_HEADER_CSS,
+}.items():
+    CHAT_MAIN_STYLE_ASSET = CHAT_MAIN_STYLE_ASSET.replace(_placeholder, _value)
+CHAT_MAIN_STYLE_VERSION = hashlib.sha256(CHAT_MAIN_STYLE_ASSET.encode("utf-8")).hexdigest()[:12]
+
+
+def chat_style_asset_url(chat_base_path: str = "") -> str:
+    base_path = chat_base_path.rstrip("/")
+    asset_path = f"{base_path}/chat-assets/chat-app.css" if base_path else "/chat-assets/chat-app.css"
+    return f"{asset_path}?v={CHAT_MAIN_STYLE_VERSION}"
+
+
+def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, follow, chat_base_path="", externalize_app_script=False, externalize_main_style=False):
     base_path = chat_base_path.rstrip("/")
     if base_path and logo_data_uri == "/hub-logo":
         logo_src = f"{base_path}/hub-logo"
@@ -8944,6 +8984,12 @@ def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port
         panels_html=CHAT_HEADER_PANELS_HTML,
     )
     html = CHAT_HTML
+    if externalize_main_style:
+        html = html.replace(
+            CHAT_MAIN_STYLE_BLOCK,
+            '  <link rel="stylesheet" href="__CHAT_STYLE_ASSET_URL__">\n',
+            1,
+        )
     if externalize_app_script:
         html = html.replace(
             CHAT_APP_SCRIPT_BLOCK,
@@ -8963,6 +9009,7 @@ def render_chat_html(*, icon_data_uris, logo_data_uri, server_instance, hub_port
         .replace("__ICON_DATA_URIS__", json.dumps(icon_data_uris, ensure_ascii=True))
         .replace("__HUB_LOGO_DATA_URI__", logo_src)
         .replace("__CHAT_BASE_PATH__", base_path)
+        .replace("__CHAT_STYLE_ASSET_URL__", chat_style_asset_url(base_path) if externalize_main_style else "")
         .replace(
             "__CHAT_APP_BOOTSTRAP__",
             render_chat_app_bootstrap_html(
