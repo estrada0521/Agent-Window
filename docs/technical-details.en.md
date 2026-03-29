@@ -11,7 +11,7 @@ The main responsibilities are split across session creation, message delivery, H
 | File | Role |
 |------|------|
 | `bin/multiagent` | create tmux sessions, place agent panes, add / remove agents, save pane logs |
-| `bin/agent-send` | deliver messages to `user`, agents, or `others`; inject sender header; retain `msg_id` / `reply-to` metadata; append JSONL |
+| `bin/agent-send` | deliver messages to `user`, agents, or `others`; auto-add `[From: ...]` header; generate `msg_id` / `reply-to` metadata; append JSONL |
 | `bin/agent-index` | Hub, chat UI, Stats, Settings, and HTTP endpoints such as upload / trace / export |
 | `lib/agent_index/chat_core.py` | chat-server runtime, message payload, pane status, trace, save log |
 | `lib/agent_index/chat_assets.py` | chat UI HTML / CSS / JavaScript, composer, brief / memory, Pane Trace |
@@ -20,6 +20,7 @@ The main responsibilities are split across session creation, message delivery, H
 | `lib/agent_index/export_core.py` | standalone HTML export builder |
 | `lib/agent_index/state_core.py` | persistence for Hub settings, chat ports, and thinking totals |
 | `lib/agent_index/agent_registry.py` | supported agent CLIs, launch / resume flags, icon metadata |
+| `bin/multiagent-public-edge` | Cloudflare-facing reverse proxy for public session access |
 
 The current per-session storage layout is:
 
@@ -80,6 +81,12 @@ Normal sends from the chat UI go through `POST /send`, and `ChatRuntime.send_mes
 
 Pane Trace comes from `GET /trace?agent=<name>&lines=<n>`. `trace_content()` uses `tmux capture-pane -p -e` and either returns a tail window or a much larger scrollback. The front-end polls only the currently visible tab: every 100ms on local / LAN hosts, every 1.5 seconds on public hosts.
 
+On desktop, the Pane Trace popup supports multiple layout modes: single pane, horizontal split, vertical split, three-pane arrangements, and a four-pane grid. Each slot polls its assigned agent independently. Agents can be reassigned per slot through tab clicks or drag-and-drop of agent icons onto pane slots. Extra polling intervals are created for each additional pane beyond the first and cleaned up when the layout changes.
+
+Polling updates do not auto-scroll. Only the initial load and explicit agent switches scroll to the bottom. When the user scrolls away from the bottom of a pane (more than 48px from the end), DOM updates are paused entirely so that text selection and copy are not disrupted by incoming refreshes. Updates resume automatically when the user scrolls back to the bottom.
+
+ANSI escape sequences in pane output are converted to styled HTML using the `AnsiUp` library. The conversion runs client-side in both mobile and desktop views. Special characters such as the trace dot (`●`) are wrapped in a dedicated `<span>` for consistent rendering across platforms, particularly iOS where emoji-variant rendering can differ.
+
 Thinking rows and Pane Trace are related but not identical. The thinking row is a status summary. Pane Trace is the pane-side text snapshot. The first is lightweight state; the second is actual pane content.
 
 ## 2. Composer / Input Modes
@@ -108,6 +115,8 @@ Slash commands are defined in the front-end `SLASH_COMMANDS` array. Their backen
 
 `@` insertion is the workspace-side file-reference path. The front-end inserts relative file paths into the conversation, and `/files-exist` validates them when needed. Import is a different pipeline. `POST /upload` stores the file body under `logs/<session>/uploads/<timestamp>_<hex>.<ext>`. The server returns the workspace-relative path, and the chat UI turns it into an attachment card.
 
+Attachment cards support renaming before send. Tapping a card opens a popup where the user can enter a label. On send, `POST /rename-upload` renames the file on disk to the chosen label (preserving the extension), and the sent message references the new filename. The label is sanitized server-side: control characters, path separators, and non-word characters are stripped or replaced, and the result is truncated to 80 characters. Collisions are resolved by appending a short random suffix.
+
 ### Brief and Memory
 
 Brief is managed by `/briefs`, `GET /brief-content`, and `POST /brief-content` in `bin/agent-index`. Names are normalized into `brief_<name>.md` under `logs/<session>/brief/`. The Brief button first fetches the stored list, then reads the selected brief body, then sends it sequentially to the selected targets with `silent=true`.
@@ -118,7 +127,11 @@ Memory is stored per agent in `logs/<session>/memory/<agent>/memory.md`, with hi
 
 ### Branch Menu
 
-The branch menu is driven by git-overview and diff endpoints from the chat server. Current branch, dirty state, commit list, and diff chunks are fetched as JSON and rendered into the panel / carousel UI. `ChatRuntime.ensure_commit_announcements()` also compares the current `git log -1` result with the previously recorded commit state. When a new commit appears, it appends a `kind="git-commit"` system entry into JSONL. Stats later uses those system entries as the source of commit counts.
+The branch menu is driven by git-overview and diff endpoints from the chat server. Current branch, dirty state, commit list, and diff chunks are fetched as JSON and rendered into the panel / carousel UI. The commit list is paginated: `/git-branch-overview` accepts `offset` and `limit` parameters and returns commits in batches (default 50). The front-end uses an `IntersectionObserver` on a sentinel element at the bottom of the list to trigger loading the next page, or the user can tap a `Load more` button. This avoids running `git log --stat` across the entire history on initial load.
+
+Uncommitted changes are shown at the top of the branch menu, above the commit history. The diff is generated from `git diff HEAD` and `git diff --cached` and rendered inline.
+
+`ChatRuntime.ensure_commit_announcements()` also compares the current `git log -1` result with the previously recorded commit state. When a new commit appears, it appends a `kind="git-commit"` system entry into JSONL. Stats later uses those system entries as the source of commit counts.
 
 ### File Menu
 
@@ -146,11 +159,68 @@ Settings flow through `state_core.load_hub_settings()` and `save_hub_settings()`
 
 `ExportRuntime` builds a standalone HTML file around the chat payload. It embeds payload data, icons, and fonts when available, plus CDN fallbacks for scripts and CSS. Fetches such as `/messages` and `/trace` are replaced with export-local shims, so the downloaded HTML can be opened as a static viewer without a live server.
 
-## 6. LAN / Public Access
+## 6. Robustness and Recovery
+
+### tmux command wrapper
+
+All tmux subprocess calls from `hub_core.py` go through `tmux_run()`, which returns a `TmuxRunResult` dataclass carrying `args`, `returncode`, `stdout`, `stderr`, and a `timed_out` flag. The default timeout is 2 seconds for read operations and 4 seconds for destructive operations like `kill-session`. When a subprocess exceeds its timeout, `TmuxRunResult.timed_out` is set to `True` and `returncode` is set to 124 (the conventional timeout exit code). This result object is duck-type-compatible with `subprocess.CompletedProcess`, so existing callers that check `.returncode` and `.stdout` continue to work without changes.
+
+### Unhealthy vs missing
+
+Session queries (`repo_sessions_query()`, `active_session_records()`) return a `RepoSessionsQueryResult` with a `state` field that is either `"ok"` or `"unhealthy"`, plus an optional `detail` string. The `"unhealthy"` state is set only when a tmux command timed out, never when it returned a non-zero exit code for normal reasons such as a session not existing. This distinction prevents the Hub from treating a slow tmux server as evidence that all sessions are gone. When the state is `"unhealthy"`, the Hub returns HTTP 503 instead of 404, and the UI shows a temporary-failure message rather than an empty session list.
+
+### Session revive guards
+
+`revive_archived_session()` runs a sequence of pre-checks before launching a session:
+
+1. Query tmux health. If `"unhealthy"`, abort immediately with a descriptive error.
+2. Check whether the session is already active. If so, return success without relaunching.
+3. Look up the archived record to retrieve the stored workspace path and agent set.
+4. Verify the workspace directory still exists and is accessible.
+
+After launching, the system polls up to 80 times at 150ms intervals (roughly 12 seconds total). Between polls it re-checks tmux health; if tmux becomes unresponsive during startup, the revive is aborted rather than left waiting indefinitely.
+
+### Pane log protection
+
+`_save_pane_logs_to_dir()` in `bin/multiagent` writes each pane capture to a temporary file (`${ans_file}.tmp.$$`) before comparing it against the existing snapshot. The protection trigger fires when the old file exceeds 1 KB and the new capture is less than half that size. When triggered, the old `.ans` and `.log` are copied to `${instance}.${timestamp}.protected.ans` and `.protected.log` before the new content overwrites them. The warning is also logged to stderr with old and new byte counts.
+
+This mechanism detects pane resets caused by agent process restarts, tmux pane clears, or session re-creation. Without it, the two-minute autosave cycle would silently replace a full terminal history with a near-empty buffer.
+
+### Delete path validation
+
+`delete_session()` in `hub_core.py` resolves the target path and checks it against a whitelist of allowed roots: the central log directory, the legacy log directory, and the local state workspace directory. If the resolved path falls outside all allowed roots, the delete is refused. This prevents path-traversal attacks or accidental deletion of unrelated directories through crafted session names.
+
+### `.meta` structure
+
+Each session directory contains a `.meta` JSON file maintained by `_update_session_meta()`:
+
+```json
+{
+  "session": "multiagent",
+  "workspace": "/path/to/workspace",
+  "created_at": "2026-03-29 10:15:32",
+  "updated_at": "2026-03-29 12:30:00",
+  "overwrite_count": 5,
+  "agents": ["claude", "codex", "gemini"],
+  "overwrites": [
+    {"timestamp": "2026-03-29 10:15:32", "reason": "initial"},
+    {"timestamp": "2026-03-29 10:17:22", "reason": "autosave"},
+    {"timestamp": "2026-03-29 12:30:00", "reason": "manual"}
+  ]
+}
+```
+
+`created_at` is preserved across saves. `updated_at` and the `overwrites` array are appended on every save. The `reason` field distinguishes `"initial"`, `"autosave"`, `"manual"`, `"kill"`, and other lifecycle events, making it possible to reconstruct when and why each snapshot was taken.
+
+## 7. LAN / Public Access
 
 `bin/agent-index` serves both the chat server and the Hub server. When certificate paths are available it listens with HTTPS. On startup it prints both local and LAN URLs, and session URLs follow `/session/<name>/`.
 
-Optional public access is handled by `bin/multiagent-cloudflare`. Quick Tunnel manages temporary public URLs. Named tunnel manages a fixed hostname and DNS. `access-enable` / `access-disable` update Cloudflare Access metadata and config. `daemon-install` adds a watchdog for keeping the public edge alive after login. All of these paths preserve the same local Hub / chat URL structure and place a public hostname in front of it.
+Optional public access is handled by `bin/multiagent-cloudflare` and `bin/multiagent-public-edge`. The public edge is a lightweight reverse proxy that sits between Cloudflare and the local Hub / chat servers. It forwards requests to the appropriate local port based on the session name in the URL path, and shares the same incremental message loading logic as the local chat server through `lib/agent_index/file_core.py`.
+
+Quick Tunnel manages temporary public URLs. Named tunnel manages a fixed hostname and DNS. `access-enable` / `access-disable` update Cloudflare Access metadata and config. `daemon-install` adds a watchdog for keeping the public edge alive after login. All of these paths preserve the same local Hub / chat URL structure and place a public hostname in front of it.
+
+The public edge applies the same tmux health awareness as the local Hub. When tmux is unresponsive, session pages return 503 rather than attempting to revive or returning stale data. Session revive through the public edge also checks tmux health before proceeding.
 
 ## Related Docs
 
