@@ -6093,6 +6093,47 @@ class Handler(BaseHTTPRequestHandler):
                 rel_path = str(save_path)
             self._send_json(200, {"ok": True, "path": rel_path})
             return
+        if parsed.path == "/rename-upload":
+            import json as _json_rename, re as _re_rename
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                length = 0
+            body = _json_rename.loads(self.rfile.read(length) or b"{}")
+            old_rel = body.get("path", "")
+            label = body.get("label", "").strip()
+            if not old_rel or not label:
+                self._send_json(400, {"ok": False, "error": "path and label required"})
+                return
+            old_path = Path(workspace) / old_rel
+            if not old_path.is_file():
+                self._send_json(404, {"ok": False, "error": "file not found"})
+                return
+            label = _re_rename.sub(r"[\x00-\x1f\x7f\u200b-\u200f\u2028\u2029/\\]", "", label)
+            label = _re_rename.sub(r"[^\w\-. ]", "_", label).strip()[:80]
+            if not label:
+                self._send_json(400, {"ok": False, "error": "invalid label"})
+                return
+            ext = old_path.suffix
+            stem = old_path.stem
+            parts = stem.split("_", 2)
+            if len(parts) >= 2:
+                ts_prefix = parts[0] + "_" + parts[1]
+            else:
+                ts_prefix = stem
+            new_name = f"{ts_prefix}_{label}{ext}"
+            new_path = old_path.parent / new_name
+            if new_path.exists() and new_path != old_path:
+                import uuid as _uuid_rename
+                new_name = f"{ts_prefix}_{label}_{_uuid_rename.uuid4().hex[:4]}{ext}"
+                new_path = old_path.parent / new_name
+            old_path.rename(new_path)
+            try:
+                new_rel = str(new_path.relative_to(Path(workspace)))
+            except ValueError:
+                new_rel = str(new_path)
+            self._send_json(200, {"ok": True, "path": new_rel})
+            return
         if parsed.path == "/open-terminal":
             try:
                 socket_flag = "-S" if "/" in tmux_socket else "-L"

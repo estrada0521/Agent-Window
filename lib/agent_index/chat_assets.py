@@ -2314,6 +2314,27 @@ __AGENT_ACCENT_CSS__
       color: var(--muted);
       text-transform: uppercase;
     }
+    .attach-card-label {
+      display: block;
+      width: 80px;
+      box-sizing: border-box;
+      margin-top: 3px;
+      padding: 2px 4px;
+      font-size: 10px;
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px;
+      outline: none;
+      text-align: center;
+    }
+    .attach-card-label:focus {
+      border-color: rgba(255,255,255,0.3);
+    }
+    .attach-card-label::placeholder {
+      color: var(--muted);
+      opacity: 0.6;
+    }
     .attach-card-name {
       font-size: 10px;
       color: var(--muted);
@@ -6178,6 +6199,20 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           target = "user";
         }
       }
+      if (!isShortcut && pendingAttachments.length) {
+        await Promise.all(pendingAttachments.map(async (a) => {
+          if (!a.label) return;
+          try {
+            const res = await fetch("/rename-upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ path: a.path, label: a.label }),
+            });
+            const data = await res.json();
+            if (data.ok && data.path) a.path = data.path;
+          } catch (_) {}
+        }));
+      }
       const attachSuffix =
         !isShortcut && pendingAttachments.length
           ? pendingAttachments.map((a) => "\n[Attached: " + a.path + "]").join("")
@@ -7288,6 +7323,15 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           ext.textContent = file.name.split(".").pop().slice(0, 5) || "FILE";
           card.appendChild(ext);
         }
+        const labelInput = document.createElement("input");
+        labelInput.type = "text";
+        labelInput.className = "attach-card-label";
+        labelInput.placeholder = "label";
+        labelInput.addEventListener("input", () => {
+          const att = pendingAttachments.find(a => a.path === path);
+          if (att) att.label = labelInput.value.trim();
+        });
+        card.appendChild(labelInput);
         const rmBtn = document.createElement("button");
         rmBtn.type = "button";
         rmBtn.className = "attach-card-remove";
@@ -7322,7 +7366,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             });
             const data = await res.json();
             if (!res.ok || !data.ok) throw new Error(data.error || "upload failed");
-            pendingAttachments.push({ path: data.path, name: file.name });
+            pendingAttachments.push({ path: data.path, name: file.name, label: "" });
             addCard(file, data.path);
           }));
           setStatus("");
