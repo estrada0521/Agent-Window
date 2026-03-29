@@ -570,20 +570,6 @@ __AGENT_ACCENT_CSS__
       from { opacity: 1; transform: translateY(0) scale(1); }
       to { opacity: 0; transform: translateY(8px) scale(0.98); }
     }
-    @keyframes restartingPulse {
-      0%, 100% {
-        color: var(--text);
-        background-color: rgba(255, 255, 255, 0.02);
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 0 0 rgba(255, 255, 255, 0);
-        text-shadow: none;
-      }
-      50% {
-        color: var(--fg-bright);
-        background-color: rgba(255, 255, 255, 0.07);
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 14px rgba(255, 255, 255, 0.08);
-        text-shadow: 0 0 12px rgba(255, 255, 255, 0.16);
-      }
-    }
     body.composer-overlay-open {
       overflow: hidden;
     }
