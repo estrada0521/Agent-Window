@@ -162,17 +162,6 @@ realpath_or_echo() {
   python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$1" 2>/dev/null || printf '%s\n' "$1"
 }
 
-file_sha256() {
-  python3 - "$1" <<'PYEOF'
-import hashlib
-import sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-print(hashlib.sha256(path.read_bytes()).hexdigest())
-PYEOF
-}
-
 session_workspace_value() {
   local session="$1"
   tmux show-environment -t "$session" MULTIAGENT_WORKSPACE 2>/dev/null | sed 's/^[^=]*=//' || true
@@ -180,41 +169,12 @@ session_workspace_value() {
 
 ensure_session_agent_doc() {
   local src="$SCRIPT_DIR/../docs/AGENT.md"
-  local legacy_src="$SCRIPT_DIR/../docs/AGENT_jp.md"
   local dest_dir="$WORKSPACE/docs"
   local dest="$dest_dir/AGENT.md"
-  local stamp="$dest_dir/.multiagent-agent-doc.sha256"
-  local src_hash="" dest_hash="" stamped_hash="" legacy_hash=""
   [[ -f "$src" ]] || return 0
   mkdir -p "$dest_dir"
-  src_hash="$(file_sha256 "$src" 2>/dev/null || true)"
-  [[ -n "$src_hash" ]] || return 0
-  if [[ ! -e "$dest" ]]; then
-    cp "$src" "$dest"
-    printf '%s\n' "$src_hash" > "$stamp"
-    return 0
-  fi
-  dest_hash="$(file_sha256 "$dest" 2>/dev/null || true)"
-  if [[ "$dest_hash" == "$src_hash" ]]; then
-    printf '%s\n' "$src_hash" > "$stamp"
-    return 0
-  fi
-  if [[ -f "$stamp" ]]; then
-    stamped_hash="$(tr -d '\r\n' < "$stamp" 2>/dev/null || true)"
-    if [[ -n "$stamped_hash" && "$dest_hash" == "$stamped_hash" ]]; then
-      cp "$src" "$dest"
-      printf '%s\n' "$src_hash" > "$stamp"
-      return 0
-    fi
-  fi
-  if [[ -f "$legacy_src" ]]; then
-    legacy_hash="$(file_sha256 "$legacy_src" 2>/dev/null || true)"
-    if [[ -n "$legacy_hash" && "$dest_hash" == "$legacy_hash" ]]; then
-      cp "$src" "$dest"
-      printf '%s\n' "$src_hash" > "$stamp"
-      return 0
-    fi
-  fi
+  cmp -s "$src" "$dest" 2>/dev/null && return 0
+  cp "$src" "$dest"
 }
 
 session_pane_count() {
