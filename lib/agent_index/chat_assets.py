@@ -1562,26 +1562,22 @@ __AGENT_ACCENT_CSS__
       justify-content: center;
       gap: 0;
       position: relative;
-      padding: 7px;
-      aspect-ratio: 1 / 1;
-      margin-right: 8px;
-      border-radius: 9px;
-      border: 1px solid transparent;
-      background: transparent;
+      padding: 8px 10px 12px 10px;
+      margin-right: 4px;
+      border: none;
+      background: transparent !important;
       color: var(--muted);
       cursor: pointer;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .target-chip .target-icon {
-      width: 19px;
-      height: 19px;
+      width: 22px;
+      height: 22px;
       flex-shrink: 0;
       display: block;
-      filter: brightness(0) invert(0.61) !important;
-      opacity: 0.85;
-      transition: filter 0.2s ease, opacity 0.2s ease;
+      filter: brightness(0) invert(0.8) !important;
+      opacity: 0.45;
+      transition: filter 0.2s ease, opacity 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .target-chip[data-base-agent="codex"] .target-icon,
     .target-chip[data-base-agent="copilot"] .target-icon,
@@ -1795,12 +1791,12 @@ __AGENT_ACCENT_CSS__
       }
       .target-chip:hover:not(.active) .target-icon,
       .target-chip:active:not(.active) .target-icon {
-        filter: brightness(0) invert(0.82) !important; /* Brighter icon on hover */
+        filter: brightness(0) invert(0.9) !important;
+        opacity: 0.75;
       }
       /* Ensure absolute stability when hovering an active chip */
-    .target-chip.active:hover {
-        background: rgba(255,255,255,0.96) !important;
-        color: var(--bg) !important;
+      .target-chip.active:hover {
+        background: transparent !important;
         cursor: default;
       }
     }
@@ -1811,18 +1807,29 @@ __AGENT_ACCENT_CSS__
       box-shadow: none;
     }
     .target-chip.active {
-      color: #fff !important;
-      background: rgba(255, 255, 255, 0.12) !important;
-      border-color: rgba(255, 255, 255, 0.24) !important;
-      backdrop-filter: blur(12px) !important;
-      -webkit-backdrop-filter: blur(12px) !important;
-      transform: scale(1.08) !important;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+      background: transparent !important;
+      border: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      transform: none !important;
+      box-shadow: none !important;
       z-index: 10;
+    }
+    .target-chip.active::after {
+      content: "";
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #fff;
     }
     .target-chip.active .target-icon {
       filter: brightness(0) invert(1) !important;
       opacity: 1 !important;
+      transform: scale(1.1);
     }
     /* Add Agent modal */
     .add-agent-overlay {
