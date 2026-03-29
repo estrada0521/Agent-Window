@@ -6115,17 +6115,11 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(400, {"ok": False, "error": "invalid label"})
                 return
             ext = old_path.suffix
-            stem = old_path.stem
-            parts = stem.split("_", 2)
-            if len(parts) >= 2:
-                ts_prefix = parts[0] + "_" + parts[1]
-            else:
-                ts_prefix = stem
-            new_name = f"{ts_prefix}_{label}{ext}"
+            new_name = f"{label}{ext}"
             new_path = old_path.parent / new_name
             if new_path.exists() and new_path != old_path:
                 import uuid as _uuid_rename
-                new_name = f"{ts_prefix}_{label}_{_uuid_rename.uuid4().hex[:4]}{ext}"
+                new_name = f"{label}_{_uuid_rename.uuid4().hex[:4]}{ext}"
                 new_path = old_path.parent / new_name
             old_path.rename(new_path)
             try:
