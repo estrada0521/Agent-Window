@@ -32,7 +32,7 @@ The same Hub and chat UI can be opened from a desktop browser or a phone browser
 | Logs | structured `.agent-index.jsonl` message log, pane captures in `.log` / `.ans`, static HTML export |
 | Backend | Auto mode, Awake, Sound notifications, Read aloud, optional public exposure with a ready-to-use Cloudflare path |
 
-The current agent registry includes `claude`, `codex`, `gemini`, `copilot`, `cursor`, `grok`, `opencode`, `qwen`, and `aider`. The same base agent can be started more than once, and duplicate instances receive names such as `claude-1` and `claude-2`.
+The current agent registry includes `claude`, `codex`, `gemini`, `copilot`, `cursor`, `grok`, `opencode`, `qwen`, and `aider`. The same base agent can be started more than once, and duplicate instances receive names such as `claude-1` and `claude-2`. Agents communicate through `agent-send`, which routes messages via stdin and appends them to the shared `.agent-index.jsonl`. This means agent-to-agent collaboration happens through the same structured log as user-to-agent messages, and the full multi-party conversation is preserved in one timeline.
 
 ### 1. New Session / Message Body
 
@@ -57,7 +57,7 @@ The renderer supports headings, paragraphs, lists, blockquotes, inline code, fen
   <img src="screenshot/pane_trace_pc.png" alt="Pane trace desktop window" width="420">
 </p>
 
-Thinking rows appear while agents are running. On mobile, tapping a thinking row opens the embedded Pane Trace viewer. On desktop, the same click opens the selected agent's Pane Trace in a popup window. Pane Trace is a lightweight viewer for the pane side of the session. It refreshes every 100ms on local / LAN access and every 1.5 seconds on public access. If the JSONL log is the structured message history, Pane Trace is the live pane-side tail.
+Thinking rows appear while agents are running. On mobile, tapping a thinking row opens the embedded Pane Trace viewer. On desktop, the same click opens the selected agent's Pane Trace in a popup window. Pane Trace is a lightweight viewer for the pane side of the session. It refreshes every 100ms on local / LAN access and every 1.5 seconds on public access. If the JSONL log is the structured message history, Pane Trace is the live pane-side tail. On desktop, the popup supports split views so multiple agents can be watched simultaneously, and agents can be switched or rearranged by tab or drag-and-drop.
 
 Compared with the main tmux terminal window, the desktop Pane Trace popup is optimized as a browser-side viewer: scrollback is smoother, switching between agents is easier, and text selection or copy is more straightforward.
 
@@ -161,9 +161,37 @@ This repo keeps long-term consistency and history lookup in separate layers. Per
 
 Messages sent through `agent-send` are appended to `.agent-index.jsonl` with `sender`, `targets`, `msg-id`, and `reply-to`. Pane-side captures are stored as `*.ans` and `*.log`, with a `.meta` file tracking update timestamps and overwrite history.
 
-The chat server autosaves pane logs roughly every two minutes for active sessions, and the `Save Log` action can force an immediate snapshot from the UI. That makes Pane Trace the live tail, while `.log` / `.ans` remain the stored snapshots.
+The chat server autosaves pane logs roughly every two minutes for active sessions, and the `Save Log` action can force an immediate snapshot from the UI. That makes Pane Trace the live tail, while `.log` / `.ans` remain the stored snapshots. The autosave interval is server-side and does not depend on whether a browser tab is open or in the foreground.
 
-The `Export` action in the header menu downloads a static HTML snapshot of the recent chat history. The prompt controls how many recent messages are included, including the option to export all available messages.
+Git commits made during the session are also logged. Each commit that touches the workspace is recorded with its hash and message, so the conversation log and the code history can be cross-referenced after the fact.
+
+The `Export` action in the header menu downloads a static HTML snapshot of the recent chat history. The prompt controls how many recent messages are included, including the option to export all available messages. The exported HTML is self-contained and can be opened offline without the chat server running.
+
+### 6. Robustness and Recovery
+
+Sessions in this environment are designed to survive interruptions. The system distinguishes between a session that was stopped intentionally, a tmux server that is temporarily unresponsive, and a session that no longer exists. Each case is handled differently so that recovery does not cause more damage than the original problem.
+
+#### Pane log protection
+
+The chat server autosaves pane captures roughly every two minutes. Before each save, the new capture is written to a temporary file and its size is compared against the existing snapshot. If the old file is larger than 1 KB and the new capture is less than half that size, the system treats this as a pane reset: the old `.ans` and `.log` files are copied to timestamped `.protected.ans` / `.protected.log` files before the new content overwrites them. This means that if a tmux pane is unexpectedly cleared or an agent process restarts, the pre-reset terminal output is preserved for later inspection rather than silently replaced by the smaller post-reset buffer.
+
+#### tmux health awareness
+
+All tmux commands issued by the Hub and chat server go through a wrapper that enforces a timeout and captures whether the command succeeded, failed, or timed out. A timed-out tmux command is reported as `unhealthy` rather than `missing`. This distinction prevents the system from concluding that a session does not exist when tmux is merely slow or overloaded. When an unhealthy state is detected, destructive actions such as automatic session revival are blocked, and the Hub returns a 503 status instead of a 404 so the UI can show the correct state.
+
+#### Session lifecycle: Kill, Revive, Delete
+
+`Kill` stops a running session's tmux windows and chat server but keeps all saved logs, workspace metadata, and the `.meta` file intact. The session moves to the archived list and can later be brought back with `Revive`, which re-creates the tmux session using the stored workspace path and agent set. Before reviving, the system checks tmux health, confirms the workspace directory still exists, and polls for up to twelve seconds to verify the session actually came up. If tmux becomes unresponsive during this window, the revive is aborted with an error rather than left in an ambiguous state.
+
+`Delete` applies only to archived sessions. It removes the stored log directory and associated thinking-time data. Paths are validated against a whitelist of allowed roots before deletion, so path-traversal attempts are refused. A deleted session cannot be revived.
+
+#### Autosave and metadata
+
+Every pane log save, whether triggered by the two-minute autosave, a manual `Save Log` from the UI, or a session kill, is recorded in the session's `.meta` file. This JSON file tracks the session name, workspace path, creation timestamp, last-updated timestamp, agent list, and an array of overwrite entries with their timestamps and reasons. The overwrite history makes it possible to tell when a session was last saved and why.
+
+#### Layered storage
+
+The separation between `.agent-index.jsonl` (structured message log), `.ans` / `.log` (pane captures), `.meta` (save history), `brief` (session-local instructions), and `memory` (per-agent summaries) means that losing one layer does not destroy the others. A corrupted pane capture does not affect the conversation log, and a cleared JSONL does not erase the terminal recordings. This layered approach is intentional: each artifact serves a different recovery or review purpose, and they are stored independently so partial failures remain partial.
 
 ## Quickstart
 

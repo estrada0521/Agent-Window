@@ -8859,8 +8859,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         });
       });
     };
+    const _paneSlideAtBottom = (el) => !el || el.scrollHeight - el.scrollTop - el.clientHeight < 48;
     const fetchPaneViewerSlide = async (agent, slide, scrollToBottomAfter) => {
       if (!slide) return;
+      if (!scrollToBottomAfter && !_paneSlideAtBottom(slide)) return;
       try {
         /* Pane Viewer はモバイル専用導線（Terminal ボタンはデスクトップでは /open-terminal）。常に軽量 tail。 */
         const ansiReady = ensurePaneTraceAnsiUp();
@@ -10033,8 +10035,10 @@ def render_pane_trace_popup_html(*, agent: str, agents: list[str] | None = None,
       if (!html) html = txt.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\\n/g,"<br>");
       return html.replace(/[●⏺]/g, '<span class="trace-dot">●</span>');
     }};
+    const _paneBodyAtBottom = (el) => !el || el.scrollHeight - el.scrollTop - el.clientHeight < 48;
     const fetchTo = async (agent, bodyEl, scroll) => {{
       if (!agent || !bodyEl) return;
+      if (!scroll && !_paneBodyAtBottom(bodyEl)) return;
       try {{
         const res = await fetch(`{trace_path_prefix}/trace?agent=${{encodeURIComponent(agent)}}&lines=192&ts=${{Date.now()}}`);
         if (!res.ok) return;
