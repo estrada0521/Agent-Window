@@ -10,6 +10,7 @@ import shutil
 import ssl
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import quote
 
@@ -120,6 +121,29 @@ def latest_message_preview_from_paths(index_paths: list[Path]) -> dict[str, str]
     return {"sender": best_sender, "text": best_text}
 
 
+@dataclass(frozen=True)
+class TmuxRunResult:
+    args: list[str]
+    returncode: int
+    stdout: str = ""
+    stderr: str = ""
+    timed_out: bool = False
+
+
+@dataclass(frozen=True)
+class SessionQueryResult:
+    records: dict[str, dict]
+    state: str  # "ok" | "unhealthy"
+    detail: str = ""
+
+
+@dataclass(frozen=True)
+class RepoSessionsQueryResult:
+    sessions: list[dict]
+    state: str  # "ok" | "unhealthy"
+    detail: str = ""
+
+
 class HubRuntime:
     def __init__(self, repo_root: Path | str, script_path: Path | str, tmux_socket: str = ""):
         self.repo_root = Path(repo_root).resolve()
@@ -139,8 +163,30 @@ class HubRuntime:
         self._pane_last_change = {}
         self.running_grace_seconds = 2.0
 
-    def tmux_run(self, args, timeout=2):
-        return subprocess.run([*self.tmux_prefix, *args], capture_output=True, text=True, timeout=timeout, check=False)
+    def tmux_run(self, args, timeout=2) -> TmuxRunResult:
+        try:
+            res = subprocess.run(
+                [*self.tmux_prefix, *args],
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
+            )
+            return TmuxRunResult(
+                args=list(args),
+                returncode=res.returncode,
+                stdout=res.stdout,
+                stderr=res.stderr,
+                timed_out=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            return TmuxRunResult(
+                args=list(args),
+                returncode=124,  # Standard timeout exit code
+                stdout=exc.stdout.decode("utf-8", errors="replace") if isinstance(exc.stdout, bytes) else (exc.stdout or ""),
+                stderr=f"tmux command timed out after {timeout} seconds",
+                timed_out=True,
+            )
 
     def tmux_env(self, session_name: str, key: str) -> str:
         result = self.tmux_run(["show-environment", "-t", session_name, key])
@@ -149,16 +195,34 @@ class HubRuntime:
             return line.split("=", 1)[1]
         return ""
 
+    def tmux_env_query(self, session_name: str, key: str) -> tuple[str, bool]:
+        """Returns (value, timed_out)"""
+        result = self.tmux_run(["show-environment", "-t", session_name, key])
+        line = result.stdout.strip()
+        if result.returncode == 0 and "=" in line:
+            return line.split("=", 1)[1], result.timed_out
+        return "", result.timed_out
+
     def session_agents(self, session_name: str) -> list[str]:
-        agents_str = self.tmux_env(session_name, "MULTIAGENT_AGENTS")
+        agents, _ = self.session_agents_query(session_name)
+        return agents
+
+    def session_agents_query(self, session_name: str) -> tuple[list[str], bool]:
+        """Returns (agents, timed_out)"""
+        agents_str, timed_out = self.tmux_env_query(session_name, "MULTIAGENT_AGENTS")
+        if timed_out:
+            return [], True
         if agents_str:
-            return [a.strip() for a in agents_str.split(",") if a.strip()]
+            return [a.strip() for a in agents_str.split(",") if a.strip()], False
+
         result = self.tmux_run(["show-environment", "-t", session_name])
+        if result.timed_out:
+            return [], True
         if result.returncode == 0:
             agents = agents_from_tmux_env_output(result.stdout)
             if agents:
-                return agents
-        return []
+                return agents, False
+        return [], False
 
     @staticmethod
     def expected_instance_names(base_agents: list[str]) -> list[str]:
@@ -299,38 +363,65 @@ class HubRuntime:
         }
 
     def repo_sessions(self):
+        res = self.repo_sessions_query()
+        return res.sessions
+
+    def repo_sessions_query(self) -> RepoSessionsQueryResult:
         result = self.tmux_run(["list-sessions", "-F", "#{session_name}"])
+        if result.timed_out:
+            return RepoSessionsQueryResult([], "unhealthy", "tmux list-sessions timed out")
         if result.returncode != 0:
-            return []
+            return RepoSessionsQueryResult([], "ok", "")
+
         sessions = []
+        any_timeout = False
+        timeout_detail = ""
+
         for name in result.stdout.splitlines():
-            if not name:
+            if not name or any_timeout:
                 continue
-            bin_dir = self.tmux_env(name, "MULTIAGENT_BIN_DIR")
+
+            bin_dir, t1 = self.tmux_env_query(name, "MULTIAGENT_BIN_DIR")
+            if t1:
+                any_timeout, timeout_detail = True, f"tmux show-environment (BIN_DIR) timed out for {name}"
+                break
             if not bin_dir:
                 continue
+
             try:
                 if Path(bin_dir).resolve() != self.script_dir:
                     continue
             except Exception:
                 continue
-            workspace = self.tmux_env(name, "MULTIAGENT_WORKSPACE")
-            explicit_log_dir = self.tmux_env(name, "MULTIAGENT_LOG_DIR")
-            attached = self.tmux_run(["display-message", "-p", "-t", name, "#{session_attached}"]).stdout.strip() or "0"
-            created_epoch = self.tmux_run(["display-message", "-p", "-t", name, "#{session_created}"]).stdout.strip() or "0"
+
+            workspace, t2 = self.tmux_env_query(name, "MULTIAGENT_WORKSPACE")
+            explicit_log_dir, t3 = self.tmux_env_query(name, "MULTIAGENT_LOG_DIR")
+            r_attached = self.tmux_run(["display-message", "-p", "-t", name, "#{session_attached}"])
+            r_created = self.tmux_run(["display-message", "-p", "-t", name, "#{session_created}"])
+            r_dead = self.tmux_run(["list-panes", "-t", name, "-F", "#{pane_dead}"])
+            agents, t4 = self.session_agents_query(name)
+
+            if t2 or t3 or r_attached.timed_out or r_created.timed_out or r_dead.timed_out or t4:
+                any_timeout = True
+                timeout_detail = f"tmux query timed out during session scan for {name}"
+                break
+
+            attached = r_attached.stdout.strip() or "0"
+            created_epoch = r_created.stdout.strip() or "0"
             try:
                 created_at = dt.datetime.fromtimestamp(int(created_epoch)).strftime("%Y-%m-%d %H:%M")
             except Exception:
                 created_at = ""
-            dead_result = self.tmux_run(["list-panes", "-t", name, "-F", "#{pane_dead}"])
-            dead_panes = sum(1 for line in dead_result.stdout.splitlines() if line.strip() == "1")
-            agents = self.session_agents(name)
+
+            dead_panes = sum(1 for line in r_dead.stdout.splitlines() if line.strip() == "1")
+
             if dead_panes > 0:
                 status = "degraded"
             elif attached != "0":
                 status = "attached"
             else:
                 status = "idle"
+
             index_paths = self.session_index_paths(name, workspace, explicit_log_dir)
             sessions.append(
                 self._build_session_record(
@@ -346,8 +437,12 @@ class HubRuntime:
                     index_paths=index_paths,
                 )
             )
+
+        if any_timeout:
+            return RepoSessionsQueryResult(sessions, "unhealthy", timeout_detail)
+
         sessions.sort(key=lambda item: item["created_epoch"], reverse=True)
-        return sessions
+        return RepoSessionsQueryResult(sessions, "ok", "")
 
     def archived_sessions(self, active_names=None):
         active_names = set(active_names or [])
@@ -454,7 +549,16 @@ class HubRuntime:
         return sessions
 
     def active_session_records(self) -> dict[str, dict]:
-        return {item["name"]: item for item in self.repo_sessions()}
+        res = self.active_session_records_query()
+        return res.records
+
+    def active_session_records_query(self) -> SessionQueryResult:
+        res = self.repo_sessions_query()
+        return SessionQueryResult(
+            records={item["name"]: item for item in res.sessions},
+            state=res.state,
+            detail=res.detail,
+        )
 
     def archived_session_records(self, active_names=None) -> dict[str, dict]:
         return {item["name"]: item for item in self.archived_sessions(active_names)}
@@ -762,7 +866,10 @@ class HubRuntime:
         return False, chat_port, "chat server did not become ready"
 
     def revive_archived_session(self, session_name: str):
-        active_records = self.active_session_records()
+        query = self.active_session_records_query()
+        if query.state == "unhealthy":
+            return False, f"tmux is currently unresponsive ({query.detail})"
+        active_records = query.records
         if session_name in active_records:
             return True, ""
         archived = self.archived_session_records(active_records.keys())
@@ -798,28 +905,44 @@ class HubRuntime:
         except Exception as exc:
             return False, str(exc)
         for _ in range(80):
-            if session_name in self.active_session_records():
+            query = self.active_session_records_query()
+            if session_name in query.records:
                 return True, ""
+            if query.state == "unhealthy":
+                return False, f"tmux became unresponsive during session startup ({query.detail})"
             time.sleep(0.15)
         return False, f"Session {session_name} did not come up in time."
 
     def kill_repo_session(self, session_name: str):
-        active = self.active_session_records()
+        query = self.active_session_records_query()
+        if query.state == "unhealthy":
+            return False, f"tmux is unresponsive, cannot confirm session state ({query.detail})"
+
+        active = query.records
         if session_name not in active:
             return False, "That active session is not available in this repo."
+
         result = self.tmux_run(["kill-session", "-t", session_name], timeout=4)
         if result.returncode != 0:
             detail = (result.stderr or result.stdout or "").strip() or "tmux kill-session failed"
             return False, detail
+
         for _ in range(20):
-            if session_name not in self.active_session_records():
+            query = self.active_session_records_query()
+            if session_name not in query.records:
                 self.stop_chat_server(session_name)
                 return True, ""
+            if query.state == "unhealthy":
+                return False, f"tmux became unresponsive while killing session ({query.detail})"
             time.sleep(0.1)
         return False, f"Session {session_name} did not go away in time."
 
     def delete_archived_session(self, session_name: str):
-        active = self.active_session_records()
+        query = self.active_session_records_query()
+        if query.state == "unhealthy":
+            return False, f"tmux is unresponsive, cannot safely delete archived session ({query.detail})"
+
+        active = query.records
         archived = self.archived_session_records(active.keys())
         record = archived.get(session_name)
         if not record:

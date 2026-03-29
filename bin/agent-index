@@ -594,8 +594,10 @@ hub = HubRuntime(repo_root, script_path, tmux_socket)
 load_hub_settings = hub.load_hub_settings
 save_hub_settings = hub.save_hub_settings
 repo_sessions = hub.repo_sessions
+repo_sessions_query = hub.repo_sessions_query
 archived_sessions = hub.archived_sessions
 active_session_records = hub.active_session_records
+active_session_records_query = hub.active_session_records_query
 archived_session_records = hub.archived_session_records
 compute_hub_stats = hub.compute_hub_stats
 ensure_chat_server = hub.ensure_chat_server
@@ -1097,6 +1099,32 @@ HUB_APP_HTML = """<!doctype html>
       letter-spacing: 0.08em;
       text-transform: uppercase;
       padding: 6px 2px 0;
+    }
+    .unhealthy-banner {
+      background: rgba(255, 69, 58, 0.12);
+      border: 0.5px solid rgba(255, 69, 58, 0.3);
+      color: rgb(255, 69, 58);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+      font-size: 13px;
+      line-height: 1.5;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .unhealthy-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      background: rgb(255, 69, 58);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
     }
     .session-card {
       display: block;
@@ -1887,14 +1915,28 @@ HUB_APP_HTML = """<!doctype html>
         });
       }
     };
-    const render = (activeSessions, archivedSessions, statsData) => {
+    const render = (activeSessions, archivedSessions, statsData, tmuxState, tmuxDetail) => {
       const activeCount = activeSessions.length;
       const archivedCount = archivedSessions.length;
       const totalMessages = Number(statsData.total_messages || 0);
       window._lastStatsData = statsData;
       renderStats(statsData);
       renderActivityGrid(statsData);
+
+      let bannerHtml = "";
+      if (tmuxState === "unhealthy") {
+        bannerHtml = `
+          <div class="unhealthy-banner">
+            <div class="unhealthy-icon">!</div>
+            <div>
+              <strong>System Unstable:</strong> ${escapeHtml(tmuxDetail || "tmux is unresponsive")}<br>
+              <span style="opacity:0.8;font-size:12px">Automatic recovery is paused to prevent double-startup. Please wait.</span>
+            </div>
+          </div>`;
+      }
+
       list.innerHTML = `
+        ${bannerHtml}
         <section class="section-block">
           <div class="section-label">Active Sessions</div>
           ${renderActiveCards(activeSessions, {
@@ -1936,17 +1978,24 @@ HUB_APP_HTML = """<!doctype html>
         const res = await fetch(`/sessions?ts=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) throw new Error("failed to load sessions");
         const data = await res.json();
-        
+
         // Prevent layout thrashing and animation re-triggering if data hasn't changed
         const sig = JSON.stringify({
           active: data.active_sessions || data.sessions || [],
           archived: data.archived_sessions || [],
           stats: data.stats || {},
+          tmux_state: data.tmux_state || "ok",
         });
         if (window._lastRenderSig === sig) return;
         window._lastRenderSig = sig;
-        
-        render(data.active_sessions || data.sessions || [], data.archived_sessions || [], data.stats || {});
+
+        render(
+          data.active_sessions || data.sessions || [],
+          data.archived_sessions || [],
+          data.stats || {},
+          data.tmux_state || "ok",
+          data.tmux_detail || ""
+        );
       } catch (error) {
         summary.textContent = "Failed to load sessions";
         stats.innerHTML = "";
@@ -4465,6 +4514,13 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_unhealthy(self, fmt, detail):
+        msg = f"tmux is currently unresponsive ({detail}). Please wait a few seconds."
+        if fmt == "json":
+            self._send_json(503, {"ok": False, "error": "tmux_unhealthy", "detail": msg})
+        else:
+            self._send_html(503, error_page(msg))
+
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path.startswith("/session/"):
@@ -4488,11 +4544,23 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
         if parsed.path == "/sessions":
-            active_map = active_session_records()
+            query = active_session_records_query()
+            active_map = query.records
             active = list(active_map.values())
-            archived = list(archived_session_records(active_map.keys()).values())
+            if query.state == "unhealthy":
+                # Suppress archived to avoid duplicates from partial scan
+                archived = []
+            else:
+                archived = list(archived_session_records(active_map.keys()).values())
             stats = compute_hub_stats(active, archived)
-            self._send_json(200, {"sessions": active, "active_sessions": active, "archived_sessions": archived, "stats": stats})
+            self._send_json(200, {
+                "sessions": active,
+                "active_sessions": active,
+                "archived_sessions": archived,
+                "stats": stats,
+                "tmux_state": query.state,
+                "tmux_detail": query.detail,
+            })
             return
         if parsed.path == "/notify-sound":
             qs = parse_qs(parsed.query)
@@ -4520,13 +4588,17 @@ class Handler(BaseHTTPRequestHandler):
             qs = parse_qs(parsed.query)
             session_name = (qs.get("session", [""])[0] or "").strip()
             fmt = qs.get("format", [""])[0]
-            active = active_session_records()
-            if not session_name or session_name not in active:
+            query = active_session_records_query()
+            if not session_name or session_name not in query.records:
+                if query.state == "unhealthy":
+                    self._send_unhealthy(fmt, query.detail)
+                    return
                 if fmt == "json":
                     self._send_json(404, {"ok": False, "error": "Session not found"})
                 else:
                     self._send_html(404, error_page("That session is not available in this repo."))
                 return
+            active = query.records
             ok, chat_port, detail = ensure_chat_server(session_name)
             if not ok:
                 if fmt == "json":
@@ -4559,6 +4631,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
             ok, detail = revive_archived_session(session_name)
             if not ok:
+                if "unresponsive" in (detail or ""):
+                    self._send_unhealthy(fmt, detail)
+                    return
                 if fmt == "json":
                     self._send_json(500, {"ok": False, "error": detail})
                 else:
@@ -4578,7 +4653,8 @@ class Handler(BaseHTTPRequestHandler):
                 f"/?follow=1&ts={int(time.time() * 1000)}",
             )
             if fmt == "json":
-                self._send_json(200, {"ok": True, "chat_url": location, "session_record": active_session_records().get(session_name, {})})
+                query = active_session_records_query()
+                self._send_json(200, {"ok": True, "chat_url": location, "session_record": query.records.get(session_name, {})})
             else:
                 self.send_response(302)
                 self.send_header("Location", location)
@@ -4764,7 +4840,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             ok, chat_port, detail = ensure_chat_server(session_name)
             if ok:
-                active = active_session_records()
+                query = active_session_records_query()
                 self._send_json(
                     200,
                     {
@@ -4776,7 +4852,7 @@ class Handler(BaseHTTPRequestHandler):
                             chat_port,
                             "/?follow=1",
                         ),
-                        "session_record": active.get(session_name, {}),
+                        "session_record": query.records.get(session_name, {}),
                     },
                 )
             else:
@@ -4793,8 +4869,11 @@ class Handler(BaseHTTPRequestHandler):
             return
         session_name = match.group(1)
         suffix = match.group(2) or "/"
-        active = active_session_records()
-        if session_name not in active:
+        query = active_session_records_query()
+        if session_name not in query.records:
+            if query.state == "unhealthy":
+                self._send_unhealthy("plain", query.detail)
+                return
             self._send_html(404, error_page("That session is not available in this repo."))
             return
         ok, chat_port, detail = ensure_chat_server(session_name)
