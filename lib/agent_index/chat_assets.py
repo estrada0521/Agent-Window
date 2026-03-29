@@ -89,10 +89,6 @@ CHAT_HTML = r"""<!doctype html>
       --fg-bright: rgb(255, 255, 255);
       --muted: rgb(158, 158, 158);
       --chrome-muted: rgb(158, 158, 158);
-      --chip-border-idle: rgba(255, 255, 255, 0.09);
-      --chip-border-active: rgba(255, 255, 255, 0.15);
-      --chip-border-pressed: rgba(255, 255, 255, 0.20);
-      --math-display-inline-pad: 2px;
       --user-accent: #b0b8c0;
 __AGENT_ACCENT_CSS__
       --system-accent: #5a6068;
@@ -129,9 +125,6 @@ __AGENT_ACCENT_CSS__
       --fg-bright: rgb(8, 10, 12);
       --muted: rgb(98, 106, 120);
       --chrome-muted: rgb(98, 106, 120);
-      --chip-border-idle: rgba(30, 40, 56, 0.16);
-      --chip-border-active: rgba(30, 40, 56, 0.24);
-      --chip-border-pressed: rgba(30, 40, 56, 0.32);
       --user-accent: #3f4854;
       --system-accent: #5f6875;
       --surface: rgb(252, 252, 250);
@@ -533,8 +526,7 @@ __AGENT_ACCENT_CSS__
       background: var(--bg);
       box-shadow: none;
     }
-    .agent-icon,
-    .filter-chip .filter-icon {
+    .agent-icon {
       width: 14px;
       height: 14px;
       flex-shrink: 0;
@@ -1566,17 +1558,12 @@ __AGENT_ACCENT_CSS__
       transition: filter 0.2s ease, opacity 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .target-chip[data-base-agent="codex"] .target-icon,
-    .target-chip[data-base-agent="copilot"] .target-icon,
-    .filter-chip[data-base-agent="codex"] .filter-icon,
-    .filter-chip[data-base-agent="copilot"] .filter-icon {
+    .target-chip[data-base-agent="copilot"] .target-icon {
       filter: invert(1) grayscale(1) brightness(1.35);
     }
     .target-chip.active[data-base-agent="codex"] .target-icon,
     .target-chip.active[data-base-agent="copilot"] .target-icon {
       filter: none;
-    }
-    .target-chip .target-label {
-      display: none;
     }
     .target-chip.auto-approval-notice::after {
       content: "";
@@ -1651,7 +1638,6 @@ __AGENT_ACCENT_CSS__
     .reply-jump-inline,
     .file-card,
     .file-modal-close,
-    .filter-chip,
     .send-btn,
     #scrollToBottomBtn,
     #composerFabBtn {
@@ -1675,8 +1661,6 @@ __AGENT_ACCENT_CSS__
     .file-card:focus-visible,
     .file-modal-close:focus,
     .file-modal-close:focus-visible,
-    .filter-chip:focus,
-    .filter-chip:focus-visible,
     .send-btn:focus,
     .send-btn:focus-visible,
     #scrollToBottomBtn:focus,
@@ -3099,7 +3083,6 @@ __AGENT_ROW_META_SELECTORS__ {
       pointer-events: none;
       animation: thinking-glow-follow 1s ease-in-out infinite;
     }
-__AGENT_THINKING_GLOW_CSS__
     @keyframes thinking-glow-follow {
       0%   { transform: scale(0.5); opacity: 0; }
       50%  { transform: scale(1.4); opacity: 0.12; }
@@ -3112,10 +3095,6 @@ __AGENT_THINKING_GLOW_CSS__
       position: relative;
       animation: thinking-icon-heartbeat 1s ease-in-out infinite;
     }
-    .message-thinking-icon--claude  { animation-delay: 0s; }
-    .message-thinking-icon--codex   { animation-delay: -0.25s; }
-    .message-thinking-icon--gemini  { animation-delay: -0.5s; }
-    .message-thinking-icon--copilot { animation-delay: -0.75s; }
     @keyframes thinking-icon-heartbeat {
       0%   { transform: translateY(0);    filter: brightness(0) invert(0.61); }
       50%  { transform: translateY(-1px); filter: brightness(0) invert(0.75); }
@@ -3908,62 +3887,6 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .message-row:not(.user):is(:hover, :focus-within, .is-centered) .message-body-row::before {
       opacity: 0.6;
     }
-    .search-input {
-      height: 26px;
-      padding: 0 9px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(0,0,0,0.2);
-      color: var(--text);
-      font: 12px/1 "SF Pro Text","Segoe UI",sans-serif;
-      outline: none;
-      width: 140px;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
-      transition: border-color 150ms ease, background 150ms ease, width 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 150ms ease;
-    }
-    .search-input::placeholder { color: var(--muted); }
-    .search-input:focus {
-      border-color: rgba(255,255,255,0.28);
-      background: rgba(255,255,255,0.04);
-      box-shadow: 0 0 12px rgba(255,255,255,0.08), inset 0 1px 2px rgba(0,0,0,0.1);
-      width: 200px;
-    }
-    .agent-filter-chips { display: none; gap: 5px; flex-wrap: wrap; }
-    .agent-filter-chips::-webkit-scrollbar { display: none; }
-    .filter-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.04);
-      color: var(--muted);
-      font: 600 11px/1.2 "SF Pro Text","Segoe UI",sans-serif;
-      cursor: pointer;
-      text-transform: capitalize;
-      transition: all 150ms ease;
-    }
-    .has-hover .filter-chip:hover:not(.active) {
-      background: rgba(255,255,255,0.08);
-      color: var(--text);
-      border-color: rgba(255,255,255,0.25);
-    }
-    .filter-chip.active {
-      color: var(--fg-bright);
-      background: rgba(255,255,255,0.14);
-      border-color: rgba(255,255,255,0.3);
-      box-shadow: 0 0 10px rgba(255,255,255,0.08), inset 0 1px 1px rgba(255,255,255,0.1);
-    }
-    #messages article.message-row.filtered-out { display: none; }
-    .search-count {
-      font-size: 11px;
-      color: var(--muted);
-      white-space: nowrap;
-      opacity: 0.8;
-      align-self: center;
-    }
-    .search-count:empty { display: none; }
     /* user message: no bubble — plain text on timeline */
     .message.user .md-body {
       background: transparent;
@@ -4030,13 +3953,6 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .has-hover #scrollToBottomBtn:hover,
     .has-hover #composerFabBtn:hover {
       background: rgba(25, 25, 25, 0.88);
-    }
-    /* filter chips */
-    .filter-chip {
-      background: rgba(255,255,255,0.02);
-    }
-    .filter-chip.active {
-      background: rgba(255,255,255,0.07);
     }
     /* selected / open states */
     .composer-plus-menu[open] .composer-plus-toggle,
@@ -5054,54 +4970,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let pendingAttachments = []; // [{path, name, label}]
     let rawSendEnabled = false;
     let availableTargets = [];
-    let filterKeyword = "";
-    let filterAgents = new Set(); // empty = show all
     let currentSessionName = "";
     let _renderedIds = new Set(); // incremental render tracking
     const expandedUserMessages = new Set();
-    const applyFilter = () => {
-      const kw = filterKeyword.toLowerCase();
-      const isFiltering = kw || filterAgents.size > 0;
-      let visible = 0;
-      document.querySelectorAll("#messages article.message-row").forEach(article => {
-        const sender = (article.dataset.sender || "").toLowerCase();
-        const raw = (article.querySelector(".message-wrap")?.dataset.raw || "").toLowerCase();
-        const matchAgent = filterAgents.size === 0 || filterAgents.has(sender);
-        const matchKeyword = !kw || sender.includes(kw) || raw.includes(kw);
-        const ok = matchAgent && matchKeyword;
-        article.classList.toggle("filtered-out", !ok);
-        if (ok) visible++;
-      });
-      document.querySelectorAll("#messages .message-thinking-row").forEach((row) => {
-        row.style.display = visible > 0 ? "" : "none";
-      });
-      const countEl = document.getElementById("searchCount");
-      if (countEl) countEl.textContent = isFiltering ? `${visible} hits` : "";
-    };
-    const renderAgentFilterChips = (agents) => {
-      const root = document.getElementById("agentFilterChips");
-      if (!root) return;
-      root.innerHTML = ["all", "user", ...agents].map(a => {
-        const active = (a === "all" ? filterAgents.size === 0 : filterAgents.has(a)) ? " active" : "";
-        const icon = a === "user" ? "" : iconImg(a, "filter-icon");
-        const label = `<span class="filter-label">${escapeHtml(a)}</span>`;
-        return `<button type="button" class="filter-chip${active}" data-agent="${escapeHtml(a)}" data-base-agent="${agentBaseName(a)}">${icon}${label}</button>`;
-      }).join("");
-      root.querySelectorAll(".filter-chip").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const ag = btn.dataset.agent;
-          if (ag === "all") {
-            filterAgents.clear();
-          } else if (filterAgents.has(ag)) {
-            filterAgents.delete(ag);
-          } else {
-            filterAgents.add(ag);
-          }
-          renderAgentFilterChips(agents);
-          applyFilter();
-        });
-      });
-    };
     const escapeHtml = (value) => value
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
@@ -5158,10 +5029,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const selectionSig = JSON.stringify([...selectedSet].sort());
       const renderSig = `${targetsSig}|${selectionSig}`;
       if (root.dataset.renderSig === renderSig) return;
+
       if (root.dataset.targetsSig !== targetsSig) {
         root.dataset.targetsSig = targetsSig;
         root.innerHTML = targets.map((target) => {
-          return `<button type="button" class="target-chip" data-target="${target}" data-base-agent="${agentBaseName(target)}" title="${escapeHtml(target)}"><img class="target-icon" src="${escapeHtml(agentIconSrc(target))}" alt="${escapeHtml(agentBaseName(target))}"><span class="target-label">${escapeHtml(target)}</span></button>`;
+          return `<button type="button" class="target-chip" data-target="${target}" data-base-agent="${agentBaseName(target)}" title="${escapeHtml(target)}"><img class="target-icon" src="${escapeHtml(agentIconSrc(target))}" alt="${escapeHtml(target)}"></button>`;
         }).join("");
         root.querySelectorAll(".target-chip").forEach((node) => {
           node.addEventListener("mousedown", (e) => e.preventDefault());
@@ -5728,7 +5600,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         selectedTargets = restoredTargets.length ? restoredTargets : [];
         picker.dataset.loaded = "1";
         renderAgentStatus(Object.fromEntries(data.targets.map((t) => [t, "idle"])));
-        renderAgentFilterChips(data.targets);
       }
       const nextTargets = sessionActive ? data.targets : [];
       const nextTargetsSig = JSON.stringify(nextTargets);
@@ -5737,7 +5608,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         selectedTargets = selectedTargets.filter((target) => availableTargets.includes(target));
         saveTargetSelection(data.session, selectedTargets);
         renderTargetPicker(availableTargets);
-        renderAgentFilterChips(availableTargets);
       }
       document.getElementById("message").disabled = !sessionActive;
       setQuickActionsDisabled(!sessionActive);
@@ -5866,7 +5736,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
 
       queueStableCodeBlockSync(root);
       renderThinkingIndicator();
-      applyFilter();
       if (shouldStick) { timeline.scrollTop = timeline.scrollHeight; }
       updateScrollBtn();
       requestCenteredMessageRowUpdate();
@@ -6493,6 +6362,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     document.getElementById("composer").addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (!sessionActive) {
+        setStatus("archived session is read-only", true);
+        return;
+      }
       const submitter = event.submitter;
       const closeOverlayOnStart = !!(submitter && submitter.classList && submitter.classList.contains("send-btn"));
       await submitMessage({ closeOverlayOnStart });
@@ -8540,7 +8413,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           selectedTargets = selectedTargets.filter((target) => availableTargets.includes(target));
           saveTargetSelection(currentSessionName, selectedTargets);
           renderTargetPicker(availableTargets);
-          renderAgentFilterChips(availableTargets);
         }
       }
       if (data.totals && typeof data.totals === "object") {
@@ -8699,7 +8571,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       ".reply-jump-inline",
       ".file-card",
       ".file-modal-close",
-      ".filter-chip",
       ".send-btn",
       "#scrollToBottomBtn"
     ].join(", ");
@@ -9614,7 +9485,6 @@ def _agent_css_selectors(theme: str = "black-hole") -> dict[str, str]:
         "__AGENT_ROW_MESSAGE_WRAP_SELECTORS__": _row_sel(".message-wrap"),
         "__AGENT_ROW_MESSAGE_SELECTORS__": _row_sel(".message"),
         "__AGENT_ROW_META_SELECTORS__": _row_sel(".meta"),
-        "__AGENT_THINKING_GLOW_CSS__": generate_thinking_glow_css(),
         "__AGENT_SEL_MD_BODY__": _sel(" .md-body"),
         "__AGENT_SEL_MD_HEADING__": _cross(["p", "li", "h1", "h2", "h3", "h4"]),
         "__AGENT_SEL_MD_BODY_TEXT__": _cross(["p", "li", "blockquote"]),
