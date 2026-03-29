@@ -81,7 +81,7 @@ USAGEEOF
   printf '  %s | user | others\n' "$ALL_AGENTS_DISPLAY"
   printf '  '
   # Print number aliases from AGENT_NUMBER_ALIAS_N variables
-  for _n in 1 2 3 4 5 6 7 8 9; do
+  for _n in 1 2 3 4 5 6 7 8 9 10; do
     _var="AGENT_NUMBER_ALIAS_${_n}"
     _v="$(eval "printf '%s' \"\${${_var}:-}\"")"
     [[ -n "$_v" ]] && printf '%s=%s  ' "$_n" "$_v"

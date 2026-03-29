@@ -32,7 +32,7 @@ The same Hub and chat UI can be opened from a desktop browser or a phone browser
 | Logs | structured `.agent-index.jsonl` message log, pane captures in `.log` / `.ans`, static HTML export |
 | Backend | Auto mode, Awake, Sound notifications, Read aloud, optional public exposure with a ready-to-use Cloudflare path |
 
-The current agent registry includes `claude`, `codex`, `gemini`, `copilot`, `cursor`, `grok`, `opencode`, `qwen`, and `aider`. The same base agent can be started more than once, and duplicate instances receive names such as `claude-1` and `claude-2`. Agents communicate through `agent-send`, which routes messages via stdin and appends them to the shared `.agent-index.jsonl`. This means agent-to-agent collaboration happens through the same structured log as user-to-agent messages, and the full multi-party conversation is preserved in one timeline.
+The current agent registry includes `claude`, `codex`, `gemini`, `kimi`, `copilot`, `cursor`, `grok`, `opencode`, `qwen`, and `aider`. The same base agent can be started more than once, and duplicate instances receive names such as `claude-1` and `claude-2`. Agents communicate through `agent-send`, which routes messages via stdin and appends them to the shared `.agent-index.jsonl`. This means agent-to-agent collaboration happens through the same structured log as user-to-agent messages, and the full multi-party conversation is preserved in one timeline.
 
 ### 1. New Session / Message Body
 
@@ -202,6 +202,8 @@ cd ~/multiagent-chat
 ```
 
 `./bin/quickstart` checks for `python3` and `tmux`, offers dependency guidance when needed, interactively checks and installs available agent CLIs, and asks once whether local HTTPS should be enabled. If needed it uses an existing `mkcert` or installs it before placing `multiagent`, `agent-index`, and `agent-send` into `~/.local/bin` and starting the Hub. It does not create an agent session yet. When a New Session is created later, missing CLIs for the selected agents are checked again.
+
+That interactive CLI install path now also covers Kimi. Installing the binary is not the whole setup, though: before Kimi can actually answer in a pane, it still needs one login on this Mac via `kimi login` or `/login` inside the Kimi CLI.
 
 After startup the terminal prints both `Hub:` and `Hub (LAN / phone):` URLs. On desktop, bookmark the `Hub:` URL so the entry page is easy to reopen. On a phone on the same Wi-Fi, open the `Hub (LAN / phone):` URL to use the same session list and chat UI. Mobile can create new sessions, enter workspace paths, and resume existing sessions as well.
 

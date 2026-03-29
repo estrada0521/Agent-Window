@@ -238,6 +238,12 @@ def _installers_for(agent: str) -> list[Installer]:
         out.append(lambda: _run_logged(["npm", "install", "-g", "@github/copilot"]))
         return out
 
+    if agent == "kimi":
+        if shutil.which("uv"):
+            out.append(lambda: _run_logged(["uv", "tool", "install", "--python", "3.13", "kimi-cli"]))
+        out.append(lambda: _run_shell_logged("curl -LsSf https://code.kimi.com/install.sh | bash"))
+        return out
+
     if agent == "grok":
         out.append(
             lambda: _run_shell_logged(
@@ -332,7 +338,7 @@ def prompt_yes(question: str) -> bool:
 
 def _may_need_npm_later(agent: str) -> bool:
     """aider / cursor は brew のみ。それ以外は npm 系のフォールバックがありうる。"""
-    return agent not in ("aider", "cursor")
+    return agent not in ("aider", "cursor", "kimi")
 
 
 def ensure_agents_interactive(repo_root: Path, agents: Sequence[str] | None) -> int:
@@ -413,8 +419,8 @@ def ensure_agents_interactive(repo_root: Path, agents: Sequence[str] | None) -> 
         ok = False
         for step in strategies:
             if step():
-                # Cursor installs to ~/.local/bin which may not be in PATH
-                if base == "cursor":
+                # Cursor / Kimi may install into ~/.local/bin which may not be in PATH
+                if base in ("cursor", "kimi"):
                     _ensure_local_bin_in_path()
                 if resolve_agent_executable(repo_root, base):
                     ok = True

@@ -2054,7 +2054,7 @@ PYEOF
 \`agent-send\` コマンドを使います。このコマンドはすでに PATH に追加済みです。本文は stdin で渡します。
 
 \`\`\`bash
-printf '%s' 'メッセージ' | agent-send <claude|codex|gemini|copilot|cursor|grok|opencode|qwen|aider|others|claude,codex>
+printf '%s' 'メッセージ' | agent-send <claude|codex|gemini|kimi|copilot|cursor|grok|opencode|qwen|aider|others|claude,codex>
 \`\`\`
 
 本文は stdin で渡します。複数行でも agent-send の基本形に寄せてください。
