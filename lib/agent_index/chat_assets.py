@@ -2952,25 +2952,11 @@ __AGENT_MESSAGE_SELECTORS__ {
       border-color: rgba(255, 255, 255, 0.12);
       box-shadow: 0 10px 24px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
     }
-    .message-row.claude .message-wrap,
-    .message-row.codex .message-wrap,
-    .message-row.gemini .message-wrap,
-    .message-row.copilot .message-wrap,
-    .message-row.grok .message-wrap,
-    .message-row.cursor .message-wrap,
-    .message-row.opencode .message-wrap,
-    .message-row.qwen .message-wrap {
+__AGENT_ROW_MESSAGE_WRAP_SELECTORS__ {
       width: min(760px, 100%);
       max-width: 100%;
     }
-    .message-row.claude .message,
-    .message-row.codex .message,
-    .message-row.gemini .message,
-    .message-row.copilot .message,
-    .message-row.grok .message,
-    .message-row.cursor .message,
-    .message-row.opencode .message,
-    .message-row.qwen .message {
+__AGENT_ROW_MESSAGE_SELECTORS__ {
       width: 100%;
       padding: 0 0 10px;
       border: none;
@@ -2980,14 +2966,7 @@ __AGENT_MESSAGE_SELECTORS__ {
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
     }
-    .message-row.claude .meta,
-    .message-row.codex .meta,
-    .message-row.gemini .meta,
-    .message-row.copilot .meta,
-    .message-row.grok .meta,
-    .message-row.cursor .meta,
-    .message-row.opencode .meta,
-    .message-row.qwen .meta {
+__AGENT_ROW_META_SELECTORS__ {
       margin-bottom: 4px;
     }
     .message.system {
@@ -5731,6 +5710,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const render = (data, { forceScroll = false, forceFullRender = false } = {}) => {
       const shouldStick = forceScroll || _stickyToBottom;
       const displayEntries = displayEntriesForData(data);
+      const previousRenderedIds = new Set(_renderedIds);
 
       updateSessionUI(data, displayEntries);
 
@@ -5753,8 +5733,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
 
       const replyChildren = buildReplyChildrenMap(displayEntries);
       const displayIdSet = new Set(displayEntries.map(e => e.msg_id));
-      const newEntries = displayEntries.filter(e => !_renderedIds.has(e.msg_id));
-      const hasRemovals = _renderedIds.size > 0 && [..._renderedIds].some(id => !displayIdSet.has(id));
+      const newEntries = displayEntries.filter(e => !previousRenderedIds.has(e.msg_id));
+      const hasRemovals = previousRenderedIds.size > 0 && [...previousRenderedIds].some(id => !displayIdSet.has(id));
       const currentRenderedOrder = Array.from(root.querySelectorAll("[data-msgid]"))
         .map((node) => String(node.dataset.msgid || ""))
         .filter(Boolean);
@@ -5763,7 +5743,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         .filter((id) => displayIdSet.has(id))
         .concat(newEntries.map((entry) => String(entry.msg_id || "")));
       const canIncrementallyTrimAndAppend = !forceFullRender
-        && _renderedIds.size > 0
+        && previousRenderedIds.size > 0
         && newEntries.length > 0
         && nextIncrementalOrder.length === nextRenderedOrder.length
         && nextIncrementalOrder.every((id, idx) => id === nextRenderedOrder[idx]);
@@ -5795,6 +5775,15 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const daybreakHtml = displayEntries.length ? `<div class="daybreak">${escapeHtml(formatDayLabel(firstTimestamp))}</div>` : "";
         root.innerHTML = daybreakHtml + displayEntries.map(entry => buildMsgHTML(entry, replyChildren)).join("");
         _renderedIds = new Set(displayEntries.map(e => e.msg_id));
+        if (previousRenderedIds.size > 0 && newEntries.length > 0) {
+          const newEntryIds = new Set(newEntries.map((entry) => String(entry.msg_id || "")));
+          root.querySelectorAll("article.message-row[data-msgid]").forEach((row) => {
+            const msgId = String(row.dataset.msgid || "");
+            if (!msgId || !newEntryIds.has(msgId)) return;
+            row.classList.add("animate-in");
+            scheduleAnimateInCleanup(row);
+          });
+        }
         postRenderScope(root);
       }
 
@@ -9519,6 +9508,8 @@ def _agent_css_selectors(theme: str = "black-hole") -> dict[str, str]:
     names = ALL_AGENT_NAMES
     def _sel(suffix="", prefix=""):
         return ",\n".join(f"    {prefix}.message.{n}{suffix}" for n in names)
+    def _row_sel(inner):
+        return ",\n".join(f"    .message-row.{n} {inner}" for n in names)
     def _cross(suffixes, prefix=""):
         parts = []
         for n in names:
@@ -9529,6 +9520,9 @@ def _agent_css_selectors(theme: str = "black-hole") -> dict[str, str]:
     return {
         "__AGENT_ACCENT_CSS__": generate_accent_css(theme),
         "__AGENT_MESSAGE_SELECTORS__": _sel(),
+        "__AGENT_ROW_MESSAGE_WRAP_SELECTORS__": _row_sel(".message-wrap"),
+        "__AGENT_ROW_MESSAGE_SELECTORS__": _row_sel(".message"),
+        "__AGENT_ROW_META_SELECTORS__": _row_sel(".meta"),
         "__AGENT_THINKING_GLOW_CSS__": generate_thinking_glow_css(),
         "__AGENT_SEL_MD_BODY__": _sel(" .md-body"),
         "__AGENT_SEL_MD_HEADING__": _cross(["p", "li", "h1", "h2", "h3", "h4"]),
