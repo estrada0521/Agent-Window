@@ -2290,6 +2290,14 @@ __AGENT_ACCENT_CSS__
       position: relative;
       width: 80px;
       flex-shrink: 0;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .attach-card:focus-visible {
+      outline: 2px solid rgba(252, 252, 252, 0.72);
+      outline-offset: 3px;
+      border-radius: 10px;
     }
     .attach-card-thumb {
       width: 80px;
@@ -2314,26 +2322,10 @@ __AGENT_ACCENT_CSS__
       color: var(--muted);
       text-transform: uppercase;
     }
-    .attach-card-label {
-      display: block;
-      width: 80px;
-      box-sizing: border-box;
-      margin-top: 3px;
-      padding: 2px 4px;
-      font-size: 10px;
-      color: var(--text);
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 4px;
-      outline: none;
-      text-align: center;
-    }
-    .attach-card-label:focus {
-      border-color: rgba(255,255,255,0.3);
-    }
-    .attach-card-label::placeholder {
-      color: var(--muted);
-      opacity: 0.6;
+    .has-hover .attach-card:hover .attach-card-thumb,
+    .has-hover .attach-card:hover .attach-card-ext {
+      border-color: rgba(255,255,255,0.2);
+      filter: brightness(1.06);
     }
     .attach-card-name {
       font-size: 10px;
@@ -2364,6 +2356,57 @@ __AGENT_ACCENT_CSS__
       line-height: 1;
     }
     .has-hover .attach-card-remove:hover { filter: brightness(1.3); }
+    .attach-rename-overlay {
+      background: rgba(0, 0, 0, 0.48);
+    }
+    .attach-rename-panel {
+      width: min(92vw, 340px);
+      max-width: 340px;
+      min-width: 0;
+    }
+    .attach-rename-copy {
+      margin: 0 0 10px;
+      color: var(--chrome-muted);
+      font: 400 13px/1.5 "SF Pro Text", "Segoe UI", sans-serif;
+    }
+    .attach-rename-label {
+      display: block;
+      margin: 0 0 6px;
+      color: var(--muted);
+      font: 500 12px/1.3 "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .attach-rename-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(252, 252, 252, 0.1);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      font: 400 14px/1.35 "SF Pro Text", "Segoe UI", sans-serif;
+      outline: none;
+      transition: border-color 120ms ease, background 120ms ease;
+    }
+    .attach-rename-input:focus {
+      border-color: rgba(252, 252, 252, 0.3);
+      background: rgba(255,255,255,0.06);
+    }
+    .attach-rename-hint {
+      margin: 8px 0 0;
+      color: var(--chrome-muted);
+      font: 400 12px/1.45 "SF Pro Text", "Segoe UI", sans-serif;
+    }
+    .attach-rename-error {
+      min-height: 18px;
+      margin: 8px 0 0;
+      color: rgba(255, 130, 130, 0.92);
+      font: 400 12px/1.45 "SF Pro Text", "Segoe UI", sans-serif;
+    }
+    html[data-mobile="1"] .attach-rename-panel {
+      width: min(92vw, 360px);
+    }
     .composer textarea {
       display: block;
       width: 100%;
@@ -4911,7 +4954,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let lastSubmitAt = 0;
     let sessionActive = true;
     let pendingReplyTo = null;
-    let pendingAttachments = []; // [{path, name}]
+    let pendingAttachments = []; // [{path, name, label}]
     let rawSendEnabled = false;
     let availableTargets = [];
     let filterKeyword = "";
@@ -6197,20 +6240,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           target = "user";
         }
       }
-      if (!isShortcut && pendingAttachments.length) {
-        await Promise.all(pendingAttachments.map(async (a) => {
-          if (!a.label) return;
-          try {
-            const res = await fetch("/rename-upload", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ path: a.path, label: a.label }),
-            });
-            const data = await res.json();
-            if (data.ok && data.path) a.path = data.path;
-          } catch (_) {}
-        }));
-      }
       const attachSuffix =
         !isShortcut && pendingAttachments.length
           ? pendingAttachments.map((a) => "\n[Attached: " + a.path + "]").join("")
@@ -7305,10 +7334,140 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const attachPreviewRow = document.getElementById("attachPreviewRow");
     const composerShellEl = document.querySelector(".composer-shell");
     if (cameraBtn && cameraInput && attachPreviewRow) {
-      const addCard = (file, path) => {
+      const attachmentBaseName = (value) => {
+        const parts = String(value || "").split(/[\\/]/);
+        return parts[parts.length - 1] || String(value || "");
+      };
+      const attachmentExt = (value) => {
+        const base = attachmentBaseName(value);
+        const dot = base.lastIndexOf(".");
+        return dot > 0 ? base.slice(dot) : "";
+      };
+      const attachmentStem = (value) => {
+        const base = attachmentBaseName(value);
+        const dot = base.lastIndexOf(".");
+        return dot > 0 ? base.slice(0, dot) : base;
+      };
+      const attachmentDisplayNameFromPath = (path, fallback = "") => {
+        const base = attachmentBaseName(path);
+        const ext = attachmentExt(base);
+        const stem = ext ? base.slice(0, -ext.length) : base;
+        const parts = stem.split("_");
+        if (parts.length >= 3) {
+          const label = parts.slice(2).join("_");
+          if (label) return `${label}${ext}`;
+        }
+        return fallback || base;
+      };
+      const syncAttachmentCard = (card, attachment) => {
+        if (!card || !attachment) return;
+        card.dataset.path = attachment.path || "";
+        card.setAttribute("aria-label", attachment.name ? `Rename attachment ${attachment.name}` : "Rename attachment");
+        card.title = attachment.name ? `Rename ${attachment.name}` : "Rename attachment";
+        const nameEl = card.querySelector(".attach-card-name");
+        if (nameEl) {
+          nameEl.textContent = attachment.name || attachmentDisplayNameFromPath(attachment.path, "Attachment");
+        }
+        const img = card.querySelector(".attach-card-thumb");
+        if (img && attachment.name) img.alt = attachment.name;
+      };
+      const openAttachmentRenameModal = (attachment, card) => {
+        if (!attachment || !pendingAttachments.includes(attachment)) return;
+        let overlay = document.getElementById("attachRenameOverlay");
+        if (overlay) overlay.remove();
+        overlay = document.createElement("div");
+        overlay.id = "attachRenameOverlay";
+        overlay.className = "add-agent-overlay attach-rename-overlay";
+        const currentName = attachment.name || attachmentDisplayNameFromPath(attachment.path, "attachment");
+        const ext = attachmentExt(currentName) || attachmentExt(attachment.path);
+        const initialLabel = (attachment.label || attachmentStem(currentName)).trim();
+        const hint = ext ? `The ${escapeHtml(ext)} extension stays unchanged.` : "The file extension stays unchanged.";
+        overlay.innerHTML = `<div class="add-agent-panel attach-rename-panel"><h3>Rename Attachment</h3><p class="attach-rename-copy">${escapeHtml(currentName)}</p><label class="attach-rename-label" for="attachRenameInput">Name</label><input id="attachRenameInput" class="attach-rename-input" type="text" placeholder="attachment name" maxlength="80" autocapitalize="off" autocorrect="off" spellcheck="false"><p class="attach-rename-hint">${hint}</p><div class="attach-rename-error" aria-live="polite"></div><div class="add-agent-actions"><button type="button" class="add-agent-cancel">Cancel</button><button type="button" class="add-agent-confirm">Rename</button></div></div>`;
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add("visible"));
+        const input = overlay.querySelector("#attachRenameInput");
+        input.value = initialLabel;
+        const errorEl = overlay.querySelector(".attach-rename-error");
+        const cancelBtn = overlay.querySelector(".add-agent-cancel");
+        const confirmBtn = overlay.querySelector(".add-agent-confirm");
+        const closeModal = ({ restoreFocus = true } = {}) => {
+          overlay.classList.remove("visible");
+          setTimeout(() => overlay.remove(), 420);
+          if (restoreFocus) {
+            try { card?.focus?.(); } catch (_) {}
+          }
+        };
+        const syncConfirmState = () => {
+          confirmBtn.disabled = !input.value.trim();
+        };
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) closeModal();
+        });
+        cancelBtn.addEventListener("click", () => closeModal());
+        input.addEventListener("input", () => {
+          errorEl.textContent = "";
+          syncConfirmState();
+        });
+        input.addEventListener("keydown", async (e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            closeModal();
+            return;
+          }
+          if (e.key === "Enter" && !confirmBtn.disabled) {
+            e.preventDefault();
+            confirmBtn.click();
+          }
+        });
+        confirmBtn.addEventListener("click", async () => {
+          const label = input.value.trim();
+          if (!label) {
+            syncConfirmState();
+            return;
+          }
+          if (!pendingAttachments.includes(attachment)) {
+            closeModal({ restoreFocus: false });
+            return;
+          }
+          confirmBtn.disabled = true;
+          cancelBtn.disabled = true;
+          errorEl.textContent = "";
+          try {
+            const res = await fetch("/rename-upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ path: attachment.path, label }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok || !data.path) {
+              throw new Error(data.error || "rename failed");
+            }
+            const nextName = attachmentDisplayNameFromPath(data.path, `${label}${ext}`);
+            attachment.path = data.path;
+            attachment.name = nextName;
+            attachment.label = attachmentStem(nextName);
+            syncAttachmentCard(card, attachment);
+            setStatus("");
+            closeModal();
+          } catch (err) {
+            errorEl.textContent = err?.message || "rename failed";
+            confirmBtn.disabled = false;
+            cancelBtn.disabled = false;
+          }
+        });
+        syncConfirmState();
+        setTimeout(() => {
+          try {
+            input.focus();
+            input.select();
+          } catch (_) {}
+        }, 40);
+      };
+      const addCard = (file, attachment) => {
         const card = document.createElement("div");
         card.className = "attach-card";
-        card.dataset.path = path;
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
         if (file.type.startsWith("image/")) {
           const img = document.createElement("img");
           img.className = "attach-card-thumb";
@@ -7321,26 +7480,30 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           ext.textContent = file.name.split(".").pop().slice(0, 5) || "FILE";
           card.appendChild(ext);
         }
-        const labelInput = document.createElement("input");
-        labelInput.type = "text";
-        labelInput.className = "attach-card-label";
-        labelInput.placeholder = "label";
-        labelInput.addEventListener("input", () => {
-          const att = pendingAttachments.find(a => a.path === path);
-          if (att) att.label = labelInput.value.trim();
-        });
-        card.appendChild(labelInput);
+        const nameEl = document.createElement("div");
+        nameEl.className = "attach-card-name";
+        nameEl.textContent = attachment.name || file.name;
+        card.appendChild(nameEl);
         const rmBtn = document.createElement("button");
         rmBtn.type = "button";
         rmBtn.className = "attach-card-remove";
         rmBtn.setAttribute("aria-label", "Remove");
         rmBtn.textContent = "\u2715";
-        rmBtn.addEventListener("click", () => {
-          pendingAttachments = pendingAttachments.filter(a => a.path !== path);
+        rmBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          pendingAttachments = pendingAttachments.filter((a) => a !== attachment);
           card.remove();
           if (!attachPreviewRow.children.length) attachPreviewRow.style.display = "none";
         });
         card.appendChild(rmBtn);
+        card.addEventListener("click", () => openAttachmentRenameModal(attachment, card));
+        card.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter" && e.key !== " ") return;
+          e.preventDefault();
+          openAttachmentRenameModal(attachment, card);
+        });
+        syncAttachmentCard(card, attachment);
         attachPreviewRow.appendChild(card);
         attachPreviewRow.style.display = "flex";
       };
@@ -7364,8 +7527,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             });
             const data = await res.json();
             if (!res.ok || !data.ok) throw new Error(data.error || "upload failed");
-            pendingAttachments.push({ path: data.path, name: file.name, label: "" });
-            addCard(file, data.path);
+            const attachment = { path: data.path, name: file.name, label: "" };
+            pendingAttachments.push(attachment);
+            addCard(file, attachment);
           }));
           setStatus("");
           return true;
