@@ -1357,19 +1357,21 @@ __AGENT_ACCENT_CSS__
     }
     .target-picker {
       grid-area: targets;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      width: 100%;
-      min-width: 0;
-      position: relative;
-      z-index: 6;
-      overflow: visible;
-      margin: 2px 0 0;
-      padding-left: 14px;
-      justify-self: start;
+      display: block !important;
+      white-space: nowrap !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      margin: 0;
+      padding: 4px 20px 4px 10px;
       align-self: center;
-      justify-content: flex-start;
+      -webkit-overflow-scrolling: touch;
+      mask-image: linear-gradient(to right, black 85%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    }
+    .target-picker::-webkit-scrollbar {
+      display: none;
     }
     .composer-stack {
       display: contents;
@@ -1561,6 +1563,7 @@ __AGENT_ACCENT_CSS__
       gap: 0;
       position: relative;
       padding: 8px 12px;
+      margin-right: 4px;
       border-radius: 8px;
       border: 1px solid transparent;
       background: transparent;
@@ -2215,13 +2218,13 @@ __AGENT_ACCENT_CSS__
       box-shadow: none;
       opacity: 0;
       pointer-events: none;
-      transform: scale(0.95);
-      transition: transform 120ms ease, filter 150ms ease, background 150ms ease, opacity 150ms ease;
+      transform: scale(0.4) rotate(-15deg);
+      transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1), filter 150ms ease, background 150ms ease, opacity 200ms ease;
     }
     .send-btn.visible {
       opacity: 1;
       pointer-events: auto;
-      transform: scale(1);
+      transform: scale(1) rotate(0deg);
     }
     .has-hover .send-btn:hover {
       filter: brightness(1.03);
@@ -2265,7 +2268,7 @@ __AGENT_ACCENT_CSS__
       justify-content: center;
       padding: 0;
       box-shadow: none;
-      transition: transform 120ms ease, filter 150ms ease, opacity 150ms ease;
+      transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1), filter 150ms ease, opacity 200ms ease;
     }
     .has-hover .mic-btn:hover {
       filter: brightness(1.03);
@@ -2276,7 +2279,7 @@ __AGENT_ACCENT_CSS__
     .mic-btn.hidden {
       opacity: 0;
       pointer-events: none;
-      transform: scale(0.95);
+      transform: scale(0.4) rotate(15deg);
     }
     .mic-btn.listening {
       background: linear-gradient(135deg, rgba(200, 60, 80, 0.92) 0%, rgba(150, 30, 55, 0.95) 100%);
