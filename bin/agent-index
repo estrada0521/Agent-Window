@@ -3808,7 +3808,7 @@ def hub_settings_html(saved=False):
       </div>
       <div class="field" id="app-controls">
         <div class="label">App Install & Notifications</div>
-        <div class="hint" style="margin-bottom:10px">Install Hub or a chat page to the Home Screen, then enable browser notifications for background agent replies.</div>
+        <div class="hint" style="margin-bottom:10px">Install Hub or a chat page to the Home Screen, then open a session chat once after enabling browser notifications so this device can register for background replies.</div>
         <div class="app-actions">
           <button class="app-button" type="button" id="installAppBtn">Install This App</button>
           <button class="app-button" type="button" id="notificationPermissionBtn">Allow Browser Notifications</button>
@@ -4195,12 +4195,12 @@ def hub_settings_html(saved=False):
       const permission = Notification.permission;
       testNotificationBtn.hidden = permission !== 'granted';
       testNotificationBtn.disabled = permission !== 'granted';
-      if (permission === 'granted') {{
+        if (permission === 'granted') {{
         notificationPermissionBtn.disabled = true;
         notificationPermissionBtn.textContent = 'Browser Notifications Enabled';
         notificationStatus.textContent = wantsBrowserNotifications
-          ? 'Permission granted. Save Settings to keep browser notifications enabled for chats.'
-          : 'Permission granted. Turn on Browser notifications above and Save Settings to use them for chats.';
+          ? 'Permission granted. Save Settings, then open a session chat once to register background notifications on this device.'
+          : 'Permission granted. Turn on Browser notifications above, Save Settings, then open a session chat once on this device.';
         return;
       }}
       if (permission === 'denied') {{
@@ -4212,7 +4212,7 @@ def hub_settings_html(saved=False):
       notificationPermissionBtn.disabled = false;
       notificationPermissionBtn.textContent = 'Allow Browser Notifications';
       notificationStatus.textContent = wantsBrowserNotifications
-        ? 'Permission not granted yet. Click Allow Browser Notifications, then Save Settings.'
+        ? 'Permission not granted yet. Click Allow Browser Notifications, then Save Settings and open a session chat once.'
         : 'Turn on Browser notifications above if you want chats to notify you in the background.';
     }};
     const showTestNotification = async () => {{
@@ -5478,6 +5478,7 @@ from agent_index.ensure_agent_clis import agent_launch_readiness
 from agent_index.export_core import ExportRuntime
 from agent_index.file_core import FileRuntime
 from agent_index.hub_header_assets import hub_header_logo_data_uri, read_hub_header_logo_bytes
+from agent_index.push_core import SessionPushMonitor, remove_push_subscription, upsert_push_subscription, vapid_public_key
 
 runtime = ChatRuntime(
     index_path=index_path,
@@ -5590,6 +5591,14 @@ export_runtime.render_html_fn = lambda: render_chat_html(
     follow="0",
     chat_base_path="",
 )
+push_monitor = SessionPushMonitor(
+    repo_root=_repo_root,
+    session_name=session_name,
+    workspace=workspace,
+    index_path=index_path,
+    settings_loader=load_chat_settings,
+)
+threading.Thread(target=push_monitor.run_forever, daemon=True, name="push-monitor").start()
 
 chat_restart_pending = False
 chat_restart_lock = threading.Lock()
@@ -6257,6 +6266,19 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
+        if parsed.path == "/push-config":
+            settings = load_chat_settings()
+            body = json.dumps({
+                "enabled": bool(settings.get("chat_browser_notifications", False)),
+                "public_key": vapid_public_key(_repo_root),
+            }, ensure_ascii=True).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if parsed.path == "/session-state":
             try:
                 body = json.dumps({
@@ -6694,6 +6716,94 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(500, {"ok": False, "error": str(exc), "reason": reason})
                 return
             self._send_json(status, payload)
+            return
+        if parsed.path == "/push/subscribe":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                length = 0
+            raw = self.rfile.read(length)
+            try:
+                data = json.loads(raw.decode("utf-8") or "{}")
+            except json.JSONDecodeError:
+                self._send_json(400, {"ok": False, "error": "invalid json"})
+                return
+            try:
+                result = upsert_push_subscription(
+                    _repo_root,
+                    session_name,
+                    workspace,
+                    data.get("subscription") or {},
+                    client_id=str(data.get("client_id") or "").strip(),
+                    user_agent=str(data.get("user_agent") or "").strip(),
+                )
+            except ValueError as exc:
+                self._send_json(400, {"ok": False, "error": str(exc)})
+                return
+            except Exception as exc:
+                self._send_json(500, {"ok": False, "error": str(exc)})
+                return
+            endpoint = str((data.get("subscription") or {}).get("endpoint") or "").strip()
+            if endpoint:
+                try:
+                    push_monitor.record_presence(
+                        str(data.get("client_id") or "").strip(),
+                        visible=not bool(data.get("hidden", False)),
+                        focused=not bool(data.get("hidden", False)),
+                        endpoint=endpoint,
+                    )
+                except Exception:
+                    pass
+            self._send_json(200, {"ok": True, **result})
+            return
+        if parsed.path == "/push/unsubscribe":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                length = 0
+            raw = self.rfile.read(length)
+            try:
+                data = json.loads(raw.decode("utf-8") or "{}")
+            except json.JSONDecodeError:
+                self._send_json(400, {"ok": False, "error": "invalid json"})
+                return
+            endpoint = str(data.get("endpoint") or "").strip()
+            if not endpoint:
+                self._send_json(400, {"ok": False, "error": "endpoint required"})
+                return
+            try:
+                removed = remove_push_subscription(_repo_root, session_name, workspace, endpoint)
+            except Exception as exc:
+                self._send_json(500, {"ok": False, "error": str(exc)})
+                return
+            self._send_json(200, {"ok": True, "removed": bool(removed)})
+            return
+        if parsed.path == "/push/presence":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                length = 0
+            raw = self.rfile.read(length)
+            try:
+                data = json.loads(raw.decode("utf-8") or "{}")
+            except json.JSONDecodeError:
+                self._send_json(400, {"ok": False, "error": "invalid json"})
+                return
+            client_id = str(data.get("client_id") or "").strip()
+            if not client_id:
+                self._send_json(400, {"ok": False, "error": "client_id required"})
+                return
+            try:
+                push_monitor.record_presence(
+                    client_id,
+                    visible=bool(data.get("visible", False)),
+                    focused=bool(data.get("focused", False)),
+                    endpoint=str(data.get("endpoint") or "").strip(),
+                )
+            except Exception as exc:
+                self._send_json(500, {"ok": False, "error": str(exc)})
+                return
+            self._send_json(200, {"ok": True})
             return
         if parsed.path == "/thinking-time" and self.command == "GET":
             try:

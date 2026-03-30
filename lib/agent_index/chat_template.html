@@ -5591,7 +5591,174 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let _lastSoundAt = 0;
     const SOUND_COOLDOWN_MS = 700;
     const supportsBrowserNotifications = typeof Notification !== "undefined";
+    const supportsServiceWorker = "serviceWorker" in navigator;
+    const supportsPushNotifications = supportsServiceWorker && "PushManager" in window;
     const browserNotificationIconUrl = `${CHAT_ASSET_BASE}/pwa-icon-192.png`;
+    const pushClientId = (() => {
+      const fallback = `push-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      try {
+        const key = "multiagentPushClientId";
+        const current = localStorage.getItem(key);
+        if (current) return current;
+        const created = (window.crypto && typeof window.crypto.randomUUID === "function")
+          ? window.crypto.randomUUID()
+          : fallback;
+        localStorage.setItem(key, created);
+        return created;
+      } catch (_) {
+        return fallback;
+      }
+    })();
+    let pushNotificationsActive = false;
+    let _pushSyncPromise = null;
+    let _lastPushPresenceSig = "";
+    const urlB64ToUint8Array = (raw) => {
+      const text = String(raw || "").trim();
+      if (!text) return new Uint8Array();
+      const pad = "=".repeat((4 - (text.length % 4 || 4)) % 4);
+      const normalized = (text + pad).replace(/-/g, "+").replace(/_/g, "/");
+      const decoded = atob(normalized);
+      return Uint8Array.from(decoded, (char) => char.charCodeAt(0));
+    };
+    const uint8ArrayToUrlB64 = (raw) => {
+      const bytes = raw instanceof Uint8Array ? raw : new Uint8Array(raw || []);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    };
+    const pushSubscriptionPayload = (subscription) => {
+      if (!subscription) return null;
+      const payload = subscription.toJSON ? subscription.toJSON() : {};
+      const keys = { ...(payload?.keys || {}) };
+      try {
+        if (!keys.p256dh && typeof subscription.getKey === "function") {
+          const p256dh = subscription.getKey("p256dh");
+          if (p256dh) keys.p256dh = uint8ArrayToUrlB64(new Uint8Array(p256dh));
+        }
+        if (!keys.auth && typeof subscription.getKey === "function") {
+          const auth = subscription.getKey("auth");
+          if (auth) keys.auth = uint8ArrayToUrlB64(new Uint8Array(auth));
+        }
+      } catch (_) {}
+      return {
+        endpoint: subscription.endpoint || payload?.endpoint || "",
+        expirationTime: subscription.expirationTime ?? payload?.expirationTime ?? null,
+        keys,
+      };
+    };
+    const pushFeatureAvailable = () => {
+      if (!supportsPushNotifications || !supportsBrowserNotifications) return false;
+      const isLocalHost = location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.hostname === "[::1]";
+      return !!(window.isSecureContext || isLocalHost);
+    };
+    const postPushPresence = async ({ force = false, keepalive = false } = {}) => {
+      if (!pushNotificationsActive || !pushFeatureAvailable()) return;
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        const body = {
+          client_id: pushClientId,
+          endpoint: subscription?.endpoint || "",
+          visible: !document.hidden,
+          focused: typeof document.hasFocus === "function" ? document.hasFocus() : !document.hidden,
+        };
+        const sig = JSON.stringify(body);
+        if (!force && sig === _lastPushPresenceSig) return;
+        _lastPushPresenceSig = sig;
+        await fetch("/push/presence", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          keepalive,
+          body: sig,
+        });
+      } catch (_) {}
+    };
+    const syncPushSubscription = async ({ unsubscribeOnly = false } = {}) => {
+      if (!pushFeatureAvailable()) {
+        pushNotificationsActive = false;
+        return false;
+      }
+      if (_pushSyncPromise) return _pushSyncPromise;
+      _pushSyncPromise = (async () => {
+        const registration = await navigator.serviceWorker.ready;
+        let subscription = await registration.pushManager.getSubscription();
+        if (
+          unsubscribeOnly
+          || !browserNotificationsEnabled
+          || Notification.permission !== "granted"
+        ) {
+          pushNotificationsActive = false;
+          _lastPushPresenceSig = "";
+          if (subscription) {
+            try {
+              await fetch("/push/unsubscribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                cache: "no-store",
+                keepalive: true,
+                body: JSON.stringify({
+                  client_id: pushClientId,
+                  endpoint: subscription.endpoint || "",
+                }),
+              });
+            } catch (_) {}
+            try {
+              await subscription.unsubscribe();
+            } catch (_) {}
+          }
+          return false;
+        }
+        const configRes = await fetch(`/push-config?ts=${Date.now()}`, { cache: "no-store" });
+        if (!configRes.ok) {
+          pushNotificationsActive = false;
+          return false;
+        }
+        const config = await configRes.json();
+        const publicKey = String(config?.public_key || "").trim();
+        if (!publicKey) {
+          pushNotificationsActive = false;
+          return false;
+        }
+        if (!subscription) {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlB64ToUint8Array(publicKey),
+          });
+        }
+        const subPayload = pushSubscriptionPayload(subscription);
+        if (!subPayload || !subPayload.endpoint || !subPayload.keys?.p256dh || !subPayload.keys?.auth) {
+          pushNotificationsActive = false;
+          return false;
+        }
+        const saveRes = await fetch("/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          body: JSON.stringify({
+            client_id: pushClientId,
+            user_agent: navigator.userAgent || "",
+            subscription: subPayload,
+          }),
+        });
+        if (!saveRes.ok) {
+          pushNotificationsActive = false;
+          return false;
+        }
+        pushNotificationsActive = true;
+        await postPushPresence({ force: true });
+        return true;
+      })().catch(() => {
+        pushNotificationsActive = false;
+        return false;
+      }).finally(() => {
+        _pushSyncPromise = null;
+      });
+      return _pushSyncPromise;
+    };
+    const queuePushSync = (options = {}) => {
+      syncPushSubscription(options).catch(() => {});
+    };
     const NOTIFICATION_SOUNDS_URL = "/notify-sounds";
     const notificationSoundUrl = (name) => `/notify-sound?name=${encodeURIComponent(name)}`;
     const ensureNotificationManifest = async () => {
@@ -5880,6 +6047,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     const showBrowserNotification = async (entries) => {
       if (!browserNotificationsEnabled || !supportsBrowserNotifications) return;
+      if (pushNotificationsActive) return;
       if (Notification.permission !== "granted" || !document.hidden) return;
       const agentEntries = (entries || []).filter((entry) => entry && entry.sender && entry.sender !== "user" && entry.sender !== "system");
       if (!agentEntries.length) return;
@@ -9202,9 +9370,15 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     setSoundBtn(soundEnabled);
     const setBrowserNotifications = (on) => {
-      browserNotificationsEnabled = !!on;
+      const next = !!on;
+      const changed = browserNotificationsEnabled !== next;
+      browserNotificationsEnabled = next;
+      if (changed) {
+        queuePushSync(browserNotificationsEnabled ? {} : { unsubscribeOnly: true });
+      }
     };
     setBrowserNotifications(browserNotificationsEnabled);
+    queuePushSync();
     // TTS (Read Aloud)
     let ttsEnabled = __CHAT_TTS_ENABLED__;
     const hasTTS = typeof window.speechSynthesis !== "undefined";
@@ -9296,13 +9470,20 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         if (typeof data?.chat_tts === "boolean" && hasTTS) {
           setTtsBtn(data.chat_tts);
         }
+        queuePushSync();
       } catch (_) {}
     };
     syncChatNotificationDefaults();
     setInterval(syncChatNotificationDefaults, 30000);
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) syncChatNotificationDefaults();
+      postPushPresence({ force: true, keepalive: document.hidden });
     });
+    window.addEventListener("focus", () => { postPushPresence({ force: true }); });
+    window.addEventListener("blur", () => { postPushPresence({ force: true, keepalive: true }); });
+    window.addEventListener("pageshow", () => { postPushPresence({ force: true }); });
+    window.addEventListener("pagehide", () => { postPushPresence({ force: true, keepalive: true }); });
+    setInterval(() => { postPushPresence(); }, 20000);
     const speakEntry = (entry) => {
       if (!hasTTS || !ttsEnabled) return;
       if (entry.sender === "user" || entry.sender === "system") return;
