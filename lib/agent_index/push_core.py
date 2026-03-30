@@ -16,6 +16,11 @@ from pathlib import Path
 from typing import Callable
 from urllib.parse import quote, urlparse
 
+try:
+    import certifi
+except Exception:  # pragma: no cover - optional dependency fallback
+    certifi = None
+
 from cryptography.hazmat.primitives import hashes, hmac, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
@@ -99,6 +104,26 @@ def _write_json_atomic(path: Path, payload: dict) -> None:
     tmp_path = path.with_name(f".{path.name}.tmp-{os.getpid()}")
     tmp_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     os.replace(tmp_path, path)
+
+
+def _default_push_subject(repo_root: Path | str) -> str:
+    explicit = str(os.environ.get("MULTIAGENT_PUSH_SUBJECT") or "").strip()
+    if explicit:
+        return explicit
+
+    repo = Path(repo_root).resolve()
+    host = str(os.environ.get("MULTIAGENT_PUBLIC_HOST") or "").strip().rstrip(".")
+    if not host:
+        for filename in ("public-host.txt", "tailscale-host.txt"):
+            candidate = repo / "certs" / filename
+            if not candidate.is_file():
+                continue
+            host = candidate.read_text(encoding="utf-8").strip().rstrip(".")
+            if host:
+                break
+    if host and host not in {"localhost", "127.0.0.1", "[::1]"} and "." in host:
+        return f"https://{host}"
+    return "mailto:push@example.com"
 
 
 def _ec_public_key_bytes(public_key: ec.EllipticCurvePublicKey) -> bytes:
@@ -426,7 +451,8 @@ def _post_web_push(endpoint: str, body: bytes, token: str, vapid_public_key: str
     connection_cls = http.client.HTTPSConnection if parsed.scheme == "https" else http.client.HTTPConnection
     kwargs = {"timeout": 10}
     if parsed.scheme == "https":
-        kwargs["context"] = ssl.create_default_context()
+        cafile = certifi.where() if certifi is not None else None
+        kwargs["context"] = ssl.create_default_context(cafile=cafile)
     conn = connection_cls(parsed.hostname, parsed.port, **kwargs)
     try:
         conn.request("POST", path, body=body, headers=headers)
@@ -443,13 +469,14 @@ def send_web_push_notifications(
     workspace: str,
     payload: dict,
     *,
-    subject: str = "mailto:push@multiagent.local",
+    subject: str | None = None,
 ) -> dict:
     subscriptions = load_push_subscriptions(repo_root, session_name, workspace)
     if not subscriptions:
         return {"sent": 0, "failed": 0, "gone": 0}
 
     vapid = ensure_vapid_keypair(repo_root)
+    push_subject = str(subject or _default_push_subject(repo_root)).strip()
     message = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     sent = 0
     failed = 0
@@ -463,7 +490,7 @@ def send_web_push_notifications(
                 subscription["keys"]["p256dh"],
                 subscription["keys"]["auth"],
             )
-            token = _jwt_token(vapid["private_pem"], endpoint, subject)
+            token = _jwt_token(vapid["private_pem"], endpoint, push_subject)
             status, _response_body = _post_web_push(endpoint, body, token, vapid["public_key"])
             if status in (201, 202):
                 sent += 1
@@ -488,13 +515,14 @@ def send_hub_web_push_notifications(
     repo_root: Path | str,
     payload: dict,
     *,
-    subject: str = "mailto:push@multiagent.local",
+    subject: str | None = None,
 ) -> dict:
     subscriptions = load_hub_push_subscriptions(repo_root)
     if not subscriptions:
         return {"sent": 0, "failed": 0, "gone": 0}
 
     vapid = ensure_vapid_keypair(repo_root)
+    push_subject = str(subject or _default_push_subject(repo_root)).strip()
     message = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     sent = 0
     failed = 0
@@ -508,7 +536,7 @@ def send_hub_web_push_notifications(
                 subscription["keys"]["p256dh"],
                 subscription["keys"]["auth"],
             )
-            token = _jwt_token(vapid["private_pem"], endpoint, subject)
+            token = _jwt_token(vapid["private_pem"], endpoint, push_subject)
             status, _response_body = _post_web_push(endpoint, body, token, vapid["public_key"])
             if status in (201, 202):
                 sent += 1
