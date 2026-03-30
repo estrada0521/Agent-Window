@@ -324,6 +324,10 @@ resolve_agent_name() {
   # Check user
   [[ "$lower" == "user" ]] && { printf '%s\n' "user"; return 0; }
   # Check number alias (e.g. 1 → claude)
+  # Note: eval is used because bash 3.2 (macOS default) lacks declare -A and
+  # reliable ${!var} indirect expansion.  The variable name is constructed
+  # solely from a validated integer token and a fixed prefix, so the input
+  # space is safe (AGENT_NUMBER_ALIAS_<digit> set by agent_registry_shell.py).
   if [[ "$token" =~ ^[0-9]+$ ]]; then
     num_var="AGENT_NUMBER_ALIAS_${token}"
     _alias_val="$(eval "printf '%s' \"\${${num_var}:-}\"")"
@@ -418,10 +422,12 @@ send_to_pane() {
   [[ -n "$pane_id" ]] || { echo "Target pane not found in session: $SESSION_NAME" >&2; return 1; }
   # paste-buffer sends text as a single paste event, which interactive CLIs
   # (codex, copilot, etc.) handle more reliably than character-by-character send-keys.
-  # sleep 0.3 waits for the paste to complete before sending Enter.
+  # The sleep waits for the paste to complete before sending Enter.
+  # AGENT_SEND_PASTE_DELAY can be raised on slow or remote environments.
+  local paste_delay="${AGENT_SEND_PASTE_DELAY:-0.3}"
   tmux set-buffer -- "$PAYLOAD" || return 1
   tmux paste-buffer -d -t "$pane_id" || return 1
-  sleep 0.3
+  sleep "$paste_delay"
   tmux send-keys -t "$pane_id" "" Enter || return 1
 }
 
@@ -459,7 +465,7 @@ append_index_entry() {
   while IFS= read -r session_log_dir; do
     [[ -n "$session_log_dir" ]] || continue
     python3 - "${session_log_dir}/.agent-index.jsonl" "$ts" "$SESSION_NAME" "$sender" "$joined_targets" "$PAYLOAD" "$MSG_ID" "${REPLY_TO:-}" <<'PYEOF'
-import json, sys
+import fcntl, json, sys
 
 path, ts, session, sender, targets, payload, msg_id, reply_to = sys.argv[1:9]
 entry = {
@@ -492,7 +498,12 @@ if reply_to:
     except Exception:
         pass
 with open(path, "a") as f:
-    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    fcntl.flock(f, fcntl.LOCK_EX)
+    try:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        f.flush()
+    finally:
+        fcntl.flock(f, fcntl.LOCK_UN)
 PYEOF
   done < <(while IFS= read -r base_dir; do
     [[ -n "$base_dir" ]] || continue
