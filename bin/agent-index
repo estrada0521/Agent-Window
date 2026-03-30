@@ -1128,6 +1128,14 @@ HUB_APP_HTML = """<!doctype html>
       font-weight: bold;
       font-size: 14px;
     }
+    @keyframes swell-heavy {
+      0% { transform: scale(1); filter: brightness(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
+      20% { transform: scale(1.08); filter: brightness(1.1); box-shadow: 0 0 24px rgba(255,255,255,0.15); }
+      100% { transform: scale(1); filter: brightness(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
+    }
+    .is-swelling {
+      animation: swell-heavy 400ms cubic-bezier(0.25, 1, 0.5, 1) !important;
+    }
     .session-card {
       display: block;
       text-decoration: none;
@@ -1137,7 +1145,17 @@ HUB_APP_HTML = """<!doctype html>
       border-radius: 16px;
       padding: 16px 18px 15px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+      view-transition-name: var(--vt-name, none);
+    }
+    .session-card.navigating {
+      opacity: 0.5;
+      transform: scale(0.98);
+      pointer-events: none;
+    }
+    ::view-transition-group(session-card-expand) {
+      animation-duration: 0.4s;
+      animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
     .session-card:hover {
       transform: translateY(-2px);
@@ -1962,15 +1980,27 @@ HUB_APP_HTML = """<!doctype html>
       list.querySelectorAll(".active-card").forEach((item) => {
         const openHref = item.dataset.openHref || "";
         if (!openHref) return;
+        const navigateWithTransition = () => {
+          if (document.startViewTransition) {
+            item.style.setProperty("--vt-name", "session-card-expand");
+            document.startViewTransition(() => {
+              item.classList.add("navigating");
+              window.location.href = openHref;
+            });
+          } else {
+            item.classList.add("navigating");
+            window.location.href = openHref;
+          }
+        };
         item.addEventListener("click", (event) => {
           if (event.target.closest("a, button, summary")) return;
-          window.location.href = openHref;
+          navigateWithTransition();
         });
         item.addEventListener("keydown", (event) => {
           if (event.target !== item) return;
           if (event.key !== "Enter" && event.key !== " ") return;
           event.preventDefault();
-          window.location.href = openHref;
+          navigateWithTransition();
         });
       });
       refreshPathMarquees();
