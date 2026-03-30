@@ -4506,6 +4506,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         });
     };
     const followMode = new URLSearchParams(window.location.search).get("follow") === "1";
+    const _isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
     const reconnectingStatusText = "reconnecting...";
     let messageRefreshFailures = 0;
     let reconnectStatusVisible = false;
@@ -6555,24 +6556,66 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         if (timer) clearTimeout(timer);
       }
     };
+    const purgeChatAssetCaches = async () => {
+      if (!("caches" in window)) return;
+      const baseUrl = `${window.location.origin}${CHAT_BASE_PATH || ""}`;
+      const exactUrls = new Set([
+        `${baseUrl}/app.webmanifest`,
+        `${baseUrl}/pwa-icon-192.png`,
+        `${baseUrl}/pwa-icon-512.png`,
+        `${baseUrl}/apple-touch-icon.png`,
+      ]);
+      const prefixUrls = [
+        `${baseUrl}/chat-assets/`,
+      ];
+      try {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(async (cacheName) => {
+          const cache = await caches.open(cacheName);
+          const requests = await cache.keys();
+          await Promise.all(requests.map((request) => {
+            const url = String(request?.url || "");
+            if (exactUrls.has(url) || prefixUrls.some((prefix) => url.startsWith(prefix))) {
+              return cache.delete(request);
+            }
+            return Promise.resolve(false);
+          }));
+        }));
+      } catch (_) {}
+    };
+    const refreshChatServiceWorkers = async () => {
+      if (!("serviceWorker" in navigator)) return;
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.update().catch(() => undefined)));
+      } catch (_) {}
+    };
     const waitForChatReady = async (timeoutMs = 15000, expectedPreviousInstance = "") => {
       const deadline = Date.now() + timeoutMs;
       let sawDisconnect = false;
       while (Date.now() < deadline) {
         try {
-          const res = await fetchWithTimeout(`/session-state?ts=${Date.now()}`, {}, 1200);
-          if (res.ok) {
-            const data = await res.json();
-            const instance = data?.server_instance || "";
-            if (!expectedPreviousInstance || (instance && instance !== expectedPreviousInstance) || sawDisconnect) {
-              if (instance) currentServerInstance = instance;
-              return true;
+          const sessionRes = await fetchWithTimeout(`/session-state?ts=${Date.now()}`, {}, 1200);
+          if (sessionRes.ok) {
+            const sessionData = await sessionRes.json();
+            const instance = sessionData?.server_instance || "";
+            const instanceAdvanced = !expectedPreviousInstance || (instance && instance !== expectedPreviousInstance) || sawDisconnect;
+            if (instanceAdvanced) {
+              const messagesRes = await fetchWithTimeout(messagesFetchUrl({ limit: 1 }), {}, 1200);
+              if (messagesRes.ok) {
+                const messagesData = await messagesRes.json();
+                if (Array.isArray(messagesData?.entries)) {
+                  const liveInstance = messagesData?.server_instance || instance;
+                  if (liveInstance) currentServerInstance = liveInstance;
+                  return true;
+                }
+              }
             }
           }
         } catch (_) {
           sawDisconnect = true;
         }
-        await sleep(200);
+        await sleep(250);
       }
       return false;
     };
@@ -7790,11 +7833,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
            btn.textContent = "Restarting…";
            const previousInstance = currentServerInstance;
            let edgeReady = false;
+           await Promise.allSettled([purgeChatAssetCaches(), refreshChatServiceWorkers()]);
            try {
              const res = await fetch("/new-chat", { method: "POST", cache: "no-store" });
              edgeReady = res.ok && res.headers.get("X-Multiagent-Chat-Ready") === "1";
            } catch (_) {}
-           const ready = edgeReady || await waitForChatReady(3000, previousInstance);
+           const ready = edgeReady || await waitForChatReady(12000, previousInstance);
+           await Promise.allSettled([purgeChatAssetCaches(), refreshChatServiceWorkers()]);
            if (!ready) {
              navigateToFreshChat();
              return;
@@ -8295,7 +8340,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     messageInput.addEventListener("input", updateSendBtnVisibility);
 
-    const _isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
     let _thinkingRowTouch = null;
     let _lastThinkingPaneMs = 0;
     if (_isMobile) {

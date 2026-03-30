@@ -293,6 +293,48 @@ sys.exit(1)
 PYEOF
 }
 
+list_listening_pids() {
+  local port="$1"
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -nP -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true
+    return 0
+  fi
+  if command -v fuser >/dev/null 2>&1; then
+    fuser "$port"/tcp 2>/dev/null | tr ' ' '\n' | sed '/^$/d' || true
+    return 0
+  fi
+  return 0
+}
+
+pid_listens_on_port() {
+  local pid="$1"
+  local port="$2"
+  [[ -n "$pid" && -n "$port" ]] || return 1
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -nP -a -p "$pid" -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
+    return $?
+  fi
+  local seen
+  seen="$(list_listening_pids "$port" | tr '\n' ' ')"
+  [[ " $seen " == *" $pid "* ]]
+}
+
+wait_for_port_to_clear() {
+  local port="$1"
+  local attempts="${2:-50}"
+  local delay="${3:-0.1}"
+  local listeners
+  local i
+  for i in $(seq 1 "$attempts"); do
+    listeners="$(list_listening_pids "$port")"
+    if [[ -z "${listeners//[[:space:]]/}" ]]; then
+      return 0
+    fi
+    sleep "$delay"
+  done
+  return 1
+}
+
 repo_log_roots() {
   local roots=() candidate resolved existing
   while IFS= read -r candidate; do
@@ -6876,20 +6918,17 @@ print(f"{_scheme}://127.0.0.1:{port}/?follow={'1' if follow_mode else '0'}", flu
 server.serve_forever()
 PYEOF
   # Kill only the stale listener on the chat port, not clients currently connected to it.
-  if command -v lsof >/dev/null 2>&1; then
-    STALE_CHAT_PIDS="$(lsof -nP -tiTCP:"$CHAT_PORT" -sTCP:LISTEN 2>/dev/null || true)"
-    if [[ -n "$STALE_CHAT_PIDS" ]]; then
-      printf '%s\n' "$STALE_CHAT_PIDS" | xargs kill -9 2>/dev/null || true
-    fi
-  elif command -v fuser >/dev/null 2>&1; then
-    fuser -k -9 "$CHAT_PORT"/tcp 2>/dev/null || true
+  STALE_CHAT_PIDS="$(list_listening_pids "$CHAT_PORT")"
+  if [[ -n "${STALE_CHAT_PIDS//[[:space:]]/}" ]]; then
+    printf '%s\n' "$STALE_CHAT_PIDS" | xargs kill -9 2>/dev/null || true
+    wait_for_port_to_clear "$CHAT_PORT" 50 0.1 || true
   fi
   SESSION_IS_ACTIVE="$SESSION_IS_ACTIVE" nohup python3 "$CHAT_SERVER_SCRIPT" "$INDEX_FILE" "$LIMIT" "$FILTER_AGENT" "$SESSION_NAME" "$FOLLOW_MODE" "$CHAT_PORT" "$SCRIPT_DIR/agent-send" "$SESSION_WORKSPACE" "$CHAT_LOG_DIR" "$CHAT_TARGETS" "$TMUX_SOCKET_NAME" "$HUB_PORT" >"$CHAT_LOG" 2>&1 </dev/null &
   CHAT_SERVER_PID=$!
   disown "$CHAT_SERVER_PID" || true
   CHAT_READY=0
   for _ in $(seq 1 50); do
-    if port_serves_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/app.webmanifest"
+    if pid_listens_on_port "$CHAT_SERVER_PID" "$CHAT_PORT" && port_serves_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/app.webmanifest"
     then
       CHAT_READY=1
       break

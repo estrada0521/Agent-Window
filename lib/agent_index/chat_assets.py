@@ -120,6 +120,11 @@ CHAT_APP_SCRIPT_ASSET = (
         '    let ttsEnabled = !!CHAT_BOOTSTRAP.chatTtsEnabled;\n',
         1,
     )
+    .replace(
+        '    let browserNotificationsEnabled = __CHAT_BROWSER_NOTIFICATIONS_ENABLED__;\n',
+        '    let browserNotificationsEnabled = !!CHAT_BOOTSTRAP.chatBrowserNotificationsEnabled;\n',
+        1,
+    )
 )
 CHAT_APP_SCRIPT_VERSION = hashlib.sha256(CHAT_APP_SCRIPT_ASSET.encode("utf-8")).hexdigest()[:12]
 
@@ -138,6 +143,7 @@ def render_chat_app_bootstrap_html(*, icon_data_uris, server_instance, hub_port,
         "hubPort": int(hub_port),
         "messageLimit": int(chat_settings["message_limit"]),
         "chatSoundEnabled": bool(chat_settings.get("chat_sound", False)),
+        "chatBrowserNotificationsEnabled": bool(chat_settings.get("chat_browser_notifications", False)),
         "chatTtsEnabled": bool(chat_settings.get("chat_tts", False)),
         "agentIconNames": list(ALL_AGENT_NAMES),
         "allBaseAgents": list(ALL_AGENT_NAMES),
