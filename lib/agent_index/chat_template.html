@@ -2642,6 +2642,7 @@ __AGENT_ACCENT_CSS__
       will-change: transform, opacity, filter;
       margin-bottom: 0px;
       position: relative;
+      overflow-anchor: none;
     }
     .message-row:not(.user) {
       padding-left: 0;
@@ -2690,9 +2691,9 @@ __AGENT_ACCENT_CSS__
       to { opacity: 1; }
     }
     .streaming-body-reveal .md-body .stream-char {
-      opacity: 0.02;
-      animation: streamCharReveal 0.042s ease forwards;
-      animation-delay: calc(var(--stream-char-i) * 16ms);
+      opacity: 0;
+      animation: streamCharReveal 0.021s ease forwards;
+      animation-delay: calc(var(--stream-char-i) * var(--stream-char-delay, 8ms));
     }
     @media (prefers-reduced-motion: reduce) {
       .streaming-body-reveal .md-body .stream-char {
@@ -3041,6 +3042,7 @@ __AGENT_ROW_META_SELECTORS__ {
       color: var(--chrome-muted);
       font-size: 12px;
       letter-spacing: 0.02em;
+      overflow-anchor: none;
     }
     .sysmsg-text {
       display: block;
@@ -3062,6 +3064,7 @@ __AGENT_ROW_META_SELECTORS__ {
       line-height: 1.45;
       cursor: pointer;
       touch-action: manipulation;
+      overflow-anchor: none;
     }
     .message-thinking-icons {
       display: inline-flex;
@@ -4289,6 +4292,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let publicDeferredObserver = null;
     const timeline = document.getElementById("messages");
     let _pollScrollLockTop = null;
+    let _pollScrollAnchor = null;
     let _hubIframeLayoutMaxH = 0;
     let _hubIframeLayoutFromParent = 0;
     let _hubChromeGapClientMin = Infinity;
@@ -4673,6 +4677,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     scrollToBottomBtn.addEventListener("click", () => {
       _pollScrollLockTop = null;
+      _pollScrollAnchor = null;
       _stickyToBottom = true;
       scrollConversationToBottom("smooth");
     });
@@ -4939,9 +4944,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const s = String(entry?.sender || "").trim().toLowerCase();
       return s !== "" && s !== "user" && s !== "system";
     };
-    const STREAM_CHAR_SKIP_SEL = "pre, code, .katex, .katex-display, .mermaid-container, table, .table-scroll, script, style";
-    const STREAM_CHAR_MS_PER_CHAR = 16;
-    const STREAM_CHAR_ANIM_MS = 42;
+    const STREAM_CHAR_SKIP_SEL = ".katex, .katex-display, .mermaid-container, table, .table-scroll, script, style";
+    const STREAM_CHAR_MS_PER_CHAR = 8;
+    const STREAM_CHAR_ANIM_MS = 21;
     const STREAM_CHAR_CAP = 3600;
     const unwrapStreamCharSpans = (row) => {
       if (!row) return;
@@ -4995,7 +5000,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       };
       walk(mdBody);
       mdBody.dataset.streamCharsApplied = "1";
-      row._streamRevealTotalMs = Math.min(idx * STREAM_CHAR_MS_PER_CHAR + STREAM_CHAR_ANIM_MS + 80, 16500);
+      const charDelay = idx > 0 ? 1000 / idx : 8;
+      mdBody.style.setProperty("--stream-char-delay", charDelay + "ms");
+      row._streamRevealTotalMs = 1000 + STREAM_CHAR_ANIM_MS + 80;
     };
     const metaAgentLabel = (name, textClass, iconSide = "right") => {
       const raw = (name || "").trim() || "unknown";
@@ -5116,8 +5123,28 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let _programmaticScroll = false;
     let _pollScrollRestoreRaf = 0;
     const maybeRestorePollScrollLock = () => {
-      if (_pollScrollLockTop == null) return;
       if (_programmaticScroll) return;
+      const hasAnchor = _pollScrollAnchor && _pollScrollAnchor.msgId;
+      const hasLock = _pollScrollLockTop != null;
+      if (!hasAnchor && !hasLock) return;
+
+      if (hasAnchor) {
+        const row = timeline.querySelector(`[data-msgid="${CSS.escape(String(_pollScrollAnchor.msgId))}"]`);
+        if (row) {
+          const tRect = timeline.getBoundingClientRect();
+          const drift = (row.getBoundingClientRect().top - tRect.top) - _pollScrollAnchor.vpTop;
+          if (Math.abs(drift) > 0.5) {
+            _programmaticScroll = true;
+            timeline.scrollTop += drift;
+            const maxTop = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
+            timeline.scrollTop = Math.min(Math.max(0, timeline.scrollTop), maxTop);
+            _pollScrollLockTop = timeline.scrollTop;
+            queueMicrotask(() => { _programmaticScroll = false; });
+            return;
+          }
+        }
+      }
+      if (!hasLock) return;
       const maxTop = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
       const target = Math.min(_pollScrollLockTop, maxTop);
       if (Math.abs(timeline.scrollTop - target) > 0.5) {
@@ -5127,7 +5154,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
     };
     const schedulePollScrollRestore = () => {
-      if (_pollScrollLockTop == null) return;
+      if (_pollScrollLockTop == null && !(_pollScrollAnchor && _pollScrollAnchor.msgId)) return;
       if (_pollScrollRestoreRaf) return;
       _pollScrollRestoreRaf = requestAnimationFrame(() => {
         _pollScrollRestoreRaf = 0;
@@ -5142,6 +5169,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         });
       } catch (_) {}
     }
+    const settleScrollLockFrames = (remaining) => {
+      if (remaining <= 0) return;
+      maybeRestorePollScrollLock();
+      requestAnimationFrame(() => settleScrollLockFrames(remaining - 1));
+    };
     const isNearBottom = () => {
       return timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight < STICKY_THRESHOLD;
     };
@@ -5151,6 +5183,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     const clearPollScrollLock = () => {
       _pollScrollLockTop = null;
+      _pollScrollAnchor = null;
     };
     timeline.addEventListener("wheel", clearPollScrollLock, { passive: true });
     timeline.addEventListener("touchstart", clearPollScrollLock, { passive: true });
@@ -5782,6 +5815,19 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
 
       const preserveScrollTop = forceScroll ? null : timeline.scrollTop;
+      let scrollAnchor = null;
+      if (!forceScroll) {
+        const tRect = timeline.getBoundingClientRect();
+        for (const el of timeline.querySelectorAll("[data-msgid]")) {
+          const mid = String(el.dataset.msgid || "");
+          if (!mid) continue;
+          const r = el.getBoundingClientRect();
+          if (r.bottom <= tRect.top + 0.5) continue;
+          if (r.top >= tRect.bottom - 0.5) break;
+          scrollAnchor = { msgId: mid, vpTop: r.top - tRect.top };
+          break;
+        }
+      }
 
       const replyChildren = buildReplyChildrenMap(displayEntries);
       const displayIdSet = new Set(displayEntries.map(e => e.msg_id));
@@ -5870,6 +5916,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       // When previously scrolled to max, new rows extend below the fold so the viewport looks unchanged.
       if (shouldStick) {
         _pollScrollLockTop = null;
+        _pollScrollAnchor = null;
         _programmaticScroll = true;
         timeline.scrollTop = timeline.scrollHeight;
         queueMicrotask(() => { _programmaticScroll = false; });
@@ -5879,10 +5926,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const applied = Math.min(preserveScrollTop, maxTop);
         timeline.scrollTop = applied;
         _pollScrollLockTop = applied;
+        _pollScrollAnchor = scrollAnchor;
         queueMicrotask(() => { _programmaticScroll = false; });
         requestAnimationFrame(() => {
           requestAnimationFrame(maybeRestorePollScrollLock);
         });
+        settleScrollLockFrames(36);
       }
       _stickyToBottom = isNearBottom();
       updateScrollBtn();
@@ -7953,6 +8002,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         updateScrollBtnPos();
         if (_stickyToBottom && timeline) {
           _pollScrollLockTop = null;
+          _pollScrollAnchor = null;
           timeline.scrollTop = timeline.scrollHeight;
         }
       };
@@ -8610,6 +8660,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (!root.querySelector("article.message-row") || !runningAgents.length) {
         existingRows.forEach((row) => row.remove());
         root.dataset.thinkingAgents = "";
+        maybeRestorePollScrollLock();
         return;
       }
       const nextThinkingAgents = runningAgents.join(",");
@@ -8639,6 +8690,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       });
       root.appendChild(frag);
       root.dataset.thinkingAgents = nextThinkingAgents;
+      maybeRestorePollScrollLock();
     };
     const syncUserMessageCollapse = (scope = document) => {
       const rows = scope?.matches?.("article.message-row.user")
