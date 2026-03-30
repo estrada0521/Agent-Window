@@ -2237,7 +2237,7 @@ __AGENT_ACCENT_CSS__
       opacity: 0;
       pointer-events: none;
       transform: scale(0.4) rotate(-15deg);
-      transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1), filter 150ms ease, background 150ms ease, opacity 200ms ease;
+      transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1), filter 150ms ease, background 150ms ease, opacity 200ms ease;
     }
     .send-btn.visible {
       opacity: 1;
@@ -2249,10 +2249,11 @@ __AGENT_ACCENT_CSS__
       box-shadow: none;
     }
     .send-btn:active {
-      transform: translateY(1px) scale(0.98);
+      transform: scale(0.92);
       background:
         linear-gradient(180deg, rgba(210, 218, 230, 0.98) 0%, rgba(175, 188, 206, 0.98) 100%);
       box-shadow: none;
+      transition: transform 80ms ease-out;
     }
     .send-btn:disabled {
       opacity: 0.45;
@@ -2286,13 +2287,14 @@ __AGENT_ACCENT_CSS__
       justify-content: center;
       padding: 0;
       box-shadow: none;
-      transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1), filter 150ms ease, opacity 200ms ease;
+      transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1), filter 150ms ease, opacity 200ms ease;
     }
     .has-hover .mic-btn:hover {
       filter: brightness(1.03);
     }
     .mic-btn:active {
-      transform: translateY(1px) scale(0.98);
+      transform: scale(0.92);
+      transition: transform 80ms ease-out;
     }
     .mic-btn.hidden {
       opacity: 0;
