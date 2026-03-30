@@ -2686,20 +2686,6 @@ __AGENT_ACCENT_CSS__
         box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
       }
     }
-    @keyframes streaming-body-reveal {
-      0% {
-        mask-image: linear-gradient(to bottom, black 0%, transparent 0%);
-        -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 0%);
-      }
-      100% {
-        mask-image: linear-gradient(to bottom, black 100%, transparent 100%);
-        -webkit-mask-image: linear-gradient(to bottom, black 100%, transparent 100%);
-      }
-    }
-    .streaming-body-reveal .md-body {
-      animation: streaming-body-reveal 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-      will-change: mask-image, -webkit-mask-image;
-    }
     /* User messages: large fixed inset on the left; content left-aligned within the row. */
     .message-row.user {
       justify-content: flex-start;
@@ -5608,7 +5594,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         if (row._animateInCleanupDone) return;
         row._animateInCleanupDone = true;
         row.classList.remove("animate-in");
-        row.classList.remove("streaming-body-reveal");
         if (row._animateInCleanupTimer) {
           clearTimeout(row._animateInCleanupTimer);
           row._animateInCleanupTimer = 0;
@@ -5698,9 +5683,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           const row = tmpl.content.firstElementChild;
           if (row) {
             row.classList.add("animate-in");
-            if (!row.classList.contains("user")) {
-              row.classList.add("streaming-body-reveal");
-            }
             scheduleAnimateInCleanup(row);
           }
           frag.appendChild(tmpl.content);
@@ -5719,9 +5701,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             const msgId = String(row.dataset.msgid || "");
             if (!msgId || !newEntryIds.has(msgId)) return;
             row.classList.add("animate-in");
-            if (!row.classList.contains("user")) {
-              row.classList.add("streaming-body-reveal");
-            }
             scheduleAnimateInCleanup(row);
           });
         }
