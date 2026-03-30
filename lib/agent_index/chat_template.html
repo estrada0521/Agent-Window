@@ -275,6 +275,7 @@ __AGENT_ACCENT_CSS__
     #hubPageMenuPanel.open.hub-menu-mode-pane .hub-main-menu-stack {
       flex: 1 1 auto;
       min-height: 0;
+      min-width: 0;
       display: flex;
       flex-direction: column;
     }
@@ -302,7 +303,8 @@ __AGENT_ACCENT_CSS__
       margin-bottom: calc(-1 * var(--pane-trace-tab-overlap));
       align-items: flex-end;
       gap: 2px;
-      padding: 0 8px;
+      /* active タブの ::before/::after が ±10px はみ出すため左右に余白（8px だと数 px はみ出す） */
+      padding: 0 12px;
       box-sizing: border-box;
       border-bottom: none;
       background: linear-gradient(
@@ -402,10 +404,25 @@ __AGENT_ACCENT_CSS__
     #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-slide {
       background: var(--pane-trace-body-bg);
       color: var(--pane-trace-body-fg);
+      max-width: 100%;
+      box-sizing: border-box;
     }
     html[data-theme="soft-light"] #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-slide {
       background: var(--pane-trace-body-bg);
       color: var(--pane-trace-body-fg);
+    }
+    /* 埋め込み Pane Trace: 狭い幅で子の min-content が親を押し広げないようにする */
+    #hubPageMenuPanel.open.hub-menu-mode-pane #paneViewer.pane-viewer {
+      min-width: 0;
+      max-width: 100%;
+    }
+    #hubPageMenuPanel.open.hub-menu-mode-pane #paneViewer .git-commit-detail-body {
+      min-width: 0;
+      max-width: 100%;
+    }
+    #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-carousel {
+      min-width: 0;
+      max-width: 100%;
     }
     .hub-main-menu-stack {
       display: block;
@@ -2757,15 +2774,33 @@ __AGENT_ACCENT_CSS__
     @keyframes userMsgReveal {
       0% {
         opacity: 0;
-        transform: translate(24px, 24px);
+        transform: translateY(-8px);
       }
       100% {
         opacity: 1;
-        transform: translate(0, 0);
+        transform: translateY(0);
       }
     }
+    @keyframes userDividerReveal {
+      0% {
+        transform: scaleX(0);
+        opacity: 0;
+      }
+      100% {
+        transform: scaleX(1);
+        opacity: 1;
+      }
+    }
+    .message-row.animate-in.user .message.user {
+      animation: userMsgReveal 500ms cubic-bezier(0.2, 1, 0.4, 1) both;
+    }
+    .message-row.animate-in.user .user-message-divider {
+      animation: userDividerReveal 600ms cubic-bezier(0.2, 1, 0.4, 1) both;
+      transform-origin: center;
+    }
     .message-row.animate-in.user {
-      animation: userMsgReveal 450ms cubic-bezier(0.2, 1, 0.4, 1) both;
+      /* Remove the old animation from the row itself to avoid double animation */
+      animation: none;
     }
     .message-row.animate-in:not(.user) {
       /* Agent messages: Frame appears instantly to allow streaming focus */
