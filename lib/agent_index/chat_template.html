@@ -2666,8 +2666,21 @@ __AGENT_ACCENT_CSS__
     .message-row.user + .message-row:not(.user) {
       margin-top: 0px;
     }
-    .message-row.animate-in {
-      animation: msgReveal 720ms cubic-bezier(0.2, 1, 0.22, 1) both;
+    @keyframes userMsgReveal {
+      0% {
+        opacity: 0;
+        transform: translate(24px, 24px);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(0, 0);
+      }
+    }
+    .message-row.animate-in.user {
+      animation: userMsgReveal 450ms cubic-bezier(0.2, 1, 0.4, 1) both;
+    }
+    .message-row.animate-in:not(.user) {
+      /* Agent messages: Frame appears instantly to allow streaming focus */
     }
     .message-row.animate-in:not(.user) .message.system {
       animation: msgPulse 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -2876,7 +2889,7 @@ __AGENT_ACCENT_CSS__
       align-self: center;
     }
     .message:not(.user) .message-meta-below {
-      margin-top: 4px;
+      margin-top: -2px;
       margin-bottom: 10px;
       gap: 7px;
       font-size: 13px;
@@ -2924,7 +2937,7 @@ __AGENT_ACCENT_CSS__
       height: 1px;
       background: var(--muted);
       opacity: 1;
-      margin-top: 6px;
+      margin-top: 2px;
     }
     .message.user .user-message-meta time {
       color: var(--chrome-muted) !important;
@@ -2954,23 +2967,11 @@ __AGENT_ACCENT_CSS__
     }
     @media (hover: hover) and (pointer: fine) {
       .message:not(.user) .message-meta-below {
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 120ms ease;
-      }
-      /* One container opacity (like agent meta); per-child rules avoid fighting `time` etc. */
-      .message.user .user-message-meta {
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 120ms ease;
-      }
-      .message-row.user:hover .user-message-meta,
-      .message-row.user:focus-within .user-message-meta {
         opacity: 1;
         pointer-events: auto;
       }
-      .message-row:not(.user):hover .message-meta-below,
-      .message-row:not(.user):focus-within .message-meta-below {
+      /* One container opacity (like agent meta); per-child rules avoid fighting `time` etc. */
+      .message.user .user-message-meta {
         opacity: 1;
         pointer-events: auto;
       }
