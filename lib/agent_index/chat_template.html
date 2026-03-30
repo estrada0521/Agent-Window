@@ -5109,7 +5109,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     const STICKY_THRESHOLD = 100;
     const PUBLIC_OLDER_AUTOLOAD_THRESHOLD = 120;
-    let _stickyToBottom = true;
+    let _stickyToBottom = false;
     let _programmaticScroll = false;
     const isNearBottom = () => {
       return timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight < STICKY_THRESHOLD;
