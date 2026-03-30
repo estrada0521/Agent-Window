@@ -341,31 +341,35 @@ __AGENT_ACCENT_CSS__
       cursor: pointer;
       white-space: nowrap;
       overflow: visible;
-      transition: color 0.2s ease, background 0.2s ease;
+      /* 選択時だけ負マージンにすると flex 行がガタつく — 全タブ同一 */
+      margin-bottom: calc(-1 * var(--pane-trace-tab-overlap));
+      transition: color 0.2s ease, background-color 0.2s ease;
     }
-    #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-tab:hover {
-      color: rgba(255, 255, 255, 0.9);
-      background: rgba(255, 255, 255, 0.1);
+    /* タッチ端末では :hover が粘着して表示が崩れるため、ホバー可能な機器のみ */
+    @media (hover: hover) and (pointer: fine) {
+      #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-tab:hover {
+        color: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.1);
+      }
+      #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-tab.active:hover {
+        color: #fff;
+        background: var(--pane-trace-body-bg);
+      }
+      html[data-theme="soft-light"] #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-tab.active:hover {
+        color: #fff;
+        background: var(--pane-trace-body-bg);
+      }
     }
     #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-tab.active {
       z-index: 2;
-      margin-bottom: calc(-1 * var(--pane-trace-tab-overlap));
       color: #fff;
       background: var(--pane-trace-body-bg);
       box-shadow: none;
-    }
-    #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-tab.active:hover {
-      color: #fff;
-      background: var(--pane-trace-body-bg);
     }
     html[data-theme="soft-light"] #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-tab {
       color: rgba(255, 255, 255, 0.5);
     }
     html[data-theme="soft-light"] #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-tab.active {
-      color: #fff;
-      background: var(--pane-trace-body-bg);
-    }
-    html[data-theme="soft-light"] #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-tab.active:hover {
       color: #fff;
       background: var(--pane-trace-body-bg);
     }

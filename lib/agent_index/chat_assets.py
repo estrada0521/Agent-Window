@@ -391,9 +391,11 @@ def render_pane_trace_popup_html(*, agent: str, agents: list[str] | None = None,
       text-overflow: ellipsis;
       -webkit-app-region: no-drag;
     }}
+    @media (hover: hover) and (pointer: fine) {{
     .pane-trace-tab:hover {{
       color: rgba(255,255,255,0.9);
       background: rgba(255,255,255,0.1);
+    }}
     }}
     .pane-trace-tab.active {{
       color: #fff;
