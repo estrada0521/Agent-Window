@@ -2796,10 +2796,42 @@ __AGENT_ACCENT_CSS__
       animation: streamCharReveal 0.021s ease forwards;
       animation-delay: calc(var(--stream-char-i) * var(--stream-char-delay, 8ms));
     }
+    @keyframes streamTailDotPulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 1; }
+    }
+    .streaming-body-reveal .md-body {
+      position: relative;
+    }
+    /* ストリーミング末尾ドット: md-body 内 absolute（fixed は祖先 transform 等でズレるため避ける） */
+    .stream-reveal-tail-dot {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 6px;
+      height: 6px;
+      margin: 0;
+      padding: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+      animation: streamTailDotPulse 1.15s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 4;
+      box-sizing: border-box;
+    }
+    html[data-theme="soft-light"] .stream-reveal-tail-dot {
+      background: rgba(26, 30, 36, 0.4);
+      box-shadow: 0 0 8px rgba(26, 30, 36, 0.15);
+    }
     @media (prefers-reduced-motion: reduce) {
       .streaming-body-reveal .md-body .stream-char {
         animation: none !important;
         opacity: 1 !important;
+      }
+      .stream-reveal-tail-dot {
+        animation: none;
+        opacity: 0.8;
       }
     }
     /* User messages: large fixed inset on the left; content left-aligned within the row. */
@@ -3026,6 +3058,10 @@ __AGENT_ACCENT_CSS__
       background: var(--muted);
       opacity: 1;
       margin-top: 2px;
+    }
+    /* Add margin when next message is agent */
+    .message-row.user + .message-row:not(.user) .message.user .user-message-divider {
+      margin-bottom: 12px;
     }
     .message.user .user-message-meta time {
       color: var(--chrome-muted) !important;
@@ -5049,8 +5085,86 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const STREAM_CHAR_MS_PER_CHAR = 8;
     const STREAM_CHAR_ANIM_MS = 21;
     const STREAM_CHAR_CAP = 3600;
+    const stopStreamRevealTailDot = (row) => {
+      if (!row) return;
+      if (row._streamTailRaf) {
+        cancelAnimationFrame(row._streamTailRaf);
+        row._streamTailRaf = 0;
+      }
+      row.querySelectorAll(".md-body .stream-reveal-tail-dot").forEach((n) => n.remove());
+      delete row._streamTailStart;
+      delete row._streamTailCharDelay;
+    };
+    const streamTailCaretRect = (node, after) => {
+      const range = document.createRange();
+      try {
+        if (after) range.setStartAfter(node);
+        else range.setStartBefore(node);
+        range.collapse(true);
+        return range.getBoundingClientRect();
+      } catch (_) {
+        return node.getBoundingClientRect();
+      }
+    };
+    const updateStreamRevealTailDot = (row, mdBody) => {
+      const dot = mdBody.querySelector(".stream-reveal-tail-dot");
+      if (!dot) return;
+      const chars = mdBody.querySelectorAll(".stream-char");
+      if (!chars.length) return;
+      const count = chars.length;
+      const delay = typeof row._streamTailCharDelay === "number" ? row._streamTailCharDelay : 8;
+      const start = typeof row._streamTailStart === "number" ? row._streamTailStart : performance.now();
+      const elapsed = performance.now() - start;
+      let k = Math.floor((elapsed - STREAM_CHAR_ANIM_MS) / delay);
+      k = Math.max(-1, Math.min(count - 1, k));
+      const el = k < 0 ? chars[0] : chars[k];
+      const charBox = el.getBoundingClientRect();
+      if (charBox.width === 0 && charBox.height === 0) return;
+      const caret = k < 0 ? streamTailCaretRect(chars[0], false) : streamTailCaretRect(el, true);
+      const mdR = mdBody.getBoundingClientRect();
+      const dotSize = 6;
+      const half = dotSize / 2;
+      const gap = 3;
+      const centerY = charBox.top + charBox.height / 2;
+      let centerX;
+      if (k < 0) {
+        centerX = (Number.isFinite(caret.left) ? caret.left : charBox.left) - gap - half;
+      } else {
+        const insertX = Number.isFinite(caret.left) ? caret.left : charBox.right;
+        centerX = insertX + gap + half;
+      }
+      const vx = centerX - half;
+      const vy = centerY - half;
+      const left = vx - mdR.left - mdBody.clientLeft + mdBody.scrollLeft;
+      const top = vy - mdR.top - mdBody.clientTop + mdBody.scrollTop;
+      dot.style.left = `${left}px`;
+      dot.style.top = `${top}px`;
+    };
+    const startStreamRevealTailDot = (row, mdBody, charCount, charDelayMs) => {
+      stopStreamRevealTailDot(row);
+      if (charCount <= 0) return;
+      const dot = document.createElement("span");
+      dot.className = "stream-reveal-tail-dot";
+      dot.setAttribute("aria-hidden", "true");
+      mdBody.appendChild(dot);
+      row._streamTailStart = performance.now();
+      row._streamTailCharDelay = charDelayMs;
+      const tick = () => {
+        if (!row.classList.contains("streaming-body-reveal")) {
+          stopStreamRevealTailDot(row);
+          return;
+        }
+        const md = row.querySelector(".md-body");
+        if (!md?.querySelector(".stream-reveal-tail-dot")) return;
+        updateStreamRevealTailDot(row, md);
+        row._streamTailRaf = requestAnimationFrame(tick);
+      };
+      updateStreamRevealTailDot(row, mdBody);
+      row._streamTailRaf = requestAnimationFrame(tick);
+    };
     const unwrapStreamCharSpans = (row) => {
       if (!row) return;
+      stopStreamRevealTailDot(row);
       row.querySelectorAll(".md-body").forEach((md) => {
         md.querySelectorAll(".stream-char").forEach((span) => {
           span.replaceWith(document.createTextNode(span.textContent));
@@ -5105,6 +5219,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const charDelay = idx > 0 ? totalDuration / idx : 8;
       mdBody.style.setProperty("--stream-char-delay", charDelay + "ms");
       row._streamRevealTotalMs = totalDuration + STREAM_CHAR_ANIM_MS + 80;
+      if (idx > 0) startStreamRevealTailDot(row, mdBody, idx, charDelay);
     };
     const metaAgentLabel = (name, textClass, iconSide = "right") => {
       const raw = (name || "").trim() || "unknown";
