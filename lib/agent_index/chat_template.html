@@ -2513,6 +2513,7 @@ __AGENT_ACCENT_CSS__
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
+      overflow-anchor: none;
       background: transparent;
       z-index: 1;
     }
@@ -4287,6 +4288,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let publicDeferredLoading = new Set();
     let publicDeferredObserver = null;
     const timeline = document.getElementById("messages");
+    let _pollScrollLockTop = null;
     let _hubIframeLayoutMaxH = 0;
     let _hubIframeLayoutFromParent = 0;
     let _hubChromeGapClientMin = Infinity;
@@ -4670,6 +4672,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
     };
     scrollToBottomBtn.addEventListener("click", () => {
+      _pollScrollLockTop = null;
       _stickyToBottom = true;
       scrollConversationToBottom("smooth");
     });
@@ -5111,6 +5114,22 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const PUBLIC_OLDER_AUTOLOAD_THRESHOLD = 120;
     let _stickyToBottom = false;
     let _programmaticScroll = false;
+    const maybeRestorePollScrollLock = () => {
+      if (_pollScrollLockTop == null) return;
+      if (_programmaticScroll) return;
+      const maxTop = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
+      const target = Math.min(_pollScrollLockTop, maxTop);
+      if (Math.abs(timeline.scrollTop - target) > 0.5) {
+        _programmaticScroll = true;
+        timeline.scrollTop = target;
+        queueMicrotask(() => { _programmaticScroll = false; });
+      }
+    };
+    if (typeof ResizeObserver === "function") {
+      try {
+        new ResizeObserver(() => maybeRestorePollScrollLock()).observe(timeline);
+      } catch (_) {}
+    }
     const isNearBottom = () => {
       return timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight < STICKY_THRESHOLD;
     };
@@ -5118,6 +5137,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (_programmaticScroll) return;
       _stickyToBottom = isNearBottom();
     };
+    const clearPollScrollLock = () => {
+      _pollScrollLockTop = null;
+    };
+    timeline.addEventListener("wheel", clearPollScrollLock, { passive: true });
+    timeline.addEventListener("touchstart", clearPollScrollLock, { passive: true });
     timeline.addEventListener("scroll", updateStickyState, { passive: true });
     timeline.addEventListener("scroll", () => {
       if (olderLoading || !olderHasMore) return;
@@ -5833,14 +5857,20 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       // Poll refreshes: keep the same document offset (do not follow new bottom).
       // When previously scrolled to max, new rows extend below the fold so the viewport looks unchanged.
       if (shouldStick) {
+        _pollScrollLockTop = null;
         _programmaticScroll = true;
         timeline.scrollTop = timeline.scrollHeight;
         queueMicrotask(() => { _programmaticScroll = false; });
       } else if (preserveScrollTop != null) {
         const maxTop = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
         _programmaticScroll = true;
-        timeline.scrollTop = Math.min(preserveScrollTop, maxTop);
+        const applied = Math.min(preserveScrollTop, maxTop);
+        timeline.scrollTop = applied;
+        _pollScrollLockTop = applied;
         queueMicrotask(() => { _programmaticScroll = false; });
+        requestAnimationFrame(() => {
+          requestAnimationFrame(maybeRestorePollScrollLock);
+        });
       }
       _stickyToBottom = isNearBottom();
       updateScrollBtn();
@@ -7910,6 +7940,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const onVVResize = () => {
         updateScrollBtnPos();
         if (_stickyToBottom && timeline) {
+          _pollScrollLockTop = null;
           timeline.scrollTop = timeline.scrollHeight;
         }
       };
