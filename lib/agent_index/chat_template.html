@@ -9004,6 +9004,22 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       root.dataset.thinkingAgents = nextThinkingAgents;
       maybeRestorePollScrollLock();
     };
+    const userCollapseScrollObserver =
+      typeof IntersectionObserver === "function" && timeline && timeline.nodeType === 1
+        ? new IntersectionObserver(
+            (entries) => {
+              for (const entry of entries) {
+                if (entry.isIntersecting) continue;
+                const row = entry.target;
+                const msgId = row?.dataset?.msgid || "";
+                if (!msgId || !expandedUserMessages.has(msgId)) continue;
+                expandedUserMessages.delete(msgId);
+                syncUserMessageCollapse(row);
+              }
+            },
+            { root: timeline, threshold: 0 }
+          )
+        : null;
     const syncUserMessageCollapse = (scope = document) => {
       const rows = scope?.matches?.("article.message-row.user")
         ? [scope]
@@ -9026,9 +9042,19 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const isExpanded = shouldCollapse && msgId && expandedUserMessages.has(msgId);
         row.classList.toggle("is-collapsible", shouldCollapse);
         bodyRow.classList.toggle("is-collapsed", shouldCollapse && !isExpanded);
-        toggle.classList.toggle("is-visible", shouldCollapse);
-        toggle.hidden = !shouldCollapse;
-        toggle.textContent = isExpanded ? "Less" : "More";
+        const showMoreBtn = shouldCollapse && !isExpanded;
+        toggle.classList.toggle("is-visible", showMoreBtn);
+        toggle.hidden = !showMoreBtn;
+        toggle.textContent = "More";
+        if (userCollapseScrollObserver) {
+          if (isExpanded && shouldCollapse && msgId) {
+            userCollapseScrollObserver.observe(row);
+          } else {
+            try {
+              userCollapseScrollObserver.unobserve(row);
+            } catch (_) {}
+          }
+        }
       });
     };
     const syncPaneViewerTabThinkingStatuses = () => {
