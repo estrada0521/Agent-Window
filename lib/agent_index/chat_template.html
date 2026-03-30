@@ -275,6 +275,7 @@ __AGENT_ACCENT_CSS__
     #hubPageMenuPanel.open.hub-menu-mode-pane .hub-main-menu-stack {
       flex: 1 1 auto;
       min-height: 0;
+      min-width: 0;
       display: flex;
       flex-direction: column;
     }
@@ -399,9 +400,19 @@ __AGENT_ACCENT_CSS__
       }
     }
     /* トレース本文: メニュー内の差分ビューと同様に読みやすいベタ地 */
+    #hubPageMenuPanel.open.hub-menu-mode-pane #paneViewer.pane-viewer {
+      min-width: 0;
+      max-width: 100%;
+    }
+    #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-carousel {
+      min-width: 0;
+      max-width: 100%;
+    }
     #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-slide {
       background: var(--pane-trace-body-bg);
       color: var(--pane-trace-body-fg);
+      max-width: 100%;
+      box-sizing: border-box;
     }
     html[data-theme="soft-light"] #hubPageMenuPanel.open.hub-menu-mode-pane .pane-viewer-slide {
       background: var(--pane-trace-body-bg);
@@ -2250,6 +2261,7 @@ __AGENT_ACCENT_CSS__
     .pane-viewer-body {
       flex: 1 1 auto;
       min-height: 0;
+      min-width: 0;
       overflow-x: auto;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
@@ -2258,7 +2270,7 @@ __AGENT_ACCENT_CSS__
       font-family: "SF Mono", "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace;
       font-weight: 400;
       font-style: normal;
-      font-size: 10px;
+      font-size: 9.5px;
       line-height: 1.35;
       white-space: pre-wrap;
       word-break: break-word;
