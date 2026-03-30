@@ -147,14 +147,6 @@ HUB_PAGE_HEADER_CSS = """
     .stat-breakdown-label { font-size: 15px !important; }
     .stat-breakdown-val { font-size: 15px !important; }
     @keyframes hubPageRestartPulse { 0%, 100% { opacity: 1; filter: drop-shadow(0 0 8px rgba(255,255,255,0.5)); } 50% { opacity: 0.4; filter: drop-shadow(0 0 0 rgba(255,255,255,0)); } }
-    @keyframes swell-heavy {
-      0% { transform: scale(1); filter: brightness(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
-      20% { transform: scale(1.3); filter: brightness(1.2); box-shadow: 0 0 24px rgba(255,255,255,0.25); }
-      100% { transform: scale(1); filter: brightness(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
-    }
-    .is-swelling {
-      animation: swell-heavy 400ms cubic-bezier(0.25, 1, 0.5, 1) !important;
-    }
     .hub-page-menu-btn {
       display: flex; align-items: center; justify-content: center;
       width: 44px; height: 44px; border-radius: 50%;
@@ -169,7 +161,9 @@ HUB_PAGE_HEADER_CSS = """
     .hub-page-menu-btn:hover { color: #fff; transform: scale(1.05); }
     .hub-page-menu-btn:active, .hub-page-menu-btn.open {
       color: #fff;
-      /* animation handled by is-swelling */
+      transform: scale(1.08);
+      filter: brightness(1.1);
+      transition: transform 120ms ease-out;
     }
     .hub-page-menu-btn svg { display: block; width: 24px; height: 24px; }
     .hub-page-menu-btn.restarting { animation: hubPageRestartPulse 1.2s ease-in-out infinite; pointer-events: none; border-color: transparent; background: transparent; }
@@ -284,14 +278,6 @@ HUB_PAGE_HEADER_JS = """
     var titleLink = document.getElementById("hubPageTitleLink");
     var envBadge = document.getElementById("hubPageEnvBadge");
 
-    function triggerButtonSwell(el) {
-      if (!el) return;
-      el.classList.remove("is-swelling");
-      void el.offsetWidth;
-      el.classList.add("is-swelling");
-      setTimeout(function() { el.classList.remove("is-swelling"); }, 450);
-    }
-
     if (envBadge) {
       var host = String(location.hostname || "");
       var isLocal = host === "127.0.0.1" || host === "localhost" || host.startsWith("192.168.") || host.startsWith("10.") || /^172\\.(1[6-9]|2\\d|3[01])\\./.test(host);
@@ -314,10 +300,6 @@ HUB_PAGE_HEADER_JS = """
       });
       menuPanel.addEventListener("click", function(e) { e.stopPropagation(); });
     }
-    document.addEventListener("click", function(e) {
-      var swellTarget = e.target.closest(".hub-page-menu-btn, .hub-page-menu-item, .session-card, .home-card, .start-btn, .quick-action, .target-chip");
-      if (swellTarget) triggerButtonSwell(swellTarget);
-    });
     if (restartBtn) {
       restartBtn.addEventListener("click", async function() {
         if (restartBtn.classList.contains("restarting")) return;
