@@ -7698,8 +7698,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           commitAllBtn = document.createElement("button");
           commitAllBtn.type = "button";
           commitAllBtn.className = "hub-page-menu-item positive";
-          commitAllBtn.innerHTML = '<span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path><path d="M4 7h16"></path></svg></span><span class="action-label">Commit All</span><span class="action-mobile">Commit All</span>';
-          openFileBtn.addEventListener("click", async (ev) => {
+          commitAllBtn.innerHTML = '<span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 3 3 7-7"/><path d="m12 13 3 3 7-7"/></svg></span><span class="action-label">Commit All</span><span class="action-mobile">Commit All</span>';          openFileBtn.addEventListener("click", async (ev) => {
             ev.preventDefault();
             ev.stopPropagation();
             if (worktreeActionBusy) return;
@@ -7719,9 +7718,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
               const res = await fetch("/git-commit-file", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ path: chunk.path, message: commitMessage }),
-              });
-              const data = await res.json().catch(() => ({}));
+                body: JSON.stringify({ path: chunk.path, message: commitMessage, agent: "user" }),
+              });              const data = await res.json().catch(() => ({}));
               if (!res.ok || !data.ok) {
                 throw new Error(data.error || "commit failed");
               }
@@ -7748,9 +7746,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
               const res = await fetch("/git-commit-all", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: commitMessage }),
-              });
-              const data = await res.json().catch(() => ({}));
+                body: JSON.stringify({ message: commitMessage, agent: "user" }),
+              });              const data = await res.json().catch(() => ({}));
               if (!res.ok || !data.ok) {
                 throw new Error(data.error || "commit failed");
               }

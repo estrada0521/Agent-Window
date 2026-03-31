@@ -6320,7 +6320,7 @@ def git_branch_overview(*, offset=0, limit=50):
         "recent_commits": recent_commits,
     }
 
-def git_commit_file(*, rel_path: str, message: str):
+def git_commit_file(*, rel_path: str, message: str, agent: str = ""):
     root = Path(workspace or _repo_root).resolve()
     rel_path = str(rel_path or "").strip().lstrip("/")
     message = str(message or "").strip()
@@ -6363,6 +6363,16 @@ def git_commit_file(*, rel_path: str, message: str):
 
     head_res = _run("rev-parse", "--short", "HEAD")
     commit_short = (head_res.stdout or "").strip() if head_res.returncode == 0 else ""
+    commit_hash = (_run("rev-parse", "HEAD").stdout or "").strip()
+
+    append_system_entry(
+        f"Commit: {commit_short} {message}",
+        kind="git-commit",
+        commit_hash=commit_hash,
+        commit_short=commit_short,
+        agent=agent,
+    )
+
     return {
         "ok": True,
         "path": normalized,
@@ -6371,7 +6381,7 @@ def git_commit_file(*, rel_path: str, message: str):
         "stdout": stdout,
     }
 
-def git_commit_all(*, message: str):
+def git_commit_all(*, message: str, agent: str = ""):
     root = Path(workspace or _repo_root).resolve()
     message = str(message or "").strip()
     if not message:
@@ -6407,6 +6417,16 @@ def git_commit_all(*, message: str):
 
     head_res = _run("rev-parse", "--short", "HEAD")
     commit_short = (head_res.stdout or "").strip() if head_res.returncode == 0 else ""
+    commit_hash = (_run("rev-parse", "HEAD").stdout or "").strip()
+
+    append_system_entry(
+        f"Commit: {commit_short} {message}",
+        kind="git-commit",
+        commit_hash=commit_hash,
+        commit_short=commit_short,
+        agent=agent,
+    )
+
     return {
         "ok": True,
         "message": message,
@@ -7471,6 +7491,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             rel = (data.get("path") or "").strip()
             message = (data.get("message") or "").strip()
+            agent = (data.get("agent") or "").strip()
             if not rel:
                 self._send_json(400, {"ok": False, "error": "path required"})
                 return
@@ -7478,7 +7499,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(400, {"ok": False, "error": "message required"})
                 return
             try:
-                result = git_commit_file(rel_path=rel, message=message)
+                result = git_commit_file(rel_path=rel, message=message, agent=agent)
             except PermissionError:
                 self._send_json(403, {"ok": False, "error": "outside workspace"})
                 return
@@ -7502,11 +7523,12 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(400, {"ok": False, "error": "invalid json"})
                 return
             message = (data.get("message") or "").strip()
+            agent = (data.get("agent") or "").strip()
             if not message:
                 self._send_json(400, {"ok": False, "error": "message required"})
                 return
             try:
-                result = git_commit_all(message=message)
+                result = git_commit_all(message=message, agent=agent)
             except ValueError as exc:
                 self._send_json(400, {"ok": False, "error": str(exc)})
                 return
