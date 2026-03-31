@@ -3714,6 +3714,10 @@ __AGENT_ROW_META_SELECTORS__ {
       transition: opacity 180ms ease, transform 180ms ease;
       will-change: opacity, transform;
     }
+    .message-thinking-runtime-keyword {
+      font-weight: 700;
+      color: rgba(252, 252, 252, 0.9);
+    }
     .message-thinking-runtime-line[data-state="enter"] {
       animation: thinkingRuntimeEventIn 220ms cubic-bezier(0.22, 0.9, 0.24, 1) both;
     }
@@ -9939,68 +9943,20 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let _cmdActiveIdx = -1;
     let _cmdTimeout = null;
     let _lastCmdItemsData = [];
-    let _cmdCategory = "all";
-    const CMD_CATEGORY_ORDER = ["all", "compose", "agent", "integrations"];
-    const CMD_CATEGORY_LABELS = {
-      all: "All",
-      compose: "Compose",
-      agent: "Agent",
-      integrations: "Apps",
-    };
     const SLASH_COMMANDS = [
-      { name: "/memo", desc: "自分宛にメモ（本文省略可＋Import添付可）", hasArg: true, category: "compose" },
-      { name: "/gemini", desc: "Gemini direct adapter で実行", hasArg: true, category: "integrations" },
-      { name: "/raw", desc: "次のメッセージを raw 送信", hasArg: true, category: "compose" },
-      { name: "/brief", desc: "brief を表示・編集", hasArg: true, category: "compose" },
-      { name: "/model", desc: "選択中 pane に /model を送信", action: () => { submitMessage({ overrideMessage: "model" }); }, category: "agent" },
-      { name: "/up", desc: "選択中 pane に上移動を送信", hasArg: true, category: "agent" },
-      { name: "/down", desc: "選択中 pane に下移動を送信", hasArg: true, category: "agent" },
-      { name: "/restart", desc: "エージェント再起動", action: () => { submitMessage({ overrideMessage: "restart" }); }, category: "agent" },
-      { name: "/resume", desc: "エージェント再開", action: () => { submitMessage({ overrideMessage: "resume" }); }, category: "agent" },
-      { name: "/interrupt", desc: "エージェントに Esc 送信", action: () => { submitMessage({ overrideMessage: "interrupt" }); }, category: "agent" },
-      { name: "/enter", desc: "エージェントに Enter 送信", action: () => { submitMessage({ overrideMessage: "enter" }); }, category: "agent" },
+      { name: "/memo", desc: "自分宛にメモ（本文省略可＋Import添付可）", hasArg: true },
+      { name: "/gemini", desc: "Gemini direct adapter で実行", hasArg: true },
+      { name: "/raw", desc: "次のメッセージを raw 送信", hasArg: true },
+      { name: "/brief", desc: "brief を表示・編集", hasArg: true },
+      { name: "/model", desc: "選択中 pane に /model を送信", action: () => { submitMessage({ overrideMessage: "model" }); } },
+      { name: "/up", desc: "選択中 pane に上移動を送信", hasArg: true },
+      { name: "/down", desc: "選択中 pane に下移動を送信", hasArg: true },
+      { name: "/restart", desc: "エージェント再起動", action: () => { submitMessage({ overrideMessage: "restart" }); } },
+      { name: "/resume", desc: "エージェント再開", action: () => { submitMessage({ overrideMessage: "resume" }); } },
+      { name: "/interrupt", desc: "エージェントに Esc 送信", action: () => { submitMessage({ overrideMessage: "interrupt" }); } },
+      { name: "/enter", desc: "エージェントに Enter 送信", action: () => { submitMessage({ overrideMessage: "enter" }); } },
     ];
-    const countCmdCategories = (items) => {
-      const counts = new Map(CMD_CATEGORY_ORDER.map((k) => [k, 0]));
-      counts.set("all", items.length);
-      for (const c of items) {
-        const k = c.category || "agent";
-        counts.set(k, (counts.get(k) || 0) + 1);
-      }
-      return counts;
-    };
-    const buildCmdCategoryTabsInner = (counts, activeKey) => {
-      const wrap = document.createElement("div");
-      wrap.className = "file-category-tabs";
-      for (const key of CMD_CATEGORY_ORDER) {
-        const count = counts.get(key) || 0;
-        if (key !== "all" && count <= 0) continue;
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "file-category-tab" + (key === activeKey ? " active" : "");
-        btn.dataset.category = key;
-        btn.innerHTML = `<span>${escapeHtml(CMD_CATEGORY_LABELS[key] || key)}</span><span class="file-category-count">${count}</span>`;
-        wrap.appendChild(btn);
-      }
-      return wrap;
-    };
     const _cmdItems = () => cmdDrop.querySelectorAll(".cmd-item");
-    function cycleCmdCategory(delta) {
-      const keys = Array.from(cmdDrop.querySelectorAll(".file-category-tab"), (t) => String(t.dataset.category || ""));
-      if (keys.length <= 1) return;
-      const idx = Math.max(0, keys.indexOf(_cmdCategory));
-      const next = keys[(idx + delta + keys.length) % keys.length];
-      if (next === _cmdCategory) return;
-      _cmdCategory = next;
-      _cmdActiveIdx = -1;
-      updateCmdAutocomplete();
-    }
-    installFullMenuCategorySwipe(
-      cmdDrop,
-      () => cmdDrop.style.display !== "none" && cmdDrop.classList.contains("visible"),
-      () => cycleCmdCategory(-1),
-      () => cycleCmdCategory(1),
-    );
     const closeCmdDrop = () => {
       if (cmdDrop.classList.contains("visible")) {
         cmdDrop.classList.remove("visible");
@@ -10050,32 +10006,16 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         closeCmdDrop();
         return;
       }
-      const counts = countCmdCategories(matches);
-      if (_cmdCategory !== "all" && (counts.get(_cmdCategory) || 0) <= 0) {
-        _cmdCategory = "all";
-      }
-      const displayMatches = _cmdCategory === "all"
-        ? matches
-        : matches.filter((c) => (c.category || "agent") === _cmdCategory);
-      if (!displayMatches.length) {
-        closeCmdDrop();
-        return;
-      }
-      _lastCmdItemsData = displayMatches.map((c) => ({ ...c, type: "command", label: c.name }));
-      cmdDrop.replaceChildren();
-      cmdDrop.appendChild(buildCmdCategoryTabsInner(counts, _cmdCategory));
-      const cmdList = document.createElement("div");
-      cmdList.className = "cmd-dropdown-list";
-      displayMatches.forEach((c, i) => {
-        const row = document.createElement("div");
-        row.className = "cmd-item";
-        row.dataset.idx = String(i);
-        row.innerHTML =
-          `<span class="cmd-item-name">${escapeHtml(c.name)}</span>` +
-          `<span class="cmd-item-desc">${escapeHtml(c.desc)}</span>`;
-        cmdList.appendChild(row);
-      });
-      cmdDrop.appendChild(cmdList);
+      _lastCmdItemsData = matches.map((c) => ({ ...c, type: "command", label: c.name }));
+      cmdDrop.innerHTML =
+        `<div class="cmd-dropdown-list">` +
+        _lastCmdItemsData.map((c, i) =>
+          `<div class="cmd-item" data-idx="${i}">` +
+          `<span class="cmd-item-name">${escapeHtml(c.label)}</span>` +
+          `<span class="cmd-item-desc">${escapeHtml(c.desc)}</span>` +
+          `</div>`
+        ).join("") +
+        `</div>`;
       _cmdActiveIdx = -1;
       positionComposerDropdown(cmdDrop);
       if (!cmdDrop.classList.contains("visible")) {
@@ -10086,40 +10026,14 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
     };
     messageInput.addEventListener("input", updateCmdAutocomplete);
-    cmdDrop.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const tab = e.target.closest(".file-category-tab");
-      if (tab) {
-        e.preventDefault();
-        const next = String(tab.dataset.category || "all");
-        if (next === _cmdCategory) return;
-        _cmdCategory = next;
-        _cmdActiveIdx = -1;
-        updateCmdAutocomplete();
-      }
-    });
+    cmdDrop.addEventListener("click", (e) => e.stopPropagation());
     cmdDrop.addEventListener("mousedown", (e) => {
-      if (e.target.closest(".file-category-tab")) {
-        e.preventDefault();
-        return;
-      }
       const item = e.target.closest(".cmd-item");
       if (item) { e.preventDefault(); selectCmd(parseInt(item.dataset.idx, 10)); }
     });
     messageInput.addEventListener("keydown", (e) => {
       if (cmdDrop.style.display === "none" || !cmdDrop.classList.contains("visible")) return;
       const items = _cmdItems();
-      const cmdTabs = cmdDrop.querySelectorAll(".file-category-tab");
-      if (e.key === "ArrowLeft" && cmdTabs.length > 1) {
-        e.preventDefault();
-        cycleCmdCategory(-1);
-        return;
-      }
-      if (e.key === "ArrowRight" && cmdTabs.length > 1) {
-        e.preventDefault();
-        cycleCmdCategory(1);
-        return;
-      }
       if (e.key === "ArrowDown") {
         e.preventDefault();
         items[_cmdActiveIdx]?.classList.remove("active");
@@ -10597,6 +10511,20 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       ).join("");
       return body + (chars.length > limited.length ? "…" : "");
     };
+    const buildThinkingRuntimeHtml = (text) => {
+      const raw = String(text || "").replace(/\r\n?/g, "\n");
+      if (!raw) return "";
+      return raw.split("\n").map((line) => {
+        const match = line.match(/^([A-Za-z][A-Za-z0-9]+)(\b.*)?$/);
+        if (!match) return escapeHtml(line);
+        const keyword = String(match[1] || "");
+        if (!/^(Ran|Edited|Explored|Read|Grepped|ReadFile|Edit|SearchText|Shell)$/i.test(keyword)) {
+          return escapeHtml(line);
+        }
+        const rest = String(match[2] || "");
+        return `<span class="message-thinking-runtime-keyword">${escapeHtml(keyword)}</span>${escapeHtml(rest)}`;
+      }).join("<br>");
+    };
     const renderThinkingIndicator = () => {
       const root = document.getElementById("messages");
       if (!root) return;
@@ -10656,7 +10584,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         const pulse = agentPulseOffset(agent);
         const runtimeItem = currentThinkingRuntimeItem(agent);
         const runtimeHtml = runtimeItem
-          ? `<span class="message-thinking-runtime-slot"><span class="message-thinking-runtime-line" data-state="${escapeHtml(runtimeItem.phase || "live")}">${escapeHtml(runtimeItem.text).replace(/\n/g, "<br>")}</span></span>`
+          ? `<span class="message-thinking-runtime-slot"><span class="message-thinking-runtime-line" data-state="${escapeHtml(runtimeItem.phase || "live")}">${buildThinkingRuntimeHtml(runtimeItem.text)}</span></span>`
           : "";
         const row = document.createElement("div");
         row.className = "message-thinking-row";

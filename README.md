@@ -1,8 +1,8 @@
-# multiagent-chat beta 1.0.2
+# multiagent-chat beta 1.0.3
 
 Japanese version: [README_jp.md](README_jp.md)
 
-Latest update notes: [docs/updates/README.md](docs/updates/README.md) / [beta 1.0.2](docs/updates/beta-1.0.2.md)
+Latest update notes: [docs/updates/README.md](docs/updates/README.md) / [beta 1.0.3](docs/updates/beta-1.0.3.md)
 
 `multiagent-chat` is a local tmux-based workbench for running multiple AI agents side by side inside one session and controlling that session from a Hub plus chat UI. `bin/multiagent` creates tmux sessions where window 0 is reserved for the human terminal and each agent instance gets its own tmux window, `bin/agent-index` serves the Hub / chat UI / log viewer, and `bin/agent-send` moves structured messages between the user, agents, and other agents.
 
@@ -28,9 +28,9 @@ The same Hub and chat UI can be opened from a desktop browser or a phone browser
 | Area | Contents |
 |------|------|
 | Hub | active / archived session lists, New Session, Resume, Stats, Settings |
-| Chat UI | user-to-agent and agent-to-agent conversation, replies, attachments, file references, brief / memory, pane actions |
+| Chat UI | user-to-agent and agent-to-agent conversation, replies, attachments, file references, brief / memory, pane actions, live runtime hints |
 | Logs | structured `.agent-index.jsonl` message log, pane captures in `.log` / `.ans`, static HTML export |
-| Backend | Auto mode, Awake, sound and browser notifications, installable Hub / chat PWA surfaces, optional public exposure with a ready-to-use Cloudflare path |
+| Backend | Auto mode, Awake, sound and browser notifications, installable Hub / chat PWA surfaces, direct Gemini chat bridge, optional public exposure with a ready-to-use Cloudflare path |
 
 The current agent registry includes `claude`, `codex`, `gemini`, `kimi`, `copilot`, `cursor`, `grok`, `opencode`, `qwen`, and `aider`. The same base agent can be started more than once, and duplicate instances receive names such as `claude-1` and `claude-2`. Agents communicate through `agent-send`, which routes messages via stdin and appends them to the shared `.agent-index.jsonl`. This means agent-to-agent collaboration happens through the same structured log as user-to-agent messages, and the full multi-party conversation is preserved in one timeline.
 
@@ -61,6 +61,8 @@ Thinking rows appear while agents are running. On mobile, tapping a thinking row
 
 Compared with the main tmux terminal window, the desktop Pane Trace popup is optimized as a browser-side viewer: scrollback is smoother, switching between agents is easier, and text selection or copy is more straightforward.
 
+When a provider adapter or pane parser can recognize tool activity, the thinking row also shows a compact runtime hint under the live status, for example `Ran`, `Edited`, `ReadFile`, or `Grepped`. These hints are intentionally lightweight UI state rather than part of the canonical `.agent-index.jsonl` history.
+
 On desktop, the `Terminal` action opens the real terminal window attached to the tmux session, with window 0 as the operator terminal and the agent windows available through normal tmux window switching. On mobile, the same action opens Pane Trace instead, so pane activity can still be monitored from a phone.
 
 ### 2. Composer / Input Modes
@@ -77,6 +79,7 @@ The composer opens as an overlay. On mobile it opens from the round `O` button. 
 Slash commands are the entry point for send-mode and pane actions. The current commands are:
 
 - `/memo`: a self memo; it can be sent with only Import attachments
+- `/gemini <text>`: run the prompt through the direct Gemini bridge
 - `/raw <text>`: a raw one-shot send without the normal header
 - `/brief`: open the `default` brief
 - `/brief set <name>`: open `brief_<name>.md`
@@ -86,6 +89,8 @@ Slash commands are the entry point for send-mode and pane actions. The current c
 
 The fuller command and quick-action list lives in [docs/chat-commands.en.md](docs/chat-commands.en.md). README keeps only the overview.
 
+`/gemini` is separate from the normal pane-driven agent flow. It sends the prompt through a direct API bridge and returns the result into the same chat timeline, but it does not inherit pane-local memory, file mutation tools, or other CLI-side affordances automatically.
+
 `@` provides file-path autocomplete inside the workspace, so a relative path can be inserted directly into the conversation. Import is not a workspace lookup. It uploads files from the local device into the session uploads area. On mobile this includes photos or files stored on the phone. On desktop it also supports drag and drop. Images appear as thumbnails and other files appear as extension cards.
 
 Brief is the reusable session-local template layer. It is different from `docs/AGENT.md`, which holds permanent repo- or environment-level rules. Briefs are stored under `logs/<session>/brief/brief_<name>.md`, can be edited through `/brief` or `/brief set <name>`, and can be sent to the selected targets from the Brief button. `docs/AGENT.md` is the durable operating guide; brief is the session-specific working context.
@@ -94,6 +99,8 @@ The same quick-action row also exposes `Load` and `Save Memory`. Memory keeps th
 
 ### 3. Header
 
+On desktop, the header menu also now exposes direct `Finder` and `Pane Trace` actions, so session navigation does not depend entirely on reopening the main terminal window.
+
 #### 3-1. Branch Menu
 
 <p align="center">
@@ -101,7 +108,7 @@ The same quick-action row also exposes `Load` and `Save Memory`. Memory keeps th
   <img src="screenshot/Git_diff-portrait.png" alt="Git diff view" width="300">
 </p>
 
-The branch menu shows the current branch, git state, recent commits, and diffs. Current uncommitted changes are shown at the top of the menu, above the commit history and diff navigation. File names inside the diff are also links into the external editor, so a file mentioned by the conversation or shown in the diff can be opened without leaving the session flow.
+The branch menu shows the current branch, git state, recent commits, and diffs. Current uncommitted changes are shown at the top of the menu, above the commit history and diff navigation. Each changed file can be opened in the editor, committed individually, or restored to `HEAD`, and there is also an `All` action for a whole-worktree commit. File names inside the diff are also links into the external editor, so a file mentioned by the conversation or shown in the diff can be opened without leaving the session flow.
 
 #### 3-2. File Menu
 
@@ -111,7 +118,7 @@ The branch menu shows the current branch, git state, recent commits, and diffs. 
   <img src="screenshot/sound.png" alt="Sound file preview" width="240">
 </p>
 
-The file menu collects files referenced inside the session. It supports previews for Markdown, code, images, audio, and other referenced files, plus `Open in Editor` for external-editor handoff. The right-side arrow jumps back to the source message that referenced the file.
+The file menu collects files referenced inside the session. It supports previews for Markdown, code, images, audio, and other referenced files, plus `Open in Editor` for external-editor handoff. Files are grouped by category with counts and size labels, and the right-side arrow jumps back to the source message that referenced the file.
 
 The Markdown preview uses typography close to the chat renderer and resolves local relative image references such as `![...](path)`. Code-oriented files open in a plain viewer, and sound files have a dedicated preview. This makes the file menu the read-side counterpart to the file references that appear in the chat body.
 
@@ -161,7 +168,7 @@ Settings centralizes the default Hub and chat behavior. Auto mode is not autonom
 
 Notification sounds are loaded directly from OGG files in `sounds/`. Regular chat notifications use random `notify_*.ogg` files, while `commit.ogg`, `awake.ogg`, `mictest.ogg`, and scheduled `HH-MM.ogg` files are handled by name. See [sounds/README.en.md](sounds/README.en.md) for the file naming rules and replacement workflow.
 
-When served over HTTPS, the Hub exposes an `App Install & Notifications` block in Settings. The intended flow is to install the Hub itself to the Home Screen or browser app shelf, allow browser notifications there, and use that single Hub install as the notification endpoint for all sessions. Individual session chats do not need to be installed separately for background agent replies.
+When served over HTTPS, the Hub exposes an `App Install & Notifications` block in Settings. The intended flow is to install the Hub itself to the Home Screen or browser app shelf, allow browser notifications there, and use that single Hub install as the notification endpoint for all sessions. Individual session chats do not need to be installed separately for background agent replies. Notification taps can deep-link back into the source session, and supported installed-app environments can expose shortcuts such as New Session and Stats directly from the app icon.
 
 ### 5. Logs / Export
 
@@ -345,15 +352,17 @@ Homebrew is the easiest path on macOS.
 | `./bin/multiagent` | create, resume, list, save, and reconfigure sessions |
 | `./bin/agent-index` | Hub, chat UI, Stats, Settings, log viewer |
 | `./bin/agent-send` | send messages to the user inbox or other agents |
+| `./bin/agent-help` | compact cheatsheet for agents running inside this environment |
 | `./bin/multiagent-cloudflare` | optional public-access workflow |
 
 ## Docs
 
 - [docs/updates/README.md](docs/updates/README.md): milestone update notes and release summaries
-- [docs/updates/beta-1.0.2.md](docs/updates/beta-1.0.2.md): changes shipped after `beta 1.0.1`
+- [docs/updates/beta-1.0.3.md](docs/updates/beta-1.0.3.md): changes shipped after `beta 1.0.2`
 - [docs/AGENT.md](docs/AGENT.md): operating guide for agents running inside this environment
 - [docs/chat-commands.en.md](docs/chat-commands.en.md): chat UI commands, Pane Trace behavior, and quick actions
 - [docs/design-philosophy.en.md](docs/design-philosophy.en.md): why tmux, chat, mobile access, and layered logs are combined this way
+- [docs/gemini-direct-api.en.md](docs/gemini-direct-api.en.md): direct Gemini bridge, runner, and JSONL/runtime note format
 - [docs/technical-details.en.md](docs/technical-details.en.md): technical layout of sessions, message transport, logs, export, and state
 - [docs/cloudflare-quick-tunnel.md](docs/cloudflare-quick-tunnel.md): Cloudflare Quick Tunnel / named tunnel setup
 - [docs/cloudflare-access.md](docs/cloudflare-access.md): protect the public Hub with Cloudflare Access
