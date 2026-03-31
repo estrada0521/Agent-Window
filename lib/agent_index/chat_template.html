@@ -243,21 +243,21 @@ __AGENT_ACCENT_CSS__
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
       opacity: 0;
-      transform: translateY(0);
+      transform: translateY(-12px) scale(0.985);
       pointer-events: none;
       padding: 0 0 calc(18px + env(safe-area-inset-bottom, 0px));
       transition:
-        opacity 180ms ease,
-        transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
-        border-color 180ms ease,
-        box-shadow 180ms ease;
+        opacity 240ms ease,
+        transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 240ms ease,
+        box-shadow 240ms ease;
     }
     .shell > .hub-page-header > .hub-page-menu-panel.open {
       border-top-color: rgba(255,255,255,0.05);
       border-bottom-color: rgba(255, 255, 255, 0.1);
       box-shadow: 0 8px 32px rgba(0,0,0,0.32);
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
       pointer-events: auto;
     }
     html[data-theme="soft-light"] .shell > .hub-page-header > .hub-page-menu-panel.open {
@@ -267,7 +267,7 @@ __AGENT_ACCENT_CSS__
     }
     .shell > .hub-page-header > #attachedFilesPanel.open,
     .shell > .hub-page-header > #gitBranchPanel.open {
-      overflow-y: auto;
+      overflow-y: hidden;
       overflow-x: hidden;
     }
     /* ハンバーガー第1層 + Pane Trace 第2層（git ブランチ→差分と同じスタック） */
@@ -631,7 +631,7 @@ __AGENT_ACCENT_CSS__
       -webkit-backdrop-filter: none;
       border: none;
       border-radius: 16px 16px 0 0;
-      overflow-y: auto;
+      overflow: hidden;
       overflow-x: hidden;
       max-height: 200px;
       z-index: 390;
@@ -640,13 +640,14 @@ __AGENT_ACCENT_CSS__
       padding: 0;
       box-sizing: border-box;
       will-change: transform, opacity;
+      flex-direction: column;
     }
     #fileDropdown.visible {
-      display: block !important;
+      display: flex !important;
       animation: dropdownIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     #fileDropdown.closing {
-      display: block !important;
+      display: flex !important;
       animation: dropdownOut 150ms ease-in forwards;
     }
     .file-item {
@@ -708,10 +709,11 @@ __AGENT_ACCENT_CSS__
       z-index: 1;
       display: flex;
       gap: 0;
-      padding: 0 16px;
+      padding: 0;
       align-items: stretch;
       overflow-x: auto;
       overflow-y: hidden;
+      scroll-behavior: smooth;
       background: rgba(var(--bg-rgb, 38, 38, 36), 0.64);
       backdrop-filter: blur(18px) saturate(160%);
       -webkit-backdrop-filter: blur(18px) saturate(160%);
@@ -722,25 +724,36 @@ __AGENT_ACCENT_CSS__
     .file-category-tabs::-webkit-scrollbar {
       display: none;
     }
+    .file-category-tab-indicator {
+      position: absolute;
+      bottom: 0;
+      height: 1.5px;
+      background: var(--text);
+      transition: left 240ms cubic-bezier(0.2, 0.8, 0.2, 1), width 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      z-index: 2;
+      pointer-events: none;
+    }
+    .file-category-tabs.is-scrolling .file-category-tab-indicator {
+      transition: none;
+    }
     .file-category-tab {
       border: none;
-      border-bottom: 1.5px solid transparent;
       background: transparent;
       color: var(--muted);
-      padding: 12px 12px 10px;
+      padding: 12px 14px 10px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font: 500 12px/1 "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif;
+      font: 500 12.5px/1 "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif;
       letter-spacing: 0.01em;
       white-space: nowrap;
       cursor: pointer;
-      transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+      transition: color 180ms ease;
+      flex: 0 0 auto;
     }
     .file-category-tab.active {
       background: transparent;
       color: var(--text);
-      border-bottom-color: rgba(255,255,255,0.34);
     }
     .has-hover .file-category-tab:hover {
       color: var(--text);
@@ -753,10 +766,55 @@ __AGENT_ACCENT_CSS__
       font-size: 11px;
       font-variant-numeric: tabular-nums;
     }
-    .file-dropdown-list,
+    .file-dropdown-list {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 10px;
+    }
     .file-menu-list,
     .cmd-dropdown-list {
       padding-bottom: 10px;
+      transition: opacity 160ms ease-out, transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform, opacity;
+    }
+    .file-menu-carousel {
+      display: flex;
+      flex-direction: row;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scroll-snap-stop: always;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      overscroll-behavior-x: contain;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      flex: 1 1 auto;
+    }
+    .file-menu-carousel::-webkit-scrollbar { display: none; }
+    .file-menu-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      min-width: 0;
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .file-menu-list.exiting {
+      opacity: 0;
+      transform: translateY(4px) scale(0.995);
+      pointer-events: none;
+    }
+    .file-menu-list.entering {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.995);
     }
     .file-menu-section {
       display: flex;
@@ -3342,23 +3400,31 @@ __AGENT_ACCENT_CSS__
       .message:not(.user) .message-meta-below {
         opacity: 0;
         pointer-events: none;
-        transition: opacity 120ms ease;
+        transform: scale(0.96) translateY(-4px);
+        transform-origin: left center;
+        transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1), transform 160ms cubic-bezier(0.4, 0, 0.2, 1);
       }
       /* One container opacity (like agent meta) */
       .message.user .user-message-meta {
         opacity: 0;
         pointer-events: none;
-        transition: opacity 120ms ease;
+        transform: scale(0.96) translateY(-4px);
+        transform-origin: left center;
+        transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1), transform 160ms cubic-bezier(0.4, 0, 0.2, 1);
       }
       .message-row.user:hover .user-message-meta,
-      .message-row.user:focus-within .user-message-meta {
+      .message-row.user:focus-within .user-message-meta,
+      .message-row.user.meta-keep-visible .user-message-meta {
         opacity: 1;
         pointer-events: auto;
+        transform: scale(1) translateY(0);
       }
       .message-row:not(.user):hover .message-meta-below,
-      .message-row:not(.user):focus-within .message-meta-below {
+      .message-row:not(.user):focus-within .message-meta-below,
+      .message-row:not(.user).meta-keep-visible .message-meta-below {
         opacity: 1;
         pointer-events: auto;
+        transform: scale(1) translateY(0);
       }
     }
     .message-row.user .message {
@@ -3604,23 +3670,26 @@ __AGENT_ROW_META_SELECTORS__ {
       letter-spacing: 0;
       min-height: 1.35em;
     }
-    .message-thinking-label-events {
+    .message-thinking-runtime-slot {
       display: inline-flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 1px;
+      gap: 0;
       min-width: 0;
       max-width: min(72vw, 560px);
     }
-    .message-thinking-event,
+    .message-thinking-runtime-line,
     .message-thinking-label-live,
     .message-thinking-label-preview {
       display: inline-block;
       max-width: min(72vw, 560px);
+      letter-spacing: 0;
+    }
+    .message-thinking-label-live,
+    .message-thinking-label-preview {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      letter-spacing: 0;
     }
     .message-thinking-label-live {
       color: rgba(252, 252, 252, 0.54);
@@ -3632,28 +3701,25 @@ __AGENT_ROW_META_SELECTORS__ {
       font-size: 12px;
       line-height: 1.35;
     }
-    .message-thinking-event {
-      color: rgba(252, 252, 252, 0.68);
+    .message-thinking-runtime-line {
+      color: rgba(252, 252, 252, 0.72);
       font-size: 12px;
-      line-height: 1.35;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow: visible;
+      text-overflow: clip;
       opacity: 0.78;
       transform: translateY(0);
       transition: opacity 180ms ease, transform 180ms ease;
       will-change: opacity, transform;
     }
-    .message-thinking-event:last-child {
-      color: rgba(252, 252, 252, 0.78);
-    }
-    .message-thinking-event[data-state="enter"] {
+    .message-thinking-runtime-line[data-state="enter"] {
       animation: thinkingRuntimeEventIn 220ms cubic-bezier(0.22, 0.9, 0.24, 1) both;
     }
-    .message-thinking-event[data-state="live"] {
+    .message-thinking-runtime-line[data-state="live"] {
       opacity: 0.78;
       transform: translateY(0);
-    }
-    .message-thinking-event[data-state="exit"] {
-      opacity: 0;
-      transform: translateY(-8px);
     }
     @keyframes thinkingRuntimeEventIn {
       0% {
@@ -3665,7 +3731,6 @@ __AGENT_ROW_META_SELECTORS__ {
         transform: translateY(0);
       }
     }
-    .message-thinking-event .stream-char,
     .message-thinking-label-preview .stream-char {
       opacity: 0;
       animation: streamCharReveal 0.021s ease forwards;
@@ -3688,9 +3753,7 @@ __AGENT_ROW_META_SELECTORS__ {
       .message-thinking-icon { animation: none; filter: brightness(0) invert(0.75); }
       .message-thinking-glow { animation: none; display: none; }
       .thinking-char { animation: none; color: rgba(252, 252, 252, 0.6); }
-      .message-thinking-event[data-state="enter"] { animation: none; opacity: 0.78; transform: none; }
-      .message-thinking-event[data-state="exit"] { opacity: 0; transform: none; }
-      .message-thinking-event .stream-char,
+      .message-thinking-runtime-line[data-state="enter"] { animation: none; opacity: 0.78; transform: none; }
       .message-thinking-label-preview .stream-char { animation: none; opacity: 1; }
     }
     .meta {
@@ -8555,7 +8618,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           badge.hidden = true;
         }
       }
-      if (nextRenderSig === attachedFilesPanelRenderSig) return;
+      const isMenuOpen = attachedFilesPanel.classList.contains("open") && !attachedFilesPanel.hidden;
+      if (nextRenderSig === attachedFilesPanelRenderSig && attachedFilesPanel.innerHTML) return;
+      if (isMenuOpen && attachedFilesPanelRenderSig && attachedFilesPanel.innerHTML) return;
       attachedFilesPanelRenderSig = nextRenderSig;
       attachedFilesPanel.innerHTML = "";
       if (!files.length) {
@@ -8581,26 +8646,141 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (_attachedFilesCategory !== "all" && (counts.get(_attachedFilesCategory) || 0) <= 0) {
         _attachedFilesCategory = "all";
       }
-      attachedFilesPanel.appendChild(buildFileCategoryTabs(counts, _attachedFilesCategory));
-      const list = document.createElement("div");
-      list.className = "file-menu-list";
-      if (_attachedFilesCategory === "all") {
-        for (const key of FILE_CATEGORY_ORDER.slice(1)) {
-          const sectionEntries = enrichedFiles.filter((item) => item.category === key);
-          if (!sectionEntries.length) continue;
-          list.appendChild(buildFileMenuSectionHeader(key, sectionEntries.length));
-          sectionEntries.forEach((item) => {
-            list.appendChild(buildFileMenuRow(item.path, item.ext, item.msgId || "", item.size));
+
+      const tabsWrap = buildFileCategoryTabs(counts, _attachedFilesCategory);
+      const indicator = document.createElement("div");
+      indicator.className = "file-category-tab-indicator";
+      tabsWrap.appendChild(indicator);
+      attachedFilesPanel.appendChild(tabsWrap);
+
+      const carousel = document.createElement("div");
+      carousel.className = "file-menu-carousel";
+      const keys = Array.from(tabsWrap.querySelectorAll(".file-category-tab"), (t) => String(t.dataset.category || ""));
+      const tabs = Array.from(tabsWrap.querySelectorAll(".file-category-tab"));
+
+      keys.forEach((key) => {
+        const slide = document.createElement("div");
+        slide.className = "file-menu-slide";
+        slide.dataset.category = key;
+        const list = document.createElement("div");
+        list.className = "file-menu-list";
+        const filtered = key === "all" ? enrichedFiles : enrichedFiles.filter((f) => f.category === key);
+        filtered.forEach((item) => {
+          list.appendChild(buildFileMenuRow(item.path, item.ext, item.msgId || "", item.size));
+        });
+        slide.appendChild(list);
+        carousel.appendChild(slide);
+      });
+
+      attachedFilesPanel.appendChild(carousel);
+
+      const clampCategoryIndex = (value) => Math.max(0, Math.min(keys.length - 1, value));
+      const currentCategoryIndex = () => {
+        const idx = keys.indexOf(_attachedFilesCategory);
+        return idx >= 0 ? idx : 0;
+      };
+      const setActiveCategoryTab = (idx) => {
+        const safeIdx = clampCategoryIndex(idx);
+        tabs.forEach((tab, tabIdx) => tab.classList.toggle("active", tabIdx === safeIdx));
+      };
+      const moveIndicator = (position) => {
+        if (!indicator || !tabs.length) return;
+        const clamped = Math.max(0, Math.min(tabs.length - 1, Number(position) || 0));
+        const lowerIdx = Math.floor(clamped);
+        const upperIdx = Math.min(tabs.length - 1, lowerIdx + 1);
+        const lowerTab = tabs[lowerIdx];
+        const upperTab = tabs[upperIdx];
+        if (!lowerTab || !upperTab) return;
+        const t = clamped - lowerIdx;
+        tabsWrap._indicatorPosition = clamped;
+        const left = (lowerTab.offsetLeft + ((upperTab.offsetLeft - lowerTab.offsetLeft) * t)) - tabsWrap.scrollLeft;
+        const width = lowerTab.offsetWidth + ((upperTab.offsetWidth - lowerTab.offsetWidth) * t);
+        indicator.style.left = `${left}px`;
+        indicator.style.width = `${width}px`;
+      };
+      const syncCategoryUi = (behavior = "auto") => {
+        if (!keys.length) return;
+        const idx = currentCategoryIndex();
+        setActiveCategoryTab(idx);
+        if (carousel.offsetWidth) {
+          carousel.scrollTo({ left: idx * carousel.offsetWidth, behavior });
+        }
+        moveIndicator(idx);
+        ensureTabVisible(idx, behavior);
+        tabsWrap.classList.remove("is-scrolling");
+      };
+      const ensureTabVisible = (idx, behavior = "smooth") => {
+        const safeIdx = clampCategoryIndex(idx);
+        const tab = tabs[safeIdx];
+        if (!tab) return;
+        const pad = 12;
+        const currentLeft = tabsWrap.scrollLeft;
+        const currentRight = currentLeft + tabsWrap.clientWidth;
+        const tabLeft = Math.max(0, tab.offsetLeft - pad);
+        const tabRight = tab.offsetLeft + tab.offsetWidth + pad;
+        if (tabLeft < currentLeft) {
+          tabsWrap.scrollTo({ left: tabLeft, behavior });
+          return;
+        }
+        if (tabRight > currentRight) {
+          tabsWrap.scrollTo({ left: Math.max(0, tabRight - tabsWrap.clientWidth), behavior });
+        }
+      };
+      const syncTab = ({ settling = false } = {}) => {
+        const w = carousel.offsetWidth;
+        if (!w) return;
+        const progress = Math.max(0, Math.min(keys.length - 1, carousel.scrollLeft / w));
+        const idx = clampCategoryIndex(Math.round(progress));
+        const next = keys[idx];
+        if (next) {
+          _attachedFilesCategory = next;
+        }
+        setActiveCategoryTab(idx);
+        moveIndicator(progress);
+        tabsWrap.classList.toggle("is-scrolling", !settling);
+        if (settling) ensureTabVisible(idx, "smooth");
+      };
+
+      attachedFilesPanel._syncCategoryUi = syncCategoryUi;
+      attachedFilesPanel._scrollToCategory = (nextCategory, behavior = "smooth") => {
+        const idx = keys.indexOf(String(nextCategory || ""));
+        if (!carousel || idx < 0) return false;
+        _attachedFilesCategory = keys[idx];
+        setActiveCategoryTab(idx);
+        moveIndicator(idx);
+        tabsWrap.classList.remove("is-scrolling");
+        ensureTabVisible(idx, behavior);
+        carousel.scrollTo({ left: idx * carousel.offsetWidth, behavior });
+        return true;
+      };
+
+      tabsWrap.addEventListener("scroll", () => {
+        if (tabsWrap._indicatorRaf) return;
+        tabsWrap._indicatorRaf = requestAnimationFrame(() => {
+          tabsWrap._indicatorRaf = 0;
+          moveIndicator(Number.isFinite(tabsWrap._indicatorPosition) ? tabsWrap._indicatorPosition : currentCategoryIndex());
+        });
+      }, { passive: true });
+
+      carousel.addEventListener("scroll", () => {
+        tabsWrap.classList.add("is-scrolling");
+        if (!carousel._scrollRaf) {
+          carousel._scrollRaf = requestAnimationFrame(() => {
+            carousel._scrollRaf = 0;
+            syncTab();
           });
         }
-      } else {
-        enrichedFiles
-          .filter((item) => item.category === _attachedFilesCategory)
-          .forEach((item) => {
-            list.appendChild(buildFileMenuRow(item.path, item.ext, item.msgId || "", item.size));
-          });
+        if (carousel._scrollTimer) clearTimeout(carousel._scrollTimer);
+        carousel._scrollTimer = setTimeout(() => syncTab({ settling: true }), 90);
+      }, { passive: true });
+
+      // Initial scroll position
+      const initialIdx = keys.indexOf(_attachedFilesCategory);
+      if (initialIdx >= 0) {
+        requestAnimationFrame(() => {
+          syncCategoryUi("auto");
+        });
       }
-      attachedFilesPanel.appendChild(list);
     };
     const closeHeaderMenus = () => {
       closeGitBranchInlineDiff();
@@ -8678,6 +8858,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
       rightMenuBtn?.classList.remove("open");
       syncHeaderMenuFocus();
+      if (attachedFilesPanel && !attachedFilesPanel.hidden && typeof attachedFilesPanel._syncCategoryUi === "function") {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => attachedFilesPanel._syncCategoryUi("auto"));
+        });
+      }
     });
     attachedFilesPanel?.addEventListener("click", (event) => {
       const tab = event.target.closest(".file-category-tab");
@@ -8686,13 +8871,28 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       event.stopPropagation();
       const nextCategory = String(tab.dataset.category || "all");
       if (nextCategory === _attachedFilesCategory) return;
-      _attachedFilesCategory = nextCategory;
-      updateAttachedFilesPanel(attachedFilesPanelEntries);
+      if (typeof attachedFilesPanel._scrollToCategory === "function") {
+        attachedFilesPanel._scrollToCategory(nextCategory, "smooth");
+      }
     });
     attachedFilesPanel?.addEventListener("mousedown", (event) => {
       if (!event.target.closest(".file-category-tab")) return;
       event.preventDefault();
       event.stopPropagation();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (!attachedFilesPanel || attachedFilesPanel.hidden || !attachedFilesPanel.classList.contains("open")) return;
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.isComposing || event.keyCode === 229) return;
+      if (event.target?.closest?.("input, textarea, select, [contenteditable='true']")) return;
+      const match = String(event.code || "").match(/^Numpad([0-9])$/);
+      if (!match) return;
+      const nextCategory = categoryKeyFromNumpad(attachedFilesPanel, parseInt(match[1], 10));
+      if (!nextCategory || nextCategory === _attachedFilesCategory) return;
+      event.preventDefault();
+      if (typeof attachedFilesPanel._scrollToCategory === "function") {
+        attachedFilesPanel._scrollToCategory(nextCategory, "smooth");
+      }
     });
     const returnToAttachedFilesMenu = () => {
       if (!attachedFilesPanel || !attachedFilesMenuBtn) return;
@@ -8724,6 +8924,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     window.addEventListener("resize", () => {
       if (needsHeaderViewportMetrics()) updateHeaderMenuViewportMetrics();
+      if (attachedFilesPanel && !attachedFilesPanel.hidden && typeof attachedFilesPanel._syncCategoryUi === "function") {
+        attachedFilesPanel._syncCategoryUi("auto");
+      }
     });
     window.addEventListener("scroll", () => {
       if (needsHeaderViewportMetrics()) updateHeaderMenuViewportMetrics();
@@ -9373,7 +9576,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     });
     // @-file autocomplete
     let _fileList = null;
-    let _fileCategory = "all";
     let _attachedFilesCategory = "all";
     const FILE_CATEGORY_ORDER = ["all", "code", "documents", "data", "web", "media", "other"];
     const FILE_CATEGORY_LABELS = {
@@ -9575,38 +9777,25 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         { passive: true },
       );
     };
-    const cycleComposerFileCategory = (delta) => {
-      const keys = Array.from(fileDrop.querySelectorAll(".file-category-tab"), (t) => String(t.dataset.category || ""));
-      if (keys.length <= 1) return;
-      const idx = Math.max(0, keys.indexOf(_fileCategory));
-      const next = keys[(idx + delta + keys.length) % keys.length];
-      if (next === _fileCategory) return;
-      _fileCategory = next;
-      _dropActiveIdx = -1;
-      updateFileAutocomplete();
-    };
     const cycleAttachedFileCategory = (delta) => {
       if (!attachedFilesPanel) return;
       const keys = Array.from(attachedFilesPanel.querySelectorAll(".file-category-tab"), (t) => String(t.dataset.category || ""));
       if (keys.length <= 1) return;
       const idx = Math.max(0, keys.indexOf(_attachedFilesCategory));
-      const next = keys[(idx + delta + keys.length) % keys.length];
+      const nextIdx = (idx + delta + keys.length) % keys.length;
+      const next = keys[nextIdx];
       if (next === _attachedFilesCategory) return;
-      _attachedFilesCategory = next;
-      updateAttachedFilesPanel(attachedFilesPanelEntries);
+      if (typeof attachedFilesPanel._scrollToCategory === "function") {
+        attachedFilesPanel._scrollToCategory(next, "smooth");
+      }
     };
-    installFullMenuCategorySwipe(
-      fileDrop,
-      () => fileDrop.style.display !== "none" && fileDrop.classList.contains("visible"),
-      () => cycleComposerFileCategory(-1),
-      () => cycleComposerFileCategory(1),
-    );
-    installFullMenuCategorySwipe(
-      attachedFilesPanel,
-      () => !!(attachedFilesPanel && !attachedFilesPanel.hidden && attachedFilesPanel.classList.contains("open")),
-      () => cycleAttachedFileCategory(-1),
-      () => cycleAttachedFileCategory(1),
-    );
+    const categoryKeyFromNumpad = (root, digit) => {
+      const keys = Array.from(root?.querySelectorAll?.(".file-category-tab") || [], (tab) => String(tab.dataset.category || ""));
+      if (!keys.length) return "";
+      if (digit === 0) return keys.includes("all") ? "all" : "";
+      const nonAll = keys.filter((key) => key !== "all");
+      return nonAll[digit - 1] || "";
+    };
     const buildFileMenuSectionHeader = (key, count) => {
       const node = document.createElement("div");
       node.className = "file-menu-section";
@@ -9642,21 +9831,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     fileDrop.addEventListener("click", (e) => {
       e.stopPropagation();
-      const tab = e.target.closest(".file-category-tab");
-      if (!tab) return;
-      e.preventDefault();
-      const nextCategory = String(tab.dataset.category || "all");
-      if (nextCategory === _fileCategory) return;
-      _fileCategory = nextCategory;
-      _dropActiveIdx = -1;
-      updateFileAutocomplete();
     });
     fileDrop.addEventListener("mousedown", (e) => {
-      const tab = e.target.closest(".file-category-tab");
-      if (tab) {
-        e.preventDefault();
-        return;
-      }
       const item = e.target.closest(".file-item");
       if (item) { e.preventDefault(); selectFile(item.dataset.path); }
     });
@@ -9711,28 +9887,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         closeDrop();
         return;
       }
-      
-      const counts = countFileCategories(matches);
-      if (_fileCategory !== "all" && (counts.get(_fileCategory) || 0) <= 0) {
-        _fileCategory = "all";
-      }
 
       fileDrop.replaceChildren();
-      fileDrop.appendChild(buildFileCategoryTabs(counts, _fileCategory));
       const list = document.createElement("div");
       list.className = "file-dropdown-list";
-      if (_fileCategory === "all") {
-        for (const key of FILE_CATEGORY_ORDER.slice(1)) {
-          const sectionEntries = matches.filter((entry) => fileCategoryKeyForEntry(entry) === key);
-          if (!sectionEntries.length) continue;
-          list.appendChild(buildFileMenuSectionHeader(key, sectionEntries.length));
-          sectionEntries.forEach((entry) => list.appendChild(buildAutocompleteFileItem(entry)));
-        }
-      } else {
-        matches
-          .filter((entry) => fileCategoryKeyForEntry(entry) === _fileCategory)
-          .forEach((entry) => list.appendChild(buildAutocompleteFileItem(entry)));
-      }
+      matches.forEach((entry) => list.appendChild(buildAutocompleteFileItem(entry)));
       fileDrop.appendChild(list);
       
       _dropActiveIdx = -1;
@@ -9754,17 +9913,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     messageInput.addEventListener("keydown", (e) => {
       if (fileDrop.style.display === "none") return;
       const items = _dropItems();
-      const catTabs = fileDrop.querySelectorAll(".file-category-tab");
-      if (e.key === "ArrowLeft" && catTabs.length > 1) {
-        e.preventDefault();
-        cycleComposerFileCategory(-1);
-        return;
-      }
-      if (e.key === "ArrowRight" && catTabs.length > 1) {
-        e.preventDefault();
-        cycleComposerFileCategory(1);
-        return;
-      }
       if (e.key === "ArrowDown") {
         e.preventDefault();
         items[_dropActiveIdx]?.classList.remove("active");
@@ -10133,6 +10281,18 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       return true;
     };
     document.getElementById("messages").addEventListener("click", (e) => {
+      const metaBtn = e.target.closest(".message-meta-below button, .user-message-meta button, .message-meta-below .meta-agent, .user-message-meta .meta-agent");
+      if (metaBtn) {
+        const row = metaBtn.closest("article.message-row");
+        if (row) {
+          row.classList.add("meta-keep-visible");
+          if (row._metaKeepTimer) clearTimeout(row._metaKeepTimer);
+          row._metaKeepTimer = setTimeout(() => {
+            row.classList.remove("meta-keep-visible");
+            row._metaKeepTimer = null;
+          }, 1800);
+        }
+      }
       const thinkingRowEarly = e.target.closest(".message-thinking-row");
       if (thinkingRowEarly) {
         const ag = thinkingRowEarly.dataset.agent;
@@ -10246,150 +10406,64 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let agentStatusSince = {};
     let agentTotalThinkingTime = {};
     let thinkingTimeSession = "";
-    const THINKING_RUNTIME_MAX_VISIBLE = 2;
     const THINKING_RUNTIME_ENTER_MS = 220;
-    const THINKING_RUNTIME_VISIBLE_MS = 1000;
-    const THINKING_RUNTIME_EXIT_MS = 180;
-    let thinkingRuntimeQueues = {};
-    let thinkingRuntimeSeenIds = {};
-    const ensureThinkingRuntimeQueue = (agent) => {
-      if (!thinkingRuntimeQueues[agent]) {
-        thinkingRuntimeQueues[agent] = { visible: [], pending: [] };
-      }
-      return thinkingRuntimeQueues[agent];
+    let thinkingRuntimeItems = {};
+    const clearThinkingRuntimeItemTimers = (item) => {
+      if (!item) return;
+      clearTimeout(item.enterTimer);
+      item.enterTimer = 0;
     };
-    const ensureThinkingRuntimeSeen = (agent) => {
-      if (!thinkingRuntimeSeenIds[agent]) {
-        thinkingRuntimeSeenIds[agent] = new Set();
-      }
-      return thinkingRuntimeSeenIds[agent];
-    };
-    const clearThinkingRuntimeEntryTimers = (entry) => {
-      if (!entry) return;
-      clearTimeout(entry.enterTimer);
-      clearTimeout(entry.expireTimer);
-      clearTimeout(entry.removeTimer);
-      entry.enterTimer = 0;
-      entry.expireTimer = 0;
-      entry.removeTimer = 0;
-    };
-    const queueVisibleRuntimeEvents = (agent) => {
-      const queue = thinkingRuntimeQueues[agent];
-      return Array.isArray(queue?.visible) ? queue.visible : [];
-    };
+    const currentThinkingRuntimeItem = (agent) => thinkingRuntimeItems[agent] || null;
     const clearThinkingRuntimeAgent = (agent, { suppressRender = false } = {}) => {
-      const queue = thinkingRuntimeQueues[agent];
-      if (!queue) return false;
-      queue.visible.forEach(clearThinkingRuntimeEntryTimers);
-      queue.pending.forEach(clearThinkingRuntimeEntryTimers);
-      delete thinkingRuntimeQueues[agent];
-      delete thinkingRuntimeSeenIds[agent];
+      const item = thinkingRuntimeItems[agent];
+      if (!item) return false;
+      clearThinkingRuntimeItemTimers(item);
+      delete thinkingRuntimeItems[agent];
       if (!suppressRender) renderThinkingIndicator();
       return true;
     };
-    const addThinkingRuntimeEntry = (agent, event, { suppressRender = false } = {}) => {
-      const queue = ensureThinkingRuntimeQueue(agent);
+    const setThinkingRuntimeItem = (agent, event, { suppressRender = false } = {}) => {
       const entry = {
         id: String(event?.id || "").trim(),
         text: String(event?.text || "").trim(),
         phase: "enter",
         enterTimer: 0,
-        expireTimer: 0,
-        removeTimer: 0,
       };
       if (!entry.id || !entry.text) return false;
-      queue.visible.push(entry);
       entry.enterTimer = setTimeout(() => {
-        const current = queueVisibleRuntimeEvents(agent).find((item) => item.id === entry.id);
+        const current = currentThinkingRuntimeItem(agent);
         if (!current || current.phase !== "enter") return;
         current.phase = "live";
         renderThinkingIndicator();
       }, THINKING_RUNTIME_ENTER_MS);
-      entry.expireTimer = setTimeout(() => {
-        startThinkingRuntimeExit(agent, entry.id);
-      }, THINKING_RUNTIME_VISIBLE_MS);
+      const current = currentThinkingRuntimeItem(agent);
+      if (current && current.id === entry.id && current.text === entry.text) return false;
+      clearThinkingRuntimeItemTimers(current);
+      thinkingRuntimeItems[agent] = entry;
       if (!suppressRender) renderThinkingIndicator();
       return true;
     };
-    const startThinkingRuntimeExit = (agent, eventId, { suppressRender = false } = {}) => {
-      const queue = thinkingRuntimeQueues[agent];
-      if (!queue) return false;
-      const entry = queue.visible.find((item) => item.id === eventId);
-      if (!entry || entry.phase === "exit") return false;
-      clearTimeout(entry.enterTimer);
-      clearTimeout(entry.expireTimer);
-      entry.phase = "exit";
-      entry.removeTimer = setTimeout(() => {
-        const nextQueue = thinkingRuntimeQueues[agent];
-        if (!nextQueue) return;
-        const idx = nextQueue.visible.findIndex((item) => item.id === eventId);
-        if (idx >= 0) {
-          const [removed] = nextQueue.visible.splice(idx, 1);
-          clearThinkingRuntimeEntryTimers(removed);
-        }
-        if (!nextQueue.visible.length && !nextQueue.pending.length) {
-          delete thinkingRuntimeQueues[agent];
-        }
-        renderThinkingIndicator();
-        processThinkingRuntimeQueue(agent);
-      }, THINKING_RUNTIME_EXIT_MS);
-      if (!suppressRender) renderThinkingIndicator();
-      return true;
-    };
-    const processThinkingRuntimeQueue = (agent, { suppressRender = false } = {}) => {
-      const queue = thinkingRuntimeQueues[agent];
-      if (!queue) return;
-      if (queue.visible.some((item) => item.phase === "exit")) return;
-      let changed = false;
-      while (queue.pending.length && queue.visible.length < THINKING_RUNTIME_MAX_VISIBLE) {
-        const nextEvent = queue.pending.shift();
-        if (addThinkingRuntimeEntry(agent, nextEvent, { suppressRender: true })) {
-          changed = true;
-        }
-      }
-      if (!changed && queue.pending.length && queue.visible.length >= THINKING_RUNTIME_MAX_VISIBLE) {
-        startThinkingRuntimeExit(agent, queue.visible[0]?.id, { suppressRender });
-        return;
-      }
-      if (changed && !suppressRender) {
-        renderThinkingIndicator();
-      }
-      if (queue.pending.length && queue.visible.length >= THINKING_RUNTIME_MAX_VISIBLE) {
-        startThinkingRuntimeExit(agent, queue.visible[0]?.id, { suppressRender });
-      }
-    };
-    const syncThinkingRuntimeQueues = (statuses, { suppressRender = false } = {}) => {
+    const syncThinkingRuntimeItems = (statuses, { suppressRender = false } = {}) => {
       const runningAgents = new Set(
         Object.entries(statuses || {})
           .filter(([, status]) => status === "running")
           .map(([agent]) => agent)
       );
       let changed = false;
-      Object.keys(thinkingRuntimeQueues).forEach((agent) => {
+      Object.keys(thinkingRuntimeItems).forEach((agent) => {
         if (runningAgents.has(agent)) return;
         changed = clearThinkingRuntimeAgent(agent, { suppressRender: true }) || changed;
       });
       runningAgents.forEach((agent) => {
         const payload = currentAgentRuntime?.[agent];
-        const events = Array.isArray(payload?.events) ? payload.events : [];
-        if (!events.length) return;
-        const queue = ensureThinkingRuntimeQueue(agent);
-        const seenIds = ensureThinkingRuntimeSeen(agent);
-        const knownIds = new Set([
-          ...seenIds,
-          ...queue.visible.map((item) => item.id),
-          ...queue.pending.map((item) => item.id),
-        ]);
-        for (const raw of events) {
-          const id = String(raw?.id || "").trim();
-          const text = String(raw?.text || "").trim();
-          if (!id || !text || knownIds.has(id)) continue;
-          queue.pending.push({ id, text });
-          knownIds.add(id);
-          seenIds.add(id);
-          changed = true;
+        const raw = payload?.current_event;
+        const id = String(raw?.id || "").trim();
+        const text = String(raw?.text || "").trim();
+        if (!id || !text) {
+          changed = clearThinkingRuntimeAgent(agent, { suppressRender: true }) || changed;
+        } else {
+          changed = setThinkingRuntimeItem(agent, { id, text }, { suppressRender: true }) || changed;
         }
-        processThinkingRuntimeQueue(agent, { suppressRender: true });
       });
       if (changed && !suppressRender) {
         renderThinkingIndicator();
@@ -10428,7 +10502,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         currentProviderRuntime = {};
       }
       if (data.statuses && typeof data.statuses === "object") {
-        syncThinkingRuntimeQueues(data.statuses, { suppressRender: true });
+        syncThinkingRuntimeItems(data.statuses, { suppressRender: true });
         renderAgentStatus(data.statuses);
       } else {
         renderThinkingIndicator();
@@ -10553,7 +10627,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       const agentRuntimeSig = JSON.stringify(
         runningAgents.map((agent) => [
           agent,
-          queueVisibleRuntimeEvents(agent).map((item) => [item.id, item.text, item.phase]),
+          currentThinkingRuntimeItem(agent)
+            ? [currentThinkingRuntimeItem(agent).id, currentThinkingRuntimeItem(agent).text, currentThinkingRuntimeItem(agent).phase]
+            : null,
         ])
       );
       const nextThinkingSig = `${runningAgents.join(",")}|${agentRuntimeSig}|${providerSig}`;
@@ -10578,12 +10654,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       
       runningAgents.forEach((agent) => {
         const pulse = agentPulseOffset(agent);
-        const runtimeEvents = queueVisibleRuntimeEvents(agent);
-        const runtimeHtml = runtimeEvents.length
-          ? `<span class="message-thinking-label-events">${runtimeEvents.map((event) => {
-              const body = event.phase === "enter" ? buildThinkingPreviewStreamHtml(event.text) : escapeHtml(event.text);
-              return `<span class="message-thinking-event" data-state="${escapeHtml(event.phase || "live")}">${body}</span>`;
-            }).join("")}</span>`
+        const runtimeItem = currentThinkingRuntimeItem(agent);
+        const runtimeHtml = runtimeItem
+          ? `<span class="message-thinking-runtime-slot"><span class="message-thinking-runtime-line" data-state="${escapeHtml(runtimeItem.phase || "live")}">${escapeHtml(runtimeItem.text).replace(/\n/g, "<br>")}</span></span>`
           : "";
         const row = document.createElement("div");
         row.className = "message-thinking-row";

@@ -21,48 +21,234 @@ from .state_core import load_hub_settings as load_shared_hub_settings
 from .state_core import load_session_thinking_totals as load_shared_session_thinking_totals
 
 
-_PANE_RUNTIME_LINE_PATTERNS: dict[str, tuple[re.Pattern[str], ...]] = {
+_PANE_RUNTIME_TOOL_LINE_PATTERNS: dict[str, tuple[re.Pattern[str], ...]] = {
     "codex": (
-        re.compile(r"^\s*[•·]\s+Ran\s+(?P<body>.+?)\s*$"),
-        re.compile(r"^\s*Ran\s+(?P<body>.+?)\s*$"),
+        re.compile(r"^\s*[•·]\s+Ran(?:\s+(?P<body>.*?))?\s*$"),
+        re.compile(r"^\s*[•·]\s+Edited(?:\s+(?P<body>.*?))?\s*$"),
+        re.compile(r"^\s*[•·]\s+Explored(?:\s+(?P<body>.*?))?\s*$"),
+        re.compile(r"^\s*Ran(?:\s+(?P<body>.*?))?\s*$"),
+        re.compile(r"^\s*Edited(?:\s+(?P<body>.*?))?\s*$"),
+        re.compile(r"^\s*Explored(?:\s+(?P<body>.*?))?\s*$"),
+    ),
+    "gemini": (
+        re.compile(r"^\s*[│|]\s*[✓✔]\s+(?P<label>ReadFile|Edit|SearchText|Shell)(?:\s+(?P<body>.*?))?\s*(?:[│|]\s*)?$"),
+        re.compile(r"^\s*[✓✔]\s+(?P<label>ReadFile|Edit|SearchText|Shell)(?:\s+(?P<body>.*?))?\s*$"),
+        re.compile(r"^\s*(?P<label>ReadFile|Edit|SearchText|Shell)(?:\s+(?P<body>.*?))?\s*$"),
+    ),
+    "cursor": (
+        re.compile(r"^\s*(?:⬢\s+)?(?P<label>Read|Grepped)(?!,)\b(?:\s+(?P<body>.*?))?\s*$"),
     ),
 }
+_PANE_RUNTIME_BULLET_RE = re.compile(r"^\s*[•·]\s+")
+_PANE_RUNTIME_SEPARATOR_RE = re.compile(r"^\s*[─—-]{3,}\s*$")
+_PANE_RUNTIME_TREE_PREFIX_RE = re.compile(r"^\s*[│└├┌┐┘┤┬┴─┼]+\s*")
+_PANE_RUNTIME_TOOL_LABEL_RE = re.compile(r"^(Ran|Edited|Explored|ReadFile|Edit|SearchText|Shell)\b(?:\s+(.*))?$")
+_PANE_RUNTIME_GEMINI_BOX_PREFIX_RE = re.compile(r"^\s*[│|]\s*[✓✔]\s+")
+_PANE_RUNTIME_GEMINI_BOX_SUFFIX_RE = re.compile(r"\s*[│|]\s*$")
+_PANE_RUNTIME_CURSOR_EDIT_RE = re.compile(r"^\s*[│|]\s+(?P<path>.+?)\s+\+(?P<plus>\d+)\s+-(?P<minus>\d+)\s*(?:[│|]\s*)?$")
+_PANE_RUNTIME_CURSOR_COUNT_SUMMARY_RE = re.compile(r"^\d+\s+(?:files?|greps?)\b(?:\s*,\s*\d+\s+(?:files?|greps?)\b)*$", re.IGNORECASE)
+_PANE_RUNTIME_EXCLUDED_LINE_RE = re.compile(r"\bworking\b", re.IGNORECASE)
 
 
 def _agent_base_name(agent: str) -> str:
     return re.sub(r"-\d+$", "", (agent or "").strip().lower())
 
 
-def _extract_pane_runtime_lines(agent: str, content: str, *, limit: int = 5) -> list[str]:
-    patterns = _PANE_RUNTIME_LINE_PATTERNS.get(_agent_base_name(agent), ())
-    if not patterns or not content:
+def _extract_pane_runtime_blocks(content: str, *, limit: int = 12) -> list[list[str]]:
+    if not content:
         return []
-    matched: list[str] = []
-    for raw in content.splitlines():
-        line = raw.rstrip()
-        if not line:
+    lines = content.splitlines()
+    blocks: list[list[str]] = []
+    idx = 0
+    while idx < len(lines):
+        line = lines[idx].rstrip()
+        if not _PANE_RUNTIME_BULLET_RE.match(line):
+            idx += 1
             continue
-        for pattern in patterns:
-            hit = pattern.search(line)
+        block = [line]
+        idx += 1
+        while idx < len(lines):
+            nxt = lines[idx].rstrip()
+            if not nxt.strip() or _PANE_RUNTIME_SEPARATOR_RE.match(nxt) or _PANE_RUNTIME_BULLET_RE.match(nxt):
+                break
+            block.append(nxt)
+            idx += 1
+        blocks.append(block)
+        if len(blocks) > max(1, int(limit)):
+            del blocks[: len(blocks) - max(1, int(limit))]
+        continue
+    return blocks
+
+
+def _normalize_pane_runtime_detail(line: str) -> str:
+    text = _PANE_RUNTIME_TREE_PREFIX_RE.sub("", (line or "").strip())
+    return text.strip()
+
+
+def _pane_runtime_tool_line_text(line: str) -> str:
+    text = str(line or "").rstrip()
+    text = _PANE_RUNTIME_GEMINI_BOX_PREFIX_RE.sub("", text)
+    text = _PANE_RUNTIME_GEMINI_BOX_SUFFIX_RE.sub("", text)
+    text = _PANE_RUNTIME_BULLET_RE.sub("", text)
+    return text.strip()
+
+
+def _pane_runtime_line_allowed(line: str) -> bool:
+    text = str(line or "").strip()
+    return bool(text) and not _PANE_RUNTIME_EXCLUDED_LINE_RE.search(text)
+
+
+def _pane_runtime_with_occurrence_ids(events: list[dict], *, limit: int) -> list[dict]:
+    counts: dict[str, int] = {}
+    normalized: list[dict] = []
+    for event in events:
+        source_id = str((event or {}).get("source_id") or "").strip()
+        if not source_id:
+            continue
+        counts[source_id] = counts.get(source_id, 0) + 1
+        normalized.append({
+            **event,
+            "source_id": f"{source_id}#{counts[source_id]}",
+        })
+    return normalized[-max(1, int(limit)) :]
+
+
+def _extract_pane_runtime_events(agent: str, content: str, *, limit: int = 12) -> list[dict]:
+    base_name = _agent_base_name(agent)
+    if base_name not in _PANE_RUNTIME_TOOL_LINE_PATTERNS:
+        return []
+    if base_name == "cursor":
+        events: list[dict] = []
+        tool_patterns = _PANE_RUNTIME_TOOL_LINE_PATTERNS.get(base_name, ())
+        for raw_line in content.splitlines():
+            line = raw_line.rstrip()
+            if not line or not _pane_runtime_line_allowed(line):
+                continue
+            edit_hit = _PANE_RUNTIME_CURSOR_EDIT_RE.search(line)
+            if edit_hit:
+                path = str(edit_hit.groupdict().get("path") or "").strip()
+                plus = str(edit_hit.groupdict().get("plus") or "").strip()
+                minus = str(edit_hit.groupdict().get("minus") or "").strip()
+                text = f"Edited {path} +{plus} -{minus}".strip()
+                if text and _pane_runtime_line_allowed(text):
+                    events.append({
+                        "kind": "fixed",
+                        "text": text,
+                        "source_id": f"tool:{base_name}:{text}",
+                    })
+                continue
+            for pattern in tool_patterns:
+                hit = pattern.search(line)
+                if not hit:
+                    continue
+                label = str(hit.groupdict().get("label") or "").strip()
+                body = str(hit.groupdict().get("body") or "").strip()
+                if not label or not body or _PANE_RUNTIME_CURSOR_COUNT_SUMMARY_RE.match(body):
+                    break
+                text = f"{label} {body}".strip()
+                if text and _pane_runtime_line_allowed(text):
+                    events.append({
+                        "kind": "fixed",
+                        "text": text,
+                        "source_id": f"tool:{base_name}:{text}",
+                    })
+                break
+        return _pane_runtime_with_occurrence_ids(events, limit=limit)
+    if base_name == "gemini":
+        events: list[dict] = []
+        tool_patterns = _PANE_RUNTIME_TOOL_LINE_PATTERNS.get(base_name, ())
+        for raw_line in content.splitlines():
+            line = raw_line.rstrip()
+            if not line or not _pane_runtime_line_allowed(line):
+                continue
+            for pattern in tool_patterns:
+                hit = pattern.search(line)
+                if not hit:
+                    continue
+                label = str(hit.groupdict().get("label") or "").strip()
+                body = str(hit.groupdict().get("body") or "").strip()
+                clean_text = _pane_runtime_tool_line_text(line)
+                if not label:
+                    label_match = _PANE_RUNTIME_TOOL_LABEL_RE.match(clean_text)
+                    label = label_match.group(1) if label_match else ""
+                if not body and clean_text:
+                    label_match = _PANE_RUNTIME_TOOL_LABEL_RE.match(clean_text)
+                    if label_match:
+                        body = str(label_match.group(2) or "").strip()
+                text = f"{label} {body}".strip() if label else clean_text
+                if not text or not _pane_runtime_line_allowed(text):
+                    break
+                events.append({
+                    "kind": "fixed",
+                    "text": text,
+                    "source_id": f"tool:{base_name}:{text}",
+                })
+                break
+        return _pane_runtime_with_occurrence_ids(events, limit=limit)
+    events: list[dict] = []
+    tool_patterns = _PANE_RUNTIME_TOOL_LINE_PATTERNS.get(base_name, ())
+    for block in _extract_pane_runtime_blocks(content, limit=limit):
+        first_line = block[0].rstrip()
+        if not _pane_runtime_line_allowed(first_line):
+            continue
+        fixed_event = None
+        matched_fixed_candidate = False
+        for pattern in tool_patterns:
+            hit = pattern.search(first_line)
             if not hit:
                 continue
+            matched_fixed_candidate = True
+            label_match = _PANE_RUNTIME_TOOL_LABEL_RE.match(_pane_runtime_tool_line_text(first_line))
+            label = label_match.group(1) if label_match else ""
             body = (hit.groupdict().get("body") or "").strip()
-            text = f"Ran {body}" if body else line.strip()
-            if text and (not matched or matched[-1] != text):
-                matched.append(text)
+            if body and not _pane_runtime_line_allowed(body):
+                body = ""
+            if not body:
+                for extra_line in block[1:]:
+                    detail = _normalize_pane_runtime_detail(extra_line)
+                    if detail and _pane_runtime_line_allowed(detail):
+                        body = detail
+                        break
+            if label and not body:
+                fixed_event = None
+                break
+            text = f"{label} {body}".strip() if label else (body or _PANE_RUNTIME_BULLET_RE.sub("", first_line).strip())
+            if not _pane_runtime_line_allowed(text):
+                fixed_event = None
+                break
+            fixed_event = {
+                "kind": "fixed",
+                "text": text,
+                "source_id": f"tool:{base_name}:{text}",
+            }
             break
-    return matched[-max(1, int(limit)) :]
+        if fixed_event:
+            events.append(fixed_event)
+            continue
+        if matched_fixed_candidate:
+            continue
+        visible_lines = [line.rstrip() for line in block if _pane_runtime_line_allowed(line)]
+        block_text = "\n".join(visible_lines).strip()
+        if not block_text:
+            continue
+        events.append({
+            "kind": "stream",
+            "text": block_text,
+            "source_id": f"intermediate:{base_name}:{block_text}",
+        })
+    return _pane_runtime_with_occurrence_ids(events, limit=limit)
 
 
-def _pane_runtime_new_lines(previous: list[str], current: list[str]) -> list[str]:
+def _pane_runtime_new_events(previous: list[dict], current: list[dict]) -> list[dict]:
     if not current:
         return []
-    prev = list(previous or [])
-    max_overlap = min(len(prev), len(current))
+    prev_ids = [str((item or {}).get("source_id") or "") for item in (previous or [])]
+    cur_ids = [str((item or {}).get("source_id") or "") for item in current]
+    max_overlap = min(len(prev_ids), len(cur_ids))
     for overlap in range(max_overlap, 0, -1):
-        if prev[-overlap:] == current[:overlap]:
+        if prev_ids[-overlap:] == cur_ids[:overlap]:
             return current[overlap:]
-    return [] if prev == current else current
+    return [] if prev_ids == cur_ids else current
 
 
 def _agent_markdown_selectors(*suffixes: str, prefix: str = "") -> str:
@@ -1133,10 +1319,10 @@ class ChatRuntime:
                     timeout=2,
                     check=False,
                 ).stdout
-                runtime_lines = _extract_pane_runtime_lines(agent, content)
-                prev_runtime_lines = self._pane_runtime_matches.get(agent, [])
-                new_runtime_lines = _pane_runtime_new_lines(prev_runtime_lines, runtime_lines)
-                self._pane_runtime_matches[agent] = runtime_lines
+                runtime_events = _extract_pane_runtime_events(agent, content)
+                prev_runtime_events = self._pane_runtime_matches.get(agent, [])
+                new_runtime_events = _pane_runtime_new_events(prev_runtime_events, runtime_events)
+                self._pane_runtime_matches[agent] = runtime_events
                 now = time.monotonic()
                 prev = self._pane_snapshots.get(pane_id)
                 self._pane_snapshots[pane_id] = content
@@ -1147,17 +1333,21 @@ class ChatRuntime:
                     last_change = self._pane_last_change.get(pane_id, 0.0)
                     result[agent] = "running" if (now - last_change) < self.running_grace_seconds else "idle"
                 if result[agent] == "running":
-                    feed = list((self._pane_runtime_state.get(agent) or {}).get("events", []))
-                    if new_runtime_lines:
-                        for text in new_runtime_lines:
+                    state = dict(self._pane_runtime_state.get(agent) or {})
+                    current_event = state.get("current_event") if isinstance(state.get("current_event"), dict) else None
+                    current_source_id = str((current_event or {}).get("source_id") or "").strip()
+                    if new_runtime_events:
+                        latest_event = new_runtime_events[-1]
+                        source_id = str(latest_event.get("source_id") or "").strip()
+                        if not source_id or source_id != current_source_id:
                             self._pane_runtime_event_seq += 1
-                            feed.append({
+                            current_event = {
                                 "id": f"{agent}:{self._pane_runtime_event_seq}",
-                                "text": text,
-                            })
-                        feed = feed[-5:]
-                    if feed:
-                        self._pane_runtime_state[agent] = {"events": feed}
+                                "text": str(latest_event.get("text") or "").strip(),
+                                "source_id": source_id,
+                            }
+                    if current_event and str(current_event.get("text") or "").strip():
+                        self._pane_runtime_state[agent] = {"current_event": current_event}
                     else:
                         self._pane_runtime_state.pop(agent, None)
                 else:
@@ -1180,17 +1370,14 @@ class ChatRuntime:
     def agent_runtime_state(self) -> dict[str, dict]:
         result = {}
         for agent, payload in self._pane_runtime_state.items():
-            events = []
-            for item in (payload or {}).get("events", []):
-                if not isinstance(item, dict):
-                    continue
-                event_id = str(item.get("id") or "").strip()
-                text = str(item.get("text") or "").strip()
-                if not event_id or not text:
-                    continue
-                events.append({"id": event_id, "text": text})
-            if events:
-                result[agent] = {"events": events[-5:]}
+            raw_event = (payload or {}).get("current_event")
+            if not isinstance(raw_event, dict):
+                continue
+            event_id = str(raw_event.get("id") or "").strip()
+            text = str(raw_event.get("text") or "").rstrip()
+            if not event_id or not text:
+                continue
+            result[agent] = {"current_event": {"id": event_id, "text": text}}
         return result
 
     def trace_content(self, agent: str, *, tail_lines: int | None = None) -> str:
