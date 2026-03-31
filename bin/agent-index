@@ -6206,6 +6206,22 @@ def _git_author_env_for_agent(agent: str) -> dict[str, str] | None:
     }
 
 
+def _git_commit_env(agent: str = "") -> dict[str, str]:
+    """Start from the current env but clear inherited git identity unless explicitly set for an agent."""
+    git_env = os.environ.copy()
+    for key in (
+        "GIT_AUTHOR_NAME",
+        "GIT_AUTHOR_EMAIL",
+        "GIT_COMMITTER_NAME",
+        "GIT_COMMITTER_EMAIL",
+    ):
+        git_env.pop(key, None)
+    _ident = _git_author_env_for_agent(agent)
+    if _ident:
+        git_env.update(_ident)
+    return git_env
+
+
 def git_branch_overview(*, offset=0, limit=50):
     root = Path(workspace or _repo_root)
     try:
@@ -6382,10 +6398,7 @@ def git_commit_file(*, rel_path: str, message: str, agent: str = ""):
     except ValueError as exc:
         raise PermissionError("outside workspace") from exc
 
-    git_env = os.environ.copy()
-    _ident = _git_author_env_for_agent(agent)
-    if _ident:
-        git_env.update(_ident)
+    git_env = _git_commit_env(agent)
 
     def _run(*args, timeout=20):
         return subprocess.run(
@@ -6441,10 +6454,7 @@ def git_commit_all(*, message: str, agent: str = ""):
     if not message:
         raise ValueError("message required")
 
-    git_env = os.environ.copy()
-    _ident = _git_author_env_for_agent(agent)
-    if _ident:
-        git_env.update(_ident)
+    git_env = _git_commit_env(agent)
 
     def _run(*args, timeout=20):
         return subprocess.run(
