@@ -1011,24 +1011,69 @@ __AGENT_ACCENT_CSS__
     }
     .git-commit-diff-actions {
       display: flex;
-      gap: 8px;
-      padding: 8px 12px 10px;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 0;
+      padding: 0;
       border-top: 0.5px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
       background: rgba(var(--bg-rgb), 0.28);
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      touch-action: pan-x;
+      scrollbar-width: thin;
     }
     html[data-theme="soft-light"] .git-commit-diff-actions {
       border-top-color: rgba(15, 20, 30, 0.08);
+      border-bottom-color: rgba(15, 20, 30, 0.1);
       background: rgba(255, 255, 255, 0.55);
     }
     .git-commit-diff-actions .hub-page-menu-item {
       flex: 1 1 0;
+      box-sizing: border-box;
+      width: auto;
       min-width: 0;
+      max-width: none;
       justify-content: center;
       text-align: center;
+      padding: 14px 20px !important;
+      gap: 12px;
+      font-size: 14px !important;
+      font-weight: 400;
+      line-height: normal;
+      border-bottom: none !important;
+      border-radius: 0;
+      transition: color 0.15s ease, background 0.15s ease !important;
+    }
+    .git-commit-diff-actions .hub-page-menu-item:hover,
+    .git-commit-diff-actions .hub-page-menu-item:active {
+      padding: 14px 20px !important;
     }
     .git-commit-diff-actions .hub-page-menu-item .action-label,
     .git-commit-diff-actions .hub-page-menu-item .action-mobile {
       text-align: center;
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
+    }
+    .git-commit-diff-actions .hub-page-menu-item.git-commit-diff-action-global {
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+    .git-commit-diff-actions .hub-page-menu-item.git-commit-diff-action-global:hover,
+    .git-commit-diff-actions .hub-page-menu-item.git-commit-diff-action-global:active {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    html[data-theme="soft-light"] .git-commit-diff-actions .hub-page-menu-item.git-commit-diff-action-global {
+      background: rgba(15, 20, 30, 0.06);
+      box-shadow: inset 0 0 0 1px rgba(15, 20, 30, 0.08);
+    }
+    html[data-theme="soft-light"] .git-commit-diff-actions .hub-page-menu-item.git-commit-diff-action-global:hover,
+    html[data-theme="soft-light"] .git-commit-diff-actions .hub-page-menu-item.git-commit-diff-action-global:active {
+      background: rgba(15, 20, 30, 0.1);
     }
     .git-commit-diff-carousel {
       display: flex;
@@ -7608,6 +7653,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       let openFileBtn = null;
       let commitFileBtn = null;
       let commitAllBtn = null;
+      let revertFileBtn = null;
       let diffScrollRaf = 0;
       let diffScrollEndTimer = null;
       let lastDiffIdx = 0;
@@ -7640,6 +7686,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         if (openFileBtn) openFileBtn.disabled = busy;
         if (commitFileBtn) commitFileBtn.disabled = busy;
         if (commitAllBtn) commitAllBtn.disabled = busy;
+        if (revertFileBtn) revertFileBtn.disabled = busy;
       };
       const updateWorktreeActionUi = (idx = lastDiffIdx) => {
         if (!actionRow || worktreeActionBusy) return;
@@ -7657,6 +7704,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           commitAllBtn.disabled = false;
           commitAllBtn.title = "Commit all current files";
         }
+        if (revertFileBtn) {
+          revertFileBtn.disabled = !path;
+          revertFileBtn.title = path
+            ? `Discard uncommitted changes and restore ${path} to HEAD`
+            : "Revert file to HEAD";
+        }
       };
       const moveDiffIndicator = (idx, { scrollTabIntoView = false } = {}) => {
         if (!toolbar) return;
@@ -7669,35 +7722,26 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         if (scrollTabIntoView) btn.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
       };
       if (fileChunks.length > 0) {
-        toolbar = document.createElement("div");
-        toolbar.className = "git-commit-diff-toolbar";
-        toolbar.innerHTML = '<div class="git-commit-diff-tab-indicator"></div>';
-        fileChunks.forEach((f, i) => {
-          const btn = document.createElement("button");
-          btn.className = `git-commit-diff-file-btn${i === 0 ? " active" : ""}`;
-          btn.dataset.file = f.path;
-          btn.dataset.line = String(f.line || 0);
-          btn.dataset.idx = String(i);
-          btn.textContent = f.path.split("/").pop();
-          btn.title = f.path;
-          toolbar.appendChild(btn);
-        });
-        wrapEl.appendChild(toolbar);
         if (!hash) {
           actionRow = document.createElement("div");
           actionRow.className = "git-commit-diff-actions";
           openFileBtn = document.createElement("button");
           openFileBtn.type = "button";
           openFileBtn.className = "hub-page-menu-item";
-          openFileBtn.innerHTML = '<span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></svg></span><span class="action-label">Open in Editor</span><span class="action-mobile">Open</span>';
+          openFileBtn.innerHTML = '<span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></svg></span><span class="action-label">Open</span><span class="action-mobile">Open</span>';
           commitFileBtn = document.createElement("button");
           commitFileBtn.type = "button";
           commitFileBtn.className = "hub-page-menu-item positive";
-          commitFileBtn.innerHTML = '<span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg></span><span class="action-label">Commit File</span><span class="action-mobile">Commit</span>';
+          commitFileBtn.innerHTML = '<span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg></span><span class="action-label">Commit</span><span class="action-mobile">Commit</span>';
           commitAllBtn = document.createElement("button");
           commitAllBtn.type = "button";
-          commitAllBtn.className = "hub-page-menu-item positive";
-          commitAllBtn.innerHTML = '<span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 3 3 7-7"/><path d="m12 13 3 3 7-7"/></svg></span><span class="action-label">Commit All</span><span class="action-mobile">Commit All</span>';          openFileBtn.addEventListener("click", async (ev) => {
+          commitAllBtn.className = "hub-page-menu-item positive git-commit-diff-action-global";
+          commitAllBtn.innerHTML = '<span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 3 3 7-7"/><path d="m12 13 3 3 7-7"/></svg></span><span class="action-label">All</span><span class="action-mobile">All</span>';
+          revertFileBtn = document.createElement("button");
+          revertFileBtn.type = "button";
+          revertFileBtn.className = "hub-page-menu-item danger";
+          revertFileBtn.innerHTML = '<span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 3"/><path d="M21 3v5h-5"/></svg></span><span class="action-label">HEAD</span><span class="action-mobile">HEAD</span>';
+          openFileBtn.addEventListener("click", async (ev) => {
             ev.preventDefault();
             ev.stopPropagation();
             if (worktreeActionBusy) return;
@@ -7718,7 +7762,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ path: chunk.path, message: commitMessage, agent: "user" }),
-              });              const data = await res.json().catch(() => ({}));
+              });
+              const data = await res.json().catch(() => ({}));
               if (!res.ok || !data.ok) {
                 throw new Error(data.error || "commit failed");
               }
@@ -7746,7 +7791,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: commitMessage, agent: "user" }),
-              });              const data = await res.json().catch(() => ({}));
+              });
+              const data = await res.json().catch(() => ({}));
               if (!res.ok || !data.ok) {
                 throw new Error(data.error || "commit failed");
               }
@@ -7763,10 +7809,61 @@ __AGENT_FONT_MODE_INLINE_STYLE__
               updateWorktreeActionUi(lastDiffIdx);
             }
           });
-          actionRow.append(openFileBtn, commitFileBtn, commitAllBtn);
+          revertFileBtn.addEventListener("click", async (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (worktreeActionBusy) return;
+            const chunk = getDiffChunk();
+            if (!chunk?.path) return;
+            const confirmMsg = `Discard all uncommitted changes to "${chunk.path}" and restore it to HEAD?\nThis cannot be undone.`;
+            if (!confirm(confirmMsg)) return;
+            setWorktreeActionBusy(true);
+            setStatus(`reverting ${chunk.path}...`);
+            try {
+              const res = await fetch("/git-restore-file", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ path: chunk.path }),
+              });
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok || !data.ok) {
+                throw new Error(data.error || "revert failed");
+              }
+              setStatus(data.path ? `Reverted to HEAD: ${data.path}` : "Reverted to HEAD");
+              setTimeout(() => setStatus(""), 2200);
+              await loadGitBranchOverviewPage({ reset: true });
+            } catch (err) {
+              setStatus(err?.message || "revert failed", true);
+              setTimeout(() => setStatus(""), 3200);
+            } finally {
+              setWorktreeActionBusy(false);
+              updateWorktreeActionUi(lastDiffIdx);
+            }
+          });
+          actionRow.append(commitAllBtn, commitFileBtn, revertFileBtn, openFileBtn);
           wrapEl.appendChild(actionRow);
           updateWorktreeActionUi(0);
+          attachGitCommitDiffActionResizeSync();
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              syncGitCommitDiffActionWidths();
+            });
+          });
         }
+        toolbar = document.createElement("div");
+        toolbar.className = "git-commit-diff-toolbar";
+        toolbar.innerHTML = '<div class="git-commit-diff-tab-indicator"></div>';
+        fileChunks.forEach((f, i) => {
+          const btn = document.createElement("button");
+          btn.className = `git-commit-diff-file-btn${i === 0 ? " active" : ""}`;
+          btn.dataset.file = f.path;
+          btn.dataset.line = String(f.line || 0);
+          btn.dataset.idx = String(i);
+          btn.textContent = f.path.split("/").pop();
+          btn.title = f.path;
+          toolbar.appendChild(btn);
+        });
+        wrapEl.appendChild(toolbar);
         requestAnimationFrame(() => {
           moveDiffIndicator(0);
           const firstBtn = toolbar.querySelector(".git-commit-diff-file-btn");
@@ -7852,7 +7949,41 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         });
       });
     };
+    let _gitDiffActionResizeTimer = 0;
+    let _gitDiffActionResizeBound = null;
+    const detachGitCommitDiffActionResizeSync = () => {
+      if (_gitDiffActionResizeBound) {
+        window.removeEventListener("resize", _gitDiffActionResizeBound);
+        _gitDiffActionResizeBound = null;
+      }
+      if (_gitDiffActionResizeTimer) {
+        clearTimeout(_gitDiffActionResizeTimer);
+        _gitDiffActionResizeTimer = 0;
+      }
+    };
+    const syncGitCommitDiffActionWidths = () => {
+      const row = gitBranchPanel?.querySelector(".git-commit-diff-actions");
+      if (!row) return;
+      row.querySelectorAll(".hub-page-menu-item").forEach((b) => {
+        b.style.flex = "";
+        b.style.width = "";
+        b.style.minWidth = "";
+        b.style.maxWidth = "";
+      });
+    };
+    const attachGitCommitDiffActionResizeSync = () => {
+      detachGitCommitDiffActionResizeSync();
+      _gitDiffActionResizeBound = () => {
+        if (_gitDiffActionResizeTimer) clearTimeout(_gitDiffActionResizeTimer);
+        _gitDiffActionResizeTimer = window.setTimeout(() => {
+          _gitDiffActionResizeTimer = 0;
+          syncGitCommitDiffActionWidths();
+        }, 80);
+      };
+      window.addEventListener("resize", _gitDiffActionResizeBound);
+    };
     const closeGitBranchInlineDiff = () => {
+      detachGitCommitDiffActionResizeSync();
       if (!gitBranchPanel) return;
       gitBranchPanel.classList.remove("git-branch-transitioning");
       gitBranchPanel.classList.remove("git-branch-mode-detail");

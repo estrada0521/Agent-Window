@@ -52,25 +52,75 @@ fi
 
 pid_file() { printf '%s' "/tmp/multiagent_auto_${SESSION_NAME}.pid"; }
 
+monitor_pids() {
+  python3 - "$SESSION_NAME" "$_REAL_SCRIPT" "$$" <<'PYEOF'
+import subprocess
+import sys
+
+session_name, script_path, current_pid = sys.argv[1:4]
+needle = f"{script_path} _monitor --session {session_name}"
+try:
+    out = subprocess.run(["ps", "-ef"], capture_output=True, text=True, check=False).stdout
+except Exception:
+    raise SystemExit(0)
+for line in out.splitlines():
+    if needle not in line:
+        continue
+    parts = line.split(None, 7)
+    if len(parts) < 8:
+        continue
+    pid = parts[1]
+    if pid == current_pid:
+        continue
+    print(pid)
+PYEOF
+}
+
+cleanup_pid_file_if_owned() {
+  local pf recorded
+  pf="$(pid_file)"
+  recorded="$(cat "$pf" 2>/dev/null || true)"
+  [[ "$recorded" == "$$" ]] && rm -f "$pf" 2>/dev/null || true
+}
+
+launch_monitor_via_tmux() {
+  local pf shell_cmd
+  pf="$(pid_file)"
+  printf -v shell_cmd 'nohup %q _monitor --session %q >/dev/null 2>&1 </dev/null & echo $! > %q' \
+    "$_REAL_SCRIPT" "$SESSION_NAME" "$pf"
+  tmux run-shell -b "$shell_cmd"
+}
+
 stop_monitor() {
   local pf pid
+  _stop_one_pid() {
+    local one_pid="$1"
+    [[ -n "$one_pid" ]] || return 0
+    kill "$one_pid" 2>/dev/null || true
+    sleep 0.2
+    if kill -0 "$one_pid" 2>/dev/null; then
+      kill -9 "$one_pid" 2>/dev/null || true
+    fi
+  }
   pf="$(pid_file)"
   if [[ -f "$pf" ]]; then
     pid="$(cat "$pf" 2>/dev/null || true)"
     if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
-      kill "$pid" 2>/dev/null || true
+      _stop_one_pid "$pid"
     fi
     rm -f "$pf"
   fi
+  while IFS= read -r pid; do
+    [[ -n "$pid" ]] || continue
+    _stop_one_pid "$pid"
+  done < <(monitor_pids)
 }
 
 case "$ACTION" in
   on)
     stop_monitor
     tmux set-environment -t "$SESSION_NAME" MULTIAGENT_AUTO_MODE "1"
-    "$0" _monitor --session "$SESSION_NAME" &
-    disown
-    echo $! > "$(pid_file)"
+    launch_monitor_via_tmux
     echo "Auto-mode ON (session: $SESSION_NAME)"
     ;;
 
@@ -132,7 +182,8 @@ case "$ACTION" in
         last_ts="$(cat "$(ts_file "$pane_id")" 2>/dev/null || echo 0)"
         [[ $((now - last_ts)) -gt 3 ]] || continue
 
-        content="$(_tmux capture-pane -p -S -15 -t "$pane_id" 2>/dev/null || true)"
+        # Approval dialogs can be taller than 15 lines, especially in Qwen's boxed prompt.
+        content="$(_tmux capture-pane -p -S -30 -t "$pane_id" 2>/dev/null || true)"
         needs_approval=0
         approval_key="Enter"
 
@@ -156,6 +207,13 @@ case "$ACTION" in
             printf '%s\n' "$content" | grep -qF "Run Everything" && needs_approval=1
             approval_key="y"
             ;;
+          QWEN)
+            # Qwen Code permission dialogs are boxed and sometimes push the choice row upward.
+            # Match both the generic permission header and the explicit default choice.
+            printf '%s\n' "$content" | grep -qiF "Allow execution of:" && needs_approval=1
+            printf '%s\n' "$content" | grep -qiF "yes, allow once" && needs_approval=1
+            printf '%s\n' "$content" | grep -qiF "Waiting for user confirmation" && needs_approval=1
+            ;;
         esac
 
         if [[ "$needs_approval" -eq 1 ]]; then
@@ -176,6 +234,6 @@ case "$ACTION" in
     # Cleanup
     rm -f "/tmp/multiagent_auto_last_${SESSION_NAME}_"* 2>/dev/null || true
     rm -f "/tmp/multiagent_auto_hash_${SESSION_NAME}_"* 2>/dev/null || true
-    rm -f "$(pid_file)" 2>/dev/null || true
+    cleanup_pid_file_if_owned
     ;;
 esac

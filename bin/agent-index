@@ -5790,6 +5790,7 @@ from __future__ import annotations
 import json
 import os
 import random
+import re
 import shlex
 import subprocess
 import sys
@@ -5818,7 +5819,7 @@ PUBLIC_HUB_PORT = int(os.environ.get("MULTIAGENT_PUBLIC_HUB_PORT", "443") or "44
 
 _repo_root = Path(agent_send_path).parent.parent
 sys.path.insert(0, str(_repo_root / "lib"))
-from agent_index.agent_registry import ALL_AGENT_NAMES
+from agent_index.agent_registry import AGENTS, ALL_AGENT_NAMES
 from agent_index.chat_assets import (
     CHAT_APP_SCRIPT_ASSET,
     CHAT_MAIN_STYLE_ASSET,
@@ -6149,6 +6150,62 @@ def _default_session_notify_sound_basename(sounds_dir: Path):
     return None
 
 
+_MULTIAGENT_AGENT_EMAIL_DOMAIN = "agents.multiagent.local"
+_AGENT_NAME_SET = frozenset(ALL_AGENT_NAMES)
+
+
+def _agent_from_text_multiagent_email(text: str) -> str:
+    """If text contains local@agents.multiagent.local, return registered agent base name."""
+    low = (text or "").lower()
+    if _MULTIAGENT_AGENT_EMAIL_DOMAIN not in low:
+        return ""
+    dom = re.escape(_MULTIAGENT_AGENT_EMAIL_DOMAIN)
+    for m in re.finditer(rf"([a-z0-9][a-z0-9._+-]*)@{dom}\b", low):
+        base = m.group(1).split("+", 1)[0].strip()
+        if base in _AGENT_NAME_SET:
+            return base
+    return ""
+
+
+def _detect_agent_from_commit_fields(*fields: str) -> str:
+    """Detect agent from commit metadata without naive substring matches (avoids false positives)."""
+    for raw in fields:
+        hit = _agent_from_text_multiagent_email(raw)
+        if hit:
+            return hit
+    names = sorted(ALL_AGENT_NAMES, key=len, reverse=True)
+    for raw in fields:
+        if not raw:
+            continue
+        low = raw.strip().lower()
+        if not low:
+            continue
+        for name in names:
+            pat = r"(?<![a-z0-9])" + re.escape(name) + r"(?:-\d+)?(?![a-z0-9])"
+            if re.search(pat, low):
+                return name
+    return ""
+
+
+def _git_author_env_for_agent(agent: str) -> dict[str, str] | None:
+    """Author/committer env vars for git so branch menu can attribute commits to agents."""
+    a = (agent or "").strip().lower()
+    if not a or a == "user":
+        return None
+    if a not in _AGENT_NAME_SET:
+        return None
+    info = AGENTS.get(a)
+    display = info.display_name if info else a
+    email = f"{a}@{_MULTIAGENT_AGENT_EMAIL_DOMAIN}"
+    name = f"{display} ({a})"
+    return {
+        "GIT_AUTHOR_NAME": name,
+        "GIT_AUTHOR_EMAIL": email,
+        "GIT_COMMITTER_NAME": name,
+        "GIT_COMMITTER_EMAIL": email,
+    }
+
+
 def git_branch_overview(*, offset=0, limit=50):
     root = Path(workspace or _repo_root)
     try:
@@ -6221,18 +6278,7 @@ def git_branch_overview(*, offset=0, limit=50):
         staged_add, staged_del = _parse_numstat(_run("diff", "--numstat", "--cached", "--"))
         worktree_added = unstaged_add + staged_add
         worktree_deleted = unstaged_del + staged_del
-    # Structured commit info with agent detection from multiple sources
-    _agent_names = tuple(ALL_AGENT_NAMES)
-    def _detect_agent(*fields):
-        """Detect agent name from author/committer/co-author/subject fields."""
-        for field in fields:
-            if not field:
-                continue
-            low = field.lower()
-            for a in _agent_names:
-                if a in low:
-                    return a
-        return ""
+    # Structured commit info with agent detection from author/committer/co-author
     log_res = _run(
         "log",
         f"--skip={offset}",
@@ -6254,11 +6300,13 @@ def git_branch_overview(*, offset=0, limit=50):
             author_email = parts[5].strip() if len(parts) > 5 else ""
             committer_email = parts[6].strip() if len(parts) > 6 else ""
             co_author = parts[7].strip() if len(parts) > 7 else ""
-            # Detect agent from: co-author, author name, author email,
-            # committer name, committer email (in priority order)
-            agent = _detect_agent(
-                co_author, author_name, author_email,
-                committer_name, committer_email,
+            # Prefer emails (Hub uses agents.multiagent.local for agent commits)
+            agent = _detect_agent_from_commit_fields(
+                author_email,
+                committer_email,
+                co_author,
+                author_name,
+                committer_name,
             )
             # Parse time to HH:MM
             hhmm = ""
@@ -6334,6 +6382,11 @@ def git_commit_file(*, rel_path: str, message: str, agent: str = ""):
     except ValueError as exc:
         raise PermissionError("outside workspace") from exc
 
+    git_env = os.environ.copy()
+    _ident = _git_author_env_for_agent(agent)
+    if _ident:
+        git_env.update(_ident)
+
     def _run(*args, timeout=20):
         return subprocess.run(
             ["git", "-C", str(root), *args],
@@ -6343,6 +6396,7 @@ def git_commit_file(*, rel_path: str, message: str, agent: str = ""):
             encoding="utf-8",
             errors="replace",
             timeout=timeout,
+            env=git_env,
         )
 
     add_res = _run("add", "-A", "--", normalized)
@@ -6387,6 +6441,11 @@ def git_commit_all(*, message: str, agent: str = ""):
     if not message:
         raise ValueError("message required")
 
+    git_env = os.environ.copy()
+    _ident = _git_author_env_for_agent(agent)
+    if _ident:
+        git_env.update(_ident)
+
     def _run(*args, timeout=20):
         return subprocess.run(
             ["git", "-C", str(root), *args],
@@ -6396,6 +6455,7 @@ def git_commit_all(*, message: str, agent: str = ""):
             encoding="utf-8",
             errors="replace",
             timeout=timeout,
+            env=git_env,
         )
 
     add_res = _run("add", "-A", "--", ".")
@@ -6434,6 +6494,51 @@ def git_commit_all(*, message: str, agent: str = ""):
         "paths": staged_paths,
         "stdout": stdout,
     }
+
+
+def git_restore_file(*, rel_path: str):
+    """Discard staged + unstaged changes for one path; match `git restore --staged --worktree`."""
+    root = Path(workspace or _repo_root).resolve()
+    rel_path = str(rel_path or "").strip().lstrip("/")
+    if not rel_path:
+        raise ValueError("path required")
+    candidate = (root / rel_path).resolve()
+    try:
+        normalized = candidate.relative_to(root).as_posix()
+    except ValueError as exc:
+        raise PermissionError("outside workspace") from exc
+
+    def _run(*args, timeout=20):
+        return subprocess.run(
+            ["git", "-C", str(root), *args],
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+        )
+
+    restore_res = _run("restore", "--staged", "--worktree", "--", normalized, timeout=30)
+    if restore_res.returncode != 0:
+        checkout_res = _run("checkout", "HEAD", "--", normalized, timeout=30)
+        if checkout_res.returncode != 0:
+            msg = (
+                restore_res.stderr
+                or restore_res.stdout
+                or checkout_res.stderr
+                or checkout_res.stdout
+                or "git restore failed"
+            ).strip()
+            raise RuntimeError(msg)
+
+    runtime.append_system_entry(
+        f"Restored to HEAD: {normalized}",
+        kind="git-restore",
+        path=normalized,
+    )
+    return {"ok": True, "path": normalized}
+
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
@@ -7529,6 +7634,34 @@ class Handler(BaseHTTPRequestHandler):
                 return
             try:
                 result = git_commit_all(message=message, agent=agent)
+            except ValueError as exc:
+                self._send_json(400, {"ok": False, "error": str(exc)})
+                return
+            except Exception as exc:
+                self._send_json(500, {"ok": False, "error": str(exc)})
+                return
+            self._send_json(200, result)
+            return
+        if parsed.path == "/git-restore-file":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                length = 0
+            raw = self.rfile.read(length)
+            try:
+                data = json.loads(raw.decode("utf-8") or "{}")
+            except json.JSONDecodeError:
+                self._send_json(400, {"ok": False, "error": "invalid json"})
+                return
+            rel = (data.get("path") or "").strip()
+            if not rel:
+                self._send_json(400, {"ok": False, "error": "path required"})
+                return
+            try:
+                result = git_restore_file(rel_path=rel)
+            except PermissionError:
+                self._send_json(403, {"ok": False, "error": "outside workspace"})
+                return
             except ValueError as exc:
                 self._send_json(400, {"ok": False, "error": str(exc)})
                 return
