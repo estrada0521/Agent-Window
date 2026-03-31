@@ -20,6 +20,51 @@ from .instance_core import resolve_target_agents as resolve_target_agent_names
 from .state_core import load_hub_settings as load_shared_hub_settings
 from .state_core import load_session_thinking_totals as load_shared_session_thinking_totals
 
+
+_PANE_RUNTIME_LINE_PATTERNS: dict[str, tuple[re.Pattern[str], ...]] = {
+    "codex": (
+        re.compile(r"^\s*[•·]\s+Ran\s+(?P<body>.+?)\s*$"),
+        re.compile(r"^\s*Ran\s+(?P<body>.+?)\s*$"),
+    ),
+}
+
+
+def _agent_base_name(agent: str) -> str:
+    return re.sub(r"-\d+$", "", (agent or "").strip().lower())
+
+
+def _extract_pane_runtime_lines(agent: str, content: str, *, limit: int = 5) -> list[str]:
+    patterns = _PANE_RUNTIME_LINE_PATTERNS.get(_agent_base_name(agent), ())
+    if not patterns or not content:
+        return []
+    matched: list[str] = []
+    for raw in content.splitlines():
+        line = raw.rstrip()
+        if not line:
+            continue
+        for pattern in patterns:
+            hit = pattern.search(line)
+            if not hit:
+                continue
+            body = (hit.groupdict().get("body") or "").strip()
+            text = f"Ran {body}" if body else line.strip()
+            if text and (not matched or matched[-1] != text):
+                matched.append(text)
+            break
+    return matched[-max(1, int(limit)) :]
+
+
+def _pane_runtime_new_lines(previous: list[str], current: list[str]) -> list[str]:
+    if not current:
+        return []
+    prev = list(previous or [])
+    max_overlap = min(len(prev), len(current))
+    for overlap in range(max_overlap, 0, -1):
+        if prev[-overlap:] == current[:overlap]:
+            return current[overlap:]
+    return [] if prev == current else current
+
+
 def _agent_markdown_selectors(*suffixes: str, prefix: str = "") -> str:
     """Generate .message.{agent} .md-body selectors for the given suffixes."""
     parts = []
@@ -93,6 +138,9 @@ class ChatRuntime:
         self._caffeinate_proc = None
         self._pane_snapshots = {}
         self._pane_last_change = {}
+        self._pane_runtime_matches = {}
+        self._pane_runtime_state = {}
+        self._pane_runtime_event_seq = 0
         self.running_grace_seconds = 2.0
         self._caffeinate_args = ["caffeinate", "-s"]
         try:
@@ -1060,6 +1108,8 @@ class ChatRuntime:
                 line = r.stdout.strip()
                 if r.returncode != 0 or "=" not in line:
                     result[agent] = "offline"
+                    self._pane_runtime_matches.pop(agent, None)
+                    self._pane_runtime_state.pop(agent, None)
                     continue
                 pane_id = line.split("=", 1)[1]
                 dead = subprocess.run(
@@ -1073,14 +1123,20 @@ class ChatRuntime:
                     result[agent] = "dead"
                     self._pane_snapshots.pop(pane_id, None)
                     self._pane_last_change.pop(pane_id, None)
+                    self._pane_runtime_matches.pop(agent, None)
+                    self._pane_runtime_state.pop(agent, None)
                     continue
                 content = subprocess.run(
-                    [*self.tmux_prefix, "capture-pane", "-p", "-S", "-20", "-t", pane_id],
+                    [*self.tmux_prefix, "capture-pane", "-p", "-S", "-80", "-t", pane_id],
                     capture_output=True,
                     text=True,
                     timeout=2,
                     check=False,
                 ).stdout
+                runtime_lines = _extract_pane_runtime_lines(agent, content)
+                prev_runtime_lines = self._pane_runtime_matches.get(agent, [])
+                new_runtime_lines = _pane_runtime_new_lines(prev_runtime_lines, runtime_lines)
+                self._pane_runtime_matches[agent] = runtime_lines
                 now = time.monotonic()
                 prev = self._pane_snapshots.get(pane_id)
                 self._pane_snapshots[pane_id] = content
@@ -1090,6 +1146,22 @@ class ChatRuntime:
                 else:
                     last_change = self._pane_last_change.get(pane_id, 0.0)
                     result[agent] = "running" if (now - last_change) < self.running_grace_seconds else "idle"
+                if result[agent] == "running":
+                    feed = list((self._pane_runtime_state.get(agent) or {}).get("events", []))
+                    if new_runtime_lines:
+                        for text in new_runtime_lines:
+                            self._pane_runtime_event_seq += 1
+                            feed.append({
+                                "id": f"{agent}:{self._pane_runtime_event_seq}",
+                                "text": text,
+                            })
+                        feed = feed[-5:]
+                    if feed:
+                        self._pane_runtime_state[agent] = {"events": feed}
+                    else:
+                        self._pane_runtime_state.pop(agent, None)
+                else:
+                    self._pane_runtime_state.pop(agent, None)
             except Exception as exc:
                 logging.error(f"Unexpected error: {exc}", exc_info=True)
                 result[agent] = "offline"
@@ -1103,6 +1175,22 @@ class ChatRuntime:
         except Exception as exc:
             logging.error(f"Unexpected error: {exc}", exc_info=True)
             pass
+        return result
+
+    def agent_runtime_state(self) -> dict[str, dict]:
+        result = {}
+        for agent, payload in self._pane_runtime_state.items():
+            events = []
+            for item in (payload or {}).get("events", []):
+                if not isinstance(item, dict):
+                    continue
+                event_id = str(item.get("id") or "").strip()
+                text = str(item.get("text") or "").strip()
+                if not event_id or not text:
+                    continue
+                events.append({"id": event_id, "text": text})
+            if events:
+                result[agent] = {"events": events[-5:]}
         return result
 
     def trace_content(self, agent: str, *, tail_lines: int | None = None) -> str:

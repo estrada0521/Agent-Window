@@ -6921,6 +6921,7 @@ class Handler(BaseHTTPRequestHandler):
                     "active": bool(runtime.session_is_active),
                     "targets": runtime.active_agents(),
                     "statuses": runtime.agent_statuses(),
+                    "agent_runtime": runtime.agent_runtime_state(),
                     "totals": runtime.load_thinking_totals(),
                     "provider_runtime": runtime.provider_runtime_state(),
                 }, ensure_ascii=True).encode("utf-8")

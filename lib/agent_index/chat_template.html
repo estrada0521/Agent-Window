@@ -717,6 +717,7 @@ __AGENT_ACCENT_CSS__
       -webkit-backdrop-filter: blur(18px) saturate(160%);
       border-bottom: 0.5px solid rgba(255,255,255,0.05);
       scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
     }
     .file-category-tabs::-webkit-scrollbar {
       display: none;
@@ -753,7 +754,8 @@ __AGENT_ACCENT_CSS__
       font-variant-numeric: tabular-nums;
     }
     .file-dropdown-list,
-    .file-menu-list {
+    .file-menu-list,
+    .cmd-dropdown-list {
       padding-bottom: 10px;
     }
     .file-menu-section {
@@ -3307,7 +3309,7 @@ __AGENT_ACCENT_CSS__
       height: 0.5px;
       background: var(--text);
       opacity: 0.7;
-      margin-top: 0;
+      margin-top: 8px;
       max-width: 100%;
     }
     /* Add margin when next message is agent */
@@ -3525,7 +3527,7 @@ __AGENT_ROW_META_SELECTORS__ {
     }
     .message-thinking-row {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
       padding: 6px 20px 6px 0px;
       color: var(--chrome-muted);
@@ -3583,9 +3585,11 @@ __AGENT_ROW_META_SELECTORS__ {
       white-space: nowrap;
       font-size: 1em;
     }
+    .message-thinking-label-agent,
     .message-thinking-row-provider {
       align-items: flex-start;
     }
+    .message-thinking-label-agent,
     .message-thinking-label-provider {
       display: inline-flex;
       flex-direction: column;
@@ -3598,7 +3602,17 @@ __AGENT_ROW_META_SELECTORS__ {
       align-items: baseline;
       white-space: nowrap;
       letter-spacing: 0;
+      min-height: 1.35em;
     }
+    .message-thinking-label-events {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1px;
+      min-width: 0;
+      max-width: min(72vw, 560px);
+    }
+    .message-thinking-event,
     .message-thinking-label-live,
     .message-thinking-label-preview {
       display: inline-block;
@@ -3618,6 +3632,40 @@ __AGENT_ROW_META_SELECTORS__ {
       font-size: 12px;
       line-height: 1.35;
     }
+    .message-thinking-event {
+      color: rgba(252, 252, 252, 0.68);
+      font-size: 12px;
+      line-height: 1.35;
+      opacity: 0.78;
+      transform: translateY(0);
+      transition: opacity 180ms ease, transform 180ms ease;
+      will-change: opacity, transform;
+    }
+    .message-thinking-event:last-child {
+      color: rgba(252, 252, 252, 0.78);
+    }
+    .message-thinking-event[data-state="enter"] {
+      animation: thinkingRuntimeEventIn 220ms cubic-bezier(0.22, 0.9, 0.24, 1) both;
+    }
+    .message-thinking-event[data-state="live"] {
+      opacity: 0.78;
+      transform: translateY(0);
+    }
+    .message-thinking-event[data-state="exit"] {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    @keyframes thinkingRuntimeEventIn {
+      0% {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      100% {
+        opacity: 0.78;
+        transform: translateY(0);
+      }
+    }
+    .message-thinking-event .stream-char,
     .message-thinking-label-preview .stream-char {
       opacity: 0;
       animation: streamCharReveal 0.021s ease forwards;
@@ -3640,6 +3688,9 @@ __AGENT_ROW_META_SELECTORS__ {
       .message-thinking-icon { animation: none; filter: brightness(0) invert(0.75); }
       .message-thinking-glow { animation: none; display: none; }
       .thinking-char { animation: none; color: rgba(252, 252, 252, 0.6); }
+      .message-thinking-event[data-state="enter"] { animation: none; opacity: 0.78; transform: none; }
+      .message-thinking-event[data-state="exit"] { opacity: 0; transform: none; }
+      .message-thinking-event .stream-char,
       .message-thinking-label-preview .stream-char { animation: none; opacity: 1; }
     }
     .meta {
@@ -9491,6 +9542,71 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
       return wrap;
     };
+    const installFullMenuCategorySwipe = (root, isOpen, onPrev, onNext) => {
+      if (!root || root.dataset.fullMenuCategorySwipe === "1") return;
+      root.dataset.fullMenuCategorySwipe = "1";
+      let x0 = null;
+      let y0 = null;
+      root.addEventListener(
+        "touchstart",
+        (e) => {
+          x0 = e.touches[0].clientX;
+          y0 = e.touches[0].clientY;
+        },
+        { passive: true },
+      );
+      root.addEventListener(
+        "touchend",
+        (e) => {
+          if (x0 == null || y0 == null) return;
+          const t = e.changedTouches[0];
+          const dx = t.clientX - x0;
+          const dy = t.clientY - y0;
+          x0 = null;
+          y0 = null;
+          if (!isOpen()) return;
+          const tabs = root.querySelectorAll(".file-category-tab");
+          if (tabs.length <= 1) return;
+          if (Math.abs(dx) < 56) return;
+          if (Math.abs(dx) < Math.abs(dy) * 1.15) return;
+          if (dx > 0) onPrev();
+          else onNext();
+        },
+        { passive: true },
+      );
+    };
+    const cycleComposerFileCategory = (delta) => {
+      const keys = Array.from(fileDrop.querySelectorAll(".file-category-tab"), (t) => String(t.dataset.category || ""));
+      if (keys.length <= 1) return;
+      const idx = Math.max(0, keys.indexOf(_fileCategory));
+      const next = keys[(idx + delta + keys.length) % keys.length];
+      if (next === _fileCategory) return;
+      _fileCategory = next;
+      _dropActiveIdx = -1;
+      updateFileAutocomplete();
+    };
+    const cycleAttachedFileCategory = (delta) => {
+      if (!attachedFilesPanel) return;
+      const keys = Array.from(attachedFilesPanel.querySelectorAll(".file-category-tab"), (t) => String(t.dataset.category || ""));
+      if (keys.length <= 1) return;
+      const idx = Math.max(0, keys.indexOf(_attachedFilesCategory));
+      const next = keys[(idx + delta + keys.length) % keys.length];
+      if (next === _attachedFilesCategory) return;
+      _attachedFilesCategory = next;
+      updateAttachedFilesPanel(attachedFilesPanelEntries);
+    };
+    installFullMenuCategorySwipe(
+      fileDrop,
+      () => fileDrop.style.display !== "none" && fileDrop.classList.contains("visible"),
+      () => cycleComposerFileCategory(-1),
+      () => cycleComposerFileCategory(1),
+    );
+    installFullMenuCategorySwipe(
+      attachedFilesPanel,
+      () => !!(attachedFilesPanel && !attachedFilesPanel.hidden && attachedFilesPanel.classList.contains("open")),
+      () => cycleAttachedFileCategory(-1),
+      () => cycleAttachedFileCategory(1),
+    );
     const buildFileMenuSectionHeader = (key, count) => {
       const node = document.createElement("div");
       node.className = "file-menu-section";
@@ -9638,6 +9754,17 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     messageInput.addEventListener("keydown", (e) => {
       if (fileDrop.style.display === "none") return;
       const items = _dropItems();
+      const catTabs = fileDrop.querySelectorAll(".file-category-tab");
+      if (e.key === "ArrowLeft" && catTabs.length > 1) {
+        e.preventDefault();
+        cycleComposerFileCategory(-1);
+        return;
+      }
+      if (e.key === "ArrowRight" && catTabs.length > 1) {
+        e.preventDefault();
+        cycleComposerFileCategory(1);
+        return;
+      }
       if (e.key === "ArrowDown") {
         e.preventDefault();
         items[_dropActiveIdx]?.classList.remove("active");
@@ -9664,20 +9791,68 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let _cmdActiveIdx = -1;
     let _cmdTimeout = null;
     let _lastCmdItemsData = [];
+    let _cmdCategory = "all";
+    const CMD_CATEGORY_ORDER = ["all", "compose", "agent", "integrations"];
+    const CMD_CATEGORY_LABELS = {
+      all: "All",
+      compose: "Compose",
+      agent: "Agent",
+      integrations: "Apps",
+    };
     const SLASH_COMMANDS = [
-      { name: "/memo", desc: "自分宛にメモ（本文省略可＋Import添付可）", hasArg: false },
-      { name: "/gemini", desc: "Gemini direct adapter で実行", hasArg: true },
-      { name: "/raw", desc: "次のメッセージを raw 送信", hasArg: true },
-      { name: "/brief", desc: "brief を表示・編集", hasArg: true },
-      { name: "/model", desc: "選択中 pane に /model を送信", action: () => { submitMessage({ overrideMessage: "model" }); } },
-      { name: "/up", desc: "選択中 pane に上移動を送信", hasArg: true },
-      { name: "/down", desc: "選択中 pane に下移動を送信", hasArg: true },
-      { name: "/restart", desc: "エージェント再起動", action: () => { submitMessage({ overrideMessage: "restart" }); } },
-      { name: "/resume", desc: "エージェント再開", action: () => { submitMessage({ overrideMessage: "resume" }); } },
-      { name: "/interrupt", desc: "エージェントに Esc 送信", action: () => { submitMessage({ overrideMessage: "interrupt" }); } },
-      { name: "/enter", desc: "エージェントに Enter 送信", action: () => { submitMessage({ overrideMessage: "enter" }); } },
+      { name: "/memo", desc: "自分宛にメモ（本文省略可＋Import添付可）", hasArg: true, category: "compose" },
+      { name: "/gemini", desc: "Gemini direct adapter で実行", hasArg: true, category: "integrations" },
+      { name: "/raw", desc: "次のメッセージを raw 送信", hasArg: true, category: "compose" },
+      { name: "/brief", desc: "brief を表示・編集", hasArg: true, category: "compose" },
+      { name: "/model", desc: "選択中 pane に /model を送信", action: () => { submitMessage({ overrideMessage: "model" }); }, category: "agent" },
+      { name: "/up", desc: "選択中 pane に上移動を送信", hasArg: true, category: "agent" },
+      { name: "/down", desc: "選択中 pane に下移動を送信", hasArg: true, category: "agent" },
+      { name: "/restart", desc: "エージェント再起動", action: () => { submitMessage({ overrideMessage: "restart" }); }, category: "agent" },
+      { name: "/resume", desc: "エージェント再開", action: () => { submitMessage({ overrideMessage: "resume" }); }, category: "agent" },
+      { name: "/interrupt", desc: "エージェントに Esc 送信", action: () => { submitMessage({ overrideMessage: "interrupt" }); }, category: "agent" },
+      { name: "/enter", desc: "エージェントに Enter 送信", action: () => { submitMessage({ overrideMessage: "enter" }); }, category: "agent" },
     ];
+    const countCmdCategories = (items) => {
+      const counts = new Map(CMD_CATEGORY_ORDER.map((k) => [k, 0]));
+      counts.set("all", items.length);
+      for (const c of items) {
+        const k = c.category || "agent";
+        counts.set(k, (counts.get(k) || 0) + 1);
+      }
+      return counts;
+    };
+    const buildCmdCategoryTabsInner = (counts, activeKey) => {
+      const wrap = document.createElement("div");
+      wrap.className = "file-category-tabs";
+      for (const key of CMD_CATEGORY_ORDER) {
+        const count = counts.get(key) || 0;
+        if (key !== "all" && count <= 0) continue;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "file-category-tab" + (key === activeKey ? " active" : "");
+        btn.dataset.category = key;
+        btn.innerHTML = `<span>${escapeHtml(CMD_CATEGORY_LABELS[key] || key)}</span><span class="file-category-count">${count}</span>`;
+        wrap.appendChild(btn);
+      }
+      return wrap;
+    };
     const _cmdItems = () => cmdDrop.querySelectorAll(".cmd-item");
+    function cycleCmdCategory(delta) {
+      const keys = Array.from(cmdDrop.querySelectorAll(".file-category-tab"), (t) => String(t.dataset.category || ""));
+      if (keys.length <= 1) return;
+      const idx = Math.max(0, keys.indexOf(_cmdCategory));
+      const next = keys[(idx + delta + keys.length) % keys.length];
+      if (next === _cmdCategory) return;
+      _cmdCategory = next;
+      _cmdActiveIdx = -1;
+      updateCmdAutocomplete();
+    }
+    installFullMenuCategorySwipe(
+      cmdDrop,
+      () => cmdDrop.style.display !== "none" && cmdDrop.classList.contains("visible"),
+      () => cycleCmdCategory(-1),
+      () => cycleCmdCategory(1),
+    );
     const closeCmdDrop = () => {
       if (cmdDrop.classList.contains("visible")) {
         cmdDrop.classList.remove("visible");
@@ -9727,13 +9902,32 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         closeCmdDrop();
         return;
       }
-      _lastCmdItemsData = matches.map((c) => ({ ...c, type: "command", label: c.name }));
-      cmdDrop.innerHTML = _lastCmdItemsData.map((c, i) =>
-        `<div class="cmd-item" data-idx="${i}">` +
-        `<span class="cmd-item-name">${escapeHtml(c.label)}</span>` +
-        `<span class="cmd-item-desc">${escapeHtml(c.desc)}</span>` +
-        `</div>`
-      ).join("");
+      const counts = countCmdCategories(matches);
+      if (_cmdCategory !== "all" && (counts.get(_cmdCategory) || 0) <= 0) {
+        _cmdCategory = "all";
+      }
+      const displayMatches = _cmdCategory === "all"
+        ? matches
+        : matches.filter((c) => (c.category || "agent") === _cmdCategory);
+      if (!displayMatches.length) {
+        closeCmdDrop();
+        return;
+      }
+      _lastCmdItemsData = displayMatches.map((c) => ({ ...c, type: "command", label: c.name }));
+      cmdDrop.replaceChildren();
+      cmdDrop.appendChild(buildCmdCategoryTabsInner(counts, _cmdCategory));
+      const cmdList = document.createElement("div");
+      cmdList.className = "cmd-dropdown-list";
+      displayMatches.forEach((c, i) => {
+        const row = document.createElement("div");
+        row.className = "cmd-item";
+        row.dataset.idx = String(i);
+        row.innerHTML =
+          `<span class="cmd-item-name">${escapeHtml(c.name)}</span>` +
+          `<span class="cmd-item-desc">${escapeHtml(c.desc)}</span>`;
+        cmdList.appendChild(row);
+      });
+      cmdDrop.appendChild(cmdList);
       _cmdActiveIdx = -1;
       positionComposerDropdown(cmdDrop);
       if (!cmdDrop.classList.contains("visible")) {
@@ -9744,14 +9938,40 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
     };
     messageInput.addEventListener("input", updateCmdAutocomplete);
-    cmdDrop.addEventListener("click", (e) => e.stopPropagation());
+    cmdDrop.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const tab = e.target.closest(".file-category-tab");
+      if (tab) {
+        e.preventDefault();
+        const next = String(tab.dataset.category || "all");
+        if (next === _cmdCategory) return;
+        _cmdCategory = next;
+        _cmdActiveIdx = -1;
+        updateCmdAutocomplete();
+      }
+    });
     cmdDrop.addEventListener("mousedown", (e) => {
+      if (e.target.closest(".file-category-tab")) {
+        e.preventDefault();
+        return;
+      }
       const item = e.target.closest(".cmd-item");
       if (item) { e.preventDefault(); selectCmd(parseInt(item.dataset.idx, 10)); }
     });
     messageInput.addEventListener("keydown", (e) => {
       if (cmdDrop.style.display === "none" || !cmdDrop.classList.contains("visible")) return;
       const items = _cmdItems();
+      const cmdTabs = cmdDrop.querySelectorAll(".file-category-tab");
+      if (e.key === "ArrowLeft" && cmdTabs.length > 1) {
+        e.preventDefault();
+        cycleCmdCategory(-1);
+        return;
+      }
+      if (e.key === "ArrowRight" && cmdTabs.length > 1) {
+        e.preventDefault();
+        cycleCmdCategory(1);
+        return;
+      }
       if (e.key === "ArrowDown") {
         e.preventDefault();
         items[_cmdActiveIdx]?.classList.remove("active");
@@ -10021,10 +10241,160 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       setReplyTo(null, "", "");
     });
     let currentAgentStatuses = {};
+    let currentAgentRuntime = {};
     let currentProviderRuntime = {};
     let agentStatusSince = {};
     let agentTotalThinkingTime = {};
     let thinkingTimeSession = "";
+    const THINKING_RUNTIME_MAX_VISIBLE = 2;
+    const THINKING_RUNTIME_ENTER_MS = 220;
+    const THINKING_RUNTIME_VISIBLE_MS = 1000;
+    const THINKING_RUNTIME_EXIT_MS = 180;
+    let thinkingRuntimeQueues = {};
+    let thinkingRuntimeSeenIds = {};
+    const ensureThinkingRuntimeQueue = (agent) => {
+      if (!thinkingRuntimeQueues[agent]) {
+        thinkingRuntimeQueues[agent] = { visible: [], pending: [] };
+      }
+      return thinkingRuntimeQueues[agent];
+    };
+    const ensureThinkingRuntimeSeen = (agent) => {
+      if (!thinkingRuntimeSeenIds[agent]) {
+        thinkingRuntimeSeenIds[agent] = new Set();
+      }
+      return thinkingRuntimeSeenIds[agent];
+    };
+    const clearThinkingRuntimeEntryTimers = (entry) => {
+      if (!entry) return;
+      clearTimeout(entry.enterTimer);
+      clearTimeout(entry.expireTimer);
+      clearTimeout(entry.removeTimer);
+      entry.enterTimer = 0;
+      entry.expireTimer = 0;
+      entry.removeTimer = 0;
+    };
+    const queueVisibleRuntimeEvents = (agent) => {
+      const queue = thinkingRuntimeQueues[agent];
+      return Array.isArray(queue?.visible) ? queue.visible : [];
+    };
+    const clearThinkingRuntimeAgent = (agent, { suppressRender = false } = {}) => {
+      const queue = thinkingRuntimeQueues[agent];
+      if (!queue) return false;
+      queue.visible.forEach(clearThinkingRuntimeEntryTimers);
+      queue.pending.forEach(clearThinkingRuntimeEntryTimers);
+      delete thinkingRuntimeQueues[agent];
+      delete thinkingRuntimeSeenIds[agent];
+      if (!suppressRender) renderThinkingIndicator();
+      return true;
+    };
+    const addThinkingRuntimeEntry = (agent, event, { suppressRender = false } = {}) => {
+      const queue = ensureThinkingRuntimeQueue(agent);
+      const entry = {
+        id: String(event?.id || "").trim(),
+        text: String(event?.text || "").trim(),
+        phase: "enter",
+        enterTimer: 0,
+        expireTimer: 0,
+        removeTimer: 0,
+      };
+      if (!entry.id || !entry.text) return false;
+      queue.visible.push(entry);
+      entry.enterTimer = setTimeout(() => {
+        const current = queueVisibleRuntimeEvents(agent).find((item) => item.id === entry.id);
+        if (!current || current.phase !== "enter") return;
+        current.phase = "live";
+        renderThinkingIndicator();
+      }, THINKING_RUNTIME_ENTER_MS);
+      entry.expireTimer = setTimeout(() => {
+        startThinkingRuntimeExit(agent, entry.id);
+      }, THINKING_RUNTIME_VISIBLE_MS);
+      if (!suppressRender) renderThinkingIndicator();
+      return true;
+    };
+    const startThinkingRuntimeExit = (agent, eventId, { suppressRender = false } = {}) => {
+      const queue = thinkingRuntimeQueues[agent];
+      if (!queue) return false;
+      const entry = queue.visible.find((item) => item.id === eventId);
+      if (!entry || entry.phase === "exit") return false;
+      clearTimeout(entry.enterTimer);
+      clearTimeout(entry.expireTimer);
+      entry.phase = "exit";
+      entry.removeTimer = setTimeout(() => {
+        const nextQueue = thinkingRuntimeQueues[agent];
+        if (!nextQueue) return;
+        const idx = nextQueue.visible.findIndex((item) => item.id === eventId);
+        if (idx >= 0) {
+          const [removed] = nextQueue.visible.splice(idx, 1);
+          clearThinkingRuntimeEntryTimers(removed);
+        }
+        if (!nextQueue.visible.length && !nextQueue.pending.length) {
+          delete thinkingRuntimeQueues[agent];
+        }
+        renderThinkingIndicator();
+        processThinkingRuntimeQueue(agent);
+      }, THINKING_RUNTIME_EXIT_MS);
+      if (!suppressRender) renderThinkingIndicator();
+      return true;
+    };
+    const processThinkingRuntimeQueue = (agent, { suppressRender = false } = {}) => {
+      const queue = thinkingRuntimeQueues[agent];
+      if (!queue) return;
+      if (queue.visible.some((item) => item.phase === "exit")) return;
+      let changed = false;
+      while (queue.pending.length && queue.visible.length < THINKING_RUNTIME_MAX_VISIBLE) {
+        const nextEvent = queue.pending.shift();
+        if (addThinkingRuntimeEntry(agent, nextEvent, { suppressRender: true })) {
+          changed = true;
+        }
+      }
+      if (!changed && queue.pending.length && queue.visible.length >= THINKING_RUNTIME_MAX_VISIBLE) {
+        startThinkingRuntimeExit(agent, queue.visible[0]?.id, { suppressRender });
+        return;
+      }
+      if (changed && !suppressRender) {
+        renderThinkingIndicator();
+      }
+      if (queue.pending.length && queue.visible.length >= THINKING_RUNTIME_MAX_VISIBLE) {
+        startThinkingRuntimeExit(agent, queue.visible[0]?.id, { suppressRender });
+      }
+    };
+    const syncThinkingRuntimeQueues = (statuses, { suppressRender = false } = {}) => {
+      const runningAgents = new Set(
+        Object.entries(statuses || {})
+          .filter(([, status]) => status === "running")
+          .map(([agent]) => agent)
+      );
+      let changed = false;
+      Object.keys(thinkingRuntimeQueues).forEach((agent) => {
+        if (runningAgents.has(agent)) return;
+        changed = clearThinkingRuntimeAgent(agent, { suppressRender: true }) || changed;
+      });
+      runningAgents.forEach((agent) => {
+        const payload = currentAgentRuntime?.[agent];
+        const events = Array.isArray(payload?.events) ? payload.events : [];
+        if (!events.length) return;
+        const queue = ensureThinkingRuntimeQueue(agent);
+        const seenIds = ensureThinkingRuntimeSeen(agent);
+        const knownIds = new Set([
+          ...seenIds,
+          ...queue.visible.map((item) => item.id),
+          ...queue.pending.map((item) => item.id),
+        ]);
+        for (const raw of events) {
+          const id = String(raw?.id || "").trim();
+          const text = String(raw?.text || "").trim();
+          if (!id || !text || knownIds.has(id)) continue;
+          queue.pending.push({ id, text });
+          knownIds.add(id);
+          seenIds.add(id);
+          changed = true;
+        }
+        processThinkingRuntimeQueue(agent, { suppressRender: true });
+      });
+      if (changed && !suppressRender) {
+        renderThinkingIndicator();
+      }
+    };
     const applySessionState = (data) => {
       if (!data || typeof data !== "object") return;
       if (typeof data.session === "string" && data.session) {
@@ -10047,12 +10417,18 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (data.totals && typeof data.totals === "object") {
         agentTotalThinkingTime = { ...data.totals };
       }
+      if (data.agent_runtime && typeof data.agent_runtime === "object") {
+        currentAgentRuntime = { ...data.agent_runtime };
+      } else {
+        currentAgentRuntime = {};
+      }
       if (data.provider_runtime && typeof data.provider_runtime === "object") {
         currentProviderRuntime = { ...data.provider_runtime };
       } else {
         currentProviderRuntime = {};
       }
       if (data.statuses && typeof data.statuses === "object") {
+        syncThinkingRuntimeQueues(data.statuses, { suppressRender: true });
         renderAgentStatus(data.statuses);
       } else {
         renderThinkingIndicator();
@@ -10174,7 +10550,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             preview: providerPreview,
           })
         : "";
-      const nextThinkingSig = `${runningAgents.join(",")}|${providerSig}`;
+      const agentRuntimeSig = JSON.stringify(
+        runningAgents.map((agent) => [
+          agent,
+          queueVisibleRuntimeEvents(agent).map((item) => [item.id, item.text, item.phase]),
+        ])
+      );
+      const nextThinkingSig = `${runningAgents.join(",")}|${agentRuntimeSig}|${providerSig}`;
       if (root.dataset.thinkingSig === nextThinkingSig && existingContainer) {
         // Already rendered. Just ensure it's at the very bottom if new messages were added.
         if (root.lastElementChild !== existingContainer) {
@@ -10196,6 +10578,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       
       runningAgents.forEach((agent) => {
         const pulse = agentPulseOffset(agent);
+        const runtimeEvents = queueVisibleRuntimeEvents(agent);
+        const runtimeHtml = runtimeEvents.length
+          ? `<span class="message-thinking-label-events">${runtimeEvents.map((event) => {
+              const body = event.phase === "enter" ? buildThinkingPreviewStreamHtml(event.text) : escapeHtml(event.text);
+              return `<span class="message-thinking-event" data-state="${escapeHtml(event.phase || "live")}">${body}</span>`;
+            }).join("")}</span>`
+          : "";
         const row = document.createElement("div");
         row.className = "message-thinking-row";
         row.dataset.agent = agent;
@@ -10208,7 +10597,10 @@ __AGENT_FONT_MODE_INLINE_STYLE__
               ${agentIconInstanceSubHtml(agent)}
             </span>
           </span>
-          <span class="message-thinking-label">${charSpans}</span>
+          <span class="message-thinking-label message-thinking-label-agent">
+            <span class="message-thinking-label-primary">${charSpans}</span>
+            ${runtimeHtml}
+          </span>
         `;
         frag.appendChild(row);
       });
