@@ -707,13 +707,14 @@ __AGENT_ACCENT_CSS__
       top: 0;
       z-index: 1;
       display: flex;
-      gap: 8px;
-      padding: 10px 18px 8px;
+      gap: 0;
+      padding: 0 16px;
+      align-items: stretch;
       overflow-x: auto;
       overflow-y: hidden;
-      background: rgba(var(--bg-rgb, 38, 38, 36), 0.82);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      background: rgba(var(--bg-rgb, 38, 38, 36), 0.64);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
       border-bottom: 0.5px solid rgba(255,255,255,0.05);
       scrollbar-width: none;
     }
@@ -721,29 +722,29 @@ __AGENT_ACCENT_CSS__
       display: none;
     }
     .file-category-tab {
-      border: 0.5px solid rgba(255,255,255,0.08);
-      border-radius: 999px;
+      border: none;
+      border-bottom: 1.5px solid transparent;
       background: transparent;
       color: var(--muted);
-      padding: 5px 10px;
+      padding: 12px 12px 10px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font: 600 12px/1 "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif;
+      font: 500 12px/1 "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif;
       letter-spacing: 0.01em;
       white-space: nowrap;
       cursor: pointer;
-      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+      transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
     }
     .file-category-tab.active {
-      background: rgba(255,255,255,0.12);
+      background: transparent;
       color: var(--text);
-      border-color: rgba(255,255,255,0.14);
+      border-bottom-color: rgba(255,255,255,0.34);
     }
     .has-hover .file-category-tab:hover {
       color: var(--text);
-      border-color: rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.08);
+      border-bottom-color: rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.04);
     }
     .file-category-count {
       color: inherit;
@@ -758,18 +759,18 @@ __AGENT_ACCENT_CSS__
     .file-menu-section {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 10px 20px 6px;
-      color: rgba(255,255,255,0.5);
-      font: 600 11px/1.2 "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      gap: 10px;
+      padding: 12px 20px 8px;
+      color: var(--muted);
+      font: 500 13px/1.2 "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+      text-transform: none;
     }
     .file-menu-section-count {
       margin-left: auto;
-      opacity: 0.62;
-      font-size: 10px;
-      letter-spacing: 0.04em;
+      opacity: 0.72;
+      font-size: 12px;
+      letter-spacing: 0;
       font-variant-numeric: tabular-nums;
     }
     .file-menu-section-icon {
@@ -1081,9 +1082,11 @@ __AGENT_ACCENT_CSS__
       border: none;
       background: transparent;
       color: var(--muted);
-      font-family: "jetbrainsMono", "JetBrains Mono", monospace;
-      font-size: 11px;
-      padding: 10px 14px;
+      font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif;
+      font-size: 13px;
+      font-weight: 450;
+      font-variation-settings: "wght" 450, "opsz" 14;
+      padding: 11px 15px;
       cursor: pointer;
       white-space: nowrap;
       flex-shrink: 0;
@@ -1106,7 +1109,9 @@ __AGENT_ACCENT_CSS__
       padding: 0;
       border-top: 0.5px solid rgba(255, 255, 255, 0.05);
       border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
-      background: rgba(var(--bg-rgb), 0.28);
+      background: rgba(var(--bg-rgb), 0.18);
+      backdrop-filter: blur(16px) saturate(150%);
+      -webkit-backdrop-filter: blur(16px) saturate(150%);
       overflow-x: auto;
       overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
@@ -1117,7 +1122,7 @@ __AGENT_ACCENT_CSS__
     html[data-theme="soft-light"] .git-commit-diff-actions {
       border-top-color: rgba(15, 20, 30, 0.08);
       border-bottom-color: rgba(15, 20, 30, 0.1);
-      background: rgba(255, 255, 255, 0.55);
+      background: rgba(255, 255, 255, 0.5);
     }
     .git-commit-diff-actions .hub-page-menu-item {
       flex: 1 1 0;
@@ -1148,16 +1153,8 @@ __AGENT_ACCENT_CSS__
       text-overflow: clip;
     }
     .git-commit-diff-actions .hub-page-menu-item.git-commit-diff-action-global {
-      background: rgba(255, 255, 255, 0.06);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-    }
-    .git-commit-diff-actions .hub-page-menu-item.git-commit-diff-action-global:hover,
-    .git-commit-diff-actions .hub-page-menu-item.git-commit-diff-action-global:active {
-      background: rgba(255, 255, 255, 0.1);
-    }
-    html[data-theme="soft-light"] .git-commit-diff-actions .hub-page-menu-item.git-commit-diff-action-global {
-      background: rgba(15, 20, 30, 0.06);
-      box-shadow: inset 0 0 0 1px rgba(15, 20, 30, 0.08);
+      background: transparent;
+      box-shadow: none;
     }
     html[data-theme="soft-light"] .git-commit-diff-actions .hub-page-menu-item.git-commit-diff-action-global:hover,
     html[data-theme="soft-light"] .git-commit-diff-actions .hub-page-menu-item.git-commit-diff-action-global:active {
@@ -1345,21 +1342,20 @@ __AGENT_ACCENT_CSS__
       color: var(--text);
     }
     html[data-theme="soft-light"] .file-category-tabs {
-      background: rgba(var(--bg-rgb), 0.84);
+      background: rgba(var(--bg-rgb), 0.72);
       border-bottom-color: rgba(15,20,30,0.08);
     }
     html[data-theme="soft-light"] .file-category-tab {
-      border-color: rgba(15,20,30,0.1);
       color: var(--muted);
     }
     html[data-theme="soft-light"] .file-category-tab.active {
-      background: rgba(15,20,30,0.09);
-      border-color: rgba(15,20,30,0.14);
+      background: transparent;
+      border-bottom-color: rgba(15,20,30,0.28);
       color: var(--text);
     }
     html[data-theme="soft-light"] .has-hover .file-category-tab:hover {
-      background: rgba(15,20,30,0.06);
-      border-color: rgba(15,20,30,0.12);
+      background: rgba(15,20,30,0.04);
+      border-bottom-color: rgba(15,20,30,0.14);
     }
     html[data-theme="soft-light"] .has-hover .file-item:hover,
     html[data-theme="soft-light"] .file-item.active,
@@ -8021,7 +8017,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           commitFileBtn.innerHTML = '<span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg></span><span class="action-label">Commit</span><span class="action-mobile">Commit</span>';
           commitAllBtn = document.createElement("button");
           commitAllBtn.type = "button";
-          commitAllBtn.className = "hub-page-menu-item positive git-commit-diff-action-global";
+          commitAllBtn.className = "hub-page-menu-item git-commit-diff-action-global";
           commitAllBtn.innerHTML = '<span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 3 3 7-7"/><path d="m12 13 3 3 7-7"/></svg></span><span class="action-label">All</span><span class="action-mobile">All</span>';
           revertFileBtn = document.createElement("button");
           revertFileBtn.type = "button";
