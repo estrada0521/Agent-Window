@@ -43,7 +43,7 @@ The current agent registry includes `claude`, `codex`, `gemini`, `kimi`, `copilo
 
 New sessions are created from the Hub. The workspace path is entered from the UI and can also be typed from mobile. Each new session keeps the operator terminal in tmux window 0 and gives every agent instance its own tmux window. Duplicate agent launches are supported, so the same base CLI can back multiple agent windows inside one session. Instance suffixes are added automatically when needed.
 
-If the workspace does not already contain `docs/AGENT.md`, session creation copies the repo version into `workspace/docs/AGENT.md`. The intended first step after opening a new session is to send that `docs/AGENT.md` to the agents so they receive the operating rules for communication and command usage inside this environment.
+If the workspace does not already contain `docs/AGENT.md`, session creation copies the repo version into `workspace/docs/AGENT.md`. The intended first step after opening a new session is to send that `docs/AGENT.md` to the agents so they receive the operating rules for communication and command usage inside this environment. Once they are running, they can also use `agent-help` for a short command-first cheatsheet.
 
 The message body shows not only user-to-agent requests, but also agent-to-agent traffic in the same timeline. Each message carries sender, targets, `msg-id`, and optional `reply-to` metadata. The UI exposes copy, reply start, jump-to-reply-source, jump-to-reply-target, and navigation into attached or referenced files.
 

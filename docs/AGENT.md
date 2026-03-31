@@ -19,6 +19,12 @@ env | rg '^MULTIAGENT|^TMUX'
 
 If you receive this document (or the workspace-side `docs/AGENT.md`) from the user, **report back once** that you have read and understood it. Use `agent-send` for the report as well.
 
+If you only need a compact command cheatsheet later, run:
+
+```bash
+agent-help
+```
+
 Example:
 
 ```bash
@@ -81,6 +87,12 @@ Target examples:
 
 ```bash
 printf '%s' 'Confirmed.' | agent-send user
+```
+
+Replying to a specific message should normally use `--reply <msg-id>` with `user` as the target:
+
+```bash
+printf '%s' 'Confirmed.' | agent-send --reply <msg-id> user
 ```
 
 ### Send to another agent

@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_PATH="${BASH_SOURCE[0]:-$0}"
+while [[ -L "$SCRIPT_PATH" ]]; do
+  SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+  LINK_TARGET="$(readlink "$SCRIPT_PATH")"
+  if [[ "$LINK_TARGET" == /* ]]; then
+    SCRIPT_PATH="$LINK_TARGET"
+  else
+    SCRIPT_PATH="$SCRIPT_DIR/$LINK_TARGET"
+  fi
+done
+
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+WORKSPACE_DIR="${MULTIAGENT_WORKSPACE:-$PWD}"
+GUIDE_PATH="${WORKSPACE_DIR}/docs/AGENT.md"
+if [[ ! -f "$GUIDE_PATH" ]]; then
+  GUIDE_PATH="${REPO_ROOT}/docs/AGENT.md"
+fi
+
+usage() {
+  cat <<'EOF'
+Usage: agent-help [--full|--path]
+
+Options:
+  --full   print the full AGENT guide
+  --path   print the AGENT guide path
+  -h, --help  show this help
+EOF
+}
+
+if [[ $# -gt 0 ]]; then
+  case "$1" in
+    --full)
+      cat "$GUIDE_PATH"
+      exit 0
+      ;;
+    --path)
+      printf '%s\n' "$GUIDE_PATH"
+      exit 0
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage >&2
+      exit 1
+      ;;
+  esac
+fi
+
+SESSION_NAME="${MULTIAGENT_SESSION:-unknown}"
+AGENT_NAME="${MULTIAGENT_AGENT_NAME:-unknown}"
+LOG_DIR="${MULTIAGENT_LOG_DIR:-${WORKSPACE_DIR}/logs}"
+SOCKET_NAME="${MULTIAGENT_TMUX_SOCKET:-unknown}"
+AGENTS_CSV="${MULTIAGENT_AGENTS:-unknown}"
+
+cat <<EOF
+Agent Quick Reference
+=====================
+
+Current session
+  session: $SESSION_NAME
+  you:     $AGENT_NAME
+  agents:  $AGENTS_CSV
+  socket:  $SOCKET_NAME
+  guide:   $GUIDE_PATH
+
+Reply routing
+  Always use agent-send for user-facing or agent-facing replies.
+  Do not print the actual reply body directly into the pane.
+
+  New topic to user:
+    printf '%s' 'message body' | agent-send user
+
+  Reply to a specific msg-id:
+    printf '%s' 'message body' | agent-send --reply <msg-id> user
+
+  Send to another agent:
+    printf '%s' 'message body' | agent-send gemini
+
+  Send to multiple agents:
+    printf '%s' 'message body' | agent-send claude,cursor
+
+Attachments and formatting
+  Include attachments in the message body, on their own line:
+    printf '%s' \$'See attached.\\n\\n[Attached: docs/AGENT.md]' | agent-send user
+
+  Use workspace-relative paths in [Attached: ...].
+  Wrap words containing \$ in backticks inside message bodies.
+
+Session topology
+  Add a new base agent:
+    multiagent add-agent --agent gemini
+
+  Remove a specific instance:
+    multiagent remove-agent --agent gemini-2
+
+  Notes:
+    - add-agent takes a base agent name
+    - remove-agent takes an instance name
+    - removing yourself closes your pane
+    - the last remaining agent cannot be removed
+
+Inspection and context
+  Current context:
+    multiagent context --json
+
+  Read recent structured messages:
+    agent-index --agent "$AGENT_NAME"
+    tail -n 20 "$LOG_DIR/$SESSION_NAME/.agent-index.jsonl"
+
+  Save pane logs now:
+    multiagent save --session "$SESSION_NAME"
+
+More help
+  agent-help         # this quick reference
+  agent-help --full  # full docs/AGENT.md
+  agent-help --path  # print docs/AGENT.md path
+EOF
