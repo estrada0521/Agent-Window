@@ -680,61 +680,101 @@ delay 0.2
         if ext == ".md":
             with open(full, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
-            escaped_js = content.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$")
-            md_height = "100vh" if embed else "calc(100vh - 43px)"
-            rel_js = rel.replace("\\", "/").replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$")
-            prefix_js = prefix.replace("\\", "\\\\").replace("`", "\\`").replace("$", "\\$")
+            content_json = json.dumps(content)
+            rel_json = json.dumps(rel.replace("\\", "/"))
+            prefix_json = json.dumps(prefix)
+            font_base = prefix or ""
             return (
-                f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
+                f'<!DOCTYPE html><html data-preview-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
                 '<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>'
-                f'<style>'
-                f'{base_css}'
-                '@font-face{font-family:"anthropicSerif";src:url("/font/anthropic-serif-roman.ttf") format("truetype");font-style:normal;font-weight:300 800;font-display:swap}'
-                '@font-face{font-family:"anthropicSerif";src:url("/font/anthropic-serif-italic.ttf") format("truetype");font-style:italic;font-weight:300 800;font-display:swap}'
-                '@font-face{font-family:"jetbrainsMono";src:url("/font/jetbrains-mono.ttf") format("truetype");font-style:normal;font-weight:100 800;font-display:swap}'
-                f'.md{{padding:24px 32px;max-width:860px;overflow:auto;height:{md_height};'
-                'font-family:"anthropicSerif","anthropicSerif Fallback","Anthropic Serif","Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP",Georgia,"Times New Roman",Times,serif;'
-                'font-size:13px;line-height:22px;font-style:normal;font-weight:360;'
-                'font-synthesis-weight:none;font-synthesis-style:none;'
-                '-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;'
-                'font-optical-sizing:auto;font-variation-settings:"wght" 360;'
-                f'background:{embed_bg};color:{pane_fg}}}'
-                '.md>*:first-child{margin-top:0}.md>*:last-child{margin-bottom:0}'
-                '.md,.md p,.md li,.md li p,.md blockquote,.md blockquote p{font-size:13px;line-height:22px}'
-                '.md p{margin:0 0 .6em}'
-                '.md h1,.md h2,.md h3,.md h4{margin:.8em 0 .3em;font-weight:600;font-variation-settings:"wght" 530;font-synthesis:weight;line-height:1.2}'
-                '.md h1{font-size:22px}.md h2{font-size:18px}.md h3{font-size:1.05em}.md h4{font-size:1em}'
-                '.md ul,.md ol{margin:.4em 0 .6em;padding-left:1.5em}.md li{margin:.15em 0;line-height:24px}.md li p{margin:0}'
-                f'.md h1,.md h2{{border-bottom:1px solid {pane_line};padding-bottom:.3em}}'
-                '.md :not(pre)>code{font-family:"jetbrainsMono","JetBrains Mono","SF Mono",monospace;font-size:13px;line-height:21px;'
-                'font-style:normal;font-weight:210;font-synthesis-weight:none;font-stretch:normal;font-variation-settings:"wght" 210;'
-                'background:rgba(255,255,255,.09);border-radius:4px;padding:1px 5px}'
-                '.md pre{margin:0;padding:16px;background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.06);border-radius:8px;overflow-x:auto}'
-                '.md pre code{font-family:"jetbrainsMono","JetBrains Mono","SF Mono",monospace;font-size:13px;line-height:20px;'
-                'font-style:normal;font-weight:210;font-synthesis-weight:none;font-variation-settings:"wght" 210;background:none;padding:0}'
-                '.md blockquote{border-left:3px solid rgba(255,255,255,0.2);margin:.5em 0;padding:.3em .8em;opacity:.85}'
-                '.md hr{border:none;border-top:1px solid rgba(255,255,255,0.12);margin:.8em 0}'
-                '.md img{display:block;max-width:100%;max-height:60vh;width:auto;height:auto;margin:12px 0;border-radius:10px}'
-                '.md table{border-collapse:collapse;width:100%;font-size:13px;line-height:21px}'
-                f'.md th,.md td{{border-top:1.5px solid {pane_line};border-bottom:1.5px solid {pane_line};border-left:none;border-right:none;padding:7.5px 4px;font-size:13px;line-height:21px;text-align:left}}'
-                '.md th{background:transparent;font-weight:530;border-top:none;border-bottom-color:rgba(255,255,255,0.28)}'
-                '.md td{font-weight:360;font-variation-settings:"wght" 360}'
-                '.md a{color:#58a6ff;text-decoration:none}.md a:hover{text-decoration:underline}'
-                '.md strong{font-weight:530;font-variation-settings:"wght" 530}.md em{font-style:italic}'
+                '<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>'
+                '<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>'
+                '<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>'
+                '<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>'
+                '<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>'
+                '<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>'
+                '<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>'
+                '<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>'
+                '<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>'
+                '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">'
+                '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>'
+                '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>'
+                f'<style>{base_css}'
+                f'@font-face{{font-family:"anthropicSerif";src:url("{font_base}/font/anthropic-serif-roman.ttf") format("truetype");font-style:normal;font-weight:300 800;font-display:swap}}'
+                f'@font-face{{font-family:"anthropicSerif";src:url("{font_base}/font/anthropic-serif-italic.ttf") format("truetype");font-style:italic;font-weight:300 800;font-display:swap}}'
+                f'@font-face{{font-family:"anthropicSans";src:url("{font_base}/font/anthropic-sans-roman.ttf") format("truetype");font-style:normal;font-weight:300 800;font-display:swap}}'
+                f'@font-face{{font-family:"anthropicSans";src:url("{font_base}/font/anthropic-sans-italic.ttf") format("truetype");font-style:italic;font-weight:300 800;font-display:swap}}'
+                f'@font-face{{font-family:"jetbrainsMono";src:local("JetBrains Mono"),local("JetBrainsMono-Regular"),url("{font_base}/font/jetbrains-mono.ttf") format("truetype-variations"),url("{font_base}/font/jetbrains-mono.ttf") format("truetype");font-style:normal;font-weight:100 800;font-display:swap}}'
+                f':root{{--bg:{pane_bg};--text:{pane_fg};--meta:rgba(252,252,252,0.62);--line:{pane_line};--line-strong:rgba(255,255,255,0.12);--inline-code-fg:rgb(196,201,209);--code-block-bg:rgba(255,255,255,0.03);--code-block-border:rgba(255,255,255,0.08);--code-block-shadow:none;--code-copy-bg:rgba(0,0,0,0.34);--code-copy-hover-bg:rgba(255,255,255,0.06);--message-text-size:13px;--message-text-line-height:22px;--link:#58a6ff;}}'
+                ':root[data-preview-theme="light"]{--bg:rgb(255,255,255);--text:rgb(20,20,19);--meta:rgba(20,20,19,0.56);--line:rgba(20,20,19,0.10);--line-strong:rgba(20,20,19,0.18);--inline-code-fg:rgb(52,52,52);--code-block-bg:rgba(20,20,19,0.035);--code-block-border:rgba(20,20,19,0.08);--code-copy-bg:rgba(255,255,255,0.88);--code-copy-hover-bg:rgba(20,20,19,0.06);--link:#245bdb}'
+                'body{background:var(--bg);color:var(--text)}'
+                '.md-preview-shell{flex:1;min-height:0;overflow:auto;background:var(--bg)}'
+                '.md-body{padding:14px 16px 18px;flex:1;min-width:0;font-family:"anthropicSans","Anthropic Sans","SF Pro Text","Segoe UI","Hiragino Kaku Gothic ProN","Hiragino Sans","Meiryo",sans-serif;font-style:normal;font-size:var(--message-text-size,13px);line-height:var(--message-text-line-height,22px);font-weight:360;color:var(--text);letter-spacing:-0.01em;font-synthesis-weight:none;font-synthesis-style:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-optical-sizing:auto;font-variation-settings:"wght" 360,"opsz" 16}'
+                '.md-body>*:first-child{margin-top:0}.md-body>*:last-child{margin-bottom:0}'
+                '.md-body,.md-body p,.md-body li,.md-body li p,.md-body blockquote,.md-body blockquote p{white-space:normal;overflow-wrap:anywhere;word-break:normal}'
+                '.md-body p{margin:0 0 .6em}'
+                '.md-body h1,.md-body h2,.md-body h3,.md-body h4{margin:.8em 0 .3em;font-weight:700;font-variation-settings:"wght" 700,"opsz" 16;font-synthesis:weight;line-height:1.2}'
+                '.md-body h1{font-size:22px}.md-body h2{font-size:18px}.md-body h3{font-size:1.05em}.md-body h4{font-size:1em}'
+                '.md-body ul,.md-body ol{margin:.4em 0 .6em;padding-left:1.5em}.md-body li{margin:.15em 0;line-height:calc(var(--message-text-line-height,22px) + 2px)}.md-body li p{margin:0}'
+                '.md-body code{font-family:inherit;font-style:inherit;font-size:inherit;font-weight:inherit;font-synthesis-weight:none;font-variation-settings:inherit;letter-spacing:inherit;color:var(--inline-code-fg);line-height:inherit;background:transparent;border:none;border-radius:0;padding:0}'
+                '.katex{font-family:KaTeX_Main,Times New Roman,serif;font-size:19px;font-weight:400;line-height:23px}'
+                '.table-scroll{display:block;width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;margin:.5em 0}.table-scroll>table{width:100%;margin:0}'
+                '.katex-display{display:block;margin:1.2em 0;width:100%;max-width:100%;padding-inline:0;overflow-x:auto;overflow-y:hidden;text-align:left;-webkit-overflow-scrolling:touch}.katex-display>.katex{display:table;width:max-content;max-width:none;margin:0 auto}'
+                '.md-body pre{display:block;width:100%;max-width:100%;box-sizing:border-box;position:relative;background:var(--code-block-bg);border:1px solid var(--code-block-border);border-radius:14px;padding:14px 16px;margin:14px 0;overflow-x:auto;white-space:pre;word-break:normal;box-shadow:var(--code-block-shadow);-webkit-overflow-scrolling:touch}'
+                '.md-body .code-block-wrap{position:relative;margin:2px 0}'
+                '.md-body .code-block-wrap .code-copy-btn{position:absolute;top:10px;right:10px;z-index:1;width:30px;height:30px;padding:0;border:1px solid var(--code-block-border);border-radius:9px;background:var(--code-copy-bg);color:var(--meta);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:opacity .15s,background .15s,color .15s,border-color .15s}'
+                '.md-body .code-block-wrap:hover .code-copy-btn{opacity:1}@media (pointer:coarse){.md-body .code-block-wrap .code-copy-btn{opacity:.72}}'
+                '.md-body .code-block-wrap .code-copy-btn:hover{background:var(--code-copy-hover-bg);color:var(--text);border-color:var(--line-strong)}.md-body .code-block-wrap .code-copy-btn svg{width:15px;height:15px}'
+                '.md-body pre code{font-family:inherit;font-style:inherit;font-size:inherit;font-weight:inherit;font-synthesis-weight:none;font-variation-settings:inherit;letter-spacing:inherit;line-height:inherit;color:var(--text);background:none;border:none;padding:0;border-radius:0;white-space:pre;word-break:normal;overflow-wrap:normal}'
+                '.md-body pre code .token.comment,.md-body pre code .token.prolog,.md-body pre code .token.doctype,.md-body pre code .token.cdata{color:rgb(100,110,130)}'
+                '.md-body pre code .token.punctuation{color:rgb(150,160,175)}'
+                '.md-body pre code .token.property,.md-body pre code .token.tag,.md-body pre code .token.boolean,.md-body pre code .token.number,.md-body pre code .token.constant,.md-body pre code .token.symbol{color:rgb(140,170,210)}'
+                '.md-body pre code .token.selector,.md-body pre code .token.attr-name,.md-body pre code .token.string,.md-body pre code .token.char,.md-body pre code .token.builtin{color:rgb(160,190,200)}'
+                '.md-body pre code .token.operator,.md-body pre code .token.entity,.md-body pre code .token.url,.md-body pre code .token.variable{color:rgb(170,180,195)}'
+                '.md-body pre code .token.atrule,.md-body pre code .token.attr-value,.md-body pre code .token.keyword{color:rgb(130,160,200)}'
+                '.md-body pre code .token.function,.md-body pre code .token.class-name{color:rgb(175,195,220)}'
+                '.md-body pre code .token.regex,.md-body pre code .token.important{color:rgb(190,170,140)}'
+                '.md-body pre code .token.decorator{color:rgb(140,170,210)}'
+                ':root[data-preview-theme="light"] .md-body pre code .token.comment,:root[data-preview-theme="light"] .md-body pre code .token.prolog,:root[data-preview-theme="light"] .md-body pre code .token.doctype,:root[data-preview-theme="light"] .md-body pre code .token.cdata{color:rgb(126,132,145)}'
+                ':root[data-preview-theme="light"] .md-body pre code .token.punctuation{color:rgb(108,116,128)}'
+                ':root[data-preview-theme="light"] .md-body pre code .token.property,:root[data-preview-theme="light"] .md-body pre code .token.tag,:root[data-preview-theme="light"] .md-body pre code .token.boolean,:root[data-preview-theme="light"] .md-body pre code .token.number,:root[data-preview-theme="light"] .md-body pre code .token.constant,:root[data-preview-theme="light"] .md-body pre code .token.symbol{color:rgb(48,92,176)}'
+                ':root[data-preview-theme="light"] .md-body pre code .token.selector,:root[data-preview-theme="light"] .md-body pre code .token.attr-name,:root[data-preview-theme="light"] .md-body pre code .token.string,:root[data-preview-theme="light"] .md-body pre code .token.char,:root[data-preview-theme="light"] .md-body pre code .token.builtin{color:rgb(40,122,113)}'
+                ':root[data-preview-theme="light"] .md-body pre code .token.operator,:root[data-preview-theme="light"] .md-body pre code .token.entity,:root[data-preview-theme="light"] .md-body pre code .token.url,:root[data-preview-theme="light"] .md-body pre code .token.variable{color:rgb(88,95,104)}'
+                ':root[data-preview-theme="light"] .md-body pre code .token.atrule,:root[data-preview-theme="light"] .md-body pre code .token.attr-value,:root[data-preview-theme="light"] .md-body pre code .token.keyword{color:rgb(86,76,176)}'
+                ':root[data-preview-theme="light"] .md-body pre code .token.function,:root[data-preview-theme="light"] .md-body pre code .token.class-name{color:rgb(23,87,152)}'
+                ':root[data-preview-theme="light"] .md-body pre code .token.regex,:root[data-preview-theme="light"] .md-body pre code .token.important{color:rgb(149,92,35)}'
+                ':root[data-preview-theme="light"] .md-body pre code .token.decorator{color:rgb(48,92,176)}'
+                '.md-body code.language-diff{display:flex;flex-direction:column;gap:0}'
+                '.md-body .diff-add{background:rgb(2,40,2);color:rgb(250,230,100);display:block;margin:0 -16px;padding:0 16px;line-height:20px}.md-body .diff-add .diff-sign{color:rgb(34,197,94)}'
+                '.md-body .diff-del{background:rgb(61,1,0);display:block;margin:0 -16px;padding:0 16px;line-height:20px}.md-body .diff-del .diff-sign{color:rgb(239,68,68)}'
+                ':root[data-preview-theme="light"] .md-body .diff-add{background:rgb(233,247,233);color:rgb(41,73,41)}:root[data-preview-theme="light"] .md-body .diff-add .diff-sign{color:rgb(38,134,74)}'
+                ':root[data-preview-theme="light"] .md-body .diff-del{background:rgb(252,236,236);color:rgb(104,39,39)}:root[data-preview-theme="light"] .md-body .diff-del .diff-sign{color:rgb(186,63,63)}'
+                '.md-body blockquote{border-left:3px solid rgba(255,255,255,0.2);margin:.5em 0;padding:.3em .8em;opacity:.85}'
+                '.md-body hr{border:none;border-top:1px solid var(--line);margin:.8em 0}'
+                '.md-body img{display:block;max-width:100%;max-height:60vh;width:auto;height:auto;margin:12px 0;border-radius:10px}'
+                '.md-body table{display:table;table-layout:auto;border-collapse:collapse;width:100%;margin:.5em 0;font-size:var(--message-text-size,13px);line-height:21px}'
+                '.md-body th,.md-body td{white-space:nowrap;border-top:1.5px solid rgba(255,255,255,0.12);border-bottom:1.5px solid rgba(255,255,255,0.12);border-left:none;border-right:none;padding:7.5px 12px !important;text-align:left;font-size:var(--message-text-size,13px);line-height:21px}'
+                '.md-body th{background:transparent;font-weight:530;border-top:none;border-bottom-color:rgba(255,255,255,0.28)}.md-body td{font-weight:360}'
+                ':root[data-preview-theme="light"] .md-body blockquote{border-left-color:rgba(20,20,19,0.18);opacity:1}'
+                ':root[data-preview-theme="light"] .md-body th,:root[data-preview-theme="light"] .md-body td{border-top-color:rgba(20,20,19,0.12);border-bottom-color:rgba(20,20,19,0.12)}'
+                ':root[data-preview-theme="light"] .md-body th{border-bottom-color:rgba(20,20,19,0.22)}'
+                '.md-body a{color:var(--link);text-decoration:none}.md-body a:hover{text-decoration:underline}.md-body strong{font-weight:530}.md-body em{font-style:italic}'
                 '</style></head>'
-                f'<body>{header.format(icon="📝")}<div class="md" id="out"></div>'
+                f'<body>{header.format(icon="📝")}<div class="md-preview-shell"><div class="md-body" id="out"></div></div>'
                 f'''<script>
-const __mdRel = `{rel_js}`;
-const __fileBase = `{prefix_js}`;
+const __mdText = {content_json};
+const __mdRel = {rel_json};
+const __fileBase = {prefix_json};
 const __rawBase = `${{__fileBase}}/file-raw?path=`;
-const __isExternalSrc = (src) => /^(https?:|data:|blob:|file:|\/\/)/i.test(src || "");
+const __root = document.documentElement;
+const __isExternalSrc = (src) => /^(https?:|data:|blob:|file:|\\/\\/)/i.test(src || "");
 const __normalizeMdPath = (baseRel, src) => {{
   const cleanSrc = String(src || "").trim();
   if (!cleanSrc || __isExternalSrc(cleanSrc) || cleanSrc.startsWith("#")) return cleanSrc;
   const withoutQuery = cleanSrc.split(/[?#]/, 1)[0];
   const baseParts = String(baseRel || "").split("/").slice(0, -1);
   const rawParts = withoutQuery.startsWith("/")
-    ? withoutQuery.replace(/^\/+/, "").split("/")
+    ? withoutQuery.replace(/^\\/+/, "").split("/")
     : baseParts.concat(withoutQuery.split("/"));
   const out = [];
   for (const part of rawParts) {{
@@ -756,9 +796,135 @@ const __rewriteMarkdownImages = (root) => {{
     img.setAttribute("src", __rawBase + encodeURIComponent(resolved));
   }});
 }};
+const escapeHtml = (value) => String(value || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+const mathRenderOptions = {{
+  delimiters: [
+    {{left: "$$", right: "$$", display: true}},
+    {{left: "$", right: "$", display: false}},
+    {{left: "\\\\[", right: "\\\\]", display: true}}
+  ],
+  ignoredClasses: ["no-math"],
+  throwOnError: false
+}};
+const renderMarkdown = (text) => {{
+  if (typeof marked === "undefined") return "<pre>" + escapeHtml(text) + "</pre>";
+  try {{
+    const mathBlocks = [];
+    let placeholderCount = 0;
+    const codeBlocks = [];
+    let codeCount = 0;
+    let processedText = String(text || "").replace(/(```[\\s\\S]*?```|`[^`\\n]+`)/g, (match) => {{
+      const id = `code-placeholder-${{codeCount++}}`;
+      codeBlocks.push({{ id, content: match }});
+      return `\\x00CODE:${{id}}\\x00`;
+    }});
+    processedText = processedText.replace(/(?<!\\$)\\$([A-Z_][A-Z0-9_]+)/g, '<span class="no-math">&#36;$1</span>');
+    processedText = processedText.replace(/\\$([{{(]][^}})\\n]*[}})])/g, '<span class="no-math">&#36;$1</span>');
+    processedText = processedText.replace(/(\\\\\\[[\\s\\S]+?\\\\\\]|\\\\\\([\\s\\S]+?\\\\\\)|\\$\\$[\\s\\S]+?\\$\\$|\\$[\\s\\S]+?\\$)/g, (match) => {{
+      const id = `math-placeholder-${{placeholderCount++}}`;
+      mathBlocks.push({{ id, content: match }});
+      return `<span class="MATH_SAFE_BLOCK" data-id="${{id}}"></span>`;
+    }});
+    processedText = processedText.replace(/\\x00CODE:(code-placeholder-\\d+)\\x00/g, (_, id) => {{
+      const block = codeBlocks.find((entry) => entry.id === id);
+      return block ? block.content : "";
+    }});
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = marked.parse(processedText, {{ breaks: true, gfm: true }});
+    tempDiv.querySelectorAll(".MATH_SAFE_BLOCK").forEach((span) => {{
+      const block = mathBlocks.find((entry) => entry.id === span.dataset.id);
+      if (block) span.outerHTML = block.content;
+    }});
+    if (mathBlocks.length) {{
+      const marker = document.createElement("span");
+      marker.className = "math-render-needed";
+      marker.hidden = true;
+      tempDiv.prepend(marker);
+    }}
+    if (typeof Prism !== "undefined") {{
+      tempDiv.querySelectorAll('code[class*="language-"]').forEach((codeEl) => {{
+        if (codeEl.classList.contains("language-diff")) return;
+        Prism.highlightElement(codeEl);
+      }});
+    }}
+    tempDiv.querySelectorAll("code.language-diff").forEach((codeEl) => {{
+      const raw = codeEl.textContent || "";
+      codeEl.innerHTML = raw.split("\\n").map((line) => {{
+        if (line.startsWith("+")) return `<span class="diff-add"><span class="diff-sign">+</span>${{escapeHtml(line.slice(1))}}</span>`;
+        if (line.startsWith("-")) return `<span class="diff-del"><span class="diff-sign">-</span>${{escapeHtml(line.slice(1))}}</span>`;
+        return escapeHtml(line);
+      }}).join("\\n");
+    }});
+    const copySvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    tempDiv.querySelectorAll("pre").forEach((pre) => {{
+      const wrap = document.createElement("div");
+      wrap.className = "code-block-wrap";
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+      wrap.insertAdjacentHTML("beforeend", `<button class="code-copy-btn" type="button" title="Copy">${{copySvg}}</button>`);
+    }});
+    return tempDiv.innerHTML;
+  }} catch (_) {{
+    return "<pre>" + escapeHtml(text) + "</pre>";
+  }}
+}};
+const ensureWideTables = (scope = document) => {{
+  scope.querySelectorAll(".md-body table").forEach((table) => {{
+    if (table.closest(".table-scroll")) return;
+    const parent = table.parentNode;
+    if (!parent) return;
+    const scroll = document.createElement("div");
+    scroll.className = "table-scroll";
+    parent.insertBefore(scroll, table);
+    scroll.appendChild(table);
+  }});
+}};
+const applyPreviewTheme = (theme) => {{
+  const nextTheme = theme === "light" ? "light" : "dark";
+  __root.setAttribute("data-preview-theme", nextTheme);
+}};
+const renderMathInScope = (scope) => {{
+  if (!scope || !scope.querySelector(".math-render-needed") || typeof renderMathInElement !== "function") return;
+  renderMathInElement(scope, mathRenderOptions);
+  scope.querySelectorAll(".math-render-needed").forEach((marker) => marker.remove());
+}};
+const copyText = async (text) => {{
+  if (navigator.clipboard?.writeText) {{
+    await navigator.clipboard.writeText(text);
+    return;
+  }}
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.setAttribute("readonly", "");
+  area.style.position = "absolute";
+  area.style.left = "-9999px";
+  document.body.appendChild(area);
+  area.select();
+  document.execCommand("copy");
+  area.remove();
+}};
+document.addEventListener("click", async (event) => {{
+  const btn = event.target.closest(".code-copy-btn");
+  if (!btn) return;
+  const code = btn.parentElement?.querySelector("pre code");
+  if (!code) return;
+  try {{
+    await copyText(code.textContent || "");
+    btn.title = "Copied";
+    setTimeout(() => {{ btn.title = "Copy"; }}, 1200);
+  }} catch (_) {{}}
+}});
+window.addEventListener("message", (event) => {{
+  const data = event?.data;
+  if (!data || data.type !== "agent-index-file-preview-theme") return;
+  applyPreviewTheme(data.theme);
+}});
 const out = document.getElementById("out");
-out.innerHTML = marked.parse(`{escaped_js}`, {{breaks:true,gfm:true}});
+out.innerHTML = renderMarkdown(__mdText);
 __rewriteMarkdownImages(out);
+ensureWideTables(out);
+renderMathInScope(out);
+applyPreviewTheme("dark");
 </script></body></html>'''
             )
 

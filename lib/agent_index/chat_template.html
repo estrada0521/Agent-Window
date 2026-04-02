@@ -1974,49 +1974,6 @@ __AGENT_ACCENT_CSS__
       border-color: rgba(245, 158, 11, 0.55);
       color: var(--warn-bright);
     }
-    .quick-action.raw-send-btn {
-      border-style: dashed;
-      border-color: rgba(214, 222, 235, 0.2);
-      background: rgba(214, 222, 235, 0.045);
-      color: rgba(214, 222, 235, 0.82);
-    }
-    .quick-action .raw-switch {
-      margin-left: auto;
-      position: relative;
-      width: 30px;
-      height: 18px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      flex: 0 0 auto;
-      transition: background 150ms ease, border-color 150ms ease;
-    }
-    .quick-action .raw-switch::after {
-      content: "";
-      position: absolute;
-      top: 1px;
-      left: 1px;
-      width: 14px;
-      height: 14px;
-      border-radius: 999px;
-      background: rgba(252, 252, 252, 0.92);
-      transition: transform 150ms ease, background 150ms ease;
-    }
-    .quick-action.raw-on .raw-switch,
-    .quick-action[data-forward-action="rawSendBtn"].raw-on .raw-switch {
-      background: rgba(252, 252, 252, 0.3);
-      border-color: rgba(252, 252, 252, 0.42);
-    }
-    .quick-action.raw-on .raw-switch::after,
-    .quick-action[data-forward-action="rawSendBtn"].raw-on .raw-switch::after {
-      transform: translateX(12px);
-      background: var(--fg-bright);
-    }
-    .has-hover .quick-action.raw-send-btn:hover:not(:disabled) {
-      background: rgba(214, 222, 235, 0.1);
-      border-color: rgba(214, 222, 235, 0.34);
-      color: var(--text);
-    }
     /* Tactile button animations */
     .target-chip:active:not(:disabled),
     .quick-action:active:not(:disabled),
@@ -4370,6 +4327,16 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .file-modal-open-editor[hidden] {
       display: none;
     }
+    .file-modal-theme-toggle {
+      width: 34px;
+      min-width: 34px;
+      padding: 0;
+      gap: 0;
+    }
+    .file-modal-theme-toggle svg {
+      width: 15px;
+      height: 15px;
+    }
     .file-modal-body {
       position: relative;
       min-height: 0;
@@ -4665,6 +4632,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           </div>
         </div>
         <div class="file-modal-actions">
+          <button type="button" id="fileModalThemeToggleBtn" class="file-modal-open-editor file-modal-theme-toggle" hidden aria-label="Switch markdown preview theme" title="Switch markdown preview theme">
+            <svg id="fileModalThemeToggleIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+          </button>
           <button type="button" id="fileModalOpenEditorBtn" class="file-modal-open-editor" hidden>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"></path></svg>
             <span>Open in Editor</span>
@@ -4689,35 +4659,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       <div class="composer-main-shell">
         <div class="target-picker" id="targetPicker"></div>
         <div class="composer-stack">
-          <details class="composer-plus-menu" id="composerPlusMenu">
-            <summary class="composer-plus-toggle" aria-label="Open command menu">
+          <div class="composer-plus-menu" id="composerPlusMenu">
+            <button type="button" class="composer-plus-toggle" id="cameraBtn" aria-label="Import" title="Import">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            </summary>
-
-            <div class="composer-plus-panel">
-              <label for="cameraInput" id="cameraBtn" class="quick-action divider-after" tabindex="0"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></span><span class="action-label">Import</span><span class="action-mobile">Import</span></label>
-              <input type="file" id="cameraInput" class="attach-file-input" multiple>
-              <button type="button" class="quick-action divider-after" data-forward-action="rawSendBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17 10 12 4 7"></path><path d="M12 17h8"></path></svg></span><span class="action-label">Raw</span><span class="action-mobile">Raw</span><span class="raw-switch" aria-hidden="true"></span></button>
-              <details class="plus-submenu divider-after">
-                <summary class="quick-action plus-submenu-toggle"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M6 20v-2a6 6 0 0 1 12 0v2"></path></svg></span><span class="action-label">Agent</span><span class="action-mobile">Agent</span><span class="submenu-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span></summary>
-                <div class="plus-submenu-panel">
-                  <button type="button" class="quick-action" data-forward-action="briefBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="m12 8 2.5 3.5L12 16l-2.5-4.5L12 8Z"></path></svg></span><span class="action-label">Brief</span><span class="action-mobile">Brief</span></button>
-                  <button type="button" class="quick-action" data-forward-action="readMemoryBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"></path><path d="m8 10 4 4 4-4"></path><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path></svg></span><span class="action-label">Load</span><span class="action-mobile">Load</span></button>
-                  <button type="button" class="quick-action" data-forward-action="memoryBtn"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h10l2 2v14H6z"></path><path d="M9 4v6h6V4"></path><path d="M9 16h6"></path></svg></span><span class="action-label">Memory</span><span class="action-mobile">Memory</span></button>
-                </div>
-              </details>
-              <details class="plus-submenu divider-after">
-                <summary class="quick-action plus-submenu-toggle"><span class="action-emoji" aria-hidden="true">⌘</span><span class="action-label">Command</span><span class="action-mobile">Command</span><span class="submenu-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span></summary>
-                <div class="plus-submenu-panel">
-                  <button type="button" class="quick-action" data-forward-action="restart"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"></rect><path d="M15.5 10A4 4 0 1 0 16 15"></path><path d="M16 9v3h-3"></path></svg></span><span class="action-label">Restart</span><span class="action-mobile">Restart</span></button>
-                  <button type="button" class="quick-action" data-forward-action="resume"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v10"></path><path d="m8 11 4 4 4-4"></path><path d="M5 19h14"></path></svg></span><span class="action-label">Resume</span><span class="action-mobile">Resume</span></button>
-                  <button type="button" class="quick-action" data-forward-action="ctrlc"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"></rect><path d="M8 10h.01"></path><path d="M11 10h.01"></path><path d="M14 10h.01"></path><path d="M17 10h.01"></path><path d="M8 14h8"></path></svg></span><span class="action-label">Ctrl+C</span><span class="action-mobile">Ctrl+C</span></button>
-                  <button type="button" class="quick-action" data-forward-action="enter"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg></span><span class="action-label">Enter</span><span class="action-mobile">Enter</span></button>
-                </div>
-              </details>
-              <button type="button" class="quick-action" data-forward-action="interrupt"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"></rect><path d="m9 10 6 6"></path><path d="m15 10-6 6"></path></svg></span><span class="action-label">Esc</span><span class="action-mobile">Esc</span></button>
-            </div>
-          </details>
+            </button>
+            <input type="file" id="cameraInput" class="attach-file-input" multiple>
+          </div>
           <div class="composer-shell">
             <div class="composer-above-input">
               <div class="reply-banner" id="replyBanner">
@@ -4740,7 +4687,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             </div>
           </div>
           <div class="quick-actions">
-            <button type="button" class="quick-action raw-send-btn" id="rawSendBtn" title="Send without [From: User] or msg-id"><span class="action-emoji">↪</span><span class="action-label">Raw Send</span><span class="action-mobile">Raw</span></button>
             <details class="quick-more">
               <summary class="quick-action quick-more-toggle"><span class="action-emoji">⋯</span><span class="action-label">Cmd</span><span class="action-mobile">Cmd</span></summary>
               <div class="quick-more-menu">
@@ -5117,9 +5063,36 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const fileModalTitle = document.getElementById("fileModalTitle");
     const fileModalPath = document.getElementById("fileModalPath");
     const fileModalIcon = document.getElementById("fileModalIcon");
+    const fileModalThemeToggleBtn = document.getElementById("fileModalThemeToggleBtn");
+    const fileModalThemeToggleIcon = document.getElementById("fileModalThemeToggleIcon");
     const fileModalOpenEditorBtn = document.getElementById("fileModalOpenEditorBtn");
     let fileModalCurrentPath = "";
+    let fileModalCurrentExt = "";
+    let fileModalPreviewTheme = "dark";
     let lastFocusedElement = null;
+    const FILE_MODAL_THEME_ICONS = {
+      dark: '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>',
+      light: '<path d="M21 12.79A9 9 0 1 1 11.21 3c0 0 0 0 0 0A7 7 0 0 0 21 12.79z"></path>',
+    };
+    const postFileModalTheme = () => {
+      if (fileModalCurrentExt !== "md") return;
+      try {
+        fileModalFrame.contentWindow?.postMessage(
+          { type: "agent-index-file-preview-theme", theme: fileModalPreviewTheme },
+          window.location.origin,
+        );
+      } catch (_) {}
+    };
+    const syncFileModalThemeToggle = () => {
+      if (!fileModalThemeToggleBtn || !fileModalThemeToggleIcon) return;
+      const isMd = fileModalCurrentExt === "md";
+      fileModalThemeToggleBtn.hidden = !isMd;
+      if (!isMd) return;
+      const nextLabel = fileModalPreviewTheme === "dark" ? "Switch markdown preview to light" : "Switch markdown preview to dark";
+      fileModalThemeToggleBtn.title = nextLabel;
+      fileModalThemeToggleBtn.setAttribute("aria-label", nextLabel);
+      fileModalThemeToggleIcon.innerHTML = FILE_MODAL_THEME_ICONS[fileModalPreviewTheme] || FILE_MODAL_THEME_ICONS.dark;
+    };
     const updateFileModalViewportMetrics = () => {
       const headerRoot = document.querySelector(".hub-page-header");
       if (!headerRoot) return;
@@ -5146,6 +5119,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         fileModal.classList.remove("closing");
         fileModalFrame.removeAttribute("src");
         fileModalCurrentPath = "";
+        fileModalCurrentExt = "";
+        fileModalPreviewTheme = "dark";
+        syncFileModalThemeToggle();
         if (fileModalOpenEditorBtn) fileModalOpenEditorBtn.hidden = true;
         window.removeEventListener("resize", syncFileModalViewportMetrics);
         window.removeEventListener("scroll", syncFileModalViewportMetrics, { capture: true });
@@ -5179,6 +5155,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         ? withChatBase(`/file-raw?path=${encodeURIComponent(path)}`)
         : withChatBase(`/file-view?path=${encodeURIComponent(path)}&embed=1`);
       fileModalCurrentPath = path;
+      fileModalCurrentExt = normalizedExt;
+      fileModalPreviewTheme = "dark";
+      syncFileModalThemeToggle();
       fileModalTitle.textContent = filename;
       fileModalPath.textContent = parentPath;
       fileModalPath.style.display = parentPath ? "" : "none";
@@ -5201,6 +5180,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       fileModalFrame.onload = () => {
         fileModalFrame.style.transition = "opacity 200ms ease-out";
         fileModalFrame.style.opacity = "1";
+        postFileModalTheme();
       };
       fileModalFrame.src = viewerUrl;
 
@@ -5274,6 +5254,12 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       } catch (err) {
         alert(err?.message || "Failed to open file in editor.");
       }
+    });
+    fileModalThemeToggleBtn?.addEventListener("click", () => {
+      if (fileModalCurrentExt !== "md") return;
+      fileModalPreviewTheme = fileModalPreviewTheme === "dark" ? "light" : "dark";
+      syncFileModalThemeToggle();
+      postFileModalTheme();
     });
     const scrollToBottomBtn = document.getElementById("scrollToBottomBtn");
     const composerFabBtn = document.getElementById("composerFabBtn");
@@ -5749,7 +5735,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let sessionActive = true;
     let pendingReplyTo = null;
     let pendingAttachments = []; // [{path, name, label}]
-    let rawSendEnabled = false;
     let availableTargets = [];
     let currentSessionName = "";
     let _renderedIds = new Set(); // incremental render tracking
@@ -5950,19 +5935,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         centeredRowRaf = 0;
         updateCenteredMessageRow();
       });
-    };
-    const renderRawSendButton = () => {
-      const button = document.getElementById("rawSendBtn");
-      if (!button) return;
-      const on = !!rawSendEnabled;
-      button.classList.toggle("raw-on", on);
-      button.classList.toggle("raw-off", !on);
-      document.querySelectorAll('[data-forward-action="rawSendBtn"]').forEach(n => n.classList.toggle("raw-on", on));
-      document.querySelectorAll('[data-forward-action="rawSendBtn"]').forEach(n => n.classList.toggle("raw-off", !on));
-      button.setAttribute("aria-pressed", on ? "true" : "false");
-      button.title = on
-        ? "Raw send enabled: send without [From: User] or msg-id"
-        : "Raw send disabled";
     };
     const flashHeaderToggle = (targetNode) => {
       const nodes = targetNode ? [targetNode] : document.querySelectorAll("#attachedFilesMenuBtn, #rightMenuBtn");
@@ -7578,7 +7550,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
       overlay.querySelector(".provider-events-close")?.addEventListener("click", closeModal);
     };
-    const submitMessage = async ({ overrideMessage = null, overrideTarget = null, raw = rawSendEnabled, closeOverlayOnStart = false } = {}) => {
+    const submitMessage = async ({ overrideMessage = null, overrideTarget = null, raw = false, closeOverlayOnStart = false } = {}) => {
       if (sendLocked || Date.now() - lastSubmitAt < 500) {
         return false;
       }
@@ -7586,11 +7558,15 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       lastSubmitAt = Date.now();
       const message = document.getElementById("message");
       const rawInput = (overrideMessage ?? message.value).trim();
+      const clearComposerDraft = () => {
+        message.value = "";
+        updateSendBtnVisibility();
+        autoResizeTextarea();
+      };
       const briefMatch = !overrideMessage && rawInput.match(/^\/brief(?:\s+set(?:\s+([A-Za-z0-9_-]+))?)?$/);
       if (briefMatch) {
         const briefName = (briefMatch[1] || "default").trim() || "default";
-        message.value = "";
-        autoResizeTextarea();
+        clearComposerDraft();
         closeCmdDrop();
         await showBriefEditorModal(briefName);
         sendLocked = false;
@@ -7602,23 +7578,43 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         overrideMessage = (memoMatch[1] || "").trim();
         overrideTarget = "user";
       }
-      // Slash command: /raw <text> → one-shot raw send (no header, direct paste)
-      const rawMatch = !overrideMessage && !memoMatch && rawInput.match(/^\/raw\s+([\s\S]+)$/);
-      if (rawMatch) {
-        overrideMessage = rawMatch[1].trim().replace(/^"([\s\S]*)"$/, "$1");
-        raw = true;
+      const loadMatch = !overrideMessage && !memoMatch && /^\/load$/i.test(rawInput);
+      if (loadMatch) {
+        clearComposerDraft();
+        closeCmdDrop();
+        try {
+          await runLoadMemoryAction();
+        } finally {
+          sendLocked = false;
+        }
+        return false;
       }
-      const geminiDirectMatch = !overrideMessage && !memoMatch && !rawMatch && rawInput.match(/^\/gemini(?:-direct)?\s+([\s\S]+)$/);
+      const memoryMatch = !overrideMessage && !memoMatch && /^\/memory$/i.test(rawInput);
+      if (memoryMatch) {
+        clearComposerDraft();
+        closeCmdDrop();
+        try {
+          await runMemoryAction();
+        } finally {
+          sendLocked = false;
+        }
+        return false;
+      }
+      const geminiDirectMatch = !overrideMessage && !memoMatch && !loadMatch && !memoryMatch && rawInput.match(/^\/gemini(?:-direct)?\s+([\s\S]+)$/);
       if (geminiDirectMatch) {
         overrideMessage = geminiDirectMatch[1].trim();
       }
-      const paneDirectMatch = !overrideMessage && !memoMatch && !rawMatch && rawInput.match(/^\/(model|up|down)(?:\s+(\d+))?$/);
+      const paneDirectMatch = !overrideMessage && !memoMatch && !loadMatch && !memoryMatch && rawInput.match(/^\/(model|up|down)(?:\s+(\d+))?$/);
       if (paneDirectMatch) {
         const cmd = paneDirectMatch[1];
         const count = Math.max(1, Math.min(parseInt(paneDirectMatch[2] || "1", 10) || 1, 100));
         overrideMessage = (cmd === "up" || cmd === "down") ? `${cmd} ${count}` : cmd;
       }
-      const payload = (memoMatch || rawMatch || geminiDirectMatch || paneDirectMatch) ? overrideMessage : rawInput;
+      const paneShortcutSlashMatch = !overrideMessage && !memoMatch && !loadMatch && !memoryMatch && rawInput.match(/^\/(restart|resume|interrupt|enter|ctrlc)$/i);
+      if (paneShortcutSlashMatch) {
+        overrideMessage = paneShortcutSlashMatch[1].toLowerCase();
+      }
+      const payload = overrideMessage !== null ? overrideMessage : rawInput;
       const providerDirect = geminiDirectMatch ? "gemini" : "";
       let target = overrideTarget ?? selectedTargets.join(",");
       const shortcutMeta = parseControlShortcut(payload);
@@ -7665,9 +7661,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           ? "starting Gemini direct..."
           : isShortcut
           ? `running ${shortcutDisplay}${shortcutCountSuffix}${shortcutScope}...`
-          : raw
-            ? `sending raw to ${target}...`
-            : `sending to ${target}...`
+          : `sending to ${target}...`
       );
       try {
         const res = await fetch("/send", {
@@ -7685,15 +7679,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         if (!res.ok || !data.ok) {
           throw new Error(data.error || "send failed");
         }
-        if (!overrideMessage || memoMatch || rawMatch || geminiDirectMatch || paneDirectMatch) {
-          message.value = "";
+        if (!overrideMessage || memoMatch || geminiDirectMatch || paneDirectMatch || paneShortcutSlashMatch) {
+          clearComposerDraft();
           if (pendingAttachments.length) {
             pendingAttachments = [];
             const row = document.getElementById("attachPreviewRow");
             if (row) { row.innerHTML = ""; row.style.display = "none"; }
           }
-          updateSendBtnVisibility();
-          autoResizeTextarea();
           if (_isMobile && !shortcutMeta?.keepComposerOpen) message.blur();
           if (!shortcutMeta?.keepComposerOpen) closeComposerOverlay();
           _stickyToBottom = true;
@@ -7704,9 +7696,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
             ? "Gemini direct started"
             : isShortcut
             ? `${shortcutDisplay}${shortcutCountSuffix}${shortcutScope} completed`
-            : raw
-              ? `raw sent to ${target}`
-              : `sent to ${target}`
+            : `sent to ${target}`
         );
         if (shortcut === "save") {
           await logSystem("Save Log");
@@ -9031,20 +9021,6 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           }
           return;
         }
-        if (target === "rawSendBtn") {
-          rawSendEnabled = !rawSendEnabled;
-          renderRawSendButton();
-          if (keepComposerOpen) flashComposerAction(target);
-          if (keepHeaderOpen) flashHeaderToggle(target);
-          const statusText = rawSendEnabled ? "raw send enabled" : "raw send disabled";
-          setStatus(statusText);
-          setTimeout(() => {
-            if ((document.getElementById("statusline").textContent || "") === statusText) {
-              setStatus("");
-            }
-          }, 1200);
-          return;
-        }
         if (target === "reloadChat") {
            if (reloadInFlight) return;
            reloadInFlight = true;
@@ -9161,9 +9137,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           showRemoveAgentModal();
           return;
         }
-        if (target !== "rawSendBtn") {
-          document.getElementById(target)?.click();
-        }
+        document.getElementById(target)?.click();
         if (keepComposerOpen && composerPlusMenu) {
           requestAnimationFrame(() => { composerPlusMenu.open = true; });
         }
@@ -9176,34 +9150,26 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         }
       });
     });
-    document.querySelectorAll(".quick-action:not(.memory-btn):not(.brief-btn):not(.raw-send-btn):not(.quick-more-toggle):not(.plus-submenu-toggle):not([data-forward-action]):not(#cameraBtn)").forEach((node) => {
+    document.querySelectorAll(".quick-action:not(.memory-btn):not(.brief-btn):not(.quick-more-toggle):not(.plus-submenu-toggle):not([data-forward-action]):not(#cameraBtn)").forEach((node) => {
       node.addEventListener("click", async () => {
         closeQuickMore();
         await submitMessage({ overrideMessage: node.dataset.shortcut || "" });
       });
     });
-    document.getElementById("rawSendBtn").addEventListener("click", (e) => {
-      if (e.detail > 0) closeQuickMore();
-      rawSendEnabled = !rawSendEnabled;
-      renderRawSendButton();
-      const statusText = rawSendEnabled ? "raw send enabled" : "raw send disabled";
-      setStatus(statusText);
-      setTimeout(() => {
-        if ((document.getElementById("statusline").textContent || "") === statusText) {
-          setStatus("");
-        }
-      }, 1200);
-    });
-    // Brief button — runs asynchronously, not logged in chat
-    document.getElementById("briefBtn").addEventListener("click", async () => {
+    async function runBriefAction() {
       const targets = selectedTargets.length > 0 ? selectedTargets : [];
       if (!targets.length) {
         setStatus("select target(s) for brief", true);
         setTimeout(() => setStatus(""), 2000);
-        return;
+        return false;
       }
       closePlusMenu();
       await showBriefSendModal(targets);
+      return true;
+    }
+    // Brief button — runs asynchronously, not logged in chat
+    document.getElementById("briefBtn").addEventListener("click", async () => {
+      await runBriefAction();
     });
     let composing = false;
     const messageInput = document.getElementById("message");
@@ -9543,6 +9509,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           _fileImportInProgress = false;
           _fileImportClearTimer = null;
         }, 20000);
+        cameraInput.click();
       });
       cameraInput.addEventListener("change", async () => {
         _fileImportInProgress = false;
@@ -10014,13 +9981,15 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const SLASH_COMMANDS = [
       { name: "/memo", desc: "自分宛にメモ（本文省略可＋Import添付可）", hasArg: true },
       { name: "/gemini", desc: "Gemini direct adapter で実行", hasArg: true },
-      { name: "/raw", desc: "次のメッセージを raw 送信", hasArg: true },
       { name: "/brief", desc: "brief を表示・編集", hasArg: true },
+      { name: "/load", desc: "選択中エージェントへ memory を読み込む", action: () => { void runLoadMemoryAction(); } },
+      { name: "/memory", desc: "選択中エージェントへ memory 保存を指示", action: () => { void runMemoryAction(); } },
       { name: "/model", desc: "選択中 pane に /model を送信", action: () => { submitMessage({ overrideMessage: "model" }); } },
       { name: "/up", desc: "選択中 pane に上移動を送信", hasArg: true },
       { name: "/down", desc: "選択中 pane に下移動を送信", hasArg: true },
       { name: "/restart", desc: "エージェント再起動", action: () => { submitMessage({ overrideMessage: "restart" }); } },
       { name: "/resume", desc: "エージェント再開", action: () => { submitMessage({ overrideMessage: "resume" }); } },
+      { name: "/ctrlc", desc: "エージェントに Ctrl+C 送信", action: () => { submitMessage({ overrideMessage: "ctrlc" }); } },
       { name: "/interrupt", desc: "エージェントに Esc 送信", action: () => { submitMessage({ overrideMessage: "interrupt" }); } },
       { name: "/enter", desc: "エージェントに Enter 送信", action: () => { submitMessage({ overrideMessage: "enter" }); } },
     ];
@@ -11435,14 +11404,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     // Pane log autosave runs on the chat server (~2 min, first after 3s) so it is not
     // throttled when the browser tab is in the background.
 
-    // Memory button — sends silently (not logged in chat)
-    document.getElementById("memoryBtn").addEventListener("click", async () => {
+    async function runMemoryAction() {
       closeQuickMore();
       const targets = selectedTargets.length > 0 ? selectedTargets : [];
       if (!targets.length) {
         setStatus("select at least one target", true);
         setTimeout(() => setStatus(""), 2000);
-        return;
+        return false;
       }
       setStatus(`sending memory instruction to ${targets.join(",")}...`);
       try {
@@ -11466,20 +11434,25 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         await refresh({ forceScroll: true });
         setStatus("memory instruction sent");
         setTimeout(() => setStatus(""), 3000);
+        return true;
       } catch (_) {
         setStatus("memory instruction failed", true);
         setTimeout(() => setStatus(""), 3000);
+        return false;
       }
+    }
+    // Memory button — sends silently (not logged in chat)
+    document.getElementById("memoryBtn").addEventListener("click", async () => {
+      await runMemoryAction();
     });
 
-    // Read Memory button — sends memory content to agent silently
-    document.getElementById("readMemoryBtn").addEventListener("click", async () => {
+    async function runLoadMemoryAction() {
       closeQuickMore();
       const targets = selectedTargets.length > 0 ? selectedTargets : [];
       if (!targets.length) {
         setStatus("select at least one target", true);
         setTimeout(() => setStatus(""), 2000);
-        return;
+        return false;
       }
       setStatus(`sending memory to ${targets.join(",")}...`);
       try {
@@ -11504,13 +11477,17 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         await refresh({ forceScroll: true });
         setStatus("memory sent to agent");
         setTimeout(() => setStatus(""), 3000);
+        return true;
       } catch (_) {
         setStatus("read memory failed", true);
         setTimeout(() => setStatus(""), 3000);
+        return false;
       }
+    }
+    // Read Memory button — sends memory content to agent silently
+    document.getElementById("readMemoryBtn").addEventListener("click", async () => {
+      await runLoadMemoryAction();
     });
-
-    renderRawSendButton();
     if (window.__STATIC_EXPORT__) {
       const comp = document.getElementById("composer");
       const message = document.getElementById("message");
