@@ -7622,17 +7622,25 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         }
         return false;
       }
-      const geminiDirectMatch = !overrideMessage && !memoMatch && !loadMatch && !memoryMatch && rawInput.match(/^\/gemini(?:-direct)?\s+([\s\S]+)$/);
+      const cronMatch = !overrideMessage && !memoMatch && !loadMatch && !memoryMatch && /^\/cron$/i.test(rawInput);
+      if (cronMatch) {
+        clearComposerDraft();
+        closeCmdDrop();
+        openCronQuickCreate();
+        sendLocked = false;
+        return false;
+      }
+      const geminiDirectMatch = !overrideMessage && !memoMatch && !loadMatch && !memoryMatch && !cronMatch && rawInput.match(/^\/gemini(?:-direct)?\s+([\s\S]+)$/);
       if (geminiDirectMatch) {
         overrideMessage = geminiDirectMatch[1].trim();
       }
-      const paneDirectMatch = !overrideMessage && !memoMatch && !loadMatch && !memoryMatch && rawInput.match(/^\/(model|up|down)(?:\s+(\d+))?$/);
+      const paneDirectMatch = !overrideMessage && !memoMatch && !loadMatch && !memoryMatch && !cronMatch && rawInput.match(/^\/(model|up|down)(?:\s+(\d+))?$/);
       if (paneDirectMatch) {
         const cmd = paneDirectMatch[1];
         const count = Math.max(1, Math.min(parseInt(paneDirectMatch[2] || "1", 10) || 1, 100));
         overrideMessage = (cmd === "up" || cmd === "down") ? `${cmd} ${count}` : cmd;
       }
-      const paneShortcutSlashMatch = !overrideMessage && !memoMatch && !loadMatch && !memoryMatch && rawInput.match(/^\/(restart|resume|interrupt|enter|ctrlc)$/i);
+      const paneShortcutSlashMatch = !overrideMessage && !memoMatch && !loadMatch && !memoryMatch && !cronMatch && rawInput.match(/^\/(restart|resume|interrupt|enter|ctrlc)$/i);
       if (paneShortcutSlashMatch) {
         overrideMessage = paneShortcutSlashMatch[1].toLowerCase();
       }
@@ -7748,14 +7756,38 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const composerPlusMenu = document.getElementById("composerPlusMenu");
     const hubBtn = document.getElementById("hubPageTitleLink");
     let keepComposerPlusMenuOnBlur = false;
+    const openHubPath = (path = "/") => {
+      const hubHost = window.location.hostname || "127.0.0.1";
+      const normalizedPath = String(path || "/").startsWith("/") ? String(path || "/") : `/${String(path || "/")}`;
+      const hubUrl = `${window.location.protocol}//${hubHost}:__HUB_PORT__${normalizedPath}`;
+      if (window.self !== window.top) {
+        if (normalizedPath === "/") {
+          window.parent.postMessage("hub_close_chat", "*");
+          return;
+        }
+        try {
+          window.parent.location.href = hubUrl;
+          return;
+        } catch (_err) {
+          window.parent.postMessage({ type: "multiagent-open-hub-path", url: hubUrl }, "*");
+          return;
+        }
+      }
+      window.location.href = hubUrl;
+    };
+    const openCronQuickCreate = () => {
+      const params = new URLSearchParams();
+      const sessionName = String(currentSessionName || "").trim();
+      const selectedAgent =
+        (selectedTargets.find((target) => target && target !== "others") || "") ||
+        (availableTargets.find((target) => target && target !== "others") || "");
+      if (sessionName) params.set("session", sessionName);
+      if (selectedAgent) params.set("agent", selectedAgent);
+      openHubPath(`/crons${params.toString() ? `?${params.toString()}` : ""}`);
+    };
     hubBtn?.addEventListener("click", (event) => {
       event.preventDefault();
-      if (window.self !== window.top) {
-        window.parent.postMessage("hub_close_chat", "*");
-      } else {
-        const hubHost = window.location.hostname || "127.0.0.1";
-        window.location.href = `${window.location.protocol}//${hubHost}:__HUB_PORT__/`;
-      }
+      openHubPath("/");
     });
     composerPlusMenu && composerPlusMenu.addEventListener("toggle", () => {
       if (!composerPlusMenu.open) {
@@ -10002,6 +10034,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let _lastCmdItemsData = [];
     const SLASH_COMMANDS = [
       { name: "/memo", desc: "自分宛にメモ（本文省略可＋Import添付可）", hasArg: true },
+      { name: "/cron", desc: "現在の session / agent を埋めた Cron 作成画面を開く", action: () => { openCronQuickCreate(); } },
       { name: "/gemini", desc: "Gemini direct adapter で実行", hasArg: true },
       { name: "/brief", desc: "brief を表示・編集", hasArg: true },
       { name: "/load", desc: "選択中エージェントへ memory を読み込む", action: () => { void runLoadMemoryAction(); } },

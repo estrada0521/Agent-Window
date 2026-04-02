@@ -113,8 +113,8 @@ CHAT_APP_SCRIPT_ASSET = (
         1,
     )
     .replace(
-        '        window.location.href = `${window.location.protocol}//${hubHost}:__HUB_PORT__/`;\n',
-        '        window.location.href = `${window.location.protocol}//${hubHost}:${Number(CHAT_BOOTSTRAP.hubPort) || 0}/`;\n',
+        '      const hubUrl = `${window.location.protocol}//${hubHost}:__HUB_PORT__${normalizedPath}`;\n',
+        '      const hubUrl = `${window.location.protocol}//${hubHost}:${Number(CHAT_BOOTSTRAP.hubPort) || 0}${normalizedPath}`;\n',
         1,
     )
     .replace(

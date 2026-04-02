@@ -628,6 +628,15 @@ tmux_socket = sys.argv[4]
 
 sys.path.insert(0, str(repo_root))
 sys.path.insert(0, str(repo_root / "lib"))
+from agent_index.agent_registry import ALL_AGENT_NAMES
+from agent_index.cron_core import (
+    CronScheduler,
+    delete_cron_job,
+    get_cron_job,
+    list_cron_jobs,
+    save_cron_job,
+    set_cron_enabled,
+)
 from agent_index.hub_core import HubRuntime
 from agent_index.ensure_agent_clis import agent_launch_readiness
 from agent_index.push_core import HubPushMonitor, remove_hub_push_subscription, upsert_hub_push_subscription, vapid_public_key
@@ -697,6 +706,12 @@ hub_push_monitor = HubPushMonitor(
     sessions_provider=lambda: repo_sessions_query().sessions,
 )
 threading.Thread(target=hub_push_monitor.run_forever, daemon=True, name="hub-push-monitor").start()
+cron_scheduler = CronScheduler(
+    repo_root=repo_root,
+    hub_runtime=hub,
+    agent_send_path=script_path.parent / "agent-send",
+)
+threading.Thread(target=cron_scheduler.run_forever, daemon=True, name="cron-scheduler").start()
 
 
 def restarting_page():
@@ -2971,6 +2986,14 @@ HUB_HOME_HTML = """<!doctype html>
     }
     window.addEventListener("message", function(e) {
       if (e.data === "hub_close_chat") closeChatFrame();
+      if (e.data && e.data.type === "multiagent-open-hub-path") {
+        const nextUrl = typeof e.data.url === "string" ? e.data.url : "";
+        if (nextUrl) {
+          closeChatFrame();
+          window.location.href = nextUrl;
+        }
+        return;
+      }
       if (e.data && e.data.type === "multiagent-chat-scroll-signal" && e.source === _chatFrame.contentWindow) {
         if (_chatOverlay.hidden) return;
         const y = window.scrollY || document.documentElement.scrollTop || 0;
@@ -5131,6 +5154,458 @@ HUB_NEW_SESSION_HTML = (
     .replace("__AIDER_ICON__", _HUB_ICON_URIS["aider"])
 )
 
+def hub_crons_html(*, jobs, session_records, notice="", prefill_session="", prefill_agent="", edit_job=None):
+    settings = load_hub_settings()
+    session_map = {}
+    for record in session_records or []:
+        if not isinstance(record, dict):
+            continue
+        name = str(record.get("name") or "").strip()
+        if not name or name in session_map:
+            continue
+        session_map[name] = {
+            "name": name,
+            "agents": [str(agent).strip() for agent in (record.get("agents") or []) if str(agent).strip()],
+            "status": str(record.get("status") or "").strip(),
+        }
+
+    selected_session = str((edit_job or {}).get("session") or prefill_session or "").strip()
+    selected_agent = str((edit_job or {}).get("agent") or prefill_agent or "").strip()
+    if selected_session and selected_session not in session_map:
+        session_map[selected_session] = {
+            "name": selected_session,
+            "agents": [selected_agent] if selected_agent else [],
+            "status": "unknown",
+        }
+    if selected_session and selected_agent and selected_agent not in session_map.get(selected_session, {}).get("agents", []):
+        session_map[selected_session]["agents"] = [*session_map[selected_session].get("agents", []), selected_agent]
+
+    all_agents = []
+    seen_agents = set()
+    for agent in ALL_AGENT_NAMES:
+        if agent not in seen_agents:
+            seen_agents.add(agent)
+            all_agents.append(agent)
+    for record in session_map.values():
+        for agent in record.get("agents", []):
+            if agent not in seen_agents:
+                seen_agents.add(agent)
+                all_agents.append(agent)
+    if selected_agent and selected_agent not in seen_agents:
+        seen_agents.add(selected_agent)
+        all_agents.append(selected_agent)
+
+    def _session_option(name: str, label: str, is_selected: bool) -> str:
+        selected_attr = ' selected' if is_selected else ''
+        return f'<option value="{html.escape(name)}"{selected_attr}>{html.escape(label)}</option>'
+
+    session_options = ['<option value="">Select session</option>']
+    for name in sorted(session_map.keys(), key=lambda item: item.lower()):
+        record = session_map[name]
+        status = str(record.get("status") or "").strip()
+        label = name if not status else f"{name} ({status})"
+        session_options.append(_session_option(name, label, name == selected_session))
+    session_options_html = "".join(session_options)
+
+    initial_agent_options = ['<option value="">Select agent</option>']
+    for agent in (session_map.get(selected_session, {}).get("agents") or all_agents):
+        selected_attr = ' selected' if agent == selected_agent else ''
+        initial_agent_options.append(f'<option value="{html.escape(agent)}"{selected_attr}>{html.escape(agent)}</option>')
+    initial_agent_values = {
+        str(agent).strip()
+        for agent in (session_map.get(selected_session, {}).get("agents") or all_agents)
+        if str(agent).strip()
+    }
+    if selected_agent and selected_agent not in initial_agent_values:
+        initial_agent_options.append(
+            f'<option value="{html.escape(selected_agent)}" selected>{html.escape(selected_agent)}</option>'
+        )
+    agent_options_html = "".join(initial_agent_options)
+
+    notice_html = (
+        f'<div class="notice">{html.escape(str(notice or "").strip())}</div>'
+        if str(notice or "").strip()
+        else ""
+    )
+
+    jobs_html = []
+    for job in jobs or []:
+        job_id = str(job.get("id") or "").strip()
+        name = html.escape(str(job.get("name") or "").strip() or "Untitled cron")
+        session_name = str(job.get("session") or "").strip()
+        agent = str(job.get("agent") or "").strip()
+        schedule = html.escape(str(job.get("schedule_label") or "").strip() or "Daily")
+        next_run = html.escape(str(job.get("next_run_at") or "").strip() or "—")
+        last_run = html.escape(str(job.get("last_run_at") or "").strip() or "—")
+        last_status = html.escape(str(job.get("last_status") or "").strip() or "idle")
+        last_detail = html.escape(str(job.get("last_status_detail") or "").strip() or "")
+        enabled = bool(job.get("enabled"))
+        toggle_value = "0" if enabled else "1"
+        toggle_label = "Disable" if enabled else "Enable"
+        open_href = f"/open-session?session={url_quote(session_name)}" if session_name else "/"
+        edit_href = f"/crons?edit={url_quote(job_id)}"
+        jobs_html.append(
+            f'''
+            <div class="cron-row">
+              <div class="cron-row-main">
+                <div class="cron-row-title">{name}</div>
+                <div class="cron-row-meta">
+                  <span>{schedule}</span>
+                  <span>{html.escape(session_name or "—")}</span>
+                  <span>{html.escape(agent or "—")}</span>
+                </div>
+                <div class="cron-row-submeta">
+                  <span><strong>Next</strong> {next_run}</span>
+                  <span><strong>Last</strong> {last_run}</span>
+                  <span><strong>Status</strong> {last_status}</span>
+                </div>
+                {f'<div class="cron-row-detail">{last_detail}</div>' if last_detail else ''}
+              </div>
+              <div class="cron-row-actions">
+                <a class="action-chip" href="{edit_href}">Edit</a>
+                <a class="action-chip" href="{open_href}">Open</a>
+                <form method="post" action="/crons/run">
+                  <input type="hidden" name="id" value="{html.escape(job_id)}">
+                  <button class="action-chip" type="submit">Run now</button>
+                </form>
+                <form method="post" action="/crons/toggle">
+                  <input type="hidden" name="id" value="{html.escape(job_id)}">
+                  <input type="hidden" name="enabled" value="{toggle_value}">
+                  <button class="action-chip" type="submit">{toggle_label}</button>
+                </form>
+                <form method="post" action="/crons/delete" onsubmit="return window.confirm('Delete this cron?');">
+                  <input type="hidden" name="id" value="{html.escape(job_id)}">
+                  <button class="action-chip danger" type="submit">Delete</button>
+                </form>
+              </div>
+            </div>
+            '''
+        )
+    jobs_html_str = "".join(jobs_html) or '<div class="empty-state">No cron jobs yet.</div>'
+
+    current_name = html.escape(str((edit_job or {}).get("name") or "").strip())
+    current_time = html.escape(str((edit_job or {}).get("time") or "").strip())
+    current_prompt = html.escape(str((edit_job or {}).get("prompt") or "").strip())
+    current_enabled = bool((edit_job or {}).get("enabled", True))
+    current_id = html.escape(str((edit_job or {}).get("id") or "").strip())
+    form_title = "Edit Cron" if edit_job else "New Cron"
+    form_submit = "Update Cron" if edit_job else "Save Cron"
+    sessions_json = json.dumps(list(session_map.values()), ensure_ascii=False).replace("</", "<\\/")
+    all_agents_json = json.dumps(all_agents, ensure_ascii=False).replace("</", "<\\/")
+    preferred_agent_json = json.dumps(selected_agent or "", ensure_ascii=False).replace("</", "<\\/")
+
+    page = """<!doctype html>
+<html lang="en" data-theme="__CHAT_THEME__"__STARFIELD_ATTR__>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="rgb(10, 10, 10)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Session Hub">
+  <link rel="manifest" href="__HUB_MANIFEST_URL__">
+  <link rel="icon" type="image/png" sizes="192x192" href="__PWA_ICON_192_URL__">
+  <link rel="apple-touch-icon" href="__APPLE_TOUCH_ICON_URL__">
+  <script>
+    (() => {
+      if (!("serviceWorker" in navigator)) return;
+      const isLocalHost = location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.hostname === "[::1]";
+      if (!(window.isSecureContext || isLocalHost)) return;
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/hub-service-worker.js", { scope: "/" }).catch((err) => {
+          console.warn("hub service worker registration failed", err);
+        });
+      }, { once: true });
+    })();
+  </script>
+  <title>Cron · Hub</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: rgb(10, 10, 10);
+      --bg-rgb: 10, 10, 10;
+      --panel: rgb(20, 20, 20);
+      --panel-2: rgb(15, 15, 15);
+      --line: rgba(255,255,255,0.06);
+      --line-strong: rgba(255,255,255,0.12);
+      --fg: rgb(252,252,252);
+      --muted: rgb(158,158,158);
+      --accent: rgb(44,132,219);
+      --danger: rgb(214,124,124);
+    }
+    html[data-theme="soft-light"] {
+      color-scheme: light;
+      --bg: rgb(244,244,242);
+      --bg-rgb: 244, 244, 242;
+      --panel: rgb(255,255,255);
+      --panel-2: rgb(248,248,246);
+      --line: rgba(15,20,30,0.12);
+      --line-strong: rgba(15,20,30,0.2);
+      --fg: rgb(26,30,36);
+      --muted: rgb(98,106,120);
+      --accent: rgb(44,132,219);
+      --danger: rgb(180,84,84);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); font-family: "SF Pro Text", "Segoe UI", sans-serif; }
+    body { padding: 0 0 max(20px, env(safe-area-inset-bottom)) 0; }
+    .shell { max-width: 860px; margin: 0 auto; }
+    .shell > :not(.hub-page-header) { padding-left: 14px; padding-right: 14px; }
+    .hero { padding: 8px 2px 18px 2px; }
+    .eyebrow { color: var(--fg); opacity: 0.8; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+    h1 { margin: 0; font-size: clamp(26px, 5vw, 38px); line-height: 1.02; font-weight: 600; letter-spacing: -0.03em; }
+    .sub { margin-top: 10px; color: var(--fg); opacity: 0.85; font-size: 14px; line-height: 1.55; max-width: 42rem; }
+    .panel {
+      background: transparent !important;
+      border: none !important;
+      border-bottom: 0.5px solid var(--line) !important;
+      border-radius: 0 !important;
+      padding: 14px 14px !important;
+      margin-bottom: 0 !important;
+    }
+    .panel:first-of-type { border-top: 0.5px solid var(--line) !important; }
+    .panel-title { margin: 0 0 10px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg); opacity: 0.9; }
+    .field-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .field-grid .field-wide { grid-column: 1 / -1; }
+    .field-label { display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg); opacity: 0.9; margin-bottom: 10px; }
+    input[type="text"], input[type="time"], select, textarea {
+      width: 100%;
+      border: 0.5px solid var(--line-strong);
+      background: var(--panel-2);
+      color: var(--fg);
+      border-radius: 12px;
+      padding: 11px 13px;
+      font-size: 16px;
+      line-height: 1.25;
+      outline: none;
+      font-family: inherit;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    textarea { min-height: 180px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { border-color: rgba(255,255,255,0.22); }
+    .toggle-row { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--fg); opacity: 0.9; }
+    .toggle-row input { width: 18px; height: 18px; accent-color: var(--accent); }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .btn, .action-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      border-radius: 999px;
+      border: 0.5px solid var(--line-strong);
+      background: var(--panel-2);
+      color: var(--fg);
+      text-decoration: none;
+      padding: 0 14px;
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn.primary { border-color: rgba(44,132,219,0.45); color: var(--accent); }
+    .btn.ghost { opacity: 0.85; }
+    .action-chip.danger { color: var(--danger); border-color: rgba(214,124,124,0.28); }
+    .notice {
+      margin: 0 14px 12px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 0.5px solid rgba(44,132,219,0.25);
+      background: rgba(44,132,219,0.09);
+      color: var(--fg);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .cron-list { display: flex; flex-direction: column; gap: 10px; }
+    .cron-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      border: 0.5px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel-2);
+      padding: 13px;
+    }
+    .cron-row-title { font-size: 16px; font-weight: 600; line-height: 1.3; }
+    .cron-row-meta, .cron-row-submeta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .cron-row-detail {
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--fg);
+      opacity: 0.78;
+    }
+    .cron-row-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: flex-end;
+    }
+    .cron-row-actions form { margin: 0; }
+    .empty-state {
+      border: 0.5px dashed var(--line-strong);
+      border-radius: 14px;
+      padding: 18px 16px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      background: var(--panel-2);
+    }
+    .hint { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    @media (max-width: 760px) {
+      .field-grid { grid-template-columns: 1fr; }
+      .cron-row { grid-template-columns: 1fr; }
+      .cron-row-actions { justify-content: flex-start; }
+    }
+  __HUB_HEADER_CSS__
+  </style>
+</head>
+<body>
+  <div class="shell">
+    __HUB_HEADER_HTML__
+    <section class="hero">
+      <div class="eyebrow">multiagent</div>
+      <h1>Cron</h1>
+      <div class="sub">Manage daily prompts that target an existing session and agent. Hub is the source of truth; chat can jump here with the current session and selected agent already filled in.</div>
+    </section>
+    __NOTICE_HTML__
+    <section class="panel">
+      <h2 class="panel-title">__FORM_TITLE__</h2>
+      <form method="post" action="/crons/save">
+        <input type="hidden" name="id" value="__FORM_ID__">
+        <div class="field-grid">
+          <label>
+            <span class="field-label">Name</span>
+            <input type="text" name="name" value="__FORM_NAME__" placeholder="Daily review">
+          </label>
+          <label>
+            <span class="field-label">Daily Time</span>
+            <input type="time" name="time" value="__FORM_TIME__" required>
+          </label>
+          <label>
+            <span class="field-label">Session</span>
+            <select name="session" id="cronSessionSelect" required>__SESSION_OPTIONS__</select>
+          </label>
+          <label>
+            <span class="field-label">Agent</span>
+            <select name="agent" id="cronAgentSelect" required>__AGENT_OPTIONS__</select>
+          </label>
+          <label class="field-wide">
+            <span class="field-label">Prompt</span>
+            <textarea name="prompt" required placeholder="Write the daily task that should be sent to the target agent.">__FORM_PROMPT__</textarea>
+            <div class="hint">Cron sends the prompt through `agent-send`. The target agent is instructed to send the actual result back to user in the same session.</div>
+          </label>
+          <label class="field-wide toggle-row">
+            <input type="checkbox" name="enabled" value="1"__FORM_ENABLED__>
+            <span>Enabled</span>
+          </label>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="submit">__FORM_SUBMIT__</button>
+          <a class="btn ghost" href="/crons">Reset</a>
+        </div>
+      </form>
+    </section>
+    <section class="panel">
+      <h2 class="panel-title">Jobs</h2>
+      <div class="cron-list">__CRON_ROWS__</div>
+    </section>
+  </div>
+  <script>
+    const sessionRecords = __CRON_SESSIONS_JSON__;
+    const allAgents = __CRON_ALL_AGENTS_JSON__;
+    const sessionSelect = document.getElementById("cronSessionSelect");
+    const agentSelect = document.getElementById("cronAgentSelect");
+    const preferredAgent = __PREFERRED_AGENT__;
+    const syncAgentOptions = () => {
+      const selectedSession = sessionSelect ? sessionSelect.value : "";
+      const record = sessionRecords.find((item) => item && item.name === selectedSession) || null;
+      const candidates = (record && Array.isArray(record.agents) && record.agents.length)
+        ? record.agents
+        : allAgents;
+      const previous = agentSelect ? agentSelect.value : "";
+      if (!agentSelect) return;
+      const selected = candidates.includes(previous) ? previous : (candidates.includes(preferredAgent) ? preferredAgent : (candidates[0] || ""));
+      agentSelect.innerHTML = '<option value="">Select agent</option>' + candidates.map((agent) => {
+        const value = String(agent || "");
+        const isSelected = value === selected ? ' selected' : '';
+        return `<option value="${value.replace(/"/g, '&quot;')}"${isSelected}>${value.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</option>`;
+      }).join("");
+      if (!candidates.length) {
+        agentSelect.innerHTML = '<option value="">Select agent</option>';
+      }
+    };
+    sessionSelect?.addEventListener("change", syncAgentOptions);
+    syncAgentOptions();
+  __HUB_HEADER_JS__
+  </script>
+</body>
+</html>
+"""
+    return (
+        page
+        .replace("__CHAT_THEME__", settings.get("theme", "black-hole"))
+        .replace("__STARFIELD_ATTR__", "" if settings.get("starfield", False) else ' data-starfield="off"')
+        .replace("__HUB_MANIFEST_URL__", _PWA_HUB_MANIFEST_URL)
+        .replace("__PWA_ICON_192_URL__", _PWA_ICON_192_URL)
+        .replace("__APPLE_TOUCH_ICON_URL__", _PWA_APPLE_TOUCH_ICON_URL)
+        .replace("__HUB_HEADER_CSS__", _HUB_PAGE_HEADER_CSS)
+        .replace("__HUB_HEADER_HTML__", _HUB_PAGE_HEADER_HTML)
+        .replace("__HUB_HEADER_JS__", _HUB_PAGE_HEADER_JS)
+        .replace("__NOTICE_HTML__", notice_html)
+        .replace("__FORM_TITLE__", form_title)
+        .replace("__FORM_ID__", current_id)
+        .replace("__FORM_NAME__", current_name)
+        .replace("__FORM_TIME__", current_time)
+        .replace("__FORM_PROMPT__", current_prompt)
+        .replace("__FORM_ENABLED__", " checked" if current_enabled else "")
+        .replace("__FORM_SUBMIT__", form_submit)
+        .replace("__SESSION_OPTIONS__", session_options_html)
+        .replace("__AGENT_OPTIONS__", agent_options_html)
+        .replace("__CRON_ROWS__", jobs_html_str)
+        .replace("__CRON_SESSIONS_JSON__", sessions_json)
+        .replace("__CRON_ALL_AGENTS_JSON__", all_agents_json)
+        .replace("__PREFERRED_AGENT__", preferred_agent_json)
+    )
+
+
+def _cron_records_query():
+    query = active_session_records_query()
+    records_by_name = {name: record for name, record in query.records.items()}
+    if query.state != "unhealthy":
+        for name, record in archived_session_records(query.records.keys()).items():
+            records_by_name.setdefault(name, record)
+    records = [records_by_name[name] for name in sorted(records_by_name.keys(), key=lambda item: item.lower())]
+    return query, records
+
+
+def _cron_redirect_location(*, notice="", session_name="", agent="", edit_id="") -> str:
+    params = []
+    text = str(notice or "").strip()
+    if text:
+        params.append(("notice", text))
+    session_value = str(session_name or "").strip()
+    if session_value:
+        params.append(("session", session_value))
+    agent_value = str(agent or "").strip()
+    if agent_value:
+        params.append(("agent", agent_value))
+    edit_value = str(edit_id or "").strip()
+    if edit_value:
+        params.append(("edit", edit_value))
+    if not params:
+        return "/crons"
+    query = "&".join(f"{url_quote(key)}={url_quote(value)}" for key, value in params)
+    return f"/crons?{query}"
+
 def error_page(message):
     text = html.escape(message)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Session Hub</title><style>:root{{color-scheme:dark}}body{{margin:0;background:rgb(38,38,36);color:rgb(240,239,235);font-family:'SF Pro Text','Segoe UI',sans-serif;padding:24px}}.panel{{max-width:680px;margin:0 auto;background:rgb(25,25,24);border:0.5px solid rgba(255,255,255,0.09);border-radius:16px;padding:18px 18px 16px}}a{{color:rgb(240,239,235)}}</style></head><body><div class="panel"><h1 style="margin:0 0 10px;font-size:24px">Session Hub</h1><p style="margin:0 0 14px;color:rgb(156,154,147);line-height:1.6">{text}</p><p style="margin:0"><a href=\"/\">Back</a></p></div></body></html>"""
@@ -5165,6 +5640,35 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(503, {"ok": False, "error": "tmux_unhealthy", "detail": msg})
         else:
             self._send_html(503, error_page(msg))
+
+    def _read_form(self):
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length).decode("utf-8", errors="replace")
+        return {key: values[-1] for key, values in parse_qs(raw).items() if values}
+
+    def _redirect(self, location: str):
+        self.send_response(302)
+        self.send_header("Location", location)
+        self.end_headers()
+
+    def _render_crons(self, *, notice="", prefill_session="", prefill_agent="", edit_job=None, status=200):
+        query, session_records = _cron_records_query()
+        message = str(notice or "").strip()
+        if query.state == "unhealthy":
+            unhealthy_note = f"tmux is currently unresponsive ({query.detail}). Session list may be incomplete."
+            message = f"{message} {unhealthy_note}".strip() if message else unhealthy_note
+        page = hub_crons_html(
+            jobs=list_cron_jobs(repo_root),
+            session_records=session_records,
+            notice=message,
+            prefill_session=prefill_session,
+            prefill_agent=prefill_agent,
+            edit_job=edit_job,
+        )
+        self._send_html(status, page)
 
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -5346,6 +5850,20 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/stats":
             self._send_html(200, HUB_STATS_HTML)
             return
+        if parsed.path == "/crons":
+            qs = parse_qs(parsed.query)
+            edit_id = (qs.get("edit", [""])[0] or "").strip()
+            edit_job = get_cron_job(repo_root, edit_id) if edit_id else None
+            notice = (qs.get("notice", [""])[0] or "").strip()
+            if edit_id and edit_job is None and not notice:
+                notice = "Cron not found."
+            self._render_crons(
+                notice=notice,
+                prefill_session=(qs.get("session", [""])[0] or "").strip(),
+                prefill_agent=(qs.get("agent", [""])[0] or "").strip(),
+                edit_job=edit_job,
+            )
+            return
         if parsed.path == "/settings":
             saved = (parse_qs(parsed.query).get("saved", ["0"])[0] == "1")
             self._send_html(200, hub_settings_html(saved=saved))
@@ -5423,17 +5941,67 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"ok":true}')
             return
-        if parsed.path == "/settings":
+        if parsed.path == "/crons/save":
+            data = self._read_form()
+            enabled = str(data.get("enabled") or "").strip().lower() in {"1", "true", "yes", "on"}
+            draft = {
+                "id": str(data.get("id") or "").strip(),
+                "name": str(data.get("name") or "").strip(),
+                "time": str(data.get("time") or "").strip(),
+                "session": str(data.get("session") or "").strip(),
+                "agent": str(data.get("agent") or "").strip(),
+                "prompt": str(data.get("prompt") or "").replace("\r\n", "\n").strip(),
+                "enabled": enabled,
+            }
             try:
-                length = int(self.headers.get("Content-Length", "0"))
-            except ValueError:
-                length = 0
-            raw = self.rfile.read(length).decode("utf-8", errors="replace")
-            data = {key: values[-1] for key, values in parse_qs(raw).items() if values}
+                saved = save_cron_job(repo_root, draft)
+            except ValueError as exc:
+                self._render_crons(
+                    notice=str(exc),
+                    prefill_session=draft["session"],
+                    prefill_agent=draft["agent"],
+                    edit_job=draft,
+                    status=400,
+                )
+                return
+            self._redirect(_cron_redirect_location(notice=f"Saved cron: {saved.get('name') or saved.get('id') or 'cron'}"))
+            return
+        if parsed.path == "/crons/delete":
+            data = self._read_form()
+            job_id = str(data.get("id") or "").strip()
+            job = get_cron_job(repo_root, job_id)
+            removed = delete_cron_job(repo_root, job_id)
+            label = (job or {}).get("name") or job_id or "cron"
+            notice = f"Deleted cron: {label}" if removed else "Cron not found."
+            self._redirect(_cron_redirect_location(notice=notice))
+            return
+        if parsed.path == "/crons/toggle":
+            data = self._read_form()
+            job_id = str(data.get("id") or "").strip()
+            enabled = str(data.get("enabled") or "").strip().lower() in {"1", "true", "yes", "on"}
+            updated = set_cron_enabled(repo_root, job_id, enabled)
+            if updated is None:
+                self._redirect(_cron_redirect_location(notice="Cron not found."))
+                return
+            label = updated.get("name") or job_id or "cron"
+            state = "enabled" if enabled else "disabled"
+            self._redirect(_cron_redirect_location(notice=f"{label} {state}."))
+            return
+        if parsed.path == "/crons/run":
+            data = self._read_form()
+            job_id = str(data.get("id") or "").strip()
+            job = get_cron_job(repo_root, job_id)
+            ok, detail = cron_scheduler.run_now(job_id)
+            if ok:
+                label = (job or {}).get("name") or job_id or "cron"
+                self._redirect(_cron_redirect_location(notice=f"Dispatched cron: {label}"))
+            else:
+                self._redirect(_cron_redirect_location(notice=detail or "Failed to run cron."))
+            return
+        if parsed.path == "/settings":
+            data = self._read_form()
             save_hub_settings(data)
-            self.send_response(302)
-            self.send_header("Location", "/settings?saved=1")
-            self.end_headers()
+            self._redirect("/settings?saved=1")
             return
         if parsed.path == "/push/subscribe":
             try:
