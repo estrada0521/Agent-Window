@@ -5074,14 +5074,36 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       dark: '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>',
       light: '<path d="M21 12.79A9 9 0 1 1 11.21 3c0 0 0 0 0 0A7 7 0 0 0 21 12.79z"></path>',
     };
+    const applyFileModalThemeDirect = () => {
+      if (fileModalCurrentExt !== "md") return false;
+      try {
+        const frameWindow = fileModalFrame.contentWindow;
+        const frameDoc = fileModalFrame.contentDocument || frameWindow?.document || null;
+        if (typeof frameWindow?.__agentIndexApplyPreviewTheme === "function") {
+          frameWindow.__agentIndexApplyPreviewTheme(fileModalPreviewTheme);
+          return true;
+        }
+        if (frameDoc?.documentElement) {
+          frameDoc.documentElement.setAttribute(
+            "data-preview-theme",
+            fileModalPreviewTheme === "light" ? "light" : "dark",
+          );
+          return true;
+        }
+      } catch (_) {}
+      return false;
+    };
     const postFileModalTheme = () => {
       if (fileModalCurrentExt !== "md") return;
+      applyFileModalThemeDirect();
       try {
         fileModalFrame.contentWindow?.postMessage(
           { type: "agent-index-file-preview-theme", theme: fileModalPreviewTheme },
           window.location.origin,
         );
       } catch (_) {}
+      requestAnimationFrame(() => { applyFileModalThemeDirect(); });
+      setTimeout(() => { applyFileModalThemeDirect(); }, 60);
     };
     const syncFileModalThemeToggle = () => {
       if (!fileModalThemeToggleBtn || !fileModalThemeToggleIcon) return;

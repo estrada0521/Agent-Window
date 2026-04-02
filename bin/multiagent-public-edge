@@ -24,6 +24,8 @@ sys.path.insert(0, str(repo_root))
 sys.path.insert(0, str(repo_root / "lib"))
 from agent_index.file_core import FileRuntime
 from agent_index.hub_core import HubRuntime
+from agent_index.chat_core import ChatRuntime
+from agent_index.state_core import load_hub_settings
 
 hub = HubRuntime(repo_root, script_path, tmux_socket)
 ensure_chat_server = hub.ensure_chat_server
@@ -306,7 +308,22 @@ class Handler(BaseHTTPRequestHandler):
             return True
         embed = qs.get("embed", [""])[0] == "1"
         try:
-            page = runtime.file_view(rel, embed=embed, base_path=f"/session/{url_quote(session_name)}")
+            settings = load_hub_settings(repo_root)
+            agent_font_mode = str(settings.get("agent_font_mode", "serif") or "serif").strip().lower()
+            agent_message_font = str(
+                settings.get(
+                    "agent_message_font",
+                    "preset-gothic" if agent_font_mode == "gothic" else "preset-mincho",
+                )
+                or ("preset-gothic" if agent_font_mode == "gothic" else "preset-mincho")
+            ).strip()
+            page = runtime.file_view(
+                rel,
+                embed=embed,
+                base_path=f"/session/{url_quote(session_name)}",
+                agent_font_mode=agent_font_mode,
+                agent_font_family=ChatRuntime._font_family_stack(agent_message_font, "agent"),
+            )
         except PermissionError:
             self.send_error(403)
             return True

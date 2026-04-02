@@ -900,6 +900,7 @@ const applyPreviewTheme = (theme) => {{
   const nextTheme = theme === "light" ? "light" : "dark";
   __root.setAttribute("data-preview-theme", nextTheme);
 }};
+window.__agentIndexApplyPreviewTheme = applyPreviewTheme;
 const renderMathInScope = (scope) => {{
   if (!scope || !scope.querySelector(".math-render-needed") || typeof renderMathInElement !== "function") return;
   renderMathInElement(scope, mathRenderOptions);
