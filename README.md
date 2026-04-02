@@ -1,8 +1,8 @@
-# multiagent-chat beta 1.0.3
+# multiagent-chat beta 1.0.4
 
 Japanese version: [README_jp.md](README_jp.md)
 
-Latest update notes: [docs/updates/README.md](docs/updates/README.md) / [beta 1.0.3](docs/updates/beta-1.0.3.md)
+Latest update notes: [docs/updates/README.md](docs/updates/README.md) / [beta 1.0.4](docs/updates/beta-1.0.4.md)
 
 `multiagent-chat` is a local tmux-based workbench for running multiple AI agents side by side inside one session and controlling that session from a Hub plus chat UI. `bin/multiagent` creates tmux sessions where window 0 is reserved for the human terminal and each agent instance gets its own tmux window, `bin/agent-index` serves the Hub / chat UI / log viewer, and `bin/agent-send` moves structured messages between the user, agents, and other agents.
 
@@ -27,10 +27,10 @@ The same Hub and chat UI can be opened from a desktop browser or a phone browser
 
 | Area | Contents |
 |------|------|
-| Hub | active / archived session lists, New Session, Resume, Stats, Settings |
+| Hub | active / archived session lists, New Session, Resume, Stats, Settings, Cron |
 | Chat UI | user-to-agent and agent-to-agent conversation, replies, attachments, file references, brief / memory, pane actions, live runtime hints |
 | Logs | structured `.agent-index.jsonl` message log, pane captures in `.log` / `.ans`, static HTML export |
-| Backend | Auto mode, Awake, sound and browser notifications, installable Hub / chat PWA surfaces, direct Gemini chat bridge, optional public exposure with a ready-to-use Cloudflare path |
+| Backend | Auto mode, Awake, sound and browser notifications, installable Hub / chat PWA surfaces, scheduled Cron dispatch, direct Gemini chat bridge, optional public exposure with a ready-to-use Cloudflare path |
 
 The current agent registry includes `claude`, `codex`, `gemini`, `kimi`, `copilot`, `cursor`, `grok`, `opencode`, `qwen`, and `aider`. The same base agent can be started more than once, and duplicate instances receive names such as `claude-1` and `claude-2`. Agents communicate through `agent-send`, which routes messages via stdin and appends them to the shared `.agent-index.jsonl`. This means agent-to-agent collaboration happens through the same structured log as user-to-agent messages, and the full multi-party conversation is preserved in one timeline.
 
@@ -42,6 +42,8 @@ The current agent registry includes `claude`, `codex`, `gemini`, `kimi`, `copilo
 </p>
 
 New sessions are created from the Hub. The workspace path is entered from the UI and can also be typed from mobile. Each new session keeps the operator terminal in tmux window 0 and gives every agent instance its own tmux window. Duplicate agent launches are supported, so the same base CLI can back multiple agent windows inside one session. Instance suffixes are added automatically when needed.
+
+The workspace picker combines direct path entry, recent paths, and a folder browser in one flow. The browse control and recent-path list are kept in the same New Session surface, so mobile and desktop can switch between manual path entry and folder browsing without leaving the form.
 
 If the workspace does not already contain `docs/AGENT.md`, session creation copies the repo version into `workspace/docs/AGENT.md`. The intended first step after opening a new session is to send that `docs/AGENT.md` to the agents so they receive the operating rules for communication and command usage inside this environment. Once they are running, they can also use `agent-help` for a short command-first cheatsheet.
 
@@ -120,7 +122,7 @@ The branch menu shows the current branch, git state, recent commits, and diffs. 
 
 The file menu collects files referenced inside the session. It supports previews for Markdown, code, images, audio, and other referenced files, plus `Open in Editor` for external-editor handoff. Files are grouped by category with counts and size labels, and the right-side arrow jumps back to the source message that referenced the file.
 
-The Markdown preview uses typography close to the chat renderer and resolves local relative image references such as `![...](path)`. Code-oriented files open in a plain viewer, and sound files have a dedicated preview. This makes the file menu the read-side counterpart to the file references that appear in the chat body.
+The Markdown preview uses typography close to the chat renderer, follows the configured agent font, and resolves local relative image references such as `![...](path)`. Markdown preview can also switch between dark and light themes from inside the preview itself, while code-oriented files open in a plain viewer and sound files have a dedicated preview. This makes the file menu the read-side counterpart to the file references that appear in the chat body.
 
 #### 3-3. Add / Remove Agent
 
@@ -143,7 +145,7 @@ Topology changes are serialized per session. If multiple panes or the UI try to 
   <img src="screenshot/settings-portrait.png" alt="Settings" width="240">
 </p>
 
-The Hub is the entry point for active and archived sessions. Active sessions show workspace path, agent set, chat count, and chat port. Archived sessions stay visible in a separate list and can be revived when their stored state is reusable. The Hub also links to New Session, Resume Sessions, Stats, and Settings.
+The Hub is the entry point for active and archived sessions. Active sessions show workspace path, agent set, chat count, and chat port. Archived sessions stay visible in a separate list and can be revived when their stored state is reusable. The Hub also links to New Session, Resume Sessions, Stats, Settings, and Cron.
 
 `Kill` applies to active sessions. It stops the tmux session and chat server, but keeps the saved logs and workspace metadata. That is why a killed session moves into the archived side and can later be brought back with `Revive` using the same session name, workspace, and agent set. `Delete` applies only to archived sessions and removes the stored log directory together with related thinking-time data, so a deleted session cannot be revived afterward. The distinction exists so that “stop for now” and “erase the stored history” are treated as different operations.
 
@@ -170,6 +172,12 @@ Notification sounds are loaded directly from OGG files in `sounds/`. Regular cha
 
 When served over HTTPS, the Hub exposes an `App Install & Notifications` block in Settings. The intended flow is to install the Hub itself to the Home Screen or browser app shelf, allow browser notifications there, and use that single Hub install as the notification endpoint for all sessions. Individual session chats do not need to be installed separately for background agent replies. Notification taps can deep-link back into the source session, and supported installed-app environments can expose shortcuts such as New Session and Stats directly from the app icon.
 
+#### 4-1. Cron
+
+The Cron page lets you schedule one daily prompt against an existing session and agent. Each job stores a name, daily time, target session, target agent, and prompt body. Jobs can be enabled or disabled individually, run immediately with `Run Now`, and removed with the same swipe-style card flow used elsewhere in the Hub.
+
+Cron dispatch still uses the normal pane and `agent-send` path rather than a separate automation transport. That means scheduled output returns into the same chat timeline as ordinary user-to-agent work. The scheduler also tracks pending runs, waits for an actual reply, and can send one reminder before eventually marking a run as timed out if no result comes back.
+
 ### 5. Logs / Export
 
 This repo keeps long-term consistency and history lookup in separate layers. Permanent repo- and environment-level rules live in `docs/AGENT.md`, session-local reusable instructions live in brief files, per-agent summaries live in memory, the conversation itself lives in `.agent-index.jsonl`, and pane-side output lives in `*.ans` and `*.log`. In practice that means `docs/AGENT.md` is static, brief is semi-static, memory is an evolving summary, JSONL is the structured message log, and pane capture is the direct terminal record.
@@ -180,7 +188,7 @@ The chat server autosaves pane logs roughly every two minutes for active session
 
 Git commits made during the session are also logged. Each commit that touches the workspace is recorded with its hash and message, so the conversation log and the code history can be cross-referenced after the fact.
 
-The `Export` action in the header menu downloads a static HTML snapshot of the recent chat history. The prompt controls how many recent messages are included, including the option to export all available messages. The exported HTML is self-contained and can be opened offline without the chat server running.
+The `Export` action in the header menu downloads a static HTML snapshot of the recent chat history. The prompt controls how many recent messages are included, including the option to export all available messages. The exported HTML is self-contained and can be opened offline without the chat server running, and recent fixes keep its standalone layout much closer to the live chat view so attachment-heavy exports remain readable on desktop and mobile.
 
 ### 6. Robustness and Recovery
 
@@ -358,7 +366,7 @@ Homebrew is the easiest path on macOS.
 ## Docs
 
 - [docs/updates/README.md](docs/updates/README.md): milestone update notes and release summaries
-- [docs/updates/beta-1.0.3.md](docs/updates/beta-1.0.3.md): changes shipped after `beta 1.0.2`
+- [docs/updates/beta-1.0.4.md](docs/updates/beta-1.0.4.md): changes shipped after `beta 1.0.3`
 - [docs/AGENT.md](docs/AGENT.md): operating guide for agents running inside this environment
 - [docs/chat-commands.en.md](docs/chat-commands.en.md): chat UI commands, Pane Trace behavior, and quick actions
 - [docs/design-philosophy.en.md](docs/design-philosophy.en.md): why tmux, chat, mobile access, and layered logs are combined this way
