@@ -10,36 +10,30 @@ Conversation history is stored in `.agent-index.jsonl`, while pane output is sto
 
 The design assumes that a session may be stopped and resumed later, and that long-lived context should be split by role instead of collapsed into a single mutable note. Permanent rules, session-local instructions, per-agent summaries, structured chat logs, and direct pane captures are stored separately so they remain easier to revisit over time.
 
-<table align="center">
-  <tr>
-    <td align="center" valign="middle">
-      <img src="mac.png" alt="multiagent-chat on Mac" width="420">
-    </td>
-    <td align="center" valign="middle">
-      <img src="iPhone.png" alt="multiagent-chat on iPhone" width="210">
-    </td>
-  </tr>
-</table>
+
+|     |     |
+| --- | --- |
+|     |     |
+
 
 The same Hub and chat UI can be opened from a desktop browser or a phone browser. A session can be started on the Mac and then viewed from the same Hub / chat paths on both desktop and mobile.
 
 ## What It Can Do
 
-| Area | Contents |
-|------|------|
-| Hub | active / archived session lists, New Session, Resume, Stats, Settings, Cron |
-| Chat UI | user-to-agent and agent-to-agent conversation, replies, attachments, file references, brief / memory, pane actions, live runtime hints |
-| Logs | structured `.agent-index.jsonl` message log, pane captures in `.log` / `.ans`, static HTML export |
+
+| Area    | Contents                                                                                                                                                                                                 |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hub     | active / archived session lists, New Session, Resume, Stats, Settings, Cron                                                                                                                              |
+| Chat UI | user-to-agent and agent-to-agent conversation, replies, attachments, file references, brief / memory, pane actions, live runtime hints                                                                   |
+| Logs    | structured `.agent-index.jsonl` message log, pane captures in `.log` / `.ans`, static HTML export                                                                                                        |
 | Backend | Auto mode, Awake, sound and browser notifications, installable Hub / chat PWA surfaces, scheduled Cron dispatch, direct Gemini chat bridge, optional public exposure with a ready-to-use Cloudflare path |
+
 
 The current agent registry includes `claude`, `codex`, `gemini`, `kimi`, `copilot`, `cursor`, `grok`, `opencode`, `qwen`, and `aider`. The same base agent can be started more than once, and duplicate instances receive names such as `claude-1` and `claude-2`. Agents communicate through `agent-send`, which routes messages via stdin and appends them to the shared `.agent-index.jsonl`. This means agent-to-agent collaboration happens through the same structured log as user-to-agent messages, and the full multi-party conversation is preserved in one timeline.
 
 ### 1. New Session / Message Body
 
-<p align="center">
-  <img src="screenshot/new_session-portrait.png" alt="Create new session" width="320">
-  <img src="screenshot/message_body-portrait.png" alt="Chat message body" width="320">
-</p>
+
 
 New sessions are created from the Hub. The workspace path is entered from the UI and can also be typed from mobile. Each new session keeps the operator terminal in tmux window 0 and gives every agent instance its own tmux window. Duplicate agent launches are supported, so the same base CLI can back multiple agent windows inside one session. Instance suffixes are added automatically when needed.
 
@@ -53,11 +47,7 @@ The renderer supports headings, paragraphs, lists, blockquotes, inline code, fen
 
 ### 1.5. Thinking / Pane Trace
 
-<p align="center">
-  <img src="screenshot/thinking.png" alt="Thinking state" width="320">
-  <img src="screenshot/Pane_trace-portrait.png" alt="Pane trace" width="320">
-  <img src="screenshot/pane_trace_pc.png" alt="Pane trace desktop window" width="420">
-</p>
+
 
 Thinking rows appear while agents are running. On mobile, tapping a thinking row opens the embedded Pane Trace viewer. On desktop, the same click opens the selected agent's Pane Trace in a popup window. Pane Trace is a lightweight viewer for the pane side of the session. It refreshes every 100ms on local / LAN access and every 1.5 seconds on public access. If the JSONL log is the structured message history, Pane Trace is the live pane-side tail. On desktop, the popup supports split views so multiple agents can be watched simultaneously, and agents can be switched or rearranged by tab or drag-and-drop.
 
@@ -69,12 +59,7 @@ On desktop, the `Terminal` action opens the real terminal window attached to the
 
 ### 2. Composer / Input Modes
 
-<p align="center">
-  <img src="screenshot/slash_command-portrait.png" alt="Slash commands" width="180">
-  <img src="screenshot/atamrk_command-portrait.png" alt="@ command autocomplete" width="180">
-  <img src="screenshot/import-portrait.png" alt="Import attachments" width="180">
-  <img src="screenshot/brief-portrait.png" alt="Brief workflow" width="180">
-</p>
+
 
 The composer opens as an overlay. On mobile it opens from the round `O` button. On desktop it opens from the same button or with a middle click. This keeps the message area larger while the composer is closed.
 
@@ -105,20 +90,13 @@ On desktop, the header menu also now exposes direct `Finder` and `Pane Trace` ac
 
 #### 3-1. Branch Menu
 
-<p align="center">
-  <img src="screenshot/branch_menu.png" alt="Branch menu" width="300">
-  <img src="screenshot/Git_diff-portrait.png" alt="Git diff view" width="300">
-</p>
+
 
 The branch menu shows the current branch, git state, recent commits, and diffs. Current uncommitted changes are shown at the top of the menu, above the commit history and diff navigation. Each changed file can be opened in the editor, committed individually, or restored to `HEAD`, and there is also an `All` action for a whole-worktree commit. File names inside the diff are also links into the external editor, so a file mentioned by the conversation or shown in the diff can be opened without leaving the session flow.
 
 #### 3-2. File Menu
 
-<p align="center">
-  <img src="screenshot/file_menu.png" alt="File menu" width="240">
-  <img src="screenshot/file_preview-portrait.png" alt="Markdown preview" width="240">
-  <img src="screenshot/sound.png" alt="Sound file preview" width="240">
-</p>
+
 
 The file menu collects files referenced inside the session. It supports previews for Markdown, code, images, audio, and other referenced files, plus `Open in Editor` for external-editor handoff. Files are grouped by category with counts and size labels, and the right-side arrow jumps back to the source message that referenced the file.
 
@@ -126,10 +104,7 @@ The Markdown preview uses typography close to the chat renderer, follows the con
 
 #### 3-3. Add / Remove Agent
 
-<p align="center">
-  <img src="screenshot/Add_agent-portrait.png" alt="Add agent" width="320">
-  <img src="screenshot/remove_agent-portrait.png" alt="Remove agent" width="320">
-</p>
+
 
 Agents can be added or removed from the header menu. These actions change the tmux window set for the session without deleting the existing `.agent-index.jsonl` history. Adding an agent creates a new agent window, removing an agent removes only that instance's window, and duplicate base agents are also handled here. After a layout change, a `Reload` is recommended so the visible targets and UI state are refreshed together.
 
@@ -139,11 +114,7 @@ Topology changes are serialized per session. If multiple panes or the UI try to 
 
 ### 4. Hub / Stats / Settings
 
-<p align="center">
-  <img src="screenshot/Hub_Top-portrait.png" alt="Hub top" width="240">
-  <img src="screenshot/Stats-portrait.png" alt="Stats page" width="240">
-  <img src="screenshot/settings-portrait.png" alt="Settings" width="240">
-</p>
+
 
 The Hub is the entry point for active and archived sessions. Active sessions show workspace path, agent set, chat count, and chat port. Archived sessions stay visible in a separate list and can be revived when their stored state is reusable. The Hub also links to New Session, Resume Sessions, Stats, Settings, and Cron.
 
@@ -153,20 +124,22 @@ Stats shows four top-level cards: Messages, Thinking Time, Activated Agents, and
 
 Settings centralizes the default Hub and chat behavior. Auto mode is not autonomous task execution. It is the mode that automatically approves command-permission prompts from agents. On first startup, Auto mode, Awake, Sound notifications, and Read aloud (TTS) are off, so only the needed ones should be turned on from Settings.
 
-| Setting | Meaning |
-|------|------|
-| Theme | switch Hub / chat theme |
-| User Messages / Agent Messages | choose fonts independently for user and agent bubbles |
-| Message Text Size | applies to message bodies, file cards, inline code, code blocks, and tables |
-| Default Message Count | initial reopen count when a chat is loaded |
-| Auto mode | auto-approve mode for agent command-permission prompts |
-| Awake (prevent sleep) | keep the machine awake |
-| Sound notifications | play OGG notification sounds from `sounds/` |
-| Browser notifications | Hub-owned web push for background agent replies across all sessions |
-| Read aloud (TTS) | browser-based speech output |
-| Bold mode | make message text bold across Hub / chat |
-| Starfield background | animated background for the Black Hole theme |
-| Black Hole Text Opacity | separate opacity controls for user and agent text in the Black Hole theme |
+
+| Setting                        | Meaning                                                                     |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| Theme                          | switch Hub / chat theme                                                     |
+| User Messages / Agent Messages | choose fonts independently for user and agent bubbles                       |
+| Message Text Size              | applies to message bodies, file cards, inline code, code blocks, and tables |
+| Default Message Count          | initial reopen count when a chat is loaded                                  |
+| Auto mode                      | auto-approve mode for agent command-permission prompts                      |
+| Awake (prevent sleep)          | keep the machine awake                                                      |
+| Sound notifications            | play OGG notification sounds from `sounds/`                                 |
+| Browser notifications          | Hub-owned web push for background agent replies across all sessions         |
+| Read aloud (TTS)               | browser-based speech output                                                 |
+| Bold mode                      | make message text bold across Hub / chat                                    |
+| Starfield background           | animated background for the Black Hole theme                                |
+| Black Hole Text Opacity        | separate opacity controls for user and agent text in the Black Hole theme   |
+
 
 Notification sounds are loaded directly from OGG files in `sounds/`. Regular chat notifications use random `notify_*.ogg` files, while `commit.ogg`, `awake.ogg`, `mictest.ogg`, and scheduled `HH-MM.ogg` files are handled by name. See [sounds/README.en.md](sounds/README.en.md) for the file naming rules and replacement workflow.
 
@@ -231,6 +204,7 @@ That interactive CLI install path now also covers Kimi. Installing the binary is
 After startup the terminal prints both `Hub:` and `Hub (LAN / phone):` URLs. On desktop, bookmark the `Hub:` URL so the entry page is easy to reopen. On a phone on the same Wi-Fi, open the `Hub (LAN / phone):` URL to use the same session list and chat UI. Mobile can create new sessions, enter workspace paths, and resume existing sessions as well.
 
 Local HTTPS is optional. The quickstart branch works like this.
+
 - `no`: start in plain HTTP. This is enough for same-Wi-Fi Safari / browser use.
 - `yes`: start in HTTPS. Use this when you want Home Screen web-app behavior, Hub-based browser notifications, microphone access, or other secure browser features on iPhone / iPad.
 
@@ -279,19 +253,19 @@ If you want to keep your saved logs or archived sessions, remove only the symlin
 
 ## Public Access (Optional)
 
-<p align="center">
-  <img src="cloudflare-color.svg" alt="Cloudflare" width="84">
-</p>
+
 
 By the time `./bin/quickstart` is done, local or same-LAN use is already set up. Public exposure is an extra layer you add afterward. Once a public URL is added, the same Hub and chat UI can be opened from outside your LAN in a normal browser. Public exposure does not have to use Cloudflare, but this repo already ships a ready-to-use Cloudflare path with commands and docs. The flow below is the shortest route if you choose Cloudflare.
 
 What a public URL enables:
+
 - open the Hub from outside the LAN at `https://<your-hostname>/`
 - keep each chat under `/session/<name>/...`
 - do the same phone-based session browsing, creation, workspace-path entry, and chat operations from outside the LAN
 - keep this separate from local HTTPS / `mkcert`; a public URL does not require installing the local CA on iPhone
 
 What you need to prepare for the Cloudflare path:
+
 - `cloudflared` on the Mac
 - for a stable hostname, your own domain already managed as a Cloudflare zone
 - Cloudflare Zero Trust / Access settings so the public hostname is restricted
@@ -300,42 +274,52 @@ What you need to prepare for the Cloudflare path:
 The practical Cloudflare flow is:
 
 1. Try temporary public access first
+
 ```sh
 bin/multiagent-cloudflare quick-start
 ```
+
 - this gives you a temporary `https://...trycloudflare.com` URL through Quick Tunnel
 - use `bin/multiagent-cloudflare quick-stop` to return to local-only mode
 - this is for short-lived testing only; it is not the recommended way to keep a Mac reachable from outside
 
-2. Move to a stable hostname on your own domain
+1. Move to a stable hostname on your own domain
+
 ```sh
 bin/multiagent-cloudflare named-login
 bin/multiagent-cloudflare named-setup multiagent <your-hostname>
 bin/multiagent-cloudflare named-start
 ```
+
 - `named-login` runs the Cloudflare browser login and installs the origin cert
 - `named-setup` creates or reuses the tunnel, routes DNS, and writes the config
 - after `named-start`, the Hub lives at `https://<your-hostname>/`
 
-3. Put Cloudflare Access in front of it
+1. Put Cloudflare Access in front of it
+
 ```sh
 bin/multiagent-cloudflare access-enable <team-name> <aud-tag>
 ```
+
 - this keeps the public Hub limited to your own or other allowed identities
 - since this ultimately reaches your Mac, Access should be the default recommendation unless you have a specific reason not to use it
 
-4. Install the daemon if you want it to stay up continuously
+1. Install the daemon if you want it to stay up continuously
+
 ```sh
 bin/multiagent-cloudflare daemon-install
 ```
+
 - this keeps the named tunnel recovered in the background after login
 
-5. Keep the Mac awake
+1. Keep the Mac awake
+
 - once the Mac goes to sleep, the public URL stops being reachable
 - if you want stable long-lived access, keep the Mac on power and prevent sleep while the tunnel is meant to stay available
 - one practical setup is to leave the Mac connected to a power-delivering external display and let only the screen go dark while the Mac itself stays awake
 
 Typical usage pattern:
+
 - use `./bin/quickstart` for local / same-LAN work
 - add Cloudflare only when you want to reach the same Hub from outside
 - use Quick Tunnel only for short tests
@@ -354,14 +338,16 @@ Homebrew is the easiest path on macOS.
 
 ## Main Commands
 
-| Command | Purpose |
-|------|------|
-| `./bin/quickstart` | start the Hub with dependency checks |
-| `./bin/multiagent` | create, resume, list, save, and reconfigure sessions |
-| `./bin/agent-index` | Hub, chat UI, Stats, Settings, log viewer |
-| `./bin/agent-send` | send messages to the user inbox or other agents |
-| `./bin/agent-help` | compact cheatsheet for agents running inside this environment |
-| `./bin/multiagent-cloudflare` | optional public-access workflow |
+
+| Command                       | Purpose                                                       |
+| ----------------------------- | ------------------------------------------------------------- |
+| `./bin/quickstart`            | start the Hub with dependency checks                          |
+| `./bin/multiagent`            | create, resume, list, save, and reconfigure sessions          |
+| `./bin/agent-index`           | Hub, chat UI, Stats, Settings, log viewer                     |
+| `./bin/agent-send`            | send messages to the user inbox or other agents               |
+| `./bin/agent-help`            | compact cheatsheet for agents running inside this environment |
+| `./bin/multiagent-cloudflare` | optional public-access workflow                               |
+
 
 ## Docs
 

@@ -13,19 +13,21 @@ This is the supplementary command and pane-control reference for the chat UI. RE
 
 Type `/` at the start of the composer to open command suggestions.
 
-| command | behavior |
-|------|------|
-| `/memo [text]` | self memo to `user`; Import attachments alone are enough even without body text |
-| `/raw <text>` | one-shot raw paste into the pane without the normal `[From: User]` header or `msg-id` |
-| `/brief` | open the `default` brief |
-| `/brief set <name>` | open `brief_<name>.md` |
-| `/model` | send `model` to the selected pane |
-| `/up [count]` | send up-navigation to the selected pane; default count is 1 |
-| `/down [count]` | send down-navigation to the selected pane; default count is 1 |
-| `/restart` | restart the selected agent pane |
-| `/resume` | resume the selected agent pane |
-| `/interrupt` | send `Esc` to the selected agent pane |
-| `/enter` | send `Enter` to the selected agent pane |
+
+| command             | behavior                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| `/memo [text]`      | self memo to `user`; Import attachments alone are enough even without body text       |
+| `/raw <text>`       | one-shot raw paste into the pane without the normal `[From: User]` header or `msg-id` |
+| `/brief`            | open the `default` brief                                                              |
+| `/brief set <name>` | open `brief_<name>.md`                                                                |
+| `/model`            | send `model` to the selected pane                                                     |
+| `/up [count]`       | send up-navigation to the selected pane; default count is 1                           |
+| `/down [count]`     | send down-navigation to the selected pane; default count is 1                         |
+| `/restart`          | restart the selected agent pane                                                       |
+| `/resume`           | resume the selected agent pane                                                        |
+| `/interrupt`        | send `Esc` to the selected agent pane                                                 |
+| `/enter`            | send `Enter` to the selected agent pane                                               |
+
 
 `count` for `/up` and `/down` is clamped into the 1..100 range.
 
@@ -33,19 +35,21 @@ Type `/` at the start of the composer to open command suggestions.
 
 These are the controls exposed under the composer and its `Cmd` / `Command` menus.
 
-| UI | behavior |
-|------|------|
-| `Import` | add local-device files into the session uploads area |
-| `Raw` / `Raw Send` | toggle raw-send mode or send the current message as raw input |
-| `Brief` / `Send Brief` | send a saved brief to the selected targets |
-| `Load` / `Load Memory` | send the current `memory.md` to the selected agent |
-| `Memory` / `Save Memory` | update `memory.md` from the current conversation |
-| `Save` / `Save Log` | save a pane-log snapshot immediately |
-| `Restart` | restart the selected agent pane |
-| `Resume` | resume the selected agent pane |
-| `Ctrl+C` | send `Ctrl+C` to the selected agent pane |
-| `Enter` | send `Enter` to the selected agent pane |
-| `Esc` / `Interrupt` | send `Esc` to the selected agent pane |
+
+| UI                       | behavior                                                      |
+| ------------------------ | ------------------------------------------------------------- |
+| `Import`                 | add local-device files into the session uploads area          |
+| `Raw` / `Raw Send`       | toggle raw-send mode or send the current message as raw input |
+| `Brief` / `Send Brief`   | send a saved brief to the selected targets                    |
+| `Load` / `Load Memory`   | send the current `memory.md` to the selected agent            |
+| `Memory` / `Save Memory` | update `memory.md` from the current conversation              |
+| `Save` / `Save Log`      | save a pane-log snapshot immediately                          |
+| `Restart`                | restart the selected agent pane                               |
+| `Resume`                 | resume the selected agent pane                                |
+| `Ctrl+C`                 | send `Ctrl+C` to the selected agent pane                      |
+| `Enter`                  | send `Enter` to the selected agent pane                       |
+| `Esc` / `Interrupt`      | send `Esc` to the selected agent pane                         |
+
 
 ## Notes
 

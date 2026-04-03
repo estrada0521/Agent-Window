@@ -8,21 +8,23 @@
 
 `multiagent-chat` の主要な責務は、session の作成、message の配送、Hub / chat UI の配信、file / log / export の補助に分かれています。
 
-| ファイル | 役割 |
-|------|------|
-| `bin/multiagent` | tmux session 作成、agent pane 配置、agent 追加 / 削除、pane log 保存 |
-| `bin/agent-send` | `user` / agent / `others` への message 配送、`[From: ...]` header の自動付与、`msg_id` / `reply-to` metadata の生成、JSONL 追記 |
-| `bin/agent-index` | Hub、chat UI、Stats、Settings、upload / trace / export などの HTTP endpoint |
-| `lib/agent_index/chat_core.py` | chat server の runtime、message payload、pane status、trace、save log |
-| `lib/agent_index/chat_assets.py` | chat UI の HTML / CSS / JavaScript、composer、brief / memory、Pane Trace |
-| `lib/agent_index/hub_core.py` | active / archived session の収集、Hub preview、Stats 集計 |
-| `lib/agent_index/file_core.py` | file preview、raw file 配信、external editor 起動 |
-| `lib/agent_index/export_core.py` | static HTML export 生成 |
-| `lib/agent_index/push_core.py` | VAPID key 管理、browser push subscription、Hub / session 通知 monitor |
-| `lib/agent_index/state_core.py` | Hub settings、chat port、thinking time の永続化 |
-| `lib/agent_index/agent_registry.py` | 対応 agent CLI 一覧、起動 / resume 設定、icon 情報 |
-| `lib/agent_index/static/pwa/` | Hub / chat の PWA 用 service worker、manifest、install asset |
-| `bin/multiagent-public-edge` | Cloudflare 向け reverse proxy（public session access 用） |
+
+| ファイル                                | 役割                                                                                                             |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `bin/multiagent`                    | tmux session 作成、agent pane 配置、agent 追加 / 削除、pane log 保存                                                        |
+| `bin/agent-send`                    | `user` / agent / `others` への message 配送、`[From: ...]` header の自動付与、`msg_id` / `reply-to` metadata の生成、JSONL 追記 |
+| `bin/agent-index`                   | Hub、chat UI、Stats、Settings、upload / trace / export などの HTTP endpoint                                           |
+| `lib/agent_index/chat_core.py`      | chat server の runtime、message payload、pane status、trace、save log                                               |
+| `lib/agent_index/chat_assets.py`    | chat UI の HTML / CSS / JavaScript、composer、brief / memory、Pane Trace                                           |
+| `lib/agent_index/hub_core.py`       | active / archived session の収集、Hub preview、Stats 集計                                                             |
+| `lib/agent_index/file_core.py`      | file preview、raw file 配信、external editor 起動                                                                    |
+| `lib/agent_index/export_core.py`    | static HTML export 生成                                                                                          |
+| `lib/agent_index/push_core.py`      | VAPID key 管理、browser push subscription、Hub / session 通知 monitor                                                |
+| `lib/agent_index/state_core.py`     | Hub settings、chat port、thinking time の永続化                                                                      |
+| `lib/agent_index/agent_registry.py` | 対応 agent CLI 一覧、起動 / resume 設定、icon 情報                                                                         |
+| `lib/agent_index/static/pwa/`       | Hub / chat の PWA 用 service worker、manifest、install asset                                                       |
+| `bin/multiagent-public-edge`        | Cloudflare 向け reverse proxy（public session access 用）                                                           |
+
 
 現在の session ごとの保存レイアウトは次のようになります。
 
@@ -99,19 +101,21 @@ composer は `chat_assets.py` 内の overlay と quick action 群で構成され
 
 slash command の一覧は front-end の `SLASH_COMMANDS` 配列で管理されており、実行先は `/send` または front-end の専用処理です。
 
-| command | technical behavior |
-|------|------|
-| `/memo [text]` | `user` 自身を target にして send。本文が空でも Import 添付があれば送信可 |
-| `/raw <text>` | `POST /send` を `silent=true` で呼び、tmux pane へ直接 paste |
-| `/brief` | `default` brief の editor modal を開く |
-| `/brief set <name>` | `brief_<name>.md` を開く |
-| `/model` | 対象 pane に `model` を送る |
-| `/up [count]` | 対象 pane に上移動を送る |
-| `/down [count]` | 対象 pane に下移動を送る |
-| `/restart` | `ChatRuntime.restart_agent_pane()` を呼ぶ |
-| `/resume` | agent registry の resume flag で pane を再開 |
-| `/interrupt` | 対象 pane に `Escape` |
-| `/enter` | 対象 pane に `Enter` |
+
+| command             | technical behavior                                   |
+| ------------------- | ---------------------------------------------------- |
+| `/memo [text]`      | `user` 自身を target にして send。本文が空でも Import 添付があれば送信可   |
+| `/raw <text>`       | `POST /send` を `silent=true` で呼び、tmux pane へ直接 paste |
+| `/brief`            | `default` brief の editor modal を開く                   |
+| `/brief set <name>` | `brief_<name>.md` を開く                                |
+| `/model`            | 対象 pane に `model` を送る                                |
+| `/up [count]`       | 対象 pane に上移動を送る                                      |
+| `/down [count]`     | 対象 pane に下移動を送る                                      |
+| `/restart`          | `ChatRuntime.restart_agent_pane()` を呼ぶ               |
+| `/resume`           | agent registry の resume flag で pane を再開              |
+| `/interrupt`        | 対象 pane に `Escape`                                   |
+| `/enter`            | 対象 pane に `Enter`                                    |
+
 
 ### `@` と Import
 

@@ -33,16 +33,18 @@ printf '%s' 'I have read docs/AGENT.md. I understand the reply routing, attachme
 
 Key environment variables:
 
-| Variable | Meaning |
-|----------|---------|
-| `MULTIAGENT_SESSION` | Current session name |
-| `MULTIAGENT_AGENT_NAME` | Your agent name |
-| `MULTIAGENT_AGENTS` | List of participating agents |
-| `MULTIAGENT_WORKSPACE` | Workspace path |
-| `MULTIAGENT_LOG_DIR` | Log directory |
-| `MULTIAGENT_TMUX_SOCKET` | tmux socket |
-| `MULTIAGENT_PANE_*` | Pane IDs for each agent and user |
-| `TMUX_PANE` | Your own pane ID |
+
+| Variable                 | Meaning                          |
+| ------------------------ | -------------------------------- |
+| `MULTIAGENT_SESSION`     | Current session name             |
+| `MULTIAGENT_AGENT_NAME`  | Your agent name                  |
+| `MULTIAGENT_AGENTS`      | List of participating agents     |
+| `MULTIAGENT_WORKSPACE`   | Workspace path                   |
+| `MULTIAGENT_LOG_DIR`     | Log directory                    |
+| `MULTIAGENT_TMUX_SOCKET` | tmux socket                      |
+| `MULTIAGENT_PANE_*`      | Pane IDs for each agent and user |
+| `TMUX_PANE`              | Your own pane ID                 |
+
 
 To inspect the current session layout programmatically:
 
@@ -58,12 +60,14 @@ If `multiagent context` fails, `MULTIAGENT_SESSION` may be stale. Pass `--sessio
 
 ### Must follow
 
-| Rule | Details |
-|------|---------|
-| **Reply routing** | **Always send replies to `user` or other agents via `agent-send`**. Never print user-facing text directly into the pane |
-| **Message body** | Pass the body via **stdin** to avoid breaking special characters and newlines |
-| **Attachments** | Include **`[Attached: relative/path]`** in the message body |
-| **Words containing `$`** | Shell variables, paths, and other words containing `$` **must be wrapped in inline code (`` ` ``)**. Otherwise the Hub renders them as math. Examples: `` `$HOME` ``, `` `$PATH` `` |
+
+| Rule                     | Details                                                                                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Reply routing**        | **Always send replies to `user` or other agents via `agent-send`**. Never print user-facing text directly into the pane                                             |
+| **Message body**         | Pass the body via **stdin** to avoid breaking special characters and newlines                                                                                       |
+| **Attachments**          | Include **`[Attached: relative/path]`** in the message body                                                                                                         |
+| **Words containing `$`** | Shell variables, paths, and other words containing `$` **must be wrapped in inline code using backticks**. Otherwise the Hub renders them as math. Examples: `` `$HOME` ``, `` `$PATH` `` |
+
 
 ### Basic form
 
@@ -123,11 +127,13 @@ printf '%s' 'hello' | /path/to/repo/bin/agent-send user
 
 ### Guidelines
 
-| Guideline | Details |
-|-----------|---------|
-| **Relative paths** | **Use workspace-relative paths**. Absolute paths may not resolve correctly |
-| **Own line** | `[Attached: docs/AGENT.md]` works best on its own line |
-| **Inside the body** | Just writing "Attached" is not enough. The exact **`[Attached: ...]` syntax** is required |
+
+| Guideline           | Details                                                                                   |
+| ------------------- | ----------------------------------------------------------------------------------------- |
+| **Relative paths**  | **Use workspace-relative paths**. Absolute paths may not resolve correctly                |
+| **Own line**        | `[Attached: docs/AGENT.md]` works best on its own line                                    |
+| **Inside the body** | Just writing "Attached" is not enough. The exact **`[Attached: ...]`** syntax is required |
+
 
 Good example:
 
@@ -183,10 +189,12 @@ This environment supports **session-specific briefs** in addition to `docs/AGENT
 
 Role comparison:
 
-| File type | Role |
-|-----------|------|
-| `docs/AGENT.md` | **Permanent rules** for the repo / multiagent environment |
-| session brief | **Additional instructions / templates** scoped to a single session |
+
+| File type       | Role                                                               |
+| --------------- | ------------------------------------------------------------------ |
+| `docs/AGENT.md` | **Permanent rules** for the repo / multiagent environment          |
+| session brief   | **Additional instructions / templates** scoped to a single session |
+
 
 Session briefs are reusable templates that can be sent to multiple agents, rather than per-agent configuration.
 
@@ -223,13 +231,15 @@ logs/multiagent/brief/brief_research.md
 
 ## 7. Session, tmux, and Logs
 
-| Item | Details |
-|------|---------|
-| Default session name | Usually `multiagent` |
-| Override session | `MULTIAGENT_SESSION` or `agent-send --session <name>` |
-| Socket | `MULTIAGENT_TMUX_SOCKET` |
-| Log location | Usually `<log directory>/<session name>/.agent-index.jsonl` |
-| Workspace | `MULTIAGENT_WORKSPACE` |
+
+| Item                 | Details                                                     |
+| -------------------- | ----------------------------------------------------------- |
+| Default session name | Usually `multiagent`                                        |
+| Override session     | `MULTIAGENT_SESSION` or `agent-send --session <name>`       |
+| Socket               | `MULTIAGENT_TMUX_SOCKET`                                    |
+| Log location         | Usually `<log directory>/<session name>/.agent-index.jsonl` |
+| Workspace            | `MULTIAGENT_WORKSPACE`                                      |
+
 
 When working across tmux sessions or multiple clones, watch out for **socket** and **workspace** mismatches.
 
@@ -273,11 +283,13 @@ Notes:
 
 ## 10. Related Documents
 
-| Path | Description |
-|------|-------------|
-| `README.md` | Public overview and quickstart |
-| `docs/cloudflare-quick-tunnel.md` | Cloudflare quick tunnel setup |
-| `docs/cloudflare-access.md` | Protecting the public Hub with Cloudflare Access |
-| `docs/cloudflare-daemon.md` | Running the public tunnel as a daemon |
+
+| Path                              | Description                                      |
+| --------------------------------- | ------------------------------------------------ |
+| `README.md`                       | Public overview and quickstart                   |
+| `docs/cloudflare-quick-tunnel.md` | Cloudflare quick tunnel setup                    |
+| `docs/cloudflare-access.md`       | Protecting the public Hub with Cloudflare Access |
+| `docs/cloudflare-daemon.md`       | Running the public tunnel as a daemon            |
+
 
 Internal notes and editor/agent-specific instruction files should be managed separately. Do not casually reference them from public-facing permanent docs.
