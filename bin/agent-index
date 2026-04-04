@@ -980,7 +980,7 @@ HUB_APP_HTML = """<!doctype html>
       padding: 0 0 max(20px, env(safe-area-inset-bottom)) 0;
     }
     .shell {
-      max-width: 760px;
+      max-width: 900px;
       margin: 0 auto;
     }
     .shell > :not(.hub-page-header) {
@@ -2435,7 +2435,7 @@ HUB_HOME_HTML = """<!doctype html>
       padding: 0 0 max(20px, env(safe-area-inset-bottom)) 0;
     }
     .shell {
-      max-width: 760px;
+      max-width: 900px;
       margin: 0 auto;
     }
     .shell > :not(.hub-page-header):not(.mob-stats-bar):not(.mob-list-wrap) {
@@ -2609,7 +2609,7 @@ HUB_HOME_HTML = """<!doctype html>
       border-top: none;
       font-size: 12px;
       color: var(--muted);
-      max-width: 760px;
+      max-width: 900px;
       width: 100%;
       margin: 0 auto;
       box-sizing: border-box;
@@ -2645,7 +2645,7 @@ HUB_HOME_HTML = """<!doctype html>
     .mob-stats-bar.is-empty { display: none; }
     .mob-list-wrap {
       display: block;
-      max-width: 760px;
+      max-width: 900px;
       margin: 0 auto;
       width: 100%;
       padding-bottom: max(40px, env(safe-area-inset-bottom));
@@ -3448,6 +3448,7 @@ def hub_settings_html(saved=False):
     user_message_opacity_blackhole = float(settings.get("user_message_opacity_blackhole", 1.0) or 1.0)
     agent_message_opacity_blackhole = float(settings.get("agent_message_opacity_blackhole", 1.0) or 1.0)
     message_limit = settings["message_limit"]
+    message_max_width = int(settings.get("message_max_width", 900) or 900)
     chat_auto = settings.get("chat_auto_mode", False)
     chat_awake = settings.get("chat_awake", False)
     chat_sound = settings.get("chat_sound", False)
@@ -3546,7 +3547,7 @@ def hub_settings_html(saved=False):
     body {{
       padding: 0 0 max(20px, env(safe-area-inset-bottom)) 0;
     }}
-    .shell {{ max-width: 760px; margin: 0 auto; }}
+    .shell {{ max-width: 900px; margin: 0 auto; }}
     .shell > :not(.hub-page-header) {{ padding-left: 14px; padding-right: 14px; }}
     .hero {{ padding: 8px 2px 18px 2px; }}
     .eyebrow {{ color: var(--muted); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }}
@@ -3888,6 +3889,11 @@ def hub_settings_html(saved=False):
         <label class="label" for="message_limit">Default Message Count</label>
         <input id="message_limit" name="message_limit" type="number" min="10" max="2000" step="10" value="{message_limit}">
         <div class="hint">Single display default for chat reopen. Current practical ceiling is 2000.</div>
+      </div>
+      <div class="field">
+        <label class="label" for="message_max_width">Message Max Width (px)</label>
+        <input id="message_max_width" name="message_max_width" type="number" min="400" max="2000" step="10" value="{message_max_width}">
+        <div class="hint">The horizontal constraint for the message display area. Desktop only. Mobile always fills the width. Default is 900.</div>
       </div>
       <div class="field">
         <div class="label">Chat Defaults</div>
@@ -4676,7 +4682,7 @@ HUB_NEW_SESSION_HTML = """<!doctype html>
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); font-family: "SF Pro Text", "Segoe UI", sans-serif; }
     body { padding: 0 0 max(20px, env(safe-area-inset-bottom)) 0; }
-    .shell { max-width: 760px; margin: 0 auto; }
+    .shell { max-width: 900px; margin: 0 auto; }
     .shell > :not(.hub-page-header) { padding-left: 14px; padding-right: 14px; }
     .hero { padding: 8px 2px 18px 2px; }
     .eyebrow { color: var(--fg); opacity: 0.8; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
@@ -5483,14 +5489,14 @@ def hub_crons_html(*, jobs, session_records, notice="", prefill_session="", pref
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); font-family: "SF Pro Text", "Segoe UI", sans-serif; }
     body { padding: 0; }
-    .shell { max-width: 760px; margin: 0 auto; width: 100%; }
+    .shell { max-width: 900px; margin: 0 auto; width: 100%; }
     .mob-stats-bar {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0;
       padding: 10px 14px 11px;
       border-bottom: 0.5px solid var(--line);
-      max-width: 760px;
+      max-width: 900px;
       width: 100%;
       margin: 0 auto;
       box-sizing: border-box;
@@ -5525,7 +5531,7 @@ def hub_crons_html(*, jobs, session_records, notice="", prefill_session="", pref
     }
     .mob-list-wrap {
       display: block;
-      max-width: 760px;
+      max-width: 900px;
       margin: 0 auto;
       width: 100%;
       padding-bottom: max(40px, env(safe-area-inset-bottom));
@@ -5906,7 +5912,7 @@ def hub_crons_html(*, jobs, session_records, notice="", prefill_session="", pref
     :not([data-starfield="off"]) body { background: transparent !important; }
     :not([data-starfield="off"]) html { background: var(--bg) !important; }
     :not([data-starfield="off"]) .shell { background: transparent !important; position: relative; z-index: 2; }
-    @media (max-width: 760px) {
+    @media (max-width: 900px) {
       .cron-field-grid { grid-template-columns: 1fr; }
     }
   __HUB_HEADER_CSS__
@@ -8038,6 +8044,7 @@ class Handler(BaseHTTPRequestHandler):
                 "bold_mode":              bool(s.get("bold_mode", False)),
                 "agent_font_mode":        str(s.get("agent_font_mode", "serif")),
                 "chat_font_settings_css": chat_font_settings_inline_style(s),
+                "message_max_width":      int(s.get("message_max_width", 900) or 900),
                 "chat_auto_mode":         bool(s.get("chat_auto_mode", False)),
                 "chat_awake":             bool(s.get("chat_awake", False)),
                 "chat_sound":             bool(s.get("chat_sound", False)),

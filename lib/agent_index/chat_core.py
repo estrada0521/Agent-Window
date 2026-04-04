@@ -429,18 +429,19 @@ class ChatRuntime:
         theme = str(settings.get("theme", "black-hole") or "black-hole").strip().lower()
         try:
             message_text_size = max(11, min(18, int(settings.get("message_text_size", 13))))
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
+        except Exception:
             message_text_size = 13
         try:
+            message_max_width = max(400, min(2000, int(settings.get("message_max_width", 900))))
+        except Exception:
+            message_max_width = 900
+        try:
             user_opacity = max(0.2, min(1.0, float(settings.get("user_message_opacity_blackhole", 1.0))))
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
+        except Exception:
             user_opacity = 1.0
         try:
             agent_opacity = max(0.2, min(1.0, float(settings.get("agent_message_opacity_blackhole", 1.0))))
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
+        except Exception:
             agent_opacity = 1.0
         if theme == "black-hole":
             user_color = f"rgba(252, 252, 252, {user_opacity:.2f})"
@@ -452,50 +453,61 @@ class ChatRuntime:
         
         bold_style = ""
         if settings.get("bold_mode"):
-            bold_style = """
+            bold_style = f"""
     .message.user .md-body,
     .message.user .md-body p,
     .message.user .md-body li,
     .message.user .md-body li p,
     .message.user .md-body blockquote,
     .message.user .md-body blockquote p,
-    """ + _agent_markdown_selectors("", " p", " li", " li p", " blockquote", " blockquote p") + """ {
+    {_agent_markdown_selectors("", " p", " li", " li p", " blockquote", " blockquote p")} {{
       font-weight: 620 !important;
       font-variation-settings: normal !important;
       font-synthesis: weight !important;
       font-synthesis-weight: auto !important;
       -webkit-font-smoothing: antialiased;
-    }
+    }}
     .message.user .md-body h1,
     .message.user .md-body h2,
     .message.user .md-body h3,
     .message.user .md-body h4,
-    """ + _agent_markdown_selectors(" h1", " h2", " h3", " h4") + """ {
+    {_agent_markdown_selectors(" h1", " h2", " h3", " h4")} {{
       font-weight: 700 !important;
       font-variation-settings: normal !important;
       font-synthesis: weight !important;
       font-synthesis-weight: auto !important;
       -webkit-font-smoothing: antialiased;
-    }
+    }}
     """
         return f"""
     :root {{
       --message-text-size: {message_text_size}px;
       --message-text-line-height: {message_text_size + 9}px;
+      --message-max-width: {message_max_width}px;
       --user-message-blackhole-color: {user_color};
       --agent-message-blackhole-color: {agent_color};
     }}
+    .shell {{
+      max-width: var(--message-max-width) !important;
+    }}
+    .composer {{
+      width: min(var(--message-max-width), calc(100vw - 24px)) !important;
+      max-width: var(--message-max-width) !important;
+    }}
+    .composer-main-shell {{
+      max-width: var(--message-max-width) !important;
+    }}
+    .statusline {{
+      width: min(var(--message-max-width), calc(100vw - 16px)) !important;
+    }}
+    .brief-editor-panel {{
+      width: min(92vw, var(--message-max-width)) !important;
+      max-width: var(--message-max-width) !important;
+    }}
     .message.user .md-body {{
       font-family: {user_family} !important;
-    }}
-{generate_agent_message_selectors(" .md-body")} {{
-      font-family: {agent_family} !important;
-    }}
-    .message.user .md-body {{
       color: var(--user-message-blackhole-color) !important;
     }}
-    .message.user .md-body p,
-    .message.user .md-body li,
     .message.user .md-body h1,
     .message.user .md-body h2,
     .message.user .md-body h3,
@@ -503,14 +515,16 @@ class ChatRuntime:
     .message.user .md-body blockquote {{
       color: var(--user-message-blackhole-color) !important;
     }}
-{generate_agent_message_selectors(" .md-body")} {{
+    {generate_agent_message_selectors(" .md-body")} {{
+      font-family: {agent_family} !important;
       color: var(--agent-message-blackhole-color) !important;
     }}
-{_bh_agent_detail_selectors(prefix="")} {{
+    {_bh_agent_detail_selectors(prefix="")} {{
       color: var(--agent-message-blackhole-color) !important;
     }}
-{bold_style}
+    {bold_style}
     """
+
 
     def load_thinking_totals(self) -> dict[str, int]:
         return load_shared_session_thinking_totals(self.repo_root, self.session_name, self.workspace)

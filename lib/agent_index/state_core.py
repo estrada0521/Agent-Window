@@ -81,6 +81,12 @@ def _apply_hub_settings(raw: dict, settings: dict, *, message_limit_cap: int, mi
         message_text_size = int(settings["message_text_size"])
     settings["message_text_size"] = max(11, min(18, message_text_size))
 
+    try:
+        message_max_width = int(raw.get("message_max_width", settings.get("message_max_width", 900)))
+    except Exception:
+        message_max_width = 900
+    settings["message_max_width"] = max(400, min(2000, message_max_width))
+
     for key in ("user_message_opacity_blackhole", "agent_message_opacity_blackhole"):
         try:
             value = float(raw.get(key, settings[key]))
@@ -107,6 +113,7 @@ HUB_SETTINGS_DEFAULTS = {
     "user_message_font": "preset-gothic",
     "agent_message_font": "preset-mincho",
     "message_text_size": 13,
+    "message_max_width": 900,
     "user_message_opacity_blackhole": 1.0,
     "agent_message_opacity_blackhole": 1.0,
     "message_limit": 500,

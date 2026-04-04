@@ -184,9 +184,9 @@ __AGENT_ACCENT_CSS__
     .shell > .hub-page-header::before {
       content: "";
       position: absolute;
-      left: -10px;
-      right: -10px;
-      top: -10px;
+      left: 0;
+      right: 0;
+      top: 0;
       bottom: 0;
       border-radius: 0 0 18px 18px;
       background: rgba(var(--bg-rgb, 38, 38, 36), 0);
@@ -575,7 +575,7 @@ __AGENT_ACCENT_CSS__
     .shell {
       position: relative;
       width: 100%;
-      max-width: 760px;
+      max-width: 900px;
       height: 100vh;
       height: 100svh;
       height: 100dvh;
@@ -1528,8 +1528,8 @@ __AGENT_ACCENT_CSS__
       grid-template-columns: minmax(0, 1fr);
       justify-items: center;
       gap: 10px;
-      width: min(760px, calc(100vw - 24px));
-      max-width: 760px;
+      width: min(900px, calc(100vw - 24px));
+      max-width: 900px;
       padding: 0 !important;
       margin: 0;
       border-top: none;
@@ -1587,7 +1587,7 @@ __AGENT_ACCENT_CSS__
       row-gap: 0;
       column-gap: 4px;
       width: 100%;
-      max-width: 760px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 8px 7px 10px 7px;
       border: none;
@@ -2217,8 +2217,8 @@ __AGENT_ACCENT_CSS__
       background: rgba(0, 0, 0, 0.42);
     }
     .brief-editor-panel {
-      width: min(92vw, 760px);
-      max-width: 760px;
+      width: min(92vw, 900px);
+      max-width: 900px;
       min-width: 0;
       max-height: min(64vh, 620px);
       display: flex;
@@ -2902,7 +2902,7 @@ __AGENT_ACCENT_CSS__
       position: absolute;
       left: 50%;
       bottom: 2px;
-      width: min(760px, calc(100vw - 16px));
+      width: min(900px, calc(100vw - 16px));
       padding: 0 10px 2px;
       min-height: 1.3em;
       color: var(--chrome-muted);
@@ -4409,6 +4409,30 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .camera-mode.visible {
       display: block;
     }
+    .camera-mode-send-border {
+      position: absolute;
+      inset: 0;
+      z-index: 999;
+      pointer-events: none;
+      border: 4px solid;
+      border-image: conic-gradient(
+        from var(--send-hue, 0deg),
+        #ff2020, #ff8800, #ffe600, #00dd44, #00aaff, #5500ff, #dd00ff, #ff2020
+      ) 1;
+      box-shadow:
+        inset 0 0 50px 14px rgba(255, 255, 255, 0.22),
+        inset 0 0 120px 2px rgba(180, 120, 255, 0.12),
+        0 0 40px 10px rgba(120, 160, 255, 0.35),
+        0 0 80px 20px rgba(160, 100, 255, 0.15);
+      opacity: 0;
+      animation: cameraSendBorder 1.6s ease-out forwards;
+    }
+    @keyframes cameraSendBorder {
+      0%   { opacity: 0; }
+      6%   { opacity: 1; }
+      40%  { opacity: 0.9; }
+      100% { opacity: 0; }
+    }
     .camera-mode-shell {
       position: absolute;
       inset: 0;
@@ -4543,6 +4567,8 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       order: 1;
       mask-image: linear-gradient(to bottom, transparent 0%, black 18%);
       -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 18%);
+      --muted: rgba(255, 255, 255, 0.72);
+      --chrome-muted: rgba(255, 255, 255, 0.72);
     }
     .camera-mode-replies::-webkit-scrollbar {
       display: none;
@@ -4551,53 +4577,17 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       display: block;
       padding: 48px 20px calc(env(safe-area-inset-bottom, 0px) + 82px);
     }
-    .camera-mode-replies .message-row {
-      margin: 0;
-    }
-    .camera-mode-replies .message-row:not(.user) {
-      align-items: stretch;
-    }
-    .camera-mode-replies .message-row:not(.user) .message {
-      max-width: none;
-      width: 100%;
-      padding-top: 0 !important;
-      background: transparent !important;
-      border-color: transparent !important;
-      box-shadow: none !important;
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
-    }
-    .camera-mode-replies .message-row:not(.user) .message::before {
-      display: none;
-    }
-    .camera-mode-replies .message-meta-below {
-      display: none !important;
-      margin: 0 !important;
-    }
-    .camera-mode-replies .reply-btn,
-    .camera-mode-replies .reply-target-jump-btn,
-    .camera-mode-replies .reply-jump-inline,
-    .camera-mode-replies .copy-btn,
-    .camera-mode-replies .user-collapse-toggle,
-    .camera-mode-replies .message-deferred-actions {
+    .camera-mode-replies .message-row.system {
       display: none !important;
     }
-    .camera-mode-replies .message-row:not(.user):not(.system) {
-      border-top: 1px solid rgba(255, 255, 255, 0.25);
-      padding-top: 6px;
-      margin-top: 6px;
+    .camera-mode-replies .user-message-divider {
+      margin-bottom: 9px;
     }
-    .camera-mode-replies .message-row:not(.user):not(.system):first-child {
-      border-top: none;
-      padding-top: 0;
-      margin-top: 0;
+    .camera-mode-replies .message:not(.user) .message-meta-below {
+      margin-bottom: 6px;
     }
-    .camera-mode-replies .md-body {
-      color: rgba(255, 255, 255, 0.97);
-    }
-    .camera-mode-replies .message-row.system,
-    .camera-mode-replies .message-row.user {
-      display: none !important;
+    .camera-mode-replies .message:not(.user) .md-body {
+      padding-top: 2px;
     }
     .camera-mode-thinking {
       position: absolute;
@@ -4617,7 +4607,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .camera-mode-thinking-main {
       display: flex;
       align-items: center;
-      gap: 0;
+      gap: 8px;
       min-width: 0;
       flex: 1 1 auto;
     }
@@ -4625,7 +4615,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       appearance: none;
       border: none;
       padding: 8px;
-      margin: 0 8px 0 0;
+      margin: 0;
       background: transparent;
       color: inherit;
       display: inline-flex;
@@ -4663,7 +4653,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       min-width: 0;
       display: inline-flex;
       align-items: center;
-      color: rgba(252, 252, 252, 0.74);
+      color: rgba(252, 252, 252, 0.84);
       font-size: 16px;
       line-height: 1.35;
       white-space: nowrap;
@@ -4672,14 +4662,14 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       margin-left: 4px;
     }
     .camera-mode-thinking-copy.is-idle {
-      color: rgba(252, 252, 252, 0.56);
+      color: rgba(252, 252, 252, 0.7);
       font-size: 13px;
       letter-spacing: 0.01em;
     }
     .camera-mode-thinking-targets {
       display: none;
       align-items: center;
-      gap: 0;
+      gap: 8px;
       min-width: 0;
       flex: 1 1 auto;
       overflow-x: auto;
@@ -4688,7 +4678,6 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       -ms-overflow-style: none;
       white-space: nowrap;
       pointer-events: auto;
-      margin-left: 4px;
     }
     .camera-mode-thinking-targets::-webkit-scrollbar {
       display: none;
@@ -4699,25 +4688,42 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .camera-mode-thinking-target-chip {
       flex: 0 0 auto;
       padding: 8px;
-      margin: 0 8px 0 0;
+      margin: 0;
       pointer-events: auto;
       touch-action: manipulation;
       line-height: 0;
+      opacity: 0;
+      transform: scale(0.7);
+      transition: opacity 180ms ease, transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .camera-mode-thinking-targets.is-open .camera-mode-thinking-target-chip {
+      opacity: 1;
+      transform: scale(1);
     }
     .camera-mode-thinking-target-chip .target-icon {
       filter: brightness(0) invert(1) !important;
-      opacity: 1 !important;
+      opacity: 0.72;
+      transition: opacity 180ms ease, filter 180ms ease;
     }
     .camera-mode-thinking-target-chip .agent-icon-slot--chip {
-      color: rgba(252, 252, 252, 0.98) !important;
+      color: rgba(252, 252, 252, 0.8) !important;
       transform: none !important;
+      transition: color 180ms ease;
     }
     .camera-mode-thinking-target-chip .agent-icon-instance-sub {
-      color: rgba(252, 252, 252, 0.98) !important;
-      text-shadow:
-        0 0 1px rgba(10, 10, 10, 0.96),
-        0 0 2px rgba(10, 10, 10, 0.96);
+      color: rgba(252, 252, 252, 0.8) !important;
+      text-shadow: none !important;
     }
+    .camera-mode-thinking-target-chip:nth-child(1) { transition-delay: 0ms; }
+    .camera-mode-thinking-target-chip:nth-child(2) { transition-delay: 30ms; }
+    .camera-mode-thinking-target-chip:nth-child(3) { transition-delay: 60ms; }
+    .camera-mode-thinking-target-chip:nth-child(4) { transition-delay: 90ms; }
+    .camera-mode-thinking-target-chip:nth-child(5) { transition-delay: 120ms; }
+    .camera-mode-thinking-target-chip:nth-child(6) { transition-delay: 150ms; }
+    .camera-mode-thinking-target-chip:nth-child(7) { transition-delay: 180ms; }
+    .camera-mode-thinking-target-chip:nth-child(8) { transition-delay: 210ms; }
+    .camera-mode-thinking-target-chip:nth-child(9) { transition-delay: 240ms; }
+    .camera-mode-thinking-target-chip:nth-child(10) { transition-delay: 270ms; }
     .camera-mode-targets {
       display: none;
       flex-direction: column;
@@ -4818,15 +4824,47 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0;
+      gap: 14px;
       padding: 8px 20px max(8px, env(safe-area-inset-bottom, 0px));
       z-index: 2;
       pointer-events: none;
     }
+    .camera-mode-mic {
+      appearance: none;
+      flex: 0 0 auto;
+      width: 58px;
+      height: 58px;
+      border-radius: 999px;
+      padding: 0;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.96);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      transition: transform 160ms ease, opacity 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+    .camera-mode-mic:active {
+      transform: scale(0.94);
+    }
+    .camera-mode-mic.listening {
+      background: rgba(186, 48, 60, 0.86);
+      border-color: rgba(255, 166, 173, 0.42);
+    }
+    .camera-mode-mic.no-speech {
+      display: none !important;
+    }
     .camera-mode-shutter {
       appearance: none;
-      width: 66px;
-      height: 66px;
+      flex: 0 0 auto;
+      width: 58px;
+      height: 58px;
       border-radius: 999px;
       padding: 0;
       border: 2px solid rgba(255, 255, 255, 0.82);
@@ -4843,8 +4881,8 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     }
     .camera-mode-shutter::before {
       content: "";
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.98);
       transition: transform 120ms ease, opacity 120ms ease;
@@ -4874,6 +4912,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       transform: scale(0.86);
       opacity: 0.7;
     }
+    .camera-mode.busy .camera-mode-mic,
     .camera-mode.busy .camera-mode-target,
     .camera-mode.busy .camera-mode-close {
       opacity: 0.54;
@@ -5203,6 +5242,9 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         <div id="cameraModeThinking" class="camera-mode-thinking" hidden></div>
         <div id="cameraModeHint" class="camera-mode-hint" hidden></div>
         <div class="camera-mode-footer">
+          <button type="button" id="cameraModeMicBtn" class="camera-mode-mic" aria-label="Voice input">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+          </button>
           <button type="button" id="cameraModeShutterBtn" class="camera-mode-shutter" aria-label="Capture and send"></button>
         </div>
       </div>
@@ -5638,6 +5680,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const cameraModeHint = document.getElementById("cameraModeHint");
     const cameraModeEmpty = document.getElementById("cameraModeEmpty");
     const cameraModeEmptyCopy = document.getElementById("cameraModeEmptyCopy");
+    const cameraModeMicBtn = document.getElementById("cameraModeMicBtn");
     const cameraModeShutterBtn = document.getElementById("cameraModeShutterBtn");
     let fileModalCurrentPath = "";
     let fileModalCurrentExt = "";
@@ -6340,6 +6383,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let cameraModeTarget = "";
     let cameraModeTargetsExpanded = false;
     let cameraModeLiveEntries = [];
+    let cameraModeMicListening = false;
+    let cancelCameraModeMicRecognition = () => {};
     let _renderedIds = new Set(); // incremental render tracking
     const expandedUserMessages = new Set();
     const escapeHtml = (value) => value
@@ -6356,6 +6401,14 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       </div>`;
     };
     const stripSenderPrefix = (value) => value.replace(/^\[From:\s*[^\]]+\]\s*/i, "");
+    const isAttachmentOnlyMessage = (entry) => {
+      const body = stripSenderPrefix(String(entry?.message || ""));
+      if (!body) return false;
+      const attachments = body.match(/\[Attached:\s*[^\]]+\]/g);
+      if (!attachments || !attachments.length) return false;
+      const remainder = body.replace(/\[Attached:\s*[^\]]+\]/g, " ").replace(/\s+/g, " ").trim();
+      return !remainder;
+    };
     const parseControlShortcut = (value) => {
       const normalized = (value || "").trim().toLowerCase();
       const mapped = {
@@ -6467,12 +6520,14 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
     };
     const syncCameraModeBusyState = () => {
+      const interactionLocked = !!cameraModeBusy || !!cameraModeMicListening;
       cameraMode?.classList.toggle("busy", !!cameraModeBusy);
-      if (cameraModeShutterBtn) cameraModeShutterBtn.disabled = !!cameraModeBusy;
+      if (cameraModeShutterBtn) cameraModeShutterBtn.disabled = interactionLocked;
+      if (cameraModeMicBtn) cameraModeMicBtn.disabled = !!cameraModeBusy;
       if (cameraModeCloseBtn) cameraModeCloseBtn.disabled = !!cameraModeBusy;
-      if (cameraModeTargetToggleBtn) cameraModeTargetToggleBtn.disabled = !!cameraModeBusy;
+      if (cameraModeTargetToggleBtn) cameraModeTargetToggleBtn.disabled = interactionLocked;
       cameraModeTargets?.querySelectorAll(".camera-mode-target").forEach((node) => {
-        node.disabled = !!cameraModeBusy;
+        node.disabled = interactionLocked;
       });
     };
     const setCameraModeTargetsExpanded = (expanded) => {
@@ -6523,10 +6578,19 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const cameraModeReplyEntries = (displayEntries) => {
       const entries = Array.isArray(displayEntries) ? displayEntries : [];
       return entries
-        .filter((entry) => entry && entry.sender && entry.sender !== "user" && entry.sender !== "system")
+        .filter((entry) => entry && entry.sender && entry.sender !== "system")
+        .filter((entry) => !(entry.sender === "user" && isAttachmentOnlyMessage(entry)))
         .slice(-12);
     };
-    const renderCameraModeReplies = () => {
+    const cameraModeEntryRenderSig = (entry) => JSON.stringify([
+      String(entry?.msg_id || ""),
+      String(entry?.sender || ""),
+      String(entry?.message || ""),
+      String(entry?.reply_to || ""),
+      Array.isArray(entry?.targets) ? entry.targets : [],
+      !!entry?.deferred_body,
+    ]);
+    const renderCameraModeReplies = (previousEntries = []) => {
       if (!cameraModeReplies || !cameraModeRepliesInner) return;
       const entries = Array.isArray(cameraModeLiveEntries) ? cameraModeLiveEntries.filter(Boolean) : [];
       cameraModeReplies.hidden = !entries.length;
@@ -6534,16 +6598,33 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         cameraModeRepliesInner.innerHTML = "";
         return;
       }
+      const previousIds = new Set((Array.isArray(previousEntries) ? previousEntries : []).map((entry) => String(entry?.msg_id || "")).filter(Boolean));
+      const newEntries = entries.filter((entry) => !previousIds.has(String(entry?.msg_id || "")));
+      const isInitialBulkLoad =
+        previousIds.size === 0 &&
+        newEntries.length > 0 &&
+        newEntries.length === entries.length &&
+        entries.length > 1;
+      const shouldMarkNewRowsAnimated =
+        newEntries.length > 0 &&
+        !isInitialBulkLoad &&
+        (previousIds.size > 0 || entries.length === 1);
       const replyChildren = buildReplyChildrenMap(entries);
       const nearBottom = Math.abs((cameraModeReplies.scrollHeight - cameraModeReplies.clientHeight) - cameraModeReplies.scrollTop) < 28;
       cameraModeRepliesInner.innerHTML = entries.map((entry) => buildMsgHTML(entry, replyChildren)).join("");
       postRenderScope(cameraModeRepliesInner);
       queueStableCodeBlockSync(cameraModeRepliesInner);
-      const rows = cameraModeRepliesInner.querySelectorAll(".message-row");
-      const row = rows.length ? rows[rows.length - 1] : null;
-      if (row) {
-        row.classList.add("animate-in");
-        scheduleAnimateInCleanup(row, { streamBody: false });
+      if (shouldMarkNewRowsAnimated) {
+        const newEntryById = new Map(newEntries.map((entry) => [String(entry?.msg_id || ""), entry]));
+        cameraModeRepliesInner.querySelectorAll("article.message-row[data-msgid]").forEach((row) => {
+          const msgId = String(row.dataset.msgid || "");
+          const entry = newEntryById.get(msgId);
+          if (!msgId || !entry) return;
+          row.classList.add("animate-in");
+          const stream = entryQualifiesForStreamReveal(entry);
+          if (stream) row.classList.add("streaming-body-reveal");
+          scheduleAnimateInCleanup(row, { streamBody: stream });
+        });
       }
       if (nearBottom) {
         cameraModeReplies.scrollTop = cameraModeReplies.scrollHeight;
@@ -6551,12 +6632,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     const syncCameraModeReplies = (displayEntries) => {
       if (!cameraMode || cameraMode.hidden) return;
+      const previousEntries = Array.isArray(cameraModeLiveEntries) ? cameraModeLiveEntries.filter(Boolean) : [];
       const nextEntries = cameraModeReplyEntries(displayEntries);
-      const nextSig = nextEntries.map((entry) => String(entry?.msg_id || "")).join(",");
-      const prevSig = (Array.isArray(cameraModeLiveEntries) ? cameraModeLiveEntries : []).map((entry) => String(entry?.msg_id || "")).join(",");
+      const nextSig = nextEntries.map(cameraModeEntryRenderSig).join("\u0002");
+      const prevSig = previousEntries.map(cameraModeEntryRenderSig).join("\u0002");
       if (nextSig === prevSig) return;
       cameraModeLiveEntries = nextEntries;
-      renderCameraModeReplies();
+      renderCameraModeReplies(previousEntries);
     };
     const setQuickActionsDisabled = (disabled) => {
       document.querySelectorAll(".quick-action").forEach((node) => {
@@ -9875,6 +9957,22 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       }
       return data;
     };
+    const sendCameraModeText = async (text, target) => {
+      const message = String(text || "").trim();
+      if (!message) {
+        throw new Error("message is required");
+      }
+      const res = await fetch("/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target, message }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "send failed");
+      }
+      return data;
+    };
     const setCameraModeBusy = (busy, hint = "", isError = false) => {
       cameraModeBusy = !!busy;
       syncCameraModeBusyState();
@@ -9884,6 +9982,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     };
     const closeCameraMode = () => {
       if (!cameraMode || cameraMode.hidden) return;
+      cancelCameraModeMicRecognition();
       stopCameraModeStream();
       cameraMode.hidden = true;
       cameraMode.classList.remove("visible", "busy");
@@ -9891,6 +9990,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       setCameraModeHint("");
       setCameraModeFallbackState(false);
       cameraModeBusy = false;
+      cameraModeMicListening = false;
       cameraModeOpening = false;
       setCameraModeTargetsExpanded(false);
       cameraModeLiveEntries = [];
@@ -9954,6 +10054,13 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         return fallbackToCameraModeChat(message, true);
       }
     };
+    const flashCameraModeSendEffect = () => {
+      if (!cameraMode) return;
+      const el = document.createElement("div");
+      el.className = "camera-mode-send-border";
+      cameraMode.appendChild(el);
+      el.addEventListener("animationend", () => el.remove(), { once: true });
+    };
     const runCameraModeSend = async (sourceBlob) => {
       const target = syncCameraModeTarget();
       if (!target) {
@@ -9973,6 +10080,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         await sendCameraModeAttachment(uploadedPath, target);
         await refresh({ forceScroll: true });
         setCameraModeBusy(false);
+        flashCameraModeSendEffect();
         return true;
       } catch (err) {
         setCameraModeBusy(false, err?.message || "camera send failed", true);
@@ -10267,90 +10375,227 @@ __AGENT_FONT_MODE_INLINE_STYLE__
 
     // Web Speech API setup
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition && micBtn) {
-      const recognition = new SpeechRecognition();
-      recognition.lang = "ja-JP";
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      let isListening = false;
-      let finalTranscript = "";
-
-      const toggleRecognition = () => {
-        if (isListening) {
-          recognition.stop();
-          return;
-        }
-        finalTranscript = messageInput.value;
-        // Check permission state for diagnostics
-        if (navigator.permissions && navigator.permissions.query) {
-          navigator.permissions.query({ name: "microphone" }).then(result => {
-            console.log("[mic] permission state:", result.state);
-            if (result.state === "denied") {
-              setStatus("マイクがブロックされています。アドレスバー左のアイコン → サイトの設定 → マイクを「許可」に変更してください");
-              setTimeout(() => setStatus(""), 8000);
-            }
-          }).catch(() => {});
-        }
-        try {
-          recognition.start();
-        } catch (err) {
-          console.error("[mic] recognition.start() threw:", err);
-          setStatus("音声認識の開始に失敗: " + err.message);
-          setTimeout(() => setStatus(""), 5000);
-        }
+    if (SpeechRecognition) {
+      const checkMicrophonePermission = (onDenied) => {
+        if (!(navigator.permissions && navigator.permissions.query)) return;
+        navigator.permissions.query({ name: "microphone" }).then((result) => {
+          console.log("[mic] permission state:", result.state);
+          if (result.state === "denied") onDenied();
+        }).catch(() => {});
       };
-      micBtn.addEventListener("click", toggleRecognition);
-      micBtn.addEventListener("touchend", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleRecognition();
-      }, { passive: false });
 
-      recognition.onstart = () => {
-        isListening = true;
-        micBtn.classList.add("listening");
-      };
-      recognition.onresult = (event) => {
-        let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          } else {
-            interim += event.results[i][0].transcript;
+      if (micBtn) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = "ja-JP";
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        let isListening = false;
+        let finalTranscript = "";
+
+        const toggleRecognition = () => {
+          if (isListening) {
+            recognition.stop();
+            return;
           }
-        }
-        messageInput.value = finalTranscript + interim;
-        updateSendBtnVisibility();
-        messageInput.dispatchEvent(new Event("input"));
-      };
-      recognition.onend = () => {
-        isListening = false;
-        micBtn.classList.remove("listening");
-        messageInput.value = finalTranscript;
-        updateSendBtnVisibility();
-        if (finalTranscript.trim()) {
-          setTimeout(() => submitMessage(), 100);
-        }
-      };
-      recognition.onerror = (e) => {
-        console.error("[mic] recognition error:", e.error, e);
-        isListening = false;
-        micBtn.classList.remove("listening");
-        if (e.error === "not-allowed") {
-          setStatus("マイクのアクセスが拒否されています。設定 > プライバシー > マイクで許可してください。");
-        } else if (e.error === "service-not-allowed") {
-          setStatus("このモード（ホーム画面アプリ）では音声認識が使えません。Safariで開いてください。");
-        } else if (e.error === "network") {
-          setStatus("音声認識サービスに接続できません（ネットワークエラー）");
-        } else if (e.error === "aborted") {
-          setStatus("音声認識が中断されました");
-        } else {
-          setStatus("音声認識エラー: " + (e.error || "unknown"));
-        }
-        setTimeout(() => setStatus(""), 5000);
-      };
-    } else if (micBtn) {
-      micBtn.classList.add("no-speech");
+          finalTranscript = messageInput.value;
+          checkMicrophonePermission(() => {
+            setStatus("マイクがブロックされています。アドレスバー左のアイコン → サイトの設定 → マイクを「許可」に変更してください");
+            setTimeout(() => setStatus(""), 8000);
+          });
+          try {
+            recognition.start();
+          } catch (err) {
+            console.error("[mic] recognition.start() threw:", err);
+            setStatus("音声認識の開始に失敗: " + err.message);
+            setTimeout(() => setStatus(""), 5000);
+          }
+        };
+        micBtn.addEventListener("click", toggleRecognition);
+        micBtn.addEventListener("touchend", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleRecognition();
+        }, { passive: false });
+
+        recognition.onstart = () => {
+          isListening = true;
+          micBtn.classList.add("listening");
+        };
+        recognition.onresult = (event) => {
+          let interim = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interim += event.results[i][0].transcript;
+            }
+          }
+          messageInput.value = finalTranscript + interim;
+          updateSendBtnVisibility();
+          messageInput.dispatchEvent(new Event("input"));
+        };
+        recognition.onend = () => {
+          isListening = false;
+          micBtn.classList.remove("listening");
+          messageInput.value = finalTranscript;
+          updateSendBtnVisibility();
+          if (finalTranscript.trim()) {
+            setTimeout(() => submitMessage(), 100);
+          }
+        };
+        recognition.onerror = (e) => {
+          console.error("[mic] recognition error:", e.error, e);
+          isListening = false;
+          micBtn.classList.remove("listening");
+          if (e.error === "not-allowed") {
+            setStatus("マイクのアクセスが拒否されています。設定 > プライバシー > マイクで許可してください。");
+          } else if (e.error === "service-not-allowed") {
+            setStatus("このモード（ホーム画面アプリ）では音声認識が使えません。Safariで開いてください。");
+          } else if (e.error === "network") {
+            setStatus("音声認識サービスに接続できません（ネットワークエラー）");
+          } else if (e.error === "aborted") {
+            setStatus("音声認識が中断されました");
+          } else {
+            setStatus("音声認識エラー: " + (e.error || "unknown"));
+          }
+          setTimeout(() => setStatus(""), 5000);
+        };
+      }
+
+      if (cameraModeMicBtn) {
+        const cameraRecognition = new SpeechRecognition();
+        cameraRecognition.lang = "ja-JP";
+        cameraRecognition.continuous = false;
+        cameraRecognition.interimResults = true;
+        let isListening = false;
+        let suppressCommit = false;
+        let finalTranscript = "";
+
+        const clearCameraMicUi = () => {
+          cameraModeMicListening = false;
+          cameraModeMicBtn.classList.remove("listening");
+          syncCameraModeBusyState();
+        };
+        cancelCameraModeMicRecognition = () => {
+          suppressCommit = true;
+          finalTranscript = "";
+          clearCameraMicUi();
+          if (!cameraModeBusy) setCameraModeHint("");
+          if (!isListening) return;
+          try {
+            cameraRecognition.abort();
+          } catch (_) {
+            try { cameraRecognition.stop(); } catch (_) {}
+          }
+        };
+        const toggleCameraRecognition = () => {
+          if (isListening) {
+            suppressCommit = false;
+            cameraRecognition.stop();
+            return;
+          }
+          if (cameraModeBusy || !cameraMode || cameraMode.hidden) return;
+          const target = syncCameraModeTarget();
+          if (!target) {
+            setCameraModeHint("No available agent target.", true);
+            return;
+          }
+          finalTranscript = "";
+          suppressCommit = false;
+          checkMicrophonePermission(() => {
+            setCameraModeHint("Microphone access is blocked.", true);
+          });
+          try {
+            cameraRecognition.start();
+          } catch (err) {
+            setCameraModeHint("Voice input failed to start.", true);
+          }
+        };
+        cameraModeMicBtn.addEventListener("click", toggleCameraRecognition);
+        cameraModeMicBtn.addEventListener("touchend", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleCameraRecognition();
+        }, { passive: false });
+        cameraRecognition.onstart = () => {
+          isListening = true;
+          cameraModeMicListening = true;
+          cameraModeMicBtn.classList.add("listening");
+          syncCameraModeBusyState();
+          setCameraModeHint("Listening...");
+        };
+        cameraRecognition.onresult = (event) => {
+          let interim = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interim += event.results[i][0].transcript;
+            }
+          }
+          const preview = `${finalTranscript}${interim}`.trim();
+          setCameraModeHint(preview || "Listening...");
+        };
+        cameraRecognition.onend = () => {
+          isListening = false;
+          clearCameraMicUi();
+          if (suppressCommit) {
+            suppressCommit = false;
+            finalTranscript = "";
+            if (!cameraModeBusy) setCameraModeHint("");
+            return;
+          }
+          const transcript = String(finalTranscript || "").trim();
+          finalTranscript = "";
+          if (!transcript) {
+            if (!cameraModeBusy) setCameraModeHint("");
+            return;
+          }
+          void (async () => {
+            const target = syncCameraModeTarget();
+            if (!target) {
+              setCameraModeHint("No available agent target.", true);
+              return;
+            }
+            try {
+              setCameraModeBusy(true);
+              await sendCameraModeText(transcript, target);
+              await refresh({ forceScroll: true });
+              setCameraModeBusy(false);
+              setCameraModeHint("");
+            } catch (err) {
+              setCameraModeBusy(false, err?.message || "voice send failed", true);
+            }
+          })();
+        };
+        cameraRecognition.onerror = (e) => {
+          console.error("[camera-mic] recognition error:", e.error, e);
+          isListening = false;
+          clearCameraMicUi();
+          if (suppressCommit || e.error === "aborted") {
+            suppressCommit = false;
+            if (!cameraModeBusy) setCameraModeHint("");
+            return;
+          }
+          if (e.error === "not-allowed") {
+            setCameraModeHint("Microphone access denied.", true);
+          } else if (e.error === "service-not-allowed") {
+            setCameraModeHint("Voice input is unavailable here.", true);
+          } else if (e.error === "network") {
+            setCameraModeHint("Speech recognition network error.", true);
+          } else if (e.error === "no-speech") {
+            setCameraModeHint("No speech detected.", true);
+          } else {
+            setCameraModeHint("Voice input error.", true);
+          }
+          setTimeout(() => {
+            if (!cameraModeMicListening && !cameraModeBusy) setCameraModeHint("");
+          }, 3200);
+        };
+      }
+    } else {
+      if (micBtn) micBtn.classList.add("no-speech");
+      if (cameraModeMicBtn) cameraModeMicBtn.classList.add("no-speech");
     }
 
     // Import / file attach
