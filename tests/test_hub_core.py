@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import signal
 import sys
 import tempfile
 import unittest
@@ -170,6 +171,66 @@ class HubCoreTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertEqual(port, 8123)
         self.assertEqual(detail, "chat server did not become ready")
+        popen_mock.assert_called_once()
+
+
+    def test_stop_chat_server_returns_success_when_no_process_listening(self) -> None:
+        with patch.object(self.runtime, "chat_port_for_session", return_value=8123), patch(
+            "agent_index.hub_core.subprocess.run",
+            return_value=type("R", (), {"stdout": "", "returncode": 0})(),
+        ):
+            ok, detail = self.runtime.stop_chat_server("demo")
+        self.assertTrue(ok)
+        self.assertEqual(detail, "")
+
+    def test_stop_chat_server_returns_failure_when_lsof_fails(self) -> None:
+        with patch.object(self.runtime, "chat_port_for_session", return_value=8123), patch(
+            "agent_index.hub_core.subprocess.run",
+            side_effect=OSError("lsof not found"),
+        ):
+            ok, detail = self.runtime.stop_chat_server("demo")
+        self.assertFalse(ok)
+        self.assertIn("lsof failed", detail)
+
+    def test_stop_chat_server_returns_failure_when_process_survives_sigkill(self) -> None:
+        with patch.object(self.runtime, "chat_port_for_session", return_value=8123), patch(
+            "agent_index.hub_core.subprocess.run",
+            return_value=type("R", (), {"stdout": "12345\n", "returncode": 0})(),
+        ), patch("agent_index.hub_core.os.kill") as kill_mock, patch.object(
+            self.runtime, "chat_ready", return_value=True
+        ), patch("agent_index.hub_core.time.sleep"):
+            ok, detail = self.runtime.stop_chat_server("demo")
+        self.assertFalse(ok)
+        self.assertIn("still running", detail)
+        sigterm_calls = [c for c in kill_mock.call_args_list if c[0][1] == signal.SIGTERM]
+        sigkill_calls = [c for c in kill_mock.call_args_list if c[0][1] == signal.SIGKILL]
+        self.assertEqual(len(sigterm_calls), 1)
+        self.assertEqual(len(sigkill_calls), 1)
+
+    def test_ensure_chat_server_continues_launch_after_stop_failure(self) -> None:
+        session_dir = self.repo_root / "logs" / "demo"
+        session_dir.mkdir()
+        with patch.object(self.runtime, "chat_port_for_session", return_value=8123), patch.object(
+            self.runtime, "chat_ready", side_effect=[True, False, True]
+        ), patch.object(
+            self.runtime, "chat_server_matches", return_value=False
+        ), patch.object(
+            self.runtime, "stop_chat_server", return_value=(False, "lsof failed")
+        ), patch("agent_index.hub_core.port_is_bindable", return_value=True), patch.object(
+            self.runtime, "_chat_launch_workspace", return_value=("/tmp/workspace", False)
+        ), patch.object(
+            self.runtime, "tmux_env_query", return_value=("/tmp/workspace/logs", False)
+        ), patch.object(
+            self.runtime, "session_agents_query", return_value=(["claude"], False)
+        ), patch.object(
+            self.runtime, "_chat_launch_session_dir", return_value=session_dir
+        ), patch(
+            "agent_index.hub_core.subprocess.Popen"
+        ) as popen_mock:
+            ok, port, detail = self.runtime.ensure_chat_server("demo")
+
+        self.assertTrue(ok)
+        self.assertEqual(port, 8123)
         popen_mock.assert_called_once()
 
 

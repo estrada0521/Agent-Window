@@ -61,8 +61,7 @@ def parse_saved_time(value: str) -> float:
     for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
         try:
             return dt.datetime.strptime(value, fmt).timestamp()
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
+        except ValueError:
             pass
     return 0
 
@@ -822,8 +821,7 @@ class HubRuntime:
                     data = json.loads(body.decode("utf-8", errors="replace"))
                     if isinstance(data, dict):
                         return data
-            except Exception as exc:
-                logging.error(f"Unexpected error: {exc}", exc_info=True)
+            except (OSError, http.client.HTTPException, json.JSONDecodeError):
                 continue
         return None
 
@@ -841,7 +839,7 @@ class HubRuntime:
             return False
         return True
 
-    def stop_chat_server(self, session_name: str) -> None:
+    def stop_chat_server(self, session_name: str) -> tuple[bool, str]:
         chat_port = self.chat_port_for_session(session_name)
         try:
             result = subprocess.run(
@@ -852,27 +850,31 @@ class HubRuntime:
                 check=False,
             )
             pids = [int(line.strip()) for line in result.stdout.splitlines() if line.strip().isdigit()]
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            pids = []
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            return False, f"lsof failed: {exc}"
         if not pids:
-            return
+            return True, ""
         for pid in pids:
             try:
                 os.kill(pid, signal.SIGTERM)
-            except Exception as exc:
-                logging.error(f"Unexpected error: {exc}", exc_info=True)
+            except ProcessLookupError:
                 pass
+            except OSError as exc:
+                logging.warning("SIGTERM pid %d failed: %s", pid, exc)
         for _ in range(15):
             if not self.chat_ready(chat_port):
-                return
+                return True, ""
             time.sleep(0.1)
         for pid in pids:
             try:
                 os.kill(pid, signal.SIGKILL)
-            except Exception as exc:
-                logging.error(f"Unexpected error: {exc}", exc_info=True)
+            except ProcessLookupError:
                 pass
+            except OSError as exc:
+                logging.warning("SIGKILL pid %d failed: %s", pid, exc)
+        if self.chat_ready(chat_port):
+            return False, f"chat server on port {chat_port} still running after SIGKILL"
+        return True, ""
 
     def _chat_launch_workspace(self, session_name: str) -> tuple[str, bool]:
         workspace, timed_out = self.tmux_env_query(session_name, "MULTIAGENT_WORKSPACE")
@@ -922,7 +924,9 @@ class HubRuntime:
         if self.chat_ready(chat_port):
             if self.chat_server_matches(session_name, chat_port):
                 return True, chat_port, ""
-            self.stop_chat_server(session_name)
+            stop_ok, stop_detail = self.stop_chat_server(session_name)
+            if not stop_ok:
+                logging.warning("stop_chat_server failed before relaunch: %s", stop_detail)
         if not port_is_bindable(chat_port):
             for candidate in range(chat_port + 1, chat_port + 40):
                 if self.chat_ready(candidate) and self.chat_server_matches(session_name, candidate):
@@ -992,7 +996,9 @@ class HubRuntime:
         if self.tmux_socket:
             env["MULTIAGENT_TMUX_SOCKET"] = self.tmux_socket
         env["MULTIAGENT_SKIP_USER_CHAT"] = "1"
-        self.stop_chat_server(session_name)
+        stop_ok, stop_detail = self.stop_chat_server(session_name)
+        if not stop_ok:
+            logging.warning("stop_chat_server failed during revive: %s", stop_detail)
         cmd = [
             str(self.multiagent_path),
             "--session", session_name,
@@ -1040,7 +1046,9 @@ class HubRuntime:
         for _ in range(20):
             query = self.active_session_records_query()
             if session_name not in query.records:
-                self.stop_chat_server(session_name)
+                stop_ok, stop_detail = self.stop_chat_server(session_name)
+                if not stop_ok:
+                    return True, f"session killed but chat server cleanup failed: {stop_detail}"
                 return True, ""
             if query.state == "unhealthy":
                 return False, f"tmux became unresponsive while killing session ({query.detail})"

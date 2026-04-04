@@ -5843,6 +5843,8 @@ class Handler(BaseHTTPRequestHandler):
             if not ok:
                 self._send_html(500, error_page(f"Failed to kill {session_name}: {detail}"))
                 return
+            if detail:
+                logging.warning("Session %s terminated but cleanup incomplete: %s", session_name, detail)
             self.send_response(302)
             self.send_header("Location", "/")
             self.end_headers()
