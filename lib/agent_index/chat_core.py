@@ -43,6 +43,9 @@ _PANE_RUNTIME_TOOL_LINE_PATTERNS: dict[str, tuple[re.Pattern[str], ...]] = {
     "cursor": (
         re.compile(r"^\s*(?:⬢\s+)?(?P<label>Read|Grepped)(?!,)\b(?:\s+(?P<body>.*?))?\s*$"),
     ),
+    "copilot": (
+        re.compile(r"^\s*[⏺●•·]\s+(?P<body>.+?)\s*$"),
+    ),
 }
 _PANE_RUNTIME_BULLET_RE = re.compile(r"^\s*[⏺●•·◦○]\s+")
 _PANE_RUNTIME_SEPARATOR_RE = re.compile(r"^\s*[─—-]{3,}\s*$")
@@ -105,6 +108,8 @@ def _pane_runtime_tool_line_text(line: str) -> str:
 def _pane_runtime_line_allowed(line: str, *, agent: str = "") -> bool:
     text = str(line or "").strip()
     if not text or _PANE_RUNTIME_EXCLUDED_LINE_RE.search(text):
+        return False
+    if "esc to cancel" in text.lower():
         return False
     if _agent_base_name(agent) == "claude":
         normalized = _normalize_pane_runtime_detail(text)

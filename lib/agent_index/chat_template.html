@@ -4475,27 +4475,63 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       left: 14px;
       bottom: calc(env(safe-area-inset-bottom, 0px) + 116px);
       width: 44px;
-      pointer-events: none;
+      display: none;
+      z-index: 3;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      pointer-events: auto;
+    }
+    .camera-mode-target-toggle {
+      appearance: none;
+      flex: 0 0 40px;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 999px;
+      background: transparent !important;
+      color: var(--text);
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: none;
+      transform: none;
+      pointer-events: auto;
+      touch-action: manipulation;
+    }
+    .camera-mode-target-toggle .camera-mode-target-icon {
+      filter: brightness(0) invert(1) !important;
+      opacity: 1 !important;
+    }
+    .camera-mode-target-toggle .agent-icon-slot--camera {
+      color: rgba(252, 252, 252, 0.98);
+      transform: scale(1.15);
+    }
+    .camera-mode-target-toggle.is-open {
+      opacity: 0.72;
     }
     .camera-mode-bottom {
+      position: absolute;
       left: 0;
       right: 0;
       bottom: 0;
-      padding:
-        84px
-        0
-        calc(env(safe-area-inset-bottom, 0px) + 18px);
+      padding: 0;
+      min-height: 82px;
+      max-height: 38vh;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      background: linear-gradient(to top, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.9) 26%, rgba(10, 10, 10, 0.56) 58%, rgba(10, 10, 10, 0) 100%);
+      justify-content: flex-end;
+      gap: 0;
+      background: linear-gradient(to top, rgba(10, 10, 10, 1) 0%, rgba(10, 10, 10, 0.92) 20%, rgba(10, 10, 10, 0.7) 45%, rgba(10, 10, 10, 0.3) 70%, rgba(10, 10, 10, 0) 100%);
     }
     .camera-mode-replies {
       position: relative;
       width: 100%;
       max-width: none;
-      max-height: min(30vh, 236px);
-      z-index: auto;
+      flex: 0 1 auto;
+      min-height: 0;
+      z-index: 1;
       transform: none;
       pointer-events: auto;
       overflow-y: auto;
@@ -4504,13 +4540,16 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       -ms-overflow-style: none;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
+      order: 1;
+      mask-image: linear-gradient(to bottom, transparent 0%, black 18%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 18%);
     }
     .camera-mode-replies::-webkit-scrollbar {
       display: none;
     }
     .camera-mode-replies-inner {
       display: block;
-      padding: 0 14px;
+      padding: 48px 20px calc(env(safe-area-inset-bottom, 0px) + 82px);
     }
     .camera-mode-replies .message-row {
       margin: 0;
@@ -4521,6 +4560,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     .camera-mode-replies .message-row:not(.user) .message {
       max-width: none;
       width: 100%;
+      padding-top: 0 !important;
       background: transparent !important;
       border-color: transparent !important;
       box-shadow: none !important;
@@ -4531,16 +4571,26 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       display: none;
     }
     .camera-mode-replies .message-meta-below {
-      margin-bottom: 7px;
+      display: none !important;
+      margin: 0 !important;
     }
     .camera-mode-replies .reply-btn,
     .camera-mode-replies .reply-target-jump-btn,
     .camera-mode-replies .reply-jump-inline,
     .camera-mode-replies .copy-btn,
     .camera-mode-replies .user-collapse-toggle,
-    .camera-mode-replies .message-deferred-actions,
-    .camera-mode-replies .user-message-divider {
+    .camera-mode-replies .message-deferred-actions {
       display: none !important;
+    }
+    .camera-mode-replies .message-row:not(.user):not(.system) {
+      border-top: 1px solid rgba(255, 255, 255, 0.25);
+      padding-top: 6px;
+      margin-top: 6px;
+    }
+    .camera-mode-replies .message-row:not(.user):not(.system):first-child {
+      border-top: none;
+      padding-top: 0;
+      margin-top: 0;
     }
     .camera-mode-replies .md-body {
       color: rgba(255, 255, 255, 0.97);
@@ -4550,42 +4600,150 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       display: none !important;
     }
     .camera-mode-thinking {
-      width: 100%;
-      pointer-events: none;
-      padding: 0 14px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      pointer-events: auto;
+      padding: 6px 12px;
+      z-index: 3;
     }
-    .camera-mode-thinking .message-thinking-container {
-      position: static;
-      margin: 0;
+    .camera-mode-thinking-shell {
+      display: flex;
+      align-items: center;
       gap: 0;
+      min-width: 0;
     }
-    .camera-mode-thinking .message-thinking-row {
-      width: 100%;
-      padding: 0;
+    .camera-mode-thinking-main {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .camera-mode-thinking-toggle {
+      appearance: none;
+      border: none;
+      padding: 8px;
+      margin: 0 8px 0 0;
+      background: transparent;
+      color: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      pointer-events: auto;
+      touch-action: manipulation;
+      line-height: 0;
+      width: 36px;
+      height: 36px;
+    }
+    .camera-mode-thinking-toggle .message-thinking-icon-wrap {
+      transform: none;
+      width: 20px;
+      height: 20px;
+    }
+    .camera-mode-thinking-toggle .message-thinking-icon {
+      width: 20px;
+      height: 20px;
+      filter: brightness(0) invert(1) !important;
+      opacity: 1 !important;
+    }
+    .camera-mode-thinking-toggle.is-idle .message-thinking-glow {
+      animation: none;
+      opacity: 0;
+    }
+    .camera-mode-thinking-toggle.is-idle .message-thinking-icon {
+      animation: none;
+      transform: none;
+      filter: brightness(0) invert(1) !important;
+      opacity: 1 !important;
+    }
+    .camera-mode-thinking-copy {
+      min-width: 0;
+      display: inline-flex;
+      align-items: center;
       color: rgba(252, 252, 252, 0.74);
+      font-size: 16px;
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-left: 4px;
     }
-    .camera-mode-thinking .message-thinking-runtime-slot,
-    .camera-mode-thinking .message-thinking-runtime-line,
-    .camera-mode-thinking .message-thinking-label-live,
-    .camera-mode-thinking .message-thinking-label-preview {
-      max-width: 100%;
+    .camera-mode-thinking-copy.is-idle {
+      color: rgba(252, 252, 252, 0.56);
+      font-size: 13px;
+      letter-spacing: 0.01em;
+    }
+    .camera-mode-thinking-targets {
+      display: none;
+      align-items: center;
+      gap: 0;
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      white-space: nowrap;
+      pointer-events: auto;
+      margin-left: 4px;
+    }
+    .camera-mode-thinking-targets::-webkit-scrollbar {
+      display: none;
+    }
+    .camera-mode-thinking-targets.is-open {
+      display: flex;
+    }
+    .camera-mode-thinking-target-chip {
+      flex: 0 0 auto;
+      padding: 8px;
+      margin: 0 8px 0 0;
+      pointer-events: auto;
+      touch-action: manipulation;
+      line-height: 0;
+    }
+    .camera-mode-thinking-target-chip .target-icon {
+      filter: brightness(0) invert(1) !important;
+      opacity: 1 !important;
+    }
+    .camera-mode-thinking-target-chip .agent-icon-slot--chip {
+      color: rgba(252, 252, 252, 0.98) !important;
+      transform: none !important;
+    }
+    .camera-mode-thinking-target-chip .agent-icon-instance-sub {
+      color: rgba(252, 252, 252, 0.98) !important;
+      text-shadow:
+        0 0 1px rgba(10, 10, 10, 0.96),
+        0 0 2px rgba(10, 10, 10, 0.96);
     }
     .camera-mode-targets {
-      display: flex;
+      display: none;
       flex-direction: column;
       align-items: flex-start;
-      gap: 8px;
+      gap: 10px;
       width: 44px;
-      max-height: 100%;
+      max-height: calc(100% - 48px);
       overflow-y: auto;
       overflow-x: hidden;
       padding: 2px 0;
-      pointer-events: auto;
+      pointer-events: none;
       scrollbar-width: none;
       -ms-overflow-style: none;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 160ms ease, transform 160ms ease, max-height 160ms ease;
     }
     .camera-mode-targets::-webkit-scrollbar {
       display: none;
+    }
+    .camera-mode-target-rail.is-open .camera-mode-targets {
+      display: flex;
+      max-height: calc(100% - 48px);
+      pointer-events: auto;
+      opacity: 1;
+      transform: translateY(0);
     }
     .camera-mode-target {
       appearance: none;
@@ -4602,6 +4760,8 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       justify-content: center;
       box-shadow: none;
       transform: none;
+      pointer-events: auto;
+      touch-action: manipulation;
     }
     .camera-mode-target.active {
       background: transparent !important;
@@ -4616,11 +4776,11 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     }
     .camera-mode-target .camera-mode-target-icon {
       filter: brightness(0) invert(0.8) !important;
-      opacity: 0.3;
+      opacity: 0.72;
       transition: filter 0.2s ease, opacity 0.2s ease;
     }
     .camera-mode-target .agent-icon-slot--camera {
-      color: rgba(252, 252, 252, 0.42);
+      color: rgba(252, 252, 252, 0.76);
       transition: color 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .camera-mode-target.active .agent-icon-slot--camera {
@@ -4639,31 +4799,34 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       left: auto;
       right: auto;
       bottom: auto;
-      padding: 0 14px;
+      padding: 0 20px;
       text-align: left;
       font: 500 12px/1.35 "SF Pro Text","Segoe UI",sans-serif;
       color: rgba(255, 255, 255, 0.86);
       text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
       pointer-events: none;
+      order: 2;
     }
     .camera-mode-hint.error {
       color: rgba(255, 214, 214, 0.96);
     }
     .camera-mode-footer {
-      position: relative;
-      left: auto;
-      right: auto;
-      bottom: auto;
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0;
-      padding: 0 14px;
+      padding: 8px 20px max(8px, env(safe-area-inset-bottom, 0px));
+      z-index: 2;
+      pointer-events: none;
     }
     .camera-mode-shutter {
       appearance: none;
-      width: 76px;
-      height: 76px;
+      width: 66px;
+      height: 66px;
       border-radius: 999px;
       padding: 0;
       border: 2px solid rgba(255, 255, 255, 0.82);
@@ -4671,6 +4834,7 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      pointer-events: auto;
       box-shadow:
         0 10px 28px rgba(0, 0, 0, 0.28),
         inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -4679,8 +4843,8 @@ __AGENT_SEL_GOTHIC_MD_LI__ {
     }
     .camera-mode-shutter::before {
       content: "";
-      width: 58px;
-      height: 58px;
+      width: 48px;
+      height: 48px;
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.98);
       transition: transform 120ms ease, opacity 120ms ease;
@@ -5016,7 +5180,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     </div>
   </div>
   <div id="cameraMode" class="camera-mode" hidden>
-    <div class="camera-mode-shell" role="dialog" aria-modal="true" aria-label="Camera">
+    <div id="cameraModeShell" class="camera-mode-shell" role="dialog" aria-modal="true" aria-label="Camera">
       <video id="cameraModeVideo" class="camera-mode-video" playsinline autoplay muted></video>
       <div class="camera-mode-shade" aria-hidden="true"></div>
       <div id="cameraModeEmpty" class="camera-mode-empty" hidden>
@@ -5028,7 +5192,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
-      <div class="camera-mode-target-rail">
+      <div id="cameraModeTargetRail" class="camera-mode-target-rail">
+        <button type="button" id="cameraModeTargetToggleBtn" class="camera-mode-target-toggle" aria-label="Choose camera target" aria-expanded="false"></button>
         <div id="cameraModeTargets" class="camera-mode-targets"></div>
       </div>
       <div class="camera-mode-bottom">
@@ -5461,8 +5626,11 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const fileModalThemeToggleIcon = document.getElementById("fileModalThemeToggleIcon");
     const fileModalOpenEditorBtn = document.getElementById("fileModalOpenEditorBtn");
     const cameraMode = document.getElementById("cameraMode");
+    const cameraModeShell = document.getElementById("cameraModeShell");
     const cameraModeVideo = document.getElementById("cameraModeVideo");
     const cameraModeCloseBtn = document.getElementById("cameraModeCloseBtn");
+    const cameraModeTargetRail = document.getElementById("cameraModeTargetRail");
+    const cameraModeTargetToggleBtn = document.getElementById("cameraModeTargetToggleBtn");
     const cameraModeTargets = document.getElementById("cameraModeTargets");
     const cameraModeReplies = document.getElementById("cameraModeReplies");
     const cameraModeRepliesInner = document.getElementById("cameraModeRepliesInner");
@@ -6170,7 +6338,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     let cameraModeBusy = false;
     let cameraModeOpening = false;
     let cameraModeTarget = "";
-    let cameraModeLiveEntry = null;
+    let cameraModeTargetsExpanded = false;
+    let cameraModeLiveEntries = [];
     let _renderedIds = new Set(); // incremental render tracking
     const expandedUserMessages = new Set();
     const escapeHtml = (value) => value
@@ -6301,65 +6470,92 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       cameraMode?.classList.toggle("busy", !!cameraModeBusy);
       if (cameraModeShutterBtn) cameraModeShutterBtn.disabled = !!cameraModeBusy;
       if (cameraModeCloseBtn) cameraModeCloseBtn.disabled = !!cameraModeBusy;
+      if (cameraModeTargetToggleBtn) cameraModeTargetToggleBtn.disabled = !!cameraModeBusy;
       cameraModeTargets?.querySelectorAll(".camera-mode-target").forEach((node) => {
         node.disabled = !!cameraModeBusy;
       });
+    };
+    const setCameraModeTargetsExpanded = (expanded) => {
+      cameraModeTargetsExpanded = !!expanded;
+      cameraModeTargetRail?.classList.toggle("is-open", cameraModeTargetsExpanded);
+      if (cameraModeTargetToggleBtn) {
+        cameraModeTargetToggleBtn.classList.toggle("is-open", cameraModeTargetsExpanded);
+        cameraModeTargetToggleBtn.setAttribute("aria-expanded", cameraModeTargetsExpanded ? "true" : "false");
+      }
     };
     const renderCameraModeTargets = () => {
       if (!cameraModeTargets) return;
       const targets = cameraModeAllowedTargets();
       const active = syncCameraModeTarget();
-      cameraModeTargets.innerHTML = targets.map((target) => {
+      const displayTargets = cameraModeTargetsExpanded
+        ? targets.filter((target) => target !== active)
+        : [];
+      if (cameraModeTargetToggleBtn) {
+        if (!active) {
+          cameraModeTargetToggleBtn.hidden = true;
+          cameraModeTargetToggleBtn.innerHTML = "";
+        } else {
+          const base = agentBaseName(active);
+          cameraModeTargetToggleBtn.hidden = false;
+          cameraModeTargetToggleBtn.dataset.target = active;
+          cameraModeTargetToggleBtn.dataset.baseAgent = base;
+          cameraModeTargetToggleBtn.title = active;
+          cameraModeTargetToggleBtn.innerHTML = `<span class="agent-icon-slot agent-icon-slot--camera"><img class="camera-mode-target-icon" src="${escapeHtml(agentIconSrc(active))}" alt="${escapeHtml(active)}">${agentIconInstanceSubHtml(active)}</span>`;
+        }
+      }
+      cameraModeTargets.innerHTML = displayTargets.map((target) => {
         const base = agentBaseName(target);
         return `<button type="button" class="camera-mode-target${target === active ? " active" : ""}" data-target="${escapeHtml(target)}" data-base-agent="${base}" aria-pressed="${target === active ? "true" : "false"}" aria-label="${escapeHtml(target)}" title="${escapeHtml(target)}"><span class="agent-icon-slot agent-icon-slot--camera"><img class="camera-mode-target-icon" src="${escapeHtml(agentIconSrc(target))}" alt="${escapeHtml(target)}">${agentIconInstanceSubHtml(target)}</span><span class="camera-mode-target-label">${escapeHtml(target)}</span></button>`;
       }).join("");
-      cameraModeTargets.hidden = !targets.length;
       cameraModeTargets.querySelectorAll(".camera-mode-target").forEach((node) => {
-        node.addEventListener("click", () => {
+        node.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
           if (cameraModeBusy) return;
           cameraModeTarget = node.dataset.target || "";
+          setCameraModeTargetsExpanded(false);
           renderCameraModeTargets();
           renderCameraModeThinking();
         });
       });
       syncCameraModeBusyState();
     };
+    const cameraModeReplyEntries = (displayEntries) => {
+      const entries = Array.isArray(displayEntries) ? displayEntries : [];
+      return entries
+        .filter((entry) => entry && entry.sender && entry.sender !== "user" && entry.sender !== "system")
+        .slice(-12);
+    };
     const renderCameraModeReplies = () => {
       if (!cameraModeReplies || !cameraModeRepliesInner) return;
-      const entry = cameraModeLiveEntry && typeof cameraModeLiveEntry === "object" ? cameraModeLiveEntry : null;
-      cameraModeReplies.hidden = !entry;
-      if (!entry) {
+      const entries = Array.isArray(cameraModeLiveEntries) ? cameraModeLiveEntries.filter(Boolean) : [];
+      cameraModeReplies.hidden = !entries.length;
+      if (!entries.length) {
         cameraModeRepliesInner.innerHTML = "";
         return;
       }
-      const replyChildren = buildReplyChildrenMap([entry]);
-      cameraModeRepliesInner.innerHTML = buildMsgHTML(entry, replyChildren);
+      const replyChildren = buildReplyChildrenMap(entries);
+      const nearBottom = Math.abs((cameraModeReplies.scrollHeight - cameraModeReplies.clientHeight) - cameraModeReplies.scrollTop) < 28;
+      cameraModeRepliesInner.innerHTML = entries.map((entry) => buildMsgHTML(entry, replyChildren)).join("");
       postRenderScope(cameraModeRepliesInner);
       queueStableCodeBlockSync(cameraModeRepliesInner);
-      const row = cameraModeRepliesInner.querySelector(".message-row");
+      const rows = cameraModeRepliesInner.querySelectorAll(".message-row");
+      const row = rows.length ? rows[rows.length - 1] : null;
       if (row) {
         row.classList.add("animate-in");
         scheduleAnimateInCleanup(row, { streamBody: false });
       }
-    };
-    const latestCameraModeEntry = (displayEntries) => {
-      const entries = Array.isArray(displayEntries) ? displayEntries : [];
-      return entries.filter((entry) => entry && entry.sender && entry.sender !== "user" && entry.sender !== "system").at(-1) || null;
+      if (nearBottom) {
+        cameraModeReplies.scrollTop = cameraModeReplies.scrollHeight;
+      }
     };
     const syncCameraModeReplies = (displayEntries) => {
       if (!cameraMode || cameraMode.hidden) return;
-      const latestIncoming = latestCameraModeEntry(displayEntries);
-      if (!latestIncoming) {
-        if (cameraModeLiveEntry) {
-          cameraModeLiveEntry = null;
-          renderCameraModeReplies();
-        }
-        return;
-      }
-      const nextId = String(latestIncoming?.msg_id || "");
-      const prevId = String(cameraModeLiveEntry?.msg_id || "");
-      if (nextId && nextId === prevId) return;
-      cameraModeLiveEntry = latestIncoming;
+      const nextEntries = cameraModeReplyEntries(displayEntries);
+      const nextSig = nextEntries.map((entry) => String(entry?.msg_id || "")).join(",");
+      const prevSig = (Array.isArray(cameraModeLiveEntries) ? cameraModeLiveEntries : []).map((entry) => String(entry?.msg_id || "")).join(",");
+      if (nextSig === prevSig) return;
+      cameraModeLiveEntries = nextEntries;
       renderCameraModeReplies();
     };
     const setQuickActionsDisabled = (disabled) => {
@@ -9682,7 +9878,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
     const setCameraModeBusy = (busy, hint = "", isError = false) => {
       cameraModeBusy = !!busy;
       syncCameraModeBusyState();
-      if (hint) {
+      if (hint && isError) {
         setCameraModeHint(hint, isError);
       }
     };
@@ -9696,7 +9892,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       setCameraModeFallbackState(false);
       cameraModeBusy = false;
       cameraModeOpening = false;
-      cameraModeLiveEntry = null;
+      setCameraModeTargetsExpanded(false);
+      cameraModeLiveEntries = [];
       renderCameraModeReplies();
       renderCameraModeThinking();
       syncCameraModeBusyState();
@@ -9768,16 +9965,14 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         return false;
       }
       try {
-        setCameraModeBusy(true, `Sending to ${target}...`);
+        setCameraModeHint("");
+        setCameraModeBusy(true);
         const prepared = await resizeCameraModeBlob(sourceBlob, { maxSide: 1280, quality: 0.7 });
         const filename = `camera_${Date.now()}.jpg`;
         const uploadedPath = await uploadCameraModeBlob(prepared, filename);
-        setStatus(`sending photo to ${target}...`);
         await sendCameraModeAttachment(uploadedPath, target);
         await refresh({ forceScroll: true });
-        setCameraModeBusy(false, `Sent to ${target}. Waiting for reply...`);
-        setStatus(`sent photo to ${target}`);
-        setTimeout(() => setStatus(""), 2200);
+        setCameraModeBusy(false);
         return true;
       } catch (err) {
         setCameraModeBusy(false, err?.message || "camera send failed", true);
@@ -9799,7 +9994,7 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       fallbackToCameraModeChat("Live camera is unavailable. Returned to chat.", true);
     };
     const openCameraMode = async () => {
-      if (!_isMobile || !cameraMode || cameraModeOpening) return;
+      if (!cameraMode || cameraModeOpening) return;
       if (!sessionActive) {
         setStatus("archived session is read-only", true);
         setTimeout(() => setStatus(""), 2200);
@@ -9820,7 +10015,8 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       cameraMode.hidden = false;
       cameraMode.classList.add("visible");
       document.body.classList.add("camera-mode-open");
-      cameraModeLiveEntry = latestCameraModeEntry(displayEntriesForData(latestPayloadData || {}));
+      setCameraModeTargetsExpanded(false);
+      cameraModeLiveEntries = cameraModeReplyEntries(displayEntriesForData(latestPayloadData || {}));
       renderCameraModeReplies();
       renderCameraModeThinking();
       setCameraModeHint("Opening camera...");
@@ -9834,8 +10030,23 @@ __AGENT_FONT_MODE_INLINE_STYLE__
       if (cameraModeBusy) return;
       closeCameraMode();
     });
+    cameraModeTargetToggleBtn?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (cameraModeBusy) return;
+      setCameraModeTargetsExpanded(!cameraModeTargetsExpanded);
+      renderCameraModeTargets();
+    });
     cameraModeShutterBtn?.addEventListener("click", () => {
+      setCameraModeTargetsExpanded(false);
       void captureAndSendCameraMode();
+    });
+    cameraModeShell?.addEventListener("click", (event) => {
+      if (!cameraModeTargetsExpanded) return;
+      if (event.target.closest(".camera-mode-thinking-shell")) return;
+      setCameraModeTargetsExpanded(false);
+      renderCameraModeTargets();
+      renderCameraModeThinking();
     });
     window.addEventListener("resize", () => {
       if (needsHeaderViewportMetrics()) updateHeaderMenuViewportMetrics();
@@ -11433,45 +11644,66 @@ __AGENT_FONT_MODE_INLINE_STYLE__
         return;
       }
       const target = syncCameraModeTarget();
-      const isRunning = !!(target && currentAgentStatuses[target] === "running");
-      if (!isRunning) {
+      if (!target) {
         cameraModeThinking.hidden = true;
         cameraModeThinking.innerHTML = "";
         cameraModeThinking.dataset.sig = "";
         return;
       }
-      const runtimeItem = currentThinkingRuntimeItem(target);
+      const isRunning = !!(currentAgentStatuses[target] === "running");
+      const candidateTargets = cameraModeTargetsExpanded
+        ? cameraModeAllowedTargets().filter((item) => item !== target)
+        : [];
       const sig = JSON.stringify([
         target,
         currentAgentStatuses[target] || "",
-        runtimeItem ? [runtimeItem.id, runtimeItem.text, runtimeItem.phase] : null,
+        cameraModeTargetsExpanded,
+        candidateTargets,
       ]);
       if (cameraModeThinking.dataset.sig === sig) return;
       const pulse = agentPulseOffset(target);
-      const THINKING_TEXT = "thinking...";
-      const charSpans = [...THINKING_TEXT].map((ch, i) =>
-        `<span class="thinking-char" style="--char-i:${i}">${ch}</span>`
-      ).join("");
-      const runtimeHtml = runtimeItem
-        ? `<span class="message-thinking-runtime-slot"><span class="message-thinking-runtime-line" data-state="${escapeHtml(runtimeItem.phase || "live")}" data-event-id="${escapeHtml(String(runtimeItem.id || ""))}">${buildThinkingRuntimeHtml(runtimeItem.text)}</span></span>`
+      const primaryHtml = (!cameraModeTargetsExpanded && isRunning)
+        ? [..."thinking..."].map((ch, i) =>
+            `<span class="thinking-char" style="--char-i:${i}">${ch}</span>`
+          ).join("")
         : "";
+      const targetsHtml = candidateTargets.map((item) =>
+        `<button type="button" class="camera-mode-thinking-target-chip target-chip" data-camera-target="${escapeHtml(item)}" data-base-agent="${escapeHtml(agentBaseName(item))}" aria-label="${escapeHtml(item)}" title="${escapeHtml(item)}"><span class="agent-icon-slot agent-icon-slot--chip"><img class="target-icon" src="${escapeHtml(agentIconSrc(item))}" alt="${escapeHtml(item)}">${agentIconInstanceSubHtml(item)}</span></button>`
+      ).join("");
       cameraModeThinking.hidden = false;
       cameraModeThinking.innerHTML = `
-        <div class="message-thinking-container">
-          <div class="message-thinking-row" data-agent="${escapeHtml(target)}" style="--agent-pulse-delay:${pulse}s">
-            <span class="message-thinking-icons">
-              <span class="message-thinking-icon-wrap">
+        <div class="camera-mode-thinking-shell" data-agent="${escapeHtml(target)}">
+          <div class="camera-mode-thinking-main">
+            <button type="button" class="camera-mode-thinking-toggle${isRunning ? "" : " is-idle"}" data-camera-target-toggle="1" aria-label="Choose camera target" aria-expanded="${cameraModeTargetsExpanded ? "true" : "false"}">
+              <span class="message-thinking-icon-wrap" style="--agent-pulse-delay:${pulse}s">
                 <span class="message-thinking-glow message-thinking-glow--${agentBaseName(target)}"></span>
                 ${thinkingIconImg(target, `message-thinking-icon message-thinking-icon--${agentBaseName(target)}`)}
               </span>
-            </span>
-            <span class="message-thinking-label message-thinking-label-agent">
-              <span class="message-thinking-label-primary">${charSpans}</span>
-              ${runtimeHtml}
-            </span>
+            </button>
+            ${primaryHtml ? `<span class="camera-mode-thinking-copy">${primaryHtml}</span>` : ``}
+            <span class="camera-mode-thinking-targets${cameraModeTargetsExpanded ? " is-open" : ""}">${targetsHtml}</span>
           </div>
         </div>
       `;
+      cameraModeThinking.querySelector('[data-camera-target-toggle="1"]')?.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (cameraModeBusy) return;
+        setCameraModeTargetsExpanded(!cameraModeTargetsExpanded);
+        renderCameraModeTargets();
+        renderCameraModeThinking();
+      });
+      cameraModeThinking.querySelectorAll("[data-camera-target]").forEach((node) => {
+        node.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (cameraModeBusy) return;
+          cameraModeTarget = node.dataset.cameraTarget || "";
+          setCameraModeTargetsExpanded(false);
+          renderCameraModeTargets();
+          renderCameraModeThinking();
+        });
+      });
       cameraModeThinking.dataset.sig = sig;
     };
     const renderThinkingIndicator = () => {
