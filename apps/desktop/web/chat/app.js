@@ -58,6 +58,7 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
     const syncMainAfterHeight = () => {
       const mainEl = document.querySelector("main");
       if (!mainEl) return;
+      mainEl.style.removeProperty("--main-spacer-height");
       mainEl.style.removeProperty("--main-after-height");
     };
     const syncAppShellHeight = () => {

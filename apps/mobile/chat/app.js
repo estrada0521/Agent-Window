@@ -115,8 +115,9 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
         ? lockHeight
         : Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
       if (baseHeight <= 0) return;
-      const fixedAfterHeight = Math.round(baseHeight * 0.5);
-      mainEl.style.setProperty("--main-after-height", fixedAfterHeight + "px");
+      const fixedSpacerHeight = Math.round(baseHeight * 0.5);
+      mainEl.style.setProperty("--main-spacer-height", fixedSpacerHeight + "px");
+      mainEl.style.removeProperty("--main-after-height");
     };
     let _pollScrollLockTop = null;
     let _pollScrollAnchor = null;
