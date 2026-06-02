@@ -38,7 +38,6 @@
         if (!dpPanelOpen && dpGitSummaryPinned) {
           dpGitHeaderSummaryState = dpBuildSummaryState(data);
           dpApplyGitOverviewHeader();
-          if (!isFirstRefresh && !dpGitDetailContext) dpKickWorktreeSummaryGlow();
           return;
         }
 
@@ -53,7 +52,7 @@
         }
 
         dpGitHeaderSummaryState = dpBuildSummaryState(data);
-        dpSyncSummaryWrap({ flash: !isFirstRefresh && !dpGitDetailContext });
+        dpSyncSummaryWrap();
         if (!dpGitDetailContext) {
           dpGitCommits = Array.isArray(data?.recent_commits) ? data.recent_commits.slice() : [];
           dpGitTotalCommits = Math.max(0, parseInt(data?.total_commits) || 0);
