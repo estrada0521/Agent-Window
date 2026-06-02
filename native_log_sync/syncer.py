@@ -18,7 +18,11 @@ from native_log_sync.io.sync_state import (
 )
 from native_log_sync.refresh.binding_models import PaneBindingRequest
 from native_log_sync.refresh.refresh_bindings import refresh_native_log_bindings as _refresh_bindings_impl
-from native_log_sync.watch.emit_events import idle_running_display_for_api, refresh_idle_statuses
+from native_log_sync.watch.emit_events import (
+    clear_agent_runtime_display,
+    idle_running_display_for_api,
+    refresh_idle_statuses,
+)
 
 
 class NativeLogSyncer:
@@ -113,6 +117,9 @@ class NativeLogSyncer:
 
     def agent_statuses(self, running_agents: set[str]) -> dict[str, str]:
         return refresh_idle_statuses(self, running_agents)
+
+    def clear_agent_runtime_display(self, agent: str) -> bool:
+        return clear_agent_runtime_display(self, agent)
 
     def agent_runtime_state(self) -> dict[str, dict]:
         return idle_running_display_for_api(self._idle_running_display_by_agent)

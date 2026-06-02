@@ -583,10 +583,20 @@
         const toIdx = toStr.length - maxLen + i;
         cols.push({
           start: fromIdx >= 0 ? parseInt(fromStr[fromIdx], 10) : 0,
-          end: parseInt(toStr[toIdx], 10),
+          end: toIdx >= 0 ? parseInt(toStr[toIdx], 10) : 0,
         });
       }
       return cols;
+    };
+    const visibleGitBranchCountRollColumns = (cols, to) => {
+      const toNum = Math.max(0, parseInt(to) || 0);
+      if (!cols.length) return cols;
+      if (toNum === 0) {
+        const firstNonZero = cols.findIndex((col) => col.start !== 0);
+        return [cols[firstNonZero >= 0 ? firstNonZero : cols.length - 1]];
+      }
+      const toLen = String(toNum).length;
+      return cols.slice(-Math.min(cols.length, toLen));
     };
     const buildGitBranchCountRollHtml = (prefix, columns) => {
       const digitHtml = columns.map(({ start }) => {
@@ -605,8 +615,8 @@
         el.textContent = `${prefix}${to}`;
         return;
       }
-      const columns = alignGitBranchCountDigits(from, to);
-      if (!columns.length) {
+      const columns = visibleGitBranchCountRollColumns(alignGitBranchCountDigits(from, to), to);
+      if (!columns.length || columns.every((col) => col.start === col.end)) {
         el.textContent = `${prefix}${to}`;
         return;
       }

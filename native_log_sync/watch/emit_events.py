@@ -10,6 +10,11 @@ def emit_agent_updates(runtime, agent: str, path: str) -> None:
 
 
 
+def clear_agent_runtime_display(runtime, agent: str) -> bool:
+    removed = runtime._idle_running_display_by_agent.pop(agent, None)
+    return removed is not None
+
+
 def idle_running_display_for_api(display_by_agent: dict[str, dict]) -> dict[str, dict]:
     result: dict[str, dict] = {}
     for agent, payload in display_by_agent.items():
@@ -31,5 +36,5 @@ def refresh_idle_statuses(runtime, running_agents: set) -> dict[str, str]:
     for agent in runtime.active_agents():
         result[agent] = "running" if agent in running_agents else "idle"
         if result[agent] != "running":
-            runtime._idle_running_display_by_agent.pop(agent, None)
+            clear_agent_runtime_display(runtime, agent)
     return result
