@@ -473,12 +473,16 @@
       left: -20px;
       top: 0;
       bottom: 4px;
-      width: 1px;
+      width: 2px;
       border-radius: 1px;
       background: var(--fg);
       opacity: 0;
       pointer-events: none;
       transition: opacity 120ms ease;
+    }
+
+    html[data-theme-desktop="split"] .message-row:not(.user) .message::before {
+      left: -16px;
     }
 
     .has-hover .message-row:not(.user):hover .message::before {
