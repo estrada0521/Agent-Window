@@ -8,7 +8,7 @@ from pathlib import Path
 from html import escape as html_escape
 from urllib.parse import quote as url_quote
 
-from hub_backend.color_constants import DARK_BG, LIGHT_FG, resolve_theme_palette
+from hub_backend.color_constants import DARK_BG, LIGHT_FG, LIGHT_FG_CHANNELS, resolve_theme_palette
 from backend_core.access.settings import load_hub_settings
 from .preview_3d import render_3d_preview
 from .view_scripts import (
@@ -84,20 +84,21 @@ def render_file_view(
     pane_bg = str((theme_palette or {}).get("dark_bg") or DARK_BG)
     embed_bg = "transparent" if embed else pane_bg
     pane_fg = str((theme_palette or {}).get("light_fg") or LIGHT_FG)
+    pane_fg_channels = str((theme_palette or {}).get("light_fg_channels") or LIGHT_FG_CHANNELS)
     pane_muted = pane_fg
     is_light_theme = str((theme_palette or {}).get("theme") or "").lower() == "light"
-    pane_ln_color = "rgba(0,0,0,0.22)" if is_light_theme else "rgba(255,255,255,0.22)"
-    pane_line = "rgba(255,255,255,0.08)"
+    pane_ln_color = "rgba(0,0,0,0.22)" if is_light_theme else f"rgba({pane_fg_channels},0.22)"
+    pane_line = f"rgba({pane_fg_channels},0.08)"
     pane_gutter_bg = "transparent"
-    pane_gutter_divider = "rgba(255,255,255,0.16)"
+    pane_gutter_divider = f"rgba({pane_fg_channels},0.16)"
     gutter_padding_left = 1
     gutter_padding_right = 5
     code_cell_padding_left = 12
-    preview_scrollbar_thumb = "rgba(255,255,255,0.15)"
-    preview_scrollbar_thumb_hover = "rgba(255,255,255,0.25)"
+    preview_scrollbar_thumb = f"rgba({pane_fg_channels},0.15)"
+    preview_scrollbar_thumb_hover = f"rgba({pane_fg_channels},0.25)"
     preview_scrollbar_thumb_light = "rgba(0,0,0,0.22)"
     preview_scrollbar_thumb_hover_light = "rgba(0,0,0,0.35)"
-    preview_selected_line_bg = "rgba(255,255,255,0.10)"
+    preview_selected_line_bg = f"rgba({pane_fg_channels},0.10)"
     preview_text_size_sync_js = (
         'window.addEventListener("message",(e)=>{'
         'const d=e?.data;if(d?.type!=="agent-preview-text-size")return;'

@@ -12,7 +12,7 @@
       align-items: stretch;
       justify-content: center;
       padding: 0;
-      color-scheme: dark;
+      color: var(--fg);
       --file-modal-top: 72px;
       --file-modal-left: 0px;
       --file-modal-width: 100vw;
@@ -22,7 +22,7 @@
       --file-modal-preview-gutter-width: 0px;
       --file-modal-preview-title-offset: 0px;
       --file-modal-preview-gutter-bg: transparent;
-      --file-modal-preview-gutter-divider: rgba(255, 255, 255, 0.22);
+      --file-modal-preview-gutter-divider: rgba(180, 180, 180, 0.22);
       --file-modal-floating-bg: rgba(20, 20, 20, 0.88);
       --file-modal-floating-hover-bg: rgba(35, 35, 35, 0.92);
     }
@@ -38,8 +38,6 @@
       content: none;
     }
     .file-modal.theme-light {
-      --fg: rgb(0, 0, 0);
-      --muted: rgb(120, 120, 120);
       --icon-fg: rgb(0, 0, 0);
       --icon-muted: rgb(120, 120, 120);
       --icon-hover: rgb(35, 35, 35);
@@ -47,9 +45,6 @@
       --file-modal-floating-hover-bg: rgba(245, 245, 245, 0.92);
     }
     .file-modal.theme-dark {
-      --fg: rgb(255, 255, 255);
-      --muted: rgb(128, 128, 128);
-      --icon-fg: rgb(255, 255, 255);
       --icon-muted: rgb(128, 128, 128);
       --icon-hover: rgb(190, 190, 190);
       --file-modal-floating-bg: rgba(20, 20, 20, 0.88);
@@ -212,10 +207,6 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-    .file-modal.theme-light .file-modal-text,
-    .file-modal.theme-light .file-modal-title {
-      color: var(--fg);
     }
     .file-modal-close {
       appearance: none;
