@@ -22,7 +22,7 @@ def resolve_theme_levels(settings: Mapping[str, object] | None = None) -> tuple[
     theme = str((settings or {}).get("theme", "dark") or "dark").strip().lower()
     if theme == "light":
         return 255, 0
-    return 4, 255
+    return 4, 180
 
 
 def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[str, object]:
@@ -69,18 +69,18 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
         icon_muted_level = 128
         icon_hover_level = 190
         chip_color_level = 70
-        line = "rgba(255, 255, 255, 0.07)"
-        line_strong = "rgba(255, 255, 255, 0.12)"
-        table_line = "rgba(255, 255, 255, 0.12)"
-        table_header_line = "rgba(255, 255, 255, 0.28)"
-        code_copy_hover_bg = "rgba(255, 255, 255, 0.09)"
+        line = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.07)"
+        line_strong = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.12)"
+        table_line = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.12)"
+        table_header_line = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.28)"
+        code_copy_hover_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.09)"
         fab_hover_bg = "rgba(40, 40, 40, 0.88)"
-        session_hover_bg = "rgba(255, 255, 255, 0.05)"
-        session_selected_bg = "rgba(255, 255, 255, 0.08)"
-        panel_row_bg = "rgba(255, 255, 255, 0.10)"
-        panel_row_border = "rgba(255, 255, 255, 0.14)"
-        panel_row_hover_bg = "rgba(255, 255, 255, 0.13)"
-        panel_row_active_bg = "rgba(255, 255, 255, 0.16)"
+        session_hover_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.05)"
+        session_selected_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.08)"
+        panel_row_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.10)"
+        panel_row_border = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.14)"
+        panel_row_hover_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.13)"
+        panel_row_active_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.16)"
     bg_rgb = (bg_level, bg_level, bg_level)
     fg_rgb = (fg_level, fg_level, fg_level)
     fg_soft_rgb = (fg_soft_level, fg_soft_level, fg_soft_level)
