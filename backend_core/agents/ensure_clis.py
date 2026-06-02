@@ -69,39 +69,23 @@ def resolve_agent_executable_for_runtime(agent_name: str, repo_root: Path | str 
     return adef.exe if adef else agent_name
 
 
-def _build_agent_env_and_exec(runtime, agent_name: str) -> tuple[str, str, object]:
+def _build_agent_exec(runtime, agent_name: str) -> tuple[str, object]:
     import shlex as _shlex
-    bin_dir = Path(runtime.agent_send_path).parent
     agent_exec_path = Path(resolve_agent_executable_for_runtime(agent_name, repo_root=runtime.repo_root))
-    path_prefix = ":".join([_shlex.quote(str(bin_dir)), _shlex.quote(str(agent_exec_path.parent))])
-    env_parts = [
-        f"PATH={path_prefix}:$PATH",
-        f"MULTIAGENT_SESSION={_shlex.quote(runtime.session_name)}",
-        f"MULTIAGENT_BIN_DIR={_shlex.quote(str(bin_dir))}",
-        f"MULTIAGENT_WORKSPACE={_shlex.quote(runtime.workspace)}",
-        f"MULTIAGENT_TMUX_SOCKET={_shlex.quote(runtime.tmux_socket)}",
-        f"MULTIAGENT_INDEX_PATH={_shlex.quote(str(runtime.index_path))}",
-        f"MULTIAGENT_AGENT_NAME={_shlex.quote(agent_name)}",
-    ]
-    env_exports = "export " + " ".join(env_parts)
     agent_exec = _shlex.quote(str(agent_exec_path))
     base = agent_name.split("-", 1)[0] if "-" in agent_name else agent_name
     adef = AGENTS.get(base)
-    return env_exports, agent_exec, adef
+    return agent_exec, adef
 
 
 def agent_launch_cmd(runtime, agent_name: str) -> str:
-    import shlex as _shlex
-    env_exports, agent_exec, adef = _build_agent_env_and_exec(runtime, agent_name)
-    parts = [env_exports]
-    if adef and adef.launch_env:
-        parts.append(f"export {adef.launch_env}")
+    agent_exec, adef = _build_agent_exec(runtime, agent_name)
     launch_extra = adef.launch_extra if adef else ""
     launch_flags = adef.launch_flags if adef else ""
     extra = f" {launch_extra}" if launch_extra else ""
     flags = f" {launch_flags}" if launch_flags else ""
-    parts.append(f"exec{extra} {agent_exec}{flags}")
-    return "; ".join(parts)
+    env_prefix = f"{adef.launch_env} " if adef and adef.launch_env else ""
+    return f"{env_prefix}exec{extra} {agent_exec}{flags}"
 
 
 def agent_resume_cmd(runtime, agent_name: str) -> str:
@@ -109,16 +93,12 @@ def agent_resume_cmd(runtime, agent_name: str) -> str:
     adef = AGENTS.get(base)
     if not adef or not adef.resume_flag:
         return agent_launch_cmd(runtime, agent_name)
-    import shlex as _shlex
-    env_exports, agent_exec, adef = _build_agent_env_and_exec(runtime, agent_name)
-    parts = [env_exports]
-    if adef.launch_env:
-        parts.append(f"export {adef.launch_env}")
+    agent_exec, adef = _build_agent_exec(runtime, agent_name)
     launch_extra = adef.launch_extra or ""
     resume_extra = adef.resume_extra_flags or ""
     extra = f" {launch_extra}" if launch_extra else ""
     flags = f" {adef.resume_flag}"
     if resume_extra:
         flags += f" {resume_extra}"
-    parts.append(f"exec{extra} {agent_exec}{flags}")
-    return "; ".join(parts)
+    env_prefix = f"{adef.launch_env} " if adef.launch_env else ""
+    return f"{env_prefix}exec{extra} {agent_exec}{flags}"
