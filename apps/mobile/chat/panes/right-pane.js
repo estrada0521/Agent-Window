@@ -564,7 +564,42 @@
       const safeIns = Math.max(0, parseInt(ins) || 0);
       const safeDels = Math.max(0, parseInt(dels) || 0);
       const cleanClass = (safeIns || safeDels) ? "" : " clean";
-      return `<span class="git-branch-summary-counts${cleanClass}"><span class="git-branch-summary-count ins">+${safeIns}</span><span class="git-branch-summary-count del">-${safeDels}</span></span>`;
+      return `<span class="git-branch-summary-counts${cleanClass}"><span class="git-branch-summary-count ins" data-count-prefix="+" data-count-value="${safeIns}">+${safeIns}</span><span class="git-branch-summary-count del" data-count-prefix="-" data-count-value="${safeDels}">-${safeDels}</span></span>`;
+    };
+    const shouldAnimateGitBranchCounts = () =>
+      !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const gitBranchCountSnapshot = (root) =>
+      root
+        ? Array.from(root.querySelectorAll(".git-branch-summary-row .git-branch-summary-count"))
+            .map((el) => Math.max(0, parseInt(el.dataset.countValue || el.textContent || "0") || 0))
+        : [];
+    const animateGitBranchCount = (el, fromValue, toValue) => {
+      const prefix = el.dataset.countPrefix || "";
+      const from = Math.max(0, parseInt(fromValue) || 0);
+      const to = Math.max(0, parseInt(toValue) || 0);
+      if (!shouldAnimateGitBranchCounts() || from === to) {
+        el.textContent = `${prefix}${to}`;
+        return;
+      }
+      const duration = 1000;
+      const started = performance.now();
+      const tick = (now) => {
+        const t = Math.min(1, (now - started) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const value = Math.round(from + (to - from) * eased);
+        el.textContent = `${prefix}${value}`;
+        if (t < 1) requestAnimationFrame(tick);
+        else el.textContent = `${prefix}${to}`;
+      };
+      el.textContent = `${prefix}${from}`;
+      requestAnimationFrame(tick);
+    };
+    const animateGitBranchCountsFromSnapshot = (root, previous) => {
+      if (!root || !previous?.length) return;
+      root.querySelectorAll(".git-branch-summary-row .git-branch-summary-count").forEach((el, idx) => {
+        if (idx >= previous.length) return;
+        animateGitBranchCount(el, previous[idx], el.dataset.countValue || el.textContent || "0");
+      });
     };
     const gitBranchPathCountText = (count) => {
       const safeCount = Math.max(0, parseInt(count) || 0);
@@ -703,7 +738,11 @@
       if (!res.ok) throw new Error("Failed to refresh branch overview");
       const data = await res.json();
       const summaryWrap = gitBranchPanel.querySelector(".git-branch-summary-wrap");
-      if (summaryWrap) summaryWrap.innerHTML = buildGitBranchSummaryHtml(data || {});
+      if (summaryWrap) {
+        const previous = gitBranchCountSnapshot(summaryWrap);
+        summaryWrap.innerHTML = buildGitBranchSummaryHtml(data || {});
+        animateGitBranchCountsFromSnapshot(summaryWrap, previous);
+      }
       gitBranchCommits = Array.isArray(data?.recent_commits) ? data.recent_commits.slice() : [];
       gitBranchTotalCommits = Math.max(0, parseInt(data?.total_commits) || 0);
       gitBranchNextOffset = Math.max(0, parseInt(data?.next_offset) || gitBranchCommits.length);

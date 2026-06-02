@@ -2,7 +2,7 @@
       const safeIns = Math.max(0, parseInt(ins) || 0);
       const safeDels = Math.max(0, parseInt(dels) || 0);
       const cleanClass = (safeIns || safeDels) ? "" : " clean";
-      return `<span class="git-branch-summary-counts${cleanClass}"><span class="git-branch-summary-count ins">+${safeIns}</span><span class="git-branch-summary-count del">-${safeDels}</span></span>`;
+      return `<span class="git-branch-summary-counts${cleanClass}"><span class="git-branch-summary-count ins" data-count-prefix="+" data-count-value="${safeIns}">+${safeIns}</span><span class="git-branch-summary-count del" data-count-prefix="-" data-count-value="${safeDels}">-${safeDels}</span></span>`;
     };
     const dpGitPathCountText = (count) => {
       const safeCount = Math.max(0, parseInt(count) || 0);
@@ -153,7 +153,6 @@
           </div>
         </div>`;
     };
-    const dpSyncSummaryWrap = ({ flash = false } = {}) => {
+    const dpSyncSummaryWrap = () => {
       dpApplyGitOverviewHeader();
-      if (flash) dpKickWorktreeSummaryGlow();
     };

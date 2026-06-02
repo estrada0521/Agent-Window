@@ -913,7 +913,7 @@
     .git-commit-file-list {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 0;
       padding: 0 2px 24px;
     }
     .git-commit-file-row {
@@ -951,8 +951,8 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      min-height: 36px;
-      padding: 6px 6px 6px 30px;
+      min-height: 28px;
+      padding: 2px 6px 2px 30px;
       position: relative;
       box-sizing: border-box;
     }

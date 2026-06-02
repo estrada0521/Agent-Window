@@ -1,6 +1,4 @@
     const DP_GIT_BATCH = 50;
-    const DP_GIT_GLOW_PREVIEW = false;
-    document.body?.classList.toggle("git-worktree-glow-preview", DP_GIT_GLOW_PREVIEW);
     const dpGitSummaryPinnedStorageKey = () => `multiagent_git_summary_pinned:${String(currentSessionName || "").trim() || "__none"}`;
     let dpGitSummaryPinned = true;
     let _dpGitSummaryPinnedLoadedForKey = "";
@@ -20,43 +18,47 @@
         btn.title = dpGitSummaryPinned ? "ピンを外して右端の表示を消す" : "右ペインを閉じても右端にこの概要を表示";
       });
     };
-    let _dpGitGlowClearTimer = null;
-    const dpCancelWorktreeSummaryGlow = () => {
-      if (_dpGitGlowClearTimer) {
-        clearTimeout(_dpGitGlowClearTimer);
-        _dpGitGlowClearTimer = null;
+    const dpShouldAnimateGitCounts = () =>
+      !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const dpGitCountSnapshot = (root) =>
+      root
+        ? Array.from(root.querySelectorAll(".git-branch-summary-row .git-branch-summary-count"))
+            .map((el) => Math.max(0, parseInt(el.dataset.countValue || el.textContent || "0") || 0))
+        : [];
+    const dpAnimateGitCount = (el, fromValue, toValue) => {
+      const prefix = el.dataset.countPrefix || "";
+      const from = Math.max(0, parseInt(fromValue) || 0);
+      const to = Math.max(0, parseInt(toValue) || 0);
+      if (!dpShouldAnimateGitCounts() || from === to) {
+        el.textContent = `${prefix}${to}`;
+        return;
       }
-      [dpGitContent?.querySelector(".git-branch-summary-wrap"), document.getElementById("gitPinnedSummaryInner")]
-        .filter(Boolean)
-        .forEach((root) => {
-          root.closest(".git-pinned-summary-aside")?.classList.remove("git-worktree-glow");
-          root.querySelector(".git-branch-summary-row")?.classList.remove("git-worktree-glow");
-        });
+      const duration = 1000;
+      const started = performance.now();
+      const tick = (now) => {
+        const t = Math.min(1, (now - started) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const value = Math.round(from + (to - from) * eased);
+        el.textContent = `${prefix}${value}`;
+        if (t < 1) requestAnimationFrame(tick);
+        else el.textContent = `${prefix}${to}`;
+      };
+      el.textContent = `${prefix}${from}`;
+      requestAnimationFrame(tick);
     };
-    const dpKickWorktreeSummaryGlow = () => {
-      const panelWrap = dpGitContent?.querySelector(".git-branch-summary-wrap");
-      const pinnedInner = document.getElementById("gitPinnedSummaryInner");
-      const stripShown = dpGitSummaryPinned && !dpPanelOpen;
-      const rootEl = (dpPanelOpen && panelWrap)
-        ? panelWrap
-        : (stripShown && pinnedInner ? pinnedInner : (panelWrap || pinnedInner));
-      if (!rootEl) return;
-      const row = rootEl.querySelector(".git-branch-summary-row");
-      if (!row) return;
-      if (_dpGitGlowClearTimer) {
-        clearTimeout(_dpGitGlowClearTimer);
-        _dpGitGlowClearTimer = null;
-      }
-      row.classList.remove("git-worktree-glow");
-      rootEl.closest(".git-pinned-summary-aside")?.classList.remove("git-worktree-glow");
-      void row.offsetWidth;
-      row.classList.add("git-worktree-glow");
-      rootEl.closest(".git-pinned-summary-aside")?.classList.add("git-worktree-glow");
-      _dpGitGlowClearTimer = setTimeout(() => {
-        row.classList.remove("git-worktree-glow");
-        rootEl.closest(".git-pinned-summary-aside")?.classList.remove("git-worktree-glow");
-        _dpGitGlowClearTimer = null;
-      }, 1850);
+    const dpAnimateGitCountsFromSnapshot = (root, previous) => {
+      if (!root || !previous?.length) return;
+      root.querySelectorAll(".git-branch-summary-row .git-branch-summary-count").forEach((el, idx) => {
+        if (idx >= previous.length) return;
+        dpAnimateGitCount(el, previous[idx], el.dataset.countValue || el.textContent || "0");
+      });
+    };
+    const dpRenderGitSummaryRoot = (root, rowHtml) => {
+      if (!root) return;
+      const previous = dpGitCountSnapshot(root);
+      root.innerHTML = rowHtml;
+      dpApplySummaryPinButtonPressed(root);
+      dpAnimateGitCountsFromSnapshot(root, previous);
     };
     let dpGitCommits = [];
     let dpGitNextOffset = 0;
@@ -70,7 +72,6 @@
     let dpGitObserver = null;
     let dpGitHeaderSummaryState = null;
     const dpApplyGitOverviewHeader = () => {
-      dpCancelWorktreeSummaryGlow();
       const rowHtml = dpGitHeaderSummaryState?.rowHtml || "";
       const panelWrap = dpGitContent?.querySelector(".git-branch-summary-wrap");
       const aside = document.getElementById("gitPinnedSummaryAside");
@@ -83,14 +84,11 @@
       }
 
       if (stripShown && inner && overlay) {
-        inner.innerHTML = rowHtml;
-        dpApplySummaryPinButtonPressed(inner);
+        dpRenderGitSummaryRoot(inner, rowHtml);
       } else if (dpPanelOpen && panelWrap) {
-        panelWrap.innerHTML = rowHtml;
-        dpApplySummaryPinButtonPressed(panelWrap);
+        dpRenderGitSummaryRoot(panelWrap, rowHtml);
       } else if (panelWrap) {
-        panelWrap.innerHTML = rowHtml;
-        dpApplySummaryPinButtonPressed(panelWrap);
+        dpRenderGitSummaryRoot(panelWrap, rowHtml);
       }
 
       if (overlay && aside && inner) dpApplyPanelWidth();
