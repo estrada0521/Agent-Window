@@ -55,10 +55,10 @@
       --bg-rgb: 0, 0, 0;
       --bg: rgb(0, 0, 0);
       --fg: rgb(255, 255, 255);
-      --muted: rgb(158, 158, 158);
+      --muted: rgb(128, 128, 128);
       --icon-fg: rgb(255, 255, 255);
-      --icon-muted: rgb(158, 158, 158);
-      --icon-hover: rgb(220, 220, 220);
+      --icon-muted: rgb(128, 128, 128);
+      --icon-hover: rgb(190, 190, 190);
       --panel: rgba(10, 10, 10, 0.72);
       --panel-2: rgba(15, 15, 15, 0.82);
       --line: rgba(255, 255, 255, 0.07);

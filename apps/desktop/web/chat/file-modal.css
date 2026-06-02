@@ -48,10 +48,10 @@
     }
     .file-modal.theme-dark {
       --fg: rgb(255, 255, 255);
-      --muted: rgb(158, 158, 158);
+      --muted: rgb(128, 128, 128);
       --icon-fg: rgb(255, 255, 255);
-      --icon-muted: rgb(158, 158, 158);
-      --icon-hover: rgb(220, 220, 220);
+      --icon-muted: rgb(128, 128, 128);
+      --icon-hover: rgb(190, 190, 190);
       --file-modal-floating-bg: rgba(20, 20, 20, 0.88);
       --file-modal-floating-hover-bg: rgba(35, 35, 35, 0.92);
     }
