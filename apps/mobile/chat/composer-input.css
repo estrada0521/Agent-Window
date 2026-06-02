@@ -344,7 +344,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      padding: calc(env(safe-area-inset-top, 0px) + 16px) 6px 0 20px;
+      padding: 0 6px 0 20px;
       display: flex;
       flex-direction: column;
       gap: 0;
@@ -356,11 +356,16 @@
       z-index: 1;
     }
 
+    main::before,
     main::after {
       content: "";
       display: block;
-      min-height: var(--main-after-height, 50vh);
       flex-shrink: 0;
+    }
+
+    main::before,
+    main::after {
+      min-height: var(--main-spacer-height, 50vh);
     }
 
     html[data-mobile="1"] main {
