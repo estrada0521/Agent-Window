@@ -22,7 +22,7 @@ def resolve_theme_levels(settings: Mapping[str, object] | None = None) -> tuple[
     theme = str((settings or {}).get("theme", "dark") or "dark").strip().lower()
     if theme == "light":
         return 255, 0
-    return 0, 255
+    return 4, 255
 
 
 def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[str, object]:

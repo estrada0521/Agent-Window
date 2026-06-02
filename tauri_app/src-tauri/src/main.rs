@@ -11,7 +11,7 @@ use tauri::menu::{MenuBuilder, NativeIcon, SubmenuBuilder};
 use tauri::webview::WebviewWindowBuilder;
 use tauri::Manager;
 
-const DARK_BG: &str = "rgb(0,0,0)";
+const DARK_BG: &str = "rgb(4,4,4)";
 
 #[cfg(target_os = "macos")]
 use window_vibrancy::{
