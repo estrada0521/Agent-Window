@@ -20,13 +20,8 @@
       --desk-chrome-fg: var(--icon-fg);
       --session-hover-bg: __SESSION_HOVER_BG__;
       --session-selected-bg: __SESSION_SELECTED_BG__;
-      --glass-bg-84: rgba(var(--bg-rgb), 0.84);
       --glass-bg-90: rgba(var(--bg-rgb), 0.90);
-      --glass-bg-92: rgba(var(--bg-rgb), 0.92);
-      --chat-pane-bg: var(--glass-bg-90);
-      --chat-pane-filter: var(--glass-filter-20);
       --glass-filter-20: blur(20px);
-      --glass-filter-24: blur(24px);
     }
     html[data-theme="light"] {
       color-scheme: light;
@@ -70,9 +65,6 @@
     html[data-theme-desktop="split"] {
       --chat-pane-bg: rgba(255, 255, 255, 0.95);
       --chat-pane-filter: blur(20px);
-    }
-    html[data-theme-desktop="split"]:not([data-tauri-app="1"]) .desk-chat-frame {
-      background: rgb(255, 255, 255);
     }
     * { box-sizing: border-box; }    html, body {
       margin: 0;
@@ -234,16 +226,6 @@
     }
     .hub-page-header {
       --page-side-pad: 12px;
-      --chrome-icon-btn-size: 44px;
-      --chrome-icon-size: 21px;
-      --chrome-icon-stroke: 1.85;
-      --chrome-icon-gap: 9px;
-    }
-    html:not([data-tauri-app="1"]) .hub-page-header .hub-page-header-top {
-      padding: max(8px, env(safe-area-inset-top)) 0 8px 0;
-      min-height: 52px;
-    }
-    html[data-tauri-app="1"] .hub-page-header {
       --chrome-icon-btn-size: 24px;
       --chrome-icon-size: 15px;
       min-height: 32px;
@@ -254,13 +236,13 @@
       z-index: 1001;
       position: relative;
     }
-    html[data-tauri-app="1"] .hub-page-header .hub-page-header-top {
+    .hub-page-header .hub-page-header-top {
       min-height: 32px;
       padding-top: 4px;
       padding-bottom: 4px;
       padding-left: 104px;
     }
-    html[data-tauri-app="1"] .hub-page-title {
+    .hub-page-title {
       display: none;
     }
     .hub-page-header .hub-page-header-actions {
@@ -309,10 +291,10 @@
       align-items: stretch;
       transition: grid-template-columns 220ms cubic-bezier(0.22, 1, 0.36, 1), column-gap 220ms cubic-bezier(0.22, 1, 0.36, 1);
     }
-    html[data-tauri-app="1"] .desk-workbench,
-    html[data-tauri-app="1"] .desk-sidebar,
-    html[data-tauri-app="1"] .desk-main,
-    html[data-tauri-app="1"] .desk-sidebar-shell {
+    .desk-workbench,
+    .desk-sidebar,
+    .desk-main,
+    .desk-sidebar-shell {
       transition: none;
     }
     .desk-workbench-outline {
@@ -371,15 +353,6 @@
       opacity: 0;
       touch-action: none;
     }
-    html:not([data-tauri-app="1"]) .desk-sidebar-resizer {
-      display: none;
-      pointer-events: none;
-    }
-    html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open .desk-sidebar-resizer,
-    html:not([data-tauri-app="1"]) .desk-workbench.settings-open .desk-sidebar-resizer {
-      display: block;
-      pointer-events: auto;
-    }
     .desk-sidebar-resizer::before {
       content: "";
       position: absolute;
@@ -412,25 +385,16 @@
       padding-top: 0;
       position: relative;
       border: none;
-      background: var(--glass-bg-92);
-      backdrop-filter: var(--glass-filter-24);
-      -webkit-backdrop-filter: var(--glass-filter-24);
-      border-radius: 0;
-      -webkit-mask-image: -webkit-radial-gradient(white, black);
-      color: var(--fg);
-    }
-    html[data-tauri-app="1"] .desk-sidebar {
-      border-radius: 26px 0 0 26px;
-    }
-    html[data-tauri-app="1"] .desk-sidebar-shell {
       background: var(--glass-bg-90);
       backdrop-filter: var(--glass-filter-20);
       -webkit-backdrop-filter: var(--glass-filter-20);
       border-radius: 26px 0 0 26px;
       box-shadow: none;
       transition: border-radius 220ms ease;
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
+      color: var(--fg);
     }
-    html[data-tauri-app="1"] .desk-sidebar-shell::after {
+    .desk-sidebar-shell::after {
       content: "";
       position: absolute;
       top: 0;
@@ -441,7 +405,7 @@
       pointer-events: none;
       z-index: 2;
     }
-    html[data-tauri-app="1"] .desk-sidebar-content {
+    .desk-sidebar-content {
       width: 100%;
       max-width: 100%;
       height: 100%;
@@ -449,19 +413,6 @@
     .desk-sidebar-shell * {
       color: inherit;
     }
-    html[data-tauri-app="1"] .desk-main {
-      background: var(--chat-pane-bg);
-      backdrop-filter: var(--chat-pane-filter);
-      -webkit-backdrop-filter: var(--chat-pane-filter);
-      border: none;
-      border-radius: 26px;
-      overflow: hidden;
-      isolation: isolate;
-      -webkit-mask-image: -webkit-radial-gradient(white, black);
-      transition: none;
-    }
-    html[data-tauri-app="1"] .desk-workbench.sidebar-open .desk-main,
-    html[data-tauri-app="1"] .desk-workbench.settings-open .desk-main,
     .desk-workbench.sidebar-open .desk-main,
     .desk-workbench.settings-open .desk-main {
       border-radius: 0 26px 26px 0;
@@ -479,10 +430,10 @@
       justify-content: flex-start;
       gap: var(--desk-chrome-gap);
       position: fixed;
-      left: calc(10px + env(safe-area-inset-left, 0px));
-      bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-      top: auto;
+      left: calc(34px + env(safe-area-inset-left, 0px));
+      top: var(--desk-chrome-top);
       right: auto;
+      bottom: auto;
       z-index: 25;
       box-sizing: border-box;
       padding: 0;
@@ -492,12 +443,6 @@
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
       box-shadow: none;
-    }
-    html[data-tauri-app="1"] .desk-floating-controls {
-      left: calc(34px + env(safe-area-inset-left, 0px));
-      top: var(--desk-chrome-top);
-      right: auto;
-      bottom: auto;
     }
     .desk-floating-controls .desk-settings-icon-btn {
       display: inline-flex;
@@ -711,13 +656,13 @@
     .desk-chat-menu-btn:active {
       transform: scale(0.9);
     }
-    html[data-tauri-app="1"] .desk-top-right-controls {
+    .desk-top-right-controls {
       display: inline-flex;
     }
-    html[data-tauri-app="1"] .desk-chat-menu-btn {
+    .desk-chat-menu-btn {
       display: inline-flex;
     }
-    html[data-tauri-app="1"] .desk-right-panel-controls {
+    .desk-right-panel-controls {
       display: inline-flex;
     }
     @media (max-width: 480px) {
@@ -734,7 +679,7 @@
       box-sizing: border-box;
       padding-top: 34px;
     }
-    html[data-tauri-app="1"] .desk-sidebar-content {
+    .desk-sidebar-content {
       padding-top: 0;
     }
     .desk-sidebar-pane,
@@ -830,19 +775,19 @@
       border-top: none;
       background: var(--bg);
     }
-    html[data-tauri-app="1"] .desk-sidebar-sessions,
-    html[data-tauri-app="1"] .desk-session-list,
-    html[data-tauri-app="1"] .desk-new-session-section,
-    html[data-tauri-app="1"] .desk-sidebar-pane,
-    html[data-tauri-app="1"] .desk-sidebar-pane-head,
-    html[data-tauri-app="1"] .desk-inline-panel,
-    html[data-tauri-app="1"] .desk-swipe-row,
-    html[data-tauri-app="1"] .desk-swipe-track,
-    html[data-tauri-app="1"] .desk-swipe-action-rail {
+    .desk-sidebar-sessions,
+    .desk-session-list,
+    .desk-new-session-section,
+    .desk-sidebar-pane,
+    .desk-sidebar-pane-head,
+    .desk-inline-panel,
+    .desk-swipe-row,
+    .desk-swipe-track,
+    .desk-swipe-action-rail {
       background: transparent;
     }
-    html[data-tauri-app="1"] .desk-sidebar-frame,
-    html[data-tauri-app="1"] .desk-inline-frame {
+    .desk-sidebar-frame,
+    .desk-inline-frame {
       background: transparent;
     }
     .desk-inline-panel.open {
@@ -1186,13 +1131,18 @@
       min-height: 0;
       height: 100%;
       width: 100%;
-      background: transparent;
+      background: var(--chat-pane-bg);
+      backdrop-filter: var(--chat-pane-filter);
+      -webkit-backdrop-filter: var(--chat-pane-filter);
       display: flex;
       align-items: stretch;
       justify-content: center;
       padding: 0;
       overflow: hidden;
       isolation: isolate;
+      border: none;
+      border-radius: 26px;
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
       transition: border-radius 220ms cubic-bezier(0.22, 1, 0.36, 1);
     }
     .desk-main::before {
@@ -1300,7 +1250,7 @@
       width: 100%;
       height: 100%;
       border: none;
-      background: var(--bg);
+      background: transparent;
     }
     @media (max-width: 480px) {
       .desk-workbench,
@@ -1375,53 +1325,54 @@
         display: none;
       }
     }
-    html[data-tauri-app="1"] .desk-workbench,
-    html[data-tauri-app="1"] .desk-workbench.sidebar-open,
-    html[data-tauri-app="1"] .desk-workbench.settings-open {
+    .desk-workbench,
+    .desk-workbench.sidebar-open,
+    .desk-workbench.settings-open {
       display: grid;
     }
-    html[data-tauri-app="1"] .desk-sidebar {
+    .desk-sidebar {
       position: relative;
       width: var(--desk-sidebar-width);
       max-width: none;
       transform: none;
+      border-radius: 26px 0 0 26px;
     }
-    html[data-tauri-app="1"] .desk-sidebar-shell {
+    .desk-sidebar-shell {
       width: 100%;
     }
-    html[data-tauri-app="1"] .desk-main {
+    .desk-main {
       display: flex;
       pointer-events: auto;
     }
-    html[data-tauri-app="1"] .desk-workbench.sidebar-open .desk-main,
-    html[data-tauri-app="1"] .desk-workbench.settings-open .desk-main {
+    .desk-workbench.sidebar-open .desk-main,
+    .desk-workbench.settings-open .desk-main {
       display: flex;
       pointer-events: auto;
     }
-    html[data-tauri-app="1"] .desk-swipe-action-rail {
+    .desk-swipe-action-rail {
       display: none;
     }
-    html[data-tauri-app="1"] .desk-workbench.sidebar-open .desk-sidebar,
-    html[data-tauri-app="1"] .desk-workbench.settings-open .desk-sidebar {
+    .desk-workbench.sidebar-open .desk-sidebar,
+    .desk-workbench.settings-open .desk-sidebar {
       width: var(--desk-sidebar-width);
       transform: none;
     }
-    html[data-tauri-app="1"] .desk-sidebar-resizer:not([hidden]) {
+    .desk-sidebar-resizer:not([hidden]) {
       display: block;
     }
-    html[data-tauri-app="1"] .desk-session-row {
+    .desk-session-row {
       padding: 10px 12px 9px;
     }
-    html[data-tauri-app="1"] .desk-section-label {
+    .desk-section-label {
       padding: 9px 12px 8px;
       font-size: 10px;
     }
-    html[data-tauri-app="1"] .desk-row-name {
+    .desk-row-name {
       font-size: 15px;
       line-height: 1.3;
       font-weight: 400;
     }
-    html[data-tauri-app="1"] .desk-row-preview {
+    .desk-row-preview {
       font-size: 11px;
       line-height: 1.35;
     }
@@ -1432,12 +1383,12 @@
     .shell {
       height: var(--app-shell-height, 100dvh);
     }
-    html[data-tauri-app="1"],
-    html[data-tauri-app="1"] body,
-    html[data-tauri-app="1"] .shell {
+    html,
+    body,
+    .shell {
       background: transparent;
     }
-    html[data-tauri-app="1"] .desk-session-title-text {
+    .desk-session-title-text {
       color: var(--desk-chrome-fg);
       font-size: 13px;
       font-weight: 500;
@@ -1451,7 +1402,7 @@
       -webkit-app-region: no-drag;
       padding-left: 4px;
     }
-    html[data-tauri-app="1"] .desk-session-title-text:empty { display: none; }
+    .desk-session-title-text:empty { display: none; }
     .desk-sidebar-hover-popover {
       position: fixed;
       z-index: 2000;
