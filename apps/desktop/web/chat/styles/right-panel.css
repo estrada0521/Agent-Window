@@ -1231,7 +1231,7 @@
     }
     .git-pinned-expand-section-title {
       padding: 4px 14px 6px;
-      font-size: 11px;
+      font-size: calc(var(--message-text-size, 13px) - 2px);
       font-weight: 400;
       letter-spacing: 0.07em;
       text-transform: uppercase;
@@ -1280,7 +1280,7 @@
       flex: 1 1 auto;
     }
     .git-pinned-expand-file-label .n {
-      font-size: 13px;
+      font-size: var(--message-text-size, 13px);
       color: var(--fg);
       white-space: nowrap;
       flex-shrink: 0;
@@ -1289,7 +1289,7 @@
       text-overflow: ellipsis;
     }
     .git-pinned-expand-file-label .d {
-      font-size: 12px;
+      font-size: calc(var(--message-text-size, 13px) - 1px);
       color: var(--muted);
       white-space: nowrap;
       overflow: hidden;
@@ -1299,7 +1299,7 @@
     .git-pinned-expand-counts {
       display: none;
       gap: 3px;
-      font-size: 12px;
+      font-size: calc(var(--message-text-size, 13px) - 1px);
       flex-shrink: 0;
       margin-left: auto;
     }
@@ -1329,6 +1329,6 @@
     }
     .git-pinned-expand-empty {
       padding: 8px 14px;
-      font-size: 11px;
+      font-size: calc(var(--message-text-size, 13px) - 2px);
       color: var(--muted);
     }
