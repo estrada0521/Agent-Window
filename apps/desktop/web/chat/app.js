@@ -819,6 +819,12 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       if (event.data.type === "multiagent-hub-theme-changed") {
         const chatTheme = event.data.chatTheme || event.data.theme;
         document.documentElement.dataset.theme = chatTheme === "light" ? "light" : "dark";
+        const themeDesktop = event.data.themeDesktop;
+        if (themeDesktop) {
+          document.documentElement.dataset.themeDesktop = themeDesktop;
+        } else {
+          delete document.documentElement.dataset.themeDesktop;
+        }
         return;
       }
       if (event.data.type === "multiagent-desktop-panel-sync-request") {
