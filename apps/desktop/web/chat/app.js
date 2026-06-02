@@ -817,7 +817,8 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     window.addEventListener("message", (event) => {
       if (!event.data) return;
       if (event.data.type === "multiagent-hub-theme-changed") {
-        document.documentElement.dataset.theme = event.data.theme === "light" ? "light" : "dark";
+        const chatTheme = event.data.chatTheme || event.data.theme;
+        document.documentElement.dataset.theme = chatTheme === "light" ? "light" : "dark";
         return;
       }
       if (event.data.type === "multiagent-desktop-panel-sync-request") {

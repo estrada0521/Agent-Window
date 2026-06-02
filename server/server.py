@@ -29,7 +29,7 @@ from server.routes.read import dispatch_get_read_route
 from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
 from backend_core.access.files import append_jsonl_entry
-from backend_core.access.settings import hub_settings_path
+from backend_core.access.settings import hub_settings_path, settings_for_chat_render
 from workspace_sync.api import WorkspaceSyncApi
 
 _PWA_STATIC_ROUTES = {
@@ -383,7 +383,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         icon_data_uris=asset_runtime.icon_data_uris,
         server_instance=server_instance,
         hub_port=hub_port,
-        chat_settings=load_chat_settings(),
+        chat_settings=settings_for_chat_render(load_chat_settings(), variant="desktop"),
         agent_font_mode_inline_style=chat_font_settings_inline_style,
         follow="0",
         chat_base_path="",

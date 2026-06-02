@@ -5,9 +5,14 @@
     const boldMobileToggle = document.querySelector('#settingsFormMobile input[name="bold_mode_mobile"]');
     const initialThemeValue = document.documentElement.dataset.theme || "dark";
     let _themeReloadPending = false;
+    const hubThemeForDesktop = (themeDesktop) => {
+      if (themeDesktop === "split") return "dark";
+      return themeDesktop === "light" ? "light" : "dark";
+    };
 
     document.querySelectorAll(".theme-switcher").forEach((switcher) => {
       const input = switcher.querySelector('input[type="hidden"]');
+      const isDesktopTheme = input?.name === "theme_desktop";
       switcher.querySelectorAll(".theme-btn").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.preventDefault();
@@ -15,11 +20,16 @@
           if (input.value === nextTheme) return;
           input.value = nextTheme;
           switcher.dataset.themeValue = nextTheme;
-          document.documentElement.dataset.theme = nextTheme;
+          document.documentElement.dataset.theme = isDesktopTheme ? hubThemeForDesktop(nextTheme) : nextTheme;
           _themeReloadPending = nextTheme !== initialThemeValue;
           try {
             if (window.self !== window.top) {
-              window.top.postMessage({ type: "multiagent-hub-theme-changed", theme: nextTheme }, "*");
+              window.top.postMessage(
+                isDesktopTheme
+                  ? { type: "multiagent-hub-theme-changed", themeDesktop: nextTheme }
+                  : { type: "multiagent-hub-theme-changed", theme: nextTheme },
+                "*"
+              );
             }
           } catch (_) {}
           // Trigger autosave

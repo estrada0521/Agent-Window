@@ -66,6 +66,14 @@
       --chat-pane-bg: var(--glass-bg-90);
       --chat-pane-filter: var(--glass-filter-20);
     }
+    /* Split: hub chrome stays dark; chat pane uses the same surface tokens as light theme. */
+    html[data-theme-desktop="split"] {
+      --chat-pane-bg: rgba(255, 255, 255, 0.95);
+      --chat-pane-filter: blur(20px);
+    }
+    html[data-theme-desktop="split"]:not([data-tauri-app="1"]) .desk-chat-frame {
+      background: rgb(255, 255, 255);
+    }
     * { box-sizing: border-box; }    html, body {
       margin: 0;
       min-height: 100%;
