@@ -454,7 +454,7 @@
       gap: 0;
       padding: 8px 12px;
       background: transparent;
-      font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+      font-family: var(--agent-message-font-family, inherit);
       font-size: 11px;
       line-height: 18px;
       color: var(--muted);

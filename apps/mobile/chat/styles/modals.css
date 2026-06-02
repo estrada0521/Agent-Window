@@ -393,7 +393,7 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       padding: 100px 0 0;
-      font-family: "SF Mono", "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace;
+      font-family: var(--agent-message-font-family, inherit);
       font-weight: 400;
       font-style: normal;
       font-size: 9.5px;
@@ -418,7 +418,7 @@
     }
 
     .trace-dot {
-      font-family: -apple-system, "Helvetica Neue", sans-serif;
+      font-family: var(--agent-message-font-family, inherit);
       font-variant-emoji: text;
       text-rendering: geometricPrecision;
     }

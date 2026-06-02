@@ -146,8 +146,6 @@
       let openTimer = null;
       let closeTimer = null;
       let fetchSeq = 0;
-      let popoverMotion = null;
-      let summaryMotion = null;
       const _e = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
       function cancelTimers() {
@@ -155,20 +153,9 @@
         clearTimeout(closeTimer); closeTimer = null;
       }
 
-      function clearPinnedPopoverMotion() {
-        popoverMotion?.cancel();
-        summaryMotion?.cancel();
-        popoverMotion = null;
-        summaryMotion = null;
-        aside.style.transform = "";
-        inner.style.transform = "";
-      }
-
       function animatePopoverIn(popover, stableElement) {
         if (!popover || typeof popover.animate !== "function") return;
         if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
-
-        clearPinnedPopoverMotion();
 
         const frames = [];
         const stableFrames = [];
@@ -194,26 +181,26 @@
             });
           }
         }
-        popoverMotion = popover.animate(frames, {
+        const animation = popover.animate(frames, {
           duration: 360,
           easing: "linear",
-          fill: "forwards",
+          fill: "both",
         });
         if (stableElement && stableFrames.length) {
-          summaryMotion = stableElement.animate(stableFrames, {
+          stableElement.animate(stableFrames, {
             duration: 360,
             easing: "linear",
-            fill: "forwards",
+            fill: "both",
           });
         }
-        const onMotionEnd = () => clearPinnedPopoverMotion();
-        popoverMotion.addEventListener("finish", onMotionEnd, { once: true });
-        popoverMotion.addEventListener("cancel", onMotionEnd, { once: true });
+        animation.addEventListener("finish", () => {
+          popover.style.transform = "";
+          if (stableElement) stableElement.style.transform = "";
+        }, { once: true });
       }
 
       function close() {
         cancelTimers();
-        clearPinnedPopoverMotion();
         aside.classList.remove("is-expanded");
         fetchSeq++;
         expand.innerHTML = "";
