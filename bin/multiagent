@@ -1364,8 +1364,6 @@ source "$SAVE_CORE_SH"
 
 start_agent() {
   local pane_id="$1" agent_name="$2" instance_name="${3:-$2}" launch_cmd
-  local index_path
-  index_path="$(_canonical_session_index_path "$SESSION_NAME")"
   local base_name="${agent_name%%-[0-9]*}"
   local executable launch_extra launch_flags launch_env
   executable="$(resolve_agent_executable "$base_name")" || {
@@ -1375,35 +1373,20 @@ start_agent() {
   launch_extra="$(agent_var AGENT_LAUNCH_EXTRA "$base_name")"
   launch_flags="$(agent_var AGENT_LAUNCH_FLAGS "$base_name")"
   launch_env="$(agent_var AGENT_LAUNCH_ENV "$base_name")"
-  launch_cmd="$(python3 - "$REPO_ROOT" "$SCRIPT_DIR" "$SESSION_NAME" "$WORKSPACE" "$TMUX_SOCKET_NAME" "$index_path" "$instance_name" "$executable" "$launch_extra" "$launch_flags" "$launch_env" <<'PYEOF'
+  launch_cmd="$(python3 - "$REPO_ROOT" "$executable" "$launch_extra" "$launch_flags" "$launch_env" <<'PYEOF'
 import sys
 from pathlib import Path
 
 repo_root = Path(sys.argv[1]).resolve()
-script_dir = sys.argv[2]
-session_name = sys.argv[3]
-workspace = sys.argv[4]
-tmux_socket = sys.argv[5]
-index_path = sys.argv[6]
-instance_name = sys.argv[7]
-executable = sys.argv[8]
-launch_extra = sys.argv[9]
-launch_flags = sys.argv[10]
-launch_env = sys.argv[11]
+executable = sys.argv[2]
+launch_extra = sys.argv[3]
+launch_flags = sys.argv[4]
+launch_env = sys.argv[5]
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.launch import build_agent_launch_command, build_env_exports
+from multiagent_lib.launch import build_agent_launch_command
 
-env_exports = build_env_exports(
-    script_dir=script_dir,
-    session_name=session_name,
-    workspace=workspace,
-    tmux_socket=tmux_socket,
-    index_path=index_path,
-    agent_name=instance_name,
-)
 print(
     build_agent_launch_command(
-        env_exports=env_exports,
         executable=executable,
         launch_extra=launch_extra,
         launch_flags=launch_flags,
@@ -1418,7 +1401,12 @@ import sys; sys.path.insert(0, '$SCRIPT_DIR')
 from multiagent_lib.workspace_trust import trust_workspace
 trust_workspace('$base_name', '$WORKSPACE')
 "
-  tmux send-keys -t "$pane_id" "$launch_cmd" Enter
+  tmux set-environment -t "$SESSION_NAME" MULTIAGENT_AGENT_NAME "$instance_name"
+  local shell_bin="${SHELL:-/bin/zsh}"
+  if [[ ! -x "$shell_bin" ]]; then
+    shell_bin=/bin/bash
+  fi
+  tmux respawn-pane -k -t "$pane_id" -c "$WORKSPACE" "$shell_bin" -lc "$launch_cmd"
 }
 
 multiagent_dispatch_agent_mutation_modes
@@ -1463,9 +1451,11 @@ if [[ "$USER_PANE" != "none" ]]; then
   fi
 fi
 
-for pane_id in "${USER_PANE_IDS[@]}"; do
-  tmux select-pane -t "$pane_id" -T "terminal"
-done
+if [[ "$USER_PANE" != "none" ]]; then
+  for pane_id in "${USER_PANE_IDS[@]}"; do
+    tmux select-pane -t "$pane_id" -T "terminal"
+  done
+fi
 
 tmux set-option -t "$SESSION_NAME" -g remain-on-exit on
 tmux set-option -t "$SESSION_NAME" -g mouse on
@@ -1487,6 +1477,8 @@ tmux set-environment -t "$SESSION_NAME" MULTIAGENT_WORKSPACE "$WORKSPACE"
 tmux set-environment -t "$SESSION_NAME" MULTIAGENT_BIN_DIR "$SCRIPT_DIR"
 tmux set-environment -t "$SESSION_NAME" MULTIAGENT_TMUX_SOCKET "$TMUX_SOCKET_NAME"
 tmux set-environment -t "$SESSION_NAME" MULTIAGENT_LAYOUT per-window
+tmux set-environment -t "$SESSION_NAME" PATH "${SCRIPT_DIR}:${PATH}"
+tmux set-environment -t "$SESSION_NAME" -u CLAUDECODE 2>/dev/null || true
 if [[ -n "$USER_PANE_ID" ]]; then
   tmux set-environment -t "$SESSION_NAME" MULTIAGENT_PANE_USER "$USER_PANE_ID"
   tmux set-environment -t "$SESSION_NAME" MULTIAGENT_PANES_USER "$(IFS=,; echo "${USER_PANE_IDS[*]-}")"
@@ -1496,7 +1488,6 @@ else
 fi
 tmux set-environment -t "$SESSION_NAME" -u MULTIAGENT_LOG_DIR 2>/dev/null || true
 tmux set-environment -t "$SESSION_NAME" MULTIAGENT_INDEX_PATH "$(_canonical_session_index_path "$SESSION_NAME")"
-tmux set-environment -t "$SESSION_NAME" -u CLAUDECODE 2>/dev/null || true
 ensure_session_index_mirrors "$SESSION_NAME"
 
 for (( i=0; i<NUM_AGENTS; i++ )); do
@@ -1533,7 +1524,7 @@ else
   done
 fi
 
-if [[ ${#USER_PANE_IDS[@]} -gt 0 ]]; then
+if [[ "$USER_PANE" != "none" && ${#USER_PANE_IDS[@]} -gt 0 ]]; then
   for pane_id in "${USER_PANE_IDS[@]}"; do
     start_user_pane "$pane_id"
   done

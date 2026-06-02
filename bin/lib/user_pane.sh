@@ -21,32 +21,23 @@ wait_for_agent_ready() {
 
 start_user_pane() {
   local pane_id="$1" launch_cmd
-  local index_path
-  index_path="$(_canonical_session_index_path "$SESSION_NAME")"
-  launch_cmd="$(python3 - "$REPO_ROOT" "$SCRIPT_DIR" "$SESSION_NAME" "$WORKSPACE" "$TMUX_SOCKET_NAME" "$index_path" <<'PYEOF'
+  launch_cmd="$(python3 - "$REPO_ROOT" "$SCRIPT_DIR" <<'PYEOF'
 import sys
 from pathlib import Path
 
 repo_root = Path(sys.argv[1]).resolve()
 script_dir = sys.argv[2]
-session_name = sys.argv[3]
-workspace = sys.argv[4]
-tmux_socket = sys.argv[5]
-index_path = sys.argv[6]
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.launch import build_env_exports, build_user_launch_command
+from multiagent_lib.launch import build_user_launch_command
 
-env_exports = build_env_exports(
-    script_dir=script_dir,
-    session_name=session_name,
-    workspace=workspace,
-    tmux_socket=tmux_socket,
-    index_path=index_path,
-)
-print(build_user_launch_command(env_exports=env_exports, script_dir=script_dir))
+print(build_user_launch_command(script_dir=script_dir))
 PYEOF
   )"
   tmux select-pane -t "$pane_id" -T "terminal"
-  tmux send-keys -t "$pane_id" C-c
-  tmux send-keys -t "$pane_id" "$launch_cmd" Enter
+  tmux set-environment -t "$SESSION_NAME" MULTIAGENT_AGENT_NAME "user"
+  local shell_bin="${SHELL:-/bin/zsh}"
+  if [[ ! -x "$shell_bin" ]]; then
+    shell_bin=/bin/bash
+  fi
+  tmux respawn-pane -k -t "$pane_id" -c "$WORKSPACE" "$shell_bin" -lc "$launch_cmd"
 }
