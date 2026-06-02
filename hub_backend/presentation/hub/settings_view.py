@@ -122,11 +122,19 @@ def hub_settings_html(
     message_text_size_mobile = int(settings.get("message_text_size_mobile") or message_text_size)
     message_text_size_desktop = int(settings.get("message_text_size_desktop") or message_text_size)
     chat_auto = settings.get("chat_auto_mode", False)
+    from backend_core.access.settings import (
+        normalize_theme_desktop,
+        normalize_theme_mobile,
+        resolve_hub_theme,
+    )
+
     theme = str(settings.get("theme", "dark") or "dark").strip().lower()
     light_mode = theme == "light"
-    light_mode_desktop = str(settings.get("theme_desktop", theme) or theme).strip().lower() == "light"
-    light_mode_mobile = str(settings.get("theme_mobile", theme) or theme).strip().lower() == "light"
-    render_theme = "light" if (light_mode_desktop if resolved_view_variant == "desktop" else light_mode_mobile) else "dark"
+    theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", theme))
+    theme_mobile = normalize_theme_mobile(settings.get("theme_mobile", theme))
+    light_mode_desktop = theme_desktop == "light"
+    light_mode_mobile = theme_mobile == "light"
+    render_theme = resolve_hub_theme(settings, variant=resolved_view_variant)
     bold_mode_mobile = settings.get("bold_mode_mobile", False)
     open_files_direct_external_editor = settings.get("open_files_direct_external_editor", False)
     external_editor = sanitize_hub_external_editor_choice(
@@ -199,8 +207,8 @@ def hub_settings_html(
         .replace("__LIGHT_MODE_CHECKED__", " checked" if light_mode else "")
         .replace("__LIGHT_MODE_DESKTOP_CHECKED__", " checked" if light_mode_desktop else "")
         .replace("__LIGHT_MODE_MOBILE_CHECKED__", " checked" if light_mode_mobile else "")
-        .replace("__THEME_MOBILE_HIDDEN__", html.escape("light" if light_mode_mobile else "dark"))
-        .replace("__THEME_DESKTOP_HIDDEN__", html.escape("light" if light_mode_desktop else "dark"))
+        .replace("__THEME_MOBILE_HIDDEN__", html.escape(theme_mobile))
+        .replace("__THEME_DESKTOP_HIDDEN__", html.escape(theme_desktop))
         .replace("__BOLD_MODE_MOBILE_CHECKED__", " checked" if bold_mode_mobile else "")
         .replace("__OPEN_FILES_DIRECT_EXTERNAL_EDITOR_CHECKED__", " checked" if open_files_direct_external_editor else "")
         .replace(

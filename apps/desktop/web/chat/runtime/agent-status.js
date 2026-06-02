@@ -137,10 +137,9 @@
         const data = await res.json();
         currentBoldModeMobile = !!data?.bold_mode_mobile;
         openFilesDirectInExternalEditor = !!data?.open_files_direct_external_editor;
-        const _theme = data?.theme_desktop ?? data?.theme;
-        if (_theme === "light" || _theme === "dark") {
-          document.documentElement.dataset.theme = _theme;
-        }
+        const _themeDesktop = String(data?.theme_desktop ?? data?.theme ?? "").trim().toLowerCase();
+        const _chatTheme = _themeDesktop === "split" ? "light" : (_themeDesktop === "light" ? "light" : "dark");
+        document.documentElement.dataset.theme = _chatTheme;
         if (typeof data?.agent_font_mode === "string" && data.agent_font_mode) {
           document.documentElement.dataset.agentFontMode = data.agent_font_mode;
         }

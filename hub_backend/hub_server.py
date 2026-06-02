@@ -560,8 +560,9 @@ def hub_new_session_html(variant="desktop"):
         .replace("__MESSAGE_TEXT_SIZE__", str(message_text_size))
         .replace("__BOLD_MODE_MOBILE__", "1" if bold_mode_mobile else "")
     )
-    theme_key = "theme_mobile" if is_mobile else "theme_desktop"
-    render_settings = dict(current_settings, theme=current_settings.get(theme_key, current_settings.get("theme", "dark")))
+    from backend_core.access.settings import settings_for_hub_render
+
+    render_settings = settings_for_hub_render(current_settings, variant="mobile" if is_mobile else "desktop")
     return apply_color_tokens(page, settings=render_settings)
 
 def _hub_session_api() -> HubSessionApi:
@@ -753,9 +754,13 @@ class Handler(BaseHTTPRequestHandler):
             settings = load_hub_settings()
         except Exception:
             settings = {}
+        from backend_core.access.settings import normalize_theme_desktop, settings_for_hub_render
+
         page = HUB_HOME_MOBILE_HTML if variant == "mobile" else HUB_HOME_DESKTOP_HTML
-        theme_key = "theme_mobile" if variant == "mobile" else "theme_desktop"
-        render_settings = dict(settings, theme=settings.get(theme_key, settings.get("theme", "dark")))
+        if variant == "desktop":
+            theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
+            page = page.replace("__THEME_DESKTOP__", theme_desktop)
+        render_settings = settings_for_hub_render(settings, variant=variant)
         self._send_html(200, apply_color_tokens(page, settings=render_settings))
 
     def _get_settings(self, parsed):

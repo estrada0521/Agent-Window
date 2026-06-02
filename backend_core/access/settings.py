@@ -7,6 +7,41 @@ import socket
 from pathlib import Path
 
 SESSION_LOG_FILENAME = ".log.jsonl"
+DESKTOP_THEME_CHOICES = frozenset({"light", "dark", "split"})
+MOBILE_THEME_CHOICES = frozenset({"light", "dark"})
+
+
+def normalize_theme_mobile(value: object) -> str:
+    return "light" if str(value or "").strip().lower() == "light" else "dark"
+
+
+def normalize_theme_desktop(value: object) -> str:
+    theme = str(value or "").strip().lower()
+    return theme if theme in DESKTOP_THEME_CHOICES else "dark"
+
+
+def resolve_hub_theme(settings: dict, *, variant: str) -> str:
+    view = str(variant or "desktop").strip().lower()
+    if view == "mobile":
+        return normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
+    desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
+    return "dark" if desktop == "split" else desktop
+
+
+def resolve_chat_theme(settings: dict, *, variant: str) -> str:
+    view = str(variant or "desktop").strip().lower()
+    if view == "mobile":
+        return normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
+    desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
+    return "light" if desktop == "split" else desktop
+
+
+def settings_for_hub_render(settings: dict, *, variant: str) -> dict:
+    return dict(settings, theme=resolve_hub_theme(settings, variant=variant))
+
+
+def settings_for_chat_render(settings: dict, *, variant: str) -> dict:
+    return dict(settings, theme=resolve_chat_theme(settings, variant=variant))
 
 
 def sanitize_hub_external_editor_choice(raw: str, *, allow_markedit: bool = False) -> str:
@@ -34,7 +69,10 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
             # unchecked checkbox → dark
             settings[_tk] = "dark"
         elif raw.get(_tk) is not None:
-            settings[_tk] = "light" if str(raw.get(_tk)).strip().lower() == "light" else "dark"
+            if _tk == "theme_desktop":
+                settings[_tk] = normalize_theme_desktop(raw.get(_tk))
+            else:
+                settings[_tk] = normalize_theme_mobile(raw.get(_tk))
         else:
             # loading from file without this key → inherit global theme
             settings[_tk] = settings["theme"]

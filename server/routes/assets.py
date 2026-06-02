@@ -4,6 +4,7 @@ import json
 from urllib.parse import parse_qs
 
 from hub_backend.branding import APP_DISPLAY_NAME
+from backend_core.access.settings import settings_for_chat_render
 from hub_backend.color_constants import apply_color_tokens, resolve_theme_palette
 from hub_backend.transport.request_base_path import request_base_path
 from hub_backend.transport.request_view import request_view_variant
@@ -12,7 +13,7 @@ from .read import _send_bytes
 
 def _get_app_manifest(handler, _parsed, ctx) -> None:
     base_path = request_base_path(headers=handler.headers, query_string=_parsed.query)
-    settings = ctx["load_chat_settings_fn"]()
+    settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant="desktop")
     palette = resolve_theme_palette(settings)
     bg = str(palette["dark_bg"])
     body = json.dumps(
@@ -38,7 +39,7 @@ def _get_app_manifest(handler, _parsed, ctx) -> None:
 
 def _get_chat_app_js(handler, _parsed, ctx) -> None:
     variant = request_view_variant(headers=handler.headers, query_string=_parsed.query)
-    settings = ctx["load_chat_settings_fn"]()
+    settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant=variant)
     body = apply_color_tokens(ctx["chat_app_script_asset_fn"](variant), settings=settings).encode("utf-8")
     _send_bytes(
         handler,
@@ -51,7 +52,7 @@ def _get_chat_app_js(handler, _parsed, ctx) -> None:
 
 def _get_chat_app_css(handler, _parsed, ctx) -> None:
     variant = request_view_variant(headers=handler.headers, query_string=_parsed.query)
-    settings = ctx["load_chat_settings_fn"]()
+    settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant=variant)
     body = apply_color_tokens(ctx["chat_main_style_asset_fn"](variant), settings=settings).encode("utf-8")
     _send_bytes(
         handler,
@@ -98,7 +99,7 @@ def _get_chat_index(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     follow = "1" if qs.get("follow", ["0"])[0] == "1" else "0"
     variant = request_view_variant(headers=handler.headers, query_string=parsed.query)
-    chat_settings = ctx["load_chat_settings_fn"]()
+    chat_settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant=variant)
     request_host = (handler.headers.get("Host", "") or "").strip()
     request_host_only = request_host.split(":", 1)[0].rstrip(".").lower()
     forwarded_public_host = (handler.headers.get("X-Forwarded-Public-Host", "") or "").strip()
