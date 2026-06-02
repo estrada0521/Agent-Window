@@ -223,7 +223,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       position: relative;
-      padding: var(--mobile-sheet-content-offset) 6px calc(10px + env(safe-area-inset-bottom, 0px));
+      padding: var(--mobile-sheet-content-offset) 6px env(safe-area-inset-bottom, 0px);
       -webkit-overflow-scrolling: touch;
       display: grid;
       grid-template-columns: 1fr;
@@ -548,7 +548,6 @@
       display: flex;
       flex-direction: column;
       gap: 2px;
-      padding: 0 0 24px;
     }
 
     .git-branch-load-more {
@@ -720,19 +719,52 @@
     .git-branch-summary-count.del {
       color: rgba(var(--git-del-red-channels), 0.9);
     }
+    .git-branch-summary-count.is-rolling {
+      display: inline-flex;
+      vertical-align: baseline;
+    }
+    .git-count-roll {
+      display: inline-flex;
+      align-items: center;
+      line-height: 1.2;
+    }
+    .git-count-roll-prefix {
+      flex: 0 0 auto;
+    }
+    .git-count-roll-digits {
+      display: inline-flex;
+      align-items: center;
+    }
+    .git-count-roll-digit {
+      height: 1.2em;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: top;
+    }
+    .git-count-roll-strip {
+      display: flex;
+      flex-direction: column;
+      will-change: transform;
+    }
+    .git-count-roll-item {
+      height: 1.2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.2;
+    }
 
     .git-commit-file-list {
       display: flex;
       flex-direction: column;
       gap: 0;
-      padding: 0 2px 24px;
+      padding: 0 2px;
     }
 
     .git-commit-file-sections {
       display: flex;
       flex-direction: column;
       gap: 0;
-      padding: 0 0 24px;
     }
 
     .git-commit-file-section {
