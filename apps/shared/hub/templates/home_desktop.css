@@ -48,11 +48,11 @@
       color-scheme: dark;
       --bg-rgb: 0, 0, 0;
       --bg: rgb(0, 0, 0);
-      --fg: rgb(210, 210, 210);
-      --muted: rgb(158, 158, 158);
-      --icon-fg: rgb(210, 210, 210);
-      --icon-muted: rgb(158, 158, 158);
-      --icon-hover: rgb(220, 220, 220);
+      --fg: rgb(180, 180, 180);
+      --muted: rgb(128, 128, 128);
+      --icon-fg: rgb(180, 180, 180);
+      --icon-muted: rgb(128, 128, 128);
+      --icon-hover: rgb(190, 190, 190);
       --desk-chrome-fg: rgb(255, 255, 255);
       --desk-chrome-hover-bg: var(--bg);
       --panel: rgba(10, 10, 10, 0.72);

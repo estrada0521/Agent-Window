@@ -32,11 +32,11 @@
       color-scheme: dark;
       --bg-rgb: 0, 0, 0;
       --bg: rgb(0, 0, 0);
-      --fg: rgb(210, 210, 210);
-      --muted: rgb(158, 158, 158);
-      --icon-fg: rgb(210, 210, 210);
-      --icon-muted: rgb(158, 158, 158);
-      --icon-hover: rgb(220, 220, 220);
+      --fg: rgb(180, 180, 180);
+      --muted: rgb(128, 128, 128);
+      --icon-fg: rgb(180, 180, 180);
+      --icon-muted: rgb(128, 128, 128);
+      --icon-hover: rgb(190, 190, 190);
       --panel: rgb(10, 10, 10);
       --panel-2: rgb(5, 5, 5);
       --line: rgba(255, 255, 255, 0.07);

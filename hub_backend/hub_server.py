@@ -316,7 +316,7 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
     html, body {{
       margin: 0;
       min-height: 100%;
-      background: __DARK_BG__;
+      background: transparent;
       color: var(--fg);
     }}
     body {{

@@ -126,10 +126,10 @@
       --mobile-sheet-pill-bg: rgba(255, 255, 255, 0.22);
       --bg-rgb: 0, 0, 0;
       --fg: rgb(255, 255, 255);
-      --muted: rgb(158, 158, 158);
+      --muted: rgb(128, 128, 128);
       --icon-fg: rgb(255, 255, 255);
-      --icon-muted: rgb(158, 158, 158);
-      --icon-hover: rgb(220, 220, 220);
+      --icon-muted: rgb(128, 128, 128);
+      --icon-hover: rgb(190, 190, 190);
     }
 
     #attachedFilesPanel.attached-files-preview-shell-light .mobile-floating-sheet-button {
