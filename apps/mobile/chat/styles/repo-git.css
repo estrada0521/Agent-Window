@@ -428,6 +428,7 @@
       min-width: 0;
       position: relative;
       cursor: pointer;
+      font-family: var(--agent-message-font-family, inherit);
       transition: background 120ms ease;
       box-sizing: border-box;
     }
@@ -576,6 +577,7 @@
       font-size: var(--message-text-size, 13px);
       line-height: 1.35;
       color: var(--fg);
+      font-family: var(--agent-message-font-family, inherit);
       cursor: default;
       transition: background 120ms ease;
     }
@@ -653,11 +655,13 @@
 
     .git-branch-summary-wrap .git-branch-summary-meta-text {
       font-size: var(--message-text-size, 13px);
+      font-family: var(--agent-message-font-family, inherit);
       color: var(--fg);
     }
 
     .git-branch-summary-wrap .git-branch-summary-counts {
       font-size: var(--message-text-size, 13px);
+      font-family: var(--agent-message-font-family, inherit);
     }
 
     .git-branch-summary-meta-text {
@@ -665,7 +669,6 @@
       font-size: calc(var(--message-text-size, 13px) - 2px);
       color: var(--muted);
       font-variant-numeric: tabular-nums;
-      font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
     }
 
     .git-branch-summary-icon-wrap {
@@ -702,7 +705,6 @@
       align-items: center;
       gap: 12px;
       flex-shrink: 0;
-      font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
       font-variant-numeric: tabular-nums;
       font-size: calc(var(--message-text-size, 13px) - 2px);
     }
