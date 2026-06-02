@@ -1,3 +1,14 @@
+    html[data-tauri-app="1"][data-hub-iframe-chat="1"] {
+      --right-panel-row-min-height: 30px;
+      --right-panel-compact-row-min-height: 26px;
+      --right-panel-row-pad-x: 6px;
+      --right-panel-row-gap: 8px;
+      --right-panel-icon-slot-size: 18px;
+      --right-panel-control-size: 24px;
+      --right-panel-small-icon-size: 16px;
+      --right-panel-pin-font-size: 12px;
+      --right-panel-compact-text-size: 12px;
+    }
     .desktop-right-panel {
       position: fixed;
       top: 0;
@@ -192,15 +203,16 @@
     .repo-path-back-btn {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--right-panel-row-gap);
       width: 100%;
-      min-height: 34px;
-      padding: 0 8px;
+      min-height: var(--right-panel-row-min-height);
+      padding: 0 var(--right-panel-row-pad-x);
       background: var(--panel-row-bg);
       border: 0.5px solid var(--panel-row-border);
       border-radius: 26px;
       cursor: default;
       text-align: left;
+      font-family: var(--agent-message-font-family, inherit);
       transition: background 120ms ease;
       box-sizing: border-box;
     }
@@ -208,8 +220,8 @@
     .has-hover .repo-path-back-btn.clickable:hover { background: var(--panel-row-hover-bg); }
     .repo-path-back-btn.clickable:active { background: var(--panel-row-active-bg); }
     .repo-path-back-icon-slot {
-      width: 18px;
-      height: 18px;
+      width: var(--right-panel-icon-slot-size);
+      height: var(--right-panel-icon-slot-size);
       pointer-events: none;
     }
     .repo-path-label {
@@ -226,8 +238,8 @@
     .repo-path-nav-btn {
       appearance: none;
       -webkit-appearance: none;
-      width: 28px;
-      height: 28px;
+      width: var(--right-panel-control-size);
+      height: var(--right-panel-control-size);
       padding: 0;
       border: none;
       border-radius: 6px;
@@ -253,14 +265,14 @@
       height: 14px;
     }
     .repo-path-nav-btn.repo-path-back-icon-slot {
-      width: 18px;
-      height: 18px;
+      width: var(--right-panel-icon-slot-size);
+      height: var(--right-panel-icon-slot-size);
       color: var(--icon-fg);
       cursor: default;
     }
     .repo-path-nav-btn.repo-path-back-icon-slot svg {
-      width: 16px;
-      height: 16px;
+      width: var(--right-panel-small-icon-size);
+      height: var(--right-panel-small-icon-size);
     }
     .repo-browser-scroll {
       flex: 1 1 auto;
@@ -305,8 +317,8 @@
       background: var(--panel-row-bg);
     }
     .repo-browser-item-icon {
-      width: 18px;
-      height: 18px;
+      width: var(--right-panel-icon-slot-size);
+      height: var(--right-panel-icon-slot-size);
       flex: 0 0 auto;
       display: inline-flex;
       align-items: center;
@@ -443,6 +455,11 @@
       cursor: pointer;
       transition: background 120ms ease, opacity 120ms ease;
     }
+    .desktop-right-panel .git-branch-summary-wrap .git-branch-summary-pin {
+      width: var(--right-panel-icon-slot-size);
+      height: var(--right-panel-icon-slot-size);
+      font-size: var(--right-panel-pin-font-size);
+    }
     .git-branch-summary-wrap .git-branch-summary-pin:not(.is-pinned) {
       opacity: 0.4;
       filter: grayscale(1);
@@ -519,11 +536,11 @@
     html[data-tauri-app="1"][data-hub-iframe-chat="1"] .git-pinned-summary-aside .git-branch-summary-wrap .git-branch-summary-row.clickable:active {
       background: rgba(255, 255, 255, 0.12);
     }
-    .git-branch-summary-wrap .git-branch-summary-row {
+    .desktop-right-panel .git-branch-summary-wrap .git-branch-summary-row {
       background: var(--panel-row-bg);
       border: 0.5px solid var(--panel-row-border);
       border-radius: 26px;
-      min-height: 34px;
+      min-height: var(--right-panel-row-min-height);
       position: relative;
     }
     .git-pinned-summary-aside::before {
@@ -557,9 +574,15 @@
       font-size: var(--message-text-size, 13px);
       color: var(--fg);
     }
+    .desktop-right-panel .git-branch-summary-wrap .git-branch-summary-meta-text {
+      font-family: var(--agent-message-font-family, inherit);
+    }
     .git-branch-summary-wrap .git-branch-summary-counts,
     .git-commit-detail-head .git-branch-summary-row .git-branch-summary-counts {
       font-size: var(--message-text-size, 13px);
+    }
+    .desktop-right-panel .git-branch-summary-wrap .git-branch-summary-counts {
+      font-family: var(--agent-message-font-family, inherit);
     }
     .git-branch-detail-view {
       display: none;
@@ -605,8 +628,8 @@
       border-bottom: none;
       border-radius: 8px;
       pointer-events: none;
-      min-height: 34px;
-      padding: 0 6px;
+      min-height: var(--right-panel-row-min-height);
+      padding: 0 var(--right-panel-row-pad-x);
       background: var(--panel-row-bg);
       border: none;
       transition: background 120ms ease;
@@ -621,14 +644,14 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 18px;
-      height: 18px;
+      width: var(--right-panel-icon-slot-size);
+      height: var(--right-panel-icon-slot-size);
       margin: 0;
       padding: 0;
       border: none;
       border-radius: 4px;
       background: transparent;
-      font-size: 14px;
+      font-size: var(--right-panel-pin-font-size);
       line-height: 1;
       cursor: default;
     }
@@ -643,7 +666,7 @@
       background: var(--panel-row-bg);
       border: 0.5px solid var(--panel-row-border);
       border-radius: 26px;
-      min-height: 34px;
+      min-height: var(--right-panel-row-min-height);
       position: relative;
     }
     .git-commit-detail-head:active > .git-branch-summary-row {
@@ -703,6 +726,7 @@
       padding: 6px 6px;
       border-radius: 8px;
       font-size: var(--message-text-size, 13px);
+      font-family: var(--agent-message-font-family, inherit);
       line-height: 1.3;
       color: var(--fg);
       min-width: 0;
@@ -733,8 +757,8 @@
     .git-branch-summary-icon-wrap {
       position: relative;
       flex-shrink: 0;
-      width: 18px;
-      height: 18px;
+      width: var(--right-panel-icon-slot-size);
+      height: var(--right-panel-icon-slot-size);
       z-index: 1;
     }
     .git-commit-dot {
@@ -859,6 +883,11 @@
       cursor: default;
       transition: background 120ms ease;
     }
+    .desktop-right-panel .git-branch-summary-row {
+      min-height: var(--right-panel-row-min-height);
+      padding: 0 var(--right-panel-row-pad-x);
+      font-family: var(--agent-message-font-family, inherit);
+    }
     .git-branch-summary-row.clickable {
       cursor: pointer;
     }
@@ -890,6 +919,10 @@
       width: 18px;
       height: 18px;
       color: var(--icon-muted);
+    }
+    .desktop-right-panel .git-branch-summary-icon {
+      width: var(--right-panel-icon-slot-size);
+      height: var(--right-panel-icon-slot-size);
     }
     .git-commit-chevron {
       width: 14px;
@@ -1021,8 +1054,8 @@
       left: 6px;
       top: 50%;
       transform: translateY(-50%);
-      width: 18px;
-      height: 18px;
+      width: var(--right-panel-icon-slot-size);
+      height: var(--right-panel-icon-slot-size);
       flex-shrink: 0;
       color: var(--icon-fg);
       display: flex;
@@ -1032,15 +1065,15 @@
       transition: color 120ms ease;
     }
     .git-commit-file-icon svg {
-      width: 16px;
-      height: 16px;
+      width: var(--right-panel-small-icon-size);
+      height: var(--right-panel-small-icon-size);
       stroke-width: 1.45;
     }
 
     .git-commit-file-undo {
       padding: 0;
-      width: 24px;
-      height: 24px;
+      width: var(--right-panel-control-size);
+      height: var(--right-panel-control-size);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1084,8 +1117,8 @@
     }
     .git-commit-file-action {
       padding: 0;
-      width: 24px;
-      height: 24px;
+      width: var(--right-panel-control-size);
+      height: var(--right-panel-control-size);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1163,6 +1196,7 @@
       contain: inline-size;
       max-height: 0;
       overflow: hidden;
+      font-family: var(--agent-message-font-family, inherit);
     }
     .git-pinned-summary-aside.is-expanded .git-pinned-expand {
       max-height: 50vh;
@@ -1190,8 +1224,8 @@
       align-items: center;
       justify-content: flex-start;
       gap: 6px;
-      margin: 0 8px;
-      padding: 6px 8px;
+      margin: 0 4px;
+      padding: 6px;
       border-radius: 10px;
       cursor: pointer;
     }
@@ -1205,8 +1239,8 @@
       overflow: hidden;
     }
     .git-pinned-expand-file-icon {
-      width: 16px;
-      height: 16px;
+      width: var(--right-panel-icon-slot-size);
+      height: var(--right-panel-icon-slot-size);
       flex: 0 0 auto;
       color: var(--icon-fg);
       display: inline-flex;
@@ -1215,8 +1249,8 @@
       pointer-events: none;
     }
     .git-pinned-expand-file-icon svg {
-      width: 15px;
-      height: 15px;
+      width: 16px;
+      height: 16px;
       stroke-width: 1.45;
     }
     .git-pinned-expand-file-label {
@@ -1237,7 +1271,7 @@
       text-overflow: ellipsis;
     }
     .git-pinned-expand-file-label .d {
-      font-size: 12px;
+      font-size: var(--right-panel-compact-text-size);
       color: var(--muted);
       white-space: nowrap;
       overflow: hidden;
@@ -1247,7 +1281,7 @@
     .git-pinned-expand-counts {
       display: none;
       gap: 3px;
-      font-size: 12px;
+      font-size: var(--right-panel-compact-text-size);
       flex-shrink: 0;
       margin-left: auto;
     }
