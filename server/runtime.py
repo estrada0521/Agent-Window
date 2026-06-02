@@ -528,6 +528,8 @@ class ChatRuntime:
 
     def _mark_running(self, agent: str) -> None:
         already_running = agent in self._agent_running
+        if not already_running:
+            self._native_log.clear_agent_runtime_display(agent)
         self._agent_running.add(agent)
         _update_running_env_impl(self, agent, True)
         if not already_running:
@@ -551,7 +553,7 @@ class ChatRuntime:
                 new_path = self._native_log.log_path_for_agent(agent)
                 if new_path and new_path != old_path:
                     self._initial_sync_agent(agent)
-            self.notify_session_state_changed(["statuses"], reason="agent-status")
+            self.notify_session_state_changed(["statuses", "agent_runtime"], reason="agent-status")
 
     def _initial_sync_agent(self, agent: str) -> None:
         """Run a full initial emit to capture any log content written before binding."""
@@ -575,8 +577,11 @@ class ChatRuntime:
         was_running = agent in self._agent_running
         self._agent_running.discard(agent)
         _update_running_env_impl(self, agent, False)
+        cleared = self._native_log.clear_agent_runtime_display(agent)
         if was_running:
-            self.notify_session_state_changed(["statuses"], reason="agent-status")
+            self.notify_session_state_changed(["statuses", "agent_runtime"], reason="agent-status")
+        elif cleared:
+            self.notify_session_state_changed(["agent_runtime"], reason="agent-runtime-clear")
 
     def agent_launch_cmd(self, agent_name: str) -> str:
         return _agent_launch_cmd_impl(self, agent_name)

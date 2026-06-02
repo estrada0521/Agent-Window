@@ -124,6 +124,11 @@
         currentProviderRuntime = {};
       }
       if (data.statuses && typeof data.statuses === "object") {
+        Object.keys(currentAgentRuntime).forEach((agent) => {
+          if (data.statuses[agent] !== "running") {
+            delete currentAgentRuntime[agent];
+          }
+        });
         syncThinkingRuntimeItems(data.statuses, { suppressRender: true });
         renderAgentStatus(data.statuses);
       } else {
