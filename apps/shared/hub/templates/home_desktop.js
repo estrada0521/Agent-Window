@@ -566,10 +566,12 @@
     function setDeskSettingsOpen(isOpen) {
       if (!_deskWorkbench) return;
       if (isOpen) {
-        _deskWorkbench.classList.remove("sidebar-open");
+        setDeskSidebarMode("settings");
       }
       _deskWorkbench.classList.toggle("settings-open", !!isOpen);
-      setDeskSidebarMode(isOpen ? "settings" : "list");
+      if (!isOpen) {
+        setDeskSidebarMode("list");
+      }
       syncDeskSidebarResizerVisibility();
     }
 
