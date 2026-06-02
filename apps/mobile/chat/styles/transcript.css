@@ -618,7 +618,7 @@
       font-size: 12px;
       line-height: 1.58;
       color: var(--fg);
-      font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+      font-family: var(--agent-message-font-family, inherit);
     }
 
     .sysmsg-row::before,

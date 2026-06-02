@@ -10,6 +10,7 @@
       --right-panel-compact-text-size: 12px;
     }
     .desktop-right-panel {
+      font-family: var(--agent-message-font-family, inherit);
       position: fixed;
       top: 0;
       right: 0;
@@ -455,11 +456,6 @@
       cursor: pointer;
       transition: background 120ms ease, opacity 120ms ease;
     }
-    .desktop-right-panel .git-branch-summary-wrap .git-branch-summary-pin {
-      width: var(--right-panel-icon-slot-size);
-      height: var(--right-panel-icon-slot-size);
-      font-size: var(--right-panel-pin-font-size);
-    }
     .git-branch-summary-wrap .git-branch-summary-pin:not(.is-pinned) {
       opacity: 0.4;
       filter: grayscale(1);
@@ -497,6 +493,7 @@
       overflow: hidden;
       isolation: isolate;
       transform-origin: top right;
+      font-family: var(--agent-message-font-family, inherit);
     }
     .git-pinned-summary-aside > * {
       position: relative;
@@ -536,11 +533,11 @@
     html[data-tauri-app="1"][data-hub-iframe-chat="1"] .git-pinned-summary-aside .git-branch-summary-wrap .git-branch-summary-row.clickable:active {
       background: rgba(255, 255, 255, 0.12);
     }
-    .desktop-right-panel .git-branch-summary-wrap .git-branch-summary-row {
+    .git-branch-summary-wrap .git-branch-summary-row {
       background: var(--panel-row-bg);
       border: 0.5px solid var(--panel-row-border);
       border-radius: 26px;
-      min-height: var(--right-panel-row-min-height);
+      min-height: 34px;
       position: relative;
     }
     .git-pinned-summary-aside::before {
@@ -572,16 +569,12 @@
     .git-branch-summary-wrap .git-branch-summary-meta-text,
     .git-commit-detail-head .git-branch-summary-row .git-branch-summary-meta-text {
       font-size: var(--message-text-size, 13px);
-      color: var(--fg);
-    }
-    .desktop-right-panel .git-branch-summary-wrap .git-branch-summary-meta-text {
       font-family: var(--agent-message-font-family, inherit);
+      color: var(--fg);
     }
     .git-branch-summary-wrap .git-branch-summary-counts,
     .git-commit-detail-head .git-branch-summary-row .git-branch-summary-counts {
       font-size: var(--message-text-size, 13px);
-    }
-    .desktop-right-panel .git-branch-summary-wrap .git-branch-summary-counts {
       font-family: var(--agent-message-font-family, inherit);
     }
     .git-branch-detail-view {
@@ -628,8 +621,8 @@
       border-bottom: none;
       border-radius: 8px;
       pointer-events: none;
-      min-height: var(--right-panel-row-min-height);
-      padding: 0 var(--right-panel-row-pad-x);
+      min-height: 34px;
+      padding: 0 6px;
       background: var(--panel-row-bg);
       border: none;
       transition: background 120ms ease;
@@ -644,14 +637,14 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: var(--right-panel-icon-slot-size);
-      height: var(--right-panel-icon-slot-size);
+      width: 18px;
+      height: 18px;
       margin: 0;
       padding: 0;
       border: none;
       border-radius: 4px;
       background: transparent;
-      font-size: var(--right-panel-pin-font-size);
+      font-size: 14px;
       line-height: 1;
       cursor: default;
     }
@@ -666,7 +659,7 @@
       background: var(--panel-row-bg);
       border: 0.5px solid var(--panel-row-border);
       border-radius: 26px;
-      min-height: var(--right-panel-row-min-height);
+      min-height: 34px;
       position: relative;
     }
     .git-commit-detail-head:active > .git-branch-summary-row {
@@ -868,7 +861,7 @@
       font-size: calc(var(--message-text-size, 13px) - 2px);
       color: var(--muted);
       font-variant-numeric: tabular-nums;
-      font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+      font-family: var(--agent-message-font-family, inherit);
     }
     .git-branch-summary-row {
       display: flex;
@@ -878,15 +871,11 @@
       padding: 0 6px;
       border-radius: 8px;
       font-size: var(--message-text-size, 13px);
+      font-family: var(--agent-message-font-family, inherit);
       line-height: 1.35;
       color: var(--fg);
       cursor: default;
       transition: background 120ms ease;
-    }
-    .desktop-right-panel .git-branch-summary-row {
-      min-height: var(--right-panel-row-min-height);
-      padding: 0 var(--right-panel-row-pad-x);
-      font-family: var(--agent-message-font-family, inherit);
     }
     .git-branch-summary-row.clickable {
       cursor: pointer;
@@ -902,9 +891,9 @@
       align-items: center;
       gap: 12px;
       flex-shrink: 0;
-      font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
       font-variant-numeric: tabular-nums;
       font-size: calc(var(--message-text-size, 13px) - 2px);
+      font-family: var(--agent-message-font-family, inherit);
     }
     .git-branch-summary-counts.clean {
       color: var(--muted);
@@ -919,10 +908,6 @@
       width: 18px;
       height: 18px;
       color: var(--icon-muted);
-    }
-    .desktop-right-panel .git-branch-summary-icon {
-      width: var(--right-panel-icon-slot-size);
-      height: var(--right-panel-icon-slot-size);
     }
     .git-commit-chevron {
       width: 14px;
@@ -1025,7 +1010,7 @@
     .git-commit-file-status {
       color: var(--muted);
       font-size: calc(var(--message-text-size, 13px) - 2px);
-      font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+      font-family: var(--agent-message-font-family, inherit);
       font-variant-numeric: tabular-nums;
       text-transform: lowercase;
     }
@@ -1078,7 +1063,7 @@
       align-items: center;
       justify-content: center;
       color: var(--muted);
-      font-family: "SF Pro Text", "SF Pro", "Segoe UI", sans-serif;
+      font-family: var(--agent-message-font-family, inherit);
       font-size: calc(var(--message-text-size, 13px) - 2px);
       font-weight: 400;
       letter-spacing: 0.01em;
@@ -1224,8 +1209,8 @@
       align-items: center;
       justify-content: flex-start;
       gap: 6px;
-      margin: 0 4px;
-      padding: 6px;
+      margin: 0 8px;
+      padding: 6px 8px;
       border-radius: 10px;
       cursor: pointer;
     }
@@ -1239,8 +1224,8 @@
       overflow: hidden;
     }
     .git-pinned-expand-file-icon {
-      width: var(--right-panel-icon-slot-size);
-      height: var(--right-panel-icon-slot-size);
+      width: 16px;
+      height: 16px;
       flex: 0 0 auto;
       color: var(--icon-fg);
       display: inline-flex;
@@ -1249,8 +1234,8 @@
       pointer-events: none;
     }
     .git-pinned-expand-file-icon svg {
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       stroke-width: 1.45;
     }
     .git-pinned-expand-file-label {
@@ -1271,7 +1256,7 @@
       text-overflow: ellipsis;
     }
     .git-pinned-expand-file-label .d {
-      font-size: var(--right-panel-compact-text-size);
+      font-size: 12px;
       color: var(--muted);
       white-space: nowrap;
       overflow: hidden;
@@ -1281,7 +1266,7 @@
     .git-pinned-expand-counts {
       display: none;
       gap: 3px;
-      font-size: var(--right-panel-compact-text-size);
+      font-size: 12px;
       flex-shrink: 0;
       margin-left: auto;
     }

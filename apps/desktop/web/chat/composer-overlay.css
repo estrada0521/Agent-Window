@@ -559,7 +559,7 @@
       font-size: var(--agent-icon-sub-font-size);
       font-weight: 700;
       line-height: 1;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-family: var(--agent-message-font-family, inherit);
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.01em;
       color: var(--icon-fg);
