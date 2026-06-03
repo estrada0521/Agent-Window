@@ -571,9 +571,7 @@ def render_file_view(
             f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette.get("dark_bg") or DARK_BG)};--fg:{str(dark_theme_palette.get("light_fg") or LIGHT_FG)};--muted:{str(dark_theme_palette.get("gray_muted") or "rgb(128,128,128)")};--icon-fg:{str(dark_theme_palette.get("icon_fg") or LIGHT_FG)};--icon-muted:{str(dark_theme_palette.get("icon_muted") or "rgb(128,128,128)")};--icon-hover:{str(dark_theme_palette.get("icon_hover") or "rgb(190,190,190)")};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:{str(dark_theme_palette.get("code_copy_hover_bg") or f"rgba({LIGHT_FG_CHANNELS},0.09)")};--external-link-fg:rgb(255,107,107);--link-blue:rgb(88,166,255);--link-blue-channels:88,166,255;--git-ins-green:rgb(74,222,128);--git-ins-green-channels:74,222,128;--git-del-red:rgb(248,113,113);--git-del-red-channels:248,113,113;--code-bg:rgba({LIGHT_FG_CHANNELS},0.05);--code-scrollbar-thumb:rgba({LIGHT_FG_CHANNELS},0.45);--code-scrollbar-thumb-hover:rgba({LIGHT_FG_CHANNELS},0.65);--line:{str(dark_theme_palette.get("line") or pane_line)};--line-strong:{str(dark_theme_palette.get("line_strong") or f"rgba({LIGHT_FG_CHANNELS},0.12)")};--table-line:{str(dark_theme_palette.get("table_line") or f"rgba({LIGHT_FG_CHANNELS},0.12)")};}}'
             'html[data-preview-theme="light"]{color-scheme:light;--bg-rgb:255,255,255;--bg:rgb(255,255,255);--fg:rgb(0,0,0);--muted:rgb(120,120,120);--icon-fg:rgb(0,0,0);--icon-muted:rgb(120,120,120);--icon-hover:rgb(35,35,35);--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:rgb(207,34,46);--link-blue:rgb(9,105,218);--link-blue-channels:9,105,218;--git-ins-green:rgb(26,127,55);--git-ins-green-channels:26,127,55;--git-del-red:rgb(207,34,46);--git-del-red-channels:207,34,46;--code-bg:rgba(0,0,0,0.05);--code-scrollbar-thumb:rgba(0,0,0,0.25);--code-scrollbar-thumb-hover:rgba(0,0,0,0.45);--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);--table-line:rgba(0,0,0,0.18);}'
             'html,body{background:transparent;color:var(--fg)}'
-            'html[data-preview-explicit-bg="1"] body{background:var(--bg)}'
             '.md-preview-shell{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:transparent;scrollbar-gutter:auto;padding-top:0}'
-            'html[data-preview-explicit-bg="1"] .md-preview-shell{background:var(--bg)}'
         )
         markdown_top_padding = "0px" if preview_chrome == "header" else ("calc(14px + max(48px, calc(21px + env(safe-area-inset-top))))" if embed else "14px")
         markdown_layout_css = (
@@ -736,15 +734,9 @@ parent.insertBefore(scroll, table);
 scroll.appendChild(table);
   }});
 }};
-const applyPreviewTheme = (theme, baseTheme = "dark") => {{
+const applyPreviewTheme = (theme) => {{
   const nextTheme = theme === "light" ? "light" : "dark";
-  const nextBase = baseTheme === "light" ? "light" : "dark";
   __root.setAttribute("data-preview-theme", nextTheme);
-  if (nextTheme === nextBase) {{
-    __root.removeAttribute("data-preview-explicit-bg");
-  }} else {{
-    __root.setAttribute("data-preview-explicit-bg", "1");
-  }}
 }};
 window.__agentIndexApplyPreviewTheme = applyPreviewTheme;
 const renderMathInScope = (scope) => {{
@@ -788,7 +780,7 @@ setTimeout(() => {{
 window.addEventListener("message", (event) => {{
   const data = event?.data;
   if (!data || data.type !== "agent-index-file-preview-theme") return;
-  applyPreviewTheme(data.theme, data.baseTheme);
+  applyPreviewTheme(data.theme);
 }});
 window.addEventListener("message", (event) => {{
   const data = event?.data;
