@@ -318,8 +318,13 @@
 
     function persistDeskSelection(name) {
       try {
-        if (name) sessionStorage.setItem(DESK_SELECTED_KEY, name);
-        else sessionStorage.removeItem(DESK_SELECTED_KEY);
+        if (name) {
+          localStorage.setItem(DESK_SELECTED_KEY, name);
+          sessionStorage.setItem(DESK_SELECTED_KEY, name);
+        } else {
+          localStorage.removeItem(DESK_SELECTED_KEY);
+          sessionStorage.removeItem(DESK_SELECTED_KEY);
+        }
       } catch (_) {}
     }
 
@@ -329,10 +334,12 @@
         if (queryName) return queryName;
       } catch (_) {}
       try {
+        return localStorage.getItem(DESK_SELECTED_KEY) || sessionStorage.getItem(DESK_SELECTED_KEY) || "";
+      } catch (_) {}
+      try {
         return sessionStorage.getItem(DESK_SELECTED_KEY) || "";
-      } catch (_) {
-        return "";
-      }
+      } catch (_) {}
+      return "";
     }
 
     function findSessionRecord(name) {
