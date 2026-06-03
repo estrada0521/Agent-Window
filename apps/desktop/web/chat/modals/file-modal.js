@@ -3,14 +3,11 @@
     const fileModalSplitResizer = document.getElementById("fileModalSplitResizer");
     const fileModalTitle = document.getElementById("fileModalTitle");
     const fileModalIcon = document.getElementById("fileModalIcon");
-    const fileModalThemeToggleBtn = document.getElementById("fileModalThemeToggleBtn");
-    const fileModalThemeToggleIcon = document.getElementById("fileModalThemeToggleIcon");
     const fileModalHtmlModeBtn = document.getElementById("fileModalHtmlModeBtn");
     const fileModalHtmlModeIcon = document.getElementById("fileModalHtmlModeIcon");
     const fileModalOpenEditorBtn = document.getElementById("fileModalOpenEditorBtn");
     let fileModalCurrentPath = "";
     let fileModalCurrentExt = "";
-    let fileModalPreviewTheme = "dark";
     let fileModalBaseTheme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
     let fileModalHtmlPreviewMode = "text";
     let currentBoldModeMobile = false;
@@ -25,78 +22,26 @@
     const _fileExistenceCache = new Map();
     const FILE_MODAL_PANE_WIDTH_KEY = "multiagent_file_pane_width_px";
     const FILE_MODAL_STATE_KEY_PREFIX = "multiagent_file_pane_state_v1:";
-    const FILE_MODAL_THEME_ICONS = {
-      dark: '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>',
-      light: '<path d="M21 12.79A9 9 0 1 1 11.21 3c0 0 0 0 0 0A7 7 0 0 0 21 12.79z"></path>',
-    };
     const FILE_MODAL_HTML_MODE_ICONS = {
       web: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 9.5h17"></path><circle cx="7.5" cy="7" r="0.8" fill="currentColor" stroke="none"></circle><circle cx="10.5" cy="7" r="0.8" fill="currentColor" stroke="none"></circle><path d="M9.5 13.5h6"></path><path d="M9.5 16.5h4"></path>',
       text: '<path d="M14 3.5H7.5A2.5 2.5 0 0 0 5 6v12a2.5 2.5 0 0 0 2.5 2.5h9A2.5 2.5 0 0 0 19 18V8.5z"></path><path d="M14 3.5V8.5H19"></path><path d="M9 12.5h6"></path><path d="M9 16h6"></path>',
     };
-    const FILE_MODAL_SYNC_THEME_VARS = [
-      "--bg-rgb",
-      "--bg",
-      "--fg",
-      "--muted",
-      "--icon-fg",
-      "--icon-muted",
-      "--icon-hover",
-      "--line",
-      "--code-copy-hover-bg",
-    ];
     const currentFileModalBaseTheme = () => document.documentElement.dataset.theme === "light" ? "light" : "dark";
     const isHtmlPreviewExt = (ext) => ext === "html" || ext === "htm";
-    const clearFileModalSyncedThemeVars = () => {
-      if (!fileModal) return;
-      for (const name of FILE_MODAL_SYNC_THEME_VARS) fileModal.style.removeProperty(name);
-    };
-    const syncFileModalThemeVarsFromPreview = () => {
-      if (!fileModal) return false;
-      if (fileModalCurrentExt !== "md") {
-        clearFileModalSyncedThemeVars();
-        return false;
-      }
-      try {
-        const frameWindow = fileModalFrame.contentWindow;
-        const frameDoc = fileModalFrame.contentDocument || frameWindow?.document || null;
-        const root = frameDoc?.documentElement || null;
-        if (!root || typeof frameWindow?.getComputedStyle !== "function") return false;
-        const computed = frameWindow.getComputedStyle(root);
-        for (const name of FILE_MODAL_SYNC_THEME_VARS) {
-          const value = String(computed.getPropertyValue(name) || "").trim();
-          if (value) fileModal.style.setProperty(name, value);
-          else fileModal.style.removeProperty(name);
-        }
-        return true;
-      } catch (_) {}
-      return false;
-    };
-    const scheduleFileModalThemeVarsSync = () => {
-      syncFileModalThemeVarsFromPreview();
-      requestAnimationFrame(() => { syncFileModalThemeVarsFromPreview(); });
-      setTimeout(() => { syncFileModalThemeVarsFromPreview(); }, 60);
-    };
     const applyFileModalThemeDirect = () => {
       try {
         const frameWindow = fileModalFrame.contentWindow;
         const frameDoc = fileModalFrame.contentDocument || frameWindow?.document || null;
         if (fileModalCurrentExt === "md" && typeof frameWindow?.__agentIndexApplyPreviewTheme === "function") {
-          frameWindow.__agentIndexApplyPreviewTheme(fileModalPreviewTheme, fileModalBaseTheme);
-          scheduleFileModalThemeVarsSync();
+          frameWindow.__agentIndexApplyPreviewTheme(fileModalBaseTheme);
           return true;
         }
         if (!frameDoc?.documentElement) return false;
         if (fileModalCurrentExt === "md") {
           frameDoc.documentElement.setAttribute(
             "data-preview-theme",
-            fileModalPreviewTheme === "light" ? "light" : "dark",
+            fileModalBaseTheme === "light" ? "light" : "dark",
           );
-          if (fileModalPreviewTheme === fileModalBaseTheme) {
-            frameDoc.documentElement.removeAttribute("data-preview-explicit-bg");
-          } else {
-            frameDoc.documentElement.setAttribute("data-preview-explicit-bg", "1");
-          }
-          scheduleFileModalThemeVarsSync();
           return true;
         }
         const isLight = fileModalBaseTheme === "light";
@@ -117,20 +62,17 @@
     };
     const postFileModalTheme = () => {
       applyFileModalThemeDirect();
-      scheduleFileModalThemeVarsSync();
       try {
         fileModalFrame.contentWindow?.postMessage(
-          { type: "agent-index-file-preview-theme", theme: fileModalPreviewTheme, baseTheme: fileModalBaseTheme },
+          { type: "agent-index-file-preview-theme", theme: fileModalBaseTheme },
           window.location.origin,
         );
       } catch (_) {}
       requestAnimationFrame(() => {
         applyFileModalThemeDirect();
-        scheduleFileModalThemeVarsSync();
       });
       setTimeout(() => {
         applyFileModalThemeDirect();
-        scheduleFileModalThemeVarsSync();
       }, 60);
     };
     const applyFileModalHtmlPreviewModeDirect = () => {
@@ -163,22 +105,6 @@
       setTimeout(() => { applyFileModalHtmlPreviewModeDirect(); }, 60);
       requestAnimationFrame(() => { bindFileModalScrollBridge(); });
       setTimeout(() => { bindFileModalScrollBridge(); }, 120);
-    };
-    const syncFileModalThemeToggle = () => {
-      if (!fileModalThemeToggleBtn || !fileModalThemeToggleIcon) return;
-      const isMd = fileModalCurrentExt === "md";
-      fileModalThemeToggleBtn.hidden = !isMd;
-      if (!isMd) return;
-      const nextLabel = fileModalPreviewTheme === "dark" ? "Switch markdown preview to light" : "Switch markdown preview to dark";
-      fileModalThemeToggleBtn.title = nextLabel;
-      fileModalThemeToggleBtn.setAttribute("aria-label", nextLabel);
-      fileModalThemeToggleIcon.innerHTML = FILE_MODAL_THEME_ICONS[fileModalPreviewTheme] || FILE_MODAL_THEME_ICONS.dark;
-    };
-    const syncFileModalShellTheme = () => {
-      if (!fileModal) return;
-      const isMd = fileModalCurrentExt === "md";
-      fileModal.classList.toggle("theme-light", isMd && fileModalBaseTheme === "dark" && fileModalPreviewTheme === "light");
-      fileModal.classList.toggle("theme-dark", isMd && fileModalBaseTheme === "light" && fileModalPreviewTheme === "dark");
     };
     const syncFileModalHtmlModeToggle = () => {
       if (!fileModalHtmlModeBtn || !fileModalHtmlModeIcon) return;
@@ -343,14 +269,9 @@
         fileModalFrame.removeAttribute("src");
         fileModalCurrentPath = "";
         fileModalCurrentExt = "";
-        fileModalPreviewTheme = "dark";
         fileModalBaseTheme = currentFileModalBaseTheme();
         fileModalHtmlPreviewMode = "text";
-        fileModal.classList.remove("theme-light");
-        fileModal.classList.remove("theme-dark");
-        clearFileModalSyncedThemeVars();
         resetFileModalPreviewMetrics();
-        syncFileModalThemeToggle();
         syncFileModalHtmlModeToggle();
         if (fileModalOpenEditorBtn) fileModalOpenEditorBtn.hidden = true;
         window.removeEventListener("resize", syncFileModalViewportMetrics);
@@ -384,15 +305,11 @@
       fileModalCurrentPath = path;
       fileModalCurrentExt = normalizedExt;
       fileModalBaseTheme = currentFileModalBaseTheme();
-      fileModalPreviewTheme = fileModalBaseTheme;
       fileModalHtmlPreviewMode = "text";
       clearFileModalScrollBridge();
       fileModal.classList.remove("file-modal-chrome-hidden");
       resetFileModalPreviewMetrics();
-      clearFileModalSyncedThemeVars();
-      syncFileModalThemeToggle();
       syncFileModalHtmlModeToggle();
-      syncFileModalShellTheme();
       fileModalTitle.textContent = filename;
       fileModalIcon.innerHTML = FILE_ICONS[normalizedExt] || FILE_SVG_ICONS.file;
       lastFocusedElement = sourceEl || document.activeElement;
@@ -455,7 +372,6 @@
         return {
           path,
           ext: String(data?.ext || extFromPath(path)).trim().toLowerCase(),
-          theme: data?.theme === "light" ? "light" : "dark",
           mode: data?.mode === "text" ? "text" : "web",
         };
       } catch (_) {
@@ -479,7 +395,6 @@
       const payload = {
         path: fileModalCurrentPath,
         ext: String(fileModalCurrentExt || extFromPath(fileModalCurrentPath) || "").trim().toLowerCase(),
-        theme: fileModalPreviewTheme === "light" ? "light" : "dark",
         mode: fileModalHtmlPreviewMode === "text" ? "text" : "web",
       };
       try {
@@ -502,11 +417,8 @@
           return false;
         }
         openFileModal(stored.path, stored.ext || extFromPath(stored.path), null, null);
-        fileModalPreviewTheme = stored.theme === "light" ? "light" : "dark";
         fileModalHtmlPreviewMode = stored.mode === "web" ? "web" : "text";
-        syncFileModalThemeToggle();
         syncFileModalHtmlModeToggle();
-        syncFileModalShellTheme();
         requestAnimationFrame(() => {
           postFileModalTheme();
           postFileModalHtmlPreviewMode();
@@ -731,14 +643,6 @@
         alert(err?.message || "Failed to open file in editor.");
       }
     });
-    fileModalThemeToggleBtn?.addEventListener("click", () => {
-      if (fileModalCurrentExt !== "md") return;
-      fileModalPreviewTheme = fileModalPreviewTheme === "dark" ? "light" : "dark";
-      syncFileModalThemeToggle();
-      syncFileModalShellTheme();
-      postFileModalTheme();
-      saveFileModalSessionState();
-    });
     fileModalHtmlModeBtn?.addEventListener("click", () => {
       if (!isHtmlPreviewExt(fileModalCurrentExt)) return;
       fileModalHtmlPreviewMode = fileModalHtmlPreviewMode === "text" ? "web" : "text";
@@ -750,18 +654,7 @@
       new MutationObserver((mutations) => {
         if (fileModal.hidden) return;
         if (!mutations.some((mutation) => mutation.attributeName === "data-theme")) return;
-        const prevBase = fileModalBaseTheme;
-        const wasOpposite = fileModalPreviewTheme !== prevBase;
         fileModalBaseTheme = currentFileModalBaseTheme();
-        if (fileModalCurrentExt === "md") {
-          fileModalPreviewTheme = wasOpposite
-            ? (fileModalBaseTheme === "dark" ? "light" : "dark")
-            : fileModalBaseTheme;
-        } else {
-          fileModalPreviewTheme = fileModalBaseTheme;
-        }
-        syncFileModalThemeToggle();
-        syncFileModalShellTheme();
         postFileModalTheme();
         saveFileModalSessionState();
       }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
