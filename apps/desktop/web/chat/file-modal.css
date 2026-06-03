@@ -64,8 +64,8 @@
     .file-modal-split-resizer {
       position: absolute;
       top: 0;
-      left: -7px;
-      width: 0;
+      left: -6px;
+      width: 12px;
       height: 100%;
       display: none;
       cursor: col-resize;
@@ -77,9 +77,9 @@
       position: absolute;
       top: 0;
       bottom: 0;
-      left: 6px;
+      left: 5px;
       width: 1px;
-      background: var(--icon-muted);
+      background: var(--line);
       transition: background 140ms ease;
     }
     .file-modal-header {
@@ -262,7 +262,7 @@
         padding-right: calc(var(--desktop-file-pane-width, 0px) + var(--desktop-right-panel-reserved-width, 0px));
       }
       body.file-modal-desktop-split .file-modal-dialog {
-        border-left: none;
+        border-left: 1px solid var(--line);
         background: transparent;
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
