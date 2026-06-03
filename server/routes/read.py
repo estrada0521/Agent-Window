@@ -190,6 +190,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
     rel = qs.get("path", [""])[0]
     embed = qs.get("embed", [""])[0] == "1"
     pane = qs.get("pane", [""])[0] == "1"
+    preview_chrome = str(qs.get("chrome", [""])[0] or "").strip().lower()
     force_progressive_text = qs.get("progressive", [""])[0] == "1"
     try:
         settings = ctx["load_chat_settings_fn"]()
@@ -222,6 +223,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
             agent_font_family=ctx["runtime"]._font_family_stack(user_message_font, "user"),
             agent_text_size=preview_text_size,
             message_bold=message_bold,
+            preview_chrome=preview_chrome,
             force_progressive_text=force_progressive_text,
         )
     except PermissionError:

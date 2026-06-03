@@ -200,20 +200,6 @@
       }
       closeHeaderMenus();
     });
-    const closePreviewFromIcon = () => {
-      closeFileModal({ restoreFocus: false });
-    };
-    fileModalIcon?.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      closePreviewFromIcon();
-    });
-    fileModalIcon?.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      event.stopPropagation();
-      closePreviewFromIcon();
-    });
     const closeQuickMore = () => {
       if (quickMore) quickMore.open = false;
       closePlusMenu();

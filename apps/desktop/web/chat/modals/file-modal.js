@@ -33,14 +33,56 @@
       web: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 9.5h17"></path><circle cx="7.5" cy="7" r="0.8" fill="currentColor" stroke="none"></circle><circle cx="10.5" cy="7" r="0.8" fill="currentColor" stroke="none"></circle><path d="M9.5 13.5h6"></path><path d="M9.5 16.5h4"></path>',
       text: '<path d="M14 3.5H7.5A2.5 2.5 0 0 0 5 6v12a2.5 2.5 0 0 0 2.5 2.5h9A2.5 2.5 0 0 0 19 18V8.5z"></path><path d="M14 3.5V8.5H19"></path><path d="M9 12.5h6"></path><path d="M9 16h6"></path>',
     };
+    const FILE_MODAL_SYNC_THEME_VARS = [
+      "--bg-rgb",
+      "--bg",
+      "--fg",
+      "--muted",
+      "--icon-fg",
+      "--icon-muted",
+      "--icon-hover",
+      "--line",
+      "--code-copy-hover-bg",
+    ];
     const currentFileModalBaseTheme = () => document.documentElement.dataset.theme === "light" ? "light" : "dark";
     const isHtmlPreviewExt = (ext) => ext === "html" || ext === "htm";
+    const clearFileModalSyncedThemeVars = () => {
+      if (!fileModal) return;
+      for (const name of FILE_MODAL_SYNC_THEME_VARS) fileModal.style.removeProperty(name);
+    };
+    const syncFileModalThemeVarsFromPreview = () => {
+      if (!fileModal) return false;
+      if (fileModalCurrentExt !== "md") {
+        clearFileModalSyncedThemeVars();
+        return false;
+      }
+      try {
+        const frameWindow = fileModalFrame.contentWindow;
+        const frameDoc = fileModalFrame.contentDocument || frameWindow?.document || null;
+        const root = frameDoc?.documentElement || null;
+        if (!root || typeof frameWindow?.getComputedStyle !== "function") return false;
+        const computed = frameWindow.getComputedStyle(root);
+        for (const name of FILE_MODAL_SYNC_THEME_VARS) {
+          const value = String(computed.getPropertyValue(name) || "").trim();
+          if (value) fileModal.style.setProperty(name, value);
+          else fileModal.style.removeProperty(name);
+        }
+        return true;
+      } catch (_) {}
+      return false;
+    };
+    const scheduleFileModalThemeVarsSync = () => {
+      syncFileModalThemeVarsFromPreview();
+      requestAnimationFrame(() => { syncFileModalThemeVarsFromPreview(); });
+      setTimeout(() => { syncFileModalThemeVarsFromPreview(); }, 60);
+    };
     const applyFileModalThemeDirect = () => {
       try {
         const frameWindow = fileModalFrame.contentWindow;
         const frameDoc = fileModalFrame.contentDocument || frameWindow?.document || null;
         if (fileModalCurrentExt === "md" && typeof frameWindow?.__agentIndexApplyPreviewTheme === "function") {
           frameWindow.__agentIndexApplyPreviewTheme(fileModalPreviewTheme, fileModalBaseTheme);
+          scheduleFileModalThemeVarsSync();
           return true;
         }
         if (!frameDoc?.documentElement) return false;
@@ -54,6 +96,7 @@
           } else {
             frameDoc.documentElement.setAttribute("data-preview-explicit-bg", "1");
           }
+          scheduleFileModalThemeVarsSync();
           return true;
         }
         const isLight = fileModalBaseTheme === "light";
@@ -74,14 +117,21 @@
     };
     const postFileModalTheme = () => {
       applyFileModalThemeDirect();
+      scheduleFileModalThemeVarsSync();
       try {
         fileModalFrame.contentWindow?.postMessage(
           { type: "agent-index-file-preview-theme", theme: fileModalPreviewTheme, baseTheme: fileModalBaseTheme },
           window.location.origin,
         );
       } catch (_) {}
-      requestAnimationFrame(() => { applyFileModalThemeDirect(); });
-      setTimeout(() => { applyFileModalThemeDirect(); }, 60);
+      requestAnimationFrame(() => {
+        applyFileModalThemeDirect();
+        scheduleFileModalThemeVarsSync();
+      });
+      setTimeout(() => {
+        applyFileModalThemeDirect();
+        scheduleFileModalThemeVarsSync();
+      }, 60);
     };
     const applyFileModalHtmlPreviewModeDirect = () => {
       if (!isHtmlPreviewExt(fileModalCurrentExt)) return false;
@@ -298,6 +348,7 @@
         fileModalHtmlPreviewMode = "text";
         fileModal.classList.remove("theme-light");
         fileModal.classList.remove("theme-dark");
+        clearFileModalSyncedThemeVars();
         resetFileModalPreviewMetrics();
         syncFileModalThemeToggle();
         syncFileModalHtmlModeToggle();
@@ -338,6 +389,7 @@
       clearFileModalScrollBridge();
       fileModal.classList.remove("file-modal-chrome-hidden");
       resetFileModalPreviewMetrics();
+      clearFileModalSyncedThemeVars();
       syncFileModalThemeToggle();
       syncFileModalHtmlModeToggle();
       syncFileModalShellTheme();
