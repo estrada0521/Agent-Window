@@ -26,6 +26,7 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
       const params = new URLSearchParams();
       params.set("path", normalizeWorkspaceFilePath(path) || String(path || "").trim());
       if (embed) { params.set("embed", "1"); params.set("pane", "1"); }
+      if (embed) params.set("chrome", "header");
       params.set("agent_font_mode", currentFilePreviewFontMode());
       if (CHAT_BASE_PATH) params.set("base_path", CHAT_BASE_PATH);
       params.set("base_theme", document.documentElement.dataset.theme === "light" ? "light" : "dark");

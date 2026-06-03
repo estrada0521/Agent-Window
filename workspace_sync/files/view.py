@@ -48,6 +48,7 @@ def render_file_view(
     agent_font_family: str | None = None,
     agent_text_size: int | None = None,
     message_bold: bool = False,
+    preview_chrome: str = "",
     force_progressive_text: bool = False,
 ) -> str:
     full = runtime._resolve_path(rel)
@@ -111,7 +112,7 @@ def render_file_view(
     font_face_css = (
         f'@font-face{{font-family:"jetbrainsMono";src:local("JetBrains Mono"),local("JetBrainsMono-Regular"),url("{font_base}/font/jetbrains-mono.ttf") format("truetype-variations"),url("{font_base}/font/jetbrains-mono.ttf") format("truetype");font-style:normal;font-weight:100 800;font-display:swap}}'
     )
-    preview_top_offset = "max(48px, calc(21px + env(safe-area-inset-top)))" if embed else "0px"
+    preview_top_offset = "0px" if preview_chrome == "header" else ("max(48px, calc(21px + env(safe-area-inset-top)))" if embed else "0px")
     base_css = (
         f':root{{color-scheme: dark;--code-font-family:{code_font_family};--message-text-size:{resolved_text_size}px;--message-text-line-height:{resolved_line_height}px;--tpad:{preview_top_offset};--preview-scrollbar-size:6px;--preview-scrollbar-thumb:{preview_scrollbar_thumb};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};--preview-selected-line-bg:{preview_selected_line_bg};}}'
         f':root[data-preview-theme="light"]{{--preview-scrollbar-thumb:{preview_scrollbar_thumb_light};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover_light}}}'
@@ -407,8 +408,8 @@ def render_file_view(
             f'.html-preview-shell{{flex:1;min-height:0;display:flex;flex-direction:column;background:{embed_bg}}}'
             f'html[data-preview-mode="text"] .html-preview-shell{{background:transparent}}'
             f'.html-preview-tabs{{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid {pane_line};background:rgba(20,20,19,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}}'
-            '.html-preview-tab{appearance:none;border:1px solid rgba(255,255,255,0.08);background:transparent;color:rgba(252,252,252,0.68);border-radius:999px;padding:6px 12px;font:inherit;font-size:12px;line-height:1;cursor:pointer;transition:color .14s ease,border-color .14s ease,background .14s ease}'
-            '.html-preview-tab.active{color:rgb(252,252,252);background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.16)}'
+            f'.html-preview-tab{{appearance:none;border:1px solid rgba({pane_fg_channels},0.08);background:transparent;color:rgba({pane_fg_channels},0.68);border-radius:999px;padding:6px 12px;font:inherit;font-size:12px;line-height:1;cursor:pointer;transition:color .14s ease,border-color .14s ease,background .14s ease}}'
+            f'.html-preview-tab.active{{color:rgb({pane_fg_channels});background:rgba({pane_fg_channels},0.06);border-color:rgba({pane_fg_channels},0.16)}}'
             '.html-preview-panels{flex:1;min-height:0;position:relative}'
             '.html-preview-panel{display:none;width:100%;height:100%}'
             '.html-preview-panel.active{display:flex}'
@@ -567,16 +568,16 @@ def render_file_view(
         markdown_preview_css = _chat_markdown_preview_css()
         initial_preview_theme = "light" if str((theme_palette or {}).get("theme") or "").lower() == "light" else "dark"
         markdown_theme_css = (
-            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette.get("dark_bg") or DARK_BG)};--fg:{str(dark_theme_palette.get("light_fg") or LIGHT_FG)};--muted:{str(dark_theme_palette.get("gray_muted") or "rgb(158,158,158)")};--icon-fg:{str(dark_theme_palette.get("icon_fg") or "rgb(255,255,255)")};--icon-muted:{str(dark_theme_palette.get("icon_muted") or "rgb(158,158,158)")};--icon-hover:{str(dark_theme_palette.get("icon_hover") or "rgb(220,220,220)")};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:{str(dark_theme_palette.get("code_copy_hover_bg") or "rgba(255,255,255,0.09)")};--external-link-fg:rgb(255,107,107);--link-blue:rgb(88,166,255);--link-blue-channels:88,166,255;--git-ins-green:rgb(74,222,128);--git-ins-green-channels:74,222,128;--git-del-red:rgb(248,113,113);--git-del-red-channels:248,113,113;--code-bg:rgba(255,255,255,0.05);--code-scrollbar-thumb:rgba(255,255,255,0.45);--code-scrollbar-thumb-hover:rgba(255,255,255,0.65);--line:{str(dark_theme_palette.get("line") or pane_line)};--line-strong:{str(dark_theme_palette.get("line_strong") or "rgba(255,255,255,0.12)")};--table-line:{str(dark_theme_palette.get("table_line") or "rgba(255,255,255,0.12)")};}}'
+            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette.get("dark_bg") or DARK_BG)};--fg:{str(dark_theme_palette.get("light_fg") or LIGHT_FG)};--muted:{str(dark_theme_palette.get("gray_muted") or "rgb(128,128,128)")};--icon-fg:{str(dark_theme_palette.get("icon_fg") or LIGHT_FG)};--icon-muted:{str(dark_theme_palette.get("icon_muted") or "rgb(128,128,128)")};--icon-hover:{str(dark_theme_palette.get("icon_hover") or "rgb(190,190,190)")};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:{str(dark_theme_palette.get("code_copy_hover_bg") or f"rgba({LIGHT_FG_CHANNELS},0.09)")};--external-link-fg:rgb(255,107,107);--link-blue:rgb(88,166,255);--link-blue-channels:88,166,255;--git-ins-green:rgb(74,222,128);--git-ins-green-channels:74,222,128;--git-del-red:rgb(248,113,113);--git-del-red-channels:248,113,113;--code-bg:rgba({LIGHT_FG_CHANNELS},0.05);--code-scrollbar-thumb:rgba({LIGHT_FG_CHANNELS},0.45);--code-scrollbar-thumb-hover:rgba({LIGHT_FG_CHANNELS},0.65);--line:{str(dark_theme_palette.get("line") or pane_line)};--line-strong:{str(dark_theme_palette.get("line_strong") or f"rgba({LIGHT_FG_CHANNELS},0.12)")};--table-line:{str(dark_theme_palette.get("table_line") or f"rgba({LIGHT_FG_CHANNELS},0.12)")};}}'
             'html[data-preview-theme="light"]{color-scheme:light;--bg-rgb:255,255,255;--bg:rgb(255,255,255);--fg:rgb(0,0,0);--muted:rgb(120,120,120);--icon-fg:rgb(0,0,0);--icon-muted:rgb(120,120,120);--icon-hover:rgb(35,35,35);--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:rgb(207,34,46);--link-blue:rgb(9,105,218);--link-blue-channels:9,105,218;--git-ins-green:rgb(26,127,55);--git-ins-green-channels:26,127,55;--git-del-red:rgb(207,34,46);--git-del-red-channels:207,34,46;--code-bg:rgba(0,0,0,0.05);--code-scrollbar-thumb:rgba(0,0,0,0.25);--code-scrollbar-thumb-hover:rgba(0,0,0,0.45);--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);--table-line:rgba(0,0,0,0.18);}'
             'html,body{background:transparent;color:var(--fg)}'
             'html[data-preview-explicit-bg="1"] body{background:var(--bg)}'
             '.md-preview-shell{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:transparent;scrollbar-gutter:auto;padding-top:0}'
             'html[data-preview-explicit-bg="1"] .md-preview-shell{background:var(--bg)}'
         )
-        markdown_top_offset = "max(48px, calc(21px + env(safe-area-inset-top)))" if embed else "0px"
+        markdown_top_padding = "0px" if preview_chrome == "header" else ("calc(14px + max(48px, calc(21px + env(safe-area-inset-top))))" if embed else "14px")
         markdown_layout_css = (
-            f'.md-preview-shell>.md-body{{padding:calc(14px + {markdown_top_offset}) 16px 18px}}'
+            f'.md-preview-shell>.md-body{{padding:{markdown_top_padding} 16px 18px}}'
         )
         return (
             f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-agent-font-mode="{agent_font_mode}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'

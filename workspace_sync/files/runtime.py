@@ -1046,6 +1046,7 @@ delay 0.2
         agent_font_family: str | None = None,
         agent_text_size: int | None = None,
         message_bold: bool = False,
+        preview_chrome: str = "",
         force_progressive_text: bool = False,
     ) -> str:
         from .view import render_file_view
@@ -1061,5 +1062,6 @@ delay 0.2
             agent_font_family=agent_font_family,
             agent_text_size=agent_text_size,
             message_bold=message_bold,
+            preview_chrome=preview_chrome,
             force_progressive_text=force_progressive_text,
         )
