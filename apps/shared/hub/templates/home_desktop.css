@@ -418,17 +418,17 @@
     .desk-sidebar {
       position: relative;
       width: var(--desk-sidebar-width);
-      max-width: 100%;
+      max-width: none;
       min-width: 0;
       overflow: hidden;
       opacity: 0;
       pointer-events: none;
-      transform: translateX(calc(-100% - 14px));
-      transition: opacity 220ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1), width 180ms ease, border-radius 220ms ease;
+      transform: none;
+      transition: none;
       background: transparent;
       box-shadow: none;
       z-index: 6;
-      border-radius: 0;
+      border-radius: 26px 0 0 26px;
       isolation: isolate;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
     }
@@ -437,7 +437,7 @@
       width: var(--desk-sidebar-width);
       opacity: 1;
       pointer-events: auto;
-      transform: translateX(0);
+      transform: none;
     }
     .desk-workbench-resizing,
     .desk-workbench-resizing * {
@@ -500,7 +500,7 @@
       -webkit-backdrop-filter: var(--glass-filter-20);
       border-radius: 26px 0 0 26px;
       box-shadow: none;
-      transition: border-radius 220ms ease;
+      transition: none;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
       color: var(--fg);
     }
@@ -520,6 +520,8 @@
     }
     .desk-workbench.sidebar-open .desk-main,
     .desk-workbench.settings-open .desk-main {
+      display: flex;
+      pointer-events: auto;
       border-radius: 0 26px 26px 0;
     }
     .desk-sidebar-shell > * {
@@ -822,7 +824,7 @@
       display: inline-flex;
     }
     @media (max-width: 480px) {
-      .desk-right-panel-controls {
+      html:not([data-tauri-app="1"]) .desk-right-panel-controls {
         display: none;
       }
     }
@@ -1030,7 +1032,7 @@
     .desk-swipe-action-rail {
       position: absolute;
       inset: 0 0 0 auto;
-      display: flex;
+      display: none;
       align-items: stretch;
       justify-content: flex-end;
       z-index: 0;
@@ -1412,12 +1414,12 @@
       background: transparent;
     }
     @media (max-width: 480px) {
-      .desk-workbench,
-      .desk-workbench.sidebar-open,
-      .desk-workbench.settings-open {
+      html:not([data-tauri-app="1"]) .desk-workbench,
+      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open,
+      html:not([data-tauri-app="1"]) .desk-workbench.settings-open {
         display: block;
       }
-      .desk-sidebar {
+      html:not([data-tauri-app="1"]) .desk-sidebar {
         position: absolute;
         inset: 0 auto 0 0;
         width: 100vw;
@@ -1427,7 +1429,7 @@
         box-shadow: none;
         border-right: none;
       }
-      .desk-sidebar-shell {
+      html:not([data-tauri-app="1"]) .desk-sidebar-shell {
         width: 100%;
         background: var(--bg);
         box-shadow: none;
@@ -1435,108 +1437,51 @@
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
       }
-      .desk-sidebar-shell::before {
+      html:not([data-tauri-app="1"]) .desk-sidebar-shell::before {
         display: none;
       }
-      .desk-workbench.sidebar-open .desk-sidebar,
-      .desk-workbench.settings-open .desk-sidebar {
+      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open .desk-sidebar,
+      html:not([data-tauri-app="1"]) .desk-workbench.settings-open .desk-sidebar {
         width: 100vw;
         transform: translateX(0);
       }
-      .desk-main {
+      html:not([data-tauri-app="1"]) .desk-main {
         transition: none;
       }
-      .desk-workbench.sidebar-open .desk-main,
-      .desk-workbench.settings-open .desk-main {
+      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open .desk-main,
+      html:not([data-tauri-app="1"]) .desk-workbench.settings-open .desk-main {
         display: none;
         pointer-events: none;
       }
-      .desk-session-row {
+      html:not([data-tauri-app="1"]) .desk-swipe-action-rail {
+        display: flex;
+      }
+      html:not([data-tauri-app="1"]) .desk-session-row {
         padding: 15px 16px 14px;
       }
-      .desk-section-label {
+      html:not([data-tauri-app="1"]) .desk-section-label {
         padding: 12px 16px 10px;
         font-size: 12px;
       }
-      .desk-row-name {
+      html:not([data-tauri-app="1"]) .desk-row-name {
         font-size: 18px;
         line-height: 1.18;
         font-weight: 500;
       }
-      .desk-row-preview {
+      html:not([data-tauri-app="1"]) .desk-row-preview {
         font-size: 14px;
         line-height: 1.32;
       }
-      .desk-sidebar-topbar {
+      html:not([data-tauri-app="1"]) .desk-sidebar-topbar {
         padding-left: 16px;
         padding-right: 16px;
       }
-      .desk-sidebar-bottom {
+      html:not([data-tauri-app="1"]) .desk-sidebar-bottom {
         padding-left: 16px;
         padding-right: 16px;
       }
-      .desk-sidebar-resizer {
+      html:not([data-tauri-app="1"]) .desk-sidebar-resizer {
         display: none;
-      }
-    }
-    @media (min-width: 481px) {
-      .desk-swipe-action-rail {
-        display: none;
-      }
-      .desk-workbench,
-      .desk-workbench.sidebar-open,
-      .desk-workbench.settings-open {
-        display: grid;
-      }
-      .desk-sidebar {
-        position: relative;
-        width: var(--desk-sidebar-width);
-        max-width: none;
-        opacity: 0;
-        pointer-events: none;
-        transform: none;
-        transition: none;
-        border-radius: 26px 0 0 26px;
-      }
-      .desk-workbench.sidebar-open .desk-sidebar,
-      .desk-workbench.settings-open .desk-sidebar {
-        width: var(--desk-sidebar-width);
-        opacity: 1;
-        pointer-events: auto;
-        transform: none;
-      }
-      .desk-sidebar-shell {
-        width: 100%;
-        transition: none;
-      }
-      .desk-main {
-        display: flex;
-        pointer-events: auto;
-        transition: none;
-      }
-      .desk-workbench.sidebar-open .desk-main,
-      .desk-workbench.settings-open .desk-main {
-        display: flex;
-        pointer-events: auto;
-      }
-      .desk-sidebar-resizer:not([hidden]) {
-        display: block;
-      }
-      .desk-session-row {
-        padding: 10px 12px 9px;
-      }
-      .desk-section-label {
-        padding: 9px 12px 8px;
-        font-size: 10px;
-      }
-      .desk-row-name {
-        font-size: 15px;
-        line-height: 1.3;
-        font-weight: 400;
-      }
-      .desk-row-preview {
-        font-size: 11px;
-        line-height: 1.35;
       }
     }
     body {
