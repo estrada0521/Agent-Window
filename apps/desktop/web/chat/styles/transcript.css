@@ -470,7 +470,7 @@
     .message-row:not(.user) .message::before {
       content: "";
       position: absolute;
-      left: -20px;
+      left: -16px;
       top: 0;
       bottom: 4px;
       width: 2px;
@@ -479,10 +479,6 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 120ms ease;
-    }
-
-    html[data-theme-desktop="split"] .message-row:not(.user) .message::before {
-      left: -16px;
     }
 
     .has-hover .message-row:not(.user):hover .message::before {
@@ -1260,7 +1256,7 @@
 
     .md-body .code-block-wrap .code-copy-btn {
       position: absolute;
-      top: 12px;
+      top: 0;
       right: 0;
       z-index: 1;
       width: 28px;
