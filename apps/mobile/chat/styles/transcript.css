@@ -495,7 +495,7 @@
     .message-row:not(.user) .message::before {
       content: "";
       position: absolute;
-      left: -20px;
+      left: -16px;
       top: 0;
       bottom: 4px;
       width: 1px;

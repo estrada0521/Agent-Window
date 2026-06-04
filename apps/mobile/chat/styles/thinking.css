@@ -434,7 +434,7 @@
 
     .md-body .code-block-wrap .code-copy-btn {
       position: absolute;
-      top: 8px;
+      top: 0;
       right: 0;
       z-index: 1;
       width: 28px;
