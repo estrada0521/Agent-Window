@@ -380,7 +380,7 @@
     .message:not(.user) .message-meta-below {
       margin-top: 0px;
       margin-bottom: var(--message-vertical-rhythm);
-      gap: 7px;
+      gap: 6px;
       font-size: 13px;
     }
 
@@ -405,7 +405,7 @@
       margin-left: 0;
       margin-right: auto;
       padding-top: 0;
-      gap: 7px;
+      gap: 6px;
       font-size: 13px;
       justify-content: flex-start;
       background: transparent;

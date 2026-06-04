@@ -384,7 +384,7 @@
     .message:not(.user) .message-meta-below {
       margin-top: 0px;
       margin-bottom: var(--message-vertical-rhythm);
-      gap: 7px;
+      gap: 6px;
       font-size: 13px;
     }
 
@@ -409,7 +409,7 @@
       margin-left: 0;
       margin-right: auto;
       padding-top: 0;
-      gap: 7px;
+      gap: 6px;
       font-size: 13px;
       justify-content: flex-start;
       background: transparent;
@@ -1098,7 +1098,7 @@
     }
 
     .md-body p {
-      margin: 0 0 0.6em;
+      margin: 0 0 6px;
     }
 
     .md-body h1,
@@ -1124,12 +1124,12 @@
 
     .md-body ul,
     .md-body ol {
-      margin: 0.4em 0 0.6em;
+      margin: 0.4em 0 6px;
       padding-left: 1.5em;
     }
 
     .md-body li {
-      margin: 0.15em 0;
+      margin: 0;
     }
 
     .md-body li p {
@@ -1231,7 +1231,7 @@
       border: none;
       border-radius: 8px;
       padding: 12px 36px 12px 16px;
-      margin: 12px 0;
+      margin: 0 0 6px;
       overflow-x: auto;
       overflow-y: hidden;
       white-space: pre;
@@ -1250,8 +1250,12 @@
     .md-body .code-block-wrap {
       position: relative;
       display: block;
-      margin: 12px 0;
+      margin: 0 0 6px;
       overflow-x: hidden;
+    }
+
+    .md-body .code-block-wrap pre {
+      margin: 0;
     }
 
     .md-body .code-block-wrap .code-copy-btn {
