@@ -962,7 +962,7 @@ Creates a tmux session where window 0 is reserved for the human terminal,
 and each agent gets its own tmux window.
 
 Options:
-  --agents AGENT_LIST  Comma-separated list of agents to launch (default: all)
+  --agents AGENT_LIST  Comma-separated list of agents to launch (default: none)
                        Available: $ALL_AGENTS_DISPLAY
                        Examples:
                          --agents claude,gemini
@@ -1256,7 +1256,8 @@ parse_user_pane_spec "$USER_PANE" || {
   exit 1
 }
 
-if [[ "$NO_AGENTS" -eq 1 ]]; then
+if [[ "$NO_AGENTS" -eq 1 || -z "$AGENTS_ARG" || "$AGENTS_ARG" == "-" ]]; then
+  NO_AGENTS=1
   SELECTED_AGENTS=()
   INSTANCE_NAMES=()
 elif [[ -n "$AGENTS_ARG" ]]; then
@@ -1275,8 +1276,6 @@ elif [[ -n "$AGENTS_ARG" ]]; then
     _normalised+=("$base_agent")
   done
   SELECTED_AGENTS=("${_normalised[@]}")
-else
-  SELECTED_AGENTS=("${ALL_AGENTS[@]}")
 fi
 
 if [[ ${#SELECTED_AGENTS[@]} -lt 1 && "$NO_AGENTS" -eq 0 ]]; then
