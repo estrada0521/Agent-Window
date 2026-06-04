@@ -62,7 +62,7 @@
           dpUpdateLoadMoreUi();
           dpEnsureGitObserver();
         } else if (dpGitDetailContext.kind === "worktree" && dpGitDetailContext.wrapEl) {
-          void dpRenderFileStatsInto(dpGitDetailContext.wrapEl, "", { allowUndo: true })
+          void dpRenderFileStatsInto(dpGitDetailContext.wrapEl, "", { allowUndo: true, incremental: true })
             .then(() => {
               if (dpGitDetailContext?.wrapEl && !dpGitDetailContext.wrapEl.querySelector(".git-commit-file-row")) {
                 dpCloseGitDetail({ refreshList: true });
@@ -172,9 +172,120 @@
         setTimeout(() => setStatus(""), 2600);
       }
     };
-    const dpRenderFileStatsInto = async (wrapEl, hash, { allowUndo = false, scope = "" } = {}) => {
+    const dpFileStatsRowKey = (scope, entry) => `${String(scope || "")}\u001f${String(entry?.path || "").trim()}`;
+    const dpFileStatsRowsSignature = (sections) =>
+      (sections || []).flatMap((section) =>
+        (section.files || []).map((entry) => [
+          section.kind || "",
+          entry?.path || "",
+          entry?.ins ?? "",
+          entry?.dels ?? "",
+          entry?.untracked ? "1" : "0",
+        ].join("\u001f"))
+      ).join("\n");
+    const dpCssEscape = (value) => {
+      if (window.CSS?.escape) return CSS.escape(String(value || ""));
+      return String(value || "").replace(/["\\]/g, "\\$&");
+    };
+    const dpBuildFileStatsSectionsHtml = (sections, { allowUndo = false } = {}) =>
+      `<div class="git-commit-file-sections">${sections.map((section) => `<section class="git-commit-file-section" data-scope="${escapeHtml(section.kind)}"><div class="git-commit-file-section-title">${escapeHtml(section.title)}</div><div class="git-commit-file-list">${section.files.map((entry) => dpBuildFileRowHtml(entry, { allowUndo, scope: section.kind })).join("")}</div></section>`).join("")}</div>`;
+    const dpBuildFileStatsSectionHtml = (section, { allowUndo = false } = {}) =>
+      `<section class="git-commit-file-section" data-scope="${escapeHtml(section.kind)}"><div class="git-commit-file-section-title">${escapeHtml(section.title)}</div><div class="git-commit-file-list">${section.files.map((entry) => dpBuildFileRowHtml(entry, { allowUndo, scope: section.kind })).join("")}</div></section>`;
+    const dpUpdateFileStatsRow = (row, entry) => {
+      if (!row) return;
+      const isUntracked = !!entry?.untracked;
+      if (isUntracked) {
+        row.dataset.untracked = "1";
+        return;
+      }
+      delete row.dataset.untracked;
+      const nextIns = Math.max(0, parseInt(entry?.ins) || 0);
+      const nextDels = Math.max(0, parseInt(entry?.dels) || 0);
+      const countEls = Array.from(row.querySelectorAll(".git-commit-file-meta .git-branch-summary-count"));
+      const updates = [
+        { idx: 0, value: nextIns },
+        { idx: 1, value: nextDels },
+      ].map(({ idx, value }) => {
+        const el = countEls[idx];
+        if (!el) return null;
+        const prev = Math.max(0, parseInt(el.dataset.countValue || el.textContent || "0") || 0);
+        return { el, prev, value };
+      }).filter(Boolean);
+      if (updates.some(({ prev, value }) => prev !== value)) {
+        const token = String(Date.now());
+        row.dataset.statsUpdateToken = token;
+        row.classList.add("is-stats-updating");
+        window.setTimeout(() => {
+          if (row.dataset.statsUpdateToken !== token) return;
+          row.classList.remove("is-stats-updating");
+          delete row.dataset.statsUpdateToken;
+        }, 2000);
+      }
+      updates.forEach(({ el, prev, value }) => {
+        el.dataset.countValue = String(value);
+        dpAnimateGitCount(el, prev, value);
+      });
+    };
+    const dpApplyFileStatsSectionsInto = (wrapEl, sections, { allowUndo = false, incremental = false } = {}) => {
+      const safeSections = (sections || []).filter((section) => Array.isArray(section.files) && section.files.length);
+      const signature = dpFileStatsRowsSignature(safeSections);
+      if (!safeSections.length) {
+        wrapEl.dataset.fileStatsSignature = "";
+        wrapEl.innerHTML = '<div class="git-commit-file-empty">No changed files</div>';
+        return;
+      }
+      if (!incremental || !wrapEl.querySelector(".git-commit-file-sections")) {
+        wrapEl.dataset.fileStatsSignature = signature;
+        wrapEl.innerHTML = dpBuildFileStatsSectionsHtml(safeSections, { allowUndo });
+        return;
+      }
+      if (wrapEl.dataset.fileStatsSignature === signature) return;
+
+      const desiredScopes = new Set(safeSections.map((section) => section.kind));
+      wrapEl.querySelectorAll(".git-commit-file-section").forEach((sectionEl) => {
+        if (!desiredScopes.has(sectionEl.dataset.scope || "")) sectionEl.remove();
+      });
+
+      const sectionsRoot = wrapEl.querySelector(".git-commit-file-sections");
+      if (!sectionsRoot) {
+        wrapEl.dataset.fileStatsSignature = signature;
+        wrapEl.innerHTML = dpBuildFileStatsSectionsHtml(safeSections, { allowUndo });
+        return;
+      }
+
+      safeSections.forEach((section) => {
+        let sectionEl = sectionsRoot.querySelector(`.git-commit-file-section[data-scope="${dpCssEscape(section.kind)}"]`);
+        if (!sectionEl) {
+          sectionsRoot.insertAdjacentHTML("beforeend", dpBuildFileStatsSectionHtml(section, { allowUndo }));
+          return;
+        }
+        const listEl = sectionEl.querySelector(".git-commit-file-list");
+        if (!listEl) {
+          sectionEl.outerHTML = dpBuildFileStatsSectionHtml(section, { allowUndo });
+          return;
+        }
+        const desiredKeys = new Set(section.files.map((entry) => dpFileStatsRowKey(section.kind, entry)));
+        listEl.querySelectorAll(".git-commit-file-row").forEach((row) => {
+          const key = dpFileStatsRowKey(section.kind, { path: row.dataset.path || "" });
+          if (!desiredKeys.has(key)) row.remove();
+        });
+        section.files.forEach((entry) => {
+          const selector = `.git-commit-file-row[data-path="${dpCssEscape(String(entry?.path || "").trim())}"]`;
+          const existing = listEl.querySelector(selector);
+          if (!existing) {
+            listEl.insertAdjacentHTML("beforeend", dpBuildFileRowHtml(entry, { allowUndo, scope: section.kind, animate: true }));
+          } else {
+            dpUpdateFileStatsRow(existing, entry);
+          }
+        });
+      });
+      wrapEl.dataset.fileStatsSignature = signature;
+    };
+    const dpRenderFileStatsInto = async (wrapEl, hash, { allowUndo = false, scope = "", incremental = false } = {}) => {
       if (!wrapEl) return null;
-      wrapEl.innerHTML = `<div class="git-commit-file-empty inline-loading-row">${dpLoadingHtml()}</div>`;
+      if (!incremental) {
+        wrapEl.innerHTML = `<div class="git-commit-file-empty inline-loading-row">${dpLoadingHtml()}</div>`;
+      }
       if (!hash && !scope) {
         const [stagedRes, unstagedRes, untrackedRes] = await Promise.all([
           fetchWithTimeout("/git-diff-files?scope=staged", {}, 5000),
@@ -185,16 +296,12 @@
         const unstagedData = await unstagedRes.json();
         const untrackedData = await untrackedRes.json();
         const sections = [
-          { title: "Staged", kind: "staged", data: stagedData },
-          { title: "Unstaged", kind: "unstaged", data: unstagedData },
-          { title: "Untracked", kind: "untracked", data: untrackedData },
-        ].filter((section) => Array.isArray(section.data?.files) && section.data.files.length);
-        if (!sections.length) {
-          wrapEl.innerHTML = '<div class="git-commit-file-empty">No changed files</div>';
-          return { files: [] };
-        }
-        wrapEl.innerHTML = `<div class="git-commit-file-sections">${sections.map((section) => `<section class="git-commit-file-section" data-scope="${escapeHtml(section.kind)}"><div class="git-commit-file-section-title">${escapeHtml(section.title)}</div><div class="git-commit-file-list">${section.data.files.map((entry) => dpBuildFileRowHtml(entry, { allowUndo, scope: section.kind })).join("")}</div></section>`).join("")}</div>`;
-        return { files: sections.flatMap((section) => section.data.files || []) };
+          { title: "Staged", kind: "staged", files: Array.isArray(stagedData?.files) ? stagedData.files : [] },
+          { title: "Unstaged", kind: "unstaged", files: Array.isArray(unstagedData?.files) ? unstagedData.files : [] },
+          { title: "Untracked", kind: "untracked", files: Array.isArray(untrackedData?.files) ? untrackedData.files : [] },
+        ].filter((section) => section.files.length);
+        dpApplyFileStatsSectionsInto(wrapEl, sections, { allowUndo, incremental });
+        return { files: sections.flatMap((section) => section.files || []) };
       }
       const params = new URLSearchParams({ hash: String(hash || "") });
       if (!hash && scope) params.set("scope", scope);
@@ -205,13 +312,18 @@
         wrapEl.innerHTML = '<div class="git-commit-file-empty">No changed files</div>';
         return data;
       }
-      wrapEl.innerHTML = `<div class="git-commit-file-list">${files.map((entry) => dpBuildFileRowHtml(entry, { allowUndo, scope })).join("")}</div>`;
+      if (incremental && wrapEl.querySelector(".git-commit-file-list")) {
+        const section = { title: "", kind: scope || "commit", files };
+        dpApplyFileStatsSectionsInto(wrapEl, [section], { allowUndo, incremental });
+      } else {
+        wrapEl.innerHTML = `<div class="git-commit-file-list">${files.map((entry) => dpBuildFileRowHtml(entry, { allowUndo, scope })).join("")}</div>`;
+      }
       return data;
     };
     const dpCloseGitDetail = ({ refreshList = false } = {}) => {
       if (!dpGitContent) return;
       const stack = dpGitContent.querySelector(".git-branch-stack");
-      stack?.classList.remove("git-branch-transitioning", "git-branch-mode-detail");
+      stack?.classList.remove("git-branch-transitioning", "git-branch-mode-detail", "git-branch-mode-worktree-detail");
       const body = dpGitContent.querySelector(".git-commit-detail-body");
       const head = dpGitContent.querySelector(".git-commit-detail-head");
       if (body) body.innerHTML = "";
@@ -267,6 +379,7 @@
       if (!dpGitContent) return;
       const stack = dpGitContent.querySelector(".git-branch-stack");
       if (!stack) return;
+      const isWorktreeDetail = diffKind === "worktree";
       dpCloseGitDetail();
       dpDisconnectGitObserver();
       dpGitDetailNeedsRefresh = false;
@@ -275,13 +388,18 @@
       const bodyEl = dpGitContent.querySelector(".git-commit-detail-body");
       if (headEl) {
         headEl.title = subject;
-        headEl.innerHTML = rowHtml;
+        if (isWorktreeDetail) {
+          headEl.innerHTML = "";
+        } else {
+          headEl.innerHTML = rowHtml;
+        }
       }
       if (!bodyEl) return;
       const wrapEl = document.createElement("div");
       wrapEl.className = "git-commit-file-wrap";
       bodyEl.appendChild(wrapEl);
       stack.classList.add("git-branch-mode-detail");
+      stack.classList.toggle("git-branch-mode-worktree-detail", isWorktreeDetail);
       dpGitDetailContext = {
         kind: diffKind === "worktree" || diffKind === "staged" || diffKind === "unstaged" ? diffKind : "commit",
         hash: diffKind === "worktree" || diffKind === "staged" || diffKind === "unstaged" ? "" : hash,

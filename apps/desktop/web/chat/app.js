@@ -715,6 +715,8 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       }
       return btn;
     };
+    const dpRepoEntriesStructureSignature = (entries) =>
+      (entries || []).map((entry) => `${entry.kind}:${entry.path}`).join("\n");
     const dpRenderRepoPanel = (rawPath, entries, { loading = false, error = "", direction = "forward" } = {}) => {
       if (!dpRepoContent) return;
       const path = dpNormalizePath(rawPath);
@@ -816,6 +818,21 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         dpRenderRepoPanel(path, [], { error: err?.message || "Failed to load directory", direction });
       }
     };
+    const dpRefreshRepoDir = async (rawPath) => {
+      if (!dpPanelOpen || !dpRepoContent?.querySelector(".repo-browser-stack")) return;
+      const path = dpNormalizePath(rawPath);
+      try {
+        const entries = await dpFetchRepoDir(path);
+        if (!dpPanelOpen || dpActivePanelView !== "repo" || dpNormalizePath(dpRepoBrowserPath) !== path) return;
+        const currentEntries = Array.from(dpRepoContent.querySelectorAll(".repo-browser-item")).map((item) => ({
+          kind: item.classList.contains("repo-browser-dir") ? "dir" : "file",
+          path: dpNormalizePath(item.title || ""),
+        }));
+        if (dpRepoEntriesStructureSignature(currentEntries) !== dpRepoEntriesStructureSignature(entries)) {
+          dpRenderRepoPanel(path, entries, { direction: "none" });
+        }
+      } catch (_) {}
+    };
     window.addEventListener("message", (event) => {
       if (!event.data) return;
       if (event.data.type === "multiagent-hub-theme-changed") {
@@ -857,10 +874,14 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       if (nextSeq) workspaceSyncLastSeq = nextSeq;
       _dpGitOverviewFingerprint = "";
       if (dpPanelOpen && dpActivePanelView === "repo") {
-        void dpLoadRepoDir(dpRepoBrowserPath || "", { animate: false });
+        void dpRefreshRepoDir(dpRepoBrowserPath || "");
       }
       if (dpPanelOpen && dpActivePanelView === "git") {
-        void dpLoadGitBranchPage({ reset: true });
+        if (dpGitContent?.querySelector(".git-branch-stack")) {
+          void dpRefreshGitOverview();
+        } else {
+          void dpLoadGitBranchPage({ reset: true });
+        }
       } else if (dpPanelOpen || dpGitSummaryPinned) {
         void dpRefreshGitOverview();
       }

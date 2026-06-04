@@ -100,9 +100,15 @@
         return;
       }
       const stack = dpGitContent.querySelector(".git-branch-stack");
-      if (stack?.classList.contains("git-branch-mode-detail")) return;
       const row = event.target.closest(".git-commit-row, .git-branch-summary-row");
       if (!row) return;
+      if (stack?.classList.contains("git-branch-mode-worktree-detail") && row.closest(".git-branch-summary-wrap")) {
+        event.preventDefault();
+        event.stopPropagation();
+        dpCloseGitDetail({ refreshList: dpGitDetailNeedsRefresh });
+        return;
+      }
+      if (stack?.classList.contains("git-branch-mode-detail")) return;
       const diffKind = row.dataset.diffKind || "";
       const hash = String(row.dataset.hash || "");
       if (!hash && !diffKind) return;

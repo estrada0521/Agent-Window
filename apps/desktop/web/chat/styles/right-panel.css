@@ -426,6 +426,14 @@
     .git-branch-stack.git-branch-mode-detail .git-branch-list-view {
       display: none;
     }
+    .git-branch-stack.git-branch-mode-worktree-detail .git-branch-list-view {
+      display: flex;
+      flex: 0 0 auto;
+      min-height: 0;
+    }
+    .git-branch-stack.git-branch-mode-worktree-detail .git-branch-commit-scroll {
+      display: none;
+    }
     .git-branch-commit-scroll {
       flex: 1;
       overflow-y: auto;
@@ -586,6 +594,12 @@
       display: flex;
       flex: 1 1 auto;
       animation: git-branch-detail-in 0.2s ease-out;
+    }
+    .git-branch-stack.git-branch-mode-worktree-detail .git-commit-detail-head {
+      display: none;
+    }
+    .git-branch-stack.git-branch-mode-worktree-detail .git-branch-summary-wrap .git-commit-chevron {
+      transform: rotate(90deg);
     }
     .git-commit-detail-body {
       flex: 1;
@@ -974,6 +988,8 @@
       background: transparent;
       overflow: hidden;
       transition: background 120ms ease;
+    }
+    .git-commit-file-row.new-file-slide {
       animation: git-commit-file-row-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
     @keyframes git-commit-file-row-in {
@@ -986,12 +1002,6 @@
         transform: translateY(0);
       }
     }
-    .git-commit-file-row:nth-child(1) { animation-delay: 0.02s; }
-    .git-commit-file-row:nth-child(2) { animation-delay: 0.04s; }
-    .git-commit-file-row:nth-child(3) { animation-delay: 0.06s; }
-    .git-commit-file-row:nth-child(4) { animation-delay: 0.08s; }
-    .git-commit-file-row:nth-child(5) { animation-delay: 0.10s; }
-    .git-commit-file-row:nth-child(n+6) { animation-delay: 0.12s; }
     .git-commit-file-row:active {
       background: var(--panel-row-hover-bg);
     }
@@ -1064,7 +1074,8 @@
       padding-right: 2px;
     }
     .has-hover .git-commit-file-row:hover .git-commit-file-actions,
-    .git-commit-file-row:focus-within .git-commit-file-actions {
+    .git-commit-file-row:focus-within .git-commit-file-actions,
+    .git-commit-file-row.is-stats-updating .git-commit-file-actions {
       display: flex;
     }
     .git-commit-file-icon {
@@ -1180,6 +1191,12 @@
       padding: 14px 8px;
       color: var(--muted);
       font-size: var(--message-text-size, 13px);
+    }
+    .git-commit-file-wrap > .git-commit-file-empty.inline-loading-row {
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .git-commit-file-row.clickable { cursor: pointer; }
     .git-branch-load-more {
