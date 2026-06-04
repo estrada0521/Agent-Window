@@ -645,22 +645,6 @@
         body: JSON.stringify({ agent }),
       }).catch(() => {});
     });
-    const messageCollapseScrollObserver =
-      typeof IntersectionObserver === "function" && timeline && timeline.nodeType === 1
-        ? new IntersectionObserver(
-            (entries) => {
-              for (const entry of entries) {
-                if (entry.isIntersecting) continue;
-                const row = entry.target;
-                const msgId = row?.dataset?.msgid || "";
-                if (!msgId || !expandedMessageBodies.has(msgId)) continue;
-                expandedMessageBodies.delete(msgId);
-                syncMessageCollapse(row);
-              }
-            },
-            { root: timeline, threshold: 0 }
-          )
-        : null;
     const syncMessageCollapse = (scope = document) => {
       const rows = scope?.matches?.("article.message-row")
         ? (isCollapsibleMessageRow(scope) ? [scope] : [])
@@ -680,14 +664,9 @@
           bodyRow.classList.remove("is-collapsed");
           toggle.classList.remove("is-visible");
           toggle.hidden = true;
-          if (messageCollapseScrollObserver) {
-            try {
-              messageCollapseScrollObserver.unobserve(row);
-            } catch (_) {}
-          }
           return;
         }
-        const maxHeight = Math.ceil((lineHeight * 20) + paddingTop + paddingBottom);
+        const maxHeight = Math.ceil((lineHeight * MESSAGE_COLLAPSE_LINES) + paddingTop + paddingBottom);
         bodyRow.style.setProperty("--message-collapse-max-height", `${maxHeight}px`);
         const shouldCollapse = body.scrollHeight > (maxHeight + 4);
         const msgId = row.dataset.msgid || "";
@@ -698,15 +677,6 @@
         toggle.classList.toggle("is-visible", showMoreBtn);
         toggle.hidden = !showMoreBtn;
         toggle.textContent = "More";
-        if (messageCollapseScrollObserver) {
-          if (isExpanded && shouldCollapse && msgId) {
-            messageCollapseScrollObserver.observe(row);
-          } else {
-            try {
-              messageCollapseScrollObserver.unobserve(row);
-            } catch (_) {}
-          }
-        }
       });
     };
     const syncPaneViewerTabThinkingStatuses = () => {

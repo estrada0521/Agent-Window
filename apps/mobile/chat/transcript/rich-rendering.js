@@ -96,13 +96,13 @@
     window.addEventListener("resize", () => {
       syncWideBlockRows(document);
       queueStableCodeBlockSync(document);
-      syncUserMessageCollapse(document);
+      syncMessageCollapse(document);
     });
     if (document.fonts?.ready) {
       document.fonts.ready.then(() => {
         syncWideBlockRows(document);
         queueStableCodeBlockSync(document);
-        syncUserMessageCollapse(document);
+        syncMessageCollapse(document);
       }).catch(() => { });
     }
     const AGENT_ICON_NAMES = __AGENT_ICON_NAMES_JS_SET__;

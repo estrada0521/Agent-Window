@@ -616,50 +616,29 @@
     };
     timeline?.addEventListener("scroll", scheduleThinkingFloatingIcons, { passive: true });
     window.addEventListener("resize", scheduleThinkingFloatingIcons, { passive: true });
-    const userCollapseScrollObserver =
-      typeof IntersectionObserver === "function" && timeline && timeline.nodeType === 1
-        ? new IntersectionObserver(
-          (entries) => {
-            for (const entry of entries) {
-              if (entry.isIntersecting) continue;
-              const row = entry.target;
-              const msgId = row?.dataset?.msgid || "";
-              if (!msgId || !expandedUserMessages.has(msgId)) continue;
-              expandedUserMessages.delete(msgId);
-              syncUserMessageCollapse(row);
-            }
-          },
-          { root: timeline, threshold: 0 }
-        )
-        : null;
-    const syncUserMessageCollapse = (scope = document) => {
-      const rows = scope?.matches?.("article.message-row.user")
-        ? [scope]
-        : Array.from(scope.querySelectorAll("article.message-row.user"));
+    const syncMessageCollapse = (scope = document) => {
+      const rows = scope?.matches?.("article.message-row")
+        ? (isCollapsibleMessageRow(scope) ? [scope] : [])
+        : Array.from(scope?.querySelectorAll?.("article.message-row") || []).filter(isCollapsibleMessageRow);
       rows.forEach((row) => {
         const bodyRow = row.querySelector(".message-body-row");
         const body = row.querySelector(".md-body");
-        const toggle = row.querySelector(".user-collapse-toggle");
+        const toggle = row.querySelector(".message-collapse-toggle");
         if (!bodyRow || !body || !toggle) return;
         const style = getComputedStyle(body);
         const lineHeight = Number.parseFloat(style.lineHeight);
         const paddingTop = Number.parseFloat(style.paddingTop) || 0;
         const paddingBottom = Number.parseFloat(style.paddingBottom) || 0;
         if (!Number.isFinite(lineHeight)) {
-          bodyRow.style.removeProperty("--user-collapse-max-height");
+          bodyRow.style.removeProperty("--message-collapse-max-height");
           row.classList.remove("is-collapsible");
           bodyRow.classList.remove("is-collapsed");
           toggle.classList.remove("is-visible");
           toggle.hidden = true;
-          if (userCollapseScrollObserver) {
-            try {
-              userCollapseScrollObserver.unobserve(row);
-            } catch (_) { }
-          }
           return;
         }
-        const maxHeight = Math.ceil((lineHeight * 20) + paddingTop + paddingBottom);
-        bodyRow.style.setProperty("--user-collapse-max-height", `${maxHeight}px`);
+        const maxHeight = Math.ceil((lineHeight * MESSAGE_COLLAPSE_LINES) + paddingTop + paddingBottom);
+        bodyRow.style.setProperty("--message-collapse-max-height", `${maxHeight}px`);
         const bodyWidth = Math.round(body.getBoundingClientRect().width || bodyRow.clientWidth || 0);
         if (bodyWidth < 40) {
           row.classList.remove("is-collapsible");
@@ -669,37 +648,22 @@
           const retries = Math.max(0, parseInt(row.dataset.collapseRetry || "0", 10) || 0);
           if (retries < 3) {
             row.dataset.collapseRetry = String(retries + 1);
-            requestAnimationFrame(() => requestAnimationFrame(() => syncUserMessageCollapse(row)));
+            requestAnimationFrame(() => requestAnimationFrame(() => syncMessageCollapse(row)));
           } else {
             row.dataset.collapseRetry = "0";
           }
           return;
         }
         row.dataset.collapseRetry = "0";
-        let shouldCollapse = body.scrollHeight > (maxHeight + 4);
-        const bodyText = String(body.textContent || "").trim();
-        const hasHardBreak = bodyText.includes("\n") || !!body.querySelector("br");
-        const hasStructuredBlocks = !!body.querySelector("pre, table, ul, ol, blockquote, img, video, iframe, details");
-        if (shouldCollapse && bodyText.length <= 280 && !hasHardBreak && !hasStructuredBlocks) {
-          shouldCollapse = false;
-        }
+        const shouldCollapse = body.scrollHeight > (maxHeight + 4);
         const msgId = row.dataset.msgid || "";
-        const isExpanded = shouldCollapse && msgId && expandedUserMessages.has(msgId);
+        const isExpanded = shouldCollapse && msgId && expandedMessageBodies.has(msgId);
         row.classList.toggle("is-collapsible", shouldCollapse);
         bodyRow.classList.toggle("is-collapsed", shouldCollapse && !isExpanded);
         const showMoreBtn = shouldCollapse && !isExpanded;
         toggle.classList.toggle("is-visible", showMoreBtn);
         toggle.hidden = !showMoreBtn;
         toggle.textContent = "More";
-        if (userCollapseScrollObserver) {
-          if (isExpanded && shouldCollapse && msgId) {
-            userCollapseScrollObserver.observe(row);
-          } else {
-            try {
-              userCollapseScrollObserver.unobserve(row);
-            } catch (_) { }
-          }
-        }
       });
     };
     const syncPaneViewerTabThinkingStatuses = () => {

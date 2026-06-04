@@ -258,12 +258,16 @@
       margin-top: 0;
     }
 
-    .message.user .message-body-row.is-collapsed {
-      overflow: hidden;
-      max-height: var(--user-collapse-max-height);
+    .message-row.is-collapsible .message-body-row {
+      position: relative;
     }
 
-    .message.user .message-body-row.is-collapsed::after {
+    .message-row.is-collapsible .message-body-row.is-collapsed {
+      overflow: hidden;
+      max-height: var(--message-collapse-max-height);
+    }
+
+    .message-row.is-collapsible .message-body-row.is-collapsed::after {
       content: "";
       position: absolute;
       left: 0;
@@ -276,7 +280,7 @@
       background: none;
     }
 
-    .message.user .user-collapse-toggle {
+    .message-row.is-collapsible .message-collapse-toggle {
       display: none;
       position: absolute;
       left: 0;
@@ -293,11 +297,11 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .message.user .user-collapse-toggle.is-visible {
+    .message-row.is-collapsible .message-collapse-toggle.is-visible {
       display: block;
     }
 
-    .has-hover .message.user .user-collapse-toggle:hover {
+    .has-hover .message-row.is-collapsible .message-collapse-toggle:hover {
       color: var(--fg);
     }
 
