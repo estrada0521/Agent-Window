@@ -9,7 +9,7 @@
       linkifyInlineCodeFileRefs(scope);
       renderMathInScope(scope);
       syncWideBlockRows(scope);
-      syncUserMessageCollapse(scope);
+      syncMessageCollapse(scope);
       observeDeferredMessages(scope);
     };
     const clearFocusMsgParam = () => {
@@ -149,6 +149,7 @@
         const targetMeta = `<span class="targets">${targetSpans}</span>`;
         const sender = escapeHtml(safeEntry.sender || "unknown");
         const isUser = cls === "user";
+        const isCollapsibleMessage = isCollapsibleMessageSender(safeEntry.sender);
         const hideMetaRow = !!options.hideMetaRow;
         const metaHiddenClass = hideMetaRow ? " meta-hidden" : "";
         const copyButtonHtml = `<button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
@@ -168,7 +169,7 @@
         ${metaRowHtml}
         <div class="message-body-row">
           ${messageBodyHtml}
-          ${isUser ? `<button class="user-collapse-toggle" type="button" hidden>More</button>` : ""}
+          ${isCollapsibleMessage ? `<button class="message-collapse-toggle" type="button" hidden>More</button>` : ""}
         </div>
         ${deferredBodyHtml}
         ${isUser ? `<div class="user-message-divider" aria-hidden="true"></div>` : ``}

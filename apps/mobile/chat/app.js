@@ -305,7 +305,14 @@ __CHAT_INCLUDE:transcript/rich-rendering.js__
     let availableTargets = [];
     let currentSessionName = "";
     let _renderedIds = new Set();
-    const expandedUserMessages = new Set();
+    const MESSAGE_COLLAPSE_LINES = 20;
+    const expandedMessageBodies = new Set();
+    const isCollapsibleMessageSender = (sender) => {
+      const normalized = String(sender || "").trim().toLowerCase();
+      return !!normalized && normalized !== "system";
+    };
+    const isCollapsibleMessageRow = (row) =>
+      !!(row && row.classList?.contains("message-row") && isCollapsibleMessageSender(row.dataset?.sender));
     const escapeHtml = (value) => value
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
