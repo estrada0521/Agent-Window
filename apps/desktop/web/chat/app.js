@@ -307,7 +307,7 @@ __CHAT_INCLUDE:transcript/rich-rendering.js__
     let availableTargets = [];
     let currentSessionName = "";
     let _renderedIds = new Set();
-    const MESSAGE_COLLAPSE_LINES = 20;
+    const MESSAGE_COLLAPSE_LINES = 40;
     const expandedMessageBodies = new Set();
     const isCollapsibleMessageSender = (sender) => {
       const normalized = String(sender || "").trim().toLowerCase();
