@@ -37,6 +37,7 @@
         text: summaryBits.join(" · "),
         subject: changedPaths ? "Uncommitted changes" : "Working tree clean",
         clickable: !!data?.worktree_has_diff,
+        counts: [worktreeAdded, worktreeDeleted],
         rowHtml: dpBuildSummaryHtml(data),
       };
     };
@@ -50,7 +51,7 @@
       const animClass = animate ? " new-commit-slide" : "";
       return `<div class="git-commit-row${animClass}" data-hash="${escapeHtml(commit?.hash || "")}"><span class="git-commit-icon-wrap">${iconInner}</span><div class="git-commit-info">${subjHtml}<div class="git-commit-meta">${statHtml}</div></div></div>`;
     };
-    const dpBuildFileRowHtml = (entry, { allowUndo = false, scope = "" } = {}) => {
+    const dpBuildFileRowHtml = (entry, { allowUndo = false, scope = "", animate = false } = {}) => {
       const path = String(entry?.path || "").trim();
       const ins = Math.max(0, parseInt(entry?.ins) || 0);
       const dels = Math.max(0, parseInt(entry?.dels) || 0);
@@ -75,8 +76,9 @@
       const actionsInnerHtml = `${untrackedActionsHtml}${undoHtml}${fileMetaHtml}`;
       const actionsHtml = actionsInnerHtml ? `<div class="git-commit-file-actions">${actionsInnerHtml}</div>` : "";
       const undoClass = allowUndo && !isUntracked && scope !== "staged" ? " has-undo" : "";
+      const animClass = animate ? " new-file-slide" : "";
       const untrackedAttr = isUntracked ? ' data-untracked="1"' : "";
-      return `<div class="git-commit-file-row clickable${undoClass}" data-path="${escapeHtml(path)}"${untrackedAttr}><div class="git-commit-file-header">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
+      return `<div class="git-commit-file-row clickable${undoClass}${animClass}" data-path="${escapeHtml(path)}"${untrackedAttr}><div class="git-commit-file-header">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
     };
     const dpDisconnectGitObserver = () => {
       if (!dpGitObserver) return;
