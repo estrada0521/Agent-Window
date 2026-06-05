@@ -474,19 +474,24 @@
       position: relative;
     }
 
-    .message-row:not(.user) .message-hover-copy {
+    .message-row:not(.user) .message-hover-copy-zone {
       position: absolute;
-      top: 0;
       right: 0;
-      bottom: 0;
+      bottom: 4px;
       z-index: 3;
-      width: 33.333%;
-      min-width: 96px;
-      height: 100%;
+      width: 15px;
+      height: 15px;
       box-sizing: border-box;
+      display: flex;
       align-items: flex-end;
       justify-content: flex-end;
-      padding: 0 0 4px 0;
+      pointer-events: none;
+    }
+
+    .message-row:not(.user) .message-hover-copy {
+      align-self: flex-end;
+      width: 15px;
+      height: 15px;
       border-radius: 6px;
       color: var(--icon-muted);
       background: transparent;
@@ -504,7 +509,7 @@
       stroke-width: 1.55;
     }
 
-    .has-hover .message-row:not(.user) .message-hover-copy:hover,
+    .has-hover .message-row:not(.user) .message-body-row.is-hover-copy-hotspot .message-hover-copy,
     .message-row:not(.user):focus-within .message-hover-copy,
     .message-row:not(.user) .message-hover-copy.copied {
       opacity: 1;

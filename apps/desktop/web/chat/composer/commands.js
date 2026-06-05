@@ -178,7 +178,33 @@
         btn.innerHTML = copyIcon;
       }, 1500);
     };
-    document.getElementById("messages").addEventListener("click", (e) => {
+    const messagesEl = document.getElementById("messages");
+    let activeHoverCopyBody = null;
+    const clearHoverCopyBody = () => {
+      if (!activeHoverCopyBody) return;
+      activeHoverCopyBody.classList.remove("is-hover-copy-hotspot");
+      activeHoverCopyBody = null;
+    };
+    messagesEl.addEventListener("pointermove", (e) => {
+      const bodyRow = e.target.closest(".message-row:not(.user) .message-body-row");
+      if (!bodyRow) {
+        clearHoverCopyBody();
+        return;
+      }
+      const rect = bodyRow.getBoundingClientRect();
+      const inHotspot = e.clientX >= rect.left + rect.width * (2 / 3);
+      if (!inHotspot) {
+        clearHoverCopyBody();
+        return;
+      }
+      if (activeHoverCopyBody && activeHoverCopyBody !== bodyRow) {
+        activeHoverCopyBody.classList.remove("is-hover-copy-hotspot");
+      }
+      activeHoverCopyBody = bodyRow;
+      bodyRow.classList.add("is-hover-copy-hotspot");
+    });
+    messagesEl.addEventListener("pointerleave", clearHoverCopyBody);
+    messagesEl.addEventListener("click", (e) => {
       const metaBtn = e.target.closest(".message-meta-below button, .user-message-meta button, .message-meta-below .meta-agent, .user-message-meta .meta-agent");
       if (metaBtn) {
         const row = metaBtn.closest("article.message-row");

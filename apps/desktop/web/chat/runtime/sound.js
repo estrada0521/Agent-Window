@@ -159,7 +159,7 @@
         : (isUser
           ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${targetMeta}${copyButtonHtml()}</div>`
           : `<div class="message-meta-below">${senderHtml}<span class="arrow">to</span>${targetMeta}</div>`);
-      const hoverCopyHtml = isUser ? "" : copyButtonHtml(" message-hover-copy");
+      const hoverCopyHtml = isUser ? "" : `<div class="message-hover-copy-zone">${copyButtonHtml(" message-hover-copy")}</div>`;
       const deferredBodyHtml = safeEntry.deferred_body && msgId
         ? `<div class="message-deferred-actions"><button class="message-deferred-btn" type="button" data-load-full-message="${msgId}">Load full message</button></div>`
         : "";
