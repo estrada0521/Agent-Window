@@ -291,7 +291,8 @@ __CHAT_INCLUDE:composer-overlay.js__
       delimiters: [
         {left: '$$', right: '$$', display: true},
         {left: '$', right: '$', display: false},
-        {left: '\\[', right: '\\]', display: true}
+        {left: '\\[', right: '\\]', display: true},
+        {left: '\\(', right: '\\)', display: false}
       ],
       ignoredClasses: ["no-math"],
       throwOnError: false

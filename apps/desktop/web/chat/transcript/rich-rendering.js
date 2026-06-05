@@ -20,6 +20,8 @@
         if (typeof renderMathInElement === "undefined") return;
         renderMathInElement(node, mathRenderOptions);
         clearMathMarkers(node);
+        if (typeof syncWideBlockRows === "function") syncWideBlockRows(node);
+        if (typeof syncMessageCollapse === "function") syncMessageCollapse(node);
       };
       if (typeof renderMathInElement === "function") {
         applyMath();
@@ -156,6 +158,11 @@
     const applyCharStreamRevealToRow = (row) => {
       const mdBody = row?.querySelector?.(".md-body");
       if (!mdBody || mdBody.dataset.streamCharsApplied) return;
+      if (scopeNeedsMathRender(mdBody)) {
+        mdBody.dataset.streamCharsApplied = "1";
+        row._streamRevealTotalMs = 0;
+        return;
+      }
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         mdBody.dataset.streamCharsApplied = "1";
         row._streamRevealTotalMs = 0;
