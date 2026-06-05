@@ -20,6 +20,9 @@ def initialize_native_log_runtime_state(runtime: object) -> None:
     runtime._native_log_watch_reconfigure = threading.Event()
     runtime._native_log_bindings_lock = threading.Lock()
     runtime._idle_running_event_seq = 0
+    runtime._idle_running_display_lock = threading.Lock()
+    runtime._idle_running_display_queues = {}
+    runtime._idle_running_display_timers = {}
 
     runtime._sync_state = runtime.load_sync_state()
     runtime._codex_cursors = _dedup_cursor_claims(_load_cursor_dict(runtime._sync_state.get("codex_cursors")))
