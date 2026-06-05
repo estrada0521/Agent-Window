@@ -69,6 +69,9 @@ def chat_server_matches(self, session_name: str, chat_port: int, *, scheme: str 
         return scheme not in {"http", "https"}
     if (state.get("session") or "") != session_name:
         return False
+    reported_repo_root = str(state.get("repo_root") or "").strip()
+    if reported_repo_root != str(self.repo_root):
+        return False
     expected_agents = self.session_agents(session_name)
     reported_agents = [str(a).strip() for a in (state.get("targets") or []) if str(a).strip()]
     if expected_agents and reported_agents and set(expected_agents) != set(reported_agents):

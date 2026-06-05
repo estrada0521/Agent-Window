@@ -126,6 +126,8 @@ def build_session_state_payload(
                 "server_instance": server_instance,
                 "session": session_name,
                 "active": bool(runtime.session_is_active),
+                "workspace": str(getattr(runtime, "workspace", "") or ""),
+                "repo_root": str(getattr(runtime, "repo_root", "") or ""),
             }
         )
     if "targets" in selected:

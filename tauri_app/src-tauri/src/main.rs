@@ -311,7 +311,6 @@ fn find_repo_root(app: &tauri::App) -> Option<String> {
     let home = std::env::var("HOME").unwrap_or_default();
     for candidate in &[
         format!("{}/.agent-window/app/bundled-repo", home),
-        format!("{}/workspace/multiagent-local", home),
         format!("{}/multiagent-chat", home),
     ] {
         if std::path::Path::new(candidate)
