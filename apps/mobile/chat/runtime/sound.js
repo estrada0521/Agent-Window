@@ -82,9 +82,6 @@
           currentPeerKey = peerKey;
           seenDirectionsForPeer = new Set();
         }
-        if (sender === "user") {
-          continue;
-        }
         const directionKey = `${sender}:${targetsSig}`;
         if (seenDirectionsForPeer.has(directionKey) && msgId) {
           hiddenIds.add(msgId);

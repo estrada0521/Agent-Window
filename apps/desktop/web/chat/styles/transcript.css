@@ -230,7 +230,7 @@
 
     .message.user .message-body-row {
       display: block;
-      width: fit-content;
+      width: 100%;
       max-width: 100%;
       margin-left: 0;
       margin-right: auto;
@@ -432,21 +432,6 @@
       margin-bottom: var(--message-vertical-rhythm);
     }
 
-    .message.user .user-message-meta .copy-btn {
-      width: 20px;
-      height: 20px;
-      margin-right: 0;
-    }
-
-    .message.user .user-message-meta .copy-btn svg {
-      width: 17px;
-      height: 17px;
-    }
-
-    .message.user .user-message-meta .copy-btn svg * {
-      stroke-width: 1.45;
-    }
-
     .message:not(.user) .message-meta-below,
     .message.user .user-message-meta {
       opacity: 1;
@@ -470,11 +455,11 @@
       position: relative;
     }
 
-    .message-row:not(.user) .message-body-row {
+    .message-row .message-body-row {
       position: relative;
     }
 
-    .message-row:not(.user) .message-hover-copy-zone {
+    .message-row .message-hover-copy-zone {
       position: absolute;
       right: 0;
       bottom: 4px;
@@ -488,7 +473,7 @@
       pointer-events: none;
     }
 
-    .message-row:not(.user) .message-hover-copy {
+    .message-row .message-hover-copy {
       align-self: flex-end;
       width: 15px;
       height: 15px;
@@ -500,18 +485,18 @@
       transition: opacity 120ms ease, color 120ms ease;
     }
 
-    .message-row:not(.user) .message-hover-copy svg {
+    .message-row .message-hover-copy svg {
       width: 15px;
       height: 15px;
     }
 
-    .message-row:not(.user) .message-hover-copy svg * {
+    .message-row .message-hover-copy svg * {
       stroke-width: 1.55;
     }
 
-    .has-hover .message-row:not(.user) .message-body-row.is-hover-copy-hotspot .message-hover-copy,
-    .message-row:not(.user):focus-within .message-hover-copy,
-    .message-row:not(.user) .message-hover-copy.copied {
+    .has-hover .message-row .message-body-row.is-hover-copy-hotspot .message-hover-copy,
+    .message-row:focus-within .message-hover-copy,
+    .message-row .message-hover-copy.copied {
       opacity: 1;
     }
 
