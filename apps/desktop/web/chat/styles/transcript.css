@@ -405,7 +405,8 @@
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
-      margin-bottom: 0;
+      margin-top: 0;
+      margin-bottom: var(--message-vertical-rhythm);
       margin-left: 0;
       margin-right: auto;
       padding-top: 0;
@@ -421,7 +422,7 @@
       height: 1px;
       background: var(--fg);
       opacity: 1;
-      margin-top: var(--message-vertical-rhythm);
+      margin-top: 0;
       max-width: 100%;
       overflow: hidden;
       transform-origin: left center;
@@ -432,6 +433,8 @@
     }
 
     .message.user .user-message-meta .copy-btn {
+      width: 20px;
+      height: 20px;
       margin-right: 0;
     }
 
