@@ -191,7 +191,7 @@
       hoverCopyRect = null;
     };
     messagesEl.addEventListener("pointermove", (e) => {
-      const bodyRow = e.target.closest(".message-row:not(.user) .message-body-row");
+      const bodyRow = e.target.closest(".message-row .message-body-row");
       if (!bodyRow) {
         clearHoverCopyBody();
         return;

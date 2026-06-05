@@ -81,9 +81,6 @@
           currentPeerKey = peerKey;
           seenDirectionsForPeer = new Set();
         }
-        if (sender === "user") {
-          continue;
-        }
         const directionKey = `${sender}:${targetsSig}`;
         if (seenDirectionsForPeer.has(directionKey) && msgId) {
           hiddenIds.add(msgId);
@@ -157,9 +154,9 @@
       const metaRowHtml = hideMetaRow
         ? ""
         : (isUser
-          ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${targetMeta}${copyButtonHtml()}</div>`
+          ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${targetMeta}</div>`
           : `<div class="message-meta-below">${senderHtml}<span class="arrow">to</span>${targetMeta}</div>`);
-      const hoverCopyHtml = isUser ? "" : `<div class="message-hover-copy-zone">${copyButtonHtml(" message-hover-copy")}</div>`;
+      const hoverCopyHtml = `<div class="message-hover-copy-zone">${copyButtonHtml(" message-hover-copy")}</div>`;
       const deferredBodyHtml = safeEntry.deferred_body && msgId
         ? `<div class="message-deferred-actions"><button class="message-deferred-btn" type="button" data-load-full-message="${msgId}">Load full message</button></div>`
         : "";
