@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import shlex
 import time
 from pathlib import Path
 
@@ -21,8 +22,7 @@ from native_log_sync.agents._shared.runtime_paths import display_path
 
 QUIET: frozenset[str] = frozenset({"write_stdin"})
 MAIN_LABEL: dict[str, str] = {
-    "apply_patch": "Patch",
-    "exec_command": "Shell",
+    "apply_patch": "Edit",
     "view_image": "Read",
     "list_mcp_resources": "MCP",
     "spawn_agent": "Agent",
@@ -44,7 +44,7 @@ def _coerce_args(arguments: object) -> object:
     except json.JSONDecodeError:
         return t
 
-_PATCH = re.compile(r"^\*\*\* Update File:\s*(.+)\s*$", re.MULTILINE)
+_PATCH = re.compile(r"^\*\*\* (?:Add|Update|Delete) File:\s*(.+)\s*$", re.MULTILINE)
 
 
 def _patch_target_path(arg: object) -> str:
@@ -69,6 +69,86 @@ def _pick(d: object, *keys: str) -> str:
     return ""
 
 
+def _truncate_line(value: str, limit: int = 120) -> str:
+    line = str(value or "").split("\n", 1)[0].strip()
+    return line[: limit - 3] + "..." if len(line) > limit else line
+
+
+def _split_command(line: str) -> list[str]:
+    try:
+        return shlex.split(line)
+    except ValueError:
+        return line.split()
+
+
+def _first_path_arg(tokens: list[str], *, workspace: str) -> str:
+    for token in reversed(tokens[1:]):
+        if not token or token.startswith("-"):
+            continue
+        if token in {"|", "&&", "||", ";"}:
+            continue
+        return display_path(token, workspace=workspace)
+    return ""
+
+
+def _exec_command_event(args: object, *, workspace: str) -> tuple[str, str] | None:
+    if not isinstance(args, dict):
+        return None
+    cmd = str(args.get("cmd") or args.get("command") or "").strip()
+    if not cmd:
+        return None
+    line = cmd.split("\n", 1)[0].strip()
+    tokens = _split_command(line)
+    if not tokens:
+        return None
+    base = os.path.basename(tokens[0])
+    lower = base.lower()
+    ws = str(workspace or "")
+
+    if lower in {"sed", "cat", "head", "tail", "nl", "xxd", "strings", "file", "wc"}:
+        return "Read", _first_path_arg(tokens, workspace=ws) or _truncate_line(line)
+
+    if lower in {"ls", "find", "pwd", "mdfind"}:
+        return "Explore", _truncate_line(line)
+
+    if lower == "rg":
+        query = ""
+        for token in tokens[1:]:
+            if token.startswith("-"):
+                continue
+            query = token
+            break
+        return "Search", _truncate_line(query or line)
+
+    if lower == "git":
+        return "Git", _truncate_line(" ".join(tokens[1:]) or line)
+
+    if lower in {"node", "npm", "npx", "python", "python3", "perl"}:
+        if len(tokens) > 1 and tokens[1] in {"--check", "-m", "-c"}:
+            return "Check", _truncate_line(line)
+        return "Run", _truncate_line(line)
+
+    if lower in {"curl"}:
+        return "Fetch", _truncate_line(line)
+
+    if lower in {"ps", "pgrep", "lsof", "kill", "pkill"}:
+        return "Process", _truncate_line(line)
+
+    if lower in {"tmux"}:
+        return "Tmux", _truncate_line(" ".join(tokens[1:]) or line)
+
+    if lower in {"open", "osascript"}:
+        return "App", _truncate_line(line)
+
+    if lower in {"ditto", "rm", "cp", "mv", "mkdir", "install", "chmod"}:
+        return "File", _truncate_line(line)
+
+    if lower in {"cargo", "tauri-build", "tauri_start"} or lower.endswith("tauri-build"):
+        return "Build", _truncate_line(line)
+
+    return "Shell", _truncate_line(line)
+
+
 def _codex_subline(tool_lower: str, args: object, *, workspace: str) -> str:
     ws = str(workspace or "")
 
@@ -77,13 +157,6 @@ def _codex_subline(tool_lower: str, args: object, *, workspace: str) -> str:
 
     if not isinstance(args, dict):
         return ""
-
-    if tool_lower == "exec_command":
-        cmd = str(args.get("cmd") or args.get("command") or "").strip()
-        if not cmd:
-            return ""
-        line = cmd.split("\n", 1)[0].strip()
-        return line[:117] + "..." if len(line) > 120 else line
 
     if tool_lower == "view_image":
         return display_path(_pick(args, "path", "file_path"), workspace=ws)
@@ -146,10 +219,16 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
     lower = str(name or "").strip().lower()
     if lower in QUIET:
         return []
+    a = _coerce_args(arguments)
+    if lower == "exec_command":
+        event = _exec_command_event(a, workspace=str(workspace or ""))
+        if event is None:
+            return []
+        main, sub = event
+        return [runtime_event(main, sub, source_id=_sid(f"tool:{lower}", f"{main}:{sub}"))]
     main = MAIN_LABEL.get(lower)
     if main is None:
         return []
-    a = _coerce_args(arguments)
     sub = _codex_subline(lower, a, workspace=str(workspace or "")).strip()
     if not sub:
         return []
