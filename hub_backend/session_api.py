@@ -149,19 +149,16 @@ class HubSessionApi:
         with lock:
             chat_port = self.ctx.hub.chat_port_for_session(session_name)
             if self.ctx.hub.chat_ready(chat_port):
-                state = self.ctx.hub.chat_server_state(chat_port)
-                if state and str(state.get("session") or "").strip() == session_name:
+                if self.ctx.hub.chat_server_matches(session_name, chat_port):
                     return True, chat_port, ""
                 stop_ok, stop_detail = self.ctx.hub.stop_chat_server(session_name)
                 if not stop_ok:
                     return False, chat_port, stop_detail
             if not port_is_bindable(chat_port):
                 for candidate in range(chat_port, chat_port + 10):
-                    if self.ctx.hub.chat_ready(candidate):
-                        state = self.ctx.hub.chat_server_state(candidate)
-                        if state and str(state.get("session") or "").strip() == session_name:
-                            save_chat_port_override(self.ctx.repo_root, session_name, candidate)
-                            return True, candidate, ""
+                    if self.ctx.hub.chat_ready(candidate) and self.ctx.hub.chat_server_matches(session_name, candidate):
+                        save_chat_port_override(self.ctx.repo_root, session_name, candidate)
+                        return True, candidate, ""
                     if port_is_bindable(candidate):
                         save_chat_port_override(self.ctx.repo_root, session_name, candidate)
                         chat_port = candidate
