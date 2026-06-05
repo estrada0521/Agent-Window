@@ -11,6 +11,15 @@ def emit_agent_updates(runtime, agent: str, path: str) -> None:
 
 
 def clear_agent_runtime_display(runtime, agent: str) -> bool:
+    lock = getattr(runtime, "_idle_running_display_lock", None)
+    if lock is not None:
+        with lock:
+            queue = getattr(runtime, "_idle_running_display_queues", {})
+            timer_by_agent = getattr(runtime, "_idle_running_display_timers", {})
+            queue.pop(agent, None)
+            timer = timer_by_agent.pop(agent, None)
+            if timer:
+                timer.cancel()
     removed = runtime._idle_running_display_by_agent.pop(agent, None)
     return removed is not None
 
