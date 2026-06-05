@@ -260,8 +260,3 @@
       fetchVisiblePaneViewerSlide(false);
     });
     void refreshSessionState();
-    setInterval(() => {
-      if (Object.keys(currentAgentStatuses).length) {
-        renderAgentStatus(currentAgentStatuses);
-      }
-    }, 1000);

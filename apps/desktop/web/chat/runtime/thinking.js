@@ -1,11 +1,9 @@
     let currentAgentStatuses = {};
     let currentAgentRuntime = {};
     let currentProviderRuntime = {};
-    const THINKING_RUNTIME_AGE_TICK_MS = 1000;
     let thinkingRuntimeItems = {};
     let thinkingRuntimeStartedAtByAgent = {};
     let thinkingProviderRuntimeMeta = { id: "", phase: "live", updatedAt: 0, enterTimer: 0 };
-    let thinkingRuntimeAgeTimer = 0;
     const clearThinkingRuntimeItemTimers = (item) => {
       if (!item) return;
       clearTimeout(item.enterTimer);
@@ -246,28 +244,10 @@
       }
       return escapeHtml(cleanedLine || firstLine);
     };
-    const formatThinkingRuntimeAgeText = (updatedAt, now = Date.now()) => {
-      const value = Number(updatedAt);
-      if (!Number.isFinite(value) || value <= 0) return "0s";
-      const elapsedSec = Math.max(0, Math.floor((now - value) / 1000));
-      return `${elapsedSec}s`;
+    const buildThinkingRuntimeLineInnerHtml = (contentHtml) => {
+      return `<span class="message-thinking-runtime-body">${contentHtml}</span>`;
     };
-    const updateThinkingRuntimeAgeNode = (ageNode, now = Date.now()) => {
-      if (!ageNode) return;
-      const updatedAt = Number(ageNode.dataset.updatedAt || "0");
-      ageNode.textContent = formatThinkingRuntimeAgeText(updatedAt, now);
-    };
-    const refreshThinkingRuntimeAges = (scope = document, now = Date.now()) => {
-      const root = scope && typeof scope.querySelectorAll === "function" ? scope : document;
-      root.querySelectorAll(".message-thinking-runtime-age[data-updated-at]").forEach((node) => {
-        updateThinkingRuntimeAgeNode(node, now);
-      });
-    };
-    const buildThinkingRuntimeLineInnerHtml = (contentHtml, updatedAt) => {
-      const safeUpdatedAt = Math.max(0, Math.round(Number(updatedAt) || Date.now()));
-      return `<span class="message-thinking-runtime-body">${contentHtml}</span><span class="message-thinking-runtime-age" data-runtime-age data-updated-at="${safeUpdatedAt}">${formatThinkingRuntimeAgeText(safeUpdatedAt)}</span>`;
-    };
-    const syncThinkingRuntimeSlot = (label, { contentHtml, eventId = "", updatedAt = Date.now() }) => {
+    const syncThinkingRuntimeSlot = (label, { contentHtml, eventId = "" }) => {
       if (!label) return;
       let slot = label.querySelector(".message-thinking-runtime-slot");
       if (!slot) {
@@ -276,7 +256,6 @@
         label.appendChild(slot);
       }
       const stableId = String(eventId || "");
-      const stableUpdatedAt = Math.max(0, Math.round(Number(updatedAt) || Date.now()));
       const lines = Array.from(slot.querySelectorAll(".message-thinking-runtime-line"));
       const activeLine = lines.find((line) => String(line.dataset.state || "") !== "leave") || lines[lines.length - 1] || null;
       const activeBody = activeLine?.querySelector(".message-thinking-runtime-body");
@@ -286,12 +265,6 @@
 
       if (activeLine && sameText && sameId) {
         activeLine.dataset.state = "live";
-        activeLine.dataset.updatedAt = String(stableUpdatedAt);
-        const ageNode = activeLine.querySelector(".message-thinking-runtime-age");
-        if (ageNode) {
-          ageNode.dataset.updatedAt = String(stableUpdatedAt);
-          updateThinkingRuntimeAgeNode(ageNode);
-        }
         return;
       }
 
@@ -315,8 +288,7 @@
       nextLine.className = "message-thinking-runtime-line";
       nextLine.dataset.state = "enter";
       nextLine.dataset.eventId = stableId;
-      nextLine.dataset.updatedAt = String(stableUpdatedAt);
-      nextLine.innerHTML = buildThinkingRuntimeLineInnerHtml(contentHtml, stableUpdatedAt);
+      nextLine.innerHTML = buildThinkingRuntimeLineInnerHtml(contentHtml);
       slot.appendChild(nextLine);
 
       // Use double requestAnimationFrame to guarantee layout transition triggers,
@@ -343,13 +315,7 @@
           line.remove();
         });
       }
-      refreshThinkingRuntimeAges(slot);
     };
-    if (!thinkingRuntimeAgeTimer) {
-      thinkingRuntimeAgeTimer = setInterval(() => {
-        refreshThinkingRuntimeAges();
-      }, THINKING_RUNTIME_AGE_TICK_MS);
-    }
     let thinkingFloatingIconFrame = 0;
     const animateScrollButtonContentSwap = (button, apply) => {
       if (!button || typeof apply !== "function") return;
@@ -516,7 +482,6 @@
         if (root.lastElementChild !== existingContainer) {
           root.appendChild(existingContainer);
         }
-        refreshThinkingRuntimeAges(existingContainer);
         scheduleThinkingFloatingIcons();
         return;
       }
@@ -548,13 +513,10 @@
 
         const nextText = runtimeItem ? buildThinkingRuntimeHtml(runtimeItem.text) : `<span class="message-thinking-runtime-keyword">${wrapThinkingChars("Running...")}</span>`;
         const nextId = runtimeItem ? (String(runtimeItem.id || "")) : "generic";
-        const nextUpdatedAt = runtimeItem?.updatedAt || Date.now();
-
         if (label) {
           syncThinkingRuntimeSlot(label, {
             contentHtml: nextText,
             eventId: nextId,
-            updatedAt: nextUpdatedAt,
           });
         }
         return row;
@@ -599,7 +561,6 @@
         syncThinkingRuntimeSlot(label, {
           contentHtml: providerText,
           eventId: providerRuntimeMeta.id || providerRuntimeEventId || "provider-runtime",
-          updatedAt: providerRuntimeMeta.updatedAt || Date.now(),
         });
         syncProviderPreviewLine("message-thinking-label-preview", providerPreviewHtml);
         return row;
@@ -626,7 +587,6 @@
         root.appendChild(container);
       }
       root.dataset.thinkingSig = nextThinkingSig;
-      refreshThinkingRuntimeAges(container);
       scheduleThinkingFloatingIcons();
       maybeRestorePollScrollLock();
     };

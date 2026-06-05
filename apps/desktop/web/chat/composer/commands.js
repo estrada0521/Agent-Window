@@ -180,10 +180,15 @@
     };
     const messagesEl = document.getElementById("messages");
     let activeHoverCopyBody = null;
+    let hoverCopyBody = null;
+    let hoverCopyRect = null;
     const clearHoverCopyBody = () => {
-      if (!activeHoverCopyBody) return;
-      activeHoverCopyBody.classList.remove("is-hover-copy-hotspot");
+      if (activeHoverCopyBody) {
+        activeHoverCopyBody.classList.remove("is-hover-copy-hotspot");
+      }
       activeHoverCopyBody = null;
+      hoverCopyBody = null;
+      hoverCopyRect = null;
     };
     messagesEl.addEventListener("pointermove", (e) => {
       const bodyRow = e.target.closest(".message-row:not(.user) .message-body-row");
@@ -191,12 +196,21 @@
         clearHoverCopyBody();
         return;
       }
-      const rect = bodyRow.getBoundingClientRect();
-      const inHotspot = e.clientX >= rect.left + rect.width * (2 / 3);
-      if (!inHotspot) {
+      if (hoverCopyBody !== bodyRow) {
+        hoverCopyBody = bodyRow;
+        hoverCopyRect = bodyRow.getBoundingClientRect();
+      }
+      const rect = hoverCopyRect;
+      if (!rect?.width) {
         clearHoverCopyBody();
         return;
       }
+      const inHotspot = e.clientX >= rect.left + rect.width * (2 / 3);
+      if (!inHotspot) {
+        if (activeHoverCopyBody === bodyRow) clearHoverCopyBody();
+        return;
+      }
+      if (activeHoverCopyBody === bodyRow) return;
       if (activeHoverCopyBody && activeHoverCopyBody !== bodyRow) {
         activeHoverCopyBody.classList.remove("is-hover-copy-hotspot");
       }
@@ -204,6 +218,8 @@
       bodyRow.classList.add("is-hover-copy-hotspot");
     });
     messagesEl.addEventListener("pointerleave", clearHoverCopyBody);
+    timeline?.addEventListener("scroll", clearHoverCopyBody, { passive: true });
+    window.addEventListener("resize", clearHoverCopyBody, { passive: true });
     messagesEl.addEventListener("click", (e) => {
       const metaBtn = e.target.closest(".message-meta-below button, .user-message-meta button, .message-meta-below .meta-agent, .user-message-meta .meta-agent");
       if (metaBtn) {
