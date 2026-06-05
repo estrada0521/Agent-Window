@@ -1004,8 +1004,7 @@
       background: var(--session-selected-bg);
     }
     .desk-session-row.is-selected .desk-row-name,
-    .desk-session-row.is-selected .desk-row-preview,
-    .desk-session-row.is-selected .desk-row-preview .sender {
+    .desk-session-row.is-selected .desk-row-preview {
       opacity: 1;
     }
     .desk-session-row.is-selected .desk-row-bullet:not(.is-running) i:first-child {
@@ -1249,7 +1248,7 @@
     .desk-row-preview {
       color: var(--muted);
       opacity: 1;
-      font-size: 11px;
+      font-size: 12px;
       line-height: 1.35;
       font-weight: 400;
       white-space: nowrap;
@@ -1257,16 +1256,7 @@
       text-overflow: ellipsis;
       min-width: 0;
     }
-    .desk-row-preview .sender {
-      color: var(--muted);
-      opacity: 1;
-      margin-right: 4px;
-      font-weight: 500;
-    }
     html[data-bold-mode="1"] .desk-row-preview {
-      font-weight: 700;
-    }
-    html[data-bold-mode="1"] .desk-row-preview .sender {
       font-weight: 700;
     }
     .desk-row-preview.is-empty {
