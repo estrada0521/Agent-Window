@@ -467,6 +467,46 @@
       position: relative;
     }
 
+    .message-row:not(.user) .message-body-row {
+      position: relative;
+    }
+
+    .message-row:not(.user) .message-hover-copy {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 3;
+      width: 33.333%;
+      min-width: 96px;
+      height: 100%;
+      box-sizing: border-box;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 0 0 4px 0;
+      border-radius: 6px;
+      color: var(--icon-muted);
+      background: transparent;
+      opacity: 0;
+      pointer-events: auto;
+      transition: opacity 120ms ease, color 120ms ease;
+    }
+
+    .message-row:not(.user) .message-hover-copy svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .message-row:not(.user) .message-hover-copy svg * {
+      stroke-width: 1.55;
+    }
+
+    .has-hover .message-row:not(.user) .message-hover-copy:hover,
+    .message-row:not(.user):focus-within .message-hover-copy,
+    .message-row:not(.user) .message-hover-copy.copied {
+      opacity: 1;
+    }
+
     .message-row:not(.user) .message::before {
       content: "";
       position: absolute;
