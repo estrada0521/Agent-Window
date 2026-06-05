@@ -541,7 +541,7 @@
 
     __AGENT_ROW_MESSAGE_SELECTORS__ {
       width: 100%;
-      padding: 0 0 6px;
+      padding: 0 0 8px;
       border: none;
       border-radius: 0;
       background: transparent;
@@ -560,7 +560,7 @@
       justify-content: center;
       gap: 10px;
       width: min(100%, var(--message-max-width, 900px));
-      padding-bottom: 6px;
+      padding-bottom: 8px;
       color: var(--muted);
       font-size: 12px;
       letter-spacing: 0.02em;
