@@ -915,16 +915,6 @@
       text-overflow: ellipsis;
     }
 
-    .message-thinking-runtime-age {
-      flex: 0 0 auto;
-      font-size: 1em;
-      font-weight: 560;
-      color: var(--muted);
-      letter-spacing: 0.01em;
-      text-shadow: none;
-      white-space: nowrap;
-    }
-
     .message-thinking-runtime-keyword {
       font-weight: 530;
       color: var(--fg);

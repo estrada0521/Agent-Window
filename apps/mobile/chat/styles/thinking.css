@@ -30,15 +30,6 @@
       text-overflow: ellipsis;
     }
 
-    .message-thinking-runtime-age {
-      flex: 0 0 auto;
-      font-size: 1em;
-      font-weight: 560;
-      color: var(--fg);
-      letter-spacing: 0.01em;
-      white-space: nowrap;
-    }
-
     .message-thinking-runtime-line[data-state="enter"] {
       opacity: 0;
       transform: translateY(100%);
