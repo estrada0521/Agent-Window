@@ -1020,8 +1020,9 @@
       const runningClass = !archived && resolveDeskSessionRunningState(sessionName, !!session.is_running) ? " is-running" : "";
       const previewText = String(session.latest_message_preview || "").trim();
       const previewSender = String(session.latest_message_sender || "").trim();
+      const previewDisplay = previewSender ? `${previewSender} ${previewText}` : previewText;
       const previewHtml = previewText
-        ? `<div class="desk-row-preview"><span class="sender">${esc(previewSender || "latest")}</span>${esc(previewText)}</div>`
+        ? `<div class="desk-row-preview">${esc(previewDisplay)}</div>`
         : "";
       return `<div class="desk-swipe-row" data-session-name="${esc(sessionName)}" data-desk-swipe-kind="${esc(swipeActionRoute)}">` +
         `<div class="desk-swipe-action-rail">` +
