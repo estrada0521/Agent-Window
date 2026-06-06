@@ -109,7 +109,6 @@
     select, input[type="text"], input[type="number"] {
       width: 100%;
       border: 0.5px solid var(--line-strong);
-      background: var(--panel-2);
       color: var(--fg);
       border-radius: 10px;
       padding: 9px 11px;
@@ -120,10 +119,15 @@
       -webkit-appearance: none;
       font-family: inherit;
     }
+    select {
+      background: transparent;
+    }
+    input[type="text"], input[type="number"] {
+      background: var(--panel-2);
+    }
     select:focus, input[type="text"]:focus, input[type="number"]:focus {
       border-color: rgba(255,255,255,0.22);
     }
-    html[data-theme="dark"] select,
     html[data-theme="dark"] input[type="text"],
     html[data-theme="dark"] input[type="number"] {
       background: rgba(20, 20, 20, 0.6);
@@ -471,7 +475,7 @@
       font-weight: 400;
       color: var(--fg);
       border: 0.5px solid var(--line-strong);
-      background-color: var(--panel-2);
+      background-color: transparent;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.35)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 9px center;
@@ -489,13 +493,11 @@
       box-shadow: none;
     }
     html[data-theme="dark"][data-view-variant="mobile"] .set-row-right select {
-      background-color: rgba(20, 20, 20, 0.6);
+      background-color: transparent;
       background-image:
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.42)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
       background-position: right 9px center;
       background-size: 14px 14px;
-      backdrop-filter: blur(20px) saturate(160%);
-      -webkit-backdrop-filter: blur(20px) saturate(160%);
       border-color: rgba(255, 255, 255, 0.1);
       box-shadow: none;
     }
