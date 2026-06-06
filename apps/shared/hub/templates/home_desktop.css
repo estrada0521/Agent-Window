@@ -21,6 +21,7 @@
       --desk-chrome-hover-bg: var(--bg);
       --session-hover-bg: __SESSION_HOVER_BG__;
       --session-selected-bg: __SESSION_SELECTED_BG__;
+      --session-danger-fg: rgb(255, 108, 102);
       --glass-bg-90: rgba(var(--bg-rgb), 0.90);
       --glass-filter-20: blur(20px);
     }
@@ -41,6 +42,7 @@
       --line-strong: rgba(0, 0, 0, 0.18);
       --session-hover-bg: rgba(0, 0, 0, 0.04);
       --session-selected-bg: rgba(0, 0, 0, 0.07);
+      --session-danger-fg: rgb(207, 34, 46);
       --chat-pane-bg: rgba(var(--bg-rgb), 0.95);
       --chat-pane-filter: blur(20px);
     }
@@ -61,6 +63,7 @@
       --line-strong: rgba(255, 255, 255, 0.12);
       --session-hover-bg: rgba(255, 255, 255, 0.05);
       --session-selected-bg: rgba(255, 255, 255, 0.08);
+      --session-danger-fg: rgb(255, 108, 102);
       --chat-pane-bg: var(--glass-bg-90);
       --chat-pane-filter: var(--glass-filter-20);
     }
@@ -1055,7 +1058,7 @@
     .desk-swipe-action-btn {
       min-width: 92px;
       border: none;
-      background: rgb(255, 59, 48);
+      background: var(--session-danger-fg);
       color: var(--fg);
       font: inherit;
       font-size: 12px;
@@ -1138,7 +1141,7 @@
     }
     .desk-row-hover-action:hover,
     .desk-row-hover-action:focus-visible {
-      color: rgb(255, 108, 102);
+      color: var(--session-danger-fg);
       outline: none;
     }
     .desk-row-hover-action:hover svg,
@@ -1149,8 +1152,8 @@
     .desk-row-hover-action:focus-visible polyline,
     .desk-row-hover-action:focus-visible path,
     .desk-row-hover-action:focus-visible line {
-      color: rgb(255, 108, 102);
-      stroke: rgb(255, 108, 102);
+      color: var(--session-danger-fg);
+      stroke: var(--session-danger-fg);
     }
     .desk-row-hover-action:hover svg,
     .desk-row-hover-action:hover svg *,
@@ -1159,7 +1162,7 @@
       stroke: currentColor;
     }
     .desk-row-hover-action:active {
-      color: rgb(255, 108, 102);
+      color: var(--session-danger-fg);
       transform: scale(0.96);
     }
     .desk-row-bullet {
