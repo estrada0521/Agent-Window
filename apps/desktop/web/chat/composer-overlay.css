@@ -549,20 +549,22 @@
       flex-shrink: 0;
       line-height: 0;
       vertical-align: middle;
-      --agent-icon-sub-font-size: 6.5px;
+      --agent-icon-sub-font-size: 11px;
+      --agent-icon-sub-right: -8px;
+      --agent-icon-sub-bottom: 0px;
     }
     .agent-icon-instance-sub {
       position: absolute;
-      right: -1px;
-      bottom: -1px;
+      right: var(--agent-icon-sub-right);
+      bottom: var(--agent-icon-sub-bottom);
       margin: 0;
       font-size: var(--agent-icon-sub-font-size);
       font-weight: 700;
       line-height: 1;
-      font-family: var(--agent-message-font-family, inherit);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
       font-variant-numeric: tabular-nums;
-      letter-spacing: -0.01em;
-      color: var(--icon-fg);
+      letter-spacing: 0;
+      color: currentColor;
       opacity: 1;
       pointer-events: none;
       display: inline-flex;
@@ -576,7 +578,9 @@
     .agent-icon-slot--chip {
       width: 20px;
       height: 20px;
-      --agent-icon-sub-font-size: 7.5px;
+      --agent-icon-sub-font-size: 12px;
+      --agent-icon-sub-right: -9px;
+      --agent-icon-sub-bottom: 0px;
     }
     .agent-icon-slot--chip .target-icon {
       width: 100%;
@@ -587,7 +591,7 @@
       mask: var(--agent-icon-mask) center / contain no-repeat;
     }
     .target-chip.active .agent-icon-instance-sub {
-      color: var(--icon-fg);
+      color: currentColor;
       text-shadow:
         0 0 1px var(--bg),
         0 0 1px var(--bg),
@@ -597,7 +601,9 @@
       width: 17px;
       height: 17px;
       flex: 0 0 17px;
-      --agent-icon-sub-font-size: 7px;
+      --agent-icon-sub-font-size: 11px;
+      --agent-icon-sub-right: -8px;
+      --agent-icon-sub-bottom: 0px;
     }
     .agent-icon-slot--meta .meta-agent-icon {
       position: absolute;
@@ -608,7 +614,9 @@
     .agent-icon-slot--badge {
       width: 100%;
       height: 100%;
-      --agent-icon-sub-font-size: 8.5px;
+      --agent-icon-sub-font-size: 13px;
+      --agent-icon-sub-right: -9px;
+      --agent-icon-sub-bottom: 0px;
     }
     .agent-icon-slot--badge .pane-viewer-pane-badge-icon {
       width: 100%;
@@ -617,7 +625,9 @@
     .agent-icon-slot--thinking {
       width: 1.55em;
       height: 1.55em;
-      --agent-icon-sub-font-size: 0.58em;
+      --agent-icon-sub-font-size: 0.9em;
+      --agent-icon-sub-right: -0.62em;
+      --agent-icon-sub-bottom: 0;
     }
     .agent-icon-slot--thinking .message-thinking-icon {
       width: 100%;
@@ -627,9 +637,9 @@
       width: 18px;
       height: 18px;
       --agent-icon-sub-size: 10px;
-      --agent-icon-sub-font-size: 6px;
-      --agent-icon-sub-offset-x: 16%;
-      --agent-icon-sub-offset-y: 12%;
+      --agent-icon-sub-font-size: 10px;
+      --agent-icon-sub-right: -8px;
+      --agent-icon-sub-bottom: 0px;
     }
     .git-commit-icon-wrap .agent-icon-slot .git-commit-icon {
       width: 100%;
