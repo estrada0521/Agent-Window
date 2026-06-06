@@ -1026,6 +1026,8 @@
       opacity: 1;
     }
     .desk-session-row.is-selected .desk-row-bullet:not(.is-running) i:first-child {
+      width: 6px;
+      height: 6px;
       background: var(--icon-fg);
     }
     .desk-session-row.archived {
@@ -1210,8 +1212,8 @@
       display: none;
     }
     .desk-row-bullet:not(.is-running) i:first-child {
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
       background: var(--icon-muted);
     }
     .desk-row-leading-icon {
