@@ -439,9 +439,8 @@ fn center_traffic_lights(window: &tauri::WebviewWindow) {
         let button_count = if zoom.is_some() { 3.0 } else { 2.0 };
         let cluster_width = close_rect.size.width + (spacing * (button_count - 1.0));
         let target_x = ((ns_window_obj.frame().size.width - cluster_width) / 2.0).round();
-        let top_inset = 18.0;
+        let title_bar_height = 26.0;
 
-        let title_bar_height = close_rect.size.height + top_inset;
         let mut title_bar_rect = NSView::frame(&title_bar_view);
         title_bar_rect.size.height = title_bar_height;
         title_bar_rect.origin.y = ns_window_obj.frame().size.height - title_bar_height;
@@ -454,6 +453,7 @@ fn center_traffic_lights(window: &tauri::WebviewWindow) {
         for (index, button) in buttons.into_iter().enumerate() {
             let mut rect = NSView::frame(&button);
             rect.origin.x = target_x + (index as f64 * spacing);
+            rect.origin.y = ((title_bar_height - rect.size.height) / 2.0).round();
             button.setFrameOrigin(rect.origin);
         }
     }

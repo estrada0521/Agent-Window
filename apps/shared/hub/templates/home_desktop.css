@@ -89,9 +89,9 @@
     html[data-tauri-app="1"] {
       --pane-trace-body-bg: rgb(12, 12, 12);
       --tauri-drag-height: 36px;
-      --tauri-window-inset-top: 31px;
-      --tauri-window-inset-x: 8px;
-      --tauri-window-inset-bottom: 8px;
+      --tauri-window-inset-top: 26px;
+      --tauri-window-inset-x: 4px;
+      --tauri-window-inset-bottom: 4px;
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] {
       --app-shell-height: calc(100dvh - var(--tauri-window-inset-top) - var(--tauri-window-inset-bottom));
@@ -304,10 +304,10 @@
     html[data-tauri-app="1"][data-tauri-root-window="1"] .hub-page-header .hub-page-header-actions,
     html[data-tauri-app="1"][data-tauri-root-window="1"] .hub-page-header-actions.hub-page-header-actions-floating {
       position: fixed;
-      top: calc(4px + env(safe-area-inset-top, 0px));
+      top: env(safe-area-inset-top, 0px);
       right: calc(var(--desk-chrome-edge) + env(safe-area-inset-right, 0px));
       width: 24px;
-      height: 24px;
+      height: var(--tauri-window-inset-top);
       margin: 0;
       padding: 0;
       gap: 0;
@@ -587,9 +587,10 @@
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-floating-controls {
       left: calc(var(--desk-chrome-edge) + env(safe-area-inset-left, 0px));
-      top: calc(4px + env(safe-area-inset-top, 0px));
+      top: env(safe-area-inset-top, 0px);
       right: auto;
       bottom: auto;
+      height: var(--tauri-window-inset-top);
       gap: 6px;
       z-index: 1306;
     }
@@ -652,7 +653,7 @@
       color: var(--desk-chrome-fg);
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-app-sidebar-toggle {
-      top: calc(4px + env(safe-area-inset-top, 0px));
+      top: env(safe-area-inset-top, 0px);
       left: calc(var(--desk-chrome-edge) + env(safe-area-inset-left, 0px));
     }
     .desk-floating-controls .desk-app-sidebar-toggle,
@@ -676,8 +677,9 @@
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-top-right-controls {
       display: inline-flex;
-      top: calc(4px + env(safe-area-inset-top, 0px));
+      top: env(safe-area-inset-top, 0px);
       right: calc(var(--desk-chrome-edge) + env(safe-area-inset-right, 0px));
+      height: var(--tauri-window-inset-top);
       opacity: 1;
       z-index: 1306;
     }
