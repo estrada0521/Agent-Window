@@ -598,18 +598,25 @@
         0 0 2px var(--bg);
     }
     .agent-icon-slot--meta {
-      width: 17px;
+      display: inline-grid;
+      grid-template-columns: 17px auto;
+      column-gap: 2px;
+      align-items: end;
+      justify-content: start;
+      width: auto;
       height: 17px;
-      flex: 0 0 17px;
+      flex: 0 0 auto;
       --agent-icon-sub-font-size: 11px;
-      --agent-icon-sub-right: -8px;
-      --agent-icon-sub-bottom: 0px;
     }
     .agent-icon-slot--meta .meta-agent-icon {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
+      position: static;
+      width: 17px;
+      height: 17px;
+    }
+    .agent-icon-slot--meta .agent-icon-instance-sub {
+      position: static;
+      align-self: end;
+      justify-self: start;
     }
     .agent-icon-slot--badge {
       width: 100%;
