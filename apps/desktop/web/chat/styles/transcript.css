@@ -14,8 +14,8 @@
       --message-vertical-rhythm: 4px;
       --message-hidden-meta-lift: 12px;
       gap: 12px;
-      width: min(100%, var(--message-max-width, 900px));
-      max-width: var(--message-max-width, 900px);
+      width: min(100%, var(--message-max-width, 750px));
+      max-width: var(--message-max-width, 750px);
       min-width: 0;
       transform-origin: left center;
       will-change: transform, opacity, filter;
@@ -544,7 +544,7 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      width: min(100%, var(--message-max-width, 900px));
+      width: min(100%, var(--message-max-width, 750px));
       padding-bottom: 8px;
       color: var(--muted);
       font-size: 12px;
@@ -646,8 +646,8 @@
       align-self: center;
       z-index: 2;
       pointer-events: none;
-      width: min(100%, var(--message-max-width, 900px));
-      max-width: var(--message-max-width, 900px);
+      width: min(100%, var(--message-max-width, 750px));
+      max-width: var(--message-max-width, 750px);
       margin-top: 0;
       margin-bottom: 12px;
       margin-left: auto;
