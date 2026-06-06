@@ -225,7 +225,9 @@
     .agent-icon-slot--pane-tab {
       width: 20px;
       height: 20px;
-      --agent-icon-sub-font-size: 7px;
+      --agent-icon-sub-font-size: 12px;
+      --agent-icon-sub-right: -9px;
+      --agent-icon-sub-bottom: 0px;
     }
 
     .pane-viewer-tab-icon {
