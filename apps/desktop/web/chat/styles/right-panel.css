@@ -462,14 +462,13 @@
       font-size: 14px;
       line-height: 1;
       cursor: pointer;
-      transition: background 120ms ease, opacity 120ms ease;
+      transition: opacity 120ms ease;
     }
     .git-branch-summary-wrap .git-branch-summary-pin:not(.is-pinned) {
       opacity: 0.4;
       filter: grayscale(1);
     }
     .git-branch-summary-wrap .git-branch-summary-pin:hover:not(.is-pinned) {
-      background: var(--panel-row-hover-bg);
       opacity: 0.8;
       filter: grayscale(0.5);
     }
