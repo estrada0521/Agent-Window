@@ -764,7 +764,7 @@
       const renderRows = (active, archived) => {
         let html = `<div class="mob-session-row mob-new-session-row" id="mobNewSessionRow" role="button" tabindex="0">` +
           `<div class="mob-row-head">` +
-          `<span class="mob-row-leading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></span>` +
+          `<span class="mob-row-leading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"></path></svg></span>` +
           `<div class="mob-row-name">New Session</div>` +
           `</div>` +
           `</div>`;
