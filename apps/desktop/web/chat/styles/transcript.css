@@ -462,7 +462,7 @@
     .message-row .message-hover-copy-zone {
       position: absolute;
       right: 0;
-      bottom: 4px;
+      bottom: 6px;
       z-index: 3;
       width: 15px;
       height: 15px;
