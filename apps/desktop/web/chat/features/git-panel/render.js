@@ -119,7 +119,7 @@
       if (dpGitLoadError) {
         btn.innerHTML = "Retry loading commits";
       } else if (dpGitPageLoading) {
-        btn.innerHTML = dpLoadingHtml();
+        btn.textContent = "";
       } else if (dpGitTotalCommits > 0) {
         btn.textContent = `Load more (${dpGitCommits.length}/${dpGitTotalCommits})`;
       } else {
