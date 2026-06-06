@@ -535,9 +535,9 @@
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      gap: var(--desk-chrome-gap);
+      gap: 6px;
       position: fixed;
-      left: calc(34px + env(safe-area-inset-left, 0px));
+      left: calc(var(--desk-chrome-edge) + env(safe-area-inset-left, 0px));
       top: var(--desk-chrome-top);
       right: auto;
       bottom: auto;
@@ -583,11 +583,11 @@
       transition: color 0.15s ease, opacity 0.15s ease, background 0.15s ease, transform 0.1s ease;
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-floating-controls {
-      left: calc(34px + env(safe-area-inset-left, 0px));
+      left: calc(var(--desk-chrome-edge) + env(safe-area-inset-left, 0px));
       top: calc(4px + env(safe-area-inset-top, 0px));
       right: auto;
       bottom: auto;
-      gap: 4px;
+      gap: 6px;
       z-index: 1306;
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-floating-controls .desk-settings-icon-btn {
@@ -652,6 +652,13 @@
       top: calc(4px + env(safe-area-inset-top, 0px));
       left: calc(var(--desk-chrome-edge) + env(safe-area-inset-left, 0px));
     }
+    .desk-floating-controls .desk-app-sidebar-toggle,
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-floating-controls .desk-app-sidebar-toggle {
+      position: static;
+      left: auto;
+      top: auto;
+      z-index: auto;
+    }
     .desk-top-right-controls {
       display: none;
       position: fixed;
@@ -659,7 +666,7 @@
       top: var(--desk-chrome-top);
       z-index: 1000;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-direction: row;
       pointer-events: auto;
       -webkit-app-region: no-drag;
@@ -671,7 +678,8 @@
       opacity: 1;
       z-index: 1306;
     }
-    .desk-chat-menu-btn {
+    .desk-chat-menu-btn,
+    .desk-chat-reload-btn {
       display: none;
       align-items: center;
       justify-content: center;
@@ -693,7 +701,8 @@
       -webkit-tap-highlight-color: transparent;
       transition: color 0.15s ease, background 0.15s ease, transform 0.1s ease;
     }
-    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-chat-menu-btn {
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-chat-menu-btn,
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-chat-reload-btn {
       position: static;
       right: auto;
       top: auto;
@@ -747,6 +756,7 @@
     .desk-floating-controls .desk-settings-icon-btn svg *,
     .desk-app-sidebar-toggle svg *,
     .desk-chat-menu-btn svg *,
+    .desk-chat-reload-btn svg *,
     .desk-panel-ctrl-btn svg * {
       stroke: var(--desk-chrome-fg);
     }
@@ -788,7 +798,8 @@
       stroke: var(--desk-chrome-fg);
       stroke-width: 1.8;
     }
-    .desk-chat-menu-btn svg {
+    .desk-chat-menu-btn svg,
+    .desk-chat-reload-btn svg {
       display: block;
       width: var(--desk-chrome-icon-size);
       height: var(--desk-chrome-icon-size);
@@ -803,21 +814,25 @@
     .desk-app-sidebar-toggle.is-active {
       color: var(--desk-chrome-fg);
     }
-    .desk-chat-menu-btn:hover {
+    .desk-chat-menu-btn:hover,
+    .desk-chat-reload-btn:hover {
       color: var(--desk-chrome-fg);
       background: var(--desk-chrome-hover-bg);
     }
-    .desk-chat-menu-btn.is-active {
+    .desk-chat-menu-btn.is-active,
+    .desk-chat-reload-btn.restarting {
       color: var(--desk-chrome-fg);
     }
     .desk-app-sidebar-toggle:active,
-    .desk-chat-menu-btn:active {
+    .desk-chat-menu-btn:active,
+    .desk-chat-reload-btn:active {
       transform: scale(0.9);
     }
     .desk-top-right-controls {
       display: inline-flex;
     }
-    .desk-chat-menu-btn {
+    .desk-chat-menu-btn,
+    .desk-chat-reload-btn {
       display: inline-flex;
     }
     .desk-right-panel-controls {

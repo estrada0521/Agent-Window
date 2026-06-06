@@ -32,6 +32,7 @@
     const _deskSessionList = document.getElementById("deskSessionList");
     const _deskChatFrame = document.getElementById("deskChatFrame");
     const _deskChatMenuBtn = document.getElementById("deskChatMenuBtn");
+    const _deskChatReloadBtn = document.getElementById("deskChatReloadBtn");
     const _deskPanelToggle = document.getElementById("deskPanelToggle");
     const _deskChatShell = document.querySelector(".desk-chat-shell");
     const _deskReloadShell = document.getElementById("deskReloadShell");
@@ -187,6 +188,14 @@
       const frameWin = _deskChatFrame?.contentWindow;
       if (!frameWin) return;
       frameWin.postMessage({ type: "multiagent-desktop-panel", mode: String(mode || "") }, "*");
+    }
+    function sendDeskChatAction(action) {
+      const frameWin = _deskChatFrame?.contentWindow;
+      if (!frameWin) return;
+      frameWin.postMessage({
+        type: "multiagent-native-menu-action",
+        payload: { action: String(action || "") },
+      }, "*");
     }
 
     function consumeHubPendingError() {
@@ -1513,6 +1522,11 @@
       event.preventDefault();
       event.stopPropagation();
       openDeskChatHeaderMenu();
+    });
+    _deskChatReloadBtn && _deskChatReloadBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      sendDeskChatAction("reloadChat");
     });
     _deskPanelToggle && _deskPanelToggle.addEventListener("click", (event) => {
       event.preventDefault();
