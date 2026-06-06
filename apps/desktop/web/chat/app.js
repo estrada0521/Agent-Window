@@ -778,7 +778,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       if (loading) {
         const node = document.createElement("div");
         node.className = "repo-browser-empty inline-loading-row";
-        node.innerHTML = dpLoadingHtml();
+        node.textContent = "";
         list.appendChild(node);
       } else if (error) {
         const node = document.createElement("div");

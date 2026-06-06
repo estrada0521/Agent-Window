@@ -284,7 +284,7 @@
     const dpRenderFileStatsInto = async (wrapEl, hash, { allowUndo = false, scope = "", incremental = false } = {}) => {
       if (!wrapEl) return null;
       if (!incremental) {
-        wrapEl.innerHTML = `<div class="git-commit-file-empty inline-loading-row">${dpLoadingHtml()}</div>`;
+        wrapEl.innerHTML = '<div class="git-commit-file-empty inline-loading-row"></div>';
       }
       if (!hash && !scope) {
         const [stagedRes, unstagedRes, untrackedRes] = await Promise.all([
@@ -349,7 +349,7 @@
         dpGitNextOffset = 0;
         dpGitTotalCommits = 0;
         dpGitCommits = [];
-        dpGitContent.innerHTML = `<div class="dp-pane-title">Git</div><div class="dp-empty-state inline-loading-row">${dpLoadingHtml()}</div>`;
+        dpGitContent.innerHTML = '<div class="dp-pane-title">Git</div><div class="dp-empty-state inline-loading-row"></div>';
       } else {
         dpUpdateLoadMoreUi();
       }
