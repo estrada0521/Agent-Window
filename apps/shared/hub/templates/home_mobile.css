@@ -12,6 +12,7 @@
       --icon-muted: __ICON_MUTED__;
       --icon-hover: __ICON_HOVER__;
       --session-hover-bg: __SESSION_HOVER_BG__;
+      --session-danger-fg: rgb(255, 59, 48);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: __DARK_BG_CHANNELS__;
@@ -41,6 +42,7 @@
       --line: rgba(0, 0, 0, 0.10);
       --line-strong: rgba(0, 0, 0, 0.18);
       --session-hover-bg: rgba(0, 0, 0, 0.04);
+      --session-danger-fg: rgb(207, 34, 46);
       --glass-bg-72: var(--bg);
       --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: 255, 255, 255;
@@ -64,6 +66,7 @@
       --line: rgba(255, 255, 255, 0.07);
       --line-strong: rgba(255, 255, 255, 0.12);
       --session-hover-bg: rgba(255, 255, 255, 0.05);
+      --session-danger-fg: rgb(255, 59, 48);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: 0, 0, 0;
@@ -791,7 +794,7 @@
 
     .swipe-act-right {
       right: 0;
-      background: rgb(255, 59, 48);
+      background: var(--session-danger-fg);
     }
 
     .mob-session-row {

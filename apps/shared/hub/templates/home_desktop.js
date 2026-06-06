@@ -1023,9 +1023,11 @@
       const sessionName = String(session.name || "");
       const archivedClass = archived ? " archived" : "";
       const selectedClass = _deskSelectedSessionName === sessionName ? " is-selected" : "";
-      const swipeActionLabel = archived ? "Delete" : "Kill";
+      const swipeActionLabel = archived ? "Delete" : "Archive";
       const swipeActionRoute = archived ? "delete-archived" : "kill";
       const trashSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+      const killSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`;
+      const actionSvg = archived ? trashSvg : killSvg;
       const runningClass = !archived && resolveDeskSessionRunningState(sessionName, !!session.is_running) ? " is-running" : "";
       const previewText = String(session.latest_message_preview || "").trim();
       const previewSender = String(session.latest_message_sender || "").trim();
@@ -1036,7 +1038,7 @@
       return `<div class="desk-swipe-row" data-session-name="${esc(sessionName)}" data-desk-swipe-kind="${esc(swipeActionRoute)}">` +
         `<div class="desk-swipe-action-rail">` +
           `<button type="button" class="desk-swipe-action-btn" data-desk-swipe-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + sessionName)}">` +
-            `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>` +
+            actionSvg +
             `<span>${esc(swipeActionLabel)}</span>` +
           `</button>` +
         `</div>` +
@@ -1054,7 +1056,7 @@
                   `</div>` +
                 `</div>` +
                 `<button type="button" class="desk-row-hover-action" data-desk-hover-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + sessionName)}" title="${esc(swipeActionLabel)}">` +
-                  trashSvg +
+                  actionSvg +
                 `</button>` +
               `</div>` +
             `</div>` +
@@ -1079,7 +1081,7 @@
         ? true
         : (isDelete
           ? confirm("Delete archived logs for " + sessionName + "? This cannot be undone.")
-          : confirm("Kill " + sessionName + "?"));
+          : confirm("Archive " + sessionName + "?"));
       if (!confirmed) return;
       const route = isDelete ? "/delete-archived-session" : "/kill-session";
       const isSelected = _deskSelectedSessionName === sessionName;
@@ -1090,7 +1092,7 @@
         );
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.ok) {
-          throw new Error(data.error || (isDelete ? "Failed to delete session." : "Failed to kill session."));
+          throw new Error(data.error || (isDelete ? "Failed to delete session." : "Failed to archive session."));
         }
         const activeHref = buildSessionOpenHref(sessionName, false);
         const archivedHref = buildSessionOpenHref(sessionName, true);
@@ -1115,7 +1117,7 @@
         clearDeskSelection();
         showDeskSidebarList({ open: true });
       } catch (err) {
-        window.alert(err?.message || (isDelete ? "Failed to delete session." : "Failed to kill session."));
+        window.alert(err?.message || (isDelete ? "Failed to delete session." : "Failed to archive session."));
       }
     }
 

@@ -750,7 +750,7 @@
             }
             return;
           }
-          if (confirm("Kill " + n + "?")) window.location.href = `/kill-session?session=${encodeURIComponent(n)}`;
+          if (confirm("Archive " + n + "?")) window.location.href = `/kill-session?session=${encodeURIComponent(n)}`;
         });
         inner.addEventListener("click", (e) => {
           if (didSwipe) { didSwipe = false; e.stopPropagation(); return; }
@@ -769,12 +769,13 @@
           `</div>` +
           `</div>`;
         const trashSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+        const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
         if (active.length) {
           html += `<div class="mob-section-label">Active</div>`;
           html += active.map((s) => {
             const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
             return `<div class="swipe-row" data-session-name="${esc(s.name)}">` +
-              `<div class="swipe-act swipe-act-right" data-action="kill">${trashSvg}<span>Kill</span></div>` +
+              `<div class="swipe-act swipe-act-right" data-action="kill">${killSvg}<span>Archive</span></div>` +
               `<div class="mob-session-row" data-open-href="/open-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +
