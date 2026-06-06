@@ -147,11 +147,6 @@ fn show_chat_header_menu(
 
     let menu = MenuBuilder::new(&app)
         .native_icon(
-            format!("{}action:reloadChat", NATIVE_MENU_PREFIX),
-            "Reload",
-            NativeIcon::Refresh,
-        )
-        .native_icon(
             format!("{}action:openTerminal", NATIVE_MENU_PREFIX),
             "Terminal",
             NativeIcon::Path,
