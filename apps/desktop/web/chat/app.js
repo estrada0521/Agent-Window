@@ -910,11 +910,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     };
     startWorkspaceSyncEvents();
     dpOnSessionSummaryPinReload({ force: true });
-    if (hasDesktopRightPanelOverlay()) {
-      void openDesktopRightPanel({ view: dpActivePanelView, reset: true });
-    } else {
-      dpApplyPanelWidth();
-    }
+    dpApplyPanelWidth();
     refresh({ forceScroll: true });
     if (followMode) {
       document.addEventListener("visibilitychange", () => {
