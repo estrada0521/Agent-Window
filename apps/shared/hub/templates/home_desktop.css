@@ -1546,8 +1546,11 @@
     }
     .desk-sidebar-hover-list .desk-session-row {
       border-radius: 8px;
-      margin: 0 4px;
+      margin: 0;
       padding: 8px 10px;
+    }
+    .desk-sidebar-hover-list .desk-session-row::before {
+      inset: 2px 5px;
     }
     .desk-sidebar-hover-list .desk-row-name {
       font-size: 13px;
