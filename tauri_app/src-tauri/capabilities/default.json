@@ -12,6 +12,7 @@
   "windows": ["main"],
   "permissions": [
     "allow-show-chat-header-menu",
+    "allow-set-window-always-on-top",
     "core:default",
     "core:window:allow-start-dragging",
     "shell:allow-open",
