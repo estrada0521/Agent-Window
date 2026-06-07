@@ -1550,12 +1550,18 @@
       padding: 8px 10px;
     }
     .desk-sidebar-hover-list .desk-session-row::before {
-      inset: 2px 5px;
+      inset: 2px 8px;
     }
     .desk-sidebar-hover-list .desk-row-name {
       font-size: 13px;
       line-height: 1.3;
       font-weight: 400;
+    }
+    .desk-sidebar-hover-list .desk-row-bullet {
+      margin-top: 1px;
+    }
+    .desk-sidebar-hover-list .desk-row-bullet:not(.is-running) {
+      margin-top: 2px;
     }
     .desk-sidebar-hover-list .desk-row-preview {
       font-size: 12px;
