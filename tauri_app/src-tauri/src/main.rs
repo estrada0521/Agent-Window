@@ -149,12 +149,12 @@ fn show_chat_header_menu(
         .native_icon(
             format!("{}action:openTerminal", NATIVE_MENU_PREFIX),
             "Terminal",
-            NativeIcon::Path,
+            NativeIcon::Computer,
         )
         .native_icon(
             format!("{}action:openFinder", NATIVE_MENU_PREFIX),
             "Finder",
-            NativeIcon::Home,
+            NativeIcon::Folder,
         )
         .separator()
         .item(&add_submenu)
