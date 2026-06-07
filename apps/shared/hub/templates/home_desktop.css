@@ -1517,7 +1517,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 220px;
-      line-height: 1;
+      line-height: 18px;
       pointer-events: none;
       -webkit-app-region: no-drag;
       padding-left: 4px;
