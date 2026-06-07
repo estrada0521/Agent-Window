@@ -8,10 +8,13 @@ use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
 use tauri::menu::{MenuBuilder, NativeIcon, SubmenuBuilder};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::webview::WebviewWindowBuilder;
 use tauri::Manager;
 
 const DARK_BG: &str = "rgb(4,4,4)";
+const TRAY_OPEN_ID: &str = "multiagent-chat:tray:open";
+const TRAY_QUIT_ID: &str = "multiagent-chat:tray:quit";
 
 #[cfg(target_os = "macos")]
 use window_vibrancy::{
@@ -268,7 +271,11 @@ fn sync_bundled_repo(app: &tauri::App) -> Option<PathBuf> {
                 .join("app")
                 .join("bundled-repo")
         })
-        .or_else(|_| app.path().app_data_dir().map(|dir| dir.join("bundled-repo")))
+        .or_else(|_| {
+            app.path()
+                .app_data_dir()
+                .map(|dir| dir.join("bundled-repo"))
+        })
         .ok()?;
     if let Err(err) = copy_dir_contents(&source, &target) {
         eprintln!("[app] bundled repo sync failed: {}", err);
@@ -459,6 +466,18 @@ fn center_traffic_lights(window: &tauri::WebviewWindow) {
     }
 }
 
+fn reveal_main_window(app: &tauri::AppHandle) {
+    let _ = app.show();
+    let Some(window) = app.get_webview_window("main") else {
+        return;
+    };
+    if matches!(window.is_minimized(), Ok(true)) {
+        let _ = window.unminimize();
+    }
+    let _ = window.show();
+    let _ = window.set_focus();
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -466,9 +485,39 @@ fn main() {
             show_chat_header_menu,
         ])
         .on_menu_event(|app, event| {
-            emit_native_menu_action(app, event.id().as_ref());
+            match event.id().as_ref() {
+                TRAY_OPEN_ID => reveal_main_window(app),
+                TRAY_QUIT_ID => app.exit(0),
+                id => emit_native_menu_action(app, id),
+            }
+        })
+        .on_tray_icon_event(|app, event| {
+            if matches!(
+                event,
+                TrayIconEvent::Click {
+                    button: MouseButton::Left,
+                    button_state: MouseButtonState::Up,
+                    ..
+                }
+            ) {
+                reveal_main_window(app);
+            }
         })
         .setup(move |app| {
+            let tray_menu = MenuBuilder::new(app)
+                .text(TRAY_OPEN_ID, "Open Agent Window")
+                .separator()
+                .text(TRAY_QUIT_ID, "Quit Agent Window")
+                .build()?;
+            let mut tray = TrayIconBuilder::with_id("menu-bar")
+                .menu(&tray_menu)
+                .tooltip("Agent Window")
+                .show_menu_on_left_click(false);
+            if let Some(icon) = app.default_window_icon().cloned() {
+                tray = tray.icon(icon).icon_as_template(false);
+            }
+            let _ = tray.build(app)?;
+
             let window = WebviewWindowBuilder::new(
                 app,
                 "main",
@@ -500,6 +549,10 @@ fn main() {
                         | tauri::WindowEvent::ScaleFactorChanged { .. }
                 ) {
                     center_traffic_lights(&traffic_window);
+                } else if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    let _ = traffic_window.hide();
+                    let _ = traffic_window.app_handle().hide();
                 }
             });
 
@@ -630,6 +683,15 @@ fn main() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running Agent Window");
+        .build(tauri::generate_context!())
+        .expect("error while building Agent Window")
+        .run(|app, event| {
+            if let tauri::RunEvent::Reopen {
+                has_visible_windows: false,
+                ..
+            } = event
+            {
+                reveal_main_window(app);
+            }
+        });
 }
