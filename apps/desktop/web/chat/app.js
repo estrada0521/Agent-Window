@@ -534,10 +534,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       dpActivePanelView = view === "git" ? "git" : "repo";
       return dpActivePanelView;
     };
-    const loadDesktopRightPanelView = ({ reset = false } = {}) => {
+    const loadDesktopRightPanelView = ({ reset = false, animateRepo = true } = {}) => {
       if (!dpPanelOpen) return Promise.resolve();
       const gitP = dpLoadGitBranchPage({ reset: true });
-      dpLoadRepoDir(dpRepoBrowserPath || "");
+      dpLoadRepoDir(dpRepoBrowserPath || "", { animate: animateRepo });
       return Promise.resolve(gitP);
     };
     const openDesktopRightPanel = ({ view = null, reset = false } = {}) => {
@@ -563,7 +563,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           }
         });
       }
-      const loadP = loadDesktopRightPanelView({ reset });
+      const loadP = loadDesktopRightPanelView({ reset, animateRepo: false });
       notifyParentPanelState();
       return loadP;
     };
