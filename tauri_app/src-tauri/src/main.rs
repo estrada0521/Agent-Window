@@ -170,6 +170,13 @@ fn show_chat_header_menu(
         .map_err(|err| err.to_string())
 }
 
+#[tauri::command]
+fn set_window_always_on_top(window: tauri::WebviewWindow, enabled: bool) -> Result<(), String> {
+    window
+        .set_always_on_top(enabled)
+        .map_err(|err| err.to_string())
+}
+
 fn emit_native_menu_action(app: &tauri::AppHandle, id: &str) {
     if !id.starts_with(NATIVE_MENU_PREFIX) {
         return;
@@ -466,6 +473,32 @@ fn center_traffic_lights(window: &tauri::WebviewWindow) {
     }
 }
 
+fn load_window_always_on_top_setting(app: &tauri::App) -> bool {
+    let settings_path = std::env::var("HOME")
+        .ok()
+        .map(|home| PathBuf::from(home).join(".agent-window/state/.hub-settings.json"))
+        .or_else(|| {
+            app.path()
+                .app_data_dir()
+                .ok()
+                .map(|dir| dir.join(".hub-settings.json"))
+        });
+    let Some(path) = settings_path else {
+        return false;
+    };
+    let Ok(raw) = std::fs::read_to_string(path) else {
+        return false;
+    };
+    serde_json::from_str::<serde_json::Value>(&raw)
+        .ok()
+        .and_then(|value| {
+            value
+                .get("window_always_on_top")
+                .and_then(|flag| flag.as_bool())
+        })
+        .unwrap_or(false)
+}
+
 fn reveal_main_window(app: &tauri::AppHandle) {
     let _ = app.show();
     let Some(window) = app.get_webview_window("main") else {
@@ -483,6 +516,7 @@ fn main() {
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             show_chat_header_menu,
+            set_window_always_on_top,
         ])
         .on_menu_event(|app, event| {
             match event.id().as_ref() {
@@ -504,6 +538,7 @@ fn main() {
             }
         })
         .setup(move |app| {
+            let always_on_top = load_window_always_on_top_setting(app);
             let tray_menu = MenuBuilder::new(app)
                 .text(TRAY_OPEN_ID, "Open Agent Window")
                 .separator()
@@ -529,6 +564,7 @@ fn main() {
             .decorations(true)
             .hidden_title(true)
             .title_bar_style(tauri::TitleBarStyle::Overlay)
+            .always_on_top(always_on_top)
             .transparent(true)
             .visible(false)
             .devtools(true)

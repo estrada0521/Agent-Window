@@ -137,6 +137,7 @@ def hub_settings_html(
     render_theme = resolve_hub_theme(settings, variant=resolved_view_variant)
     bold_mode_mobile = settings.get("bold_mode_mobile", False)
     open_files_direct_external_editor = settings.get("open_files_direct_external_editor", False)
+    window_always_on_top = settings.get("window_always_on_top", False)
     external_editor = sanitize_hub_external_editor_choice(
         str(settings.get("external_editor", "vscode") or "vscode").strip(),
         allow_markedit=False,
@@ -211,6 +212,7 @@ def hub_settings_html(
         .replace("__THEME_DESKTOP_HIDDEN__", html.escape(theme_desktop))
         .replace("__BOLD_MODE_MOBILE_CHECKED__", " checked" if bold_mode_mobile else "")
         .replace("__OPEN_FILES_DIRECT_EXTERNAL_EDITOR_CHECKED__", " checked" if open_files_direct_external_editor else "")
+        .replace("__WINDOW_ALWAYS_ON_TOP_CHECKED__", " checked" if window_always_on_top else "")
         .replace(
             "__OPEN_FILES_DIRECT_EXTERNAL_EDITOR_HIDDEN__",
             html.escape("on" if open_files_direct_external_editor else ""),

@@ -130,6 +130,7 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
         "chat_auto_mode",
         "bold_mode_mobile",
         "open_files_direct_external_editor",
+        "window_always_on_top",
     ):
         if missing_flags_false and key not in raw:
             settings[key] = False
@@ -154,6 +155,7 @@ HUB_SETTINGS_DEFAULTS = {
     "chat_auto_mode": False,
     "bold_mode_mobile": False,
     "open_files_direct_external_editor": False,
+    "window_always_on_top": False,
 }
 
 
