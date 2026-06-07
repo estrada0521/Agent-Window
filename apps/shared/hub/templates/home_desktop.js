@@ -1599,6 +1599,9 @@
 
     window.refreshHubSessionLists = refreshHubSessions;
     consumeHubPendingError();
+    if (isTauriDesktopApp() && !isPhoneViewport()) {
+      showDeskSidebarList({ open: true });
+    }
     refreshHubSessions(true);
     setInterval(() => {
       refreshHubSessions(false);
