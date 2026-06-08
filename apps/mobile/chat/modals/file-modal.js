@@ -1,37 +1,18 @@
     const _fileExistenceCache = new Map();
-    const FILE_PREVIEW_THEME_ICONS = {
-      dark: '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>',
-      light: '<path d="M21 12.79A9 9 0 1 1 11.21 3c0 0 0 0 0 0A7 7 0 0 0 21 12.79z"></path>',
-    };
     const FILE_PREVIEW_HTML_MODE_ICONS = {
       web: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 9.5h17"></path><circle cx="7.5" cy="7" r="0.8" fill="currentColor" stroke="none"></circle><circle cx="10.5" cy="7" r="0.8" fill="currentColor" stroke="none"></circle><path d="M9.5 13.5h6"></path><path d="M9.5 16.5h4"></path>',
       text: '<path d="M14 3.5H7.5A2.5 2.5 0 0 0 5 6v12a2.5 2.5 0 0 0 2.5 2.5h9A2.5 2.5 0 0 0 19 18V8.5z"></path><path d="M14 3.5V8.5H19"></path><path d="M9 12.5h6"></path><path d="M9 16h6"></path>',
     };
-    let attachedFilesPreviewTheme = "dark";
     let attachedFilesPreviewBaseTheme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
     let attachedFilesHtmlPreviewMode = "text";
     let attachedFilesPreviewControlsWired = false;
     const currentFileModalBaseTheme = () => document.documentElement.dataset.theme === "light" ? "light" : "dark";
     const isHtmlPreviewExt = (ext) => ext === "html" || ext === "htm";
     const attachedFilesPreviewFrameEl = () => attachedFilesPanel?.querySelector(".attached-files-preview-frame");
-    const attachedFilesPreviewThemeToggleBtn = () => attachedFilesPanel?.querySelector(".attached-files-preview-theme-toggle");
-    const attachedFilesPreviewThemeToggleIcon = () => attachedFilesPanel?.querySelector(".attached-files-preview-theme-toggle-icon");
     const attachedFilesPreviewHtmlModeBtn = () => attachedFilesPanel?.querySelector(".attached-files-preview-html-mode");
     const attachedFilesPreviewHtmlModeIcon = () => attachedFilesPanel?.querySelector(".attached-files-preview-html-mode-icon");
     const attachedFilesPreviewExt = () => String(attachedFilesPanel?._previewExt || "").toLowerCase();
     const attachedFilesPreviewInPreviewMode = () => !!attachedFilesPanel?.classList.contains("attached-files-mode-preview");
-    const syncAttachedFilesPreviewThemeToggle = () => {
-      const btn = attachedFilesPreviewThemeToggleBtn();
-      const icon = attachedFilesPreviewThemeToggleIcon();
-      if (!btn || !icon) return;
-      const isMd = attachedFilesPreviewExt() === "md";
-      btn.hidden = !attachedFilesPreviewInPreviewMode() || !isMd;
-      if (btn.hidden) return;
-      const nextLabel = attachedFilesPreviewTheme === "dark" ? "Switch markdown preview to light" : "Switch markdown preview to dark";
-      btn.title = nextLabel;
-      btn.setAttribute("aria-label", nextLabel);
-      icon.innerHTML = FILE_PREVIEW_THEME_ICONS[attachedFilesPreviewTheme] || FILE_PREVIEW_THEME_ICONS.dark;
-    };
     const syncAttachedFilesPreviewHtmlModeToggle = () => {
       const btn = attachedFilesPreviewHtmlModeBtn();
       const icon = attachedFilesPreviewHtmlModeIcon();
@@ -45,27 +26,15 @@
       btn.setAttribute("aria-label", title);
       icon.innerHTML = FILE_PREVIEW_HTML_MODE_ICONS[nextMode] || FILE_PREVIEW_HTML_MODE_ICONS.text;
     };
-    const syncAttachedFilesPreviewShellTheme = () => {
-      if (!attachedFilesPanel) return;
-      const isMd = attachedFilesPreviewExt() === "md";
-      attachedFilesPanel.classList.toggle("attached-files-preview-shell-light", isMd && attachedFilesPreviewTheme === "light");
-      attachedFilesPanel.classList.toggle("attached-files-preview-shell-dark", isMd && attachedFilesPreviewBaseTheme === "light" && attachedFilesPreviewTheme === "dark");
-    };
     const resetAttachedFilesPreviewControls = () => {
-      attachedFilesPreviewTheme = currentFileModalBaseTheme();
-      attachedFilesPreviewBaseTheme = attachedFilesPreviewTheme;
+      attachedFilesPreviewBaseTheme = currentFileModalBaseTheme();
       attachedFilesHtmlPreviewMode = "text";
-      syncAttachedFilesPreviewThemeToggle();
       syncAttachedFilesPreviewHtmlModeToggle();
-      syncAttachedFilesPreviewShellTheme();
     };
     const initAttachedFilesPreviewControls = () => {
       attachedFilesPreviewBaseTheme = currentFileModalBaseTheme();
-      attachedFilesPreviewTheme = attachedFilesPreviewBaseTheme;
       attachedFilesHtmlPreviewMode = "text";
-      syncAttachedFilesPreviewThemeToggle();
       syncAttachedFilesPreviewHtmlModeToggle();
-      syncAttachedFilesPreviewShellTheme();
     };
     const applyPreviewHtmlModeToFrame = (frame, ext, mode) => {
       if (!isHtmlPreviewExt(ext)) return false;
@@ -103,7 +72,7 @@
     const postAttachedFilesPreviewTheme = () => {
       const frame = attachedFilesPreviewFrameEl();
       if (!frame?.src) return;
-      postPreviewThemeToFrame(frame, attachedFilesPreviewExt(), attachedFilesPreviewTheme, attachedFilesPreviewBaseTheme);
+      postPreviewThemeToFrame(frame, attachedFilesPreviewExt(), attachedFilesPreviewBaseTheme);
     };
     const postAttachedFilesPreviewHtmlMode = () => {
       const frame = attachedFilesPreviewFrameEl();
@@ -118,27 +87,13 @@
       attachedFilesPreviewControlsWired = true;
       const actions = document.createElement("div");
       actions.className = "attached-files-preview-actions";
-      const themeBtn = document.createElement("button");
-      themeBtn.type = "button";
-      themeBtn.className = "attached-files-preview-theme-toggle mobile-bottom-sheet-button mobile-floating-sheet-button";
-      themeBtn.hidden = true;
-      themeBtn.innerHTML = '<svg class="attached-files-preview-theme-toggle-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>';
       const htmlBtn = document.createElement("button");
       htmlBtn.type = "button";
       htmlBtn.className = "attached-files-preview-html-mode mobile-bottom-sheet-button mobile-floating-sheet-button";
       htmlBtn.hidden = true;
       htmlBtn.innerHTML = '<svg class="attached-files-preview-html-mode-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>';
-      actions.append(themeBtn, htmlBtn, closeBtn);
+      actions.append(htmlBtn, closeBtn);
       navBar.appendChild(actions);
-      themeBtn.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (attachedFilesPreviewExt() !== "md") return;
-        attachedFilesPreviewTheme = attachedFilesPreviewTheme === "dark" ? "light" : "dark";
-        syncAttachedFilesPreviewThemeToggle();
-        syncAttachedFilesPreviewShellTheme();
-        postAttachedFilesPreviewTheme();
-      });
       htmlBtn.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -149,29 +104,24 @@
       });
       resetAttachedFilesPreviewControls();
     };
-    const applyPreviewThemeToFrame = (frame, ext, previewTheme, baseTheme) => {
+    const applyPreviewThemeToFrame = (frame, ext, baseTheme) => {
       if (!frame) return false;
       const normalizedExt = String(ext || "").toLowerCase();
-      const resolvedPreviewTheme = previewTheme === "light" ? "light" : "dark";
       const resolvedBaseTheme = baseTheme === "light" ? "light" : "dark";
       try {
         const frameWindow = frame.contentWindow;
         const frameDoc = frame.contentDocument || frameWindow?.document || null;
         if (normalizedExt === "md" && typeof frameWindow?.__agentIndexApplyPreviewTheme === "function") {
-          frameWindow.__agentIndexApplyPreviewTheme(resolvedPreviewTheme, resolvedBaseTheme);
+          frameWindow.__agentIndexApplyPreviewTheme(resolvedBaseTheme, resolvedBaseTheme);
           return true;
         }
         if (!frameDoc?.documentElement) return false;
         if (normalizedExt === "md") {
           frameDoc.documentElement.setAttribute(
             "data-preview-theme",
-            resolvedPreviewTheme === "light" ? "light" : "dark",
+            resolvedBaseTheme,
           );
-          if (resolvedPreviewTheme === resolvedBaseTheme) {
-            frameDoc.documentElement.removeAttribute("data-preview-explicit-bg");
-          } else {
-            frameDoc.documentElement.setAttribute("data-preview-explicit-bg", "1");
-          }
+          frameDoc.documentElement.removeAttribute("data-preview-explicit-bg");
           return true;
         }
         const isLight = resolvedBaseTheme === "light";
@@ -191,19 +141,19 @@
       } catch (_) { }
       return false;
     };
-    const postPreviewThemeToFrame = (frame, ext, previewTheme, baseTheme) => {
-      applyPreviewThemeToFrame(frame, ext, previewTheme, baseTheme);
+    const postPreviewThemeToFrame = (frame, ext, baseTheme) => {
+      applyPreviewThemeToFrame(frame, ext, baseTheme);
       try {
         frame.contentWindow?.postMessage(
-          { type: "agent-index-file-preview-theme", theme: previewTheme, baseTheme },
+          { type: "agent-index-file-preview-theme", theme: baseTheme, baseTheme },
           window.location.origin,
         );
       } catch (_) { }
       requestAnimationFrame(() => {
-        applyPreviewThemeToFrame(frame, ext, previewTheme, baseTheme);
+        applyPreviewThemeToFrame(frame, ext, baseTheme);
       });
       setTimeout(() => {
-        applyPreviewThemeToFrame(frame, ext, previewTheme, baseTheme);
+        applyPreviewThemeToFrame(frame, ext, baseTheme, baseTheme);
       }, 60);
     };
     const resetEmbeddedFilePreviewFrame = (frame) => {
@@ -335,18 +285,7 @@
         if (!mutations.some((mutation) => mutation.attributeName === "data-theme")) return;
         const frame = attachedFilesPreviewFrameEl();
         if (!frame?.src) return;
-        const prevBase = attachedFilesPreviewBaseTheme;
-        const wasOpposite = attachedFilesPreviewTheme !== prevBase;
         attachedFilesPreviewBaseTheme = currentFileModalBaseTheme();
-        if (attachedFilesPreviewExt() === "md") {
-          attachedFilesPreviewTheme = wasOpposite
-            ? (attachedFilesPreviewBaseTheme === "dark" ? "light" : "dark")
-            : attachedFilesPreviewBaseTheme;
-        } else {
-          attachedFilesPreviewTheme = attachedFilesPreviewBaseTheme;
-        }
-        syncAttachedFilesPreviewThemeToggle();
-        syncAttachedFilesPreviewShellTheme();
         postAttachedFilesPreviewTheme();
       }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     }
