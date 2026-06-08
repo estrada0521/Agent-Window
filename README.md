@@ -1,7 +1,6 @@
 # Agent Window
 
 Claude, Codex, Gemini, Cursor, Copilot の CLI を制御する Agent Window です。
-
 通常のサブスクリプションだけで動作します。
 
 <p align="center">
@@ -68,13 +67,15 @@ Always on Top をONにすると、Windowが常に全面表示されます
   <img src="media/agent-window-middle-5.png" width="32%" alt="Agent Window middle 5"></p>
 右PaneはWorkspaceの状態を一般的なFSEvents方式で同期しています
 未コミット差分だけを小さく表示する機能があります
+untrackedファイルの削除と無視、ファイル単位のrevertボタンだけ実装しています
+
 埋め込みのファイルビューアーは最小実装ですが、HTMLの表示とmarkdownレンダリングには対応しています
 設定から「External Editor」をONにした場合は、指定した外部エディタにファイルが展開されます（こちらがデフォルトです）
 
 ### メニューボタン
 右上のハンバーガーボタンから以下の操作を行うことができます
 <p align="center">
-  <img src="media/agent-window-middle-6.png" width="32%" alt="Agent Window middle 6">
+  <img src="media/agent-window-middle-6.png" width="50%" alt="Agent Window middle 6">
 </p>
 
 **Terminal** : tmux terminal 本体を開くだけです。コンパクトにしています
