@@ -172,7 +172,8 @@
       frame.onload = () => {
         frame.style.transition = "opacity 200ms ease-out";
         frame.style.opacity = "1";
-        postPreviewThemeToFrame(frame, normalizedExt, attachedFilesPreviewTheme, attachedFilesPreviewBaseTheme);
+        attachedFilesPreviewBaseTheme = currentFileModalBaseTheme();
+        postPreviewThemeToFrame(frame, normalizedExt, attachedFilesPreviewBaseTheme);
         postPreviewHtmlModeToFrame(frame, normalizedExt, attachedFilesHtmlPreviewMode);
       };
       frame.src = fileViewHrefForPath(normalizedPath, { embed: true });
