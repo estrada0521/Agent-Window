@@ -1,13 +1,13 @@
 # Agent Window
 
 Claude, Codex, Gemini, Cursor, Copilot の CLI を制御する Agent Window です。
-必要であれば辞書的に任意のCLIを追加登録することができます。
 
 通常のサブスクリプションだけで動作します。
 
-![Agent Window hero 1](media/agent-window-hero-1.png)
-
-![Agent Window hero 2](media/agent-window-hero-2.png)
+<p align="center">
+  <img src="media/agent-window-hero-1.png" width="100%" alt="Agent Window hero 1">
+  <img src="media/agent-window-hero-2.png" width="100%" alt="Agent Window hero 2">
+</p>
 
 # バックエンド
 このrepoにおけるセッションには1つのtmuxプロセスとチャットサーバーが紐づけられます
@@ -33,18 +33,28 @@ Mac版はRust製Tauriビルドのアプリを用意しています
 Hubサーバーではセッション一覧を管理します
 新しいセッションの開始や、セッションのアーカイブ・削除はここから行います
 また、外観の設定や機能周りのグローバルな設定もここから変更します。
+<p align="center">
+  <img src="media/agent-window-middle-1.png" width="32%" alt="Agent Window middle 1">
+  <img src="media/agent-window-middle-3.png" width="32%" alt="Agent Window middle 3">
+</p>
 
 ### 外観
-ダーク、ライトの2種類のテーマを用意しています
+ダーク、ライト・複合の3種類のテーマを用意しました
 
 ### 自動承認
 Auto Approval をON にすると、CLI側の設定に依らず全てのエージェントのツールコールが自動承認されます
 Running中のエージェントのみ tmux capture pane が Polling され、承認用文字列を見つけたらEnterを送るだけの無骨な方法です
 
+### 全面表示
+Always on Top をONにすると、Windowが常に全面表示されます
+
 ## チャット画面(中央・右)
 基本画面です。よくあるAgent windowと基本的に同じです
 
 ### 入力欄
+<p align="center">
+  <img src="media/agent-window-middle-2.png" width="64%" alt="Agent Window middle 2">
+</p>
 入力欄は普段は最小化され、チャット本文の表示領域を最大化しています。下部のOボタンで展開されます
 入力されたメッセージは、選択したエージェントのCLI Paneに直接貼り付けられます
 つまり、各CLIのコマンドをそのまま利用可能です
@@ -53,28 +63,34 @@ Running中のエージェントのみ tmux capture pane が Polling され、承
 添付されたファイルは `.agent-window/uploads/` に保存されます
 
 ### Workspace管理
+<p align="center">
+  <img src="media/agent-window-middle-4.png" width="32%" alt="Agent Window middle 4">
+  <img src="media/agent-window-middle-5.png" width="32%" alt="Agent Window middle 5"></p>
 右PaneはWorkspaceの状態を一般的なFSEvents方式で同期しています
 未コミット差分だけを小さく表示する機能があります
 埋め込みのファイルビューアーは最小実装ですが、HTMLの表示とmarkdownレンダリングには対応しています
-設定から「External Editor」をONにした場合は、指定した外部エディタにファイルが展開されます
+設定から「External Editor」をONにした場合は、指定した外部エディタにファイルが展開されます（こちらがデフォルトです）
 
 ### メニューボタン
 右上のハンバーガーボタンから以下の操作を行うことができます
-
-**reload** : チャットサーバーのハードリロードです。ソースコードを編集していた場合、入れ替わります。何か問題があればとりあえずreload
+<p align="center">
+  <img src="media/agent-window-middle-6.png" width="32%" alt="Agent Window middle 6">
+</p>
 
 **Terminal** : tmux terminal 本体を開くだけです。コンパクトにしています
 
 **Finder**: セッションワークスペースをFinderで開きます
 
 **Add / Remove Agent** : セッションにエージェントを追加・削除できます。同一エージェントの複数追加も可能です。
-Claude-3のようにインスタンス名で処理されます
+Claude-3のようにインスタンス名で処理されます。
+
+**reload** : チャットサーバーのハードリロードです。ソースコードを編集していた場合、入れ替わります（何か問題があればとりあえずreload）。
 
 # Setup
 
 ## Tauri App + HTTP
 
-webでも動きますが、UI・UXを確認していないので、基本的にTauri App前提です。
+基本的にTauri App前提です。
 
 事前に `python3`, `tmux`, `cargo`, `tauri-cli`, Xcode Command Line Tools をインストールしてください。
 
@@ -87,7 +103,6 @@ Claude, Codex, Gemini, Cursor, Copilot などのAgent CLIは使用したいも�
 このコマンドで、Tauri Appをbuildし、HubはTauri Appから起動されます。
 
 Hubのデフォルトポートは `8788` です。
-別の用途で使っている場合は、`AGENT_INDEX_HUB_PORT=8799 ./tauri_app/tauri_start` のように変更できます。
 
 起動後はHubの `New Session` からセッションを開始してください。
 
@@ -115,8 +130,7 @@ mkcert の `rootCA.pem` を端末へ送り、証明書プロファイルをイ�
 その後、Safari で
 
 ```text
-https://<MacのLAN IP>:8788/
-or
+https://<MacのLAN IP>:8788/ or
 https://<Mac名>.local:8788/
 ```
-を開き、ホーム画面にアプリを追加します。
+を開き、ホーム画面にアプリを追加するとPWAとして使えるようになります。
