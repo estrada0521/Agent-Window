@@ -1274,6 +1274,11 @@
       overflow-x: hidden;
     }
 
+    .md-body li > * + pre,
+    .md-body li > * + .code-block-wrap {
+      margin-top: 6px;
+    }
+
     .md-body .code-block-wrap pre {
       margin: 0;
     }
