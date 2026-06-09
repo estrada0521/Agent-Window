@@ -1,111 +1,128 @@
 # Agent Window
 
-Claude, Codex, Gemini, Cursor, Copilot の CLI を制御する Agent Window です。
-通常のサブスクリプションだけで動作します。
+Agent Window is an application for controlling the CLI tools of Claude, Codex, Gemini, Cursor, Copilot, and other agents.
+It works with regular subscriptions only.
 
 <p align="center">
   <img src="media/agent-window-hero-1.png" width="100%" alt="Agent Window hero 1">
   <img src="media/agent-window-hero-2.png" width="100%" alt="Agent Window hero 2">
 </p>
 
-# バックエンド
-このrepoにおけるセッションには1つのtmuxプロセスとチャットサーバーが紐づけられます。
-各プロセス内のpaneに任意のエージェントを追加・削除することができます。つまり、1つのセッションを複数のエージェントで運用します。
-CLIの restart や削除→追加を繰り返しても同セッションである限り同じlocal jsonlにログが追記されます。
+# Backend
 
-## 送信
-送信のバックエンドにはtmux send-keyを使用しています。
-エージェント→エージェントへの送信もセッション内外問わず可能です。
+In this repository, each session is associated with one tmux process and one chat server.
+You can add or remove any agents in the panes within each process. In other words, a single session can be operated with multiple agents.
+Even if you restart a CLI or repeatedly remove and re-add an agent, logs are appended to the same local JSONL file as long as it remains the same session.
 
-## 受信
-受信はPID Tree等からCLIのnative log pathを解決し、kqueueで直接監視する方式を採用しています。
-チャットサーバーのリロードやCLIのrestartなど、特定のタイミングでpathの再解決が走ります。
-イベントはメッセージとツールコールを中心に振り分けられ、前者だけがセッションのjsonlに記録され、後者は一時的にストリームされます。
+## Sending
 
-## アプリ
-Mac版はRust製Tauriビルドのアプリを用意しています。
-見た目を整えるだけの薄いラッパーで、実態はただのwebアプリです。
-スマホ用にはPWAを用意しています。
+The sending backend uses `tmux send-key`.
+Messages can also be sent from one agent to another, whether they are in the same session or in different sessions.
 
-# フロントエンド
+## Receiving
 
-## Hub(左サイドバー)
-Hubサーバーではセッション一覧を管理します。
-新しいセッションの開始や、セッションのアーカイブ・削除はここから行います。
-また、外観の設定や機能周りのグローバルな設定もここから変更します。
+For receiving, Agent Window resolves each CLI's native log path from sources such as the PID tree, then monitors it directly with kqueue.
+The path is re-resolved at specific timings, such as when the chat server is reloaded or when a CLI is restarted.
+Events are mainly classified into messages and tool calls. Only messages are recorded in the session JSONL file, while tool calls are streamed temporarily.
+
+## App
+
+The Mac version is provided as a Tauri app built with Rust.
+It is only a thin wrapper for improving the appearance; the actual application is just a web app.
+A PWA is also provided for smartphones.
+
+# Frontend
+
+## Hub (left sidebar)
+
+The Hub server manages the session list.
+You can start new sessions, archive sessions, and delete sessions from here.
+You can also change appearance settings and global feature settings from here.
+
 <p align="center">
   <img src="media/agent-window-middle-1.png" width="49%" alt="Agent Window middle 1">
   <img src="media/agent-window-middle-3.png" width="49%" alt="Agent Window middle 3">
 </p>
 
-### 外観
-ダーク、ライト・複合の3種類のテーマを用意しました。
+### Appearance
 
-### 自動承認
-Auto Approval をON にすると、CLI側の設定に依らず全てのエージェントのツールコールが自動承認されます。
-Running中のエージェントのみ tmux capture pane が Polling され、承認用文字列を見つけたらEnterを送るだけの無骨な方法です。
+Three themes are available: dark, light, and mixed.
 
-### 全面表示
-Always on Top をONにすると、Windowが常に全面表示されます。
+### Auto Approval
 
-## チャット画面(中央・右)
-基本画面です。よくあるAgent windowと基本的に同じです。
+When Auto Approval is turned on, tool calls from all agents are automatically approved regardless of the CLI-side settings.
+Only agents in the Running state are polled with `tmux capture-pane`; when an approval prompt string is found, Agent Window simply sends Enter. This is a deliberately simple and rough implementation.
 
-### 入力欄
+### Always on Top
+
+When Always on Top is turned on, the window always stays in front.
+
+## Chat view (center and right)
+
+This is the main view. It is basically the same as a typical agent window.
+
+### Input box
+
 <p align="center">
   <img src="media/agent-window-middle-2.png" width="100%" alt="Agent Window middle 2">
 </p>
-入力欄は普段は最小化され、チャット本文の表示領域を最大化しています。下部のOボタンで展開されます。
-入力されたメッセージは、選択したエージェントのCLI Paneに直接貼り付けられます。
-つまり、各CLIのコマンドをそのまま利用可能です。
-@を入力するとrepo内のファイル検索できます、後述するFSEventsの結果をキャッシュしています。
-プラスボタン、またはドラッグ&ドロップでファイルを添付できます。
-添付されたファイルは `.agent-window/uploads/` に保存されます。
 
-### Workspace管理
+The input box is usually minimized to maximize the display area for the chat body.
+It can be expanded with the `O` button at the bottom.
+Messages entered here are pasted directly into the selected agent's CLI pane.
+In other words, you can use the commands of each CLI as-is.
+Typing `@` lets you search files inside the repository; the results from FSEvents, described later, are cached.
+Files can be attached with the plus button or by drag and drop.
+Attached files are saved under `.agent-window/uploads/`.
+
+### Workspace management
+
 <p align="center">
   <img src="media/agent-window-middle-4.png" width="49%" alt="Agent Window middle 4">
   <img src="media/agent-window-middle-5.png" width="49%" alt="Agent Window middle 5">
 </p>
-右PaneはWorkspaceの状態を一般的なFSEvents方式で同期しています。
-未コミット差分だけを小さく表示する機能があります。
-untrackedファイルの削除と無視、ファイル単位のrevertボタンだけ実装しています。
 
-埋め込みのファイルビューアーは最小実装ですが、HTMLの表示とmarkdownレンダリングには対応しています。
-設定から「External Editor」をONにした場合は、指定した外部エディタにファイルが展開されます（こちらがデフォルトです）。
+The right pane synchronizes the workspace state using the standard FSEvents approach.
+It includes a feature for displaying only uncommitted changes in a compact form.
+Only deletion and ignoring of untracked files, as well as file-level revert buttons, are implemented.
 
-### メニューボタン
-右上のハンバーガーボタンから以下の操作を行うことができます。
+The embedded file viewer is minimal, but it supports HTML display and Markdown rendering.
+When `External Editor` is turned on in the settings, files are opened in the specified external editor. This is the default behavior.
+
+### Menu button
+
+The hamburger button in the upper-right corner provides the following actions.
+
 <p align="center">
   <img src="media/agent-window-middle-6.png" width="100%" alt="Agent Window middle 6">
 </p>
 
-**Terminal** : tmux terminal 本体を開くだけです。コンパクトにしています。
-**Finder**: セッションワークスペースをFinderで開きます。
-**Add / Remove Agent** : セッションにエージェントを追加・削除できます。同一エージェントの複数追加も可能です。Claude-3のようにインスタンス名で処理されます。
-**reload** : チャットサーバーのハードリロードです。ソースコードを編集していた場合、入れ替わります（何か問題があればとりあえずreload）。
+**Terminal**: Opens the tmux terminal itself. It is kept compact.
+**Finder**: Opens the session workspace in Finder.
+**Add / Remove Agent**: Adds or removes agents from the session. Multiple instances of the same agent can also be added. They are handled by instance names such as `Claude-3`.
+**reload**: Performs a hard reload of the chat server. If you have edited the source code, the updated code will be loaded. If something goes wrong, try reload first.
 
 # Setup
 
 ## Tauri App + HTTP
 
-基本的にTauri App前提です。
+Basically, Agent Window assumes use through the Tauri app.
 
-事前に `python3`, `tmux`, `cargo`, `tauri-cli`, Xcode Command Line Tools をインストールしてください。
+Before starting, install `python3`, `tmux`, `cargo`, `tauri-cli`, and Xcode Command Line Tools.
 
-Claude, Codex, Gemini, Cursor, Copilot などのAgent CLIは使用したいものを事前にインストールし、認証まで済ませてください。
+Install and authenticate the Agent CLIs you want to use, such as Claude, Codex, Gemini, Cursor, and Copilot, in advance.
 
 ```bash
 ./tauri_app/tauri_start
 ```
 
-このコマンドで、Tauri Appをbuildし、HubはTauri Appから起動されます。
+This command builds the Tauri app, and the Hub is launched from the Tauri app.
 
-Hubのデフォルトポートは `8788` です。
+The default port for the Hub is `8788`.
 
-起動後はHubの `New Session` からセッションを開始してください。
+After startup, start a session from `New Session` in the Hub.
 
-再buildだけ行う場合:
+To rebuild only:
 
 ```bash
 ./tauri_app/tauri-build
@@ -113,26 +130,28 @@ Hubのデフォルトポートは `8788` です。
 
 ## PWA / HTTPS
 
-先にHTTPのTauri Appが動いている必要があります。
+The HTTP Tauri app must already be running first.
 
 ```bash
 ./setup/pwa/enable
 ./tauri_app/tauri_start
 ```
 
-`./setup/pwa/enable` は実行中のHubを確認して、mkcertとローカル証明書を準備します。
+`./setup/pwa/enable` checks the running Hub, then prepares mkcert and the local certificate.
 
-PWA有効化後は `~/.agent-window/state/pwa/enabled` を見て自動でHTTPS起動します。
+After the PWA is enabled, Agent Window checks `~/.agent-window/state/pwa/enabled` and automatically starts with HTTPS.
 
-mkcert の `rootCA.pem` を端末へ送り、証明書プロファイルをインストールして信頼を有効化してください。
+Send mkcert's `rootCA.pem` to your device, install the certificate profile, and enable trust for it.
 
-その後、Safari で
+Then open the following URL in Safari:
 
 ```text
-https://<MacのLAN IP>:8788/ or
-https://<Mac名>.local:8788/
+https://<Mac LAN IP>:8788/ or
+https://<Mac name>.local:8788/
 ```
-を開き、ホーム画面にアプリを追加するとPWAとして使えるようになります。
+
+Add it to the home screen to use it as a PWA.
+
 <p align="center">
   <img src="media/agent-window-mobile-1.png" width="24%" alt="Mobile UI 1">
   <img src="media/agent-window-mobile-2.png" width="24%" alt="Mobile UI 2">
