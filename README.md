@@ -133,13 +133,9 @@ https://<MacのLAN IP>:8788/ or
 https://<Mac名>.local:8788/
 ```
 を開き、ホーム画面にアプリを追加するとPWAとして使えるようになります。
-
-## Mobile UI
-
 <p align="center">
-  <img src="media/agent-window-mobile-1.png" width="32%" alt="Mobile UI 1">
-  <img src="media/agent-window-mobile-2.png" width="32%" alt="Mobile UI 2">
-  <img src="media/agent-window-mobile-3.png" width="32%" alt="Mobile UI 3">
+  <img src="media/agent-window-mobile-1.png" width="24%" alt="Mobile UI 1">
+  <img src="media/agent-window-mobile-2.png" width="24%" alt="Mobile UI 2">
+  <img src="media/agent-window-mobile-3.png" width="24%" alt="Mobile UI 3">
+  <img src="media/agent-window-mobile-4.png" width="24%" alt="Mobile UI 4">
 </p>
-
-
