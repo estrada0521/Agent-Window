@@ -34,12 +34,12 @@ Hubサーバーではセッション一覧を管理します。
 新しいセッションの開始や、セッションのアーカイブ・削除はここから行います。
 また、外観の設定や機能周りのグローバルな設定もここから変更します。
 <p align="center">
-  <img src="media/agent-window-middle-1.png" width="32%" alt="Agent Window middle 1">
-  <img src="media/agent-window-middle-3.png" width="32%" alt="Agent Window middle 3">
+  <img src="media/agent-window-middle-1.png" width="49%" alt="Agent Window middle 1">
+  <img src="media/agent-window-middle-3.png" width="49%" alt="Agent Window middle 3">
 </p>
 
-### 外観。
-ダーク、ライト・複合の3種類のテーマを用意しました
+### 外観
+ダーク、ライト・複合の3種類のテーマを用意しました。
 
 ### 自動承認
 Auto Approval をON にすると、CLI側の設定に依らず全てのエージェントのツールコールが自動承認されます。
@@ -53,7 +53,7 @@ Always on Top をONにすると、Windowが常に全面表示されます。
 
 ### 入力欄
 <p align="center">
-  <img src="media/agent-window-middle-2.png" width="64%" alt="Agent Window middle 2">
+  <img src="media/agent-window-middle-2.png" width="100%" alt="Agent Window middle 2">
 </p>
 入力欄は普段は最小化され、チャット本文の表示領域を最大化しています。下部のOボタンで展開されます。
 入力されたメッセージは、選択したエージェントのCLI Paneに直接貼り付けられます。
@@ -64,8 +64,8 @@ Always on Top をONにすると、Windowが常に全面表示されます。
 
 ### Workspace管理
 <p align="center">
-  <img src="media/agent-window-middle-4.png" width="32%" alt="Agent Window middle 4">
-  <img src="media/agent-window-middle-5.png" width="32%" alt="Agent Window middle 5">
+  <img src="media/agent-window-middle-4.png" width="49%" alt="Agent Window middle 4">
+  <img src="media/agent-window-middle-5.png" width="49%" alt="Agent Window middle 5">
 </p>
 右PaneはWorkspaceの状態を一般的なFSEvents方式で同期しています。
 未コミット差分だけを小さく表示する機能があります。
@@ -77,7 +77,7 @@ untrackedファイルの削除と無視、ファイル単位のrevertボタン�
 ### メニューボタン
 右上のハンバーガーボタンから以下の操作を行うことができます。
 <p align="center">
-  <img src="media/agent-window-middle-6.png" width="50%" alt="Agent Window middle 6">
+  <img src="media/agent-window-middle-6.png" width="100%" alt="Agent Window middle 6">
 </p>
 
 **Terminal** : tmux terminal 本体を開くだけです。コンパクトにしています。
