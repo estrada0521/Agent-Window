@@ -199,7 +199,7 @@
       display: block;
       width: 100%;
       max-width: 100%;
-      padding: 0 0 0 0;
+      padding: 0 0 3px 0;
       border-radius: 0;
       background: transparent;
       color: var(--fg);
@@ -421,7 +421,7 @@
       height: 1px;
       background: var(--fg);
       opacity: 1;
-      margin-top: 1px;
+      margin-top: var(--message-vertical-rhythm);
       max-width: 100%;
       overflow: hidden;
       transform-origin: left center;
