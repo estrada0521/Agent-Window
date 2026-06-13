@@ -30,11 +30,11 @@
     }
     html[data-theme="light"] {
       color-scheme: light;
-      --bg-rgb: 255, 255, 255;
-      --bg: rgb(255, 255, 255);
-      --fg: rgb(0, 0, 0);
+      --bg-rgb: 249, 249, 247;
+      --bg: rgb(249, 249, 247);
+      --fg: rgb(19, 19, 19);
       --muted: rgb(120, 120, 120);
-      --icon-fg: rgb(0, 0, 0);
+      --icon-fg: rgb(19, 19, 19);
       --icon-muted: rgb(120, 120, 120);
       --icon-hover: rgb(35, 35, 35);
       --panel: rgba(250, 250, 250, 0.72);
@@ -45,7 +45,7 @@
       --session-danger-fg: rgb(207, 34, 46);
       --glass-bg-72: var(--bg);
       --glass-filter-20: blur(20px) saturate(180%);
-      --mob-top-gradient-rgb: 255, 255, 255;
+      --mob-top-gradient-rgb: 249, 249, 247;
       --mob-sheet-gradient-rgb: var(--mob-top-gradient-rgb);
       --mob-sheet-floating-bg: rgba(0, 0, 0, 0.10);
       --mob-sheet-floating-hover-bg: rgba(0, 0, 0, 0.13);
