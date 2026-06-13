@@ -921,7 +921,7 @@
     }
     .desk-session-list::-webkit-scrollbar { display: none; }
     .desk-new-session-section {
-      padding: 8px 0 8px;
+      padding: 8px 0 0;
       border-bottom: none;
       display: block;
       background: transparent;
@@ -929,7 +929,7 @@
     .desk-new-session-toggle {
       width: 100%;
       margin: 0;
-      padding: 10px 12px 9px;
+      padding: 10px 12px 10px;
       border-radius: 0;
       opacity: 1;
       position: relative;
@@ -1264,13 +1264,13 @@
     }
     .desk-new-session-toggle .desk-row-name {
       text-align: left;
-      font-size: 14px;
+      font-size: var(--message-text-size, 13px);
       font-weight: 500;
       opacity: 1;
     }
     .desk-new-session-toggle .desk-row-leading-icon {
-      width: 14px;
-      height: 14px;
+      width: 12px;
+      height: 12px;
       opacity: 1;
     }
     .desk-row-preview {

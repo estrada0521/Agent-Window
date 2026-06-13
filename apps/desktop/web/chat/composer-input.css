@@ -337,8 +337,8 @@
       border-radius: 999px;
       border: 0.5px solid rgba(255, 255, 255, 0.14);
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018) 48%, rgba(255, 255, 255, 0.045)),
-        rgba(var(--bg-rgb), 0.62);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.005) 48%, rgba(255, 255, 255, 0.012)),
+        rgba(var(--bg-rgb), 0.88);
       color: var(--icon-fg);
       font-size: 17px;
       line-height: 1;
