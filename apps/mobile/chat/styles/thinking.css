@@ -30,6 +30,18 @@
       text-overflow: ellipsis;
     }
 
+    .message-thinking-runtime-keyword {
+      font-weight: 600;
+      color: var(--fg);
+      display: inline;
+      white-space: normal;
+    }
+
+    .message-thinking-runtime-detail {
+      font-weight: 430;
+      color: var(--muted);
+    }
+
     .message-thinking-runtime-line[data-state="enter"] {
       opacity: 0;
       transform: translateY(100%);

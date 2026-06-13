@@ -5,6 +5,7 @@
       height: 100%;
       min-height: 0;
       font-family: var(--agent-message-font-family, inherit);
+      font-weight: 480;
     }
 
     #attachedFilesPanel .attached-files-sheet-back[disabled] {
@@ -363,6 +364,7 @@
       position: relative;
       cursor: pointer;
       font-family: var(--agent-message-font-family, inherit);
+      font-weight: 480;
       transition: background 120ms ease;
       box-sizing: border-box;
     }
