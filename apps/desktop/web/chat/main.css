@@ -70,11 +70,11 @@ __CHAT_INCLUDE:file-modal.css__
     #composerFabBtn {
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018) 48%, rgba(255, 255, 255, 0.045)),
-        rgba(253, 253, 252, 0.62);
+        rgba(var(--bg-rgb), 0.62);
     }
     .has-hover #scrollToBottomBtn:hover,
     .has-hover #composerFabBtn:hover {
-      background: rgba(235, 235, 233, 0.62);
+      background: var(--fab-hover-bg);
     }
     .composer-plus-menu[open] .composer-plus-toggle,
     .composer-plus-menu:not([open]) .composer-plus-toggle:active {

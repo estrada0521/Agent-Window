@@ -338,7 +338,7 @@
       border: 0.5px solid rgba(255, 255, 255, 0.14);
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018) 48%, rgba(255, 255, 255, 0.045)),
-        rgba(253, 253, 252, 0.62);
+        rgba(var(--bg-rgb), 0.62);
       color: var(--icon-fg);
       font-size: 17px;
       line-height: 1;
@@ -401,7 +401,7 @@
     }
     .has-hover #scrollToBottomBtn:hover,
     .has-hover #composerFabBtn:hover {
-      background: rgba(235, 235, 233, 0.62);
+      background: var(--fab-hover-bg);
     }
     #composerFabBtn:active {
       background:
