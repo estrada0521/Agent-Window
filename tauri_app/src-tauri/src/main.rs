@@ -549,7 +549,7 @@ fn main() {
                 .tooltip("Agent Window")
                 .show_menu_on_left_click(false);
             if let Some(icon) = app.default_window_icon().cloned() {
-                tray = tray.icon(icon).icon_as_template(false);
+                tray = tray.icon(icon).icon_as_template(true);
             }
             let _ = tray.build(app)?;
 
