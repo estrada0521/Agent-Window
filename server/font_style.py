@@ -3,8 +3,9 @@ from __future__ import annotations
 
 def font_family_stack(selection: str, role: str) -> str:
     value = str(selection or "").strip()
-    sans_stack = '"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", sans-serif'
-    serif_stack = '"anthropicSerif", "anthropicSerif Fallback", "Anthropic Serif", "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", Georgia, "Times New Roman", Times, serif'
+    cjk_sans_fallback = '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR"'
+    sans_stack = f'"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", {cjk_sans_fallback}, sans-serif'
+    serif_stack = f'"anthropicSerif", "Anthropic Serif", Georgia, "Arial Hebrew", "Noto Sans Hebrew", "Times New Roman", Times, {cjk_sans_fallback}, serif'
     default_stack = sans_stack if role == "user" else serif_stack
     if value == "preset-gothic":
         return sans_stack
@@ -60,6 +61,33 @@ def chat_font_settings_inline_style(
         --message-text-line-height: {message_text_size_mobile + 9}px;
       }}
     }}"""
+    mobile_typography_override = f"""
+    @media (max-width: {bold_mode_viewport_max_px}px) {{
+      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message.user .md-body,
+      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message.user .md-body p,
+      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message.user .md-body li,
+      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message.user .md-body li p {{
+        font-weight: 430;
+        font-optical-sizing: auto;
+        font-variation-settings: "opsz" 16;
+        font-synthesis: none;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        line-height: calc(var(--message-text-size, 16px) + 6px);
+      }}
+      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message:not(.user):not(.system) .md-body,
+      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message:not(.user):not(.system) .md-body p,
+      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message:not(.user):not(.system) .md-body li,
+      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message:not(.user):not(.system) .md-body li p {{
+        font-weight: 430;
+        font-optical-sizing: auto;
+        font-variation-settings: "opsz" 16;
+        font-synthesis: none;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        line-height: calc(var(--message-text-size, 16px) + 8px);
+      }}
+    }}"""
     return f"""
     :root {{
       --message-text-size: {message_text_size_desktop}px;
@@ -99,6 +127,7 @@ def chat_font_settings_inline_style(
     {bh_agent_detail_selectors_fn(prefix="")} {{
       color: var(--fg);
     }}
+    {mobile_typography_override}
     {bold_style}
     {mobile_text_size_override}
     """
