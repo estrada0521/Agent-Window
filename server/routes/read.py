@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from urllib.parse import parse_qs
 
-from backend_core.access.settings import normalize_theme_desktop, resolve_chat_theme
+from backend_core.access.settings import normalize_theme_desktop, resolve_chat_theme, settings_for_chat_render
 from hub_backend.transport.request_base_path import request_base_path
 from shortcut_command.catalog import public_command_dicts
 
@@ -296,6 +296,7 @@ def _get_auto_mode(handler, _parsed, ctx) -> None:
 
 def _get_hub_settings(handler, _parsed, ctx) -> None:
     settings = ctx["load_chat_settings_fn"]()
+    chat_render_settings = settings_for_chat_render(settings, variant="desktop")
     body = json.dumps(
         {
             "bold_mode_mobile": bool(settings.get("bold_mode_mobile", False)),
@@ -304,7 +305,7 @@ def _get_hub_settings(handler, _parsed, ctx) -> None:
             "theme": resolve_chat_theme(settings, variant="desktop"),
             "theme_mobile": "light" if str(settings.get("theme_mobile", settings.get("theme", "dark"))).strip().lower() == "light" else "dark",
             "theme_desktop": normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark"))),
-            "chat_font_settings_css": ctx["chat_font_settings_inline_style_fn"](settings),
+            "chat_font_settings_css": ctx["chat_font_settings_inline_style_fn"](chat_render_settings),
             "chat_auto_mode": bool(settings.get("chat_auto_mode", False)),
             "open_files_direct_external_editor": bool(
                 settings.get("open_files_direct_external_editor", False)

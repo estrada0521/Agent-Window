@@ -61,33 +61,33 @@ def chat_font_settings_inline_style(
         --message-text-line-height: {message_text_size_mobile + 9}px;
       }}
     }}"""
-    mobile_typography_override = f"""
-    @media (max-width: {bold_mode_viewport_max_px}px) {{
-      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message.user .md-body,
-      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message.user .md-body p,
-      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message.user .md-body li,
-      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message.user .md-body li p {{
-        font-weight: 430;
-        font-optical-sizing: auto;
-        font-variation-settings: "opsz" 16;
-        font-synthesis: none;
-        -webkit-font-smoothing: antialiased;
-        text-rendering: optimizeLegibility;
-        line-height: calc(var(--message-text-size, 16px) + 6px);
-      }}
-      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message:not(.user):not(.system) .md-body,
-      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message:not(.user):not(.system) .md-body p,
-      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message:not(.user):not(.system) .md-body li,
-      html:not([data-tauri-app="1"][data-hub-iframe-chat="1"]) .message:not(.user):not(.system) .md-body li p {{
-        font-weight: 430;
-        font-optical-sizing: auto;
-        font-variation-settings: "opsz" 16;
-        font-synthesis: none;
-        -webkit-font-smoothing: antialiased;
-        text-rendering: optimizeLegibility;
-        line-height: calc(var(--message-text-size, 16px) + 8px);
-      }}
-    }}"""
+    typography_override = """
+    .message.user .md-body,
+    .message.user .md-body p,
+    .message.user .md-body li,
+    .message.user .md-body li p {
+      font-family: var(--user-message-font-family);
+      font-weight: 430;
+      font-optical-sizing: auto;
+      font-variation-settings: "opsz" 16;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      line-height: calc(var(--message-text-size, 16px) + 6px);
+    }
+    .message:not(.user):not(.system) .md-body,
+    .message:not(.user):not(.system) .md-body p,
+    .message:not(.user):not(.system) .md-body li,
+    .message:not(.user):not(.system) .md-body li p {
+      font-family: var(--agent-message-font-family);
+      font-weight: 430;
+      font-optical-sizing: auto;
+      font-variation-settings: "opsz" 16;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      line-height: calc(var(--message-text-size, 16px) + 8px);
+    }"""
     return f"""
     :root {{
       --message-text-size: {message_text_size_desktop}px;
@@ -125,9 +125,10 @@ def chat_font_settings_inline_style(
       color: var(--fg);
     }}
     {bh_agent_detail_selectors_fn(prefix="")} {{
+      font-family: var(--agent-message-font-family);
       color: var(--fg);
     }}
-    {mobile_typography_override}
+    {typography_override}
     {bold_style}
     {mobile_text_size_override}
     """
