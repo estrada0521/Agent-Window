@@ -69,7 +69,7 @@
     }
     /* Split: hub chrome stays dark; chat pane uses the same surface tokens as light theme. */
     html[data-theme-desktop="split"] {
-      --chat-pane-bg: rgba(255, 255, 255, 0.95);
+      --chat-pane-bg: rgb(253, 253, 252);
       --chat-pane-filter: blur(20px);
     }
     html[data-tauri-app="1"][data-theme-desktop="split"] {
