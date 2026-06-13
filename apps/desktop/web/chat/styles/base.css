@@ -159,7 +159,7 @@
     }
     html[data-theme="dark"] {
       color-scheme: dark;
-      --bg-rgb: 0, 0, 0;
+      --bg-rgb: 13, 13, 12;
       --fg: rgb(180, 180, 180);
       --muted: rgb(128, 128, 128);
       --icon-fg: rgb(180, 180, 180);

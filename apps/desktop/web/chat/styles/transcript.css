@@ -519,7 +519,7 @@
     }
 
     __AGENT_MESSAGE_SELECTORS__ {
-      background: rgba(0, 0, 0, 0.68);
+      background: rgba(13, 13, 12, 0.68);
       border: none;
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
     }
