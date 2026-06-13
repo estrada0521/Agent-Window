@@ -78,16 +78,6 @@ __CHAT_INCLUDE:styles/thinking.css__
     .md-body pre {
     }
 
-    #scrollToBottomBtn,
-    #composerFabBtn {
-      background: var(--bg);
-    }
-
-    .has-hover #scrollToBottomBtn:hover,
-    .has-hover #composerFabBtn:hover {
-      background: var(--fab-hover-bg);
-    }
-
     .composer-plus-menu[open] .composer-plus-toggle,
     .composer-plus-menu:not([open]) .composer-plus-toggle:active {
       background: transparent;
