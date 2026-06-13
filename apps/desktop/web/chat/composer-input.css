@@ -232,7 +232,7 @@
       max-height: 200px;
       resize: none;
       padding: 14px 52px 14px 14px;
-      font: 400 15px/1.6 "SF Pro Text","Segoe UI",sans-serif;
+      font: 400 15px/1.6 var(--user-message-font-family, "SF Pro Text", "Segoe UI", sans-serif);
       box-shadow: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;

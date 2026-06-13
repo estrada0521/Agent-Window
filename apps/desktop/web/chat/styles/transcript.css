@@ -1067,7 +1067,9 @@
     .md-body {
       flex: 1;
       min-width: 0;
-      font: 15px/1.65 "SF Pro Text", "Segoe UI", sans-serif;
+      font-family: var(--agent-message-font-family, "SF Pro Text", "Segoe UI", sans-serif);
+      font-size: var(--message-text-size, 13px);
+      line-height: var(--message-text-line-height, 22px);
       color: var(--fg);
     }
 
