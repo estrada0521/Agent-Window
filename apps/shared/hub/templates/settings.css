@@ -16,11 +16,11 @@
     }
     html[data-theme="light"] {
       color-scheme: light;
-      --bg-rgb: 255, 255, 255;
-      --bg: rgb(255, 255, 255);
-      --fg: rgb(0, 0, 0);
+      --bg-rgb: 253, 253, 252;
+      --bg: rgb(253, 253, 252);
+      --fg: rgb(11, 11, 11);
       --muted: rgb(120, 120, 120);
-      --icon-fg: rgb(0, 0, 0);
+      --icon-fg: rgb(11, 11, 11);
       --icon-muted: rgb(120, 120, 120);
       --icon-hover: rgb(35, 35, 35);
       --panel: rgb(250, 250, 250);
