@@ -334,23 +334,35 @@
       transform: translateX(-50%) translateY(10px) scale(0.75);
       width: 38px;
       height: 38px;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: transparent;
-      color: var(--fg);
+      border-radius: 999px;
+      border: 0.5px solid rgba(255, 255, 255, 0.14);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018) 48%, rgba(255, 255, 255, 0.045)),
+        rgba(253, 253, 252, 0.62);
+      color: var(--icon-fg);
       font-size: 17px;
       line-height: 1;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.20),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.055),
+        inset 0 0 18px rgba(255, 255, 255, 0.024),
+        0 10px 28px rgba(0, 0, 0, 0.30);
       opacity: 0;
       pointer-events: none;
-      transition: background 150ms ease, color 150ms ease, opacity 220ms ease, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition:
+        background 160ms ease,
+        border-color 160ms ease,
+        box-shadow 160ms ease,
+        color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 220ms ease,
+        transform 160ms ease;
       z-index: 100;
-      backdrop-filter: blur(12px) saturate(160%);
-      -webkit-backdrop-filter: blur(12px) saturate(160%);
+      backdrop-filter: blur(28px) saturate(220%) contrast(114%);
+      -webkit-backdrop-filter: blur(28px) saturate(220%) contrast(114%);
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
@@ -375,19 +387,44 @@
       height: 18px;
       font-size: 12px;
     }
+    html[data-theme="light"] #scrollToBottomBtn,
+    html[data-theme="light"] #composerFabBtn {
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.34) 44%, rgba(255, 255, 255, 0.56)),
+        rgba(253, 253, 252, 0.42);
+      border-color: rgba(255, 255, 255, 0.70);
+      box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.92),
+        inset 0 -10px 18px rgba(255, 255, 255, 0.28),
+        0 8px 22px rgba(0, 0, 0, 0.13),
+        0 1px 0 rgba(255, 255, 255, 0.56);
+    }
     .has-hover #scrollToBottomBtn:hover,
     .has-hover #composerFabBtn:hover {
-      background: var(--fab-hover-bg);
+      background: rgba(235, 235, 233, 0.62);
     }
     #composerFabBtn:active {
-      background: var(--bg-hover);
-      transform: translateX(-50%) translateY(0) scale(0.92);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.024) 48%, rgba(255, 255, 255, 0.055)),
+        rgba(253, 253, 252, 0.70);
+      border-color: rgba(255, 255, 255, 0.18);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.24),
+        inset 0 0 18px rgba(255, 255, 255, 0.035),
+        0 7px 22px rgba(0, 0, 0, 0.34);
+      transform: translateX(-50%) translateY(0) scale(0.94);
     }
     #scrollToBottomBtn:active,
     #scrollToBottomBtn.visible:active {
-      background: var(--glass-bg-72, rgba(var(--bg-rgb), 0.72));
-      transform: translateX(-50%) translateY(0) scale(1);
-      filter: none;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.024) 48%, rgba(255, 255, 255, 0.055)),
+        rgba(253, 253, 252, 0.70);
+      border-color: rgba(255, 255, 255, 0.18);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.24),
+        inset 0 0 18px rgba(255, 255, 255, 0.035),
+        0 7px 22px rgba(0, 0, 0, 0.34);
+      transform: translateX(-50%) translateY(0) scale(0.94);
     }
     #scrollToBottomBtn.visible,
     #composerFabBtn.visible {

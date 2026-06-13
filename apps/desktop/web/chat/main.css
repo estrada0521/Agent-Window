@@ -54,8 +54,7 @@ __CHAT_INCLUDE:file-modal.css__
       background: var(--fg);
       color: var(--surface);
     }
-    .has-hover .quick-action:hover:not(:disabled),
-    #composerFabBtn:active {
+    .has-hover .quick-action:hover:not(:disabled) {
       background: var(--surface-alt);
     }
     #fileDropdown {
@@ -69,11 +68,13 @@ __CHAT_INCLUDE:file-modal.css__
     }
     #scrollToBottomBtn,
     #composerFabBtn {
-      background: var(--glass-bg-72, rgba(var(--bg-rgb), 0.72));
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018) 48%, rgba(255, 255, 255, 0.045)),
+        rgba(253, 253, 252, 0.62);
     }
     .has-hover #scrollToBottomBtn:hover,
     .has-hover #composerFabBtn:hover {
-      background: var(--fab-hover-bg);
+      background: rgba(235, 235, 233, 0.62);
     }
     .composer-plus-menu[open] .composer-plus-toggle,
     .composer-plus-menu:not([open]) .composer-plus-toggle:active {
