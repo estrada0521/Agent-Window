@@ -68,9 +68,7 @@ __CHAT_INCLUDE:file-modal.css__
     }
     #scrollToBottomBtn,
     #composerFabBtn {
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018) 48%, rgba(255, 255, 255, 0.045)),
-        rgba(var(--bg-rgb), 0.62);
+      background: rgba(var(--bg-rgb), 0.96);
     }
     .has-hover #scrollToBottomBtn:hover,
     .has-hover #composerFabBtn:hover {
