@@ -155,11 +155,23 @@ __CHAT_INCLUDE:styles/thinking.css__
     }
 
     .shell>.hub-page-header .hub-page-title .hub-page-logo {
-      height: 22px;
-      width: auto;
+      height: 24px;
+      width: 24px;
       transform: none;
       position: relative;
       z-index: 1;
+      background: linear-gradient(currentColor, currentColor) no-repeat 8.5px 6.1px / 1.8px 11.8px;
+    }
+
+    .shell>.hub-page-header .hub-page-title .hub-page-logo rect {
+      x: 3.7px;
+      y: 4.1px;
+      width: 16.6px;
+      height: 15.8px;
+    }
+
+    .shell>.hub-page-header .hub-page-title .hub-page-logo .hub-logo-line {
+      opacity: 0;
     }
 
     .shell>.hub-page-header .hub-page-header-actions .hub-page-menu-btn {
