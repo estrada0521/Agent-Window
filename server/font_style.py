@@ -29,6 +29,7 @@ def chat_font_settings_inline_style(
 ) -> str:
     user_family = font_family_stack_fn(settings.get("user_message_font", "preset-gothic"), "user")
     agent_family = font_family_stack_fn(settings.get("agent_message_font", "preset-mincho"), "agent")
+    sans_family = font_family_stack_fn("preset-gothic", "user")
     try:
         _legacy_size = max(8, min(18, int(settings.get("message_text_size", 13))))
     except Exception:
@@ -95,6 +96,7 @@ def chat_font_settings_inline_style(
       --message-max-width: {message_max_width}px;
       --user-message-font-family: {user_family};
       --agent-message-font-family: {agent_family};
+      --sans-font-family: {sans_family};
     }}
     .shell {{
       max-width: var(--message-max-width);

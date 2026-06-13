@@ -569,7 +569,7 @@
 
     .mob-session-row {
       display: block;
-      padding: 14px 20px;
+      padding: 12px 20px;
       border-bottom: none;
       cursor: pointer;
       text-decoration: none;
@@ -606,13 +606,15 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
     }
 
     .mob-row-name {
-      font-size: 20px;
+      font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+      font-size: 15px;
       font-weight: 600;
-      letter-spacing: -0.02em;
+      letter-spacing: 0;
+      line-height: 1.2;
       min-width: 0;
       flex: 1;
       white-space: nowrap;
@@ -621,8 +623,8 @@
     }
 
     .mob-row-leading-icon {
-      width: 18px;
-      height: 18px;
+      width: 13px;
+      height: 13px;
       flex: 0 0 auto;
       color: var(--icon-fg);
       opacity: 1;
@@ -642,24 +644,20 @@
       padding-top: 14px;
     }
 
-    .mob-new-session-row .mob-row-head {
-      justify-content: flex-start;
-    }
-
     .mob-new-session-row .mob-row-name {
-      font-size: 18px;
-      letter-spacing: -0.015em;
+      letter-spacing: 0;
     }
 
     .mob-row-preview {
-      margin-top: 4px;
+      margin-top: 3px;
       color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
+      font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+      font-size: 13px;
+      font-weight: 430;
+      line-height: 1.2;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 100%;
     }
 
     .mob-row-preview .sender {
