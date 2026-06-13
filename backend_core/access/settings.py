@@ -42,7 +42,8 @@ def settings_for_hub_render(settings: dict, *, variant: str) -> dict:
 
 def settings_for_chat_render(settings: dict, *, variant: str) -> dict:
     resolved = dict(settings, theme=resolve_chat_theme(settings, variant=variant))
-    if str(variant or "").strip().lower() == "mobile":
+    view = str(variant or "").strip().lower()
+    if view == "mobile":
         resolved.update(
             user_message_font="preset-gothic",
             agent_message_font="preset-mincho",
