@@ -194,8 +194,8 @@ def _get_file_view(handler, parsed, ctx) -> None:
     force_progressive_text = qs.get("progressive", [""])[0] == "1"
     try:
         settings = ctx["load_chat_settings_fn"]()
-        user_message_font = str(settings.get("user_message_font", "preset-gothic") or "preset-gothic").strip()
-        preview_font_mode = "serif" if user_message_font == "preset-mincho" else "gothic"
+        agent_message_font = str(settings.get("agent_message_font", "preset-mincho") or "preset-mincho").strip()
+        preview_font_mode = "gothic" if agent_message_font == "preset-gothic" else "serif"
         preview_text_size = (
             settings.get("message_text_size_desktop") or
             settings.get("message_text_size")
@@ -220,7 +220,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
             base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
             preview_base_theme=str(qs.get("base_theme", [""])[0] or "").strip(),
             agent_font_mode=preview_font_mode,
-            agent_font_family=ctx["runtime"]._font_family_stack(user_message_font, "user"),
+            agent_font_family=ctx["runtime"]._font_family_stack(agent_message_font, "agent"),
             agent_text_size=preview_text_size,
             message_bold=message_bold,
             preview_chrome=preview_chrome,

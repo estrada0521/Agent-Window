@@ -61,6 +61,9 @@ def render_file_view(
     raw_url = f"{prefix}/file-raw?path={url_quote(rel)}"
     size = os.path.getsize(full)
     agent_font_mode = "gothic" if str(agent_font_mode or "").strip().lower() == "gothic" else "serif"
+    _serif_stack = '"anthropicSerif", "Anthropic Serif", Georgia, "Times New Roman", Times, "Hiragino Mincho ProN", "YuMincho", "Yu Mincho", "Noto Serif CJK JP", serif'
+    _sans_stack = '"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif'
+    resolved_agent_font_family = str(agent_font_family).strip() if agent_font_family else (_sans_stack if agent_font_mode == "gothic" else _serif_stack)
     code_font_family = (
         '"SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", monospace'
     )
@@ -114,7 +117,7 @@ def render_file_view(
     )
     preview_top_offset = "0px" if preview_chrome == "header" else ("max(48px, calc(21px + env(safe-area-inset-top)))" if embed else "0px")
     base_css = (
-        f':root{{color-scheme: dark;--code-font-family:{code_font_family};--message-text-size:{resolved_text_size}px;--message-text-line-height:{resolved_line_height}px;--tpad:{preview_top_offset};--preview-scrollbar-size:6px;--preview-scrollbar-thumb:{preview_scrollbar_thumb};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};--preview-selected-line-bg:{preview_selected_line_bg};}}'
+        f':root{{color-scheme: dark;--agent-message-font-family:{resolved_agent_font_family};--code-font-family:{code_font_family};--message-text-size:{resolved_text_size}px;--message-text-line-height:{resolved_line_height}px;--tpad:{preview_top_offset};--preview-scrollbar-size:6px;--preview-scrollbar-thumb:{preview_scrollbar_thumb};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};--preview-selected-line-bg:{preview_selected_line_bg};}}'
         f':root[data-preview-theme="light"]{{--preview-scrollbar-thumb:{preview_scrollbar_thumb_light};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover_light}}}'
         f"{font_face_css}"
         f"*{{box-sizing:border-box}}"
