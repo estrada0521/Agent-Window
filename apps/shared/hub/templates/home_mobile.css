@@ -54,12 +54,12 @@
     }
     html[data-theme="dark"] {
       color-scheme: dark;
-      --bg-rgb: 0, 0, 0;
-      --bg: rgb(0, 0, 0);
+      --bg-rgb: 6, 6, 5;
+      --bg: rgb(6, 6, 5);
       --fg: rgb(255, 255, 255);
-      --muted: rgb(128, 128, 128);
+      --muted: rgb(150, 150, 150);
       --icon-fg: rgb(255, 255, 255);
-      --icon-muted: rgb(128, 128, 128);
+      --icon-muted: rgb(150, 150, 150);
       --icon-hover: rgb(190, 190, 190);
       --panel: rgba(10, 10, 10, 0.72);
       --panel-2: rgba(15, 15, 15, 0.82);
@@ -543,7 +543,7 @@
 
     html[data-theme="dark"] .hub-page-header .hub-page-title,
     html[data-theme="dark"] .hub-page-header .hub-page-header-actions .hub-page-menu-btn {
-      background: var(--bg);
+      background: rgb(0, 0, 0);
       border-color: rgba(255, 255, 255, 0.10);
       box-shadow:
         0 2px 12px rgba(0, 0, 0, 0.40),
