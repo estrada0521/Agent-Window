@@ -44,7 +44,7 @@ html, body {
   min-height: 100%;
   background: var(--bg);
   color: var(--fg);
-  font-family: "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-family: var(--agent-message-font-family, "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif);
   overscroll-behavior: contain;
 }
 

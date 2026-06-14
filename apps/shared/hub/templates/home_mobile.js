@@ -42,7 +42,7 @@
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     const HUB_LAUNCH_SHELL_FALLBACK_MS = 5000;
     const CHAT_RENDER_READY_FALLBACK_MS = 2600;
-    const CHAT_OVERLAY_CLOSE_MS = 340;
+    const CHAT_OVERLAY_CLOSE_MS = 300;
     let _mobBoldModeState = document.documentElement.dataset.boldMode === "1";
     function applyMobBoldMode(enabled) {
       if (enabled) {
@@ -476,16 +476,23 @@
       document.documentElement.classList.add("hub-chat-overlay-active");
       document.body.classList.add("hub-chat-overlay-active");
       setPrewarmingOverlayActive(false);
-      _chatOverlay.classList.remove("overlay-visible", "overlay-closing");
+      const _wasPeeking = _chatOverlay.classList.contains("overlay-peeking");
+      document.documentElement.classList.remove("hub-chat-peeking");
+      _chatOverlay.classList.remove("overlay-visible", "overlay-closing", "overlay-peeking");
       resetChatOverlayMotionStyles();
       _chatOverlay.hidden = false;
-      requestAnimationFrame(() => {
+      if (_wasPeeking) {
+        _chatOverlay.classList.add("overlay-visible");
+        document.documentElement.classList.add("hub-chat-ui-active");
+      } else {
         requestAnimationFrame(() => {
-          if (_chatOverlay.hidden || _chatOverlay.classList.contains("prewarming")) return;
-          _chatOverlay.classList.add("overlay-visible");
-          document.documentElement.classList.add("hub-chat-ui-active");
+          requestAnimationFrame(() => {
+            if (_chatOverlay.hidden || _chatOverlay.classList.contains("prewarming")) return;
+            _chatOverlay.classList.add("overlay-visible");
+            document.documentElement.classList.add("hub-chat-ui-active");
+          });
         });
-      });
+      }
       _currentChatSessionName = normalizedName;
       if (!canReusePrewarm) {
         _prewarmedFrameReady = false;
@@ -511,6 +518,7 @@
       resetChatOverlayMotionStyles();
       updateMenuContext(false);
       _chatOverlay.classList.add("overlay-closing");
+      document.documentElement.classList.add("hub-chat-peeking");
       if (_chatOverlayCloseTimer) clearTimeout(_chatOverlayCloseTimer);
       _chatOverlayCloseTimer = setTimeout(() => {
         _chatOverlayCloseTimer = 0;
@@ -518,12 +526,7 @@
         document.body.classList.remove("hub-chat-overlay-active");
         _chatOverlay.classList.remove("overlay-closing");
         resetChatOverlayMotionStyles();
-        if (shouldUseChatOverlay() && _currentChatSessionName && _prewarmedChatUrl && _chatFrame.src === _prewarmedChatUrl) {
-          setPrewarmingOverlayActive(true);
-        } else {
-          _chatOverlay.hidden = true;
-          _chatFrame.src = "about:blank";
-        }
+        _chatOverlay.classList.add("overlay-peeking");
         _chatOverlay.style.top = "";
         _chatOverlay.style.height = "";
         _currentChatUrl = "";
