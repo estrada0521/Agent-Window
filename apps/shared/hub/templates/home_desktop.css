@@ -51,10 +51,10 @@
       --bg-rgb: 13, 13, 12;
       --bg: rgb(13, 13, 12);
       --glass-bg-90: rgba(var(--bg-rgb), 0.95);
-      --fg: rgb(180, 180, 180);
-      --muted: rgb(128, 128, 128);
-      --icon-fg: rgb(180, 180, 180);
-      --icon-muted: rgb(128, 128, 128);
+      --fg: rgb(200, 200, 200);
+      --muted: rgb(150, 150, 150);
+      --icon-fg: rgb(200, 200, 200);
+      --icon-muted: rgb(150, 150, 150);
       --icon-hover: rgb(190, 190, 190);
       --desk-chrome-fg: rgb(255, 255, 255);
       --desk-chrome-hover-bg: var(--bg);
