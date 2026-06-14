@@ -165,11 +165,11 @@
     }
     html[data-theme="dark"] {
       color-scheme: dark;
-      --bg-rgb: 0, 0, 0;
+      --bg-rgb: 13, 13, 12;
       --fg: rgb(255, 255, 255);
-      --muted: rgb(128, 128, 128);
+      --muted: rgb(150, 150, 150);
       --icon-fg: rgb(255, 255, 255);
-      --icon-muted: rgb(128, 128, 128);
+      --icon-muted: rgb(150, 150, 150);
       --icon-hover: rgb(190, 190, 190);
       --chip-color: rgb(70, 70, 70);
       --panel-row-bg: rgba(255, 255, 255, 0.10);
