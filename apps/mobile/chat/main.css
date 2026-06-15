@@ -76,6 +76,7 @@ __CHAT_INCLUDE:styles/thinking.css__
     }
 
     .md-body pre {
+      font-family: var(--code-font-family, "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace);
     }
 
     .composer-plus-menu[open] .composer-plus-toggle,
