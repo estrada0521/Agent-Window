@@ -63,11 +63,7 @@
           dpEnsureGitObserver();
         } else if (dpGitDetailContext.kind === "worktree" && dpGitDetailContext.wrapEl) {
           void dpRenderFileStatsInto(dpGitDetailContext.wrapEl, "", { allowUndo: true, incremental: true })
-            .then(() => {
-              if (dpGitDetailContext?.wrapEl && !dpGitDetailContext.wrapEl.querySelector(".git-commit-file-row")) {
-                dpCloseGitDetail({ refreshList: true });
-              }
-            }).catch(() => {});
+            .catch(() => {});
         }
       } catch (_) {
       } finally {
