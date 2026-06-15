@@ -577,9 +577,10 @@ def hub_new_session_html(variant="desktop"):
     else:
         agent_font_family = _serif_stack
     page = apply_color_tokens(page, settings=render_settings)
+    _code_font_family = f'"SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", {_cjk_sans}, monospace'
     font_inject = (
         f'<style>'
-        f':root{{--agent-message-font-family:{agent_font_family};}}'
+        f':root{{--agent-message-font-family:{agent_font_family};--code-font-family:{_code_font_family};}}'
         f'.dir-item-name,.dir-create-label{{font-weight:480!important;}}'
         f'</style>'
     )
