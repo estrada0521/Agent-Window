@@ -799,8 +799,6 @@
       ensureGitBranchObserver();
       if (gitBranchDetailContext?.kind === "worktree" && gitBranchDetailContext?.wrapEl) {
         await renderGitCommitFileStatsInto(gitBranchDetailContext.wrapEl, "", { allowUndo: true });
-        const stillHasRows = !!gitBranchDetailContext.wrapEl.querySelector(".git-commit-file-row");
-        if (!stillHasRows) closeGitBranchInlineDiff({ refreshList: true });
       }
     };
     const buildGitCommitFileRowHtml = (entry, { allowUndo = false, scope = "" } = {}) => {
