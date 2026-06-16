@@ -21,14 +21,17 @@
     const boldMobileToggle = document.querySelector('#settingsFormMobile input[name="bold_mode_mobile"]');
     const initialThemeValue = document.documentElement.dataset.theme || "dark";
     let _themeReloadPending = false;
+    const systemPrefersDark = () => {
+      try { return window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (_) { return true; }
+    };
     const hubThemeForDesktop = (themeDesktop) => {
+      if (themeDesktop === "system") return systemPrefersDark() ? "dark" : "light";
       if (themeDesktop === "split") return "dark";
       return themeDesktop === "light" ? "light" : "dark";
     };
 
     document.querySelectorAll(".theme-switcher").forEach((switcher) => {
       const input = switcher.querySelector('input[type="hidden"]');
-      const isDesktopTheme = input?.name === "theme_desktop";
       switcher.querySelectorAll(".theme-btn").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.preventDefault();
@@ -36,16 +39,11 @@
           if (input.value === nextTheme) return;
           input.value = nextTheme;
           switcher.dataset.themeValue = nextTheme;
-          document.documentElement.dataset.theme = isDesktopTheme ? hubThemeForDesktop(nextTheme) : nextTheme;
+          document.documentElement.dataset.theme = nextTheme;
           _themeReloadPending = nextTheme !== initialThemeValue;
           try {
             if (window.self !== window.top) {
-              window.top.postMessage(
-                isDesktopTheme
-                  ? { type: "multiagent-hub-theme-changed", themeDesktop: nextTheme }
-                  : { type: "multiagent-hub-theme-changed", theme: nextTheme },
-                "*"
-              );
+              window.top.postMessage({ type: "multiagent-hub-theme-changed", theme: nextTheme }, "*");
             }
           } catch (_) {}
           // Trigger autosave
@@ -56,6 +54,36 @@
         });
       });
     });
+
+    const themeDesktopSelect = document.getElementById("theme_desktop");
+    if (themeDesktopSelect) {
+      const applyThemeDesktopSelection = (nextTheme) => {
+        document.documentElement.dataset.theme = hubThemeForDesktop(nextTheme);
+        try {
+          if (window.self !== window.top) {
+            window.top.postMessage({ type: "multiagent-hub-theme-changed", themeDesktop: nextTheme }, "*");
+          }
+        } catch (_) {}
+      };
+      // Standalone (non-embedded) settings page: self-correct immediately on load.
+      if (window.self === window.top && themeDesktopSelect.value === "system") {
+        applyThemeDesktopSelection("system");
+      }
+      themeDesktopSelect.addEventListener("change", () => {
+        const nextTheme = themeDesktopSelect.value;
+        applyThemeDesktopSelection(nextTheme);
+        _themeReloadPending = nextTheme !== initialThemeValue;
+        if (typeof _doAutoSave === "function") {
+          clearTimeout(_autoSaveTimer);
+          _autoSaveTimer = setTimeout(_doAutoSave, 150);
+        }
+      });
+      try {
+        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+          if (themeDesktopSelect.value === "system") applyThemeDesktopSelection("system");
+        });
+      } catch (_) {}
+    }
 
     const applyBoldMode = () => {
       const html = document.documentElement;
