@@ -151,6 +151,16 @@ def hub_settings_html(
         f'<option value="{html.escape(value)}"' + (' selected' if value == selected else '') + f'>{html.escape(label)}</option>'
         for value, label in font_choices
     )
+    theme_desktop_choices = (
+        ("system", "System"),
+        ("light", "Light"),
+        ("dark", "Dark"),
+        ("split", "Hybrid"),
+    )
+    theme_desktop_options = "".join(
+        f'<option value="{html.escape(value)}"' + (' selected' if value == theme_desktop else '') + f'>{html.escape(label)}</option>'
+        for value, label in theme_desktop_choices
+    )
     def _build_editor_options(choices_fn, selected: str) -> tuple[str, str]:
         raw_choices = choices_fn()
         sanitized: list[tuple[str, str]] = []
@@ -210,6 +220,7 @@ def hub_settings_html(
         .replace("__LIGHT_MODE_MOBILE_CHECKED__", " checked" if light_mode_mobile else "")
         .replace("__THEME_MOBILE_HIDDEN__", html.escape(theme_mobile))
         .replace("__THEME_DESKTOP_HIDDEN__", html.escape(theme_desktop))
+        .replace("__THEME_DESKTOP_OPTIONS__", theme_desktop_options)
         .replace("__BOLD_MODE_MOBILE_CHECKED__", " checked" if bold_mode_mobile else "")
         .replace("__OPEN_FILES_DIRECT_EXTERNAL_EDITOR_CHECKED__", " checked" if open_files_direct_external_editor else "")
         .replace("__WINDOW_ALWAYS_ON_TOP_CHECKED__", " checked" if window_always_on_top else "")

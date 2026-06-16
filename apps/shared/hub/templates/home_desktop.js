@@ -374,10 +374,15 @@
       }
     }
 
+    function systemPrefersDark() {
+      try { return window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (_) { return true; }
+    }
+
     function deskChatThemeFromDesktop(themeDesktop) {
       const value = String(
         themeDesktop || document.documentElement.dataset.themeDesktop || document.documentElement.dataset.theme || "dark"
       ).trim().toLowerCase();
+      if (value === "system") return systemPrefersDark() ? "dark" : "light";
       return value === "split" || value === "light" ? "light" : "dark";
     }
 
@@ -402,6 +407,36 @@
         );
       } catch (_) {}
     }
+
+    function applyIncomingThemeDesktop(themeDesktopRaw) {
+      const themeDesktop = String(
+        themeDesktopRaw || document.documentElement.dataset.themeDesktop || "dark"
+      ).trim().toLowerCase();
+      const hubTheme = themeDesktop === "system"
+        ? (systemPrefersDark() ? "dark" : "light")
+        : (themeDesktop === "split" ? "dark" : (themeDesktop === "light" ? "light" : "dark"));
+      document.documentElement.dataset.theme = hubTheme;
+      document.documentElement.dataset.themeDesktop = themeDesktop;
+      applyDeskChatTheme(themeDesktop);
+      try { _deskSidebarFrame.contentDocument.documentElement.dataset.theme = hubTheme; } catch (_) {}
+      try {
+        _deskSidebarFrame?.contentWindow?.postMessage(
+          { type: "multiagent-hub-theme-changed", theme: hubTheme, themeDesktop },
+          "*"
+        );
+      } catch (_) {}
+    }
+
+    if ((document.documentElement.dataset.themeDesktop || "").trim().toLowerCase() === "system") {
+      applyIncomingThemeDesktop("system");
+    }
+    try {
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+        if ((document.documentElement.dataset.themeDesktop || "").trim().toLowerCase() === "system") {
+          applyIncomingThemeDesktop("system");
+        }
+      });
+    } catch (_) {}
 
     function buildDeskChatFrameUrl(chatUrl) {
       const raw = String(chatUrl || "").trim();
@@ -1355,20 +1390,7 @@
         return;
       }
       if (event.data && event.data.type === "multiagent-hub-theme-changed") {
-        const themeDesktop = String(
-          event.data.themeDesktop || event.data.theme || document.documentElement.dataset.themeDesktop || "dark"
-        ).trim().toLowerCase();
-        const hubTheme = themeDesktop === "split" ? "dark" : (themeDesktop === "light" ? "light" : "dark");
-        document.documentElement.dataset.theme = hubTheme;
-        document.documentElement.dataset.themeDesktop = themeDesktop;
-        applyDeskChatTheme(themeDesktop);
-        try { _deskSidebarFrame.contentDocument.documentElement.dataset.theme = hubTheme; } catch (_) {}
-        try {
-          _deskSidebarFrame?.contentWindow?.postMessage(
-            { type: "multiagent-hub-theme-changed", theme: hubTheme, themeDesktop },
-            "*"
-          );
-        } catch (_) {}
+        applyIncomingThemeDesktop(event.data.themeDesktop || event.data.theme);
         return;
       }
       if (event.data && event.data.type === "multiagent-open-hub-path") {

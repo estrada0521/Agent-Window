@@ -216,14 +216,12 @@
       height: 18px;
     }
     .theme-switcher[data-theme-value="light"] .theme-btn.light,
-    .theme-switcher[data-theme-value="dark"] .theme-btn.dark,
-    .theme-switcher[data-theme-value="split"] .theme-btn.split {
+    .theme-switcher[data-theme-value="dark"] .theme-btn.dark {
       background: var(--bg);
       color: var(--fg);
       box-shadow: 0 1px 3px rgba(0,0,0,0.12);
     }
-    html[data-theme="dark"] .theme-switcher[data-theme-value="dark"] .theme-btn.dark,
-    html[data-theme="dark"] .theme-switcher[data-theme-value="split"] .theme-btn.split {
+    html[data-theme="dark"] .theme-switcher[data-theme-value="dark"] .theme-btn.dark {
       box-shadow: 0 1px 3px rgba(0,0,0,0.4);
     }
 

@@ -7,7 +7,7 @@ import socket
 from pathlib import Path
 
 SESSION_LOG_FILENAME = ".log.jsonl"
-DESKTOP_THEME_CHOICES = frozenset({"light", "dark", "split"})
+DESKTOP_THEME_CHOICES = frozenset({"system", "light", "dark", "split"})
 MOBILE_THEME_CHOICES = frozenset({"light", "dark"})
 
 
@@ -25,7 +25,9 @@ def resolve_hub_theme(settings: dict, *, variant: str) -> str:
     if view == "mobile":
         return normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
     desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
-    return "dark" if desktop == "split" else desktop
+    if desktop in ("split", "system"):
+        return "dark"
+    return desktop
 
 
 def resolve_chat_theme(settings: dict, *, variant: str) -> str:
@@ -33,7 +35,11 @@ def resolve_chat_theme(settings: dict, *, variant: str) -> str:
     if view == "mobile":
         return normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
     desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
-    return "light" if desktop == "split" else desktop
+    if desktop == "split":
+        return "light"
+    if desktop == "system":
+        return "dark"
+    return desktop
 
 
 def settings_for_hub_render(settings: dict, *, variant: str) -> dict:
