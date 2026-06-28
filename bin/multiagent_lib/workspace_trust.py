@@ -38,6 +38,17 @@ def _trust_gemini(workspace: str) -> None:
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    antigravity_config = Path.home() / ".gemini" / "antigravity-cli" / "settings.json"
+    try:
+        agy_data = json.loads(antigravity_config.read_text(encoding="utf-8")) if antigravity_config.exists() else {}
+    except Exception:
+        agy_data = {}
+    trusted = agy_data.setdefault("trustedWorkspaces", [])
+    if workspace not in trusted:
+        trusted.append(workspace)
+        antigravity_config.parent.mkdir(parents=True, exist_ok=True)
+        antigravity_config.write_text(json.dumps(agy_data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
 
 def _trust_copilot(workspace: str) -> None:
     """~/.copilot/config.json: trustedFolders[] append"""

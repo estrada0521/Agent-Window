@@ -210,6 +210,14 @@ agent_in_registry() {
   return 1
 }
 
+canonical_agent_name() {
+  local candidate="$1"
+  case "$candidate" in
+    agy|antigravity|antigravity-ide) printf 'gemini\n' ;;
+    *) printf '%s\n' "$candidate" ;;
+  esac
+}
+
 agent_var() {
   local prefix="$1"
   local agent="$2"
@@ -230,13 +238,14 @@ agent_name = sys.argv[2]
 
 sys.path.insert(0, str(repo_root / "src"))
 from backend_core.agents.ensure_clis import resolve_agent_executable
+from backend_core.agents.registry import canonical_agent_name
 
 resolved = resolve_agent_executable(repo_root, agent_name)
 if resolved:
     print(resolved)
     raise SystemExit(0)
 
-base = agent_name.split("-", 1)[0]
+base = canonical_agent_name(agent_name.split("-", 1)[0])
 print(base)
 raise SystemExit(1)
 PYEOF
@@ -299,6 +308,11 @@ session_attached_value() {
 session_bin_dir_value() {
   local session="$1"
   tmux show-environment -t "$session" MULTIAGENT_BIN_DIR 2>/dev/null | sed 's/^[^=]*=//' || true
+}
+
+session_workspace_value() {
+  local session="$1"
+  tmux show-environment -t "$session" MULTIAGENT_WORKSPACE 2>/dev/null | sed 's/^[^=]*=//' || true
 }
 
 load_session_runtime_context() {
@@ -1264,7 +1278,7 @@ elif [[ -n "$AGENTS_ARG" ]]; then
   IFS=',' read -ra SELECTED_AGENTS <<< "$AGENTS_ARG"
   _normalised=()
   for agent in "${SELECTED_AGENTS[@]}"; do
-    base_agent="${agent%%-[0-9]*}"
+    base_agent="$(canonical_agent_name "${agent%%-[0-9]*}")"
     valid=0
     for a in "${ALL_AGENTS[@]}"; do
       [[ "$base_agent" == "$a" ]] && valid=1 && break
@@ -1310,7 +1324,11 @@ print(','.join(result))
         echo "multiagent: 警告: ${agent} の CLI が無いため起動しません（厳格にするには MULTIAGENT_STRICT_AGENT_CLIS=1）" >&2
       fi
     done
-    SELECTED_AGENTS=("${_kept[@]}")
+    if [[ ${#_kept[@]} -gt 0 ]]; then
+      SELECTED_AGENTS=("${_kept[@]}")
+    else
+      SELECTED_AGENTS=()
+    fi
     if [[ ${#SELECTED_AGENTS[@]} -lt 1 ]]; then
       echo "multiagent: 起動できるエージェントがありません。CLI を入れるか --agents で指定してください。" >&2
       exit 1

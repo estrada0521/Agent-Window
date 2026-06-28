@@ -172,7 +172,7 @@ multiagent_dispatch_agent_mutation_modes() {
       exit 1
     fi
 
-    base_agent="${AGENTS_ARG%%-[0-9]*}"
+    base_agent="$(canonical_agent_name "${AGENTS_ARG%%-[0-9]*}")"
     if ! agent_in_registry "$base_agent"; then
       echo "Unknown agent: $AGENTS_ARG" >&2
       exit 1
