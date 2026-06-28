@@ -4,8 +4,6 @@ import logging
 import subprocess
 from typing import Any, Protocol
 
-from native_log_sync.agents._shared.path_state import _agent_base_name
-
 from shortcut_command.catalog import PANE_SINGLE_CONTROL_MESSAGES
 from shortcut_command.parsing import parse_pane_direct_command
 
@@ -19,6 +17,8 @@ class ShortcutControlRuntime(Protocol):
     def resume_agent_pane(self, agent: str) -> tuple[bool, str]: ...
 
     def pane_id_for_agent(self, agent: str) -> str | None: ...
+
+    def _mark_idle(self, agent: str) -> None: ...
 
     def append_system_entry(self, message: str, *, agent: str = "", **extra: Any) -> dict: ...
 
@@ -64,8 +64,8 @@ def try_deliver_shortcut_control(
                 capture_output=True,
                 check=False,
             )
-            if message in {"interrupt", "ctrlc"} and _agent_base_name(agent) == "cursor":
-                rt._agent_running.discard(agent)
+            if message in {"interrupt", "ctrlc"}:
+                rt._mark_idle(agent)
     except Exception as exc:
         logging.error("Unexpected error: %s", exc, exc_info=True)
         return 500, {"ok": False, "error": str(exc)}

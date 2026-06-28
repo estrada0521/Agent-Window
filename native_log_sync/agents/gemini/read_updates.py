@@ -12,6 +12,7 @@ from native_log_sync.agents._shared.path_state import (
 )
 from backend_core.access.files import append_jsonl_entry
 from native_log_sync.duplicate import already_synced_message, mark_message_synced
+from native_log_sync.entry_kind import should_omit_antigravity_text
 
 
 def _read_varint(data: bytes, index: int, end: int) -> tuple[int | None, int]:
@@ -76,7 +77,11 @@ def _protobuf_strings(data: bytes, *, depth: int = 0, max_depth: int = 4) -> lis
 
 
 def _antigravity_response_text(payload: bytes) -> str:
-    strings = [s.strip() for s in _protobuf_strings(payload or b"") if s.strip()]
+    strings = [
+        s.strip()
+        for s in _protobuf_strings(payload or b"")
+        if s.strip() and not should_omit_antigravity_text(s)
+    ]
     candidates = [
         s for s in strings
         if "**Summary of work:**" in s or "\n- Received " in s or "pong" in s.lower()
@@ -105,11 +110,19 @@ def _sync_antigravity_db(self, agent: str, db_path: str, prev_cursor: NativeLogC
     uri = f"file:{db_path}?mode=ro&immutable=1&nolock=1"
     with sqlite3.connect(uri, uri=True) as conn:
         rows = conn.execute(
-            "select idx, step_payload from steps where step_type = 15 and idx >= ? order by idx",
+            """
+            select s.idx, s.step_payload, next.step_type
+            from steps s
+            left join steps next on next.idx = s.idx + 1
+            where s.step_type = 15 and s.idx >= ?
+            order by s.idx
+            """,
             (start_idx,),
         ).fetchall()
-    for idx, payload in rows:
+    for idx, payload, next_step_type in rows:
         max_seen = max(max_seen, int(idx) + 1)
+        if next_step_type in {7, 8, 9}:
+            continue
         text = _antigravity_response_text(payload or b"").strip()
         if not text:
             continue
