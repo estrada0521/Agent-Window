@@ -1,9 +1,51 @@
 from __future__ import annotations
 
-import os
+import json
 from pathlib import Path
 
-from native_log_sync.agents._shared.resolve_path import path_within_roots, pick_latest_unclaimed_for_agent, workspace_slug_variants
+
+def _resolve_antigravity_conversation_db(runtime, workspace_text: str) -> str:
+    base = Path.home() / ".gemini" / "antigravity-cli"
+    history_path = base / "history.jsonl"
+    conversations_dir = base / "conversations"
+    if not history_path.is_file() or not conversations_dir.is_dir():
+        return ""
+
+    workspace_aliases = {str(Path(alias).resolve()) for alias in runtime._workspace_aliases(workspace_text)}
+    picked_conversation_id = ""
+    try:
+        lines = history_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        lines = []
+    for line in reversed(lines[-200:]):
+        try:
+            item = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(item, dict):
+            continue
+        workspace = str(item.get("workspace") or "").strip()
+        if workspace:
+            try:
+                workspace = str(Path(workspace).resolve())
+            except OSError:
+                pass
+        if workspace_aliases and workspace not in workspace_aliases:
+            continue
+        conversation_id = str(item.get("conversationId") or "").strip()
+        if conversation_id:
+            picked_conversation_id = conversation_id
+            break
+
+    if not picked_conversation_id:
+        try:
+            candidates = sorted(conversations_dir.glob("*.db"), key=lambda p: p.stat().st_mtime, reverse=True)
+        except OSError:
+            candidates = []
+        return str(candidates[0]) if candidates else ""
+
+    candidate = conversations_dir / f"{picked_conversation_id}.db"
+    return str(candidate) if candidate.is_file() else ""
 
 
 def resolve_gemini_native_log(runtime, agent: str, native_log_path: str | None) -> str:
@@ -11,31 +53,4 @@ def resolve_gemini_native_log(runtime, agent: str, native_log_path: str | None) 
     if not workspace_text:
         return ""
 
-    roots: list[Path] = []
-    seen_roots: set[str] = set()
-    for alias in runtime._workspace_aliases(workspace_text):
-        workspace_name = Path(alias).name.strip()
-        if not workspace_name:
-            continue
-        for slug in workspace_slug_variants(workspace_name, include_lower=True):
-            root = Path.home() / ".gemini" / "tmp" / slug / "chats"
-            if not root.is_dir():
-                continue
-            key = str(root.resolve())
-            if key in seen_roots:
-                continue
-            seen_roots.add(key)
-            roots.append(root)
-    if not roots:
-        return ""
-
-    candidates: list[Path] = []
-    for root in roots:
-        candidates.extend(root.glob("*.jsonl"))
-
-    resolved = str(Path(native_log_path)) if native_log_path else ""
-    if resolved and path_within_roots(resolved, roots) and os.path.exists(resolved):
-        return resolved
-
-    picked = pick_latest_unclaimed_for_agent(candidates, runtime._gemini_cursors, agent)
-    return str(picked) if picked and picked.exists() else ""
+    return _resolve_antigravity_conversation_db(runtime, workspace_text)

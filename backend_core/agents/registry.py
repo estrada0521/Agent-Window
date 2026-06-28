@@ -28,6 +28,11 @@ class AgentDef:
 
 
 AGENTS: dict[str, AgentDef] = {}
+AGENT_ALIASES: dict[str, str] = {
+    "agy": "gemini",
+    "antigravity": "gemini",
+    "antigravity-ide": "gemini",
+}
 
 AGENT_ICONS_DIR = "assets/icons/agents"
 
@@ -64,13 +69,14 @@ _register(
     ),
     AgentDef(
         name="gemini",
-        display_name="Gemini",
+        display_name="Antigravity",
         icon_file="gemini-color.svg",
-        executable="gemini",
+        executable="agy",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
-        resume_flag="--resume latest",
-        ready_pattern=r"Ready \(multiagent\)|Gemini|Type your message",
+        resume_flag="--continue",
+        ready_pattern=r"Ready \(multiagent\)|Antigravity|Type your message",
         number_alias=3,
+        fallback_paths=("~/.local/bin/agy",),
         fallback_nvm=True,
     ),
     AgentDef(
@@ -119,6 +125,11 @@ def icon_filename_map() -> dict[str, str]:
 
 def number_alias_map() -> dict[int, str]:
     return {a.number_alias: name for name, a in AGENTS.items() if a.number_alias}
+
+
+def canonical_agent_name(name: str) -> str:
+    base = (name or "").strip().lower()
+    return AGENT_ALIASES.get(base, base)
 
 
 def generate_agent_message_selectors(suffix: str = "", prefix: str = "") -> str:

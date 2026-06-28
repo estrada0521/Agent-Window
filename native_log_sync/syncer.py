@@ -102,6 +102,9 @@ class NativeLogSyncer:
         reason: str = "",
     ) -> list[dict]:
         bindings = _refresh_bindings_impl(self, pane_requests, replace_all=replace_all, reason=reason)
+        from native_log_sync.dispatch import sync_agent
+        for binding in bindings:
+            sync_agent(self, binding.agent, binding.path)
         return [
             {
                 "agent": item.agent,

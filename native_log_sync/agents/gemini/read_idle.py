@@ -3,8 +3,6 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from native_log_sync.agents.gemini.read_runtime import parse_native_gemini_log
-
 if TYPE_CHECKING:
     from server.runtime import ChatRuntime
 
@@ -15,4 +13,4 @@ def load_runtime_events_for_idle_running(runtime: ChatRuntime, agent: str) -> li
     path = runtime._gemini_cursors[agent].path
     if not path or not os.path.exists(path):
         return []
-    return parse_native_gemini_log(path, limit=12, workspace=runtime.workspace)
+    return []

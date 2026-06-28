@@ -11,7 +11,7 @@ def resolve_native_log_binding(runtime, request):
         pane_id=request.pane_id,
         pane_pid=request.pane_pid,
         path=path or "",
-        source="gemini-chat",
+        source="antigravity-db",
     )
 
 

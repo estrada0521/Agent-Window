@@ -1,20 +1,137 @@
 from __future__ import annotations
 
-import json
 import logging
 import os
+import sqlite3
+import string
 import time
+from pathlib import Path
 
 from native_log_sync.agents._shared.path_state import (
     NativeLogCursor,
-    _advance_native_cursor,
-    _cursor_binding_changed,
 )
 from backend_core.access.files import append_jsonl_entry
 from native_log_sync.duplicate import already_synced_message, mark_message_synced
 
-from native_log_sync.agents.gemini.read_runtime import extract_gemini_message, iter_tool_calls, runtime_tool_events
-from native_log_sync.agents._shared.runtime_push import push_runtime_display
+
+def _read_varint(data: bytes, index: int, end: int) -> tuple[int | None, int]:
+    shift = 0
+    value = 0
+    while index < end and shift < 70:
+        byte = data[index]
+        index += 1
+        value |= (byte & 0x7F) << shift
+        if not byte & 0x80:
+            return value, index
+        shift += 7
+    return None, index
+
+
+def _printable_utf8(raw: bytes) -> str | None:
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    if not text.strip():
+        return None
+    good = sum((ch in string.printable or ord(ch) > 127) and ch not in "\x0b\x0c" for ch in text)
+    if good / max(1, len(text)) < 0.85:
+        return None
+    return text
+
+
+def _protobuf_strings(data: bytes, *, depth: int = 0, max_depth: int = 4) -> list[str]:
+    out: list[str] = []
+    index = 0
+    end = len(data)
+    while index < end:
+        key, next_index = _read_varint(data, index, end)
+        if key is None or next_index <= index:
+            break
+        wire = key & 7
+        index = next_index
+        if wire == 0:
+            _, index = _read_varint(data, index, end)
+        elif wire == 1:
+            index += 8
+        elif wire == 5:
+            index += 4
+        elif wire == 2:
+            length, next_index = _read_varint(data, index, end)
+            if length is None:
+                break
+            index = next_index
+            if length < 0 or index + length > end:
+                break
+            chunk = data[index : index + length]
+            text = _printable_utf8(chunk)
+            if text is not None:
+                out.append(text)
+            if depth < max_depth and len(chunk) > 1:
+                out.extend(_protobuf_strings(chunk, depth=depth + 1, max_depth=max_depth))
+            index += length
+        else:
+            break
+    return out
+
+
+def _antigravity_response_text(payload: bytes) -> str:
+    strings = [s.strip() for s in _protobuf_strings(payload or b"") if s.strip()]
+    candidates = [
+        s for s in strings
+        if "**Summary of work:**" in s or "\n- Received " in s or "pong" in s.lower()
+    ]
+    if not candidates:
+        candidates = [
+            s for s in strings
+            if 1 <= len(s) <= 8000
+            and not s.startswith(("sessionID", "file://", "command(", "read_url("))
+            and not s.startswith(("/", "MODEL_", "gemini-"))
+            and "trajectory_id" not in s
+            and not (len(s) == 36 and s.count("-") == 4)
+        ]
+    if not candidates:
+        return ""
+    candidates.sort(key=lambda s: (len(s), s), reverse=True)
+    return candidates[0]
+
+
+def _sync_antigravity_db(self, agent: str, db_path: str, prev_cursor: NativeLogCursor | None) -> bool:
+    prev_key = os.path.realpath(prev_cursor.path) if prev_cursor is not None else ""
+    current_key = os.path.realpath(db_path)
+    start_idx = int(prev_cursor.offset) if prev_cursor is not None and prev_key == current_key else 0
+    appended = False
+    max_seen = start_idx
+    uri = f"file:{db_path}?mode=ro&immutable=1&nolock=1"
+    with sqlite3.connect(uri, uri=True) as conn:
+        rows = conn.execute(
+            "select idx, step_payload from steps where step_type = 15 and idx >= ? order by idx",
+            (start_idx,),
+        ).fetchall()
+    for idx, payload in rows:
+        max_seen = max(max_seen, int(idx) + 1)
+        text = _antigravity_response_text(payload or b"").strip()
+        if not text:
+            continue
+        msg_id = f"antigravity:{Path(db_path).stem}:{idx}"
+        if already_synced_message(self, agent, text, msg_id):
+            continue
+        jsonl_entry = {
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "session": self.session_name,
+            "sender": agent,
+            "targets": ["user"],
+            "message": text,
+            "msg_id": msg_id,
+        }
+        append_jsonl_entry(self.index_path, jsonl_entry)
+        mark_message_synced(self, agent, text, msg_id)
+        appended = True
+    self._gemini_cursors[agent] = NativeLogCursor(path=db_path, offset=max_seen)
+    self.save_sync_state()
+    if appended:
+        self._mark_idle(agent)
+    return appended
 
 
 def sync_gemini_native_log(
@@ -25,117 +142,17 @@ def sync_gemini_native_log(
     first_seen_grace_seconds: float,
     sync_bind_backfill_window_seconds: float,
 ) -> None:
-    _FIRST_SEEN_GRACE_SECONDS = float(first_seen_grace_seconds)
-    _SYNC_BIND_BACKFILL_WINDOW_SECONDS = float(sync_bind_backfill_window_seconds)
+    del first_seen_grace_seconds, sync_bind_backfill_window_seconds
     prev_cursor = self._gemini_cursors.get(agent)
     try:
         session_path_str = str(native_log_path or "").strip()
         if not session_path_str or not os.path.exists(session_path_str):
             return
 
-        file_size = os.path.getsize(session_path_str)
-        offset = _advance_native_cursor(self._gemini_cursors, agent, session_path_str, file_size)
-
-        def _append_gemini_entry(entry: dict, *, min_event_ts: float | None = None) -> bool:
-            extracted = extract_gemini_message(entry, min_event_ts=min_event_ts)
-            if not extracted:
-                return False
-            
-            msg_id = extracted["msg_id"]
-            display_text = extracted["display_text"]
-            if already_synced_message(self, agent, display_text, msg_id):
-                return False
-                
-            if extracted["is_thought"]:
-                return False
-
-            jsonl_entry = {
-                "timestamp": extracted["timestamp"],
-                "session": self.session_name,
-                "sender": agent,
-                "targets": ["user"],
-                "message": display_text,
-                "msg_id": msg_id,
-            }
-            append_jsonl_entry(self.index_path, jsonl_entry)
-            mark_message_synced(self, agent, display_text, msg_id)
-            return True
-
-        def _scan_recent_gemini_entries(min_event_ts: float) -> bool:
-            appended = False
-            try:
-                with open(session_path_str, "r", encoding="utf-8") as handle:
-                    for line in handle:
-                        line = line.strip()
-                        if not line:
-                            continue
-                        try:
-                            entry = json.loads(line)
-                        except json.JSONDecodeError:
-                            continue
-                        if _append_gemini_entry(entry, min_event_ts=min_event_ts):
-                            appended = True
-            except Exception:
-                return False
-            return appended
-
-        if offset is None:
-            appended_on_bind = False
-            binding_changed = _cursor_binding_changed(prev_cursor, self._gemini_cursors.get(agent))
-            if binding_changed:
-                min_event_ts = time.time() - _SYNC_BIND_BACKFILL_WINDOW_SECONDS
-                appended_on_bind = _scan_recent_gemini_entries(min_event_ts)
-            if appended_on_bind or binding_changed:
-                self.save_sync_state()
+        if not session_path_str.endswith(".db"):
             return
 
-        _assistant_appended = False
-        _cancelled = False
-        with open(session_path_str, "r", encoding="utf-8") as f:
-            f.seek(offset)
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entry = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if (
-                    entry.get("type") == "info"
-                    and entry.get("content") == "Request cancelled."
-                ):
-                    _cancelled = True
-                if entry.get("type") == "error":
-                    content = str(entry.get("content") or "").strip()
-                    if "exhausted your capacity" in content.lower() or "usage limit" in content.lower() or "quota" in content.lower():
-                        msg_id = str(entry.get("id") or "").strip()
-                        if msg_id and not already_synced_message(self, agent, content, msg_id):
-                            import uuid
-                            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                            jsonl_entry = {
-                                "timestamp": timestamp,
-                                "session": self.session_name,
-                                "sender": agent,
-                                "targets": ["user"],
-                                "message": content,
-                                "msg_id": msg_id or uuid.uuid4().hex[:12],
-                            }
-                            append_jsonl_entry(self.index_path, jsonl_entry)
-                            mark_message_synced(self, agent, content, msg_id)
-                        _cancelled = True
-                if _append_gemini_entry(entry):
-                    _assistant_appended = True
-                tool_evs = []
-                for name, inp in iter_tool_calls(entry):
-                    tool_evs.extend(runtime_tool_events(name, inp, workspace=str(self.workspace or "")))
-                if tool_evs:
-                    push_runtime_display(self, agent, tool_evs)
-
-        self._gemini_cursors[agent] = NativeLogCursor(path=session_path_str, offset=file_size)
-        self.save_sync_state()
-        if _assistant_appended or _cancelled:
-            self._mark_idle(agent)
+        _sync_antigravity_db(self, agent, session_path_str, prev_cursor)
     except Exception as exc:
         if prev_cursor is None:
             self._gemini_cursors.pop(agent, None)
