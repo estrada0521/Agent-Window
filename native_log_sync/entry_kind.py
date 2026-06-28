@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 
 _GEMINI_PLAN_PREFIX = re.compile(
@@ -8,6 +9,25 @@ _GEMINI_PLAN_PREFIX = re.compile(
 )
 _MAX_PLAN_TEXT_LEN = 280
 _LEGACY_EPHEMERAL_KIND = "agent-thinking"
+_ANTIGRAVITY_TOOL_KEYS = {"toolAction", "toolSummary"}
+_ANTIGRAVITY_THOUGHT_PHRASES = (
+    "okay,",
+    "i'm ",
+    "i've ",
+    "i am ",
+    "i need ",
+    "my focus ",
+)
+_ANTIGRAVITY_TOOL_NAMES = {
+    "grep_search",
+    "list_dir",
+    "read_file",
+    "replace",
+    "run_shell_command",
+    "search_web",
+    "view_file",
+    "write_file",
+}
 
 
 def _normalized_nonempty_texts(texts: list[str]) -> list[str]:
@@ -52,6 +72,73 @@ def is_ephemeral_thought_content(texts: list[str], *, has_thought_part: bool = F
     return _has_gemini_plan_prefix(" ".join(normalized))
 
 
+def is_antigravity_tool_call_text(text: str) -> bool:
+    body = str(text or "").strip()
+    if not body.startswith("{") or not body.endswith("}"):
+        return False
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        return False
+    if not isinstance(payload, dict):
+        return False
+    return bool(_ANTIGRAVITY_TOOL_KEYS.intersection(payload))
+
+
+def is_antigravity_internal_text(text: str) -> bool:
+    body = str(text or "").strip()
+    if not body:
+        return True
+    if any(ord(ch) < 32 and ch not in "\n\r\t" for ch in body):
+        return True
+    if body.startswith(("sessionID", "file://", "command(", "read_url(")):
+        return True
+    if body.startswith(("/", "MODEL_", "gemini-")):
+        return True
+    if body in _ANTIGRAVITY_TOOL_NAMES:
+        return True
+    if "trajectory_id" in body:
+        return True
+    if re.fullmatch(r"-?\d{12,}", body):
+        return True
+    if re.fullmatch(r"bot-[0-9a-fA-F-]{36}", body):
+        return True
+    if 6 <= len(body) <= 12 and re.fullmatch(r"[a-z0-9]+", body) and re.search(r"\d", body):
+        return True
+    if (
+        16 <= len(body) <= 80
+        and not re.search(r"\s", body)
+        and re.fullmatch(r"[A-Za-z0-9_-]+", body)
+        and re.search(r"[a-z]", body)
+        and re.search(r"[A-Z]", body)
+        and re.search(r"\d", body)
+    ):
+        return True
+    if len(body) == 36 and body.count("-") == 4:
+        return True
+    return False
+
+
+def is_antigravity_thought_trace_text(text: str) -> bool:
+    body = strip_sender_prefix(str(text or "")).strip()
+    if "**" not in body[:120]:
+        return False
+    if "**Summary of work:**" in body or "**行ったこと" in body:
+        return False
+    lower = body[:1200].lower()
+    if not any(phrase in lower for phrase in _ANTIGRAVITY_THOUGHT_PHRASES):
+        return False
+    return bool(re.search(r"(?:^|\n)\*\*[^*\n]{3,80}\*\*|^[^*\n]{3,80}\*\*", body))
+
+
+def should_omit_antigravity_text(text: str) -> bool:
+    return (
+        is_antigravity_tool_call_text(text)
+        or is_antigravity_internal_text(text)
+        or is_antigravity_thought_trace_text(text)
+    )
+
+
 def should_omit_entry_from_chat(entry: dict) -> bool:
     if not isinstance(entry, dict):
         return False
@@ -63,6 +150,8 @@ def should_omit_entry_from_chat(entry: dict) -> bool:
     if kind == _LEGACY_EPHEMERAL_KIND:
         return True
     body = strip_sender_prefix(str(entry.get("message") or ""))
+    if sender_base == "gemini" and should_omit_antigravity_text(body):
+        return True
     if sender_base == "gemini" and _has_gemini_plan_prefix(body):
         return True
     if _is_planning_style_text(body):
