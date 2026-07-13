@@ -105,8 +105,8 @@
       --code-bg: rgba(255, 255, 255, 0.05);
       --code-scrollbar-thumb: rgba(255, 255, 255, 0.45);
       --code-scrollbar-thumb-hover: rgba(255, 255, 255, 0.65);
-      --scrollbar-thumb: rgba(255, 255, 255, 0.15);
-      --scrollbar-thumb-hover: rgba(255, 255, 255, 0.25);
+      --scrollbar-thumb: var(--fg);
+      --scrollbar-thumb-hover: var(--fg);
     }
     html[data-theme="light"] {
       color-scheme: light;
@@ -154,8 +154,8 @@
       --code-bg: rgba(0, 0, 0, 0.05);
       --code-scrollbar-thumb: rgba(0, 0, 0, 0.25);
       --code-scrollbar-thumb-hover: rgba(0, 0, 0, 0.45);
-      --scrollbar-thumb: rgba(0, 0, 0, 0.22);
-      --scrollbar-thumb-hover: rgba(0, 0, 0, 0.35);
+      --scrollbar-thumb: var(--fg);
+      --scrollbar-thumb-hover: var(--fg);
     }
     html[data-theme="dark"] {
       color-scheme: dark;
@@ -180,8 +180,8 @@
       --code-bg: rgba(180, 180, 180, 0.05);
       --code-scrollbar-thumb: rgba(180, 180, 180, 0.45);
       --code-scrollbar-thumb-hover: rgba(180, 180, 180, 0.65);
-      --scrollbar-thumb: rgba(180, 180, 180, 0.15);
-      --scrollbar-thumb-hover: rgba(180, 180, 180, 0.25);
+      --scrollbar-thumb: var(--fg);
+      --scrollbar-thumb-hover: var(--fg);
       --surface: rgb(10, 10, 10);
       --surface-alt: rgb(15, 15, 15);
       --bg-hover: rgb(20, 20, 20);
@@ -443,10 +443,11 @@
       border-top: none;
     }
     * { box-sizing: border-box; }
-    ::-webkit-scrollbar { width: 14px; height: 14px; }
+    html { scrollbar-color: var(--scrollbar-thumb) transparent; }
+    ::-webkit-scrollbar { width: 2px; height: 2px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border: 4px solid transparent; background-clip: padding-box; border-radius: 999px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); border: 4px solid transparent; background-clip: padding-box; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
     .git-branch-commit-scroll,
     .git-commit-detail-body > .git-commit-file-wrap,
     .repo-browser-scroll {

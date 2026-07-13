@@ -323,9 +323,10 @@
     html[data-mobile="1"] main {
       padding-right: 20px;
     }
-    main::-webkit-scrollbar { width: 8px; height: 8px; }
-    main::-webkit-scrollbar-thumb { background: var(--code-scrollbar-thumb); border: 0; background-clip: border-box; border-radius: 0; }
-    main::-webkit-scrollbar-thumb:hover { background: var(--code-scrollbar-thumb-hover); border: 0; background-clip: border-box; border-radius: 0; }
+    main { scrollbar-width: thin; scrollbar-color: var(--fg) transparent; }
+    main::-webkit-scrollbar { width: 2px !important; height: 2px !important; }
+    main::-webkit-scrollbar-thumb { background: var(--fg); border: 0; border-radius: 999px; }
+    main::-webkit-scrollbar-thumb:hover { background: var(--fg); border: 0; border-radius: 999px; }
     #scrollToBottomBtn,
     #composerFabBtn {
       position: fixed;
