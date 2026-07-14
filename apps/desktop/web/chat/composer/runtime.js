@@ -78,14 +78,36 @@
       const maybeOpenComposerForAttachDrag = () => {
         if (!isComposerOverlayOpen()) openComposerOverlay({ immediateFocus: false });
       };
+      let attachDragClearTimer = 0;
+      const showComposerAttachDrag = () => {
+        if (attachDragClearTimer) {
+          clearTimeout(attachDragClearTimer);
+          attachDragClearTimer = 0;
+        }
+        maybeOpenComposerForAttachDrag();
+        composerOverlay?.classList.add("composer-attach-drag");
+      };
+      const hideComposerAttachDrag = ({ immediate = false } = {}) => {
+        if (attachDragClearTimer) {
+          clearTimeout(attachDragClearTimer);
+          attachDragClearTimer = 0;
+        }
+        if (immediate) {
+          composerOverlay?.classList.remove("composer-attach-drag");
+          return;
+        }
+        attachDragClearTimer = setTimeout(() => {
+          composerOverlay?.classList.remove("composer-attach-drag");
+          attachDragClearTimer = 0;
+        }, 120);
+      };
       window.addEventListener("message", async (event) => {
         if (event.source !== window.parent || !(event.data && event.data.type)) return;
         if (event.data.type === "multiagent-parent-attach-drag") {
           if (event.data.active) {
-            maybeOpenComposerForAttachDrag();
-            composerOverlay?.classList.add("composer-attach-drag");
+            showComposerAttachDrag();
           } else {
-            composerOverlay?.classList.remove("composer-attach-drag");
+            hideComposerAttachDrag();
           }
           return;
         }
@@ -93,7 +115,7 @@
         const forwardedFiles = Array.isArray(event.data.files)
           ? event.data.files.filter((file) => file && typeof file.name === "string")
           : [];
-        composerOverlay?.classList.remove("composer-attach-drag");
+        hideComposerAttachDrag({ immediate: true });
         if (!forwardedFiles.length) return;
         maybeOpenComposerForAttachDrag();
         await uploadAttachedFiles(forwardedFiles);
@@ -120,30 +142,30 @@
       });
       document.addEventListener("dragenter", (e) => {
         if (!dtHasFiles(e.dataTransfer) || isOnFileInputDrop(e.target)) return;
-        maybeOpenComposerForAttachDrag();
-        composerOverlay?.classList.add("composer-attach-drag");
+        showComposerAttachDrag();
       }, true);
       document.addEventListener("dragover", (e) => {
         if (!dtHasFiles(e.dataTransfer) || isOnFileInputDrop(e.target)) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = "copy";
+        showComposerAttachDrag();
       }, true);
       document.addEventListener("dragleave", (e) => {
         if (!composerOverlay?.classList.contains("composer-attach-drag")) return;
         if (!dtHasFiles(e.dataTransfer)) return;
         const related = e.relatedTarget;
         if (!related || !document.documentElement.contains(related)) {
-          composerOverlay.classList.remove("composer-attach-drag");
+          hideComposerAttachDrag();
         }
       }, true);
       document.addEventListener("dragend", () => {
-        composerOverlay?.classList.remove("composer-attach-drag");
+        hideComposerAttachDrag({ immediate: true });
       }, true);
       document.addEventListener("drop", async (e) => {
         if (!dtHasFiles(e.dataTransfer) || isOnFileInputDrop(e.target)) return;
         e.preventDefault();
         e.stopPropagation();
-        composerOverlay?.classList.remove("composer-attach-drag");
+        hideComposerAttachDrag({ immediate: true });
         maybeOpenComposerForAttachDrag();
         await uploadAttachedFiles(e.dataTransfer.files);
       }, true);

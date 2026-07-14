@@ -307,6 +307,28 @@
     const setDeskAttachDragActive = (active) => {
       postDeskChatFrameMessage({ type: "multiagent-parent-attach-drag", active: !!active });
     };
+    let deskAttachDragClearTimer = 0;
+    const showDeskAttachDrag = () => {
+      if (deskAttachDragClearTimer) {
+        clearTimeout(deskAttachDragClearTimer);
+        deskAttachDragClearTimer = 0;
+      }
+      setDeskAttachDragActive(true);
+    };
+    const hideDeskAttachDrag = ({ immediate = false } = {}) => {
+      if (deskAttachDragClearTimer) {
+        clearTimeout(deskAttachDragClearTimer);
+        deskAttachDragClearTimer = 0;
+      }
+      if (immediate) {
+        setDeskAttachDragActive(false);
+        return;
+      }
+      deskAttachDragClearTimer = setTimeout(() => {
+        setDeskAttachDragActive(false);
+        deskAttachDragClearTimer = 0;
+      }, 120);
+    };
     const forwardDeskDroppedFiles = (files) => {
       const dropped = Array.from(files || []).filter((file) => file && typeof file.name === "string");
       if (!dropped.length) return false;
@@ -1413,29 +1435,29 @@
     });
     document.addEventListener("dragenter", (event) => {
       if (!deskDtHasFiles(event.dataTransfer) || isDeskChatFrameDropTarget(event.target)) return;
-      setDeskAttachDragActive(true);
+      showDeskAttachDrag();
     }, true);
     document.addEventListener("dragover", (event) => {
       if (!deskDtHasFiles(event.dataTransfer) || isDeskChatFrameDropTarget(event.target)) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = "copy";
-      setDeskAttachDragActive(true);
+      showDeskAttachDrag();
     }, true);
     document.addEventListener("dragleave", (event) => {
       if (!deskDtHasFiles(event.dataTransfer) || isDeskChatFrameDropTarget(event.target)) return;
       const related = event.relatedTarget;
       if (!related || !document.documentElement.contains(related)) {
-        setDeskAttachDragActive(false);
+        hideDeskAttachDrag();
       }
     }, true);
     document.addEventListener("dragend", () => {
-      setDeskAttachDragActive(false);
+      hideDeskAttachDrag({ immediate: true });
     }, true);
     document.addEventListener("drop", (event) => {
       if (!deskDtHasFiles(event.dataTransfer) || isDeskChatFrameDropTarget(event.target)) return;
       event.preventDefault();
       event.stopPropagation();
-      setDeskAttachDragActive(false);
+      hideDeskAttachDrag({ immediate: true });
       forwardDeskDroppedFiles(event.dataTransfer.files);
     }, true);
 
