@@ -125,7 +125,8 @@
           return true;
         }
         const isLight = resolvedBaseTheme === "light";
-        const bg = isLight ? "rgb(255,255,255)" : "rgb(0,0,0)";
+        const rootStyle = getComputedStyle(document.documentElement);
+        const bg = isLight ? "rgb(255,255,255)" : (rootStyle.getPropertyValue("--bg").trim() || "rgb(13,13,12)");
         const fg = isLight ? "rgb(0,0,0)" : "rgb(255,255,255)";
         const lnFg = isLight ? "rgba(0,0,0,0.22)" : "rgba(255,255,255,0.22)";
         const scheme = isLight ? "light" : "dark";

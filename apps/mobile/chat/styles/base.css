@@ -203,7 +203,7 @@
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --mobile-sheet-pill-bg: rgba(255, 255, 255, 0.22);
       --mobile-top-gradient-rgb: 0, 0, 0;
-      --mobile-sheet-gradient-rgb: var(--mobile-top-gradient-rgb);
+      --mobile-sheet-gradient-rgb: var(--bg-rgb);
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);
     }
 
@@ -405,9 +405,9 @@
       pointer-events: auto;
       border-radius: 20px 20px 0 0;
       border-top: 0.5px solid rgba(255, 255, 255, 0.15);
-      background: var(--glass-bg-72);
-      backdrop-filter: var(--glass-filter-20);
-      -webkit-backdrop-filter: var(--glass-filter-20);
+      background: var(--bg);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
       box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
     }
 

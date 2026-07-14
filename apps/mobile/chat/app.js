@@ -1,9 +1,12 @@
 __CHAT_INCLUDE:../../shared/chat/base.js__
     const applyMobileThemeGradientVars = () => {
       const root = document.documentElement;
-      const channels = root.dataset.theme === "light" ? "255, 255, 255" : "0, 0, 0";
-      root.style.setProperty("--mobile-top-gradient-rgb", channels);
-      root.style.setProperty("--mobile-sheet-gradient-rgb", channels);
+      const sheetChannels = getComputedStyle(root).getPropertyValue("--bg-rgb").trim() || (
+        root.dataset.theme === "light" ? "249, 249, 247" : "13, 13, 12"
+      );
+      const topChannels = root.dataset.theme === "light" ? "255, 255, 255" : "0, 0, 0";
+      root.style.setProperty("--mobile-top-gradient-rgb", topChannels);
+      root.style.setProperty("--mobile-sheet-gradient-rgb", sheetChannels);
     };
     applyMobileThemeGradientVars();
     new MutationObserver((mutations) => {
