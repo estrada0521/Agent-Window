@@ -1,7 +1,7 @@
 # Agent Window
 
-Agent Window is an application for controlling the CLI tools of Claude, Codex, Gemini, Cursor, Copilot, and other agents.
-It works with regular subscriptions only.
+Agent Window controls CLIs for Claude, Codex, Gemini, Cursor, and Copilot.
+Works with a normal subscription alone.
 
 <p align="center">
   <img src="media/agent-window-hero-1.png" width="100%" alt="Agent Window hero 1">
@@ -10,117 +10,100 @@ It works with regular subscriptions only.
 
 # Backend
 
-In this repository, each session is associated with one tmux process and one chat server.
-You can add or remove any agents in the panes within each process. In other words, a single session can be operated with multiple agents.
-Even if you restart a CLI or repeatedly remove and re-add an agent, logs are appended to the same local JSONL file as long as it remains the same session.
+Each session in this repo is tied to one tmux process and one chat server.
+You can add and remove agents in any pane. In other words, one session runs multiple agents.
+Logs append to the same local jsonl as long as it is the same session, even if you restart or re-add CLIs.
 
 ## Sending
 
-The sending backend uses `tmux send-key`.
-Messages can also be sent from one agent to another, whether they are in the same session or in different sessions.
+The sending backend uses `tmux send-keys`.
+Agent-to-agent sending is possible regardless of the session.
 
 ## Receiving
 
-For receiving, Agent Window resolves each CLI's native log path from sources such as the PID tree, then monitors it directly with kqueue.
-The path is re-resolved at specific timings, such as when the chat server is reloaded or when a CLI is restarted.
-Events are mainly classified into messages and tool calls. Only messages are recorded in the session JSONL file, while tool calls are streamed temporarily.
+Receiving resolves each CLI's native log path from the PID Tree, etc., and monitors it directly via kqueue.
+Path re-resolution occurs at specific times like chat server reloads or CLI restarts.
+Events are categorized into messages and tool calls; only the former are recorded in the session's jsonl, while the latter are streamed temporarily.
 
 ## App
 
-The Mac version is provided as a Tauri app built with Rust.
-It is only a thin wrapper for improving the appearance; the actual application is just a web app.
-A PWA is also provided for smartphones.
+Mac version: a Rust Tauri-built app.
+A thin wrapper for appearance; essentially a web app.
+PWA available for mobile.
 
 # Frontend
 
 ## Hub (left sidebar)
 
 The Hub server manages the session list.
-You can start new sessions, archive sessions, and delete sessions from here.
-You can also change appearance settings and global feature settings from here.
-
-<p align="center">
-  <img src="media/agent-window-middle-1.png" width="49%" alt="Agent Window middle 1">
-  <img src="media/agent-window-middle-3.png" width="49%" alt="Agent Window middle 3">
-</p>
+Start new sessions, archive, or delete sessions from here.
+Appearance and global feature settings are also changed here.
 
 ### Appearance
 
-Three themes are available: dark, light, and mixed.
+Three themes: Dark, Light, and Hybrid.
 
 ### Auto Approval
 
-When Auto Approval is turned on, tool calls from all agents are automatically approved regardless of the CLI-side settings.
-Only agents in the Running state are polled with `tmux capture-pane`; when an approval prompt string is found, Agent Window simply sends Enter. This is a deliberately simple and rough implementation.
+When Auto Approval is ON, all agents' tool calls are auto-approved regardless of CLI settings.
+Only running agents' tmux panes are polled; a simple method that sends Enter when an approval prompt is found.
 
 ### Always on Top
 
-When Always on Top is turned on, the window always stays in front.
+When Always on Top is ON, the window remains above all others.
 
-## Chat view (center and right)
+## Chat Screen (center / right)
 
-This is the main view. It is basically the same as a typical agent window.
+The basic screen. Similar to typical agent windows.
 
-### Input box
-
-<p align="center">
-  <img src="media/agent-window-middle-2.png" width="100%" alt="Agent Window middle 2">
-</p>
-
-The input box is usually minimized to maximize the display area for the chat body.
-It can be expanded with the `O` button at the bottom.
-Messages entered here are pasted directly into the selected agent's CLI pane.
-In other words, you can use the commands of each CLI as-is.
-Typing `@` lets you search files inside the repository; the results from FSEvents, described later, are cached.
-Files can be attached with the plus button or by drag and drop.
-Attached files are saved under `.agent-window/uploads/`.
-
-### Workspace management
+### Input
 
 <p align="center">
-  <img src="media/agent-window-middle-4.png" width="49%" alt="Agent Window middle 4">
-  <img src="media/agent-window-middle-5.png" width="49%" alt="Agent Window middle 5">
+  <img src="media/agent-window-middle-2.png" width="100%" alt="Agent Window input 1">
+  <img src="media/agent-window-middle-3.png" width="100%" alt="Agent Window input 2">
 </p>
 
-The right pane synchronizes the workspace state using the standard FSEvents approach.
-It includes a feature for displaying only uncommitted changes in a compact form.
-Only deletion and ignoring of untracked files, as well as file-level revert buttons, are implemented.
+Usually minimized to maximize the chat area. Expanded with the O button at the bottom.
+Messages are pasted directly into the selected agent's CLI pane.
+CLI commands can be used as-is.
+`@` triggers in-repo file search, caching FSEvents results.
+Attach files via the plus button or drag and drop.
+Attached files are saved to `.agent-window/uploads/`.
 
-The embedded file viewer is minimal, but it supports HTML display and Markdown rendering.
-When `External Editor` is turned on in the settings, files are opened in the specified external editor. This is the default behavior.
+### Workspace
 
-### Menu button
+The right pane syncs workspace state via standard FSEvents.
+Uncommitted diffs are shown compactly.
+Includes untracked file deletion/ignoring and per-file revert buttons.
+Minimal embedded file viewer supports HTML and markdown rendering.
+When `External Editor` is ON, files open in your specified editor by default.
 
-The hamburger button in the upper-right corner provides the following actions.
+### Menu Button
 
-<p align="center">
-  <img src="media/agent-window-middle-6.png" width="100%" alt="Agent Window middle 6">
-</p>
+The hamburger button in the top-right opens the following:
 
-**Terminal**: Opens the tmux terminal itself. It is kept compact.
+**Terminal**: Opens the tmux terminal directly. Compact layout.
 **Finder**: Opens the session workspace in Finder.
-**Add / Remove Agent**: Adds or removes agents from the session. Multiple instances of the same agent can also be added. They are handled by instance names such as `Claude-3`.
-**reload**: Performs a hard reload of the chat server. If you have edited the source code, the updated code will be loaded. If something goes wrong, try reload first.
+**Add / Remove Agent**: Add/remove agents. Supports multiple instances of the same agent, handled by instance names like `Claude-3`.
+**reload**: Hard reload of the chat server. Replaces the server after source edits.
 
 # Setup
 
 ## Tauri App + HTTP
 
-Basically, Agent Window assumes use through the Tauri app.
+Primarily designed for the Tauri App.
 
-Before starting, install `python3`, `tmux`, `cargo`, `tauri-cli`, and Xcode Command Line Tools.
+Prerequisites: `python3`, `tmux`, `cargo`, `tauri-cli`, and Xcode Command Line Tools.
 
-Install and authenticate the Agent CLIs you want to use, such as Claude, Codex, Gemini, Cursor, and Copilot, in advance.
+Install and authenticate Agent CLIs such as Claude, Codex, Gemini, Cursor, and Copilot beforehand.
 
 ```bash
 ./tauri_app/tauri_start
 ```
 
-This command builds the Tauri app, and the Hub is launched from the Tauri app.
-
-The default port for the Hub is `8788`.
-
-After startup, start a session from `New Session` in the Hub.
+This builds the Tauri App; the Hub is started from within it.
+Default port is `8788`.
+Start a session via `New Session` in the Hub.
 
 To rebuild only:
 
@@ -130,20 +113,18 @@ To rebuild only:
 
 ## PWA / HTTPS
 
-The HTTP Tauri app must already be running first.
+Requires the HTTP Tauri App to be running first.
 
 ```bash
 ./setup/pwa/enable
 ./tauri_app/tauri_start
 ```
 
-`./setup/pwa/enable` checks the running Hub, then prepares mkcert and the local certificate.
+`./setup/pwa/enable` prepares mkcert and local certificates.
+Once enabled, the app starts in HTTPS by checking `~/.agent-window/state/pwa/enabled`.
+Install mkcert's `rootCA.pem` on your device and enable trust.
 
-After the PWA is enabled, Agent Window checks `~/.agent-window/state/pwa/enabled` and automatically starts with HTTPS.
-
-Send mkcert's `rootCA.pem` to your device, install the certificate profile, and enable trust for it.
-
-Then open the following URL in Safari:
+Open the following in Safari:
 
 ```text
 https://<Mac LAN IP>:8788/ or
