@@ -183,6 +183,29 @@
       const maybeOpenComposerForAttachDrag = () => {
         if (!isComposerOverlayOpen()) openComposerOverlay({ immediateFocus: false });
       };
+      let attachDragClearTimer = 0;
+      const showComposerAttachDrag = () => {
+        if (attachDragClearTimer) {
+          clearTimeout(attachDragClearTimer);
+          attachDragClearTimer = 0;
+        }
+        maybeOpenComposerForAttachDrag();
+        composerOverlay?.classList.add("composer-attach-drag");
+      };
+      const hideComposerAttachDrag = ({ immediate = false } = {}) => {
+        if (attachDragClearTimer) {
+          clearTimeout(attachDragClearTimer);
+          attachDragClearTimer = 0;
+        }
+        if (immediate) {
+          composerOverlay?.classList.remove("composer-attach-drag");
+          return;
+        }
+        attachDragClearTimer = setTimeout(() => {
+          composerOverlay?.classList.remove("composer-attach-drag");
+          attachDragClearTimer = 0;
+        }, 120);
+      };
       cameraBtn.addEventListener("click", () => {
         closePlusMenu();
         closeComposerOverlay();
@@ -195,30 +218,30 @@
       });
       document.addEventListener("dragenter", (e) => {
         if (!dtHasFiles(e.dataTransfer) || isOnFileInputDrop(e.target)) return;
-        maybeOpenComposerForAttachDrag();
-        composerOverlay?.classList.add("composer-attach-drag");
+        showComposerAttachDrag();
       }, true);
       document.addEventListener("dragover", (e) => {
         if (!dtHasFiles(e.dataTransfer) || isOnFileInputDrop(e.target)) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = "copy";
+        showComposerAttachDrag();
       }, true);
       document.addEventListener("dragleave", (e) => {
         if (!composerOverlay?.classList.contains("composer-attach-drag")) return;
         if (!dtHasFiles(e.dataTransfer)) return;
         const related = e.relatedTarget;
         if (!related || !document.documentElement.contains(related)) {
-          composerOverlay.classList.remove("composer-attach-drag");
+          hideComposerAttachDrag();
         }
       }, true);
       document.addEventListener("dragend", () => {
-        composerOverlay?.classList.remove("composer-attach-drag");
+        hideComposerAttachDrag({ immediate: true });
       }, true);
       document.addEventListener("drop", async (e) => {
         if (!dtHasFiles(e.dataTransfer) || isOnFileInputDrop(e.target)) return;
         e.preventDefault();
         e.stopPropagation();
-        composerOverlay?.classList.remove("composer-attach-drag");
+        hideComposerAttachDrag({ immediate: true });
         maybeOpenComposerForAttachDrag();
         await uploadAttachedFiles(e.dataTransfer.files);
       }, true);
