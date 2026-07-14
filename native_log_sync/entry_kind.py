@@ -9,7 +9,16 @@ _GEMINI_PLAN_PREFIX = re.compile(
 )
 _MAX_PLAN_TEXT_LEN = 280
 _LEGACY_EPHEMERAL_KIND = "agent-thinking"
-_ANTIGRAVITY_TOOL_KEYS = {"toolAction", "toolSummary"}
+_ANTIGRAVITY_TOOL_KEYS = {
+    "functionCall",
+    "toolAction",
+    "toolCallId",
+    "toolInput",
+    "toolName",
+    "toolResult",
+    "toolSummary",
+    "toolUseId",
+}
 _ANTIGRAVITY_THOUGHT_PHRASES = (
     "okay,",
     "i'm ",
@@ -19,15 +28,23 @@ _ANTIGRAVITY_THOUGHT_PHRASES = (
     "my focus ",
 )
 _ANTIGRAVITY_TOOL_NAMES = {
+    "command_status",
     "grep_search",
     "list_dir",
+    "multi_replace_file_content",
     "read_file",
     "replace",
+    "run_command",
     "run_shell_command",
     "search_web",
     "view_file",
+    "write_to_file",
     "write_file",
 }
+_ANTIGRAVITY_INTERNAL_DIGEST = re.compile(r"\d+\([0-9a-fA-F]{32,64}\)?")
+_ANTIGRAVITY_INTERNAL_BOT_REF = re.compile(r"\d+\(bot-[0-9a-fA-F-]{8,36}\)?")
+_ANTIGRAVITY_HEX_DIGEST = re.compile(r"(?=.*[a-fA-F])[0-9a-fA-F]{32,64}")
+_ANTIGRAVITY_BASE64_BLOB = re.compile(r"[A-Za-z0-9+/]{120,}={0,2}")
 
 
 def _normalized_nonempty_texts(texts: list[str]) -> list[str]:
@@ -98,6 +115,14 @@ def is_antigravity_internal_text(text: str) -> bool:
     if body in _ANTIGRAVITY_TOOL_NAMES:
         return True
     if "trajectory_id" in body:
+        return True
+    if _ANTIGRAVITY_INTERNAL_DIGEST.fullmatch(body):
+        return True
+    if _ANTIGRAVITY_INTERNAL_BOT_REF.fullmatch(body):
+        return True
+    if _ANTIGRAVITY_HEX_DIGEST.fullmatch(body):
+        return True
+    if _ANTIGRAVITY_BASE64_BLOB.fullmatch(body):
         return True
     if re.fullmatch(r"-?\d{12,}", body):
         return True

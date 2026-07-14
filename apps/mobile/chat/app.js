@@ -347,7 +347,7 @@ __CHAT_INCLUDE:transcript/rich-rendering.js__
         node.disabled = disabled;
       });
     };
-    const STICKY_THRESHOLD = 450;
+    const STICKY_THRESHOLD = 32;
     const PUBLIC_OLDER_AUTOLOAD_THRESHOLD = 120;
     let _stickyToBottom = false;
     let _programmaticScroll = false;

@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 
 from backend_core.access.settings import load_hub_settings, sanitize_hub_external_editor_choice
+from workspace_sync.files.ignore import FileIndexIgnoreRules
 
 
 class FileRuntime:
@@ -91,10 +92,37 @@ class FileRuntime:
         self._dir_list_cache: dict[str, list[dict]] | None = None
         self._file_list_cache_at = 0.0
         self._file_list_cache_lock = threading.Lock()
+        self._file_list_refresh_lock = threading.Lock()
         self._file_list_cache_version = 0
+        self._file_index_ignore = FileIndexIgnoreRules(self.workspace)
 
     def _is_allowed_path(self, full: str) -> bool:
         return True
+
+    @staticmethod
+    def _normalize_rel_path(rel: str) -> str:
+        return FileIndexIgnoreRules.normalize_rel_path(rel)
+
+    def _rel_path_is_skipped(self, rel: str) -> bool:
+        normalized = self._normalize_rel_path(rel)
+        if not normalized:
+            return False
+        parts = Path(normalized).parts
+        if any(part in self.SKIP_DIRS for part in parts):
+            return True
+        return self._file_index_ignore.matches(normalized)
+
+    def _prune_walk_dirs(self, rel_dir: str, dirs: list[str]) -> None:
+        kept: list[str] = []
+        for dirname in dirs:
+            child_rel = f"{rel_dir}/{dirname}" if rel_dir else dirname
+            if self._rel_path_is_skipped(child_rel):
+                continue
+            kept.append(dirname)
+        dirs[:] = sorted(kept)
+
+    def file_index_path_is_ignored(self, rel: str) -> bool:
+        return self._rel_path_is_skipped(rel)
 
     @staticmethod
     def _native_log_home_root_paths() -> tuple[Path, ...]:
@@ -724,8 +752,7 @@ delay 0.2
             rel = str(item or "").replace("\\", "/").strip("/")
             if not rel or rel in seen:
                 continue
-            parts = Path(rel).parts[:-1]
-            if any(part in self.SKIP_DIRS for part in parts):
+            if self._rel_path_is_skipped(rel):
                 continue
             full = os.path.realpath(os.path.join(self.workspace, rel))
             if not self._is_allowed_path(full):
@@ -737,13 +764,18 @@ delay 0.2
     def _list_files_via_walk(self) -> list[str]:
         paths: list[str] = []
         for root, dirs, filenames in os.walk(self.workspace):
-            dirs[:] = sorted(d for d in dirs if d != ".git")
+            rel_dir = os.path.relpath(root, self.workspace).replace("\\", "/")
+            if rel_dir == ".":
+                rel_dir = ""
+            self._prune_walk_dirs(rel_dir, dirs)
             for filename in sorted(filenames):
                 full = os.path.join(root, filename)
                 resolved = os.path.realpath(full)
                 if not self._is_allowed_path(resolved):
                     continue
                 rel = os.path.relpath(full, self.workspace).replace("\\", "/")
+                if self._rel_path_is_skipped(rel):
+                    continue
                 if rel:
                     paths.append(rel)
         paths.sort(key=lambda value: value.casefold())
@@ -757,49 +789,56 @@ delay 0.2
             self._file_list_cache_version += 1
 
     def refresh_file_list_cache(self) -> list[dict]:
+        if not self._file_list_refresh_lock.acquire(blocking=False):
+            with self._file_list_cache_lock:
+                return [dict(item) for item in (self._file_list_cache or [])]
         files: list[dict] = []
         dir_entries: dict[str, list[dict]] = {"": []}
-        for root, dirs, filenames in os.walk(self.workspace):
-            dirs[:] = sorted(d for d in dirs if d != ".git")
-            rel_dir = os.path.relpath(root, self.workspace).replace("\\", "/")
-            if rel_dir == ".":
-                rel_dir = ""
-            dir_bucket = dir_entries.setdefault(rel_dir, [])
-            for dirname in dirs:
-                child_rel = f"{rel_dir}/{dirname}" if rel_dir else dirname
-                if dirname in self.SKIP_DIRS:
+        try:
+            for root, dirs, filenames in os.walk(self.workspace):
+                rel_dir = os.path.relpath(root, self.workspace).replace("\\", "/")
+                if rel_dir == ".":
+                    rel_dir = ""
+                if self._rel_path_is_skipped(rel_dir):
+                    dirs[:] = []
                     continue
-                try:
-                    child_real = os.path.realpath(os.path.join(root, dirname))
-                except OSError:
-                    continue
-                if not self._is_allowed_path(child_real):
-                    continue
-                dir_entries.setdefault(child_rel, [])
-                dir_bucket.append({"name": dirname, "path": child_rel, "kind": "dir"})
-            for filename in sorted(filenames):
-                full = os.path.join(root, filename)
-                resolved = os.path.realpath(full)
-                if not self._is_allowed_path(resolved):
-                    continue
-                rel = os.path.relpath(full, self.workspace).replace("\\", "/")
-                if not rel:
-                    continue
-                files.append({"path": rel, "size": None})
-                try:
-                    size = os.path.getsize(full) if os.path.isfile(full) else None
-                except OSError:
-                    size = None
-                dir_bucket.append({"name": filename, "path": rel, "kind": "file", "size": size})
-        files.sort(key=lambda item: str(item.get("path") or "").casefold())
-        for rel, entries in dir_entries.items():
-            entries.sort(key=lambda item: (item.get("kind") != "dir", str(item.get("name") or "").casefold()))
-        with self._file_list_cache_lock:
-            self._file_list_cache = files
-            self._dir_list_cache = dir_entries
-            self._file_list_cache_at = time.time()
-            self._file_list_cache_version += 1
-            return [dict(item) for item in files]
+                self._prune_walk_dirs(rel_dir, dirs)
+                dir_bucket = dir_entries.setdefault(rel_dir, [])
+                for dirname in dirs:
+                    child_rel = f"{rel_dir}/{dirname}" if rel_dir else dirname
+                    try:
+                        child_real = os.path.realpath(os.path.join(root, dirname))
+                    except OSError:
+                        continue
+                    if not self._is_allowed_path(child_real):
+                        continue
+                    dir_entries.setdefault(child_rel, [])
+                    dir_bucket.append({"name": dirname, "path": child_rel, "kind": "dir"})
+                for filename in sorted(filenames):
+                    full = os.path.join(root, filename)
+                    resolved = os.path.realpath(full)
+                    if not self._is_allowed_path(resolved):
+                        continue
+                    rel = os.path.relpath(full, self.workspace).replace("\\", "/")
+                    if not rel or self._rel_path_is_skipped(rel):
+                        continue
+                    files.append({"path": rel, "size": None})
+                    try:
+                        size = os.path.getsize(full) if os.path.isfile(full) else None
+                    except OSError:
+                        size = None
+                    dir_bucket.append({"name": filename, "path": rel, "kind": "file", "size": size})
+            files.sort(key=lambda item: str(item.get("path") or "").casefold())
+            for rel, entries in dir_entries.items():
+                entries.sort(key=lambda item: (item.get("kind") != "dir", str(item.get("name") or "").casefold()))
+            with self._file_list_cache_lock:
+                self._file_list_cache = files
+                self._dir_list_cache = dir_entries
+                self._file_list_cache_at = time.time()
+                self._file_list_cache_version += 1
+                return [dict(item) for item in files]
+        finally:
+            self._file_list_refresh_lock.release()
 
     def file_list_cache_state(self) -> dict[str, int | float]:
         with self._file_list_cache_lock:

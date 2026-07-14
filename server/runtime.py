@@ -619,6 +619,9 @@ class ChatRuntime:
         )
 
     def agent_statuses(self) -> dict[str, str]:
+        restored = self._restore_running_agents_from_tmux_env()
+        if restored:
+            self._agent_running.update(restored)
         return self._native_log.agent_statuses(self._agent_running)
 
     def agent_runtime_state(self) -> dict[str, dict]:

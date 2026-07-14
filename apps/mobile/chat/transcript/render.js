@@ -1,6 +1,6 @@
     const render = (data, { forceScroll = false, forceFullRender = false } = {}) => {
       try {
-        const shouldStick = forceScroll;
+        const shouldStick = forceScroll || _stickyToBottom || isNearBottom();
         const displayEntries = displayEntriesForData(data);
         const metaHiddenIds = computeMetaHiddenIds(displayEntries);
         const previousRenderedIds = new Set(_renderedIds);
@@ -24,9 +24,9 @@
           return;
         }
 
-        const preserveScrollTop = forceScroll ? null : timeline.scrollTop;
+        const preserveScrollTop = shouldStick ? null : timeline.scrollTop;
         let scrollAnchor = null;
-        if (!forceScroll) {
+        if (!shouldStick) {
           const tRect = timeline.getBoundingClientRect();
           for (const el of timeline.querySelectorAll("[data-msgid]")) {
             const mid = String(el.dataset.msgid || "");

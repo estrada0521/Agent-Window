@@ -317,6 +317,10 @@ fn find_repo_root(app: &tauri::App) -> Option<String> {
             }
         }
     }
+    if let Some(repo) = sync_bundled_repo(app) {
+        return Some(repo.to_string_lossy().to_string());
+    }
+
     let home = std::env::var("HOME").unwrap_or_default();
     for candidate in &[
         format!("{}/.agent-window/app/bundled-repo", home),
@@ -329,7 +333,7 @@ fn find_repo_root(app: &tauri::App) -> Option<String> {
             return Some(candidate.clone());
         }
     }
-    sync_bundled_repo(app).map(|repo| repo.to_string_lossy().to_string())
+    None
 }
 
 fn wait_for_port(port: u16, timeout: Duration) -> bool {

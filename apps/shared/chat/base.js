@@ -68,6 +68,13 @@
     const KATEX_CSS_HREF = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
     const KATEX_JS_SRC = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
     const KATEX_AUTO_RENDER_SRC = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+    const normalizeEscapedLineBreaks = (text) => {
+      const value = String(text ?? "");
+      if (!/\\[rn]/.test(value)) return value;
+      const matches = value.match(/\\r\\n|\\n|\\r/g) || [];
+      if (matches.length < 2 && !/\\n\\n|\\n\s*(?:[-*]|\d+\.|#{1,6}\s)/.test(value)) return value;
+      return value.replace(/\\r\\n|\\n|\\r/g, "\n");
+    };
     const renderMarkdown = (text) => {
       if (typeof marked !== "undefined") {
         try {
@@ -76,7 +83,8 @@
 
           const codeBlocks = [];
           let codeCount = 0;
-          let processedText = text.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
+          const normalizedText = normalizeEscapedLineBreaks(text);
+          let processedText = normalizedText.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
             const id = `code-placeholder-${codeCount++}`;
             codeBlocks.push({ id, content: match });
             return `\x00CODE:${id}\x00`;
@@ -136,7 +144,7 @@
           return injectFileCards(tempDiv.innerHTML);
         } catch (_) {}
       }
-      return injectFileCards("<pre>" + escapeHtml(text) + "</pre>");
+      return injectFileCards("<pre>" + escapeHtml(normalizeEscapedLineBreaks(text)) + "</pre>");
     };
     const wrapFileIcon = (path) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
     const FILE_SVG_ICONS = {
