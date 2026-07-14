@@ -23,6 +23,7 @@ class _DebouncedWorkspaceRefresh:
     def __init__(self, workspace_sync_api) -> None:
         self._api = workspace_sync_api
         self._lock = threading.Lock()
+        self._flush_lock = threading.Lock()
         self._pending: set[str] = set()
         self._timer: threading.Timer | None = None
 
@@ -34,6 +35,8 @@ class _DebouncedWorkspaceRefresh:
         rel = os.path.relpath(normalized, workspace).replace("\\", "/")
         if rel == ".git" or rel.startswith(".git/"):
             return
+        if self._api.file_runtime.file_index_path_is_ignored(rel):
+            return
         with self._lock:
             self._pending.add(normalized)
             if self._timer:
@@ -43,6 +46,23 @@ class _DebouncedWorkspaceRefresh:
             self._timer.start()
 
     def _flush(self) -> None:
+        if not self._flush_lock.acquire(blocking=False):
+            self._schedule_flush()
+            return
+        try:
+            self._flush_locked()
+        finally:
+            self._flush_lock.release()
+
+    def _schedule_flush(self) -> None:
+        with self._lock:
+            if self._timer:
+                self._timer.cancel()
+            self._timer = threading.Timer(_DEBOUNCE_SEC, self._flush)
+            self._timer.daemon = True
+            self._timer.start()
+
+    def _flush_locked(self) -> None:
         with self._lock:
             paths = set(self._pending)
             self._pending.clear()
@@ -61,6 +81,10 @@ class _DebouncedWorkspaceRefresh:
             self._api.publish_sync_event()
         except Exception as exc:
             logging.error("Workspace sync event publish failed: %s", exc)
+        with self._lock:
+            has_more = bool(self._pending)
+        if has_more:
+            self._schedule_flush()
 
 
 def start_workspace_fsevents_watcher(workspace_sync_api) -> None:

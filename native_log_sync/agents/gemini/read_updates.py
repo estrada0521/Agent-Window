@@ -4,6 +4,7 @@ import logging
 import os
 import sqlite3
 import string
+import threading
 import time
 from pathlib import Path
 
@@ -13,6 +14,9 @@ from native_log_sync.agents._shared.path_state import (
 from backend_core.access.files import append_jsonl_entry
 from native_log_sync.duplicate import already_synced_message, mark_message_synced
 from native_log_sync.entry_kind import should_omit_antigravity_text
+
+_ANTIGRAVITY_STABLE_SEEN_SECONDS = 1.5
+_ANTIGRAVITY_RETRY_DELAY_SECONDS = 1.7
 
 
 def _read_varint(data: bytes, index: int, end: int) -> tuple[int | None, int]:
@@ -82,6 +86,14 @@ def _antigravity_response_text(payload: bytes) -> str:
         for s in _protobuf_strings(payload or b"")
         if s.strip() and not should_omit_antigravity_text(s)
     ]
+    repeated: dict[str, int] = {}
+    for text in strings:
+        repeated[text] = repeated.get(text, 0) + 1
+    visible_text_candidates = [text for text, count in repeated.items() if count >= 2]
+    if visible_text_candidates:
+        visible_text_candidates.sort(key=lambda s: (len(s), s), reverse=True)
+        return visible_text_candidates[0]
+
     candidates = [
         s for s in strings
         if "**Summary of work:**" in s or "\n- Received " in s or "pong" in s.lower()
@@ -101,12 +113,47 @@ def _antigravity_response_text(payload: bytes) -> str:
     return candidates[0]
 
 
+def _schedule_antigravity_retry(self, agent: str, db_path: str, step_key: str) -> None:
+    retry_keys = getattr(self, "_gemini_pending_antigravity_retry_keys", None)
+    if not isinstance(retry_keys, set):
+        retry_keys = set()
+        self._gemini_pending_antigravity_retry_keys = retry_keys
+    if step_key in retry_keys:
+        return
+    retry_keys.add(step_key)
+
+    def retry() -> None:
+        retry_keys.discard(step_key)
+        try:
+            sync_gemini_native_log(
+                self,
+                agent,
+                db_path,
+                first_seen_grace_seconds=0,
+                sync_bind_backfill_window_seconds=0,
+            )
+        except Exception as exc:
+            logging.error(f"Failed to retry Gemini Antigravity sync for {agent}: {exc}", exc_info=True)
+
+    timer = threading.Timer(_ANTIGRAVITY_RETRY_DELAY_SECONDS, retry)
+    timer.daemon = True
+    timer.start()
+
+
 def _sync_antigravity_db(self, agent: str, db_path: str, prev_cursor: NativeLogCursor | None) -> bool:
     prev_key = os.path.realpath(prev_cursor.path) if prev_cursor is not None else ""
     current_key = os.path.realpath(db_path)
     start_idx = int(prev_cursor.offset) if prev_cursor is not None and prev_key == current_key else 0
     appended = False
-    max_seen = start_idx
+    next_cursor = start_idx
+    pending_steps = getattr(self, "_gemini_pending_antigravity_steps", None)
+    if not isinstance(pending_steps, dict):
+        pending_steps = {}
+        self._gemini_pending_antigravity_steps = pending_steps
+    pending_prefix = f"{current_key}:"
+    for key in list(pending_steps):
+        if not str(key).startswith(pending_prefix):
+            pending_steps.pop(key, None)
     uri = f"file:{db_path}?mode=ro&immutable=1&nolock=1"
     with sqlite3.connect(uri, uri=True) as conn:
         rows = conn.execute(
@@ -119,15 +166,40 @@ def _sync_antigravity_db(self, agent: str, db_path: str, prev_cursor: NativeLogC
             """,
             (start_idx,),
         ).fetchall()
+    now = time.monotonic()
     for idx, payload, next_step_type in rows:
-        max_seen = max(max_seen, int(idx) + 1)
+        idx = int(idx)
+        if idx < next_cursor:
+            continue
+        step_key = f"{current_key}:{idx}"
         if next_step_type in {7, 8, 9}:
+            pending_steps.pop(step_key, None)
+            next_cursor = idx + 1
             continue
         text = _antigravity_response_text(payload or b"").strip()
+        payload_size = len(payload or b"")
+        pending = pending_steps.get(step_key)
+        if pending is None or pending.get("text") != text or pending.get("payload_size") != payload_size:
+            pending_steps[step_key] = {
+                "text": text,
+                "payload_size": payload_size,
+                "first_seen": now,
+            }
+            _schedule_antigravity_retry(self, agent, db_path, step_key)
+            break
+        if now - float(pending.get("first_seen") or now) < _ANTIGRAVITY_STABLE_SEEN_SECONDS:
+            _schedule_antigravity_retry(self, agent, db_path, step_key)
+            break
+        pending_steps.pop(step_key, None)
         if not text:
+            next_cursor = idx + 1
+            continue
+        if should_omit_antigravity_text(text):
+            next_cursor = idx + 1
             continue
         msg_id = f"antigravity:{Path(db_path).stem}:{idx}"
         if already_synced_message(self, agent, text, msg_id):
+            next_cursor = idx + 1
             continue
         jsonl_entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -140,7 +212,8 @@ def _sync_antigravity_db(self, agent: str, db_path: str, prev_cursor: NativeLogC
         append_jsonl_entry(self.index_path, jsonl_entry)
         mark_message_synced(self, agent, text, msg_id)
         appended = True
-    self._gemini_cursors[agent] = NativeLogCursor(path=db_path, offset=max_seen)
+        next_cursor = idx + 1
+    self._gemini_cursors[agent] = NativeLogCursor(path=db_path, offset=next_cursor)
     self.save_sync_state()
     if appended:
         self._mark_idle(agent)

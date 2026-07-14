@@ -215,7 +215,7 @@ def _message_index_watcher() -> None:
                 for event in events:
                     if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
                         if runtime is not None:
-                            runtime.notify_session_state_changed(["messages"], reason="messages")
+                            runtime.notify_session_state_changed(["messages", "statuses"], reason="messages")
                     if event.fflags & (select.KQ_NOTE_RENAME | select.KQ_NOTE_DELETE):
                         raise OSError("message index path changed")
         except Exception as exc:

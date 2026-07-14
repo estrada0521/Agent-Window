@@ -73,13 +73,17 @@ class TmuxClient:
         return ["tmux", "-L", self.tmux_socket_name]
 
     def run(self, args: list[str]) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(
-            [*self._prefix(), *args],
-            capture_output=True,
-            text=True,
-            check=False,
-            env=self.env,
-        )
+        cmd = [*self._prefix(), *args]
+        try:
+            return subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                check=False,
+                env=self.env,
+            )
+        except OSError as exc:
+            return subprocess.CompletedProcess(cmd, 127, "", str(exc))
 
 
 class AgentSendRuntime:
@@ -111,6 +115,8 @@ class AgentSendRuntime:
         line = (result.stdout or "").strip()
         if result.returncode == 0 and "=" in line:
             return line.split("=", 1)[1]
+        if session_name and session_name == (self.env.get("MULTIAGENT_SESSION") or "").strip():
+            return (self.env.get(key) or "").strip()
         return ""
 
     def session_workspace_value(self, session_name: str) -> str:
@@ -136,6 +142,10 @@ class AgentSendRuntime:
     def resolve_session_name(self, explicit_session: str = "") -> str:
         if explicit_session:
             return explicit_session
+
+        env_session = (self.env.get("MULTIAGENT_SESSION") or "").strip()
+        if env_session:
+            return env_session
 
         if self.env.get("TMUX"):
             result = self.tmux.run(["display-message", "-p", "#{session_name}"])
@@ -315,6 +325,16 @@ class AgentSendRuntime:
         except ValueError:
             return None
 
+    def _mark_agent_running(self, session_name: str, agent_name: str) -> None:
+        name = str(agent_name or "").strip()
+        if not session_name or not name:
+            return
+        base = agent_base_name(name)
+        if base not in self.all_agents:
+            return
+        upper = name.upper().replace("-", "_")
+        self.tmux.run(["set-environment", "-t", session_name, f"MULTIAGENT_RUNNING_{upper}", "1"])
+
     def send_to_pane(
         self,
         pane_id: str,
@@ -417,6 +437,7 @@ class AgentSendRuntime:
                 session_name=session_name,
                 session_attached_count=attached_count,
             ):
+                self._mark_agent_running(session_name, target.agent_name)
                 if target.agent_name not in successful_targets:
                     successful_targets.append(target.agent_name)
             else:

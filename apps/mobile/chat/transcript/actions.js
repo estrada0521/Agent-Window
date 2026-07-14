@@ -257,7 +257,7 @@
           setQuickActionsDisabled(false);
         }
         setStatus(data.status_message || "done");
-        void refresh({ forceScroll: true });
+        void refresh();
         if (data.activated) {
           void refreshSessionState();
         }
@@ -332,9 +332,8 @@
               if (row) { row.innerHTML = ""; row.style.display = "none"; }
             }
             closeComposerOverlay();
-            _stickyToBottom = true;
             setStatus(data.status_message || "done");
-            void refresh({ forceScroll: true });
+            void refresh();
             if (data.activated) {
               void refreshSessionState();
             }
@@ -395,7 +394,6 @@
           if (row) { row.innerHTML = ""; row.style.display = "none"; }
         }
         closeComposerOverlay();
-        _stickyToBottom = true;
         setStatus(
           indexOnly
             ? "note saved"
@@ -403,7 +401,7 @@
               ? `queued for ${target}`
               : `sent to ${target}`)
         );
-        void refresh({ forceScroll: true });
+        void refresh();
         if (data.activated) {
           void refreshSessionState();
         }

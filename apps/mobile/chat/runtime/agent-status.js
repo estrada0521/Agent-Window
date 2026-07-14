@@ -84,7 +84,7 @@
           projections = normalizeSessionStateProjections(payload?.projections);
         } catch (_) {}
         if (projections.includes("messages")) {
-          void refresh({ forceScroll: !!followMode });
+          void refresh();
           projections = projections.filter((projection) => projection !== "messages");
         }
         if (projections.length) void refreshSessionState(projections);

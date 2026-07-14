@@ -148,6 +148,19 @@
     const STREAM_CHAR_SKIP_SEL = ".katex, .katex-display, table, .table-scroll, script, style";
     const STREAM_CHAR_ANIM_MS = 21;
     const STREAM_CHAR_CAP = 3600;
+    const streamGraphemeSegmenter = typeof Intl !== "undefined" && Intl.Segmenter
+      ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
+      : null;
+    const streamTextUnits = (text) => {
+      const raw = String(text || "");
+      if (!raw) return [];
+      if (streamGraphemeSegmenter) {
+        try {
+          return Array.from(streamGraphemeSegmenter.segment(raw), (part) => part.segment);
+        } catch (_) { }
+      }
+      return Array.from(raw);
+    };
     const unwrapStreamCharSpans = (row) => {
       if (!row) return;
       row.querySelectorAll(".md-body").forEach((md) => {
@@ -173,12 +186,12 @@
         if (!text || !/\S/.test(text)) return;
         const parentEl = node.parentElement;
         if (!parentEl || parentEl.closest(STREAM_CHAR_SKIP_SEL)) return;
-        const take = Math.min(text.length, STREAM_CHAR_CAP - idx);
-        const head = text.slice(0, take);
-        const tail = text.slice(take);
+        const units = streamTextUnits(text);
+        const take = Math.min(units.length, STREAM_CHAR_CAP - idx);
+        const head = units.slice(0, take);
+        const tail = units.slice(take).join("");
         const frag = document.createDocumentFragment();
-        for (let i = 0; i < head.length; i++) {
-          const ch = head[i];
+        for (const ch of head) {
           const span = document.createElement("span");
           span.className = "stream-char";
           span.textContent = ch;

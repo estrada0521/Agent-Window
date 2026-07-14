@@ -640,6 +640,9 @@
       width: 100%;
       height: 100%;
     }
+    .agent-icon-slot--thinking .agent-icon-instance-sub {
+      color: var(--icon-fg);
+    }
     .git-commit-icon-wrap .agent-icon-slot {
       width: 18px;
       height: 18px;
