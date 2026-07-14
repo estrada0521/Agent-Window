@@ -423,14 +423,16 @@
       word-break: normal;
       box-shadow: none;
       -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: var(--fg) transparent;
       min-height: var(--code-scroll-stable-height, auto);
       color: var(--muted);
     }
 
-    .md-body pre::-webkit-scrollbar { width: 14px; height: 14px; }
+    .md-body pre::-webkit-scrollbar { width: 2px; height: 2px; }
     .md-body pre::-webkit-scrollbar-track { background: transparent; }
-    .md-body pre::-webkit-scrollbar-thumb { background: var(--code-scrollbar-thumb); border: 4px solid transparent; background-clip: padding-box; border-radius: 999px; }
-    .md-body pre::-webkit-scrollbar-thumb:hover { background: var(--code-scrollbar-thumb-hover); border: 4px solid transparent; background-clip: padding-box; }
+    .md-body pre::-webkit-scrollbar-thumb { background: var(--fg); border: 0; border-radius: 999px; }
+    .md-body pre::-webkit-scrollbar-thumb:hover { background: var(--fg); border: 0; border-radius: 999px; }
 
     .md-body .code-block-wrap {
       position: relative;
