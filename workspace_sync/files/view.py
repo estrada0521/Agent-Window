@@ -19,8 +19,12 @@ from .view_scripts import (
 )
 
 
-def _chat_markdown_preview_css() -> str:
-    css_path = Path(__file__).resolve().parents[2] / "apps/desktop/web/chat/styles/transcript.css"
+def _chat_markdown_preview_css(preview_variant: str = "") -> str:
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(preview_variant or "").strip().lower() == "mobile":
+        css_path = repo_root / "apps/mobile/chat/styles/thinking.css"
+    else:
+        css_path = repo_root / "apps/desktop/web/chat/styles/transcript.css"
     css = css_path.read_text(encoding="utf-8")
     start = css.index("    .md-body {")
     end = css.index("    .message-deferred-actions", start)
@@ -28,8 +32,10 @@ def _chat_markdown_preview_css() -> str:
     replacements = {
         "__AGENT_SEL_MD_BODY__": ".md-body",
         "__AGENT_SEL_MD_BODY_LI__": ".md-body li",
+        "__AGENT_SEL_MD_HEADING__": ".md-body h1, .md-body h2, .md-body h3, .md-body h4",
         "__AGENT_SEL_GOTHIC_MD_BODY__": 'html[data-agent-font-mode="gothic"] .md-body',
         "__AGENT_SEL_GOTHIC_MD_LI__": 'html[data-agent-font-mode="gothic"] .md-body li',
+        "__AGENT_SEL_GOTHIC_MD_HEADING__": 'html[data-agent-font-mode="gothic"] .md-body h1, html[data-agent-font-mode="gothic"] .md-body h2, html[data-agent-font-mode="gothic"] .md-body h3, html[data-agent-font-mode="gothic"] .md-body h4',
     }
     for placeholder, value in replacements.items():
         markdown_css = markdown_css.replace(placeholder, value)
@@ -44,6 +50,7 @@ def render_file_view(
     pane: bool = False,
     base_path: str = "",
     preview_base_theme: str = "",
+    preview_variant: str = "",
     agent_font_mode: str = "serif",
     agent_font_family: str | None = None,
     agent_text_size: int | None = None,
@@ -80,6 +87,7 @@ def render_file_view(
         except Exception as exc:
             logging.error(f"Unexpected error: {exc}", exc_info=True)
     requested_base_theme = str(preview_base_theme or "").strip().lower()
+    resolved_preview_variant = "mobile" if str(preview_variant or "").strip().lower() == "mobile" else "desktop"
     if requested_base_theme == "dark":
         theme_palette = resolve_theme_palette({"theme": "dark"})
     elif requested_base_theme == "light":
@@ -568,10 +576,12 @@ def render_file_view(
                 '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>',
             ])
         markdown_head_libs = "".join(markdown_head_tags)
-        markdown_preview_css = _chat_markdown_preview_css()
+        markdown_preview_css = _chat_markdown_preview_css(resolved_preview_variant)
         initial_preview_theme = "light" if str((theme_palette or {}).get("theme") or "").lower() == "light" else "dark"
+        dark_preview_fg = "rgb(255,255,255)" if resolved_preview_variant == "mobile" else "rgb(200,200,200)"
+        dark_preview_fg_channels = "255,255,255" if resolved_preview_variant == "mobile" else "200,200,200"
         markdown_theme_css = (
-            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette.get("dark_bg") or DARK_BG)};--fg:{str(dark_theme_palette.get("light_fg") or LIGHT_FG)};--muted:{str(dark_theme_palette.get("gray_muted") or "rgb(128,128,128)")};--icon-fg:{str(dark_theme_palette.get("icon_fg") or LIGHT_FG)};--icon-muted:{str(dark_theme_palette.get("icon_muted") or "rgb(128,128,128)")};--icon-hover:{str(dark_theme_palette.get("icon_hover") or "rgb(190,190,190)")};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:{str(dark_theme_palette.get("code_copy_hover_bg") or f"rgba({LIGHT_FG_CHANNELS},0.09)")};--external-link-fg:rgb(255,107,107);--link-blue:rgb(88,166,255);--link-blue-channels:88,166,255;--git-ins-green:rgb(74,222,128);--git-ins-green-channels:74,222,128;--git-del-red:rgb(248,113,113);--git-del-red-channels:248,113,113;--code-bg:rgba({LIGHT_FG_CHANNELS},0.05);--code-scrollbar-thumb:rgba({LIGHT_FG_CHANNELS},0.45);--code-scrollbar-thumb-hover:rgba({LIGHT_FG_CHANNELS},0.65);--line:{str(dark_theme_palette.get("line") or pane_line)};--line-strong:{str(dark_theme_palette.get("line_strong") or f"rgba({LIGHT_FG_CHANNELS},0.12)")};--table-line:{str(dark_theme_palette.get("table_line") or f"rgba({LIGHT_FG_CHANNELS},0.12)")};}}'
+            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette.get("dark_bg") or DARK_BG)};--fg:{dark_preview_fg};--muted:rgb(150,150,150);--icon-fg:{dark_preview_fg};--icon-muted:rgb(150,150,150);--icon-hover:rgb(190,190,190);--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba({dark_preview_fg_channels},0.09);--external-link-fg:rgb(255,107,107);--link-blue:rgb(88,166,255);--link-blue-channels:88,166,255;--git-ins-green:rgb(74,222,128);--git-ins-green-channels:74,222,128;--git-del-red:rgb(248,113,113);--git-del-red-channels:248,113,113;--code-bg:rgba({dark_preview_fg_channels},0.05);--code-scrollbar-thumb:rgba({dark_preview_fg_channels},0.45);--code-scrollbar-thumb-hover:rgba({dark_preview_fg_channels},0.65);--line:rgba({dark_preview_fg_channels},0.07);--line-strong:rgba({dark_preview_fg_channels},0.12);--table-line:rgba({dark_preview_fg_channels},0.12);--table-header-line:rgba({dark_preview_fg_channels},0.28);}}'
             'html[data-preview-theme="light"]{color-scheme:light;--bg-rgb:255,255,255;--bg:rgb(255,255,255);--fg:rgb(0,0,0);--muted:rgb(120,120,120);--icon-fg:rgb(0,0,0);--icon-muted:rgb(120,120,120);--icon-hover:rgb(35,35,35);--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:rgb(207,34,46);--link-blue:rgb(9,105,218);--link-blue-channels:9,105,218;--git-ins-green:rgb(26,127,55);--git-ins-green-channels:26,127,55;--git-del-red:rgb(207,34,46);--git-del-red-channels:207,34,46;--code-bg:rgba(0,0,0,0.05);--code-scrollbar-thumb:rgba(0,0,0,0.25);--code-scrollbar-thumb-hover:rgba(0,0,0,0.45);--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);--table-line:rgba(0,0,0,0.18);}'
             'html,body{background:transparent;color:var(--fg)}'
             '.md-preview-shell{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:transparent;scrollbar-gutter:auto;padding-top:0}'
@@ -597,6 +607,7 @@ const __previewBasePath = {prefix_json};
 const __previewAgentFontMode = {json.dumps(agent_font_mode)};
 const __previewAgentTextSize = {json.dumps(resolved_text_size)};
 const __previewMessageBold = {json.dumps(bool(message_bold))};
+const __previewVariant = {json.dumps(resolved_preview_variant)};
 const __rawBase = `${{__fileBase}}/file-raw?path=`;
 const __root = document.documentElement;
 const __isExternalSrc = (src) => /^(https?:|data:|blob:|file:|\\/\\/)/i.test(src || "");
@@ -608,6 +619,7 @@ const buildPreviewHref = (relPath) => {{
   if (__previewBasePath) params.set("base_path", __previewBasePath);
   if (__previewAgentFontMode) params.set("agent_font_mode", __previewAgentFontMode);
   if (__previewAgentTextSize) params.set("agent_text_size", String(__previewAgentTextSize));
+  if (__previewVariant) params.set("preview_variant", __previewVariant);
   params.set("message_bold", __previewMessageBold ? "1" : "0");
   return `${{__fileBase}}/file-view?${{params.toString()}}`;
 }};

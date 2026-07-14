@@ -21,6 +21,7 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
       params.set("agent_font_mode", currentFilePreviewFontMode());
       if (CHAT_BASE_PATH) params.set("base_path", CHAT_BASE_PATH);
       params.set("base_theme", document.documentElement.dataset.theme === "light" ? "light" : "dark");
+      params.set("preview_variant", "mobile");
       const textSize = currentFilePreviewTextSize();
       if (textSize) params.set("agent_text_size", textSize);
       return withChatBase(`/file-view?${params.toString()}`);
