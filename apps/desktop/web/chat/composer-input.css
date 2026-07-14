@@ -42,6 +42,8 @@
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.05);
       transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
     }
+    .composer-overlay.visible .composer-field,
+    .composer-overlay.closing .composer-field,
     .composer-field:focus-within {
       background: rgba(255, 255, 255, 0.09);
       border-color: rgba(255, 255, 255, 0.20);
