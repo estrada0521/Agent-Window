@@ -1419,11 +1419,15 @@
     }
 
     .md-body blockquote {
-      border-left: 3px solid rgba(255, 255, 255, 0.2);
+      border-left: 3px solid var(--fg);
       margin: 0.5em 0;
       padding: 0.3em 0.8em;
       color: var(--muted);
       opacity: 1;
+    }
+
+    .md-body blockquote p {
+      margin-bottom: 0;
     }
 
     .md-body hr {
