@@ -36,7 +36,9 @@ function shouldHandle(url) {
 }
 
 function isNetworkFirstAsset(url) {
-  if (isHubScope) return false;
+  if (isHubScope) {
+    return url.pathname === `${prefix}/hub-launch-shell.html`;
+  }
   return false;
 }
 
@@ -139,4 +141,3 @@ self.addEventListener("fetch", (event) => {
     }
   })());
 });
-

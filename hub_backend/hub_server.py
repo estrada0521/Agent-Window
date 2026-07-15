@@ -400,6 +400,19 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
         target = current;
       }}
       target = ensureLaunchShellFlag(target);
+      const adoptTargetUrl = () => {{
+        try {{
+          window.history.replaceState(window.history.state, "", target);
+          return true;
+        }} catch (_err) {{
+          try {{
+            window.location.replace(target);
+          }} catch (_replaceErr) {{
+            window.location.href = target;
+          }}
+          return false;
+        }}
+      }};
       const load = async () => {{
         if (requestedRestart && !restartRequested) {{
           await requestHubRestart();
@@ -409,6 +422,7 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
           const response = await fetch(target, {{ cache: "no-store" }});
           if (!response.ok) throw new Error(`load failed: ${{response.status}}`);
           const html = await response.text();
+          if (!adoptTargetUrl()) return;
           document.open();
           document.write(html);
           document.close();
