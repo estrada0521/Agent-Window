@@ -61,24 +61,6 @@
         rgba(var(--bg-rgb), 0.28) 100%
       );
     }
-    html[data-hub-shell="1"] .composer-overlay.visible.composer-attach-drag::before {
-      background: radial-gradient(
-        125% 100% at 50% 50%,
-        rgba(var(--bg-rgb), 0.28) 0%,
-        rgba(var(--bg-rgb), 0.24) 38%,
-        rgba(var(--bg-rgb), 0.16) 72%,
-        rgba(var(--bg-rgb), 0.08) 100%
-      );
-    }
-    .composer-overlay.visible.composer-attach-drag::before {
-      background: radial-gradient(
-        125% 100% at 50% 50%,
-        rgba(var(--bg-rgb), 0.22) 0%,
-        rgba(var(--bg-rgb), 0.18) 38%,
-        rgba(var(--bg-rgb), 0.12) 72%,
-        rgba(var(--bg-rgb), 0.06) 100%
-      );
-    }
     .composer-overlay.visible.composer-attach-drag .composer {
       outline: 2px dashed rgba(255, 255, 255, 0.32);
       outline-offset: 6px;
