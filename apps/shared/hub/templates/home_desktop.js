@@ -1470,6 +1470,10 @@
       } catch (_) {}
     });
 
+    _deskSidebarFrame && _deskSidebarFrame.addEventListener("load", () => {
+      applyIncomingThemeDesktop();
+    });
+
     _deskMain && _deskMain.addEventListener("click", () => {
       if (isPhoneViewport() && isDeskSidePaneOpen()) {
         setDeskSettingsOpen(false);
