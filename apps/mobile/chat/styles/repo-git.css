@@ -66,7 +66,7 @@
     }
 
     html[data-theme="light"] #attachedFilesPanel .attached-files-preview-view {
-      background: rgb(255, 255, 255);
+      background: var(--bg);
     }
 
     html[data-theme="dark"] #attachedFilesPanel .attached-files-preview-view {
