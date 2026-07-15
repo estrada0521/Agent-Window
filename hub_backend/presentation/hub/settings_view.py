@@ -121,7 +121,6 @@ def hub_settings_html(
     message_text_size = int(settings.get("message_text_size", 13) or 13)
     message_text_size_mobile = int(settings.get("message_text_size_mobile") or message_text_size)
     message_text_size_desktop = int(settings.get("message_text_size_desktop") or message_text_size)
-    chat_auto = settings.get("chat_auto_mode", False)
     from backend_core.access.settings import (
         normalize_theme_desktop,
         normalize_theme_mobile,
@@ -214,7 +213,6 @@ def hub_settings_html(
         .replace("__MESSAGE_TEXT_SIZE__", str(message_text_size))
         .replace("__MESSAGE_TEXT_SIZE_MOBILE__", str(message_text_size_mobile))
         .replace("__MESSAGE_TEXT_SIZE_DESKTOP__", str(message_text_size_desktop))
-        .replace("__CHAT_AUTO_CHECKED__", " checked" if chat_auto else "")
         .replace("__LIGHT_MODE_CHECKED__", " checked" if light_mode else "")
         .replace("__LIGHT_MODE_DESKTOP_CHECKED__", " checked" if light_mode_desktop else "")
         .replace("__LIGHT_MODE_MOBILE_CHECKED__", " checked" if light_mode_mobile else "")

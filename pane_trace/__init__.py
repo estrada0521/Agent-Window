@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from auto_mode.pane import capture_pane_text
+from .pane import capture_pane_text
 
 
 def trace_content(

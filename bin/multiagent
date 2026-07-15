@@ -68,7 +68,6 @@ SESSION_NAME_EXPLICIT=0
 WORKSPACE="$PWD"
 DETACH=0
 FRESH=0
-AUTO=1
 AGENTS_ARG=""
 NO_AGENTS=0
 USER_PANE="bottom:1"
@@ -970,7 +969,7 @@ Usage:
   multiagent resume [--session NAME | --latest] [--detach]
   multiagent kill [--session NAME | --all]
   multiagent rename --session NAME --to NEW_NAME
-  multiagent [--session NAME] [--workspace PATH] [--detach] [--fresh] [--no-auto] [--agents AGENT_LIST]
+  multiagent [--session NAME] [--workspace PATH] [--detach] [--fresh] [--agents AGENT_LIST]
 
 Creates a tmux session where window 0 is reserved for the human terminal,
 and each agent gets its own tmux window.
@@ -989,7 +988,6 @@ Options:
   --workspace PATH     Working directory (default: current directory)
   --detach             Start session in detached mode
   --fresh              Delete existing logs for the session name before starting
-  --no-auto            Disable auto-mode (auto-mode is ON by default)
   --all                For list: include archived sessions. For status/kill: target all active sessions
   --latest             Target the most recently created session for this multiagent install
   --to NEW_NAME        New session name for rename
@@ -1228,7 +1226,6 @@ while [[ $# -gt 0 ]]; do
     --workspace) WORKSPACE="$2"; shift 2 ;;
     --detach)    DETACH=1; shift ;;
     --fresh)     FRESH=1; shift ;;
-    --no-auto)   AUTO=0; shift ;;
     --all)       ALL_SESSIONS=1; shift ;;
     --latest)    LATEST_SESSION=1; shift ;;
     --to)        RENAME_TO="$2"; shift 2 ;;
@@ -1547,10 +1544,6 @@ if [[ -n "$USER_PANE_ID" ]]; then
   tmux select-pane -t "$USER_PANE_ID"
 elif [[ ${#PANES[@]} -gt 0 ]]; then
   tmux select-pane -t "${PANES[0]}"
-fi
-
-if [[ "$AUTO" -eq 1 ]]; then
-  "$REPO_ROOT/auto_mode/auto-mode" on --session "$SESSION_NAME" >&2 || true
 fi
 
 [[ "$DETACH" -eq 1 ]] && { echo "Started tmux session: $SESSION_NAME"; exit 0; }

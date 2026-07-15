@@ -83,14 +83,6 @@ multiagent_dispatch_prelaunch_modes() {
       echo "Session does not exist: $SESSION_NAME" >&2
       exit 1
     fi
-    _auto_val="$(tmux show-environment -t "$SESSION_NAME" MULTIAGENT_AUTO_MODE 2>/dev/null | sed 's/^[^=]*=//' || echo "0")"
-    if [[ "$_auto_val" == "1" ]]; then
-      _pid_file="${AGENT_WINDOW_RUN_DIR:-$HOME/.agent-window/run}/auto-mode/${SESSION_NAME}.pid"
-      _pid="$(cat "$_pid_file" 2>/dev/null || true)"
-      if [[ -z "$_pid" ]] || ! kill -0 "$_pid" 2>/dev/null; then
-        "$REPO_ROOT/auto_mode/auto-mode" on --session "$SESSION_NAME" >&2 || true
-      fi
-    fi
     [[ "$DETACH" -eq 1 ]] && { echo "Session exists: $SESSION_NAME"; exit 0; }
     exec_tmux attach-session -t "$SESSION_NAME"
   fi
