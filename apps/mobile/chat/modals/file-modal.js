@@ -111,8 +111,14 @@
       try {
         const frameWindow = frame.contentWindow;
         const frameDoc = frame.contentDocument || frameWindow?.document || null;
+        const rootStyle = getComputedStyle(document.documentElement);
+        const bgRgb = rootStyle.getPropertyValue("--bg-rgb").trim()
+          || (resolvedBaseTheme === "light" ? "249,249,247" : "13,13,12");
+        const bg = `rgb(${bgRgb})`;
         if (normalizedExt === "md" && typeof frameWindow?.__agentIndexApplyPreviewTheme === "function") {
           frameWindow.__agentIndexApplyPreviewTheme(resolvedBaseTheme, resolvedBaseTheme);
+          frameDoc?.documentElement?.style.setProperty("--bg-rgb", bgRgb);
+          frameDoc?.documentElement?.style.setProperty("--bg", bg);
           return true;
         }
         if (!frameDoc?.documentElement) return false;
@@ -122,11 +128,11 @@
             resolvedBaseTheme,
           );
           frameDoc.documentElement.removeAttribute("data-preview-explicit-bg");
+          frameDoc.documentElement.style.setProperty("--bg-rgb", bgRgb);
+          frameDoc.documentElement.style.setProperty("--bg", bg);
           return true;
         }
         const isLight = resolvedBaseTheme === "light";
-        const rootStyle = getComputedStyle(document.documentElement);
-        const bg = isLight ? "rgb(255,255,255)" : (rootStyle.getPropertyValue("--bg").trim() || "rgb(13,13,12)");
         const fg = isLight ? "rgb(0,0,0)" : "rgb(255,255,255)";
         const lnFg = isLight ? "rgba(0,0,0,0.22)" : "rgba(255,255,255,0.22)";
         const scheme = isLight ? "light" : "dark";
