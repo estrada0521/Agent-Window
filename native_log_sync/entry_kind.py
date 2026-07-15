@@ -29,14 +29,20 @@ _ANTIGRAVITY_THOUGHT_PHRASES = (
 )
 _ANTIGRAVITY_TOOL_NAMES = {
     "command_status",
+    "define_subagent",
+    "find_by_name",
     "grep_search",
+    "invoke_subagent",
     "list_dir",
+    "manage_task",
     "multi_replace_file_content",
     "read_file",
     "replace",
+    "replace_file_content",
     "run_command",
     "run_shell_command",
     "search_web",
+    "send_message",
     "view_file",
     "write_to_file",
     "write_file",
@@ -175,9 +181,13 @@ def should_omit_entry_from_chat(entry: dict) -> bool:
     if kind == _LEGACY_EPHEMERAL_KIND:
         return True
     body = strip_sender_prefix(str(entry.get("message") or ""))
-    if sender_base == "gemini" and should_omit_antigravity_text(body):
+    structured_antigravity_response = (
+        str(entry.get("native_log_kind") or "").strip().lower()
+        == "antigravity_assistant_response"
+    )
+    if sender_base == "gemini" and not structured_antigravity_response and should_omit_antigravity_text(body):
         return True
-    if sender_base == "gemini" and _has_gemini_plan_prefix(body):
+    if sender_base == "gemini" and not structured_antigravity_response and _has_gemini_plan_prefix(body):
         return True
     if _is_planning_style_text(body):
         return True
