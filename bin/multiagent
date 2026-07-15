@@ -1413,11 +1413,6 @@ print(
 PYEOF
   )"
   tmux select-pane -t "$pane_id" -T "$instance_name"
-  python3 -c "
-import sys; sys.path.insert(0, '$SCRIPT_DIR')
-from multiagent_lib.workspace_trust import trust_workspace
-trust_workspace('$base_name', '$WORKSPACE')
-"
   tmux set-environment -t "$SESSION_NAME" MULTIAGENT_AGENT_NAME "$instance_name"
   local shell_bin="${SHELL:-/bin/zsh}"
   if [[ ! -x "$shell_bin" ]]; then
