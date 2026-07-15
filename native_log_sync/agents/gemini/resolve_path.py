@@ -17,7 +17,7 @@ def _resolve_antigravity_conversation_db(runtime, workspace_text: str) -> str:
         lines = history_path.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
         lines = []
-    for line in reversed(lines[-200:]):
+    for line in reversed(lines):
         try:
             item = json.loads(line)
         except json.JSONDecodeError:
@@ -34,15 +34,16 @@ def _resolve_antigravity_conversation_db(runtime, workspace_text: str) -> str:
             continue
         conversation_id = str(item.get("conversationId") or "").strip()
         if conversation_id:
-            picked_conversation_id = conversation_id
-            break
+            candidate = conversations_dir / f"{conversation_id}.db"
+            if candidate.is_file():
+                picked_conversation_id = conversation_id
+                break
 
     if not picked_conversation_id:
-        try:
-            candidates = sorted(conversations_dir.glob("*.db"), key=lambda p: p.stat().st_mtime, reverse=True)
-        except OSError:
-            candidates = []
-        return str(candidates[0]) if candidates else ""
+        # Never bind an unrelated workspace's newest conversation. Waiting
+        # for Antigravity to append its history record is safer than leaking
+        # another project's assistant output into this session.
+        return ""
 
     candidate = conversations_dir / f"{picked_conversation_id}.db"
     return str(candidate) if candidate.is_file() else ""
