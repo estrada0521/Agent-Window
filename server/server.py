@@ -66,7 +66,6 @@ load_chat_settings = _not_initialized
 chat_font_settings_inline_style = _not_initialized
 payload = _not_initialized
 append_system_entry = _not_initialized
-auto_mode_status = _not_initialized
 send_message = _not_initialized
 agent_statuses = _not_initialized
 file_runtime = None
@@ -176,11 +175,6 @@ def _hub_settings_watcher() -> None:
             events = kq.control(None, 4, None)
             for event in events:
                 if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
-                    try:
-                        if runtime is not None:
-                            runtime._apply_saved_monitor_setting()
-                    except Exception as exc:
-                        logging.error("auto mode settings apply error: %s", exc)
                     try:
                         if workspace_sync_api is not None:
                             workspace_sync_api.invalidate_hub_settings()
@@ -309,7 +303,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     global port, agent_send_path, workspace, log_dir, targets, tmux_socket, hub_port
     global PUBLIC_HOST, PUBLIC_HUB_PORT, _repo_root, runtime
     global _PWA_STATIC_DIR, server_instance, load_chat_settings, chat_font_settings_inline_style
-    global payload, append_system_entry, auto_mode_status
+    global payload, append_system_entry
     global send_message, agent_statuses, file_runtime, HTML, asset_runtime
     global send_queue, send_queue_thread, workspace_sync_api
 
@@ -361,11 +355,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     chat_font_settings_inline_style = runtime.chat_font_settings_inline_style
     payload = runtime.payload
     append_system_entry = runtime.append_system_entry
-    try:
-        runtime._apply_saved_monitor_setting()
-    except Exception as exc:
-        logging.error("Failed to apply chat_auto_mode setting: %s", exc)
-    auto_mode_status = runtime.auto_mode_status
     send_message = _send_or_enqueue_message
     agent_statuses = runtime.agent_statuses
     workspace_sync_api = WorkspaceSyncApi(
@@ -568,7 +557,6 @@ def _route_context() -> dict:
         "public_hub_port": PUBLIC_HUB_PORT,
         "payload_fn": payload,
         "append_system_entry_fn": append_system_entry,
-        "auto_mode_status_fn": auto_mode_status,
         "send_message_fn": send_message,
         "agent_statuses_fn": agent_statuses,
         "file_runtime": file_runtime,

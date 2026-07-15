@@ -41,7 +41,6 @@
       "../../message_delivery/": "multiagent-chat-repo/message_delivery/",
       "../../workspace_sync/": "multiagent-chat-repo/workspace_sync/",
       "../../native_log_sync/": "multiagent-chat-repo/native_log_sync/",
-      "../../auto_mode/": "multiagent-chat-repo/auto_mode/",
       "../../shortcut_command/": "multiagent-chat-repo/shortcut_command/"
     }
   }

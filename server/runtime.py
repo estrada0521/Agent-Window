@@ -58,7 +58,6 @@ from backend_core.tmux.session import (
     pane_id_for_agent as _pane_id_for_agent_impl,
     running_agents_from_env as _running_agents_from_env_impl,
 )
-from auto_mode.monitor import monitor_status as _monitor_status_impl, set_monitor_active as _set_monitor_active_impl, ensure_monitor_running as _ensure_monitor_running_impl
 from frontedge.session_state import (
     build_session_state_payload as _build_session_state_payload_impl,
     initialize_session_state_bus as _initialize_session_state_bus_impl,
@@ -448,41 +447,6 @@ class ChatRuntime:
         return body
 
 
-    def auto_mode_status(self) -> dict:
-        return _monitor_status_impl(
-            self.tmux_prefix,
-            self.session_name,
-            subprocess_module=subprocess,
-            os_module=os,
-            path_class=Path,
-            logging_module=logging,
-        )
-
-    def _apply_saved_monitor_setting(self) -> bool:
-        try:
-            active = bool(self.load_chat_settings().get("chat_auto_mode", False))
-        except Exception as exc:
-            logging.error("Failed to load chat_auto_mode setting: %s", exc, exc_info=True)
-            return False
-        script_path = Path(self.agent_send_path).resolve().parent.parent / "auto_mode" / "auto-mode"
-        return _set_monitor_active_impl(
-            self.tmux_prefix,
-            self.session_name,
-            auto_mode_script=script_path,
-            tmux_socket=getattr(self, "tmux_socket", ""),
-            active=active,
-        )
-
-    def _ensure_auto_mode_monitor(self) -> None:
-        """Start the auto-mode monitor if it is not already running."""
-        script_path = Path(self.agent_send_path).resolve().parent.parent / "auto_mode" / "auto-mode"
-        _ensure_monitor_running_impl(
-            self.tmux_prefix,
-            self.session_name,
-            auto_mode_script=script_path,
-            tmux_socket=getattr(self, "tmux_socket", ""),
-        )
-
     def active_agents(self) -> list[str]:
         return _active_agents_impl(
             self,
@@ -533,7 +497,6 @@ class ChatRuntime:
         self._agent_running.add(agent)
         _update_running_env_impl(self, agent, True)
         if not already_running:
-            self._ensure_auto_mode_monitor()
             if not self._native_log.has_log_binding(agent):
                 # Try immediate binding; on failure, always start retry thread
                 self.refresh_native_log_bindings([agent], reason="first-message")
