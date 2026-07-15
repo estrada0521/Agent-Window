@@ -45,8 +45,8 @@ Three themes: Dark, Light, and Hybrid.
 
 ### Auto Approval
 
-When Auto Approval is ON, all agents' tool calls are auto-approved regardless of CLI settings.
-Only running agents' tmux panes are polled; a simple method that sends Enter when an approval prompt is found.
+When Auto Approval is ON, supported agents' permission prompts are approved by sending a key to their tmux pane.
+Providers with native permission controls, currently Codex and Antigravity, are excluded and their panes are not polled.
 
 ### Always on Top
 
