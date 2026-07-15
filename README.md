@@ -46,7 +46,7 @@ Three themes: Dark, Light, and Hybrid.
 ### Auto Approval
 
 When Auto Approval is ON, supported agents' permission prompts are approved by sending a key to their tmux pane.
-Providers with native permission controls, currently Codex, Antigravity, and Cursor, are excluded and their panes are not polled.
+Providers with native permission controls, currently Codex, Antigravity, Cursor, and Copilot, are excluded and their panes are not polled.
 
 ### Always on Top
 
