@@ -30,7 +30,7 @@
     const HUB_LAUNCH_SHELL_PARAM = "launch_shell";
     const applyMobThemeGradientVars = () => {
       const root = document.documentElement;
-      const channels = root.dataset.theme === "light" ? "255, 255, 255" : "0, 0, 0";
+      const channels = root.dataset.theme === "light" ? "255, 255, 255" : "10, 10, 9";
       root.style.setProperty("--mob-top-gradient-rgb", channels);
       root.style.setProperty("--mob-sheet-gradient-rgb", channels);
     };
@@ -140,6 +140,15 @@
     }
     function lastRememberedSession() {
       try { return (sessionStorage.getItem(HUB_LAST_SESSION_KEY) || "").trim(); } catch (_) { return ""; }
+    }
+    function syncMobileSelectedSessionRows() {
+      const selectedName = String(_currentChatSessionName || lastRememberedSession() || "").trim();
+      document.querySelectorAll("#mobListWrap .mob-session-row[data-session-name]").forEach((row) => {
+        const isSelected = !!selectedName && row.dataset.sessionName === selectedName;
+        row.classList.toggle("is-selected", isSelected);
+        if (isSelected) row.setAttribute("aria-current", "page");
+        else row.removeAttribute("aria-current");
+      });
     }
     function persistChatFrameState(url, name) {
       const normalizedUrl = String(url || "").trim();
@@ -494,6 +503,7 @@
         });
       }
       _currentChatSessionName = normalizedName;
+      syncMobileSelectedSessionRows();
       if (!canReusePrewarm) {
         _prewarmedFrameReady = false;
         _prewarmedFrameRenderReady = false;
@@ -779,7 +789,7 @@
             const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
             return `<div class="swipe-row" data-session-name="${esc(s.name)}">` +
               `<div class="swipe-act swipe-act-right" data-action="kill">${killSvg}<span>Archive</span></div>` +
-              `<div class="mob-session-row" data-open-href="/open-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
+              `<div class="mob-session-row" data-session-name="${esc(s.name)}" data-open-href="/open-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +
               `</div>` +
@@ -793,7 +803,7 @@
             const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
             return `<div class="swipe-row" data-session-name="${esc(s.name)}">` +
               `<div class="swipe-act swipe-act-right" data-action="delete-archived">${trashSvg}<span>Delete</span></div>` +
-              `<div class="mob-session-row archived-row" data-open-href="/revive-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
+              `<div class="mob-session-row archived-row" data-session-name="${esc(s.name)}" data-open-href="/revive-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +
               `</div>` +
@@ -805,6 +815,7 @@
           html += `<div class="mob-empty">No sessions found</div>`;
         }
         wrap.innerHTML = html;
+        syncMobileSelectedSessionRows();
         const newSessionRow = document.getElementById("mobNewSessionRow");
         const openNewSession = () => {
           if (typeof window._openMobSheet === "function") {
