@@ -20,9 +20,7 @@ def _usage_text() -> str:
             "",
             "Examples:",
             "  printf '%s' 'hello' | agent-send claude",
-            "  agent-send --reply abc123 codex <<'MSGEOF'",
-            "  hello",
-            "  MSGEOF",
+            "  printf '%s' 'hello' | agent-send --reply abc123 codex",
             "",
             "Targets:",
             f"  {', '.join(ALL_AGENT_NAMES)} | others",
@@ -79,9 +77,7 @@ def _parse_agent_send_args(argv: list[str]) -> tuple[bool, str, str, str]:
             "Pass the message body on stdin instead.\n\n"
             "Examples:\n"
             "  printf '%s' 'hello' | agent-send claude\n"
-            "  agent-send --reply <msg-id> claude <<'MSGEOF'\n"
-            "  hello\n"
-            "  MSGEOF"
+            "  printf '%s' 'hello' | agent-send --reply <msg-id> claude"
         )
     return False, session_name, reply_to, target
 
