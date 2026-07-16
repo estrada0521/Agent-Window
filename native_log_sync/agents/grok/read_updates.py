@@ -13,6 +13,11 @@ from native_log_sync.agents._shared.path_state import (
     _advance_native_cursor,
     _cursor_binding_changed,
 )
+from native_log_sync.agents._shared.runtime_push import push_runtime_display
+from native_log_sync.agents.grok.read_runtime import (
+    iter_tool_calls_from_update,
+    runtime_tool_events,
+)
 from native_log_sync.duplicate import already_synced_message, mark_message_synced
 
 
@@ -110,6 +115,7 @@ def sync_grok_native_log(runtime, agent: str, native_log_path: str | None = None
             return
 
         turn_completed = False
+        workspace = str(getattr(runtime, "workspace", "") or "")
         with open(updates_path, "r", encoding="utf-8") as handle:
             handle.seek(offset)
             while True:
@@ -121,6 +127,11 @@ def sync_grok_native_log(runtime, agent: str, native_log_path: str | None = None
                 except json.JSONDecodeError:
                     continue
                 turn_completed = _turn_completed(entry) or turn_completed
+                tool_evs: list[dict] = []
+                for name, inp in iter_tool_calls_from_update(entry):
+                    tool_evs.extend(runtime_tool_events(name, inp, workspace=workspace))
+                if tool_evs:
+                    push_runtime_display(runtime, agent, tool_evs)
 
         runtime._grok_cursors[agent] = NativeLogCursor(path=updates_path, offset=file_size)
         runtime.save_sync_state()
