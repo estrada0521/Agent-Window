@@ -65,6 +65,7 @@ def save_sync_state(runtime, *, time_module=time) -> None:
             "copilot_cursors": _cursor_dict_to_json(runtime._copilot_cursors),
             "claude_cursors": _cursor_dict_to_json(runtime._claude_cursors),
             "gemini_cursors": _cursor_dict_to_json(runtime._gemini_cursors),
+            "grok_cursors": _cursor_dict_to_json(runtime._grok_cursors),
             "agent_first_seen_ts": dict(runtime._agent_first_seen_ts),
             "synced_msg_ids": sorted(runtime._synced_msg_ids),
             "synced_message_fingerprints": sorted(runtime._synced_message_fingerprints),
@@ -87,6 +88,7 @@ def sync_cursor_status(runtime, *, os_module=os) -> list[dict]:
         ("copilot", runtime._copilot_cursors),
         ("claude", runtime._claude_cursors),
         ("gemini", runtime._gemini_cursors),
+        ("grok", runtime._grok_cursors),
     ]
     for agent in runtime.active_agents():
         entry: dict = {

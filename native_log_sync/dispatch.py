@@ -5,6 +5,7 @@ from native_log_sync.agents.codex.read_updates import sync_codex_native_log
 from native_log_sync.agents.copilot.read_updates import sync_copilot_native_log
 from native_log_sync.agents.cursor.read_updates import sync_cursor_native_log
 from native_log_sync.agents.gemini.read_updates import sync_gemini_native_log
+from native_log_sync.agents.grok.read_updates import sync_grok_native_log
 from native_log_sync.io.sync_timing import FIRST_SEEN_GRACE_SECONDS, SYNC_BIND_BACKFILL_WINDOW_SECONDS
 
 
@@ -37,3 +38,5 @@ def sync_agent(runtime, agent: str, path: str | None = None) -> None:
             first_seen_grace_seconds=FIRST_SEEN_GRACE_SECONDS,
             sync_bind_backfill_window_seconds=SYNC_BIND_BACKFILL_WINDOW_SECONDS,
         )
+    elif base == "grok":
+        sync_grok_native_log(runtime, agent, path)

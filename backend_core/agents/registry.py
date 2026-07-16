@@ -19,6 +19,7 @@ class AgentDef:
     number_alias: int = 0
     startup_priority: int = 0
     fallback_paths: tuple[str, ...] = ()
+    prefer_fallback_paths: bool = False
     fallback_nvm: bool = False
     selectable: bool = True
 
@@ -104,6 +105,18 @@ _register(
         ready_pattern=r"Cursor Agent|resume previous session|Output the version number|Bypassing Permissions",
         number_alias=5,
         fallback_paths=("~/.local/bin/cursor-agent",),
+    ),
+    AgentDef(
+        name="grok",
+        display_name="Grok",
+        icon_file="grok.svg",
+        executable="grok",
+        launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
+        resume_flag="--continue",
+        ready_pattern=r"Grok Build|What can I help|Type your message",
+        number_alias=6,
+        fallback_paths=("~/.local/bin/grok",),
+        prefer_fallback_paths=True,
     ),
 )
 
