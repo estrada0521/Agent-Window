@@ -15,6 +15,20 @@ def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
     base = canonical_agent_name(agent_name.split("-", 1)[0])
     adef = AGENTS.get(base)
     exe_name = adef.exe if adef else agent_name
+
+    def fallback_path() -> str | None:
+        if not adef:
+            return None
+        for p in adef.fallback_paths:
+            candidate = Path(p).expanduser()
+            if candidate.is_file():
+                return str(candidate)
+        return None
+
+    if adef and adef.prefer_fallback_paths:
+        found = fallback_path()
+        if found:
+            return found
     found = shutil.which(exe_name)
     if found:
         return found
@@ -23,10 +37,9 @@ def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
         if found:
             return found
     if adef:
-        for p in adef.fallback_paths:
-            candidate = Path(p).expanduser()
-            if candidate.is_file():
-                return str(candidate)
+        found = fallback_path()
+        if found:
+            return found
     if adef and adef.fallback_nvm:
         home = Path.home()
         nvm_bin = Path(os.environ.get("NVM_BIN", "")).expanduser()
