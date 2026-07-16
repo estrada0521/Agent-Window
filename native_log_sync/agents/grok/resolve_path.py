@@ -29,8 +29,8 @@ def _session_workspace(summary_path: Path) -> str:
     return _normalized_path(str(info.get("cwd") or ""))
 
 
-def resolve_grok_chat_history_path(runtime, agent: str) -> str:
-    """Return the newest unclaimed Grok chat history for this workspace.
+def resolve_grok_updates_path(runtime, agent: str) -> str:
+    """Return the newest unclaimed Grok update stream for this workspace.
 
     Grok's session directory does not identify a tmux pane.  Restricting the
     lookup to the exact recorded cwd and refusing already claimed histories
@@ -46,10 +46,11 @@ def resolve_grok_chat_history_path(runtime, agent: str) -> str:
     candidates: list[Path] = []
     for summary_path in sessions_root.glob("*/*/summary.json"):
         history_path = summary_path.parent / "chat_history.jsonl"
-        if not history_path.is_file():
+        updates_path = summary_path.parent / "updates.jsonl"
+        if not history_path.is_file() or not updates_path.is_file():
             continue
         if _session_workspace(summary_path) == workspace:
-            candidates.append(history_path)
+            candidates.append(updates_path)
 
     blocked_path = getattr(runtime, "_native_log_blocked_paths", {}).get(agent, "")
     picked = pick_latest_unclaimed_for_agent(

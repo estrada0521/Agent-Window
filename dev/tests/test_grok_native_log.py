@@ -5,7 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from native_log_sync.agents.grok.read_updates import extract_grok_assistant_text, sync_grok_native_log
+from message_delivery import mark_agent_sent
+from native_log_sync.agents.grok.read_updates import _turn_completed, extract_grok_assistant_text, sync_grok_native_log
 
 
 class _Runtime:
@@ -23,6 +24,14 @@ class _Runtime:
 
     def _mark_idle(self, agent: str) -> None:
         self.idle_agents.append(agent)
+
+
+class _DeliveryRuntime:
+    def __init__(self) -> None:
+        self.running_agents: list[str] = []
+
+    def _mark_running(self, agent: str) -> None:
+        self.running_agents.append(agent)
 
 
 class GrokNativeLogTests(unittest.TestCase):
@@ -43,10 +52,29 @@ class GrokNativeLogTests(unittest.TestCase):
             with self.subTest(entry=entry):
                 self.assertEqual(extract_grok_assistant_text(entry), "")
 
-    def test_initial_latest_reply_then_following_appends_are_synced(self) -> None:
+    def test_only_end_turn_completion_marks_a_turn_finished(self) -> None:
+        self.assertTrue(
+            _turn_completed(
+                {"params": {"update": {"sessionUpdate": "turn_completed", "stop_reason": "end_turn"}}}
+            )
+        )
+        self.assertFalse(
+            _turn_completed(
+                {"params": {"update": {"sessionUpdate": "turn_completed", "stop_reason": "max_tokens"}}}
+            )
+        )
+        self.assertFalse(_turn_completed({"params": {"update": {"sessionUpdate": "agent_message_chunk"}}}))
+
+    def test_sending_to_grok_marks_the_agent_running(self) -> None:
+        runtime = _DeliveryRuntime()
+        mark_agent_sent(runtime, "grok")
+        self.assertEqual(runtime.running_agents, ["grok"])
+
+    def test_initial_latest_reply_then_turn_completed_are_synced(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             history = root / "chat_history.jsonl"
+            updates = root / "updates.jsonl"
             initial = [
                 {"type": "user", "content": [{"type": "text", "text": "hello"}]},
                 {"type": "assistant", "content": "Earlier reply"},
@@ -54,20 +82,29 @@ class GrokNativeLogTests(unittest.TestCase):
                 {"type": "assistant", "content": "Current reply"},
             ]
             history.write_text("".join(json.dumps(item) + "\n" for item in initial), encoding="utf-8")
+            updates.write_text("", encoding="utf-8")
             runtime = _Runtime(root)
 
-            sync_grok_native_log(runtime, "grok", str(history))
+            sync_grok_native_log(runtime, "grok", str(updates))
             first = [json.loads(line)["message"] for line in runtime.index_path.read_text(encoding="utf-8").splitlines()]
             self.assertEqual(first, ["Current reply"])
+            self.assertEqual(runtime.idle_agents, [])
 
             with history.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps({"type": "user", "content": "next"}) + "\n")
                 handle.write(json.dumps({"type": "assistant", "content": "Next reply"}) + "\n")
-            sync_grok_native_log(runtime, "grok", str(history))
+            with updates.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps({"params": {"update": {"sessionUpdate": "agent_message_chunk"}}}) + "\n")
+            sync_grok_native_log(runtime, "grok", str(updates))
+            self.assertEqual(runtime.idle_agents, [])
+
+            with updates.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps({"params": {"update": {"sessionUpdate": "turn_completed", "stop_reason": "end_turn"}}}) + "\n")
+            sync_grok_native_log(runtime, "grok", str(updates))
 
             messages = [json.loads(line)["message"] for line in runtime.index_path.read_text(encoding="utf-8").splitlines()]
             self.assertEqual(messages, ["Current reply", "Next reply"])
-            self.assertEqual(runtime.idle_agents, ["grok", "grok"])
+            self.assertEqual(runtime.idle_agents, ["grok"])
 
 
 if __name__ == "__main__":

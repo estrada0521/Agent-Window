@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from native_log_sync.refresh.binding_models import binding_for_path
 
-from .resolve_path import resolve_grok_chat_history_path
+from .resolve_path import resolve_grok_updates_path
 
 
 def resolve_native_log_binding(runtime, request):
@@ -10,8 +10,8 @@ def resolve_native_log_binding(runtime, request):
         agent=request.agent,
         pane_id=request.pane_id,
         pane_pid=request.pane_pid,
-        path=resolve_grok_chat_history_path(runtime, request.agent),
-        source="grok-chat-history",
+        path=resolve_grok_updates_path(runtime, request.agent),
+        source="grok-updates",
     )
 
 

@@ -19,6 +19,8 @@ from native_log_sync.duplicate import already_synced_message, mark_message_synce
 def extract_grok_assistant_text(entry: object) -> str:
     if not isinstance(entry, dict) or entry.get("type") != "assistant":
         return ""
+    if entry.get("tool_calls"):
+        return ""
     content = entry.get("content")
     return content.strip() if isinstance(content, str) else ""
 
@@ -46,11 +48,11 @@ def _append_grok_entry(runtime, agent: str, path: str, line_start: int, entry: o
     return True
 
 
-def _sync_initial_latest_assistant(runtime, agent: str, path: str) -> bool:
+def _sync_latest_final_assistant(runtime, agent: str, history_path: str) -> bool:
     """Backfill only the final reply that may precede first file binding."""
     latest: tuple[int, object] | None = None
     try:
-        with open(path, "r", encoding="utf-8") as handle:
+        with open(history_path, "r", encoding="utf-8") as handle:
             while True:
                 line_start = handle.tell()
                 line = handle.readline()
@@ -66,32 +68,51 @@ def _sync_initial_latest_assistant(runtime, agent: str, path: str) -> bool:
         return False
     if latest is None:
         return False
-    return _append_grok_entry(runtime, agent, path, *latest)
+    return _append_grok_entry(runtime, agent, history_path, *latest)
+
+
+def _turn_completed(entry: object) -> bool:
+    if not isinstance(entry, dict):
+        return False
+    params = entry.get("params")
+    if not isinstance(params, dict):
+        return False
+    update = params.get("update")
+    return (
+        isinstance(update, dict)
+        and update.get("sessionUpdate") == "turn_completed"
+        and update.get("stop_reason") == "end_turn"
+    )
+
+
+def _chat_history_path(updates_path: str) -> str:
+    candidate = Path(updates_path).with_name("chat_history.jsonl")
+    return str(candidate) if candidate.is_file() else ""
 
 
 def sync_grok_native_log(runtime, agent: str, native_log_path: str | None = None) -> None:
-    """Sync final assistant messages from Grok's append-only chat history."""
+    """Sync completed Grok turns from its append-only update stream."""
     try:
-        path = str(native_log_path or "").strip()
-        if not path or not os.path.isfile(path):
+        updates_path = str(native_log_path or "").strip()
+        if not updates_path or not os.path.isfile(updates_path):
             return
-        file_size = os.path.getsize(path)
+        history_path = _chat_history_path(updates_path)
+        if not history_path:
+            return
+        file_size = os.path.getsize(updates_path)
         previous = runtime._grok_cursors.get(agent)
-        offset = _advance_native_cursor(runtime._grok_cursors, agent, path, file_size)
+        offset = _advance_native_cursor(runtime._grok_cursors, agent, updates_path, file_size)
         if offset is None:
             binding_changed = _cursor_binding_changed(previous, runtime._grok_cursors.get(agent))
-            appended = _sync_initial_latest_assistant(runtime, agent, path) if binding_changed else False
+            appended = _sync_latest_final_assistant(runtime, agent, history_path) if binding_changed else False
             if binding_changed:
                 runtime.save_sync_state()
-            if appended:
-                runtime._mark_idle(agent)
             return
 
-        appended = False
-        with open(path, "r", encoding="utf-8") as handle:
+        turn_completed = False
+        with open(updates_path, "r", encoding="utf-8") as handle:
             handle.seek(offset)
             while True:
-                line_start = handle.tell()
                 line = handle.readline()
                 if not line:
                     break
@@ -99,11 +120,12 @@ def sync_grok_native_log(runtime, agent: str, native_log_path: str | None = None
                     entry = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-                appended = _append_grok_entry(runtime, agent, path, line_start, entry) or appended
+                turn_completed = _turn_completed(entry) or turn_completed
 
-        runtime._grok_cursors[agent] = NativeLogCursor(path=path, offset=file_size)
+        runtime._grok_cursors[agent] = NativeLogCursor(path=updates_path, offset=file_size)
         runtime.save_sync_state()
-        if appended:
+        if turn_completed:
+            _sync_latest_final_assistant(runtime, agent, history_path)
             runtime._mark_idle(agent)
     except Exception as exc:
         logging.error("Failed to sync Grok message for %s: %s", agent, exc, exc_info=True)
