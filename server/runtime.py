@@ -126,6 +126,7 @@ class ChatRuntime:
             session_name=self.session_name,
             workspace=self.workspace,
             mark_idle_fn=self._mark_idle,
+            mark_running_from_native_activity_fn=self._mark_running_from_native_activity,
             notify_state_fn=self.notify_session_state_changed,
             active_agents_fn=self.active_agents,
             running_agents_fn=lambda: self._agent_running,
@@ -517,6 +518,14 @@ class ChatRuntime:
                 if new_path and new_path != old_path:
                     self._initial_sync_agent(agent)
             self.notify_session_state_changed(["statuses", "agent_runtime"], reason="agent-status")
+
+    def _mark_running_from_native_activity(self, agent: str) -> None:
+        """Mark an idle agent running without rebinding its already-watched log."""
+        if agent in self._agent_running:
+            return
+        self._agent_running.add(agent)
+        _update_running_env_impl(self, agent, True)
+        self.notify_session_state_changed(["statuses"], reason="agent-native-activity")
 
     def _initial_sync_agent(self, agent: str) -> None:
         """Run a full initial emit to capture any log content written before binding."""

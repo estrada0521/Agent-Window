@@ -24,6 +24,36 @@ from native_log_sync.agents.codex.read_runtime import iter_tool_calls, runtime_t
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 
 
+def _codex_runtime_state_event(entry: object) -> str:
+    """Return the last-write-wins runtime state implied by a Codex log entry.
+
+    This deliberately excludes bookkeeping, reasoning, token counts, and tool
+    outputs.  They can trail a completed turn without meaning that Codex has
+    resumed work.
+    """
+    if not isinstance(entry, dict):
+        return ""
+    entry_type = entry.get("type")
+    payload = entry.get("payload")
+    if not isinstance(payload, dict):
+        return ""
+    event_type = str(payload.get("type") or "").strip().lower()
+    if entry_type == "event_msg":
+        if event_type == "task_complete":
+            return "completed"
+        if event_type in {"task_started", "agent_message"}:
+            return "active"
+    elif entry_type == "response_item" and event_type in {
+        "message",
+        "function_call",
+        "custom_tool_call",
+        "web_search_call",
+        "tool_search_call",
+    }:
+        return "active"
+    return ""
+
+
 def _codex_token_count_limit_message(payload: dict) -> str:
     rate_limits = payload.get("rate_limits") or {}
     if not isinstance(rate_limits, dict):
@@ -157,7 +187,7 @@ def sync_codex_native_log(
                 path_changed = prev_cursor is not None and prev_cursor.path != resolved_path
                 if path_changed:
                     # restart: read entire new file so pong + task_complete are not missed
-                    turn_done_restart = False
+                    last_runtime_state_event = ""
                     try:
                         with open(resolved_path, "r", encoding="utf-8") as f:
                             for line in f:
@@ -169,11 +199,9 @@ def sync_codex_native_log(
                                 except json.JSONDecodeError:
                                     continue
                                 _append_codex_entry(entry)
-                                if (
-                                    entry.get("type") == "event_msg"
-                                    and str((entry.get("payload") or {}).get("type") or "").strip().lower() == "task_complete"
-                                ):
-                                    turn_done_restart = True
+                                runtime_state_event = _codex_runtime_state_event(entry)
+                                if runtime_state_event:
+                                    last_runtime_state_event = runtime_state_event
                                 for name, inp in iter_tool_calls(entry):
                                     tool_evs = runtime_tool_events(name, inp, workspace=str(self.workspace or ""))
                                     if tool_evs:
@@ -181,15 +209,17 @@ def sync_codex_native_log(
                     except Exception:
                         pass
                     self.save_sync_state()
-                    if turn_done_restart:
+                    if last_runtime_state_event == "completed":
                         self._mark_idle(agent)
+                    elif last_runtime_state_event == "active" and agent not in self.running_agents():
+                        self._mark_running_from_native_activity(agent)
                 else:
                     min_event_ts = time.time() - _SYNC_BIND_BACKFILL_WINDOW_SECONDS
                     if _scan_recent_codex_entries(min_event_ts):
                         self.save_sync_state()
             return
 
-        turn_done_seen = False
+        last_runtime_state_event = ""
 
         with open(resolved_path, "r", encoding="utf-8") as f:
             f.seek(offset)
@@ -202,11 +232,9 @@ def sync_codex_native_log(
                 except json.JSONDecodeError:
                     continue
                 _append_codex_entry(entry)
-                if (
-                    entry.get("type") == "event_msg"
-                    and str((entry.get("payload") or {}).get("type") or "").strip().lower() == "task_complete"
-                ):
-                    turn_done_seen = True
+                runtime_state_event = _codex_runtime_state_event(entry)
+                if runtime_state_event:
+                    last_runtime_state_event = runtime_state_event
                 tool_evs = []
                 for name, inp in iter_tool_calls(entry):
                     tool_evs.extend(runtime_tool_events(name, inp, workspace=str(self.workspace or "")))
@@ -215,7 +243,9 @@ def sync_codex_native_log(
 
         self._codex_cursors[agent] = NativeLogCursor(path=resolved_path, offset=file_size)
         self.save_sync_state()
-        if turn_done_seen:
+        if last_runtime_state_event == "completed":
             self._mark_idle(agent)
+        elif last_runtime_state_event == "active" and agent not in self.running_agents():
+            self._mark_running_from_native_activity(agent)
     except Exception as exc:
         logging.error(f"Failed to sync Codex message for {agent}: {exc}")
