@@ -505,7 +505,7 @@
       position: absolute;
       left: -16px;
       top: 0;
-      bottom: 4px;
+      bottom: 8px;
       width: 2px;
       border-radius: 1px;
       background: var(--fg);
