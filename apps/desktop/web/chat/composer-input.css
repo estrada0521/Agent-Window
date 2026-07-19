@@ -296,12 +296,14 @@
       content: none;
     }
     main {
+      --chat-scrollbar-width: 2px;
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      padding: 0 6px 0 20px;
+      /* Left padding is 20px; reserve the remainder on the right after the scrollbar. */
+      padding: 0 calc(20px - var(--chat-scrollbar-width)) 0 20px;
       display: flex;
       flex-direction: column;
       gap: 0;
@@ -326,9 +328,14 @@
       padding-right: 20px;
     }
     main { scrollbar-width: thin; scrollbar-color: var(--fg) transparent; }
-    main::-webkit-scrollbar { width: 2px !important; height: 2px !important; }
+    main::-webkit-scrollbar { width: var(--chat-scrollbar-width) !important; height: var(--chat-scrollbar-width) !important; }
     main::-webkit-scrollbar-thumb { background: var(--fg); border: 0; border-radius: 999px; }
     main::-webkit-scrollbar-thumb:hover { background: var(--fg); border: 0; border-radius: 999px; }
+    /* Keep the transcript's content box fixed when its thin scrollbar appears. */
+    html:not([data-mobile="1"]) main {
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+    }
     #scrollToBottomBtn,
     #composerFabBtn {
       position: fixed;
