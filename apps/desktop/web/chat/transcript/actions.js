@@ -22,7 +22,7 @@
       } catch (_) {
       } finally {
         olderLoading = false;
-        rerenderCurrentMessages();
+        rerenderCurrentMessages({ suppressEntryAnimation: true });
         const delta = timeline.scrollHeight - prevHeight;
         timeline.scrollTop = prevTop + delta;
         updateScrollBtn();

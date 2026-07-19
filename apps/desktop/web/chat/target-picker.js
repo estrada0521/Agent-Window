@@ -36,7 +36,7 @@
       });
     };
     const STICKY_THRESHOLD = 32;
-    const PUBLIC_OLDER_AUTOLOAD_THRESHOLD = 120;
+    const OLDER_AUTOLOAD_MIN_THRESHOLD = 480;
     let _stickyToBottom = false;
     let _programmaticScroll = false;
     let _pollScrollRestoreRaf = 0;
