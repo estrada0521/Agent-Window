@@ -1,4 +1,8 @@
-    const render = (data, { forceScroll = false, forceFullRender = false } = {}) => {
+    const render = (data, {
+      forceScroll = false,
+      forceFullRender = false,
+      suppressEntryAnimation = false,
+    } = {}) => {
       try {
       const shouldStick = forceScroll || _stickyToBottom || isNearBottom();
       const displayEntries = displayEntriesForData(data);
@@ -63,6 +67,7 @@
       const shouldMarkNewRowsAnimated =
         newEntries.length > 0
         && !isInitialBulkLoad
+        && !suppressEntryAnimation
         && (previousRenderedIds.size > 0 || displayEntries.length === 1);
 
       let pendingStreamRowCleanups = [];
@@ -540,12 +545,13 @@
       return {
         forceScroll: !!(currentOptions.forceScroll || nextOptions.forceScroll),
         forceFullRender: !!(currentOptions.forceFullRender || nextOptions.forceFullRender),
+        suppressEntryAnimation: !!(currentOptions.suppressEntryAnimation || nextOptions.suppressEntryAnimation),
       };
     };
-    const rerenderCurrentMessages = () => {
+    const rerenderCurrentMessages = ({ suppressEntryAnimation = false } = {}) => {
       if (!latestPayloadData) return;
       lastMessagesSig = "";
-      render(latestPayloadData, { forceFullRender: true });
+      render(latestPayloadData, { forceFullRender: true, suppressEntryAnimation });
     };
     const ensurePublicDeferredObserver = () => {
       if (!isPublicChatView || publicDeferredObserver || typeof IntersectionObserver !== "function") return;

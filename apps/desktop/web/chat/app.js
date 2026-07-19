@@ -354,7 +354,8 @@ __CHAT_INCLUDE:target-picker.js__
     timeline.addEventListener("scroll", updateStickyState, { passive: true });
     timeline.addEventListener("scroll", () => {
       if (olderLoading || !olderHasMore) return;
-      if (timeline.scrollTop > PUBLIC_OLDER_AUTOLOAD_THRESHOLD) return;
+      const threshold = Math.max(OLDER_AUTOLOAD_MIN_THRESHOLD, timeline.clientHeight * 1.25);
+      if (timeline.scrollTop > threshold) return;
       void loadOlderMessages();
     }, { passive: true });
     const updateScrollBtn = () => {
