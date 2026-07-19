@@ -1,16 +1,100 @@
 from __future__ import annotations
 
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from native_log_sync.agents.codex.read_runtime import iter_tool_calls, runtime_tool_events
 from native_log_sync.agents.codex.read_runtime_legacy_5_5 import iter_legacy_tool_calls
+from native_log_sync.agents.codex.read_updates import _codex_runtime_state_event, sync_codex_native_log
 
 
 def _entry(payload: dict) -> dict:
     return {"type": "response_item", "payload": payload}
 
 
+class _CodexSyncRuntime:
+    def __init__(self, root: Path) -> None:
+        self._codex_cursors = {}
+        self._synced_msg_ids = set()
+        self._synced_message_fingerprints = set()
+        self.index_path = root / "agent-index.jsonl"
+        self.session_name = "test-session"
+        self.workspace = str(root)
+        self.idle_agents: list[str] = []
+        self.running_marks: list[str] = []
+        self._running: set[str] = set()
+
+    def save_sync_state(self) -> None:
+        pass
+
+    def _mark_idle(self, agent: str) -> None:
+        self.idle_agents.append(agent)
+        self._running.discard(agent)
+
+    def _mark_running_from_native_activity(self, agent: str) -> None:
+        self.running_marks.append(agent)
+        self._running.add(agent)
+
+    def running_agents(self) -> set[str]:
+        return set(self._running)
+
+
 class CodexRuntime56Tests(unittest.TestCase):
+    def test_last_runtime_state_event_controls_native_running_status(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            log_path = root / "rollout.jsonl"
+            log_path.write_text("", encoding="utf-8")
+            runtime = _CodexSyncRuntime(root)
+
+            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            with log_path.open("a", encoding="utf-8") as handle:
+                for kind in ("task_complete", "thread_settings_applied", "task_started"):
+                    handle.write(json.dumps({"type": "event_msg", "payload": {"type": kind}}) + "\n")
+            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            self.assertEqual(runtime.running_marks, ["codex"])
+            self.assertEqual(runtime.idle_agents, [])
+
+            with log_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps({"type": "event_msg", "payload": {"type": "task_started"}}) + "\n")
+            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            self.assertEqual(runtime.running_marks, ["codex"])
+
+            with log_path.open("a", encoding="utf-8") as handle:
+                for kind in ("task_started", "task_complete"):
+                    handle.write(json.dumps({"type": "event_msg", "payload": {"type": kind}}) + "\n")
+            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            self.assertEqual(runtime.idle_agents, ["codex"])
+
+    def test_only_semantic_codex_activity_reactivates_running(self) -> None:
+        active_entries = [
+            {"type": "event_msg", "payload": {"type": "task_started"}},
+            {"type": "event_msg", "payload": {"type": "agent_message"}},
+            _entry({"type": "message"}),
+            _entry({"type": "function_call"}),
+            _entry({"type": "custom_tool_call"}),
+            _entry({"type": "web_search_call"}),
+            _entry({"type": "tool_search_call"}),
+        ]
+        for entry in active_entries:
+            self.assertEqual(_codex_runtime_state_event(entry), "active")
+
+        inactive_entries = [
+            {"type": "event_msg", "payload": {"type": "thread_settings_applied"}},
+            {"type": "event_msg", "payload": {"type": "token_count"}},
+            _entry({"type": "reasoning"}),
+            _entry({"type": "function_call_output"}),
+            _entry({"type": "custom_tool_call_output"}),
+        ]
+        for entry in inactive_entries:
+            self.assertEqual(_codex_runtime_state_event(entry), "")
+        self.assertEqual(
+            _codex_runtime_state_event({"type": "event_msg", "payload": {"type": "task_complete"}}),
+            "completed",
+        )
+
     def test_exec_unwraps_multiple_calls_without_matching_strings(self) -> None:
         script = '''
 const fake = "tools.view_image({\\"path\\":\\"wrong.png\\"})";

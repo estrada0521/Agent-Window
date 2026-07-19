@@ -35,6 +35,7 @@ class NativeLogSyncer:
         session_name: str,
         workspace: str,
         mark_idle_fn: Callable[[str], None],
+        mark_running_from_native_activity_fn: Callable[[str], None],
         notify_state_fn: Callable[..., None],
         active_agents_fn: Callable[[], list[str]],
         running_agents_fn: Callable[[], set[str]],
@@ -45,6 +46,7 @@ class NativeLogSyncer:
         self.session_name = session_name
         self.workspace = workspace
         self._mark_idle = mark_idle_fn
+        self._mark_running_from_native_activity = mark_running_from_native_activity_fn
         self._notify_state_fn = notify_state_fn
         self._active_agents_fn = active_agents_fn
         self._running_agents_fn = running_agents_fn
