@@ -1449,10 +1449,10 @@
     .md-body td {
       white-space: nowrap;
       border-top: none;
-      border-bottom: 1.5px solid var(--table-line);
+      border-bottom: 1px solid var(--table-line);
       border-left: none;
       border-right: none;
-      padding: 7.5px 12px;
+      padding: 5px 12px;
       text-align: left;
       font: inherit;
     }
@@ -1460,11 +1460,11 @@
     .md-body th {
       background: transparent;
       font-weight: inherit;
-      border-bottom-color: var(--table-header-line);
+      border-bottom-color: var(--fg);
     }
 
     .md-body tr:last-child td {
-      border-bottom-color: var(--table-header-line);
+      border-bottom-color: var(--fg);
     }
 
     .md-body a:not(.inline-file-link):not(.local-file-link) {
