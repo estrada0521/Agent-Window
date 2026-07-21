@@ -1211,11 +1211,14 @@
       cursor: pointer;
     }
 
-    .katex {
-      font-family: var(--agent-message-font-family, inherit);
-      font-size: 19px;
-      font-weight: 400;
-      line-height: 23px;
+    /* Keep mathematical glyphs in KaTeX, but make only \text{...} read like
+       the surrounding agent message (including CJK fallback glyphs). */
+    .katex .text {
+      font-family: var(--agent-message-font-family) !important;
+      font-weight: inherit;
+      font-style: normal;
+      /* KaTeX's root is 1.21em; restore \text to the surrounding message size. */
+      font-size: 0.826446em;
     }
 
     .table-scroll {

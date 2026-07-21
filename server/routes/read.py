@@ -192,12 +192,14 @@ def _get_file_view(handler, parsed, ctx) -> None:
     pane = qs.get("pane", [""])[0] == "1"
     preview_chrome = str(qs.get("chrome", [""])[0] or "").strip().lower()
     force_progressive_text = qs.get("progressive", [""])[0] == "1"
+    requested_preview_variant = str(qs.get("preview_variant", [""])[0] or "").strip().lower()
+    preview_variant = "mobile" if requested_preview_variant == "mobile" else "desktop"
     try:
-        settings = ctx["load_chat_settings_fn"]()
+        settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant=preview_variant)
         agent_message_font = str(settings.get("agent_message_font", "preset-mincho") or "preset-mincho").strip()
         preview_font_mode = "gothic" if agent_message_font == "preset-gothic" else "serif"
         preview_text_size = (
-            settings.get("message_text_size_desktop") or
+            (settings.get("message_text_size_mobile") if preview_variant == "mobile" else settings.get("message_text_size_desktop")) or
             settings.get("message_text_size")
         )
         requested_text_size = str(qs.get("agent_text_size", [""])[0] or "").strip()
@@ -219,7 +221,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
             pane=pane,
             base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
             preview_base_theme=str(qs.get("base_theme", [""])[0] or "").strip(),
-            preview_variant=str(qs.get("preview_variant", [""])[0] or "").strip(),
+            preview_variant=preview_variant,
             agent_font_mode=preview_font_mode,
             agent_font_family=ctx["runtime"]._font_family_stack(agent_message_font, "agent"),
             agent_text_size=preview_text_size,
