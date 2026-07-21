@@ -68,9 +68,7 @@ __CHAT_INCLUDE:../../shared/chat/markdown-inline-code.css__
       background: var(--surface);
     }
 
-    .md-body pre {
-      font-family: var(--code-font-family, "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace);
-    }
+__CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
 
     .composer-plus-menu[open] .composer-plus-toggle,
     .composer-plus-menu:not([open]) .composer-plus-toggle:active {

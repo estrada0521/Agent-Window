@@ -1271,7 +1271,6 @@
       max-width: 100%;
       box-sizing: border-box;
       position: relative;
-      font-family: var(--code-font-family, "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace);
       background: var(--code-bg);
       border: none;
       border-radius: 8px;

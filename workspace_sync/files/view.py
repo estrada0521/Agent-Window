@@ -23,6 +23,7 @@ from .view_scripts import (
 def _chat_markdown_preview_css(preview_variant: str = "") -> str:
     repo_root = Path(__file__).resolve().parents[2]
     inline_code_css = (repo_root / "apps/shared/chat/markdown-inline-code.css").read_text(encoding="utf-8")
+    code_block_css = (repo_root / "apps/shared/chat/markdown-code-block.css").read_text(encoding="utf-8")
     if str(preview_variant or "").strip().lower() == "mobile":
         css_path = repo_root / "apps/mobile/chat/styles/thinking.css"
     else:
@@ -41,7 +42,7 @@ def _chat_markdown_preview_css(preview_variant: str = "") -> str:
     }
     for placeholder, value in replacements.items():
         markdown_css = markdown_css.replace(placeholder, value)
-    return f"{inline_code_css}\n{markdown_css}"
+    return f"{inline_code_css}\n{code_block_css}\n{markdown_css}"
 
 
 def render_file_view(
