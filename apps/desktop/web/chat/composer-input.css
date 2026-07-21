@@ -250,6 +250,12 @@
     .composer textarea::placeholder {
       color: var(--muted);
     }
+    html:not([data-mobile="1"]) .composer textarea {
+      scrollbar-width: none;
+    }
+    html:not([data-mobile="1"]) .composer textarea::-webkit-scrollbar {
+      display: none;
+    }
     .statusline {
       position: absolute;
       left: 0;
