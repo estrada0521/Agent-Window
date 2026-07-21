@@ -22,6 +22,7 @@ from .view_scripts import (
 
 def _chat_markdown_preview_css(preview_variant: str = "") -> str:
     repo_root = Path(__file__).resolve().parents[2]
+    inline_code_css = (repo_root / "apps/shared/chat/markdown-inline-code.css").read_text(encoding="utf-8")
     if str(preview_variant or "").strip().lower() == "mobile":
         css_path = repo_root / "apps/mobile/chat/styles/thinking.css"
     else:
@@ -40,7 +41,7 @@ def _chat_markdown_preview_css(preview_variant: str = "") -> str:
     }
     for placeholder, value in replacements.items():
         markdown_css = markdown_css.replace(placeholder, value)
-    return markdown_css
+    return f"{inline_code_css}\n{markdown_css}"
 
 
 def render_file_view(
@@ -606,7 +607,7 @@ def render_file_view(
             f'.md-preview-shell>.md-body{{padding:{markdown_top_padding} 16px 18px}}'
         )
         return (
-            f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-agent-font-mode="{agent_font_mode}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
+            f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-agent-font-mode="{agent_font_mode}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
             f'{markdown_head_libs}'
             f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}'
             f'{preview_bold_css}'
@@ -826,6 +827,7 @@ scroll.appendChild(table);
 const applyPreviewTheme = (theme) => {{
   const nextTheme = theme === "light" ? "light" : "dark";
   __root.setAttribute("data-preview-theme", nextTheme);
+  __root.setAttribute("data-theme", nextTheme);
 }};
 window.__agentIndexApplyPreviewTheme = applyPreviewTheme;
 const renderMathInScope = (scope) => {{
