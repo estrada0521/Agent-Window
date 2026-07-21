@@ -368,12 +368,15 @@
     const syncAttachedFilesSheetBackBtn = () => {
       const backBtn = attachedFilesSheetBackBtn();
       if (!backBtn) return;
+      const navBar = backBtn.closest(".attached-files-sheet-nav-bar");
       if (attachedFilesPanel?.classList.contains("attached-files-mode-preview")) {
+        navBar?.classList.remove("attached-files-sheet-nav-at-root");
         backBtn.disabled = false;
         backBtn.setAttribute("aria-label", "Back to directory");
         return;
       }
       const atRoot = !normalizeAttachedFilesRepoPath(_attachedFilesBrowserPath);
+      navBar?.classList.toggle("attached-files-sheet-nav-at-root", atRoot);
       backBtn.disabled = atRoot;
       backBtn.setAttribute("aria-label", atRoot ? "No parent directory" : "Go to parent directory");
     };
