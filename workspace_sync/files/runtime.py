@@ -2,7 +2,6 @@ from __future__ import annotations
 import logging
 import re
 import uuid
-from collections import Counter
 
 import os
 import shlex
@@ -933,16 +932,6 @@ delay 0.2
             if len(deduped) == 1:
                 return deduped[0]
 
-        ranked = self.search_files(normalized_query, limit=8, force_refresh=False)
-        if not ranked:
-            return ""
-        ranked_paths = [str(entry.get("path") or "") for entry in ranked if str(entry.get("path") or "")]
-        if not ranked_paths:
-            return ""
-        top = ranked_paths[0]
-        counts = Counter(self._basename(path).lower() for path in ranked_paths)
-        if counts.get(self._basename(top).lower(), 0) == 1:
-            return top
         return ""
 
     def resolve_file_references(self, queries: list[str]) -> dict[str, str]:
