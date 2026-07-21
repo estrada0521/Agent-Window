@@ -398,9 +398,13 @@
       padding-inline: 0;
       overflow-x: auto;
       overflow-y: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
       text-align: left;
       -webkit-overflow-scrolling: touch;
     }
+
+    .katex-display::-webkit-scrollbar { display: none; }
 
     .katex-display>.katex {
       display: table;
