@@ -121,6 +121,10 @@ def render_file_view(
     )
     font_base = prefix or ""
     font_face_css = (
+        f'@font-face{{font-family:"anthropicSerif";src:url("{font_base}/font/anthropic-serif-roman.ttf") format("truetype-variations"),url("{font_base}/font/anthropic-serif-roman.ttf") format("truetype");font-style:normal;font-weight:300 800;font-optical-sizing:auto;font-display:swap}}'
+        f'@font-face{{font-family:"anthropicSerif";src:url("{font_base}/font/anthropic-serif-italic.ttf") format("truetype-variations"),url("{font_base}/font/anthropic-serif-italic.ttf") format("truetype");font-style:italic;font-weight:300 800;font-optical-sizing:auto;font-display:swap}}'
+        f'@font-face{{font-family:"anthropicSans";src:url("{font_base}/font/anthropic-sans-roman.ttf") format("truetype-variations"),url("{font_base}/font/anthropic-sans-roman.ttf") format("truetype");font-style:normal;font-weight:300 800;font-optical-sizing:auto;font-display:swap}}'
+        f'@font-face{{font-family:"anthropicSans";src:url("{font_base}/font/anthropic-sans-italic.ttf") format("truetype-variations"),url("{font_base}/font/anthropic-sans-italic.ttf") format("truetype");font-style:italic;font-weight:300 800;font-optical-sizing:auto;font-display:swap}}'
         f'@font-face{{font-family:"jetbrainsMono";src:local("JetBrains Mono"),local("JetBrainsMono-Regular"),url("{font_base}/font/jetbrains-mono.ttf") format("truetype-variations"),url("{font_base}/font/jetbrains-mono.ttf") format("truetype");font-style:normal;font-weight:100 800;font-display:swap}}'
     )
     preview_top_offset = "0px" if preview_chrome == "header" else ("max(48px, calc(21px + env(safe-area-inset-top)))" if embed else "0px")
@@ -577,6 +581,13 @@ def render_file_view(
             ])
         markdown_head_libs = "".join(markdown_head_tags)
         markdown_preview_css = _chat_markdown_preview_css(resolved_preview_variant)
+        markdown_typography_css = (
+            ".md-body,.md-body p,.md-body li,.md-body li p{"
+            "font-family:var(--agent-message-font-family);font-weight:430;"
+            'font-optical-sizing:auto;font-variation-settings:"opsz" 16;font-synthesis:none;'
+            "-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;"
+            "line-height:calc(var(--message-text-size,16px) + 8px)}"
+        )
         initial_preview_theme = "light" if str((theme_palette or {}).get("theme") or "").lower() == "light" else "dark"
         dark_preview_fg = "rgb(255,255,255)" if resolved_preview_variant == "mobile" else "rgb(200,200,200)"
         dark_preview_fg_channels = "255,255,255" if resolved_preview_variant == "mobile" else "200,200,200"
@@ -595,7 +606,7 @@ def render_file_view(
         return (
             f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-agent-font-mode="{agent_font_mode}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
             f'{markdown_head_libs}'
-            f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_layout_css}'
+            f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}'
             f'{preview_bold_css}'
             '</style></head>'
             f'<body>{header.format(icon="📝")}<div class="md-preview-shell"><div class="md-body" id="out"></div></div>'
