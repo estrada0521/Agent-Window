@@ -89,6 +89,13 @@
       background: var(--bg);
       color: var(--fg);
       font-family: "SF Pro Text", "Segoe UI", sans-serif;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+      display: none;
     }
 
     body {
@@ -958,12 +965,12 @@
 
     #chatOverlay.overlay-closing,
     #chatOverlay.overlay-peeking {
-      border-left: 2px solid var(--line-strong);
+      box-shadow: -8px 0 16px rgba(0, 0, 0, 0.10);
     }
 
     html[data-theme="dark"] #chatOverlay.overlay-closing,
     html[data-theme="dark"] #chatOverlay.overlay-peeking {
-      border-left-color: rgb(2, 2, 2);
+      box-shadow: -8px 0 18px rgba(0, 0, 0, 0.18);
     }
 
     html.hub-chat-overlay-active {
