@@ -10,6 +10,7 @@ from urllib.parse import quote as url_quote
 
 from hub_backend.color_constants import DARK_BG, LIGHT_FG, LIGHT_FG_CHANNELS, resolve_theme_palette
 from backend_core.access.settings import load_hub_settings
+from server.font_style import font_family_stack
 from .preview_3d import render_3d_preview
 from .view_scripts import (
     build_gutter_scroll_sync_js,
@@ -68,9 +69,10 @@ def render_file_view(
     raw_url = f"{prefix}/file-raw?path={url_quote(rel)}"
     size = os.path.getsize(full)
     agent_font_mode = "gothic" if str(agent_font_mode or "").strip().lower() == "gothic" else "serif"
-    _serif_stack = '"anthropicSerif", "Anthropic Serif", Georgia, "Times New Roman", Times, "Hiragino Mincho ProN", "YuMincho", "Yu Mincho", "Noto Serif CJK JP", serif'
-    _sans_stack = '"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif'
-    resolved_agent_font_family = str(agent_font_family).strip() if agent_font_family else (_sans_stack if agent_font_mode == "gothic" else _serif_stack)
+    resolved_agent_font_family = str(agent_font_family).strip() if agent_font_family else font_family_stack(
+        "preset-gothic" if agent_font_mode == "gothic" else "preset-mincho",
+        "agent",
+    )
     code_font_family = (
         '"SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", monospace'
     )
@@ -531,7 +533,6 @@ def render_file_view(
         rel_json = json.dumps(rel.replace("\\", "/"))
         prefix_json = json.dumps(prefix)
         has_fenced_code = "```" in content
-        has_math = bool(re.search(r"(\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$\$[\s\S]+?\$\$|(?<!\$)\$[^$\n]+\$)", content))
         prism_aliases = {
             "py": "python",
             "python": "python",
@@ -564,7 +565,14 @@ def render_file_view(
                 if not resolved_lang or resolved_lang in prism_langs:
                     continue
                 prism_langs.append(resolved_lang)
-        markdown_head_tags = ['<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>']
+        # Match the chat shell's cascade: KaTeX loads before its Chat-derived
+        # markdown CSS, with no preview-only math typography overrides.
+        markdown_head_tags = [
+            '<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>',
+            '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">',
+            '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>',
+            '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>',
+        ]
         if has_fenced_code:
             markdown_head_tags.extend([
                 '<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>',
@@ -573,16 +581,10 @@ def render_file_view(
                 f'<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-{lang}.min.js"></script>'
                 for lang in prism_langs
             )
-        if has_math:
-            markdown_head_tags.extend([
-                '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">',
-                '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>',
-                '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>',
-            ])
         markdown_head_libs = "".join(markdown_head_tags)
         markdown_preview_css = _chat_markdown_preview_css(resolved_preview_variant)
         markdown_typography_css = (
-            ".md-body,.md-body p,.md-body li,.md-body li p{"
+            ".md-body,.md-body p,.md-body li,.md-body li p,.md-body blockquote,.md-body blockquote p{"
             "font-family:var(--agent-message-font-family);font-weight:430;"
             'font-optical-sizing:auto;font-variation-settings:"opsz" 16;font-synthesis:none;'
             "-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;"
@@ -623,6 +625,64 @@ const __previewMessageBold = {json.dumps(bool(message_bold))};
 const __previewVariant = {json.dumps(resolved_preview_variant)};
 const __rawBase = `${{__fileBase}}/file-raw?path=`;
 const __root = document.documentElement;
+const KATEX_CSS_HREF = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+const KATEX_JS_SRC = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+const KATEX_AUTO_RENDER_SRC = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+const loadExternalScriptOnce = (() => {{
+  const pending = new Map();
+  return (src) => {{
+    const raw = String(src || "").trim();
+    if (!raw) return Promise.resolve(false);
+    const href = new URL(raw, window.location.href).href;
+    for (const script of document.scripts) {{
+      if ((script.src || "") === href) return Promise.resolve(true);
+    }}
+    if (pending.has(href)) return pending.get(href);
+    const promise = new Promise((resolve, reject) => {{
+      const script = document.createElement("script");
+      script.src = href;
+      script.onload = () => resolve(true);
+      script.onerror = () => reject(new Error(`failed to load ${{href}}`));
+      document.head.appendChild(script);
+    }}).catch(() => false);
+    pending.set(href, promise);
+    return promise;
+  }};
+}})();
+const loadExternalStylesheetOnce = (() => {{
+  const pending = new Map();
+  return (href) => {{
+    const raw = String(href || "").trim();
+    if (!raw) return Promise.resolve(false);
+    const absHref = new URL(raw, window.location.href).href;
+    for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {{
+      if ((link.href || "") === absHref) return Promise.resolve(true);
+    }}
+    if (pending.has(absHref)) return pending.get(absHref);
+    const promise = new Promise((resolve, reject) => {{
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = absHref;
+      link.onload = () => resolve(true);
+      link.onerror = () => reject(new Error(`failed to load ${{absHref}}`));
+      document.head.appendChild(link);
+    }}).catch(() => false);
+    pending.set(absHref, promise);
+    return promise;
+  }};
+}})();
+let katexLoadPromise = null;
+const ensureKatexReady = async () => {{
+  if (typeof renderMathInElement === "function") return true;
+  if (katexLoadPromise) return katexLoadPromise;
+  katexLoadPromise = (async () => {{
+    const cssReady = await loadExternalStylesheetOnce(KATEX_CSS_HREF);
+    const katexReady = await loadExternalScriptOnce(KATEX_JS_SRC);
+    const autoRenderReady = katexReady ? await loadExternalScriptOnce(KATEX_AUTO_RENDER_SRC) : false;
+    return cssReady && katexReady && autoRenderReady && typeof renderMathInElement === "function";
+  }})().catch(() => false);
+  return katexLoadPromise;
+}};
 const __isExternalSrc = (src) => /^(https?:|data:|blob:|file:|\\/\\/)/i.test(src || "");
 const buildPreviewHref = (relPath) => {{
   const params = new URLSearchParams();
@@ -686,7 +746,8 @@ const mathRenderOptions = {{
   delimiters: [
 {{left: "$$", right: "$$", display: true}},
 {{left: "$", right: "$", display: false}},
-{{left: "\\\\[", right: "\\\\]", display: true}}
+{{left: "\\\\[", right: "\\\\]", display: true}},
+{{left: "\\\\(", right: "\\\\)", display: false}}
   ],
   ignoredClasses: ["no-math"],
   throwOnError: false
@@ -768,9 +829,19 @@ const applyPreviewTheme = (theme) => {{
 }};
 window.__agentIndexApplyPreviewTheme = applyPreviewTheme;
 const renderMathInScope = (scope) => {{
-  if (!scope || !scope.querySelector(".math-render-needed") || typeof renderMathInElement !== "function") return;
-  renderMathInElement(scope, mathRenderOptions);
-  scope.querySelectorAll(".math-render-needed").forEach((marker) => marker.remove());
+  if (!scope || !scope.querySelector(".math-render-needed")) return;
+  const applyMath = () => {{
+    if (typeof renderMathInElement !== "function") return;
+    renderMathInElement(scope, mathRenderOptions);
+    scope.querySelectorAll(".math-render-needed").forEach((marker) => marker.remove());
+  }};
+  if (typeof renderMathInElement === "function") {{
+    applyMath();
+    return;
+  }}
+  ensureKatexReady().then((ready) => {{
+    if (ready) applyMath();
+  }});
 }};
 const copyText = async (text) => {{
   if (navigator.clipboard?.writeText) {{

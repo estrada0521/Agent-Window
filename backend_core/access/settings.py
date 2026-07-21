@@ -47,17 +47,7 @@ def settings_for_hub_render(settings: dict, *, variant: str) -> dict:
 
 
 def settings_for_chat_render(settings: dict, *, variant: str) -> dict:
-    resolved = dict(settings, theme=resolve_chat_theme(settings, variant=variant))
-    view = str(variant or "").strip().lower()
-    if view == "mobile":
-        resolved.update(
-            user_message_font="preset-gothic",
-            agent_message_font="preset-mincho",
-            agent_font_mode="serif",
-            message_text_size_mobile=16,
-            bold_mode_mobile=False,
-        )
-    return resolved
+    return dict(settings, theme=resolve_chat_theme(settings, variant=variant))
 
 
 def sanitize_hub_external_editor_choice(raw: str, *, allow_markedit: bool = False) -> str:
