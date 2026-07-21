@@ -57,6 +57,27 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
     const launchShellMode = _pageParams.get("launch_shell") === "1";
     const composerAutoOpenRequested = _pageParams.get("compose") === "1";
     const DESKTOP_FILE_PANE_MIN_VIEWPORT_PX = 961;
+    let _scrollbarLayoutSyncFrame = 0;
+    const syncChatScrollbarLayoutWidth = () => {
+      const mainEl = document.querySelector("main");
+      if (!mainEl || document.documentElement.dataset.mobile === "1") return;
+      const width = Math.max(0, mainEl.offsetWidth - mainEl.clientWidth);
+      const next = `${width}px`;
+      if (mainEl.style.getPropertyValue("--chat-scrollbar-layout-width") !== next) {
+        mainEl.style.setProperty("--chat-scrollbar-layout-width", next);
+      }
+    };
+    const scheduleChatScrollbarLayoutWidthSync = () => {
+      if (_scrollbarLayoutSyncFrame) return;
+      _scrollbarLayoutSyncFrame = requestAnimationFrame(() => {
+        _scrollbarLayoutSyncFrame = 0;
+        syncChatScrollbarLayoutWidth();
+      });
+    };
+    const mainScrollbarEl = document.querySelector("main");
+    if (mainScrollbarEl && typeof ResizeObserver === "function") {
+      new ResizeObserver(scheduleChatScrollbarLayoutWidthSync).observe(mainScrollbarEl);
+    }
     const syncMainAfterHeight = () => {
       const mainEl = document.querySelector("main");
       if (!mainEl) return;
@@ -69,8 +90,12 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
       syncMainAfterHeight();
     };
     syncAppShellHeight();
+    scheduleChatScrollbarLayoutWidthSync();
     window.addEventListener("pageshow", () => syncAppShellHeight());
-    window.addEventListener("resize", () => syncAppShellHeight());
+    window.addEventListener("resize", () => {
+      syncAppShellHeight();
+      scheduleChatScrollbarLayoutWidthSync();
+    });
     if (window.visualViewport) {
       let _vvSyncTimer = 0;
       const scheduleSyncFromVV = () => {

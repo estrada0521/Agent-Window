@@ -55,6 +55,18 @@ __CHAT_INCLUDE:file-modal.css__
       background: rgba(40, 40, 34, 0.055);
       border-color: rgba(40, 40, 34, 0.07);
     }
+    .md-body a.inline-file-link > code,
+    .md-body a.local-file-link > code {
+      background: rgba(255, 255, 250, 0.075);
+      border: 1px solid rgba(255, 255, 250, 0.075);
+      border-radius: 4px;
+      padding: 0.04em 0.3em;
+    }
+    html[data-theme="light"] .md-body a.inline-file-link > code,
+    html[data-theme="light"] .md-body a.local-file-link > code {
+      background: rgba(40, 40, 34, 0.055);
+      border-color: rgba(40, 40, 34, 0.07);
+    }
     .send-btn {
       background: var(--fg);
       color: var(--surface);
