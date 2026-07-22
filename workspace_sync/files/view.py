@@ -110,10 +110,14 @@ def render_file_view(
     gutter_padding_left = 1
     gutter_padding_right = 5
     code_cell_padding_left = 12
-    preview_scrollbar_thumb = f"rgba({pane_fg_channels},0.15)"
-    preview_scrollbar_thumb_hover = f"rgba({pane_fg_channels},0.25)"
-    preview_scrollbar_thumb_light = "rgba(0,0,0,0.22)"
-    preview_scrollbar_thumb_hover_light = "rgba(0,0,0,0.35)"
+    is_mobile_preview = resolved_preview_variant == "mobile"
+    preview_scrollbar_size = "2px" if is_mobile_preview else "6px"
+    preview_scrollbar_thumb = "var(--fg)" if is_mobile_preview else f"rgba({pane_fg_channels},0.15)"
+    preview_scrollbar_thumb_hover = "var(--fg)" if is_mobile_preview else f"rgba({pane_fg_channels},0.25)"
+    preview_scrollbar_border = "0" if is_mobile_preview else "1px solid transparent"
+    preview_scrollbar_bg_clip = "border-box" if is_mobile_preview else "padding-box"
+    preview_scrollbar_thumb_light = "var(--fg)" if is_mobile_preview else "rgba(0,0,0,0.22)"
+    preview_scrollbar_thumb_hover_light = "var(--fg)" if is_mobile_preview else "rgba(0,0,0,0.35)"
     preview_selected_line_bg = f"rgba({pane_fg_channels},0.10)"
     preview_text_size_sync_js = (
         'window.addEventListener("message",(e)=>{'
@@ -133,14 +137,14 @@ def render_file_view(
     )
     preview_top_offset = "0px" if preview_chrome == "header" else ("max(48px, calc(21px + env(safe-area-inset-top)))" if embed else "0px")
     base_css = (
-        f':root{{color-scheme: dark;--agent-message-font-family:{resolved_agent_font_family};--code-font-family:{code_font_family};--message-text-size:{resolved_text_size}px;--message-text-line-height:{resolved_line_height}px;--tpad:{preview_top_offset};--preview-scrollbar-size:6px;--preview-scrollbar-thumb:{preview_scrollbar_thumb};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};--preview-selected-line-bg:{preview_selected_line_bg};}}'
+        f':root{{color-scheme: dark;--agent-message-font-family:{resolved_agent_font_family};--code-font-family:{code_font_family};--message-text-size:{resolved_text_size}px;--message-text-line-height:{resolved_line_height}px;--tpad:{preview_top_offset};--preview-scrollbar-size:{preview_scrollbar_size};--preview-scrollbar-thumb:{preview_scrollbar_thumb};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover};--preview-scrollbar-border:{preview_scrollbar_border};--preview-scrollbar-bg-clip:{preview_scrollbar_bg_clip};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};--preview-selected-line-bg:{preview_selected_line_bg};}}'
         f':root[data-preview-theme="light"]{{--preview-scrollbar-thumb:{preview_scrollbar_thumb_light};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover_light}}}'
         f"{font_face_css}"
         f"*{{box-sizing:border-box}}"
         '.md-preview-shell::-webkit-scrollbar,.view-container::-webkit-scrollbar,.html-preview-text-wrap::-webkit-scrollbar,.html-preview-text-scroll::-webkit-scrollbar,.code-scroll::-webkit-scrollbar,.table-scroll::-webkit-scrollbar,.katex-display::-webkit-scrollbar,.md-body pre::-webkit-scrollbar{width:var(--preview-scrollbar-size);height:var(--preview-scrollbar-size)}'
         '.md-preview-shell::-webkit-scrollbar-track,.view-container::-webkit-scrollbar-track,.html-preview-text-wrap::-webkit-scrollbar-track,.html-preview-text-scroll::-webkit-scrollbar-track,.code-scroll::-webkit-scrollbar-track,.table-scroll::-webkit-scrollbar-track,.katex-display::-webkit-scrollbar-track,.md-body pre::-webkit-scrollbar-track{background:transparent}'
-        '.md-preview-shell::-webkit-scrollbar-thumb,.view-container::-webkit-scrollbar-thumb,.html-preview-text-wrap::-webkit-scrollbar-thumb,.html-preview-text-scroll::-webkit-scrollbar-thumb,.code-scroll::-webkit-scrollbar-thumb,.table-scroll::-webkit-scrollbar-thumb,.katex-display::-webkit-scrollbar-thumb,.md-body pre::-webkit-scrollbar-thumb{background:var(--preview-scrollbar-thumb);border-radius:999px;border:1px solid transparent;background-clip:padding-box}'
-        '.md-preview-shell::-webkit-scrollbar-thumb:hover,.view-container::-webkit-scrollbar-thumb:hover,.html-preview-text-wrap::-webkit-scrollbar-thumb:hover,.html-preview-text-scroll::-webkit-scrollbar-thumb:hover,.code-scroll::-webkit-scrollbar-thumb:hover,.table-scroll::-webkit-scrollbar-thumb:hover,.katex-display::-webkit-scrollbar-thumb:hover,.md-body pre::-webkit-scrollbar-thumb:hover{background:var(--preview-scrollbar-thumb-hover);border:1px solid transparent;background-clip:padding-box}'
+        '.md-preview-shell::-webkit-scrollbar-thumb,.view-container::-webkit-scrollbar-thumb,.html-preview-text-wrap::-webkit-scrollbar-thumb,.html-preview-text-scroll::-webkit-scrollbar-thumb,.code-scroll::-webkit-scrollbar-thumb,.table-scroll::-webkit-scrollbar-thumb,.katex-display::-webkit-scrollbar-thumb,.md-body pre::-webkit-scrollbar-thumb{background:var(--preview-scrollbar-thumb);border-radius:999px;border:var(--preview-scrollbar-border);background-clip:var(--preview-scrollbar-bg-clip)}'
+        '.md-preview-shell::-webkit-scrollbar-thumb:hover,.view-container::-webkit-scrollbar-thumb:hover,.html-preview-text-wrap::-webkit-scrollbar-thumb:hover,.html-preview-text-scroll::-webkit-scrollbar-thumb:hover,.code-scroll::-webkit-scrollbar-thumb:hover,.table-scroll::-webkit-scrollbar-thumb:hover,.katex-display::-webkit-scrollbar-thumb:hover,.md-body pre::-webkit-scrollbar-thumb:hover{background:var(--preview-scrollbar-thumb-hover);border:var(--preview-scrollbar-border);background-clip:var(--preview-scrollbar-bg-clip)}'
         f"html,body{{margin:0;background:{embed_bg};color:{pane_fg};font-family:sans-serif;display:flex;flex-direction:column;height:100vh;font-size:var(--message-text-size);line-height:var(--message-text-line-height)}}"
         f".hdr{{padding:10px 16px;background:{embed_bg};border-bottom:0.5px solid {pane_line};display:flex;align-items:center;gap:8px;flex-shrink:0}}"
         f".fn{{font-weight:700;font-size:14px;color:{pane_fg}}}"
@@ -607,10 +611,18 @@ def render_file_view(
         markdown_layout_css = (
             f'.md-preview-shell>.md-body{{padding:{markdown_top_padding} 16px 18px}}'
         )
+        mobile_preview_shell_scrollbar_css = (
+            '.md-preview-shell{scrollbar-width:thin;scrollbar-color:var(--fg) transparent}'
+            '.md-preview-shell::-webkit-scrollbar{width:2px;height:2px}'
+            '.md-preview-shell::-webkit-scrollbar-track{background:transparent}'
+            '.md-preview-shell::-webkit-scrollbar-thumb{background:var(--fg);border:0;border-radius:999px}'
+            '.md-preview-shell::-webkit-scrollbar-thumb:hover{background:var(--fg);border:0}'
+            if resolved_preview_variant == "mobile" else ""
+        )
         return (
             f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-agent-font-mode="{agent_font_mode}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
             f'{markdown_head_libs}'
-            f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}'
+            f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}{mobile_preview_shell_scrollbar_css}'
             f'{preview_bold_css}'
             '</style></head>'
             f'<body>{header.format(icon="📝")}<div class="md-preview-shell"><div class="md-body" id="out"></div></div>'
