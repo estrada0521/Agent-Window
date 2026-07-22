@@ -83,8 +83,10 @@
 
           const codeBlocks = [];
           let codeCount = 0;
-          const normalizedText = normalizeEscapedLineBreaks(text);
-          let processedText = normalizedText.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
+          // Protect literal code and TeX before expanding serialized newlines.
+          // In particular, `\\right` begins with `\\r`; normalizing first used to
+          // turn it into a newline followed by `ight`, which KaTeX correctly rejects.
+          let processedText = String(text ?? "").replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
             const id = `code-placeholder-${codeCount++}`;
             codeBlocks.push({ id, content: match });
             return `\x00CODE:${id}\x00`;
@@ -95,6 +97,8 @@
             mathBlocks.push({ id, content: match });
             return `<span class="MATH_SAFE_BLOCK" data-id="${id}"></span>`;
           });
+
+          processedText = normalizeEscapedLineBreaks(processedText);
 
           processedText = processedText.replace(/\x00CODE:(code-placeholder-\d+)\x00/g, (_, id) => {
             const block = codeBlocks.find(b => b.id === id);
