@@ -789,12 +789,15 @@ class Handler(BaseHTTPRequestHandler):
             settings = load_hub_settings()
         except Exception:
             settings = {}
-        from backend_core.access.settings import normalize_theme_desktop, settings_for_hub_render
+        from backend_core.access.settings import normalize_theme_desktop, normalize_theme_mobile, settings_for_hub_render
 
         page = HUB_HOME_MOBILE_HTML if variant == "mobile" else HUB_HOME_DESKTOP_HTML
         if variant == "desktop":
             theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
             page = page.replace("__THEME_DESKTOP__", theme_desktop)
+        else:
+            theme_mobile = normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
+            page = page.replace("__THEME_MOBILE__", theme_mobile)
         render_settings = settings_for_hub_render(settings, variant=variant)
         self._send_html(200, apply_color_tokens(page, settings=render_settings))
 

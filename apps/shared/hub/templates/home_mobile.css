@@ -1035,6 +1035,36 @@
       box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
     }
 
+    /* Settings is a full-height preferences surface rather than a compact
+       action sheet. The class is set only while /settings is embedded. */
+    .mob-sheet-panel.settings-sheet {
+      height: 95dvh;
+      max-height: 95dvh;
+      border-radius: 32px 32px 0 0;
+    }
+    html[data-theme="light"] .mob-sheet-panel.settings-sheet {
+      background: rgb(253, 253, 252);
+      border-top-color: rgba(0, 0, 0, 0.06);
+      box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
+    }
+    .mob-sheet-panel.settings-sheet .mob-sheet-pill {
+      display: none;
+    }
+    .mob-sheet-panel.settings-sheet .mob-sheet-nav-bar {
+      min-height: 84px;
+      padding-top: 12px;
+      padding-bottom: 12px;
+    }
+    .mob-sheet-panel.settings-sheet .mob-sheet-nav-title {
+      font-size: 20px;
+      font-weight: 650;
+    }
+    .mob-sheet-panel.settings-sheet .mob-sheet-close {
+      position: absolute;
+      left: calc(14px + env(safe-area-inset-left, 0px));
+      margin-left: 0;
+    }
+
     .mob-sheet-panel::before {
       content: "";
       position: absolute;

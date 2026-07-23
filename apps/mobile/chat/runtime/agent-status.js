@@ -135,9 +135,16 @@
         const res = await fetch("/hub-settings", { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
-        const _theme = data?.theme_mobile ?? data?.theme;
-        if (_theme === "light" || _theme === "dark") {
-          document.documentElement.dataset.theme = _theme;
+        // When Chat is inside the mobile Hub, the Hub supplies the resolved
+        // theme after the iframe loads.  Reading a just-saved preference here
+        // can race that message and reintroduce an OS-derived theme.
+        if (window.parent === window) {
+          const _theme = data?.theme_mobile ?? data?.theme;
+          if (_theme === "system" || _theme === "light" || _theme === "dark") {
+            document.documentElement.dataset.theme = _theme === "system"
+              ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+              : _theme;
+          }
         }
         if (typeof data?.agent_font_mode === "string" && data.agent_font_mode) {
           document.documentElement.dataset.agentFontMode = data.agent_font_mode;
