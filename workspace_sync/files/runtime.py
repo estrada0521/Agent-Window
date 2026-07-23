@@ -533,6 +533,19 @@ delay 0.2
                 raise PermissionError(full)
         else:
             full = self._resolve_path(rel_raw, allow_workspace_root=True)
+        if os.path.isdir(full):
+            cmd, _mode = self._editor_command(full, preferred=self._preferred_external_editor())
+            popen_kw: dict = {}
+            if cmd and cmd[0] == "code" and self.workspace:
+                popen_kw["cwd"] = self.workspace
+            subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+                **popen_kw,
+            )
+            return {"ok": True, "path": rel}
         if not os.path.isfile(full):
             raise FileNotFoundError(full)
         ext = os.path.splitext(full)[1].lower()
