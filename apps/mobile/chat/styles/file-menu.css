@@ -52,6 +52,12 @@
       transition: background 120ms ease;
     }
 
+    /* Keep the candidate list's leading edge on the same 10px rhythm as the
+       composer text, without changing the desktop menu. */
+    html[data-mobile="1"] .file-item {
+      padding-left: 10px;
+    }
+
     .file-item-icon {
       width: 14px;
       height: 14px;
