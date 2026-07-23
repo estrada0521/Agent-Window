@@ -57,6 +57,20 @@
       box-sizing: border-box;
       will-change: transform, opacity;
       flex-direction: column;
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) transparent;
+    }
+
+    #fileDropdown::-webkit-scrollbar,
+    .file-menu-slide::-webkit-scrollbar {
+      width: 2px;
+      height: 2px;
+    }
+
+    #fileDropdown::-webkit-scrollbar-thumb,
+    .file-menu-slide::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 999px;
     }
     #fileDropdown.visible {
       display: flex;
@@ -94,7 +108,7 @@
       gap: 12px;
       width: 100%;
       box-sizing: border-box;
-      padding: 8px 18px;
+      padding: 8px 14px;
       border-radius: 10px;
       font-size: 13.5px;
       line-height: 20px;

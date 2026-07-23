@@ -53,11 +53,6 @@ The basic screen. Similar to typical agent windows.
 
 ### Input
 
-<p align="center">
-  <img src="media/agent-window-middle-2.png" width="100%" alt="Agent Window input 1">
-  <img src="media/agent-window-middle-3.png" width="100%" alt="Agent Window input 2">
-</p>
-
 Usually minimized to maximize the chat area. Expanded with the O button at the bottom.
 Messages are pasted directly into the selected agent's CLI pane.
 CLI commands can be used as-is.
