@@ -53,11 +53,6 @@ Always on Top をONにすると、Windowが常に全面表示されます。
 
 ### 入力欄
 
-<p align="center">
-  <img src="media/agent-window-middle-2.png" width="100%" alt="Agent Window input 1">
-  <img src="media/agent-window-middle-3.png" width="100%" alt="Agent Window input 2">
-</p>
-
 入力欄は普段は最小化され、チャット本文の表示領域を最大化しています。下部のOボタンで展開されます。
 入力されたメッセージは、選択したエージェントのCLI paneに直接貼り付けられます。
 つまり、各CLIのコマンドをそのまま利用可能です。
