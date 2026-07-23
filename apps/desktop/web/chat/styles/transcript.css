@@ -1181,13 +1181,18 @@
       padding: 0;
     }
 
-    .md-body a.inline-file-link,
+    .md-body a.inline-file-link {
+      color: var(--inline-file-link-fg);
+      text-decoration: none;
+    }
+
     .md-body a.local-file-link {
       color: var(--inline-file-link-fg);
       text-decoration: none;
     }
 
-    .md-body a.inline-file-link code {
+    .md-body a.inline-file-link code,
+    .md-body a.local-file-link code {
       color: inherit;
       text-decoration: none;
     }
@@ -1200,13 +1205,18 @@
       box-shadow: none;
     }
 
-    .has-hover .md-body a.inline-file-link:hover,
+    .has-hover .md-body a.inline-file-link:hover {
+      color: var(--inline-file-link-fg);
+      text-decoration: none;
+    }
+
     .has-hover .md-body a.local-file-link:hover {
       color: var(--inline-file-link-fg);
       text-decoration: none;
     }
 
-    .has-hover .md-body a.inline-file-link:hover code {
+    .has-hover .md-body a.inline-file-link:hover code,
+    .has-hover .md-body a.local-file-link:hover code {
       color: inherit;
       cursor: pointer;
     }

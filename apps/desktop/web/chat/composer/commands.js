@@ -240,6 +240,10 @@
         if (path) {
           e.preventDefault();
           e.stopPropagation();
+          if (anyLink.dataset.fileLinkOpen === "editor") {
+            void openFileInEditor(path, lineFromLinkAnchor(anyLink));
+            return;
+          }
           void openFileSurface(path, extFromPath(path), anyLink, e, lineFromLinkAnchor(anyLink));
           return;
         }

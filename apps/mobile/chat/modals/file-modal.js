@@ -196,6 +196,9 @@
       if (!rawHref || rawHref.startsWith("#") || rawHref.startsWith("//")) return "";
       try {
         const url = new URL(rawHref, window.location.href);
+        if (url.protocol === "file:" && (!url.host || url.host === "localhost")) {
+          return decodeURIComponent(url.pathname || "");
+        }
         if (url.origin === window.location.origin && ((CHAT_BASE_PATH && (url.pathname === `${CHAT_BASE_PATH}/file-raw` || url.pathname === `${CHAT_BASE_PATH}/file-view`)) || url.pathname === "/file-raw" || url.pathname === "/file-view")) {
           return url.searchParams.get("path") || "";
         }
@@ -220,6 +223,11 @@
         if (!anchor.dataset.filepath) anchor.dataset.filepath = path;
         if (!anchor.dataset.ext) anchor.dataset.ext = extFromPath(path);
         if (!anchor.title) anchor.title = path;
+        if (!anchor.querySelector("code") && anchor.childElementCount === 0) {
+          const label = document.createElement("code");
+          label.textContent = anchor.textContent || path;
+          anchor.replaceChildren(label);
+        }
       });
     };
     const filePathFromLinkAnchor = (anchor) => {
