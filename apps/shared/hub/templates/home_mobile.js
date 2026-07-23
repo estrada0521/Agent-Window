@@ -40,6 +40,49 @@
         applyMobThemeGradientVars();
       }
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const mobileThemeMode = () => {
+      const mode = document.documentElement.dataset.themeMobile;
+      return mode === "system" || mode === "light" || mode === "dark" ? mode : "dark";
+    };
+    const resolveMobileTheme = (mode = mobileThemeMode()) => {
+      if (mode === "system") {
+        try { return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } catch (_) { return "dark"; }
+      }
+      return mode === "light" ? "light" : "dark";
+    };
+    const publishMobileTheme = (mode = mobileThemeMode(), observedTheme = "") => {
+      const theme = observedTheme === "light" || observedTheme === "dark"
+        ? observedTheme
+        : resolveMobileTheme(mode);
+      const root = document.documentElement;
+      root.dataset.theme = theme;
+      // Do this synchronously as well as through the CSS selector.  Safari's
+      // PWA renderer can otherwise keep the fixed Hub gradient in its old
+      // compositing layer for a frame after an appearance change.
+      root.style.colorScheme = theme;
+      applyMobThemeGradientVars();
+      try { _chatFrame.contentDocument.documentElement.dataset.theme = theme; } catch (_) {}
+      try { _chatFrame?.contentWindow?.postMessage({ type: "multiagent-hub-theme-changed", theme }, "*"); } catch (_) {}
+      const sheetFrame = document.getElementById("mobSheetFrame");
+      try { sheetFrame?.contentWindow?.postMessage({ type: "multiagent-hub-theme-changed", theme }, "*"); } catch (_) {}
+      return theme;
+    };
+    publishMobileTheme();
+    const refreshSystemMobileTheme = () => {
+      if (mobileThemeMode() === "system") publishMobileTheme();
+    };
+    try {
+      const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      if (systemThemeQuery.addEventListener) systemThemeQuery.addEventListener("change", refreshSystemMobileTheme);
+      else if (systemThemeQuery.addListener) systemThemeQuery.addListener(refreshSystemMobileTheme);
+    } catch (_) {}
+    // iOS may defer a media-query change while an installed PWA is in the
+    // background.  Reconcile on every return to the Hub, but only in System.
+    window.addEventListener("pageshow", refreshSystemMobileTheme);
+    window.addEventListener("focus", refreshSystemMobileTheme);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) refreshSystemMobileTheme();
+    });
     const HUB_LAUNCH_SHELL_FALLBACK_MS = 5000;
     const CHAT_RENDER_READY_FALLBACK_MS = 2600;
     const CHAT_OVERLAY_CLOSE_MS = 300;
@@ -225,6 +268,7 @@
       setPrewarmingOverlayActive(true);
       _chatFrame.onload = function () {
         _prewarmedFrameReady = true;
+        publishMobileTheme();
       };
       if (!reusingSameSrc) {
         _chatFrame.style.transition = "none";
@@ -462,6 +506,7 @@
         _chatFrame.style.opacity = "1";
         _bumpHubChatParentLayoutMax();
         _postHubLayoutToChat();
+        publishMobileTheme();
         if (_prewarmedFrameRenderReady) {
           persistChatFrameState(normalizedUrl, normalizedName);
           finishChatRenderWait();
@@ -656,8 +701,22 @@
         _postHubLayoutToChat();
         return;
       }
+      if (e.data && e.data.type === "multiagent-hub-mobile-theme-mode-changed") {
+        const mode = String(e.data.themeMobile || "").toLowerCase();
+        if (!["system", "light", "dark"].includes(mode)) return;
+        document.documentElement.dataset.themeMobile = mode;
+        publishMobileTheme(mode);
+        return;
+      }
+      if (e.data && e.data.type === "multiagent-hub-mobile-system-theme-observed") {
+        if (mobileThemeMode() !== "system") return;
+        const theme = e.data.theme === "light" ? "light" : (e.data.theme === "dark" ? "dark" : "");
+        if (theme) publishMobileTheme("system", theme);
+        return;
+      }
       if (e.data && e.data.type === "multiagent-hub-theme-changed") {
-        const theme = e.data.theme === "light" ? "light" : "dark";
+        if (e.data.theme !== "light" && e.data.theme !== "dark") return;
+        const theme = e.data.theme;
         document.documentElement.dataset.theme = theme;
         try { _chatFrame.contentDocument.documentElement.dataset.theme = theme; } catch (_) {}
         try { _chatFrame?.contentWindow?.postMessage({ type: "multiagent-hub-theme-changed", theme }, "*"); } catch (_) {}
@@ -915,6 +974,11 @@
 
       function openSheet(url, isNewSession, title) {
         _sheetIsNewSession = !!isNewSession;
+        var isSettingsSheet = false;
+        try {
+          isSettingsSheet = !_sheetIsNewSession && new URL(url, window.location.origin).pathname === "/settings";
+        } catch (_) { }
+        sheetPanel.classList.toggle("settings-sheet", isSettingsSheet);
         if (sheetTitle) sheetTitle.textContent = _sheetIsNewSession ? "" : (title || "");
         if (sheetBackBtn) sheetBackBtn.hidden = true;
         if (_sheetCloseTimer) { clearTimeout(_sheetCloseTimer); _sheetCloseTimer = 0; }
@@ -922,6 +986,7 @@
         sheetFrame.classList.remove("sheet-frame-ready");
         sheetFrame.onload = function () {
           if (loadToken !== _sheetFrameLoadToken) return;
+          publishMobileTheme();
           requestAnimationFrame(function () {
             if (loadToken === _sheetFrameLoadToken) sheetFrame.classList.add("sheet-frame-ready");
           });
@@ -941,6 +1006,7 @@
       function finishSheetClose(refreshSessionList) {
         var wasNewSession = _sheetIsNewSession;
         _sheetIsNewSession = false;
+        sheetPanel.classList.remove("settings-sheet");
         if (sheetBackBtn) sheetBackBtn.hidden = true;
         if (sheetTitle) sheetTitle.textContent = "";
         sheet.classList.remove("sheet-closing");

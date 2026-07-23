@@ -8,11 +8,12 @@ from pathlib import Path
 
 SESSION_LOG_FILENAME = ".log.jsonl"
 DESKTOP_THEME_CHOICES = frozenset({"system", "light", "dark", "split"})
-MOBILE_THEME_CHOICES = frozenset({"light", "dark"})
+MOBILE_THEME_CHOICES = frozenset({"system", "light", "dark"})
 
 
 def normalize_theme_mobile(value: object) -> str:
-    return "light" if str(value or "").strip().lower() == "light" else "dark"
+    theme = str(value or "").strip().lower()
+    return theme if theme in MOBILE_THEME_CHOICES else "dark"
 
 
 def normalize_theme_desktop(value: object) -> str:
@@ -23,7 +24,10 @@ def normalize_theme_desktop(value: object) -> str:
 def resolve_hub_theme(settings: dict, *, variant: str) -> str:
     view = str(variant or "desktop").strip().lower()
     if view == "mobile":
-        return normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
+        mobile = normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
+        # The server has no access to the device preference. Client-side code
+        # upgrades this fallback when the user selected System.
+        return "dark" if mobile == "system" else mobile
     desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
     if desktop in ("split", "system"):
         return "dark"
@@ -33,7 +37,8 @@ def resolve_hub_theme(settings: dict, *, variant: str) -> str:
 def resolve_chat_theme(settings: dict, *, variant: str) -> str:
     view = str(variant or "desktop").strip().lower()
     if view == "mobile":
-        return normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
+        mobile = normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
+        return "dark" if mobile == "system" else mobile
     desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
     if desktop == "split":
         return "light"

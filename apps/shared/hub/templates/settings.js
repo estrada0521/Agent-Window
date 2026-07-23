@@ -30,33 +30,79 @@
       return themeDesktop === "light" ? "light" : "dark";
     };
 
-    document.querySelectorAll(".theme-switcher").forEach((switcher) => {
-      const input = switcher.querySelector('input[type="hidden"]');
-      switcher.querySelectorAll(".theme-btn").forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-          e.preventDefault();
-          const nextTheme = btn.dataset.theme;
-          if (input.value === nextTheme) return;
-          input.value = nextTheme;
-          switcher.dataset.themeValue = nextTheme;
-          document.documentElement.dataset.theme = nextTheme;
-          _themeReloadPending = nextTheme !== initialThemeValue;
-          try {
-            if (window.self !== window.top) {
-              window.top.postMessage({ type: "multiagent-hub-theme-changed", theme: nextTheme }, "*");
-            }
-          } catch (_) {}
-          // Trigger autosave
-          if (typeof _doAutoSave === "function") {
-            clearTimeout(_autoSaveTimer);
-            _autoSaveTimer = setTimeout(_doAutoSave, 150);
+    const themeMobileSelect = document.getElementById("themeMobileSelect");
+    if (themeMobileSelect) {
+      const initialMobileTheme = themeMobileSelect.dataset.initialValue || initialThemeValue;
+      const embeddedInHub = window.self !== window.top;
+      const resolveMobileTheme = (value) => value === "system"
+        ? (systemPrefersDark() ? "dark" : "light")
+        : (value === "light" ? "light" : "dark");
+      const applyMobileThemeSelection = (value, { save = true } = {}) => {
+        try {
+          if (embeddedInHub) {
+            // The mobile Hub owns the effective theme.  This frame only owns
+            // the saved preference, so it can never independently follow an
+            // OS preference change while Light or Dark is selected.
+            window.top.postMessage({ type: "multiagent-hub-mobile-theme-mode-changed", themeMobile: value }, "*");
+          } else {
+            document.documentElement.dataset.theme = resolveMobileTheme(value);
           }
-        });
+        } catch (_) {}
+        if (save && typeof _doAutoSave === "function") {
+          clearTimeout(_autoSaveTimer);
+          _autoSaveTimer = setTimeout(_doAutoSave, 150);
+        }
+      };
+      if (["system", "light", "dark"].includes(initialMobileTheme)) {
+        themeMobileSelect.value = initialMobileTheme;
+        if (!embeddedInHub && initialMobileTheme === "system") applyMobileThemeSelection("system", { save: false });
+      }
+      themeMobileSelect.addEventListener("change", () => {
+        const selectedMode = themeMobileSelect.value;
+        _themeReloadPending = resolveMobileTheme(selectedMode) !== initialThemeValue;
+        applyMobileThemeSelection(selectedMode);
       });
-    });
+      if (!embeddedInHub) {
+        try {
+          window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+            if (themeMobileSelect.value === "system") applyMobileThemeSelection("system", { save: false });
+          });
+        } catch (_) {}
+      }
+      window.addEventListener("message", (event) => {
+        const data = event.data;
+        if (data?.type !== "multiagent-hub-theme-changed") return;
+        if (data.theme === "light" || data.theme === "dark") {
+          document.documentElement.dataset.theme = data.theme;
+        }
+      });
+      if (embeddedInHub) {
+        const reportObservedSystemTheme = () => {
+          if (themeMobileSelect.value !== "system") return;
+          try {
+            window.top.postMessage({
+              type: "multiagent-hub-mobile-system-theme-observed",
+              theme: systemPrefersDark() ? "dark" : "light",
+            }, "*");
+          } catch (_) {}
+        };
+        try {
+          const query = window.matchMedia("(prefers-color-scheme: dark)");
+          if (query.addEventListener) query.addEventListener("change", reportObservedSystemTheme);
+          else if (query.addListener) query.addListener(reportObservedSystemTheme);
+        } catch (_) {}
+        window.addEventListener("pageshow", reportObservedSystemTheme);
+        window.addEventListener("focus", reportObservedSystemTheme);
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden) reportObservedSystemTheme();
+        });
+      }
+    }
 
     const themeDesktopSelect = document.getElementById("theme_desktop");
-    if (themeDesktopSelect) {
+    // Both desktop and mobile forms are present in this template.  Do not let
+    // the hidden desktop control observe OS changes inside a mobile sheet.
+    if (themeDesktopSelect && !isMobileView) {
       const applyThemeDesktopSelection = (nextTheme) => {
         document.documentElement.dataset.theme = hubThemeForDesktop(nextTheme);
         try {

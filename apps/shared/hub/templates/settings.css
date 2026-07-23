@@ -172,59 +172,6 @@
     .toggle-row input[type="checkbox"]::before { content: ""; position: absolute; width: 12px; height: 12px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: transform 200ms; }
     .toggle-row input[type="checkbox"]:checked::before { transform: translateX(14px); }
 
-    .theme-switcher {
-      display: flex;
-      background: transparent;
-      border-radius: 8px;
-      padding: 2px;
-      border: 0.5px solid var(--line-strong);
-      gap: 2px;
-    }
-    html[data-view-variant="mobile"] .theme-switcher {
-      background: var(--panel-2);
-    }
-    .theme-btn {
-      appearance: none;
-      -webkit-appearance: none;
-      border: none;
-      background: transparent;
-      padding: 4px 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 6px;
-      color: var(--muted);
-      transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease;
-    }
-    html[data-view-variant="mobile"] .theme-btn {
-      padding: 8px 16px;
-      border-radius: 8px;
-    }
-    .theme-btn svg {
-      width: 14px;
-      height: 14px;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 2.1;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      display: block;
-    }
-    html[data-view-variant="mobile"] .theme-btn svg {
-      width: 18px;
-      height: 18px;
-    }
-    .theme-switcher[data-theme-value="light"] .theme-btn.light,
-    .theme-switcher[data-theme-value="dark"] .theme-btn.dark {
-      background: var(--bg);
-      color: var(--fg);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-    }
-    html[data-theme="dark"] .theme-switcher[data-theme-value="dark"] .theme-btn.dark {
-      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-    }
-
     .set-section { display: none; }
     .hero, .hub-nav { display: none; }
     html[data-hub-embed="1"] body { padding-bottom: 0; }
@@ -609,6 +556,117 @@
       outline: none;
       transform: scale(0.72);
       transform-origin: right center;
+    }
+
+    /* Mobile settings: grouped iOS-style cards. Keep the sheet navigation in
+       the parent Hub; this styles only the embedded settings document. */
+    html[data-view-variant="mobile"] #settingsFormMobile {
+      --settings-card-bg: rgb(242, 242, 240);
+      --settings-card-line: rgba(0, 0, 0, 0.14);
+      padding: 0 20px 32px;
+    }
+    html[data-theme="dark"][data-view-variant="mobile"] #settingsFormMobile {
+      --settings-card-bg: rgb(25, 25, 24);
+      --settings-card-line: rgba(255, 255, 255, 0.11);
+    }
+    html[data-hub-embed="1"][data-view-variant="mobile"] #settingsFormMobile {
+      padding-top: calc(var(--hub-embed-sheet-offset) + 2px);
+    }
+    html[data-view-variant="mobile"] .set-section {
+      margin: 0 0 30px;
+    }
+    html[data-view-variant="mobile"] .set-section-header {
+      padding: 20px 4px 12px;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      text-transform: none;
+    }
+    html[data-view-variant="mobile"] .set-section-body {
+      overflow: hidden;
+      background: var(--settings-card-bg);
+      border-radius: 32px;
+    }
+    html[data-view-variant="mobile"] .set-row {
+      position: relative;
+      min-height: 52px;
+      padding: 6px 20px;
+      gap: 14px;
+      background: transparent;
+    }
+    html[data-view-variant="mobile"] .set-row + .set-row::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 20px;
+      left: 64px;
+      height: 1px;
+      background: var(--settings-card-line);
+      pointer-events: none;
+    }
+    html[data-view-variant="mobile"] .set-row-left {
+      gap: 14px;
+    }
+    html[data-view-variant="mobile"] .set-row-icon {
+      width: 26px;
+      height: 26px;
+      color: var(--icon-muted);
+    }
+    html[data-view-variant="mobile"] .set-row-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      stroke-width: 1.8;
+    }
+    html[data-view-variant="mobile"] .set-row-icon svg [fill="currentColor"] {
+      fill: currentColor;
+    }
+    html[data-view-variant="mobile"] .set-row-name {
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+    html[data-view-variant="mobile"] .set-row-right {
+      gap: 10px;
+      margin-left: auto;
+      justify-content: flex-end;
+    }
+    html[data-view-variant="mobile"] .set-row-right select {
+      width: min(156px, 40vw);
+      max-width: 40vw;
+      padding: 5px 0;
+      border: 0;
+      border-radius: 0;
+      color: var(--fg);
+      font-size: 16px;
+      font-weight: 400;
+      background-image: none;
+      box-shadow: none;
+      text-align: right;
+      text-align-last: right;
+    }
+    html[data-view-variant="mobile"] .stepper-control {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+    }
+    html[data-view-variant="mobile"] .stepper-btn {
+      width: 32px;
+      height: 32px;
+      background: rgba(var(--bg-rgb), 0.07);
+      border-radius: 999px;
+      color: var(--fg);
+    }
+    html[data-view-variant="mobile"] .stepper-value {
+      min-width: 2.15em;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 500;
+    }
+    html[data-view-variant="mobile"] .set-toggle {
+      transform: scale(0.82);
     }
     html[data-view-variant="desktop"] .toggle-row input[type="checkbox"] {
       -webkit-appearance: switch;

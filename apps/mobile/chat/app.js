@@ -243,6 +243,26 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
       if (!e.data || e.data.type !== "multiagent-hub-theme-changed") return;
       document.documentElement.dataset.theme = e.data.theme === "light" ? "light" : "dark";
     });
+    if (window.parent !== window) {
+      const reportObservedSystemTheme = () => {
+        try {
+          window.parent.postMessage({
+            type: "multiagent-hub-mobile-system-theme-observed",
+            theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
+          }, "*");
+        } catch (_) {}
+      };
+      try {
+        const query = window.matchMedia("(prefers-color-scheme: dark)");
+        if (query.addEventListener) query.addEventListener("change", reportObservedSystemTheme);
+        else if (query.addListener) query.addListener(reportObservedSystemTheme);
+      } catch (_) {}
+      window.addEventListener("pageshow", reportObservedSystemTheme);
+      window.addEventListener("focus", reportObservedSystemTheme);
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) reportObservedSystemTheme();
+      });
+    }
     const scrollConversationToBottom = (behavior = "auto") => {
       _programmaticScroll = true;
       timeline.scrollTo({ top: timeline.scrollHeight, behavior });

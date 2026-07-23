@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from urllib.parse import parse_qs
 
-from backend_core.access.settings import normalize_theme_desktop, resolve_chat_theme, settings_for_chat_render
+from backend_core.access.settings import normalize_theme_desktop, normalize_theme_mobile, resolve_chat_theme, settings_for_chat_render
 from hub_backend.transport.request_base_path import request_base_path
 from shortcut_command.catalog import public_command_dicts
 
@@ -301,7 +301,7 @@ def _get_hub_settings(handler, _parsed, ctx) -> None:
             "bold_mode": bool(settings.get("bold_mode_mobile", False)),
             "agent_font_mode": str(settings.get("agent_font_mode", "serif")),
             "theme": resolve_chat_theme(settings, variant="desktop"),
-            "theme_mobile": "light" if str(settings.get("theme_mobile", settings.get("theme", "dark"))).strip().lower() == "light" else "dark",
+            "theme_mobile": normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark"))),
             "theme_desktop": normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark"))),
             "chat_font_settings_css": ctx["chat_font_settings_inline_style_fn"](chat_render_settings),
             "open_files_direct_external_editor": bool(
