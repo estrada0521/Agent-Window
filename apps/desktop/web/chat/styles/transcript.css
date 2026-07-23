@@ -1428,7 +1428,7 @@
       border-left: 3px solid var(--fg);
       margin: 0.5em 0;
       padding: 0.3em 0.8em;
-      color: var(--muted);
+      color: var(--fg);
       opacity: 1;
     }
 
