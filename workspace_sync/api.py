@@ -38,10 +38,6 @@ class WorkspaceSyncApi:
             index_path=self.index_path,
             runtime=runtime,
         )
-        try:
-            self.file_runtime.refresh_file_list_cache()
-        except Exception:
-            pass
         start_workspace_fsevents_watcher(self)
 
     def raw_response_metadata(self, rel: str, range_header: str = "") -> dict:
@@ -64,6 +60,9 @@ class WorkspaceSyncApi:
 
     def refresh_file_index_cache(self):
         return self.file_runtime.refresh_file_list_cache()
+
+    def invalidate_file_index_cache(self) -> None:
+        self.file_runtime.invalidate_file_list_cache()
 
     def invalidate_git_cache(self) -> None:
         workspace_git.invalidate_branch_overview_cache()
@@ -140,4 +139,3 @@ class WorkspaceSyncApi:
 
     def git_ignore_file(self, *, rel_path: str):
         return workspace_git.git_ignore_file(rel_path=rel_path)
-

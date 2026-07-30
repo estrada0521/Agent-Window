@@ -39,7 +39,7 @@ def _codex_runtime_state_event(entry: object) -> str:
         return ""
     event_type = str(payload.get("type") or "").strip().lower()
     if entry_type == "event_msg":
-        if event_type == "task_complete":
+        if event_type in {"task_complete", "turn_aborted"}:
             return "completed"
         if event_type in {"task_started", "agent_message"}:
             return "active"

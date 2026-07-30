@@ -94,6 +94,42 @@ class CodexRuntime56Tests(unittest.TestCase):
             _codex_runtime_state_event({"type": "event_msg", "payload": {"type": "task_complete"}}),
             "completed",
         )
+        self.assertEqual(
+            _codex_runtime_state_event({"type": "event_msg", "payload": {"type": "turn_aborted"}}),
+            "completed",
+        )
+
+    def test_turn_aborted_keeps_interrupted_codex_idle(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            log_path = root / "rollout.jsonl"
+            log_path.write_text("", encoding="utf-8")
+            runtime = _CodexSyncRuntime(root)
+
+            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            with log_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps({"type": "event_msg", "payload": {"type": "task_started"}}) + "\n")
+            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            self.assertEqual(runtime.running_agents(), {"codex"})
+
+            # /interrupt marks the agent idle immediately. Codex then writes a
+            # developer interruption notice followed by the terminal event.
+            runtime._mark_idle("codex")
+            with log_path.open("a", encoding="utf-8") as handle:
+                handle.write(
+                    json.dumps(
+                        {
+                            "type": "response_item",
+                            "payload": {"type": "message", "role": "developer"},
+                        }
+                    )
+                    + "\n"
+                )
+                handle.write(json.dumps({"type": "event_msg", "payload": {"type": "turn_aborted"}}) + "\n")
+            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+
+            self.assertEqual(runtime.running_agents(), set())
+            self.assertEqual(runtime.idle_agents, ["codex", "codex"])
 
     def test_exec_unwraps_multiple_calls_without_matching_strings(self) -> None:
         script = '''
