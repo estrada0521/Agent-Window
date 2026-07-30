@@ -229,6 +229,22 @@ fn copy_dir_contents(source: &Path, target: &Path) -> std::io::Result<()> {
         if file_type.is_dir() {
             copy_dir_contents(&source_path, &target_path)?;
         } else if file_type.is_file() {
+            // コピー先が既に存在してソースより新しければスキップする。
+            // これにより、開発中に bundled-repo を直接更新した変更が
+            // Mac 再起動時の .app バンドルによる上書きで失われなくなる。
+            if target_path.exists() {
+                let src_modified = std::fs::metadata(&source_path)
+                    .and_then(|m| m.modified())
+                    .ok();
+                let tgt_modified = std::fs::metadata(&target_path)
+                    .and_then(|m| m.modified())
+                    .ok();
+                if let (Some(src_t), Some(tgt_t)) = (src_modified, tgt_modified) {
+                    if tgt_t >= src_t {
+                        continue;
+                    }
+                }
+            }
             if let Some(parent) = target_path.parent() {
                 std::fs::create_dir_all(parent)?;
             }

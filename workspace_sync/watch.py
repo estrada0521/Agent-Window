@@ -18,6 +18,31 @@ from native_log_sync.io.fsevents_stream import (
 
 _DEBOUNCE_SEC = 0.25
 
+_GIT_HEAD_METADATA_PATHS = frozenset(
+    {
+        ".git",
+        ".git/HEAD",
+        ".git/packed-refs",
+        ".git/refs",
+        ".git/logs",
+        ".git/worktrees",
+        ".git/reftable",
+    }
+)
+_GIT_HEAD_METADATA_PREFIXES = (
+    ".git/refs/",
+    ".git/logs/",
+    ".git/worktrees/",
+    ".git/reftable/",
+)
+
+
+def _is_git_head_metadata_path(rel: str) -> bool:
+    normalized = str(rel or "").replace("\\", "/").strip("/")
+    if normalized in _GIT_HEAD_METADATA_PATHS:
+        return True
+    return any(normalized.startswith(prefix) for prefix in _GIT_HEAD_METADATA_PREFIXES)
+
 
 class _DebouncedWorkspaceRefresh:
     def __init__(self, workspace_sync_api) -> None:
@@ -25,6 +50,7 @@ class _DebouncedWorkspaceRefresh:
         self._lock = threading.Lock()
         self._flush_lock = threading.Lock()
         self._pending: set[str] = set()
+        self._git_head_pending = False
         self._timer: threading.Timer | None = None
 
     def add_path(self, path: str) -> None:
@@ -34,16 +60,23 @@ class _DebouncedWorkspaceRefresh:
             return
         rel = os.path.relpath(normalized, workspace).replace("\\", "/")
         if rel == ".git" or rel.startswith(".git/"):
+            if _is_git_head_metadata_path(rel):
+                with self._lock:
+                    self._git_head_pending = True
+                    self._schedule_flush_locked()
             return
         if self._api.file_runtime.file_index_path_is_ignored(rel):
             return
         with self._lock:
             self._pending.add(normalized)
-            if self._timer:
-                self._timer.cancel()
-            self._timer = threading.Timer(_DEBOUNCE_SEC, self._flush)
-            self._timer.daemon = True
-            self._timer.start()
+            self._schedule_flush_locked()
+
+    def _schedule_flush_locked(self) -> None:
+        if self._timer:
+            self._timer.cancel()
+        self._timer = threading.Timer(_DEBOUNCE_SEC, self._flush)
+        self._timer.daemon = True
+        self._timer.start()
 
     def _flush(self) -> None:
         if not self._flush_lock.acquire(blocking=False):
@@ -56,23 +89,27 @@ class _DebouncedWorkspaceRefresh:
 
     def _schedule_flush(self) -> None:
         with self._lock:
-            if self._timer:
-                self._timer.cancel()
-            self._timer = threading.Timer(_DEBOUNCE_SEC, self._flush)
-            self._timer.daemon = True
-            self._timer.start()
+            self._schedule_flush_locked()
 
     def _flush_locked(self) -> None:
         with self._lock:
             paths = set(self._pending)
+            git_head_changed = self._git_head_pending
             self._pending.clear()
+            self._git_head_pending = False
             self._timer = None
-        if not paths:
+        if not paths and not git_head_changed:
             return
-        try:
-            self._api.refresh_file_index_cache()
-        except Exception as exc:
-            logging.error("Workspace file index refresh failed: %s", exc)
+        if paths:
+            try:
+                self._api.invalidate_file_index_cache()
+            except Exception as exc:
+                logging.error("Workspace file index invalidation failed: %s", exc)
+        if git_head_changed:
+            try:
+                self._api.runtime.ensure_commit_announcements()
+            except Exception as exc:
+                logging.error("Commit announcement refresh failed: %s", exc)
         try:
             self._api.invalidate_git_cache()
         except Exception as exc:
@@ -82,7 +119,7 @@ class _DebouncedWorkspaceRefresh:
         except Exception as exc:
             logging.error("Workspace sync event publish failed: %s", exc)
         with self._lock:
-            has_more = bool(self._pending)
+            has_more = bool(self._pending) or self._git_head_pending
         if has_more:
             self._schedule_flush()
 
