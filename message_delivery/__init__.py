@@ -58,14 +58,12 @@ def send_message(
     self,
     target: str,
     message: str,
-    reply_to: str = "",
     silent: bool = False,
     raw: bool = False,
     append_entry: bool = True,
 ) -> tuple[int, dict]:
     target = (target or "").strip()
     message = (message or "").strip()
-    reply_to = (reply_to or "").strip()
     if not message:
         return 400, {"ok": False, "error": "message is required"}
     if target:
@@ -85,11 +83,6 @@ def send_message(
                 "message": message,
                 "msg_id": uuid.uuid4().hex[:12],
             }
-            if reply_to:
-                entry["reply_to"] = reply_to
-                reply_preview = self._reply_preview_for(reply_to)
-                if reply_preview:
-                    entry["reply_preview"] = reply_preview
             append_jsonl_entry(self.index_path, entry)
         return 200, {"ok": True, "mode": "memo"}
     if "user" in targets:
@@ -172,11 +165,6 @@ def send_message(
             "message": payload,
             "msg_id": uuid.uuid4().hex[:12],
         }
-        if reply_to:
-            entry["reply_to"] = reply_to
-            reply_preview = self._reply_preview_for(reply_to)
-            if reply_preview:
-                entry["reply_preview"] = reply_preview
         append_jsonl_entry(self.index_path, entry)
     if failed_targets:
         return 400, {"ok": False, "error": f"Failed to deliver to: {', '.join(failed_targets)}"}

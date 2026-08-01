@@ -260,19 +260,6 @@ class ChatRuntime:
             return self._light_entry(entry) if light_mode else entry
         return None
 
-    def _reply_preview_for(self, reply_to: str) -> str:
-        source = self.entry_by_id(reply_to, light_mode=True)
-        if not source:
-            return ""
-        src_sender = str(source.get("sender") or "unknown").strip() or "unknown"
-        src_message = str(source.get("message") or "")
-        if src_message.startswith("[From:"):
-            idx = src_message.find("]")
-            if idx != -1:
-                src_message = src_message[idx + 1 :].lstrip()
-        preview = src_message[:80].replace("\n", " ")
-        return f"{src_sender}: {preview}"
-
     def normalized_events_for_msg(self, msg_id: str) -> dict | None:
         entry = self.entry_by_id(msg_id, light_mode=False)
         if entry is None:
@@ -575,7 +562,6 @@ class ChatRuntime:
         self,
         target: str,
         message: str,
-        reply_to: str = "",
         silent: bool = False,
         raw: bool = False,
         append_entry: bool = True,
@@ -584,7 +570,6 @@ class ChatRuntime:
             self,
             target,
             message,
-            reply_to=reply_to,
             silent=silent,
             raw=raw,
             append_entry=append_entry,

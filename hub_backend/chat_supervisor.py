@@ -10,9 +10,11 @@ import ssl
 import subprocess
 import sys
 import time
+import uuid
 from pathlib import Path
 
 from backend_core.tmux.process_cleanup import cleanup_target_process_groups
+from backend_core.access.files import append_jsonl_entry
 from backend_core.access.settings import (
     agent_window_run_dir,
     local_runtime_log_dir,
@@ -21,6 +23,32 @@ from backend_core.access.settings import (
     session_log_path,
     workspace_log_link_path,
 )
+
+
+def _append_session_lifecycle_entry(session_name: str, action: str) -> None:
+    normalized_action = str(action or "").strip().lower()
+    message = {
+        "archived": "Session archived.",
+        "revived": "Session revived.",
+    }.get(normalized_action)
+    if not message:
+        return
+    try:
+        append_jsonl_entry(
+            session_log_path(session_name),
+            {
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "session": session_name,
+                "sender": "system",
+                "targets": [],
+                "message": message,
+                "msg_id": uuid.uuid4().hex[:12],
+                "kind": "session-lifecycle",
+                "lifecycle_action": normalized_action,
+            },
+        )
+    except Exception as exc:
+        logging.warning("failed to append %s lifecycle entry for %s: %s", normalized_action, session_name, exc)
 
 
 def chat_ready(self, chat_port: int) -> bool:
@@ -313,6 +341,7 @@ def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
     for _ in range(80):
         query = self.active_session_records_query()
         if session_name in query.records:
+            _append_session_lifecycle_entry(session_name, "revived")
             return True, ""
         if query.state == "unhealthy":
             return False, f"tmux became unresponsive during session startup ({query.detail})"
@@ -339,6 +368,7 @@ def kill_repo_session(self, session_name: str) -> tuple[bool, str]:
         query = self.active_session_records_query()
         if session_name not in query.records:
             stop_ok, stop_detail = self.stop_chat_server(session_name)
+            _append_session_lifecycle_entry(session_name, "archived")
             if not stop_ok:
                 return True, f"session killed but chat server cleanup failed: {stop_detail}"
             return True, ""

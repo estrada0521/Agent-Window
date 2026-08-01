@@ -104,6 +104,8 @@ def sync_copilot_native_log(
                 "message": content,
                 "msg_id": msg_id,
             }
+            if str(entry.get("type") or "").strip() == "session.error":
+                jsonl_entry["kind"] = "provider-notice"
             append_jsonl_entry(self.index_path, jsonl_entry)
             mark_message_synced(self, agent, content, msg_id)
             return True

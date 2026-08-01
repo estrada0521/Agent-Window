@@ -103,6 +103,7 @@ def sync_codex_native_log(
                     return False
 
             display = ""
+            provider_notice = False
             entry_type = entry.get("type", "")
             if entry_type == "response_item":
                 payload = entry.get("payload", {})
@@ -134,6 +135,7 @@ def sync_codex_native_log(
                     display = _codex_token_count_limit_message(payload)
                     if not display:
                         return False
+                    provider_notice = True
                 else:
                     return False
             else:
@@ -157,6 +159,8 @@ def sync_codex_native_log(
                 "message": display,
                 "msg_id": msg_id,
             }
+            if provider_notice:
+                jsonl_entry["kind"] = "provider-notice"
             append_jsonl_entry(self.index_path, jsonl_entry)
             mark_message_synced(self, agent, display, msg_id)
             return True

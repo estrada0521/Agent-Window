@@ -88,6 +88,8 @@ workspaceとGitの状態は、これとは別にFSEventsで監視され、右pan
 * `tauri-cli`
 * Xcode Command Line Tools
 
+不足している依存関係と、その導入コマンドだけを確認する場合は `./setup/preflight` を実行します。このscriptが何かをinstallすることはありません。
+
 使用するAgent CLIも個別にインストールし、それぞれ通常の方法で認証を済ませてください。すべての対応CLIを入れる必要はありません。
 
 ## Tauri App + HTTP

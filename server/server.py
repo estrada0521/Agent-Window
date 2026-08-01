@@ -76,7 +76,7 @@ send_queue = None
 send_queue_thread = None
 
 
-def _build_outbound_user_entry(*, targets: list[str], message: str, reply_to: str = "") -> dict:
+def _build_outbound_user_entry(*, targets: list[str], message: str) -> dict:
     entry = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "session": session_name,
@@ -85,11 +85,6 @@ def _build_outbound_user_entry(*, targets: list[str], message: str, reply_to: st
         "message": message,
         "msg_id": uuid.uuid4().hex[:12],
     }
-    if reply_to:
-        entry["reply_to"] = reply_to
-        reply_preview = runtime._reply_preview_for(reply_to)
-        if reply_preview:
-            entry["reply_preview"] = reply_preview
     return entry
 
 
@@ -187,7 +182,6 @@ def _queued_send_worker() -> None:
             status, body = runtime.send_message(
                 job.get("target", ""),
                 job.get("message", ""),
-                job.get("reply_to", ""),
                 silent=bool(job.get("silent", False)),
                 raw=bool(job.get("raw", False)),
                 append_entry=False,
@@ -214,7 +208,6 @@ def _queued_send_worker() -> None:
 def _send_or_enqueue_message(
     target: str,
     message: str,
-    reply_to: str = "",
     silent: bool = False,
     raw: bool = False,
 ) -> tuple[int, dict]:
@@ -223,18 +216,16 @@ def _send_or_enqueue_message(
         return runtime.send_message(
             target,
             message,
-            reply_to,
             silent=silent,
             raw=raw,
         )
-    entry = _build_outbound_user_entry(targets=queue_targets, message=message, reply_to=reply_to)
+    entry = _build_outbound_user_entry(targets=queue_targets, message=message)
     append_jsonl_entry(runtime.index_path, entry)
     send_queue.put(
         {
             "target": ",".join(queue_targets),
             "targets": queue_targets,
             "message": str(message or "").strip(),
-            "reply_to": str(reply_to or "").strip(),
             "silent": False,
             "raw": False,
             "msg_id": entry["msg_id"],

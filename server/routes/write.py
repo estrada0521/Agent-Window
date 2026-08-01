@@ -542,7 +542,6 @@ def _post_send(handler, _parsed, ctx) -> None:
     status, body = ctx["send_message_fn"](
         data.get("target", ""),
         data.get("message", ""),
-        data.get("reply_to", ""),
         silent=bool(data.get("silent", False)),
         raw=bool(data.get("raw", False)),
     )
