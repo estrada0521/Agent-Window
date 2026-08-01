@@ -7,14 +7,6 @@ if [[ "${MULTIAGENT_SKIP_LOCAL_HTTPS_SETUP:-}" == "1" ]]; then
   exit 1
 fi
 
-brew_shellenv() {
-  if [[ -x /opt/homebrew/bin/brew ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-  elif [[ -x /usr/local/bin/brew ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
-  fi
-}
-
 mkcert_cmd() {
   if command -v mkcert >/dev/null 2>&1; then
     command -v mkcert
@@ -69,38 +61,6 @@ emit_mode() {
   printf '%s\n' "$1"
 }
 
-install_mkcert_mac() {
-  brew_shellenv
-  if ! command -v brew >/dev/null 2>&1; then
-    echo "multiagent: local HTTPS を自動セットアップするには Homebrew が必要です。" >&2
-    echo "multiagent: 先に brew を入れてから、再度 ./setup/pwa/enable を実行してください。" >&2
-    return 1
-  fi
-  brew install mkcert >&2
-}
-
-install_mkcert_linux() {
-  if command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update -y >&2
-    sudo apt-get install -y mkcert >&2
-    return 0
-  fi
-  if command -v dnf >/dev/null 2>&1; then
-    sudo dnf install -y mkcert >&2
-    return 0
-  fi
-  if command -v yum >/dev/null 2>&1; then
-    sudo yum install -y mkcert >&2
-    return 0
-  fi
-  if command -v apk >/dev/null 2>&1; then
-    sudo apk add --no-cache mkcert >&2
-    return 0
-  fi
-  echo "multiagent: この Linux では mkcert の自動導入に未対応です。手動で mkcert を入れてください。" >&2
-  return 1
-}
-
 announce_local_https_requirement() {
   cat >&2 <<'EOF'
 multiagent: phone/PWA access requires local HTTPS.
@@ -112,28 +72,15 @@ EOF
 }
 
 main() {
-  local os mkcert_bin=""
-  os="$(uname -s 2>/dev/null || echo unknown)"
+  local mkcert_bin=""
   announce_local_https_requirement
 
   if mkcert_bin="$(mkcert_cmd 2>/dev/null)"; then
     echo "multiagent: using existing mkcert for local HTTPS." >&2
   else
-
-    case "$os" in
-      Darwin)
-        install_mkcert_mac
-        ;;
-      Linux)
-        install_mkcert_linux
-        ;;
-      *)
-        echo "multiagent: OS (${os}) では mkcert の自動導入未対応です。" >&2
-        exit 1
-        ;;
-    esac
-
-    mkcert_bin="$(mkcert_cmd)"
+    echo "multiagent: mkcert is required. Nothing was installed." >&2
+    echo "multiagent: install it yourself with: brew install mkcert" >&2
+    exit 1
   fi
   echo "multiagent: installing local CA into the system trust store..." >&2
   "$mkcert_bin" -install >&2

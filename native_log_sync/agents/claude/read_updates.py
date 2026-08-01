@@ -113,6 +113,8 @@ def sync_claude_native_log(
                 "message": display,
                 "msg_id": msg_id,
             }
+            if entry.get("isApiErrorMessage"):
+                jsonl_entry["kind"] = "provider-notice"
             append_jsonl_entry(self.index_path, jsonl_entry)
             mark_message_synced(self, agent, display, msg_id)
             return True

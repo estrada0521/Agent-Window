@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import re
 import subprocess
@@ -362,29 +361,6 @@ class AgentSendRuntime:
             return False
         return True
 
-    def _reply_preview_for(self, index_path: Path, reply_to: str) -> str:
-        if not reply_to:
-            return ""
-        try:
-            with index_path.open("r", encoding="utf-8") as handle:
-                for raw in handle:
-                    line = raw.strip()
-                    if not line:
-                        continue
-                    entry = json.loads(line)
-                    if entry.get("msg_id") != reply_to:
-                        continue
-                    message = str(entry.get("message") or "")
-                    if "[From:" in message:
-                        idx = message.find("]")
-                        if idx != -1:
-                            message = message[idx + 1 :].strip()
-                    preview = message[:80].replace("\n", " ")
-                    return f"{entry.get('sender', 'unknown')}: {preview}"
-        except Exception:
-            return ""
-        return ""
-
     def append_index_entry(
         self,
         *,
@@ -393,7 +369,6 @@ class AgentSendRuntime:
         targets: list[str],
         payload: str,
         msg_id: str,
-        reply_to: str = "",
     ) -> None:
         index_path = self.resolve_session_index_path(session_name)
         entry = {
@@ -404,11 +379,6 @@ class AgentSendRuntime:
             "message": payload,
             "msg_id": msg_id,
         }
-        if reply_to:
-            entry["reply_to"] = reply_to
-            preview = self._reply_preview_for(index_path, reply_to)
-            if preview:
-                entry["reply_preview"] = preview
         append_jsonl_entry(index_path, entry)
 
     def send_message(
@@ -417,7 +387,6 @@ class AgentSendRuntime:
         target_spec: str,
         payload: str,
         explicit_session: str = "",
-        reply_to: str = "",
     ) -> bool:
         session_name = self.resolve_session_name(explicit_session)
         sender_role = self.current_pane_role(session_name) or self.env.get("MULTIAGENT_AGENT_NAME") or "user"
@@ -454,6 +423,5 @@ class AgentSendRuntime:
             targets=successful_targets,
             payload=delivery_payload,
             msg_id=msg_id,
-            reply_to=reply_to,
         )
         return not failed_any

@@ -1,0 +1,132 @@
+from __future__ import annotations
+
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from native_log_sync.agents.claude.read_updates import sync_claude_native_log
+from native_log_sync.agents.codex.read_updates import sync_codex_native_log
+from native_log_sync.agents.copilot.read_updates import sync_copilot_native_log
+
+
+class _SyncRuntime:
+    def __init__(self, root: Path) -> None:
+        self._claude_cursors = {}
+        self._codex_cursors = {}
+        self._copilot_cursors = {}
+        self._synced_msg_ids = set()
+        self._synced_message_fingerprints = set()
+        self.index_path = root / "agent-index.jsonl"
+        self.session_name = "test-session"
+        self.workspace = str(root)
+
+    def save_sync_state(self) -> None:
+        pass
+
+    def _first_seen_for_agent(self, _agent: str) -> float:
+        return 0
+
+    def _mark_idle(self, _agent: str) -> None:
+        pass
+
+    def _mark_running_from_native_activity(self, _agent: str) -> None:
+        pass
+
+    def running_agents(self) -> set[str]:
+        return set()
+
+    def pane_id_for_agent(self, _agent: str) -> str:
+        return ""
+
+    def pane_field(self, _pane_id: str, _field: str) -> str:
+        return ""
+
+
+def _read_entries(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+
+
+class ProviderNoticeTests(unittest.TestCase):
+    def test_claude_api_error_is_provider_notice(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            native_log = root / "claude.jsonl"
+            native_log.write_text("", encoding="utf-8")
+            runtime = _SyncRuntime(root)
+            sync_claude_native_log(
+                runtime,
+                "claude",
+                str(native_log),
+                first_seen_grace_seconds=0,
+                sync_bind_backfill_window_seconds=0,
+            )
+            with native_log.open("a", encoding="utf-8") as handle:
+                handle.write(
+                    json.dumps(
+                        {
+                            "type": "assistant",
+                            "uuid": "claude-notice",
+                            "isApiErrorMessage": True,
+                            "message": {"error_message": "You've hit your session limit"},
+                        }
+                    )
+                    + "\n"
+                )
+            sync_claude_native_log(
+                runtime,
+                "claude",
+                str(native_log),
+                first_seen_grace_seconds=0,
+                sync_bind_backfill_window_seconds=0,
+            )
+            self.assertEqual(_read_entries(runtime.index_path)[0]["kind"], "provider-notice")
+
+    def test_codex_rate_limit_is_provider_notice(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            native_log = root / "codex.jsonl"
+            native_log.write_text("", encoding="utf-8")
+            runtime = _SyncRuntime(root)
+            sync_codex_native_log(runtime, "codex", str(native_log), sync_bind_backfill_window_seconds=0)
+            with native_log.open("a", encoding="utf-8") as handle:
+                handle.write(
+                    json.dumps(
+                        {
+                            "type": "event_msg",
+                            "timestamp": "2026-08-02T00:00:00Z",
+                            "payload": {
+                                "type": "token_count",
+                                "rate_limits": {"rate_limit_reached_type": "primary"},
+                            },
+                        }
+                    )
+                    + "\n"
+                )
+            sync_codex_native_log(runtime, "codex", str(native_log), sync_bind_backfill_window_seconds=0)
+            self.assertEqual(_read_entries(runtime.index_path)[0]["kind"], "provider-notice")
+
+    def test_copilot_rate_limit_is_provider_notice(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            native_log = root / "copilot.jsonl"
+            native_log.write_text("", encoding="utf-8")
+            runtime = _SyncRuntime(root)
+            sync_copilot_native_log(runtime, "copilot", str(native_log), sync_bind_backfill_window_seconds=0)
+            with native_log.open("a", encoding="utf-8") as handle:
+                handle.write(
+                    json.dumps(
+                        {
+                            "type": "session.error",
+                            "id": "copilot-notice",
+                            "data": {"errorType": "rate_limit", "message": "Rate limit reached"},
+                        }
+                    )
+                    + "\n"
+                )
+            sync_copilot_native_log(runtime, "copilot", str(native_log), sync_bind_backfill_window_seconds=0)
+            self.assertEqual(_read_entries(runtime.index_path)[0]["kind"], "provider-notice")
+
+
+if __name__ == "__main__":
+    unittest.main()

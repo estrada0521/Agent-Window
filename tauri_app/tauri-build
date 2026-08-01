@@ -69,6 +69,8 @@ for _hp in /opt/homebrew/bin /usr/local/bin "$HOME/.cargo/bin"; do
 done
 export PATH
 
+"$ROOT/setup/preflight" --desktop --quiet
+
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$HOME/.agent-window/cache/tauri-target}"
 mkdir -p "$CARGO_TARGET_DIR"
 

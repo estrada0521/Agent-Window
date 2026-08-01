@@ -88,6 +88,8 @@ Install the following in advance.
 * `tauri-cli`
 * Xcode Command Line Tools
 
+Run `./setup/preflight` to list missing dependencies and the commands needed to install them. The script never installs anything.
+
 Install whichever Agent CLIs you intend to use and authenticate each one through its normal process. You do not need to install every supported CLI.
 
 ## Tauri App + HTTP

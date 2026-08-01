@@ -49,6 +49,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+"$REPO_ROOT/setup/preflight" --pwa --quiet
+
 HUB_MODE=""
 if port_serves_expected_url "http" "$HUB_PORT" "/hub.webmanifest"; then
   HUB_MODE="http"

@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+
+set -u
+
+MODE="desktop"
+QUIET=0
+
+usage() {
+  cat <<'EOF'
+Usage: setup/preflight [--desktop | --pwa] [--quiet]
+
+Checks required commands without installing anything. If something is missing,
+prints every missing requirement and the exact command needed to install it.
+
+Options:
+  --desktop  check requirements for the macOS desktop app (default)
+  --pwa      check the additional requirement for PWA HTTPS
+  --quiet    print only failures
+  --help     show this help
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --desktop)
+      MODE="desktop"
+      shift
+      ;;
+    --pwa)
+      MODE="pwa"
+      shift
+      ;;
+    --quiet)
+      QUIET=1
+      shift
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "preflight: unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+for search_path in /opt/homebrew/bin /usr/local/bin "$HOME/.cargo/bin"; do
+  case ":${PATH:-}:" in
+    *:"$search_path":*) ;;
+    *) [[ -d "$search_path" ]] && PATH="$search_path:$PATH" ;;
+  esac
+done
+export PATH
+
+if [[ "$(uname -s 2>/dev/null || true)" != "Darwin" ]]; then
+  echo "Agent Window preflight failed. Nothing was installed." >&2
+  echo "- macOS is required; cross-platform operation is not supported." >&2
+  exit 1
+fi
+
+missing_names=()
+missing_commands=()
+brew_needed=0
+
+add_missing() {
+  missing_names+=("$1")
+  missing_commands+=("$2")
+  [[ "${3:-}" == "brew" ]] && brew_needed=1
+}
+
+if [[ "$MODE" == "desktop" ]]; then
+  command -v python3 >/dev/null 2>&1 || add_missing "python3" "brew install python" brew
+  command -v tmux >/dev/null 2>&1 || add_missing "tmux" "brew install tmux" brew
+
+  if ! command -v cargo >/dev/null 2>&1; then
+    add_missing "Rust / cargo" "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+    add_missing "tauri-cli" "cargo install tauri-cli --version \"^2\" --locked"
+  elif ! cargo tauri --help >/dev/null 2>&1; then
+    add_missing "tauri-cli" "cargo install tauri-cli --version \"^2\" --locked"
+  fi
+
+  if ! command -v xcode-select >/dev/null 2>&1 || ! xcode-select -p >/dev/null 2>&1; then
+    add_missing "Xcode Command Line Tools" "xcode-select --install"
+  fi
+else
+  command -v mkcert >/dev/null 2>&1 || add_missing "mkcert" "brew install mkcert" brew
+fi
+
+if (( ${#missing_names[@]} > 0 )); then
+  echo "Agent Window preflight failed. Nothing was installed." >&2
+  echo "Missing requirements:" >&2
+  for ((i = 0; i < ${#missing_names[@]}; i += 1)); do
+    echo "- ${missing_names[$i]}" >&2
+    echo "  Install: ${missing_commands[$i]}" >&2
+  done
+  if [[ "$brew_needed" == "1" ]] && ! command -v brew >/dev/null 2>&1; then
+    echo "- Homebrew (required by the brew commands above)" >&2
+    echo '  Install: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"' >&2
+  fi
+  exit 1
+fi
+
+if [[ "$QUIET" != "1" ]]; then
+  if [[ "$MODE" == "pwa" ]]; then
+    echo "Agent Window preflight: PWA HTTPS requirement is available."
+  else
+    echo "Agent Window preflight: desktop requirements are available."
+  fi
+fi

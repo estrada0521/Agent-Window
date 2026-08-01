@@ -14,13 +14,12 @@ def _usage_text() -> str:
     alias_line = "  " + "  ".join(f"{n}={aliases[n]}" for n in sorted(aliases))
     return "\n".join(
         [
-            "Usage: agent-send [--session NAME] [--reply MSG_ID] <target>",
+            "Usage: agent-send [--session NAME] <target>",
             "",
             "Message body is read from stdin.",
             "",
             "Examples:",
             "  printf '%s' 'hello' | agent-send claude",
-            "  printf '%s' 'hello' | agent-send --reply abc123 codex",
             "",
             "Targets:",
             f"  {', '.join(ALL_AGENT_NAMES)} | others",
@@ -32,10 +31,9 @@ def _usage_text() -> str:
     )
 
 
-def _parse_agent_send_args(argv: list[str]) -> tuple[bool, str, str, str]:
+def _parse_agent_send_args(argv: list[str]) -> tuple[bool, str, str]:
     show_help = False
     session_name = (os.environ.get("MULTIAGENT_SESSION") or "").strip()
-    reply_to = ""
     idx = 0
 
     while idx < len(argv):
@@ -50,12 +48,6 @@ def _parse_agent_send_args(argv: list[str]) -> tuple[bool, str, str, str]:
             session_name = argv[idx + 1]
             idx += 2
             continue
-        if token == "--reply":
-            if idx + 1 >= len(argv):
-                raise AgentSendError("agent-send: --reply requires a value")
-            reply_to = argv[idx + 1]
-            idx += 2
-            continue
         if token == "--stdin":
             raise AgentSendError("agent-send: --stdin has been removed; stdin is now the default")
         if token == "--":
@@ -65,9 +57,9 @@ def _parse_agent_send_args(argv: list[str]) -> tuple[bool, str, str, str]:
 
     remaining = argv[idx:]
     if show_help and not remaining:
-        return True, session_name, reply_to, ""
+        return True, session_name, ""
     if not remaining:
-        return False, session_name, reply_to, ""
+        return False, session_name, ""
 
     target = remaining[0]
     extras = remaining[1:]
@@ -76,10 +68,9 @@ def _parse_agent_send_args(argv: list[str]) -> tuple[bool, str, str, str]:
             "agent-send: inline text arguments are no longer supported.\n\n"
             "Pass the message body on stdin instead.\n\n"
             "Examples:\n"
-            "  printf '%s' 'hello' | agent-send claude\n"
-            "  printf '%s' 'hello' | agent-send --reply <msg-id> claude"
+            "  printf '%s' 'hello' | agent-send claude"
         )
-    return False, session_name, reply_to, target
+    return False, session_name, target
 
 
 def run(argv: list[str] | None = None) -> int:
@@ -94,7 +85,7 @@ def run(argv: list[str] | None = None) -> int:
     script_dir = Path(known.script_dir).resolve() if known.script_dir else (repo_root / "bin")
 
     try:
-        show_help, session_name, reply_to, target = _parse_agent_send_args(remaining)
+        show_help, session_name, target = _parse_agent_send_args(remaining)
     except AgentSendError as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -111,8 +102,7 @@ def run(argv: list[str] | None = None) -> int:
         print(
             "agent-send requires a message body on stdin.\n\n"
             "Examples:\n"
-            "  printf '%s' 'hello' | agent-send claude\n"
-            "  printf '%s' 'hello' | agent-send --reply <msg-id> claude",
+            "  printf '%s' 'hello' | agent-send claude",
             file=sys.stderr,
         )
         return 1
@@ -137,7 +127,6 @@ def run(argv: list[str] | None = None) -> int:
             target_spec=target,
             payload=payload,
             explicit_session=session_name,
-            reply_to=reply_to,
         )
     except AgentSendError as exc:
         print(str(exc), file=sys.stderr)

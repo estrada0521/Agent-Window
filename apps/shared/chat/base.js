@@ -75,6 +75,17 @@
       if (matches.length < 2 && !/\\n\\n|\\n\s*(?:[-*]|\d+\.|#{1,6}\s)/.test(value)) return value;
       return value.replace(/\\r\\n|\\n|\\r/g, "\n");
     };
+    const revealMarkdownLinkTargets = (root) => {
+      root.querySelectorAll("a[href]").forEach((anchor) => {
+        const href = String(anchor.getAttribute("href") || "").trim();
+        const label = String(anchor.textContent || "").trim();
+        if (!href || label === href) return;
+        const target = document.createElement("span");
+        target.className = "markdown-link-target";
+        target.textContent = ` (${href})`;
+        anchor.after(target);
+      });
+    };
     const renderMarkdown = (text) => {
       if (typeof marked !== "undefined") {
         try {
@@ -121,6 +132,7 @@
             marker.hidden = true;
             tempDiv.prepend(marker);
           }
+          revealMarkdownLinkTargets(tempDiv);
           if (typeof Prism !== "undefined") {
             tempDiv.querySelectorAll('code[class*="language-"]').forEach(codeEl => {
               if (codeEl.classList.contains("language-diff")) return;
