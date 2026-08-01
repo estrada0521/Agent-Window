@@ -3,6 +3,8 @@
 Claude, Codex, Gemini, Cursor, Copilot の CLI を制御する Agent Window です。
 通常のサブスクリプションだけで動作します。
 
+[設計思想](DESIGN_jp.md) · [English](README.md)
+
 <p align="center">
   <img src="media/agent-window-hero-1.png" width="100%" alt="Agent Window hero 1">
   <img src="media/agent-window-hero-2.png" width="100%" alt="Agent Window hero 2">

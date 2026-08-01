@@ -3,6 +3,8 @@
 Agent Window controls CLIs for Claude, Codex, Gemini, Cursor, and Copilot.
 Works with a normal subscription alone.
 
+[Design philosophy](DESIGN.md) · [日本語](README_jp.md)
+
 <p align="center">
   <img src="media/agent-window-hero-1.png" width="100%" alt="Agent Window hero 1">
   <img src="media/agent-window-hero-2.png" width="100%" alt="Agent Window hero 2">
