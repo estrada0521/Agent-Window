@@ -131,3 +131,7 @@ https://<Mac名>.local:8788/
   <img src="media/agent-window-mobile-3.png" width="24%" alt="Mobile UI 3">
   <img src="media/agent-window-mobile-4.png" width="24%" alt="Mobile UI 4">
 </p>
+
+# License
+
+[0BSD](LICENSE)。好きに使ってください。
