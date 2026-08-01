@@ -131,3 +131,7 @@ Add it to the home screen to use it as a PWA.
   <img src="media/agent-window-mobile-3.png" width="24%" alt="Mobile UI 3">
   <img src="media/agent-window-mobile-4.png" width="24%" alt="Mobile UI 4">
 </p>
+
+# License
+
+[0BSD](LICENSE). Do whatever you want with it.
