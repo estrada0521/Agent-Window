@@ -1,6 +1,6 @@
 # Agent Window
 
-Agent Windowは、Claude、Codex、Gemini、Cursor、CopilotなどのAgent CLIを、一つのworkspaceと一つの時系列で扱うために開発したmacOS向けのローカルインターフェースです。各Agent CLIはtmuxのpane内で通常どおり起動します。Agent Windowは、選択したpaneへ文字列を送り、各CLIのnative logから発話を取得し、一つの画面へまとめます。CLIを共通APIで包んだり、独自のagent runtimeへ載せ替えたりはしません。認証、モデル選択、CLIコマンドなどは、それぞれのCLIが本来備えているものをそのまま使用します。このページは現行実装のスナップショットです。詳細と最新状態のSoTはrepoです。
+Agent Windowは、Claude、Codex、Gemini、Cursor、CopilotなどのAgent CLIを、一つのworkspaceと一つの時系列で扱うために開発したmacOS向けのローカルインターフェースです。各Agent CLIはtmuxのpane内で通常どおり起動します。Agent Windowは、選択したpaneへ文字列を送り、各CLIのnative logから発話を取得し、一つの画面へまとめます。CLIを共通APIで包んだり、独自のagent runtimeへ載せ替えることなく、CLIが本来備えているものをそのまま使用します。
 
 [設計思想](DESIGN_jp.md) · [English](README.md)
 
