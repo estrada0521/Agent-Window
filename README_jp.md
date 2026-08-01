@@ -1,7 +1,10 @@
 # Agent Window
 
-Claude, Codex, Gemini, Cursor, Copilot の CLI を制御する Agent Window です。
-通常のサブスクリプションだけで動作します。
+Agent Windowは、Claude、Codex、Gemini、Cursor、CopilotなどのAgent CLIを、一つのworkspaceと一つの時系列で扱うために開発し、実際に使用しているmacOS向けのローカルインターフェースです。
+
+各Agent CLIはtmuxのpane内で通常どおり起動します。Agent Windowは、選択したpaneへ文字列を送り、各CLIのnative logから発話を取得し、一つの画面へまとめます。CLIを共通APIで包んだり、独自のagent runtimeへ載せ替えたりはしません。認証、モデル選択、CLIコマンドなどは、それぞれのCLIが本来備えているものをそのまま使用します。
+
+このページは現行実装のスナップショットです。詳細と最新状態のSoTはrepoです。
 
 [設計思想](DESIGN_jp.md) · [English](README.md)
 
@@ -10,94 +13,138 @@ Claude, Codex, Gemini, Cursor, Copilot の CLI を制御する Agent Window で�
   <img src="media/agent-window-hero-2.png" width="100%" alt="Agent Window hero 2">
 </p>
 
-# バックエンド
+# 構成
 
-このrepoにおけるセッションには1つのtmuxプロセスとチャットサーバーが紐づけられます。
-各プロセス内のpaneに任意のエージェントを追加・削除できます。つまり、1つのセッションを複数のエージェントで運用します。
-CLIの restart や削除から再追加を繰り返しても、同じセッションである限り同じlocal jsonlにログが追記されます。
+一つのAgent Window sessionには、一つのworkspace、一つのtmux process、一つのchat server、一つのlocal JSONLが紐づきます。
+
+tmuxの各paneには、任意のAgent CLIを追加・削除できます。同じAgentを複数起動することもでき、その場合は `Claude-3` のような個別のinstance名で扱います。
+
+会話履歴はCLI processではなくAgent Window sessionに属します。CLIを終了、再起動、削除、再追加しても、同じsessionである限り、通常メッセージは同じJSONLへ追記されます。
+
+基本的なデータフローは次のとおりです。
+
+```text
+入力欄
+  → chat server
+  → tmux pane
+  → Agent CLI
+
+Agent CLI
+  → native log
+  → native log watcher
+  → chat server
+  → UI / session JSONL
+```
+
+workspaceとGitの状態は、これとは別にFSEventsで監視され、右paneへ反映されます。
 
 ## 送信
 
-送信のバックエンドには `tmux send-keys` を使用しています。
-エージェントからエージェントへの送信も、セッション内外を問わず可能です。
+送信バックエンドには `tmux send-keys` を使用します。
+
+入力欄から送信された文字列は、選択中のAgent CLIが動作するpaneへ直接入力されます。Agent Window専用のメッセージ形式へ変換されないため、各CLIのslash commandやその他のCLIコマンドもそのまま使用できます。
+
+エージェント間の送信には `agent-send` を使用します。これは指定した別のAgent CLIへ文字列を入力する薄いwrapperで、同じsession内だけでなく、別sessionのAgentへ送ることもできます。
 
 ## 受信
 
-受信はPID Tree等からCLIのnative log pathを解決し、kqueueで直接監視する方式を採用しています。
-チャットサーバーのリロードやCLIのrestartなど、特定のタイミングでpathの再解決が走ります。
-イベントはメッセージとツールコールを中心に振り分けられ、前者だけがセッションのjsonlに記録され、後者は一時的にストリームされます。
+受信側はPID treeなどから各CLIのnative log pathを解決し、kqueueで直接監視します。
+
+CLIの再起動、Agentの再追加、chat serverのreloadなど、必要なタイミングでprocessとlog pathの対応を再解決します。したがって、CLI processが入れ替わっても、Agent Window session側の時系列は継続します。
+
+native logから取得したeventは、通常メッセージとtool callなどに分類されます。
+
+人間からAgent、Agentから人間、Agentから別のAgentへ送られた通常メッセージは、sessionのJSONLへ保存されます。tool callやcommand outputは必要に応じて画面へ一時的にstreamされますが、共通の会話履歴には無差別に保存しません。
 
 ## アプリ
 
-Mac版はRust製Tauriビルドのアプリです。
-見た目を整えるための薄いラッパーで、実態はwebアプリです。
-スマホ用にはPWAを用意しています。
+実体はローカルで動作するWebアプリです。
 
-# フロントエンド
+macOS版はRust / Tauriでbuildした薄いwrapperで、window制御や外観など、desktop applicationとして必要な部分を担当します。mobile端末から同じ画面へ接続するためのPWAも用意しています。
 
-## Hub(左サイドバー)
+# インターフェース
 
-Hubサーバーではセッション一覧を管理します。
-新しいセッションの開始や、セッションのアーカイブ・削除はここから行います。
-外観の設定や機能周りのグローバルな設定もここから変更します。
+## Hub
 
-### 外観
+左側のHubは、Agent Window sessionの一覧を管理します。
 
-ダーク、ライト、複合の3種類のテーマを用意しています。
+新しいsessionの開始、archive、削除はここから行います。外観や、session間で共通する機能設定もHubに保持されます。
 
-### 全面表示
+外観はDark、Light、Hybridの3 themeです。`Always on Top` を有効にすると、Tauri windowをほかのwindowより前面に固定します。
 
-Always on Top をONにすると、Windowが常に全面表示されます。
+## チャット画面
 
-## チャット画面(中央・右)
+中央には、sessionに参加した各Agentとの通常メッセージを、一つの時系列として表示します。
 
-基本画面です。よくあるAgent windowと基本的に同じです。
+表示はAgentごとの独立したchat roomには分割されません。CLIを切り替えたり、複数のAgentを同時に動かしたりしても、同じsession内で発生した会話は同じ流れに残ります。
 
-### 入力欄
+### Agentの選択と入力
 
-入力欄は普段は最小化され、チャット本文の表示領域を最大化しています。下部のOボタンで展開されます。
-入力されたメッセージは、選択したエージェントのCLI paneに直接貼り付けられます。
-つまり、各CLIのコマンドをそのまま利用可能です。
-`@` を入力するとrepo内のファイル検索ができます。FSEventsの結果をキャッシュしています。
-プラスボタン、またはドラッグ&ドロップでファイルを添付できます。
-添付されたファイルは `.agent-window/uploads/` に保存されます。
+メッセージの送信先は、現在選択されているAgent CLIです。
 
-### Workspace管理
+入力欄は通常、chatの表示領域を広く取るために最小化されています。画面下部の `O` buttonから展開します。
 
-右paneはWorkspaceの状態を一般的なFSEvents方式で同期しています。
-未コミット差分だけを小さく表示する機能があります。
-untrackedファイルの削除と無視、ファイル単位のrevertボタンを実装しています。
-埋め込みのファイルビューアーは最小実装ですが、HTMLの表示とmarkdownレンダリングには対応しています。
-設定から `External Editor` をONにした場合は、指定した外部エディタにファイルが展開されます。こちらがデフォルトです。
+`@` を入力すると、workspace内のfileを検索できます。検索対象にはFSEventsで取得したfile情報のcacheを使用します。
 
-### メニューボタン
+fileはplus buttonまたはdrag-and-dropで添付できます。添付されたfileはworkspace内の `.agent-window/uploads/` に保存され、そのpathがAgentへ渡されます。
 
-右上のハンバーガーボタンから以下の操作を行えます。
+### Workspace
 
-**Terminal**: tmux terminal 本体を開きます。コンパクトにしています。
-**Finder**: セッションワークスペースをFinderで開きます。
-**Add / Remove Agent**: セッションにエージェントを追加・削除できます。同一エージェントの複数追加も可能です。`Claude-3` のようなインスタンス名で処理されます。
-**reload**: チャットサーバーのハードリロードです。ソースコードを編集していた場合、サーバーが入れ替わります。
+右paneには、現在のworkspaceの状態を表示します。
+
+FSEventsでfile systemの変更を追跡し、未commitのdiffを小さくまとめて表示します。untracked fileの削除・ignore、file単位のrevertにも対応しています。
+
+埋め込みfile viewerは最小限の実装で、text file、HTML、Markdownなどを確認できます。
+
+`External Editor` を有効にしている場合、fileは指定された外部editorで開きます。通常はこちらを使用します。
+
+### メニュー
+
+右上のhamburger buttonから、次の操作を行えます。
+
+* `Terminal`
+  sessionに紐づくtmux terminalを直接開きます。
+
+* `Finder`
+  sessionのworkspaceをFinderで開きます。
+
+* `Add / Remove Agent`
+  Agent CLIをsessionへ追加・削除します。同じAgentの複数instanceも追加できます。
+
+* `reload`
+  chat serverをhard reloadします。source codeを変更している場合は、動作中のserverを新しい実装へ置き換えます。
 
 # Setup
 
+以下は、repoをcloneした後にAgent Windowを起動するための最小限の入口です。
+
+現在の実装はmacOSを前提としています。環境固有の詳細や最新の挙動については、repo内の実装を参照してください。
+
+## 必要なもの
+
+事前に次をインストールします。
+
+* `python3`
+* `tmux`
+* `cargo`
+* `tauri-cli`
+* Xcode Command Line Tools
+
+使用するAgent CLIも個別にインストールし、それぞれ通常の方法で認証を済ませてください。すべての対応CLIを入れる必要はありません。
+
 ## Tauri App + HTTP
 
-基本的にTauri App前提です。
-
-事前に `python3`, `tmux`, `cargo`, `tauri-cli`, Xcode Command Line Tools をインストールしてください。
-
-Claude, Codex, Gemini, Cursor, Copilot などのAgent CLIは、使用したいものを事前にインストールし、認証まで済ませてください。
+repo rootで次を実行します。
 
 ```bash
 ./tauri_app/tauri_start
 ```
 
-このコマンドでTauri Appをbuildし、HubはTauri Appから起動されます。
-Hubのデフォルトポートは `8788` です。
-起動後はHubの `New Session` からセッションを開始してください。
+Tauri Appをbuildして起動します。HubはTauri Appから起動され、既定のportは `8788` です。
 
-再buildだけ行う場合:
+起動後、Hubの `New Session` からsessionを開始します。
+
+Tauri Appのrebuildだけを行う場合は、次を使用します。
 
 ```bash
 ./tauri_app/tauri-build
@@ -105,25 +152,32 @@ Hubのデフォルトポートは `8788` です。
 
 ## PWA / HTTPS
 
-先にHTTPのTauri Appが動いている必要があります。
+PWAは、同じLAN上のmobile端末からAgent Windowへ接続するためのものです。
+
+最初に、HTTP modeでTauri AppとHubを起動します。その状態で次を実行します。
 
 ```bash
 ./setup/pwa/enable
+```
+
+このscriptは実行中のHubを確認し、mkcertとlocal certificateを準備します。
+
+PWAを有効にした後は、次回以降の起動時に `~/.agent-window/state/pwa/enabled` が検出され、HTTPS modeで起動します。
+
+```bash
 ./tauri_app/tauri_start
 ```
 
-`./setup/pwa/enable` は実行中のHubを確認して、mkcertとローカル証明書を準備します。
-PWA有効化後は `~/.agent-window/state/pwa/enabled` を見て自動でHTTPS起動します。
-mkcert の `rootCA.pem` を端末へ送り、証明書プロファイルをインストールして信頼を有効化してください。
+mkcertの `rootCA.pem` を接続する端末へ送り、certificate profileをinstallして信頼を有効にします。
 
-その後、Safari で以下を開きます。
+その後、Safariで次のいずれかを開きます。
 
 ```text
-https://<MacのLAN IP>:8788/ or
+https://<MacのLAN IP>:8788/
 https://<Mac名>.local:8788/
 ```
 
-ホーム画面にアプリを追加するとPWAとして使えるようになります。
+ホーム画面へ追加するとPWAとして使用できます。
 
 <p align="center">
   <img src="media/agent-window-mobile-1.png" width="24%" alt="Mobile UI 1">
@@ -134,4 +188,4 @@ https://<Mac名>.local:8788/
 
 # License
 
-[0BSD](LICENSE)。好きに使ってください。
+[0BSD](LICENSE)です。好きにしてください。
