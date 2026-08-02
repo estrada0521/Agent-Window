@@ -11,7 +11,7 @@ Agent Window is a **local interface for macOS** that I developed to work with Ag
 
 # Architecture
 
-Each Agent Window session is associated with one workspace, one tmux process, one chat server, and one local JSONL log. Any Agent CLI can be added to or removed from the tmux panes. Multiple instances of the same Agent can run at once; each is identified by an instance name such as `Claude-3`. Conversation history belongs to the Agent Window session rather than to a CLI process. Even when a CLI is exited, restarted, removed, or added again, ordinary messages continue to be appended to the same JSONL as long as the session remains the same. The basic data flow is:
+Each Agent Window session is associated with one workspace, one tmux process, one chat server, and one local JSONL log. Any Agent CLI can be added to or removed from the tmux panes. Multiple instances of the same Agent can run at once; each is identified by an instance name such as `Claude-3`. Conversation history belongs to the Agent Window session rather than to a CLI process. Even when a CLI is exited, restarted, removed, or added again, ordinary messages continue to be appended to the same JSONL as long as the session remains the same. This JSONL is append-only and can be read without Agent Window. The basic data flow is:
 
 ```text
 Input field
@@ -48,7 +48,7 @@ The Hub on the left manages the list of Agent Window sessions. New sessions are 
 
 ## Chat
 
-The center of the interface displays ordinary messages exchanged with every Agent participating in the session as a single timeline. The display is not divided into independent chat rooms for each Agent. Switching between CLIs or running multiple Agents at the same time does not split the conversation: everything that happens within the same session remains in the same flow.
+The center of the interface displays ordinary messages exchanged with every Agent participating in the session as a single timeline. The display is not divided into independent chat rooms for each Agent. Switching between CLIs or running multiple Agents at the same time does not split the conversation: everything that happens within the same session remains in the same flow. The timeline visible on screen is the same timeline preserved in the session JSONL.
 
 ### Agent selection and input
 

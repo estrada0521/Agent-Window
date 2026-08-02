@@ -11,7 +11,7 @@ Agent Windowは、Claude、Codex、Gemini、Cursor、CopilotなどのAgent CLI�
 
 # 構成
 
-一つのAgent Window sessionには、一つのworkspace、一つのtmux process、一つのchat server、一つのlocal JSONLが紐づきます。tmuxの各paneには、任意のAgent CLIを追加・削除できます。同じAgentを複数起動することもでき、その場合は `Claude-3` のような個別のinstance名で扱います。会話履歴はCLI processではなくAgent Window sessionに属します。CLIを終了、再起動、削除、再追加しても、同じsessionである限り、通常メッセージは同じJSONLへ追記されます。基本的なデータフローは次のとおりです。
+一つのAgent Window sessionには、一つのworkspace、一つのtmux process、一つのchat server、一つのlocal JSONLが紐づきます。tmuxの各paneには、任意のAgent CLIを追加・削除できます。同じAgentを複数起動することもでき、その場合は `Claude-3` のような個別のinstance名で扱います。会話履歴はCLI processではなくAgent Window sessionに属します。CLIを終了、再起動、削除、再追加しても、同じsessionである限り、通常メッセージは同じJSONLへ追記されます。このJSONLは追記のみで、Agent Windowがなくても読めます。基本的なデータフローは次のとおりです。
 
 ```text
 入力欄
@@ -48,7 +48,7 @@ workspaceとGitの状態は、これとは別にFSEventsで監視され、右pan
 
 ## チャット画面
 
-中央には、sessionに参加した各Agentとの通常メッセージを、一つの時系列として表示します。表示はAgentごとの独立したchat roomには分割されません。CLIを切り替えたり、複数のAgentを同時に動かしたりしても、同じsession内で発生した会話は同じ流れに残ります。
+中央には、sessionに参加した各Agentとの通常メッセージを、一つの時系列として表示します。表示はAgentごとの独立したchat roomには分割されません。CLIを切り替えたり、複数のAgentを同時に動かしたりしても、同じsession内で発生した会話は同じ流れに残ります。画面に見えている時系列が、そのままsessionのJSONLに残る時系列です。
 
 ### Agentの選択と入力
 
