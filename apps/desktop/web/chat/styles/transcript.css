@@ -1292,7 +1292,7 @@
       word-break: normal;
       box-shadow: none;
       min-height: var(--code-scroll-stable-height, auto);
-      color: var(--muted);
+      color: var(--fg);
     }
 
     .md-body pre { scrollbar-width: thin; scrollbar-color: var(--fg) transparent; }

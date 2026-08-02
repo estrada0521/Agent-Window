@@ -38,10 +38,20 @@ Failure cases are virtually nonexistent, so formalizing acknowledgement, retries
 If all that is needed is to send text, entering it into the other Agent's CLI is enough.
 Adding a dedicated protocol would only increase the implementation and maintenance surface.
 
+### Why isn't the conversation split per Agent?
+
+Because the unit of conversation is the project.
+Splitting it would divide the record of one piece of work by the number of participants.
+
 ### Why don't you save tool calls to the shared JSONL?
 
 To keep the shared JSONL as a meaningful conversation record.
 Tool calls are displayed on screen, but persisting them would make most of the record noise. The native logs remain available when needed.
+
+### What is the unified log for?
+
+It is a project's conversation record, for humans and Agents to read.
+Because it is reachable from within the workspace, it can also be used to bring an Agent up to speed. The format is append-only JSONL, readable without Agent Window.
 
 ### Where are conversation history and attachments stored?
 
@@ -66,6 +76,11 @@ When needed, a human or Agent handles them through ordinary Git operations.
 
 It depends on the Agents. If they are mindful of each other, they do not conflict.
 Agent Window does not impose constraints and leaves this to the Agents' intelligence.
+
+### Does it manage concurrency or resource limits?
+
+No. The appropriate limit depends on the situation.
+Whatever agreement is needed is made by the humans or Agents at the time.
 
 ### Why does it bind to `0.0.0.0`?
 

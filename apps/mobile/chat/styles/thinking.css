@@ -443,7 +443,7 @@
       scrollbar-width: thin;
       scrollbar-color: var(--fg) transparent;
       min-height: var(--code-scroll-stable-height, auto);
-      color: var(--muted);
+      color: var(--fg);
     }
 
     .md-body pre::-webkit-scrollbar { width: 2px; height: 2px; }
