@@ -30,7 +30,7 @@ workspaceとGitの状態は、これとは別にFSEventsで監視され、右pan
 
 ## 送信
 
-送信バックエンドには `tmux send-keys` を使用します。入力欄から送信された文字列は、選択中のAgent CLIが動作するpaneへ直接入力されます。Agent Window専用のメッセージ形式へ変換されないため、各CLIのslash commandやその他のCLIコマンドもそのまま使用できます。エージェント間の送信には `agent-send` を使用します。これは指定した別のAgent CLIへ文字列を入力する薄いwrapperで、同じsession内だけでなく、別sessionのAgentへ送ることもできます。
+送信バックエンドには `tmux send-keys` を使用します。入力欄から送信された文字列は、選択中のAgent CLIが動作するpaneへ直接入力されます。Agent Window専用のメッセージ形式へ変換されないため、各CLIのslash commandやその他のCLIコマンドもそのまま使用できます。エージェント間の送信には `agent-send` を使用します。これは指定した別のAgent CLIへ文字列を入力する薄いwrapperで、同じsession内だけでなく、別sessionのAgentへ送ることもできます。Agentは `agent-send name <target> <name>` で、別のinstanceにsession内の名前を付けられます。名前が使われるのは `agent-send` の宛先と `[From: ...]` prefixだけで、既存のinstance名とlog上の識別子は変わりません。
 
 ## 受信
 

@@ -10,6 +10,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from message_delivery.interaction import normalize_sender_payload, pane_delivery_payload
+from message_delivery.names import (
+    load_agent_names,
+    remove_agent_name,
+    set_agent_name,
+    validate_agent_display_name,
+)
 from backend_core.agents.names import agent_base_name
 from backend_core.agents.registry import ALL_AGENT_NAMES, number_alias_map
 from backend_core.access.files import append_jsonl_entry
@@ -222,6 +228,96 @@ class AgentSendRuntime:
 
         return self.resolve_self_agent(session_name)
 
+    def source_session_name(self, target_session_name: str) -> str:
+        env_session = (self.env.get("MULTIAGENT_SESSION") or "").strip()
+        if env_session:
+            return env_session
+        if self.env.get("TMUX"):
+            result = self.tmux.run(["display-message", "-p", "#{session_name}"])
+            current_session = (result.stdout or "").strip()
+            if current_session:
+                return current_session
+        return target_session_name
+
+    def agent_names(self, session_name: str) -> dict[str, str]:
+        return load_agent_names(session_name)
+
+    def active_agent_instances(self, session_name: str) -> list[str]:
+        agents_str = self.tmux_env(session_name, "MULTIAGENT_AGENTS")
+        if agents_str and agents_str != "-":
+            return [item.strip() for item in agents_str.split(",") if item.strip()]
+        active: list[str] = []
+        for agent in self.all_agents:
+            if self.resolve_pane(session_name, f"MULTIAGENT_PANE_{agent.upper()}"):
+                active.append(agent)
+        return active
+
+    def resolve_agent_name_target(self, session_name: str, requested: str) -> str:
+        raw = str(requested or "").strip()
+        lowered = raw.lower()
+        if not lowered:
+            raise AgentSendError("Agent target is required.")
+
+        available = self.active_agent_instances(session_name)
+        for instance in available:
+            if instance.lower() == lowered:
+                return instance
+
+        alias_matches = [
+            canonical
+            for canonical, display in self.agent_names(session_name).items()
+            if display.casefold() == raw.casefold() and canonical in available
+        ]
+        if len(alias_matches) == 1:
+            return alias_matches[0]
+        if len(alias_matches) > 1:
+            raise AgentSendError(f'Agent name is ambiguous: "{raw}"')
+
+        resolved = self.resolve_agent_name(raw)
+        if resolved:
+            base = agent_base_name(resolved)
+            candidates = [
+                instance
+                for instance in available
+                if instance == base or instance.startswith(f"{base}-")
+            ]
+            if len(candidates) == 1:
+                return candidates[0]
+            if len(candidates) > 1:
+                options = ", ".join(candidates)
+                raise AgentSendError(f'Agent target "{raw}" is ambiguous; use one of: {options}')
+
+        raise AgentSendError(f"Agent instance not found: {raw}")
+
+    def _validate_name_available(self, session_name: str, canonical: str, display_name: str) -> str:
+        try:
+            name = validate_agent_display_name(display_name)
+        except ValueError as exc:
+            raise AgentSendError(str(exc)) from exc
+        folded = name.casefold()
+        reserved = {"user", "others", "name", "names", "unname"}
+        reserved.update(str(number) for number in self.number_aliases)
+        reserved.update(agent.casefold() for agent in self.active_agent_instances(session_name))
+        if folded in reserved or self.resolve_agent_name(name) is not None:
+            raise AgentSendError(f'Agent name conflicts with an existing target: "{name}"')
+        for other_canonical, other_name in self.agent_names(session_name).items():
+            if other_canonical != canonical and other_name.casefold() == folded:
+                raise AgentSendError(f'Agent name is already in use: "{name}"')
+        return name
+
+    def assign_agent_name(self, session_name: str, requested: str, display_name: str) -> tuple[str, str]:
+        canonical = self.resolve_agent_name_target(session_name, requested)
+        name = self._validate_name_available(session_name, canonical, display_name)
+        set_agent_name(session_name, canonical, name)
+        return canonical, name
+
+    def clear_agent_name(self, session_name: str, requested: str) -> tuple[str, str]:
+        canonical = self.resolve_agent_name_target(session_name, requested)
+        removed, _names = remove_agent_name(session_name, canonical)
+        if not removed:
+            raise AgentSendError(f"Agent has no name: {canonical}")
+        return canonical, removed
+
     @staticmethod
     def normalize_payload(sender: str, payload: str) -> str:
         return normalize_sender_payload(sender, payload)
@@ -237,6 +333,7 @@ class AgentSendRuntime:
     def _build_delivery_targets(self, session_name: str, target_spec: str, sender_role: str | None) -> list[DeliveryTarget]:
         targets: list[DeliveryTarget] = []
         panes_by_target: dict[str, str] = {}
+        names = self.agent_names(session_name)
 
         def queue(agent_name: str, pane_id: str) -> None:
             if not agent_name or not pane_id:
@@ -272,6 +369,24 @@ class AgentSendRuntime:
                 if not found:
                     raise AgentSendError(f"Target pane not found: {raw_target}")
                 continue
+
+            alias_matches = [
+                canonical
+                for canonical, display in names.items()
+                if display.casefold() == raw_target.casefold()
+            ]
+            if len(alias_matches) == 1:
+                canonical = alias_matches[0]
+                pane = self.resolve_pane(
+                    session_name,
+                    f"MULTIAGENT_PANE_{canonical.upper().replace('-', '_')}",
+                )
+                if not pane:
+                    raise AgentSendError(f"Target pane not found: {raw_target}")
+                queue(canonical, pane)
+                continue
+            if len(alias_matches) > 1:
+                raise AgentSendError(f'Agent name is ambiguous: "{raw_target}"')
 
             lower_target = raw_target.lower()
             if lower_target == "user":
@@ -390,7 +505,9 @@ class AgentSendRuntime:
     ) -> bool:
         session_name = self.resolve_session_name(explicit_session)
         sender_role = self.current_pane_role(session_name) or self.env.get("MULTIAGENT_AGENT_NAME") or "user"
-        delivery_payload = self.normalize_payload(sender_role, payload)
+        source_session = self.source_session_name(session_name)
+        sender_label = self.agent_names(source_session).get(sender_role, sender_role)
+        delivery_payload = self.normalize_payload(sender_label, payload)
         delivery_targets = self._build_delivery_targets(session_name, target_spec, sender_role)
         if not delivery_targets:
             raise AgentSendError("No target panes resolved.")

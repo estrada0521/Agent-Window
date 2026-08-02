@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import time
 from datetime import datetime
@@ -21,6 +22,35 @@ def _parse_tmux_environment_output(output: str) -> dict[str, str]:
 
 def _parse_agents_csv(agents_csv: str) -> list[str]:
     return [item.strip() for item in (agents_csv or "").split(",") if item.strip()]
+
+
+def _reconcile_agent_names(meta: dict[str, object], current_agents: list[str]) -> None:
+    raw_names = meta.get("agent_names")
+    if not isinstance(raw_names, dict):
+        return
+    previous_agents_raw = meta.get("agents")
+    previous_agents = {
+        str(agent or "").strip().lower()
+        for agent in (previous_agents_raw if isinstance(previous_agents_raw, list) else [])
+        if str(agent or "").strip()
+    }
+    current = {str(agent or "").strip().lower() for agent in current_agents if str(agent or "").strip()}
+    cleaned = {
+        str(canonical or "").strip().lower(): str(display or "").strip()
+        for canonical, display in raw_names.items()
+        if str(canonical or "").strip() and str(display or "").strip()
+    }
+    reconciled = {canonical: display for canonical, display in cleaned.items() if canonical in current}
+    for canonical, display in cleaned.items():
+        if canonical in current or canonical not in previous_agents or re.search(r"-\d+$", canonical):
+            continue
+        replacement = f"{canonical}-1"
+        if replacement in current and replacement not in previous_agents and replacement not in reconciled:
+            reconciled[replacement] = display
+    if reconciled:
+        meta["agent_names"] = reconciled
+    else:
+        meta.pop("agent_names", None)
 
 
 def write_session_meta_file(session: str, agents_csv: str, tmux_env_output: str) -> None:
@@ -47,9 +77,11 @@ def write_session_meta_file(session: str, agents_csv: str, tmux_env_output: str)
         or ""
     ).strip()
 
+    parsed_agents = _parse_agents_csv(agents_csv)
+    _reconcile_agent_names(meta, parsed_agents)
     meta["session"] = session
     meta["workspace"] = workspace
-    meta["agents"] = _parse_agents_csv(agents_csv)
+    meta["agents"] = parsed_agents
     meta["created_at"] = created_at
     meta["updated_at"] = updated_at
     meta_path.parent.mkdir(parents=True, exist_ok=True)
