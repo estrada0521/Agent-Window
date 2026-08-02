@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 from backend_core.agents.registry import ALL_AGENT_NAMES, number_alias_map
@@ -20,6 +21,13 @@ def _usage_text() -> str:
             "",
             "Examples:",
             "  printf '%s' 'hello' | agent-send claude",
+            "  agent-send name claude Fable",
+            "  printf '%s' 'hello' | agent-send Fable",
+            "",
+            "Naming:",
+            "  agent-send name <target> <name>",
+            "  agent-send names",
+            "  agent-send unname <target-or-name>",
             "",
             "Targets:",
             f"  {', '.join(ALL_AGENT_NAMES)} | others",
@@ -31,7 +39,16 @@ def _usage_text() -> str:
     )
 
 
-def _parse_agent_send_args(argv: list[str]) -> tuple[bool, str, str]:
+@dataclass(frozen=True)
+class ParsedAgentSendArgs:
+    show_help: bool
+    session_name: str
+    operation: str
+    target: str = ""
+    name: str = ""
+
+
+def _parse_agent_send_args(argv: list[str]) -> ParsedAgentSendArgs:
     show_help = False
     session_name = (os.environ.get("MULTIAGENT_SESSION") or "").strip()
     idx = 0
@@ -57,9 +74,23 @@ def _parse_agent_send_args(argv: list[str]) -> tuple[bool, str, str]:
 
     remaining = argv[idx:]
     if show_help and not remaining:
-        return True, session_name, ""
+        return ParsedAgentSendArgs(True, session_name, "help")
     if not remaining:
-        return False, session_name, ""
+        return ParsedAgentSendArgs(False, session_name, "send")
+
+    operation = remaining[0].lower()
+    if operation == "names":
+        if len(remaining) != 1:
+            raise AgentSendError("Usage: agent-send [--session NAME] names")
+        return ParsedAgentSendArgs(show_help, session_name, "names")
+    if operation == "name":
+        if len(remaining) != 3:
+            raise AgentSendError("Usage: agent-send [--session NAME] name <target> <name>")
+        return ParsedAgentSendArgs(show_help, session_name, "name", remaining[1], remaining[2])
+    if operation == "unname":
+        if len(remaining) != 2:
+            raise AgentSendError("Usage: agent-send [--session NAME] unname <target-or-name>")
+        return ParsedAgentSendArgs(show_help, session_name, "unname", remaining[1])
 
     target = remaining[0]
     extras = remaining[1:]
@@ -70,7 +101,7 @@ def _parse_agent_send_args(argv: list[str]) -> tuple[bool, str, str]:
             "Examples:\n"
             "  printf '%s' 'hello' | agent-send claude"
         )
-    return False, session_name, target
+    return ParsedAgentSendArgs(show_help, session_name, "send", target)
 
 
 def run(argv: list[str] | None = None) -> int:
@@ -85,17 +116,46 @@ def run(argv: list[str] | None = None) -> int:
     script_dir = Path(known.script_dir).resolve() if known.script_dir else (repo_root / "bin")
 
     try:
-        show_help, session_name, target = _parse_agent_send_args(remaining)
+        parsed = _parse_agent_send_args(remaining)
     except AgentSendError as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
-    if show_help:
+    if parsed.show_help:
         print(_usage_text())
         return 0
 
-    if not target:
+    if parsed.operation == "send" and not parsed.target:
         print(_usage_text(), file=sys.stderr)
+        return 1
+
+    runtime = AgentSendRuntime(
+        repo_root=repo_root,
+        script_dir=script_dir,
+        env=dict(os.environ),
+        cwd=Path.cwd(),
+    )
+
+    try:
+        session_name = runtime.resolve_session_name(parsed.session_name)
+        if parsed.operation == "names":
+            names = runtime.agent_names(session_name)
+            if names:
+                for canonical, display in names.items():
+                    print(f"{canonical}: {display}")
+            else:
+                print(f"No agent names set for session: {session_name}")
+            return 0
+        if parsed.operation == "name":
+            canonical, display = runtime.assign_agent_name(session_name, parsed.target, parsed.name)
+            print(f"Named {canonical} {display}.")
+            return 0
+        if parsed.operation == "unname":
+            canonical, display = runtime.clear_agent_name(session_name, parsed.target)
+            print(f"Removed name {display} from {canonical}.")
+            return 0
+    except AgentSendError as exc:
+        print(str(exc), file=sys.stderr)
         return 1
 
     if sys.stdin.isatty():
@@ -115,18 +175,11 @@ def run(argv: list[str] | None = None) -> int:
         print("agent-send: empty message body", file=sys.stderr)
         return 1
 
-    runtime = AgentSendRuntime(
-        repo_root=repo_root,
-        script_dir=script_dir,
-        env=dict(os.environ),
-        cwd=Path.cwd(),
-    )
-
     try:
         success = runtime.send_message(
-            target_spec=target,
+            target_spec=parsed.target,
             payload=payload,
-            explicit_session=session_name,
+            explicit_session=parsed.session_name,
         )
     except AgentSendError as exc:
         print(str(exc), file=sys.stderr)

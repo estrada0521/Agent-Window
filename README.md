@@ -30,7 +30,7 @@ Workspace and Git state are monitored separately through FSEvents and reflected 
 
 ## Sending
 
-The sending backend uses `tmux send-keys`. Text sent from the input field is entered directly into the pane running the selected Agent CLI. Because it is not converted into an Agent Window-specific message format, slash commands and other native CLI commands can be used as-is. Agent-to-agent messages are sent with `agent-send`. This is a thin wrapper that enters text into another specified Agent CLI, whether it is in the same session or a different one.
+The sending backend uses `tmux send-keys`. Text sent from the input field is entered directly into the pane running the selected Agent CLI. Because it is not converted into an Agent Window-specific message format, slash commands and other native CLI commands can be used as-is. Agent-to-agent messages are sent with `agent-send`. This is a thin wrapper that enters text into another specified Agent CLI, whether it is in the same session or a different one. An Agent can give another instance a session-local name with `agent-send name <target> <name>`. The name is used only as an `agent-send` address and in the `[From: ...]` prefix; canonical instance names and log identities remain unchanged.
 
 ## Receiving
 
