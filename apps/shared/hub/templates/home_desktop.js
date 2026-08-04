@@ -1371,14 +1371,6 @@
         }).catch(() => {});
         return;
       }
-      if (event.data && event.data.type === "multiagent-set-window-always-on-top" && event.source === _deskSidebarFrame?.contentWindow) {
-        const invoke = (() => {
-          try { return window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke || null; } catch (_) { return null; }
-        })();
-        if (typeof invoke !== "function") return;
-        invoke("set_window_always_on_top", { enabled: !!event.data.enabled }).catch(() => {});
-        return;
-      }
       if (event.data && event.data.type === "multiagent-composer-overlay-state" && event.source === _deskChatFrame?.contentWindow) {
         setDeskComposerOverlayOpen(!!event.data.open);
         return;

@@ -1,22 +1,6 @@
     const HUB_EMBED = document.documentElement.dataset.hubEmbed === "1";
     const VIEW_VARIANT = document.documentElement.dataset.viewVariant || "";
     const isMobileView = VIEW_VARIANT === "mobile";
-    const getTauriInvoke = () => {
-      try { return window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke || null; } catch (_) { return null; }
-    };
-    const applyWindowAlwaysOnTop = (enabled) => {
-      const nextEnabled = !!enabled;
-      const invoke = getTauriInvoke();
-      if (typeof invoke === "function") {
-        invoke("set_window_always_on_top", { enabled: nextEnabled }).catch(() => {});
-        return;
-      }
-      if (window.self !== window.top) {
-        try {
-          window.parent.postMessage({ type: "multiagent-set-window-always-on-top", enabled: nextEnabled }, "*");
-        } catch (_) {}
-      }
-    };
 
     const boldMobileToggle = document.querySelector('#settingsFormMobile input[name="bold_mode_mobile"]');
     const initialThemeValue = document.documentElement.dataset.theme || "dark";
@@ -233,7 +217,6 @@
           body: payload.toString(),
           cache: "no-store",
         });
-        applyWindowAlwaysOnTop(formData.get("window_always_on_top") === "on");
         _themeReloadPending = false;
       } catch (_) {}
       settingsForm.dataset.saving = "0";
