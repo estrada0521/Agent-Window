@@ -43,8 +43,6 @@ def main() -> None:
         emit_scalar(f"AGENT_RESUME_FLAG_{name}", agent.resume_flag)
         emit_scalar(f"AGENT_RESUME_EXTRA_FLAGS_{name}", agent.resume_extra_flags)
         emit_scalar(f"AGENT_STARTUP_PRIORITY_{name}", agent.startup_priority)
-        if agent.number_alias:
-            emit_scalar(f"AGENT_NUMBER_ALIAS_{agent.number_alias}", name)
 
 
 if __name__ == "__main__":

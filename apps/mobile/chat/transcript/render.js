@@ -1,6 +1,6 @@
     const render = (data, { forceScroll = false, forceFullRender = false } = {}) => {
       try {
-        const shouldStick = forceScroll || _stickyToBottom || isNearBottom();
+        const shouldStick = forceScroll;
         const displayEntries = displayEntriesForData(data);
         const metaHiddenIds = computeMetaHiddenIds(displayEntries);
         const previousRenderedIds = new Set(_renderedIds);
