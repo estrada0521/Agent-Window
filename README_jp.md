@@ -44,7 +44,7 @@ workspaceとGitの状態は、これとは別にFSEventsで監視され、右pan
 
 ## Hub
 
-左側のHubは、Agent Window sessionの一覧を管理します。新しいsessionの開始、archive、削除はここから行います。外観や、session間で共通する機能設定もHubに保持されます。外観はDark、Light、Hybridの3 themeです。`Always on Top` を有効にすると、Tauri windowをほかのwindowより前面に固定します。
+左側のHubは、Agent Window sessionの一覧を管理します。新しいsessionの開始、archive、削除はここから行います。外観や、session間で共通する機能設定もHubに保持されます。外観はDark、Light、Hybridの3 themeです。
 
 ## チャット画面
 

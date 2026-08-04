@@ -132,7 +132,6 @@ def hub_settings_html(
     render_theme = resolve_hub_theme(settings, variant=resolved_view_variant)
     bold_mode_mobile = settings.get("bold_mode_mobile", False)
     open_files_direct_external_editor = settings.get("open_files_direct_external_editor", False)
-    window_always_on_top = settings.get("window_always_on_top", False)
     font_choices = available_chat_font_choices_fn()
     font_options = lambda selected: "".join(
         f'<option value="{html.escape(value)}"' + (' selected' if value == selected else '') + f'>{html.escape(label)}</option>'
@@ -170,7 +169,6 @@ def hub_settings_html(
         .replace("__THEME_DESKTOP_OPTIONS__", theme_desktop_options)
         .replace("__BOLD_MODE_MOBILE_CHECKED__", " checked" if bold_mode_mobile else "")
         .replace("__OPEN_FILES_DIRECT_EXTERNAL_EDITOR_CHECKED__", " checked" if open_files_direct_external_editor else "")
-        .replace("__WINDOW_ALWAYS_ON_TOP_CHECKED__", " checked" if window_always_on_top else "")
         .replace(
             "__OPEN_FILES_DIRECT_EXTERNAL_EDITOR_HIDDEN__",
             html.escape("on" if open_files_direct_external_editor else ""),

@@ -44,7 +44,7 @@ Agent Window is fundamentally a locally running web app. The macOS version is a 
 
 ## Hub
 
-The Hub on the left manages the list of Agent Window sessions. New sessions are started, archived, and deleted from the Hub. Appearance and functional settings shared across sessions are also stored there. The three appearance themes are Dark, Light, and Hybrid. Enabling `Always on Top` keeps the Tauri window in front of other windows.
+The Hub on the left manages the list of Agent Window sessions. New sessions are started, archived, and deleted from the Hub. Appearance and functional settings shared across sessions are also stored there. The three appearance themes are Dark, Light, and Hybrid.
 
 ## Chat
 
