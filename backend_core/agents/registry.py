@@ -16,7 +16,6 @@ class AgentDef:
     resume_flag: str = ""
     resume_extra_flags: str = ""
     ready_pattern: str = ""
-    number_alias: int = 0
     startup_priority: int = 0
     fallback_paths: tuple[str, ...] = ()
     prefer_fallback_paths: bool = False
@@ -54,7 +53,6 @@ _register(
         launch_extra=f"env -u CLAUDECODE {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="--continue",
         ready_pattern=r"Claude Code|Tips for getting started|Recent activity",
-        number_alias=1,
         fallback_paths=("~/.local/bin/claude",),
     ),
     AgentDef(
@@ -65,7 +63,6 @@ _register(
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="resume --last",
         ready_pattern=r"OpenAI Codex|model:|Tip: New",
-        number_alias=2,
         fallback_nvm=True,
     ),
     AgentDef(
@@ -76,7 +73,6 @@ _register(
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="--continue",
         ready_pattern=r"Ready \(multiagent\)|Antigravity|Type your message",
-        number_alias=3,
         fallback_paths=("~/.local/bin/agy",),
         fallback_nvm=True,
     ),
@@ -88,7 +84,6 @@ _register(
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="--continue",
         ready_pattern=r"GitHub Copilot|What can I help you with|Ask Copilot",
-        number_alias=4,
         startup_priority=10,
         fallback_nvm=True,
     ),
@@ -100,7 +95,6 @@ _register(
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="--continue",
         ready_pattern=r"Cursor Agent|resume previous session|Output the version number|Bypassing Permissions",
-        number_alias=5,
         fallback_paths=("~/.local/bin/cursor-agent",),
     ),
     AgentDef(
@@ -111,7 +105,6 @@ _register(
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="--continue",
         ready_pattern=r"Grok Build|What can I help|Type your message",
-        number_alias=6,
         fallback_paths=("~/.local/bin/grok",),
         prefer_fallback_paths=True,
     ),
@@ -131,10 +124,6 @@ def icon_file_map(repo_root: Path) -> dict[str, Path]:
 
 def icon_filename_map() -> dict[str, str]:
     return {name: a.icon_file for name, a in AGENTS.items()}
-
-
-def number_alias_map() -> dict[int, str]:
-    return {a.number_alias: name for name, a in AGENTS.items() if a.number_alias}
 
 
 def canonical_agent_name(name: str) -> str:

@@ -17,7 +17,7 @@ from message_delivery.names import (
     validate_agent_display_name,
 )
 from backend_core.agents.names import agent_base_name
-from backend_core.agents.registry import ALL_AGENT_NAMES, number_alias_map
+from backend_core.agents.registry import ALL_AGENT_NAMES
 from backend_core.access.files import append_jsonl_entry
 import hashlib as _hashlib
 
@@ -107,7 +107,6 @@ class AgentSendRuntime:
         self.tmux_socket_name = tmux_socket_from_env(self.repo_root, self.env)
         self.tmux = TmuxClient(self.tmux_socket_name, self.env)
         self.all_agents = list(ALL_AGENT_NAMES)
-        self.number_aliases = number_alias_map()
 
     def list_sessions(self) -> list[str]:
         result = self.tmux.run(["list-sessions", "-F", "#S"])
@@ -184,10 +183,6 @@ class AgentSendRuntime:
         lower = (token or "").strip().lower()
         if not lower:
             return None
-        if lower.isdigit():
-            alias = self.number_aliases.get(int(lower))
-            if alias:
-                return alias
         base = agent_base_name(lower)
         if base in self.all_agents:
             return lower
@@ -296,7 +291,6 @@ class AgentSendRuntime:
             raise AgentSendError(str(exc)) from exc
         folded = name.casefold()
         reserved = {"user", "others", "name", "names", "unname"}
-        reserved.update(str(number) for number in self.number_aliases)
         reserved.update(agent.casefold() for agent in self.active_agent_instances(session_name))
         if folded in reserved or self.resolve_agent_name(name) is not None:
             raise AgentSendError(f'Agent name conflicts with an existing target: "{name}"')

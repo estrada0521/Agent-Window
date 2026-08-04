@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from bin.multiagent_lib.state import write_session_meta_file
-from message_delivery.cli import _parse_agent_send_args
+from message_delivery.cli import _parse_agent_send_args, _usage_text
 from message_delivery.send import AgentSendError, AgentSendRuntime
 
 
@@ -83,6 +83,18 @@ class AgentNameTests(unittest.TestCase):
         )
         self.assertEqual(_parse_agent_send_args(["names"]).operation, "names")
         self.assertEqual(_parse_agent_send_args(["unname", "Fable"]).operation, "unname")
+
+    def test_numeric_provider_aliases_are_not_supported(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime = _NameRuntime(Path(tmp))
+            self.assertIsNone(runtime.resolve_agent_name("1"))
+            with self.assertRaisesRegex(AgentSendError, "Unknown target: 1"):
+                runtime.send_message(
+                    target_spec="1",
+                    payload="hello",
+                    explicit_session="test-session",
+                )
+        self.assertNotIn("1=claude", _usage_text())
 
     def test_alias_is_only_used_for_address_and_from_prefix(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

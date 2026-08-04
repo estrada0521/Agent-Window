@@ -6,13 +6,11 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from backend_core.agents.registry import ALL_AGENT_NAMES, number_alias_map
+from backend_core.agents.registry import ALL_AGENT_NAMES
 from message_delivery.send import AgentSendError, AgentSendRuntime
 
 
 def _usage_text() -> str:
-    aliases = number_alias_map()
-    alias_line = "  " + "  ".join(f"{n}={aliases[n]}" for n in sorted(aliases))
     return "\n".join(
         [
             "Usage: agent-send [--session NAME] <target>",
@@ -31,7 +29,6 @@ def _usage_text() -> str:
             "",
             "Targets:",
             f"  {', '.join(ALL_AGENT_NAMES)} | others",
-            alias_line,
             "  claude-1       (specific instance when duplicates exist)",
             "  claude,codex   (comma-separated targets)",
             "  claude         (sends to ALL claude instances if duplicated)",
