@@ -49,9 +49,6 @@ class WorkspaceSyncApi:
     def file_content(self, rel: str):
         return self.file_runtime.file_content(rel)
 
-    def openability(self, rel: str) -> dict[str, str | bool | None]:
-        return self.file_runtime.openability(rel)
-
     def file_view(self, rel: str, **kwargs):
         return self.file_runtime.file_view(rel, **kwargs)
 

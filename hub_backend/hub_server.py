@@ -7,7 +7,6 @@ import os
 import re
 import ssl
 import subprocess
-import shutil
 import sys
 import threading
 import time
@@ -466,65 +465,6 @@ def available_chat_font_choices():
     )
 
 
-def _macos_app_exists(app_name: str) -> bool:
-    if sys.platform != "darwin" or not shutil.which("osascript"):
-        return False
-    try:
-        result = subprocess.run(
-            ["osascript", "-e", f'id of application "{app_name}"'],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        )
-    except Exception:
-        return False
-    return result.returncode == 0
-
-
-def available_external_editor_choices():
-    choices: list[tuple[str, str]] = []
-
-    def _append(value: str, label: str) -> None:
-        if any(existing == value for existing, _ in choices):
-            return
-        choices.append((value, label))
-
-    _append("vscode", "VS Code")
-    _append("coteditor", "CotEditor")
-
-    if sys.platform == "darwin":
-        app_candidates = (
-            ("app:Antigravity", "Antigravity", ("Antigravity", "Antigravity Editor")),
-            ("app:Cursor", "Cursor", ("Cursor",)),
-            ("app:Windsurf", "Windsurf", ("Windsurf",)),
-            ("app:Zed", "Zed", ("Zed",)),
-            ("app:Sublime Text", "Sublime Text", ("Sublime Text",)),
-            ("app:TextMate", "TextMate", ("TextMate",)),
-            ("app:BBEdit", "BBEdit", ("BBEdit",)),
-            ("app:Nova", "Nova", ("Nova",)),
-        )
-        for value, label, app_names in app_candidates:
-            if any(_macos_app_exists(app_name) for app_name in app_names):
-                _append(value, label)
-
-    _append("system", "System Default")
-    return choices
-
-
-def available_markdown_external_editor_choices():
-    seen: set[str] = set()
-    choices: list[tuple[str, str]] = []
-    if sys.platform == "darwin" and _macos_app_exists("MarkEdit"):
-        choices.append(("markedit", "MarkEdit"))
-        seen.add("markedit")
-    for value, label in available_external_editor_choices():
-        if value in seen:
-            continue
-        choices.append((value, label))
-        seen.add(value)
-    return choices
-
-
 def hub_settings_html(saved=False, variant="desktop"):
     header_html = render_hub_page_header(
         title_href="/",
@@ -536,8 +476,6 @@ def hub_settings_html(saved=False, variant="desktop"):
         saved=bool(saved),
         load_hub_settings_fn=hub.load_hub_settings,
         available_chat_font_choices_fn=available_chat_font_choices,
-        available_external_editor_choices_fn=available_external_editor_choices,
-        available_markdown_external_editor_choices_fn=available_markdown_external_editor_choices,
         settings_template=_HUB_SETTINGS_TEMPLATE,
         pwa_hub_manifest_url=_PWA_HUB_MANIFEST_URL,
         pwa_icon_192_url=_PWA_ICON_192_URL,

@@ -146,7 +146,7 @@
         body: JSON.stringify(payload),
       });
       const okMsg = diff ? `Diff opened: ${normalizedPath}` : `Opened ${normalizedPath}`;
-      const errMsg = diff ? "Failed to open diff in editor." : "Failed to open file in editor.";
+      const errMsg = diff ? "Failed to open diff in editor." : "Failed to open file in the default app.";
       try {
         let res = await tryPost();
         if (!res.ok && (res.status >= 500 || res.status === 429)) {

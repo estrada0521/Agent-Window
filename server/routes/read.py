@@ -170,21 +170,6 @@ def _get_file_content(handler, parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
-def _get_file_openability(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    rel = qs.get("path", [""])[0]
-    try:
-        payload_body = ctx["workspace_sync_api"].openability(rel)
-    except PermissionError:
-        handler.send_error(403)
-        return
-    except FileNotFoundError:
-        handler.send_error(404)
-        return
-    body = json.dumps(payload_body, ensure_ascii=True).encode("utf-8")
-    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
-
-
 def _get_file_view(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     rel = qs.get("path", [""])[0]
@@ -477,7 +462,6 @@ _GET_ROUTES = {
     "/trace": _get_trace,
     "/file-raw": _get_file_raw,
     "/file-content": _get_file_content,
-    "/file-openability": _get_file_openability,
     "/file-view": _get_file_view,
     "/files": _get_files,
     "/files-search": _get_files_search,
