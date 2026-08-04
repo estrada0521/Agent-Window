@@ -315,14 +315,7 @@
       lastFocusedElement = sourceEl || document.activeElement;
       setFileModalEnterOffset(sourceEl, triggerEvent);
       if (fileModalOpenEditorBtn) {
-        fileModalOpenEditorBtn.hidden = true;
-        fetch(`/file-openability?path=${encodeURIComponent(path)}`)
-          .then((res) => res.ok ? res.json() : null)
-          .then((data) => {
-            if (fileModalCurrentPath !== path || !fileModalOpenEditorBtn) return;
-            fileModalOpenEditorBtn.hidden = !(data && data.editable);
-          })
-          .catch(() => {});
+        fileModalOpenEditorBtn.hidden = false;
       }
 
       fileModalFrame.style.opacity = "0";
@@ -529,21 +522,8 @@
         return;
       }
       if (openFilesDirectInExternalEditor) {
-        try {
-          const obRes = await fetch(`/file-openability?path=${encodeURIComponent(normalizedPath)}`, { cache: "no-store" });
-          if (obRes.ok) {
-            const ob = await obRes.json().catch(() => ({}));
-            const mk = ob && ob.media_kind;
-            if (mk === "image" || mk === "video" || mk === "audio" || mk === "pdf") {
-              await openFileInEditor(normalizedPath, 0);
-              return;
-            }
-            if (ob && ob.editable) {
-              await openFileInEditor(normalizedPath, lineNum);
-              return;
-            }
-          }
-        } catch (_) {}
+        await openFileInEditor(normalizedPath, lineNum);
+        return;
       }
       openFileModal(normalizedPath, ext, sourceEl, triggerEvent);
     };
@@ -566,7 +546,7 @@
           res = await tryPost();
         }
         if (!res.ok) {
-          let detail = "Failed to open file in editor.";
+          let detail = "Failed to open file in the default app.";
           try {
             const data = await res.json();
             if (data && data.error) detail = data.error;
@@ -578,7 +558,7 @@
         try {
           _fileExistenceCache.delete(normalizedPath);
         } catch (_) {}
-        setStatus(err?.message || "Failed to open file in editor.", true);
+        setStatus(err?.message || "Failed to open file in the default app.", true);
         setTimeout(() => setStatus(""), 2200);
         return false;
       }
@@ -641,7 +621,7 @@
           body: JSON.stringify({ path: fileModalCurrentPath }),
         });
         if (!res.ok) {
-          let detail = "Failed to open file in editor.";
+          let detail = "Failed to open file in the default app.";
           try {
             const data = await res.json();
             if (data && data.error) detail = data.error;
@@ -649,7 +629,7 @@
           throw new Error(detail);
         }
       } catch (err) {
-        alert(err?.message || "Failed to open file in editor.");
+        alert(err?.message || "Failed to open file in the default app.");
       }
     });
     fileModalHtmlModeBtn?.addEventListener("click", () => {

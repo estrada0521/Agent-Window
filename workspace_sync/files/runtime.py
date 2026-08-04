@@ -12,7 +12,6 @@ import threading
 import time
 from pathlib import Path
 
-from backend_core.access.settings import load_hub_settings, sanitize_hub_external_editor_choice
 from workspace_sync.files.ignore import FileIndexIgnoreRules
 
 
@@ -52,7 +51,6 @@ class FileRuntime:
     TEXT_EXTS = {".py", ".js", ".json", ".yaml", ".yml", ".sh", ".sql", ".html", ".css", ".tex", ".txt", ".csv", ".log"}
     EDITABLE_TEXT_EXTS = TEXT_EXTS | {".md", ".ts", ".tsx", ".jsx", ".toml", ".ini", ".cfg", ".conf", ".rst", ".env"}
     PDF_EXTS = {".pdf"}
-    MARKDOWN_EXTS = frozenset({".md", ".markdown"})
     VIDEO_EXTS = {
         ".mp4": "video/mp4",
         ".mov": "video/quicktime",
@@ -268,34 +266,7 @@ class FileRuntime:
             return False
         if not sample:
             return True
-        if b"\x00" in sample:
-            return False
-        return True
-
-    def can_open_in_editor(self, rel: str) -> bool:
-        full = self._resolve_path(rel, allow_workspace_root=True)
-        if not os.path.isfile(full):
-            return False
-        ext = os.path.splitext(full)[1].lower()
-        if ext in self.PDF_EXTS:
-            return False
-        return ext in self.EDITABLE_TEXT_EXTS or self._is_probably_text_file(full)
-
-    def openability(self, rel: str) -> dict[str, str | bool | None]:
-        full = self._resolve_path(rel, allow_workspace_root=True)
-        if not os.path.isfile(full):
-            raise FileNotFoundError(rel)
-        ext = os.path.splitext(full)[1].lower()
-        if ext in self.PDF_EXTS:
-            return {"editable": False, "media_kind": "pdf"}
-        if ext in self.IMAGE_EXTS:
-            return {"editable": False, "media_kind": "image"}
-        if ext in self.VIDEO_EXTS:
-            return {"editable": False, "media_kind": "video"}
-        if ext in self.AUDIO_EXTS:
-            return {"editable": False, "media_kind": "audio"}
-        editable = ext in self.EDITABLE_TEXT_EXTS or self._is_probably_text_file(full)
-        return {"editable": bool(editable), "media_kind": None}
+        return b"\x00" not in sample
 
     @staticmethod
     def _macos_app_exists(app_name: str) -> bool:
@@ -313,215 +284,40 @@ class FileRuntime:
             return False
         return result.returncode == 0
 
-    def _preferred_external_editor(self) -> str:
-        if not self.repo_root:
-            return "vscode"
-        try:
-            settings = load_hub_settings(self.repo_root)
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            return "vscode"
-        preferred_raw = str(settings.get("external_editor", "vscode") or "vscode").strip()
-        return sanitize_hub_external_editor_choice(preferred_raw, allow_markedit=False)
-
-    def _preferred_markdown_external_editor(self) -> str:
-        if not self.repo_root:
-            return "markedit"
-        try:
-            settings = load_hub_settings(self.repo_root)
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            return "markedit"
-        raw = str(settings.get("external_editor_markdown", "markedit") or "markedit").strip()
-        token = sanitize_hub_external_editor_choice(raw, allow_markedit=True)
-        if token == "markedit" and not FileRuntime._macos_app_exists("MarkEdit"):
-            return self._preferred_external_editor()
-        return token
-
-    def _preferred_editor_token_for_path(self, full: str) -> str:
-        ext = os.path.splitext(full)[1].lower()
-        if ext in self.MARKDOWN_EXTS:
-            return self._preferred_markdown_external_editor()
-        return self._preferred_external_editor()
-
-    def _vscode_cli_command(self, full: str, line: int = 0) -> list[str]:
-        if self.workspace:
-            if line > 0:
-                return ["code", "-r", self.workspace, "-g", f"{full}:{line}"]
-            return ["code", "-r", self.workspace, full]
-        return ["code", "-g", f"{full}:{line}"] if line > 0 else ["code", full]
-
-    def _vscode_open_app_command(self, full: str, line: int = 0) -> list[str]:
-        args = ["-r"]
-        if self.workspace:
-            args.append(self.workspace)
-        if line > 0:
-            args.extend(["--goto", f"{full}:{line}"])
-        else:
-            args.append(full)
-        return ["open", "-a", "Visual Studio Code", "--args", *args]
-
-    def _antigravity_command(self, full: str, line: int = 0, *, app_name: str = "Antigravity IDE") -> list[str]:
-        target = f"{full}:{line}" if line > 0 else full
-        cli: str | None = None
-        for name in ("antigravity-ide", "agy", "antigravity"):
-            found = shutil.which(name)
-            if found:
-                cli = found
-                break
-        if cli is None:
-            cli = self._darwin_antigravity_executable()
-        if cli:
-            args = [cli]
-            if self.workspace:
-                args.append(self.workspace)
-            if line > 0:
-                args.extend(["-g", target])
-            else:
-                args.append(full)
-            return args
-        args = []
-        if self.workspace:
-            args.append(self.workspace)
-        if line > 0:
-            args.extend(["--goto", target])
-        else:
-            args.append(full)
-        return ["open", "-a", app_name, "--args", *args]
-
-    def _editor_command(self, full: str, line: int = 0, *, preferred: str | None = None) -> tuple[list[str], str]:
-        configured = (os.environ.get("MULTIAGENT_EXTERNAL_EDITOR") or "").strip()
-        if configured:
-            if "{path}" in configured:
-                return shlex.split(configured.format(path=full)), "custom"
-            return shlex.split(configured) + [full], "custom"
-        use_pref = preferred if preferred is not None else self._preferred_external_editor()
-        use_pref = str(use_pref or "vscode").strip() or "vscode"
-        if use_pref.lower() == "markedit" and sys.platform == "darwin" and FileRuntime._macos_app_exists("MarkEdit"):
-            return ["open", "-a", "MarkEdit", full], "lightweight"
-        preferred = use_pref
-        if preferred.startswith("app:") and sys.platform == "darwin":
-            app_name = preferred[4:].strip()
-            app_name_lc = app_name.lower()
-            if app_name_lc in {"visual studio code", "vscode"}:
-                if shutil.which("code"):
-                    return self._vscode_cli_command(full, line=line), "vscode"
-                return self._vscode_open_app_command(full, line=line), "vscode"
-            if app_name_lc in {"antigravity", "google antigravity", "antigravity ide"}:
-                return self._antigravity_command(full, line=line, app_name=app_name), "vscode"
-            if app_name and FileRuntime._macos_app_exists(app_name):
-                if app_name_lc == "coteditor":
-                    if line > 0:
-                        script = (
-                            f'tell application "CotEditor"\n'
-                            f'  activate\n'
-                            f'  open POSIX file "{full}"\n'
-                            f'  tell front document\n'
-                            f'    jump to line {line}\n'
-                            f'  end tell\n'
-                            f'end tell'
-                        )
-                        return ["osascript", "-e", script], "lightweight"
-                    return ["open", "-a", "CotEditor", full], "lightweight"
-                return ["open", "-a", app_name, full], "lightweight"
-        if preferred == "system":
-            if sys.platform == "darwin":
-                return ["open", full], "system"
-            if shutil.which("xdg-open"):
-                return ["xdg-open", full], "system"
-        if preferred == "coteditor" and sys.platform == "darwin" and FileRuntime._macos_app_exists("CotEditor"):
-            if line > 0:
-                script = (
-                    f'tell application "CotEditor"\n'
-                    f'  activate\n'
-                    f'  open POSIX file "{full}"\n'
-                    f'  tell front document\n'
-                    f'    jump to line {line}\n'
-                    f'  end tell\n'
-                    f'end tell'
-                )
-                return ["osascript", "-e", script], "lightweight"
-            return ["open", "-a", "CotEditor", full], "lightweight"
-        if shutil.which("code"):
-            return self._vscode_cli_command(full, line=line), "vscode"
-        if sys.platform == "darwin" and FileRuntime._macos_app_exists("Visual Studio Code"):
-            return self._vscode_open_app_command(full, line=line), "vscode"
-        if sys.platform == "darwin":
-            if FileRuntime._macos_app_exists("CotEditor"):
-                if line > 0:
-                    script = (
-                        f'tell application "CotEditor"\n'
-                        f'  activate\n'
-                        f'  open POSIX file "{full}"\n'
-                        f'  tell front document\n'
-                        f'    jump to line {line}\n'
-                        f'  end tell\n'
-                        f'end tell'
-                    )
-                    return ["osascript", "-e", script], "lightweight"
-                return ["open", "-a", "CotEditor", full], "lightweight"
-            if FileRuntime._macos_app_exists("Sublime Text"):
-                st_target = f"{full}:{line}" if line > 0 else full
-                return ["open", "-a", "Sublime Text", st_target], "lightweight"
-            if FileRuntime._macos_app_exists("TextMate"):
-                return ["open", "-a", "TextMate", full], "lightweight"
-            if FileRuntime._macos_app_exists("BBEdit"):
-                return ["open", "-a", "BBEdit", full], "lightweight"
-            return ["open", full], "system"
-        if shutil.which("xdg-open"):
-            return ["xdg-open", full], "system"
-        return ["xdg-open", full], "system"
-
     @staticmethod
-    def _shrink_vscode_window():
-        if sys.platform != "darwin" or not shutil.which("osascript"):
-            return
-        script = '''
-delay 0.35
-tell application "Visual Studio Code" to activate
-delay 0.2
-        tell application "System Events"
-            tell process "Code"
-                if (count of windows) > 0 then
-                    set position of front window to {108, 96}
-                    set size of front window to {760, 560}
-                end if
-            end tell
-        end tell
-'''
-        deadline = time.time() + 4.0
-        while time.time() < deadline:
-            try:
-                subprocess.Popen(
-                    ["osascript", "-e", script],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    start_new_session=True,
-                )
-                return
-            except Exception as exc:
-                logging.error(f"Unexpected error: {exc}", exc_info=True)
-                time.sleep(0.15)
-
-    def _spawn_open_os_default(self, full: str) -> None:
+    def _open_with_system_default(full: str) -> bool:
         if sys.platform == "darwin":
-            subprocess.Popen(
-                ["open", full],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
+            open_cmd = ["open", full]
+            reveal_cmd = ["open", "-R", full]
         elif shutil.which("xdg-open"):
-            subprocess.Popen(
-                ["xdg-open", full],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
+            open_cmd = ["xdg-open", full]
+            reveal_cmd = ["xdg-open", full if os.path.isdir(full) else os.path.dirname(full)]
         else:
             raise ValueError("No handler available to open this file with the system default.")
 
+        try:
+            result = subprocess.run(
+                open_cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=10,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            result = None
+        if result is not None and result.returncode == 0:
+            return False
+
+        subprocess.Popen(
+            reveal_cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        return True
+
     def open_in_editor(self, rel: str, line: int = 0, *, allow_native_log_home: bool = False):
+        del line
         rel_raw = str(rel or "").strip()
         if not rel_raw:
             raise ValueError("path required")
@@ -533,45 +329,10 @@ delay 0.2
                 raise PermissionError(full)
         else:
             full = self._resolve_path(rel_raw, allow_workspace_root=True)
-        if os.path.isdir(full):
-            cmd, _mode = self._editor_command(full, preferred=self._preferred_external_editor())
-            popen_kw: dict = {}
-            if cmd and cmd[0] == "code" and self.workspace:
-                popen_kw["cwd"] = self.workspace
-            subprocess.Popen(
-                cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-                **popen_kw,
-            )
-            return {"ok": True, "path": rel}
-        if not os.path.isfile(full):
+        if not os.path.exists(full):
             raise FileNotFoundError(full)
-        ext = os.path.splitext(full)[1].lower()
-        media_exts = self.IMAGE_EXTS | set(self.VIDEO_EXTS.keys()) | set(self.AUDIO_EXTS.keys())
-        os_default_exts = media_exts | self.PDF_EXTS
-        if ext in os_default_exts:
-            self._spawn_open_os_default(full)
-            return {"ok": True, "path": rel}
-        if ext not in self.EDITABLE_TEXT_EXTS and ext not in {".html", ".htm"} and not self._is_probably_text_file(full):
-            raise ValueError("Only text files can be opened in an external editor.")
-        editor_token = self._preferred_editor_token_for_path(full)
-        cmd, _mode = self._editor_command(full, line=line, preferred=editor_token)
-        popen_kw: dict = {}
-        if cmd and cmd[0] == "code" and self.workspace:
-            try:
-                popen_kw["cwd"] = self.workspace
-            except Exception:
-                pass
-        subprocess.Popen(
-            cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-            **popen_kw,
-        )
-        return {"ok": True, "path": rel}
+        revealed = self._open_with_system_default(full)
+        return {"ok": True, "path": rel, "revealed_in_finder": revealed}
 
     def _git_show_bytes(self, rev_path: str) -> bytes | None:
         try:

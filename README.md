@@ -56,7 +56,7 @@ Messages are sent to the currently selected Agent CLI. The input field is normal
 
 ### Workspace
 
-The right pane displays the state of the current workspace. File system changes are tracked with FSEvents, and uncommitted diffs are shown in a compact form. Untracked files can be deleted or ignored, and individual files can be reverted. The minimal embedded file viewer supports text files, HTML, Markdown, and other common formats. When `External Editor` is enabled, files open in the configured external editor. This is the normal mode of use.
+The right pane displays the state of the current workspace. File system changes are tracked with FSEvents, and uncommitted diffs are shown in a compact form. Untracked files can be deleted or ignored, and individual files can be reverted. The minimal embedded file viewer supports text files, HTML, Markdown, and other common formats. When `Open in Default App` is enabled, files open in the macOS default application. This is the normal mode of use.
 
 ### Menu
 

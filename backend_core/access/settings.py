@@ -55,18 +55,6 @@ def settings_for_chat_render(settings: dict, *, variant: str) -> dict:
     return dict(settings, theme=resolve_chat_theme(settings, variant=variant))
 
 
-def sanitize_hub_external_editor_choice(raw: str, *, allow_markedit: bool = False) -> str:
-    s = str(raw or "").strip()
-    low = s.lower()
-    if allow_markedit and low == "markedit":
-        return "markedit"
-    if low in {"vscode", "coteditor", "system"}:
-        return low
-    if low.startswith("app:") and s[4:].strip():
-        return f"app:{s[4:].strip()}"
-    return "vscode"
-
-
 def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool = False) -> dict:
     if not isinstance(raw, dict):
         return settings
@@ -130,13 +118,6 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
         message_text_size_desktop = settings["message_text_size"]
     settings["message_text_size_desktop"] = max(8, min(18, message_text_size_desktop))
 
-    external_editor_raw = str(raw.get("external_editor", settings.get("external_editor", "vscode")) or "vscode").strip()
-    settings["external_editor"] = sanitize_hub_external_editor_choice(external_editor_raw, allow_markedit=False)
-    md_raw = str(
-        raw.get("external_editor_markdown", settings.get("external_editor_markdown", "markedit")) or "markedit"
-    ).strip()
-    settings["external_editor_markdown"] = sanitize_hub_external_editor_choice(md_raw, allow_markedit=True)
-
     for key in (
         "bold_mode_mobile",
         "open_files_direct_external_editor",
@@ -160,8 +141,6 @@ HUB_SETTINGS_DEFAULTS = {
     "message_text_size": 13,
     "message_text_size_mobile": 16,
     "message_text_size_desktop": 13,
-    "external_editor": "vscode",
-    "external_editor_markdown": "markedit",
     "bold_mode_mobile": False,
     "open_files_direct_external_editor": False,
     "window_always_on_top": False,

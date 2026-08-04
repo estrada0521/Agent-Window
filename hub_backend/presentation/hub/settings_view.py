@@ -7,8 +7,6 @@ from pathlib import Path
 from hub_backend.branding import APP_DISPLAY_NAME
 from hub_backend.color_constants import apply_color_tokens
 from hub_backend.server_helpers import apply_hub_page_branding
-from backend_core.access.settings import sanitize_hub_external_editor_choice
-
 
 def normalized_font_label(name: str) -> str:
     label = re.sub(r"\.(ttf|ttc|otf)$", "", name, flags=re.IGNORECASE)
@@ -102,8 +100,6 @@ def hub_settings_html(
     saved: bool,
     load_hub_settings_fn,
     available_chat_font_choices_fn,
-    available_external_editor_choices_fn,
-    available_markdown_external_editor_choices_fn,
     settings_template: str,
     pwa_hub_manifest_url: str,
     pwa_icon_192_url: str,
@@ -137,14 +133,6 @@ def hub_settings_html(
     bold_mode_mobile = settings.get("bold_mode_mobile", False)
     open_files_direct_external_editor = settings.get("open_files_direct_external_editor", False)
     window_always_on_top = settings.get("window_always_on_top", False)
-    external_editor = sanitize_hub_external_editor_choice(
-        str(settings.get("external_editor", "vscode") or "vscode").strip(),
-        allow_markedit=False,
-    )
-    external_editor_markdown = sanitize_hub_external_editor_choice(
-        str(settings.get("external_editor_markdown", "markedit") or "markedit").strip(),
-        allow_markedit=True,
-    )
     font_choices = available_chat_font_choices_fn()
     font_options = lambda selected: "".join(
         f'<option value="{html.escape(value)}"' + (' selected' if value == selected else '') + f'>{html.escape(label)}</option>'
@@ -160,43 +148,6 @@ def hub_settings_html(
         f'<option value="{html.escape(value)}"' + (' selected' if value == theme_desktop else '') + f'>{html.escape(label)}</option>'
         for value, label in theme_desktop_choices
     )
-    def _build_editor_options(choices_fn, selected: str) -> tuple[str, str]:
-        raw_choices = choices_fn()
-        sanitized: list[tuple[str, str]] = []
-        seen_vals: set[str] = set()
-        for value, label in raw_choices:
-            value_text = str(value or "").strip()
-            label_text = str(label or "").strip()
-            if not value_text or not label_text or value_text in seen_vals:
-                continue
-            seen_vals.add(value_text)
-            sanitized.append((value_text, label_text))
-        resolved = selected
-        if not any(value == resolved for value, _ in sanitized):
-            if resolved.startswith("app:") and resolved[4:].strip():
-                sanitized.append((resolved, resolved[4:].strip()))
-            elif resolved == "markedit":
-                sanitized.insert(0, ("markedit", "MarkEdit"))
-            else:
-                resolved = "vscode" if choices_fn is available_external_editor_choices_fn else "markedit"
-        if not sanitized:
-            sanitized = [
-                ("vscode", "VS Code"),
-                ("coteditor", "CotEditor"),
-                ("system", "System Default"),
-            ]
-        options_html = "".join(
-            f'<option value="{html.escape(value)}"' + (' selected' if value == resolved else '') + f'>{html.escape(label)}</option>'
-            for value, label in sanitized
-        )
-        return options_html, resolved
-
-    external_editor_options, external_editor = _build_editor_options(
-        available_external_editor_choices_fn, external_editor
-    )
-    markdown_editor_options, external_editor_markdown = _build_editor_options(
-        available_markdown_external_editor_choices_fn, external_editor_markdown
-    )
     notice = ""
     page = settings_template
     page = (
@@ -207,8 +158,6 @@ def hub_settings_html(
         .replace("__NOTICE_HTML__", notice)
         .replace("__USER_MESSAGE_FONT_OPTIONS__", font_options(user_message_font))
         .replace("__AGENT_MESSAGE_FONT_OPTIONS__", font_options(agent_message_font))
-        .replace("__EXTERNAL_EDITOR_OPTIONS__", external_editor_options)
-        .replace("__MARKDOWN_EXTERNAL_EDITOR_OPTIONS__", markdown_editor_options)
         .replace("__FONT_MODE__", font_mode)
         .replace("__MESSAGE_TEXT_SIZE__", str(message_text_size))
         .replace("__MESSAGE_TEXT_SIZE_MOBILE__", str(message_text_size_mobile))
@@ -226,7 +175,6 @@ def hub_settings_html(
             "__OPEN_FILES_DIRECT_EXTERNAL_EDITOR_HIDDEN__",
             html.escape("on" if open_files_direct_external_editor else ""),
         )
-        .replace("__EXTERNAL_EDITOR_MARKDOWN_HIDDEN__", html.escape(external_editor_markdown))
         .replace("__BOLD_MODE_MOBILE_HIDDEN__", html.escape("on" if bold_mode_mobile else ""))
         .replace("__VIEW_VARIANT__", resolved_view_variant)
     )

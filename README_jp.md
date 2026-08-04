@@ -56,7 +56,7 @@ workspaceとGitの状態は、これとは別にFSEventsで監視され、右pan
 
 ### Workspace
 
-右paneには、現在のworkspaceの状態を表示します。FSEventsでfile systemの変更を追跡し、未commitのdiffを小さくまとめて表示します。untracked fileの削除・ignore、file単位のrevertにも対応しています。埋め込みfile viewerは最小限の実装で、text file、HTML、Markdownなどを確認できます。`External Editor` を有効にしている場合、fileは指定された外部editorで開きます。通常はこちらを使用します。
+右paneには、現在のworkspaceの状態を表示します。FSEventsでfile systemの変更を追跡し、未commitのdiffを小さくまとめて表示します。untracked fileの削除・ignore、file単位のrevertにも対応しています。埋め込みfile viewerは最小限の実装で、text file、HTML、Markdownなどを確認できます。`Open in Default App` を有効にしている場合、fileはmacOSの既定のapplicationで開きます。通常はこちらを使用します。
 
 ### メニュー
 
