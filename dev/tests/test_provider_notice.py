@@ -7,14 +7,12 @@ from pathlib import Path
 
 from native_log_sync.agents.claude.read_updates import sync_claude_native_log
 from native_log_sync.agents.codex.read_updates import sync_codex_native_log
-from native_log_sync.agents.copilot.read_updates import sync_copilot_native_log
 
 
 class _SyncRuntime:
     def __init__(self, root: Path) -> None:
         self._claude_cursors = {}
         self._codex_cursors = {}
-        self._copilot_cursors = {}
         self._synced_msg_ids = set()
         self._synced_message_fingerprints = set()
         self.index_path = root / "agent-index.jsonl"
@@ -104,27 +102,6 @@ class ProviderNoticeTests(unittest.TestCase):
                     + "\n"
                 )
             sync_codex_native_log(runtime, "codex", str(native_log), sync_bind_backfill_window_seconds=0)
-            self.assertEqual(_read_entries(runtime.index_path)[0]["kind"], "provider-notice")
-
-    def test_copilot_rate_limit_is_provider_notice(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            native_log = root / "copilot.jsonl"
-            native_log.write_text("", encoding="utf-8")
-            runtime = _SyncRuntime(root)
-            sync_copilot_native_log(runtime, "copilot", str(native_log), sync_bind_backfill_window_seconds=0)
-            with native_log.open("a", encoding="utf-8") as handle:
-                handle.write(
-                    json.dumps(
-                        {
-                            "type": "session.error",
-                            "id": "copilot-notice",
-                            "data": {"errorType": "rate_limit", "message": "Rate limit reached"},
-                        }
-                    )
-                    + "\n"
-                )
-            sync_copilot_native_log(runtime, "copilot", str(native_log), sync_bind_backfill_window_seconds=0)
             self.assertEqual(_read_entries(runtime.index_path)[0]["kind"], "provider-notice")
 
 

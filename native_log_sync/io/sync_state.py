@@ -62,7 +62,6 @@ def save_sync_state(runtime, *, time_module=time) -> None:
         state = {
             "codex_cursors": _cursor_dict_to_json(runtime._codex_cursors),
             "cursor_cursors": _cursor_dict_to_json(runtime._cursor_cursors),
-            "copilot_cursors": _cursor_dict_to_json(runtime._copilot_cursors),
             "claude_cursors": _cursor_dict_to_json(runtime._claude_cursors),
             "gemini_cursors": _cursor_dict_to_json(runtime._gemini_cursors),
             "grok_cursors": _cursor_dict_to_json(runtime._grok_cursors),
@@ -85,7 +84,6 @@ def sync_cursor_status(runtime, *, os_module=os) -> list[dict]:
     cursor_maps: list[tuple[str, dict[str, NativeLogCursor]]] = [
         ("codex", runtime._codex_cursors),
         ("cursor", runtime._cursor_cursors),
-        ("copilot", runtime._copilot_cursors),
         ("claude", runtime._claude_cursors),
         ("gemini", runtime._gemini_cursors),
         ("grok", runtime._grok_cursors),

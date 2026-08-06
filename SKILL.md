@@ -73,7 +73,6 @@ such as `codex`. Do not assume that `codex-1` exists.
 | `claude` | Claude |
 | `codex` | Codex |
 | `gemini` | Antigravity |
-| `copilot` | Copilot |
 | `cursor` | Cursor |
 | `grok` | Grok |
 | `others` | Every active agent instance except yourself |
