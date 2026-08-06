@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ "${MULTIAGENT_SKIP_LOCAL_HTTPS_SETUP:-}" == "1" ]]; then
-  echo "multiagent: MULTIAGENT_SKIP_LOCAL_HTTPS_SETUP=1 is no longer supported." >&2
+if [[ "${AGENT_WINDOW_SKIP_LOCAL_HTTPS_SETUP:-}" == "1" ]]; then
+  echo "multiagent: AGENT_WINDOW_SKIP_LOCAL_HTTPS_SETUP=1 is no longer supported." >&2
   echo "multiagent: unset it and rerun ./setup/pwa/enable." >&2
   exit 1
 fi

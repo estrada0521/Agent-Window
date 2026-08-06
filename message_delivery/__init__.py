@@ -173,7 +173,7 @@ def send_message(
 
 def _update_running_env(runtime, agent: str, running: bool) -> None:
     upper = agent.upper().replace("-", "_")
-    var = f"MULTIAGENT_RUNNING_{upper}"
+    var = f"AGENT_WINDOW_RUNNING_{upper}"
     try:
         if running:
             subprocess.run(

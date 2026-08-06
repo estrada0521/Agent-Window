@@ -15,8 +15,7 @@ class _NameRuntime(AgentSendRuntime):
     def __init__(self, root: Path, *, source_session: str = "test-session") -> None:
         super().__init__(
             repo_root=root,
-            script_dir=root / "bin",
-            env={"MULTIAGENT_SESSION": source_session, "MULTIAGENT_AGENT_NAME": "codex"},
+            env={"AGENT_WINDOW_SESSION": source_session, "AGENT_WINDOW_AGENT_NAME": "codex"},
             cwd=root,
         )
         self.root = root
@@ -27,20 +26,20 @@ class _NameRuntime(AgentSendRuntime):
         }
 
     def resolve_session_name(self, explicit_session: str = "") -> str:
-        return explicit_session or str(self.env.get("MULTIAGENT_SESSION") or "test-session")
+        return explicit_session or str(self.env.get("AGENT_WINDOW_SESSION") or "test-session")
 
     def tmux_env(self, session_name: str, key: str) -> str:
-        if key == "MULTIAGENT_AGENTS":
+        if key == "AGENT_WINDOW_AGENTS":
             return ",".join(self.session_agents.get(session_name, []))
-        if key.startswith("MULTIAGENT_PANE_"):
-            requested = key.removeprefix("MULTIAGENT_PANE_").lower().replace("_", "-")
+        if key.startswith("AGENT_WINDOW_PANE_"):
+            requested = key.removeprefix("AGENT_WINDOW_PANE_").lower().replace("_", "-")
             for index, instance in enumerate(self.session_agents.get(session_name, []), start=1):
                 if requested == instance:
                     return f"%{index}"
         return ""
 
     def current_pane_role(self, _session_name: str) -> str | None:
-        return str(self.env.get("MULTIAGENT_AGENT_NAME") or "") or None
+        return str(self.env.get("AGENT_WINDOW_AGENT_NAME") or "") or None
 
     def _session_attached_count(self, _session_name: str) -> int | None:
         return 1
@@ -192,7 +191,7 @@ class AgentNameTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            env_output = f"MULTIAGENT_INDEX_PATH={index_path}\nMULTIAGENT_WORKSPACE={root}\n"
+            env_output = f"AGENT_WINDOW_INDEX_PATH={index_path}\nAGENT_WINDOW_WORKSPACE={root}\n"
             write_session_meta_file("demo", "claude-1,claude-2,codex", env_output)
             renamed = json.loads(meta_path.read_text(encoding="utf-8"))
             self.assertEqual(renamed["agent_names"], {"claude-1": "Fable"})

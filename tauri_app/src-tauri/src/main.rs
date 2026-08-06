@@ -306,7 +306,7 @@ fn sync_bundled_repo(app: &tauri::App) -> Option<PathBuf> {
 }
 
 fn find_repo_root(app: &tauri::App) -> Option<String> {
-    for env_key in ["MULTIAGENT_REPO_ROOT", "MULTIAGENT_WORKSPACE"] {
+    for env_key in ["AGENT_WINDOW_REPO_ROOT", "AGENT_WINDOW_WORKSPACE"] {
         if let Ok(candidate) = std::env::var(env_key) {
             let path = PathBuf::from(candidate);
             if path.join("bin/agent-index").exists() {
@@ -598,7 +598,7 @@ fn main() {
             let pwa_https_enabled = Path::new(&pwa_enabled_file).exists();
 
             let tauri_use_https =
-                std::env::var("MULTIAGENT_TAURI_USE_HTTPS").ok().as_deref() == Some("1")
+                std::env::var("AGENT_WINDOW_TAURI_USE_HTTPS").ok().as_deref() == Some("1")
                     || pwa_https_enabled;
             let expected_transport = if tauri_use_https {
                 LocalHubTransport::Https
@@ -631,8 +631,8 @@ fn main() {
                     .env("AGENT_INDEX_HUB_PORT", hub_port.to_string())
                     .env("PYTHONPATH", format!("{0}/src:{0}", repo_root));
                 if has_certs && tauri_use_https {
-                    cmd.env("MULTIAGENT_CERT_FILE", &cert_file)
-                        .env("MULTIAGENT_KEY_FILE", &key_file);
+                    cmd.env("AGENT_WINDOW_CERT_FILE", &cert_file)
+                        .env("AGENT_WINDOW_KEY_FILE", &key_file);
                 }
                 match cmd.spawn() {
                     Ok(c) => {

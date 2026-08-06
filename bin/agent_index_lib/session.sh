@@ -61,29 +61,22 @@ matching_archived_sessions() {
 
 session_workspace_value() {
   local session="$1"
-  tmux show-environment -t "$session" MULTIAGENT_WORKSPACE 2>/dev/null | sed 's/^[^=]*=//' || true
-}
-
-session_bin_dir_value() {
-  local session="$1"
-  tmux show-environment -t "$session" MULTIAGENT_BIN_DIR 2>/dev/null | sed 's/^[^=]*=//' || true
+  tmux show-environment -t "$session" AGENT_WINDOW_WORKSPACE 2>/dev/null | sed 's/^[^=]*=//' || true
 }
 
 matching_repo_sessions() {
-  local session bin_dir
+  local session workspace
   while IFS= read -r session; do
     [[ -n "$session" ]] || continue
-    bin_dir="$(session_bin_dir_value "$session")"
-    [[ -n "$bin_dir" ]] || continue
-    bin_dir="$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$bin_dir" 2>/dev/null || printf '%s' "$bin_dir")"
-    [[ "$bin_dir" == "$SCRIPT_DIR" ]] || continue
+    workspace="$(session_workspace_value "$session")"
+    [[ -n "$workspace" ]] || continue
     printf '%s\n' "$session"
   done < <(tmux list-sessions -F '#S' 2>/dev/null || true)
 }
 
 available_agents() {
   local agents_str
-  agents_str="$(tmux show-environment -t "$SESSION_NAME" MULTIAGENT_AGENTS 2>/dev/null | sed 's/^[^=]*=//' || true)"
+  agents_str="$(tmux show-environment -t "$SESSION_NAME" AGENT_WINDOW_AGENTS 2>/dev/null | sed 's/^[^=]*=//' || true)"
   if [[ -n "$agents_str" ]]; then
     printf '%s\n' "$agents_str"
     return

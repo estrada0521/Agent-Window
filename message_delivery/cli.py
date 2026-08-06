@@ -47,7 +47,7 @@ class ParsedAgentSendArgs:
 
 def _parse_agent_send_args(argv: list[str]) -> ParsedAgentSendArgs:
     show_help = False
-    session_name = (os.environ.get("MULTIAGENT_SESSION") or "").strip()
+    session_name = (os.environ.get("AGENT_WINDOW_SESSION") or "").strip()
     idx = 0
 
     while idx < len(argv):
@@ -106,11 +106,9 @@ def run(argv: list[str] | None = None) -> int:
 
     bootstrap = argparse.ArgumentParser(add_help=False)
     bootstrap.add_argument("--repo-root", default="")
-    bootstrap.add_argument("--script-dir", default="")
     known, remaining = bootstrap.parse_known_args(args)
 
     repo_root = Path(known.repo_root).resolve() if known.repo_root else Path(__file__).resolve().parents[2]
-    script_dir = Path(known.script_dir).resolve() if known.script_dir else (repo_root / "bin")
 
     try:
         parsed = _parse_agent_send_args(remaining)
@@ -128,7 +126,6 @@ def run(argv: list[str] | None = None) -> int:
 
     runtime = AgentSendRuntime(
         repo_root=repo_root,
-        script_dir=script_dir,
         env=dict(os.environ),
         cwd=Path.cwd(),
     )

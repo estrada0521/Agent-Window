@@ -56,7 +56,7 @@ class DeliveryTarget:
 
 
 def tmux_socket_from_env(repo_root: Path | str, env: dict[str, str]) -> str:
-    explicit = (env.get("MULTIAGENT_TMUX_SOCKET") or "").strip()
+    explicit = (env.get("AGENT_WINDOW_TMUX_SOCKET") or "").strip()
     if explicit:
         return explicit
     tmux_env = (env.get("TMUX") or "").strip()
@@ -96,12 +96,10 @@ class AgentSendRuntime:
         self,
         *,
         repo_root: Path | str,
-        script_dir: Path | str,
         env: dict[str, str] | None = None,
         cwd: Path | str | None = None,
     ) -> None:
         self.repo_root = Path(repo_root).resolve()
-        self.script_dir = Path(script_dir).resolve()
         self.env = dict(os.environ if env is None else env)
         self.cwd = Path(cwd or os.getcwd()).resolve()
         self.tmux_socket_name = tmux_socket_from_env(self.repo_root, self.env)
@@ -119,35 +117,25 @@ class AgentSendRuntime:
         line = (result.stdout or "").strip()
         if result.returncode == 0 and "=" in line:
             return line.split("=", 1)[1]
-        if session_name and session_name == (self.env.get("MULTIAGENT_SESSION") or "").strip():
+        if session_name and session_name == (self.env.get("AGENT_WINDOW_SESSION") or "").strip():
             return (self.env.get(key) or "").strip()
         return ""
 
     def session_workspace_value(self, session_name: str) -> str:
-        return self.tmux_env(session_name, "MULTIAGENT_WORKSPACE")
-
-    def session_bin_dir_value(self, session_name: str) -> str:
-        return self.tmux_env(session_name, "MULTIAGENT_BIN_DIR")
+        return self.tmux_env(session_name, "AGENT_WINDOW_WORKSPACE")
 
     def matching_repo_sessions(self) -> list[str]:
-        matched: list[str] = []
-        for session in self.list_sessions():
-            bin_dir = self.session_bin_dir_value(session).strip()
-            if not bin_dir:
-                continue
-            try:
-                resolved = str(Path(bin_dir).resolve())
-            except Exception:
-                resolved = bin_dir
-            if resolved == str(self.script_dir):
-                matched.append(session)
-        return matched
+        return [
+            session
+            for session in self.list_sessions()
+            if self.session_workspace_value(session).strip()
+        ]
 
     def resolve_session_name(self, explicit_session: str = "") -> str:
         if explicit_session:
             return explicit_session
 
-        env_session = (self.env.get("MULTIAGENT_SESSION") or "").strip()
+        env_session = (self.env.get("AGENT_WINDOW_SESSION") or "").strip()
         if env_session:
             return env_session
 
@@ -163,13 +151,13 @@ class AgentSendRuntime:
         if len(matched_workspace_sessions) == 1:
             return matched_workspace_sessions[0]
         if len(matched_workspace_sessions) > 1:
-            raise AgentSendError("Multiple sessions exist for this workspace; run from inside tmux or set MULTIAGENT_SESSION.")
+            raise AgentSendError("Multiple sessions exist for this workspace; run from inside tmux or set AGENT_WINDOW_SESSION.")
 
         matched_repo_sessions = self.matching_repo_sessions()
         if len(matched_repo_sessions) == 1:
             return matched_repo_sessions[0]
         if len(matched_repo_sessions) > 1:
-            raise AgentSendError("Multiple active multiagent sessions exist; set MULTIAGENT_SESSION or pass --session.")
+            raise AgentSendError("Multiple active multiagent sessions exist; set AGENT_WINDOW_SESSION or pass --session.")
 
         raise AgentSendError("No active multiagent session found for this workspace.")
 
@@ -193,16 +181,16 @@ class AgentSendRuntime:
         if not current_pane:
             return None
 
-        agents_str = self.tmux_env(session_name, "MULTIAGENT_AGENTS")
+        agents_str = self.tmux_env(session_name, "AGENT_WINDOW_AGENTS")
         if agents_str:
             for instance in [x.strip() for x in agents_str.split(",") if x.strip()]:
                 upper = instance.upper().replace("-", "_")
-                pane = self.resolve_pane(session_name, f"MULTIAGENT_PANE_{upper}")
+                pane = self.resolve_pane(session_name, f"AGENT_WINDOW_PANE_{upper}")
                 if pane == current_pane:
                     return instance
 
         for agent in self.all_agents:
-            pane = self.resolve_pane(session_name, f"MULTIAGENT_PANE_{agent.upper()}")
+            pane = self.resolve_pane(session_name, f"AGENT_WINDOW_PANE_{agent.upper()}")
             if pane == current_pane:
                 return agent
         return None
@@ -212,19 +200,19 @@ class AgentSendRuntime:
         if not current_pane:
             return None
 
-        user_panes = self.resolve_pane(session_name, "MULTIAGENT_PANES_USER")
+        user_panes = self.resolve_pane(session_name, "AGENT_WINDOW_PANES_USER")
         if user_panes:
             if current_pane in [x.strip() for x in user_panes.split(",") if x.strip()]:
                 return "user"
         else:
-            user_pane = self.resolve_pane(session_name, "MULTIAGENT_PANE_USER")
+            user_pane = self.resolve_pane(session_name, "AGENT_WINDOW_PANE_USER")
             if user_pane == current_pane:
                 return "user"
 
         return self.resolve_self_agent(session_name)
 
     def source_session_name(self, target_session_name: str) -> str:
-        env_session = (self.env.get("MULTIAGENT_SESSION") or "").strip()
+        env_session = (self.env.get("AGENT_WINDOW_SESSION") or "").strip()
         if env_session:
             return env_session
         if self.env.get("TMUX"):
@@ -238,12 +226,12 @@ class AgentSendRuntime:
         return load_agent_names(session_name)
 
     def active_agent_instances(self, session_name: str) -> list[str]:
-        agents_str = self.tmux_env(session_name, "MULTIAGENT_AGENTS")
+        agents_str = self.tmux_env(session_name, "AGENT_WINDOW_AGENTS")
         if agents_str and agents_str != "-":
             return [item.strip() for item in agents_str.split(",") if item.strip()]
         active: list[str] = []
         for agent in self.all_agents:
-            if self.resolve_pane(session_name, f"MULTIAGENT_PANE_{agent.upper()}"):
+            if self.resolve_pane(session_name, f"AGENT_WINDOW_PANE_{agent.upper()}"):
                 active.append(agent)
         return active
 
@@ -340,23 +328,23 @@ class AgentSendRuntime:
                 base_name = agent_base_name(resolved_name)
                 if re.search(r"-\d+$", resolved_name):
                     upper = resolved_name.upper().replace("-", "_")
-                    pane = self.resolve_pane(session_name, f"MULTIAGENT_PANE_{upper}")
+                    pane = self.resolve_pane(session_name, f"AGENT_WINDOW_PANE_{upper}")
                     if not pane:
                         raise AgentSendError(f"Target pane not found: {resolved_name}")
                     queue(resolved_name, pane)
                     continue
 
-                agents_str = self.tmux_env(session_name, "MULTIAGENT_AGENTS")
+                agents_str = self.tmux_env(session_name, "AGENT_WINDOW_AGENTS")
                 found = False
                 if agents_str:
                     for instance in [x.strip() for x in agents_str.split(",") if x.strip()]:
                         if instance == base_name or instance.startswith(f"{base_name}-"):
-                            pane = self.resolve_pane(session_name, f"MULTIAGENT_PANE_{instance.upper().replace('-', '_')}")
+                            pane = self.resolve_pane(session_name, f"AGENT_WINDOW_PANE_{instance.upper().replace('-', '_')}")
                             if pane:
                                 queue(instance, pane)
                                 found = True
                 if not found:
-                    pane = self.resolve_pane(session_name, f"MULTIAGENT_PANE_{base_name.upper()}")
+                    pane = self.resolve_pane(session_name, f"AGENT_WINDOW_PANE_{base_name.upper()}")
                     if pane:
                         queue(base_name, pane)
                         found = True
@@ -373,7 +361,7 @@ class AgentSendRuntime:
                 canonical = alias_matches[0]
                 pane = self.resolve_pane(
                     session_name,
-                    f"MULTIAGENT_PANE_{canonical.upper().replace('-', '_')}",
+                    f"AGENT_WINDOW_PANE_{canonical.upper().replace('-', '_')}",
                 )
                 if not pane:
                     raise AgentSendError(f"Target pane not found: {raw_target}")
@@ -392,19 +380,19 @@ class AgentSendRuntime:
             if lower_target == "others":
                 if not sender_role:
                     raise AgentSendError("Cannot resolve current sender for target: others")
-                agents_str = self.tmux_env(session_name, "MULTIAGENT_AGENTS")
+                agents_str = self.tmux_env(session_name, "AGENT_WINDOW_AGENTS")
                 if agents_str:
                     for instance in [x.strip() for x in agents_str.split(",") if x.strip()]:
                         if sender_role != "user" and instance == sender_role:
                             continue
-                        pane = self.resolve_pane(session_name, f"MULTIAGENT_PANE_{instance.upper().replace('-', '_')}")
+                        pane = self.resolve_pane(session_name, f"AGENT_WINDOW_PANE_{instance.upper().replace('-', '_')}")
                         if pane:
                             queue(instance, pane)
                 else:
                     for agent in self.all_agents:
                         if sender_role != "user" and agent == sender_role:
                             continue
-                        pane = self.resolve_pane(session_name, f"MULTIAGENT_PANE_{agent.upper()}")
+                        pane = self.resolve_pane(session_name, f"AGENT_WINDOW_PANE_{agent.upper()}")
                         if pane:
                             queue(agent, pane)
                 continue
@@ -441,7 +429,7 @@ class AgentSendRuntime:
         if base not in self.all_agents:
             return
         upper = name.upper().replace("-", "_")
-        self.tmux.run(["set-environment", "-t", session_name, f"MULTIAGENT_RUNNING_{upper}", "1"])
+        self.tmux.run(["set-environment", "-t", session_name, f"AGENT_WINDOW_RUNNING_{upper}", "1"])
 
     def send_to_pane(
         self,
@@ -498,7 +486,7 @@ class AgentSendRuntime:
         explicit_session: str = "",
     ) -> bool:
         session_name = self.resolve_session_name(explicit_session)
-        sender_role = self.current_pane_role(session_name) or self.env.get("MULTIAGENT_AGENT_NAME") or "user"
+        sender_role = self.current_pane_role(session_name) or self.env.get("AGENT_WINDOW_AGENT_NAME") or "user"
         source_session = self.source_session_name(session_name)
         sender_label = self.agent_names(source_session).get(sender_role, sender_role)
         delivery_payload = self.normalize_payload(sender_label, payload)

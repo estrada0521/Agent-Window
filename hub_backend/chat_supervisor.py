@@ -156,7 +156,7 @@ def stop_chat_server(
 
 
 def chat_launch_workspace(self, session_name: str) -> tuple[str, bool]:
-    workspace, timed_out = self.tmux_env_query(session_name, "MULTIAGENT_WORKSPACE")
+    workspace, timed_out = self.tmux_env_query(session_name, "AGENT_WINDOW_WORKSPACE")
     if timed_out:
         return "", True
     workspace = (workspace or "").strip()
@@ -179,9 +179,9 @@ def chat_launch_session_dir(self, session_name: str, workspace: str, explicit_lo
 
 def chat_launch_env(self) -> dict[str, str]:
     env = os.environ.copy()
-    env["MULTIAGENT_AGENT_NAME"] = "user"
+    env["AGENT_WINDOW_AGENT_NAME"] = "user"
     if self.tmux_socket:
-        env["MULTIAGENT_TMUX_SOCKET"] = self.tmux_socket
+        env["AGENT_WINDOW_TMUX_SOCKET"] = self.tmux_socket
     env["AGENT_WINDOW_RUN_DIR"] = str(agent_window_run_dir())
     env["SESSION_IS_ACTIVE"] = "1"
     pythonpath_parts = [str(self.repo_root / "src"), str(self.repo_root)]
@@ -190,9 +190,9 @@ def chat_launch_env(self) -> dict[str, str]:
         pythonpath_parts.append(existing_pythonpath)
     env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
     if str(getattr(self, "hub_scheme", "") or "").strip().lower() == "http":
-        env.pop("MULTIAGENT_CERT_FILE", None)
-        env.pop("MULTIAGENT_KEY_FILE", None)
-        env.pop("MULTIAGENT_ENABLE_LOCAL_HTTPS", None)
+        env.pop("AGENT_WINDOW_CERT_FILE", None)
+        env.pop("AGENT_WINDOW_KEY_FILE", None)
+        env.pop("AGENT_WINDOW_ENABLE_LOCAL_HTTPS", None)
     return env
 
 
@@ -237,11 +237,11 @@ def ensure_chat_server(
         session_dir = self._chat_launch_session_dir(session_name, workspace, explicit_log_dir)
         index_path = session_log_path(session_name)
         try:
-            self.tmux_run(["set-environment", "-t", session_name, "MULTIAGENT_INDEX_PATH", str(index_path)], timeout=2)
+            self.tmux_run(["set-environment", "-t", session_name, "AGENT_WINDOW_INDEX_PATH", str(index_path)], timeout=2)
         except Exception:
             pass
         env = self._chat_launch_env()
-        env["MULTIAGENT_INDEX_PATH"] = str(index_path)
+        env["AGENT_WINDOW_INDEX_PATH"] = str(index_path)
         try:
             subprocess_module.Popen(
                 [
@@ -292,8 +292,8 @@ def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
         return False, f"Saved workspace is unavailable: {workspace or 'unknown'}"
     env = os.environ.copy()
     if self.tmux_socket:
-        env["MULTIAGENT_TMUX_SOCKET"] = self.tmux_socket
-    env["MULTIAGENT_SKIP_USER_CHAT"] = "1"
+        env["AGENT_WINDOW_TMUX_SOCKET"] = self.tmux_socket
+    env["AGENT_WINDOW_SKIP_USER_CHAT"] = "1"
     stop_ok, stop_detail = self.stop_chat_server(session_name)
     if not stop_ok:
         logging.warning("stop_chat_server failed during revive: %s", stop_detail)

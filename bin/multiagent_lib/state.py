@@ -55,7 +55,7 @@ def _reconcile_agent_names(meta: dict[str, object], current_agents: list[str]) -
 
 def write_session_meta_file(session: str, agents_csv: str, tmux_env_output: str) -> None:
     env_map = _parse_tmux_environment_output(tmux_env_output)
-    index_path_raw = str(env_map.get("MULTIAGENT_INDEX_PATH") or "").strip()
+    index_path_raw = str(env_map.get("AGENT_WINDOW_INDEX_PATH") or "").strip()
     if not index_path_raw:
         return
 
@@ -72,7 +72,7 @@ def write_session_meta_file(session: str, agents_csv: str, tmux_env_output: str)
 
     created_at = str(meta.get("created_at") or "").strip() or updated_at
     workspace = str(
-        env_map.get("MULTIAGENT_WORKSPACE")
+        env_map.get("AGENT_WINDOW_WORKSPACE")
         or meta.get("workspace")
         or ""
     ).strip()

@@ -27,10 +27,10 @@ multiagent_dispatch_prelaunch_modes() {
     command -v tmux >/dev/null 2>&1 || { echo "tmux is required." >&2; exit 1; }
     resolved_note=""
     if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
-      if [[ -n "${MULTIAGENT_SESSION:-}" ]]; then
-        SESSION_NAME="$MULTIAGENT_SESSION"
-      elif [[ -n "${MULTIAGENT_SESSION_NAME:-}" ]]; then
-        SESSION_NAME="$MULTIAGENT_SESSION_NAME"
+      if [[ -n "${AGENT_WINDOW_SESSION:-}" ]]; then
+        SESSION_NAME="$AGENT_WINDOW_SESSION"
+      elif [[ -n "${AGENT_WINDOW_SESSION_NAME:-}" ]]; then
+        SESSION_NAME="$AGENT_WINDOW_SESSION_NAME"
       fi
     fi
     if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
@@ -42,7 +42,7 @@ multiagent_dispatch_prelaunch_modes() {
       SESSION_NAME="$(resolve_target_session_name)" || exit 1
     fi
     if [[ -z "$SESSION_NAME" ]]; then
-      echo "Session does not exist or could not be resolved (set MULTIAGENT_SESSION or run inside tmux)." >&2
+      echo "Session does not exist or could not be resolved (set AGENT_WINDOW_SESSION or run inside tmux)." >&2
       exit 1
     fi
     if ! tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
@@ -51,10 +51,10 @@ multiagent_dispatch_prelaunch_modes() {
     fi
     if [[ "$SESSION_NAME_EXPLICIT" -eq 1 ]]; then
       resolved_note="--session"
-    elif [[ -n "${MULTIAGENT_SESSION:-}" && "$SESSION_NAME" == "${MULTIAGENT_SESSION}" ]]; then
-      resolved_note="MULTIAGENT_SESSION"
-    elif [[ -n "${MULTIAGENT_SESSION_NAME:-}" && "$SESSION_NAME" == "${MULTIAGENT_SESSION_NAME}" ]]; then
-      resolved_note="MULTIAGENT_SESSION_NAME"
+    elif [[ -n "${AGENT_WINDOW_SESSION:-}" && "$SESSION_NAME" == "${AGENT_WINDOW_SESSION}" ]]; then
+      resolved_note="AGENT_WINDOW_SESSION"
+    elif [[ -n "${AGENT_WINDOW_SESSION_NAME:-}" && "$SESSION_NAME" == "${AGENT_WINDOW_SESSION_NAME}" ]]; then
+      resolved_note="AGENT_WINDOW_SESSION_NAME"
     elif [[ -n "${TMUX:-}" ]]; then
       resolved_note="tmux client (#{session_name})"
     else
@@ -171,7 +171,7 @@ multiagent_dispatch_agent_mutation_modes() {
     fi
 
     load_session_runtime_context "$SESSION_NAME"
-    tmux set-environment -t "$SESSION_NAME" MULTIAGENT_INDEX_PATH "$(_canonical_session_index_path "$SESSION_NAME")"
+    tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_INDEX_PATH "$(_canonical_session_index_path "$SESSION_NAME")"
     ensure_session_index_mirrors "$SESSION_NAME"
 
     acquire_session_topology_lock "$SESSION_NAME" || exit 1
@@ -181,7 +181,7 @@ multiagent_dispatch_agent_mutation_modes() {
     renumber_existing_exact_instance "$SESSION_NAME" "$base_agent"
     instance_name="$(next_instance_name "$SESSION_NAME" "$base_agent")"
     upper_instance="$(printf '%s' "$instance_name" | tr '[:lower:]-' '[:upper:]_')"
-    existing_pane_line="$(tmux show-environment -t "$SESSION_NAME" "MULTIAGENT_PANE_${upper_instance}" 2>/dev/null || true)"
+    existing_pane_line="$(tmux show-environment -t "$SESSION_NAME" "AGENT_WINDOW_PANE_${upper_instance}" 2>/dev/null || true)"
     existing_pane="$(printf '%s' "$existing_pane_line" | sed 's/^[^=]*=//')"
     if [[ -n "$existing_pane" ]]; then
       echo "Agent instance already exists: $instance_name (bug: please report)" >&2
@@ -222,12 +222,12 @@ from multiagent_lib.agents import agents_to_csv, append_instance, parse_agents_c
 print(agents_to_csv(append_instance(parse_agents_csv(agents_csv), instance_name)))
 PYEOF
     )"
-    tmux set-environment -t "$SESSION_NAME" "MULTIAGENT_PANE_${upper_instance}" "$new_pane"
-    tmux set-environment -t "$SESSION_NAME" MULTIAGENT_AGENTS "$updated_agents"
+    tmux set-environment -t "$SESSION_NAME" "AGENT_WINDOW_PANE_${upper_instance}" "$new_pane"
+    tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_AGENTS "$updated_agents"
     update_session_meta_file "$SESSION_NAME"
 
     start_agent "$new_pane" "$base_agent" "$instance_name"
-    initiator_name="${MULTIAGENT_AGENT_NAME:-user}"
+    initiator_name="${AGENT_WINDOW_AGENT_NAME:-user}"
     append_session_system_entry "$SESSION_NAME" "$(format_session_topology_message "add-agent" "$instance_name" "$initiator_name")" "session-topology" "add-agent" "$instance_name" "$initiator_name"
 
     echo "Added agent $instance_name to session: $SESSION_NAME"
@@ -253,7 +253,7 @@ PYEOF
 
     instance_name="$(printf '%s' "$AGENTS_ARG" | tr '[:upper:]' '[:lower:]')"
     load_session_runtime_context "$SESSION_NAME"
-    tmux set-environment -t "$SESSION_NAME" MULTIAGENT_INDEX_PATH "$(_canonical_session_index_path "$SESSION_NAME")"
+    tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_INDEX_PATH "$(_canonical_session_index_path "$SESSION_NAME")"
     ensure_session_index_mirrors "$SESSION_NAME"
 
     acquire_session_topology_lock "$SESSION_NAME" || exit 1
@@ -296,7 +296,7 @@ PYEOF
     fi
 
     upper_instance="$(printf '%s' "$canonical" | tr '[:lower:]-' '[:upper:]_')"
-    pane_line="$(tmux show-environment -t "$SESSION_NAME" "MULTIAGENT_PANE_${upper_instance}" 2>/dev/null)" || {
+    pane_line="$(tmux show-environment -t "$SESSION_NAME" "AGENT_WINDOW_PANE_${upper_instance}" 2>/dev/null)" || {
       echo "Failed to query tmux pane state for $canonical" >&2
       exit 1
     }
@@ -313,19 +313,19 @@ PYEOF
       done
     fi
 
-    if [[ "${TMUX_PANE:-}" == "$pane_id" ]] && [[ "${MULTIAGENT_REMOVE_HELPER:-0}" != "1" ]]; then
+    if [[ "${TMUX_PANE:-}" == "$pane_id" ]] && [[ "${AGENT_WINDOW_REMOVE_HELPER:-0}" != "1" ]]; then
       if command -v nohup >/dev/null 2>&1; then
         nohup env \
-          MULTIAGENT_REMOVE_HELPER=1 \
-          MULTIAGENT_SESSION="$SESSION_NAME" \
-          MULTIAGENT_TMUX_SOCKET="$TMUX_SOCKET_NAME" \
+          AGENT_WINDOW_REMOVE_HELPER=1 \
+          AGENT_WINDOW_SESSION="$SESSION_NAME" \
+          AGENT_WINDOW_TMUX_SOCKET="$TMUX_SOCKET_NAME" \
           "$SCRIPT_DIR/multiagent" remove-agent --session "$SESSION_NAME" --agent "$canonical" \
           >/dev/null 2>&1 </dev/null &
       else
         env \
-          MULTIAGENT_REMOVE_HELPER=1 \
-          MULTIAGENT_SESSION="$SESSION_NAME" \
-          MULTIAGENT_TMUX_SOCKET="$TMUX_SOCKET_NAME" \
+          AGENT_WINDOW_REMOVE_HELPER=1 \
+          AGENT_WINDOW_SESSION="$SESSION_NAME" \
+          AGENT_WINDOW_TMUX_SOCKET="$TMUX_SOCKET_NAME" \
           "$SCRIPT_DIR/multiagent" remove-agent --session "$SESSION_NAME" --agent "$canonical" \
           >/dev/null 2>&1 </dev/null &
       fi
@@ -348,8 +348,8 @@ PYEOF
       fi
     fi
 
-    tmux set-environment -t "$SESSION_NAME" -u "MULTIAGENT_PANE_${upper_instance}" 2>/dev/null || true
-    tmux set-environment -t "$SESSION_NAME" MULTIAGENT_AGENTS "$updated_agents"
+    tmux set-environment -t "$SESSION_NAME" -u "AGENT_WINDOW_PANE_${upper_instance}" 2>/dev/null || true
+    tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_AGENTS "$updated_agents"
 
     if ! session_uses_per_window_layout "$SESSION_NAME"; then
       user_panes_csv="$(session_user_pane_value "$SESSION_NAME")"
@@ -357,7 +357,7 @@ PYEOF
     fi
 
     update_session_meta_file "$SESSION_NAME"
-    initiator_name="${MULTIAGENT_AGENT_NAME:-user}"
+    initiator_name="${AGENT_WINDOW_AGENT_NAME:-user}"
     append_session_system_entry "$SESSION_NAME" "$(format_session_topology_message "remove-agent" "$canonical" "$initiator_name")" "session-topology" "remove-agent" "$canonical" "$initiator_name"
     echo "Removed agent $canonical from session: $SESSION_NAME"
     release_session_topology_lock

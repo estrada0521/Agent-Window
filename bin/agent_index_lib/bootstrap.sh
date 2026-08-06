@@ -46,7 +46,7 @@ default_tmux_socket_name() {
   printf '%s\n' "agent-window"
 }
 
-TMUX_SOCKET_NAME="${MULTIAGENT_TMUX_SOCKET:-$(default_tmux_socket_name)}"
+TMUX_SOCKET_NAME="${AGENT_WINDOW_TMUX_SOCKET:-$(default_tmux_socket_name)}"
 
 tmux() {
   if [[ "$TMUX_SOCKET_NAME" == */* ]]; then
