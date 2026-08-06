@@ -25,16 +25,16 @@ show_ios_trust_help() {
     root_ca="${caroot}/rootCA.pem"
   fi
   echo >&2
-  echo "multiagent: local HTTPS is ready on this Mac." >&2
-  echo "multiagent: iPhone / iPad で LAN HTTPS を使う場合は、次の手順が追加で必要です。" >&2
+  echo "agent-window: local HTTPS is ready on this Mac." >&2
+  echo "agent-window: iPhone / iPad で LAN HTTPS を使う場合は、次の手順が追加で必要です。" >&2
   if [[ -n "$root_ca" ]]; then
-    echo "multiagent: 1. ${root_ca} を AirDrop / Files / Mail などで端末へ送る" >&2
+    echo "agent-window: 1. ${root_ca} を AirDrop / Files / Mail などで端末へ送る" >&2
   else
-    echo "multiagent: 1. mkcert の rootCA.pem を端末へ送る" >&2
+    echo "agent-window: 1. mkcert の rootCA.pem を端末へ送る" >&2
   fi
-  echo "multiagent: 2. 端末で証明書プロファイルをインストールする" >&2
-  echo "multiagent: 3. Settings > General > About > Certificate Trust Settings で trust を有効化する" >&2
-  echo "multiagent: rootCA-key.pem は絶対に共有しないでください。" >&2
+  echo "agent-window: 2. 端末で証明書プロファイルをインストールする" >&2
+  echo "agent-window: 3. Settings > General > About > Certificate Trust Settings で trust を有効化する" >&2
+  echo "agent-window: rootCA-key.pem は絶対に共有しないでください。" >&2
   echo >&2
 }
 
@@ -47,7 +47,7 @@ reveal_root_ca_in_finder() {
   [[ -n "$caroot" ]] || return 0
   root_ca="${caroot}/rootCA.pem"
   [[ -f "$root_ca" ]] || return 0
-  echo "multiagent: revealing rootCA.pem in Finder..." >&2
+  echo "agent-window: revealing rootCA.pem in Finder..." >&2
   open -R "$root_ca" >/dev/null 2>&1 || true
 }
 
@@ -57,11 +57,11 @@ emit_mode() {
 
 announce_local_https_requirement() {
   cat >&2 <<'EOF'
-multiagent: phone/PWA access requires local HTTPS.
-multiagent: mkcert を使って localhost / LAN 向け証明書を用意します。
-multiagent: - Home Screen web app
-multiagent: - secure browser APIs (camera, clipboard, etc.)
-multiagent: - 将来の service worker / push 系機能
+agent-window: phone/PWA access requires local HTTPS.
+agent-window: mkcert を使って localhost / LAN 向け証明書を用意します。
+agent-window: - Home Screen web app
+agent-window: - secure browser APIs (camera, clipboard, etc.)
+agent-window: - 将来の service worker / push 系機能
 EOF
 }
 
@@ -70,13 +70,13 @@ main() {
   announce_local_https_requirement
 
   if mkcert_bin="$(mkcert_cmd 2>/dev/null)"; then
-    echo "multiagent: using existing mkcert for local HTTPS." >&2
+    echo "agent-window: using existing mkcert for local HTTPS." >&2
   else
-    echo "multiagent: mkcert is required. Nothing was installed." >&2
-    echo "multiagent: install it yourself with: brew install mkcert" >&2
+    echo "agent-window: mkcert is required. Nothing was installed." >&2
+    echo "agent-window: install it yourself with: brew install mkcert" >&2
     exit 1
   fi
-  echo "multiagent: installing local CA into the system trust store..." >&2
+  echo "agent-window: installing local CA into the system trust store..." >&2
   "$mkcert_bin" -install >&2
   reveal_root_ca_in_finder "$mkcert_bin"
   show_ios_trust_help "$mkcert_bin"
