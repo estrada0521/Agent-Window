@@ -96,17 +96,6 @@ def _get_message_entry(handler, parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
-def _get_normalized_events(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    msg_id = (qs.get("msg_id", [""])[0] or "").strip()
-    payload_body = ctx["runtime"].normalized_events_for_msg(msg_id)
-    if payload_body is None:
-        handler.send_error(404)
-        return
-    body = json.dumps(payload_body, ensure_ascii=True).encode("utf-8")
-    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
-
-
 def _get_trace(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     agent = qs.get("agent", [""])[0].lower()
@@ -453,7 +442,6 @@ def _get_shortcut_commands(handler, _parsed, ctx) -> None:
 _GET_ROUTES = {
     "/messages": _get_messages,
     "/message-entry": _get_message_entry,
-    "/normalized-events": _get_normalized_events,
     "/trace": _get_trace,
     "/file-raw": _get_file_raw,
     "/file-content": _get_file_content,

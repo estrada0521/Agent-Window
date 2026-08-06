@@ -272,8 +272,7 @@
     if (msgThinking) {
       msgThinking.addEventListener("touchstart", (e) => {
         const row = e.target.closest(".message-thinking-row");
-        const providerEventsMsgId = row?.dataset?.providerEvents || "";
-        if (!row || (!row.dataset.agent && !providerEventsMsgId)) {
+        if (!row || !row.dataset.agent) {
           _thinkingRowTouch = null;
           return;
         }
@@ -284,7 +283,6 @@
         }
         _thinkingRowTouch = {
           agent: row.dataset.agent || "",
-          providerEvents: providerEventsMsgId,
           x: t.clientX,
           y: t.clientY,
         };
@@ -295,9 +293,7 @@
         _thinkingRowTouch = null;
         const row = e.target.closest(".message-thinking-row");
         if (!row) return;
-        if ((row.dataset.providerEvents || "") !== (start.providerEvents || "")) {
-          if ((row.dataset.agent || "") !== (start.agent || "")) return;
-        }
+        if ((row.dataset.agent || "") !== (start.agent || "")) return;
         const t = e.changedTouches && e.changedTouches[0];
         if (!t) return;
         const dx = t.clientX - start.x;
@@ -308,9 +304,7 @@
         _lastThinkingPaneMs = now;
         _ignoreGlobalClick = true;
         e.preventDefault();
-        if (start.providerEvents) {
-          void showProviderEventsModal(start.providerEvents);
-        } else if (start.agent) {
+        if (start.agent) {
           showPaneTraceViewer(start.agent);
         }
       }, { passive: false });

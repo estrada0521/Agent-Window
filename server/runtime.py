@@ -241,46 +241,6 @@ class ChatRuntime:
             return self._light_entry(entry) if light_mode else entry
         return None
 
-    def normalized_events_for_msg(self, msg_id: str) -> dict | None:
-        entry = self.entry_by_id(msg_id, light_mode=False)
-        if entry is None:
-            return None
-        rel = str(entry.get("normalized_event_path") or "").strip()
-        if not rel:
-            return {"entry": entry, "events": [], "path": "", "missing": True}
-        base = self.index_path.parent.resolve()
-        path = (base / rel).resolve()
-        try:
-            path.relative_to(base)
-        except ValueError:
-            return {"entry": entry, "events": [], "path": rel, "missing": True}
-        if not path.exists():
-            return {"entry": entry, "events": [], "path": rel, "missing": True}
-        events: list[dict] = []
-        with path.open("r", encoding="utf-8", errors="replace") as f:
-            for idx, line in enumerate(f):
-                text = line.strip()
-                if not text:
-                    continue
-                try:
-                    events.append(json.loads(text))
-                except json.JSONDecodeError:
-                    events.append({"event": "raw.line", "seq": idx, "text": text})
-        return {"entry": entry, "events": events, "path": rel, "missing": False}
-
-    def provider_runtime_state(self) -> dict:
-        path = self.index_path.parent / ".provider-runtime.json"
-        if not path.exists():
-            return {}
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            return {}
-        if not isinstance(payload, dict):
-            return {}
-        return payload
-
     def session_metadata(self) -> dict:
         session_slug = quote(self.session_name, safe="")
         return {
