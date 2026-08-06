@@ -12,33 +12,41 @@ from native_log_sync.agents._shared.path_state import (
     _cursor_dict_to_json,
 )
 from native_log_sync.io.state_paths import (
+    canonical_native_log_sync_internal_path,
     canonical_native_log_sync_state_path,
     legacy_agent_index_sync_state_path,
 )
+
+_INTERNAL_KEYS = ("agent_first_seen_ts", "synced_msg_ids", "synced_message_fingerprints")
+
+
+def _read_json_locked(path) -> dict:
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_SH)
+            raw = handle.read().strip()
+            if not raw:
+                return {}
+            return json.loads(raw)
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError:
+        return {}
 
 
 def load_sync_state(runtime) -> dict:
     canonical = canonical_native_log_sync_state_path(runtime.index_path.parent)
     legacy = legacy_agent_index_sync_state_path(runtime.index_path.parent)
+    internal = canonical_native_log_sync_internal_path(runtime.index_path.parent)
 
     if canonical.exists():
         read_path = canonical
     elif legacy.exists():
         read_path = legacy
     else:
-        return {}
+        read_path = None
 
-    try:
-        with read_path.open("r", encoding="utf-8") as handle:
-            fcntl.flock(handle.fileno(), fcntl.LOCK_SH)
-            raw = handle.read().strip()
-            if not raw:
-                return {}
-            data = json.loads(raw)
-    except FileNotFoundError:
-        return {}
-    except json.JSONDecodeError:
-        return {}
+    data: dict = _read_json_locked(read_path) if read_path is not None else {}
 
     if read_path == legacy:
         try:
@@ -54,25 +62,45 @@ def load_sync_state(runtime) -> dict:
             legacy.unlink()
         except OSError:
             pass
+
+    # Internal dedup bookkeeping lives in its own file. Older sessions still
+    # have it inline in `data` (read above) until the next save migrates it;
+    # once the internal file exists, it is the source of truth.
+    if internal.exists():
+        internal_data = _read_json_locked(internal)
+        for key in _INTERNAL_KEYS:
+            if key in internal_data:
+                data[key] = internal_data[key]
+
     return data
 
 
 def save_sync_state(runtime, *, time_module=time) -> None:
+    last_sync = time_module.strftime("%Y-%m-%d %H:%M:%S")
     try:
-        state = {
+        pointer_state = {
             "codex_cursors": _cursor_dict_to_json(runtime._codex_cursors),
             "cursor_cursors": _cursor_dict_to_json(runtime._cursor_cursors),
             "claude_cursors": _cursor_dict_to_json(runtime._claude_cursors),
             "gemini_cursors": _cursor_dict_to_json(runtime._gemini_cursors),
             "grok_cursors": _cursor_dict_to_json(runtime._grok_cursors),
-            "agent_first_seen_ts": dict(runtime._agent_first_seen_ts),
-            "synced_msg_ids": sorted(runtime._synced_msg_ids),
-            "synced_message_fingerprints": sorted(runtime._synced_message_fingerprints),
-            "last_sync": time_module.strftime("%Y-%m-%d %H:%M:%S"),
+            "last_sync": last_sync,
         }
         with canonical_native_log_sync_state_path(runtime.index_path.parent).open("w", encoding="utf-8") as handle:
             fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-            handle.write(json.dumps(state, ensure_ascii=False))
+            handle.write(json.dumps(pointer_state, ensure_ascii=False))
+            handle.flush()
+            os.fsync(handle.fileno())
+
+        internal_state = {
+            "agent_first_seen_ts": dict(runtime._agent_first_seen_ts),
+            "synced_msg_ids": sorted(runtime._synced_msg_ids),
+            "synced_message_fingerprints": sorted(runtime._synced_message_fingerprints),
+            "last_sync": last_sync,
+        }
+        with canonical_native_log_sync_internal_path(runtime.index_path.parent).open("w", encoding="utf-8") as handle:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+            handle.write(json.dumps(internal_state, ensure_ascii=False))
             handle.flush()
             os.fsync(handle.fileno())
     except Exception as exc:
