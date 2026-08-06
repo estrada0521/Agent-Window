@@ -403,6 +403,7 @@
       align-items: center;
       justify-content: center;
       padding: 0;
+      border-radius: 999px;
     }
 
     .hub-page-header .hub-page-header-actions {
@@ -539,6 +540,7 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.24),
         inset 0 0 18px rgba(255, 255, 255, 0.035),
         0 7px 22px rgba(0, 0, 0, 0.34);
+      border-radius: 999px;
       transform: scale(0.94);
     }
 

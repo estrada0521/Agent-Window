@@ -13,22 +13,18 @@
       if (/iP(hone|ad|od)/.test(ua)) return true;
       return navigator.platform === "MacIntel" && Number(navigator.maxTouchPoints || 0) > 1;
     })();
-    const useNativeHeaderMenuPicker = !!(isAppleTouchDevice && nativeHeaderMenuSelect && rightMenuBtn);
+    const useNativeHeaderMenuPicker = false; // Disabled due to iOS Safari visual glitches (flashing white square)
     const clearNativeHeaderMenuSelection = () => {
       if (!nativeHeaderMenuSelect) return;
       nativeHeaderMenuSelect.value = "";
     };
     const syncNativeHeaderMenuSelectAnchor = () => {
-      if (!useNativeHeaderMenuPicker || !nativeHeaderMenuSelect || !rightMenuBtn) return;
-      const rect = rightMenuBtn.getBoundingClientRect();
-      nativeHeaderMenuSelect.style.left = `${Math.round(rect.left)}px`;
-      nativeHeaderMenuSelect.style.top = `${Math.round(rect.top)}px`;
-      nativeHeaderMenuSelect.style.width = `${Math.max(1, Math.round(rect.width))}px`;
-      nativeHeaderMenuSelect.style.height = `${Math.max(1, Math.round(rect.height))}px`;
+      // Keep the select off-screen; do not reposition it over the button.
+      // Moving it to the button's coordinates causes iOS Safari to flash
+      // the native select box appearance at that position.
     };
     const openNativeHeaderMenuPicker = () => {
       if (!useNativeHeaderMenuPicker || !nativeHeaderMenuSelect) return false;
-      syncNativeHeaderMenuSelectAnchor();
       clearNativeHeaderMenuSelection();
       const show = () => {
         if (typeof nativeHeaderMenuSelect.showPicker === "function") {
@@ -46,7 +42,6 @@
     };
     if (useNativeHeaderMenuPicker) {
       nativeHeaderMenuSelect.classList.add("is-ios-active");
-      syncNativeHeaderMenuSelectAnchor();
     }
     nativeHeaderMenuSelect?.addEventListener("pointerdown", () => {
       resetAgentActionNativeMenu({ clearOptions: true });
@@ -534,6 +529,8 @@
     let gitBranchPageLoading = false;
     let gitBranchLoadError = "";
     let gitBranchLoadSeq = 0;
+    let gitBranchRefreshSeq = 0;
+    let gitBranchOverviewSig = "";
     let gitBranchDetailContext = null;
     let gitBranchDetailNeedsRefresh = false;
     let gitBranchObserver = null;
@@ -755,6 +752,21 @@
           </div>
         </div>`);
     };
+    const gitBranchOverviewSignature = (data) => JSON.stringify({
+      worktree_changed_paths: Math.max(0, parseInt(data?.worktree_changed_paths) || 0),
+      worktree_added: Math.max(0, parseInt(data?.worktree_added) || 0),
+      worktree_deleted: Math.max(0, parseInt(data?.worktree_deleted) || 0),
+      worktree_has_diff: !!data?.worktree_has_diff,
+      total_commits: Math.max(0, parseInt(data?.total_commits) || 0),
+      next_offset: Math.max(0, parseInt(data?.next_offset) || 0),
+      has_more: !!data?.has_more,
+      commits: (Array.isArray(data?.recent_commits) ? data.recent_commits : []).map((commit) => ({
+        hash: String(commit?.hash || ""),
+        subject: String(commit?.subject || ""),
+        ins: Math.max(0, parseInt(commit?.ins) || 0),
+        dels: Math.max(0, parseInt(commit?.dels) || 0),
+      })),
+    });
     const applyGitBranchOverviewPage = (data, { reset = false } = {}) => {
       const commits = Array.isArray(data?.recent_commits) ? data.recent_commits : [];
       if (reset) {
@@ -771,6 +783,7 @@
       gitBranchHasMore = !!data?.has_more;
       if (reset) {
         renderGitBranchCommitRows(gitBranchCommits, { append: false });
+        gitBranchOverviewSig = gitBranchOverviewSignature(data);
       } else if (commits.length) {
         renderGitBranchCommitRows(commits, { append: true });
       }
@@ -779,6 +792,7 @@
     };
     const refreshGitBranchOverviewView = async () => {
       if (!gitBranchPanel) return;
+      const refreshSeq = ++gitBranchRefreshSeq;
       const params = new URLSearchParams({
         offset: "0",
         limit: String(GIT_BRANCH_BATCH),
@@ -787,21 +801,29 @@
       const res = await fetchWithTimeout(`/git-branch-overview?${params.toString()}`, {}, 5000);
       if (!res.ok) throw new Error("Failed to refresh branch overview");
       const data = await res.json();
-      const summaryWrap = gitBranchPanel.querySelector(".git-branch-summary-wrap");
-      if (summaryWrap) {
-        const previous = gitBranchCountSnapshot(summaryWrap);
-        summaryWrap.innerHTML = buildGitBranchSummaryHtml(data || {});
-        animateGitBranchCountsFromSnapshot(summaryWrap, previous);
+      if (refreshSeq !== gitBranchRefreshSeq) return;
+      const nextOverviewSig = gitBranchOverviewSignature(data);
+      if (nextOverviewSig !== gitBranchOverviewSig) {
+        const summaryWrap = gitBranchPanel.querySelector(".git-branch-summary-wrap");
+        if (summaryWrap) {
+          const previous = gitBranchCountSnapshot(summaryWrap);
+          summaryWrap.innerHTML = buildGitBranchSummaryHtml(data || {});
+          animateGitBranchCountsFromSnapshot(summaryWrap, previous);
+        }
+        gitBranchCommits = Array.isArray(data?.recent_commits) ? data.recent_commits.slice() : [];
+        gitBranchTotalCommits = Math.max(0, parseInt(data?.total_commits) || 0);
+        gitBranchNextOffset = Math.max(0, parseInt(data?.next_offset) || gitBranchCommits.length);
+        gitBranchHasMore = !!data?.has_more;
+        renderGitBranchCommitRows(gitBranchCommits, { append: false });
+        updateGitBranchLoadMoreUi();
+        ensureGitBranchObserver();
+        gitBranchOverviewSig = nextOverviewSig;
       }
-      gitBranchCommits = Array.isArray(data?.recent_commits) ? data.recent_commits.slice() : [];
-      gitBranchTotalCommits = Math.max(0, parseInt(data?.total_commits) || 0);
-      gitBranchNextOffset = Math.max(0, parseInt(data?.next_offset) || gitBranchCommits.length);
-      gitBranchHasMore = !!data?.has_more;
-      renderGitBranchCommitRows(gitBranchCommits, { append: false });
-      updateGitBranchLoadMoreUi();
-      ensureGitBranchObserver();
       if (gitBranchDetailContext?.kind === "worktree" && gitBranchDetailContext?.wrapEl) {
-        await renderGitCommitFileStatsInto(gitBranchDetailContext.wrapEl, "", { allowUndo: true });
+        await renderGitCommitFileStatsInto(gitBranchDetailContext.wrapEl, "", {
+          allowUndo: true,
+          preserveCurrent: true,
+        });
       }
     };
     const buildGitCommitFileRowHtml = (entry, { allowUndo = false, scope = "" } = {}) => {
@@ -832,9 +854,18 @@
       const untrackedAttr = isUntracked ? ' data-untracked="1"' : "";
       return `<div class="git-commit-file-row clickable${undoClass}" data-path="${escapeHtml(path)}"${untrackedAttr}><div class="git-commit-file-header">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
     };
-    const renderGitCommitFileStatsInto = async (wrapEl, hash, { allowUndo = false, scope = "" } = {}) => {
+    const renderGitCommitFileStatsInto = async (
+      wrapEl,
+      hash,
+      { allowUndo = false, scope = "", preserveCurrent = false } = {},
+    ) => {
       if (!wrapEl) return null;
-      wrapEl.innerHTML = `<div class="git-commit-file-empty inline-loading-row">${loadingIndicatorHtml("Loading…")}</div>`;
+      const requestSeq = Math.max(0, parseInt(wrapEl.dataset.fileStatsRequestSeq) || 0) + 1;
+      wrapEl.dataset.fileStatsRequestSeq = String(requestSeq);
+      if (!preserveCurrent) {
+        delete wrapEl.dataset.fileStatsSig;
+        wrapEl.innerHTML = `<div class="git-commit-file-empty inline-loading-row">${loadingIndicatorHtml("Loading…")}</div>`;
+      }
       if (!hash && !scope) {
         const [stagedRes, unstagedRes, untrackedRes] = await Promise.all([
           fetchWithTimeout("/git-diff-files?scope=staged", {}, 5000),
@@ -844,11 +875,25 @@
         const stagedData = await stagedRes.json();
         const unstagedData = await unstagedRes.json();
         const untrackedData = await untrackedRes.json();
+        if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return null;
         const sections = [
           { title: "Staged", kind: "staged", data: stagedData },
           { title: "Unstaged", kind: "unstaged", data: unstagedData },
           { title: "Untracked", kind: "untracked", data: untrackedData },
         ].filter((section) => Array.isArray(section.data?.files) && section.data.files.length);
+        const nextSig = JSON.stringify(sections.map((section) => ({
+          kind: section.kind,
+          files: (section.data.files || []).map((entry) => ({
+            path: String(entry?.path || ""),
+            ins: Math.max(0, parseInt(entry?.ins) || 0),
+            dels: Math.max(0, parseInt(entry?.dels) || 0),
+            untracked: !!entry?.untracked,
+          })),
+        })));
+        if (preserveCurrent && wrapEl.dataset.fileStatsSig === nextSig) {
+          return { files: sections.flatMap((section) => section.data.files || []) };
+        }
+        wrapEl.dataset.fileStatsSig = nextSig;
         if (!sections.length) {
           wrapEl.innerHTML = '<div class="git-commit-file-empty">No changed files</div>';
           return { files: [] };
@@ -860,7 +905,20 @@
       if (!hash && scope) params.set("scope", scope);
       const res = await fetchWithTimeout(`/git-diff-files?${params.toString()}`, {}, 5000);
       const data = await res.json();
+      if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return null;
       const files = Array.isArray(data?.files) ? data.files : [];
+      const nextSig = JSON.stringify({
+        hash: String(hash || ""),
+        scope: String(scope || ""),
+        files: files.map((entry) => ({
+          path: String(entry?.path || ""),
+          ins: Math.max(0, parseInt(entry?.ins) || 0),
+          dels: Math.max(0, parseInt(entry?.dels) || 0),
+          untracked: !!entry?.untracked,
+        })),
+      });
+      if (preserveCurrent && wrapEl.dataset.fileStatsSig === nextSig) return data;
+      wrapEl.dataset.fileStatsSig = nextSig;
       if (!files.length) {
         wrapEl.innerHTML = '<div class="git-commit-file-empty">No changed files</div>';
         return data;
@@ -895,6 +953,7 @@
       gitBranchLoadError = "";
       disconnectGitBranchObserver();
       if (reset) {
+        gitBranchRefreshSeq += 1;
         closeGitBranchInlineDiff();
         setGitBranchSheetTitle("Git Branches");
         gitBranchHasMore = false;
@@ -931,6 +990,12 @@
       }
     };
     const updateGitBranchPanel = async () => {
+      if (gitBranchPanel?.querySelector(".git-branch-stack")) {
+        try {
+          await refreshGitBranchOverviewView();
+        } catch (_) {}
+        return;
+      }
       await loadGitBranchOverviewPage({ reset: true });
     };
     if (gitBranchPanel) {
@@ -1120,11 +1185,18 @@
 
       const renderPanel = (rawPath, entriesForPath, { loading = false, error = "", transition = "none" } = {}) => {
         const path = normalizeRepoPath(rawPath);
+        const allEntries = Array.isArray(entriesForPath) ? entriesForPath : [];
         const nextRenderSig = JSON.stringify({
           session: sessionKey,
           path,
           loading: loading ? 1 : 0,
-          error: error ? 1 : 0,
+          error: String(error || ""),
+          entries: allEntries.map((entry) => ({
+            name: String(entry?.name || ""),
+            path: String(entry?.path || ""),
+            kind: entry?.kind === "dir" ? "dir" : "file",
+            size: Number.isFinite(entry?.size) ? entry.size : null,
+          })),
         });
         if (nextRenderSig === attachedFilesPanelRenderSig && attachedFilesBrowserMountEl()?.childElementCount) return;
         attachedFilesPanelRenderSig = nextRenderSig;
@@ -1226,7 +1298,6 @@
             files: listItems.filter((entry) => entry?.kind !== "dir"),
           };
         };
-        const allEntries = Array.isArray(entriesForPath) ? entriesForPath : [];
         const list = document.createElement("div");
         list.className = "repo-browser-list";
         if (transition === "forward" || transition === "back") {
@@ -1250,21 +1321,29 @@
         syncAttachedFilesSheetBackBtn();
       };
 
-      const openRepoPath = async (rawPath, { transition = "none" } = {}) => {
+      const openRepoPath = async (rawPath, { transition = "none", preserveCurrent = false } = {}) => {
         const path = normalizeRepoPath(rawPath);
         if (attachedFilesPanel._repoSessionKey !== sessionKey) return;
-        renderPanel(path, [], { loading: true, transition });
+        const updateSeq = ++attachedFilesPanelUpdateSeq;
+        const canPreserveCurrent = !!(
+          preserveCurrent
+          && path === _attachedFilesBrowserPath
+          && attachedFilesBrowserMountEl()?.childElementCount
+        );
+        if (!canPreserveCurrent) renderPanel(path, [], { loading: true, transition });
         try {
           const entriesForPath = await fetchRepoDir(path);
-          if (attachedFilesPanel._repoSessionKey !== sessionKey) return;
+          if (updateSeq !== attachedFilesPanelUpdateSeq || attachedFilesPanel._repoSessionKey !== sessionKey) return;
+          if (canPreserveCurrent && _attachedFilesBrowserPath !== path) return;
           renderPanel(path, entriesForPath, { transition });
         } catch (err) {
-          if (attachedFilesPanel._repoSessionKey !== sessionKey) return;
+          if (updateSeq !== attachedFilesPanelUpdateSeq || attachedFilesPanel._repoSessionKey !== sessionKey) return;
+          if (canPreserveCurrent) return;
           const errorText = String(err?.message || "Failed to load directory");
           if (path) {
             try {
               const rootEntries = await fetchRepoDir("");
-              if (attachedFilesPanel._repoSessionKey !== sessionKey) return;
+              if (updateSeq !== attachedFilesPanelUpdateSeq || attachedFilesPanel._repoSessionKey !== sessionKey) return;
               renderPanel("", rootEntries, { transition: "back" });
               return;
             } catch (_) { }
@@ -1275,14 +1354,14 @@
 
       attachedFilesPanel._syncCategoryUi = () => {
         if (attachedFilesPanel.classList.contains("attached-files-mode-preview")) return;
-        void openRepoPath(_attachedFilesBrowserPath, { transition: "none" });
+        void openRepoPath(_attachedFilesBrowserPath, { transition: "none", preserveCurrent: true });
       };
       attachedFilesPanel._openRepoPath = openRepoPath;
       attachedFilesPanel._scrollToCategory = () => false;
       const panelVisible = attachedFilesPanel.classList.contains("open") && !attachedFilesPanel.hidden;
       if (!panelVisible) return;
       if (attachedFilesPanel.classList.contains("attached-files-mode-preview")) return;
-      await openRepoPath(_attachedFilesBrowserPath, { transition: "none" });
+      await openRepoPath(_attachedFilesBrowserPath, { transition: "none", preserveCurrent: true });
     };
     const closeHeaderMenus = () => {
       resetAgentActionNativeMenu({ clearOptions: true });

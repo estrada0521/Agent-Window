@@ -242,6 +242,7 @@
     .hub-page-header .hub-page-header-actions .hub-page-menu-btn:active,
     .hub-page-header .hub-page-header-actions .hub-page-menu-btn.open {
       background: rgba(255, 255, 255, 0.075);
+      border-radius: 999px;
       transform: translateY(7px);
     }
     html[data-view-variant="desktop"]:not([data-hub-embed="1"]) .hub-page-header {

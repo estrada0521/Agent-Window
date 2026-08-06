@@ -164,43 +164,10 @@ HUB_PAGE_HEADER_JS = """
     }
     
     if (menuBtn && bridge) {
-      var _syncBridge = function() {
-        if (!menuBtn || menuBtn.offsetParent === null) return;
-        var rect = menuBtn.getBoundingClientRect();
-        var padX = 4;
-        var padY = 4;
-        var left = Math.max(0, rect.left - padX);
-        var top = Math.max(0, rect.top - padY);
-        var width = rect.width + (padX * 2);
-        var height = rect.height + (padY * 2);
-        var viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
-        var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-        if (viewportWidth > 0 && left + width > viewportWidth) {
-          left = Math.max(0, viewportWidth - width);
-        }
-        if (viewportHeight > 0 && top + height > viewportHeight) {
-          top = Math.max(0, viewportHeight - height);
-        }
-        bridge.style.left = left + "px";
-        bridge.style.top = top + "px";
-        bridge.style.width = width + "px";
-        bridge.style.height = height + "px";
-        // opacity:0 so focus ring is invisible; pointer-events:auto keeps it tappable
-        bridge.style.opacity = "0";
-        bridge.style.pointerEvents = "auto";
-        bridge.style.zIndex = "999";
-        bridge.style.background = "transparent";
-        bridge.style.color = "transparent";
-        bridge.style.border = "0";
-        bridge.style.outline = "none";
-        bridge.style.webkitTapHighlightColor = "transparent";
-      };
-      _syncBridge();
-      window.addEventListener("resize", _syncBridge, { passive: true });
-      window.addEventListener("scroll", _syncBridge, { passive: true });
-      window.visualViewport && window.visualViewport.addEventListener("resize", _syncBridge, { passive: true });
-      window.visualViewport && window.visualViewport.addEventListener("scroll", _syncBridge, { passive: true });
-      menuBtn.addEventListener("pointerdown", _syncBridge, { passive: true });
+      menuBtn.addEventListener("pointerdown", function() {
+        // keep bridge off-screen; do not reposition it over the button
+        // (repositioning causes iOS Safari to flash a native select focus rect)
+      }, { passive: true });
 
       bridge.addEventListener("change", function(e) {
         var action = e.target.value;

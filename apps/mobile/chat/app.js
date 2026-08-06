@@ -553,7 +553,7 @@ __CHAT_INCLUDE:panes/pane-viewer.js__
       }
       const gitPanelOpen = !!(gitBranchPanel && gitBranchPanel.classList.contains("open") && !gitBranchPanel.hidden);
       if (gitPanelOpen) {
-        void updateGitBranchPanel();
+        void updateGitBranchPanel().catch(() => {});
       }
     };
     const startWorkspaceSyncEvents = () => {
