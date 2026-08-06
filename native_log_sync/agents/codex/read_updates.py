@@ -87,7 +87,7 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
         if start >= file_size:
             return
 
-        def _append_codex_entry(entry: dict) -> bool:
+        def _append_codex_entry(entry: dict, line_start: int) -> bool:
             display = ""
             provider_notice = False
             entry_type = entry.get("type", "")
@@ -142,6 +142,8 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
                 "targets": ["user"],
                 "message": display,
                 "msg_id": msg_id,
+                "native_log_path": resolved_path,
+                "native_log_offset": line_start,
             }
             if provider_notice:
                 jsonl_entry["kind"] = "provider-notice"
@@ -151,7 +153,11 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
         last_runtime_state_event = ""
         with open(resolved_path, "r", encoding="utf-8") as f:
             f.seek(start)
-            for line in f:
+            while True:
+                line_start = f.tell()
+                line = f.readline()
+                if not line:
+                    break
                 line = line.strip()
                 if not line:
                     continue
@@ -159,7 +165,7 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
                     entry = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-                _append_codex_entry(entry)
+                _append_codex_entry(entry, line_start)
                 runtime_state_event = _codex_runtime_state_event(entry)
                 if runtime_state_event:
                     last_runtime_state_event = runtime_state_event

@@ -133,6 +133,8 @@ def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None)
                 "targets": ["user"],
                 "message": display,
                 "msg_id": msg_id,
+                "native_log_path": transcript_path,
+                "native_log_offset": line_start,
             }
             append_jsonl_entry(self.index_path, jsonl_entry)
 

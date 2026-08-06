@@ -122,6 +122,8 @@ def _sync_antigravity_db(self, agent: str, db_path: str) -> bool:
             "message": text,
             "msg_id": msg_id,
             "native_log_kind": "antigravity_assistant_response",
+            "native_log_path": db_path,
+            "native_log_offset": idx,
         }
         append_jsonl_entry(self.index_path, jsonl_entry)
         appended = True

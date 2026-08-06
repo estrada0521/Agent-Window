@@ -57,7 +57,7 @@ def sync_claude_native_log(self, agent: str, native_log_path: str | None = None)
         if start >= file_size:
             return
 
-        def _append_claude_entry(entry: dict) -> bool:
+        def _append_claude_entry(entry: dict, line_start: int) -> bool:
             if entry.get("type") != "assistant":
                 return False
             msg = entry.get("message") if isinstance(entry, dict) else {}
@@ -94,6 +94,8 @@ def sync_claude_native_log(self, agent: str, native_log_path: str | None = None)
                 "targets": ["user"],
                 "message": display,
                 "msg_id": msg_id,
+                "native_log_path": session_path_str,
+                "native_log_offset": line_start,
             }
             if entry.get("isApiErrorMessage"):
                 jsonl_entry["kind"] = "provider-notice"
@@ -103,7 +105,11 @@ def sync_claude_native_log(self, agent: str, native_log_path: str | None = None)
         turn_done_seen = False
         with open(session_path_str, "r", encoding="utf-8") as f:
             f.seek(start)
-            for line in f:
+            while True:
+                line_start = f.tell()
+                line = f.readline()
+                if not line:
+                    break
                 line = line.strip()
                 if not line:
                     continue
@@ -113,7 +119,7 @@ def sync_claude_native_log(self, agent: str, native_log_path: str | None = None)
                     continue
                 if _claude_entry_marks_turn_done(entry):
                     turn_done_seen = True
-                _append_claude_entry(entry)
+                _append_claude_entry(entry, line_start)
                 tool_evs = []
                 for name, inp in iter_tool_calls(entry):
                     tool_evs.extend(runtime_tool_events(name, inp, workspace=str(self.workspace or "")))
