@@ -111,7 +111,7 @@ def write_commit_state(
         logging_module.error(f"Unexpected error: {exc}", exc_info=True)
 
 
-def record_git_commit_locked(runtime, handle, commit: dict, *, agent: str = "") -> bool:
+def record_git_commit_locked(runtime, handle, commit: dict) -> bool:
     if has_logged_commit_entry(runtime, commit["hash"]):
         write_commit_state_locked(runtime, handle, commit)
         return False
@@ -120,40 +120,9 @@ def record_git_commit_locked(runtime, handle, commit: dict, *, agent: str = "") 
         kind="git-commit",
         commit_hash=commit["hash"],
         commit_short=commit["short"],
-        agent=agent,
     )
     write_commit_state_locked(runtime, handle, commit)
     return True
-
-
-def record_git_commit(
-    runtime,
-    *,
-    commit_hash: str,
-    commit_short: str,
-    subject: str,
-    agent: str = "",
-    fcntl_module=fcntl,
-    logging_module=logging,
-) -> bool:
-    commit = {
-        "hash": (commit_hash or "").strip(),
-        "short": (commit_short or "").strip(),
-        "subject": str(subject or "").strip(),
-    }
-    if not commit["hash"] or not commit["short"] or not commit["subject"]:
-        return False
-    try:
-        _commit_state_path(runtime).parent.mkdir(parents=True, exist_ok=True)
-        with _commit_state_path(runtime).open("a+", encoding="utf-8") as handle:
-            fcntl_module.flock(handle.fileno(), fcntl_module.LOCK_EX)
-            try:
-                return record_git_commit_locked(runtime, handle, commit, agent=agent)
-            finally:
-                fcntl_module.flock(handle.fileno(), fcntl_module.LOCK_UN)
-    except Exception as exc:
-        logging_module.error(f"Unexpected error: {exc}", exc_info=True)
-        return False
 
 
 def current_git_commit(

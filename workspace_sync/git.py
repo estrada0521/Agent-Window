@@ -1,17 +1,11 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 import subprocess
 import threading
 import time
 from pathlib import Path
-
-from backend_core.agents.registry import AGENTS, ALL_AGENT_NAMES
-
-_AGENT_WINDOW_AGENT_EMAIL_DOMAIN = "agents.agent-window.local"
-_AGENT_NAME_SET = frozenset(ALL_AGENT_NAMES)
 
 _workspace: str = ""
 _repo_root: Path = Path()
@@ -38,63 +32,6 @@ def _clear_branch_overview_cache() -> None:
 
 def invalidate_branch_overview_cache() -> None:
     _clear_branch_overview_cache()
-
-
-def _agent_from_text_multiagent_email(text: str) -> str:
-    low = (text or "").lower()
-    if _AGENT_WINDOW_AGENT_EMAIL_DOMAIN not in low:
-        return ""
-    dom = re.escape(_AGENT_WINDOW_AGENT_EMAIL_DOMAIN)
-    for m in re.finditer(rf"([a-z0-9][a-z0-9._+-]*)@{dom}\b", low):
-        base = m.group(1).split("+", 1)[0].strip()
-        if base in _AGENT_NAME_SET:
-            return base
-    return ""
-
-
-def _detect_agent_from_commit_fields(*fields: str) -> str:
-    for raw in fields:
-        hit = _agent_from_text_multiagent_email(raw)
-        if hit:
-            return hit
-    names = sorted(ALL_AGENT_NAMES, key=len, reverse=True)
-    for raw in fields:
-        if not raw:
-            continue
-        low = raw.strip().lower()
-        if not low:
-            continue
-        for name in names:
-            pat = r"(?<![a-z0-9])" + re.escape(name) + r"(?:-\d+)?(?![a-z0-9])"
-            if re.search(pat, low):
-                return name
-    return ""
-
-
-def _recent_logged_commit_agents(max_lines: int = 4000) -> dict[str, str]:
-    try:
-        lines = []
-        with _index_path.open("r", encoding="utf-8") as f:
-            for line in f:
-                lines.append(line)
-                if len(lines) > max_lines:
-                    del lines[: len(lines) - max_lines]
-    except Exception:
-        return {}
-    agents_by_hash: dict[str, str] = {}
-    for raw in reversed(lines):
-        try:
-            entry = json.loads(raw)
-        except Exception:
-            continue
-        if entry.get("kind") != "git-commit":
-            continue
-        commit_hash = (entry.get("commit_hash") or "").strip()
-        agent = (entry.get("agent") or "").strip().lower()
-        if not commit_hash or not agent or commit_hash in agents_by_hash:
-            continue
-        agents_by_hash[commit_hash] = agent
-    return agents_by_hash
 
 
 def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
@@ -226,12 +163,11 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
     else:
         worktree_added = worktree_unstaged_added + worktree_staged_added
         worktree_deleted = worktree_unstaged_deleted + worktree_staged_deleted
-    logged_commit_agents = _recent_logged_commit_agents()
     log_res = _run(
         "log",
         f"--skip={offset}",
         f"--max-count={limit}",
-        "--format=%h\x1f%aI\x1f%s\x1f%an\x1f%cn\x1f%ae\x1f%ce\x1f%(trailers:key=Co-Authored-By,valueonly,separator=;)\x1f%D",
+        "--format=%h\x1f%aI\x1f%s\x1f%D",
     )
     recent_commits = []
     if log_res.returncode == 0:
@@ -243,18 +179,6 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
             if len(parts) < 3:
                 continue
             h, ts, subj = parts[0], parts[1], parts[2]
-            author_name = parts[3].strip() if len(parts) > 3 else ""
-            committer_name = parts[4].strip() if len(parts) > 4 else ""
-            author_email = parts[5].strip() if len(parts) > 5 else ""
-            committer_email = parts[6].strip() if len(parts) > 6 else ""
-            co_author = parts[7].strip() if len(parts) > 7 else ""
-            agent = logged_commit_agents.get(h) or _detect_agent_from_commit_fields(
-                author_email,
-                committer_email,
-                co_author,
-                author_name,
-                committer_name,
-            )
             hhmm = ""
             try:
                 t_part = ts.split("T")[1] if "T" in ts else ""
@@ -262,12 +186,11 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
                     hhmm = t_part[:5]
             except Exception:
                 pass
-            refs = parts[8].strip() if len(parts) > 8 else ""
+            refs = parts[3].strip() if len(parts) > 3 else ""
             recent_commits.append({
                 "hash": h,
                 "time": hhmm,
                 "subject": subj,
-                "agent": agent,
                 "is_origin_main": "origin/main" in refs,
             })
     stat_res = _run("log", f"--skip={offset}", f"--max-count={limit}", "--format=%h", "--shortstat")
