@@ -102,6 +102,7 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       align-items: center;
       justify-content: center;
       padding: 0;
+      border-radius: 999px;
       transform: translateY(7px);
     }
 
@@ -217,6 +218,7 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
         inset 0 1px 0 rgba(255, 255, 255, 0.24),
         inset 0 0 18px rgba(255, 255, 255, 0.035),
         0 7px 22px rgba(0, 0, 0, 0.34);
+      border-radius: 999px;
       transform: translateY(8px) scale(0.94);
     }
 
@@ -251,11 +253,11 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
     }
 
     .hub-native-menu-select.is-ios-active {
-      left: 0;
-      top: 0;
-      width: 44px;
-      height: 44px;
-      opacity: 0.01;
+      left: -9999px;
+      top: -9999px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
       pointer-events: auto;
       z-index: 220;
       background: transparent;

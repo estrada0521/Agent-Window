@@ -509,6 +509,8 @@
       cursor: pointer;
       appearance: none;
       -webkit-appearance: none;
+      border-radius: 50%;
+      -webkit-tap-highlight-color: transparent;
       transition: all 0.2s ease;
     }
     .has-hover .hub-page-menu-btn:hover {
