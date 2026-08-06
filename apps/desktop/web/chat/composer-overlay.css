@@ -418,7 +418,6 @@
     .target-chip,
     .copy-btn,
     .file-card,
-    .file-modal-close,
     .send-btn,
     #scrollToBottomBtn,
     #composerFabBtn {
@@ -434,8 +433,6 @@
     .copy-btn:focus-visible,
     .file-card:focus,
     .file-card:focus-visible,
-    .file-modal-close:focus,
-    .file-modal-close:focus-visible,
     .send-btn:focus,
     .send-btn:focus-visible,
     #scrollToBottomBtn:focus,

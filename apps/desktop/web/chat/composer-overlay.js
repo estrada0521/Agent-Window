@@ -106,7 +106,7 @@
         closeComposerOverlay({ restoreFocus: true });
       }
     });
-    const shouldIgnoreComposerMouseShortcut = (target) => !!target?.closest?.("a, button, input, textarea, select, summary, label, [contenteditable='true'], .pane-viewer, .file-modal-dialog, #fileDropdown, #cmdDropdown");
+    const shouldIgnoreComposerMouseShortcut = (target) => !!target?.closest?.("a, button, input, textarea, select, summary, label, [contenteditable='true'], .pane-viewer, #fileDropdown, #cmdDropdown");
     document.addEventListener("mousedown", (event) => {
       if (event.button !== 1) return;
       if (shouldIgnoreComposerMouseShortcut(event.target)) return;

@@ -217,7 +217,6 @@
       if (!sessionActive) {
         setStatus("archived session is read-only");
       }
-      void maybeRestoreFileModalSessionState(currentSessionName);
       maybeAutoOpenComposer();
       dpOnSessionSummaryPinReload();
     };

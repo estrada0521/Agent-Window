@@ -302,7 +302,7 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
         } catch (_) {}
       }
     };
-__CHAT_INCLUDE:modals/file-modal.js__
+__CHAT_INCLUDE:attachments/file-open.js__
 __CHAT_INCLUDE:composer-overlay.js__
     const updateScrollBtnPos = () => {
       const shell = document.querySelector(".shell");
@@ -572,10 +572,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       desktopRightPanel.hidden = false;
       desktopRightPanel.classList.add("open");
       document.body.classList.add("right-panel-open");
-      if (fileModal && !fileModal.hidden) {
-        updateFileModalViewportMetrics();
-        scheduleFileModalViewportMetrics();
-      }
       if (dpGitContent && dpSplitPanel && !_dpSplitGitHeightPx) {
         requestAnimationFrame(() => {
           const panelH = dpSplitPanel.getBoundingClientRect().height;
@@ -599,10 +595,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       document.body.classList.remove("right-panel-open");
       dpDisconnectGitObserver();
       dpSyncPinnedSummaryStrip();
-      if (fileModal && !fileModal.hidden) {
-        updateFileModalViewportMetrics();
-        scheduleFileModalViewportMetrics();
-      }
       notifyParentPanelState();
     };
     const toggleDesktopRightPanel = () => {
@@ -621,7 +613,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       dpPanelWidthPx = dpClampPanelWidthPx(nextWidth);
       dpApplyPanelWidth();
       notifyParentPanelState();
-      if (fileModal && !fileModal.hidden) updateFileModalViewportMetrics();
       if (needsHeaderViewportMetrics()) updateHeaderMenuViewportMetrics();
     };
     dpSplitDivider?.addEventListener("pointerdown", (e) => {

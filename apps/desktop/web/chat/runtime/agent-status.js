@@ -105,7 +105,6 @@
       ".target-chip",
       ".copy-btn",
       ".file-card",
-      ".file-modal-close",
       ".send-btn",
       "#scrollToBottomBtn"
     ].join(", ");
@@ -136,7 +135,6 @@
         if (!res.ok) return;
         const data = await res.json();
         currentBoldModeMobile = !!data?.bold_mode_mobile;
-        openFilesDirectInExternalEditor = !!data?.open_files_direct_external_editor;
         const _themeDesktop = String(data?.theme_desktop ?? data?.theme ?? "").trim().toLowerCase();
         const _chatTheme = _themeDesktop === "system"
           ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
@@ -149,18 +147,6 @@
           const styleNode = document.getElementById("chatFontSettingsStyle");
           if (styleNode && styleNode.textContent !== data.chat_font_settings_css) {
             styleNode.textContent = data.chat_font_settings_css;
-            const fileFrame = document.getElementById("fileModalFrame");
-            if (fileFrame?.contentWindow) {
-              const sz = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--message-text-size")) || 0;
-              if (sz >= 8) {
-                try {
-                  fileFrame.contentWindow.postMessage(
-                    { type: "agent-preview-text-size", size: sz },
-                    window.location.origin,
-                  );
-                } catch (_) {}
-              }
-            }
           }
         }
       } catch (_) {}

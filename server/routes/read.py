@@ -287,9 +287,6 @@ def _get_hub_settings(handler, _parsed, ctx) -> None:
             "theme_mobile": normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark"))),
             "theme_desktop": normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark"))),
             "chat_font_settings_css": ctx["chat_font_settings_inline_style_fn"](chat_render_settings),
-            "open_files_direct_external_editor": bool(
-                settings.get("open_files_direct_external_editor", False)
-            ),
         },
         ensure_ascii=True,
     ).encode("utf-8")
