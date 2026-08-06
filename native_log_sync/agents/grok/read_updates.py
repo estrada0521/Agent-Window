@@ -44,6 +44,8 @@ def _append_grok_reply(runtime, agent: str, history_path: str, line_start: int, 
             "targets": ["user"],
             "message": display,
             "msg_id": msg_id,
+            "native_log_path": history_path,
+            "native_log_offset": line_start,
         },
     )
     return True
