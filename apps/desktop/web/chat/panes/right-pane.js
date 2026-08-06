@@ -363,4 +363,3 @@
     let composing = false;
     const messageInput = document.getElementById("message");
     const sendBtn = document.querySelector(".send-btn");
-    const micBtn = document.getElementById("micBtn");
