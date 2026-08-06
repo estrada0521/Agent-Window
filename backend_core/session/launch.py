@@ -40,7 +40,6 @@ def launch_session(runtime, delivery_targets: list[str]) -> tuple[bool, dict]:
     env["AGENT_WINDOW_WORKSPACE"] = runtime.workspace
     env["AGENT_WINDOW_INDEX_PATH"] = str(runtime.index_path)
     env["AGENT_WINDOW_TMUX_SOCKET"] = runtime.tmux_socket
-    env["AGENT_WINDOW_SKIP_USER_CHAT"] = "1"
     env.pop("TMUX", None)
     env.pop("TMUX_PANE", None)
     env["AGENT_WINDOW_AGENT_NAME"] = "user"

@@ -293,7 +293,6 @@ def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
     env = os.environ.copy()
     if self.tmux_socket:
         env["AGENT_WINDOW_TMUX_SOCKET"] = self.tmux_socket
-    env["AGENT_WINDOW_SKIP_USER_CHAT"] = "1"
     stop_ok, stop_detail = self.stop_chat_server(session_name)
     if not stop_ok:
         logging.warning("stop_chat_server failed during revive: %s", stop_detail)
