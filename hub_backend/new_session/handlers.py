@@ -157,7 +157,6 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         # Start tmux session with user pane only (no agents yet)
         multiagent_bin = str(ctx["script_path"].parent / "multiagent")
         launch_env = os.environ.copy()
-        launch_env["AGENT_WINDOW_SKIP_USER_CHAT"] = "1"
         subprocess.Popen(
             [multiagent_bin, "--detach", "--no-agents", "--session", session_name, "--workspace", resolved_workspace],
             cwd=resolved_workspace,

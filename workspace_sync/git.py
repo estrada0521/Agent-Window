@@ -10,7 +10,7 @@ from pathlib import Path
 
 from backend_core.agents.registry import AGENTS, ALL_AGENT_NAMES
 
-_AGENT_WINDOW_AGENT_EMAIL_DOMAIN = "agents.multiagent.local"
+_AGENT_WINDOW_AGENT_EMAIL_DOMAIN = "agents.agent-window.local"
 _AGENT_NAME_SET = frozenset(ALL_AGENT_NAMES)
 
 _workspace: str = ""

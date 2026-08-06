@@ -12,27 +12,6 @@ def tmux_prefix_args(tmux_socket: str) -> list[str]:
     return ["tmux", "-L", socket]
 
 
-def parse_pane_ids(panes_csv: str) -> list[str]:
-    return [pane.strip() for pane in (panes_csv or "").split(",") if pane.strip()]
-
-
-def retile_session_preserving_user_panes(*, session: str, user_panes_csv: str, tmux_socket: str) -> None:
-    prefix = tmux_prefix_args(tmux_socket)
-    subprocess.run(
-        [*prefix, "select-layout", "-t", f"{session}:0", "tiled"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
-    for pane_id in parse_pane_ids(user_panes_csv):
-        subprocess.run(
-            [*prefix, "resize-pane", "-t", pane_id, "-y", "2"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        )
-
-
 def window_target_for_pane(*, pane_id: str, tmux_socket: str) -> str:
     pane = (pane_id or "").strip()
     if not pane:
@@ -112,19 +91,6 @@ def create_agent_window(
     return pane_id
 
 
-def split_agent_pane(*, target_pane: str, workspace: str, tmux_socket: str) -> str:
-    prefix = tmux_prefix_args(tmux_socket)
-    res = subprocess.run(
-        [*prefix, "split-window", "-h", "-P", "-F", "#{pane_id}", "-t", target_pane, "-c", workspace],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if res.returncode != 0:
-        return ""
-    return (res.stdout or "").strip()
-
-
 def create_user_pane_band(
     *,
     target: str,
@@ -201,25 +167,6 @@ def create_user_pane_band(
     return pane_ids
 
 
-def configure_agent_pane_defaults(*, pane_id: str, tmux_socket: str) -> None:
-    pane = (pane_id or "").strip()
-    if not pane:
-        return
-    prefix = tmux_prefix_args(tmux_socket)
-    subprocess.run(
-        [*prefix, "set-option", "-pt", pane, "remain-on-exit", "on"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
-    subprocess.run(
-        [*prefix, "set-option", "-pt", pane, "mouse", "on"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
-
-
 def kill_window_target(*, window_target: str, tmux_socket: str) -> bool:
     target = (window_target or "").strip()
     if not target:
@@ -228,21 +175,6 @@ def kill_window_target(*, window_target: str, tmux_socket: str) -> bool:
     cleanup_target_process_groups(target=target, tmux_prefix=prefix)
     res = subprocess.run(
         [*prefix, "kill-window", "-t", target],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
-    return res.returncode == 0
-
-
-def kill_pane_target(*, pane_id: str, tmux_socket: str) -> bool:
-    pane = (pane_id or "").strip()
-    if not pane:
-        return False
-    prefix = tmux_prefix_args(tmux_socket)
-    cleanup_target_process_groups(target=pane, tmux_prefix=prefix)
-    res = subprocess.run(
-        [*prefix, "kill-pane", "-t", pane],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,

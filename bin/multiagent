@@ -63,7 +63,7 @@ print(agent_window_run_dir())
 PYEOF
 )}"
 export AGENT_WINDOW_RUN_DIR
-SESSION_NAME="${AGENT_WINDOW_SESSION_NAME:-}"
+SESSION_NAME=""
 SESSION_NAME_EXPLICIT=0
 WORKSPACE="$PWD"
 DETACH=0
@@ -357,28 +357,17 @@ primary_user_pane_id() {
 
 primary_agent_pane_id() {
   local session="$1"
-  if session_uses_per_window_layout "$session"; then
-    local agents_str instance upper pane_id
-    agents_str="$(session_agents_value "$session")"
-    [[ "$agents_str" == "-" ]] && return 0
-    IFS=',' read -ra _agent_instances <<< "$agents_str"
-    for instance in "${_agent_instances[@]}"; do
-      [[ -n "$instance" ]] || continue
-      upper="$(printf '%s' "$instance" | tr '[:lower:]-' '[:upper:]_')"
-      pane_id="$(tmux show-environment -t "$session" "AGENT_WINDOW_PANE_${upper}" 2>/dev/null | sed 's/^[^=]*=//' || true)"
-      [[ -n "$pane_id" ]] && { printf '%s\n' "$pane_id"; return 0; }
-    done
-    return 0
-  fi
-  local user_pattern
-  user_pattern="$(session_user_pane_value "$session")"
-  tmux list-panes -t "$session":0 -F '#{pane_id}' 2>/dev/null | awk -v users="$user_pattern" '
-    BEGIN {
-      n=split(users, ids, /,/);
-      for (i=1; i<=n; i++) if (ids[i] != "") excluded[ids[i]]=1;
-    }
-    !excluded[$1] { print $1; exit }
-  '
+  local agents_str instance upper pane_id
+  agents_str="$(session_agents_value "$session")"
+  [[ "$agents_str" == "-" ]] && return 0
+  IFS=',' read -ra _agent_instances <<< "$agents_str"
+  for instance in "${_agent_instances[@]}"; do
+    [[ -n "$instance" ]] || continue
+    upper="$(printf '%s' "$instance" | tr '[:lower:]-' '[:upper:]_')"
+    pane_id="$(tmux show-environment -t "$session" "AGENT_WINDOW_PANE_${upper}" 2>/dev/null | sed 's/^[^=]*=//' || true)"
+    [[ -n "$pane_id" ]] && { printf '%s\n' "$pane_id"; return 0; }
+  done
+  return 0
 }
 
 parse_user_pane_spec() {
@@ -404,28 +393,6 @@ PYEOF
   fi
   IFS=$'\t' read -r USER_PANE_TOP_COUNT USER_PANE_BOTTOM_COUNT <<< "$parsed"
   [[ -n "$USER_PANE_TOP_COUNT" && -n "$USER_PANE_BOTTOM_COUNT" ]]
-}
-
-retile_session_preserving_user_panes() {
-  local session="$1" user_panes_csv="${2:-}"
-  python3 - "$REPO_ROOT" "$session" "$user_panes_csv" "$TMUX_SOCKET_NAME" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-session = sys.argv[2]
-user_panes_csv = sys.argv[3]
-tmux_socket = sys.argv[4]
-sys.path.insert(0, str(repo_root / "src"))
-sys.path.insert(0, str(repo_root))
-from backend_core.tmux.window import retile_session_preserving_user_panes
-
-retile_session_preserving_user_panes(
-    session=session,
-    user_panes_csv=user_panes_csv,
-    tmux_socket=tmux_socket,
-)
-PYEOF
 }
 
 create_user_pane_band() {
@@ -460,16 +427,6 @@ PYEOF
     [[ -n "$pane_id" ]] || continue
     USER_PANE_IDS+=("$pane_id")
   done <<< "$created_panes"
-}
-
-session_layout_value() {
-  local session="$1" layout
-  layout="$(tmux show-environment -t "$session" AGENT_WINDOW_LAYOUT 2>/dev/null | sed 's/^[^=]*=//' || true)"
-  [[ -n "$layout" ]] && printf '%s\n' "$layout" || printf 'grid\n'
-}
-
-session_uses_per_window_layout() {
-  [[ "$(session_layout_value "$1")" == "per-window" ]]
 }
 
 window_target_for_pane() {
@@ -543,41 +500,6 @@ print(
 PYEOF
 }
 
-split_agent_pane() {
-  local target_pane="$1" workspace="$2"
-  python3 - "$REPO_ROOT" "$target_pane" "$workspace" "$TMUX_SOCKET_NAME" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-target_pane = sys.argv[2]
-workspace = sys.argv[3]
-tmux_socket = sys.argv[4]
-sys.path.insert(0, str(repo_root / "src"))
-sys.path.insert(0, str(repo_root))
-from backend_core.tmux.window import split_agent_pane
-
-print(split_agent_pane(target_pane=target_pane, workspace=workspace, tmux_socket=tmux_socket))
-PYEOF
-}
-
-configure_agent_pane_defaults() {
-  local pane_id="$1"
-  python3 - "$REPO_ROOT" "$pane_id" "$TMUX_SOCKET_NAME" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-pane_id = sys.argv[2]
-tmux_socket = sys.argv[3]
-sys.path.insert(0, str(repo_root / "src"))
-sys.path.insert(0, str(repo_root))
-from backend_core.tmux.window import configure_agent_pane_defaults
-
-configure_agent_pane_defaults(pane_id=pane_id, tmux_socket=tmux_socket)
-PYEOF
-}
-
 kill_window_target() {
   local window_target="$1"
   python3 - "$REPO_ROOT" "$window_target" "$TMUX_SOCKET_NAME" <<'PYEOF'
@@ -595,37 +517,11 @@ raise SystemExit(0 if kill_window_target(window_target=window_target, tmux_socke
 PYEOF
 }
 
-kill_pane_target() {
-  local pane_id="$1"
-  python3 - "$REPO_ROOT" "$pane_id" "$TMUX_SOCKET_NAME" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-pane_id = sys.argv[2]
-tmux_socket = sys.argv[3]
-sys.path.insert(0, str(repo_root / "src"))
-sys.path.insert(0, str(repo_root))
-from backend_core.tmux.window import kill_pane_target
-
-raise SystemExit(0 if kill_pane_target(pane_id=pane_id, tmux_socket=tmux_socket) else 1)
-PYEOF
-}
-
 recover_session_pane_for_instance() {
   local session="$1" instance_name="$2"
-  local recovered pane_id pane_title
-  if session_uses_per_window_layout "$session"; then
-    recovered="$(tmux list-panes -a -F '#{session_name}\t#{pane_id}\t#{window_name}' 2>/dev/null | awk -F '\t' -v session="$session" -v target="$instance_name" '$1 == session && $3 == target {print $2; exit}')"
-    [[ -n "$recovered" ]] && printf '%s\n' "$recovered"
-    return 0
-  fi
-  while IFS=$'\t' read -r _session pane_id pane_title; do
-    [[ "$_session" == "$session" ]] || continue
-    [[ -n "$pane_id" && "$pane_title" == "$instance_name" ]] || continue
-    printf '%s\n' "$pane_id"
-    return 0
-  done < <(tmux list-panes -a -F '#{session_name}\t#{pane_id}\t#{pane_title}' 2>/dev/null || true)
+  local recovered
+  recovered="$(tmux list-panes -a -F '#{session_name}\t#{pane_id}\t#{window_name}' 2>/dev/null | awk -F '\t' -v session="$session" -v target="$instance_name" '$1 == session && $3 == target {print $2; exit}')"
+  [[ -n "$recovered" ]] && printf '%s\n' "$recovered"
   return 0
 }
 
@@ -734,11 +630,9 @@ PYEOF
     tmux set-environment -t "$session" "AGENT_WINDOW_PANE_${upper_replacement}" "$pane_id"
     tmux set-environment -t "$session" -u "AGENT_WINDOW_PANE_${upper_old}" 2>/dev/null || true
     tmux select-pane -t "$pane_id" -T "$replacement" >/dev/null 2>&1 || true
-    if session_uses_per_window_layout "$session"; then
-      local window_target
-      window_target="$(window_target_for_pane "$pane_id")"
-      [[ -n "$window_target" ]] && tmux rename-window -t "$window_target" "$replacement" >/dev/null 2>&1 || true
-    fi
+    local window_target
+    window_target="$(window_target_for_pane "$pane_id")"
+    [[ -n "$window_target" ]] && tmux rename-window -t "$window_target" "$replacement" >/dev/null 2>&1 || true
   fi
   if [[ -n "$updated_agents" ]]; then
     tmux set-environment -t "$session" AGENT_WINDOW_AGENTS "$updated_agents"
@@ -1463,7 +1357,6 @@ done
 tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_SESSION "$SESSION_NAME"
 tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_WORKSPACE "$WORKSPACE"
 tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_TMUX_SOCKET "$TMUX_SOCKET_NAME"
-tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_LAYOUT per-window
 tmux set-environment -t "$SESSION_NAME" PATH "${SCRIPT_DIR}:${PATH}"
 tmux set-environment -t "$SESSION_NAME" -u CLAUDECODE 2>/dev/null || true
 if [[ -n "$USER_PANE_ID" ]]; then

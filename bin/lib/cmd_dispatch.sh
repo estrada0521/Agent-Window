@@ -29,8 +29,6 @@ multiagent_dispatch_prelaunch_modes() {
     if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
       if [[ -n "${AGENT_WINDOW_SESSION:-}" ]]; then
         SESSION_NAME="$AGENT_WINDOW_SESSION"
-      elif [[ -n "${AGENT_WINDOW_SESSION_NAME:-}" ]]; then
-        SESSION_NAME="$AGENT_WINDOW_SESSION_NAME"
       fi
     fi
     if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
@@ -53,8 +51,6 @@ multiagent_dispatch_prelaunch_modes() {
       resolved_note="--session"
     elif [[ -n "${AGENT_WINDOW_SESSION:-}" && "$SESSION_NAME" == "${AGENT_WINDOW_SESSION}" ]]; then
       resolved_note="AGENT_WINDOW_SESSION"
-    elif [[ -n "${AGENT_WINDOW_SESSION_NAME:-}" && "$SESSION_NAME" == "${AGENT_WINDOW_SESSION_NAME}" ]]; then
-      resolved_note="AGENT_WINDOW_SESSION_NAME"
     elif [[ -n "${TMUX:-}" ]]; then
       resolved_note="tmux client (#{session_name})"
     else
@@ -195,18 +191,8 @@ multiagent_dispatch_agent_mutation_modes() {
       exit 1
     }
 
-    if session_uses_per_window_layout "$SESSION_NAME"; then
-      new_pane="$(create_agent_window "$SESSION_NAME" "$instance_name")"
-      [[ -n "$new_pane" ]] || { echo "Failed to create agent window" >&2; exit 1; }
-    else
-      target_pane="$(primary_agent_pane_id "$SESSION_NAME")"
-      [[ -n "$target_pane" ]] || { echo "No agent pane found in session: $SESSION_NAME" >&2; exit 1; }
-      new_pane="$(split_agent_pane "$target_pane" "$WORKSPACE")"
-      [[ -n "$new_pane" ]] || { echo "Failed to create pane" >&2; exit 1; }
-      configure_agent_pane_defaults "$new_pane"
-      user_panes_csv="$(session_user_pane_value "$SESSION_NAME")"
-      retile_session_preserving_user_panes "$SESSION_NAME" "$user_panes_csv"
-    fi
+    new_pane="$(create_agent_window "$SESSION_NAME" "$instance_name")"
+    [[ -n "$new_pane" ]] || { echo "Failed to create agent window" >&2; exit 1; }
 
     current_agents="$(session_agents_value "$SESSION_NAME")"
     updated_agents="$(python3 - "$REPO_ROOT" "$current_agents" "$instance_name" <<'PYEOF'
@@ -334,27 +320,15 @@ PYEOF
       exit 0
     fi
 
-    if session_uses_per_window_layout "$SESSION_NAME"; then
-      window_target="$(window_target_for_pane "$pane_id")"
-      [[ -n "$window_target" ]] || { echo "No tmux window recorded for instance: $canonical" >&2; exit 1; }
-      if ! kill_window_target "$window_target"; then
-        echo "tmux kill-window failed for $window_target" >&2
-        exit 1
-      fi
-    else
-      if ! kill_pane_target "$pane_id"; then
-        echo "tmux kill-pane failed for $pane_id" >&2
-        exit 1
-      fi
+    window_target="$(window_target_for_pane "$pane_id")"
+    [[ -n "$window_target" ]] || { echo "No tmux window recorded for instance: $canonical" >&2; exit 1; }
+    if ! kill_window_target "$window_target"; then
+      echo "tmux kill-window failed for $window_target" >&2
+      exit 1
     fi
 
     tmux set-environment -t "$SESSION_NAME" -u "AGENT_WINDOW_PANE_${upper_instance}" 2>/dev/null || true
     tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_AGENTS "$updated_agents"
-
-    if ! session_uses_per_window_layout "$SESSION_NAME"; then
-      user_panes_csv="$(session_user_pane_value "$SESSION_NAME")"
-      retile_session_preserving_user_panes "$SESSION_NAME" "$user_panes_csv"
-    fi
 
     update_session_meta_file "$SESSION_NAME"
     initiator_name="${AGENT_WINDOW_AGENT_NAME:-user}"
