@@ -1,14 +1,15 @@
     function markTauriDesktopApp() {
       document.documentElement.dataset.tauriApp = "1";
-      try { sessionStorage.setItem("multiagent_tauri_app", "1"); } catch (_) {}
-      window.__multiagentIsTauriApp = true;
+      try { sessionStorage.setItem("agent_window_tauri_app", "1"); } catch (_) {}
+      window.__agentWindowNative = window.__agentWindowNative || {};
+      window.__agentWindowNative.isTauriApp = true;
       return true;
     }
     function isTauriDesktopApp() {
-      if (document.documentElement.dataset.tauriApp === "1" || window.__multiagentIsTauriApp) return true;
+      if (document.documentElement.dataset.tauriApp === "1" || window.__agentWindowNative?.isTauriApp) return true;
       try {
         const params = new URLSearchParams(window.location.search || "");
-        if (params.get("tauri") === "1" || sessionStorage.getItem("multiagent_tauri_app") === "1") {
+        if (params.get("tauri") === "1" || sessionStorage.getItem("agent_window_tauri_app") === "1") {
           return markTauriDesktopApp();
         }
       } catch (_) {}
@@ -16,7 +17,7 @@
         if (
           typeof window.__TAURI__ !== "undefined" ||
           typeof window.__TAURI_INTERNALS__ !== "undefined" ||
-          window.__multiagentAppSettingsLoaded
+          window.__agentWindowNative?.appSettingsLoaded
         ) {
           return markTauriDesktopApp();
         }
@@ -44,9 +45,9 @@
     const _deskSettingsBtn = document.getElementById("deskSettingsBtn");
     const _deskReloadBtn = document.getElementById("deskReloadBtn");
     const _deskNewSessionToggle = document.getElementById("deskNewSessionToggle");
-    const DESK_SELECTED_KEY = "multiagent_hub_selected_session";
-    const DESK_SIDEBAR_WIDTH_KEY = "multiagent_hub_sidebar_width";
-    const HUB_PENDING_ERROR_KEY = "multiagent_hub_pending_error";
+    const DESK_SELECTED_KEY = "agent_window_hub_selected_session";
+    const DESK_SIDEBAR_WIDTH_KEY = "agent_window_hub_sidebar_width";
+    const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
     const DESK_DEFAULT_SIDEBAR_WIDTH = 160;
     const DESK_MIN_SIDEBAR_WIDTH = 160;
     const DESK_MAX_SIDEBAR_WIDTH = 420;
@@ -74,10 +75,10 @@
       }
     };
 
-    window.addEventListener("multiagent-native-menu-action", (event) => {
+    window.addEventListener("native-menu-action", (event) => {
       try {
         _deskChatFrame?.contentWindow?.postMessage({
-          type: "multiagent-native-menu-action",
+          type: "native-menu-action",
           payload: event.detail || {},
         }, "*");
       } catch (_) {}
@@ -182,18 +183,18 @@
             height: Number(btnRect.height || 24),
           }
         : null;
-      frameWin.postMessage({ type: "multiagent-open-chat-header-menu", anchor }, "*");
+      frameWin.postMessage({ type: "open-chat-header-menu", anchor }, "*");
     }
     function sendDeskPanelCommand(mode) {
       const frameWin = _deskChatFrame?.contentWindow;
       if (!frameWin) return;
-      frameWin.postMessage({ type: "multiagent-desktop-panel", mode: String(mode || "") }, "*");
+      frameWin.postMessage({ type: "desktop-panel", mode: String(mode || "") }, "*");
     }
     function sendDeskChatAction(action) {
       const frameWin = _deskChatFrame?.contentWindow;
       if (!frameWin) return;
       frameWin.postMessage({
-        type: "multiagent-native-menu-action",
+        type: "native-menu-action",
         payload: { action: String(action || "") },
       }, "*");
     }
@@ -305,7 +306,7 @@
       }
     };
     const setDeskAttachDragActive = (active) => {
-      postDeskChatFrameMessage({ type: "multiagent-parent-attach-drag", active: !!active });
+      postDeskChatFrameMessage({ type: "parent-attach-drag", active: !!active });
     };
     let deskAttachDragClearTimer = 0;
     const showDeskAttachDrag = () => {
@@ -332,7 +333,7 @@
     const forwardDeskDroppedFiles = (files) => {
       const dropped = Array.from(files || []).filter((file) => file && typeof file.name === "string");
       if (!dropped.length) return false;
-      return postDeskChatFrameMessage({ type: "multiagent-parent-drop-files", files: dropped });
+      return postDeskChatFrameMessage({ type: "parent-drop-files", files: dropped });
     };
     function sortActiveSessions(active) {
       return [...active];
@@ -424,7 +425,7 @@
       } catch (_) {}
       try {
         _deskChatFrame?.contentWindow?.postMessage(
-          { type: "multiagent-hub-theme-changed", theme: chatTheme, chatTheme, themeDesktop: resolvedThemeDesktop },
+          { type: "hub-theme-changed", theme: chatTheme, chatTheme, themeDesktop: resolvedThemeDesktop },
           "*"
         );
       } catch (_) {}
@@ -443,7 +444,7 @@
       try { _deskSidebarFrame.contentDocument.documentElement.dataset.theme = hubTheme; } catch (_) {}
       try {
         _deskSidebarFrame?.contentWindow?.postMessage(
-          { type: "multiagent-hub-theme-changed", theme: hubTheme, themeDesktop },
+          { type: "hub-theme-changed", theme: hubTheme, themeDesktop },
           "*"
         );
       } catch (_) {}
@@ -480,7 +481,7 @@
       }
     }
 
-    window.__multiagentRefreshTauriFrames = () => {
+    window.__agentWindowRefreshTauriFrames = () => {
       if (!isTauriDesktopApp()) return;
       if (!_deskChatFrame) return;
       const current = String(_deskChatFrame.getAttribute("src") || _deskChatFrame.src || "");
@@ -575,7 +576,7 @@
       }
       try {
         _deskChatFrame?.contentWindow?.postMessage({
-          type: "multiagent-hub-sidebar-state",
+          type: "hub-sidebar-state",
           open: !!isDeskSessionSidebarOpen(),
         }, "*");
       } catch (_) {}
@@ -1341,21 +1342,21 @@
     }
 
     window.addEventListener("message", (event) => {
-      if (event.data && event.data.type === "multiagent-session-running-state" && event.source === _deskChatFrame?.contentWindow) {
+      if (event.data && event.data.type === "session-running-state" && event.source === _deskChatFrame?.contentWindow) {
         const sessionName = String(event.data.sessionName || "").trim();
         if (!sessionName) return;
         setDeskSessionRunningState(sessionName, !!event.data.isRunning, "live");
         refreshDeskSessionRunningRow(sessionName);
         return;
       }
-      if (event.data && event.data.type === "multiagent-desktop-panel-state" && event.source === _deskChatFrame?.contentWindow) {
+      if (event.data && event.data.type === "desktop-panel-state" && event.source === _deskChatFrame?.contentWindow) {
         updateDeskPanelButtonState(
           String(event.data.mode || ""),
           Number(event.data.width || 0),
         );
         return;
       }
-      if (event.data && event.data.type === "multiagent-show-chat-header-menu") {
+      if (event.data && event.data.type === "show-chat-header-menu") {
         const invoke = (() => {
           try { return window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke || null; } catch (_) { return null; }
         })();
@@ -1371,7 +1372,7 @@
         }).catch(() => {});
         return;
       }
-      if (event.data && event.data.type === "multiagent-composer-overlay-state" && event.source === _deskChatFrame?.contentWindow) {
+      if (event.data && event.data.type === "composer-overlay-state" && event.source === _deskChatFrame?.contentWindow) {
         setDeskComposerOverlayOpen(!!event.data.open);
         return;
       }
@@ -1379,13 +1380,13 @@
         showDeskSidebarList({ open: true });
         return;
       }
-      if (event.data && event.data.type === "multiagent-toggle-hub-sidebar") {
+      if (event.data && event.data.type === "toggle-hub-sidebar") {
         if (isDeskSettingsOpen()) setDeskSettingsOpen(false);
         setDeskSidebarOpen(!isDeskSidebarOpen());
         if (isDeskSidebarOpen()) setDeskSidebarMode("list");
         return;
       }
-      if (event.data && event.data.type === "multiagent-hub-open-chat-session") {
+      if (event.data && event.data.type === "hub-open-chat-session") {
         const chatUrl = typeof event.data.chatUrl === "string" ? event.data.chatUrl : "";
         const sessionName = typeof event.data.sessionName === "string" ? event.data.sessionName : "";
         if (chatUrl && sessionName) {
@@ -1399,15 +1400,15 @@
         }
         return;
       }
-      if (event.data && event.data.type === "multiagent-hub-close-sidebar-page") {
+      if (event.data && event.data.type === "hub-close-sidebar-page") {
         setDeskSettingsOpen(false);
         return;
       }
-      if (event.data && event.data.type === "multiagent-hub-theme-changed") {
+      if (event.data && event.data.type === "hub-theme-changed") {
         applyIncomingThemeDesktop(event.data.themeDesktop || event.data.theme);
         return;
       }
-      if (event.data && event.data.type === "multiagent-open-hub-path") {
+      if (event.data && event.data.type === "open-hub-path") {
         const nextUrl = typeof event.data.url === "string" ? event.data.url : "";
         if (!nextUrl) return;
         try {
@@ -1458,7 +1459,7 @@
       syncDeskChatShellState();
       applyDeskChatTheme();
       try {
-        _deskChatFrame.contentWindow?.postMessage({ type: "multiagent-desktop-panel-sync-request" }, "*");
+        _deskChatFrame.contentWindow?.postMessage({ type: "desktop-panel-sync-request" }, "*");
       } catch (_) {}
     });
 

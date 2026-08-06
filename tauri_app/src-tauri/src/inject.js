@@ -103,8 +103,8 @@
   }
 
   function installDragHandler(doc) {
-    if (!doc || !doc.documentElement || doc.__multiagentDragHandlerInstalled) return;
-    doc.__multiagentDragHandlerInstalled = true;
+    if (!doc || !doc.documentElement || doc.__agentWindowDragHandlerInstalled) return;
+    doc.__agentWindowDragHandlerInstalled = true;
     doc.addEventListener("mousedown", (event) => {
       if (event.button !== 0 || event.defaultPrevented) return;
       const target = event.target;
@@ -127,9 +127,10 @@
     try {
       doc.documentElement.dataset.tauriApp = "1";
       doc.documentElement.dataset.tauriRootWindow = isRootWindow ? "1" : "0";
-      doc.defaultView?.sessionStorage?.setItem("multiagent_tauri_app", "1");
-      doc.defaultView.__multiagentIsTauriApp = true;
-      doc.defaultView.__multiagentAppSettingsLoaded = true;
+      doc.defaultView?.sessionStorage?.setItem("agent_window_tauri_app", "1");
+      const native = doc.defaultView.__agentWindowNative || (doc.defaultView.__agentWindowNative = {});
+      native.isTauriApp = true;
+      native.appSettingsLoaded = true;
     } catch (_) {}
     const install = () => {
       try {

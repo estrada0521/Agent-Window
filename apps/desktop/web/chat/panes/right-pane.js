@@ -138,7 +138,7 @@
         await invoke("show_chat_header_menu", { payload });
       } else if (window.parent && window.parent !== window) {
         window.parent.postMessage({
-          type: "multiagent-show-chat-header-menu",
+          type: "show-chat-header-menu",
           payload,
         }, "*");
       } else {
@@ -162,11 +162,11 @@
       void runForwardAction(action, { sourceNode: null, keepComposerOpen: false, keepHeaderOpen: false });
     };
     window.addEventListener("message", (event) => {
-      if (!(event.data && event.data.type === "multiagent-native-menu-action")) return;
+      if (!(event.data && event.data.type === "native-menu-action")) return;
       void handleTauriNativeMenuAction(event.data.payload);
     });
     window.addEventListener("message", (event) => {
-      if (!(event.data && event.data.type === "multiagent-open-chat-header-menu")) return;
+      if (!(event.data && event.data.type === "open-chat-header-menu")) return;
       const anchorData = event.data.anchor || null;
       const anchorRect = anchorData && typeof anchorData === "object"
         ? {
@@ -185,7 +185,7 @@
       }
       rightMenuBtn?.click();
     });
-    window.addEventListener("multiagent-native-menu-action", (event) => {
+    window.addEventListener("native-menu-action", (event) => {
       void handleTauriNativeMenuAction(event.detail || {});
     });
     rightMenuBtn?.addEventListener("click", (event) => {

@@ -473,7 +473,7 @@
         raf = requestAnimationFrame(() => {
           raf = 0;
           const height = Math.max(220, Math.min(420, Math.ceil(document.documentElement.scrollHeight || document.body.scrollHeight || 0)));
-          window.parent.postMessage({ type: "multiagent-hub-inline-frame-height", kind: "new-session", height }, "*");
+          window.parent.postMessage({ type: "hub-inline-frame-height", kind: "new-session", height }, "*");
         });
       };
     })();
@@ -494,7 +494,7 @@
         if (!res.ok || !data.ok || !data.chat_url) throw new Error(data.error || "Failed to start draft session.");
         if (HUB_EMBED && window.self !== window.top) {
           window.parent.postMessage({
-            type: "multiagent-hub-open-chat-session",
+            type: "hub-open-chat-session",
             chatUrl: data.chat_url,
             sessionName: data.session || "",
             sessionRecord: data.session_record || {},
@@ -711,7 +711,7 @@
       function notifyDirState() {
         if (HUB_EMBED && window.self !== window.top) {
           window.parent.postMessage({
-            type: "multiagent-hub-sheet-dir-state",
+            type: "hub-sheet-dir-state",
             path: _currentPath || "",
             displayPath: _currentPath ? shortPath(_currentPath) : "",
             canGoBack: !!_parentPath,
@@ -789,7 +789,7 @@
 
       // Listen for "Go Back" triggered from the parent sheet nav bar back button
       window.addEventListener("message", (e) => {
-        if (e.data && e.data.type === "multiagent-hub-sheet-go-back") {
+        if (e.data && e.data.type === "hub-sheet-go-back") {
           if (_parentPath) loadDir(_parentPath, "back");
         }
       });

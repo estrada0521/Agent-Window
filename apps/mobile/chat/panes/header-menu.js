@@ -22,7 +22,7 @@
       const hubUrl = hubUrlForPath("/");
       if (window.self !== window.top) {
         try {
-          window.parent.postMessage({ type: "multiagent-open-hub-path", url: hubUrl, reveal: true }, "*");
+          window.parent.postMessage({ type: "open-hub-path", url: hubUrl, reveal: true }, "*");
         } catch (_) {
           requestHubCloseChat();
         }
@@ -42,7 +42,7 @@
           window.parent.location.href = hubUrl;
           return;
         } catch (_err) {
-          window.parent.postMessage({ type: "multiagent-open-hub-path", url: hubUrl }, "*");
+          window.parent.postMessage({ type: "open-hub-path", url: hubUrl }, "*");
           return;
         }
       }

@@ -201,7 +201,7 @@ fn emit_native_menu_action(app: &tauri::AppHandle, id: &str) {
     };
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.eval(&format!(
-            "window.dispatchEvent(new CustomEvent('multiagent-native-menu-action', {{ detail: {} }}));",
+            "window.dispatchEvent(new CustomEvent('native-menu-action', {{ detail: {} }}));",
             json
         ));
     }

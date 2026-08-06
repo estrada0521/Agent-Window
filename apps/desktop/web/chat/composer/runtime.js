@@ -103,7 +103,7 @@
       };
       window.addEventListener("message", async (event) => {
         if (event.source !== window.parent || !(event.data && event.data.type)) return;
-        if (event.data.type === "multiagent-parent-attach-drag") {
+        if (event.data.type === "parent-attach-drag") {
           if (event.data.active) {
             showComposerAttachDrag();
           } else {
@@ -111,7 +111,7 @@
           }
           return;
         }
-        if (event.data.type !== "multiagent-parent-drop-files") return;
+        if (event.data.type !== "parent-drop-files") return;
         const forwardedFiles = Array.isArray(event.data.files)
           ? event.data.files.filter((file) => file && typeof file.name === "string")
           : [];

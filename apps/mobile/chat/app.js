@@ -146,7 +146,7 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     const requestHubParentLayout = () => {
       if (!window.frameElement) return;
       try {
-        window.parent.postMessage({ type: "multiagent-chat-request-hub-layout" }, "*");
+        window.parent.postMessage({ type: "chat-request-hub-layout" }, "*");
       } catch (_) { }
     };
     const requestHubCloseChat = () => {
@@ -160,7 +160,7 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           try {
-            window.parent.postMessage({ type: "multiagent-chat-render-ready" }, "*");
+            window.parent.postMessage({ type: "chat-render-ready" }, "*");
           } catch (_) { }
         });
       });
@@ -170,7 +170,7 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
       _hubChildOriW = window.innerWidth || 0;
       _hubChildOriH = window.innerHeight || 0;
       window.addEventListener("message", (e) => {
-        if (!e.data || e.data.type !== "multiagent-hub-layout") return;
+        if (!e.data || e.data.type !== "hub-layout") return;
         if (e.source !== window.parent) return;
         const lh = Number(e.data.layoutHeight) || 0;
         if (lh > 0) {
@@ -202,7 +202,7 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
         if (now - _hubParentScrollSigAt < 220) return;
         _hubParentScrollSigAt = now;
         try {
-          window.parent.postMessage({ type: "multiagent-chat-scroll-signal" }, "*");
+          window.parent.postMessage({ type: "chat-scroll-signal" }, "*");
         } catch (_) { }
       };
       const hubChildResizeChrome = () => {
@@ -236,14 +236,14 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
       requestHubParentLayout();
     }
     window.addEventListener("message", (e) => {
-      if (!e.data || e.data.type !== "multiagent-hub-theme-changed") return;
+      if (!e.data || e.data.type !== "hub-theme-changed") return;
       document.documentElement.dataset.theme = e.data.theme === "light" ? "light" : "dark";
     });
     if (window.parent !== window) {
       const reportObservedSystemTheme = () => {
         try {
           window.parent.postMessage({
-            type: "multiagent-hub-mobile-system-theme-observed",
+            type: "hub-mobile-system-theme-observed",
             theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
           }, "*");
         } catch (_) {}

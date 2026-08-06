@@ -31,12 +31,13 @@
     (() => {
       const markTauriApp = () => {
         document.documentElement.dataset.tauriApp = "1";
-        try { sessionStorage.setItem("multiagent_tauri_app", "1"); } catch (_) {}
-        window.__multiagentIsTauriApp = true;
+        try { sessionStorage.setItem("agent_window_tauri_app", "1"); } catch (_) {}
+        window.__agentWindowNative = window.__agentWindowNative || {};
+        window.__agentWindowNative.isTauriApp = true;
       };
       try {
         const params = new URLSearchParams(window.location.search || "");
-        const stored = sessionStorage.getItem("multiagent_tauri_app") === "1";
+        const stored = sessionStorage.getItem("agent_window_tauri_app") === "1";
         if (
           params.get("tauri") === "1" ||
           stored ||

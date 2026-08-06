@@ -1405,10 +1405,10 @@
       await runForwardAction(action, { sourceNode: null, keepComposerOpen: false, keepHeaderOpen: false });
     };
     window.addEventListener("message", (event) => {
-      if (!(event.data && event.data.type === "multiagent-native-menu-action")) return;
+      if (!(event.data && event.data.type === "native-menu-action")) return;
       void handleNativeMenuAction(event.data.payload);
     });
-    window.addEventListener("multiagent-native-menu-action", (event) => {
+    window.addEventListener("native-menu-action", (event) => {
       void handleNativeMenuAction(event.detail || {});
     });
     rightMenuBtn?.addEventListener("click", (event) => {

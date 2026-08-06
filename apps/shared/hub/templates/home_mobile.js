@@ -22,8 +22,8 @@
     const _chatUrlCache = new Map();
     const _chatUrlInflight = new Map();
     const HUB_CHAT_FRAME_KEY = "hub_chat_frame";
-    const HUB_LAST_SESSION_KEY = "multiagent_hub_last_session_name";
-    const HUB_PENDING_ERROR_KEY = "multiagent_hub_pending_error";
+    const HUB_LAST_SESSION_KEY = "agent_window_hub_last_session_name";
+    const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
     const HUB_CHAT_URL_CACHE_TTL_MS = 180000;
     const HUB_CHAT_URL_CACHE_LIMIT = 3;
     const HUB_ACTIVE_PREWARM_LIMIT = 3;
@@ -62,9 +62,9 @@
       root.style.colorScheme = theme;
       applyMobThemeGradientVars();
       try { _chatFrame.contentDocument.documentElement.dataset.theme = theme; } catch (_) {}
-      try { _chatFrame?.contentWindow?.postMessage({ type: "multiagent-hub-theme-changed", theme }, "*"); } catch (_) {}
+      try { _chatFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*"); } catch (_) {}
       const sheetFrame = document.getElementById("mobSheetFrame");
-      try { sheetFrame?.contentWindow?.postMessage({ type: "multiagent-hub-theme-changed", theme }, "*"); } catch (_) {}
+      try { sheetFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*"); } catch (_) {}
       return theme;
     };
     publishMobileTheme();
@@ -396,7 +396,7 @@
       try {
         w.postMessage(
           {
-            type: "multiagent-hub-layout",
+            type: "hub-layout",
             layoutHeight: _hubChatParentLayoutMax,
             parentInnerHeight: ih,
             parentVvHeight: vvH,
@@ -653,7 +653,7 @@
         });
     }
     window.addEventListener("message", function (e) {
-      if (e.data && e.data.type === "multiagent-chat-render-ready" && e.source === _chatFrame.contentWindow) {
+      if (e.data && e.data.type === "chat-render-ready" && e.source === _chatFrame.contentWindow) {
         _prewarmedFrameRenderReady = true;
         if (!_chatOverlay.hidden && !_chatOverlay.classList.contains("prewarming")) {
           _chatFrame.style.transition = "opacity 140ms ease";
@@ -666,11 +666,11 @@
         return;
       }
       if (e.data === "hub_close_chat") closeChatFrame();
-      if (e.data && e.data.type === "multiagent-toggle-hub-sidebar") {
+      if (e.data && e.data.type === "toggle-hub-sidebar") {
         closeChatFrame();
         return;
       }
-      if (e.data && e.data.type === "multiagent-open-hub-path") {
+      if (e.data && e.data.type === "open-hub-path") {
         const nextUrl = typeof e.data.url === "string" ? e.data.url : "";
         if (nextUrl) {
           closeChatFrame();
@@ -687,7 +687,7 @@
         }
         return;
       }
-      if (e.data && e.data.type === "multiagent-chat-scroll-signal" && e.source === _chatFrame.contentWindow) {
+      if (e.data && e.data.type === "chat-scroll-signal" && e.source === _chatFrame.contentWindow) {
         if (_chatOverlay.hidden) return;
         const y = window.scrollY || document.documentElement.scrollTop || 0;
         try {
@@ -696,30 +696,30 @@
         } catch (_) { }
         return;
       }
-      if (e.data && e.data.type === "multiagent-chat-request-hub-layout" && e.source === _chatFrame.contentWindow) {
+      if (e.data && e.data.type === "chat-request-hub-layout" && e.source === _chatFrame.contentWindow) {
         _bumpHubChatParentLayoutMax();
         _postHubLayoutToChat();
         return;
       }
-      if (e.data && e.data.type === "multiagent-hub-mobile-theme-mode-changed") {
+      if (e.data && e.data.type === "hub-mobile-theme-mode-changed") {
         const mode = String(e.data.themeMobile || "").toLowerCase();
         if (!["system", "light", "dark"].includes(mode)) return;
         document.documentElement.dataset.themeMobile = mode;
         publishMobileTheme(mode);
         return;
       }
-      if (e.data && e.data.type === "multiagent-hub-mobile-system-theme-observed") {
+      if (e.data && e.data.type === "hub-mobile-system-theme-observed") {
         if (mobileThemeMode() !== "system") return;
         const theme = e.data.theme === "light" ? "light" : (e.data.theme === "dark" ? "dark" : "");
         if (theme) publishMobileTheme("system", theme);
         return;
       }
-      if (e.data && e.data.type === "multiagent-hub-theme-changed") {
+      if (e.data && e.data.type === "hub-theme-changed") {
         if (e.data.theme !== "light" && e.data.theme !== "dark") return;
         const theme = e.data.theme;
         document.documentElement.dataset.theme = theme;
         try { _chatFrame.contentDocument.documentElement.dataset.theme = theme; } catch (_) {}
-        try { _chatFrame?.contentWindow?.postMessage({ type: "multiagent-hub-theme-changed", theme }, "*"); } catch (_) {}
+        try { _chatFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*"); } catch (_) {}
         return;
       }
     });
@@ -1076,21 +1076,21 @@
       if (sheetBackBtn) {
         sheetBackBtn.addEventListener("click", function () {
           if (!sheetFrame || !sheetFrame.contentWindow) return;
-          sheetFrame.contentWindow.postMessage({ type: "multiagent-hub-sheet-go-back" }, "*");
+          sheetFrame.contentWindow.postMessage({ type: "hub-sheet-go-back" }, "*");
         });
       }
 
       window.addEventListener("message", function (e) {
         if (!sheetFrame || e.source !== sheetFrame.contentWindow) return;
-        if (e.data && e.data.type === "multiagent-hub-close-sidebar-page") closeSheet();
+        if (e.data && e.data.type === "hub-close-sidebar-page") closeSheet();
         if (e.data === "hub_close_chat") closeSheet();
-        if (e.data && e.data.type === "multiagent-hub-sheet-dir-state") {
+        if (e.data && e.data.type === "hub-sheet-dir-state") {
           if (_sheetIsNewSession) {
             if (sheetTitle) sheetTitle.textContent = e.data.displayPath || "";
             if (sheetBackBtn) sheetBackBtn.hidden = !e.data.canGoBack;
           }
         }
-        if (e.data && e.data.type === "multiagent-hub-open-chat-session") {
+        if (e.data && e.data.type === "hub-open-chat-session") {
           if (_sheetOpeningChat) return;
           _sheetOpeningChat = true;
           var chatUrl = typeof e.data.chatUrl === "string" ? e.data.chatUrl : "";
