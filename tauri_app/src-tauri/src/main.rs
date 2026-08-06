@@ -56,7 +56,6 @@ struct NativeMenuActionPayload {
 struct HubProcess(Mutex<Option<Child>>);
 
 const INJECT_JS: &str = include_str!("inject.js");
-const BUNDLED_REPO_RESOURCE_DIR: &str = "multiagent-chat-repo";
 const NATIVE_MENU_PREFIX: &str = "multiagent-chat:";
 
 fn encode_menu_component(value: &str) -> String {
@@ -208,104 +207,7 @@ fn emit_native_menu_action(app: &tauri::AppHandle, id: &str) {
     }
 }
 
-fn copy_dir_contents(source: &Path, target: &Path) -> std::io::Result<()> {
-    std::fs::create_dir_all(target)?;
-    for entry in std::fs::read_dir(source)? {
-        let entry = entry?;
-        let source_path = entry.path();
-        let file_name = entry.file_name();
-        if file_name.to_string_lossy() == ".DS_Store" {
-            continue;
-        }
-        let target_path = target.join(file_name);
-        let file_type = entry.file_type()?;
-        if file_type.is_dir() {
-            copy_dir_contents(&source_path, &target_path)?;
-        } else if file_type.is_file() {
-            // コピー先が既に存在してソースより新しければスキップする。
-            // これにより、開発中に bundled-repo を直接更新した変更が
-            // Mac 再起動時の .app バンドルによる上書きで失われなくなる。
-            if target_path.exists() {
-                let src_modified = std::fs::metadata(&source_path)
-                    .and_then(|m| m.modified())
-                    .ok();
-                let tgt_modified = std::fs::metadata(&target_path)
-                    .and_then(|m| m.modified())
-                    .ok();
-                if let (Some(src_t), Some(tgt_t)) = (src_modified, tgt_modified) {
-                    if tgt_t >= src_t {
-                        continue;
-                    }
-                }
-            }
-            if let Some(parent) = target_path.parent() {
-                std::fs::create_dir_all(parent)?;
-            }
-            std::fs::copy(&source_path, &target_path)?;
-            if let Ok(permissions) = std::fs::metadata(&source_path).map(|m| m.permissions()) {
-                let _ = std::fs::set_permissions(&target_path, permissions);
-            }
-        }
-    }
-    Ok(())
-}
-
-#[cfg(unix)]
-fn make_bin_scripts_executable(repo_root: &Path) {
-    use std::os::unix::fs::PermissionsExt;
-
-    let bin_dir = repo_root.join("bin");
-    let Ok(entries) = std::fs::read_dir(bin_dir) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_file() {
-            if let Ok(metadata) = std::fs::metadata(&path) {
-                let mut permissions = metadata.permissions();
-                permissions.set_mode(0o755);
-                let _ = std::fs::set_permissions(&path, permissions);
-            }
-        }
-    }
-}
-
-#[cfg(not(unix))]
-fn make_bin_scripts_executable(_repo_root: &Path) {}
-
-fn sync_bundled_repo(app: &tauri::App) -> Option<PathBuf> {
-    let resource_root = app.path().resource_dir().ok()?;
-    let source = resource_root.join(BUNDLED_REPO_RESOURCE_DIR);
-    if !source.join("bin/agent-index").exists() {
-        return None;
-    }
-
-    let target = std::env::var("HOME")
-        .map(|home| {
-            PathBuf::from(home)
-                .join(".agent-window")
-                .join("app")
-                .join("bundled-repo")
-        })
-        .or_else(|_| {
-            app.path()
-                .app_data_dir()
-                .map(|dir| dir.join("bundled-repo"))
-        })
-        .ok()?;
-    if let Err(err) = copy_dir_contents(&source, &target) {
-        eprintln!("[app] bundled repo sync failed: {}", err);
-        return None;
-    }
-    make_bin_scripts_executable(&target);
-    if target.join("bin/agent-index").exists() {
-        Some(target)
-    } else {
-        None
-    }
-}
-
-fn find_repo_root(app: &tauri::App) -> Option<String> {
+fn find_repo_root() -> Option<String> {
     for env_key in ["AGENT_WINDOW_REPO_ROOT", "AGENT_WINDOW_WORKSPACE"] {
         if let Ok(candidate) = std::env::var(env_key) {
             let path = PathBuf::from(candidate);
@@ -324,22 +226,6 @@ fn find_repo_root(app: &tauri::App) -> Option<String> {
                 }
                 dir = d.parent().map(|p| p.to_path_buf());
             }
-        }
-    }
-    if let Some(repo) = sync_bundled_repo(app) {
-        return Some(repo.to_string_lossy().to_string());
-    }
-
-    let home = std::env::var("HOME").unwrap_or_default();
-    for candidate in &[
-        format!("{}/.agent-window/app/bundled-repo", home),
-        format!("{}/multiagent-chat", home),
-    ] {
-        if std::path::Path::new(candidate)
-            .join("bin/agent-index")
-            .exists()
-        {
-            return Some(candidate.clone());
         }
     }
     None
@@ -574,9 +460,9 @@ fn main() {
                 }
             });
 
-            let repo_root = find_repo_root(app).unwrap_or_default();
+            let repo_root = find_repo_root().unwrap_or_default();
             if repo_root.is_empty() {
-                let _ = window.eval(&format!("document.body.style.cssText='background:{};color:#fff;padding:60px 40px;font:18px -apple-system,sans-serif';document.body.textContent='Could not find multiagent-chat repo.';", DARK_BG));
+                let _ = window.eval(&format!("document.body.style.cssText='background:{};color:#fff;padding:60px 40px;font:18px -apple-system,sans-serif';document.body.textContent='Could not find the Agent Window repo.';", DARK_BG));
                 return Ok(());
             }
             eprintln!("[app] repo = {}", repo_root);

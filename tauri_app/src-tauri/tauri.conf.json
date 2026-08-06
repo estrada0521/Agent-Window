@@ -28,20 +28,6 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.png"
-    ],
-    "resources": {
-      "../../assets/": "multiagent-chat-repo/assets/",
-      "../../apps/shared/": "multiagent-chat-repo/apps/shared/",
-      "../../apps/desktop/web/": "multiagent-chat-repo/apps/desktop/web/",
-      "../../apps/mobile/": "multiagent-chat-repo/apps/mobile/",
-      "../../bin/": "multiagent-chat-repo/bin/",
-      "../../backend_core/": "multiagent-chat-repo/backend_core/",
-      "../../hub_backend/": "multiagent-chat-repo/hub_backend/",
-      "../../server/": "multiagent-chat-repo/server/",
-      "../../message_delivery/": "multiagent-chat-repo/message_delivery/",
-      "../../workspace_sync/": "multiagent-chat-repo/workspace_sync/",
-      "../../native_log_sync/": "multiagent-chat-repo/native_log_sync/",
-      "../../shortcut_command/": "multiagent-chat-repo/shortcut_command/"
-    }
+    ]
   }
 }
