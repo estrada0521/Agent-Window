@@ -191,5 +191,5 @@ def _update_running_env(runtime, agent: str, running: bool) -> None:
 
 def mark_agent_sent(self, agent_name: str) -> None:
     base = _agent_base_name(agent_name)
-    if base in {"claude", "cursor", "codex", "copilot", "gemini", "grok"}:
+    if base in {"claude", "cursor", "codex", "gemini", "grok"}:
         self._mark_running(agent_name)

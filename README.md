@@ -1,6 +1,6 @@
 # Agent Window
 
-Agent Window is a **local interface for macOS** that I developed to work with Agent CLIs such as Claude, Codex, Gemini, Cursor, and Copilot in a single workspace and timeline. Each Agent CLI runs normally inside a tmux pane. Agent Window sends text to the selected pane, retrieves messages from each CLI's native log, and brings them together on one screen. Without wrapping the CLIs in a common API or replacing their runtimes with a custom agent runtime, it **uses the capabilities provided natively by each CLI**.
+Agent Window is a **local interface for macOS** that I developed to work with Agent CLIs such as Claude, Codex, Gemini, and Cursor in a single workspace and timeline. Each Agent CLI runs normally inside a tmux pane. Agent Window sends text to the selected pane, retrieves messages from each CLI's native log, and brings them together on one screen. Without wrapping the CLIs in a common API or replacing their runtimes with a custom agent runtime, it **uses the capabilities provided natively by each CLI**.
 
 [Design philosophy](DESIGN.md) · [日本語](README_jp.md)
 

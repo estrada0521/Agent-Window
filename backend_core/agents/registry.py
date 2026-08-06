@@ -77,17 +77,6 @@ _register(
         fallback_nvm=True,
     ),
     AgentDef(
-        name="copilot",
-        display_name="Copilot",
-        icon_file="github.svg",
-        executable="copilot",
-        launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
-        resume_flag="--continue",
-        ready_pattern=r"GitHub Copilot|What can I help you with|Ask Copilot",
-        startup_priority=10,
-        fallback_nvm=True,
-    ),
-    AgentDef(
         name="cursor",
         display_name="Cursor",
         icon_file="cursor.svg",

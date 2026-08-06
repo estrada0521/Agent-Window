@@ -979,7 +979,7 @@ Options:
                        Available: $ALL_AGENTS_DISPLAY
                        Examples:
                          --agents claude,gemini
-                         --agents claude,codex,copilot
+                         --agents claude,codex,cursor
 
   --user-pane SPEC     Add short terminal panes for the human operator (default: bottom:1)
                        Examples: top, bottom:2, top:2,bottom:1, none

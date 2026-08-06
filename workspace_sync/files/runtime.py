@@ -129,7 +129,6 @@ class FileRuntime:
             home / ".claude",
             home / ".codex",
             home / ".gemini",
-            home / ".copilot",
         )
         out: list[Path] = []
         for r in roots:
