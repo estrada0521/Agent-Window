@@ -174,12 +174,10 @@
     const updateSendBtnVisibility = () => {
       if (!sessionActive) {
         if (sendBtn) sendBtn.classList.remove("visible");
-        if (micBtn) micBtn.classList.remove("hidden");
         return;
       }
       const hasText = messageInput.value.trim().length > 0;
       if (sendBtn) sendBtn.classList.toggle("visible", hasText);
-      if (micBtn) micBtn.classList.toggle("hidden", hasText);
     };
     messageInput.addEventListener("input", updateSendBtnVisibility);
 
