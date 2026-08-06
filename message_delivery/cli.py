@@ -13,7 +13,7 @@ from message_delivery.send import AgentSendError, AgentSendRuntime
 def _usage_text() -> str:
     return "\n".join(
         [
-            "Usage: agent-send [--session NAME] <target>",
+            "Usage: agent-send <target>",
             "",
             "Message body is read from stdin.",
             "",
@@ -39,7 +39,6 @@ def _usage_text() -> str:
 @dataclass(frozen=True)
 class ParsedAgentSendArgs:
     show_help: bool
-    session_name: str
     operation: str
     target: str = ""
     name: str = ""
@@ -47,7 +46,6 @@ class ParsedAgentSendArgs:
 
 def _parse_agent_send_args(argv: list[str]) -> ParsedAgentSendArgs:
     show_help = False
-    session_name = (os.environ.get("AGENT_WINDOW_SESSION") or "").strip()
     idx = 0
 
     while idx < len(argv):
@@ -55,12 +53,6 @@ def _parse_agent_send_args(argv: list[str]) -> ParsedAgentSendArgs:
         if token in {"-h", "--help"}:
             show_help = True
             idx += 1
-            continue
-        if token == "--session":
-            if idx + 1 >= len(argv):
-                raise AgentSendError("agent-send: --session requires a value")
-            session_name = argv[idx + 1]
-            idx += 2
             continue
         if token == "--stdin":
             raise AgentSendError("agent-send: --stdin has been removed; stdin is now the default")
@@ -71,23 +63,23 @@ def _parse_agent_send_args(argv: list[str]) -> ParsedAgentSendArgs:
 
     remaining = argv[idx:]
     if show_help and not remaining:
-        return ParsedAgentSendArgs(True, session_name, "help")
+        return ParsedAgentSendArgs(True, "help")
     if not remaining:
-        return ParsedAgentSendArgs(False, session_name, "send")
+        return ParsedAgentSendArgs(False, "send")
 
     operation = remaining[0].lower()
     if operation == "names":
         if len(remaining) != 1:
-            raise AgentSendError("Usage: agent-send [--session NAME] names")
-        return ParsedAgentSendArgs(show_help, session_name, "names")
+            raise AgentSendError("Usage: agent-send names")
+        return ParsedAgentSendArgs(show_help, "names")
     if operation == "name":
         if len(remaining) != 3:
-            raise AgentSendError("Usage: agent-send [--session NAME] name <target> <name>")
-        return ParsedAgentSendArgs(show_help, session_name, "name", remaining[1], remaining[2])
+            raise AgentSendError("Usage: agent-send name <target> <name>")
+        return ParsedAgentSendArgs(show_help, "name", remaining[1], remaining[2])
     if operation == "unname":
         if len(remaining) != 2:
-            raise AgentSendError("Usage: agent-send [--session NAME] unname <target-or-name>")
-        return ParsedAgentSendArgs(show_help, session_name, "unname", remaining[1])
+            raise AgentSendError("Usage: agent-send unname <target-or-name>")
+        return ParsedAgentSendArgs(show_help, "unname", remaining[1])
 
     target = remaining[0]
     extras = remaining[1:]
@@ -98,7 +90,7 @@ def _parse_agent_send_args(argv: list[str]) -> ParsedAgentSendArgs:
             "Examples:\n"
             "  printf '%s' 'hello' | agent-send claude"
         )
-    return ParsedAgentSendArgs(show_help, session_name, "send", target)
+    return ParsedAgentSendArgs(show_help, "send", target)
 
 
 def run(argv: list[str] | None = None) -> int:
@@ -131,7 +123,7 @@ def run(argv: list[str] | None = None) -> int:
     )
 
     try:
-        session_name = runtime.resolve_session_name(parsed.session_name)
+        session_name = runtime.resolve_session_name()
         if parsed.operation == "names":
             names = runtime.agent_names(session_name)
             if names:
@@ -173,7 +165,6 @@ def run(argv: list[str] | None = None) -> int:
         success = runtime.send_message(
             target_spec=parsed.target,
             payload=payload,
-            explicit_session=parsed.session_name,
         )
     except AgentSendError as exc:
         print(str(exc), file=sys.stderr)

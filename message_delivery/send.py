@@ -131,10 +131,7 @@ class AgentSendRuntime:
             if self.session_workspace_value(session).strip()
         ]
 
-    def resolve_session_name(self, explicit_session: str = "") -> str:
-        if explicit_session:
-            return explicit_session
-
+    def resolve_session_name(self) -> str:
         env_session = (self.env.get("AGENT_WINDOW_SESSION") or "").strip()
         if env_session:
             return env_session
@@ -157,7 +154,7 @@ class AgentSendRuntime:
         if len(matched_repo_sessions) == 1:
             return matched_repo_sessions[0]
         if len(matched_repo_sessions) > 1:
-            raise AgentSendError("Multiple active multiagent sessions exist; set AGENT_WINDOW_SESSION or pass --session.")
+            raise AgentSendError("Multiple active multiagent sessions exist; set AGENT_WINDOW_SESSION.")
 
         raise AgentSendError("No active multiagent session found for this workspace.")
 
@@ -210,17 +207,6 @@ class AgentSendRuntime:
                 return "user"
 
         return self.resolve_self_agent(session_name)
-
-    def source_session_name(self, target_session_name: str) -> str:
-        env_session = (self.env.get("AGENT_WINDOW_SESSION") or "").strip()
-        if env_session:
-            return env_session
-        if self.env.get("TMUX"):
-            result = self.tmux.run(["display-message", "-p", "#{session_name}"])
-            current_session = (result.stdout or "").strip()
-            if current_session:
-                return current_session
-        return target_session_name
 
     def agent_names(self, session_name: str) -> dict[str, str]:
         return load_agent_names(session_name)
@@ -483,12 +469,10 @@ class AgentSendRuntime:
         *,
         target_spec: str,
         payload: str,
-        explicit_session: str = "",
     ) -> bool:
-        session_name = self.resolve_session_name(explicit_session)
+        session_name = self.resolve_session_name()
         sender_role = self.current_pane_role(session_name) or self.env.get("AGENT_WINDOW_AGENT_NAME") or "user"
-        source_session = self.source_session_name(session_name)
-        sender_label = self.agent_names(source_session).get(sender_role, sender_role)
+        sender_label = self.agent_names(session_name).get(sender_role, sender_role)
         delivery_payload = self.normalize_payload(sender_label, payload)
         delivery_targets = self._build_delivery_targets(session_name, target_spec, sender_role)
         if not delivery_targets:

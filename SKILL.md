@@ -20,11 +20,7 @@ event logs are synchronized automatically.
 printf '%s' '<message body>' | agent-send <target>
 ```
 
-Target a different session:
-
-```bash
-printf '%s' '<message body>' | agent-send --session <session_name> <target>
-```
+`agent-send` always targets the current tmux session; it cannot send to a different session.
 
 ## Rules
 
@@ -129,13 +125,6 @@ List or remove names without piping stdin:
 ```bash
 agent-send names
 agent-send unname <target-or-name>
-```
-
-To manage names in another session, place `--session` before the naming
-command:
-
-```bash
-agent-send --session <session_name> name <target> <name>
 ```
 
 ## Examples
