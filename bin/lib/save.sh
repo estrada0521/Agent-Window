@@ -43,41 +43,18 @@ if not canonical.exists():
 PYEOF
 }
 
-_ensure_workspace_index_symlink() {
-  local session="$1" canonical_index="$2" workspace_root
+ensure_session_index_mirrors() {
+  local session="$1" workspace_root
+  _ensure_canonical_index_healthy "$session"
   workspace_root="${WORKSPACE:-${MULTIAGENT_WORKSPACE:-}}"
   [[ -n "$workspace_root" ]] || return 0
-  python3 - "$canonical_index" "$workspace_root" <<'PYEOF'
-import os
+  PYTHONPATH="$REPO_ROOT/src:$REPO_ROOT" python3 - "$session" "$workspace_root" <<'PYEOF'
 import sys
-from pathlib import Path
 
-canonical = Path(sys.argv[1])
-workspace_root = Path(sys.argv[2])
-link_dir = workspace_root / ".agent-window"
-link_path = link_dir / ".log.jsonl"
+from backend_core.access.settings import ensure_session_workspace_mirrors
 
-try:
-    link_dir.mkdir(parents=True, exist_ok=True)
-    if link_path.is_symlink():
-        if link_path.resolve() == canonical.resolve():
-            raise SystemExit(0)
-        link_path.unlink()
-    elif link_path.exists():
-        link_path.unlink()
-    link_path.symlink_to(canonical)
-except FileNotFoundError:
-    pass
-except Exception as exc:
-    print(f"warning: workspace index symlink failed: {exc}", file=sys.stderr)
+ensure_session_workspace_mirrors(sys.argv[1], sys.argv[2])
 PYEOF
-}
-
-ensure_session_index_mirrors() {
-  local session="$1" canonical_index
-  _ensure_canonical_index_healthy "$session"
-  canonical_index="$(_canonical_session_index_path "$session")"
-  _ensure_workspace_index_symlink "$session" "$canonical_index"
 }
 
 append_session_system_entry() {

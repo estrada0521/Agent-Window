@@ -68,7 +68,7 @@ class HubRuntime:
         self.script_path = Path(script_path).resolve()
         self.script_dir = self.script_path.parent
         self.multiagent_path = self.script_dir / "multiagent"
-        self.agent_send_path = self.script_dir / "agent-send"
+        self.agent_send_path = self.repo_root / "message_delivery" / "agent-send"
         self.central_log_dir = local_runtime_log_dir(self.repo_root)
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port or 0)

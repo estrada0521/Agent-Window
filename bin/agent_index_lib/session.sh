@@ -13,17 +13,19 @@ agent_index_session_log_dir() {
 }
 
 agent_index_ensure_session_index_mirrors() {
-  local session="$1" session_dir index_path link_dir link_path
+  local session="$1" session_dir index_path
   session_dir="$(agent_index_session_log_dir "$session")"
   index_path="${session_dir}/.log.jsonl"
   mkdir -p "$session_dir"
   [[ -e "$index_path" ]] || : > "$index_path"
   [[ -n "${SESSION_WORKSPACE:-}" ]] || return 0
-  link_dir="${SESSION_WORKSPACE}/.agent-window"
-  link_path="${link_dir}/.log.jsonl"
-  mkdir -p "$link_dir"
-  [[ -e "$link_path" || -L "$link_path" ]] && rm -f "$link_path"
-  ln -s "$index_path" "$link_path"
+  PYTHONPATH="$AGENT_INDEX_PYTHONPATH" python3 - "$session" "$SESSION_WORKSPACE" <<'PYEOF'
+import sys
+
+from backend_core.access.settings import ensure_session_workspace_mirrors
+
+ensure_session_workspace_mirrors(sys.argv[1], sys.argv[2])
+PYEOF
 }
 
 repo_log_roots() {

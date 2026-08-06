@@ -17,11 +17,11 @@ from backend_core.tmux.process_cleanup import cleanup_target_process_groups
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.settings import (
     agent_window_run_dir,
+    ensure_session_workspace_mirrors,
     local_runtime_log_dir,
     port_is_bindable,
     save_chat_port_override,
     session_log_path,
-    workspace_log_link_path,
 )
 
 
@@ -168,30 +168,12 @@ def chat_launch_workspace(self, session_name: str) -> tuple[str, bool]:
     return workspace or str(self.repo_root), False
 
 
-def _ensure_workspace_index_symlink(canonical_index: Path, session_name: str, workspace: str) -> None:
-    if not workspace:
-        return
-    link_path = workspace_log_link_path(workspace)
-    link_dir = link_path.parent
-    try:
-        link_dir.mkdir(parents=True, exist_ok=True)
-        if link_path.is_symlink():
-            if link_path.resolve() == canonical_index.resolve():
-                return
-            link_path.unlink()
-        elif link_path.exists():
-            link_path.unlink()
-        link_path.symlink_to(canonical_index)
-    except Exception as exc:
-        logging.warning("workspace index symlink failed: %s", exc)
-
-
 def chat_launch_session_dir(self, session_name: str, workspace: str, explicit_log_dir: str) -> Path:
     session_dir = local_runtime_log_dir(self.repo_root) / session_name
     session_dir.mkdir(parents=True, exist_ok=True)
     canonical_index = session_log_path(session_name)
     canonical_index.touch(exist_ok=True)
-    _ensure_workspace_index_symlink(canonical_index, session_name, workspace)
+    ensure_session_workspace_mirrors(session_name, workspace)
     return session_dir
 
 

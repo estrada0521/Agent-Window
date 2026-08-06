@@ -7,6 +7,7 @@ import socket
 from pathlib import Path
 
 SESSION_LOG_FILENAME = ".log.jsonl"
+NATIVE_LOG_STATE_FILENAME = ".native-log-sync-state.json"
 DESKTOP_THEME_CHOICES = frozenset({"system", "light", "dark", "split"})
 MOBILE_THEME_CHOICES = frozenset({"system", "light", "dark"})
 
@@ -181,12 +182,41 @@ def session_log_path(session_name: str) -> Path:
     return session_artifact_dir(session_name) / SESSION_LOG_FILENAME
 
 
+def session_native_log_state_path(session_name: str) -> Path:
+    return session_artifact_dir(session_name) / NATIVE_LOG_STATE_FILENAME
+
+
 def workspace_agent_window_dir(workspace: Path | str) -> Path:
     return Path(workspace).expanduser() / ".agent-window"
 
 
 def workspace_log_link_path(workspace: Path | str) -> Path:
     return workspace_agent_window_dir(workspace) / SESSION_LOG_FILENAME
+
+
+def workspace_native_log_state_link_path(workspace: Path | str) -> Path:
+    return workspace_agent_window_dir(workspace) / NATIVE_LOG_STATE_FILENAME
+
+
+def ensure_session_workspace_mirrors(session_name: str, workspace: Path | str) -> None:
+    if not workspace:
+        return
+    mirrors = (
+        (session_log_path(session_name), workspace_log_link_path(workspace)),
+        (session_native_log_state_path(session_name), workspace_native_log_state_link_path(workspace)),
+    )
+    for target, link_path in mirrors:
+        try:
+            link_path.parent.mkdir(parents=True, exist_ok=True)
+            if link_path.is_symlink():
+                if link_path.resolve() == target.resolve():
+                    continue
+                link_path.unlink()
+            elif link_path.exists():
+                link_path.unlink()
+            link_path.symlink_to(target)
+        except Exception as exc:
+            logging.warning("workspace symlink failed (%s): %s", link_path, exc)
 
 
 def workspace_upload_dir(workspace: Path | str) -> Path:
