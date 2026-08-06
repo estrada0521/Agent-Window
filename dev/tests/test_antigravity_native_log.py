@@ -17,7 +17,7 @@ from native_log_sync.agents.gemini.read_runtime import (
 )
 from native_log_sync.agents.gemini.read_updates import _sync_antigravity_db
 from native_log_sync.agents.gemini.resolve_path import _resolve_antigravity_conversation_db
-from native_log_sync.agents._shared.path_state import NativeLogCursor
+from native_log_sync.agents._shared.path_state import _normalized_native_log_path
 from native_log_sync.entry_kind import should_omit_entry_from_chat
 
 
@@ -191,9 +191,8 @@ class _FakeRuntime:
         self.index_path = index_path
         self.session_name = "TEST"
         self.workspace = "/workspace"
-        self._gemini_cursors = {}
-        self._synced_msg_ids = set()
-        self._synced_message_fingerprints = set()
+        self._native_log_progress = {}
+        self._native_log_current_paths = {}
         self._idle_running_event_seq = 0
         self._idle_running_display_by_agent = {}
         self.saved = 0
@@ -231,7 +230,7 @@ class AntigravitySyncTests(unittest.TestCase):
             )
             out = Path(td) / "session.jsonl"
             runtime = _FakeRuntime(out)
-            appended = _sync_antigravity_db(runtime, "gemini", str(db), None)
+            appended = _sync_antigravity_db(runtime, "gemini", str(db))
             entries = [json.loads(line) for line in out.read_text().splitlines()]
 
         self.assertTrue(appended)
@@ -252,12 +251,8 @@ class AntigravitySyncTests(unittest.TestCase):
                 ],
             )
             runtime = _FakeRuntime(out)
-            appended = _sync_antigravity_db(
-                runtime,
-                "gemini",
-                str(db),
-                NativeLogCursor(path=str(db), offset=0),
-            )
+            runtime._native_log_progress[_normalized_native_log_path(str(db))] = 0
+            appended = _sync_antigravity_db(runtime, "gemini", str(db))
             entries = [json.loads(line) for line in out.read_text().splitlines()]
 
         self.assertTrue(appended)
@@ -283,12 +278,8 @@ class AntigravitySyncTests(unittest.TestCase):
                 ],
             )
             runtime = _FakeRuntime(out)
-            appended = _sync_antigravity_db(
-                runtime,
-                "gemini",
-                str(db),
-                NativeLogCursor(path=str(db), offset=2),
-            )
+            runtime._native_log_progress[_normalized_native_log_path(str(db))] = 2
+            appended = _sync_antigravity_db(runtime, "gemini", str(db))
 
         self.assertFalse(appended)
         self.assertFalse(out.exists())

@@ -10,9 +10,9 @@ if TYPE_CHECKING:
 
 
 def load_runtime_events_for_idle_running(runtime: ChatRuntime, agent: str) -> list[dict]:
-    if agent not in runtime._codex_cursors:
+    path = runtime._native_log_current_paths.get(agent)
+    if not path:
         return []
-    path = runtime._codex_cursors[agent].path
     if not path or not os.path.exists(path):
         return []
     return parse_native_codex_log(path, limit=12, workspace=runtime.workspace)

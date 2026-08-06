@@ -17,7 +17,7 @@ def resolve_native_log_binding(runtime, request):
 
 def on_pane_restart(runtime, agent: str) -> None:
     # A new log is created at CLI launch; clear stale cursor so the new file is picked up.
-    runtime._gemini_cursors.pop(agent, None)
+    runtime._native_log_current_paths.pop(agent, None)
 
 
 def on_pane_add(runtime, agent: str) -> None:

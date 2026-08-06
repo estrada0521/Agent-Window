@@ -7,13 +7,10 @@ import time
 import uuid
 
 from native_log_sync.agents._shared.path_state import (
-    NativeLogCursor,
-    _advance_native_cursor,
-    _cursor_binding_changed,
-    _parse_iso_timestamp_epoch,
+    advance_read_progress,
+    read_progress_start,
 )
 from backend_core.access.files import append_jsonl_entry
-from native_log_sync.duplicate import already_synced_message, mark_message_synced
 
 from native_log_sync.agents.claude.read_runtime import iter_tool_calls, runtime_tool_events
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
@@ -48,42 +45,29 @@ def _claude_entry_marks_turn_done(entry: dict) -> bool:
     return bool(entry.get("isApiErrorMessage"))
 
 
-def sync_claude_native_log(
-    self,
-    agent: str,
-    native_log_path: str | None = None,
-    *,
-    first_seen_grace_seconds: float,
-    sync_bind_backfill_window_seconds: float,
-) -> None:
-    _FIRST_SEEN_GRACE_SECONDS = float(first_seen_grace_seconds)
-    _SYNC_BIND_BACKFILL_WINDOW_SECONDS = float(sync_bind_backfill_window_seconds)
+def sync_claude_native_log(self, agent: str, native_log_path: str | None = None) -> None:
     try:
         session_path_str = str(native_log_path or "").strip()
         if not session_path_str or not os.path.exists(session_path_str):
             return
 
+        self._native_log_current_paths[agent] = session_path_str
         file_size = os.path.getsize(session_path_str)
-        prev_cursor = self._claude_cursors.get(agent)
-        offset = _advance_native_cursor(self._claude_cursors, agent, session_path_str, file_size)
+        start = read_progress_start(self._native_log_progress, session_path_str, file_size)
+        if start >= file_size:
+            return
 
-        def _append_claude_entry(entry: dict, *, min_event_ts: float | None = None) -> bool:
+        def _append_claude_entry(entry: dict) -> bool:
             if entry.get("type") != "assistant":
                 return False
-            if min_event_ts is not None:
-                event_ts = _parse_iso_timestamp_epoch(
-                    str(entry.get("timestamp") or entry.get("created_at") or "")
-                )
-                if event_ts is None or event_ts < min_event_ts:
-                    return False
             msg = entry.get("message") if isinstance(entry, dict) else {}
             if not isinstance(msg, dict):
                 return False
-            
+
             display = ""
             if entry.get("isApiErrorMessage"):
                 display = str(msg.get("error_message") or msg.get("message") or "").strip()
-            
+
             if not display:
                 content = msg.get("content", [])
                 if not isinstance(content, list):
@@ -96,14 +80,12 @@ def sync_claude_native_log(
                             texts.append(text)
                 if texts:
                     display = "\n".join(texts)
-            
+
             if not display:
                 return False
             msg_id = str(entry.get("uuid") or entry.get("id") or "")[:12]
             if not msg_id:
                 msg_id = uuid.uuid4().hex[:12]
-            if already_synced_message(self, agent, display, msg_id):
-                return False
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
             jsonl_entry = {
                 "timestamp": timestamp,
@@ -116,65 +98,11 @@ def sync_claude_native_log(
             if entry.get("isApiErrorMessage"):
                 jsonl_entry["kind"] = "provider-notice"
             append_jsonl_entry(self.index_path, jsonl_entry)
-            mark_message_synced(self, agent, display, msg_id)
             return True
-
-        def _scan_recent_claude_entries(min_event_ts: float) -> bool:
-            appended = False
-            try:
-                with open(session_path_str, "r", encoding="utf-8") as f:
-                    for line in f:
-                        line = line.strip()
-                        if not line:
-                            continue
-                        try:
-                            entry = json.loads(line)
-                        except json.JSONDecodeError:
-                            continue
-                        if _append_claude_entry(entry, min_event_ts=min_event_ts):
-                            appended = True
-            except Exception:
-                return False
-            return appended
-
-        if offset is None:
-            if _cursor_binding_changed(prev_cursor, self._claude_cursors.get(agent)):
-                path_changed = prev_cursor is not None and prev_cursor.path != session_path_str
-                if path_changed:
-                    # session switch: read entire new file so responses are not missed
-                    turn_done_restart = False
-                    try:
-                        with open(session_path_str, "r", encoding="utf-8") as f:
-                            for line in f:
-                                line = line.strip()
-                                if not line:
-                                    continue
-                                try:
-                                    entry = json.loads(line)
-                                except json.JSONDecodeError:
-                                    continue
-                                if _claude_entry_marks_turn_done(entry):
-                                    turn_done_restart = True
-                                _append_claude_entry(entry)
-                                for name, inp in iter_tool_calls(entry):
-                                    tool_evs = runtime_tool_events(name, inp, workspace=str(self.workspace or ""))
-                                    if tool_evs:
-                                        push_runtime_display(self, agent, tool_evs)
-                    except Exception:
-                        pass
-                    self.save_sync_state()
-                    if turn_done_restart:
-                        self._mark_idle(agent)
-                else:
-                    first_seen = self._first_seen_for_agent(agent)
-                    min_event_ts = first_seen - _FIRST_SEEN_GRACE_SECONDS
-                    if _scan_recent_claude_entries(min_event_ts):
-                        self.save_sync_state()
-            return
 
         turn_done_seen = False
         with open(session_path_str, "r", encoding="utf-8") as f:
-            f.seek(offset)
+            f.seek(start)
             for line in f:
                 line = line.strip()
                 if not line:
@@ -191,10 +119,10 @@ def sync_claude_native_log(
                     tool_evs.extend(runtime_tool_events(name, inp, workspace=str(self.workspace or "")))
                 if tool_evs:
                     push_runtime_display(self, agent, tool_evs)
+
+        advance_read_progress(self._native_log_progress, session_path_str, file_size)
+        self.save_sync_state()
         if turn_done_seen:
             self._mark_idle(agent)
-
-        self._claude_cursors[agent] = NativeLogCursor(path=session_path_str, offset=file_size)
-        self.save_sync_state()
     except Exception as exc:
         logging.error("Failed to sync Claude message for %s: %s", agent, exc, exc_info=True)

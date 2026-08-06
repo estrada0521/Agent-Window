@@ -8,12 +8,10 @@ import re
 import time
 
 from native_log_sync.agents._shared.path_state import (
-    NativeLogCursor,
-    _advance_native_cursor,
-    _cursor_binding_changed,
+    advance_read_progress,
+    read_progress_start,
 )
 from backend_core.access.files import append_jsonl_entry
-from native_log_sync.duplicate import already_synced_message, mark_message_synced
 from native_log_sync.redacted import normalize_cursor_plaintext_for_index
 from native_log_sync.agents.cursor.read_runtime import iter_tool_calls, runtime_tool_events
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
@@ -85,29 +83,21 @@ def _extract_cursor_sync_display_text(entry: dict) -> str:
     return ""
 
 
-def sync_cursor_native_log(
-    self,
-    agent: str,
-    native_log_path: str | None = None,
-    *,
-    first_seen_grace_seconds: float,
-) -> None:
-    _FIRST_SEEN_GRACE_SECONDS = float(first_seen_grace_seconds)
+def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None) -> None:
     try:
         transcript_path = str(native_log_path or "").strip()
         if not transcript_path or not os.path.exists(transcript_path):
             return
+
+        self._native_log_current_paths[agent] = transcript_path
         file_size = os.path.getsize(transcript_path)
-        prev_cursor = self._cursor_cursors.get(agent)
-        offset = _advance_native_cursor(self._cursor_cursors, agent, transcript_path, file_size)
-        if offset is None:
-            if _cursor_binding_changed(prev_cursor, self._cursor_cursors.get(agent)):
-                self.save_sync_state()
+        start = read_progress_start(self._native_log_progress, transcript_path, file_size)
+        if start >= file_size:
             return
 
         batch: list[tuple[int, dict]] = []
         with open(transcript_path, "r", encoding="utf-8") as f:
-            f.seek(offset)
+            f.seek(start)
             while True:
                 line_start = f.tell()
                 line = f.readline()
@@ -135,8 +125,6 @@ def sync_cursor_native_log(
 
             key = f"cursor:{agent}:{transcript_path}:{line_start}:{display}"
             msg_id = hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
-            if already_synced_message(self, agent, display, msg_id):
-                continue
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
             jsonl_entry = {
                 "timestamp": timestamp,
@@ -147,7 +135,6 @@ def sync_cursor_native_log(
                 "msg_id": msg_id,
             }
             append_jsonl_entry(self.index_path, jsonl_entry)
-            mark_message_synced(self, agent, display, msg_id)
 
         for _ls, entry in batch:
             tool_evs = []
@@ -159,7 +146,7 @@ def sync_cursor_native_log(
         if turn_done_seen:
             self._mark_idle(agent)
 
-        self._cursor_cursors[agent] = NativeLogCursor(path=transcript_path, offset=file_size)
+        advance_read_progress(self._native_log_progress, transcript_path, file_size)
         self.save_sync_state()
     except Exception as exc:
         logging.error("Failed to sync Cursor message for %s: %s", agent, exc)

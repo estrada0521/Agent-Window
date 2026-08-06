@@ -18,9 +18,9 @@ def resolve_native_log_binding(runtime, request):
 def on_pane_restart(runtime, agent: str) -> None:
     from native_log_sync.agents._shared.path_state import _normalized_native_log_path
 
-    old_cursor = runtime._grok_cursors.pop(agent, None)
-    if old_cursor and old_cursor.path:
-        runtime._native_log_blocked_paths[agent] = _normalized_native_log_path(old_cursor.path)
+    old_path = runtime._native_log_current_paths.pop(agent, None)
+    if old_path:
+        runtime._native_log_blocked_paths[agent] = _normalized_native_log_path(old_path)
     else:
         runtime._native_log_blocked_paths.pop(agent, None)
 

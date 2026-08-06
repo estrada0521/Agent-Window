@@ -6,7 +6,7 @@ import sys
 import unicodedata
 from pathlib import Path
 
-from native_log_sync.agents._shared.path_state import NativeLogCursor, _normalized_native_log_path
+from native_log_sync.agents._shared.path_state import _normalized_native_log_path
 
 
 def workspace_slug_variants(path_value: str, *, include_lower: bool = False) -> list[str]:
@@ -62,7 +62,7 @@ def path_within_roots(path: str | Path, roots: list[Path]) -> bool:
 
 def pick_latest_unclaimed_for_agent(
     candidates: list[Path],
-    cursors: dict[str, NativeLogCursor],
+    pane_paths: dict[str, str],
     agent: str,
     *,
     min_mtime: float = 0.0,
@@ -71,10 +71,10 @@ def pick_latest_unclaimed_for_agent(
     if not candidates:
         return None
     claimed: set[str] = set()
-    for other_agent, cursor in cursors.items():
+    for other_agent, path in pane_paths.items():
         if other_agent == agent:
             continue
-        claimed.add(_normalized_native_log_path(cursor.path))
+        claimed.add(_normalized_native_log_path(path))
     normalized_blocked = _normalized_native_log_path(blocked_path) if blocked_path else ""
     eligible: list[tuple[float, Path]] = []
     seen_candidate_paths: set[str] = set()

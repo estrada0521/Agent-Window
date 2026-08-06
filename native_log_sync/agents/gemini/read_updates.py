@@ -9,7 +9,8 @@ import time
 from pathlib import Path
 
 from native_log_sync.agents._shared.path_state import (
-    NativeLogCursor,
+    _normalized_native_log_path,
+    advance_read_progress,
 )
 from backend_core.access.files import append_jsonl_entry
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
@@ -19,7 +20,6 @@ from native_log_sync.agents.gemini.read_runtime import (
     parse_antigravity_transcript_step,
     runtime_tool_events,
 )
-from native_log_sync.duplicate import already_synced_message, mark_message_synced
 
 _ANTIGRAVITY_STABLE_SEEN_SECONDS = 1.5
 _ANTIGRAVITY_RETRY_DELAY_SECONDS = 1.7
@@ -37,13 +37,7 @@ def _schedule_antigravity_retry(self, agent: str, db_path: str, step_key: str) -
     def retry() -> None:
         retry_keys.discard(step_key)
         try:
-            sync_gemini_native_log(
-                self,
-                agent,
-                db_path,
-                first_seen_grace_seconds=0,
-                sync_bind_backfill_window_seconds=0,
-            )
+            sync_gemini_native_log(self, agent, db_path)
         except Exception as exc:
             logging.error(f"Failed to retry Gemini Antigravity sync for {agent}: {exc}", exc_info=True)
 
@@ -52,18 +46,17 @@ def _schedule_antigravity_retry(self, agent: str, db_path: str, step_key: str) -
     timer.start()
 
 
-def _sync_antigravity_db(self, agent: str, db_path: str, prev_cursor: NativeLogCursor | None) -> bool:
-    prev_key = os.path.realpath(prev_cursor.path) if prev_cursor is not None else ""
-    current_key = os.path.realpath(db_path)
-    same_binding = prev_cursor is not None and prev_key == current_key
-    start_idx = int(prev_cursor.offset) if same_binding else 0
+def _sync_antigravity_db(self, agent: str, db_path: str) -> bool:
+    normalized_path = _normalized_native_log_path(db_path)
+    is_continuation = normalized_path in self._native_log_progress
+    start_idx = self._native_log_progress.get(normalized_path, 0)
     appended = False
     next_cursor = start_idx
     pending_steps = getattr(self, "_gemini_pending_antigravity_steps", None)
     if not isinstance(pending_steps, dict):
         pending_steps = {}
         self._gemini_pending_antigravity_steps = pending_steps
-    pending_prefix = f"{current_key}:"
+    pending_prefix = f"{normalized_path}:"
     for key in list(pending_steps):
         if not str(key).startswith(pending_prefix):
             pending_steps.pop(key, None)
@@ -85,7 +78,7 @@ def _sync_antigravity_db(self, agent: str, db_path: str, prev_cursor: NativeLogC
         idx = int(idx)
         if idx < next_cursor:
             continue
-        step_key = f"{current_key}:{idx}"
+        step_key = f"{normalized_path}:{idx}"
         text, tool_calls = parse_antigravity_planner_step(payload or b"")
         if not text and not tool_calls:
             if transcript_entries is None:
@@ -114,16 +107,13 @@ def _sync_antigravity_db(self, agent: str, db_path: str, prev_cursor: NativeLogC
             )
         # Binding a pre-existing conversation can backfill hundreds of rows.
         # Do not replay that historical tool stream into the live status UI.
-        if runtime_events and (same_binding or idx >= max_idx):
+        if runtime_events and (is_continuation or idx >= max_idx):
             push_runtime_display(self, agent, runtime_events)
 
         if not text:
             next_cursor = idx + 1
             continue
         msg_id = f"antigravity-v2:{Path(db_path).stem}:{idx}"
-        if already_synced_message(self, agent, text, msg_id):
-            next_cursor = idx + 1
-            continue
         jsonl_entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "session": self.session_name,
@@ -134,26 +124,16 @@ def _sync_antigravity_db(self, agent: str, db_path: str, prev_cursor: NativeLogC
             "native_log_kind": "antigravity_assistant_response",
         }
         append_jsonl_entry(self.index_path, jsonl_entry)
-        mark_message_synced(self, agent, text, msg_id)
         appended = True
         next_cursor = idx + 1
-    self._gemini_cursors[agent] = NativeLogCursor(path=db_path, offset=next_cursor)
+    advance_read_progress(self._native_log_progress, db_path, next_cursor)
     self.save_sync_state()
     if appended:
         self._mark_idle(agent)
     return appended
 
 
-def sync_gemini_native_log(
-    self,
-    agent: str,
-    native_log_path: str | None = None,
-    *,
-    first_seen_grace_seconds: float,
-    sync_bind_backfill_window_seconds: float,
-) -> None:
-    del first_seen_grace_seconds, sync_bind_backfill_window_seconds
-    prev_cursor = self._gemini_cursors.get(agent)
+def sync_gemini_native_log(self, agent: str, native_log_path: str | None = None) -> None:
     try:
         session_path_str = str(native_log_path or "").strip()
         if not session_path_str or not os.path.exists(session_path_str):
@@ -162,10 +142,7 @@ def sync_gemini_native_log(
         if not session_path_str.endswith(".db"):
             return
 
-        _sync_antigravity_db(self, agent, session_path_str, prev_cursor)
+        self._native_log_current_paths[agent] = session_path_str
+        _sync_antigravity_db(self, agent, session_path_str)
     except Exception as exc:
-        if prev_cursor is None:
-            self._gemini_cursors.pop(agent, None)
-        else:
-            self._gemini_cursors[agent] = prev_cursor
         logging.error(f"Failed to sync Gemini message for {agent}: {exc}", exc_info=True)

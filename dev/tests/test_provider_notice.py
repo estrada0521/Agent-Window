@@ -11,10 +11,8 @@ from native_log_sync.agents.codex.read_updates import sync_codex_native_log
 
 class _SyncRuntime:
     def __init__(self, root: Path) -> None:
-        self._claude_cursors = {}
-        self._codex_cursors = {}
-        self._synced_msg_ids = set()
-        self._synced_message_fingerprints = set()
+        self._native_log_progress = {}
+        self._native_log_current_paths = {}
         self.index_path = root / "agent-index.jsonl"
         self.session_name = "test-session"
         self.workspace = str(root)
@@ -52,13 +50,7 @@ class ProviderNoticeTests(unittest.TestCase):
             native_log = root / "claude.jsonl"
             native_log.write_text("", encoding="utf-8")
             runtime = _SyncRuntime(root)
-            sync_claude_native_log(
-                runtime,
-                "claude",
-                str(native_log),
-                first_seen_grace_seconds=0,
-                sync_bind_backfill_window_seconds=0,
-            )
+            sync_claude_native_log(runtime, "claude", str(native_log))
             with native_log.open("a", encoding="utf-8") as handle:
                 handle.write(
                     json.dumps(
@@ -71,13 +63,7 @@ class ProviderNoticeTests(unittest.TestCase):
                     )
                     + "\n"
                 )
-            sync_claude_native_log(
-                runtime,
-                "claude",
-                str(native_log),
-                first_seen_grace_seconds=0,
-                sync_bind_backfill_window_seconds=0,
-            )
+            sync_claude_native_log(runtime, "claude", str(native_log))
             self.assertEqual(_read_entries(runtime.index_path)[0]["kind"], "provider-notice")
 
     def test_codex_rate_limit_is_provider_notice(self) -> None:
@@ -86,7 +72,7 @@ class ProviderNoticeTests(unittest.TestCase):
             native_log = root / "codex.jsonl"
             native_log.write_text("", encoding="utf-8")
             runtime = _SyncRuntime(root)
-            sync_codex_native_log(runtime, "codex", str(native_log), sync_bind_backfill_window_seconds=0)
+            sync_codex_native_log(runtime, "codex", str(native_log))
             with native_log.open("a", encoding="utf-8") as handle:
                 handle.write(
                     json.dumps(
@@ -101,7 +87,7 @@ class ProviderNoticeTests(unittest.TestCase):
                     )
                     + "\n"
                 )
-            sync_codex_native_log(runtime, "codex", str(native_log), sync_bind_backfill_window_seconds=0)
+            sync_codex_native_log(runtime, "codex", str(native_log))
             self.assertEqual(_read_entries(runtime.index_path)[0]["kind"], "provider-notice")
 
 
