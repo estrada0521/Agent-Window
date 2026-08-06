@@ -63,8 +63,6 @@ def _chat_bold_mode_rules_block(html_scope: str = "") -> str:
     {scoped(".git-commit-file-section-title")},
     {scoped(".git-commit-file-path")},
     {scoped(".git-commit-file-dir")},
-    {scoped(".file-modal-title")},
-    {scoped(".file-modal-text")},
     {scoped(".attached-files-sheet-title")},
     {scoped(".file-item")},
     {scoped(".file-item-name")},

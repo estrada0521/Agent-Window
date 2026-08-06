@@ -122,7 +122,6 @@
       if (!sessionActive) {
         setStatus("archived session is read-only");
       }
-      void maybeRestoreFileModalSessionState(currentSessionName);
       maybeAutoOpenComposer();
       if (hasOwn("agent_runtime") && data.agent_runtime && typeof data.agent_runtime === "object") {
         currentAgentRuntime = { ...data.agent_runtime };

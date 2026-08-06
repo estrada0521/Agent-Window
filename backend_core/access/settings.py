@@ -121,7 +121,6 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
 
     for key in (
         "bold_mode_mobile",
-        "open_files_direct_external_editor",
     ):
         if missing_flags_false and key not in raw:
             settings[key] = False
@@ -142,7 +141,6 @@ HUB_SETTINGS_DEFAULTS = {
     "message_text_size_mobile": 16,
     "message_text_size_desktop": 13,
     "bold_mode_mobile": False,
-    "open_files_direct_external_editor": False,
 }
 
 

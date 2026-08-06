@@ -24,8 +24,7 @@
     };
     const syncHeaderMenuFocus = () => {
       const paneTraceOpen = !!document.getElementById("paneViewer")?.classList.contains("visible");
-      const fileModalOpen = document.body.classList.contains("file-modal-open");
-      const focused = hasOpenHeaderMenu() || paneTraceOpen || fileModalOpen;
+      const focused = hasOpenHeaderMenu() || paneTraceOpen;
       if (focused) updateHeaderMenuViewportMetrics();
     };
     const needsHeaderViewportMetrics = () =>
@@ -206,15 +205,8 @@
       closeHeaderMenus();
     };
     window.addEventListener("resize", () => {
-      if (document.body.classList.contains("file-modal-desktop-split")) {
-        applyDesktopFilePaneWidthPx(getDesktopFilePaneWidthPx());
-        updateFileModalViewportMetrics();
-      } else {
-        void maybeRestoreFileModalSessionState(currentSessionName);
-      }
       if (dpPanelOpen) {
         dpApplyPanelWidth();
-        if (!fileModal.hidden) updateFileModalViewportMetrics();
       }
       if (needsHeaderViewportMetrics()) updateHeaderMenuViewportMetrics();
     });

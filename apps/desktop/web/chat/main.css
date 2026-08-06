@@ -5,7 +5,6 @@ __CHAT_INCLUDE:composer-overlay.css__
 __CHAT_INCLUDE:styles/modals.css__
 __CHAT_INCLUDE:composer-input.css__
 __CHAT_INCLUDE:styles/transcript.css__
-__CHAT_INCLUDE:file-modal.css__
     .copy-btn {
       display: inline-flex;
       align-items: center;
