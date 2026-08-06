@@ -18,10 +18,6 @@ def request_view_variant(*, headers, query_string: str = "", default: str = "des
     if query_view:
         return _normalized_view(query_view, default=default)
 
-    header_view = (headers.get("X-Multiagent-View", "") or "").strip()
-    if header_view:
-        return _normalized_view(header_view, default=default)
-
     ch_mobile = (headers.get("Sec-CH-UA-Mobile", "") or "").strip().lower()
     if ch_mobile in {"?1", "1", "true"}:
         return "mobile"
