@@ -22,11 +22,10 @@ class _NameRuntime(AgentSendRuntime):
         self.sent: list[tuple[str, str, str]] = []
         self.session_agents = {
             "test-session": ["claude", "codex"],
-            "other-session": ["claude", "gemini"],
         }
 
-    def resolve_session_name(self, explicit_session: str = "") -> str:
-        return explicit_session or str(self.env.get("AGENT_WINDOW_SESSION") or "test-session")
+    def resolve_session_name(self) -> str:
+        return str(self.env.get("AGENT_WINDOW_SESSION") or "test-session")
 
     def tmux_env(self, session_name: str, key: str) -> str:
         if key == "AGENT_WINDOW_AGENTS":
@@ -75,10 +74,10 @@ class AgentNameTests(unittest.TestCase):
         send = _parse_agent_send_args(["claude"])
         self.assertEqual((send.operation, send.target), ("send", "claude"))
 
-        name = _parse_agent_send_args(["--session", "demo", "name", "claude", "Fable"])
+        name = _parse_agent_send_args(["name", "claude", "Fable"])
         self.assertEqual(
-            (name.operation, name.session_name, name.target, name.name),
-            ("name", "demo", "claude", "Fable"),
+            (name.operation, name.target, name.name),
+            ("name", "claude", "Fable"),
         )
         self.assertEqual(_parse_agent_send_args(["names"]).operation, "names")
         self.assertEqual(_parse_agent_send_args(["unname", "Fable"]).operation, "unname")
@@ -91,7 +90,6 @@ class AgentNameTests(unittest.TestCase):
                 runtime.send_message(
                     target_spec="1",
                     payload="hello",
-                    explicit_session="test-session",
                 )
         self.assertNotIn("1=claude", _usage_text())
 
@@ -106,7 +104,6 @@ class AgentNameTests(unittest.TestCase):
                     runtime.send_message(
                         target_spec="Fable",
                         payload="hello",
-                        explicit_session="test-session",
                     )
                 )
 
@@ -115,20 +112,6 @@ class AgentNameTests(unittest.TestCase):
             self.assertEqual(entry["sender"], "codex")
             self.assertEqual(entry["targets"], ["claude"])
             self.assertEqual(entry["message"], "[From: Sage]\nhello\n")
-
-    def test_cross_session_uses_target_name_and_source_name(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            runtime = _NameRuntime(root)
-            with patch("message_delivery.names.session_log_path", self._session_log_path(root)):
-                runtime.assign_agent_name("test-session", "codex", "Sage")
-                runtime.assign_agent_name("other-session", "claude", "Fable")
-                runtime.send_message(
-                    target_spec="Fable",
-                    payload="hello",
-                    explicit_session="other-session",
-                )
-            self.assertEqual(runtime.sent, [("%1", "[From: Sage]\nhello\n", "claude")])
 
     def test_duplicate_base_must_be_named_by_exact_instance(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -153,7 +136,6 @@ class AgentNameTests(unittest.TestCase):
                 runtime.send_message(
                     target_spec="claude",
                     payload="hello",
-                    explicit_session="test-session",
                 )
             self.assertEqual(
                 [(pane, agent) for pane, _payload, agent in runtime.sent],
