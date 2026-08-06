@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 
 from backend_core.access.settings import resolve_chat_port
-from multiagent_lib.state import _parse_tmux_environment_output
+from agent_window_lib.state import _parse_tmux_environment_output
 
 
 def _clean_tmux_env_value(value: str) -> str:

@@ -297,7 +297,7 @@ def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
     if not stop_ok:
         logging.warning("stop_chat_server failed during revive: %s", stop_detail)
     cmd = [
-        str(self.multiagent_path),
+        str(self.agent_window_path),
         "--session",
         session_name,
         "--workspace",
@@ -381,7 +381,7 @@ def delete_archived_session(self, session_name: str) -> tuple[bool, str]:
         logging.error(f"Unexpected error: {exc}", exc_info=True)
         return False, "Archived log directory could not be resolved."
     if not any(root == resolved or root in resolved.parents for root in allowed_roots):
-        return False, "Refusing to delete a path outside multiagent log roots."
+        return False, "Refusing to delete a path outside agent-window log roots."
     try:
         shutil.rmtree(resolved)
     except Exception as exc:

@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-multiagent_resolve_script_path() {
+agent_window_resolve_script_path() {
   local p="${BASH_SOURCE[0]:-$0}"
   while [[ -L "$p" ]]; do
     local d targ
@@ -16,7 +16,7 @@ multiagent_resolve_script_path() {
   done
   printf '%s\n' "$p"
 }
-_REAL_SCRIPT="$(multiagent_resolve_script_path)"
+_REAL_SCRIPT="$(agent_window_resolve_script_path)"
 OPS_DIR="$(cd "$(dirname "$_REAL_SCRIPT")" && pwd)"
 REPO_ROOT="$(cd "$OPS_DIR/.." && pwd)"
 SCRIPT_DIR="$REPO_ROOT/bin"
@@ -31,7 +31,7 @@ export PATH
 
 for _cmd in python3 tmux; do
   if ! command -v "$_cmd" >/dev/null 2>&1; then
-    echo "multiagent: $_cmd is required on PATH. Install it, then re-run this command." >&2
+    echo "agent-window: $_cmd is required on PATH. Install it, then re-run this command." >&2
     exit 1
   fi
 done
@@ -126,7 +126,7 @@ from pathlib import Path
 repo_root = Path(sys.argv[1]).resolve()
 lock_dir = Path(sys.argv[2])
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.state import release_topology_lock
+from agent_window_lib.state import release_topology_lock
 
 release_topology_lock(lock_dir)
 PYEOF
@@ -152,7 +152,7 @@ repo_root = Path(sys.argv[1]).resolve()
 lock_dir = Path(sys.argv[2])
 holder_pid = int(sys.argv[3])
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.state import acquire_topology_lock
+from agent_window_lib.state import acquire_topology_lock
 
 raise SystemExit(0 if acquire_topology_lock(lock_dir, holder_pid) else 1)
 PYEOF
@@ -173,7 +173,7 @@ from pathlib import Path
 repo_root = Path(sys.argv[1]).resolve()
 session_name = (sys.argv[2] or "").strip()
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.session import stop_session_chat_server
+from agent_window_lib.session import stop_session_chat_server
 
 ok, detail = stop_session_chat_server(repo_root, session_name)
 if not ok:
@@ -315,7 +315,7 @@ from pathlib import Path
 repo_root = Path(sys.argv[1]).resolve()
 env_output = sys.argv[2]
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.session import session_context_from_env_output
+from agent_window_lib.session import session_context_from_env_output
 
 context = session_context_from_env_output(env_output)
 print(f"WORKSPACE={context.get('workspace', '')}")
@@ -379,7 +379,7 @@ from pathlib import Path
 repo_root = Path(sys.argv[1]).resolve()
 spec = sys.argv[2]
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.topology import parse_user_pane_spec
+from agent_window_lib.topology import parse_user_pane_spec
 
 try:
     top, bottom = parse_user_pane_spec(spec)
@@ -585,7 +585,7 @@ repo_root = Path(sys.argv[1]).resolve()
 agents_csv = sys.argv[2]
 base_agent = sys.argv[3]
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.agents import parse_agents_csv, next_instance_name
+from agent_window_lib.agents import parse_agents_csv, next_instance_name
 
 print(next_instance_name(parse_agents_csv(agents_csv), base_agent))
 PYEOF
@@ -603,7 +603,7 @@ repo_root = Path(sys.argv[1]).resolve()
 agents_csv = sys.argv[2]
 base_agent = sys.argv[3]
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.agents import agents_to_csv, parse_agents_csv, renumber_exact_instance
+from agent_window_lib.agents import agents_to_csv, parse_agents_csv, renumber_exact_instance
 
 updated, rename = renumber_exact_instance(parse_agents_csv(agents_csv), base_agent)
 if not rename:
@@ -656,7 +656,7 @@ session = sys.argv[2]
 agents_csv = sys.argv[3]
 tmux_env_output = os.environ.get("AGENT_WINDOW_TMUX_ENV_OUTPUT", "")
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.state import write_session_meta_file
+from agent_window_lib.state import write_session_meta_file
 
 write_session_meta_file(session, agents_csv, tmux_env_output)
 PYEOF
@@ -840,15 +840,15 @@ resolve_target_session_name() {
 usage() {
   cat <<EOF
 Usage:
-  multiagent list [--verbose] [--all]
-  multiagent [status] [--session NAME] [--all]
-  multiagent context [--session NAME] [--json]
-  multiagent add-agent --session NAME --agent AGENT
-  multiagent remove-agent --session NAME --agent INSTANCE
-  multiagent resume [--session NAME | --latest] [--detach]
-  multiagent kill [--session NAME | --all]
-  multiagent rename --session NAME --to NEW_NAME
-  multiagent [--session NAME] [--workspace PATH] [--detach] [--fresh] [--agents AGENT_LIST]
+  agent-window list [--verbose] [--all]
+  agent-window [status] [--session NAME] [--all]
+  agent-window context [--session NAME] [--json]
+  agent-window add-agent --session NAME --agent AGENT
+  agent-window remove-agent --session NAME --agent INSTANCE
+  agent-window resume [--session NAME | --latest] [--detach]
+  agent-window kill [--session NAME | --all]
+  agent-window rename --session NAME --to NEW_NAME
+  agent-window [--session NAME] [--workspace PATH] [--detach] [--fresh] [--agents AGENT_LIST]
 
 Creates a tmux session where window 0 is reserved for the human terminal,
 and each agent gets its own tmux window.
@@ -868,10 +868,10 @@ Options:
   --detach             Start session in detached mode
   --fresh              Delete existing logs for the session name before starting
   --all                For list: include archived sessions. For status/kill: target all active sessions
-  --latest             Target the most recently created session for this multiagent install
+  --latest             Target the most recently created session for this agent-window install
   --to NEW_NAME        New session name for rename
   --verbose            Show extra details in list output
-  list                 List active sessions for this multiagent install
+  list                 List active sessions for this agent-window install
   context              Print session/workspace/agent-pane summary for the current pane (or --session)
   add-agent            Add a new agent to an existing session
   remove-agent         Remove one agent pane (INSTANCE e.g. claude, gemini-2); chat jsonl is untouched
@@ -943,7 +943,7 @@ list_sessions() {
     done < <(archived_repo_sessions)
   fi
 
-  [[ "$found" -eq 1 ]] || echo "No sessions found for this multiagent install"
+  [[ "$found" -eq 1 ]] || echo "No sessions found for this agent-window install"
 }
 
 show_status() {
@@ -1046,7 +1046,7 @@ PYEOF
     return 0
   fi
 
-  printf '%s\n' "## multiagent context"
+  printf '%s\n' "## agent-window context"
   printf '%s\n' ""
   printf '%s\n' "- **tmux session**: ${session}"
   printf '%s\n' "- **session resolved via**: ${resolved_note:-unknown}"
@@ -1063,7 +1063,7 @@ PYEOF
   if [[ -n "$agents_str" ]]; then
     session_agent_state_lines "$session"
   else
-    printf '%s\n' "  (AGENT_WINDOW_AGENTS unset and no fallback; use \`multiagent status --session '${session}'\`.)"
+    printf '%s\n' "  (AGENT_WINDOW_AGENTS unset and no fallback; use \`agent-window status --session '${session}'\`.)"
   fi
   printf '%s\n' ""
   printf '%s\n' "### Hints"
@@ -1133,7 +1133,7 @@ if [[ "$ALL_SESSIONS" -eq 1 ]] && [[ "$LATEST_SESSION" -eq 1 ]]; then
   exit 1
 fi
 
-multiagent_dispatch_prelaunch_modes
+agent_window_dispatch_prelaunch_modes
 
 parse_user_pane_spec "$USER_PANE" || {
   echo "Unknown --user-pane value: $USER_PANE (examples: none, top, bottom:2, top:2,bottom:1)" >&2
@@ -1191,7 +1191,7 @@ print(','.join(result))
       if resolve_agent_executable "$agent" >/dev/null; then
         _kept+=("$agent")
       else
-        echo "multiagent: 警告: ${agent} の CLI が無いため起動しません（厳格にするには AGENT_WINDOW_STRICT_AGENT_CLIS=1）" >&2
+        echo "agent-window: 警告: ${agent} の CLI が無いため起動しません（厳格にするには AGENT_WINDOW_STRICT_AGENT_CLIS=1）" >&2
       fi
     done
     if [[ ${#_kept[@]} -gt 0 ]]; then
@@ -1200,7 +1200,7 @@ print(','.join(result))
       SELECTED_AGENTS=()
     fi
     if [[ ${#SELECTED_AGENTS[@]} -lt 1 ]]; then
-      echo "multiagent: 起動できるエージェントがありません。CLI を入れるか --agents で指定してください。" >&2
+      echo "agent-window: 起動できるエージェントがありません。CLI を入れるか --agents で指定してください。" >&2
       exit 1
     fi
     _instance_names_str="$(python3 -c "
@@ -1270,7 +1270,7 @@ launch_extra = sys.argv[3]
 launch_flags = sys.argv[4]
 launch_env = sys.argv[5]
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.launch import build_agent_launch_command
+from agent_window_lib.launch import build_agent_launch_command
 
 print(
     build_agent_launch_command(
@@ -1291,7 +1291,7 @@ PYEOF
   tmux respawn-pane -k -t "$pane_id" -c "$WORKSPACE" "$shell_bin" -lc "$launch_cmd"
 }
 
-multiagent_dispatch_agent_mutation_modes
+agent_window_dispatch_agent_mutation_modes
 
 
 if tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
@@ -1305,12 +1305,12 @@ if [[ "$FRESH" -eq 1 ]]; then
   _fresh_dir="${CENTRAL_LOG_DIR}/${SESSION_NAME}"
   if [[ -d "$_fresh_dir" ]]; then
     rm -rf "$_fresh_dir"
-    echo "[multiagent] Removed: $_fresh_dir" >&2
+    echo "[agent-window] Removed: $_fresh_dir" >&2
   fi
   _fresh_workspace_dir="${WORKSPACE}/.agent-window"
   if [[ -d "$_fresh_workspace_dir" ]]; then
     rm -rf "$_fresh_workspace_dir"
-    echo "[multiagent] Removed: $_fresh_workspace_dir" >&2
+    echo "[agent-window] Removed: $_fresh_workspace_dir" >&2
   fi
 fi
 
