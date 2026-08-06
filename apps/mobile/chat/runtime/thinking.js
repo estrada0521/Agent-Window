@@ -1,36 +1,10 @@
     let currentAgentStatuses = {};
     let currentAgentRuntime = {};
-    let currentProviderRuntime = {};
     let thinkingRuntimeItems = {};
-    let thinkingProviderRuntimeMeta = { id: "", phase: "live", updatedAt: 0, enterTimer: 0 };
     const clearThinkingRuntimeItemTimers = (item) => {
       if (!item) return;
       clearTimeout(item.enterTimer);
       item.enterTimer = 0;
-    };
-    const clearThinkingProviderRuntimeTimer = () => {
-      clearTimeout(thinkingProviderRuntimeMeta.enterTimer);
-      thinkingProviderRuntimeMeta.enterTimer = 0;
-    };
-    const resetThinkingProviderRuntimeMeta = () => {
-      clearThinkingProviderRuntimeTimer();
-      thinkingProviderRuntimeMeta.id = "";
-      thinkingProviderRuntimeMeta.phase = "live";
-      thinkingProviderRuntimeMeta.updatedAt = 0;
-    };
-    const syncThinkingProviderRuntimeMeta = (eventId) => {
-      const nextId = String(eventId || "").trim();
-      if (!nextId) {
-        resetThinkingProviderRuntimeMeta();
-        return thinkingProviderRuntimeMeta;
-      }
-      if (thinkingProviderRuntimeMeta.id !== nextId) {
-        clearThinkingProviderRuntimeTimer();
-        thinkingProviderRuntimeMeta.id = nextId;
-        thinkingProviderRuntimeMeta.phase = "live";
-        thinkingProviderRuntimeMeta.updatedAt = Date.now();
-      }
-      return thinkingProviderRuntimeMeta;
     };
     const currentThinkingRuntimeItem = (agent) => thinkingRuntimeItems[agent] || null;
     const clearThinkingRuntimeAgent = (agent, { suppressRender = false } = {}) => {
@@ -116,11 +90,6 @@
       } else if (hasOwn("agent_runtime")) {
         currentAgentRuntime = {};
       }
-      if (hasOwn("provider_runtime") && data.provider_runtime && typeof data.provider_runtime === "object") {
-        currentProviderRuntime = { ...data.provider_runtime };
-      } else if (hasOwn("provider_runtime")) {
-        currentProviderRuntime = {};
-      }
       if (data.statuses && typeof data.statuses === "object") {
         Object.keys(currentAgentRuntime).forEach((agent) => {
           if (data.statuses[agent] !== "running") {
@@ -135,66 +104,6 @@
         }
         renderThinkingIndicator();
       }
-    };
-    const formatCompactMetric = (value) => {
-      const num = Number(value);
-      if (!Number.isFinite(num)) return "";
-      const abs = Math.abs(num);
-      if (abs >= 1_000_000) {
-        return `${(num / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1).replace(/\.0$/, "")}M`;
-      }
-      if (abs >= 1_000) {
-        return `${(num / 1_000).toFixed(abs >= 10_000 ? 0 : 1).replace(/\.0$/, "")}k`;
-      }
-      return String(Math.trunc(num));
-    };
-    const providerRuntimeSummaryItems = (runtime) => {
-      if (!runtime || typeof runtime !== "object") return [];
-      const explicit = Array.isArray(runtime.summary_items)
-        ? runtime.summary_items.map((item) => String(item || "").trim()).filter(Boolean)
-        : [];
-      if (explicit.length) return explicit;
-      const derived = [];
-      const chunkIndex = Number(runtime.chunk_index);
-      if (Number.isFinite(chunkIndex)) derived.push(`chunk ${chunkIndex + 1}`);
-      const chunkCount = Number(runtime.chunk_count);
-      if (Number.isFinite(chunkCount) && chunkCount > 0) derived.push(`${chunkCount} chunks`);
-      const totalTokens = formatCompactMetric(runtime.usage_total_tokens);
-      if (totalTokens) derived.push(`${totalTokens} tok`);
-      const thoughtTokens = formatCompactMetric(runtime.usage_thought_tokens);
-      if (thoughtTokens) derived.push(`${thoughtTokens} think`);
-      const outputChars = formatCompactMetric(runtime.output_chars);
-      if (outputChars) derived.push(`${outputChars} chars`);
-      const finishReason = String(runtime.finish_reason || "").trim();
-      if (finishReason) derived.push(finishReason);
-      const errorType = String(runtime.error_type || "").trim();
-      if (errorType) derived.push(errorType);
-      return derived;
-    };
-    const providerRuntimeStructuredText = (runtime) => {
-      if (!runtime || typeof runtime !== "object") return "";
-      const parts = [];
-      const eventName = String(runtime.event_name || "").trim();
-      if (eventName) parts.push(eventName);
-      const summaryItems = providerRuntimeSummaryItems(runtime);
-      if (summaryItems.length) parts.push(...summaryItems);
-      return parts.join(" · ");
-    };
-    const providerRuntimePreviewText = (runtime) => {
-      if (!runtime || typeof runtime !== "object") return "";
-      const preview = String(runtime.preview || "").trim();
-      if (!preview) return "";
-      const structured = providerRuntimeStructuredText(runtime);
-      return preview === structured ? "" : preview;
-    };
-    const buildThinkingPreviewStreamHtml = (text) => {
-      const chars = Array.from(String(text || ""));
-      if (!chars.length) return "";
-      const limited = chars.slice(0, 320);
-      const body = limited.map((ch, idx) =>
-        `<span class="stream-char" style="--stream-char-i:${idx}">${escapeHtml(ch)}</span>`
-      ).join("");
-      return body + (chars.length > limited.length ? "…" : "");
     };
     const wrapThinkingChars = (text, offset = 0) => {
       return Array.from(String(text || "")).map((ch, i) =>
@@ -358,7 +267,6 @@
         const icon = wrap.querySelector(".message-thinking-icon");
         return [
           row.dataset.agent || "",
-          row.dataset.provider || "",
           row.style.getPropertyValue("--agent-pulse-delay") || "",
           icon?.className || "",
           icon?.getAttribute("style") || "",
@@ -417,42 +325,18 @@
         return;
       }
       const runningAgents = Object.keys(currentAgentStatuses).filter((agent) => currentAgentStatuses[agent] === "running");
-      const providerRuntimeActive = !!currentProviderRuntime?.active && !!currentProviderRuntime?.provider;
-      const hasRuntimeRunning = runningAgents.length > 0 || providerRuntimeActive;
+      const hasRuntimeRunning = runningAgents.length > 0;
       document.body?.classList.toggle("agent-runtime-running", hasRuntimeRunning);
       const existingContainer = root.querySelector(".message-thinking-container");
 
       if (!root.querySelector("article.message-row") || !hasRuntimeRunning) {
         if (existingContainer) existingContainer.remove();
-        resetThinkingProviderRuntimeMeta();
         root.dataset.thinkingSig = "";
           removeThinkingFloatingIcons();
         maybeRestorePollScrollLock();
         return;
       }
 
-      const providerStructured = providerRuntimeStructuredText(currentProviderRuntime);
-      const providerPreview = providerRuntimePreviewText(currentProviderRuntime);
-      const providerRuntimeEventId = providerRuntimeActive
-        ? JSON.stringify({
-          provider: currentProviderRuntime.provider || "",
-          runId: currentProviderRuntime.run_id || "",
-          status: currentProviderRuntime.status || "",
-          event: currentProviderRuntime.event_name || "",
-          seq: currentProviderRuntime.event_seq || "",
-          summary: providerRuntimeSummaryItems(currentProviderRuntime),
-          preview: providerPreview,
-        })
-        : "";
-      let providerRuntimeMeta = thinkingProviderRuntimeMeta;
-      if (providerRuntimeActive) {
-        providerRuntimeMeta = syncThinkingProviderRuntimeMeta(providerRuntimeEventId);
-      } else {
-        resetThinkingProviderRuntimeMeta();
-      }
-      const providerSig = providerRuntimeActive
-        ? `${providerRuntimeEventId}|${providerRuntimeMeta.phase || "live"}`
-        : "";
       const agentRuntimeSig = JSON.stringify(
         runningAgents.map((agent) => [
           agent,
@@ -461,7 +345,7 @@
             : null,
         ])
       );
-      const nextThinkingSig = `${runningAgents.join(",")}|${agentRuntimeSig}|${providerSig}`;
+      const nextThinkingSig = `${runningAgents.join(",")}|${agentRuntimeSig}`;
       if (root.dataset.thinkingSig === nextThinkingSig && existingContainer) {
         if (root.lastElementChild !== existingContainer) {
           root.appendChild(existingContainer);
@@ -506,67 +390,16 @@
         return row;
       };
 
-      const ensureProviderRow = () => {
-        const providerAgent = agentBaseName(currentProviderRuntime.provider || "gemini") || "gemini";
-        const pulse = agentPulseOffset(providerAgent);
-        const providerPreviewHtml = providerPreview ? buildThinkingPreviewStreamHtml(providerPreview) : "";
-        let row = container.querySelector(".message-thinking-row-provider");
-        if (!row) {
-          row = document.createElement("div");
-          row.className = "message-thinking-row message-thinking-row-provider";
-          row.innerHTML = `
-            <span class="message-thinking-icons">
-              <span class="message-thinking-icon-wrap">
-                <span class="message-thinking-glow"></span>
-                ${thinkingIconImg(providerAgent, `message-thinking-icon message-thinking-icon--${agentBaseName(providerAgent)}`)}
-              </span>
-            </span>
-            <span class="message-thinking-label message-thinking-label-provider"></span>
-          `;
-        }
-        row.dataset.providerEvents = String(currentProviderRuntime.system_msg_id || "");
-        row.dataset.provider = providerAgent;
-        row.style.setProperty("--agent-pulse-delay", `${pulse}s`);
-        const label = row.querySelector(".message-thinking-label-provider");
-        const syncProviderPreviewLine = (className, html) => {
-          const existing = label?.querySelector(`.${className}`);
-          if (!html) {
-            existing?.remove();
-            return;
-          }
-          if (existing && existing.innerHTML === html) return;
-          const node = document.createElement("span");
-          node.className = className;
-          node.innerHTML = html;
-          if (existing) existing.replaceWith(node);
-          else label?.appendChild(node);
-        };
-        const providerText = providerStructured ? `<span class="message-thinking-runtime-keyword">${wrapThinkingChars(providerStructured)}</span>` : `<span class="message-thinking-runtime-keyword">${wrapThinkingChars("Running...")}</span>`;
-        syncThinkingRuntimeSlot(label, {
-          contentHtml: providerText,
-          eventId: providerRuntimeMeta.id || providerRuntimeEventId || "provider-runtime",
-        });
-        syncProviderPreviewLine("message-thinking-label-preview", providerPreviewHtml);
-        return row;
-      };
-
       const desiredAgents = new Set(runningAgents);
       container.querySelectorAll(".message-thinking-row[data-agent]").forEach((row) => {
         if (!desiredAgents.has(row.dataset.agent || "")) {
           row.remove();
         }
       });
-      if (!providerRuntimeActive) {
-        resetThinkingProviderRuntimeMeta();
-        container.querySelector(".message-thinking-row-provider")?.remove();
-      }
 
       runningAgents.forEach((agent) => {
         container.appendChild(ensureAgentRow(agent));
       });
-      if (providerRuntimeActive) {
-        container.appendChild(ensureProviderRow());
-      }
       if (root.lastElementChild !== container) {
         root.appendChild(container);
       }

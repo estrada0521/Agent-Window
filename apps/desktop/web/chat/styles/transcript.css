@@ -571,69 +571,6 @@
       font-weight: inherit;
     }
 
-    .provider-events-overlay {
-      background: rgba(0, 0, 0, 0.72);
-    }
-
-    .provider-events-panel {
-      width: min(820px, calc(100vw - 32px));
-      max-height: min(78vh, 920px);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .provider-events-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .provider-events-title {
-      margin: 0;
-      font-size: 16px;
-      letter-spacing: 0.01em;
-    }
-
-    .provider-events-meta {
-      margin: 0;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.55;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .provider-events-close {
-      appearance: none;
-      border: 0;
-      background: transparent;
-      color: var(--icon-fg);
-      font-size: 26px;
-      line-height: 1;
-      cursor: pointer;
-      padding: 0;
-      width: 32px;
-      height: 32px;
-      flex-shrink: 0;
-    }
-
-    .provider-events-pre {
-      margin: 0;
-      padding: 14px 16px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(0, 0, 0, 0.32);
-      overflow: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 12px;
-      line-height: 1.58;
-      color: var(--fg);
-      font-family: var(--agent-message-font-family, inherit);
-    }
-
     .sysmsg-row::before,
     .sysmsg-row::after {
       content: "";

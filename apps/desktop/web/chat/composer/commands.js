@@ -262,15 +262,6 @@
         void openFileSurface(path, ext, fileCard, e, 0);
         return;
       }
-      const thinkingRowEarly = e.target.closest(".message-thinking-row");
-      if (thinkingRowEarly) {
-        const providerEventsMsgId = thinkingRowEarly.dataset.providerEvents;
-        if (providerEventsMsgId) {
-          e.preventDefault();
-          void showProviderEventsModal(providerEventsMsgId);
-          return;
-        }
-      }
       const collapseToggle = e.target.closest(".message-collapse-toggle");
       if (collapseToggle) {
         const row = collapseToggle.closest("article.message-row");
@@ -282,13 +273,6 @@
           expandedMessageBodies.add(msgId);
         }
         syncMessageCollapse(row);
-        return;
-      }
-      const providerEventsBtn = e.target.closest("[data-provider-events]");
-      if (providerEventsBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        void showProviderEventsModal(providerEventsBtn.dataset.providerEvents || "");
         return;
       }
       const btn = e.target.closest(".copy-btn");

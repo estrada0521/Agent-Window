@@ -138,46 +138,6 @@
         await loadFullMessageEntry(fullBtn.dataset.loadFullMessage || "", fullBtn);
       }
     });
-    const showProviderEventsModal = async (msgId) => {
-      const targetMsgId = String(msgId || "").trim();
-      if (!targetMsgId) return;
-      let payload = null;
-      try {
-        const res = await fetch(`/normalized-events?msg_id=${encodeURIComponent(targetMsgId)}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("normalized events unavailable");
-        payload = await res.json();
-      } catch (err) {
-        setStatus(err?.message || "normalized events unavailable", true);
-        setTimeout(() => setStatus(""), 2200);
-        return;
-      }
-      let overlay = document.getElementById("providerEventsOverlay");
-      if (overlay) overlay.remove();
-      const entry = payload?.entry || {};
-      const events = Array.isArray(payload?.events) ? payload.events : [];
-      const rendered = events.length
-        ? events.map((event) => JSON.stringify(event, null, 2)).join("\n\n")
-        : (payload?.missing ? "[normalized event log missing]" : "[no normalized events]");
-      overlay = document.createElement("div");
-      overlay.id = "providerEventsOverlay";
-      overlay.className = "add-agent-overlay provider-events-overlay";
-      overlay.innerHTML = `<div class="add-agent-panel provider-events-panel"><div class="provider-events-header"><div><h3 class="provider-events-title">Normalized Events</h3><p class="provider-events-meta">${escapeHtml([
-        entry.provider_adapter || "",
-        entry.provider_model || "",
-        payload?.path ? `path: ${payload.path}` : "",
-        entry.run_id ? `run: ${entry.run_id}` : "",
-      ].filter(Boolean).join("\n"))}</p></div><button type="button" class="provider-events-close" aria-label="Close">×</button></div><pre class="provider-events-pre">${escapeHtml(rendered)}</pre></div>`;
-      document.body.appendChild(overlay);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => overlay.classList.add("visible"));
-      });
-      const closeModal = () => {
-        overlay.classList.remove("visible");
-        setTimeout(() => overlay.remove(), 420);
-      };
-      overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
-      overlay.querySelector(".provider-events-close")?.addEventListener("click", closeModal);
-    };
     let _shortcutCommandsCache = null;
     const loadShortcutCommandsOnce = async () => {
       if (_shortcutCommandsCache) return _shortcutCommandsCache;

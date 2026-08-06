@@ -10,7 +10,6 @@ SESSION_STATE_PROJECTIONS = (
     "statuses",
     "messages",
     "agent_runtime",
-    "provider_runtime",
 )
 _SESSION_STATE_PROJECTION_SET = frozenset(SESSION_STATE_PROJECTIONS)
 _SESSION_STATE_HISTORY_LIMIT = 128
@@ -139,6 +138,4 @@ def build_session_state_payload(
         payload["statuses"] = runtime.agent_statuses()
     if "agent_runtime" in selected:
         payload["agent_runtime"] = runtime.agent_runtime_state()
-    if "provider_runtime" in selected:
-        payload["provider_runtime"] = runtime.provider_runtime_state()
     return payload
