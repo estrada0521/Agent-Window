@@ -72,13 +72,9 @@
       }
       refreshInFlight = true;
       try {
-        const requestedFocusMsgId = String(pendingFocusMsgId || readFocusMsgIdFromUrl() || "").trim();
-        const useFocusedWindow = !!requestedFocusMsgId && focusWindowRequestedMsgId !== requestedFocusMsgId;
-        const url = useFocusedWindow
-          ? messagesFetchUrl({ around_msg_id: requestedFocusMsgId })
-          : messagesFetchUrl();
+        const url = messagesFetchUrl();
         const headers = {};
-        if (!useFocusedWindow && lastMessagesEtag) {
+        if (lastMessagesEtag) {
           headers["If-None-Match"] = lastMessagesEtag;
         }
         const res = await fetchWithTimeout(
@@ -97,20 +93,10 @@
         }
         if (!res.ok) throw new Error("messages unavailable");
         const nextMessagesEtag = res.headers.get("ETag") || "";
-        if (!useFocusedWindow && nextMessagesEtag) {
+        if (nextMessagesEtag) {
           lastMessagesEtag = nextMessagesEtag;
         }
         const data = await res.json();
-        if (useFocusedWindow) {
-          focusWindowRequestedMsgId = requestedFocusMsgId;
-          const hasFocusedEntry = Array.isArray(data?.entries)
-            && data.entries.some((entry) => String(entry?.msg_id || "") === requestedFocusMsgId);
-          pendingFocusMsgId = hasFocusedEntry ? requestedFocusMsgId : "";
-          if (!hasFocusedEntry) {
-            focusWindowRequestedMsgId = "";
-            clearFocusMsgParam();
-          }
-        }
         const nextServerInstance = data?.server_instance || "";
         if (nextServerInstance && currentServerInstance && nextServerInstance !== currentServerInstance) {
           olderEntries = [];
