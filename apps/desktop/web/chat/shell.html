@@ -48,16 +48,16 @@
       // Detect Tauri desktop app via URL param, session marker, Tauri globals, or parent frame flag.
       function _detectTauri() {
         try {
-          const stored = sessionStorage.getItem("multiagent_tauri_app") === "1";
+          const stored = sessionStorage.getItem("agent_window_tauri_app") === "1";
           if (
             params.get("tauri") === "1" ||
             stored ||
             typeof window.__TAURI__ !== "undefined" ||
             typeof window.__TAURI_INTERNALS__ !== "undefined" ||
-            (window.parent !== window && window.parent.__multiagentAppSettingsLoaded)
+            (window.parent !== window && window.parent.__agentWindowNative?.appSettingsLoaded)
           ) {
             document.documentElement.dataset.tauriApp = "1";
-            try { sessionStorage.setItem("multiagent_tauri_app", "1"); } catch (_) {}
+            try { sessionStorage.setItem("agent_window_tauri_app", "1"); } catch (_) {}
             return true;
           }
         } catch (_) {}

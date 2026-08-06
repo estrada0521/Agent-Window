@@ -10,7 +10,7 @@
       lastHubRunningStateSig = sig;
       try {
         window.parent.postMessage({
-          type: "multiagent-session-running-state",
+          type: "session-running-state",
           sessionName,
           isRunning,
           runningAgents,

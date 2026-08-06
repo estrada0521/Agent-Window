@@ -398,21 +398,21 @@
       const hubUrl = `${window.location.protocol}//${hubHost}:__HUB_PORT__${normalizedPath}`;
       if (window.self !== window.top) {
         if (normalizedPath === "/") {
-          window.parent.postMessage({ type: "multiagent-toggle-hub-sidebar" }, "*");
+          window.parent.postMessage({ type: "toggle-hub-sidebar" }, "*");
           return;
         }
         try {
           window.parent.location.href = hubUrl;
           return;
         } catch (_err) {
-          window.parent.postMessage({ type: "multiagent-open-hub-path", url: hubUrl }, "*");
+          window.parent.postMessage({ type: "open-hub-path", url: hubUrl }, "*");
           return;
         }
       }
       window.location.href = hubUrl;
     };
     window.addEventListener("message", (event) => {
-      if (!(event.data && event.data.type === "multiagent-hub-sidebar-state")) return;
+      if (!(event.data && event.data.type === "hub-sidebar-state")) return;
       const isOpen = !!event.data.open;
       if (isOpen) document.documentElement.dataset.hubSidebarOpen = "1";
       else delete document.documentElement.dataset.hubSidebarOpen;

@@ -187,13 +187,13 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
     const requestHubParentLayout = () => {
       if (!isHubIframeChat()) return;
       try {
-        window.parent.postMessage({ type: "multiagent-chat-request-hub-layout" }, "*");
+        window.parent.postMessage({ type: "chat-request-hub-layout" }, "*");
       } catch (_) {}
     };
     const notifyHubComposerOverlayState = (open) => {
       if (!isHubIframeChat()) return;
       try {
-        window.parent.postMessage({ type: "multiagent-composer-overlay-state", open: !!open }, "*");
+        window.parent.postMessage({ type: "composer-overlay-state", open: !!open }, "*");
       } catch (_) {}
     };
     const notifyHubChatRenderReady = () => {
@@ -201,7 +201,7 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           try {
-            window.parent.postMessage({ type: "multiagent-chat-render-ready" }, "*");
+            window.parent.postMessage({ type: "chat-render-ready" }, "*");
           } catch (_) {}
         });
       });
@@ -211,7 +211,7 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
       _hubChildOriW = window.innerWidth || 0;
       _hubChildOriH = window.innerHeight || 0;
       window.addEventListener("message", (e) => {
-        if (!e.data || e.data.type !== "multiagent-hub-layout") return;
+        if (!e.data || e.data.type !== "hub-layout") return;
         if (e.source !== window.parent) return;
         const lh = Number(e.data.layoutHeight) || 0;
         if (lh > 0) {
@@ -244,7 +244,7 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
         if (now - _hubParentScrollSigAt < 220) return;
         _hubParentScrollSigAt = now;
         try {
-          window.parent.postMessage({ type: "multiagent-chat-scroll-signal" }, "*");
+          window.parent.postMessage({ type: "chat-scroll-signal" }, "*");
         } catch (_) {}
       };
       const hubChildResizeChrome = () => {
@@ -490,7 +490,7 @@ __CHAT_INCLUDE:panes/pane-viewer.js__
     const DP_PANEL_DEFAULT_WIDTH = 220;
     const DP_PANEL_MIN_WIDTH = 220;
     const DP_PANEL_MAX_WIDTH = 560;
-    const DP_PANEL_WIDTH_KEY = "multiagent_desktop_right_panel_width_px";
+    const DP_PANEL_WIDTH_KEY = "agent_window_desktop_right_panel_width_px";
     const DP_PANEL_GAP = 0;
     const hasDesktopRightPanelOverlay = () => (
       document.documentElement.dataset.tauriApp === "1"
@@ -545,7 +545,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       try {
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({
-            type: "multiagent-desktop-panel-state",
+            type: "desktop-panel-state",
             mode: dpPanelOpen ? "open" : "",
             view: dpActivePanelView,
             width: dpPanelOpen ? dpCurrentPanelWidthPx() : 0,
@@ -850,7 +850,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     };
     window.addEventListener("message", (event) => {
       if (!event.data) return;
-      if (event.data.type === "multiagent-hub-theme-changed") {
+      if (event.data.type === "hub-theme-changed") {
         const chatTheme = event.data.chatTheme || event.data.theme;
         document.documentElement.dataset.theme = chatTheme === "light" ? "light" : "dark";
         const themeDesktop = event.data.themeDesktop;
@@ -861,11 +861,11 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         }
         return;
       }
-      if (event.data.type === "multiagent-desktop-panel-sync-request") {
+      if (event.data.type === "desktop-panel-sync-request") {
         notifyParentPanelState();
         return;
       }
-      if (event.data.type !== "multiagent-desktop-panel") return;
+      if (event.data.type !== "desktop-panel") return;
       if (!hasDesktopRightPanelOverlay()) return;
       const mode = String(event.data.mode || "");
       if (mode === "close") {

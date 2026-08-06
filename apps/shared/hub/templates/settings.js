@@ -27,7 +27,7 @@
             // The mobile Hub owns the effective theme.  This frame only owns
             // the saved preference, so it can never independently follow an
             // OS preference change while Light or Dark is selected.
-            window.top.postMessage({ type: "multiagent-hub-mobile-theme-mode-changed", themeMobile: value }, "*");
+            window.top.postMessage({ type: "hub-mobile-theme-mode-changed", themeMobile: value }, "*");
           } else {
             document.documentElement.dataset.theme = resolveMobileTheme(value);
           }
@@ -55,7 +55,7 @@
       }
       window.addEventListener("message", (event) => {
         const data = event.data;
-        if (data?.type !== "multiagent-hub-theme-changed") return;
+        if (data?.type !== "hub-theme-changed") return;
         if (data.theme === "light" || data.theme === "dark") {
           document.documentElement.dataset.theme = data.theme;
         }
@@ -65,7 +65,7 @@
           if (themeMobileSelect.value !== "system") return;
           try {
             window.top.postMessage({
-              type: "multiagent-hub-mobile-system-theme-observed",
+              type: "hub-mobile-system-theme-observed",
               theme: systemPrefersDark() ? "dark" : "light",
             }, "*");
           } catch (_) {}
@@ -91,7 +91,7 @@
         document.documentElement.dataset.theme = hubThemeForDesktop(nextTheme);
         try {
           if (window.self !== window.top) {
-            window.top.postMessage({ type: "multiagent-hub-theme-changed", themeDesktop: nextTheme }, "*");
+            window.top.postMessage({ type: "hub-theme-changed", themeDesktop: nextTheme }, "*");
           }
         } catch (_) {}
       };
@@ -189,7 +189,7 @@
     }
     const closeSettingsPage = () => {
       if (HUB_EMBED && window.self !== window.top) {
-        window.parent.postMessage({ type: "multiagent-hub-close-sidebar-page" }, "*");
+        window.parent.postMessage({ type: "hub-close-sidebar-page" }, "*");
         return;
       }
       if (window.history.length > 1) {
