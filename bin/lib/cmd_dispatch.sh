@@ -1,4 +1,4 @@
-multiagent_dispatch_prelaunch_modes() {
+agent_window_dispatch_prelaunch_modes() {
   if [[ "$MODE" == "status" ]]; then
     command -v tmux >/dev/null 2>&1 || { echo "tmux is required." >&2; exit 1; }
     if [[ "$ALL_SESSIONS" -eq 1 ]]; then
@@ -9,7 +9,7 @@ multiagent_dispatch_prelaunch_modes() {
         echo
         found=1
       done < <(repo_sessions)
-      [[ "$found" -eq 1 ]] || echo "No sessions found for this multiagent install"
+      [[ "$found" -eq 1 ]] || echo "No sessions found for this agent-window install"
       exit 0
     fi
     if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
@@ -90,14 +90,14 @@ multiagent_dispatch_prelaunch_modes() {
       while IFS= read -r session; do
         [[ -z "$session" ]] && continue
         if ! stop_session_chat_server "$session"; then
-          echo "[multiagent] warning: failed to stop chat server for $session" >&2
+          echo "[agent-window] warning: failed to stop chat server for $session" >&2
         fi
         cleanup_session_process_groups "$session" || true
         tmux kill-session -t "$session"
         echo "Killed tmux session: $session"
         killed=1
       done < <(repo_sessions)
-      [[ "$killed" -eq 1 ]] || { echo "No sessions found for this multiagent install"; exit 1; }
+      [[ "$killed" -eq 1 ]] || { echo "No sessions found for this agent-window install"; exit 1; }
       exit 0
     fi
     if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
@@ -112,7 +112,7 @@ multiagent_dispatch_prelaunch_modes() {
       exit 1
     fi
     if ! stop_session_chat_server "$SESSION_NAME"; then
-      echo "[multiagent] warning: failed to stop chat server for $SESSION_NAME" >&2
+      echo "[agent-window] warning: failed to stop chat server for $SESSION_NAME" >&2
     fi
     cleanup_session_process_groups "$SESSION_NAME" || true
     tmux kill-session -t "$SESSION_NAME"
@@ -144,7 +144,7 @@ multiagent_dispatch_prelaunch_modes() {
   fi
 }
 
-multiagent_dispatch_agent_mutation_modes() {
+agent_window_dispatch_agent_mutation_modes() {
   if [[ "$MODE" == "add-agent" ]]; then
     command -v tmux >/dev/null 2>&1 || { echo "tmux is required." >&2; exit 1; }
     [[ -n "$AGENTS_ARG" ]] || { echo "--agent is required for add-agent" >&2; exit 1; }
@@ -203,7 +203,7 @@ repo_root = Path(sys.argv[1]).resolve()
 agents_csv = sys.argv[2]
 instance_name = sys.argv[3]
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.agents import agents_to_csv, append_instance, parse_agents_csv
+from agent_window_lib.agents import agents_to_csv, append_instance, parse_agents_csv
 
 print(agents_to_csv(append_instance(parse_agents_csv(agents_csv), instance_name)))
 PYEOF
@@ -255,7 +255,7 @@ repo_root = Path(sys.argv[1]).resolve()
 agents_csv = sys.argv[2]
 instance_name = sys.argv[3]
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.agents import agents_to_csv, parse_agents_csv, remove_instance, resolve_canonical_instance
+from agent_window_lib.agents import agents_to_csv, parse_agents_csv, remove_instance, resolve_canonical_instance
 
 agents = parse_agents_csv(agents_csv)
 canonical = resolve_canonical_instance(agents, instance_name)
@@ -305,14 +305,14 @@ PYEOF
           AGENT_WINDOW_REMOVE_HELPER=1 \
           AGENT_WINDOW_SESSION="$SESSION_NAME" \
           AGENT_WINDOW_TMUX_SOCKET="$TMUX_SOCKET_NAME" \
-          "$SCRIPT_DIR/multiagent" remove-agent --session "$SESSION_NAME" --agent "$canonical" \
+          "$SCRIPT_DIR/agent-window" remove-agent --session "$SESSION_NAME" --agent "$canonical" \
           >/dev/null 2>&1 </dev/null &
       else
         env \
           AGENT_WINDOW_REMOVE_HELPER=1 \
           AGENT_WINDOW_SESSION="$SESSION_NAME" \
           AGENT_WINDOW_TMUX_SOCKET="$TMUX_SOCKET_NAME" \
-          "$SCRIPT_DIR/multiagent" remove-agent --session "$SESSION_NAME" --agent "$canonical" \
+          "$SCRIPT_DIR/agent-window" remove-agent --session "$SESSION_NAME" --agent "$canonical" \
           >/dev/null 2>&1 </dev/null &
       fi
       disown >/dev/null 2>&1 || true

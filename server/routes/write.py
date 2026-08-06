@@ -63,7 +63,7 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     bin_dir = Path(ctx["agent_send_path"]).resolve().parent.parent / "bin"
     try:
         proc = subprocess.run(
-            [str(bin_dir / "multiagent"), "add-agent", "--session", ctx["session_name"], "--agent", agent],
+            [str(bin_dir / "agent-window"), "add-agent", "--session", ctx["session_name"], "--agent", agent],
             capture_output=True,
             text=True,
             env=ctx["clean_env_fn"](),
@@ -114,7 +114,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
     bin_dir = Path(ctx["agent_send_path"]).resolve().parent.parent / "bin"
     try:
         proc = subprocess.run(
-            [str(bin_dir / "multiagent"), "remove-agent", "--session", ctx["session_name"], "--agent", agent],
+            [str(bin_dir / "agent-window"), "remove-agent", "--session", ctx["session_name"], "--agent", agent],
             capture_output=True,
             text=True,
             env=ctx["clean_env_fn"](),

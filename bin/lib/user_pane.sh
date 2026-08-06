@@ -28,7 +28,7 @@ from pathlib import Path
 repo_root = Path(sys.argv[1]).resolve()
 script_dir = sys.argv[2]
 sys.path.insert(0, str(repo_root / "bin"))
-from multiagent_lib.launch import build_user_launch_command
+from agent_window_lib.launch import build_user_launch_command
 
 print(build_user_launch_command(script_dir=script_dir))
 PYEOF

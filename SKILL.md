@@ -56,7 +56,7 @@ Use the exact instance names shown in the current session topology.
 They are available in `AGENT_WINDOW_AGENTS` and through:
 
 ```bash
-multiagent context
+agent-window context
 ```
 
 When only one instance of an agent is active, its name may be unsuffixed,

@@ -154,9 +154,9 @@ class AgentSendRuntime:
         if len(matched_repo_sessions) == 1:
             return matched_repo_sessions[0]
         if len(matched_repo_sessions) > 1:
-            raise AgentSendError("Multiple active multiagent sessions exist; set AGENT_WINDOW_SESSION.")
+            raise AgentSendError("Multiple active agent-window sessions exist; set AGENT_WINDOW_SESSION.")
 
-        raise AgentSendError("No active multiagent session found for this workspace.")
+        raise AgentSendError("No active agent-window session found for this workspace.")
 
     def resolve_pane(self, session_name: str, key: str) -> str:
         value = self.tmux_env(session_name, key)

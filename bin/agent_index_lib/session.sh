@@ -121,7 +121,7 @@ resolve_session_name() {
   fi
 
   if [[ ${#matched[@]} -gt 1 ]]; then
-    echo "Multiple active multiagent sessions exist; specify --session." >&2
+    echo "Multiple active agent-window sessions exist; specify --session." >&2
     return 1
   fi
 
@@ -136,10 +136,10 @@ resolve_session_name() {
   fi
 
   if [[ ${#matched[@]} -gt 1 ]]; then
-    echo "Multiple archived multiagent sessions exist; specify --session." >&2
+    echo "Multiple archived agent-window sessions exist; specify --session." >&2
     return 1
   fi
 
-  echo "No active or archived multiagent session found for this workspace." >&2
+  echo "No active or archived agent-window session found for this workspace." >&2
   return 1
 }

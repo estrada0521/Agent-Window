@@ -13,8 +13,8 @@ use tauri::webview::WebviewWindowBuilder;
 use tauri::Manager;
 
 const DARK_BG: &str = "rgb(4,4,4)";
-const TRAY_OPEN_ID: &str = "multiagent-chat:tray:open";
-const TRAY_QUIT_ID: &str = "multiagent-chat:tray:quit";
+const TRAY_OPEN_ID: &str = "agent-window-chat:tray:open";
+const TRAY_QUIT_ID: &str = "agent-window-chat:tray:quit";
 
 #[cfg(target_os = "macos")]
 use window_vibrancy::{
@@ -56,7 +56,7 @@ struct NativeMenuActionPayload {
 struct HubProcess(Mutex<Option<Child>>);
 
 const INJECT_JS: &str = include_str!("inject.js");
-const NATIVE_MENU_PREFIX: &str = "multiagent-chat:";
+const NATIVE_MENU_PREFIX: &str = "agent-window-chat:";
 
 fn encode_menu_component(value: &str) -> String {
     let mut out = String::new();

@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from bin.multiagent_lib.state import write_session_meta_file
+from bin.agent_window_lib.state import write_session_meta_file
 from message_delivery.cli import _parse_agent_send_args, _usage_text
 from message_delivery.send import AgentSendError, AgentSendRuntime
 

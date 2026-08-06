@@ -1,5 +1,5 @@
 [package]
-name = "multiagent-chat"
+name = "agent-window-chat"
 version = "1.0.9"
 edition = "2021"
 description = "Agent Window desktop app"
