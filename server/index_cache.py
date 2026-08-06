@@ -23,11 +23,9 @@ def matched_entries(runtime) -> list[dict]:
         )
         if can_append:
             entries = list(runtime._matched_entries_cache_entries)
-            seen_ids = set(runtime._matched_entries_cache_seen_ids)
             start_offset = runtime._matched_entries_cache_size
         else:
             entries = []
-            seen_ids = set()
             start_offset = 0
         read_size = max(0, stat.st_size - start_offset)
         try:
@@ -56,12 +54,6 @@ def matched_entries(runtime) -> list[dict]:
             if agent_index_entry_omit_for_redacted(str(entry.get("message") or "")):
                 processed_size += len(raw_segment)
                 continue
-            msg_id = str(entry.get("msg_id") or "").strip()
-            if msg_id:
-                if msg_id in seen_ids:
-                    processed_size += len(raw_segment)
-                    continue
-                seen_ids.add(msg_id)
             entries.append(entry)
             processed_size += len(raw_segment)
         runtime._matched_entries_cache_sig = (
@@ -69,5 +61,4 @@ def matched_entries(runtime) -> list[dict]:
         )
         runtime._matched_entries_cache_size = processed_size
         runtime._matched_entries_cache_entries = entries
-        runtime._matched_entries_cache_seen_ids = seen_ids
         return list(entries)

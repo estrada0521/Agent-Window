@@ -141,7 +141,6 @@ class ChatRuntime:
         self._matched_entries_cache_sig: tuple[int, int] = (0, 0)
         self._matched_entries_cache_size = 0
         self._matched_entries_cache_entries: list[dict] = []
-        self._matched_entries_cache_seen_ids: set[str] = set()
 
     def load_chat_settings(self) -> dict:
         return load_shared_hub_settings(self.repo_root)
@@ -216,14 +215,12 @@ class ChatRuntime:
         *,
         limit_override: int | None = None,
         before_msg_id: str = "",
-        around_msg_id: str = "",
     ) -> tuple[list[dict], bool, int]:
         return _entry_window_impl(
             self._matched_entries(),
             limit_override=limit_override,
             default_limit=self.limit,
             before_msg_id=before_msg_id,
-            around_msg_id=around_msg_id,
         )
 
     def _light_entry(self, entry: dict) -> dict:
@@ -233,22 +230,6 @@ class ChatRuntime:
             code_threshold=self.PUBLIC_LIGHT_CODE_THRESHOLD,
             attachment_preview_limit=self.PUBLIC_LIGHT_ATTACHMENT_PREVIEW_LIMIT,
         )
-
-    def read_entries(
-        self,
-        limit_override: int | None = None,
-        before_msg_id: str = "",
-        around_msg_id: str = "",
-        light_mode: bool = False,
-    ) -> list[dict]:
-        entries, _has_older = self._entry_window(
-            limit_override=limit_override,
-            before_msg_id=before_msg_id,
-            around_msg_id=around_msg_id,
-        )
-        if light_mode:
-            return [self._light_entry(entry) for entry in entries]
-        return entries
 
     def entry_by_id(self, msg_id: str, *, light_mode: bool = False):
         target = (msg_id or "").strip()
@@ -377,7 +358,6 @@ class ChatRuntime:
         self,
         limit_override: int | None = None,
         before_msg_id: str = "",
-        around_msg_id: str = "",
         light_mode: bool = False,
     ) -> bytes:
         now = time.monotonic()
@@ -390,7 +370,6 @@ class ChatRuntime:
             index_sig,
             limit_override,
             before_msg_id,
-            around_msg_id,
             bool(light_mode),
             bool(self.session_is_active),
             bool(self.follow_mode),
@@ -403,7 +382,6 @@ class ChatRuntime:
         entries, has_older, total_count = self._entry_window(
             limit_override=limit_override,
             before_msg_id=before_msg_id,
-            around_msg_id=around_msg_id,
         )
         meta["total_messages"] = total_count
         if light_mode:

@@ -43,8 +43,6 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
           return `${prefix}${buildInlineFileLinkMarkup(rawPath, rawPath)}`;
         });
     };
-    const FOCUS_MSG_PARAM = "focus_msg_id";
-    const readFocusMsgIdFromUrl = () => (new URLSearchParams(window.location.search).get(FOCUS_MSG_PARAM) || "").trim();
     const _pageParams = new URLSearchParams(window.location.search || "");
     const followMode = _pageParams.get("follow") === "1";
     const launchShellMode = _pageParams.get("launch_shell") === "1";
@@ -69,8 +67,6 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     const MESSAGE_BATCH = 50;
     const INITIAL_MESSAGE_WINDOW = 50;
     let latestPayloadData = null;
-    let pendingFocusMsgId = readFocusMsgIdFromUrl();
-    let focusWindowRequestedMsgId = "";
     let olderEntries = [];
     let olderHasMore = false;
     let olderLoading = false;
@@ -529,7 +525,7 @@ __CHAT_INCLUDE:transcript/rich-rendering.js__
     timeline.addEventListener("scroll", requestCenteredMessageRowUpdate, { passive: true });
     window.addEventListener("resize", requestCenteredMessageRowUpdate);
 
-__CHAT_INCLUDE:runtime/sound.js__
+__CHAT_INCLUDE:runtime/messages.js__
 __CHAT_INCLUDE:transcript/render.js__
 __CHAT_INCLUDE:transcript/actions.js__
 __CHAT_INCLUDE:panes/header-menu.js__

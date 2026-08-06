@@ -11,8 +11,6 @@
         if (!forceScroll && renderSig === lastMessagesSig) return;
         lastMessagesSig = renderSig;
 
-        notifyNewMessages(displayEntries);
-        lastNotifiedMsgId = displayEntries.at(-1)?.msg_id || lastNotifiedMsgId;
         initialLoadDone = true;
 
         const root = document.getElementById("messages");

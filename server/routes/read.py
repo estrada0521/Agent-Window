@@ -58,7 +58,6 @@ def _get_messages(handler, parsed, ctx) -> None:
     limit_override = None
     limit_raw = (qs.get("limit", [""])[0] or "").strip()
     before_msg_id = (qs.get("before_msg_id", [""])[0] or "").strip()
-    around_msg_id = (qs.get("around_msg_id", [""])[0] or "").strip()
     light_mode = (qs.get("light", [""])[0] or "").strip() == "1"
     if limit_raw:
         try:
@@ -68,7 +67,6 @@ def _get_messages(handler, parsed, ctx) -> None:
     body = ctx["payload_fn"](
         limit_override=limit_override,
         before_msg_id=before_msg_id,
-        around_msg_id=around_msg_id,
         light_mode=light_mode,
     )
     etag = _etag_for_body(body)
