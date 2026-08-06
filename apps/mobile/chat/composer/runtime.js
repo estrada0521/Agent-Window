@@ -15,97 +15,6 @@
       scheduleComposerCloseFromKeyboardDismiss();
     });
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const checkMicrophonePermission = (onDenied) => {
-        if (!(navigator.permissions && navigator.permissions.query)) return;
-        navigator.permissions.query({ name: "microphone" }).then((result) => {
-          if (result.state === "denied") onDenied();
-        }).catch(() => { });
-      };
-
-      if (micBtn) {
-        const recognition = new SpeechRecognition();
-        recognition.lang = "ja-JP";
-        recognition.continuous = false;
-        recognition.interimResults = true;
-        let isListening = false;
-        let finalTranscript = "";
-
-        const toggleRecognition = () => {
-          if (isListening) {
-            recognition.stop();
-            return;
-          }
-          finalTranscript = messageInput.value;
-          checkMicrophonePermission(() => {
-            setStatus("マイクがブロックされています。アドレスバー左のアイコン → サイトの設定 → マイクを「許可」に変更してください");
-            setTimeout(() => setStatus(""), 8000);
-          });
-          try {
-            recognition.start();
-          } catch (err) {
-            console.error("[mic] recognition.start() threw:", err);
-            setStatus("音声認識の開始に失敗: " + err.message);
-            setTimeout(() => setStatus(""), 5000);
-          }
-        };
-        micBtn.addEventListener("click", toggleRecognition);
-        micBtn.addEventListener("touchend", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          toggleRecognition();
-        }, { passive: false });
-
-        recognition.onstart = () => {
-          isListening = true;
-          micBtn.classList.add("listening");
-        };
-        recognition.onresult = (event) => {
-          let interim = "";
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            if (event.results[i].isFinal) {
-              finalTranscript += event.results[i][0].transcript;
-            } else {
-              interim += event.results[i][0].transcript;
-            }
-          }
-          messageInput.value = finalTranscript + interim;
-          updateSendBtnVisibility();
-          messageInput.dispatchEvent(new Event("input"));
-        };
-        recognition.onend = () => {
-          isListening = false;
-          micBtn.classList.remove("listening");
-          messageInput.value = finalTranscript;
-          updateSendBtnVisibility();
-          if (finalTranscript.trim()) {
-            setTimeout(() => submitMessage(), 100);
-          }
-        };
-        recognition.onerror = (e) => {
-          console.error("[mic] recognition error:", e.error, e);
-          isListening = false;
-          micBtn.classList.remove("listening");
-          if (e.error === "not-allowed") {
-            setStatus("マイクのアクセスが拒否されています。設定 > プライバシー > マイクで許可してください。");
-          } else if (e.error === "service-not-allowed") {
-            setStatus("このモード（ホーム画面アプリ）では音声認識が使えません。Safariで開いてください。");
-          } else if (e.error === "network") {
-            setStatus("音声認識サービスに接続できません（ネットワークエラー）");
-          } else if (e.error === "aborted") {
-            setStatus("音声認識が中断されました");
-          } else {
-            setStatus("音声認識エラー: " + (e.error || "unknown"));
-          }
-          setTimeout(() => setStatus(""), 5000);
-        };
-      }
-
-    } else {
-      if (micBtn) micBtn.classList.add("no-speech");
-    }
-
     const cameraBtn = document.getElementById("cameraBtn");
     const cameraInput = document.getElementById("cameraInput");
     const attachPreviewRow = document.getElementById("attachPreviewRow");
@@ -248,13 +157,5 @@
     }
 
     const updateSendBtnVisibility = () => {
-      if (!sessionActive) {
-        if (sendBtn) sendBtn.classList.remove("visible");
-        if (micBtn) micBtn.classList.remove("hidden");
-        return;
-      }
-      const hasText = messageInput.value.trim().length > 0;
-      if (sendBtn) sendBtn.classList.toggle("visible", hasText);
-      if (micBtn) micBtn.classList.toggle("hidden", hasText);
+      if (sendBtn) sendBtn.disabled = !sessionActive;
     };
-    messageInput.addEventListener("input", updateSendBtnVisibility);

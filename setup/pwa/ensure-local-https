@@ -60,7 +60,7 @@ announce_local_https_requirement() {
 multiagent: phone/PWA access requires local HTTPS.
 multiagent: mkcert を使って localhost / LAN 向け証明書を用意します。
 multiagent: - Home Screen web app
-multiagent: - microphone / secure browser APIs
+multiagent: - secure browser APIs (camera, clipboard, etc.)
 multiagent: - 将来の service worker / push 系機能
 EOF
 }
