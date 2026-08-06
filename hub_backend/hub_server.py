@@ -69,7 +69,6 @@ from hub_backend.server_helpers import (
     pwa_asset_url as _pwa_asset_url_impl,
     pwa_asset_version as _pwa_asset_version_impl,
     pwa_icon_entries as _pwa_icon_entries_impl,
-    pwa_shortcut_entries as _pwa_shortcut_entries_impl,
     resolve_external_origin as _resolve_external_origin_impl,
     restarting_page as _restarting_page_impl,
     serve_pwa_static as _serve_pwa_static_impl,
@@ -269,13 +268,6 @@ def _pwa_asset_url(path: str, base_path: str = "", *, bust: bool = False) -> str
 
 def _pwa_icon_entries(base_path: str = "") -> list[dict[str, str]]:
     return _pwa_icon_entries_impl(
-        base_path=base_path,
-        pwa_asset_url_fn=_pwa_asset_url,
-    )
-
-
-def _pwa_shortcut_entries(base_path: str = "") -> list[dict[str, object]]:
-    return _pwa_shortcut_entries_impl(
         base_path=base_path,
         pwa_asset_url_fn=_pwa_asset_url,
     )
@@ -669,7 +661,6 @@ class Handler(BaseHTTPRequestHandler):
             "start_url": "/hub-launch-shell.html?target=%2F%3Flaunch_shell%3D1",
             "scope": "/",
             "icons": _pwa_icon_entries(),
-            "shortcuts": _pwa_shortcut_entries(),
         }, ensure_ascii=True).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/manifest+json; charset=utf-8")

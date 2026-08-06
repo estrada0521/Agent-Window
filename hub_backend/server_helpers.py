@@ -88,7 +88,7 @@ def format_session_chat_url(
 
 
 def restarting_page():
-    return """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Restarting Hub</title><style>:root{color-scheme:dark;--fg:rgb(180, 180, 180);--muted:rgb(128, 128, 128)}body{margin:0;background:rgb(38,38,36);color:var(--fg);font-family:'SF Pro Text','Segoe UI',sans-serif;padding:24px}.panel{max-width:680px;margin:0 auto;background:rgb(25,25,24);border:0.5px solid rgba(180,180,180,0.09);border-radius:16px;padding:18px 18px 16px}.eyebrow{color:var(--muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}h1{margin:0 0 10px;font-size:24px}p{margin:0;color:var(--muted);line-height:1.6}</style></head><body><div class="panel"><div class="eyebrow">multiagent</div><h1>Restarting Hub</h1><p>The Hub server is being replaced. This page will reconnect automatically as soon as the new server is ready.</p></div><script>const started=Date.now();const reconnect=async()=>{try{const res=await fetch(`/sessions?ts=${Date.now()}`,{cache:'no-store'});if(res.ok){window.location.replace('/');return;}}catch(_err){}if(Date.now()-started<15000){window.setTimeout(reconnect,500);}};window.setTimeout(reconnect,700);</script></body></html>"""
+    return """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Restarting Hub</title><style>:root{color-scheme:dark;--fg:rgb(180, 180, 180);--muted:rgb(128, 128, 128)}body{margin:0;background:rgb(38,38,36);color:var(--fg);font-family:'SF Pro Text','Segoe UI',sans-serif;padding:24px}.panel{max-width:680px;margin:0 auto;background:rgb(25,25,24);border:0.5px solid rgba(180,180,180,0.09);border-radius:16px;padding:18px 18px 16px}.eyebrow{color:var(--muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}h1{margin:0 0 10px;font-size:24px}p{margin:0;color:var(--muted);line-height:1.6}</style></head><body><div class="panel"><div class="eyebrow">Agent Window</div><h1>Restarting Hub</h1><p>The Hub server is being replaced. This page will reconnect automatically as soon as the new server is ready.</p></div><script>const started=Date.now();const reconnect=async()=>{try{const res=await fetch(`/sessions?ts=${Date.now()}`,{cache:'no-store'});if(res.ok){window.location.replace('/');return;}}catch(_err){}if(Date.now()-started<15000){window.setTimeout(reconnect,500);}};window.setTimeout(reconnect,700);</script></body></html>"""
 
 
 def clean_env(*, env_mapping) -> dict:
@@ -214,31 +214,6 @@ def pwa_icon_entries(*, base_path: str = "", pwa_asset_url_fn) -> list[dict[str,
             "type": "image/png",
             "purpose": "any",
         },
-    ]
-
-
-def pwa_shortcut_entries(*, base_path: str = "", pwa_asset_url_fn) -> list[dict[str, object]]:
-    icon_192 = pwa_asset_url_fn("/pwa-icon-192.png", base_path=base_path, bust=True)
-    shortcut_icon = [{
-        "src": icon_192,
-        "sizes": "192x192",
-        "type": "image/png",
-    }]
-    return [
-        {
-            "name": "New Session",
-            "short_name": "New",
-            "description": "Start a fresh multiagent session",
-            "url": pwa_asset_url_fn("/new-session", base_path=base_path),
-            "icons": shortcut_icon,
-        },
-        {
-            "name": "Settings",
-            "short_name": "Settings",
-            "description": "Open Hub settings and notification controls",
-            "url": pwa_asset_url_fn("/settings#app-controls", base_path=base_path),
-            "icons": shortcut_icon,
-        }
     ]
 
 
