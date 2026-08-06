@@ -10,7 +10,7 @@ from pathlib import Path
 
 from backend_core.agents.registry import AGENTS, ALL_AGENT_NAMES
 
-_MULTIAGENT_AGENT_EMAIL_DOMAIN = "agents.multiagent.local"
+_AGENT_WINDOW_AGENT_EMAIL_DOMAIN = "agents.multiagent.local"
 _AGENT_NAME_SET = frozenset(ALL_AGENT_NAMES)
 
 _workspace: str = ""
@@ -42,9 +42,9 @@ def invalidate_branch_overview_cache() -> None:
 
 def _agent_from_text_multiagent_email(text: str) -> str:
     low = (text or "").lower()
-    if _MULTIAGENT_AGENT_EMAIL_DOMAIN not in low:
+    if _AGENT_WINDOW_AGENT_EMAIL_DOMAIN not in low:
         return ""
-    dom = re.escape(_MULTIAGENT_AGENT_EMAIL_DOMAIN)
+    dom = re.escape(_AGENT_WINDOW_AGENT_EMAIL_DOMAIN)
     for m in re.finditer(rf"([a-z0-9][a-z0-9._+-]*)@{dom}\b", low):
         base = m.group(1).split("+", 1)[0].strip()
         if base in _AGENT_NAME_SET:

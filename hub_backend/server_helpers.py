@@ -93,7 +93,7 @@ def restarting_page():
 
 def clean_env(*, env_mapping) -> dict:
     env = dict(env_mapping)
-    env["MULTIAGENT_AGENT_NAME"] = "user"
+    env["AGENT_WINDOW_AGENT_NAME"] = "user"
     return env
 
 
@@ -123,7 +123,7 @@ def launch_hub_restart(
         "        break\n"
         "    time.sleep(0.1)\n"
         "env = os.environ.copy()\n"
-        "env['MULTIAGENT_AGENT_NAME'] = 'user'\n"
+        "env['AGENT_WINDOW_AGENT_NAME'] = 'user'\n"
         "subprocess.Popen(\n"
         "    ['bash', script_path, '--hub', '--hub-port', str(port)],\n"
         "    cwd=repo_root,\n"

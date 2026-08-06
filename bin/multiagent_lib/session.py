@@ -21,9 +21,8 @@ def _clean_tmux_env_value(value: str) -> str:
 def session_context_from_env_output(tmux_env_output: str) -> dict[str, str]:
     env_map = _parse_tmux_environment_output(tmux_env_output)
     return {
-        "workspace": _clean_tmux_env_value(env_map.get("MULTIAGENT_WORKSPACE", "")),
-        "bin_dir": _clean_tmux_env_value(env_map.get("MULTIAGENT_BIN_DIR", "")),
-        "tmux_socket": _clean_tmux_env_value(env_map.get("MULTIAGENT_TMUX_SOCKET", "")),
+        "workspace": _clean_tmux_env_value(env_map.get("AGENT_WINDOW_WORKSPACE", "")),
+        "tmux_socket": _clean_tmux_env_value(env_map.get("AGENT_WINDOW_TMUX_SOCKET", "")),
     }
 
 

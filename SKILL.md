@@ -57,7 +57,7 @@ This distinction applies to every agent type, such as `claude-1`,
 `claude-2`, `gemini-1`, or `cursor-2`.
 
 Use the exact instance names shown in the current session topology.
-They are available in `MULTIAGENT_AGENTS` and through:
+They are available in `AGENT_WINDOW_AGENTS` and through:
 
 ```bash
 multiagent context

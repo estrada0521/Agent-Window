@@ -188,8 +188,8 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         "host_without_port",
     ):
         globals()[attr] = getattr(hub, attr)
-    PUBLIC_HOST = (os.environ.get("MULTIAGENT_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
-    PUBLIC_HUB_PORT = int(os.environ.get("MULTIAGENT_PUBLIC_HUB_PORT", "443") or "443")
+    PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
+    PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
     restart_pending, hub_server = False, None
     _PWA_STATIC_DIR = repo_root / "apps" / "shared" / "pwa"
 
@@ -885,8 +885,8 @@ def main(argv: list[str] | None = None) -> None:
 
     initialize_from_argv(argv)
 
-    cert_file = os.environ.get("MULTIAGENT_CERT_FILE", "")
-    key_file = os.environ.get("MULTIAGENT_KEY_FILE", "")
+    cert_file = os.environ.get("AGENT_WINDOW_CERT_FILE", "")
+    key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")
     use_https = bool(cert_file and key_file)
     _scheme = "https" if use_https else "http"
     if hub is not None:

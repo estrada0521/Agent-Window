@@ -374,7 +374,7 @@ class FileRuntime:
         ws = self.workspace
         candidates: list[list[str]] = []
 
-        custom = (os.environ.get("MULTIAGENT_DIFF_EDITOR") or "").strip()
+        custom = (os.environ.get("AGENT_WINDOW_DIFF_EDITOR") or "").strip()
         if custom:
             try:
                 prefix = shlex.split(custom)
@@ -421,7 +421,7 @@ class FileRuntime:
         if not candidates:
             raise ValueError(
                 "External diff needs a VS Code–compatible CLI: install Google Antigravity ('agy'), "
-                "VS Code ('code'), or set MULTIAGENT_DIFF_EDITOR to a command (e.g. agy)."
+                "VS Code ('code'), or set AGENT_WINDOW_DIFF_EDITOR to a command (e.g. agy)."
             )
         cmd = candidates[0]
         popen_kw: dict = {}

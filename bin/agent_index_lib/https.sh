@@ -128,8 +128,8 @@ ensure_repo_https_cert() {
   fi
 
   if [[ -f "$cert_file" && -f "$key_file" ]]; then
-    export MULTIAGENT_CERT_FILE="$cert_file"
-    export MULTIAGENT_KEY_FILE="$key_file"
+    export AGENT_WINDOW_CERT_FILE="$cert_file"
+    export AGENT_WINDOW_KEY_FILE="$key_file"
   fi
 }
 

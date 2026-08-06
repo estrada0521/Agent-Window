@@ -132,7 +132,7 @@ class HubRuntime:
         return agents
 
     def session_agents_query(self, session_name: str) -> tuple[list[str], bool]:
-        agents_str, timed_out = self.tmux_env_query(session_name, "MULTIAGENT_AGENTS")
+        agents_str, timed_out = self.tmux_env_query(session_name, "AGENT_WINDOW_AGENTS")
         if timed_out:
             return [], True
         cleaned = str(agents_str or "").strip()

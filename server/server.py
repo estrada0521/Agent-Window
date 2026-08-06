@@ -241,7 +241,7 @@ def _send_or_enqueue_message(
 
 def _clean_env():
     env = os.environ.copy()
-    env["MULTIAGENT_AGENT_NAME"] = "user"
+    env["AGENT_WINDOW_AGENT_NAME"] = "user"
     return env
 
 
@@ -277,8 +277,8 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     targets = [item for item in argv[8].split(",") if item]
     tmux_socket = argv[9]
     hub_port = int(argv[10])
-    PUBLIC_HOST = (os.environ.get("MULTIAGENT_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
-    PUBLIC_HUB_PORT = int(os.environ.get("MULTIAGENT_PUBLIC_HUB_PORT", "443") or "443")
+    PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
+    PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
 
     _repo_root = Path(agent_send_path).parent.parent
     runtime = ChatRuntime(
@@ -442,7 +442,7 @@ def queue_chat_restart():
         "                break\n"
         "            time.sleep(0.1)\n"
         "env = os.environ.copy()\n"
-        "env['MULTIAGENT_AGENT_NAME'] = 'user'\n"
+        "env['AGENT_WINDOW_AGENT_NAME'] = 'user'\n"
         "subprocess.Popen(\n"
         "    [script_path, '--follow', '--chat', '--session', session_name],\n"
         "    cwd=repo_root,\n"
@@ -602,8 +602,8 @@ def main(argv: list[str] | None = None) -> None:
     initialize_from_argv(argv)
     _kill_stale_sync_processes(str(index_path))
 
-    cert_file = os.environ.get("MULTIAGENT_CERT_FILE", "")
-    key_file = os.environ.get("MULTIAGENT_KEY_FILE", "")
+    cert_file = os.environ.get("AGENT_WINDOW_CERT_FILE", "")
+    key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")
     use_https = bool(cert_file and key_file)
     ThreadingHTTPServer.allow_reuse_address = True
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)

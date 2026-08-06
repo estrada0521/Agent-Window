@@ -36,15 +36,14 @@ def mark_session_launched(runtime, launched_agents: list[str]) -> None:
 
 def launch_session(runtime, delivery_targets: list[str]) -> tuple[bool, dict]:
     env = os.environ.copy()
-    env["MULTIAGENT_SESSION"] = runtime.session_name
-    env["MULTIAGENT_WORKSPACE"] = runtime.workspace
-    env["MULTIAGENT_INDEX_PATH"] = str(runtime.index_path)
-    env["MULTIAGENT_BIN_DIR"] = str(Path(runtime.agent_send_path).parent)
-    env["MULTIAGENT_TMUX_SOCKET"] = runtime.tmux_socket
-    env["MULTIAGENT_SKIP_USER_CHAT"] = "1"
+    env["AGENT_WINDOW_SESSION"] = runtime.session_name
+    env["AGENT_WINDOW_WORKSPACE"] = runtime.workspace
+    env["AGENT_WINDOW_INDEX_PATH"] = str(runtime.index_path)
+    env["AGENT_WINDOW_TMUX_SOCKET"] = runtime.tmux_socket
+    env["AGENT_WINDOW_SKIP_USER_CHAT"] = "1"
     env.pop("TMUX", None)
     env.pop("TMUX_PANE", None)
-    env["MULTIAGENT_AGENT_NAME"] = "user"
+    env["AGENT_WINDOW_AGENT_NAME"] = "user"
     multiagent_bin = Path(runtime.agent_send_path).parent / "multiagent"
     try:
         subprocess.Popen(

@@ -46,7 +46,7 @@ PYEOF
 ensure_session_index_mirrors() {
   local session="$1" workspace_root
   _ensure_canonical_index_healthy "$session"
-  workspace_root="${WORKSPACE:-${MULTIAGENT_WORKSPACE:-}}"
+  workspace_root="${WORKSPACE:-${AGENT_WINDOW_WORKSPACE:-}}"
   [[ -n "$workspace_root" ]] || return 0
   PYTHONPATH="$REPO_ROOT/src:$REPO_ROOT" python3 - "$session" "$workspace_root" <<'PYEOF'
 import sys

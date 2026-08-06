@@ -302,21 +302,12 @@ def collect_repo_sessions(runtime: Any) -> tuple[list[dict], str, str]:
         if not name or any_timeout:
             continue
 
-        bin_dir, t1 = runtime.tmux_env_query(name, "MULTIAGENT_BIN_DIR")
-        if t1:
-            any_timeout, timeout_detail = True, f"tmux show-environment (BIN_DIR) timed out for {name}"
+        workspace, t2 = runtime.tmux_env_query(name, "AGENT_WINDOW_WORKSPACE")
+        if t2:
+            any_timeout, timeout_detail = True, f"tmux show-environment (WORKSPACE) timed out for {name}"
             break
-        if not bin_dir:
+        if not workspace:
             continue
-
-        try:
-            if Path(bin_dir).resolve() != runtime.script_dir:
-                continue
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            continue
-
-        workspace, t2 = runtime.tmux_env_query(name, "MULTIAGENT_WORKSPACE")
         explicit_log_dir = ""
         r_attached = runtime.tmux_run(["display-message", "-p", "-t", name, "#{session_attached}"])
         r_created = runtime.tmux_run(["display-message", "-p", "-t", name, "#{session_created}"])

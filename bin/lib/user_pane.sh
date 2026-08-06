@@ -34,7 +34,7 @@ print(build_user_launch_command(script_dir=script_dir))
 PYEOF
   )"
   tmux select-pane -t "$pane_id" -T "terminal"
-  tmux set-environment -t "$SESSION_NAME" MULTIAGENT_AGENT_NAME "user"
+  tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_AGENT_NAME "user"
   local shell_bin="${SHELL:-/bin/zsh}"
   if [[ ! -x "$shell_bin" ]]; then
     shell_bin=/bin/bash

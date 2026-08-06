@@ -167,7 +167,7 @@ class HubSessionApi:
             index_path = session_log_path(session_name)
             index_path.touch(exist_ok=True)
             env = self.ctx.hub._chat_launch_env()
-            env["MULTIAGENT_INDEX_PATH"] = str(index_path)
+            env["AGENT_WINDOW_INDEX_PATH"] = str(index_path)
             env["SESSION_IS_ACTIVE"] = "1"
             try:
                 subprocess.Popen(

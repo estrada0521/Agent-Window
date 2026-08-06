@@ -68,10 +68,10 @@ if [[ "$HUB_MODE" == "https" ]]; then
 fi
 
 bash "$REPO_ROOT/setup/pwa/ensure-local-https" >/dev/null
-export MULTIAGENT_ENABLE_LOCAL_HTTPS=1
+export AGENT_WINDOW_ENABLE_LOCAL_HTTPS=1
 ensure_repo_https_cert
 
-if [[ -z "${MULTIAGENT_CERT_FILE:-}" || -z "${MULTIAGENT_KEY_FILE:-}" ]]; then
+if [[ -z "${AGENT_WINDOW_CERT_FILE:-}" || -z "${AGENT_WINDOW_KEY_FILE:-}" ]]; then
   echo "pwa-enable: local HTTPS certificate was not created." >&2
   exit 1
 fi
@@ -81,7 +81,7 @@ mkdir -p "$PWA_STATE_DIR"
 cat > "$PWA_STATE_DIR/enabled" <<EOF
 enabled_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 hub_port=$HUB_PORT
-cert_file=$MULTIAGENT_CERT_FILE
+cert_file=$AGENT_WINDOW_CERT_FILE
 EOF
 
 echo "pwa-enable: PWA HTTPS preparation complete."
