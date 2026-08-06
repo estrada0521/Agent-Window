@@ -476,7 +476,7 @@ class FileRuntime:
         if not gitignore_path.exists():
             try:
                 gitignore_path.write_text(
-                    "# Ephemeral diff snapshots (multiagent-chat). Safe to delete this folder.\n*\n!.gitignore\n",
+                    "# Ephemeral diff snapshots (Agent Window). Safe to delete this folder.\n*\n!.gitignore\n",
                     encoding="utf-8",
                 )
             except OSError:
