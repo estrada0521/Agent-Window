@@ -14,12 +14,10 @@ from pathlib import Path
 
 # Canonical (current)
 NATIVE_LOG_SYNC_STATE_FILENAME = ".native-log-sync-state.json"
-NATIVE_LOG_SYNC_LOCK_FILENAME = ".native-log-sync.lock"
 
-# Internal dedup bookkeeping (synced_msg_ids / fingerprints / first_seen_ts).
-# Deliberately not mirrored into the workspace: it is large, grows without
-# bound over a session's lifetime, and has no value to an agent looking up
-# a provider's current native log path via NATIVE_LOG_SYNC_STATE_FILENAME.
+# Internal bookkeeping (native_log_progress / agent_first_seen_ts). Deliberately
+# not mirrored into the workspace: it has no value to an agent looking up a
+# provider's current native log path via NATIVE_LOG_SYNC_STATE_FILENAME.
 NATIVE_LOG_SYNC_INTERNAL_FILENAME = ".native-log-sync-internal.json"
 
 # Historical — migrated on read
@@ -41,10 +39,6 @@ def canonical_native_log_sync_internal_path(session_dir: Path | str) -> Path:
 
 def legacy_agent_index_sync_state_path(session_dir: Path | str) -> Path:
     return Path(session_dir).resolve() / LEGACY_AGENT_INDEX_SYNC_STATE_FILENAME
-
-
-def canonical_native_log_sync_lock_path(session_dir: Path | str) -> Path:
-    return Path(session_dir).resolve() / NATIVE_LOG_SYNC_LOCK_FILENAME
 
 
 def legacy_agent_index_sync_lock_path(session_dir: Path | str) -> Path:
