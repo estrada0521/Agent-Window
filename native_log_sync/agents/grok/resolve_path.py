@@ -55,7 +55,7 @@ def resolve_grok_updates_path(runtime, agent: str) -> str:
     blocked_path = getattr(runtime, "_native_log_blocked_paths", {}).get(agent, "")
     picked = pick_latest_unclaimed_for_agent(
         candidates,
-        runtime._grok_cursors,
+        runtime._native_log_current_paths,
         agent,
         blocked_path=blocked_path,
     )

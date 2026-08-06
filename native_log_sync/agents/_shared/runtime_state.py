@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import json
 import threading
 import time
 
 from native_log_sync.agents._shared.path_state import (
-    _dedup_cursor_claims,
-    _load_cursor_dict,
+    _load_path_progress,
+    _load_pane_paths,
 )
-from native_log_sync.duplicate import mark_message_synced
 
 
 def initialize_native_log_runtime_state(runtime: object) -> None:
@@ -25,11 +23,16 @@ def initialize_native_log_runtime_state(runtime: object) -> None:
     runtime._idle_running_display_timers = {}
 
     runtime._sync_state = runtime.load_sync_state()
-    runtime._codex_cursors = _dedup_cursor_claims(_load_cursor_dict(runtime._sync_state.get("codex_cursors")))
-    runtime._cursor_cursors = _dedup_cursor_claims(_load_cursor_dict(runtime._sync_state.get("cursor_cursors")))
-    runtime._claude_cursors = _dedup_cursor_claims(_load_cursor_dict(runtime._sync_state.get("claude_cursors")))
-    runtime._gemini_cursors = _dedup_cursor_claims(_load_cursor_dict(runtime._sync_state.get("gemini_cursors")))
-    runtime._grok_cursors = _dedup_cursor_claims(_load_cursor_dict(runtime._sync_state.get("grok_cursors")))
+
+    # The durable record: for every native log path this session has ever
+    # synced (regardless of which pane/instance is currently reading it),
+    # how far into it we've read. This is the only place read progress is
+    # tracked, so there is nothing to keep in sync across two stores.
+    runtime._native_log_progress = _load_path_progress(runtime._sync_state.get("native_log_progress"))
+
+    # Lightweight, disposable: which path each pane is currently resolved to.
+    # Recomputed from path resolution every sync; safe to lose or rebuild.
+    runtime._native_log_current_paths = _load_pane_paths(runtime._sync_state.get("native_log_current_paths"))
 
     runtime._native_log_blocked_paths: dict[str, str] = {}
 
@@ -39,44 +42,6 @@ def initialize_native_log_runtime_state(runtime: object) -> None:
         for key, value in raw_first_seen.items():
             if isinstance(key, str) and isinstance(value, (int, float)):
                 runtime._agent_first_seen_ts[key] = float(value)
-
-    runtime._synced_msg_ids = set()
-    runtime._synced_message_fingerprints = set()
-    persisted_ids = runtime._sync_state.get("synced_msg_ids")
-    if isinstance(persisted_ids, list):
-        for msg_id in persisted_ids:
-            if isinstance(msg_id, str) and msg_id.strip():
-                runtime._synced_msg_ids.add(msg_id.strip())
-    persisted_fingerprints = runtime._sync_state.get("synced_message_fingerprints")
-    if isinstance(persisted_fingerprints, list):
-        for fingerprint in persisted_fingerprints:
-            if isinstance(fingerprint, str) and fingerprint.strip():
-                runtime._synced_message_fingerprints.add(fingerprint.strip())
-
-    # Older sync-state files did not persist content fingerprints. Fall back to
-    # one index scan only for initial bootstrap/migration, then rely on the
-    # persisted sets and O(1) lookups during normal sync.
-    needs_index_preload = not runtime._synced_msg_ids or not runtime._synced_message_fingerprints
-    preload_prefixes = ("gemini", "codex", "cursor", "claude", "grok")
-    try:
-        if needs_index_preload and runtime.index_path.exists():
-            with open(runtime.index_path, "r", encoding="utf-8") as handle:
-                for line in handle:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        obj = json.loads(line)
-                    except Exception:
-                        continue
-                    sender = str(obj.get("sender") or "")
-                    agent = str(obj.get("agent") or "")
-                    if sender.startswith(preload_prefixes) or agent:
-                        msg_id = str(obj.get("msg_id") or "").strip()
-                        message = str(obj.get("message") or "")
-                        mark_message_synced(runtime, sender, message, msg_id)
-    except Exception:
-        pass
 
 
 def first_seen_for_agent(runtime: object, agent: str, *, time_module=time) -> float:

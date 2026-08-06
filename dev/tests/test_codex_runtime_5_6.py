@@ -16,9 +16,8 @@ def _entry(payload: dict) -> dict:
 
 class _CodexSyncRuntime:
     def __init__(self, root: Path) -> None:
-        self._codex_cursors = {}
-        self._synced_msg_ids = set()
-        self._synced_message_fingerprints = set()
+        self._native_log_progress = {}
+        self._native_log_current_paths = {}
         self.index_path = root / "agent-index.jsonl"
         self.session_name = "test-session"
         self.workspace = str(root)
@@ -49,23 +48,23 @@ class CodexRuntime56Tests(unittest.TestCase):
             log_path.write_text("", encoding="utf-8")
             runtime = _CodexSyncRuntime(root)
 
-            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            sync_codex_native_log(runtime, "codex", str(log_path))
             with log_path.open("a", encoding="utf-8") as handle:
                 for kind in ("task_complete", "thread_settings_applied", "task_started"):
                     handle.write(json.dumps({"type": "event_msg", "payload": {"type": kind}}) + "\n")
-            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            sync_codex_native_log(runtime, "codex", str(log_path))
             self.assertEqual(runtime.running_marks, ["codex"])
             self.assertEqual(runtime.idle_agents, [])
 
             with log_path.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps({"type": "event_msg", "payload": {"type": "task_started"}}) + "\n")
-            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            sync_codex_native_log(runtime, "codex", str(log_path))
             self.assertEqual(runtime.running_marks, ["codex"])
 
             with log_path.open("a", encoding="utf-8") as handle:
                 for kind in ("task_started", "task_complete"):
                     handle.write(json.dumps({"type": "event_msg", "payload": {"type": kind}}) + "\n")
-            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            sync_codex_native_log(runtime, "codex", str(log_path))
             self.assertEqual(runtime.idle_agents, ["codex"])
 
     def test_only_semantic_codex_activity_reactivates_running(self) -> None:
@@ -106,10 +105,10 @@ class CodexRuntime56Tests(unittest.TestCase):
             log_path.write_text("", encoding="utf-8")
             runtime = _CodexSyncRuntime(root)
 
-            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            sync_codex_native_log(runtime, "codex", str(log_path))
             with log_path.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps({"type": "event_msg", "payload": {"type": "task_started"}}) + "\n")
-            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            sync_codex_native_log(runtime, "codex", str(log_path))
             self.assertEqual(runtime.running_agents(), {"codex"})
 
             # /interrupt marks the agent idle immediately. Codex then writes a
@@ -126,7 +125,7 @@ class CodexRuntime56Tests(unittest.TestCase):
                     + "\n"
                 )
                 handle.write(json.dumps({"type": "event_msg", "payload": {"type": "turn_aborted"}}) + "\n")
-            sync_codex_native_log(runtime, "codex", str(log_path), sync_bind_backfill_window_seconds=0)
+            sync_codex_native_log(runtime, "codex", str(log_path))
 
             self.assertEqual(runtime.running_agents(), set())
             self.assertEqual(runtime.idle_agents, ["codex", "codex"])

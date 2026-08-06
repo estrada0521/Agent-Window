@@ -9,12 +9,6 @@ import shlex
 import time
 from pathlib import Path
 
-from native_log_sync.agents._shared.path_state import (
-    NativeLogCursor,
-    _advance_native_cursor,
-    _cursor_binding_changed,
-    _parse_iso_timestamp_epoch,
-)
 from native_log_sync.event_format import _pane_runtime_gemini_with_occurrence_ids
 from backend_core.access.files import append_jsonl_entry
 

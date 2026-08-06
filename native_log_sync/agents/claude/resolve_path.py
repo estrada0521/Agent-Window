@@ -34,7 +34,7 @@ def resolve_claude_session_jsonl_path(runtime, agent: str, native_log_path: str 
     for root in roots:
         candidates.extend(root.glob("*.jsonl"))
     blocked_path = getattr(runtime, "_native_log_blocked_paths", {}).get(agent, "")
-    picked = pick_latest_unclaimed_for_agent(candidates, runtime._claude_cursors, agent, blocked_path=blocked_path)
+    picked = pick_latest_unclaimed_for_agent(candidates, runtime._native_log_current_paths, agent, blocked_path=blocked_path)
     if picked and picked.exists():
         runtime._native_log_blocked_paths.pop(agent, None)
         return str(picked)

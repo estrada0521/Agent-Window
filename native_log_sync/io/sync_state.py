@@ -7,9 +7,8 @@ import os
 import time
 
 from native_log_sync.agents._shared.path_state import (
-    NativeLogCursor,
     _agent_base_name,
-    _cursor_dict_to_json,
+    _normalized_native_log_path,
 )
 from native_log_sync.io.state_paths import (
     canonical_native_log_sync_internal_path,
@@ -17,7 +16,34 @@ from native_log_sync.io.state_paths import (
     legacy_agent_index_sync_state_path,
 )
 
-_INTERNAL_KEYS = ("agent_first_seen_ts", "synced_msg_ids", "synced_message_fingerprints")
+_INTERNAL_KEYS = ("agent_first_seen_ts", "native_log_progress")
+
+# Pre-redesign per-agent cursor keys: {"agent": [path, offset], ...}. A session
+# whose internal file predates the path-progress model has none of the
+# _INTERNAL_KEYS above, so without this fallback every native log would be
+# treated as never-read and replayed from byte 0 on next load.
+_LEGACY_CURSOR_KEYS = (
+    "claude_cursors",
+    "codex_cursors",
+    "cursor_cursors",
+    "gemini_cursors",
+    "grok_cursors",
+)
+
+
+def _migrate_legacy_cursors_to_progress(data: dict) -> dict[str, int]:
+    progress: dict[str, int] = {}
+    for key in _LEGACY_CURSOR_KEYS:
+        cursors = data.get(key)
+        if not isinstance(cursors, dict):
+            continue
+        for value in cursors.values():
+            if not isinstance(value, (list, tuple)) or len(value) != 2:
+                continue
+            path, offset = value
+            if isinstance(path, str) and path and isinstance(offset, int):
+                progress[_normalized_native_log_path(path)] = offset
+    return progress
 
 
 def _read_json_locked(path) -> dict:
@@ -63,14 +89,20 @@ def load_sync_state(runtime) -> dict:
         except OSError:
             pass
 
-    # Internal dedup bookkeeping lives in its own file. Older sessions still
-    # have it inline in `data` (read above) until the next save migrates it;
-    # once the internal file exists, it is the source of truth.
+    # Internal bookkeeping (read-progress ledger, first-seen timestamps) lives
+    # in its own file, not the workspace-mirrored one. Once it exists it is
+    # the source of truth for these keys.
+    internal_data: dict = {}
     if internal.exists():
         internal_data = _read_json_locked(internal)
         for key in _INTERNAL_KEYS:
             if key in internal_data:
                 data[key] = internal_data[key]
+
+    if "native_log_progress" not in internal_data:
+        legacy_progress = _migrate_legacy_cursors_to_progress(data)
+        if legacy_progress:
+            data["native_log_progress"] = legacy_progress
 
     return data
 
@@ -79,11 +111,7 @@ def save_sync_state(runtime, *, time_module=time) -> None:
     last_sync = time_module.strftime("%Y-%m-%d %H:%M:%S")
     try:
         pointer_state = {
-            "codex_cursors": _cursor_dict_to_json(runtime._codex_cursors),
-            "cursor_cursors": _cursor_dict_to_json(runtime._cursor_cursors),
-            "claude_cursors": _cursor_dict_to_json(runtime._claude_cursors),
-            "gemini_cursors": _cursor_dict_to_json(runtime._gemini_cursors),
-            "grok_cursors": _cursor_dict_to_json(runtime._grok_cursors),
+            "native_log_current_paths": dict(runtime._native_log_current_paths),
             "last_sync": last_sync,
         }
         with canonical_native_log_sync_state_path(runtime.index_path.parent).open("w", encoding="utf-8") as handle:
@@ -94,8 +122,7 @@ def save_sync_state(runtime, *, time_module=time) -> None:
 
         internal_state = {
             "agent_first_seen_ts": dict(runtime._agent_first_seen_ts),
-            "synced_msg_ids": sorted(runtime._synced_msg_ids),
-            "synced_message_fingerprints": sorted(runtime._synced_message_fingerprints),
+            "native_log_progress": dict(runtime._native_log_progress),
             "last_sync": last_sync,
         }
         with canonical_native_log_sync_internal_path(runtime.index_path.parent).open("w", encoding="utf-8") as handle:
@@ -109,31 +136,21 @@ def save_sync_state(runtime, *, time_module=time) -> None:
 
 def sync_cursor_status(runtime, *, os_module=os) -> list[dict]:
     result: list[dict] = []
-    cursor_maps: list[tuple[str, dict[str, NativeLogCursor]]] = [
-        ("codex", runtime._codex_cursors),
-        ("cursor", runtime._cursor_cursors),
-        ("claude", runtime._claude_cursors),
-        ("gemini", runtime._gemini_cursors),
-        ("grok", runtime._grok_cursors),
-    ]
     for agent in runtime.active_agents():
+        path = runtime._native_log_current_paths.get(agent)
         entry: dict = {
             "agent": agent,
             "type": _agent_base_name(agent),
-            "log_path": None,
+            "log_path": path,
             "offset": None,
             "file_size": None,
             "first_seen_ts": runtime._first_seen_for_agent(agent),
         }
-        for _type, cmap in cursor_maps:
-            if agent in cmap:
-                cursor = cmap[agent]
-                entry["log_path"] = cursor.path
-                entry["offset"] = cursor.offset
-                try:
-                    entry["file_size"] = os_module.path.getsize(cursor.path)
-                except OSError:
-                    entry["file_size"] = None
-                break
+        if path:
+            entry["offset"] = runtime._native_log_progress.get(_normalized_native_log_path(path))
+            try:
+                entry["file_size"] = os_module.path.getsize(path)
+            except OSError:
+                entry["file_size"] = None
         result.append(entry)
     return result

@@ -15,9 +15,8 @@ from native_log_sync.agents.grok.read_updates import _turn_completed, extract_gr
 
 class _Runtime:
     def __init__(self, root: Path) -> None:
-        self._grok_cursors = {}
-        self._synced_msg_ids = set()
-        self._synced_message_fingerprints = set()
+        self._native_log_progress = {}
+        self._native_log_current_paths = {}
         self.index_path = root / "agent-index.jsonl"
         self.session_name = "test-session"
         self.workspace = str(root)

@@ -9,16 +9,15 @@ from pathlib import Path
 
 from backend_core.access.files import append_jsonl_entry
 from native_log_sync.agents._shared.path_state import (
-    NativeLogCursor,
-    _advance_native_cursor,
-    _cursor_binding_changed,
+    _normalized_native_log_path,
+    advance_read_progress,
+    read_progress_start,
 )
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.grok.read_runtime import (
     iter_tool_calls_from_update,
     runtime_tool_events,
 )
-from native_log_sync.duplicate import already_synced_message, mark_message_synced
 
 
 def extract_grok_assistant_text(entry: object) -> str:
@@ -30,14 +29,12 @@ def extract_grok_assistant_text(entry: object) -> str:
     return content.strip() if isinstance(content, str) else ""
 
 
-def _append_grok_entry(runtime, agent: str, path: str, line_start: int, entry: object) -> bool:
+def _append_grok_reply(runtime, agent: str, history_path: str, line_start: int, entry: dict) -> bool:
     display = extract_grok_assistant_text(entry)
     if not display:
         return False
-    key = f"grok:{agent}:{path}:{line_start}".encode("utf-8")
+    key = f"grok:{agent}:{history_path}:{line_start}".encode("utf-8")
     msg_id = hashlib.sha256(key).hexdigest()[:12]
-    if already_synced_message(runtime, agent, display, msg_id):
-        return False
     append_jsonl_entry(
         runtime.index_path,
         {
@@ -49,31 +46,65 @@ def _append_grok_entry(runtime, agent: str, path: str, line_start: int, entry: o
             "msg_id": msg_id,
         },
     )
-    mark_message_synced(runtime, agent, display, msg_id)
     return True
 
 
-def _sync_latest_final_assistant(runtime, agent: str, history_path: str) -> bool:
-    """Backfill only the final reply that may precede first file binding."""
-    latest: tuple[int, object] | None = None
-    try:
+def _sync_grok_chat_history(runtime, agent: str, history_path: str) -> bool:
+    """Sync assistant replies from chat_history.jsonl not yet synced.
+
+    The first time this exact file is seen, only backfill the single latest
+    reply (there may be a long prior conversation in here that predates this
+    Agent Window install ever watching it); every sync after that is a plain
+    incremental read of whatever is new.
+    """
+    normalized = _normalized_native_log_path(history_path)
+    is_first_encounter = normalized not in runtime._native_log_progress
+    file_size = os.path.getsize(history_path)
+    start = read_progress_start(runtime._native_log_progress, history_path, file_size)
+    if start >= file_size:
+        return False
+
+    appended = False
+    if is_first_encounter:
+        latest: tuple[int, dict] | None = None
         with open(history_path, "r", encoding="utf-8") as handle:
+            handle.seek(start)
             while True:
                 line_start = handle.tell()
                 line = handle.readline()
                 if not line:
                     break
+                line = line.strip()
+                if not line:
+                    continue
                 try:
                     entry = json.loads(line)
                 except json.JSONDecodeError:
                     continue
                 if extract_grok_assistant_text(entry):
                     latest = (line_start, entry)
-    except OSError:
-        return False
-    if latest is None:
-        return False
-    return _append_grok_entry(runtime, agent, history_path, *latest)
+        if latest is not None:
+            appended = _append_grok_reply(runtime, agent, history_path, *latest)
+    else:
+        with open(history_path, "r", encoding="utf-8") as handle:
+            handle.seek(start)
+            while True:
+                line_start = handle.tell()
+                line = handle.readline()
+                if not line:
+                    break
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if _append_grok_reply(runtime, agent, history_path, line_start, entry):
+                    appended = True
+
+    advance_read_progress(runtime._native_log_progress, history_path, file_size)
+    return appended
 
 
 def _turn_completed(entry: object) -> bool:
@@ -104,39 +135,40 @@ def sync_grok_native_log(runtime, agent: str, native_log_path: str | None = None
         history_path = _chat_history_path(updates_path)
         if not history_path:
             return
+
+        runtime._native_log_current_paths[agent] = updates_path
+        normalized_updates = _normalized_native_log_path(updates_path)
+        is_first_bind = normalized_updates not in runtime._native_log_progress
+
         file_size = os.path.getsize(updates_path)
-        previous = runtime._grok_cursors.get(agent)
-        offset = _advance_native_cursor(runtime._grok_cursors, agent, updates_path, file_size)
-        if offset is None:
-            binding_changed = _cursor_binding_changed(previous, runtime._grok_cursors.get(agent))
-            appended = _sync_latest_final_assistant(runtime, agent, history_path) if binding_changed else False
-            if binding_changed:
-                runtime.save_sync_state()
-            return
+        start = read_progress_start(runtime._native_log_progress, updates_path, file_size)
 
         turn_completed = False
-        workspace = str(getattr(runtime, "workspace", "") or "")
-        with open(updates_path, "r", encoding="utf-8") as handle:
-            handle.seek(offset)
-            while True:
-                line = handle.readline()
-                if not line:
-                    break
-                try:
-                    entry = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                turn_completed = _turn_completed(entry) or turn_completed
-                tool_evs: list[dict] = []
-                for name, inp in iter_tool_calls_from_update(entry):
-                    tool_evs.extend(runtime_tool_events(name, inp, workspace=workspace))
-                if tool_evs:
-                    push_runtime_display(runtime, agent, tool_evs)
+        if start < file_size:
+            workspace = str(getattr(runtime, "workspace", "") or "")
+            with open(updates_path, "r", encoding="utf-8") as handle:
+                handle.seek(start)
+                while True:
+                    line = handle.readline()
+                    if not line:
+                        break
+                    try:
+                        entry = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    turn_completed = _turn_completed(entry) or turn_completed
+                    tool_evs: list[dict] = []
+                    for name, inp in iter_tool_calls_from_update(entry):
+                        tool_evs.extend(runtime_tool_events(name, inp, workspace=workspace))
+                    if tool_evs:
+                        push_runtime_display(runtime, agent, tool_evs)
 
-        runtime._grok_cursors[agent] = NativeLogCursor(path=updates_path, offset=file_size)
-        runtime.save_sync_state()
+        advance_read_progress(runtime._native_log_progress, updates_path, file_size)
+
+        if turn_completed or is_first_bind:
+            _sync_grok_chat_history(runtime, agent, history_path)
         if turn_completed:
-            _sync_latest_final_assistant(runtime, agent, history_path)
             runtime._mark_idle(agent)
+        runtime.save_sync_state()
     except Exception as exc:
-        logging.error("Failed to sync Grok message for %s: %s", agent, exc, exc_info=True)
+        logging.error(f"Failed to sync Grok message for {agent}: {exc}", exc_info=True)
