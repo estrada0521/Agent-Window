@@ -140,7 +140,13 @@ if [[ -z "$app_path" ]]; then
   exit 1
 fi
 
-printf 'tauri-build: built app at %s\n' "$app_path"
+install_dir="$HOME/Applications"
+mkdir -p "$install_dir"
+installed_app="$install_dir/$(basename "$app_path")"
+rm -rf "$installed_app"
+cp -R "$app_path" "$installed_app"
+
+printf 'tauri-build: installed app at %s\n' "$installed_app"
 if [[ "$OPEN_APP" == "1" ]]; then
-  open "$app_path"
+  open "$installed_app"
 fi
