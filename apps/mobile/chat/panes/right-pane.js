@@ -13,18 +13,22 @@
       if (/iP(hone|ad|od)/.test(ua)) return true;
       return navigator.platform === "MacIntel" && Number(navigator.maxTouchPoints || 0) > 1;
     })();
-    const useNativeHeaderMenuPicker = false; // Disabled due to iOS Safari visual glitches (flashing white square)
+    const useNativeHeaderMenuPicker = !!(isAppleTouchDevice && nativeHeaderMenuSelect && rightMenuBtn);
     const clearNativeHeaderMenuSelection = () => {
       if (!nativeHeaderMenuSelect) return;
       nativeHeaderMenuSelect.value = "";
     };
     const syncNativeHeaderMenuSelectAnchor = () => {
-      // Keep the select off-screen; do not reposition it over the button.
-      // Moving it to the button's coordinates causes iOS Safari to flash
-      // the native select box appearance at that position.
+      if (!useNativeHeaderMenuPicker || !nativeHeaderMenuSelect || !rightMenuBtn) return;
+      const rect = rightMenuBtn.getBoundingClientRect();
+      nativeHeaderMenuSelect.style.left = `${Math.round(rect.left)}px`;
+      nativeHeaderMenuSelect.style.top = `${Math.round(rect.top)}px`;
+      nativeHeaderMenuSelect.style.width = `${Math.max(1, Math.round(rect.width))}px`;
+      nativeHeaderMenuSelect.style.height = `${Math.max(1, Math.round(rect.height))}px`;
     };
     const openNativeHeaderMenuPicker = () => {
       if (!useNativeHeaderMenuPicker || !nativeHeaderMenuSelect) return false;
+      syncNativeHeaderMenuSelectAnchor();
       clearNativeHeaderMenuSelection();
       const show = () => {
         if (typeof nativeHeaderMenuSelect.showPicker === "function") {
@@ -42,6 +46,7 @@
     };
     if (useNativeHeaderMenuPicker) {
       nativeHeaderMenuSelect.classList.add("is-ios-active");
+      syncNativeHeaderMenuSelectAnchor();
     }
     nativeHeaderMenuSelect?.addEventListener("pointerdown", () => {
       resetAgentActionNativeMenu({ clearOptions: true });
