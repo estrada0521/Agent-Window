@@ -1,6 +1,8 @@
 # Agent Window
 
-Agent Window is a **local interface for macOS** that I developed to work with Agent CLIs such as Claude, Codex, Gemini, and Cursor in a single workspace and timeline. Each Agent CLI runs normally inside a tmux pane. Agent Window sends text to the selected pane, retrieves messages from each CLI's native log, and brings them together on one screen. Without wrapping the CLIs in a common API or replacing their runtimes with a custom agent runtime, it **uses the capabilities provided natively by each CLI**.
+Agent Window is a **local interface for macOS** that watches, from outside, a workspace where multiple Agent CLIs are running.
+
+Each Agent CLI launches normally inside a tmux pane. It never calls a model through an API or SDK. **It uses only the capabilities each CLI already has.**
 
 [Design philosophy](DESIGN.md) · [日本語](README_jp.md)
 
@@ -9,78 +11,13 @@ Agent Window is a **local interface for macOS** that I developed to work with Ag
   <img src="media/agent-window-hero-2.png" width="100%" alt="Agent Window hero 2">
 </p>
 
-# Architecture
-
-Each Agent Window session is associated with one workspace, one tmux process, one chat server, and one local JSONL log. Any Agent CLI can be added to or removed from the tmux panes. Multiple instances of the same Agent can run at once; each is identified by an instance name such as `Claude-3`. Conversation history belongs to the Agent Window session rather than to a CLI process. Even when a CLI is exited, restarted, removed, or added again, ordinary messages continue to be appended to the same JSONL as long as the session remains the same. This JSONL is append-only and can be read without Agent Window. The basic data flow is:
-
-```text
-Input field
-  → chat server
-  → tmux pane
-  → Agent CLI
-
-Agent CLI
-  → native log
-  → native log watcher
-  → chat server
-  → UI / session JSONL
-```
-
-Workspace and Git state are monitored separately through FSEvents and reflected in the right pane.
-
-## Sending
-
-The sending backend uses `tmux send-keys`. Text sent from the input field is entered directly into the pane running the selected Agent CLI. Because it is not converted into an Agent Window-specific message format, slash commands and other native CLI commands can be used as-is. Agent-to-agent messages are sent with `agent-send`. This is a thin wrapper that enters text into another specified Agent CLI, whether it is in the same session or a different one. An Agent can give another instance a session-local name with `agent-send name <target> <name>`. The name is used only as an `agent-send` address and in the `[From: ...]` prefix; canonical instance names and log identities remain unchanged.
-
-## Receiving
-
-The receiving side resolves each CLI's native log path from its PID tree and related process information, then monitors it directly with kqueue. The mapping between processes and log paths is resolved again when necessary, such as after a CLI restart, an Agent being added again, or a chat server reload. The Agent Window session timeline therefore continues even when the CLI process changes. Events obtained from native logs are classified into ordinary messages, tool calls, and other categories. Ordinary messages sent from humans to Agents, from Agents to humans, and from one Agent to another are stored in the session JSONL. Tool calls and command output may be streamed temporarily to the screen when needed, but they are not indiscriminately persisted in the shared conversation history.
-
-## App
-
-Agent Window is fundamentally a locally running web app. The macOS version is a thin wrapper built with Rust and Tauri. It handles the parts required of a desktop application, such as window control and appearance. A PWA is also provided so mobile devices can connect to the same interface.
-
-# Interface
-
-## Hub
-
-The Hub on the left manages the list of Agent Window sessions. New sessions are started, archived, and deleted from the Hub. Appearance and functional settings shared across sessions are also stored there. The three appearance themes are Dark, Light, and Hybrid.
-
-## Chat
-
-The center of the interface displays ordinary messages exchanged with every Agent participating in the session as a single timeline. The display is not divided into independent chat rooms for each Agent. Switching between CLIs or running multiple Agents at the same time does not split the conversation: everything that happens within the same session remains in the same flow. The timeline visible on screen is the same timeline preserved in the session JSONL.
-
-### Agent selection and input
-
-Messages are sent to the currently selected Agent CLI. The input field is normally minimized to leave more room for the chat. Use the `O` button at the bottom of the screen to expand it. Typing `@` searches files in the workspace. The search uses a cache of file information obtained through FSEvents. Files can be attached with the plus button or by drag-and-drop. Attached files are saved to `.agent-window/uploads/` in the workspace, and their paths are passed to the Agent.
-
-### Workspace
-
-The right pane displays the state of the current workspace. File system changes are tracked with FSEvents, and uncommitted diffs are shown in a compact form. Untracked files can be deleted or ignored, and individual files can be reverted. The minimal embedded file viewer supports text files, HTML, Markdown, and other common formats. When `Open in Default App` is enabled, files open in the macOS default application. This is the normal mode of use.
-
-### Menu
-
-The hamburger button in the top-right provides the following actions.
-
-* `Terminal`
-  Opens the tmux terminal associated with the session.
-
-* `Finder`
-  Opens the session workspace in Finder.
-
-* `Add / Remove Agent`
-  Adds or removes Agent CLIs in the session. Multiple instances of the same Agent can also be added.
-
-* `reload`
-  Hard-reloads the chat server. If the source code has changed, the running server is replaced with the new implementation.
+---
 
 # Setup
 
-The following is the minimal entry point for starting Agent Window after cloning the repository. The current implementation targets macOS. Refer to the implementation in the repository for environment-specific details and the latest behavior.
+The current implementation targets macOS.
 
 ## Requirements
-
-Install the following in advance.
 
 * `python3`
 * `tmux`
@@ -88,11 +25,11 @@ Install the following in advance.
 * `tauri-cli`
 * Xcode Command Line Tools
 
-Run `./setup/preflight` to list missing dependencies and the commands needed to install them. The script never installs anything.
+`./setup/preflight` checks for missing dependencies and the commands needed to install them. The script never installs anything itself.
 
-Install whichever Agent CLIs you intend to use and authenticate each one through its normal process. You do not need to install every supported CLI.
+Install whichever Agent CLIs you plan to use individually, and authenticate each one the normal way.
 
-## Tauri App + HTTP
+## Launch
 
 Run the following from the repository root.
 
@@ -100,31 +37,99 @@ Run the following from the repository root.
 ./tauri_app/tauri_start
 ```
 
-This builds and launches the Tauri App. The Hub is started by the Tauri App and uses port `8788` by default. After launch, start a session with `New Session` in the Hub. To rebuild only the Tauri App, use:
+This builds and launches the Tauri App. The Hub is started by the Tauri App and uses port `8788` by default.
+
+To rebuild only the Tauri App, use:
 
 ```bash
 ./tauri_app/tauri-build
 ```
 
-## PWA / HTTPS
+# Use
 
-The PWA provides access to Agent Window from a mobile device on the same LAN. First, start the Tauri App and Hub in HTTP mode. While they are running, execute:
+## Start a session
+
+Choose a workspace root from `New Session` in the Hub to set up a session.
+The Hub manages the list of sessions; archiving and deleting are also done from here.
+
+## Add an Agent
+
+`Add / Remove Agent` in the top right adds or removes Agents from the session. Running more than one instance of the same CLI Agent produces instance names such as `Claude-2`.
+
+* `Terminal` — opens a compact, pane-switching tmux terminal directly
+* `Finder` — opens the session's workspace in Finder
+
+The separate reload button beside it hard-reloads the GUI server. If the source code has changed, the running server is replaced with the new implementation.
+
+## Send
+
+The input field is normally minimized to leave more room for the chat, and expands with the `O` button at the bottom of the screen or by pressing the scroll wheel. Which Agent icons are selected determines who a message is sent to.
+
+Text in the input field is entered directly, via `tmux send-keys`, into the pane running the selected Agent CLI. It is not converted into an Agent Window-specific message format, so **slash commands and other native CLI commands also pass through the same input field.** A failed send is detected as `send_error`, but success is not notified. Minimal controls that CLIs don't offer by default — restarting a pane, interrupting from mobile — are wired in by Agent Window.
+
+Typing `@` searches files in the workspace. Files can also be attached with the plus button or by drag-and-drop. Attached files are saved to `<workspace>/.agent-window/uploads/`, and their path is passed to the Agent as ordinary text.
+
+## Read
+
+The GUI displays messages from the human and every Agent participating in the session as a single timeline. **It is not split into independent chat rooms per Agent or per worktree.** Switching CLIs, or running multiple Agents at once, does not split the conversation — everything that happens within the same session stays in the same flow.
+
+Even when a CLI exits, restarts, is removed, or is added again, the timeline continues as long as the session stays the same.
+
+It actually lives at the following location, symlinked into the workspace.
+
+```text
+~/.agent-window/session/{session_name}/.log.jsonl
+```
+
+Tool calls are streamed to the screen while running, for a sense of progress, but are not kept in this timeline.
+
+Technically, each CLI's native log path is resolved from its PID tree and similar process information, and kqueue watches it directly. The mapping between process and log path is re-resolved whenever necessary — a CLI restart, an Agent being re-added, a GUI server reload. So the session's timeline continues even when the CLI process is replaced.
+
+## Watch the workspace
+
+Git and workspace state are watched with FSEvents and projected onto the right pane. File search uses a cache of file information obtained the same way.
+
+Clicking a file opens it in the macOS default application. The desktop version of Agent Window does not reimplement a file viewer that already exists elsewhere. Mobile can't rely on that, so a bottom-sheet-style built-in viewer opens instead.
+
+## Connect Agents to each other
+
+An Agent can send a message directly to another Agent in the session with `agent-send`. Place `SKILL.md` at the designated location if needed — it is the only SKILL Agent Window has committed to.
+
+```bash
+agent-send <target> <message>
+```
+
+Technically, `agent-send` is a thin wrapper around the same `tmux send-keys` a human uses. It only resolves the destination and attaches a prefix such as `[From: Claude]`.
+
+## Give a name
+
+Agent Window's one and only unnecessary feature.
+
+```bash
+agent-send name <target> <name>
+```
+
+An Agent can be given a name that works within the session. The name is used only as an `agent-send` address and in the `[From: ...]` prefix; existing instance names and log identities are unchanged.
+
+## Use it from a phone
+
+You can connect to the same screen from a mobile device on the same LAN.
+
+First, start the Tauri App and Hub in HTTP mode. While they are running, run:
 
 ```bash
 ./setup/pwa/enable
 ```
 
-This script checks the running Hub and prepares mkcert and a local certificate.
+This script checks the running Hub and prepares mkcert and a local certificate. **mkcert installs a local CA on the system.**
 
-After the PWA is enabled, `~/.agent-window/state/pwa/enabled` is detected on subsequent launches and Agent Window starts in HTTPS mode.
+From then on, `~/.agent-window/state/pwa/enabled` is detected at launch and Agent Window starts in HTTPS mode.
 
 ```bash
 ./tauri_app/tauri_start
 ```
 
-Send mkcert's `rootCA.pem` to the device that will connect to Agent Window, install the certificate profile, and enable trust for it.
-
-Then open either of the following in Safari:
+Send mkcert's `rootCA.pem` to the device that will connect, install the certificate profile, and enable trust for it. Then open either of the following in Safari:
 
 ```text
 https://<Mac LAN IP>:8788/
@@ -139,6 +144,13 @@ Add it to the Home Screen to use it as a PWA.
   <img src="media/agent-window-mobile-3.png" width="24%" alt="Mobile UI 3">
   <img src="media/agent-window-mobile-4.png" width="24%" alt="Mobile UI 4">
 </p>
+
+## Supported CLIs
+
+Claude, Codex, Antigravity, Cursor, Grok.
+
+The receiving side needs to know where each CLI's native log lives and what format it's in, so there is per-CLI handling.
+The sending side is the same for every CLI. It only enters text into a pane, so there is no CLI-specific implementation.
 
 # License
 

@@ -2,7 +2,7 @@ use objc2_app_kit::{NSView, NSWindow, NSWindowButton};
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::{Child, Command};
 use std::sync::Mutex;
 use std::thread;
@@ -207,28 +207,21 @@ fn emit_native_menu_action(app: &tauri::AppHandle, id: &str) {
     }
 }
 
-fn find_repo_root() -> Option<String> {
-    for env_key in ["AGENT_WINDOW_REPO_ROOT", "AGENT_WINDOW_WORKSPACE"] {
-        if let Ok(candidate) = std::env::var(env_key) {
-            let path = PathBuf::from(candidate);
-            if path.join("bin/agent-index").exists() {
-                return Some(path.to_string_lossy().to_string());
-            }
-        }
-    }
+// CARGO_MANIFEST_DIR is set automatically by Cargo for every build, no script
+// or shell needs to export anything. It points at tauri_app/src-tauri; the
+// repo root is two directories up. The installed .app is a standalone copy
+// launched from the Dock/Finder, with no reliable runtime signal for where
+// its source repo lives, so the path is fixed at compile time instead of
+// guessed at launch time.
+const CARGO_MANIFEST_DIR: &str = env!("CARGO_MANIFEST_DIR");
 
-    if let Ok(exe) = std::env::current_exe() {
-        let mut dir = exe.parent().map(|p| p.to_path_buf());
-        for _ in 0..12 {
-            if let Some(ref d) = dir {
-                if d.join("bin/agent-index").exists() {
-                    return Some(d.to_string_lossy().to_string());
-                }
-                dir = d.parent().map(|p| p.to_path_buf());
-            }
-        }
+fn find_repo_root() -> Option<String> {
+    let repo_root = Path::new(CARGO_MANIFEST_DIR).parent()?.parent()?;
+    if repo_root.join("bin/agent-index").exists() {
+        Some(repo_root.to_string_lossy().to_string())
+    } else {
+        None
     }
-    None
 }
 
 fn wait_for_port(port: u16, timeout: Duration) -> bool {
