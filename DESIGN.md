@@ -1,27 +1,56 @@
-## Agent Window Design Philosophy
+# Design Philosophy
 
 [日本語](DESIGN_jp.md)
 
-Agent Window is not a framework for managing multiple AI agents. It is an intentionally thin interface that launches existing CLIs, sends them text, and brings their messages into a single screen and timeline.
+Agent Window is a thin interface for projecting **space** (where the work happens), **time** (its history), and the **intelligence** that acts within them — without modeling any of it.
 
-Every feature is decided by one test: **is this something a sufficiently capable participant can settle by thinking?** If it is, Agent Window does not implement it. If it is not, Agent Window must. The former grows less necessary as models improve; the latter grows more necessary. What follows is to do as little as possible beyond the obvious.
+## Assumptions
 
-A tmux session tied to one workspace is treated as a single working environment. Even when any number of different CLIs are launched within it, the conversation is not divided by agent. There is one project, and agents participate in its work temporarily. Even as CLIs repeatedly exit and restart, the record remains in the same timeline.
+A place to work already exists. A git repository, a database, a temporary directory for an investigation, or just a folder for writing a paper. Agent Window maps it to a single implementation unit — a tmux session tied to that workspace — and does not ask what it actually is.
 
-There is no need to treat humans and AI—or AIs with one another—exchanging text and dividing work when necessary as orchestration. It is fundamentally just ordinary communication. When an application predefines concepts such as roles, handoffs, task graphs, shared memory, or worktree ownership, it creates a form of debt: the work must then conform to that structure. There is no reason to turn what natural language can adequately express into a separate formal system.
+Time already exists too. Its trace remains as an observable order of change: commits, file updates, processes starting and exiting.
 
-Coordination is not a feature to be built; it is something participants do. Given a channel and a record, review, division of labor, and agreed limits appear when they are needed, in the form they are needed. They also arrive with their reasons attached. A protocol handed down by an application arrives with only its rules.
+And agents and humans are the intelligence that exists in that space and time, temporarily or semi-permanently. Both are present in the same place, read the same history, and speak to each other.
+Their standing differs, though. An agent is inside the workspace and reads files directly. A human is outside, and needs a window. **The Agent Window GUI is a thin window through which a human watches an agent.**
+The window can break without the space breaking. tmux holds the session; the GUI only looks in from outside.
 
-The same applies to communication between agents. `agent-send` is a lowest-level mechanism that simply enters text into another Agent CLI specified by the sending Agent; technically, it is nothing more than a wrapper around `tmux send-keys`. From the receiver's perspective, there is no essential difference between text entered by a human and text sent by another agent. It does not introduce a dedicated communication protocol or shared mailbox; it merely shortens, in the smallest possible way, the act of a human entering text into another CLI.
+## Unified Log
 
-The unified log records messages sent from humans to Agents, from Agents to humans, and from one Agent to another, in the order they occurred. It does not record the tool calls or command output contained in each CLI's native log. It brings together only ordinary messages that can serve as a project history and conversation record for humans and Agents to read.
+It records messages — human → agent, agent → human, agent → agent — along with session topology such as Add / Remove Agent, in chronological order.
 
-This is not a feature of the interface. It is one file in the workspace. Agent Window does not own it, and it can be read without Agent Window. Where someone was wrong and later corrected it, that too remains, unsummarized.
+This is not the original record. The originals are each CLI's native log, git, and the filesystem. The unified log is a **projection** of those, reduced to a granularity that humans and agents can both reference across. Native logs sitting at different paths, and history spanning process restarts, converge here into a single space and time.
 
-Agent Window is responsible for launching CLIs, delivering input, capturing messages, persisting logs, and reflecting workspace state—the layer that no amount of intelligence can satisfy, only mechanism. Decisions such as which agents to use, how to divide work, whether to use worktrees, and who should decide are left to humans or agents, leaving their intelligence unobstructed.
+What it is: a single append-only jsonl, symlinked into the workspace. It does not depend on Agent Window. The log is not application-internal state; it is a record left in the workspace.
 
-In other words: **implement unavoidable mechanisms, but do not institutionalize decisions that intelligent actors can make for themselves.**
+Ordinary exchanges happen directly through `agent-send`. When you want a cross-cutting view of who is handling what and where someone is stuck, you read the unified log. And when exact reproduction is needed, each line leads back to the native log it references, and to its position within it.
 
-Contracts added to compensate for limitations in model capabilities can become liabilities as models grow more capable. Agent Window does not reimplement agent planning, division of labor, Git operations, or context management as features of its own. As upstream CLIs and models improve, it uses those capabilities directly. It is designed not to obstruct the progress of models or freeze assumptions from the past.
+## What We Don't Implement
 
-Agent Window prioritizes agents from organizations that control large-scale computing resources themselves, develop or directly operate their models, and provide them through first-party CLIs. This is not a judgment of quality; it is a question of who owns the interface. Aggregators that merely place third-party APIs behind a common interface, and provider-neutral agent frameworks, make their behavior depend on a layer they do not control. Since Agent Window implements nothing to compensate for an agent's limitations, it depends entirely on the upstream CLI. Choosing what to connect to is the consequence.
+plan, role, task graph, handoff. These are things **a sufficiently capable intelligence can settle by thinking**.
+
+Additional contracts introduced to compensate for the current limits of LLMs go stale as models improve. There is no reason to convert something into an institution of our own when it can be expressed in natural language and already exists on the side of reality.
+
+Isolation is no different. If simultaneous writes to the same file need to be avoided, an intelligence calls `git worktree`. The guarantee already exists within the space, and how many to create and when to fold them back is something an intelligence can judge. There is no reason for the application to own it.
+
+Communication between agents is the same. `agent-send` is technically an extremely thin wrapper around `tmux send-keys`, short-circuiting — in the smallest possible form — the act of a human typing text into a CLI. It has no dedicated protocol and no shared mailbox.
+
+## What We Implement
+
+There is one criterion:
+
+> **What a participant cannot invoke from within reality.**
+
+Only this is unavoidable.
+
+- Launching CLIs, and keeping the processes alive
+- Delivering input, and attaching the sender prefix
+- Watching native logs, and merging them into the unified log
+- Making the workspace observable
+
+Launching a CLI is necessary at the point when the participant to call does not yet exist. Native logs sit at a different path for each agent, and break across process restarts. Merging a scattered space into one requires a vantage point outside every participant. None of this is reachable from inside.
+
+## Summary
+
+Implement the mechanisms that are unavoidable; do not institutionalize what an intelligent actor can judge for itself.
+
+Project reality. Do not model it.

@@ -1,6 +1,8 @@
 # Agent Window
 
-Agent Windowは、Claude、Codex、Gemini、Cursor、GrokのAgent CLIを、一つのworkspaceと一つの時系列で扱うために開発した**macOS向けのローカルインターフェース**です。各Agent CLIはtmuxのpane内で通常どおり起動します。Agent Windowは、選択したpaneへ文字列を送り、各CLIのnative logから発話を取得し、一つの画面へまとめます。CLIを共通APIで包んだり、独自のagent runtimeへ載せ替えることなく、**CLIが本来備えているものをそのまま使用します**。
+Agent Windowは、複数のAgent CLIが動いている作業場所を、外から眺めるための**macOS向けのローカルインターフェース**です。
+
+各Agent CLIは、tmuxのpane内で通常どおり起動します。APIやSDK等を経由してmodelを呼ぶことはありません。**CLIが既に備えている機能を、そのまま利用します。**
 
 [設計思想](DESIGN_jp.md) · [English](README.md)
 
@@ -9,78 +11,13 @@ Agent Windowは、Claude、Codex、Gemini、Cursor、GrokのAgent CLIを、一�
   <img src="media/agent-window-hero-2.png" width="100%" alt="Agent Window hero 2">
 </p>
 
-# 構成
-
-一つのAgent Window sessionには、一つのworkspace、一つのtmux process、一つのchat server、一つのlocal JSONLが紐づきます。tmuxの各paneには、任意のAgent CLIを追加・削除できます。同じAgentを複数起動することもでき、その場合は `Claude-3` のような個別のinstance名で扱います。会話履歴はCLI processではなくAgent Window sessionに属します。CLIを終了、再起動、削除、再追加しても、同じsessionである限り、通常メッセージは同じJSONLへ追記されます。このJSONLは追記のみで、Agent Windowがなくても読めます。基本的なデータフローは次のとおりです。
-
-```text
-入力欄
-  → chat server
-  → tmux pane
-  → Agent CLI
-
-Agent CLI
-  → native log
-  → native log watcher
-  → chat server
-  → UI / session JSONL
-```
-
-workspaceとGitの状態は、これとは別にFSEventsで監視され、右paneへ反映されます。
-
-## 送信
-
-送信バックエンドには `tmux send-keys` を使用します。入力欄から送信された文字列は、選択中のAgent CLIが動作するpaneへ直接入力されます。Agent Window専用のメッセージ形式へ変換されないため、各CLIのslash commandやその他のCLIコマンドもそのまま使用できます。エージェント間の送信には `agent-send` を使用します。これは指定した別のAgent CLIへ文字列を入力する薄いwrapperで、同じsession内だけでなく、別sessionのAgentへ送ることもできます。Agentは `agent-send name <target> <name>` で、別のinstanceにsession内の名前を付けられます。名前が使われるのは `agent-send` の宛先と `[From: ...]` prefixだけで、既存のinstance名とlog上の識別子は変わりません。
-
-## 受信
-
-受信側はPID treeなどから各CLIのnative log pathを解決し、kqueueで直接監視します。CLIの再起動、Agentの再追加、chat serverのreloadなど、必要なタイミングでprocessとlog pathの対応を再解決します。したがって、CLI processが入れ替わっても、Agent Window session側の時系列は継続します。native logから取得したeventは、通常メッセージとtool callなどに分類されます。人間からAgent、Agentから人間、Agentから別のAgentへ送られた通常メッセージは、sessionのJSONLへ保存されます。tool callやcommand outputは必要に応じて画面へ一時的にstreamされますが、共通の会話履歴には無差別に保存しません。
-
-## アプリ
-
-実体はローカルで動作するWebアプリです。macOS版はRust / Tauriでbuildした薄いwrapperで、window制御や外観など、desktop applicationとして必要な部分を担当します。mobile端末から同じ画面へ接続するためのPWAも用意しています。
-
-# インターフェース
-
-## Hub
-
-左側のHubは、Agent Window sessionの一覧を管理します。新しいsessionの開始、archive、削除はここから行います。外観や、session間で共通する機能設定もHubに保持されます。外観はDark、Light、Hybridの3 themeです。
-
-## チャット画面
-
-中央には、sessionに参加した各Agentとの通常メッセージを、一つの時系列として表示します。表示はAgentごとの独立したchat roomには分割されません。CLIを切り替えたり、複数のAgentを同時に動かしたりしても、同じsession内で発生した会話は同じ流れに残ります。画面に見えている時系列が、そのままsessionのJSONLに残る時系列です。
-
-### Agentの選択と入力
-
-メッセージの送信先は、現在選択されているAgent CLIです。入力欄は通常、chatの表示領域を広く取るために最小化されています。画面下部の `O` buttonから展開します。`@` を入力すると、workspace内のfileを検索できます。検索対象にはFSEventsで取得したfile情報のcacheを使用します。fileはplus buttonまたはdrag-and-dropで添付できます。添付されたfileはworkspace内の `.agent-window/uploads/` に保存され、そのpathがAgentへ渡されます。
-
-### Workspace
-
-右paneには、現在のworkspaceの状態を表示します。FSEventsでfile systemの変更を追跡し、未commitのdiffを小さくまとめて表示します。untracked fileの削除・ignore、file単位のrevertにも対応しています。埋め込みfile viewerは最小限の実装で、text file、HTML、Markdownなどを確認できます。`Open in Default App` を有効にしている場合、fileはmacOSの既定のapplicationで開きます。通常はこちらを使用します。
-
-### メニュー
-
-右上のhamburger buttonから、次の操作を行えます。
-
-* `Terminal`
-  sessionに紐づくtmux terminalを直接開きます。
-
-* `Finder`
-  sessionのworkspaceをFinderで開きます。
-
-* `Add / Remove Agent`
-  Agent CLIをsessionへ追加・削除します。同じAgentの複数instanceも追加できます。
-
-* `reload`
-  chat serverをhard reloadします。source codeを変更している場合は、動作中のserverを新しい実装へ置き換えます。
+---
 
 # Setup
 
-以下は、repoをcloneした後にAgent Windowを起動するための最小限の入口です。現在の実装はmacOSを前提としています。環境固有の詳細や最新の挙動については、repo内の実装を参照してください。
+現在の実装はmacOSを前提としています。
 
 ## 必要なもの
-
-事前に次をインストールします。
 
 * `python3`
 * `tmux`
@@ -88,11 +25,11 @@ workspaceとGitの状態は、これとは別にFSEventsで監視され、右pan
 * `tauri-cli`
 * Xcode Command Line Tools
 
-不足している依存関係と、その導入コマンドだけを確認する場合は `./setup/preflight` を実行します。このscriptが何かをinstallすることはありません。
+ `./setup/preflight` は、不足している依存関係と、その導入コマンドを確認します。このscriptが何かをinstallすることはありません。
 
-使用するAgent CLIも個別にインストールし、それぞれ通常の方法で認証を済ませてください。すべての対応CLIを入れる必要はありません。
+使用するAgent CLIは個別にインストールし、通常の方法で認証を済ませてください。
 
-## Tauri App + HTTP
+## 起動
 
 repo rootで次を実行します。
 
@@ -100,31 +37,99 @@ repo rootで次を実行します。
 ./tauri_app/tauri_start
 ```
 
-Tauri Appをbuildして起動します。HubはTauri Appから起動され、既定のportは `8788` です。起動後、Hubの `New Session` からsessionを開始します。Tauri Appのrebuildだけを行う場合は、次を使用します。
+Tauri Appをbuildして起動します。HubはTauri Appから起動され、既定のportは `8788` です。
+
+Tauri Appのrebuildだけを行う場合は、次を使用します。
 
 ```bash
 ./tauri_app/tauri-build
 ```
 
-## PWA / HTTPS
+# 使う
 
-PWAは、同じLAN上のmobile端末からAgent Windowへ接続するためのものです。最初に、HTTP modeでTauri AppとHubを起動します。その状態で次を実行します。
+## sessionを始める
+
+Hubの `New Session` からworkspace root を選択し、sessionを設立します。
+Hubはsessionの一覧を管理し、Archive、削除もここから行います。
+
+## Agentを足す
+
+右上の `Add / Remove Agent` から、Agent を該当sessionに追加/削除できます。同種のCLI Agentを複数起動した場合は `Claude-2` のようなinstance名になります。
+
+* `Terminal` —compactなpane切り替え式のtmux terminalを直接開きます
+* `Finder` — sessionのworkspaceをFinderで開きます
+
+隣の独立したreload buttonは、GUI serverをhard reloadします。source codeを変更している場合は、動作中のserverを新しい実装へ置き換えます。
+
+## 送る
+
+入力欄は通常、chatの表示領域を広く取るために最小化されており、画面下部の `O` button、またはホイール押し込みで展開されます。Agent Iconの選択状態が、メッセージの送信先を指定します。
+
+入力欄の文字列は、選択中のAgent CLIが動作するpaneへ`tmux send-keys` を介して直接入力されます。Agent Window専用のmessage形式へは変換しません。。従って、**各CLIのslash commandやその他のCLIコマンドも、同じ入力欄から通ります。** 入力に失敗した場合は`send_error`として検出されますが、成功は通知しません。Pane自体の`restart`やmobileからの中断等、CLIの既定コマンドでは実現できない最小限の制御はAgent Windowが配線しています。
+
+`@` を入力すると、workspace内のfileを検索できます。fileはplus buttonまたはdrag-and-dropでも添付できます。添付されたfileは `<workspace>/.agent-window/uploads/` に保存され、そのpathがAgentへ通常テキストとして渡されます。
+
+
+## 読む
+
+GUI は、sessionに参加した人間と各Agentのメッセージを、一つの時系列として表示します。**Agentごと、Worktreeごとの独立したchat roomには分割されません。** CLIを切り替えても、複数のAgentを同時に動かしても、同じsession内で発生した会話は同じ流れに残ります。
+CLIを終了、再起動、削除、再追加しても、同じsessionである限り、時系列は続きます。
+
+実体は次の場所にあり、workspaceにはsymlinkが貼られます。
+
+```text
+~/.agent-window/session/{session_name}/.log.jsonl
+```
+
+tool callは体感のために実行中に画面へstreamされますが、この時系列には残りません。
+
+技術的には、PID treeなどから各CLIのnative log pathを解決し、kqueueがこれを直接監視しています。CLIの再起動、Agentの再追加、GUI serverのreloadなど、必要なタイミングでprocessとlog pathの対応が再解決されます。したがって、CLI processが入れ替わっても、session側の時系列は継続します
+
+## workspaceを見る
+
+git と workspaceの状態はFSEventsで監視され、右paneに投影されます。file検索は、このFSEventsで取得したfile情報のcacheを使用しています
+
+fileをクリックすると、はmacOSの既定のapplicationで展開されます。desktop版のAgent Windowでは既に存在しているfile viewerの再実装をしていません。mobileではそれらに頼れないため、bottom sheet型の内蔵viewerが開きます。
+
+## Agent同士をつなぐ
+
+Agentは `agent-send` で、session内の別のAgentへ直接メッセージを送れます。必要な場合は、`SKILL.md`を所定の場所に配置してください。これはAgent Windowが契約した唯一のSKILLです。
+
+```bash
+agent-send <target> <message>
+```
+
+技術的には、`agent-send` は、人間の使う経路と同じ`tmux send-keys`の薄いwrapperです。宛先の解決と`[From: Claude]`のような Prefixの付与のみを行います。
+
+## 名前をつける
+
+Agent Windowの唯一の不要な機能です。
+
+```bash
+agent-send name <target> <name>
+```
+
+Agentに、session内で通じる名前を付けられます。名前が使われるのは `agent-send` の宛先と `[From: ...]` prefixだけで、既存のinstance名とlog上の識別子は変わりません。
+
+## スマートフォンから使う
+
+同一LAN上のmobile端末から、同じ画面へ接続できます。
+
+最初に、HTTP modeでTauri AppとHubを起動します。その状態で次を実行します。
 
 ```bash
 ./setup/pwa/enable
 ```
 
-このscriptは実行中のHubを確認し、mkcertとlocal certificateを準備します。
+このscriptは実行中のHubを確認し、mkcertとlocal certificateを準備します。**mkcertはシステムにlocal CAをinstallします。**
 
-PWAを有効にした後は、次回以降の起動時に `~/.agent-window/state/pwa/enabled` が検出され、HTTPS modeで起動します。
+以降は起動時に `~/.agent-window/state/pwa/enabled` が検出され、HTTPS modeで起動します。
 
 ```bash
 ./tauri_app/tauri_start
 ```
 
-mkcertの `rootCA.pem` を接続する端末へ送り、certificate profileをinstallして信頼を有効にします。
-
-その後、Safariで次のいずれかを開きます。
+mkcertの `rootCA.pem` を接続する端末へ送り、certificate profileをinstallして信頼を有効にします。その後、Safariで次のいずれかを開きます。
 
 ```text
 https://<MacのLAN IP>:8788/
@@ -139,6 +144,14 @@ https://<Mac名>.local:8788/
   <img src="media/agent-window-mobile-3.png" width="24%" alt="Mobile UI 3">
   <img src="media/agent-window-mobile-4.png" width="24%" alt="Mobile UI 4">
 </p>
+
+
+## 対応CLI
+
+Claude、Codex、Antigravity、Cursor、Grok。
+
+受信側は、各CLIのnative logの置き場所と形式を知る必要があるため、CLIごとの対応が入ります。
+送信側はどのCLIも同じです。paneへ文字列を入力するだけなので、CLI固有の実装はありません。
 
 # License
 

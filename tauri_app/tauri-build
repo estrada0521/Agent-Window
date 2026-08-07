@@ -119,7 +119,6 @@ if ! cargo tauri --help >/dev/null 2>&1; then
 fi
 
 mkdir -p "$ROOT/assets/sounds"
-export AGENT_WINDOW_REPO_ROOT="$ROOT"
 if [[ "$LOCAL_HTTPS" == "1" ]]; then
   export AGENT_WINDOW_TAURI_USE_HTTPS=1
 else
