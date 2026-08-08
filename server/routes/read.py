@@ -270,7 +270,6 @@ def _get_hub_settings(handler, _parsed, ctx) -> None:
     body = json.dumps(
         {
             "bold_mode_mobile": bool(settings.get("bold_mode_mobile", False)),
-            "bold_mode": bool(settings.get("bold_mode_mobile", False)),
             "agent_font_mode": str(settings.get("agent_font_mode", "serif")),
             "theme": resolve_chat_theme(settings, variant="desktop"),
             "theme_mobile": normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark"))),

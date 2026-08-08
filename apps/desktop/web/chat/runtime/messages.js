@@ -117,12 +117,9 @@
         const systemMessage = emphasizeSystemMessageKeyword(escapeHtml(safeEntry.message || ""), kindRaw);
         const systemTitle = systemMessage.replaceAll('"', "&quot;").replace(/<[^>]+>/g, "");
         const msgId = escapeHtml(safeEntry.msg_id || "");
-        return `<div class="sysmsg-row" data-msgid="${msgId}" data-sender="system" data-kind="${escapeHtml(safeEntry.kind || "")}"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
+        return `<div class="sysmsg-row" data-msgid="${msgId}" data-sender="system"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
       }
       const cls = roleClass(safeEntry.sender);
-      const entryKindRaw = String(safeEntry?.kind || "").trim();
-      const entryKind = entryKindRaw.toLowerCase();
-      const kindClass = entryKind ? ` kind-${entryKind.replace(/[^a-z0-9_-]/g, "-")}` : "";
       const entryTargets = Array.isArray(safeEntry.targets) ? safeEntry.targets : [];
       const targetIconOnly = (t) => agentBaseName(t) !== "user";
       const targetSpans = (entryTargets.length > 0
@@ -151,7 +148,7 @@
         ? `<div class="message-deferred-actions"><button class="message-deferred-btn" type="button" data-load-full-message="${msgId}">Load full message</button></div>`
         : "";
 
-      return `<article class="message-row ${cls}${kindClass}${metaHiddenClass}" data-msgid="${msgId}" data-sender="${sender}" data-kind="${escapeHtml(entryKindRaw)}">
+      return `<article class="message-row ${cls}${metaHiddenClass}" data-msgid="${msgId}" data-sender="${sender}">
         <div class="message ${cls}" data-raw="${rawAttr}" data-preview="${previewAttr}">
         ${metaRowHtml}
         <div class="message-body-row">
@@ -167,7 +164,7 @@
         const fallbackBody = escapeHtml(String(stripSenderPrefix(String((entry && entry.message) || "")) || ""));
         const fallbackMsgId = escapeHtml(String((entry && entry.msg_id) || ""));
         const fallbackSender = escapeHtml(String((entry && entry.sender) || "unknown"));
-        return `<article class="message-row agent" data-msgid="${fallbackMsgId}" data-sender="${fallbackSender}" data-kind=""><div class="message agent"><div class="message-body-row"><div class="md-body">${fallbackBody}</div></div></div></article>`;
+        return `<article class="message-row agent" data-msgid="${fallbackMsgId}" data-sender="${fallbackSender}"><div class="message agent"><div class="message-body-row"><div class="md-body">${fallbackBody}</div></div></div></article>`;
       }
     };
     const buildMsgHTMLFallback = (entry) => {
@@ -175,17 +172,16 @@
       const sender = String(safeEntry.sender || "unknown");
       const senderLower = sender.toLowerCase();
       const msgId = escapeHtml(String(safeEntry.msg_id || ""));
-      const kind = escapeHtml(String(safeEntry.kind || ""));
       if (senderLower === "system") {
         const body = escapeHtml(stripSenderPrefix(String(safeEntry.message || ""))).replaceAll("\n", "<br>");
         const systemMessage = emphasizeSystemMessageKeyword(body, String(safeEntry.kind || ""));
-        return `<div class="sysmsg-row" data-msgid="${msgId}" data-sender="system" data-kind="${kind}"><span class="sysmsg-text">${systemMessage}</span></div>`;
+        return `<div class="sysmsg-row" data-msgid="${msgId}" data-sender="system"><span class="sysmsg-text">${systemMessage}</span></div>`;
       }
       try {
         return buildMsgHTML(entry, { hideMetaRow: false });
       } catch (_) {
         const body = escapeHtml(stripSenderPrefix(String(safeEntry.message || ""))).replaceAll("\n", "<br>");
-        return `<article class="message-row agent" data-msgid="${msgId}" data-sender="${escapeHtml(sender)}" data-kind="${kind}">
+        return `<article class="message-row agent" data-msgid="${msgId}" data-sender="${escapeHtml(sender)}">
         <div class="message agent">
           <div class="message-meta-below"><span class="sender-label">${escapeHtml(sender)}</span></div>
           <div class="message-body-row"><div class="md-body">${body}</div></div>
