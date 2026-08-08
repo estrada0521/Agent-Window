@@ -129,7 +129,7 @@
     } else if (hoverCapabilityMedia.addListener) {
       hoverCapabilityMedia.addListener(syncHoverCapabilityClass);
     }
-    const syncChatNotificationDefaults = async () => {
+    const syncChatSettingsDefaults = async () => {
       try {
         const res = await fetch("/hub-settings", { cache: "no-store" });
         if (!res.ok) return;
@@ -138,7 +138,7 @@
         const _themeDesktop = String(data?.theme_desktop ?? data?.theme ?? "").trim().toLowerCase();
         const _chatTheme = _themeDesktop === "system"
           ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-          : (_themeDesktop === "split" || _themeDesktop === "light" ? "light" : "dark");
+          : (_themeDesktop === "light" ? "light" : "dark");
         document.documentElement.dataset.theme = _chatTheme;
         if (typeof data?.agent_font_mode === "string" && data.agent_font_mode) {
           document.documentElement.dataset.agentFontMode = data.agent_font_mode;
@@ -151,10 +151,10 @@
         }
       } catch (_) {}
     };
-    syncChatNotificationDefaults();
+    syncChatSettingsDefaults();
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {
-        syncChatNotificationDefaults();
+        syncChatSettingsDefaults();
         void refreshSessionState();
       }
     });

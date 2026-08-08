@@ -115,7 +115,7 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
     let currentServerInstance = SERVER_INSTANCE_SEED;
     const isPublicChatView = !(() => {
       const host = String(location.hostname || "");
-      return host === "127.0.0.1" || host === "localhost" || host === "[::1]" || host.startsWith("192.168.") || host.startsWith("10.") || /^172\\.(1[6-9]|2\\d|3[01])\\./.test(host);
+      return host === "127.0.0.1" || host === "localhost" || host === "[::1]" || host.startsWith("192.168.") || host.startsWith("10.") || /^172\.(1[6-9]|2\d|3[01])\./.test(host);
     })();
     const MESSAGE_BATCH = 50;
     const INITIAL_MESSAGE_WINDOW = 50;
@@ -903,7 +903,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const nextHubSettingsVersion = parseInt(payload?.hub_settings_version) || 0;
       if (nextHubSettingsVersion > workspaceSyncLastHubSettingsVersion) {
         workspaceSyncLastHubSettingsVersion = nextHubSettingsVersion;
-        void syncChatNotificationDefaults();
+        void syncChatSettingsDefaults();
       }
     };
     const startWorkspaceSyncEvents = () => {

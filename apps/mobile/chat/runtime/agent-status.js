@@ -130,7 +130,7 @@
     _safariDummy.style.cssText = "position:absolute;bottom:0;width:100%;height:env(safe-area-inset-bottom);pointer-events:none;opacity:0;z-index:-1;";
     document.body.appendChild(_safariDummy);
 
-    const syncChatNotificationDefaults = async () => {
+    const syncChatSettingsDefaults = async () => {
       try {
         const res = await fetch("/hub-settings", { cache: "no-store" });
         if (!res.ok) return;
@@ -169,9 +169,9 @@
         }
       } catch (_) { }
     };
-    syncChatNotificationDefaults();
+    syncChatSettingsDefaults();
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) syncChatNotificationDefaults();
+      if (!document.hidden) syncChatSettingsDefaults();
     });
 
     document.addEventListener("pointerdown", (e) => {
