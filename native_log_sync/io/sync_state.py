@@ -18,33 +18,6 @@ from native_log_sync.io.state_paths import (
 
 _INTERNAL_KEYS = ("agent_first_seen_ts", "native_log_progress")
 
-# Pre-redesign per-agent cursor keys: {"agent": [path, offset], ...}. A session
-# whose internal file predates the path-progress model has none of the
-# _INTERNAL_KEYS above, so without this fallback every native log would be
-# treated as never-read and replayed from byte 0 on next load.
-_LEGACY_CURSOR_KEYS = (
-    "claude_cursors",
-    "codex_cursors",
-    "cursor_cursors",
-    "gemini_cursors",
-    "grok_cursors",
-)
-
-
-def _migrate_legacy_cursors_to_progress(data: dict) -> dict[str, int]:
-    progress: dict[str, int] = {}
-    for key in _LEGACY_CURSOR_KEYS:
-        cursors = data.get(key)
-        if not isinstance(cursors, dict):
-            continue
-        for value in cursors.values():
-            if not isinstance(value, (list, tuple)) or len(value) != 2:
-                continue
-            path, offset = value
-            if isinstance(path, str) and path and isinstance(offset, int):
-                progress[_normalized_native_log_path(path)] = offset
-    return progress
-
 
 def _read_json_locked(path) -> dict:
     try:
@@ -98,11 +71,6 @@ def load_sync_state(runtime) -> dict:
         for key in _INTERNAL_KEYS:
             if key in internal_data:
                 data[key] = internal_data[key]
-
-    if "native_log_progress" not in internal_data:
-        legacy_progress = _migrate_legacy_cursors_to_progress(data)
-        if legacy_progress:
-            data["native_log_progress"] = legacy_progress
 
     return data
 

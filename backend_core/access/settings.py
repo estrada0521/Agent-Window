@@ -106,17 +106,17 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
     settings["message_text_size"] = max(8, min(18, message_text_size))
 
     try:
-        message_text_size_mobile = int(raw.get("message_text_size_mobile") or settings.get("message_text_size_mobile") or settings["message_text_size"])
+        message_text_size_mobile = int(raw.get("message_text_size_mobile") or settings.get("message_text_size_mobile") or 13)
     except Exception as exc:
         logging.error(f"Unexpected error: {exc}", exc_info=True)
-        message_text_size_mobile = settings["message_text_size"]
+        message_text_size_mobile = 13
     settings["message_text_size_mobile"] = max(8, min(18, message_text_size_mobile))
 
     try:
-        message_text_size_desktop = int(raw.get("message_text_size_desktop") or settings.get("message_text_size_desktop") or settings["message_text_size"])
+        message_text_size_desktop = int(raw.get("message_text_size_desktop") or settings.get("message_text_size_desktop") or 13)
     except Exception as exc:
         logging.error(f"Unexpected error: {exc}", exc_info=True)
-        message_text_size_desktop = settings["message_text_size"]
+        message_text_size_desktop = 13
     settings["message_text_size_desktop"] = max(8, min(18, message_text_size_desktop))
 
     for key in (
