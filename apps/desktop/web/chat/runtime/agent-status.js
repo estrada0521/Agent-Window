@@ -1,52 +1,11 @@
-    let lastHubRunningStateSig = "";
-    const notifyHubRunningState = () => {
-      if (window.parent === window) return;
-      const sessionName = String(currentSessionName || "").trim();
-      if (!sessionName) return;
-      const runningAgents = Object.keys(currentAgentStatuses || {}).filter((agent) => currentAgentStatuses[agent] === "running");
-      const isRunning = runningAgents.length > 0;
-      const sig = `${sessionName}|${isRunning ? "1" : "0"}|${runningAgents.join(",")}`;
-      if (sig === lastHubRunningStateSig) return;
-      lastHubRunningStateSig = sig;
-      try {
-        window.parent.postMessage({
-          type: "session-running-state",
-          sessionName,
-          isRunning,
-          runningAgents,
-        }, "*");
-      } catch (_) {}
-    };
+__CHAT_INCLUDE:../../../../shared/chat/hub-running-state.js__
     const renderAgentStatus = (statuses) => {
       currentAgentStatuses = { ...statuses };
       syncPaneViewerTabThinkingStatuses();
       renderThinkingIndicator();
       notifyHubRunningState();
     };
-    const normalizeSessionStateProjections = (projections) => {
-      const raw = Array.isArray(projections)
-        ? projections
-        : (typeof projections === "string" ? projections.split(",") : []);
-      const seen = new Set();
-      const ordered = [];
-      raw.forEach((item) => {
-        const key = String(item || "").trim();
-        if (!key || seen.has(key)) return;
-        seen.add(key);
-        ordered.push(key);
-      });
-      return ordered;
-    };
-    const mergeSessionStateProjections = (left, right) => {
-      const seen = new Set();
-      const merged = [];
-      [...normalizeSessionStateProjections(left), ...normalizeSessionStateProjections(right)].forEach((item) => {
-        if (seen.has(item)) return;
-        seen.add(item);
-        merged.push(item);
-      });
-      return merged;
-    };
+__CHAT_INCLUDE:../../../../shared/chat/session-state-projections.js__
     const refreshSessionState = async (projections = null) => {
       const requestedProjections = normalizeSessionStateProjections(projections);
       if (refreshSessionState.inFlight) {
@@ -78,24 +37,7 @@
     };
     refreshSessionState.inFlight = false;
     refreshSessionState.pending = [];
-    const startSessionStateEvents = () => {
-      if (typeof EventSource !== "function") return;
-      const es = new EventSource(withChatBase("/session-state-events"));
-      es.addEventListener("state", (event) => {
-        let projections = [];
-        try {
-          const payload = JSON.parse(event.data || "{}");
-          projections = normalizeSessionStateProjections(payload?.projections);
-        } catch (_) {}
-        if (projections.includes("messages")) {
-          void refresh();
-          projections = projections.filter((projection) => projection !== "messages");
-        }
-        if (projections.length) void refreshSessionState(projections);
-      });
-      es.onerror = () => {};
-    };
-    startSessionStateEvents();
+__CHAT_INCLUDE:../../../../shared/chat/session-state-events.js__
     const hoverCapabilityMedia = window.matchMedia("(hover: hover) and (pointer: fine)");
     const canUseHoverInteractions = () => hoverCapabilityMedia.matches;
     const touchBlurSelector = [

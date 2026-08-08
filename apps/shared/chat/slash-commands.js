@@ -1,0 +1,26 @@
+    let _shortcutCommandsCache = null;
+    const loadShortcutCommandsOnce = async () => {
+      if (_shortcutCommandsCache) return _shortcutCommandsCache;
+      const r = await fetch("/shortcut-commands", { cache: "no-store" });
+      if (!r.ok) throw new Error("shortcut-commands failed");
+      const j = await r.json();
+      const list = Array.isArray(j.commands) ? j.commands : [];
+      if (!list.length) throw new Error("empty shortcut commands");
+      _shortcutCommandsCache = list;
+      return list;
+    };
+    const parseSlashCommandInput = (rawInput, list) => {
+      const normalized = rawInput.trim();
+      const sorted = [...list].sort((a, b) => String(b.slash || "").length - String(a.slash || "").length);
+      for (const c of sorted) {
+        const slash = String(c.slash || "");
+        if (!slash.startsWith("/")) continue;
+        if (normalized === slash) {
+          return { id: c.id, arg: "" };
+        }
+        if (c.has_arg && normalized.startsWith(slash + " ")) {
+          return { id: c.id, arg: normalized.slice(slash.length + 1) };
+        }
+      }
+      return null;
+    };
