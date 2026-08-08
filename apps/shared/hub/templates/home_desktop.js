@@ -406,7 +406,7 @@
         themeDesktop || document.documentElement.dataset.themeDesktop || document.documentElement.dataset.theme || "dark"
       ).trim().toLowerCase();
       if (value === "system") return systemPrefersDark() ? "dark" : "light";
-      return value === "split" || value === "light" ? "light" : "dark";
+      return value === "light" ? "light" : "dark";
     }
 
     function applyDeskChatTheme(themeDesktop) {
@@ -437,7 +437,7 @@
       ).trim().toLowerCase();
       const hubTheme = themeDesktop === "system"
         ? (systemPrefersDark() ? "dark" : "light")
-        : (themeDesktop === "split" ? "dark" : (themeDesktop === "light" ? "light" : "dark"));
+        : (themeDesktop === "light" ? "light" : "dark");
       document.documentElement.dataset.theme = hubTheme;
       document.documentElement.dataset.themeDesktop = themeDesktop;
       applyDeskChatTheme(themeDesktop);

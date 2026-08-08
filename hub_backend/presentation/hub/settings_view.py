@@ -140,7 +140,6 @@ def hub_settings_html(
         ("system", "System"),
         ("light", "Light"),
         ("dark", "Dark"),
-        ("split", "Hybrid"),
     )
     theme_desktop_options = "".join(
         f'<option value="{html.escape(value)}"' + (' selected' if value == theme_desktop else '') + f'>{html.escape(label)}</option>'

@@ -10,7 +10,6 @@
     };
     const hubThemeForDesktop = (themeDesktop) => {
       if (themeDesktop === "system") return systemPrefersDark() ? "dark" : "light";
-      if (themeDesktop === "split") return "dark";
       return themeDesktop === "light" ? "light" : "dark";
     };
 

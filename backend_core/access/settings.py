@@ -8,7 +8,7 @@ from pathlib import Path
 
 SESSION_LOG_FILENAME = ".log.jsonl"
 NATIVE_LOG_STATE_FILENAME = ".native-log-sync-state.json"
-DESKTOP_THEME_CHOICES = frozenset({"system", "light", "dark", "split"})
+DESKTOP_THEME_CHOICES = frozenset({"system", "light", "dark"})
 MOBILE_THEME_CHOICES = frozenset({"system", "light", "dark"})
 
 
@@ -30,7 +30,7 @@ def resolve_hub_theme(settings: dict, *, variant: str) -> str:
         # upgrades this fallback when the user selected System.
         return "dark" if mobile == "system" else mobile
     desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
-    if desktop in ("split", "system"):
+    if desktop == "system":
         return "dark"
     return desktop
 
@@ -41,8 +41,6 @@ def resolve_chat_theme(settings: dict, *, variant: str) -> str:
         mobile = normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
         return "dark" if mobile == "system" else mobile
     desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
-    if desktop == "split":
-        return "light"
     if desktop == "system":
         return "dark"
     return desktop
