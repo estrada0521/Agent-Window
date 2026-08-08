@@ -156,10 +156,6 @@ def agent_window_run_dir() -> Path:
     return agent_window_root() / "run"
 
 
-def agent_window_cache_dir() -> Path:
-    return agent_window_root() / "cache"
-
-
 def agent_window_session_root() -> Path:
     return agent_window_root() / "session"
 

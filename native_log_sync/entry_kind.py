@@ -8,7 +8,6 @@ _GEMINI_PLAN_PREFIX = re.compile(
     re.IGNORECASE,
 )
 _MAX_PLAN_TEXT_LEN = 280
-_LEGACY_EPHEMERAL_KIND = "agent-thinking"
 _ANTIGRAVITY_TOOL_KEYS = {
     "functionCall",
     "toolAction",
@@ -53,10 +52,6 @@ _ANTIGRAVITY_HEX_DIGEST = re.compile(r"(?=.*[a-fA-F])[0-9a-fA-F]{32,64}")
 _ANTIGRAVITY_BASE64_BLOB = re.compile(r"[A-Za-z0-9+/]{120,}={0,2}")
 
 
-def _normalized_nonempty_texts(texts: list[str]) -> list[str]:
-    return [str(text or "").strip() for text in texts if str(text or "").strip()]
-
-
 def _is_planning_style_text(text: str) -> bool:
     body = str(text or "").strip()
     if not body or len(body) > _MAX_PLAN_TEXT_LEN:
@@ -84,15 +79,6 @@ def strip_sender_prefix(message: str) -> str:
         if close != -1:
             text = text[close + 1 :].lstrip()
     return text
-
-
-def is_ephemeral_thought_content(texts: list[str], *, has_thought_part: bool = False) -> bool:
-    if has_thought_part:
-        return True
-    normalized = _normalized_nonempty_texts(texts)
-    if not normalized:
-        return False
-    return _has_gemini_plan_prefix(" ".join(normalized))
 
 
 def is_antigravity_tool_call_text(text: str) -> bool:
@@ -177,9 +163,6 @@ def should_omit_entry_from_chat(entry: dict) -> bool:
     if not sender_name or sender_name in {"user", "system"}:
         return False
     sender_base = re.sub(r"-\d+$", "", sender_name)
-    kind = str(entry.get("kind") or "").strip().lower()
-    if kind == _LEGACY_EPHEMERAL_KIND:
-        return True
     body = strip_sender_prefix(str(entry.get("message") or ""))
     structured_antigravity_response = (
         str(entry.get("native_log_kind") or "").strip().lower()

@@ -21,16 +21,6 @@ def resolve_binding(runtime, request):
     return resolver(runtime, request)
 
 
-def load_idle_events(runtime, agent: str) -> list[dict]:
-    mod = _agent_module(agent)
-    if mod is None:
-        return []
-    reader = getattr(mod, "load_runtime_events_for_idle_running", None)
-    if reader is None:
-        return []
-    return reader(runtime, agent)
-
-
 def on_pane_restart(runtime, agent: str) -> None:
     mod = _agent_module(agent)
     if mod is None:

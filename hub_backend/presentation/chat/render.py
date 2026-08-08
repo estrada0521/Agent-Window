@@ -5,10 +5,6 @@ import json
 from hub_backend.branding import APP_DISPLAY_NAME
 
 
-def _js_bool(value: object) -> str:
-    return "true" if bool(value) else "false"
-
-
 def build_chat_template_replacements(
     *,
     icon_data_uris: dict,

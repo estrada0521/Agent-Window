@@ -16,17 +16,3 @@ def agent_instance_number(raw_name: str) -> int | None:
     except ValueError:
         return None
 
-
-def expected_instance_names(base_agents: list[str]) -> list[str]:
-    counts: dict[str, int] = {}
-    for agent in base_agents:
-        counts[agent] = counts.get(agent, 0) + 1
-    indices: dict[str, int] = {}
-    resolved = []
-    for agent in base_agents:
-        if counts.get(agent, 0) > 1:
-            indices[agent] = indices.get(agent, 0) + 1
-            resolved.append(f"{agent}-{indices[agent]}")
-        else:
-            resolved.append(agent)
-    return resolved

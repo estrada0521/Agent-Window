@@ -22,11 +22,6 @@ NATIVE_LOG_SYNC_INTERNAL_FILENAME = ".native-log-sync-internal.json"
 
 # Historical — migrated on read
 LEGACY_AGENT_INDEX_SYNC_STATE_FILENAME = ".agent-index-sync-state.json"
-LEGACY_AGENT_INDEX_SYNC_LOCK_FILENAME = ".agent-index-sync.lock"
-
-
-def session_dir_for_index(index_path: Path) -> Path:
-    return Path(index_path).resolve().parent
 
 
 def canonical_native_log_sync_state_path(session_dir: Path | str) -> Path:
@@ -39,7 +34,3 @@ def canonical_native_log_sync_internal_path(session_dir: Path | str) -> Path:
 
 def legacy_agent_index_sync_state_path(session_dir: Path | str) -> Path:
     return Path(session_dir).resolve() / LEGACY_AGENT_INDEX_SYNC_STATE_FILENAME
-
-
-def legacy_agent_index_sync_lock_path(session_dir: Path | str) -> Path:
-    return Path(session_dir).resolve() / LEGACY_AGENT_INDEX_SYNC_LOCK_FILENAME

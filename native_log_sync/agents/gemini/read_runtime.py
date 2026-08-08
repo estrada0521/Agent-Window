@@ -10,7 +10,6 @@ from pathlib import Path
 
 from native_log_sync.agents._shared.runtime_display import runtime_event
 from native_log_sync.agents._shared.runtime_paths import display_path
-from native_log_sync.event_format import _pane_runtime_with_occurrence_ids
 
 
 def _read_varint(data: bytes, index: int) -> tuple[int, int] | None:
@@ -321,32 +320,3 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
     if not main:
         return []
     return [runtime_event(main, sub, source_id=_source_id(lower, f"{main}:{sub}"))]
-
-
-def parse_antigravity_db_runtime(filepath: str, limit: int, workspace: str = "") -> list[dict] | None:
-    """Recover recent tool activity after an Agent Window UI reload."""
-
-    try:
-        row_limit = max(64, int(limit) * 8)
-        uri = f"file:{filepath}?mode=ro&immutable=1&nolock=1"
-        with sqlite3.connect(uri, uri=True) as conn:
-            rows = conn.execute(
-                "select idx, step_payload from steps where step_type = 15 order by idx desc limit ?",
-                (row_limit,),
-            ).fetchall()
-        events: list[dict] = []
-        transcript_entries: dict[int, dict] | None = None
-        for idx, payload in reversed(rows):
-            _text, calls = parse_antigravity_planner_step(payload or b"")
-            if not calls:
-                if transcript_entries is None:
-                    transcript_entries = load_antigravity_transcript_entries(filepath)
-                _fallback_text, calls = parse_antigravity_transcript_step(
-                    transcript_entries.get(int(idx))
-                )
-            for tool_name, args in calls:
-                events.extend(runtime_tool_events(tool_name, args, workspace=workspace))
-        return _pane_runtime_with_occurrence_ids(events, limit=limit)
-    except Exception as exc:
-        logging.error("Failed to parse Antigravity runtime %s: %s", filepath, exc)
-        return None
