@@ -46,33 +46,33 @@ def _codex_runtime_state_event(entry: object) -> str:
     return ""
 
 
-def _codex_token_count_limit_message(payload: dict) -> str:
-    rate_limits = payload.get("rate_limits") or {}
-    if not isinstance(rate_limits, dict):
+def _codex_task_error_message(payload: dict) -> str:
+    """Extract a human-readable error from a Codex task_complete event.
+
+    Codex reports a failed turn (rate limit, unsupported model, etc.) by
+    setting `error` on the task_complete event, not as a separate `error`
+    event_msg. `usage_limit_exceeded` carries an already human-readable
+    message; other error kinds carry a raw JSON-encoded API error string,
+    so the inner message is unwrapped when present.
+    """
+    error = payload.get("error")
+    if not isinstance(error, dict):
         return ""
-
-    reached_type = str(rate_limits.get("rate_limit_reached_type") or "").strip()
-    if not reached_type:
+    message = str(error.get("message") or "").strip()
+    if not message:
         return ""
-
-    credits = rate_limits.get("credits")
-    if isinstance(credits, dict):
-        no_credits = not credits.get("has_credits", True) and str(credits.get("balance", "1")) == "0"
-        if no_credits:
-            return "You've hit your usage limit. Purchase more credits or wait for the next billing cycle."
-
-    primary = rate_limits.get("primary") or {}
-    if not isinstance(primary, dict):
-        primary = {}
-    window = primary.get("window_minutes")
-    resets_at = primary.get("resets_at")
-    if resets_at:
-        import datetime
-        reset_str = datetime.datetime.fromtimestamp(resets_at).strftime("%H:%M")
-        return f"Rate limit reached. Resets at {reset_str}."
-    if window:
-        return f"Rate limit reached. Resets in {window} minutes."
-    return "Rate limit reached."
+    if message.startswith("{"):
+        try:
+            parsed = json.loads(message)
+        except (json.JSONDecodeError, TypeError):
+            parsed = None
+        if isinstance(parsed, dict):
+            inner = parsed.get("error")
+            if isinstance(inner, dict):
+                inner_message = str(inner.get("message") or "").strip()
+                if inner_message:
+                    return inner_message
+    return message
 
 
 def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) -> None:
@@ -115,10 +115,11 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
                 payload_type = str(payload.get("type") or "").strip().lower()
                 if payload_type == "error":
                     display = str(payload.get("message") or "").strip()
+                    provider_notice = True
                 elif payload_type == "agent_reasoning":
                     return False
-                elif payload_type == "token_count":
-                    display = _codex_token_count_limit_message(payload)
+                elif payload_type == "task_complete":
+                    display = _codex_task_error_message(payload)
                     if not display:
                         return False
                     provider_notice = True
