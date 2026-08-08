@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -32,7 +33,13 @@ def _process_tree(pid: str) -> set[str]:
 
 
 def resolve_codex_rollout_jsonl_path(pane_pid: str) -> str:
+    # A single codex process can hold several rollout files open at once
+    # (context compaction / session forking keeps older handles around), so
+    # lsof order is not a reliable signal for which one is actually being
+    # written to. Collect every open rollout file across the process tree
+    # and pick the one with the newest mtime.
     sessions_root = str((Path.home() / ".codex" / "sessions").resolve())
+    candidates: dict[str, float] = {}
     for pid in sorted(_process_tree(str(pane_pid or "").strip())):
         if not pid:
             continue
@@ -58,6 +65,15 @@ def resolve_codex_rollout_jsonl_path(pane_pid: str) -> str:
                 resolved = str(Path(path).resolve())
             except OSError:
                 resolved = path
-            if resolved.startswith(sessions_root + "/") and Path(resolved).is_file():
-                return resolved
-    return ""
+            if resolved in candidates:
+                continue
+            if not resolved.startswith(sessions_root + "/"):
+                continue
+            try:
+                mtime = os.path.getmtime(resolved)
+            except OSError:
+                continue
+            candidates[resolved] = mtime
+    if not candidates:
+        return ""
+    return max(candidates, key=candidates.get)
