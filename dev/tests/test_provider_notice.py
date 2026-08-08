@@ -58,13 +58,15 @@ class ProviderNoticeTests(unittest.TestCase):
                             "type": "assistant",
                             "uuid": "claude-notice",
                             "isApiErrorMessage": True,
-                            "message": {"error_message": "You've hit your session limit"},
+                            "message": {"content": [{"type": "text", "text": "You've hit your session limit"}]},
                         }
                     )
                     + "\n"
                 )
             sync_claude_native_log(runtime, "claude", str(native_log))
-            self.assertEqual(_read_entries(runtime.index_path)[0]["kind"], "provider-notice")
+            entries = _read_entries(runtime.index_path)
+            self.assertEqual(entries[0]["kind"], "provider-notice")
+            self.assertEqual(entries[0]["message"], "You've hit your session limit")
 
     def test_codex_rate_limit_is_provider_notice(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

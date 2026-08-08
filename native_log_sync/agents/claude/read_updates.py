@@ -64,25 +64,18 @@ def sync_claude_native_log(self, agent: str, native_log_path: str | None = None)
             if not isinstance(msg, dict):
                 return False
 
-            display = ""
-            if entry.get("isApiErrorMessage"):
-                display = str(msg.get("error_message") or msg.get("message") or "").strip()
-
-            if not display:
-                content = msg.get("content", [])
-                if not isinstance(content, list):
-                    return False
-                texts = []
-                for c in content:
-                    if isinstance(c, dict) and c.get("type") == "text":
-                        text = str(c.get("text") or "").strip()
-                        if text:
-                            texts.append(text)
-                if texts:
-                    display = "\n".join(texts)
-
-            if not display:
+            content = msg.get("content", [])
+            if not isinstance(content, list):
                 return False
+            texts = []
+            for c in content:
+                if isinstance(c, dict) and c.get("type") == "text":
+                    text = str(c.get("text") or "").strip()
+                    if text:
+                        texts.append(text)
+            if not texts:
+                return False
+            display = "\n".join(texts)
             msg_id = str(entry.get("uuid") or entry.get("id") or "")[:12]
             if not msg_id:
                 msg_id = uuid.uuid4().hex[:12]

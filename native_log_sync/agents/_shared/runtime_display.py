@@ -12,4 +12,4 @@ def runtime_event(main: str, sub: str = "", *, source_id: str) -> dict:
         text = s
     else:
         text = ""
-    return {"kind": "fixed", "text": text, "source_id": source_id}
+    return {"text": text, "source_id": source_id}

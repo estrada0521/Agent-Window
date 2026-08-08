@@ -104,7 +104,7 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
                     if isinstance(content, list):
                         for c in content:
                             if isinstance(c, dict):
-                                t = c.get("text") or c.get("output_text", {}).get("text", "")
+                                t = c.get("text")
                                 if t and str(t).strip():
                                     texts.append(str(t).strip())
                     if not texts:
