@@ -8,13 +8,10 @@ use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
 use tauri::menu::{MenuBuilder, NativeIcon, SubmenuBuilder};
-use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::webview::WebviewWindowBuilder;
 use tauri::Manager;
 
 const DARK_BG: &str = "rgb(4,4,4)";
-const TRAY_OPEN_ID: &str = "agent-window-chat:tray:open";
-const TRAY_QUIT_ID: &str = "agent-window-chat:tray:quit";
 
 #[cfg(target_os = "macos")]
 use window_vibrancy::{
@@ -382,39 +379,9 @@ fn main() {
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![show_chat_header_menu])
         .on_menu_event(|app, event| {
-            match event.id().as_ref() {
-                TRAY_OPEN_ID => reveal_main_window(app),
-                TRAY_QUIT_ID => app.exit(0),
-                id => emit_native_menu_action(app, id),
-            }
-        })
-        .on_tray_icon_event(|app, event| {
-            if matches!(
-                event,
-                TrayIconEvent::Click {
-                    button: MouseButton::Left,
-                    button_state: MouseButtonState::Up,
-                    ..
-                }
-            ) {
-                reveal_main_window(app);
-            }
+            emit_native_menu_action(app, event.id().as_ref());
         })
         .setup(move |app| {
-            let tray_menu = MenuBuilder::new(app)
-                .text(TRAY_OPEN_ID, "Open Agent Window")
-                .separator()
-                .text(TRAY_QUIT_ID, "Quit Agent Window")
-                .build()?;
-            let mut tray = TrayIconBuilder::with_id("menu-bar")
-                .menu(&tray_menu)
-                .tooltip("Agent Window")
-                .show_menu_on_left_click(false);
-            if let Some(icon) = app.default_window_icon().cloned() {
-                tray = tray.icon(icon).icon_as_template(true);
-            }
-            let _ = tray.build(app)?;
-
             let window = WebviewWindowBuilder::new(
                 app,
                 "main",
