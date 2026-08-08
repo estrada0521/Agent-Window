@@ -127,36 +127,7 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
     let publicDeferredLoading = new Set();
     let publicDeferredObserver = null;
     let hasInitialRefreshHydrated = false;
-    let launchShellRevealFallbackTimer = 0;
-    const timeline = document.getElementById("messages");
-    const clearLaunchShellParam = () => {
-      const params = new URLSearchParams(window.location.search || "");
-      if (!params.has("launch_shell")) return;
-      params.delete("launch_shell");
-      const nextQuery = params.toString();
-      const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}${window.location.hash || ""}`;
-      try {
-        window.history.replaceState(window.history.state, "", nextUrl);
-      } catch (_) {}
-    };
-    const releaseLaunchShellGate = () => {
-      if (document.documentElement.dataset.launchShell !== "1") return;
-      document.documentElement.removeAttribute("data-launch-shell");
-      if (launchShellRevealFallbackTimer) {
-        clearTimeout(launchShellRevealFallbackTimer);
-        launchShellRevealFallbackTimer = 0;
-      }
-      clearLaunchShellParam();
-    };
-    const armLaunchShellGate = (timeoutMs = 10000) => {
-      document.documentElement.dataset.launchShell = "1";
-      if (launchShellRevealFallbackTimer) {
-        clearTimeout(launchShellRevealFallbackTimer);
-      }
-      launchShellRevealFallbackTimer = setTimeout(() => {
-        releaseLaunchShellGate();
-      }, Math.max(1000, Number(timeoutMs) || 10000));
-    };
+__CHAT_INCLUDE:../../../shared/chat/launch-shell-gate.js__
     if (launchShellMode) {
       armLaunchShellGate(10000);
     }
@@ -238,30 +209,7 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
         }
       });
       window.addEventListener("pagehide", () => notifyHubComposerOverlayState(false));
-      let _hubParentScrollSigAt = 0;
-      const hubPingParentForSafariChrome = () => {
-        const now = Date.now();
-        if (now - _hubParentScrollSigAt < 220) return;
-        _hubParentScrollSigAt = now;
-        try {
-          window.parent.postMessage({ type: "chat-scroll-signal" }, "*");
-        } catch (_) {}
-      };
-      const hubChildResizeChrome = () => {
-        const w = window.innerWidth || 0;
-        const h = window.innerHeight || 0;
-        if (_hubChildOriW > 0 && _hubChildOriH > 0) {
-          const b0 = _hubChildOriH >= _hubChildOriW;
-          const b1 = h >= w;
-          const diffH = Math.abs(_hubChildOriH - h);
-          if (b0 !== b1 && diffH > 150) {
-            _hubChromeGapClientMin = Infinity;
-          }
-        }
-        _hubChildOriW = w;
-        _hubChildOriH = h;
-        bumpHubIframeLayoutLock();
-      };
+      __CHAT_INCLUDE:../../../shared/chat/hub-safari-chrome.js__
       bumpHubIframeLayoutLock();
       window.addEventListener("resize", hubChildResizeChrome, { passive: true });
       if (window.visualViewport) {
@@ -437,25 +385,7 @@ __CHAT_INCLUDE:target-picker.js__
         setTimeout(() => node.classList.remove("toggle-flash"), 120);
       });
     };
-    const targetSelectionStorageKey = (session) => `targetSelection:${session || "default"}`;
-    const saveTargetSelection = (session, targets) => {
-      if (!session) return;
-      try {
-        localStorage.setItem(targetSelectionStorageKey(session), JSON.stringify(targets || []));
-      } catch (_) {}
-    };
-    const loadTargetSelection = (session, availableTargets = []) => {
-      if (!session) return [];
-      try {
-        const raw = localStorage.getItem(targetSelectionStorageKey(session));
-        const parsed = JSON.parse(raw || "[]");
-        if (!Array.isArray(parsed)) return [];
-        const allowed = new Set(availableTargets);
-        return parsed.filter((item) => typeof item === "string" && allowed.has(item));
-      } catch (_) {
-        return [];
-      }
-    };
+__CHAT_INCLUDE:../../../shared/chat/target-selection.js__
     timeline.addEventListener("scroll", updateScrollBtn, { passive: true });
     timeline.addEventListener("scroll", requestCenteredMessageRowUpdate, { passive: true });
     window.addEventListener("resize", requestCenteredMessageRowUpdate);
@@ -906,23 +836,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         void syncChatSettingsDefaults();
       }
     };
-    const startWorkspaceSyncEvents = () => {
-      if (typeof EventSource !== "function") return;
-      if (workspaceSyncEventSource) return;
-      const base = CHAT_BASE_PATH || "";
-      const initialUrl = workspaceSyncLastSeq > 0
-        ? `${base}/workspace-sync-events?after=${encodeURIComponent(String(workspaceSyncLastSeq))}`
-        : `${base}/workspace-sync-events`;
-      const es = new EventSource(initialUrl);
-      es.addEventListener("sync", (event) => {
-        try {
-          handleWorkspaceSyncUpdate(JSON.parse(event.data || "{}"));
-        } catch (_) {}
-      });
-      es.onerror = () => {};
-      workspaceSyncEventSource = es;
-    };
-    startWorkspaceSyncEvents();
+    __CHAT_INCLUDE:../../../shared/chat/workspace-sync-events.js__
     dpOnSessionSummaryPinReload({ force: true });
     dpApplyPanelWidth();
     refresh({ forceScroll: true });
