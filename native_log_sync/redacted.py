@@ -1,10 +1,5 @@
 from __future__ import annotations
 
-import fcntl
-import json
-import os
-from pathlib import Path
-
 REDACTED_TOKEN = "[REDACTED]"
 
 
@@ -51,51 +46,3 @@ def rewrite_agent_index_message_strip_trailing_redacted(message: str) -> str | N
         return prefix + new_body
     return new_body
 
-
-def compact_agent_index_jsonl(path: Path | str) -> tuple[int, int, int]:
-    target = Path(path)
-    if not target.is_file():
-        return (0, 0, 0)
-
-    out_lines: list[str] = []
-    removed = 0
-    rewritten = 0
-    with target.open("r+", encoding="utf-8", errors="replace") as handle:
-        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-        try:
-            for line in handle:
-                if not line.strip():
-                    continue
-                raw = line.rstrip("\n\r")
-                try:
-                    entry = json.loads(raw)
-                except json.JSONDecodeError:
-                    out_lines.append(line if line.endswith("\n") else line + "\n")
-                    continue
-                if not isinstance(entry, dict):
-                    out_lines.append(line if line.endswith("\n") else line + "\n")
-                    continue
-                msg = entry.get("message", "")
-                if agent_index_entry_omit_for_redacted(str(msg)):
-                    removed += 1
-                    continue
-                new_msg = rewrite_agent_index_message_strip_trailing_redacted(str(msg))
-                if new_msg is not None:
-                    entry["message"] = new_msg
-                    rewritten += 1
-                    out_lines.append(json.dumps(entry, ensure_ascii=False) + "\n")
-                else:
-                    out_lines.append(line if line.endswith("\n") else line + "\n")
-
-            kept = len(out_lines)
-            if removed == 0 and rewritten == 0:
-                return (kept, 0, 0)
-
-            handle.seek(0)
-            handle.truncate()
-            handle.writelines(out_lines)
-            handle.flush()
-            os.fsync(handle.fileno())
-            return (kept, removed, rewritten)
-        finally:
-            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)

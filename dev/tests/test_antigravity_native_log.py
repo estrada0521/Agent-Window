@@ -10,7 +10,6 @@ from unittest.mock import patch
 from native_log_sync.agents.gemini.read_runtime import (
     iter_tool_calls,
     load_antigravity_transcript_entries,
-    parse_antigravity_db_runtime,
     parse_antigravity_planner_step,
     parse_antigravity_transcript_step,
     runtime_tool_events,
@@ -171,19 +170,6 @@ class AntigravityRuntimeTests(unittest.TestCase):
         self.assertEqual(runtime_tool_events("command_status", {"CommandId": "x"}), [])
         self.assertEqual(runtime_tool_events("manage_task", {"Action": "status"}), [])
         self.assertEqual(runtime_tool_events("future_tool", {})[0]["text"], "Tool future_tool")
-
-    def test_db_runtime_reload_recovers_tool_events(self) -> None:
-        with tempfile.TemporaryDirectory() as td:
-            db = Path(td) / "conversation.db"
-            _create_db(
-                db,
-                [
-                    (0, 15, _planner_payload(calls=[("view_file", {"AbsolutePath": "/workspace/a.py"})])),
-                    (1, 8, b""),
-                ],
-            )
-            events = parse_antigravity_db_runtime(str(db), 12, workspace="/workspace")
-        self.assertEqual(events[0]["text"], "Read a.py")
 
 
 class _FakeRuntime:

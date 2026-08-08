@@ -8,7 +8,6 @@
       const safeCount = Math.max(0, parseInt(count) || 0);
       return `${safeCount} ${safeCount === 1 ? "path" : "paths"}`;
     };
-    const dpLoadingHtml = () => '<span class="inline-loading"><span class="inline-loading-spinner" aria-hidden="true"></span></span>';
     const DP_GIT_SUMMARY_PIN_SVG = '📌';
     const dpBuildSummaryHtml = (data) => {
       const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);

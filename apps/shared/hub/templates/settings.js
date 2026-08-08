@@ -174,10 +174,6 @@
       );
       const mobileInput = document.querySelector('#settingsFormDesktop [name="message_text_size_mobile"]');
       _makeTextSizeStepper(mobileInput, null, null, null, null);
-
-      const _parentRoot = () => {
-        try { return window.self !== window.top ? window.parent.document.documentElement : null; } catch (_) { return null; }
-      };
     }
 
     const activeForm = isMobileView
@@ -187,17 +183,6 @@
     if (HUB_EMBED && settingsForm) {
       settingsForm.action = "/settings?embed=1";
     }
-    const closeSettingsPage = () => {
-      if (HUB_EMBED && window.self !== window.top) {
-        window.parent.postMessage({ type: "hub-close-sidebar-page" }, "*");
-        return;
-      }
-      if (window.history.length > 1) {
-        window.history.back();
-        return;
-      }
-      window.location.href = "/";
-    };
     let _autoSaveTimer = null;
     const _doAutoSave = async () => {
       if (!settingsForm || settingsForm.dataset.saving === "1") return;

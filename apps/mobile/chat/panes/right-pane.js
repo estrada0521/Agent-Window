@@ -1379,16 +1379,6 @@
       closeAttachedFilesSheet({ immediate: true });
       syncHeaderMenuFocus();
     };
-    const toggleHeaderMenu = (panel, button) => {
-      if (!panel || !button) return;
-      const nextOpen = panel.hidden || !panel.classList.contains("open");
-      if (nextOpen) updateHeaderMenuViewportMetrics();
-      panel.hidden = !nextOpen;
-      panel.classList.toggle("open", nextOpen);
-      button.classList.toggle("open", nextOpen);
-      if (!nextOpen && panel === rightMenuPanel) exitPaneTraceMode();
-      syncHeaderMenuFocus();
-    };
     const handleNativeMenuAction = async (payload) => {
       const data = payload || {};
       if (data.action === "agent") {

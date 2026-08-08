@@ -72,45 +72,6 @@ def has_logged_commit_entry(
     return False
 
 
-def read_commit_state(
-    runtime,
-    *,
-    fcntl_module=fcntl,
-    logging_module=logging,
-) -> dict:
-    if not _commit_state_path(runtime).exists():
-        return {}
-    try:
-        with _commit_state_path(runtime).open("a+", encoding="utf-8") as handle:
-            fcntl_module.flock(handle.fileno(), fcntl_module.LOCK_SH)
-            try:
-                return read_commit_state_locked(runtime, handle)
-            finally:
-                fcntl_module.flock(handle.fileno(), fcntl_module.LOCK_UN)
-    except Exception as exc:
-        logging_module.error(f"Unexpected error: {exc}", exc_info=True)
-        return {}
-
-
-def write_commit_state(
-    runtime,
-    commit: dict,
-    *,
-    fcntl_module=fcntl,
-    logging_module=logging,
-) -> None:
-    try:
-        _commit_state_path(runtime).parent.mkdir(parents=True, exist_ok=True)
-        with _commit_state_path(runtime).open("a+", encoding="utf-8") as handle:
-            fcntl_module.flock(handle.fileno(), fcntl_module.LOCK_EX)
-            try:
-                write_commit_state_locked(runtime, handle, commit)
-            finally:
-                fcntl_module.flock(handle.fileno(), fcntl_module.LOCK_UN)
-    except Exception as exc:
-        logging_module.error(f"Unexpected error: {exc}", exc_info=True)
-
-
 def record_git_commit_locked(runtime, handle, commit: dict) -> bool:
     if has_logged_commit_entry(runtime, commit["hash"]):
         write_commit_state_locked(runtime, handle, commit)

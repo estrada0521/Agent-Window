@@ -87,18 +87,3 @@ def resolve_cursor_session_jsonl_path(runtime, pane_pid: str) -> str:
     return ""
 
 
-def path_under_workspace_cursor_projects(runtime, path: str) -> bool:
-    resolved = str(path or "").strip()
-    if not resolved:
-        return False
-    for root in cursor_transcript_roots(runtime, str(runtime.workspace or "").strip()):
-        project_root = root.parent
-        prefix = str(project_root.resolve())
-        if resolved == prefix or resolved.startswith(prefix + "/"):
-            return True
-    return False
-
-
-def transcript_jsonl_matches_workspace(runtime, path: str) -> bool:
-    resolved = str(path or "").strip()
-    return resolved.endswith(".jsonl") and path_under_workspace_cursor_projects(runtime, resolved)

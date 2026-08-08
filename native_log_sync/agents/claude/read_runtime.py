@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import logging
 
-from native_log_sync.agents._shared.jsonl_runtime import parse_jsonl_tail_for_runtime
 from native_log_sync.agents._shared.runtime_display import runtime_event
 from native_log_sync.agents._shared.runtime_paths import display_path
 
@@ -19,17 +18,6 @@ _MAIN_LABEL: dict[str, str] = {
     "write": "Write",
     "edit": "Edit",
 }
-
-
-def parse_jsonl_for_runtime(filepath: str, limit: int, workspace: str = "") -> list[dict] | None:
-    return parse_jsonl_tail_for_runtime(
-        filepath,
-        limit,
-        workspace,
-        iter_tool_calls=iter_tool_calls,
-        tool_events=runtime_tool_events,
-        log_label="Claude transcript JSONL",
-    )
 
 
 def iter_tool_calls(entry: dict) -> list[tuple[str, dict]]:

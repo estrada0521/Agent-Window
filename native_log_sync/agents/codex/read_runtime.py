@@ -9,7 +9,6 @@ import shlex
 import time
 from pathlib import Path
 
-from native_log_sync.event_format import _pane_runtime_gemini_with_occurrence_ids
 from backend_core.access.files import append_jsonl_entry
 
 from native_log_sync.agents._shared.runtime_display import runtime_event
@@ -473,66 +472,3 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
     if not sub:
         sub = lower
     return [runtime_event(main, sub, source_id=_sid(f"tool:{lower}", sub))]
-
-
-def parse_native_codex_log(filepath: str, limit: int, workspace: str = "") -> list[dict] | None:
-    try:
-        tail_bytes = 65_536
-        with open(filepath, "rb") as f:
-            f.seek(0, 2)
-            size = f.tell()
-            start = max(0, size - tail_bytes)
-            f.seek(start)
-            raw = f.read()
-        lines = raw.decode("utf-8", errors="replace").splitlines()
-        if start > 0 and lines:
-            lines = lines[1:]
-
-        events = []
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                data = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-
-            if data.get("type") == "response_item" and "payload" in data:
-                payload = data["payload"]
-                ptype = payload.get("type")
-
-                if ptype == "reasoning":
-                    summary = payload.get("summary") or []
-                    for item in summary:
-                        if not isinstance(item, dict):
-                            continue
-                        text = str(item.get("text") or "").strip()
-                        if not text:
-                            continue
-                        events.append(
-                            {
-                                "kind": "fixed",
-                                "text": f"✦ {text}",
-                                "source_id": f"thought:codex:✦ {text}",
-                            }
-                        )
-                else:
-                    for name, inp in iter_tool_calls(data):
-                        events.extend(runtime_tool_events(name, inp, workspace=workspace))
-            if data.get("type") == "event_msg" and "payload" in data:
-                payload = data["payload"] or {}
-                if payload.get("type") == "agent_reasoning":
-                    text = str(payload.get("text") or "").strip()
-                    if text:
-                        events.append(
-                            {
-                                "kind": "fixed",
-                                "text": f"✦ {text}",
-                                "source_id": f"thought:codex:✦ {text}",
-                            }
-                        )
-        return _pane_runtime_gemini_with_occurrence_ids(events, limit=limit)
-    except Exception as e:
-        logging.error("Failed to parse native codex log %s: %s", filepath, e)
-        return None

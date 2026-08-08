@@ -261,14 +261,6 @@
         return cached === true;
       }
     };
-    const closeFileModal = () => {
-      if (attachedFilesPanel?.classList.contains("attached-files-mode-preview")) {
-        closeAttachedFilesRepoPreview();
-      }
-      if (attachedFilesPanel?.classList.contains("open") && !attachedFilesPanel.hidden) {
-        closeAttachedFilesSheet();
-      }
-    };
     const openFileSurface = async (path, ext, sourceEl, triggerEvent) => {
       const normalizedPath = String(path || "").trim();
       if (!normalizedPath) return;
