@@ -48,7 +48,7 @@ _register(
     AgentDef(
         name="claude",
         display_name="Claude",
-        icon_file="claude-color.svg",
+        icon_file="claude.svg",
         executable="claude",
         launch_extra=f"env -u CLAUDECODE {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="--continue",
@@ -58,7 +58,7 @@ _register(
     AgentDef(
         name="codex",
         display_name="Codex",
-        icon_file="codex-color.svg",
+        icon_file="codex.svg",
         executable="codex",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="resume --last",
@@ -68,7 +68,7 @@ _register(
     AgentDef(
         name="gemini",
         display_name="Antigravity",
-        icon_file="gemini-color.svg",
+        icon_file="antigravity.svg",
         executable="agy",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="--continue",
