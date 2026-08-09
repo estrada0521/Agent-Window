@@ -284,13 +284,26 @@ class FileRuntime:
         return result.returncode == 0
 
     @staticmethod
-    def _open_with_system_default(full: str) -> bool:
+    def _reveal_in_finder(full: str) -> None:
         if sys.platform == "darwin":
-            open_cmd = ["open", full]
             reveal_cmd = ["open", "-R", full]
         elif shutil.which("xdg-open"):
-            open_cmd = ["xdg-open", full]
             reveal_cmd = ["xdg-open", full if os.path.isdir(full) else os.path.dirname(full)]
+        else:
+            raise ValueError("No handler available to reveal this file.")
+        subprocess.Popen(
+            reveal_cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+
+    @classmethod
+    def _open_with_system_default(cls, full: str) -> bool:
+        if sys.platform == "darwin":
+            open_cmd = ["open", full]
+        elif shutil.which("xdg-open"):
+            open_cmd = ["xdg-open", full]
         else:
             raise ValueError("No handler available to open this file with the system default.")
 
@@ -307,16 +320,10 @@ class FileRuntime:
         if result is not None and result.returncode == 0:
             return False
 
-        subprocess.Popen(
-            reveal_cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
+        cls._reveal_in_finder(full)
         return True
 
-    def open_in_editor(self, rel: str, line: int = 0, *, allow_native_log_home: bool = False):
-        del line
+    def _resolve_open_target(self, rel: str, *, allow_native_log_home: bool) -> str:
         rel_raw = str(rel or "").strip()
         if not rel_raw:
             raise ValueError("path required")
@@ -330,8 +337,18 @@ class FileRuntime:
             full = self._resolve_path(rel_raw, allow_workspace_root=True)
         if not os.path.exists(full):
             raise FileNotFoundError(full)
+        return full
+
+    def open_in_editor(self, rel: str, line: int = 0, *, allow_native_log_home: bool = False):
+        del line
+        full = self._resolve_open_target(rel, allow_native_log_home=allow_native_log_home)
         revealed = self._open_with_system_default(full)
         return {"ok": True, "path": rel, "revealed_in_finder": revealed}
+
+    def reveal_in_finder(self, rel: str, *, allow_native_log_home: bool = False):
+        full = self._resolve_open_target(rel, allow_native_log_home=allow_native_log_home)
+        self._reveal_in_finder(full)
+        return {"ok": True, "path": rel, "revealed_in_finder": True}
 
     def _git_show_bytes(self, rev_path: str) -> bytes | None:
         try:

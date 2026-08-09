@@ -502,14 +502,14 @@ def _run_nativelog_command(ctx, *, target: str) -> tuple[int, dict]:
         msg = f"native log path not found for {agent}"
         return 404, {"ok": False, "error": msg, "status_message": msg}
     try:
-        workspace_sync_api.open_in_editor(path, allow_native_log_home=True)
+        workspace_sync_api.reveal_in_finder(path, allow_native_log_home=True)
     except FileNotFoundError:
         msg = f"native log file not found: {path}"
         return 404, {"ok": False, "error": msg, "status_message": msg}
     except Exception as exc:
         msg = str(exc)
         return 500, {"ok": False, "error": msg, "status_message": msg}
-    return 200, {"ok": True, "status_message": f"opened native log for {agent}"}
+    return 200, {"ok": True, "status_message": f"revealed native log for {agent} in Finder"}
 
 
 def _post_shortcut_command(handler, _parsed, ctx) -> None:

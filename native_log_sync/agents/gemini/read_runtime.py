@@ -102,7 +102,7 @@ def _planner_message(payload: bytes) -> bytes:
 
     # Field 20 is the current Antigravity planner response envelope. Keep a
     # structural fallback so a harmless outer-field renumbering does not
-    # silently drop all Gemini output again.
+    # silently drop all Antigravity output again.
     preferred = _bytes_fields(outer, 20)
     for candidate in reversed(preferred):
         if _looks_like_planner_message(candidate):

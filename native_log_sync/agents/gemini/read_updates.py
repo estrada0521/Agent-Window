@@ -39,7 +39,7 @@ def _schedule_antigravity_retry(self, agent: str, db_path: str, step_key: str) -
         try:
             sync_gemini_native_log(self, agent, db_path)
         except Exception as exc:
-            logging.error(f"Failed to retry Gemini Antigravity sync for {agent}: {exc}", exc_info=True)
+            logging.error(f"Failed to retry Antigravity sync for {agent}: {exc}", exc_info=True)
 
     timer = threading.Timer(_ANTIGRAVITY_RETRY_DELAY_SECONDS, retry)
     timer.daemon = True
@@ -147,4 +147,4 @@ def sync_gemini_native_log(self, agent: str, native_log_path: str | None = None)
         self._native_log_current_paths[agent] = session_path_str
         _sync_antigravity_db(self, agent, session_path_str)
     except Exception as exc:
-        logging.error(f"Failed to sync Gemini message for {agent}: {exc}", exc_info=True)
+        logging.error(f"Failed to sync Antigravity message for {agent}: {exc}", exc_info=True)

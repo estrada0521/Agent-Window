@@ -119,6 +119,9 @@ class WorkspaceSyncApi:
     def open_in_editor(self, rel: str, line: int = 0, *, allow_native_log_home: bool = False):
         return self.file_runtime.open_in_editor(rel, line=line, allow_native_log_home=allow_native_log_home)
 
+    def reveal_in_finder(self, rel: str, *, allow_native_log_home: bool = False):
+        return self.file_runtime.reveal_in_finder(rel, allow_native_log_home=allow_native_log_home)
+
     def open_diff_in_editor(self, rel: str, *, commit_hash: str = ""):
         return self.file_runtime.open_diff_in_editor(rel, commit_hash=commit_hash)
 
