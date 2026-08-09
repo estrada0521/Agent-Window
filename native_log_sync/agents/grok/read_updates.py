@@ -23,8 +23,6 @@ from native_log_sync.agents.grok.read_runtime import (
 def extract_grok_assistant_text(entry: object) -> str:
     if not isinstance(entry, dict) or entry.get("type") != "assistant":
         return ""
-    if entry.get("tool_calls"):
-        return ""
     content = entry.get("content")
     return content.strip() if isinstance(content, str) else ""
 
@@ -129,7 +127,8 @@ def _chat_history_path(updates_path: str) -> str:
 
 
 def sync_grok_native_log(runtime, agent: str, native_log_path: str | None = None) -> None:
-    """Sync completed Grok turns from its append-only update stream."""
+    """Sync new Grok replies as they land in chat_history.jsonl, and mark
+    idle once the update stream reports the turn as complete."""
     try:
         updates_path = str(native_log_path or "").strip()
         if not updates_path or not os.path.isfile(updates_path):
@@ -139,8 +138,6 @@ def sync_grok_native_log(runtime, agent: str, native_log_path: str | None = None
             return
 
         runtime._native_log_current_paths[agent] = updates_path
-        normalized_updates = _normalized_native_log_path(updates_path)
-        is_first_bind = normalized_updates not in runtime._native_log_progress
 
         file_size = os.path.getsize(updates_path)
         start = read_progress_start(runtime._native_log_progress, updates_path, file_size)
@@ -167,8 +164,7 @@ def sync_grok_native_log(runtime, agent: str, native_log_path: str | None = None
 
         advance_read_progress(runtime._native_log_progress, updates_path, file_size)
 
-        if turn_completed or is_first_bind:
-            _sync_grok_chat_history(runtime, agent, history_path)
+        _sync_grok_chat_history(runtime, agent, history_path)
         if turn_completed:
             runtime._mark_idle(agent)
         runtime.save_sync_state()
