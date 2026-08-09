@@ -133,12 +133,6 @@
             tempDiv.prepend(marker);
           }
           revealMarkdownLinkTargets(tempDiv);
-          if (typeof Prism !== "undefined") {
-            tempDiv.querySelectorAll('code[class*="language-"]').forEach(codeEl => {
-              if (codeEl.classList.contains("language-diff")) return;
-              Prism.highlightElement(codeEl);
-            });
-          }
           tempDiv.querySelectorAll('code.language-diff').forEach(codeEl => {
             const raw = codeEl.textContent;
             codeEl.innerHTML = raw.split("\n").map(line => {

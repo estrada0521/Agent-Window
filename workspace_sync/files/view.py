@@ -3,12 +3,17 @@ from __future__ import annotations
 import logging
 import json
 import os
-import re
 from pathlib import Path
 from html import escape as html_escape
 from urllib.parse import quote as url_quote
 
 from hub_backend.color_constants import DARK_BG, LIGHT_FG, LIGHT_FG_CHANNELS, resolve_theme_palette
+from hub_backend.presentation.chat.script_assets import (
+    KATEX_CDN_AUTO_RENDER_SRC,
+    KATEX_CDN_CSS_HREF,
+    KATEX_CDN_JS_SRC,
+    MARKED_CDN_SRC,
+)
 from backend_core.access.settings import load_hub_settings
 from server.font_style import font_family_stack
 from .preview_3d import render_3d_preview
@@ -538,55 +543,14 @@ def render_file_view(
         content_json = json.dumps(content)
         rel_json = json.dumps(rel.replace("\\", "/"))
         prefix_json = json.dumps(prefix)
-        has_fenced_code = "```" in content
-        prism_aliases = {
-            "py": "python",
-            "python": "python",
-            "js": "javascript",
-            "javascript": "javascript",
-            "node": "javascript",
-            "ts": "typescript",
-            "typescript": "typescript",
-            "tsx": "typescript",
-            "sh": "bash",
-            "bash": "bash",
-            "shell": "bash",
-            "zsh": "bash",
-            "json": "json",
-            "yaml": "yaml",
-            "yml": "yaml",
-            "css": "css",
-            "html": "markup",
-            "xml": "markup",
-            "svg": "markup",
-            "sql": "sql",
-        }
-        prism_langs: list[str] = []
-        if has_fenced_code:
-            for match in re.finditer(r"```([^\n`]*)", content):
-                raw_lang = str(match.group(1) or "").strip().split(" ", 1)[0].strip().lower()
-                if not raw_lang:
-                    continue
-                resolved_lang = prism_aliases.get(raw_lang)
-                if not resolved_lang or resolved_lang in prism_langs:
-                    continue
-                prism_langs.append(resolved_lang)
         # Match the chat shell's cascade: KaTeX loads before its Chat-derived
         # markdown CSS, with no preview-only math typography overrides.
         markdown_head_tags = [
-            '<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>',
-            '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">',
-            '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>',
-            '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>',
+            f'<script src="{MARKED_CDN_SRC}"></script>',
+            f'<link rel="stylesheet" href="{KATEX_CDN_CSS_HREF}">',
+            f'<script src="{KATEX_CDN_JS_SRC}"></script>',
+            f'<script src="{KATEX_CDN_AUTO_RENDER_SRC}"></script>',
         ]
-        if has_fenced_code:
-            markdown_head_tags.extend([
-                '<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>',
-            ])
-            markdown_head_tags.extend(
-                f'<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-{lang}.min.js"></script>'
-                for lang in prism_langs
-            )
         markdown_head_libs = "".join(markdown_head_tags)
         markdown_preview_css = _chat_markdown_preview_css(resolved_preview_variant)
         markdown_typography_css = (
@@ -639,9 +603,9 @@ const __previewMessageBold = {json.dumps(bool(message_bold))};
 const __previewVariant = {json.dumps(resolved_preview_variant)};
 const __rawBase = `${{__fileBase}}/file-raw?path=`;
 const __root = document.documentElement;
-const KATEX_CSS_HREF = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
-const KATEX_JS_SRC = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
-const KATEX_AUTO_RENDER_SRC = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+const KATEX_CSS_HREF = {json.dumps(KATEX_CDN_CSS_HREF)};
+const KATEX_JS_SRC = {json.dumps(KATEX_CDN_JS_SRC)};
+const KATEX_AUTO_RENDER_SRC = {json.dumps(KATEX_CDN_AUTO_RENDER_SRC)};
 const loadExternalScriptOnce = (() => {{
   const pending = new Map();
   return (src) => {{
@@ -798,12 +762,6 @@ if (mathBlocks.length) {{
   marker.className = "math-render-needed";
   marker.hidden = true;
   tempDiv.prepend(marker);
-}}
-if (typeof Prism !== "undefined") {{
-  tempDiv.querySelectorAll('code[class*="language-"]').forEach((codeEl) => {{
-    if (codeEl.classList.contains("language-diff")) return;
-    Prism.highlightElement(codeEl);
-  }});
 }}
 tempDiv.querySelectorAll("code.language-diff").forEach((codeEl) => {{
   const raw = codeEl.textContent || "";
