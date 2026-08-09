@@ -839,6 +839,12 @@
       transform-origin: top;
     }
 
+    .pane-viewer-detail-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+
     .git-commit-detail-body>.git-commit-diff-wrap-stacked {
       border-top: none;
     }
