@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 
 from native_log_sync.agents._shared.runtime_display import runtime_event
 from native_log_sync.agents._shared.runtime_paths import display_path

@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 import shlex
-import sqlite3
 from collections.abc import Iterable
 from pathlib import Path
 

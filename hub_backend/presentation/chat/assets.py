@@ -25,7 +25,6 @@ from hub_backend.color_constants import apply_color_tokens
 from ..hub.header_assets import HUB_PAGE_HEADER_CSS, render_hub_page_header
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_CHAT_TEMPLATE_DIR = Path(__file__).resolve().parent
 
 
 CHAT_DESKTOP_HTML = load_chat_template("desktop")
@@ -179,23 +178,8 @@ def _chat_variant(variant: str = "desktop") -> _ChatAssetVariant:
     return _CHAT_VARIANTS[_normalized_chat_variant(variant)]
 
 
-CHAT_APP_SCRIPT_BLOCK = _CHAT_VARIANTS["desktop"].app_script_block
-CHAT_APP_SCRIPT_TEMPLATE = _CHAT_VARIANTS["desktop"].app_script_template
 CHAT_APP_SCRIPT_ASSET = _CHAT_VARIANTS["desktop"].app_script_asset
-CHAT_APP_SCRIPT_VERSION = _CHAT_VARIANTS["desktop"].app_script_version
-CHAT_MAIN_STYLE_BLOCK = _CHAT_VARIANTS["desktop"].main_style_block
-CHAT_MAIN_STYLE_TEMPLATE = _CHAT_VARIANTS["desktop"].main_style_template
 CHAT_MAIN_STYLE_ASSET = _CHAT_VARIANTS["desktop"].main_style_asset
-CHAT_MAIN_STYLE_VERSION = _CHAT_VARIANTS["desktop"].main_style_version
-
-CHAT_MOBILE_APP_SCRIPT_BLOCK = _CHAT_VARIANTS["mobile"].app_script_block
-CHAT_MOBILE_APP_SCRIPT_TEMPLATE = _CHAT_VARIANTS["mobile"].app_script_template
-CHAT_MOBILE_APP_SCRIPT_ASSET = _CHAT_VARIANTS["mobile"].app_script_asset
-CHAT_MOBILE_APP_SCRIPT_VERSION = _CHAT_VARIANTS["mobile"].app_script_version
-CHAT_MOBILE_MAIN_STYLE_BLOCK = _CHAT_VARIANTS["mobile"].main_style_block
-CHAT_MOBILE_MAIN_STYLE_TEMPLATE = _CHAT_VARIANTS["mobile"].main_style_template
-CHAT_MOBILE_MAIN_STYLE_ASSET = _CHAT_VARIANTS["mobile"].main_style_asset
-CHAT_MOBILE_MAIN_STYLE_VERSION = _CHAT_VARIANTS["mobile"].main_style_version
 
 
 

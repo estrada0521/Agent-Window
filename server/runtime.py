@@ -1,8 +1,6 @@
 from __future__ import annotations
 import logging
 
-import json
-import os
 import subprocess
 import threading
 import time
@@ -277,42 +275,6 @@ class ChatRuntime:
             session_name=self.session_name,
             projections=projections,
         )
-
-    def mark_session_activated(self) -> None:
-        self.session_is_active = True
-        restored = self._restore_running_agents_from_tmux_env()
-        if restored:
-            self._agent_running.update(restored)
-        self.notify_session_state_changed(["base", "targets", "statuses"], reason="session-activated")
-        threading.Thread(
-            target=self._post_activation_bind,
-            daemon=True,
-            name="post-activation-bind",
-        ).start()
-
-    def _post_activation_bind(self, *, retries: int = 30, interval: float = 1.0) -> None:
-        """Retry native-log binding refresh until all active agents are bound."""
-        bound_agents: set[str] = set()
-        for attempt in range(retries):
-            time.sleep(interval)
-            try:
-                # Only refresh agents that are not yet bound to avoid
-                # clobbering bindings established by _mark_running.
-                unbound = [a for a in self.active_agents() if a not in bound_agents and not self._native_log.has_log_binding(a)]
-                if unbound:
-                    self.refresh_native_log_bindings(unbound, reason="post-activation")
-                for agent in self.active_agents():
-                    if agent not in bound_agents and self._native_log.has_log_binding(agent):
-                        bound_agents.add(agent)
-                        self._initial_sync_agent(agent)
-                if bound_agents:
-                    self.notify_session_state_changed(["statuses"], reason="post-activation-bind")
-                # Stop once all currently known agents are bound
-                active = set(self.active_agents())
-                if active and active.issubset(bound_agents):
-                    return
-            except Exception as exc:
-                logging.warning("post-activation bind attempt %d failed: %s", attempt + 1, exc)
 
     def payload(
         self,

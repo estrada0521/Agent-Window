@@ -157,24 +157,9 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
 
 
 _DEFAULT_THEME = resolve_theme_palette()
-DARK_BG_RGB = _DEFAULT_THEME["dark_bg_rgb"]
-DARK_BG_CHANNELS = _DEFAULT_THEME["dark_bg_channels"]
 DARK_BG = _DEFAULT_THEME["dark_bg"]
-LIGHT_FG_RGB = _DEFAULT_THEME["light_fg_rgb"]
 LIGHT_FG_CHANNELS = _DEFAULT_THEME["light_fg_channels"]
 LIGHT_FG = _DEFAULT_THEME["light_fg"]
-LIGHT_FG_SOFT_RGB = _DEFAULT_THEME["light_fg_soft_rgb"]
-LIGHT_FG_SOFT_CHANNELS = _DEFAULT_THEME["light_fg_soft_channels"]
-LIGHT_FG_SOFT = _DEFAULT_THEME["light_fg_soft"]
-LIGHT_FG_BRIGHT_RGB = _DEFAULT_THEME["light_fg_bright_rgb"]
-LIGHT_FG_BRIGHT_CHANNELS = _DEFAULT_THEME["light_fg_bright_channels"]
-LIGHT_FG_BRIGHT = _DEFAULT_THEME["light_fg_bright"]
-GRAY_PANEL_STRONG = _DEFAULT_THEME["gray_panel_strong"]
-GRAY_SURFACE = _DEFAULT_THEME["gray_surface"]
-GRAY_SURFACE_ALT = _DEFAULT_THEME["gray_surface_alt"]
-GRAY_HOVER = _DEFAULT_THEME["gray_hover"]
-GRAY_INLINE_BORDER = _DEFAULT_THEME["gray_inline_border"]
-GRAY_MUTED = _DEFAULT_THEME["gray_muted"]
 
 
 def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) -> str:

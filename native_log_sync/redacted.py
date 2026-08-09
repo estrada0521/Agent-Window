@@ -33,16 +33,3 @@ def agent_index_entry_omit_for_redacted(message: str) -> bool:
         return False
     return normalize_cursor_plaintext_for_index(b) is None
 
-
-def rewrite_agent_index_message_strip_trailing_redacted(message: str) -> str | None:
-    prefix, body = split_message_from_prefix(message)
-    b = (body or "").rstrip()
-    if not b.endswith(REDACTED_TOKEN):
-        return None
-    new_body = b[: -len(REDACTED_TOKEN)].rstrip()
-    if not new_body:
-        return None
-    if prefix:
-        return prefix + new_body
-    return new_body
-

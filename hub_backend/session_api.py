@@ -108,7 +108,6 @@ class HubSessionApi:
         updated_at: str = "",
     ) -> dict:
         """Build a minimal session record for a newly-started active session."""
-        session_dir = self.session_logs_dir(session_name)
         index_path = session_log_path(session_name)
         now_epoch = int(time.time())
         record = self.ctx.hub._build_session_record(
