@@ -90,7 +90,8 @@
       --surface-alt: __GRAY_SURFACE_ALT__;
       --bg-hover: __GRAY_HOVER__;
       --inline-code-border: __GRAY_INLINE_BORDER__;
-      --pane-trace-body-bg: var(--bg);
+      --pane-trace-body-bg-channels: 13, 13, 12;
+      --pane-trace-body-bg: rgb(var(--pane-trace-body-bg-channels));
       --warn: #fbbf24;
       --warn-bright: #fcd34d;
       --error: #ef4444;
@@ -601,10 +602,10 @@
       top: 0;
       left: 0;
       right: 0;
-      bottom: 0;
+      bottom: -6px;
       width: 100vw;
-      height: 100dvh;
-      min-height: 100dvh;
+      height: calc(100dvh + 6px);
+      min-height: calc(100dvh + 6px);
       max-height: none;
       padding: 0;
       border: none;
