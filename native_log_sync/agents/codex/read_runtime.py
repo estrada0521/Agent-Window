@@ -2,14 +2,9 @@ from __future__ import annotations
 
 import ast
 import json
-import logging
 import os
 import re
 import shlex
-import time
-from pathlib import Path
-
-from backend_core.access.files import append_jsonl_entry
 
 from native_log_sync.agents._shared.runtime_display import runtime_event
 from native_log_sync.agents._shared.runtime_paths import display_path

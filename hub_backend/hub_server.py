@@ -90,7 +90,6 @@ save_hub_settings = _not_initialized
 repo_sessions = _not_initialized
 repo_sessions_query = _not_initialized
 archived_sessions = _not_initialized
-active_session_records = _not_initialized
 active_session_records_query = _not_initialized
 archived_session_records = _not_initialized
 ensure_chat_server = _not_initialized
@@ -151,7 +150,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
     global repo_root, script_path, port, tmux_socket, hub
     global load_hub_settings, save_hub_settings, repo_sessions, repo_sessions_query
-    global archived_sessions, active_session_records, active_session_records_query
+    global archived_sessions, active_session_records_query
     global archived_session_records, ensure_chat_server
     global revive_archived_session, kill_repo_session
     global delete_archived_session, host_without_port, PUBLIC_HOST, PUBLIC_HUB_PORT
@@ -177,7 +176,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         "repo_sessions",
         "repo_sessions_query",
         "archived_sessions",
-        "active_session_records",
         "active_session_records_query",
         "archived_session_records",
         "ensure_chat_server",
@@ -440,10 +438,8 @@ _hub_pages = _build_hub_html_pages_impl(
     new_session_max_per_agent=NEW_SESSION_MAX_PER_AGENT,
     hub_icon_uris=_HUB_ICON_URIS,
 )
-HUB_HOME_HTML = _hub_pages["hub_home_html"]
 HUB_HOME_DESKTOP_HTML = _hub_pages["hub_home_html_desktop"]
 HUB_HOME_MOBILE_HTML = _hub_pages["hub_home_html_mobile"]
-HUB_NEW_SESSION_HTML = _hub_pages["hub_new_session_html"]
 
 
 def _normalized_font_label(name: str) -> str:

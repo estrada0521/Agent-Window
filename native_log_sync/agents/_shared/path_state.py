@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 
 from backend_core.agents.names import agent_base_name as _agent_base_name
-from backend_core.agents.names import agent_instance_number as _agent_instance_number
 
 
 def _normalized_native_log_path(path: str | Path) -> str:

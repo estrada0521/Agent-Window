@@ -1,5 +1,4 @@
 from __future__ import annotations
-import logging
 
 import os
 import signal
@@ -217,10 +216,6 @@ class HubRuntime:
 
     def archived_sessions(self, active_names: set[str] | list[str] | None = None) -> list[dict]:
         return _archived_sessions_impl(self, active_names)
-
-    def active_session_records(self) -> dict[str, dict]:
-        res = self.active_session_records_query()
-        return res.records
 
     def active_session_records_query(self) -> SessionQueryResult:
         res = self.repo_sessions_query()

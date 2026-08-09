@@ -513,64 +513,6 @@ class FileRuntime:
         self._spawn_vscode_diff(str(left_path.resolve()), right_arg)
         return {"ok": True, "path": rel, "mode": "diff", "commit_hash": commit_hash}
 
-    def _list_files_via_git(self) -> list[str] | None:
-        try:
-            proc = subprocess.run(
-                [
-                    "git",
-                    "-C",
-                    self.workspace,
-                    "ls-files",
-                    "-z",
-                    "--cached",
-                    "--others",
-                    "--exclude-standard",
-                ],
-                check=False,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                timeout=4.0,
-            )
-        except (OSError, subprocess.TimeoutExpired):
-            return None
-        if proc.returncode != 0:
-            return None
-        raw = proc.stdout.decode("utf-8", errors="replace")
-        paths: list[str] = []
-        seen: set[str] = set()
-        for item in raw.split("\x00"):
-            rel = str(item or "").replace("\\", "/").strip("/")
-            if not rel or rel in seen:
-                continue
-            if self._rel_path_is_skipped(rel):
-                continue
-            full = os.path.realpath(os.path.join(self.workspace, rel))
-            if not self._is_allowed_path(full):
-                continue
-            seen.add(rel)
-            paths.append(rel)
-        return sorted(paths, key=lambda value: value.casefold())
-
-    def _list_files_via_walk(self) -> list[str]:
-        paths: list[str] = []
-        for root, dirs, filenames in os.walk(self.workspace):
-            rel_dir = os.path.relpath(root, self.workspace).replace("\\", "/")
-            if rel_dir == ".":
-                rel_dir = ""
-            self._prune_walk_dirs(rel_dir, dirs)
-            for filename in sorted(filenames):
-                full = os.path.join(root, filename)
-                resolved = os.path.realpath(full)
-                if not self._is_allowed_path(resolved):
-                    continue
-                rel = os.path.relpath(full, self.workspace).replace("\\", "/")
-                if self._rel_path_is_skipped(rel):
-                    continue
-                if rel:
-                    paths.append(rel)
-        paths.sort(key=lambda value: value.casefold())
-        return paths
-
     def invalidate_file_list_cache(self) -> None:
         with self._file_list_cache_lock:
             self._file_list_cache = None
