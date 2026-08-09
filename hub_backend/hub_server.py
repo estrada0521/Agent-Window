@@ -44,7 +44,6 @@ from hub_backend.branding import APP_DISPLAY_NAME
 from hub_backend.color_constants import apply_color_tokens, resolve_theme_palette
 from hub_backend.new_session.handlers import (
     get_check_session_name as _get_check_session_name_action,
-    post_mkdir as _post_mkdir_action,
     post_pick_workspace as _post_pick_workspace_action,
     post_start_session_draft as _post_start_session_draft_action,
 )
@@ -574,14 +573,12 @@ _GET_ROUTE_HANDLERS = {
     "/settings": "_get_settings",
     "/new-session": "_get_new_session",
     "/check-session-name": _get_check_session_name_action,
-    "/dirs": "_get_dirs",
 }
 
 _POST_ROUTE_HANDLERS = {
     "/restart-hub": _post_restart_hub_action,
     "/settings": _post_settings_action,
     "/pick-workspace": _post_pick_workspace_action,
-    "/mkdir": _post_mkdir_action,
     "/start-session-draft": _post_start_session_draft_action,
 }
 
@@ -734,47 +731,6 @@ class Handler(BaseHTTPRequestHandler):
     def _get_new_session(self, parsed):
         variant = request_view_variant(headers=self.headers, query_string=parsed.query)
         self._send_html(200, hub_new_session_html(variant=variant))
-
-
-    def _get_dirs(self, parsed):
-        import os as _os
-
-        qs = parse_qs(parsed.query)
-        req_path = (qs.get("path", [""])[0] or "").strip()
-        home = str(Path.home())
-        if not req_path:
-            req_path = home
-        try:
-            real = str(Path(req_path).resolve())
-        except Exception:
-            real = home
-        if not real.startswith(home):
-            real = home
-        _SKIP = frozenset({"node_modules", "__pycache__"})
-        entries = []
-        try:
-            with _os.scandir(real) as it:
-                for entry in sorted(it, key=lambda e: e.name.lower()):
-                    if not entry.is_dir(follow_symlinks=False):
-                        continue
-                    if entry.name.startswith("."):
-                        continue
-                    if entry.name in _SKIP:
-                        continue
-                    has_ch = False
-                    try:
-                        has_ch = any(
-                            True
-                            for e2 in _os.scandir(entry.path)
-                            if e2.is_dir(follow_symlinks=False) and not e2.name.startswith(".")
-                        )
-                    except PermissionError:
-                        pass
-                    entries.append({"name": entry.name, "path": entry.path, "has_children": has_ch})
-        except PermissionError:
-            pass
-        parent = str(Path(real).parent) if real != home else None
-        self._send_json(200, {"path": real, "parent": parent, "home": home, "entries": entries})
 
 
 

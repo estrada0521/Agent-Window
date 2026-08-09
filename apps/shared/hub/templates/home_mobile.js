@@ -834,12 +834,7 @@
       };
 
       const renderRows = (active, archived) => {
-        let html = `<div class="mob-session-row mob-new-session-row" id="mobNewSessionRow" role="button" tabindex="0">` +
-          `<div class="mob-row-head">` +
-          `<span class="mob-row-leading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"></path></svg></span>` +
-          `<div class="mob-row-name">New Session</div>` +
-          `</div>` +
-          `</div>`;
+        let html = "";
         const trashSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
         const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
         if (active.length) {
@@ -875,21 +870,6 @@
         }
         wrap.innerHTML = html;
         syncMobileSelectedSessionRows();
-        const newSessionRow = document.getElementById("mobNewSessionRow");
-        const openNewSession = () => {
-          if (typeof window._openMobSheet === "function") {
-            window._openMobSheet("/new-session?embed=1&view=mobile", true, "New Session");
-            return;
-          }
-          window.location.href = "/new-session";
-        };
-        newSessionRow?.addEventListener("click", openNewSession);
-        newSessionRow?.addEventListener("touchstart", () => {}, { passive: true });
-        newSessionRow?.addEventListener("keydown", (e) => {
-          if (e.key !== "Enter" && e.key !== " ") return;
-          e.preventDefault();
-          openNewSession();
-        });
         wrap.querySelectorAll(".swipe-row").forEach(initSwipeRow);
       };
       const refresh = async (force) => {
@@ -942,13 +922,10 @@
       var sheetNav = document.getElementById("mobSheetNav");
       var sheetTitle = document.getElementById("mobSheetTitle");
       var sheetClose = document.getElementById("mobSheetClose");
-      var sheetBackBtn = document.getElementById("mobSheetBackBtn");
       if (!sheet || !sheetFrame || !sheetPanel) return;
 
       var _sheetCloseTimer = 0;
-      var _sheetIsNewSession = false;
       var _sheetFrameLoadToken = 0;
-      var _sheetOpeningChat = false;
       var _sheetScrollY = 0;
       var _sheetScrollLocked = false;
       var DARK_BG = "__DARK_BG__";
@@ -972,15 +949,9 @@
         try { window.scrollTo(0, _sheetScrollY || 0); } catch (_) { }
       }
 
-      function openSheet(url, isNewSession, title) {
-        _sheetIsNewSession = !!isNewSession;
-        var isSettingsSheet = false;
-        try {
-          isSettingsSheet = !_sheetIsNewSession && new URL(url, window.location.origin).pathname === "/settings";
-        } catch (_) { }
-        sheetPanel.classList.toggle("settings-sheet", isSettingsSheet);
-        if (sheetTitle) sheetTitle.textContent = _sheetIsNewSession ? "" : (title || "");
-        if (sheetBackBtn) sheetBackBtn.hidden = true;
+      function openSheet(url, title) {
+        sheetPanel.classList.add("settings-sheet");
+        if (sheetTitle) sheetTitle.textContent = title || "";
         if (_sheetCloseTimer) { clearTimeout(_sheetCloseTimer); _sheetCloseTimer = 0; }
         var loadToken = ++_sheetFrameLoadToken;
         sheetFrame.classList.remove("sheet-frame-ready");
@@ -1003,11 +974,8 @@
         });
       }
 
-      function finishSheetClose(refreshSessionList) {
-        var wasNewSession = _sheetIsNewSession;
-        _sheetIsNewSession = false;
+      function finishSheetClose() {
         sheetPanel.classList.remove("settings-sheet");
-        if (sheetBackBtn) sheetBackBtn.hidden = true;
         if (sheetTitle) sheetTitle.textContent = "";
         sheet.classList.remove("sheet-closing");
         sheet.hidden = true;
@@ -1017,30 +985,25 @@
         sheetFrame.removeAttribute("src");
         sheetFrame.srcdoc = _sheetBlankDoc;
         unlockSheetScroll();
-        if (wasNewSession && refreshSessionList !== false && window._mobRefresh) {
-          window._lastMobRenderSig = null;
-          window._mobRefresh(true);
-        }
       }
 
       function closeSheet(options) {
         options = options || {};
         const immediate = options.immediate === true;
-        const refreshSessionList = options.refreshSessionList !== false;
         if (_sheetCloseTimer) {
           clearTimeout(_sheetCloseTimer);
           _sheetCloseTimer = 0;
         }
         if (immediate) {
           sheet.classList.remove("sheet-open", "sheet-closing");
-          finishSheetClose(refreshSessionList);
+          finishSheetClose();
           return;
         }
         sheet.classList.remove("sheet-open");
         sheet.classList.add("sheet-closing");
         _sheetCloseTimer = setTimeout(function () {
           _sheetCloseTimer = 0;
-          finishSheetClose(refreshSessionList);
+          finishSheetClose();
         }, 300);
       }
 
@@ -1073,38 +1036,10 @@
         }, { passive: true });
       }
 
-      if (sheetBackBtn) {
-        sheetBackBtn.addEventListener("click", function () {
-          if (!sheetFrame || !sheetFrame.contentWindow) return;
-          sheetFrame.contentWindow.postMessage({ type: "hub-sheet-go-back" }, "*");
-        });
-      }
-
       window.addEventListener("message", function (e) {
         if (!sheetFrame || e.source !== sheetFrame.contentWindow) return;
         if (e.data && e.data.type === "hub-close-sidebar-page") closeSheet();
         if (e.data === "hub_close_chat") closeSheet();
-        if (e.data && e.data.type === "hub-sheet-dir-state") {
-          if (_sheetIsNewSession) {
-            if (sheetTitle) sheetTitle.textContent = e.data.displayPath || "";
-            if (sheetBackBtn) sheetBackBtn.hidden = !e.data.canGoBack;
-          }
-        }
-        if (e.data && e.data.type === "hub-open-chat-session") {
-          if (_sheetOpeningChat) return;
-          _sheetOpeningChat = true;
-          var chatUrl = typeof e.data.chatUrl === "string" ? e.data.chatUrl : "";
-          var sessionName = typeof e.data.sessionName === "string" ? e.data.sessionName : "";
-          closeSheet({ immediate: true, refreshSessionList: false });
-          if (chatUrl) {
-            requestAnimationFrame(function () {
-              _sheetOpeningChat = false;
-              openChatInFrame(chatUrl, sessionName);
-            });
-          } else {
-            _sheetOpeningChat = false;
-          }
-        }
       });
 
       var bridge = document.getElementById("hubPageNativeMenuBridge");
@@ -1112,14 +1047,10 @@
         bridge.addEventListener("change", function (e) {
           var val = bridge.value;
           if (!val) return;
-          if (val === "new-session") {
+          if (val === "settings") {
             e.stopImmediatePropagation();
             bridge.value = "";
-            openSheet("/new-session?embed=1&view=mobile", true, "New Session");
-          } else if (val === "settings") {
-            e.stopImmediatePropagation();
-            bridge.value = "";
-            openSheet("/settings?embed=1&view=mobile", false, "Settings");
+            openSheet("/settings?embed=1&view=mobile", "Settings");
           } else if (val === "close-session" || val === "hub") {
             e.stopImmediatePropagation();
             bridge.value = "";
