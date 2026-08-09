@@ -597,17 +597,6 @@
       align-self: end;
       justify-self: start;
     }
-    .agent-icon-slot--badge {
-      width: 100%;
-      height: 100%;
-      --agent-icon-sub-font-size: 13px;
-      --agent-icon-sub-right: -9px;
-      --agent-icon-sub-bottom: 0px;
-    }
-    .agent-icon-slot--badge .pane-viewer-pane-badge-icon {
-      width: 100%;
-      height: 100%;
-    }
     .agent-icon-slot--thinking {
       width: 1.55em;
       height: 1.55em;
