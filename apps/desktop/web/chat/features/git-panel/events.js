@@ -13,43 +13,8 @@
         await dpLoadGitBranchPage();
         return;
       }
-      const fileActionBtn = event.target.closest(".git-commit-file-action");
-      if (fileActionBtn) {
-        event.preventDefault();
-        event.stopPropagation();
-        const filePath = String(fileActionBtn.dataset.path || "").trim();
-        const action = String(fileActionBtn.dataset.action || "").trim();
-        if (!filePath || !action || fileActionBtn.dataset.busy === "1") return;
-        if (action !== "ignore" && action !== "delete") return;
-        fileActionBtn.dataset.busy = "1";
-        fileActionBtn.disabled = true;
-        setStatus(`${action} ${filePath}...`);
-        try {
-          const endpoint = action === "ignore" ? "/git-ignore-file" : "/git-delete-untracked-file";
-          const response = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ path: filePath }),
-          });
-          const payload = await response.json().catch(() => ({}));
-          if (!response.ok || !payload?.ok) throw new Error(payload?.error || `${action} failed`);
-          let okMsg = `${action}d ${filePath}`;
-          if (action === "ignore") okMsg = `ignored ${filePath}`;
-          else if (action === "delete") okMsg = `deleted ${filePath}`;
-          setStatus(okMsg);
-          setTimeout(() => setStatus(""), 1800);
-          dpGitDetailNeedsRefresh = true;
-          await dpRefreshGitOverview();
-        } catch (err) {
-          setStatus(err?.message || `${action} failed`, true);
-        } finally {
-          delete fileActionBtn.dataset.busy;
-          fileActionBtn.disabled = false;
-        }
-        return;
-      }
       const fileRow = event.target.closest(".git-commit-file-row");
-      if (fileRow && !event.target.closest(".git-commit-file-undo")) {
+      if (fileRow) {
         event.preventDefault();
         const p = String(fileRow.dataset.path || "").trim();
         if (p) {
@@ -57,38 +22,6 @@
             diff: fileRow.dataset.untracked !== "1",
             commitHash: dpGitDetailContext?.hash || "",
           });
-        }
-        return;
-      }
-      const undoBtn = event.target.closest(".git-commit-file-undo");
-      if (undoBtn) {
-        event.preventDefault();
-        event.stopPropagation();
-        const filePath = String(undoBtn.dataset.path || "").trim();
-        if (!filePath || undoBtn.dataset.busy === "1") return;
-        undoBtn.dataset.busy = "1";
-        undoBtn.disabled = true;
-        setStatus(`undoing ${filePath}...`);
-        try {
-          const response = await fetch("/git-restore-file", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              path: filePath,
-              scope: event.target.closest(".git-commit-file-section")?.dataset.scope || "",
-            }),
-          });
-          const payload = await response.json().catch(() => ({}));
-          if (!response.ok || !payload?.ok) throw new Error(payload?.error || "undo failed");
-          setStatus(`restored ${filePath}`);
-          setTimeout(() => setStatus(""), 1800);
-          dpGitDetailNeedsRefresh = true;
-          await dpRefreshGitOverview();
-        } catch (err) {
-          setStatus(err?.message || "undo failed", true);
-        } finally {
-          delete undoBtn.dataset.busy;
-          undoBtn.disabled = false;
         }
         return;
       }
