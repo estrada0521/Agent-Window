@@ -1035,10 +1035,6 @@
       if (active.length) {
         return { name: active[0].name, archived: false };
       }
-      const archived = (_hubSessionsCache.archived || []).filter((session) => session.name !== blocked);
-      if (archived.length) {
-        return { name: archived[0].name, archived: true };
-      }
       return null;
     }
 
@@ -1060,13 +1056,12 @@
       const requested = getRequestedDeskSelection();
       if (requested) {
         const match = findSessionRecord(requested);
-        if (!match) {
-          persistDeskSelection("");
-          setDeskSelectionInUrl("");
-        } else {
-          openSessionFrame(buildSessionOpenHref(requested, match.archived), requested);
+        if (match && !match.archived) {
+          openSessionFrame(buildSessionOpenHref(requested, false), requested);
           return;
         }
+        persistDeskSelection("");
+        setDeskSelectionInUrl("");
       }
       const active = _hubSessionsCache.active || [];
       if (active.length) {
