@@ -1,9 +1,3 @@
-    let paneViewerInterval = null;
-    let paneViewerTabScrollRaf = 0;
-    let paneViewerTabScrollEndTimer = null;
-    let paneViewerOpenRaf = 0;
-    let paneViewerInitialFetchTimer = 0;
-    let lastPaneViewerTabIdx = 0;
     const headerRoot = document.querySelector(".hub-page-header");
     const shellRoot = document.querySelector(".shell");
     const hasOpenHeaderMenu = () => !!rightMenuPanel?.classList.contains("open");
@@ -23,49 +17,11 @@
       document.documentElement.style.setProperty("--chat-surface-right", `${right}px`);
     };
     const syncHeaderMenuFocus = () => {
-      const paneTraceOpen = !!document.getElementById("paneViewer")?.classList.contains("visible");
-      const focused = hasOpenHeaderMenu() || paneTraceOpen;
-      if (focused) updateHeaderMenuViewportMetrics();
+      if (hasOpenHeaderMenu()) updateHeaderMenuViewportMetrics();
     };
-    const needsHeaderViewportMetrics = () =>
-      hasOpenHeaderMenu() || !!document.getElementById("paneViewer")?.classList.contains("visible");
-    const clearPaneViewerOpenWork = () => {
-      if (paneViewerOpenRaf) {
-        cancelAnimationFrame(paneViewerOpenRaf);
-        paneViewerOpenRaf = 0;
-      }
-      if (paneViewerInitialFetchTimer) {
-        clearTimeout(paneViewerInitialFetchTimer);
-        paneViewerInitialFetchTimer = 0;
-      }
-    };
-    function exitPaneTraceMode() {
-      const paneEl = document.getElementById("paneViewer");
-      clearPaneViewerOpenWork();
-      if (paneViewerTabScrollEndTimer) {
-        clearTimeout(paneViewerTabScrollEndTimer);
-        paneViewerTabScrollEndTimer = null;
-      }
-      if (paneEl?.classList?.contains("visible") && paneViewerCarousel && paneViewerAgents.length) {
-        const w = paneViewerCarousel.offsetWidth;
-        if (w) {
-          const idx = Math.max(0, Math.min(paneViewerAgents.length - 1, Math.round(paneViewerCarousel.scrollLeft / w)));
-          paneViewerLastAgent = paneViewerAgents[idx];
-        }
-      }
-      if (paneEl) paneEl.classList.remove("visible");
-      rightMenuPanel?.classList.remove("hub-menu-mode-pane");
-      if (paneViewerInterval) {
-        clearInterval(paneViewerInterval);
-        paneViewerInterval = null;
-      }
-      syncHeaderMenuFocus();
-    }
-    const isLocalHubHostname = (host = String(location.hostname || "")) =>
-      host === "127.0.0.1" || host === "localhost" || host === "[::1]" || host.startsWith("192.168.") || host.startsWith("10.") || /^172\\.(1[6-9]|2\\d|3[01])\\./.test(host);
+    const needsHeaderViewportMetrics = () => hasOpenHeaderMenu();
     const closeHeaderMenus = () => {
       resetAgentActionMenus();
-      exitPaneTraceMode();
       rightMenuPanel?.classList.remove("open");
       if (rightMenuPanel) rightMenuPanel.hidden = true;
       rightMenuBtn?.classList.remove("open");

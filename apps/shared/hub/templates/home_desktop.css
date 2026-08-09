@@ -79,7 +79,6 @@
       padding: 0;
     }
     html[data-tauri-app="1"] {
-      --pane-trace-body-bg: rgb(12, 12, 12);
       --tauri-drag-height: 36px;
       --tauri-window-inset-top: 26px;
       --tauri-window-inset-x: 4px;
@@ -284,9 +283,6 @@
       min-height: var(--tauri-drag-height);
     }
     .hub-page-title {
-      display: none;
-    }
-    html[data-tauri-app="1"] .hub-page-title {
       display: none;
     }
     .hub-page-header .hub-page-header-actions {

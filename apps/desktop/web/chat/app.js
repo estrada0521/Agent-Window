@@ -410,7 +410,6 @@ __CHAT_INCLUDE:attachments/file-runtime.js__
 __CHAT_INCLUDE:composer/commands.js__
 __CHAT_INCLUDE:runtime/thinking.js__
 __CHAT_INCLUDE:runtime/agent-status.js__
-__CHAT_INCLUDE:panes/pane-viewer.js__
     const desktopRightPanel = document.getElementById("desktopRightPanel");
     const desktopRightPanelResizer = document.getElementById("desktopRightPanelResizer");
     const dpSplitPanel = document.getElementById("dpSplitPanel");

@@ -1,7 +1,6 @@
 __CHAT_INCLUDE:../../../../shared/chat/hub-running-state.js__
     const renderAgentStatus = (statuses) => {
       currentAgentStatuses = { ...statuses };
-      syncPaneViewerTabThinkingStatuses();
       renderThinkingIndicator();
       notifyHubRunningState();
     };
@@ -126,6 +125,3 @@ __CHAT_INCLUDE:../../../../shared/chat/session-state-events.js__
         setTimeout(() => { btn.innerHTML = codeCopySvg; }, 1500);
       });
     });
-    const stripAnsiForTrace = (value) => String(value ?? "")
-      .replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "")
-      .replace(/\u001b\][^\u0007]*\u0007/g, "");
