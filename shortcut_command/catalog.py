@@ -58,7 +58,7 @@ def all_commands() -> tuple[ShortcutCommandSpec, ...]:
         ShortcutCommandSpec(
             id="nativelog",
             slash="/nativelog",
-            desc="選択中エージェントのネイティブログを外部エディタで開く",
+            desc="選択中エージェントのネイティブログをFinderで表示する",
             has_arg=False,
         ),
     )
