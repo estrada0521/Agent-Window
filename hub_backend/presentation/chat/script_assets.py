@@ -4,6 +4,16 @@ import hashlib
 from dataclasses import dataclass
 
 
+ANSI_UP_VERSION = "5.1.0"
+MARKED_VERSION = "12"
+KATEX_VERSION = "0.16.11"
+
+ANSI_UP_CDN_SRC = f"https://cdn.jsdelivr.net/npm/ansi_up@{ANSI_UP_VERSION}/ansi_up.min.js"
+MARKED_CDN_SRC = f"https://cdn.jsdelivr.net/npm/marked@{MARKED_VERSION}/marked.min.js"
+KATEX_CDN_CSS_HREF = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/katex.min.css"
+KATEX_CDN_JS_SRC = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/katex.min.js"
+KATEX_CDN_AUTO_RENDER_SRC = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/contrib/auto-render.min.js"
+
 CHAT_HEADER_ACTIONS_HTML = """
 <button type="button" class="hub-page-menu-btn" id="hubPageMenuBtn" title="Menu" aria-label="Menu">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="10" y1="15" x2="20" y2="15"/></svg>
@@ -45,11 +55,11 @@ CHAT_HEADER_PANELS_HTML = """
   </div>
 </div>
 """
-CHAT_ANSI_UP_HEAD_TAG = '  <script src="https://cdn.jsdelivr.net/npm/ansi_up@5.1.0/ansi_up.min.js"></script>\n'
+CHAT_ANSI_UP_HEAD_TAG = f'  <script src="{ANSI_UP_CDN_SRC}"></script>\n'
 CHAT_KATEX_HEAD_TAGS = (
-    '  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">\n'
-    '  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>\n'
-    '  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>\n'
+    f'  <link rel="stylesheet" href="{KATEX_CDN_CSS_HREF}">\n'
+    f'  <script src="{KATEX_CDN_JS_SRC}"></script>\n'
+    f'  <script src="{KATEX_CDN_AUTO_RENDER_SRC}"></script>\n'
 )
 
 
