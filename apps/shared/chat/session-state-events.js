@@ -16,3 +16,4 @@
       es.onerror = () => {};
     };
     startSessionStateEvents();
+    void refreshSessionState();
