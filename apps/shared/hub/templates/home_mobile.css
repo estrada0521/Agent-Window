@@ -584,6 +584,7 @@
       max-width: 900px;
       margin: 0 auto;
       width: 100%;
+      padding-top: 64px;
       padding-bottom: 20px;
     }
 
@@ -671,15 +672,6 @@
       width: 100%;
       height: 100%;
       display: block;
-    }
-
-    .mob-new-session-row {
-      margin-top: 64px;
-      padding-top: 14px;
-    }
-
-    .mob-new-session-row .mob-row-name {
-      letter-spacing: 0;
     }
 
     .mob-row-preview {
@@ -1159,11 +1151,6 @@
       text-overflow: ellipsis;
     }
 
-    /* ── Sheet liquid-glass buttons ───────────────────────────────────────────
-       Close (×) and Start New Session share this visual style.
-       Note: display is intentionally NOT set here so the `hidden` attribute
-       is respected. Each element sets its own display via its own class.
-       ─────────────────────────────────────────────────────────────────────── */
     .mob-sheet-glass-btn {
       appearance: none; -webkit-appearance: none;
       border: 0.5px solid rgba(255, 255, 255, 0.14);
@@ -1231,25 +1218,6 @@
 
     .mob-sheet-close svg {
       display: block;
-    }
-
-    /* Back button: absolutely positioned on the left side of the nav bar */
-    .mob-sheet-back-btn {
-      position: absolute;
-      left: calc(14px + env(safe-area-inset-left, 0px));
-      top: 50%;
-      transform: translateY(-50%);
-      width: var(--mob-sheet-floating-height);
-      height: var(--mob-sheet-floating-height);
-    }
-
-    .mob-sheet-back-btn svg {
-      display: block;
-    }
-
-    /* :active must preserve the translateY(-50%) centering */
-    .mob-sheet-back-btn:active {
-      transform: translateY(-50%) scale(0.94);
     }
 
     #mobSheetFrame {

@@ -96,7 +96,6 @@ DEFAULT_HUB_HEADER_ACTIONS = """
 </button>
 <select id="hubPageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;color:transparent;font-size:13px;z-index:220;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true" tabindex="-1">
   <option value="" disabled selected>Menu</option>
-  <option value="new-session">New Session</option>
   <option value="settings">Settings</option>
   <option value="restart-hub">Reload</option>
 </select>
@@ -206,10 +205,6 @@ HUB_PAGE_HEADER_JS = """
         var action = e.target.value;
         e.target.value = "";
         if (!action) return;
-        if (action === "new-session") {
-          location.href = "/new-session";
-          return;
-        }
         if (action === "settings") {
           location.href = "/settings";
           return;

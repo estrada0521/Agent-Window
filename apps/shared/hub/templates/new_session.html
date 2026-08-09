@@ -102,319 +102,6 @@
     html[data-view-variant="desktop"]:not([data-hub-embed="1"]) .hub-page-header { display: none; }
     html[data-view-variant="desktop"]:not([data-hub-embed="1"]) #pickerPanel { min-height: 100dvh; }
 
-    html[data-hub-embed="1"] #pickerPanel,
-    html[data-view-variant="mobile"] #pickerPanel { display: none; }
-    html[data-hub-embed="1"] #dirBrowser,
-    html[data-view-variant="mobile"] #dirBrowser { display: flex; }
-
-    #dirBrowser {
-      display: none;
-      position: absolute; inset: 0;
-      overflow: hidden;
-    }
-    .dir-list {
-      position: absolute; inset: 0;
-      overflow-y: auto; -webkit-overflow-scrolling: touch;
-      padding: var(--hub-embed-sheet-offset) 0 calc(44px + max(20px, env(safe-area-inset-bottom, 0px)) + 8px);
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 2px;
-      align-content: start;
-    }
-    .dir-list.slide-out-forward {
-      opacity: 0;
-      transform: translateX(-16px);
-      transition: transform 150ms ease, opacity 120ms ease;
-      overflow: hidden;
-    }
-    .dir-list.slide-out-back {
-      opacity: 0;
-      transform: translateX(16px);
-      transition: transform 150ms ease, opacity 120ms ease;
-      overflow: hidden;
-    }
-    .dir-list.slide-in-forward {
-      opacity: 0;
-      transform: translateX(16px);
-    }
-    .dir-list.slide-in-back {
-      opacity: 0;
-      transform: translateX(-16px);
-    }
-    .dir-list.slide-settle {
-      opacity: 1;
-      transform: translateX(0);
-      transition: transform 170ms cubic-bezier(0.22, 1, 0.36, 1), opacity 140ms ease;
-    }
-    /* .hub-row provides: position:relative, isolation:isolate,
-       touch-action:manipulation, -webkit-tap-highlight-color, ::before highlight */
-    .dir-item {
-      display: flex; align-items: center;
-      padding: 6px 14px;
-      cursor: pointer;
-      gap: 12px;
-      border: none; background: transparent; color: var(--fg);
-      width: 100%; font: inherit; text-align: left;
-    }
-    .dir-item-icon {
-      width: 22px; height: 22px;
-      flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
-      color: var(--icon-fg);
-    }
-    .dir-item-icon svg { display: block; width: 17px; height: 17px; stroke-width: 1.7; }
-    .dir-item-name {
-      flex: 1; min-width: 0;
-      font-size: var(--settings-text-size);
-      line-height: 1.3;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      color: var(--fg);
-      font-weight: 480;
-    }
-    html[data-bold-mode="1"] .dir-item-name { font-weight: 700; }
-    html[data-bold-mode="1"] .dir-create-label { font-weight: 700; }
-    html[data-bold-mode="1"] .dir-path-text { font-weight: 700; }
-    .dir-item-chevron {
-      width: 14px; height: 14px;
-      color: var(--icon-muted);
-      flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
-    }
-    .dir-item-chevron svg { display: block; width: 100%; height: 100%; stroke-width: 1.8; }
-    .dir-item.leaf .dir-item-chevron { visibility: hidden; }
-    .dir-create-icon {
-      color: var(--accent);
-    }
-    .dir-create-label {
-      color: var(--accent);
-      font-weight: 480;
-    }
-    .dir-empty {
-      padding: 40px 24px; text-align: center;
-      font-size: var(--settings-text-size); color: var(--muted);
-    }
-    .dir-loading {
-      padding: 40px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    @keyframes hub-inline-loading-spin {
-      to { transform: rotate(360deg); }
-    }
-    .inline-loading {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--muted);
-      vertical-align: middle;
-    }
-    .inline-loading-spinner {
-      width: 18px;
-      height: 18px;
-      border: 2px solid var(--icon-muted);
-      border-top-color: var(--icon-fg);
-      border-radius: 50%;
-      animation: hub-inline-loading-spin 800ms linear infinite;
-      flex: 0 0 auto;
-    }
-    .dir-status {
-      position: absolute;
-      bottom: calc(44px + max(20px, env(safe-area-inset-bottom, 0px)) + 12px);
-      left: 14px; right: 14px;
-      font-size: 13px;
-      color: var(--muted);
-      text-align: center;
-      z-index: 10;
-      pointer-events: none;
-    }
-    .dir-status.error { color: rgb(232, 146, 146); pointer-events: auto; }
-    .dir-start-btn {
-      position: absolute;
-      bottom: max(20px, env(safe-area-inset-bottom, 0px));
-      left: 50%;
-      transform: translateX(-50%);
-      height: 44px;
-      padding: 0 18px;
-      z-index: 10;
-      appearance: none; -webkit-appearance: none;
-      border: 0.5px solid rgba(255, 255, 255, 0.14);
-      border-radius: 999px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018) 48%, rgba(255, 255, 255, 0.045)),
-        rgba(var(--bg-rgb), 0.52);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.20),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.055),
-        inset 0 0 18px rgba(255, 255, 255, 0.024),
-        0 4px 14px rgba(0, 0, 0, 0.25);
-      backdrop-filter: blur(28px) saturate(220%) contrast(114%);
-      -webkit-backdrop-filter: blur(28px) saturate(220%) contrast(114%);
-      color: var(--fg);
-      font: inherit; font-size: 15px; font-weight: 600;
-      white-space: nowrap;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      transition:
-        background 160ms ease,
-        border-color 160ms ease,
-        box-shadow 160ms ease,
-        transform 160ms ease;
-    }
-    .dir-start-btn:active {
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.024) 48%, rgba(255, 255, 255, 0.055)),
-        rgba(var(--bg-rgb), 0.60);
-      border-color: rgba(255, 255, 255, 0.18);
-      transform: translateX(-50%) scale(0.94);
-    }
-    .dir-start-btn[disabled] { opacity: 0.4; cursor: default; }
-    html[data-bold-mode="1"] .dir-start-btn { font-weight: 700; }
-    html[data-theme="light"] .dir-start-btn {
-      background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.28) 44%, rgba(255, 255, 255, 0.48)),
-        rgba(var(--bg-rgb), 0.25);
-      border-color: rgba(0, 0, 0, 0.10);
-      box-shadow:
-        inset 0 1px 1px rgba(255, 255, 255, 0.92),
-        0 4px 14px rgba(0, 0, 0, 0.10),
-        0 1px 0 rgba(255, 255, 255, 0.56);
-    }
-    html[data-theme="light"] .dir-start-btn:active {
-      background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.80), rgba(255, 255, 255, 0.36) 44%, rgba(255, 255, 255, 0.56)),
-        rgba(var(--bg-rgb), 0.35);
-    }
-    .dir-create-overlay {
-      position: fixed; inset: 0; z-index: 50;
-      display: flex; align-items: center; justify-content: center;
-      padding: 24px calc(12px + env(safe-area-inset-right, 0px)) 24px calc(12px + env(safe-area-inset-left, 0px));
-      background: rgba(var(--bg-rgb), 0.10);
-      backdrop-filter: blur(0px);
-      -webkit-backdrop-filter: blur(0px);
-      opacity: 0; pointer-events: none;
-      transition: opacity 240ms ease, background 320ms ease, backdrop-filter 320ms ease, -webkit-backdrop-filter 320ms ease;
-    }
-    .dir-create-overlay[hidden] { display: none; }
-    .dir-create-overlay.visible {
-      opacity: 1; pointer-events: auto;
-      background: rgba(var(--bg-rgb), 0.16);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .dir-create-composer {
-      width: min(900px, calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
-      max-width: 900px;
-      padding: 8px 7px 10px 7px;
-      margin: 0 auto;
-      border: none;
-      background: transparent;
-      position: relative;
-      isolation: isolate;
-      opacity: 0;
-      filter: blur(18px);
-      transform: translateY(42px) scale(0.952);
-      transition: opacity 320ms ease, transform 620ms cubic-bezier(0.18, 0.9, 0.22, 1), filter 520ms ease;
-      will-change: transform, opacity, filter;
-    }
-    .dir-create-composer::before {
-      content: "";
-      position: absolute;
-      inset: 6px 8px 8px;
-      border-radius: 30px;
-      background: radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.045) 34%, rgba(255, 255, 255, 0.012) 58%, rgba(255, 255, 255, 0) 76%);
-      filter: blur(18px);
-      opacity: 0.82;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .dir-create-composer > * {
-      position: relative;
-      z-index: 1;
-    }
-    .dir-create-overlay.visible .dir-create-composer {
-      opacity: 1;
-      filter: blur(0);
-      transform: translateY(0) scale(1);
-    }
-    .dir-create-field {
-      position: relative;
-      border-radius: 24px;
-      min-height: 54px;
-    }
-    .dir-create-input {
-      display: block;
-      width: 100%;
-      border: none;
-      background: transparent;
-      color: var(--fg);
-      border-radius: 22px;
-      min-height: 54px;
-      padding: 12px 46px 12px 10px;
-      font-size: 16px;
-      line-height: 1.5;
-      font-family: inherit;
-      outline: none;
-      box-sizing: border-box;
-      -webkit-appearance: none;
-      appearance: none;
-    }
-    html[data-bold-mode="1"] .dir-create-input {
-      font-weight: 700;
-    }
-    .dir-create-input::placeholder { color: var(--muted); }
-    .dir-create-input:focus,
-    .dir-create-input:active {
-      background: transparent;
-    }
-    .dir-create-input:-webkit-autofill,
-    .dir-create-input:-webkit-autofill:hover,
-    .dir-create-input:-webkit-autofill:focus,
-    .dir-create-input:-webkit-autofill:active {
-      -webkit-text-fill-color: var(--fg);
-      -webkit-box-shadow: 0 0 0 1000px transparent inset;
-      transition: background-color 9999s ease-out 0s;
-    }
-    .dir-create-submit {
-      position: absolute;
-      right: 5px;
-      bottom: 9px;
-      width: 38px;
-      height: 38px;
-      border-radius: 8px;
-      border: none;
-      background: rgba(255, 255, 255, 0.95);
-      color: var(--bg);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      box-shadow: none;
-      opacity: 0;
-      pointer-events: none;
-      transform: scale(0.4) rotate(-15deg);
-      -webkit-tap-highlight-color: transparent;
-      transition: transform 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 150ms ease, background 150ms ease, opacity 200ms ease;
-    }
-    .dir-create-submit.visible {
-      opacity: 1;
-      pointer-events: auto;
-      transform: scale(1) rotate(0deg);
-    }
-    .dir-create-submit.visible:active {
-      transform: scale(1.08) rotate(0deg);
-      filter: brightness(1.1);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-      transition: transform 120ms ease-out;
-    }
-    .dir-create-submit:disabled {
-      cursor: not-allowed;
-      box-shadow: none;
-      filter: none;
-    }
-    html[data-theme="light"] .dir-create-submit {
-      background: rgba(0, 0, 0, 0.92);
-      color: rgb(255, 255, 255);
-    }
   </style>
 </head>
 <body>
@@ -431,35 +118,11 @@
       </div>
       <div class="status" id="statusText"></div>
     </section>
-    <div id="dirBrowser">
-      <div class="dir-list" id="dirList">
-        <div class="dir-loading">
-          <span class="inline-loading">
-            <span class="inline-loading-spinner" aria-hidden="true"></span>
-          </span>
-        </div>
-      </div>
-      <div class="dir-status" id="dirStatus"></div>
-      <button type="button" id="dirStartBtn" class="dir-start-btn" disabled>Start New Session</button>
-    </div>
-    <div class="dir-create-overlay" id="dirCreateOverlay" hidden>
-      <form class="dir-create-composer" id="dirCreateForm">
-        <div class="dir-create-field">
-          <input class="dir-create-input" id="dirCreateInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Directory name">
-          <button type="button" class="dir-create-submit" id="dirCreateSubmit" aria-label="Create directory">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-          </button>
-        </div>
-      </form>
-    </div>
   </div>
   <script>
     const HUB_EMBED = document.documentElement.dataset.hubEmbed === "1";
-    const VIEW_VARIANT = document.documentElement.dataset.viewVariant || "";
-    const USE_DIR_BROWSER = HUB_EMBED || VIEW_VARIANT === "mobile";
 
     const NATIVE_PICKER_SUPPORTED =
-      !USE_DIR_BROWSER &&
       /mac/i.test(String(navigator.platform || "")) &&
       !/iphone|ipad|ipod|android/i.test(String(navigator.userAgent || ""));
 
@@ -478,12 +141,19 @@
       };
     })();
 
-    const dirStatus = document.getElementById("dirStatus");
-    const dirUseText = null;
+    const statusText = document.getElementById("statusText");
+    const pickBtn = document.getElementById("pickBtn");
+    const pickBtnLabel = document.getElementById("pickBtnLabel");
+    const setStatus = (message = "", isError = false) => {
+      statusText.textContent = String(message || "");
+      statusText.classList.toggle("error", !!(message && isError));
+      queueEmbedHeight();
+    };
+
     const startSession = async (workspace) => {
       if (startInFlight || !workspace) return;
       startInFlight = true;
-      if (dirStatus) { dirStatus.textContent = "Opening chat…"; dirStatus.className = "dir-status"; }
+      setStatus("Opening chat…");
       try {
         const res = await fetch("/start-session-draft", {
           method: "POST",
@@ -503,298 +173,47 @@
         }
         window.location.href = data.chat_url;
       } catch (err) {
-        if (dirStatus) { dirStatus.textContent = err?.message || "Failed."; dirStatus.className = "dir-status error"; }
+        setStatus(err?.message || "Failed.", true);
         startInFlight = false;
       }
     };
 
-    if (!USE_DIR_BROWSER) {
-      const statusText = document.getElementById("statusText");
-      const pickBtn = document.getElementById("pickBtn");
-      const pickBtnLabel = document.getElementById("pickBtnLabel");
-      const setStatus = (message = "", isError = false) => {
-        statusText.textContent = String(message || "");
-        statusText.classList.toggle("error", !!(message && isError));
-        queueEmbedHeight();
-      };
-      const pickWorkspace = async () => {
-        if (!NATIVE_PICKER_SUPPORTED) {
-          const manual = window.prompt("Workspace path", "");
-          return manual === null ? "" : String(manual || "").trim();
-        }
-        const res = await fetch("/pick-workspace", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
-        const data = await res.json().catch(() => ({}));
-        if (data.ok && data.path) return String(data.path || "");
-        if (data.canceled) return "";
-        throw new Error(data.error || "Workspace picker failed.");
-      };
-      const beginDraftSession = async () => {
-        if (startInFlight) return;
-        startInFlight = true;
-        pickBtn.disabled = true;
-        pickBtnLabel.textContent = NATIVE_PICKER_SUPPORTED ? "Choosing…" : "Starting…";
-        setStatus("Choose a workspace…");
-        try {
-          const workspace = await pickWorkspace();
-          if (!workspace) { setStatus(""); return; }
-          await startSession(workspace);
-        } catch (err) {
-          setStatus(err?.message || "Failed to start draft session.", true);
-        } finally {
-          startInFlight = false;
-          pickBtn.disabled = false;
-          pickBtnLabel.textContent = NATIVE_PICKER_SUPPORTED ? "Choose in Finder" : "Choose Workspace";
-        }
-      };
-      pickBtn.addEventListener("click", () => beginDraftSession());
-      window.addEventListener("load", () => {
-        queueEmbedHeight();
-        if (new URLSearchParams(window.location.search).get("autostart") !== "0") beginDraftSession();
-      }, { once: true });
-      if (typeof ResizeObserver === "function") {
-        try { new ResizeObserver(() => queueEmbedHeight()).observe(document.body); } catch (_) {}
+    const pickWorkspace = async () => {
+      if (!NATIVE_PICKER_SUPPORTED) {
+        const manual = window.prompt("Workspace path", "");
+        return manual === null ? "" : String(manual || "").trim();
       }
-    }
-
-    if (USE_DIR_BROWSER) {
-      const dirStartBtn = document.getElementById("dirStartBtn");
-      const dirCreateOverlay = document.getElementById("dirCreateOverlay");
-      const dirCreateForm = document.getElementById("dirCreateForm");
-      const dirCreateInput = document.getElementById("dirCreateInput");
-      const dirCreateSubmit = document.getElementById("dirCreateSubmit");
-      const dirList = document.getElementById("dirList");
-
-      const getDirCreateBtn = () => document.getElementById("dirCreateBtn");
-
-      let _currentPath = "";
-      let _parentPath = null;
-      let _loading = false;
-
-      const folderSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h5.1a1.5 1.5 0 0 1 1.06.44l1.9 1.9a1.5 1.5 0 0 0 1.06.44H19.5A1.5 1.5 0 0 1 21 9.28V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
-      const chevronSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
-
-      function shortPath(p) {
-        const parts = (p || "").replace(/\/$/, "").split("/").filter(Boolean);
-        if (!parts.length) return "/";
-        return parts[parts.length - 1];
+      const res = await fetch("/pick-workspace", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+      const data = await res.json().catch(() => ({}));
+      if (data.ok && data.path) return String(data.path || "");
+      if (data.canceled) return "";
+      throw new Error(data.error || "Workspace picker failed.");
+    };
+    const beginDraftSession = async () => {
+      if (startInFlight) return;
+      startInFlight = true;
+      pickBtn.disabled = true;
+      pickBtnLabel.textContent = NATIVE_PICKER_SUPPORTED ? "Choosing…" : "Starting…";
+      setStatus("Choose a workspace…");
+      try {
+        const workspace = await pickWorkspace();
+        if (!workspace) { setStatus(""); return; }
+        await startSession(workspace);
+      } catch (err) {
+        setStatus(err?.message || "Failed to start draft session.", true);
+      } finally {
+        startInFlight = false;
+        pickBtn.disabled = false;
+        pickBtnLabel.textContent = NATIVE_PICKER_SUPPORTED ? "Choose in Finder" : "Choose Workspace";
       }
-
-      function esc(s) { return String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-      function escAttr(s) { return String(s || "").replace(/"/g, "&quot;"); }
-      function childPath(parent, name) {
-        const base = String(parent || "").replace(/\/+$/, "");
-        return (base || "") + "/" + String(name || "").replace(/^\/+/, "");
-      }
-
-      function openCreateOverlay() {
-        if (_loading || !_currentPath || !dirCreateOverlay || !dirCreateInput) return;
-        dirCreateInput.value = "";
-        if (dirCreateSubmit) dirCreateSubmit.classList.remove("visible");
-        dirCreateOverlay.hidden = false;
-        dirCreateOverlay.classList.add("visible");
-        try { dirCreateInput.focus({ preventScroll: true }); } catch (_) { dirCreateInput.focus(); }
-      }
-
-      function closeCreateOverlay() {
-        if (!dirCreateOverlay) return;
-        dirCreateOverlay.classList.remove("visible");
-        if (dirCreateSubmit) dirCreateSubmit.classList.remove("visible");
-        setTimeout(() => {
-          if (!dirCreateOverlay.classList.contains("visible")) dirCreateOverlay.hidden = true;
-        }, 140);
-      }
-
-      async function createDirectory(nameValue) {
-        if (_loading || !_currentPath) return;
-        const name = String(nameValue || "").trim();
-        if (!name) return;
-        if (/[\\/]/.test(name)) {
-          if (dirStatus) { dirStatus.textContent = "Use a folder name, not a path."; dirStatus.className = "dir-status error"; }
-          return;
-        }
-        const target = childPath(_currentPath, name);
-        const activeCreateBtn = getDirCreateBtn();
-        if (activeCreateBtn) activeCreateBtn.disabled = true;
-        if (dirCreateSubmit) dirCreateSubmit.disabled = true;
-        if (dirStatus) { dirStatus.textContent = "Creating…"; dirStatus.className = "dir-status"; }
-        try {
-          const res = await fetch("/mkdir", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ path: target }),
-          });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok || !data.ok) throw new Error(data.error || "Failed to create directory.");
-          closeCreateOverlay();
-          await loadDir(data.path || target, "forward");
-        } catch (err) {
-          if (dirStatus) { dirStatus.textContent = err?.message || "Failed."; dirStatus.className = "dir-status error"; }
-        } finally {
-          const activeCreateBtn2 = getDirCreateBtn();
-          if (activeCreateBtn2) activeCreateBtn2.disabled = false;
-          if (dirCreateSubmit) dirCreateSubmit.disabled = false;
-        }
-      }
-
-      const dirTransitionDelay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-      function dirEntriesHtml(entries) {
-        let html = `<button type="button" class="dir-item hub-row dir-create-item" id="dirCreateBtn">` +
-          `<span class="dir-item-icon dir-create-icon">` +
-          `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>` +
-          `</span>` +
-          `<span class="dir-item-name dir-create-label">Create New Directory</span>` +
-          `</button>`;
-        if (!entries.length) {
-          html += '<div class="dir-empty">No subfolders</div>';
-          return html;
-        }
-        html += entries.map(e => {
-          const leaf = !e.has_children;
-          return `<div class="dir-item hub-row${leaf ? " leaf" : ""}" data-path="${escAttr(e.path)}">` +
-            `<span class="dir-item-icon">${folderSvg}</span>` +
-            `<span class="dir-item-name">${esc(e.name)}</span>` +
-            `<span class="dir-item-chevron">${chevronSvg}</span>` +
-            `</div>`;
-        }).join("");
-        return html;
-      }
-
-      function attachDirItemHandlers() {
-        dirList.querySelectorAll(".dir-item:not(.dir-create-item)").forEach(el => {
-          el.addEventListener("click", () => {
-            loadDir(el.dataset.path, "forward");
-          });
-        });
-        const activeCreateBtn = getDirCreateBtn();
-        if (activeCreateBtn) {
-          activeCreateBtn.addEventListener("click", openCreateOverlay);
-        }
-      }
-
-      // Touch feedback for <div> rows — CSS :active doesn't fire on iOS Safari
-      // for non-interactive elements, so we add .tap-active on touchstart.
-      dirList.addEventListener("touchstart", (e) => {
-        const row = e.target.closest(".dir-item:not(.dir-create-item)");
-        if (row) row.classList.add("tap-active");
-      }, { passive: true });
-      ["touchend", "touchcancel"].forEach(evt => {
-        dirList.addEventListener(evt, () => {
-          dirList.querySelectorAll(".tap-active").forEach(el => el.classList.remove("tap-active"));
-        }, { passive: true });
-      });
-
-      async function renderDirList(html, direction) {
-        const animated = direction === "forward" || direction === "back";
-        const outClass = direction === "back" ? "slide-out-back" : "slide-out-forward";
-        const inClass = direction === "back" ? "slide-in-back" : "slide-in-forward";
-        dirList.classList.remove("slide-out-forward", "slide-out-back", "slide-in-forward", "slide-in-back", "slide-settle");
-        if (animated) {
-          dirList.classList.add(outClass);
-          await dirTransitionDelay(150);
-        }
-        dirList.innerHTML = html;
-        dirList.scrollTop = 0;
-        attachDirItemHandlers();
-        if (!animated) return;
-        dirList.classList.remove(outClass);
-        dirList.classList.add(inClass);
-        void dirList.offsetWidth;
-        requestAnimationFrame(() => {
-          dirList.classList.remove(inClass);
-          dirList.classList.add("slide-settle");
-        });
-        await dirTransitionDelay(220);
-        dirList.classList.remove("slide-settle");
-      }
-
-      function notifyDirState() {
-        if (HUB_EMBED && window.self !== window.top) {
-          window.parent.postMessage({
-            type: "hub-sheet-dir-state",
-            path: _currentPath || "",
-            displayPath: _currentPath ? shortPath(_currentPath) : "",
-            canGoBack: !!_parentPath,
-          }, "*");
-        }
-      }
-
-      async function loadDir(path, direction = "") {
-        if (_loading) return;
-        _loading = true;
-        const activeCreateBtn = getDirCreateBtn();
-        if (activeCreateBtn) activeCreateBtn.disabled = true;
-        if (!_currentPath) dirList.innerHTML = '<div class="dir-loading"><span class="inline-loading"><span class="inline-loading-spinner" aria-hidden="true"></span></span></div>';
-        if (dirStatus) { dirStatus.textContent = ""; dirStatus.className = "dir-status"; }
-        try {
-          const url = "/dirs" + (path ? "?path=" + encodeURIComponent(path) : "");
-          const res = await fetch(url, { cache: "no-store" });
-          if (!res.ok) throw new Error("Failed to load directory.");
-          const data = await res.json();
-          _currentPath = data.path || path || "";
-          _parentPath = data.parent || null;
-
-          if (dirStartBtn) dirStartBtn.disabled = !_currentPath;
-          notifyDirState();
-
-          const entries = data.entries || [];
-          await renderDirList(dirEntriesHtml(entries), direction);
-        } catch (err) {
-          if (dirStatus) { dirStatus.textContent = err?.message || "Failed."; dirStatus.className = "dir-status error"; }
-          dirList.innerHTML = "";
-        } finally {
-          _loading = false;
-          notifyDirState();
-          const activeCreateBtn2 = getDirCreateBtn();
-          if (activeCreateBtn2) activeCreateBtn2.disabled = !_currentPath;
-        }
-      }
-
-      if (dirStartBtn) {
-        dirStartBtn.addEventListener("click", () => {
-          if (!_currentPath || startInFlight) return;
-          startSession(_currentPath);
-        });
-      }
-      if (dirCreateOverlay) {
-        dirCreateOverlay.addEventListener("click", (event) => {
-          if (event.target === dirCreateOverlay) closeCreateOverlay();
-        });
-      }
-      if (dirCreateForm) {
-        dirCreateForm.addEventListener("submit", (event) => {
-          event.preventDefault();
-          return false;
-        });
-      }
-      if (dirCreateSubmit) {
-        dirCreateSubmit.addEventListener("click", (event) => {
-          event.preventDefault();
-          createDirectory(dirCreateInput ? dirCreateInput.value : "");
-        });
-      }
-      if (dirCreateInput) {
-        dirCreateInput.addEventListener("input", () => {
-          if (dirCreateSubmit) dirCreateSubmit.classList.toggle("visible", dirCreateInput.value.trim().length > 0);
-        });
-        dirCreateInput.addEventListener("keydown", (event) => {
-          if (event.key !== "Enter") return;
-          event.preventDefault();
-          createDirectory(dirCreateInput.value);
-        });
-      }
-      window.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && dirCreateOverlay && !dirCreateOverlay.hidden) closeCreateOverlay();
-      });
-
-      // Listen for "Go Back" triggered from the parent sheet nav bar back button
-      window.addEventListener("message", (e) => {
-        if (e.data && e.data.type === "hub-sheet-go-back") {
-          if (_parentPath) loadDir(_parentPath, "back");
-        }
-      });
-
-      loadDir("");
+    };
+    pickBtn.addEventListener("click", () => beginDraftSession());
+    window.addEventListener("load", () => {
+      queueEmbedHeight();
+      if (new URLSearchParams(window.location.search).get("autostart") !== "0") beginDraftSession();
+    }, { once: true });
+    if (typeof ResizeObserver === "function") {
+      try { new ResizeObserver(() => queueEmbedHeight()).observe(document.body); } catch (_) {}
     }
 
   __HUB_HEADER_JS__

@@ -87,29 +87,6 @@ def post_pick_workspace(handler, _parsed, _ctx) -> None:
     handler._send_json(200, {"ok": True, "path": str(resolved)})
 
 
-def post_mkdir(handler, _parsed, _ctx) -> None:
-    try:
-        length = int(handler.headers.get("Content-Length", "0"))
-    except ValueError:
-        length = 0
-    raw = handler.rfile.read(length)
-    try:
-        data = json.loads(raw.decode("utf-8") or "{}")
-    except json.JSONDecodeError:
-        handler._send_json(400, {"ok": False, "error": "invalid json"})
-        return
-    path_str = str(data.get("path") or "").strip()
-    if not path_str:
-        handler._send_json(400, {"ok": False, "error": "path required"})
-        return
-    path = Path(path_str)
-    try:
-        path.mkdir(parents=True, exist_ok=True)
-        handler._send_json(200, {"ok": True, "path": str(path.resolve())})
-    except Exception as exc:
-        handler._send_json(500, {"ok": False, "error": str(exc)})
-
-
 def post_start_session_draft(handler, _parsed, ctx) -> None:
     try:
         length = int(handler.headers.get("Content-Length", "0"))
