@@ -458,13 +458,3 @@
         toggle.textContent = "More";
       });
     };
-    const syncPaneViewerTabThinkingStatuses = () => {
-      const tabsRoot = document.getElementById("paneViewerTabs");
-      if (tabsRoot) {
-        tabsRoot.querySelectorAll(".pane-viewer-tab").forEach((tab) => {
-          const a = tab.dataset.agent;
-          if (!a) return;
-          tab.classList.toggle("pane-viewer-tab-thinking", currentAgentStatuses[a] === "running");
-        });
-      }
-    };

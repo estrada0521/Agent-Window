@@ -127,11 +127,6 @@
       return `${CHAT_ASSET_BASE}/icon/${enc}`;
     };
     const agentPulseOffset = () => 0;
-    const paneViewerTabIconHtml = (agent) => {
-      const iconUrl = agentIconSrc(agent);
-      const sub = agentIconInstanceSubHtml(agent);
-      return `<span class="agent-icon-slot agent-icon-slot--pane-tab"><span class="pane-viewer-tab-icon" aria-hidden="true" style="--agent-icon-mask:url('${escapeHtml(iconUrl)}')"></span>${sub}</span>`;
-    };
     const thinkingIconImg = (name, cls) => {
       const base = agentBaseName(name);
       if (!AGENT_ICON_NAMES.has(base)) return "";
