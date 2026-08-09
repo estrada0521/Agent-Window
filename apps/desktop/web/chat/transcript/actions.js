@@ -261,9 +261,7 @@ __CHAT_INCLUDE:../../../../shared/chat/slash-commands.js__
     if (isTauriHubIframeChat && hubHeaderRoot) {
       hubHeaderRoot.remove();
     }
-    if (isDesktopHubShell && hubBtn) {
-      hubBtn.remove();
-    }
+    hubBtn?.remove();
     let keepComposerPlusMenuOnBlur = false;
     const openHubPath = (path = "/") => {
       const hubHost = window.location.hostname || "127.0.0.1";
