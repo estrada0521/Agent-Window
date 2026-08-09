@@ -50,18 +50,11 @@
       const animClass = animate ? " new-commit-slide" : "";
       return `<div class="git-commit-row${animClass}" data-hash="${escapeHtml(commit?.hash || "")}"><span class="git-commit-icon-wrap">${iconInner}</span><div class="git-commit-info">${subjHtml}<div class="git-commit-meta">${statHtml}</div></div></div>`;
     };
-    const dpBuildFileRowHtml = (entry, { allowUndo = false, scope = "", animate = false } = {}) => {
+    const dpBuildFileRowHtml = (entry, { animate = false } = {}) => {
       const path = String(entry?.path || "").trim();
       const ins = Math.max(0, parseInt(entry?.ins) || 0);
       const dels = Math.max(0, parseInt(entry?.dels) || 0);
       const isUntracked = !!entry?.untracked;
-      const untrackedActionsHtml = isUntracked
-        ? `<button type="button" class="git-commit-file-action" data-action="ignore" data-path="${escapeHtml(path)}" aria-label="Ignore ${escapeHtml(path)}" title="Ignore"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"></circle><path d="m7 7 10 10" stroke="currentColor" stroke-width="2"></path></svg></button><button type="button" class="git-commit-file-action delete" data-action="delete" data-path="${escapeHtml(path)}" aria-label="Delete ${escapeHtml(path)}" title="Delete"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"></path><path d="M9 7V5h6v2"></path><path d="M8 10v7"></path><path d="M12 10v7"></path><path d="M16 10v7"></path><path d="M6 7l1 12h10l1-12"></path></svg></button>`
-        : "";
-
-      const undoHtml = allowUndo && !isUntracked && scope !== "staged"
-        ? `<button type="button" class="git-commit-file-undo" data-path="${escapeHtml(path)}" aria-label="Restore ${escapeHtml(path)}" title="Restore"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 1 1 0 11H11"></path></svg></button>`
-        : "";
       const ext = extFromPath(path);
       const iconSvg = FILE_ICONS[ext] || FILE_SVG_ICONS.file;
       const iconHtml = `<span class="git-commit-file-icon">${iconSvg}</span>`;
@@ -72,12 +65,10 @@
         ? `<span class="git-commit-file-name">${escapeHtml(fileName)}</span><span class="git-commit-file-dir">${escapeHtml(dirPath)}</span>`
         : `<span class="git-commit-file-name">${escapeHtml(fileName)}</span>`;
       const fileMetaHtml = isUntracked ? "" : `<div class="git-commit-file-meta">${dpGitCountsHtml(ins, dels)}</div>`;
-      const actionsInnerHtml = `${untrackedActionsHtml}${undoHtml}${fileMetaHtml}`;
-      const actionsHtml = actionsInnerHtml ? `<div class="git-commit-file-actions">${actionsInnerHtml}</div>` : "";
-      const undoClass = allowUndo && !isUntracked && scope !== "staged" ? " has-undo" : "";
+      const actionsHtml = fileMetaHtml ? `<div class="git-commit-file-actions">${fileMetaHtml}</div>` : "";
       const animClass = animate ? " new-file-slide" : "";
       const untrackedAttr = isUntracked ? ' data-untracked="1"' : "";
-      return `<div class="git-commit-file-row clickable${undoClass}${animClass}" data-path="${escapeHtml(path)}"${untrackedAttr}><div class="git-commit-file-header">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
+      return `<div class="git-commit-file-row clickable${animClass}" data-path="${escapeHtml(path)}"${untrackedAttr}><div class="git-commit-file-header">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
     };
     const dpDisconnectGitObserver = () => {
       if (!dpGitObserver) return;

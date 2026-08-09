@@ -127,12 +127,3 @@ class WorkspaceSyncApi:
 
     def git_diff_files(self, *, commit_hash: str = "", scope: str = ""):
         return workspace_git.git_diff_files(commit_hash=commit_hash, scope=scope)
-
-    def git_restore_file(self, *, rel_path: str, scope: str = ""):
-        return workspace_git.git_restore_file(rel_path=rel_path, scope=scope)
-
-    def git_delete_untracked_file(self, *, rel_path: str):
-        return workspace_git.git_delete_untracked_file(rel_path=rel_path)
-
-    def git_ignore_file(self, *, rel_path: str):
-        return workspace_git.git_ignore_file(rel_path=rel_path)
