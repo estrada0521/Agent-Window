@@ -588,27 +588,6 @@
         clearPersistedChatFrameState();
       }, CHAT_OVERLAY_CLOSE_MS);
     }
-    const hubLogoBtn = document.getElementById("hubPageTitleLink");
-    function openRememberedSessionFromHub() {
-      const remembered = lastRememberedSession();
-      if (!remembered) return false;
-      openSessionFrame(`/open-session?session=${encodeURIComponent(remembered)}`, remembered);
-      return true;
-    }
-    if (hubLogoBtn) {
-      hubLogoBtn.addEventListener("click", (event) => {
-        if (document.documentElement.classList.contains("hub-chat-ui-active")) {
-          event.preventDefault();
-          closeChatFrame();
-          return;
-        }
-        if (openRememberedSessionFromHub()) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-        }
-      });
-    }
-
     function openSessionFrame(openHref, name, options = {}) {
       rememberLastSession(name);
       const shouldShowTransition = !!options.showTransition || /^\/revive-session(?:[/?]|$)/.test(String(openHref || ""));
