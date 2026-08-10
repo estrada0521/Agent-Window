@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 
-def font_family_stack(selection: str, role: str) -> str:
+def font_family_stack(selection: str, role: str, variant: str = "desktop") -> str:
     value = str(selection or "").strip()
     cjk_sans_fallback = '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR"'
-    sans_stack = f'"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", {cjk_sans_fallback}, sans-serif'
+    if str(variant or "").strip().lower() == "mobile":
+        sans_stack = f'"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", {cjk_sans_fallback}, sans-serif'
+    else:
+        sans_stack = f'"anthropicSans", system-ui, "Segoe UI", Roboto, Helvetica, Arial, {cjk_sans_fallback}, sans-serif'
     serif_stack = f'"anthropicSerif", "Anthropic Serif", Georgia, "Arial Hebrew", "Noto Sans Hebrew", "Times New Roman", Times, {cjk_sans_fallback}, serif'
     default_stack = sans_stack if role == "user" else serif_stack
     if value == "preset-gothic":
@@ -26,10 +29,11 @@ def chat_font_settings_inline_style(
     chat_bold_mode_rules_block_fn,
     bh_agent_detail_selectors_fn,
     font_family_stack_fn=font_family_stack,
+    variant: str = "desktop",
 ) -> str:
-    user_family = font_family_stack_fn(settings.get("user_message_font", "preset-gothic"), "user")
-    agent_family = font_family_stack_fn(settings.get("agent_message_font", "preset-mincho"), "agent")
-    sans_family = font_family_stack_fn("preset-gothic", "user")
+    user_family = font_family_stack_fn(settings.get("user_message_font", "preset-gothic"), "user", variant)
+    agent_family = font_family_stack_fn(settings.get("agent_message_font", "preset-mincho"), "agent", variant)
+    sans_family = font_family_stack_fn("preset-gothic", "user", variant)
     try:
         _legacy_size = max(8, min(18, int(settings.get("message_text_size", 13))))
     except Exception:
@@ -68,7 +72,7 @@ def chat_font_settings_inline_style(
     .message.user .md-body li,
     .message.user .md-body li p {
       font-family: var(--user-message-font-family);
-      font-weight: 430;
+      font-weight: 400;
       font-optical-sizing: auto;
       font-variation-settings: "opsz" 16;
       font-synthesis: none;
@@ -81,7 +85,7 @@ def chat_font_settings_inline_style(
     .message:not(.user):not(.system) .md-body li,
     .message:not(.user):not(.system) .md-body li p {
       font-family: var(--agent-message-font-family);
-      font-weight: 430;
+      font-weight: 400;
       font-optical-sizing: auto;
       font-variation-settings: "opsz" 16;
       font-synthesis: none;
