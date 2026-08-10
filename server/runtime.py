@@ -172,11 +172,11 @@ class ChatRuntime:
         start_watchers(self._native_log)
 
     @staticmethod
-    def _font_family_stack(selection: str, role: str, variant: str = "desktop") -> str:
-        return _font_family_stack_impl(selection, role, variant)
+    def _font_family_stack(selection: str, role: str) -> str:
+        return _font_family_stack_impl(selection, role)
 
     @classmethod
-    def chat_font_settings_inline_style(cls, settings: dict, variant: str = "desktop") -> str:
+    def chat_font_settings_inline_style(cls, settings: dict) -> str:
         return _chat_font_settings_inline_style_impl(
             settings,
             bold_mode_viewport_max_px=BOLD_MODE_VIEWPORT_MAX_PX,
@@ -184,7 +184,6 @@ class ChatRuntime:
             chat_bold_mode_rules_block_fn=_chat_bold_mode_rules_block,
             bh_agent_detail_selectors_fn=_bh_agent_detail_selectors,
             font_family_stack_fn=cls._font_family_stack,
-            variant=variant,
         )
 
 
