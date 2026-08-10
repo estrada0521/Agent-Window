@@ -62,13 +62,26 @@ def chat_font_settings_inline_style(
         --message-text-line-height: {message_text_size_mobile + 9}px;
       }}
     }}"""
+    mobile_body_weight_override = f"""
+    @media (max-width: {bold_mode_viewport_max_px}px) {{
+      {non_tauri_desktop_scope} .message.user .md-body,
+      {non_tauri_desktop_scope} .message.user .md-body p,
+      {non_tauri_desktop_scope} .message.user .md-body li,
+      {non_tauri_desktop_scope} .message.user .md-body li p,
+      {non_tauri_desktop_scope} .message:not(.user):not(.system) .md-body,
+      {non_tauri_desktop_scope} .message:not(.user):not(.system) .md-body p,
+      {non_tauri_desktop_scope} .message:not(.user):not(.system) .md-body li,
+      {non_tauri_desktop_scope} .message:not(.user):not(.system) .md-body li p {{
+        font-weight: 430;
+      }}
+    }}"""
     typography_override = """
     .message.user .md-body,
     .message.user .md-body p,
     .message.user .md-body li,
     .message.user .md-body li p {
       font-family: var(--user-message-font-family);
-      font-weight: 430;
+      font-weight: 400;
       font-optical-sizing: auto;
       font-variation-settings: "opsz" 16;
       font-synthesis: none;
@@ -81,7 +94,7 @@ def chat_font_settings_inline_style(
     .message:not(.user):not(.system) .md-body li,
     .message:not(.user):not(.system) .md-body li p {
       font-family: var(--agent-message-font-family);
-      font-weight: 430;
+      font-weight: 400;
       font-optical-sizing: auto;
       font-variation-settings: "opsz" 16;
       font-synthesis: none;
@@ -133,4 +146,5 @@ def chat_font_settings_inline_style(
     {typography_override}
     {bold_style}
     {mobile_text_size_override}
+    {mobile_body_weight_override}
     """
