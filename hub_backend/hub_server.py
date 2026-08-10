@@ -86,7 +86,6 @@ tmux_socket = ""
 hub = None
 load_hub_settings = _not_initialized
 save_hub_settings = _not_initialized
-repo_sessions = _not_initialized
 repo_sessions_query = _not_initialized
 archived_sessions = _not_initialized
 active_session_records_query = _not_initialized
@@ -148,7 +147,7 @@ def format_session_chat_url(host_header: str, session_name: str, local_port: int
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
     global repo_root, script_path, port, tmux_socket, hub
-    global load_hub_settings, save_hub_settings, repo_sessions, repo_sessions_query
+    global load_hub_settings, save_hub_settings, repo_sessions_query
     global archived_sessions, active_session_records_query
     global archived_session_records, ensure_chat_server
     global revive_archived_session, kill_repo_session
@@ -172,7 +171,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     for attr in (
         "load_hub_settings",
         "save_hub_settings",
-        "repo_sessions",
         "repo_sessions_query",
         "archived_sessions",
         "active_session_records_query",
@@ -222,7 +220,6 @@ def queue_hub_restart():
         time_module=time,
     )
 
-NEW_SESSION_MAX_PER_AGENT = 5
 _PWA_STATIC_DIR = Path()
 _PWA_STATIC_ROUTES = {
     "/pwa-icon-192.png": ("icon-192.png", "image/png", "no-store"),
@@ -434,7 +431,6 @@ _hub_pages = _build_hub_html_pages_impl(
     hub_header_css=_HUB_PAGE_HEADER_CSS,
     hub_header_html=_HUB_PAGE_HEADER_HTML,
     hub_header_js=_HUB_PAGE_HEADER_JS,
-    new_session_max_per_agent=NEW_SESSION_MAX_PER_AGENT,
     hub_icon_uris=_HUB_ICON_URIS,
 )
 HUB_HOME_DESKTOP_HTML = _hub_pages["hub_home_html_desktop"]
@@ -551,7 +547,6 @@ def _hub_action_context() -> dict[str, object]:
         "error_page_fn": error_page,
         "format_session_chat_url_fn": format_session_chat_url,
         "kill_repo_session_fn": kill_repo_session,
-        "new_session_max_per_agent": NEW_SESSION_MAX_PER_AGENT,
         "queue_hub_restart_fn": queue_hub_restart,
         "revive_archived_session_fn": revive_archived_session,
         "save_hub_settings_fn": save_hub_settings,

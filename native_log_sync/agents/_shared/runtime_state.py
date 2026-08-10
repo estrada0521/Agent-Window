@@ -13,8 +13,6 @@ def initialize_native_log_runtime_state(runtime: object) -> None:
     runtime._idle_running_display_by_agent = {}
     runtime._pane_native_log_paths = {}
     runtime._native_log_bindings_by_agent = {}
-    runtime._native_log_watch_roots = {}
-    runtime._native_log_watch_generation = 0
     runtime._native_log_watch_reconfigure = threading.Event()
     runtime._native_log_bindings_lock = threading.Lock()
     runtime._native_log_sync_lock = threading.Lock()

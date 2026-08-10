@@ -4,14 +4,6 @@ from native_log_sync.agents import resolve_binding
 from native_log_sync.refresh.binding_models import NativeLogBinding, PaneBindingRequest
 
 
-def _watch_roots_for_bindings(bindings_by_agent: dict[str, NativeLogBinding]) -> dict[str, list[str]]:
-    watch_roots: dict[str, list[str]] = {}
-    for binding in bindings_by_agent.values():
-        for root in binding.watch_roots:
-            watch_roots.setdefault(root, []).append(binding.agent)
-    return watch_roots
-
-
 def refresh_native_log_bindings(
     runtime,
     pane_requests: list[PaneBindingRequest],
@@ -38,7 +30,5 @@ def refresh_native_log_bindings(
             next_by_agent[binding.agent] = binding
 
         runtime._native_log_bindings_by_agent = next_by_agent
-        runtime._native_log_watch_roots = _watch_roots_for_bindings(next_by_agent)
-        runtime._native_log_watch_generation += 1
         runtime._native_log_watch_reconfigure.set()
     return bindings

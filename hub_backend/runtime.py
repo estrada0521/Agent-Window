@@ -206,10 +206,6 @@ class HubRuntime:
             preferred_index_path=preferred_index_path,
         )
 
-    def repo_sessions(self) -> list[dict]:
-        res = self.repo_sessions_query()
-        return res.sessions
-
     def repo_sessions_query(self) -> RepoSessionsQueryResult:
         sessions, state, detail = _collect_repo_sessions_impl(self)
         return RepoSessionsQueryResult(sessions, state, detail)

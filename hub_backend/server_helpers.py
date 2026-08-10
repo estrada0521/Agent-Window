@@ -253,7 +253,6 @@ def build_hub_html_pages(
     hub_header_css: str,
     hub_header_html: str,
     hub_header_js: str,
-    new_session_max_per_agent: int,
     hub_icon_uris: dict[str, str],
 ) -> dict[str, str]:
     def _replace_agent_icon_tokens(html: str) -> str:
