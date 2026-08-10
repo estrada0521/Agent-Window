@@ -30,6 +30,9 @@ printf '%s' '<message body>' | agent-send <target>
 4. Do not add a `[From: ...]` prefix. `agent-send` adds it automatically.
 5. Do not use `agent-send` to reply to the user.
 6. Distinguish carefully between a base target and a specific instance target.
+7. Do not send messages to yourself. `agent-send` rejects self-targeted sends.
+8. On success, `agent-send` prints a summary to stdout showing what was sent
+   and to whom, including the auto-added `[From: ...]` prefix.
 
 ## Base Targets and Instance Targets
 
@@ -125,24 +128,4 @@ List or remove names without piping stdin:
 ```bash
 agent-send names
 agent-send unname <target-or-name>
-```
-
-## Examples
-
-Ask only `codex-1` for help:
-
-```bash
-printf '%s' 'Please review the current implementation.' | agent-send codex-1
-```
-
-Ask every Codex instance:
-
-```bash
-printf '%s' 'Please independently review this issue.' | agent-send codex
-```
-
-Broadcast to every other instance:
-
-```bash
-printf '%s' 'The shared interface has changed.' | agent-send others
 ```

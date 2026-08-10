@@ -478,6 +478,9 @@ class AgentSendRuntime:
         if not delivery_targets:
             raise AgentSendError("No target panes resolved.")
 
+        if any(t.agent_name == sender_role for t in delivery_targets):
+            raise AgentSendError("cannot send to yourself")
+
         successful_targets: list[str] = []
         failed_any = False
         attached_count = self._session_attached_count(session_name)
@@ -507,4 +510,9 @@ class AgentSendRuntime:
             payload=delivery_payload,
             msg_id=msg_id,
         )
+
+        target_names = ", ".join(successful_targets)
+        display = delivery_payload if len(delivery_payload) <= 200 else delivery_payload[:200] + "..."
+        print(f"The following was sent to {target_names}:\n{display}")
+
         return not failed_any
