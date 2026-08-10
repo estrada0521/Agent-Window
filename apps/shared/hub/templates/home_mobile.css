@@ -58,9 +58,9 @@
       color-scheme: dark;
       --bg-rgb: 10, 10, 9;
       --bg: rgb(10, 10, 9);
-      --fg: rgb(248, 248, 247);
+      --fg: rgb(200, 200, 200);
       --muted: rgb(150, 150, 150);
-      --icon-fg: rgb(248, 248, 247);
+      --icon-fg: rgb(200, 200, 200);
       --icon-muted: rgb(150, 150, 150);
       --icon-hover: rgb(190, 190, 190);
       --panel: rgba(14, 14, 13, 0.72);

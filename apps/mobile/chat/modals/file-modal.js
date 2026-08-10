@@ -133,8 +133,8 @@
           return true;
         }
         const isLight = resolvedBaseTheme === "light";
-        const fg = isLight ? "rgb(0,0,0)" : "rgb(255,255,255)";
-        const lnFg = isLight ? "rgba(0,0,0,0.22)" : "rgba(255,255,255,0.22)";
+        const fg = isLight ? "rgb(0,0,0)" : "rgb(200,200,200)";
+        const lnFg = isLight ? "rgba(0,0,0,0.22)" : "rgba(200,200,200,0.22)";
         const scheme = isLight ? "light" : "dark";
         frameDoc.documentElement.setAttribute("data-preview-base-theme", scheme);
         let style = frameDoc.getElementById("agent-index-base-theme-style");

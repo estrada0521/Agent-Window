@@ -561,8 +561,8 @@ def render_file_view(
             "line-height:calc(var(--message-text-size,16px) + 8px)}"
         )
         initial_preview_theme = "light" if str((theme_palette or {}).get("theme") or "").lower() == "light" else "dark"
-        dark_preview_fg = "rgb(255,255,255)" if resolved_preview_variant == "mobile" else "rgb(200,200,200)"
-        dark_preview_fg_channels = "255,255,255" if resolved_preview_variant == "mobile" else "200,200,200"
+        dark_preview_fg = "rgb(200,200,200)"
+        dark_preview_fg_channels = "200,200,200"
         light_preview_bg_channels = "249,249,247" if resolved_preview_variant == "mobile" else "255,255,255"
         light_preview_bg = f"rgb({light_preview_bg_channels})"
         markdown_theme_css = (
