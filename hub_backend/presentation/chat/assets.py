@@ -263,7 +263,7 @@ def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings
         server_instance=server_instance,
         hub_port=hub_port,
         chat_settings=chat_settings,
-        agent_font_mode_inline_style=agent_font_mode_inline_style(chat_settings),
+        agent_font_mode_inline_style=agent_font_mode_inline_style(chat_settings, variant=normalized_variant),
         hub_header_css=HUB_PAGE_HEADER_CSS,
         chat_document_title=chat_document_title,
     )
