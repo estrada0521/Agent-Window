@@ -2,7 +2,7 @@
 
 Agent Windowは、複数のAgent CLIが動いている作業場所を、外から眺めるための**macOS向けのローカルインターフェース**です。
 
-各Agent CLIは、tmuxのpane内で通常どおり起動します。APIやSDK等を経由してmodelを呼ぶことはありません。**CLIが既に備えている機能を、そのまま利用します。**
+各Agent CLIは、tmuxのpane内で通常どおり起動します。APIやSDK等を経由してmodelを呼ぶことはありません。UNIX的に、**CLIが既に備えている機能を、そのまま利用します。**
 
 [設計思想](DESIGN_jp.md) · [English](README.md)
 
