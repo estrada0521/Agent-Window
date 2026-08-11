@@ -24,7 +24,9 @@ __CHAT_INCLUDE:../../../shared/chat/messages-data.js__
           const systemMessage = emphasizeSystemMessageKeyword(escapeHtml(safeEntry.message || ""), kindRaw);
           const systemTitle = systemMessage.replaceAll('"', "&quot;").replace(/<[^>]+>/g, "");
           const msgId = escapeHtml(safeEntry.msg_id || "");
-          return `<div class="sysmsg-row" data-msgid="${msgId}" data-sender="system"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
+          const isSessionLifecycle = /^(?:Session archived|Session revived)\b/i.test(safeEntry.message || "");
+          const extraClass = isSessionLifecycle ? " sysmsg-strong" : "";
+          return `<div class="sysmsg-row${extraClass}" data-msgid="${msgId}" data-sender="system"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
         }
         const cls = roleClass(safeEntry.sender);
         const entryTargets = Array.isArray(safeEntry.targets) ? safeEntry.targets : [];
@@ -80,7 +82,9 @@ __CHAT_INCLUDE:../../../shared/chat/messages-data.js__
       if (senderLower === "system") {
         const body = escapeHtml(stripSenderPrefix(String(safeEntry.message || ""))).replaceAll("\n", "<br>");
         const systemMessage = emphasizeSystemMessageKeyword(body, String(safeEntry.kind || ""));
-        return `<div class="sysmsg-row" data-msgid="${msgId}" data-sender="system"><span class="sysmsg-text">${systemMessage}</span></div>`;
+        const isSessionLifecycle = /^(?:Session archived|Session revived)\b/i.test(String(safeEntry.message || ""));
+        const extraClass = isSessionLifecycle ? " sysmsg-strong" : "";
+        return `<div class="sysmsg-row${extraClass}" data-msgid="${msgId}" data-sender="system"><span class="sysmsg-text">${systemMessage}</span></div>`;
       }
       try {
         return buildMsgHTML(entry, { hideMetaRow: false });
