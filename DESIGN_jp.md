@@ -1,4 +1,4 @@
-# 設計思想
+# 設計哲学
 
 [English](DESIGN.md)
 
