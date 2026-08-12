@@ -427,19 +427,48 @@
       top: 0;
       left: 0;
       right: 0;
-      height: var(--bottom-sheet-top-gradient-height, 75px);
+      height: var(--bottom-sheet-top-gradient-height, 100px);
       z-index: 4;
       pointer-events: none;
-      background: linear-gradient(
-        rgba(var(--bottom-sheet-top-gradient-rgb), var(--bottom-sheet-top-gradient-strong, 0.82)) 0%,
-        rgba(var(--bottom-sheet-top-gradient-rgb), var(--bottom-sheet-top-gradient-strong, 0.82)) 26%,
-        rgba(var(--bottom-sheet-top-gradient-rgb), var(--bottom-sheet-top-gradient-mid, 0.60)) 46%,
-        rgba(var(--bottom-sheet-top-gradient-rgb), var(--bottom-sheet-top-gradient-soft, 0.32)) 64%,
-        rgba(var(--bottom-sheet-top-gradient-rgb), var(--bottom-sheet-top-gradient-faint, 0.10)) 82%,
+      background: linear-gradient(to bottom,
+        rgba(var(--bottom-sheet-top-gradient-rgb), 0.84) 0%,
+        rgba(var(--bottom-sheet-top-gradient-rgb), 0.68) 22%,
+        rgba(var(--bottom-sheet-top-gradient-rgb), 0.38) 52%,
+        rgba(var(--bottom-sheet-top-gradient-rgb), 0.12) 74%,
         rgba(var(--bottom-sheet-top-gradient-rgb), 0) 100%
       );
-      backdrop-filter: blur(var(--bottom-sheet-top-gradient-blur, 0.9px));
-      -webkit-backdrop-filter: blur(var(--bottom-sheet-top-gradient-blur, 0.9px));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      -webkit-mask-image: linear-gradient(to bottom,
+        black 0%,
+        rgba(0, 0, 0, 0.981) 7%,
+        rgba(0, 0, 0, 0.926) 14%,
+        rgba(0, 0, 0, 0.838) 21%,
+        rgba(0, 0, 0, 0.726) 29%,
+        rgba(0, 0, 0, 0.597) 36%,
+        rgba(0, 0, 0, 0.462) 43%,
+        rgba(0, 0, 0, 0.329) 50%,
+        rgba(0, 0, 0, 0.209) 57%,
+        rgba(0, 0, 0, 0.117) 64%,
+        rgba(0, 0, 0, 0.056) 71%,
+        rgba(0, 0, 0, 0.019) 79%,
+        transparent 86%
+      );
+      mask-image: linear-gradient(to bottom,
+        black 0%,
+        rgba(0, 0, 0, 0.981) 7%,
+        rgba(0, 0, 0, 0.926) 14%,
+        rgba(0, 0, 0, 0.838) 21%,
+        rgba(0, 0, 0, 0.726) 29%,
+        rgba(0, 0, 0, 0.597) 36%,
+        rgba(0, 0, 0, 0.462) 43%,
+        rgba(0, 0, 0, 0.329) 50%,
+        rgba(0, 0, 0, 0.209) 57%,
+        rgba(0, 0, 0, 0.117) 64%,
+        rgba(0, 0, 0, 0.056) 71%,
+        rgba(0, 0, 0, 0.019) 79%,
+        transparent 86%
+      );
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-nav,
