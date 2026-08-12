@@ -387,13 +387,7 @@
       overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
       margin: 0.5em 0;
-      scrollbar-width: thin;
-      scrollbar-color: var(--fg) transparent;
     }
-    .table-scroll::-webkit-scrollbar { width: 2px; height: 2px; }
-    .table-scroll::-webkit-scrollbar-track { background: transparent; }
-    .table-scroll::-webkit-scrollbar-thumb { background: var(--fg); border: 0; border-radius: 999px; }
-    .table-scroll::-webkit-scrollbar-thumb:hover { background: var(--fg); border: 0; border-radius: 999px; }
 
     .table-scroll>table {
       width: 100%;
@@ -440,16 +434,9 @@
       word-break: normal;
       box-shadow: none;
       -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      scrollbar-color: var(--fg) transparent;
       min-height: var(--code-scroll-stable-height, auto);
       color: var(--fg);
     }
-
-    .md-body pre::-webkit-scrollbar { width: 2px; height: 2px; }
-    .md-body pre::-webkit-scrollbar-track { background: transparent; }
-    .md-body pre::-webkit-scrollbar-thumb { background: var(--fg); border: 0; border-radius: 999px; }
-    .md-body pre::-webkit-scrollbar-thumb:hover { background: var(--fg); border: 0; border-radius: 999px; }
 
     .md-body .code-block-wrap {
       position: relative;
