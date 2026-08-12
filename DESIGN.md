@@ -59,4 +59,4 @@ Launching a CLI is necessary at the point when the participant to call does not 
 
 Implement the mechanisms that are unavoidable; do not institutionalize what an intelligent actor can judge for itself.
 
-Project reality. Do not model it.
+Without layering new truth on top, project the reality that already exists.
