@@ -888,27 +888,6 @@
       box-sizing: border-box;
     }
 
-    html {
-      scrollbar-color: var(--fg) transparent;
-    }
-
-    ::-webkit-scrollbar {
-      width: 2px;
-      height: 2px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--fg);
-      border-radius: 999px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--fg);
-    }
 
     html,
     body {
