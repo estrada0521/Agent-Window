@@ -30,7 +30,7 @@ plan, role, task graph, handoff. These are things **a sufficiently capable intel
 
 Additional contracts introduced to compensate for the current limits of LLMs go stale as models improve. There is no reason to convert something into an institution of our own when it can be expressed in natural language and already exists on the side of reality.
 
-Isolation is no different. If needed, an intelligence can simply use `git worktree` — there is no reason for the application to own it. Owning it immediately creates the next problem:
+Isolation is no different. The guarantee is necessary, but it already exists within the space, as a git primitive. If needed, an intelligence can use `git worktree` directly — there is no reason for the application to own it. Owning it immediately creates the next problem:
 
 - An agent and a worktree are not 1:1.
 - Their lifetimes don't match.
