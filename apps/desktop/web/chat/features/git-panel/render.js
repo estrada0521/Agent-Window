@@ -130,7 +130,6 @@
     const dpRenderGitShell = (data) => {
       if (!dpGitContent) return;
       dpGitContent.innerHTML = `
-        <div class="dp-pane-title">Git</div>
         <div class="git-branch-stack">
           <div class="git-branch-list-view">
             <div class="git-branch-summary-wrap"></div>

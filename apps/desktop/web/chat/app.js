@@ -666,10 +666,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const path = dpNormalizePath(rawPath);
       dpRepoBrowserPath = path;
       dpRepoContent.innerHTML = "";
-      const title = document.createElement("div");
-      title.className = "dp-pane-title";
-      title.textContent = "Repo";
-      dpRepoContent.appendChild(title);
       const stack = document.createElement("div");
       stack.className = `repo-browser-stack repo-browser-nav-${direction}`;
       const pathWrap = document.createElement("div");
