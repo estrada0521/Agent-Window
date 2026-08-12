@@ -1,6 +1,6 @@
 # Agent Window
 
-Agent Window is a **local interface for macOS** that watches, from outside, a workspace where multiple Agent CLIs are running.
+Agent Window is a UNIX-philosophy **local interface for macOS** that watches, from outside, a workspace where multiple Agent CLIs are running.
 
 Each Agent CLI launches normally inside a tmux pane. It never calls a model through an API or SDK. **It uses only the capabilities each CLI already has.**
 
