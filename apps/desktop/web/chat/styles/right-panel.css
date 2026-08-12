@@ -112,24 +112,8 @@
       flex-direction: column;
       min-height: 0;
       overflow: hidden;
-    }
-    .dp-pane-title {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 auto;
-      height: 28px;
-      min-height: 28px;
-      padding: 0 8px;
+      padding-top: 8px;
       box-sizing: border-box;
-      color: var(--fg);
-      font-size: 13.5px;
-      font-weight: 550;
-      line-height: 1;
-      letter-spacing: 0.01em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
     .dp-split-pane-git {
       flex: 0 0 auto;

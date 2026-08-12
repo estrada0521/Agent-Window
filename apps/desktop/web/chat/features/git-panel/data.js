@@ -345,7 +345,7 @@
         dpGitNextOffset = 0;
         dpGitTotalCommits = 0;
         dpGitCommits = [];
-        dpGitContent.innerHTML = '<div class="dp-pane-title">Git</div><div class="dp-empty-state inline-loading-row"></div>';
+        dpGitContent.innerHTML = '<div class="dp-empty-state inline-loading-row"></div>';
       } else {
         dpUpdateLoadMoreUi();
       }
@@ -360,7 +360,7 @@
       } catch (err) {
         if (loadSeq !== dpGitLoadSeq) return;
         if (reset) {
-          dpGitContent.innerHTML = `<div class="dp-pane-title">Git</div><div class="dp-empty-state">${escapeHtml(err?.message || "Load failed")}</div>`;
+          dpGitContent.innerHTML = `<div class="dp-empty-state">${escapeHtml(err?.message || "Load failed")}</div>`;
         } else {
           dpGitLoadError = err?.message || "Load failed";
         }
