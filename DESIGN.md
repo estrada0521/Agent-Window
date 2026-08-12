@@ -30,7 +30,13 @@ plan, role, task graph, handoff. These are things **a sufficiently capable intel
 
 Additional contracts introduced to compensate for the current limits of LLMs go stale as models improve. There is no reason to convert something into an institution of our own when it can be expressed in natural language and already exists on the side of reality.
 
-Isolation is no different. If simultaneous writes to the same file need to be avoided, an intelligence calls `git worktree`. The guarantee already exists within the space, and how many to create and when to fold them back is something an intelligence can judge. There is no reason for the application to own it.
+Isolation is no different. If needed, an intelligence can simply use `git worktree` — there is no reason for the application to own it. Owning it immediately creates the next problem:
+
+- An agent and a worktree are not 1:1.
+- Their lifetimes don't match.
+- It becomes a second source of truth, duplicating the git state that already lives outside the application.
+
+Agent Window does not only target projects with clear boundaries that decompose neatly into independent tasks. It is meant to also handle work where **how to divide and proceed is itself non-obvious**.
 
 Communication between agents is the same. `agent-send` is technically an extremely thin wrapper around `tmux send-keys`, short-circuiting — in the smallest possible form — the act of a human typing text into a CLI. It has no dedicated protocol and no shared mailbox.
 
