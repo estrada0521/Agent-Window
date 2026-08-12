@@ -4,7 +4,7 @@ Agent Windowは、複数のAgent CLIが動いている作業場所を外から�
 
 各Agent CLIは、tmuxのpane内で通常どおり起動します。APIやSDK等を経由してmodelを呼ぶことはありません。**CLIが既に備えている機能を、そのまま利用します。**
 
-[設計思想](DESIGN_jp.md) · [English](README.md)
+[設計哲学](DESIGN_jp.md) · [English](README.md)
 
 <p align="center">
   <img src="media/agent-window-hero-1.png" width="100%" alt="Agent Window hero 1">
