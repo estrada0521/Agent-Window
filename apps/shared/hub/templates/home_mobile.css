@@ -69,8 +69,8 @@
       --panel-2: rgba(19, 19, 18, 0.82);
       --line: rgba(255, 255, 255, 0.07);
       --line-strong: rgba(255, 255, 255, 0.12);
-      --session-hover-bg: rgba(255, 255, 255, 0.05);
-      --session-selected-bg: rgba(255, 255, 255, 0.08);
+      --session-hover-bg: rgba(255, 255, 255, 0.028);
+      --session-selected-bg: rgba(255, 255, 255, 0.045);
       --session-danger-fg: rgb(255, 59, 48);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --glass-filter-20: blur(20px) saturate(180%);
@@ -889,7 +889,7 @@
 
     html[data-theme="dark"] #chatOverlay.overlay-closing,
     html[data-theme="dark"] #chatOverlay.overlay-peeking {
-      box-shadow: -8px 0 18px rgba(0, 0, 0, 0.18);
+      box-shadow: -8px 0 18px rgba(255, 255, 255, 0.06);
     }
 
     html.hub-chat-overlay-active {
