@@ -508,39 +508,6 @@
       overflow-wrap: normal;
     }
 
-    .md-body code.language-diff {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-
-    .md-body .diff-add {
-      background: rgba(var(--git-ins-green-channels), 0.15);
-      color: var(--fg);
-      display: block;
-      margin: 0 -16px;
-      padding: 0 16px;
-      line-height: calc(var(--message-text-line-height, 22px) - 4px);
-    }
-
-    .md-body .diff-add .diff-sign {
-      color: rgb(34, 197, 94);
-    }
-
-    .md-body .diff-del {
-      background: rgba(239, 68, 68, 0.12);
-      color: rgba(255, 200, 200, 0.9);
-      display: block;
-      margin: 0 -16px;
-      padding: 0 16px;
-      line-height: calc(var(--message-text-line-height, 22px) - 4px);
-      text-decoration: none;
-    }
-
-    .md-body .diff-del .diff-sign {
-      color: rgb(239, 68, 68);
-    }
-
 
     .md-body blockquote {
       border-left: 3px solid var(--fg);

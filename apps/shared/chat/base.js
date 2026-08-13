@@ -133,14 +133,6 @@
             tempDiv.prepend(marker);
           }
           revealMarkdownLinkTargets(tempDiv);
-          tempDiv.querySelectorAll('code.language-diff').forEach(codeEl => {
-            const raw = codeEl.textContent;
-            codeEl.innerHTML = raw.split("\n").map(line => {
-              if (line.startsWith("+")) return `<span class="diff-add"><span class="diff-sign">+</span>${escapeHtml(line.slice(1))}</span>`;
-              if (line.startsWith("-")) return `<span class="diff-del"><span class="diff-sign">-</span>${escapeHtml(line.slice(1))}</span>`;
-              return escapeHtml(line);
-            }).join("\n");
-          });
 
           const copySvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
           tempDiv.querySelectorAll("pre").forEach(pre => {
