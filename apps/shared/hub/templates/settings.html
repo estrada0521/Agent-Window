@@ -64,9 +64,6 @@ __HUB_INCLUDE:settings.css__
               __THEME_DESKTOP_OPTIONS__
             </select>
           </div>
-          <input type="hidden" name="theme_mobile" value="__THEME_MOBILE_HIDDEN__">
-          <input type="hidden" name="message_text_size_mobile" value="__MESSAGE_TEXT_SIZE_MOBILE__">
-          <input type="hidden" name="bold_mode_mobile" value="__BOLD_MODE_MOBILE_HIDDEN__">
           <div class="toggle-row">
             <span class="toggle-row-copy">
               <div class="set-desk-bullet"><i></i></div><label for="message_text_size_desktop" style="cursor:pointer;">Text Size</label>
@@ -93,89 +90,6 @@ __HUB_INCLUDE:settings.css__
       </div>
     </form>
 
-    <form id="settingsFormMobile" method="post" action="/settings">
-      __NOTICE_HTML__
-      <input type="hidden" name="agent_font_mode" value="__FONT_MODE__">
-
-      <div class="set-section">
-        <div class="set-section-header">Appearance</div>
-        <div class="set-section-body">
-          <div class="set-row">
-            <div class="set-row-left">
-              <span class="set-row-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 3a9 9 0 0 0 0 18V3z" fill="currentColor"></path></svg>
-              </span>
-              <span class="set-row-name">Theme</span>
-            </div>
-            <div class="set-row-right">
-              <select name="theme_mobile" id="themeMobileSelect" data-initial-value="__THEME_MOBILE_HIDDEN__">
-                <option value="system">System</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
-            </div>
-          </div>
-          <input type="hidden" name="theme_desktop" value="__THEME_DESKTOP_HIDDEN__">
-
-          <input type="hidden" name="message_text_size_desktop" value="__MESSAGE_TEXT_SIZE_DESKTOP__">
-          <label class="set-row" for="mob_bold_mobile">
-            <div class="set-row-left">
-              <span class="set-row-icon">
-                <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-              </span>
-              <span class="set-row-name">Bold</span>
-            </div>
-            <input id="mob_bold_mobile" type="checkbox" name="bold_mode_mobile" value="on" class="set-toggle"__BOLD_MODE_MOBILE_CHECKED__ switch>
-          </label>
-
-          <div class="set-row">
-            <div class="set-row-left">
-              <span class="set-row-icon">
-                <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-              </span>
-              <span class="set-row-name">Text Size</span>
-            </div>
-            <div class="set-row-right set-row-right-text-size">
-              <div class="stepper-control">
-                <button type="button" class="stepper-btn" id="textSizeMobileMinus">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                </button>
-                <span class="stepper-value" id="textSizeMobileValue">__MESSAGE_TEXT_SIZE_MOBILE__</span>
-                <input type="hidden" name="message_text_size_mobile" id="textSizeMobileInput" value="__MESSAGE_TEXT_SIZE_MOBILE__">
-                <button type="button" class="stepper-btn" id="textSizeMobilePlus">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="set-row">
-            <div class="set-row-left">
-              <span class="set-row-icon">
-                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              </span>
-              <span class="set-row-name">User Messages</span>
-            </div>
-            <div class="set-row-right">
-              <select name="user_message_font">__USER_MESSAGE_FONT_OPTIONS__</select>
-            </div>
-          </div>
-
-          <div class="set-row">
-            <div class="set-row-left">
-              <span class="set-row-icon">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>
-              </span>
-              <span class="set-row-name">Agent Messages</span>
-            </div>
-            <div class="set-row-right">
-              <select name="agent_message_font">__AGENT_MESSAGE_FONT_OPTIONS__</select>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </form>
   </div>
   <script>
 __HUB_INCLUDE:settings.js__

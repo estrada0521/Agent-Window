@@ -32,7 +32,6 @@
       const root = document.documentElement;
       const channels = root.dataset.theme === "light" ? "255, 255, 255" : "10, 10, 9";
       root.style.setProperty("--mob-top-gradient-rgb", channels);
-      root.style.setProperty("--mob-sheet-gradient-rgb", channels);
     };
     applyMobThemeGradientVars();
     new MutationObserver((mutations) => {
@@ -40,20 +39,13 @@
         applyMobThemeGradientVars();
       }
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    const mobileThemeMode = () => {
-      const mode = document.documentElement.dataset.themeMobile;
-      return mode === "system" || mode === "light" || mode === "dark" ? mode : "dark";
+    const resolveMobileTheme = () => {
+      try { return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } catch (_) { return "dark"; }
     };
-    const resolveMobileTheme = (mode = mobileThemeMode()) => {
-      if (mode === "system") {
-        try { return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } catch (_) { return "dark"; }
-      }
-      return mode === "light" ? "light" : "dark";
-    };
-    const publishMobileTheme = (mode = mobileThemeMode(), observedTheme = "") => {
+    const publishMobileTheme = (observedTheme = "") => {
       const theme = observedTheme === "light" || observedTheme === "dark"
         ? observedTheme
-        : resolveMobileTheme(mode);
+        : resolveMobileTheme();
       const root = document.documentElement;
       root.dataset.theme = theme;
       // Do this synchronously as well as through the CSS selector.  Safari's
@@ -63,14 +55,10 @@
       applyMobThemeGradientVars();
       try { _chatFrame.contentDocument.documentElement.dataset.theme = theme; } catch (_) {}
       try { _chatFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*"); } catch (_) {}
-      const sheetFrame = document.getElementById("mobSheetFrame");
-      try { sheetFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*"); } catch (_) {}
       return theme;
     };
     publishMobileTheme();
-    const refreshSystemMobileTheme = () => {
-      if (mobileThemeMode() === "system") publishMobileTheme();
-    };
+    const refreshSystemMobileTheme = () => publishMobileTheme();
     try {
       const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
       if (systemThemeQuery.addEventListener) systemThemeQuery.addEventListener("change", refreshSystemMobileTheme);
@@ -86,20 +74,6 @@
     const HUB_LAUNCH_SHELL_FALLBACK_MS = 5000;
     const CHAT_RENDER_READY_FALLBACK_MS = 2600;
     const CHAT_OVERLAY_CLOSE_MS = 300;
-    let _mobBoldModeState = document.documentElement.dataset.boldMode === "1";
-    function applyMobBoldMode(enabled) {
-      if (enabled) {
-        document.documentElement.dataset.boldMode = "1";
-        return;
-      }
-      delete document.documentElement.dataset.boldMode;
-    }
-    function syncMobBoldModeFromSessionsPayload(payload) {
-      const next = !!payload?.bold_mode_mobile;
-      if (next === _mobBoldModeState) return;
-      _mobBoldModeState = next;
-      applyMobBoldMode(next);
-    }
     function resetChatOverlayMotionStyles() {
       _chatOverlay.style.transform = "";
       _chatOverlay.style.transition = "";
@@ -462,13 +436,11 @@
         bridge.innerHTML = `
           <option value="" disabled selected>Menu</option>
           <option value="close-session">Close Session</option>
-          <option value="settings">Settings</option>
           <option value="restart-hub">Reload</option>
         `;
       } else {
         bridge.innerHTML = `
           <option value="" disabled selected>Menu</option>
-          <option value="settings">Settings</option>
           <option value="restart-hub">Reload</option>
         `;
       }
@@ -680,17 +652,9 @@
         _postHubLayoutToChat();
         return;
       }
-      if (e.data && e.data.type === "hub-mobile-theme-mode-changed") {
-        const mode = String(e.data.themeMobile || "").toLowerCase();
-        if (!["system", "light", "dark"].includes(mode)) return;
-        document.documentElement.dataset.themeMobile = mode;
-        publishMobileTheme(mode);
-        return;
-      }
       if (e.data && e.data.type === "hub-mobile-system-theme-observed") {
-        if (mobileThemeMode() !== "system") return;
         const theme = e.data.theme === "light" ? "light" : (e.data.theme === "dark" ? "dark" : "");
-        if (theme) publishMobileTheme("system", theme);
+        if (theme) publishMobileTheme(theme);
         return;
       }
       if (e.data && e.data.type === "hub-theme-changed") {
@@ -858,7 +822,6 @@
           if (!res.ok) throw new Error("failed");
           const data = await res.json();
           if (requestSeq !== _mobSessionsRequestSeq) return;
-          syncMobBoldModeFromSessionsPayload(data);
           const activeSessions = data.active_sessions || data.sessions || [];
           const archivedSessions = data.archived_sessions || [];
           _mobSessionsCache = { active: activeSessions, archived: archivedSessions };
@@ -895,142 +858,12 @@
     })();
 
     (function () {
-      var sheet = document.getElementById("mobSheet");
-      var sheetFrame = document.getElementById("mobSheetFrame");
-      var sheetPanel = document.getElementById("mobSheetPanel");
-      var sheetNav = document.getElementById("mobSheetNav");
-      var sheetTitle = document.getElementById("mobSheetTitle");
-      var sheetClose = document.getElementById("mobSheetClose");
-      if (!sheet || !sheetFrame || !sheetPanel) return;
-
-      var _sheetCloseTimer = 0;
-      var _sheetFrameLoadToken = 0;
-      var _sheetScrollY = 0;
-      var _sheetScrollLocked = false;
-      var DARK_BG = "__DARK_BG__";
-      var _sheetBlankDoc = `<!doctype html><html><head><meta name='color-scheme' content='dark'><style>html,body{margin:0;min-height:100%;background:${DARK_BG};color-scheme:dark}</style></head><body></body></html>`;
-
-      function lockSheetScroll() {
-        if (_sheetScrollLocked) return;
-        _sheetScrollLocked = true;
-        _sheetScrollY = window.scrollY || document.documentElement.scrollTop || 0;
-        document.documentElement.classList.add("mob-sheet-active");
-        document.body.classList.add("mob-sheet-active");
-        document.body.style.top = "-" + _sheetScrollY + "px";
-      }
-
-      function unlockSheetScroll() {
-        if (!_sheetScrollLocked) return;
-        _sheetScrollLocked = false;
-        document.documentElement.classList.remove("mob-sheet-active");
-        document.body.classList.remove("mob-sheet-active");
-        document.body.style.top = "";
-        try { window.scrollTo(0, _sheetScrollY || 0); } catch (_) { }
-      }
-
-      function openSheet(url, title) {
-        sheetPanel.classList.add("settings-sheet");
-        if (sheetTitle) sheetTitle.textContent = title || "";
-        if (_sheetCloseTimer) { clearTimeout(_sheetCloseTimer); _sheetCloseTimer = 0; }
-        var loadToken = ++_sheetFrameLoadToken;
-        sheetFrame.classList.remove("sheet-frame-ready");
-        sheetFrame.onload = function () {
-          if (loadToken !== _sheetFrameLoadToken) return;
-          publishMobileTheme();
-          requestAnimationFrame(function () {
-            if (loadToken === _sheetFrameLoadToken) sheetFrame.classList.add("sheet-frame-ready");
-          });
-        };
-        sheetFrame.removeAttribute("srcdoc");
-        sheetFrame.src = url;
-        lockSheetScroll();
-        sheet.hidden = false;
-        sheet.classList.remove("sheet-closing");
-        requestAnimationFrame(function () {
-          requestAnimationFrame(function () {
-            sheet.classList.add("sheet-open");
-          });
-        });
-      }
-
-      function finishSheetClose() {
-        sheetPanel.classList.remove("settings-sheet");
-        if (sheetTitle) sheetTitle.textContent = "";
-        sheet.classList.remove("sheet-closing");
-        sheet.hidden = true;
-        _sheetFrameLoadToken++;
-        sheetFrame.onload = null;
-        sheetFrame.classList.remove("sheet-frame-ready");
-        sheetFrame.removeAttribute("src");
-        sheetFrame.srcdoc = _sheetBlankDoc;
-        unlockSheetScroll();
-      }
-
-      function closeSheet(options) {
-        options = options || {};
-        const immediate = options.immediate === true;
-        if (_sheetCloseTimer) {
-          clearTimeout(_sheetCloseTimer);
-          _sheetCloseTimer = 0;
-        }
-        if (immediate) {
-          sheet.classList.remove("sheet-open", "sheet-closing");
-          finishSheetClose();
-          return;
-        }
-        sheet.classList.remove("sheet-open");
-        sheet.classList.add("sheet-closing");
-        _sheetCloseTimer = setTimeout(function () {
-          _sheetCloseTimer = 0;
-          finishSheetClose();
-        }, 300);
-      }
-
-      window._openMobSheet = openSheet;
-      window._closeMobSheet = closeSheet;
-
-      sheet.addEventListener("click", function (e) {
-        if (e.target === sheet) closeSheet();
-      });
-
-      if (sheetClose) sheetClose.addEventListener("click", closeSheet);
-
-      if (sheetNav) {
-        var _startY = 0, _dy = 0, _dragging = false;
-        sheetNav.addEventListener("touchstart", function (e) {
-          _startY = e.touches[0].clientY; _dy = 0; _dragging = true;
-          sheetPanel.style.transition = "none";
-        }, { passive: true });
-        sheetNav.addEventListener("touchmove", function (e) {
-          if (!_dragging) return;
-          _dy = Math.max(0, e.touches[0].clientY - _startY);
-          sheetPanel.style.transform = "translateY(" + _dy + "px)";
-        }, { passive: true });
-        sheetNav.addEventListener("touchend", function () {
-          if (!_dragging) return;
-          _dragging = false;
-          sheetPanel.style.transition = "";
-          sheetPanel.style.transform = "";
-          if (_dy > 80) closeSheet();
-        }, { passive: true });
-      }
-
-      window.addEventListener("message", function (e) {
-        if (!sheetFrame || e.source !== sheetFrame.contentWindow) return;
-        if (e.data && e.data.type === "hub-close-sidebar-page") closeSheet();
-        if (e.data === "hub_close_chat") closeSheet();
-      });
-
       var bridge = document.getElementById("hubPageNativeMenuBridge");
       if (bridge) {
         bridge.addEventListener("change", function (e) {
           var val = bridge.value;
           if (!val) return;
-          if (val === "settings") {
-            e.stopImmediatePropagation();
-            bridge.value = "";
-            openSheet("/settings?embed=1&view=mobile", "Settings");
-          } else if (val === "close-session" || val === "hub") {
+          if (val === "close-session" || val === "hub") {
             e.stopImmediatePropagation();
             bridge.value = "";
             closeChatFrame();

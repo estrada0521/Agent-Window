@@ -75,7 +75,6 @@ __CHAT_INCLUDE:../../../../shared/chat/session-state-events.js__
         const res = await fetch("/hub-settings", { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
-        currentBoldModeMobile = !!data?.bold_mode_mobile;
         const _themeDesktop = String(data?.theme_desktop ?? data?.theme ?? "").trim().toLowerCase();
         const _chatTheme = _themeDesktop === "system"
           ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")

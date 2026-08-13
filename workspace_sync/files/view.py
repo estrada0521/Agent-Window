@@ -62,7 +62,6 @@ def render_file_view(
     agent_font_mode: str = "serif",
     agent_font_family: str | None = None,
     agent_text_size: int | None = None,
-    message_bold: bool = False,
     preview_chrome: str = "",
     force_progressive_text: bool = False,
 ) -> str:
@@ -161,20 +160,6 @@ def render_file_view(
         f".hdr{{padding:10px 16px;background:{embed_bg};border-bottom:0.5px solid {pane_line};display:flex;align-items:center;gap:8px;flex-shrink:0}}"
         f".fn{{font-weight:700;font-size:14px;color:{pane_fg}}}"
     )
-    preview_bold_css = (
-        ".code-table .lc pre,"
-        ".html-preview-text-table .lc pre,"
-        "pre,"
-        ".md-body,"
-        ".md-body p,"
-        ".md-body li,"
-        ".md-body li p,"
-        ".md-body blockquote,"
-        ".md-body blockquote p"
-        "{font-weight:620;font-variation-settings:normal;font-synthesis:weight;font-synthesis-weight:auto;-webkit-font-smoothing:antialiased}"
-        ".md-body h1,.md-body h2,.md-body h3,.md-body h4"
-        "{font-weight:700;font-variation-settings:normal;font-synthesis:weight;font-synthesis-weight:auto;-webkit-font-smoothing:antialiased}"
-    ) if message_bold else ""
     header = "" if embed else (
         f'<div class="hdr"><span>{{icon}}</span><span class="fn">{html_escape(filename)}</span>'
         f"</div>"
@@ -464,7 +449,6 @@ def render_file_view(
             '.html-preview-gutter-table tbody tr.is-selected .ln,.html-preview-text-table tbody tr.is-selected .lc{background:var(--preview-selected-line-bg)}'
             '.html-preview-text-table .lc pre{margin:0;min-height:var(--message-text-line-height);line-height:var(--message-text-line-height);font:inherit;white-space:pre}'
             '.html-preview-gutter-table tbody tr:last-child .ln,.html-preview-text-table tbody tr:last-child .lc pre{padding-bottom:24px}'
-            f'{preview_bold_css}'
             '</style></head>'
             f'<body>{header.format(icon="🌐")}<div class="html-preview-shell">{tabs_markup}'
             '<div class="html-preview-panels">'
@@ -506,7 +490,6 @@ def render_file_view(
             '.code-gutter-table tbody tr.is-selected .ln,.code-table tbody tr.is-selected .lc{background:var(--preview-selected-line-bg)}'
             '.code-table .lc pre{margin:0;min-height:var(--message-text-line-height);line-height:var(--message-text-line-height);font:inherit;white-space:pre}'
             '.code-gutter-table tbody tr:last-child .ln,.code-table tbody tr:last-child .lc pre{padding-bottom:24px}'
-            f'{preview_bold_css}'
             '</style></head>'
             f'<body>{header.format(icon="📄")}'
             '<div class="view-container" id="viewContainer">'
@@ -539,7 +522,6 @@ def render_file_view(
             '.code-gutter-table tbody tr.is-selected .ln,.code-table tbody tr.is-selected .lc{background:var(--preview-selected-line-bg)}'
             '.code-table .lc pre{margin:0;min-height:var(--message-text-line-height);line-height:var(--message-text-line-height);font:inherit;white-space:pre}'
             '.code-gutter-table tbody tr:last-child .ln,.code-table tbody tr:last-child .lc pre{padding-bottom:24px}'
-            f'{preview_bold_css}'
             '</style></head>'
             f'<body>{header.format(icon="📄")}'
             f'<div class="view-container" id="viewContainer"><div class="code-gutter" id="codeGutter"><div class="code-gutter-inner" id="codeGutterInner"><table class="code-gutter-table" role="presentation"><tbody>{gutter_rows}</tbody></table></div></div><div class="code-scroll" id="codeScroll"><table class="code-table" role="presentation"><tbody>{code_rows}</tbody></table></div></div><script>{build_vertical_bias_wheel_js(view_container_id="viewContainer", code_scroll_id="codeScroll")}{build_gutter_scroll_sync_js(code_scroll_id="codeScroll", gutter_id="codeGutter", gutter_inner_id="codeGutterInner")}{build_line_selection_js(table_selector=".code-table", gutter_selector=".code-gutter-table")}{preview_text_size_sync_js}</script></body></html>'
@@ -586,7 +568,6 @@ def render_file_view(
             f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-agent-font-mode="{agent_font_mode}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
             f'{markdown_head_libs}'
             f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}'
-            f'{preview_bold_css}'
             '</style></head>'
             f'<body>{header.format(icon="📝")}<div class="md-preview-shell"><div class="md-body" id="out"></div></div>'
             f'''<script>
@@ -598,7 +579,6 @@ const __previewPane = {json.dumps(pane)};
 const __previewBasePath = {prefix_json};
 const __previewAgentFontMode = {json.dumps(agent_font_mode)};
 const __previewAgentTextSize = {json.dumps(resolved_text_size)};
-const __previewMessageBold = {json.dumps(bool(message_bold))};
 const __previewVariant = {json.dumps(resolved_preview_variant)};
 const __rawBase = `${{__fileBase}}/file-raw?path=`;
 const __root = document.documentElement;
@@ -670,7 +650,6 @@ const buildPreviewHref = (relPath) => {{
   if (__previewAgentFontMode) params.set("agent_font_mode", __previewAgentFontMode);
   if (__previewAgentTextSize) params.set("agent_text_size", String(__previewAgentTextSize));
   if (__previewVariant) params.set("preview_variant", __previewVariant);
-  params.set("message_bold", __previewMessageBold ? "1" : "0");
   return `${{__fileBase}}/file-view?${{params.toString()}}`;
 }};
 const __normalizeMdPath = (baseRel, src) => {{
@@ -881,6 +860,6 @@ applyPreviewTheme("dark");
         f'.hdr{{padding:10px 16px;background:{embed_bg};border-bottom:1px solid {pane_line};display:flex;align-items:center;gap:8px}}'
         f'.fn{{font-weight:700;font-size:14px;color:{pane_fg}}}'
         f'pre{{margin:0;padding:16px;white-space:pre;overflow:auto;height:{pre_height};background:{embed_bg};padding-top:calc(16px + var(--tpad,0px))}}'
-        f'{preview_bold_css}</style></head>'
+        '</style></head>'
         f'<body>{header.format(icon="📄")}<pre>{escaped}</pre></body></html>'
     )

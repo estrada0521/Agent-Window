@@ -78,15 +78,11 @@ __CHAT_INCLUDE:../../../shared/chat/session-state-events.js__
         if (!res.ok) return;
         const data = await res.json();
         // When Chat is inside the mobile Hub, the Hub supplies the resolved
-        // theme after the iframe loads.  Reading a just-saved preference here
-        // can race that message and reintroduce an OS-derived theme.
+        // theme after the iframe loads.  Mobile always follows the OS
+        // preference, so only resolve it here when standalone (no parent).
         if (window.parent === window) {
-          const _theme = data?.theme_mobile ?? data?.theme;
-          if (_theme === "system" || _theme === "light" || _theme === "dark") {
-            document.documentElement.dataset.theme = _theme === "system"
-              ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-              : _theme;
-          }
+          document.documentElement.dataset.theme =
+            window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         }
         if (typeof data?.agent_font_mode === "string" && data.agent_font_mode) {
           document.documentElement.dataset.agentFontMode = data.agent_font_mode;

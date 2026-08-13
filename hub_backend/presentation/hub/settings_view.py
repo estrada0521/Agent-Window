@@ -115,22 +115,17 @@ def hub_settings_html(
     user_message_font = settings.get("user_message_font", "preset-gothic")
     agent_message_font = settings.get("agent_message_font", "preset-mincho")
     message_text_size = int(settings.get("message_text_size", 13) or 13)
-    message_text_size_mobile = int(settings.get("message_text_size_mobile") or message_text_size)
     message_text_size_desktop = int(settings.get("message_text_size_desktop") or message_text_size)
     from backend_core.access.settings import (
         normalize_theme_desktop,
-        normalize_theme_mobile,
         resolve_hub_theme,
     )
 
     theme = str(settings.get("theme", "dark") or "dark").strip().lower()
     light_mode = theme == "light"
     theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", theme))
-    theme_mobile = normalize_theme_mobile(settings.get("theme_mobile", theme))
     light_mode_desktop = theme_desktop == "light"
-    light_mode_mobile = theme_mobile == "light"
     render_theme = resolve_hub_theme(settings, variant=resolved_view_variant)
-    bold_mode_mobile = settings.get("bold_mode_mobile", False)
     font_choices = available_chat_font_choices_fn()
     font_options = lambda selected: "".join(
         f'<option value="{html.escape(value)}"' + (' selected' if value == selected else '') + f'>{html.escape(label)}</option>'
@@ -157,16 +152,11 @@ def hub_settings_html(
         .replace("__AGENT_MESSAGE_FONT_OPTIONS__", font_options(agent_message_font))
         .replace("__FONT_MODE__", font_mode)
         .replace("__MESSAGE_TEXT_SIZE__", str(message_text_size))
-        .replace("__MESSAGE_TEXT_SIZE_MOBILE__", str(message_text_size_mobile))
         .replace("__MESSAGE_TEXT_SIZE_DESKTOP__", str(message_text_size_desktop))
         .replace("__LIGHT_MODE_CHECKED__", " checked" if light_mode else "")
         .replace("__LIGHT_MODE_DESKTOP_CHECKED__", " checked" if light_mode_desktop else "")
-        .replace("__LIGHT_MODE_MOBILE_CHECKED__", " checked" if light_mode_mobile else "")
-        .replace("__THEME_MOBILE_HIDDEN__", html.escape(theme_mobile))
         .replace("__THEME_DESKTOP_HIDDEN__", html.escape(theme_desktop))
         .replace("__THEME_DESKTOP_OPTIONS__", theme_desktop_options)
-        .replace("__BOLD_MODE_MOBILE_CHECKED__", " checked" if bold_mode_mobile else "")
-        .replace("__BOLD_MODE_MOBILE_HIDDEN__", html.escape("on" if bold_mode_mobile else ""))
         .replace("__VIEW_VARIANT__", resolved_view_variant)
     )
     page = (

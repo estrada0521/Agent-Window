@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from urllib.parse import parse_qs
 
-from backend_core.access.settings import normalize_theme_desktop, normalize_theme_mobile, resolve_chat_theme, settings_for_chat_render
+from backend_core.access.settings import normalize_theme_desktop, resolve_chat_theme, settings_for_chat_render
 from hub_backend.transport.request_base_path import request_base_path
 from shortcut_command.catalog import public_command_dicts
 
@@ -170,23 +170,13 @@ def _get_file_view(handler, parsed, ctx) -> None:
         settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant=preview_variant)
         agent_message_font = str(settings.get("agent_message_font", "preset-mincho") or "preset-mincho").strip()
         preview_font_mode = "gothic" if agent_message_font == "preset-gothic" else "serif"
-        preview_text_size = (
-            (settings.get("message_text_size_mobile") if preview_variant == "mobile" else settings.get("message_text_size_desktop")) or
-            settings.get("message_text_size")
-        )
+        preview_text_size = settings.get("message_text_size_desktop") or settings.get("message_text_size")
         requested_text_size = str(qs.get("agent_text_size", [""])[0] or "").strip()
         if requested_text_size:
             try:
                 preview_text_size = max(8, min(18, int(requested_text_size)))
             except ValueError:
                 pass
-        requested_message_bold = str(qs.get("message_bold", [""])[0] or "").strip().lower()
-        if requested_message_bold in {"1", "true", "yes", "on"}:
-            message_bold = True
-        elif requested_message_bold in {"0", "false", "no", "off"}:
-            message_bold = False
-        else:
-            message_bold = bool(settings.get("bold_mode_mobile", False))
         page = ctx["workspace_sync_api"].file_view(
             rel,
             embed=embed,
@@ -197,7 +187,6 @@ def _get_file_view(handler, parsed, ctx) -> None:
             agent_font_mode=preview_font_mode,
             agent_font_family=ctx["runtime"]._font_family_stack(agent_message_font, "agent"),
             agent_text_size=preview_text_size,
-            message_bold=message_bold,
             preview_chrome=preview_chrome,
             force_progressive_text=force_progressive_text,
         )
@@ -269,10 +258,8 @@ def _get_hub_settings(handler, _parsed, ctx) -> None:
     chat_render_settings = settings_for_chat_render(settings, variant="desktop")
     body = json.dumps(
         {
-            "bold_mode_mobile": bool(settings.get("bold_mode_mobile", False)),
             "agent_font_mode": str(settings.get("agent_font_mode", "serif")),
             "theme": resolve_chat_theme(settings, variant="desktop"),
-            "theme_mobile": normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark"))),
             "theme_desktop": normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark"))),
             "chat_font_settings_css": ctx["chat_font_settings_inline_style_fn"](chat_render_settings),
         },

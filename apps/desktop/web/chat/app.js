@@ -1,8 +1,4 @@
 __CHAT_INCLUDE:../../../shared/chat/base.js__
-    const currentFilePreviewBoldEnabled = () => {
-      const isNarrowViewport = (window.innerWidth || 0) <= 480;
-      return isNarrowViewport ? !!currentBoldModeMobile : false;
-    };
     const normalizeWorkspaceFilePath = (p) => {
       let s = String(p || "").trim();
       if (!s) return "";
@@ -33,7 +29,6 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
       params.set("preview_variant", "desktop");
       const textSize = currentFilePreviewTextSize();
       if (textSize) params.set("agent_text_size", textSize);
-      params.set("message_bold", currentFilePreviewBoldEnabled() ? "1" : "0");
       return withChatBase(`/file-view?${params.toString()}`);
     };
     const buildInlineFileLinkMarkup = (path, label = "") => {
