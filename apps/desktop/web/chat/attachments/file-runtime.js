@@ -147,7 +147,7 @@ __CHAT_INCLUDE:../../../../shared/chat/file-autocomplete.js__
       if (item) { e.preventDefault(); selectFile(item.dataset.path); }
     });
     const autoResizeTextarea = () => {
-      const baseHeight = 54;
+      const baseHeight = 52;
       const composerFieldEl = document.querySelector(".composer-field");
       messageInput.style.marginTop = "0px";
       messageInput.style.height = baseHeight + "px";
