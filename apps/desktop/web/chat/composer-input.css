@@ -67,13 +67,13 @@
       box-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
       opacity: 0;
       pointer-events: none;
-      transform: scale(0.4) rotate(-15deg);
-      transition: transform 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 150ms ease, opacity 200ms ease;
+      transform: translateY(10px);
+      transition: transform 260ms ease-out, box-shadow 150ms ease, opacity 220ms ease-out;
     }
     .send-btn.visible {
       opacity: 1;
       pointer-events: auto;
-      transform: scale(1) rotate(0deg);
+      transform: translateY(0);
     }
     .has-hover .send-btn:hover {
       box-shadow: 0 3px 14px rgba(0, 0, 0, 0.55);

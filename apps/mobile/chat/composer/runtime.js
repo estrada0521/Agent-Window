@@ -130,5 +130,11 @@
     }
 
     const updateSendBtnVisibility = () => {
-      if (sendBtn) sendBtn.disabled = !sessionActive;
+      if (!sessionActive) {
+        if (sendBtn) sendBtn.classList.remove("visible");
+        return;
+      }
+      const hasText = messageInput.value.trim().length > 0;
+      if (sendBtn) sendBtn.classList.toggle("visible", hasText);
     };
+    messageInput.addEventListener("input", updateSendBtnVisibility);
