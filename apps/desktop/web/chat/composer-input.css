@@ -47,7 +47,7 @@
     .composer-field:focus-within {
       background: rgba(255, 255, 255, 0.09);
       border-color: rgba(255, 255, 255, 0.20);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 2px rgba(255, 255, 255, 0.07), inset 0 1px 1px rgba(255, 255, 255, 0.07);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.07);
     }
     .send-btn {
       position: absolute;
