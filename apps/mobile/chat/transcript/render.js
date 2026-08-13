@@ -147,8 +147,14 @@
         updateScrollBtn();
         requestCenteredMessageRowUpdate();
         {
+          const input = document.getElementById("message");
           const sendBtnEl = document.querySelector(".send-btn");
-          if (sendBtnEl) sendBtnEl.disabled = !sessionActive;
+          const hasText = !!(input && input.value.trim().length > 0);
+          if (!sessionActive) {
+            if (sendBtnEl) sendBtnEl.classList.remove("visible");
+          } else {
+            if (sendBtnEl) sendBtnEl.classList.toggle("visible", hasText);
+          }
         }
       } catch (err) {
         console.error("chat render failed; using fallback renderer", err);

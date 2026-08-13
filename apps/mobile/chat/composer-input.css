@@ -60,11 +60,21 @@
       justify-content: center;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
       transition:
         background 160ms ease,
         border-color 160ms ease,
         box-shadow 160ms ease,
-        transform 160ms ease;
+        transform 260ms ease-out,
+        opacity 220ms ease-out;
+    }
+
+    .send-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
     }
 
     .send-btn svg {
