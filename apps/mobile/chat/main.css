@@ -50,11 +50,6 @@ __CHAT_INCLUDE:styles/thinking.css__
 
 __CHAT_INCLUDE:../../shared/chat/markdown-inline-code.css__
 
-    .send-btn {
-      background: var(--fg);
-      color: var(--surface);
-    }
-
     .has-hover .quick-action:hover:not(:disabled) {
       background: rgb(40, 40, 40);
     }
