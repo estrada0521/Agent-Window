@@ -310,6 +310,16 @@
       will-change: backdrop-filter;
     }
 
+    .hub-top-blur-0a {
+      --hub-top-blur-height: 136px;
+      --hub-top-blur-radius: 0.2px;
+    }
+
+    .hub-top-blur-0b {
+      --hub-top-blur-height: 118px;
+      --hub-top-blur-radius: 0.45px;
+    }
+
     .hub-top-blur-1 {
       --hub-top-blur-height: 100px;
       --hub-top-blur-radius: 0.9px;
