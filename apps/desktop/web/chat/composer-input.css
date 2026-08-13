@@ -34,7 +34,7 @@
     }
     .composer-field {
       position: relative;
-      border-radius: 14px;
+      border-radius: 26px;
       min-height: 54px;
       height: 54px;
       background: rgba(255, 255, 255, 0.06);
@@ -55,7 +55,7 @@
       bottom: 8px;
       width: 36px;
       height: 36px;
-      border-radius: 10px;
+      border-radius: 26px;
       border: none;
       background: var(--fg);
       color: var(--surface);
