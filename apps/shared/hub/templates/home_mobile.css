@@ -25,6 +25,7 @@
       --mob-sheet-floating-bg: var(--session-hover-bg);
       --mob-sheet-floating-hover-bg: var(--panel-2);
       --mob-sheet-pill-bg: rgba(255, 255, 255, 0.22);
+      --mob-sheet-top-border: rgba(255, 255, 255, 0.08);
       --mob-sheet-gradient-rgb: var(--mob-top-gradient-rgb);
       --bottom-sheet-top-gradient-rgb: var(--mob-sheet-gradient-rgb);
       --code-bg: rgba(255, 255, 255, 0.05);
@@ -52,6 +53,7 @@
       --mob-sheet-floating-bg: rgba(0, 0, 0, 0.10);
       --mob-sheet-floating-hover-bg: rgba(0, 0, 0, 0.13);
       --mob-sheet-pill-bg: rgba(20, 20, 19, 0.24);
+      --mob-sheet-top-border: rgba(255, 255, 255, 0.15);
       --code-bg: rgba(0, 0, 0, 0.05);
     }
     html[data-theme="dark"] {
@@ -75,6 +77,7 @@
       --mob-top-gradient-rgb: var(--bg-rgb);
       --mob-sheet-gradient-rgb: var(--mob-top-gradient-rgb);
       --mob-sheet-pill-bg: rgba(255, 255, 255, 0.22);
+      --mob-sheet-top-border: rgba(255, 255, 255, 0.08);
       --code-bg: rgba(255, 255, 255, 0.05);
     }
 
@@ -951,7 +954,7 @@
       transform: translateY(100%);
       transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
       overflow: hidden;
-      border-top: 0.5px solid rgba(255, 255, 255, 0.15);
+      border-top: 0.5px solid var(--mob-sheet-top-border);
       box-shadow: none;
     }
 
