@@ -1,4 +1,3 @@
-    let currentBoldModeMobile = false;
     const _fileExistenceCache = new Map();
 __CHAT_INCLUDE:../../../../shared/chat/file-link-parse.js__
     const decorateLocalFileLinks = (scope = document) => {

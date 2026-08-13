@@ -1,8 +1,5 @@
     const HUB_EMBED = document.documentElement.dataset.hubEmbed === "1";
-    const VIEW_VARIANT = document.documentElement.dataset.viewVariant || "";
-    const isMobileView = VIEW_VARIANT === "mobile";
 
-    const boldMobileToggle = document.querySelector('#settingsFormMobile input[name="bold_mode_mobile"]');
     const initialThemeValue = document.documentElement.dataset.theme || "dark";
     let _themeReloadPending = false;
     const systemPrefersDark = () => {
@@ -13,79 +10,8 @@
       return themeDesktop === "light" ? "light" : "dark";
     };
 
-    const themeMobileSelect = document.getElementById("themeMobileSelect");
-    if (themeMobileSelect) {
-      const initialMobileTheme = themeMobileSelect.dataset.initialValue || initialThemeValue;
-      const embeddedInHub = window.self !== window.top;
-      const resolveMobileTheme = (value) => value === "system"
-        ? (systemPrefersDark() ? "dark" : "light")
-        : (value === "light" ? "light" : "dark");
-      const applyMobileThemeSelection = (value, { save = true } = {}) => {
-        try {
-          if (embeddedInHub) {
-            // The mobile Hub owns the effective theme.  This frame only owns
-            // the saved preference, so it can never independently follow an
-            // OS preference change while Light or Dark is selected.
-            window.top.postMessage({ type: "hub-mobile-theme-mode-changed", themeMobile: value }, "*");
-          } else {
-            document.documentElement.dataset.theme = resolveMobileTheme(value);
-          }
-        } catch (_) {}
-        if (save && typeof _doAutoSave === "function") {
-          clearTimeout(_autoSaveTimer);
-          _autoSaveTimer = setTimeout(_doAutoSave, 150);
-        }
-      };
-      if (["system", "light", "dark"].includes(initialMobileTheme)) {
-        themeMobileSelect.value = initialMobileTheme;
-        if (!embeddedInHub && initialMobileTheme === "system") applyMobileThemeSelection("system", { save: false });
-      }
-      themeMobileSelect.addEventListener("change", () => {
-        const selectedMode = themeMobileSelect.value;
-        _themeReloadPending = resolveMobileTheme(selectedMode) !== initialThemeValue;
-        applyMobileThemeSelection(selectedMode);
-      });
-      if (!embeddedInHub) {
-        try {
-          window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-            if (themeMobileSelect.value === "system") applyMobileThemeSelection("system", { save: false });
-          });
-        } catch (_) {}
-      }
-      window.addEventListener("message", (event) => {
-        const data = event.data;
-        if (data?.type !== "hub-theme-changed") return;
-        if (data.theme === "light" || data.theme === "dark") {
-          document.documentElement.dataset.theme = data.theme;
-        }
-      });
-      if (embeddedInHub) {
-        const reportObservedSystemTheme = () => {
-          if (themeMobileSelect.value !== "system") return;
-          try {
-            window.top.postMessage({
-              type: "hub-mobile-system-theme-observed",
-              theme: systemPrefersDark() ? "dark" : "light",
-            }, "*");
-          } catch (_) {}
-        };
-        try {
-          const query = window.matchMedia("(prefers-color-scheme: dark)");
-          if (query.addEventListener) query.addEventListener("change", reportObservedSystemTheme);
-          else if (query.addListener) query.addListener(reportObservedSystemTheme);
-        } catch (_) {}
-        window.addEventListener("pageshow", reportObservedSystemTheme);
-        window.addEventListener("focus", reportObservedSystemTheme);
-        document.addEventListener("visibilitychange", () => {
-          if (!document.hidden) reportObservedSystemTheme();
-        });
-      }
-    }
-
     const themeDesktopSelect = document.getElementById("theme_desktop");
-    // Both desktop and mobile forms are present in this template.  Do not let
-    // the hidden desktop control observe OS changes inside a mobile sheet.
-    if (themeDesktopSelect && !isMobileView) {
+    if (themeDesktopSelect) {
       const applyThemeDesktopSelection = (nextTheme) => {
         document.documentElement.dataset.theme = hubThemeForDesktop(nextTheme);
         try {
@@ -114,19 +40,6 @@
       } catch (_) {}
     }
 
-    const applyBoldMode = () => {
-      const html = document.documentElement;
-      const mobileBold = boldMobileToggle?.checked;
-      const active = isMobileView && mobileBold;
-      if (active) {
-        html.dataset.boldMode = '1';
-      } else {
-        delete html.dataset.boldMode;
-      }
-    };
-    boldMobileToggle?.addEventListener('change', applyBoldMode);
-    applyBoldMode();
-
     const _makeNumberStepper = (input, minusBtnId, plusBtnId, valueDisplayId, onApply, options = {}) => {
       if (!input) return;
       const min = Number.isFinite(options.min) ? options.min : 11;
@@ -152,33 +65,10 @@
     const _makeTextSizeStepper = (input, minusBtnId, plusBtnId, valueDisplayId, onApply) => {
       _makeNumberStepper(input, minusBtnId, plusBtnId, valueDisplayId, onApply, { min: 8, max: 18, fallback: 13 });
     };
-    let activeTextSizeInput = null;
-    if (isMobileView) {
-      activeTextSizeInput = document.getElementById('textSizeMobileInput');
-      _makeTextSizeStepper(
-        activeTextSizeInput,
-        'textSizeMobileMinus', 'textSizeMobilePlus', 'textSizeMobileValue',
-        (sz) => document.documentElement.style.setProperty('--settings-text-size', sz + 'px')
-      );
-      _makeTextSizeStepper(
-        document.getElementById('textSizeDesktopInput'),
-        'textSizeDesktopMinus', 'textSizeDesktopPlus', 'textSizeDesktopValue',
-        null
-      );
-    } else {
-      const desktopInput = document.querySelector('#settingsFormDesktop [name="message_text_size_desktop"]');
-      activeTextSizeInput = desktopInput;
-      _makeTextSizeStepper(desktopInput, null, null, null,
-        (sz) => document.documentElement.style.setProperty('--settings-text-size', sz + 'px')
-      );
-      const mobileInput = document.querySelector('#settingsFormDesktop [name="message_text_size_mobile"]');
-      _makeTextSizeStepper(mobileInput, null, null, null, null);
-    }
+    const activeTextSizeInput = document.querySelector('#settingsFormDesktop [name="message_text_size_desktop"]');
+    _makeTextSizeStepper(activeTextSizeInput, null, null, null, null);
 
-    const activeForm = isMobileView
-      ? document.getElementById('settingsFormMobile')
-      : document.getElementById('settingsFormDesktop');
-    const settingsForm = activeForm;
+    const settingsForm = document.getElementById('settingsFormDesktop');
     if (HUB_EMBED && settingsForm) {
       settingsForm.action = "/settings?embed=1";
     }

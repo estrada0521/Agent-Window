@@ -28,6 +28,7 @@ from hub_backend.presentation.hub.header_assets import (
     DEFAULT_HUB_HEADER_PANELS,
     HUB_PAGE_HEADER_CSS,
     HUB_PAGE_HEADER_JS,
+    MOBILE_HUB_HEADER_ACTIONS,
     render_hub_page_header,
 )
 from backend_core.access.settings import (
@@ -283,6 +284,7 @@ def _serve_pwa_static(handler, path: str) -> bool:
 _HUB_ICON_URIS = {name: _icon_data_uri(fname) for name, fname in _icon_filename_map().items()}
 _HUB_PAGE_HEADER_CSS = HUB_PAGE_HEADER_CSS
 _HUB_PAGE_HEADER_HTML = render_hub_page_header()
+_HUB_PAGE_HEADER_HTML_MOBILE = render_hub_page_header(actions_html=MOBILE_HUB_HEADER_ACTIONS)
 _HUB_PAGE_HEADER_JS = HUB_PAGE_HEADER_JS
 _HUB_LAUNCH_SHELL_BODY_HTML = (
     '<div class="launch-shell-card">'
@@ -430,6 +432,7 @@ _hub_pages = _build_hub_html_pages_impl(
     pwa_apple_touch_icon_url=_PWA_APPLE_TOUCH_ICON_URL,
     hub_header_css=_HUB_PAGE_HEADER_CSS,
     hub_header_html=_HUB_PAGE_HEADER_HTML,
+    hub_header_html_mobile=_HUB_PAGE_HEADER_HTML_MOBILE,
     hub_header_js=_HUB_PAGE_HEADER_JS,
     hub_icon_uris=_HUB_ICON_URIS,
 )
@@ -479,11 +482,10 @@ def hub_new_session_html(variant="desktop"):
         message_text_size = int(current_settings.get("message_text_size", 13) or 13)
     except Exception:
         message_text_size = 13
-    bold_mode_mobile = bool(current_settings.get("bold_mode_mobile", False)) if is_mobile else False
     header_html = render_hub_page_header(
         title_href="/",
         title_id="hubPageTitleLink",
-        actions_html=DEFAULT_HUB_HEADER_ACTIONS,
+        actions_html=MOBILE_HUB_HEADER_ACTIONS if is_mobile else DEFAULT_HUB_HEADER_ACTIONS,
         panels_html=DEFAULT_HUB_HEADER_PANELS,
     )
     page = (
@@ -493,7 +495,6 @@ def hub_new_session_html(variant="desktop"):
         .replace("__HUB_HEADER_JS__", _HUB_PAGE_HEADER_JS)
         .replace("__VIEW_VARIANT__", "mobile" if is_mobile else "desktop")
         .replace("__MESSAGE_TEXT_SIZE__", str(message_text_size))
-        .replace("__BOLD_MODE_MOBILE__", "1" if bold_mode_mobile else "")
     )
     from backend_core.access.settings import settings_for_hub_render
 
@@ -684,18 +685,12 @@ class Handler(BaseHTTPRequestHandler):
             archived = []
         else:
             archived = list(archived_session_records(active_map.keys()).values())
-        try:
-            hub_settings = load_hub_settings()
-        except Exception:
-            hub_settings = {}
-        bold_mode_mobile = bool(hub_settings.get("bold_mode_mobile", False))
         self._send_json(200, {
             "sessions": active,
             "active_sessions": active,
             "archived_sessions": archived,
             "tmux_state": query.state,
             "tmux_detail": query.detail,
-            "bold_mode_mobile": bold_mode_mobile,
         })
 
 
@@ -706,20 +701,20 @@ class Handler(BaseHTTPRequestHandler):
             settings = load_hub_settings()
         except Exception:
             settings = {}
-        from backend_core.access.settings import normalize_theme_desktop, normalize_theme_mobile, settings_for_hub_render
+        from backend_core.access.settings import normalize_theme_desktop, settings_for_hub_render
 
         page = HUB_HOME_MOBILE_HTML if variant == "mobile" else HUB_HOME_DESKTOP_HTML
         if variant == "desktop":
             theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
             page = page.replace("__THEME_DESKTOP__", theme_desktop)
-        else:
-            theme_mobile = normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
-            page = page.replace("__THEME_MOBILE__", theme_mobile)
         render_settings = settings_for_hub_render(settings, variant=variant)
         self._send_html(200, apply_color_tokens(page, settings=render_settings))
 
     def _get_settings(self, parsed):
         variant = request_view_variant(headers=self.headers, query_string=parsed.query)
+        if variant == "mobile":
+            self._redirect("/")
+            return
         saved = (parse_qs(parsed.query).get("saved", ["0"])[0] == "1")
         self._send_html(200, hub_settings_html(saved=saved, variant=variant))
 

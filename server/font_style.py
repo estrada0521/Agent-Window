@@ -23,7 +23,6 @@ def chat_font_settings_inline_style(
     *,
     bold_mode_viewport_max_px: int,
     generate_agent_message_selectors_fn,
-    chat_bold_mode_rules_block_fn,
     bh_agent_detail_selectors_fn,
     font_family_stack_fn=font_family_stack,
 ) -> str:
@@ -38,30 +37,9 @@ def chat_font_settings_inline_style(
         message_text_size_desktop = max(8, min(18, int(settings.get("message_text_size_desktop") or _legacy_size)))
     except Exception:
         message_text_size_desktop = _legacy_size
-    try:
-        message_text_size_mobile = max(8, min(18, int(settings.get("message_text_size_mobile") or _legacy_size)))
-    except Exception:
-        message_text_size_mobile = _legacy_size
     message_max_width = 900
 
-    bold_parts: list[str] = []
     non_tauri_desktop_scope = 'html:not([data-tauri-app="1"][data-hub-iframe-chat="1"])'
-    if settings.get("bold_mode_mobile"):
-        mobile_inner = chat_bold_mode_rules_block_fn(non_tauri_desktop_scope)
-        bold_parts.append(
-            f"@media (max-width: {bold_mode_viewport_max_px}px) {{\n{mobile_inner}\n    }}"
-        )
-    bold_style = "\n".join(bold_parts)
-    mobile_text_size_override = ""
-    if message_text_size_mobile != message_text_size_desktop:
-        non_tauri = 'html:not([data-tauri-app="1"][data-hub-iframe-chat="1"])'
-        mobile_text_size_override = f"""
-    @media (max-width: {bold_mode_viewport_max_px}px) {{
-      {non_tauri} {{
-        --message-text-size: {message_text_size_mobile}px;
-        --message-text-line-height: {message_text_size_mobile + 9}px;
-      }}
-    }}"""
     mobile_body_weight_override = f"""
     @media (max-width: {bold_mode_viewport_max_px}px) {{
       {non_tauri_desktop_scope} .message.user .md-body,
@@ -144,7 +122,5 @@ def chat_font_settings_inline_style(
       color: var(--fg);
     }}
     {typography_override}
-    {bold_style}
-    {mobile_text_size_override}
     {mobile_body_weight_override}
     """

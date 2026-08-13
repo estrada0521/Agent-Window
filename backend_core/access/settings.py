@@ -9,12 +9,6 @@ from pathlib import Path
 SESSION_LOG_FILENAME = ".log.jsonl"
 NATIVE_LOG_STATE_FILENAME = ".native-log-sync-state.json"
 DESKTOP_THEME_CHOICES = frozenset({"system", "light", "dark"})
-MOBILE_THEME_CHOICES = frozenset({"system", "light", "dark"})
-
-
-def normalize_theme_mobile(value: object) -> str:
-    theme = str(value or "").strip().lower()
-    return theme if theme in MOBILE_THEME_CHOICES else "dark"
 
 
 def normalize_theme_desktop(value: object) -> str:
@@ -25,10 +19,9 @@ def normalize_theme_desktop(value: object) -> str:
 def resolve_hub_theme(settings: dict, *, variant: str) -> str:
     view = str(variant or "desktop").strip().lower()
     if view == "mobile":
-        mobile = normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
-        # The server has no access to the device preference. Client-side code
-        # upgrades this fallback when the user selected System.
-        return "dark" if mobile == "system" else mobile
+        # Mobile always follows the OS preference; the server has no access
+        # to it, so client-side code upgrades this fallback after load.
+        return "dark"
     desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
     if desktop == "system":
         return "dark"
@@ -38,8 +31,7 @@ def resolve_hub_theme(settings: dict, *, variant: str) -> str:
 def resolve_chat_theme(settings: dict, *, variant: str) -> str:
     view = str(variant or "desktop").strip().lower()
     if view == "mobile":
-        mobile = normalize_theme_mobile(settings.get("theme_mobile", settings.get("theme", "dark")))
-        return "dark" if mobile == "system" else mobile
+        return "dark"
     desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
     if desktop == "system":
         return "dark"
@@ -62,18 +54,14 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
     theme = str(theme_raw or settings.get("theme") or "dark").strip().lower()
     settings["theme"] = "light" if theme == "light" else "dark"
 
-    for _tk in ("theme_mobile", "theme_desktop"):
-        if missing_flags_false and _tk not in raw:
-            # unchecked checkbox → dark
-            settings[_tk] = "dark"
-        elif raw.get(_tk) is not None:
-            if _tk == "theme_desktop":
-                settings[_tk] = normalize_theme_desktop(raw.get(_tk))
-            else:
-                settings[_tk] = normalize_theme_mobile(raw.get(_tk))
-        else:
-            # loading from file without this key → inherit global theme
-            settings[_tk] = settings["theme"]
+    if missing_flags_false and "theme_desktop" not in raw:
+        # unchecked checkbox → dark
+        settings["theme_desktop"] = "dark"
+    elif raw.get("theme_desktop") is not None:
+        settings["theme_desktop"] = normalize_theme_desktop(raw.get("theme_desktop"))
+    else:
+        # loading from file without this key → inherit global theme
+        settings["theme_desktop"] = settings["theme"]
 
     # keep global theme in sync with desktop so hub renders correctly
     settings["theme"] = settings["theme_desktop"]
@@ -104,41 +92,23 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
     settings["message_text_size"] = max(8, min(18, message_text_size))
 
     try:
-        message_text_size_mobile = int(raw.get("message_text_size_mobile") or settings.get("message_text_size_mobile") or 13)
-    except Exception as exc:
-        logging.error(f"Unexpected error: {exc}", exc_info=True)
-        message_text_size_mobile = 13
-    settings["message_text_size_mobile"] = max(8, min(18, message_text_size_mobile))
-
-    try:
         message_text_size_desktop = int(raw.get("message_text_size_desktop") or settings.get("message_text_size_desktop") or 13)
     except Exception as exc:
         logging.error(f"Unexpected error: {exc}", exc_info=True)
         message_text_size_desktop = 13
     settings["message_text_size_desktop"] = max(8, min(18, message_text_size_desktop))
 
-    for key in (
-        "bold_mode_mobile",
-    ):
-        if missing_flags_false and key not in raw:
-            settings[key] = False
-            continue
-        value = raw.get(key, settings[key])
-        settings[key] = value in (True, "true", "1", "on") if not isinstance(value, bool) else value
     return settings
 
 
 HUB_SETTINGS_DEFAULTS = {
     "theme": "dark",
-    "theme_mobile": "dark",
     "theme_desktop": "dark",
     "agent_font_mode": "serif",
     "user_message_font": "preset-gothic",
     "agent_message_font": "preset-mincho",
     "message_text_size": 13,
-    "message_text_size_mobile": 16,
     "message_text_size_desktop": 13,
-    "bold_mode_mobile": False,
 }
 
 

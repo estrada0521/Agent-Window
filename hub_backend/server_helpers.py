@@ -252,6 +252,7 @@ def build_hub_html_pages(
     pwa_apple_touch_icon_url: str,
     hub_header_css: str,
     hub_header_html: str,
+    hub_header_html_mobile: str,
     hub_header_js: str,
     hub_icon_uris: dict[str, str],
 ) -> dict[str, str]:
@@ -260,7 +261,7 @@ def build_hub_html_pages(
             html = html.replace(f"__{agent_name.upper()}_ICON__", icon_uri)
         return html
 
-    def _render_hub_home_html(filename: str) -> str:
+    def _render_hub_home_html(filename: str, *, header_html: str) -> str:
         template_path = template_dir / filename
         if not template_path.is_file():
             raise FileNotFoundError(f"Hub home template not found: {template_path}")
@@ -271,14 +272,14 @@ def build_hub_html_pages(
             .replace("__PWA_ICON_192_URL__", pwa_icon_192_url)
             .replace("__APPLE_TOUCH_ICON_URL__", pwa_apple_touch_icon_url)
             .replace("__HUB_HEADER_CSS__", hub_header_css)
-            .replace("__HUB_HEADER_HTML__", hub_header_html)
+            .replace("__HUB_HEADER_HTML__", header_html)
             .replace("__HUB_HEADER_JS__", hub_header_js)
         )
         html = apply_hub_page_branding(html, page_title=APP_DISPLAY_NAME)
         return _replace_agent_icon_tokens(html)
 
-    hub_home_desktop_html = _render_hub_home_html("home_desktop.html")
-    hub_home_mobile_html = _render_hub_home_html("home_mobile.html")
+    hub_home_desktop_html = _render_hub_home_html("home_desktop.html", header_html=hub_header_html)
+    hub_home_mobile_html = _render_hub_home_html("home_mobile.html", header_html=hub_header_html_mobile)
     hub_new_session_html = _expand_hub_template_includes((template_dir / "new_session.html").read_text(), template_dir)
     hub_new_session_html = (
         hub_new_session_html
@@ -286,9 +287,10 @@ def build_hub_html_pages(
         .replace("__PWA_ICON_192_URL__", pwa_icon_192_url)
         .replace("__APPLE_TOUCH_ICON_URL__", pwa_apple_touch_icon_url)
         .replace("__HUB_HEADER_CSS__", hub_header_css)
-        .replace("__HUB_HEADER_HTML__", hub_header_html)
         .replace("__HUB_HEADER_JS__", hub_header_js)
     )
+    # __HUB_HEADER_HTML__ is intentionally left in place here: hub_new_session_html()
+    # substitutes it per-request so the menu actions can vary by view variant.
     hub_new_session_html = apply_hub_page_branding(
         hub_new_session_html,
         page_title=f"New Session · {APP_DISPLAY_NAME}",
