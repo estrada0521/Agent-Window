@@ -91,6 +91,7 @@
       --mobile-sheet-floating-bg: var(--panel-row-bg);
       --mobile-sheet-floating-hover-bg: var(--panel-row-hover-bg);
       --mobile-sheet-pill-bg: rgba(255, 255, 255, 0.22);
+      --mobile-sheet-top-border: rgba(255, 255, 255, 0.08);
       --mobile-top-gradient-rgb: __DARK_BG_CHANNELS__;
       --mobile-sheet-gradient-rgb: var(--mobile-top-gradient-rgb);
       --bottom-sheet-top-gradient-rgb: var(--mobile-sheet-gradient-rgb);
@@ -159,6 +160,7 @@
       --glass-filter-18: blur(18px) saturate(160%);
       --glass-filter-20: blur(20px) saturate(180%);
       --mobile-sheet-pill-bg: rgba(20, 20, 19, 0.24);
+      --mobile-sheet-top-border: rgba(255, 255, 255, 0.15);
       --mobile-top-gradient-rgb: 249, 249, 247;
       --mobile-sheet-gradient-rgb: var(--mobile-top-gradient-rgb);
       --mobile-sheet-floating-bg: rgba(0, 0, 0, 0.10);
@@ -233,6 +235,7 @@
       --glass-bg-68: rgba(var(--bg-rgb), 0.68);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --mobile-sheet-pill-bg: rgba(255, 255, 255, 0.22);
+      --mobile-sheet-top-border: rgba(255, 255, 255, 0.08);
       --mobile-top-gradient-rgb: 0, 0, 0;
       --mobile-sheet-gradient-rgb: var(--bg-rgb);
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);
@@ -461,7 +464,7 @@
       overflow: hidden;
       pointer-events: auto;
       border-radius: 20px 20px 0 0;
-      border-top: 0.5px solid rgba(255, 255, 255, 0.15);
+      border-top: 0.5px solid var(--mobile-sheet-top-border);
       background: var(--bg);
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
