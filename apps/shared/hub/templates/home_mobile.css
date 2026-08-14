@@ -859,11 +859,6 @@
 
     #chatOverlay.overlay-closing,
     #chatOverlay.overlay-peeking {
-      box-shadow: -8px 0 16px rgba(0, 0, 0, 0.10);
-    }
-
-    html[data-theme="dark"] #chatOverlay.overlay-closing,
-    html[data-theme="dark"] #chatOverlay.overlay-peeking {
       box-shadow: none;
     }
 
