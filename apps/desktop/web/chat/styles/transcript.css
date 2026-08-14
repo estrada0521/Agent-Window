@@ -1347,7 +1347,6 @@
     .md-body td {
       white-space: nowrap;
       border-top: none;
-      border-bottom: 1px solid var(--table-line);
       border-left: none;
       border-right: none;
       padding: 5px 12px;
@@ -1358,11 +1357,7 @@
     .md-body th {
       background: transparent;
       font-weight: inherit;
-      border-bottom-color: var(--fg);
-    }
-
-    .md-body tr:last-child td {
-      border-bottom-color: var(--fg);
+      border-bottom: 1px solid var(--fg);
     }
 
     .md-body a:not(.inline-file-link):not(.local-file-link) {
