@@ -106,8 +106,8 @@
 
     #paneTracePanel {
       --bg-rgb: var(--pane-trace-body-bg-channels);
-      --fg: rgb(255, 255, 255);
-      --icon-fg: rgb(255, 255, 255);
+      --fg: rgb(200, 200, 200);
+      --icon-fg: rgb(200, 200, 200);
       --bottom-sheet-top-gradient-rgb: var(--pane-trace-body-bg-channels);
     }
 
