@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-import base64 as _base64
-import html
 import json
 import os
 import re
 import ssl
-import subprocess
 import sys
 import threading
-import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote as url_quote, urlparse
@@ -30,10 +26,6 @@ from hub_backend.presentation.hub.header_assets import (
     HUB_PAGE_HEADER_JS,
     MOBILE_HUB_HEADER_ACTIONS,
     render_hub_page_header,
-)
-from backend_core.access.settings import (
-    load_hub_settings,
-    save_hub_settings,
 )
 from hub_backend.session_api import HubSessionApi, HubSessionApiContext
 from hub_backend.presentation.hub.settings_view import (
@@ -70,14 +62,9 @@ from hub_backend.server_helpers import (
     pwa_asset_version as _pwa_asset_version_impl,
     pwa_icon_entries as _pwa_icon_entries_impl,
     resolve_external_origin as _resolve_external_origin_impl,
-    restarting_page as _restarting_page_impl,
     serve_pwa_static as _serve_pwa_static_impl,
 )
 from hub_backend.transport.request_view import request_view_variant
-
-def _not_initialized(*_args, **_kwargs):
-    raise RuntimeError("hub_server.initialize_from_argv() must run before serving requests")
-
 
 _initialized = False
 repo_root = Path()
@@ -85,17 +72,6 @@ script_path = Path()
 port = 0
 tmux_socket = ""
 hub = None
-load_hub_settings = _not_initialized
-save_hub_settings = _not_initialized
-repo_sessions_query = _not_initialized
-archived_sessions = _not_initialized
-active_session_records_query = _not_initialized
-archived_session_records = _not_initialized
-ensure_chat_server = _not_initialized
-revive_archived_session = _not_initialized
-kill_repo_session = _not_initialized
-delete_archived_session = _not_initialized
-host_without_port = _not_initialized
 PUBLIC_HOST = ""
 PUBLIC_HUB_PORT = 443
 restart_lock = threading.Lock()
@@ -108,7 +84,7 @@ def resolve_external_origin(host_header: str, local_port: int) -> dict[str, obje
     return _resolve_external_origin_impl(
         host_header,
         local_port,
-        host_without_port_fn=host_without_port,
+        host_without_port_fn=hub.host_without_port,
         public_host=PUBLIC_HOST,
         public_hub_port=PUBLIC_HUB_PORT,
         hub_port=port,
@@ -148,11 +124,7 @@ def format_session_chat_url(host_header: str, session_name: str, local_port: int
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
     global repo_root, script_path, port, tmux_socket, hub
-    global load_hub_settings, save_hub_settings, repo_sessions_query
-    global archived_sessions, active_session_records_query
-    global archived_session_records, ensure_chat_server
-    global revive_archived_session, kill_repo_session
-    global delete_archived_session, host_without_port, PUBLIC_HOST, PUBLIC_HUB_PORT
+    global PUBLIC_HOST, PUBLIC_HUB_PORT
     global restart_pending, hub_server, _PWA_STATIC_DIR
 
     if _initialized:
@@ -169,20 +141,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     script_path = Path(script_arg).resolve()
     port = int(port_arg)
     hub = HubRuntime(repo_root, script_path, tmux_socket, hub_port=port)
-    for attr in (
-        "load_hub_settings",
-        "save_hub_settings",
-        "repo_sessions_query",
-        "archived_sessions",
-        "active_session_records_query",
-        "archived_session_records",
-        "ensure_chat_server",
-        "revive_archived_session",
-        "kill_repo_session",
-        "delete_archived_session",
-        "host_without_port",
-    ):
-        globals()[attr] = getattr(hub, attr)
     PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
     PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
     restart_pending, hub_server = False, None
@@ -191,16 +149,8 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     _initialized = True
 
 
-def restarting_page():
-    return _restarting_page_impl()
-
-
 def error_page(message: str) -> str:
-    return _error_page_impl(message, html_escape_fn=html.escape)
-
-
-def _clean_env():
-    return _clean_env_impl(env_mapping=os.environ)
+    return _error_page_impl(message)
 
 
 def queue_hub_restart():
@@ -213,12 +163,8 @@ def queue_hub_restart():
         script_path=script_path,
         port=port,
         repo_root=repo_root,
-        clean_env_fn=_clean_env,
-        subprocess_module=subprocess,
-        sys_module=sys,
+        clean_env_fn=_clean_env_impl,
         hub_server_getter=lambda: hub_server,
-        threading_module=threading,
-        time_module=time,
     )
 
 _PWA_STATIC_DIR = Path()
@@ -248,7 +194,6 @@ def _icon_data_uri(filename: str) -> str:
         filename,
         repo_root=repo_root,
         agent_icons_dir=AGENT_ICONS_DIR,
-        base64_module=_base64,
     )
 
 
@@ -440,14 +385,10 @@ HUB_HOME_DESKTOP_HTML = _hub_pages["hub_home_html_desktop"]
 HUB_HOME_MOBILE_HTML = _hub_pages["hub_home_html_mobile"]
 
 
-def _normalized_font_label(name: str) -> str:
-    return _normalized_font_label_impl(name)
-
-
 def available_chat_font_choices():
     return _available_chat_font_choices_impl(
         path_class=Path,
-        normalized_font_label_fn=_normalized_font_label,
+        normalized_font_label_fn=_normalized_font_label_impl,
     )
 
 
@@ -529,28 +470,28 @@ def _hub_session_api() -> HubSessionApi:
             hub=hub,
             hub_port=port,
             all_agent_names=ALL_AGENT_NAMES,
-            active_session_records_query=active_session_records_query,
-            archived_session_records=archived_session_records,
-            ensure_chat_server=ensure_chat_server,
-            delete_archived_session=delete_archived_session,
+            active_session_records_query=hub.active_session_records_query,
+            archived_session_records=hub.archived_session_records,
+            ensure_chat_server=hub.ensure_chat_server,
+            delete_archived_session=hub.delete_archived_session,
         )
     )
 
 
 def _hub_action_context() -> dict[str, object]:
     return {
-        "active_session_records_query_fn": active_session_records_query,
+        "active_session_records_query_fn": hub.active_session_records_query,
         "agent_launch_readiness_fn": agent_launch_readiness,
         "all_agent_names": ALL_AGENT_NAMES,
-        "archived_session_records_fn": archived_session_records,
-        "delete_archived_session_fn": delete_archived_session,
-        "ensure_chat_server_fn": ensure_chat_server,
+        "archived_session_records_fn": hub.archived_session_records,
+        "delete_archived_session_fn": hub.delete_archived_session,
+        "ensure_chat_server_fn": hub.ensure_chat_server,
         "error_page_fn": error_page,
         "format_session_chat_url_fn": format_session_chat_url,
-        "kill_repo_session_fn": kill_repo_session,
+        "kill_repo_session_fn": hub.kill_repo_session,
         "queue_hub_restart_fn": queue_hub_restart,
-        "revive_archived_session_fn": revive_archived_session,
-        "save_hub_settings_fn": save_hub_settings,
+        "revive_archived_session_fn": hub.revive_archived_session,
+        "save_hub_settings_fn": hub.save_hub_settings,
         "script_path": script_path,
         "session_api": _hub_session_api(),
     }
@@ -636,7 +577,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _get_hub_manifest(self, _parsed):
         try:
-            settings = load_hub_settings()
+            settings = hub.load_hub_settings()
         except Exception:
             settings = {}
         palette = resolve_theme_palette(settings)
@@ -660,13 +601,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def _get_hub_launch_shell(self, _parsed):
         try:
-            settings = load_hub_settings()
+            settings = hub.load_hub_settings()
         except Exception:
             settings = {}
         self._send_html(200, apply_color_tokens(HUB_LAUNCH_SHELL_HTML, settings=settings))
 
     def _get_sessions(self, _parsed):
-        query = active_session_records_query()
+        query = hub.active_session_records_query()
         active_map = query.records
         active = []
         for record in active_map.values():
@@ -684,7 +625,7 @@ class Handler(BaseHTTPRequestHandler):
         if query.state == "unhealthy":
             archived = []
         else:
-            archived = list(archived_session_records(active_map.keys()).values())
+            archived = list(hub.archived_session_records(active_map.keys()).values())
         self._send_json(200, {
             "sessions": active,
             "active_sessions": active,
@@ -698,7 +639,7 @@ class Handler(BaseHTTPRequestHandler):
     def _get_home(self, _parsed):
         variant = request_view_variant(headers=self.headers, query_string=_parsed.query)
         try:
-            settings = load_hub_settings()
+            settings = hub.load_hub_settings()
         except Exception:
             settings = {}
         from backend_core.access.settings import normalize_theme_desktop, settings_for_hub_render

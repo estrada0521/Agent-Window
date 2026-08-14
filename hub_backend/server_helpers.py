@@ -1,7 +1,14 @@
 from __future__ import annotations
 
+import base64
+import html
 import json
+import os
 import re
+import subprocess
+import sys
+import threading
+import time
 from pathlib import Path
 
 from hub_backend.branding import APP_DISPLAY_NAME
@@ -87,12 +94,8 @@ def format_session_chat_url(
     return format_external_url_fn(host_header, local_port, path)
 
 
-def restarting_page():
-    return """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Restarting Hub</title><style>:root{color-scheme:dark;--fg:rgb(180, 180, 180);--muted:rgb(128, 128, 128)}body{margin:0;background:rgb(38,38,36);color:var(--fg);font-family:'SF Pro Text','Segoe UI',sans-serif;padding:24px}.panel{max-width:680px;margin:0 auto;background:rgb(25,25,24);border:0.5px solid rgba(180,180,180,0.09);border-radius:16px;padding:18px 18px 16px}.eyebrow{color:var(--muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}h1{margin:0 0 10px;font-size:24px}p{margin:0;color:var(--muted);line-height:1.6}</style></head><body><div class="panel"><div class="eyebrow">Agent Window</div><h1>Restarting Hub</h1><p>The Hub server is being replaced. This page will reconnect automatically as soon as the new server is ready.</p></div><script>const started=Date.now();const reconnect=async()=>{try{const res=await fetch(`/sessions?ts=${Date.now()}`,{cache:'no-store'});if(res.ok){window.location.replace('/');return;}}catch(_err){}if(Date.now()-started<15000){window.setTimeout(reconnect,500);}};window.setTimeout(reconnect,700);</script></body></html>"""
-
-
-def clean_env(*, env_mapping) -> dict:
-    env = dict(env_mapping)
+def clean_env() -> dict:
+    env = dict(os.environ)
     env["AGENT_WINDOW_AGENT_NAME"] = "user"
     return env
 
@@ -103,11 +106,7 @@ def launch_hub_restart(
     port: int,
     repo_root,
     clean_env_fn,
-    subprocess_module,
-    sys_module,
     hub_server_getter,
-    threading_module,
-    time_module,
 ) -> bool:
     restart_helper = (
         "import os, socket, subprocess, sys, time\n"
@@ -135,20 +134,20 @@ def launch_hub_restart(
         "    close_fds=True,\n"
         ")\n"
     )
-    subprocess_module.Popen(
-        [sys_module.executable, "-c", restart_helper, str(script_path), str(port), str(repo_root)],
+    subprocess.Popen(
+        [sys.executable, "-c", restart_helper, str(script_path), str(port), str(repo_root)],
         cwd=repo_root,
         env=clean_env_fn(),
-        stdin=subprocess_module.DEVNULL,
-        stdout=subprocess_module.DEVNULL,
-        stderr=subprocess_module.DEVNULL,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
         start_new_session=True,
         close_fds=True,
     )
 
     def worker():
         try:
-            time_module.sleep(0.15)
+            time.sleep(0.15)
             server = hub_server_getter()
             if server is not None:
                 server.shutdown()
@@ -156,7 +155,7 @@ def launch_hub_restart(
         finally:
             pass
 
-    threading_module.Thread(target=worker, daemon=True).start()
+    threading.Thread(target=worker, daemon=True).start()
     return True
 
 
@@ -180,12 +179,12 @@ def pwa_asset_version(
         return str(int(Path(fallback_file).stat().st_mtime_ns))
 
 
-def icon_data_uri(filename: str, *, repo_root: Path, agent_icons_dir: str, base64_module) -> str:
+def icon_data_uri(filename: str, *, repo_root: Path, agent_icons_dir: str) -> str:
     try:
         icon_file = repo_root / agent_icons_dir / filename
         if not icon_file.is_file():
             return ""
-        return "data:image/svg+xml;base64," + base64_module.b64encode(icon_file.read_bytes()).decode("ascii")
+        return "data:image/svg+xml;base64," + base64.b64encode(icon_file.read_bytes()).decode("ascii")
     except Exception:
         return ""
 
@@ -237,9 +236,9 @@ def serve_pwa_static(handler, path: str, *, pwa_static_routes, pwa_static_dir: P
     return True
 
 
-def error_page(message, *, html_escape_fn) -> str:
+def error_page(message) -> str:
     text = str(message or "").strip()
-    escaped = html_escape_fn(text)
+    escaped = html.escape(text)
     payload = json.dumps(text)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Redirecting</title><style>:root{{color-scheme:dark;--fg:rgb(180, 180, 180);--muted:rgb(128, 128, 128)}}html,body{{margin:0;min-height:100%;background:{DARK_BG};color:var(--fg);font-family:'SF Pro Text','Segoe UI',sans-serif}}body{{display:grid;place-items:center;padding:24px}}.note{{font-size:13px;line-height:1.5;color:var(--muted)}}</style></head><body><div class="note">Returning to Hub…</div><script>(()=>{{const message={payload};const key="agent_window_hub_pending_error";try{{const storage=(window.top&&window.top.sessionStorage)||window.sessionStorage;storage.setItem(key,message);}}catch(_err){{}}let target="/";try{{if(document.referrer){{const ref=new URL(document.referrer,window.location.href);if(ref.origin===window.location.origin&&ref.href!==window.location.href)target=ref.href;}}}}catch(_err){{}}try{{if(window.top&&window.top!==window){{if(target==="/")window.top.location.replace("/");else window.top.location.href=target;return;}}if(target!=="/"){{window.location.replace(target);return;}}}}catch(_err){{}}window.location.replace("/");}})();</script><noscript><div class="note">{escaped}</div><p><a href="/">Back</a></p></noscript></body></html>"""
 
