@@ -216,6 +216,8 @@
       if (attachedFilesPanel.classList.contains("attached-files-mode-preview")) {
         closeAttachedFilesRepoPreview();
       }
+      closeGitBranchSheet({ immediate: true });
+      closePaneTraceSheet({ immediate: true });
       attachedFilesSheet.open();
       if (typeof attachedFilesPanel._syncCategoryUi === "function") {
         requestAnimationFrame(() => {
@@ -280,6 +282,8 @@
     };
     const openGitBranchSheet = async () => {
       if (!gitBranchPanel) return;
+      closeAttachedFilesSheet({ immediate: true });
+      closePaneTraceSheet({ immediate: true });
       ensureGitBranchSheetDom();
       setGitBranchSheetTitle("Git Branches");
       gitBranchSheet.open();
