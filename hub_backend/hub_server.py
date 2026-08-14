@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import ssl
@@ -223,7 +224,7 @@ _HUB_PAGE_HEADER_HTML = render_hub_page_header()
 _HUB_PAGE_HEADER_HTML_MOBILE = render_hub_page_header(actions_html=MOBILE_HUB_HEADER_ACTIONS)
 _HUB_PAGE_HEADER_JS = HUB_PAGE_HEADER_JS
 _HUB_LAUNCH_SHELL_BODY_HTML = (
-    '<div class="launch-shell-card">'
+    '<div class="launch-shell-card" id="launchShellCard">'
     '<span class="launch-shell-spinner" aria-hidden="true"></span>'
     "</div>"
 )
@@ -279,6 +280,26 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
     }}
     @keyframes launch-shell-spin {{
       to {{ transform: rotate(360deg); }}
+    }}
+    .launch-shell-card.is-error {{
+      width: auto;
+      height: auto;
+      flex-direction: column;
+      gap: 10px;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--fg);
+    }}
+    .launch-shell-retry {{
+      appearance: none;
+      border: 1px solid var(--icon-muted);
+      background: transparent;
+      color: var(--fg);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font: inherit;
+      cursor: pointer;
     }}
   </style>
 </head>
@@ -336,6 +357,21 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
           return false;
         }}
       }};
+      const launchShellCard = document.getElementById("launchShellCard");
+      const maxLoadWaitMs = 15000;
+      let loadStartedAt = Date.now();
+      const showLaunchShellError = () => {{
+        if (!launchShellCard) return;
+        launchShellCard.classList.add("is-error");
+        launchShellCard.innerHTML =
+          '<span>Hub is not responding.</span><button type="button" class="launch-shell-retry">Retry</button>';
+        launchShellCard.querySelector(".launch-shell-retry")?.addEventListener("click", () => {{
+          launchShellCard.classList.remove("is-error");
+          launchShellCard.innerHTML = '<span class="launch-shell-spinner" aria-hidden="true"></span>';
+          loadStartedAt = Date.now();
+          load();
+        }});
+      }};
       const load = async () => {{
         if (requestedRestart && !restartRequested) {{
           await requestHubRestart();
@@ -350,6 +386,10 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
           document.write(html);
           document.close();
         }} catch (_err) {{
+          if (Date.now() - loadStartedAt > maxLoadWaitMs) {{
+            showLaunchShellError();
+            return;
+          }}
           window.setTimeout(load, requestedRestart ? 520 : 700);
         }}
       }};
@@ -569,7 +609,8 @@ class Handler(BaseHTTPRequestHandler):
     def _get_hub_manifest(self, _parsed):
         try:
             settings = hub.load_hub_settings()
-        except Exception:
+        except Exception as exc:
+            logging.warning("load_hub_settings failed: %s", exc)
             settings = {}
         palette = resolve_theme_palette(settings)
         bg = str(palette["dark_bg"])
@@ -593,7 +634,8 @@ class Handler(BaseHTTPRequestHandler):
     def _get_hub_launch_shell(self, _parsed):
         try:
             settings = hub.load_hub_settings()
-        except Exception:
+        except Exception as exc:
+            logging.warning("load_hub_settings failed: %s", exc)
             settings = {}
         self._send_html(200, apply_color_tokens(HUB_LAUNCH_SHELL_HTML, settings=settings))
 
@@ -631,7 +673,8 @@ class Handler(BaseHTTPRequestHandler):
         variant = request_view_variant(headers=self.headers, query_string=_parsed.query)
         try:
             settings = hub.load_hub_settings()
-        except Exception:
+        except Exception as exc:
+            logging.warning("load_hub_settings failed: %s", exc)
             settings = {}
         from backend_core.access.settings import normalize_theme_desktop, settings_for_hub_render
 
