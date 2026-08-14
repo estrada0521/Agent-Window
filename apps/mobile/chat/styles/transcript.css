@@ -265,19 +265,8 @@
     .message-row.is-collapsible .message-body-row.is-collapsed {
       overflow: hidden;
       max-height: var(--message-collapse-max-height);
-    }
-
-    .message-row.is-collapsible .message-body-row.is-collapsed::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 0;
-      pointer-events: none;
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
-      background: none;
+      mask-image: linear-gradient(to bottom, black 0, black calc(100% - 28px), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black 0, black calc(100% - 28px), transparent 100%);
     }
 
     .message-row.is-collapsible .message-collapse-toggle {
