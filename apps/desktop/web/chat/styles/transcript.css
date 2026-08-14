@@ -1229,8 +1229,8 @@
       position: relative;
       background: var(--code-bg);
       border: none;
-      border-radius: 8px;
-      padding: 12px 36px 12px 16px;
+      border-radius: 26px;
+      padding: 8px 36px 8px 16px;
       margin: 0 0 6px;
       overflow-x: auto;
       overflow-y: visible;
@@ -1250,7 +1250,7 @@
     .md-body .code-block-wrap {
       position: relative;
       display: block;
-      margin: 0 0 6px;
+      margin: 10px 0;
       overflow-x: hidden;
     }
 
