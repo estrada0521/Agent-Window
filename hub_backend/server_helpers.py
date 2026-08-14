@@ -73,10 +73,6 @@ def format_external_url(host_header: str, local_port: int, path: str, *, resolve
     return f"{resolved['origin']}{suffix}"
 
 
-def is_public_host(host_header: str, *, resolve_external_origin_fn, hub_port: int) -> bool:
-    return bool(resolve_external_origin_fn(host_header, hub_port).get("is_public"))
-
-
 def format_session_chat_url(
     host_header: str,
     session_name: str,
