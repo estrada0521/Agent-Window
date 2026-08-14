@@ -56,7 +56,6 @@ from hub_backend.server_helpers import (
     format_external_url as _format_external_url_impl,
     format_session_chat_url as _format_session_chat_url_impl,
     icon_data_uri as _icon_data_uri_impl,
-    is_public_host as _is_public_host_impl,
     launch_hub_restart as _launch_hub_restart_impl,
     pwa_asset_url as _pwa_asset_url_impl,
     pwa_asset_version as _pwa_asset_version_impl,
@@ -98,14 +97,6 @@ def format_external_url(host_header: str, local_port: int, path: str) -> str:
         local_port,
         path,
         resolve_external_origin_fn=resolve_external_origin,
-    )
-
-
-def is_public_host(host_header: str) -> bool:
-    return _is_public_host_impl(
-        host_header,
-        resolve_external_origin_fn=resolve_external_origin,
-        hub_port=0,
     )
 
 
