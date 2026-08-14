@@ -864,7 +864,7 @@
 
     html[data-theme="dark"] #chatOverlay.overlay-closing,
     html[data-theme="dark"] #chatOverlay.overlay-peeking {
-      box-shadow: -8px 0 18px rgba(255, 255, 255, 0.06);
+      box-shadow: none;
     }
 
     html.hub-chat-overlay-active {
