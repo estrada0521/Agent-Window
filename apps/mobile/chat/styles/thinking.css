@@ -326,12 +326,7 @@
       font-size: inherit;
       font-weight: inherit;
       letter-spacing: inherit;
-      color: var(--muted);
       line-height: inherit;
-      background: transparent;
-      border: none;
-      border-radius: 0;
-      padding: 0;
     }
 
     .md-body a.inline-file-link {
