@@ -262,11 +262,11 @@
       position: relative;
     }
 
-    .message-row.is-collapsible .message-body-row.is-collapsed {
+    .message-row.is-collapsible .message-body-row.is-collapsed .md-body {
       overflow: hidden;
       max-height: var(--message-collapse-max-height);
-      mask-image: linear-gradient(to bottom, black 0, black calc(100% - 28px), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, black 0, black calc(100% - 28px), transparent 100%);
+      mask-image: linear-gradient(to bottom, black 0, black calc(100% - 56px), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black 0, black calc(100% - 56px), transparent 100%);
     }
 
     .message-row.is-collapsible .message-collapse-toggle {
