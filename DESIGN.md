@@ -24,11 +24,11 @@ What it is: a single append-only jsonl, symlinked into the workspace. It does no
 
 Ordinary exchanges happen directly through `agent-send`. When you want a cross-cutting view of who is handling what and where someone is stuck, you read the unified log. And when exact reproduction is needed, each line leads back to the native log it references, and to its position within it.
 
-## What We Don't Implement
+## What I Don't Implement
 
 plan, role, task graph, handoff. These are things **a sufficiently capable intelligence can settle by thinking**.
 
-Additional contracts introduced to compensate for the current limits of LLMs go stale as models improve. There is no reason to convert something into an institution of our own when it can be expressed in natural language and already exists on the side of reality.
+Additional contracts introduced to compensate for the current limits of LLMs go stale as models improve. There is no reason to convert something into an institution of my own when it can be expressed in natural language and already exists on the side of reality.
 
 Isolation is no different. The guarantee is necessary, but it already exists within the space, as a git primitive. If needed, an intelligence can use `git worktree` directly — there is no reason for the application to own it. Owning it immediately creates the next problem:
 
@@ -40,7 +40,7 @@ Agent Window does not only target projects with clear boundaries that decompose 
 
 Communication between agents is the same. `agent-send` is technically an extremely thin wrapper around `tmux send-keys`, short-circuiting — in the smallest possible form — the act of a human typing text into a CLI. It has no dedicated protocol and no shared mailbox.
 
-## What We Implement
+## What I Implement
 
 There is one criterion:
 
