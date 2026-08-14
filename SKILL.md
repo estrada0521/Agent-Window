@@ -1,18 +1,12 @@
 ---
 name: agent-send
 description: >-
-  Use when the user wants to contact, notify, relay to, ask help from,
-  broadcast to, or assign a session-local name to other agents in an
-  Agent Window session.
-  Use normal assistant output for replies to the user; never use agent-send
-  for user-facing responses.
+  Use when the user wants to contact, notify, relay to, ask help from, broadcast to, or assign a session-local name to other agents in an Agent Window session. Use normal assistant output for replies to the user; never use agent-send for user-facing responses.
 ---
 
 # Send Messages to and Name Other Agents
 
-Use this skill only for agent-to-agent communication in an Agent Window
-session. Replies to the user must use normal assistant output because native
-event logs are synchronized automatically.
+Use this skill only for agent-to-agent communication in an Agent Window session. Replies to the user must use normal assistant output because native event logs are synchronized automatically.
 
 ## Syntax
 
@@ -31,8 +25,7 @@ printf '%s' '<message body>' | agent-send <target>
 5. Do not use `agent-send` to reply to the user.
 6. Distinguish carefully between a base target and a specific instance target.
 7. Do not send messages to yourself. `agent-send` rejects self-targeted sends.
-8. On success, `agent-send` prints a summary to stdout showing what was sent
-   and to whom, including the auto-added `[From: ...]` prefix.
+8. On success, `agent-send` prints a summary to stdout showing what was sent and to whom, including the auto-added `[From: ...]` prefix.
 
 ## Base Targets and Instance Targets
 
@@ -42,8 +35,7 @@ A base target sends the message to every active instance of that agent:
 printf '%s' 'Please review this.' | agent-send codex
 ```
 
-For example, if both `codex-1` and `codex-2` are active, targeting `codex`
-sends the message to both.
+For example, if both `codex-1` and `codex-2` are active, targeting `codex` sends the message to both.
 
 An instance target sends the message only to that exact instance:
 
@@ -52,18 +44,15 @@ printf '%s' 'Please inspect the parser.' | agent-send codex-1
 printf '%s' 'Please inspect the UI.' | agent-send codex-2
 ```
 
-This distinction applies to every agent type, such as `claude-1`,
-`claude-2`, `gemini-1`, or `cursor-2`.
+This distinction applies to every agent type, such as `claude-1`, `claude-2`, `gemini-1`, or `cursor-2`.
 
-Use the exact instance names shown in the current session topology.
-They are available in `AGENT_WINDOW_AGENTS` and through:
+Use the exact instance names shown in the current session topology. They are available in `AGENT_WINDOW_AGENTS` and through:
 
 ```bash
 agent-window context
 ```
 
-When only one instance of an agent is active, its name may be unsuffixed,
-such as `codex`. Do not assume that `codex-1` exists.
+When only one instance of an agent is active, its name may be unsuffixed, such as `codex`. Do not assume that `codex-1` exists.
 
 ## Current Base Targets
 
@@ -76,11 +65,9 @@ such as `codex`. Do not assume that `codex-1` exists.
 | `grok` | Grok |
 | `others` | Every active agent instance except yourself |
 
-Use `gemini` when sending to Antigravity. Do not use `agy` or `antigravity`
-as an `agent-send` target.
+Use `gemini` when sending to Antigravity. Do not use `agy` or `antigravity` as an `agent-send` target.
 
-`others` excludes only the sender's own instance. For example, when
-`codex-1` sends to `others`, `codex-2` is still included.
+`others` excludes only the sender's own instance. For example, when `codex-1` sends to `others`, `codex-2` is still included.
 
 Multiple base and instance targets can be mixed:
 
@@ -105,19 +92,11 @@ agent-send name claude-2 Fable
 printf '%s' 'Please review this.' | agent-send Fable
 ```
 
-The assigned name is an additional address, not a replacement. In this
-example, both `Fable` and `claude-2` address the same instance. The base target
-`claude` also keeps its existing behavior: it addresses the only Claude
-instance when one is active, or every active Claude instance when duplicated.
+The assigned name is an additional address, not a replacement. In this example, both `Fable` and `claude-2` address the same instance. The base target `claude` also keeps its existing behavior: it addresses the only Claude instance when one is active, or every active Claude instance when duplicated.
 
-Names affect only `agent-send` addressing and the automatic `[From: ...]`
-prefix. Canonical instance names and JSONL sender/target identities do not
-change. Names are local to the Agent Window session.
+Names affect only `agent-send` addressing and the automatic `[From: ...]` prefix. Canonical instance names and JSONL sender/target identities do not change. Names are local to the Agent Window session.
 
-The target passed to `name` must identify exactly one active instance. Use an
-exact instance target such as `claude-2` when duplicate instances exist. An
-existing assigned name may also be used as the target. Quote a name containing
-spaces:
+The target passed to `name` must identify exactly one active instance. Use an exact instance target such as `claude-2` when duplicate instances exist. An existing assigned name may also be used as the target. Quote a name containing spaces:
 
 ```bash
 agent-send name claude-2 'Blue Fable'
