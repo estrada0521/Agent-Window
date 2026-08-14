@@ -19,27 +19,11 @@ from message_delivery.names import (
 from backend_core.agents.names import agent_base_name
 from backend_core.agents.registry import ALL_AGENT_NAMES
 from backend_core.access.files import append_jsonl_entry
-import hashlib as _hashlib
 
 from message_delivery.paste_timing import delivery_paste_delay_seconds
 
-def default_tmux_socket_name(repo_root) -> str:
+def default_tmux_socket_name() -> str:
     return "agent-window"
-
-
-def _safe_session_name(s: str) -> str:
-    return (s or "default").replace("/", "_")
-
-
-def session_topology_lock_path(tmux_socket: str, session_name: str) -> Path:
-    safe = _safe_session_name(session_name)
-    sock = tmux_socket or "default"
-    if sock.startswith("/"):
-        digest = _hashlib.sha1(f"{sock}|{safe}".encode()).hexdigest()[:20]
-    else:
-        digest = _hashlib.sha1(f"{sock}|{safe}".encode()).hexdigest()[:20]
-    run_dir = Path(os.environ.get("AGENT_WINDOW_RUN_DIR") or (Path.home() / ".agent-window" / "run"))
-    return run_dir / "topology-locks" / f"{digest}.lock"
 
 
 from backend_core.access.settings import session_log_path
@@ -55,7 +39,7 @@ class DeliveryTarget:
     pane_id: str
 
 
-def tmux_socket_from_env(repo_root: Path | str, env: dict[str, str]) -> str:
+def tmux_socket_from_env(env: dict[str, str]) -> str:
     explicit = (env.get("AGENT_WINDOW_TMUX_SOCKET") or "").strip()
     if explicit:
         return explicit
@@ -65,7 +49,7 @@ def tmux_socket_from_env(repo_root: Path | str, env: dict[str, str]) -> str:
         if re.match(r"^/(private/)?tmp/tmux-[^/]+/.+$", socket_path):
             return Path(socket_path).name
         return socket_path
-    return default_tmux_socket_name(repo_root)
+    return default_tmux_socket_name()
 
 class TmuxClient:
     def __init__(self, tmux_socket_name: str, env: dict[str, str]):
@@ -102,7 +86,7 @@ class AgentSendRuntime:
         self.repo_root = Path(repo_root).resolve()
         self.env = dict(os.environ if env is None else env)
         self.cwd = Path(cwd or os.getcwd()).resolve()
-        self.tmux_socket_name = tmux_socket_from_env(self.repo_root, self.env)
+        self.tmux_socket_name = tmux_socket_from_env(self.env)
         self.tmux = TmuxClient(self.tmux_socket_name, self.env)
         self.all_agents = list(ALL_AGENT_NAMES)
 
@@ -388,10 +372,6 @@ class AgentSendRuntime:
         for name, pane in panes_by_target.items():
             targets.append(DeliveryTarget(agent_name=name, pane_id=pane))
         return targets
-
-    @staticmethod
-    def _agent_base_name(agent_name: str) -> str:
-        return agent_base_name(agent_name)
 
     def _session_attached_count(self, session_name: str) -> int | None:
         if not session_name:
