@@ -1013,6 +1013,7 @@
       color: var(--muted);
     }
 
+__CHAT_INCLUDE:../../../../shared/chat/markdown-body.css__
 __CHAT_INCLUDE:../../../../shared/chat/markdown-body-desktop.css__
 
     .message-deferred-actions {
