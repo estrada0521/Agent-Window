@@ -1,8 +1,6 @@
     let currentAgentStatuses = {};
     let currentAgentRuntime = {};
     let thinkingRuntimeItems = {};
-    let pendingThinkingRuntimeItems = {};
-    const THINKING_MIN_DISPLAY_MS = 1000;
     const clearThinkingRuntimeItemTimers = (item) => {
       if (!item) return;
       clearTimeout(item.enterTimer);
@@ -10,7 +8,6 @@
     };
     const currentThinkingRuntimeItem = (agent) => thinkingRuntimeItems[agent] || null;
     const clearThinkingRuntimeAgent = (agent, { suppressRender = false } = {}) => {
-      delete pendingThinkingRuntimeItems[agent];
       const item = thinkingRuntimeItems[agent];
       if (!item) return false;
       clearThinkingRuntimeItemTimers(item);
@@ -18,22 +15,12 @@
       if (!suppressRender) renderThinkingIndicator();
       return true;
     };
-    const promoteThinkingRuntimeItem = (agent) => {
-      const pending = pendingThinkingRuntimeItems[agent];
-      delete pendingThinkingRuntimeItems[agent];
-      if (!pending) return;
-      pending.displayedAt = Date.now();
-      pending.enterTimer = 0;
-      thinkingRuntimeItems[agent] = pending;
-      renderThinkingIndicator();
-    };
     const setThinkingRuntimeItem = (agent, event, { suppressRender = false } = {}) => {
       const entry = {
         id: String(event?.id || "").trim(),
         text: String(event?.text || "").trim(),
         phase: "live",
         enterTimer: 0,
-        displayedAt: 0,
         updatedAt: Number.isFinite(Number(event?.updatedAt)) && Number(event.updatedAt) > 0
           ? Number(event.updatedAt)
           : Date.now(),
@@ -41,25 +28,10 @@
       if (!entry.id || !entry.text) return false;
       const current = currentThinkingRuntimeItem(agent);
       if (current && current.id === entry.id && current.text === entry.text) return false;
-      const pending = pendingThinkingRuntimeItems[agent];
-      if (pending && pending.id === entry.id && pending.text === entry.text) return false;
-      const elapsed = current ? Date.now() - (current.displayedAt || 0) : Infinity;
-      if (!current || elapsed >= THINKING_MIN_DISPLAY_MS) {
-        clearThinkingRuntimeItemTimers(current);
-        delete pendingThinkingRuntimeItems[agent];
-        entry.displayedAt = Date.now();
-        thinkingRuntimeItems[agent] = entry;
-        if (!suppressRender) renderThinkingIndicator();
-        return true;
-      }
-      // A newer tool-call event arrived before the current one has been on
-      // screen for THINKING_MIN_DISPLAY_MS: queue it instead of overwriting
-      // immediately, so a burst of events doesn't flash past unreadably.
-      pendingThinkingRuntimeItems[agent] = entry;
-      if (!current.enterTimer) {
-        current.enterTimer = setTimeout(() => promoteThinkingRuntimeItem(agent), THINKING_MIN_DISPLAY_MS - elapsed);
-      }
-      return false;
+      clearThinkingRuntimeItemTimers(current);
+      thinkingRuntimeItems[agent] = entry;
+      if (!suppressRender) renderThinkingIndicator();
+      return true;
     };
     const syncThinkingRuntimeItems = (statuses, { suppressRender = false } = {}) => {
       const runningAgents = new Set(
