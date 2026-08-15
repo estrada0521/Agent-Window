@@ -372,6 +372,17 @@ __CHAT_INCLUDE:target-picker.js__
         }, 500);
       });
     };
+    document.addEventListener("pointerdown", (e) => {
+      const toggle = e.target.closest(".hub-page-menu-btn, .composer-plus-toggle, .quick-action");
+      if (toggle) {
+        if (toggle.classList.contains("animating")) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        flashHeaderToggle(toggle);
+      }
+    });
     const flashComposerAction = (action) => {
       document.querySelectorAll(`.composer-plus-panel [data-forward-action="${action}"]`).forEach((node) => {
         node.classList.remove("toggle-flash");
@@ -405,6 +416,8 @@ __CHAT_INCLUDE:attachments/file-runtime.js__
 __CHAT_INCLUDE:composer/commands.js__
 __CHAT_INCLUDE:runtime/thinking.js__
 __CHAT_INCLUDE:runtime/agent-status.js__
+__CHAT_INCLUDE:runtime/touch-interaction.js__
+__CHAT_INCLUDE:runtime/settings-sync.js__
     const desktopRightPanel = document.getElementById("desktopRightPanel");
     const desktopRightPanelResizer = document.getElementById("desktopRightPanelResizer");
     const dpSplitPanel = document.getElementById("dpSplitPanel");
