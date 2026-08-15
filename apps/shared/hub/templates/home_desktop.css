@@ -164,31 +164,6 @@
       letter-spacing: 0.04em;
       text-transform: uppercase;
     }
-    .hub-nav form {
-      margin: 0;
-    }
-    .hub-nav .hub-restart-form {
-      margin-left: auto;
-    }
-    .hub-nav button {
-      color: var(--muted);
-      border: 0.5px solid var(--line);
-      background: var(--panel);
-      border-radius: 999px;
-      padding: 6px 10px;
-      font: inherit;
-      font-size: 12px;
-      font-weight: 400;
-      line-height: 1;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-    }
-    .hub-nav .hub-restart-form button { color: var(--link-blue); }
-    @keyframes hubRestartingPulse { 0%, 100% { color: var(--icon-fg); } 50% { color: var(--icon-muted); } }
-    .hub-nav button.restarting { animation: hubRestartingPulse 900ms ease-in-out infinite; pointer-events: none; }
     .home-card {
       display: block;
       text-decoration: none;

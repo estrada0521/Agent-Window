@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from hub_backend.branding import APP_DISPLAY_NAME
+
+_HUB_TEMPLATE_DIR = Path(__file__).resolve().parents[3] / "apps" / "shared" / "hub" / "templates"
+_HUB_RESTART_NAV_JS = (_HUB_TEMPLATE_DIR / "_hub_restart_nav.js").read_text()
 
 
 HUB_PAGE_HEADER_CSS = """
@@ -153,18 +158,7 @@ HUB_PAGE_HEADER_JS = """
     var menuBtn = document.getElementById("hubPageMenuBtn");
     var titleLink = document.getElementById("hubPageTitleLink");
     var bridge = document.getElementById("hubPageNativeMenuBridge");
-    var _restarting = false;
-
-    function restartHub() {
-      if (_restarting) return;
-      _restarting = true;
-      var launchShellTarget = "/hub-launch-shell.html?restart=1&target=" + encodeURIComponent("/");
-      try {
-        location.replace(launchShellTarget);
-      } catch (_) {
-        location.href = launchShellTarget;
-      }
-    }
+__HUB_RESTART_NAV_JS__
 
     if (titleLink) {
       titleLink.addEventListener("click", function() {
@@ -220,7 +214,7 @@ HUB_PAGE_HEADER_JS = """
           return;
         }
         if (action === "restart-hub") {
-          restartHub();
+          beginHubRestart();
         }
       });
 
@@ -236,4 +230,4 @@ HUB_PAGE_HEADER_JS = """
       });
     }
   })();
-"""
+""".replace("__HUB_RESTART_NAV_JS__", _HUB_RESTART_NAV_JS)
