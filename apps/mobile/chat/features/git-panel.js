@@ -34,8 +34,6 @@
       }
       if (gitBranchPanel) gitBranchPanel.innerHTML = html;
     };
-    const loadingIndicatorHtml = (_label = "Loading…") =>
-      '<span class="inline-loading"><span class="inline-loading-spinner" aria-hidden="true"></span></span>';
     const gitBranchCountsHtml = (ins, dels) => {
       const safeIns = Math.max(0, parseInt(ins) || 0);
       const safeDels = Math.max(0, parseInt(dels) || 0);

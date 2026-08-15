@@ -174,6 +174,27 @@
       const match = filename.match(/^\d{8}_\d{6}_(.+)$/);
       return match ? match[1] : filename;
     };
+    const normalizeWorkspaceFilePath = (p) => {
+      let s = String(p || "").trim();
+      if (!s) return "";
+      s = s.replace(/\\/g, "/");
+      for (let i = 0; i < 8; i += 1) {
+        const next = s.replace("/./", "/");
+        if (next === s) break;
+        s = next;
+      }
+      for (let i = 0; i < 8; i += 1) {
+        const next = s.replace("//", "/");
+        if (next === s) break;
+        s = next;
+      }
+      if (s.length > 1 && s.endsWith("/")) {
+        s = s.slice(0, -1);
+      }
+      return s;
+    };
+    const loadingIndicatorHtml = (_label = "Loading...") =>
+      '<span class="inline-loading"><span class="inline-loading-spinner" aria-hidden="true"></span></span>';
     const currentFilePreviewFontMode = () => {
       const mode = String(document.documentElement.getAttribute("data-agent-font-mode") || "").trim().toLowerCase();
       return mode === "gothic" ? "gothic" : "serif";

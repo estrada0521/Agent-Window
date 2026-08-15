@@ -1,5 +1,5 @@
     let _fileAutocompleteRequestSeq = 0;
-__CHAT_INCLUDE:../../../shared/chat/file-resolve.js__
+__CHAT_INCLUDE:../file-resolve.js__
     const fileDrop = document.getElementById("fileDropdown");
     let _dropActiveIdx = -1;
     let _ignoreGlobalClick = false;
@@ -43,7 +43,7 @@ __CHAT_INCLUDE:../../../shared/chat/file-resolve.js__
       _dropActiveIdx = -1;
     };
     document.addEventListener("composer-overlay-close-start", () => closeDrop({ immediate: true }));
-__CHAT_INCLUDE:../../../shared/chat/file-autocomplete.js__
+__CHAT_INCLUDE:../file-autocomplete.js__
     const LINKIFY_INLINE_CODE_CHUNK = 20;
     let _linkifyInlineCodeRunSeq = 0;
     let _linkifyDebounceTimer = null;
@@ -68,12 +68,17 @@ __CHAT_INCLUDE:../../../shared/chat/file-autocomplete.js__
       if (!queries.length) return;
       void resolveInlineCodeFilePaths(queries).then((resolvedMap) => {
         if (runId !== _linkifyInlineCodeRunSeq) return;
+        const normalizedMap = new Map();
+        resolvedMap.forEach((value, key) => {
+          const normalized = normalizeWorkspaceFilePath(value) || value;
+          if (normalized) normalizedMap.set(key, normalized);
+        });
         let i = 0;
         const processEl = (entry) => {
           const codeEl = entry.codeEl;
           const parsed = entry.parsed;
           if (!parsed || !codeEl?.isConnected) return;
-          const path = resolvedMap.get(parsed.token) || "";
+          const path = normalizedMap.get(parsed.token) || "";
           if (!path) return;
           const anchor = document.createElement("a");
           anchor.className = "inline-file-link";
@@ -153,17 +158,34 @@ __CHAT_INCLUDE:../../../shared/chat/file-autocomplete.js__
       const item = e.target.closest(".file-item");
       if (item) { e.preventDefault(); selectFile(item.dataset.path); }
     });
-    const autoResizeTextarea = () => {
-      const baseHeight = 54;
-      messageInput.style.marginTop = "0px";
-      messageInput.style.height = baseHeight + "px";
-      const scrollH = messageInput.scrollHeight;
-      const maxHeight = 200;
-      const nextHeight = Math.min(maxHeight, Math.max(baseHeight, scrollH + 2));
-      messageInput.style.height = nextHeight + "px";
-      messageInput.style.marginTop = (baseHeight - nextHeight) + "px";
-      composerShellEl?.style.setProperty("--composer-input-rise", Math.max(0, nextHeight - baseHeight) + "px");
-    };
+    const autoResizeTextarea = document.documentElement.dataset.mobile === "1"
+      ? () => {
+        const baseHeight = 54;
+        messageInput.style.marginTop = "0px";
+        messageInput.style.height = baseHeight + "px";
+        const scrollH = messageInput.scrollHeight;
+        const maxHeight = 200;
+        const nextHeight = Math.min(maxHeight, Math.max(baseHeight, scrollH + 2));
+        messageInput.style.height = nextHeight + "px";
+        messageInput.style.marginTop = (baseHeight - nextHeight) + "px";
+        composerShellEl?.style.setProperty("--composer-input-rise", Math.max(0, nextHeight - baseHeight) + "px");
+      }
+      : () => {
+        const baseHeight = 52;
+        const composerFieldEl = document.querySelector(".composer-field");
+        messageInput.style.marginTop = "0px";
+        messageInput.style.height = baseHeight + "px";
+        const scrollH = messageInput.scrollHeight;
+        const maxHeight = 200;
+        const nextHeight = Math.min(maxHeight, Math.max(baseHeight, scrollH + 2));
+        messageInput.style.height = nextHeight + "px";
+        if (composerFieldEl) {
+          composerFieldEl.style.minHeight = nextHeight + "px";
+          composerFieldEl.style.height = nextHeight + "px";
+        }
+        messageInput.style.marginTop = "0px";
+        composerShellEl?.style.setProperty("--composer-input-rise", Math.max(0, nextHeight - baseHeight) + "px");
+      };
     const positionComposerDropdown = (dropdown) => {
       if (!dropdown) return;
       const taRect = messageInput.getBoundingClientRect();
@@ -219,6 +241,7 @@ __CHAT_INCLUDE:../../../shared/chat/file-autocomplete.js__
         closePlusMenu();
       }
     };
+
     messageInput.addEventListener("input", updateFileAutocomplete);
     messageInput.addEventListener("click", () => setTimeout(updateFileAutocomplete, 10));
     messageInput.addEventListener("focus", () => {
