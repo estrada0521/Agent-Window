@@ -854,7 +854,6 @@
       kickstartRememberedSessionPrewarm();
       window._mobRefresh = refresh;
       refresh();
-      setInterval(refresh, 5000);
     })();
 
     (function () {

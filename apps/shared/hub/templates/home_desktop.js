@@ -1647,7 +1647,4 @@
       showDeskSidebarList({ open: true });
     }
     refreshHubSessions(true);
-    setInterval(() => {
-      refreshHubSessions(false);
-    }, 5000);
   __HUB_HEADER_JS__
