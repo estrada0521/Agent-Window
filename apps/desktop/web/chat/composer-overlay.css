@@ -326,7 +326,7 @@
     .has-hover .composer-plus-panel .quick-action:hover {
       color: var(--fg);
     }
-    .composer-plus-panel .quick-action[data-forward-action="interrupt"] {
+    .composer-plus-panel .quick-action[data-forward-action="esc"] {
       color: rgba(245, 201, 96, 0.95);
     }
     .composer-plus-panel .quick-action.divider-after {
@@ -457,12 +457,12 @@
       opacity: 1;
       cursor: default;
     }
-    .quick-action[data-shortcut="interrupt"] {
+    .quick-action[data-shortcut="esc"] {
       margin-left: auto;
       border-color: rgba(245, 158, 11, 0.32);
       color: var(--warn);
     }
-    .has-hover .quick-action[data-shortcut="interrupt"]:hover:not(:disabled) {
+    .has-hover .quick-action[data-shortcut="esc"]:hover:not(:disabled) {
       background: rgba(245, 158, 11, 0.12);
       border-color: rgba(245, 158, 11, 0.55);
       color: var(--warn-bright);

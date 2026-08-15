@@ -34,12 +34,9 @@ def run_shortcut_command(
 
 
 def _wire_payload(command_id: str, arg: str) -> str:
-    if command_id == "up":
+    if command_id in {"up", "down", "left", "right"}:
         n = _parse_repeat(arg, default=1)
-        return f"up {n}"
-    if command_id == "down":
-        n = _parse_repeat(arg, default=1)
-        return f"down {n}"
+        return f"{command_id} {n}"
     return command_id
 
 

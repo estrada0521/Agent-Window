@@ -26,6 +26,18 @@ def all_commands() -> tuple[ShortcutCommandSpec, ...]:
             has_arg=True,
         ),
         ShortcutCommandSpec(
+            id="left",
+            slash="/left",
+            desc="選択中 pane に左移動を送信",
+            has_arg=True,
+        ),
+        ShortcutCommandSpec(
+            id="right",
+            slash="/right",
+            desc="選択中 pane に右移動を送信",
+            has_arg=True,
+        ),
+        ShortcutCommandSpec(
             id="restart",
             slash="/restart",
             desc="エージェント再起動",
@@ -44,8 +56,8 @@ def all_commands() -> tuple[ShortcutCommandSpec, ...]:
             has_arg=False,
         ),
         ShortcutCommandSpec(
-            id="interrupt",
-            slash="/interrupt",
+            id="esc",
+            slash="/esc",
             desc="エージェントに Esc 送信",
             has_arg=False,
         ),
@@ -82,5 +94,5 @@ def public_command_dicts() -> list[dict[str, str | bool]]:
 
 
 PANE_SINGLE_CONTROL_MESSAGES = frozenset(
-    {"interrupt", "ctrlc", "enter", "restart", "resume"},
+    {"esc", "ctrlc", "enter", "restart", "resume"},
 )

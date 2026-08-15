@@ -1391,7 +1391,7 @@
       const action = String(target || "");
       if (!action) return;
       if (keepComposerOpen) flashComposerAction(action);
-      if (action === "interrupt" || action === "restart" || action === "resume" || action === "ctrlc" || action === "enter") {
+      if (action === "esc" || action === "restart" || action === "resume" || action === "ctrlc" || action === "enter") {
         if (!keepComposerOpen) closeQuickMore();
         await postShortcutCommand({ command_id: action, arg: "" });
         if (keepComposerOpen && composerPlusMenu) {
