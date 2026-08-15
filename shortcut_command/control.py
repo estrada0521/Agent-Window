@@ -50,7 +50,7 @@ def try_deliver_shortcut_control(
             if not pane_id:
                 return 400, {"ok": False, "error": f"pane not found for {agent}"}
             if pane_direct:
-                tmux_key = {"up": "Up", "down": "Down"}[pane_direct["name"]]
+                tmux_key = {"up": "Up", "down": "Down", "left": "Left", "right": "Right"}[pane_direct["name"]]
                 for _ in range(pane_direct["repeat"]):
                     subprocess.run(
                         [*rt.tmux_prefix, "send-keys", "-t", pane_id, tmux_key],
@@ -58,13 +58,13 @@ def try_deliver_shortcut_control(
                         check=False,
                     )
                 continue
-            tmux_key = {"interrupt": "Escape", "ctrlc": "C-c", "enter": "Enter"}[message]
+            tmux_key = {"esc": "Escape", "ctrlc": "C-c", "enter": "Enter"}[message]
             subprocess.run(
                 [*rt.tmux_prefix, "send-keys", "-t", pane_id, tmux_key],
                 capture_output=True,
                 check=False,
             )
-            if message in {"interrupt", "ctrlc"}:
+            if message in {"esc", "ctrlc"}:
                 rt._mark_idle(agent)
     except Exception as exc:
         logging.error("Unexpected error: %s", exc, exc_info=True)
