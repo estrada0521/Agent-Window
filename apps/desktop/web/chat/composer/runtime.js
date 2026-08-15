@@ -156,13 +156,6 @@
 
     delete document.documentElement.dataset.mobile;
 
-    messageInput.addEventListener("keydown", async (event) => {
-      if (event.key !== "Enter" || event.shiftKey || composing) {
-        return;
-      }
-      event.preventDefault();
-      await submitMessage();
-    });
     messageInput.addEventListener("compositionstart", () => {
       composing = true;
     });
