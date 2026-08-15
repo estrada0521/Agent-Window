@@ -30,8 +30,9 @@ def _chat_markdown_preview_css(preview_variant: str = "") -> str:
     inline_code_css = (repo_root / "apps/shared/chat/markdown-inline-code.css").read_text(encoding="utf-8")
     code_block_css = (repo_root / "apps/shared/chat/markdown-code-block.css").read_text(encoding="utf-8")
     variant_name = "mobile" if str(preview_variant or "").strip().lower() == "mobile" else "desktop"
-    body_css_path = repo_root / f"apps/shared/chat/markdown-body-{variant_name}.css"
-    markdown_css = body_css_path.read_text(encoding="utf-8")
+    shared_body_css = (repo_root / "apps/shared/chat/markdown-body.css").read_text(encoding="utf-8")
+    variant_body_css = (repo_root / f"apps/shared/chat/markdown-body-{variant_name}.css").read_text(encoding="utf-8")
+    markdown_css = f"{shared_body_css}\n{variant_body_css}"
     replacements = {
         "__AGENT_SEL_MD_BODY__": ".md-body",
         "__AGENT_SEL_MD_BODY_LI__": ".md-body li",
