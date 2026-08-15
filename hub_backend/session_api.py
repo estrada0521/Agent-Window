@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Sequence
 
-from backend_core.access.settings import local_runtime_log_dir, port_is_bindable, save_chat_port_override, session_log_path
+from backend_core.access.settings import local_runtime_log_dir, session_log_path
 
 
 @dataclass(frozen=True)
@@ -146,22 +146,11 @@ class HubSessionApi:
         """Start a chat server with SESSION_IS_ACTIVE=1 for a session whose tmux is already running."""
         lock = self.ctx.hub._get_launch_lock(session_name)
         with lock:
-            chat_port = self.ctx.hub.chat_port_for_session(session_name)
-            if self.ctx.hub.chat_ready(chat_port):
-                if self.ctx.hub.chat_server_matches(session_name, chat_port):
-                    return True, chat_port, ""
-                stop_ok, stop_detail = self.ctx.hub.stop_chat_server(session_name)
-                if not stop_ok:
-                    return False, chat_port, stop_detail
-            if not port_is_bindable(chat_port):
-                for candidate in range(chat_port, chat_port + 10):
-                    if self.ctx.hub.chat_ready(candidate) and self.ctx.hub.chat_server_matches(session_name, candidate):
-                        save_chat_port_override(self.ctx.repo_root, session_name, candidate)
-                        return True, candidate, ""
-                    if port_is_bindable(candidate):
-                        save_chat_port_override(self.ctx.repo_root, session_name, candidate)
-                        chat_port = candidate
-                        break
+            chat_port, ready, error = self.ctx.hub._chat_launch_port(session_name)
+            if error:
+                return False, chat_port, error
+            if ready:
+                return True, chat_port, ""
             session_dir = self.ctx.hub._chat_launch_session_dir(session_name, workspace, "")
             index_path = session_log_path(session_name)
             index_path.touch(exist_ok=True)

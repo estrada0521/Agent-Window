@@ -21,6 +21,7 @@ from hub_backend.chat_supervisor import (
     kill_repo_session as _kill_repo_session_impl,
     revive_archived_session as _revive_archived_session_impl,
     stop_chat_server as _stop_chat_server_impl,
+    _chat_launch_port as _chat_launch_port_impl,
 )
 from hub_backend.session_query import (
     archived_sessions as _archived_sessions_impl,
@@ -32,9 +33,7 @@ from hub_backend.session_query import (
 )
 from backend_core.access.settings import load_hub_settings as load_shared_hub_settings
 from backend_core.access.settings import local_runtime_log_dir
-from backend_core.access.settings import port_is_bindable
 from backend_core.access.settings import resolve_chat_port
-from backend_core.access.settings import save_chat_port_override
 from backend_core.access.settings import save_hub_settings as save_shared_hub_settings
 
 
@@ -258,12 +257,13 @@ class HubRuntime:
     def _chat_launch_env(self) -> dict[str, str]:
         return _chat_launch_env_impl(self)
 
+    def _chat_launch_port(self, session_name: str) -> tuple[int, bool, str]:
+        return _chat_launch_port_impl(self, session_name)
+
     def ensure_chat_server(self, session_name: str) -> tuple[bool, int, str]:
         return _ensure_chat_server_impl(
             self,
             session_name,
-            port_is_bindable_fn=port_is_bindable,
-            save_chat_port_override_fn=save_chat_port_override,
             subprocess_module=subprocess,
             sys_module=sys,
             time_module=time,
