@@ -48,47 +48,6 @@ def build_gutter_scroll_sync_js(
             "syncPreviewGutterScroll();"
         )
 
-def build_line_selection_js(
-        *,
-        table_selector: str,
-        gutter_selector: str | None = None,
-    ) -> str:
-        gutter_query = (
-            f"document.querySelector({json.dumps(gutter_selector)})"
-            if gutter_selector
-            else "null"
-        )
-        return (
-            f'const selectableTable=document.querySelector({json.dumps(table_selector)});'
-            f"const selectableGutter={gutter_query};"
-            "if(selectableTable){"
-            'let selectedLine="";'
-            "const setSelectedLine=(lineValue)=>{"
-            'const nextLine=String(lineValue||"");'
-            "if(!nextLine||selectedLine===nextLine)return;"
-            "if(selectedLine){"
-            'selectableTable.querySelector(`tr[data-line="${selectedLine}"]`)?.classList.remove("is-selected");'
-            'selectableGutter?.querySelector(`tr[data-line="${selectedLine}"]`)?.classList.remove("is-selected");'
-            "}"
-            "selectedLine=nextLine;"
-            'selectableTable.querySelector(`tr[data-line="${selectedLine}"]`)?.classList.add("is-selected");'
-            'selectableGutter?.querySelector(`tr[data-line="${selectedLine}"]`)?.classList.add("is-selected");'
-            "};"
-            "const bindSelectableSurface=(surface)=>{"
-            "if(!surface)return;"
-            'surface.addEventListener("click",(event)=>{'
-            "const target=event.target;"
-            "if(!(target instanceof Element))return;"
-            'const row=target.closest("tr[data-line]");'
-            "if(!row||!surface.contains(row))return;"
-            'setSelectedLine(row.getAttribute("data-line"));'
-            "});"
-            "};"
-            "bindSelectableSurface(selectableTable);"
-            "bindSelectableSurface(selectableGutter);"
-            "}"
-        )
-
 def build_progressive_loader_js(
         *,
         raw_url_value: str,

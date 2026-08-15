@@ -19,7 +19,6 @@ from server.font_style import font_family_stack
 from .preview_3d import render_3d_preview
 from .view_scripts import (
     build_gutter_scroll_sync_js,
-    build_line_selection_js,
     build_progressive_loader_js,
     build_vertical_bias_wheel_js,
 )
@@ -118,7 +117,6 @@ def render_file_view(
     preview_scrollbar_bg_clip = "border-box" if is_mobile_preview else "padding-box"
     preview_scrollbar_thumb_light = "var(--fg)" if is_mobile_preview else "rgba(0,0,0,0.22)"
     preview_scrollbar_thumb_hover_light = "var(--fg)" if is_mobile_preview else "rgba(0,0,0,0.35)"
-    preview_selected_line_bg = f"rgba({pane_fg_channels},0.10)"
     preview_text_size_sync_js = (
         'window.addEventListener("message",(e)=>{'
         'const d=e?.data;if(d?.type!=="agent-preview-text-size")return;'
@@ -147,7 +145,7 @@ def render_file_view(
         )
     )
     base_css = (
-        f':root{{color-scheme: dark;--agent-message-font-family:{resolved_agent_font_family};--code-font-family:{code_font_family};--message-text-size:{resolved_text_size}px;--message-text-line-height:{resolved_line_height}px;--tpad:{preview_top_offset};--preview-scrollbar-size:{preview_scrollbar_size};--preview-scrollbar-thumb:{preview_scrollbar_thumb};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover};--preview-scrollbar-border:{preview_scrollbar_border};--preview-scrollbar-bg-clip:{preview_scrollbar_bg_clip};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};--preview-selected-line-bg:{preview_selected_line_bg};}}'
+        f':root{{color-scheme: dark;--agent-message-font-family:{resolved_agent_font_family};--code-font-family:{code_font_family};--message-text-size:{resolved_text_size}px;--message-text-line-height:{resolved_line_height}px;--tpad:{preview_top_offset};--preview-scrollbar-size:{preview_scrollbar_size};--preview-scrollbar-thumb:{preview_scrollbar_thumb};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover};--preview-scrollbar-border:{preview_scrollbar_border};--preview-scrollbar-bg-clip:{preview_scrollbar_bg_clip};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
         f':root[data-preview-theme="light"]{{--preview-scrollbar-thumb:{preview_scrollbar_thumb_light};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover_light}}}'
         f"{font_face_css}"
         f"*{{box-sizing:border-box}}"
@@ -442,7 +440,6 @@ def render_file_view(
             '.html-preview-text-table{border-collapse:collapse;min-width:100%;width:max-content;table-layout:auto;font-family:var(--code-font-family);font-size:var(--message-text-size);line-height:var(--message-text-line-height)}'
             '.html-preview-text-table td{padding:0;vertical-align:top}'
             '.html-preview-text-table .lc{padding-left:12px;padding-right:min(7vw,52px)}'
-            '.html-preview-gutter-table tbody tr.is-selected .ln,.html-preview-text-table tbody tr.is-selected .lc{background:var(--preview-selected-line-bg)}'
             '.html-preview-text-table .lc pre{margin:0;min-height:var(--message-text-line-height);line-height:var(--message-text-line-height);font:inherit;white-space:pre}'
             '.html-preview-gutter-table tbody tr:last-child .ln,.html-preview-text-table tbody tr:last-child .lc pre{padding-bottom:24px}'
             '</style></head>'
@@ -450,7 +447,7 @@ def render_file_view(
             '<div class="html-preview-panels">'
             f'<div class="html-preview-panel html-preview-panel-web" data-preview-panel="web"><iframe src="{raw_url}" title="{html_escape(filename)}" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe></div>'
             f'<div class="html-preview-panel html-preview-panel-text active" data-preview-panel="text"><div class="html-preview-text-wrap" id="htmlTextViewContainer"><div class="html-preview-gutter" id="htmlTextGutter"><div class="html-preview-gutter-inner" id="htmlTextGutterInner"><table class="html-preview-gutter-table" role="presentation"><tbody id="htmlTextGutterBody">{gutter_rows}</tbody></table></div></div><div class="html-preview-text-scroll" id="htmlTextCodeScroll"><table class="html-preview-text-table" role="presentation"><tbody id="htmlTextCodeBody">{code_rows}</tbody></table></div></div></div>'
-            f'</div><script>{toggle_js}{build_line_selection_js(table_selector=".html-preview-text-table", gutter_selector=".html-preview-gutter-table")}</script></div></body></html>'
+            f'</div><script>{toggle_js}</script></div></body></html>'
         )
     if is_text_like and ext != ".md" and (bool(force_progressive_text) or size > runtime.INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES):
         chunk_bytes = runtime.PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES
@@ -483,7 +480,6 @@ def render_file_view(
             '.code-table{border-collapse:collapse;min-width:100%;width:max-content;table-layout:auto;font-family:var(--code-font-family);font-size:var(--message-text-size);line-height:var(--message-text-line-height)}'
             '.code-table td{padding:0;vertical-align:top}'
             '.code-table .lc{padding-left:12px;padding-right:min(7vw,52px)}'
-            '.code-gutter-table tbody tr.is-selected .ln,.code-table tbody tr.is-selected .lc{background:var(--preview-selected-line-bg)}'
             '.code-table .lc pre{margin:0;min-height:var(--message-text-line-height);line-height:var(--message-text-line-height);font:inherit;white-space:pre}'
             '.code-gutter-table tbody tr:last-child .ln,.code-table tbody tr:last-child .lc pre{padding-bottom:24px}'
             '</style></head>'
@@ -491,7 +487,7 @@ def render_file_view(
             '<div class="view-container" id="viewContainer">'
             '<div class="code-gutter" id="codeGutter"><div class="code-gutter-inner" id="codeGutterInner"><table class="code-gutter-table" role="presentation"><tbody id="codeGutterBody"></tbody></table></div></div>'
             '<div class="code-scroll" id="codeScroll"><table class="code-table" role="presentation"><tbody id="codeBody"></tbody></table></div>'
-            f'</div><script>{build_vertical_bias_wheel_js(view_container_id="viewContainer", code_scroll_id="codeScroll")}{build_gutter_scroll_sync_js(code_scroll_id="codeScroll", gutter_id="codeGutter", gutter_inner_id="codeGutterInner")}{build_line_selection_js(table_selector=".code-table", gutter_selector=".code-gutter-table")}{progressive_loader_js}{preview_text_size_sync_js}</script></body></html>'
+            f'</div><script>{build_vertical_bias_wheel_js(view_container_id="viewContainer", code_scroll_id="codeScroll")}{build_gutter_scroll_sync_js(code_scroll_id="codeScroll", gutter_id="codeGutter", gutter_inner_id="codeGutterInner")}{progressive_loader_js}{preview_text_size_sync_js}</script></body></html>'
         )
     if is_text_like and ext != ".md":
         with open(full, "r", encoding="utf-8", errors="replace") as f:
@@ -515,12 +511,11 @@ def render_file_view(
             '.code-table{border-collapse:collapse;min-width:100%;width:max-content;table-layout:auto;font-family:var(--code-font-family);font-size:var(--message-text-size);line-height:var(--message-text-line-height)}'
             '.code-table td{padding:0;vertical-align:top}'
             '.code-table .lc{padding-left:12px;padding-right:min(7vw,52px)}'
-            '.code-gutter-table tbody tr.is-selected .ln,.code-table tbody tr.is-selected .lc{background:var(--preview-selected-line-bg)}'
             '.code-table .lc pre{margin:0;min-height:var(--message-text-line-height);line-height:var(--message-text-line-height);font:inherit;white-space:pre}'
             '.code-gutter-table tbody tr:last-child .ln,.code-table tbody tr:last-child .lc pre{padding-bottom:24px}'
             '</style></head>'
             f'<body>{header.format(icon="📄")}'
-            f'<div class="view-container" id="viewContainer"><div class="code-gutter" id="codeGutter"><div class="code-gutter-inner" id="codeGutterInner"><table class="code-gutter-table" role="presentation"><tbody>{gutter_rows}</tbody></table></div></div><div class="code-scroll" id="codeScroll"><table class="code-table" role="presentation"><tbody>{code_rows}</tbody></table></div></div><script>{build_vertical_bias_wheel_js(view_container_id="viewContainer", code_scroll_id="codeScroll")}{build_gutter_scroll_sync_js(code_scroll_id="codeScroll", gutter_id="codeGutter", gutter_inner_id="codeGutterInner")}{build_line_selection_js(table_selector=".code-table", gutter_selector=".code-gutter-table")}{preview_text_size_sync_js}</script></body></html>'
+            f'<div class="view-container" id="viewContainer"><div class="code-gutter" id="codeGutter"><div class="code-gutter-inner" id="codeGutterInner"><table class="code-gutter-table" role="presentation"><tbody>{gutter_rows}</tbody></table></div></div><div class="code-scroll" id="codeScroll"><table class="code-table" role="presentation"><tbody>{code_rows}</tbody></table></div></div><script>{build_vertical_bias_wheel_js(view_container_id="viewContainer", code_scroll_id="codeScroll")}{build_gutter_scroll_sync_js(code_scroll_id="codeScroll", gutter_id="codeGutter", gutter_inner_id="codeGutterInner")}{preview_text_size_sync_js}</script></body></html>'
         )
     if ext == ".md":
         with open(full, "r", encoding="utf-8", errors="replace") as f:
