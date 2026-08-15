@@ -140,7 +140,11 @@ def hub_settings_html(
         f'<option value="{html.escape(value)}"' + (' selected' if value == theme_desktop else '') + f'>{html.escape(label)}</option>'
         for value, label in theme_desktop_choices
     )
-    notice = ""
+    notice = (
+        '<div style="margin:0 0 16px;padding:10px 14px;border:1px solid var(--line);'
+        'border-radius:8px;color:var(--fg);font-size:13px;">Settings saved.</div>'
+        if saved else ""
+    )
     page = settings_template
     page = (
         page
