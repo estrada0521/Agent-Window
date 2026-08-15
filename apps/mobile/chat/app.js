@@ -1,4 +1,5 @@
 __CHAT_INCLUDE:../../shared/chat/base.js__
+    document.documentElement.dataset.mobile = "1";
     const applyMobileThemeGradientVars = () => {
       const root = document.documentElement;
       const sheetChannels = getComputedStyle(root).getPropertyValue("--bg-rgb").trim() || (
@@ -92,6 +93,21 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     };
     let _pollScrollLockTop = null;
     let _pollScrollAnchor = null;
+    syncMainAfterHeight();
+    window.addEventListener("resize", syncMainAfterHeight, { passive: true });
+    if (window.visualViewport) {
+      const onVVResize = () => {
+        syncMainAfterHeight();
+        updateScrollBtnPos();
+        if (_stickyToBottom && timeline) {
+          _pollScrollLockTop = null;
+          _pollScrollAnchor = null;
+          timeline.scrollTop = timeline.scrollHeight;
+        }
+      };
+      visualViewport.addEventListener("resize", onVVResize);
+      visualViewport.addEventListener("scroll", onVVResize);
+    }
     let _hubIframeLayoutMaxH = 0;
     let _hubIframeLayoutFromParent = 0;
     let _hubChromeGapClientMin = Infinity;
@@ -461,7 +477,6 @@ __CHAT_INCLUDE:transcript/actions.js__
 __CHAT_INCLUDE:panes/header-menu.js__
 __CHAT_INCLUDE:panes/right-pane.js__
 __CHAT_INCLUDE:composer/runtime.js__
-__CHAT_INCLUDE:runtime/thinking-touch.js__
 __CHAT_INCLUDE:attachments/file-runtime.js__
 __CHAT_INCLUDE:composer/commands.js__
 __CHAT_INCLUDE:runtime/thinking.js__

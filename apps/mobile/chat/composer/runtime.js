@@ -14,6 +14,13 @@
     messageInput?.addEventListener("blur", () => {
       scheduleComposerCloseFromKeyboardDismiss();
     });
+    messageInput.addEventListener("compositionstart", () => {
+      composing = true;
+    });
+    messageInput.addEventListener("compositionend", () => {
+      composing = false;
+      setTimeout(updateFileAutocomplete, 10);
+    });
 
     const cameraBtn = document.getElementById("cameraBtn");
     const cameraInput = document.getElementById("cameraInput");

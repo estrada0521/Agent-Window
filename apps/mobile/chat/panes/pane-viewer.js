@@ -220,6 +220,8 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
       }
       showPaneTraceViewer(null);
     };
+    let _thinkingRowTouch = null;
+    let _lastThinkingPaneMs = 0;
     const msgThinking = document.getElementById("messages");
     if (msgThinking) {
       msgThinking.addEventListener("touchstart", (e) => {
