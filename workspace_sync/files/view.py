@@ -29,14 +29,9 @@ def _chat_markdown_preview_css(preview_variant: str = "") -> str:
     repo_root = Path(__file__).resolve().parents[2]
     inline_code_css = (repo_root / "apps/shared/chat/markdown-inline-code.css").read_text(encoding="utf-8")
     code_block_css = (repo_root / "apps/shared/chat/markdown-code-block.css").read_text(encoding="utf-8")
-    if str(preview_variant or "").strip().lower() == "mobile":
-        css_path = repo_root / "apps/mobile/chat/styles/thinking.css"
-    else:
-        css_path = repo_root / "apps/desktop/web/chat/styles/transcript.css"
-    css = css_path.read_text(encoding="utf-8")
-    start = css.index("    .md-body {")
-    end = css.index("    .message-deferred-actions", start)
-    markdown_css = css[start:end]
+    variant_name = "mobile" if str(preview_variant or "").strip().lower() == "mobile" else "desktop"
+    body_css_path = repo_root / f"apps/shared/chat/markdown-body-{variant_name}.css"
+    markdown_css = body_css_path.read_text(encoding="utf-8")
     replacements = {
         "__AGENT_SEL_MD_BODY__": ".md-body",
         "__AGENT_SEL_MD_BODY_LI__": ".md-body li",
@@ -65,7 +60,7 @@ def render_file_view(
     preview_chrome: str = "",
     force_progressive_text: bool = False,
 ) -> str:
-    full = runtime._resolve_path(rel)
+    full = runtime._resolve_reference_path(rel)
     if not os.path.exists(full):
         raise FileNotFoundError(full)
 

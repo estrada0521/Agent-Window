@@ -348,13 +348,20 @@
     let _attachedFilesPreviewExt = "";
     let _attachedFilesGoToParentPath = () => { };
     const attachedFilesSheetBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
-    const normalizeAttachedFilesRepoPath = (value) => String(value || "")
-      .replace(/\\/g, "/")
-      .replace(/^\/+|\/+$/g, "");
+    const normalizeAttachedFilesRepoPath = (value) => {
+      const normalized = String(value || "").replace(/\\/g, "/");
+      if (normalized.startsWith("/") || normalized.startsWith("~")) {
+        return normalized.replace(/\/+$/g, "");
+      }
+      return normalized.replace(/^\/+|\/+$/g, "");
+    };
     const attachedFilesParentPathForFile = (rawPath) => {
-      const parts = normalizeAttachedFilesRepoPath(rawPath).split("/").filter(Boolean);
+      const normalized = normalizeAttachedFilesRepoPath(rawPath);
+      const isAbsolute = normalized.startsWith("/");
+      const parts = normalized.split("/").filter(Boolean);
       parts.pop();
-      return parts.join("/");
+      const joined = parts.join("/");
+      return isAbsolute ? `/${joined}` : joined;
     };
     const attachedFilesSheetTitleEl = () => attachedFilesPanel?.querySelector(".attached-files-sheet-title");
     const attachedFilesSheetBackBtn = () => attachedFilesPanel?.querySelector(".attached-files-sheet-back");
