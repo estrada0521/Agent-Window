@@ -282,3 +282,13 @@
         markCopied(btn);
       }).catch(() => {});
     });
+    messagesEl.addEventListener("auxclick", (e) => {
+      if (e.button !== 1) return;
+      const anyLink = e.target.closest("a[href]");
+      if (!anyLink) return;
+      const href = anyLink.getAttribute("href");
+      if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      window.open(href, "_blank", "noopener,noreferrer");
+    });
