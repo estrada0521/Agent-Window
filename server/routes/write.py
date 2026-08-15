@@ -385,7 +385,6 @@ def _post_open_file_in_editor(handler, _parsed, ctx) -> None:
     line = int(data.get("line", 0) or 0)
     diff_mode = bool(data.get("diff"))
     commit_hash = str(data.get("commit_hash") or "").strip()
-    allow_native_log_home = bool(data.get("allow_native_log_home"))
     if not rel:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
@@ -393,7 +392,7 @@ def _post_open_file_in_editor(handler, _parsed, ctx) -> None:
         if diff_mode:
             result = ctx["workspace_sync_api"].open_diff_in_editor(rel, commit_hash=commit_hash)
         else:
-            result = ctx["workspace_sync_api"].open_in_editor(rel, line=line, allow_native_log_home=allow_native_log_home)
+            result = ctx["workspace_sync_api"].open_in_editor(rel, line=line)
     except PermissionError:
         handler._send_json(403, {"ok": False, "error": "forbidden"})
         return
@@ -424,7 +423,7 @@ def _run_nativelog_command(ctx, *, target: str) -> tuple[int, dict]:
         msg = f"native log path not found for {agent}"
         return 404, {"ok": False, "error": msg, "status_message": msg}
     try:
-        workspace_sync_api.reveal_in_finder(path, allow_native_log_home=True)
+        workspace_sync_api.reveal_in_finder(path)
     except FileNotFoundError:
         msg = f"native log file not found: {path}"
         return 404, {"ok": False, "error": msg, "status_message": msg}

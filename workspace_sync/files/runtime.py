@@ -94,7 +94,17 @@ class FileRuntime:
         self._file_index_ignore = FileIndexIgnoreRules(self.workspace)
 
     def _is_allowed_path(self, full: str) -> bool:
-        return True
+        try:
+            resolved = Path(full).resolve()
+        except OSError:
+            return False
+        for root in self.allowed_roots:
+            try:
+                resolved.relative_to(root)
+                return True
+            except ValueError:
+                continue
+        return False
 
     @staticmethod
     def _normalize_rel_path(rel: str) -> str:
@@ -121,37 +131,6 @@ class FileRuntime:
     def file_index_path_is_ignored(self, rel: str) -> bool:
         return self._rel_path_is_skipped(rel)
 
-    @staticmethod
-    def _native_log_home_root_paths() -> tuple[Path, ...]:
-        home = Path.home()
-        roots = (
-            home / ".cursor",
-            home / ".claude",
-            home / ".codex",
-            home / ".gemini",
-            home / ".grok",
-        )
-        out: list[Path] = []
-        for r in roots:
-            try:
-                out.append(r.resolve())
-            except OSError:
-                continue
-        return tuple(out)
-
-    def _is_native_log_home_path(self, full: str) -> bool:
-        try:
-            fp = Path(full).resolve()
-        except OSError:
-            return False
-        for root in self._native_log_home_root_paths():
-            try:
-                fp.relative_to(root)
-                return True
-            except ValueError:
-                continue
-        return False
-
     def _resolve_path(self, rel: str, *, allow_workspace_root: bool = False) -> str:
         rel = rel or ""
         if rel.startswith("~"):
@@ -164,12 +143,23 @@ class FileRuntime:
             raise PermissionError(full)
         return full
 
+    def _resolve_reference_path(self, rel: str) -> str:
+        """Resolve a chat-style file reference (workspace-relative or fully
+        qualified). A fully-qualified path is self-contained -- it doesn't
+        need a root to disambiguate -- so it bypasses workspace containment;
+        a relative reference stays confined to the workspace via
+        _resolve_path.
+        """
+        rel_raw = str(rel or "").strip()
+        if rel_raw.startswith("~") or os.path.isabs(rel_raw):
+            return os.path.realpath(os.path.expanduser(rel_raw))
+        return self._resolve_path(rel_raw, allow_workspace_root=True)
+
     def files_exist(self, paths: list[str]) -> dict[str, bool]:
         result = {}
         for rel in paths:
             try:
-                full = self._resolve_path(rel, allow_workspace_root=True)
-                result[rel] = os.path.exists(full)
+                result[rel] = os.path.exists(self._resolve_reference_path(rel))
             except (PermissionError, Exception):
                 result[rel] = False
         return result
@@ -204,7 +194,7 @@ class FileRuntime:
         return start, end, True
 
     def raw_response_metadata(self, rel: str, range_header: str = "") -> dict:
-        full = self._resolve_path(rel)
+        full = self._resolve_reference_path(rel)
         size = os.path.getsize(full)
         try:
             start, end, is_partial = self._parse_single_range(range_header, size)
@@ -251,7 +241,7 @@ class FileRuntime:
                     break
 
     def file_content(self, rel: str):
-        full = self._resolve_path(rel, allow_workspace_root=True)
+        full = self._resolve_reference_path(rel)
         with open(full, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
         ext = os.path.splitext(rel)[1].lstrip(".")
@@ -324,30 +314,22 @@ class FileRuntime:
         cls._reveal_in_finder(full)
         return True
 
-    def _resolve_open_target(self, rel: str, *, allow_native_log_home: bool) -> str:
-        rel_raw = str(rel or "").strip()
-        if not rel_raw:
+    def _resolve_open_target(self, rel: str) -> str:
+        if not str(rel or "").strip():
             raise ValueError("path required")
-        if allow_native_log_home:
-            if not (rel_raw.startswith("~") or os.path.isabs(rel_raw)):
-                raise ValueError("allow_native_log_home requires an absolute path")
-            full = os.path.realpath(os.path.expanduser(rel_raw))
-            if not self._is_native_log_home_path(full):
-                raise PermissionError(full)
-        else:
-            full = self._resolve_path(rel_raw, allow_workspace_root=True)
+        full = self._resolve_reference_path(rel)
         if not os.path.exists(full):
             raise FileNotFoundError(full)
         return full
 
-    def open_in_editor(self, rel: str, line: int = 0, *, allow_native_log_home: bool = False):
+    def open_in_editor(self, rel: str, line: int = 0):
         del line
-        full = self._resolve_open_target(rel, allow_native_log_home=allow_native_log_home)
+        full = self._resolve_open_target(rel)
         revealed = self._open_with_system_default(full)
         return {"ok": True, "path": rel, "revealed_in_finder": revealed}
 
-    def reveal_in_finder(self, rel: str, *, allow_native_log_home: bool = False):
-        full = self._resolve_open_target(rel, allow_native_log_home=allow_native_log_home)
+    def reveal_in_finder(self, rel: str):
+        full = self._resolve_open_target(rel)
         self._reveal_in_finder(full)
         return {"ok": True, "path": rel, "revealed_in_finder": True}
 
@@ -609,6 +591,11 @@ class FileRuntime:
         raw_query = str(query or "").strip()
         if not raw_query:
             return ""
+        if raw_query.startswith("~") or os.path.isabs(raw_query):
+            # A fully-qualified reference is unambiguous on its own; it
+            # doesn't need to be matched against this workspace's file index.
+            full = self._resolve_reference_path(raw_query)
+            return full if os.path.exists(full) else ""
         normalized_query = raw_query.replace("\\", "/").lstrip("./").strip("/")
         if not normalized_query:
             return ""
