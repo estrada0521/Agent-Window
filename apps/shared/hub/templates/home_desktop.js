@@ -87,7 +87,6 @@
     let _hubSessionsCache = { active: [], archived: [] };
     let _deskSessionsRequestSeq = 0;
     let _deskSessionsRenderedOnce = false;
-    let _deskSessionsColdFailures = 0;
     let _deskSelectedSessionName = "";
     let _deskOpenToken = 0;
     let _deskSidebarMode = "list";
@@ -1309,7 +1308,6 @@
         const archived = data.archived_sessions || [];
         syncDeskSessionRunningFromServer(active);
         _hubSessionsCache = { active, archived };
-        _deskSessionsColdFailures = 0;
 
         const signature = JSON.stringify({
           active,
@@ -1328,8 +1326,6 @@
       } catch (_) {
         if (requestSeq !== _deskSessionsRequestSeq) return;
         if (_deskSessionsRenderedOnce || _hubSessionsCache.active.length || _hubSessionsCache.archived.length) return;
-        _deskSessionsColdFailures += 1;
-        if (_deskSessionsColdFailures < 2) return;
         if (_deskSessionList) {
           _deskSessionList.innerHTML = `<div class="desk-empty-list">Failed to load sessions</div>`;
         }

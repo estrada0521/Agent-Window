@@ -690,7 +690,6 @@
       let _mobSessionsCache = { active: [], archived: [] };
       let _mobSessionsRequestSeq = 0;
       let _mobSessionsRenderedOnce = false;
-      let _mobSessionsColdFailures = 0;
 
       const esc = (v) => String(v || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -829,7 +828,6 @@
           const activeSessions = data.active_sessions || data.sessions || [];
           const archivedSessions = data.archived_sessions || [];
           _mobSessionsCache = { active: activeSessions, archived: archivedSessions };
-          _mobSessionsColdFailures = 0;
 
           const sig = JSON.stringify({
             active: activeSessions,
@@ -850,8 +848,6 @@
         } catch (_) {
           if (requestSeq !== _mobSessionsRequestSeq) return;
           if (_mobSessionsRenderedOnce || _mobSessionsCache.active.length || _mobSessionsCache.archived.length) return;
-          _mobSessionsColdFailures += 1;
-          if (_mobSessionsColdFailures < 2) return;
           wrap.innerHTML = `<div class="mob-empty">Failed to load sessions</div>`;
         }
       };

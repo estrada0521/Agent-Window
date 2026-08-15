@@ -76,6 +76,7 @@ PUBLIC_HOST = ""
 PUBLIC_HUB_PORT = 443
 restart_lock = threading.Lock()
 restart_pending = False
+_restart_release_event = threading.Event()
 hub_server = None
 _scheme = "http"
 
@@ -158,6 +159,21 @@ def queue_hub_restart():
         clean_env_fn=_clean_env_impl,
         hub_server_getter=lambda: hub_server,
     )
+
+
+def release_restart_hold():
+    """Signal that it's now safe for this process to exit.
+
+    ThreadingHTTPServer's request-handling threads run as daemon threads
+    here, so once serve_forever() returns and main() would otherwise fall
+    off the end of the script, the interpreter tears down every remaining
+    daemon thread immediately -- including whichever one is still in the
+    middle of spawning the replacement process or writing this request's
+    HTTP response. main() blocks on _restart_release_event after
+    serve_forever() returns specifically so that work gets to finish;
+    call this once it actually has (see post_restart_hub).
+    """
+    _restart_release_event.set()
 
 _PWA_STATIC_DIR = Path()
 _PWA_STATIC_ROUTES = {
@@ -314,11 +330,14 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       const requestedRestart = params.get("restart") === "1";
       let restartRequested = false;
       const requestHubRestart = async () => {{
-        if (!requestedRestart || restartRequested) return;
+        if (!requestedRestart || restartRequested) return true;
         restartRequested = true;
         try {{
-          await fetch("/restart-hub", {{ method: "POST" }});
-        }} catch (_err) {{}}
+          const res = await fetch("/restart-hub", {{ method: "POST" }});
+          return res.ok;
+        }} catch (_err) {{
+          return false;
+        }}
       }};
       const ensureLaunchShellFlag = (rawTarget) => {{
         try {{
@@ -372,25 +391,40 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
           load();
         }});
       }};
+      const attemptLoad = async () => {{
+        const response = await fetch(target, {{ cache: "no-store" }});
+        if (!response.ok) throw new Error(`load failed: ${{response.status}}`);
+        const html = await response.text();
+        if (!adoptTargetUrl()) return;
+        document.open();
+        document.write(html);
+        document.close();
+      }};
       const load = async () => {{
-        if (requestedRestart && !restartRequested) {{
-          await requestHubRestart();
-          await new Promise((resolve) => window.setTimeout(resolve, 120));
+        if (requestedRestart) {{
+          // /restart-hub blocks until the replacement process is actually
+          // accepting connections, so a single subsequent fetch is
+          // guaranteed to land on it -- no retry loop needed here.
+          const restarted = await requestHubRestart();
+          if (!restarted) {{
+            showLaunchShellError();
+            return;
+          }}
+          try {{
+            await attemptLoad();
+          }} catch (_err) {{
+            showLaunchShellError();
+          }}
+          return;
         }}
         try {{
-          const response = await fetch(target, {{ cache: "no-store" }});
-          if (!response.ok) throw new Error(`load failed: ${{response.status}}`);
-          const html = await response.text();
-          if (!adoptTargetUrl()) return;
-          document.open();
-          document.write(html);
-          document.close();
+          await attemptLoad();
         }} catch (_err) {{
           if (Date.now() - loadStartedAt > maxLoadWaitMs) {{
             showLaunchShellError();
             return;
           }}
-          window.setTimeout(load, requestedRestart ? 520 : 700);
+          window.setTimeout(load, 700);
         }}
       }};
       load();
@@ -521,6 +555,7 @@ def _hub_action_context() -> dict[str, object]:
         "format_session_chat_url_fn": format_session_chat_url,
         "kill_repo_session_fn": hub.kill_repo_session,
         "queue_hub_restart_fn": queue_hub_restart,
+        "release_restart_hold_fn": release_restart_hold,
         "revive_archived_session_fn": hub.revive_archived_session,
         "save_hub_settings_fn": hub.save_hub_settings,
         "script_path": script_path,
@@ -807,6 +842,15 @@ def main(argv: list[str] | None = None) -> None:
         hub_server.socket = ctx.wrap_socket(hub_server.socket, server_side=True)
     print(f"{_scheme}://127.0.0.1:{port}/", flush=True)
     hub_server.serve_forever()
+    if restart_pending:
+        # Request-handling threads are daemon threads; once this (the
+        # only non-daemon) thread falls off the end of the script, the
+        # interpreter kills every remaining daemon thread immediately.
+        # A restart in progress needs those threads to finish spawning
+        # the replacement and sending this response first -- bounded by
+        # launch_hub_restart's own ready_timeout, so no separate timeout
+        # here.
+        _restart_release_event.wait()
 
 
 if __name__ == "__main__":
