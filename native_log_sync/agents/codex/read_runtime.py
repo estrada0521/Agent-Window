@@ -412,7 +412,7 @@ def iter_tool_calls(entry: dict) -> list[tuple[str, object]]:
     """Read active Codex 5.6 tool-call envelopes.
 
     Codex 5.5 ``function_call`` support is intentionally retired from this
-    path; see ``read_runtime_legacy_5_5.py`` for the archived reader.
+    path.
     """
 
     if entry.get("type") != "response_item":
