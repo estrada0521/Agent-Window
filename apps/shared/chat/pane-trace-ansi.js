@@ -1,5 +1,8 @@
     let paneTraceAnsiUp = null;
     let paneTraceAnsiLoadPromise = null;
+    const stripAnsiForTrace = (value) => String(value ?? "")
+      .replace(/\[[0-?]*[ -/]*[@-~]/g, "")
+      .replace(/\][^]*/g, "");
     const ensurePaneTraceAnsiUp = async () => {
       if (paneTraceAnsiUp) return true;
       try {
