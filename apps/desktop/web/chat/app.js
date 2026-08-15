@@ -265,7 +265,6 @@ __CHAT_INCLUDE:composer-overlay.js__
 __CHAT_INCLUDE:transcript/rich-rendering.js__
     let selectedTargets = [];
     let sendLocked = false;
-    let lastSubmitAt = 0;
     let sessionActive = true;
     let composerAutoOpenConsumed = false;
     const canComposeInSession = () => !!sessionActive;
@@ -497,7 +496,8 @@ __CHAT_INCLUDE:../../../shared/chat/target-selection.js__
 
 __CHAT_INCLUDE:runtime/messages.js__
 __CHAT_INCLUDE:transcript/render.js__
-__CHAT_INCLUDE:transcript/actions.js__
+__CHAT_INCLUDE:../../../shared/chat/transcript/actions.js__
+__CHAT_INCLUDE:runtime/hub-navigation.js__
 __CHAT_INCLUDE:panes/header-menu.js__
 __CHAT_INCLUDE:panes/right-pane.js__
 __CHAT_INCLUDE:composer/runtime.js__

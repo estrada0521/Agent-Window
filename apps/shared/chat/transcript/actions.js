@@ -28,7 +28,7 @@
         updateScrollBtn();
       }
     };
-__CHAT_INCLUDE:../../../../shared/chat/transcript-refresh.js__
+__CHAT_INCLUDE:../transcript-refresh.js__
     timeline.addEventListener("click", async (event) => {
       const fullBtn = event.target.closest("[data-load-full-message]");
       if (fullBtn) {
@@ -36,13 +36,15 @@ __CHAT_INCLUDE:../../../../shared/chat/transcript-refresh.js__
         await loadFullMessageEntry(fullBtn.dataset.loadFullMessage || "", fullBtn);
       }
     });
-__CHAT_INCLUDE:../../../../shared/chat/slash-commands.js__
+__CHAT_INCLUDE:../slash-commands.js__
+    const blurComposerOnMobile = (message) => {
+      if (document.documentElement.dataset.mobile === "1") message.blur();
+    };
     const postShortcutCommand = async ({ command_id, arg = "" }) => {
-      if (sendLocked || Date.now() - lastSubmitAt < 250) {
+      if (sendLocked) {
         return false;
       }
       sendLocked = true;
-      lastSubmitAt = Date.now();
       const target = selectedTargets.join(",");
       if (!target.trim()) {
         setStatus("select at least one target", true);
@@ -90,11 +92,10 @@ __CHAT_INCLUDE:../../../../shared/chat/slash-commands.js__
       }
     };
     const submitMessage = async ({ closeOverlayOnStart = false, forcedText = null } = {}) => {
-      if (sendLocked || Date.now() - lastSubmitAt < 250) {
+      if (sendLocked) {
         return false;
       }
       sendLocked = true;
-      lastSubmitAt = Date.now();
       const message = document.getElementById("message");
       const rawInput = (forcedText != null ? forcedText : message.value).trim();
       const clearComposerDraft = () => {
@@ -116,6 +117,7 @@ __CHAT_INCLUDE:../../../../shared/chat/slash-commands.js__
           const arg = parsed.arg;
           setQuickActionsDisabled(true);
           if (closeOverlayOnStart && isComposerOverlayOpen()) {
+            blurComposerOnMobile(message);
             closeComposerOverlay();
           }
           try {
@@ -143,6 +145,7 @@ __CHAT_INCLUDE:../../../../shared/chat/slash-commands.js__
               setQuickActionsDisabled(false);
             }
             clearComposerDraft();
+            blurComposerOnMobile(message);
             if (pendingAttachments.length) {
               pendingAttachments = [];
               const row = document.getElementById("attachPreviewRow");
@@ -179,6 +182,7 @@ __CHAT_INCLUDE:../../../../shared/chat/slash-commands.js__
       }
       setQuickActionsDisabled(true);
       if (closeOverlayOnStart && isComposerOverlayOpen()) {
+        blurComposerOnMobile(message);
         closeComposerOverlay();
       }
       setStatus(indexOnly ? "saving note..." : `sending to ${target}...`);
@@ -203,6 +207,7 @@ __CHAT_INCLUDE:../../../../shared/chat/slash-commands.js__
           setQuickActionsDisabled(false);
         }
         clearComposerDraft();
+        blurComposerOnMobile(message);
         if (pendingAttachments.length) {
           pendingAttachments = [];
           const row = document.getElementById("attachPreviewRow");
@@ -239,4 +244,3 @@ __CHAT_INCLUDE:../../../../shared/chat/slash-commands.js__
     });
     const quickMore = document.querySelector(".quick-more");
     const composerPlusMenu = document.getElementById("composerPlusMenu");
-__CHAT_INCLUDE:../runtime/hub-navigation.js__
