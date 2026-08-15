@@ -1,3 +1,6 @@
+    let composing = false;
+    const messageInput = document.getElementById("message");
+    const sendBtn = document.querySelector(".send-btn");
     let keepComposerPlusMenuOnBlur = false;
     composerPlusMenu && composerPlusMenu.addEventListener("toggle", () => {
       if (!composerPlusMenu.open) {
@@ -182,9 +185,6 @@
       }, true);
     }
 
-    let composing = false;
-    const messageInput = document.getElementById("message");
-    const sendBtn = document.querySelector(".send-btn");
     const updateSendBtnVisibility = () => {
       if (!sessionActive) {
         if (sendBtn) sendBtn.classList.remove("visible");
