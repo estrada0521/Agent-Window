@@ -1,23 +1,4 @@
 __CHAT_INCLUDE:../../../shared/chat/base.js__
-    const normalizeWorkspaceFilePath = (p) => {
-      let s = String(p || "").trim();
-      if (!s) return "";
-      s = s.replace(/\\/g, "/");
-      for (let i = 0; i < 8; i += 1) {
-        const next = s.replace("/./", "/");
-        if (next === s) break;
-        s = next;
-      }
-      for (let i = 0; i < 8; i += 1) {
-        const next = s.replace("//", "/");
-        if (next === s) break;
-        s = next;
-      }
-      if (s.length > 1 && s.endsWith("/")) {
-        s = s.slice(0, -1);
-      }
-      return s;
-    };
     const fileViewHrefForPath = (path, { embed = false } = {}) => {
       const params = new URLSearchParams();
       params.set("path", normalizeWorkspaceFilePath(path) || String(path || "").trim());
@@ -501,7 +482,7 @@ __CHAT_INCLUDE:runtime/hub-navigation.js__
 __CHAT_INCLUDE:panes/header-menu.js__
 __CHAT_INCLUDE:panes/right-pane.js__
 __CHAT_INCLUDE:composer/runtime.js__
-__CHAT_INCLUDE:attachments/file-runtime.js__
+__CHAT_INCLUDE:../../../shared/chat/attachments/file-runtime.js__
 __CHAT_INCLUDE:composer/commands.js__
 __CHAT_INCLUDE:../../../shared/chat/thinking.js__
 __CHAT_INCLUDE:runtime/agent-status.js__
