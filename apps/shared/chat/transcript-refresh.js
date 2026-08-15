@@ -87,6 +87,7 @@
           releaseLaunchShellGate();
         }
         notifyHubChatRenderReady();
+        notifyHubMessagesChanged();
       } catch (_) {
         messageRefreshFailures += 1;
         if (followMode && messageRefreshFailures >= 3) {
