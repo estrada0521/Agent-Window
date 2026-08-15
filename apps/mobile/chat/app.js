@@ -552,7 +552,7 @@ __CHAT_INCLUDE:panes/right-pane.js__
 __CHAT_INCLUDE:composer/runtime.js__
 __CHAT_INCLUDE:attachments/file-runtime.js__
 __CHAT_INCLUDE:composer/commands.js__
-__CHAT_INCLUDE:runtime/thinking.js__
+__CHAT_INCLUDE:../../shared/chat/thinking.js__
 __CHAT_INCLUDE:runtime/agent-status.js__
 __CHAT_INCLUDE:../../shared/chat/touch-interaction.js__
 __CHAT_INCLUDE:runtime/settings-sync.js__
