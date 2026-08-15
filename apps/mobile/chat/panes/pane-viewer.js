@@ -137,6 +137,16 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
       movePaneViewerIndicator(idx, { scrollTabIntoView: true });
       fetchPaneViewerSlideByIndex(idx, true);
     };
+    const syncPaneViewerTabThinkingStatuses = () => {
+      const tabsRoot = document.getElementById("paneViewerTabs");
+      if (tabsRoot) {
+        tabsRoot.querySelectorAll(".pane-viewer-tab").forEach((tab) => {
+          const a = tab.dataset.agent;
+          if (!a) return;
+          tab.classList.toggle("pane-viewer-tab-thinking", currentAgentStatuses[a] === "running");
+        });
+      }
+    };
     const buildPaneViewer = () => {
       paneViewerAgents = availableTargets.filter(t => t !== "others");
       const restoreAgent = paneViewerLastAgent && paneViewerAgents.includes(paneViewerLastAgent)
