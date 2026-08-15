@@ -1,5 +1,13 @@
 __CHAT_INCLUDE:../../shared/chat/base.js__
     document.documentElement.dataset.mobile = "1";
+    document.querySelectorAll("[data-desktop-only='1']").forEach((node) => {
+      node.hidden = true;
+      if (node.tagName === "OPTION") node.disabled = true;
+    });
+    document.querySelectorAll("[data-mobile-only='1']").forEach((node) => {
+      node.hidden = false;
+      if (node.tagName === "OPTION") node.disabled = false;
+    });
     const _safariSafeAreaDummy = document.createElement("div");
     _safariSafeAreaDummy.style.cssText = "position:absolute;bottom:0;width:100%;height:env(safe-area-inset-bottom);pointer-events:none;opacity:0;z-index:-1;";
     document.body.appendChild(_safariSafeAreaDummy);
@@ -488,6 +496,7 @@ __CHAT_INCLUDE:../../shared/chat/target-selection.js__
 __CHAT_INCLUDE:runtime/messages.js__
 __CHAT_INCLUDE:transcript/render.js__
 __CHAT_INCLUDE:transcript/actions.js__
+__CHAT_INCLUDE:runtime/hub-navigation.js__
 __CHAT_INCLUDE:panes/header-menu.js__
 __CHAT_INCLUDE:panes/right-pane.js__
 __CHAT_INCLUDE:composer/runtime.js__
