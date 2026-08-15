@@ -196,38 +196,52 @@ def chat_launch_env(self) -> dict[str, str]:
     return env
 
 
+def _chat_launch_port(self, session_name: str) -> tuple[int, bool, str]:
+    """Find the chat port to use for session_name: an already-matching
+    server, or the next bindable one (saving that as an override).
+
+    Returns (chat_port, ready, error). ready=True means a chat server for
+    this session already answers at chat_port -- the caller doesn't need to
+    launch one. error is set only when stopping a stale server failed.
+    """
+    chat_port = self.chat_port_for_session(session_name)
+    scheme = getattr(self, "hub_scheme", "")
+    if self.chat_ready(chat_port):
+        if self.chat_server_matches(session_name, chat_port, scheme=scheme):
+            return chat_port, True, ""
+        stop_ok, stop_detail = self.stop_chat_server(session_name)
+        if not stop_ok:
+            return chat_port, False, stop_detail
+
+    if not port_is_bindable(chat_port):
+        if self.chat_ready(chat_port) and self.chat_server_matches(session_name, chat_port, scheme=scheme):
+            return chat_port, True, ""
+        for candidate in range(chat_port, chat_port + 10):
+            if self.chat_ready(candidate) and self.chat_server_matches(session_name, candidate, scheme=scheme):
+                save_chat_port_override(self.repo_root, session_name, candidate)
+                return candidate, True, ""
+            if port_is_bindable(candidate):
+                save_chat_port_override(self.repo_root, session_name, candidate)
+                return candidate, False, ""
+
+    return chat_port, False, ""
+
+
 def ensure_chat_server(
     self,
     session_name: str,
     *,
-    port_is_bindable_fn=port_is_bindable,
-    save_chat_port_override_fn=save_chat_port_override,
     subprocess_module=subprocess,
     sys_module=sys,
     time_module=time,
 ) -> tuple[bool, int, str]:
     lock = self._get_launch_lock(session_name)
     with lock:
-        chat_port = self.chat_port_for_session(session_name)
-        if self.chat_ready(chat_port):
-            if self.chat_server_matches(session_name, chat_port, scheme=getattr(self, "hub_scheme", "")):
-                return True, chat_port, ""
-            stop_ok, stop_detail = self.stop_chat_server(session_name)
-            if not stop_ok:
-                logging.warning("stop_chat_server failed before relaunch: %s", stop_detail)
-
-        if not port_is_bindable_fn(chat_port):
-            if self.chat_ready(chat_port) and self.chat_server_matches(session_name, chat_port, scheme=getattr(self, "hub_scheme", "")):
-                return True, chat_port, ""
-
-            for candidate in range(chat_port, chat_port + 10):
-                if self.chat_ready(candidate) and self.chat_server_matches(session_name, candidate, scheme=getattr(self, "hub_scheme", "")):
-                    save_chat_port_override_fn(self.repo_root, session_name, candidate)
-                    return True, candidate, ""
-                if port_is_bindable_fn(candidate):
-                    save_chat_port_override_fn(self.repo_root, session_name, candidate)
-                    chat_port = candidate
-                    break
+        chat_port, ready, error = self._chat_launch_port(session_name)
+        if error:
+            logging.warning("stop_chat_server failed before relaunch: %s", error)
+        if ready:
+            return True, chat_port, ""
 
         workspace, workspace_timed_out = self._chat_launch_workspace(session_name)
         explicit_log_dir = ""
