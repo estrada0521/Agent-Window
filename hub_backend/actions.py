@@ -139,11 +139,19 @@ def get_delete_archived_session(handler, parsed, ctx) -> None:
 
 
 def post_restart_hub(handler, _parsed, ctx) -> None:
-    ctx["queue_hub_restart_fn"]()
-    handler.send_response(200)
-    handler.send_header("Content-Type", "application/json")
-    handler.end_headers()
-    handler.wfile.write(b'{"ok":true}')
+    ok = ctx["queue_hub_restart_fn"]()
+    try:
+        handler.send_response(200 if ok else 503)
+        handler.send_header("Content-Type", "application/json")
+        handler.end_headers()
+        handler.wfile.write(b'{"ok":true}' if ok else b'{"ok":false}')
+        handler.wfile.flush()
+    finally:
+        # queue_hub_restart_fn() may have left this process's request
+        # threads as the only thing keeping it alive (see
+        # release_restart_hold's docstring) -- only safe to let it exit
+        # once the response above has actually gone out.
+        ctx["release_restart_hold_fn"]()
 
 
 def post_settings(handler, parsed, ctx) -> None:

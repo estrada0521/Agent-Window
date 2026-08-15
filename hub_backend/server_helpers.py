@@ -5,6 +5,7 @@ import html
 import json
 import os
 import re
+import socket
 import subprocess
 import sys
 import threading
@@ -103,56 +104,71 @@ def launch_hub_restart(
     repo_root,
     clean_env_fn,
     hub_server_getter,
+    ready_timeout: float = 10.0,
 ) -> bool:
-    restart_helper = (
-        "import os, socket, subprocess, sys, time\n"
-        "script_path, port, repo_root = sys.argv[1], int(sys.argv[2]), sys.argv[3]\n"
-        "def port_open():\n"
-        "    try:\n"
-        "        with socket.create_connection(('127.0.0.1', port), timeout=0.2):\n"
-        "            return True\n"
-        "    except OSError:\n"
-        "        return False\n"
-        "for _ in range(150):\n"
-        "    if not port_open():\n"
-        "        break\n"
-        "    time.sleep(0.1)\n"
-        "env = os.environ.copy()\n"
-        "env['AGENT_WINDOW_AGENT_NAME'] = 'user'\n"
-        "subprocess.Popen(\n"
-        "    ['bash', script_path, '--hub', '--hub-port', str(port)],\n"
-        "    cwd=repo_root,\n"
-        "    env=env,\n"
-        "    stdin=subprocess.DEVNULL,\n"
-        "    stdout=subprocess.DEVNULL,\n"
-        "    stderr=subprocess.DEVNULL,\n"
-        "    start_new_session=True,\n"
-        "    close_fds=True,\n"
-        ")\n"
-    )
-    subprocess.Popen(
-        [sys.executable, "-c", restart_helper, str(script_path), str(port), str(repo_root)],
-        cwd=repo_root,
-        env=clean_env_fn(),
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        start_new_session=True,
-        close_fds=True,
-    )
+    """Restart the Hub process and block until the new one is actually
+    accepting connections on `port`, so the caller's HTTP response only
+    goes out once a single subsequent request is guaranteed to land on
+    the new process -- no client-side retry/poll needed for this to work.
 
-    def worker():
+    The actual shutdown/respawn runs on a background daemon thread. This
+    is required, not just a style choice: ThreadingHTTPServer's own
+    request-handling threads are daemon threads here, so if *this*
+    thread (one of them) called server.shutdown() directly, the instant
+    serve_forever() returns, main() falls off the end of the script and
+    the interpreter kills every remaining daemon thread outright --
+    including the one still trying to spawn the replacement or send this
+    response. Doing the work on a second daemon thread and just blocking
+    this one on an Event sidesteps that; main() additionally holds the
+    process open after serve_forever() returns until release_restart_hold()
+    confirms the response was actually sent (see hub_server.py).
+    """
+    done = threading.Event()
+    result: dict[str, bool] = {"ok": False}
+
+    def worker() -> None:
         try:
-            time.sleep(0.15)
             server = hub_server_getter()
             if server is not None:
-                server.shutdown()
-                server.server_close()
+                try:
+                    server.shutdown()
+                except Exception:
+                    pass
+                try:
+                    server.server_close()
+                except Exception:
+                    pass
+
+            env = clean_env_fn()
+            env["AGENT_WINDOW_AGENT_NAME"] = "user"
+            try:
+                subprocess.Popen(
+                    ["bash", str(script_path), "--hub", "--hub-port", str(port)],
+                    cwd=repo_root,
+                    env=env,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                    close_fds=True,
+                )
+            except Exception:
+                return
+
+            deadline = time.monotonic() + ready_timeout
+            while time.monotonic() < deadline:
+                try:
+                    with socket.create_connection(("127.0.0.1", port), timeout=0.3):
+                        result["ok"] = True
+                        return
+                except OSError:
+                    time.sleep(0.05)
         finally:
-            pass
+            done.set()
 
     threading.Thread(target=worker, daemon=True).start()
-    return True
+    done.wait()  # worker's own finally always fires within ready_timeout
+    return result["ok"]
 
 
 def pwa_asset_version(
