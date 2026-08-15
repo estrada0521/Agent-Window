@@ -262,7 +262,7 @@ __CHAT_INCLUDE:composer-overlay.js__
       ignoredClasses: ["no-math"],
       throwOnError: false
     };
-__CHAT_INCLUDE:transcript/rich-rendering.js__
+__CHAT_INCLUDE:../../../shared/chat/transcript/rich-rendering.js__
     let selectedTargets = [];
     let sendLocked = false;
     let sessionActive = true;
