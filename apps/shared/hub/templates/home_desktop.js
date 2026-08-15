@@ -1344,6 +1344,10 @@
         refreshDeskSessionRunningRow(sessionName);
         return;
       }
+      if (event.data && event.data.type === "session-messages-changed" && event.source === _deskChatFrame?.contentWindow) {
+        void refreshHubSessions(true, { skipRestore: true });
+        return;
+      }
       if (event.data && event.data.type === "desktop-panel-state" && event.source === _deskChatFrame?.contentWindow) {
         updateDeskPanelButtonState(
           String(event.data.mode || ""),

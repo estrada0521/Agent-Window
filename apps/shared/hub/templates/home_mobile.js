@@ -652,6 +652,10 @@
         _postHubLayoutToChat();
         return;
       }
+      if (e.data && e.data.type === "session-messages-changed" && e.source === _chatFrame.contentWindow) {
+        void refresh();
+        return;
+      }
       if (e.data && e.data.type === "hub-mobile-system-theme-observed") {
         const theme = e.data.theme === "light" ? "light" : (e.data.theme === "dark" ? "dark" : "");
         if (theme) publishMobileTheme(theme);

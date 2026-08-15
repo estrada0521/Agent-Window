@@ -1,4 +1,4 @@
-__CHAT_INCLUDE:../../../../shared/chat/hub-running-state.js__
+__CHAT_INCLUDE:../../../../shared/chat/hub-session-events.js__
     const renderAgentStatus = (statuses) => {
       currentAgentStatuses = { ...statuses };
       renderThinkingIndicator();
