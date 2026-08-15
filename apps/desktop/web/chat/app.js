@@ -281,6 +281,40 @@ __CHAT_INCLUDE:transcript/rich-rendering.js__
     };
     const isCollapsibleMessageRow = (row) =>
       !!(row && row.classList?.contains("message-row") && isCollapsibleMessageSender(row.dataset?.sender));
+    const syncMessageCollapse = (scope = document) => {
+      const rows = scope?.matches?.("article.message-row")
+        ? (isCollapsibleMessageRow(scope) ? [scope] : [])
+        : Array.from(scope?.querySelectorAll?.("article.message-row") || []).filter(isCollapsibleMessageRow);
+      rows.forEach((row) => {
+        const bodyRow = row.querySelector(".message-body-row");
+        const body = row.querySelector(".md-body");
+        const toggle = row.querySelector(".message-collapse-toggle");
+        if (!bodyRow || !body || !toggle) return;
+        const style = getComputedStyle(body);
+        const lineHeight = Number.parseFloat(style.lineHeight);
+        const paddingTop = Number.parseFloat(style.paddingTop) || 0;
+        const paddingBottom = Number.parseFloat(style.paddingBottom) || 0;
+        if (!Number.isFinite(lineHeight)) {
+          bodyRow.style.removeProperty("--message-collapse-max-height");
+          row.classList.remove("is-collapsible");
+          bodyRow.classList.remove("is-collapsed");
+          toggle.classList.remove("is-visible");
+          toggle.hidden = true;
+          return;
+        }
+        const maxHeight = Math.ceil((lineHeight * MESSAGE_COLLAPSE_LINES) + paddingTop + paddingBottom);
+        bodyRow.style.setProperty("--message-collapse-max-height", `${maxHeight}px`);
+        const shouldCollapse = body.scrollHeight > (maxHeight + 4);
+        const msgId = row.dataset.msgid || "";
+        const isExpanded = shouldCollapse && msgId && expandedMessageBodies.has(msgId);
+        row.classList.toggle("is-collapsible", shouldCollapse);
+        bodyRow.classList.toggle("is-collapsed", shouldCollapse && !isExpanded);
+        const showMoreBtn = shouldCollapse && !isExpanded;
+        toggle.classList.toggle("is-visible", showMoreBtn);
+        toggle.hidden = !showMoreBtn;
+        toggle.textContent = "More";
+      });
+    };
     const escapeHtml = (value) => value
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
