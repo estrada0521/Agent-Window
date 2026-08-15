@@ -1,0 +1,369 @@
+    .md-body {
+      flex: 1;
+      min-width: 0;
+      font-family: var(--agent-message-font-family, "SF Pro Text", "Segoe UI", sans-serif);
+      font-size: var(--message-text-size, 13px);
+      line-height: var(--message-text-line-height, 22px);
+      color: var(--fg);
+    }
+
+    .message.user .md-body {
+      font-size: var(--message-text-size, 13px);
+      line-height: var(--message-text-line-height, 22px);
+    }
+
+    __AGENT_SEL_MD_BODY__ {
+      font-size: var(--message-text-size, 13px);
+      line-height: var(--message-text-line-height, 22px);
+      color: var(--fg);
+    }
+
+    __AGENT_SEL_MD_BODY_LI__ {
+      line-height: calc(var(--message-text-line-height, 22px) + 2px);
+    }
+
+    __AGENT_SEL_GOTHIC_MD_BODY__ {
+      font-size: var(--message-text-size, 13px);
+      line-height: var(--message-text-line-height, 22px);
+    }
+
+    __AGENT_SEL_GOTHIC_MD_LI__ {
+      line-height: var(--message-text-line-height, 22px);
+    }
+
+    __AGENT_SEL_GOTHIC_MD_LI__ {
+      line-height: var(--message-text-line-height, 22px);
+    }
+
+    .md-body>*:first-child {
+      margin-top: 0;
+    }
+
+    .md-body>*:last-child {
+      margin-bottom: 0;
+    }
+
+    .md-body,
+    .md-body p,
+    .md-body li,
+    .md-body li p,
+    .md-body blockquote,
+    .md-body blockquote p {
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+
+    .md-body p {
+      margin: 0 0 6px;
+    }
+
+    .md-body h1,
+    .md-body h2,
+    .md-body h3,
+    .md-body h4 {
+      margin: 0.8em 0 0.5em;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .md-body h1 {
+      font-size: 22px;
+    }
+
+    .md-body h2 {
+      font-size: 1.25em;
+    }
+
+    .md-body h3 {
+      font-size: 1.05em;
+    }
+
+    .md-body h4 {
+      font-size: 1em;
+      font-weight: 600;
+    }
+
+    .md-body ul,
+    .md-body ol {
+      margin: 0.4em 0 6px;
+      padding-left: 1.5em;
+    }
+
+    .md-body li {
+      margin: 0 0 6px;
+    }
+
+    .md-body li p {
+      margin: 0;
+    }
+
+    .md-body code {
+      font-family: inherit;
+      font-style: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+      letter-spacing: inherit;
+      line-height: inherit;
+    }
+
+    .md-body a.inline-file-link {
+      color: var(--inline-file-link-fg);
+      text-decoration: none;
+    }
+
+    .md-body a.local-file-link {
+      color: var(--inline-file-link-fg);
+      text-decoration: none;
+    }
+
+    .md-body a.inline-file-link code,
+    .md-body a.local-file-link code {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .md-body a.inline-file-link:focus,
+    .md-body a.inline-file-link:focus-visible,
+    .md-body a.local-file-link:focus,
+    .md-body a.local-file-link:focus-visible {
+      outline: none;
+      box-shadow: none;
+    }
+
+    .has-hover .md-body a.inline-file-link:hover {
+      color: var(--inline-file-link-fg);
+      text-decoration: none;
+    }
+
+    .has-hover .md-body a.local-file-link:hover {
+      color: var(--inline-file-link-fg);
+      text-decoration: none;
+    }
+
+    .has-hover .md-body a.inline-file-link:hover code,
+    .has-hover .md-body a.local-file-link:hover code {
+      color: inherit;
+      cursor: pointer;
+    }
+
+    /* Keep mathematical glyphs in KaTeX, but make only \text{...} read like
+       the surrounding agent message (including CJK fallback glyphs). */
+    .katex .text {
+      font-family: var(--agent-message-font-family) !important;
+      font-weight: inherit;
+      font-style: normal;
+      /* KaTeX's root is 1.21em; restore \text to the surrounding message size. */
+      font-size: 0.826446em;
+    }
+
+    .table-scroll {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      margin: 0.5em 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--fg) transparent;
+    }
+    .table-scroll::-webkit-scrollbar { width: 2px; height: 2px; }
+    .table-scroll::-webkit-scrollbar-track { background: transparent; }
+    .table-scroll::-webkit-scrollbar-thumb { background: var(--fg); border: 0; border-radius: 999px; }
+    .table-scroll::-webkit-scrollbar-thumb:hover { background: var(--fg); border: 0; border-radius: 999px; }
+
+    .table-scroll>table {
+      width: 100%;
+      margin: 0;
+    }
+
+    .katex-display {
+      display: block;
+      margin: 1.2em 0;
+      width: 100%;
+      max-width: 100%;
+      padding-inline: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      text-align: left;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .katex-display::-webkit-scrollbar { display: none; }
+
+    .katex-display>.katex {
+      display: table;
+      width: max-content;
+      max-width: none;
+      margin: 0 auto;
+    }
+
+    .md-body pre {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      position: relative;
+      background: var(--code-bg);
+      border: none;
+      border-radius: 26px;
+      padding: 8px 36px 8px 16px;
+      margin: 0 0 6px;
+      overflow-x: auto;
+      overflow-y: visible;
+      white-space: pre;
+      word-break: normal;
+      box-shadow: none;
+      min-height: var(--code-scroll-stable-height, auto);
+      color: var(--fg);
+    }
+
+    .md-body pre { scrollbar-width: thin; scrollbar-color: var(--fg) transparent; }
+    .md-body pre::-webkit-scrollbar { width: 2px; height: 2px; }
+    .md-body pre::-webkit-scrollbar-track { background: transparent; }
+    .md-body pre::-webkit-scrollbar-thumb { background: var(--fg); border: 0; border-radius: 999px; }
+    .md-body pre::-webkit-scrollbar-thumb:hover { background: var(--fg); border: 0; border-radius: 999px; }
+
+    .md-body .code-block-wrap {
+      position: relative;
+      display: block;
+      margin: 10px 0;
+      overflow-x: hidden;
+    }
+
+    .md-body li > * + pre,
+    .md-body li > * + .code-block-wrap {
+      margin-top: 6px;
+    }
+
+    .md-body .code-block-wrap pre {
+      margin: 0;
+    }
+
+    .md-body .code-block-wrap .code-copy-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      z-index: 1;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: none;
+      border-radius: 8px;
+      background: var(--code-copy-bg);
+      color: var(--icon-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .md-body .code-block-wrap:hover .code-copy-btn {
+      color: var(--icon-hover);
+    }
+
+    @media (pointer: coarse) {
+      .md-body .code-block-wrap .code-copy-btn {
+        color: var(--icon-muted);
+      }
+    }
+
+    .md-body .code-block-wrap .code-copy-btn:hover {
+      background: transparent;
+      color: var(--icon-hover);
+    }
+
+    .md-body .code-block-wrap .code-copy-btn svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .md-body pre code {
+      font: inherit;
+      color: inherit;
+      background: none;
+      border: none;
+      padding: 0;
+      border-radius: 0;
+      white-space: pre;
+      word-break: normal;
+      overflow-wrap: normal;
+    }
+
+    .md-body blockquote {
+      border-left: 3px solid var(--fg);
+      margin: 0.5em 0;
+      padding: 0.3em 0.8em;
+      color: var(--fg);
+      opacity: 1;
+    }
+
+    .md-body blockquote p {
+      margin-bottom: 0;
+    }
+
+    .md-body hr {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 0.8em 0;
+    }
+
+    .md-body table {
+      display: table;
+      table-layout: auto;
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.5em 0;
+      font: inherit;
+    }
+
+    .md-body th,
+    .md-body td {
+      white-space: nowrap;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      padding: 5px 12px;
+      text-align: left;
+      font: inherit;
+    }
+
+    .md-body th {
+      background: transparent;
+      font-weight: inherit;
+      border-bottom: 1px solid var(--fg);
+    }
+
+    .md-body a:not(.inline-file-link):not(.local-file-link) {
+      color: var(--external-link-fg);
+      text-decoration: none;
+    }
+
+    .has-hover .md-body a:hover {
+      text-decoration: underline;
+    }
+
+    .has-hover .md-body a.inline-file-link:hover,
+    .has-hover .md-body a.local-file-link:hover {
+      text-decoration: none;
+    }
+
+    .md-body strong {
+      font-weight: 650;
+    }
+
+    .md-body em {
+      font-style: italic;
+    }
+
+    .md-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
