@@ -19,11 +19,24 @@ from message_delivery.names import (
 from backend_core.agents.names import agent_base_name
 from backend_core.agents.registry import ALL_AGENT_NAMES
 from backend_core.access.files import append_jsonl_entry
+import hashlib as _hashlib
 
 from message_delivery.paste_timing import delivery_paste_delay_seconds
 
 def default_tmux_socket_name() -> str:
     return "agent-window"
+
+
+def _safe_session_name(s: str) -> str:
+    return (s or "default").replace("/", "_")
+
+
+def session_topology_lock_path(tmux_socket: str, session_name: str) -> Path:
+    safe = _safe_session_name(session_name)
+    sock = tmux_socket or "default"
+    digest = _hashlib.sha1(f"{sock}|{safe}".encode()).hexdigest()[:20]
+    run_dir = Path(os.environ.get("AGENT_WINDOW_RUN_DIR") or (Path.home() / ".agent-window" / "run"))
+    return run_dir / "topology-locks" / f"{digest}.lock"
 
 
 from backend_core.access.settings import session_log_path

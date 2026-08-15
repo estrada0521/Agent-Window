@@ -92,7 +92,7 @@ sys.path.insert(0, str(repo_root / "src"))
 sys.path.insert(0, str(repo_root))
 from message_delivery.send import default_tmux_socket_name
 
-print(default_tmux_socket_name(repo_root))
+print(default_tmux_socket_name())
 PYEOF
 }
 
