@@ -270,8 +270,3 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
       fetchVisiblePaneViewerSlide(false);
     });
     refreshSessionState(["statuses"]);
-    setInterval(() => {
-      if (Object.keys(currentAgentStatuses).length) {
-        renderAgentStatus(currentAgentStatuses);
-      }
-    }, 1000);
