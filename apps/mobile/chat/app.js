@@ -1,5 +1,8 @@
 __CHAT_INCLUDE:../../shared/chat/base.js__
     document.documentElement.dataset.mobile = "1";
+    const _safariSafeAreaDummy = document.createElement("div");
+    _safariSafeAreaDummy.style.cssText = "position:absolute;bottom:0;width:100%;height:env(safe-area-inset-bottom);pointer-events:none;opacity:0;z-index:-1;";
+    document.body.appendChild(_safariSafeAreaDummy);
     const applyMobileThemeGradientVars = () => {
       const root = document.documentElement;
       const sheetChannels = getComputedStyle(root).getPropertyValue("--bg-rgb").trim() || (
@@ -453,6 +456,17 @@ __CHAT_INCLUDE:transcript/rich-rendering.js__
         }, 500);
       });
     };
+    document.addEventListener("pointerdown", (e) => {
+      const toggle = e.target.closest(".hub-page-menu-btn, .composer-plus-toggle, .quick-action");
+      if (toggle) {
+        if (toggle.classList.contains("animating")) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        flashHeaderToggle(toggle);
+      }
+    });
     const flashComposerAction = (action) => {
       document.querySelectorAll(`.composer-plus-panel [data-forward-action="${action}"]`).forEach((node) => {
         node.classList.remove("toggle-flash");
@@ -481,6 +495,8 @@ __CHAT_INCLUDE:attachments/file-runtime.js__
 __CHAT_INCLUDE:composer/commands.js__
 __CHAT_INCLUDE:runtime/thinking.js__
 __CHAT_INCLUDE:runtime/agent-status.js__
+__CHAT_INCLUDE:runtime/touch-interaction.js__
+__CHAT_INCLUDE:runtime/settings-sync.js__
 __CHAT_INCLUDE:panes/pane-viewer.js__
     let workspaceSyncEventSource = null;
     let workspaceSyncLastSeq = 0;
