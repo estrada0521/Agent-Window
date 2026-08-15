@@ -1588,11 +1588,8 @@
     _deskSettingsBtn && _deskSettingsBtn.addEventListener("click", () => openDeskSidebarPage("settings"));
     _deskReloadBtn && _deskReloadBtn.addEventListener("click", () => {
       if (_deskReloadBtn.classList.contains("restarting")) return;
-      _deskReloadBtn.classList.add("restarting");
-      _deskReloadBtn.disabled = true;
       setDeskReloadShell(true);
-      const launchShellTarget = `/hub-launch-shell.html?restart=1&target=${encodeURIComponent("/")}`;
-      window.location.replace(launchShellTarget);
+      beginHubRestart(_deskReloadBtn);
     });
     if (_deskSessionList) {
       _deskSessionList.addEventListener("click", (event) => {
