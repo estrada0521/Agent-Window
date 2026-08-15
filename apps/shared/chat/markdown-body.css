@@ -215,7 +215,8 @@
       position: relative;
       display: block;
       margin: 10px 0;
-      overflow-x: hidden;
+      overflow: hidden;
+      border-radius: 26px;
     }
 
     .md-body li > * + pre,
