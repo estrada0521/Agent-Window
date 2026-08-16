@@ -8,20 +8,20 @@
       font-weight: 480;
     }
 
-    #attachedFilesPanel .attached-files-sheet-back[disabled] {
+    #repoPanel .repo-sheet-back[disabled] {
       visibility: hidden;
       pointer-events: none;
     }
 
-    #attachedFilesPanel .attached-files-sheet-nav-bar.attached-files-sheet-nav-at-root {
+    #repoPanel .repo-sheet-nav-bar.repo-sheet-nav-at-root {
       display: flex;
     }
 
-    #attachedFilesPanel .attached-files-sheet-nav-bar.attached-files-sheet-nav-at-root .attached-files-sheet-back {
+    #repoPanel .repo-sheet-nav-bar.repo-sheet-nav-at-root .repo-sheet-back {
       display: none;
     }
 
-    #attachedFilesPanel .attached-files-sheet-nav-bar.attached-files-sheet-nav-at-root .attached-files-sheet-title {
+    #repoPanel .repo-sheet-nav-bar.repo-sheet-nav-at-root .repo-sheet-title {
       position: absolute;
       left: 50%;
       top: 50%;
@@ -34,21 +34,21 @@
       text-align: center;
     }
 
-    #attachedFilesPanel .attached-files-sheet-nav-bar.attached-files-sheet-nav-at-root .attached-files-preview-actions {
+    #repoPanel .repo-sheet-nav-bar.repo-sheet-nav-at-root .repo-preview-actions {
       margin-left: auto;
     }
 
-    #attachedFilesPanel .attached-files-sheet-nav-bar {
+    #repoPanel .repo-sheet-nav-bar {
       display: grid;
       grid-template-columns: var(--mobile-sheet-floating-height) minmax(0, 1fr) max-content;
       column-gap: 8px;
     }
 
-    #attachedFilesPanel .attached-files-sheet-back {
+    #repoPanel .repo-sheet-back {
       grid-column: 1;
     }
 
-    #attachedFilesPanel .attached-files-sheet-title {
+    #repoPanel .repo-sheet-title {
       position: static;
       grid-column: 2;
       width: 100%;
@@ -60,12 +60,12 @@
       text-align: left;
     }
 
-    #attachedFilesPanel .attached-files-preview-actions {
+    #repoPanel .repo-preview-actions {
       grid-column: 3;
       margin-left: 0;
     }
 
-    #attachedFilesPanel .attached-files-sheet-content {
+    #repoPanel .repo-sheet-content {
       flex: 1 1 auto;
       min-height: 0;
       display: flex;
@@ -75,57 +75,57 @@
       z-index: 1;
     }
 
-    #attachedFilesPanel.attached-files-mode-preview .attached-files-sheet-content {
+    #repoPanel.repo-mode-preview .repo-sheet-content {
       overflow: hidden;
     }
 
-    .attached-files-stack {
+    .repo-stack {
       position: relative;
       flex: 1 1 auto;
       min-height: 0;
       height: 100%;
     }
 
-    .attached-files-browser-view,
-    .attached-files-preview-view {
+    .repo-browser-view,
+    .repo-preview-view {
       position: absolute;
       inset: 0;
       min-height: 0;
     }
 
-    .attached-files-browser-view {
+    .repo-browser-view {
       display: flex;
       flex-direction: column;
     }
 
-    .attached-files-browser-mount {
+    .repo-browser-mount {
       flex: 1 1 auto;
       min-height: 0;
       display: flex;
       flex-direction: column;
     }
 
-    .attached-files-preview-view {
+    .repo-preview-view {
       display: none;
     }
 
-    #attachedFilesPanel.attached-files-mode-preview .attached-files-browser-view {
+    #repoPanel.repo-mode-preview .repo-browser-view {
       display: none;
     }
 
-    #attachedFilesPanel.attached-files-mode-preview .attached-files-preview-view {
+    #repoPanel.repo-mode-preview .repo-preview-view {
       display: block;
     }
 
-    html[data-theme="light"] #attachedFilesPanel .attached-files-preview-view {
+    html[data-theme="light"] #repoPanel .repo-preview-view {
       background: var(--bg);
     }
 
-    html[data-theme="dark"] #attachedFilesPanel .attached-files-preview-view {
+    html[data-theme="dark"] #repoPanel .repo-preview-view {
       background: var(--bg);
     }
 
-    .attached-files-preview-frame {
+    .repo-preview-frame {
       width: 100%;
       height: 100%;
       border: 0;
@@ -133,7 +133,7 @@
       background: transparent;
     }
 
-    .attached-files-preview-actions {
+    .repo-preview-actions {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -141,17 +141,17 @@
       margin-left: auto;
     }
 
-    .attached-files-preview-actions .attached-files-preview-html-mode[hidden] {
+    .repo-preview-actions .repo-preview-html-mode[hidden] {
       display: none;
     }
 
-    .attached-files-preview-actions .attached-files-preview-html-mode svg {
+    .repo-preview-actions .repo-preview-html-mode svg {
       width: 18px;
       height: 18px;
       stroke-width: 1.5;
     }
 
-    #attachedFilesPanel .attached-files-sheet-panel .repo-browser {
+    #repoPanel .repo-sheet-panel .repo-browser {
       flex: 1 1 auto;
       min-height: 0;
       opacity: 0;
@@ -161,12 +161,12 @@
         transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    #attachedFilesPanel.open .attached-files-sheet-panel .repo-browser {
+    #repoPanel.open .repo-sheet-panel .repo-browser {
       opacity: 1;
       transform: translateY(0);
     }
 
-    #attachedFilesPanel.sheet-closing .attached-files-sheet-panel .repo-browser {
+    #repoPanel.sheet-closing .repo-sheet-panel .repo-browser {
       opacity: 0;
       transform: translateY(8px);
     }

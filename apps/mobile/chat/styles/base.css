@@ -347,7 +347,7 @@
       pointer-events: auto;
     }
 
-    .shell>.hub-page-header>#attachedFilesPanel {
+    .shell>.hub-page-header>#repoPanel {
       top: 0;
       left: 0;
       right: 0;
@@ -367,7 +367,7 @@
       transition: background 300ms ease, backdrop-filter 300ms ease, -webkit-backdrop-filter 300ms ease;
     }
 
-    .shell>.hub-page-header>#attachedFilesPanel.open {
+    .shell>.hub-page-header>#repoPanel.open {
       background: rgba(var(--bg-rgb), 0.16);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
@@ -377,13 +377,13 @@
       overflow: hidden;
     }
 
-    .shell>.hub-page-header>#attachedFilesPanel.sheet-closing {
+    .shell>.hub-page-header>#repoPanel.sheet-closing {
       background: rgba(0, 0, 0, 0);
       backdrop-filter: blur(0);
       -webkit-backdrop-filter: blur(0);
     }
 
-    .shell>.hub-page-header>#attachedFilesPanel.open {
+    .shell>.hub-page-header>#repoPanel.open {
       overflow-y: hidden;
       overflow-x: hidden;
     }
@@ -424,8 +424,8 @@
       -webkit-backdrop-filter: blur(0);
     }
 
-    html.attached-files-sheet-active,
-    body.attached-files-sheet-active,
+    html.repo-sheet-active,
+    body.repo-sheet-active,
     html.git-branch-sheet-active,
     body.git-branch-sheet-active,
     html.pane-trace-sheet-active,
@@ -434,7 +434,7 @@
       overscroll-behavior: none;
     }
 
-    body.attached-files-sheet-active,
+    body.repo-sheet-active,
     body.git-branch-sheet-active,
     body.pane-trace-sheet-active {
       position: fixed;
@@ -644,13 +644,13 @@
       justify-content: center;
     }
 
-    #attachedFilesPanel.open .mobile-floating-sheet-panel,
+    #repoPanel.open .mobile-floating-sheet-panel,
     #gitBranchPanel.open .mobile-floating-sheet-panel,
     #paneTracePanel.open .mobile-floating-sheet-panel {
       transform: translateY(0);
     }
 
-    #attachedFilesPanel.sheet-closing .mobile-floating-sheet-panel,
+    #repoPanel.sheet-closing .mobile-floating-sheet-panel,
     #gitBranchPanel.sheet-closing .mobile-floating-sheet-panel,
     #paneTracePanel.sheet-closing .mobile-floating-sheet-panel {
       transform: translateY(100%);

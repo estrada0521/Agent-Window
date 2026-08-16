@@ -562,9 +562,9 @@ __CHAT_INCLUDE:panes/pane-viewer.js__
       const nextSeq = Math.max(0, parseInt(payload?.seq) || 0);
       if (nextSeq && nextSeq <= workspaceSyncLastSeq) return;
       if (nextSeq) workspaceSyncLastSeq = nextSeq;
-      const repoPanelOpen = !!(attachedFilesPanel && attachedFilesPanel.classList.contains("open") && !attachedFilesPanel.hidden);
-      if (repoPanelOpen && typeof attachedFilesPanel._syncCategoryUi === "function") {
-        attachedFilesPanel._syncCategoryUi();
+      const repoPanelOpen = !!(repoPanel && repoPanel.classList.contains("open") && !repoPanel.hidden);
+      if (repoPanelOpen && typeof repoPanel._syncCategoryUi === "function") {
+        repoPanel._syncCategoryUi();
       }
       const gitPanelOpen = !!(gitBranchPanel && gitBranchPanel.classList.contains("open") && !gitBranchPanel.hidden);
       if (gitPanelOpen) {
