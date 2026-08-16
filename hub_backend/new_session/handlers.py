@@ -129,7 +129,6 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         session_state = ctx["session_api"].write_session_metadata(
             session_name,
             resolved_workspace,
-            list(ctx["all_agent_names"]),
         )
         # Start tmux session with the terminal window only (no agents yet)
         agent_window_bin = str(ctx["script_path"].parent / "agent-window")

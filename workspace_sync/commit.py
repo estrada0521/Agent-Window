@@ -11,7 +11,7 @@ _COMMIT_STATE_FILENAME = ".agent-index-commit-state.json"
 
 
 def _commit_state_path(runtime) -> Path:
-    return runtime.index_path.parent / _COMMIT_STATE_FILENAME
+    return runtime.log_path.parent / _COMMIT_STATE_FILENAME
 
 
 def read_commit_state_locked(runtime, handle, *, json_module=json, logging_module=logging) -> dict:
@@ -51,11 +51,11 @@ def has_logged_commit_entry(
     logging_module=logging,
 ) -> bool:
     commit_hash = (commit_hash or "").strip()
-    if not commit_hash or not runtime.index_path.exists():
+    if not commit_hash or not runtime.log_path.exists():
         return False
     try:
         recent_lines: deque[str] = deque_class(maxlen=max(32, int(recent_limit)))
-        with runtime.index_path.open("r", encoding="utf-8") as f:
+        with runtime.log_path.open("r", encoding="utf-8") as f:
             for line in f:
                 recent_lines.append(line)
         for line in reversed(recent_lines):

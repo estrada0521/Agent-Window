@@ -182,6 +182,7 @@ def chat_launch_env(self) -> dict[str, str]:
     env["AGENT_WINDOW_AGENT_NAME"] = "user"
     if self.tmux_socket:
         env["AGENT_WINDOW_TMUX_SOCKET"] = self.tmux_socket
+    env["AGENT_INDEX_HUB_PORT"] = str(self.hub_port)
     env["AGENT_WINDOW_RUN_DIR"] = str(agent_window_run_dir())
     env["SESSION_IS_ACTIVE"] = "1"
     pythonpath_parts = [str(self.repo_root)]
@@ -244,34 +245,23 @@ def ensure_chat_server(
             return True, chat_port, ""
 
         workspace, workspace_timed_out = self._chat_launch_workspace(session_name)
-        explicit_log_dir = ""
-        targets, targets_timed_out = self.session_agents_query(session_name)
-        if workspace_timed_out or targets_timed_out:
+        if workspace_timed_out:
             return False, chat_port, "tmux query timed out while preparing chat server launch"
-        session_dir = self._chat_launch_session_dir(session_name, workspace, explicit_log_dir)
-        index_path = session_log_path(session_name)
+        self._chat_launch_session_dir(session_name, workspace, "")
+        log_path = session_log_path(session_name)
         try:
-            self.tmux_run(["set-environment", "-t", session_name, "AGENT_WINDOW_INDEX_PATH", str(index_path)], timeout=2)
+            self.tmux_run(["set-environment", "-t", session_name, "AGENT_WINDOW_INDEX_PATH", str(log_path)], timeout=2)
         except Exception:
             pass
         env = self._chat_launch_env()
-        env["AGENT_WINDOW_INDEX_PATH"] = str(index_path)
         try:
             subprocess_module.Popen(
                 [
                     sys_module.executable,
                     "-m",
                     "server.server",
-                    str(index_path),
-                    "2000",
                     session_name,
-                    str(chat_port),
-                    str(self.agent_send_path),
                     workspace,
-                    str(session_dir.parent),
-                    ",".join(targets),
-                    self.tmux_socket,
-                    str(self.hub_port),
                 ],
                 cwd=workspace or str(self.repo_root),
                 env=env,

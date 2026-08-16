@@ -21,7 +21,11 @@ def _parse_tmux_environment_output(output: str) -> dict[str, str]:
 
 
 def _parse_agents_csv(agents_csv: str) -> list[str]:
-    return [item.strip() for item in (agents_csv or "").split(",") if item.strip()]
+    return [
+        item.strip()
+        for item in (agents_csv or "").split(",")
+        if item.strip() and item.strip() != "-"
+    ]
 
 
 def _reconcile_agent_names(meta: dict[str, object], current_agents: list[str]) -> None:

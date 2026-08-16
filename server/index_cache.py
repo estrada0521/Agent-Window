@@ -7,10 +7,10 @@ from native_log_sync.redacted import omit_redacted_log_entry
 
 
 def matched_entries(runtime) -> list[dict]:
-    if not runtime.index_path.exists():
+    if not runtime.log_path.exists():
         return []
     try:
-        stat = runtime.index_path.stat()
+        stat = runtime.log_path.stat()
     except OSError:
         return []
     current_sig = (stat.st_size, stat.st_mtime_ns)
@@ -29,7 +29,7 @@ def matched_entries(runtime) -> list[dict]:
             start_offset = 0
         read_size = max(0, stat.st_size - start_offset)
         try:
-            with runtime.index_path.open("rb") as f:
+            with runtime.log_path.open("rb") as f:
                 f.seek(start_offset)
                 chunk = f.read(read_size)
         except OSError:

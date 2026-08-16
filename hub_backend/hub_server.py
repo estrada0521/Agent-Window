@@ -15,7 +15,6 @@ from urllib.error import HTTPError, URLError
 
 from backend_core.agents.registry import (
     AGENT_ICONS_DIR,
-    ALL_AGENT_NAMES,
     icon_filename_map as _icon_filename_map,
 )
 from hub_backend.runtime import HubRuntime
@@ -505,8 +504,6 @@ def _hub_session_api() -> HubSessionApi:
         HubSessionApiContext(
             repo_root=repo_root,
             hub=hub,
-            hub_port=port,
-            all_agent_names=ALL_AGENT_NAMES,
             active_session_records_query=hub.active_session_records_query,
             archived_session_records=hub.archived_session_records,
             ensure_chat_server=hub.ensure_chat_server,
@@ -519,7 +516,6 @@ def _hub_action_context() -> dict[str, object]:
     return {
         "active_session_records_query_fn": hub.active_session_records_query,
         "agent_launch_readiness_fn": agent_launch_readiness,
-        "all_agent_names": ALL_AGENT_NAMES,
         "archived_session_records_fn": hub.archived_session_records,
         "delete_archived_session_fn": hub.delete_archived_session,
         "ensure_chat_server_fn": hub.ensure_chat_server,
