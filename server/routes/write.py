@@ -80,6 +80,13 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     with ctx["runtime"]._payload_cache_lock:
         ctx["runtime"]._payload_cache.clear()
         ctx["runtime"]._payload_cache_order.clear()
+    try:
+        ctx["runtime"]._native_log.on_pane_add(instance)
+        ctx["runtime"].refresh_native_log_bindings([instance], reason="add-agent")
+        ctx["runtime"].notify_session_state_changed(["targets", "statuses"], reason="targets-changed")
+    except Exception as exc:
+        handler._send_json(500, {"ok": False, "error": str(exc)})
+        return
     handler._send_json(
         200,
         {
@@ -89,15 +96,6 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
             "targets": targets,
         },
     )
-    try:
-        ctx["runtime"]._native_log.on_pane_add(instance)
-        ctx["runtime"].refresh_native_log_bindings([instance], reason="add-agent")
-    except Exception:
-        pass
-    try:
-        ctx["runtime"].notify_session_state_changed(["targets", "statuses"], reason="targets-changed")
-    except Exception:
-        pass
 
 
 def _post_remove_agent(handler, _parsed, ctx) -> None:
@@ -126,6 +124,12 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
     with ctx["runtime"]._payload_cache_lock:
         ctx["runtime"]._payload_cache.clear()
         ctx["runtime"]._payload_cache_order.clear()
+    try:
+        ctx["runtime"].refresh_native_log_bindings(reason="remove-agent")
+        ctx["runtime"].notify_session_state_changed(["targets", "statuses"], reason="targets-changed")
+    except Exception as exc:
+        handler._send_json(500, {"ok": False, "error": str(exc)})
+        return
     handler._send_json(
         200,
         {
@@ -135,14 +139,6 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
             "targets": targets,
         },
     )
-    try:
-        ctx["runtime"].refresh_native_log_bindings(reason="remove-agent")
-    except Exception:
-        pass
-    try:
-        ctx["runtime"].notify_session_state_changed(["targets", "statuses"], reason="targets-changed")
-    except Exception:
-        pass
 
 
 def _post_upload(handler, _parsed, ctx) -> None:

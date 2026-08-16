@@ -1050,28 +1050,11 @@
       return openDeskSessionRow(rows[nextIndex]);
     }
 
-    function pickDeskFallbackSession(excludedName = "") {
-      const blocked = String(excludedName || "");
-      const active = sortActiveSessions((_hubSessionsCache.active || []).filter((session) => session.name !== blocked));
-      if (active.length) {
-        return { name: active[0].name, archived: false };
-      }
-      return null;
-    }
-
     function maybeRestoreDeskSelection() {
       if (_deskSelectedSessionName) {
         if (findSessionRecord(_deskSelectedSessionName)) return;
-        persistDeskSelection("");
-        setDeskSelectionInUrl("");
-        _deskSelectedSessionName = "";
-        updateDeskWindowTitle("");
-        const fallback = pickDeskFallbackSession();
-        if (fallback) {
-          openSessionFrame(buildSessionOpenHref(fallback.name, fallback.archived), fallback.name);
-          return;
-        }
         clearDeskSelection();
+        showDeskSidebarList({ open: true });
         return;
       }
       const requested = getRequestedDeskSelection();
@@ -1083,6 +1066,9 @@
         }
         persistDeskSelection("");
         setDeskSelectionInUrl("");
+        failDeskOpen("Session not found");
+        showDeskSidebarList({ open: true });
+        return;
       }
       const active = _hubSessionsCache.active || [];
       if (active.length) {
@@ -1164,7 +1150,7 @@
           `${route}?session=${encodeURIComponent(sessionName)}&format=json&ts=${Date.now()}`,
           { cache: "no-store" }
         );
-        const data = await response.json().catch(() => ({}));
+        const data = await response.json();
         if (!response.ok || !data.ok) {
           throw new Error(data.error || (isDelete ? "Failed to delete session." : "Failed to archive session."));
         }
@@ -1183,11 +1169,6 @@
         }
         await refreshHubSessions(true, { skipRestore: true });
         if (!isSelected) return;
-        const fallback = pickDeskFallbackSession(sessionName);
-        if (fallback) {
-          await openSessionFrame(buildSessionOpenHref(fallback.name, fallback.archived), fallback.name);
-          return;
-        }
         clearDeskSelection();
         showDeskSidebarList({ open: true });
       } catch (err) {

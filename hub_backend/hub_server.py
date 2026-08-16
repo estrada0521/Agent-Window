@@ -450,14 +450,8 @@ def hub_settings_html(saved=False, variant="desktop"):
 
 def hub_new_session_html(variant="desktop"):
     is_mobile = (variant == "mobile")
-    try:
-        current_settings = hub.load_hub_settings()
-    except Exception:
-        current_settings = {}
-    try:
-        message_text_size = int(current_settings.get("message_text_size", 13) or 13)
-    except Exception:
-        message_text_size = 13
+    current_settings = hub.load_hub_settings()
+    message_text_size = int(current_settings["message_text_size"])
     header_html = render_page_header(
         title_href="/",
         title_id="pageTitleLink",
@@ -636,10 +630,8 @@ class Handler(BaseHTTPRequestHandler):
         for record in active_map.values():
             session_record = dict(record)
             running_agents: list[str] = []
-            try:
-                chat_port = int(session_record.get("chat_port") or 0)
-            except Exception:
-                chat_port = 0
+            raw_port = session_record.get("chat_port")
+            chat_port = 0 if raw_port in (None, "", 0, "0") else int(raw_port)
             if chat_port > 0 and hub.chat_ready(chat_port):
                 running_agents = _hub_session_api().running_agents_from_session_state(hub.chat_server_state(chat_port))
             session_record["running_agents"] = running_agents

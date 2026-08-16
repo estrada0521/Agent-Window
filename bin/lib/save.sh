@@ -29,14 +29,8 @@ def _target_abs(path: Path) -> str:
     return os.path.abspath(path.parent / target)
 
 if canonical.is_symlink():
-    try:
-        if _target_abs(canonical) == os.path.abspath(canonical):
-            canonical.unlink()
-    except Exception:
-        try:
-            canonical.unlink()
-        except Exception:
-            pass
+    if _target_abs(canonical) == os.path.abspath(canonical):
+        canonical.unlink()
 
 if not canonical.exists():
     canonical.touch()

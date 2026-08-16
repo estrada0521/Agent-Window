@@ -64,12 +64,10 @@ def write_session_meta_file(session: str, agents_csv: str, tmux_env_output: str)
     updated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
     meta: dict[str, object] = {}
     if meta_path.is_file():
-        try:
-            raw = json.loads(meta_path.read_text(encoding="utf-8"))
-            if isinstance(raw, dict):
-                meta = raw
-        except Exception:
-            meta = {}
+        raw = json.loads(meta_path.read_text(encoding="utf-8"))
+        if not isinstance(raw, dict):
+            raise ValueError(f"invalid session meta: {meta_path}")
+        meta = raw
 
     created_at = str(meta.get("created_at") or "").strip() or updated_at
     workspace = str(

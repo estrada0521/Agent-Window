@@ -20,12 +20,8 @@ def parse_session_dir(name: str) -> str:
 
 
 def count_nonempty_lines(path: Path) -> int:
-    try:
-        with path.open("r", encoding="utf-8") as handle:
-            return sum(1 for line in handle if line.strip())
-    except Exception as exc:
-        logging.error(f"Unexpected error: {exc}", exc_info=True)
-        return 0
+    with path.open("r", encoding="utf-8") as handle:
+        return sum(1 for line in handle if line.strip())
 
 
 def parse_saved_time(value: str) -> float:
@@ -217,11 +213,7 @@ def collect_repo_sessions(runtime: Any) -> tuple[list[dict], str, str]:
 
         attached = r_attached.stdout.strip() or "0"
         created_epoch = r_created.stdout.strip() or "0"
-        try:
-            created_at = dt.datetime.fromtimestamp(int(created_epoch)).strftime("%Y-%m-%d %H:%M")
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            created_at = ""
+        created_at = dt.datetime.fromtimestamp(int(created_epoch)).strftime("%Y-%m-%d %H:%M")
 
         dead_panes = sum(1 for line in r_dead.stdout.splitlines() if line.strip() == "1")
 
@@ -270,26 +262,13 @@ def archived_sessions(runtime: Any, active_names: set[str] | list[str] | None = 
         for entry in entries:
             meta_path = entry / ".meta"
             log_path = entry / ".log.jsonl"
-            try:
-                if not meta_path.exists() and not log_path.exists():
-                    continue
-            except OSError:
+            if not meta_path.exists() and not log_path.exists():
                 continue
             meta: dict[str, Any] = {}
             if meta_path.exists():
-                try:
-                    raw_meta = meta_path.read_text(encoding="utf-8")
-                    meta = json.loads(raw_meta)
-                except json.JSONDecodeError:
-                    try:
-                        meta, _ = json.JSONDecoder().raw_decode(raw_meta)
-                    except Exception:
-                        meta = {}
-                except (OSError, FileNotFoundError):
-                    meta = {}
-                except Exception as exc:
-                    logging.error(f"Unexpected error: {exc}", exc_info=True)
-                    meta = {}
+                meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                if not isinstance(meta, dict):
+                    raise ValueError(f"invalid session meta: {meta_path}")
             session_name = (meta.get("session") or parse_session_dir(entry.name) or "").strip()
             if not session_name or session_name in active_names_set:
                 continue

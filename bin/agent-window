@@ -660,11 +660,10 @@ if os.path.isdir(central_log_dir):
             continue
         meta = {}
         if os.path.exists(meta_path):
-            try:
-                with open(meta_path, "r") as f:
-                    meta = json.load(f)
-            except Exception:
-                meta = {}
+            with open(meta_path, "r") as f:
+                meta = json.load(f)
+            if not isinstance(meta, dict):
+                raise SystemExit(f"invalid session meta: {meta_path}")
         session = meta.get("session") or parse_session_dir(entry)
         created = meta.get("created_at") or format_mtime(path)
         updated = meta.get("updated_at") or format_mtime(path)
@@ -1070,41 +1069,6 @@ print(','.join(result))
 " "${SELECTED_AGENTS[@]}")"
   IFS=',' read -ra INSTANCE_NAMES <<< "$_instance_names_str"
 
-  if [[ "${AGENT_WINDOW_STRICT_AGENT_CLIS:-}" != "1" ]]; then
-    _kept=()
-    for agent in "${SELECTED_AGENTS[@]}"; do
-      if resolve_agent_executable "$agent" >/dev/null; then
-        _kept+=("$agent")
-      else
-        echo "agent-window: 警告: ${agent} の CLI が無いため起動しません（厳格にするには AGENT_WINDOW_STRICT_AGENT_CLIS=1）" >&2
-      fi
-    done
-    if [[ ${#_kept[@]} -gt 0 ]]; then
-      SELECTED_AGENTS=("${_kept[@]}")
-    else
-      SELECTED_AGENTS=()
-    fi
-    if [[ ${#SELECTED_AGENTS[@]} -lt 1 ]]; then
-      echo "agent-window: 起動できるエージェントがありません。CLI を入れるか --agents で指定してください。" >&2
-      exit 1
-    fi
-    _instance_names_str="$(python3 -c "
-import sys
-agents = sys.argv[1:]
-from collections import Counter
-counts = Counter(agents)
-indices = {}
-result = []
-for a in agents:
-    if counts[a] > 1:
-        indices[a] = indices.get(a, 0) + 1
-        result.append(f'{a}-{indices[a]}')
-    else:
-        result.append(a)
-print(','.join(result))
-" "${SELECTED_AGENTS[@]}")"
-    IFS=',' read -ra INSTANCE_NAMES <<< "$_instance_names_str"
-  fi
 fi
 
 command -v tmux >/dev/null 2>&1 || { echo "tmux is required." >&2; exit 1; }
@@ -1118,7 +1082,6 @@ if [[ "$NO_AGENTS" -eq 0 ]]; then
           check_cmd="$(agent_var AGENT_EXECUTABLE "$agent")"
           [[ -n "$check_cmd" ]] || check_cmd="$agent"
           echo "Required command not found: $check_cmd" >&2
-          echo "  （CLI を入れるか、AGENT_WINDOW_STRICT_AGENT_CLIS を付けない場合は未導入分は起動しません）" >&2
           exit 1
         }
         _checked_cmds="${_checked_cmds:+$_checked_cmds,}$agent"

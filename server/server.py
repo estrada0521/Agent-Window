@@ -474,44 +474,10 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
 
-def _kill_stale_sync_processes(session_name_str: str) -> None:
-    import signal
-
-    my_pid = os.getpid()
-    try:
-        result = subprocess.run(
-            ["pgrep", "-f", f"server.server {session_name_str} "],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
-        for line in result.stdout.strip().splitlines():
-            pid_str = line.strip()
-            if not pid_str:
-                continue
-            try:
-                pid = int(pid_str)
-            except ValueError:
-                continue
-            if pid == my_pid:
-                continue
-            try:
-                os.kill(pid, signal.SIGTERM)
-                logging.info("Killed stale chat_server PID %d for %s", pid, session_name_str)
-            except OSError:
-                pass
-    except Exception as exc:
-        logging.debug("_kill_stale_sync_processes: %s", exc)
-
-
 def main(argv: list[str] | None = None) -> None:
     global server
 
     initialize_from_argv(argv)
-    if os.environ.get("AGENT_WINDOW_CHAT_RESTART_HANDOFF") != "1":
-        _kill_stale_sync_processes(session_name)
-
     cert_file = os.environ.get("AGENT_WINDOW_CERT_FILE", "")
     key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")
     scheme = local_bind_scheme(cert_file=cert_file, key_file=key_file)

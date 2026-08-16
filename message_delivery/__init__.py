@@ -135,19 +135,14 @@ def send_message(
 def _update_running_env(runtime, agent: str, running: bool) -> None:
     upper = agent.upper().replace("-", "_")
     var = f"AGENT_WINDOW_RUNNING_{upper}"
-    try:
-        if running:
-            subprocess.run(
-                [*runtime.tmux_prefix, "set-environment", "-t", runtime.session_name, var, "1"],
-                capture_output=True, check=False, timeout=1,
-            )
-        else:
-            subprocess.run(
-                [*runtime.tmux_prefix, "set-environment", "-u", "-t", runtime.session_name, var],
-                capture_output=True, check=False, timeout=1,
-            )
-    except Exception:
-        pass
+    if running:
+        args = [*runtime.tmux_prefix, "set-environment", "-t", runtime.session_name, var, "1"]
+    else:
+        args = [*runtime.tmux_prefix, "set-environment", "-u", "-t", runtime.session_name, var]
+    result = subprocess.run(args, capture_output=True, check=False, timeout=1)
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or b"").decode("utf-8", "replace").strip()
+        raise RuntimeError(detail or f"tmux set-environment failed for {agent}")
 
 
 def mark_agent_sent(self, agent_name: str) -> None:

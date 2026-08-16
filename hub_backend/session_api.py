@@ -28,11 +28,10 @@ class HubSessionApi:
         return local_runtime_log_dir(self.ctx.repo_root) / str(session_name or "").strip()
 
     def read_json_file(self, path: Path) -> dict:
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
-            return {}
-        return data if isinstance(data, dict) else {}
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise ValueError(f"invalid json object: {path}")
+        return data
 
     def resolve_session_chat_target(self, session_name: str) -> dict:
         query = self.ctx.active_session_records_query()
@@ -76,10 +75,7 @@ class HubSessionApi:
         base = re.sub(r"[^a-zA-Z0-9_.\-]", "-", raw_name).strip(".-")[:64] or "session"
         query = self.ctx.active_session_records_query()
         existing = set(query.records.keys())
-        try:
-            existing.update(self.ctx.archived_session_records(existing).keys())
-        except Exception:
-            pass
+        existing.update(self.ctx.archived_session_records(existing).keys())
         candidate = base
         suffix = 2
         while candidate in existing or self.session_logs_dir(candidate).exists():

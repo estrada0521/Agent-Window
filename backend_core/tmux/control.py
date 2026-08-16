@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import os
 import shutil
 import signal
@@ -161,7 +160,7 @@ def append_session_lifecycle_entry(session_name: str, action: str) -> None:
 def _copy_agent_doc(repo_root: Path, workspace: str) -> None:
     src = repo_root / "docs" / "AGENT.md"
     if not src.is_file():
-        return
+        raise SessionControlError(f"missing agent doc: {src}")
     dest_dir = Path(workspace) / "docs"
     dest = dest_dir / "AGENT.md"
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -179,8 +178,13 @@ def _chat_listener_pids(chat_port: int) -> list[int]:
             timeout=1,
             check=False,
         )
-    except (OSError, subprocess.TimeoutExpired):
-        return []
+    except subprocess.TimeoutExpired as exc:
+        raise SessionControlError(f"lsof timed out for port {chat_port}") from exc
+    except OSError as exc:
+        raise SessionControlError(f"lsof failed for port {chat_port}: {exc}") from exc
+    if result.returncode not in (0, 1):
+        detail = (result.stderr or result.stdout or "").strip() or f"lsof exited {result.returncode}"
+        raise SessionControlError(f"lsof failed for port {chat_port}: {detail}")
     return [int(line.strip()) for line in (result.stdout or "").splitlines() if line.strip().isdigit()]
 
 
@@ -211,7 +215,10 @@ def stop_chat_server(repo_root: Path | str, session_name: str) -> tuple[bool, st
     if not name:
         return False, "session_name is required"
     chat_port = int(resolve_chat_port(repo_root, name))
-    pids = _chat_listener_pids(chat_port)
+    try:
+        pids = _chat_listener_pids(chat_port)
+    except SessionControlError as exc:
+        return False, str(exc)
     if not pids:
         return True, ""
     detail = _signal_chat_pids(pids, signal.SIGTERM)
@@ -248,7 +255,7 @@ def _start_agent(
     _set_env(prefix, session_name, "AGENT_WINDOW_AGENT_NAME", instance_name)
     shell = os.environ.get("SHELL") or "/bin/zsh"
     if not os.path.isfile(shell) or not os.access(shell, os.X_OK):
-        shell = "/bin/bash"
+        raise SessionControlError(f"shell is not executable: {shell}")
     result = _run(
         prefix,
         ["respawn-pane", "-k", "-t", pane_id, "-c", workspace, shell, "-lc", command],
@@ -258,7 +265,7 @@ def _start_agent(
         raise SessionControlError(detail)
 
 
-def _prepare_instances(repo_root: Path, requested: list[str], *, strict: bool) -> list[str]:
+def _prepare_instances(repo_root: Path, requested: list[str]) -> list[str]:
     bases: list[str] = []
     for raw in requested:
         base = _base_agent(raw)
@@ -269,14 +276,9 @@ def _prepare_instances(repo_root: Path, requested: list[str], *, strict: bool) -
         return []
     kept: list[str] = []
     for base in bases:
-        if resolve_agent_executable(repo_root, base):
-            kept.append(base)
-            continue
-        if strict:
+        if not resolve_agent_executable(repo_root, base):
             raise SessionControlError(f"Required command not found for {base}")
-        logging.warning("skipping %s: CLI is not installed", base)
-    if requested and not kept:
-        raise SessionControlError("no launchable agents")
+        kept.append(base)
     return _instance_names(kept)
 
 
@@ -305,7 +307,6 @@ def create_session(
     instances = _prepare_instances(
         root,
         [str(item).strip() for item in (agents or []) if str(item).strip()],
-        strict=os.environ.get("AGENT_WINDOW_STRICT_AGENT_CLIS") == "1",
     )
 
     if fresh:
