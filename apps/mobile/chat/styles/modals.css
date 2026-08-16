@@ -5,13 +5,32 @@
       --bottom-sheet-top-gradient-rgb: var(--pane-trace-body-bg-channels);
     }
 
-    #paneTracePanel .mobile-floating-sheet-panel {
+    .shell>.hub-page-header>#paneTracePanel {
+      bottom: -6px;
+      height: calc(100dvh + 6px);
+      min-height: calc(100dvh + 6px);
+      max-height: none;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .shell>.hub-page-header>#paneTracePanel.open {
+      pointer-events: auto;
+    }
+
+    #paneTracePanel .mobile-bottom-sheet-panel {
       margin-bottom: -2px;
       padding-bottom: 2px;
     }
 
-    html[data-theme="light"] #paneTracePanel .mobile-bottom-sheet-button,
-    html[data-theme="light"] #paneTracePanel .mobile-floating-sheet-button {
+    #paneTracePanel .pane-trace-sheet-content .hub-main-menu-stack {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    html[data-theme="light"] #paneTracePanel .mobile-bottom-sheet-button {
       background:
         var(--liquid-glass-dark-sheen),
         rgba(var(--bg-rgb), var(--liquid-glass-dark-fill-opacity));
@@ -19,8 +38,7 @@
       box-shadow: var(--liquid-glass-dark-sm-shadow);
     }
 
-    html[data-theme="light"] #paneTracePanel .mobile-bottom-sheet-button:active,
-    html[data-theme="light"] #paneTracePanel .mobile-floating-sheet-button:active {
+    html[data-theme="light"] #paneTracePanel .mobile-bottom-sheet-button:active {
       background:
         var(--liquid-glass-dark-sheen-active),
         rgba(var(--bg-rgb), var(--liquid-glass-dark-fill-opacity-active));

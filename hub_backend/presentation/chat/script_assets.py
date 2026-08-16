@@ -30,9 +30,9 @@ CHAT_HEADER_ACTIONS_HTML = """
 </select>
 """
 CHAT_HEADER_PANELS_HTML = """
-<div class="hub-page-menu-panel" id="gitBranchPanel" hidden></div>
-<div class="hub-page-menu-panel" id="repoPanel" hidden></div>
-<div class="hub-page-menu-panel" id="paneTracePanel" hidden>
+<div class="hub-page-menu-panel mobile-sheet-overlay" id="gitBranchPanel" hidden></div>
+<div class="hub-page-menu-panel mobile-sheet-overlay" id="repoPanel" hidden></div>
+<div class="hub-page-menu-panel mobile-sheet-overlay" id="paneTracePanel" hidden>
   <div class="hub-main-menu-stack">
     <div id="paneViewer" class="pane-viewer" hidden>
       <div class="git-commit-detail-body pane-viewer-detail-body">
