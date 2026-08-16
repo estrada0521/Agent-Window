@@ -483,7 +483,7 @@ __CHAT_INCLUDE:panes/header-menu.js__
 __CHAT_INCLUDE:panes/right-pane.js__
 __CHAT_INCLUDE:composer/runtime.js__
 __CHAT_INCLUDE:../../../shared/chat/attachments/file-runtime.js__
-__CHAT_INCLUDE:composer/commands.js__
+__CHAT_INCLUDE:../../../shared/chat/composer/commands.js__
 __CHAT_INCLUDE:../../../shared/chat/thinking.js__
 __CHAT_INCLUDE:runtime/agent-status.js__
 __CHAT_INCLUDE:../../../shared/chat/touch-interaction.js__

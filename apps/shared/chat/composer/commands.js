@@ -180,7 +180,51 @@
         btn.innerHTML = copyIcon;
       }, 1500);
     };
-    document.getElementById("messages").addEventListener("click", (e) => {
+    const messagesEl = document.getElementById("messages");
+    if (document.documentElement.dataset.mobile !== "1") {
+      let activeHoverCopyBody = null;
+      let hoverCopyBody = null;
+      let hoverCopyRect = null;
+      const clearHoverCopyBody = () => {
+        if (activeHoverCopyBody) {
+          activeHoverCopyBody.classList.remove("is-hover-copy-hotspot");
+        }
+        activeHoverCopyBody = null;
+        hoverCopyBody = null;
+        hoverCopyRect = null;
+      };
+      messagesEl.addEventListener("pointermove", (e) => {
+        const bodyRow = e.target.closest(".message-row .message-body-row");
+        if (!bodyRow) {
+          clearHoverCopyBody();
+          return;
+        }
+        if (hoverCopyBody !== bodyRow) {
+          hoverCopyBody = bodyRow;
+          hoverCopyRect = bodyRow.getBoundingClientRect();
+        }
+        const rect = hoverCopyRect;
+        if (!rect?.width) {
+          clearHoverCopyBody();
+          return;
+        }
+        const inHotspot = e.clientX >= rect.left + rect.width * (2 / 3);
+        if (!inHotspot) {
+          if (activeHoverCopyBody === bodyRow) clearHoverCopyBody();
+          return;
+        }
+        if (activeHoverCopyBody === bodyRow) return;
+        if (activeHoverCopyBody && activeHoverCopyBody !== bodyRow) {
+          activeHoverCopyBody.classList.remove("is-hover-copy-hotspot");
+        }
+        activeHoverCopyBody = bodyRow;
+        bodyRow.classList.add("is-hover-copy-hotspot");
+      });
+      messagesEl.addEventListener("pointerleave", clearHoverCopyBody);
+      timeline?.addEventListener("scroll", clearHoverCopyBody, { passive: true });
+      window.addEventListener("resize", clearHoverCopyBody, { passive: true });
+    }
+    messagesEl.addEventListener("click", (e) => {
       const metaBtn = e.target.closest(".message-meta-below button, .user-message-meta button, .message-meta-below .meta-agent, .user-message-meta .meta-agent");
       if (metaBtn) {
         const row = metaBtn.closest("article.message-row");
@@ -200,6 +244,10 @@
         if (path) {
           e.preventDefault();
           e.stopPropagation();
+          if (document.documentElement.dataset.mobile !== "1" && anyLink.dataset.fileLinkOpen === "editor") {
+            void openFileInEditor(path, lineFromLinkAnchor(anyLink));
+            return;
+          }
           void openFileSurface(path, extFromPath(path), anyLink, e, lineFromLinkAnchor(anyLink));
           return;
         }
@@ -249,3 +297,15 @@
         markCopied(btn);
       }).catch(() => {});
     });
+    if (document.documentElement.dataset.mobile !== "1") {
+      messagesEl.addEventListener("auxclick", (e) => {
+        if (e.button !== 1) return;
+        const anyLink = e.target.closest("a[href]");
+        if (!anyLink) return;
+        const href = anyLink.getAttribute("href");
+        if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
+        e.preventDefault();
+        e.stopPropagation();
+        window.open(href, "_blank", "noopener,noreferrer");
+      });
+    }
