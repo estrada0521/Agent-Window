@@ -433,10 +433,17 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
 </body>
 </html>"""
 
-_HUB_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "shared" / "hub" / "templates"
-_HUB_SETTINGS_TEMPLATE = _expand_hub_template_includes((_HUB_TEMPLATE_DIR / "settings.html").read_text(), _HUB_TEMPLATE_DIR)
+_HUB_SHARED_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "shared" / "hub" / "templates"
+_HUB_DESKTOP_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "desktop" / "web" / "hub"
+_HUB_MOBILE_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "mobile" / "hub"
+_HUB_SETTINGS_TEMPLATE = _expand_hub_template_includes(
+    (_HUB_DESKTOP_TEMPLATE_DIR / "settings.html").read_text(),
+    [_HUB_DESKTOP_TEMPLATE_DIR, _HUB_SHARED_TEMPLATE_DIR],
+)
 _hub_pages = _build_hub_html_pages_impl(
-    template_dir=_HUB_TEMPLATE_DIR,
+    desktop_template_dir=_HUB_DESKTOP_TEMPLATE_DIR,
+    mobile_template_dir=_HUB_MOBILE_TEMPLATE_DIR,
+    shared_template_dir=_HUB_SHARED_TEMPLATE_DIR,
     pwa_hub_manifest_url=_PWA_HUB_MANIFEST_URL,
     pwa_icon_192_url=_PWA_ICON_192_URL,
     pwa_apple_touch_icon_url=_PWA_APPLE_TOUCH_ICON_URL,
