@@ -8,6 +8,7 @@ import re
 import time
 
 from native_log_sync.agents._shared.path_state import (
+    _normalized_native_log_path,
     advance_read_progress,
     read_progress_start,
 )
@@ -54,6 +55,11 @@ def _strip_cursor_internal_notes(text: str) -> str:
 def _extract_cursor_sync_display_text(entry: dict) -> str:
     role = entry.get("role", "")
     if role == "assistant":
+        # A text block alongside a tool_use is mid-turn narration/reasoning,
+        # not a message to the user; only a turn with no further tool calls
+        # is an actual reply.
+        if not _cursor_assistant_message_has_no_tool_use(entry):
+            return ""
         msg_obj = entry.get("message") if isinstance(entry, dict) else {}
         if not isinstance(msg_obj, dict):
             return ""
@@ -83,6 +89,94 @@ def _extract_cursor_sync_display_text(entry: dict) -> str:
     return ""
 
 
+def _cursor_display_for_sync(entry: dict) -> str:
+    display = _extract_cursor_sync_display_text(entry)
+    if not display:
+        return ""
+    return normalize_cursor_plaintext_for_index(display) or ""
+
+
+def last_synced_cursor_display(index_path: str, transcript_path: str) -> str | None:
+    key = _normalized_native_log_path(transcript_path)
+    if not key or not os.path.exists(index_path):
+        return None
+    last: str | None = None
+    with open(index_path, "r", encoding="utf-8") as handle:
+        for raw in handle:
+            line = raw.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            path = entry.get("native_log_path")
+            if not isinstance(path, str) or _normalized_native_log_path(path) != key:
+                continue
+            message = entry.get("message")
+            if isinstance(message, str) and message:
+                last = message
+    return last
+
+
+def resume_offset_after_display(transcript_path: str, display: str) -> int | None:
+    if not display:
+        return None
+    with open(transcript_path, "r", encoding="utf-8") as handle:
+        while True:
+            line = handle.readline()
+            if not line:
+                return None
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                entry = json.loads(stripped)
+            except json.JSONDecodeError:
+                continue
+            if _cursor_display_for_sync(entry) == display:
+                return handle.tell()
+
+
+def _read_cursor_transcript_batch(transcript_path: str, start: int) -> tuple[list[tuple[int, dict]], int]:
+    """Read complete JSONL rows from `start`. If `start` is mid-line (Cursor
+    extended the last row after we snapshotted file size), skip to the next
+    newline instead of decoding from the middle of a UTF-8 character.
+    Incomplete trailing rows are left unread so the next sync can pick them up.
+    """
+    batch: list[tuple[int, dict]] = []
+    with open(transcript_path, "rb") as handle:
+        if start > 0:
+            handle.seek(max(start - 1, 0))
+            prev = handle.read(1)
+            if prev != b"\n":
+                handle.readline()
+        consumed = handle.tell()
+        while True:
+            line_start = handle.tell()
+            raw = handle.readline()
+            if not raw:
+                break
+            if not raw.endswith(b"\n"):
+                break
+            try:
+                line = raw.decode("utf-8").strip()
+            except UnicodeDecodeError:
+                consumed = handle.tell()
+                continue
+            if not line:
+                consumed = handle.tell()
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                consumed = handle.tell()
+                continue
+            batch.append((line_start, entry))
+            consumed = handle.tell()
+    return batch, consumed
+
+
 def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None) -> None:
     try:
         transcript_path = str(native_log_path or "").strip()
@@ -93,38 +187,28 @@ def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None)
         file_size = os.path.getsize(transcript_path)
         start = read_progress_start(self._native_log_progress, transcript_path, file_size)
         if start is None:
-            logging.error(
-                "Cursor native log %s shrank below the synced position; skipping this sync", transcript_path
-            )
-            return
+            anchor = last_synced_cursor_display(str(self.index_path), transcript_path)
+            if not anchor:
+                logging.error(
+                    "Cursor native log %s shrank below the synced position; no last synced message",
+                    transcript_path,
+                )
+                return
+            start = resume_offset_after_display(transcript_path, anchor)
+            if start is None:
+                logging.error(
+                    "Cursor native log %s shrank below the synced position; last synced message not found",
+                    transcript_path,
+                )
+                return
         if start >= file_size:
             return
 
-        batch: list[tuple[int, dict]] = []
-        with open(transcript_path, "r", encoding="utf-8") as f:
-            f.seek(start)
-            while True:
-                line_start = f.tell()
-                line = f.readline()
-                if not line:
-                    break
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entry = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                batch.append((line_start, entry))
-
+        batch, consumed = _read_cursor_transcript_batch(transcript_path, start)
         turn_done_seen = _cursor_turn_done_from_batch(batch)
 
         for line_start, entry in batch:
-            display = _extract_cursor_sync_display_text(entry)
-            if not display:
-                continue
-
-            display = normalize_cursor_plaintext_for_index(display)
+            display = _cursor_display_for_sync(entry)
             if not display:
                 continue
 
@@ -153,7 +237,7 @@ def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None)
         if turn_done_seen:
             self._mark_idle(agent)
 
-        advance_read_progress(self._native_log_progress, transcript_path, file_size)
+        advance_read_progress(self._native_log_progress, transcript_path, consumed)
         self.save_sync_state()
     except Exception as exc:
         logging.error("Failed to sync Cursor message for %s: %s", agent, exc)
