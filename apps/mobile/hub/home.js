@@ -18,6 +18,7 @@
     let _awaitingChatRenderReady = false;
     let _hubReadyTimeoutTimer = 0;
     let _chatOverlayCloseTimer = 0;
+    let refreshMobSessions = null;
     const _chatUrlCache = new Map();
     const _chatUrlInflight = new Map();
     const HUB_CHAT_FRAME_KEY = "hub_chat_frame";
@@ -204,9 +205,26 @@
       if (normalizedName) return normalizedName;
       return String(openHref || "").trim();
     }
+    function hubFrameChatUrl(chatUrl, sessionName) {
+      const raw = String(chatUrl || "").trim();
+      const name = String(sessionName || "").trim();
+      if (!raw) return raw;
+      try {
+        const next = new URL(raw, window.location.href);
+        if (next.origin === window.location.origin) {
+          return next.pathname + next.search + next.hash;
+        }
+      } catch (_) {}
+      if (!name) return raw;
+      let search = "";
+      try {
+        search = new URL(raw, window.location.href).search;
+      } catch (_) {}
+      return `/session/${encodeURIComponent(name)}/${search || ""}`;
+    }
     function cacheChatUrl(name, url) {
       const normalizedName = String(name || "").trim();
-      const normalizedUrl = String(url || "").trim();
+      const normalizedUrl = hubFrameChatUrl(url, normalizedName);
       if (!normalizedName || !normalizedUrl) return;
       if (_chatUrlCache.has(normalizedName)) _chatUrlCache.delete(normalizedName);
       _chatUrlCache.set(normalizedName, { url: normalizedUrl, ts: Date.now() });
@@ -225,7 +243,7 @@
         _chatUrlCache.delete(normalizedName);
         return "";
       }
-      const cachedUrl = String(item.url || "").trim();
+      const cachedUrl = hubFrameChatUrl(item.url, normalizedName);
       if (cachedUrl) cacheChatUrl(normalizedName, cachedUrl);
       return cachedUrl;
     }
@@ -242,7 +260,7 @@
     }
     function primeChatFrame(sessionName, chatUrl) {
       const normalizedName = String(sessionName || "").trim();
-      const normalizedUrl = String(chatUrl || "").trim();
+      const normalizedUrl = hubFrameChatUrl(chatUrl, normalizedName);
       if (!normalizedName || !normalizedUrl) return;
       const reusingSameSrc = _chatFrame.src === normalizedUrl;
       _prewarmedSessionName = normalizedName;
@@ -289,8 +307,9 @@
           if (!res.ok || !chatUrl) {
             throw new Error((data && data.error) || "open session failed");
           }
-          if (normalizedName) cacheChatUrl(normalizedName, chatUrl);
-          return chatUrl;
+          const framedUrl = hubFrameChatUrl(chatUrl, normalizedName);
+          if (normalizedName) cacheChatUrl(normalizedName, framedUrl);
+          return framedUrl;
         })
         .finally(() => {
           if (cacheKey) _chatUrlInflight.delete(cacheKey);
@@ -443,7 +462,7 @@
       if (_hubLaunchShellPending) showLaunchShell();
       startChatRenderWait();
       const normalizedName = String(name || "").trim();
-      const normalizedUrl = String(url || "").trim();
+      const normalizedUrl = hubFrameChatUrl(url, normalizedName);
       cacheChatUrl(normalizedName, normalizedUrl);
       clearPersistedChatFrameState();
       _currentChatUrl = normalizedUrl;
@@ -548,6 +567,9 @@
       resolveChatUrl(openHref, name)
         .then((chatUrl) => {
           openChatInFrame(chatUrl, name);
+          if (/^\/revive-session(?:[/?]|$)/.test(String(openHref || ""))) {
+            if (refreshMobSessions) void refreshMobSessions(true);
+          }
         })
         .catch((err) => {
           failHubReadyWait(err?.message || "open session failed");
@@ -607,7 +629,7 @@
         return;
       }
       if (e.data && e.data.type === "session-messages-changed" && e.source === _chatFrame.contentWindow) {
-        void refresh();
+        if (refreshMobSessions) void refreshMobSessions(true);
         return;
       }
       if (e.data && e.data.type === "hub-mobile-system-theme-observed") {
@@ -818,7 +840,7 @@
         }
       };
       kickstartRememberedSessionPrewarm();
-      window._mobRefresh = refresh;
+      refreshMobSessions = refresh;
       refresh();
     })();
 

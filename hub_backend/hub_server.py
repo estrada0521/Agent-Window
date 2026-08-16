@@ -765,8 +765,10 @@ class Handler(BaseHTTPRequestHandler):
         headers["X-Forwarded-Prefix"] = f"/session/{session_name}"
         req = Request(upstream, data=body, method=method, headers=headers)
         ctx = ssl._create_unverified_context() if chat_scheme == "https" else None
+        accept = (self.headers.get("Accept") or "").lower()
+        timeout = None if (suffix.endswith("-events") or "text/event-stream" in accept) else 30
         try:
-            resp = urlopen(req, context=ctx, timeout=30) if ctx is not None else urlopen(req, timeout=30)
+            resp = urlopen(req, context=ctx, timeout=timeout) if ctx is not None else urlopen(req, timeout=timeout)
             status = resp.status
             resp_headers = resp.headers
         except HTTPError as exc:
