@@ -231,8 +231,6 @@
         if (!res.ok || !data.ok) {
           throw new Error(data.error || `failed to ${adding ? "add" : "remove"} agent`);
         }
-        await new Promise((resolve) => setTimeout(resolve, adding ? 700 : 500));
-        await refreshSessionState();
         setStatus(`${selected} ${adding ? "added" : "removed"}`);
         setTimeout(() => setStatus(""), 1800);
       } catch (err) {
