@@ -3,18 +3,19 @@
     const withChatBase = (path) => {
       const raw = String(path || "");
       if (!CHAT_BASE_PATH || !raw.startsWith("/") || raw.startsWith("//")) return raw;
+      if (raw === CHAT_BASE_PATH || raw.startsWith(`${CHAT_BASE_PATH}/`)) return raw;
       return `${CHAT_BASE_PATH}${raw}`;
     };
     if (CHAT_BASE_PATH) {
       const __origFetch = window.fetch.bind(window);
       window.fetch = (input, init) => {
         if (typeof input === "string" && input.startsWith("/") && !input.startsWith("//")) {
-          return __origFetch(`${CHAT_BASE_PATH}${input}`, init);
+          return __origFetch(withChatBase(input), init);
         }
         if (input instanceof Request) {
           const url = input.url || "";
           if (url.startsWith(window.location.origin + "/")) {
-            const nextUrl = `${window.location.origin}${CHAT_BASE_PATH}${url.slice(window.location.origin.length)}`;
+            const nextUrl = `${window.location.origin}${withChatBase(url.slice(window.location.origin.length))}`;
             return __origFetch(new Request(nextUrl, input), init);
           }
         }
