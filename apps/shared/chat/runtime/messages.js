@@ -15,7 +15,7 @@
       const msgId = String(entry?.msg_id || "");
       return (msgId && publicFullEntryCache.get(msgId)) || entry;
     };
-__CHAT_INCLUDE:../../../shared/chat/messages-data.js__
+__CHAT_INCLUDE:../messages-data.js__
     const buildMsgHTML = (entry, options = {}) => {
       try {
         const safeEntry = (entry && typeof entry === "object") ? entry : {};
@@ -44,14 +44,16 @@ __CHAT_INCLUDE:../../../shared/chat/messages-data.js__
         const isCollapsibleMessage = isCollapsibleMessageSender(safeEntry.sender);
         const hideMetaRow = !!options.hideMetaRow;
         const metaHiddenClass = hideMetaRow ? " meta-hidden" : "";
-        const copyButtonHtml = `<button class="copy-btn" type="button" title="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
+        const isMobile = document.documentElement.dataset.mobile === "1";
+        const copyButtonHtml = (extraClass = "") => `<button class="copy-btn${extraClass}" type="button" title="コピー" aria-label="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
         const messageBodyHtml = `<div class="md-body">${renderMarkdown(body)}</div>`;
         const senderHtml = metaAgentLabel(safeEntry.sender || "unknown", "sender-label", "right", { iconOnly: true });
         const metaRowHtml = hideMetaRow
           ? ""
           : (isUser
-            ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${targetMeta}${copyButtonHtml}</div>`
-            : `<div class="message-meta-below">${senderHtml}<span class="arrow">to</span>${targetMeta}${copyButtonHtml}</div>`);
+            ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${targetMeta}${isMobile ? copyButtonHtml() : ""}</div>`
+            : `<div class="message-meta-below">${senderHtml}<span class="arrow">to</span>${targetMeta}${isMobile ? copyButtonHtml() : ""}</div>`);
+        const hoverCopyHtml = isMobile ? "" : `<div class="message-hover-copy-zone">${copyButtonHtml(" message-hover-copy")}</div>`;
         const deferredBodyHtml = safeEntry.deferred_body && msgId
           ? `<div class="message-deferred-actions"><button class="message-deferred-btn" type="button" data-load-full-message="${msgId}">Load full message</button></div>`
           : "";
@@ -62,6 +64,7 @@ __CHAT_INCLUDE:../../../shared/chat/messages-data.js__
         <div class="message-body-row">
           ${messageBodyHtml}
           ${isCollapsibleMessage ? `<button class="message-collapse-toggle" type="button" hidden>More</button>` : ""}
+          ${hoverCopyHtml}
         </div>
         ${deferredBodyHtml}
         ${isUser ? `<div class="user-message-divider" aria-hidden="true"></div>` : ``}
@@ -100,7 +103,7 @@ __CHAT_INCLUDE:../../../shared/chat/messages-data.js__
     };
     const updateSessionUI = (data, displayEntries) => {
       currentSessionName = data.session || "";
-      repoSession = currentSessionName;
+      if (document.documentElement.dataset.mobile === "1") repoSession = currentSessionName;
       sessionActive = !!data.active;
       const resolvedTargets = normalizedSessionTargets(data.targets);
       const picker = document.getElementById("targetPicker");
@@ -124,7 +127,11 @@ __CHAT_INCLUDE:../../../shared/chat/messages-data.js__
         setStatus("archived session is read-only");
       }
       maybeAutoOpenComposer();
-      updateRepoPanel(displayEntries);
+      if (document.documentElement.dataset.mobile === "1") {
+        updateRepoPanel(displayEntries);
+      } else {
+        dpOnSessionSummaryPinReload();
+      }
     };
     const scheduleAnimateInCleanup = (row, opts = {}) => {
       const streamBody = !!opts.streamBody;

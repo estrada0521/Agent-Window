@@ -468,8 +468,8 @@ __CHAT_INCLUDE:../../../shared/chat/target-selection.js__
       }, { passive: true });
     }
 
-__CHAT_INCLUDE:runtime/messages.js__
-__CHAT_INCLUDE:transcript/render.js__
+__CHAT_INCLUDE:../../../shared/chat/runtime/messages.js__
+__CHAT_INCLUDE:../../../shared/chat/transcript/render.js__
 __CHAT_INCLUDE:../../../shared/chat/transcript/actions.js__
 __CHAT_INCLUDE:runtime/hub-navigation.js__
 __CHAT_INCLUDE:panes/header-menu.js__
