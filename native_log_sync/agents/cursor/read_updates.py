@@ -96,6 +96,36 @@ def _cursor_display_for_sync(entry: dict) -> str:
     return normalize_cursor_plaintext_for_index(display) or ""
 
 
+def last_synced_cursor_offset(log_path: str, transcript_path: str) -> int | None:
+    key = _normalized_native_log_path(transcript_path)
+    if not key or not os.path.exists(log_path):
+        return None
+    last: int | None = None
+    with open(log_path, "r", encoding="utf-8") as handle:
+        for raw in handle:
+            line = raw.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            path = entry.get("native_log_path")
+            if not isinstance(path, str) or _normalized_native_log_path(path) != key:
+                continue
+            off = entry.get("native_log_offset")
+            if isinstance(off, int) and (last is None or off > last):
+                last = off
+    return last
+
+
+def _offset_after_native_line(transcript_path: str, line_start: int) -> int:
+    with open(transcript_path, "rb") as handle:
+        handle.seek(max(line_start, 0))
+        handle.readline()
+        return handle.tell()
+
+
 def last_synced_cursor_display(log_path: str, transcript_path: str) -> str | None:
     key = _normalized_native_log_path(transcript_path)
     if not key or not os.path.exists(log_path):
@@ -186,6 +216,12 @@ def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None)
         self._native_log_current_paths[agent] = transcript_path
         file_size = os.path.getsize(transcript_path)
         start = read_progress_start(self._native_log_progress, transcript_path, file_size)
+        if start == 0:
+            last_off = last_synced_cursor_offset(str(self.log_path), transcript_path)
+            if last_off is not None:
+                start = _offset_after_native_line(transcript_path, last_off)
+                advance_read_progress(self._native_log_progress, transcript_path, start)
+                self.save_sync_state()
         if start is None:
             anchor = last_synced_cursor_display(str(self.log_path), transcript_path)
             if not anchor:
