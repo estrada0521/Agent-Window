@@ -1,7 +1,8 @@
 use objc2_app_kit::{NSView, NSWindow, NSWindowButton};
 use std::collections::HashMap;
 use std::path::Path;
-use std::process::{Child, Command};
+use std::io::Read;
+use std::process::{Child, Command, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 use tauri::menu::{MenuBuilder, NativeIcon, SubmenuBuilder};
@@ -224,6 +225,31 @@ fn show_hub_error(window: &tauri::WebviewWindow, message: &str) {
     let _ = window.show();
 }
 
+fn login_shell_path() -> Result<String, String> {
+    let mut child = Command::new("/bin/zsh")
+        .args(["-lic", "print -r -- $PATH"])
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|err| format!("Failed to read shell PATH: {err}"))?;
+    if !wait_for_child_success(&mut child, Duration::from_secs(5)) {
+        return Err("Failed to read shell PATH.".into());
+    }
+    let mut stdout = String::new();
+    let Some(mut pipe) = child.stdout.take() else {
+        return Err("Failed to read shell PATH.".into());
+    };
+    if pipe.read_to_string(&mut stdout).is_err() {
+        return Err("Failed to read shell PATH.".into());
+    }
+    let path = stdout.trim();
+    if path.is_empty() || path.contains('\n') {
+        return Err("Failed to read shell PATH.".into());
+    }
+    Ok(path.to_string())
+}
+
 fn configured_hub_port() -> u16 {
     std::env::var("AGENT_INDEX_HUB_PORT")
         .ok()
@@ -395,11 +421,14 @@ fn main() {
             eprintln!("[app] repo = {}", repo_root);
 
             let hub_port = configured_hub_port();
+            let path = match login_shell_path() {
+                Ok(value) => value,
+                Err(message) => {
+                    show_hub_error(&window, &message);
+                    return Ok(());
+                }
+            };
             let home = std::env::var("HOME").unwrap_or_default();
-            let path = format!(
-                "/opt/homebrew/bin:/opt/homebrew/sbin:{}/.cargo/bin:{}/.nvm/versions/node/v24.14.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
-                home, home,
-            );
             let cert_dir = std::env::var("AGENT_WINDOW_CERTS_DIR")
                 .unwrap_or_else(|_| format!("{}/.agent-window/state/certs", home));
             let cert_file = format!("{}/cert.pem", cert_dir);
