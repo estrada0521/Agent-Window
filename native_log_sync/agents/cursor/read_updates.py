@@ -124,7 +124,12 @@ def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None)
 
     self._native_log_current_paths[agent] = transcript_path
     file_size = os.path.getsize(transcript_path)
-    start = read_progress_start(self._native_log_progress, transcript_path, file_size)
+    start = read_progress_start(
+        self._native_log_progress,
+        transcript_path,
+        file_size,
+        on_shrink="wait",
+    )
     if start == 0:
         last_off = last_synced_cursor_offset(str(self.log_path), transcript_path)
         if last_off is not None:

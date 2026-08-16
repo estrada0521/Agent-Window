@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import time
 from pathlib import Path
@@ -106,7 +107,10 @@ class NativeLogSyncer:
         bindings = _refresh_bindings_impl(self, pane_requests, replace_all=replace_all, reason=reason)
         from native_log_sync.dispatch import sync_agent
         for binding in bindings:
-            sync_agent(self, binding.agent, binding.path)
+            try:
+                sync_agent(self, binding.agent, binding.path)
+            except Exception:
+                logging.exception("native log sync failed for %s", binding.agent)
         return [
             {
                 "agent": item.agent,
