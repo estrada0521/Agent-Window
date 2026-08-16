@@ -880,50 +880,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
         return;
       }
       if (action === "reloadChat") {
-        if (reloadInFlight) return;
-        reloadInFlight = true;
-        armLaunchShellGate(15000);
-        const btn = sourceNode;
-        if (btn) {
-          btn.disabled = true;
-          btn.classList.add("restarting");
-          btn.textContent = "Restarting…";
-        }
-        const previousInstance = currentServerInstance;
-        const resetReloadState = (errMsg) => {
-          reloadInFlight = false;
-          releaseLaunchShellGate();
-          if (btn) {
-            btn.disabled = false;
-            btn.classList.remove("restarting");
-            btn.textContent = "Reload";
-          }
-          if (errMsg) {
-            setStatus(errMsg, true);
-            setTimeout(() => setStatus(""), 3000);
-          }
-        };
-        await Promise.allSettled([purgeChatAssetCaches(), refreshChatServiceWorkers()]);
-        let res;
-        try {
-          res = await fetch("/new-chat", { method: "POST", cache: "no-store" });
-        } catch (err) {
-          resetReloadState(err?.message || "reload failed");
-          return;
-        }
-        if (!res.ok) {
-          let errMsg = "reload failed";
-          try { const d = await res.json(); errMsg = d?.error || errMsg; } catch (_) {}
-          resetReloadState(errMsg);
-          return;
-        }
-        const ready = await waitForChatReady(12000, previousInstance);
-        await Promise.allSettled([purgeChatAssetCaches(), refreshChatServiceWorkers()]);
-        if (!ready) {
-          resetReloadState("reload timed out");
-          return;
-        }
-        navigateToFreshChat();
+        await beginChatReload(sourceNode);
         return;
       }
       if (action === "openGitBranchMenu") {

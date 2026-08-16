@@ -40,15 +40,17 @@ def _resolve_within_root(path_value: str, *, workspace_root: str, allowed_root: 
 
 
 def _post_new_chat(handler, _parsed, ctx) -> None:
+    owns_restart = False
     try:
-        ctx["runtime"].refresh_native_log_bindings(reason="reload")
-    except Exception:
-        pass
-    ok, detail = ctx["queue_chat_restart_fn"]()
-    if not ok:
-        handler._send_json(500, {"ok": False, "error": detail})
-        return
-    handler._send_json(200, {"ok": True, "port": ctx["port"], "restarting": True, "detail": detail})
+        ok, detail, owns_restart = ctx["queue_chat_restart_fn"]()
+        handler._send_json(
+            200 if ok else 503,
+            {"ok": ok, "error": "" if ok else detail},
+        )
+        handler.wfile.flush()
+    finally:
+        if owns_restart:
+            ctx["release_chat_restart_fn"]()
 
 
 def _post_add_agent(handler, _parsed, ctx) -> None:

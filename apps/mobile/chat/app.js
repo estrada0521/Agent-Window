@@ -65,7 +65,6 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     let refreshInFlight = false;
     let pendingRefreshOptions = null;
     let reloadInFlight = false;
-    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const AGENT_ICON_DATA = __ICON_DATA_URIS__;
     const SERVER_INSTANCE_SEED = "__SERVER_INSTANCE__";
     let currentServerInstance = SERVER_INSTANCE_SEED;
