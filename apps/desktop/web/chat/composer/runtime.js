@@ -212,8 +212,6 @@
     };
     messageInput.addEventListener("input", updateSendBtnVisibility);
 
-    delete document.documentElement.dataset.mobile;
-
     messageInput.addEventListener("compositionstart", () => {
       composing = true;
     });
