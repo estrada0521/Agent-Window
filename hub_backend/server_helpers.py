@@ -18,17 +18,19 @@ from hub_backend.color_constants import DARK_BG
 _HUB_INCLUDE_RE = re.compile(r"__HUB_INCLUDE:([A-Za-z0-9_./-]+)__")
 
 
-def _expand_hub_template_includes(text: str, template_dir: Path) -> str:
-    root = template_dir.resolve()
+def _expand_hub_template_includes(text: str, template_dirs: Path | list[Path]) -> str:
+    dirs = [template_dirs] if isinstance(template_dirs, Path) else list(template_dirs)
+    roots = [d.resolve() for d in dirs]
 
     def _replace(match: re.Match[str]) -> str:
         rel = match.group(1)
-        path = (template_dir / rel).resolve()
-        if root not in path.parents and path != root:
-            raise ValueError(f"Hub template include escapes template directory: {rel}")
-        if not path.is_file():
-            raise FileNotFoundError(f"Hub template include not found: {path}")
-        return path.read_text()
+        for root in roots:
+            path = (root / rel).resolve()
+            if root not in path.parents and path != root:
+                continue
+            if path.is_file():
+                return path.read_text()
+        raise FileNotFoundError(f"Hub template include not found in {roots}: {rel}")
 
     return _HUB_INCLUDE_RE.sub(_replace, text)
 
@@ -257,7 +259,9 @@ def error_page(message) -> str:
 
 def build_hub_html_pages(
     *,
-    template_dir: Path,
+    desktop_template_dir: Path,
+    mobile_template_dir: Path,
+    shared_template_dir: Path,
     pwa_hub_manifest_url: str,
     pwa_icon_192_url: str,
     pwa_apple_touch_icon_url: str,
@@ -272,11 +276,11 @@ def build_hub_html_pages(
             html = html.replace(f"__{agent_name.upper()}_ICON__", icon_uri)
         return html
 
-    def _render_hub_home_html(filename: str, *, header_html: str) -> str:
-        template_path = template_dir / filename
+    def _render_hub_home_html(own_dir: Path, *, header_html: str) -> str:
+        template_path = own_dir / "home.html"
         if not template_path.is_file():
             raise FileNotFoundError(f"Hub home template not found: {template_path}")
-        html = _expand_hub_template_includes(template_path.read_text(), template_dir)
+        html = _expand_hub_template_includes(template_path.read_text(), [own_dir, shared_template_dir])
         html = (
             html
             .replace("__HUB_MANIFEST_URL__", pwa_hub_manifest_url)
@@ -289,9 +293,12 @@ def build_hub_html_pages(
         html = apply_hub_page_branding(html, page_title=APP_DISPLAY_NAME)
         return _replace_agent_icon_tokens(html)
 
-    hub_home_desktop_html = _render_hub_home_html("home_desktop.html", header_html=hub_header_html)
-    hub_home_mobile_html = _render_hub_home_html("home_mobile.html", header_html=hub_header_html_mobile)
-    hub_new_session_html = _expand_hub_template_includes((template_dir / "new_session.html").read_text(), template_dir)
+    hub_home_desktop_html = _render_hub_home_html(desktop_template_dir, header_html=hub_header_html)
+    hub_home_mobile_html = _render_hub_home_html(mobile_template_dir, header_html=hub_header_html_mobile)
+    hub_new_session_html = _expand_hub_template_includes(
+        (desktop_template_dir / "new_session.html").read_text(),
+        [desktop_template_dir, shared_template_dir],
+    )
     hub_new_session_html = (
         hub_new_session_html
         .replace("__HUB_MANIFEST_URL__", pwa_hub_manifest_url)
