@@ -383,7 +383,6 @@ def render_file_view(
             '};'
             'window.__agentIndexApplyHtmlPreviewMode=setMode;'
             'window.addEventListener("message",(event)=>{'
-            'if(event.origin!==window.location.origin)return;'
             'const data=event.data||{};'
             'if(data.type==="agent-index-file-preview-mode"){setMode(data.mode);return;}'
             'if(data.type==="agent-preview-text-size"){const sz=Number(data.size);if(Number.isFinite(sz)&&sz>=8){document.documentElement.style.setProperty("--message-text-size",sz+"px");document.documentElement.style.setProperty("--message-text-line-height",(sz+9)+"px");}}'
@@ -433,7 +432,7 @@ def render_file_view(
             '</style></head>'
             f'<body>{header.format(icon="🌐")}<div class="html-preview-shell">{tabs_markup}'
             '<div class="html-preview-panels">'
-            f'<div class="html-preview-panel html-preview-panel-web" data-preview-panel="web"><iframe src="{raw_url}" title="{html_escape(filename)}" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe></div>'
+            f'<div class="html-preview-panel html-preview-panel-web" data-preview-panel="web"><iframe src="{raw_url}" title="{html_escape(filename)}"></iframe></div>'
             f'<div class="html-preview-panel html-preview-panel-text active" data-preview-panel="text"><div class="html-preview-text-wrap" id="htmlTextViewContainer"><div class="html-preview-gutter" id="htmlTextGutter"><div class="html-preview-gutter-inner" id="htmlTextGutterInner"><table class="html-preview-gutter-table" role="presentation"><tbody id="htmlTextGutterBody">{gutter_rows}</tbody></table></div></div><div class="html-preview-text-scroll" id="htmlTextCodeScroll"><table class="html-preview-text-table" role="presentation"><tbody id="htmlTextCodeBody">{code_rows}</tbody></table></div></div></div>'
             f'</div><script>{toggle_js}</script></div></body></html>'
         )
