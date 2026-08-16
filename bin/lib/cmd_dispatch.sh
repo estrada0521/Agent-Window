@@ -291,14 +291,6 @@ PYEOF
       echo "No tmux pane recorded for instance: $canonical" >&2
       exit 1
     fi
-    user_panes_csv="$(session_user_pane_value "$SESSION_NAME")"
-    if [[ -n "$user_panes_csv" ]]; then
-      IFS=',' read -ra _up_ids <<< "$user_panes_csv"
-      for _up in "${_up_ids[@]}"; do
-        [[ -n "$_up" && "$_up" == "$pane_id" ]] && { echo "Refusing to remove a user/terminal pane" >&2; exit 1; }
-      done
-    fi
-
     if [[ "${TMUX_PANE:-}" == "$pane_id" ]] && [[ "${AGENT_WINDOW_REMOVE_HELPER:-0}" != "1" ]]; then
       if command -v nohup >/dev/null 2>&1; then
         nohup env \

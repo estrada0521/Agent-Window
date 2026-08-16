@@ -43,7 +43,7 @@
       notifyHubMessagesChanged();
     };
     const refresh = async (options = {}) => {
-      const refreshOptions = (!hasInitialRefreshHydrated && followMode)
+      const refreshOptions = !hasInitialRefreshHydrated
         ? mergeRefreshOptions(options, { forceScroll: true })
         : options;
       if (refreshInFlight) {

@@ -51,7 +51,6 @@
       --chrome-icon-gap: 2px;
       --bg-rgb: __DARK_BG_CHANNELS__;
       --bg: rgb(var(--bg-rgb));
-      --desktop-file-pane-width: 0px;
       --desktop-right-panel-reserved-width: 0px;
       --panel: rgba(__GRAY_SURFACE_CHANNELS__, 0.98);
       --panel-strong: rgba(__GRAY_PANEL_STRONG_CHANNELS__, 0.99);

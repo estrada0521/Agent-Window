@@ -2,35 +2,17 @@
     let composing = false;
     const messageInput = document.getElementById("message");
     const sendBtn = document.querySelector(".send-btn");
-    let keepComposerPlusMenuOnBlur = false;
-    composerPlusMenu?.addEventListener("pointerdown", () => {
-      keepComposerPlusMenuOnBlur = true;
-      setTimeout(() => { keepComposerPlusMenuOnBlur = false; }, 240);
-    });
-    composerPlusMenu?.addEventListener("touchstart", () => {
-      keepComposerPlusMenuOnBlur = true;
-      setTimeout(() => { keepComposerPlusMenuOnBlur = false; }, 240);
-    }, { passive: true });
-    const closePlusMenu = () => {
-      if (composerPlusMenu && composerPlusMenu.open) {
-        composerPlusMenu.classList.add("closing");
-        setTimeout(() => {
-          composerPlusMenu.open = false;
-          composerPlusMenu.classList.remove("closing");
-        }, 160);
-      }
-    };
-    const plusToggle = composerPlusMenu?.querySelector(".composer-plus-toggle");
-    plusToggle?.addEventListener("mousedown", (e) => {
+    const attachBtn = document.getElementById("attachBtn");
+    attachBtn?.addEventListener("mousedown", (e) => {
       e.preventDefault();
-      if (!isMobileComposer) plusToggle.classList.add("pressing");
+      if (!isMobileComposer) attachBtn.classList.add("pressing");
     });
     if (!isMobileComposer) {
-      const _clearPressing = () => plusToggle?.classList.remove("pressing");
-      plusToggle?.addEventListener("mouseup", _clearPressing);
-      plusToggle?.addEventListener("mouseleave", _clearPressing);
-      plusToggle?.addEventListener("touchend", _clearPressing, { passive: true });
-      plusToggle?.addEventListener("touchcancel", _clearPressing, { passive: true });
+      const _clearPressing = () => attachBtn?.classList.remove("pressing");
+      attachBtn?.addEventListener("mouseup", _clearPressing);
+      attachBtn?.addEventListener("mouseleave", _clearPressing);
+      attachBtn?.addEventListener("touchend", _clearPressing, { passive: true });
+      attachBtn?.addEventListener("touchcancel", _clearPressing, { passive: true });
     }
     if (isMobileComposer) {
       let composerBlurCloseTimer = null;
@@ -55,7 +37,6 @@
       });
     }
 
-    const attachBtn = document.getElementById("attachBtn");
     const attachInput = document.getElementById("attachInput");
     const attachPreviewRow = document.getElementById("attachPreviewRow");
     const composerShellEl = document.querySelector(".composer-shell");
@@ -149,7 +130,6 @@ __CHAT_INCLUDE:../upload-attached-files.js__
           await uploadAttachedFiles(forwardedFiles);
         });
         attachBtn.addEventListener("click", () => {
-          closePlusMenu();
           attachInput.click();
         });
         attachInput.addEventListener("change", async () => {
@@ -159,7 +139,6 @@ __CHAT_INCLUDE:../upload-attached-files.js__
         });
       } else {
         attachBtn.addEventListener("click", () => {
-          closePlusMenu();
           closeComposerOverlay();
           attachInput.click();
         });

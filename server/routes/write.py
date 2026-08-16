@@ -157,17 +157,6 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         pass
 
 
-def _post_log_system(handler, _parsed, ctx) -> None:
-    data, err = _read_json_body(handler)
-    if err:
-        handler._send_json(400, {"ok": False, "error": err})
-        return
-    msg = (data.get("message") or "").strip()
-    if not msg:
-        handler._send_json(400, {"ok": False, "error": "message required"})
-        return
-    ctx["append_system_entry_fn"](msg)
-    handler._send_json(200, {"ok": True})
 def _post_upload(handler, _parsed, ctx) -> None:
     content_type = handler.headers.get("Content-Type", "application/octet-stream")
     raw_name = handler.headers.get("X-Filename", "upload.bin") or "upload.bin"
@@ -475,7 +464,6 @@ _POST_ROUTES = {
     "/new-chat": _post_new_chat,
     "/add-agent": _post_add_agent,
     "/remove-agent": _post_remove_agent,
-    "/log-system": _post_log_system,
     "/upload": _post_upload,
     "/delete-upload": _post_delete_upload,
     "/open-terminal": _post_open_terminal,

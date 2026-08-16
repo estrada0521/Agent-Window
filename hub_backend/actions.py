@@ -36,7 +36,7 @@ def get_open_session(handler, parsed, ctx) -> None:
         handler.headers.get("Host", "127.0.0.1"),
         session_name,
         chat_port,
-        f"/?follow=1&ts={int(time.time() * 1000)}",
+        f"/?ts={int(time.time() * 1000)}",
     )
     if fmt == "json":
         handler._send_json(200, {"ok": True, "chat_url": location, "session_record": resolved.get("session_record", {})})
@@ -77,7 +77,7 @@ def get_revive_session(handler, parsed, ctx) -> None:
         handler.headers.get("Host", "127.0.0.1"),
         session_name,
         chat_port,
-        f"/?follow=1&ts={int(time.time() * 1000)}",
+        f"/?ts={int(time.time() * 1000)}",
     )
     if fmt == "json":
         query = ctx["active_session_records_query_fn"]()

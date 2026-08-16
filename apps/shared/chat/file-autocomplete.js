@@ -7,7 +7,6 @@
         fileDrop.classList.remove("closing");
         fileDrop.style.display = "block";
         fileDrop.classList.add("visible");
-        closePlusMenu();
       }
     };
     const _basenameCache = new Map();

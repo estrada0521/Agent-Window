@@ -166,7 +166,6 @@ class HubSessionApi:
                         str(index_path),
                         "2000",
                         session_name,
-                        "1",
                         str(chat_port),
                         str(self.ctx.hub.agent_send_path),
                         workspace,

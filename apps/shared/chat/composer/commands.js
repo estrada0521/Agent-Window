@@ -137,11 +137,8 @@
     messageInput.addEventListener("blur", (event) => {
       document.body.classList.remove("composing");
       const nextTarget = event.relatedTarget;
-      const keepPlusMenuOpen = keepComposerPlusMenuOnBlur
-        || !!(nextTarget && composerPlusMenu && composerPlusMenu.contains(nextTarget));
       const keepAutocompleteMenusOpen = _keepAutocompleteMenuOnBlur
         || !!(nextTarget && (fileDrop.contains(nextTarget) || cmdDrop.contains(nextTarget)));
-      if (!keepPlusMenuOpen) closePlusMenu();
       if (!keepAutocompleteMenusOpen) {
         setTimeout(closeDrop, 150);
         setTimeout(closeCmdDrop, 150);

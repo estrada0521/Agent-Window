@@ -278,7 +278,6 @@ def build_session_record(
         "status": status,
         "chat_port": runtime.chat_port_for_session(name),
         "session_path": f"/session/{session_slug}/",
-        "follow_path": f"/session/{session_slug}/?follow=1",
         "log_dir": str(primary_index.parent if primary_index else ""),
         "index_path": str(primary_index) if primary_index else "",
         "chat_count": sum(count_nonempty_lines(path) for path in resolved_paths),

@@ -27,7 +27,6 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
         });
     };
     const _pageParams = new URLSearchParams(window.location.search);
-    const followMode = _pageParams.get("follow") === "1";
     const launchShellMode = _pageParams.get("launch_shell") === "1";
     const composerAutoOpenRequested = _pageParams.get("compose") === "1";
     const DESKTOP_FILE_PANE_MIN_VIEWPORT_PX = 961;
@@ -436,7 +435,7 @@ __CHAT_INCLUDE:target-picker.js__
       });
     };
     document.addEventListener("pointerdown", (e) => {
-      const toggle = e.target.closest(".hub-page-menu-btn, .composer-plus-toggle, .quick-action");
+      const toggle = e.target.closest(".hub-page-menu-btn, .composer-attach-btn, .quick-action");
       if (toggle) {
         if (toggle.classList.contains("animating")) {
           e.preventDefault();
@@ -498,14 +497,9 @@ __CHAT_INCLUDE:../../../shared/chat/runtime/settings-sync.js__
     let _desktopRightPanelResizeState = null;
     let _dpSplitDragging = false;
     let _dpSplitGitHeightPx = null;
-    const dpDesktopFilePaneWidthPx = () => {
-      const raw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--desktop-file-pane-width"));
-      return Number.isFinite(raw) ? Math.max(0, Math.round(raw)) : 0;
-    };
     const dpClampPanelWidthPx = (value) => {
       const viewportWidth = Math.max(0, window.innerWidth || 0);
-      const filePaneWidth = dpDesktopFilePaneWidthPx();
-      const availableWidth = Math.max(0, viewportWidth - filePaneWidth);
+      const availableWidth = viewportWidth;
       const maxWidth = Math.max(DP_PANEL_MIN_WIDTH, Math.min(DP_PANEL_MAX_WIDTH, availableWidth - 360));
       const numeric = Number(value);
       if (!Number.isFinite(numeric)) {
@@ -899,10 +893,8 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     dpOnSessionSummaryPinReload({ force: true });
     dpApplyPanelWidth();
     refresh({ forceScroll: true });
-    if (followMode) {
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-          void refresh();
-        }
-      });
-    }
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        void refresh();
+      }
+    });

@@ -238,7 +238,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
         fileDrop.classList.remove("closing");
         fileDrop.style.display = "block";
         fileDrop.classList.add("visible");
-        closePlusMenu();
       }
     };
 

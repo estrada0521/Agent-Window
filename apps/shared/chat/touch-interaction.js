@@ -3,7 +3,7 @@
     const touchBlurSelector = [
       ".quick-action",
       ".hub-page-menu-btn",
-      ".composer-plus-toggle",
+      ".composer-attach-btn",
       ".target-chip",
       ".copy-btn",
       ".file-card",

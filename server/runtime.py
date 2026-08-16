@@ -81,7 +81,6 @@ class ChatRuntime:
         index_path: Path | str,
         limit: int,
         session_name: str,
-        follow_mode: bool,
         port: int,
         agent_send_path: Path | str,
         workspace: str,
@@ -95,7 +94,6 @@ class ChatRuntime:
         self.index_path = Path(index_path)
         self.limit = int(limit) if int(limit) > 0 else 50
         self.session_name = session_name
-        self.follow_mode = bool(follow_mode)
         self.port = int(port)
         self.agent_send_path = str(agent_send_path)
         self.workspace = workspace
@@ -245,7 +243,6 @@ class ChatRuntime:
             "port": self.port,
             "hub_port": self.hub_port,
             "session_path": f"/session/{session_slug}/",
-            "follow_path": f"/session/{session_slug}/?follow=1",
         }
 
     def notify_session_state_changed(
@@ -288,7 +285,6 @@ class ChatRuntime:
             before_msg_id,
             bool(light_mode),
             bool(self.session_is_active),
-            bool(self.follow_mode),
         )
         with self._payload_cache_lock:
             cached = self._payload_cache.get(cache_key)
@@ -312,7 +308,6 @@ class ChatRuntime:
                 self._payload_targets_cache = (now, list(targets))
         payload_doc = build_payload_document(
             meta=meta,
-            follow_mode=self.follow_mode,
             targets=targets,
             has_older=has_older,
             light_mode=bool(light_mode),
