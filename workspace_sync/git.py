@@ -13,6 +13,7 @@ _runtime = None
 _BRANCH_OVERVIEW_CACHE_TTL_SECONDS = 5.0
 _branch_overview_cache_lock = threading.Lock()
 _branch_overview_cache: dict[tuple[str, int, int], tuple[float, dict]] = {}
+_commit_list_cache: dict[tuple[str, str, int, int], dict] = {}
 
 
 def configure(*, workspace: str, repo_root: Path, runtime) -> None:
@@ -26,10 +27,114 @@ def configure(*, workspace: str, repo_root: Path, runtime) -> None:
 def _clear_branch_overview_cache() -> None:
     with _branch_overview_cache_lock:
         _branch_overview_cache.clear()
+        _commit_list_cache.clear()
 
 
 def invalidate_branch_overview_cache() -> None:
-    _clear_branch_overview_cache()
+    with _branch_overview_cache_lock:
+        _branch_overview_cache.clear()
+
+
+def git_ignored_rel_paths(workspace: str, rel_paths: list[str]) -> set[str]:
+    paths = [str(rel or "").replace("\\", "/").strip("/") for rel in rel_paths if str(rel or "").strip()]
+    if not paths:
+        return set()
+    result = subprocess.run(
+        ["git", "-C", workspace, "check-ignore", "-z", "--stdin"],
+        input="".join(f"{path}\0" for path in paths),
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if result.returncode not in (0, 1):
+        raise RuntimeError((result.stderr or result.stdout or "git check-ignore failed").strip())
+    return {item.replace("\\", "/").strip("/") for item in (result.stdout or "").split("\0") if item.strip()}
+
+
+def _read_commit_list(_run, *, branch: str, offset: int, limit: int) -> dict:
+    total_commits = 0
+    total_res = _run("rev-list", "--count", "HEAD")
+    if total_res.returncode == 0:
+        try:
+            total_commits = max(0, int((total_res.stdout or "").strip() or "0"))
+        except Exception:
+            total_commits = 0
+    upstream_res = _run("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}")
+    upstream = (upstream_res.stdout or "").strip() if upstream_res.returncode == 0 else ""
+    ahead_behind = ""
+    if upstream:
+        count_res = _run("rev-list", "--left-right", "--count", f"{branch}...{upstream}")
+        if count_res.returncode == 0:
+            parts = (count_res.stdout or "").strip().split()
+            if len(parts) == 2:
+                ahead_behind = f"ahead {parts[0]} / behind {parts[1]}"
+    log_res = _run(
+        "log",
+        f"--skip={offset}",
+        f"--max-count={limit}",
+        "--format=%h\x1f%aI\x1f%s\x1f%D",
+    )
+    recent_commits = []
+    if log_res.returncode == 0:
+        for line in (log_res.stdout or "").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split("\x1f")
+            if len(parts) < 3:
+                continue
+            h, ts, subj = parts[0], parts[1], parts[2]
+            hhmm = ""
+            try:
+                t_part = ts.split("T")[1] if "T" in ts else ""
+                if t_part:
+                    hhmm = t_part[:5]
+            except Exception:
+                pass
+            refs = parts[3].strip() if len(parts) > 3 else ""
+            recent_commits.append({
+                "hash": h,
+                "time": hhmm,
+                "subject": subj,
+                "is_origin_main": "origin/main" in refs,
+            })
+    stat_res = _run("log", f"--skip={offset}", f"--max-count={limit}", "--format=%h", "--shortstat")
+    commit_stats = {}
+    if stat_res.returncode == 0:
+        current_hash = None
+        for line in (stat_res.stdout or "").splitlines():
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if len(stripped) <= 12 and all(c in "0123456789abcdef" for c in stripped):
+                current_hash = stripped
+            elif current_hash and "changed" in stripped:
+                ins = dels = changed_paths = 0
+                for part in stripped.split(","):
+                    part = part.strip()
+                    files_match = re.search(r"(\d+)\s+files?\s+changed", part)
+                    if files_match:
+                        changed_paths = int(files_match.group(1))
+                        continue
+                    if "insertion" in part:
+                        ins = int(part.split()[0])
+                    elif "deletion" in part:
+                        dels = int(part.split()[0])
+                commit_stats[current_hash] = {"ins": ins, "dels": dels, "changed_paths": changed_paths}
+                current_hash = None
+    for commit in recent_commits:
+        stats = commit_stats.get(commit["hash"]) or {}
+        commit["ins"] = int(stats.get("ins", 0) or 0)
+        commit["dels"] = int(stats.get("dels", 0) or 0)
+        commit["changed_paths"] = int(stats.get("changed_paths", 0) or 0)
+    return {
+        "total_commits": total_commits,
+        "upstream": upstream,
+        "ahead_behind": ahead_behind,
+        "recent_commits": recent_commits,
+    }
 
 
 def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
@@ -93,24 +198,13 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
             if y not in {" ", "?"}:
                 unstaged.add(path)
         return staged, unstaged, untracked
+    head_res = _run("rev-parse", "HEAD")
+    head = (head_res.stdout or "").strip() if head_res.returncode == 0 else ""
     branch_res = _run("rev-parse", "--abbrev-ref", "HEAD")
     branch = (branch_res.stdout or "").strip() if branch_res.returncode == 0 else "unknown"
-    total_commits = 0
-    total_res = _run("rev-list", "--count", "HEAD")
-    if total_res.returncode == 0:
-        try:
-            total_commits = max(0, int((total_res.stdout or "").strip() or "0"))
-        except Exception:
-            total_commits = 0
-    upstream_res = _run("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}")
-    upstream = (upstream_res.stdout or "").strip() if upstream_res.returncode == 0 else ""
-    ahead_behind = ""
-    if upstream:
-        count_res = _run("rev-list", "--left-right", "--count", f"{branch}...{upstream}")
-        if count_res.returncode == 0:
-            parts = (count_res.stdout or "").strip().split()
-            if len(parts) == 2:
-                ahead_behind = f"ahead {parts[0]} / behind {parts[1]}"
+    commit_key = (str(root.resolve()), head, offset, limit)
+    with _branch_overview_cache_lock:
+        cached_commits = _commit_list_cache.get(commit_key)
     status_res = _run("status", "--short", "--branch", "--untracked-files=all")
     status_lines = []
     if status_res.returncode == 0:
@@ -161,65 +255,14 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
     else:
         worktree_added = worktree_unstaged_added + worktree_staged_added
         worktree_deleted = worktree_unstaged_deleted + worktree_staged_deleted
-    log_res = _run(
-        "log",
-        f"--skip={offset}",
-        f"--max-count={limit}",
-        "--format=%h\x1f%aI\x1f%s\x1f%D",
-    )
-    recent_commits = []
-    if log_res.returncode == 0:
-        for line in (log_res.stdout or "").splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split("\x1f")
-            if len(parts) < 3:
-                continue
-            h, ts, subj = parts[0], parts[1], parts[2]
-            hhmm = ""
-            try:
-                t_part = ts.split("T")[1] if "T" in ts else ""
-                if t_part:
-                    hhmm = t_part[:5]
-            except Exception:
-                pass
-            refs = parts[3].strip() if len(parts) > 3 else ""
-            recent_commits.append({
-                "hash": h,
-                "time": hhmm,
-                "subject": subj,
-                "is_origin_main": "origin/main" in refs,
-            })
-    stat_res = _run("log", f"--skip={offset}", f"--max-count={limit}", "--format=%h", "--shortstat")
-    commit_stats = {}
-    if stat_res.returncode == 0:
-        current_hash = None
-        for line in (stat_res.stdout or "").splitlines():
-            stripped = line.strip()
-            if not stripped:
-                continue
-            if len(stripped) <= 12 and all(c in "0123456789abcdef" for c in stripped):
-                current_hash = stripped
-            elif current_hash and "changed" in stripped:
-                ins = dels = changed_paths = 0
-                for part in stripped.split(","):
-                    part = part.strip()
-                    files_match = re.search(r"(\d+)\s+files?\s+changed", part)
-                    if files_match:
-                        changed_paths = int(files_match.group(1))
-                        continue
-                    if "insertion" in part:
-                        ins = int(part.split()[0])
-                    elif "deletion" in part:
-                        dels = int(part.split()[0])
-                commit_stats[current_hash] = {"ins": ins, "dels": dels, "changed_paths": changed_paths}
-                current_hash = None
-    for c in recent_commits:
-        s = commit_stats.get(c["hash"]) or {}
-        c["ins"] = int(s.get("ins", 0) or 0)
-        c["dels"] = int(s.get("dels", 0) or 0)
-        c["changed_paths"] = int(s.get("changed_paths", 0) or 0)
+    if cached_commits is None:
+        cached_commits = _read_commit_list(_run, branch=branch, offset=offset, limit=limit)
+        with _branch_overview_cache_lock:
+            _commit_list_cache[commit_key] = cached_commits
+    recent_commits = list(cached_commits["recent_commits"])
+    total_commits = int(cached_commits["total_commits"])
+    upstream = str(cached_commits["upstream"])
+    ahead_behind = str(cached_commits["ahead_behind"])
     next_offset = offset + len(recent_commits)
     has_more = next_offset < total_commits if total_commits else len(recent_commits) >= limit
     result = {

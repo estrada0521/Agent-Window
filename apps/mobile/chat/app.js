@@ -543,16 +543,24 @@ __CHAT_INCLUDE:../../shared/chat/runtime/settings-sync.js__
 __CHAT_INCLUDE:panes/pane-viewer.js__
     let workspaceSyncEventSource = null;
     let workspaceSyncLastSeq = 0;
+    let workspaceSyncLastGitVersion = 0;
+    let workspaceSyncLastFileVersion = 0;
     const handleWorkspaceSyncUpdate = (payload = {}) => {
       const nextSeq = Math.max(0, parseInt(payload?.seq) || 0);
       if (nextSeq && nextSeq <= workspaceSyncLastSeq) return;
       if (nextSeq) workspaceSyncLastSeq = nextSeq;
+      const nextGitVersion = parseInt(payload?.git_version);
+      const gitChanged = Number.isFinite(nextGitVersion) && nextGitVersion !== workspaceSyncLastGitVersion;
+      if (Number.isFinite(nextGitVersion)) workspaceSyncLastGitVersion = nextGitVersion;
+      const nextFileVersion = parseInt(payload?.file_version);
+      const fileChanged = Number.isFinite(nextFileVersion) && nextFileVersion !== workspaceSyncLastFileVersion;
+      if (Number.isFinite(nextFileVersion)) workspaceSyncLastFileVersion = nextFileVersion;
       const repoPanelOpen = !!(repoPanel && repoPanel.classList.contains("open") && !repoPanel.hidden);
-      if (repoPanelOpen && typeof repoPanel._syncCategoryUi === "function") {
+      if (fileChanged && repoPanelOpen && typeof repoPanel._syncCategoryUi === "function") {
         repoPanel._syncCategoryUi();
       }
       const gitPanelOpen = !!(gitBranchPanel && gitBranchPanel.classList.contains("open") && !gitBranchPanel.hidden);
-      if (gitPanelOpen) {
+      if (gitChanged && gitPanelOpen) {
         void updateGitBranchPanel().catch(() => {});
       }
     };
