@@ -1,5 +1,5 @@
     const _fileExistenceCache = new Map();
-__CHAT_INCLUDE:../../../../shared/chat/file-link-parse.js__
+__CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
     const decorateLocalFileLinks = (scope = document) => {
       if (!scope?.querySelectorAll) return;
       scope.querySelectorAll(".md-body a[href]").forEach((anchor) => {
@@ -25,7 +25,7 @@ __CHAT_INCLUDE:../../../../shared/chat/file-link-parse.js__
       const raw = fromDataset || pathFromLocalHref(anchor.getAttribute("href") || "");
       return normalizeWorkspaceFilePath(raw);
     };
-__CHAT_INCLUDE:../../../../shared/chat/file-link-line.js__
+__CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
     const fileExistsOnDisk = async (path) => {
       const normalizedPath = normalizeWorkspaceFilePath(path);
       if (!normalizedPath) return false;

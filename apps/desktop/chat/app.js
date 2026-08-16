@@ -1,4 +1,4 @@
-__CHAT_INCLUDE:../../../shared/chat/base.js__
+__CHAT_INCLUDE:../../shared/chat/base.js__
     const fileViewHrefForPath = (path, { embed = false } = {}) => {
       const params = new URLSearchParams();
       params.set("path", normalizeWorkspaceFilePath(path) || String(path || "").trim());
@@ -98,7 +98,7 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
     let publicDeferredLoading = new Set();
     let publicDeferredObserver = null;
     let hasInitialRefreshHydrated = false;
-__CHAT_INCLUDE:../../../shared/chat/launch-shell-gate.js__
+__CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     if (launchShellMode) {
       armLaunchShellGate();
     }
@@ -177,7 +177,7 @@ __CHAT_INCLUDE:../../../shared/chat/launch-shell-gate.js__
           );
         }
       });
-      __CHAT_INCLUDE:../../../shared/chat/hub-safari-chrome.js__
+      __CHAT_INCLUDE:../../shared/chat/hub-safari-chrome.js__
       bumpHubIframeLayoutLock();
       window.addEventListener("resize", hubChildResizeChrome, { passive: true });
       if (window.visualViewport) {
@@ -219,7 +219,7 @@ __CHAT_INCLUDE:../../../shared/chat/launch-shell-gate.js__
       }
     };
 __CHAT_INCLUDE:attachments/file-open.js__
-__CHAT_INCLUDE:../../../shared/chat/composer-overlay.js__
+__CHAT_INCLUDE:../../shared/chat/composer-overlay.js__
     const updateScrollBtnPos = () => {
       const shell = document.querySelector(".shell");
       shell.style.setProperty("--floating-btn-bottom", "160px");
@@ -235,7 +235,7 @@ __CHAT_INCLUDE:../../../shared/chat/composer-overlay.js__
       ignoredClasses: ["no-math"],
       throwOnError: false
     };
-__CHAT_INCLUDE:../../../shared/chat/transcript/rich-rendering.js__
+__CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
     let selectedTargets = [];
     let sendLocked = false;
     let sessionActive = true;
@@ -443,7 +443,7 @@ __CHAT_INCLUDE:target-picker.js__
         flashHeaderToggle(toggle);
       }
     });
-__CHAT_INCLUDE:../../../shared/chat/target-selection.js__
+__CHAT_INCLUDE:../../shared/chat/target-selection.js__
     timeline.addEventListener("scroll", updateScrollBtn, { passive: true });
     timeline.addEventListener("scroll", requestCenteredMessageRowUpdate, { passive: true });
     window.addEventListener("resize", requestCenteredMessageRowUpdate);
@@ -458,19 +458,19 @@ __CHAT_INCLUDE:../../../shared/chat/target-selection.js__
       }, { passive: true });
     }
 
-__CHAT_INCLUDE:../../../shared/chat/runtime/messages.js__
-__CHAT_INCLUDE:../../../shared/chat/transcript/render.js__
-__CHAT_INCLUDE:../../../shared/chat/transcript/actions.js__
+__CHAT_INCLUDE:../../shared/chat/runtime/messages.js__
+__CHAT_INCLUDE:../../shared/chat/transcript/render.js__
+__CHAT_INCLUDE:../../shared/chat/transcript/actions.js__
 __CHAT_INCLUDE:runtime/hub-navigation.js__
 __CHAT_INCLUDE:panes/header-menu.js__
 __CHAT_INCLUDE:panes/right-pane.js__
 __CHAT_INCLUDE:composer/runtime.js__
-__CHAT_INCLUDE:../../../shared/chat/attachments/file-runtime.js__
-__CHAT_INCLUDE:../../../shared/chat/composer/commands.js__
-__CHAT_INCLUDE:../../../shared/chat/thinking.js__
-__CHAT_INCLUDE:../../../shared/chat/runtime/agent-status.js__
-__CHAT_INCLUDE:../../../shared/chat/touch-interaction.js__
-__CHAT_INCLUDE:../../../shared/chat/runtime/settings-sync.js__
+__CHAT_INCLUDE:../../shared/chat/attachments/file-runtime.js__
+__CHAT_INCLUDE:../../shared/chat/composer/commands.js__
+__CHAT_INCLUDE:../../shared/chat/thinking.js__
+__CHAT_INCLUDE:../../shared/chat/runtime/agent-status.js__
+__CHAT_INCLUDE:../../shared/chat/touch-interaction.js__
+__CHAT_INCLUDE:../../shared/chat/runtime/settings-sync.js__
     const desktopRightPanel = document.getElementById("desktopRightPanel");
     const desktopRightPanelResizer = document.getElementById("desktopRightPanelResizer");
     const dpSplitPanel = document.getElementById("dpSplitPanel");
@@ -887,7 +887,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         void syncChatSettingsDefaults();
       }
     };
-    __CHAT_INCLUDE:../../../shared/chat/workspace-sync-events.js__
+    __CHAT_INCLUDE:../../shared/chat/workspace-sync-events.js__
     dpOnSessionSummaryPinReload({ force: true });
     dpApplyPanelWidth();
     refresh({ forceScroll: true });

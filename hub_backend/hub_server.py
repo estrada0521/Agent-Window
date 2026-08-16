@@ -399,7 +399,7 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
 </html>"""
 
 _HUB_SHARED_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "shared" / "hub" / "templates"
-_HUB_DESKTOP_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "desktop" / "web" / "hub"
+_HUB_DESKTOP_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "desktop" / "hub"
 _HUB_MOBILE_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "mobile" / "hub"
 _HUB_SETTINGS_TEMPLATE = _expand_hub_template_includes(
     (_HUB_DESKTOP_TEMPLATE_DIR / "settings.html").read_text(),

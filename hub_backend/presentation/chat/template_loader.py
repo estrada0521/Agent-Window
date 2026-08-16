@@ -7,7 +7,7 @@ _APPS_ROOT = Path(__file__).resolve().parents[3] / "apps"
 _REPO_ROOT = _APPS_ROOT.parent
 _DEBUG_INCLUDES_ROOT = _REPO_ROOT / "debug"
 _CHAT_TEMPLATE_DIRS = {
-    "desktop": _APPS_ROOT / "desktop" / "web" / "chat",
+    "desktop": _APPS_ROOT / "desktop" / "chat",
     "mobile": _APPS_ROOT / "mobile" / "chat",
 }
 
