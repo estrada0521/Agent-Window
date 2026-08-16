@@ -901,10 +901,6 @@
       overflow: hidden;
     }
 
-    .git-commit-detail-body>.git-commit-diff-wrap-stacked {
-      border-top: none;
-    }
-
     .git-commit-detail-body>.git-commit-file-wrap {
       border-top: none;
       padding: 4px 0 10px;

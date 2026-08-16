@@ -187,7 +187,6 @@
     async function runForwardAction(target, { sourceNode = null, keepComposerOpen = false, keepHeaderOpen = false } = {}) {
       const action = String(target || "");
       if (!action) return;
-      if (keepComposerOpen) flashComposerAction(action);
       if (action === "esc" || action === "restart" || action === "resume" || action === "ctrlc" || action === "enter") {
         if (!keepComposerOpen) closeQuickMore();
         await postShortcutCommand({ command_id: action, arg: "" });
@@ -264,7 +263,7 @@
         await runForwardAction(target, { sourceNode: node, keepComposerOpen, keepHeaderOpen });
       });
     });
-    document.querySelectorAll(".quick-action:not(.quick-more-toggle):not(.plus-submenu-toggle):not([data-forward-action]):not(#attachBtn)").forEach((node) => {
+        document.querySelectorAll(".quick-action:not(.quick-more-toggle):not([data-forward-action]):not(#attachBtn)").forEach((node) => {
       node.addEventListener("click", async () => {
         closeQuickMore();
         const sc = node.dataset.shortcut || "";

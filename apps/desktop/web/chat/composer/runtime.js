@@ -1,9 +1,4 @@
     let keepComposerPlusMenuOnBlur = false;
-    composerPlusMenu && composerPlusMenu.addEventListener("toggle", () => {
-      if (!composerPlusMenu.open) {
-        composerPlusMenu.querySelectorAll(".plus-submenu").forEach(sub => { sub.open = false; });
-      }
-    });
     composerPlusMenu?.addEventListener("pointerdown", () => {
       keepComposerPlusMenuOnBlur = true;
       setTimeout(() => { keepComposerPlusMenuOnBlur = false; }, 240);
@@ -12,25 +7,6 @@
       keepComposerPlusMenuOnBlur = true;
       setTimeout(() => { keepComposerPlusMenuOnBlur = false; }, 240);
     }, { passive: true });
-    composerPlusMenu?.addEventListener("click", (event) => {
-      const keepFocusTarget = event.target.closest(".plus-submenu-toggle, .composer-plus-panel .quick-action");
-      if (!keepFocusTarget) return;
-      if (event.target.closest("#attachBtn")) return;
-      requestAnimationFrame(() => {
-        if (document.activeElement !== messageInput) {
-          focusMessageInputWithoutScroll();
-        }
-      });
-    });
-    composerPlusMenu && composerPlusMenu.querySelectorAll(".plus-submenu").forEach(sub => {
-      sub.addEventListener("toggle", () => {
-        if (sub.open) {
-          composerPlusMenu.querySelectorAll(".plus-submenu").forEach(other => {
-            if (other !== sub) other.open = false;
-          });
-        }
-      });
-    });
     const closePlusMenu = () => {
       if (composerPlusMenu && composerPlusMenu.open) {
         composerPlusMenu.classList.add("closing");
@@ -50,9 +26,6 @@
     plusToggle?.addEventListener("mouseleave", _clearPressing);
     plusToggle?.addEventListener("touchend", _clearPressing, { passive: true });
     plusToggle?.addEventListener("touchcancel", _clearPressing, { passive: true });
-    composerPlusMenu?.addEventListener("toggle", () => {
-      if (composerPlusMenu.open) closeDrop();
-    });
     let _fileImportInProgress = false;
     let _fileImportClearTimer = null;
 
