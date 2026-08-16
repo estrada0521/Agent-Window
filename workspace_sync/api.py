@@ -119,9 +119,6 @@ class WorkspaceSyncApi:
     def reveal_in_finder(self, rel: str):
         return self.file_runtime.reveal_in_finder(rel)
 
-    def open_diff_in_editor(self, rel: str, *, commit_hash: str = ""):
-        return self.file_runtime.open_diff_in_editor(rel, commit_hash=commit_hash)
-
     def git_branch_overview(self, *, offset=0, limit=50, force_refresh: bool = False):
         return workspace_git.git_branch_overview(offset=offset, limit=limit, force_refresh=force_refresh)
 

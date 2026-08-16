@@ -86,6 +86,29 @@
         anchor.after(target);
       });
     };
+    const applyWrittenOrderedListNumbers = (root, source) => {
+      if (!root || typeof marked?.lexer !== "function") return;
+      const values = [];
+      const walk = (tokens) => {
+        for (const token of tokens || []) {
+          if (token.type === "list" && token.ordered) {
+            for (const item of token.items || []) {
+              const match = String(item.raw || "").match(/^\s*(\d{1,9})[.)]/);
+              values.push(match ? match[1] : "");
+              walk(item.tokens);
+            }
+          } else if (token.tokens) {
+            walk(token.tokens);
+          }
+        }
+      };
+      walk(marked.lexer(String(source ?? ""), { breaks: true, gfm: true }));
+      const items = root.querySelectorAll("ol > li");
+      if (!values.length || values.length !== items.length) return;
+      items.forEach((item, index) => {
+        if (values[index]) item.setAttribute("value", values[index]);
+      });
+    };
     const renderMarkdown = (text) => {
       if (typeof marked === "undefined") {
         throw new Error("marked is unavailable");
@@ -121,6 +144,7 @@
 
       const tempDiv = document.createElement("div");
       tempDiv.innerHTML = html;
+      applyWrittenOrderedListNumbers(tempDiv, processedText);
       tempDiv.querySelectorAll(".MATH_SAFE_BLOCK").forEach(span => {
         const block = mathBlocks.find(b => b.id === span.dataset.id);
         if (block) {

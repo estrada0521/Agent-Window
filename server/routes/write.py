@@ -374,16 +374,11 @@ def _post_open_file_in_editor(handler, _parsed, ctx) -> None:
         return
     rel = (data.get("path") or "").strip()
     line = int(data.get("line", 0) or 0)
-    diff_mode = bool(data.get("diff"))
-    commit_hash = str(data.get("commit_hash") or "").strip()
     if not rel:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
     try:
-        if diff_mode:
-            result = ctx["workspace_sync_api"].open_diff_in_editor(rel, commit_hash=commit_hash)
-        else:
-            result = ctx["workspace_sync_api"].open_in_editor(rel, line=line)
+        result = ctx["workspace_sync_api"].open_in_editor(rel, line=line)
     except PermissionError:
         handler._send_json(403, {"ok": False, "error": "forbidden"})
         return
@@ -454,8 +449,6 @@ def _post_send(handler, _parsed, ctx) -> None:
     status, body = ctx["send_message_fn"](
         data.get("target", ""),
         data.get("message", ""),
-        silent=bool(data.get("silent", False)),
-        raw=bool(data.get("raw", False)),
     )
     handler._send_json(status, body)
 

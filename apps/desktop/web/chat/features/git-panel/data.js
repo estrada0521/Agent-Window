@@ -131,22 +131,18 @@
       dpUpdateLoadMoreUi();
       dpEnsureGitObserver();
     };
-    const dpPostOpenFileInEditor = async (rawPath, line = 0, { diff = false, commitHash = "" } = {}) => {
+    const dpPostOpenFileInEditor = async (rawPath, line = 0) => {
       const normalizedPath = normalizeWorkspaceFilePath(rawPath);
       if (!normalizedPath) return;
       const normalizedLine = Number.isFinite(line) && line > 0 ? Math.floor(line) : 0;
       const payload = { path: normalizedPath, line: normalizedLine };
-      if (diff) {
-        payload.diff = true;
-        payload.commit_hash = String(commitHash || "").trim();
-      }
       const tryPost = () => fetch("/open-file-in-editor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const okMsg = diff ? `Diff opened: ${normalizedPath}` : `Opened ${normalizedPath}`;
-      const errMsg = diff ? "Failed to open diff in editor." : "Failed to open file in the default app.";
+      const okMsg = `Opened ${normalizedPath}`;
+      const errMsg = "Failed to open file in the default app.";
       try {
         let res = await tryPost();
         if (!res.ok && (res.status >= 500 || res.status === 429)) {

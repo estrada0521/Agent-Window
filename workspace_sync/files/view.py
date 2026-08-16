@@ -16,7 +16,6 @@ from hub_backend.presentation.chat.script_assets import (
 )
 from backend_core.access.settings import load_hub_settings
 from server.font_style import font_family_stack
-from .preview_3d import render_3d_preview
 from .view_scripts import (
     build_gutter_scroll_sync_js,
     build_progressive_loader_js,
@@ -337,17 +336,6 @@ def render_file_view(
             f'<canvas id="blobCanvas" width="200" height="200"></canvas>'
             f'<audio id="audioPreview" controls src="{raw_url}"></audio></div></div>'
             f'<script>{audio_js}</script></body></html>'
-        )
-    if ext in runtime.MODEL_3D_EXTS:
-        return render_3d_preview(
-            ext=ext,
-            filename=filename,
-            header_html=header.format(icon="🧊"),
-            raw_url=raw_url,
-            base_css=base_css,
-            embed_bg=embed_bg,
-            pane_muted=pane_muted,
-            pane_line=pane_line,
         )
     is_text_like = ext in runtime.EDITABLE_TEXT_EXTS or runtime._is_probably_text_file(full)
     if ext in {".html", ".htm"}:
@@ -722,6 +710,29 @@ processedText = processedText.replace(/\\x00CODE:(code-placeholder-\\d+)\\x00/g,
 }});
 const tempDiv = document.createElement("div");
 tempDiv.innerHTML = marked.parse(processedText, {{ breaks: true, gfm: true }});
+if (typeof marked.lexer === "function") {{
+  const values = [];
+  const walk = (tokens) => {{
+    for (const token of tokens || []) {{
+      if (token.type === "list" && token.ordered) {{
+        for (const item of token.items || []) {{
+          const match = String(item.raw || "").match(/^\\s*(\\d{{1,9}})[.)]/);
+          values.push(match ? match[1] : "");
+          walk(item.tokens);
+        }}
+      }} else if (token.tokens) {{
+        walk(token.tokens);
+      }}
+    }}
+  }};
+  walk(marked.lexer(processedText, {{ breaks: true, gfm: true }}));
+  const items = tempDiv.querySelectorAll("ol > li");
+  if (values.length && values.length === items.length) {{
+    items.forEach((item, index) => {{
+      if (values[index]) item.setAttribute("value", values[index]);
+    }});
+  }}
+}}
 tempDiv.querySelectorAll(".MATH_SAFE_BLOCK").forEach((span) => {{
   const block = mathBlocks.find((entry) => entry.id === span.dataset.id);
   if (block) span.replaceWith(document.createTextNode(block.content));

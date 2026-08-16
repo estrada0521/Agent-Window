@@ -13,7 +13,6 @@ from native_log_sync.agents._shared.path_state import (
 from native_log_sync.io.state_paths import (
     canonical_native_log_sync_internal_path,
     canonical_native_log_sync_state_path,
-    legacy_agent_index_sync_state_path,
 )
 
 _INTERNAL_KEYS = ("agent_first_seen_ts", "native_log_progress")
@@ -35,32 +34,8 @@ def _read_json_locked(path) -> dict:
 
 def load_sync_state(runtime) -> dict:
     canonical = canonical_native_log_sync_state_path(runtime.index_path.parent)
-    legacy = legacy_agent_index_sync_state_path(runtime.index_path.parent)
     internal = canonical_native_log_sync_internal_path(runtime.index_path.parent)
-
-    if canonical.exists():
-        read_path = canonical
-    elif legacy.exists():
-        read_path = legacy
-    else:
-        read_path = None
-
-    data: dict = _read_json_locked(read_path) if read_path is not None else {}
-
-    if read_path == legacy:
-        try:
-            legacy.rename(canonical)
-        except OSError:
-            try:
-                canonical.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-                legacy.unlink()
-            except OSError:
-                pass
-    elif legacy.exists():
-        try:
-            legacy.unlink()
-        except OSError:
-            pass
+    data: dict = _read_json_locked(canonical) if canonical.exists() else {}
 
     # Internal bookkeeping (read-progress ledger, first-seen timestamps) lives
     # in its own file, not the workspace-mirrored one. Once it exists it is

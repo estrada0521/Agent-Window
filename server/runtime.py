@@ -451,16 +451,12 @@ class ChatRuntime:
         self,
         target: str,
         message: str,
-        silent: bool = False,
-        raw: bool = False,
         append_entry: bool = True,
     ) -> tuple[int, dict]:
         return _send_message_impl(
             self,
             target,
             message,
-            silent=silent,
-            raw=raw,
             append_entry=append_entry,
         )
 
