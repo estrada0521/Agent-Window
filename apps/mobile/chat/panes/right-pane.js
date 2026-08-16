@@ -337,8 +337,6 @@
       }
       syncHeaderMenuFocus();
     }
-    const isLocalHubHostname = (host = String(location.hostname || "")) =>
-      host === "127.0.0.1" || host === "localhost" || host === "[::1]" || host.startsWith("192.168.") || host.startsWith("10.") || /^172\\.(1[6-9]|2\\d|3[01])\\./.test(host);
     let repoSession = "";
     let repoPanelRenderSig = "";
     let repoPanelUpdateSeq = 0;

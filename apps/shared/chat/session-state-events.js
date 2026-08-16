@@ -13,7 +13,9 @@
         }
         if (projections.length) void refreshSessionState(projections);
       });
-      es.onerror = () => {};
+      es.onerror = () => {
+        setStatus("session events disconnected", true);
+      };
     };
     startSessionStateEvents();
     void refreshSessionState();

@@ -79,9 +79,6 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
       window.visualViewport.addEventListener("resize", scheduleSyncFromVV);
       window.visualViewport.addEventListener("scroll", scheduleSyncFromVV);
     }
-    const reconnectingStatusText = "reconnecting...";
-    let messageRefreshFailures = 0;
-    let reconnectStatusVisible = false;
     let refreshInFlight = false;
     let pendingRefreshOptions = null;
     let reloadInFlight = false;
@@ -105,7 +102,7 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
     let hasInitialRefreshHydrated = false;
 __CHAT_INCLUDE:../../../shared/chat/launch-shell-gate.js__
     if (launchShellMode) {
-      armLaunchShellGate(10000);
+      armLaunchShellGate();
     }
     let _pollScrollLockTop = null;
     let _pollScrollAnchor = null;

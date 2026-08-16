@@ -1,6 +1,6 @@
 "use strict";
 
-const SW_VERSION = "20260419-1";
+const SW_VERSION = "20260816-1";
 const scopeUrl = new URL(self.registration.scope);
 const scopePath = scopeUrl.pathname.replace(/\/$/, "");
 const scriptPath = new URL(self.location.href).pathname;
@@ -12,7 +12,6 @@ const cacheName = `${cacheNamespace}-${SW_VERSION}`;
 const staticPaths = isHubScope
   ? [
       `${prefix}/hub.webmanifest`,
-      `${prefix}/hub-launch-shell.html`,
       `${prefix}/pwa-icon-192.png`,
       `${prefix}/pwa-icon-512.png`,
       `${prefix}/apple-touch-icon.png`,
@@ -33,13 +32,6 @@ function shouldHandle(url) {
     path.startsWith(`${prefix}/font/`) ||
     path.startsWith(`${prefix}/icon/`)
   );
-}
-
-function isNetworkFirstAsset(url) {
-  if (isHubScope) {
-    return url.pathname === `${prefix}/hub-launch-shell.html`;
-  }
-  return false;
 }
 
 function isHubLaunchNavigation(request, url) {
@@ -90,20 +82,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (isHubLaunchNavigation(request, url)) {
-    event.respondWith((async () => {
-      const cache = await caches.open(cacheName);
-      try {
-        const freshShell = await fetch(`${prefix}/hub-launch-shell.html`, { cache: "no-store" });
-        if (freshShell && freshShell.ok) {
-          await cache.put(`${prefix}/hub-launch-shell.html`, freshShell.clone());
-          return freshShell;
-        }
-      } catch (_err) {
-      }
-      const shell = await cache.match(`${prefix}/hub-launch-shell.html`);
-      if (shell) return shell;
-      return fetch(request);
-    })());
+    event.respondWith(fetch(`${prefix}/hub-launch-shell.html`, { cache: "no-store" }));
     return;
   }
 
@@ -112,15 +91,6 @@ self.addEventListener("fetch", (event) => {
   event.respondWith((async () => {
     const cache = await caches.open(cacheName);
     const cached = await cache.match(request);
-    if (isNetworkFirstAsset(url)) {
-      try {
-        const response = await fetch(request, { cache: "no-store" });
-        return await putIfOk(cache, request, response);
-      } catch (err) {
-        if (cached) return cached;
-        throw err;
-      }
-    }
 
     if (cached) {
       event.waitUntil(
@@ -131,13 +101,7 @@ self.addEventListener("fetch", (event) => {
       return cached;
     }
 
-    try {
-      const response = await fetch(request);
-      return await putIfOk(cache, request, response);
-    } catch (err) {
-      const fallback = await cache.match(request);
-      if (fallback) return fallback;
-      throw err;
-    }
+    const response = await fetch(request);
+    return await putIfOk(cache, request, response);
   })());
 });

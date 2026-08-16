@@ -236,6 +236,7 @@ def _send_or_enqueue_message(
         "queued": True,
         "msg_id": entry["msg_id"],
         "targets": queue_targets,
+        "entry": entry,
     }
 
 

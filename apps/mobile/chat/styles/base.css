@@ -262,12 +262,12 @@
       --liquid-glass-lg-active-fill-opacity: var(--liquid-glass-dark-fill-opacity-active);
     }
 
-    html[data-launch-shell="1"],
-    html[data-launch-shell="1"] body {
+    html[data-launch-shell],
+    html[data-launch-shell] body {
       background: var(--bg);
     }
 
-    html[data-launch-shell="1"] body>.shell {
+    html[data-launch-shell] body>.shell {
       opacity: 0;
       pointer-events: none;
     }
@@ -288,6 +288,18 @@
       z-index: 12000;
       pointer-events: none;
       box-sizing: border-box;
+    }
+
+    html[data-launch-shell="error"]::before {
+      content: "timeout";
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--fg);
+      font-size: 13px;
+      z-index: 12000;
+      pointer-events: none;
     }
 
     .shell>.hub-page-header {

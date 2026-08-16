@@ -70,8 +70,10 @@ __CHAT_INCLUDE:../session-state-projections.js__
           params.set("projections", requestedProjections.join(","));
         }
         const res = await fetchWithTimeout(`/session-state?${params.toString()}`, {}, 4000);
-        if (res.ok) applySessionState(await res.json());
-      } catch (_) {
+        if (!res.ok) throw new Error("session state unavailable");
+        applySessionState(await res.json());
+      } catch (err) {
+        setStatus(err?.message || String(err), true);
       } finally {
         refreshSessionState.inFlight = false;
         if (refreshSessionState.pending.length) {

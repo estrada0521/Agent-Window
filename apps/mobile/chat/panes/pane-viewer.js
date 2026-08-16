@@ -215,9 +215,8 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
           paneViewerInitialFetchTimer = setTimeout(() => {
             paneViewerInitialFetchTimer = 0;
             fetchPaneViewerSlideByIndex(lastPaneViewerTabIdx, true);
-            const paneTracePollMs = isLocalHubHostname() ? 300 : 1500;
             if (paneViewerInterval) clearInterval(paneViewerInterval);
-            paneViewerInterval = setInterval(() => fetchVisiblePaneViewerSlide(false), paneTracePollMs);
+            paneViewerInterval = setInterval(() => fetchVisiblePaneViewerSlide(false), 1000);
           }, 24);
         });
       });

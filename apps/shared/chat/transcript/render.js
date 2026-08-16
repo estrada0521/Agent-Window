@@ -181,21 +181,6 @@
       node.textContent = text;
       node.classList.toggle("is-error", isError);
     };
-    const setReconnectStatus = (active) => {
-      const node = document.getElementById("statusline");
-      const current = node.textContent || "";
-      if (active) {
-        if (reconnectStatusVisible || !current || current === reconnectingStatusText) {
-          setStatus(reconnectingStatusText);
-          reconnectStatusVisible = true;
-        }
-        return;
-      }
-      if (reconnectStatusVisible || current === reconnectingStatusText) {
-        setStatus("");
-      }
-      reconnectStatusVisible = false;
-    };
     const agentActionCandidates = (mode) => {
       if (mode === "add") return ALL_BASE_AGENTS.filter(Boolean);
       return (availableTargets || []).filter((agent) => agent && agent !== "others");
