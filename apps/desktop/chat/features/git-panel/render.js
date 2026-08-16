@@ -1,28 +1,14 @@
-    const dpGitCountsHtml = gitBranchCountsHtml;
-    const dpGitPathCountText = gitBranchPathCountText;
     const DP_GIT_SUMMARY_PIN_SVG = '📌';
     const dpBuildSummaryHtml = (data) => {
-      const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
-      const worktreeAdded = Math.max(0, parseInt(data?.worktree_added) || 0);
-      const worktreeDeleted = Math.max(0, parseInt(data?.worktree_deleted) || 0);
-      const worktreeClickable = !!data?.worktree_has_diff;
-      const worktreeLabel = changedPaths ? "Uncommitted changes" : "Working tree clean";
-      const worktreeMeta = changedPaths
-        ? `<span class="git-branch-summary-meta-text">${dpGitPathCountText(changedPaths)}</span>`
-        : `<span class="git-branch-summary-meta-text">No changes</span>`;
-      const worktreeCounts = dpGitCountsHtml(worktreeAdded, worktreeDeleted);
-      const chevron = worktreeClickable
-        ? '<svg class="git-commit-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>'
-        : "";
       const pinBtn = `<button type="button" class="git-branch-summary-pin" aria-pressed="false" aria-label="未コミット概要をチャット右端に固定表示" title="右ペインを閉じても右端にこの概要を表示">${DP_GIT_SUMMARY_PIN_SVG}</button>`;
-      return `<div class="git-branch-summary-row${worktreeClickable ? " clickable" : ""}"${worktreeClickable ? ' data-diff-kind="worktree"' : ""}>${pinBtn}<div class="git-commit-info"><div class="git-branch-summary-label">${escapeHtml(worktreeLabel)}</div><div class="git-commit-meta">${worktreeMeta}${worktreeCounts}</div></div>${chevron}</div>`;
+      return gitBranchSummaryRowHtml(data, { leadingHtml: pinBtn });
     };
     const dpBuildSummaryState = (data) => {
       const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
       const worktreeAdded = Math.max(0, parseInt(data?.worktree_added) || 0);
       const worktreeDeleted = Math.max(0, parseInt(data?.worktree_deleted) || 0);
       const summaryBits = changedPaths
-        ? ["Uncommitted changes", dpGitPathCountText(changedPaths), `+${worktreeAdded}`, `-${worktreeDeleted}`]
+        ? ["Uncommitted changes", gitBranchPathCountText(changedPaths), `+${worktreeAdded}`, `-${worktreeDeleted}`]
         : ["Working tree clean"];
       return {
         text: summaryBits.join(" · "),
@@ -33,7 +19,6 @@
       };
     };
     const dpBuildCommitRowHtml = gitCommitRowHtml;
-    const dpBuildFileRowHtml = gitCommitFileRowHtml;
     const dpDisconnectGitObserver = () => {
       if (!dpGitObserver) return;
       try { dpGitObserver.disconnect(); } catch (_) {}

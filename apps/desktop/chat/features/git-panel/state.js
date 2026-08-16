@@ -1,4 +1,3 @@
-    const DP_GIT_BATCH = 50;
     const dpGitSummaryPinnedStorageKey = () => `agent_window_git_summary_pinned:${String(currentSessionName || "").trim() || "__none"}`;
     let dpGitSummaryPinned = true;
     let _dpGitSummaryPinnedLoadedForKey = "";

@@ -1,4 +1,5 @@
 __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
+__CHAT_INCLUDE:../../../shared/chat/git-panel-data.js__
     let gitBranchCommits = [];
     let gitBranchNextOffset = 0;
     let gitBranchTotalCommits = 0;
@@ -11,7 +12,6 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
     let gitBranchDetailContext = null;
     let gitBranchDetailNeedsRefresh = false;
     let gitBranchObserver = null;
-    const GIT_BRANCH_BATCH = 50;
     const disconnectGitBranchObserver = () => {
       if (!gitBranchObserver) return;
       try { gitBranchObserver.disconnect(); } catch (_) { }
@@ -35,27 +35,6 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
       }
       if (gitBranchPanel) gitBranchPanel.innerHTML = html;
     };
-    const buildGitBranchSummaryHtml = (data) => {
-      const changedPaths = parseInt(data?.worktree_changed_paths) || 0;
-      const worktreeAdded = parseInt(data?.worktree_added) || 0;
-      const worktreeDeleted = parseInt(data?.worktree_deleted) || 0;
-      const worktreeClickable = !!data?.worktree_has_diff;
-      const worktreeLabel = changedPaths
-        ? "Uncommitted changes"
-        : "Working tree clean";
-      const worktreeMeta = changedPaths
-        ? `<span class="git-branch-summary-meta-text">${gitBranchPathCountText(changedPaths)}</span>`
-        : `<span class="git-branch-summary-meta-text">No changes</span>`;
-      const worktreeCounts = gitBranchCountsHtml(worktreeAdded, worktreeDeleted);
-      const summaryChevron = worktreeClickable
-        ? '<svg class="git-commit-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>'
-        : "";
-      return `<div class="git-branch-summary-row${worktreeClickable ? " clickable" : ""}"${worktreeClickable ? ' data-diff-kind="worktree"' : ""}>` +
-        `<div class="git-commit-info"><div class="git-branch-summary-label">${escapeHtml(worktreeLabel)}</div><div class="git-commit-meta">${worktreeMeta}${worktreeCounts}</div></div>` +
-        summaryChevron +
-        `</div>`;
-    };
-    const buildGitBranchCommitRowHtml = (commit) => gitCommitRowHtml(commit);
     const renderGitBranchCommitRows = (commits, { append = false } = {}) => {
       const listEl = gitBranchCommitListEl();
       if (!listEl) return;
@@ -64,12 +43,12 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
           listEl.innerHTML = '<div class="git-commit-file-empty" data-git-branch-empty="1">No commits</div>';
           return;
         }
-        listEl.innerHTML = commits.map((commit) => buildGitBranchCommitRowHtml(commit)).join("");
+        listEl.innerHTML = commits.map((commit) => gitCommitRowHtml(commit)).join("");
         return;
       }
       if (!commits.length) return;
       listEl.querySelector("[data-git-branch-empty]")?.remove();
-      listEl.insertAdjacentHTML("beforeend", commits.map((commit) => buildGitBranchCommitRowHtml(commit)).join(""));
+      listEl.insertAdjacentHTML("beforeend", commits.map((commit) => gitCommitRowHtml(commit)).join(""));
     };
     const updateGitBranchLoadMoreUi = () => {
       const btn = gitBranchLoadMoreEl();
@@ -114,11 +93,10 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
       gitBranchObserver.observe(btn);
     };
     const renderGitBranchPanelShell = (data) => {
-      const summaryHtml = buildGitBranchSummaryHtml(data);
       setGitBranchPanelBodyHtml(`
         <div class="git-branch-stack">
           <div class="git-branch-list-view">
-            <div class="git-branch-summary-wrap">${summaryHtml}</div>
+            <div class="git-branch-summary-wrap">${gitBranchSummaryRowHtml(data)}</div>
             <div class="git-branch-commit-list"></div>
             <button type="button" class="page-menu-item git-branch-load-more" hidden></button>
           </div>
@@ -128,72 +106,38 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
           </div>
         </div>`);
     };
-    const gitBranchOverviewSignature = (data) => JSON.stringify({
-      worktree_changed_paths: Math.max(0, parseInt(data?.worktree_changed_paths) || 0),
-      worktree_added: Math.max(0, parseInt(data?.worktree_added) || 0),
-      worktree_deleted: Math.max(0, parseInt(data?.worktree_deleted) || 0),
-      worktree_has_diff: !!data?.worktree_has_diff,
-      total_commits: Math.max(0, parseInt(data?.total_commits) || 0),
-      next_offset: Math.max(0, parseInt(data?.next_offset) || 0),
-      has_more: !!data?.has_more,
-      commits: (Array.isArray(data?.recent_commits) ? data.recent_commits : []).map((commit) => ({
-        hash: String(commit?.hash || ""),
-        subject: String(commit?.subject || ""),
-        ins: Math.max(0, parseInt(commit?.ins) || 0),
-        dels: Math.max(0, parseInt(commit?.dels) || 0),
-      })),
-    });
-    const applyGitBranchOverviewPage = (data, { reset = false } = {}) => {
-      const commits = Array.isArray(data?.recent_commits) ? data.recent_commits : [];
-      if (reset) {
-        renderGitBranchPanelShell(data || {});
-        gitBranchCommits = [];
-      }
-      if (commits.length) {
-        gitBranchCommits = reset ? commits.slice() : gitBranchCommits.concat(commits);
-      } else if (reset) {
-        gitBranchCommits = [];
-      }
-      gitBranchTotalCommits = Math.max(0, parseInt(data?.total_commits) || 0);
-      gitBranchNextOffset = Math.max(0, parseInt(data?.next_offset) || gitBranchCommits.length);
-      gitBranchHasMore = !!data?.has_more;
+    const applyGitBranchOverviewPaging = (page, { reset = false } = {}) => {
+      gitBranchCommits = page.commits;
+      gitBranchTotalCommits = page.totalCommits;
+      gitBranchNextOffset = page.nextOffset;
+      gitBranchHasMore = page.hasMore;
+      if (reset) gitBranchOverviewSig = page.fingerprint;
       if (reset) {
         renderGitBranchCommitRows(gitBranchCommits, { append: false });
-        gitBranchOverviewSig = gitBranchOverviewSignature(data);
-      } else if (commits.length) {
-        renderGitBranchCommitRows(commits, { append: true });
+      } else if (page.pageCommits.length) {
+        renderGitBranchCommitRows(page.pageCommits, { append: true });
       }
       updateGitBranchLoadMoreUi();
       ensureGitBranchObserver();
     };
+    const applyGitBranchOverviewPage = (data, { reset = false } = {}) => {
+      if (reset) renderGitBranchPanelShell(data || {});
+      applyGitBranchOverviewPaging(gitOverviewPagingFromResponse(data, gitBranchCommits, { reset }), { reset });
+    };
     const refreshGitBranchOverviewView = async () => {
       if (!gitBranchPanel) return;
       const refreshSeq = ++gitBranchRefreshSeq;
-      const params = new URLSearchParams({
-        offset: "0",
-        limit: String(GIT_BRANCH_BATCH),
-      });
-      params.set("refresh", "1");
-      const res = await fetchWithTimeout(`/git-branch-overview?${params.toString()}`, {}, 5000);
-      if (!res.ok) throw new Error("Failed to refresh branch overview");
-      const data = await res.json();
+      const data = await fetchGitBranchOverview({ offset: 0, refresh: true });
       if (refreshSeq !== gitBranchRefreshSeq) return;
-      const nextOverviewSig = gitBranchOverviewSignature(data);
+      const nextOverviewSig = gitOverviewFingerprint(data);
       if (nextOverviewSig !== gitBranchOverviewSig) {
         const summaryWrap = gitBranchPanel.querySelector(".git-branch-summary-wrap");
         if (summaryWrap) {
           const previous = gitBranchCountSnapshot(summaryWrap);
-          summaryWrap.innerHTML = buildGitBranchSummaryHtml(data || {});
+          summaryWrap.innerHTML = gitBranchSummaryRowHtml(data || {});
           animateGitBranchCountsFromSnapshot(summaryWrap, previous);
         }
-        gitBranchCommits = Array.isArray(data?.recent_commits) ? data.recent_commits.slice() : [];
-        gitBranchTotalCommits = Math.max(0, parseInt(data?.total_commits) || 0);
-        gitBranchNextOffset = Math.max(0, parseInt(data?.next_offset) || gitBranchCommits.length);
-        gitBranchHasMore = !!data?.has_more;
-        renderGitBranchCommitRows(gitBranchCommits, { append: false });
-        updateGitBranchLoadMoreUi();
-        ensureGitBranchObserver();
-        gitBranchOverviewSig = nextOverviewSig;
+        applyGitBranchOverviewPaging(gitOverviewPagingFromResponse(data, [], { reset: true }), { reset: true });
       }
       if (gitBranchDetailContext?.kind === "worktree" && gitBranchDetailContext?.wrapEl) {
         await renderGitCommitFileStatsInto(gitBranchDetailContext.wrapEl, "", {
@@ -202,7 +146,6 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
         });
       }
     };
-    const buildGitCommitFileRowHtml = (entry) => gitCommitFileRowHtml(entry);
     const renderGitCommitFileStatsInto = async (
       wrapEl,
       hash,
@@ -212,68 +155,33 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
       const requestSeq = Math.max(0, parseInt(wrapEl.dataset.fileStatsRequestSeq) || 0) + 1;
       wrapEl.dataset.fileStatsRequestSeq = String(requestSeq);
       if (!preserveCurrent) {
-        delete wrapEl.dataset.fileStatsSig;
+        delete wrapEl.dataset.fileStatsSignature;
         wrapEl.innerHTML = `<div class="git-commit-file-empty inline-loading-row">${loadingIndicatorHtml("Loading…")}</div>`;
       }
-      if (!hash && !scope) {
-        const [stagedRes, unstagedRes, untrackedRes] = await Promise.all([
-          fetchWithTimeout("/git-diff-files?scope=staged", {}, 5000),
-          fetchWithTimeout("/git-diff-files?scope=unstaged", {}, 5000),
-          fetchWithTimeout("/git-diff-files?scope=untracked", {}, 5000),
-        ]);
-        const stagedData = await stagedRes.json();
-        const unstagedData = await unstagedRes.json();
-        const untrackedData = await untrackedRes.json();
-        if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return null;
-        const sections = [
-          { title: "Staged", kind: "staged", data: stagedData },
-          { title: "Unstaged", kind: "unstaged", data: unstagedData },
-          { title: "Untracked", kind: "untracked", data: untrackedData },
-        ].filter((section) => Array.isArray(section.data?.files) && section.data.files.length);
-        const nextSig = JSON.stringify(sections.map((section) => ({
-          kind: section.kind,
-          files: (section.data.files || []).map((entry) => ({
-            path: String(entry?.path || ""),
-            ins: Math.max(0, parseInt(entry?.ins) || 0),
-            dels: Math.max(0, parseInt(entry?.dels) || 0),
-            untracked: !!entry?.untracked,
-          })),
-        })));
-        if (preserveCurrent && wrapEl.dataset.fileStatsSig === nextSig) {
-          return { files: sections.flatMap((section) => section.data.files || []) };
+      const loaded = await loadGitDiffFileStats({ hash, scope });
+      if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return null;
+      if (loaded.mode === "sections") {
+        const signature = gitFileStatsRowsSignature(loaded.sections);
+        if (preserveCurrent && wrapEl.dataset.fileStatsSignature === signature) {
+          return { files: loaded.files };
         }
-        wrapEl.dataset.fileStatsSig = nextSig;
-        if (!sections.length) {
+        wrapEl.dataset.fileStatsSignature = signature;
+        if (!loaded.sections.length) {
           wrapEl.innerHTML = '<div class="git-commit-file-empty">No changed files</div>';
           return { files: [] };
         }
-        wrapEl.innerHTML = `<div class="git-commit-file-sections">${sections.map((section) => `<section class="git-commit-file-section" data-scope="${escapeHtml(section.kind)}"><div class="git-commit-file-section-title">${escapeHtml(section.title)}</div><div class="git-commit-file-list">${section.data.files.map((entry) => buildGitCommitFileRowHtml(entry, { allowUndo, scope: section.kind })).join("")}</div></section>`).join("")}</div>`;
-        return { files: sections.flatMap((section) => section.data.files || []) };
+        wrapEl.innerHTML = gitCommitFileStatsSectionsHtml(loaded.sections, { allowUndo });
+        return { files: loaded.files };
       }
-      const params = new URLSearchParams({ hash: String(hash || "") });
-      if (!hash && scope) params.set("scope", scope);
-      const res = await fetchWithTimeout(`/git-diff-files?${params.toString()}`, {}, 5000);
-      const data = await res.json();
-      if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return null;
-      const files = Array.isArray(data?.files) ? data.files : [];
-      const nextSig = JSON.stringify({
-        hash: String(hash || ""),
-        scope: String(scope || ""),
-        files: files.map((entry) => ({
-          path: String(entry?.path || ""),
-          ins: Math.max(0, parseInt(entry?.ins) || 0),
-          dels: Math.max(0, parseInt(entry?.dels) || 0),
-          untracked: !!entry?.untracked,
-        })),
-      });
-      if (preserveCurrent && wrapEl.dataset.fileStatsSig === nextSig) return data;
-      wrapEl.dataset.fileStatsSig = nextSig;
-      if (!files.length) {
+      const signature = gitFileStatsRowsSignature([{ kind: scope || "commit", files: loaded.files }]);
+      if (preserveCurrent && wrapEl.dataset.fileStatsSignature === signature) return loaded.data;
+      wrapEl.dataset.fileStatsSignature = signature;
+      if (!loaded.files.length) {
         wrapEl.innerHTML = '<div class="git-commit-file-empty">No changed files</div>';
-        return data;
+        return loaded.data;
       }
-      wrapEl.innerHTML = `<div class="git-commit-file-list">${files.map((entry) => buildGitCommitFileRowHtml(entry, { allowUndo, scope })).join("")}</div>`;
-      return data;
+      wrapEl.innerHTML = gitCommitFileListHtml(loaded.files, { allowUndo, scope });
+      return loaded.data;
     };
     const closeGitBranchInlineDiff = ({ refreshList = false } = {}) => {
       if (!gitBranchPanel) return;
@@ -314,14 +222,10 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
         updateGitBranchLoadMoreUi();
       }
       try {
-        const params = new URLSearchParams({
-          offset: String(reset ? 0 : gitBranchNextOffset),
-          limit: String(GIT_BRANCH_BATCH),
+        const data = await fetchGitBranchOverview({
+          offset: reset ? 0 : gitBranchNextOffset,
+          refresh: reset,
         });
-        if (reset) params.set("refresh", "1");
-        const res = await fetchWithTimeout(`/git-branch-overview?${params.toString()}`, {}, 5000);
-        if (!res.ok) throw new Error(reset ? "Failed to load branch overview" : "Failed to load more commits");
-        const data = await res.json();
         if (loadSeq !== gitBranchLoadSeq) return;
         applyGitBranchOverviewPage(data, { reset });
       } catch (err) {
