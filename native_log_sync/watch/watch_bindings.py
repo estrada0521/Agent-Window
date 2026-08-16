@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import logging
 import os
 import select
 import sys
 import threading
-import time
 
 from native_log_sync.watch.emit_events import emit_agent_updates
 
@@ -66,26 +64,23 @@ class _VnodeNativeSync:
         self._path_by_agent.pop(agent, None)
         if fd is not None:
             self._agent_by_fd.pop(fd, None)
-            try:
-                os.close(fd)
-            except OSError:
-                pass
+            os.close(fd)
 
     def _open_locked(self, agent: str, path: str) -> None:
         try:
             fd = os.open(path, os.O_RDONLY)
-            ev = select.kevent(
-                fd,
-                filter=select.KQ_FILTER_VNODE,
-                flags=select.KQ_EV_ADD | select.KQ_EV_CLEAR,
-                fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND,
-            )
-            self._kq.control([ev], 0)
-            self._fd_by_agent[agent] = fd
-            self._path_by_agent[agent] = path
-            self._agent_by_fd[fd] = agent
-        except OSError as exc:
-            logging.warning("vnode register failed for %s (%s): %s", agent, path, exc)
+        except FileNotFoundError:
+            return
+        ev = select.kevent(
+            fd,
+            filter=select.KQ_FILTER_VNODE,
+            flags=select.KQ_EV_ADD | select.KQ_EV_CLEAR,
+            fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND,
+        )
+        self._kq.control([ev], 0)
+        self._fd_by_agent[agent] = fd
+        self._path_by_agent[agent] = path
+        self._agent_by_fd[fd] = agent
 
     def get_watched_paths(self) -> dict[str, str]:
         with self._lock:
@@ -97,35 +92,28 @@ class _VnodeNativeSync:
         if reconfigure:
             reconfigure.clear()
         while True:
-            try:
-                events = self._kq.control(None, 16, None)
-                woke = False
-                pending = []
-                for event in events:
-                    if event.ident == self._wake_r:
-                        self._drain_wake()
-                        woke = True
-                        continue
-                    pending.append(event)
-                if woke or (reconfigure and reconfigure.is_set()):
-                    if reconfigure:
-                        reconfigure.clear()
-                    self._sync_bindings()
-                if not self._runtime.session_is_active:
+            events = self._kq.control(None, 16, None)
+            woke = False
+            pending = []
+            for event in events:
+                if event.ident == self._wake_r:
+                    self._drain_wake()
+                    woke = True
                     continue
-                for event in pending:
-                    if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
-                        with self._lock:
-                            agent = self._agent_by_fd.get(event.ident)
-                            path = self._path_by_agent.get(agent) if agent else None
-                        if agent and path:
-                            try:
-                                emit_agent_updates(self._runtime, agent, path)
-                            except Exception as exc:
-                                logging.error("Native vnode emit failed for %s: %s", agent, exc)
-            except Exception as exc:
-                logging.error("Native vnode watcher error: %s", exc)
-                time.sleep(1.0)
+                pending.append(event)
+            if woke or (reconfigure and reconfigure.is_set()):
+                if reconfigure:
+                    reconfigure.clear()
+                self._sync_bindings()
+            if not self._runtime.session_is_active:
+                continue
+            for event in pending:
+                if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
+                    with self._lock:
+                        agent = self._agent_by_fd.get(event.ident)
+                        path = self._path_by_agent.get(agent) if agent else None
+                    if agent and path:
+                        emit_agent_updates(self._runtime, agent, path)
 
 
 def start_native_log_vnode_watcher(runtime) -> None:

@@ -37,10 +37,16 @@ def initialize_native_log_runtime_state(runtime: object) -> None:
 
     runtime._agent_first_seen_ts = {}
     raw_first_seen = runtime._sync_state.get("agent_first_seen_ts")
-    if isinstance(raw_first_seen, dict):
-        for key, value in raw_first_seen.items():
-            if isinstance(key, str) and isinstance(value, (int, float)):
-                runtime._agent_first_seen_ts[key] = float(value)
+    if raw_first_seen is None:
+        return
+    if not isinstance(raw_first_seen, dict):
+        raise ValueError("agent_first_seen_ts must be an object")
+    for key, value in raw_first_seen.items():
+        if not isinstance(key, str) or not key:
+            raise ValueError("agent_first_seen_ts keys must be agent names")
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            raise ValueError(f"agent_first_seen_ts[{key!r}] must be a number")
+        runtime._agent_first_seen_ts[key] = float(value)
 
 
 def first_seen_for_agent(runtime: object, agent: str, *, time_module=time) -> float:

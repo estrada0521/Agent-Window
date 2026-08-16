@@ -32,10 +32,7 @@ def normalize_watch_roots(path: str) -> tuple[str, ...]:
     raw = str(path or "").strip()
     if not raw:
         return ()
-    try:
-        real = os.path.realpath(raw)
-    except OSError:
-        real = raw
+    real = os.path.realpath(raw)
     root = real if os.path.isdir(real) else os.path.dirname(real)
     if not root:
         return ()

@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 import hashlib
-import json
-import logging
 import os
 import time
 from pathlib import Path
 
-from backend_core.access.files import append_jsonl_entry
 from native_log_sync.agents._shared.path_state import (
     _normalized_native_log_path,
     advance_read_progress,
@@ -18,6 +15,8 @@ from native_log_sync.agents.grok.read_runtime import (
     iter_tool_calls_from_update,
     runtime_tool_events,
 )
+from native_log_sync.io.jsonl_read import complete_jsonl_scan
+from native_log_sync.io.projected import append_projected_entry
 
 
 def extract_grok_assistant_text(entry: object) -> str:
@@ -33,7 +32,7 @@ def _append_grok_reply(runtime, agent: str, history_path: str, line_start: int, 
         return False
     key = f"grok:{agent}:{history_path}:{line_start}".encode("utf-8")
     msg_id = hashlib.sha256(key).hexdigest()[:12]
-    append_jsonl_entry(
+    append_projected_entry(
         runtime.log_path,
         {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -61,54 +60,24 @@ def _sync_grok_chat_history(runtime, agent: str, history_path: str) -> bool:
     is_first_encounter = normalized not in runtime._native_log_progress
     file_size = os.path.getsize(history_path)
     start = read_progress_start(runtime._native_log_progress, history_path, file_size)
-    if start is None:
-        logging.error(
-            "Grok chat history %s shrank below the synced position; skipping this sync", history_path
-        )
-        return False
     if start >= file_size:
         return False
 
     appended = False
+    scan = complete_jsonl_scan(history_path, start)
     if is_first_encounter:
         latest: tuple[int, dict] | None = None
-        with open(history_path, "r", encoding="utf-8") as handle:
-            handle.seek(start)
-            while True:
-                line_start = handle.tell()
-                line = handle.readline()
-                if not line:
-                    break
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entry = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if extract_grok_assistant_text(entry):
-                    latest = (line_start, entry)
+        for line_start, entry in scan:
+            if extract_grok_assistant_text(entry):
+                latest = (line_start, entry)
         if latest is not None:
             appended = _append_grok_reply(runtime, agent, history_path, *latest)
     else:
-        with open(history_path, "r", encoding="utf-8") as handle:
-            handle.seek(start)
-            while True:
-                line_start = handle.tell()
-                line = handle.readline()
-                if not line:
-                    break
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entry = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if _append_grok_reply(runtime, agent, history_path, line_start, entry):
-                    appended = True
+        for line_start, entry in scan:
+            if _append_grok_reply(runtime, agent, history_path, line_start, entry):
+                appended = True
 
-    advance_read_progress(runtime._native_log_progress, history_path, file_size)
+    advance_read_progress(runtime._native_log_progress, history_path, scan.consumed)
     return appended
 
 
@@ -134,49 +103,34 @@ def _chat_history_path(updates_path: str) -> str:
 def sync_grok_native_log(runtime, agent: str, native_log_path: str | None = None) -> None:
     """Sync new Grok replies as they land in chat_history.jsonl, and mark
     idle once the update stream reports the turn as complete."""
-    try:
-        updates_path = str(native_log_path or "").strip()
-        if not updates_path or not os.path.isfile(updates_path):
-            return
-        history_path = _chat_history_path(updates_path)
-        if not history_path:
-            return
+    updates_path = str(native_log_path or "").strip()
+    if not updates_path or not os.path.isfile(updates_path):
+        return
+    history_path = _chat_history_path(updates_path)
+    if not history_path:
+        return
 
-        runtime._native_log_current_paths[agent] = updates_path
+    runtime._native_log_current_paths[agent] = updates_path
 
-        file_size = os.path.getsize(updates_path)
-        start = read_progress_start(runtime._native_log_progress, updates_path, file_size)
+    file_size = os.path.getsize(updates_path)
+    start = read_progress_start(runtime._native_log_progress, updates_path, file_size)
 
-        turn_completed = False
-        if start is None:
-            logging.error(
-                "Grok updates log %s shrank below the synced position; skipping this sync", updates_path
-            )
-        else:
-            if start < file_size:
-                workspace = str(getattr(runtime, "workspace", "") or "")
-                with open(updates_path, "r", encoding="utf-8") as handle:
-                    handle.seek(start)
-                    while True:
-                        line = handle.readline()
-                        if not line:
-                            break
-                        try:
-                            entry = json.loads(line)
-                        except json.JSONDecodeError:
-                            continue
-                        turn_completed = _turn_completed(entry) or turn_completed
-                        tool_evs: list[dict] = []
-                        for name, inp in iter_tool_calls_from_update(entry):
-                            tool_evs.extend(runtime_tool_events(name, inp, workspace=workspace))
-                        if tool_evs:
-                            push_runtime_display(runtime, agent, tool_evs)
+    turn_completed = False
+    if start < file_size:
+        workspace = str(getattr(runtime, "workspace", "") or "")
+        scan = complete_jsonl_scan(updates_path, start)
+        for _line_start, entry in scan:
+            turn_completed = _turn_completed(entry) or turn_completed
+            tool_evs: list[dict] = []
+            for name, inp in iter_tool_calls_from_update(entry):
+                tool_evs.extend(runtime_tool_events(name, inp, workspace=workspace))
+            if tool_evs:
+                push_runtime_display(runtime, agent, tool_evs)
+        advance_read_progress(runtime._native_log_progress, updates_path, scan.consumed)
+    else:
+        advance_read_progress(runtime._native_log_progress, updates_path, file_size)
 
-            advance_read_progress(runtime._native_log_progress, updates_path, file_size)
-
-        _sync_grok_chat_history(runtime, agent, history_path)
-        if turn_completed:
-            runtime._mark_idle(agent)
-        runtime.save_sync_state()
-    except Exception as exc:
-        logging.error(f"Failed to sync Grok message for {agent}: {exc}", exc_info=True)
+    _sync_grok_chat_history(runtime, agent, history_path)
+    if turn_completed:
+        runtime._mark_idle(agent)
+    runtime.save_sync_state()

@@ -4,24 +4,29 @@ import json
 from collections import deque
 from pathlib import Path
 
-from native_log_sync.entry_kind import should_omit_entry_from_chat
 from native_log_sync.redacted import omit_redacted_log_entry
 
 MATCHED_ENTRY_TAIL = 64
 
 
 def _classify_log_segment(raw_segment: bytes) -> tuple[str, dict | None]:
-    line = raw_segment.rstrip(b"\r\n").decode("utf-8", errors="replace").strip()
+    complete = raw_segment.endswith((b"\n", b"\r"))
+    try:
+        line = raw_segment.rstrip(b"\r\n").decode("utf-8").strip()
+    except UnicodeDecodeError:
+        if not complete:
+            return "incomplete", None
+        raise
     if not line:
         return "skip", None
     try:
         entry = json.loads(line)
     except json.JSONDecodeError:
-        if not raw_segment.endswith((b"\n", b"\r")):
+        if not complete:
             return "incomplete", None
-        return "skip", None
-    if should_omit_entry_from_chat(entry):
-        return "skip", None
+        raise
+    if not isinstance(entry, dict):
+        raise RuntimeError("unified log line is not an object")
     if omit_redacted_log_entry(str(entry.get("message") or "")):
         return "skip", None
     return "entry", entry
@@ -46,10 +51,7 @@ def _ingest_matched_tail(runtime) -> None:
         tail.clear()
         runtime._matched_entries_total = 0
         return
-    try:
-        stat = runtime.log_path.stat()
-    except OSError:
-        return
+    stat = runtime.log_path.stat()
     current_sig = (stat.st_size, stat.st_mtime_ns)
     if runtime._matched_entries_cache_sig == current_sig:
         return
@@ -65,21 +67,16 @@ def _ingest_matched_tail(runtime) -> None:
         start_offset = 0
         total = 0
     processed_size = start_offset
-    try:
-        with runtime.log_path.open("rb") as handle:
-            handle.seek(start_offset)
-            for raw_segment in handle:
-                kind, entry = _classify_log_segment(raw_segment)
-                if kind == "incomplete":
-                    break
-                processed_size += len(raw_segment)
-                if kind == "entry" and entry is not None:
-                    tail.append(entry)
-                    total += 1
-    except OSError:
-        runtime._matched_entries_total = total
-        runtime._matched_entries_cache_size = processed_size
-        return
+    with runtime.log_path.open("rb") as handle:
+        handle.seek(start_offset)
+        for raw_segment in handle:
+            kind, entry = _classify_log_segment(raw_segment)
+            if kind == "incomplete":
+                break
+            processed_size += len(raw_segment)
+            if kind == "entry" and entry is not None:
+                tail.append(entry)
+                total += 1
     runtime._matched_entries_total = total
     runtime._matched_entries_cache_size = processed_size
     runtime._matched_entries_cache_sig = (
@@ -91,16 +88,13 @@ def _window_before_from_disk(path: Path, before_msg_id: str, limit: int, total_c
     window: deque[dict] = deque(maxlen=limit)
     overflow = False
     found = False
-    try:
-        for entry in _iter_matched_log_entries(path):
-            if str(entry.get("msg_id") or "") == before_msg_id:
-                found = True
-                break
-            if len(window) == limit:
-                overflow = True
-            window.append(entry)
-    except OSError:
-        return [], False, total_count
+    for entry in _iter_matched_log_entries(path):
+        if str(entry.get("msg_id") or "") == before_msg_id:
+            found = True
+            break
+        if len(window) == limit:
+            overflow = True
+        window.append(entry)
     if not found:
         return [], False, total_count
     return list(window), overflow, total_count
@@ -108,11 +102,8 @@ def _window_before_from_disk(path: Path, before_msg_id: str, limit: int, total_c
 
 def _window_tail_from_disk(path: Path, limit: int, total_count: int):
     window: deque[dict] = deque(maxlen=limit)
-    try:
-        for entry in _iter_matched_log_entries(path):
-            window.append(entry)
-    except OSError:
-        return [], False, total_count
+    for entry in _iter_matched_log_entries(path):
+        window.append(entry)
     return list(window), total_count > limit, total_count
 
 
@@ -149,10 +140,7 @@ def find_matched_entry(runtime, msg_id: str) -> dict | None:
             if str(entry.get("msg_id") or "") == target:
                 return dict(entry)
         log_path = runtime.log_path
-    try:
-        for entry in _iter_matched_log_entries(log_path):
-            if str(entry.get("msg_id") or "") == target:
-                return entry
-    except OSError:
-        return None
+    for entry in _iter_matched_log_entries(log_path):
+        if str(entry.get("msg_id") or "") == target:
+            return entry
     return None

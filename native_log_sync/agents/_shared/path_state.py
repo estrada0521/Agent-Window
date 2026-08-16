@@ -10,45 +10,52 @@ def _normalized_native_log_path(path: str | Path) -> str:
     raw = str(path or "").strip()
     if not raw:
         return ""
-    try:
-        return os.path.realpath(str(Path(raw).expanduser()))
-    except OSError:
-        return str(Path(raw).expanduser())
+    return os.path.realpath(str(Path(raw).expanduser()))
 
 
 def _load_path_progress(raw: object) -> dict[str, int]:
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict):
+        raise ValueError("native_log_progress must be an object")
     result: dict[str, int] = {}
-    if isinstance(raw, dict):
-        for path, position in raw.items():
-            if isinstance(path, str) and path and isinstance(position, int) and Path(path).is_file():
-                result[path] = position
+    for path, position in raw.items():
+        if not isinstance(path, str) or not path:
+            raise ValueError("native_log_progress keys must be paths")
+        if not isinstance(position, int) or isinstance(position, bool) or position < 0:
+            raise ValueError(f"native_log_progress[{path!r}] must be a non-negative int")
+        result[path] = position
     return result
 
 
 def _load_pane_paths(raw: object) -> dict[str, str]:
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict):
+        raise ValueError("native_log_current_paths must be an object")
     result: dict[str, str] = {}
-    if isinstance(raw, dict):
-        for agent, path in raw.items():
-            if isinstance(agent, str) and isinstance(path, str) and path:
-                result[agent] = path
+    for agent, path in raw.items():
+        if not isinstance(agent, str) or not agent:
+            raise ValueError("native_log_current_paths keys must be agent names")
+        if not isinstance(path, str) or not path:
+            raise ValueError(f"native_log_current_paths[{agent!r}] must be a path")
+        result[agent] = path
     return result
 
 
-def read_progress_start(progress: dict[str, int], path: str, file_size: int) -> int | None:
+def read_progress_start(progress: dict[str, int], path: str, file_size: int) -> int:
     """Where to resume reading `path` from: the recorded high-water mark, or 0
-    if this exact file has never been synced before (new chat, or the first
-    time this install has ever seen this native log).
+    if this exact file has never been synced before.
 
-    A native log is never supposed to shrink. If it appears smaller than the
-    recorded high-water mark, resuming from 0 would silently replay content
-    that was already synced (duplicate messages). Since we can't tell whether
-    that's a genuine replacement or a momentary/misleading size reading,
-    return None so the caller skips this sync cycle instead of guessing.
+    A native log is never supposed to shrink. Guessing (replay from 0, or
+    skip this cycle) is forbidden; the caller must see the error.
     """
     key = _normalized_native_log_path(path)
     start = progress.get(key, 0)
     if file_size < start:
-        return None
+        raise RuntimeError(
+            f"native log shrank: {path} size={file_size} progress={start}"
+        )
     return start
 
 

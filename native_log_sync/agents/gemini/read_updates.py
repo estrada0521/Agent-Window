@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import logging
 import os
 import sqlite3
 import threading
@@ -12,7 +11,7 @@ from native_log_sync.agents._shared.path_state import (
     _normalized_native_log_path,
     advance_read_progress,
 )
-from backend_core.access.files import append_jsonl_entry
+from native_log_sync.io.projected import append_projected_entry
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.gemini.read_runtime import (
     load_antigravity_transcript_entries,
@@ -36,10 +35,7 @@ def _schedule_antigravity_retry(self, agent: str, db_path: str, step_key: str) -
 
     def retry() -> None:
         retry_keys.discard(step_key)
-        try:
-            sync_gemini_native_log(self, agent, db_path)
-        except Exception as exc:
-            logging.error(f"Failed to retry Antigravity sync for {agent}: {exc}", exc_info=True)
+        sync_gemini_native_log(self, agent, db_path)
 
     timer = threading.Timer(_ANTIGRAVITY_RETRY_DELAY_SECONDS, retry)
     timer.daemon = True
@@ -126,7 +122,7 @@ def _sync_antigravity_db(self, agent: str, db_path: str) -> bool:
                             "native_log_path": db_path,
                             "native_log_offset": idx,
                         }
-                        append_jsonl_entry(self.log_path, jsonl_entry)
+                        append_projected_entry(self.log_path, jsonl_entry)
                         appended = True
                 # If this step is no longer max_idx, it's confirmed complete.
                 if idx < max_idx:
@@ -188,7 +184,7 @@ def _sync_antigravity_db(self, agent: str, db_path: str) -> bool:
                 "native_log_path": db_path,
                 "native_log_offset": idx,
             }
-            append_jsonl_entry(self.log_path, jsonl_entry)
+            append_projected_entry(self.log_path, jsonl_entry)
             appended = True
             next_cursor = idx + 1
 
@@ -225,15 +221,12 @@ def _sync_antigravity_db(self, agent: str, db_path: str) -> bool:
 
 
 def sync_gemini_native_log(self, agent: str, native_log_path: str | None = None) -> None:
-    try:
-        session_path_str = str(native_log_path or "").strip()
-        if not session_path_str or not os.path.exists(session_path_str):
-            return
+    session_path_str = str(native_log_path or "").strip()
+    if not session_path_str or not os.path.exists(session_path_str):
+        return
 
-        if not session_path_str.endswith(".db"):
-            return
+    if not session_path_str.endswith(".db"):
+        raise RuntimeError(f"Antigravity native log is not a db: {session_path_str}")
 
-        self._native_log_current_paths[agent] = session_path_str
-        _sync_antigravity_db(self, agent, session_path_str)
-    except Exception as exc:
-        logging.error(f"Failed to sync Antigravity message for {agent}: {exc}", exc_info=True)
+    self._native_log_current_paths[agent] = session_path_str
+    _sync_antigravity_db(self, agent, session_path_str)

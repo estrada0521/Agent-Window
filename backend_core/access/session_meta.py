@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 from datetime import datetime
 from pathlib import Path
 
@@ -27,27 +26,17 @@ def _parse_agents_csv(agents_csv: str) -> list[str]:
 
 def _reconcile_agent_names(meta: dict[str, object], current_agents: list[str]) -> None:
     raw_names = meta.get("agent_names")
-    if not isinstance(raw_names, dict):
+    if raw_names is None:
         return
-    previous_agents_raw = meta.get("agents")
-    previous_agents = {
-        str(agent or "").strip().lower()
-        for agent in (previous_agents_raw if isinstance(previous_agents_raw, list) else [])
-        if str(agent or "").strip()
-    }
+    if not isinstance(raw_names, dict):
+        raise ValueError("agent_names must be an object")
     current = {str(agent or "").strip().lower() for agent in current_agents if str(agent or "").strip()}
-    cleaned = {
+    reconciled = {
         str(canonical or "").strip().lower(): str(display or "").strip()
         for canonical, display in raw_names.items()
         if str(canonical or "").strip() and str(display or "").strip()
+        and str(canonical or "").strip().lower() in current
     }
-    reconciled = {canonical: display for canonical, display in cleaned.items() if canonical in current}
-    for canonical, display in cleaned.items():
-        if canonical in current or canonical not in previous_agents or re.search(r"-\d+$", canonical):
-            continue
-        replacement = f"{canonical}-1"
-        if replacement in current and replacement not in previous_agents and replacement not in reconciled:
-            reconciled[replacement] = display
     if reconciled:
         meta["agent_names"] = reconciled
     else:
