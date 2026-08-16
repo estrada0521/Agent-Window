@@ -82,6 +82,13 @@
       _launchShell.hidden = false;
       _launchShell.classList.add("visible");
     }
+    function resetLaunchShellCard() {
+      const card = _launchShell?.querySelector(".launch-shell-card");
+      if (!card) return;
+      card.classList.remove("is-error");
+      card.setAttribute("aria-hidden", "true");
+      card.innerHTML = '<span class="launch-shell-spinner"></span>';
+    }
     function hideLaunchShell() {
       if (!_launchShell) return;
       _launchShell.classList.remove("visible");
@@ -107,6 +114,7 @@
     }
     function startHubReadyTimeout() {
       if (_hubReadyTimeoutTimer) return;
+      resetLaunchShellCard();
       _hubReadyTimeoutTimer = setTimeout(() => {
         failHubReadyWait("timeout");
       }, HUB_READY_TIMEOUT_MS);
@@ -233,7 +241,6 @@
       }
     }
     function primeChatFrame(sessionName, chatUrl) {
-      if (!shouldUseChatOverlay()) return;
       const normalizedName = String(sessionName || "").trim();
       const normalizedUrl = String(chatUrl || "").trim();
       if (!normalizedName || !normalizedUrl) return;
@@ -279,9 +286,10 @@
         .then(async (res) => {
           const data = await res.json();
           const chatUrl = String((data && data.chat_url) || "").trim();
-          if (chatUrl && normalizedName) {
-            cacheChatUrl(normalizedName, chatUrl);
+          if (!res.ok || !chatUrl) {
+            throw new Error((data && data.error) || "open session failed");
           }
+          if (normalizedName) cacheChatUrl(normalizedName, chatUrl);
           return chatUrl;
         })
         .finally(() => {
@@ -409,31 +417,6 @@
       _chatOverlay.style.top = "";
       _chatOverlay.style.height = "";
     }
-    function shouldUseChatOverlay() {
-      return true;
-    }
-    function ensureChatLaunchShellFlag(rawUrl) {
-      const target = String(rawUrl || "").trim();
-      if (!target) return "";
-      try {
-        const next = new URL(target, window.location.origin);
-        if (next.origin !== window.location.origin) return target;
-        if (!next.searchParams.has("launch_shell")) next.searchParams.set("launch_shell", "1");
-        return next.pathname + next.search + next.hash;
-      } catch (_) {
-        return target;
-      }
-    }
-    function navigateWithLaunchShell(url) {
-      const target = ensureChatLaunchShellFlag(url);
-      if (!target) return;
-      showLaunchShell();
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          window.location.href = target;
-        });
-      });
-    }
     function updateMenuContext(isChat) {
       const bridge = document.getElementById("hubPageNativeMenuBridge");
       if (!bridge) return;
@@ -457,13 +440,6 @@
         _chatOverlayCloseTimer = 0;
       }
       rememberLastSession(name);
-      const useOverlay = shouldUseChatOverlay();
-      if (!useOverlay) {
-        showLaunchShell();
-        startChatRenderWait();
-        navigateWithLaunchShell(url);
-        return;
-      }
       if (_hubLaunchShellPending) showLaunchShell();
       startChatRenderWait();
       const normalizedName = String(name || "").trim();
@@ -565,47 +541,16 @@
         clearPersistedChatFrameState();
       }, CHAT_OVERLAY_CLOSE_MS);
     }
-    function openSessionFrame(openHref, name, options = {}) {
+    function openSessionFrame(openHref, name) {
       rememberLastSession(name);
-      const shouldShowTransition = !!options.showTransition || /^\/revive-session(?:[/?]|$)/.test(String(openHref || ""));
-      if (shouldShowTransition) showLaunchShell();
-      if (!shouldUseChatOverlay()) {
-        showLaunchShell();
-        const cached = cachedChatUrl(name);
-        if (cached) {
-          navigateWithLaunchShell(cached);
-          return;
-        }
-        resolveChatUrl(openHref, name)
-          .then((chatUrl) => {
-            if (chatUrl) navigateWithLaunchShell(chatUrl);
-            else if (name && openHref.startsWith("/open-session")) navigateWithLaunchShell(`/session/${encodeURIComponent(name)}/?follow=1&ts=${Date.now()}`);
-            else navigateWithLaunchShell(openHref);
-          })
-          .catch(() => {
-            if (name && openHref.startsWith("/open-session")) navigateWithLaunchShell(`/session/${encodeURIComponent(name)}/?follow=1&ts=${Date.now()}`);
-            else navigateWithLaunchShell(openHref);
-          });
-        return;
-      }
+      resetLaunchShellCard();
+      if (/^\/revive-session(?:[/?]|$)/.test(String(openHref || ""))) showLaunchShell();
       resolveChatUrl(openHref, name)
         .then((chatUrl) => {
-          if (chatUrl) {
-            openChatInFrame(chatUrl, name);
-            return;
-          }
-          if (shouldShowTransition) {
-            navigateWithLaunchShell(openHref);
-          } else {
-            window.location.href = openHref;
-          }
+          openChatInFrame(chatUrl, name);
         })
-        .catch(() => {
-          if (shouldShowTransition) {
-            navigateWithLaunchShell(openHref);
-          } else {
-            window.location.href = openHref;
-          }
+        .catch((err) => {
+          failHubReadyWait(err?.message || "open session failed");
         });
     }
     window.addEventListener("message", function (e) {
@@ -682,12 +627,11 @@
     const pendingHubErrorMessage = consumePendingHubErrorMessage();
     if (pendingHubErrorMessage) {
       clearPersistedChatFrameState();
+      failHubReadyWait(pendingHubErrorMessage);
     }
     try {
       const saved = sessionStorage.getItem(HUB_CHAT_FRAME_KEY);
-      if (!shouldUseChatOverlay()) {
-        sessionStorage.removeItem(HUB_CHAT_FRAME_KEY);
-      } else if (saved) {
+      if (saved && !pendingHubErrorMessage) {
         const { url, name } = JSON.parse(saved);
         if (url) openChatInFrame(url, name);
       }
