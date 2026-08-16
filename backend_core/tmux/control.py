@@ -157,18 +157,6 @@ def append_session_lifecycle_entry(session_name: str, action: str) -> None:
     )
 
 
-def _copy_agent_doc(repo_root: Path, workspace: str) -> None:
-    src = repo_root / "docs" / "AGENT.md"
-    if not src.is_file():
-        raise SessionControlError(f"missing agent doc: {src}")
-    dest_dir = Path(workspace) / "docs"
-    dest = dest_dir / "AGENT.md"
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    if dest.is_file() and dest.read_bytes() == src.read_bytes():
-        return
-    shutil.copy2(src, dest)
-
-
 def _chat_listener_pids(chat_port: int) -> list[int]:
     try:
         result = subprocess.run(
@@ -186,6 +174,60 @@ def _chat_listener_pids(chat_port: int) -> list[int]:
         detail = (result.stderr or result.stdout or "").strip() or f"lsof exited {result.returncode}"
         raise SessionControlError(f"lsof failed for port {chat_port}: {detail}")
     return [int(line.strip()) for line in (result.stdout or "").splitlines() if line.strip().isdigit()]
+
+
+def _process_command(pid: int) -> str | None:
+    try:
+        result = subprocess.run(
+            ["ps", "-p", str(pid), "-ww", "-o", "command="],
+            capture_output=True,
+            text=True,
+            timeout=1,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise SessionControlError(f"ps timed out for pid {pid}") from exc
+    except OSError as exc:
+        raise SessionControlError(f"ps failed for pid {pid}: {exc}") from exc
+    if result.returncode == 1:
+        return None
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip() or f"ps exited {result.returncode}"
+        raise SessionControlError(f"ps failed for pid {pid}: {detail}")
+    command = (result.stdout or "").strip()
+    return command or None
+
+
+def _is_own_chat_server(command: str, session_name: str) -> bool:
+    tokens = command.split()
+    for i, token in enumerate(tokens):
+        if token != "-m":
+            continue
+        if i + 2 >= len(tokens):
+            return False
+        if tokens[i + 1] != "server.server":
+            continue
+        return tokens[i + 2] == session_name
+    return False
+
+
+def _own_chat_listener_pids(chat_port: int, session_name: str) -> list[int]:
+    ours: list[int] = []
+    foreign: list[int] = []
+    for pid in _chat_listener_pids(chat_port):
+        command = _process_command(pid)
+        if command is None:
+            continue
+        if _is_own_chat_server(command, session_name):
+            ours.append(pid)
+        else:
+            foreign.append(pid)
+    if foreign:
+        shown = ", ".join(str(pid) for pid in foreign)
+        raise SessionControlError(
+            f"chat port {chat_port} is occupied by pid {shown}, not this session's chat server"
+        )
+    return ours
 
 
 def _chat_port_open(chat_port: int) -> bool:
@@ -216,7 +258,7 @@ def stop_chat_server(repo_root: Path | str, session_name: str) -> tuple[bool, st
         return False, "session_name is required"
     chat_port = int(resolve_chat_port(repo_root, name))
     try:
-        pids = _chat_listener_pids(chat_port)
+        pids = _own_chat_listener_pids(chat_port, name)
     except SessionControlError as exc:
         return False, str(exc)
     if not pids:
@@ -317,7 +359,6 @@ def create_session(
         if workspace_runtime.is_dir():
             shutil.rmtree(workspace_runtime)
 
-    _copy_agent_doc(root, str(workspace_path))
     log_path = session_log_path(name)
     log_path.parent.mkdir(parents=True, exist_ok=True)
     if not log_path.exists():
