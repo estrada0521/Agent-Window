@@ -61,7 +61,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
       if (!listEl) return;
       if (!append) {
         if (!commits.length) {
-          listEl.innerHTML = '<div class="page-menu-item" data-git-branch-empty="1" style="cursor:default;opacity:0.52">No commits</div>';
+          listEl.innerHTML = '<div class="git-commit-file-empty" data-git-branch-empty="1">No commits</div>';
           return;
         }
         listEl.innerHTML = commits.map((commit) => buildGitBranchCommitRowHtml(commit)).join("");

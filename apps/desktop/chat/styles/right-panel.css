@@ -1083,9 +1083,11 @@
     }
 
     .git-commit-file-empty {
-      padding: 14px 8px;
+      padding: 24px 8px;
+      text-align: center;
       color: var(--muted);
       font-size: var(--message-text-size, 13px);
+      line-height: 1.45;
     }
     .git-commit-file-wrap > .git-commit-file-empty.inline-loading-row {
       min-height: 160px;
