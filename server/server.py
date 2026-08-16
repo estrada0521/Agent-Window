@@ -391,6 +391,7 @@ def _serve_pwa_static(handler, path: str) -> bool:
 
 chat_restart_pending = False
 chat_restart_lock = threading.Lock()
+chat_restart_release_event = threading.Event()
 server = None
 
 
@@ -398,92 +399,42 @@ def queue_chat_restart():
     global chat_restart_pending
     with chat_restart_lock:
         if chat_restart_pending:
-            return True, "restart already pending"
+            return False, "restart already pending", False
         chat_restart_pending = True
 
     bin_dir = Path(agent_send_path).resolve().parent.parent / "bin"
     script_path = str(bin_dir / "agent-index")
-    restart_helper = (
-        "import os, signal, socket, subprocess, sys, time\n"
-        "script_path, port, repo_root, session_name = sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4]\n"
-        "def port_open():\n"
-        "    try:\n"
-        "        with socket.create_connection(('127.0.0.1', port), timeout=0.2):\n"
-        "            return True\n"
-        "    except OSError:\n"
-        "        return False\n"
-        "for _ in range(50):\n"
-        "    if not port_open():\n"
-        "        break\n"
-        "    time.sleep(0.1)\n"
-        "if port_open():\n"
-        "    try:\n"
-        "        result = subprocess.run(['lsof', '-nP', f'-tiTCP:{port}', '-sTCP:LISTEN'], capture_output=True, text=True, timeout=1, check=False)\n"
-        "        pids = [int(line.strip()) for line in result.stdout.splitlines() if line.strip().isdigit()]\n"
-        "    except Exception:\n"
-        "        pids = []\n"
-        "    for pid in pids:\n"
-        "        try:\n"
-        "            os.kill(pid, signal.SIGTERM)\n"
-        "        except Exception:\n"
-        "            pass\n"
-        "    for _ in range(20):\n"
-        "        if not port_open():\n"
-        "            break\n"
-        "        time.sleep(0.1)\n"
-        "    if port_open():\n"
-        "        for pid in pids:\n"
-        "            try:\n"
-        "                os.kill(pid, signal.SIGKILL)\n"
-        "            except Exception:\n"
-        "                pass\n"
-        "        for _ in range(20):\n"
-        "            if not port_open():\n"
-        "                break\n"
-        "            time.sleep(0.1)\n"
-        "env = os.environ.copy()\n"
-        "env['AGENT_WINDOW_AGENT_NAME'] = 'user'\n"
-        "subprocess.Popen(\n"
-        "    [script_path, '--follow', '--chat', '--session', session_name],\n"
-        "    cwd=repo_root,\n"
-        "    env=env,\n"
-        "    stdin=subprocess.DEVNULL,\n"
-        "    stdout=subprocess.DEVNULL,\n"
-        "    stderr=subprocess.DEVNULL,\n"
-        "    start_new_session=True,\n"
-        "    close_fds=True,\n"
-        ")\n"
-    )
-    try:
-        subprocess.Popen(
-            [sys.executable, "-c", restart_helper, script_path, str(port), str(_repo_root), session_name],
-            cwd=str(_repo_root),
-            env=_clean_env(),
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-            close_fds=True,
-        )
-    except Exception as exc:
-        with chat_restart_lock:
-            chat_restart_pending = False
-        return False, str(exc)
+    done = threading.Event()
+    result = {"ok": False}
 
     def worker():
-        time.sleep(0.15)
-        if server is None:
-            return
         try:
-            server.shutdown()
-        finally:
-            try:
+            if server is not None:
+                server.shutdown()
                 server.server_close()
-            except Exception:
-                pass
+            env = _clean_env()
+            env["AGENT_WINDOW_AGENT_NAME"] = "user"
+            env["AGENT_WINDOW_CHAT_RESTART_HANDOFF"] = "1"
+            completed = subprocess.run(
+                [script_path, "--follow", "--chat", "--session", session_name],
+                cwd=str(_repo_root),
+                env=env,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+            result["ok"] = completed.returncode == 0
+        finally:
+            done.set()
 
     threading.Thread(target=worker, daemon=True, name="chat-restart").start()
-    return True, ""
+    done.wait()
+    return result["ok"], "" if result["ok"] else "reload failed", True
+
+
+def release_chat_restart() -> None:
+    chat_restart_release_event.set()
 
 
 def _route_context() -> dict:
@@ -520,6 +471,7 @@ def _route_context() -> dict:
         "render_chat_html_fn": render_chat_html,
         "clean_env_fn": _clean_env,
         "queue_chat_restart_fn": queue_chat_restart,
+        "release_chat_restart_fn": release_chat_restart,
     }
 
 
@@ -600,7 +552,8 @@ def main(argv: list[str] | None = None) -> None:
     global server
 
     initialize_from_argv(argv)
-    _kill_stale_sync_processes(str(index_path))
+    if os.environ.get("AGENT_WINDOW_CHAT_RESTART_HANDOFF") != "1":
+        _kill_stale_sync_processes(str(index_path))
 
     cert_file = os.environ.get("AGENT_WINDOW_CERT_FILE", "")
     key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")
@@ -615,6 +568,8 @@ def main(argv: list[str] | None = None) -> None:
         scheme = "https"
     print(f"{scheme}://127.0.0.1:{port}/?follow={'1' if follow_mode else '0'}", flush=True)
     server.serve_forever()
+    if chat_restart_pending:
+        chat_restart_release_event.wait()
 
 
 if __name__ == "__main__":
