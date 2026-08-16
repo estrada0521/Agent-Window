@@ -64,9 +64,6 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     let reconnectStatusVisible = false;
     let refreshInFlight = false;
     let pendingRefreshOptions = null;
-    let sessionStateInFlight = false;
-    let pendingSessionStateRefresh = false;
-    let pendingSessionStateProjections = [];
     let reloadInFlight = false;
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const AGENT_ICON_DATA = __ICON_DATA_URIS__;
@@ -552,9 +549,9 @@ __CHAT_INCLUDE:composer/runtime.js__
 __CHAT_INCLUDE:../../shared/chat/attachments/file-runtime.js__
 __CHAT_INCLUDE:../../shared/chat/composer/commands.js__
 __CHAT_INCLUDE:../../shared/chat/thinking.js__
-__CHAT_INCLUDE:runtime/agent-status.js__
+__CHAT_INCLUDE:../../shared/chat/runtime/agent-status.js__
 __CHAT_INCLUDE:../../shared/chat/touch-interaction.js__
-__CHAT_INCLUDE:runtime/settings-sync.js__
+__CHAT_INCLUDE:../../shared/chat/runtime/settings-sync.js__
 __CHAT_INCLUDE:panes/pane-viewer.js__
     let workspaceSyncEventSource = null;
     let workspaceSyncLastSeq = 0;
