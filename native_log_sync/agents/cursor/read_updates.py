@@ -92,6 +92,11 @@ def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None)
         self._native_log_current_paths[agent] = transcript_path
         file_size = os.path.getsize(transcript_path)
         start = read_progress_start(self._native_log_progress, transcript_path, file_size)
+        if start is None:
+            logging.error(
+                "Cursor native log %s shrank below the synced position; skipping this sync", transcript_path
+            )
+            return
         if start >= file_size:
             return
 

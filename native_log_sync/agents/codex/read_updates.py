@@ -84,6 +84,11 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
         self._native_log_current_paths[agent] = resolved_path
         file_size = os.path.getsize(resolved_path)
         start = read_progress_start(self._native_log_progress, resolved_path, file_size)
+        if start is None:
+            logging.error(
+                "Codex native log %s shrank below the synced position; skipping this sync", resolved_path
+            )
+            return
         if start >= file_size:
             return
 

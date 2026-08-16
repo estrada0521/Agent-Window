@@ -61,6 +61,11 @@ def _sync_grok_chat_history(runtime, agent: str, history_path: str) -> bool:
     is_first_encounter = normalized not in runtime._native_log_progress
     file_size = os.path.getsize(history_path)
     start = read_progress_start(runtime._native_log_progress, history_path, file_size)
+    if start is None:
+        logging.error(
+            "Grok chat history %s shrank below the synced position; skipping this sync", history_path
+        )
+        return False
     if start >= file_size:
         return False
 
@@ -143,26 +148,31 @@ def sync_grok_native_log(runtime, agent: str, native_log_path: str | None = None
         start = read_progress_start(runtime._native_log_progress, updates_path, file_size)
 
         turn_completed = False
-        if start < file_size:
-            workspace = str(getattr(runtime, "workspace", "") or "")
-            with open(updates_path, "r", encoding="utf-8") as handle:
-                handle.seek(start)
-                while True:
-                    line = handle.readline()
-                    if not line:
-                        break
-                    try:
-                        entry = json.loads(line)
-                    except json.JSONDecodeError:
-                        continue
-                    turn_completed = _turn_completed(entry) or turn_completed
-                    tool_evs: list[dict] = []
-                    for name, inp in iter_tool_calls_from_update(entry):
-                        tool_evs.extend(runtime_tool_events(name, inp, workspace=workspace))
-                    if tool_evs:
-                        push_runtime_display(runtime, agent, tool_evs)
+        if start is None:
+            logging.error(
+                "Grok updates log %s shrank below the synced position; skipping this sync", updates_path
+            )
+        else:
+            if start < file_size:
+                workspace = str(getattr(runtime, "workspace", "") or "")
+                with open(updates_path, "r", encoding="utf-8") as handle:
+                    handle.seek(start)
+                    while True:
+                        line = handle.readline()
+                        if not line:
+                            break
+                        try:
+                            entry = json.loads(line)
+                        except json.JSONDecodeError:
+                            continue
+                        turn_completed = _turn_completed(entry) or turn_completed
+                        tool_evs: list[dict] = []
+                        for name, inp in iter_tool_calls_from_update(entry):
+                            tool_evs.extend(runtime_tool_events(name, inp, workspace=workspace))
+                        if tool_evs:
+                            push_runtime_display(runtime, agent, tool_evs)
 
-        advance_read_progress(runtime._native_log_progress, updates_path, file_size)
+            advance_read_progress(runtime._native_log_progress, updates_path, file_size)
 
         _sync_grok_chat_history(runtime, agent, history_path)
         if turn_completed:

@@ -34,16 +34,21 @@ def _load_pane_paths(raw: object) -> dict[str, str]:
     return result
 
 
-def read_progress_start(progress: dict[str, int], path: str, file_size: int) -> int:
+def read_progress_start(progress: dict[str, int], path: str, file_size: int) -> int | None:
     """Where to resume reading `path` from: the recorded high-water mark, or 0
     if this exact file has never been synced before (new chat, or the first
-    time this install has ever seen this native log). If the file is smaller
-    than the recorded mark, it was truncated or replaced; restart from 0.
+    time this install has ever seen this native log).
+
+    A native log is never supposed to shrink. If it appears smaller than the
+    recorded high-water mark, resuming from 0 would silently replay content
+    that was already synced (duplicate messages). Since we can't tell whether
+    that's a genuine replacement or a momentary/misleading size reading,
+    return None so the caller skips this sync cycle instead of guessing.
     """
     key = _normalized_native_log_path(path)
     start = progress.get(key, 0)
     if file_size < start:
-        return 0
+        return None
     return start
 
 
