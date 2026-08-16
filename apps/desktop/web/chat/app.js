@@ -478,9 +478,9 @@ __CHAT_INCLUDE:composer/runtime.js__
 __CHAT_INCLUDE:../../../shared/chat/attachments/file-runtime.js__
 __CHAT_INCLUDE:../../../shared/chat/composer/commands.js__
 __CHAT_INCLUDE:../../../shared/chat/thinking.js__
-__CHAT_INCLUDE:runtime/agent-status.js__
+__CHAT_INCLUDE:../../../shared/chat/runtime/agent-status.js__
 __CHAT_INCLUDE:../../../shared/chat/touch-interaction.js__
-__CHAT_INCLUDE:runtime/settings-sync.js__
+__CHAT_INCLUDE:../../../shared/chat/runtime/settings-sync.js__
     const desktopRightPanel = document.getElementById("desktopRightPanel");
     const desktopRightPanelResizer = document.getElementById("desktopRightPanelResizer");
     const dpSplitPanel = document.getElementById("dpSplitPanel");
