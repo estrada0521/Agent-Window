@@ -824,9 +824,12 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           kind: item.classList.contains("repo-browser-dir") ? "dir" : "file",
           path: dpNormalizePath(item.title || ""),
         }));
-        if (dpRepoEntriesStructureSignature(currentEntries) !== dpRepoEntriesStructureSignature(entries)) {
-          dpRenderRepoPanel(path, entries, { direction: "none" });
-        }
+        if (dpRepoEntriesStructureSignature(currentEntries) === dpRepoEntriesStructureSignature(entries)) return;
+        const scrollEl = dpRepoContent.querySelector(".repo-browser-scroll");
+        const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
+        dpRenderRepoPanel(path, entries, { direction: "none" });
+        const nextScroll = dpRepoContent.querySelector(".repo-browser-scroll");
+        if (nextScroll) nextScroll.scrollTop = scrollTop;
       } catch (_) {}
     };
     window.addEventListener("message", (event) => {
@@ -863,22 +866,30 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     });
     let workspaceSyncEventSource = null;
     let workspaceSyncLastSeq = 0;
+    let workspaceSyncLastGitVersion = 0;
+    let workspaceSyncLastFileVersion = 0;
     let workspaceSyncLastHubSettingsVersion = -1;
     const handleWorkspaceSyncUpdate = (payload = {}) => {
       const nextSeq = Math.max(0, parseInt(payload?.seq) || 0);
       if (nextSeq && nextSeq <= workspaceSyncLastSeq) return;
       if (nextSeq) workspaceSyncLastSeq = nextSeq;
-      _dpGitOverviewFingerprint = "";
-      if (dpPanelOpen && dpActivePanelView === "repo") {
+      const nextGitVersion = parseInt(payload?.git_version);
+      const gitChanged = Number.isFinite(nextGitVersion) && nextGitVersion !== workspaceSyncLastGitVersion;
+      if (Number.isFinite(nextGitVersion)) workspaceSyncLastGitVersion = nextGitVersion;
+      const nextFileVersion = parseInt(payload?.file_version);
+      const fileChanged = Number.isFinite(nextFileVersion) && nextFileVersion !== workspaceSyncLastFileVersion;
+      if (Number.isFinite(nextFileVersion)) workspaceSyncLastFileVersion = nextFileVersion;
+      if (gitChanged) _dpGitOverviewFingerprint = "";
+      if (fileChanged && dpPanelOpen && dpActivePanelView === "repo") {
         void dpRefreshRepoDir(dpRepoBrowserPath || "");
       }
-      if (dpPanelOpen && dpActivePanelView === "git") {
+      if (gitChanged && dpPanelOpen && dpActivePanelView === "git") {
         if (dpGitContent?.querySelector(".git-branch-stack")) {
           void dpRefreshGitOverview();
         } else {
           void dpLoadGitBranchPage({ reset: true });
         }
-      } else if (dpPanelOpen || dpGitSummaryPinned) {
+      } else if (gitChanged && (dpPanelOpen || dpGitSummaryPinned)) {
         void dpRefreshGitOverview();
       }
       const nextHubSettingsVersion = parseInt(payload?.hub_settings_version) || 0;

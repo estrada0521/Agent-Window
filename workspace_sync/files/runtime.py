@@ -79,7 +79,6 @@ class FileRuntime:
                 roots.append(resolved)
         self.allowed_roots = tuple(roots)
         self._file_list_cache: list[dict] | None = None
-        self._dir_list_cache: dict[str, list[dict]] | None = None
         self._file_list_cache_at = 0.0
         self._file_list_cache_lock = threading.Lock()
         self._file_list_refresh_lock = threading.Lock()
@@ -111,15 +110,6 @@ class FileRuntime:
         if any(part in self.SKIP_DIRS for part in parts):
             return True
         return self._file_index_ignore.matches(normalized)
-
-    def _prune_walk_dirs(self, rel_dir: str, dirs: list[str]) -> None:
-        kept: list[str] = []
-        for dirname in dirs:
-            child_rel = f"{rel_dir}/{dirname}" if rel_dir else dirname
-            if self._rel_path_is_skipped(child_rel):
-                continue
-            kept.append(dirname)
-        dirs[:] = sorted(kept)
 
     def file_index_path_is_ignored(self, rel: str) -> bool:
         return self._rel_path_is_skipped(rel)
@@ -306,7 +296,6 @@ class FileRuntime:
     def invalidate_file_list_cache(self) -> None:
         with self._file_list_cache_lock:
             self._file_list_cache = None
-            self._dir_list_cache = None
             self._file_list_cache_at = 0.0
             self._file_list_cache_version += 1
 
@@ -314,53 +303,35 @@ class FileRuntime:
         if not self._file_list_refresh_lock.acquire(blocking=False):
             with self._file_list_cache_lock:
                 return [dict(item) for item in (self._file_list_cache or [])]
-        files: list[dict] = []
-        dir_entries: dict[str, list[dict]] = {"": []}
         try:
-            for root, dirs, filenames in os.walk(self.workspace):
-                rel_dir = os.path.relpath(root, self.workspace).replace("\\", "/")
-                if rel_dir == ".":
-                    rel_dir = ""
-                if self._rel_path_is_skipped(rel_dir):
-                    dirs[:] = []
-                    continue
-                self._prune_walk_dirs(rel_dir, dirs)
-                dir_bucket = dir_entries.setdefault(rel_dir, [])
-                for dirname in dirs:
-                    child_rel = f"{rel_dir}/{dirname}" if rel_dir else dirname
-                    try:
-                        child_real = os.path.realpath(os.path.join(root, dirname))
-                    except OSError:
-                        continue
-                    if not self._is_allowed_path(child_real):
-                        continue
-                    dir_entries.setdefault(child_rel, [])
-                    dir_bucket.append({"name": dirname, "path": child_rel, "kind": "dir"})
-                for filename in sorted(filenames):
-                    full = os.path.join(root, filename)
-                    resolved = os.path.realpath(full)
-                    if not self._is_allowed_path(resolved):
-                        continue
-                    rel = os.path.relpath(full, self.workspace).replace("\\", "/")
-                    if not rel or self._rel_path_is_skipped(rel):
-                        continue
-                    files.append({"path": rel, "size": None})
-                    try:
-                        size = os.path.getsize(full) if os.path.isfile(full) else None
-                    except OSError:
-                        size = None
-                    dir_bucket.append({"name": filename, "path": rel, "kind": "file", "size": size})
-            files.sort(key=lambda item: str(item.get("path") or "").casefold())
-            for rel, entries in dir_entries.items():
-                entries.sort(key=lambda item: (item.get("kind") != "dir", str(item.get("name") or "").casefold()))
+            files = self._git_search_paths()
             with self._file_list_cache_lock:
                 self._file_list_cache = files
-                self._dir_list_cache = dir_entries
                 self._file_list_cache_at = time.time()
                 self._file_list_cache_version += 1
                 return [dict(item) for item in files]
         finally:
             self._file_list_refresh_lock.release()
+
+    def _git_search_paths(self) -> list[dict]:
+        result = subprocess.run(
+            ["git", "-C", self.workspace, "ls-files", "-z", "-c", "-o", "--exclude-standard"],
+            check=False,
+            capture_output=True,
+        )
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout or b"").decode("utf-8", "replace").strip()
+            raise RuntimeError(detail or f"git ls-files exited {result.returncode}")
+        files: list[dict] = []
+        for raw in (result.stdout or b"").split(b"\0"):
+            if not raw:
+                continue
+            rel = raw.decode("utf-8", "replace").replace("\\", "/")
+            if not rel or self._rel_path_is_skipped(rel):
+                continue
+            files.append({"path": rel, "size": None})
+        files.sort(key=lambda item: str(item.get("path") or "").casefold())
+        return files
 
     def file_list_cache_state(self) -> dict[str, int | float]:
         with self._file_list_cache_lock:
@@ -574,21 +545,30 @@ class FileRuntime:
         full = self._resolve_path(normalized_rel, allow_workspace_root=True)
         if not os.path.isdir(full):
             raise NotADirectoryError(full)
-        now = time.time()
-        with self._file_list_cache_lock:
-            if (
-                self._dir_list_cache is not None
-                and (now - self._file_list_cache_at) <= self.FILE_LIST_CACHE_TTL_SECONDS
-            ):
-                cached = self._dir_list_cache.get(normalized_rel)
-                if cached is not None:
-                    return [dict(item) for item in cached]
-        self.refresh_file_list_cache()
-        with self._file_list_cache_lock:
-            cached = (self._dir_list_cache or {}).get(normalized_rel)
-            if cached is not None:
-                return [dict(item) for item in cached]
-        return []
+        entries: list[dict] = []
+        with os.scandir(full) as scanner:
+            for entry in scanner:
+                child_rel = f"{normalized_rel}/{entry.name}" if normalized_rel else entry.name
+                if self._rel_path_is_skipped(child_rel):
+                    continue
+                try:
+                    is_dir = entry.is_dir(follow_symlinks=False)
+                except OSError:
+                    continue
+                item = {
+                    "name": entry.name,
+                    "path": child_rel,
+                    "kind": "dir" if is_dir else "file",
+                    "size": None,
+                }
+                if not is_dir:
+                    try:
+                        item["size"] = entry.stat(follow_symlinks=False).st_size
+                    except OSError:
+                        item["size"] = None
+                entries.append(item)
+        entries.sort(key=lambda item: (item.get("kind") != "dir", str(item.get("name") or "").casefold()))
+        return entries
 
     def file_view(
         self,
