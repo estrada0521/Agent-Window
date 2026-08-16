@@ -87,7 +87,12 @@ def format_session_chat_url(
     url_quote_fn,
 ) -> str:
     resolved = resolve_external_origin_fn(host_header, local_port)
-    if resolved["is_public"]:
+    host = str(resolved.get("host") or "").lower()
+    loopback = host in {"127.0.0.1", "localhost", "::1", "[::1]"}
+    if resolved["is_public"] or not loopback:
+        # Phone / LAN / public Hub already trusted this origin. A second
+        # HTTPS port (the chat server) is a different origin, so Safari
+        # cannot accept the self-signed cert inside the iframe.
         base = f"{resolved['origin']}/session/{url_quote_fn(session_name)}"
         return f"{base}{path}"
     return format_external_url_fn(host_header, local_port, path)
