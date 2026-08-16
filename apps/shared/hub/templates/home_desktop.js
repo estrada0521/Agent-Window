@@ -581,10 +581,6 @@
       } catch (_) {}
     }
 
-    function setDeskComposerOverlayOpen(isOpen) {
-      _deskMain?.classList.toggle("composer-overlay-open", !!isOpen);
-    }
-
     function syncDeskSidebarResizerVisibility() {
       if (!_deskSidebarResizer) return;
       if (isTauriDesktopApp()) {
@@ -901,7 +897,6 @@
       updateDeskWindowTitle(_deskSelectedSessionName);
       persistDeskSelection(_deskSelectedSessionName);
       setDeskSelectionInUrl(_deskSelectedSessionName);
-      setDeskComposerOverlayOpen(false);
       if (isDeskSessionSidebarOpen()) _deskChatFrame.dataset.hubSidebarOpen = "1";
       else delete _deskChatFrame.dataset.hubSidebarOpen;
       if (_deskSelectedSessionName) {
@@ -1365,10 +1360,6 @@
             y: Math.round(Number(childPayload.y || 0) + Number(frameRect.top || 0)),
           },
         }).catch(() => {});
-        return;
-      }
-      if (event.data && event.data.type === "composer-overlay-state" && event.source === _deskChatFrame?.contentWindow) {
-        setDeskComposerOverlayOpen(!!event.data.open);
         return;
       }
       if (event.data === "hub_close_chat") {

@@ -263,7 +263,7 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       }
     };
 __CHAT_INCLUDE:modals/file-modal.js__
-__CHAT_INCLUDE:composer-overlay.js__
+__CHAT_INCLUDE:../../shared/chat/composer-overlay.js__
     const updateScrollBtnPos = () => {
       const shell = document.querySelector(".shell");
       shell.style.setProperty("--floating-btn-bottom", "160px");

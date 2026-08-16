@@ -2,20 +2,13 @@
     const composerOverlay = document.getElementById("composerOverlay");
     const composerForm = document.getElementById("composer");
     const isComposerOverlayOpen = () => !!composerOverlay && !composerOverlay.hidden && composerOverlay.classList.contains("visible");
-    let composerBlurCloseTimer = null;
-    const clearComposerBlurCloseTimer = () => {
-      if (composerBlurCloseTimer) {
-        clearTimeout(composerBlurCloseTimer);
-        composerBlurCloseTimer = null;
-      }
-    };
     const setComposerCaretToEnd = () => {
       if (!messageInput) return;
       const end = messageInput.value.length;
       if (typeof messageInput.setSelectionRange === "function") {
         try {
           messageInput.setSelectionRange(end, end);
-        } catch (_) { }
+        } catch (_) {}
       }
     };
     const focusComposerTextarea = ({ sync = false } = {}) => {
@@ -29,7 +22,7 @@
         setComposerCaretToEnd();
       };
       if (sync) {
-        if (composerForm) {
+        if (document.documentElement.dataset.mobile === "1" && composerForm) {
           composerForm.classList.add("composer-focus-hack");
           applyFocus();
           let restored = false;
@@ -78,7 +71,6 @@
     };
     const closeComposerOverlay = ({ restoreFocus = false } = {}) => {
       if (!composerOverlay || composerOverlay.hidden) return;
-      clearComposerBlurCloseTimer();
       document.dispatchEvent(new CustomEvent("composer-overlay-close-start"));
       composerOverlay.classList.remove("visible");
       composerOverlay.classList.add("closing");
@@ -109,7 +101,7 @@
           const nextQuery = params.toString();
           window.history.replaceState(window.history.state, "", `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}`);
         }
-      } catch (_) { }
+      } catch (_) {}
       requestAnimationFrame(() => openComposerOverlay({ immediateFocus: canComposeInSession() }));
     };
     scrollToBottomBtn.addEventListener("click", () => {
@@ -126,3 +118,17 @@
         closeComposerOverlay({ restoreFocus: true });
       }
     });
+    if (document.documentElement.dataset.mobile !== "1") {
+      const shouldIgnoreComposerMouseShortcut = (target) => !!target?.closest?.("a, button, input, textarea, select, summary, label, [contenteditable='true'], #fileDropdown, #cmdDropdown");
+      document.addEventListener("mousedown", (event) => {
+        if (event.button !== 1) return;
+        if (shouldIgnoreComposerMouseShortcut(event.target)) return;
+        event.preventDefault();
+        openComposerOverlay({ immediateFocus: canComposeInSession() });
+      }, { capture: true });
+      document.addEventListener("auxclick", (event) => {
+        if (event.button !== 1) return;
+        if (shouldIgnoreComposerMouseShortcut(event.target)) return;
+        event.preventDefault();
+      }, { capture: true });
+    }
