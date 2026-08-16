@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -9,6 +8,8 @@ import sys
 import time
 from pathlib import Path
 from urllib.parse import parse_qs
+
+from backend_core.tmux.control import SessionControlError, create_session
 
 
 def get_check_session_name(handler, parsed, ctx) -> None:
@@ -130,16 +131,17 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
             session_name,
             resolved_workspace,
         )
-        # Start tmux session with the terminal window only (no agents yet)
-        agent_window_bin = str(ctx["script_path"].parent / "agent-window")
-        launch_env = os.environ.copy()
-        subprocess.Popen(
-            [agent_window_bin, "--detach", "--session", session_name, "--workspace", resolved_workspace],
-            cwd=resolved_workspace,
-            env=launch_env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        try:
+            create_session(
+                session_name=session_name,
+                workspace=resolved_workspace,
+                agents=[],
+                tmux_socket=str(getattr(ctx["session_api"].ctx.hub, "tmux_socket", "") or ""),
+                repo_root=ctx["session_api"].ctx.repo_root,
+            )
+        except SessionControlError as exc:
+            handler._send_json(500, {"ok": False, "error": str(exc)})
+            return
         # Start chat server with SESSION_IS_ACTIVE=1 (session is live immediately)
         ok, chat_port, detail = ctx["session_api"].ensure_active_chat_server(
             session_name,

@@ -89,12 +89,7 @@ agent_window_dispatch_prelaunch_modes() {
       killed=0
       while IFS= read -r session; do
         [[ -z "$session" ]] && continue
-        if ! stop_session_chat_server "$session"; then
-          echo "[agent-window] warning: failed to stop chat server for $session" >&2
-        fi
-        cleanup_session_process_groups "$session" || true
-        tmux kill-session -t "$session"
-        echo "Killed tmux session: $session"
+        session_control kill --session "$session" --tmux-socket "$TMUX_SOCKET_NAME" || exit 1
         killed=1
       done < <(repo_sessions)
       [[ "$killed" -eq 1 ]] || { echo "No sessions found for this agent-window install"; exit 1; }
@@ -107,17 +102,8 @@ agent_window_dispatch_prelaunch_modes() {
       echo "Session does not exist" >&2
       exit 1
     fi
-    if ! tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
-      echo "Session does not exist: $SESSION_NAME" >&2
-      exit 1
-    fi
-    if ! stop_session_chat_server "$SESSION_NAME"; then
-      echo "[agent-window] warning: failed to stop chat server for $SESSION_NAME" >&2
-    fi
-    cleanup_session_process_groups "$SESSION_NAME" || true
-    tmux kill-session -t "$SESSION_NAME"
-    echo "Killed tmux session: $SESSION_NAME"
-    exit 0
+    session_control kill --session "$SESSION_NAME" --tmux-socket "$TMUX_SOCKET_NAME"
+    exit $?
   fi
 
   if [[ "$MODE" == "rename" ]]; then
@@ -145,189 +131,18 @@ agent_window_dispatch_prelaunch_modes() {
 }
 
 agent_window_dispatch_agent_mutation_modes() {
-  if [[ "$MODE" == "add-agent" ]]; then
-    command -v tmux >/dev/null 2>&1 || { echo "tmux is required." >&2; exit 1; }
-    [[ -n "$AGENTS_ARG" ]] || { echo "--agent is required for add-agent" >&2; exit 1; }
-    if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
-      SESSION_NAME="$(resolve_target_session_name)" || exit 1
-    fi
-    if [[ -z "$SESSION_NAME" ]]; then
-      echo "Session does not exist" >&2
-      exit 1
-    fi
-    if ! tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
-      echo "Session does not exist: $SESSION_NAME" >&2
-      exit 1
-    fi
-
-    base_agent="$(canonical_agent_name "${AGENTS_ARG%%-[0-9]*}")"
-    if ! agent_in_registry "$base_agent"; then
-      echo "Unknown agent: $AGENTS_ARG" >&2
-      exit 1
-    fi
-
-    load_session_runtime_context "$SESSION_NAME"
-    tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_INDEX_PATH "$(_canonical_session_index_path "$SESSION_NAME")"
-    ensure_session_index_mirrors "$SESSION_NAME"
-
-    acquire_session_topology_lock "$SESSION_NAME" || exit 1
-    trap 'release_session_topology_lock' EXIT
-    reconcile_session_agent_registry "$SESSION_NAME" >/dev/null
-
-    renumber_existing_exact_instance "$SESSION_NAME" "$base_agent"
-    instance_name="$(next_instance_name "$SESSION_NAME" "$base_agent")"
-    upper_instance="$(printf '%s' "$instance_name" | tr '[:lower:]-' '[:upper:]_')"
-    existing_pane_line="$(tmux show-environment -t "$SESSION_NAME" "AGENT_WINDOW_PANE_${upper_instance}" 2>/dev/null || true)"
-    existing_pane="$(printf '%s' "$existing_pane_line" | sed 's/^[^=]*=//')"
-    if [[ -n "$existing_pane" ]]; then
-      echo "Agent instance already exists: $instance_name (bug: please report)" >&2
-      exit 1
-    fi
-
-    required_cmd="$(resolve_agent_executable "$base_agent")" || {
-      required_cmd="$(agent_var AGENT_EXECUTABLE "$base_agent")"
-      [[ -n "$required_cmd" ]] || required_cmd="$base_agent"
-      echo "Required command not found for $base_agent: $required_cmd" >&2
-      exit 1
-    }
-
-    new_pane="$(create_agent_window "$SESSION_NAME" "$instance_name")"
-    [[ -n "$new_pane" ]] || { echo "Failed to create agent window" >&2; exit 1; }
-
-    current_agents="$(session_agents_value "$SESSION_NAME")"
-    updated_agents="$(python3 - "$REPO_ROOT" "$current_agents" "$instance_name" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-agents_csv = sys.argv[2]
-instance_name = sys.argv[3]
-sys.path.insert(0, str(repo_root / "bin"))
-from agent_window_lib.agents import agents_to_csv, append_instance, parse_agents_csv
-
-print(agents_to_csv(append_instance(parse_agents_csv(agents_csv), instance_name)))
-PYEOF
-    )"
-    tmux set-environment -t "$SESSION_NAME" "AGENT_WINDOW_PANE_${upper_instance}" "$new_pane"
-    tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_AGENTS "$updated_agents"
-    update_session_meta_file "$SESSION_NAME"
-
-    start_agent "$new_pane" "$base_agent" "$instance_name"
-    initiator_name="${AGENT_WINDOW_AGENT_NAME:-user}"
-    append_session_system_entry "$SESSION_NAME" "$(format_session_topology_message "add-agent" "$instance_name" "$initiator_name")" "session-topology" "add-agent" "$instance_name" "$initiator_name"
-
-    echo "Added agent $instance_name to session: $SESSION_NAME"
-    release_session_topology_lock
-    trap - EXIT
-    exit 0
+  if [[ "$MODE" != "add-agent" && "$MODE" != "remove-agent" ]]; then
+    return 0
   fi
-
-  if [[ "$MODE" == "remove-agent" ]]; then
-    command -v tmux >/dev/null 2>&1 || { echo "tmux is required." >&2; exit 1; }
-    [[ -n "$AGENTS_ARG" ]] || { echo "--agent is required for remove-agent" >&2; exit 1; }
-    if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
-      SESSION_NAME="$(resolve_target_session_name)" || exit 1
-    fi
-    if [[ -z "$SESSION_NAME" ]]; then
-      echo "Session does not exist" >&2
-      exit 1
-    fi
-    if ! tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
-      echo "Session does not exist: $SESSION_NAME" >&2
-      exit 1
-    fi
-
-    instance_name="$(printf '%s' "$AGENTS_ARG" | tr '[:upper:]' '[:lower:]')"
-    load_session_runtime_context "$SESSION_NAME"
-    tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_INDEX_PATH "$(_canonical_session_index_path "$SESSION_NAME")"
-    ensure_session_index_mirrors "$SESSION_NAME"
-
-    acquire_session_topology_lock "$SESSION_NAME" || exit 1
-    trap 'release_session_topology_lock' EXIT
-    reconcile_session_agent_registry "$SESSION_NAME" >/dev/null
-
-    current_agents="$(session_agents_value "$SESSION_NAME")"
-    remove_plan="$(python3 - "$REPO_ROOT" "$current_agents" "$instance_name" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-agents_csv = sys.argv[2]
-instance_name = sys.argv[3]
-sys.path.insert(0, str(repo_root / "bin"))
-from agent_window_lib.agents import agents_to_csv, parse_agents_csv, remove_instance, resolve_canonical_instance
-
-agents = parse_agents_csv(agents_csv)
-canonical = resolve_canonical_instance(agents, instance_name)
-if not canonical:
-    raise SystemExit(2)
-remaining_agents = remove_instance(agents, canonical)
-print(canonical)
-print(len(remaining_agents))
-print(agents_to_csv(remaining_agents))
-PYEOF
-    )"
-    remove_plan_status=$?
-    if [[ "$remove_plan_status" -eq 2 ]]; then
-      echo "Agent instance not in this session: $AGENTS_ARG (current: ${current_agents:-none})" >&2
-      exit 1
-    fi
-    [[ "$remove_plan_status" -eq 0 ]] || exit "$remove_plan_status"
-    canonical="$(printf '%s\n' "$remove_plan" | sed -n '1p')"
-    remaining="$(printf '%s\n' "$remove_plan" | sed -n '2p')"
-    updated_agents="$(printf '%s\n' "$remove_plan" | sed -n '3p')"
-    if [[ "$remaining" -lt 1 ]]; then
-      echo "Cannot remove the last agent pane" >&2
-      exit 1
-    fi
-
-    upper_instance="$(printf '%s' "$canonical" | tr '[:lower:]-' '[:upper:]_')"
-    pane_line="$(tmux show-environment -t "$SESSION_NAME" "AGENT_WINDOW_PANE_${upper_instance}" 2>/dev/null)" || {
-      echo "Failed to query tmux pane state for $canonical" >&2
-      exit 1
-    }
-    pane_id="$(printf '%s' "$pane_line" | sed 's/^[^=]*=//')"
-    if [[ -z "$pane_id" ]]; then
-      echo "No tmux pane recorded for instance: $canonical" >&2
-      exit 1
-    fi
-    if [[ "${TMUX_PANE:-}" == "$pane_id" ]] && [[ "${AGENT_WINDOW_REMOVE_HELPER:-0}" != "1" ]]; then
-      if command -v nohup >/dev/null 2>&1; then
-        nohup env \
-          AGENT_WINDOW_REMOVE_HELPER=1 \
-          AGENT_WINDOW_SESSION="$SESSION_NAME" \
-          AGENT_WINDOW_TMUX_SOCKET="$TMUX_SOCKET_NAME" \
-          "$SCRIPT_DIR/agent-window" remove-agent --session "$SESSION_NAME" --agent "$canonical" \
-          >/dev/null 2>&1 </dev/null &
-      else
-        env \
-          AGENT_WINDOW_REMOVE_HELPER=1 \
-          AGENT_WINDOW_SESSION="$SESSION_NAME" \
-          AGENT_WINDOW_TMUX_SOCKET="$TMUX_SOCKET_NAME" \
-          "$SCRIPT_DIR/agent-window" remove-agent --session "$SESSION_NAME" --agent "$canonical" \
-          >/dev/null 2>&1 </dev/null &
-      fi
-      disown >/dev/null 2>&1 || true
-      echo "Scheduled removal of agent $canonical from session: $SESSION_NAME"
-      exit 0
-    fi
-
-    window_target="$(window_target_for_pane "$pane_id")"
-    [[ -n "$window_target" ]] || { echo "No tmux window recorded for instance: $canonical" >&2; exit 1; }
-    if ! kill_window_target "$window_target"; then
-      echo "tmux kill-window failed for $window_target" >&2
-      exit 1
-    fi
-
-    tmux set-environment -t "$SESSION_NAME" -u "AGENT_WINDOW_PANE_${upper_instance}" 2>/dev/null || true
-    tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_AGENTS "$updated_agents"
-
-    update_session_meta_file "$SESSION_NAME"
-    initiator_name="${AGENT_WINDOW_AGENT_NAME:-user}"
-    append_session_system_entry "$SESSION_NAME" "$(format_session_topology_message "remove-agent" "$canonical" "$initiator_name")" "session-topology" "remove-agent" "$canonical" "$initiator_name"
-    echo "Removed agent $canonical from session: $SESSION_NAME"
-    release_session_topology_lock
-    trap - EXIT
-    exit 0
+  command -v tmux >/dev/null 2>&1 || { echo "tmux is required." >&2; exit 1; }
+  [[ -n "$AGENTS_ARG" ]] || { echo "--agent is required for $MODE" >&2; exit 1; }
+  if [[ -z "$SESSION_NAME" ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 0 ]]; then
+    SESSION_NAME="$(resolve_target_session_name)" || exit 1
   fi
+  if [[ -z "$SESSION_NAME" ]]; then
+    echo "Session does not exist" >&2
+    exit 1
+  fi
+  session_control "$MODE" --session "$SESSION_NAME" --agent "$AGENTS_ARG" --tmux-socket "$TMUX_SOCKET_NAME"
+  exit $?
 }
