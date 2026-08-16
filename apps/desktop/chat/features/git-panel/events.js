@@ -156,18 +156,8 @@
         expand.innerHTML = `<div class="git-pinned-expand-loading"><span></span><span></span><span></span></div>`;
 
         try {
-          const [staged, unstaged, untracked] = await Promise.all([
-            fetchWithTimeout("/git-diff-files?scope=staged",    {}, 4000).then(r => r.json()),
-            fetchWithTimeout("/git-diff-files?scope=unstaged",  {}, 4000).then(r => r.json()),
-            fetchWithTimeout("/git-diff-files?scope=untracked", {}, 4000).then(r => r.json()),
-          ]);
+          const { sections } = await fetchGitWorktreeFileSections();
           if (seq !== fetchSeq) return;
-
-          const sections = [
-            { label: "Staged",    scope: "staged",    files: staged?.files    || [] },
-            { label: "Unstaged",  scope: "unstaged",  files: unstaged?.files  || [] },
-            { label: "Untracked", scope: "untracked", files: untracked?.files || [] },
-          ].filter(s => s.files.length);
 
           if (!sections.length) {
             close();
@@ -187,7 +177,7 @@
               const counts = (!f.untracked && (ins || dels))
                 ? `<span class="git-pinned-expand-counts"><span class="ins">+${ins}</span><span class="del">-${dels}</span></span>`
                 : "";
-              return `<div class="git-pinned-expand-file" data-path="${_e(path)}" data-scope="${_e(s.scope)}">` +
+              return `<div class="git-pinned-expand-file" data-path="${_e(path)}" data-scope="${_e(s.kind)}">` +
                 `<span class="git-pinned-expand-file-main"><span class="git-pinned-expand-file-icon">${icon}</span>` +
                 `<span class="git-pinned-expand-file-label"><span class="n">${_e(name)}</span>${dir ? `<span class="d">${_e(dir)}</span>` : ""}</span></span>` +
                 counts +

@@ -8,6 +8,26 @@
       const safeCount = Math.max(0, parseInt(count) || 0);
       return `${safeCount} ${safeCount === 1 ? "path" : "paths"}`;
     };
+    const gitCommitChevronSvg = '<svg class="git-commit-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
+    const gitBranchSummaryRowHtml = (data, { leadingHtml = "" } = {}) => {
+      const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
+      const worktreeAdded = Math.max(0, parseInt(data?.worktree_added) || 0);
+      const worktreeDeleted = Math.max(0, parseInt(data?.worktree_deleted) || 0);
+      const worktreeClickable = !!data?.worktree_has_diff;
+      const worktreeLabel = changedPaths ? "Uncommitted changes" : "Working tree clean";
+      const worktreeMeta = changedPaths
+        ? `<span class="git-branch-summary-meta-text">${gitBranchPathCountText(changedPaths)}</span>`
+        : `<span class="git-branch-summary-meta-text">No changes</span>`;
+      const worktreeCounts = gitBranchCountsHtml(worktreeAdded, worktreeDeleted);
+      const chevron = worktreeClickable ? gitCommitChevronSvg : "";
+      return `<div class="git-branch-summary-row${worktreeClickable ? " clickable" : ""}"${worktreeClickable ? ' data-diff-kind="worktree"' : ""}>${leadingHtml}<div class="git-commit-info"><div class="git-branch-summary-label">${escapeHtml(worktreeLabel)}</div><div class="git-commit-meta">${worktreeMeta}${worktreeCounts}</div></div>${chevron}</div>`;
+    };
+    const gitCommitFileListHtml = (files, rowOptions = {}) =>
+      `<div class="git-commit-file-list">${(files || []).map((entry) => gitCommitFileRowHtml(entry, rowOptions)).join("")}</div>`;
+    const gitCommitFileStatsSectionHtml = (section, rowOptions = {}) =>
+      `<section class="git-commit-file-section" data-scope="${escapeHtml(section.kind)}"><div class="git-commit-file-section-title">${escapeHtml(section.title)}</div>${gitCommitFileListHtml(section.files, { ...rowOptions, scope: section.kind })}</section>`;
+    const gitCommitFileStatsSectionsHtml = (sections, rowOptions = {}) =>
+      `<div class="git-commit-file-sections">${(sections || []).map((section) => gitCommitFileStatsSectionHtml(section, rowOptions)).join("")}</div>`;
     const gitCommitRowHtml = (commit, { animate = false } = {}) => {
       const dotClass = commit?.is_origin_main ? "git-commit-dot is-origin-main" : "git-commit-dot";
       const iconInner = `<span class="${dotClass}" aria-hidden="true"></span>`;
