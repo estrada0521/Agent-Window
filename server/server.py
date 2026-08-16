@@ -10,7 +10,6 @@ import subprocess
 import sys
 import threading
 import time
-import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
@@ -25,7 +24,6 @@ from server.routes.assets import dispatch_get_assets_route
 from server.routes.read import dispatch_get_read_route
 from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
-from backend_core.access.files import append_jsonl_entry
 from backend_core.access.settings import (
     hub_settings_path,
     resolve_chat_port,
@@ -73,18 +71,6 @@ workspace_sync_api = None
 asset_runtime = None
 send_queue = None
 send_queue_thread = None
-
-
-def _build_outbound_user_entry(*, targets: list[str], message: str) -> dict:
-    entry = {
-        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "session": session_name,
-        "sender": "user",
-        "targets": list(targets),
-        "message": message,
-        "msg_id": uuid.uuid4().hex[:12],
-    }
-    return entry
 
 
 def _send_is_queueable(target: str, message: str) -> list[str] | None:
@@ -210,8 +196,7 @@ def _send_or_enqueue_message(
             target,
             message,
         )
-    entry = _build_outbound_user_entry(targets=queue_targets, message=message)
-    append_jsonl_entry(runtime.log_path, entry)
+    entry = runtime.append_user_entry(message, targets=queue_targets)
     send_queue.put(
         {
             "target": ",".join(queue_targets),

@@ -1,6 +1,27 @@
 from __future__ import annotations
 
 
+def append_user_entry(
+    runtime,
+    message: str,
+    *,
+    targets: list[str],
+    datetime_class,
+    uuid_module,
+    append_jsonl_entry_fn,
+) -> dict:
+    entry = {
+        "timestamp": datetime_class.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "session": runtime.session_name,
+        "sender": "user",
+        "targets": list(targets),
+        "message": message,
+        "msg_id": uuid_module.uuid4().hex[:12],
+    }
+    append_jsonl_entry_fn(runtime.log_path, entry)
+    return entry
+
+
 def append_system_entry(
     runtime,
     message: str,

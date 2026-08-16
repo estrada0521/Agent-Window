@@ -4,11 +4,8 @@ import logging
 import os
 import subprocess
 import time
-import uuid
-from datetime import datetime as dt_datetime
 
 from native_log_sync.agents._shared.path_state import _agent_base_name
-from backend_core.access.files import append_jsonl_entry
 from message_delivery.interaction import pane_delivery_payload
 from message_delivery.paste_timing import delivery_paste_delay_seconds
 
@@ -73,15 +70,7 @@ def send_message(
         return 400, {"ok": False, "error": "target is required"}
     if targets == ["user"]:
         if append_entry:
-            entry = {
-                "timestamp": dt_datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "session": self.session_name,
-                "sender": "user",
-                "targets": ["user"],
-                "message": message,
-                "msg_id": uuid.uuid4().hex[:12],
-            }
-            append_jsonl_entry(self.index_path, entry)
+            entry = self.append_user_entry(message, targets=["user"])
             return 200, {"ok": True, "mode": "note", "entry": entry}
         return 200, {"ok": True, "mode": "note"}
     if "user" in targets:
@@ -134,15 +123,7 @@ def send_message(
             return 400, {"ok": False, "error": f"Failed to deliver to: {failed_targets[0]}"}
         return 400, {"ok": False, "error": "No target panes resolved."}
     if append_entry:
-        entry = {
-            "timestamp": dt_datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "session": self.session_name,
-            "sender": "user",
-            "targets": successful_targets,
-            "message": payload,
-            "msg_id": uuid.uuid4().hex[:12],
-        }
-        append_jsonl_entry(self.index_path, entry)
+        entry = self.append_user_entry(payload, targets=successful_targets)
         if failed_targets:
             return 400, {"ok": False, "error": f"Failed to deliver to: {', '.join(failed_targets)}"}
         return 200, {"ok": True, "entry": entry}

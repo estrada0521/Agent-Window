@@ -26,6 +26,7 @@ from message_delivery import (
 )
 from .entry_write import (
     append_system_entry as _append_system_entry_impl,
+    append_user_entry as _append_user_entry_impl,
 )
 from .entries import entry_window as _entry_window_impl
 from .font_style import (
@@ -166,6 +167,16 @@ class ChatRuntime:
             font_family_stack_fn=cls._font_family_stack,
         )
 
+
+    def append_user_entry(self, message: str, *, targets: list[str]) -> dict:
+        return _append_user_entry_impl(
+            self,
+            message,
+            targets=targets,
+            datetime_class=dt_datetime,
+            uuid_module=uuid,
+            append_jsonl_entry_fn=append_jsonl_entry,
+        )
 
     def append_system_entry(self, message: str, *, agent: str = "", **extra) -> dict:
         return _append_system_entry_impl(
