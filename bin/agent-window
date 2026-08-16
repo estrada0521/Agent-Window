@@ -21,6 +21,10 @@ OPS_DIR="$(cd "$(dirname "$_REAL_SCRIPT")" && pwd)"
 REPO_ROOT="$(cd "$OPS_DIR/.." && pwd)"
 SCRIPT_DIR="$REPO_ROOT/bin"
 
+session_control() {
+  PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -m backend_core.cli.session_control "$@"
+}
+
 for _hp in /opt/homebrew/bin /usr/local/bin; do
   case ":${PATH:-}:" in *:"${_hp}":*) ;; *)
     [[ -d "$_hp" ]] && PATH="${_hp}:$PATH"
@@ -1130,140 +1134,20 @@ if [[ ! -f "$SAVE_CORE_SH" ]]; then
 fi
 source "$SAVE_CORE_SH"
 
-start_agent() {
-  local pane_id="$1" agent_name="$2" instance_name="${3:-$2}" launch_cmd
-  local base_name="${agent_name%%-[0-9]*}"
-  local executable launch_extra launch_flags launch_env
-  executable="$(resolve_agent_executable "$base_name")" || {
-    executable="$(agent_var AGENT_EXECUTABLE "$base_name")"
-    [[ -n "$executable" ]] || executable="$base_name"
-  }
-  launch_extra="$(agent_var AGENT_LAUNCH_EXTRA "$base_name")"
-  launch_flags="$(agent_var AGENT_LAUNCH_FLAGS "$base_name")"
-  launch_env="$(agent_var AGENT_LAUNCH_ENV "$base_name")"
-  launch_cmd="$(python3 - "$REPO_ROOT" "$executable" "$launch_extra" "$launch_flags" "$launch_env" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-executable = sys.argv[2]
-launch_extra = sys.argv[3]
-launch_flags = sys.argv[4]
-launch_env = sys.argv[5]
-sys.path.insert(0, str(repo_root / "bin"))
-from agent_window_lib.launch import build_agent_launch_command
-
-print(
-    build_agent_launch_command(
-        executable=executable,
-        launch_extra=launch_extra,
-        launch_flags=launch_flags,
-        launch_env=launch_env,
-    )
-)
-PYEOF
-  )"
-  tmux select-pane -t "$pane_id" -T "$instance_name"
-  tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_AGENT_NAME "$instance_name"
-  local shell_bin="${SHELL:-/bin/zsh}"
-  if [[ ! -x "$shell_bin" ]]; then
-    shell_bin=/bin/bash
-  fi
-  tmux respawn-pane -k -t "$pane_id" -c "$WORKSPACE" "$shell_bin" -lc "$launch_cmd"
-}
-
 agent_window_dispatch_agent_mutation_modes
 
-
-if tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
-  echo "Session already exists: $SESSION_NAME" >&2
-  exit 1
-fi
-
-NUM_AGENTS=${#SELECTED_AGENTS[@]}
-
+_create_args=(
+  create
+  --session "$SESSION_NAME"
+  --workspace "$WORKSPACE"
+  --tmux-socket "$TMUX_SOCKET_NAME"
+)
 if [[ "$FRESH" -eq 1 ]]; then
-  _fresh_dir="${CENTRAL_LOG_DIR}/${SESSION_NAME}"
-  if [[ -d "$_fresh_dir" ]]; then
-    rm -rf "$_fresh_dir"
-    echo "[agent-window] Removed: $_fresh_dir" >&2
-  fi
-  _fresh_workspace_dir="${WORKSPACE}/.agent-window"
-  if [[ -d "$_fresh_workspace_dir" ]]; then
-    rm -rf "$_fresh_workspace_dir"
-    echo "[agent-window] Removed: $_fresh_workspace_dir" >&2
-  fi
+  _create_args+=(--fresh)
 fi
-
-ensure_session_agent_doc
-
-tmux new-session -d -x "$AGENT_WINDOW_WIDTH" -y "$AGENT_WINDOW_HEIGHT" -s "$SESSION_NAME" -c "$WORKSPACE"
-configure_window_size "$SESSION_NAME":0
-tmux rename-window -t "$SESSION_NAME":0 terminal >/dev/null 2>&1 || true
-
-tmux set-option -t "$SESSION_NAME" -g remain-on-exit on
-tmux set-option -t "$SESSION_NAME" -g mouse on
-tmux set-option -t "$SESSION_NAME" -g pane-border-style fg='#38393D'
-tmux set-option -t "$SESSION_NAME" -g pane-active-border-style fg='#38393D'
-tmux set-option -t "$SESSION_NAME" -g status-style bg='#38393D',fg='#ACB4BE'
-tmux set-option -t "$SESSION_NAME" -g history-limit 50000
-tmux set-option -t "$SESSION_NAME" -g @scroll-speed-num-lines-per-scroll 1 2>/dev/null || true
-
-PANES=()
-for (( i=0; i<NUM_AGENTS; i++ )); do
-  pane_id="$(create_agent_window "$SESSION_NAME" "${INSTANCE_NAMES[$i]}")"
-  [[ -n "$pane_id" ]] || { echo "Failed to create agent window for ${INSTANCE_NAMES[$i]}" >&2; exit 1; }
-  PANES+=("$pane_id")
-done
-
-tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_SESSION "$SESSION_NAME"
-tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_WORKSPACE "$WORKSPACE"
-tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_TMUX_SOCKET "$TMUX_SOCKET_NAME"
-tmux set-environment -t "$SESSION_NAME" PATH "${SCRIPT_DIR}:${PATH}"
-tmux set-environment -t "$SESSION_NAME" -u CLAUDECODE 2>/dev/null || true
-tmux set-environment -t "$SESSION_NAME" -u AGENT_WINDOW_PANE_USER 2>/dev/null || true
-tmux set-environment -t "$SESSION_NAME" -u AGENT_WINDOW_PANES_USER 2>/dev/null || true
-tmux set-environment -t "$SESSION_NAME" -u AGENT_WINDOW_LOG_DIR 2>/dev/null || true
-tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_INDEX_PATH "$(_canonical_session_index_path "$SESSION_NAME")"
-ensure_session_index_mirrors "$SESSION_NAME"
-
-for (( i=0; i<NUM_AGENTS; i++ )); do
-  instance="${INSTANCE_NAMES[$i]}"
-  pane="${PANES[$i]}"
-  upper=$(echo "$instance" | tr '[:lower:]-' '[:upper:]_')
-  tmux set-environment -t "$SESSION_NAME" "AGENT_WINDOW_PANE_${upper}" "$pane"
-done
-if [[ "$NO_AGENTS" -eq 1 ]]; then
-  tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_AGENTS "-"
-else
-  tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_AGENTS "$(IFS=,; echo "${INSTANCE_NAMES[*]}")"
+if [[ "$NO_AGENTS" -eq 0 && ${#INSTANCE_NAMES[@]} -gt 0 ]]; then
+  _create_args+=(--agents "$(IFS=,; echo "${INSTANCE_NAMES[*]}")")
 fi
-
-update_session_meta_file "$SESSION_NAME"
-
-_priority_idx=-1
-_max_priority=0
-for (( i=0; i<NUM_AGENTS; i++ )); do
-  _p="$(agent_var AGENT_STARTUP_PRIORITY "${SELECTED_AGENTS[$i]}")"
-  [[ -n "$_p" && "$_p" -gt "$_max_priority" ]] && _max_priority="$_p" && _priority_idx=$i
-done
-
-if [[ $_priority_idx -ge 0 && $_max_priority -gt 0 ]]; then
-  start_agent "${PANES[$_priority_idx]}" "${SELECTED_AGENTS[$_priority_idx]}" "${INSTANCE_NAMES[$_priority_idx]}"
-  sleep 3
-  for (( i=0; i<NUM_AGENTS; i++ )); do
-    [[ $i -eq $_priority_idx ]] && continue
-    start_agent "${PANES[$i]}" "${SELECTED_AGENTS[$i]}" "${INSTANCE_NAMES[$i]}"
-  done
-else
-  for (( i=0; i<NUM_AGENTS; i++ )); do
-    start_agent "${PANES[$i]}" "${SELECTED_AGENTS[$i]}" "${INSTANCE_NAMES[$i]}"
-  done
-fi
-
-if [[ ${#PANES[@]} -gt 0 ]]; then
-  tmux select-pane -t "${PANES[0]}"
-fi
-
-[[ "$DETACH" -eq 1 ]] && { echo "Started tmux session: $SESSION_NAME"; exit 0; }
+session_control "${_create_args[@]}"
+[[ "$DETACH" -eq 1 ]] && exit 0
 exec_tmux attach-session -t "$SESSION_NAME"

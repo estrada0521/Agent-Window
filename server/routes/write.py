@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import unquote as url_unquote
 
 from backend_core.access.settings import workspace_upload_dir
+from backend_core.tmux.control import SessionControlError, add_agent, remove_agent
 from shortcut_command.execute import run_shortcut_command
 
 
@@ -62,22 +63,18 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     if not agent:
         handler._send_json(400, {"ok": False, "error": "agent required"})
         return
-    bin_dir = Path(ctx["repo_root"]) / "bin"
     try:
-        proc = subprocess.run(
-            [str(bin_dir / "agent-window"), "add-agent", "--session", ctx["session_name"], "--agent", agent],
-            capture_output=True,
-            text=True,
-            env=ctx["clean_env_fn"](),
-            check=False,
+        instance = add_agent(
+            session_name=ctx["session_name"],
+            agent=agent,
+            tmux_socket=str(getattr(ctx["runtime"], "tmux_socket", "") or ""),
+            repo_root=ctx["repo_root"],
         )
-    except Exception as exc:
+    except SessionControlError as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    stdout = (proc.stdout or "").strip()
-    stderr = (proc.stderr or "").strip()
-    if proc.returncode != 0:
-        handler._send_json(500, {"ok": False, "error": stderr or stdout or f"add-agent failed ({proc.returncode})"})
+    except Exception as exc:
+        handler._send_json(500, {"ok": False, "error": str(exc)})
         return
     targets = ctx["runtime"].active_agents()
     with ctx["runtime"]._payload_cache_lock:
@@ -87,14 +84,14 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         200,
         {
             "ok": True,
-            "agent": agent,
-            "message": stdout or f"Added agent {agent}",
+            "agent": instance,
+            "message": f"Added agent {instance}",
             "targets": targets,
         },
     )
     try:
-        ctx["runtime"]._native_log.on_pane_add(agent)
-        ctx["runtime"].refresh_native_log_bindings([agent], reason="add-agent")
+        ctx["runtime"]._native_log.on_pane_add(instance)
+        ctx["runtime"].refresh_native_log_bindings([instance], reason="add-agent")
     except Exception:
         pass
     try:
@@ -112,25 +109,18 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
     if not agent:
         handler._send_json(400, {"ok": False, "error": "agent required"})
         return
-    bin_dir = Path(ctx["repo_root"]) / "bin"
     try:
-        proc = subprocess.run(
-            [str(bin_dir / "agent-window"), "remove-agent", "--session", ctx["session_name"], "--agent", agent],
-            capture_output=True,
-            text=True,
-            env=ctx["clean_env_fn"](),
-            check=False,
+        instance, _scheduled = remove_agent(
+            session_name=ctx["session_name"],
+            agent=agent,
+            tmux_socket=str(getattr(ctx["runtime"], "tmux_socket", "") or ""),
+            repo_root=ctx["repo_root"],
         )
-    except Exception as exc:
+    except SessionControlError as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    stdout = (proc.stdout or "").strip()
-    stderr = (proc.stderr or "").strip()
-    if proc.returncode != 0:
-        handler._send_json(
-            500,
-            {"ok": False, "error": stderr or stdout or f"remove-agent failed ({proc.returncode})"},
-        )
+    except Exception as exc:
+        handler._send_json(500, {"ok": False, "error": str(exc)})
         return
     targets = ctx["runtime"].active_agents()
     with ctx["runtime"]._payload_cache_lock:
@@ -140,8 +130,8 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         200,
         {
             "ok": True,
-            "agent": agent,
-            "message": stdout or f"Removed agent {agent}",
+            "agent": instance,
+            "message": f"Removed agent {instance}",
             "targets": targets,
         },
     )

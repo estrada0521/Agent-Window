@@ -5,16 +5,13 @@ import json
 import logging
 import os
 import shutil
-import signal
 import ssl
 import subprocess
 import sys
 import time
-import uuid
 from pathlib import Path
 
-from backend_core.tmux.process_cleanup import cleanup_target_process_groups
-from backend_core.access.files import append_jsonl_entry
+from backend_core.tmux.control import SessionControlError, create_session, kill_session, stop_chat_server as stop_chat_server_impl
 from backend_core.access.settings import (
     agent_window_run_dir,
     ensure_session_workspace_mirrors,
@@ -23,32 +20,6 @@ from backend_core.access.settings import (
     save_chat_port_override,
     session_log_path,
 )
-
-
-def _append_session_lifecycle_entry(session_name: str, action: str) -> None:
-    normalized_action = str(action or "").strip().lower()
-    message = {
-        "archived": "Session archived.",
-        "revived": "Session revived.",
-    }.get(normalized_action)
-    if not message:
-        return
-    try:
-        append_jsonl_entry(
-            session_log_path(session_name),
-            {
-                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "session": session_name,
-                "sender": "system",
-                "targets": [],
-                "message": message,
-                "msg_id": uuid.uuid4().hex[:12],
-                "kind": "session-lifecycle",
-                "lifecycle_action": normalized_action,
-            },
-        )
-    except Exception as exc:
-        logging.warning("failed to append %s lifecycle entry for %s: %s", normalized_action, session_name, exc)
 
 
 def chat_ready(self, chat_port: int) -> bool:
@@ -112,47 +83,9 @@ def chat_server_matches(self, session_name: str, chat_port: int, *, scheme: str 
 def stop_chat_server(
     self,
     session_name: str,
-    *,
-    subprocess_module=subprocess,
-    os_module=os,
-    signal_module=signal,
-    time_module=time,
+    **_kwargs,
 ) -> tuple[bool, str]:
-    chat_port = self.chat_port_for_session(session_name)
-    try:
-        result = subprocess_module.run(
-            ["lsof", "-nP", f"-tiTCP:{chat_port}", "-sTCP:LISTEN"],
-            capture_output=True,
-            text=True,
-            timeout=1,
-            check=False,
-        )
-        pids = [int(line.strip()) for line in result.stdout.splitlines() if line.strip().isdigit()]
-    except (OSError, subprocess_module.TimeoutExpired) as exc:
-        return False, f"lsof failed: {exc}"
-    if not pids:
-        return True, ""
-    for pid in pids:
-        try:
-            os_module.kill(pid, signal_module.SIGTERM)
-        except ProcessLookupError:
-            pass
-        except OSError as exc:
-            logging.warning("SIGTERM pid %d failed: %s", pid, exc)
-    for _ in range(15):
-        if not self.chat_ready(chat_port):
-            return True, ""
-        time_module.sleep(0.1)
-    for pid in pids:
-        try:
-            os_module.kill(pid, signal_module.SIGKILL)
-        except ProcessLookupError:
-            pass
-        except OSError as exc:
-            logging.warning("SIGKILL pid %d failed: %s", pid, exc)
-    if self.chat_ready(chat_port):
-        return False, f"chat server on port {chat_port} still running after SIGKILL"
-    return True, ""
+    return stop_chat_server_impl(self.repo_root, session_name)
 
 
 def chat_launch_workspace(self, session_name: str) -> tuple[str, bool]:
@@ -330,44 +263,21 @@ def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
     workspace = (record.get("workspace") or "").strip()
     if not workspace or not Path(workspace).is_dir():
         return False, f"Saved workspace is unavailable: {workspace or 'unknown'}"
-    env = os.environ.copy()
-    if self.tmux_socket:
-        env["AGENT_WINDOW_TMUX_SOCKET"] = self.tmux_socket
     stop_ok, stop_detail = self.stop_chat_server(session_name)
     if not stop_ok:
         logging.warning("stop_chat_server failed during revive: %s", stop_detail)
-    cmd = [
-        str(self.agent_window_path),
-        "--session",
-        session_name,
-        "--workspace",
-        workspace,
-        "--detach",
-    ]
-    agents = record.get("agents") or []
-    if agents:
-        cmd.extend(["--agents", ",".join(agents)])
     try:
-        subprocess.Popen(
-            cmd,
-            cwd=workspace,
-            env=env,
-            start_new_session=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+        create_session(
+            session_name=session_name,
+            workspace=workspace,
+            agents=[str(item).strip() for item in (record.get("agents") or []) if str(item).strip()],
+            tmux_socket=self.tmux_socket,
+            repo_root=self.repo_root,
+            lifecycle_action="revived",
         )
-    except Exception as exc:
-        logging.error(f"Unexpected error: {exc}", exc_info=True)
+    except SessionControlError as exc:
         return False, str(exc)
-    for _ in range(80):
-        query = self.active_session_records_query()
-        if session_name in query.records:
-            _append_session_lifecycle_entry(session_name, "revived")
-            return True, ""
-        if query.state == "unhealthy":
-            return False, f"tmux became unresponsive during session startup ({query.detail})"
-        time.sleep(0.15)
-    return False, f"Session {session_name} did not come up in time."
+    return True, ""
 
 
 def kill_repo_session(self, session_name: str) -> tuple[bool, str]:
@@ -378,25 +288,11 @@ def kill_repo_session(self, session_name: str) -> tuple[bool, str]:
     active = query.records
     if session_name not in active:
         return False, "That active session is not available in this repo."
-
-    cleanup_target_process_groups(target=session_name, tmux_prefix=self.tmux_prefix)
-    result = self.tmux_run(["kill-session", "-t", session_name], timeout=4)
-    if result.returncode != 0:
-        detail = (result.stderr or result.stdout or "").strip() or "tmux kill-session failed"
-        return False, detail
-
-    for _ in range(20):
-        query = self.active_session_records_query()
-        if session_name not in query.records:
-            stop_ok, stop_detail = self.stop_chat_server(session_name)
-            _append_session_lifecycle_entry(session_name, "archived")
-            if not stop_ok:
-                return True, f"session killed but chat server cleanup failed: {stop_detail}"
-            return True, ""
-        if query.state == "unhealthy":
-            return False, f"tmux became unresponsive while killing session ({query.detail})"
-        time.sleep(0.1)
-    return False, f"Session {session_name} did not go away in time."
+    try:
+        kill_session(session_name=session_name, tmux_socket=self.tmux_socket, repo_root=self.repo_root)
+    except SessionControlError as exc:
+        return False, str(exc)
+    return True, ""
 
 
 def delete_archived_session(self, session_name: str) -> tuple[bool, str]:

@@ -63,9 +63,6 @@ class HubRuntime:
     def __init__(self, repo_root: Path | str, script_path: Path | str, tmux_socket: str = "", hub_port: int = 0):
         self.repo_root = Path(repo_root).resolve()
         self.script_path = Path(script_path).resolve()
-        self.script_dir = self.script_path.parent
-        self.agent_window_path = self.script_dir / "agent-window"
-        self.agent_send_path = self.repo_root / "message_delivery" / "agent-send"
         self.central_log_dir = local_runtime_log_dir(self.repo_root)
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port or 0)
