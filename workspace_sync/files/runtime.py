@@ -87,15 +87,14 @@ class FileRuntime:
 
     def _is_allowed_path(self, full: str) -> bool:
         try:
-            resolved = Path(full).resolve()
+            resolved = os.path.realpath(full)
         except OSError:
             return False
+        if not resolved:
+            return False
         for root in self.allowed_roots:
-            try:
-                resolved.relative_to(root)
+            if resolved == root or resolved.startswith(root + os.sep):
                 return True
-            except ValueError:
-                continue
         return False
 
     @staticmethod
@@ -551,10 +550,14 @@ class FileRuntime:
                 child_rel = f"{normalized_rel}/{entry.name}" if normalized_rel else entry.name
                 if self._rel_path_is_skipped(child_rel):
                     continue
+                is_dir = False
                 try:
                     is_dir = entry.is_dir(follow_symlinks=False)
                 except OSError:
-                    continue
+                    try:
+                        is_dir = entry.is_dir(follow_symlinks=True)
+                    except OSError:
+                        is_dir = False
                 item = {
                     "name": entry.name,
                     "path": child_rel,
