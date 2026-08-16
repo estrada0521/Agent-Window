@@ -683,6 +683,15 @@
       background: var(--session-danger-fg);
     }
 
+    .swipe-act-left {
+      left: 0;
+      background: rgb(48, 209, 88);
+    }
+
+    html[data-theme="dark"] .swipe-act-left {
+      color: rgb(10, 10, 9);
+    }
+
     .mob-session-row {
       background: var(--bg);
       opacity: 1;

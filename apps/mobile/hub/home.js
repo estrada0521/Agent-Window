@@ -659,9 +659,12 @@
       const initSwipeRow = (sr) => {
         const inner = sr.querySelector(".mob-session-row");
         const actR = sr.querySelector(".swipe-act-right");
+        const actL = sr.querySelector(".swipe-act-left");
         if (!inner) return;
         sr._snap = 0;
         let sx = 0, sy = 0, dx = 0, axis = null, active = false, didSwipe = false;
+        const minX = actR ? -SNAP_W : 0;
+        const maxX = actL ? SNAP_W : 0;
         const startDrag = (clientX, clientY) => {
           if (anyOpen && anyOpen !== sr) { closeRow(anyOpen, true); anyOpen = null; }
           sx = clientX; sy = clientY;
@@ -680,8 +683,7 @@
           didSwipe = true;
           dx = cx;
           const base = (sr._snap || 0) * SNAP_W;
-          let x = Math.max(-SNAP_W, Math.min(0, base + dx));
-          if (!actR && x < 0) x = 0;
+          const x = Math.max(minX, Math.min(maxX, base + dx));
           inner.style.transform = x ? `translateX(${x}px)` : "";
         };
         const endDrag = () => {
@@ -693,6 +695,9 @@
           if (fx < -THRESH && actR) {
             inner.style.transition = ease; inner.style.transform = `translateX(${-SNAP_W}px)`;
             sr._snap = -1; anyOpen = sr;
+          } else if (fx > THRESH && actL) {
+            inner.style.transition = ease; inner.style.transform = `translateX(${SNAP_W}px)`;
+            sr._snap = 1; anyOpen = sr;
           } else {
             inner.style.transition = ease; inner.style.transform = "";
             sr._snap = 0; if (anyOpen === sr) anyOpen = null;
@@ -710,6 +715,11 @@
           const onUp = () => { endDrag(); document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
           document.addEventListener("mousemove", onMove);
           document.addEventListener("mouseup", onUp);
+        });
+        if (actL) actL.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const n = sr.dataset.sessionName;
+          if (n) openSessionFrame(`/revive-session?session=${encodeURIComponent(n)}`, n);
         });
         if (actR) actR.addEventListener("click", (e) => {
           e.stopPropagation();
@@ -736,6 +746,7 @@
         let html = "";
         const trashSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
         const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
+        const reviveSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
         if (active.length) {
           html += `<div class="mob-section-label">Active</div>`;
           html += active.map((s) => {
@@ -755,8 +766,9 @@
           html += archived.map((s) => {
             const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
             return `<div class="swipe-row" data-session-name="${esc(s.name)}">` +
+              `<div class="swipe-act swipe-act-left" data-action="revive">${reviveSvg}<span>Revive</span></div>` +
               `<div class="swipe-act swipe-act-right" data-action="delete-archived">${trashSvg}<span>Delete</span></div>` +
-              `<div class="mob-session-row archived-row" data-session-name="${esc(s.name)}" data-open-href="/revive-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
+              `<div class="mob-session-row archived-row" data-session-name="${esc(s.name)}" data-open-href="/open-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +
               `</div>` +
