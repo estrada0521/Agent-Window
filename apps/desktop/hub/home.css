@@ -227,6 +227,7 @@
     :root {
       --desk-chrome-size: 24px;
       --desk-chrome-icon-size: 15px;
+      --desk-chrome-radius: 8px;
       --desk-chrome-top: 4px;
       --desk-chrome-edge: 10px;
       --desk-chrome-gap: 4px;
@@ -542,7 +543,7 @@
       color: var(--desk-chrome-fg);
       background: none;
       border: none;
-      border-radius: 4px;
+      border-radius: var(--desk-chrome-radius);
       appearance: none;
       -webkit-appearance: none;
       cursor: pointer;
@@ -604,7 +605,7 @@
       padding: 0;
       background: transparent;
       border: none;
-      border-radius: 4px;
+      border-radius: var(--desk-chrome-radius);
       box-shadow: none;
       appearance: none;
       -webkit-appearance: none;
@@ -659,7 +660,7 @@
       color: var(--desk-chrome-fg);
       background: transparent;
       border: none;
-      border-radius: 4px;
+      border-radius: var(--desk-chrome-radius);
       box-shadow: none;
       appearance: none;
       -webkit-appearance: none;
@@ -703,7 +704,7 @@
       color: var(--desk-chrome-fg);
       background: transparent;
       border: none;
-      border-radius: 4px;
+      border-radius: var(--desk-chrome-radius);
       box-shadow: none;
       appearance: none;
       -webkit-appearance: none;
