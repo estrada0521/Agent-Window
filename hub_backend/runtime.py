@@ -21,6 +21,7 @@ from hub_backend.chat_supervisor import (
     kill_repo_session as _kill_repo_session_impl,
     revive_archived_session as _revive_archived_session_impl,
     stop_chat_server as _stop_chat_server_impl,
+    stop_inactive_chat_servers as _stop_inactive_chat_servers_impl,
     _chat_launch_port as _chat_launch_port_impl,
 )
 from hub_backend.session_query import (
@@ -248,22 +249,33 @@ class HubRuntime:
             time_module=time,
         )
 
+    def stop_inactive_chat_servers(self, *, keep_session: str = "") -> None:
+        return _stop_inactive_chat_servers_impl(self, keep_session=keep_session)
+
     def _chat_launch_workspace(self, session_name: str) -> tuple[str, bool]:
         return _chat_launch_workspace_impl(self, session_name)
 
     def _chat_launch_session_dir(self, session_name: str, workspace: str, explicit_log_dir: str) -> Path:
         return _chat_launch_session_dir_impl(self, session_name, workspace, explicit_log_dir)
 
-    def _chat_launch_env(self) -> dict[str, str]:
-        return _chat_launch_env_impl(self)
+    def _chat_launch_env(self, *, session_is_active: bool = True) -> dict[str, str]:
+        return _chat_launch_env_impl(self, session_is_active=session_is_active)
 
     def _chat_launch_port(self, session_name: str) -> tuple[int, bool, str]:
         return _chat_launch_port_impl(self, session_name)
 
-    def ensure_chat_server(self, session_name: str) -> tuple[bool, int, str]:
+    def ensure_chat_server(
+        self,
+        session_name: str,
+        *,
+        session_is_active: bool = True,
+        workspace: str = "",
+    ) -> tuple[bool, int, str]:
         return _ensure_chat_server_impl(
             self,
             session_name,
+            session_is_active=session_is_active,
+            workspace=workspace,
             subprocess_module=subprocess,
             sys_module=sys,
             time_module=time,

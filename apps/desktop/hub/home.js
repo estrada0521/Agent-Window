@@ -400,9 +400,8 @@
       return null;
     }
 
-    function buildSessionOpenHref(sessionName, archived) {
-      const base = archived ? "/revive-session" : "/open-session";
-      return `${base}?session=${encodeURIComponent(sessionName)}`;
+    function buildSessionOpenHref(sessionName, _archived) {
+      return `/open-session?session=${encodeURIComponent(sessionName)}`;
     }
 
     function normalizeComparableUrl(rawUrl) {
@@ -1009,9 +1008,17 @@
       focusDeskSessionRow(row);
     }
 
+    function deskSessionOpenHref(row) {
+      const name = row?.dataset.sessionName || "";
+      if (row?.classList.contains("archived") && _deskSelectedSessionName === name) {
+        return `/revive-session?session=${encodeURIComponent(name)}`;
+      }
+      return row?.dataset.openHref || "";
+    }
+
     function openDeskSessionRow(row) {
       if (!row) return false;
-      const href = row.dataset.openHref;
+      const href = deskSessionOpenHref(row);
       const name = row.dataset.sessionName || "";
       if (!href || !name) return false;
       openSessionFrame(href, name);
@@ -1630,7 +1637,7 @@
           closeDeskSwipeRow(swipeRow, true);
           return;
         }
-        const href = row.dataset.openHref;
+        const href = deskSessionOpenHref(row);
         const name = row.dataset.sessionName || "";
         if (href) openSessionFrame(href, name);
       });

@@ -49,7 +49,25 @@ class HubSessionApi:
             }
         if query.state == "unhealthy":
             return {"status": "unhealthy", "detail": query.detail}
-        return {"status": "missing"}
+        archived = self.ctx.archived_session_records(query.records.keys())
+        record = archived.get(session_name)
+        if not record:
+            return {"status": "missing"}
+        workspace = str(record.get("workspace") or "").strip()
+        if not workspace or not Path(workspace).is_dir():
+            return {"status": "error", "detail": f"Saved workspace is unavailable: {workspace or 'unknown'}"}
+        ok, chat_port, detail = self.ctx.ensure_chat_server(
+            session_name,
+            session_is_active=False,
+            workspace=workspace,
+        )
+        if not ok:
+            return {"status": "error", "detail": detail}
+        return {
+            "status": "ok",
+            "chat_port": chat_port,
+            "session_record": record,
+        }
 
     def format_session_timestamp(self, epoch: int | None = None) -> str:
         ts = int(epoch or time.time())

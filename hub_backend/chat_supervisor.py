@@ -177,14 +177,14 @@ def chat_launch_session_dir(self, session_name: str, workspace: str, explicit_lo
     return session_dir
 
 
-def chat_launch_env(self) -> dict[str, str]:
+def chat_launch_env(self, *, session_is_active: bool = True) -> dict[str, str]:
     env = os.environ.copy()
     env["AGENT_WINDOW_AGENT_NAME"] = "user"
     if self.tmux_socket:
         env["AGENT_WINDOW_TMUX_SOCKET"] = self.tmux_socket
     env["AGENT_INDEX_HUB_PORT"] = str(self.hub_port)
     env["AGENT_WINDOW_RUN_DIR"] = str(agent_window_run_dir())
-    env["SESSION_IS_ACTIVE"] = "1"
+    env["SESSION_IS_ACTIVE"] = "1" if session_is_active else "0"
     pythonpath_parts = [str(self.repo_root)]
     existing_pythonpath = (env.get("PYTHONPATH") or "").strip()
     if existing_pythonpath:
@@ -228,10 +228,29 @@ def _chat_launch_port(self, session_name: str) -> tuple[int, bool, str]:
     return chat_port, False, ""
 
 
+def stop_inactive_chat_servers(self, *, keep_session: str = "") -> None:
+    query = self.active_session_records_query()
+    archived = self.archived_session_records(query.records.keys())
+    keep = str(keep_session or "").strip()
+    scheme = getattr(self, "hub_scheme", "")
+    for name in archived:
+        if name == keep:
+            continue
+        port = self.chat_port_for_session(name)
+        if not self.chat_ready(port):
+            continue
+        state = self.chat_server_state(port, scheme=scheme)
+        if not state or state.get("active"):
+            continue
+        self.stop_chat_server(name)
+
+
 def ensure_chat_server(
     self,
     session_name: str,
     *,
+    session_is_active: bool = True,
+    workspace: str = "",
     subprocess_module=subprocess,
     sys_module=sys,
     time_module=time,
@@ -242,18 +261,35 @@ def ensure_chat_server(
         if error:
             logging.warning("stop_chat_server failed before relaunch: %s", error)
         if ready:
-            return True, chat_port, ""
+            state = self.chat_server_state(chat_port, scheme=getattr(self, "hub_scheme", ""))
+            if state and bool(state.get("active")) == bool(session_is_active):
+                return True, chat_port, ""
+            stop_ok, stop_detail = self.stop_chat_server(session_name)
+            if not stop_ok:
+                return False, chat_port, stop_detail
 
-        workspace, workspace_timed_out = self._chat_launch_workspace(session_name)
-        if workspace_timed_out:
-            return False, chat_port, "tmux query timed out while preparing chat server launch"
-        self._chat_launch_session_dir(session_name, workspace, "")
-        log_path = session_log_path(session_name)
-        try:
-            self.tmux_run(["set-environment", "-t", session_name, "AGENT_WINDOW_INDEX_PATH", str(log_path)], timeout=2)
-        except Exception:
-            pass
-        env = self._chat_launch_env()
+        if not session_is_active:
+            self.stop_inactive_chat_servers(keep_session=session_name)
+
+        resolved_workspace = str(workspace or "").strip()
+        if not resolved_workspace:
+            if session_is_active:
+                resolved_workspace, workspace_timed_out = self._chat_launch_workspace(session_name)
+                if workspace_timed_out:
+                    return False, chat_port, "tmux query timed out while preparing chat server launch"
+            else:
+                archived = self.archived_session_records(self.active_session_records_query().records.keys())
+                resolved_workspace = str((archived.get(session_name) or {}).get("workspace") or "").strip()
+        if not resolved_workspace:
+            return False, chat_port, "workspace unavailable"
+        self._chat_launch_session_dir(session_name, resolved_workspace, "")
+        if session_is_active:
+            log_path = session_log_path(session_name)
+            try:
+                self.tmux_run(["set-environment", "-t", session_name, "AGENT_WINDOW_INDEX_PATH", str(log_path)], timeout=2)
+            except Exception:
+                pass
+        env = self._chat_launch_env(session_is_active=session_is_active)
         try:
             subprocess_module.Popen(
                 [
@@ -261,9 +297,9 @@ def ensure_chat_server(
                     "-m",
                     "server.server",
                     session_name,
-                    workspace,
+                    resolved_workspace,
                 ],
-                cwd=workspace or str(self.repo_root),
+                cwd=resolved_workspace or str(self.repo_root),
                 env=env,
                 start_new_session=True,
                 stdout=subprocess.DEVNULL,
