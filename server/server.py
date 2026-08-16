@@ -19,6 +19,7 @@ from hub_backend.presentation.chat.assets import (
     chat_main_style_asset,
     render_chat_html,
 )
+from hub_backend.server_helpers import PROCESS_HANDOFF_TIMEOUT_SEC
 from server.runtime import ChatRuntime
 from server.routes.assets import dispatch_get_assets_route
 from server.routes.read import dispatch_get_read_route
@@ -26,6 +27,7 @@ from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
 from backend_core.access.settings import (
     hub_settings_path,
+    local_bind_scheme,
     resolve_chat_port,
     session_log_path,
 )
@@ -378,8 +380,11 @@ def queue_chat_restart():
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 check=False,
+                timeout=PROCESS_HANDOFF_TIMEOUT_SEC,
             )
             result["ok"] = completed.returncode == 0
+        except subprocess.TimeoutExpired:
+            result["ok"] = False
         finally:
             done.set()
 
@@ -509,15 +514,13 @@ def main(argv: list[str] | None = None) -> None:
 
     cert_file = os.environ.get("AGENT_WINDOW_CERT_FILE", "")
     key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")
-    use_https = bool(cert_file and key_file)
+    scheme = local_bind_scheme(cert_file=cert_file, key_file=key_file)
     ThreadingHTTPServer.allow_reuse_address = True
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
-    scheme = "http"
-    if use_https:
+    if scheme == "https":
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.load_cert_chain(cert_file, key_file)
         server.socket = ctx.wrap_socket(server.socket, server_side=True)
-        scheme = "https"
     print(f"{scheme}://127.0.0.1:{port}/", flush=True)
     server.serve_forever()
     if chat_restart_pending:

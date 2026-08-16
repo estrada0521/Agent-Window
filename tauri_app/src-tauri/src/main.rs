@@ -1,10 +1,7 @@
 use objc2_app_kit::{NSView, NSWindow, NSWindowButton};
 use std::collections::HashMap;
-use std::io::{Read, Write};
-use std::net::TcpStream;
 use std::path::Path;
 use std::process::{Child, Command};
-use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
 use tauri::menu::{MenuBuilder, NativeIcon, SubmenuBuilder};
@@ -48,9 +45,6 @@ struct NativeMenuActionPayload {
     mode: Option<String>,
     agent: Option<String>,
 }
-
-#[allow(dead_code)]
-struct HubProcess(Mutex<Option<Child>>);
 
 const INJECT_JS: &str = include_str!("inject.js");
 const NATIVE_MENU_PREFIX: &str = "agent-window-chat:";
@@ -230,34 +224,6 @@ fn show_hub_error(window: &tauri::WebviewWindow, message: &str) {
     let _ = window.show();
 }
 
-fn wait_for_port(port: u16, timeout: Duration) -> bool {
-    let start = Instant::now();
-    while start.elapsed() < timeout {
-        if TcpStream::connect_timeout(
-            &format!("127.0.0.1:{}", port).parse().unwrap(),
-            Duration::from_millis(200),
-        )
-        .is_ok()
-        {
-            return true;
-        }
-        thread::sleep(Duration::from_millis(300));
-    }
-    false
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum LocalHubTransport {
-    Http,
-    Https,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum LocalHubProbe {
-    AgentWindow(LocalHubTransport),
-    OtherListener,
-}
-
 fn configured_hub_port() -> u16 {
     std::env::var("AGENT_INDEX_HUB_PORT")
         .ok()
@@ -266,16 +232,14 @@ fn configured_hub_port() -> u16 {
         .unwrap_or(8788)
 }
 
-fn probe_manifest_with_curl(port: u16, transport: LocalHubTransport) -> bool {
-    let scheme = match transport {
-        LocalHubTransport::Http => "http",
-        LocalHubTransport::Https => "https",
-    };
+fn hub_ready(port: u16, use_https: bool) -> bool {
+    let scheme = if use_https { "https" } else { "http" };
     let url = format!("{}://127.0.0.1:{}/hub.webmanifest", scheme, port);
-    let Ok(output) = Command::new("/usr/bin/curl")
-        .args(["-sk", "--max-time", "1", &url])
-        .output()
-    else {
+    let mut args = vec!["-s", "--max-time", "1", url.as_str()];
+    if use_https {
+        args.insert(0, "-k");
+    }
+    let Ok(output) = Command::new("/usr/bin/curl").args(&args).output() else {
         return false;
     };
     if !output.status.success() {
@@ -285,26 +249,20 @@ fn probe_manifest_with_curl(port: u16, transport: LocalHubTransport) -> bool {
     body.contains("\"name\"") && body.contains("Agent Window")
 }
 
-fn probe_local_hub(port: u16) -> Option<LocalHubProbe> {
-    let mut stream = TcpStream::connect_timeout(
-        &format!("127.0.0.1:{}", port).parse().unwrap(),
-        Duration::from_millis(400),
-    )
-    .ok()?;
-    let _ = stream.set_read_timeout(Some(Duration::from_millis(400)));
-    let _ = stream.set_write_timeout(Some(Duration::from_millis(400)));
-    let _ = stream.write_all(
-        b"GET /hub.webmanifest HTTP/1.0\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n",
-    );
-    let mut buf = [0_u8; 16];
-    let transport = match stream.read(&mut buf) {
-        Ok(n) if n >= 5 && &buf[..5] == b"HTTP/" => LocalHubTransport::Http,
-        Ok(_) | Err(_) => LocalHubTransport::Https,
-    };
-    if probe_manifest_with_curl(port, transport) {
-        Some(LocalHubProbe::AgentWindow(transport))
-    } else {
-        Some(LocalHubProbe::OtherListener)
+fn wait_for_child_success(child: &mut Child, timeout: Duration) -> bool {
+    let start = Instant::now();
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => return status.success(),
+            Ok(None) => {
+                if start.elapsed() >= timeout {
+                    let _ = child.kill();
+                    return false;
+                }
+                thread::sleep(Duration::from_millis(50));
+            }
+            Err(_) => return false,
+        }
     }
 }
 
@@ -450,62 +408,55 @@ fn main() {
             let state_dir = std::env::var("AGENT_WINDOW_STATE_DIR")
                 .unwrap_or_else(|_| format!("{}/.agent-window/state", home));
             let pwa_enabled_file = format!("{}/pwa/enabled", state_dir);
-            let pwa_https_enabled = Path::new(&pwa_enabled_file).exists();
-
-            let tauri_use_https =
-                std::env::var("AGENT_WINDOW_TAURI_USE_HTTPS").ok().as_deref() == Some("1")
-                    || pwa_https_enabled;
-            let expected_transport = if tauri_use_https {
-                LocalHubTransport::Https
-            } else {
-                LocalHubTransport::Http
-            };
-            let hub_probe = probe_local_hub(hub_port);
-            let hub_already_up =
-                hub_probe == Some(LocalHubProbe::AgentWindow(expected_transport));
-
-            if matches!(hub_probe, Some(LocalHubProbe::OtherListener)) {
+            let use_https = Path::new(&pwa_enabled_file).exists();
+            if std::env::var("AGENT_WINDOW_TAURI_USE_HTTPS").ok().as_deref() == Some("1")
+                && !use_https
+            {
                 show_hub_error(
                     &window,
-                    &format!(
-                        "Port {} is already in use by another service. Set AGENT_INDEX_HUB_PORT to use a different Hub port.",
-                        hub_port
-                    ),
+                    "PWA HTTPS is not enabled. Start the HTTP app first, then run ./setup/pwa/enable.",
+                );
+                return Ok(());
+            }
+            if use_https && !has_certs {
+                show_hub_error(
+                    &window,
+                    "Local HTTPS certificates are missing. Start the HTTP app first, then run ./setup/pwa/enable.",
                 );
                 return Ok(());
             }
 
+            let hub_already_up = hub_ready(hub_port, use_https);
+            let mut spawned_hub: Option<Child> = None;
             if !hub_already_up {
                 let mut cmd = Command::new(format!("{}/bin/agent-index", repo_root));
                 cmd.args([
                     "--hub",
                     "--hub-port",
                     &hub_port.to_string(),
-                    if tauri_use_https { "--https" } else { "--http" },
+                    if use_https { "--https" } else { "--http" },
                 ])
                     .current_dir(&repo_root)
                     .env("PATH", &path)
                     .env("AGENT_INDEX_HUB_PORT", hub_port.to_string())
                     .env("PYTHONPATH", repo_root.clone());
-                if has_certs && tauri_use_https {
+                if use_https {
                     cmd.env("AGENT_WINDOW_CERT_FILE", &cert_file)
                         .env("AGENT_WINDOW_KEY_FILE", &key_file);
                 }
                 match cmd.spawn() {
                     Ok(c) => {
                         eprintln!("[app] Hub spawned pid={}", c.id());
-                        app.manage(HubProcess(Mutex::new(Some(c))));
+                        spawned_hub = Some(c);
                     }
                     Err(e) => {
                         eprintln!("[app] Hub spawn failed: {}", e);
                         show_hub_error(&window, &format!("Failed to start Hub: {}", e));
-                        app.manage(HubProcess(Mutex::new(None)));
                         return Ok(());
                     }
                 }
             } else {
                 eprintln!("[app] Hub already up");
-                app.manage(HubProcess(Mutex::new(None)));
             }
 
             let app_handle = app.handle().clone();
@@ -515,47 +466,16 @@ fn main() {
                         show_hub_error(&w, &message);
                     }
                 };
-                if !hub_already_up && !wait_for_port(hub_port, Duration::from_secs(15)) {
-                    eprintln!("[app] Hub timeout");
-                    show_error(format!("Hub timeout on port {}", hub_port));
-                    return;
-                }
-                let transport = match probe_local_hub(hub_port) {
-                    Some(LocalHubProbe::AgentWindow(t)) => t,
-                    Some(LocalHubProbe::OtherListener) => {
-                        eprintln!("[app] Port {} is in use by another service", hub_port);
-                        show_error(format!(
-                            "Port {} is already in use by another service.",
-                            hub_port
-                        ));
+                if let Some(mut child) = spawned_hub {
+                    if !wait_for_child_success(&mut child, Duration::from_secs(8)) {
+                        eprintln!("[app] Hub failed to start");
+                        show_error(format!("Hub failed to start on port {}", hub_port));
                         return;
                     }
-                    None => {
-                        eprintln!(
-                            "[app] No Hub response on port {} (expected HTTP or HTTPS)",
-                            hub_port
-                        );
-                        show_error(format!("No Hub response on port {}", hub_port));
-                        return;
-                    }
-                };
-                if transport != expected_transport {
-                    eprintln!(
-                        "[app] Hub on port {} is using the wrong transport for this launch",
-                        hub_port
-                    );
-                    show_error(format!(
-                        "Hub on port {} is using the wrong transport.",
-                        hub_port
-                    ));
-                    return;
                 }
-                let scheme = match transport {
-                    LocalHubTransport::Http => "http",
-                    LocalHubTransport::Https => "https",
-                };
+                let scheme = if use_https { "https" } else { "http" };
                 let hub_url = format!("{}://127.0.0.1:{}/?tauri=1", scheme, hub_port);
-                eprintln!("[app] Navigating to {} ({} transport)", hub_url, scheme);
+                eprintln!("[app] Navigating to {}", hub_url);
                 if let Some(w) = app_handle.get_webview_window("main") {
                     let url: tauri::Url = hub_url.parse().unwrap();
                     let _ = w.navigate(url);

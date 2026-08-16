@@ -5,11 +5,8 @@ import html
 import json
 import os
 import re
-import socket
 import subprocess
-import sys
 import threading
-import time
 from pathlib import Path
 
 from hub_backend.branding import APP_DISPLAY_NAME
@@ -98,6 +95,9 @@ def format_session_chat_url(
     return format_external_url_fn(host_header, local_port, path)
 
 
+PROCESS_HANDOFF_TIMEOUT_SEC = 8.0
+
+
 def clean_env() -> dict:
     env = dict(os.environ)
     env["AGENT_WINDOW_AGENT_NAME"] = "user"
@@ -111,12 +111,9 @@ def launch_hub_restart(
     repo_root,
     clean_env_fn,
     hub_server_getter,
-    ready_timeout: float = 10.0,
+    ready_timeout: float = PROCESS_HANDOFF_TIMEOUT_SEC,
 ) -> bool:
-    """Restart the Hub process and block until the new one is actually
-    accepting connections on `port`, so the caller's HTTP response only
-    goes out once a single subsequent request is guaranteed to land on
-    the new process -- no client-side retry/poll needed for this to work.
+    """Restart the Hub process and block until agent-index reports ready.
 
     The actual shutdown/respawn runs on a background daemon thread. This
     is required, not just a style choice: ThreadingHTTPServer's own
@@ -137,44 +134,28 @@ def launch_hub_restart(
         try:
             server = hub_server_getter()
             if server is not None:
-                try:
-                    server.shutdown()
-                except Exception:
-                    pass
-                try:
-                    server.server_close()
-                except Exception:
-                    pass
-
+                server.shutdown()
+                server.server_close()
             env = clean_env_fn()
             env["AGENT_WINDOW_AGENT_NAME"] = "user"
-            try:
-                subprocess.Popen(
-                    ["bash", str(script_path), "--hub", "--hub-port", str(port)],
-                    cwd=repo_root,
-                    env=env,
-                    stdin=subprocess.DEVNULL,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    start_new_session=True,
-                    close_fds=True,
-                )
-            except Exception:
-                return
-
-            deadline = time.monotonic() + ready_timeout
-            while time.monotonic() < deadline:
-                try:
-                    with socket.create_connection(("127.0.0.1", port), timeout=0.3):
-                        result["ok"] = True
-                        return
-                except OSError:
-                    time.sleep(0.05)
+            completed = subprocess.run(
+                ["bash", str(script_path), "--hub", "--hub-port", str(port)],
+                cwd=repo_root,
+                env=env,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+                timeout=ready_timeout,
+            )
+            result["ok"] = completed.returncode == 0
+        except subprocess.TimeoutExpired:
+            result["ok"] = False
         finally:
             done.set()
 
     threading.Thread(target=worker, daemon=True).start()
-    done.wait()  # worker's own finally always fires within ready_timeout
+    done.wait()
     return result["ok"]
 
 

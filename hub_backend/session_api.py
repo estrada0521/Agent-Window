@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess
-import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -159,42 +157,8 @@ class HubSessionApi:
         return running
 
     def ensure_active_chat_server(self, session_name: str, workspace: str) -> tuple[bool, int, str]:
-        """Start a chat server with SESSION_IS_ACTIVE=1 for a session whose tmux is already running."""
-        lock = self.ctx.hub._get_launch_lock(session_name)
-        with lock:
-            chat_port, ready, error = self.ctx.hub._chat_launch_port(session_name)
-            if error:
-                return False, chat_port, error
-            if ready:
-                return True, chat_port, ""
-            self.ctx.hub._chat_launch_session_dir(session_name, workspace, "")
-            session_log_path(session_name).touch(exist_ok=True)
-            env = self.ctx.hub._chat_launch_env()
-            env["SESSION_IS_ACTIVE"] = "1"
-            try:
-                subprocess.Popen(
-                    [
-                        sys.executable,
-                        "-m",
-                        "server.server",
-                        session_name,
-                        workspace,
-                    ],
-                    cwd=workspace or str(self.ctx.repo_root),
-                    env=env,
-                    start_new_session=True,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-            except Exception as exc:
-                return False, chat_port, str(exc)
-            for _ in range(80):
-                if self.ctx.hub.chat_ready(chat_port):
-                    state = self.ctx.hub.chat_server_state(
-                        chat_port,
-                        scheme=getattr(self.ctx.hub, "hub_scheme", ""),
-                    )
-                    if state and str(state.get("session") or "").strip() == session_name:
-                        return True, chat_port, ""
-                time.sleep(0.05)
-            return False, chat_port, "active chat server did not become ready"
+        return self.ctx.ensure_chat_server(
+            session_name,
+            session_is_active=True,
+            workspace=workspace,
+        )

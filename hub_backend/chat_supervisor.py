@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import http.client
 import json
-import logging
 import os
 import shutil
 import ssl
@@ -17,55 +16,74 @@ from backend_core.access.settings import (
     ensure_session_workspace_mirrors,
     local_runtime_log_dir,
     port_is_bindable,
-    save_chat_port_override,
+    pwa_https_enabled,
     session_log_path,
 )
+
+SERVER_READY_TIMEOUT_SEC = 6.0
+HTTPS_PROBE_TIMEOUT_SEC = 1.0
+
+
+def _wait_until(predicate, timeout_sec: float, *, time_module=time, interval: float = 0.1) -> bool:
+    deadline = time_module.monotonic() + timeout_sec
+    while True:
+        if predicate():
+            return True
+        remaining = deadline - time_module.monotonic()
+        if remaining <= 0:
+            return False
+        time_module.sleep(min(interval, remaining))
 
 
 def chat_ready(self, chat_port: int) -> bool:
     import socket as _sock
 
     try:
-        with _sock.create_connection(("127.0.0.1", chat_port), timeout=0.35):
+        with _sock.create_connection(("127.0.0.1", chat_port), timeout=HTTPS_PROBE_TIMEOUT_SEC):
             return True
     except OSError:
         return False
 
 
-def chat_server_state(self, chat_port: int, *, scheme: str = "") -> dict | None:
-    schemes = (scheme,) if scheme in {"http", "https"} else ("https", "http")
-    for scheme_name in schemes:
-        try:
-            if scheme_name == "https":
-                conn = http.client.HTTPSConnection(
-                    "127.0.0.1",
-                    chat_port,
-                    timeout=0.6,
-                    context=ssl._create_unverified_context(),
-                )
-            else:
-                conn = http.client.HTTPConnection("127.0.0.1", chat_port, timeout=0.6)
-            conn.request(
-                "GET",
-                f"/session-state?ts={int(time.time() * 1000)}",
-                headers={"Host": f"127.0.0.1:{chat_port}"},
+def chat_server_state(self, chat_port: int) -> dict | None:
+    scheme = str(getattr(self, "hub_scheme", "") or "").strip().lower()
+    if scheme not in {"http", "https"}:
+        return None
+    try:
+        if scheme == "https":
+            conn = http.client.HTTPSConnection(
+                "127.0.0.1",
+                chat_port,
+                timeout=HTTPS_PROBE_TIMEOUT_SEC,
+                context=ssl._create_unverified_context(),
             )
-            resp = conn.getresponse()
-            body = resp.read()
-            conn.close()
-            if 200 <= resp.status < 300:
-                data = json.loads(body.decode("utf-8", errors="replace"))
-                if isinstance(data, dict):
-                    return data
-        except (OSError, http.client.HTTPException, json.JSONDecodeError):
-            continue
+        else:
+            conn = http.client.HTTPConnection(
+                "127.0.0.1",
+                chat_port,
+                timeout=HTTPS_PROBE_TIMEOUT_SEC,
+            )
+        conn.request(
+            "GET",
+            f"/session-state?ts={int(time.time() * 1000)}",
+            headers={"Host": f"127.0.0.1:{chat_port}"},
+        )
+        resp = conn.getresponse()
+        body = resp.read()
+        conn.close()
+        if 200 <= resp.status < 300:
+            data = json.loads(body.decode("utf-8", errors="replace"))
+            if isinstance(data, dict):
+                return data
+    except (OSError, http.client.HTTPException, json.JSONDecodeError, TimeoutError):
+        return None
     return None
 
 
-def chat_server_matches(self, session_name: str, chat_port: int, *, scheme: str = "") -> bool:
-    state = self.chat_server_state(chat_port, scheme=scheme)
+def chat_server_matches(self, session_name: str, chat_port: int) -> bool:
+    state = self.chat_server_state(chat_port)
     if not state:
-        return scheme not in {"http", "https"}
+        return False
     if (state.get("session") or "") != session_name:
         return False
     reported_repo_root = str(state.get("repo_root") or "").strip()
@@ -98,7 +116,7 @@ def chat_launch_workspace(self, session_name: str) -> tuple[str, bool]:
     query = self.active_session_records_query()
     if query.state == "ok":
         workspace = str((query.records.get(session_name) or {}).get("workspace") or "").strip()
-    return workspace or str(self.repo_root), False
+    return workspace, False
 
 
 def chat_launch_session_dir(self, session_name: str, workspace: str, explicit_log_dir: str) -> Path:
@@ -124,59 +142,46 @@ def chat_launch_env(self, *, session_is_active: bool = True) -> dict[str, str]:
     if existing_pythonpath:
         pythonpath_parts.append(existing_pythonpath)
     env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
-    if str(getattr(self, "hub_scheme", "") or "").strip().lower() == "http":
-        env.pop("AGENT_WINDOW_CERT_FILE", None)
-        env.pop("AGENT_WINDOW_KEY_FILE", None)
-        env.pop("AGENT_WINDOW_ENABLE_LOCAL_HTTPS", None)
+    if pwa_https_enabled():
+        return env
+    env.pop("AGENT_WINDOW_CERT_FILE", None)
+    env.pop("AGENT_WINDOW_KEY_FILE", None)
+    env.pop("AGENT_WINDOW_ENABLE_LOCAL_HTTPS", None)
     return env
 
 
 def _chat_launch_port(self, session_name: str) -> tuple[int, bool, str]:
-    """Find the chat port to use for session_name: an already-matching
-    server, or the next bindable one (saving that as an override).
+    """Return the session's designated chat port, or fail if it cannot be used.
 
-    Returns (chat_port, ready, error). ready=True means a chat server for
-    this session already answers at chat_port -- the caller doesn't need to
-    launch one. error is set only when stopping a stale server failed.
+    Returns (chat_port, ready, error). ready=True means this session already
+    answers at chat_port on the Hub scheme. Occupied-by-something-else is an
+    error; this does not stop or replace a foreign listener.
     """
     chat_port = self.chat_port_for_session(session_name)
-    scheme = getattr(self, "hub_scheme", "")
-    if self.chat_ready(chat_port):
-        if self.chat_server_matches(session_name, chat_port, scheme=scheme):
-            return chat_port, True, ""
-        stop_ok, stop_detail = self.stop_chat_server(session_name)
-        if not stop_ok:
-            return chat_port, False, stop_detail
-
-    if not port_is_bindable(chat_port):
-        if self.chat_ready(chat_port) and self.chat_server_matches(session_name, chat_port, scheme=scheme):
-            return chat_port, True, ""
-        for candidate in range(chat_port, chat_port + 10):
-            if self.chat_ready(candidate) and self.chat_server_matches(session_name, candidate, scheme=scheme):
-                save_chat_port_override(self.repo_root, session_name, candidate)
-                return candidate, True, ""
-            if port_is_bindable(candidate):
-                save_chat_port_override(self.repo_root, session_name, candidate)
-                return candidate, False, ""
-
+    if self.chat_server_matches(session_name, chat_port):
+        return chat_port, True, ""
+    if self.chat_ready(chat_port) or not port_is_bindable(chat_port):
+        return chat_port, False, f"chat port {chat_port} is occupied"
     return chat_port, False, ""
 
 
-def stop_inactive_chat_servers(self, *, keep_session: str = "") -> None:
+def stop_inactive_chat_servers(self, *, keep_session: str = "") -> str:
     query = self.active_session_records_query()
     archived = self.archived_session_records(query.records.keys())
     keep = str(keep_session or "").strip()
-    scheme = getattr(self, "hub_scheme", "")
     for name in archived:
         if name == keep:
             continue
         port = self.chat_port_for_session(name)
         if not self.chat_ready(port):
             continue
-        state = self.chat_server_state(port, scheme=scheme)
+        state = self.chat_server_state(port)
         if not state or state.get("active"):
             continue
-        self.stop_chat_server(name)
+        stop_ok, stop_detail = self.stop_chat_server(name)
+        if not stop_ok:
+            return stop_detail
+    return ""
 
 
 def ensure_chat_server(
@@ -193,9 +198,9 @@ def ensure_chat_server(
     with lock:
         chat_port, ready, error = self._chat_launch_port(session_name)
         if error:
-            logging.warning("stop_chat_server failed before relaunch: %s", error)
+            return False, chat_port, error
         if ready:
-            state = self.chat_server_state(chat_port, scheme=getattr(self, "hub_scheme", ""))
+            state = self.chat_server_state(chat_port)
             if state and bool(state.get("active")) == bool(session_is_active):
                 return True, chat_port, ""
             stop_ok, stop_detail = self.stop_chat_server(session_name)
@@ -203,7 +208,9 @@ def ensure_chat_server(
                 return False, chat_port, stop_detail
 
         if not session_is_active:
-            self.stop_inactive_chat_servers(keep_session=session_name)
+            stop_detail = self.stop_inactive_chat_servers(keep_session=session_name)
+            if stop_detail:
+                return False, chat_port, stop_detail
 
         resolved_workspace = str(workspace or "").strip()
         if not resolved_workspace:
@@ -219,10 +226,13 @@ def ensure_chat_server(
         self._chat_launch_session_dir(session_name, resolved_workspace, "")
         if session_is_active:
             log_path = session_log_path(session_name)
-            try:
-                self.tmux_run(["set-environment", "-t", session_name, "AGENT_WINDOW_INDEX_PATH", str(log_path)], timeout=2)
-            except Exception:
-                pass
+            result = self.tmux_run(
+                ["set-environment", "-t", session_name, "AGENT_WINDOW_INDEX_PATH", str(log_path)],
+                timeout=2,
+            )
+            if result.timed_out or result.returncode != 0:
+                detail = (result.stderr or result.stdout or "").strip() or "tmux set-environment failed"
+                return False, chat_port, detail
         env = self._chat_launch_env(session_is_active=session_is_active)
         try:
             subprocess_module.Popen(
@@ -239,13 +249,19 @@ def ensure_chat_server(
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
+        except OSError as exc:
             return False, chat_port, str(exc)
-        for _ in range(60):
-            if self.chat_ready(chat_port) and self.chat_server_state(chat_port, scheme=getattr(self, "hub_scheme", "")):
-                return True, chat_port, ""
-            time_module.sleep(0.1)
+
+        def _ready() -> bool:
+            state = self.chat_server_state(chat_port)
+            return (
+                bool(state)
+                and str(state.get("session") or "").strip() == session_name
+                and bool(state.get("active")) == bool(session_is_active)
+            )
+
+        if _wait_until(_ready, SERVER_READY_TIMEOUT_SEC, time_module=time_module):
+            return True, chat_port, ""
         return False, chat_port, "chat server did not become ready"
 
 
@@ -265,7 +281,7 @@ def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
         return False, f"Saved workspace is unavailable: {workspace or 'unknown'}"
     stop_ok, stop_detail = self.stop_chat_server(session_name)
     if not stop_ok:
-        logging.warning("stop_chat_server failed during revive: %s", stop_detail)
+        return False, stop_detail
     try:
         create_session(
             session_name=session_name,
@@ -316,14 +332,12 @@ def delete_archived_session(self, session_name: str) -> tuple[bool, str]:
     ]
     try:
         resolved = log_dir.resolve()
-    except Exception as exc:
-        logging.error(f"Unexpected error: {exc}", exc_info=True)
-        return False, "Archived log directory could not be resolved."
+    except OSError as exc:
+        return False, str(exc)
     if not any(root == resolved or root in resolved.parents for root in allowed_roots):
         return False, "Refusing to delete a path outside agent-window log roots."
     try:
         shutil.rmtree(resolved)
-    except Exception as exc:
-        logging.error(f"Unexpected error: {exc}", exc_info=True)
+    except OSError as exc:
         return False, str(exc)
     return True, ""

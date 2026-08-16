@@ -192,6 +192,20 @@ def _chat_port_open(chat_port: int) -> bool:
         return False
 
 
+_CHAT_STOP_WAIT_SEC = 2.0
+
+
+def _signal_chat_pids(pids: list[int], sig: int) -> str:
+    for pid in pids:
+        try:
+            os.kill(pid, sig)
+        except ProcessLookupError:
+            continue
+        except OSError as exc:
+            return f"failed to signal chat server pid {pid}: {exc}"
+    return ""
+
+
 def stop_chat_server(repo_root: Path | str, session_name: str) -> tuple[bool, str]:
     name = (session_name or "").strip()
     if not name:
@@ -200,20 +214,20 @@ def stop_chat_server(repo_root: Path | str, session_name: str) -> tuple[bool, st
     pids = _chat_listener_pids(chat_port)
     if not pids:
         return True, ""
-    for pid in pids:
-        try:
-            os.kill(pid, signal.SIGTERM)
-        except (ProcessLookupError, OSError):
-            continue
-    for _ in range(15):
+    detail = _signal_chat_pids(pids, signal.SIGTERM)
+    if detail:
+        return False, detail
+    deadline = time.monotonic() + _CHAT_STOP_WAIT_SEC
+    while time.monotonic() < deadline:
         if not _chat_port_open(chat_port):
             return True, ""
-        time.sleep(0.1)
-    for pid in pids:
-        try:
-            os.kill(pid, signal.SIGKILL)
-        except (ProcessLookupError, OSError):
-            continue
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        time.sleep(min(0.1, remaining))
+    detail = _signal_chat_pids(pids, signal.SIGKILL)
+    if detail:
+        return False, detail
     if _chat_port_open(chat_port):
         return False, f"chat server on port {chat_port} still running after SIGKILL"
     return True, ""
@@ -414,7 +428,7 @@ def kill_session(
         raise SessionControlError(f"Session does not exist: {name}")
     stop_ok, stop_detail = stop_chat_server(root, name)
     if not stop_ok:
-        logging.warning("failed to stop chat server for %s: %s", name, stop_detail)
+        raise SessionControlError(f"failed to stop chat server for {name}: {stop_detail}")
     cleanup_target_process_groups(target=name, tmux_prefix=prefix)
     result = _run(prefix, ["kill-session", "-t", name], timeout=4)
     if result.returncode != 0:

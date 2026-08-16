@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 import re
 import ssl
@@ -606,11 +605,7 @@ class Handler(BaseHTTPRequestHandler):
         return True
 
     def _get_hub_manifest(self, _parsed):
-        try:
-            settings = hub.load_hub_settings()
-        except Exception as exc:
-            logging.warning("load_hub_settings failed: %s", exc)
-            settings = {}
+        settings = hub.load_hub_settings()
         palette = resolve_theme_palette(settings)
         bg = str(palette["dark_bg"])
         body = json.dumps({
@@ -631,11 +626,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _get_hub_launch_shell(self, _parsed):
-        try:
-            settings = hub.load_hub_settings()
-        except Exception as exc:
-            logging.warning("load_hub_settings failed: %s", exc)
-            settings = {}
+        settings = hub.load_hub_settings()
         self._send_html(200, apply_color_tokens(HUB_LAUNCH_SHELL_HTML, settings=settings))
 
     def _get_sessions(self, _parsed):
@@ -670,11 +661,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _get_home(self, _parsed):
         variant = request_view_variant(headers=self.headers, query_string=_parsed.query)
-        try:
-            settings = hub.load_hub_settings()
-        except Exception as exc:
-            logging.warning("load_hub_settings failed: %s", exc)
-            settings = {}
+        settings = hub.load_hub_settings()
         from backend_core.access.settings import normalize_theme_desktop, settings_for_hub_render
 
         page = HUB_HOME_MOBILE_HTML if variant == "mobile" else HUB_HOME_DESKTOP_HTML
@@ -752,8 +739,7 @@ class Handler(BaseHTTPRequestHandler):
                 length = 0
             body = self.rfile.read(length)
         query = f"?{parsed.query}" if parsed.query else ""
-        chat_scheme = _scheme
-        upstream = f"{chat_scheme}://127.0.0.1:{chat_port}{suffix}{query}"
+        upstream = f"{_scheme}://127.0.0.1:{chat_port}{suffix}{query}"
         headers = {}
         for key, value in self.headers.items():
             key_lc = key.lower()
@@ -764,7 +750,7 @@ class Handler(BaseHTTPRequestHandler):
         headers["Accept-Encoding"] = "identity"
         headers["X-Forwarded-Prefix"] = f"/session/{session_name}"
         req = Request(upstream, data=body, method=method, headers=headers)
-        ctx = ssl._create_unverified_context() if chat_scheme == "https" else None
+        ctx = ssl._create_unverified_context() if _scheme == "https" else None
         accept = (self.headers.get("Accept") or "").lower()
         timeout = None if (suffix.endswith("-events") or "text/event-stream" in accept) else 30
         try:
@@ -802,15 +788,16 @@ def main(argv: list[str] | None = None) -> None:
 
     initialize_from_argv(argv)
 
+    from backend_core.access.settings import local_bind_scheme
+
     cert_file = os.environ.get("AGENT_WINDOW_CERT_FILE", "")
     key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")
-    use_https = bool(cert_file and key_file)
-    _scheme = "https" if use_https else "http"
+    _scheme = local_bind_scheme(cert_file=cert_file, key_file=key_file)
     if hub is not None:
         hub.hub_scheme = _scheme
     ThreadingHTTPServer.allow_reuse_address = True
     hub_server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
-    if use_https:
+    if _scheme == "https":
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.load_cert_chain(cert_file, key_file)
         hub_server.socket = ctx.wrap_socket(hub_server.socket, server_side=True)
@@ -822,7 +809,7 @@ def main(argv: list[str] | None = None) -> None:
         # interpreter kills every remaining daemon thread immediately.
         # A restart in progress needs those threads to finish spawning
         # the replacement and sending this response first -- bounded by
-        # launch_hub_restart's own ready_timeout, so no separate timeout
+        # launch_hub_restart's own handoff timeout, so no separate timeout
         # here.
         _restart_release_event.wait()
 
