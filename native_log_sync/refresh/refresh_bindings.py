@@ -31,4 +31,7 @@ def refresh_native_log_bindings(
 
         runtime._native_log_bindings_by_agent = next_by_agent
         runtime._native_log_watch_reconfigure.set()
+    watcher = getattr(runtime, "_native_log_vnode_watcher", None)
+    if watcher is not None:
+        watcher.wake()
     return bindings

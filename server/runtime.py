@@ -28,7 +28,7 @@ from .entry_write import (
     append_system_entry as _append_system_entry_impl,
     append_user_entry as _append_user_entry_impl,
 )
-from .entries import entry_window as _entry_window_impl
+from .index_cache import MATCHED_ENTRY_TAIL, find_matched_entry, message_entry_window
 from .font_style import (
     chat_font_settings_inline_style as _chat_font_settings_inline_style_impl,
     font_family_stack as _font_family_stack_impl,
@@ -42,7 +42,6 @@ from .payload import (
     encode_payload_document,
     summarize_light_entry,
 )
-from .index_cache import matched_entries as _matched_entries_impl
 from native_log_sync.syncer import NativeLogSyncer
 from native_log_sync.refresh.binding_models import PaneBindingRequest
 from backend_core.tmux.session import (
@@ -123,7 +122,8 @@ class ChatRuntime:
         self._matched_entries_cache_lock = threading.Lock()
         self._matched_entries_cache_sig: tuple[int, int] = (0, 0)
         self._matched_entries_cache_size = 0
-        self._matched_entries_cache_entries: list[dict] = []
+        self._matched_entries_cache_entries: deque[dict] = deque(maxlen=MATCHED_ENTRY_TAIL)
+        self._matched_entries_total = 0
 
     def load_chat_settings(self) -> dict:
         return load_shared_hub_settings(self.repo_root)
@@ -197,17 +197,14 @@ class ChatRuntime:
     def attachment_paths(message: str) -> list[str]:
         return payload_attachment_paths(message)
 
-    def _matched_entries(self) -> list[dict]:
-        return _matched_entries_impl(self)
-
     def _entry_window(
         self,
         *,
         limit_override: int | None = None,
         before_msg_id: str = "",
     ) -> tuple[list[dict], bool, int]:
-        return _entry_window_impl(
-            self._matched_entries(),
+        return message_entry_window(
+            self,
             limit_override=limit_override,
             default_limit=self.limit,
             before_msg_id=before_msg_id,
@@ -222,14 +219,10 @@ class ChatRuntime:
         )
 
     def entry_by_id(self, msg_id: str, *, light_mode: bool = False):
-        target = (msg_id or "").strip()
-        if not target:
+        entry = find_matched_entry(self, msg_id)
+        if entry is None:
             return None
-        for entry in reversed(self._matched_entries()):
-            if str(entry.get("msg_id") or "") != target:
-                continue
-            return self._light_entry(entry) if light_mode else entry
-        return None
+        return self._light_entry(entry) if light_mode else entry
 
     def session_metadata(self) -> dict:
         session_slug = quote(self.session_name, safe="")

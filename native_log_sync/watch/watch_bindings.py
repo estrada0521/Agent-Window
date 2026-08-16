@@ -18,6 +18,36 @@ class _VnodeNativeSync:
         self._fd_by_agent: dict[str, int] = {}
         self._path_by_agent: dict[str, str] = {}
         self._agent_by_fd: dict[int, str] = {}
+        self._wake_r, self._wake_w = os.pipe()
+        os.set_blocking(self._wake_r, False)
+        os.set_blocking(self._wake_w, False)
+        os.set_inheritable(self._wake_r, False)
+        os.set_inheritable(self._wake_w, False)
+        self._kq.control(
+            [
+                select.kevent(
+                    self._wake_r,
+                    filter=select.KQ_FILTER_READ,
+                    flags=select.KQ_EV_ADD | select.KQ_EV_CLEAR,
+                )
+            ],
+            0,
+        )
+
+    def wake(self) -> None:
+        try:
+            os.write(self._wake_w, b"\0")
+        except BlockingIOError:
+            return
+
+    def _drain_wake(self) -> None:
+        while True:
+            try:
+                chunk = os.read(self._wake_r, 64)
+            except BlockingIOError:
+                return
+            if not chunk:
+                return
 
     def _sync_bindings(self) -> None:
         bindings: dict = dict(getattr(self._runtime, "_native_log_bindings_by_agent", {}))
@@ -68,14 +98,22 @@ class _VnodeNativeSync:
             reconfigure.clear()
         while True:
             try:
-                if reconfigure and reconfigure.is_set():
-                    reconfigure.clear()
+                events = self._kq.control(None, 16, None)
+                woke = False
+                pending = []
+                for event in events:
+                    if event.ident == self._wake_r:
+                        self._drain_wake()
+                        woke = True
+                        continue
+                    pending.append(event)
+                if woke or (reconfigure and reconfigure.is_set()):
+                    if reconfigure:
+                        reconfigure.clear()
                     self._sync_bindings()
                 if not self._runtime.session_is_active:
-                    time.sleep(1.0)
                     continue
-                events = self._kq.control(None, 16, 1.0)
-                for event in events:
+                for event in pending:
                     if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
                         with self._lock:
                             agent = self._agent_by_fd.get(event.ident)
