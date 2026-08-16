@@ -26,8 +26,15 @@ from server.routes.read import dispatch_get_read_route
 from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
 from backend_core.access.files import append_jsonl_entry
-from backend_core.access.settings import hub_settings_path
+from backend_core.access.settings import (
+    hub_settings_path,
+    resolve_chat_port,
+    session_log_path,
+)
 from workspace_sync.api import WorkspaceSyncApi
+
+DEFAULT_HUB_PORT = 8788
+DEFAULT_TMUX_SOCKET = "agent-window"
 
 _PWA_STATIC_ROUTES = {
     "/pwa-icon-192.png": ("icon-192.png", "image/png", "public, max-age=3600"),
@@ -42,14 +49,11 @@ def _not_initialized(*_args, **_kwargs):
 
 
 _initialized = False
-index_path = Path()
-limit = 0
+log_path = Path()
 session_name = ""
 port = 0
-agent_send_path = ""
 workspace = ""
 log_dir = ""
-targets: list[str] = []
 tmux_socket = ""
 hub_port = 0
 PUBLIC_HOST = ""
@@ -137,11 +141,11 @@ def _message_index_watcher() -> None:
     while True:
         fd = None
         try:
-            index_path.parent.mkdir(parents=True, exist_ok=True)
-            if not index_path.exists():
-                index_path.touch()
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            if not log_path.exists():
+                log_path.touch()
             kq = select.kqueue()
-            fd = os.open(str(index_path), os.O_RDONLY)
+            fd = os.open(str(log_path), os.O_RDONLY)
             ev = select.kevent(
                 fd,
                 filter=select.KQ_FILTER_VNODE,
@@ -156,7 +160,7 @@ def _message_index_watcher() -> None:
                         if runtime is not None:
                             runtime.notify_session_state_changed(["messages", "statuses"], reason="messages")
                     if event.fflags & (select.KQ_NOTE_RENAME | select.KQ_NOTE_DELETE):
-                        raise OSError("message index path changed")
+                        raise OSError("message log path changed")
         except Exception as exc:
             logging.error("message index watcher error: %s", exc)
             time.sleep(1.0)
@@ -207,7 +211,7 @@ def _send_or_enqueue_message(
             message,
         )
     entry = _build_outbound_user_entry(targets=queue_targets, message=message)
-    append_jsonl_entry(runtime.index_path, entry)
+    append_jsonl_entry(runtime.log_path, entry)
     send_queue.put(
         {
             "target": ",".join(queue_targets),
@@ -233,8 +237,8 @@ def _clean_env():
 
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
-    global index_path, limit, session_name
-    global port, agent_send_path, workspace, log_dir, targets, tmux_socket, hub_port
+    global log_path, session_name
+    global port, workspace, log_dir, tmux_socket, hub_port
     global PUBLIC_HOST, PUBLIC_HUB_PORT, _repo_root, runtime
     global _PWA_STATIC_DIR, server_instance, load_chat_settings, chat_font_settings_inline_style
     global payload, append_system_entry
@@ -245,36 +249,29 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         return
 
     argv = list(sys.argv[1:] if argv is None else argv)
-    if len(argv) != 10:
-        raise SystemExit(
-            "usage: python -m server.server "
-            "<index_path> <limit> <session_name> "
-            "<port> <agent_send_path> <workspace> <log_dir> <targets_csv> <tmux_socket> <hub_port>"
-        )
+    if len(argv) != 2:
+        raise SystemExit("usage: python -m server.server <session_name> <workspace>")
 
-    index_path = Path(argv[0])
-    limit = int(argv[1])
-    session_name = argv[2]
-    port = int(argv[3])
-    agent_send_path = argv[4]
-    workspace = argv[5]
-    log_dir = argv[6]
-    targets = [item for item in argv[7].split(",") if item]
-    tmux_socket = argv[8]
-    hub_port = int(argv[9])
+    session_name = str(argv[0] or "").strip()
+    workspace = str(argv[1] or "").strip()
+    if not session_name or not workspace:
+        raise SystemExit("usage: python -m server.server <session_name> <workspace>")
+
+    _repo_root = Path(__file__).resolve().parent.parent
+    log_path = session_log_path(session_name)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.touch(exist_ok=True)
+    log_dir = str(log_path.parent)
+    port = resolve_chat_port(_repo_root, session_name)
+    tmux_socket = (os.environ.get("AGENT_WINDOW_TMUX_SOCKET") or DEFAULT_TMUX_SOCKET).strip()
+    hub_port = int(os.environ.get("AGENT_INDEX_HUB_PORT") or DEFAULT_HUB_PORT)
     PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
     PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
 
-    _repo_root = Path(agent_send_path).parent.parent
     runtime = ChatRuntime(
-        index_path=index_path,
-        limit=limit,
         session_name=session_name,
         port=port,
-        agent_send_path=agent_send_path,
         workspace=workspace,
-        log_dir=log_dir,
-        targets=targets,
         tmux_socket=tmux_socket,
         hub_port=hub_port,
         repo_root=_repo_root,
@@ -291,9 +288,9 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     agent_statuses = runtime.agent_statuses
     workspace_sync_api = WorkspaceSyncApi(
         workspace=workspace,
-        allowed_roots=[index_path.parent],
+        allowed_roots=[log_path.parent],
         repo_root=_repo_root,
-        index_path=index_path,
+        index_path=log_path,
         runtime=runtime,
     )
     file_runtime = workspace_sync_api.file_runtime
@@ -376,7 +373,7 @@ def queue_chat_restart():
             return False, "restart already pending", False
         chat_restart_pending = True
 
-    bin_dir = Path(agent_send_path).resolve().parent.parent / "bin"
+    bin_dir = _repo_root / "bin"
     script_path = str(bin_dir / "agent-index")
     done = threading.Event()
     result = {"ok": False}
@@ -417,12 +414,11 @@ def _route_context() -> dict:
         "server_instance": server_instance,
         "runtime": runtime,
         "workspace": workspace,
-        "session_dir": str(index_path.parent),
+        "session_dir": str(log_path.parent),
         "log_dir": log_dir,
         "port": port,
         "hub_port": hub_port,
         "tmux_socket": tmux_socket,
-        "agent_send_path": agent_send_path,
         "repo_root": _repo_root,
         "public_host": PUBLIC_HOST,
         "public_hub_port": PUBLIC_HUB_PORT,
@@ -489,13 +485,13 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
 
-def _kill_stale_sync_processes(index_path_str: str) -> None:
+def _kill_stale_sync_processes(session_name_str: str) -> None:
     import signal
 
     my_pid = os.getpid()
     try:
         result = subprocess.run(
-            ["pgrep", "-f", f"server.server.*{index_path_str}"],
+            ["pgrep", "-f", f"server.server {session_name_str} "],
             capture_output=True,
             text=True,
             timeout=5,
@@ -513,7 +509,7 @@ def _kill_stale_sync_processes(index_path_str: str) -> None:
                 continue
             try:
                 os.kill(pid, signal.SIGTERM)
-                logging.info("Killed stale chat_server PID %d for %s", pid, index_path_str)
+                logging.info("Killed stale chat_server PID %d for %s", pid, session_name_str)
             except OSError:
                 pass
     except Exception as exc:
@@ -525,7 +521,7 @@ def main(argv: list[str] | None = None) -> None:
 
     initialize_from_argv(argv)
     if os.environ.get("AGENT_WINDOW_CHAT_RESTART_HANDOFF") != "1":
-        _kill_stale_sync_processes(str(index_path))
+        _kill_stale_sync_processes(session_name)
 
     cert_file = os.environ.get("AGENT_WINDOW_CERT_FILE", "")
     key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")

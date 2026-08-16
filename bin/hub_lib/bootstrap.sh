@@ -58,7 +58,7 @@ tmux() {
 
 usage() {
   cat <<'EOF'
-Usage: agent-index [--session NAME] [--limit N] [--chat] [--hub] [--hub-port N] [--http|--https]
+Usage: agent-index [--session NAME] [--chat] [--hub] [--hub-port N] [--http|--https]
 
 Start Hub or the chat server for the current or archived session.
 EOF

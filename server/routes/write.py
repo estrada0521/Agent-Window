@@ -62,7 +62,7 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     if not agent:
         handler._send_json(400, {"ok": False, "error": "agent required"})
         return
-    bin_dir = Path(ctx["agent_send_path"]).resolve().parent.parent / "bin"
+    bin_dir = Path(ctx["repo_root"]) / "bin"
     try:
         proc = subprocess.run(
             [str(bin_dir / "agent-window"), "add-agent", "--session", ctx["session_name"], "--agent", agent],
@@ -80,7 +80,6 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         handler._send_json(500, {"ok": False, "error": stderr or stdout or f"add-agent failed ({proc.returncode})"})
         return
     targets = ctx["runtime"].active_agents()
-    ctx["runtime"].targets = list(targets)
     with ctx["runtime"]._payload_cache_lock:
         ctx["runtime"]._payload_cache.clear()
         ctx["runtime"]._payload_cache_order.clear()
@@ -113,7 +112,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
     if not agent:
         handler._send_json(400, {"ok": False, "error": "agent required"})
         return
-    bin_dir = Path(ctx["agent_send_path"]).resolve().parent.parent / "bin"
+    bin_dir = Path(ctx["repo_root"]) / "bin"
     try:
         proc = subprocess.run(
             [str(bin_dir / "agent-window"), "remove-agent", "--session", ctx["session_name"], "--agent", agent],
@@ -134,7 +133,6 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         )
         return
     targets = ctx["runtime"].active_agents()
-    ctx["runtime"].targets = list(targets)
     with ctx["runtime"]._payload_cache_lock:
         ctx["runtime"]._payload_cache.clear()
         ctx["runtime"]._payload_cache_order.clear()

@@ -23,5 +23,5 @@ def append_system_entry(
         entry["agent"] = agent
     if extra:
         entry.update(extra)
-    append_jsonl_entry_fn(runtime.index_path, entry)
+    append_jsonl_entry_fn(runtime.log_path, entry)
     return entry

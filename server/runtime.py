@@ -59,7 +59,13 @@ from .session_state import (
 from pane_trace import trace_content as _trace_content_impl
 from backend_core.tmux.instances import resolve_target_agents as resolve_target_agent_names
 from backend_core.access.files import append_jsonl_entry
-from backend_core.access.settings import load_hub_settings as load_shared_hub_settings
+from backend_core.access.settings import (
+    load_hub_settings as load_shared_hub_settings,
+    session_log_path,
+)
+
+
+ENTRY_WINDOW_LIMIT = 2000
 
 
 class ChatRuntime:
@@ -70,27 +76,20 @@ class ChatRuntime:
     def __init__(
         self,
         *,
-        index_path: Path | str,
-        limit: int,
         session_name: str,
         port: int,
-        agent_send_path: Path | str,
         workspace: str,
-        log_dir: str,
-        targets: list[str],
         tmux_socket: str,
         hub_port: int,
         repo_root: Path | str,
         session_is_active: bool,
     ):
-        self.index_path = Path(index_path)
-        self.limit = int(limit) if int(limit) > 0 else 50
         self.session_name = session_name
+        self.log_path = session_log_path(session_name)
+        self.limit = ENTRY_WINDOW_LIMIT
         self.port = int(port)
-        self.agent_send_path = str(agent_send_path)
         self.workspace = workspace
-        self.log_dir = log_dir
-        self.targets = list(targets or [])
+        self.log_dir = str(self.log_path.parent)
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port)
         self.repo_root = Path(repo_root).resolve()
@@ -105,7 +104,7 @@ class ChatRuntime:
         self._agent_running: set[str] = self._restore_running_agents_from_tmux_env()
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(
-            index_path=self.index_path,
+            index_path=self.log_path,
             session_name=self.session_name,
             workspace=self.workspace,
             mark_idle_fn=self._mark_idle,
@@ -226,7 +225,7 @@ class ChatRuntime:
             "server_instance": self.server_instance,
             "session": self.session_name,
             "active": self.session_is_active,
-            "source": str(self.index_path),
+            "source": str(self.log_path),
             "workspace": self.workspace,
             "log_dir": self.log_dir,
             "port": self.port,
@@ -264,7 +263,7 @@ class ChatRuntime:
     ) -> bytes:
         now = time.monotonic()
         try:
-            stat = self.index_path.stat()
+            stat = self.log_path.stat()
             index_sig = (stat.st_size, stat.st_mtime_ns)
         except OSError:
             index_sig = (0, 0)
@@ -287,14 +286,12 @@ class ChatRuntime:
         meta["total_messages"] = total_count
         if light_mode:
             entries = [self._light_entry(entry) for entry in entries]
-        targets = list(self.targets or [])
-        if not targets:
-            targets_cached_at, cached_targets = self._payload_targets_cache
-            if now - targets_cached_at < 2.0:
-                targets = list(cached_targets)
-            else:
-                targets = self.active_agents()
-                self._payload_targets_cache = (now, list(targets))
+        targets_cached_at, cached_targets = self._payload_targets_cache
+        if now - targets_cached_at < 2.0:
+            targets = list(cached_targets)
+        else:
+            targets = self.active_agents()
+            self._payload_targets_cache = (now, list(targets))
         payload_doc = build_payload_document(
             meta=meta,
             targets=targets,
@@ -321,10 +318,7 @@ class ChatRuntime:
         )
 
     def resolve_target_agents(self, target: str) -> list[str]:
-        agents = list(self.targets or [])
-        if not agents:
-            agents = self.active_agents()
-        return resolve_target_agent_names(target, agents)
+        return resolve_target_agent_names(target, self.active_agents())
 
     def pane_id_for_agent(self, agent_name: str) -> str:
         return _pane_id_for_agent_impl(
@@ -347,8 +341,6 @@ class ChatRuntime:
             subprocess_module=subprocess,
             logging_module=logging,
         )
-        if not agents and self.targets:
-            agents = list(self.targets)
         return _running_agents_from_env_impl(
             self,
             agents,
