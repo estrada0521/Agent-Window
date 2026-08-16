@@ -424,6 +424,7 @@ def _post_send(handler, _parsed, ctx) -> None:
     status, body = ctx["send_message_fn"](
         data.get("target", ""),
         data.get("message", ""),
+        data.get("client"),
     )
     handler._send_json(status, body)
 

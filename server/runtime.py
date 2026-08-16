@@ -168,7 +168,7 @@ class ChatRuntime:
         )
 
 
-    def append_user_entry(self, message: str, *, targets: list[str]) -> dict:
+    def append_user_entry(self, message: str, *, targets: list[str], client: str | None = None) -> dict:
         return _append_user_entry_impl(
             self,
             message,
@@ -176,6 +176,7 @@ class ChatRuntime:
             datetime_class=dt_datetime,
             uuid_module=uuid,
             append_jsonl_entry_fn=append_jsonl_entry,
+            client=client,
         )
 
     def append_system_entry(self, message: str, *, agent: str = "", **extra) -> dict:
@@ -427,12 +428,14 @@ class ChatRuntime:
         target: str,
         message: str,
         append_entry: bool = True,
+        client: str | None = None,
     ) -> tuple[int, dict]:
         return _send_message_impl(
             self,
             target,
             message,
             append_entry=append_entry,
+            client=client,
         )
 
     def agent_statuses(self) -> dict[str, str]:

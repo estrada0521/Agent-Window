@@ -191,14 +191,16 @@ def _queued_send_worker() -> None:
 def _send_or_enqueue_message(
     target: str,
     message: str,
+    client: str | None = None,
 ) -> tuple[int, dict]:
     queue_targets = _send_is_queueable(target, message)
     if not queue_targets:
         return runtime.send_message(
             target,
             message,
+            client=client,
         )
-    entry = runtime.append_user_entry(message, targets=queue_targets)
+    entry = runtime.append_user_entry(message, targets=queue_targets, client=client)
     send_queue.put(
         {
             "target": ",".join(queue_targets),

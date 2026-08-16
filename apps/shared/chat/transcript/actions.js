@@ -191,7 +191,11 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         const res = await fetch("/send", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ target, message: messageBody }),
+          body: JSON.stringify({
+            target,
+            message: messageBody,
+            client: document.documentElement.dataset.mobile === "1" ? "mobile" : "desktop",
+          }),
         });
         const data = await res.json();
         if (!res.ok || !data.ok) {

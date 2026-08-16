@@ -56,6 +56,7 @@ def send_message(
     target: str,
     message: str,
     append_entry: bool = True,
+    client: str | None = None,
 ) -> tuple[int, dict]:
     target = (target or "").strip()
     message = (message or "").strip()
@@ -70,7 +71,7 @@ def send_message(
         return 400, {"ok": False, "error": "target is required"}
     if targets == ["user"]:
         if append_entry:
-            entry = self.append_user_entry(message, targets=["user"])
+            entry = self.append_user_entry(message, targets=["user"], client=client)
             return 200, {"ok": True, "mode": "note", "entry": entry}
         return 200, {"ok": True, "mode": "note"}
     if "user" in targets:
@@ -123,7 +124,7 @@ def send_message(
             return 400, {"ok": False, "error": f"Failed to deliver to: {failed_targets[0]}"}
         return 400, {"ok": False, "error": "No target panes resolved."}
     if append_entry:
-        entry = self.append_user_entry(payload, targets=successful_targets)
+        entry = self.append_user_entry(payload, targets=successful_targets, client=client)
         if failed_targets:
             return 400, {"ok": False, "error": f"Failed to deliver to: {', '.join(failed_targets)}"}
         return 200, {"ok": True, "entry": entry}
