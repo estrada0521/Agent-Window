@@ -1,44 +1,56 @@
     let _dpGitOverviewFingerprint = null;
     let _dpGitRefreshInFlight = false;
+    let _dpGitRefreshQueued = false;
     const dpRefreshGitOverview = async () => {
       if (dpGitPageLoading) return;
       if (!dpPanelOpen && !dpGitSummaryPinned) return;
-      if (_dpGitRefreshInFlight) return;
+      if (_dpGitRefreshInFlight) {
+        _dpGitRefreshQueued = true;
+        return;
+      }
       _dpGitRefreshInFlight = true;
       try {
-        const data = await fetchGitBranchOverview({ offset: 0, refresh: true });
-        const fp = gitOverviewFingerprint(data);
-        if (fp === _dpGitOverviewFingerprint) return;
-        const isFirstRefresh = _dpGitOverviewFingerprint === null;
-        _dpGitOverviewFingerprint = fp;
+        while (true) {
+          _dpGitRefreshQueued = false;
+          const data = await fetchGitBranchOverview({ offset: 0, refresh: true });
+          const fp = gitOverviewFingerprint(data);
+          if (fp !== _dpGitOverviewFingerprint) {
+            const isFirstRefresh = _dpGitOverviewFingerprint === null;
+            _dpGitOverviewFingerprint = fp;
 
-        if (!dpPanelOpen && dpGitSummaryPinned) {
-          dpGitHeaderSummaryState = dpBuildSummaryState(data);
-          dpApplyGitOverviewHeader();
-          return;
-        }
+            if (!dpPanelOpen && dpGitSummaryPinned) {
+              dpGitHeaderSummaryState = dpBuildSummaryState(data);
+              dpApplyGitOverviewHeader();
+            } else {
+              const newHashes = isFirstRefresh
+                ? null
+                : gitNewCommitHashes(dpGitCommits, data?.recent_commits);
 
-        const newHashes = isFirstRefresh
-          ? null
-          : gitNewCommitHashes(dpGitCommits, data?.recent_commits);
-
-        dpGitHeaderSummaryState = dpBuildSummaryState(data);
-        dpSyncSummaryWrap();
-        if (!dpGitDetailContext) {
-          const page = gitOverviewPagingFromResponse(data, [], { reset: true });
-          dpGitCommits = page.commits;
-          dpGitTotalCommits = page.totalCommits;
-          dpGitNextOffset = page.nextOffset;
-          dpGitHasMore = page.hasMore;
-          dpRenderCommitRows(dpGitCommits, { append: false, newHashes });
-          dpUpdateLoadMoreUi();
-          dpEnsureGitObserver();
-        } else if (dpGitDetailContext.kind === "worktree" && dpGitDetailContext.wrapEl) {
-          void dpRenderFileStatsInto(dpGitDetailContext.wrapEl, "", { allowUndo: true, incremental: true });
+              dpGitHeaderSummaryState = dpBuildSummaryState(data);
+              dpSyncSummaryWrap();
+              if (!dpGitDetailContext) {
+                const page = gitOverviewPagingFromResponse(data, [], { reset: true });
+                dpGitCommits = page.commits;
+                dpGitTotalCommits = page.totalCommits;
+                dpGitNextOffset = page.nextOffset;
+                dpGitHasMore = page.hasMore;
+                dpRenderCommitRows(dpGitCommits, { append: false, newHashes });
+                dpUpdateLoadMoreUi();
+                dpEnsureGitObserver();
+              } else if (dpGitDetailContext.kind === "worktree" && dpGitDetailContext.wrapEl) {
+                void dpRenderFileStatsInto(dpGitDetailContext.wrapEl, "", { allowUndo: true, incremental: true });
+              }
+            }
+          }
+          if (!_dpGitRefreshQueued) break;
         }
       } catch (_) {
       } finally {
         _dpGitRefreshInFlight = false;
+        if (_dpGitRefreshQueued) {
+          _dpGitRefreshQueued = false;
+          void dpRefreshGitOverview();
+        }
       }
     };
     const dpToggleGitSummaryPinned = () => {
