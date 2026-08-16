@@ -1,13 +1,5 @@
-    const dpGitCountsHtml = (ins, dels) => {
-      const safeIns = Math.max(0, parseInt(ins) || 0);
-      const safeDels = Math.max(0, parseInt(dels) || 0);
-      const cleanClass = (safeIns || safeDels) ? "" : " clean";
-      return `<span class="git-branch-summary-counts${cleanClass}"><span class="git-branch-summary-count ins" data-count-prefix="+" data-count-value="${safeIns}">+${safeIns}</span><span class="git-branch-summary-count del" data-count-prefix="-" data-count-value="${safeDels}">-${safeDels}</span></span>`;
-    };
-    const dpGitPathCountText = (count) => {
-      const safeCount = Math.max(0, parseInt(count) || 0);
-      return `${safeCount} ${safeCount === 1 ? "path" : "paths"}`;
-    };
+    const dpGitCountsHtml = gitBranchCountsHtml;
+    const dpGitPathCountText = gitBranchPathCountText;
     const DP_GIT_SUMMARY_PIN_SVG = '📌';
     const dpBuildSummaryHtml = (data) => {
       const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
@@ -40,36 +32,8 @@
         rowHtml: dpBuildSummaryHtml(data),
       };
     };
-    const dpBuildCommitRowHtml = (commit, { animate = false } = {}) => {
-      const dotClass = commit?.is_origin_main ? "git-commit-dot is-origin-main" : "git-commit-dot";
-      const iconInner = `<span class="${dotClass}" aria-hidden="true"></span>`;
-      const subjHtml = `<div class="git-commit-subject">${escapeHtml(commit?.subject || "")}</div>`;
-      const ins = Math.max(0, parseInt(commit?.ins) || 0);
-      const dels = Math.max(0, parseInt(commit?.dels) || 0);
-      const statHtml = dpGitCountsHtml(ins, dels);
-      const animClass = animate ? " new-commit-slide" : "";
-      return `<div class="git-commit-row${animClass}" data-hash="${escapeHtml(commit?.hash || "")}"><span class="git-commit-icon-wrap">${iconInner}</span><div class="git-commit-info">${subjHtml}<div class="git-commit-meta">${statHtml}</div></div></div>`;
-    };
-    const dpBuildFileRowHtml = (entry, { animate = false } = {}) => {
-      const path = String(entry?.path || "").trim();
-      const ins = Math.max(0, parseInt(entry?.ins) || 0);
-      const dels = Math.max(0, parseInt(entry?.dels) || 0);
-      const isUntracked = !!entry?.untracked;
-      const ext = extFromPath(path);
-      const iconSvg = FILE_ICONS[ext] || FILE_SVG_ICONS.file;
-      const iconHtml = `<span class="git-commit-file-icon">${iconSvg}</span>`;
-      const slashIdx = path.lastIndexOf("/");
-      const fileName = slashIdx >= 0 ? path.slice(slashIdx + 1) : path;
-      const dirPath = slashIdx >= 0 ? path.slice(0, slashIdx) : "";
-      const pathHtml = dirPath
-        ? `<span class="git-commit-file-name">${escapeHtml(fileName)}</span><span class="git-commit-file-dir">${escapeHtml(dirPath)}</span>`
-        : `<span class="git-commit-file-name">${escapeHtml(fileName)}</span>`;
-      const fileMetaHtml = isUntracked ? "" : `<div class="git-commit-file-meta">${dpGitCountsHtml(ins, dels)}</div>`;
-      const actionsHtml = fileMetaHtml ? `<div class="git-commit-file-actions">${fileMetaHtml}</div>` : "";
-      const animClass = animate ? " new-file-slide" : "";
-      const untrackedAttr = isUntracked ? ' data-untracked="1"' : "";
-      return `<div class="git-commit-file-row clickable${animClass}" data-path="${escapeHtml(path)}"${untrackedAttr}><div class="git-commit-file-header">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
-    };
+    const dpBuildCommitRowHtml = gitCommitRowHtml;
+    const dpBuildFileRowHtml = gitCommitFileRowHtml;
     const dpDisconnectGitObserver = () => {
       if (!dpGitObserver) return;
       try { dpGitObserver.disconnect(); } catch (_) {}
