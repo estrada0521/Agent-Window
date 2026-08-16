@@ -1305,12 +1305,6 @@
         -webkit-backdrop-filter 220ms ease;
       z-index: 0;
     }
-    .desk-main.composer-overlay-open::before {
-      background: rgba(0, 0, 0, 0);
-      backdrop-filter: blur(0px);
-      -webkit-backdrop-filter: blur(0px);
-      opacity: 0;
-    }
     .desk-main > * {
       position: relative;
       z-index: 1;

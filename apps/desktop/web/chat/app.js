@@ -137,12 +137,6 @@ __CHAT_INCLUDE:../../../shared/chat/launch-shell-gate.js__
         window.parent.postMessage({ type: "chat-request-hub-layout" }, "*");
       } catch (_) {}
     };
-    const notifyHubComposerOverlayState = (open) => {
-      if (!isHubIframeChat()) return;
-      try {
-        window.parent.postMessage({ type: "composer-overlay-state", open: !!open }, "*");
-      } catch (_) {}
-    };
     const notifyHubChatRenderReady = () => {
       if (!isHubIframeChat()) return;
       requestAnimationFrame(() => {
@@ -184,7 +178,6 @@ __CHAT_INCLUDE:../../../shared/chat/launch-shell-gate.js__
           );
         }
       });
-      window.addEventListener("pagehide", () => notifyHubComposerOverlayState(false));
       __CHAT_INCLUDE:../../../shared/chat/hub-safari-chrome.js__
       bumpHubIframeLayoutLock();
       window.addEventListener("resize", hubChildResizeChrome, { passive: true });
@@ -227,7 +220,7 @@ __CHAT_INCLUDE:../../../shared/chat/launch-shell-gate.js__
       }
     };
 __CHAT_INCLUDE:attachments/file-open.js__
-__CHAT_INCLUDE:composer-overlay.js__
+__CHAT_INCLUDE:../../../shared/chat/composer-overlay.js__
     const updateScrollBtnPos = () => {
       const shell = document.querySelector(".shell");
       shell.style.setProperty("--floating-btn-bottom", "160px");
