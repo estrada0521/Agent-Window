@@ -48,7 +48,7 @@ ensure_session_index_mirrors() {
   _ensure_canonical_index_healthy "$session"
   workspace_root="${WORKSPACE:-${AGENT_WINDOW_WORKSPACE:-}}"
   [[ -n "$workspace_root" ]] || return 0
-  PYTHONPATH="$REPO_ROOT/src:$REPO_ROOT" python3 - "$session" "$workspace_root" <<'PYEOF'
+  PYTHONPATH="$REPO_ROOT" python3 - "$session" "$workspace_root" <<'PYEOF'
 import sys
 
 from backend_core.access.settings import ensure_session_workspace_mirrors

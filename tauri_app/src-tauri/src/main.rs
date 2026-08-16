@@ -486,7 +486,7 @@ fn main() {
                     .current_dir(&repo_root)
                     .env("PATH", &path)
                     .env("AGENT_INDEX_HUB_PORT", hub_port.to_string())
-                    .env("PYTHONPATH", format!("{0}/src:{0}", repo_root));
+                    .env("PYTHONPATH", repo_root.clone());
                 if has_certs && tauri_use_https {
                     cmd.env("AGENT_WINDOW_CERT_FILE", &cert_file)
                         .env("AGENT_WINDOW_KEY_FILE", &key_file);

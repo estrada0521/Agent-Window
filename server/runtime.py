@@ -54,7 +54,7 @@ from backend_core.tmux.session import (
     pane_id_for_agent as _pane_id_for_agent_impl,
     running_agents_from_env as _running_agents_from_env_impl,
 )
-from frontedge.session_state import (
+from .session_state import (
     build_session_state_payload as _build_session_state_payload_impl,
     initialize_session_state_bus as _initialize_session_state_bus_impl,
     publish_session_state_change as _publish_session_state_change_impl,

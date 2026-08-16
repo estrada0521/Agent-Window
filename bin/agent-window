@@ -36,14 +36,13 @@ for _cmd in python3 tmux; do
   fi
 done
 
-eval "$(PYTHONPATH="$REPO_ROOT/src:$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -m backend_core.cli.agent_registry_shell)"
+eval "$(PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -m backend_core.cli.agent_registry_shell)"
 APP_NAME="$(basename "$0")"
 CENTRAL_LOG_DIR="$(python3 - "$REPO_ROOT" <<'PYEOF'
 import sys
 from pathlib import Path
 
 repo_root = Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(repo_root / "src"))
 sys.path.insert(0, str(repo_root))
 from backend_core.access.settings import local_runtime_log_dir
 
@@ -55,7 +54,6 @@ import sys
 from pathlib import Path
 
 repo_root = Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(repo_root / "src"))
 sys.path.insert(0, str(repo_root))
 from backend_core.access.settings import agent_window_run_dir
 
@@ -85,7 +83,6 @@ import sys
 from pathlib import Path
 
 repo_root = Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(repo_root / "src"))
 sys.path.insert(0, str(repo_root))
 from message_delivery.send import default_tmux_socket_name
 
@@ -106,7 +103,6 @@ from pathlib import Path
 repo_root = Path(sys.argv[1]).resolve()
 sock = sys.argv[2]
 session_name = sys.argv[3]
-sys.path.insert(0, str(repo_root / "src"))
 sys.path.insert(0, str(repo_root))
 from message_delivery.send import session_topology_lock_path
 
@@ -189,7 +185,6 @@ from pathlib import Path
 repo_root = Path(sys.argv[1]).resolve()
 session_name = sys.argv[2]
 tmux_socket = sys.argv[3]
-sys.path.insert(0, str(repo_root / "src"))
 sys.path.insert(0, str(repo_root))
 from backend_core.tmux.process_cleanup import cleanup_target_process_groups
 from backend_core.tmux.window import tmux_prefix_args
@@ -232,7 +227,7 @@ from pathlib import Path
 repo_root = Path(sys.argv[1]).resolve()
 agent_name = sys.argv[2]
 
-sys.path.insert(0, str(repo_root / "src"))
+sys.path.insert(0, str(repo_root))
 from backend_core.agents.ensure_clis import resolve_agent_executable
 from backend_core.agents.registry import canonical_agent_name
 
@@ -358,7 +353,6 @@ from pathlib import Path
 repo_root = Path(sys.argv[1]).resolve()
 pane_id = sys.argv[2]
 tmux_socket = sys.argv[3]
-sys.path.insert(0, str(repo_root / "src"))
 sys.path.insert(0, str(repo_root))
 from backend_core.tmux.window import window_target_for_pane
 
@@ -377,7 +371,6 @@ target = sys.argv[2]
 width = int(sys.argv[3])
 height = int(sys.argv[4])
 tmux_socket = sys.argv[5]
-sys.path.insert(0, str(repo_root / "src"))
 sys.path.insert(0, str(repo_root))
 from backend_core.tmux.window import configure_window_size
 
@@ -403,7 +396,6 @@ workspace = sys.argv[4]
 width = int(sys.argv[5])
 height = int(sys.argv[6])
 tmux_socket = sys.argv[7]
-sys.path.insert(0, str(repo_root / "src"))
 sys.path.insert(0, str(repo_root))
 from backend_core.tmux.window import create_agent_window
 
@@ -429,7 +421,6 @@ from pathlib import Path
 repo_root = Path(sys.argv[1]).resolve()
 window_target = sys.argv[2]
 tmux_socket = sys.argv[3]
-sys.path.insert(0, str(repo_root / "src"))
 sys.path.insert(0, str(repo_root))
 from backend_core.tmux.window import kill_window_target
 
