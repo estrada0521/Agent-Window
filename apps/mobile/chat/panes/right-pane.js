@@ -934,7 +934,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
         await runForwardAction(target, { sourceNode: node, keepComposerOpen, keepHeaderOpen });
       });
     });
-        document.querySelectorAll(".quick-action:not(.quick-more-toggle):not([data-forward-action]):not(#cameraBtn)").forEach((node) => {
+        document.querySelectorAll(".quick-action:not(.quick-more-toggle):not([data-forward-action]):not(#attachBtn)").forEach((node) => {
       node.addEventListener("click", async () => {
         closeQuickMore();
         const sc = node.dataset.shortcut || "";
