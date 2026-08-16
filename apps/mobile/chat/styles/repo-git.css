@@ -217,11 +217,11 @@
     }
 
     .repo-browser-item:active {
-      background: var(--panel-row-bg);
+      background: var(--panel-row-selected-bg);
     }
 
     .repo-browser-dir:active {
-      background: var(--panel-row-bg);
+      background: var(--panel-row-selected-bg);
     }
 
     .has-hover .repo-browser-item:hover {
@@ -404,7 +404,7 @@
     }
 
     .git-commit-row:active {
-      background: var(--mobile-sheet-floating-hover-bg);
+      background: var(--panel-row-selected-bg);
     }
 
     .has-hover .git-commit-row:hover {
@@ -556,7 +556,7 @@
     }
 
     .git-branch-summary-row.clickable:active {
-      background: var(--panel-row-hover-bg);
+      background: var(--panel-row-selected-bg);
     }
 
     .has-hover .git-branch-summary-row.clickable:hover {
@@ -765,7 +765,7 @@
     .git-commit-file-row:nth-child(n+6) { animation-delay: 0.12s; }
 
     .git-commit-file-row:active {
-      background: var(--panel-row-hover-bg);
+      background: var(--panel-row-selected-bg);
     }
 
     .has-hover .git-commit-file-row:hover {
