@@ -38,8 +38,6 @@ __CHAT_INCLUDE:styles/transcript.css__
       border: none;
       color: var(--fg);
     }
-    .message-row.is-collapsible .message-body-row.is-collapsed::after {
-    }
 __CHAT_INCLUDE:../../shared/chat/markdown-inline-code.css__
     .send-btn {
       background: var(--fg);
