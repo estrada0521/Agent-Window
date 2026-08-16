@@ -58,8 +58,6 @@ def send_message(
     self,
     target: str,
     message: str,
-    silent: bool = False,
-    raw: bool = False,
     append_entry: bool = True,
 ) -> tuple[int, dict]:
     target = (target or "").strip()
@@ -103,28 +101,6 @@ def send_message(
     if not delivery_targets:
         return 400, {"ok": False, "error": "target is required"}
     attached_count = _session_attached_count(self, subprocess_module=subprocess)
-    if silent or raw:
-        try:
-            for agent in delivery_targets:
-                pane_id = self.pane_id_for_agent(agent)
-                if not pane_id:
-                    return 400, {"ok": False, "error": f"pane not found for {agent}"}
-                if not _send_keys_literal(self, pane_id, message, subprocess_module=subprocess):
-                    return 400, {"ok": False, "error": f"Failed to deliver to: {agent}"}
-                time.sleep(
-                    delivery_paste_delay_seconds(
-                        message,
-                        env=os.environ,
-                        session_attached_count=attached_count,
-                    )
-                )
-                if not _send_enter(self, pane_id, subprocess_module=subprocess):
-                    return 400, {"ok": False, "error": f"Failed to deliver to: {agent}"}
-                self._mark_agent_sent(agent)
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            return 500, {"ok": False, "error": str(exc)}
-        return 200, {"ok": True, "raw": bool(raw)}
     payload = message
     successful_targets: list[str] = []
     failed_targets: list[str] = []

@@ -1,10 +1,8 @@
 from __future__ import annotations
 import logging
 import re
-import uuid
 
 import os
-import shlex
 import shutil
 import subprocess
 import sys
@@ -42,10 +40,6 @@ class FileRuntime:
         ".ogg": "audio/ogg",
         ".m4a": "audio/mp4",
         ".flac": "audio/flac",
-        ".obj": "text/plain; charset=utf-8",
-        ".stl": "model/stl",
-        ".step": "application/step",
-        ".stp": "application/step",
     }
     IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico"}
     TEXT_EXTS = {".py", ".js", ".json", ".yaml", ".yml", ".sh", ".sql", ".html", ".css", ".tex", ".txt", ".csv", ".log"}
@@ -65,7 +59,6 @@ class FileRuntime:
         ".m4a": "audio/mp4",
         ".flac": "audio/flac",
     }
-    MODEL_3D_EXTS = {".obj", ".stl", ".step", ".stp"}
     SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache"}
 
     def __init__(
@@ -259,22 +252,6 @@ class FileRuntime:
         return b"\x00" not in sample
 
     @staticmethod
-    def _macos_app_exists(app_name: str) -> bool:
-        if sys.platform != "darwin" or not shutil.which("osascript"):
-            return False
-        try:
-            result = subprocess.run(
-                ["osascript", "-e", f'id of application "{app_name}"'],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-            )
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            return False
-        return result.returncode == 0
-
-    @staticmethod
     def _reveal_in_finder(full: str) -> None:
         if sys.platform == "darwin":
             reveal_cmd = ["open", "-R", full]
@@ -332,168 +309,6 @@ class FileRuntime:
         full = self._resolve_open_target(rel)
         self._reveal_in_finder(full)
         return {"ok": True, "path": rel, "revealed_in_finder": True}
-
-    def _git_show_bytes(self, rev_path: str) -> bytes | None:
-        try:
-            proc = subprocess.run(
-                ["git", "-C", self.workspace, "show", rev_path],
-                capture_output=True,
-                timeout=20,
-                check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired):
-            return None
-        if proc.returncode != 0:
-            return None
-        return proc.stdout if proc.stdout is not None else b""
-
-    @staticmethod
-    def _blob_looks_binary(blob: bytes) -> bool:
-        if not blob:
-            return False
-        return b"\x00" in blob[:8192]
-
-    @staticmethod
-    def _darwin_antigravity_executable() -> str | None:
-        if sys.platform != "darwin":
-            return None
-        for candidate in (
-            "/Applications/Antigravity IDE.app/Contents/Resources/app/bin/antigravity-ide",
-            str(Path.home() / "Applications/Antigravity IDE.app/Contents/Resources/app/bin/antigravity-ide"),
-            "/Applications/Antigravity.app/Contents/Resources/app/bin/antigravity",
-            str(Path.home() / "Applications/Antigravity.app/Contents/Resources/app/bin/antigravity"),
-        ):
-            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
-                return candidate
-        return None
-
-    def _spawn_vscode_diff(self, left: str, right: str) -> None:
-        left_abs = str(Path(left).resolve())
-        right_abs = str(Path(right).resolve())
-        diff_tail = ["--diff", left_abs, right_abs]
-        ws = self.workspace
-        candidates: list[list[str]] = []
-
-        custom = (os.environ.get("AGENT_WINDOW_DIFF_EDITOR") or "").strip()
-        if custom:
-            try:
-                prefix = shlex.split(custom)
-                if prefix:
-                    candidates.append(prefix + diff_tail)
-            except ValueError:
-                pass
-
-        seen: set[tuple[str, ...]] = set()
-
-        def _add(cmd: list[str]) -> None:
-            key = tuple(cmd)
-            if key in seen:
-                return
-            seen.add(key)
-            candidates.append(cmd)
-
-        for name in ("antigravity-ide", "agy", "antigravity"):
-            found = shutil.which(name)
-            if found:
-                _add([found, ws, *diff_tail])
-                _add([found, *diff_tail])
-
-        bundle = self._darwin_antigravity_executable()
-        if bundle and not shutil.which("antigravity-ide") and not shutil.which("agy") and not shutil.which("antigravity"):
-            _add([bundle, ws, *diff_tail])
-            _add([bundle, *diff_tail])
-
-        if shutil.which("code"):
-            _add(["code", *diff_tail])
-            _add(["code", ws, *diff_tail])
-
-        if sys.platform == "darwin":
-            if FileRuntime._macos_app_exists("Antigravity IDE"):
-                _add(["open", "-na", "Antigravity IDE", "--args", ws, *diff_tail])
-                _add(["open", "-na", "Antigravity IDE", "--args", *diff_tail])
-            if FileRuntime._macos_app_exists("Antigravity"):
-                _add(["open", "-na", "Antigravity", "--args", ws, *diff_tail])
-                _add(["open", "-na", "Antigravity", "--args", *diff_tail])
-            if FileRuntime._macos_app_exists("Visual Studio Code"):
-                _add(["open", "-na", "Visual Studio Code", "--args", ws, *diff_tail])
-                _add(["open", "-na", "Visual Studio Code", "--args", *diff_tail])
-
-        if not candidates:
-            raise ValueError(
-                "External diff needs a VS Code–compatible CLI: install Google Antigravity ('agy'), "
-                "VS Code ('code'), or set AGENT_WINDOW_DIFF_EDITOR to a command (e.g. agy)."
-            )
-        cmd = candidates[0]
-        popen_kw: dict = {}
-        if cmd[0] != "open" and ws:
-            try:
-                popen_kw["cwd"] = ws
-            except Exception:
-                pass
-        subprocess.Popen(
-            cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-            **popen_kw,
-        )
-
-    def open_diff_in_editor(self, rel: str, *, commit_hash: str = "") -> dict:
-        rel = str(rel or "").strip().lstrip("/")
-        if not rel:
-            raise ValueError("path required")
-        commit_hash = str(commit_hash or "").strip()
-        full = self._resolve_path(rel, allow_workspace_root=True)
-
-        if not commit_hash:
-            old_b = self._git_show_bytes(f"HEAD:{rel}")
-            old_bytes = old_b if old_b is not None else b""
-            if os.path.isfile(full):
-                with open(full, "rb") as fh:
-                    new_bytes = fh.read()
-            else:
-                new_bytes = b""
-        else:
-            old_b = self._git_show_bytes(f"{commit_hash}~1:{rel}")
-            new_b = self._git_show_bytes(f"{commit_hash}:{rel}")
-            old_bytes = old_b if old_b is not None else b""
-            new_bytes = new_b if new_b is not None else b""
-
-        if self._blob_looks_binary(old_bytes) or self._blob_looks_binary(new_bytes):
-            raise ValueError("Binary files cannot be opened in the external diff view.")
-        if not old_bytes and not new_bytes:
-            raise FileNotFoundError(rel)
-
-        suffix = Path(rel).suffix or ".txt"
-        safe_stem = re.sub(r"[^\w\-.]+", "_", Path(rel).name)[:96] or "file"
-        token = uuid.uuid4().hex[:12]
-        tmp_root = Path(self.workspace) / ".agent-window" / "diff-snapshots"
-        try:
-            tmp_root.mkdir(mode=0o700, parents=True, exist_ok=True)
-        except OSError as exc:
-            raise ValueError(f"Cannot create diff cache directory in workspace: {exc}") from exc
-        gitignore_path = tmp_root / ".gitignore"
-        if not gitignore_path.exists():
-            try:
-                gitignore_path.write_text(
-                    "# Ephemeral diff snapshots (Agent Window). Safe to delete this folder.\n*\n!.gitignore\n",
-                    encoding="utf-8",
-                )
-            except OSError:
-                pass
-
-        left_path = tmp_root / f"{safe_stem}.base.{token}{suffix}"
-        left_path.write_bytes(old_bytes)
-
-        if not commit_hash and os.path.isfile(full):
-            right_arg = os.path.abspath(full)
-        else:
-            right_path = tmp_root / f"{safe_stem}.work.{token}{suffix}"
-            right_path.write_bytes(new_bytes)
-            right_arg = str(right_path.resolve())
-
-        self._spawn_vscode_diff(str(left_path.resolve()), right_arg)
-        return {"ok": True, "path": rel, "mode": "diff", "commit_hash": commit_hash}
 
     def invalidate_file_list_cache(self) -> None:
         with self._file_list_cache_lock:

@@ -87,10 +87,8 @@ def _build_outbound_user_entry(*, targets: list[str], message: str) -> dict:
     return entry
 
 
-def _send_is_queueable(target: str, message: str, *, silent: bool = False, raw: bool = False) -> list[str] | None:
+def _send_is_queueable(target: str, message: str) -> list[str] | None:
     if runtime is None or not runtime.session_is_active:
-        return None
-    if silent or raw:
         return None
     normalized_target = str(target or "").strip()
     normalized_message = str(message or "").strip()
@@ -181,8 +179,6 @@ def _queued_send_worker() -> None:
             status, body = runtime.send_message(
                 job.get("target", ""),
                 job.get("message", ""),
-                silent=bool(job.get("silent", False)),
-                raw=bool(job.get("raw", False)),
                 append_entry=False,
             )
             if status != 200 or not body.get("ok"):
@@ -207,16 +203,12 @@ def _queued_send_worker() -> None:
 def _send_or_enqueue_message(
     target: str,
     message: str,
-    silent: bool = False,
-    raw: bool = False,
 ) -> tuple[int, dict]:
-    queue_targets = _send_is_queueable(target, message, silent=silent, raw=raw)
+    queue_targets = _send_is_queueable(target, message)
     if not queue_targets:
         return runtime.send_message(
             target,
             message,
-            silent=silent,
-            raw=raw,
         )
     entry = _build_outbound_user_entry(targets=queue_targets, message=message)
     append_jsonl_entry(runtime.index_path, entry)
@@ -225,8 +217,6 @@ def _send_or_enqueue_message(
             "target": ",".join(queue_targets),
             "targets": queue_targets,
             "message": str(message or "").strip(),
-            "silent": False,
-            "raw": False,
             "msg_id": entry["msg_id"],
         }
     )

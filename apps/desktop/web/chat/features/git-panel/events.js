@@ -18,10 +18,7 @@
         event.preventDefault();
         const p = String(fileRow.dataset.path || "").trim();
         if (p) {
-          await dpPostOpenFileInEditor(p, 0, {
-            diff: fileRow.dataset.untracked !== "1",
-            commitHash: dpGitDetailContext?.hash || "",
-          });
+          await dpPostOpenFileInEditor(p, 0);
         }
         return;
       }
@@ -208,7 +205,7 @@
         const file = event.target.closest(".git-pinned-expand-file");
         if (!file) return;
         const path = file.dataset.path || "";
-        if (path) dpPostOpenFileInEditor(path, 0, { diff: file.dataset.scope !== "untracked" });
+        if (path) dpPostOpenFileInEditor(path, 0);
       });
 
       aside.addEventListener("mouseenter", () => { cancelTimers(); openTimer = setTimeout(open, 60); });
