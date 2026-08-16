@@ -607,21 +607,21 @@
     }
     .git-commit-detail-head:active > * {
       background: var(--panel-row-active-bg);
-      border-radius: 8px;
+      border-radius: 26px;
     }
     .has-hover .git-commit-detail-head:hover > * {
       background: var(--panel-row-hover-bg);
-      border-radius: 8px;
+      border-radius: 26px;
     }
     .git-commit-detail-head .git-commit-row,
     .git-commit-detail-head .git-branch-summary-row {
       border-bottom: none;
-      border-radius: 8px;
+      border-radius: 26px;
       pointer-events: none;
       min-height: 34px;
       padding: 0 6px;
       background: var(--panel-row-bg);
-      border: none;
+      border: 0.5px solid var(--panel-row-border);
       transition: background 120ms ease;
     }
     .git-commit-detail-head .git-commit-chevron {

@@ -14,7 +14,7 @@ from .bootstrap import build_chat_bootstrap_payload, encode_chat_bootstrap_paylo
 from .script_assets import (
     CHAT_ANSI_UP_HEAD_TAG,
     CHAT_HEADER_ACTIONS_HTML,
-    CHAT_HEADER_PANELS_HTML,
+    CHAT_SHEET_PANELS_HTML,
     CHAT_KATEX_HEAD_TAGS,
     build_chat_app_script_assets,
 )
@@ -22,14 +22,13 @@ from .render import apply_chat_template_replacements, build_chat_template_replac
 from .template_loader import load_chat_template
 from hub_backend.branding import APP_DISPLAY_NAME
 from hub_backend.color_constants import apply_color_tokens
-from ..hub.header_assets import HUB_PAGE_HEADER_CSS, render_hub_page_header
+from ..hub.header_assets import PAGE_HEADER_CSS, render_page_header
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 CHAT_DESKTOP_HTML = load_chat_template("desktop")
 CHAT_MOBILE_HTML = load_chat_template("mobile")
-CHAT_HTML = CHAT_DESKTOP_HTML
 _CHAT_PWA_STATIC_DIR = _REPO_ROOT / "apps" / "shared" / "pwa"
 
 
@@ -152,7 +151,7 @@ def _build_chat_asset_variant(html: str) -> _ChatAssetVariant:
         )
     for placeholder, value in {
         **_agent_css_selectors(),
-        "__HUB_HEADER_CSS__": HUB_PAGE_HEADER_CSS,
+        "__HUB_HEADER_CSS__": PAGE_HEADER_CSS,
     }.items():
         main_style_asset = main_style_asset.replace(placeholder, value)
     return _ChatAssetVariant(
@@ -176,11 +175,6 @@ _CHAT_VARIANTS = {
 
 def _chat_variant(variant: str = "desktop") -> _ChatAssetVariant:
     return _CHAT_VARIANTS[_normalized_chat_variant(variant)]
-
-
-CHAT_APP_SCRIPT_ASSET = _CHAT_VARIANTS["desktop"].app_script_asset
-CHAT_MAIN_STYLE_ASSET = _CHAT_VARIANTS["desktop"].main_style_asset
-
 
 
 def chat_app_script_asset(variant: str = "desktop") -> str:
@@ -212,10 +206,10 @@ def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings
     normalized_session_name = str(session_name or "").strip()
     chat_document_title = f"{normalized_session_name} · {APP_DISPLAY_NAME}" if normalized_session_name else APP_DISPLAY_NAME
     actions_html = CHAT_HEADER_ACTIONS_HTML
-    panels_html = CHAT_HEADER_PANELS_HTML
-    chat_header_html = render_hub_page_header(
+    panels_html = CHAT_SHEET_PANELS_HTML
+    chat_header_html = render_page_header(
         title_href="/",
-        title_id="hubPageTitleLink",
+        title_id="pageTitleLink",
         actions_html=actions_html,
         panels_html=panels_html,
     )
@@ -264,7 +258,7 @@ def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings
         hub_port=hub_port,
         chat_settings=chat_settings,
         agent_font_mode_inline_style=agent_font_mode_inline_style(chat_settings),
-        hub_header_css=HUB_PAGE_HEADER_CSS,
+        hub_header_css=PAGE_HEADER_CSS,
         chat_document_title=chat_document_title,
     )
     html = apply_chat_template_replacements(html, replacements)

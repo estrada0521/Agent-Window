@@ -7,13 +7,13 @@
     html[data-tauri-app="1"] textarea,
     html[data-tauri-app="1"] [role="button"],
     html[data-tauri-app="1"] .desk-sidebar-resizer,
-    html[data-tauri-app="1"] .hub-page-header-actions,
-    html[data-tauri-app="1"] .hub-page-menu-panel {
+    html[data-tauri-app="1"] .page-header-actions,
+    html[data-tauri-app="1"] .page-menu-panel {
       app-region: no-drag;
       -webkit-app-region: no-drag;
     }
   `;
-  const DRAG_REGION_SELECTOR = ".tauri-top-drag-strip, [data-tauri-drag-region], .hub-page-header, .hub-page-header-top";
+  const DRAG_REGION_SELECTOR = ".tauri-top-drag-strip, [data-tauri-drag-region], .page-header, .page-header-top";
   const NO_DRAG_SELECTOR = [
     "button",
     "a",
@@ -21,10 +21,10 @@
     "select",
     "textarea",
     "[role=\"button\"]",
-    ".hub-page-header-actions",
-    ".hub-page-menu-panel",
-    ".hub-page-menu-btn",
-    "#hubPageNativeMenuBridge",
+    ".page-header-actions",
+    ".page-menu-panel",
+    ".page-menu-btn",
+    "#pageNativeMenuBridge",
     ".desk-sidebar-resizer",
   ].join(", ");
 
@@ -33,7 +33,7 @@
     if (doc.documentElement.dataset.tauriRootWindow === "0") return;
     let hasHeader = false;
     try {
-      hasHeader = !!doc.querySelector(".hub-page-header");
+      hasHeader = !!doc.querySelector(".page-header");
     } catch (_) {}
     if (!hasHeader) return;
     try {
@@ -55,7 +55,7 @@
     if (doc.documentElement.dataset.tauriRootWindow === "0") return;
     try {
       doc
-        .querySelectorAll(".hub-page-header, .hub-page-header-top")
+        .querySelectorAll(".page-header, .page-header-top")
         .forEach((node) => node.setAttribute("data-tauri-drag-region", ""));
     } catch (_) {}
   }

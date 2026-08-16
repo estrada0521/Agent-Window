@@ -7,7 +7,7 @@
     const gitBranchPanel = document.getElementById("gitBranchPanel");
     const repoPanel = document.getElementById("repoPanel");
     const paneTracePanel = document.getElementById("paneTracePanel");
-    const nativeHeaderMenuSelect = document.getElementById("hubPageNativeMenuSelect");
+    const nativeHeaderMenuSelect = document.getElementById("pageNativeMenuSelect");
     const isAppleTouchDevice = (() => {
       const ua = String(navigator.userAgent || "");
       if (/iP(hone|ad|od)/.test(ua)) return true;
@@ -60,7 +60,7 @@
     nativeHeaderMenuSelect?.addEventListener("blur", () => {
       setTimeout(clearNativeHeaderMenuSelection, 0);
     });
-    const headerRoot = document.querySelector(".hub-page-header");
+    const headerRoot = document.querySelector(".page-header");
     const hasOpenHeaderMenu = () => !!(gitBranchPanel?.classList.contains("open") || rightMenuPanel?.classList.contains("open") || repoPanel?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
     const MOBILE_BOTTOM_SHEET_CLOSE_MS = 300;
     const mobileSheetCloseIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
@@ -535,7 +535,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
     const updateRepoPanel = async (entries) => {
       if (!repoPanel) return;
       repoPanelEntries = Array.isArray(entries) ? entries : [];
-      document.querySelectorAll(".hub-page-menu-btn .repo-badge").forEach((node) => node.remove());
+      document.querySelectorAll(".page-menu-btn .repo-badge").forEach((node) => node.remove());
 
       const normalizeRepoPath = (value) => String(value || "")
         .replace(/\\/g, "/")
@@ -822,7 +822,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
     headerRoot?.addEventListener("click", (event) => {
       if (!repoPanel?.classList.contains("repo-mode-preview")) return;
       if (event.defaultPrevented) return;
-      if (event.target.closest(".hub-page-menu-btn, .hub-page-menu-panel, button, a, details, summary, input, textarea, select, label, [role='button']")) {
+      if (event.target.closest(".page-menu-btn, .page-menu-panel, button, a, details, summary, input, textarea, select, label, [role='button']")) {
         return;
       }
       closeRepoPreview();
@@ -865,7 +865,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
         return;
       }
       if (action === "reloadChat") {
-        await beginChatReload(sourceNode);
+        await beginNewChat(sourceNode);
         return;
       }
       if (action === "openGitBranchMenu") {

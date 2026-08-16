@@ -213,7 +213,7 @@
       line-height: 1.2;
       white-space: nowrap;
     }
-    .hub-page-menu-btn {
+    .page-menu-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -230,21 +230,21 @@
       -webkit-tap-highlight-color: transparent;
       transition: all 0.2s ease;
     }
-    .has-hover .hub-page-menu-btn:hover {
+    .has-hover .page-menu-btn:hover {
       color: var(--icon-fg);
     }
-    .hub-page-menu-btn:active,
-    .hub-page-menu-btn.open {
+    .page-menu-btn:active,
+    .page-menu-btn.open {
       color: var(--icon-fg);
       transform: scale(0.9);
     }
-    .hub-page-menu-btn svg {
+    .page-menu-btn svg {
       display: block;
       width: var(--chrome-icon-size);
       height: var(--chrome-icon-size);
       stroke-width: var(--chrome-icon-stroke);
     }
-    .hub-page-header-actions {
+    .page-header-actions {
       display: flex;
       align-items: center;
       gap: var(--chrome-icon-gap);
@@ -252,53 +252,53 @@
     }
 
     @media (min-width: 1024px) {
-      .hub-page-header-top {
+      .page-header-top {
         padding-top: 2px;
         padding-bottom: 2px;
         padding-right: var(--page-side-pad);
       }
-      .shell > .hub-page-header.header-hidden {
+      .shell > .page-header.header-hidden {
         opacity: 1;
         pointer-events: auto;
       }
 
     }
-    .hub-page-menu-item.positive,
-    .hub-page-menu-item.positive .action-label,
-    .hub-page-menu-item.positive .action-mobile,
-    .hub-page-menu-item.danger,
-    .hub-page-menu-item.danger .action-label,
-    .hub-page-menu-item.danger .action-mobile {
+    .page-menu-item.positive,
+    .page-menu-item.positive .action-label,
+    .page-menu-item.positive .action-mobile,
+    .page-menu-item.danger,
+    .page-menu-item.danger .action-label,
+    .page-menu-item.danger .action-mobile {
       color: var(--fg);
     }
-    .hub-page-menu-item.positive:hover,
-    .hub-page-menu-item.positive:active,
-    .hub-page-menu-item.positive:hover .action-label,
-    .hub-page-menu-item.positive:active .action-label,
-    .hub-page-menu-item.positive:hover .action-mobile,
-    .hub-page-menu-item.positive:active .action-mobile,
-    .hub-page-menu-item.danger:hover,
-    .hub-page-menu-item.danger:active,
-    .hub-page-menu-item.danger:hover .action-label,
-    .hub-page-menu-item.danger:active .action-label,
-    .hub-page-menu-item.danger:hover .action-mobile,
-    .hub-page-menu-item.danger:active .action-mobile {
+    .page-menu-item.positive:hover,
+    .page-menu-item.positive:active,
+    .page-menu-item.positive:hover .action-label,
+    .page-menu-item.positive:active .action-label,
+    .page-menu-item.positive:hover .action-mobile,
+    .page-menu-item.positive:active .action-mobile,
+    .page-menu-item.danger:hover,
+    .page-menu-item.danger:active,
+    .page-menu-item.danger:hover .action-label,
+    .page-menu-item.danger:active .action-label,
+    .page-menu-item.danger:hover .action-mobile,
+    .page-menu-item.danger:active .action-mobile {
       color: var(--fg);
     }
-    .hub-page-menu-item .action-mobile {
+    .page-menu-item .action-mobile {
       display: none;
     }
-    .hub-page-menu-item.inline-loading-row {
+    .page-menu-item.inline-loading-row {
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
     }
-    .hub-page-menu-item.inline-loading-row .inline-loading {
+    .page-menu-item.inline-loading-row .inline-loading {
       width: 100%;
       justify-content: center;
     }
-    .hub-page-menu-item .action-icon {
+    .page-menu-item .action-icon {
       width: 18px;
       height: 18px;
       display: inline-flex;
@@ -307,14 +307,14 @@
       flex: 0 0 auto;
       color: currentColor;
     }
-    .hub-page-menu-item .action-icon svg {
+    .page-menu-item .action-icon svg {
       width: 100%;
       height: 100%;
       display: block;
       stroke: currentColor;
       fill: none;
     }
-    .hub-page-menu-item .action-icon .menu-agent-icon-wrap {
+    .page-menu-item .action-icon .menu-agent-icon-wrap {
       position: relative;
       width: 100%;
       height: 100%;
@@ -322,7 +322,7 @@
       align-items: center;
       justify-content: center;
     }
-    .hub-page-menu-item .action-icon .menu-agent-icon-base {
+    .page-menu-item .action-icon .menu-agent-icon-base {
       width: 100%;
       height: 100%;
       display: block;
@@ -330,7 +330,7 @@
       -webkit-mask: var(--agent-icon-mask) center / contain no-repeat;
       mask: var(--agent-icon-mask) center / contain no-repeat;
     }
-    .hub-page-menu-item .action-icon .menu-agent-icon-addon {
+    .page-menu-item .action-icon .menu-agent-icon-addon {
       position: absolute;
       right: -2px;
       bottom: -2px;

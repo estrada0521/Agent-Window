@@ -497,7 +497,7 @@ __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
       });
     };
     const flashHeaderToggle = (targetNode) => {
-      const nodes = targetNode ? [targetNode] : document.querySelectorAll("#hubPageMenuBtn, #rightMenuBtn");
+      const nodes = targetNode ? [targetNode] : document.querySelectorAll("#pageMenuBtn, #rightMenuBtn");
       nodes.forEach((node) => {
         if (node.classList.contains("animating")) return;
         node.classList.add("animating");
@@ -507,7 +507,7 @@ __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
       });
     };
     document.addEventListener("pointerdown", (e) => {
-      const toggle = e.target.closest(".hub-page-menu-btn, .composer-attach-btn, .quick-action");
+      const toggle = e.target.closest(".page-menu-btn, .composer-attach-btn, .quick-action");
       if (toggle) {
         if (toggle.classList.contains("animating")) {
           e.preventDefault();
@@ -532,13 +532,13 @@ __CHAT_INCLUDE:../../shared/chat/transcript/render.js__
 __CHAT_INCLUDE:../../shared/chat/transcript/actions.js__
 __CHAT_INCLUDE:runtime/hub-navigation.js__
 __CHAT_INCLUDE:panes/header-menu.js__
-__CHAT_INCLUDE:panes/right-pane.js__
+__CHAT_INCLUDE:panes/sheets.js__
 __CHAT_INCLUDE:composer/runtime.js__
 __CHAT_INCLUDE:../../shared/chat/attachments/file-runtime.js__
 __CHAT_INCLUDE:../../shared/chat/composer/commands.js__
 __CHAT_INCLUDE:../../shared/chat/thinking.js__
 __CHAT_INCLUDE:../../shared/chat/runtime/agent-status.js__
-__CHAT_INCLUDE:../../shared/chat/touch-interaction.js__
+__CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
 __CHAT_INCLUDE:../../shared/chat/runtime/settings-sync.js__
 __CHAT_INCLUDE:panes/pane-viewer.js__
     let workspaceSyncEventSource = null;

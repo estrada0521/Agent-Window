@@ -387,7 +387,7 @@
         }
       }
     };
-__CHAT_INCLUDE:../chat-reload.js__
+__CHAT_INCLUDE:../new-chat.js__
     const mergeRefreshOptions = (current = {}, next = {}) => {
       const currentOptions = current || {};
       const nextOptions = next || {};

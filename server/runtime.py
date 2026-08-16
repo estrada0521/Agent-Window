@@ -10,8 +10,7 @@ from datetime import datetime as dt_datetime
 from pathlib import Path
 from urllib.parse import quote
 
-from backend_core.agents.registry import generate_agent_message_selectors
-from backend_core.agents.ensure_clis import (
+from backend_core.agents.executables import (
     agent_launch_cmd as _agent_launch_cmd_impl,
     agent_resume_cmd as _agent_resume_cmd_impl,
     resolve_agent_executable_for_runtime as _resolve_agent_executable_impl,
@@ -42,9 +41,6 @@ from .payload import (
     encode_payload_document,
     summarize_light_entry,
 )
-from .style import (
-    _bh_agent_detail_selectors as _bh_agent_detail_selectors_impl,
-)
 from .index_cache import matched_entries as _matched_entries_impl
 from native_log_sync.syncer import NativeLogSyncer
 from native_log_sync.refresh.binding_models import PaneBindingRequest
@@ -64,9 +60,6 @@ from pane_trace import trace_content as _trace_content_impl
 from backend_core.tmux.instances import resolve_target_agents as resolve_target_agent_names
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.settings import load_hub_settings as load_shared_hub_settings
-
-def _bh_agent_detail_selectors(prefix: str = "") -> str:
-    return _bh_agent_detail_selectors_impl(prefix=prefix)
 
 
 class ChatRuntime:
@@ -171,8 +164,6 @@ class ChatRuntime:
     def chat_font_settings_inline_style(cls, settings: dict) -> str:
         return _chat_font_settings_inline_style_impl(
             settings,
-            generate_agent_message_selectors_fn=generate_agent_message_selectors,
-            bh_agent_detail_selectors_fn=_bh_agent_detail_selectors,
             font_family_stack_fn=cls._font_family_stack,
         )
 

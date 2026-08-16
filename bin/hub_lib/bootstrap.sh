@@ -2,14 +2,14 @@
 
 set -euo pipefail
 
-if [[ -n "${AGENT_INDEX_BOOTSTRAP_SH:-}" ]]; then
+if [[ -n "${HUB_LIB_BOOTSTRAP_SH:-}" ]]; then
   return 0
 fi
-AGENT_INDEX_BOOTSTRAP_SH=1
+HUB_LIB_BOOTSTRAP_SH=1
 
 SCRIPT_DIR="$REPO_ROOT/bin"
-AGENT_INDEX_PYTHONPATH="${REPO_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
-AGENT_WINDOW_RUN_DIR="${AGENT_WINDOW_RUN_DIR:-$(PYTHONPATH="$AGENT_INDEX_PYTHONPATH" python3 - "$REPO_ROOT" <<'PYEOF'
+HUB_PYTHONPATH="${REPO_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+AGENT_WINDOW_RUN_DIR="${AGENT_WINDOW_RUN_DIR:-$(PYTHONPATH="$HUB_PYTHONPATH" python3 - "$REPO_ROOT" <<'PYEOF'
 import sys
 from pathlib import Path
 
@@ -20,7 +20,7 @@ print(agent_window_run_dir())
 PYEOF
 )}"
 export AGENT_WINDOW_RUN_DIR
-AGENT_WINDOW_LOG_DIR="${AGENT_WINDOW_LOG_DIR:-$(PYTHONPATH="$AGENT_INDEX_PYTHONPATH" python3 - "$REPO_ROOT" <<'PYEOF'
+AGENT_WINDOW_LOG_DIR="${AGENT_WINDOW_LOG_DIR:-$(PYTHONPATH="$HUB_PYTHONPATH" python3 - "$REPO_ROOT" <<'PYEOF'
 import sys
 from pathlib import Path
 
@@ -39,7 +39,7 @@ for _cmd in python3 tmux; do
   fi
 done
 
-_ALL_AGENTS="$(PYTHONPATH="$AGENT_INDEX_PYTHONPATH" python3 -c "from backend_core.agents.registry import ALL_AGENT_NAMES; print(' '.join(ALL_AGENT_NAMES))" 2>/dev/null || echo "claude codex gemini cursor")"
+_ALL_AGENTS="$(PYTHONPATH="$HUB_PYTHONPATH" python3 -c "from backend_core.agents.registry import ALL_AGENT_NAMES; print(' '.join(ALL_AGENT_NAMES))" 2>/dev/null || echo "claude codex gemini cursor")"
 read -ra _ALL_AGENTS_ARR <<< "$_ALL_AGENTS"
 
 default_tmux_socket_name() {

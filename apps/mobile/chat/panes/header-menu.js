@@ -1,7 +1,7 @@
-    const rightMenuBtn = document.getElementById("hubPageMenuBtn");
-    const rightMenuPanel = document.getElementById("hubPageMenuPanel");
-    const nativeHeaderMenuBridge = document.getElementById("hubPageNativeMenuBridge");
-    const dedicatedNativeHeaderMenuSelect = document.getElementById("hubPageNativeMenuSelect");
+    const rightMenuBtn = document.getElementById("pageMenuBtn");
+    const rightMenuPanel = document.getElementById("pageMenuPanel");
+    const nativeHeaderMenuBridge = document.getElementById("pageNativeMenuBridge");
+    const dedicatedNativeHeaderMenuSelect = document.getElementById("pageNativeMenuSelect");
     {
       const bridge = nativeHeaderMenuBridge;
       if (bridge && dedicatedNativeHeaderMenuSelect) {

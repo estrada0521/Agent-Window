@@ -16,9 +16,6 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from hub_backend.presentation.chat.assets import (
-    CHAT_APP_SCRIPT_ASSET,
-    CHAT_HTML,
-    CHAT_MAIN_STYLE_ASSET,
     chat_app_script_asset,
     chat_main_style_asset,
     render_chat_html,
@@ -29,7 +26,7 @@ from server.routes.read import dispatch_get_read_route
 from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
 from backend_core.access.files import append_jsonl_entry
-from backend_core.access.settings import hub_settings_path, settings_for_chat_render
+from backend_core.access.settings import hub_settings_path
 from workspace_sync.api import WorkspaceSyncApi
 
 _PWA_STATIC_ROUTES = {
@@ -69,7 +66,6 @@ send_message = _not_initialized
 agent_statuses = _not_initialized
 file_runtime = None
 workspace_sync_api = None
-HTML = CHAT_HTML
 asset_runtime = None
 send_queue = None
 send_queue_thread = None
@@ -242,7 +238,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     global PUBLIC_HOST, PUBLIC_HUB_PORT, _repo_root, runtime
     global _PWA_STATIC_DIR, server_instance, load_chat_settings, chat_font_settings_inline_style
     global payload, append_system_entry
-    global send_message, agent_statuses, file_runtime, HTML, asset_runtime
+    global send_message, agent_statuses, file_runtime, asset_runtime
     global send_queue, send_queue_thread, workspace_sync_api
 
     if _initialized:
@@ -303,15 +299,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     file_runtime = workspace_sync_api.file_runtime
     asset_runtime = ChatAssetRuntime(
         repo_root=_repo_root,
-    )
-    HTML = render_chat_html(
-        icon_data_uris=asset_runtime.icon_data_uris,
-        server_instance=server_instance,
-        hub_port=hub_port,
-        chat_settings=settings_for_chat_render(load_chat_settings(), variant="desktop"),
-        agent_font_mode_inline_style=chat_font_settings_inline_style,
-        chat_base_path="",
-        session_name=session_name,
     )
     runtime.start_native_log_sync()
     try:
@@ -451,8 +438,6 @@ def _route_context() -> dict:
         "pwa_asset_url_fn": _pwa_asset_url,
         "pwa_icon_entries_fn": _pwa_icon_entries,
         "serve_pwa_static_fn": _serve_pwa_static,
-        "chat_app_script_asset": CHAT_APP_SCRIPT_ASSET,
-        "chat_main_style_asset": CHAT_MAIN_STYLE_ASSET,
         "chat_app_script_asset_fn": chat_app_script_asset,
         "chat_main_style_asset_fn": chat_main_style_asset,
         "render_chat_html_fn": render_chat_html,

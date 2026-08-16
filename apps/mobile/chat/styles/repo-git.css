@@ -879,47 +879,47 @@
       padding: 40px 10px;
     }
 
-    .hub-page-menu-item.positive .action-label,
+    .page-menu-item.positive .action-label,
 
-    .hub-page-menu-item.positive .action-mobile {
+    .page-menu-item.positive .action-mobile {
       color: var(--fg);
     }
 
-    .hub-page-menu-item.positive:hover,
-    .hub-page-menu-item.positive:active,
-    .hub-page-menu-item.positive:hover .action-label,
-    .hub-page-menu-item.positive:active .action-label,
-    .hub-page-menu-item.positive:hover .action-mobile,
-    .hub-page-menu-item.positive:active .action-mobile {
+    .page-menu-item.positive:hover,
+    .page-menu-item.positive:active,
+    .page-menu-item.positive:hover .action-label,
+    .page-menu-item.positive:active .action-label,
+    .page-menu-item.positive:hover .action-mobile,
+    .page-menu-item.positive:active .action-mobile {
       color: var(--fg);
     }
 
-    .hub-page-menu-item.danger {
+    .page-menu-item.danger {
       color: rgba(var(--git-del-red-channels), 0.96);
     }
 
-    .hub-page-menu-item.danger:hover,
-    .hub-page-menu-item.danger:active {
+    .page-menu-item.danger:hover,
+    .page-menu-item.danger:active {
       color: rgba(252, 165, 165, 1);
     }
 
-    .hub-page-menu-item .action-mobile {
+    .page-menu-item .action-mobile {
       display: none;
     }
 
-    .hub-page-menu-item.inline-loading-row {
+    .page-menu-item.inline-loading-row {
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
     }
 
-    .hub-page-menu-item.inline-loading-row .inline-loading {
+    .page-menu-item.inline-loading-row .inline-loading {
       width: 100%;
       justify-content: center;
     }
 
-    .hub-page-menu-item .action-icon {
+    .page-menu-item .action-icon {
       width: 18px;
       height: 18px;
       display: inline-flex;
@@ -929,7 +929,7 @@
       color: currentColor;
     }
 
-    .hub-page-menu-item .action-icon svg {
+    .page-menu-item .action-icon svg {
       width: 100%;
       height: 100%;
       display: block;

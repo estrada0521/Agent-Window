@@ -5,7 +5,7 @@
       --bottom-sheet-top-gradient-rgb: var(--pane-trace-body-bg-channels);
     }
 
-    .shell>.hub-page-header>#paneTracePanel {
+    .shell>.page-header>#paneTracePanel {
       bottom: -6px;
       height: calc(100dvh + 6px);
       min-height: calc(100dvh + 6px);
@@ -14,7 +14,7 @@
       pointer-events: none;
     }
 
-    .shell>.hub-page-header>#paneTracePanel.open {
+    .shell>.page-header>#paneTracePanel.open {
       pointer-events: auto;
     }
 

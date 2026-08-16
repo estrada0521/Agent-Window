@@ -2,7 +2,7 @@
     const canUseHoverInteractions = () => hoverCapabilityMedia.matches;
     const touchBlurSelector = [
       ".quick-action",
-      ".hub-page-menu-btn",
+      ".page-menu-btn",
       ".composer-attach-btn",
       ".target-chip",
       ".copy-btn",

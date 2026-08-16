@@ -13,7 +13,7 @@ REPO_ROOT="$(cd "$_SCRIPT_DIR/../.." && pwd)"
 HUB_PORT="${AGENT_INDEX_HUB_PORT:-8788}"
 
 # shellcheck source=/dev/null
-source "$REPO_ROOT/bin/agent_index_lib/https.sh"
+source "$REPO_ROOT/bin/hub_lib/https.sh"
 
 usage() {
   cat <<'EOF'

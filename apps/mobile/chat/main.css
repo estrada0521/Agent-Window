@@ -70,7 +70,7 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       background: transparent;
     }
 
-    .shell>.hub-page-header {
+    .shell>.page-header {
       --mobile-header-edge-gap: 14px;
       --chrome-icon-btn-size: 44px;
       --chrome-icon-size: 24px;
@@ -78,7 +78,7 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       --chrome-icon-gap: 0;
     }
 
-    .shell>.hub-page-header .hub-page-header-top {
+    .shell>.page-header .page-header-top {
       padding-top: max(0px, calc(env(safe-area-inset-top, 0px) - 8px));
       padding-right: calc(var(--mobile-header-edge-gap) + env(safe-area-inset-right, 0px));
       padding-bottom: 2px;
@@ -87,8 +87,8 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       align-items: center;
     }
 
-    .shell>.hub-page-header .hub-page-title,
-    .shell>.hub-page-header .hub-page-header-actions .hub-page-menu-btn {
+    .shell>.page-header .page-title,
+    .shell>.page-header .page-header-actions .page-menu-btn {
       width: var(--chrome-icon-btn-size);
       height: var(--chrome-icon-btn-size);
       min-width: var(--chrome-icon-btn-size);
@@ -101,13 +101,13 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       transform: translateY(7px);
     }
 
-    .shell>.hub-page-header .hub-page-header-actions {
+    .shell>.page-header .page-header-actions {
       gap: 0;
       margin-left: auto;
       min-height: var(--chrome-icon-btn-size);
     }
 
-    .shell>.hub-page-header .hub-page-title {
+    .shell>.page-header .page-title {
       margin: 0;
       gap: 0;
       position: relative;
@@ -129,16 +129,16 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
         transform 160ms ease;
     }
 
-    .shell>.hub-page-header .hub-page-title:hover {
+    .shell>.page-header .page-title:hover {
       opacity: 1;
       transform: translateY(7px);
     }
 
-    .shell>.hub-page-header .hub-page-title:active {
+    .shell>.page-header .page-title:active {
       transform: translateY(7px) scale(0.94);
     }
 
-    .shell>.hub-page-header .hub-page-title .hub-page-logo {
+    .shell>.page-header .page-title .page-logo {
       height: 24px;
       width: 24px;
       transform: none;
@@ -147,18 +147,18 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       background: linear-gradient(currentColor, currentColor) no-repeat 8.5px 6.1px / 1.8px 11.8px;
     }
 
-    .shell>.hub-page-header .hub-page-title .hub-page-logo rect {
+    .shell>.page-header .page-title .page-logo rect {
       x: 3.7px;
       y: 4.1px;
       width: 16.6px;
       height: 15.8px;
     }
 
-    .shell>.hub-page-header .hub-page-title .hub-page-logo .hub-logo-line {
+    .shell>.page-header .page-title .page-logo .hub-logo-line {
       opacity: 0;
     }
 
-    .shell>.hub-page-header .hub-page-header-actions .hub-page-menu-btn {
+    .shell>.page-header .page-header-actions .page-menu-btn {
       position: relative;
       isolation: isolate;
       overflow: hidden;
@@ -181,22 +181,22 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       padding: 0;
     }
 
-    .shell>.hub-page-header .hub-page-title::before,
-    .shell>.hub-page-header .hub-page-header-actions .hub-page-menu-btn::before,
-    .shell>.hub-page-header .hub-page-title::after,
-    .shell>.hub-page-header .hub-page-header-actions .hub-page-menu-btn::after {
+    .shell>.page-header .page-title::before,
+    .shell>.page-header .page-header-actions .page-menu-btn::before,
+    .shell>.page-header .page-title::after,
+    .shell>.page-header .page-header-actions .page-menu-btn::after {
       content: "";
       display: none;
     }
 
-    .shell>.hub-page-header .hub-page-header-actions .hub-page-menu-btn svg {
+    .shell>.page-header .page-header-actions .page-menu-btn svg {
       transform: none;
       position: relative;
       z-index: 1;
     }
 
-    .shell>.hub-page-header .hub-page-header-actions .hub-page-menu-btn:active,
-    .shell>.hub-page-header .hub-page-header-actions .hub-page-menu-btn.open {
+    .shell>.page-header .page-header-actions .page-menu-btn:active,
+    .shell>.page-header .page-header-actions .page-menu-btn.open {
       border-radius: 999px;
       border-color: var(--liquid-glass-lg-active-border);
       background:

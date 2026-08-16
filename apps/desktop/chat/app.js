@@ -433,7 +433,7 @@ __CHAT_INCLUDE:target-picker.js__
       });
     };
     document.addEventListener("pointerdown", (e) => {
-      const toggle = e.target.closest(".hub-page-menu-btn, .composer-attach-btn, .quick-action");
+      const toggle = e.target.closest(".page-menu-btn, .composer-attach-btn, .quick-action");
       if (toggle) {
         if (toggle.classList.contains("animating")) {
           e.preventDefault();
@@ -449,7 +449,7 @@ __CHAT_INCLUDE:../../shared/chat/target-selection.js__
     window.addEventListener("resize", requestCenteredMessageRowUpdate);
 
     {
-      const header = document.querySelector(".hub-page-header");
+      const header = document.querySelector(".page-header");
       if (header) header.classList.remove("header-hidden");
       timeline.addEventListener("scroll", () => {
         if (header?.classList.contains("header-hidden")) {
@@ -463,13 +463,13 @@ __CHAT_INCLUDE:../../shared/chat/transcript/render.js__
 __CHAT_INCLUDE:../../shared/chat/transcript/actions.js__
 __CHAT_INCLUDE:runtime/hub-navigation.js__
 __CHAT_INCLUDE:panes/header-menu.js__
-__CHAT_INCLUDE:panes/right-pane.js__
+__CHAT_INCLUDE:panes/header-actions.js__
 __CHAT_INCLUDE:composer/runtime.js__
 __CHAT_INCLUDE:../../shared/chat/attachments/file-runtime.js__
 __CHAT_INCLUDE:../../shared/chat/composer/commands.js__
 __CHAT_INCLUDE:../../shared/chat/thinking.js__
 __CHAT_INCLUDE:../../shared/chat/runtime/agent-status.js__
-__CHAT_INCLUDE:../../shared/chat/touch-interaction.js__
+__CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
 __CHAT_INCLUDE:../../shared/chat/runtime/settings-sync.js__
     const desktopRightPanel = document.getElementById("desktopRightPanel");
     const desktopRightPanelResizer = document.getElementById("desktopRightPanelResizer");

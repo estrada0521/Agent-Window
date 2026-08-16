@@ -418,7 +418,7 @@
       _chatOverlay.style.height = "";
     }
     function updateMenuContext(isChat) {
-      const bridge = document.getElementById("hubPageNativeMenuBridge");
+      const bridge = document.getElementById("pageNativeMenuBridge");
       if (!bridge) return;
       if (isChat) {
         bridge.innerHTML = `
@@ -811,7 +811,7 @@
     })();
 
     (function () {
-      var bridge = document.getElementById("hubPageNativeMenuBridge");
+      var bridge = document.getElementById("pageNativeMenuBridge");
       if (bridge) {
         bridge.addEventListener("change", function (e) {
           var val = bridge.value;

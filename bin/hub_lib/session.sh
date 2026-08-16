@@ -2,24 +2,24 @@
 
 set -euo pipefail
 
-if [[ -n "${AGENT_INDEX_SESSION_SH:-}" ]]; then
+if [[ -n "${HUB_LIB_SESSION_SH:-}" ]]; then
   return 0
 fi
-AGENT_INDEX_SESSION_SH=1
+HUB_LIB_SESSION_SH=1
 
-agent_index_session_log_dir() {
+hub_session_log_dir() {
   local session="$1"
   printf '%s/%s\n' "$AGENT_WINDOW_LOG_DIR" "$session"
 }
 
-agent_index_ensure_session_index_mirrors() {
+hub_ensure_session_log() {
   local session="$1" session_dir index_path
-  session_dir="$(agent_index_session_log_dir "$session")"
+  session_dir="$(hub_session_log_dir "$session")"
   index_path="${session_dir}/.log.jsonl"
   mkdir -p "$session_dir"
   [[ -e "$index_path" ]] || : > "$index_path"
   [[ -n "${SESSION_WORKSPACE:-}" ]] || return 0
-  PYTHONPATH="$AGENT_INDEX_PYTHONPATH" python3 - "$session" "$SESSION_WORKSPACE" <<'PYEOF'
+  PYTHONPATH="$HUB_PYTHONPATH" python3 - "$session" "$SESSION_WORKSPACE" <<'PYEOF'
 import sys
 
 from backend_core.access.settings import ensure_session_workspace_mirrors
@@ -87,11 +87,11 @@ available_agents() {
 resolve_session_log_dir() {
   local session_dir
   if [[ "${SESSION_IS_ACTIVE:-0}" == "1" && -n "$SESSION_NAME" ]]; then
-    agent_index_ensure_session_index_mirrors "$SESSION_NAME"
-    printf '%s\n' "$(agent_index_session_log_dir "$SESSION_NAME")"
+    hub_ensure_session_log "$SESSION_NAME"
+    printf '%s\n' "$(hub_session_log_dir "$SESSION_NAME")"
     return
   fi
-  session_dir="$(agent_index_session_log_dir "$SESSION_NAME")"
+  session_dir="$(hub_session_log_dir "$SESSION_NAME")"
   mkdir -p "$session_dir"
   printf '%s\n' "$session_dir"
 }

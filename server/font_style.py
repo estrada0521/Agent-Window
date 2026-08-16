@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from backend_core.agents.registry import generate_agent_message_selectors
+
 
 def font_family_stack(selection: str, role: str) -> str:
     value = str(selection or "").strip()
@@ -18,11 +20,17 @@ def font_family_stack(selection: str, role: str) -> str:
     return default_stack
 
 
+def agent_detail_selectors(prefix: str = "") -> str:
+    parts = []
+    base = f"    {prefix}.message:not(.user):not(.system) .md-body"
+    for suffix in (" p", " li", " h1", " h2", " h3", " h4", " blockquote"):
+        parts.append(f"{base}{suffix}")
+    return ",\n".join(parts)
+
+
 def chat_font_settings_inline_style(
     settings: dict,
     *,
-    generate_agent_message_selectors_fn,
-    bh_agent_detail_selectors_fn,
     font_family_stack_fn=font_family_stack,
 ) -> str:
     user_family = font_family_stack_fn(settings.get("user_message_font", "preset-gothic"), "user")
@@ -109,11 +117,11 @@ def chat_font_settings_inline_style(
     .message.user .md-body blockquote {{
       color: var(--fg);
     }}
-    {generate_agent_message_selectors_fn(" .md-body")} {{
+    {generate_agent_message_selectors(" .md-body")} {{
       font-family: var(--agent-message-font-family);
       color: var(--fg);
     }}
-    {bh_agent_detail_selectors_fn(prefix="")} {{
+    {agent_detail_selectors(prefix="")} {{
       font-family: var(--agent-message-font-family);
       color: var(--fg);
     }}

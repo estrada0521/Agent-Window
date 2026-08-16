@@ -37,7 +37,7 @@ __CHAT_INCLUDE:../transcript-refresh.js__
         await loadFullMessageEntry(fullBtn.dataset.loadFullMessage || "", fullBtn);
       }
     });
-__CHAT_INCLUDE:../slash-commands.js__
+__CHAT_INCLUDE:../shortcut-commands.js__
     const blurComposerOnMobile = (message) => {
       if (document.documentElement.dataset.mobile === "1") message.blur();
     };

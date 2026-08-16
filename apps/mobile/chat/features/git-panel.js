@@ -61,7 +61,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
       if (!listEl) return;
       if (!append) {
         if (!commits.length) {
-          listEl.innerHTML = '<div class="hub-page-menu-item" data-git-branch-empty="1" style="cursor:default;opacity:0.52">No commits</div>';
+          listEl.innerHTML = '<div class="page-menu-item" data-git-branch-empty="1" style="cursor:default;opacity:0.52">No commits</div>';
           return;
         }
         listEl.innerHTML = commits.map((commit) => buildGitBranchCommitRowHtml(commit)).join("");
@@ -120,7 +120,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
           <div class="git-branch-list-view">
             <div class="git-branch-summary-wrap">${summaryHtml}</div>
             <div class="git-branch-commit-list"></div>
-            <button type="button" class="hub-page-menu-item git-branch-load-more" hidden></button>
+            <button type="button" class="page-menu-item git-branch-load-more" hidden></button>
           </div>
           <div class="git-branch-detail-view">
             <button type="button" class="git-commit-detail-head" aria-label="コミット一覧に戻る"></button>
@@ -309,7 +309,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
         gitBranchNextOffset = 0;
         gitBranchTotalCommits = 0;
         gitBranchCommits = [];
-        setGitBranchPanelBodyHtml(`<div class="hub-page-menu-item inline-loading-row" style="cursor:default">${loadingIndicatorHtml("Loading…")}</div>`);
+        setGitBranchPanelBodyHtml(`<div class="page-menu-item inline-loading-row" style="cursor:default">${loadingIndicatorHtml("Loading…")}</div>`);
       } else {
         updateGitBranchLoadMoreUi();
       }
@@ -327,7 +327,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
       } catch (err) {
         if (loadSeq !== gitBranchLoadSeq) return;
         if (reset) {
-          setGitBranchPanelBodyHtml(`<div class="hub-page-menu-item" style="cursor:default;opacity:0.72">${escapeHtml(err?.message || "Failed to load branch overview")}</div>`);
+          setGitBranchPanelBodyHtml(`<div class="page-menu-item" style="cursor:default;opacity:0.72">${escapeHtml(err?.message || "Failed to load branch overview")}</div>`);
         } else {
           gitBranchLoadError = err?.message || "Failed to load more commits";
         }

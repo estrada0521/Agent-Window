@@ -8,7 +8,7 @@ _HUB_TEMPLATE_DIR = Path(__file__).resolve().parents[3] / "apps" / "shared" / "h
 _HUB_RESTART_NAV_JS = (_HUB_TEMPLATE_DIR / "_hub_restart_nav.js").read_text()
 
 
-HUB_PAGE_HEADER_CSS = """
+PAGE_HEADER_CSS = """
     :root {
       --page-side-pad: 14px;
       --chrome-icon-btn-size: 26px;
@@ -28,7 +28,7 @@ HUB_PAGE_HEADER_CSS = """
       font-style: italic; font-weight: 300 800; font-display: swap;
     }
     html, body { font-family: "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif; }
-    .hub-page-header {
+    .page-header {
       display: flex; flex-direction: column;
       width: 100%;
       margin: 0;
@@ -37,38 +37,38 @@ HUB_PAGE_HEADER_CSS = """
       box-shadow: none;
       transition: opacity 0.18s ease;
     }
-    .hub-page-header::after { content: none; }
-    .hub-page-header-top { border-bottom: none; box-shadow: none; }
-    .hub-page-header.header-hidden {
+    .page-header::after { content: none; }
+    .page-header-top { border-bottom: none; box-shadow: none; }
+    .page-header.header-hidden {
       opacity: 0;
       pointer-events: none;
     }
-    .hub-page-header-top {
+    .page-header-top {
       display: flex; align-items: center; justify-content: space-between;
       padding: max(4px, env(safe-area-inset-top)) var(--page-side-pad) 8px;
       box-sizing: border-box;
     }
-    .hub-page-title {
+    .page-title {
       display: inline-flex; align-items: center; justify-content: flex-start; text-decoration: none; opacity: 1;
       min-width: 48px; min-height: 48px;
       gap: 8px;
       transition: opacity 0.2s ease, transform 0.2s ease;
     }
-    .hub-page-title:hover { opacity: 0.8; transform: scale(0.98); }
-    .hub-page-header-actions {
+    .page-title:hover { opacity: 0.8; transform: scale(0.98); }
+    .page-header-actions {
       display: flex;
       align-items: center;
       gap: var(--chrome-icon-gap);
       flex: 0 0 auto;
     }
-    .hub-page-logo {
+    .page-logo {
       height: 24px;
       width: auto;
       display: block;
       align-self: center;
       color: var(--fg);
     }
-    .hub-page-menu-btn {
+    .page-menu-btn {
       display: flex; align-items: center; justify-content: center;
       width: var(--chrome-icon-btn-size); height: var(--chrome-icon-btn-size);
       background: transparent; border: none; color: var(--fg);
@@ -79,27 +79,27 @@ HUB_PAGE_HEADER_CSS = """
       -webkit-tap-highlight-color: transparent;
       outline: none;
     }
-    .hub-page-menu-btn:hover { color: var(--fg); background: transparent; }
-    .hub-page-menu-btn:active { color: var(--fg); background: transparent; box-shadow: none; }
-    .hub-page-menu-btn svg {
+    .page-menu-btn:hover { color: var(--fg); background: transparent; }
+    .page-menu-btn:active { color: var(--fg); background: transparent; box-shadow: none; }
+    .page-menu-btn svg {
       width: var(--chrome-icon-size);
       height: var(--chrome-icon-size);
       stroke-width: var(--chrome-icon-stroke);
     }
-    .hub-page-logo .hub-logo-line {
+    .page-logo .hub-logo-line {
       transform: none;
     }
-    html[data-tauri-app="1"] .hub-page-header {
+    html[data-tauri-app="1"] .page-header {
       background: none;
       box-shadow: none;
     }
 """
 
 DEFAULT_HUB_HEADER_ACTIONS = """
-<button class="hub-page-menu-btn" id="hubPageMenuBtn">
+<button class="page-menu-btn" id="pageMenuBtn">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="10" y1="15" x2="20" y2="15"/></svg>
 </button>
-<select id="hubPageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;color:transparent;font-size:13px;z-index:220;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true" tabindex="-1">
+<select id="pageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;color:transparent;font-size:13px;z-index:220;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true" tabindex="-1">
   <option value="" disabled selected>Menu</option>
   <option value="settings">Settings</option>
   <option value="restart-hub">Reload</option>
@@ -107,10 +107,10 @@ DEFAULT_HUB_HEADER_ACTIONS = """
 """
 
 MOBILE_HUB_HEADER_ACTIONS = """
-<button class="hub-page-menu-btn" id="hubPageMenuBtn">
+<button class="page-menu-btn" id="pageMenuBtn">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="10" y1="15" x2="20" y2="15"/></svg>
 </button>
-<select id="hubPageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;color:transparent;font-size:13px;z-index:220;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true" tabindex="-1">
+<select id="pageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;color:transparent;font-size:13px;z-index:220;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true" tabindex="-1">
   <option value="" disabled selected>Menu</option>
   <option value="restart-hub">Reload</option>
 </select>
@@ -120,17 +120,17 @@ DEFAULT_HUB_HEADER_PANELS = """
 """
 
 
-def render_hub_page_header(
+def render_page_header(
     *,
     title_href: str = "/",
-    title_id: str = "hubPageTitleLink",
+    title_id: str = "pageTitleLink",
     title_aria_label: str = APP_DISPLAY_NAME,
     title_alt: str = APP_DISPLAY_NAME,
     actions_html: str = DEFAULT_HUB_HEADER_ACTIONS,
     panels_html: str = DEFAULT_HUB_HEADER_PANELS,
 ) -> str:
     return (
-        HUB_PAGE_HEADER_HTML_TEMPLATE.replace("__TITLE_HREF__", title_href)
+        PAGE_HEADER_HTML_TEMPLATE.replace("__TITLE_HREF__", title_href)
         .replace("__TITLE_ID__", title_id)
         .replace("__TITLE_ARIA_LABEL__", title_aria_label)
         .replace("__TITLE_ALT__", title_alt)
@@ -139,13 +139,13 @@ def render_hub_page_header(
     )
 
 
-HUB_PAGE_HEADER_HTML_TEMPLATE = """
-  <div class="hub-page-header">
-    <div class="hub-page-header-top">
-      <a href="__TITLE_HREF__" class="hub-page-title hub-logo-anchor" id="__TITLE_ID__" aria-label="__TITLE_ARIA_LABEL__" title="__TITLE_ALT__">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="hub-page-logo" aria-hidden="true"><rect x="3.5" y="6.5" width="17" height="11" rx="2.2"/><path class="hub-logo-line" d="M9.5 6.5v11"/></svg>
+PAGE_HEADER_HTML_TEMPLATE = """
+  <div class="page-header">
+    <div class="page-header-top">
+      <a href="__TITLE_HREF__" class="page-title hub-logo-anchor" id="__TITLE_ID__" aria-label="__TITLE_ARIA_LABEL__" title="__TITLE_ALT__">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="page-logo" aria-hidden="true"><rect x="3.5" y="6.5" width="17" height="11" rx="2.2"/><path class="hub-logo-line" d="M9.5 6.5v11"/></svg>
       </a>
-      <div class="hub-page-header-actions">
+      <div class="page-header-actions">
         __HEADER_ACTIONS__
       </div>
     </div>
@@ -153,11 +153,11 @@ HUB_PAGE_HEADER_HTML_TEMPLATE = """
   </div>
 """
 
-HUB_PAGE_HEADER_JS = """
+PAGE_HEADER_JS = """
   (function() {
-    var menuBtn = document.getElementById("hubPageMenuBtn");
-    var titleLink = document.getElementById("hubPageTitleLink");
-    var bridge = document.getElementById("hubPageNativeMenuBridge");
+    var menuBtn = document.getElementById("pageMenuBtn");
+    var titleLink = document.getElementById("pageTitleLink");
+    var bridge = document.getElementById("pageNativeMenuBridge");
 __HUB_RESTART_NAV_JS__
 
     if (titleLink) {
