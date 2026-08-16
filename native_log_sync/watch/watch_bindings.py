@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import select
 import sys
@@ -113,7 +114,10 @@ class _VnodeNativeSync:
                         agent = self._agent_by_fd.get(event.ident)
                         path = self._path_by_agent.get(agent) if agent else None
                     if agent and path:
-                        emit_agent_updates(self._runtime, agent, path)
+                        try:
+                            emit_agent_updates(self._runtime, agent, path)
+                        except Exception:
+                            logging.exception("native log sync failed for %s", agent)
 
 
 def start_native_log_vnode_watcher(runtime) -> None:

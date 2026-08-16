@@ -43,16 +43,28 @@ def _load_pane_paths(raw: object) -> dict[str, str]:
     return result
 
 
-def read_progress_start(progress: dict[str, int], path: str, file_size: int) -> int:
+def read_progress_start(
+    progress: dict[str, int],
+    path: str,
+    file_size: int,
+    *,
+    on_shrink: str = "error",
+) -> int:
     """Where to resume reading `path` from: the recorded high-water mark, or 0
     if this exact file has never been synced before.
 
-    A native log is never supposed to shrink. Guessing (replay from 0, or
-    skip this cycle) is forbidden; the caller must see the error.
+    A native log is never supposed to shrink. Guessing (replay from 0) is
+    forbidden. `on_shrink="wait"` keeps the recorded offset so the caller can
+    return until the file is at least that large again (Cursor last-line
+    rewrite). Anything else raises.
     """
+    if on_shrink not in {"error", "wait"}:
+        raise ValueError(f"unknown on_shrink: {on_shrink}")
     key = _normalized_native_log_path(path)
     start = progress.get(key, 0)
     if file_size < start:
+        if on_shrink == "wait":
+            return start
         raise RuntimeError(
             f"native log shrank: {path} size={file_size} progress={start}"
         )
