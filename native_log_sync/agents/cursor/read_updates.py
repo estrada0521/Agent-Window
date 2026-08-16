@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
-import logging
 import os
 import re
 import time
@@ -12,10 +10,11 @@ from native_log_sync.agents._shared.path_state import (
     advance_read_progress,
     read_progress_start,
 )
-from backend_core.access.files import append_jsonl_entry
-from native_log_sync.redacted import normalize_cursor_plaintext_for_index
-from native_log_sync.agents.cursor.read_runtime import iter_tool_calls, runtime_tool_events
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
+from native_log_sync.agents.cursor.read_runtime import iter_tool_calls, runtime_tool_events
+from native_log_sync.io.jsonl_read import complete_jsonl_scan
+from native_log_sync.io.projected import append_projected_entry
+from native_log_sync.redacted import normalize_cursor_plaintext_for_index
 
 
 _CURSOR_INTERNAL_NOTE_RE = re.compile(
@@ -101,21 +100,13 @@ def last_synced_cursor_offset(log_path: str, transcript_path: str) -> int | None
     if not key or not os.path.exists(log_path):
         return None
     last: int | None = None
-    with open(log_path, "r", encoding="utf-8") as handle:
-        for raw in handle:
-            line = raw.strip()
-            if not line:
-                continue
-            try:
-                entry = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            path = entry.get("native_log_path")
-            if not isinstance(path, str) or _normalized_native_log_path(path) != key:
-                continue
-            off = entry.get("native_log_offset")
-            if isinstance(off, int) and (last is None or off > last):
-                last = off
+    for _line_start, entry in complete_jsonl_scan(log_path):
+        path = entry.get("native_log_path")
+        if not isinstance(path, str) or _normalized_native_log_path(path) != key:
+            continue
+        off = entry.get("native_log_offset")
+        if isinstance(off, int) and (last is None or off > last):
+            last = off
     return last
 
 
@@ -126,153 +117,54 @@ def _offset_after_native_line(transcript_path: str, line_start: int) -> int:
         return handle.tell()
 
 
-def last_synced_cursor_display(log_path: str, transcript_path: str) -> str | None:
-    key = _normalized_native_log_path(transcript_path)
-    if not key or not os.path.exists(log_path):
-        return None
-    last: str | None = None
-    with open(log_path, "r", encoding="utf-8") as handle:
-        for raw in handle:
-            line = raw.strip()
-            if not line:
-                continue
-            try:
-                entry = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            path = entry.get("native_log_path")
-            if not isinstance(path, str) or _normalized_native_log_path(path) != key:
-                continue
-            message = entry.get("message")
-            if isinstance(message, str) and message:
-                last = message
-    return last
-
-
-def resume_offset_after_display(transcript_path: str, display: str) -> int | None:
-    if not display:
-        return None
-    with open(transcript_path, "r", encoding="utf-8") as handle:
-        while True:
-            line = handle.readline()
-            if not line:
-                return None
-            stripped = line.strip()
-            if not stripped:
-                continue
-            try:
-                entry = json.loads(stripped)
-            except json.JSONDecodeError:
-                continue
-            if _cursor_display_for_sync(entry) == display:
-                return handle.tell()
-
-
-def _read_cursor_transcript_batch(transcript_path: str, start: int) -> tuple[list[tuple[int, dict]], int]:
-    """Read complete JSONL rows from `start`. If `start` is mid-line (Cursor
-    extended the last row after we snapshotted file size), skip to the next
-    newline instead of decoding from the middle of a UTF-8 character.
-    Incomplete trailing rows are left unread so the next sync can pick them up.
-    """
-    batch: list[tuple[int, dict]] = []
-    with open(transcript_path, "rb") as handle:
-        if start > 0:
-            handle.seek(max(start - 1, 0))
-            prev = handle.read(1)
-            if prev != b"\n":
-                handle.readline()
-        consumed = handle.tell()
-        while True:
-            line_start = handle.tell()
-            raw = handle.readline()
-            if not raw:
-                break
-            if not raw.endswith(b"\n"):
-                break
-            try:
-                line = raw.decode("utf-8").strip()
-            except UnicodeDecodeError:
-                consumed = handle.tell()
-                continue
-            if not line:
-                consumed = handle.tell()
-                continue
-            try:
-                entry = json.loads(line)
-            except json.JSONDecodeError:
-                consumed = handle.tell()
-                continue
-            batch.append((line_start, entry))
-            consumed = handle.tell()
-    return batch, consumed
-
-
 def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None) -> None:
-    try:
-        transcript_path = str(native_log_path or "").strip()
-        if not transcript_path or not os.path.exists(transcript_path):
-            return
+    transcript_path = str(native_log_path or "").strip()
+    if not transcript_path or not os.path.exists(transcript_path):
+        return
 
-        self._native_log_current_paths[agent] = transcript_path
-        file_size = os.path.getsize(transcript_path)
-        start = read_progress_start(self._native_log_progress, transcript_path, file_size)
-        if start == 0:
-            last_off = last_synced_cursor_offset(str(self.log_path), transcript_path)
-            if last_off is not None:
-                start = _offset_after_native_line(transcript_path, last_off)
-                advance_read_progress(self._native_log_progress, transcript_path, start)
-                self.save_sync_state()
-        if start is None:
-            anchor = last_synced_cursor_display(str(self.log_path), transcript_path)
-            if not anchor:
-                logging.error(
-                    "Cursor native log %s shrank below the synced position; no last synced message",
-                    transcript_path,
-                )
-                return
-            start = resume_offset_after_display(transcript_path, anchor)
-            if start is None:
-                logging.error(
-                    "Cursor native log %s shrank below the synced position; last synced message not found",
-                    transcript_path,
-                )
-                return
-        if start >= file_size:
-            return
+    self._native_log_current_paths[agent] = transcript_path
+    file_size = os.path.getsize(transcript_path)
+    start = read_progress_start(self._native_log_progress, transcript_path, file_size)
+    if start == 0:
+        last_off = last_synced_cursor_offset(str(self.log_path), transcript_path)
+        if last_off is not None:
+            start = _offset_after_native_line(transcript_path, last_off)
+            advance_read_progress(self._native_log_progress, transcript_path, start)
+            self.save_sync_state()
+    if start >= file_size:
+        return
 
-        batch, consumed = _read_cursor_transcript_batch(transcript_path, start)
-        turn_done_seen = _cursor_turn_done_from_batch(batch)
+    scan = complete_jsonl_scan(transcript_path, start, align_mid_line=True)
+    batch = list(scan)
+    turn_done_seen = _cursor_turn_done_from_batch(batch)
 
-        for line_start, entry in batch:
-            display = _cursor_display_for_sync(entry)
-            if not display:
-                continue
+    for line_start, entry in batch:
+        display = _cursor_display_for_sync(entry)
+        if not display:
+            continue
 
-            key = f"cursor:{agent}:{transcript_path}:{line_start}:{display}"
-            msg_id = hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-            jsonl_entry = {
-                "timestamp": timestamp,
-                "session": self.session_name,
-                "sender": agent,
-                "targets": ["user"],
-                "message": display,
-                "msg_id": msg_id,
-                "native_log_path": transcript_path,
-                "native_log_offset": line_start,
-            }
-            append_jsonl_entry(self.log_path, jsonl_entry)
+        key = f"cursor:{agent}:{transcript_path}:{line_start}:{display}"
+        msg_id = hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
+        jsonl_entry = {
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "session": self.session_name,
+            "sender": agent,
+            "targets": ["user"],
+            "message": display,
+            "msg_id": msg_id,
+            "native_log_path": transcript_path,
+            "native_log_offset": line_start,
+        }
+        append_projected_entry(self.log_path, jsonl_entry)
 
-        for _ls, entry in batch:
-            tool_evs = []
-            for name, inp in iter_tool_calls(entry):
-                tool_evs.extend(runtime_tool_events(name, inp, workspace=str(self.workspace or "")))
-            if tool_evs:
-                push_runtime_display(self, agent, tool_evs)
+    for _ls, entry in batch:
+        tool_evs = []
+        for name, inp in iter_tool_calls(entry):
+            tool_evs.extend(runtime_tool_events(name, inp, workspace=str(self.workspace or "")))
+        if tool_evs:
+            push_runtime_display(self, agent, tool_evs)
 
-        advance_read_progress(self._native_log_progress, transcript_path, consumed)
-        self.save_sync_state()
-        if turn_done_seen:
-            self._mark_idle(agent)
-    except Exception as exc:
-        logging.error("Failed to sync Cursor message for %s: %s", agent, exc)
+    advance_read_progress(self._native_log_progress, transcript_path, scan.consumed)
+    self.save_sync_state()
+    if turn_done_seen:
+        self._mark_idle(agent)

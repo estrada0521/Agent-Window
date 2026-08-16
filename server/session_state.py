@@ -44,7 +44,9 @@ def normalize_session_state_projections(
                     selected.append(full)
                     seen.add(full)
             continue
-        if name not in _SESSION_STATE_PROJECTION_SET or name in seen:
+        if name not in _SESSION_STATE_PROJECTION_SET:
+            raise ValueError(f"unknown session state projection: {name}")
+        if name in seen:
             continue
         selected.append(name)
         seen.add(name)

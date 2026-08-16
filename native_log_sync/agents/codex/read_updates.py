@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
 import os
 import time
 
@@ -10,10 +9,10 @@ from native_log_sync.agents._shared.path_state import (
     advance_read_progress,
     read_progress_start,
 )
-from backend_core.access.files import append_jsonl_entry
-
-from native_log_sync.agents.codex.read_runtime import iter_tool_calls, runtime_tool_events
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
+from native_log_sync.agents.codex.read_runtime import iter_tool_calls, runtime_tool_events
+from native_log_sync.io.jsonl_read import complete_jsonl_scan
+from native_log_sync.io.projected import append_projected_entry
 
 
 def _codex_runtime_state_event(entry: object) -> str:
@@ -76,116 +75,96 @@ def _codex_task_error_message(payload: dict) -> str:
 
 
 def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) -> None:
-    try:
-        resolved_path = str(native_log_path or "").strip()
-        if not resolved_path or not os.path.exists(resolved_path):
-            return
+    resolved_path = str(native_log_path or "").strip()
+    if not resolved_path or not os.path.exists(resolved_path):
+        return
 
-        self._native_log_current_paths[agent] = resolved_path
-        file_size = os.path.getsize(resolved_path)
-        start = read_progress_start(self._native_log_progress, resolved_path, file_size)
-        if start is None:
-            logging.error(
-                "Codex native log %s shrank below the synced position; skipping this sync", resolved_path
-            )
-            return
-        if start >= file_size:
-            return
+    self._native_log_current_paths[agent] = resolved_path
+    file_size = os.path.getsize(resolved_path)
+    start = read_progress_start(self._native_log_progress, resolved_path, file_size)
+    if start >= file_size:
+        return
 
-        def _append_codex_entry(entry: dict, line_start: int) -> bool:
-            display = ""
-            provider_notice = False
-            entry_type = entry.get("type", "")
-            if entry_type == "response_item":
-                payload = entry.get("payload", {})
-                payload_type = str(payload.get("type") or "").strip().lower()
-                if payload_type == "reasoning":
+    def _append_codex_entry(entry: dict, line_start: int) -> bool:
+        display = ""
+        provider_notice = False
+        entry_type = entry.get("type", "")
+        if entry_type == "response_item":
+            payload = entry.get("payload", {})
+            payload_type = str(payload.get("type") or "").strip().lower()
+            if payload_type == "reasoning":
+                return False
+            else:
+                if payload.get("role") != "assistant":
                     return False
-                else:
-                    if payload.get("role") != "assistant":
-                        return False
-                    content = payload.get("content", [])
-                    texts = []
-                    if isinstance(content, list):
-                        for c in content:
-                            if isinstance(c, dict):
-                                t = c.get("text")
-                                if t and str(t).strip():
-                                    texts.append(str(t).strip())
-                    if not texts:
-                        return False
-                    display = "\n".join(texts)
-            elif entry_type == "event_msg":
-                payload = entry.get("payload", {})
-                payload_type = str(payload.get("type") or "").strip().lower()
-                if payload_type == "error":
-                    display = str(payload.get("message") or "").strip()
-                    provider_notice = True
-                elif payload_type == "agent_reasoning":
+                content = payload.get("content", [])
+                texts = []
+                if isinstance(content, list):
+                    for c in content:
+                        if isinstance(c, dict):
+                            t = c.get("text")
+                            if t and str(t).strip():
+                                texts.append(str(t).strip())
+                if not texts:
                     return False
-                elif payload_type == "task_complete":
-                    display = _codex_task_error_message(payload)
-                    if not display:
-                        return False
-                    provider_notice = True
-                else:
+                display = "\n".join(texts)
+        elif entry_type == "event_msg":
+            payload = entry.get("payload", {})
+            payload_type = str(payload.get("type") or "").strip().lower()
+            if payload_type == "error":
+                display = str(payload.get("message") or "").strip()
+                provider_notice = True
+            elif payload_type == "agent_reasoning":
+                return False
+            elif payload_type == "task_complete":
+                display = _codex_task_error_message(payload)
+                if not display:
                     return False
+                provider_notice = True
             else:
                 return False
+        else:
+            return False
 
-            if not display:
-                return False
+        if not display:
+            return False
 
-            src_ts = str(entry.get("timestamp") or "")
-            key = f"codex:{agent}:{src_ts}:{display}"
-            msg_id = hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
+        src_ts = str(entry.get("timestamp") or "")
+        key = f"codex:{agent}:{src_ts}:{display}"
+        msg_id = hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
 
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-            jsonl_entry = {
-                "timestamp": timestamp,
-                "session": self.session_name,
-                "sender": agent,
-                "targets": ["user"],
-                "message": display,
-                "msg_id": msg_id,
-                "native_log_path": resolved_path,
-                "native_log_offset": line_start,
-            }
-            if provider_notice:
-                jsonl_entry["kind"] = "provider-notice"
-            append_jsonl_entry(self.log_path, jsonl_entry)
-            return True
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        jsonl_entry = {
+            "timestamp": timestamp,
+            "session": self.session_name,
+            "sender": agent,
+            "targets": ["user"],
+            "message": display,
+            "msg_id": msg_id,
+            "native_log_path": resolved_path,
+            "native_log_offset": line_start,
+        }
+        if provider_notice:
+            jsonl_entry["kind"] = "provider-notice"
+        append_projected_entry(self.log_path, jsonl_entry)
+        return True
 
-        last_runtime_state_event = ""
-        with open(resolved_path, "r", encoding="utf-8") as f:
-            f.seek(start)
-            while True:
-                line_start = f.tell()
-                line = f.readline()
-                if not line:
-                    break
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entry = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                _append_codex_entry(entry, line_start)
-                runtime_state_event = _codex_runtime_state_event(entry)
-                if runtime_state_event:
-                    last_runtime_state_event = runtime_state_event
-                tool_evs = []
-                for name, inp in iter_tool_calls(entry):
-                    tool_evs.extend(runtime_tool_events(name, inp, workspace=str(self.workspace or "")))
-                if tool_evs:
-                    push_runtime_display(self, agent, tool_evs)
+    last_runtime_state_event = ""
+    scan = complete_jsonl_scan(resolved_path, start)
+    for line_start, entry in scan:
+        _append_codex_entry(entry, line_start)
+        runtime_state_event = _codex_runtime_state_event(entry)
+        if runtime_state_event:
+            last_runtime_state_event = runtime_state_event
+        tool_evs = []
+        for name, inp in iter_tool_calls(entry):
+            tool_evs.extend(runtime_tool_events(name, inp, workspace=str(self.workspace or "")))
+        if tool_evs:
+            push_runtime_display(self, agent, tool_evs)
 
-        advance_read_progress(self._native_log_progress, resolved_path, file_size)
-        self.save_sync_state()
-        if last_runtime_state_event == "completed":
-            self._mark_idle(agent)
-        elif last_runtime_state_event == "active" and agent not in self.running_agents():
-            self._mark_running_from_native_activity(agent)
-    except Exception as exc:
-        logging.error(f"Failed to sync Codex message for {agent}: {exc}")
+    advance_read_progress(self._native_log_progress, resolved_path, scan.consumed)
+    self.save_sync_state()
+    if last_runtime_state_event == "completed":
+        self._mark_idle(agent)
+    elif last_runtime_state_event == "active" and agent not in self.running_agents():
+        self._mark_running_from_native_activity(agent)
