@@ -54,6 +54,11 @@ def sync_claude_native_log(self, agent: str, native_log_path: str | None = None)
         self._native_log_current_paths[agent] = session_path_str
         file_size = os.path.getsize(session_path_str)
         start = read_progress_start(self._native_log_progress, session_path_str, file_size)
+        if start is None:
+            logging.error(
+                "Claude native log %s shrank below the synced position; skipping this sync", session_path_str
+            )
+            return
         if start >= file_size:
             return
 
