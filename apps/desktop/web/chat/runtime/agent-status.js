@@ -66,7 +66,7 @@ __CHAT_INCLUDE:../../../../shared/chat/session-state-projections.js__
         if (requestedProjections.length) {
           params.set("projections", requestedProjections.join(","));
         }
-        const res = await fetch(`/session-state?${params.toString()}`, { cache: "no-store" });
+        const res = await fetchWithTimeout(`/session-state?${params.toString()}`, {}, 4000);
         if (res.ok) {
           applySessionState(await res.json());
           return true;
