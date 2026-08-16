@@ -234,10 +234,9 @@ def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None)
             if tool_evs:
                 push_runtime_display(self, agent, tool_evs)
 
-        if turn_done_seen:
-            self._mark_idle(agent)
-
         advance_read_progress(self._native_log_progress, transcript_path, consumed)
         self.save_sync_state()
+        if turn_done_seen:
+            self._mark_idle(agent)
     except Exception as exc:
         logging.error("Failed to sync Cursor message for %s: %s", agent, exc)
