@@ -355,6 +355,14 @@
       font-size: var(--message-text-size, 13px);
       line-height: 1.45;
     }
+    button.repo-browser-empty {
+      display: block;
+      width: 100%;
+      border: 0;
+      background: transparent;
+      font: inherit;
+      cursor: pointer;
+    }
     .repo-browser-item-dimmed {
       color: var(--muted);
       opacity: 1;

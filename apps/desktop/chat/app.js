@@ -776,9 +776,15 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         node.textContent = "";
         list.appendChild(node);
       } else if (error) {
-        const node = document.createElement("div");
+        const node = document.createElement("button");
+        node.type = "button";
         node.className = "repo-browser-empty";
         node.textContent = error;
+        node.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void dpLoadRepoDir(path);
+        });
         list.appendChild(node);
       } else {
         const dirs = (entries || []).filter(e => e.kind === "dir");
