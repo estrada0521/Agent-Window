@@ -120,8 +120,9 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     let _hubChromeGapClientMin = Infinity;
     let _hubChildOriW = 0;
     let _hubChildOriH = 0;
+    const isEmbeddedHubChat = window.parent !== window;
     const applyHubIframeLockHeight = () => {
-      if (!window.frameElement) {
+      if (!isEmbeddedHubChat) {
         syncMainAfterHeight();
         return;
       }
@@ -134,23 +135,23 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       syncMainAfterHeight();
     };
     const bumpHubIframeLayoutLock = () => {
-      if (!window.frameElement) return;
+      if (!isEmbeddedHubChat) return;
       applyHubIframeLockHeight();
     };
     const requestHubParentLayout = () => {
-      if (!window.frameElement) return;
+      if (!isEmbeddedHubChat) return;
       try {
         window.parent.postMessage({ type: "chat-request-hub-layout" }, "*");
       } catch (_) { }
     };
     const requestHubCloseChat = () => {
-      if (!window.frameElement) return;
+      if (!isEmbeddedHubChat) return;
       try {
         window.parent.postMessage("hub_close_chat", "*");
       } catch (_) { }
     };
     const notifyHubChatRenderReady = () => {
-      if (!window.frameElement) return;
+      if (!isEmbeddedHubChat) return;
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           try {
@@ -159,7 +160,11 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
         });
       });
     };
-    if (window.frameElement) {
+    const notifyHubChatRenderError = (message) => {
+      if (!isEmbeddedHubChat) return;
+      window.parent.postMessage({ type: "chat-render-error", message: String(message || "render failed") }, "*");
+    };
+    if (isEmbeddedHubChat) {
       document.documentElement.dataset.hubIframeChat = "1";
       _hubChildOriW = window.innerWidth || 0;
       _hubChildOriH = window.innerHeight || 0;

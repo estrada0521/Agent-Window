@@ -726,6 +726,13 @@
       box-shadow: none;
     }
 
+    .launch-shell-card.is-error {
+      width: auto;
+      height: auto;
+      color: var(--fg);
+      font-size: 13px;
+    }
+
     .launch-shell-spinner {
       width: 18px;
       height: 18px;
