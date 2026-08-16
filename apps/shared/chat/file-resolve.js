@@ -22,7 +22,7 @@
         const params = new URLSearchParams();
         if (query) params.set("q", query);
         params.set("limit", String(normalizedLimit));
-        const response = await fetchWithTimeout(`${CHAT_BASE_PATH || ""}/files-search?${params.toString()}`, {}, 2500);
+        const response = await fetchWithTimeout(`/files-search?${params.toString()}`, {}, 2500);
         if (response.ok) {
           const raw = await response.json();
           return (Array.isArray(raw) ? raw : [])
@@ -36,7 +36,7 @@
       const unique = [...new Set((Array.isArray(queries) ? queries : []).map((item) => String(item || "").trim()).filter(Boolean))];
       if (!unique.length) return new Map();
       try {
-        const response = await fetch(`${CHAT_BASE_PATH || ""}/files-resolve`, {
+        const response = await fetch("/files-resolve", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ queries: unique }),
