@@ -81,7 +81,6 @@ __CHAT_INCLUDE:../messages-data.js__
         selectedTargets = restoredTargets.length ? restoredTargets : [];
         saveTargetSelection(currentSessionName, selectedTargets);
         picker.dataset.loaded = "1";
-        renderAgentStatus(Object.fromEntries(resolvedTargets.map((t) => [t, "idle"])));
       }
       const nextTargetsSig = JSON.stringify(resolvedTargets);
       if (nextTargetsSig !== JSON.stringify(availableTargets)) {
