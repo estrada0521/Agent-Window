@@ -57,7 +57,6 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     };
     const _pageParams = new URLSearchParams(window.location.search || "");
     const launchShellMode = _pageParams.get("launch_shell") === "1";
-    const composerAutoOpenRequested = _pageParams.get("compose") === "1";
     let refreshInFlight = false;
     let pendingRefreshOptions = null;
     let reloadInFlight = false;
@@ -278,7 +277,6 @@ __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
     let selectedTargets = [];
     let sendLocked = false;
     let sessionActive = true;
-    let composerAutoOpenConsumed = false;
     const canComposeInSession = () => !!sessionActive;
     let pendingAttachments = [];
     let availableTargets = [];

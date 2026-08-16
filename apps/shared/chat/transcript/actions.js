@@ -170,7 +170,7 @@ __CHAT_INCLUDE:../slash-commands.js__
         // ショートカット未一致 → 通常メッセージとして送信
       }
       let target = selectedTargets.join(",");
-      const indexOnly = !target;
+      const isNote = !target;
       const attachSuffix =
         pendingAttachments.length
           ? pendingAttachments.map((a) => "\n[Attached: " + a.path + "]").join("")
@@ -186,7 +186,7 @@ __CHAT_INCLUDE:../slash-commands.js__
         blurComposerOnMobile(message);
         closeComposerOverlay();
       }
-      setStatus(indexOnly ? "saving note..." : `sending to ${target}...`);
+      setStatus(isNote ? "saving note..." : `sending to ${target}...`);
       try {
         const res = await fetch("/send", {
           method: "POST",
@@ -216,7 +216,7 @@ __CHAT_INCLUDE:../slash-commands.js__
         }
         closeComposerOverlay();
         setStatus(
-          indexOnly
+          isNote
             ? "note saved"
             : (data.queued ? `queued for ${target}` : `sent to ${target}`)
         );

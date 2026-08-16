@@ -90,20 +90,6 @@
         }
       }
     };
-    const maybeAutoOpenComposer = () => {
-      if (!composerAutoOpenRequested || composerAutoOpenConsumed) return;
-      if (!sessionActive) return;
-      composerAutoOpenConsumed = true;
-      try {
-        const params = new URLSearchParams(window.location.search);
-        if (params.has("compose")) {
-          params.delete("compose");
-          const nextQuery = params.toString();
-          window.history.replaceState(window.history.state, "", `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}`);
-        }
-      } catch (_) {}
-      requestAnimationFrame(() => openComposerOverlay({ immediateFocus: canComposeInSession() }));
-    };
     scrollToBottomBtn.addEventListener("click", () => {
       _pollScrollLockTop = null;
       _pollScrollAnchor = null;

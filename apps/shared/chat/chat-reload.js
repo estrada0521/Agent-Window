@@ -23,7 +23,6 @@
         return;
       }
       const params = new URLSearchParams(window.location.search);
-      params.delete("follow");
       params.set("ts", String(Date.now()));
       window.location.replace(`${window.location.pathname}?${params.toString()}`);
     };

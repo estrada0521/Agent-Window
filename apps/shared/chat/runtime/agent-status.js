@@ -32,7 +32,6 @@ __CHAT_INCLUDE:../session-state-projections.js__
       if (!sessionActive) {
         setStatus("archived session is read-only");
       }
-      maybeAutoOpenComposer();
       if (hasOwn("agent_runtime") && data.agent_runtime && typeof data.agent_runtime === "object") {
         currentAgentRuntime = { ...data.agent_runtime };
       } else if (hasOwn("agent_runtime")) {

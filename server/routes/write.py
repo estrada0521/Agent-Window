@@ -226,6 +226,40 @@ def _post_delete_upload(handler, _parsed, ctx) -> None:
 
 
 def _post_open_terminal(handler, _parsed, ctx) -> None:
+    data, err = _read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
+        return
+    agent = str((data or {}).get("agent") or "").strip()
+    if agent:
+        try:
+            pane_id = ctx["runtime"].pane_id_for_agent(agent)
+            if pane_id:
+                socket_flag = "-S" if "/" in ctx["tmux_socket"] else "-L"
+                prefix = ["tmux", socket_flag, ctx["tmux_socket"]]
+                win_res = subprocess.run(
+                    [*prefix, "display-message", "-p", "-t", pane_id, "#{window_id}"],
+                    capture_output=True, text=True, check=False,
+                )
+                window_id = (win_res.stdout or "").strip()
+                if window_id:
+                    subprocess.run(
+                        [*prefix, "select-window", "-t", window_id],
+                        capture_output=True, check=False,
+                    )
+                subprocess.run(
+                    [*prefix, "select-pane", "-t", pane_id],
+                    capture_output=True, check=False,
+                )
+                subprocess.Popen(
+                    ["osascript", "-e", 'tell application "Terminal" to activate'],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                handler._send_json(200, {"ok": True})
+                return
+        except Exception:
+            pass
     try:
         socket_flag = "-S" if "/" in ctx["tmux_socket"] else "-L"
         cols, rows = 200, 40
@@ -276,49 +310,6 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
         handler._send_json(200, {"ok": True})
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
-
-
-def _post_open_terminal_pane(handler, _parsed, ctx) -> None:
-    data, err = _read_json_body(handler)
-    if err:
-        handler._send_json(400, {"ok": False, "error": err})
-        return
-    agent = str(data.get("agent") or "").strip()
-    switched = False
-    if agent:
-        try:
-            pane_id = ctx["runtime"].pane_id_for_agent(agent)
-            if pane_id:
-                socket_flag = "-S" if "/" in ctx["tmux_socket"] else "-L"
-                prefix = ["tmux", socket_flag, ctx["tmux_socket"]]
-                # Resolve the window containing this pane, then select window + pane
-                win_res = subprocess.run(
-                    [*prefix, "display-message", "-p", "-t", pane_id, "#{window_id}"],
-                    capture_output=True, text=True, check=False,
-                )
-                window_id = (win_res.stdout or "").strip()
-                if window_id:
-                    subprocess.run(
-                        [*prefix, "select-window", "-t", window_id],
-                        capture_output=True, check=False,
-                    )
-                subprocess.run(
-                    [*prefix, "select-pane", "-t", pane_id],
-                    capture_output=True, check=False,
-                )
-                # Bring existing Terminal window to front without opening a new one
-                subprocess.Popen(
-                    ["osascript", "-e", 'tell application "Terminal" to activate'],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-                switched = True
-        except Exception:
-            pass
-    if switched:
-        handler._send_json(200, {"ok": True})
-    else:
-        _post_open_terminal(handler, _parsed, ctx)
 
 
 def _post_open_finder(handler, _parsed, ctx) -> None:
@@ -460,7 +451,6 @@ _POST_ROUTES = {
     "/upload": _post_upload,
     "/delete-upload": _post_delete_upload,
     "/open-terminal": _post_open_terminal,
-    "/open-terminal-pane": _post_open_terminal_pane,
     "/open-finder": _post_open_finder,
     "/files-exist": _post_files_exist,
     "/files-resolve": _post_files_resolve,

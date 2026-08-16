@@ -233,13 +233,6 @@ class FileRuntime:
                 if write(chunk) is False:
                     break
 
-    def file_content(self, rel: str):
-        full = self._resolve_reference_path(rel)
-        with open(full, "r", encoding="utf-8", errors="replace") as f:
-            content = f.read()
-        ext = os.path.splitext(rel)[1].lstrip(".")
-        return {"content": content, "ext": ext}
-
     @staticmethod
     def _is_probably_text_file(full: str) -> bool:
         try:

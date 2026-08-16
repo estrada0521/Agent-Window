@@ -403,7 +403,7 @@ def queue_chat_restart():
             env["AGENT_WINDOW_AGENT_NAME"] = "user"
             env["AGENT_WINDOW_CHAT_RESTART_HANDOFF"] = "1"
             completed = subprocess.run(
-                [script_path, "--follow", "--chat", "--session", session_name],
+                [script_path, "--chat", "--session", session_name],
                 cwd=str(_repo_root),
                 env=env,
                 stdin=subprocess.DEVNULL,

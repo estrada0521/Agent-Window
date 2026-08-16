@@ -21,7 +21,6 @@ def font_family_stack(selection: str, role: str) -> str:
 def chat_font_settings_inline_style(
     settings: dict,
     *,
-    bold_mode_viewport_max_px: int,
     generate_agent_message_selectors_fn,
     bh_agent_detail_selectors_fn,
     font_family_stack_fn=font_family_stack,
@@ -39,20 +38,17 @@ def chat_font_settings_inline_style(
         message_text_size_desktop = _legacy_size
     message_max_width = 900
 
-    non_tauri_desktop_scope = 'html:not([data-tauri-app="1"][data-hub-iframe-chat="1"])'
-    mobile_body_weight_override = f"""
-    @media (max-width: {bold_mode_viewport_max_px}px) {{
-      {non_tauri_desktop_scope} .message.user .md-body,
-      {non_tauri_desktop_scope} .message.user .md-body p,
-      {non_tauri_desktop_scope} .message.user .md-body li,
-      {non_tauri_desktop_scope} .message.user .md-body li p,
-      {non_tauri_desktop_scope} .message:not(.user):not(.system) .md-body,
-      {non_tauri_desktop_scope} .message:not(.user):not(.system) .md-body p,
-      {non_tauri_desktop_scope} .message:not(.user):not(.system) .md-body li,
-      {non_tauri_desktop_scope} .message:not(.user):not(.system) .md-body li p {{
-        font-weight: 430;
-      }}
-    }}"""
+    mobile_body_weight_override = """
+    html[data-mobile="1"] .message.user .md-body,
+    html[data-mobile="1"] .message.user .md-body p,
+    html[data-mobile="1"] .message.user .md-body li,
+    html[data-mobile="1"] .message.user .md-body li p,
+    html[data-mobile="1"] .message:not(.user):not(.system) .md-body,
+    html[data-mobile="1"] .message:not(.user):not(.system) .md-body p,
+    html[data-mobile="1"] .message:not(.user):not(.system) .md-body li,
+    html[data-mobile="1"] .message:not(.user):not(.system) .md-body li p {
+      font-weight: 430;
+    }"""
     typography_override = """
     .message.user .md-body,
     .message.user .md-body p,

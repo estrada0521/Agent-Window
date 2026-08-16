@@ -46,9 +46,6 @@ class WorkspaceSyncApi:
     def stream_raw_response(self, metadata: dict, write) -> None:
         self.file_runtime.stream_raw_response(metadata, write)
 
-    def file_content(self, rel: str):
-        return self.file_runtime.file_content(rel)
-
     def file_view(self, rel: str, **kwargs):
         return self.file_runtime.file_view(rel, **kwargs)
 
