@@ -264,16 +264,6 @@ default_session_name() {
   basename "$WORKSPACE"
 }
 
-ensure_session_agent_doc() {
-  local src="$SCRIPT_DIR/../docs/AGENT.md"
-  local dest_dir="$WORKSPACE/docs"
-  local dest="$dest_dir/AGENT.md"
-  [[ -f "$src" ]] || return 0
-  mkdir -p "$dest_dir"
-  cmp -s "$src" "$dest" 2>/dev/null && return 0
-  cp "$src" "$dest"
-}
-
 session_pane_count() {
   local session="$1"
   tmux list-panes -s -t "$session" 2>/dev/null | wc -l | tr -d ' '
