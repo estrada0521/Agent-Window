@@ -19,7 +19,8 @@
         if (olderBatch.length) {
           olderEntries = mergeEntriesById(olderBatch, olderEntries);
         }
-      } catch (_) {
+      } catch (err) {
+        setStatus(err?.message || String(err), true);
       } finally {
         olderLoading = false;
         rerenderCurrentMessages({ suppressEntryAnimation: true });
@@ -219,7 +220,7 @@ __CHAT_INCLUDE:../slash-commands.js__
             ? "note saved"
             : (data.queued ? `queued for ${target}` : `sent to ${target}`)
         );
-        void refresh();
+        applyLocalEntry(data.entry);
         if (data.activated) {
           void refreshSessionState();
         }

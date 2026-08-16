@@ -32,6 +32,16 @@
         button.textContent = "Retry full message";
       }
     };
+    let refreshEpoch = 0;
+    const applyLocalEntry = (entry) => {
+      const msgId = String(entry?.msg_id || "").trim();
+      if (!msgId) throw new Error("send did not return entry");
+      refreshEpoch += 1;
+      const current = latestPayloadData || {};
+      latestPayloadData = { ...current, entries: mergeEntriesById(current.entries || [], [entry]) };
+      render(latestPayloadData);
+      notifyHubMessagesChanged();
+    };
     const refresh = async (options = {}) => {
       const refreshOptions = (!hasInitialRefreshHydrated && followMode)
         ? mergeRefreshOptions(options, { forceScroll: true })
@@ -41,6 +51,7 @@
         return;
       }
       refreshInFlight = true;
+      const epoch = refreshEpoch;
       try {
         const url = messagesFetchUrl();
         const headers = {};
@@ -52,8 +63,6 @@
           Object.keys(headers).length ? { headers } : {}
         );
         if (res.status === 304) {
-          messageRefreshFailures = 0;
-          setReconnectStatus(false);
           if (!hasInitialRefreshHydrated) {
             hasInitialRefreshHydrated = true;
             releaseLaunchShellGate();
@@ -67,6 +76,7 @@
           lastMessagesEtag = nextMessagesEtag;
         }
         const data = await res.json();
+        if (epoch !== refreshEpoch) return;
         const nextServerInstance = data?.server_instance || "";
         if (nextServerInstance && currentServerInstance && nextServerInstance !== currentServerInstance) {
           olderEntries = [];
@@ -79,8 +89,6 @@
         if (!olderEntries.length) {
           olderHasMore = !!data?.has_older;
         }
-        messageRefreshFailures = 0;
-        setReconnectStatus(false);
         render(data, refreshOptions);
         if (!hasInitialRefreshHydrated) {
           hasInitialRefreshHydrated = true;
@@ -89,16 +97,12 @@
         notifyHubChatRenderReady();
         notifyHubMessagesChanged();
       } catch (err) {
-        messageRefreshFailures += 1;
+        const detail = err?.message || String(err);
         if (!hasInitialRefreshHydrated) {
-          const detail = err?.message || String(err);
           releaseLaunchShellGate();
-          setStatus(detail, true);
           notifyHubChatRenderError(detail);
         }
-        if (followMode && messageRefreshFailures >= 3) {
-          setReconnectStatus(true);
-        }
+        setStatus(detail, true);
       } finally {
         refreshInFlight = false;
         if (pendingRefreshOptions) {

@@ -19,12 +19,16 @@
       }
       clearLaunchShellParam();
     };
-    const armLaunchShellGate = (timeoutMs = 10000) => {
+    const armLaunchShellGate = () => {
       document.documentElement.dataset.launchShell = "1";
       if (launchShellRevealFallbackTimer) {
         clearTimeout(launchShellRevealFallbackTimer);
       }
       launchShellRevealFallbackTimer = setTimeout(() => {
-        releaseLaunchShellGate();
-      }, Math.max(1000, Number(timeoutMs) || 10000));
+        if (document.documentElement.dataset.launchShell !== "1") return;
+        document.documentElement.dataset.launchShell = "error";
+        launchShellRevealFallbackTimer = 0;
+        clearLaunchShellParam();
+        notifyHubChatRenderError("timeout");
+      }, 5000);
     };

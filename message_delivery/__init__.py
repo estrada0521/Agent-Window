@@ -84,6 +84,7 @@ def send_message(
                 "msg_id": uuid.uuid4().hex[:12],
             }
             append_jsonl_entry(self.index_path, entry)
+            return 200, {"ok": True, "mode": "memo", "entry": entry}
         return 200, {"ok": True, "mode": "memo"}
     if "user" in targets:
         return 400, {"ok": False, "error": 'target "user" cannot be combined with other targets'}
@@ -166,6 +167,9 @@ def send_message(
             "msg_id": uuid.uuid4().hex[:12],
         }
         append_jsonl_entry(self.index_path, entry)
+        if failed_targets:
+            return 400, {"ok": False, "error": f"Failed to deliver to: {', '.join(failed_targets)}"}
+        return 200, {"ok": True, "entry": entry}
     if failed_targets:
         return 400, {"ok": False, "error": f"Failed to deliver to: {', '.join(failed_targets)}"}
     return 200, {"ok": True}

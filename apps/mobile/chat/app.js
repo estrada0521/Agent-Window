@@ -59,9 +59,6 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     const followMode = _pageParams.get("follow") === "1";
     const launchShellMode = _pageParams.get("launch_shell") === "1";
     const composerAutoOpenRequested = _pageParams.get("compose") === "1";
-    const reconnectingStatusText = "reconnecting...";
-    let messageRefreshFailures = 0;
-    let reconnectStatusVisible = false;
     let refreshInFlight = false;
     let pendingRefreshOptions = null;
     let reloadInFlight = false;
@@ -84,7 +81,7 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     let hasInitialRefreshHydrated = false;
 __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     if (launchShellMode) {
-      armLaunchShellGate(10000);
+      armLaunchShellGate();
     }
     const syncMainAfterHeight = () => {
       const mainEl = document.querySelector("main");
@@ -198,8 +195,6 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       __CHAT_INCLUDE:../../shared/chat/hub-safari-chrome.js__
       bumpHubIframeLayoutLock();
       hubPingParentForSafariChrome();
-      setTimeout(hubPingParentForSafariChrome, 120);
-      setTimeout(hubPingParentForSafariChrome, 400);
       window.addEventListener("resize", hubChildResizeChrome, { passive: true });
       if (window.visualViewport) {
         window.visualViewport.addEventListener("resize", hubChildResizeChrome);
