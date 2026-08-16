@@ -198,11 +198,11 @@ class HubRuntime:
     def chat_ready(self, chat_port: int) -> bool:
         return _chat_ready_impl(self, chat_port)
 
-    def chat_server_state(self, chat_port: int, *, scheme: str = "") -> dict | None:
-        return _chat_server_state_impl(self, chat_port, scheme=scheme)
+    def chat_server_state(self, chat_port: int) -> dict | None:
+        return _chat_server_state_impl(self, chat_port)
 
-    def chat_server_matches(self, session_name: str, chat_port: int, *, scheme: str = "") -> bool:
-        return _chat_server_matches_impl(self, session_name, chat_port, scheme=scheme)
+    def chat_server_matches(self, session_name: str, chat_port: int) -> bool:
+        return _chat_server_matches_impl(self, session_name, chat_port)
 
     def stop_chat_server(self, session_name: str) -> tuple[bool, str]:
         return _stop_chat_server_impl(
@@ -214,7 +214,7 @@ class HubRuntime:
             time_module=time,
         )
 
-    def stop_inactive_chat_servers(self, *, keep_session: str = "") -> None:
+    def stop_inactive_chat_servers(self, *, keep_session: str = "") -> str:
         return _stop_inactive_chat_servers_impl(self, keep_session=keep_session)
 
     def _chat_launch_workspace(self, session_name: str) -> tuple[str, bool]:

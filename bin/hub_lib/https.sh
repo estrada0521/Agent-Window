@@ -89,7 +89,10 @@ ensure_repo_https_cert() {
   local extra_name=""
   local name
 
-  command -v mkcert >/dev/null 2>&1 || return 0
+  command -v mkcert >/dev/null 2>&1 || {
+    echo "ensure_repo_https_cert: mkcert is required for local HTTPS." >&2
+    return 1
+  }
 
   current_ip="$(detect_local_ip || true)"
   local_name="$(detect_local_host_name)"
@@ -127,10 +130,12 @@ ensure_repo_https_cert() {
     mkcert -cert-file "$cert_file" -key-file "$key_file" "${names[@]}" >/dev/null
   fi
 
-  if [[ -f "$cert_file" && -f "$key_file" ]]; then
-    export AGENT_WINDOW_CERT_FILE="$cert_file"
-    export AGENT_WINDOW_KEY_FILE="$key_file"
+  if [[ ! -f "$cert_file" || ! -f "$key_file" ]]; then
+    echo "ensure_repo_https_cert: certificate files were not created." >&2
+    return 1
   fi
+  export AGENT_WINDOW_CERT_FILE="$cert_file"
+  export AGENT_WINDOW_KEY_FILE="$key_file"
 }
 
 port_serves_expected_url() {
@@ -151,11 +156,11 @@ try:
         conn = http.client.HTTPSConnection(
             "127.0.0.1",
             port,
-            timeout=1.2,
+            timeout=1.0,
             context=ssl._create_unverified_context(),
         )
     else:
-        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=1.2)
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=1.0)
     conn.request("GET", path, headers={"Host": f"127.0.0.1:{port}"})
     resp = conn.getresponse()
     resp.read(1)
@@ -168,44 +173,94 @@ sys.exit(1)
 PYEOF
 }
 
-list_listening_pids() {
-  local port="$1"
-  if command -v lsof >/dev/null 2>&1; then
-    lsof -nP -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true
-    return 0
-  fi
-  if command -v fuser >/dev/null 2>&1; then
-    fuser "$port"/tcp 2>/dev/null | tr ' ' '\n' | sed '/^$/d' || true
-    return 0
-  fi
-  return 0
+wait_for_expected_url() {
+  local scheme="$1"
+  local port="$2"
+  local path="$3"
+  local timeout_sec="${4:-6}"
+  python3 - "$scheme" "$port" "$path" "$timeout_sec" <<'PYEOF'
+import http.client
+import ssl
+import sys
+import time
+
+scheme = sys.argv[1]
+port = int(sys.argv[2])
+path = sys.argv[3]
+timeout_sec = float(sys.argv[4])
+deadline = time.monotonic() + timeout_sec
+
+while time.monotonic() < deadline:
+    try:
+        if scheme == "https":
+            conn = http.client.HTTPSConnection(
+                "127.0.0.1",
+                port,
+                timeout=1.0,
+                context=ssl._create_unverified_context(),
+            )
+        elif scheme == "http":
+            conn = http.client.HTTPConnection("127.0.0.1", port, timeout=1.0)
+        else:
+            sys.exit(1)
+        conn.request("GET", path, headers={"Host": f"127.0.0.1:{port}"})
+        resp = conn.getresponse()
+        resp.read(1)
+        conn.close()
+        if 200 <= resp.status < 500:
+            sys.exit(0)
+    except Exception:
+        pass
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        break
+    time.sleep(min(0.1, remaining))
+sys.exit(1)
+PYEOF
 }
 
-pid_listens_on_port() {
-  local pid="$1"
-  local port="$2"
-  [[ -n "$pid" && -n "$port" ]] || return 1
-  if command -v lsof >/dev/null 2>&1; then
-    lsof -nP -a -p "$pid" -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
-    return $?
-  fi
-  local seen
-  seen="$(list_listening_pids "$port" | tr '\n' ' ')"
-  [[ " $seen " == *" $pid "* ]]
+list_listening_pids() {
+  local port="$1"
+  command -v lsof >/dev/null 2>&1 || {
+    echo "lsof is required to inspect port $port." >&2
+    return 1
+  }
+  lsof -nP -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true
 }
 
 wait_for_port_to_clear() {
   local port="$1"
-  local attempts="${2:-50}"
-  local delay="${3:-0.1}"
-  local listeners
-  local i
-  for i in $(seq 1 "$attempts"); do
-    listeners="$(list_listening_pids "$port")"
-    if [[ -z "${listeners//[[:space:]]/}" ]]; then
-      return 0
-    fi
-    sleep "$delay"
-  done
-  return 1
+  local timeout_sec="${2:-6}"
+  python3 - "$port" "$timeout_sec" <<'PYEOF'
+import subprocess
+import sys
+import time
+
+port = sys.argv[1]
+timeout_sec = float(sys.argv[2])
+deadline = time.monotonic() + timeout_sec
+
+def listening():
+    try:
+        result = subprocess.run(
+            ["lsof", "-nP", f"-tiTCP:{port}", "-sTCP:LISTEN"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        sys.exit(1)
+    if result.returncode not in (0, 1):
+        sys.exit(1)
+    return bool((result.stdout or "").strip())
+
+while time.monotonic() < deadline:
+    if not listening():
+        sys.exit(0)
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        break
+    time.sleep(min(0.1, remaining))
+sys.exit(1)
+PYEOF
 }

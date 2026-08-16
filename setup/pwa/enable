@@ -54,17 +54,12 @@ done
 HUB_MODE=""
 if port_serves_expected_url "http" "$HUB_PORT" "/hub.webmanifest"; then
   HUB_MODE="http"
-elif port_serves_expected_url "https" "$HUB_PORT" "/hub.webmanifest"; then
-  HUB_MODE="https"
 fi
 
 if [[ -z "$HUB_MODE" ]]; then
-  echo "pwa-enable: Hub is not running on http://127.0.0.1:${HUB_PORT}/" >&2
+  echo "pwa-enable: Hub is not running on http://127.0.0.1:${HUB_PORT}/." >&2
   echo "pwa-enable: start the Tauri app first: ./tauri_app/tauri_start" >&2
   exit 1
-fi
-if [[ "$HUB_MODE" == "https" ]]; then
-  echo "pwa-enable: adopting the already-running HTTPS Hub on port $HUB_PORT." >&2
 fi
 
 bash "$REPO_ROOT/setup/pwa/ensure-local-https" >/dev/null
@@ -85,9 +80,5 @@ cert_file=$AGENT_WINDOW_CERT_FILE
 EOF
 
 echo "pwa-enable: PWA HTTPS preparation complete."
-if [[ "$HUB_MODE" == "http" ]]; then
-  echo "pwa-enable: next, quit the HTTP Tauri app and restart with:"
-else
-  echo "pwa-enable: next restart with:"
-fi
+echo "pwa-enable: next, quit the HTTP Tauri app and restart with:"
 echo "pwa-enable:   ./tauri_app/tauri_start"

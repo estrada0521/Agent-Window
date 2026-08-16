@@ -27,6 +27,7 @@ HTTPS_MODE_EXPLICIT=0
 HUB_PORT="${AGENT_INDEX_HUB_PORT:-8788}"
 SESSION_WORKSPACE="${AGENT_WINDOW_WORKSPACE:-$PWD}"
 SESSION_IS_ACTIVE=0
+READY_TIMEOUT_SEC=6
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -42,26 +43,30 @@ while [[ $# -gt 0 ]]; do
 done
 
 PWA_ENABLED_FILE="${AGENT_WINDOW_STATE_DIR:-$HOME/.agent-window/state}/pwa/enabled"
-if [[ "$HTTPS_MODE" -eq 1 || ( "$HTTPS_MODE_EXPLICIT" -eq 0 && ( "${AGENT_WINDOW_ENABLE_LOCAL_HTTPS:-}" == "1" || -f "$PWA_ENABLED_FILE" ) ) ]]; then
+if [[ "$HTTPS_MODE_EXPLICIT" -eq 0 && ( "${AGENT_WINDOW_ENABLE_LOCAL_HTTPS:-}" == "1" || -f "$PWA_ENABLED_FILE" ) ]]; then
+  HTTPS_MODE=1
+fi
+if [[ "$HTTPS_MODE" -eq 1 ]]; then
   if [[ ! -f "$PWA_ENABLED_FILE" ]]; then
     echo "PWA HTTPS is not enabled yet." >&2
     echo "Start the HTTP Tauri app first, then run ./setup/pwa/enable." >&2
     exit 1
   fi
   export AGENT_WINDOW_ENABLE_LOCAL_HTTPS=1
-  if [[ -z "${AGENT_WINDOW_CERT_FILE:-}" || -z "${AGENT_WINDOW_KEY_FILE:-}" ]]; then
-    ensure_repo_https_cert
-  fi
-  if [[ -z "${AGENT_WINDOW_CERT_FILE:-}" || -z "${AGENT_WINDOW_KEY_FILE:-}" ]]; then
-    echo "local HTTPS certificate is required. Run ./setup/pwa/enable first." >&2
-    exit 1
-  fi
+  CERTS_DIR="${AGENT_WINDOW_CERTS_DIR:-$HOME/.agent-window/state/certs}"
+  : "${AGENT_WINDOW_CERT_FILE:=$CERTS_DIR/cert.pem}"
+  : "${AGENT_WINDOW_KEY_FILE:=$CERTS_DIR/key.pem}"
+  export AGENT_WINDOW_CERT_FILE AGENT_WINDOW_KEY_FILE
   if [[ ! -f "${AGENT_WINDOW_CERT_FILE}" || ! -f "${AGENT_WINDOW_KEY_FILE}" ]]; then
-    echo "configured local HTTPS certificate files are missing." >&2
+    echo "PWA is enabled; HTTPS certificate files are missing." >&2
     exit 1
   fi
   HTTPS_SCHEME="https"
 else
+  if [[ -f "$PWA_ENABLED_FILE" ]]; then
+    echo "PWA is enabled; HTTP is not allowed." >&2
+    exit 1
+  fi
   unset AGENT_WINDOW_CERT_FILE AGENT_WINDOW_KEY_FILE AGENT_WINDOW_ENABLE_LOCAL_HTTPS
   HTTPS_SCHEME="http"
 fi
@@ -77,41 +82,19 @@ else
   unset AGENT_WINDOW_PUBLIC_HOST AGENT_WINDOW_PUBLIC_HUB_PORT
 fi
 if [[ "$HUB_MODE" -eq 1 ]]; then
-  HUB_READY=0
-  if port_serves_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/hub.webmanifest"; then
-    HUB_READY=1
-  else
-    OPPOSITE_SCHEME="http"
-    [[ "$HTTPS_SCHEME" == "http" ]] && OPPOSITE_SCHEME="https"
-    if port_serves_expected_url "$OPPOSITE_SCHEME" "$HUB_PORT" "/hub.webmanifest"; then
-      STALE_HUB_PIDS="$(list_listening_pids "$HUB_PORT")"
-      while IFS= read -r stale_pid; do
-        [[ -n "$stale_pid" ]] || continue
-        stale_cmd="$(ps -p "$stale_pid" -o command= 2>/dev/null || true)"
-        if [[ "$stale_cmd" == *"hub_backend.hub_server"* && "$stale_cmd" == *"$REPO_ROOT"* ]]; then
-          kill "$stale_pid" 2>/dev/null || true
-        fi
-      done <<< "$STALE_HUB_PIDS"
-      wait_for_port_to_clear "$HUB_PORT" 50 0.1 || true
+  if ! port_serves_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/hub.webmanifest"; then
+    STALE_HUB_PIDS="$(list_listening_pids "$HUB_PORT")"
+    if [[ -n "${STALE_HUB_PIDS//[[:space:]]/}" ]]; then
+      echo "Hub port $HUB_PORT is occupied by a listener that is not ${HTTPS_SCHEME}." >&2
+      exit 1
     fi
     PYTHONPATH="$HUB_PYTHONPATH" AGENT_WINDOW_AGENT_NAME="user" nohup python3 -m hub_backend.hub_server "$REPO_ROOT" "$SCRIPT_DIR/agent-index" "$HUB_PORT" "$TMUX_SOCKET_NAME" >/dev/null 2>&1 </dev/null &
     HUB_SERVER_PID=$!
     disown "$HUB_SERVER_PID" || true
-    for _ in $(seq 1 50); do
-      if port_serves_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/hub.webmanifest"; then
-        HUB_READY=1
-        break
-      fi
-      if ! kill -0 "$HUB_SERVER_PID" 2>/dev/null; then
-        break
-      fi
-      sleep 0.1
-    done
-  fi
-
-  if [[ "$HUB_READY" -ne 1 ]]; then
-    echo "Hub server failed to start or a stale server with the wrong scheme is still listening on port $HUB_PORT." >&2
-    exit 1
+    if ! wait_for_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/hub.webmanifest" "$READY_TIMEOUT_SEC"; then
+      echo "Hub server failed to start on ${HTTPS_SCHEME}://127.0.0.1:${HUB_PORT}/." >&2
+      exit 1
+    fi
   fi
 
   HUB_URL="${HTTPS_SCHEME}://127.0.0.1:${HUB_PORT}/"
@@ -158,33 +141,29 @@ fi
 
 if [[ "$CHAT_MODE" -eq 1 ]]; then
   CHAT_PORT="$(PYTHONPATH="$HUB_PYTHONPATH" python3 -m server.port_cli "$REPO_ROOT" "$SESSION_NAME")"
-  STALE_CHAT_PIDS="$(list_listening_pids "$CHAT_PORT")"
-  if [[ -n "${STALE_CHAT_PIDS//[[:space:]]/}" ]]; then
-    printf '%s\n' "$STALE_CHAT_PIDS" | xargs kill -9 2>/dev/null || true
-    wait_for_port_to_clear "$CHAT_PORT" 50 0.1 || true
+  CHAT_ALREADY_UP=0
+  if [[ "${AGENT_WINDOW_CHAT_RESTART_HANDOFF:-}" != "1" ]] \
+    && port_serves_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/app.webmanifest"; then
+    CHAT_ALREADY_UP=1
   fi
-  SESSION_IS_ACTIVE="$SESSION_IS_ACTIVE" \
-    PYTHONPATH="$HUB_PYTHONPATH" \
-    AGENT_WINDOW_AGENT_NAME="user" \
-    AGENT_INDEX_HUB_PORT="$HUB_PORT" \
-    AGENT_WINDOW_TMUX_SOCKET="$TMUX_SOCKET_NAME" \
-    nohup python3 -m server.server "$SESSION_NAME" "$SESSION_WORKSPACE" >/dev/null 2>&1 </dev/null &
-  CHAT_SERVER_PID=$!
-  disown "$CHAT_SERVER_PID" || true
-  CHAT_READY=0
-  for _ in $(seq 1 50); do
-    if pid_listens_on_port "$CHAT_SERVER_PID" "$CHAT_PORT" && port_serves_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/app.webmanifest"; then
-      CHAT_READY=1
-      break
+  if [[ "$CHAT_ALREADY_UP" -ne 1 ]]; then
+    STALE_CHAT_PIDS="$(list_listening_pids "$CHAT_PORT")"
+    if [[ -n "${STALE_CHAT_PIDS//[[:space:]]/}" ]]; then
+      echo "Chat port $CHAT_PORT is occupied by a listener that is not ${HTTPS_SCHEME}." >&2
+      exit 1
     fi
-    if ! kill -0 "$CHAT_SERVER_PID" 2>/dev/null; then
-      break
+    SESSION_IS_ACTIVE="$SESSION_IS_ACTIVE" \
+      PYTHONPATH="$HUB_PYTHONPATH" \
+      AGENT_WINDOW_AGENT_NAME="user" \
+      AGENT_INDEX_HUB_PORT="$HUB_PORT" \
+      AGENT_WINDOW_TMUX_SOCKET="$TMUX_SOCKET_NAME" \
+      nohup python3 -m server.server "$SESSION_NAME" "$SESSION_WORKSPACE" >/dev/null 2>&1 </dev/null &
+    CHAT_SERVER_PID=$!
+    disown "$CHAT_SERVER_PID" || true
+    if ! wait_for_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/app.webmanifest" "$READY_TIMEOUT_SEC"; then
+      echo "Chat server failed to start on ${HTTPS_SCHEME}://127.0.0.1:${CHAT_PORT}/." >&2
+      exit 1
     fi
-    sleep 0.1
-  done
-  if [[ "$CHAT_READY" -ne 1 ]]; then
-    echo "Chat server failed to start or a stale server with the wrong scheme is still listening on port $CHAT_PORT." >&2
-    exit 1
   fi
   CHAT_URL="${HTTPS_SCHEME}://127.0.0.1:${CHAT_PORT}/"
   LOCAL_IP="$(detect_local_ip || true)"

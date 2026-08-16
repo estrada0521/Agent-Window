@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import socket
 from pathlib import Path
 
@@ -117,7 +118,25 @@ def agent_window_root() -> Path:
 
 
 def agent_window_state_dir() -> Path:
+    override = (os.environ.get("AGENT_WINDOW_STATE_DIR") or "").strip()
+    if override:
+        return Path(override).expanduser()
     return agent_window_root() / "state"
+
+
+def pwa_https_enabled() -> bool:
+    return (agent_window_state_dir() / "pwa" / "enabled").is_file()
+
+
+def local_bind_scheme(*, cert_file: str = "", key_file: str = "") -> str:
+    """PWA on → HTTPS only. PWA off → HTTP."""
+    if not pwa_https_enabled():
+        return "http"
+    if not cert_file or not key_file:
+        raise SystemExit("PWA is enabled; HTTPS certificate and key are required")
+    if not Path(cert_file).is_file() or not Path(key_file).is_file():
+        raise SystemExit("PWA is enabled; HTTPS certificate files are missing")
+    return "https"
 
 
 def agent_window_run_dir() -> Path:
