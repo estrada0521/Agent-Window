@@ -48,7 +48,6 @@ _initialized = False
 index_path = Path()
 limit = 0
 session_name = ""
-follow_mode = False
 port = 0
 agent_send_path = ""
 workspace = ""
@@ -248,7 +247,7 @@ def _clean_env():
 
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
-    global index_path, limit, session_name, follow_mode
+    global index_path, limit, session_name
     global port, agent_send_path, workspace, log_dir, targets, tmux_socket, hub_port
     global PUBLIC_HOST, PUBLIC_HUB_PORT, _repo_root, runtime
     global _PWA_STATIC_DIR, server_instance, load_chat_settings, chat_font_settings_inline_style
@@ -260,24 +259,23 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         return
 
     argv = list(sys.argv[1:] if argv is None else argv)
-    if len(argv) != 11:
+    if len(argv) != 10:
         raise SystemExit(
             "usage: python -m server.server "
-            "<index_path> <limit> <session_name> <follow_mode> "
+            "<index_path> <limit> <session_name> "
             "<port> <agent_send_path> <workspace> <log_dir> <targets_csv> <tmux_socket> <hub_port>"
         )
 
     index_path = Path(argv[0])
     limit = int(argv[1])
     session_name = argv[2]
-    follow_mode = argv[3] == "1"
-    port = int(argv[4])
-    agent_send_path = argv[5]
-    workspace = argv[6]
-    log_dir = argv[7]
-    targets = [item for item in argv[8].split(",") if item]
-    tmux_socket = argv[9]
-    hub_port = int(argv[10])
+    port = int(argv[3])
+    agent_send_path = argv[4]
+    workspace = argv[5]
+    log_dir = argv[6]
+    targets = [item for item in argv[7].split(",") if item]
+    tmux_socket = argv[8]
+    hub_port = int(argv[9])
     PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
     PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
 
@@ -286,7 +284,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         index_path=index_path,
         limit=limit,
         session_name=session_name,
-        follow_mode=follow_mode,
         port=port,
         agent_send_path=agent_send_path,
         workspace=workspace,
@@ -323,7 +320,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         hub_port=hub_port,
         chat_settings=settings_for_chat_render(load_chat_settings(), variant="desktop"),
         agent_font_mode_inline_style=chat_font_settings_inline_style,
-        follow="0",
         chat_base_path="",
         session_name=session_name,
     )
@@ -567,7 +563,7 @@ def main(argv: list[str] | None = None) -> None:
         ctx.load_cert_chain(cert_file, key_file)
         server.socket = ctx.wrap_socket(server.socket, server_side=True)
         scheme = "https"
-    print(f"{scheme}://127.0.0.1:{port}/?follow={'1' if follow_mode else '0'}", flush=True)
+    print(f"{scheme}://127.0.0.1:{port}/", flush=True)
     server.serve_forever()
     if chat_restart_pending:
         chat_restart_release_event.wait()

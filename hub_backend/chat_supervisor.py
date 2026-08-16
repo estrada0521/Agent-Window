@@ -265,7 +265,6 @@ def ensure_chat_server(
                     str(index_path),
                     "2000",
                     session_name,
-                    "1",
                     str(chat_port),
                     str(self.agent_send_path),
                     workspace,

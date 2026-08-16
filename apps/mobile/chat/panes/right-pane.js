@@ -55,7 +55,7 @@
       const target = String(nativeHeaderMenuSelect.value || "");
       clearNativeHeaderMenuSelection();
       if (!target) return;
-      void runForwardAction(target, { sourceNode: null, keepComposerOpen: false, keepHeaderOpen: false });
+      void runForwardAction(target, { sourceNode: null, keepHeaderOpen: false });
     });
     nativeHeaderMenuSelect?.addEventListener("blur", () => {
       setTimeout(clearNativeHeaderMenuSelection, 0);
@@ -794,7 +794,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
       }
       const action = String(data.action || "");
       if (!action) return;
-      await runForwardAction(action, { sourceNode: null, keepComposerOpen: false, keepHeaderOpen: false });
+      await runForwardAction(action, { sourceNode: null, keepHeaderOpen: false });
     };
     window.addEventListener("message", (event) => {
       if (!(event.data && event.data.type === "native-menu-action")) return;
@@ -834,7 +834,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
     });
     const closeQuickMore = () => {
       if (quickMore) quickMore.open = false;
-      closePlusMenu();
       closeHeaderMenus();
     };
     window.addEventListener("resize", () => {
@@ -850,9 +849,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
       if (quickMore && quickMore.open && !quickMore.contains(event.target)) {
         quickMore.open = false;
       }
-      if (composerPlusMenu && composerPlusMenu.open && !composerPlusMenu.contains(event.target) && !event.target.closest(".target-chip")) {
-        closePlusMenu();
-      }
       const inRightMenu = rightMenuBtn?.contains(event.target) || rightMenuPanel?.contains(event.target);
       const inGitBranchMenu = gitBranchPanel?.contains(event.target);
       const inFilesMenu = repoPanel?.contains(event.target);
@@ -865,15 +861,12 @@ __CHAT_INCLUDE:../features/git-panel.js__
         closeHeaderMenus();
       }
     });
-    async function runForwardAction(target, { sourceNode = null, keepComposerOpen = false, keepHeaderOpen = false } = {}) {
+    async function runForwardAction(target, { sourceNode = null, keepHeaderOpen = false } = {}) {
       const action = String(target || "");
       if (!action) return;
       if (action === "esc" || action === "restart" || action === "resume" || action === "ctrlc" || action === "enter") {
-        if (!keepComposerOpen) closeQuickMore();
+        closeQuickMore();
         await postShortcutCommand({ command_id: action, arg: "" });
-        if (keepComposerOpen && composerPlusMenu) {
-          requestAnimationFrame(() => { composerPlusMenu.open = true; });
-        }
         return;
       }
       if (action === "reloadChat") {
@@ -914,9 +907,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
         return;
       }
       document.getElementById(action)?.click();
-      if (keepComposerOpen && composerPlusMenu) {
-        requestAnimationFrame(() => { composerPlusMenu.open = true; });
-      }
       if (keepHeaderOpen && rightMenuPanel && rightMenuBtn) {
         requestAnimationFrame(() => {
           rightMenuPanel.hidden = false;
@@ -929,9 +919,8 @@ __CHAT_INCLUDE:../features/git-panel.js__
       node.addEventListener("mousedown", (e) => e.preventDefault());
       node.addEventListener("click", async () => {
         const target = node.dataset.forwardAction || "";
-        const keepComposerOpen = !!(composerPlusMenu && composerPlusMenu.contains(node));
         const keepHeaderOpen = !!(rightMenuPanel && rightMenuPanel.contains(node));
-        await runForwardAction(target, { sourceNode: node, keepComposerOpen, keepHeaderOpen });
+        await runForwardAction(target, { sourceNode: node, keepHeaderOpen });
       });
     });
         document.querySelectorAll(".quick-action:not(.quick-more-toggle):not([data-forward-action]):not(#attachBtn)").forEach((node) => {

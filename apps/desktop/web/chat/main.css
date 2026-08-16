@@ -64,7 +64,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-code-block.css__
     .has-hover #composerFabBtn:hover {
       background: var(--fab-hover-bg);
     }
-    .composer-plus-menu[open] .composer-plus-toggle,
-    .composer-plus-menu:not([open]) .composer-plus-toggle:active {
+    .composer-attach-btn:active {
       background: transparent;
     }

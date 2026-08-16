@@ -131,7 +131,7 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
             resolved_workspace,
             list(ctx["all_agent_names"]),
         )
-        # Start tmux session with user pane only (no agents yet)
+        # Start tmux session with the terminal window only (no agents yet)
         agent_window_bin = str(ctx["script_path"].parent / "agent-window")
         launch_env = os.environ.copy()
         subprocess.Popen(
@@ -164,7 +164,7 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         handler.headers.get("Host", "127.0.0.1"),
         session_name,
         int(chat_port or 0),
-        f"/?follow=1&ts={int(time.time() * 1000)}",
+        f"/?ts={int(time.time() * 1000)}",
     )
     handler._send_json(
         200,

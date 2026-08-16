@@ -244,4 +244,3 @@ __CHAT_INCLUDE:../slash-commands.js__
       await submitMessage({ closeOverlayOnStart });
     });
     const quickMore = document.querySelector(".quick-more");
-    const composerPlusMenu = document.getElementById("composerPlusMenu");

@@ -56,7 +56,6 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
         });
     };
     const _pageParams = new URLSearchParams(window.location.search || "");
-    const followMode = _pageParams.get("follow") === "1";
     const launchShellMode = _pageParams.get("launch_shell") === "1";
     const composerAutoOpenRequested = _pageParams.get("compose") === "1";
     let refreshInFlight = false;
@@ -510,7 +509,7 @@ __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
       });
     };
     document.addEventListener("pointerdown", (e) => {
-      const toggle = e.target.closest(".hub-page-menu-btn, .composer-plus-toggle, .quick-action");
+      const toggle = e.target.closest(".hub-page-menu-btn, .composer-attach-btn, .quick-action");
       if (toggle) {
         if (toggle.classList.contains("animating")) {
           e.preventDefault();
@@ -561,10 +560,8 @@ __CHAT_INCLUDE:panes/pane-viewer.js__
     };
     __CHAT_INCLUDE:../../shared/chat/workspace-sync-events.js__
     refresh({ forceScroll: true });
-    if (followMode) {
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-          void refresh();
-        }
-      });
-    }
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        void refresh();
+      }
+    });

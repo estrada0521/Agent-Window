@@ -84,8 +84,8 @@ def send_message(
                 "msg_id": uuid.uuid4().hex[:12],
             }
             append_jsonl_entry(self.index_path, entry)
-            return 200, {"ok": True, "mode": "memo", "entry": entry}
-        return 200, {"ok": True, "mode": "memo"}
+            return 200, {"ok": True, "mode": "note", "entry": entry}
+        return 200, {"ok": True, "mode": "note"}
     if "user" in targets:
         return 400, {"ok": False, "error": 'target "user" cannot be combined with other targets'}
     delivery_targets: list[str] = []

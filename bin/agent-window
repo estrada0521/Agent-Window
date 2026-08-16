@@ -70,9 +70,6 @@ DETACH=0
 FRESH=0
 AGENTS_ARG=""
 NO_AGENTS=0
-USER_PANE="bottom:1"
-USER_PANE_TOP_COUNT=0
-USER_PANE_BOTTOM_COUNT=0
 MODE="up"
 LIST_VERBOSE=0
 ALL_SESSIONS=0
@@ -337,24 +334,6 @@ PYEOF
   [[ -n "$session_socket" ]] && TMUX_SOCKET_NAME="$session_socket"
 }
 
-session_user_pane_value() {
-  local session="$1"
-  local panes
-  panes="$(tmux show-environment -t "$session" AGENT_WINDOW_PANES_USER 2>/dev/null | sed 's/^[^=]*=//' || true)"
-  if [[ -n "$panes" ]]; then
-    printf '%s\n' "$panes"
-  else
-    tmux show-environment -t "$session" AGENT_WINDOW_PANE_USER 2>/dev/null | sed 's/^[^=]*=//' || true
-  fi
-}
-
-primary_user_pane_id() {
-  local session="$1" panes
-  panes="$(session_user_pane_value "$session")"
-  panes="${panes%%,*}"
-  [[ -n "$panes" ]] && printf '%s\n' "$panes"
-}
-
 primary_agent_pane_id() {
   local session="$1"
   local agents_str instance upper pane_id
@@ -368,65 +347,6 @@ primary_agent_pane_id() {
     [[ -n "$pane_id" ]] && { printf '%s\n' "$pane_id"; return 0; }
   done
   return 0
-}
-
-parse_user_pane_spec() {
-  local spec="$1" parsed
-  if ! parsed="$(python3 - "$REPO_ROOT" "$spec" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-spec = sys.argv[2]
-sys.path.insert(0, str(repo_root / "bin"))
-from agent_window_lib.topology import parse_user_pane_spec
-
-try:
-    top, bottom = parse_user_pane_spec(spec)
-except ValueError:
-    raise SystemExit(1)
-
-print(f"{top}\t{bottom}")
-PYEOF
-  )"; then
-    return 1
-  fi
-  IFS=$'\t' read -r USER_PANE_TOP_COUNT USER_PANE_BOTTOM_COUNT <<< "$parsed"
-  [[ -n "$USER_PANE_TOP_COUNT" && -n "$USER_PANE_BOTTOM_COUNT" ]]
-}
-
-create_user_pane_band() {
-  local target="$1" side="$2" count="$3" pane_height="${4:-1}" created_panes pane_id
-  created_panes="$(python3 - "$REPO_ROOT" "$target" "$side" "$count" "$pane_height" "$WORKSPACE" "$TMUX_SOCKET_NAME" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-target = sys.argv[2]
-side = sys.argv[3]
-count = int(sys.argv[4])
-pane_height = int(sys.argv[5])
-workspace = sys.argv[6]
-tmux_socket = sys.argv[7]
-sys.path.insert(0, str(repo_root / "src"))
-sys.path.insert(0, str(repo_root))
-from backend_core.tmux.window import create_user_pane_band
-
-for pane_id in create_user_pane_band(
-    target=target,
-    side=side,
-    count=count,
-    pane_height=pane_height,
-    workspace=workspace,
-    tmux_socket=tmux_socket,
-):
-    print(pane_id)
-PYEOF
-  )"
-  while IFS= read -r pane_id; do
-    [[ -n "$pane_id" ]] || continue
-    USER_PANE_IDS+=("$pane_id")
-  done <<< "$created_panes"
 }
 
 window_target_for_pane() {
@@ -860,9 +780,6 @@ Options:
                          --agents claude,gemini
                          --agents claude,codex,cursor
 
-  --user-pane SPEC     Add short terminal panes for the human operator (default: bottom:1)
-                       Examples: top, bottom:2, top:2,bottom:1, none
-
   --session NAME       Name of the tmux session (default: current directory name)
   --workspace PATH     Working directory (default: current directory)
   --detach             Start session in detached mode
@@ -896,9 +813,6 @@ list_sessions() {
       printf '  Panes: %s\n' "$(session_pane_count "$session")"
       printf '  Dead panes: %s\n' "$(session_dead_pane_count "$session")"
       printf '  Attached clients: %s\n' "$(session_attached_value "$session")"
-      if [[ -n "$(session_user_pane_value "$session")" ]]; then
-        printf '  User pane: %s\n' "$(session_user_pane_value "$session")"
-      fi
       printf '  Agents: %s\n' "$(session_agents_value "$session")"
       printf '  Created: %s\n' "$(session_created_value "$session")"
       printf '%s\n' "$(session_agent_state_lines "$session")"
@@ -953,18 +867,16 @@ show_status() {
     return 0
   fi
 
-  local workspace window_count pane_count user_pane
+  local workspace window_count pane_count
   workspace="$(tmux show-environment -t "$session" AGENT_WINDOW_WORKSPACE 2>/dev/null | sed 's/^[^=]*=//')"
   window_count="$(tmux list-windows -t "$session" 2>/dev/null | wc -l | tr -d ' ')"
   pane_count="$(tmux list-panes -s -t "$session" 2>/dev/null | wc -l | tr -d ' ')"
-  user_pane="$(session_user_pane_value "$session")"
 
   echo "Session: $session"
   echo "Running: yes"
   [[ -n "$workspace" ]] && echo "Workspace: $workspace"
   echo "Windows: $window_count"
   echo "Panes: $pane_count"
-  [[ -n "$user_pane" ]] && echo "User pane: $user_pane"
   echo "Agents:"
 
   local instance upper pane_id pane_title pane_dead agents_str
@@ -991,7 +903,7 @@ show_status() {
 print_agent_context() {
   local session="$1" resolved_note="$2"
   local workspace agents_str inst upper pane_id pane_title pane_dead pane_cmd
-  local current_pane instance_guess user_panes_csv sock
+  local current_pane instance_guess sock
 
   workspace="$(tmux show-environment -t "$session" AGENT_WINDOW_WORKSPACE 2>/dev/null | sed 's/^[^=]*=//' || true)"
   sock="$(tmux show-environment -t "$session" AGENT_WINDOW_TMUX_SOCKET 2>/dev/null | sed 's/^[^=]*=//' || true)"
@@ -1011,22 +923,16 @@ print_agent_context() {
     done
   fi
   [[ -n "$instance_guess" ]] || instance_guess="${AGENT_WINDOW_AGENT_NAME:-}"
-  user_panes_csv="$(session_user_pane_value "$session")"
-  if [[ -z "$instance_guess" && -n "$current_pane" && -n "$user_panes_csv" ]]; then
-    case ",${user_panes_csv}," in
-      *,"${current_pane}",*) instance_guess="(user/terminal pane)" ;;
-    esac
-  fi
 
   if [[ "$CONTEXT_JSON" -eq 1 ]]; then
     python3 - "$session" "$resolved_note" "$sock" "${AGENT_WINDOW_SESSION:-}" "$workspace" \
-      "$agents_str" "$current_pane" "$instance_guess" "$user_panes_csv" "$CENTRAL_LOG_DIR" <<'PYEOF'
+      "$agents_str" "$current_pane" "$instance_guess" "$CENTRAL_LOG_DIR" <<'PYEOF'
 import json
 import os
 import sys
 
 session, resolved_note, sock, mult_session, workspace = sys.argv[1:6]
-agents_str, current_pane, instance_guess, user_panes_csv, central_log = sys.argv[6:11]
+agents_str, current_pane, instance_guess, central_log = sys.argv[6:10]
 
 agents = [a.strip() for a in agents_str.split(",") if a.strip()] if agents_str else []
 out = {
@@ -1039,7 +945,6 @@ out = {
     "AGENT_WINDOW_AGENTS": agents,
     "current_tmux_pane": current_pane or None,
     "this_pane_role": instance_guess or None,
-    "user_panes_env_csv": user_panes_csv or None,
 }
 print(json.dumps(out, indent=2, ensure_ascii=False))
 PYEOF
@@ -1057,7 +962,6 @@ PYEOF
   printf '%s\n' "- **AGENT_WINDOW_AGENTS**: ${agents_str:-<unset>}"
   [[ -n "$current_pane" ]] && printf '%s\n' "- **this tmux pane (TMUX_PANE)**: ${current_pane}"
   [[ -n "$instance_guess" ]] && printf '%s\n' "- **this pane as agent instance (best effort)**: ${instance_guess}"
-  [[ -n "$user_panes_csv" ]] && printf '%s\n' "- **user panes (env csv)**: ${user_panes_csv}"
   printf '%s\n' ""
   printf '%s\n' "### Agent panes"
   if [[ -n "$agents_str" ]]; then
@@ -1070,13 +974,6 @@ PYEOF
   printf '%s\n' "- \`agent-send\` uses \`AGENT_WINDOW_SESSION\` (and tmux); targets come from AGENT_WINDOW_AGENTS and AGENT_WINDOW_PANE_* in this session."
   printf '%s\n' "- Chat jsonl lives at \`${CENTRAL_LOG_DIR}/${session}/.log.jsonl\`; workspace mirror is \`${workspace}/.agent-window/.log.jsonl\`."
 }
-
-USER_PANE_CORE_SH="$REPO_ROOT/bin/lib/user_pane.sh"
-if [[ ! -f "$USER_PANE_CORE_SH" ]]; then
-  echo "Missing required user-pane helper script: $USER_PANE_CORE_SH" >&2
-  exit 1
-fi
-source "$USER_PANE_CORE_SH"
 
 CMD_DISPATCH_CORE_SH="$REPO_ROOT/bin/lib/cmd_dispatch.sh"
 if [[ ! -f "$CMD_DISPATCH_CORE_SH" ]]; then
@@ -1106,7 +1003,7 @@ while [[ $# -gt 0 ]]; do
     --json)      CONTEXT_JSON=1; shift ;;
     --agents|--agent) AGENTS_ARG="$2"; shift 2 ;;
     --no-agents) NO_AGENTS=1; shift ;;
-    --user-pane) USER_PANE="$2"; shift 2 ;;
+    --user-pane) echo "--user-pane has been removed" >&2; exit 1 ;;
     --log-dir)   echo "--log-dir is no longer supported; logs are stored under ~/.agent-window/session." >&2; exit 1 ;;
     -h|--help)   usage; exit 0 ;;
     *)           echo "Unknown argument: $1" >&2; usage >&2; exit 1 ;;
@@ -1134,11 +1031,6 @@ if [[ "$ALL_SESSIONS" -eq 1 ]] && [[ "$LATEST_SESSION" -eq 1 ]]; then
 fi
 
 agent_window_dispatch_prelaunch_modes
-
-parse_user_pane_spec "$USER_PANE" || {
-  echo "Unknown --user-pane value: $USER_PANE (examples: none, top, bottom:2, top:2,bottom:1)" >&2
-  exit 1
-}
 
 if [[ "$NO_AGENTS" -eq 1 || -z "$AGENTS_ARG" || "$AGENTS_ARG" == "-" ]]; then
   NO_AGENTS=1
@@ -1320,25 +1212,6 @@ tmux new-session -d -x "$AGENT_WINDOW_WIDTH" -y "$AGENT_WINDOW_HEIGHT" -s "$SESS
 configure_window_size "$SESSION_NAME":0
 tmux rename-window -t "$SESSION_NAME":0 terminal >/dev/null 2>&1 || true
 
-USER_PANE_ID=""
-USER_PANE_IDS=()
-if [[ "$USER_PANE" != "none" ]]; then
-  USER_PANE_ID="$(tmux display-message -p -t "$SESSION_NAME":0.0 '#{pane_id}')"
-  USER_PANE_IDS=("$USER_PANE_ID")
-  if [[ "$USER_PANE_TOP_COUNT" -gt 0 ]]; then
-    create_user_pane_band "$USER_PANE_ID" top "$USER_PANE_TOP_COUNT"
-  fi
-  if [[ "$USER_PANE_BOTTOM_COUNT" -gt 0 ]]; then
-    create_user_pane_band "$USER_PANE_ID" bottom "$USER_PANE_BOTTOM_COUNT"
-  fi
-fi
-
-if [[ "$USER_PANE" != "none" ]]; then
-  for pane_id in "${USER_PANE_IDS[@]}"; do
-    tmux select-pane -t "$pane_id" -T "terminal"
-  done
-fi
-
 tmux set-option -t "$SESSION_NAME" -g remain-on-exit on
 tmux set-option -t "$SESSION_NAME" -g mouse on
 tmux set-option -t "$SESSION_NAME" -g pane-border-style fg='#38393D'
@@ -1359,13 +1232,8 @@ tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_WORKSPACE "$WORKSPACE"
 tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_TMUX_SOCKET "$TMUX_SOCKET_NAME"
 tmux set-environment -t "$SESSION_NAME" PATH "${SCRIPT_DIR}:${PATH}"
 tmux set-environment -t "$SESSION_NAME" -u CLAUDECODE 2>/dev/null || true
-if [[ -n "$USER_PANE_ID" ]]; then
-  tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_PANE_USER "$USER_PANE_ID"
-  tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_PANES_USER "$(IFS=,; echo "${USER_PANE_IDS[*]-}")"
-else
-  tmux set-environment -t "$SESSION_NAME" -u AGENT_WINDOW_PANE_USER 2>/dev/null || true
-  tmux set-environment -t "$SESSION_NAME" -u AGENT_WINDOW_PANES_USER 2>/dev/null || true
-fi
+tmux set-environment -t "$SESSION_NAME" -u AGENT_WINDOW_PANE_USER 2>/dev/null || true
+tmux set-environment -t "$SESSION_NAME" -u AGENT_WINDOW_PANES_USER 2>/dev/null || true
 tmux set-environment -t "$SESSION_NAME" -u AGENT_WINDOW_LOG_DIR 2>/dev/null || true
 tmux set-environment -t "$SESSION_NAME" AGENT_WINDOW_INDEX_PATH "$(_canonical_session_index_path "$SESSION_NAME")"
 ensure_session_index_mirrors "$SESSION_NAME"
@@ -1404,16 +1272,7 @@ else
   done
 fi
 
-if [[ "$USER_PANE" != "none" && ${#USER_PANE_IDS[@]} -gt 0 ]]; then
-  for pane_id in "${USER_PANE_IDS[@]}"; do
-    start_user_pane "$pane_id"
-  done
-fi
-
-
-if [[ -n "$USER_PANE_ID" ]]; then
-  tmux select-pane -t "$USER_PANE_ID"
-elif [[ ${#PANES[@]} -gt 0 ]]; then
+if [[ ${#PANES[@]} -gt 0 ]]; then
   tmux select-pane -t "${PANES[0]}"
 fi
 

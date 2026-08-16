@@ -190,19 +190,6 @@ class AgentSendRuntime:
         return None
 
     def current_pane_role(self, session_name: str) -> str | None:
-        current_pane = (self.env.get("TMUX_PANE") or "").strip()
-        if not current_pane:
-            return None
-
-        user_panes = self.resolve_pane(session_name, "AGENT_WINDOW_PANES_USER")
-        if user_panes:
-            if current_pane in [x.strip() for x in user_panes.split(",") if x.strip()]:
-                return "user"
-        else:
-            user_pane = self.resolve_pane(session_name, "AGENT_WINDOW_PANE_USER")
-            if user_pane == current_pane:
-                return "user"
-
         return self.resolve_self_agent(session_name)
 
     def agent_names(self, session_name: str) -> dict[str, str]:

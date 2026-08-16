@@ -59,7 +59,7 @@
           const action = e.target.value;
           e.target.value = "";
           if (!action) return;
-          void runForwardAction(action, { sourceNode: null, keepComposerOpen: false, keepHeaderOpen: false });
+          void runForwardAction(action, { sourceNode: null, keepHeaderOpen: false });
         });
       }
     }

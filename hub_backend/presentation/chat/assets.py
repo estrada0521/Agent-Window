@@ -205,7 +205,7 @@ def chat_app_asset_url(chat_base_path: str = "", *, variant: str = "desktop") ->
     return f"{asset_path}?v={_chat_variant(normalized_variant).app_script_version}&view={normalized_variant}"
 
 
-def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, follow, chat_base_path="", externalize_app_script=False, externalize_main_style=False, eager_optional_vendors=True, variant="desktop", session_name=""):
+def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, chat_base_path="", externalize_app_script=False, externalize_main_style=False, eager_optional_vendors=True, variant="desktop", session_name=""):
     normalized_variant = _normalized_chat_variant(variant)
     asset_variant = _chat_variant(normalized_variant)
     base_path = chat_base_path.rstrip("/")
@@ -269,4 +269,4 @@ def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings
     )
     html = apply_chat_template_replacements(html, replacements)
     html = apply_color_tokens(html, settings=chat_settings)
-    return html.replace("mode: snapshot", f"mode: {'follow' if follow == '1' else 'snapshot'}")
+    return html

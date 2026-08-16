@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from urllib.parse import parse_qs
 
 from hub_backend.branding import APP_DISPLAY_NAME
 from backend_core.access.settings import settings_for_chat_render
@@ -23,7 +22,7 @@ def _get_app_manifest(handler, _parsed, ctx) -> None:
             "display": "standalone",
             "background_color": bg,
             "theme_color": bg,
-            "start_url": ctx["pwa_asset_url_fn"]("/?follow=1", base_path),
+            "start_url": ctx["pwa_asset_url_fn"]("/", base_path),
             "scope": ctx["pwa_asset_url_fn"]("/", base_path),
             "icons": ctx["pwa_icon_entries_fn"](base_path),
         },
@@ -96,8 +95,6 @@ def _get_font_asset(handler, parsed, ctx) -> None:
 
 
 def _get_chat_index(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    follow = "1" if qs.get("follow", ["0"])[0] == "1" else "0"
     variant = request_view_variant(headers=handler.headers, query_string=parsed.query)
     chat_settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant=variant)
     request_host = (handler.headers.get("Host", "") or "").strip()
@@ -117,7 +114,6 @@ def _get_chat_index(handler, parsed, ctx) -> None:
         hub_port=effective_hub_port,
         chat_settings=chat_settings,
         agent_font_mode_inline_style=ctx["chat_font_settings_inline_style_fn"],
-        follow=follow,
         chat_base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
         externalize_app_script=True,
         externalize_main_style=True,
