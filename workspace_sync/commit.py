@@ -14,16 +14,18 @@ def _commit_state_path(runtime) -> Path:
     return runtime.log_path.parent / _COMMIT_STATE_FILENAME
 
 
-def read_commit_state_locked(runtime, handle, *, json_module=json, logging_module=logging) -> dict:
+def read_commit_state_locked(runtime, handle, *, json_module=json) -> dict:
     handle.seek(0)
     raw = handle.read().strip()
     if not raw:
         return {}
     try:
-        return json_module.loads(raw)
-    except Exception as exc:
-        logging_module.error(f"Unexpected error: {exc}", exc_info=True)
-        return {}
+        data = json_module.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError("corrupt commit state") from exc
+    if not isinstance(data, dict):
+        raise ValueError("commit state is not an object")
+    return data
 
 
 def commit_state_payload(commit: dict) -> dict:
@@ -147,33 +149,28 @@ def ensure_commit_announcements(
     runtime,
     *,
     fcntl_module=fcntl,
-    logging_module=logging,
 ) -> None:
     current = current_git_commit(runtime)
     if not current:
         return
-    try:
-        _commit_state_path(runtime).parent.mkdir(parents=True, exist_ok=True)
-        with _commit_state_path(runtime).open("a+", encoding="utf-8") as handle:
-            fcntl_module.flock(handle.fileno(), fcntl_module.LOCK_EX)
-            try:
-                state = read_commit_state_locked(runtime, handle)
-                last_hash = (state.get("last_commit_hash") or "").strip()
-                if not last_hash:
-                    record_git_commit_locked(runtime, handle, current)
-                    return
-                if last_hash == current["hash"]:
-                    return
-                commits = git_commits_since(runtime, last_hash)
-                if commits is None:
-                    record_git_commit_locked(runtime, handle, current)
-                    return
-                if not commits:
-                    record_git_commit_locked(runtime, handle, current)
-                    return
-                for commit in commits:
-                    record_git_commit_locked(runtime, handle, commit)
-            finally:
-                fcntl_module.flock(handle.fileno(), fcntl_module.LOCK_UN)
-    except Exception as exc:
-        logging_module.error(f"Unexpected error: {exc}", exc_info=True)
+    _commit_state_path(runtime).parent.mkdir(parents=True, exist_ok=True)
+    with _commit_state_path(runtime).open("a+", encoding="utf-8") as handle:
+        fcntl_module.flock(handle.fileno(), fcntl_module.LOCK_EX)
+        try:
+            state = read_commit_state_locked(runtime, handle)
+            last_hash = (state.get("last_commit_hash") or "").strip()
+            if not last_hash:
+                record_git_commit_locked(runtime, handle, current)
+                return
+            if last_hash == current["hash"]:
+                return
+            commits = git_commits_since(runtime, last_hash)
+            if commits is None:
+                return
+            if not commits:
+                record_git_commit_locked(runtime, handle, current)
+                return
+            for commit in commits:
+                record_git_commit_locked(runtime, handle, commit)
+        finally:
+            fcntl_module.flock(handle.fileno(), fcntl_module.LOCK_UN)

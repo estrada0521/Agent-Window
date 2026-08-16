@@ -54,13 +54,16 @@ def git_ignored_rel_paths(workspace: str, rel_paths: list[str]) -> set[str]:
 
 
 def _read_commit_list(_run, *, branch: str, offset: int, limit: int) -> dict:
-    total_commits = 0
     total_res = _run("rev-list", "--count", "HEAD")
-    if total_res.returncode == 0:
-        try:
-            total_commits = max(0, int((total_res.stdout or "").strip() or "0"))
-        except Exception:
-            total_commits = 0
+    if total_res.returncode != 0:
+        raise RuntimeError((total_res.stderr or total_res.stdout or "git rev-list --count failed").strip())
+    raw_count = (total_res.stdout or "").strip()
+    try:
+        total_commits = int(raw_count)
+    except ValueError as exc:
+        raise RuntimeError(f"git rev-list --count returned {raw_count!r}") from exc
+    if total_commits < 0:
+        raise RuntimeError(f"git rev-list --count returned {total_commits}")
     upstream_res = _run("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}")
     upstream = (upstream_res.stdout or "").strip() if upstream_res.returncode == 0 else ""
     ahead_behind = ""
@@ -256,9 +259,17 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
         worktree_added = worktree_unstaged_added + worktree_staged_added
         worktree_deleted = worktree_unstaged_deleted + worktree_staged_deleted
     if cached_commits is None:
-        cached_commits = _read_commit_list(_run, branch=branch, offset=offset, limit=limit)
-        with _branch_overview_cache_lock:
-            _commit_list_cache[commit_key] = cached_commits
+        if head_res.returncode != 0:
+            cached_commits = {
+                "total_commits": 0,
+                "upstream": "",
+                "ahead_behind": "",
+                "recent_commits": [],
+            }
+        else:
+            cached_commits = _read_commit_list(_run, branch=branch, offset=offset, limit=limit)
+            with _branch_overview_cache_lock:
+                _commit_list_cache[commit_key] = cached_commits
     recent_commits = list(cached_commits["recent_commits"])
     total_commits = int(cached_commits["total_commits"])
     upstream = str(cached_commits["upstream"])
