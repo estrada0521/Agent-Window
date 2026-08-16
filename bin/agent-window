@@ -1003,8 +1003,6 @@ while [[ $# -gt 0 ]]; do
     --json)      CONTEXT_JSON=1; shift ;;
     --agents|--agent) AGENTS_ARG="$2"; shift 2 ;;
     --no-agents) NO_AGENTS=1; shift ;;
-    --user-pane) echo "--user-pane has been removed" >&2; exit 1 ;;
-    --log-dir)   echo "--log-dir is no longer supported; logs are stored under ~/.agent-window/session." >&2; exit 1 ;;
     -h|--help)   usage; exit 0 ;;
     *)           echo "Unknown argument: $1" >&2; usage >&2; exit 1 ;;
   esac

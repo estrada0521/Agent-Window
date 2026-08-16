@@ -54,8 +54,6 @@ def _parse_agent_send_args(argv: list[str]) -> ParsedAgentSendArgs:
             show_help = True
             idx += 1
             continue
-        if token == "--stdin":
-            raise AgentSendError("agent-send: --stdin has been removed; stdin is now the default")
         if token == "--":
             idx += 1
             break

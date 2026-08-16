@@ -418,7 +418,7 @@
       ensureMobileSheetDom(repoPanel, {
         kind: "repo",
         title: "Repository",
-        closeLabel: "Close attached files",
+        closeLabel: "Close repository",
         onClose: () => closeRepoSheet(),
         leadingButtonHtml: `<button type="button" class="repo-sheet-back mobile-bottom-sheet-button" aria-label="Go to parent directory">${repoSheetBackIcon}</button>`,
         afterBuild: ({ sheetNav, contentEl }) => {

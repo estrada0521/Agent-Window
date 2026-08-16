@@ -43,7 +43,6 @@ from .payload import (
     summarize_light_entry,
 )
 from .style import (
-    BOLD_MODE_VIEWPORT_MAX_PX,
     _bh_agent_detail_selectors as _bh_agent_detail_selectors_impl,
 )
 from .index_cache import matched_entries as _matched_entries_impl
@@ -172,7 +171,6 @@ class ChatRuntime:
     def chat_font_settings_inline_style(cls, settings: dict) -> str:
         return _chat_font_settings_inline_style_impl(
             settings,
-            bold_mode_viewport_max_px=BOLD_MODE_VIEWPORT_MAX_PX,
             generate_agent_message_selectors_fn=generate_agent_message_selectors,
             bh_agent_detail_selectors_fn=_bh_agent_detail_selectors,
             font_family_stack_fn=cls._font_family_stack,

@@ -371,7 +371,7 @@
         if (!row) return;
         const agent = row.dataset.agent || "";
         if (!agent) return;
-        fetch("/open-terminal-pane", {
+        fetch("/open-terminal", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ agent }),

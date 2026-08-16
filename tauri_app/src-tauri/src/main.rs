@@ -481,7 +481,6 @@ fn main() {
                     "--hub",
                     "--hub-port",
                     &hub_port.to_string(),
-                    "--no-open",
                     if tauri_use_https { "--https" } else { "--http" },
                 ])
                     .current_dir(&repo_root)

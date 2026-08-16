@@ -28,7 +28,6 @@ __CHAT_INCLUDE:../../../shared/chat/base.js__
     };
     const _pageParams = new URLSearchParams(window.location.search);
     const launchShellMode = _pageParams.get("launch_shell") === "1";
-    const composerAutoOpenRequested = _pageParams.get("compose") === "1";
     const DESKTOP_FILE_PANE_MIN_VIEWPORT_PX = 961;
     let _scrollbarLayoutSyncFrame = 0;
     const syncChatScrollbarLayoutWidth = () => {
@@ -240,7 +239,6 @@ __CHAT_INCLUDE:../../../shared/chat/transcript/rich-rendering.js__
     let selectedTargets = [];
     let sendLocked = false;
     let sessionActive = true;
-    let composerAutoOpenConsumed = false;
     const canComposeInSession = () => !!sessionActive;
     let pendingAttachments = [];
     let availableTargets = [];

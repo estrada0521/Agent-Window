@@ -135,7 +135,7 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         agent_window_bin = str(ctx["script_path"].parent / "agent-window")
         launch_env = os.environ.copy()
         subprocess.Popen(
-            [agent_window_bin, "--detach", "--no-agents", "--session", session_name, "--workspace", resolved_workspace],
+            [agent_window_bin, "--detach", "--session", session_name, "--workspace", resolved_workspace],
             cwd=resolved_workspace,
             env=launch_env,
             stdout=subprocess.DEVNULL,

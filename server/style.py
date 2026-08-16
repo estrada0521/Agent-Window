@@ -10,9 +10,6 @@ def _agent_markdown_selectors(*suffixes: str, prefix: str = "") -> str:
     return ",\n".join(parts)
 
 
-BOLD_MODE_VIEWPORT_MAX_PX = 480
-
-
 def _bh_agent_detail_selectors(prefix: str = "") -> str:
     return _agent_markdown_selectors(
         " p",

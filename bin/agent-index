@@ -21,7 +21,6 @@ source "$HUB_LIB_DIR/session.sh"
 
 SESSION_NAME="${AGENT_WINDOW_SESSION:-}"
 LIMIT=2000
-JSON_MODE=0
 CHAT_MODE=0
 HUB_MODE=0
 HTTPS_MODE=0
@@ -34,14 +33,11 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --session) SESSION_NAME="$2"; shift 2 ;;
     --limit) LIMIT="$2"; shift 2 ;;
-    --follow) shift ;;
-    --json) JSON_MODE=1; shift ;;
     --chat) CHAT_MODE=1; shift ;;
     --hub) HUB_MODE=1; shift ;;
     --hub-port) HUB_PORT="$2"; shift 2 ;;
     --https) HTTPS_MODE=1; HTTPS_MODE_EXPLICIT=1; shift ;;
     --http) HTTPS_MODE=0; HTTPS_MODE_EXPLICIT=1; shift ;;
-    --no-open) shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 1 ;;
   esac

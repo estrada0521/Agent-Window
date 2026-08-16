@@ -95,7 +95,6 @@ __CHAT_INCLUDE:../messages-data.js__
       if (!sessionActive) {
         setStatus("archived session is read-only");
       }
-      maybeAutoOpenComposer();
       if (document.documentElement.dataset.mobile === "1") {
         updateRepoPanel(displayEntries);
       } else {

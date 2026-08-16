@@ -561,10 +561,6 @@ class Handler(BaseHTTPRequestHandler):
     _GET_ROUTE_HANDLERS = _GET_ROUTE_HANDLERS
     _POST_ROUTE_HANDLERS = _POST_ROUTE_HANDLERS
 
-    def end_headers(self):
-        self.send_header("Permissions-Policy", "camera=(self), microphone=(self)")
-        super().end_headers()
-
     def _send_json(self, status, payload):
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)

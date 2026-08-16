@@ -60,7 +60,7 @@ announce_local_https_requirement() {
 agent-window: phone/PWA access requires local HTTPS.
 agent-window: mkcert を使って localhost / LAN 向け証明書を用意します。
 agent-window: - Home Screen web app
-agent-window: - secure browser APIs (camera, clipboard, etc.)
+agent-window: - secure browser APIs (clipboard, etc.)
 agent-window: - 将来の service worker / push 系機能
 EOF
 }
