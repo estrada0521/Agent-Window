@@ -274,7 +274,7 @@ class AgentSendRuntime:
     def normalize_payload(sender: str, payload: str) -> str:
         return normalize_sender_payload(sender, payload)
 
-    def resolve_session_index_path(self, session_name: str) -> Path:
+    def resolve_session_log_path(self, session_name: str) -> Path:
         target_session = session_name or "default"
         default_path = session_log_path(target_session)
         default_path.parent.mkdir(parents=True, exist_ok=True)
@@ -424,7 +424,7 @@ class AgentSendRuntime:
             return False
         return True
 
-    def append_index_entry(
+    def append_log_entry(
         self,
         *,
         session_name: str,
@@ -433,7 +433,7 @@ class AgentSendRuntime:
         payload: str,
         msg_id: str,
     ) -> None:
-        index_path = self.resolve_session_index_path(session_name)
+        log_path = self.resolve_session_log_path(session_name)
         entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "session": session_name,
@@ -442,7 +442,7 @@ class AgentSendRuntime:
             "message": payload,
             "msg_id": msg_id,
         }
-        append_jsonl_entry(index_path, entry)
+        append_jsonl_entry(log_path, entry)
 
     def send_message(
         self,
@@ -483,7 +483,7 @@ class AgentSendRuntime:
             raise AgentSendError("Message delivery failed for all targets.")
 
         msg_id = uuid.uuid4().hex[:12]
-        self.append_index_entry(
+        self.append_log_entry(
             session_name=session_name,
             sender=sender_role,
             targets=successful_targets,

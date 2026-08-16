@@ -172,7 +172,8 @@ def chat_launch_session_dir(self, session_name: str, workspace: str, explicit_lo
     session_dir = local_runtime_log_dir(self.repo_root) / session_name
     session_dir.mkdir(parents=True, exist_ok=True)
     canonical_index = session_log_path(session_name)
-    canonical_index.touch(exist_ok=True)
+    if not canonical_index.exists():
+        canonical_index.touch()
     ensure_session_workspace_mirrors(session_name, workspace)
     return session_dir
 
@@ -408,9 +409,12 @@ def delete_archived_session(self, session_name: str) -> tuple[bool, str]:
     record = archived.get(session_name)
     if not record:
         return False, "That archived session is not available in this repo."
+    stop_ok, stop_detail = self.stop_chat_server(session_name)
+    if not stop_ok:
+        return False, stop_detail
     log_dir = Path((record.get("log_dir") or "").strip())
     if not log_dir.exists():
-        return False, "Archived log directory no longer exists."
+        return True, ""
     allowed_roots = [
         self.central_log_dir.resolve(),
     ]

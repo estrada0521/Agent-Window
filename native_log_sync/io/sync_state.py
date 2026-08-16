@@ -33,8 +33,8 @@ def _read_json_locked(path) -> dict:
 
 
 def load_sync_state(runtime) -> dict:
-    canonical = canonical_native_log_sync_state_path(runtime.index_path.parent)
-    internal = canonical_native_log_sync_internal_path(runtime.index_path.parent)
+    canonical = canonical_native_log_sync_state_path(runtime.log_path.parent)
+    internal = canonical_native_log_sync_internal_path(runtime.log_path.parent)
     data: dict = _read_json_locked(canonical) if canonical.exists() else {}
 
     # Internal bookkeeping (read-progress ledger, first-seen timestamps) lives
@@ -57,7 +57,7 @@ def save_sync_state(runtime, *, time_module=time) -> None:
             "native_log_current_paths": dict(runtime._native_log_current_paths),
             "last_sync": last_sync,
         }
-        with canonical_native_log_sync_state_path(runtime.index_path.parent).open("w", encoding="utf-8") as handle:
+        with canonical_native_log_sync_state_path(runtime.log_path.parent).open("w", encoding="utf-8") as handle:
             fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
             handle.write(json.dumps(pointer_state, ensure_ascii=False))
             handle.flush()
@@ -68,7 +68,7 @@ def save_sync_state(runtime, *, time_module=time) -> None:
             "native_log_progress": dict(runtime._native_log_progress),
             "last_sync": last_sync,
         }
-        with canonical_native_log_sync_internal_path(runtime.index_path.parent).open("w", encoding="utf-8") as handle:
+        with canonical_native_log_sync_internal_path(runtime.log_path.parent).open("w", encoding="utf-8") as handle:
             fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
             handle.write(json.dumps(internal_state, ensure_ascii=False))
             handle.flush()

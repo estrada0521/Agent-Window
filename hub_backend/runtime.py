@@ -29,8 +29,6 @@ from hub_backend.session_query import (
     build_session_record as _build_session_record_impl,
     collect_repo_sessions as _collect_repo_sessions_impl,
     host_without_port as _host_without_port_impl,
-    session_index_path as _session_index_path_impl,
-    session_index_paths as _session_index_paths_impl,
 )
 from backend_core.access.settings import load_hub_settings as load_shared_hub_settings
 from backend_core.access.settings import local_runtime_log_dir
@@ -142,32 +140,6 @@ class HubRuntime:
     def chat_port_for_session(self, session_name: str) -> int:
         return resolve_chat_port(self.repo_root, session_name)
 
-    def session_index_paths(
-        self,
-        session_name: str,
-        workspace: str = "",
-        explicit_log_dir: str = "",
-    ):
-        return _session_index_paths_impl(
-            self,
-            session_name,
-            workspace,
-            explicit_log_dir,
-        )
-
-    def session_index_path(
-        self,
-        session_name: str,
-        workspace: str = "",
-        explicit_log_dir: str = "",
-    ):
-        return _session_index_path_impl(
-            self,
-            session_name,
-            workspace,
-            explicit_log_dir,
-        )
-
     @staticmethod
     def host_without_port(host_header: str) -> str:
         return _host_without_port_impl(host_header)
@@ -185,9 +157,7 @@ class HubRuntime:
         created_at: str = "",
         updated_epoch: int = 0,
         updated_at: str = "",
-        explicit_log_dir: str = "",
-        index_paths: list[Path] | None = None,
-        preferred_index_path: Path | None = None,
+        log_path: Path | None = None,
     ) -> dict:
         return _build_session_record_impl(
             self,
@@ -201,9 +171,7 @@ class HubRuntime:
             created_at=created_at,
             updated_epoch=updated_epoch,
             updated_at=updated_at,
-            explicit_log_dir=explicit_log_dir,
-            index_paths=index_paths,
-            preferred_index_path=preferred_index_path,
+            log_path=log_path,
         )
 
     def repo_sessions_query(self) -> RepoSessionsQueryResult:
