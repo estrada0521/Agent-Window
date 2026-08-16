@@ -9,18 +9,16 @@ from pathlib import Path
 
 _workspace: str = ""
 _repo_root: Path = Path()
-_index_path: Path = Path()
 _runtime = None
 _BRANCH_OVERVIEW_CACHE_TTL_SECONDS = 5.0
 _branch_overview_cache_lock = threading.Lock()
 _branch_overview_cache: dict[tuple[str, int, int], tuple[float, dict]] = {}
 
 
-def configure(*, workspace: str, repo_root: Path, index_path: Path, runtime) -> None:
-    global _workspace, _repo_root, _index_path, _runtime
+def configure(*, workspace: str, repo_root: Path, runtime) -> None:
+    global _workspace, _repo_root, _runtime
     _workspace = workspace or ""
     _repo_root = repo_root
-    _index_path = index_path
     _runtime = runtime
     _clear_branch_overview_cache()
 

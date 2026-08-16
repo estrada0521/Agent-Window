@@ -275,7 +275,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         workspace=workspace,
         allowed_roots=[log_path.parent],
         repo_root=_repo_root,
-        index_path=log_path,
         runtime=runtime,
     )
     file_runtime = workspace_sync_api.file_runtime

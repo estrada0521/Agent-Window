@@ -97,7 +97,7 @@ def sync_claude_native_log(self, agent: str, native_log_path: str | None = None)
             }
             if entry.get("isApiErrorMessage"):
                 jsonl_entry["kind"] = "provider-notice"
-            append_jsonl_entry(self.index_path, jsonl_entry)
+            append_jsonl_entry(self.log_path, jsonl_entry)
             return True
 
         turn_done_seen = False

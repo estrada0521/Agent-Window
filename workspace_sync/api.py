@@ -16,12 +16,10 @@ class WorkspaceSyncApi:
         workspace: str | Path,
         allowed_roots: list[str | Path] | tuple[str | Path, ...] | None = None,
         repo_root: str | Path,
-        index_path: str | Path,
         runtime,
     ) -> None:
         self.workspace = str(workspace)
         self.repo_root = Path(repo_root).resolve()
-        self.index_path = Path(index_path)
         self.runtime = runtime
         self._sync_event_condition = threading.Condition()
         self._sync_event_seq = 0
@@ -35,7 +33,6 @@ class WorkspaceSyncApi:
         workspace_git.configure(
             workspace=self.workspace,
             repo_root=self.repo_root,
-            index_path=self.index_path,
             runtime=runtime,
         )
         start_workspace_fsevents_watcher(self)

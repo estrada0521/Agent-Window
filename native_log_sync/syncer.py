@@ -31,7 +31,7 @@ class NativeLogSyncer:
     def __init__(
         self,
         *,
-        index_path: Path | str,
+        log_path: Path | str,
         session_name: str,
         workspace: str,
         mark_idle_fn: Callable[[str], None],
@@ -42,7 +42,7 @@ class NativeLogSyncer:
         pane_id_fn: Callable[[str], str | None],
         session_is_active_fn: Callable[[], bool],
     ) -> None:
-        self.index_path = Path(index_path)
+        self.log_path = Path(log_path)
         self.session_name = session_name
         self.workspace = workspace
         self._mark_idle = mark_idle_fn

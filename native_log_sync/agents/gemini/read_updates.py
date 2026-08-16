@@ -126,7 +126,7 @@ def _sync_antigravity_db(self, agent: str, db_path: str) -> bool:
                             "native_log_path": db_path,
                             "native_log_offset": idx,
                         }
-                        append_jsonl_entry(self.index_path, jsonl_entry)
+                        append_jsonl_entry(self.log_path, jsonl_entry)
                         appended = True
                 # If this step is no longer max_idx, it's confirmed complete.
                 if idx < max_idx:
@@ -188,7 +188,7 @@ def _sync_antigravity_db(self, agent: str, db_path: str) -> bool:
                 "native_log_path": db_path,
                 "native_log_offset": idx,
             }
-            append_jsonl_entry(self.index_path, jsonl_entry)
+            append_jsonl_entry(self.log_path, jsonl_entry)
             appended = True
             next_cursor = idx + 1
 

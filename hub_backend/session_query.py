@@ -19,16 +19,6 @@ def parse_session_dir(name: str) -> str:
     return name
 
 
-def safe_mtime(path: Path) -> float:
-    try:
-        return path.stat().st_mtime
-    except (FileNotFoundError, PermissionError):
-        return 0
-    except Exception as exc:
-        logging.error(f"Unexpected error: {exc}", exc_info=True)
-        return 0
-
-
 def count_nonempty_lines(path: Path) -> int:
     try:
         with path.open("r", encoding="utf-8") as handle:
@@ -102,9 +92,9 @@ def _iter_tail_lines(path: Path, *, max_bytes: int = _PREVIEW_TAIL_BYTES):
         logging.error(f"Unexpected error: {exc}", exc_info=True)
 
 
-def _latest_message_preview_from_full_scan(index_path: Path) -> dict[str, str]:
+def _latest_message_preview_from_full_scan(log_path: Path) -> dict[str, str]:
     last_preview = {"sender": "", "text": ""}
-    with index_path.open("r", encoding="utf-8") as handle:
+    with log_path.open("r", encoding="utf-8") as handle:
         for line in handle:
             line = line.strip()
             if not line:
@@ -122,12 +112,12 @@ def _latest_message_preview_from_full_scan(index_path: Path) -> dict[str, str]:
     return last_preview
 
 
-def latest_message_preview(index_path: Path | None) -> dict[str, str]:
-    if not index_path or not index_path.is_file():
+def latest_message_preview(log_path: Path | None) -> dict[str, str]:
+    if not log_path or not log_path.is_file():
         return {"sender": "", "text": ""}
     try:
-        size = index_path.stat().st_size
-        for line in _iter_tail_lines(index_path):
+        size = log_path.stat().st_size
+        for line in _iter_tail_lines(log_path):
             try:
                 entry = json.loads(line)
             except json.JSONDecodeError:
@@ -139,74 +129,11 @@ def latest_message_preview(index_path: Path | None) -> dict[str, str]:
             if preview["text"]:
                 return preview
         if size > _PREVIEW_TAIL_BYTES:
-            return _latest_message_preview_from_full_scan(index_path)
+            return _latest_message_preview_from_full_scan(log_path)
     except Exception as exc:
         logging.error(f"Unexpected error: {exc}", exc_info=True)
         return {"sender": "", "text": ""}
     return {"sender": "", "text": ""}
-
-
-def latest_message_preview_from_paths(index_paths: list[Path]) -> dict[str, str]:
-    best_sender = ""
-    best_text = ""
-    best_epoch = -1.0
-    for index_path in index_paths:
-        preview = latest_message_preview(index_path)
-        if not preview["text"]:
-            continue
-        epoch = safe_mtime(index_path)
-        if epoch >= best_epoch:
-            best_epoch = epoch
-            best_sender = preview["sender"]
-            best_text = preview["text"]
-    return {"sender": best_sender, "text": best_text}
-
-
-def session_index_paths(
-    runtime: Any,
-    session_name: str,
-    workspace: str = "",
-    explicit_log_dir: str = "",
-) -> list[Path]:
-    roots: list[Path] = []
-    root_candidates = [str(runtime.central_log_dir)]
-    for candidate in root_candidates:
-        candidate = (candidate or "").strip()
-        if not candidate:
-            continue
-        try:
-            root = Path(candidate).resolve()
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            continue
-        if root not in roots:
-            roots.append(root)
-    found: list[Path] = []
-    seen = set()
-    for root in roots:
-        if not root.is_dir():
-            continue
-        candidates = [root / session_name / ".log.jsonl"]
-        for index_path in candidates:
-            if not index_path.is_file():
-                continue
-            resolved = str(index_path.resolve())
-            if resolved in seen:
-                continue
-            seen.add(resolved)
-            found.append(index_path)
-    found.sort(key=lambda path: (safe_mtime(path), path.stat().st_size if path.exists() else 0), reverse=True)
-    return found
-
-
-def session_index_path(
-    runtime: Any,
-    session_name: str,
-    workspace: str = "",
-    explicit_log_dir: str = "",
-) -> Path | None:
-    paths = session_index_paths(runtime, session_name, workspace, explicit_log_dir)
-    return paths[0] if paths else None
 
 
 def host_without_port(host_header: str) -> str:
@@ -230,40 +157,11 @@ def build_session_record(
     created_at: str = "",
     updated_epoch: int = 0,
     updated_at: str = "",
-    explicit_log_dir: str = "",
-    index_paths: list[Path] | None = None,
-    preferred_index_path: Path | None = None,
+    log_path: Path | None = None,
 ) -> dict:
-    resolved_paths = list(index_paths or session_index_paths(runtime, name, workspace, explicit_log_dir))
-    primary_index = None
-    if preferred_index_path is not None:
-        preferred_index = Path(preferred_index_path)
-        if preferred_index.is_file():
-            primary_index = preferred_index
-            try:
-                preferred_key = str(preferred_index.resolve())
-            except Exception:
-                preferred_key = str(preferred_index)
-            has_preferred = False
-            for candidate in resolved_paths:
-                try:
-                    candidate_key = str(candidate.resolve())
-                except Exception:
-                    candidate_key = str(candidate)
-                if candidate_key == preferred_key:
-                    has_preferred = True
-                    break
-            if not has_preferred:
-                resolved_paths.insert(0, preferred_index)
-    if primary_index is None:
-        primary_index = resolved_paths[0] if resolved_paths else None
-
-    if primary_index is not None:
-        preview = latest_message_preview(primary_index)
-        if not preview["text"]:
-            preview = latest_message_preview_from_paths(resolved_paths)
-    else:
-        preview = {"sender": "", "text": ""}
+    path = Path(log_path) if log_path is not None else session_log_path(name)
+    primary = path if path.is_file() else None
+    preview = latest_message_preview(primary)
     session_slug = quote(name, safe="")
     return {
         "name": name,
@@ -278,9 +176,9 @@ def build_session_record(
         "status": status,
         "chat_port": runtime.chat_port_for_session(name),
         "session_path": f"/session/{session_slug}/",
-        "log_dir": str(primary_index.parent if primary_index else ""),
-        "index_path": str(primary_index) if primary_index else "",
-        "chat_count": sum(count_nonempty_lines(path) for path in resolved_paths),
+        "log_dir": str(path.parent),
+        "log_path": str(path),
+        "chat_count": count_nonempty_lines(path) if primary else 0,
         "latest_message_sender": preview["sender"],
         "latest_message_preview": preview["text"],
     }
@@ -307,7 +205,6 @@ def collect_repo_sessions(runtime: Any) -> tuple[list[dict], str, str]:
             break
         if not workspace:
             continue
-        explicit_log_dir = ""
         r_attached = runtime.tmux_run(["display-message", "-p", "-t", name, "#{session_attached}"])
         r_created = runtime.tmux_run(["display-message", "-p", "-t", name, "#{session_created}"])
         r_dead = runtime.tmux_run(["list-panes", "-t", name, "-F", "#{pane_dead}"])
@@ -335,8 +232,6 @@ def collect_repo_sessions(runtime: Any) -> tuple[list[dict], str, str]:
         else:
             status = "idle"
 
-        preferred_index_path = session_log_path(name)
-        index_paths = session_index_paths(runtime, name, workspace, explicit_log_dir)
         sessions.append(
             build_session_record(
                 runtime,
@@ -348,9 +243,6 @@ def collect_repo_sessions(runtime: Any) -> tuple[list[dict], str, str]:
                 dead_panes=dead_panes,
                 created_epoch=int(created_epoch) if created_epoch.isdigit() else 0,
                 created_at=created_at,
-                explicit_log_dir=explicit_log_dir,
-                index_paths=index_paths,
-                preferred_index_path=preferred_index_path,
             )
         )
 
@@ -377,9 +269,9 @@ def archived_sessions(runtime: Any, active_names: set[str] | list[str] | None = 
         entries = [entry for entry in log_root.iterdir() if entry.is_dir()]
         for entry in entries:
             meta_path = entry / ".meta"
-            index_path = entry / ".log.jsonl"
+            log_path = entry / ".log.jsonl"
             try:
-                if not meta_path.exists() and not index_path.exists():
+                if not meta_path.exists() and not log_path.exists():
                     continue
             except OSError:
                 continue
@@ -404,7 +296,8 @@ def archived_sessions(runtime: Any, active_names: set[str] | list[str] | None = 
             workspace = (meta.get("workspace") or "").strip() or str(runtime.repo_root)
             created_epoch = parse_saved_time(str(meta.get("created_at", "")))
             updated_epoch = parse_saved_time(str(meta.get("updated_at", "")))
-            updated_epoch = max(updated_epoch, safe_mtime(meta_path), safe_mtime(index_path))
+            if not updated_epoch:
+                updated_epoch = created_epoch
             if not created_epoch:
                 created_epoch = updated_epoch
             agents: list[str] = []
@@ -428,8 +321,7 @@ def archived_sessions(runtime: Any, active_names: set[str] | list[str] | None = 
                 created_at=str(meta.get("created_at") or format_epoch(created_epoch)),
                 updated_epoch=int(updated_epoch or 0),
                 updated_at=str(meta.get("updated_at") or format_epoch(updated_epoch)),
-                explicit_log_dir=str(entry),
-                index_paths=[index_path] if index_path.exists() else [],
+                log_path=log_path,
             )
             existing = records.get(session_name)
             if existing is None or record["updated_epoch"] > existing["updated_epoch"]:

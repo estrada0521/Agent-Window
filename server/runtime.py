@@ -105,7 +105,7 @@ class ChatRuntime:
         self._agent_running: set[str] = self._restore_running_agents_from_tmux_env()
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(
-            index_path=self.log_path,
+            log_path=self.log_path,
             session_name=self.session_name,
             workspace=self.workspace,
             mark_idle_fn=self._mark_idle,

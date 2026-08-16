@@ -96,12 +96,12 @@ def _cursor_display_for_sync(entry: dict) -> str:
     return normalize_cursor_plaintext_for_index(display) or ""
 
 
-def last_synced_cursor_display(index_path: str, transcript_path: str) -> str | None:
+def last_synced_cursor_display(log_path: str, transcript_path: str) -> str | None:
     key = _normalized_native_log_path(transcript_path)
-    if not key or not os.path.exists(index_path):
+    if not key or not os.path.exists(log_path):
         return None
     last: str | None = None
-    with open(index_path, "r", encoding="utf-8") as handle:
+    with open(log_path, "r", encoding="utf-8") as handle:
         for raw in handle:
             line = raw.strip()
             if not line:
@@ -187,7 +187,7 @@ def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None)
         file_size = os.path.getsize(transcript_path)
         start = read_progress_start(self._native_log_progress, transcript_path, file_size)
         if start is None:
-            anchor = last_synced_cursor_display(str(self.index_path), transcript_path)
+            anchor = last_synced_cursor_display(str(self.log_path), transcript_path)
             if not anchor:
                 logging.error(
                     "Cursor native log %s shrank below the synced position; no last synced message",
@@ -225,7 +225,7 @@ def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None)
                 "native_log_path": transcript_path,
                 "native_log_offset": line_start,
             }
-            append_jsonl_entry(self.index_path, jsonl_entry)
+            append_jsonl_entry(self.log_path, jsonl_entry)
 
         for _ls, entry in batch:
             tool_evs = []

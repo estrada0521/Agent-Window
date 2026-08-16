@@ -34,7 +34,7 @@ def _append_grok_reply(runtime, agent: str, history_path: str, line_start: int, 
     key = f"grok:{agent}:{history_path}:{line_start}".encode("utf-8")
     msg_id = hashlib.sha256(key).hexdigest()[:12]
     append_jsonl_entry(
-        runtime.index_path,
+        runtime.log_path,
         {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "session": runtime.session_name,

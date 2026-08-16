@@ -137,7 +137,7 @@ class HubSessionApi:
             created_at=created_at or self.format_session_timestamp(now_epoch),
             updated_epoch=now_epoch,
             updated_at=updated_at or self.format_session_timestamp(now_epoch),
-            preferred_index_path=log_path,
+            log_path=log_path,
         )
         record["running_agents"] = []
         record["is_running"] = True

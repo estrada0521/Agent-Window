@@ -153,7 +153,7 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
             }
             if provider_notice:
                 jsonl_entry["kind"] = "provider-notice"
-            append_jsonl_entry(self.index_path, jsonl_entry)
+            append_jsonl_entry(self.log_path, jsonl_entry)
             return True
 
         last_runtime_state_event = ""
