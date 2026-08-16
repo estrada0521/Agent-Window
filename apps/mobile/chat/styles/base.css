@@ -302,27 +302,27 @@
       pointer-events: none;
     }
 
-    .shell>.hub-page-header {
+    .shell>.page-header {
       position: absolute;
       overflow: visible;
       z-index: 155;
     }
 
-    .shell>.hub-page-header>.hub-page-header-top {
+    .shell>.page-header>.page-header-top {
       position: relative;
       z-index: 2;
       padding-bottom: 0;
     }
 
-    .shell>.hub-page-header>#hubPageMenuPanel:not(.hub-menu-mode-pane) {
+    .shell>.page-header>#pageMenuPanel:not(.hub-menu-mode-pane) {
       display: none;
     }
 
-    .shell>.hub-page-header>#hubPageMenuPanel.open.hub-menu-mode-pane {
+    .shell>.page-header>#pageMenuPanel.open.hub-menu-mode-pane {
       display: flex;
     }
 
-    .shell>.hub-page-header>.hub-page-menu-panel {
+    .shell>.page-header>.page-menu-panel {
       position: fixed;
       top: var(--header-menu-top, 72px);
       left: var(--header-menu-left, 0px);
@@ -350,7 +350,7 @@
         box-shadow 240ms ease;
     }
 
-    .shell>.hub-page-header>.hub-page-menu-panel.open {
+    .shell>.page-header>.page-menu-panel.open {
       border-top-color: rgba(255, 255, 255, 0.05);
       border-bottom-color: rgba(255, 255, 255, 0.1);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.32);
@@ -363,8 +363,8 @@
       display: block;
     }
 
-    .shell>.hub-page-header>#gitBranchPanel.git-branch-transitioning.open,
-    .shell>.hub-page-header>#gitBranchPanel.git-branch-mode-detail.open {
+    .shell>.page-header>#gitBranchPanel.git-branch-transitioning.open,
+    .shell>.page-header>#gitBranchPanel.git-branch-mode-detail.open {
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -458,13 +458,17 @@
     }
 
     .git-commit-detail-head .git-commit-row {
-      border-radius: 8px;
+      border-radius: 26px;
       pointer-events: none;
       min-height: 34px;
       padding: 0 10px;
-      background: var(--panel-row-selected-bg);
-      backdrop-filter: var(--glass-filter-18);
-      -webkit-backdrop-filter: var(--glass-filter-18);
+      background:
+        var(--liquid-glass-lg-sheen),
+        rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
+      border: 0.5px solid var(--liquid-glass-lg-border);
+      box-shadow: var(--liquid-glass-lg-shadow);
+      backdrop-filter: var(--liquid-glass-blur);
+      -webkit-backdrop-filter: var(--liquid-glass-blur);
       transition: background 120ms ease;
     }
 

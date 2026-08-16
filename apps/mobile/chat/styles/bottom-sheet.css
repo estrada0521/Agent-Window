@@ -1,4 +1,4 @@
-    .shell>.hub-page-header>.mobile-sheet-overlay {
+    .shell>.page-header>.mobile-sheet-overlay {
       top: 0;
       left: 0;
       right: 0;
@@ -18,7 +18,7 @@
       transition: background 300ms ease, backdrop-filter 300ms ease, -webkit-backdrop-filter 300ms ease;
     }
 
-    .shell>.hub-page-header>.mobile-sheet-overlay.open {
+    .shell>.page-header>.mobile-sheet-overlay.open {
       background: rgba(var(--bg-rgb), 0.16);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
@@ -28,7 +28,7 @@
       overflow: hidden;
     }
 
-    .shell>.hub-page-header>.mobile-sheet-overlay.sheet-closing {
+    .shell>.page-header>.mobile-sheet-overlay.sheet-closing {
       background: rgba(0, 0, 0, 0);
       backdrop-filter: blur(0);
       -webkit-backdrop-filter: blur(0);

@@ -228,7 +228,7 @@ repo_root = Path(sys.argv[1]).resolve()
 agent_name = sys.argv[2]
 
 sys.path.insert(0, str(repo_root))
-from backend_core.agents.ensure_clis import resolve_agent_executable
+from backend_core.agents.executables import resolve_agent_executable
 from backend_core.agents.registry import canonical_agent_name
 
 resolved = resolve_agent_executable(repo_root, agent_name)

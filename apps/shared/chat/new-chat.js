@@ -1,4 +1,4 @@
-    const beginChatReload = async (button) => {
+    const beginNewChat = async (button) => {
       if (reloadInFlight) return;
       reloadInFlight = true;
       document.documentElement.dataset.launchShell = "1";

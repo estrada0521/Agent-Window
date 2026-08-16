@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 from native_log_sync.entry_kind import should_omit_entry_from_chat
-from native_log_sync.redacted import agent_index_entry_omit_for_redacted
+from native_log_sync.redacted import omit_redacted_log_entry
 
 
 def matched_entries(runtime) -> list[dict]:
@@ -51,7 +51,7 @@ def matched_entries(runtime) -> list[dict]:
             if should_omit_entry_from_chat(entry):
                 processed_size += len(raw_segment)
                 continue
-            if agent_index_entry_omit_for_redacted(str(entry.get("message") or "")):
+            if omit_redacted_log_entry(str(entry.get("message") or "")):
                 processed_size += len(raw_segment)
                 continue
             entries.append(entry)

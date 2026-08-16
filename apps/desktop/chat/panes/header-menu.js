@@ -1,6 +1,6 @@
-    let rightMenuBtn = document.getElementById("hubPageMenuBtn");
-    const rightMenuPanel = document.getElementById("hubPageMenuPanel");
-    let nativeHeaderMenuBridge = document.getElementById("hubPageNativeMenuBridge");
+    let rightMenuBtn = document.getElementById("pageMenuBtn");
+    const rightMenuPanel = document.getElementById("pageMenuPanel");
+    let nativeHeaderMenuBridge = document.getElementById("pageNativeMenuBridge");
     if (isTauriHubIframeChat) {
       rightMenuBtn?.remove();
       nativeHeaderMenuBridge?.remove();
@@ -28,7 +28,7 @@
           const height = Number.isFinite(btnRect.height) && btnRect.height > 0 ? btnRect.height : fallbackHeight;
           const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
           const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-          const dockedToFloatingActions = !!bridge.parentElement?.classList.contains("hub-page-header-actions-floating");
+          const dockedToFloatingActions = !!bridge.parentElement?.classList.contains("page-header-actions-floating");
           if (dockedToFloatingActions) {
             bridge.style.position = "absolute";
             bridge.style.left = "0px";

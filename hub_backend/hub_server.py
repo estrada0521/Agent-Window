@@ -19,14 +19,14 @@ from backend_core.agents.registry import (
     icon_filename_map as _icon_filename_map,
 )
 from hub_backend.runtime import HubRuntime
-from backend_core.agents.ensure_clis import agent_launch_readiness
+from backend_core.agents.executables import agent_launch_readiness
 from hub_backend.presentation.hub.header_assets import (
     DEFAULT_HUB_HEADER_ACTIONS,
     DEFAULT_HUB_HEADER_PANELS,
-    HUB_PAGE_HEADER_CSS,
-    HUB_PAGE_HEADER_JS,
+    PAGE_HEADER_CSS,
+    PAGE_HEADER_JS,
     MOBILE_HUB_HEADER_ACTIONS,
-    render_hub_page_header,
+    render_page_header,
 )
 from hub_backend.session_api import HubSessionApi, HubSessionApiContext
 from hub_backend.presentation.hub.settings_view import (
@@ -235,10 +235,10 @@ def _serve_pwa_static(handler, path: str) -> bool:
     )
 
 _HUB_ICON_URIS = {name: _icon_data_uri(fname) for name, fname in _icon_filename_map().items()}
-_HUB_PAGE_HEADER_CSS = HUB_PAGE_HEADER_CSS
-_HUB_PAGE_HEADER_HTML = render_hub_page_header()
-_HUB_PAGE_HEADER_HTML_MOBILE = render_hub_page_header(actions_html=MOBILE_HUB_HEADER_ACTIONS)
-_HUB_PAGE_HEADER_JS = HUB_PAGE_HEADER_JS
+_PAGE_HEADER_CSS = PAGE_HEADER_CSS
+_PAGE_HEADER_HTML = render_page_header()
+_PAGE_HEADER_HTML_MOBILE = render_page_header(actions_html=MOBILE_HUB_HEADER_ACTIONS)
+_PAGE_HEADER_JS = PAGE_HEADER_JS
 _HUB_LAUNCH_SHELL_BODY_HTML = (
     '<div class="launch-shell-card" id="launchShellCard">'
     '<span class="launch-shell-spinner" aria-hidden="true"></span>'
@@ -412,10 +412,10 @@ _hub_pages = _build_hub_html_pages_impl(
     pwa_hub_manifest_url=_PWA_HUB_MANIFEST_URL,
     pwa_icon_192_url=_PWA_ICON_192_URL,
     pwa_apple_touch_icon_url=_PWA_APPLE_TOUCH_ICON_URL,
-    hub_header_css=_HUB_PAGE_HEADER_CSS,
-    hub_header_html=_HUB_PAGE_HEADER_HTML,
-    hub_header_html_mobile=_HUB_PAGE_HEADER_HTML_MOBILE,
-    hub_header_js=_HUB_PAGE_HEADER_JS,
+    hub_header_css=_PAGE_HEADER_CSS,
+    hub_header_html=_PAGE_HEADER_HTML,
+    hub_header_html_mobile=_PAGE_HEADER_HTML_MOBILE,
+    hub_header_js=_PAGE_HEADER_JS,
     hub_icon_uris=_HUB_ICON_URIS,
 )
 HUB_HOME_DESKTOP_HTML = _hub_pages["hub_home_html_desktop"]
@@ -430,9 +430,9 @@ def available_chat_font_choices():
 
 
 def hub_settings_html(saved=False, variant="desktop"):
-    header_html = render_hub_page_header(
+    header_html = render_page_header(
         title_href="/",
-        title_id="hubPageTitleLink",
+        title_id="pageTitleLink",
         actions_html=DEFAULT_HUB_HEADER_ACTIONS,
         panels_html=DEFAULT_HUB_HEADER_PANELS,
     )
@@ -444,9 +444,9 @@ def hub_settings_html(saved=False, variant="desktop"):
         pwa_hub_manifest_url=_PWA_HUB_MANIFEST_URL,
         pwa_icon_192_url=_PWA_ICON_192_URL,
         pwa_apple_touch_icon_url=_PWA_APPLE_TOUCH_ICON_URL,
-        hub_header_css=_HUB_PAGE_HEADER_CSS,
+        hub_header_css=_PAGE_HEADER_CSS,
         hub_header_html=header_html,
-        hub_header_js=_HUB_PAGE_HEADER_JS,
+        hub_header_js=_PAGE_HEADER_JS,
         view_variant=variant,
     )
 
@@ -460,17 +460,17 @@ def hub_new_session_html(variant="desktop"):
         message_text_size = int(current_settings.get("message_text_size", 13) or 13)
     except Exception:
         message_text_size = 13
-    header_html = render_hub_page_header(
+    header_html = render_page_header(
         title_href="/",
-        title_id="hubPageTitleLink",
+        title_id="pageTitleLink",
         actions_html=MOBILE_HUB_HEADER_ACTIONS if is_mobile else DEFAULT_HUB_HEADER_ACTIONS,
         panels_html=DEFAULT_HUB_HEADER_PANELS,
     )
     page = (
         _hub_pages["hub_new_session_html"]
-        .replace("__HUB_HEADER_CSS__", _HUB_PAGE_HEADER_CSS)
+        .replace("__HUB_HEADER_CSS__", _PAGE_HEADER_CSS)
         .replace("__HUB_HEADER_HTML__", header_html)
-        .replace("__HUB_HEADER_JS__", _HUB_PAGE_HEADER_JS)
+        .replace("__HUB_HEADER_JS__", _PAGE_HEADER_JS)
         .replace("__VIEW_VARIANT__", "mobile" if is_mobile else "desktop")
         .replace("__MESSAGE_TEXT_SIZE__", str(message_text_size))
     )

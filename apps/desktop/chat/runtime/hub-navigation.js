@@ -1,14 +1,14 @@
-    const hubBtn = document.getElementById("hubPageTitleLink");
+    const hubBtn = document.getElementById("pageTitleLink");
     const isDesktopHubShell = document.documentElement.dataset.hubShell === "1";
     const isTauriDesktopApp = document.documentElement.dataset.tauriApp === "1";
     const isTauriHubIframeChat = isTauriDesktopApp && document.documentElement.dataset.hubIframeChat === "1";
-    const hubHeaderRoot = document.querySelector(".shell > .hub-page-header");
-    const hubHeaderTop = hubHeaderRoot?.querySelector(".hub-page-header-top") || null;
-    const hubHeaderActions = hubHeaderTop?.querySelector(".hub-page-header-actions") || null;
+    const hubHeaderRoot = document.querySelector(".shell > .page-header");
+    const hubHeaderTop = hubHeaderRoot?.querySelector(".page-header-top") || null;
+    const hubHeaderActions = hubHeaderTop?.querySelector(".page-header-actions") || null;
     const shouldFloatHeaderActions = isDesktopHubShell || (isTauriDesktopApp && !isTauriHubIframeChat);
     if (shouldFloatHeaderActions && hubHeaderActions) {
       if (hubHeaderActions) {
-        hubHeaderActions.classList.add("hub-page-header-actions-floating");
+        hubHeaderActions.classList.add("page-header-actions-floating");
         if (hubHeaderActions.parentElement !== document.body) {
           document.body.appendChild(hubHeaderActions);
         }

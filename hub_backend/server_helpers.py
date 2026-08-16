@@ -296,8 +296,8 @@ def build_hub_html_pages(
     hub_home_desktop_html = _render_hub_home_html(desktop_template_dir, header_html=hub_header_html)
     hub_home_mobile_html = _render_hub_home_html(mobile_template_dir, header_html=hub_header_html_mobile)
     hub_new_session_html = _expand_hub_template_includes(
-        (desktop_template_dir / "new_session.html").read_text(),
-        [desktop_template_dir, shared_template_dir],
+        (shared_template_dir.parent / "new_session.html").read_text(),
+        [shared_template_dir, desktop_template_dir],
     )
     hub_new_session_html = (
         hub_new_session_html
@@ -315,7 +315,6 @@ def build_hub_html_pages(
     )
     hub_new_session_html = _replace_agent_icon_tokens(hub_new_session_html)
     return {
-        "hub_home_html": hub_home_desktop_html,
         "hub_home_html_desktop": hub_home_desktop_html,
         "hub_home_html_mobile": hub_home_mobile_html,
         "hub_new_session_html": hub_new_session_html,

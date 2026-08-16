@@ -15,10 +15,10 @@ KATEX_CDN_JS_SRC = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/kat
 KATEX_CDN_AUTO_RENDER_SRC = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/contrib/auto-render.min.js"
 
 CHAT_HEADER_ACTIONS_HTML = """
-<button type="button" class="hub-page-menu-btn" id="hubPageMenuBtn" title="Menu" aria-label="Menu">
+<button type="button" class="page-menu-btn" id="pageMenuBtn" title="Menu" aria-label="Menu">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="10" y1="15" x2="20" y2="15"/></svg>
 </button>
-<select id="hubPageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0.001;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;font-size:13px;z-index:220;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true">
+<select id="pageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0.001;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;font-size:13px;z-index:220;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true">
   <option value="" disabled selected>Menu</option>
   <option value="openGitBranchMenu" data-mobile-only="1" style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23ffffff%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 3v12%22/%3E%3Ccircle cx=%2218%22 cy=%226%22 r=%223%22/%3E%3Ccircle cx=%226%22 cy=%2218%22 r=%223%22/%3E%3Cpath d=%22M18 9a9 9 0 0 1-9 9%22/%3E%3C/svg%3E')">Git Branches</option>
   <option value="openRepoMenu" data-mobile-only="1" style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23ffffff%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z%22/%3E%3C/svg%3E')">Repository</option>
@@ -29,10 +29,10 @@ CHAT_HEADER_ACTIONS_HTML = """
   <option value="removeAgent" style="background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23ffffff%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M5%2012h14%27%2F%3E%3C%2Fsvg%3E')">Remove Agent</option>
 </select>
 """
-CHAT_HEADER_PANELS_HTML = """
-<div class="hub-page-menu-panel mobile-sheet-overlay" id="gitBranchPanel" hidden></div>
-<div class="hub-page-menu-panel mobile-sheet-overlay" id="repoPanel" hidden></div>
-<div class="hub-page-menu-panel mobile-sheet-overlay" id="paneTracePanel" hidden>
+CHAT_SHEET_PANELS_HTML = """
+<div class="page-menu-panel mobile-sheet-overlay" id="gitBranchPanel" hidden></div>
+<div class="page-menu-panel mobile-sheet-overlay" id="repoPanel" hidden></div>
+<div class="page-menu-panel mobile-sheet-overlay" id="paneTracePanel" hidden>
   <div class="hub-main-menu-stack">
     <div id="paneViewer" class="pane-viewer" hidden>
       <div class="git-commit-detail-body pane-viewer-detail-body">
@@ -42,15 +42,15 @@ CHAT_HEADER_PANELS_HTML = """
     </div>
   </div>
 </div>
-<div class="hub-page-menu-panel" id="hubPageMenuPanel" hidden>
+<div class="page-menu-panel" id="pageMenuPanel" hidden>
   <div class="hub-main-menu-stack">
     <div class="hub-main-menu-list-view">
-      <button type="button" class="hub-page-menu-item" data-forward-action="openGitBranchMenu" data-mobile-only="1"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"></path><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg></span><span class="action-label">Git Branches</span><span class="action-mobile">Branches</span></button>
-      <button type="button" class="hub-page-menu-item" data-forward-action="openRepoMenu" data-mobile-only="1"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></span><span class="action-label">Repository</span><span class="action-mobile">Repository</span></button>
-      <button type="button" class="hub-page-menu-item" data-forward-action="openTerminal" data-desktop-only="1"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></span><span class="action-label">Terminal</span><span class="action-mobile">Terminal</span></button>
-      <button type="button" class="hub-page-menu-item" data-forward-action="openFinder" data-desktop-only="1"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z"></path><path d="M3 10h18"></path></svg></span><span class="action-label">Finder</span><span class="action-mobile">Finder</span></button>
-      <button type="button" class="hub-page-menu-item positive" data-forward-action="addAgent"><span class="action-icon" aria-hidden="true"></span><span class="action-label">Add Agent</span><span class="action-mobile">Add Agent</span></button>
-      <button type="button" class="hub-page-menu-item danger" data-forward-action="removeAgent"><span class="action-icon" aria-hidden="true"></span><span class="action-label">Remove Agent</span><span class="action-mobile">Remove</span></button>
+      <button type="button" class="page-menu-item" data-forward-action="openGitBranchMenu" data-mobile-only="1"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"></path><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg></span><span class="action-label">Git Branches</span><span class="action-mobile">Branches</span></button>
+      <button type="button" class="page-menu-item" data-forward-action="openRepoMenu" data-mobile-only="1"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></span><span class="action-label">Repository</span><span class="action-mobile">Repository</span></button>
+      <button type="button" class="page-menu-item" data-forward-action="openTerminal" data-desktop-only="1"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></span><span class="action-label">Terminal</span><span class="action-mobile">Terminal</span></button>
+      <button type="button" class="page-menu-item" data-forward-action="openFinder" data-desktop-only="1"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z"></path><path d="M3 10h18"></path></svg></span><span class="action-label">Finder</span><span class="action-mobile">Finder</span></button>
+      <button type="button" class="page-menu-item positive" data-forward-action="addAgent"><span class="action-icon" aria-hidden="true"></span><span class="action-label">Add Agent</span><span class="action-mobile">Add Agent</span></button>
+      <button type="button" class="page-menu-item danger" data-forward-action="removeAgent"><span class="action-icon" aria-hidden="true"></span><span class="action-label">Remove Agent</span><span class="action-mobile">Remove</span></button>
     </div>
   </div>
 </div>

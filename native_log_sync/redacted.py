@@ -26,7 +26,7 @@ def normalize_cursor_plaintext_for_index(display: str) -> str | None:
     return t
 
 
-def agent_index_entry_omit_for_redacted(message: str) -> bool:
+def omit_redacted_log_entry(message: str) -> bool:
     _, body = split_message_from_prefix(message)
     b = (body or "").strip()
     if not b:

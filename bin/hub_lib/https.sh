@@ -2,10 +2,10 @@
 
 set -euo pipefail
 
-if [[ -n "${AGENT_INDEX_HTTPS_SH:-}" ]]; then
+if [[ -n "${HUB_LIB_HTTPS_SH:-}" ]]; then
   return 0
 fi
-AGENT_INDEX_HTTPS_SH=1
+HUB_LIB_HTTPS_SH=1
 
 detect_local_ip() {
   python3 - <<'PYEOF'

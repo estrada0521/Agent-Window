@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 
-from backend_core.agents.ensure_clis import agent_launch_cmd, agent_resume_cmd
+from backend_core.agents.executables import agent_launch_cmd, agent_resume_cmd
 from backend_core.tmux.process_cleanup import cleanup_target_process_groups
 
 

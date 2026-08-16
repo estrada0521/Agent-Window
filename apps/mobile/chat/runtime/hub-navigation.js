@@ -1,4 +1,4 @@
-    const hubBtn = document.getElementById("hubPageTitleLink");
+    const hubBtn = document.getElementById("pageTitleLink");
     const hubRootUrl = () => {
       if (CHAT_BASE_PATH || String(window.location.pathname || "").startsWith("/session/")) {
         return `${window.location.origin}/`;

@@ -1,4 +1,4 @@
-    const headerRoot = document.querySelector(".hub-page-header");
+    const headerRoot = document.querySelector(".page-header");
     const shellRoot = document.querySelector(".shell");
     const hasOpenHeaderMenu = () => !!rightMenuPanel?.classList.contains("open");
     const updateHeaderMenuViewportMetrics = () => {
@@ -189,7 +189,7 @@
         return;
       }
       if (action === "reloadChat") {
-        await beginChatReload(sourceNode);
+        await beginNewChat(sourceNode);
         return;
       }
       if (action === "openTerminal") {
