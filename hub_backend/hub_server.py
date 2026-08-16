@@ -775,25 +775,33 @@ class Handler(BaseHTTPRequestHandler):
         ctx = ssl._create_unverified_context() if chat_scheme == "https" else None
         try:
             resp = urlopen(req, context=ctx, timeout=30) if ctx is not None else urlopen(req, timeout=30)
-            resp_body = resp.read()
             status = resp.status
             resp_headers = resp.headers
         except HTTPError as exc:
-            resp_body = exc.read()
+            resp = exc
             status = exc.code
             resp_headers = exc.headers
         except URLError as exc:
             self._send_html(502, error_page(f"Chat proxy failed for {session_name}: {exc}"))
             return
-        self.send_response(status)
-        for key, value in resp_headers.items():
-            key_lc = key.lower()
-            if key_lc in {"transfer-encoding", "connection", "content-length", "content-encoding"}:
-                continue
-            self.send_header(key, value)
-        self.send_header("Content-Length", str(len(resp_body)))
-        self.end_headers()
-        self.wfile.write(resp_body)
+        try:
+            self.send_response(status)
+            for key, value in resp_headers.items():
+                if key.lower() in {"transfer-encoding", "connection", "content-encoding"}:
+                    continue
+                self.send_header(key, value)
+            self.end_headers()
+            read_chunk = getattr(resp, "read1", None)
+            while True:
+                chunk = read_chunk(65536) if read_chunk is not None else resp.read(65536)
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
+                self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            return
+        finally:
+            resp.close()
 
 def main(argv: list[str] | None = None) -> None:
     global _scheme, hub_server
