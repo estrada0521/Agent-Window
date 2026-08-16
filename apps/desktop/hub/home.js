@@ -58,8 +58,6 @@
     const DESK_SIDEBAR_CLOSE_SWIPE_EDGE_PX = 36;
     const DESK_SIDEBAR_CLOSE_SWIPE_THRESHOLD = 54;
     const DESK_CHAT_URL_CACHE_LIMIT = 3;
-    const DESK_RUNNING_LIVE_TTL_MS = 15000;
-    const DESK_RUNNING_SERVER_TTL_MS = 6500;
     let _deskPanelActiveMode = "";
     let _deskPanelWidth = 0;
     const _phoneViewportQuery = window.matchMedia(`(max-width: ${PHONE_VIEWPORT_MAX_PX}px)`);
@@ -96,48 +94,22 @@
     let _deskActivePrewarmToken = 0;
     let _deskOpenSwipeRow = null;
     let _deskNewSessionStarting = false;
-    const _deskSessionRunningState = new Map();
 
-    function pruneDeskSessionRunningState(now = Date.now()) {
-      _deskSessionRunningState.forEach((entry, name) => {
-        const ttl = entry?.source === "live" ? DESK_RUNNING_LIVE_TTL_MS : DESK_RUNNING_SERVER_TTL_MS;
-        if (!entry || (now - Number(entry.ts || 0)) > ttl) {
-          _deskSessionRunningState.delete(name);
-        }
-      });
-    }
     function updateDeskWindowTitle(name) {
       const textEl = document.getElementById("deskSessionTitleText");
       if (!textEl) return;
       textEl.textContent = name || "";
     }
-    function setDeskSessionRunningState(sessionName, isRunning, source = "server") {
+    function cachedActiveSession(sessionName) {
       const normalized = String(sessionName || "").trim();
-      if (!normalized) return;
-      const now = Date.now();
-      if (source === "server") {
-        const existing = _deskSessionRunningState.get(normalized);
-        if (existing && existing.source === "live" && (now - Number(existing.ts || 0)) <= DESK_RUNNING_LIVE_TTL_MS) {
-          return;
-        }
-      }
-      _deskSessionRunningState.set(normalized, { isRunning: !!isRunning, source, ts: now });
-      pruneDeskSessionRunningState(now);
+      if (!normalized) return null;
+      return (_hubSessionsCache.active || []).find((session) => String(session?.name || "").trim() === normalized) || null;
     }
-    function syncDeskSessionRunningFromServer(activeSessions) {
-      (activeSessions || []).forEach((session) => {
-        const name = String(session?.name || "").trim();
-        if (!name) return;
-        setDeskSessionRunningState(name, !!session?.is_running, "server");
-      });
-    }
-    function resolveDeskSessionRunningState(sessionName, fallback) {
-      const normalized = String(sessionName || "").trim();
-      if (!normalized) return !!fallback;
-      pruneDeskSessionRunningState();
-      const entry = _deskSessionRunningState.get(normalized);
-      if (!entry) return !!fallback;
-      return !!entry.isRunning;
+    function setCachedSessionRunning(sessionName, isRunning) {
+      const session = cachedActiveSession(sessionName);
+      if (!session) return false;
+      session.is_running = !!isRunning;
+      return true;
     }
     function refreshDeskSessionRunningRow(sessionName) {
       if (!_deskSessionList) return;
@@ -147,7 +119,7 @@
       if (!row || row.classList.contains("archived")) return;
       const bullet = row.querySelector(".desk-row-bullet");
       if (!bullet) return;
-      bullet.classList.toggle("is-running", resolveDeskSessionRunningState(normalized, bullet.classList.contains("is-running")));
+      bullet.classList.toggle("is-running", !!cachedActiveSession(normalized)?.is_running);
     }
     function updateDeskPanelButtonState(mode = "", width = _deskPanelWidth) {
       _deskPanelActiveMode = mode ? "open" : "";
@@ -1088,7 +1060,7 @@
       const trashSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
       const killSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`;
       const actionSvg = archived ? trashSvg : killSvg;
-      const runningClass = !archived && resolveDeskSessionRunningState(sessionName, !!session.is_running) ? " is-running" : "";
+      const runningClass = !archived && session.is_running ? " is-running" : "";
       const previewText = String(session.latest_message_preview || "").trim();
       const previewSender = String(session.latest_message_sender || "").trim();
       const previewDisplay = previewSender ? `${previewSender} ${previewText}` : previewText;
@@ -1309,7 +1281,6 @@
         if (requestSeq !== _deskSessionsRequestSeq) return;
         const active = data.active_sessions || data.sessions || [];
         const archived = data.archived_sessions || [];
-        syncDeskSessionRunningFromServer(active);
         _hubSessionsCache = { active, archived };
 
         const signature = JSON.stringify({
@@ -1339,7 +1310,7 @@
       if (event.data && event.data.type === "session-running-state" && event.source === _deskChatFrame?.contentWindow) {
         const sessionName = String(event.data.sessionName || "").trim();
         if (!sessionName) return;
-        setDeskSessionRunningState(sessionName, !!event.data.isRunning, "live");
+        setCachedSessionRunning(sessionName, !!event.data.isRunning);
         refreshDeskSessionRunningRow(sessionName);
         return;
       }
