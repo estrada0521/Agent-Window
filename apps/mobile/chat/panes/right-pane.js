@@ -104,6 +104,7 @@
       sheetNav.addEventListener("touchend", finishDrag, { passive: true });
       sheetNav.addEventListener("touchcancel", finishDrag, { passive: true });
     };
+    const MOBILE_SHEET_ACTIVE_CLASS = "mobile-sheet-active";
     const buildMobileBottomSheet = ({
       kind,
       title = "",
@@ -112,18 +113,18 @@
       leadingButtonHtml = "",
     }) => {
       const sheet = document.createElement("div");
-      sheet.className = `${kind}-sheet mobile-bottom-sheet mobile-floating-sheet`;
+      sheet.className = `${kind}-sheet mobile-bottom-sheet`;
       const sheetPanel = document.createElement("div");
-      sheetPanel.className = `${kind}-sheet-panel mobile-bottom-sheet-panel mobile-floating-sheet-panel`;
+      sheetPanel.className = `${kind}-sheet-panel mobile-bottom-sheet-panel`;
       const sheetNav = document.createElement("div");
-      sheetNav.className = `${kind}-sheet-nav mobile-bottom-sheet-nav mobile-floating-sheet-nav`;
+      sheetNav.className = `${kind}-sheet-nav mobile-bottom-sheet-nav`;
       const leading = leadingButtonHtml || "";
       sheetNav.innerHTML = `
-        <div class="${kind}-sheet-pill mobile-bottom-sheet-pill mobile-floating-sheet-pill"></div>
-        <div class="${kind}-sheet-nav-bar mobile-bottom-sheet-nav-bar mobile-floating-sheet-nav-bar">
+        <div class="${kind}-sheet-pill mobile-bottom-sheet-pill"></div>
+        <div class="${kind}-sheet-nav-bar mobile-bottom-sheet-nav-bar">
           ${leading}
-          <div class="${kind}-sheet-title mobile-bottom-sheet-title mobile-floating-sheet-title"></div>
-          <button type="button" class="${kind}-sheet-close mobile-bottom-sheet-button mobile-floating-sheet-button" aria-label="${closeLabel}">
+          <div class="${kind}-sheet-title mobile-bottom-sheet-title"></div>
+          <button type="button" class="${kind}-sheet-close mobile-bottom-sheet-button" aria-label="${closeLabel}">
             ${mobileSheetCloseIcon}
           </button>
         </div>`;
@@ -141,6 +142,31 @@
       sheetPanel.append(sheetNav, contentEl);
       sheet.appendChild(sheetPanel);
       return { sheet, sheetPanel, sheetNav, contentEl, titleEl, closeBtn };
+    };
+    const ensureMobileSheetDom = (panel, {
+      kind,
+      title,
+      closeLabel,
+      onClose,
+      leadingButtonHtml = "",
+      afterBuild = null,
+    }) => {
+      if (!panel) return null;
+      const existingContent = panel.querySelector(`.${kind}-sheet-content`);
+      if (existingContent) return existingContent;
+      const existing = document.createDocumentFragment();
+      while (panel.firstChild) existing.appendChild(panel.firstChild);
+      const built = buildMobileBottomSheet({
+        kind,
+        title,
+        closeLabel,
+        onClose,
+        leadingButtonHtml,
+      });
+      if (existing.childNodes.length) built.contentEl.appendChild(existing);
+      afterBuild?.(built);
+      panel.appendChild(built.sheet);
+      return built.contentEl;
     };
     const createMobileSheetController = (panel, activeClass, { onOpened = () => { }, onClosed = () => { } } = {}) => {
       let closeTimer = 0;
@@ -202,7 +228,7 @@
       };
       return { open, close, clearCloseTimer, lockScroll, unlockScroll };
     };
-    const repoSheet = createMobileSheetController(repoPanel, "repo-sheet-active", {
+    const repoSheet = createMobileSheetController(repoPanel, MOBILE_SHEET_ACTIVE_CLASS, {
       onClosed: () => {
         _repoPreviewPath = "";
         _repoPreviewExt = "";
@@ -225,27 +251,13 @@
         });
       }
     };
-    const paneTraceSheet = createMobileSheetController(paneTracePanel, "pane-trace-sheet-active");
-    const paneTraceSheetContentEl = () => paneTracePanel?.querySelector(".pane-trace-sheet-content");
-    const ensurePaneTraceSheetDom = () => {
-      if (!paneTracePanel) return null;
-      let contentEl = paneTraceSheetContentEl();
-      if (contentEl) return contentEl;
-
-      const existing = document.createDocumentFragment();
-      while (paneTracePanel.firstChild) existing.appendChild(paneTracePanel.firstChild);
-
-      const { sheet, contentEl: sheetContentEl } = buildMobileBottomSheet({
-        kind: "pane-trace",
-        title: "Pane Trace",
-        closeLabel: "Close pane trace",
-        onClose: () => exitPaneTraceMode(),
-      });
-      contentEl = sheetContentEl;
-      contentEl.appendChild(existing);
-      paneTracePanel.appendChild(sheet);
-      return contentEl;
-    };
+    const paneTraceSheet = createMobileSheetController(paneTracePanel, MOBILE_SHEET_ACTIVE_CLASS);
+    const ensurePaneTraceSheetDom = () => ensureMobileSheetDom(paneTracePanel, {
+      kind: "pane-trace",
+      title: "Pane Trace",
+      closeLabel: "Close pane trace",
+      onClose: () => exitPaneTraceMode(),
+    });
     const closePaneTraceSheet = ({ immediate = false } = {}) => {
       if (!paneTracePanel) return;
       paneTraceSheet.close({ immediate });
@@ -255,27 +267,13 @@
       ensurePaneTraceSheetDom();
       paneTraceSheet.open(onOpened);
     };
-    const gitBranchSheet = createMobileSheetController(gitBranchPanel, "git-branch-sheet-active");
-    const gitBranchSheetContentEl = () => gitBranchPanel?.querySelector(".git-branch-sheet-content");
-    const ensureGitBranchSheetDom = () => {
-      if (!gitBranchPanel) return null;
-      let contentEl = gitBranchSheetContentEl();
-      if (contentEl) return contentEl;
-
-      const existing = document.createDocumentFragment();
-      while (gitBranchPanel.firstChild) existing.appendChild(gitBranchPanel.firstChild);
-
-      const { sheet, contentEl: sheetContentEl } = buildMobileBottomSheet({
-        kind: "git-branch",
-        title: "Git Branches",
-        closeLabel: "Close git branches",
-        onClose: () => closeGitBranchSheet(),
-      });
-      contentEl = sheetContentEl;
-      contentEl.appendChild(existing);
-      gitBranchPanel.appendChild(sheet);
-      return contentEl;
-    };
+    const gitBranchSheet = createMobileSheetController(gitBranchPanel, MOBILE_SHEET_ACTIVE_CLASS);
+    const ensureGitBranchSheetDom = () => ensureMobileSheetDom(gitBranchPanel, {
+      kind: "git-branch",
+      title: "Git Branches",
+      closeLabel: "Close git branches",
+      onClose: () => closeGitBranchSheet(),
+    });
     const closeGitBranchSheet = ({ immediate = false } = {}) => {
       if (!gitBranchPanel) return;
       gitBranchSheet.close({ immediate });
@@ -417,82 +415,79 @@
     const ensureRepoSheetDom = () => {
       if (!repoPanel) return false;
       if (repoPanel.querySelector(".repo-sheet")) return true;
-
-      const stack = document.createElement("div");
-      stack.className = "repo-stack";
-
-      const browserView = document.createElement("div");
-      browserView.className = "repo-browser-view";
-      const browserMount = document.createElement("div");
-      browserMount.className = "repo-browser-mount";
-      browserView.appendChild(browserMount);
-
-      const previewView = document.createElement("div");
-      previewView.className = "repo-preview-view";
-      const previewFrame = document.createElement("iframe");
-      previewFrame.className = "repo-preview-frame";
-      previewFrame.title = "File preview";
-      previewView.appendChild(previewFrame);
-      stack.append(browserView, previewView);
-
-      const { sheet, sheetNav, contentEl: sheetContentEl } = buildMobileBottomSheet({
+      ensureMobileSheetDom(repoPanel, {
         kind: "repo",
         title: "Repository",
         closeLabel: "Close attached files",
         onClose: () => closeRepoSheet(),
-        leadingButtonHtml: `<button type="button" class="repo-sheet-back mobile-bottom-sheet-button mobile-floating-sheet-button" aria-label="Go to parent directory">${repoSheetBackIcon}</button>`,
-      });
-      sheetNav.querySelector(".repo-sheet-back")?.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        handleRepoSheetBack();
-      });
-      wireRepoPreviewControls(sheetNav);
+        leadingButtonHtml: `<button type="button" class="repo-sheet-back mobile-bottom-sheet-button" aria-label="Go to parent directory">${repoSheetBackIcon}</button>`,
+        afterBuild: ({ sheetNav, contentEl }) => {
+          const stack = document.createElement("div");
+          stack.className = "repo-stack";
+          const browserView = document.createElement("div");
+          browserView.className = "repo-browser-view";
+          const browserMount = document.createElement("div");
+          browserMount.className = "repo-browser-mount";
+          browserView.appendChild(browserMount);
+          const previewView = document.createElement("div");
+          previewView.className = "repo-preview-view";
+          const previewFrame = document.createElement("iframe");
+          previewFrame.className = "repo-preview-frame";
+          previewFrame.title = "File preview";
+          previewView.appendChild(previewFrame);
+          stack.append(browserView, previewView);
 
-      let swipeStartX = 0;
-      let swipeStartY = 0;
-      let swipeTracking = false;
-      let swipeBackReady = false;
-      const resetSwipeBack = () => {
-        swipeTracking = false;
-        swipeBackReady = false;
-      };
-      browserView.addEventListener("touchstart", (event) => {
-        if (!normalizeRepoPath(_repoBrowserPath)) return;
-        const touch = event.touches?.[0];
-        if (!touch) return;
-        swipeStartX = touch.clientX;
-        swipeStartY = touch.clientY;
-        swipeTracking = true;
-        swipeBackReady = false;
-      }, { passive: true });
-      browserView.addEventListener("touchmove", (event) => {
-        if (!swipeTracking) return;
-        const touch = event.touches?.[0];
-        if (!touch) {
-          resetSwipeBack();
-          return;
-        }
-        const deltaX = touch.clientX - swipeStartX;
-        const deltaY = touch.clientY - swipeStartY;
-        if (Math.abs(deltaY) > 42) {
-          resetSwipeBack();
-          return;
-        }
-        if (deltaX > 56 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
-          swipeBackReady = true;
-        }
-      }, { passive: true });
-      browserView.addEventListener("touchend", () => {
-        if (!swipeTracking) return;
-        const shouldBack = swipeBackReady;
-        resetSwipeBack();
-        if (shouldBack) _repoGoToParentPath();
-      }, { passive: true });
-      browserView.addEventListener("touchcancel", resetSwipeBack, { passive: true });
+          sheetNav.querySelector(".repo-sheet-back")?.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            handleRepoSheetBack();
+          });
+          wireRepoPreviewControls(sheetNav);
 
-      sheetContentEl.appendChild(stack);
-      repoPanel.appendChild(sheet);
+          let swipeStartX = 0;
+          let swipeStartY = 0;
+          let swipeTracking = false;
+          let swipeBackReady = false;
+          const resetSwipeBack = () => {
+            swipeTracking = false;
+            swipeBackReady = false;
+          };
+          browserView.addEventListener("touchstart", (event) => {
+            if (!normalizeRepoPath(_repoBrowserPath)) return;
+            const touch = event.touches?.[0];
+            if (!touch) return;
+            swipeStartX = touch.clientX;
+            swipeStartY = touch.clientY;
+            swipeTracking = true;
+            swipeBackReady = false;
+          }, { passive: true });
+          browserView.addEventListener("touchmove", (event) => {
+            if (!swipeTracking) return;
+            const touch = event.touches?.[0];
+            if (!touch) {
+              resetSwipeBack();
+              return;
+            }
+            const deltaX = touch.clientX - swipeStartX;
+            const deltaY = touch.clientY - swipeStartY;
+            if (Math.abs(deltaY) > 42) {
+              resetSwipeBack();
+              return;
+            }
+            if (deltaX > 56 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+              swipeBackReady = true;
+            }
+          }, { passive: true });
+          browserView.addEventListener("touchend", () => {
+            if (!swipeTracking) return;
+            const shouldBack = swipeBackReady;
+            resetSwipeBack();
+            if (shouldBack) _repoGoToParentPath();
+          }, { passive: true });
+          browserView.addEventListener("touchcancel", resetSwipeBack, { passive: true });
+          contentEl.appendChild(stack);
+        },
+      });
       syncRepoSheetBackBtn();
       return true;
     };

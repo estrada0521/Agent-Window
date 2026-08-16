@@ -65,20 +65,6 @@
       margin-left: 0;
     }
 
-    #repoPanel .repo-sheet-content {
-      flex: 1 1 auto;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      position: relative;
-      z-index: 1;
-    }
-
-    #repoPanel.repo-mode-preview .repo-sheet-content {
-      overflow: hidden;
-    }
-
     .repo-stack {
       position: relative;
       flex: 1 1 auto;

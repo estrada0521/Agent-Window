@@ -19,7 +19,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
     };
     const gitBranchCommitListEl = () => gitBranchPanel?.querySelector(".git-branch-commit-list");
     const gitBranchLoadMoreEl = () => gitBranchPanel?.querySelector(".git-branch-load-more");
-    const gitBranchScrollRootEl = () => gitBranchSheetContentEl() || gitBranchPanel;
+    const gitBranchScrollRootEl = () => gitBranchPanel?.querySelector(".git-branch-sheet-content") || gitBranchPanel;
     const gitBranchSheetTitleEl = () => gitBranchPanel?.querySelector(".git-branch-sheet-title");
     const setGitBranchSheetTitle = () => {
       const titleEl = gitBranchSheetTitleEl();
