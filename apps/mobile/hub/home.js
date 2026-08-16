@@ -222,6 +222,20 @@
       } catch (_) {}
       return `/session/${encodeURIComponent(name)}/${search || ""}`;
     }
+    function normalizeComparableUrl(rawUrl) {
+      const value = String(rawUrl || "").trim();
+      if (!value) return "";
+      try {
+        return new URL(value, window.location.href).toString();
+      } catch (_) {
+        return value;
+      }
+    }
+    function hubFrameSrcMatches(url) {
+      const current = normalizeComparableUrl(_chatFrame.src);
+      const next = normalizeComparableUrl(url);
+      return !!current && !!next && current === next;
+    }
     function cacheChatUrl(name, url) {
       const normalizedName = String(name || "").trim();
       const normalizedUrl = hubFrameChatUrl(url, normalizedName);
@@ -262,7 +276,7 @@
       const normalizedName = String(sessionName || "").trim();
       const normalizedUrl = hubFrameChatUrl(chatUrl, normalizedName);
       if (!normalizedName || !normalizedUrl) return;
-      const reusingSameSrc = _chatFrame.src === normalizedUrl;
+      const reusingSameSrc = hubFrameSrcMatches(normalizedUrl);
       _prewarmedSessionName = normalizedName;
       _prewarmedChatUrl = normalizedUrl;
       if (!reusingSameSrc) {
@@ -487,8 +501,8 @@
       const canReusePrewarm =
         normalizedName &&
         _prewarmedSessionName === normalizedName &&
-        _prewarmedChatUrl === normalizedUrl &&
-        _chatFrame.src === normalizedUrl;
+        normalizeComparableUrl(_prewarmedChatUrl) === normalizeComparableUrl(normalizedUrl) &&
+        hubFrameSrcMatches(normalizedUrl);
       if (!canReusePrewarm) {
         _chatFrame.style.transition = "none";
         _chatFrame.style.opacity = "0";
