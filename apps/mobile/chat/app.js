@@ -520,14 +520,6 @@ __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
         flashHeaderToggle(toggle);
       }
     });
-    const flashComposerAction = (action) => {
-      document.querySelectorAll(`.composer-plus-panel [data-forward-action="${action}"]`).forEach((node) => {
-        node.classList.remove("toggle-flash");
-        void node.offsetWidth;
-        node.classList.add("toggle-flash");
-        setTimeout(() => node.classList.remove("toggle-flash"), 120);
-      });
-    };
 __CHAT_INCLUDE:../../shared/chat/target-selection.js__
     const normalizedSessionTargets = (rawTargets) => {
       return Array.isArray(rawTargets)

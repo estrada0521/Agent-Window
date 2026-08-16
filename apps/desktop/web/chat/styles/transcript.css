@@ -639,41 +639,6 @@
       z-index: 1;
     }
 
-    .message-thinking-floating-icons {
-      position: fixed;
-      left: 20px;
-      bottom: max(12px, env(safe-area-inset-bottom, 0px));
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      padding: 6px;
-      border-radius: 8px;
-      border: none;
-      background: var(--glass-bg-72, rgba(var(--bg-rgb), 0.72));
-      box-shadow: none;
-      backdrop-filter: var(--glass-filter-10, blur(10px) saturate(130%));
-      -webkit-backdrop-filter: var(--glass-filter-10, blur(10px) saturate(130%));
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(4px);
-      transition: opacity 120ms ease, transform 120ms ease;
-      z-index: 120;
-      box-sizing: border-box;
-      font-size: var(--message-text-size, 13px);
-      line-height: var(--message-text-line-height, 22px);
-    }
-
-    .message-thinking-floating-icons.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .message-thinking-floating-icons[hidden] {
-      display: none;
-    }
-
     .message-thinking-floating-icon-wrap {
       animation: mono-icon-pulse 1s infinite;
       animation-delay: var(--agent-pulse-delay, 0s);
