@@ -4,166 +4,165 @@
       suppressEntryAnimation = false,
     } = {}) => {
       try {
-      const shouldStick = forceScroll || _stickyToBottom || isNearBottom();
-      const displayEntries = displayEntriesForData(data);
-      const metaHiddenIds = computeMetaHiddenIds(displayEntries);
-      const previousRenderedIds = new Set(_renderedIds);
+        const shouldStick = forceScroll || _stickyToBottom || isNearBottom();
+        const displayEntries = displayEntriesForData(data);
+        const metaHiddenIds = computeMetaHiddenIds(displayEntries);
+        const previousRenderedIds = new Set(_renderedIds);
 
-      updateSessionUI(data, displayEntries);
+        updateSessionUI(data, displayEntries);
 
-      const renderSig = displayEntries.map((entry) => entryRenderKey(entry)).join("\u0002");
-      if (!forceScroll && renderSig === lastMessagesSig) return;
-      lastMessagesSig = renderSig;
+        const renderSig = displayEntries.map((entry) => entryRenderKey(entry)).join("\u0002");
+        if (!forceScroll && renderSig === lastMessagesSig) return;
+        lastMessagesSig = renderSig;
 
-      initialLoadDone = true;
+        initialLoadDone = true;
 
-      const root = document.getElementById("messages");
-      if (!displayEntries.length) {
-        _renderedIds.clear();
-        root.innerHTML = emptyConversationHTML();
-        renderThinkingIndicator();
-        updateScrollBtn();
-        return;
-      }
-
-      const preserveScrollTop = shouldStick ? null : timeline.scrollTop;
-      let scrollAnchor = null;
-      if (!shouldStick) {
-        const tRect = timeline.getBoundingClientRect();
-        for (const el of timeline.querySelectorAll("[data-msgid]")) {
-          const mid = String(el.dataset.msgid || "");
-          if (!mid) continue;
-          const r = el.getBoundingClientRect();
-          if (r.bottom <= tRect.top + 0.5) continue;
-          if (r.top >= tRect.bottom - 0.5) break;
-          scrollAnchor = { msgId: mid, vpTop: r.top - tRect.top };
-          break;
+        const root = document.getElementById("messages");
+        if (!displayEntries.length) {
+          _renderedIds.clear();
+          root.innerHTML = emptyConversationHTML();
+          renderThinkingIndicator();
+          updateScrollBtn();
+          return;
         }
-      }
 
-      const displayIdSet = new Set(displayEntries.map(e => e.msg_id));
-      const newEntries = displayEntries.filter(e => !previousRenderedIds.has(e.msg_id));
-      const hasRemovals = previousRenderedIds.size > 0 && [...previousRenderedIds].some(id => !displayIdSet.has(id));
-      const currentRenderedOrder = Array.from(root.querySelectorAll("[data-msgid]"))
-        .map((node) => String(node.dataset.msgid || ""))
-        .filter(Boolean);
-      const nextRenderedOrder = displayEntries.map((entry) => String(entry.msg_id || ""));
-      const nextIncrementalOrder = currentRenderedOrder
-        .filter((id) => displayIdSet.has(id))
-        .concat(newEntries.map((entry) => String(entry.msg_id || "")));
-      const canIncrementallyTrimAndAppend = !forceFullRender
-        && previousRenderedIds.size > 0
-        && newEntries.length > 0
-        && nextIncrementalOrder.length === nextRenderedOrder.length
-        && nextIncrementalOrder.every((id, idx) => id === nextRenderedOrder[idx]);
-
-      const isInitialBulkLoad =
-        previousRenderedIds.size === 0
-        && newEntries.length > 0
-        && newEntries.length === displayEntries.length
-        && displayEntries.length > 1;
-      const shouldMarkNewRowsAnimated =
-        newEntries.length > 0
-        && !isInitialBulkLoad
-        && !suppressEntryAnimation
-        && (previousRenderedIds.size > 0 || displayEntries.length === 1);
-
-      let pendingStreamRowCleanups = [];
-      if (canIncrementallyTrimAndAppend) {
-        if (hasRemovals) {
-          root.querySelectorAll("[data-msgid]").forEach((node) => {
-            const msgId = String(node.dataset.msgid || "");
-            if (msgId && !displayIdSet.has(msgId)) node.remove();
-          });
-        }
-        const frag = document.createDocumentFragment();
-        const pendingRowCleanup = [];
-        for (const entry of newEntries) {
-          const entryMsgId = String(entry?.msg_id || "");
-          const tmpl = document.createElement("template");
-          tmpl.innerHTML = buildMsgHTML(entry, {
-            hideMetaRow: entryMsgId ? metaHiddenIds.has(entryMsgId) : false,
-          });
-          const row = tmpl.content.firstElementChild;
-          if (row) {
-            row.classList.add("animate-in");
-            const stream = entryQualifiesForStreamReveal(entry);
-            if (stream) row.classList.add("streaming-body-reveal");
-            pendingRowCleanup.push({ row, stream });
+        const preserveScrollTop = shouldStick ? null : timeline.scrollTop;
+        let scrollAnchor = null;
+        if (!shouldStick) {
+          const tRect = timeline.getBoundingClientRect();
+          for (const el of timeline.querySelectorAll("[data-msgid]")) {
+            const mid = String(el.dataset.msgid || "");
+            if (!mid) continue;
+            const r = el.getBoundingClientRect();
+            if (r.bottom <= tRect.top + 0.5) continue;
+            if (r.top >= tRect.bottom - 0.5) break;
+            scrollAnchor = { msgId: mid, vpTop: r.top - tRect.top };
+            break;
           }
-          frag.appendChild(tmpl.content);
         }
-        root.appendChild(frag);
-        _renderedIds = displayIdSet;
-        for (const { row } of pendingRowCleanup) {
-          if (row.isConnected) postRenderScope(row);
-        }
-        pendingStreamRowCleanups = pendingRowCleanup;
-      } else {
-        root.innerHTML = displayEntries.map((entry) => {
-          const entryMsgId = String(entry?.msg_id || "");
-          return buildMsgHTML(entry, {
-            hideMetaRow: entryMsgId ? metaHiddenIds.has(entryMsgId) : false,
-          });
-        }).join("");
-        _renderedIds = new Set(displayEntries.map(e => e.msg_id));
-        const pendingFullRowCleanup = [];
-        if (shouldMarkNewRowsAnimated) {
-          const newEntryById = new Map(newEntries.map((e) => [String(e.msg_id || ""), e]));
-          root.querySelectorAll("[data-msgid]").forEach((row) => {
-            const msgId = String(row.dataset.msgid || "");
-            const entry = newEntryById.get(msgId);
-            if (!msgId || !entry) return;
-            row.classList.add("animate-in");
-            const stream = entryQualifiesForStreamReveal(entry);
-            if (stream) row.classList.add("streaming-body-reveal");
-            pendingFullRowCleanup.push({ row, stream });
-          });
-        }
-        postRenderScope(root);
-        requestAnimationFrame(() => { if (root.isConnected) linkifyInlineCodeFileRefsImmediate(root); });
-        pendingStreamRowCleanups = pendingFullRowCleanup;
-      }
 
-      queueStableCodeBlockSync(root);
-      pendingStreamRowCleanups.forEach(({ row, stream }) => {
-        if (stream) applyCharStreamRevealToRow(row);
-        scheduleAnimateInCleanup(row, { streamBody: stream });
-      });
-      renderThinkingIndicator();
+        const displayIdSet = new Set(displayEntries.map(e => e.msg_id));
+        const newEntries = displayEntries.filter(e => !previousRenderedIds.has(e.msg_id));
+        const hasRemovals = previousRenderedIds.size > 0 && [...previousRenderedIds].some(id => !displayIdSet.has(id));
+        const currentRenderedOrder = Array.from(root.querySelectorAll("[data-msgid]"))
+          .map((node) => String(node.dataset.msgid || ""))
+          .filter(Boolean);
+        const nextRenderedOrder = displayEntries.map((entry) => String(entry.msg_id || ""));
+        const nextIncrementalOrder = currentRenderedOrder
+          .filter((id) => displayIdSet.has(id))
+          .concat(newEntries.map((entry) => String(entry.msg_id || "")));
+        const canIncrementallyTrimAndAppend = !forceFullRender
+          && previousRenderedIds.size > 0
+          && newEntries.length > 0
+          && nextIncrementalOrder.length === nextRenderedOrder.length
+          && nextIncrementalOrder.every((id, idx) => id === nextRenderedOrder[idx]);
 
-      if (shouldStick) {
-        _pollScrollLockTop = null;
-        _pollScrollAnchor = null;
-        _programmaticScroll = true;
-        timeline.scrollTop = timeline.scrollHeight;
-        queueMicrotask(() => { _programmaticScroll = false; });
-      } else if (preserveScrollTop != null) {
-        const maxTop = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
-        _programmaticScroll = true;
-        const applied = Math.min(preserveScrollTop, maxTop);
-        timeline.scrollTop = applied;
-        _pollScrollLockTop = applied;
-        _pollScrollAnchor = scrollAnchor;
-        queueMicrotask(() => { _programmaticScroll = false; });
-        requestAnimationFrame(() => {
-          requestAnimationFrame(maybeRestorePollScrollLock);
-        });
-        settleScrollLockFrames(10);
-      }
-      _stickyToBottom = isNearBottom();
-      updateScrollBtn();
-      requestCenteredMessageRowUpdate();
-      {
-        const input = document.getElementById("message");
-        const sendBtnEl = document.querySelector(".send-btn");
-        const hasText = !!(input && input.value.trim().length > 0);
-        if (!sessionActive) {
-          if (sendBtnEl) sendBtnEl.classList.remove("visible");
+        const isInitialBulkLoad =
+          previousRenderedIds.size === 0
+          && newEntries.length > 0
+          && newEntries.length === displayEntries.length
+          && displayEntries.length > 1;
+        const shouldMarkNewRowsAnimated =
+          newEntries.length > 0
+          && !isInitialBulkLoad
+          && !suppressEntryAnimation
+          && (previousRenderedIds.size > 0 || displayEntries.length === 1);
+
+        let pendingStreamRowCleanups = [];
+        if (canIncrementallyTrimAndAppend) {
+          if (hasRemovals) {
+            root.querySelectorAll("[data-msgid]").forEach((node) => {
+              const msgId = String(node.dataset.msgid || "");
+              if (msgId && !displayIdSet.has(msgId)) node.remove();
+            });
+          }
+          const frag = document.createDocumentFragment();
+          const pendingRowCleanup = [];
+          for (const entry of newEntries) {
+            const entryMsgId = String(entry?.msg_id || "");
+            const tmpl = document.createElement("template");
+            tmpl.innerHTML = buildMsgHTML(entry, {
+              hideMetaRow: entryMsgId ? metaHiddenIds.has(entryMsgId) : false,
+            });
+            const row = tmpl.content.firstElementChild;
+            if (row) {
+              row.classList.add("animate-in");
+              const stream = entryQualifiesForStreamReveal(entry);
+              if (stream) row.classList.add("streaming-body-reveal");
+              pendingRowCleanup.push({ row, stream });
+            }
+            frag.appendChild(tmpl.content);
+          }
+          root.appendChild(frag);
+          _renderedIds = displayIdSet;
+          for (const { row } of pendingRowCleanup) {
+            if (row.isConnected) postRenderScope(row);
+          }
+          pendingStreamRowCleanups = pendingRowCleanup;
         } else {
-          if (sendBtnEl) sendBtnEl.classList.toggle("visible", hasText);
+          root.innerHTML = displayEntries.map((entry) => {
+            const entryMsgId = String(entry?.msg_id || "");
+            return buildMsgHTML(entry, {
+              hideMetaRow: entryMsgId ? metaHiddenIds.has(entryMsgId) : false,
+            });
+          }).join("");
+          _renderedIds = new Set(displayEntries.map(e => e.msg_id));
+          const pendingFullRowCleanup = [];
+          if (shouldMarkNewRowsAnimated) {
+            const newEntryById = new Map(newEntries.map((e) => [String(e.msg_id || ""), e]));
+            root.querySelectorAll("[data-msgid]").forEach((row) => {
+              const msgId = String(row.dataset.msgid || "");
+              const entry = newEntryById.get(msgId);
+              if (!msgId || !entry) return;
+              row.classList.add("animate-in");
+              const stream = entryQualifiesForStreamReveal(entry);
+              if (stream) row.classList.add("streaming-body-reveal");
+              pendingFullRowCleanup.push({ row, stream });
+            });
+          }
+          postRenderScope(root);
+          pendingStreamRowCleanups = pendingFullRowCleanup;
         }
-      }
+
+        queueStableCodeBlockSync(root);
+        pendingStreamRowCleanups.forEach(({ row, stream }) => {
+          if (stream) applyCharStreamRevealToRow(row);
+          scheduleAnimateInCleanup(row, { streamBody: stream });
+        });
+        renderThinkingIndicator();
+
+        if (shouldStick) {
+          _pollScrollLockTop = null;
+          _pollScrollAnchor = null;
+          _programmaticScroll = true;
+          timeline.scrollTop = timeline.scrollHeight;
+          queueMicrotask(() => { _programmaticScroll = false; });
+        } else if (preserveScrollTop != null) {
+          const maxTop = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
+          _programmaticScroll = true;
+          const applied = Math.min(preserveScrollTop, maxTop);
+          timeline.scrollTop = applied;
+          _pollScrollLockTop = applied;
+          _pollScrollAnchor = scrollAnchor;
+          queueMicrotask(() => { _programmaticScroll = false; });
+          requestAnimationFrame(() => {
+            requestAnimationFrame(maybeRestorePollScrollLock);
+          });
+          settleScrollLockFrames(10);
+        }
+        _stickyToBottom = isNearBottom();
+        updateScrollBtn();
+        requestCenteredMessageRowUpdate();
+        {
+          const input = document.getElementById("message");
+          const sendBtnEl = document.querySelector(".send-btn");
+          const hasText = !!(input && input.value.trim().length > 0);
+          if (!sessionActive) {
+            if (sendBtnEl) sendBtnEl.classList.remove("visible");
+          } else {
+            if (sendBtnEl) sendBtnEl.classList.toggle("visible", hasText);
+          }
+        }
       } catch (err) {
         console.error("chat render failed; using fallback renderer", err);
         try {
@@ -232,13 +231,8 @@
         if (!res.ok || !data.ok) {
           throw new Error(data.error || `failed to ${adding ? "add" : "remove"} agent`);
         }
-        lastMessagesEtag = "";
+        await new Promise((resolve) => setTimeout(resolve, adding ? 700 : 500));
         await refreshSessionState();
-        await refresh({ forceFullRender: true });
-        setTimeout(() => {
-          lastMessagesEtag = "";
-          void refresh({ forceFullRender: true });
-        }, adding ? 700 : 500);
         setStatus(`${selected} ${adding ? "added" : "removed"}`);
         setTimeout(() => setStatus(""), 1800);
       } catch (err) {
@@ -309,6 +303,14 @@
     };
     const anchorAgentActionNativeMenu = (select) => {
       const anchor = rightMenuBtn || document.activeElement || document.body;
+      if (document.documentElement.dataset.mobile === "1") {
+        const rect = anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : { left: 0, top: 0, width: 1, height: 1 };
+        select.style.left = `${Math.max(0, Math.round(rect.left))}px`;
+        select.style.top = `${Math.max(0, Math.round(rect.top))}px`;
+        select.style.width = `${Math.max(1, Math.round(rect.width || 1))}px`;
+        select.style.height = `${Math.max(1, Math.round(rect.height || 1))}px`;
+        return;
+      }
       const rect = anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : { left: 0, top: 0, right: 0, width: 1, height: 1 };
       const gap = 8;
       const vw = window.innerWidth || document.documentElement.clientWidth || 0;
@@ -377,21 +379,49 @@
     };
     const fetchWithTimeout = async (url, options = {}, timeoutMs = 5000) => {
       let timer = null;
+      let timedOut = false;
       const controller = typeof AbortController === "function" ? new AbortController() : null;
-      try {
-        if (controller && timeoutMs > 0) {
-          timer = setTimeout(() => controller.abort(), timeoutMs);
+      const requestOptions = {
+        cache: "no-store",
+        ...options,
+      };
+      const upstreamSignal = options?.signal || null;
+      if (controller) {
+        requestOptions.signal = controller.signal;
+        if (upstreamSignal) {
+          if (upstreamSignal.aborted) {
+            controller.abort();
+          } else if (typeof upstreamSignal.addEventListener === "function") {
+            upstreamSignal.addEventListener("abort", () => controller.abort(), { once: true });
+          }
         }
-        return await fetch(url, {
-          cache: "no-store",
-          ...options,
-          signal: controller ? controller.signal : options.signal,
-        });
+      } else if (upstreamSignal) {
+        requestOptions.signal = upstreamSignal;
+      }
+      const fetchPromise = fetch(url, requestOptions);
+      if (!(timeoutMs > 0)) return fetchPromise;
+      const timeoutPromise = new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          timedOut = true;
+          try { controller?.abort(); } catch (_) {}
+          reject(new Error("request timeout"));
+        }, timeoutMs);
+      });
+      try {
+        return await Promise.race([fetchPromise, timeoutPromise]);
+      } catch (err) {
+        if (timedOut && err?.name === "AbortError") {
+          throw new Error("request timeout");
+        }
+        throw err;
       } finally {
         if (timer) clearTimeout(timer);
+        if (timedOut) {
+          fetchPromise.catch(() => {});
+        }
       }
     };
-__CHAT_INCLUDE:../../../../shared/chat/chat-reload.js__
+__CHAT_INCLUDE:../chat-reload.js__
     const mergeRefreshOptions = (current = {}, next = {}) => {
       const currentOptions = current || {};
       const nextOptions = next || {};

@@ -542,8 +542,8 @@ __CHAT_INCLUDE:../../shared/chat/target-selection.js__
     timeline.addEventListener("scroll", requestCenteredMessageRowUpdate, { passive: true });
     window.addEventListener("resize", requestCenteredMessageRowUpdate);
 
-__CHAT_INCLUDE:runtime/messages.js__
-__CHAT_INCLUDE:transcript/render.js__
+__CHAT_INCLUDE:../../shared/chat/runtime/messages.js__
+__CHAT_INCLUDE:../../shared/chat/transcript/render.js__
 __CHAT_INCLUDE:../../shared/chat/transcript/actions.js__
 __CHAT_INCLUDE:runtime/hub-navigation.js__
 __CHAT_INCLUDE:panes/header-menu.js__
