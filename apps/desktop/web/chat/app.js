@@ -147,6 +147,10 @@ __CHAT_INCLUDE:../../../shared/chat/launch-shell-gate.js__
         });
       });
     };
+    const notifyHubChatRenderError = (message) => {
+      if (!isHubIframeChat()) return;
+      window.parent.postMessage({ type: "chat-render-error", message: String(message || "render failed") }, "*");
+    };
     if (isHubIframeChat()) {
       document.documentElement.dataset.hubIframeChat = "1";
       _hubChildOriW = window.innerWidth || 0;

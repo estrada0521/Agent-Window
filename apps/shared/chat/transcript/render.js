@@ -172,6 +172,8 @@
         }
         _renderedIds.clear();
         updateScrollBtn();
+        notifyHubChatRenderError(err?.message || err);
+        throw err;
       }
     };
     const setStatus = (text, isError = false) => {

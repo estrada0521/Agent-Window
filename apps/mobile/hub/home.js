@@ -15,9 +15,8 @@
     let _prewarmedFrameRenderReady = false;
     let _prewarmToken = 0;
     let _hubLaunchShellPending = false;
-    let _hubLaunchShellFallbackTimer = 0;
     let _awaitingChatRenderReady = false;
-    let _chatRenderReadyFallbackTimer = 0;
+    let _hubReadyTimeoutTimer = 0;
     let _chatOverlayCloseTimer = 0;
     const _chatUrlCache = new Map();
     const _chatUrlInflight = new Map();
@@ -71,8 +70,7 @@
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) refreshSystemMobileTheme();
     });
-    const HUB_LAUNCH_SHELL_FALLBACK_MS = 5000;
-    const CHAT_RENDER_READY_FALLBACK_MS = 2600;
+    const HUB_READY_TIMEOUT_MS = 5000;
     const CHAT_OVERLAY_CLOSE_MS = 300;
     function resetChatOverlayMotionStyles() {
       _chatOverlay.style.transform = "";
@@ -89,6 +87,35 @@
       _launchShell.classList.remove("visible");
       _launchShell.hidden = true;
     }
+    function clearHubReadyTimeout() {
+      if (!_hubReadyTimeoutTimer) return;
+      clearTimeout(_hubReadyTimeoutTimer);
+      _hubReadyTimeoutTimer = 0;
+    }
+    function failHubReadyWait(message) {
+      _hubLaunchShellPending = false;
+      _awaitingChatRenderReady = false;
+      clearHubReadyTimeout();
+      clearLaunchShellQueryFlag();
+      const card = _launchShell?.querySelector(".launch-shell-card");
+      if (card) {
+        card.classList.add("is-error");
+        card.removeAttribute("aria-hidden");
+        card.textContent = String(message || "timeout");
+      }
+      showLaunchShell();
+    }
+    function startHubReadyTimeout() {
+      if (_hubReadyTimeoutTimer) return;
+      _hubReadyTimeoutTimer = setTimeout(() => {
+        failHubReadyWait("timeout");
+      }, HUB_READY_TIMEOUT_MS);
+    }
+    function finishHubReadyWaitIfComplete() {
+      if (_hubLaunchShellPending || _awaitingChatRenderReady) return;
+      clearHubReadyTimeout();
+      hideLaunchShell();
+    }
     function clearLaunchShellQueryFlag() {
       const params = new URLSearchParams(window.location.search || "");
       if (!params.has(HUB_LAUNCH_SHELL_PARAM)) return;
@@ -102,53 +129,31 @@
     function releaseHubLaunchShellAfterRender() {
       if (!_hubLaunchShellPending) return;
       _hubLaunchShellPending = false;
-      if (_hubLaunchShellFallbackTimer) {
-        clearTimeout(_hubLaunchShellFallbackTimer);
-        _hubLaunchShellFallbackTimer = 0;
-      }
       clearLaunchShellQueryFlag();
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          if (!_awaitingChatRenderReady) hideLaunchShell();
+          finishHubReadyWaitIfComplete();
         });
       });
     }
     function startChatRenderWait() {
       _awaitingChatRenderReady = true;
-      if (_chatRenderReadyFallbackTimer) clearTimeout(_chatRenderReadyFallbackTimer);
-      _chatRenderReadyFallbackTimer = setTimeout(() => {
-        _awaitingChatRenderReady = false;
-        _chatRenderReadyFallbackTimer = 0;
-        if (!_hubLaunchShellPending) hideLaunchShell();
-      }, CHAT_RENDER_READY_FALLBACK_MS);
+      startHubReadyTimeout();
     }
     function finishChatRenderWait() {
       if (!_awaitingChatRenderReady) return;
       _awaitingChatRenderReady = false;
-      if (_chatRenderReadyFallbackTimer) {
-        clearTimeout(_chatRenderReadyFallbackTimer);
-        _chatRenderReadyFallbackTimer = 0;
-      }
-      if (!_hubLaunchShellPending) hideLaunchShell();
+      finishHubReadyWaitIfComplete();
     }
     function cancelChatRenderWait() {
       _awaitingChatRenderReady = false;
-      if (_chatRenderReadyFallbackTimer) {
-        clearTimeout(_chatRenderReadyFallbackTimer);
-        _chatRenderReadyFallbackTimer = 0;
-      }
+      finishHubReadyWaitIfComplete();
     }
     const _launchShellParams = new URLSearchParams(window.location.search || "");
     _hubLaunchShellPending = _launchShellParams.get(HUB_LAUNCH_SHELL_PARAM) === "1";
     if (_hubLaunchShellPending) {
       showLaunchShell();
-      _hubLaunchShellFallbackTimer = setTimeout(() => {
-        if (!_hubLaunchShellPending || _awaitingChatRenderReady) return;
-        _hubLaunchShellPending = false;
-        _hubLaunchShellFallbackTimer = 0;
-        clearLaunchShellQueryFlag();
-        hideLaunchShell();
-      }, HUB_LAUNCH_SHELL_FALLBACK_MS);
+      startHubReadyTimeout();
     }
     function rememberLastSession(name) {
       const normalized = String(name || "").trim();
@@ -604,6 +609,10 @@
         });
     }
     window.addEventListener("message", function (e) {
+      if (e.data && e.data.type === "chat-render-error" && e.source === _chatFrame.contentWindow) {
+        failHubReadyWait(e.data.message || "render failed");
+        return;
+      }
       if (e.data && e.data.type === "chat-render-ready" && e.source === _chatFrame.contentWindow) {
         _prewarmedFrameRenderReady = true;
         if (!_chatOverlay.hidden && !_chatOverlay.classList.contains("prewarming")) {
@@ -849,6 +858,7 @@
           if (requestSeq !== _mobSessionsRequestSeq) return;
           if (_mobSessionsRenderedOnce || _mobSessionsCache.active.length || _mobSessionsCache.archived.length) return;
           wrap.innerHTML = `<div class="mob-empty">Failed to load sessions</div>`;
+          if (_hubLaunchShellPending) failHubReadyWait("Failed to load sessions");
         }
       };
       kickstartRememberedSessionPrewarm();

@@ -88,8 +88,14 @@
         }
         notifyHubChatRenderReady();
         notifyHubMessagesChanged();
-      } catch (_) {
+      } catch (err) {
         messageRefreshFailures += 1;
+        if (!hasInitialRefreshHydrated) {
+          const detail = err?.message || String(err);
+          releaseLaunchShellGate();
+          setStatus(detail, true);
+          notifyHubChatRenderError(detail);
+        }
         if (followMode && messageRefreshFailures >= 3) {
           setReconnectStatus(true);
         }
