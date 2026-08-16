@@ -40,17 +40,20 @@ def post_pick_workspace(handler, _parsed, _ctx) -> None:
     try:
         data = json.loads(raw.decode("utf-8") or "{}")
     except json.JSONDecodeError:
-        data = {}
+        handler._send_json(400, {"ok": False, "error": "invalid json"})
+        return
+    if not isinstance(data, dict):
+        handler._send_json(400, {"ok": False, "error": "invalid json"})
+        return
     start_path = str(data.get("path") or "").strip()
     start_clause = ""
     if start_path:
-        try:
-            candidate = Path(start_path).expanduser().resolve()
-            if candidate.exists():
-                escaped = str(candidate).replace("\\", "\\\\").replace('"', '\\"')
-                start_clause = f' default location POSIX file "{escaped}"'
-        except Exception:
-            start_clause = ""
+        candidate = Path(start_path).expanduser().resolve()
+        if not candidate.exists():
+            handler._send_json(400, {"ok": False, "error": f"path not found: {candidate}"})
+            return
+        escaped = str(candidate).replace("\\", "\\\\").replace('"', '\\"')
+        start_clause = f' default location POSIX file "{escaped}"'
     script = (
         'set chosenFolder to choose folder with prompt "Choose workspace folder"'
         f"{start_clause}\n"
@@ -115,10 +118,7 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     if override_name:
         query = ctx["active_session_records_query_fn"]()
         existing = set(query.records.keys())
-        try:
-            existing.update(ctx["archived_session_records_fn"](existing).keys())
-        except Exception:
-            pass
+        existing.update(ctx["archived_session_records_fn"](existing).keys())
         if override_name in existing or ctx["session_api"].session_logs_dir(override_name).exists():
             handler._send_json(409, {"ok": False, "error": f"セッション名 '{override_name}' は既に使用されています"})
             return

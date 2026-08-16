@@ -367,17 +367,11 @@ class ChatRuntime:
         _update_running_env_impl(self, agent, True)
         if not already_running:
             if not self._native_log.has_log_binding(agent):
-                # Try immediate binding; on failure, always start retry thread
                 self.refresh_native_log_bindings([agent], reason="first-message")
                 if self._native_log.has_log_binding(agent):
                     self._initial_sync_agent(agent)
                 else:
-                    threading.Thread(
-                        target=self._bind_retry_loop,
-                        args=(agent,),
-                        daemon=True,
-                        name=f"bind-retry-{agent}",
-                    ).start()
+                    logging.error("native log bind failed for %s", agent)
             else:
                 # Re-resolve to detect session switches (e.g. new Claude conversation file)
                 old_path = self._native_log.log_path_for_agent(agent)
@@ -401,17 +395,6 @@ class ChatRuntime:
         path = self._native_log.log_path_for_agent(agent)
         if path:
             emit_agent_updates(self._native_log, agent, path)
-
-    def _bind_retry_loop(self, agent: str, *, retries: int = 20, interval: float = 1.0) -> None:
-        for attempt in range(retries):
-            time.sleep(interval)
-            if self._native_log.has_log_binding(agent):
-                self._initial_sync_agent(agent)
-                return
-            self.refresh_native_log_bindings([agent], reason="first-message-retry")
-            if self._native_log.has_log_binding(agent):
-                self._initial_sync_agent(agent)
-                return
 
     def _mark_idle(self, agent: str) -> None:
         was_running = agent in self._agent_running

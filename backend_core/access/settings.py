@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
 import os
 import socket
 from pathlib import Path
@@ -87,17 +86,23 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
 
     try:
         message_text_size = int(raw.get("message_text_size", settings["message_text_size"]))
-    except Exception as exc:
-        logging.error(f"Unexpected error: {exc}", exc_info=True)
-        message_text_size = int(settings["message_text_size"])
-    settings["message_text_size"] = max(8, min(18, message_text_size))
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"invalid message_text_size: {raw.get('message_text_size')!r}") from exc
+    if not (8 <= message_text_size <= 18):
+        raise ValueError(f"message_text_size out of range: {message_text_size}")
+    settings["message_text_size"] = message_text_size
 
     try:
-        message_text_size_desktop = int(raw.get("message_text_size_desktop") or settings.get("message_text_size_desktop") or 13)
-    except Exception as exc:
-        logging.error(f"Unexpected error: {exc}", exc_info=True)
-        message_text_size_desktop = 13
-    settings["message_text_size_desktop"] = max(8, min(18, message_text_size_desktop))
+        message_text_size_desktop = int(
+            raw.get("message_text_size_desktop")
+            if raw.get("message_text_size_desktop") is not None
+            else settings.get("message_text_size_desktop") or 13
+        )
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"invalid message_text_size_desktop: {raw.get('message_text_size_desktop')!r}") from exc
+    if not (8 <= message_text_size_desktop <= 18):
+        raise ValueError(f"message_text_size_desktop out of range: {message_text_size_desktop}")
+    settings["message_text_size_desktop"] = message_text_size_desktop
 
     return settings
 
@@ -187,17 +192,14 @@ def ensure_session_workspace_mirrors(session_name: str, workspace: Path | str) -
         (session_native_log_state_path(session_name), workspace_native_log_state_link_path(workspace)),
     )
     for target, link_path in mirrors:
-        try:
-            link_path.parent.mkdir(parents=True, exist_ok=True)
-            if link_path.is_symlink():
-                if link_path.resolve() == target.resolve():
-                    continue
-                link_path.unlink()
-            elif link_path.exists():
-                link_path.unlink()
-            link_path.symlink_to(target)
-        except Exception as exc:
-            logging.warning("workspace symlink failed (%s): %s", link_path, exc)
+        link_path.parent.mkdir(parents=True, exist_ok=True)
+        if link_path.is_symlink():
+            if link_path.resolve() == target.resolve():
+                continue
+            link_path.unlink()
+        elif link_path.exists():
+            link_path.unlink()
+        link_path.symlink_to(target)
 
 
 def workspace_upload_dir(workspace: Path | str) -> Path:
@@ -219,12 +221,10 @@ def chat_ports_path(repo_root: Path | str, *, create_parent: bool = True) -> Pat
 def _read_json_dict(path: Path) -> dict:
     if not path.is_file():
         return {}
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        logging.error(f"Unexpected error: {exc}", exc_info=True)
-        return {}
-    return raw if isinstance(raw, dict) else {}
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError(f"invalid json object: {path}")
+    return raw
 
 
 def load_chat_port_overrides(repo_root: Path | str) -> dict[str, int]:
@@ -232,14 +232,14 @@ def load_chat_port_overrides(repo_root: Path | str) -> dict[str, int]:
     overrides = {}
     for key, value in raw.items():
         if not isinstance(key, str):
-            continue
+            raise ValueError(f"invalid chat port key: {key!r}")
         try:
             port = int(value)
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            continue
-        if 1 <= port <= 65535:
-            overrides[key] = port
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"invalid chat port for {key!r}: {value!r}") from exc
+        if not (1 <= port <= 65535):
+            raise ValueError(f"chat port out of range for {key!r}: {port}")
+        overrides[key] = port
     return overrides
 
 
@@ -275,11 +275,9 @@ def load_hub_settings(repo_root: Path | str) -> dict:
     settings = dict(HUB_SETTINGS_DEFAULTS)
     path = hub_settings_path(repo_root)
     if path.is_file():
-        try:
-            raw = json.loads(path.read_text(encoding="utf-8"))
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            raw = {}
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(raw, dict):
+            raise ValueError(f"invalid hub settings: {path}")
         settings = _apply_hub_settings(raw, settings)
     return settings
 
