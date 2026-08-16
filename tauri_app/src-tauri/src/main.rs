@@ -221,6 +221,15 @@ fn find_repo_root() -> Option<String> {
     }
 }
 
+fn show_hub_error(window: &tauri::WebviewWindow, message: &str) {
+    let escaped = message.replace('\\', "\\\\").replace('\'', "\\'");
+    let _ = window.eval(&format!(
+        "document.body.style.cssText='background:{};color:#fff;padding:60px 40px;font:18px -apple-system,sans-serif';document.body.textContent='{}';",
+        DARK_BG, escaped
+    ));
+    let _ = window.show();
+}
+
 fn wait_for_port(port: u16, timeout: Duration) -> bool {
     let start = Instant::now();
     while start.elapsed() < timeout {
@@ -422,7 +431,7 @@ fn main() {
 
             let repo_root = find_repo_root().unwrap_or_default();
             if repo_root.is_empty() {
-                let _ = window.eval(&format!("document.body.style.cssText='background:{};color:#fff;padding:60px 40px;font:18px -apple-system,sans-serif';document.body.textContent='Could not find the Agent Window repo.';", DARK_BG));
+                show_hub_error(&window, "Could not find the Agent Window repo.");
                 return Ok(());
             }
             eprintln!("[app] repo = {}", repo_root);
@@ -456,10 +465,13 @@ fn main() {
                 hub_probe == Some(LocalHubProbe::AgentWindow(expected_transport));
 
             if matches!(hub_probe, Some(LocalHubProbe::OtherListener)) {
-                let _ = window.eval(&format!(
-                    "document.body.style.cssText='background:{};color:#fff;padding:60px 40px;font:18px -apple-system,sans-serif';document.body.textContent='Port {} is already in use by another service. Set AGENT_INDEX_HUB_PORT to use a different Hub port.';",
-                    DARK_BG, hub_port
-                ));
+                show_hub_error(
+                    &window,
+                    &format!(
+                        "Port {} is already in use by another service. Set AGENT_INDEX_HUB_PORT to use a different Hub port.",
+                        hub_port
+                    ),
+                );
                 return Ok(());
             }
 
@@ -487,7 +499,9 @@ fn main() {
                     }
                     Err(e) => {
                         eprintln!("[app] Hub spawn failed: {}", e);
+                        show_hub_error(&window, &format!("Failed to start Hub: {}", e));
                         app.manage(HubProcess(Mutex::new(None)));
+                        return Ok(());
                     }
                 }
             } else {
@@ -497,20 +511,24 @@ fn main() {
 
             let app_handle = app.handle().clone();
             thread::spawn(move || {
+                let show_error = |message: String| {
+                    if let Some(w) = app_handle.get_webview_window("main") {
+                        show_hub_error(&w, &message);
+                    }
+                };
                 if !hub_already_up && !wait_for_port(hub_port, Duration::from_secs(15)) {
                     eprintln!("[app] Hub timeout");
+                    show_error(format!("Hub timeout on port {}", hub_port));
                     return;
-                }
-                if hub_already_up {
-                    thread::sleep(Duration::from_millis(600));
                 }
                 let transport = match probe_local_hub(hub_port) {
                     Some(LocalHubProbe::AgentWindow(t)) => t,
                     Some(LocalHubProbe::OtherListener) => {
-                        eprintln!(
-                            "[app] Port {} is in use by another service",
+                        eprintln!("[app] Port {} is in use by another service", hub_port);
+                        show_error(format!(
+                            "Port {} is already in use by another service.",
                             hub_port
-                        );
+                        ));
                         return;
                     }
                     None => {
@@ -518,6 +536,7 @@ fn main() {
                             "[app] No Hub response on port {} (expected HTTP or HTTPS)",
                             hub_port
                         );
+                        show_error(format!("No Hub response on port {}", hub_port));
                         return;
                     }
                 };
@@ -526,6 +545,10 @@ fn main() {
                         "[app] Hub on port {} is using the wrong transport for this launch",
                         hub_port
                     );
+                    show_error(format!(
+                        "Hub on port {} is using the wrong transport.",
+                        hub_port
+                    ));
                     return;
                 }
                 let scheme = match transport {
@@ -537,11 +560,7 @@ fn main() {
                 if let Some(w) = app_handle.get_webview_window("main") {
                     let url: tauri::Url = hub_url.parse().unwrap();
                     let _ = w.navigate(url);
-                    let show_w = w.clone();
-                    thread::spawn(move || {
-                        thread::sleep(Duration::from_millis(300));
-                        let _ = show_w.show();
-                    });
+                    let _ = w.show();
                 }
             });
 

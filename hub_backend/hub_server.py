@@ -300,22 +300,9 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
     .launch-shell-card.is-error {{
       width: auto;
       height: auto;
-      flex-direction: column;
-      gap: 10px;
-      text-align: center;
       font-size: 13px;
       line-height: 1.5;
       color: var(--fg);
-    }}
-    .launch-shell-retry {{
-      appearance: none;
-      border: 1px solid var(--icon-muted);
-      background: transparent;
-      color: var(--fg);
-      border-radius: 999px;
-      padding: 6px 16px;
-      font: inherit;
-      cursor: pointer;
     }}
   </style>
 </head>
@@ -377,19 +364,10 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
         }}
       }};
       const launchShellCard = document.getElementById("launchShellCard");
-      const maxLoadWaitMs = 15000;
-      let loadStartedAt = Date.now();
-      const showLaunchShellError = () => {{
+      const showLaunchShellError = (message) => {{
         if (!launchShellCard) return;
         launchShellCard.classList.add("is-error");
-        launchShellCard.innerHTML =
-          '<span>Hub is not responding.</span><button type="button" class="launch-shell-retry">Retry</button>';
-        launchShellCard.querySelector(".launch-shell-retry")?.addEventListener("click", () => {{
-          launchShellCard.classList.remove("is-error");
-          launchShellCard.innerHTML = '<span class="launch-shell-spinner" aria-hidden="true"></span>';
-          loadStartedAt = Date.now();
-          load();
-        }});
+        launchShellCard.textContent = String(message || "Hub is not responding.");
       }};
       const attemptLoad = async () => {{
         const response = await fetch(target, {{ cache: "no-store" }});
@@ -402,29 +380,16 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       }};
       const load = async () => {{
         if (requestedRestart) {{
-          // /restart-hub blocks until the replacement process is actually
-          // accepting connections, so a single subsequent fetch is
-          // guaranteed to land on it -- no retry loop needed here.
           const restarted = await requestHubRestart();
           if (!restarted) {{
-            showLaunchShellError();
+            showLaunchShellError("restart failed");
             return;
           }}
-          try {{
-            await attemptLoad();
-          }} catch (_err) {{
-            showLaunchShellError();
-          }}
-          return;
         }}
         try {{
           await attemptLoad();
         }} catch (_err) {{
-          if (Date.now() - loadStartedAt > maxLoadWaitMs) {{
-            showLaunchShellError();
-            return;
-          }}
-          window.setTimeout(load, 700);
+          showLaunchShellError();
         }}
       }};
       load();

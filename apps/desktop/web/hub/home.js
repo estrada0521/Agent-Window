@@ -163,8 +163,27 @@
     }
     function setDeskReloadShell(active) {
       if (!_deskReloadShell) return;
+      if (active) {
+        const card = _deskReloadShell.querySelector(".desk-reload-shell-card");
+        if (card) {
+          card.classList.remove("is-error");
+          card.innerHTML = '<span class="desk-reload-shell-spinner" aria-hidden="true"></span>';
+        }
+      }
       _deskReloadShell.hidden = !active;
       _deskReloadShell.classList.toggle("visible", !!active);
+    }
+    function failDeskOpen(message) {
+      const card = _deskReloadShell?.querySelector(".desk-reload-shell-card");
+      if (card) {
+        card.classList.add("is-error");
+        card.textContent = String(message || "open session failed");
+      }
+      if (_deskReloadShell) {
+        _deskReloadShell.hidden = false;
+        _deskReloadShell.classList.add("visible");
+      }
+      setDeskChatLoading(false);
     }
 
     function openDeskChatHeaderMenu() {
@@ -942,9 +961,10 @@
 
     async function openSessionFrame(openHref, name) {
       if (!name) {
-        window.location.href = openHref;
+        failDeskOpen("Session not found");
         return;
       }
+      setDeskReloadShell(false);
       const needsReviveTransition = /^\/revive-session(?:[/?]|$)/.test(String(openHref || ""));
       const closeOnOpen = isPhoneViewport();
       _deskSelectedSessionName = name;
@@ -959,9 +979,9 @@
         if (openToken !== _deskOpenToken) return;
         openChatInDesk(chatUrl, name);
         if (closeOnOpen) setDeskSidebarOpen(false);
-      } catch (_) {
+      } catch (err) {
         if (openToken !== _deskOpenToken) return;
-        window.location.href = openHref;
+        failDeskOpen(err?.message || "open session failed");
       }
     }
 
