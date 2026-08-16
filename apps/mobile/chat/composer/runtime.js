@@ -47,6 +47,13 @@
     composerPlusMenu?.addEventListener("toggle", () => {
       if (composerPlusMenu.open) closeDrop();
     });
+    let composerBlurCloseTimer = null;
+    const clearComposerBlurCloseTimer = () => {
+      if (composerBlurCloseTimer) {
+        clearTimeout(composerBlurCloseTimer);
+        composerBlurCloseTimer = null;
+      }
+    };
     const scheduleComposerCloseFromKeyboardDismiss = () => {
       clearComposerBlurCloseTimer();
       composerBlurCloseTimer = setTimeout(() => {
