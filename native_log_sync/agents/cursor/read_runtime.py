@@ -174,4 +174,28 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
             return []
         return [runtime_event("Fetch", url, source_id=_source_id("tool:webfetch", url))]
 
+    if lower == "task":
+        sub = _pick(args_obj, "description") or _pick(args_obj, "subagent_type") or "agent"
+        first = sub.split("\n", 1)[0].strip()
+        if len(first) > 120:
+            first = first[:117] + "..."
+        return [runtime_event("Agent", first, source_id=_source_id("tool:task", first))]
+
+    if lower == "awaitshell":
+        sub = _pick(args_obj, "pattern")
+        if not sub:
+            sid = _pick(args_obj, "shell_id")
+            sub = f"shell {sid}" if sid else "shell"
+        first = sub.split("\n", 1)[0].strip()
+        if len(first) > 120:
+            first = first[:117] + "..."
+        return [runtime_event("Wait", first, source_id=_source_id("tool:awaitshell", first))]
+
+    if lower == "getmcptools":
+        sub = _pick(args_obj, "toolName", "pattern", "server") or "tools"
+        first = sub.split("\n", 1)[0].strip()
+        if len(first) > 120:
+            first = first[:117] + "..."
+        return [runtime_event("MCP", first, source_id=_source_id("tool:getmcptools", first))]
+
     return []
