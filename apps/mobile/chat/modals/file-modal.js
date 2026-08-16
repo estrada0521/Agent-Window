@@ -3,38 +3,38 @@
       web: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 9.5h17"></path><circle cx="7.5" cy="7" r="0.8" fill="currentColor" stroke="none"></circle><circle cx="10.5" cy="7" r="0.8" fill="currentColor" stroke="none"></circle><path d="M9.5 13.5h6"></path><path d="M9.5 16.5h4"></path>',
       text: '<path d="M14 3.5H7.5A2.5 2.5 0 0 0 5 6v12a2.5 2.5 0 0 0 2.5 2.5h9A2.5 2.5 0 0 0 19 18V8.5z"></path><path d="M14 3.5V8.5H19"></path><path d="M9 12.5h6"></path><path d="M9 16h6"></path>',
     };
-    let attachedFilesPreviewBaseTheme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
-    let attachedFilesHtmlPreviewMode = "text";
-    let attachedFilesPreviewControlsWired = false;
+    let repoPreviewBaseTheme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
+    let repoHtmlPreviewMode = "text";
+    let repoPreviewControlsWired = false;
     const currentFileModalBaseTheme = () => document.documentElement.dataset.theme === "light" ? "light" : "dark";
     const isHtmlPreviewExt = (ext) => ext === "html" || ext === "htm";
-    const attachedFilesPreviewFrameEl = () => attachedFilesPanel?.querySelector(".attached-files-preview-frame");
-    const attachedFilesPreviewHtmlModeBtn = () => attachedFilesPanel?.querySelector(".attached-files-preview-html-mode");
-    const attachedFilesPreviewHtmlModeIcon = () => attachedFilesPanel?.querySelector(".attached-files-preview-html-mode-icon");
-    const attachedFilesPreviewExt = () => String(attachedFilesPanel?._previewExt || "").toLowerCase();
-    const attachedFilesPreviewInPreviewMode = () => !!attachedFilesPanel?.classList.contains("attached-files-mode-preview");
-    const syncAttachedFilesPreviewHtmlModeToggle = () => {
-      const btn = attachedFilesPreviewHtmlModeBtn();
-      const icon = attachedFilesPreviewHtmlModeIcon();
+    const repoPreviewFrameEl = () => repoPanel?.querySelector(".repo-preview-frame");
+    const repoPreviewHtmlModeBtn = () => repoPanel?.querySelector(".repo-preview-html-mode");
+    const repoPreviewHtmlModeIcon = () => repoPanel?.querySelector(".repo-preview-html-mode-icon");
+    const repoPreviewExt = () => String(repoPanel?._previewExt || "").toLowerCase();
+    const repoPreviewInPreviewMode = () => !!repoPanel?.classList.contains("repo-mode-preview");
+    const syncRepoPreviewHtmlModeToggle = () => {
+      const btn = repoPreviewHtmlModeBtn();
+      const icon = repoPreviewHtmlModeIcon();
       if (!btn || !icon) return;
-      const isHtml = isHtmlPreviewExt(attachedFilesPreviewExt());
-      btn.hidden = !attachedFilesPreviewInPreviewMode() || !isHtml;
+      const isHtml = isHtmlPreviewExt(repoPreviewExt());
+      btn.hidden = !repoPreviewInPreviewMode() || !isHtml;
       if (btn.hidden) return;
-      const nextMode = attachedFilesHtmlPreviewMode === "text" ? "web" : "text";
+      const nextMode = repoHtmlPreviewMode === "text" ? "web" : "text";
       const title = nextMode === "text" ? "Switch HTML preview to text" : "Switch HTML preview to web";
       btn.title = title;
       btn.setAttribute("aria-label", title);
       icon.innerHTML = FILE_PREVIEW_HTML_MODE_ICONS[nextMode] || FILE_PREVIEW_HTML_MODE_ICONS.text;
     };
-    const resetAttachedFilesPreviewControls = () => {
-      attachedFilesPreviewBaseTheme = currentFileModalBaseTheme();
-      attachedFilesHtmlPreviewMode = "text";
-      syncAttachedFilesPreviewHtmlModeToggle();
+    const resetRepoPreviewControls = () => {
+      repoPreviewBaseTheme = currentFileModalBaseTheme();
+      repoHtmlPreviewMode = "text";
+      syncRepoPreviewHtmlModeToggle();
     };
-    const initAttachedFilesPreviewControls = () => {
-      attachedFilesPreviewBaseTheme = currentFileModalBaseTheme();
-      attachedFilesHtmlPreviewMode = "text";
-      syncAttachedFilesPreviewHtmlModeToggle();
+    const initRepoPreviewControls = () => {
+      repoPreviewBaseTheme = currentFileModalBaseTheme();
+      repoHtmlPreviewMode = "text";
+      syncRepoPreviewHtmlModeToggle();
     };
     const applyPreviewHtmlModeToFrame = (frame, ext, mode) => {
       if (!isHtmlPreviewExt(ext)) return false;
@@ -69,40 +69,40 @@
         applyPreviewHtmlModeToFrame(frame, ext, mode);
       }, 60);
     };
-    const postAttachedFilesPreviewTheme = () => {
-      const frame = attachedFilesPreviewFrameEl();
+    const postRepoPreviewTheme = () => {
+      const frame = repoPreviewFrameEl();
       if (!frame?.src) return;
-      postPreviewThemeToFrame(frame, attachedFilesPreviewExt(), attachedFilesPreviewBaseTheme);
+      postPreviewThemeToFrame(frame, repoPreviewExt(), repoPreviewBaseTheme);
     };
-    const postAttachedFilesPreviewHtmlMode = () => {
-      const frame = attachedFilesPreviewFrameEl();
+    const postRepoPreviewHtmlMode = () => {
+      const frame = repoPreviewFrameEl();
       if (!frame?.src) return;
-      postPreviewHtmlModeToFrame(frame, attachedFilesPreviewExt(), attachedFilesHtmlPreviewMode);
+      postPreviewHtmlModeToFrame(frame, repoPreviewExt(), repoHtmlPreviewMode);
     };
-    const wireAttachedFilesPreviewControls = (sheetNav) => {
-      if (attachedFilesPreviewControlsWired || !sheetNav) return;
-      const navBar = sheetNav.querySelector(".attached-files-sheet-nav-bar");
-      const closeBtn = navBar?.querySelector(".attached-files-sheet-close");
+    const wireRepoPreviewControls = (sheetNav) => {
+      if (repoPreviewControlsWired || !sheetNav) return;
+      const navBar = sheetNav.querySelector(".repo-sheet-nav-bar");
+      const closeBtn = navBar?.querySelector(".repo-sheet-close");
       if (!navBar || !closeBtn) return;
-      attachedFilesPreviewControlsWired = true;
+      repoPreviewControlsWired = true;
       const actions = document.createElement("div");
-      actions.className = "attached-files-preview-actions";
+      actions.className = "repo-preview-actions";
       const htmlBtn = document.createElement("button");
       htmlBtn.type = "button";
-      htmlBtn.className = "attached-files-preview-html-mode mobile-bottom-sheet-button mobile-floating-sheet-button";
+      htmlBtn.className = "repo-preview-html-mode mobile-bottom-sheet-button mobile-floating-sheet-button";
       htmlBtn.hidden = true;
-      htmlBtn.innerHTML = '<svg class="attached-files-preview-html-mode-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>';
+      htmlBtn.innerHTML = '<svg class="repo-preview-html-mode-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>';
       actions.append(htmlBtn, closeBtn);
       navBar.appendChild(actions);
       htmlBtn.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        if (!isHtmlPreviewExt(attachedFilesPreviewExt())) return;
-        attachedFilesHtmlPreviewMode = attachedFilesHtmlPreviewMode === "text" ? "web" : "text";
-        syncAttachedFilesPreviewHtmlModeToggle();
-        postAttachedFilesPreviewHtmlMode();
+        if (!isHtmlPreviewExt(repoPreviewExt())) return;
+        repoHtmlPreviewMode = repoHtmlPreviewMode === "text" ? "web" : "text";
+        syncRepoPreviewHtmlModeToggle();
+        postRepoPreviewHtmlMode();
       });
-      resetAttachedFilesPreviewControls();
+      resetRepoPreviewControls();
     };
     const applyPreviewThemeToFrame = (frame, ext, baseTheme) => {
       if (!frame) return false;
@@ -179,9 +179,9 @@
       frame.onload = () => {
         frame.style.transition = "opacity 200ms ease-out";
         frame.style.opacity = "1";
-        attachedFilesPreviewBaseTheme = currentFileModalBaseTheme();
-        postPreviewThemeToFrame(frame, normalizedExt, attachedFilesPreviewBaseTheme);
-        postPreviewHtmlModeToFrame(frame, normalizedExt, attachedFilesHtmlPreviewMode);
+        repoPreviewBaseTheme = currentFileModalBaseTheme();
+        postPreviewThemeToFrame(frame, normalizedExt, repoPreviewBaseTheme);
+        postPreviewHtmlModeToFrame(frame, normalizedExt, repoHtmlPreviewMode);
       };
       frame.src = fileViewHrefForPath(normalizedPath, { embed: true });
     };
@@ -234,7 +234,7 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
       const normalizedPath = String(path || "").trim();
       if (!normalizedPath) return;
       const normalizedExt = String(ext || extFromPath(normalizedPath) || "").toLowerCase();
-      if (typeof attachedFilesPanel?._openFilePreview !== "function") return;
+      if (typeof repoPanel?._openFilePreview !== "function") return;
       if (!isPublicChatView) {
         const exists = await fileExistsOnDisk(normalizedPath);
         if (!exists) {
@@ -243,12 +243,12 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
           return;
         }
       }
-      await attachedFilesPanel._openFilePreview(normalizedPath, normalizedExt);
+      await repoPanel._openFilePreview(normalizedPath, normalizedExt);
     };
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && attachedFilesPanel?.classList.contains("attached-files-mode-preview")) {
+      if (event.key === "Escape" && repoPanel?.classList.contains("repo-mode-preview")) {
         event.preventDefault();
-        closeAttachedFilesRepoPreview();
+        closeRepoPreview();
         return;
       }
       if (event.key === "Escape" && isComposerOverlayOpen()) {
@@ -258,12 +258,12 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
     });
     if (typeof MutationObserver !== "undefined") {
       new MutationObserver((mutations) => {
-        if (!attachedFilesPanel?.classList.contains("attached-files-mode-preview")) return;
+        if (!repoPanel?.classList.contains("repo-mode-preview")) return;
         if (!mutations.some((mutation) => mutation.attributeName === "data-theme")) return;
-        const frame = attachedFilesPreviewFrameEl();
+        const frame = repoPreviewFrameEl();
         if (!frame?.src) return;
-        attachedFilesPreviewBaseTheme = currentFileModalBaseTheme();
-        postAttachedFilesPreviewTheme();
+        repoPreviewBaseTheme = currentFileModalBaseTheme();
+        postRepoPreviewTheme();
       }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     }
     const scrollToBottomBtn = document.getElementById("scrollToBottomBtn");

@@ -100,7 +100,7 @@ __CHAT_INCLUDE:../../../shared/chat/messages-data.js__
     };
     const updateSessionUI = (data, displayEntries) => {
       currentSessionName = data.session || "";
-      attachedFilesSession = currentSessionName;
+      repoSession = currentSessionName;
       sessionActive = !!data.active;
       const resolvedTargets = normalizedSessionTargets(data.targets);
       const picker = document.getElementById("targetPicker");
@@ -124,7 +124,7 @@ __CHAT_INCLUDE:../../../shared/chat/messages-data.js__
         setStatus("archived session is read-only");
       }
       maybeAutoOpenComposer();
-      updateAttachedFilesPanel(displayEntries);
+      updateRepoPanel(displayEntries);
     };
     const scheduleAnimateInCleanup = (row, opts = {}) => {
       const streamBody = !!opts.streamBody;

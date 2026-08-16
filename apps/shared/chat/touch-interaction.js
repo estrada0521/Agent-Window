@@ -7,7 +7,7 @@
       ".target-chip",
       ".copy-btn",
       ".file-card",
-      ".attached-files-sheet-close",
+      ".repo-sheet-close",
       ".send-btn",
       "#scrollToBottomBtn"
     ].join(", ");

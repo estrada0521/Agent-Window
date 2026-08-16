@@ -5,7 +5,7 @@
     let paneViewerInitialFetchTimer = 0;
     let lastPaneViewerTabIdx = 0;
     const gitBranchPanel = document.getElementById("gitBranchPanel");
-    const attachedFilesPanel = document.getElementById("attachedFilesPanel");
+    const repoPanel = document.getElementById("repoPanel");
     const paneTracePanel = document.getElementById("paneTracePanel");
     const nativeHeaderMenuSelect = document.getElementById("hubPageNativeMenuSelect");
     const isAppleTouchDevice = (() => {
@@ -61,7 +61,7 @@
       setTimeout(clearNativeHeaderMenuSelection, 0);
     });
     const headerRoot = document.querySelector(".hub-page-header");
-    const hasOpenHeaderMenu = () => !!(gitBranchPanel?.classList.contains("open") || rightMenuPanel?.classList.contains("open") || attachedFilesPanel?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
+    const hasOpenHeaderMenu = () => !!(gitBranchPanel?.classList.contains("open") || rightMenuPanel?.classList.contains("open") || repoPanel?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
     const MOBILE_BOTTOM_SHEET_CLOSE_MS = 300;
     const mobileSheetCloseIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     const animateBottomSheetOpen = (panel, onOpened = () => { }) => {
@@ -202,26 +202,26 @@
       };
       return { open, close, clearCloseTimer, lockScroll, unlockScroll };
     };
-    const attachedFilesSheet = createMobileSheetController(attachedFilesPanel, "attached-files-sheet-active", {
+    const repoSheet = createMobileSheetController(repoPanel, "repo-sheet-active", {
       onClosed: () => {
-        _attachedFilesPreviewPath = "";
-        _attachedFilesPreviewExt = "";
-        attachedFilesPanel?.classList.remove("attached-files-mode-preview");
-        resetEmbeddedFilePreviewFrame(attachedFilesPreviewFrameEl());
+        _repoPreviewPath = "";
+        _repoPreviewExt = "";
+        repoPanel?.classList.remove("repo-mode-preview");
+        resetEmbeddedFilePreviewFrame(repoPreviewFrameEl());
       },
     });
-    const closeAttachedFilesSheet = (options) => attachedFilesSheet.close(options);
-    const openAttachedFilesSheet = () => {
-      if (!attachedFilesPanel) return;
-      if (attachedFilesPanel.classList.contains("attached-files-mode-preview")) {
-        closeAttachedFilesRepoPreview();
+    const closeRepoSheet = (options) => repoSheet.close(options);
+    const openRepoSheet = () => {
+      if (!repoPanel) return;
+      if (repoPanel.classList.contains("repo-mode-preview")) {
+        closeRepoPreview();
       }
       closeGitBranchSheet({ immediate: true });
       closePaneTraceSheet({ immediate: true });
-      attachedFilesSheet.open();
-      if (typeof attachedFilesPanel._syncCategoryUi === "function") {
+      repoSheet.open();
+      if (typeof repoPanel._syncCategoryUi === "function") {
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => attachedFilesPanel._syncCategoryUi());
+          requestAnimationFrame(() => repoPanel._syncCategoryUi());
         });
       }
     };
@@ -282,7 +282,7 @@
     };
     const openGitBranchSheet = async () => {
       if (!gitBranchPanel) return;
-      closeAttachedFilesSheet({ immediate: true });
+      closeRepoSheet({ immediate: true });
       closePaneTraceSheet({ immediate: true });
       ensureGitBranchSheetDom();
       setGitBranchSheetTitle("Git Branches");
@@ -339,117 +339,117 @@
     }
     const isLocalHubHostname = (host = String(location.hostname || "")) =>
       host === "127.0.0.1" || host === "localhost" || host === "[::1]" || host.startsWith("192.168.") || host.startsWith("10.") || /^172\\.(1[6-9]|2\\d|3[01])\\./.test(host);
-    let attachedFilesSession = "";
-    let attachedFilesPanelRenderSig = "";
-    let attachedFilesPanelUpdateSeq = 0;
-    let attachedFilesPanelEntries = [];
-    let _attachedFilesBrowserPath = "";
-    let _attachedFilesPreviewPath = "";
-    let _attachedFilesPreviewExt = "";
-    let _attachedFilesGoToParentPath = () => { };
-    const attachedFilesSheetBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
-    const normalizeAttachedFilesRepoPath = (value) => {
+    let repoSession = "";
+    let repoPanelRenderSig = "";
+    let repoPanelUpdateSeq = 0;
+    let repoPanelEntries = [];
+    let _repoBrowserPath = "";
+    let _repoPreviewPath = "";
+    let _repoPreviewExt = "";
+    let _repoGoToParentPath = () => { };
+    const repoSheetBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
+    const normalizeRepoPath = (value) => {
       const normalized = String(value || "").replace(/\\/g, "/");
       if (normalized.startsWith("/") || normalized.startsWith("~")) {
         return normalized.replace(/\/+$/g, "");
       }
       return normalized.replace(/^\/+|\/+$/g, "");
     };
-    const attachedFilesParentPathForFile = (rawPath) => {
-      const normalized = normalizeAttachedFilesRepoPath(rawPath);
+    const repoParentPathForFile = (rawPath) => {
+      const normalized = normalizeRepoPath(rawPath);
       const isAbsolute = normalized.startsWith("/");
       const parts = normalized.split("/").filter(Boolean);
       parts.pop();
       const joined = parts.join("/");
       return isAbsolute ? `/${joined}` : joined;
     };
-    const attachedFilesSheetTitleEl = () => attachedFilesPanel?.querySelector(".attached-files-sheet-title");
-    const attachedFilesSheetBackBtn = () => attachedFilesPanel?.querySelector(".attached-files-sheet-back");
-    const attachedFilesBrowserMountEl = () => attachedFilesPanel?.querySelector(".attached-files-browser-mount");
-    const attachedFilesBrowserTitleForPath = (rawPath) => {
-      const path = normalizeAttachedFilesRepoPath(rawPath);
+    const repoSheetTitleEl = () => repoPanel?.querySelector(".repo-sheet-title");
+    const repoSheetBackBtn = () => repoPanel?.querySelector(".repo-sheet-back");
+    const repoBrowserMountEl = () => repoPanel?.querySelector(".repo-browser-mount");
+    const repoBrowserTitleForPath = (rawPath) => {
+      const path = normalizeRepoPath(rawPath);
       return path ? (path.split("/").filter(Boolean).pop() || "Repository") : "Repository";
     };
-    const setAttachedFilesSheetTitle = (text) => {
-      const titleEl = attachedFilesSheetTitleEl();
+    const setRepoSheetTitle = (text) => {
+      const titleEl = repoSheetTitleEl();
       if (!titleEl) return;
       titleEl.textContent = text;
       titleEl.title = text;
     };
-    const syncAttachedFilesSheetBackBtn = () => {
-      const backBtn = attachedFilesSheetBackBtn();
+    const syncRepoSheetBackBtn = () => {
+      const backBtn = repoSheetBackBtn();
       if (!backBtn) return;
-      const navBar = backBtn.closest(".attached-files-sheet-nav-bar");
-      if (attachedFilesPanel?.classList.contains("attached-files-mode-preview")) {
-        navBar?.classList.remove("attached-files-sheet-nav-at-root");
+      const navBar = backBtn.closest(".repo-sheet-nav-bar");
+      if (repoPanel?.classList.contains("repo-mode-preview")) {
+        navBar?.classList.remove("repo-sheet-nav-at-root");
         backBtn.disabled = false;
         backBtn.setAttribute("aria-label", "Back to directory");
         return;
       }
-      const atRoot = !normalizeAttachedFilesRepoPath(_attachedFilesBrowserPath);
-      navBar?.classList.toggle("attached-files-sheet-nav-at-root", atRoot);
+      const atRoot = !normalizeRepoPath(_repoBrowserPath);
+      navBar?.classList.toggle("repo-sheet-nav-at-root", atRoot);
       backBtn.disabled = atRoot;
       backBtn.setAttribute("aria-label", atRoot ? "No parent directory" : "Go to parent directory");
     };
-    const clearAttachedFilesRepoPreview = () => {
-      _attachedFilesPreviewPath = "";
-      _attachedFilesPreviewExt = "";
-      if (attachedFilesPanel) {
-        delete attachedFilesPanel._previewPath;
-        delete attachedFilesPanel._previewExt;
+    const clearRepoPreview = () => {
+      _repoPreviewPath = "";
+      _repoPreviewExt = "";
+      if (repoPanel) {
+        delete repoPanel._previewPath;
+        delete repoPanel._previewExt;
       }
-      attachedFilesPanel?.classList.remove("attached-files-mode-preview");
-      resetEmbeddedFilePreviewFrame(attachedFilesPreviewFrameEl());
-      resetAttachedFilesPreviewControls();
-      setAttachedFilesSheetTitle(attachedFilesBrowserTitleForPath(_attachedFilesBrowserPath));
-      syncAttachedFilesSheetBackBtn();
+      repoPanel?.classList.remove("repo-mode-preview");
+      resetEmbeddedFilePreviewFrame(repoPreviewFrameEl());
+      resetRepoPreviewControls();
+      setRepoSheetTitle(repoBrowserTitleForPath(_repoBrowserPath));
+      syncRepoSheetBackBtn();
     };
-    const closeAttachedFilesRepoPreview = () => {
-      if (!_attachedFilesPreviewPath) return;
-      clearAttachedFilesRepoPreview();
+    const closeRepoPreview = () => {
+      if (!_repoPreviewPath) return;
+      clearRepoPreview();
     };
-    const handleAttachedFilesSheetBack = () => {
-      if (!attachedFilesPanel) return;
-      if (attachedFilesPanel.classList.contains("attached-files-mode-preview")) {
-        closeAttachedFilesRepoPreview();
+    const handleRepoSheetBack = () => {
+      if (!repoPanel) return;
+      if (repoPanel.classList.contains("repo-mode-preview")) {
+        closeRepoPreview();
         return;
       }
-      _attachedFilesGoToParentPath();
+      _repoGoToParentPath();
     };
-    const ensureAttachedFilesSheetDom = () => {
-      if (!attachedFilesPanel) return false;
-      if (attachedFilesPanel.querySelector(".attached-files-sheet")) return true;
+    const ensureRepoSheetDom = () => {
+      if (!repoPanel) return false;
+      if (repoPanel.querySelector(".repo-sheet")) return true;
 
       const stack = document.createElement("div");
-      stack.className = "attached-files-stack";
+      stack.className = "repo-stack";
 
       const browserView = document.createElement("div");
-      browserView.className = "attached-files-browser-view";
+      browserView.className = "repo-browser-view";
       const browserMount = document.createElement("div");
-      browserMount.className = "attached-files-browser-mount";
+      browserMount.className = "repo-browser-mount";
       browserView.appendChild(browserMount);
 
       const previewView = document.createElement("div");
-      previewView.className = "attached-files-preview-view";
+      previewView.className = "repo-preview-view";
       const previewFrame = document.createElement("iframe");
-      previewFrame.className = "attached-files-preview-frame";
+      previewFrame.className = "repo-preview-frame";
       previewFrame.title = "File preview";
       previewView.appendChild(previewFrame);
       stack.append(browserView, previewView);
 
       const { sheet, sheetNav, contentEl: sheetContentEl } = buildMobileBottomSheet({
-        kind: "attached-files",
+        kind: "repo",
         title: "Repository",
         closeLabel: "Close attached files",
-        onClose: () => closeAttachedFilesSheet(),
-        leadingButtonHtml: `<button type="button" class="attached-files-sheet-back mobile-bottom-sheet-button mobile-floating-sheet-button" aria-label="Go to parent directory">${attachedFilesSheetBackIcon}</button>`,
+        onClose: () => closeRepoSheet(),
+        leadingButtonHtml: `<button type="button" class="repo-sheet-back mobile-bottom-sheet-button mobile-floating-sheet-button" aria-label="Go to parent directory">${repoSheetBackIcon}</button>`,
       });
-      sheetNav.querySelector(".attached-files-sheet-back")?.addEventListener("click", (event) => {
+      sheetNav.querySelector(".repo-sheet-back")?.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        handleAttachedFilesSheetBack();
+        handleRepoSheetBack();
       });
-      wireAttachedFilesPreviewControls(sheetNav);
+      wireRepoPreviewControls(sheetNav);
 
       let swipeStartX = 0;
       let swipeStartY = 0;
@@ -460,7 +460,7 @@
         swipeBackReady = false;
       };
       browserView.addEventListener("touchstart", (event) => {
-        if (!normalizeAttachedFilesRepoPath(_attachedFilesBrowserPath)) return;
+        if (!normalizeRepoPath(_repoBrowserPath)) return;
         const touch = event.touches?.[0];
         if (!touch) return;
         swipeStartX = touch.clientX;
@@ -489,20 +489,20 @@
         if (!swipeTracking) return;
         const shouldBack = swipeBackReady;
         resetSwipeBack();
-        if (shouldBack) _attachedFilesGoToParentPath();
+        if (shouldBack) _repoGoToParentPath();
       }, { passive: true });
       browserView.addEventListener("touchcancel", resetSwipeBack, { passive: true });
 
       sheetContentEl.appendChild(stack);
-      attachedFilesPanel.appendChild(sheet);
-      syncAttachedFilesSheetBackBtn();
+      repoPanel.appendChild(sheet);
+      syncRepoSheetBackBtn();
       return true;
     };
-    const openAttachedFilesPreview = async (rawPath, ext) => {
-      const path = normalizeAttachedFilesRepoPath(rawPath);
+    const openRepoPreview = async (rawPath, ext) => {
+      const path = normalizeRepoPath(rawPath);
       const normalizedExt = String(ext || fileExtForPath(path) || "").toLowerCase();
-      if (!path || !attachedFilesPanel) return;
-      if (!ensureAttachedFilesSheetDom()) return;
+      if (!path || !repoPanel) return;
+      if (!ensureRepoSheetDom()) return;
       if (!isPublicChatView) {
         const exists = await fileExistsOnDisk(path);
         if (!exists) {
@@ -511,47 +511,47 @@
           return;
         }
       }
-      const frame = attachedFilesPreviewFrameEl();
+      const frame = repoPreviewFrameEl();
       if (!frame) return;
-      const parentPath = attachedFilesParentPathForFile(path);
-      const sheetOpen = attachedFilesPanel.classList.contains("open") && !attachedFilesPanel.hidden;
-      if (!sheetOpen) attachedFilesSheet.open();
-      if (attachedFilesPanel.classList.contains("attached-files-mode-preview")) {
-        clearAttachedFilesRepoPreview();
+      const parentPath = repoParentPathForFile(path);
+      const sheetOpen = repoPanel.classList.contains("open") && !repoPanel.hidden;
+      if (!sheetOpen) repoSheet.open();
+      if (repoPanel.classList.contains("repo-mode-preview")) {
+        clearRepoPreview();
       }
-      if (typeof attachedFilesPanel._openRepoPath === "function") {
-        if (_attachedFilesBrowserPath !== parentPath || !attachedFilesBrowserMountEl()?.childElementCount) {
-          await attachedFilesPanel._openRepoPath(parentPath);
+      if (typeof repoPanel._openRepoPath === "function") {
+        if (_repoBrowserPath !== parentPath || !repoBrowserMountEl()?.childElementCount) {
+          await repoPanel._openRepoPath(parentPath);
         }
       } else {
-        _attachedFilesBrowserPath = parentPath;
+        _repoBrowserPath = parentPath;
       }
-      _attachedFilesPreviewPath = path;
-      _attachedFilesPreviewExt = normalizedExt;
-      attachedFilesPanel._previewPath = path;
-      attachedFilesPanel._previewExt = normalizedExt;
-      attachedFilesPanel.classList.add("attached-files-mode-preview");
+      _repoPreviewPath = path;
+      _repoPreviewExt = normalizedExt;
+      repoPanel._previewPath = path;
+      repoPanel._previewExt = normalizedExt;
+      repoPanel.classList.add("repo-mode-preview");
       const filename = (displayAttachmentFilename(path) || path || "Preview").trim();
-      setAttachedFilesSheetTitle(filename);
-      syncAttachedFilesSheetBackBtn();
-      initAttachedFilesPreviewControls();
+      setRepoSheetTitle(filename);
+      syncRepoSheetBackBtn();
+      initRepoPreviewControls();
       wireEmbeddedFilePreviewFrame(frame, path, normalizedExt);
     };
-    if (attachedFilesPanel) attachedFilesPanel._openFilePreview = openAttachedFilesPreview;
+    if (repoPanel) repoPanel._openFilePreview = openRepoPreview;
 __CHAT_INCLUDE:../features/git-panel.js__
-    const updateAttachedFilesPanel = async (entries) => {
-      if (!attachedFilesPanel) return;
-      attachedFilesPanelEntries = Array.isArray(entries) ? entries : [];
-      document.querySelectorAll(".hub-page-menu-btn .attached-files-badge").forEach((node) => node.remove());
+    const updateRepoPanel = async (entries) => {
+      if (!repoPanel) return;
+      repoPanelEntries = Array.isArray(entries) ? entries : [];
+      document.querySelectorAll(".hub-page-menu-btn .repo-badge").forEach((node) => node.remove());
 
       const normalizeRepoPath = (value) => String(value || "")
         .replace(/\\/g, "/")
         .replace(/^\/+|\/+$/g, "");
-      const sessionKey = attachedFilesSession || currentSessionName || "";
-      if (attachedFilesPanel._repoSessionKey !== sessionKey) {
-        attachedFilesPanel._repoSessionKey = sessionKey;
-        _attachedFilesBrowserPath = "";
-        attachedFilesPanelRenderSig = "";
+      const sessionKey = repoSession || currentSessionName || "";
+      if (repoPanel._repoSessionKey !== sessionKey) {
+        repoPanel._repoSessionKey = sessionKey;
+        _repoBrowserPath = "";
+        repoPanelRenderSig = "";
       }
 
       const fetchRepoDir = async (rawPath) => {
@@ -607,11 +607,11 @@ __CHAT_INCLUDE:../features/git-panel.js__
             size: Number.isFinite(entry?.size) ? entry.size : null,
           })),
         });
-        if (nextRenderSig === attachedFilesPanelRenderSig && attachedFilesBrowserMountEl()?.childElementCount) return;
-        attachedFilesPanelRenderSig = nextRenderSig;
-        _attachedFilesBrowserPath = path;
-        if (_attachedFilesPreviewPath) clearAttachedFilesRepoPreview();
-        ensureAttachedFilesSheetDom();
+        if (nextRenderSig === repoPanelRenderSig && repoBrowserMountEl()?.childElementCount) return;
+        repoPanelRenderSig = nextRenderSig;
+        _repoBrowserPath = path;
+        if (_repoPreviewPath) clearRepoPreview();
+        ensureRepoSheetDom();
 
         const browser = document.createElement("div");
         browser.className = "repo-browser repo-browser-mobile";
@@ -621,7 +621,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
           parts.pop();
           void openRepoPath(parts.join("/"), { transition: "back" });
         };
-        _attachedFilesGoToParentPath = goToParentPath;
+        _repoGoToParentPath = goToParentPath;
         const appendMessage = (container, text, className = "repo-browser-empty", { loading = false } = {}) => {
           const node = document.createElement("div");
           node.className = className;
@@ -696,7 +696,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
           btn.addEventListener("click", async (event) => {
             event.preventDefault();
             event.stopPropagation();
-            await openAttachedFilesPreview(fileEntry.path, ext);
+            await openRepoPreview(fileEntry.path, ext);
           });
           container.appendChild(btn);
         };
@@ -724,35 +724,35 @@ __CHAT_INCLUDE:../features/git-panel.js__
           fileEntries.forEach((fileEntry) => appendFileItem(list, fileEntry));
         }
         browser.appendChild(list);
-        const mount = attachedFilesBrowserMountEl();
+        const mount = repoBrowserMountEl();
         if (mount) mount.replaceChildren(browser);
-        setAttachedFilesSheetTitle(attachedFilesBrowserTitleForPath(path));
-        syncAttachedFilesSheetBackBtn();
+        setRepoSheetTitle(repoBrowserTitleForPath(path));
+        syncRepoSheetBackBtn();
       };
 
       const openRepoPath = async (rawPath, { transition = "none", preserveCurrent = false } = {}) => {
         const path = normalizeRepoPath(rawPath);
-        if (attachedFilesPanel._repoSessionKey !== sessionKey) return;
-        const updateSeq = ++attachedFilesPanelUpdateSeq;
+        if (repoPanel._repoSessionKey !== sessionKey) return;
+        const updateSeq = ++repoPanelUpdateSeq;
         const canPreserveCurrent = !!(
           preserveCurrent
-          && path === _attachedFilesBrowserPath
-          && attachedFilesBrowserMountEl()?.childElementCount
+          && path === _repoBrowserPath
+          && repoBrowserMountEl()?.childElementCount
         );
         if (!canPreserveCurrent) renderPanel(path, [], { loading: true, transition });
         try {
           const entriesForPath = await fetchRepoDir(path);
-          if (updateSeq !== attachedFilesPanelUpdateSeq || attachedFilesPanel._repoSessionKey !== sessionKey) return;
-          if (canPreserveCurrent && _attachedFilesBrowserPath !== path) return;
+          if (updateSeq !== repoPanelUpdateSeq || repoPanel._repoSessionKey !== sessionKey) return;
+          if (canPreserveCurrent && _repoBrowserPath !== path) return;
           renderPanel(path, entriesForPath, { transition });
         } catch (err) {
-          if (updateSeq !== attachedFilesPanelUpdateSeq || attachedFilesPanel._repoSessionKey !== sessionKey) return;
+          if (updateSeq !== repoPanelUpdateSeq || repoPanel._repoSessionKey !== sessionKey) return;
           if (canPreserveCurrent) return;
           const errorText = String(err?.message || "Failed to load directory");
           if (path) {
             try {
               const rootEntries = await fetchRepoDir("");
-              if (updateSeq !== attachedFilesPanelUpdateSeq || attachedFilesPanel._repoSessionKey !== sessionKey) return;
+              if (updateSeq !== repoPanelUpdateSeq || repoPanel._repoSessionKey !== sessionKey) return;
               renderPanel("", rootEntries, { transition: "back" });
               return;
             } catch (_) { }
@@ -761,16 +761,16 @@ __CHAT_INCLUDE:../features/git-panel.js__
         }
       };
 
-      attachedFilesPanel._syncCategoryUi = () => {
-        if (attachedFilesPanel.classList.contains("attached-files-mode-preview")) return;
-        void openRepoPath(_attachedFilesBrowserPath, { transition: "none", preserveCurrent: true });
+      repoPanel._syncCategoryUi = () => {
+        if (repoPanel.classList.contains("repo-mode-preview")) return;
+        void openRepoPath(_repoBrowserPath, { transition: "none", preserveCurrent: true });
       };
-      attachedFilesPanel._openRepoPath = openRepoPath;
-      attachedFilesPanel._scrollToCategory = () => false;
-      const panelVisible = attachedFilesPanel.classList.contains("open") && !attachedFilesPanel.hidden;
+      repoPanel._openRepoPath = openRepoPath;
+      repoPanel._scrollToCategory = () => false;
+      const panelVisible = repoPanel.classList.contains("open") && !repoPanel.hidden;
       if (!panelVisible) return;
-      if (attachedFilesPanel.classList.contains("attached-files-mode-preview")) return;
-      await openRepoPath(_attachedFilesBrowserPath, { transition: "none", preserveCurrent: true });
+      if (repoPanel.classList.contains("repo-mode-preview")) return;
+      await openRepoPath(_repoBrowserPath, { transition: "none", preserveCurrent: true });
     };
     const closeHeaderMenus = () => {
       resetAgentActionNativeMenu({ clearOptions: true });
@@ -780,7 +780,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
       rightMenuPanel?.classList.remove("open");
       if (rightMenuPanel) rightMenuPanel.hidden = true;
       rightMenuBtn?.classList.remove("open");
-      closeAttachedFilesSheet({ immediate: true });
+      closeRepoSheet({ immediate: true });
       syncHeaderMenuFocus();
     };
     const handleNativeMenuAction = async (payload) => {
@@ -814,11 +814,11 @@ __CHAT_INCLUDE:../features/git-panel.js__
       }
       closeHeaderMenus();
     });
-    attachedFilesPanel?.addEventListener("click", (event) => {
-      if (event.target !== attachedFilesPanel) return;
+    repoPanel?.addEventListener("click", (event) => {
+      if (event.target !== repoPanel) return;
       event.preventDefault();
       event.stopPropagation();
-      closeAttachedFilesSheet();
+      closeRepoSheet();
     });
     gitBranchPanel?.addEventListener("click", (event) => {
       if (event.target !== gitBranchPanel) return;
@@ -827,12 +827,12 @@ __CHAT_INCLUDE:../features/git-panel.js__
       closeGitBranchSheet();
     });
     headerRoot?.addEventListener("click", (event) => {
-      if (!attachedFilesPanel?.classList.contains("attached-files-mode-preview")) return;
+      if (!repoPanel?.classList.contains("repo-mode-preview")) return;
       if (event.defaultPrevented) return;
       if (event.target.closest(".hub-page-menu-btn, .hub-page-menu-panel, button, a, details, summary, input, textarea, select, label, [role='button']")) {
         return;
       }
-      closeAttachedFilesRepoPreview();
+      closeRepoPreview();
     });
     const closeQuickMore = () => {
       if (quickMore) quickMore.open = false;
@@ -841,8 +841,8 @@ __CHAT_INCLUDE:../features/git-panel.js__
     };
     window.addEventListener("resize", () => {
       if (hasOpenHeaderMenu()) updateHeaderMenuViewportMetrics();
-      if (attachedFilesPanel && !attachedFilesPanel.hidden && typeof attachedFilesPanel._syncCategoryUi === "function") {
-        attachedFilesPanel._syncCategoryUi();
+      if (repoPanel && !repoPanel.hidden && typeof repoPanel._syncCategoryUi === "function") {
+        repoPanel._syncCategoryUi();
       }
     });
     window.addEventListener("scroll", () => {
@@ -857,7 +857,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
       }
       const inRightMenu = rightMenuBtn?.contains(event.target) || rightMenuPanel?.contains(event.target);
       const inGitBranchMenu = gitBranchPanel?.contains(event.target);
-      const inFilesMenu = attachedFilesPanel?.contains(event.target);
+      const inFilesMenu = repoPanel?.contains(event.target);
       const inPaneTraceMenu = paneTracePanel?.contains(event.target);
       const inNativeBridgeMenu = nativeHeaderMenuBridge?.contains(event.target);
       const inNativeHeaderMenu = nativeHeaderMenuSelect?.contains(event.target);
@@ -930,8 +930,8 @@ __CHAT_INCLUDE:../features/git-panel.js__
         openGitBranchSheet();
         return;
       }
-      if (action === "openAttachedFilesMenu") {
-        openAttachedFilesSheet();
+      if (action === "openRepoMenu") {
+        openRepoSheet();
         return;
       }
       if (action === "openPaneTraceWindow") {
