@@ -164,33 +164,14 @@
           }
         }
       } catch (err) {
-        console.error("chat render failed; using fallback renderer", err);
-        try {
-          const root = document.getElementById("messages");
-          if (!root) return;
-          const fallbackBaseEntries = Array.isArray(data?.entries) ? data.entries : [];
-          const fallbackEntries = mergeEntriesById(olderEntries, fallbackBaseEntries).slice(-INITIAL_MESSAGE_WINDOW);
-          if (!fallbackEntries.length) {
-            _renderedIds.clear();
-            root.innerHTML = emptyConversationHTML();
-            updateScrollBtn();
-            return;
-          }
-          root.innerHTML = fallbackEntries.map((entry) => buildMsgHTMLFallback(entry)).join("");
-          _renderedIds = new Set(fallbackEntries.map((entry) => String(entry?.msg_id || "")).filter(Boolean));
-          postRenderScope(root);
-          queueStableCodeBlockSync(root);
-          _stickyToBottom = isNearBottom();
-          updateScrollBtn();
-        } catch (fallbackErr) {
-          console.error("chat fallback render failed", fallbackErr);
-          const root = document.getElementById("messages");
-          if (root) {
-            root.innerHTML = `<div class="sysmsg-row"><span class="sysmsg-text">Rendering error. Please reload the page.</span></div>`;
-          }
-          _renderedIds.clear();
-          updateScrollBtn();
+        console.error("chat render failed", err);
+        const root = document.getElementById("messages");
+        if (root) {
+          const detail = escapeHtml(String(err?.message || err));
+          root.innerHTML = `<div class="sysmsg-row"><span class="sysmsg-text">Rendering error: ${detail}</span></div>`;
         }
+        _renderedIds.clear();
+        updateScrollBtn();
       }
     };
     const setStatus = (text, isError = false) => {

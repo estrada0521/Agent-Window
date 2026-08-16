@@ -17,7 +17,6 @@
     };
 __CHAT_INCLUDE:../messages-data.js__
     const buildMsgHTML = (entry, options = {}) => {
-      try {
         const safeEntry = (entry && typeof entry === "object") ? entry : {};
         if (safeEntry.sender === "system") {
           const kindRaw = String(safeEntry.kind || "");
@@ -70,36 +69,6 @@ __CHAT_INCLUDE:../messages-data.js__
         ${isUser ? `<div class="user-message-divider" aria-hidden="true"></div>` : ``}
         </div>
       </article>`;
-      } catch (err) {
-        const fallbackBody = escapeHtml(String(stripSenderPrefix(String((entry && entry.message) || "")) || ""));
-        const fallbackMsgId = escapeHtml(String((entry && entry.msg_id) || ""));
-        const fallbackSender = escapeHtml(String((entry && entry.sender) || "unknown"));
-        return `<article class="message-row agent" data-msgid="${fallbackMsgId}" data-sender="${fallbackSender}"><div class="message agent"><div class="message-body-row"><div class="md-body">${fallbackBody}</div></div></div></article>`;
-      }
-    };
-    const buildMsgHTMLFallback = (entry) => {
-      const safeEntry = (entry && typeof entry === "object") ? entry : {};
-      const sender = String(safeEntry.sender || "unknown");
-      const senderLower = sender.toLowerCase();
-      const msgId = escapeHtml(String(safeEntry.msg_id || ""));
-      if (senderLower === "system") {
-        const body = escapeHtml(stripSenderPrefix(String(safeEntry.message || ""))).replaceAll("\n", "<br>");
-        const systemMessage = emphasizeSystemMessageKeyword(body, String(safeEntry.kind || ""));
-        const isSessionLifecycle = /^(?:Session archived|Session revived)\b/i.test(String(safeEntry.message || ""));
-        const extraClass = isSessionLifecycle ? " sysmsg-strong" : "";
-        return `<div class="sysmsg-row${extraClass}" data-msgid="${msgId}" data-sender="system"><span class="sysmsg-text">${systemMessage}</span></div>`;
-      }
-      try {
-        return buildMsgHTML(entry, { hideMetaRow: false });
-      } catch (_) {
-        const body = escapeHtml(stripSenderPrefix(String(safeEntry.message || ""))).replaceAll("\n", "<br>");
-        return `<article class="message-row agent" data-msgid="${msgId}" data-sender="${escapeHtml(sender)}">
-        <div class="message agent">
-          <div class="message-meta-below"><span class="sender-label">${escapeHtml(sender)}</span></div>
-          <div class="message-body-row"><div class="md-body">${body}</div></div>
-        </div>
-      </article>`;
-      }
     };
     const updateSessionUI = (data, displayEntries) => {
       currentSessionName = data.session || "";
