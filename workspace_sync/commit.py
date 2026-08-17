@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import fcntl
 import json
-import logging
 import subprocess
 from collections import deque
 from pathlib import Path
@@ -50,7 +49,6 @@ def has_logged_commit_entry(
     recent_limit: int = 256,
     deque_class=deque,
     json_module=json,
-    logging_module=logging,
 ) -> bool:
     commit_hash = (commit_hash or "").strip()
     if not commit_hash or not runtime.log_path.exists():
@@ -63,14 +61,14 @@ def has_logged_commit_entry(
         for line in reversed(recent_lines):
             try:
                 entry = json_module.loads(line)
-            except Exception:
+            except json.JSONDecodeError:
                 continue
             if entry.get("kind") != "git-commit":
                 continue
             if (entry.get("commit_hash") or "").strip() == commit_hash:
                 return True
-    except Exception as exc:
-        logging_module.error(f"Unexpected error: {exc}", exc_info=True)
+    except OSError as exc:
+        raise RuntimeError(f"failed to read commit log {runtime.log_path}: {exc}") from exc
     return False
 
 
@@ -92,19 +90,14 @@ def current_git_commit(
     runtime,
     *,
     subprocess_module=subprocess,
-    logging_module=logging,
 ) -> dict | None:
-    try:
-        result = subprocess_module.run(
-            ["git", "-C", runtime.workspace, "log", "-1", "--format=%H%x1f%h%x1f%s"],
-            capture_output=True,
-            text=True,
-            timeout=2,
-            check=False,
-        )
-    except Exception as exc:
-        logging_module.error(f"Unexpected error: {exc}", exc_info=True)
-        return None
+    result = subprocess_module.run(
+        ["git", "-C", runtime.workspace, "log", "-1", "--format=%H%x1f%h%x1f%s"],
+        capture_output=True,
+        text=True,
+        timeout=2,
+        check=False,
+    )
     if result.returncode != 0:
         return None
     line = result.stdout.strip()
@@ -112,7 +105,7 @@ def current_git_commit(
         return None
     parts = line.split("\x1f", 2)
     if len(parts) != 3:
-        return None
+        raise RuntimeError(f"git log -1 returned a malformed commit line: {line!r}")
     return {"hash": parts[0], "short": parts[1], "subject": parts[2]}
 
 
@@ -121,26 +114,21 @@ def git_commits_since(
     base_hash: str,
     *,
     subprocess_module=subprocess,
-    logging_module=logging,
-) -> list[dict] | None:
-    try:
-        result = subprocess_module.run(
-            ["git", "-C", runtime.workspace, "log", "--reverse", "--format=%H%x1f%h%x1f%s", f"{base_hash}..HEAD"],
-            capture_output=True,
-            text=True,
-            timeout=2,
-            check=False,
-        )
-    except Exception as exc:
-        logging_module.error(f"Unexpected error: {exc}", exc_info=True)
-        return None
+) -> list[dict]:
+    result = subprocess_module.run(
+        ["git", "-C", runtime.workspace, "log", "--reverse", "--format=%H%x1f%h%x1f%s", f"{base_hash}..HEAD"],
+        capture_output=True,
+        text=True,
+        timeout=2,
+        check=False,
+    )
     if result.returncode != 0:
-        return None
+        raise RuntimeError((result.stderr or result.stdout or "git log failed").strip())
     commits = []
     for line in result.stdout.splitlines():
         parts = line.split("\x1f", 2)
         if len(parts) != 3:
-            continue
+            raise RuntimeError(f"git log returned a malformed commit line: {line!r}")
         commits.append({"hash": parts[0], "short": parts[1], "subject": parts[2]})
     return commits
 
@@ -165,8 +153,6 @@ def ensure_commit_announcements(
             if last_hash == current["hash"]:
                 return
             commits = git_commits_since(runtime, last_hash)
-            if commits is None:
-                return
             if not commits:
                 record_git_commit_locked(runtime, handle, current)
                 return

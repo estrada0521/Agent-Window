@@ -69,64 +69,65 @@ def _read_commit_list(_run, *, branch: str, offset: int, limit: int) -> dict:
     ahead_behind = ""
     if upstream:
         count_res = _run("rev-list", "--left-right", "--count", f"{branch}...{upstream}")
-        if count_res.returncode == 0:
-            parts = (count_res.stdout or "").strip().split()
-            if len(parts) == 2:
-                ahead_behind = f"ahead {parts[0]} / behind {parts[1]}"
+        if count_res.returncode != 0:
+            raise RuntimeError((count_res.stderr or count_res.stdout or "git rev-list ahead/behind failed").strip())
+        parts = (count_res.stdout or "").strip().split()
+        if len(parts) != 2:
+            raise RuntimeError(f"git rev-list --left-right --count returned {count_res.stdout!r}")
+        ahead_behind = f"ahead {parts[0]} / behind {parts[1]}"
     log_res = _run(
         "log",
         f"--skip={offset}",
         f"--max-count={limit}",
         "--format=%h\x1f%aI\x1f%s\x1f%D",
     )
+    if log_res.returncode != 0:
+        raise RuntimeError((log_res.stderr or log_res.stdout or "git log failed").strip())
     recent_commits = []
-    if log_res.returncode == 0:
-        for line in (log_res.stdout or "").splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split("\x1f")
-            if len(parts) < 3:
-                continue
-            h, ts, subj = parts[0], parts[1], parts[2]
-            hhmm = ""
-            try:
-                t_part = ts.split("T")[1] if "T" in ts else ""
-                if t_part:
-                    hhmm = t_part[:5]
-            except Exception:
-                pass
-            refs = parts[3].strip() if len(parts) > 3 else ""
-            recent_commits.append({
-                "hash": h,
-                "time": hhmm,
-                "subject": subj,
-                "is_origin_main": "origin/main" in refs,
-            })
+    for line in (log_res.stdout or "").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split("\x1f")
+        if len(parts) < 3:
+            raise RuntimeError(f"git log returned a malformed commit line: {line!r}")
+        h, ts, subj = parts[0], parts[1], parts[2]
+        hhmm = ""
+        t_part = ts.split("T")[1] if "T" in ts else ""
+        if t_part:
+            hhmm = t_part[:5]
+        refs = parts[3].strip() if len(parts) > 3 else ""
+        recent_commits.append({
+            "hash": h,
+            "time": hhmm,
+            "subject": subj,
+            "is_origin_main": "origin/main" in refs,
+        })
     stat_res = _run("log", f"--skip={offset}", f"--max-count={limit}", "--format=%h", "--shortstat")
+    if stat_res.returncode != 0:
+        raise RuntimeError((stat_res.stderr or stat_res.stdout or "git log --shortstat failed").strip())
     commit_stats = {}
-    if stat_res.returncode == 0:
-        current_hash = None
-        for line in (stat_res.stdout or "").splitlines():
-            stripped = line.strip()
-            if not stripped:
-                continue
-            if len(stripped) <= 12 and all(c in "0123456789abcdef" for c in stripped):
-                current_hash = stripped
-            elif current_hash and "changed" in stripped:
-                ins = dels = changed_paths = 0
-                for part in stripped.split(","):
-                    part = part.strip()
-                    files_match = re.search(r"(\d+)\s+files?\s+changed", part)
-                    if files_match:
-                        changed_paths = int(files_match.group(1))
-                        continue
-                    if "insertion" in part:
-                        ins = int(part.split()[0])
-                    elif "deletion" in part:
-                        dels = int(part.split()[0])
-                commit_stats[current_hash] = {"ins": ins, "dels": dels, "changed_paths": changed_paths}
-                current_hash = None
+    current_hash = None
+    for line in (stat_res.stdout or "").splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if len(stripped) <= 12 and all(c in "0123456789abcdef" for c in stripped):
+            current_hash = stripped
+        elif current_hash and "changed" in stripped:
+            ins = dels = changed_paths = 0
+            for part in stripped.split(","):
+                part = part.strip()
+                files_match = re.search(r"(\d+)\s+files?\s+changed", part)
+                if files_match:
+                    changed_paths = int(files_match.group(1))
+                    continue
+                if "insertion" in part:
+                    ins = int(part.split()[0])
+                elif "deletion" in part:
+                    dels = int(part.split()[0])
+            commit_stats[current_hash] = {"ins": ins, "dels": dels, "changed_paths": changed_paths}
+            current_hash = None
     for commit in recent_commits:
         stats = commit_stats.get(commit["hash"]) or {}
         commit["ins"] = int(stats.get("ins", 0) or 0)
@@ -142,14 +143,13 @@ def _read_commit_list(_run, *, branch: str, offset: int, limit: int) -> dict:
 
 def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
     root = Path(_workspace or _repo_root)
-    try:
-        offset = max(0, int(offset))
-    except Exception:
-        offset = 0
-    try:
-        limit = max(1, min(int(limit), 200))
-    except Exception:
-        limit = 50
+    offset = int(offset)
+    limit = int(limit)
+    if offset < 0:
+        raise ValueError(f"offset must be >= 0, got {offset}")
+    if limit < 1:
+        raise ValueError(f"limit must be >= 1, got {limit}")
+    limit = min(limit, 200)
     cache_key = (str(root.resolve()), offset, limit)
     now = time.monotonic()
     if not force_refresh:
@@ -171,7 +171,7 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
         added = 0
         deleted = 0
         if res.returncode != 0:
-            return added, deleted
+            raise RuntimeError((res.stderr or res.stdout or "git diff --numstat failed").strip())
         for line in (res.stdout or "").splitlines():
             parts = line.split("\t", 2)
             if len(parts) < 3:
@@ -202,20 +202,27 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
                 unstaged.add(path)
         return staged, unstaged, untracked
     head_res = _run("rev-parse", "HEAD")
-    head = (head_res.stdout or "").strip() if head_res.returncode == 0 else ""
-    branch_res = _run("rev-parse", "--abbrev-ref", "HEAD")
-    branch = (branch_res.stdout or "").strip() if branch_res.returncode == 0 else "unknown"
+    has_head = head_res.returncode == 0
+    head = (head_res.stdout or "").strip() if has_head else ""
+    if has_head:
+        branch_res = _run("rev-parse", "--abbrev-ref", "HEAD")
+        if branch_res.returncode != 0:
+            raise RuntimeError((branch_res.stderr or branch_res.stdout or "git rev-parse --abbrev-ref HEAD failed").strip())
+        branch = (branch_res.stdout or "").strip()
+    else:
+        branch = ""
     commit_key = (str(root.resolve()), head, offset, limit)
     with _branch_overview_cache_lock:
         cached_commits = _commit_list_cache.get(commit_key)
     status_res = _run("status", "--short", "--branch", "--untracked-files=all")
+    if status_res.returncode != 0:
+        raise RuntimeError((status_res.stderr or status_res.stdout or "git status failed").strip())
     status_lines = []
-    if status_res.returncode == 0:
-        for line in (status_res.stdout or "").splitlines():
-            line = line.rstrip()
-            if not line or line.startswith("## "):
-                continue
-            status_lines.append(line)
+    for line in (status_res.stdout or "").splitlines():
+        line = line.rstrip()
+        if not line or line.startswith("## "):
+            continue
+        status_lines.append(line)
     def _status_path_for_fingerprint(line: str) -> str:
         raw = str(line or "")
         path = raw[3:] if len(raw) > 3 else raw
@@ -246,18 +253,16 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
     worktree_staged_added, worktree_staged_deleted = _parse_numstat(staged_diff_res)
     worktree_unstaged_added, worktree_unstaged_deleted = _parse_numstat(unstaged_diff_res)
     worktree_has_untracked_diff = bool(untracked_paths)
-    worktree_added = 0
-    worktree_deleted = 0
-    diff_head_res = _run("diff", "--numstat", "HEAD", "--")
-    worktree_has_staged_diff = staged_diff_res.returncode == 0 and bool((staged_diff_res.stdout or "").strip())
-    worktree_has_unstaged_diff = unstaged_diff_res.returncode == 0 and bool((unstaged_diff_res.stdout or "").strip())
-    worktree_has_diff = worktree_has_staged_diff or worktree_has_unstaged_diff or worktree_has_untracked_diff
-    if diff_head_res.returncode == 0:
+    worktree_has_staged_diff = bool((staged_diff_res.stdout or "").strip())
+    worktree_has_unstaged_diff = bool((unstaged_diff_res.stdout or "").strip())
+    if has_head:
+        diff_head_res = _run("diff", "--numstat", "HEAD", "--")
         worktree_added, worktree_deleted = _parse_numstat(diff_head_res)
         worktree_has_diff = bool((diff_head_res.stdout or "").strip()) or worktree_has_untracked_diff
     else:
         worktree_added = worktree_unstaged_added + worktree_staged_added
         worktree_deleted = worktree_unstaged_deleted + worktree_staged_deleted
+        worktree_has_diff = worktree_has_staged_diff or worktree_has_unstaged_diff or worktree_has_untracked_diff
     if cached_commits is None:
         if head_res.returncode != 0:
             cached_commits = {
@@ -361,7 +366,7 @@ def git_diff_files(*, commit_hash: str = "", scope: str = ""):
     def _untracked_paths() -> list[str]:
         res = _run("ls-files", "--others", "--exclude-standard", "--full-name", "--")
         if res.returncode != 0:
-            return []
+            raise RuntimeError((res.stderr or res.stdout or "git ls-files failed").strip())
         return [line.strip() for line in (res.stdout or "").splitlines() if line.strip()]
     def _append_untracked(files: list[dict], paths: list[str]) -> list[dict]:
         seen = {str(item.get("path") or "").strip() for item in files}
@@ -380,6 +385,8 @@ def git_diff_files(*, commit_hash: str = "", scope: str = ""):
             seen.add(path)
         return merged
 
+    head_res = _run("rev-parse", "HEAD")
+    has_head = head_res.returncode == 0
     lines: list[str] = []
     include_untracked = False
     if commit_hash:
@@ -411,24 +418,18 @@ def git_diff_files(*, commit_hash: str = "", scope: str = ""):
             include_untracked = True
         else:
             include_untracked = True
-            diff_res = _run("diff", "--numstat", "HEAD", "--")
-            if diff_res.returncode == 0:
+            if has_head:
+                diff_res = _run("diff", "--numstat", "HEAD", "--")
+                if diff_res.returncode != 0:
+                    raise RuntimeError((diff_res.stderr or diff_res.stdout or "git diff failed").strip())
                 lines = (diff_res.stdout or "").splitlines()
             else:
                 staged = _run("diff", "--numstat", "--cached", "--")
                 unstaged = _run("diff", "--numstat", "--")
-                if staged.returncode != 0 and unstaged.returncode != 0:
-                    raise RuntimeError(
-                        (
-                            diff_res.stderr
-                            or diff_res.stdout
-                            or staged.stderr
-                            or staged.stdout
-                            or unstaged.stderr
-                            or unstaged.stdout
-                            or "git diff failed"
-                        ).strip()
-                    )
+                if staged.returncode != 0:
+                    raise RuntimeError((staged.stderr or staged.stdout or "git diff --cached failed").strip())
+                if unstaged.returncode != 0:
+                    raise RuntimeError((unstaged.stderr or unstaged.stdout or "git diff failed").strip())
                 lines = (staged.stdout or "").splitlines() + (unstaged.stdout or "").splitlines()
 
     files, total_ins, total_dels = _parse_numstat_lines(lines)

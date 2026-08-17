@@ -13,8 +13,8 @@ def _resolve_antigravity_transcript(runtime, workspace_text: str) -> str:
     workspace_aliases = {str(Path(alias).resolve()) for alias in runtime._workspace_aliases(workspace_text)}
     try:
         lines = history_path.read_text(encoding="utf-8", errors="replace").splitlines()
-    except OSError:
-        lines = []
+    except OSError as exc:
+        raise RuntimeError(f"unreadable Antigravity history.jsonl: {history_path}: {exc}") from exc
     for line in reversed(lines):
         try:
             item = json.loads(line)
