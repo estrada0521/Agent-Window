@@ -207,14 +207,15 @@ restart_hub() {
 }
 
 restart_public_edge() {
-  local pid
+  local pid tmux_socket_path
   pid="$(lsof -tiTCP:${PUBLIC_EDGE_PORT} -sTCP:LISTEN 2>/dev/null | head -n 1 || true)"
   if [[ -n "$pid" ]]; then
     kill "$pid" 2>/dev/null || true
     sleep 1
   fi
+  tmux_socket_path="$(tmux display-message -p '#{socket_path}' 2>/dev/null || true)"
   tmux kill-session -t "=$EDGE_TMUX_SESSION" 2>/dev/null || true
-  tmux new-session -d -s "$EDGE_TMUX_SESSION" -c "$REPO_ROOT" "exec python3 '$PUBLIC_EDGE_SOURCE' '$REPO_ROOT' '$BIN_DIR/agent-index' '$HUB_PORT' '$PUBLIC_EDGE_PORT'"
+  tmux new-session -d -s "$EDGE_TMUX_SESSION" -c "$REPO_ROOT" "exec python3 '$PUBLIC_EDGE_SOURCE' '$REPO_ROOT' '$BIN_DIR/agent-index' '$HUB_PORT' '$PUBLIC_EDGE_PORT' '$tmux_socket_path'"
   local attempt
   for attempt in $(seq 1 20); do
     if curl -s "http://127.0.0.1:${PUBLIC_EDGE_PORT}" >/dev/null 2>&1; then
@@ -452,9 +453,7 @@ command_named_start() {
     tmux kill-session -t "=$CF_TMUX_SESSION" 2>/dev/null || true
   fi
   if tmux_session_alive "$CF_TMUX_SESSION"; then
-    if ! tmux_session_alive "$EDGE_TMUX_SESSION"; then
-      restart_public_edge
-    fi
+    restart_public_edge
     echo "Cloudflare tunnel already running"
     command_status
     exit 0
@@ -486,9 +485,11 @@ command_daemon_install() {
   mkdir -p "$LAUNCH_AGENT_DIR"
   cp "$LAUNCH_AGENT_SOURCE" "$LAUNCH_AGENT_PLIST"
   launchctl bootout "gui/$(id -u)" "$LAUNCH_AGENT_PLIST" >/dev/null 2>&1 || true
+  tmux kill-session -t "=$CF_TMUX_SESSION" 2>/dev/null || true
+  tmux kill-session -t "=$EDGE_TMUX_SESSION" 2>/dev/null || true
+  command_named_start >/dev/null
   launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST"
   launchctl enable "gui/$(id -u)/${LAUNCH_AGENT_LABEL}" >/dev/null 2>&1 || true
-  command_named_start >/dev/null
   printf 'launch_agent=%s\n' "$LAUNCH_AGENT_PLIST"
   printf 'label=%s\n' "$LAUNCH_AGENT_LABEL"
 }

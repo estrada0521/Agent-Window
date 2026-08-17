@@ -32,6 +32,7 @@ from hub_backend.session_query import (
 )
 from backend_core.access.settings import load_hub_settings as load_shared_hub_settings
 from backend_core.access.settings import local_runtime_log_dir
+from backend_core.access.settings import pwa_https_enabled
 from backend_core.access.settings import resolve_chat_port
 from backend_core.access.settings import save_hub_settings as save_shared_hub_settings
 
@@ -66,7 +67,7 @@ class HubRuntime:
         self.central_log_dir = local_runtime_log_dir(self.repo_root)
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port or 0)
-        self.hub_scheme = "http"
+        self.hub_scheme = "https" if pwa_https_enabled() else "http"
         self.tmux_prefix = ["tmux"]
         if tmux_socket:
             if "/" in tmux_socket:
