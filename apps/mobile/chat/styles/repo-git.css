@@ -201,6 +201,8 @@
     }
 
     .repo-browser-item {
+      appearance: none;
+      -webkit-appearance: none;
       border: none;
       background: transparent;
       color: var(--fg);
@@ -214,22 +216,23 @@
       font: inherit;
       cursor: pointer;
       min-width: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 120ms ease;
     }
 
-    .repo-browser-item:active {
-      background: var(--panel-row-selected-bg);
+    .repo-browser-item:focus,
+    .repo-browser-item:focus-visible {
+      outline: none;
     }
 
-    .repo-browser-dir:active {
+    .repo-browser-item:active,
+    .has-hover .repo-browser-item:hover:active {
       background: var(--panel-row-selected-bg);
     }
 
     .has-hover .repo-browser-item:hover {
-      background: var(--panel-row-bg);
-    }
-
-    .has-hover .repo-browser-dir:hover {
-      background: var(--panel-row-bg);
+      background: var(--mobile-sheet-floating-bg);
     }
 
     .repo-browser-item-icon {
