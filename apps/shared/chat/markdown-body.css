@@ -284,7 +284,7 @@
     .md-body blockquote {
       border-left: 3px solid var(--fg);
       margin: 0.5em 0;
-      padding: 0.3em 0.8em;
+      padding: 0 0.8em;
       color: var(--fg);
       opacity: 1;
     }

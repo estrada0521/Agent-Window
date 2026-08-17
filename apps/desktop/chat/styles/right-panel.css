@@ -366,7 +366,8 @@
       width: 100%;
       border: 0;
       background: transparent;
-      font: inherit;
+      font-family: inherit;
+      font-weight: inherit;
       cursor: pointer;
     }
     .repo-browser-item-dimmed {
