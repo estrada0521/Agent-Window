@@ -27,6 +27,7 @@ from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
 from backend_core.access.settings import (
     hub_settings_path,
+    local_bind_host,
     local_bind_scheme,
     resolve_chat_port,
     session_log_path,
@@ -484,7 +485,7 @@ def main(argv: list[str] | None = None) -> None:
     key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")
     scheme = local_bind_scheme(cert_file=cert_file, key_file=key_file)
     ThreadingHTTPServer.allow_reuse_address = True
-    server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    server = ThreadingHTTPServer((local_bind_host(), port), Handler)
     if scheme == "https":
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.load_cert_chain(cert_file, key_file)

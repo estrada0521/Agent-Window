@@ -35,6 +35,7 @@ A strict guarantee using the native log is possible, but the guarantee itself is
 
 ### Why does it bind to `0.0.0.0`?
 
-To use the PWA from an iPhone on the LAN.
+Only when PWA is enabled. Adding the app to the iPhone Home Screen needs HTTPS, so PWA on means HTTPS and a LAN bind.
+When PWA is off, it binds to `127.0.0.1`.
 It assumes use on a trusted local network. In the author's environment, combining the PWA with authentication would only add unnecessary maintenance burden, so authentication is not implemented.
 If needed, please change the bind address or add authentication yourself.

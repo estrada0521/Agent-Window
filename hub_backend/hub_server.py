@@ -734,7 +734,7 @@ def main(argv: list[str] | None = None) -> None:
 
     initialize_from_argv(argv)
 
-    from backend_core.access.settings import local_bind_scheme
+    from backend_core.access.settings import local_bind_host, local_bind_scheme
 
     cert_file = os.environ.get("AGENT_WINDOW_CERT_FILE", "")
     key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")
@@ -742,7 +742,7 @@ def main(argv: list[str] | None = None) -> None:
     if hub is not None:
         hub.hub_scheme = _scheme
     ThreadingHTTPServer.allow_reuse_address = True
-    hub_server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    hub_server = ThreadingHTTPServer((local_bind_host(), port), Handler)
     if _scheme == "https":
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.load_cert_chain(cert_file, key_file)
