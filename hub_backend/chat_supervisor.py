@@ -13,7 +13,6 @@ from pathlib import Path
 from backend_core.tmux.control import SessionControlError, create_session, kill_session, stop_chat_server as stop_chat_server_impl
 from backend_core.access.settings import (
     agent_window_run_dir,
-    ensure_session_workspace_mirrors,
     local_runtime_log_dir,
     port_is_bindable,
     pwa_https_enabled,
@@ -109,13 +108,12 @@ def stop_chat_server(
     return stop_chat_server_impl(self.repo_root, session_name)
 
 
-def chat_launch_session_dir(self, session_name: str, workspace: str, explicit_log_dir: str) -> Path:
+def chat_launch_session_dir(self, session_name: str) -> Path:
     session_dir = local_runtime_log_dir(self.repo_root) / session_name
     session_dir.mkdir(parents=True, exist_ok=True)
     canonical_index = session_log_path(session_name)
     if not canonical_index.exists():
         canonical_index.touch()
-    ensure_session_workspace_mirrors(session_name, workspace)
     return session_dir
 
 
@@ -222,7 +220,7 @@ def ensure_chat_server(
             if stop_detail:
                 return False, chat_port, stop_detail
 
-        session_dir = self._chat_launch_session_dir(session_name, resolved_workspace, "")
+        session_dir = self._chat_launch_session_dir(session_name)
         if session_is_active:
             log_path = session_log_path(session_name)
             result = self.tmux_run(

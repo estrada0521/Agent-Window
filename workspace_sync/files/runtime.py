@@ -59,7 +59,7 @@ class FileRuntime:
         ".m4a": "audio/mp4",
         ".flac": "audio/flac",
     }
-    SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache"}
+    SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache", ".agent-window"}
 
     def __init__(
         self,
@@ -118,6 +118,8 @@ class FileRuntime:
         root = str(self.workspace or "").strip()
         if not root:
             raise RuntimeError("workspace is not configured")
+        if not os.path.isdir(root):
+            raise RuntimeError("workspace is not available")
         return root
 
     def _resolve_path(self, rel: str, *, allow_workspace_root: bool = False) -> str:

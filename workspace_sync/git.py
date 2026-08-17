@@ -26,7 +26,10 @@ def _git_root() -> Path:
     root = str(_workspace or "").strip()
     if not root:
         raise RuntimeError("git workspace is not configured")
-    return Path(root)
+    path = Path(root)
+    if not path.is_dir():
+        raise RuntimeError("workspace is not available")
+    return path
 
 
 def _clear_git_overview_cache() -> None:

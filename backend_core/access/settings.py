@@ -239,11 +239,15 @@ def workspace_native_log_state_link_path(workspace: Path | str) -> Path:
 
 
 def ensure_session_workspace_mirrors(session_name: str, workspace: Path | str) -> None:
-    if not workspace:
+    raw = str(workspace or "").strip()
+    if not raw:
+        return
+    workspace_path = Path(raw).expanduser()
+    if not workspace_path.is_dir():
         return
     mirrors = (
-        (session_log_path(session_name), workspace_log_link_path(workspace)),
-        (session_native_log_state_path(session_name), workspace_native_log_state_link_path(workspace)),
+        (session_log_path(session_name), workspace_log_link_path(workspace_path)),
+        (session_native_log_state_path(session_name), workspace_native_log_state_link_path(workspace_path)),
     )
     for target, link_path in mirrors:
         link_path.parent.mkdir(parents=True, exist_ok=True)
