@@ -53,7 +53,6 @@ class _DebouncedWorkspaceRefresh:
         self._pending: set[str] = set()
         self._git_head_pending = False
         self._timer: threading.Timer | None = None
-        self._leading_pending = False
 
     def add_path(self, path: str) -> None:
         normalized = os.path.realpath(path)
@@ -65,30 +64,16 @@ class _DebouncedWorkspaceRefresh:
             if _is_git_head_metadata_path(rel):
                 with self._lock:
                     self._git_head_pending = True
-                    self._schedule_flush_locked(immediate=self._timer is None)
-            return
-        if self._api.file_runtime.file_index_path_is_ignored(rel):
+                    self._schedule_flush_locked()
             return
         with self._lock:
             self._pending.add(normalized)
-            self._schedule_flush_locked(immediate=self._timer is None)
+            self._schedule_flush_locked()
 
-    def _schedule_flush_locked(self, *, immediate: bool = False) -> None:
-        if immediate:
-            if self._timer and self._leading_pending:
-                return
-            if self._timer:
-                self._timer.cancel()
-            delay = 0
-            self._leading_pending = True
-        else:
-            if self._leading_pending:
-                return
-            if self._timer:
-                self._timer.cancel()
-            delay = _DEBOUNCE_SEC
-            self._leading_pending = False
-        self._timer = threading.Timer(delay, self._flush)
+    def _schedule_flush_locked(self) -> None:
+        if self._timer:
+            self._timer.cancel()
+        self._timer = threading.Timer(_DEBOUNCE_SEC, self._flush)
         self._timer.daemon = True
         self._timer.start()
 
@@ -103,7 +88,7 @@ class _DebouncedWorkspaceRefresh:
 
     def _schedule_flush(self) -> None:
         with self._lock:
-            self._schedule_flush_locked(immediate=False)
+            self._schedule_flush_locked()
 
     def _flush_locked(self) -> None:
         with self._lock:
@@ -112,18 +97,18 @@ class _DebouncedWorkspaceRefresh:
             self._pending.clear()
             self._git_head_pending = False
             self._timer = None
-            self._leading_pending = False
         if not paths and not git_head_changed:
             return
-        if paths:
+        workspace = self._api.file_runtime.workspace
+        rels = [os.path.relpath(path, workspace).replace("\\", "/") for path in paths]
+        file_rels = [rel for rel in rels if not self._api.file_runtime.file_index_path_is_ignored(rel)]
+        if file_rels:
             try:
                 self._api.invalidate_file_index_cache()
             except Exception as exc:
                 logging.error("Workspace file index invalidation failed: %s", exc)
         git_relevant = git_head_changed
-        if paths and not git_head_changed:
-            workspace = self._api.file_runtime.workspace
-            rels = [os.path.relpath(path, workspace).replace("\\", "/") for path in paths]
+        if rels and not git_head_changed:
             try:
                 ignored = git_ignored_rel_paths(workspace, rels)
             except Exception as exc:

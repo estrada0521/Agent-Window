@@ -13,7 +13,7 @@
     const dpBootstrapPinnedGitSummary = async () => {
       if (!hasDesktopRightPanelOverlay() || !dpGitSummaryPinned) return;
       try {
-        const data = await fetchGitOverview({ offset: 0 });
+        const data = await fetchGitOverview({ offset: 0, refresh: true });
         dpGitHeaderSummaryState = dpBuildSummaryState(data);
         dpApplyGitOverviewHeader();
         gitSession.setFingerprint(gitOverviewFingerprint(data));
@@ -201,17 +201,18 @@
       detailHeadHtml: ({ isWorktree, rowHtml }) => (isWorktree ? "" : rowHtml),
       commitRowOptions: (commit, newHashes) => ({ animate: !!(newHashes && newHashes.has(commit.hash)) }),
       renderFileStatsInto: dpRenderFileStatsInto,
+      onOverview: (data) => {
+        dpGitHeaderSummaryState = dpBuildSummaryState(data || {});
+        dpApplyGitOverviewHeader();
+      },
       onPage: (data) => {
         dpGitHeaderSummaryState = dpBuildSummaryState(data || {});
         dpSyncSummaryWrap();
       },
       onFingerprintChanged: (data, { isFirst, previousCommits, detailContext }) => {
         if (!dpPanelOpen && dpGitSummaryPinned) {
-          dpGitHeaderSummaryState = dpBuildSummaryState(data);
-          dpApplyGitOverviewHeader();
           return { updateList: false };
         }
-        dpGitHeaderSummaryState = dpBuildSummaryState(data);
         dpSyncSummaryWrap();
         if (detailContext) return { updateList: false };
         return {
