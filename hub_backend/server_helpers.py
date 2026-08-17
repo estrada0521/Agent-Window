@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import html
 import json
 import os
@@ -174,13 +173,6 @@ def pwa_asset_version(
         return str(int(Path(fallback_file).stat().st_mtime_ns))
 
 
-def icon_data_uri(filename: str, *, repo_root: Path, agent_icons_dir: str) -> str:
-    icon_file = repo_root / agent_icons_dir / filename
-    if not icon_file.is_file():
-        return ""
-    return "data:image/svg+xml;base64," + base64.b64encode(icon_file.read_bytes()).decode("ascii")
-
-
 def pwa_asset_url(path: str, *, base_path: str = "", bust: bool = False, pwa_asset_version_fn) -> str:
     prefix = base_path.rstrip("/")
     target = path if path.startswith("/") else f"/{path}"
@@ -247,13 +239,7 @@ def build_hub_html_pages(
     hub_header_html: str,
     hub_header_html_mobile: str,
     hub_header_js: str,
-    hub_icon_uris: dict[str, str],
 ) -> dict[str, str]:
-    def _replace_agent_icon_tokens(html: str) -> str:
-        for agent_name, icon_uri in hub_icon_uris.items():
-            html = html.replace(f"__{agent_name.upper()}_ICON__", icon_uri)
-        return html
-
     def _render_hub_home_html(own_dir: Path, *, header_html: str) -> str:
         template_path = own_dir / "home.html"
         if not template_path.is_file():
@@ -268,8 +254,7 @@ def build_hub_html_pages(
             .replace("__HUB_HEADER_HTML__", header_html)
             .replace("__HUB_HEADER_JS__", hub_header_js)
         )
-        html = apply_hub_page_branding(html, page_title=APP_DISPLAY_NAME)
-        return _replace_agent_icon_tokens(html)
+        return apply_hub_page_branding(html, page_title=APP_DISPLAY_NAME)
 
     hub_home_desktop_html = _render_hub_home_html(desktop_template_dir, header_html=hub_header_html)
     hub_home_mobile_html = _render_hub_home_html(mobile_template_dir, header_html=hub_header_html_mobile)
@@ -291,7 +276,6 @@ def build_hub_html_pages(
         hub_new_session_html,
         page_title=f"New Session · {APP_DISPLAY_NAME}",
     )
-    hub_new_session_html = _replace_agent_icon_tokens(hub_new_session_html)
     return {
         "hub_home_html_desktop": hub_home_desktop_html,
         "hub_home_html_mobile": hub_home_mobile_html,

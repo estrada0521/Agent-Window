@@ -12,10 +12,6 @@ from urllib.parse import parse_qs, quote as url_quote, unquote as url_unquote, u
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
-from backend_core.agents.registry import (
-    AGENT_ICONS_DIR,
-    icon_filename_map as _icon_filename_map,
-)
 from backend_core.access.settings import resolve_chat_port
 from hub_backend.runtime import HubRuntime
 from backend_core.agents.executables import agent_launch_readiness
@@ -55,7 +51,6 @@ from hub_backend.server_helpers import (
     _expand_hub_template_includes,
     format_external_url as _format_external_url_impl,
     format_session_chat_url as _format_session_chat_url_impl,
-    icon_data_uri as _icon_data_uri_impl,
     launch_hub_restart as _launch_hub_restart_impl,
     pwa_asset_url as _pwa_asset_url_impl,
     pwa_asset_version as _pwa_asset_version_impl,
@@ -196,14 +191,6 @@ def _pwa_asset_version(path: str) -> str:
         fallback_file=__file__,
     )
 
-def _icon_data_uri(filename: str) -> str:
-    return _icon_data_uri_impl(
-        filename,
-        repo_root=repo_root,
-        agent_icons_dir=AGENT_ICONS_DIR,
-    )
-
-
 def _pwa_asset_url(path: str, base_path: str = "", *, bust: bool = False) -> str:
     return _pwa_asset_url_impl(
         path,
@@ -233,7 +220,6 @@ def _serve_pwa_static(handler, path: str) -> bool:
         pwa_static_dir=_PWA_STATIC_DIR,
     )
 
-_HUB_ICON_URIS = {name: _icon_data_uri(fname) for name, fname in _icon_filename_map().items()}
 _PAGE_HEADER_CSS = PAGE_HEADER_CSS
 _PAGE_HEADER_HTML = render_page_header()
 _PAGE_HEADER_HTML_MOBILE = render_page_header(actions_html=MOBILE_HUB_HEADER_ACTIONS)
@@ -415,7 +401,6 @@ _hub_pages = _build_hub_html_pages_impl(
     hub_header_html=_PAGE_HEADER_HTML,
     hub_header_html_mobile=_PAGE_HEADER_HTML_MOBILE,
     hub_header_js=_PAGE_HEADER_JS,
-    hub_icon_uris=_HUB_ICON_URIS,
 )
 HUB_HOME_DESKTOP_HTML = _hub_pages["hub_home_html_desktop"]
 HUB_HOME_MOBILE_HTML = _hub_pages["hub_home_html_mobile"]

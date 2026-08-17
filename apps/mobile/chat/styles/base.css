@@ -314,14 +314,6 @@
       padding-bottom: 0;
     }
 
-    .shell>.page-header>#pageMenuPanel:not(.hub-menu-mode-pane) {
-      display: none;
-    }
-
-    .shell>.page-header>#pageMenuPanel.open.hub-menu-mode-pane {
-      display: flex;
-    }
-
     .shell>.page-header>.page-menu-panel {
       position: fixed;
       top: var(--header-menu-top, 72px);

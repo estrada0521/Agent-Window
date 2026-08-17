@@ -852,34 +852,6 @@
       padding: 40px 10px;
     }
 
-    .page-menu-item.positive .action-label,
-
-    .page-menu-item.positive .action-mobile {
-      color: var(--fg);
-    }
-
-    .page-menu-item.positive:hover,
-    .page-menu-item.positive:active,
-    .page-menu-item.positive:hover .action-label,
-    .page-menu-item.positive:active .action-label,
-    .page-menu-item.positive:hover .action-mobile,
-    .page-menu-item.positive:active .action-mobile {
-      color: var(--fg);
-    }
-
-    .page-menu-item.danger {
-      color: rgba(var(--git-del-red-channels), 0.96);
-    }
-
-    .page-menu-item.danger:hover,
-    .page-menu-item.danger:active {
-      color: rgba(252, 165, 165, 1);
-    }
-
-    .page-menu-item .action-mobile {
-      display: none;
-    }
-
     .page-menu-item.inline-loading-row {
       display: flex;
       align-items: center;
@@ -890,24 +862,6 @@
     .page-menu-item.inline-loading-row .inline-loading {
       width: 100%;
       justify-content: center;
-    }
-
-    .page-menu-item .action-icon {
-      width: 18px;
-      height: 18px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 auto;
-      color: currentColor;
-    }
-
-    .page-menu-item .action-icon svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-      stroke: currentColor;
-      fill: none;
     }
 
     .file-item:not(:last-child) {
