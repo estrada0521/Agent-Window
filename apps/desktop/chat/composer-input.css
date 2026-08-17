@@ -226,7 +226,7 @@
       box-sizing: border-box;
     }
     .statusline.is-error {
-      color: rgba(var(--git-del-red-channels), 0.9);
+      color: var(--external-link-fg);
     }
     html[data-mobile="1"] .composer-overlay {
       --composer-overlay-max-width: calc(100vw - 16px);
