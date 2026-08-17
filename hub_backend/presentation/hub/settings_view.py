@@ -1,105 +1,16 @@
 from __future__ import annotations
 
 import html
-import re
-from pathlib import Path
 
 from hub_backend.branding import APP_DISPLAY_NAME
 from hub_backend.color_constants import apply_color_tokens
 from hub_backend.server_helpers import apply_hub_page_branding
-
-def normalized_font_label(name: str) -> str:
-    label = re.sub(r"\.(ttf|ttc|otf)$", "", name, flags=re.IGNORECASE)
-    label = re.sub(
-        r"[-_](Variable|Italic|Italics|Roman|Romans|Regular|Medium|Light|Bold|Heavy|Black|Condensed|Rounded|Mono)\b",
-        "",
-        label,
-        flags=re.IGNORECASE,
-    )
-    label = re.sub(r"\s+", " ", label).strip(" -_")
-    return label
-
-
-def available_chat_font_choices(*, path_class=Path, normalized_font_label_fn=normalized_font_label):
-    seen = set()
-    choices = [
-        ("preset-gothic", "Default Gothic"),
-        ("preset-mincho", "Default Mincho"),
-    ]
-    curated_families = [
-        # English — Serif
-        ("system:Georgia", "Georgia"),
-        ("system:Baskerville", "Baskerville"),
-        ("system:Palatino", "Palatino"),
-        ("system:Didot", "Didot"),
-        ("system:Big Caslon", "Big Caslon"),
-        ("system:American Typewriter", "American Typewriter"),
-        ("system:Times New Roman", "Times New Roman"),
-        # English — Sans-serif
-        ("system:Helvetica Neue", "Helvetica Neue"),
-        ("system:Gill Sans", "Gill Sans"),
-        ("system:Futura", "Futura"),
-        ("system:Optima", "Optima"),
-        ("system:Avenir", "Avenir"),
-        ("system:Avenir Next", "Avenir Next"),
-        ("system:Arial", "Arial"),
-        # Japanese
-        ("system:Hiragino Sans", "Hiragino Sans"),
-        ("system:Hiragino Kaku Gothic ProN", "Hiragino Kaku Gothic ProN"),
-        ("system:Hiragino Maru Gothic ProN", "Hiragino Maru Gothic ProN"),
-        ("system:Hiragino Mincho ProN", "Hiragino Mincho ProN"),
-        ("system:Yu Gothic", "Yu Gothic"),
-        ("system:Yu Gothic UI", "Yu Gothic UI"),
-        ("system:Yu Mincho", "Yu Mincho"),
-        ("system:Meiryo", "Meiryo"),
-        ("system:BIZ UDPGothic", "BIZ UDPGothic"),
-        ("system:BIZ UDPMincho", "BIZ UDPMincho"),
-        ("system:Noto Sans JP", "Noto Sans JP"),
-        ("system:Noto Serif JP", "Noto Serif JP"),
-        ("system:Zen Kaku Gothic New", "Zen Kaku Gothic New"),
-        ("system:Zen Maru Gothic", "Zen Maru Gothic"),
-        ("system:Shippori Mincho", "Shippori Mincho"),
-        ("system:Sawarabi Gothic", "Sawarabi Gothic"),
-        ("system:Sawarabi Mincho", "Sawarabi Mincho"),
-    ]
-    for value, label in curated_families:
-        key = label.lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        choices.append((value, label))
-    for root in (
-        path_class("/System/Library/Fonts"),
-        path_class("/Library/Fonts"),
-        path_class.home() / "Library/Fonts",
-    ):
-        if not root.exists():
-            continue
-        for path in sorted(root.rglob("*")):
-            if not path.is_file():
-                continue
-            if path.suffix.lower() not in {".ttf", ".ttc", ".otf"}:
-                continue
-            label = normalized_font_label_fn(path.name)
-            if not label:
-                continue
-            key = label.lower()
-            if key in seen:
-                continue
-            seen.add(key)
-            choices.append((f"system:{label}", label))
-            if len(choices) >= 300:
-                break
-        if len(choices) >= 300:
-            break
-    return choices
 
 
 def hub_settings_html(
     *,
     saved: bool,
     load_hub_settings_fn,
-    available_chat_font_choices_fn,
     settings_template: str,
     pwa_hub_manifest_url: str,
     pwa_icon_192_url: str,
@@ -111,24 +22,21 @@ def hub_settings_html(
 ):
     resolved_view_variant = "mobile" if str(view_variant or "").strip().lower() == "mobile" else "desktop"
     settings = load_hub_settings_fn()
-    message_font = settings.get("message_font", "preset-gothic")
-    message_text_size = int(settings.get("message_text_size", 13) or 13)
-    message_text_size_desktop = int(settings.get("message_text_size_desktop") or message_text_size)
     from backend_core.access.settings import (
+        canonicalize_message_font,
         normalize_theme_desktop,
         resolve_hub_theme,
     )
+
+    message_font = canonicalize_message_font(settings.get("message_font"))
+    message_text_size = int(settings.get("message_text_size", 13) or 13)
+    message_text_size_desktop = int(settings.get("message_text_size_desktop") or message_text_size)
 
     theme = str(settings.get("theme", "dark") or "dark").strip().lower()
     light_mode = theme == "light"
     theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", theme))
     light_mode_desktop = theme_desktop == "light"
     render_theme = resolve_hub_theme(settings, variant=resolved_view_variant)
-    font_choices = available_chat_font_choices_fn()
-    font_options = lambda selected: "".join(
-        f'<option value="{html.escape(value)}"' + (' selected' if value == selected else '') + f'>{html.escape(label)}</option>'
-        for value, label in font_choices
-    )
     theme_desktop_choices = (
         ("system", "System"),
         ("light", "Light"),
@@ -150,7 +58,7 @@ def hub_settings_html(
         .replace("__PWA_ICON_192_URL__", pwa_icon_192_url)
         .replace("__APPLE_TOUCH_ICON_URL__", pwa_apple_touch_icon_url)
         .replace("__NOTICE_HTML__", notice)
-        .replace("__MESSAGE_FONT_OPTIONS__", font_options(message_font))
+        .replace("__MESSAGE_FONT__", html.escape(message_font))
         .replace("__MESSAGE_TEXT_SIZE__", str(message_text_size))
         .replace("__MESSAGE_TEXT_SIZE_DESKTOP__", str(message_text_size_desktop))
         .replace("__LIGHT_MODE_CHECKED__", " checked" if light_mode else "")

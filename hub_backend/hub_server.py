@@ -25,9 +25,7 @@ from hub_backend.presentation.hub.header_assets import (
 )
 from hub_backend.session_api import HubSessionApi, HubSessionApiContext
 from hub_backend.presentation.hub.settings_view import (
-    available_chat_font_choices as _available_chat_font_choices_impl,
     hub_settings_html as _hub_settings_html_impl,
-    normalized_font_label as _normalized_font_label_impl,
 )
 from hub_backend.branding import APP_DISPLAY_NAME
 from hub_backend.color_constants import apply_color_tokens, resolve_theme_palette
@@ -406,13 +404,6 @@ HUB_HOME_DESKTOP_HTML = _hub_pages["hub_home_html_desktop"]
 HUB_HOME_MOBILE_HTML = _hub_pages["hub_home_html_mobile"]
 
 
-def available_chat_font_choices():
-    return _available_chat_font_choices_impl(
-        path_class=Path,
-        normalized_font_label_fn=_normalized_font_label_impl,
-    )
-
-
 def hub_settings_html(saved=False, variant="desktop"):
     header_html = render_page_header(
         title_href="/",
@@ -423,7 +414,6 @@ def hub_settings_html(saved=False, variant="desktop"):
     return _hub_settings_html_impl(
         saved=bool(saved),
         load_hub_settings_fn=hub.load_hub_settings,
-        available_chat_font_choices_fn=available_chat_font_choices,
         settings_template=_HUB_SETTINGS_TEMPLATE,
         pwa_hub_manifest_url=_PWA_HUB_MANIFEST_URL,
         pwa_icon_192_url=_PWA_ICON_192_URL,
@@ -453,10 +443,9 @@ def hub_new_session_html(variant="desktop"):
         .replace("__MESSAGE_TEXT_SIZE__", str(message_text_size))
     )
     from backend_core.access.settings import settings_for_hub_render
-    from server.font_style import font_family_stack
 
     render_settings = settings_for_hub_render(current_settings, variant="mobile" if is_mobile else "desktop")
-    message_font_family = font_family_stack(str(render_settings.get("message_font") or "preset-gothic"))
+    message_font_family = str(render_settings.get("message_font") or "")
     page = apply_color_tokens(page, settings=render_settings)
     _cjk_sans = '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR"'
     _code_font_family = f'"SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", {_cjk_sans}, monospace'

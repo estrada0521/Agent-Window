@@ -1,22 +1,11 @@
 from __future__ import annotations
 
+from backend_core.access.settings import DEFAULT_MESSAGE_FONT, canonicalize_message_font
 from backend_core.agents.registry import generate_agent_message_selectors
 
 
 def font_family_stack(selection: str, role: str = "user") -> str:
-    value = str(selection or "").strip()
-    cjk_sans_fallback = '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR"'
-    sans_stack = f'"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", {cjk_sans_fallback}, sans-serif'
-    serif_stack = f'"anthropicSerif", "Anthropic Serif", Georgia, "Arial Hebrew", "Noto Sans Hebrew", "Times New Roman", Times, {cjk_sans_fallback}, serif'
-    if value == "preset-gothic":
-        return sans_stack
-    if value == "preset-mincho":
-        return serif_stack
-    if value.startswith("system:"):
-        family = value.split(":", 1)[1].strip()
-        if family:
-            return f'"{family}", {sans_stack}'
-    return sans_stack
+    return canonicalize_message_font(selection)
 
 
 def agent_detail_selectors(prefix: str = "") -> str:
@@ -32,8 +21,8 @@ def chat_font_settings_inline_style(
     *,
     font_family_stack_fn=font_family_stack,
 ) -> str:
-    message_family = font_family_stack_fn(settings.get("message_font", "preset-gothic"), "user")
-    sans_family = font_family_stack_fn("preset-gothic", "user")
+    message_family = font_family_stack_fn(settings.get("message_font", DEFAULT_MESSAGE_FONT), "user")
+    sans_family = DEFAULT_MESSAGE_FONT
     try:
         _legacy_size = max(8, min(18, int(settings.get("message_text_size", 13))))
     except Exception:
