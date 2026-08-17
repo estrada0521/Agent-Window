@@ -63,7 +63,7 @@
     }
     .field + .field { margin-top: 16px; }
     .label { display:block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-    select, input[type="text"], input[type="number"] {
+    select, input[type="text"], input[type="number"], textarea {
       width: 100%;
       border: 0.5px solid var(--line-strong);
       color: var(--fg);
@@ -79,17 +79,27 @@
     select {
       background: transparent;
     }
-    input[type="text"], input[type="number"] {
+    input[type="text"], input[type="number"], textarea {
       background: var(--panel-2);
+    }
+    textarea.message-font-input {
+      resize: vertical;
+      min-height: 5.5em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      font-weight: 400;
+      cursor: text;
     }
     #message_text_size_desktop {
       background: transparent;
     }
-    select:focus, input[type="text"]:focus, input[type="number"]:focus {
+    select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
       border-color: rgba(255,255,255,0.22);
     }
     html[data-theme="dark"] input[type="text"],
-    html[data-theme="dark"] input[type="number"] {
+    html[data-theme="dark"] input[type="number"],
+    html[data-theme="dark"] textarea {
       background: rgba(20, 20, 20, 0.6);
       backdrop-filter: blur(20px) saturate(160%);
       -webkit-backdrop-filter: blur(20px) saturate(160%);

@@ -5,7 +5,6 @@ import json
 from urllib.parse import parse_qs
 
 from backend_core.access.settings import (
-    message_font_mode,
     normalize_theme_desktop,
     resolve_chat_theme,
     settings_for_chat_render,
@@ -162,8 +161,8 @@ def _get_file_view(handler, parsed, ctx) -> None:
     preview_variant = "mobile" if requested_preview_variant == "mobile" else "desktop"
     try:
         settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant=preview_variant)
-        message_font = str(settings.get("message_font", "preset-gothic") or "preset-gothic").strip()
-        preview_font_mode = message_font_mode(message_font)
+        message_font = str(settings.get("message_font") or "").strip()
+        preview_font_mode = "gothic"
         preview_text_size = settings.get("message_text_size_desktop") or settings.get("message_text_size")
         requested_text_size = str(qs.get("agent_text_size", [""])[0] or "").strip()
         if requested_text_size:

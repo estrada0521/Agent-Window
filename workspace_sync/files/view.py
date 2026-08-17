@@ -14,8 +14,7 @@ from hub_backend.presentation.chat.script_assets import (
     KATEX_CDN_JS_SRC,
     MARKED_CDN_SRC,
 )
-from backend_core.access.settings import load_hub_settings
-from server.font_style import font_family_stack
+from backend_core.access.settings import DEFAULT_MESSAGE_FONT, load_hub_settings
 from .view_scripts import (
     build_gutter_scroll_sync_js,
     build_progressive_loader_js,
@@ -69,10 +68,7 @@ def render_file_view(
     raw_url = f"{prefix}/file-raw?path={url_quote(rel)}"
     size = os.path.getsize(full)
     agent_font_mode = "gothic" if str(agent_font_mode or "").strip().lower() == "gothic" else "serif"
-    resolved_agent_font_family = str(agent_font_family).strip() if agent_font_family else font_family_stack(
-        "preset-gothic" if agent_font_mode == "gothic" else "preset-mincho",
-        "agent",
-    )
+    resolved_agent_font_family = str(agent_font_family).strip() if agent_font_family else DEFAULT_MESSAGE_FONT
     code_font_family = (
         '"SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", monospace'
     )

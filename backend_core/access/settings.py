@@ -9,6 +9,21 @@ from pathlib import Path
 SESSION_LOG_FILENAME = ".log.jsonl"
 NATIVE_LOG_STATE_FILENAME = ".native-log-sync-state.json"
 DESKTOP_THEME_CHOICES = frozenset({"system", "light", "dark"})
+DEFAULT_MESSAGE_FONT = (
+    '"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", '
+    '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", '
+    '"PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", '
+    '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", '
+    '"Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif'
+)
+LEGACY_MINCHO_MESSAGE_FONT = (
+    '"anthropicSerif", "Anthropic Serif", Georgia, "Arial Hebrew", "Noto Sans Hebrew", '
+    '"Times New Roman", Times, '
+    '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", '
+    '"PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", '
+    '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", '
+    '"Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", serif'
+)
 
 
 def normalize_theme_desktop(value: object) -> str:
@@ -38,14 +53,31 @@ def resolve_chat_theme(settings: dict, *, variant: str) -> str:
     return desktop
 
 
-def message_font_mode(message_font: str) -> str:
-    return "serif" if str(message_font or "").strip() == "preset-mincho" else "gothic"
+def canonicalize_message_font(value: object) -> str:
+    text = " ".join(str(value or "").split())
+    if not text:
+        return ""
+    if text == "preset-gothic":
+        return DEFAULT_MESSAGE_FONT
+    if text == "preset-mincho":
+        return LEGACY_MINCHO_MESSAGE_FONT
+    if text.startswith("system:"):
+        family = text.split(":", 1)[1].strip()
+        if family:
+            return f'"{family}", {DEFAULT_MESSAGE_FONT}'
+        return ""
+    return text
+
+
+def _require_css_font_family(value: str) -> str:
+    if any(ch in value for ch in "{};"):
+        raise ValueError(f"invalid message_font: {value!r}")
+    return value
 
 
 def _with_derived_font_fields(settings: dict) -> dict:
-    message_font = str(settings.get("message_font") or "preset-gothic").strip() or "preset-gothic"
-    settings["message_font"] = message_font
-    settings["agent_font_mode"] = message_font_mode(message_font)
+    settings["message_font"] = canonicalize_message_font(settings.get("message_font"))
+    settings["agent_font_mode"] = "gothic"
     return settings
 
 
@@ -85,15 +117,13 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
     # keep global theme in sync with desktop so hub renders correctly
     settings["theme"] = settings["theme_desktop"]
 
-    message_font = ""
-    for key in ("message_font", "user_message_font", "agent_message_font"):
-        message_font = str(raw.get(key) or "").strip()
-        if message_font:
-            break
-    if not message_font:
-        message_font = str(settings.get("message_font") or "preset-gothic").strip() or "preset-gothic"
-    settings["message_font"] = message_font
-    settings["agent_font_mode"] = message_font_mode(message_font)
+    if "message_font" in raw:
+        message_font = canonicalize_message_font(raw.get("message_font"))
+    else:
+        legacy = str(raw.get("user_message_font") or raw.get("agent_message_font") or "").strip()
+        message_font = canonicalize_message_font(legacy or settings.get("message_font"))
+    settings["message_font"] = _require_css_font_family(message_font)
+    settings["agent_font_mode"] = "gothic"
     settings.pop("user_message_font", None)
     settings.pop("agent_message_font", None)
 
@@ -124,14 +154,14 @@ HUB_SETTINGS_DEFAULTS = {
     "theme": "dark",
     "theme_desktop": "dark",
     "agent_font_mode": "gothic",
-    "message_font": "preset-gothic",
+    "message_font": DEFAULT_MESSAGE_FONT,
     "message_text_size": 13,
     "message_text_size_desktop": 13,
 }
 
 MOBILE_CHAT_TYPOGRAPHY = {
     "agent_font_mode": "gothic",
-    "message_font": "preset-gothic",
+    "message_font": DEFAULT_MESSAGE_FONT,
     "message_text_size": 13,
     "message_text_size_desktop": 13,
 }
