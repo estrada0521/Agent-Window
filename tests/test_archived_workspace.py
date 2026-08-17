@@ -269,7 +269,66 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertEqual(detail, "")
         self.assertEqual(launched["args"][3], "Even-Parity")
         self.assertEqual(launched["args"][4], str(workspace))
-        self.assertEqual(launched["cwd"], str(workspace))
+        self.assertEqual(launched["cwd"], "/Users/okadaharuto/workspace/Agent-Window")
+
+    def test_chat_launch_cwd_is_not_a_workspace_that_contains_server_py(self) -> None:
+        launched = {}
+
+        class _Popen:
+            def __init__(self, args, **kwargs):
+                launched["args"] = list(args)
+                launched["cwd"] = kwargs.get("cwd")
+
+        class _Sys:
+            executable = "/usr/bin/python3"
+
+        class _Time:
+            @staticmethod
+            def monotonic():
+                return 0.0
+
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp) / "xray-structure-factor"
+            workspace.mkdir()
+            (workspace / "server.py").write_text("raise SystemExit('shadow')\n", encoding="utf-8")
+            hub = SimpleNamespace(
+                repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
+                _get_launch_lock=lambda _name: threading.Lock(),
+                archived_session_records=lambda _active: {},
+                active_session_records_query=lambda: _Query({}),
+                chat_port_for_session=lambda _name: 8568,
+                chat_server_state=lambda _port: {
+                    "session": "xray-structure-factor",
+                    "repo_root": "/Users/okadaharuto/workspace/Agent-Window",
+                    "workspace": str(workspace),
+                    "targets": [],
+                    "active": False,
+                },
+                chat_server_matches=lambda *args, **kwargs: True,
+                chat_ready=lambda _port: False,
+                stop_chat_server=lambda _name: (True, ""),
+                stop_inactive_chat_servers=lambda **_kwargs: "",
+                _chat_launch_session_dir=lambda *_args: None,
+                _chat_launch_env=lambda **_kwargs: {},
+                _chat_launch_port=lambda *_args, **_kwargs: (8568, False, ""),
+                tmux_run=lambda *_args, **_kwargs: SimpleNamespace(timed_out=False, returncode=0, stderr="", stdout=""),
+            )
+            with patch("hub_backend.chat_supervisor._wait_until", return_value=True):
+                ok, port, detail = ensure_chat_server(
+                    hub,
+                    "xray-structure-factor",
+                    session_is_active=False,
+                    workspace=str(workspace),
+                    subprocess_module=SimpleNamespace(Popen=_Popen),
+                    sys_module=_Sys,
+                    time_module=_Time,
+                )
+        self.assertTrue(ok)
+        self.assertEqual(port, 8568)
+        self.assertEqual(detail, "")
+        self.assertEqual(launched["args"][4], str(workspace))
+        self.assertEqual(launched["cwd"], "/Users/okadaharuto/workspace/Agent-Window")
+        self.assertNotEqual(launched["cwd"], str(workspace))
 
     def test_ensure_chat_server_opens_logs_without_a_workspace_folder(self) -> None:
         launched = {}
@@ -326,8 +385,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertEqual(port, 8206)
         self.assertEqual(detail, "")
         self.assertEqual(launched["args"][4], "")
-        self.assertEqual(launched["cwd"], str(session_dir))
-        self.assertNotEqual(launched["cwd"], "/Users/okadaharuto/workspace/Agent-Window")
+        self.assertEqual(launched["cwd"], "/Users/okadaharuto/workspace/Agent-Window")
 
     def test_hub_runtime_forwards_workspace_into_chat_server_match(self) -> None:
         import inspect
