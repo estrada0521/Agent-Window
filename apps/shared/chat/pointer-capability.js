@@ -8,6 +8,7 @@
       ".copy-btn",
       ".file-card",
       ".repo-sheet-close",
+      ".repo-browser-item",
       ".send-btn",
       "#scrollToBottomBtn"
     ].join(", ");
