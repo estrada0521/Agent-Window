@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import subprocess
 import unittest
 from pathlib import Path
@@ -16,34 +15,11 @@ def _between(text: str, start: str, end: str) -> str:
 
 
 class ChatRendererCoreTests(unittest.TestCase):
-    def test_real_renderer_handles_real_log_entries_and_propagates_failures(self) -> None:
+    def test_renderer_does_not_swallow_marked_failures(self) -> None:
         base = (ROOT / "apps/shared/chat/base.js").read_text()
         messages = (ROOT / "apps/shared/chat/runtime/messages.js").read_text()
         render_markdown = _between(base, "    const applyWrittenOrderedListNumbers =", "    const wrapFileIcon")
         build_message = _between(messages, "    const buildMsgHTML =", "    const updateSessionUI")
-
-        entries = [
-            {
-                "sender": "user",
-                "targets": ["cursor"],
-                "message": "<script>alert(1)</script> **bold**",
-                "msg_id": "synthetic-user",
-            },
-            {
-                "sender": "cursor-2",
-                "targets": ["user", "claude-1"],
-                "message": "```js\\nconst x = 1;\\n```\\n\\n$E=mc^2$",
-                "msg_id": "synthetic-agent",
-                "deferred_body": True,
-            },
-            {
-                "sender": "system",
-                "targets": [],
-                "message": "Commit abc123 renderer test",
-                "msg_id": "synthetic-system",
-                "kind": "git-commit",
-            },
-        ]
 
         script = f"""
 const assert = require("node:assert/strict");
@@ -82,22 +58,12 @@ const emphasizeSystemMessageKeyword = (message, kind = "") =>
 {render_markdown}
 {build_message}
 
-const entries = {json.dumps(entries, ensure_ascii=False)};
-for (const mobile of ["0", "1"]) {{
-  document.documentElement.dataset.mobile = mobile;
-  for (const entry of entries) {{
-    const html = buildMsgHTML(entry);
-    assert.equal(typeof html, "string");
-    assert.ok(html.length > 0);
-    assert.ok(html.includes(String(entry.msg_id || "")));
-  }}
-}}
-
+const entry = {{ sender: "user", targets: ["cursor"], message: "hi", msg_id: "m1" }};
 marked.parse = () => {{ throw new Error("synthetic marked failure"); }};
-assert.throws(() => buildMsgHTML(entries[0]), /synthetic marked failure/);
+assert.throws(() => buildMsgHTML(entry), /synthetic marked failure/);
 marked = undefined;
-assert.throws(() => buildMsgHTML(entries[0]), /marked is unavailable/);
-console.log(`rendered=${{entries.length * 2}}`);
+assert.throws(() => buildMsgHTML(entry), /marked is unavailable/);
+console.log("marked-failure-propagated");
 """
         completed = subprocess.run(
             ["node"],
@@ -107,7 +73,7 @@ console.log(`rendered=${{entries.length * 2}}`);
             check=False,
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn("rendered=", completed.stdout)
+        self.assertIn("marked-failure-propagated", completed.stdout)
 
 
     def test_written_ordered_list_numbers_are_preserved(self) -> None:

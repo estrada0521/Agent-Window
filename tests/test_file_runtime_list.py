@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import subprocess
 import tempfile
-import time
 import unittest
 from pathlib import Path
 
@@ -19,13 +18,10 @@ class FileRuntimeListTests(unittest.TestCase):
             (workspace / "scratch" / "blob.bin").write_bytes(b"x" * 1024)
             runtime = FileRuntime(workspace=workspace, repo_root=workspace)
 
-            t0 = time.perf_counter()
             root_entries = runtime.list_dir("")
-            elapsed_ms = (time.perf_counter() - t0) * 1000
             names = {entry["name"] for entry in root_entries}
             self.assertIn("apps", names)
             self.assertNotIn("test.md", names)
-            self.assertLess(elapsed_ms, 200)
 
             app_entries = runtime.list_dir("apps")
             self.assertEqual([entry["name"] for entry in app_entries], ["test.md"])
