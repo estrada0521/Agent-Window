@@ -26,35 +26,6 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
         applyMobileThemeGradientVars();
       }
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    const fileViewHrefForPath = (path, { embed = false } = {}) => {
-      const params = new URLSearchParams();
-      params.set("path", String(path || ""));
-      if (embed) {
-        params.set("embed", "1");
-        params.set("progressive", "1");
-      }
-      params.set("agent_font_mode", currentFilePreviewFontMode());
-      if (CHAT_BASE_PATH) params.set("base_path", CHAT_BASE_PATH);
-      params.set("base_theme", document.documentElement.dataset.theme === "light" ? "light" : "dark");
-      params.set("preview_variant", "mobile");
-      const textSize = currentFilePreviewTextSize();
-      if (textSize) params.set("agent_text_size", textSize);
-      return withChatBase(`/file-view?${params.toString()}`);
-    };
-    const buildInlineFileLinkMarkup = (path, label = "") => {
-      const normalizedPath = String(path || "").trim();
-      if (!normalizedPath) return "";
-      const visible = String(label || displayAttachmentFilename(normalizedPath) || normalizedPath).trim() || normalizedPath;
-      const href = fileViewHrefForPath(normalizedPath);
-      return `<a class="inline-file-link" href="${escapeHtml(href)}" data-filepath="${escapeHtml(normalizedPath)}" data-ext="${escapeHtml(extFromPath(normalizedPath))}" title="${escapeHtml(normalizedPath)}"><code>${escapeHtml(visible)}</code></a>`;
-    };
-    const injectFileCards = (html) => {
-      return html
-        .replace(/\[Attached:\s*([^\]]+)\]/g, (match, rawPath) => buildInlineFileLinkMarkup(rawPath.trim()))
-        .replace(/(^|[\s>(])@((?:[A-Za-z0-9._-]+\/)+[A-Za-z0-9._-]+(?:\.[A-Za-z0-9._-]+)?)/g, (match, prefix, rawPath) => {
-          return `${prefix}${buildInlineFileLinkMarkup(rawPath, rawPath)}`;
-        });
-    };
     const _pageParams = new URLSearchParams(window.location.search || "");
     const launchShellMode = _pageParams.get("launch_shell") === "1";
     let refreshInFlight = false;

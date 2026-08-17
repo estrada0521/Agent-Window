@@ -232,3 +232,38 @@
       } catch (_) {}
       return "";
     };
+    const fileViewHrefForPath = (path, { embed = false } = {}) => {
+      const isMobile = document.documentElement.dataset.mobile === "1";
+      const params = new URLSearchParams();
+      params.set("path", normalizeWorkspaceFilePath(path) || String(path || "").trim());
+      if (embed) {
+        params.set("embed", "1");
+        if (isMobile) {
+          params.set("progressive", "1");
+        } else {
+          params.set("pane", "1");
+          params.set("chrome", "header");
+        }
+      }
+      params.set("agent_font_mode", currentFilePreviewFontMode());
+      if (CHAT_BASE_PATH) params.set("base_path", CHAT_BASE_PATH);
+      params.set("base_theme", document.documentElement.dataset.theme === "light" ? "light" : "dark");
+      params.set("preview_variant", isMobile ? "mobile" : "desktop");
+      const textSize = currentFilePreviewTextSize();
+      if (textSize) params.set("agent_text_size", textSize);
+      return withChatBase(`/file-view?${params.toString()}`);
+    };
+    const buildInlineFileLinkMarkup = (path, label = "") => {
+      const normalizedPath = normalizeWorkspaceFilePath(path);
+      if (!normalizedPath) return "";
+      const visible = String(label || displayAttachmentFilename(normalizedPath) || normalizedPath).trim() || normalizedPath;
+      const href = fileViewHrefForPath(normalizedPath);
+      return `<a class="inline-file-link" href="${escapeHtml(href)}" data-filepath="${escapeHtml(normalizedPath)}" data-ext="${escapeHtml(extFromPath(normalizedPath))}" title="${escapeHtml(normalizedPath)}"><code>${escapeHtml(visible)}</code></a>`;
+    };
+    const injectFileCards = (html) => {
+      return html
+        .replace(/\[Attached:\s*([^\]]+)\]/g, (match, rawPath) => buildInlineFileLinkMarkup(rawPath.trim()))
+        .replace(/(^|[\s>(])@((?:[A-Za-z0-9._-]+\/)+[A-Za-z0-9._-]+(?:\.[A-Za-z0-9._-]+)?)/g, (match, prefix, rawPath) => {
+          return `${prefix}${buildInlineFileLinkMarkup(rawPath, rawPath)}`;
+        });
+    };
