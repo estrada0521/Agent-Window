@@ -68,9 +68,10 @@ class FileRuntime:
         allowed_roots: list[str | Path] | tuple[str | Path, ...] | None = None,
         repo_root: str | Path | None = None,
     ):
-        self.workspace = os.path.realpath(os.path.normpath(str(workspace)))
+        raw = str(workspace or "").strip()
+        self.workspace = os.path.realpath(os.path.normpath(raw)) if raw else ""
         self.repo_root = os.path.realpath(os.path.normpath(str(repo_root))) if repo_root else None
-        roots = [self.workspace]
+        roots = [self.workspace] if self.workspace else []
         for candidate in allowed_roots or ():
             if not candidate:
                 continue
@@ -113,7 +114,14 @@ class FileRuntime:
     def file_index_path_is_ignored(self, rel: str) -> bool:
         return self._rel_path_is_skipped(rel)
 
+    def _require_workspace(self) -> str:
+        root = str(self.workspace or "").strip()
+        if not root:
+            raise RuntimeError("workspace is not configured")
+        return root
+
     def _resolve_path(self, rel: str, *, allow_workspace_root: bool = False) -> str:
+        self._require_workspace()
         rel = rel or ""
         if rel.startswith("~"):
             full = os.path.realpath(os.path.expanduser(rel))
@@ -299,6 +307,7 @@ class FileRuntime:
             self._file_list_cache_version += 1
 
     def refresh_file_list_cache(self) -> list[dict]:
+        self._require_workspace()
         if not self._file_list_refresh_lock.acquire(blocking=False):
             with self._file_list_cache_lock:
                 return [dict(item) for item in (self._file_list_cache or [])]

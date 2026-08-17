@@ -198,9 +198,11 @@ def _get_files(handler, parsed, ctx) -> None:
     force_refresh = (qs.get("refresh", [""])[0] or "").lower() in ("1", "true", "yes")
     try:
         files = ctx["workspace_sync_api"].list_files(force_refresh=force_refresh)
-    except Exception:
-        files = []
-    body = json.dumps(files, ensure_ascii=True).encode("utf-8")
+        body = json.dumps(files, ensure_ascii=True).encode("utf-8")
+    except Exception as exc:
+        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
+        _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
+        return
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
@@ -235,9 +237,11 @@ def _get_files_search(handler, parsed, ctx) -> None:
             limit = 60
     try:
         files = ctx["workspace_sync_api"].search_files(query, limit=limit, force_refresh=False)
-    except Exception:
-        files = []
-    body = json.dumps(files, ensure_ascii=True).encode("utf-8")
+        body = json.dumps(files, ensure_ascii=True).encode("utf-8")
+    except Exception as exc:
+        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
+        _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
+        return
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 

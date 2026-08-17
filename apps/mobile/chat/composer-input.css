@@ -225,7 +225,7 @@
       box-sizing: border-box;
     }
     .statusline.is-error {
-      color: var(--external-link-fg);
+      color: var(--error);
     }
 
     main {

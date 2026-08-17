@@ -80,7 +80,7 @@ def chat_server_state(self, chat_port: int) -> dict | None:
     return None
 
 
-def chat_server_matches(self, session_name: str, chat_port: int) -> bool:
+def chat_server_matches(self, session_name: str, chat_port: int, *, workspace: str = "") -> bool:
     state = self.chat_server_state(chat_port)
     if not state:
         return False
@@ -88,6 +88,9 @@ def chat_server_matches(self, session_name: str, chat_port: int) -> bool:
         return False
     reported_repo_root = str(state.get("repo_root") or "").strip()
     if reported_repo_root != str(self.repo_root):
+        return False
+    expected_workspace = str(workspace or "").strip()
+    if str(state.get("workspace") or "").strip() != expected_workspace:
         return False
     expected_agents = self.session_agents(session_name)
     reported_agents = [str(a).strip() for a in (state.get("targets") or []) if str(a).strip()]
@@ -104,19 +107,6 @@ def stop_chat_server(
     **_kwargs,
 ) -> tuple[bool, str]:
     return stop_chat_server_impl(self.repo_root, session_name)
-
-
-def chat_launch_workspace(self, session_name: str) -> tuple[str, bool]:
-    workspace, timed_out = self.tmux_env_query(session_name, "AGENT_WINDOW_WORKSPACE")
-    if timed_out:
-        return "", True
-    workspace = (workspace or "").strip()
-    if workspace:
-        return workspace, False
-    query = self.active_session_records_query()
-    if query.state == "ok":
-        workspace = str((query.records.get(session_name) or {}).get("workspace") or "").strip()
-    return workspace, False
 
 
 def chat_launch_session_dir(self, session_name: str, workspace: str, explicit_log_dir: str) -> Path:
@@ -150,17 +140,32 @@ def chat_launch_env(self, *, session_is_active: bool = True) -> dict[str, str]:
     return env
 
 
-def _chat_launch_port(self, session_name: str) -> tuple[int, bool, str]:
+def _chat_launch_port(
+    self,
+    session_name: str,
+    *,
+    workspace: str = "",
+    session_is_active: bool = True,
+) -> tuple[int, bool, str]:
     """Return the session's designated chat port, or fail if it cannot be used.
 
     Returns (chat_port, ready, error). ready=True means this session already
-    answers at chat_port on the Hub scheme. Occupied-by-something-else is an
-    error; this does not stop or replace a foreign listener.
+    answers at chat_port on the Hub scheme with the expected workspace.
+    Occupied-by-something-else is an error; this does not stop or replace a
+    foreign listener. A listener for this session with the wrong workspace or
+    active flag is not ready; the caller stops it and relaunches.
     """
     chat_port = self.chat_port_for_session(session_name)
-    if self.chat_server_matches(session_name, chat_port):
+    state = self.chat_server_state(chat_port)
+    if (
+        self.chat_server_matches(session_name, chat_port, workspace=workspace)
+        and state is not None
+        and bool(state.get("active")) == bool(session_is_active)
+    ):
         return chat_port, True, ""
     if self.chat_ready(chat_port) or not port_is_bindable(chat_port):
+        if state and str(state.get("session") or "").strip() == session_name:
+            return chat_port, False, ""
         return chat_port, False, f"chat port {chat_port} is occupied"
     return chat_port, False, ""
 
@@ -196,13 +201,18 @@ def ensure_chat_server(
 ) -> tuple[bool, int, str]:
     lock = self._get_launch_lock(session_name)
     with lock:
-        chat_port, ready, error = self._chat_launch_port(session_name)
+        resolved_workspace = str(workspace or "").strip()
+
+        chat_port, ready, error = self._chat_launch_port(
+            session_name,
+            workspace=resolved_workspace,
+            session_is_active=session_is_active,
+        )
         if error:
             return False, chat_port, error
         if ready:
-            state = self.chat_server_state(chat_port)
-            if state and bool(state.get("active")) == bool(session_is_active):
-                return True, chat_port, ""
+            return True, chat_port, ""
+        if self.chat_ready(chat_port):
             stop_ok, stop_detail = self.stop_chat_server(session_name)
             if not stop_ok:
                 return False, chat_port, stop_detail
@@ -212,18 +222,7 @@ def ensure_chat_server(
             if stop_detail:
                 return False, chat_port, stop_detail
 
-        resolved_workspace = str(workspace or "").strip()
-        if not resolved_workspace:
-            if session_is_active:
-                resolved_workspace, workspace_timed_out = self._chat_launch_workspace(session_name)
-                if workspace_timed_out:
-                    return False, chat_port, "tmux query timed out while preparing chat server launch"
-            else:
-                archived = self.archived_session_records(self.active_session_records_query().records.keys())
-                resolved_workspace = str((archived.get(session_name) or {}).get("workspace") or "").strip()
-        if not resolved_workspace:
-            return False, chat_port, "workspace unavailable"
-        self._chat_launch_session_dir(session_name, resolved_workspace, "")
+        session_dir = self._chat_launch_session_dir(session_name, resolved_workspace, "")
         if session_is_active:
             log_path = session_log_path(session_name)
             result = self.tmux_run(
@@ -234,6 +233,7 @@ def ensure_chat_server(
                 detail = (result.stderr or result.stdout or "").strip() or "tmux set-environment failed"
                 return False, chat_port, detail
         env = self._chat_launch_env(session_is_active=session_is_active)
+        launch_cwd = resolved_workspace if resolved_workspace and Path(resolved_workspace).is_dir() else str(session_dir)
         try:
             subprocess_module.Popen(
                 [
@@ -243,7 +243,7 @@ def ensure_chat_server(
                     session_name,
                     resolved_workspace,
                 ],
-                cwd=resolved_workspace or str(self.repo_root),
+                cwd=launch_cwd,
                 env=env,
                 start_new_session=True,
                 stdout=subprocess.DEVNULL,
@@ -257,6 +257,7 @@ def ensure_chat_server(
             return (
                 bool(state)
                 and str(state.get("session") or "").strip() == session_name
+                and str(state.get("workspace") or "").strip() == resolved_workspace
                 and bool(state.get("active")) == bool(session_is_active)
             )
 

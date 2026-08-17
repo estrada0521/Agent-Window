@@ -47,7 +47,10 @@ def write_session_meta_file(session: str, agents_csv: str, tmux_env_output: str)
     env_map = _parse_tmux_environment_output(tmux_env_output)
     index_path_raw = str(env_map.get("AGENT_WINDOW_INDEX_PATH") or "").strip()
     if not index_path_raw:
-        return
+        raise ValueError("AGENT_WINDOW_INDEX_PATH is required to write session meta")
+    workspace = str(env_map.get("AGENT_WINDOW_WORKSPACE") or "").strip()
+    if not workspace:
+        raise ValueError("AGENT_WINDOW_WORKSPACE is required to write session meta")
 
     meta_path = Path(index_path_raw).expanduser().resolve().parent / ".meta"
     updated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -59,11 +62,6 @@ def write_session_meta_file(session: str, agents_csv: str, tmux_env_output: str)
         meta = raw
 
     created_at = str(meta.get("created_at") or "").strip() or updated_at
-    workspace = str(
-        env_map.get("AGENT_WINDOW_WORKSPACE")
-        or meta.get("workspace")
-        or ""
-    ).strip()
 
     parsed_agents = _parse_agents_csv(agents_csv)
     _reconcile_agent_names(meta, parsed_agents)

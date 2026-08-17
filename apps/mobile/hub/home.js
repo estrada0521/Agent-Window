@@ -110,13 +110,7 @@
       _awaitingChatRenderReady = false;
       clearHubReadyTimeout();
       clearLaunchShellQueryFlag();
-      const card = _launchShell?.querySelector(".launch-shell-card");
-      if (card) {
-        card.classList.add("is-error");
-        card.removeAttribute("aria-hidden");
-        card.textContent = String(message || "timeout");
-      }
-      showLaunchShell();
+      hideLaunchShell();
     }
     function startHubReadyTimeout() {
       if (_hubReadyTimeoutTimer) return;

@@ -66,7 +66,13 @@ def get_revive_session(handler, parsed, ctx) -> None:
         else:
             handler._send_html(500, ctx["error_page_fn"](f"Failed to revive {session_name}: {detail}"))
         return
-    ok, chat_port, detail = ctx["ensure_chat_server_fn"](session_name)
+    query = ctx["active_session_records_query_fn"]()
+    workspace = str((query.records.get(session_name) or {}).get("workspace") or "").strip()
+    ok, chat_port, detail = ctx["ensure_chat_server_fn"](
+        session_name,
+        session_is_active=True,
+        workspace=workspace,
+    )
     if not ok:
         if fmt == "json":
             handler._send_json(500, {"ok": False, "error": detail})

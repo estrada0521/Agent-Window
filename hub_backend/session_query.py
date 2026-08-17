@@ -15,10 +15,6 @@ _PREVIEW_TAIL_BYTES = 2 * 1024 * 1024
 _PREVIEW_TAIL_CHUNK_BYTES = 64 * 1024
 
 
-def parse_session_dir(name: str) -> str:
-    return name
-
-
 def parse_saved_time(value: str) -> float:
     if not value:
         return 0
@@ -263,10 +259,10 @@ def archived_sessions(runtime: Any, active_names: set[str] | list[str] | None = 
                 meta = json.loads(meta_path.read_text(encoding="utf-8"))
                 if not isinstance(meta, dict):
                     raise ValueError(f"invalid session meta: {meta_path}")
-            session_name = (meta.get("session") or parse_session_dir(entry.name) or "").strip()
+            session_name = str(meta.get("session") or entry.name or "").strip()
             if not session_name or session_name in active_names_set:
                 continue
-            workspace = (meta.get("workspace") or "").strip() or str(runtime.repo_root)
+            workspace = str(meta.get("workspace") or "").strip()
             created_epoch = parse_saved_time(str(meta.get("created_at", "")))
             updated_epoch = parse_saved_time(str(meta.get("updated_at", "")))
             if not updated_epoch:

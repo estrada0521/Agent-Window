@@ -160,6 +160,7 @@
         _deskReloadShell.classList.add("visible");
       }
       setDeskChatLoading(false);
+      showDeskSidebarList({ open: true });
     }
 
     function openDeskChatHeaderMenu() {
@@ -1268,6 +1269,10 @@
     }
 
     window.addEventListener("message", (event) => {
+      if (event.data && event.data.type === "hub-session-error") {
+        failDeskOpen(event.data.message || "open session failed");
+        return;
+      }
       if (event.data && event.data.type === "session-running-state" && event.source === _deskChatFrame?.contentWindow) {
         const sessionName = String(event.data.sessionName || "").trim();
         if (!sessionName) return;

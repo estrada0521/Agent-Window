@@ -244,7 +244,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
 
     session_name = str(argv[0] or "").strip()
     workspace = str(argv[1] or "").strip()
-    if not session_name or not workspace:
+    if not session_name:
         raise SystemExit("usage: python -m server.server <session_name> <workspace>")
 
     _repo_root = Path(__file__).resolve().parent.parent

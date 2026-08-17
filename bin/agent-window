@@ -635,9 +635,6 @@ def format_mtime(path):
     except OSError:
         return ""
 
-def parse_session_dir(name):
-    return name
-
 records = {}
 if os.path.isdir(central_log_dir):
     for entry in os.listdir(central_log_dir):
@@ -654,7 +651,10 @@ if os.path.isdir(central_log_dir):
                 meta = json.load(f)
             if not isinstance(meta, dict):
                 raise SystemExit(f"invalid session meta: {meta_path}")
-        session = meta.get("session") or parse_session_dir(entry)
+        session = str(meta.get("session") or entry or "").strip()
+        workspace = str(meta.get("workspace") or "").strip()
+        if not session:
+            continue
         created = meta.get("created_at") or format_mtime(path)
         updated = meta.get("updated_at") or format_mtime(path)
         meta_agents = meta.get("agents")
@@ -672,7 +672,7 @@ if os.path.isdir(central_log_dir):
         agents = unique_agents
         record = {
             "session": session,
-            "workspace": meta.get("workspace") or "-",
+            "workspace": workspace,
             "created": created,
             "updated": updated,
             "agents": ",".join(agents) if agents else "-",

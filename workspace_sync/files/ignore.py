@@ -11,8 +11,9 @@ class FileIndexIgnoreRules:
     RELOAD_INTERVAL_SECONDS = 1.0
 
     def __init__(self, workspace: str | Path) -> None:
-        self.workspace = os.path.realpath(os.path.normpath(str(workspace)))
-        self.config_path = Path(self.workspace) / self.CONFIG_REL_PATH
+        raw = str(workspace or "").strip()
+        self.workspace = os.path.realpath(os.path.normpath(raw)) if raw else ""
+        self.config_path = Path(self.workspace) / self.CONFIG_REL_PATH if self.workspace else None
         self._loaded_at = 0.0
         self._mtime_ns: int | None = None
         self._patterns: tuple[str, ...] = ()
@@ -29,6 +30,8 @@ class FileIndexIgnoreRules:
         return normalized
 
     def _read_patterns(self) -> tuple[str, ...]:
+        if self.config_path is None:
+            return ()
         patterns: list[str] = []
         try:
             raw = self.config_path.read_text(encoding="utf-8")
@@ -44,6 +47,8 @@ class FileIndexIgnoreRules:
         return tuple(dict.fromkeys(patterns))
 
     def _maybe_reload(self) -> None:
+        if self.config_path is None:
+            return
         now = time.monotonic()
         if now - self._loaded_at < self.RELOAD_INTERVAL_SECONDS:
             return
