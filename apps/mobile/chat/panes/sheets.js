@@ -50,6 +50,7 @@
       const target = String(nativeHeaderMenuSelect.value || "");
       clearNativeHeaderMenuSelection();
       if (!target) return;
+      _ignoreGlobalClick = true;
       void runForwardAction(target, { sourceNode: null });
     });
     nativeHeaderMenuSelect?.addEventListener("blur", () => {
@@ -834,6 +835,10 @@ __CHAT_INCLUDE:../features/git-panel.js__
       if (hasOpenHeaderMenu()) updateHeaderMenuViewportMetrics();
     }, { passive: true });
     document.addEventListener("click", (event) => {
+      if (_ignoreGlobalClick) {
+        _ignoreGlobalClick = false;
+        return;
+      }
       if (quickMore && quickMore.open && !quickMore.contains(event.target)) {
         quickMore.open = false;
       }
@@ -869,7 +874,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
         return;
       }
       if (action === "openPaneTraceWindow") {
-        closeQuickMore();
         togglePaneViewer();
         return;
       }
