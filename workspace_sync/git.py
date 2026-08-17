@@ -10,9 +10,9 @@ from pathlib import Path
 _workspace: str = ""
 _repo_root: Path = Path()
 _runtime = None
-_BRANCH_OVERVIEW_CACHE_TTL_SECONDS = 5.0
-_branch_overview_cache_lock = threading.Lock()
-_branch_overview_cache: dict[tuple[str, int, int], tuple[float, dict]] = {}
+_GIT_OVERVIEW_CACHE_TTL_SECONDS = 5.0
+_git_overview_cache_lock = threading.Lock()
+_git_overview_cache: dict[tuple[str, int, int], tuple[float, dict]] = {}
 _commit_list_cache: dict[tuple[str, str, int, int], dict] = {}
 
 
@@ -21,18 +21,18 @@ def configure(*, workspace: str, repo_root: Path, runtime) -> None:
     _workspace = workspace or ""
     _repo_root = repo_root
     _runtime = runtime
-    _clear_branch_overview_cache()
+    _clear_git_overview_cache()
 
 
-def _clear_branch_overview_cache() -> None:
-    with _branch_overview_cache_lock:
-        _branch_overview_cache.clear()
+def _clear_git_overview_cache() -> None:
+    with _git_overview_cache_lock:
+        _git_overview_cache.clear()
         _commit_list_cache.clear()
 
 
-def invalidate_branch_overview_cache() -> None:
-    with _branch_overview_cache_lock:
-        _branch_overview_cache.clear()
+def invalidate_git_overview_cache() -> None:
+    with _git_overview_cache_lock:
+        _git_overview_cache.clear()
 
 
 def git_ignored_rel_paths(workspace: str, rel_paths: list[str]) -> set[str]:
@@ -141,7 +141,7 @@ def _read_commit_list(_run, *, branch: str, offset: int, limit: int) -> dict:
     }
 
 
-def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
+def git_overview(*, offset=0, limit=50, force_refresh: bool = False):
     root = Path(_workspace or _repo_root)
     offset = int(offset)
     limit = int(limit)
@@ -153,9 +153,9 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
     cache_key = (str(root.resolve()), offset, limit)
     now = time.monotonic()
     if not force_refresh:
-        with _branch_overview_cache_lock:
-            cached = _branch_overview_cache.get(cache_key)
-            if cached and now - cached[0] < _BRANCH_OVERVIEW_CACHE_TTL_SECONDS:
+        with _git_overview_cache_lock:
+            cached = _git_overview_cache.get(cache_key)
+            if cached and now - cached[0] < _GIT_OVERVIEW_CACHE_TTL_SECONDS:
                 return cached[1]
 
     def _run(*args):
@@ -212,7 +212,7 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
     else:
         branch = ""
     commit_key = (str(root.resolve()), head, offset, limit)
-    with _branch_overview_cache_lock:
+    with _git_overview_cache_lock:
         cached_commits = _commit_list_cache.get(commit_key)
     status_res = _run("status", "--short", "--branch", "--untracked-files=all")
     if status_res.returncode != 0:
@@ -273,7 +273,7 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
             }
         else:
             cached_commits = _read_commit_list(_run, branch=branch, offset=offset, limit=limit)
-            with _branch_overview_cache_lock:
+            with _git_overview_cache_lock:
                 _commit_list_cache[commit_key] = cached_commits
     recent_commits = list(cached_commits["recent_commits"])
     total_commits = int(cached_commits["total_commits"])
@@ -308,8 +308,8 @@ def git_branch_overview(*, offset=0, limit=50, force_refresh: bool = False):
         "status_lines": status_lines[:8],
         "recent_commits": recent_commits,
     }
-    with _branch_overview_cache_lock:
-        _branch_overview_cache[cache_key] = (time.monotonic(), result)
+    with _git_overview_cache_lock:
+        _git_overview_cache[cache_key] = (time.monotonic(), result)
     return result
 
 

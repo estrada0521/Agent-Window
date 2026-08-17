@@ -12,7 +12,7 @@
       try {
         while (true) {
           _dpGitRefreshQueued = false;
-          const data = await fetchGitBranchOverview({ offset: 0, refresh: true });
+          const data = await fetchGitOverview({ offset: 0, refresh: true });
           const fp = gitOverviewFingerprint(data);
           if (fp !== _dpGitOverviewFingerprint) {
             const isFirstRefresh = _dpGitOverviewFingerprint === null;
@@ -68,7 +68,7 @@
     const dpBootstrapPinnedGitSummary = async () => {
       if (!hasDesktopRightPanelOverlay() || !dpGitSummaryPinned) return;
       try {
-        const data = await fetchGitBranchOverview({ offset: 0 });
+        const data = await fetchGitOverview({ offset: 0 });
         dpGitHeaderSummaryState = dpBuildSummaryState(data);
         dpApplyGitOverviewHeader();
         _dpGitOverviewFingerprint = gitOverviewFingerprint(data);
@@ -154,7 +154,7 @@
       delete row.dataset.untracked;
       const nextIns = Math.max(0, parseInt(entry?.ins) || 0);
       const nextDels = Math.max(0, parseInt(entry?.dels) || 0);
-      const countEls = Array.from(row.querySelectorAll(".git-commit-file-meta .git-branch-summary-count"));
+      const countEls = Array.from(row.querySelectorAll(".git-commit-file-meta .git-summary-count"));
       const updates = [
         { idx: 0, value: nextIns },
         { idx: 1, value: nextDels },
@@ -176,7 +176,7 @@
       }
       updates.forEach(({ el, prev, value }) => {
         el.dataset.countValue = String(value);
-        dpAnimateGitCount(el, prev, value);
+        animateGitCount(el, prev, value);
       });
     };
     const dpApplyFileStatsSectionsInto = (wrapEl, sections, { allowUndo = false, incremental = false } = {}) => {
@@ -258,8 +258,8 @@
     };
     const dpCloseGitDetail = ({ refreshList = false } = {}) => {
       if (!dpGitContent) return;
-      const stack = dpGitContent.querySelector(".git-branch-stack");
-      stack?.classList.remove("git-branch-transitioning", "git-branch-mode-detail", "git-branch-mode-worktree-detail");
+      const stack = dpGitContent.querySelector(".git-stack");
+      stack?.classList.remove("git-transitioning", "git-mode-detail", "git-mode-worktree-detail");
       const body = dpGitContent.querySelector(".git-commit-detail-body");
       const head = dpGitContent.querySelector(".git-commit-detail-head");
       if (body) body.innerHTML = "";
@@ -269,9 +269,9 @@
       dpEnsureGitObserver();
       const shouldRefresh = !!refreshList;
       dpGitDetailNeedsRefresh = false;
-      if (shouldRefresh) void dpLoadGitBranchPage({ reset: true });
+      if (shouldRefresh) void dpLoadGitPage({ reset: true });
     };
-    const dpLoadGitBranchPage = async ({ reset = false } = {}) => {
+    const dpLoadGitPage = async ({ reset = false } = {}) => {
       if ((!dpPanelOpen && !dpGitSummaryPinned) || !dpGitContent) return;
       if (dpGitPageLoading) return;
       if (!reset && !dpGitHasMore && !dpGitLoadError) return;
@@ -290,7 +290,7 @@
         dpUpdateLoadMoreUi();
       }
       try {
-        const data = await fetchGitBranchOverview({
+        const data = await fetchGitOverview({
           offset: reset ? 0 : dpGitNextOffset,
           refresh: reset,
         });
@@ -312,13 +312,13 @@
     };
     const dpOpenGitDetail = async ({ diffKind = "", hash = "", rowHtml = "", subject = "" } = {}) => {
       if (!dpGitContent) return;
-      const stack = dpGitContent.querySelector(".git-branch-stack");
+      const stack = dpGitContent.querySelector(".git-stack");
       if (!stack) return;
       const isWorktreeDetail = diffKind === "worktree";
       dpCloseGitDetail();
       dpDisconnectGitObserver();
       dpGitDetailNeedsRefresh = false;
-      stack.classList.add("git-branch-transitioning");
+      stack.classList.add("git-transitioning");
       const headEl = dpGitContent.querySelector(".git-commit-detail-head");
       const bodyEl = dpGitContent.querySelector(".git-commit-detail-body");
       if (headEl) {
@@ -333,15 +333,15 @@
       const wrapEl = document.createElement("div");
       wrapEl.className = "git-commit-file-wrap";
       bodyEl.appendChild(wrapEl);
-      stack.classList.add("git-branch-mode-detail");
-      stack.classList.toggle("git-branch-mode-worktree-detail", isWorktreeDetail);
+      stack.classList.add("git-mode-detail");
+      stack.classList.toggle("git-mode-worktree-detail", isWorktreeDetail);
       dpGitDetailContext = {
         kind: diffKind === "worktree" || diffKind === "staged" || diffKind === "unstaged" ? diffKind : "commit",
         hash: diffKind === "worktree" || diffKind === "staged" || diffKind === "unstaged" ? "" : hash,
         wrapEl,
       };
       dpGitContent.scrollTop = 0;
-      requestAnimationFrame(() => stack.classList.remove("git-branch-transitioning"));
+      requestAnimationFrame(() => stack.classList.remove("git-transitioning"));
       try {
         await dpRenderFileStatsInto(wrapEl, diffKind === "worktree" ? "" : hash, {
           allowUndo: diffKind === "worktree",

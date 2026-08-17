@@ -30,15 +30,15 @@
       if (refresh) params.set("refresh", "1");
       return params;
     };
-    const fetchGitBranchOverview = async ({ offset = 0, limit = GIT_PANEL_BATCH, refresh = false } = {}) => {
+    const fetchGitOverview = async ({ offset = 0, limit = GIT_PANEL_BATCH, refresh = false } = {}) => {
       const res = await fetchWithTimeout(
-        `/git-branch-overview?${gitOverviewQuery({ offset, limit, refresh })}`,
+        `/git-overview?${gitOverviewQuery({ offset, limit, refresh })}`,
         {},
         GIT_PANEL_FETCH_MS,
       );
       if (!res.ok) {
-        if (refresh && !offset) throw new Error("Failed to refresh branch overview");
-        throw new Error(offset > 0 ? "Failed to load more commits" : "Failed to load branch overview");
+        if (refresh && !offset) throw new Error("Failed to refresh git overview");
+        throw new Error(offset > 0 ? "Failed to load more commits" : "Failed to load git overview");
       }
       return res.json();
     };

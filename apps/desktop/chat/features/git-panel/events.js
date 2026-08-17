@@ -1,16 +1,16 @@
     dpGitContent?.addEventListener("click", async (event) => {
-      if (event.target.closest(".git-branch-summary-pin")) {
+      if (event.target.closest(".git-summary-pin")) {
         event.preventDefault();
         event.stopPropagation();
         dpToggleGitSummaryPinned();
         return;
       }
       if (!dpPanelOpen) return;
-      const loadMoreBtn = event.target.closest(".git-branch-load-more");
+      const loadMoreBtn = event.target.closest(".git-load-more");
       if (loadMoreBtn) {
         event.preventDefault();
         event.stopPropagation();
-        await dpLoadGitBranchPage();
+        await dpLoadGitPage();
         return;
       }
       const fileRow = event.target.closest(".git-commit-file-row");
@@ -29,44 +29,44 @@
         dpCloseGitDetail({ refreshList: dpGitDetailNeedsRefresh });
         return;
       }
-      const stack = dpGitContent.querySelector(".git-branch-stack");
-      const row = event.target.closest(".git-commit-row, .git-branch-summary-row");
+      const stack = dpGitContent.querySelector(".git-stack");
+      const row = event.target.closest(".git-commit-row, .git-summary-row");
       if (!row) return;
-      if (stack?.classList.contains("git-branch-mode-worktree-detail") && row.closest(".git-branch-summary-wrap")) {
+      if (stack?.classList.contains("git-mode-worktree-detail") && row.closest(".git-summary-wrap")) {
         event.preventDefault();
         event.stopPropagation();
         dpCloseGitDetail({ refreshList: dpGitDetailNeedsRefresh });
         return;
       }
-      if (stack?.classList.contains("git-branch-mode-detail")) return;
+      if (stack?.classList.contains("git-mode-detail")) return;
       const diffKind = row.dataset.diffKind || "";
       const hash = String(row.dataset.hash || "");
       if (!hash && !diffKind) return;
       event.preventDefault();
       event.stopPropagation();
       const subject = diffKind
-        ? (row.querySelector(".git-branch-summary-label")?.textContent?.trim() || "Uncommitted changes")
+        ? (row.querySelector(".git-summary-label")?.textContent?.trim() || "Uncommitted changes")
         : (row.querySelector(".git-commit-subject")?.textContent?.trim() || hash.slice(0, 7));
       await dpOpenGitDetail({ diffKind, hash, rowHtml: row.outerHTML, subject });
     });
     document.getElementById("gitPinnedSummaryAside")?.addEventListener("click", async (event) => {
-      if (event.target.closest(".git-branch-summary-pin")) {
+      if (event.target.closest(".git-summary-pin")) {
         event.preventDefault();
         event.stopPropagation();
         dpToggleGitSummaryPinned();
         return;
       }
-      const row = event.target.closest('.git-branch-summary-row[data-diff-kind="worktree"]');
+      const row = event.target.closest('.git-summary-row[data-diff-kind="worktree"]');
       if (!row || !dpGitContent) return;
       event.preventDefault();
       event.stopPropagation();
-      const needReset = !dpGitContent.querySelector(".git-branch-stack");
+      const needReset = !dpGitContent.querySelector(".git-stack");
       await openDesktopRightPanel({ view: "git", reset: needReset });
       await dpOpenGitDetail({
         diffKind: "worktree",
         hash: "",
         rowHtml: row.outerHTML,
-        subject: row.querySelector(".git-branch-summary-label")?.textContent?.trim() || "Uncommitted changes",
+        subject: row.querySelector(".git-summary-label")?.textContent?.trim() || "Uncommitted changes",
       });
     });
 

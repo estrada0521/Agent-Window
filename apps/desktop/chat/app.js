@@ -573,7 +573,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     };
     const loadDesktopRightPanelView = ({ reset = false, animateRepo = true } = {}) => {
       if (!dpPanelOpen) return Promise.resolve();
-      const gitP = dpLoadGitBranchPage({ reset: true });
+      const gitP = dpLoadGitPage({ reset: true });
       dpLoadRepoDir(dpRepoBrowserPath || "", { animate: animateRepo });
       return Promise.resolve(gitP);
     };
@@ -919,10 +919,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         void dpRefreshRepoDir(dpRepoBrowserPath || "");
       }
       if (gitChanged && dpPanelOpen && dpActivePanelView === "git") {
-        if (dpGitContent?.querySelector(".git-branch-stack")) {
+        if (dpGitContent?.querySelector(".git-stack")) {
           void dpRefreshGitOverview();
         } else {
-          void dpLoadGitBranchPage({ reset: true });
+          void dpLoadGitPage({ reset: true });
         }
       } else if (gitChanged && (dpPanelOpen || dpGitSummaryPinned)) {
         void dpRefreshGitOverview();

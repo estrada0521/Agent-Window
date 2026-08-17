@@ -53,7 +53,7 @@ class WorkspaceSyncApi:
         self.file_runtime.invalidate_file_list_cache()
 
     def invalidate_git_cache(self) -> None:
-        workspace_git.invalidate_branch_overview_cache()
+        workspace_git.invalidate_git_overview_cache()
         with self._sync_event_condition:
             self._git_cache_version += 1
 
@@ -113,8 +113,8 @@ class WorkspaceSyncApi:
     def reveal_in_finder(self, rel: str):
         return self.file_runtime.reveal_in_finder(rel)
 
-    def git_branch_overview(self, *, offset=0, limit=50, force_refresh: bool = False):
-        return workspace_git.git_branch_overview(offset=offset, limit=limit, force_refresh=force_refresh)
+    def git_overview(self, *, offset=0, limit=50, force_refresh: bool = False):
+        return workspace_git.git_overview(offset=offset, limit=limit, force_refresh=force_refresh)
 
     def git_diff_files(self, *, commit_hash: str = "", scope: str = ""):
         return workspace_git.git_diff_files(commit_hash=commit_hash, scope=scope)

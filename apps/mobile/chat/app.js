@@ -560,9 +560,9 @@ __CHAT_INCLUDE:panes/pane-viewer.js__
       if (fileChanged && repoPanelOpen && typeof repoPanel._syncCategoryUi === "function") {
         repoPanel._syncCategoryUi();
       }
-      const gitPanelOpen = !!(gitBranchPanel && gitBranchPanel.classList.contains("open") && !gitBranchPanel.hidden);
+      const gitPanelOpen = !!(gitPanel && gitPanel.classList.contains("open") && !gitPanel.hidden);
       if (gitChanged && gitPanelOpen) {
-        void updateGitBranchPanel().catch(() => {});
+        void updateGitPanel().catch(() => {});
       }
     };
     __CHAT_INCLUDE:../../shared/chat/workspace-sync-events.js__
