@@ -2,10 +2,10 @@
 
 ## 1. Prefer the intended path
 
-- Treat a broken input, a broken ledger, or an unreadable source as an error. Do not replace it with an empty stand-in, a zero, or a skipped step so that the rest of the work can continue.
-- Do not rescue a failure with fallback, retry, or a catch that proceeds as if the work had succeeded. If you did not understand a piece of work, do not record it as done.
-- "One shot" is not "land the change in a single attempt." It is: the path this code claims to take should be sufficient. If you need a fallback for the system to keep working, the original logic is the defect. Tighten that path. Do not pad around it.
-- Independent paths are not jointly liable. Fail the path that broke. Do not halt unrelated paths to make the failure look consistent.
+- Treat a broken input, a broken progress record, or an unreadable source as an error. Do not replace it with an empty stand-in, a zero, or a skipped step so that the rest of the work can continue.
+- Do not rescue a failure with a fallback, a retry, or a catch that proceeds as if the work had succeeded. If you did not understand a piece of work, do not record it as done.
+- A piece of logic names a path it takes. That path must be enough. If the system only keeps working because a second path catches the failure, the named path is the defect. Repair it. Do not wrap it. This is not a request to finish a change on the first try.
+- Independent paths are not jointly liable. When one path fails, fail that path. Do not stop unrelated paths to make the failure look consistent.
 
 ## 2. Project; do not own
 
