@@ -365,8 +365,9 @@ __CHAT_INCLUDE:target-picker.js__
     const isNearBottom = () => {
       return timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight < STICKY_THRESHOLD;
     };
+    let _pinStickyThroughWidthChange = false;
     const updateStickyState = () => {
-      if (_programmaticScroll) return;
+      if (_programmaticScroll || _pinStickyThroughWidthChange) return;
       _stickyToBottom = isNearBottom();
     };
     const clearPollScrollLock = () => {
@@ -393,6 +394,33 @@ __CHAT_INCLUDE:target-picker.js__
       scrollToBottomBtn.classList.toggle("visible", !_stickyToBottom && !overlayOpen && !emptyPlaceholder);
       composerFabBtn?.classList.toggle("visible", (_stickyToBottom || emptyPlaceholder) && !overlayOpen);
     };
+    let _timelineLayoutWidth = timeline.clientWidth;
+    let _timelineMaxScroll = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
+    new ResizeObserver(() => {
+      const width = timeline.clientWidth;
+      const maxScroll = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
+      const prevWidth = _timelineLayoutWidth;
+      const prevMaxScroll = _timelineMaxScroll;
+      _timelineLayoutWidth = width;
+      _timelineMaxScroll = maxScroll;
+      if (width === prevWidth) return;
+      const wasSticky = _stickyToBottom || (prevMaxScroll - timeline.scrollTop < STICKY_THRESHOLD);
+      if (!wasSticky) return;
+      _pinStickyThroughWidthChange = true;
+      scrollConversationToBottom("auto");
+      _stickyToBottom = true;
+      requestAnimationFrame(() => {
+        scrollConversationToBottom("auto");
+        _stickyToBottom = true;
+        requestAnimationFrame(() => {
+          scrollConversationToBottom("auto");
+          _stickyToBottom = true;
+          _pinStickyThroughWidthChange = false;
+          _timelineMaxScroll = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
+          updateScrollBtn();
+        });
+      });
+    }).observe(timeline);
     let centeredRowRaf = 0;
     const updateCenteredMessageRow = () => {
       const rows = Array.from(document.querySelectorAll("#messages article.message-row"));
