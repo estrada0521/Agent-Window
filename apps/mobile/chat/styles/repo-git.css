@@ -300,8 +300,9 @@
       padding: 20px 12px;
     }
 
-    .repo-browser-empty.error {
-      color: rgb(232, 146, 146);
+    .repo-browser-empty.error,
+    .git-commit-file-empty.error {
+      color: var(--external-link-fg);
     }
 
     @keyframes hub-inline-loading-spin {
@@ -861,18 +862,6 @@
       align-items: center;
       justify-content: center;
       padding: 40px 10px;
-    }
-
-    .page-menu-item.inline-loading-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
-
-    .page-menu-item.inline-loading-row .inline-loading {
-      width: 100%;
-      justify-content: center;
     }
 
     .file-item:not(:last-child) {

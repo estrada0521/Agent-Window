@@ -38,8 +38,8 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
         </div>`);
       },
       setBodyHtml: setGitPanelBodyHtml,
-      loadingHtml: `<div class="page-menu-item inline-loading-row" style="cursor:default">${loadingIndicatorHtml("Loading…")}</div>`,
-      errorHtml: (message) => `<div class="page-menu-item" style="cursor:default;opacity:0.72">${escapeHtml(message)}</div>`,
+      loadingHtml: `<div class="git-commit-file-empty inline-loading-row">${loadingIndicatorHtml("Loading…")}</div>`,
+      errorHtml: (message) => `<div class="git-commit-file-empty error">${escapeHtml(message)}</div>`,
       emptyCommitsHtml: '<div class="git-commit-file-empty" data-git-empty="1">No commits</div>',
       loadMoreLoadingHtml: loadingIndicatorHtml("Loading…"),
       loadMoreRetryText: "Retry loading commits",

@@ -212,7 +212,7 @@
             scope: isWorktree ? "" : diffKind,
           });
         } catch (_) {
-          wrapEl.innerHTML = '<div class="git-commit-file-empty">Failed to load file stats</div>';
+          wrapEl.innerHTML = '<div class="git-commit-file-empty error">Failed to load file stats</div>';
         }
       };
       const loadPage = async ({ reset = false } = {}) => {
