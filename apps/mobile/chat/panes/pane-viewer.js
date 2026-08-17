@@ -184,7 +184,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
       return hit || null;
     };
     const showPaneTraceViewer = (focusAgent) => {
-      if (!paneViewerEl) return;
+      if (!paneViewerEl || !paneTracePanel) return;
       const resolved = resolvePaneFocusAgent(focusAgent);
       if (resolved) paneViewerLastAgent = resolved;
       if (paneTracePanel.classList.contains("open")) {
@@ -198,6 +198,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
 
       paneViewerEl.classList.remove("visible");
       paneViewerEl.hidden = true;
+      _ignoreGlobalClick = true;
 
       openPaneTraceSheet(() => {
         paneViewerEl.hidden = false;
@@ -219,7 +220,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
       });
     };
     const togglePaneViewer = () => {
-      if (!paneViewerEl) return;
+      if (!paneViewerEl || !paneTracePanel) return;
       if (paneTracePanel.classList.contains("open")) {
         exitPaneTraceMode();
         return;
