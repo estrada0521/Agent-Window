@@ -5,8 +5,8 @@ import time
 from pathlib import Path
 
 from native_log_sync.agents._shared.path_state import (
-    _normalized_native_log_path,
     advance_read_progress,
+    read_progress_start,
 )
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.gemini.read_runtime import (
@@ -21,13 +21,6 @@ def _conversation_id_from_transcript(path: str) -> str:
     return Path(path).parent.parent.parent.name
 
 
-def _skip_existing_transcript(path: str) -> int:
-    scan = complete_jsonl_scan(path, 0)
-    for _line_start, _entry in scan:
-        pass
-    return scan.consumed
-
-
 def sync_gemini_native_log(self, agent: str, native_log_path: str | None = None) -> None:
     session_path_str = str(native_log_path or "").strip()
     if not session_path_str or not os.path.exists(session_path_str):
@@ -36,15 +29,12 @@ def sync_gemini_native_log(self, agent: str, native_log_path: str | None = None)
         raise RuntimeError(f"Antigravity native log is not transcript_full.jsonl: {session_path_str}")
 
     self._native_log_current_paths[agent] = session_path_str
-    key = _normalized_native_log_path(session_path_str)
     file_size = os.path.getsize(session_path_str)
-    recorded = self._native_log_progress.get(key)
-    if recorded is None or file_size < recorded:
-        advance_read_progress(self._native_log_progress, session_path_str, _skip_existing_transcript(session_path_str))
-        self.save_sync_state()
+    start = read_progress_start(self._native_log_progress, session_path_str, file_size)
+    if start >= file_size:
         return
 
-    scan = complete_jsonl_scan(session_path_str, recorded)
+    scan = complete_jsonl_scan(session_path_str, start)
     appended = False
     conversation_id = _conversation_id_from_transcript(session_path_str)
     for line_start, entry in scan:

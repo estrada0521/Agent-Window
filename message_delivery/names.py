@@ -18,8 +18,10 @@ def session_meta_path(session_name: str) -> Path:
 
 
 def _clean_agent_names(raw: object) -> dict[str, str]:
-    if not isinstance(raw, dict):
+    if raw is None:
         return {}
+    if not isinstance(raw, dict):
+        raise ValueError("agent_names must be an object")
     names: dict[str, str] = {}
     for canonical, display in raw.items():
         canonical_name = str(canonical or "").strip().lower()
@@ -31,22 +33,21 @@ def _clean_agent_names(raw: object) -> dict[str, str]:
 
 def _read_meta(handle) -> dict:
     handle.seek(0)
-    try:
-        raw = json.loads(handle.read() or "{}")
-    except (json.JSONDecodeError, OSError):
-        raw = {}
-    return raw if isinstance(raw, dict) else {}
+    raw_text = handle.read()
+    if not str(raw_text).strip():
+        raise ValueError("session meta is empty")
+    raw = json.loads(raw_text)
+    if not isinstance(raw, dict):
+        raise ValueError("session meta is not an object")
+    return raw
 
 
 def load_agent_names(session_name: str) -> dict[str, str]:
     path = session_meta_path(session_name)
     if not path.is_file():
         return {}
-    try:
-        with path.open("r", encoding="utf-8") as handle:
-            return _clean_agent_names(_read_meta(handle).get(AGENT_NAMES_KEY))
-    except OSError:
-        return {}
+    with path.open("r", encoding="utf-8") as handle:
+        return _clean_agent_names(_read_meta(handle).get(AGENT_NAMES_KEY))
 
 
 def _update_agent_names(
@@ -54,8 +55,7 @@ def _update_agent_names(
     update: Callable[[dict[str, str]], None],
 ) -> dict[str, str]:
     path = session_meta_path(session_name)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a+", encoding="utf-8") as handle:
+    with path.open("r+", encoding="utf-8") as handle:
         fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
         try:
             meta = _read_meta(handle)

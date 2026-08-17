@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import subprocess
-from pathlib import Path
 from urllib.parse import parse_qs
 
 from backend_core.access.settings import normalize_theme_desktop, resolve_chat_theme, settings_for_chat_render
@@ -338,49 +336,12 @@ def _get_git_branch_overview(handler, parsed, ctx) -> None:
     raw_limit = (qs.get("limit", ["50"])[0] or "50").strip()
     force_refresh = (qs.get("refresh", [""])[0] or "").lower() in ("1", "true", "yes")
     try:
-        offset = max(0, int(raw_offset))
-    except ValueError:
-        offset = 0
-    try:
-        limit = max(1, min(int(raw_limit), 200))
-    except ValueError:
-        limit = 50
-    try:
+        offset = int(raw_offset)
+        limit = int(raw_limit)
         data = ctx["workspace_sync_api"].git_branch_overview(
             offset=offset, limit=limit, force_refresh=force_refresh
         )
         body = json.dumps(data, ensure_ascii=True).encode("utf-8")
-    except Exception as exc:
-        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
-        _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
-        return
-    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
-
-
-def _get_git_diff(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    commit_hash = (qs.get("hash", [""])[0] or "").strip()
-    file_path = (qs.get("path", [""])[0] or "").strip()
-    root = Path(ctx["workspace"] or ctx["repo_root"])
-    try:
-        path_args = ["--", file_path] if file_path else ["--"]
-        if commit_hash:
-            result = subprocess.run(
-                ["git", "-C", str(root), "diff", f"{commit_hash}~1", commit_hash] + path_args,
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
-        else:
-            result = subprocess.run(
-                ["git", "-C", str(root), "diff", "HEAD"] + path_args,
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
-        body = json.dumps({"diff": result.stdout or ""}, ensure_ascii=True).encode("utf-8")
     except Exception as exc:
         body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
         _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
@@ -425,7 +386,6 @@ _GET_ROUTES = {
     "/session-state-events": _get_session_state_events,
     "/workspace-sync-events": _get_workspace_sync_events,
     "/git-branch-overview": _get_git_branch_overview,
-    "/git-diff": _get_git_diff,
     "/git-diff-files": _get_git_diff_files,
     "/shortcut-commands": _get_shortcut_commands,
 }

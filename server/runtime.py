@@ -319,7 +319,6 @@ class ChatRuntime:
         return _active_agents_impl(
             self,
             subprocess_module=subprocess,
-            logging_module=logging,
         )
 
     def resolve_target_agents(self, target: str) -> list[str]:
@@ -344,7 +343,6 @@ class ChatRuntime:
         agents = _active_agents_impl(
             self,
             subprocess_module=subprocess,
-            logging_module=logging,
         )
         return _running_agents_from_env_impl(
             self,

@@ -4,24 +4,23 @@ import logging
 import subprocess
 
 
-def active_agents(runtime, *, subprocess_module=subprocess, logging_module=logging) -> list[str]:
-    try:
-        r = subprocess_module.run(
-            [*runtime.tmux_prefix, "show-environment", "-t", runtime.session_name, "AGENT_WINDOW_AGENTS"],
-            capture_output=True,
-            text=True,
-            timeout=2,
-            check=False,
-        )
-        line = r.stdout.strip()
-        if r.returncode == 0 and "=" in line:
-            raw = line.split("=", 1)[1].strip()
-            if not raw or raw == "-":
-                return []
-            return [a for a in raw.split(",") if a and a != "-"]
-    except Exception as exc:
-        logging_module.error(f"Unexpected error: {exc}", exc_info=True)
-    return []
+def active_agents(runtime, *, subprocess_module=subprocess) -> list[str]:
+    r = subprocess_module.run(
+        [*runtime.tmux_prefix, "show-environment", "-t", runtime.session_name, "AGENT_WINDOW_AGENTS"],
+        capture_output=True,
+        text=True,
+        timeout=2,
+        check=False,
+    )
+    line = r.stdout.strip()
+    if r.returncode == 0 and "=" in line:
+        raw = line.split("=", 1)[1].strip()
+        if not raw or raw == "-":
+            return []
+        return [a for a in raw.split(",") if a and a != "-"]
+    if r.returncode != 0:
+        return []
+    raise RuntimeError(f"tmux show-environment AGENT_WINDOW_AGENTS returned unreadable output: {line!r}")
 
 
 def running_agents_from_env(runtime, agents: list[str], *, subprocess_module=subprocess, logging_module=logging) -> set[str]:

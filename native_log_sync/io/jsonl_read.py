@@ -8,7 +8,8 @@ class CompleteJsonlScan:
     """Iterate complete JSON objects in a jsonl file.
 
     An incomplete trailing line is left unread (`consumed` stays before it).
-    A complete line that is not UTF-8 JSON object raises.
+    A complete line that is not a UTF-8 JSON object is skipped: the cursor
+    advances, and nothing is yielded. The CLI owns those records.
     """
 
     def __init__(self, path: str | Path, start: int = 0, *, align_mid_line: bool = False) -> None:
@@ -35,26 +36,19 @@ class CompleteJsonlScan:
                     break
                 if not raw.endswith((b"\n", b"\r")):
                     break
+                self.consumed = handle.tell()
                 try:
                     line = raw.decode("utf-8").strip()
-                except UnicodeDecodeError as exc:
-                    raise RuntimeError(
-                        f"corrupt jsonl {self.path} at offset {line_start}"
-                    ) from exc
+                except UnicodeDecodeError:
+                    continue
                 if not line:
-                    self.consumed = handle.tell()
                     continue
                 try:
                     entry = json.loads(line)
-                except json.JSONDecodeError as exc:
-                    raise RuntimeError(
-                        f"corrupt jsonl {self.path} at offset {line_start}"
-                    ) from exc
+                except json.JSONDecodeError:
+                    continue
                 if not isinstance(entry, dict):
-                    raise RuntimeError(
-                        f"jsonl {self.path} at offset {line_start} is not an object"
-                    )
-                self.consumed = handle.tell()
+                    continue
                 yield line_start, entry
 
 
