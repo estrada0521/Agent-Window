@@ -193,6 +193,11 @@ def local_bind_scheme(*, cert_file: str = "", key_file: str = "") -> str:
     return "https"
 
 
+def local_bind_host() -> str:
+    """PWA on → LAN. PWA off → loopback."""
+    return "0.0.0.0" if pwa_https_enabled() else "127.0.0.1"
+
+
 def agent_window_run_dir() -> Path:
     return agent_window_root() / "run"
 
@@ -306,7 +311,7 @@ def port_is_bindable(port: int) -> bool:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     try:
-        sock.bind(("0.0.0.0", int(port)))
+        sock.bind((local_bind_host(), int(port)))
         return True
     except OSError:
         return False
