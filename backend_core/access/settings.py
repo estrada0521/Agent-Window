@@ -38,12 +38,31 @@ def resolve_chat_theme(settings: dict, *, variant: str) -> str:
     return desktop
 
 
+def message_font_mode(message_font: str) -> str:
+    return "serif" if str(message_font or "").strip() == "preset-mincho" else "gothic"
+
+
+def _with_derived_font_fields(settings: dict) -> dict:
+    message_font = str(settings.get("message_font") or "preset-gothic").strip() or "preset-gothic"
+    settings["message_font"] = message_font
+    settings["agent_font_mode"] = message_font_mode(message_font)
+    return settings
+
+
 def settings_for_hub_render(settings: dict, *, variant: str) -> dict:
-    return dict(settings, theme=resolve_hub_theme(settings, variant=variant))
+    view = str(variant or "desktop").strip().lower()
+    rendered = dict(settings, theme=resolve_hub_theme(settings, variant=view))
+    if view == "mobile":
+        rendered.update(MOBILE_CHAT_TYPOGRAPHY)
+    return _with_derived_font_fields(rendered)
 
 
 def settings_for_chat_render(settings: dict, *, variant: str) -> dict:
-    return dict(settings, theme=resolve_chat_theme(settings, variant=variant))
+    view = str(variant or "desktop").strip().lower()
+    rendered = dict(settings, theme=resolve_chat_theme(settings, variant=view))
+    if view == "mobile":
+        rendered.update(MOBILE_CHAT_TYPOGRAPHY)
+    return _with_derived_font_fields(rendered)
 
 
 def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool = False) -> dict:
@@ -66,23 +85,17 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
     # keep global theme in sync with desktop so hub renders correctly
     settings["theme"] = settings["theme_desktop"]
 
-    agent_font_mode = str(raw.get("agent_font_mode") or settings["agent_font_mode"]).strip().lower()
-    if agent_font_mode in {"serif", "gothic"}:
-        settings["agent_font_mode"] = agent_font_mode
-
-    user_message_font = str(raw.get("user_message_font") or settings["user_message_font"]).strip()
-    if user_message_font:
-        settings["user_message_font"] = user_message_font
-
-    agent_message_font = str(raw.get("agent_message_font") or "").strip()
-    if agent_message_font:
-        settings["agent_message_font"] = agent_message_font
-        if agent_message_font == "preset-gothic":
-            settings["agent_font_mode"] = "gothic"
-        elif agent_message_font == "preset-mincho":
-            settings["agent_font_mode"] = "serif"
-    else:
-        settings["agent_message_font"] = "preset-gothic" if settings["agent_font_mode"] == "gothic" else "preset-mincho"
+    message_font = ""
+    for key in ("message_font", "user_message_font", "agent_message_font"):
+        message_font = str(raw.get(key) or "").strip()
+        if message_font:
+            break
+    if not message_font:
+        message_font = str(settings.get("message_font") or "preset-gothic").strip() or "preset-gothic"
+    settings["message_font"] = message_font
+    settings["agent_font_mode"] = message_font_mode(message_font)
+    settings.pop("user_message_font", None)
+    settings.pop("agent_message_font", None)
 
     try:
         message_text_size = int(raw.get("message_text_size", settings["message_text_size"]))
@@ -110,9 +123,15 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
 HUB_SETTINGS_DEFAULTS = {
     "theme": "dark",
     "theme_desktop": "dark",
-    "agent_font_mode": "serif",
-    "user_message_font": "preset-gothic",
-    "agent_message_font": "preset-mincho",
+    "agent_font_mode": "gothic",
+    "message_font": "preset-gothic",
+    "message_text_size": 13,
+    "message_text_size_desktop": 13,
+}
+
+MOBILE_CHAT_TYPOGRAPHY = {
+    "agent_font_mode": "gothic",
+    "message_font": "preset-gothic",
     "message_text_size": 13,
     "message_text_size_desktop": 13,
 }

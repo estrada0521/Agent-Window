@@ -4,8 +4,14 @@ import hashlib
 import json
 from urllib.parse import parse_qs
 
-from backend_core.access.settings import normalize_theme_desktop, resolve_chat_theme, settings_for_chat_render
+from backend_core.access.settings import (
+    message_font_mode,
+    normalize_theme_desktop,
+    resolve_chat_theme,
+    settings_for_chat_render,
+)
 from hub_backend.transport.request_base_path import request_base_path
+from hub_backend.transport.request_view import request_view_variant
 from shortcut_command.catalog import public_command_dicts
 
 
@@ -156,8 +162,8 @@ def _get_file_view(handler, parsed, ctx) -> None:
     preview_variant = "mobile" if requested_preview_variant == "mobile" else "desktop"
     try:
         settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant=preview_variant)
-        agent_message_font = str(settings.get("agent_message_font", "preset-mincho") or "preset-mincho").strip()
-        preview_font_mode = "gothic" if agent_message_font == "preset-gothic" else "serif"
+        message_font = str(settings.get("message_font", "preset-gothic") or "preset-gothic").strip()
+        preview_font_mode = message_font_mode(message_font)
         preview_text_size = settings.get("message_text_size_desktop") or settings.get("message_text_size")
         requested_text_size = str(qs.get("agent_text_size", [""])[0] or "").strip()
         if requested_text_size:
@@ -173,7 +179,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
             preview_base_theme=str(qs.get("base_theme", [""])[0] or "").strip(),
             preview_variant=preview_variant,
             agent_font_mode=preview_font_mode,
-            agent_font_family=ctx["runtime"]._font_family_stack(agent_message_font, "agent"),
+            agent_font_family=ctx["runtime"]._font_family_stack(message_font, "user"),
             agent_text_size=preview_text_size,
             preview_chrome=preview_chrome,
             force_progressive_text=force_progressive_text,
@@ -241,13 +247,14 @@ def _get_agents(handler, _parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
-def _get_hub_settings(handler, _parsed, ctx) -> None:
+def _get_hub_settings(handler, parsed, ctx) -> None:
     settings = ctx["load_chat_settings_fn"]()
-    chat_render_settings = settings_for_chat_render(settings, variant="desktop")
+    variant = request_view_variant(headers=handler.headers, query_string=parsed.query)
+    chat_render_settings = settings_for_chat_render(settings, variant=variant)
     body = json.dumps(
         {
-            "agent_font_mode": str(settings.get("agent_font_mode", "serif")),
-            "theme": resolve_chat_theme(settings, variant="desktop"),
+            "agent_font_mode": str(chat_render_settings.get("agent_font_mode", "serif")),
+            "theme": resolve_chat_theme(settings, variant=variant),
             "theme_desktop": normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark"))),
             "chat_font_settings_css": ctx["chat_font_settings_inline_style_fn"](chat_render_settings),
         },

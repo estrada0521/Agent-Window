@@ -40,7 +40,6 @@ __HUB_INCLUDE:settings.css__
     __HUB_HEADER_HTML__
     <form class="panel" id="settingsFormDesktop" method="post" action="/settings">
       __NOTICE_HTML__
-      <input type="hidden" name="agent_font_mode" value="__FONT_MODE__">
 
       <div class="field" style="border:none; padding:0;">
         <div class="chat-toggles">
@@ -61,18 +60,10 @@ __HUB_INCLUDE:settings.css__
           </div>
           <div class="toggle-row" style="flex-direction:column; align-items:flex-start; padding-bottom:12px;">
             <span class="toggle-row-copy" style="margin-bottom:6px;">
-              <div class="set-desk-bullet"><i></i></div><label for="user_message_font" style="cursor:pointer;">User Messages</label>
+              <div class="set-desk-bullet"><i></i></div><label for="message_font" style="cursor:pointer;">Font</label>
             </span>
-            <select id="user_message_font" name="user_message_font" style="width:100%; padding:6px 10px; font-size:13px; cursor:pointer;">
-              __USER_MESSAGE_FONT_OPTIONS__
-            </select>
-          </div>
-          <div class="toggle-row" style="flex-direction:column; align-items:flex-start; padding-bottom:12px;">
-            <span class="toggle-row-copy" style="margin-bottom:6px;">
-              <div class="set-desk-bullet"><i></i></div><label for="agent_message_font" style="cursor:pointer;">Agent Messages</label>
-            </span>
-            <select id="agent_message_font" name="agent_message_font" style="width:100%; padding:6px 10px; font-size:13px; cursor:pointer;">
-              __AGENT_MESSAGE_FONT_OPTIONS__
+            <select id="message_font" name="message_font" style="width:100%; padding:6px 10px; font-size:13px; cursor:pointer;">
+              __MESSAGE_FONT_OPTIONS__
             </select>
           </div>
         </div>

@@ -1,6 +1,9 @@
     const syncChatSettingsDefaults = async () => {
       try {
-        const res = await fetch("/hub-settings", { cache: "no-store" });
+        const res = await fetch(
+          document.documentElement.dataset.mobile === "1" ? "/hub-settings?view=mobile" : "/hub-settings",
+          { cache: "no-store" },
+        );
         if (!res.ok) return;
         const data = await res.json();
         if (document.documentElement.dataset.mobile === "1") {

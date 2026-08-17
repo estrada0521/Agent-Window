@@ -453,26 +453,16 @@ def hub_new_session_html(variant="desktop"):
         .replace("__MESSAGE_TEXT_SIZE__", str(message_text_size))
     )
     from backend_core.access.settings import settings_for_hub_render
+    from server.font_style import font_family_stack
 
     render_settings = settings_for_hub_render(current_settings, variant="mobile" if is_mobile else "desktop")
-    _cjk_sans = '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR"'
-    _sans_stack = f'"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", {_cjk_sans}, sans-serif'
-    _serif_stack = f'"anthropicSerif", "Anthropic Serif", Georgia, "Arial Hebrew", "Noto Sans Hebrew", "Times New Roman", Times, {_cjk_sans}, serif'
-    agent_font = str(current_settings.get("agent_message_font", "preset-mincho") or "preset-mincho").strip()
-    if agent_font == "preset-gothic":
-        agent_font_family = _sans_stack
-    elif agent_font == "preset-mincho":
-        agent_font_family = _serif_stack
-    elif agent_font.startswith("system:"):
-        family = agent_font.split(":", 1)[1].strip()
-        agent_font_family = f'"{family}", {_serif_stack}' if family else _serif_stack
-    else:
-        agent_font_family = _serif_stack
+    message_font_family = font_family_stack(str(render_settings.get("message_font") or "preset-gothic"))
     page = apply_color_tokens(page, settings=render_settings)
+    _cjk_sans = '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR"'
     _code_font_family = f'"SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", {_cjk_sans}, monospace'
     font_inject = (
         f'<style>'
-        f':root{{--agent-message-font-family:{agent_font_family};--code-font-family:{_code_font_family};}}'
+        f':root{{--message-font-family:{message_font_family};--agent-message-font-family:var(--message-font-family);--code-font-family:{_code_font_family};}}'
         f'.dir-item-name,.dir-create-label{{font-weight:480!important;}}'
         f'</style>'
     )

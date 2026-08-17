@@ -3,12 +3,11 @@ from __future__ import annotations
 from backend_core.agents.registry import generate_agent_message_selectors
 
 
-def font_family_stack(selection: str, role: str) -> str:
+def font_family_stack(selection: str, role: str = "user") -> str:
     value = str(selection or "").strip()
     cjk_sans_fallback = '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR"'
     sans_stack = f'"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", {cjk_sans_fallback}, sans-serif'
     serif_stack = f'"anthropicSerif", "Anthropic Serif", Georgia, "Arial Hebrew", "Noto Sans Hebrew", "Times New Roman", Times, {cjk_sans_fallback}, serif'
-    default_stack = sans_stack if role == "user" else serif_stack
     if value == "preset-gothic":
         return sans_stack
     if value == "preset-mincho":
@@ -16,8 +15,8 @@ def font_family_stack(selection: str, role: str) -> str:
     if value.startswith("system:"):
         family = value.split(":", 1)[1].strip()
         if family:
-            return f'"{family}", {default_stack}'
-    return default_stack
+            return f'"{family}", {sans_stack}'
+    return sans_stack
 
 
 def agent_detail_selectors(prefix: str = "") -> str:
@@ -33,8 +32,7 @@ def chat_font_settings_inline_style(
     *,
     font_family_stack_fn=font_family_stack,
 ) -> str:
-    user_family = font_family_stack_fn(settings.get("user_message_font", "preset-gothic"), "user")
-    agent_family = font_family_stack_fn(settings.get("agent_message_font", "preset-mincho"), "agent")
+    message_family = font_family_stack_fn(settings.get("message_font", "preset-gothic"), "user")
     sans_family = font_family_stack_fn("preset-gothic", "user")
     try:
         _legacy_size = max(8, min(18, int(settings.get("message_text_size", 13))))
@@ -89,8 +87,9 @@ def chat_font_settings_inline_style(
       --message-text-size: {message_text_size_desktop}px;
       --message-text-line-height: {message_text_size_desktop + 9}px;
       --message-max-width: {message_max_width}px;
-      --user-message-font-family: {user_family};
-      --agent-message-font-family: {agent_family};
+      --message-font-family: {message_family};
+      --user-message-font-family: var(--message-font-family);
+      --agent-message-font-family: var(--message-font-family);
       --sans-font-family: {sans_family};
     }}
     .shell {{

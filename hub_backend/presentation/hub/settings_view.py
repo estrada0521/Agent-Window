@@ -111,9 +111,7 @@ def hub_settings_html(
 ):
     resolved_view_variant = "mobile" if str(view_variant or "").strip().lower() == "mobile" else "desktop"
     settings = load_hub_settings_fn()
-    font_mode = settings["agent_font_mode"]
-    user_message_font = settings.get("user_message_font", "preset-gothic")
-    agent_message_font = settings.get("agent_message_font", "preset-mincho")
+    message_font = settings.get("message_font", "preset-gothic")
     message_text_size = int(settings.get("message_text_size", 13) or 13)
     message_text_size_desktop = int(settings.get("message_text_size_desktop") or message_text_size)
     from backend_core.access.settings import (
@@ -152,9 +150,7 @@ def hub_settings_html(
         .replace("__PWA_ICON_192_URL__", pwa_icon_192_url)
         .replace("__APPLE_TOUCH_ICON_URL__", pwa_apple_touch_icon_url)
         .replace("__NOTICE_HTML__", notice)
-        .replace("__USER_MESSAGE_FONT_OPTIONS__", font_options(user_message_font))
-        .replace("__AGENT_MESSAGE_FONT_OPTIONS__", font_options(agent_message_font))
-        .replace("__FONT_MODE__", font_mode)
+        .replace("__MESSAGE_FONT_OPTIONS__", font_options(message_font))
         .replace("__MESSAGE_TEXT_SIZE__", str(message_text_size))
         .replace("__MESSAGE_TEXT_SIZE_DESKTOP__", str(message_text_size_desktop))
         .replace("__LIGHT_MODE_CHECKED__", " checked" if light_mode else "")
