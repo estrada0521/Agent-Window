@@ -1,58 +1,3 @@
-    let _dpGitOverviewFingerprint = null;
-    let _dpGitRefreshInFlight = false;
-    let _dpGitRefreshQueued = false;
-    const dpRefreshGitOverview = async () => {
-      if (dpGitPageLoading) return;
-      if (!dpPanelOpen && !dpGitSummaryPinned) return;
-      if (_dpGitRefreshInFlight) {
-        _dpGitRefreshQueued = true;
-        return;
-      }
-      _dpGitRefreshInFlight = true;
-      try {
-        while (true) {
-          _dpGitRefreshQueued = false;
-          const data = await fetchGitOverview({ offset: 0, refresh: true });
-          const fp = gitOverviewFingerprint(data);
-          if (fp !== _dpGitOverviewFingerprint) {
-            const isFirstRefresh = _dpGitOverviewFingerprint === null;
-            _dpGitOverviewFingerprint = fp;
-
-            if (!dpPanelOpen && dpGitSummaryPinned) {
-              dpGitHeaderSummaryState = dpBuildSummaryState(data);
-              dpApplyGitOverviewHeader();
-            } else {
-              const newHashes = isFirstRefresh
-                ? null
-                : gitNewCommitHashes(dpGitCommits, data?.recent_commits);
-
-              dpGitHeaderSummaryState = dpBuildSummaryState(data);
-              dpSyncSummaryWrap();
-              if (!dpGitDetailContext) {
-                const page = gitOverviewPagingFromResponse(data, [], { reset: true });
-                dpGitCommits = page.commits;
-                dpGitTotalCommits = page.totalCommits;
-                dpGitNextOffset = page.nextOffset;
-                dpGitHasMore = page.hasMore;
-                dpRenderCommitRows(dpGitCommits, { append: false, newHashes });
-                dpUpdateLoadMoreUi();
-                dpEnsureGitObserver();
-              } else if (dpGitDetailContext.kind === "worktree" && dpGitDetailContext.wrapEl) {
-                void dpRenderFileStatsInto(dpGitDetailContext.wrapEl, "", { allowUndo: true, incremental: true });
-              }
-            }
-          }
-          if (!_dpGitRefreshQueued) break;
-        }
-      } catch (_) {
-      } finally {
-        _dpGitRefreshInFlight = false;
-        if (_dpGitRefreshQueued) {
-          _dpGitRefreshQueued = false;
-          void dpRefreshGitOverview();
-        }
-      }
-    };
     const dpToggleGitSummaryPinned = () => {
       dpGitSummaryPinned = !dpGitSummaryPinned;
       try {
@@ -71,7 +16,7 @@
         const data = await fetchGitOverview({ offset: 0 });
         dpGitHeaderSummaryState = dpBuildSummaryState(data);
         dpApplyGitOverviewHeader();
-        _dpGitOverviewFingerprint = gitOverviewFingerprint(data);
+        gitSession.setFingerprint(gitOverviewFingerprint(data));
       } catch (_) {}
     };
     const dpOnSessionSummaryPinReload = ({ force = false } = {}) => {
@@ -79,32 +24,12 @@
       if (!force && _dpGitSummaryPinnedLoadedForKey === storageKey) return;
       _dpGitSummaryPinnedLoadedForKey = storageKey;
       dpReadGitSummaryPinnedFromStorage();
-      _dpGitOverviewFingerprint = null;
+      gitSession.invalidateFingerprint();
       if (dpGitSummaryPinned) {
         void dpBootstrapPinnedGitSummary();
       }
       dpSyncPinnedSummaryStrip();
       dpApplyPanelWidth();
-    };
-    const dpApplyGitPage = (data, { reset = false, newHashes = null } = {}) => {
-      if (reset) {
-        dpRenderGitShell(data || {});
-      }
-      const page = gitOverviewPagingFromResponse(data, dpGitCommits, { reset });
-      dpGitHeaderSummaryState = dpBuildSummaryState(data || {});
-      if (reset) _dpGitOverviewFingerprint = page.fingerprint;
-      dpSyncSummaryWrap();
-      dpGitCommits = page.commits;
-      dpGitTotalCommits = page.totalCommits;
-      dpGitNextOffset = page.nextOffset;
-      dpGitHasMore = page.hasMore;
-      if (reset) {
-        dpRenderCommitRows(dpGitCommits, { append: false, newHashes });
-      } else if (page.pageCommits.length) {
-        dpRenderCommitRows(page.pageCommits, { append: true });
-      }
-      dpUpdateLoadMoreUi();
-      dpEnsureGitObserver();
     };
     const dpPostOpenFileInEditor = async (rawPath, line = 0) => {
       const normalizedPath = normalizeWorkspaceFilePath(rawPath);
@@ -256,98 +181,51 @@
       }
       return loaded.data;
     };
-    const dpCloseGitDetail = ({ refreshList = false } = {}) => {
-      if (!dpGitContent) return;
-      const stack = dpGitContent.querySelector(".git-stack");
-      stack?.classList.remove("git-transitioning", "git-mode-detail", "git-mode-worktree-detail");
-      const body = dpGitContent.querySelector(".git-commit-detail-body");
-      const head = dpGitContent.querySelector(".git-commit-detail-head");
-      if (body) body.innerHTML = "";
-      if (head) head.innerHTML = "";
-      dpGitDetailContext = null;
-      dpUpdateLoadMoreUi();
-      dpEnsureGitObserver();
-      const shouldRefresh = !!refreshList;
-      dpGitDetailNeedsRefresh = false;
-      if (shouldRefresh) void dpLoadGitPage({ reset: true });
-    };
-    const dpLoadGitPage = async ({ reset = false } = {}) => {
-      if ((!dpPanelOpen && !dpGitSummaryPinned) || !dpGitContent) return;
-      if (dpGitPageLoading) return;
-      if (!reset && !dpGitHasMore && !dpGitLoadError) return;
-      const loadSeq = ++dpGitLoadSeq;
-      dpGitPageLoading = true;
-      dpGitLoadError = "";
-      dpDisconnectGitObserver();
-      if (reset) {
-        dpCloseGitDetail();
-        dpGitHasMore = false;
-        dpGitNextOffset = 0;
-        dpGitTotalCommits = 0;
-        dpGitCommits = [];
-        dpGitContent.innerHTML = '<div class="dp-empty-state inline-loading-row"></div>';
-      } else {
-        dpUpdateLoadMoreUi();
-      }
-      try {
-        const data = await fetchGitOverview({
-          offset: reset ? 0 : dpGitNextOffset,
-          refresh: reset,
-        });
-        if (loadSeq !== dpGitLoadSeq) return;
-        dpApplyGitPage(data, { reset });
-      } catch (err) {
-        if (loadSeq !== dpGitLoadSeq) return;
-        if (reset) {
-          dpGitContent.innerHTML = `<div class="dp-empty-state">${escapeHtml(err?.message || "Load failed")}</div>`;
-        } else {
-          dpGitLoadError = err?.message || "Load failed";
+    const gitSession = createGitPanelSession({
+      root: () => dpGitContent,
+      modeEl: () => dpGitContent?.querySelector(".git-stack") || dpGitContent,
+      observerRoot: () => dpGitContent?.querySelector(".git-commit-scroll") ?? dpGitContent,
+      scrollRoot: () => dpGitContent,
+      canLoad: () => (dpPanelOpen || dpGitSummaryPinned) && !!dpGitContent,
+      canRefresh: () => dpPanelOpen || dpGitSummaryPinned,
+      renderShell: () => dpRenderGitShell(),
+      setBodyHtml: (html) => {
+        if (dpGitContent) dpGitContent.innerHTML = html;
+      },
+      loadingHtml: '<div class="dp-empty-state inline-loading-row"></div>',
+      errorHtml: (message) => `<div class="dp-empty-state">${escapeHtml(message)}</div>`,
+      emptyCommitsHtml: '<div class="dp-empty-state" data-git-empty="1">No commits</div>',
+      loadMoreRetryText: "Retry loading commits",
+      loadMoreCountText: (loaded, total) => `Load more (${loaded}/${total})`,
+      worktreeDetailClass: true,
+      detailHeadHtml: ({ isWorktree, rowHtml }) => (isWorktree ? "" : rowHtml),
+      commitRowOptions: (commit, newHashes) => ({ animate: !!(newHashes && newHashes.has(commit.hash)) }),
+      renderFileStatsInto: dpRenderFileStatsInto,
+      onPage: (data) => {
+        dpGitHeaderSummaryState = dpBuildSummaryState(data || {});
+        dpSyncSummaryWrap();
+      },
+      onFingerprintChanged: (data, { isFirst, previousCommits, detailContext }) => {
+        if (!dpPanelOpen && dpGitSummaryPinned) {
+          dpGitHeaderSummaryState = dpBuildSummaryState(data);
+          dpApplyGitOverviewHeader();
+          return { updateList: false };
         }
-      } finally {
-        if (loadSeq !== dpGitLoadSeq) return;
-        dpGitPageLoading = false;
-        dpUpdateLoadMoreUi();
-        dpEnsureGitObserver();
-      }
-    };
-    const dpOpenGitDetail = async ({ diffKind = "", hash = "", rowHtml = "", subject = "" } = {}) => {
-      if (!dpGitContent) return;
-      const stack = dpGitContent.querySelector(".git-stack");
-      if (!stack) return;
-      const isWorktreeDetail = diffKind === "worktree";
-      dpCloseGitDetail();
-      dpDisconnectGitObserver();
-      dpGitDetailNeedsRefresh = false;
-      stack.classList.add("git-transitioning");
-      const headEl = dpGitContent.querySelector(".git-commit-detail-head");
-      const bodyEl = dpGitContent.querySelector(".git-commit-detail-body");
-      if (headEl) {
-        headEl.title = subject;
-        if (isWorktreeDetail) {
-          headEl.innerHTML = "";
-        } else {
-          headEl.innerHTML = rowHtml;
-        }
-      }
-      if (!bodyEl) return;
-      const wrapEl = document.createElement("div");
-      wrapEl.className = "git-commit-file-wrap";
-      bodyEl.appendChild(wrapEl);
-      stack.classList.add("git-mode-detail");
-      stack.classList.toggle("git-mode-worktree-detail", isWorktreeDetail);
-      dpGitDetailContext = {
-        kind: diffKind === "worktree" || diffKind === "staged" || diffKind === "unstaged" ? diffKind : "commit",
-        hash: diffKind === "worktree" || diffKind === "staged" || diffKind === "unstaged" ? "" : hash,
-        wrapEl,
-      };
-      dpGitContent.scrollTop = 0;
-      requestAnimationFrame(() => stack.classList.remove("git-transitioning"));
+        dpGitHeaderSummaryState = dpBuildSummaryState(data);
+        dpSyncSummaryWrap();
+        if (detailContext) return { updateList: false };
+        return {
+          updateList: true,
+          newHashes: isFirst ? null : gitNewCommitHashes(previousCommits, data?.recent_commits),
+        };
+      },
+    });
+    const dpLoadGitPage = (opts) => gitSession.loadPage(opts);
+    const dpOpenGitDetail = (opts) => gitSession.openDetail(opts);
+    const dpCloseGitDetail = (opts) => gitSession.closeDetail(opts);
+    const dpDisconnectGitObserver = () => gitSession.disconnectObserver();
+    const dpRefreshGitOverview = async () => {
       try {
-        await dpRenderFileStatsInto(wrapEl, diffKind === "worktree" ? "" : hash, {
-          allowUndo: diffKind === "worktree",
-          scope: diffKind === "worktree" ? "" : diffKind,
-        });
-      } catch (_) {
-        wrapEl.innerHTML = '<div class="git-commit-file-empty">Failed to load file stats</div>';
-      }
+        await gitSession.refresh();
+      } catch (_) {}
     };

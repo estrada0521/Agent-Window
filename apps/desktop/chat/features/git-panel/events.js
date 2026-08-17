@@ -1,53 +1,13 @@
     dpGitContent?.addEventListener("click", async (event) => {
-      if (event.target.closest(".git-summary-pin")) {
-        event.preventDefault();
-        event.stopPropagation();
-        dpToggleGitSummaryPinned();
-        return;
-      }
-      if (!dpPanelOpen) return;
-      const loadMoreBtn = event.target.closest(".git-load-more");
-      if (loadMoreBtn) {
-        event.preventDefault();
-        event.stopPropagation();
-        await dpLoadGitPage();
-        return;
-      }
-      const fileRow = event.target.closest(".git-commit-file-row");
-      if (fileRow) {
-        event.preventDefault();
-        const p = String(fileRow.dataset.path || "").trim();
-        if (p) {
-          await dpPostOpenFileInEditor(p, 0);
-        }
-        return;
-      }
-
-      if (event.target.closest(".git-commit-detail-head")) {
-        event.preventDefault();
-        event.stopPropagation();
-        dpCloseGitDetail({ refreshList: dpGitDetailNeedsRefresh });
-        return;
-      }
-      const stack = dpGitContent.querySelector(".git-stack");
-      const row = event.target.closest(".git-commit-row, .git-summary-row");
-      if (!row) return;
-      if (stack?.classList.contains("git-mode-worktree-detail") && row.closest(".git-summary-wrap")) {
-        event.preventDefault();
-        event.stopPropagation();
-        dpCloseGitDetail({ refreshList: dpGitDetailNeedsRefresh });
-        return;
-      }
-      if (stack?.classList.contains("git-mode-detail")) return;
-      const diffKind = row.dataset.diffKind || "";
-      const hash = String(row.dataset.hash || "");
-      if (!hash && !diffKind) return;
-      event.preventDefault();
-      event.stopPropagation();
-      const subject = diffKind
-        ? (row.querySelector(".git-summary-label")?.textContent?.trim() || "Uncommitted changes")
-        : (row.querySelector(".git-commit-subject")?.textContent?.trim() || hash.slice(0, 7));
-      await dpOpenGitDetail({ diffKind, hash, rowHtml: row.outerHTML, subject });
+      await gitSession.handleClick(event, {
+        onPin: () => dpToggleGitSummaryPinned(),
+        requireOpen: () => dpPanelOpen,
+        onFileRow: async (fileRow) => {
+          const p = String(fileRow.dataset.path || "").trim();
+          if (p) await dpPostOpenFileInEditor(p, 0);
+        },
+        closeWorktreeSummaryClick: true,
+      });
     });
     document.getElementById("gitPinnedSummaryAside")?.addEventListener("click", async (event) => {
       if (event.target.closest(".git-summary-pin")) {

@@ -914,12 +914,12 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const nextFileVersion = parseInt(payload?.file_version);
       const fileChanged = Number.isFinite(nextFileVersion) && nextFileVersion !== workspaceSyncLastFileVersion;
       if (Number.isFinite(nextFileVersion)) workspaceSyncLastFileVersion = nextFileVersion;
-      if (gitChanged) _dpGitOverviewFingerprint = "";
+      if (gitChanged) gitSession.invalidateFingerprint();
       if (fileChanged && dpPanelOpen && dpActivePanelView === "repo") {
         void dpRefreshRepoDir(dpRepoBrowserPath || "");
       }
       if (gitChanged && dpPanelOpen && dpActivePanelView === "git") {
-        if (dpGitContent?.querySelector(".git-stack")) {
+        if (gitSession.hasShell()) {
           void dpRefreshGitOverview();
         } else {
           void dpLoadGitPage({ reset: true });
