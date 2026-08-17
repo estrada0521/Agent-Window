@@ -58,6 +58,12 @@
     const DESK_SIDEBAR_CLOSE_SWIPE_EDGE_PX = 36;
     const DESK_SIDEBAR_CLOSE_SWIPE_THRESHOLD = 54;
     const DESK_CHAT_URL_CACHE_LIMIT = 3;
+    const hubChatUrls = createHubChatUrlResolver({
+      cacheLimit: DESK_CHAT_URL_CACHE_LIMIT,
+      cacheKey: (openHref) => String(openHref || "").trim(),
+      wrapUrl: (url) => String(url || "").trim(),
+      errorMessage: "chat url unavailable",
+    });
     let _deskPanelActiveMode = "";
     let _deskPanelWidth = 0;
     const _phoneViewportQuery = window.matchMedia(`(max-width: ${PHONE_VIEWPORT_MAX_PX}px)`);
@@ -89,8 +95,6 @@
     let _deskOpenToken = 0;
     let _deskSidebarMode = "list";
     let _deskSidebarWidth = DESK_DEFAULT_SIDEBAR_WIDTH;
-    let _deskChatUrlCache = new Map();
-    let _deskChatUrlInflight = new Map();
     let _deskActivePrewarmToken = 0;
     let _deskOpenSwipeRow = null;
     let _deskNewSessionStarting = false;
@@ -376,16 +380,6 @@
       return `/open-session?session=${encodeURIComponent(sessionName)}`;
     }
 
-    function normalizeComparableUrl(rawUrl) {
-      const value = String(rawUrl || "").trim();
-      if (!value) return "";
-      try {
-        return new URL(value, window.location.href).toString();
-      } catch (_) {
-        return value;
-      }
-    }
-
     function systemPrefersDark() {
       try { return window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (_) { return true; }
     }
@@ -482,24 +476,11 @@
     };
 
     function cacheDeskChatUrl(cacheKey, chatUrl) {
-      const key = String(cacheKey || "");
-      const value = String(chatUrl || "");
-      if (!key || !value) return;
-      if (_deskChatUrlCache.has(key)) _deskChatUrlCache.delete(key);
-      _deskChatUrlCache.set(key, value);
-      while (_deskChatUrlCache.size > DESK_CHAT_URL_CACHE_LIMIT) {
-        const oldest = _deskChatUrlCache.keys().next();
-        if (oldest && !oldest.done) _deskChatUrlCache.delete(oldest.value);
-        else break;
-      }
+      hubChatUrls.write(cacheKey, chatUrl);
     }
 
     function readCachedDeskChatUrl(cacheKey) {
-      const key = String(cacheKey || "");
-      if (!key || !_deskChatUrlCache.has(key)) return "";
-      const value = _deskChatUrlCache.get(key) || "";
-      if (value) cacheDeskChatUrl(key, value);
-      return value;
+      return hubChatUrls.read(cacheKey);
     }
 
     function prioritizedDeskActiveSessions() {
@@ -531,7 +512,7 @@
       if (!active.length) return;
       const queue = active
         .map((session) => buildSessionOpenHref(session.name, false))
-        .filter((href) => href && !readCachedDeskChatUrl(href) && !_deskChatUrlInflight.has(href));
+        .filter((href) => href && !readCachedDeskChatUrl(href) && !hubChatUrls.hasInflight(href));
       if (!queue.length) return;
       const token = ++_deskActivePrewarmToken;
       let running = 0;
@@ -908,26 +889,8 @@
       renderDesktopSessions(_hubSessionsCache.active || [], _hubSessionsCache.archived || []);
     }
 
-    async function resolveSessionChatUrl(openHref) {
-      const cached = readCachedDeskChatUrl(openHref);
-      if (cached) return cached;
-      const inflight = _deskChatUrlInflight.get(openHref);
-      if (inflight) return inflight;
-      const url = openHref + (openHref.includes("?") ? "&" : "?") + "format=json";
-      const request = fetch(url, { cache: "no-store" })
-        .then(async (response) => {
-          const data = await response.json();
-          if (response.ok && data && data.chat_url) {
-            cacheDeskChatUrl(openHref, data.chat_url);
-            return data.chat_url;
-          }
-          throw new Error((data && data.error) || "chat url unavailable");
-        })
-        .finally(() => {
-          _deskChatUrlInflight.delete(openHref);
-        });
-      _deskChatUrlInflight.set(openHref, request);
-      return request;
+    function resolveSessionChatUrl(openHref) {
+      return hubChatUrls.resolve(openHref);
     }
 
     async function openSessionFrame(openHref, name) {
@@ -1128,10 +1091,8 @@
         }
         const activeHref = buildSessionOpenHref(sessionName, false);
         const archivedHref = buildSessionOpenHref(sessionName, true);
-        _deskChatUrlCache.delete(activeHref);
-        _deskChatUrlCache.delete(archivedHref);
-        _deskChatUrlInflight.delete(activeHref);
-        _deskChatUrlInflight.delete(archivedHref);
+        hubChatUrls.forget(activeHref);
+        hubChatUrls.forget(archivedHref);
         if (isSelected) {
           _deskOpenToken += 1;
           _deskSelectedSessionName = "";

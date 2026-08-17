@@ -19,8 +19,6 @@
     let _hubReadyTimeoutTimer = 0;
     let _chatOverlayCloseTimer = 0;
     let refreshMobSessions = null;
-    const _chatUrlCache = new Map();
-    const _chatUrlInflight = new Map();
     const HUB_CHAT_FRAME_KEY = "hub_chat_frame";
     const HUB_LAST_SESSION_KEY = "agent_window_hub_last_session_name";
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
@@ -28,6 +26,13 @@
     const HUB_CHAT_URL_CACHE_LIMIT = 3;
     const HUB_ACTIVE_PREWARM_LIMIT = 3;
     const HUB_LAUNCH_SHELL_PARAM = "launch_shell";
+    const hubChatUrls = createHubChatUrlResolver({
+      cacheLimit: HUB_CHAT_URL_CACHE_LIMIT,
+      ttlMs: HUB_CHAT_URL_CACHE_TTL_MS,
+      cacheKey: (openHref, name) => String(name || "").trim() || String(openHref || "").trim(),
+      wrapUrl: (url) => hubFrameChatUrl(url),
+      errorMessage: "open session failed",
+    });
     const applyMobThemeGradientVars = () => {
       const root = document.documentElement;
       const channels = root.dataset.theme === "light" ? "255, 255, 255" : "10, 10, 9";
@@ -200,12 +205,7 @@
       }
       return message;
     }
-    function chatUrlCacheKey(openHref, name) {
-      const normalizedName = String(name || "").trim();
-      if (normalizedName) return normalizedName;
-      return String(openHref || "").trim();
-    }
-    function hubFrameChatUrl(chatUrl, sessionName) {
+    function hubFrameChatUrl(chatUrl) {
       const raw = String(chatUrl || "").trim();
       if (!raw) return raw;
       try {
@@ -216,44 +216,13 @@
       } catch (_) {}
       return raw;
     }
-    function normalizeComparableUrl(rawUrl) {
-      const value = String(rawUrl || "").trim();
-      if (!value) return "";
-      try {
-        return new URL(value, window.location.href).toString();
-      } catch (_) {
-        return value;
-      }
-    }
     function hubFrameSrcMatches(url) {
       const current = normalizeComparableUrl(_chatFrame.src);
       const next = normalizeComparableUrl(url);
       return !!current && !!next && current === next;
     }
     function cacheChatUrl(name, url) {
-      const normalizedName = String(name || "").trim();
-      const normalizedUrl = hubFrameChatUrl(url, normalizedName);
-      if (!normalizedName || !normalizedUrl) return;
-      if (_chatUrlCache.has(normalizedName)) _chatUrlCache.delete(normalizedName);
-      _chatUrlCache.set(normalizedName, { url: normalizedUrl, ts: Date.now() });
-      while (_chatUrlCache.size > HUB_CHAT_URL_CACHE_LIMIT) {
-        const oldest = _chatUrlCache.keys().next();
-        if (oldest && !oldest.done) _chatUrlCache.delete(oldest.value);
-        else break;
-      }
-    }
-    function cachedChatUrl(name) {
-      const normalizedName = String(name || "").trim();
-      if (!normalizedName) return "";
-      const item = _chatUrlCache.get(normalizedName);
-      if (!item) return "";
-      if ((Date.now() - Number(item.ts || 0)) > HUB_CHAT_URL_CACHE_TTL_MS) {
-        _chatUrlCache.delete(normalizedName);
-        return "";
-      }
-      const cachedUrl = hubFrameChatUrl(item.url, normalizedName);
-      if (cachedUrl) cacheChatUrl(normalizedName, cachedUrl);
-      return cachedUrl;
+      hubChatUrls.write(name, url);
     }
     function setPrewarmingOverlayActive(active) {
       _chatOverlay.classList.toggle("prewarming", !!active);
@@ -291,44 +260,9 @@
       }
     }
     async function resolveChatUrl(openHref, name, { force = false, prewarm = false } = {}) {
-      const normalizedName = String(name || "").trim();
-      const cacheKey = chatUrlCacheKey(openHref, normalizedName);
-      if (!force && normalizedName) {
-        const cached = cachedChatUrl(normalizedName);
-        if (cached) {
-          if (prewarm) primeChatFrame(normalizedName, cached);
-          return cached;
-        }
-      }
-      const inflight = !force && cacheKey ? _chatUrlInflight.get(cacheKey) : null;
-      if (inflight) {
-        return inflight.then((chatUrl) => {
-          if (prewarm && chatUrl && normalizedName) primeChatFrame(normalizedName, chatUrl);
-          return chatUrl;
-        });
-      }
-      const url = openHref + (openHref.includes("?") ? "&" : "?") + "format=json";
-      const request = fetch(url, { cache: "no-store" })
-        .then(async (res) => {
-          const data = await res.json();
-          const chatUrl = String((data && data.chat_url) || "").trim();
-          if (!res.ok || !chatUrl) {
-            throw new Error((data && data.error) || "open session failed");
-          }
-          const framedUrl = hubFrameChatUrl(chatUrl, normalizedName);
-          if (normalizedName) cacheChatUrl(normalizedName, framedUrl);
-          return framedUrl;
-        })
-        .finally(() => {
-          if (cacheKey) _chatUrlInflight.delete(cacheKey);
-        });
-      if (!force && cacheKey) {
-        _chatUrlInflight.set(cacheKey, request);
-      }
-      return request.then((chatUrl) => {
-        if (prewarm && chatUrl && normalizedName) primeChatFrame(normalizedName, chatUrl);
-        return chatUrl;
-      });
+      const chatUrl = await hubChatUrls.resolve(openHref, name, { force });
+      if (prewarm && chatUrl) primeChatFrame(name, chatUrl);
+      return chatUrl;
     }
     function activeWarmCandidates(activeSessions) {
       return (activeSessions || [])
