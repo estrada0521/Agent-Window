@@ -887,14 +887,12 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       if (fileChanged && dpPanelOpen && dpActivePanelView === "repo") {
         void dpRefreshRepoDir(dpRepoBrowserPath || "");
       }
-      if (gitChanged && dpPanelOpen && dpActivePanelView === "git") {
-        if (gitSession.hasShell()) {
-          void dpRefreshGitOverview();
-        } else {
+      if ((gitChanged || fileChanged) && (dpPanelOpen || dpGitSummaryPinned)) {
+        if (dpPanelOpen && !gitSession.hasShell()) {
           void dpLoadGitPage({ reset: true });
+        } else {
+          void dpRefreshGitOverview();
         }
-      } else if (gitChanged && (dpPanelOpen || dpGitSummaryPinned)) {
-        void dpRefreshGitOverview();
       }
       const nextHubSettingsVersion = parseInt(payload?.hub_settings_version) || 0;
       if (nextHubSettingsVersion > workspaceSyncLastHubSettingsVersion) {

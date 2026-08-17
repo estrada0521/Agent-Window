@@ -254,12 +254,17 @@
           state.pageLoading = false;
           updateLoadMoreUi();
           ensureObserver();
+          if (state.refreshQueued) {
+            state.refreshQueued = false;
+            void refresh();
+          }
         }
       };
       const runRefresh = async () => {
         const refreshSeq = ++state.refreshSeq;
         const data = await fetchGitOverview({ offset: 0, refresh: true });
         if (refreshSeq !== state.refreshSeq) return;
+        host.onOverview?.(data);
         const nextSig = gitOverviewFingerprint(data);
         if (nextSig !== state.overviewSig) {
           const isFirst = !state.overviewSig;
@@ -287,8 +292,7 @@
       };
       const refresh = async () => {
         if (host.canRefresh && !host.canRefresh()) return;
-        if (state.pageLoading) return;
-        if (state.refreshInFlight) {
+        if (state.pageLoading || state.refreshInFlight) {
           state.refreshQueued = true;
           return;
         }
