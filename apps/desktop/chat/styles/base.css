@@ -352,12 +352,12 @@
     ::-webkit-scrollbar { width: 2px; height: 2px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 999px; }
-    .git-branch-commit-scroll,
+    .git-commit-scroll,
     .git-commit-detail-body > .git-commit-file-wrap,
     .repo-browser-scroll {
       scrollbar-width: none;
     }
-    .git-branch-commit-scroll::-webkit-scrollbar,
+    .git-commit-scroll::-webkit-scrollbar,
     .git-commit-detail-body > .git-commit-file-wrap::-webkit-scrollbar,
     .repo-browser-scroll::-webkit-scrollbar {
       width: 0;

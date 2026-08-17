@@ -11,40 +11,37 @@
     };
     const dpApplySummaryPinButtonPressed = (root) => {
       if (!root) return;
-      root.querySelectorAll(".git-branch-summary-pin").forEach((btn) => {
+      root.querySelectorAll(".git-summary-pin").forEach((btn) => {
         btn.setAttribute("aria-pressed", dpGitSummaryPinned ? "true" : "false");
         btn.classList.toggle("is-pinned", dpGitSummaryPinned);
         btn.title = dpGitSummaryPinned ? "ピンを外して右端の表示を消す" : "右ペインを閉じても右端にこの概要を表示";
       });
     };
-    const dpGitCountSnapshot = gitBranchCountSnapshot;
-    const dpAnimateGitCount = animateGitBranchCount;
-    const dpAnimateGitCountsFromSnapshot = animateGitBranchCountsFromSnapshot;
     const dpRenderGitSummaryRoot = (root, rowHtml) => {
       if (!root) return;
-      const existingRow = root.querySelector(".git-branch-summary-row");
+      const existingRow = root.querySelector(".git-summary-row");
       if (existingRow && rowHtml) {
         const temp = document.createElement("div");
         temp.innerHTML = rowHtml;
-        const nextRow = temp.querySelector(".git-branch-summary-row");
+        const nextRow = temp.querySelector(".git-summary-row");
         if (nextRow) {
           existingRow.className = nextRow.className;
           if (nextRow.dataset.diffKind) existingRow.dataset.diffKind = nextRow.dataset.diffKind;
           else delete existingRow.dataset.diffKind;
-          const existingMeta = existingRow.querySelector(".git-branch-summary-meta-text");
-          const nextMeta = nextRow.querySelector(".git-branch-summary-meta-text");
+          const existingMeta = existingRow.querySelector(".git-summary-meta-text");
+          const nextMeta = nextRow.querySelector(".git-summary-meta-text");
           if (existingMeta && nextMeta && existingMeta.textContent !== nextMeta.textContent) {
             existingMeta.textContent = nextMeta.textContent;
           }
-          const existingCounts = Array.from(existingRow.querySelectorAll(".git-branch-summary-count"));
-          const nextCounts = Array.from(nextRow.querySelectorAll(".git-branch-summary-count"));
+          const existingCounts = Array.from(existingRow.querySelectorAll(".git-summary-count"));
+          const nextCounts = Array.from(nextRow.querySelectorAll(".git-summary-count"));
           existingCounts.forEach((countEl, idx) => {
             const nextCount = nextCounts[idx];
             if (!nextCount) return;
             const nextValue = Math.max(0, parseInt(nextCount.dataset.countValue || nextCount.textContent || "0") || 0);
             const prevValue = Math.max(0, parseInt(countEl.dataset.countValue || countEl.textContent || "0") || 0);
             countEl.dataset.countValue = String(nextValue);
-            dpAnimateGitCount(countEl, prevValue, nextValue);
+            animateGitCount(countEl, prevValue, nextValue);
           });
           const existingChevron = existingRow.querySelector(".git-commit-chevron");
           const nextChevron = nextRow.querySelector(".git-commit-chevron");
@@ -54,10 +51,10 @@
           return;
         }
       }
-      const previous = dpGitCountSnapshot(root);
+      const previous = gitCountSnapshot(root);
       root.innerHTML = rowHtml;
       dpApplySummaryPinButtonPressed(root);
-      dpAnimateGitCountsFromSnapshot(root, previous);
+      animateGitCountsFromSnapshot(root, previous);
     };
     const dpSummaryCountsKey = (state) =>
       Array.isArray(state?.counts) ? state.counts.map((value) => Math.max(0, parseInt(value) || 0)).join(":") : "";
@@ -77,7 +74,7 @@
       const rowHtml = dpGitHeaderSummaryState?.rowHtml || "";
       const countsKey = dpSummaryCountsKey(dpGitHeaderSummaryState);
       const shouldAnimate = countsKey !== dpGitAppliedSummaryCountsKey;
-      const panelWrap = dpGitContent?.querySelector(".git-branch-summary-wrap");
+      const panelWrap = dpGitContent?.querySelector(".git-summary-wrap");
       const aside = document.getElementById("gitPinnedSummaryAside");
       const inner = document.getElementById("gitPinnedSummaryInner");
       const overlay = hasDesktopRightPanelOverlay();

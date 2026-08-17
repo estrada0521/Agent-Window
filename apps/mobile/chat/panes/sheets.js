@@ -4,7 +4,7 @@
     let paneViewerOpenRaf = 0;
     let paneViewerInitialFetchTimer = 0;
     let lastPaneViewerTabIdx = 0;
-    const gitBranchPanel = document.getElementById("gitBranchPanel");
+    const gitPanel = document.getElementById("gitPanel");
     const repoPanel = document.getElementById("repoPanel");
     const paneTracePanel = document.getElementById("paneTracePanel");
     const nativeHeaderMenuSelect = document.getElementById("pageNativeMenuSelect");
@@ -61,7 +61,7 @@
       setTimeout(clearNativeHeaderMenuSelection, 0);
     });
     const headerRoot = document.querySelector(".page-header");
-    const hasOpenHeaderMenu = () => !!(gitBranchPanel?.classList.contains("open") || rightMenuPanel?.classList.contains("open") || repoPanel?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
+    const hasOpenHeaderMenu = () => !!(gitPanel?.classList.contains("open") || rightMenuPanel?.classList.contains("open") || repoPanel?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
     const MOBILE_BOTTOM_SHEET_CLOSE_MS = 300;
     const mobileSheetCloseIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     const animateBottomSheetOpen = (panel, onOpened = () => { }) => {
@@ -242,7 +242,7 @@
       if (repoPanel.classList.contains("repo-mode-preview")) {
         closeRepoPreview();
       }
-      closeGitBranchSheet({ immediate: true });
+      closeGitSheet({ immediate: true });
       closePaneTraceSheet({ immediate: true });
       repoSheet.open();
       if (typeof repoPanel._syncCategoryUi === "function") {
@@ -267,25 +267,25 @@
       ensurePaneTraceSheetDom();
       paneTraceSheet.open(onOpened);
     };
-    const gitBranchSheet = createMobileSheetController(gitBranchPanel, MOBILE_SHEET_ACTIVE_CLASS);
-    const ensureGitBranchSheetDom = () => ensureMobileSheetDom(gitBranchPanel, {
-      kind: "git-branch",
-      title: "Git Branches",
-      closeLabel: "Close git branches",
-      onClose: () => closeGitBranchSheet(),
+    const gitSheet = createMobileSheetController(gitPanel, MOBILE_SHEET_ACTIVE_CLASS);
+    const ensureGitSheetDom = () => ensureMobileSheetDom(gitPanel, {
+      kind: "git",
+      title: "Git",
+      closeLabel: "Close git",
+      onClose: () => closeGitSheet(),
     });
-    const closeGitBranchSheet = ({ immediate = false } = {}) => {
-      if (!gitBranchPanel) return;
-      gitBranchSheet.close({ immediate });
+    const closeGitSheet = ({ immediate = false } = {}) => {
+      if (!gitPanel) return;
+      gitSheet.close({ immediate });
     };
-    const openGitBranchSheet = async () => {
-      if (!gitBranchPanel) return;
+    const openGitSheet = async () => {
+      if (!gitPanel) return;
       closeRepoSheet({ immediate: true });
       closePaneTraceSheet({ immediate: true });
-      ensureGitBranchSheetDom();
-      setGitBranchSheetTitle("Git Branches");
-      gitBranchSheet.open();
-      await updateGitBranchPanel();
+      ensureGitSheetDom();
+      setGitSheetTitle("Git");
+      gitSheet.open();
+      await updateGitPanel();
     };
     const updateHeaderMenuViewportMetrics = () => {
       if (!headerRoot) return;
@@ -767,9 +767,9 @@ __CHAT_INCLUDE:../features/git-panel.js__
     };
     const closeHeaderMenus = () => {
       resetAgentActionNativeMenu({ clearOptions: true });
-      closeGitBranchInlineDiff();
+      closeGitDetail();
       exitPaneTraceMode();
-      closeGitBranchSheet({ immediate: true });
+      closeGitSheet({ immediate: true });
       rightMenuPanel?.classList.remove("open");
       if (rightMenuPanel) rightMenuPanel.hidden = true;
       rightMenuBtn?.classList.remove("open");
@@ -813,11 +813,11 @@ __CHAT_INCLUDE:../features/git-panel.js__
       event.stopPropagation();
       closeRepoSheet();
     });
-    gitBranchPanel?.addEventListener("click", (event) => {
-      if (event.target !== gitBranchPanel) return;
+    gitPanel?.addEventListener("click", (event) => {
+      if (event.target !== gitPanel) return;
       event.preventDefault();
       event.stopPropagation();
-      closeGitBranchSheet();
+      closeGitSheet();
     });
     headerRoot?.addEventListener("click", (event) => {
       if (!repoPanel?.classList.contains("repo-mode-preview")) return;
@@ -845,14 +845,14 @@ __CHAT_INCLUDE:../features/git-panel.js__
         quickMore.open = false;
       }
       const inRightMenu = rightMenuBtn?.contains(event.target) || rightMenuPanel?.contains(event.target);
-      const inGitBranchMenu = gitBranchPanel?.contains(event.target);
+      const inGitMenu = gitPanel?.contains(event.target);
       const inFilesMenu = repoPanel?.contains(event.target);
       const inPaneTraceMenu = paneTracePanel?.contains(event.target);
       const inNativeBridgeMenu = nativeHeaderMenuBridge?.contains(event.target);
       const inNativeHeaderMenu = nativeHeaderMenuSelect?.contains(event.target);
       const agentActionNativeMenu = document.getElementById("agentActionNativeMenuSelect");
       const inAgentActionMenu = agentActionNativeMenu?.contains(event.target);
-      if (!inRightMenu && !inGitBranchMenu && !inFilesMenu && !inPaneTraceMenu && !inNativeBridgeMenu && !inNativeHeaderMenu && !inAgentActionMenu) {
+      if (!inRightMenu && !inGitMenu && !inFilesMenu && !inPaneTraceMenu && !inNativeBridgeMenu && !inNativeHeaderMenu && !inAgentActionMenu) {
         closeHeaderMenus();
       }
     });
@@ -868,8 +868,8 @@ __CHAT_INCLUDE:../features/git-panel.js__
         await beginNewChat(sourceNode);
         return;
       }
-      if (action === "openGitBranchMenu") {
-        openGitBranchSheet();
+      if (action === "openGitMenu") {
+        openGitSheet();
         return;
       }
       if (action === "openRepoMenu") {

@@ -193,7 +193,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
         }
         return;
       }
-      closeGitBranchSheet({ immediate: true });
+      closeGitSheet({ immediate: true });
       closeRepoSheet({ immediate: true });
 
       rightMenuPanel?.classList.remove("open");

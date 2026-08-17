@@ -330,7 +330,7 @@ def _get_workspace_sync_events(handler, parsed, ctx) -> None:
         return
 
 
-def _get_git_branch_overview(handler, parsed, ctx) -> None:
+def _get_git_overview(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     raw_offset = (qs.get("offset", ["0"])[0] or "0").strip()
     raw_limit = (qs.get("limit", ["50"])[0] or "50").strip()
@@ -338,7 +338,7 @@ def _get_git_branch_overview(handler, parsed, ctx) -> None:
     try:
         offset = int(raw_offset)
         limit = int(raw_limit)
-        data = ctx["workspace_sync_api"].git_branch_overview(
+        data = ctx["workspace_sync_api"].git_overview(
             offset=offset, limit=limit, force_refresh=force_refresh
         )
         body = json.dumps(data, ensure_ascii=True).encode("utf-8")
@@ -385,7 +385,7 @@ _GET_ROUTES = {
     "/session-state": _get_session_state,
     "/session-state-events": _get_session_state_events,
     "/workspace-sync-events": _get_workspace_sync_events,
-    "/git-branch-overview": _get_git_branch_overview,
+    "/git-overview": _get_git_overview,
     "/git-diff-files": _get_git_diff_files,
     "/shortcut-commands": _get_shortcut_commands,
 }

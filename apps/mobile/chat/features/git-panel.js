@@ -1,59 +1,59 @@
 __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
 __CHAT_INCLUDE:../../../shared/chat/git-panel-data.js__
-    let gitBranchCommits = [];
-    let gitBranchNextOffset = 0;
-    let gitBranchTotalCommits = 0;
-    let gitBranchHasMore = false;
-    let gitBranchPageLoading = false;
-    let gitBranchLoadError = "";
-    let gitBranchLoadSeq = 0;
-    let gitBranchRefreshSeq = 0;
-    let gitBranchOverviewSig = "";
-    let gitBranchDetailContext = null;
-    let gitBranchDetailNeedsRefresh = false;
-    let gitBranchObserver = null;
-    const disconnectGitBranchObserver = () => {
-      if (!gitBranchObserver) return;
-      try { gitBranchObserver.disconnect(); } catch (_) { }
-      gitBranchObserver = null;
+    let gitCommits = [];
+    let gitNextOffset = 0;
+    let gitTotalCommits = 0;
+    let gitHasMore = false;
+    let gitPageLoading = false;
+    let gitLoadError = "";
+    let gitLoadSeq = 0;
+    let gitRefreshSeq = 0;
+    let gitOverviewSig = "";
+    let gitDetailContext = null;
+    let gitDetailNeedsRefresh = false;
+    let gitObserver = null;
+    const disconnectGitObserver = () => {
+      if (!gitObserver) return;
+      try { gitObserver.disconnect(); } catch (_) { }
+      gitObserver = null;
     };
-    const gitBranchCommitListEl = () => gitBranchPanel?.querySelector(".git-branch-commit-list");
-    const gitBranchLoadMoreEl = () => gitBranchPanel?.querySelector(".git-branch-load-more");
-    const gitBranchScrollRootEl = () => gitBranchPanel?.querySelector(".git-branch-sheet-content") || gitBranchPanel;
-    const gitBranchSheetTitleEl = () => gitBranchPanel?.querySelector(".git-branch-sheet-title");
-    const setGitBranchSheetTitle = () => {
-      const titleEl = gitBranchSheetTitleEl();
+    const gitCommitListEl = () => gitPanel?.querySelector(".git-commit-list");
+    const gitLoadMoreEl = () => gitPanel?.querySelector(".git-load-more");
+    const gitScrollRootEl = () => gitPanel?.querySelector(".git-sheet-content") || gitPanel;
+    const gitSheetTitleEl = () => gitPanel?.querySelector(".git-sheet-title");
+    const setGitSheetTitle = () => {
+      const titleEl = gitSheetTitleEl();
       if (!titleEl) return;
-      titleEl.textContent = "Git Branches";
-      titleEl.title = "Git Branches";
+      titleEl.textContent = "Git";
+      titleEl.title = "Git";
     };
-    const setGitBranchPanelBodyHtml = (html) => {
-      const contentEl = ensureGitBranchSheetDom();
+    const setGitPanelBodyHtml = (html) => {
+      const contentEl = ensureGitSheetDom();
       if (contentEl) {
         contentEl.innerHTML = html;
         return;
       }
-      if (gitBranchPanel) gitBranchPanel.innerHTML = html;
+      if (gitPanel) gitPanel.innerHTML = html;
     };
-    const renderGitBranchCommitRows = (commits, { append = false } = {}) => {
-      const listEl = gitBranchCommitListEl();
+    const renderGitCommitRows = (commits, { append = false } = {}) => {
+      const listEl = gitCommitListEl();
       if (!listEl) return;
       if (!append) {
         if (!commits.length) {
-          listEl.innerHTML = '<div class="git-commit-file-empty" data-git-branch-empty="1">No commits</div>';
+          listEl.innerHTML = '<div class="git-commit-file-empty" data-git-empty="1">No commits</div>';
           return;
         }
         listEl.innerHTML = commits.map((commit) => gitCommitRowHtml(commit)).join("");
         return;
       }
       if (!commits.length) return;
-      listEl.querySelector("[data-git-branch-empty]")?.remove();
+      listEl.querySelector("[data-git-empty]")?.remove();
       listEl.insertAdjacentHTML("beforeend", commits.map((commit) => gitCommitRowHtml(commit)).join(""));
     };
-    const updateGitBranchLoadMoreUi = () => {
-      const btn = gitBranchLoadMoreEl();
+    const updateGitLoadMoreUi = () => {
+      const btn = gitLoadMoreEl();
       if (!btn) return;
-      if (!gitBranchHasMore && !gitBranchLoadError) {
+      if (!gitHasMore && !gitLoadError) {
         btn.hidden = true;
         btn.disabled = true;
         btn.classList.remove("inline-loading-row");
@@ -61,86 +61,86 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-data.js__
         return;
       }
       btn.hidden = false;
-      btn.disabled = gitBranchPageLoading;
-      if (gitBranchLoadError) {
+      btn.disabled = gitPageLoading;
+      if (gitLoadError) {
         btn.classList.remove("inline-loading-row");
         btn.textContent = "Retry loading commits";
-      } else if (gitBranchPageLoading) {
+      } else if (gitPageLoading) {
         btn.classList.add("inline-loading-row");
         btn.innerHTML = loadingIndicatorHtml("Loading…");
-      } else if (gitBranchTotalCommits > 0) {
+      } else if (gitTotalCommits > 0) {
         btn.classList.remove("inline-loading-row");
-        btn.textContent = `Load more commits (${gitBranchCommits.length}/${gitBranchTotalCommits})`;
+        btn.textContent = `Load more commits (${gitCommits.length}/${gitTotalCommits})`;
       } else {
         btn.classList.remove("inline-loading-row");
         btn.textContent = "Load more commits";
       }
     };
-    const ensureGitBranchObserver = () => {
-      disconnectGitBranchObserver();
-      const btn = gitBranchLoadMoreEl();
-      if (!btn || !gitBranchHasMore || gitBranchPageLoading || gitBranchLoadError || typeof IntersectionObserver !== "function") return;
-      gitBranchObserver = new IntersectionObserver((entries) => {
+    const ensureGitObserver = () => {
+      disconnectGitObserver();
+      const btn = gitLoadMoreEl();
+      if (!btn || !gitHasMore || gitPageLoading || gitLoadError || typeof IntersectionObserver !== "function") return;
+      gitObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
-          void loadGitBranchOverviewPage();
+          void loadGitOverviewPage();
         });
       }, {
-        root: gitBranchScrollRootEl(),
+        root: gitScrollRootEl(),
         rootMargin: "220px 0px 220px 0px",
         threshold: 0.01,
       });
-      gitBranchObserver.observe(btn);
+      gitObserver.observe(btn);
     };
-    const renderGitBranchPanelShell = (data) => {
-      setGitBranchPanelBodyHtml(`
-        <div class="git-branch-stack">
-          <div class="git-branch-list-view">
-            <div class="git-branch-summary-wrap">${gitBranchSummaryRowHtml(data)}</div>
-            <div class="git-branch-commit-list"></div>
-            <button type="button" class="page-menu-item git-branch-load-more" hidden></button>
+    const renderGitPanelShell = (data) => {
+      setGitPanelBodyHtml(`
+        <div class="git-stack">
+          <div class="git-list-view">
+            <div class="git-summary-wrap">${gitSummaryRowHtml(data)}</div>
+            <div class="git-commit-list"></div>
+            <button type="button" class="page-menu-item git-load-more" hidden></button>
           </div>
-          <div class="git-branch-detail-view">
+          <div class="git-detail-view">
             <button type="button" class="git-commit-detail-head" aria-label="コミット一覧に戻る"></button>
             <div class="git-commit-detail-body"></div>
           </div>
         </div>`);
     };
-    const applyGitBranchOverviewPaging = (page, { reset = false } = {}) => {
-      gitBranchCommits = page.commits;
-      gitBranchTotalCommits = page.totalCommits;
-      gitBranchNextOffset = page.nextOffset;
-      gitBranchHasMore = page.hasMore;
-      if (reset) gitBranchOverviewSig = page.fingerprint;
+    const applyGitOverviewPaging = (page, { reset = false } = {}) => {
+      gitCommits = page.commits;
+      gitTotalCommits = page.totalCommits;
+      gitNextOffset = page.nextOffset;
+      gitHasMore = page.hasMore;
+      if (reset) gitOverviewSig = page.fingerprint;
       if (reset) {
-        renderGitBranchCommitRows(gitBranchCommits, { append: false });
+        renderGitCommitRows(gitCommits, { append: false });
       } else if (page.pageCommits.length) {
-        renderGitBranchCommitRows(page.pageCommits, { append: true });
+        renderGitCommitRows(page.pageCommits, { append: true });
       }
-      updateGitBranchLoadMoreUi();
-      ensureGitBranchObserver();
+      updateGitLoadMoreUi();
+      ensureGitObserver();
     };
-    const applyGitBranchOverviewPage = (data, { reset = false } = {}) => {
-      if (reset) renderGitBranchPanelShell(data || {});
-      applyGitBranchOverviewPaging(gitOverviewPagingFromResponse(data, gitBranchCommits, { reset }), { reset });
+    const applyGitOverviewPage = (data, { reset = false } = {}) => {
+      if (reset) renderGitPanelShell(data || {});
+      applyGitOverviewPaging(gitOverviewPagingFromResponse(data, gitCommits, { reset }), { reset });
     };
-    const refreshGitBranchOverviewView = async () => {
-      if (!gitBranchPanel) return;
-      const refreshSeq = ++gitBranchRefreshSeq;
-      const data = await fetchGitBranchOverview({ offset: 0, refresh: true });
-      if (refreshSeq !== gitBranchRefreshSeq) return;
+    const refreshGitOverviewView = async () => {
+      if (!gitPanel) return;
+      const refreshSeq = ++gitRefreshSeq;
+      const data = await fetchGitOverview({ offset: 0, refresh: true });
+      if (refreshSeq !== gitRefreshSeq) return;
       const nextOverviewSig = gitOverviewFingerprint(data);
-      if (nextOverviewSig !== gitBranchOverviewSig) {
-        const summaryWrap = gitBranchPanel.querySelector(".git-branch-summary-wrap");
+      if (nextOverviewSig !== gitOverviewSig) {
+        const summaryWrap = gitPanel.querySelector(".git-summary-wrap");
         if (summaryWrap) {
-          const previous = gitBranchCountSnapshot(summaryWrap);
-          summaryWrap.innerHTML = gitBranchSummaryRowHtml(data || {});
-          animateGitBranchCountsFromSnapshot(summaryWrap, previous);
+          const previous = gitCountSnapshot(summaryWrap);
+          summaryWrap.innerHTML = gitSummaryRowHtml(data || {});
+          animateGitCountsFromSnapshot(summaryWrap, previous);
         }
-        applyGitBranchOverviewPaging(gitOverviewPagingFromResponse(data, [], { reset: true }), { reset: true });
+        applyGitOverviewPaging(gitOverviewPagingFromResponse(data, [], { reset: true }), { reset: true });
       }
-      if (gitBranchDetailContext?.kind === "worktree" && gitBranchDetailContext?.wrapEl) {
-        await renderGitCommitFileStatsInto(gitBranchDetailContext.wrapEl, "", {
+      if (gitDetailContext?.kind === "worktree" && gitDetailContext?.wrapEl) {
+        await renderGitCommitFileStatsInto(gitDetailContext.wrapEl, "", {
           allowUndo: true,
           preserveCurrent: true,
         });
@@ -183,104 +183,104 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-data.js__
       wrapEl.innerHTML = gitCommitFileListHtml(loaded.files, { allowUndo, scope });
       return loaded.data;
     };
-    const closeGitBranchInlineDiff = ({ refreshList = false } = {}) => {
-      if (!gitBranchPanel) return;
-      gitBranchPanel.classList.remove("git-branch-transitioning");
-      gitBranchPanel.classList.remove("git-branch-mode-detail");
-      setGitBranchSheetTitle("Git Branches");
-      const body = gitBranchPanel.querySelector(".git-commit-detail-body");
+    const closeGitDetail = ({ refreshList = false } = {}) => {
+      if (!gitPanel) return;
+      gitPanel.classList.remove("git-transitioning");
+      gitPanel.classList.remove("git-mode-detail");
+      setGitSheetTitle("Git");
+      const body = gitPanel.querySelector(".git-commit-detail-body");
       if (body) body.innerHTML = "";
-      const head = gitBranchPanel.querySelector(".git-commit-detail-head");
+      const head = gitPanel.querySelector(".git-commit-detail-head");
       if (head) head.innerHTML = "";
-      gitBranchDetailContext = null;
-      updateGitBranchLoadMoreUi();
-      ensureGitBranchObserver();
+      gitDetailContext = null;
+      updateGitLoadMoreUi();
+      ensureGitObserver();
       const shouldRefresh = !!refreshList;
-      gitBranchDetailNeedsRefresh = false;
+      gitDetailNeedsRefresh = false;
       if (shouldRefresh) {
-        void loadGitBranchOverviewPage({ reset: true });
+        void loadGitOverviewPage({ reset: true });
       }
     };
-    const loadGitBranchOverviewPage = async ({ reset = false } = {}) => {
-      if (!gitBranchPanel) return;
-      if (gitBranchPageLoading) return;
-      if (!reset && !gitBranchHasMore && !gitBranchLoadError) return;
-      const loadSeq = ++gitBranchLoadSeq;
-      gitBranchPageLoading = true;
-      gitBranchLoadError = "";
-      disconnectGitBranchObserver();
+    const loadGitOverviewPage = async ({ reset = false } = {}) => {
+      if (!gitPanel) return;
+      if (gitPageLoading) return;
+      if (!reset && !gitHasMore && !gitLoadError) return;
+      const loadSeq = ++gitLoadSeq;
+      gitPageLoading = true;
+      gitLoadError = "";
+      disconnectGitObserver();
       if (reset) {
-        gitBranchRefreshSeq += 1;
-        closeGitBranchInlineDiff();
-        setGitBranchSheetTitle("Git Branches");
-        gitBranchHasMore = false;
-        gitBranchNextOffset = 0;
-        gitBranchTotalCommits = 0;
-        gitBranchCommits = [];
-        setGitBranchPanelBodyHtml(`<div class="page-menu-item inline-loading-row" style="cursor:default">${loadingIndicatorHtml("Loading…")}</div>`);
+        gitRefreshSeq += 1;
+        closeGitDetail();
+        setGitSheetTitle("Git");
+        gitHasMore = false;
+        gitNextOffset = 0;
+        gitTotalCommits = 0;
+        gitCommits = [];
+        setGitPanelBodyHtml(`<div class="page-menu-item inline-loading-row" style="cursor:default">${loadingIndicatorHtml("Loading…")}</div>`);
       } else {
-        updateGitBranchLoadMoreUi();
+        updateGitLoadMoreUi();
       }
       try {
-        const data = await fetchGitBranchOverview({
-          offset: reset ? 0 : gitBranchNextOffset,
+        const data = await fetchGitOverview({
+          offset: reset ? 0 : gitNextOffset,
           refresh: reset,
         });
-        if (loadSeq !== gitBranchLoadSeq) return;
-        applyGitBranchOverviewPage(data, { reset });
+        if (loadSeq !== gitLoadSeq) return;
+        applyGitOverviewPage(data, { reset });
       } catch (err) {
-        if (loadSeq !== gitBranchLoadSeq) return;
+        if (loadSeq !== gitLoadSeq) return;
         if (reset) {
-          setGitBranchPanelBodyHtml(`<div class="page-menu-item" style="cursor:default;opacity:0.72">${escapeHtml(err?.message || "Failed to load branch overview")}</div>`);
+          setGitPanelBodyHtml(`<div class="page-menu-item" style="cursor:default;opacity:0.72">${escapeHtml(err?.message || "Failed to load git overview")}</div>`);
         } else {
-          gitBranchLoadError = err?.message || "Failed to load more commits";
+          gitLoadError = err?.message || "Failed to load more commits";
         }
       } finally {
-        if (loadSeq !== gitBranchLoadSeq) return;
-        gitBranchPageLoading = false;
-        updateGitBranchLoadMoreUi();
-        ensureGitBranchObserver();
+        if (loadSeq !== gitLoadSeq) return;
+        gitPageLoading = false;
+        updateGitLoadMoreUi();
+        ensureGitObserver();
       }
     };
-    const updateGitBranchPanel = async () => {
-      if (gitBranchPanel?.querySelector(".git-branch-stack")) {
+    const updateGitPanel = async () => {
+      if (gitPanel?.querySelector(".git-stack")) {
         try {
-          await refreshGitBranchOverviewView();
+          await refreshGitOverviewView();
         } catch (_) {}
         return;
       }
-      await loadGitBranchOverviewPage({ reset: true });
+      await loadGitOverviewPage({ reset: true });
     };
-    if (gitBranchPanel) {
-      gitBranchPanel.addEventListener("click", async (e) => {
-        const loadMoreBtn = e.target.closest(".git-branch-load-more");
+    if (gitPanel) {
+      gitPanel.addEventListener("click", async (e) => {
+        const loadMoreBtn = e.target.closest(".git-load-more");
         if (loadMoreBtn) {
           e.stopPropagation();
           e.preventDefault();
-          await loadGitBranchOverviewPage();
+          await loadGitOverviewPage();
           return;
         }
         if (e.target.closest(".git-commit-detail-head")) {
           e.stopPropagation();
-          closeGitBranchInlineDiff({ refreshList: gitBranchDetailNeedsRefresh });
+          closeGitDetail({ refreshList: gitDetailNeedsRefresh });
           return;
         }
-        if (gitBranchPanel.classList.contains("git-branch-mode-detail")) return;
-        const row = e.target.closest(".git-commit-row, .git-branch-summary-row");
+        if (gitPanel.classList.contains("git-mode-detail")) return;
+        const row = e.target.closest(".git-commit-row, .git-summary-row");
         if (!row) return;
         const diffKind = row.dataset.diffKind || "";
         const hash = row.dataset.hash;
         if (!hash && !diffKind) return;
         e.stopPropagation();
-        closeGitBranchInlineDiff();
-        disconnectGitBranchObserver();
-        gitBranchDetailNeedsRefresh = false;
-        gitBranchPanel.classList.add("git-branch-transitioning");
+        closeGitDetail();
+        disconnectGitObserver();
+        gitDetailNeedsRefresh = false;
+        gitPanel.classList.add("git-transitioning");
         const subject = diffKind
-          ? (row.querySelector(".git-branch-summary-label")?.textContent?.trim() || "Uncommitted changes")
+          ? (row.querySelector(".git-summary-label")?.textContent?.trim() || "Uncommitted changes")
           : (row.querySelector(".git-commit-subject")?.textContent?.trim() || hash.slice(0, 7));
-        const headEl = gitBranchPanel.querySelector(".git-commit-detail-head");
-        const bodyEl = gitBranchPanel.querySelector(".git-commit-detail-body");
+        const headEl = gitPanel.querySelector(".git-commit-detail-head");
+        const bodyEl = gitPanel.querySelector(".git-commit-detail-body");
         if (headEl) {
           headEl.title = subject;
           headEl.innerHTML = row.outerHTML;
@@ -289,17 +289,17 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-data.js__
         const wrapEl = document.createElement("div");
         wrapEl.className = "git-commit-file-wrap";
         bodyEl.appendChild(wrapEl);
-        setGitBranchSheetTitle("Git Branches");
-        gitBranchPanel.classList.add("git-branch-mode-detail");
-        gitBranchDetailContext = {
+        setGitSheetTitle("Git");
+        gitPanel.classList.add("git-mode-detail");
+        gitDetailContext = {
           kind: diffKind === "worktree" ? "worktree" : "commit",
           hash: diffKind === "worktree" ? "" : String(hash || ""),
           wrapEl,
         };
-        const scrollRoot = gitBranchScrollRootEl();
+        const scrollRoot = gitScrollRootEl();
         if (scrollRoot) scrollRoot.scrollTop = 0;
         requestAnimationFrame(() => {
-          gitBranchPanel?.classList.remove("git-branch-transitioning");
+          gitPanel?.classList.remove("git-transitioning");
         });
         try {
           await renderGitCommitFileStatsInto(
