@@ -8,7 +8,7 @@ import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, quote as url_quote, urlparse
+from urllib.parse import parse_qs, quote as url_quote, unquote as url_unquote, urlparse
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
@@ -16,6 +16,7 @@ from backend_core.agents.registry import (
     AGENT_ICONS_DIR,
     icon_filename_map as _icon_filename_map,
 )
+from backend_core.access.settings import resolve_chat_port
 from hub_backend.runtime import HubRuntime
 from backend_core.agents.executables import agent_launch_readiness
 from hub_backend.presentation.hub.header_assets import (
@@ -709,20 +710,9 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
             return
-        session_name = match.group(1)
+        session_name = url_unquote(match.group(1))
         suffix = match.group(2) or "/"
-        resolved = _hub_session_api().resolve_session_chat_target(session_name)
-        if resolved["status"] == "unhealthy":
-            self._send_unhealthy("plain", str(resolved.get("detail") or ""))
-            return
-        if resolved["status"] == "missing":
-            self._send_html(404, error_page("That session is not available in this repo."))
-            return
-        if resolved["status"] != "ok":
-            detail = str(resolved.get("detail") or "")
-            self._send_html(500, error_page(f"Failed to start chat for {session_name}: {detail}"))
-            return
-        chat_port = int(resolved.get("chat_port") or 0)
+        chat_port = int(resolve_chat_port(repo_root, session_name))
         body = None
         if method == "POST":
             try:

@@ -207,7 +207,6 @@
     }
     function hubFrameChatUrl(chatUrl, sessionName) {
       const raw = String(chatUrl || "").trim();
-      const name = String(sessionName || "").trim();
       if (!raw) return raw;
       try {
         const next = new URL(raw, window.location.href);
@@ -215,12 +214,7 @@
           return next.pathname + next.search + next.hash;
         }
       } catch (_) {}
-      if (!name) return raw;
-      let search = "";
-      try {
-        search = new URL(raw, window.location.href).search;
-      } catch (_) {}
-      return `/session/${encodeURIComponent(name)}/${search || ""}`;
+      return raw;
     }
     function normalizeComparableUrl(rawUrl) {
       const value = String(rawUrl || "").trim();
@@ -500,6 +494,7 @@
       };
       const canReusePrewarm =
         normalizedName &&
+        _prewarmedFrameRenderReady &&
         _prewarmedSessionName === normalizedName &&
         normalizeComparableUrl(_prewarmedChatUrl) === normalizeComparableUrl(normalizedUrl) &&
         hubFrameSrcMatches(normalizedUrl);
@@ -538,6 +533,9 @@
       if (!canReusePrewarm) {
         _prewarmedFrameReady = false;
         _prewarmedFrameRenderReady = false;
+        if (hubFrameSrcMatches(normalizedUrl)) {
+          _chatFrame.src = "about:blank";
+        }
         _chatFrame.src = normalizedUrl;
       } else if (_prewarmedFrameReady) {
         requestAnimationFrame(onChatReady);
@@ -591,6 +589,11 @@
     }
     window.addEventListener("message", function (e) {
       if (e.data && e.data.type === "chat-render-error" && e.source === _chatFrame.contentWindow) {
+        _prewarmedFrameReady = false;
+        _prewarmedFrameRenderReady = false;
+        if (_chatOverlay.classList.contains("prewarming") || !_awaitingChatRenderReady) {
+          return;
+        }
         failHubReadyWait(e.data.message || "render failed");
         return;
       }
