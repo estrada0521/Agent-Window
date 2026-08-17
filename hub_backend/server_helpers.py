@@ -175,13 +175,10 @@ def pwa_asset_version(
 
 
 def icon_data_uri(filename: str, *, repo_root: Path, agent_icons_dir: str) -> str:
-    try:
-        icon_file = repo_root / agent_icons_dir / filename
-        if not icon_file.is_file():
-            return ""
-        return "data:image/svg+xml;base64," + base64.b64encode(icon_file.read_bytes()).decode("ascii")
-    except Exception:
+    icon_file = repo_root / agent_icons_dir / filename
+    if not icon_file.is_file():
         return ""
+    return "data:image/svg+xml;base64," + base64.b64encode(icon_file.read_bytes()).decode("ascii")
 
 
 def pwa_asset_url(path: str, *, base_path: str = "", bust: bool = False, pwa_asset_version_fn) -> str:

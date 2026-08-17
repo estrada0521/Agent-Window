@@ -106,7 +106,12 @@ def _get_trace(handler, parsed, ctx) -> None:
             tail_lines = None
         if tail_lines is not None:
             tail_lines = max(1, min(tail_lines, 10_000))
-    content_str = ctx["runtime"].trace_content(agent, tail_lines=tail_lines)
+    try:
+        content_str = ctx["runtime"].trace_content(agent, tail_lines=tail_lines)
+    except Exception as exc:
+        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
+        _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
+        return
     body = json.dumps({"content": content_str}, ensure_ascii=True).encode("utf-8")
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
