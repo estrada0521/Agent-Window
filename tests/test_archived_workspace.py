@@ -340,9 +340,63 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         workspace_git.configure(workspace="", runtime=None)
         with self.assertRaisesRegex(RuntimeError, "git workspace is not configured"):
             workspace_git.git_overview()
-        workspace_git.configure(workspace="/tmp/even-parity", runtime=None)
-        self.assertEqual(str(workspace_git._git_root()), "/tmp/even-parity")
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace_git.configure(workspace=tmp, runtime=None)
+            self.assertEqual(str(workspace_git._git_root()), tmp)
+            self.assertNotEqual(str(workspace_git._git_root()), "/Users/okadaharuto/workspace/Agent-Window")
+        workspace_git.configure(workspace="/no/such/even-parity", runtime=None)
+        with self.assertRaisesRegex(RuntimeError, "workspace is not available"):
+            workspace_git.git_overview()
         workspace_git.configure(workspace="", runtime=None)
+
+    def test_mirrors_do_not_create_a_missing_workspace(self) -> None:
+        from backend_core.access.settings import ensure_session_workspace_mirrors
+
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = Path(tmp) / "Even-Parity"
+            ensure_session_workspace_mirrors("Even-Parity", str(missing))
+            self.assertFalse(missing.exists())
+
+    def test_mirrors_link_inside_an_existing_workspace(self) -> None:
+        from backend_core.access.settings import (
+            SESSION_LOG_FILENAME,
+            NATIVE_LOG_STATE_FILENAME,
+            ensure_session_workspace_mirrors,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp) / "Lab"
+            workspace.mkdir()
+            canonical = Path(tmp) / "session"
+            canonical.mkdir()
+            log_target = canonical / SESSION_LOG_FILENAME
+            native_target = canonical / NATIVE_LOG_STATE_FILENAME
+            log_target.write_text("", encoding="utf-8")
+            native_target.write_text("", encoding="utf-8")
+            with patch("backend_core.access.settings.session_log_path", return_value=log_target), patch(
+                "backend_core.access.settings.session_native_log_state_path",
+                return_value=native_target,
+            ):
+                ensure_session_workspace_mirrors("Lab", str(workspace))
+            link = workspace / ".agent-window" / SESSION_LOG_FILENAME
+            self.assertTrue(link.is_symlink())
+            self.assertEqual(link.resolve(), log_target.resolve())
+
+    def test_chat_launch_does_not_touch_a_missing_workspace(self) -> None:
+        from hub_backend.chat_supervisor import chat_launch_session_dir
+
+        with tempfile.TemporaryDirectory() as tmp:
+            logs = Path(tmp) / "logs"
+            missing = Path(tmp) / "Even-Parity"
+            hub = SimpleNamespace(repo_root=Path(tmp) / "hub")
+            with patch("hub_backend.chat_supervisor.local_runtime_log_dir", return_value=logs), patch(
+                "hub_backend.chat_supervisor.session_log_path",
+                return_value=logs / "Even-Parity" / ".log.jsonl",
+            ):
+                session_dir = chat_launch_session_dir(hub, "Even-Parity")
+            self.assertEqual(session_dir, logs / "Even-Parity")
+            self.assertTrue(session_dir.is_dir())
+            self.assertFalse(missing.exists())
 
 
 if __name__ == "__main__":

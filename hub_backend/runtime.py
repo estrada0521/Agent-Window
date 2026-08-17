@@ -217,8 +217,8 @@ class HubRuntime:
     def stop_inactive_chat_servers(self, *, keep_session: str = "") -> str:
         return _stop_inactive_chat_servers_impl(self, keep_session=keep_session)
 
-    def _chat_launch_session_dir(self, session_name: str, workspace: str, explicit_log_dir: str) -> Path:
-        return _chat_launch_session_dir_impl(self, session_name, workspace, explicit_log_dir)
+    def _chat_launch_session_dir(self, session_name: str) -> Path:
+        return _chat_launch_session_dir_impl(self, session_name)
 
     def _chat_launch_env(self, *, session_is_active: bool = True) -> dict[str, str]:
         return _chat_launch_env_impl(self, session_is_active=session_is_active)
