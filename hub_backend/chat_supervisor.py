@@ -231,7 +231,6 @@ def ensure_chat_server(
                 detail = (result.stderr or result.stdout or "").strip() or "tmux set-environment failed"
                 return False, chat_port, detail
         env = self._chat_launch_env(session_is_active=session_is_active)
-        launch_cwd = resolved_workspace if resolved_workspace and Path(resolved_workspace).is_dir() else str(session_dir)
         try:
             subprocess_module.Popen(
                 [
@@ -241,7 +240,7 @@ def ensure_chat_server(
                     session_name,
                     resolved_workspace,
                 ],
-                cwd=launch_cwd,
+                cwd=str(self.repo_root),
                 env=env,
                 start_new_session=True,
                 stdout=subprocess.DEVNULL,
