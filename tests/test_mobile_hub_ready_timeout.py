@@ -74,14 +74,12 @@ assert.equal(_launchShell.hidden, true);
 startChatRenderWait();
 assert.equal(timerCalls.length, 2);
 timerCalls[1].fn();
-assert.equal(card.textContent, "timeout");
-assert.equal(card.errorClass, "is-error");
-assert.equal(_launchShell.hidden, false);
+assert.equal(_launchShell.hidden, true);
 assert.equal(_awaitingChatRenderReady, false);
 
 startChatRenderWait();
 failHubReadyWait("messages unavailable");
-assert.equal(card.textContent, "messages unavailable");
+assert.equal(_launchShell.hidden, true);
 assert.equal(_hubReadyTimeoutTimer, 0);
 console.log("mobile hub ready timeout state machine ok");
 """

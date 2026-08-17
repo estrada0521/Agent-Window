@@ -144,6 +144,11 @@
       font-size: var(--message-text-size, 13px);
       line-height: 1.45;
     }
+    .dp-empty-state.error,
+    .repo-browser-empty.error,
+    .git-commit-file-empty.error {
+      color: var(--error);
+    }
     .dp-split-pane:has(.repo-browser-stack) {
       overflow: hidden;
     }

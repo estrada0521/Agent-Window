@@ -8,7 +8,6 @@ import time
 from pathlib import Path
 
 _workspace: str = ""
-_repo_root: Path = Path()
 _runtime = None
 _GIT_OVERVIEW_CACHE_TTL_SECONDS = 5.0
 _git_overview_cache_lock = threading.Lock()
@@ -16,12 +15,18 @@ _git_overview_cache: dict[tuple[str, int, int], tuple[float, dict]] = {}
 _commit_list_cache: dict[tuple[str, str, int, int], dict] = {}
 
 
-def configure(*, workspace: str, repo_root: Path, runtime) -> None:
-    global _workspace, _repo_root, _runtime
+def configure(*, workspace: str, runtime) -> None:
+    global _workspace, _runtime
     _workspace = workspace or ""
-    _repo_root = repo_root
     _runtime = runtime
     _clear_git_overview_cache()
+
+
+def _git_root() -> Path:
+    root = str(_workspace or "").strip()
+    if not root:
+        raise RuntimeError("git workspace is not configured")
+    return Path(root)
 
 
 def _clear_git_overview_cache() -> None:
@@ -142,7 +147,7 @@ def _read_commit_list(_run, *, branch: str, offset: int, limit: int) -> dict:
 
 
 def git_overview(*, offset=0, limit=50, force_refresh: bool = False):
-    root = Path(_workspace or _repo_root)
+    root = _git_root()
     offset = int(offset)
     limit = int(limit)
     if offset < 0:
@@ -314,7 +319,7 @@ def git_overview(*, offset=0, limit=50, force_refresh: bool = False):
 
 
 def git_diff_files(*, commit_hash: str = "", scope: str = ""):
-    root = Path(_workspace or _repo_root)
+    root = _git_root()
     commit_hash = str(commit_hash or "").strip()
     scope = str(scope or "").strip().lower()
 

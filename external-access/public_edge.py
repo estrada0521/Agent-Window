@@ -202,7 +202,9 @@ class Handler(BaseHTTPRequestHandler):
         record = record or self._active_session_record(session_name)
         if record is None:
             return None
-        workspace = (record.get("workspace") or "").strip() or str(repo_root)
+        workspace = (record.get("workspace") or "").strip()
+        if not workspace:
+            return None
         return FileRuntime(workspace=workspace)
 
     @staticmethod
@@ -349,7 +351,9 @@ class Handler(BaseHTTPRequestHandler):
         deadline = time.time() + SESSION_RESTART_WAIT_WINDOW
         saw_disconnect = False
         while time.time() < deadline:
-            ok, chat_port, _detail = ensure_chat_server(session_name)
+            record = self._active_session_record(session_name)
+            workspace = str((record or {}).get("workspace") or "").strip()
+            ok, chat_port, _detail = ensure_chat_server(session_name, workspace=workspace)
             if ok:
                 payload = self._read_chat_session_state(chat_port)
                 instance = str((payload or {}).get("server_instance") or "")
@@ -396,7 +400,8 @@ class Handler(BaseHTTPRequestHandler):
         post_deadline = time.time() + SESSION_POST_RETRY_WINDOW if method == "POST" and suffix == "/new-chat" else time.time()
         public_message_limit = self._public_message_limit(parsed.query) if method == "GET" and suffix == "/messages" else 0
         while True:
-            ok, chat_port, detail = ensure_chat_server(session_name)
+            workspace = str((record or {}).get("workspace") or "").strip()
+            ok, chat_port, detail = ensure_chat_server(session_name, workspace=workspace)
             if not ok:
                 body_bytes = f"Failed to start chat for {session_name}: {detail}".encode("utf-8")
                 self.send_response(500)
@@ -469,7 +474,8 @@ class Handler(BaseHTTPRequestHandler):
         qs = parse_qs(parsed.query)
         session_name = (qs.get("session", [""])[0] or "").strip()
         fmt = qs.get("format", [""])[0]
-        if not session_name or self._active_session_record(session_name, revive=True) is None:
+        record = self._active_session_record(session_name, revive=True) if session_name else None
+        if not session_name or record is None:
             if getattr(self, "_Handler__tmux_unhealthy_detail", ""):
                 payload = json.dumps({"ok": False, "error": f"tmux unresponsive: {self._Handler__tmux_unhealthy_detail}"})
                 self._send_json(503, payload)
@@ -477,7 +483,8 @@ class Handler(BaseHTTPRequestHandler):
             payload = '{"ok": false, "error": "Session not found"}'
             self._send_json(404, payload)
             return
-        ok, _chat_port, detail = ensure_chat_server(session_name)
+        workspace = str(record.get("workspace") or "").strip()
+        ok, _chat_port, detail = ensure_chat_server(session_name, workspace=workspace)
         if not ok:
             payload = '{"ok": false, "error": "%s"}' % detail.replace('"', "'")
             self._send_json(500, payload)

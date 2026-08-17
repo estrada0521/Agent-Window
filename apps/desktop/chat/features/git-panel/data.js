@@ -193,7 +193,7 @@
         if (dpGitContent) dpGitContent.innerHTML = html;
       },
       loadingHtml: '<div class="dp-empty-state inline-loading-row"></div>',
-      errorHtml: (message) => `<div class="dp-empty-state">${escapeHtml(message)}</div>`,
+      errorHtml: (message) => `<div class="dp-empty-state error">${escapeHtml(message)}</div>`,
       emptyCommitsHtml: '<div class="dp-empty-state" data-git-empty="1">No commits</div>',
       loadMoreRetryText: "Retry loading commits",
       loadMoreCountText: (loaded, total) => `Load more (${loaded}/${total})`,

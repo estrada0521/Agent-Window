@@ -776,7 +776,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       } else if (error) {
         const node = document.createElement("button");
         node.type = "button";
-        node.className = "repo-browser-empty";
+        node.className = "repo-browser-empty error";
         node.textContent = error;
         node.addEventListener("click", (e) => {
           e.preventDefault();

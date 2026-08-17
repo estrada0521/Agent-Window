@@ -298,8 +298,12 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
 
 
 def _post_open_finder(handler, _parsed, ctx) -> None:
+    workspace = str(ctx["workspace"] or "").strip()
+    if not workspace:
+        handler._send_json(400, {"ok": False, "error": "workspace unavailable"})
+        return
     try:
-        target = Path(ctx["workspace"] or ctx["repo_root"]).resolve()
+        target = Path(workspace).resolve()
         if not target.exists():
             handler._send_json(404, {"ok": False, "error": "workspace not found"})
             return

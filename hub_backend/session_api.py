@@ -36,7 +36,12 @@ class HubSessionApi:
     def resolve_session_chat_target(self, session_name: str) -> dict:
         query = self.ctx.active_session_records_query()
         if session_name in query.records:
-            ok, chat_port, detail = self.ctx.ensure_chat_server(session_name)
+            workspace = str((query.records.get(session_name) or {}).get("workspace") or "").strip()
+            ok, chat_port, detail = self.ctx.ensure_chat_server(
+                session_name,
+                session_is_active=True,
+                workspace=workspace,
+            )
             if not ok:
                 return {"status": "error", "detail": detail}
             return {
@@ -51,8 +56,6 @@ class HubSessionApi:
         if not record:
             return {"status": "missing"}
         workspace = str(record.get("workspace") or "").strip()
-        if not workspace or not Path(workspace).is_dir():
-            return {"status": "error", "detail": f"Saved workspace is unavailable: {workspace or 'unknown'}"}
         ok, chat_port, detail = self.ctx.ensure_chat_server(
             session_name,
             session_is_active=False,
@@ -86,6 +89,12 @@ class HubSessionApi:
 
     def write_session_metadata(self, session_name: str, workspace: str) -> dict:
         """Write .meta and ensure .log.jsonl exists."""
+        session_name = str(session_name or "").strip()
+        workspace = str(workspace or "").strip()
+        if not session_name:
+            raise ValueError("session is required")
+        if not workspace:
+            raise ValueError("workspace is required")
         session_dir = self.session_logs_dir(session_name)
         session_dir.mkdir(parents=True, exist_ok=True)
         log_path = session_log_path(session_name)

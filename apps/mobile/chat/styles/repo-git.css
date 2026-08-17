@@ -302,7 +302,7 @@
 
     .repo-browser-empty.error,
     .git-commit-file-empty.error {
-      color: var(--external-link-fg);
+      color: var(--error);
     }
 
     @keyframes hub-inline-loading-spin {

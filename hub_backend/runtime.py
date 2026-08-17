@@ -12,7 +12,6 @@ from pathlib import Path
 from hub_backend.chat_supervisor import (
     chat_launch_env as _chat_launch_env_impl,
     chat_launch_session_dir as _chat_launch_session_dir_impl,
-    chat_launch_workspace as _chat_launch_workspace_impl,
     chat_ready as _chat_ready_impl,
     chat_server_matches as _chat_server_matches_impl,
     chat_server_state as _chat_server_state_impl,
@@ -202,8 +201,8 @@ class HubRuntime:
     def chat_server_state(self, chat_port: int) -> dict | None:
         return _chat_server_state_impl(self, chat_port)
 
-    def chat_server_matches(self, session_name: str, chat_port: int) -> bool:
-        return _chat_server_matches_impl(self, session_name, chat_port)
+    def chat_server_matches(self, session_name: str, chat_port: int, *, workspace: str = "") -> bool:
+        return _chat_server_matches_impl(self, session_name, chat_port, workspace=workspace)
 
     def stop_chat_server(self, session_name: str) -> tuple[bool, str]:
         return _stop_chat_server_impl(
@@ -218,17 +217,25 @@ class HubRuntime:
     def stop_inactive_chat_servers(self, *, keep_session: str = "") -> str:
         return _stop_inactive_chat_servers_impl(self, keep_session=keep_session)
 
-    def _chat_launch_workspace(self, session_name: str) -> tuple[str, bool]:
-        return _chat_launch_workspace_impl(self, session_name)
-
     def _chat_launch_session_dir(self, session_name: str, workspace: str, explicit_log_dir: str) -> Path:
         return _chat_launch_session_dir_impl(self, session_name, workspace, explicit_log_dir)
 
     def _chat_launch_env(self, *, session_is_active: bool = True) -> dict[str, str]:
         return _chat_launch_env_impl(self, session_is_active=session_is_active)
 
-    def _chat_launch_port(self, session_name: str) -> tuple[int, bool, str]:
-        return _chat_launch_port_impl(self, session_name)
+    def _chat_launch_port(
+        self,
+        session_name: str,
+        *,
+        workspace: str = "",
+        session_is_active: bool = True,
+    ) -> tuple[int, bool, str]:
+        return _chat_launch_port_impl(
+            self,
+            session_name,
+            workspace=workspace,
+            session_is_active=session_is_active,
+        )
 
     def ensure_chat_server(
         self,

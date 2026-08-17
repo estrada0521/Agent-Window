@@ -108,8 +108,7 @@
       --pane-trace-body-bg: rgb(var(--pane-trace-body-bg-channels));
       --warn: #fbbf24;
       --warn-bright: #fcd34d;
-      --error: #ef4444;
-      --error-bright: #f87171;
+      --error: #ff6b6b;
       --inline-file-link-fg: var(--link-blue);
       --code-copy-bg: transparent;
       --code-copy-hover-bg: __CODE_COPY_HOVER_BG__;
@@ -169,6 +168,7 @@
       --mobile-sheet-floating-hover-bg: rgba(0, 0, 0, 0.13);
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);
       --external-link-fg: rgb(207, 34, 46);
+      --error: rgb(207, 34, 46);
 
       --link-blue: rgb(9, 105, 218);
       --link-blue-channels: 9, 105, 218;

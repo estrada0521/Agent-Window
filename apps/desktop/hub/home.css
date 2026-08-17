@@ -1212,10 +1212,10 @@
       box-sizing: border-box;
     }
     .desk-reload-shell {
-      position: fixed;
+      position: absolute;
       inset: 0;
-      z-index: 12000;
-      background: var(--bg);
+      z-index: 4;
+      background: var(--chat-pane-bg);
       display: none;
       align-items: center;
       justify-content: center;

@@ -32,7 +32,6 @@ class WorkspaceSyncApi:
         )
         workspace_git.configure(
             workspace=self.workspace,
-            repo_root=self.repo_root,
             runtime=runtime,
         )
         start_workspace_fsevents_watcher(self)

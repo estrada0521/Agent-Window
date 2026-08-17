@@ -27,6 +27,12 @@ class FileRuntimeListTests(unittest.TestCase):
             self.assertEqual([entry["name"] for entry in app_entries], ["test.md"])
             self.assertEqual(app_entries[0]["kind"], "file")
 
+    def test_list_dir_fails_when_workspace_is_missing(self) -> None:
+        runtime = FileRuntime(workspace="", repo_root="/Users/okadaharuto/workspace/Agent-Window")
+        self.assertEqual(runtime.workspace, "")
+        with self.assertRaisesRegex(RuntimeError, "workspace is not configured"):
+            runtime.list_dir("")
+
     def test_search_files_uses_git_visible_paths_not_ignored_dumps(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
