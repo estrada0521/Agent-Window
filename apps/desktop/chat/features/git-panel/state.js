@@ -58,16 +58,6 @@
     };
     const dpSummaryCountsKey = (state) =>
       Array.isArray(state?.counts) ? state.counts.map((value) => Math.max(0, parseInt(value) || 0)).join(":") : "";
-    let dpGitCommits = [];
-    let dpGitNextOffset = 0;
-    let dpGitTotalCommits = 0;
-    let dpGitHasMore = false;
-    let dpGitPageLoading = false;
-    let dpGitLoadError = "";
-    let dpGitLoadSeq = 0;
-    let dpGitDetailContext = null;
-    let dpGitDetailNeedsRefresh = false;
-    let dpGitObserver = null;
     let dpGitHeaderSummaryState = null;
     let dpGitAppliedSummaryCountsKey = "";
     const dpApplyGitOverviewHeader = () => {
