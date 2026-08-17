@@ -19,11 +19,6 @@ def parse_session_dir(name: str) -> str:
     return name
 
 
-def count_nonempty_lines(path: Path) -> int:
-    with path.open("r", encoding="utf-8") as handle:
-        return sum(1 for line in handle if line.strip())
-
-
 def parse_saved_time(value: str) -> float:
     if not value:
         return 0
@@ -174,7 +169,6 @@ def build_session_record(
         "session_path": f"/session/{session_slug}/",
         "log_dir": str(path.parent),
         "log_path": str(path),
-        "chat_count": count_nonempty_lines(path) if primary else 0,
         "latest_message_sender": preview["sender"],
         "latest_message_preview": preview["text"],
     }
