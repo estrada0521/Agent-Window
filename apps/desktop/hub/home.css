@@ -115,114 +115,7 @@
       max-height: var(--app-shell-height);
       box-shadow: none;
     }
-    .hero {
-      padding: 8px 2px 18px 2px;
-    }
-    .eyebrow {
-      color: var(--muted);
-      font-size: 12px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    h1 {
-      margin: 0;
-      font-size: clamp(28px, 5vw, 40px);
-      line-height: 1.02;
-      font-weight: 600;
-      letter-spacing: -0.03em;
-    }
-    .sub {
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.55;
-      max-width: 40rem;
-    }
-    .home-grid {
-      display: grid;
-      gap: 12px;
-      margin-top: 8px;
-    }
-    .hub-nav {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 14px;
-      width: 100%;
-      align-items: center;
-    }
-    .hub-nav a {
-      color: var(--muted);
-      text-decoration: none;
-      border: 0.5px solid var(--line);
-      background: var(--panel);
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 12px;
-      line-height: 1;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    .home-card {
-      display: block;
-      text-decoration: none;
-      color: inherit;
-      background: var(--panel);
-      border: 0.5px solid var(--line);
-      border-radius: 20px;
-      padding: 24px 22px 22px;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.05);
-      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-    }
-    .home-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: radial-gradient(circle at top left, rgba(255,255,255,0.04), transparent 60%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-    }
-    .home-card:hover {
-      transform: translateY(-4px) scale(1.01);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.15);
-      background: var(--panel-2);
-    }
-    .home-card:hover::before {
-      opacity: 1;
-    }
-    .home-label {
-      color: var(--muted);
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .home-title {
-      font-size: 22px;
-      line-height: 1.1;
-      font-weight: 600;
-      letter-spacing: -0.03em;
-    }
-    .home-note {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-      margin-top: 10px;
-      max-width: 34rem;
-    }
-    .hub-nav a.active {
-      background: var(--bg);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
     body { padding: 0; }
-    .hero, .home-grid, .hub-nav { display: none; }
     __HUB_HEADER_CSS__
     :root {
       --desk-chrome-size: 24px;
@@ -364,8 +257,7 @@
     }
     html[data-tauri-app="1"] .desk-workbench,
     html[data-tauri-app="1"] .desk-chat-frame,
-    html[data-tauri-app="1"] .desk-sidebar-frame,
-    html[data-tauri-app="1"] .desk-inline-frame {
+    html[data-tauri-app="1"] .desk-sidebar-frame {
       background: transparent;
     }
     .desk-workbench,
@@ -494,9 +386,6 @@
     .desk-sidebar-shell > * {
       position: relative;
       z-index: 1;
-    }
-    .desk-sidebar-topbar {
-      display: none;
     }
     .desk-floating-controls {
       display: flex;
@@ -912,39 +801,18 @@
     .desk-new-session-toggle:hover::before {
       opacity: 1;
     }
-    .desk-inline-panel {
-      display: none;
-      margin-top: 0;
-      border-radius: 0;
-      overflow: hidden;
-      border-top: none;
-      background: var(--bg);
-    }
     .desk-sidebar-sessions,
     .desk-session-list,
     .desk-new-session-section,
     .desk-sidebar-pane,
     .desk-sidebar-pane-head,
-    .desk-inline-panel,
     .desk-swipe-row,
     .desk-swipe-track,
     .desk-swipe-action-rail {
       background: transparent;
     }
-    .desk-sidebar-frame,
-    .desk-inline-frame {
+    .desk-sidebar-frame {
       background: transparent;
-    }
-    .desk-inline-panel.open {
-      display: block;
-    }
-    .desk-inline-frame {
-      display: block;
-      width: 100%;
-      height: 420px;
-      border: none;
-      background: var(--bg);
-      transition: height 180ms ease;
     }
     .desk-section-label {
       padding: 9px 12px 8px;
@@ -1455,14 +1323,6 @@
       html:not([data-tauri-app="1"]) .desk-row-preview {
         font-size: 14px;
         line-height: 1.32;
-      }
-      html:not([data-tauri-app="1"]) .desk-sidebar-topbar {
-        padding-left: 16px;
-        padding-right: 16px;
-      }
-      html:not([data-tauri-app="1"]) .desk-sidebar-bottom {
-        padding-left: 16px;
-        padding-right: 16px;
       }
       html:not([data-tauri-app="1"]) .desk-sidebar-resizer {
         display: none;

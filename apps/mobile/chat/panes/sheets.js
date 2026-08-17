@@ -535,7 +535,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
     const updateRepoPanel = async (entries) => {
       if (!repoPanel) return;
       repoPanelEntries = Array.isArray(entries) ? entries : [];
-      document.querySelectorAll(".page-menu-btn .repo-badge").forEach((node) => node.remove());
 
       const normalizeRepoPath = (value) => String(value || "")
         .replace(/\\/g, "/")

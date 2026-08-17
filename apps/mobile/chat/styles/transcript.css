@@ -697,13 +697,7 @@
       font-size: 1em;
     }
 
-    .message-thinking-label-agent,
-    .message-thinking-row-provider {
-      align-items: flex-start;
-    }
-
-    .message-thinking-label-agent,
-    .message-thinking-label-provider {
+    .message-thinking-label-agent {
       display: inline-flex;
       flex-direction: column;
       align-items: flex-start;

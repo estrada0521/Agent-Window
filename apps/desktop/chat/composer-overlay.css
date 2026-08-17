@@ -132,8 +132,7 @@
       transform: translateY(0) scale(1);
       pointer-events: auto;
     }
-    .composer-overlay.closing .composer,
-    .composer.composer-hidden {
+    .composer-overlay.closing .composer {
       opacity: 0;
       filter: blur(6px);
       transform: translateY(6px) scale(0.992);
@@ -337,7 +336,6 @@
     .composer-attach-btn,
     .target-chip,
     .copy-btn,
-    .file-card,
     .send-btn,
     #scrollToBottomBtn,
     #composerFabBtn {
@@ -351,8 +349,6 @@
     .target-chip:focus-visible,
     .copy-btn:focus,
     .copy-btn:focus-visible,
-    .file-card:focus,
-    .file-card:focus-visible,
     .send-btn:focus,
     .send-btn:focus-visible,
     #scrollToBottomBtn:focus,
@@ -530,20 +526,4 @@
     }
     .agent-icon-slot--thinking .agent-icon-instance-sub {
       color: var(--icon-fg);
-    }
-    .git-commit-icon-wrap .agent-icon-slot {
-      width: 18px;
-      height: 18px;
-      --agent-icon-sub-size: 10px;
-      --agent-icon-sub-font-size: 10px;
-      --agent-icon-sub-right: -8px;
-      --agent-icon-sub-bottom: 0px;
-    }
-    .git-commit-icon-wrap .agent-icon-slot .git-commit-icon {
-      width: 100%;
-      height: 100%;
-    }
-    .conversation-empty-state {
-      background: transparent;
-      padding: 0 12px;
     }

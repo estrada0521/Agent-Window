@@ -61,18 +61,6 @@
       pointer-events: none;
     }
 
-    @keyframes streamCharReveal {
-      to {
-        opacity: 1;
-      }
-    }
-
-    .message-thinking-label-preview .stream-char {
-      opacity: 0;
-      animation: streamCharReveal 0.021s ease forwards;
-      animation-delay: calc(var(--stream-char-i) * var(--stream-char-delay, 8ms));
-    }
-
     .thinking-char {
       color: var(--muted);
       font-size: 1.25em;
@@ -143,10 +131,6 @@
         transition: none;
       }
 
-      .message-thinking-label-preview .stream-char {
-        animation: none;
-        opacity: 1;
-      }
     }
 
     .meta {
@@ -235,79 +219,4 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-body-mobile.css__
     .message-deferred-btn[disabled] {
       color: var(--muted);
       cursor: default;
-    }
-
-    .file-card {
-      display: inline-flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 10px;
-      margin: 4px 0;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 8px;
-      background: rgb(25, 24, 23);
-      cursor: pointer;
-      color: var(--fg);
-      text-align: left;
-      max-width: 100%;
-      font-size: var(--message-text-size, 13px);
-      line-height: 21px;
-    }
-
-    .has-hover .file-card:hover {
-      background: rgba(255, 255, 255, 0.06);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .file-card-icon {
-      width: 1.1em;
-      height: 1.1em;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      color: var(--icon-muted);
-    }
-
-    .file-card-icon svg {
-      width: 100%;
-      height: 100%;
-      stroke-width: 2.2px;
-    }
-
-    .file-card-name {
-      font-size: inherit;
-      font-weight: inherit;
-      line-height: inherit;
-      flex-shrink: 0;
-    }
-
-    .file-card-path {
-      order: 3;
-      flex: 0 0 100%;
-      display: block;
-      margin-top: -2px;
-      padding-left: calc(0.9em + 6px);
-      max-width: 100%;
-      color: var(--muted);
-      font-family: inherit;
-      font-size: inherit;
-      font-weight: inherit;
-      line-height: inherit;
-      white-space: normal;
-      overflow: visible;
-      text-overflow: clip;
-      overflow-wrap: anywhere;
-      word-break: normal;
-    }
-
-    .file-card-open {
-      order: 2;
-      margin-left: auto;
-      font-size: inherit;
-      font-weight: inherit;
-      line-height: inherit;
-      color: var(--muted);
-      flex-shrink: 0;
     }
