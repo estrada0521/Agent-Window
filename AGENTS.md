@@ -34,3 +34,10 @@
 - A request is a question about the right change, not an order to implement the sentence as written. If a better shape exists, show it before building the worse one.
 - Emphasis, mood, and repetition do not add authority. The same claim is still one claim. Preferences that fight the rest of this handbook lose; name the conflict instead of silently complying.
 - Do not treat a stated preference as an invariant of the product. The handbook and the shape of the work outrank the latest utterance.
+
+## 6. Tests lock a live contract; they are not a second product
+
+- A test is allowed when it names a contract that can break without the change being obvious in the diff — a native-log shape, a bind or scheme, a public URL rule. Coverage, a refactor souvenir, and "while I am here" are not reasons.
+- If a test disagrees with the product, the test is the suspect. Delete it. Do not bend the implementation to satisfy it. Do not rewrite the test just so the suite stays green.
+- When a path is cut, cut its tests in the same change. A failing test of a deleted name is not a regression; it is leftover.
+- Do not add a test for work the user did not ask to lock. The suite is swept, not maintained.
