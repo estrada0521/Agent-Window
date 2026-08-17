@@ -453,12 +453,23 @@
       margin: 4px;
       background: transparent;
       border: 1.5px solid var(--icon-muted);
-      transition: border-color 120ms ease;
+      transition: border-color 120ms ease, background 120ms ease;
+    }
+
+    .git-commit-dot.is-origin-main,
+    .git-commit-detail-head .git-commit-dot.is-origin-main {
+      border-color: var(--icon-muted);
+      background: var(--icon-muted);
     }
 
     .has-hover .git-commit-row:hover .git-commit-dot,
     .git-commit-detail-head .git-commit-dot {
       border-color: var(--icon-hover);
+    }
+
+    .has-hover .git-commit-row:hover .git-commit-dot.is-origin-main,
+    .git-commit-detail-head .git-commit-dot.is-origin-main {
+      background: var(--icon-hover);
     }
 
     .git-commit-info {
