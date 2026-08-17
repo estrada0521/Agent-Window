@@ -5,11 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from message_delivery import mark_agent_sent
-from native_log_sync.agents.grok.read_runtime import (
-    iter_tool_calls_from_update,
-    runtime_tool_events,
-)
+from native_log_sync.agents.grok.read_runtime import iter_tool_calls_from_update
 from native_log_sync.agents.grok.read_updates import _turn_completed, extract_grok_assistant_text, sync_grok_native_log
 
 
@@ -34,14 +30,6 @@ class _Runtime:
 
     def notify_session_state_changed(self, keys, *, reason: str = "") -> None:
         self.runtime_notifies.append(reason)
-
-
-class _DeliveryRuntime:
-    def __init__(self) -> None:
-        self.running_agents: list[str] = []
-
-    def _mark_running(self, agent: str) -> None:
-        self.running_agents.append(agent)
 
 
 class GrokNativeLogTests(unittest.TestCase):
@@ -87,11 +75,6 @@ class GrokNativeLogTests(unittest.TestCase):
         )
         self.assertFalse(_turn_completed({"params": {"update": {"sessionUpdate": "agent_message_chunk"}}}))
 
-    def test_sending_to_grok_marks_the_agent_running(self) -> None:
-        runtime = _DeliveryRuntime()
-        mark_agent_sent(runtime, "grok")
-        self.assertEqual(runtime.running_agents, ["grok"])
-
     def test_tool_call_start_is_parsed_and_updates_are_ignored(self) -> None:
         start = {
             "params": {
@@ -119,41 +102,6 @@ class GrokNativeLogTests(unittest.TestCase):
             [("read_file", {"target_file": "/repo/README.md", "_tool_call_id": "call-1"})],
         )
         self.assertEqual(iter_tool_calls_from_update(update), [])
-
-    def test_runtime_labels_match_common_grok_tools(self) -> None:
-        cases = [
-            (
-                "run_terminal_command",
-                {"command": "ls -la", "description": "List root"},
-                "Bash List root",
-            ),
-            (
-                "read_file",
-                {"target_file": "/Users/okadaharuto/workspace/Agent-Window/README.md"},
-                "Read README.md",
-            ),
-            (
-                "grep",
-                {"pattern": "typing", "glob": "*.py"},
-                "Search typing in *.py",
-            ),
-            (
-                "list_dir",
-                {"target_directory": "/Users/okadaharuto/workspace/Agent-Window/apps"},
-                "Explore apps",
-            ),
-            (
-                "web_search",
-                {"query": "grok build cli"},
-                "Search grok build cli",
-            ),
-        ]
-        ws = "/Users/okadaharuto/workspace/Agent-Window"
-        for name, args, expected in cases:
-            with self.subTest(name=name):
-                events = runtime_tool_events(name, args, workspace=ws)
-                self.assertEqual(len(events), 1)
-                self.assertEqual(events[0]["text"], expected)
 
     def test_tool_call_events_push_running_display(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

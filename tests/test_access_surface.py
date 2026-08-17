@@ -7,7 +7,8 @@ from unittest.mock import patch
 
 from backend_core.access.settings import local_bind_host, local_bind_scheme
 from hub_backend.runtime import HubRuntime
-from hub_backend.server_helpers import format_session_chat_url
+from hub_backend.server_helpers import format_session_chat_url, resolve_external_origin
+from hub_backend.session_query import host_without_port
 
 
 class PwaBindTests(unittest.TestCase):
@@ -30,6 +31,21 @@ class PwaBindTests(unittest.TestCase):
 
 
 class SessionChatUrlTests(unittest.TestCase):
+    def test_only_the_public_hostname_is_public(self) -> None:
+        origin_kw = {
+            "host_without_port_fn": host_without_port,
+            "public_host": "hub.example.com",
+            "public_hub_port": 443,
+            "hub_port": 8788,
+            "scheme": "https",
+        }
+        lan = resolve_external_origin("192.168.0.10:8788", 8761, **origin_kw)
+        tailscale = resolve_external_origin("100.64.0.10:8788", 8761, **origin_kw)
+        public = resolve_external_origin("hub.example.com", 8761, **origin_kw)
+        self.assertFalse(lan["is_public"])
+        self.assertFalse(tailscale["is_public"])
+        self.assertTrue(public["is_public"])
+
     def test_lan_or_tailscale_stays_port_direct(self) -> None:
         url = format_session_chat_url(
             "192.168.3.13:8788",

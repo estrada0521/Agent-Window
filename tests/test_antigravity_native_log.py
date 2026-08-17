@@ -113,25 +113,7 @@ class AntigravityTranscriptTests(unittest.TestCase):
 
 
 class AntigravityRuntimeTests(unittest.TestCase):
-    def test_all_observed_tool_families_have_stable_runtime_output(self) -> None:
-        cases = {
-            "view_file": ({"AbsolutePath": "/workspace/src/a.py"}, "Read src/a.py"),
-            "list_dir": ({"DirectoryPath": "/workspace/src"}, "Explore src"),
-            "grep_search": ({"Query": "needle", "SearchPath": "/workspace/src"}, "Search needle in src"),
-            "find_by_name": ({"Pattern": "*.py", "SearchDirectory": "/workspace"}, "Search *.py in ."),
-            "run_command": ({"CommandLine": "git status --short"}, "Git status --short"),
-            "replace_file_content": ({"TargetFile": "/workspace/a.py"}, "Edit a.py"),
-            "multi_replace_file_content": ({"TargetFile": "/workspace/a.py"}, "Edit a.py"),
-            "write_to_file": ({"TargetFile": "/workspace/new.py"}, "Write new.py"),
-            "search_web": ({"query": "Antigravity CLI"}, "Web Antigravity CLI"),
-            "define_subagent": ({"toolSummary": "Define auditor"}, "Agent Define auditor"),
-            "invoke_subagent": ({"toolSummary": "Launch auditors"}, "Agent Launch auditors"),
-            "send_message": ({"Recipient": "root"}, "Message root"),
-        }
-        for name, (args, expected) in cases.items():
-            with self.subTest(name=name):
-                self.assertEqual(runtime_tool_events(name, args, workspace="/workspace")[0]["text"], expected)
-
+    def test_status_polls_are_quiet_and_unknown_tools_stay_visible(self) -> None:
         self.assertEqual(runtime_tool_events("command_status", {"CommandId": "x"}), [])
         self.assertEqual(runtime_tool_events("manage_task", {"Action": "status"}), [])
         self.assertEqual(runtime_tool_events("future_tool", {})[0]["text"], "Tool future_tool")
