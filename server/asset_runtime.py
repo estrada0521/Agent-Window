@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import base64
-import logging
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -37,13 +36,9 @@ class ChatAssetRuntime:
 
     def _icon_data_uri(self, name: str) -> str:
         icon_path = self.icon_files.get(name)
-        if not icon_path or not icon_path.exists():
+        if not icon_path or not icon_path.is_file():
             return ""
-        try:
-            raw = icon_path.read_bytes()
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            return ""
+        raw = icon_path.read_bytes()
         return "data:image/svg+xml;base64," + base64.b64encode(raw).decode("ascii")
 
     def resolve_font_file(self, name: str) -> Path | None:
@@ -69,20 +64,14 @@ class ChatAssetRuntime:
         if not key:
             return None
         path = self.icon_files.get(key)
-        if not path or not path.exists():
+        if not path:
             return None
-        try:
-            return path.read_bytes()
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
+        if not path.is_file():
             return None
+        return path.read_bytes()
 
     def font_bytes(self, name: str) -> bytes | None:
         path = self.resolve_font_file(name)
         if not path:
             return None
-        try:
-            return path.read_bytes()
-        except Exception as exc:
-            logging.error(f"Unexpected error: {exc}", exc_info=True)
-            return None
+        return path.read_bytes()

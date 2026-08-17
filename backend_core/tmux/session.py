@@ -54,9 +54,20 @@ def pane_id_for_agent(runtime, agent_name: str, *, subprocess_module=subprocess)
         [*runtime.tmux_prefix, "show-environment", "-t", runtime.session_name, pane_var],
         capture_output=True,
         text=True,
+        timeout=2,
         check=False,
     )
-    return res.stdout.strip().split("=", 1)[-1] if "=" in res.stdout else ""
+    line = res.stdout.strip()
+    if res.returncode == 0 and "=" in line:
+        return line.split("=", 1)[1].strip()
+    if res.returncode != 0:
+        detail = (res.stderr or res.stdout or "").strip()
+        if "unknown variable" in detail.lower():
+            return ""
+        raise RuntimeError(
+            f"tmux show-environment {pane_var} failed (exit {res.returncode}): {detail or line!r}"
+        )
+    raise RuntimeError(f"tmux show-environment {pane_var} returned unreadable output: {line!r}")
 
 
 def pane_field(runtime, pane_id: str, field: str, *, subprocess_module=subprocess) -> str:

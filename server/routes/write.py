@@ -218,32 +218,33 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
     if agent:
         try:
             pane_id = ctx["runtime"].pane_id_for_agent(agent)
-            if pane_id:
-                socket_flag = "-S" if "/" in ctx["tmux_socket"] else "-L"
-                prefix = ["tmux", socket_flag, ctx["tmux_socket"]]
-                win_res = subprocess.run(
-                    [*prefix, "display-message", "-p", "-t", pane_id, "#{window_id}"],
-                    capture_output=True, text=True, check=False,
-                )
-                window_id = (win_res.stdout or "").strip()
-                if window_id:
-                    subprocess.run(
-                        [*prefix, "select-window", "-t", window_id],
-                        capture_output=True, check=False,
-                    )
+        except Exception as exc:
+            handler._send_json(500, {"ok": False, "error": str(exc)})
+            return
+        if pane_id:
+            socket_flag = "-S" if "/" in ctx["tmux_socket"] else "-L"
+            prefix = ["tmux", socket_flag, ctx["tmux_socket"]]
+            win_res = subprocess.run(
+                [*prefix, "display-message", "-p", "-t", pane_id, "#{window_id}"],
+                capture_output=True, text=True, check=False,
+            )
+            window_id = (win_res.stdout or "").strip()
+            if window_id:
                 subprocess.run(
-                    [*prefix, "select-pane", "-t", pane_id],
+                    [*prefix, "select-window", "-t", window_id],
                     capture_output=True, check=False,
                 )
-                subprocess.Popen(
-                    ["osascript", "-e", 'tell application "Terminal" to activate'],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-                handler._send_json(200, {"ok": True})
-                return
-        except Exception:
-            pass
+            subprocess.run(
+                [*prefix, "select-pane", "-t", pane_id],
+                capture_output=True, check=False,
+            )
+            subprocess.Popen(
+                ["osascript", "-e", 'tell application "Terminal" to activate'],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            handler._send_json(200, {"ok": True})
+            return
     try:
         socket_flag = "-S" if "/" in ctx["tmux_socket"] else "-L"
         cols, rows = 200, 40

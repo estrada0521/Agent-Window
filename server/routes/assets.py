@@ -62,9 +62,12 @@ def _get_chat_app_css(handler, _parsed, ctx) -> None:
     )
 
 
-def _get_icon_asset(handler, parsed, ctx) -> None:
-    name = parsed.path[6:]
-    body = ctx["asset_runtime"].icon_bytes(name)
+def _send_asset_bytes(handler, reader, name: str, *, content_type: str) -> None:
+    try:
+        body = reader(name)
+    except OSError as exc:
+        handler.send_error(500, str(exc))
+        return
     if body is None:
         handler.send_response(404)
         handler.end_headers()
@@ -73,24 +76,26 @@ def _get_icon_asset(handler, parsed, ctx) -> None:
         handler,
         200,
         body,
-        content_type="image/svg+xml",
+        content_type=content_type,
         cache_control="public, max-age=3600",
     )
 
 
-def _get_font_asset(handler, parsed, ctx) -> None:
-    name = parsed.path[6:]
-    body = ctx["asset_runtime"].font_bytes(name)
-    if body is None:
-        handler.send_response(404)
-        handler.end_headers()
-        return
-    _send_bytes(
+def _get_icon_asset(handler, parsed, ctx) -> None:
+    _send_asset_bytes(
         handler,
-        200,
-        body,
+        ctx["asset_runtime"].icon_bytes,
+        parsed.path[6:],
+        content_type="image/svg+xml",
+    )
+
+
+def _get_font_asset(handler, parsed, ctx) -> None:
+    _send_asset_bytes(
+        handler,
+        ctx["asset_runtime"].font_bytes,
+        parsed.path[6:],
         content_type="font/ttf",
-        cache_control="public, max-age=3600",
     )
 
 
