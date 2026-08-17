@@ -444,6 +444,7 @@ __CHAT_INCLUDE:target-picker.js__
       }
     });
 __CHAT_INCLUDE:../../shared/chat/target-selection.js__
+__CHAT_INCLUDE:../../shared/chat/composer-draft.js__
     timeline.addEventListener("scroll", updateScrollBtn, { passive: true });
     timeline.addEventListener("scroll", requestCenteredMessageRowUpdate, { passive: true });
     window.addEventListener("resize", requestCenteredMessageRowUpdate);

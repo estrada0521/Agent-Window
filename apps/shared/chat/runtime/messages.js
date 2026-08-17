@@ -73,6 +73,7 @@ __CHAT_INCLUDE:../messages-data.js__
     const updateSessionUI = (data, displayEntries) => {
       currentSessionName = data.session || "";
       if (document.documentElement.dataset.mobile === "1") repoSession = currentSessionName;
+      restoreComposerDraft();
       sessionActive = !!data.active;
       const resolvedTargets = normalizedSessionTargets(data.targets);
       const picker = document.getElementById("targetPicker");

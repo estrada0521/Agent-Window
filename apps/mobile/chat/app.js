@@ -518,6 +518,7 @@ __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
       }
     });
 __CHAT_INCLUDE:../../shared/chat/target-selection.js__
+__CHAT_INCLUDE:../../shared/chat/composer-draft.js__
     const normalizedSessionTargets = (rawTargets) => {
       return Array.isArray(rawTargets)
         ? rawTargets.filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim())

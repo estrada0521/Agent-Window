@@ -13,6 +13,7 @@ __CHAT_INCLUDE:../session-state-projections.js__
       const hasOwn = (key) => Object.prototype.hasOwnProperty.call(data, key);
       if (typeof data.session === "string" && data.session) {
         currentSessionName = data.session;
+        restoreComposerDraft();
       }
       if (typeof data.active === "boolean") {
         sessionActive = data.active;

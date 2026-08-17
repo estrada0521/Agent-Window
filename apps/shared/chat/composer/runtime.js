@@ -188,6 +188,8 @@ __CHAT_INCLUDE:../upload-attached-files.js__
       if (sendBtn) sendBtn.classList.toggle("visible", hasText);
     };
     messageInput.addEventListener("input", updateSendBtnVisibility);
+    messageInput.addEventListener("input", saveComposerDraft);
+    window.addEventListener("pagehide", saveComposerDraft);
     messageInput.addEventListener("compositionstart", () => {
       composing = true;
     });
@@ -207,3 +209,7 @@ __CHAT_INCLUDE:../upload-attached-files.js__
         document.getElementById("composer").requestSubmit();
       });
     }
+    restoreComposerDraft();
+    queueMicrotask(() => {
+      if (typeof autoResizeTextarea === "function") autoResizeTextarea();
+    });

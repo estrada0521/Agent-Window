@@ -101,6 +101,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
       const rawInput = (forcedText != null ? forcedText : message.value).trim();
       const clearComposerDraft = () => {
         message.value = "";
+        clearStoredComposerDraft();
         updateSendBtnVisibility();
         autoResizeTextarea();
       };
