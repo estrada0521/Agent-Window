@@ -41,16 +41,6 @@ class FileRuntimeListTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "workspace is not available"):
             runtime.list_dir("")
 
-    def test_list_dir_hides_agent_window_runtime_dir(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            workspace = Path(tmp)
-            (workspace / ".agent-window").mkdir()
-            (workspace / "src").mkdir()
-            runtime = FileRuntime(workspace=workspace, repo_root=workspace)
-            names = {entry["name"] for entry in runtime.list_dir("")}
-            self.assertIn("src", names)
-            self.assertNotIn(".agent-window", names)
-
     def test_search_files_uses_git_visible_paths_not_ignored_dumps(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)

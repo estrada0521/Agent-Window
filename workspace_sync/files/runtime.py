@@ -59,7 +59,7 @@ class FileRuntime:
         ".m4a": "audio/mp4",
         ".flac": "audio/flac",
     }
-    SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache", ".agent-window"}
+    SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache"}
 
     def __init__(
         self,
