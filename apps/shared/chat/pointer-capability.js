@@ -6,7 +6,6 @@
       ".composer-attach-btn",
       ".target-chip",
       ".copy-btn",
-      ".file-card",
       ".repo-sheet-close",
       ".repo-browser-item",
       ".send-btn",

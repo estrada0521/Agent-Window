@@ -338,8 +338,6 @@
     .hub-main-menu-stack {
       display: block;
     }
-    .git-commit-detail-head .git-commit-stat-bar { display: none; }
-    .git-commit-detail-head .git-commit-stat-num { display: inline; }
     .git-commit-detail-body {
       flex: 1 1 auto;
       min-height: 0;

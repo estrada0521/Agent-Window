@@ -139,7 +139,6 @@
       font-size: 12px;
     }
 
-    .file-menu-list,
     .cmd-dropdown-list {
       padding-bottom: 10px;
       transition: opacity 160ms ease-out, transform 160ms cubic-bezier(0.16, 1, 0.3, 1);

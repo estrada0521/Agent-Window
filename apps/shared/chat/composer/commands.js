@@ -255,14 +255,6 @@
           return;
         }
       }
-      const fileCard = e.target.closest(".file-card");
-      if (fileCard) {
-        e.stopPropagation();
-        const path = fileCard.dataset.filepath;
-        const ext = fileCard.dataset.ext || "";
-        void openFileSurface(path, ext, fileCard, e, 0);
-        return;
-      }
       const collapseToggle = e.target.closest(".message-collapse-toggle");
       if (collapseToggle) {
         const row = collapseToggle.closest("article.message-row");

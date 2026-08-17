@@ -53,7 +53,7 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       if (!scope?.querySelectorAll) return;
       const snapshot = [];
       scope.querySelectorAll(".md-body code").forEach((codeEl) => {
-        if (!codeEl || codeEl.closest("pre") || codeEl.closest(".file-card")) return;
+        if (!codeEl || codeEl.closest("pre")) return;
         if (codeEl.closest("a")) return;
         if (codeEl.closest(".streaming-body-reveal")) return;
         snapshot.push(codeEl);

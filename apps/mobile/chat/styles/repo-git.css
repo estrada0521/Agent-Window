@@ -329,11 +329,6 @@
       flex: 0 0 auto;
     }
 
-    .inline-loading-label {
-      line-height: 1.2;
-      white-space: nowrap;
-    }
-
     .repo-browser-item-dimmed {
       color: var(--muted);
       opacity: 1;
@@ -621,25 +616,6 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .git-summary-icon-wrap {
-      position: relative;
-      flex-shrink: 0;
-      width: 18px;
-      height: 18px;
-      z-index: 1;
-    }
-
-    .git-summary-icon {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      color: var(--icon-muted);
-    }
-
-    .git-summary-row.clickable:hover .git-summary-icon {
-      color: var(--icon-fg);
-    }
-
     .git-summary-row .git-commit-chevron {
       color: var(--icon-muted);
       transition: transform 220ms ease, color 200ms ease;
@@ -822,14 +798,6 @@
       gap: 8px;
       min-width: 0;
       flex: 0 0 auto;
-    }
-
-    .git-commit-file-status {
-      color: var(--muted);
-      font-size: calc(var(--message-text-size, 13px) - 2px);
-      font-family: var(--agent-message-font-family, inherit);
-      font-variant-numeric: tabular-nums;
-      text-transform: lowercase;
     }
 
     .git-commit-file-actions {

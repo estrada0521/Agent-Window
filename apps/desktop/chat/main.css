@@ -49,8 +49,7 @@ __CHAT_INCLUDE:../../shared/chat/markdown-inline-code.css__
     #fileDropdown {
       background: transparent;
     }
-    .attach-card-ext,
-    .file-card {
+    .attach-card-ext {
       background: var(--surface);
     }
 __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__

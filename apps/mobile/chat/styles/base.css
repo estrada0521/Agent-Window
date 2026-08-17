@@ -644,37 +644,6 @@
       );
     }
 
-    .agent-icon {
-      width: 14px;
-      height: 14px;
-      flex-shrink: 0;
-      display: block;
-    }
-
-    .agent-icon {
-      position: relative;
-      background-color: var(--icon-muted);
-      -webkit-mask: var(--agent-icon-mask) center / contain no-repeat;
-      mask: var(--agent-icon-mask) center / contain no-repeat;
-      filter: none;
-      opacity: 1;
-      transition: background-color 140ms ease, filter 140ms ease;
-    }
-
-    .agent-icon::before {
-      content: "";
-      position: absolute;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      top: -2px;
-      right: -2px;
-      background: transparent;
-      box-shadow: 0 0 4px transparent;
-      z-index: 1;
-      transition: background 150ms ease, box-shadow 150ms ease;
-    }
-
     @keyframes dropdownIn {
       from {
         opacity: 0;

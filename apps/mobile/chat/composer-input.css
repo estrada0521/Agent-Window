@@ -359,10 +359,3 @@
       padding: 0 16px;
       box-sizing: border-box;
     }
-
-    .conversation-empty-title {
-      margin: 0;
-      color: var(--fg);
-      font: 500 12px/1.2 "SF Pro Text", "Segoe UI", sans-serif;
-      letter-spacing: 0.02em;
-    }
