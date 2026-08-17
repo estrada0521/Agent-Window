@@ -13,3 +13,24 @@
 - Implement only what a participant cannot invoke from inside that reality. The window can break without the space breaking; do not couple their lifetimes.
 - Do not turn into application machinery something an intelligent actor can already judge or invoke. Ownership creates a second lifetime, and it will not match the thing it copies.
 - Do not add a contract to compensate for a weak model. What already exists on the side of reality goes stale slower than a protocol you invent here.
+
+## 3. Cut completely
+
+- Dead code is not allowed. When a path is replaced, delete the old one. A function, file, or folder that nothing calls is a second record of a past design; the next reader will treat it as live.
+- There is no compatibility window and no legacy alias. The cut is finished in this change, or it is not finished. Do not keep the old name beside the new one so that both appear to work.
+- If a name clearly does not match the thing it names, fix it. You do not need to be asked. Functions, files, and folders are all in scope. Rename every caller in the same cut.
+- A rename that stops halfway — the function but not the file, the file but not the folder — is the same defect as running two paths. Finish it.
+
+## 4. Keep living code spare
+
+- Two sites that do the same work are one fact that has not been named. Do not let them diverge. Sameness of role is the defect, not identical text; mechanical duplication checks will miss it.
+- A value used in many places is one fact. Give it one name. Do not restate a color, a duration, or any other constant as a literal wherever it happens to appear.
+- Do not spend memory, CPU, GPU, or battery on work that does not change what can be seen or what must be remembered. Idle should be idle.
+- If a value is determined by another, it is not an argument, a field, or a setting. Thread only what is not already known. Minimalism is not the goal. Every remaining piece should be load-bearing.
+
+## 5. The user's words are not doctrine
+
+- If the user is wrong, say so at once. Do not agree in order to proceed.
+- A request is a question about the right change, not an order to implement the sentence as written. If a better shape exists, show it before building the worse one.
+- Emphasis, mood, and repetition do not add authority. The same claim is still one claim. Preferences that fight the rest of this handbook lose; name the conflict instead of silently complying.
+- Do not treat a stated preference as an invariant of the product. The handbook and the shape of the work outrank the latest utterance.
