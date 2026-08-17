@@ -9,7 +9,6 @@
       olderLoading = true;
       const prevHeight = timeline.scrollHeight;
       const prevTop = timeline.scrollTop;
-      rerenderCurrentMessages();
       try {
         const res = await fetchWithTimeout(messagesFetchUrl({ before_msg_id: firstMsgId }));
         if (!res.ok) throw new Error("older messages unavailable");
@@ -23,9 +22,14 @@
         setStatus(err?.message || String(err), true);
       } finally {
         olderLoading = false;
-        rerenderCurrentMessages({ suppressEntryAnimation: true });
-        const delta = timeline.scrollHeight - prevHeight;
-        timeline.scrollTop = prevTop + delta;
+        render(latestPayloadData, { suppressEntryAnimation: true });
+        if (!lastRenderPrepended) {
+          const delta = timeline.scrollHeight - prevHeight;
+          _programmaticScroll = true;
+          timeline.scrollTop = prevTop + delta;
+          _pollScrollLockTop = timeline.scrollTop;
+          queueMicrotask(() => { _programmaticScroll = false; });
+        }
         updateScrollBtn();
       }
     };

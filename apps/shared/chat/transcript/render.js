@@ -1,9 +1,11 @@
+    let lastRenderPrepended = false;
     const render = (data, {
       forceScroll = false,
       forceFullRender = false,
       suppressEntryAnimation = false,
     } = {}) => {
       try {
+        lastRenderPrepended = false;
         const shouldStick = forceScroll || _stickyToBottom || isNearBottom();
         const displayEntries = displayEntriesForData(data);
         const metaHiddenIds = computeMetaHiddenIds(displayEntries);
@@ -41,9 +43,12 @@
           }
         }
 
-        const displayIdSet = new Set(displayEntries.map(e => e.msg_id));
-        const newEntries = displayEntries.filter(e => !previousRenderedIds.has(e.msg_id));
-        const hasRemovals = previousRenderedIds.size > 0 && [...previousRenderedIds].some(id => !displayIdSet.has(id));
+        const displayIdSet = new Set(displayEntries.map((e) => String(e.msg_id || "")).filter(Boolean));
+        const newEntries = displayEntries.filter((e) => {
+          const id = String(e.msg_id || "");
+          return id && !previousRenderedIds.has(id);
+        });
+        const hasRemovals = previousRenderedIds.size > 0 && [...previousRenderedIds].some((id) => !displayIdSet.has(String(id)));
         const currentRenderedOrder = Array.from(root.querySelectorAll("[data-msgid]"))
           .map((node) => String(node.dataset.msgid || ""))
           .filter(Boolean);
@@ -56,6 +61,13 @@
           && newEntries.length > 0
           && nextIncrementalOrder.length === nextRenderedOrder.length
           && nextIncrementalOrder.every((id, idx) => id === nextRenderedOrder[idx]);
+        const canIncrementallyPrepend = !forceFullRender
+          && previousRenderedIds.size > 0
+          && newEntries.length > 0
+          && !hasRemovals
+          && nextRenderedOrder.length === currentRenderedOrder.length + newEntries.length
+          && newEntries.every((entry, idx) => nextRenderedOrder[idx] === String(entry.msg_id || ""))
+          && currentRenderedOrder.every((id, idx) => nextRenderedOrder[idx + newEntries.length] === id);
 
         const isInitialBulkLoad =
           previousRenderedIds.size === 0
@@ -99,6 +111,35 @@
             if (row.isConnected) postRenderScope(row);
           }
           pendingStreamRowCleanups = pendingRowCleanup;
+        } else if (canIncrementallyPrepend) {
+          const heightBefore = timeline.scrollHeight;
+          const topBefore = timeline.scrollTop;
+          const frag = document.createDocumentFragment();
+          const pendingRowCleanup = [];
+          for (const entry of newEntries) {
+            const entryMsgId = String(entry?.msg_id || "");
+            const tmpl = document.createElement("template");
+            tmpl.innerHTML = buildMsgHTML(entry, {
+              hideMetaRow: entryMsgId ? metaHiddenIds.has(entryMsgId) : false,
+            });
+            const row = tmpl.content.firstElementChild;
+            if (row) pendingRowCleanup.push({ row, stream: false });
+            frag.appendChild(tmpl.content);
+          }
+          const firstMsg = root.querySelector("[data-msgid]");
+          root.insertBefore(frag, firstMsg || root.firstChild);
+          _renderedIds = displayIdSet;
+          for (const { row } of pendingRowCleanup) {
+            if (row.isConnected) postRenderScope(row);
+          }
+          pendingStreamRowCleanups = pendingRowCleanup;
+          void timeline.offsetHeight;
+          _programmaticScroll = true;
+          timeline.scrollTop = topBefore + (timeline.scrollHeight - heightBefore);
+          _pollScrollLockTop = timeline.scrollTop;
+          _pollScrollAnchor = scrollAnchor;
+          lastRenderPrepended = true;
+          queueMicrotask(() => { _programmaticScroll = false; });
         } else {
           root.innerHTML = displayEntries.map((entry) => {
             const entryMsgId = String(entry?.msg_id || "");
@@ -106,7 +147,7 @@
               hideMetaRow: entryMsgId ? metaHiddenIds.has(entryMsgId) : false,
             });
           }).join("");
-          _renderedIds = new Set(displayEntries.map(e => e.msg_id));
+          _renderedIds = displayIdSet;
           const pendingFullRowCleanup = [];
           if (shouldMarkNewRowsAnimated) {
             const newEntryById = new Map(newEntries.map((e) => [String(e.msg_id || ""), e]));
@@ -131,7 +172,13 @@
         });
         renderThinkingIndicator();
 
-        if (shouldStick) {
+        if (canIncrementallyPrepend) {
+          _stickyToBottom = isNearBottom();
+          requestAnimationFrame(() => {
+            requestAnimationFrame(maybeRestorePollScrollLock);
+          });
+          settleScrollLockFrames(10);
+        } else if (shouldStick) {
           _pollScrollLockTop = null;
           _pollScrollAnchor = null;
           _programmaticScroll = true;

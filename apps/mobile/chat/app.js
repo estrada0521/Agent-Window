@@ -349,7 +349,7 @@ __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
       });
     };
     const STICKY_THRESHOLD = 32;
-    const PUBLIC_OLDER_AUTOLOAD_THRESHOLD = 120;
+    const OLDER_AUTOLOAD_MIN_THRESHOLD = 480;
     let _stickyToBottom = false;
     let _programmaticScroll = false;
     let _pollScrollRestoreRaf = 0;
@@ -421,7 +421,8 @@ __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
     timeline.addEventListener("scroll", updateStickyState, { passive: true });
     timeline.addEventListener("scroll", () => {
       if (olderLoading || !olderHasMore) return;
-      if (timeline.scrollTop > PUBLIC_OLDER_AUTOLOAD_THRESHOLD) return;
+      const threshold = Math.max(OLDER_AUTOLOAD_MIN_THRESHOLD, timeline.clientHeight * 1.25);
+      if (timeline.scrollTop > threshold) return;
       void loadOlderMessages();
     }, { passive: true });
     const updateScrollBtn = () => {
