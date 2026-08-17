@@ -200,8 +200,7 @@
     .has-hover .page-menu-btn:hover {
       color: var(--icon-fg);
     }
-    .page-menu-btn:active,
-    .page-menu-btn.open {
+    .page-menu-btn:active {
       color: var(--icon-fg);
       transform: scale(0.9);
     }

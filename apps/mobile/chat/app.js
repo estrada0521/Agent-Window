@@ -1,13 +1,5 @@
 __CHAT_INCLUDE:../../shared/chat/base.js__
     document.documentElement.dataset.mobile = "1";
-    document.querySelectorAll("[data-desktop-only='1']").forEach((node) => {
-      node.hidden = true;
-      if (node.tagName === "OPTION") node.disabled = true;
-    });
-    document.querySelectorAll("[data-mobile-only='1']").forEach((node) => {
-      node.hidden = false;
-      if (node.tagName === "OPTION") node.disabled = false;
-    });
     const _safariSafeAreaDummy = document.createElement("div");
     _safariSafeAreaDummy.style.cssText = "position:absolute;bottom:0;width:100%;height:env(safe-area-inset-bottom);pointer-events:none;opacity:0;z-index:-1;";
     document.body.appendChild(_safariSafeAreaDummy);
@@ -467,15 +459,12 @@ __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
         updateCenteredMessageRow();
       });
     };
-    const flashHeaderToggle = (targetNode) => {
-      const nodes = targetNode ? [targetNode] : document.querySelectorAll("#pageMenuBtn, #rightMenuBtn");
-      nodes.forEach((node) => {
-        if (node.classList.contains("animating")) return;
-        node.classList.add("animating");
-        setTimeout(() => {
-          node.classList.remove("animating");
-        }, 500);
-      });
+    const flashHeaderToggle = (node) => {
+      if (!node || node.classList.contains("animating")) return;
+      node.classList.add("animating");
+      setTimeout(() => {
+        node.classList.remove("animating");
+      }, 500);
     };
     document.addEventListener("pointerdown", (e) => {
       const toggle = e.target.closest(".page-menu-btn, .composer-attach-btn, .quick-action");

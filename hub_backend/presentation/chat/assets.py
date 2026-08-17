@@ -207,7 +207,7 @@ def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings
     normalized_session_name = str(session_name or "").strip()
     chat_document_title = f"{normalized_session_name} · {APP_DISPLAY_NAME}" if normalized_session_name else APP_DISPLAY_NAME
     actions_html = CHAT_HEADER_ACTIONS_HTML_MOBILE if normalized_variant == "mobile" else CHAT_HEADER_ACTIONS_HTML
-    panels_html = CHAT_SHEET_PANELS_HTML
+    panels_html = CHAT_SHEET_PANELS_HTML if normalized_variant == "mobile" else ""
     chat_header_html = render_page_header(
         title_href="/",
         title_id="pageTitleLink",

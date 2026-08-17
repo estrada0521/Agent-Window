@@ -1,6 +1,5 @@
     const closeHeaderMenus = () => {
       resetAgentActionMenus();
-      rightMenuBtn?.classList.remove("open");
     };
     const renderAgentIconRgba = (src) => new Promise((resolve) => {
       if (!src) return resolve(null);
@@ -210,7 +209,7 @@
       }
       document.getElementById(action)?.click();
     }
-    document.querySelectorAll(".quick-action:not(.quick-more-toggle):not([data-forward-action]):not(#attachBtn)").forEach((node) => {
+    document.querySelectorAll(".quick-action:not(.quick-more-toggle):not(#attachBtn)").forEach((node) => {
       node.addEventListener("click", async () => {
         closeQuickMore();
         const sc = node.dataset.shortcut || "";

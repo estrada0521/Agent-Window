@@ -283,7 +283,6 @@
       select.style.height = `${height}px`;
     };
     const openAgentActionMenu = (mode) => {
-      updateHeaderMenuViewportMetrics();
       const candidates = agentActionCandidates(mode);
       if (mode === "remove" && candidates.length <= 1) {
         resetAgentActionMenus();
