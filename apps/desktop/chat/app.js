@@ -423,15 +423,12 @@ __CHAT_INCLUDE:target-picker.js__
         updateCenteredMessageRow();
       });
     };
-    const flashHeaderToggle = (targetNode) => {
-      const nodes = targetNode ? [targetNode] : document.querySelectorAll("#rightMenuBtn");
-      nodes.forEach((node) => {
-        if (node.classList.contains("animating")) return;
-        node.classList.add("animating");
-        setTimeout(() => {
-          node.classList.remove("animating");
-        }, 500);
-      });
+    const flashHeaderToggle = (node) => {
+      if (!node || node.classList.contains("animating")) return;
+      node.classList.add("animating");
+      setTimeout(() => {
+        node.classList.remove("animating");
+      }, 500);
     };
     document.addEventListener("pointerdown", (e) => {
       const toggle = e.target.closest(".page-menu-btn, .composer-attach-btn, .quick-action");
@@ -600,7 +597,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       dpPanelWidthPx = dpClampPanelWidthPx(nextWidth);
       dpApplyPanelWidth();
       notifyParentPanelState();
-      if (needsHeaderViewportMetrics()) updateHeaderMenuViewportMetrics();
     };
     dpSplitDivider?.addEventListener("pointerdown", (e) => {
       e.preventDefault();

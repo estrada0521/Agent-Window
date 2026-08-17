@@ -764,7 +764,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
       closeGitDetail();
       exitPaneTraceMode();
       closeGitSheet({ immediate: true });
-      rightMenuBtn?.classList.remove("open");
       closeRepoSheet({ immediate: true });
       syncHeaderMenuFocus();
     };
@@ -896,7 +895,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
       }
       document.getElementById(action)?.click();
     }
-    document.querySelectorAll(".quick-action:not(.quick-more-toggle):not([data-forward-action]):not(#attachBtn)").forEach((node) => {
+    document.querySelectorAll(".quick-action:not(.quick-more-toggle):not(#attachBtn)").forEach((node) => {
       node.addEventListener("click", async () => {
         closeQuickMore();
         const sc = node.dataset.shortcut || "";

@@ -229,8 +229,7 @@
       appearance: none;
       -webkit-appearance: none;
     }
-    .page-header .page-header-actions .page-menu-btn:active,
-    .page-header .page-header-actions .page-menu-btn.open {
+    .page-header .page-header-actions .page-menu-btn:active {
       background: transparent;
       transform: none;
     }

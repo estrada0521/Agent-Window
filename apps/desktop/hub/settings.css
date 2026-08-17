@@ -209,8 +209,7 @@
     .page-header .page-header-actions .page-menu-btn svg {
       transform: none;
     }
-    .page-header .page-header-actions .page-menu-btn:active,
-    .page-header .page-header-actions .page-menu-btn.open {
+    .page-header .page-header-actions .page-menu-btn:active {
       background:
         var(--liquid-glass-lg-active-sheen),
         rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
@@ -325,7 +324,5 @@
     .set-desk-bullet i {
       display: block; width: 6px; height: 6px; background: var(--icon-muted); border-radius: 50%;
     }
-    [data-tauri-only="1"] { display: none; }
-    html[data-tauri-app="1"] [data-tauri-only="1"] { display: flex; }
     [data-tauri-only="1"] { display: none; }
     html[data-tauri-app="1"] [data-tauri-only="1"] { display: flex; }

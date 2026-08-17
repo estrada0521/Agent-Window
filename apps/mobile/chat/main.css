@@ -180,22 +180,13 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       padding: 0;
     }
 
-    .shell>.page-header .page-title::before,
-    .shell>.page-header .page-header-actions .page-menu-btn::before,
-    .shell>.page-header .page-title::after,
-    .shell>.page-header .page-header-actions .page-menu-btn::after {
-      content: "";
-      display: none;
-    }
-
     .shell>.page-header .page-header-actions .page-menu-btn svg {
       transform: none;
       position: relative;
       z-index: 1;
     }
 
-    .shell>.page-header .page-header-actions .page-menu-btn:active,
-    .shell>.page-header .page-header-actions .page-menu-btn.open {
+    .shell>.page-header .page-header-actions .page-menu-btn:active {
       border-radius: 999px;
       border-color: var(--liquid-glass-lg-active-border);
       background:

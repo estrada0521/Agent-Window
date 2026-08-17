@@ -273,24 +273,13 @@
       transform: none;
     }
 
-    .page-header .page-header-actions .page-menu-btn::before {
-      content: "";
-      display: none;
-    }
-
-    .page-header .page-header-actions .page-menu-btn::after {
-      content: "";
-      display: none;
-    }
-
     .page-header .page-header-actions .page-menu-btn svg {
       transform: none;
       position: relative;
       z-index: 1;
     }
 
-    .page-header .page-header-actions .page-menu-btn:active,
-    .page-header .page-header-actions .page-menu-btn.open {
+    .page-header .page-header-actions .page-menu-btn:active {
       background:
         var(--liquid-glass-lg-active-sheen),
         rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
