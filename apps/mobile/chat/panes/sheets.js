@@ -8,12 +8,7 @@
     const repoPanel = document.getElementById("repoPanel");
     const paneTracePanel = document.getElementById("paneTracePanel");
     const nativeHeaderMenuSelect = document.getElementById("pageNativeMenuSelect");
-    const isAppleTouchDevice = (() => {
-      const ua = String(navigator.userAgent || "");
-      if (/iP(hone|ad|od)/.test(ua)) return true;
-      return navigator.platform === "MacIntel" && Number(navigator.maxTouchPoints || 0) > 1;
-    })();
-    const useNativeHeaderMenuPicker = !!(isAppleTouchDevice && nativeHeaderMenuSelect && rightMenuBtn);
+    const useNativeHeaderMenuPicker = !!(nativeHeaderMenuSelect && rightMenuBtn);
     const clearNativeHeaderMenuSelection = () => {
       if (!nativeHeaderMenuSelect) return;
       nativeHeaderMenuSelect.value = "";
@@ -55,13 +50,13 @@
       const target = String(nativeHeaderMenuSelect.value || "");
       clearNativeHeaderMenuSelection();
       if (!target) return;
-      void runForwardAction(target, { sourceNode: null, keepHeaderOpen: false });
+      void runForwardAction(target, { sourceNode: null });
     });
     nativeHeaderMenuSelect?.addEventListener("blur", () => {
       setTimeout(clearNativeHeaderMenuSelection, 0);
     });
     const headerRoot = document.querySelector(".page-header");
-    const hasOpenHeaderMenu = () => !!(gitPanel?.classList.contains("open") || rightMenuPanel?.classList.contains("open") || repoPanel?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
+    const hasOpenHeaderMenu = () => !!(gitPanel?.classList.contains("open") || repoPanel?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
     const MOBILE_BOTTOM_SHEET_CLOSE_MS = 300;
     const mobileSheetCloseIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     const animateBottomSheetOpen = (panel, onOpened = () => { }) => {
@@ -769,8 +764,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
       closeGitDetail();
       exitPaneTraceMode();
       closeGitSheet({ immediate: true });
-      rightMenuPanel?.classList.remove("open");
-      if (rightMenuPanel) rightMenuPanel.hidden = true;
       rightMenuBtn?.classList.remove("open");
       closeRepoSheet({ immediate: true });
       syncHeaderMenuFocus();
@@ -788,7 +781,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
       }
       const action = String(data.action || "");
       if (!action) return;
-      await runForwardAction(action, { sourceNode: null, keepHeaderOpen: false });
+      await runForwardAction(action, { sourceNode: null });
     };
     window.addEventListener("message", (event) => {
       if (!(event.data && event.data.type === "native-menu-action")) return;
@@ -831,31 +824,32 @@ __CHAT_INCLUDE:../features/git-panel.js__
       closeHeaderMenus();
     };
     window.addEventListener("resize", () => {
+      syncNativeHeaderMenuSelectAnchor();
       if (hasOpenHeaderMenu()) updateHeaderMenuViewportMetrics();
       if (repoPanel && !repoPanel.hidden && typeof repoPanel._syncCategoryUi === "function") {
         repoPanel._syncCategoryUi();
       }
     });
     window.addEventListener("scroll", () => {
+      syncNativeHeaderMenuSelectAnchor();
       if (hasOpenHeaderMenu()) updateHeaderMenuViewportMetrics();
     }, { passive: true });
     document.addEventListener("click", (event) => {
       if (quickMore && quickMore.open && !quickMore.contains(event.target)) {
         quickMore.open = false;
       }
-      const inRightMenu = rightMenuBtn?.contains(event.target) || rightMenuPanel?.contains(event.target);
+      const inRightMenu = rightMenuBtn?.contains(event.target);
       const inGitMenu = gitPanel?.contains(event.target);
       const inFilesMenu = repoPanel?.contains(event.target);
       const inPaneTraceMenu = paneTracePanel?.contains(event.target);
-      const inNativeBridgeMenu = nativeHeaderMenuBridge?.contains(event.target);
       const inNativeHeaderMenu = nativeHeaderMenuSelect?.contains(event.target);
       const agentActionNativeMenu = document.getElementById("agentActionNativeMenuSelect");
       const inAgentActionMenu = agentActionNativeMenu?.contains(event.target);
-      if (!inRightMenu && !inGitMenu && !inFilesMenu && !inPaneTraceMenu && !inNativeBridgeMenu && !inNativeHeaderMenu && !inAgentActionMenu) {
+      if (!inRightMenu && !inGitMenu && !inFilesMenu && !inPaneTraceMenu && !inNativeHeaderMenu && !inAgentActionMenu) {
         closeHeaderMenus();
       }
     });
-    async function runForwardAction(target, { sourceNode = null, keepHeaderOpen = false } = {}) {
+    async function runForwardAction(target, { sourceNode = null } = {}) {
       const action = String(target || "");
       if (!action) return;
       if (action === "esc" || action === "restart" || action === "resume" || action === "ctrlc" || action === "enter") {
@@ -901,23 +895,8 @@ __CHAT_INCLUDE:../features/git-panel.js__
         return;
       }
       document.getElementById(action)?.click();
-      if (keepHeaderOpen && rightMenuPanel && rightMenuBtn) {
-        requestAnimationFrame(() => {
-          rightMenuPanel.hidden = false;
-          rightMenuPanel.classList.add("open");
-          rightMenuBtn.classList.add("open");
-        });
-      }
     }
-    document.querySelectorAll("[data-forward-action]").forEach((node) => {
-      node.addEventListener("mousedown", (e) => e.preventDefault());
-      node.addEventListener("click", async () => {
-        const target = node.dataset.forwardAction || "";
-        const keepHeaderOpen = !!(rightMenuPanel && rightMenuPanel.contains(node));
-        await runForwardAction(target, { sourceNode: node, keepHeaderOpen });
-      });
-    });
-        document.querySelectorAll(".quick-action:not(.quick-more-toggle):not([data-forward-action]):not(#attachBtn)").forEach((node) => {
+    document.querySelectorAll(".quick-action:not(.quick-more-toggle):not([data-forward-action]):not(#attachBtn)").forEach((node) => {
       node.addEventListener("click", async () => {
         closeQuickMore();
         const sc = node.dataset.shortcut || "";

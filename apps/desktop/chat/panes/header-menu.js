@@ -1,5 +1,4 @@
     let rightMenuBtn = document.getElementById("pageMenuBtn");
-    const rightMenuPanel = document.getElementById("pageMenuPanel");
     let nativeHeaderMenuBridge = document.getElementById("pageNativeMenuBridge");
     if (isTauriHubIframeChat) {
       rightMenuBtn?.remove();
@@ -39,7 +38,6 @@
             bridge.style.opacity = "0.001";
             bridge.style.pointerEvents = hasTauriNativeHeaderMenu() ? "none" : "auto";
             bridge.style.zIndex = "2";
-            syncNativeBridgeOptionVisibility();
             return;
           }
           if (hasTauriNativeHeaderMenu()) {
@@ -62,7 +60,6 @@
           bridge.style.opacity = "0.001";
           bridge.style.pointerEvents = "auto";
           bridge.style.zIndex = "999";
-          syncNativeBridgeOptionVisibility();
         };
         syncBridge();
         requestAnimationFrame(syncBridge);
@@ -75,15 +72,7 @@
           const action = String(e.target.value || "");
           e.target.value = "";
           if (!action) return;
-          void runForwardAction(action, { sourceNode: null, keepHeaderOpen: false });
+          void runForwardAction(action, { sourceNode: null });
         });
       }
     }
-    document.querySelectorAll("[data-desktop-only='1']").forEach((node) => {
-      node.hidden = false;
-      if (node.tagName === "OPTION") node.disabled = false;
-    });
-    document.querySelectorAll("[data-mobile-only='1']").forEach((node) => {
-      node.hidden = true;
-      if (node.tagName === "OPTION") node.disabled = true;
-    });

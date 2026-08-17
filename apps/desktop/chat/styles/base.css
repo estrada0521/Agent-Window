@@ -297,9 +297,6 @@
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    .shell > .page-header > #pageMenuPanel:not(.hub-menu-mode-pane) {
-      display: none;
-    }
     .shell > .page-header > .page-menu-panel {
       position: fixed;
       top: var(--header-menu-top, 72px);

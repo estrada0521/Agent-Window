@@ -1,31 +1,6 @@
-    const headerRoot = document.querySelector(".page-header");
-    const shellRoot = document.querySelector(".shell");
-    const hasOpenHeaderMenu = () => !!rightMenuPanel?.classList.contains("open");
-    const updateHeaderMenuViewportMetrics = () => {
-      if (!headerRoot) return;
-      const headerRect = headerRoot.getBoundingClientRect();
-      const shellRect = shellRoot?.getBoundingClientRect?.() || headerRect;
-      const top = Math.max(0, Math.round(headerRect.bottom));
-      const left = Math.max(0, Math.round(shellRect.left));
-      const width = Math.max(0, Math.round(shellRect.width));
-      const right = Math.max(0, Math.round((window.innerWidth || 0) - (shellRect.right || (left + width))));
-      document.documentElement.style.setProperty("--header-menu-top", `${top}px`);
-      document.documentElement.style.setProperty("--header-menu-left", `${left}px`);
-      document.documentElement.style.setProperty("--header-menu-width", `${width}px`);
-      document.documentElement.style.setProperty("--chat-surface-left", `${left}px`);
-      document.documentElement.style.setProperty("--chat-surface-width", `${width}px`);
-      document.documentElement.style.setProperty("--chat-surface-right", `${right}px`);
-    };
-    const syncHeaderMenuFocus = () => {
-      if (hasOpenHeaderMenu()) updateHeaderMenuViewportMetrics();
-    };
-    const needsHeaderViewportMetrics = () => hasOpenHeaderMenu();
     const closeHeaderMenus = () => {
       resetAgentActionMenus();
-      rightMenuPanel?.classList.remove("open");
-      if (rightMenuPanel) rightMenuPanel.hidden = true;
       rightMenuBtn?.classList.remove("open");
-      syncHeaderMenuFocus();
     };
     const renderAgentIconRgba = (src) => new Promise((resolve) => {
       if (!src) return resolve(null);
@@ -115,7 +90,7 @@
       }
       const action = String(data.action || "");
       if (!action) return;
-      void runForwardAction(action, { sourceNode: null, keepHeaderOpen: false });
+      void runForwardAction(action, { sourceNode: null });
     };
     window.addEventListener("message", (event) => {
       if (!(event.data && event.data.type === "native-menu-action")) return;
@@ -139,7 +114,9 @@
         openTauriHeaderMenu(anchorRect).catch(() => {});
         return;
       }
-      rightMenuBtn?.click();
+      if (typeof nativeHeaderMenuBridge?.showPicker === "function") {
+        try { nativeHeaderMenuBridge.showPicker(); } catch (_) {}
+      }
     });
     window.addEventListener("native-menu-action", (event) => {
       void handleTauriNativeMenuAction(event.detail || {});
@@ -163,16 +140,12 @@
       if (dpPanelOpen) {
         dpApplyPanelWidth();
       }
-      if (needsHeaderViewportMetrics()) updateHeaderMenuViewportMetrics();
     });
-    window.addEventListener("scroll", () => {
-      if (needsHeaderViewportMetrics()) updateHeaderMenuViewportMetrics();
-    }, { passive: true });
     document.addEventListener("click", (event) => {
       if (quickMore && quickMore.open && !quickMore.contains(event.target)) {
         quickMore.open = false;
       }
-      const inRightMenu = rightMenuBtn?.contains(event.target) || rightMenuPanel?.contains(event.target);
+      const inRightMenu = rightMenuBtn?.contains(event.target);
       const inNativeBridgeMenu = nativeHeaderMenuBridge?.contains(event.target);
       const agentActionNativeMenu = document.getElementById("agentActionNativeMenuSelect");
       const inAgentActionMenu = agentActionNativeMenu?.contains(event.target);
@@ -180,7 +153,7 @@
         closeHeaderMenus();
       }
     });
-    async function runForwardAction(target, { sourceNode = null, keepHeaderOpen = false } = {}) {
+    async function runForwardAction(target, { sourceNode = null } = {}) {
       const action = String(target || "");
       if (!action) return;
       if (action === "esc" || action === "restart" || action === "resume" || action === "ctrlc" || action === "enter") {
@@ -221,7 +194,7 @@
           setTimeout(() => setStatus(""), 2000);
           return;
         }
-        if (!keepHeaderOpen) closeQuickMore();
+        closeQuickMore();
         showAddAgentModal();
         return;
       }
@@ -231,28 +204,13 @@
           setTimeout(() => setStatus(""), 2000);
           return;
         }
-        if (!keepHeaderOpen) closeQuickMore();
+        closeQuickMore();
         showRemoveAgentModal();
         return;
       }
       document.getElementById(action)?.click();
-      if (keepHeaderOpen && rightMenuPanel && rightMenuBtn) {
-        requestAnimationFrame(() => {
-          rightMenuPanel.hidden = false;
-          rightMenuPanel.classList.add("open");
-          rightMenuBtn.classList.add("open");
-        });
-      }
     }
-    document.querySelectorAll("[data-forward-action]").forEach((node) => {
-      node.addEventListener("mousedown", (e) => e.preventDefault());
-      node.addEventListener("click", async () => {
-        const target = node.dataset.forwardAction || "";
-        const keepHeaderOpen = !!(rightMenuPanel && rightMenuPanel.contains(node));
-        await runForwardAction(target, { sourceNode: node, keepHeaderOpen });
-      });
-    });
-        document.querySelectorAll(".quick-action:not(.quick-more-toggle):not([data-forward-action]):not(#attachBtn)").forEach((node) => {
+    document.querySelectorAll(".quick-action:not(.quick-more-toggle):not([data-forward-action]):not(#attachBtn)").forEach((node) => {
       node.addEventListener("click", async () => {
         closeQuickMore();
         const sc = node.dataset.shortcut || "";

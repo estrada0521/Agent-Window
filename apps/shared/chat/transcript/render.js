@@ -207,16 +207,6 @@
       }
     };
     let nativeBridgeAgentActionMode = "";
-    const syncNativeBridgeOptionVisibility = () => {
-      const bridge = nativeHeaderMenuBridge;
-      if (!bridge) return;
-      Array.from(bridge.options).forEach((opt) => {
-        if (opt.dataset.mobileOnly === "1") {
-          opt.hidden = true;
-          opt.disabled = true;
-        }
-      });
-    };
     const resetAgentActionNativeMenu = ({ clearOptions = false } = {}) => {
       const select = document.getElementById("agentActionNativeMenuSelect");
       if (!select) return;

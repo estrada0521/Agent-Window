@@ -14,6 +14,7 @@ from .bootstrap import build_chat_bootstrap_payload, encode_chat_bootstrap_paylo
 from .script_assets import (
     CHAT_ANSI_UP_HEAD_TAG,
     CHAT_HEADER_ACTIONS_HTML,
+    CHAT_HEADER_ACTIONS_HTML_MOBILE,
     CHAT_SHEET_PANELS_HTML,
     CHAT_KATEX_HEAD_TAGS,
     build_chat_app_script_assets,
@@ -205,7 +206,7 @@ def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings
     base_path = chat_base_path.rstrip("/")
     normalized_session_name = str(session_name or "").strip()
     chat_document_title = f"{normalized_session_name} · {APP_DISPLAY_NAME}" if normalized_session_name else APP_DISPLAY_NAME
-    actions_html = CHAT_HEADER_ACTIONS_HTML
+    actions_html = CHAT_HEADER_ACTIONS_HTML_MOBILE if normalized_variant == "mobile" else CHAT_HEADER_ACTIONS_HTML
     panels_html = CHAT_SHEET_PANELS_HTML
     chat_header_html = render_page_header(
         title_href="/",
