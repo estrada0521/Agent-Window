@@ -1,35 +1,9 @@
 from __future__ import annotations
 
 import os
-import subprocess
 from pathlib import Path
 
-
-def _process_tree(pid: str) -> set[str]:
-    try:
-        out = subprocess.run(
-            ["ps", "-eo", "pid,ppid"],
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout
-    except Exception:
-        return {pid} if pid else set()
-    children_map: dict[str, list[str]] = {}
-    for line in out.splitlines()[1:]:
-        parts = line.strip().split()
-        if len(parts) >= 2:
-            child, parent = parts[0], parts[1]
-            children_map.setdefault(parent, []).append(child)
-    found = {pid} if pid else set()
-    queue = [pid] if pid else []
-    while queue:
-        current = queue.pop(0)
-        for child in children_map.get(current, []):
-            if child not in found:
-                found.add(child)
-                queue.append(child)
-    return found
+from native_log_sync.agents._shared.process_tree import lsof_text, process_tree
 
 
 def resolve_codex_rollout_jsonl_path(pane_pid: str) -> str:
@@ -40,17 +14,9 @@ def resolve_codex_rollout_jsonl_path(pane_pid: str) -> str:
     # and pick the one with the newest mtime.
     sessions_root = str((Path.home() / ".codex" / "sessions").resolve())
     candidates: dict[str, float] = {}
-    for pid in sorted(_process_tree(str(pane_pid or "").strip())):
-        if not pid:
-            continue
-        try:
-            out = subprocess.run(
-                ["lsof", "-p", pid],
-                capture_output=True,
-                text=True,
-                check=True,
-            ).stdout
-        except Exception:
+    for pid in sorted(process_tree(pane_pid)):
+        out = lsof_text(pid)
+        if out is None:
             continue
         for line in out.splitlines()[1:]:
             parts = line.split()
