@@ -43,9 +43,15 @@
       nativeHeaderMenuSelect.classList.add("is-ios-active");
       syncNativeHeaderMenuSelectAnchor();
     }
-    nativeHeaderMenuSelect?.addEventListener("pointerdown", () => {
+    nativeHeaderMenuSelect?.addEventListener("pointerdown", (event) => {
+      if (agentActionSelectIsArmed()) {
+        event.preventDefault();
+        event.stopPropagation();
+        showArmedAgentActionPicker();
+        return;
+      }
       resetAgentActionNativeMenu({ clearOptions: true });
-    }, { passive: true });
+    });
     nativeHeaderMenuSelect?.addEventListener("change", () => {
       const target = String(nativeHeaderMenuSelect.value || "");
       clearNativeHeaderMenuSelection();
@@ -793,6 +799,10 @@ __CHAT_INCLUDE:../features/git-panel.js__
     rightMenuBtn?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (agentActionSelectIsArmed()) {
+        showArmedAgentActionPicker();
+        return;
+      }
       resetAgentActionNativeMenu({ clearOptions: true });
       if (useNativeHeaderMenuPicker) {
         if (openNativeHeaderMenuPicker()) return;
@@ -837,6 +847,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
     document.addEventListener("click", (event) => {
       if (_ignoreGlobalClick) {
         _ignoreGlobalClick = false;
+        setTimeout(() => { skipAgentMenuBlur = false; }, 0);
         return;
       }
       if (quickMore && quickMore.open && !quickMore.contains(event.target)) {
@@ -878,7 +889,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
         return;
       }
       if (action === "addAgent") {
-        closeQuickMore();
         if (!sessionActive) {
           setStatus("archived session is read-only", true);
           setTimeout(() => setStatus(""), 2000);
@@ -888,7 +898,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
         return;
       }
       if (action === "removeAgent") {
-        closeQuickMore();
         if (!sessionActive) {
           setStatus("archived session is read-only", true);
           setTimeout(() => setStatus(""), 2000);

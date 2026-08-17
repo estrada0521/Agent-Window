@@ -221,6 +221,21 @@
       resetAgentActionNativeMenu({ clearOptions: true });
       nativeBridgeAgentActionMode = "";
     };
+    const agentActionSelectIsArmed = () => {
+      const select = document.getElementById("agentActionNativeMenuSelect");
+      if (!select) return false;
+      return select.options.length > 1 && select.style.top !== "-9999px";
+    };
+    const showArmedAgentActionPicker = () => {
+      const select = document.getElementById("agentActionNativeMenuSelect");
+      if (!select || !agentActionSelectIsArmed()) return false;
+      if (typeof select.showPicker === "function") {
+        try { select.showPicker(); return true; } catch (_) {}
+      }
+      try { select.click(); return true; } catch (_) {}
+      return false;
+    };
+    let skipAgentMenuBlur = false;
     const ensureAgentActionNativeMenu = () => {
       let select = document.getElementById("agentActionNativeMenuSelect");
       if (select) return select;
@@ -252,7 +267,10 @@
         void performAgentAction(value.slice(0, sep), value.slice(sep + 1));
       });
       select.addEventListener("blur", () => {
-        setTimeout(() => resetAgentActionNativeMenu({ clearOptions: true }), 0);
+        setTimeout(() => {
+          if (skipAgentMenuBlur) return;
+          resetAgentActionNativeMenu({ clearOptions: true });
+        }, 0);
       });
       document.body.appendChild(select);
       return select;
@@ -303,6 +321,7 @@
         .map((agent) => `<option value="${mode}:${escapeHtml(agent)}">${escapeHtml(agent)}</option>`)
         .join("");
       anchorAgentActionNativeMenu(select);
+      skipAgentMenuBlur = document.documentElement.dataset.mobile === "1";
       let opened = false;
       const show = () => {
         if (typeof select.showPicker === "function") {
@@ -316,13 +335,7 @@
       };
       show();
       if (!opened) {
-        setTimeout(() => {
-          if (!show()) {
-            resetAgentActionNativeMenu({ clearOptions: true });
-            setStatus("agent menu unavailable", true);
-            setTimeout(() => setStatus(""), 2200);
-          }
-        }, 0);
+        setTimeout(() => { void show(); }, 0);
       }
       return true;
     };
