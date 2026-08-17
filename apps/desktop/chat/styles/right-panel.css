@@ -11,6 +11,12 @@
     }
     .desktop-right-panel {
       font-family: var(--agent-message-font-family, inherit);
+      font-weight: 430;
+      font-optical-sizing: auto;
+      font-variation-settings: "opsz" 16;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
       position: fixed;
       top: 0;
       right: 0;
