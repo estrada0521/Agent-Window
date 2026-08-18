@@ -204,6 +204,12 @@
         top left;
       mask-repeat: no-repeat;
     }
+    .md-body br:has(+ .katex-display),
+    .md-body .katex-display + br,
+    .md-body br:has(+ span > .katex-display),
+    .md-body span:has(> .katex-display) + br {
+      display: none;
+    }
 
     .katex-display>.katex {
       display: table;
