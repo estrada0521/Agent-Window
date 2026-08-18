@@ -247,10 +247,10 @@
           throw new Error(data.error || `failed to ${adding ? "add" : "remove"} agent`);
         }
         setStatus(`${selected} ${adding ? "added" : "removed"}`);
-        setTimeout(() => setStatus(""), STATUS_TOAST_SUCCESS_MS);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       } catch (err) {
         setStatus(err?.message || `${adding ? "add" : "remove"} agent failed`, true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_ERROR_MS);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       }
     };
     let nativeBridgeAgentActionMode = "";
@@ -352,13 +352,13 @@
       if (mode === "remove" && candidates.length <= 1) {
         resetAgentActionMenus();
         setStatus("need at least 2 agents to remove one", true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_ERROR_MS);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
         return true;
       }
       if (!candidates.length) {
         resetAgentActionMenus();
         setStatus("no agents available", true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_NOT_FOUND_MS);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
         return true;
       }
       const select = ensureAgentActionNativeMenu();

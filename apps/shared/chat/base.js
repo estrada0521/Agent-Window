@@ -1,7 +1,4 @@
-    const STATUS_TOAST_SUCCESS_MS = 1800;
-    const STATUS_TOAST_READONLY_MS = 2000;
-    const STATUS_TOAST_NOT_FOUND_MS = 2200;
-    const STATUS_TOAST_ERROR_MS = 2600;
+    const STATUS_TOAST_MS = 2500;
     const CHAT_BASE_PATH = "__CHAT_BASE_PATH__";
     const CHAT_ASSET_BASE = CHAT_BASE_PATH || "";
     const withChatBase = (path) => {
