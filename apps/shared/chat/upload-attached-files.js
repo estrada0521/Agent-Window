@@ -20,7 +20,7 @@
           return true;
         } catch (err) {
           setStatus("upload failed: " + err.message, true);
-          setTimeout(() => setStatus(""), 3000);
+          setTimeout(() => setStatus(""), STATUS_TOAST_ERROR_MS);
           return false;
         }
       };
