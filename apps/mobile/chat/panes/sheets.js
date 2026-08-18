@@ -829,10 +829,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
       }
       closeRepoPreview();
     });
-    const closeQuickMore = () => {
-      if (quickMore) quickMore.open = false;
-      closeHeaderMenus();
-    };
     window.addEventListener("resize", () => {
       syncNativeHeaderMenuSelectAnchor();
       if (hasOpenHeaderMenu()) updateHeaderMenuViewportMetrics();
@@ -850,9 +846,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
         setTimeout(() => { skipAgentMenuBlur = false; }, 0);
         return;
       }
-      if (quickMore && quickMore.open && !quickMore.contains(event.target)) {
-        quickMore.open = false;
-      }
+
       const inRightMenu = rightMenuBtn?.contains(event.target);
       const inGitMenu = gitPanel?.contains(event.target);
       const inFilesMenu = repoPanel?.contains(event.target);
@@ -868,7 +862,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
       const action = String(target || "");
       if (!action) return;
       if (action === "esc" || action === "restart" || action === "resume" || action === "ctrlc" || action === "enter") {
-        closeQuickMore();
         await postShortcutCommand({ command_id: action, arg: "" });
         return;
       }
@@ -910,7 +903,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
     }
     document.querySelectorAll(".quick-action:not(.quick-more-toggle):not(#attachBtn)").forEach((node) => {
       node.addEventListener("click", async () => {
-        closeQuickMore();
         const sc = node.dataset.shortcut || "";
         if (sc) {
           await postShortcutCommand({ command_id: sc, arg: "" });

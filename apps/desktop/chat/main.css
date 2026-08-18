@@ -42,9 +42,6 @@ __CHAT_INCLUDE:../../shared/chat/markdown-inline-code.css__
       background: var(--fg);
       color: var(--surface);
     }
-    .has-hover .quick-action:hover:not(:disabled) {
-      background: var(--surface-alt);
-    }
     #fileDropdown {
       background: transparent;
     }

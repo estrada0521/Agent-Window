@@ -1,7 +1,6 @@
     const hoverCapabilityMedia = window.matchMedia("(hover: hover) and (pointer: fine)");
     const canUseHoverInteractions = () => hoverCapabilityMedia.matches;
     const touchBlurSelector = [
-      ".quick-action",
       ".page-menu-btn",
       ".composer-attach-btn",
       ".target-chip",

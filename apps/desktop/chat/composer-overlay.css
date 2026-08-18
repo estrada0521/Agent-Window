@@ -204,22 +204,6 @@
     .composer-stack {
       display: contents;
     }
-    .quick-actions {
-      grid-column: 1 / -1;
-      display: none;
-      flex-wrap: wrap;
-      gap: 6px;
-      min-width: 0;
-    }
-    .quick-more {
-      display: contents;
-    }
-    .quick-more > summary {
-      display: none;
-    }
-    .quick-more-menu {
-      display: contents;
-    }
     .composer-attach {
       position: relative;
       display: flex;
@@ -296,43 +280,6 @@
       opacity: 1;
       transition: none;
     }
-    .quick-action {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 5px 9px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.03);
-      color: var(--muted);
-      font: 600 12px/1.2 var(--font-main);
-      cursor: pointer;
-      user-select: none;
-      -webkit-user-select: none;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      transition: background 150ms ease, color 150ms ease, border-color 150ms ease, transform 150ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 150ms ease;
-    }
-    .quick-action .action-icon {
-      width: 14px;
-      height: 14px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 auto;
-      color: currentColor;
-    }
-    .quick-action .action-icon svg {
-      width: 14px;
-      height: 14px;
-      display: block;
-      stroke: currentColor;
-    }
-    .quick-action .action-mobile {
-      display: none;
-    }
-    .quick-action,
     .composer-attach-btn,
     .target-chip,
     .copy-btn,
@@ -341,8 +288,6 @@
     #composerFabBtn {
       -webkit-tap-highlight-color: transparent;
     }
-    .quick-action:focus,
-    .quick-action:focus-visible,
     .composer-attach-btn:focus,
     .composer-attach-btn:focus-visible,
     .target-chip:focus,
@@ -358,33 +303,7 @@
       outline: none;
       -webkit-focus-ring-color: transparent;
     }
-    .has-hover .quick-action:hover:not(:disabled) {
-      background: var(--surface-alt);
-      color: var(--fg);
-      border-color: rgba(255,255,255,0.25);
-      transform: none;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-    .quick-action:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    .quick-action.restarting:disabled {
-      opacity: 1;
-      cursor: default;
-    }
-    .quick-action[data-shortcut="esc"] {
-      margin-left: auto;
-      border-color: rgba(245, 158, 11, 0.32);
-      color: var(--warn);
-    }
-    .has-hover .quick-action[data-shortcut="esc"]:hover:not(:disabled) {
-      background: rgba(245, 158, 11, 0.12);
-      border-color: rgba(245, 158, 11, 0.55);
-      color: var(--warn-bright);
-    }
-    .target-chip:active:not(:disabled),
-    .quick-action:active:not(:disabled) {
+    .target-chip:active:not(:disabled) {
       transform: none;
     }
     #composerFabBtn:active {

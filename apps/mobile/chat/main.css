@@ -50,9 +50,6 @@ __CHAT_INCLUDE:styles/thinking.css__
 
 __CHAT_INCLUDE:../../shared/chat/markdown-inline-code.css__
 
-    .has-hover .quick-action:hover:not(:disabled) {
-      background: rgb(40, 40, 40);
-    }
 
     #fileDropdown {
       background: transparent;

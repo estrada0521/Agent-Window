@@ -91,7 +91,7 @@ __CHAT_INCLUDE:../messages-data.js__
         renderTargetPicker(availableTargets);
       }
       document.getElementById("message").disabled = !sessionActive;
-      setQuickActionsDisabled(!sessionActive);
+
       if (!sessionActive) {
         setStatus("archived session is read-only");
       }

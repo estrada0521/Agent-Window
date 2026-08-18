@@ -56,7 +56,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         sendLocked = false;
         return false;
       }
-      setQuickActionsDisabled(true);
       setStatus(`running ${command_id}...`);
       try {
         const res = await fetch("/shortcut-command", {
@@ -80,7 +79,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
             saveTargetSelection(currentSessionName, selectedTargets);
             renderTargetPicker(availableTargets);
           }
-          setQuickActionsDisabled(false);
         }
         setStatus(data.status_message || "done");
         void refresh();
@@ -92,7 +90,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         setStatus(error.message, true);
         return false;
       } finally {
-        setQuickActionsDisabled(!sessionActive);
         sendLocked = false;
       }
     };
@@ -121,7 +118,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         const parsed = parseSlashCommandInput(rawInput, list);
         if (parsed) {
           const arg = parsed.arg;
-          setQuickActionsDisabled(true);
           if (closeOverlayOnStart && isComposerOverlayOpen()) {
             blurComposerOnMobile(message);
             closeComposerOverlay();
@@ -148,7 +144,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
                 saveTargetSelection(currentSessionName, selectedTargets);
                 renderTargetPicker(availableTargets);
               }
-              setQuickActionsDisabled(false);
             }
             clearComposerDraft();
             blurComposerOnMobile(message);
@@ -168,7 +163,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
             setStatus(error.message, true);
             return false;
           } finally {
-            setQuickActionsDisabled(!sessionActive);
             sendLocked = false;
           }
         }
@@ -186,7 +180,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         sendLocked = false;
         return false;
       }
-      setQuickActionsDisabled(true);
       if (closeOverlayOnStart && isComposerOverlayOpen()) {
         blurComposerOnMobile(message);
         closeComposerOverlay();
@@ -214,7 +207,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
             saveTargetSelection(currentSessionName, selectedTargets);
             renderTargetPicker(availableTargets);
           }
-          setQuickActionsDisabled(false);
         }
         clearComposerDraft();
         blurComposerOnMobile(message);
@@ -238,7 +230,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         setStatus(error.message, true);
         return false;
       } finally {
-        setQuickActionsDisabled(!sessionActive);
         sendLocked = false;
       }
     };
@@ -252,4 +243,3 @@ __CHAT_INCLUDE:../shortcut-commands.js__
       const closeOverlayOnStart = !!(submitter && submitter.classList && submitter.classList.contains("send-btn"));
       await submitMessage({ closeOverlayOnStart });
     });
-    const quickMore = document.querySelector(".quick-more");
