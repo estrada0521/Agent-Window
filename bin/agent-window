@@ -210,10 +210,18 @@ agent_in_registry() {
 
 canonical_agent_name() {
   local candidate="$1"
-  case "$candidate" in
-    agy|antigravity|antigravity-ide) printf 'gemini\n' ;;
-    *) printf '%s\n' "$candidate" ;;
-  esac
+  python3 - "$REPO_ROOT" "$candidate" <<'PYEOF'
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1]).resolve()
+name = sys.argv[2]
+
+sys.path.insert(0, str(repo_root))
+from backend_core.agents.registry import canonical_agent_name
+
+print(canonical_agent_name(name))
+PYEOF
 }
 
 agent_var() {
