@@ -32,6 +32,17 @@ def _git_root() -> Path:
     return path
 
 
+def _run_git(root: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["git", "-C", str(root), *args],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+
+
 def _clear_git_overview_cache() -> None:
     with _git_overview_cache_lock:
         _git_overview_cache.clear()
@@ -61,8 +72,8 @@ def git_ignored_rel_paths(workspace: str, rel_paths: list[str]) -> set[str]:
     return {item.replace("\\", "/").strip("/") for item in (result.stdout or "").split("\0") if item.strip()}
 
 
-def _read_commit_list(_run, *, branch: str, offset: int, limit: int) -> dict:
-    total_res = _run("rev-list", "--count", "HEAD")
+def _read_commit_list(root: Path, *, branch: str, offset: int, limit: int) -> dict:
+    total_res = _run_git(root, "rev-list", "--count", "HEAD")
     if total_res.returncode != 0:
         raise RuntimeError((total_res.stderr or total_res.stdout or "git rev-list --count failed").strip())
     raw_count = (total_res.stdout or "").strip()
@@ -72,18 +83,19 @@ def _read_commit_list(_run, *, branch: str, offset: int, limit: int) -> dict:
         raise RuntimeError(f"git rev-list --count returned {raw_count!r}") from exc
     if total_commits < 0:
         raise RuntimeError(f"git rev-list --count returned {total_commits}")
-    upstream_res = _run("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}")
+    upstream_res = _run_git(root, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}")
     upstream = (upstream_res.stdout or "").strip() if upstream_res.returncode == 0 else ""
     ahead_behind = ""
     if upstream:
-        count_res = _run("rev-list", "--left-right", "--count", f"{branch}...{upstream}")
+        count_res = _run_git(root, "rev-list", "--left-right", "--count", f"{branch}...{upstream}")
         if count_res.returncode != 0:
             raise RuntimeError((count_res.stderr or count_res.stdout or "git rev-list ahead/behind failed").strip())
         parts = (count_res.stdout or "").strip().split()
         if len(parts) != 2:
             raise RuntimeError(f"git rev-list --left-right --count returned {count_res.stdout!r}")
         ahead_behind = f"ahead {parts[0]} / behind {parts[1]}"
-    log_res = _run(
+    log_res = _run_git(
+        root,
         "log",
         f"--skip={offset}",
         f"--max-count={limit}",
@@ -111,7 +123,7 @@ def _read_commit_list(_run, *, branch: str, offset: int, limit: int) -> dict:
             "subject": subj,
             "is_origin_main": "origin/main" in refs,
         })
-    stat_res = _run("log", f"--skip={offset}", f"--max-count={limit}", "--format=%h", "--shortstat")
+    stat_res = _run_git(root, "log", f"--skip={offset}", f"--max-count={limit}", "--format=%h", "--shortstat")
     if stat_res.returncode != 0:
         raise RuntimeError((stat_res.stderr or stat_res.stdout or "git log --shortstat failed").strip())
     commit_stats = {}
@@ -167,14 +179,7 @@ def git_overview(*, offset=0, limit=50, force_refresh: bool = False):
                 return cached[1]
 
     def _run(*args):
-        return subprocess.run(
-            ["git", "-C", str(root), *args],
-            check=False,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
+        return _run_git(root, *args)
     def _parse_numstat(res):
         added = 0
         deleted = 0
@@ -280,7 +285,7 @@ def git_overview(*, offset=0, limit=50, force_refresh: bool = False):
                 "recent_commits": [],
             }
         else:
-            cached_commits = _read_commit_list(_run, branch=branch, offset=offset, limit=limit)
+            cached_commits = _read_commit_list(root, branch=branch, offset=offset, limit=limit)
             with _git_overview_cache_lock:
                 _commit_list_cache[commit_key] = cached_commits
     recent_commits = list(cached_commits["recent_commits"])
@@ -327,14 +332,7 @@ def git_diff_files(*, commit_hash: str = "", scope: str = ""):
     scope = str(scope or "").strip().lower()
 
     def _run(*args):
-        return subprocess.run(
-            ["git", "-C", str(root), *args],
-            check=False,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
+        return _run_git(root, *args)
 
     def _parse_numstat_lines(lines: list[str]) -> tuple[list[dict], int, int]:
         by_path: dict[str, dict] = {}
