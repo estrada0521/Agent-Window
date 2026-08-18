@@ -306,7 +306,7 @@
       border: 1px solid rgba(255,255,255,0.08);
       background: rgba(255,255,255,0.03);
       color: var(--muted);
-      font: 600 12px/1.2 "SF Pro Text","Segoe UI",sans-serif;
+      font: 600 12px/1.2 var(--font-main);
       cursor: pointer;
       user-select: none;
       -webkit-user-select: none;

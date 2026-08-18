@@ -76,8 +76,8 @@ def chat_font_settings_inline_style(
       --message-text-size: {message_text_size_desktop}px;
       --message-text-line-height: {message_text_size_desktop + 9}px;
       --message-max-width: {message_max_width}px;
-      --font-main: {message_family}, sans-serif;
-      --font-code: {code_family}, monospace;
+      --font-main: {message_family};
+      --font-code: {code_family};
     }}
     .shell {{
       max-width: var(--message-max-width);
