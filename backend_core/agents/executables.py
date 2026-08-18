@@ -4,7 +4,7 @@ import os
 import shutil
 from pathlib import Path
 
-from backend_core.agents.registry import AGENTS, canonical_agent_name
+from backend_core.agents.registry import AGENTS, base_agent_name
 
 
 def _repo_root() -> Path:
@@ -12,7 +12,7 @@ def _repo_root() -> Path:
 
 
 def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
-    base = canonical_agent_name(agent_name.split("-", 1)[0])
+    base = base_agent_name(agent_name)
     adef = AGENTS.get(base)
     exe_name = adef.exe if adef else agent_name
 
@@ -59,7 +59,7 @@ def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
 
 
 def agent_launch_readiness(repo_root: Path, agent_name: str) -> dict[str, str]:
-    base = canonical_agent_name(agent_name.split("-", 1)[0])
+    base = base_agent_name(agent_name)
     executable = resolve_agent_executable(repo_root, base)
     if not executable:
         disp = AGENTS[base].display_name if base in AGENTS else base
@@ -77,7 +77,7 @@ def resolve_agent_executable_for_runtime(agent_name: str, repo_root: Path | str 
     found = resolve_agent_executable(resolved_root, agent_name)
     if found:
         return found
-    base = canonical_agent_name(agent_name.split("-", 1)[0] if "-" in agent_name else agent_name)
+    base = base_agent_name(agent_name)
     adef = AGENTS.get(base)
     return adef.exe if adef else agent_name
 
@@ -86,7 +86,7 @@ def _build_agent_exec(runtime, agent_name: str) -> tuple[str, object]:
     import shlex as _shlex
     agent_exec_path = Path(resolve_agent_executable_for_runtime(agent_name, repo_root=runtime.repo_root))
     agent_exec = _shlex.quote(str(agent_exec_path))
-    base = canonical_agent_name(agent_name.split("-", 1)[0] if "-" in agent_name else agent_name)
+    base = base_agent_name(agent_name)
     adef = AGENTS.get(base)
     return agent_exec, adef
 
@@ -102,7 +102,7 @@ def agent_launch_cmd(runtime, agent_name: str) -> str:
 
 
 def agent_resume_cmd(runtime, agent_name: str) -> str:
-    base = canonical_agent_name(agent_name.split("-", 1)[0] if "-" in agent_name else agent_name)
+    base = base_agent_name(agent_name)
     adef = AGENTS.get(base)
     if not adef or not adef.resume_flag:
         return agent_launch_cmd(runtime, agent_name)
