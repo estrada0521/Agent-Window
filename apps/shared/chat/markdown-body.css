@@ -174,7 +174,8 @@
       margin-bottom: 6px;
       width: 100%;
       max-width: 100%;
-      padding-inline: 0;
+      box-sizing: border-box;
+      padding-inline: 16px;
       padding-bottom: 7px;
       overflow-x: auto;
       overflow-y: hidden;
