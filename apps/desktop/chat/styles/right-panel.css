@@ -766,8 +766,7 @@
       border: 1.5px solid var(--icon-muted);
       transition: border-color 120ms ease, background 120ms ease;
     }
-    .git-commit-dot.is-origin-main,
-    .git-commit-detail-head .git-commit-dot.is-origin-main {
+    .git-commit-dot.is-origin-main {
       border-color: var(--icon-muted);
       background: var(--icon-muted);
     }
