@@ -7,6 +7,9 @@ if [[ -n "${HUB_LIB_SESSION_SH:-}" ]]; then
 fi
 HUB_LIB_SESSION_SH=1
 
+# shellcheck source=/dev/null
+source "$REPO_ROOT/bin/lib/tmux_session.sh"
+
 hub_session_log_dir() {
   local session="$1"
   printf '%s/%s\n' "$AGENT_WINDOW_LOG_DIR" "$session"
@@ -57,11 +60,6 @@ matching_archived_sessions() {
     session="$dir"
     [[ -n "$session" ]] && printf '%s\n' "$session"
   done < <(find_archived_index_files)
-}
-
-session_workspace_value() {
-  local session="$1"
-  tmux show-environment -t "$session" AGENT_WINDOW_WORKSPACE 2>/dev/null | sed 's/^[^=]*=//' || true
 }
 
 matching_repo_sessions() {

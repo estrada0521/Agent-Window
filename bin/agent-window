@@ -21,6 +21,9 @@ OPS_DIR="$(cd "$(dirname "$_REAL_SCRIPT")" && pwd)"
 REPO_ROOT="$(cd "$OPS_DIR/.." && pwd)"
 SCRIPT_DIR="$REPO_ROOT/bin"
 
+# shellcheck source=/dev/null
+source "$REPO_ROOT/bin/lib/tmux_session.sh"
+
 session_control() {
   PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -m backend_core.cli.session_control "$@"
 }
@@ -284,11 +287,6 @@ session_created_value() {
 session_attached_value() {
   local session="$1"
   tmux display-message -p -t "$session" '#{session_attached}' 2>/dev/null || true
-}
-
-session_workspace_value() {
-  local session="$1"
-  tmux show-environment -t "$session" AGENT_WINDOW_WORKSPACE 2>/dev/null | sed 's/^[^=]*=//' || true
 }
 
 load_session_runtime_context() {
