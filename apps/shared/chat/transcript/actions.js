@@ -45,6 +45,16 @@ __CHAT_INCLUDE:../shortcut-commands.js__
     const blurComposerOnMobile = (message) => {
       if (document.documentElement.dataset.mobile === "1") message.blur();
     };
+    const applySessionActivation = (data) => {
+      if (!data?.activated) return;
+      sessionActive = true;
+      if (Array.isArray(data.targets) && data.targets.length) {
+        availableTargets = normalizedSessionTargets(data.targets);
+        selectedTargets = data.targets.filter((t) => availableTargets.includes(t));
+        saveTargetSelection(currentSessionName, selectedTargets);
+        renderTargetPicker(availableTargets);
+      }
+    };
     const postShortcutCommand = async ({ command_id, arg = "" }) => {
       if (sendLocked) {
         return false;
@@ -71,15 +81,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         if (!res.ok || !data.ok) {
           throw new Error(data.error || "shortcut failed");
         }
-        if (data.activated) {
-          sessionActive = true;
-          if (Array.isArray(data.targets) && data.targets.length) {
-            availableTargets = normalizedSessionTargets(data.targets);
-            selectedTargets = data.targets.filter((t) => availableTargets.includes(t));
-            saveTargetSelection(currentSessionName, selectedTargets);
-            renderTargetPicker(availableTargets);
-          }
-        }
+        applySessionActivation(data);
         setStatus(data.status_message || "done");
         void refresh();
         if (data.activated) {
@@ -136,15 +138,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
             if (!res.ok || !data.ok) {
               throw new Error(data.error || "shortcut failed");
             }
-            if (data.activated) {
-              sessionActive = true;
-              if (Array.isArray(data.targets) && data.targets.length) {
-                availableTargets = normalizedSessionTargets(data.targets);
-                selectedTargets = data.targets.filter((t) => availableTargets.includes(t));
-                saveTargetSelection(currentSessionName, selectedTargets);
-                renderTargetPicker(availableTargets);
-              }
-            }
+            applySessionActivation(data);
             clearComposerDraft();
             blurComposerOnMobile(message);
             if (pendingAttachments.length) {
@@ -199,15 +193,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         if (!res.ok || !data.ok) {
           throw new Error(data.error || "send failed");
         }
-        if (data.activated) {
-          sessionActive = true;
-          if (Array.isArray(data.targets) && data.targets.length) {
-            availableTargets = normalizedSessionTargets(data.targets);
-            selectedTargets = data.targets.filter((t) => availableTargets.includes(t));
-            saveTargetSelection(currentSessionName, selectedTargets);
-            renderTargetPicker(availableTargets);
-          }
-        }
+        applySessionActivation(data);
         clearComposerDraft();
         blurComposerOnMobile(message);
         if (pendingAttachments.length) {
