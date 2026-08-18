@@ -58,6 +58,7 @@ from .session_state import (
 )
 from pane_trace import trace_content as _trace_content_impl
 from backend_core.tmux.instances import resolve_target_agents as resolve_target_agent_names
+from backend_core.tmux.window import tmux_prefix_args
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.settings import (
     load_hub_settings as load_shared_hub_settings,
@@ -95,12 +96,7 @@ class ChatRuntime:
         self.repo_root = Path(repo_root).resolve()
         self.session_is_active = bool(session_is_active)
         self.server_instance = uuid.uuid4().hex
-        self.tmux_prefix = ["tmux"]
-        if self.tmux_socket:
-            if "/" in self.tmux_socket:
-                self.tmux_prefix.extend(["-S", self.tmux_socket])
-            else:
-                self.tmux_prefix.extend(["-L", self.tmux_socket])
+        self.tmux_prefix = tmux_prefix_args(self.tmux_socket) if self.tmux_socket else ["tmux"]
         self._agent_running: set[str] = self._restore_running_agents_from_tmux_env()
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(

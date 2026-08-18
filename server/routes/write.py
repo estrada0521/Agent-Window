@@ -10,6 +10,7 @@ from urllib.parse import unquote as url_unquote
 
 from backend_core.access.settings import workspace_upload_dir
 from backend_core.tmux.control import SessionControlError, add_agent, remove_agent
+from backend_core.tmux.window import tmux_prefix_args
 from shortcut_command.execute import run_shortcut_command
 
 
@@ -222,8 +223,7 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
             handler._send_json(500, {"ok": False, "error": str(exc)})
             return
         if pane_id:
-            socket_flag = "-S" if "/" in ctx["tmux_socket"] else "-L"
-            prefix = ["tmux", socket_flag, ctx["tmux_socket"]]
+            prefix = tmux_prefix_args(ctx["tmux_socket"])
             win_res = subprocess.run(
                 [*prefix, "display-message", "-p", "-t", pane_id, "#{window_id}"],
                 capture_output=True, text=True, check=False,
@@ -246,14 +246,13 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
             handler._send_json(200, {"ok": True})
             return
     try:
-        socket_flag = "-S" if "/" in ctx["tmux_socket"] else "-L"
+        prefix = tmux_prefix_args(ctx["tmux_socket"])
+        socket_flag = prefix[1]
         cols, rows = 200, 40
         try:
             size_result = subprocess.run(
                 [
-                    "tmux",
-                    socket_flag,
-                    ctx["tmux_socket"],
+                    *prefix,
                     "display-message",
                     "-p",
                     "-t",
