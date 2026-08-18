@@ -2,17 +2,13 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import ssl
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, quote as url_quote, unquote as url_unquote, urlparse
-from urllib.error import URLError
+from urllib.parse import parse_qs, quote as url_quote, urlparse
 
-from backend_core.access.settings import resolve_chat_port
-from backend_core.net import http_proxy
 from hub_backend.runtime import HubRuntime
 from backend_core.agents.executables import agent_launch_readiness
 from hub_backend.presentation.hub.header_assets import (
@@ -652,9 +648,6 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
-        if parsed.path.startswith("/session/"):
-            self._proxy_session_request("GET", parsed)
-            return
         if _serve_pwa_static(self, parsed.path):
             return
         if self._dispatch_route(parsed, self._GET_ROUTE_HANDLERS):
@@ -664,45 +657,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
-        if parsed.path.startswith("/session/"):
-            self._proxy_session_request("POST", parsed)
-            return
         if self._dispatch_route(parsed, self._POST_ROUTE_HANDLERS):
             return
         self.send_response(404)
         self.end_headers()
 
-    def _proxy_session_request(self, method: str, parsed):
-        match = re.match(r"^/session/([^/]+)(/.*)?$", parsed.path)
-        if not match:
-            self.send_response(404)
-            self.end_headers()
-            return
-        session_name = url_unquote(match.group(1))
-        suffix = match.group(2) or "/"
-        chat_port = int(resolve_chat_port(repo_root, session_name))
-        body = None
-        if method == "POST":
-            try:
-                length = int(self.headers.get("Content-Length", "0"))
-            except ValueError:
-                length = 0
-            body = self.rfile.read(length)
-        query = f"?{parsed.query}" if parsed.query else ""
-        upstream = f"{_scheme}://127.0.0.1:{chat_port}{suffix}{query}"
-        headers = http_proxy.forward_headers(
-            self.headers,
-            host=f"127.0.0.1:{chat_port}",
-            forwarded_prefix=f"/session/{session_name}",
-        )
-        accept = (self.headers.get("Accept") or "").lower()
-        timeout = None if (suffix.endswith("-events") or "text/event-stream" in accept) else 30
-        try:
-            status, resp_headers, resp = http_proxy.open_upstream(method, upstream, body=body, headers=headers, timeout=timeout)
-        except URLError as exc:
-            self._send_html(502, error_page(f"Chat proxy failed for {session_name}: {exc}"))
-            return
-        http_proxy.relay_stream(self, status, resp_headers, resp)
 
 def main(argv: list[str] | None = None) -> None:
     global _scheme, hub_server
