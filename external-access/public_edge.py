@@ -4,15 +4,11 @@ from __future__ import annotations
 import json
 import logging
 import os
-import ssl
 import sys
 import time
-from http.client import RemoteDisconnected
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs, quote as url_quote, urlencode, urlparse
-from urllib.request import Request, urlopen
+from urllib.parse import parse_qs, quote as url_quote, urlparse
 
 repo_root = Path(sys.argv[1]).resolve()
 script_path = Path(sys.argv[2]).resolve()
@@ -21,6 +17,7 @@ edge_port = int(sys.argv[4])
 tmux_socket = sys.argv[5] if len(sys.argv) > 5 else ""
 
 sys.path.insert(0, str(repo_root))
+from backend_core.net import http_proxy
 from workspace_sync.files.runtime import FileRuntime
 from hub_backend.runtime import HubRuntime
 from server.runtime import ChatRuntime
@@ -36,9 +33,8 @@ SESSION_POST_RETRY_WINDOW = 0.6
 SESSION_RESTART_WAIT_WINDOW = 2.5
 SESSION_STATE_TIMEOUT = 1.2
 UPSTREAM_TIMEOUT = 30.0
-TRANSIENT_UPSTREAM_ERRORS = (URLError, OSError, TimeoutError, RemoteDisconnected)
+TRANSIENT_UPSTREAM_ERRORS = http_proxy.TRANSIENT_UPSTREAM_ERRORS
 STREAM_CHUNK_SIZE = 64 * 1024
-PUBLIC_MESSAGE_LIMIT = 50
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -89,80 +85,28 @@ class Handler(BaseHTTPRequestHandler):
         return body
 
     def _forward_headers(self, *, forwarded_prefix: str = "", host_override: str = "") -> dict[str, str]:
-        headers = {}
         external_host = host_override or self.headers.get("Host", "")
-        for key, value in self.headers.items():
-            key_lc = key.lower()
-            if key_lc in {"host", "content-length", "connection", "accept-encoding"}:
-                continue
-            headers[key] = value
-        headers["Host"] = external_host
-        headers["Accept-Encoding"] = "identity"
+        extra = None
         if forwarded_prefix:
-            headers["X-Forwarded-Prefix"] = forwarded_prefix
-            headers["X-Forwarded-Public-Host"] = external_host
-            headers["X-Forwarded-Public-Proto"] = "https"
-        return headers
+            extra = {
+                "X-Forwarded-Public-Host": external_host,
+                "X-Forwarded-Public-Proto": "https",
+            }
+        return http_proxy.forward_headers(
+            self.headers, host=external_host, forwarded_prefix=forwarded_prefix, extra=extra,
+        )
 
     def _open_upstream(self, method: str, upstream: str, *, body: bytes | None = None, headers: dict[str, str] | None = None, timeout: float = UPSTREAM_TIMEOUT):
-        req = Request(upstream, data=body, method=method, headers=headers)
-        ctx = ssl._create_unverified_context()
-        try:
-            resp = urlopen(req, context=ctx, timeout=timeout)
-            return int(getattr(resp, "status", 200) or 200), resp.headers, resp
-        except HTTPError as exc:
-            return exc.code, exc.headers, exc
+        return http_proxy.open_upstream(method, upstream, body=body, headers=headers, timeout=timeout)
 
     def _request_upstream(self, method: str, upstream: str, *, body: bytes | None = None, headers: dict[str, str] | None = None, timeout: float = UPSTREAM_TIMEOUT) -> dict:
-        status, resp_headers, resp = self._open_upstream(method, upstream, body=body, headers=headers, timeout=timeout)
-        try:
-            resp_body = resp.read()
-        finally:
-            try:
-                resp.close()
-            except Exception:
-                pass
-        return {"status": status, "headers": resp_headers, "body": resp_body}
+        return http_proxy.read_upstream(method, upstream, body=body, headers=headers, timeout=timeout)
 
     def _relay_upstream(self, response: dict, *, extra_headers: dict[str, str] | None = None):
-        status = int(response.get("status", 502))
-        resp_headers = response.get("headers") or {}
-        resp_body = response.get("body") or b""
-        self.send_response(status)
-        for key, value in resp_headers.items():
-            key_lc = key.lower()
-            if key_lc in {"transfer-encoding", "connection", "content-length", "content-encoding"}:
-                continue
-            self.send_header(key, value)
-        for key, value in (extra_headers or {}).items():
-            self.send_header(key, value)
-        self.send_header("Content-Length", str(len(resp_body)))
-        self.end_headers()
-        self._safe_write(resp_body)
+        http_proxy.relay_buffered(self, response, extra_headers=extra_headers)
 
     def _relay_upstream_stream(self, status: int, resp_headers, resp):
-        try:
-            self.send_response(status)
-            for key, value in resp_headers.items():
-                if key.lower() in {"transfer-encoding", "connection"}:
-                    continue
-                self.send_header(key, value)
-            self.end_headers()
-            while True:
-                chunk = resp.read1(STREAM_CHUNK_SIZE)
-                if not chunk:
-                    break
-                if not self._safe_write(chunk):
-                    break
-                try:
-                    self.wfile.flush()
-                except (BrokenPipeError, ConnectionResetError):
-                    break
-        finally:
-            try:
-                resp.close()
-            except Exception:
-                pass
+        http_proxy.relay_stream(self, status, resp_headers, resp, chunk_size=STREAM_CHUNK_SIZE)
 
     def _proxy(self, method: str, upstream: str, *, forwarded_prefix: str = ""):
         body = self._read_request_body(method)
@@ -206,47 +150,6 @@ class Handler(BaseHTTPRequestHandler):
         if not workspace:
             return None
         return FileRuntime(workspace=workspace)
-
-    @staticmethod
-    def _public_message_limit(query: str) -> int:
-        qs = parse_qs(query, keep_blank_values=True)
-        try:
-            requested = int((qs.get("limit", [""])[0] or "").strip())
-        except ValueError:
-            requested = PUBLIC_MESSAGE_LIMIT
-        if requested <= 0:
-            requested = PUBLIC_MESSAGE_LIMIT
-        return min(requested, PUBLIC_MESSAGE_LIMIT)
-
-    @staticmethod
-    def _with_query_limit(suffix: str, query: str, limit: int) -> str:
-        qs = parse_qs(query, keep_blank_values=True)
-        qs["limit"] = [str(limit)]
-        qs["light"] = ["1"]
-        next_query = urlencode(qs, doseq=True)
-        return suffix + (f"?{next_query}" if next_query else "")
-
-    def _relay_public_messages(self, response: dict, *, limit: int):
-        status = int(response.get("status", 502))
-        if status != 200:
-            self._relay_upstream(response)
-            return
-        try:
-            payload_body = json.loads((response.get("body") or b"{}").decode("utf-8", errors="replace"))
-        except Exception:
-            self._relay_upstream(response)
-            return
-        entries = payload_body.get("entries")
-        if isinstance(entries, list) and limit > 0 and len(entries) > limit:
-            payload_body["entries"] = entries[-limit:]
-            payload_body["has_older"] = True
-        body = json.dumps(payload_body, ensure_ascii=True).encode("utf-8")
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self._safe_write(body)
 
     def _handle_session_file_request(self, session_name: str, suffix: str, parsed, *, record: dict | None = None) -> bool:
         if suffix not in {"/file-raw", "/file-view", "/file-openability"}:
@@ -398,7 +301,6 @@ class Handler(BaseHTTPRequestHandler):
         previous_instance = ""
         deadline = time.time() + SESSION_GET_RETRY_WINDOW if method == "GET" else time.time()
         post_deadline = time.time() + SESSION_POST_RETRY_WINDOW if method == "POST" and suffix == "/new-chat" else time.time()
-        public_message_limit = self._public_message_limit(parsed.query) if method == "GET" and suffix == "/messages" else 0
         while True:
             workspace = str((record or {}).get("workspace") or "").strip()
             ok, chat_port, detail = ensure_chat_server(session_name, workspace=workspace)
@@ -413,9 +315,7 @@ class Handler(BaseHTTPRequestHandler):
             if method == "POST" and suffix == "/new-chat" and not previous_instance:
                 payload = self._read_chat_session_state(chat_port)
                 previous_instance = str((payload or {}).get("server_instance") or "")
-            upstream_suffix = self._with_query_limit(suffix, parsed.query, public_message_limit) if public_message_limit else suffix
-            if not public_message_limit and parsed.query:
-                upstream_suffix += f"?{parsed.query}"
+            upstream_suffix = suffix + (f"?{parsed.query}" if parsed.query else "")
             last_exc = None
             response = None
             status = 0
@@ -425,8 +325,6 @@ class Handler(BaseHTTPRequestHandler):
                 upstream = f"{scheme}://127.0.0.1:{chat_port}{upstream_suffix}"
                 try:
                     if method == "POST" and suffix == "/new-chat":
-                        response = self._request_upstream(method, upstream, body=body, headers=headers)
-                    elif public_message_limit:
                         response = self._request_upstream(method, upstream, body=body, headers=headers)
                     else:
                         status, resp_headers, resp = self._open_upstream(method, upstream, body=body, headers=headers)
@@ -452,12 +350,6 @@ class Handler(BaseHTTPRequestHandler):
                     response,
                     extra_headers={"X-Agent-Window-Chat-Ready": "1" if ready else "0"},
                 )
-                return
-            if public_message_limit:
-                if method == "GET" and int(response.get("status", 0)) in {502, 503, 504} and time.time() < deadline:
-                    time.sleep(SESSION_GET_RETRY_DELAY)
-                    continue
-                self._relay_public_messages(response, limit=public_message_limit)
                 return
             if method == "GET" and status in {502, 503, 504} and time.time() < deadline:
                 try:

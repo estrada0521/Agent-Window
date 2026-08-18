@@ -9,10 +9,10 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote as url_quote, unquote as url_unquote, urlparse
-from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
+from urllib.error import URLError
 
 from backend_core.access.settings import resolve_chat_port
+from backend_core.net import http_proxy
 from hub_backend.runtime import HubRuntime
 from backend_core.agents.executables import agent_launch_readiness
 from hub_backend.presentation.hub.header_assets import (
@@ -690,48 +690,19 @@ class Handler(BaseHTTPRequestHandler):
             body = self.rfile.read(length)
         query = f"?{parsed.query}" if parsed.query else ""
         upstream = f"{_scheme}://127.0.0.1:{chat_port}{suffix}{query}"
-        headers = {}
-        for key, value in self.headers.items():
-            key_lc = key.lower()
-            if key_lc in {"host", "content-length", "connection", "accept-encoding"}:
-                continue
-            headers[key] = value
-        headers["Host"] = f"127.0.0.1:{chat_port}"
-        headers["Accept-Encoding"] = "identity"
-        headers["X-Forwarded-Prefix"] = f"/session/{session_name}"
-        req = Request(upstream, data=body, method=method, headers=headers)
-        ctx = ssl._create_unverified_context() if _scheme == "https" else None
+        headers = http_proxy.forward_headers(
+            self.headers,
+            host=f"127.0.0.1:{chat_port}",
+            forwarded_prefix=f"/session/{session_name}",
+        )
         accept = (self.headers.get("Accept") or "").lower()
         timeout = None if (suffix.endswith("-events") or "text/event-stream" in accept) else 30
         try:
-            resp = urlopen(req, context=ctx, timeout=timeout) if ctx is not None else urlopen(req, timeout=timeout)
-            status = resp.status
-            resp_headers = resp.headers
-        except HTTPError as exc:
-            resp = exc
-            status = exc.code
-            resp_headers = exc.headers
+            status, resp_headers, resp = http_proxy.open_upstream(method, upstream, body=body, headers=headers, timeout=timeout)
         except URLError as exc:
             self._send_html(502, error_page(f"Chat proxy failed for {session_name}: {exc}"))
             return
-        try:
-            self.send_response(status)
-            for key, value in resp_headers.items():
-                if key.lower() in {"transfer-encoding", "connection", "content-encoding"}:
-                    continue
-                self.send_header(key, value)
-            self.end_headers()
-            read_chunk = getattr(resp, "read1", None)
-            while True:
-                chunk = read_chunk(65536) if read_chunk is not None else resp.read(65536)
-                if not chunk:
-                    break
-                self.wfile.write(chunk)
-                self.wfile.flush()
-        except (BrokenPipeError, ConnectionResetError):
-            return
-        finally:
-            resp.close()
+        http_proxy.relay_stream(self, status, resp_headers, resp)
 
 def main(argv: list[str] | None = None) -> None:
     global _scheme, hub_server
