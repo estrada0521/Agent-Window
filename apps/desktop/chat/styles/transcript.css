@@ -282,7 +282,7 @@
       border: none;
       background: transparent;
       color: var(--muted);
-      font: 600 12px/1 "SF Pro Text", "Segoe UI", sans-serif;
+      font: 600 12px/1 var(--font-main);
       letter-spacing: 0.01em;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;

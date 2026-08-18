@@ -244,7 +244,7 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       display: grid;
       place-items: center;
       padding: 24px;
-      font-family: var(--font-main, sans-serif);
+      font-family: var(--font-main);
     }}
     .launch-shell {{
       display: flex;
