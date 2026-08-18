@@ -76,7 +76,7 @@
       min-height: 100dvh;
       background: var(--bg);
       color: var(--fg);
-      font-family: var(--font-main, "SF Pro Text", "Segoe UI", sans-serif);
+      font-family: var(--font-main);
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
@@ -372,7 +372,7 @@
     }
 
     .mob-row-name {
-      font-family: var(--font-main, "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif);
+      font-family: var(--font-main);
       font-size: 15px;
       font-weight: 700;
       letter-spacing: 0;
@@ -404,7 +404,7 @@
     .mob-row-preview {
       margin-top: 3px;
       color: var(--muted);
-      font-family: var(--font-main, "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif);
+      font-family: var(--font-main);
       font-size: 13px;
       font-weight: 430;
       line-height: 1.2;

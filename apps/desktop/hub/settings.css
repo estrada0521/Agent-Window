@@ -48,7 +48,7 @@
       min-height: 100%;
       background: transparent;
       color: var(--fg);
-      font-family: var(--font-main, "SF Pro Text", "Segoe UI", sans-serif);
+      font-family: var(--font-main);
     }
     body {
       padding: 0 0 max(20px, env(safe-area-inset-bottom)) 0;
@@ -85,7 +85,7 @@
     textarea.message-font-input {
       resize: vertical;
       min-height: 5.5em;
-      font-family: var(--font-code, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+      font-family: var(--font-code);
       font-size: 12px;
       line-height: 1.45;
       font-weight: 400;

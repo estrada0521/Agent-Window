@@ -138,7 +138,7 @@ def render_file_view(
         )
     )
     base_css = (
-        f':root{{color-scheme: dark;--font-main:{resolved_agent_font_family};--font-code:{code_font_family};--message-text-size:{resolved_text_size}px;--message-text-line-height:{resolved_line_height}px;--tpad:{preview_top_offset};--preview-scrollbar-size:{preview_scrollbar_size};--preview-scrollbar-thumb:{preview_scrollbar_thumb};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover};--preview-scrollbar-border:{preview_scrollbar_border};--preview-scrollbar-bg-clip:{preview_scrollbar_bg_clip};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
+        f':root{{color-scheme: dark;--font-main:{resolved_agent_font_family}, sans-serif;--font-code:{code_font_family}, monospace;--message-text-size:{resolved_text_size}px;--message-text-line-height:{resolved_line_height}px;--tpad:{preview_top_offset};--preview-scrollbar-size:{preview_scrollbar_size};--preview-scrollbar-thumb:{preview_scrollbar_thumb};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover};--preview-scrollbar-border:{preview_scrollbar_border};--preview-scrollbar-bg-clip:{preview_scrollbar_bg_clip};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
         f':root[data-preview-theme="light"]{{--preview-scrollbar-thumb:{preview_scrollbar_thumb_light};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover_light}}}'
         f"{font_face_css}"
         f"*{{box-sizing:border-box}}"

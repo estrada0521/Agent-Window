@@ -4,7 +4,7 @@
       width: 100%;
       height: 100%;
       min-height: 0;
-      font-family: var(--font-main, inherit);
+      font-family: var(--font-main);
       font-weight: 480;
     }
 
@@ -396,7 +396,7 @@
       min-width: 0;
       position: relative;
       cursor: pointer;
-      font-family: var(--font-main, inherit);
+      font-family: var(--font-main);
       font-weight: 480;
       transition: background 120ms ease;
       box-sizing: border-box;
@@ -555,7 +555,7 @@
       font-size: var(--message-text-size, 13px);
       line-height: 1.35;
       color: var(--fg);
-      font-family: var(--font-main, inherit);
+      font-family: var(--font-main);
       cursor: default;
       transition: background 120ms ease;
     }
@@ -611,13 +611,13 @@
 
     .git-summary-wrap .git-summary-meta-text {
       font-size: var(--message-text-size, 13px);
-      font-family: var(--font-main, inherit);
+      font-family: var(--font-main);
       color: var(--fg);
     }
 
     .git-summary-wrap .git-summary-counts {
       font-size: var(--message-text-size, 13px);
-      font-family: var(--font-main, inherit);
+      font-family: var(--font-main);
     }
 
     .git-summary-meta-text {
@@ -730,7 +730,7 @@
       flex-direction: column;
       border-radius: 8px;
       background: transparent;
-      font-family: var(--font-main, inherit);
+      font-family: var(--font-main);
       overflow: hidden;
       transition: background 120ms ease;
       animation: git-commit-file-row-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;

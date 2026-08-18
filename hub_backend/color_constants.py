@@ -191,11 +191,16 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
 
     import html
     from backend_core.access.settings import canonicalize_message_font, DEFAULT_CODE_FONT
-    message_font = html.escape(canonicalize_message_font((settings or {}).get("message_font")))
+    message_font = canonicalize_message_font((settings or {}).get("message_font"))
+    message_font_css = message_font
+    message_font = html.escape(message_font)
     code_font_raw = str((settings or {}).get("code_font") or "").strip()
-    code_font = html.escape(code_font_raw if code_font_raw else DEFAULT_CODE_FONT)
+    code_font_css = code_font_raw if code_font_raw else DEFAULT_CODE_FONT
+    code_font = html.escape(code_font_css)
 
     replacements: tuple[tuple[str, str], ...] = (
+        ("__MESSAGE_FONT_CSS__", message_font_css),
+        ("__CODE_FONT_CSS__", code_font_css),
         ("__MESSAGE_FONT__", message_font),
         ("__CODE_FONT__", code_font),
         ("__THEME__", str(palette["theme"])),

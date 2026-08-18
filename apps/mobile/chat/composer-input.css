@@ -185,7 +185,7 @@
       max-height: 200px;
       resize: none;
       padding: 12px 46px 12px 10px;
-      font: 400 16px/1.5 var(--font-main, "SF Pro Text", "Segoe UI", sans-serif);
+      font: 400 16px/1.5 var(--font-main);
       box-shadow: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
