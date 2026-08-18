@@ -402,7 +402,7 @@ def hub_settings_html(saved=False, variant="desktop"):
     import html
     from backend_core.access.settings import (
         normalize_theme_desktop,
-        resolve_hub_theme,
+        resolve_theme,
     )
 
     settings = hub.load_hub_settings()
@@ -411,7 +411,7 @@ def hub_settings_html(saved=False, variant="desktop"):
 
     theme = str(settings.get("theme", "dark") or "dark").strip().lower()
     theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", theme))
-    render_theme = resolve_hub_theme(settings, variant=variant)
+    render_theme = resolve_theme(settings, variant=variant)
     
     theme_desktop_choices = (
         ("system", "System"),
