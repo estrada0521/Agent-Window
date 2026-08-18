@@ -3,12 +3,14 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import socket
 from pathlib import Path
 
 SESSION_LOG_FILENAME = ".log.jsonl"
 NATIVE_LOG_STATE_FILENAME = ".native-log-sync-state.json"
 DESKTOP_THEME_CHOICES = frozenset({"system", "light", "dark"})
+SESSION_NAME_MAX_LENGTH = 64
 DEFAULT_MESSAGE_FONT = (
     '"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", '
     '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", '
@@ -19,6 +21,10 @@ DEFAULT_MESSAGE_FONT = (
 DEFAULT_CODE_FONT = (
     '"SF Mono", "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace'
 )
+
+
+def sanitize_session_name(raw: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9_.\-]", "-", str(raw or "")).strip(".-")[:SESSION_NAME_MAX_LENGTH]
 
 
 def normalize_theme_desktop(value: object) -> str:

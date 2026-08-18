@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import json
-import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from backend_core.access.settings import local_runtime_log_dir, session_log_path
+from backend_core.access.settings import local_runtime_log_dir, sanitize_session_name, session_log_path
 
 
 @dataclass(frozen=True)
@@ -75,7 +74,7 @@ class HubSessionApi:
 
     def unique_session_name_for_workspace(self, workspace: str) -> str:
         raw_name = Path(workspace).name or "session"
-        base = re.sub(r"[^a-zA-Z0-9_.\-]", "-", raw_name).strip(".-")[:64] or "session"
+        base = sanitize_session_name(raw_name) or "session"
         query = self.ctx.active_session_records_query()
         existing = set(query.records.keys())
         existing.update(self.ctx.archived_session_records(existing).keys())
