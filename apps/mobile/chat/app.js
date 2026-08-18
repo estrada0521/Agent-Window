@@ -343,11 +343,6 @@ __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
       });
       root.dataset.renderSig = renderSig;
     };
-    const setQuickActionsDisabled = (disabled) => {
-      document.querySelectorAll(".quick-action").forEach((node) => {
-        node.disabled = disabled;
-      });
-    };
     const STICKY_THRESHOLD = 32;
     const OLDER_AUTOLOAD_MIN_THRESHOLD = 480;
     let _stickyToBottom = false;
@@ -468,7 +463,7 @@ __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
       }, 500);
     };
     document.addEventListener("pointerdown", (e) => {
-      const toggle = e.target.closest(".page-menu-btn, .composer-attach-btn, .quick-action");
+      const toggle = e.target.closest(".page-menu-btn, .composer-attach-btn");
       if (toggle) {
         if (toggle.classList.contains("animating")) {
           e.preventDefault();

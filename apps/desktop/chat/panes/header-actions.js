@@ -131,19 +131,13 @@
       }
       closeHeaderMenus();
     });
-    const closeQuickMore = () => {
-      if (quickMore) quickMore.open = false;
-      closeHeaderMenus();
-    };
     window.addEventListener("resize", () => {
       if (dpPanelOpen) {
         dpApplyPanelWidth();
       }
     });
     document.addEventListener("click", (event) => {
-      if (quickMore && quickMore.open && !quickMore.contains(event.target)) {
-        quickMore.open = false;
-      }
+
       const inRightMenu = rightMenuBtn?.contains(event.target);
       const inNativeBridgeMenu = nativeHeaderMenuBridge?.contains(event.target);
       const agentActionNativeMenu = document.getElementById("agentActionNativeMenuSelect");
@@ -156,7 +150,6 @@
       const action = String(target || "");
       if (!action) return;
       if (action === "esc" || action === "restart" || action === "resume" || action === "ctrlc" || action === "enter") {
-        closeQuickMore();
         await postShortcutCommand({ command_id: action, arg: "" });
         return;
       }
@@ -165,12 +158,10 @@
         return;
       }
       if (action === "openTerminal") {
-        closeQuickMore();
         fetch("/open-terminal", { method: "POST" }).catch(() => {});
         return;
       }
       if (action === "openFinder") {
-        closeQuickMore();
         try {
           const res = await fetch("/open-finder", { method: "POST" });
           if (res.ok) {
@@ -193,7 +184,6 @@
           setTimeout(() => setStatus(""), 2000);
           return;
         }
-        closeQuickMore();
         showAddAgentModal();
         return;
       }
@@ -203,7 +193,6 @@
           setTimeout(() => setStatus(""), 2000);
           return;
         }
-        closeQuickMore();
         showRemoveAgentModal();
         return;
       }
@@ -211,7 +200,6 @@
     }
     document.querySelectorAll(".quick-action:not(.quick-more-toggle):not(#attachBtn)").forEach((node) => {
       node.addEventListener("click", async () => {
-        closeQuickMore();
         const sc = node.dataset.shortcut || "";
         if (sc) {
           await postShortcutCommand({ command_id: sc, arg: "" });

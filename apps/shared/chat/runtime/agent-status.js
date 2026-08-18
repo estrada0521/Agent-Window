@@ -29,7 +29,7 @@ __CHAT_INCLUDE:../session-state-projections.js__
         }
       }
       document.getElementById("message").disabled = !sessionActive;
-      setQuickActionsDisabled(!sessionActive);
+
       if (!sessionActive) {
         setStatus("archived session is read-only");
       }
