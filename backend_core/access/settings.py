@@ -26,21 +26,11 @@ def normalize_theme_desktop(value: object) -> str:
     return theme if theme in DESKTOP_THEME_CHOICES else "dark"
 
 
-def resolve_hub_theme(settings: dict, *, variant: str) -> str:
+def resolve_theme(settings: dict, *, variant: str) -> str:
     view = str(variant or "desktop").strip().lower()
     if view == "mobile":
         # Mobile always follows the OS preference; the server has no access
         # to it, so client-side code upgrades this fallback after load.
-        return "dark"
-    desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
-    if desktop == "system":
-        return "dark"
-    return desktop
-
-
-def resolve_chat_theme(settings: dict, *, variant: str) -> str:
-    view = str(variant or "desktop").strip().lower()
-    if view == "mobile":
         return "dark"
     desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
     if desktop == "system":
@@ -77,7 +67,7 @@ def _with_derived_font_fields(settings: dict) -> dict:
 
 def settings_for_hub_render(settings: dict, *, variant: str) -> dict:
     view = str(variant or "desktop").strip().lower()
-    rendered = dict(settings, theme=resolve_hub_theme(settings, variant=view))
+    rendered = dict(settings, theme=resolve_theme(settings, variant=view))
     if view == "mobile":
         rendered.update(MOBILE_CHAT_TEXT_SIZE)
     return _with_derived_font_fields(rendered)
@@ -85,7 +75,7 @@ def settings_for_hub_render(settings: dict, *, variant: str) -> dict:
 
 def settings_for_chat_render(settings: dict, *, variant: str) -> dict:
     view = str(variant or "desktop").strip().lower()
-    rendered = dict(settings, theme=resolve_chat_theme(settings, variant=view))
+    rendered = dict(settings, theme=resolve_theme(settings, variant=view))
     if view == "mobile":
         rendered.update(MOBILE_CHAT_TEXT_SIZE)
     return _with_derived_font_fields(rendered)
