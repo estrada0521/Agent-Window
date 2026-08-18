@@ -24,9 +24,7 @@ from hub_backend.presentation.hub.header_assets import (
     render_page_header,
 )
 from hub_backend.session_api import HubSessionApi, HubSessionApiContext
-from hub_backend.presentation.hub.settings_view import (
-    hub_settings_html as _hub_settings_html_impl,
-)
+
 from hub_backend.branding import APP_DISPLAY_NAME
 from hub_backend.color_constants import apply_color_tokens, resolve_theme_palette
 from hub_backend.new_session.handlers import (
@@ -405,24 +403,66 @@ HUB_HOME_MOBILE_HTML = _hub_pages["hub_home_html_mobile"]
 
 
 def hub_settings_html(saved=False, variant="desktop"):
+    import html
+    from backend_core.access.settings import (
+        canonicalize_message_font,
+        normalize_theme_desktop,
+        resolve_hub_theme,
+    )
+    
+    settings = hub.load_hub_settings()
+    
+    message_font = canonicalize_message_font(settings.get("message_font"))
+    message_text_size_desktop = int(settings.get("message_text_size_desktop") or settings.get("message_text_size", 13) or 13)
+
+    theme = str(settings.get("theme", "dark") or "dark").strip().lower()
+    theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", theme))
+    render_theme = resolve_hub_theme(settings, variant=variant)
+    
+    theme_desktop_choices = (
+        ("system", "System"),
+        ("light", "Light"),
+        ("dark", "Dark"),
+    )
+    theme_desktop_options = "".join(
+        f'<option value="{html.escape(value)}"' + (' selected' if value == theme_desktop else '') + f'>{html.escape(label)}</option>'
+        for value, label in theme_desktop_choices
+    )
+    
+    notice = (
+        '<div style="margin:0 0 16px;padding:10px 14px;border:1px solid var(--line);'
+        'border-radius:8px;color:var(--fg);font-size:13px;">Settings saved.</div>'
+        if saved else ""
+    )
+    
     header_html = render_page_header(
         title_href="/",
         title_id="pageTitleLink",
         actions_html=DEFAULT_HUB_HEADER_ACTIONS,
         panels_html=DEFAULT_HUB_HEADER_PANELS,
     )
-    return _hub_settings_html_impl(
-        saved=bool(saved),
-        load_hub_settings_fn=hub.load_hub_settings,
-        settings_template=_HUB_SETTINGS_TEMPLATE,
-        pwa_hub_manifest_url=_PWA_HUB_MANIFEST_URL,
-        pwa_icon_192_url=_PWA_ICON_192_URL,
-        pwa_apple_touch_icon_url=_PWA_APPLE_TOUCH_ICON_URL,
-        hub_header_css=_PAGE_HEADER_CSS,
-        hub_header_html=header_html,
-        hub_header_js=_PAGE_HEADER_JS,
-        view_variant=variant,
+
+    page = (
+        _HUB_SETTINGS_TEMPLATE
+        .replace("__HUB_MANIFEST_URL__", _PWA_HUB_MANIFEST_URL)
+        .replace("__PWA_ICON_192_URL__", _PWA_ICON_192_URL)
+        .replace("__APPLE_TOUCH_ICON_URL__", _PWA_APPLE_TOUCH_ICON_URL)
+        .replace("__NOTICE_HTML__", notice)
+        .replace("__MESSAGE_FONT__", html.escape(message_font))
+        .replace("__MESSAGE_TEXT_SIZE_DESKTOP__", str(message_text_size_desktop))
+        .replace("__THEME_DESKTOP_OPTIONS__", theme_desktop_options)
+        .replace("__VIEW_VARIANT__", "desktop")
+        .replace("__HUB_HEADER_CSS__", _PAGE_HEADER_CSS)
+        .replace("__HUB_HEADER_HTML__", header_html)
+        .replace("__HUB_HEADER_JS__", _PAGE_HEADER_JS)
     )
+    
+    from hub_backend.server_helpers import apply_hub_page_branding
+    page = apply_hub_page_branding(page, page_title=f"Settings · {APP_DISPLAY_NAME}")
+    
+    render_settings = dict(settings, theme=render_theme)
+    return apply_color_tokens(page, settings=render_settings)
+
 
 
 def _hub_session_api() -> HubSessionApi:
