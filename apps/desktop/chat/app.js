@@ -50,26 +50,7 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
       window.visualViewport.addEventListener("resize", scheduleSyncFromVV);
       window.visualViewport.addEventListener("scroll", scheduleSyncFromVV);
     }
-    let refreshInFlight = false;
-    let pendingRefreshOptions = null;
-    let reloadInFlight = false;
-    const AGENT_ICON_DATA = __ICON_DATA_URIS__;
-    const SERVER_INSTANCE_SEED = "__SERVER_INSTANCE__";
-    let currentServerInstance = SERVER_INSTANCE_SEED;
-    const isPublicChatView = !(() => {
-      const host = String(location.hostname || "");
-      return host === "127.0.0.1" || host === "localhost" || host === "[::1]" || host.startsWith("192.168.") || host.startsWith("10.") || /^172\.(1[6-9]|2\d|3[01])\./.test(host);
-    })();
-    const MESSAGE_BATCH = 50;
-    const INITIAL_MESSAGE_WINDOW = 50;
-    let latestPayloadData = null;
-    let olderEntries = [];
-    let olderHasMore = false;
-    let olderLoading = false;
-    let publicFullEntryCache = new Map();
-    let publicDeferredLoading = new Set();
-    let publicDeferredObserver = null;
-    let hasInitialRefreshHydrated = false;
+__CHAT_INCLUDE:../../shared/chat/conversation-state.js__
 __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     if (launchShellMode) {
       armLaunchShellGate();
@@ -162,205 +143,22 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       timeline.addEventListener("scroll", hubPingParentForSafariChrome, { passive: true });
       requestHubParentLayout();
     }
-    const scrollConversationToBottom = (behavior = "auto") => {
-      _programmaticScroll = true;
-      timeline.scrollTo({ top: timeline.scrollHeight, behavior });
-      requestAnimationFrame(() => { _programmaticScroll = false; });
-    };
-    const focusMessageInputWithoutScroll = (selectionStart = null, selectionEnd = selectionStart) => {
-      if (typeof isComposerOverlayOpen === "function" && typeof openComposerOverlay === "function" && !isComposerOverlayOpen()) {
-        openComposerOverlay({ immediateFocus: true });
-        if (selectionStart !== null && typeof messageInput.setSelectionRange === "function") {
-          requestAnimationFrame(() => {
-            try {
-              messageInput.setSelectionRange(selectionStart, selectionEnd ?? selectionStart);
-            } catch (_) {}
-          });
-        }
-        return;
-      }
-      try {
-        messageInput.focus({ preventScroll: true });
-      } catch (_) {
-        messageInput.focus();
-      }
-      if (selectionStart !== null && typeof messageInput.setSelectionRange === "function") {
-        try {
-          messageInput.setSelectionRange(selectionStart, selectionEnd ?? selectionStart);
-        } catch (_) {}
-      }
-    };
+__CHAT_INCLUDE:../../shared/chat/scroll-focus.js__
 __CHAT_INCLUDE:attachments/file-open.js__
 __CHAT_INCLUDE:../../shared/chat/composer-overlay.js__
-    const updateScrollBtnPos = () => {
-      const shell = document.querySelector(".shell");
-      shell.style.setProperty("--floating-btn-bottom", "160px");
-      shell.style.setProperty("--composer-height", "0px");
-    };
-    const mathRenderOptions = {
-      delimiters: [
-        {left: '$$', right: '$$', display: true},
-        {left: '$', right: '$', display: false},
-        {left: '\\[', right: '\\]', display: true},
-        {left: '\\(', right: '\\)', display: false}
-      ],
-      ignoredClasses: ["no-math"],
-      throwOnError: false
-    };
+__CHAT_INCLUDE:../../shared/chat/rich-rendering-setup.js__
 __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
-    let selectedTargets = [];
-    let sendLocked = false;
-    let sessionActive = true;
-    const canComposeInSession = () => !!sessionActive;
-    let pendingAttachments = [];
-    let availableTargets = [];
-    let currentSessionName = "";
-    let _renderedIds = new Set();
-    const MESSAGE_COLLAPSE_LINES = 40;
-    const expandedMessageBodies = new Set();
-    const isCollapsibleMessageSender = (sender) => {
-      const normalized = String(sender || "").trim().toLowerCase();
-      return !!normalized && normalized !== "system";
-    };
-    const isCollapsibleMessageRow = (row) =>
-      !!(row && row.classList?.contains("message-row") && isCollapsibleMessageSender(row.dataset?.sender));
-    const syncMessageCollapse = (scope = document) => {
-      const rows = scope?.matches?.("article.message-row")
-        ? (isCollapsibleMessageRow(scope) ? [scope] : [])
-        : Array.from(scope?.querySelectorAll?.("article.message-row") || []).filter(isCollapsibleMessageRow);
-      rows.forEach((row) => {
-        const bodyRow = row.querySelector(".message-body-row");
-        const body = row.querySelector(".md-body");
-        const toggle = row.querySelector(".message-collapse-toggle");
-        if (!bodyRow || !body || !toggle) return;
-        const style = getComputedStyle(body);
-        const lineHeight = Number.parseFloat(style.lineHeight);
-        const paddingTop = Number.parseFloat(style.paddingTop) || 0;
-        const paddingBottom = Number.parseFloat(style.paddingBottom) || 0;
-        if (!Number.isFinite(lineHeight)) {
-          bodyRow.style.removeProperty("--message-collapse-max-height");
-          row.classList.remove("is-collapsible");
-          bodyRow.classList.remove("is-collapsed");
-          toggle.classList.remove("is-visible");
-          toggle.hidden = true;
-          return;
-        }
-        const maxHeight = Math.ceil((lineHeight * MESSAGE_COLLAPSE_LINES) + paddingTop + paddingBottom);
-        bodyRow.style.setProperty("--message-collapse-max-height", `${maxHeight}px`);
-        const shouldCollapse = body.scrollHeight > (maxHeight + 4);
-        const msgId = row.dataset.msgid || "";
-        const isExpanded = shouldCollapse && msgId && expandedMessageBodies.has(msgId);
-        row.classList.toggle("is-collapsible", shouldCollapse);
-        bodyRow.classList.toggle("is-collapsed", shouldCollapse && !isExpanded);
-        const showMoreBtn = shouldCollapse && !isExpanded;
-        toggle.classList.toggle("is-visible", showMoreBtn);
-        toggle.hidden = !showMoreBtn;
-        toggle.textContent = "More";
-      });
-    };
-    const escapeHtml = (value) => value
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;");
-    const emptyConversationHTML = () => {
-      return `<div class="conversation-empty" aria-hidden="true"></div>`;
-    };
-    const stripSenderPrefix = (value) => value.replace(/^\[From:\s*[^\]]+\]\s*/i, "");
-    const normalizedSessionTargets = (rawTargets) => {
-      return Array.isArray(rawTargets)
-        ? rawTargets.filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim())
-        : [];
-    };
+__CHAT_INCLUDE:../../shared/chat/message-collapse.js__
 __CHAT_INCLUDE:../../shared/chat/target-picker.js__
-    const STICKY_THRESHOLD = 32;
-    const OLDER_AUTOLOAD_MIN_THRESHOLD = 480;
-    let _stickyToBottom = false;
-    let _programmaticScroll = false;
-    let _pollScrollRestoreRaf = 0;
-    const maybeRestorePollScrollLock = () => {
-      if (_programmaticScroll) return;
-      const hasAnchor = _pollScrollAnchor && _pollScrollAnchor.msgId;
-      const hasLock = _pollScrollLockTop != null;
-      if (!hasAnchor && !hasLock) return;
-
-      if (hasAnchor) {
-        const row = timeline.querySelector(`[data-msgid="${CSS.escape(String(_pollScrollAnchor.msgId))}"]`);
-        if (row) {
-          const tRect = timeline.getBoundingClientRect();
-          const drift = (row.getBoundingClientRect().top - tRect.top) - _pollScrollAnchor.vpTop;
-          if (Math.abs(drift) > 0.5) {
-            _programmaticScroll = true;
-            timeline.scrollTop += drift;
-            const maxTop = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
-            timeline.scrollTop = Math.min(Math.max(0, timeline.scrollTop), maxTop);
-            _pollScrollLockTop = timeline.scrollTop;
-            queueMicrotask(() => { _programmaticScroll = false; });
-            return;
-          }
-        }
-      }
-      if (!hasLock) return;
-      const maxTop = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
-      const target = Math.min(_pollScrollLockTop, maxTop);
-      if (Math.abs(timeline.scrollTop - target) > 0.5) {
-        _programmaticScroll = true;
-        timeline.scrollTop = target;
-        queueMicrotask(() => { _programmaticScroll = false; });
-      }
-    };
-    const schedulePollScrollRestore = () => {
-      if (_pollScrollLockTop == null && !(_pollScrollAnchor && _pollScrollAnchor.msgId)) return;
-      if (_pollScrollRestoreRaf) return;
-      _pollScrollRestoreRaf = requestAnimationFrame(() => {
-        _pollScrollRestoreRaf = 0;
-        maybeRestorePollScrollLock();
-      });
-    };
-    if (typeof MutationObserver === "function") {
-      try {
-        new MutationObserver(() => schedulePollScrollRestore()).observe(timeline, {
-          childList: true,
-          subtree: true,
-        });
-      } catch (_) {}
-    }
-    const settleScrollLockFrames = (remaining) => {
-      if (remaining <= 0) return;
-      maybeRestorePollScrollLock();
-      requestAnimationFrame(() => settleScrollLockFrames(remaining - 1));
-    };
-    const isNearBottom = () => {
-      return timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight < STICKY_THRESHOLD;
-    };
+__CHAT_INCLUDE:../../shared/chat/target-selection.js__
+__CHAT_INCLUDE:../../shared/chat/composer-draft.js__
+__CHAT_INCLUDE:../../shared/chat/scroll-lock.js__
     let _pinStickyThroughWidthChange = false;
     const updateStickyState = () => {
       if (_programmaticScroll || _pinStickyThroughWidthChange) return;
       _stickyToBottom = isNearBottom();
     };
-    const clearPollScrollLock = () => {
-      _pollScrollLockTop = null;
-      _pollScrollAnchor = null;
-    };
-    timeline.addEventListener("wheel", clearPollScrollLock, { passive: true });
-    timeline.addEventListener("touchstart", clearPollScrollLock, { passive: true });
-    timeline.addEventListener("scroll", updateStickyState, { passive: true });
-    timeline.addEventListener("scroll", () => {
-      if (olderLoading || !olderHasMore) return;
-      const threshold = Math.max(OLDER_AUTOLOAD_MIN_THRESHOLD, timeline.clientHeight * 1.25);
-      if (timeline.scrollTop > threshold) return;
-      void loadOlderMessages();
-    }, { passive: true });
-    const updateScrollBtn = () => {
-      if (!hasInitialRefreshHydrated) {
-        scrollToBottomBtn.classList.remove("visible");
-        composerFabBtn?.classList.remove("visible");
-        return;
-      }
-      const overlayOpen = isComposerOverlayOpen();
-      const emptyPlaceholder = !!document.querySelector("#messages .conversation-empty");
-      scrollToBottomBtn.classList.toggle("visible", !_stickyToBottom && !overlayOpen && !emptyPlaceholder);
-      composerFabBtn?.classList.toggle("visible", (_stickyToBottom || emptyPlaceholder) && !overlayOpen);
-    };
+__CHAT_INCLUDE:../../shared/chat/scroll-btn.js__
     let _timelineLayoutWidth = timeline.clientWidth;
     let _timelineMaxScroll = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
     new ResizeObserver(() => {
@@ -388,58 +186,6 @@ __CHAT_INCLUDE:../../shared/chat/target-picker.js__
         });
       });
     }).observe(timeline);
-    let centeredRowRaf = 0;
-    const updateCenteredMessageRow = () => {
-      const rows = Array.from(document.querySelectorAll("#messages article.message-row"));
-      rows.forEach((row) => row.classList.remove("is-centered"));
-      const useCenterHighlight = window.matchMedia("(hover: none), (pointer: coarse)").matches;
-      if (!useCenterHighlight || !rows.length) return;
-      const timelineRect = timeline.getBoundingClientRect();
-      const centerY = timelineRect.top + (timelineRect.height / 2);
-      let bestRow = null;
-      let bestDistance = Number.POSITIVE_INFINITY;
-      rows.forEach((row) => {
-        const rect = row.getBoundingClientRect();
-        if (rect.bottom <= timelineRect.top || rect.top >= timelineRect.bottom) return;
-        const rowCenter = rect.top + (rect.height / 2);
-        const distance = Math.abs(rowCenter - centerY);
-        if (distance < bestDistance) {
-          bestDistance = distance;
-          bestRow = row;
-        }
-      });
-      bestRow?.classList.add("is-centered");
-    };
-    const requestCenteredMessageRowUpdate = () => {
-      if (centeredRowRaf) return;
-      centeredRowRaf = requestAnimationFrame(() => {
-        centeredRowRaf = 0;
-        updateCenteredMessageRow();
-      });
-    };
-    const flashHeaderToggle = (node) => {
-      if (!node || node.classList.contains("animating")) return;
-      node.classList.add("animating");
-      setTimeout(() => {
-        node.classList.remove("animating");
-      }, 500);
-    };
-    document.addEventListener("pointerdown", (e) => {
-      const toggle = e.target.closest(".page-menu-btn, .composer-attach-btn");
-      if (toggle) {
-        if (toggle.classList.contains("animating")) {
-          e.preventDefault();
-          e.stopPropagation();
-          return;
-        }
-        flashHeaderToggle(toggle);
-      }
-    });
-__CHAT_INCLUDE:../../shared/chat/target-selection.js__
-__CHAT_INCLUDE:../../shared/chat/composer-draft.js__
-    timeline.addEventListener("scroll", updateScrollBtn, { passive: true });
-    timeline.addEventListener("scroll", requestCenteredMessageRowUpdate, { passive: true });
-    window.addEventListener("resize", requestCenteredMessageRowUpdate);
 
     {
       const header = document.querySelector(".page-header");
