@@ -183,23 +183,6 @@ def pwa_asset_url(path: str, *, base_path: str = "", bust: bool = False, pwa_ass
     return f"{url}{sep}v={pwa_asset_version_fn(target)}"
 
 
-def pwa_icon_entries(*, base_path: str = "", pwa_asset_url_fn) -> list[dict[str, str]]:
-    return [
-        {
-            "src": pwa_asset_url_fn("/pwa-icon-192.png", base_path=base_path, bust=True),
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any",
-        },
-        {
-            "src": pwa_asset_url_fn("/pwa-icon-512.png", base_path=base_path, bust=True),
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any",
-        },
-    ]
-
-
 def serve_pwa_static(handler, path: str, *, pwa_static_routes, pwa_static_dir: Path) -> bool:
     route = pwa_static_routes.get(path)
     if not route:
