@@ -535,7 +535,6 @@
     }
 
     function deskSidebarPageUrl(mode) {
-      if (mode === "new") return `/new-session?embed=1&ts=${Date.now()}`;
       if (mode === "settings") { return `/hub-launch-shell.html?target=${encodeURIComponent("/settings?embed=1")}`; }
       return "about:blank";
     }
@@ -829,10 +828,6 @@
     }
 
     function openDeskSidebarPage(mode, { toggle = true } = {}) {
-      if (mode === "new") {
-        startDeskNewSessionFlow();
-        return;
-      }
       if (!_deskSidebarFrame || !_deskSidebarPaneTitle) return;
       if (isDeskSettingsOpen()) {
         if (toggle) setDeskSettingsOpen(false);
@@ -1344,11 +1339,6 @@
         if (!nextUrl) return;
         try {
           const parsed = new URL(nextUrl, window.location.href);
-          if (parsed.pathname === "/new-session") {
-            setDeskSidebarOpen(true);
-            openDeskSidebarPage("new");
-            return;
-          }
           if (parsed.pathname === "/settings") {
             openDeskSidebarPage("settings", { toggle: false });
             return;

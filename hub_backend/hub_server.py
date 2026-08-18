@@ -424,38 +424,6 @@ def hub_settings_html(saved=False, variant="desktop"):
         view_variant=variant,
     )
 
-def hub_new_session_html(variant="desktop"):
-    is_mobile = (variant == "mobile")
-    current_settings = hub.load_hub_settings()
-    message_text_size = int(current_settings["message_text_size"])
-    header_html = render_page_header(
-        title_href="/",
-        title_id="pageTitleLink",
-        actions_html=MOBILE_HUB_HEADER_ACTIONS if is_mobile else DEFAULT_HUB_HEADER_ACTIONS,
-        panels_html=DEFAULT_HUB_HEADER_PANELS,
-    )
-    page = (
-        _hub_pages["hub_new_session_html"]
-        .replace("__HUB_HEADER_CSS__", _PAGE_HEADER_CSS)
-        .replace("__HUB_HEADER_HTML__", header_html)
-        .replace("__HUB_HEADER_JS__", _PAGE_HEADER_JS)
-        .replace("__VIEW_VARIANT__", "mobile" if is_mobile else "desktop")
-        .replace("__MESSAGE_TEXT_SIZE__", str(message_text_size))
-    )
-    from backend_core.access.settings import settings_for_hub_render
-
-    render_settings = settings_for_hub_render(current_settings, variant="mobile" if is_mobile else "desktop")
-    message_font_family = str(render_settings.get("message_font") or "")
-    page = apply_color_tokens(page, settings=render_settings)
-    _cjk_sans = '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR"'
-    _code_font_family = f'"SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", {_cjk_sans}, monospace'
-    font_inject = (
-        f'<style>'
-        f':root{{--message-font-family:{message_font_family};--agent-message-font-family:var(--message-font-family);--code-font-family:{_code_font_family};}}'
-        f'.dir-item-name,.dir-create-label{{font-weight:480!important;}}'
-        f'</style>'
-    )
-    return page.replace('</head>', font_inject + '\n</head>', 1)
 
 def _hub_session_api() -> HubSessionApi:
     return HubSessionApi(
