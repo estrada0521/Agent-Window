@@ -36,9 +36,7 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ paths: [normalizedPath] }),
         });
-        if (!res.ok) {
-          return cached === true;
-        }
+        if (!res.ok) return false;
         const data = await res.json().catch(() => ({}));
         const exists = !!data?.[normalizedPath];
         if (exists) {
