@@ -181,8 +181,28 @@
       overflow-y: hidden;
       text-align: left;
       -webkit-overflow-scrolling: touch;
-      -webkit-mask-image: linear-gradient(to right, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
-      mask-image: linear-gradient(to right, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
+      /* Mask the content for smooth horizontal fade, but overlay a solid black mask on the bottom 14px to protect the scrollbar */
+      -webkit-mask-image: 
+        linear-gradient(to right, #000, #000),
+        linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+      -webkit-mask-size: 
+        100% 14px,
+        100% 100%;
+      -webkit-mask-position: 
+        bottom left,
+        top left;
+      -webkit-mask-repeat: no-repeat;
+      
+      mask-image: 
+        linear-gradient(to right, #000, #000),
+        linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+      mask-size: 
+        100% 14px,
+        100% 100%;
+      mask-position: 
+        bottom left,
+        top left;
+      mask-repeat: no-repeat;
     }
 
     .katex-display>.katex {
