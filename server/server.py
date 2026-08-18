@@ -25,6 +25,7 @@ from server.routes.assets import dispatch_get_assets_route
 from server.routes.read import dispatch_get_read_route
 from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
+from backend_core.access.pwa import pwa_icon_entries
 from backend_core.access.settings import (
     hub_settings_path,
     local_bind_host,
@@ -313,20 +314,10 @@ def _pwa_asset_url(path: str, base_path: str = "") -> str:
 
 
 def _pwa_icon_entries(base_path: str = "") -> list[dict[str, str]]:
-    return [
-        {
-            "src": _pwa_asset_url("/pwa-icon-192.png", base_path),
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any",
-        },
-        {
-            "src": _pwa_asset_url("/pwa-icon-512.png", base_path),
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any",
-        },
-    ]
+    return pwa_icon_entries(
+        base_path=base_path,
+        pwa_asset_url_fn=lambda path, *, base_path="", bust=False: _pwa_asset_url(path, base_path),
+    )
 
 
 def _serve_pwa_static(handler, path: str) -> bool:

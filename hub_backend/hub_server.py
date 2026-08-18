@@ -10,6 +10,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, quote as url_quote, urlparse
 
 from hub_backend.runtime import HubRuntime
+from backend_core.access.pwa import pwa_icon_entries as _pwa_icon_entries_impl
 from backend_core.agents.executables import agent_launch_readiness
 from hub_backend.presentation.hub.header_assets import (
     DEFAULT_HUB_HEADER_ACTIONS,
@@ -46,7 +47,6 @@ from hub_backend.server_helpers import (
     launch_hub_restart as _launch_hub_restart_impl,
     pwa_asset_url as _pwa_asset_url_impl,
     pwa_asset_version as _pwa_asset_version_impl,
-    pwa_icon_entries as _pwa_icon_entries_impl,
     resolve_external_origin as _resolve_external_origin_impl,
     serve_pwa_static as _serve_pwa_static_impl,
 )
