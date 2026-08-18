@@ -3,28 +3,6 @@
     }
 
     @font-face {
-      font-family: "anthropicSerif";
-      src:
-        url("__CHAT_BASE_PATH__/font/anthropic-serif-roman.ttf") format("truetype-variations"),
-        url("__CHAT_BASE_PATH__/font/anthropic-serif-roman.ttf") format("truetype");
-      font-style: normal;
-      font-weight: 300 800;
-      font-optical-sizing: auto;
-      font-display: swap;
-    }
-
-    @font-face {
-      font-family: "anthropicSerif";
-      src:
-        url("__CHAT_BASE_PATH__/font/anthropic-serif-italic.ttf") format("truetype-variations"),
-        url("__CHAT_BASE_PATH__/font/anthropic-serif-italic.ttf") format("truetype");
-      font-style: italic;
-      font-weight: 300 800;
-      font-optical-sizing: auto;
-      font-display: swap;
-    }
-
-    @font-face {
       font-family: "anthropicSans";
       src:
         url("__CHAT_BASE_PATH__/font/anthropic-sans-roman.ttf") format("truetype-variations"),

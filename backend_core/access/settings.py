@@ -16,14 +16,6 @@ DEFAULT_MESSAGE_FONT = (
     '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", '
     '"Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif'
 )
-LEGACY_MINCHO_MESSAGE_FONT = (
-    '"anthropicSerif", "Anthropic Serif", Georgia, "Arial Hebrew", "Noto Sans Hebrew", '
-    '"Times New Roman", Times, '
-    '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", '
-    '"PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", '
-    '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", '
-    '"Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", serif'
-)
 
 
 def normalize_theme_desktop(value: object) -> str:
@@ -59,8 +51,6 @@ def canonicalize_message_font(value: object) -> str:
         return ""
     if text == "preset-gothic":
         return DEFAULT_MESSAGE_FONT
-    if text == "preset-mincho":
-        return LEGACY_MINCHO_MESSAGE_FONT
     if text.startswith("system:"):
         family = text.split(":", 1)[1].strip()
         if family:
