@@ -120,6 +120,10 @@ def canonical_agent_name(name: str) -> str:
     return AGENT_ALIASES.get(base, base)
 
 
+def base_agent_name(instance_name: str) -> str:
+    return canonical_agent_name((instance_name or "").split("-", 1)[0])
+
+
 def generate_agent_message_selectors(suffix: str = "", prefix: str = "") -> str:
     return f"    {prefix}.message:not(.user):not(.system){suffix}"
 

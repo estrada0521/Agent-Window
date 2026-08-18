@@ -30,7 +30,7 @@ from backend_core.agents.instances import (
     renumber_exact_instance,
     resolve_canonical_instance,
 )
-from backend_core.agents.registry import AGENTS, canonical_agent_name
+from backend_core.agents.registry import AGENTS, base_agent_name
 from backend_core.tmux.process_cleanup import cleanup_target_process_groups
 from backend_core.tmux.topology import (
     acquire_topology_lock,
@@ -98,11 +98,6 @@ def _unset_env(prefix: list[str], session_name: str, key: str) -> None:
 
 def _pane_env_key(instance_name: str) -> str:
     return f"AGENT_WINDOW_PANE_{instance_name.upper().replace('-', '_')}"
-
-
-def _base_agent(name: str) -> str:
-    raw = (name or "").strip().lower()
-    return canonical_agent_name(raw.split("-", 1)[0] if raw else "")
 
 
 def _instance_names(bases: list[str]) -> list[str]:
@@ -310,7 +305,7 @@ def _start_agent(
 def _prepare_instances(repo_root: Path, requested: list[str]) -> list[str]:
     bases: list[str] = []
     for raw in requested:
-        base = _base_agent(raw)
+        base = base_agent_name(raw)
         if not base or base not in AGENTS:
             raise SessionControlError(f"Unknown agent: {raw}")
         bases.append(base)
@@ -431,7 +426,7 @@ def create_session(
         priority_idx = -1
         max_priority = 0
         for i, instance in enumerate(instances):
-            priority = int(AGENTS[_base_agent(instance)].startup_priority or 0)
+            priority = int(AGENTS[base_agent_name(instance)].startup_priority or 0)
             if priority > max_priority:
                 max_priority = priority
                 priority_idx = i
@@ -499,7 +494,7 @@ def add_agent(
     initiator: str = "",
 ) -> str:
     name = (session_name or "").strip()
-    base = _base_agent(agent)
+    base = base_agent_name(agent)
     if not name:
         raise SessionControlError("session_name is required")
     if not base or base not in AGENTS:
