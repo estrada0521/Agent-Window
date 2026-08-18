@@ -239,7 +239,7 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
         const exists = await fileExistsOnDisk(normalizedPath);
         if (!exists) {
           setStatus(`file not found: ${displayAttachmentFilename(normalizedPath) || normalizedPath}`, true);
-          setTimeout(() => setStatus(""), STATUS_TOAST_NOT_FOUND_MS);
+          setTimeout(() => setStatus(""), STATUS_TOAST_MS);
           return;
         }
       }

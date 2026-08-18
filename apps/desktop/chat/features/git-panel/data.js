@@ -38,10 +38,10 @@
       try {
         await postOpenFileInEditor(normalizedPath, line);
         setStatus(`Opened ${normalizedPath}`);
-        setTimeout(() => setStatus(""), STATUS_TOAST_SUCCESS_MS);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       } catch (err) {
         setStatus(err?.message || errMsg, true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_ERROR_MS);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       }
     };
     const dpFileStatsRowKey = (scope, entry) => `${String(scope || "")}\u001f${String(entry?.path || "").trim()}`;

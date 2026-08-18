@@ -83,7 +83,7 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
           _fileExistenceCache.delete(normalizedPath);
         } catch (_) {}
         setStatus(err?.message || "Failed to open file in the default app.", true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_NOT_FOUND_MS);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
         return false;
       }
     };
@@ -106,7 +106,7 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
       const exists = await fileExistsOnDisk(normalizedPath);
       if (!exists) {
         setStatus(`file not found: ${displayAttachmentFilename(normalizedPath) || normalizedPath}`, true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_NOT_FOUND_MS);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
         return;
       }
       await openFileInEditor(normalizedPath, lineNum);
