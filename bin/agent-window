@@ -1080,13 +1080,6 @@ if [[ "$NO_AGENTS" -eq 0 ]]; then
   done
 fi
 
-SAVE_CORE_SH="$REPO_ROOT/bin/lib/save.sh"
-if [[ ! -f "$SAVE_CORE_SH" ]]; then
-  echo "Missing required save helper script: $SAVE_CORE_SH" >&2
-  exit 1
-fi
-source "$SAVE_CORE_SH"
-
 agent_window_dispatch_agent_mutation_modes
 
 _create_args=(
