@@ -195,14 +195,21 @@
        makes that the formula's right edge, so "(1)" sits on the last glyph. */
     .katex-display>.katex:has(>.katex-html>.tag) {
       display: block;
-      width: 100%;
+      width: max-content;
+      min-width: 100%;
       margin: 0;
       text-align: center;
     }
 
+    .katex-display>.katex>.katex-html>.tag {
+      position: sticky;
+      right: 0;
+      float: right;
+    }
+
     .katex-display>.katex>.katex-html:has(>.tag) {
       box-sizing: border-box;
-      padding-inline: 4em;
+      padding-inline: 1.5em;
     }
 
     .md-body pre {
