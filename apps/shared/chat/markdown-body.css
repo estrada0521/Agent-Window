@@ -180,6 +180,14 @@
       overflow-y: hidden;
       text-align: left;
       -webkit-overflow-scrolling: touch;
+      -webkit-mask-image: linear-gradient(to right, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
+    }
+
+    /* Do not fade the right edge if there is a sticky \tag, so the tag remains visible */
+    .md-body .katex-display:has(.tag) {
+      -webkit-mask-image: linear-gradient(to right, transparent 0, black 16px, black 100%);
+      mask-image: linear-gradient(to right, transparent 0, black 16px, black 100%);
     }
 
     .katex-display>.katex {
