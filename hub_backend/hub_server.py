@@ -413,6 +413,9 @@ def hub_settings_html(saved=False, variant="desktop"):
     settings = hub.load_hub_settings()
     
     message_font = canonicalize_message_font(settings.get("message_font"))
+    code_font = str(settings.get("code_font") or "").strip()
+    from backend_core.access.settings import DEFAULT_CODE_FONT
+    code_font = code_font if code_font else DEFAULT_CODE_FONT
     message_text_size_desktop = int(settings.get("message_text_size_desktop") or settings.get("message_text_size", 13) or 13)
 
     theme = str(settings.get("theme", "dark") or "dark").strip().lower()
@@ -449,6 +452,7 @@ def hub_settings_html(saved=False, variant="desktop"):
         .replace("__APPLE_TOUCH_ICON_URL__", _PWA_APPLE_TOUCH_ICON_URL)
         .replace("__NOTICE_HTML__", notice)
         .replace("__MESSAGE_FONT__", html.escape(message_font))
+        .replace("__CODE_FONT__", html.escape(code_font))
         .replace("__MESSAGE_TEXT_SIZE_DESKTOP__", str(message_text_size_desktop))
         .replace("__THEME_DESKTOP_OPTIONS__", theme_desktop_options)
         .replace("__VIEW_VARIANT__", "desktop")

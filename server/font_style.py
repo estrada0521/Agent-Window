@@ -22,7 +22,7 @@ def chat_font_settings_inline_style(
     font_family_stack_fn=font_family_stack,
 ) -> str:
     message_family = font_family_stack_fn(settings.get("message_font", DEFAULT_MESSAGE_FONT), "user")
-    sans_family = DEFAULT_MESSAGE_FONT
+    code_family = settings.get("code_font", "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace")
     try:
         _legacy_size = max(8, min(18, int(settings.get("message_text_size", 13))))
     except Exception:
@@ -49,7 +49,7 @@ def chat_font_settings_inline_style(
     .message.user .md-body p,
     .message.user .md-body li,
     .message.user .md-body li p {
-      font-family: var(--user-message-font-family);
+      font-family: var(--font-main);
       font-weight: 400;
       font-optical-sizing: auto;
       font-variation-settings: "opsz" 16;
@@ -62,7 +62,7 @@ def chat_font_settings_inline_style(
     .message:not(.user):not(.system) .md-body p,
     .message:not(.user):not(.system) .md-body li,
     .message:not(.user):not(.system) .md-body li p {
-      font-family: var(--agent-message-font-family);
+      font-family: var(--font-main);
       font-weight: 400;
       font-optical-sizing: auto;
       font-variation-settings: "opsz" 16;
@@ -76,10 +76,8 @@ def chat_font_settings_inline_style(
       --message-text-size: {message_text_size_desktop}px;
       --message-text-line-height: {message_text_size_desktop + 9}px;
       --message-max-width: {message_max_width}px;
-      --message-font-family: {message_family};
-      --user-message-font-family: var(--message-font-family);
-      --agent-message-font-family: var(--message-font-family);
-      --sans-font-family: {sans_family};
+      --font-main: {message_family};
+      --font-code: {code_family};
     }}
     .shell {{
       max-width: var(--message-max-width);
@@ -95,7 +93,7 @@ def chat_font_settings_inline_style(
       width: min(var(--composer-overlay-max-width, var(--message-max-width)), calc(100vw - 16px));
     }}
     .message.user .md-body {{
-      font-family: var(--user-message-font-family);
+      font-family: var(--font-main);
       color: var(--fg);
     }}
     .message.user .md-body h1,
@@ -106,11 +104,11 @@ def chat_font_settings_inline_style(
       color: var(--fg);
     }}
     {generate_agent_message_selectors(" .md-body")} {{
-      font-family: var(--agent-message-font-family);
+      font-family: var(--font-main);
       color: var(--fg);
     }}
     {agent_detail_selectors(prefix="")} {{
-      font-family: var(--agent-message-font-family);
+      font-family: var(--font-main);
       color: var(--fg);
     }}
     {typography_override}

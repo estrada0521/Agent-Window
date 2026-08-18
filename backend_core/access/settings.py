@@ -16,6 +16,9 @@ DEFAULT_MESSAGE_FONT = (
     '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", '
     '"Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif'
 )
+DEFAULT_CODE_FONT = (
+    '"SF Mono", "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace'
+)
 
 
 def normalize_theme_desktop(value: object) -> str:
@@ -67,7 +70,8 @@ def _require_css_font_family(value: str) -> str:
 
 def _with_derived_font_fields(settings: dict) -> dict:
     settings["message_font"] = canonicalize_message_font(settings.get("message_font"))
-    settings["agent_font_mode"] = "gothic"
+    code_font = str(settings.get("code_font") or "").strip()
+    settings["code_font"] = code_font if code_font else DEFAULT_CODE_FONT
     return settings
 
 
@@ -113,7 +117,16 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
         legacy = str(raw.get("user_message_font") or raw.get("agent_message_font") or "").strip()
         message_font = canonicalize_message_font(legacy or settings.get("message_font"))
     settings["message_font"] = _require_css_font_family(message_font)
-    settings["agent_font_mode"] = "gothic"
+    
+    if "code_font" in raw:
+        code_font = str(raw.get("code_font") or "").strip()
+        if code_font:
+            settings["code_font"] = _require_css_font_family(code_font)
+        else:
+            settings["code_font"] = DEFAULT_CODE_FONT
+    elif "code_font" not in settings:
+        settings["code_font"] = DEFAULT_CODE_FONT
+
     settings.pop("user_message_font", None)
     settings.pop("agent_message_font", None)
 
@@ -143,15 +156,15 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
 HUB_SETTINGS_DEFAULTS = {
     "theme": "dark",
     "theme_desktop": "dark",
-    "agent_font_mode": "gothic",
     "message_font": DEFAULT_MESSAGE_FONT,
+    "code_font": DEFAULT_CODE_FONT,
     "message_text_size": 13,
     "message_text_size_desktop": 13,
 }
 
 MOBILE_CHAT_TYPOGRAPHY = {
-    "agent_font_mode": "gothic",
     "message_font": DEFAULT_MESSAGE_FONT,
+    "code_font": DEFAULT_CODE_FONT,
     "message_text_size": 13,
     "message_text_size_desktop": 13,
 }

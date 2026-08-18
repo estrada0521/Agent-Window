@@ -588,7 +588,7 @@
       flex-direction: column;
       gap: 4px;
       box-sizing: border-box;
-      font-family: var(--sans-font-family, "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif);
+      font-family: var(--font-main, "anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", sans-serif);
       font-size: var(--message-text-size, 13px);
       line-height: var(--message-text-line-height, 22px);
       font-weight: 430;
