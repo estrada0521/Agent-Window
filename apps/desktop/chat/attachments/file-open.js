@@ -49,32 +49,34 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
         return cached === true;
       }
     };
-    const openFileInEditor = async (path, line = 0) => {
-      const normalizedPath = normalizeWorkspaceFilePath(path);
-      if (!normalizedPath) return false;
+    const postOpenFileInEditor = async (path, line = 0) => {
       const normalizedLine = Number.isFinite(line) && line > 0 ? Math.floor(line) : 0;
-      const payload = { path: normalizedPath, line: normalizedLine };
+      const payload = { path, line: normalizedLine };
       const tryPost = () =>
         fetch("/open-file-in-editor", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-      const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+      let res = await tryPost();
+      if (!res.ok && (res.status >= 500 || res.status === 429)) {
+        await new Promise((r) => setTimeout(r, 220));
+        res = await tryPost();
+      }
+      if (!res.ok) {
+        let detail = "Failed to open file in the default app.";
+        try {
+          const data = await res.json();
+          if (data && data.error) detail = data.error;
+        } catch (_) {}
+        throw new Error(detail);
+      }
+    };
+    const openFileInEditor = async (path, line = 0) => {
+      const normalizedPath = normalizeWorkspaceFilePath(path);
+      if (!normalizedPath) return false;
       try {
-        let res = await tryPost();
-        if (!res.ok && (res.status >= 500 || res.status === 429)) {
-          await delay(220);
-          res = await tryPost();
-        }
-        if (!res.ok) {
-          let detail = "Failed to open file in the default app.";
-          try {
-            const data = await res.json();
-            if (data && data.error) detail = data.error;
-          } catch (_) {}
-          throw new Error(detail);
-        }
+        await postOpenFileInEditor(normalizedPath, line);
         return true;
       } catch (err) {
         try {
