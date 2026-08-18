@@ -2,21 +2,7 @@
 
 set -euo pipefail
 
-agent_window_resolve_script_path() {
-  local p="${BASH_SOURCE[0]:-$0}"
-  while [[ -L "$p" ]]; do
-    local d targ
-    d="$(cd "$(dirname "$p")" && pwd)"
-    targ="$(readlink "$p")"
-    if [[ "$targ" == /* ]]; then
-      p="$targ"
-    else
-      p="$d/$targ"
-    fi
-  done
-  printf '%s\n' "$p"
-}
-_REAL_SCRIPT="$(agent_window_resolve_script_path)"
+_REAL_SCRIPT="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "${BASH_SOURCE[0]:-$0}")"
 OPS_DIR="$(cd "$(dirname "$_REAL_SCRIPT")" && pwd)"
 REPO_ROOT="$(cd "$OPS_DIR/.." && pwd)"
 SCRIPT_DIR="$REPO_ROOT/bin"
