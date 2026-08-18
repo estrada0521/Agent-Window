@@ -135,7 +135,6 @@
     }, true);
 
     messageInput.addEventListener("blur", (event) => {
-      document.body.classList.remove("composing");
       const nextTarget = event.relatedTarget;
       const keepAutocompleteMenusOpen = _keepAutocompleteMenuOnBlur
         || !!(nextTarget && (fileDrop.contains(nextTarget) || cmdDrop.contains(nextTarget)));

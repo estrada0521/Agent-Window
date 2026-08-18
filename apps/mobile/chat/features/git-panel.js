@@ -40,10 +40,10 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
         </div>`);
       },
       setBodyHtml: setGitPanelBodyHtml,
-      loadingHtml: `<div class="git-commit-file-empty inline-loading-row">${loadingIndicatorHtml("Loading…")}</div>`,
+      loadingHtml: `<div class="git-commit-file-empty inline-loading-row">${loadingIndicatorHtml()}</div>`,
       errorHtml: (message) => `<div class="git-commit-file-empty error">${escapeHtml(message)}</div>`,
       emptyCommitsHtml: '<div class="git-commit-file-empty" data-git-empty="1">No commits</div>',
-      loadMoreLoadingHtml: loadingIndicatorHtml("Loading…"),
+      loadMoreLoadingHtml: loadingIndicatorHtml(),
       loadMoreRetryText: "Retry loading commits",
       loadMoreCountText: (loaded, total) => `Load more commits (${loaded}/${total})`,
       onLoadReset: () => setGitSheetTitle(),

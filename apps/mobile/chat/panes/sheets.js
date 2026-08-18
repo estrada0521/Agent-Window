@@ -621,7 +621,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
           node.className = className;
           if (loading) {
             node.classList.add("inline-loading-row");
-            node.innerHTML = loadingIndicatorHtml(text || "Loading…");
+            node.innerHTML = loadingIndicatorHtml();
           } else {
             node.textContent = text;
           }
