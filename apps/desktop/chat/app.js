@@ -271,7 +271,7 @@ __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
         ? rawTargets.filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim())
         : [];
     };
-__CHAT_INCLUDE:target-picker.js__
+__CHAT_INCLUDE:../../shared/chat/target-picker.js__
     const STICKY_THRESHOLD = 32;
     const OLDER_AUTOLOAD_MIN_THRESHOLD = 480;
     let _stickyToBottom = false;
