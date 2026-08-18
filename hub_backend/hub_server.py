@@ -508,7 +508,6 @@ _GET_ROUTE_HANDLERS = {
     "/": "_get_home",
     "/index.html": "_get_home",
     "/settings": "_get_settings",
-    "/new-session": "_get_new_session",
     "/check-session-name": _get_check_session_name_action,
 }
 
@@ -643,11 +642,6 @@ class Handler(BaseHTTPRequestHandler):
             return
         saved = (parse_qs(parsed.query).get("saved", ["0"])[0] == "1")
         self._send_html(200, hub_settings_html(saved=saved, variant=variant))
-
-    def _get_new_session(self, parsed):
-        variant = request_view_variant(headers=self.headers, query_string=parsed.query)
-        self._send_html(200, hub_new_session_html(variant=variant))
-
 
 
 
