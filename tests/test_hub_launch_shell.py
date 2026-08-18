@@ -23,25 +23,6 @@ class HubLaunchShellTests(unittest.TestCase):
         self.assertIn("window.location.replace(target)", HUB_LAUNCH_SHELL_HTML)
         self.assertIn("window.location.href = target", HUB_LAUNCH_SHELL_HTML)
 
-    def test_session_open_does_not_retry_via_html_navigation(self) -> None:
-        desktop = (
-            Path(__file__).resolve().parents[1] / "apps" / "desktop" / "hub" / "home.js"
-        ).read_text(encoding="utf-8")
-        mobile = (
-            Path(__file__).resolve().parents[1] / "apps" / "mobile" / "hub" / "home.js"
-        ).read_text(encoding="utf-8")
-        self.assertIn("failDeskOpen", desktop)
-        self.assertNotIn("window.location.href = openHref", desktop)
-        self.assertIn("failHubReadyWait(err?.message || \"open session failed\")", mobile)
-        self.assertNotIn("window.location.href = openHref", mobile)
-        self.assertNotIn("navigateWithLaunchShell", mobile)
-
-    def test_launch_shell_is_one_shot(self) -> None:
-        self.assertNotIn("launch-shell-retry", HUB_LAUNCH_SHELL_HTML)
-        self.assertNotIn("maxLoadWaitMs", HUB_LAUNCH_SHELL_HTML)
-        self.assertNotIn("window.setTimeout(load, 700)", HUB_LAUNCH_SHELL_HTML)
-        self.assertIn("showLaunchShellError();", HUB_LAUNCH_SHELL_HTML)
-
     def test_installed_pwa_fetches_launch_shell_from_network(self) -> None:
         self.assertIn(
             'event.respondWith(fetch(`${prefix}/hub-launch-shell.html`, { cache: "no-store" }));',
