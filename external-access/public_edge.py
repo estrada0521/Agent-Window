@@ -30,8 +30,6 @@ revive_archived_session = hub.revive_archived_session
 SESSION_GET_RETRY_WINDOW = 3.0
 SESSION_GET_RETRY_DELAY = 0.15
 SESSION_POST_RETRY_WINDOW = 0.6
-SESSION_RESTART_WAIT_WINDOW = 2.5
-SESSION_STATE_TIMEOUT = 1.2
 UPSTREAM_TIMEOUT = 30.0
 TRANSIENT_UPSTREAM_ERRORS = http_proxy.TRANSIENT_UPSTREAM_ERRORS
 STREAM_CHUNK_SIZE = 64 * 1024
@@ -234,41 +232,6 @@ class Handler(BaseHTTPRequestHandler):
         self._safe_write(body)
         return True
 
-    def _read_chat_session_state(self, chat_port: int) -> dict | None:
-        headers = self._forward_headers(host_override=f"127.0.0.1:{chat_port}")
-        for scheme in ("http", "https"):
-            upstream = f"{scheme}://127.0.0.1:{chat_port}/session-state?ts={int(time.time() * 1000)}"
-            try:
-                response = self._request_upstream("GET", upstream, headers=headers, timeout=SESSION_STATE_TIMEOUT)
-            except TRANSIENT_UPSTREAM_ERRORS:
-                continue
-            if int(response.get("status", 0)) != 200:
-                continue
-            try:
-                return json.loads((response.get("body") or b"{}").decode("utf-8", errors="replace"))
-            except Exception:
-                continue
-        return None
-
-    def _wait_for_chat_restart(self, session_name: str, previous_instance: str = ""):
-        deadline = time.time() + SESSION_RESTART_WAIT_WINDOW
-        saw_disconnect = False
-        while time.time() < deadline:
-            record = self._active_session_record(session_name)
-            workspace = str((record or {}).get("workspace") or "").strip()
-            ok, chat_port, _detail = ensure_chat_server(session_name, workspace=workspace)
-            if ok:
-                payload = self._read_chat_session_state(chat_port)
-                instance = str((payload or {}).get("server_instance") or "")
-                if not previous_instance or (instance and instance != previous_instance) or saw_disconnect:
-                    return True
-            else:
-                payload = None
-            if not payload:
-                saw_disconnect = True
-            time.sleep(SESSION_GET_RETRY_DELAY)
-        return False
-
     def _proxy_hub(self, method: str):
         parsed = urlparse(self.path)
         upstream = f"https://127.0.0.1:{hub_port}{parsed.path}"
@@ -298,7 +261,6 @@ class Handler(BaseHTTPRequestHandler):
         body = self._read_request_body(method)
         forwarded_prefix = f"/session/{session_name}"
         headers = self._forward_headers(forwarded_prefix=forwarded_prefix)
-        previous_instance = ""
         deadline = time.time() + SESSION_GET_RETRY_WINDOW if method == "GET" else time.time()
         post_deadline = time.time() + SESSION_POST_RETRY_WINDOW if method == "POST" and suffix == "/new-chat" else time.time()
         while True:
@@ -312,9 +274,6 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self._safe_write(body_bytes)
                 return
-            if method == "POST" and suffix == "/new-chat" and not previous_instance:
-                payload = self._read_chat_session_state(chat_port)
-                previous_instance = str((payload or {}).get("server_instance") or "")
             upstream_suffix = suffix + (f"?{parsed.query}" if parsed.query else "")
             last_exc = None
             response = None
@@ -343,13 +302,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_bad_gateway(last_exc)
                 return
             if method == "POST" and suffix == "/new-chat":
-                ready = False
-                if 200 <= int(response.get("status", 0)) < 300:
-                    ready = self._wait_for_chat_restart(session_name, previous_instance)
-                self._relay_upstream(
-                    response,
-                    extra_headers={"X-Agent-Window-Chat-Ready": "1" if ready else "0"},
-                )
+                self._relay_upstream(response)
                 return
             if method == "GET" and status in {502, 503, 504} and time.time() < deadline:
                 try:
