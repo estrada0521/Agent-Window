@@ -15,7 +15,7 @@
       return `${protocol}//${host}/`;
     };
     const hubUrlForPath = (path = "/") => {
-      const normalizedPath = String(path || "/").startsWith("/") ? String(path || "/") : `/${String(path || "/")}`;
+      const normalizedPath = normalizeHubPath(path);
       return `${hubRootUrl().replace(/\/$/, "")}${normalizedPath}`;
     };
     const requestHubTop = () => {
@@ -31,7 +31,7 @@
       window.location.href = hubUrl;
     };
     const openHubPath = (path = "/") => {
-      const normalizedPath = String(path || "/").startsWith("/") ? String(path || "/") : `/${String(path || "/")}`;
+      const normalizedPath = normalizeHubPath(path);
       const hubUrl = hubUrlForPath(normalizedPath);
       if (window.self !== window.top) {
         if (normalizedPath === "/") {

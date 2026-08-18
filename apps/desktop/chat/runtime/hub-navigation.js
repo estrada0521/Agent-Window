@@ -23,7 +23,7 @@
     hubBtn?.remove();
     const openHubPath = (path = "/") => {
       const hubHost = window.location.hostname || "127.0.0.1";
-      const normalizedPath = String(path || "/").startsWith("/") ? String(path || "/") : `/${String(path || "/")}`;
+      const normalizedPath = normalizeHubPath(path);
       const hubUrl = `${window.location.protocol}//${hubHost}:__HUB_PORT__${normalizedPath}`;
       if (window.self !== window.top) {
         if (normalizedPath === "/") {

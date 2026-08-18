@@ -1,4 +1,8 @@
     const STATUS_TOAST_MS = 2500;
+    const normalizeHubPath = (path) => {
+      const raw = String(path || "/");
+      return raw.startsWith("/") ? raw : `/${raw}`;
+    };
     const CHAT_BASE_PATH = "__CHAT_BASE_PATH__";
     const CHAT_ASSET_BASE = CHAT_BASE_PATH || "";
     const withChatBase = (path) => {
