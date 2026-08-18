@@ -58,7 +58,8 @@ def load_chat_template(variant: str) -> str:
     normalized = "mobile" if str(variant or "").strip().lower() == "mobile" else "desktop"
     template_dir = _CHAT_TEMPLATE_DIRS[normalized]
     shell = _read_text(template_dir / "shell.html")
-    composer = _expand_includes(_read_text(template_dir / "composer.html"), template_dir)
+    shared_chat_dir = _APPS_ROOT / "shared" / "chat"
+    composer = _expand_includes(_read_text(shared_chat_dir / "composer.html"), shared_chat_dir)
     css = _expand_includes(_read_text(template_dir / "main.css"), template_dir)
     shell_css = _read_text(template_dir / "shell.css")
     js = _expand_includes(_read_text(template_dir / "app.js"), template_dir)
