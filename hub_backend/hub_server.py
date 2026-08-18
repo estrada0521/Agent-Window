@@ -401,17 +401,12 @@ HUB_HOME_MOBILE_HTML = _hub_pages["hub_home_html_mobile"]
 def hub_settings_html(saved=False, variant="desktop"):
     import html
     from backend_core.access.settings import (
-        canonicalize_message_font,
         normalize_theme_desktop,
         resolve_hub_theme,
     )
-    
+
     settings = hub.load_hub_settings()
-    
-    message_font = canonicalize_message_font(settings.get("message_font"))
-    code_font = str(settings.get("code_font") or "").strip()
-    from backend_core.access.settings import DEFAULT_CODE_FONT
-    code_font = code_font if code_font else DEFAULT_CODE_FONT
+
     message_text_size_desktop = int(settings.get("message_text_size_desktop") or settings.get("message_text_size", 13) or 13)
 
     theme = str(settings.get("theme", "dark") or "dark").strip().lower()
