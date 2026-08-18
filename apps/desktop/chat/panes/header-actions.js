@@ -166,22 +166,22 @@
           const res = await fetch("/open-finder", { method: "POST" });
           if (res.ok) {
             setStatus("opened Finder");
-            setTimeout(() => setStatus(""), 1800);
+            setTimeout(() => setStatus(""), STATUS_TOAST_SUCCESS_MS);
           } else {
             const data = await res.json().catch(() => ({}));
             setStatus(data.error || "Finder open failed", true);
-            setTimeout(() => setStatus(""), 2600);
+            setTimeout(() => setStatus(""), STATUS_TOAST_ERROR_MS);
           }
         } catch (err) {
           setStatus(`Finder open error: ${err.message}`, true);
-          setTimeout(() => setStatus(""), 2600);
+          setTimeout(() => setStatus(""), STATUS_TOAST_ERROR_MS);
         }
         return;
       }
       if (action === "addAgent") {
         if (!sessionActive) {
           setStatus("archived session is read-only", true);
-          setTimeout(() => setStatus(""), 2000);
+          setTimeout(() => setStatus(""), STATUS_TOAST_READONLY_MS);
           return;
         }
         showAddAgentModal();
@@ -190,7 +190,7 @@
       if (action === "removeAgent") {
         if (!sessionActive) {
           setStatus("archived session is read-only", true);
-          setTimeout(() => setStatus(""), 2000);
+          setTimeout(() => setStatus(""), STATUS_TOAST_READONLY_MS);
           return;
         }
         showRemoveAgentModal();

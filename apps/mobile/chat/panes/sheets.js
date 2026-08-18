@@ -502,7 +502,7 @@
         const exists = await fileExistsOnDisk(path);
         if (!exists) {
           setStatus(`file not found: ${displayAttachmentFilename(path) || path}`, true);
-          setTimeout(() => setStatus(""), 2200);
+          setTimeout(() => setStatus(""), STATUS_TOAST_NOT_FOUND_MS);
           return;
         }
       }
@@ -884,7 +884,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
       if (action === "addAgent") {
         if (!sessionActive) {
           setStatus("archived session is read-only", true);
-          setTimeout(() => setStatus(""), 2000);
+          setTimeout(() => setStatus(""), STATUS_TOAST_READONLY_MS);
           return;
         }
         showAddAgentModal();
@@ -893,7 +893,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
       if (action === "removeAgent") {
         if (!sessionActive) {
           setStatus("archived session is read-only", true);
-          setTimeout(() => setStatus(""), 2000);
+          setTimeout(() => setStatus(""), STATUS_TOAST_READONLY_MS);
           return;
         }
         showRemoveAgentModal();
