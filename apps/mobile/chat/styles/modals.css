@@ -232,7 +232,7 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       padding: 100px 12px 0;
-      font-family: "SF Mono", "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace;
+      font-family: var(--font-code, "SF Mono", "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace);
       font-weight: 400;
       font-style: normal;
       font-size: 9.5px;
@@ -257,7 +257,7 @@
     }
 
     .trace-dot {
-      font-family: -apple-system, "Helvetica Neue", sans-serif;
+      font-family: var(--font-main, -apple-system, "Helvetica Neue", sans-serif);
       font-variant-emoji: text;
       text-rendering: geometricPrecision;
     }

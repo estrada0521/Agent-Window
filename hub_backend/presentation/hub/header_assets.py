@@ -27,7 +27,7 @@ PAGE_HEADER_CSS = """
       src: url("/font/anthropic-sans-italic.ttf") format("truetype");
       font-style: italic; font-weight: 300 800; font-display: swap;
     }
-    html, body { font-family: "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif; }
+    html, body { font-family: var(--font-main, "anthropicSans", "SF Pro Text", "Segoe UI", sans-serif); }
     .page-header {
       display: flex; flex-direction: column;
       width: 100%;

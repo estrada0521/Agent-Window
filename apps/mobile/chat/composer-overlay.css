@@ -490,7 +490,7 @@
       font-size: var(--agent-icon-sub-font-size);
       font-weight: 700;
       line-height: 1;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      font-family: var(--font-main, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif);
       font-variant-numeric: tabular-nums;
       letter-spacing: 0;
       color: currentColor;

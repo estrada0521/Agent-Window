@@ -244,7 +244,7 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       display: grid;
       place-items: center;
       padding: 24px;
-      font-family: "SF Pro Text", "Segoe UI", sans-serif;
+      font-family: var(--font-main, "SF Pro Text", "Segoe UI", sans-serif);
     }}
     .launch-shell {{
       display: flex;
@@ -451,8 +451,6 @@ def hub_settings_html(saved=False, variant="desktop"):
         .replace("__PWA_ICON_192_URL__", _PWA_ICON_192_URL)
         .replace("__APPLE_TOUCH_ICON_URL__", _PWA_APPLE_TOUCH_ICON_URL)
         .replace("__NOTICE_HTML__", notice)
-        .replace("__MESSAGE_FONT__", html.escape(message_font))
-        .replace("__CODE_FONT__", html.escape(code_font))
         .replace("__MESSAGE_TEXT_SIZE_DESKTOP__", str(message_text_size_desktop))
         .replace("__THEME_DESKTOP_OPTIONS__", theme_desktop_options)
         .replace("__VIEW_VARIANT__", "desktop")
