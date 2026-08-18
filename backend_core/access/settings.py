@@ -78,12 +78,16 @@ def _with_derived_font_fields(settings: dict) -> dict:
 def settings_for_hub_render(settings: dict, *, variant: str) -> dict:
     view = str(variant or "desktop").strip().lower()
     rendered = dict(settings, theme=resolve_hub_theme(settings, variant=view))
+    if view == "mobile":
+        rendered.update(MOBILE_CHAT_TEXT_SIZE)
     return _with_derived_font_fields(rendered)
 
 
 def settings_for_chat_render(settings: dict, *, variant: str) -> dict:
     view = str(variant or "desktop").strip().lower()
     rendered = dict(settings, theme=resolve_chat_theme(settings, variant=view))
+    if view == "mobile":
+        rendered.update(MOBILE_CHAT_TEXT_SIZE)
     return _with_derived_font_fields(rendered)
 
 
@@ -154,6 +158,11 @@ HUB_SETTINGS_DEFAULTS = {
     "theme_desktop": "dark",
     "message_font": DEFAULT_MESSAGE_FONT,
     "code_font": DEFAULT_CODE_FONT,
+    "message_text_size": 13,
+    "message_text_size_desktop": 13,
+}
+
+MOBILE_CHAT_TEXT_SIZE = {
     "message_text_size": 13,
     "message_text_size_desktop": 13,
 }
