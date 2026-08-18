@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-import signal
 import subprocess
 import sys
 import threading
@@ -34,6 +32,7 @@ from backend_core.access.settings import local_runtime_log_dir
 from backend_core.access.settings import pwa_https_enabled
 from backend_core.access.settings import resolve_chat_port
 from backend_core.access.settings import save_hub_settings as save_shared_hub_settings
+from backend_core.tmux.window import tmux_prefix_args
 
 
 @dataclass(frozen=True)
@@ -67,12 +66,7 @@ class HubRuntime:
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port or 0)
         self.hub_scheme = "https" if pwa_https_enabled() else "http"
-        self.tmux_prefix = ["tmux"]
-        if tmux_socket:
-            if "/" in tmux_socket:
-                self.tmux_prefix.extend(["-S", tmux_socket])
-            else:
-                self.tmux_prefix.extend(["-L", tmux_socket])
+        self.tmux_prefix = tmux_prefix_args(tmux_socket) if tmux_socket else ["tmux"]
         self._launch_locks = {}
         self._launch_locks_master = threading.Lock()
 
@@ -205,14 +199,7 @@ class HubRuntime:
         return _chat_server_matches_impl(self, session_name, chat_port, workspace=workspace)
 
     def stop_chat_server(self, session_name: str) -> tuple[bool, str]:
-        return _stop_chat_server_impl(
-            self,
-            session_name,
-            subprocess_module=subprocess,
-            os_module=os,
-            signal_module=signal,
-            time_module=time,
-        )
+        return _stop_chat_server_impl(self, session_name)
 
     def stop_inactive_chat_servers(self, *, keep_session: str = "") -> str:
         return _stop_inactive_chat_servers_impl(self, keep_session=keep_session)
