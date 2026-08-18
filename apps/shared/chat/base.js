@@ -216,7 +216,7 @@
       }
       return s;
     };
-    const loadingIndicatorHtml = (_label = "Loading...") =>
+    const loadingIndicatorHtml = () =>
       '<span class="inline-loading"><span class="inline-loading-spinner" aria-hidden="true"></span></span>';
     const currentFilePreviewFontMode = () => {
       const mode = String(document.documentElement.getAttribute("data-agent-font-mode") || "").trim().toLowerCase();

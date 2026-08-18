@@ -157,7 +157,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
         `<button class="pane-viewer-tab${i === initialIdx ? " active" : ""}" data-agent="${escapeHtml(a)}" title="${escapeHtml(a)}" aria-label="${escapeHtml(a)}" style="--agent-pulse-delay:${agentPulseOffset(a)}s">${paneViewerTabIconHtml(a)}</button>`
       ).join("");
       paneViewerCarousel.innerHTML = paneViewerAgents.map(a =>
-        `<div class="pane-viewer-slide" data-agent="${escapeHtml(a)}"><div class="pane-viewer-header-shadow"></div><div class="pane-viewer-body inline-loading-pane">${loadingIndicatorHtml("Loading…")}</div></div>`
+        `<div class="pane-viewer-slide" data-agent="${escapeHtml(a)}"><div class="pane-viewer-header-shadow"></div><div class="pane-viewer-body inline-loading-pane">${loadingIndicatorHtml()}</div></div>`
       ).join("");
       paneViewerTabs.querySelectorAll(".pane-viewer-tab").forEach(tab => {
         tab.addEventListener("click", () => scrollToAgent(tab.dataset.agent));

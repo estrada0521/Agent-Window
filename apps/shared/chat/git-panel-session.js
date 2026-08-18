@@ -127,7 +127,7 @@
         wrapEl.dataset.fileStatsRequestSeq = String(requestSeq);
         if (!preserveCurrent) {
           delete wrapEl.dataset.fileStatsSignature;
-          wrapEl.innerHTML = `<div class="git-commit-file-empty inline-loading-row">${loadingIndicatorHtml("Loading…")}</div>`;
+          wrapEl.innerHTML = `<div class="git-commit-file-empty inline-loading-row">${loadingIndicatorHtml()}</div>`;
         }
         const loaded = await loadGitDiffFileStats({ hash, scope });
         if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return null;

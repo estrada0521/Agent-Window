@@ -378,6 +378,10 @@
       text-decoration: none;
     }
 
+    .md-body .markdown-link-target {
+      color: var(--external-link-fg);
+    }
+
     .has-hover .md-body a:hover {
       text-decoration: underline;
     }
