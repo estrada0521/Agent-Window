@@ -100,11 +100,7 @@ def chat_server_matches(self, session_name: str, chat_port: int, *, workspace: s
     return True
 
 
-def stop_chat_server(
-    self,
-    session_name: str,
-    **_kwargs,
-) -> tuple[bool, str]:
+def stop_chat_server(self, session_name: str) -> tuple[bool, str]:
     return stop_chat_server_impl(self.repo_root, session_name)
 
 
