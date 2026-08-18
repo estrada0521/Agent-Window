@@ -215,7 +215,7 @@
         const root = document.getElementById("messages");
         if (root) {
           const detail = escapeHtml(String(err?.message || err));
-          root.innerHTML = `<div class="sysmsg-row"><span class="sysmsg-text">Rendering error: ${detail}</span></div>`;
+          root.innerHTML = `<div class="sysmsg-row"><span class="sysmsg-text" style="color: var(--error);">Rendering error: ${detail}</span></div>`;
         }
         _renderedIds.clear();
         updateScrollBtn();

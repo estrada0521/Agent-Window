@@ -198,11 +198,4 @@
       }
       throw new Error(`unknown menu action: ${action}`);
     }
-    document.querySelectorAll(".quick-action:not(.quick-more-toggle):not(#attachBtn)").forEach((node) => {
-      node.addEventListener("click", async () => {
-        const sc = node.dataset.shortcut || "";
-        if (sc) {
-          await postShortcutCommand({ command_id: sc, arg: "" });
-        }
-      });
-    });
+
