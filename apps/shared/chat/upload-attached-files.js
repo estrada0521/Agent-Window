@@ -1,7 +1,6 @@
       const uploadAttachedFiles = async (fileList) => {
         const files = Array.from(fileList || []).filter((f) => f && typeof f.name === "string");
         if (!files.length) return false;
-        setStatus(files.length > 1 ? `uploading ${files.length} files...` : `uploading ${files[0].name}...`);
         try {
           await Promise.all(files.map(async (file) => {
             const res = await fetch("/upload", {
@@ -18,7 +17,6 @@
             pendingAttachments.push(attachment);
             addCard(file, attachment);
           }));
-          setStatus("");
           return true;
         } catch (err) {
           setStatus("upload failed: " + err.message, true);
