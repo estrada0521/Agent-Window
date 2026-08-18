@@ -34,30 +34,10 @@
     const dpPostOpenFileInEditor = async (rawPath, line = 0) => {
       const normalizedPath = normalizeWorkspaceFilePath(rawPath);
       if (!normalizedPath) return;
-      const normalizedLine = Number.isFinite(line) && line > 0 ? Math.floor(line) : 0;
-      const payload = { path: normalizedPath, line: normalizedLine };
-      const tryPost = () => fetch("/open-file-in-editor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const okMsg = `Opened ${normalizedPath}`;
       const errMsg = "Failed to open file in the default app.";
       try {
-        let res = await tryPost();
-        if (!res.ok && (res.status >= 500 || res.status === 429)) {
-          await sleep(220);
-          res = await tryPost();
-        }
-        if (!res.ok) {
-          let detail = errMsg;
-          try {
-            const data = await res.json();
-            if (data?.error) detail = data.error;
-          } catch (_) {}
-          throw new Error(detail);
-        }
-        setStatus(okMsg);
+        await postOpenFileInEditor(normalizedPath, line);
+        setStatus(`Opened ${normalizedPath}`);
         setTimeout(() => setStatus(""), 1800);
       } catch (err) {
         setStatus(err?.message || errMsg, true);
