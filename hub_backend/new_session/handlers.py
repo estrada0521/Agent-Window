@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 import shutil
 import subprocess
 import sys
@@ -9,6 +8,7 @@ import time
 from pathlib import Path
 from urllib.parse import parse_qs
 
+from backend_core.access.settings import sanitize_session_name
 from backend_core.tmux.control import SessionControlError, create_session
 
 
@@ -23,7 +23,7 @@ def get_check_session_name(handler, parsed, ctx) -> None:
     except Exception as exc:
         handler._send_json(400, {"ok": False, "error": str(exc)})
         return
-    original = re.sub(r"[^a-zA-Z0-9_.\-]", "-", Path(resolved).name or "session").strip(".-")[:64] or "session"
+    original = sanitize_session_name(Path(resolved).name or "session") or "session"
     proposed = ctx["session_api"].unique_session_name_for_workspace(resolved)
     handler._send_json(200, {"ok": True, "name": proposed, "original": original, "conflict": proposed != original})
 
@@ -114,7 +114,7 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     if not Path(resolved_workspace).is_dir():
         handler._send_json(400, {"ok": False, "error": f"Invalid workspace: {resolved_workspace}"})
         return
-    override_name = re.sub(r"[^a-zA-Z0-9_.\-]", "-", str(data.get("session_name") or "")).strip(".-")[:64]
+    override_name = sanitize_session_name(str(data.get("session_name") or ""))
     if override_name:
         query = ctx["active_session_records_query_fn"]()
         existing = set(query.records.keys())
