@@ -207,7 +207,7 @@
         showRemoveAgentModal();
         return;
       }
-      document.getElementById(action)?.click();
+      throw new Error(`unknown menu action: ${action}`);
     }
     document.querySelectorAll(".quick-action:not(.quick-more-toggle):not(#attachBtn)").forEach((node) => {
       node.addEventListener("click", async () => {

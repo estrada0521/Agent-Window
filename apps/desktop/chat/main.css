@@ -21,7 +21,6 @@ __CHAT_INCLUDE:styles/transcript.css__
       color: var(--muted);
       line-height: 1;
       border-radius: 4px;
-      transition: color 150ms ease;
       -webkit-tap-highlight-color: transparent;
     }
     .has-hover .copy-btn:hover {

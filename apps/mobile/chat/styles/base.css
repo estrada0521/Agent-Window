@@ -356,7 +356,8 @@
     }
 
     .shell>.page-header>#gitPanel.git-transitioning.open,
-    .shell>.page-header>#gitPanel.git-mode-detail.open {
+    .shell>.page-header>#gitPanel.open:has(.git-stack.git-mode-detail),
+    .shell>.page-header>#gitPanel.open:has(.git-stack.git-mode-worktree-detail) {
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -365,19 +366,30 @@
       padding-bottom: 0;
     }
 
-    #gitPanel.git-mode-detail.open .git-stack {
+    .git-stack.git-mode-detail,
+    .git-stack.git-mode-worktree-detail {
       display: flex;
       flex-direction: column;
     }
 
-    #gitPanel.git-mode-detail.open .git-list-view {
+    .git-stack.git-mode-detail .git-commit-list,
+    .git-stack.git-mode-detail .git-load-more,
+    .git-stack.git-mode-detail:not(.git-mode-worktree-detail) .git-summary-wrap {
       display: none;
     }
 
-    #gitPanel.git-mode-detail.open .git-detail-view {
+    .git-stack.git-mode-detail .git-detail-view {
       display: flex;
       flex-direction: column;
       animation: git-detail-in 0.2s ease-out both;
+    }
+
+    .git-stack.git-mode-worktree-detail .git-commit-detail-head {
+      display: none;
+    }
+
+    .git-stack.git-mode-worktree-detail .git-summary-wrap .git-commit-chevron {
+      transform: rotate(90deg);
     }
 
     @keyframes git-detail-in {
@@ -443,7 +455,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    #gitPanel.git-mode-detail .git-commit-detail-head {
+    .git-stack.git-mode-detail .git-commit-detail-head {
       position: sticky;
       top: 0;
       z-index: 4;

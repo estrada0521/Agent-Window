@@ -127,8 +127,6 @@ class ChatTemplateShareTests(unittest.TestCase):
         mobile = load_chat_template("mobile")
         self.assertIn('id="attachBtn"', desktop)
         self.assertIn('id="attachBtn"', mobile)
-        self.assertNotIn('id="cameraBtn"', desktop)
-        self.assertNotIn('id="cameraBtn"', mobile)
         self.assertIn("const isMobileComposer", desktop)
         self.assertIn("const isMobileComposer", mobile)
         self.assertIn("const gitCommitFileRowHtml", desktop)

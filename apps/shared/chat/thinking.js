@@ -194,7 +194,6 @@
         cancelAnimationFrame(thinkingFloatingIconFrame);
         thinkingFloatingIconFrame = 0;
       }
-      document.getElementById("messageThinkingFloatingIcons")?.remove();
       restoreThinkingScrollButton();
     };
     const syncThinkingFloatingIcons = () => {

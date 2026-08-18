@@ -18,11 +18,13 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
     };
     const gitSession = createGitPanelSession({
       root: () => gitPanel,
-      modeEl: () => gitPanel,
+      modeEl: () => gitPanel?.querySelector(".git-stack") || gitPanel,
       observerRoot: () => gitPanel?.querySelector(".git-sheet-content") || gitPanel,
       scrollRoot: () => gitPanel?.querySelector(".git-sheet-content") || gitPanel,
       canLoad: () => !!gitPanel,
       canRefresh: () => !!gitPanel,
+      worktreeDetailClass: true,
+      detailHeadHtml: ({ isWorktree, rowHtml }) => (isWorktree ? "" : rowHtml),
       renderShell: (data) => {
         setGitPanelBodyHtml(`
         <div class="git-stack">
@@ -68,5 +70,5 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       await gitSession.loadPage({ reset: true });
     };
     gitPanel?.addEventListener("click", (event) => {
-      void gitSession.handleClick(event);
+      void gitSession.handleClick(event, { closeWorktreeSummaryClick: true });
     });

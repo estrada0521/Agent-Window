@@ -56,7 +56,7 @@ class MobileAgentPickerTests(unittest.TestCase):
 
     def test_add_remove_do_not_reset_before_the_leftover_tap(self) -> None:
         add_agent = _between(SHEETS, 'if (action === "addAgent")', 'if (action === "removeAgent")')
-        remove_agent = _between(SHEETS, 'if (action === "removeAgent")', "document.getElementById(action)")
+        remove_agent = _between(SHEETS, 'if (action === "removeAgent")', "unknown menu action")
         self.assertIn("showAddAgentModal()", add_agent)
         self.assertNotIn("closeQuickMore", add_agent)
         self.assertIn("showRemoveAgentModal()", remove_agent)
