@@ -347,12 +347,11 @@
           closeDetail({ refreshList: state.detailNeedsRefresh });
           return;
         }
-        const stack = rootEl.querySelector(".git-stack");
         const row = event.target.closest(".git-commit-row, .git-summary-row");
         if (!row) return;
         if (
           closeWorktreeSummaryClick
-          && stack?.classList.contains("git-mode-worktree-detail")
+          && modeEl()?.classList.contains("git-mode-worktree-detail")
           && row.closest(".git-summary-wrap")
         ) {
           event.preventDefault();
