@@ -13,20 +13,6 @@
       -webkit-app-region: no-drag;
     }
   `;
-  const DRAG_REGION_SELECTOR = ".tauri-top-drag-strip, [data-tauri-drag-region], .page-header, .page-header-top";
-  const NO_DRAG_SELECTOR = [
-    "button",
-    "a",
-    "input",
-    "select",
-    "textarea",
-    "[role=\"button\"]",
-    ".page-header-actions",
-    ".page-menu-panel",
-    ".page-menu-btn",
-    "#pageNativeMenuBridge",
-    ".desk-sidebar-resizer",
-  ].join(", ");
 
   function ensureTopDragStrip(doc) {
     if (!doc || !doc.documentElement || !doc.body) return;
@@ -60,61 +46,6 @@
     } catch (_) {}
   }
 
-  function isNoDragTarget(target) {
-    return !!(target && typeof target.closest === "function" && target.closest(NO_DRAG_SELECTOR));
-  }
-
-  async function startWindowDrag(view) {
-    const candidates = [];
-    if (view) candidates.push(view);
-    try {
-      if (view?.parent && view.parent !== view) candidates.push(view.parent);
-    } catch (_) {}
-    for (const candidate of candidates) {
-      const tauri = candidate?.__TAURI__;
-      const invoke = tauri?.core?.invoke || tauri?.invoke || candidate?.__TAURI_INTERNALS__?.invoke;
-      const label = candidate?.__TAURI_INTERNALS?.metadata?.currentWindow?.label || "main";
-      if (typeof invoke === "function") {
-        try {
-          await invoke("plugin:window|start_dragging", { label });
-          return true;
-        } catch (_) {}
-      }
-      if (!tauri) continue;
-      try {
-        const getCurrentWindow = tauri.window?.getCurrentWindow;
-        if (typeof getCurrentWindow === "function") {
-          const currentWindow = getCurrentWindow();
-          if (currentWindow && typeof currentWindow.startDragging === "function") {
-            await currentWindow.startDragging();
-            return true;
-          }
-        }
-      } catch (_) {}
-      try {
-        const appWindow = tauri.window?.appWindow;
-        if (appWindow && typeof appWindow.startDragging === "function") {
-          await appWindow.startDragging();
-          return true;
-        }
-      } catch (_) {}
-    }
-    return false;
-  }
-
-  function installDragHandler(doc) {
-    if (!doc || !doc.documentElement || doc.__agentWindowDragHandlerInstalled) return;
-    doc.__agentWindowDragHandlerInstalled = true;
-    doc.addEventListener("mousedown", (event) => {
-      if (event.button !== 0 || event.defaultPrevented) return;
-      const target = event.target;
-      if (!target || isNoDragTarget(target)) return;
-      const inDragRegion = !!(typeof target.closest === "function" && target.closest(DRAG_REGION_SELECTOR));
-      if (!inDragRegion) return;
-      void startWindowDrag(doc.defaultView);
-    }, { capture: true });
-  }
-
   function applyCssToDocument(doc) {
     if (!doc || !doc.documentElement) return false;
     let isRootWindow = true;
@@ -146,21 +77,9 @@
       } catch (_) {}
       ensureTopDragStrip(doc);
       markDragRegions(doc);
-      installDragHandler(doc);
     };
     if (doc.head) install();
     else doc.addEventListener("DOMContentLoaded", install, { once: true });
-    if (doc.readyState === "loading") {
-      doc.addEventListener("DOMContentLoaded", () => {
-        ensureTopDragStrip(doc);
-        markDragRegions(doc);
-        installDragHandler(doc);
-      }, { once: true });
-    } else {
-      ensureTopDragStrip(doc);
-      markDragRegions(doc);
-      installDragHandler(doc);
-    }
     return true;
   }
 
