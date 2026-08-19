@@ -83,35 +83,43 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     # The mutation above already succeeded (the agent exists in tmux now).
     # Nothing past this point should turn that success into a reported
     # failure - a client that saw a 500 here and retried would add a
-    # second agent on top of the one that's already there.
-    warning = ""
+    # second agent on top of the one that's already there. Each step below
+    # is independent of the others, so each gets its own try/except: one
+    # failing must not stop the rest from running.
+    warnings: list[str] = []
     if rename:
         try:
             ctx["runtime"].rename_agent_identity(*rename)
         except Exception as exc:
-            warning = str(exc)
+            warnings.append(str(exc))
     try:
         targets = ctx["runtime"].active_agents()
     except Exception as exc:
         targets = []
-        warning = warning or str(exc)
+        warnings.append(str(exc))
     with ctx["runtime"]._payload_cache_lock:
         ctx["runtime"]._payload_cache.clear()
         ctx["runtime"]._payload_cache_order.clear()
     try:
         ctx["runtime"]._native_log.on_pane_add(instance)
+    except Exception as exc:
+        warnings.append(str(exc))
+    try:
         ctx["runtime"].refresh_native_log_bindings([instance], reason="add-agent")
+    except Exception as exc:
+        warnings.append(str(exc))
+    try:
         ctx["runtime"].notify_session_state_changed(["targets", "statuses"], reason="targets-changed")
     except Exception as exc:
-        warning = warning or str(exc)
+        warnings.append(str(exc))
     payload = {
         "ok": True,
         "agent": instance,
         "message": f"Added agent {instance}",
         "targets": targets,
     }
-    if warning:
-        payload["warning"] = warning
+    if warnings:
+        payload["warning"] = "; ".join(warnings)
     handler._send_json(200, payload)
 
 
@@ -140,29 +148,33 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
 
     # The mutation above already succeeded (the agent is gone from tmux
     # now). Nothing past this point should turn that success into a
-    # reported failure.
-    warning = ""
+    # reported failure. Each step below is independent of the others, so
+    # each gets its own try/except: one failing must not stop the rest.
+    warnings: list[str] = []
     try:
         targets = ctx["runtime"].active_agents()
     except Exception as exc:
         targets = []
-        warning = str(exc)
+        warnings.append(str(exc))
     with ctx["runtime"]._payload_cache_lock:
         ctx["runtime"]._payload_cache.clear()
         ctx["runtime"]._payload_cache_order.clear()
     try:
         ctx["runtime"].refresh_native_log_bindings(reason="remove-agent")
+    except Exception as exc:
+        warnings.append(str(exc))
+    try:
         ctx["runtime"].notify_session_state_changed(["targets", "statuses"], reason="targets-changed")
     except Exception as exc:
-        warning = warning or str(exc)
+        warnings.append(str(exc))
     payload = {
         "ok": True,
         "agent": instance,
         "message": f"Removed agent {instance}",
         "targets": targets,
     }
-    if warning:
-        payload["warning"] = warning
+    if warnings:
+        payload["warning"] = "; ".join(warnings)
     handler._send_json(200, payload)
 
 
