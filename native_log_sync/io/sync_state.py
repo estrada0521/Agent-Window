@@ -50,28 +50,48 @@ def load_sync_state(runtime) -> dict:
     return data
 
 
+def _atomic_write_json(path, data: dict) -> None:
+    """Write `data` to `path` so a reader never observes a truncated file.
+
+    A plain open(path, "w") truncates before the new content is written, so
+    a crash mid-write leaves an empty/corrupt file behind. Writing to a
+    sibling temp file first and renaming over the target makes the switch
+    atomic: readers see either the old complete file or the new one.
+    """
+    tmp_path = path.with_name(f"{path.name}.tmp-{os.getpid()}")
+    with tmp_path.open("w", encoding="utf-8") as handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        handle.write(json.dumps(data, ensure_ascii=False))
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(tmp_path, path)
+
+
 def save_sync_state(runtime, *, time_module=time) -> None:
     last_sync = time_module.strftime("%Y-%m-%d %H:%M:%S")
+    session_dir = runtime.log_path.parent
     pointer_state = {
         "native_log_current_paths": dict(runtime._native_log_current_paths),
         "last_sync": last_sync,
     }
-    with canonical_native_log_sync_state_path(runtime.log_path.parent).open("w", encoding="utf-8") as handle:
-        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-        handle.write(json.dumps(pointer_state, ensure_ascii=False))
-        handle.flush()
-        os.fsync(handle.fileno())
+    _atomic_write_json(canonical_native_log_sync_state_path(session_dir), pointer_state)
 
     internal_state = {
         "agent_first_seen_ts": dict(runtime._agent_first_seen_ts),
         "native_log_progress": dict(runtime._native_log_progress),
         "last_sync": last_sync,
     }
-    with canonical_native_log_sync_internal_path(runtime.log_path.parent).open("w", encoding="utf-8") as handle:
-        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-        handle.write(json.dumps(internal_state, ensure_ascii=False))
-        handle.flush()
-        os.fsync(handle.fileno())
+    internal_path = canonical_native_log_sync_internal_path(session_dir)
+    _atomic_write_json(internal_path, internal_state)
+
+    # Both renames above only guarantee the file *content* is durable; the
+    # directory entry pointing at the new inode still needs its own fsync
+    # to survive a crash right after the rename.
+    dir_fd = os.open(str(internal_path.parent), os.O_RDONLY)
+    try:
+        os.fsync(dir_fd)
+    finally:
+        os.close(dir_fd)
 
 
 def sync_cursor_status(runtime, *, os_module=os) -> list[dict]:
