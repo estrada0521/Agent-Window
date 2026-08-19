@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -159,17 +158,6 @@ class Handler(BaseHTTPRequestHandler):
             return True
         qs = parse_qs(parsed.query)
         rel = qs.get("path", [""])[0]
-        try:
-            full_path = runtime._resolve_path(rel)
-        except PermissionError:
-            self.send_error(403)
-            return True
-        except FileNotFoundError:
-            self.send_error(404)
-            return True
-        if not os.path.exists(full_path):
-            self.send_error(404)
-            return True
         if suffix == "/file-openability":
             try:
                 payload_body = {"editable": runtime.can_open_in_editor(rel)}
@@ -188,7 +176,14 @@ class Handler(BaseHTTPRequestHandler):
             self._safe_write(body)
             return True
         if suffix == "/file-raw":
-            metadata = runtime.raw_response_metadata(rel, self.headers.get("Range", ""))
+            try:
+                metadata = runtime.raw_response_metadata(rel, self.headers.get("Range", ""))
+            except PermissionError:
+                self.send_error(403)
+                return True
+            except FileNotFoundError:
+                self.send_error(404)
+                return True
             if int(metadata.get("status", 500)) == 416:
                 self.send_response(416)
                 self.send_header("Accept-Ranges", "bytes")
