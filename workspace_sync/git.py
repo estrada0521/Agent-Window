@@ -19,7 +19,7 @@ def configure(*, workspace: str, runtime) -> None:
     global _workspace, _runtime
     _workspace = workspace or ""
     _runtime = runtime
-    _clear_git_overview_cache()
+    invalidate_git_overview_cache()
 
 
 def _git_root() -> Path:
@@ -43,15 +43,13 @@ def _run_git(root: Path, *args: str) -> subprocess.CompletedProcess:
     )
 
 
-def _clear_git_overview_cache() -> None:
+def invalidate_git_overview_cache() -> None:
+    # Both caches key off HEAD/paths derived from the same repo state, so a
+    # change that invalidates one invalidates the other - there's no case
+    # where only the overview or only the commit list has gone stale.
     with _git_overview_cache_lock:
         _git_overview_cache.clear()
         _commit_list_cache.clear()
-
-
-def invalidate_git_overview_cache() -> None:
-    with _git_overview_cache_lock:
-        _git_overview_cache.clear()
 
 
 def git_ignored_rel_paths(workspace: str, rel_paths: list[str]) -> set[str]:
