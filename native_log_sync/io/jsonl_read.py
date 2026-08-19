@@ -17,6 +17,9 @@ class CompleteJsonlScan:
         self.start = start
         self.align_mid_line = align_mid_line
         self.consumed = start
+        self.skipped = 0
+        self.last_skip_offset: int | None = None
+        self.last_skip_reason: str = ""
 
     def __iter__(self):
         with open(self.path, "rb") as handle:
@@ -40,16 +43,24 @@ class CompleteJsonlScan:
                 try:
                     line = raw.decode("utf-8").strip()
                 except UnicodeDecodeError:
+                    self._record_skip(line_start, "not valid utf-8")
                     continue
                 if not line:
                     continue
                 try:
                     entry = json.loads(line)
                 except json.JSONDecodeError:
+                    self._record_skip(line_start, "not valid json")
                     continue
                 if not isinstance(entry, dict):
+                    self._record_skip(line_start, "not a json object")
                     continue
                 yield line_start, entry
+
+    def _record_skip(self, offset: int, reason: str) -> None:
+        self.skipped += 1
+        self.last_skip_offset = offset
+        self.last_skip_reason = reason
 
 
 def complete_jsonl_scan(

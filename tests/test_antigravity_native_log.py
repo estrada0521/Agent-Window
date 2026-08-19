@@ -64,6 +64,7 @@ class _FakeRuntime:
         self.workspace = "/workspace"
         self._native_log_progress = {}
         self._native_log_current_paths = {}
+        self._native_log_projection_status = {}
         self._idle_running_event_seq = 0
         self._idle_running_display_by_agent = {}
         self.saved = 0
