@@ -24,6 +24,8 @@ A few entries — session topology such as Add / Remove Agent — are not projec
 
 Each entry's timestamp is when Agent Window observed it, not the event time inside the native log it came from — real order and observed order can diverge during catch-up after a restart.
 
+Agent Window does not own reality, but it must know whether its projection of reality is healthy. A malformed line in a native log is the CLI's record, not a failure of ours — it's skipped and scanning continues — but that skip is never silent: each agent carries a projection status (ok / warning with detail / unavailable with detail) reflecting whether its own window is currently clear.
+
 What it is: a single append-only jsonl, symlinked into the workspace. It does not depend on Agent Window. The log is not application-internal state; it is a record left in the workspace.
 
 Ordinary exchanges happen directly through `agent-send`. When you want a cross-cutting view of who is handling what and where someone is stuck, you read the unified log. And when exact reproduction is needed, each line leads back to the native log it references, and to its position within it.

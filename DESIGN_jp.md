@@ -24,6 +24,8 @@ Agent Window は、**空間**（作業場所）、**時間**（履歴）、そ�
 
 各行のtimestampは Agent Window がそれを観測した時刻であり、由来する native log 内の event time ではありません。再起動後のcatch-upなどでは、実際の順序と観測順序が食い違うことがあります。
 
+Agent Window は現実を所有しませんが、自分自身の射影が健全かどうかは知っていなければなりません。native log中の壊れた行はCLI側の記録であり、こちら側の失敗ではないので、スキップしてscanを続けます。ただしそのスキップは決して静かではなく、各agentは自分の窓が今晴れているかを示すprojection status(ok / warning + detail / unavailable + detail)を持ちます。
+
 実体は  append-only jsonl であり、workspace に symlink されます。Agent Window に依存しません。ログはアプリケーション内部の状態ではなく、作業空間に残る記録です。
 
 普段のやり取りは `agent-send` で直接行われます。他の参加者が何を担当し、どこで詰まっているかを横断的に把握したいときは、統一ログを読みます。厳密な再現が必要になったときは、各行が参照している native log と、その中での位置へ辿れます。
