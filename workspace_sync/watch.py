@@ -9,6 +9,7 @@ from ctypes import c_double, c_uint32, c_uint64, c_void_p
 
 from native_log_sync.io.fsevents_stream import (
     FSEVENT_CREATE_FLAGS,
+    FSEVENT_RESCAN_FLAGS,
     FSEventCallback,
     KFSEVENTSTREAM_EVENT_ID_SINCE_NOW,
     cf_path_array,
@@ -51,7 +52,18 @@ class _DebouncedWorkspaceRefresh:
         self._flush_lock = threading.Lock()
         self._pending: set[str] = set()
         self._git_head_pending = False
+        self._full_rescan_pending = False
         self._timer: threading.Timer | None = None
+
+    def mark_full_rescan(self) -> None:
+        # FSEvents told us it coalesced or dropped individual path events, so the
+        # reported paths for this batch can't be trusted to cover everything that
+        # changed. Treat the whole workspace as dirty instead of guessing which
+        # subtree needs a rescan.
+        with self._lock:
+            self._full_rescan_pending = True
+            self._git_head_pending = True
+            self._schedule_flush_locked()
 
     def add_path(self, path: str) -> None:
         normalized = os.path.realpath(path)
@@ -93,21 +105,23 @@ class _DebouncedWorkspaceRefresh:
         with self._lock:
             paths = set(self._pending)
             git_head_changed = self._git_head_pending
+            full_rescan = self._full_rescan_pending
             self._pending.clear()
             self._git_head_pending = False
+            self._full_rescan_pending = False
             self._timer = None
-        if not paths and not git_head_changed:
+        if not paths and not git_head_changed and not full_rescan:
             return
         workspace = self._api.file_runtime.workspace
         rels = [os.path.relpath(path, workspace) for path in paths]
         file_rels = [rel for rel in rels if not self._api.file_runtime.file_index_path_is_ignored(rel)]
-        if file_rels:
+        if file_rels or full_rescan:
             try:
                 self._api.invalidate_file_index_cache()
             except Exception as exc:
                 logging.error("Workspace file index invalidation failed: %s", exc)
-        git_relevant = git_head_changed
-        if rels and not git_head_changed:
+        git_relevant = git_head_changed or full_rescan
+        if rels and not git_relevant:
             try:
                 ignored = git_ignored_rel_paths(workspace, rels)
             except Exception as exc:
@@ -173,8 +187,11 @@ def start_workspace_fsevents_watcher(workspace_sync_api) -> None:
         CFRunLoopRun.argtypes = []
         kCFRunLoopDefaultMode = c_void_p.in_dll(cf, "kCFRunLoopDefaultMode")
 
-        def on_events(_stream, _info, num, paths, _flags, _ids):
+        def on_events(_stream, _info, num, paths, flags, _ids):
             if not num or not paths:
+                return
+            if any(flags[index] & FSEVENT_RESCAN_FLAGS for index in range(num)):
+                debouncer.mark_full_rescan()
                 return
             for index in range(num):
                 try:
