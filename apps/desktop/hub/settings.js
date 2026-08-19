@@ -40,33 +40,7 @@
       } catch (_) {}
     }
 
-    const _makeNumberStepper = (input, minusBtnId, plusBtnId, valueDisplayId, onApply, options = {}) => {
-      if (!input) return;
-      const min = Number.isFinite(options.min) ? options.min : 11;
-      const max = Number.isFinite(options.max) ? options.max : 18;
-      const fallback = Number.isFinite(options.fallback) ? options.fallback : min;
-      input.value = String(Math.max(min, Math.min(max, parseInt(input.value, 10) || fallback)));
-      const apply = () => {
-        const sz = Math.max(min, Math.min(max, parseInt(input.value, 10) || fallback));
-        input.value = String(sz);
-        const disp = valueDisplayId ? document.getElementById(valueDisplayId) : null;
-        if (disp) disp.textContent = sz;
-        if (onApply) onApply(sz);
-      };
-      apply();
-      input.addEventListener('input', apply);
-      input.addEventListener('change', apply);
-      const minus = minusBtnId ? document.getElementById(minusBtnId) : null;
-      const plus = plusBtnId ? document.getElementById(plusBtnId) : null;
-      const triggerSave = () => { if (typeof _doAutoSave === 'function') { clearTimeout(_autoSaveTimer); _autoSaveTimer = setTimeout(_doAutoSave, 350); } };
-      if (minus) minus.addEventListener('click', (e) => { e.preventDefault(); const v = parseInt(input.value, 10) || fallback; const n = Math.max(min, v - 1); if (v !== n) { input.value = n; apply(); triggerSave(); } });
-      if (plus) plus.addEventListener('click', (e) => { e.preventDefault(); const v = parseInt(input.value, 10) || fallback; const n = Math.min(max, v + 1); if (v !== n) { input.value = n; apply(); triggerSave(); } });
-    };
-    const _makeTextSizeStepper = (input, minusBtnId, plusBtnId, valueDisplayId, onApply) => {
-      _makeNumberStepper(input, minusBtnId, plusBtnId, valueDisplayId, onApply, { min: 8, max: 18, fallback: 13 });
-    };
     const activeTextSizeInput = document.querySelector('#settingsFormDesktop [name="message_text_size_desktop"]');
-    _makeTextSizeStepper(activeTextSizeInput, null, null, null, null);
 
     const settingsForm = document.getElementById('settingsFormDesktop');
     if (HUB_EMBED && settingsForm) {

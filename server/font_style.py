@@ -24,11 +24,11 @@ def chat_font_settings_inline_style(
     message_family = font_family_stack_fn(settings.get("message_font", DEFAULT_MESSAGE_FONT), "user")
     code_family = settings.get("code_font", "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace")
     try:
-        _legacy_size = max(8, min(18, int(settings.get("message_text_size", 13))))
+        _legacy_size = int(settings.get("message_text_size", 13))
     except Exception:
         _legacy_size = 13
     try:
-        message_text_size_desktop = max(8, min(18, int(settings.get("message_text_size_desktop") or _legacy_size)))
+        message_text_size_desktop = int(settings.get("message_text_size_desktop") or _legacy_size)
     except Exception:
         message_text_size_desktop = _legacy_size
     message_max_width = 900
