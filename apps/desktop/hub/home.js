@@ -330,10 +330,6 @@
       if (!dropped.length) return false;
       return postDeskChatFrameMessage({ type: "parent-drop-files", files: dropped });
     };
-    function sortActiveSessions(active) {
-      return [...active];
-    }
-
     function setDeskSelectionInUrl(name) {
       try {
         const next = new URL(window.location.href);
@@ -485,7 +481,7 @@
     }
 
     function prioritizedDeskActiveSessions() {
-      const active = sortActiveSessions(_hubSessionsCache.active || []);
+      const active = _hubSessionsCache.active || [];
       if (!active.length) return [];
       const byName = new Map();
       active.forEach((session) => {
@@ -1211,17 +1207,16 @@
 
     function renderDesktopSessions(active, archived) {
       if (!_deskSessionList) return;
-      const sortedActive = sortActiveSessions(active);
       let html = "";
-      if (sortedActive.length) {
+      if (active.length) {
         html += `<div class="desk-section-label">Active</div>`;
-        html += sortedActive.map((session) => renderDeskSessionRow(session, false)).join("");
+        html += active.map((session) => renderDeskSessionRow(session, false)).join("");
       }
       if (archived.length) {
         html += `<div class="desk-section-label">Archived</div>`;
         html += archived.map((session) => renderDeskSessionRow(session, true)).join("");
       }
-      if (!sortedActive.length && !archived.length) {
+      if (!active.length && !archived.length) {
         html = `<div class="desk-empty-list">No sessions found</div>`;
       }
       _deskSessionList.innerHTML = html;
