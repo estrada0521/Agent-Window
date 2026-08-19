@@ -49,7 +49,6 @@ from backend_core.tmux.window import (
 
 SESSION_WIDTH = 66
 SESSION_HEIGHT = 40
-_PRIORITY_STAGGER_SEC = 3.0
 
 
 class SessionControlError(RuntimeError):
@@ -427,26 +426,14 @@ def create_session(
     _write_meta(prefix, name)
 
     if panes:
-        priority_idx = -1
-        max_priority = 0
-        for i, instance in enumerate(instances):
-            priority = int(AGENTS[base_agent_name(instance)].startup_priority or 0)
-            if priority > max_priority:
-                max_priority = priority
-                priority_idx = i
-        order = list(range(len(instances)))
-        if priority_idx >= 0 and max_priority > 0:
-            order = [priority_idx] + [i for i in order if i != priority_idx]
-        for i, idx in enumerate(order):
-            if i == 1 and priority_idx >= 0 and max_priority > 0:
-                time.sleep(_PRIORITY_STAGGER_SEC)
+        for instance, pane_id in zip(instances, panes):
             _start_agent(
                 prefix=prefix,
                 repo_root=root,
                 session_name=name,
                 workspace=str(workspace_path),
-                pane_id=panes[idx],
-                instance_name=instances[idx],
+                pane_id=pane_id,
+                instance_name=instance,
             )
         _run(prefix, ["select-pane", "-t", panes[0]])
 

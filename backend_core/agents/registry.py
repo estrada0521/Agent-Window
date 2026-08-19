@@ -16,7 +16,6 @@ class AgentDef:
     resume_flag: str = ""
     resume_extra_flags: str = ""
     ready_pattern: str = ""
-    startup_priority: int = 0
     fallback_paths: tuple[str, ...] = ()
     prefer_fallback_paths: bool = False
     fallback_nvm: bool = False
