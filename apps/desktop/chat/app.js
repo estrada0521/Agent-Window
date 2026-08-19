@@ -203,7 +203,7 @@ __CHAT_INCLUDE:../../shared/chat/transcript/actions.js__
 __CHAT_INCLUDE:runtime/hub-navigation.js__
 __CHAT_INCLUDE:panes/header-menu.js__
 __CHAT_INCLUDE:panes/header-actions.js__
-__CHAT_INCLUDE:composer/runtime.js__
+__CHAT_INCLUDE:../../shared/chat/composer/runtime.js__
 __CHAT_INCLUDE:../../shared/chat/attachments/file-runtime.js__
 __CHAT_INCLUDE:../../shared/chat/composer/commands.js__
 __CHAT_INCLUDE:../../shared/chat/thinking.js__
