@@ -41,7 +41,8 @@ def chat_font_settings_inline_style(
     html[data-mobile="1"] .message:not(.user):not(.system) .md-body,
     html[data-mobile="1"] .message:not(.user):not(.system) .md-body p,
     html[data-mobile="1"] .message:not(.user):not(.system) .md-body li,
-    html[data-mobile="1"] .message:not(.user):not(.system) .md-body li p {
+    html[data-mobile="1"] .message:not(.user):not(.system) .md-body li p,
+    html[data-mobile="1"] .sysmsg-text {
       font-weight: 430;
     }"""
     typography_override = """
@@ -70,6 +71,15 @@ def chat_font_settings_inline_style(
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
       line-height: calc(var(--message-text-size, 16px) + 8px);
+    }
+    .sysmsg-text {
+      font-family: var(--font-main);
+      font-weight: 400;
+      font-optical-sizing: auto;
+      font-variation-settings: "opsz" 16;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }"""
     return f"""
     :root {{
