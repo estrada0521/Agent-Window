@@ -11,6 +11,7 @@ from backend_core.access.settings import (
 )
 from hub_backend.transport.request_base_path import request_base_path
 from hub_backend.transport.request_view import request_view_variant
+from server.runtime import ENTRY_WINDOW_LIMIT
 from shortcut_command.catalog import public_command_dicts
 
 
@@ -64,7 +65,7 @@ def _get_messages(handler, parsed, ctx) -> None:
     light_mode = (qs.get("light", [""])[0] or "").strip() == "1"
     if limit_raw:
         try:
-            limit_override = max(1, min(2000, int(limit_raw)))
+            limit_override = max(1, min(ENTRY_WINDOW_LIMIT, int(limit_raw)))
         except ValueError:
             limit_override = None
     body = ctx["payload_fn"](
@@ -167,7 +168,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
         requested_text_size = str(qs.get("agent_text_size", [""])[0] or "").strip()
         if requested_text_size:
             try:
-                preview_text_size = max(8, min(18, int(requested_text_size)))
+                preview_text_size = int(requested_text_size)
             except ValueError:
                 pass
         page = ctx["workspace_sync_api"].file_view(

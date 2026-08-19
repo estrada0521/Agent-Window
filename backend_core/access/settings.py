@@ -130,8 +130,6 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
         message_text_size = int(raw.get("message_text_size", settings["message_text_size"]))
     except (TypeError, ValueError) as exc:
         raise ValueError(f"invalid message_text_size: {raw.get('message_text_size')!r}") from exc
-    if not (8 <= message_text_size <= 18):
-        raise ValueError(f"message_text_size out of range: {message_text_size}")
     settings["message_text_size"] = message_text_size
 
     try:
@@ -142,8 +140,6 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
         )
     except (TypeError, ValueError) as exc:
         raise ValueError(f"invalid message_text_size_desktop: {raw.get('message_text_size_desktop')!r}") from exc
-    if not (8 <= message_text_size_desktop <= 18):
-        raise ValueError(f"message_text_size_desktop out of range: {message_text_size_desktop}")
     settings["message_text_size_desktop"] = message_text_size_desktop
 
     return settings
