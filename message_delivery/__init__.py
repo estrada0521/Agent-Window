@@ -6,7 +6,6 @@ import subprocess
 import time
 
 from native_log_sync.agents._shared.path_state import _agent_base_name
-from message_delivery.interaction import pane_delivery_payload
 from message_delivery.paste_timing import delivery_paste_delay_seconds
 
 
@@ -100,13 +99,12 @@ def send_message(
             if not pane_id:
                 failed_targets.append(agent)
                 continue
-            agent_payload = pane_delivery_payload(agent, payload)
-            if not _send_keys_literal(self, pane_id, agent_payload, subprocess_module=subprocess):
+            if not _send_keys_literal(self, pane_id, payload, subprocess_module=subprocess):
                 failed_targets.append(agent)
                 continue
             time.sleep(
                 delivery_paste_delay_seconds(
-                    agent_payload,
+                    payload,
                     env=os.environ,
                     session_attached_count=attached_count,
                 )
