@@ -149,7 +149,7 @@ class Handler(BaseHTTPRequestHandler):
         return FileRuntime(workspace=workspace)
 
     def _handle_session_file_request(self, session_name: str, suffix: str, parsed, *, record: dict | None = None) -> bool:
-        if suffix not in {"/file-raw", "/file-view", "/file-openability"}:
+        if suffix not in {"/file-raw", "/file-view"}:
             return False
         runtime = self._session_file_runtime(session_name, record)
         if runtime is None:
@@ -158,23 +158,6 @@ class Handler(BaseHTTPRequestHandler):
             return True
         qs = parse_qs(parsed.query)
         rel = qs.get("path", [""])[0]
-        if suffix == "/file-openability":
-            try:
-                payload_body = {"editable": runtime.can_open_in_editor(rel)}
-            except PermissionError:
-                self.send_error(403)
-                return True
-            except FileNotFoundError:
-                self.send_error(404)
-                return True
-            body = json.dumps(payload_body, ensure_ascii=True).encode("utf-8")
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_header("Cache-Control", "no-store")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self._safe_write(body)
-            return True
         if suffix == "/file-raw":
             try:
                 metadata = runtime.raw_response_metadata(rel, self.headers.get("Range", ""))
