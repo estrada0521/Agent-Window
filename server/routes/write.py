@@ -67,7 +67,7 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         handler._send_json(400, {"ok": False, "error": "agent required"})
         return
     try:
-        instance = add_agent(
+        instance, rename = add_agent(
             session_name=ctx["session_name"],
             agent=agent,
             tmux_socket=str(getattr(ctx["runtime"], "tmux_socket", "") or ""),
@@ -85,11 +85,16 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     # failure - a client that saw a 500 here and retried would add a
     # second agent on top of the one that's already there.
     warning = ""
+    if rename:
+        try:
+            ctx["runtime"].rename_agent_identity(*rename)
+        except Exception as exc:
+            warning = str(exc)
     try:
         targets = ctx["runtime"].active_agents()
     except Exception as exc:
         targets = []
-        warning = str(exc)
+        warning = warning or str(exc)
     with ctx["runtime"]._payload_cache_lock:
         ctx["runtime"]._payload_cache.clear()
         ctx["runtime"]._payload_cache_order.clear()
