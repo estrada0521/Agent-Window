@@ -20,6 +20,8 @@ It records messages — human → agent, agent → human, agent → agent — al
 
 This is not the original record. The originals are each CLI's native log, git, and the filesystem. The unified log is a **projection** of those, reduced to a granularity that humans and agents can both reference across. Native logs sitting at different paths, and history spanning process restarts, converge here into a single space and time.
 
+A few entries — session topology such as Add / Remove Agent — are not projected from any native log; they are Agent Window's own record of an action it performed. This stays a thin historical fact, not a second model of the space.
+
 Each entry's timestamp is when Agent Window observed it, not the event time inside the native log it came from — real order and observed order can diverge during catch-up after a restart.
 
 What it is: a single append-only jsonl, symlinked into the workspace. It does not depend on Agent Window. The log is not application-internal state; it is a record left in the workspace.
