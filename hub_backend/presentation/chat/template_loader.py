@@ -4,8 +4,6 @@ from pathlib import Path
 import re
 
 _APPS_ROOT = Path(__file__).resolve().parents[3] / "apps"
-_REPO_ROOT = _APPS_ROOT.parent
-_DEBUG_INCLUDES_ROOT = _REPO_ROOT / "debug"
 _CHAT_TEMPLATE_DIRS = {
     "desktop": _APPS_ROOT / "desktop" / "chat",
     "mobile": _APPS_ROOT / "mobile" / "chat",
@@ -37,13 +35,7 @@ def _expand_includes(text: str, base_dir: Path, stack: tuple[Path, ...] = ()) ->
         rel = match.group(1)
         path = (base_dir / rel).resolve()
         apps_root = _APPS_ROOT.resolve()
-        debug_root = _DEBUG_INCLUDES_ROOT.resolve()
-        allowed = (
-            apps_root in path.parents
-            or path == apps_root
-            or debug_root in path.parents
-            or path == debug_root
-        )
+        allowed = apps_root in path.parents or path == apps_root
         if not allowed:
             raise ValueError(f"Chat template include escapes allowed directories: {rel}")
         if path in stack:
