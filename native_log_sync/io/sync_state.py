@@ -78,6 +78,7 @@ def sync_cursor_status(runtime, *, os_module=os) -> list[dict]:
     result: list[dict] = []
     for agent in runtime.active_agents():
         path = runtime._native_log_current_paths.get(agent)
+        projection_status = getattr(runtime, "_native_log_projection_status", {}).get(agent, {"status": "ok"})
         entry: dict = {
             "agent": agent,
             "type": _agent_base_name(agent),
@@ -85,6 +86,8 @@ def sync_cursor_status(runtime, *, os_module=os) -> list[dict]:
             "offset": None,
             "file_size": None,
             "first_seen_ts": runtime._first_seen_for_agent(agent),
+            "projection_status": projection_status.get("status", "ok"),
+            "projection_detail": projection_status.get("detail", ""),
         }
         if path:
             entry["offset"] = runtime._native_log_progress.get(_normalized_native_log_path(path))

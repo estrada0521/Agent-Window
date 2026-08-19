@@ -34,6 +34,7 @@ def initialize_native_log_runtime_state(runtime: object) -> None:
     runtime._native_log_current_paths = _load_pane_paths(runtime._sync_state.get("native_log_current_paths"))
 
     runtime._native_log_blocked_paths: dict[str, str] = {}
+    runtime._native_log_projection_status: dict[str, dict] = {}
 
     runtime._agent_first_seen_ts = {}
     raw_first_seen = runtime._sync_state.get("agent_first_seen_ts")

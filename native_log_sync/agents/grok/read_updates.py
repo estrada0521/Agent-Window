@@ -10,6 +10,7 @@ from native_log_sync.agents._shared.path_state import (
     advance_read_progress,
     read_progress_start,
 )
+from native_log_sync.agents._shared.projection_status import record_projection_scan_result
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.grok.read_runtime import (
     iter_tool_calls_from_update,
@@ -78,6 +79,7 @@ def _sync_grok_chat_history(runtime, agent: str, history_path: str) -> bool:
                 appended = True
 
     advance_read_progress(runtime._native_log_progress, history_path, scan.consumed)
+    record_projection_scan_result(runtime, agent, scan)
     return appended
 
 
@@ -127,6 +129,7 @@ def sync_grok_native_log(runtime, agent: str, native_log_path: str | None = None
             if tool_evs:
                 push_runtime_display(runtime, agent, tool_evs)
         advance_read_progress(runtime._native_log_progress, updates_path, scan.consumed)
+        record_projection_scan_result(runtime, agent, scan)
     else:
         advance_read_progress(runtime._native_log_progress, updates_path, file_size)
 

@@ -9,6 +9,7 @@ from native_log_sync.agents._shared.path_state import (
     advance_read_progress,
     read_progress_start,
 )
+from native_log_sync.agents._shared.projection_status import record_projection_scan_result
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.codex.read_runtime import iter_tool_calls, runtime_tool_events
 from native_log_sync.io.jsonl_read import complete_jsonl_scan
@@ -163,6 +164,7 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
             push_runtime_display(self, agent, tool_evs)
 
     advance_read_progress(self._native_log_progress, resolved_path, scan.consumed)
+    record_projection_scan_result(self, agent, scan)
     self.save_sync_state()
     if last_runtime_state_event == "completed":
         self._mark_idle(agent)

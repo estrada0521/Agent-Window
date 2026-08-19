@@ -13,6 +13,7 @@ class _SyncRuntime:
     def __init__(self, root: Path) -> None:
         self._native_log_progress = {}
         self._native_log_current_paths = {}
+        self._native_log_projection_status = {}
         self.log_path = root / "agent-index.jsonl"
         self.session_name = "test-session"
         self.workspace = str(root)

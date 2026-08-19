@@ -12,6 +12,9 @@ from native_log_sync.agents._shared.runtime_state import (
 )
 from native_log_sync.agents import on_pane_restart as _on_pane_restart_impl, on_pane_add as _on_pane_add_impl
 from native_log_sync.agents._shared.workspace_paths import workspace_aliases as _workspace_aliases_impl
+from native_log_sync.agents._shared.projection_status import (
+    record_projection_sync_failure as _record_projection_sync_failure_impl,
+)
 from native_log_sync.io.sync_state import (
     load_sync_state as _load_sync_state_impl,
     save_sync_state as _save_sync_state_impl,
@@ -109,8 +112,9 @@ class NativeLogSyncer:
         for binding in bindings:
             try:
                 sync_agent(self, binding.agent, binding.path)
-            except Exception:
+            except Exception as exc:
                 logging.exception("native log sync failed for %s", binding.agent)
+                _record_projection_sync_failure_impl(self, binding.agent, exc)
         return [
             {
                 "agent": item.agent,
