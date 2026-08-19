@@ -20,7 +20,7 @@ class FileIndexIgnoreRules:
 
     @staticmethod
     def normalize_rel_path(rel: str) -> str:
-        return str(rel or "").replace("\\", "/").strip("/")
+        return str(rel or "").strip("/")
 
     @classmethod
     def normalize_pattern(cls, pattern: str) -> str:

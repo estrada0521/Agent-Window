@@ -11,7 +11,6 @@ use tauri::Manager;
 
 const DARK_BG: &str = "rgb(4,4,4)";
 
-#[cfg(target_os = "macos")]
 use window_vibrancy::{
     apply_liquid_glass, apply_vibrancy, NSGlassEffectViewStyle, NSVisualEffectMaterial,
     NSVisualEffectState,

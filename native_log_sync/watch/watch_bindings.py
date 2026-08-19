@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import os
 import select
-import sys
 import threading
 
 from native_log_sync.watch.emit_events import emit_agent_updates
@@ -135,8 +134,6 @@ class _VnodeNativeSync:
 
 
 def start_native_log_vnode_watcher(runtime) -> None:
-    if sys.platform != "darwin":
-        return
     watcher = _VnodeNativeSync(runtime)
     runtime._native_log_vnode_watcher = watcher
     threading.Thread(target=watcher.run, daemon=True, name="native-vnode").start()

@@ -3,9 +3,7 @@ import logging
 import re
 
 import os
-import shutil
 import subprocess
-import sys
 import threading
 import time
 from pathlib import Path
@@ -245,14 +243,8 @@ class FileRuntime:
 
     @staticmethod
     def _reveal_in_finder(full: str) -> None:
-        if sys.platform == "darwin":
-            reveal_cmd = ["open", "-R", full]
-        elif shutil.which("xdg-open"):
-            reveal_cmd = ["xdg-open", full if os.path.isdir(full) else os.path.dirname(full)]
-        else:
-            raise ValueError("No handler available to reveal this file.")
         subprocess.Popen(
-            reveal_cmd,
+            ["open", "-R", full],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
@@ -260,16 +252,9 @@ class FileRuntime:
 
     @classmethod
     def _open_with_system_default(cls, full: str) -> bool:
-        if sys.platform == "darwin":
-            open_cmd = ["open", full]
-        elif shutil.which("xdg-open"):
-            open_cmd = ["xdg-open", full]
-        else:
-            raise ValueError("No handler available to open this file with the system default.")
-
         try:
             result = subprocess.run(
-                open_cmd,
+                ["open", full],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 timeout=10,
@@ -336,7 +321,7 @@ class FileRuntime:
         for raw in (result.stdout or b"").split(b"\0"):
             if not raw:
                 continue
-            rel = raw.decode("utf-8", "replace").replace("\\", "/")
+            rel = raw.decode("utf-8", "replace")
             if not rel or self._rel_path_is_skipped(rel):
                 continue
             files.append({"path": rel, "size": None})
@@ -354,7 +339,7 @@ class FileRuntime:
     @staticmethod
     def _basename(path: str) -> str:
         s = str(path or "")
-        i = max(s.rfind("/"), s.rfind("\\"))
+        i = s.rfind("/")
         return s if i == -1 else s[i + 1 :]
 
     @staticmethod
@@ -385,7 +370,7 @@ class FileRuntime:
             # doesn't need to be matched against this workspace's file index.
             full = self._resolve_reference_path(raw_query)
             return full if os.path.exists(full) else ""
-        normalized_query = raw_query.replace("\\", "/").lstrip("./").strip("/")
+        normalized_query = raw_query.lstrip("./").strip("/")
         if not normalized_query:
             return ""
         entries = self.list_files(force_refresh=False)
@@ -551,7 +536,7 @@ class FileRuntime:
         return [hydrate_size(item[1]) for item in ranked[:normalized_limit]]
 
     def list_dir(self, rel: str = ""):
-        normalized_rel = str(rel or "").replace("\\", "/").strip("/")
+        normalized_rel = str(rel or "").strip("/")
         full = self._resolve_path(normalized_rel, allow_workspace_root=True)
         if not os.path.isdir(full):
             raise NotADirectoryError(full)

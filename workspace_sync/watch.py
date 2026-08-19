@@ -3,7 +3,6 @@ from __future__ import annotations
 import ctypes
 import logging
 import os
-import sys
 import threading
 import time
 from ctypes import c_double, c_uint32, c_uint64, c_void_p
@@ -39,7 +38,7 @@ _GIT_HEAD_METADATA_PREFIXES = (
 
 
 def _is_git_head_metadata_path(rel: str) -> bool:
-    normalized = str(rel or "").replace("\\", "/").strip("/")
+    normalized = str(rel or "").strip("/")
     if normalized in _GIT_HEAD_METADATA_PATHS:
         return True
     return any(normalized.startswith(prefix) for prefix in _GIT_HEAD_METADATA_PREFIXES)
@@ -59,7 +58,7 @@ class _DebouncedWorkspaceRefresh:
         workspace = self._api.file_runtime.workspace
         if not normalized.startswith(workspace):
             return
-        rel = os.path.relpath(normalized, workspace).replace("\\", "/")
+        rel = os.path.relpath(normalized, workspace)
         if rel == ".git" or rel.startswith(".git/"):
             if _is_git_head_metadata_path(rel):
                 with self._lock:
@@ -100,7 +99,7 @@ class _DebouncedWorkspaceRefresh:
         if not paths and not git_head_changed:
             return
         workspace = self._api.file_runtime.workspace
-        rels = [os.path.relpath(path, workspace).replace("\\", "/") for path in paths]
+        rels = [os.path.relpath(path, workspace) for path in paths]
         file_rels = [rel for rel in rels if not self._api.file_runtime.file_index_path_is_ignored(rel)]
         if file_rels:
             try:
@@ -136,9 +135,6 @@ class _DebouncedWorkspaceRefresh:
 
 
 def start_workspace_fsevents_watcher(workspace_sync_api) -> None:
-    if sys.platform != "darwin":
-        return
-
     workspace_root = workspace_sync_api.file_runtime.workspace
     if not workspace_root or not os.path.isdir(workspace_root):
         return

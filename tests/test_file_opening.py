@@ -18,7 +18,6 @@ class FileOpeningTests(unittest.TestCase):
             completed = mock.Mock(returncode=0)
 
             with (
-                mock.patch("workspace_sync.files.runtime.sys.platform", "darwin"),
                 mock.patch("workspace_sync.files.runtime.subprocess.run", return_value=completed) as run,
                 mock.patch("workspace_sync.files.runtime.subprocess.Popen") as popen,
             ):
@@ -43,7 +42,6 @@ class FileOpeningTests(unittest.TestCase):
             completed = mock.Mock(returncode=1)
 
             with (
-                mock.patch("workspace_sync.files.runtime.sys.platform", "darwin"),
                 mock.patch("workspace_sync.files.runtime.subprocess.run", return_value=completed),
                 mock.patch("workspace_sync.files.runtime.subprocess.Popen") as popen,
             ):

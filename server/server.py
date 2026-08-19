@@ -91,8 +91,6 @@ def _send_is_queueable(target: str, message: str) -> list[str] | None:
 
 
 def _hub_settings_watcher() -> None:
-    if sys.platform != "darwin":
-        return
     settings_file = hub_settings_path(_repo_root)
     if not settings_file.exists():
         return
@@ -126,8 +124,6 @@ def _hub_settings_watcher() -> None:
 
 
 def _message_index_watcher() -> None:
-    if sys.platform != "darwin":
-        return
     while True:
         fd = None
         try:
