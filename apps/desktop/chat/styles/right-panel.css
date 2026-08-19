@@ -1037,8 +1037,12 @@
       align-items: center;
       justify-content: flex-end;
       gap: 4px;
-      flex: 0 0 auto;
-      min-width: 0;
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding-left: 24px;
+      background: linear-gradient(to right, transparent, var(--bg) 10px);
     }
     .git-commit-file-actions .git-summary-counts {
       gap: 8px;
