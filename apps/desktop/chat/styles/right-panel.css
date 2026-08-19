@@ -1010,11 +1010,15 @@
       box-sizing: border-box;
     }
     .git-commit-file-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       color: var(--fg);
-      flex-shrink: 0;
     }
     .git-commit-file-dir {
       min-width: 0;
+      flex-shrink: 3;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
