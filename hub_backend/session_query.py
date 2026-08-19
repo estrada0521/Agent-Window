@@ -175,7 +175,10 @@ def collect_repo_sessions(runtime: Any) -> tuple[list[dict], str, str]:
     if result.timed_out:
         return [], "unhealthy", "tmux list-sessions timed out"
     if result.returncode != 0:
-        return [], "ok", ""
+        stderr = result.stderr.strip()
+        if "no server running" in stderr or "No such file or directory" in stderr:
+            return [], "ok", ""
+        return [], "unhealthy", stderr or f"tmux list-sessions failed (exit {result.returncode})"
 
     sessions: list[dict] = []
     any_timeout = False
