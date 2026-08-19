@@ -65,18 +65,21 @@ class _VnodeNativeSync:
         self._path_by_agent.pop(agent, None)
         if fd is not None:
             self._agent_by_fd.pop(fd, None)
-            os.close(fd)
+            try:
+                os.close(fd)
+            except OSError:
+                logging.exception("native log watch close failed for %s", agent)
 
     def _open_locked(self, agent: str, path: str) -> None:
         try:
             fd = os.open(path, os.O_RDONLY)
-        except FileNotFoundError:
+        except OSError:
             return
         ev = select.kevent(
             fd,
             filter=select.KQ_FILTER_VNODE,
             flags=select.KQ_EV_ADD | select.KQ_EV_CLEAR,
-            fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND,
+            fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND | select.KQ_NOTE_DELETE | select.KQ_NOTE_RENAME,
         )
         self._kq.control([ev], 0)
         self._fd_by_agent[agent] = fd
@@ -108,7 +111,16 @@ class _VnodeNativeSync:
                 self._sync_bindings()
             if not self._runtime.session_is_active:
                 continue
+            rebind = False
             for event in pending:
+                if event.fflags & (select.KQ_NOTE_DELETE | select.KQ_NOTE_RENAME):
+                    with self._lock:
+                        agent = self._agent_by_fd.get(event.ident)
+                        if agent:
+                            self._close_locked(agent)
+                    if agent:
+                        rebind = True
+                    continue
                 if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
                     with self._lock:
                         agent = self._agent_by_fd.get(event.ident)
@@ -118,6 +130,8 @@ class _VnodeNativeSync:
                             emit_agent_updates(self._runtime, agent, path)
                         except Exception:
                             logging.exception("native log sync failed for %s", agent)
+            if rebind:
+                self._sync_bindings()
 
 
 def start_native_log_vnode_watcher(runtime) -> None:
