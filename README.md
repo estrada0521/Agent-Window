@@ -99,7 +99,7 @@ An Agent can send a message directly to another Agent in the session with `agent
 agent-send <target> <message>
 ```
 
-Technically, `agent-send` is a thin wrapper around the same `tmux send-keys` a human uses. It only resolves the destination and attaches a prefix such as `[From: Claude]`.
+Technically, `agent-send` is a thin wrapper around the same `tmux send-keys` a human uses. It only resolves the destination and attaches a prefix such as `[From: Claude]`. Success here means the same thing it does for the input field above: tmux accepted the keystrokes, not that the target Agent understood or acted on it.
 
 ## Give a name
 

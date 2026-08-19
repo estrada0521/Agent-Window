@@ -99,7 +99,7 @@ Agentは `agent-send` で、session内の別のAgentへ直接メッセージを�
 agent-send <target> <message>
 ```
 
-技術的には、`agent-send` は、人間の使う経路と同じ`tmux send-keys`の薄いwrapperです。宛先の解決と`[From: Claude]`のような Prefixの付与のみを行います。
+技術的には、`agent-send` は、人間の使う経路と同じ`tmux send-keys`の薄いwrapperです。宛先の解決と`[From: Claude]`のような Prefixの付与のみを行います。ここでの「成功」の意味は上の入力欄と同じで、tmuxがキー入力を受け付けたということだけであり、送信先のAgentが理解した・行動したことを意味しません。
 
 ## 名前をつける
 
