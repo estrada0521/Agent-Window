@@ -2,20 +2,34 @@ from __future__ import annotations
 
 import fcntl
 import json
+import os
 import subprocess
 from collections import deque
 from pathlib import Path
 
 _COMMIT_STATE_FILENAME = ".agent-index-commit-state.json"
+_COMMIT_LOCK_FILENAME = ".agent-index-commit-state.lock"
 
 
 def _commit_state_path(runtime) -> Path:
     return runtime.log_path.parent / _COMMIT_STATE_FILENAME
 
 
-def read_commit_state_locked(runtime, handle, *, json_module=json) -> dict:
-    handle.seek(0)
-    raw = handle.read().strip()
+def _commit_lock_path(runtime) -> Path:
+    # A separate, never-replaced file to flock(): write_commit_state() below
+    # swaps the state file's inode out from under any already-open handle via
+    # os.replace(), so locking the state file itself would let a second
+    # caller that opened it just before the swap block on a stale inode and
+    # then read/write against that stale copy once unblocked. Locking a file
+    # that never gets replaced keeps the critical section race-free.
+    return runtime.log_path.parent / _COMMIT_LOCK_FILENAME
+
+
+def read_commit_state(runtime, *, json_module=json) -> dict:
+    try:
+        raw = _commit_state_path(runtime).read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        return {}
     if not raw:
         return {}
     try:
@@ -35,11 +49,20 @@ def commit_state_payload(commit: dict) -> dict:
     }
 
 
-def write_commit_state_locked(runtime, handle, commit: dict, *, json_module=json) -> None:
-    handle.seek(0)
-    handle.truncate()
-    handle.write(json_module.dumps(commit_state_payload(commit), ensure_ascii=False))
-    handle.flush()
+def write_commit_state(runtime, commit: dict, *, json_module=json, os_module=os) -> None:
+    path = _commit_state_path(runtime)
+    payload = json_module.dumps(commit_state_payload(commit), ensure_ascii=False)
+    tmp_path = path.with_name(f"{path.name}.tmp-{os_module.getpid()}")
+    with tmp_path.open("w", encoding="utf-8") as handle:
+        handle.write(payload)
+        handle.flush()
+        os_module.fsync(handle.fileno())
+    os_module.replace(tmp_path, path)
+    dir_fd = os_module.open(str(path.parent), os_module.O_RDONLY)
+    try:
+        os_module.fsync(dir_fd)
+    finally:
+        os_module.close(dir_fd)
 
 
 def has_logged_commit_entry(
@@ -72,9 +95,9 @@ def has_logged_commit_entry(
     return False
 
 
-def record_git_commit_locked(runtime, handle, commit: dict) -> bool:
+def record_git_commit(runtime, commit: dict) -> bool:
     if has_logged_commit_entry(runtime, commit["hash"]):
-        write_commit_state_locked(runtime, handle, commit)
+        write_commit_state(runtime, commit)
         return False
     runtime.append_system_entry(
         f"Commit {commit['short']} {commit['subject']}",
@@ -82,7 +105,7 @@ def record_git_commit_locked(runtime, handle, commit: dict) -> bool:
         commit_hash=commit["hash"],
         commit_short=commit["short"],
     )
-    write_commit_state_locked(runtime, handle, commit)
+    write_commit_state(runtime, commit)
     return True
 
 
@@ -141,22 +164,23 @@ def ensure_commit_announcements(
     current = current_git_commit(runtime)
     if not current:
         return
-    _commit_state_path(runtime).parent.mkdir(parents=True, exist_ok=True)
-    with _commit_state_path(runtime).open("a+", encoding="utf-8") as handle:
-        fcntl_module.flock(handle.fileno(), fcntl_module.LOCK_EX)
+    lock_path = _commit_lock_path(runtime)
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+", encoding="utf-8") as lock_handle:
+        fcntl_module.flock(lock_handle.fileno(), fcntl_module.LOCK_EX)
         try:
-            state = read_commit_state_locked(runtime, handle)
+            state = read_commit_state(runtime)
             last_hash = (state.get("last_commit_hash") or "").strip()
             if not last_hash:
-                record_git_commit_locked(runtime, handle, current)
+                record_git_commit(runtime, current)
                 return
             if last_hash == current["hash"]:
                 return
             commits = git_commits_since(runtime, last_hash)
             if not commits:
-                record_git_commit_locked(runtime, handle, current)
+                record_git_commit(runtime, current)
                 return
             for commit in commits:
-                record_git_commit_locked(runtime, handle, commit)
+                record_git_commit(runtime, commit)
         finally:
-            fcntl_module.flock(handle.fileno(), fcntl_module.LOCK_UN)
+            fcntl_module.flock(lock_handle.fileno(), fcntl_module.LOCK_UN)
