@@ -17,12 +17,13 @@
 ## 3. Cut completely
 
 - Dead code is not allowed. When a path is replaced, delete the old one. A function, file, or folder that nothing calls is a second record of a past design; the next reader will treat it as live.
-- There is no compatibility window and no legacy alias. The cut is finished in this change, or it is not finished. Do not keep the old name beside the new one so that both appear to work.
+- There is no compatibility window and no legacy alias. The cut is finished in this change, or it is not finished.
 - If a name clearly does not match the thing it names, fix it. You do not need to be asked. Functions, files, and folders are all in scope. Rename every caller in the same cut.
 - A rename that stops halfway — the function but not the file, the file but not the folder — is the same defect as running two paths. Finish it.
 
 ## 4. Keep living code spare
 
+- Do not optimize what should not exist in the first place. Question the thing before you improve it.
 - Two sites that do the same work are one fact that has not been named. Do not let them diverge. Sameness of role is the defect, not identical text; mechanical duplication checks will miss it.
 - A value used in many places is one fact. Give it one name. Do not restate a color, a duration, or any other constant as a literal wherever it happens to appear.
 - Do not spend memory, CPU, GPU, or battery on work that does not change what can be seen or what must be remembered. Idle should be idle.
