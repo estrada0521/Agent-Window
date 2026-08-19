@@ -4,6 +4,33 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from backend_core.access.settings import agent_window_session_root
+
+
+def find_session_for_workspace(workspace: Path | str, *, exclude_session: str = "") -> str | None:
+    """Return the name of an existing session (active or archived) whose
+    recorded workspace matches. A session's .meta file persists after the
+    tmux session itself is gone, so this covers archived sessions too.
+    """
+    target = str(Path(workspace).expanduser().resolve())
+    exclude = str(exclude_session or "").strip()
+    root = agent_window_session_root()
+    if not root.is_dir():
+        return None
+    for entry in sorted(root.iterdir()):
+        if not entry.is_dir() or entry.name == exclude:
+            continue
+        meta_path = entry / ".meta"
+        if not meta_path.is_file():
+            continue
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(meta, dict) and str(meta.get("workspace") or "").strip() == target:
+            return entry.name
+    return None
+
 
 def _parse_tmux_environment_output(output: str) -> dict[str, str]:
     env_map: dict[str, str] = {}

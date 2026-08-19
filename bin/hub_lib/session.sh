@@ -52,24 +52,21 @@ latest_archived_index_file() {
   find_archived_index_files "$session_filter" | sort | tail -n 1
 }
 
-matching_archived_sessions() {
-  local index_file dir session
-  while IFS= read -r index_file; do
-    [[ -n "$index_file" ]] || continue
-    dir="$(basename "$(dirname "$index_file")")"
-    session="$dir"
-    [[ -n "$session" ]] && printf '%s\n' "$session"
-  done < <(find_archived_index_files)
-}
+# A workspace has at most one session, active or archived (enforced at
+# creation in backend_core.tmux.control.create_session), so this is a
+# lookup, not a "which of these did you mean" search. Delegates to the
+# same .meta-scanning helper that guards session creation, instead of
+# re-deriving matching semantics separately in bash.
+resolve_workspace_session() {
+  PYTHONPATH="$HUB_PYTHONPATH" python3 - <<'PYEOF'
+from pathlib import Path
 
-matching_repo_sessions() {
-  local session workspace
-  while IFS= read -r session; do
-    [[ -n "$session" ]] || continue
-    workspace="$(session_workspace_value "$session")"
-    [[ -n "$workspace" ]] || continue
-    printf '%s\n' "$session"
-  done < <(tmux list-sessions -F '#S' 2>/dev/null || true)
+from backend_core.access.session_meta import find_session_for_workspace
+
+found = find_session_for_workspace(Path.cwd())
+if found:
+    print(found)
+PYEOF
 }
 
 available_agents() {
@@ -95,7 +92,6 @@ resolve_session_log_dir() {
 }
 
 resolve_session_name() {
-  local matched=()
   if [[ -n "$SESSION_NAME" ]]; then
     printf '%s\n' "$SESSION_NAME"
     return 0
@@ -109,35 +105,13 @@ resolve_session_name() {
     fi
   fi
 
-  while IFS= read -r session; do
-    [[ -n "$session" ]] && matched+=("$session")
-  done < <(matching_repo_sessions)
-
-  if [[ ${#matched[@]} -eq 1 ]]; then
-    printf '%s\n' "${matched[0]}"
+  local workspace_session
+  workspace_session="$(resolve_workspace_session)"
+  if [[ -n "$workspace_session" ]]; then
+    printf '%s\n' "$workspace_session"
     return 0
   fi
 
-  if [[ ${#matched[@]} -gt 1 ]]; then
-    echo "Multiple active agent-window sessions exist; specify --session." >&2
-    return 1
-  fi
-
-  matched=()
-  while IFS= read -r session; do
-    [[ -n "$session" ]] && matched+=("$session")
-  done < <(matching_archived_sessions | sort -u)
-
-  if [[ ${#matched[@]} -eq 1 ]]; then
-    printf '%s\n' "${matched[0]}"
-    return 0
-  fi
-
-  if [[ ${#matched[@]} -gt 1 ]]; then
-    echo "Multiple archived agent-window sessions exist; specify --session." >&2
-    return 1
-  fi
-
-  echo "No active or archived agent-window session found for this workspace." >&2
+  echo "No agent-window session found for this workspace; specify --session." >&2
   return 1
 }
