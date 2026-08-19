@@ -556,6 +556,7 @@
       line-height: 1.35;
       color: var(--fg);
       font-family: var(--font-main);
+      font-weight: 480;
       cursor: default;
       transition: background 120ms ease;
     }
@@ -612,12 +613,14 @@
     .git-summary-wrap .git-summary-meta-text {
       font-size: var(--message-text-size, 13px);
       font-family: var(--font-main);
+      font-weight: 480;
       color: var(--fg);
     }
 
     .git-summary-wrap .git-summary-counts {
       font-size: var(--message-text-size, 13px);
       font-family: var(--font-main);
+      font-weight: 480;
     }
 
     .git-summary-meta-text {
@@ -731,6 +734,7 @@
       border-radius: 8px;
       background: transparent;
       font-family: var(--font-main);
+      font-weight: 480;
       overflow: hidden;
       transition: background 120ms ease;
       animation: git-commit-file-row-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
