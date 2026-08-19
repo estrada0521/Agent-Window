@@ -6,7 +6,7 @@ import os
 import re
 import shlex
 
-from native_log_sync.agents._shared.runtime_display import runtime_event
+from native_log_sync.agents._shared.runtime_display import runtime_event, short_line
 from native_log_sync.agents._shared.runtime_paths import display_path
 
 # Transport/polling calls were also intentionally quiet in the 5.5 display.
@@ -92,11 +92,6 @@ def _pick(d: object, *keys: str) -> str:
     return ""
 
 
-def _truncate_line(value: str, limit: int = 120) -> str:
-    line = str(value or "").split("\n", 1)[0].strip()
-    return line[: limit - 3] + "..." if len(line) > limit else line
-
-
 def _split_command(line: str) -> list[str]:
     try:
         return shlex.split(line)
@@ -129,10 +124,10 @@ def _exec_command_event(args: object, *, workspace: str) -> tuple[str, str] | No
     ws = str(workspace or "")
 
     if lower in {"sed", "cat", "head", "tail", "nl", "xxd", "strings", "file", "wc"}:
-        return "Read", _first_path_arg(tokens, workspace=ws) or _truncate_line(line)
+        return "Read", _first_path_arg(tokens, workspace=ws) or short_line(line)
 
     if lower in {"ls", "find", "pwd", "mdfind"}:
-        return "Explore", _truncate_line(line)
+        return "Explore", short_line(line)
 
     if lower == "rg":
         query = ""
@@ -141,35 +136,35 @@ def _exec_command_event(args: object, *, workspace: str) -> tuple[str, str] | No
                 continue
             query = token
             break
-        return "Search", _truncate_line(query or line)
+        return "Search", short_line(query or line)
 
     if lower == "git":
-        return "Git", _truncate_line(" ".join(tokens[1:]) or line)
+        return "Git", short_line(" ".join(tokens[1:]) or line)
 
     if lower in {"node", "npm", "npx", "python", "python3", "perl"}:
         if len(tokens) > 1 and tokens[1] in {"--check", "-m", "-c"}:
-            return "Check", _truncate_line(line)
-        return "Run", _truncate_line(line)
+            return "Check", short_line(line)
+        return "Run", short_line(line)
 
     if lower in {"curl"}:
-        return "Fetch", _truncate_line(line)
+        return "Fetch", short_line(line)
 
     if lower in {"ps", "pgrep", "lsof", "kill", "pkill"}:
-        return "Process", _truncate_line(line)
+        return "Process", short_line(line)
 
     if lower in {"tmux"}:
-        return "Tmux", _truncate_line(" ".join(tokens[1:]) or line)
+        return "Tmux", short_line(" ".join(tokens[1:]) or line)
 
     if lower in {"open", "osascript"}:
-        return "App", _truncate_line(line)
+        return "App", short_line(line)
 
     if lower in {"ditto", "rm", "cp", "mv", "mkdir", "install", "chmod"}:
-        return "File", _truncate_line(line)
+        return "File", short_line(line)
 
     if lower in {"cargo", "tauri-build", "tauri_start"} or lower.endswith("tauri-build"):
-        return "Build", _truncate_line(line)
+        return "Build", short_line(line)
 
-    return "Shell", _truncate_line(line)
+    return "Shell", short_line(line)
 
 
 def _codex_subline(tool_lower: str, args: object, *, workspace: str) -> str:
@@ -192,8 +187,7 @@ def _codex_subline(tool_lower: str, args: object, *, workspace: str) -> str:
         d = _pick(args, "message", "description", "prompt")
         if not d:
             d = str(args.get("agent_type") or "").strip() or "(spawn_agent)"
-        line = d.split("\n", 1)[0].strip()
-        return line[:117] + "..." if len(line) > 120 else line
+        return short_line(d)
 
     if tool_lower == "update_plan":
         plan = args.get("plan")
@@ -452,10 +446,10 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
         action = _pick(a, "type") or "web"
         sub = _pick(a, "query", "url") or action
         main = "Search" if action == "search" else "Web"
-        sub = _truncate_line(sub)
+        sub = short_line(sub)
         return [runtime_event(main, sub, source_id=_sid("tool:web_search", f"{action}:{sub}"))]
     if lower == "tool_search":
-        sub = _truncate_line(_pick(a, "query") or "tools")
+        sub = short_line(_pick(a, "query") or "tools")
         return [runtime_event("Tool Search", sub, source_id=_sid("tool:tool_search", sub))]
     main = MAIN_LABEL.get(lower)
     sub = _codex_subline(lower, a, workspace=str(workspace or "")).strip() if main else ""

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from native_log_sync.agents._shared.runtime_display import runtime_event
+from native_log_sync.agents._shared.runtime_display import runtime_event, short_line
 from native_log_sync.agents._shared.runtime_paths import display_path
 
 _QUIET: frozenset[str] = frozenset({"todowrite"})
@@ -127,9 +127,7 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
         cmd = str(args_obj.get("command") or args_obj.get("cmd") or "").strip()
         if not cmd:
             return []
-        first = cmd.split("\n", 1)[0].strip()
-        if len(first) > 120:
-            first = first[:117] + "..."
+        first = short_line(cmd)
         return [runtime_event("Shell", first, source_id=_source_id("tool:shell", first))]
 
     if lower == "grep":
@@ -176,9 +174,7 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
 
     if lower == "task":
         sub = _pick(args_obj, "description") or _pick(args_obj, "subagent_type") or "agent"
-        first = sub.split("\n", 1)[0].strip()
-        if len(first) > 120:
-            first = first[:117] + "..."
+        first = short_line(sub)
         return [runtime_event("Agent", first, source_id=_source_id("tool:task", first))]
 
     if lower == "awaitshell":
@@ -186,16 +182,12 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
         if not sub:
             sid = _pick(args_obj, "shell_id")
             sub = f"shell {sid}" if sid else "shell"
-        first = sub.split("\n", 1)[0].strip()
-        if len(first) > 120:
-            first = first[:117] + "..."
+        first = short_line(sub)
         return [runtime_event("Wait", first, source_id=_source_id("tool:awaitshell", first))]
 
     if lower == "getmcptools":
         sub = _pick(args_obj, "toolName", "pattern", "server") or "tools"
-        first = sub.split("\n", 1)[0].strip()
-        if len(first) > 120:
-            first = first[:117] + "..."
+        first = short_line(sub)
         return [runtime_event("MCP", first, source_id=_source_id("tool:getmcptools", first))]
 
     return []
