@@ -394,6 +394,21 @@ class ChatRuntime:
         elif cleared:
             self.notify_session_state_changed(["agent_runtime"], reason="agent-runtime-clear")
 
+    def rename_agent_identity(self, old: str, new: str) -> None:
+        """Move all in-process per-agent state from `old` to `new`.
+
+        Called when add_agent()'s singleton -> multi-instance renumbering
+        renames an already-running instance underneath it (e.g. the sole
+        `claude` becomes `claude-1` when a second Claude is added). The
+        tmux-side pane/running env vars are already migrated by add_agent()
+        itself, inside its topology lock; this covers the state this
+        process holds in memory.
+        """
+        if old in self._agent_running:
+            self._agent_running.discard(old)
+            self._agent_running.add(new)
+        self._native_log.rename_agent(old, new)
+
     def agent_launch_cmd(self, agent_name: str) -> str:
         return _agent_launch_cmd_impl(self, agent_name)
 

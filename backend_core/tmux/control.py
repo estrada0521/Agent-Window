@@ -100,6 +100,10 @@ def _pane_env_key(instance_name: str) -> str:
     return f"AGENT_WINDOW_PANE_{instance_name.upper().replace('-', '_')}"
 
 
+def _running_env_key(instance_name: str) -> str:
+    return f"AGENT_WINDOW_RUNNING_{instance_name.upper().replace('-', '_')}"
+
+
 def _instance_names(bases: list[str]) -> list[str]:
     counts = Counter(bases)
     indices: dict[str, int] = {}
@@ -117,9 +121,9 @@ def _show_environment(prefix: list[str], session_name: str) -> str:
     return _run(prefix, ["show-environment", "-t", session_name]).stdout or ""
 
 
-def _write_meta(prefix: list[str], session_name: str) -> None:
+def _write_meta(prefix: list[str], session_name: str, *, rename: tuple[str, str] | None = None) -> None:
     agents = _env_value(prefix, session_name, "AGENT_WINDOW_AGENTS")
-    write_session_meta_file(session_name, agents or "-", _show_environment(prefix, session_name))
+    write_session_meta_file(session_name, agents or "-", _show_environment(prefix, session_name), rename=rename)
 
 
 def _append_log(session_name: str, message: str, *, kind: str, extra: dict | None = None) -> None:
@@ -492,7 +496,7 @@ def add_agent(
     tmux_socket: str = "",
     repo_root: Path | str | None = None,
     initiator: str = "",
-) -> str:
+) -> tuple[str, tuple[str, str] | None]:
     name = (session_name or "").strip()
     base = base_agent_name(agent)
     if not name:
@@ -523,6 +527,9 @@ def add_agent(
             if old_pane:
                 _unset_env(prefix, name, _pane_env_key(old_name))
                 _set_env(prefix, name, _pane_env_key(new_name), old_pane)
+            if _env_value(prefix, name, _running_env_key(old_name)) == "1":
+                _unset_env(prefix, name, _running_env_key(old_name))
+                _set_env(prefix, name, _running_env_key(new_name), "1")
             _set_env(prefix, name, "AGENT_WINDOW_AGENTS", agents_to_csv(current))
         instance = next_instance_name(current, base)
         if _env_value(prefix, name, _pane_env_key(instance)):
@@ -540,7 +547,7 @@ def add_agent(
         updated = append_instance(current, instance)
         _set_env(prefix, name, _pane_env_key(instance), pane_id)
         _set_env(prefix, name, "AGENT_WINDOW_AGENTS", agents_to_csv(updated))
-        _write_meta(prefix, name)
+        _write_meta(prefix, name, rename=rename)
         _start_agent(
             prefix=prefix,
             repo_root=root,
@@ -556,7 +563,7 @@ def add_agent(
             kind="session-topology",
             extra={"topology_action": "add-agent", "agent_instance": instance, "initiator": actor},
         )
-        return instance
+        return instance, rename
     finally:
         release_topology_lock(lock_dir)
 

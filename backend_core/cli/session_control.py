@@ -62,7 +62,9 @@ def main(argv: list[str] | None = None) -> int:
             kill_session(session_name=args.session, tmux_socket=socket_name)
             print(f"Killed tmux session: {args.session}")
         elif args.cmd == "add-agent":
-            instance = add_agent(session_name=args.session, agent=args.agent, tmux_socket=socket_name)
+            instance, rename = add_agent(session_name=args.session, agent=args.agent, tmux_socket=socket_name)
+            if rename:
+                print(f"Renamed {rename[0]} -> {rename[1]}")
             print(f"Added agent {instance} to session: {args.session}")
         elif args.cmd == "remove-agent":
             instance, scheduled = remove_agent(session_name=args.session, agent=args.agent, tmux_socket=socket_name)
