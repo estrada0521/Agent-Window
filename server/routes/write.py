@@ -13,6 +13,8 @@ from backend_core.tmux.control import SessionControlError, add_agent, remove_age
 from backend_core.tmux.window import tmux_prefix_args
 from shortcut_command.execute import run_shortcut_command
 
+_MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+
 
 def _read_json_body(handler):
     try:
@@ -157,6 +159,9 @@ def _post_upload(handler, _parsed, ctx) -> None:
         length = int(handler.headers.get("Content-Length", "0"))
     except ValueError:
         length = 0
+    if length > _MAX_UPLOAD_BYTES:
+        handler._send_json(413, {"ok": False, "error": f"upload exceeds {_MAX_UPLOAD_BYTES // (1024 * 1024)}MB limit"})
+        return
     data = handler.rfile.read(length)
     upload_dir = workspace_upload_dir(ctx["workspace"])
     upload_dir.mkdir(parents=True, exist_ok=True)
