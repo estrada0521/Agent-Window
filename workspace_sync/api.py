@@ -106,8 +106,8 @@ class WorkspaceSyncApi:
     def files_exist(self, paths: list[str]) -> dict[str, bool]:
         return self.file_runtime.files_exist(paths)
 
-    def open_in_editor(self, rel: str, line: int = 0):
-        return self.file_runtime.open_in_editor(rel, line=line)
+    def open_with_default_app(self, rel: str):
+        return self.file_runtime.open_with_default_app(rel)
 
     def reveal_in_finder(self, rel: str):
         return self.file_runtime.reveal_in_finder(rel)

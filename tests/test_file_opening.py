@@ -21,7 +21,7 @@ class FileOpeningTests(unittest.TestCase):
                 mock.patch("workspace_sync.files.runtime.subprocess.run", return_value=completed) as run,
                 mock.patch("workspace_sync.files.runtime.subprocess.Popen") as popen,
             ):
-                result = runtime.open_in_editor("example.zip", line=12)
+                result = runtime.open_with_default_app("example.zip")
 
             run.assert_called_once_with(
                 ["open", str(archive.resolve())],
@@ -45,7 +45,7 @@ class FileOpeningTests(unittest.TestCase):
                 mock.patch("workspace_sync.files.runtime.subprocess.run", return_value=completed),
                 mock.patch("workspace_sync.files.runtime.subprocess.Popen") as popen,
             ):
-                result = runtime.open_in_editor("unknown.data")
+                result = runtime.open_with_default_app("unknown.data")
 
             popen.assert_called_once_with(
                 ["open", "-R", str(target.resolve())],

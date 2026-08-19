@@ -31,12 +31,12 @@
       dpSyncPinnedSummaryStrip();
       dpApplyPanelWidth();
     };
-    const dpPostOpenFileInEditor = async (rawPath, line = 0) => {
+    const dpPostOpenFile = async (rawPath) => {
       const normalizedPath = normalizeWorkspaceFilePath(rawPath);
       if (!normalizedPath) return;
       const errMsg = "Failed to open file in the default app.";
       try {
-        await postOpenFileInEditor(normalizedPath, line);
+        await postOpenFile(normalizedPath);
         setStatus(`Opened ${normalizedPath}`);
         setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       } catch (err) {

@@ -210,7 +210,6 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
       if (fromDataset) return fromDataset;
       return pathFromLocalHref(anchor.getAttribute("href") || "");
     };
-__CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
     const fileExistsOnDisk = async (path) => {
       const normalizedPath = String(path || "").trim();
       if (!normalizedPath) return false;

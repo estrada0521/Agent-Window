@@ -62,16 +62,11 @@
         }
       }
       token = token.replace(/\\/g, "/");
-      let line = 0;
-      const lineMatch = token.match(/^(.*?)(?:#L(\d+)|:(\d+)|\s+line\s+(\d+)|\s+L(\d+))$/i);
+      const lineMatch = token.match(/^(.*?)(?:#L\d+|:\d+|\s+line\s+\d+|\s+L\d+)$/i);
       if (lineMatch && lineMatch[1]) {
-        const parsedLine = parseInt(lineMatch[2] || lineMatch[3] || lineMatch[4] || lineMatch[5] || "0", 10);
-        if (parsedLine > 0) {
-          token = lineMatch[1].trim();
-          line = parsedLine;
-        }
+        token = lineMatch[1].trim();
       }
       token = token.replace(/^\.\/+/, "").trim();
       if (!token || token === "." || token === ".." || /\s/.test(token)) return null;
-      return { token, line };
+      return token;
     };

@@ -25,7 +25,6 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
       const raw = fromDataset || pathFromLocalHref(anchor.getAttribute("href") || "");
       return normalizeWorkspaceFilePath(raw);
     };
-__CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
     const fileExistsOnDisk = async (path) => {
       const normalizedPath = normalizeWorkspaceFilePath(path);
       if (!normalizedPath) return false;
@@ -49,14 +48,12 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
         return cached === true;
       }
     };
-    const postOpenFileInEditor = async (path, line = 0) => {
-      const normalizedLine = Number.isFinite(line) && line > 0 ? Math.floor(line) : 0;
-      const payload = { path, line: normalizedLine };
+    const postOpenFile = async (path) => {
       const tryPost = () =>
-        fetch("/open-file-in-editor", {
+        fetch("/open-file", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ path }),
         });
       let res = await tryPost();
       if (!res.ok && (res.status >= 500 || res.status === 429)) {
@@ -72,11 +69,11 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
         throw new Error(detail);
       }
     };
-    const openFileInEditor = async (path, line = 0) => {
+    const openFile = async (path) => {
       const normalizedPath = normalizeWorkspaceFilePath(path);
       if (!normalizedPath) return false;
       try {
-        await postOpenFileInEditor(normalizedPath, line);
+        await postOpenFile(normalizedPath);
         return true;
       } catch (err) {
         try {
@@ -93,12 +90,11 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
       _openSurfaceChain = next;
       return next;
     };
-    const openFileSurface = (path, ext, sourceEl, triggerEvent, lineArg = 0) =>
-      runOpenSurfaceSerialized(() => openFileSurfaceImpl(path, ext, sourceEl, triggerEvent, lineArg));
-    const openFileSurfaceImpl = async (path, ext, sourceEl, triggerEvent, lineArg = 0) => {
+    const openFileSurface = (path, ext, sourceEl, triggerEvent) =>
+      runOpenSurfaceSerialized(() => openFileSurfaceImpl(path, ext, sourceEl, triggerEvent));
+    const openFileSurfaceImpl = async (path, ext, sourceEl, triggerEvent) => {
       const normalizedPath = normalizeWorkspaceFilePath(path);
       if (!normalizedPath) return;
-      const lineNum = Number.isFinite(lineArg) && lineArg > 0 ? Math.floor(lineArg) : 0;
       if (isPublicChatView) {
         window.open(fileViewHrefForPath(normalizedPath), "_blank", "noopener,noreferrer");
         return;
@@ -109,5 +105,5 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-line.js__
         setTimeout(() => setStatus(""), STATUS_TOAST_MS);
         return;
       }
-      await openFileInEditor(normalizedPath, lineNum);
+      await openFile(normalizedPath);
     };

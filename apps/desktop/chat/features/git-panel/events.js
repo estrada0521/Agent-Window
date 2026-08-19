@@ -4,7 +4,7 @@
         requireOpen: () => dpPanelOpen,
         onFileRow: async (fileRow) => {
           const p = String(fileRow.dataset.path || "").trim();
-          if (p) await dpPostOpenFileInEditor(p, 0);
+          if (p) await dpPostOpenFile(p);
         },
         closeWorktreeSummaryClick: true,
       });
@@ -155,7 +155,7 @@
         const file = event.target.closest(".git-pinned-expand-file");
         if (!file) return;
         const path = file.dataset.path || "";
-        if (path) dpPostOpenFileInEditor(path, 0);
+        if (path) dpPostOpenFile(path);
       });
 
       aside.addEventListener("mouseenter", () => { cancelTimers(); openTimer = setTimeout(open, 60); });
