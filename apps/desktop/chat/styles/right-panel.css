@@ -1010,15 +1010,11 @@
       box-sizing: border-box;
     }
     .git-commit-file-name {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
       color: var(--fg);
+      flex-shrink: 0;
     }
     .git-commit-file-dir {
       min-width: 0;
-      flex-shrink: 9999;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -1037,14 +1033,8 @@
       align-items: center;
       justify-content: flex-end;
       gap: 4px;
-      position: absolute;
-      right: 6px;
-      top: 50%;
-      transform: translateY(-50%);
-      padding-left: 24px;
-      background:
-        linear-gradient(to right, transparent, var(--panel-row-bg) 10px),
-        var(--bg);
+      flex: 0 0 auto;
+      min-width: 0;
     }
     .git-commit-file-actions .git-summary-counts {
       gap: 8px;
