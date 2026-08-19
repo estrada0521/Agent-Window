@@ -70,7 +70,7 @@ def git_ignored_rel_paths(workspace: str, rel_paths: list[str]) -> set[str]:
     return {item.replace("\\", "/").strip("/") for item in (result.stdout or "").split("\0") if item.strip()}
 
 
-def _read_commit_list(root: Path, *, branch: str, offset: int, limit: int) -> dict:
+def _read_commit_list(root: Path, *, offset: int, limit: int) -> dict:
     total_res = _run_git(root, "rev-list", "--count", "HEAD")
     if total_res.returncode != 0:
         raise RuntimeError((total_res.stderr or total_res.stdout or "git rev-list --count failed").strip())
@@ -81,17 +81,6 @@ def _read_commit_list(root: Path, *, branch: str, offset: int, limit: int) -> di
         raise RuntimeError(f"git rev-list --count returned {raw_count!r}") from exc
     if total_commits < 0:
         raise RuntimeError(f"git rev-list --count returned {total_commits}")
-    upstream_res = _run_git(root, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}")
-    upstream = (upstream_res.stdout or "").strip() if upstream_res.returncode == 0 else ""
-    ahead_behind = ""
-    if upstream:
-        count_res = _run_git(root, "rev-list", "--left-right", "--count", f"{branch}...{upstream}")
-        if count_res.returncode != 0:
-            raise RuntimeError((count_res.stderr or count_res.stdout or "git rev-list ahead/behind failed").strip())
-        parts = (count_res.stdout or "").strip().split()
-        if len(parts) != 2:
-            raise RuntimeError(f"git rev-list --left-right --count returned {count_res.stdout!r}")
-        ahead_behind = f"ahead {parts[0]} / behind {parts[1]}"
     log_res = _run_git(
         root,
         "log",
@@ -153,8 +142,6 @@ def _read_commit_list(root: Path, *, branch: str, offset: int, limit: int) -> di
         commit["changed_paths"] = int(stats.get("changed_paths", 0) or 0)
     return {
         "total_commits": total_commits,
-        "upstream": upstream,
-        "ahead_behind": ahead_behind,
         "recent_commits": recent_commits,
     }
 
@@ -215,13 +202,6 @@ def git_overview(*, offset=0, limit=50, force_refresh: bool = False):
     head_res = _run("rev-parse", "HEAD")
     has_head = head_res.returncode == 0
     head = (head_res.stdout or "").strip() if has_head else ""
-    if has_head:
-        branch_res = _run("rev-parse", "--abbrev-ref", "HEAD")
-        if branch_res.returncode != 0:
-            raise RuntimeError((branch_res.stderr or branch_res.stdout or "git rev-parse --abbrev-ref HEAD failed").strip())
-        branch = (branch_res.stdout or "").strip()
-    else:
-        branch = ""
     commit_key = (str(root.resolve()), head, offset, limit)
     with _git_overview_cache_lock:
         cached_commits = _commit_list_cache.get(commit_key)
@@ -278,24 +258,17 @@ def git_overview(*, offset=0, limit=50, force_refresh: bool = False):
         if head_res.returncode != 0:
             cached_commits = {
                 "total_commits": 0,
-                "upstream": "",
-                "ahead_behind": "",
                 "recent_commits": [],
             }
         else:
-            cached_commits = _read_commit_list(root, branch=branch, offset=offset, limit=limit)
+            cached_commits = _read_commit_list(root, offset=offset, limit=limit)
             with _git_overview_cache_lock:
                 _commit_list_cache[commit_key] = cached_commits
     recent_commits = list(cached_commits["recent_commits"])
     total_commits = int(cached_commits["total_commits"])
-    upstream = str(cached_commits["upstream"])
-    ahead_behind = str(cached_commits["ahead_behind"])
     next_offset = offset + len(recent_commits)
     has_more = next_offset < total_commits if total_commits else len(recent_commits) >= limit
     result = {
-        "branch": branch,
-        "upstream": upstream,
-        "ahead_behind": ahead_behind,
         "offset": offset,
         "limit": limit,
         "next_offset": next_offset,
@@ -308,13 +281,9 @@ def git_overview(*, offset=0, limit=50, force_refresh: bool = False):
         "worktree_staged_added": worktree_staged_added,
         "worktree_staged_deleted": worktree_staged_deleted,
         "worktree_staged_changed_paths": len(staged_paths),
-        "worktree_staged_has_diff": worktree_has_staged_diff,
         "worktree_unstaged_added": worktree_unstaged_added,
         "worktree_unstaged_deleted": worktree_unstaged_deleted,
         "worktree_unstaged_changed_paths": len(unstaged_paths),
-        "worktree_unstaged_has_diff": worktree_has_unstaged_diff,
-        "worktree_untracked_has_diff": worktree_has_untracked_diff,
-        "worktree_untracked_changed_paths": len(untracked_paths),
         "worktree_fingerprint": _worktree_fingerprint(),
         "status_lines": status_lines[:8],
         "recent_commits": recent_commits,
