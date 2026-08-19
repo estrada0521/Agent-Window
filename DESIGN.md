@@ -20,6 +20,8 @@ It records messages — human → agent, agent → human, agent → agent — al
 
 This is not the original record. The originals are each CLI's native log, git, and the filesystem. The unified log is a **projection** of those, reduced to a granularity that humans and agents can both reference across. Native logs sitting at different paths, and history spanning process restarts, converge here into a single space and time.
 
+Each entry's timestamp is when Agent Window observed it, not the event time inside the native log it came from — real order and observed order can diverge during catch-up after a restart.
+
 What it is: a single append-only jsonl, symlinked into the workspace. It does not depend on Agent Window. The log is not application-internal state; it is a record left in the workspace.
 
 Ordinary exchanges happen directly through `agent-send`. When you want a cross-cutting view of who is handling what and where someone is stuck, you read the unified log. And when exact reproduction is needed, each line leads back to the native log it references, and to its position within it.
