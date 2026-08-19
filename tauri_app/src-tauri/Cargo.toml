@@ -1,6 +1,6 @@
 [package]
 name = "agent-window-chat"
-version = "1.0.9"
+version = "0.0.0"
 edition = "2021"
 description = "Agent Window desktop app"
 
