@@ -105,13 +105,6 @@ class AgentSendRuntime:
     def session_workspace_value(self, session_name: str) -> str:
         return self.tmux_env(session_name, "AGENT_WINDOW_WORKSPACE")
 
-    def matching_repo_sessions(self) -> list[str]:
-        return [
-            session
-            for session in self.list_sessions()
-            if self.session_workspace_value(session).strip()
-        ]
-
     def resolve_session_name(self) -> str:
         env_session = (self.env.get("AGENT_WINDOW_SESSION") or "").strip()
         if env_session:
@@ -123,19 +116,14 @@ class AgentSendRuntime:
             if session_name:
                 return session_name
 
+        # A workspace has at most one session (enforced at creation in
+        # backend_core.tmux.control.create_session), so this is a lookup,
+        # not a "which of these did you mean" search.
         matched_workspace_sessions = [
             session for session in self.list_sessions() if self.session_workspace_value(session) == str(self.cwd)
         ]
-        if len(matched_workspace_sessions) == 1:
+        if matched_workspace_sessions:
             return matched_workspace_sessions[0]
-        if len(matched_workspace_sessions) > 1:
-            raise AgentSendError("Multiple sessions exist for this workspace; run from inside tmux or set AGENT_WINDOW_SESSION.")
-
-        matched_repo_sessions = self.matching_repo_sessions()
-        if len(matched_repo_sessions) == 1:
-            return matched_repo_sessions[0]
-        if len(matched_repo_sessions) > 1:
-            raise AgentSendError("Multiple active agent-window sessions exist; set AGENT_WINDOW_SESSION.")
 
         raise AgentSendError("No active agent-window session found for this workspace.")
 
