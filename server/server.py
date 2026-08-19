@@ -14,11 +14,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-from hub_backend.presentation.chat.assets import (
-    chat_app_script_asset,
-    chat_main_style_asset,
-    render_chat_html,
-)
+from hub_backend.presentation.chat.assets import render_chat_html
 from hub_backend.server_helpers import PROCESS_HANDOFF_TIMEOUT_SEC
 from server.runtime import ChatRuntime
 from server.routes.assets import dispatch_get_assets_route
@@ -413,8 +409,6 @@ def _route_context() -> dict:
         "pwa_asset_url_fn": _pwa_asset_url,
         "pwa_icon_entries_fn": _pwa_icon_entries,
         "serve_pwa_static_fn": _serve_pwa_static,
-        "chat_app_script_asset_fn": chat_app_script_asset,
-        "chat_main_style_asset_fn": chat_main_style_asset,
         "render_chat_html_fn": render_chat_html,
         "clean_env_fn": _clean_env,
         "queue_chat_restart_fn": queue_chat_restart,
