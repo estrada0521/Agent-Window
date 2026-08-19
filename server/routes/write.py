@@ -79,7 +79,17 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    targets = ctx["runtime"].active_agents()
+
+    # The mutation above already succeeded (the agent exists in tmux now).
+    # Nothing past this point should turn that success into a reported
+    # failure - a client that saw a 500 here and retried would add a
+    # second agent on top of the one that's already there.
+    warning = ""
+    try:
+        targets = ctx["runtime"].active_agents()
+    except Exception as exc:
+        targets = []
+        warning = str(exc)
     with ctx["runtime"]._payload_cache_lock:
         ctx["runtime"]._payload_cache.clear()
         ctx["runtime"]._payload_cache_order.clear()
@@ -88,17 +98,16 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         ctx["runtime"].refresh_native_log_bindings([instance], reason="add-agent")
         ctx["runtime"].notify_session_state_changed(["targets", "statuses"], reason="targets-changed")
     except Exception as exc:
-        handler._send_json(500, {"ok": False, "error": str(exc)})
-        return
-    handler._send_json(
-        200,
-        {
-            "ok": True,
-            "agent": instance,
-            "message": f"Added agent {instance}",
-            "targets": targets,
-        },
-    )
+        warning = warning or str(exc)
+    payload = {
+        "ok": True,
+        "agent": instance,
+        "message": f"Added agent {instance}",
+        "targets": targets,
+    }
+    if warning:
+        payload["warning"] = warning
+    handler._send_json(200, payload)
 
 
 def _post_remove_agent(handler, _parsed, ctx) -> None:
@@ -123,7 +132,16 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    targets = ctx["runtime"].active_agents()
+
+    # The mutation above already succeeded (the agent is gone from tmux
+    # now). Nothing past this point should turn that success into a
+    # reported failure.
+    warning = ""
+    try:
+        targets = ctx["runtime"].active_agents()
+    except Exception as exc:
+        targets = []
+        warning = str(exc)
     with ctx["runtime"]._payload_cache_lock:
         ctx["runtime"]._payload_cache.clear()
         ctx["runtime"]._payload_cache_order.clear()
@@ -131,17 +149,16 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         ctx["runtime"].refresh_native_log_bindings(reason="remove-agent")
         ctx["runtime"].notify_session_state_changed(["targets", "statuses"], reason="targets-changed")
     except Exception as exc:
-        handler._send_json(500, {"ok": False, "error": str(exc)})
-        return
-    handler._send_json(
-        200,
-        {
-            "ok": True,
-            "agent": instance,
-            "message": f"Removed agent {instance}",
-            "targets": targets,
-        },
-    )
+        warning = warning or str(exc)
+    payload = {
+        "ok": True,
+        "agent": instance,
+        "message": f"Removed agent {instance}",
+        "targets": targets,
+    }
+    if warning:
+        payload["warning"] = warning
+    handler._send_json(200, payload)
 
 
 def _post_upload(handler, _parsed, ctx) -> None:

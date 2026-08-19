@@ -19,7 +19,12 @@ def active_agents(runtime, *, subprocess_module=subprocess) -> list[str]:
             return []
         return [a for a in raw.split(",") if a and a != "-"]
     if r.returncode != 0:
-        return []
+        detail = (r.stderr or r.stdout or "").strip()
+        if "unknown variable" in detail.lower():
+            return []
+        raise RuntimeError(
+            f"tmux show-environment AGENT_WINDOW_AGENTS failed (exit {r.returncode}): {detail or line!r}"
+        )
     raise RuntimeError(f"tmux show-environment AGENT_WINDOW_AGENTS returned unreadable output: {line!r}")
 
 
