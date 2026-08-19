@@ -276,8 +276,7 @@ class FileRuntime:
             raise FileNotFoundError(full)
         return full
 
-    def open_in_editor(self, rel: str, line: int = 0):
-        del line
+    def open_with_default_app(self, rel: str):
         full = self._resolve_open_target(rel)
         revealed = self._open_with_system_default(full)
         return {"ok": True, "path": rel, "revealed_in_finder": revealed}

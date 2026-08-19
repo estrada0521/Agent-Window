@@ -62,9 +62,9 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       const runId = ++_linkifyInlineCodeRunSeq;
       const parsedEntries = snapshot.map((codeEl) => ({
         codeEl,
-        parsed: parseInlineCodeFileToken(codeEl.textContent || ""),
+        token: parseInlineCodeFileToken(codeEl.textContent || ""),
       }));
-      const queries = parsedEntries.map((item) => item.parsed?.token || "").filter(Boolean);
+      const queries = parsedEntries.map((item) => item.token || "").filter(Boolean);
       if (!queries.length) return;
       void resolveInlineCodeFilePaths(queries).then((resolvedMap) => {
         if (runId !== _linkifyInlineCodeRunSeq) return;
@@ -76,18 +76,15 @@ __CHAT_INCLUDE:../file-autocomplete.js__
         let i = 0;
         const processEl = (entry) => {
           const codeEl = entry.codeEl;
-          const parsed = entry.parsed;
-          if (!parsed || !codeEl?.isConnected) return;
-          const path = normalizedMap.get(parsed.token) || "";
+          const token = entry.token;
+          if (!token || !codeEl?.isConnected) return;
+          const path = normalizedMap.get(token) || "";
           if (!path) return;
           const anchor = document.createElement("a");
           anchor.className = "inline-file-link";
           anchor.href = fileViewHrefForPath(path);
           anchor.dataset.filepath = path;
           anchor.dataset.ext = extFromPath(path);
-          if (parsed.line > 0) {
-            anchor.dataset.line = String(parsed.line);
-          }
           anchor.title = path;
           const codeClone = codeEl.cloneNode(true);
           anchor.appendChild(codeClone);

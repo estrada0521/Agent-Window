@@ -385,18 +385,17 @@ def _post_files_resolve(handler, _parsed, ctx) -> None:
     handler._send_json(200, {"ok": True, "resolved": resolved})
 
 
-def _post_open_file_in_editor(handler, _parsed, ctx) -> None:
+def _post_open_file(handler, _parsed, ctx) -> None:
     data, err = _read_json_body(handler)
     if err:
         handler._send_json(400, {"ok": False, "error": err})
         return
     rel = (data.get("path") or "").strip()
-    line = int(data.get("line", 0) or 0)
     if not rel:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
     try:
-        result = ctx["workspace_sync_api"].open_in_editor(rel, line=line)
+        result = ctx["workspace_sync_api"].open_with_default_app(rel)
     except PermissionError:
         handler._send_json(403, {"ok": False, "error": "forbidden"})
         return
@@ -482,7 +481,7 @@ _POST_ROUTES = {
     "/open-finder": _post_open_finder,
     "/files-exist": _post_files_exist,
     "/files-resolve": _post_files_resolve,
-    "/open-file-in-editor": _post_open_file_in_editor,
+    "/open-file": _post_open_file,
     "/shortcut-command": _post_shortcut_command,
     "/send": _post_send,
 }

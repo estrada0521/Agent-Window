@@ -241,10 +241,10 @@
           e.preventDefault();
           e.stopPropagation();
           if (document.documentElement.dataset.mobile !== "1" && anyLink.dataset.fileLinkOpen === "editor") {
-            void openFileInEditor(path, lineFromLinkAnchor(anyLink));
+            void openFile(path);
             return;
           }
-          void openFileSurface(path, extFromPath(path), anyLink, e, lineFromLinkAnchor(anyLink));
+          void openFileSurface(path, extFromPath(path), anyLink, e);
           return;
         }
         if (href && !href.startsWith("#") && !href.startsWith("javascript:")) {
