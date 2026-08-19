@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-import sys
 import time
 from pathlib import Path
 from urllib.parse import parse_qs
@@ -29,7 +28,7 @@ def get_check_session_name(handler, parsed, ctx) -> None:
 
 
 def post_pick_workspace(handler, _parsed, _ctx) -> None:
-    if sys.platform != "darwin" or not shutil.which("osascript"):
+    if not shutil.which("osascript"):
         handler._send_json(501, {"ok": False, "error": "native workspace picker is unavailable on this device"})
         return
     try:
