@@ -9,7 +9,7 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
-from message_delivery.interaction import normalize_sender_payload, pane_delivery_payload
+from message_delivery.interaction import normalize_sender_payload
 from message_delivery.names import (
     load_agent_names,
     remove_agent_name,
@@ -451,7 +451,7 @@ class AgentSendRuntime:
         for target in delivery_targets:
             if self.send_to_pane(
                 target.pane_id,
-                pane_delivery_payload(target.agent_name, delivery_payload),
+                delivery_payload,
                 target.agent_name,
                 session_name=session_name,
                 session_attached_count=attached_count,
