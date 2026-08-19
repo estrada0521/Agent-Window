@@ -366,6 +366,10 @@
       display: none;
     }
 
+    .git-stack.git-mode-worktree-detail .git-list-view {
+      display: contents;
+    }
+
     .git-stack.git-mode-worktree-detail .git-summary-wrap .git-commit-chevron {
       transform: rotate(90deg);
     }
