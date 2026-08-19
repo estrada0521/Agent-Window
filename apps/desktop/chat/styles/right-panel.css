@@ -1042,7 +1042,9 @@
       top: 50%;
       transform: translateY(-50%);
       padding-left: 24px;
-      background: linear-gradient(to right, transparent, var(--bg) 10px);
+      background:
+        linear-gradient(to right, transparent, var(--panel-row-bg) 10px),
+        var(--bg);
     }
     .git-commit-file-actions .git-summary-counts {
       gap: 8px;
