@@ -1018,7 +1018,7 @@
     }
     .git-commit-file-dir {
       min-width: 0;
-      flex-shrink: 3;
+      flex-shrink: 9999;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
