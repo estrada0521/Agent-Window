@@ -26,14 +26,12 @@ _GIT_HEAD_METADATA_PATHS = frozenset(
         ".git/packed-refs",
         ".git/refs",
         ".git/logs",
-        ".git/worktrees",
         ".git/reftable",
     }
 )
 _GIT_HEAD_METADATA_PREFIXES = (
     ".git/refs/",
     ".git/logs/",
-    ".git/worktrees/",
     ".git/reftable/",
 )
 
