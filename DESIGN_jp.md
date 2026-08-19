@@ -20,6 +20,8 @@ Agent Window は、**空間**（作業場所）、**時間**（履歴）、そ�
 
 これは記録の原本ではありません。原本は各 CLI の native log であり、git であり、ファイルシステムです。統一ログはそれらを、人間と agent が横断的に参照できる粒度へ落とした**射影**です。異なる path にある native log と、プロセスの再起動を跨いだ履歴が、ここで一つの時空間に合流します。
 
+一部のentry — Add / Remove Agent のような session topology — は、どの native log からの射影でもなく、Agent Window 自身が行った操作の記録です。ただしこれは薄い historical な事実にとどまり、空間の第二モデルではありません。
+
 各行のtimestampは Agent Window がそれを観測した時刻であり、由来する native log 内の event time ではありません。再起動後のcatch-upなどでは、実際の順序と観測順序が食い違うことがあります。
 
 実体は  append-only jsonl であり、workspace に symlink されます。Agent Window に依存しません。ログはアプリケーション内部の状態ではなく、作業空間に残る記録です。
