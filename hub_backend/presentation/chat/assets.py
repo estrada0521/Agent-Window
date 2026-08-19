@@ -1,23 +1,15 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
 from pathlib import Path
 
-from backend_core.agents.registry import (
-    ALL_AGENT_NAMES,
-    SELECTABLE_AGENT_NAMES,
-    agent_names_js_set,
-    agent_names_js_array,
-)
-from .bootstrap import build_chat_bootstrap_payload, encode_chat_bootstrap_payload
+from backend_core.agents.registry import agent_names_js_set, agent_names_js_array
 from .script_assets import (
     CHAT_ANSI_UP_HEAD_TAG,
     CHAT_HEADER_ACTIONS_HTML,
     CHAT_HEADER_ACTIONS_HTML_MOBILE,
     CHAT_SHEET_PANELS_HTML,
     CHAT_KATEX_HEAD_TAGS,
-    build_chat_app_script_assets,
 )
 from .render import apply_chat_template_replacements, build_chat_template_replacements
 from .template_loader import load_chat_template
@@ -48,27 +40,18 @@ def _chat_pwa_asset_url(path: str, filename: str, chat_base_path: str = "") -> s
     return f"{asset_path}{sep}v={version}"
 
 
-def render_chat_app_bootstrap_html(*, icon_data_uris, server_instance, hub_port, chat_settings, chat_base_path="") -> str:
-    payload = build_chat_bootstrap_payload(
-        icon_data_uris=icon_data_uris,
-        server_instance=server_instance,
-        hub_port=hub_port,
-        chat_settings=chat_settings,
-        chat_base_path=chat_base_path,
-        agent_icon_names=list(ALL_AGENT_NAMES),
-        all_base_agents=list(SELECTABLE_AGENT_NAMES),
-    )
-    payload_json = encode_chat_bootstrap_payload(payload)
+def render_chat_service_worker_html() -> str:
+    # CHAT_BASE_PATH is declared by the main app script, which always
+    # precedes this block in the page -- classic (non-module) <script> tags
+    # share one top-level lexical scope, so a later tag can read an earlier
+    # tag's const/let bindings directly.
     return (
-        f"  <script>window.__CHAT_BOOTSTRAP__ = {payload_json};</script>\n"
         "  <script>\n"
         "    (() => {\n"
         "      if (!(\"serviceWorker\" in navigator)) return;\n"
         "      const isLocalHost = location.hostname === \"localhost\" || location.hostname === \"127.0.0.1\" || location.hostname === \"[::1]\";\n"
         "      if (!(window.isSecureContext || isLocalHost)) return;\n"
-        "      const basePath = (window.__CHAT_BOOTSTRAP__ && typeof window.__CHAT_BOOTSTRAP__.basePath === \"string\")\n"
-        "        ? window.__CHAT_BOOTSTRAP__.basePath.replace(/\\/$/, \"\")\n"
-        "        : \"\";\n"
+        "      const basePath = CHAT_BASE_PATH.replace(/\\/$/, \"\");\n"
         "      const scriptUrl = `${basePath}/service-worker.js`;\n"
         "      const scope = `${basePath || \"\"}/` || \"/\";\n"
         "      window.addEventListener(\"load\", () => {\n"
@@ -107,102 +90,16 @@ def _agent_css_selectors() -> dict[str, str]:
     }
 
 
-_CHAT_MAIN_STYLE_OPEN = "  <style>\n"
-_CHAT_MAIN_STYLE_CLOSE = "  </style>\n"
-
-
-@dataclass(frozen=True)
-class _ChatAssetVariant:
-    html: str
-    app_script_block: str
-    app_script_template: str
-    app_script_asset: str
-    app_script_version: str
-    main_style_block: str
-    main_style_template: str
-    main_style_asset: str
-    main_style_version: str
-
-
 def _normalized_chat_variant(variant: str = "desktop") -> str:
     return "mobile" if str(variant or "").strip().lower() == "mobile" else "desktop"
 
 
-def _build_chat_asset_variant(html: str) -> _ChatAssetVariant:
-    app_assets = build_chat_app_script_assets(html)
-    main_style_start = html.find(_CHAT_MAIN_STYLE_OPEN)
-    if main_style_start < 0:
-        raise ValueError("chat main style block not found")
-    main_style_end = html.find(_CHAT_MAIN_STYLE_CLOSE, main_style_start)
-    if main_style_end < 0:
-        raise ValueError("chat main style close tag not found")
-    main_style_block = html[main_style_start:main_style_end + len(_CHAT_MAIN_STYLE_CLOSE)]
-    main_style_template = html[main_style_start + len(_CHAT_MAIN_STYLE_OPEN):main_style_end]
-    main_style_asset = main_style_template
-    for font_name in (
-        "anthropic-serif-roman.ttf",
-        "anthropic-serif-italic.ttf",
-        "anthropic-sans-roman.ttf",
-        "anthropic-sans-italic.ttf",
-        "jetbrains-mono.ttf",
-    ):
-        main_style_asset = main_style_asset.replace(
-            f'"__CHAT_BASE_PATH__/font/{font_name}"',
-            f'"../font/{font_name}"',
-        )
-    for placeholder, value in {
-        **_agent_css_selectors(),
-        "__HUB_HEADER_CSS__": PAGE_HEADER_CSS,
-    }.items():
-        main_style_asset = main_style_asset.replace(placeholder, value)
-    return _ChatAssetVariant(
-        html=html,
-        app_script_block=app_assets.block,
-        app_script_template=app_assets.template,
-        app_script_asset=app_assets.asset,
-        app_script_version=app_assets.version,
-        main_style_block=main_style_block,
-        main_style_template=main_style_template,
-        main_style_asset=main_style_asset,
-        main_style_version=hashlib.sha256(main_style_asset.encode("utf-8")).hexdigest()[:12],
-    )
+def _chat_html(variant: str = "desktop") -> str:
+    return CHAT_MOBILE_HTML if _normalized_chat_variant(variant) == "mobile" else CHAT_DESKTOP_HTML
 
 
-_CHAT_VARIANTS = {
-    "desktop": _build_chat_asset_variant(CHAT_DESKTOP_HTML),
-    "mobile": _build_chat_asset_variant(CHAT_MOBILE_HTML),
-}
-
-
-def _chat_variant(variant: str = "desktop") -> _ChatAssetVariant:
-    return _CHAT_VARIANTS[_normalized_chat_variant(variant)]
-
-
-def chat_app_script_asset(variant: str = "desktop") -> str:
-    return _chat_variant(variant).app_script_asset
-
-
-def chat_main_style_asset(variant: str = "desktop") -> str:
-    return _chat_variant(variant).main_style_asset
-
-
-def chat_style_asset_url(chat_base_path: str = "", *, variant: str = "desktop") -> str:
+def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, chat_base_path="", eager_optional_vendors=True, variant="desktop", session_name=""):
     normalized_variant = _normalized_chat_variant(variant)
-    base_path = chat_base_path.rstrip("/")
-    asset_path = f"{base_path}/chat-assets/chat-app.css" if base_path else "/chat-assets/chat-app.css"
-    return f"{asset_path}?v={_chat_variant(normalized_variant).main_style_version}&view={normalized_variant}"
-
-
-def chat_app_asset_url(chat_base_path: str = "", *, variant: str = "desktop") -> str:
-    normalized_variant = _normalized_chat_variant(variant)
-    base_path = chat_base_path.rstrip("/")
-    asset_path = f"{base_path}/chat-assets/chat-app.js" if base_path else "/chat-assets/chat-app.js"
-    return f"{asset_path}?v={_chat_variant(normalized_variant).app_script_version}&view={normalized_variant}"
-
-
-def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, chat_base_path="", externalize_app_script=False, externalize_main_style=False, eager_optional_vendors=True, variant="desktop", session_name=""):
-    normalized_variant = _normalized_chat_variant(variant)
-    asset_variant = _chat_variant(normalized_variant)
     base_path = chat_base_path.rstrip("/")
     normalized_session_name = str(session_name or "").strip()
     chat_document_title = f"{normalized_session_name} · {APP_DISPLAY_NAME}" if normalized_session_name else APP_DISPLAY_NAME
@@ -214,22 +111,10 @@ def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings
         actions_html=actions_html,
         panels_html=panels_html,
     )
-    html = asset_variant.html
+    html = _chat_html(normalized_variant)
     if not eager_optional_vendors:
         html = html.replace(CHAT_ANSI_UP_HEAD_TAG, "", 1)
         html = html.replace(CHAT_KATEX_HEAD_TAGS, "", 1)
-    if externalize_main_style:
-        html = html.replace(
-            asset_variant.main_style_block,
-            '  <link rel="stylesheet" href="__CHAT_STYLE_ASSET_URL__">\n',
-            1,
-        )
-    if externalize_app_script:
-        html = html.replace(
-            asset_variant.app_script_block,
-            "__CHAT_APP_BOOTSTRAP__\n  <script src=\"__CHAT_APP_ASSET_URL__\"></script>\n",
-            1,
-        )
     for placeholder, value in _agent_css_selectors().items():
         html = html.replace(placeholder, value)
     if "__CHAT_HEADER_HTML__" in html:
@@ -242,19 +127,7 @@ def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings
         chat_manifest_url=_chat_pwa_asset_url("/app.webmanifest", "icon-192.png", base_path),
         chat_pwa_icon_192_url=_chat_pwa_asset_url("/pwa-icon-192.png", "icon-192.png", base_path),
         chat_apple_touch_icon_url=_chat_pwa_asset_url("/apple-touch-icon.png", "apple-touch-icon.png", base_path),
-        chat_style_asset_url=chat_style_asset_url(base_path, variant=normalized_variant) if externalize_main_style else "",
-        chat_app_bootstrap_html=(
-            render_chat_app_bootstrap_html(
-                icon_data_uris=icon_data_uris,
-                server_instance=server_instance,
-                hub_port=hub_port,
-                chat_settings=chat_settings,
-                chat_base_path=base_path,
-            )
-            if externalize_app_script
-            else ""
-        ),
-        chat_app_asset_url=chat_app_asset_url(base_path, variant=normalized_variant) if externalize_app_script else "",
+        chat_service_worker_html=render_chat_service_worker_html(),
         server_instance=server_instance,
         hub_port=hub_port,
         chat_settings=chat_settings,

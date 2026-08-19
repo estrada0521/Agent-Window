@@ -3,7 +3,7 @@
       if (CHAT_BASE_PATH || String(window.location.pathname || "").startsWith("/session/")) {
         return `${window.location.origin}/`;
       }
-      const portValue = Number(CHAT_BOOTSTRAP.hubPort || 0);
+      const portValue = Number(__HUB_PORT__) || 0;
       const protocol = window.location.protocol || "http:";
       const host = window.location.hostname || "127.0.0.1";
       const defaultPort =
