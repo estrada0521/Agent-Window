@@ -4,7 +4,7 @@ import json
 import os
 import shlex
 
-from native_log_sync.agents._shared.runtime_display import runtime_event
+from native_log_sync.agents._shared.runtime_display import runtime_event, short_line
 from native_log_sync.agents._shared.runtime_paths import display_path
 
 
@@ -63,13 +63,8 @@ def _pick(args: object, *keys: str) -> str:
     return ""
 
 
-def _short_line(value: str, limit: int = 120) -> str:
-    line = str(value or "").split("\n", 1)[0].strip()
-    return line[: limit - 3] + "..." if len(line) > limit else line
-
-
 def _command_label(command: str) -> str:
-    line = _short_line(command)
+    line = short_line(command)
     if not line:
         return ""
     try:
@@ -145,7 +140,7 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
         main = "Tool"
         sub = raw_name
 
-    sub = _short_line(sub)
+    sub = short_line(sub)
     if not main:
         return []
     return [runtime_event(main, sub, source_id=_source_id(lower, f"{main}:{sub}"))]

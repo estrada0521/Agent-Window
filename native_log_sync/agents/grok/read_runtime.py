@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from native_log_sync.agents._shared.runtime_display import runtime_event
+from native_log_sync.agents._shared.runtime_display import runtime_event, short_line
 from native_log_sync.agents._shared.runtime_paths import display_path
 
 # Tools that should not flash the Running strip.
@@ -37,13 +37,6 @@ _MAIN_LABEL: dict[str, str] = {
 
 def _source_id(prefix: str, tail: str) -> str:
     return f"{prefix}:{(tail or '')[:120]}"
-
-
-def _short_line(value: object, limit: int = 120) -> str:
-    line = str(value or "").split("\n", 1)[0].strip()
-    if len(line) > limit:
-        return line[: limit - 3] + "..."
-    return line
 
 
 def _pick(d: object, *keys: str) -> str:
@@ -130,8 +123,8 @@ def _subline(lower: str, args: dict, *, workspace: str) -> str:
     if lower in {"run_terminal_command", "bash"}:
         desc = _pick(args, "description")
         if desc:
-            return _short_line(desc)
-        return _short_line(_pick(args, "command", "cmd"))
+            return short_line(desc)
+        return short_line(_pick(args, "command", "cmd"))
     if lower in {"read_file", "read"}:
         return display_path(_pick(args, "target_file", "path", "file_path"), workspace=ws)
     if lower == "grep":
@@ -141,32 +134,32 @@ def _subline(lower: str, args: dict, *, workspace: str) -> str:
         path_disp = display_path(path, workspace=ws) if path else ""
         scope = path_disp or glob
         if pattern and scope:
-            return _short_line(f"{pattern} in {scope}")
-        return _short_line(pattern or scope or "grep")
+            return short_line(f"{pattern} in {scope}")
+        return short_line(pattern or scope or "grep")
     if lower in {"list_dir", "glob"}:
         path = _pick(args, "target_directory", "path", "glob_pattern", "pattern")
-        return display_path(path, workspace=ws) if path and not path.startswith("*") else _short_line(path or ".")
+        return display_path(path, workspace=ws) if path and not path.startswith("*") else short_line(path or ".")
     if lower in {"search_replace", "write"}:
         return display_path(_pick(args, "file_path", "path", "target_file"), workspace=ws)
     if lower in {"web_search", "websearch"}:
-        return _short_line(_pick(args, "query", "q", "prompt") or "web")
+        return short_line(_pick(args, "query", "q", "prompt") or "web")
     if lower in {"web_fetch", "webfetch", "open_page"}:
-        return _short_line(_pick(args, "url", "path"))
+        return short_line(_pick(args, "url", "path"))
     if lower == "open_page_with_find":
         url = _pick(args, "url")
         pattern = _pick(args, "pattern")
         if url and pattern:
-            return _short_line(f"{pattern} in {url}")
-        return _short_line(pattern or url or "find")
+            return short_line(f"{pattern} in {url}")
+        return short_line(pattern or url or "find")
     if lower in {"spawn_subagent", "task"}:
-        return _short_line(_pick(args, "description", "prompt", "subagent_type") or "subagent")
+        return short_line(_pick(args, "description", "prompt", "subagent_type") or "subagent")
     # Generic: first useful string field
     for key in ("path", "target_file", "file_path", "command", "query", "pattern", "description", "url"):
         value = _pick(args, key)
         if value:
             if key in {"path", "target_file", "file_path"}:
                 return display_path(value, workspace=ws)
-            return _short_line(value)
+            return short_line(value)
     return ""
 
 

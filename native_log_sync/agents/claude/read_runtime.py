@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from native_log_sync.agents._shared.runtime_display import runtime_event
+from native_log_sync.agents._shared.runtime_display import runtime_event, short_line
 from native_log_sync.agents._shared.runtime_paths import display_path
 
 _QUIET: frozenset[str] = frozenset({"write_stdin", "todoread"})
@@ -67,11 +67,6 @@ def _pick(d: object, *keys: str) -> str:
     return ""
 
 
-def _short_line(value: object, limit: int = 120) -> str:
-    line = str(value or "").split("\n", 1)[0].strip()
-    return line[: limit - 3] + "..." if len(line) > limit else line
-
-
 def _list_strings(value: object) -> list[str]:
     if not isinstance(value, list):
         return []
@@ -81,17 +76,17 @@ def _list_strings(value: object) -> list[str]:
 def _browser_subline(tool_lower: str, args: dict, *, workspace: str) -> str:
     action = tool_lower.removeprefix("mcp__playwright__browser_")
     if action == "navigate":
-        return f"Navigate {_short_line(args.get('url'))}".strip()
+        return f"Navigate {short_line(args.get('url'))}".strip()
     if action == "click":
-        target = _short_line(_pick(args, "element", "target"))
+        target = short_line(_pick(args, "element", "target"))
         return f"Click {target}".strip()
     if action == "evaluate":
         filename = display_path(_pick(args, "filename"), workspace=workspace)
         return f"Evaluate {filename}".strip()
     if action == "select_option":
-        target = _short_line(_pick(args, "element", "target"))
+        target = short_line(_pick(args, "element", "target"))
         values = ", ".join(_list_strings(args.get("values")))
-        detail = " · ".join(part for part in (target, _short_line(values)) if part)
+        detail = " · ".join(part for part in (target, short_line(values)) if part)
         return f"Select {detail}".strip()
     if action == "file_upload":
         paths = _list_strings(args.get("paths"))
@@ -117,7 +112,7 @@ def _browser_subline(tool_lower: str, args: dict, *, workspace: str) -> str:
             return f"Resize {width:g}×{height:g}"
         return "Resize"
     if action == "console_messages":
-        return f"Console {_short_line(args.get('level'))}".strip()
+        return f"Console {short_line(args.get('level'))}".strip()
     label = action.replace("_", " ").strip().title()
     return label or "Action"
 
@@ -127,7 +122,7 @@ def _input_subline(args: dict) -> str:
     if not isinstance(questions, list) or not questions:
         return ""
     first = questions[0]
-    text = _short_line(_pick(first, "question", "header"))
+    text = short_line(_pick(first, "question", "header"))
     remaining = len(questions) - 1
     return f"{text} (+{remaining})" if text and remaining else text
 
@@ -136,22 +131,22 @@ def _schedule_subline(tool_lower: str, args: dict) -> str:
     if tool_lower == "schedulewakeup":
         seconds = args.get("delaySeconds")
         timing = f" in {seconds:g}s" if isinstance(seconds, (int, float)) else ""
-        detail = _short_line(_pick(args, "reason", "prompt"))
+        detail = short_line(_pick(args, "reason", "prompt"))
         suffix = f" · {detail}" if detail else ""
         return f"Wakeup{timing}{suffix}"
     if tool_lower == "croncreate":
-        cron = _short_line(args.get("cron"))
-        prompt = _short_line(args.get("prompt"))
+        cron = short_line(args.get("cron"))
+        prompt = short_line(args.get("prompt"))
         detail = " · ".join(part for part in (cron, prompt) if part)
         return f"Create {detail}".strip()
     if tool_lower == "crondelete":
-        return f"Delete {_short_line(args.get('id'))}".strip()
+        return f"Delete {short_line(args.get('id'))}".strip()
     return ""
 
 
 def _send_message_subline(args: dict) -> str:
-    recipient = _short_line(_pick(args, "recipient", "to"))
-    summary = _short_line(_pick(args, "summary", "message", "content"))
+    recipient = short_line(_pick(args, "recipient", "to"))
+    summary = short_line(_pick(args, "summary", "message", "content"))
     detail = " · ".join(part for part in (recipient, summary) if part)
     return f"Message {detail}".strip()
 
@@ -162,8 +157,7 @@ def _claude_tool_subline(tool_lower: str, args: dict, *, workspace: str) -> str:
         cmd = str(args.get("command") or args.get("cmd") or "").strip()
         if not cmd:
             return ""
-        line = cmd.split("\n", 1)[0].strip()
-        return line[:117] + "..." if len(line) > 120 else line
+        return short_line(cmd)
     if tool_lower == "read":
         path = display_path(_pick(args, "path", "file_path", "notebook_path"), workspace=ws)
         bits: list[str] = []
@@ -188,12 +182,9 @@ def _claude_tool_subline(tool_lower: str, args: dict, *, workspace: str) -> str:
         d = _pick(args, "description", "prompt")
         if not d:
             return ""
-        line = d.split("\n", 1)[0].strip()
-        return line[:117] + "..." if len(line) > 120 else line
+        return short_line(d)
     if tool_lower == "mcp__ccd_session__mark_chapter":
-        t = _pick(args, "title", "summary")
-        if len(t) > 120:
-            t = t[:117] + "…"
+        t = short_line(_pick(args, "title", "summary"))
         return f"mark_chapter · {t}" if t else "mark_chapter"
     if tool_lower == "todowrite":
         todos = args.get("todos")
@@ -229,10 +220,10 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
         sub = _browser_subline(lower, a, workspace=ws)
     elif lower == "websearch":
         main = "Search"
-        sub = _short_line(a.get("query"))
+        sub = short_line(a.get("query"))
     elif lower == "webfetch":
         main = "Fetch"
-        sub = _short_line(_pick(a, "url", "prompt"))
+        sub = short_line(_pick(a, "url", "prompt"))
     elif lower == "askuserquestion":
         main = "Input"
         sub = _input_subline(a)
@@ -241,7 +232,7 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
         sub = _schedule_subline(lower, a)
     elif lower == "skill":
         main = "Skill"
-        sub = _short_line(a.get("skill"))
+        sub = short_line(a.get("skill"))
     elif lower == "sendmessage":
         main = "Agent"
         sub = _send_message_subline(a)
