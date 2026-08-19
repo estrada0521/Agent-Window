@@ -9,17 +9,10 @@
         fileDrop.classList.add("visible");
       }
     };
-    const _basenameCache = new Map();
-    const BASENAME_CACHE_MAX = 65536;
     const basename = (path) => {
       const s = String(path || "");
-      const cachedBase = _basenameCache.get(s);
-      if (cachedBase !== undefined) return cachedBase;
       const i = Math.max(s.lastIndexOf("/"), s.lastIndexOf("\\"));
-      const b = i === -1 ? s : s.slice(i + 1);
-      if (_basenameCache.size >= BASENAME_CACHE_MAX) _basenameCache.clear();
-      _basenameCache.set(s, b);
-      return b;
+      return i === -1 ? s : s.slice(i + 1);
     };
     const composerAutocompleteRelativeDir = (fullPath) => {
       let p = String(fullPath || "").trim().replace(/\\/g, "/");
