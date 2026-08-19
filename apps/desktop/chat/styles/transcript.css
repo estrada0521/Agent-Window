@@ -537,6 +537,7 @@
       width: min(100%, var(--message-max-width, 600px));
       padding-bottom: 8px;
       color: var(--muted);
+      font-family: var(--font-main);
       font-size: var(--message-text-size, 13px);
       line-height: var(--message-text-line-height, 22px);
       letter-spacing: 0.02em;
