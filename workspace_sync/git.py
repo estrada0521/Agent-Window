@@ -418,4 +418,19 @@ def git_diff_files(*, commit_hash: str = "", scope: str = ""):
     }
 
 
+def open_diff_tool(rel_path: str) -> dict:
+    root = _git_root()
+    rel = str(rel_path or "").strip().lstrip("/")
+    if not rel:
+        raise ValueError("path required")
+    try:
+        (root / rel).resolve().relative_to(root.resolve())
+    except ValueError:
+        raise PermissionError(rel)
+    subprocess.Popen(
+        ["git", "-C", str(root), "difftool", "-y", "--", rel],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return {"ok": True, "path": rel}
 
