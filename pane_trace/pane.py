@@ -27,5 +27,6 @@ def capture_pane_text(
         check=False,
     )
     if result.returncode != 0:
-        return ""
+        detail = (result.stderr or result.stdout or "").strip()
+        raise RuntimeError(f"tmux capture-pane failed (exit {result.returncode}): {detail}")
     return result.stdout or ""
