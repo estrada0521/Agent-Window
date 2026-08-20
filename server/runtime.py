@@ -172,7 +172,6 @@ class ChatRuntime:
             message,
             targets=targets,
             datetime_class=dt_datetime,
-            uuid_module=uuid,
             append_jsonl_entry_fn=append_jsonl_entry,
             client=client,
         )
@@ -184,7 +183,6 @@ class ChatRuntime:
             agent=agent,
             extra=extra,
             datetime_class=dt_datetime,
-            uuid_module=uuid,
             append_jsonl_entry_fn=append_jsonl_entry,
         )
 

@@ -4,7 +4,6 @@ import os
 import re
 import time
 
-from native_log_sync.agents._shared.msg_id import content_msg_id
 from native_log_sync.agents._shared.path_state import (
     _normalized_native_log_path,
     advance_read_progress,
@@ -149,14 +148,12 @@ def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None)
         if not display:
             continue
 
-        msg_id = content_msg_id("cursor", agent, transcript_path, line_start, display)
         jsonl_entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "session": self.session_name,
             "sender": agent,
             "targets": ["user"],
             "message": display,
-            "msg_id": msg_id,
             "native_log_path": transcript_path,
             "native_log_offset": line_start,
         }

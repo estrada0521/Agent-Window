@@ -5,7 +5,6 @@ import re
 import subprocess
 import sys
 import time
-import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -379,7 +378,6 @@ class AgentSendRuntime:
         sender: str,
         targets: list[str],
         payload: str,
-        msg_id: str,
     ) -> None:
         log_path = self.resolve_session_log_path(session_name)
         entry = {
@@ -388,7 +386,6 @@ class AgentSendRuntime:
             "sender": sender,
             "targets": targets,
             "message": payload,
-            "msg_id": msg_id,
         }
         append_jsonl_entry(log_path, entry)
 
@@ -428,13 +425,11 @@ class AgentSendRuntime:
         if not successful_targets:
             raise AgentSendError("Message delivery failed for all targets.")
 
-        msg_id = uuid.uuid4().hex[:12]
         self.append_log_entry(
             session_name=session_name,
             sender=sender_role,
             targets=successful_targets,
             payload=delivery_payload,
-            msg_id=msg_id,
         )
 
         target_names = ", ".join(successful_targets)

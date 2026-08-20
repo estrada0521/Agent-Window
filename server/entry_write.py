@@ -14,7 +14,6 @@ def append_user_entry(
     *,
     targets: list[str],
     datetime_class,
-    uuid_module,
     append_jsonl_entry_fn,
     client: str | None = None,
 ) -> dict:
@@ -24,13 +23,11 @@ def append_user_entry(
         "sender": "user",
         "targets": list(targets),
         "message": message,
-        "msg_id": uuid_module.uuid4().hex[:12],
     }
     recorded = _user_client(client)
     if recorded:
         entry["client"] = recorded
-    append_jsonl_entry_fn(runtime.log_path, entry)
-    return entry
+    return append_jsonl_entry_fn(runtime.log_path, entry)
 
 
 def append_system_entry(
@@ -40,7 +37,6 @@ def append_system_entry(
     agent: str = "",
     extra: dict | None = None,
     datetime_class,
-    uuid_module,
     append_jsonl_entry_fn,
 ) -> dict:
     entry = {
@@ -49,11 +45,9 @@ def append_system_entry(
         "sender": "system",
         "targets": [],
         "message": message,
-        "msg_id": uuid_module.uuid4().hex[:12],
     }
     if agent:
         entry["agent"] = agent
     if extra:
         entry.update(extra)
-    append_jsonl_entry_fn(runtime.log_path, entry)
-    return entry
+    return append_jsonl_entry_fn(runtime.log_path, entry)
