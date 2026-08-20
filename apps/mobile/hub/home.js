@@ -205,6 +205,10 @@
       try {
         const next = new URL(raw, window.location.href);
         if (next.origin === window.location.origin) {
+          // This page only ever runs as the mobile Hub, so it already knows
+          // the answer the framed chat page would otherwise have to guess
+          // from headers alone -- guessing is what fails for iPad Safari.
+          next.searchParams.set("view", "mobile");
           return next.pathname + next.search + next.hash;
         }
       } catch (_) {}
