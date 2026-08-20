@@ -81,6 +81,23 @@
       if (matches.length < 2 && !/\\n\\n|\\n\s*(?:[-*]|\d+\.|#{1,6}\s)/.test(value)) return value;
       return value.replace(/\\r\\n|\\n|\\r/g, "\n");
     };
+    const UNSAFE_URL_ATTR_PATTERN = /^\s*javascript:/i;
+    const stripUnsafeMarkup = (root) => {
+      // marked passes raw HTML through unchanged; agent output routinely
+      // quotes HTML it read from the web, so this has to run on every
+      // render, not just ones that look suspicious.
+      root.querySelectorAll("iframe, object, embed, form").forEach(el => el.remove());
+      root.querySelectorAll("*").forEach(el => {
+        for (const attr of Array.from(el.attributes)) {
+          const name = attr.name.toLowerCase();
+          if (name.startsWith("on")) {
+            el.removeAttribute(attr.name);
+          } else if (/^(?:href|src|xlink:href|action|formaction)$/.test(name) && UNSAFE_URL_ATTR_PATTERN.test(attr.value)) {
+            el.removeAttribute(attr.name);
+          }
+        }
+      });
+    };
     const revealMarkdownLinkTargets = (root) => {
       root.querySelectorAll("a[href]").forEach((anchor) => {
         const href = String(anchor.getAttribute("href") || "").trim();
@@ -150,6 +167,7 @@
 
       const tempDiv = document.createElement("div");
       tempDiv.innerHTML = html;
+      stripUnsafeMarkup(tempDiv);
       applyWrittenOrderedListNumbers(tempDiv, processedText);
       tempDiv.querySelectorAll(".MATH_SAFE_BLOCK").forEach(span => {
         const block = mathBlocks.find(b => b.id === span.dataset.id);
