@@ -4,7 +4,6 @@ import os
 import time
 from pathlib import Path
 
-from native_log_sync.agents._shared.msg_id import content_msg_id
 from native_log_sync.agents._shared.path_state import (
     _normalized_native_log_path,
     advance_read_progress,
@@ -31,7 +30,6 @@ def _append_grok_reply(runtime, agent: str, history_path: str, line_start: int, 
     display = extract_grok_assistant_text(entry)
     if not display:
         return False
-    msg_id = content_msg_id("grok", agent, history_path, line_start)
     append_projected_entry(
         runtime.log_path,
         {
@@ -40,7 +38,6 @@ def _append_grok_reply(runtime, agent: str, history_path: str, line_start: int, 
             "sender": agent,
             "targets": ["user"],
             "message": display,
-            "msg_id": msg_id,
             "native_log_path": history_path,
             "native_log_offset": line_start,
         },

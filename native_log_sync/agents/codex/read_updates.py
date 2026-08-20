@@ -4,7 +4,6 @@ import json
 import os
 import time
 
-from native_log_sync.agents._shared.msg_id import content_msg_id
 from native_log_sync.agents._shared.path_state import (
     advance_read_progress,
     read_progress_start,
@@ -130,9 +129,6 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
         if not display:
             return False
 
-        src_ts = str(entry.get("timestamp") or "")
-        msg_id = content_msg_id("codex", agent, src_ts, display)
-
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         jsonl_entry = {
             "timestamp": timestamp,
@@ -140,7 +136,6 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
             "sender": agent,
             "targets": ["user"],
             "message": display,
-            "msg_id": msg_id,
             "native_log_path": resolved_path,
             "native_log_offset": line_start,
         }

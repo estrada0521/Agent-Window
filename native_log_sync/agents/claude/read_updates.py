@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import time
 
-from native_log_sync.agents._shared.msg_id import content_msg_id
 from native_log_sync.agents._shared.path_state import (
     advance_read_progress,
     read_progress_start,
@@ -44,13 +43,6 @@ def _claude_entry_marks_turn_done(entry: dict) -> bool:
     return bool(entry.get("isApiErrorMessage"))
 
 
-def _claude_msg_id(entry: dict, session_path: str, line_start: int) -> str:
-    native_id = str(entry.get("uuid") or entry.get("id") or "").strip()
-    if native_id:
-        return native_id[:12]
-    return content_msg_id(session_path, line_start)
-
-
 def sync_claude_native_log(self, agent: str, native_log_path: str | None = None) -> None:
     session_path_str = str(native_log_path or "").strip()
     if not session_path_str or not os.path.exists(session_path_str):
@@ -87,7 +79,6 @@ def sync_claude_native_log(self, agent: str, native_log_path: str | None = None)
             "sender": agent,
             "targets": ["user"],
             "message": display,
-            "msg_id": _claude_msg_id(entry, session_path_str, line_start),
             "native_log_path": session_path_str,
             "native_log_offset": line_start,
         }

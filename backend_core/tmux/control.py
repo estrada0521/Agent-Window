@@ -7,7 +7,6 @@ import socket
 import subprocess
 import sys
 import time
-import uuid
 from collections import Counter
 from pathlib import Path
 from types import SimpleNamespace
@@ -132,7 +131,6 @@ def _append_log(session_name: str, message: str, *, kind: str, extra: dict | Non
         "sender": "system",
         "targets": [],
         "message": message,
-        "msg_id": uuid.uuid4().hex[:12],
         "kind": kind,
     }
     if extra:
