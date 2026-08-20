@@ -40,8 +40,6 @@
       } catch (_) {}
     }
 
-    const activeTextSizeInput = document.querySelector('#settingsFormDesktop [name="message_text_size_desktop"]');
-
     const settingsForm = document.getElementById('settingsFormDesktop');
     if (HUB_EMBED && settingsForm) {
       settingsForm.action = "/settings?embed=1";
@@ -54,9 +52,6 @@
       const formData = new FormData(settingsForm);
       for (const [key, value] of formData.entries()) {
         payload.append(key, String(value));
-      }
-      if (activeTextSizeInput) {
-        payload.set("message_text_size", String(activeTextSizeInput.value || ""));
       }
       try {
         await fetch(settingsForm.action || "/settings", {

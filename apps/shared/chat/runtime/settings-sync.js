@@ -31,7 +31,7 @@
             if (document.documentElement.dataset.mobile === "1") {
               const fileFrame = document.querySelector("#repoPanel .repo-preview-frame");
               if (fileFrame?.contentWindow) {
-                const sz = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--message-text-size")) || 0;
+                const sz = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size")) || 0;
                 if (sz >= 8) {
                   try {
                     fileFrame.contentWindow.postMessage(

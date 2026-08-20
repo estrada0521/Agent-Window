@@ -127,20 +127,10 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
     settings.pop("agent_message_font", None)
 
     try:
-        message_text_size = int(raw.get("message_text_size", settings["message_text_size"]))
+        text_size = int(raw.get("text_size", settings.get("text_size") or 13))
     except (TypeError, ValueError) as exc:
-        raise ValueError(f"invalid message_text_size: {raw.get('message_text_size')!r}") from exc
-    settings["message_text_size"] = message_text_size
-
-    try:
-        message_text_size_desktop = int(
-            raw.get("message_text_size_desktop")
-            if raw.get("message_text_size_desktop") is not None
-            else settings.get("message_text_size_desktop") or 13
-        )
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"invalid message_text_size_desktop: {raw.get('message_text_size_desktop')!r}") from exc
-    settings["message_text_size_desktop"] = message_text_size_desktop
+        raise ValueError(f"invalid text_size: {raw.get('text_size')!r}") from exc
+    settings["text_size"] = text_size
 
     return settings
 
@@ -150,13 +140,11 @@ HUB_SETTINGS_DEFAULTS = {
     "theme_desktop": "dark",
     "message_font": DEFAULT_MESSAGE_FONT,
     "code_font": DEFAULT_CODE_FONT,
-    "message_text_size": 13,
-    "message_text_size_desktop": 13,
+    "text_size": 13,
 }
 
 MOBILE_CHAT_TEXT_SIZE = {
-    "message_text_size": 13,
-    "message_text_size_desktop": 13,
+    "text_size": 13,
 }
 
 

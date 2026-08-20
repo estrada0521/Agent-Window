@@ -229,7 +229,7 @@
     };
     const currentFilePreviewTextSize = () => {
       try {
-        const rawSize = window.getComputedStyle(document.documentElement).getPropertyValue("--message-text-size") || "";
+        const rawSize = window.getComputedStyle(document.documentElement).getPropertyValue("--text-size") || "";
         const parsedSize = Number.parseInt(String(rawSize).trim(), 10);
         if (Number.isFinite(parsedSize) && parsedSize >= 11 && parsedSize <= 18) {
           return String(parsedSize);

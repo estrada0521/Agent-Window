@@ -407,7 +407,7 @@ def hub_settings_html(saved=False, variant="desktop"):
 
     settings = hub.load_hub_settings()
 
-    message_text_size_desktop = int(settings.get("message_text_size_desktop") or settings.get("message_text_size", 13) or 13)
+    text_size = int(settings.get("text_size", 13) or 13)
 
     theme = str(settings.get("theme", "dark") or "dark").strip().lower()
     theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", theme))
@@ -442,7 +442,7 @@ def hub_settings_html(saved=False, variant="desktop"):
         .replace("__PWA_ICON_192_URL__", _PWA_ICON_192_URL)
         .replace("__APPLE_TOUCH_ICON_URL__", _PWA_APPLE_TOUCH_ICON_URL)
         .replace("__NOTICE_HTML__", notice)
-        .replace("__MESSAGE_TEXT_SIZE_DESKTOP__", str(message_text_size_desktop))
+        .replace("__TEXT_SIZE__", str(text_size))
         .replace("__THEME_DESKTOP_OPTIONS__", theme_desktop_options)
         .replace("__VIEW_VARIANT__", "desktop")
         .replace("__HUB_HEADER_CSS__", _PAGE_HEADER_CSS)

@@ -527,8 +527,8 @@
       gap: 10px;
       color: var(--muted);
       font-family: var(--font-main);
-      font-size: var(--message-text-size, 13px);
-      line-height: var(--message-text-line-height, 22px);
+      font-size: var(--text-size, 13px);
+      line-height: var(--text-line-height, 22px);
       letter-spacing: 0.02em;
     }
 
@@ -572,8 +572,8 @@
       flex-direction: column;
       gap: 4px;
       font-family: var(--font-main);
-      font-size: var(--message-text-size, 13px);
-      line-height: var(--message-text-line-height, 22px);
+      font-size: var(--text-size, 13px);
+      line-height: var(--text-line-height, 22px);
       font-weight: 430;
       font-optical-sizing: auto;
       font-variation-settings: "opsz" 16;

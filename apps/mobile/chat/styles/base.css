@@ -477,7 +477,7 @@
     .git-commit-detail-head .git-commit-row .git-commit-meta .git-summary-counts {
       align-items: center;
       gap: 8px;
-      font-size: var(--message-text-size, 13px);
+      font-size: var(--text-size, 13px);
       line-height: 1.3;
     }
 
@@ -499,12 +499,12 @@
     }
 
     .git-commit-detail-head .git-summary-row .git-summary-meta-text {
-      font-size: var(--message-text-size, 13px);
+      font-size: var(--text-size, 13px);
       color: var(--fg);
     }
 
     .git-commit-detail-head .git-summary-row .git-summary-counts {
-      font-size: var(--message-text-size, 13px);
+      font-size: var(--text-size, 13px);
     }
 
     .git-commit-detail-head .git-commit-chevron {

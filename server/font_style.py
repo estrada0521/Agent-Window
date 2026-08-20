@@ -24,13 +24,9 @@ def chat_font_settings_inline_style(
     message_family = font_family_stack_fn(settings.get("message_font", DEFAULT_MESSAGE_FONT), "user")
     code_family = settings.get("code_font", "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace")
     try:
-        _legacy_size = int(settings.get("message_text_size", 13))
+        text_size = int(settings.get("text_size", 13))
     except Exception:
-        _legacy_size = 13
-    try:
-        message_text_size_desktop = int(settings.get("message_text_size_desktop") or _legacy_size)
-    except Exception:
-        message_text_size_desktop = _legacy_size
+        text_size = 13
     message_max_width = 900
 
     mobile_body_weight_override = """
@@ -57,7 +53,7 @@ def chat_font_settings_inline_style(
       font-synthesis: none;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
-      line-height: calc(var(--message-text-size, 16px) + 6px);
+      line-height: calc(var(--text-size, 16px) + 6px);
     }
     .message:not(.user):not(.system) .md-body,
     .message:not(.user):not(.system) .md-body p,
@@ -70,7 +66,7 @@ def chat_font_settings_inline_style(
       font-synthesis: none;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
-      line-height: calc(var(--message-text-size, 16px) + 8px);
+      line-height: calc(var(--text-size, 16px) + 8px);
     }
     .sysmsg-text {
       font-family: var(--font-main);
@@ -83,8 +79,8 @@ def chat_font_settings_inline_style(
     }"""
     return f"""
     :root {{
-      --message-text-size: {message_text_size_desktop}px;
-      --message-text-line-height: {message_text_size_desktop + 9}px;
+      --text-size: {text_size}px;
+      --text-line-height: {text_size + 9}px;
       --message-max-width: {message_max_width}px;
       --font-main: {message_family};
       --font-code: {code_family};
