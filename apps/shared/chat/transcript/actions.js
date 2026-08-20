@@ -1,7 +1,7 @@
     const loadOlderMessages = async () => {
       if (olderLoading || !latestPayloadData) return;
-      const firstMsgId = displayEntriesForData(latestPayloadData)[0]?.msg_id || "";
-      if (!firstMsgId) {
+      const loadedCount = displayEntriesForData(latestPayloadData).length;
+      if (!loadedCount) {
         olderHasMore = false;
         rerenderCurrentMessages();
         return;
@@ -10,7 +10,7 @@
       const prevHeight = timeline.scrollHeight;
       const prevTop = timeline.scrollTop;
       try {
-        const res = await fetchWithTimeout(messagesFetchUrl({ before_msg_id: firstMsgId }));
+        const res = await fetchWithTimeout(messagesFetchUrl({ offset: loadedCount }));
         if (!res.ok) throw new Error("older messages unavailable");
         const data = await res.json();
         const olderBatch = Array.isArray(data?.entries) ? data.entries : [];
@@ -34,13 +34,6 @@
       }
     };
 __CHAT_INCLUDE:../transcript-refresh.js__
-    timeline.addEventListener("click", async (event) => {
-      const fullBtn = event.target.closest("[data-load-full-message]");
-      if (fullBtn) {
-        event.preventDefault();
-        await loadFullMessageEntry(fullBtn.dataset.loadFullMessage || "", fullBtn);
-      }
-    });
 __CHAT_INCLUDE:../shortcut-commands.js__
     const blurComposerOnMobile = (message) => {
       if (document.documentElement.dataset.mobile === "1") message.blur();

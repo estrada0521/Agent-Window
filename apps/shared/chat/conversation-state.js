@@ -14,7 +14,4 @@
     let olderEntries = [];
     let olderHasMore = false;
     let olderLoading = false;
-    let publicFullEntryCache = new Map();
-    let publicDeferredLoading = new Set();
-    let publicDeferredObserver = null;
     let hasInitialRefreshHydrated = false;

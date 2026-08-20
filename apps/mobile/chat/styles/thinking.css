@@ -191,32 +191,3 @@
 
 __CHAT_INCLUDE:../../../shared/chat/markdown-body.css__
 __CHAT_INCLUDE:../../../shared/chat/markdown-body-mobile.css__
-
-    .message-deferred-actions {
-      display: flex;
-      justify-content: center;
-      margin-top: 10px;
-    }
-
-    .message-deferred-btn {
-      border: 0.5px solid rgba(255, 255, 255, 0.12);
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--muted);
-      border-radius: 999px;
-      padding: 6px 12px;
-      font-size: 12px;
-      line-height: 1.2;
-      cursor: pointer;
-      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
-    }
-
-    .has-hover .message-deferred-btn:hover {
-      color: var(--fg);
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .message-deferred-btn[disabled] {
-      color: var(--muted);
-      cursor: default;
-    }

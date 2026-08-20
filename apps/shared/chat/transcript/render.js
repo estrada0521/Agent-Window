@@ -451,28 +451,3 @@ __CHAT_INCLUDE:../new-chat.js__
       lastMessagesSig = "";
       render(latestPayloadData, { forceFullRender: true, suppressEntryAnimation });
     };
-    const ensurePublicDeferredObserver = () => {
-      if (!isPublicChatView || publicDeferredObserver || typeof IntersectionObserver !== "function") return;
-      publicDeferredObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const button = entry.target.closest("[data-load-full-message]") || entry.target.querySelector("[data-load-full-message]");
-          if (!button) return;
-          void loadFullMessageEntry(button.dataset.loadFullMessage || "", button);
-        });
-      }, {
-        root: timeline,
-        rootMargin: "220px 0px 220px 0px",
-        threshold: 0.01,
-      });
-    };
-    const observeDeferredMessages = (scope) => {
-      if (!isPublicChatView) return;
-      ensurePublicDeferredObserver();
-      if (!publicDeferredObserver) return;
-      (scope || document).querySelectorAll("[data-load-full-message]").forEach((button) => {
-        const msgId = String(button.dataset.loadFullMessage || "");
-        if (!msgId || publicFullEntryCache.has(msgId) || publicDeferredLoading.has(msgId)) return;
-        publicDeferredObserver.observe(button);
-      });
-    };

@@ -9,11 +9,6 @@
       renderMathInScope(scope);
       syncWideBlockRows(scope);
       syncMessageCollapse(scope);
-      observeDeferredMessages(scope);
-    };
-    const overrideDisplayEntry = (entry) => {
-      const msgId = String(entry?.msg_id || "");
-      return (msgId && publicFullEntryCache.get(msgId)) || entry;
     };
 __CHAT_INCLUDE:../messages-data.js__
     const buildMsgHTML = (entry, options = {}) => {
@@ -53,9 +48,6 @@ __CHAT_INCLUDE:../messages-data.js__
             ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${targetMeta}${isMobile ? copyButtonHtml() : ""}</div>`
             : `<div class="message-meta-below">${senderHtml}<span class="arrow">to</span>${targetMeta}${isMobile ? copyButtonHtml() : ""}</div>`);
         const hoverCopyHtml = isMobile ? "" : `<div class="message-hover-copy-zone">${copyButtonHtml(" message-hover-copy")}</div>`;
-        const deferredBodyHtml = safeEntry.deferred_body && msgId
-          ? `<div class="message-deferred-actions"><button class="message-deferred-btn" type="button" data-load-full-message="${msgId}">Load full message</button></div>`
-          : "";
 
         return `<article class="message-row ${cls}${metaHiddenClass}" data-msgid="${msgId}" data-sender="${sender}">
         <div class="message ${cls}" data-raw="${rawAttr}" data-preview="${previewAttr}">
@@ -65,7 +57,6 @@ __CHAT_INCLUDE:../messages-data.js__
           ${isCollapsibleMessage ? `<button class="message-collapse-toggle" type="button" hidden>More</button>` : ""}
           ${hoverCopyHtml}
         </div>
-        ${deferredBodyHtml}
         ${isUser ? `<div class="user-message-divider" aria-hidden="true"></div>` : ``}
         </div>
       </article>`;

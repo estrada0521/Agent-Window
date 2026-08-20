@@ -2,8 +2,7 @@
       const merged = [];
       const seen = new Set();
       for (const group of groups) {
-        for (const rawEntry of (group || [])) {
-          const entry = overrideDisplayEntry(rawEntry);
+        for (const entry of (group || [])) {
           const msgId = String(entry?.msg_id || "");
           if (msgId) {
             if (seen.has(msgId)) continue;
@@ -17,7 +16,6 @@
     const entryRenderKey = (entry) => JSON.stringify([
       String(entry?.msg_id || ""),
       String(entry?.kind || ""),
-      String(entry?.deferred_body || ""),
     ]);
     const displayEntriesForData = (data) => {
       const baseEntries = Array.isArray(data?.entries) ? data.entries : [];
@@ -68,7 +66,6 @@
       const params = new URLSearchParams();
       params.set("ts", String(Date.now()));
       params.set("limit", String(MESSAGE_BATCH));
-      if (isPublicChatView) params.set("light", "1");
       Object.entries(extra || {}).forEach(([key, value]) => {
         if (value === undefined || value === null || value === "") return;
         params.set(key, String(value));

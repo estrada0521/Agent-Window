@@ -84,20 +84,14 @@ def _ingest_matched_tail(runtime) -> None:
     )
 
 
-def _window_before_from_disk(path: Path, before_msg_id: str, limit: int, total_count: int):
-    window: deque[dict] = deque(maxlen=limit)
-    overflow = False
-    found = False
+def _window_before_offset_from_disk(path: Path, offset: int, limit: int, total_count: int):
+    window: deque[dict] = deque(maxlen=offset + limit)
     for entry in _iter_matched_log_entries(path):
-        if str(entry.get("msg_id") or "") == before_msg_id:
-            found = True
-            break
-        if len(window) == limit:
-            overflow = True
         window.append(entry)
-    if not found:
-        return [], False, total_count
-    return list(window), overflow, total_count
+    kept = list(window)
+    older_batch = kept[: max(0, len(kept) - offset)]
+    has_older = total_count > offset + len(older_batch)
+    return older_batch, has_older, total_count
 
 
 def _window_tail_from_disk(path: Path, limit: int, total_count: int):
@@ -112,7 +106,7 @@ def message_entry_window(
     *,
     limit_override: int | None,
     default_limit: int,
-    before_msg_id: str = "",
+    offset: int = 0,
 ) -> tuple[list[dict], bool, int]:
     limit = limit_override if limit_override is not None else default_limit
     if not limit or limit <= 0:
@@ -122,25 +116,8 @@ def message_entry_window(
         total_count = runtime._matched_entries_total
         tail = list(runtime._matched_entries_cache_entries)
         log_path = runtime.log_path
-    target = (before_msg_id or "").strip()
-    if target:
-        return _window_before_from_disk(log_path, target, limit, total_count)
+    if offset > 0:
+        return _window_before_offset_from_disk(log_path, offset, limit, total_count)
     if len(tail) >= min(limit, total_count):
         return tail[-limit:], total_count > limit, total_count
     return _window_tail_from_disk(log_path, limit, total_count)
-
-
-def find_matched_entry(runtime, msg_id: str) -> dict | None:
-    target = (msg_id or "").strip()
-    if not target:
-        return None
-    with runtime._matched_entries_cache_lock:
-        _ingest_matched_tail(runtime)
-        for entry in reversed(runtime._matched_entries_cache_entries):
-            if str(entry.get("msg_id") or "") == target:
-                return dict(entry)
-        log_path = runtime.log_path
-    for entry in _iter_matched_log_entries(log_path):
-        if str(entry.get("msg_id") or "") == target:
-            return entry
-    return None
