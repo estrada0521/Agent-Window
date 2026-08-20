@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from native_log_sync.agents._shared.msg_id import content_msg_id
 from native_log_sync.agents.gemini.read_runtime import (
     iter_tool_calls,
     parse_antigravity_transcript_step,
@@ -145,7 +146,7 @@ class AntigravitySyncTests(unittest.TestCase):
             entries = _projected_messages(out)
 
         self.assertEqual([entry["message"] for entry in entries], ["完了しました。"])
-        self.assertEqual(entries[0]["msg_id"], "antigravity-v2:conversation:2")
+        self.assertEqual(entries[0]["msg_id"], content_msg_id("antigravity-v2", "conversation", 2))
         self.assertEqual(
             runtime._idle_running_display_by_agent["gemini"]["current_event"]["text"],
             "Edit app.py",
