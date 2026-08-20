@@ -345,20 +345,6 @@ class AgentSendRuntime:
             targets.append(DeliveryTarget(agent_name=name, pane_id=pane))
         return targets
 
-    def _session_attached_count(self, session_name: str) -> int | None:
-        if not session_name:
-            return None
-        result = self.tmux.run(["display-message", "-p", "-t", session_name, "#{session_attached}"])
-        if result.returncode != 0:
-            return None
-        raw = str(result.stdout or "").strip()
-        if not raw:
-            return None
-        try:
-            return int(raw)
-        except ValueError:
-            return None
-
     def _mark_agent_running(self, session_name: str, agent_name: str) -> None:
         name = str(agent_name or "").strip()
         if not session_name or not name:
@@ -376,22 +362,12 @@ class AgentSendRuntime:
         agent_name: str = "",
         *,
         session_name: str = "",
-        session_attached_count: int | None = None,
     ) -> bool:
         if not pane_id:
             return False
         if self.tmux.run(["send-keys", "-t", pane_id, "-l", "--", payload]).returncode != 0:
             return False
-        attached_count = session_attached_count
-        if attached_count is None:
-            attached_count = self._session_attached_count(session_name)
-        time.sleep(
-            delivery_paste_delay_seconds(
-                payload,
-                env=self.env,
-                session_attached_count=attached_count,
-            )
-        )
+        time.sleep(delivery_paste_delay_seconds(env=self.env))
         if self.tmux.run(["send-keys", "-t", pane_id, "", "Enter"]).returncode != 0:
             return False
         return True
@@ -435,14 +411,12 @@ class AgentSendRuntime:
 
         successful_targets: list[str] = []
         failed_any = False
-        attached_count = self._session_attached_count(session_name)
         for target in delivery_targets:
             if self.send_to_pane(
                 target.pane_id,
                 delivery_payload,
                 target.agent_name,
                 session_name=session_name,
-                session_attached_count=attached_count,
             ):
                 self._mark_agent_running(session_name, target.agent_name)
                 if target.agent_name not in successful_targets:

@@ -31,25 +31,6 @@ def _send_enter(runtime, pane_id: str, *, subprocess_module=subprocess) -> bool:
     return result.returncode == 0
 
 
-def _session_attached_count(runtime, *, subprocess_module=subprocess) -> int | None:
-    session_name = str(getattr(runtime, "session_name", "") or "").strip()
-    if not session_name:
-        return None
-    result = subprocess_module.run(
-        [*runtime.tmux_prefix, "display-message", "-p", "-t", session_name, "#{session_attached}"],
-        capture_output=True, text=True, check=False,
-    )
-    if result.returncode != 0:
-        return None
-    raw = str(result.stdout or "").strip()
-    if not raw:
-        return None
-    try:
-        return int(raw)
-    except ValueError:
-        return None
-
-
 def send_message(
     self,
     target: str,
@@ -89,7 +70,6 @@ def send_message(
             delivery_targets.append(agent)
     if not delivery_targets:
         return 400, {"ok": False, "error": "target is required"}
-    attached_count = _session_attached_count(self, subprocess_module=subprocess)
     payload = message
     successful_targets: list[str] = []
     failed_targets: list[str] = []
@@ -102,13 +82,7 @@ def send_message(
             if not _send_keys_literal(self, pane_id, payload, subprocess_module=subprocess):
                 failed_targets.append(agent)
                 continue
-            time.sleep(
-                delivery_paste_delay_seconds(
-                    payload,
-                    env=os.environ,
-                    session_attached_count=attached_count,
-                )
-            )
+            time.sleep(delivery_paste_delay_seconds(env=os.environ))
             if not _send_enter(self, pane_id, subprocess_module=subprocess):
                 failed_targets.append(agent)
                 continue
