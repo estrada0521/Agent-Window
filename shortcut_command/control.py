@@ -52,18 +52,24 @@ def try_deliver_shortcut_control(
             if pane_direct:
                 tmux_key = {"up": "Up", "down": "Down", "left": "Left", "right": "Right"}[pane_direct["name"]]
                 for _ in range(pane_direct["repeat"]):
-                    subprocess.run(
+                    result = subprocess.run(
                         [*rt.tmux_prefix, "send-keys", "-t", pane_id, tmux_key],
                         capture_output=True,
                         check=False,
                     )
+                    if result.returncode != 0:
+                        detail = (result.stderr or result.stdout or b"").decode("utf-8", "replace").strip()
+                        return 400, {"ok": False, "error": detail or f"send-keys failed for {agent}"}
                 continue
             tmux_key = {"esc": "Escape", "ctrlc": "C-c", "enter": "Enter"}[message]
-            subprocess.run(
+            result = subprocess.run(
                 [*rt.tmux_prefix, "send-keys", "-t", pane_id, tmux_key],
                 capture_output=True,
                 check=False,
             )
+            if result.returncode != 0:
+                detail = (result.stderr or result.stdout or b"").decode("utf-8", "replace").strip()
+                return 400, {"ok": False, "error": detail or f"send-keys failed for {agent}"}
             if message in {"esc", "ctrlc"}:
                 rt._mark_idle(agent)
     except Exception as exc:
