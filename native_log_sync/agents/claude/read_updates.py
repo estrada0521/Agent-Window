@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import hashlib
 import os
 import time
 
+from native_log_sync.agents._shared.msg_id import content_msg_id
 from native_log_sync.agents._shared.path_state import (
     advance_read_progress,
     read_progress_start,
@@ -48,7 +48,7 @@ def _claude_msg_id(entry: dict, session_path: str, line_start: int) -> str:
     native_id = str(entry.get("uuid") or entry.get("id") or "").strip()
     if native_id:
         return native_id[:12]
-    return hashlib.sha256(f"{session_path}:{line_start}".encode("utf-8")).hexdigest()[:12]
+    return content_msg_id(session_path, line_start)
 
 
 def sync_claude_native_log(self, agent: str, native_log_path: str | None = None) -> None:

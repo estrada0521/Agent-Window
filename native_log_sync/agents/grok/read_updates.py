@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import hashlib
 import os
 import time
 from pathlib import Path
 
+from native_log_sync.agents._shared.msg_id import content_msg_id
 from native_log_sync.agents._shared.path_state import (
     _normalized_native_log_path,
     advance_read_progress,
@@ -31,8 +31,7 @@ def _append_grok_reply(runtime, agent: str, history_path: str, line_start: int, 
     display = extract_grok_assistant_text(entry)
     if not display:
         return False
-    key = f"grok:{agent}:{history_path}:{line_start}".encode("utf-8")
-    msg_id = hashlib.sha256(key).hexdigest()[:12]
+    msg_id = content_msg_id("grok", agent, history_path, line_start)
     append_projected_entry(
         runtime.log_path,
         {
