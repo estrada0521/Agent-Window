@@ -1,7 +1,5 @@
     const HUB_EMBED = document.documentElement.dataset.hubEmbed === "1";
 
-    const initialThemeValue = document.documentElement.dataset.theme || "dark";
-    let _themeReloadPending = false;
     const systemPrefersDark = () => {
       try { return window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (_) { return true; }
     };
@@ -27,7 +25,6 @@
       themeDesktopSelect.addEventListener("change", () => {
         const nextTheme = themeDesktopSelect.value;
         applyThemeDesktopSelection(nextTheme);
-        _themeReloadPending = nextTheme !== initialThemeValue;
         if (typeof _doAutoSave === "function") {
           clearTimeout(_autoSaveTimer);
           _autoSaveTimer = setTimeout(_doAutoSave, 150);
@@ -60,7 +57,6 @@
           body: payload.toString(),
           cache: "no-store",
         });
-        _themeReloadPending = false;
       } catch (_) {}
       settingsForm.dataset.saving = "0";
     };
