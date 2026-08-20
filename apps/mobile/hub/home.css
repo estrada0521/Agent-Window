@@ -559,7 +559,7 @@
     .launch-shell-card.is-error {
       width: auto;
       height: auto;
-      color: var(--fg);
+      color: var(--session-danger-fg);
       font-size: 13px;
     }
 
