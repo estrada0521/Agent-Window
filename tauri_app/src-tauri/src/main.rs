@@ -368,7 +368,6 @@ fn reveal_main_window(app: &tauri::AppHandle) {
 
 fn main() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![show_chat_header_menu])
         .on_menu_event(|app, event| {
             emit_native_menu_action(app, event.id().as_ref());
