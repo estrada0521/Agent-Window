@@ -53,8 +53,6 @@
     const DESK_MAX_SIDEBAR_WIDTH = 420;
     const DESK_SWIPE_ACTION_WIDTH = 92;
     const DESK_SWIPE_OPEN_THRESHOLD = 40;
-    const DESK_ACTIVE_PREWARM_LIMIT = 3;
-    const DESK_ACTIVE_PREWARM_CONCURRENCY = 2;
     const DESK_SIDEBAR_CLOSE_SWIPE_EDGE_PX = 36;
     const DESK_SIDEBAR_CLOSE_SWIPE_THRESHOLD = 54;
     const DESK_CHAT_URL_CACHE_LIMIT = 3;
@@ -95,7 +93,6 @@
     let _deskOpenToken = 0;
     let _deskSidebarMode = "list";
     let _deskSidebarWidth = DESK_DEFAULT_SIDEBAR_WIDTH;
-    let _deskActivePrewarmToken = 0;
     let _deskOpenSwipeRow = null;
     let _deskNewSessionStarting = false;
 
@@ -469,60 +466,6 @@
       hubChatUrls.write(cacheKey, chatUrl);
     }
 
-    function readCachedDeskChatUrl(cacheKey) {
-      return hubChatUrls.read(cacheKey);
-    }
-
-    function prioritizedDeskActiveSessions() {
-      const active = _hubSessionsCache.active || [];
-      if (!active.length) return [];
-      const byName = new Map();
-      active.forEach((session) => {
-        const sessionName = String(session?.name || "").trim();
-        if (sessionName && !byName.has(sessionName)) byName.set(sessionName, session);
-      });
-      const ordered = [];
-      const pushed = new Set();
-      const pushSession = (name) => {
-        const sessionName = String(name || "").trim();
-        if (!sessionName || pushed.has(sessionName)) return;
-        const session = byName.get(sessionName);
-        if (!session) return;
-        pushed.add(sessionName);
-        ordered.push(session);
-      };
-      pushSession(_deskSelectedSessionName);
-      pushSession(getRequestedDeskSelection());
-      active.forEach((session) => pushSession(session?.name));
-      return ordered;
-    }
-
-    function scheduleDeskActivePrewarm() {
-      const active = prioritizedDeskActiveSessions().slice(0, DESK_ACTIVE_PREWARM_LIMIT);
-      if (!active.length) return;
-      const queue = active
-        .map((session) => buildSessionOpenHref(session.name, false))
-        .filter((href) => href && !readCachedDeskChatUrl(href) && !hubChatUrls.hasInflight(href));
-      if (!queue.length) return;
-      const token = ++_deskActivePrewarmToken;
-      let running = 0;
-      const pump = () => {
-        if (token !== _deskActivePrewarmToken) return;
-        while (running < DESK_ACTIVE_PREWARM_CONCURRENCY && queue.length) {
-          const href = queue.shift();
-          if (!href) continue;
-          running += 1;
-          resolveSessionChatUrl(href)
-            .catch(() => {})
-            .finally(() => {
-              running -= 1;
-              pump();
-            });
-        }
-      };
-      pump();
-    }
-
     function deskSidebarPageUrl(mode) {
       if (mode === "settings") { return `/hub-launch-shell.html?target=${encodeURIComponent("/settings?embed=1")}`; }
       return "about:blank";
@@ -566,9 +509,6 @@
       }
       syncDeskSidebarResizerVisibility();
       syncDeskChatShellState();
-      if (isOpen) {
-        scheduleDeskActivePrewarm();
-      }
     }
 
     function isDeskSidebarOpen() {
@@ -1240,7 +1180,6 @@
           active.forEach((session) => refreshDeskSessionRunningRow(session?.name || ""));
         }
         _deskSessionsRenderedOnce = true;
-        scheduleDeskActivePrewarm();
         if (!skipRestore) maybeRestoreDeskSelection();
       } catch (_) {
         if (requestSeq !== _deskSessionsRequestSeq) return;
