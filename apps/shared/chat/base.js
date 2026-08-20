@@ -132,7 +132,16 @@
         if (values[index]) item.setAttribute("value", values[index]);
       });
     };
+    const renderMarkdownFallback = (text) => escapeHtml(String(text ?? "")).replace(/\n/g, "<br>");
     const renderMarkdown = (text) => {
+      try {
+        return renderMarkdownUnsafe(text);
+      } catch (err) {
+        console.error("markdown render failed, showing plain text", err);
+        return renderMarkdownFallback(text);
+      }
+    };
+    const renderMarkdownUnsafe = (text) => {
       if (typeof marked === "undefined") {
         throw new Error("marked is unavailable");
       }
