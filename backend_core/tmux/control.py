@@ -47,7 +47,7 @@ from backend_core.tmux.window import (
 
 
 SESSION_WIDTH = 66
-SESSION_HEIGHT = 40
+SESSION_HEIGHT = 80
 
 
 class SessionControlError(RuntimeError):
@@ -383,7 +383,7 @@ def create_session(
         detail = (created.stderr or created.stdout or "").strip() or "tmux new-session failed"
         raise SessionControlError(detail)
 
-    configure_window_size(target=f"{name}:0", width=SESSION_WIDTH, height=SESSION_HEIGHT, tmux_socket=socket_name)
+    configure_window_size(target=f"{name}:0", width=SESSION_WIDTH, tmux_socket=socket_name)
     _run(prefix, ["rename-window", "-t", f"{name}:0", "terminal"])
     for args in (
         ["set-option", "-t", name, "-g", "remain-on-exit", "on"],
@@ -403,7 +403,6 @@ def create_session(
             instance_name=instance,
             workspace=str(workspace_path),
             width=SESSION_WIDTH,
-            height=SESSION_HEIGHT,
             tmux_socket=socket_name,
         )
         if not pane_id:
@@ -527,7 +526,6 @@ def add_agent(
             instance_name=instance,
             workspace=workspace,
             width=SESSION_WIDTH,
-            height=SESSION_HEIGHT,
             tmux_socket=socket_name,
         )
         if not pane_id:
