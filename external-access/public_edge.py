@@ -19,12 +19,22 @@ sys.path.insert(0, str(repo_root))
 from backend_core.net import http_proxy
 from workspace_sync.files.runtime import FileRuntime
 from hub_backend.runtime import HubRuntime
+from hub_backend.session_api import HubSessionApi, HubSessionApiContext
 from server.runtime import ChatRuntime
 from backend_core.access.settings import DEFAULT_MESSAGE_FONT, load_hub_settings, settings_for_chat_render
 
 hub = HubRuntime(repo_root, script_path, tmux_socket, hub_port=hub_port)
 ensure_chat_server = hub.ensure_chat_server
-revive_archived_session = hub.revive_archived_session
+session_api = HubSessionApi(
+    HubSessionApiContext(
+        repo_root=repo_root,
+        hub=hub,
+        active_session_records_query=hub.active_session_records_query,
+        archived_session_records=hub.archived_session_records,
+        ensure_chat_server=hub.ensure_chat_server,
+        delete_archived_session=hub.delete_archived_session,
+    )
+)
 
 SESSION_GET_RETRY_WINDOW = 3.0
 SESSION_GET_RETRY_DELAY = 0.1
@@ -115,32 +125,23 @@ class Handler(BaseHTTPRequestHandler):
             return
         self._relay_upstream_stream(status, resp_headers, resp)
 
-    def _active_session_record(self, session_name: str, *, revive: bool = False) -> dict | None:
+    def _resolve_session(self, session_name: str) -> dict | None:
+        """Resolve a session (active, or archived as a read-only viewer) without
+        reviving it. Reviving is exclusively a /revive-session action, proxied
+        straight through to the local hub."""
         self.__tmux_unhealthy_detail = ""
-        query = hub.active_session_records_query()
-        if query.state == "unhealthy":
-            self.__tmux_unhealthy_detail = query.detail
+        resolved = session_api.resolve_session_chat_target(session_name)
+        if resolved["status"] == "unhealthy":
+            self.__tmux_unhealthy_detail = resolved.get("detail", "")
             return None
-
-        record = query.records.get(session_name)
-        if record is not None or not revive:
-            return record
-
-        ok, _detail = revive_archived_session(session_name)
-        if not ok:
-            if "unresponsive" in (_detail or ""):
-                self.__tmux_unhealthy_detail = _detail
+        if resolved["status"] != "ok":
             return None
-
-        # Re-query after revive to ensure we have the latest and healthy state
-        final_query = hub.active_session_records_query()
-        if final_query.state == "unhealthy":
-            self.__tmux_unhealthy_detail = final_query.detail
-            return None
-        return final_query.records.get(session_name)
+        return resolved
 
     def _session_file_runtime(self, session_name: str, record: dict | None = None) -> FileRuntime | None:
-        record = record or self._active_session_record(session_name)
+        if record is None:
+            resolved = self._resolve_session(session_name)
+            record = resolved.get("session_record") if resolved else None
         if record is None:
             return None
         workspace = (record.get("workspace") or "").strip()
@@ -226,14 +227,16 @@ class Handler(BaseHTTPRequestHandler):
             return
         session_name = parts[2]
         suffix = "/" if len(parts) < 4 or not parts[3] else f"/{parts[3]}"
-        record = self._active_session_record(session_name)
-        if record is None:
+        resolved = self._resolve_session(session_name)
+        if resolved is None:
             if getattr(self, "_Handler__tmux_unhealthy_detail", ""):
                 self._send_service_unavailable(self._Handler__tmux_unhealthy_detail)
                 return
             self.send_response(404)
             self.end_headers()
             return
+        record = resolved.get("session_record") or {}
+        session_is_active = bool(resolved.get("session_is_active", True))
         if method == "GET" and self._handle_session_file_request(session_name, suffix, parsed, record=record):
             return
         body = self._read_request_body(method)
@@ -243,7 +246,7 @@ class Handler(BaseHTTPRequestHandler):
         post_deadline = time.time() + SESSION_POST_RETRY_WINDOW if method == "POST" and suffix == "/new-chat" else time.time()
         while True:
             workspace = str((record or {}).get("workspace") or "").strip()
-            ok, chat_port, detail = ensure_chat_server(session_name, workspace=workspace)
+            ok, chat_port, detail = ensure_chat_server(session_name, session_is_active=session_is_active, workspace=workspace)
             if not ok:
                 body_bytes = f"Failed to start chat for {session_name}: {detail}".encode("utf-8")
                 self.send_response(500)
@@ -297,20 +300,14 @@ class Handler(BaseHTTPRequestHandler):
         qs = parse_qs(parsed.query)
         session_name = (qs.get("session", [""])[0] or "").strip()
         fmt = qs.get("format", [""])[0]
-        record = self._active_session_record(session_name, revive=True) if session_name else None
-        if not session_name or record is None:
+        resolved = self._resolve_session(session_name) if session_name else None
+        if not session_name or resolved is None:
             if getattr(self, "_Handler__tmux_unhealthy_detail", ""):
                 payload = json.dumps({"ok": False, "error": f"tmux unresponsive: {self._Handler__tmux_unhealthy_detail}"})
                 self._send_json(503, payload)
                 return
             payload = '{"ok": false, "error": "Session not found"}'
             self._send_json(404, payload)
-            return
-        workspace = str(record.get("workspace") or "").strip()
-        ok, _chat_port, detail = ensure_chat_server(session_name, workspace=workspace)
-        if not ok:
-            payload = '{"ok": false, "error": "%s"}' % detail.replace('"', "'")
-            self._send_json(500, payload)
             return
         location = f"/session/{url_quote(session_name, safe='')}/?follow=1"
         if fmt == "json":

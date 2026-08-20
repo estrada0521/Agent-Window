@@ -47,6 +47,7 @@ class HubSessionApi:
                 "status": "ok",
                 "chat_port": chat_port,
                 "session_record": query.records.get(session_name, {}),
+                "session_is_active": True,
             }
         if query.state == "unhealthy":
             return {"status": "unhealthy", "detail": query.detail}
@@ -66,6 +67,7 @@ class HubSessionApi:
             "status": "ok",
             "chat_port": chat_port,
             "session_record": record,
+            "session_is_active": False,
         }
 
     def format_session_timestamp(self, epoch: int | None = None) -> str:
