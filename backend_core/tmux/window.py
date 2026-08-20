@@ -28,19 +28,17 @@ def window_target_for_pane(*, pane_id: str, tmux_socket: str) -> str:
     return (res.stdout or "").strip()
 
 
-def configure_window_size(*, target: str, width: int, height: int, tmux_socket: str) -> None:
+def configure_window_size(*, target: str, width: int, tmux_socket: str) -> None:
     target_name = (target or "").strip()
     if not target_name:
         return
     prefix = tmux_prefix_args(tmux_socket)
+    # Width must stay fixed -- mobile's pane trace re-renders the captured
+    # ANSI grid assuming a stable column count. Height has no such consumer,
+    # so it's left untouched: omitting -y here is what leaves it alone,
+    # both now and on whatever the terminal does with it later.
     subprocess.run(
-        [*prefix, "set-window-option", "-t", target_name, "window-size", "manual"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
-    subprocess.run(
-        [*prefix, "resize-window", "-t", target_name, "-x", str(width), "-y", str(height)],
+        [*prefix, "resize-window", "-t", target_name, "-x", str(width)],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
@@ -53,7 +51,6 @@ def create_agent_window(
     instance_name: str,
     workspace: str,
     width: int,
-    height: int,
     tmux_socket: str,
 ) -> str:
     prefix = tmux_prefix_args(tmux_socket)
@@ -85,7 +82,6 @@ def create_agent_window(
     configure_window_size(
         target=window_target or pane_id,
         width=width,
-        height=height,
         tmux_socket=tmux_socket,
     )
     return pane_id
