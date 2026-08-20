@@ -122,8 +122,8 @@
       --external-link-fg: rgb(207, 34, 46);
       --error: rgb(207, 34, 46);
 
-      --link-blue: rgb(9, 105, 218);
-      --link-blue-channels: 9, 105, 218;
+      --link-blue: rgb(36, 85, 161);
+      --link-blue-channels: 36, 85, 161;
       --git-ins-green: rgb(26, 127, 55);
       --git-ins-green-channels: 26, 127, 55;
       --git-del-red: rgb(207, 34, 46);
