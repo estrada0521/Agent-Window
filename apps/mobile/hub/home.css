@@ -93,13 +93,27 @@
     .shell {
       position: relative;
       width: 100%;
-      max-width: 640px;
+      max-width: 900px;
       min-height: 100dvh;
       margin: 0 auto;
     }
 
     html.hub-chat-peeking .shell {
-      padding-right: 25vw;
+      max-width: none;
+      margin: 0;
+      padding-right: var(--hub-chat-peek-width, 25vw);
+    }
+
+    @media (min-width: 600px) {
+      html.hub-chat-peeking {
+        --hub-sidebar-width: min(400px, 75vw);
+      }
+
+      html.hub-chat-peeking .shell {
+        max-width: var(--hub-sidebar-width);
+        margin: 0;
+        padding-right: 0;
+      }
     }
 
     .shell> :not(.page-header):not(.mob-list-wrap):not(.hub-mobile-tagline) {
@@ -246,7 +260,13 @@
     }
 
     html.hub-chat-peeking .page-header .page-header-actions {
-      right: calc(14px + env(safe-area-inset-right, 0px) + 25vw);
+      right: calc(14px + env(safe-area-inset-right, 0px) + var(--hub-chat-peek-width, 25vw));
+    }
+
+    @media (min-width: 600px) {
+      html.hub-chat-peeking .page-header .page-header-actions {
+        right: calc(100vw - var(--hub-sidebar-width) + 14px + env(safe-area-inset-right, 0px));
+      }
     }
 
     .page-header .page-header-actions .page-menu-btn {
@@ -308,7 +328,6 @@
 
     .mob-list-wrap {
       display: block;
-      max-width: 640px;
       margin: 0 auto;
       width: 100%;
       padding-top: 64px;
@@ -597,14 +616,21 @@
 
     #chatOverlay.overlay-closing {
       opacity: 1;
-      transform: translate3d(75%, 0, 0);
+      transform: translate3d(calc(100% - var(--hub-chat-peek-width, 25vw)), 0, 0);
       transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
     }
 
     #chatOverlay.overlay-peeking {
       opacity: 1;
-      transform: translate3d(75%, 0, 0);
+      transform: translate3d(calc(100% - var(--hub-chat-peek-width, 25vw)), 0, 0);
       transition: none;
+    }
+
+    @media (min-width: 600px) {
+      #chatOverlay.overlay-closing,
+      #chatOverlay.overlay-peeking {
+        transform: translate3d(var(--hub-sidebar-width), 0, 0);
+      }
     }
 
     #chatOverlay.prewarming {
