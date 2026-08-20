@@ -145,7 +145,7 @@ class AntigravitySyncTests(unittest.TestCase):
             entries = _projected_messages(out)
 
         self.assertEqual([entry["message"] for entry in entries], ["完了しました。"])
-        self.assertTrue(entries[0]["msg_id"])
+        self.assertTrue(entries[0]["context_hash"])
         self.assertEqual(
             runtime._idle_running_display_by_agent["gemini"]["current_event"]["text"],
             "Edit app.py",

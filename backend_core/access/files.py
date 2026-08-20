@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 
-def _content_msg_id(*parts: object) -> str:
+def _context_hash(*parts: object) -> str:
     key = ":".join(str(part) for part in parts)
     return hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
 
@@ -16,7 +16,7 @@ def append_jsonl_entry(path: Path | str, entry: dict) -> dict:
     target.parent.mkdir(parents=True, exist_ok=True)
     entry = {
         **entry,
-        "msg_id": _content_msg_id(
+        "context_hash": _context_hash(
             entry.get("timestamp"),
             entry.get("session"),
             entry.get("sender"),

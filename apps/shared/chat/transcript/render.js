@@ -32,30 +32,30 @@
         let scrollAnchor = null;
         if (!shouldStick) {
           const tRect = timeline.getBoundingClientRect();
-          for (const el of timeline.querySelectorAll("[data-msgid]")) {
-            const mid = String(el.dataset.msgid || "");
+          for (const el of timeline.querySelectorAll("[data-context-hash]")) {
+            const mid = String(el.dataset.contextHash || "");
             if (!mid) continue;
             const r = el.getBoundingClientRect();
             if (r.bottom <= tRect.top + 0.5) continue;
             if (r.top >= tRect.bottom - 0.5) break;
-            scrollAnchor = { msgId: mid, vpTop: r.top - tRect.top };
+            scrollAnchor = { contextHash: mid, vpTop: r.top - tRect.top };
             break;
           }
         }
 
-        const displayIdSet = new Set(displayEntries.map((e) => String(e.msg_id || "")).filter(Boolean));
+        const displayIdSet = new Set(displayEntries.map((e) => String(e.context_hash || "")).filter(Boolean));
         const newEntries = displayEntries.filter((e) => {
-          const id = String(e.msg_id || "");
+          const id = String(e.context_hash || "");
           return id && !previousRenderedIds.has(id);
         });
         const hasRemovals = previousRenderedIds.size > 0 && [...previousRenderedIds].some((id) => !displayIdSet.has(String(id)));
-        const currentRenderedOrder = Array.from(root.querySelectorAll("[data-msgid]"))
-          .map((node) => String(node.dataset.msgid || ""))
+        const currentRenderedOrder = Array.from(root.querySelectorAll("[data-context-hash]"))
+          .map((node) => String(node.dataset.contextHash || ""))
           .filter(Boolean);
-        const nextRenderedOrder = displayEntries.map((entry) => String(entry.msg_id || ""));
+        const nextRenderedOrder = displayEntries.map((entry) => String(entry.context_hash || ""));
         const nextIncrementalOrder = currentRenderedOrder
           .filter((id) => displayIdSet.has(id))
-          .concat(newEntries.map((entry) => String(entry.msg_id || "")));
+          .concat(newEntries.map((entry) => String(entry.context_hash || "")));
         const canIncrementallyTrimAndAppend = !forceFullRender
           && previousRenderedIds.size > 0
           && newEntries.length > 0
@@ -66,7 +66,7 @@
           && newEntries.length > 0
           && !hasRemovals
           && nextRenderedOrder.length === currentRenderedOrder.length + newEntries.length
-          && newEntries.every((entry, idx) => nextRenderedOrder[idx] === String(entry.msg_id || ""))
+          && newEntries.every((entry, idx) => nextRenderedOrder[idx] === String(entry.context_hash || ""))
           && currentRenderedOrder.every((id, idx) => nextRenderedOrder[idx + newEntries.length] === id);
 
         const isInitialBulkLoad =
@@ -83,18 +83,18 @@
         let pendingStreamRowCleanups = [];
         if (canIncrementallyTrimAndAppend) {
           if (hasRemovals) {
-            root.querySelectorAll("[data-msgid]").forEach((node) => {
-              const msgId = String(node.dataset.msgid || "");
-              if (msgId && !displayIdSet.has(msgId)) node.remove();
+            root.querySelectorAll("[data-context-hash]").forEach((node) => {
+              const contextHash = String(node.dataset.contextHash || "");
+              if (contextHash && !displayIdSet.has(contextHash)) node.remove();
             });
           }
           const frag = document.createDocumentFragment();
           const pendingRowCleanup = [];
           for (const entry of newEntries) {
-            const entryMsgId = String(entry?.msg_id || "");
+            const entryContextHash = String(entry?.context_hash || "");
             const tmpl = document.createElement("template");
             tmpl.innerHTML = buildMsgHTML(entry, {
-              hideMetaRow: entryMsgId ? metaHiddenIds.has(entryMsgId) : false,
+              hideMetaRow: entryContextHash ? metaHiddenIds.has(entryContextHash) : false,
             });
             const row = tmpl.content.firstElementChild;
             if (row) {
@@ -117,16 +117,16 @@
           const frag = document.createDocumentFragment();
           const pendingRowCleanup = [];
           for (const entry of newEntries) {
-            const entryMsgId = String(entry?.msg_id || "");
+            const entryContextHash = String(entry?.context_hash || "");
             const tmpl = document.createElement("template");
             tmpl.innerHTML = buildMsgHTML(entry, {
-              hideMetaRow: entryMsgId ? metaHiddenIds.has(entryMsgId) : false,
+              hideMetaRow: entryContextHash ? metaHiddenIds.has(entryContextHash) : false,
             });
             const row = tmpl.content.firstElementChild;
             if (row) pendingRowCleanup.push({ row, stream: false });
             frag.appendChild(tmpl.content);
           }
-          const firstMsg = root.querySelector("[data-msgid]");
+          const firstMsg = root.querySelector("[data-context-hash]");
           root.insertBefore(frag, firstMsg || root.firstChild);
           _renderedIds = displayIdSet;
           for (const { row } of pendingRowCleanup) {
@@ -142,19 +142,19 @@
           queueMicrotask(() => { _programmaticScroll = false; });
         } else {
           root.innerHTML = displayEntries.map((entry) => {
-            const entryMsgId = String(entry?.msg_id || "");
+            const entryContextHash = String(entry?.context_hash || "");
             return buildMsgHTML(entry, {
-              hideMetaRow: entryMsgId ? metaHiddenIds.has(entryMsgId) : false,
+              hideMetaRow: entryContextHash ? metaHiddenIds.has(entryContextHash) : false,
             });
           }).join("");
           _renderedIds = displayIdSet;
           const pendingFullRowCleanup = [];
           if (shouldMarkNewRowsAnimated) {
-            const newEntryById = new Map(newEntries.map((e) => [String(e.msg_id || ""), e]));
-            root.querySelectorAll("[data-msgid]").forEach((row) => {
-              const msgId = String(row.dataset.msgid || "");
-              const entry = newEntryById.get(msgId);
-              if (!msgId || !entry) return;
+            const newEntryById = new Map(newEntries.map((e) => [String(e.context_hash || ""), e]));
+            root.querySelectorAll("[data-context-hash]").forEach((row) => {
+              const contextHash = String(row.dataset.contextHash || "");
+              const entry = newEntryById.get(contextHash);
+              if (!contextHash || !entry) return;
               row.classList.add("animate-in");
               const stream = entryQualifiesForStreamReveal(entry);
               if (stream) row.classList.add("streaming-body-reveal");

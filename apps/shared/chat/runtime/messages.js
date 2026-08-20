@@ -17,10 +17,10 @@ __CHAT_INCLUDE:../messages-data.js__
           const kindRaw = String(safeEntry.kind || "");
           const systemMessage = emphasizeSystemMessageKeyword(escapeHtml(safeEntry.message || ""), kindRaw);
           const systemTitle = systemMessage.replaceAll('"', "&quot;").replace(/<[^>]+>/g, "");
-          const msgId = escapeHtml(safeEntry.msg_id || "");
+          const contextHash = escapeHtml(safeEntry.context_hash || "");
           const isSessionLifecycle = /^(?:Session archived|Session revived)\b/i.test(safeEntry.message || "");
           const extraClass = isSessionLifecycle ? " sysmsg-strong" : "";
-          return `<div class="sysmsg-row${extraClass}" data-msgid="${msgId}" data-sender="system"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
+          return `<div class="sysmsg-row${extraClass}" data-context-hash="${contextHash}" data-sender="system"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
         }
         const cls = roleClass(safeEntry.sender);
         const entryTargets = Array.isArray(safeEntry.targets) ? safeEntry.targets : [];
@@ -31,7 +31,7 @@ __CHAT_INCLUDE:../messages-data.js__
         const body = stripSenderPrefix(safeEntry.message || "");
         const rawAttr = escapeHtml(body).replaceAll('"', "&quot;");
         const previewAttr = escapeHtml(body.slice(0, 80)).replaceAll('"', "&quot;");
-        const msgId = escapeHtml(safeEntry.msg_id || "");
+        const contextHash = escapeHtml(safeEntry.context_hash || "");
         const targetMeta = `<span class="targets">${targetSpans}</span>`;
         const sender = escapeHtml(safeEntry.sender || "unknown");
         const isUser = cls === "user";
@@ -49,7 +49,7 @@ __CHAT_INCLUDE:../messages-data.js__
             : `<div class="message-meta-below">${senderHtml}<span class="arrow">to</span>${targetMeta}${isMobile ? copyButtonHtml() : ""}</div>`);
         const hoverCopyHtml = isMobile ? "" : `<div class="message-hover-copy-zone">${copyButtonHtml(" message-hover-copy")}</div>`;
 
-        return `<article class="message-row ${cls}${metaHiddenClass}" data-msgid="${msgId}" data-sender="${sender}">
+        return `<article class="message-row ${cls}${metaHiddenClass}" data-context-hash="${contextHash}" data-sender="${sender}">
         <div class="message ${cls}" data-raw="${rawAttr}" data-preview="${previewAttr}">
         ${metaRowHtml}
         <div class="message-body-row">

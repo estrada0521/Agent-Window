@@ -257,12 +257,12 @@
       const collapseToggle = e.target.closest(".message-collapse-toggle");
       if (collapseToggle) {
         const row = collapseToggle.closest("article.message-row");
-        const msgId = row?.dataset.msgid || "";
-        if (!row || !msgId || !isCollapsibleMessageRow(row)) return;
-        if (expandedMessageBodies.has(msgId)) {
-          expandedMessageBodies.delete(msgId);
+        const contextHash = row?.dataset.contextHash || "";
+        if (!row || !contextHash || !isCollapsibleMessageRow(row)) return;
+        if (expandedMessageBodies.has(contextHash)) {
+          expandedMessageBodies.delete(contextHash);
         } else {
-          expandedMessageBodies.add(msgId);
+          expandedMessageBodies.add(contextHash);
         }
         syncMessageCollapse(row);
         return;
