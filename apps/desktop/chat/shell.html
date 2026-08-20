@@ -12,6 +12,23 @@
   <link rel="icon" type="image/png" sizes="192x192" href="__CHAT_PWA_ICON_192_URL__">
   <link rel="apple-touch-icon" href="__CHAT_APPLE_TOUCH_ICON_URL__">
   <title>__CHAT_DOCUMENT_TITLE__</title>
+  <script>
+    (() => {
+      // iPadOS Safari's default UA impersonates macOS and sends no Client
+      // Hints, so the server can't tell it apart from a real Mac -- only
+      // touch capability can. Redirect before the mobile-vendor CDN script
+      // below fetches anything the desktop variant doesn't need.
+      try {
+        if (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || "")) {
+          const url = new URL(window.location.href);
+          if (url.searchParams.get("view") !== "mobile") {
+            url.searchParams.set("view", "mobile");
+            window.location.replace(url.toString());
+          }
+        }
+      } catch (_) {}
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
   <script>
     (() => {

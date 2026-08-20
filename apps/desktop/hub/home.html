@@ -13,6 +13,22 @@
   <link rel="apple-touch-icon" href="__APPLE_TOUCH_ICON_URL__">
   <script>
     (() => {
+      // iPadOS Safari's default UA impersonates macOS and sends no Client
+      // Hints, so the server can't tell it apart from a real Mac -- only
+      // touch capability can.
+      try {
+        if (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || "")) {
+          const url = new URL(window.location.href);
+          if (url.searchParams.get("view") !== "mobile") {
+            url.searchParams.set("view", "mobile");
+            window.location.replace(url.toString());
+          }
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    (() => {
       if (!("serviceWorker" in navigator)) return;
       const isLocalHost = location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.hostname === "[::1]";
       if (!(window.isSecureContext || isLocalHost)) return;
