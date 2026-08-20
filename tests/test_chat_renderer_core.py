@@ -58,7 +58,7 @@ const emphasizeSystemMessageKeyword = (message, kind = "") =>
 {render_markdown}
 {build_message}
 
-const entry = {{ sender: "user", targets: ["cursor"], message: "hi", msg_id: "m1" }};
+const entry = {{ sender: "user", targets: ["cursor"], message: "hi", context_hash: "m1" }};
 marked.parse = () => {{ throw new Error("synthetic marked failure"); }};
 assert.throws(() => buildMsgHTML(entry), /synthetic marked failure/);
 marked = undefined;

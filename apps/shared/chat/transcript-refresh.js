@@ -1,7 +1,7 @@
     let refreshEpoch = 0;
     const applyLocalEntry = (entry) => {
-      const msgId = String(entry?.msg_id || "").trim();
-      if (!msgId) throw new Error("send did not return entry");
+      const contextHash = String(entry?.context_hash || "").trim();
+      if (!contextHash) throw new Error("send did not return entry");
       refreshEpoch += 1;
       const current = latestPayloadData || {};
       latestPayloadData = { ...current, entries: mergeEntriesById(current.entries || [], [entry]) };

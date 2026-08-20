@@ -203,7 +203,7 @@ def _send_or_enqueue_message(
     return 200, {
         "ok": True,
         "queued": True,
-        "msg_id": entry["msg_id"],
+        "context_hash": entry["context_hash"],
         "targets": queue_targets,
         "entry": entry,
     }

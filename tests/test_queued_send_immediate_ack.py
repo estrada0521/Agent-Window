@@ -17,7 +17,7 @@ class _FakeQueueRuntime:
         return [item.strip() for item in target.split(",") if item.strip()]
 
     def append_user_entry(self, message: str, *, targets: list[str], client: str | None = None) -> dict:
-        return {"msg_id": "test-msg-id", "targets": targets, "message": message}
+        return {"context_hash": "test-context-hash", "targets": targets, "message": message}
 
 
 class QueuedSendImmediateAckTest(unittest.TestCase):

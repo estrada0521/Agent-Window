@@ -5,12 +5,12 @@
     let _pollScrollRestoreRaf = 0;
     const maybeRestorePollScrollLock = () => {
       if (_programmaticScroll) return;
-      const hasAnchor = _pollScrollAnchor && _pollScrollAnchor.msgId;
+      const hasAnchor = _pollScrollAnchor && _pollScrollAnchor.contextHash;
       const hasLock = _pollScrollLockTop != null;
       if (!hasAnchor && !hasLock) return;
 
       if (hasAnchor) {
-        const row = timeline.querySelector(`[data-msgid="${CSS.escape(String(_pollScrollAnchor.msgId))}"]`);
+        const row = timeline.querySelector(`[data-context-hash="${CSS.escape(String(_pollScrollAnchor.contextHash))}"]`);
         if (row) {
           const tRect = timeline.getBoundingClientRect();
           const drift = (row.getBoundingClientRect().top - tRect.top) - _pollScrollAnchor.vpTop;
@@ -35,7 +35,7 @@
       }
     };
     const schedulePollScrollRestore = () => {
-      if (_pollScrollLockTop == null && !(_pollScrollAnchor && _pollScrollAnchor.msgId)) return;
+      if (_pollScrollLockTop == null && !(_pollScrollAnchor && _pollScrollAnchor.contextHash)) return;
       if (_pollScrollRestoreRaf) return;
       _pollScrollRestoreRaf = requestAnimationFrame(() => {
         _pollScrollRestoreRaf = 0;

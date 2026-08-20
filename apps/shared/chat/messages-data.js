@@ -1,6 +1,6 @@
     const mergeEntriesById = (...groups) => groups.flatMap((group) => group || []);
     const entryRenderKey = (entry) => JSON.stringify([
-      String(entry?.msg_id || ""),
+      String(entry?.context_hash || ""),
       String(entry?.kind || ""),
     ]);
     const displayEntriesForData = (data) => {
@@ -28,7 +28,7 @@
       let seenDirectionsForPeer = new Set();
       for (const entry of (entries || [])) {
         const sender = String(entry?.sender || "").trim().toLowerCase();
-        const msgId = String(entry?.msg_id || "").trim();
+        const contextHash = String(entry?.context_hash || "").trim();
         const targetsSig = entryTargetsSignature(entry);
         if (!sender || sender === "system") {
           continue;
@@ -40,8 +40,8 @@
           seenDirectionsForPeer = new Set();
         }
         const directionKey = `${sender}:${targetsSig}`;
-        if (seenDirectionsForPeer.has(directionKey) && msgId) {
-          hiddenIds.add(msgId);
+        if (seenDirectionsForPeer.has(directionKey) && contextHash) {
+          hiddenIds.add(contextHash);
         } else {
           seenDirectionsForPeer.add(directionKey);
         }

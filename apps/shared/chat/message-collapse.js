@@ -54,8 +54,8 @@
         }
         row.dataset.collapseRetry = "0";
         const shouldCollapse = body.scrollHeight > (maxHeight + 4);
-        const msgId = row.dataset.msgid || "";
-        const isExpanded = shouldCollapse && msgId && expandedMessageBodies.has(msgId);
+        const contextHash = row.dataset.contextHash || "";
+        const isExpanded = shouldCollapse && contextHash && expandedMessageBodies.has(contextHash);
         row.classList.toggle("is-collapsible", shouldCollapse);
         bodyRow.classList.toggle("is-collapsed", shouldCollapse && !isExpanded);
         const showMoreBtn = shouldCollapse && !isExpanded;

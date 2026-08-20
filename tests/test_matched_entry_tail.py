@@ -25,7 +25,7 @@ class _IndexRuntime:
 
 def _write_log(path: Path, count: int) -> None:
     lines = [
-        json.dumps({"msg_id": f"m{i}", "sender": "user", "message": f"hello {i}"}, ensure_ascii=True)
+        json.dumps({"context_hash": f"m{i}", "sender": "user", "message": f"hello {i}"}, ensure_ascii=True)
         for i in range(count)
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -45,8 +45,8 @@ class MatchedEntryTailTests(unittest.TestCase):
             self.assertEqual(total, 200)
             self.assertTrue(has_older)
             self.assertEqual(len(entries), 50)
-            self.assertEqual(entries[0]["msg_id"], "m150")
-            self.assertEqual(entries[-1]["msg_id"], "m199")
+            self.assertEqual(entries[0]["context_hash"], "m150")
+            self.assertEqual(entries[-1]["context_hash"], "m199")
             self.assertLessEqual(len(runtime._matched_entries_cache_entries), MATCHED_ENTRY_TAIL)
 
     def test_older_window_reads_past_the_tail(self) -> None:
@@ -63,8 +63,8 @@ class MatchedEntryTailTests(unittest.TestCase):
             )
             self.assertEqual(total, 200)
             self.assertTrue(has_older)
-            self.assertEqual(older[0]["msg_id"], "m100")
-            self.assertEqual(older[-1]["msg_id"], "m149")
+            self.assertEqual(older[0]["context_hash"], "m100")
+            self.assertEqual(older[-1]["context_hash"], "m149")
 
     def test_append_keeps_new_tail_without_growing_cache(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -73,7 +73,7 @@ class MatchedEntryTailTests(unittest.TestCase):
             runtime = _IndexRuntime(log_path)
             message_entry_window(runtime, limit_override=50, default_limit=2000)
             with log_path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps({"msg_id": "m80", "sender": "user", "message": "hello 80"}) + "\n")
+                handle.write(json.dumps({"context_hash": "m80", "sender": "user", "message": "hello 80"}) + "\n")
             entries, has_older, total = message_entry_window(
                 runtime,
                 limit_override=50,
@@ -81,5 +81,5 @@ class MatchedEntryTailTests(unittest.TestCase):
             )
             self.assertEqual(total, 81)
             self.assertTrue(has_older)
-            self.assertEqual(entries[-1]["msg_id"], "m80")
+            self.assertEqual(entries[-1]["context_hash"], "m80")
             self.assertLessEqual(len(runtime._matched_entries_cache_entries), MATCHED_ENTRY_TAIL)
