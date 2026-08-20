@@ -2,33 +2,33 @@
       flex: 1;
       min-width: 0;
       font-family: var(--font-main);
-      font-size: var(--message-text-size, 13px);
-      line-height: var(--message-text-line-height, 22px);
+      font-size: var(--text-size, 13px);
+      line-height: var(--text-line-height, 22px);
       color: var(--fg);
     }
 
     .message.user .md-body {
-      font-size: var(--message-text-size, 13px);
-      line-height: var(--message-text-line-height, 22px);
+      font-size: var(--text-size, 13px);
+      line-height: var(--text-line-height, 22px);
     }
 
     __AGENT_SEL_MD_BODY__ {
-      font-size: var(--message-text-size, 13px);
-      line-height: var(--message-text-line-height, 22px);
+      font-size: var(--text-size, 13px);
+      line-height: var(--text-line-height, 22px);
       color: var(--fg);
     }
 
     __AGENT_SEL_MD_BODY_LI__ {
-      line-height: calc(var(--message-text-line-height, 22px) + 2px);
+      line-height: calc(var(--text-line-height, 22px) + 2px);
     }
 
     __AGENT_SEL_GOTHIC_MD_BODY__ {
-      font-size: var(--message-text-size, 13px);
-      line-height: var(--message-text-line-height, 22px);
+      font-size: var(--text-size, 13px);
+      line-height: var(--text-line-height, 22px);
     }
 
     __AGENT_SEL_GOTHIC_MD_LI__ {
-      line-height: var(--message-text-line-height, 22px);
+      line-height: var(--text-line-height, 22px);
     }
 
     .md-body>*:first-child {

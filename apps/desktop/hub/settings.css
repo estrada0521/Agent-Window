@@ -91,7 +91,7 @@
       font-weight: 400;
       cursor: text;
     }
-    #message_text_size_desktop {
+    #text_size {
       background: transparent;
     }
     select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
@@ -106,7 +106,7 @@
       border: 0.5px solid rgba(255, 255, 255, 0.1);
       box-shadow: none;
     }
-    html[data-theme="dark"] #message_text_size_desktop {
+    html[data-theme="dark"] #text_size {
       background: transparent;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;

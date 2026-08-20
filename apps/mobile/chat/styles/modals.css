@@ -247,7 +247,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: var(--message-text-size, 13px);
+      font-size: var(--text-size, 13px);
       color: var(--muted);
       white-space: normal;
     }
