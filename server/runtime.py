@@ -28,7 +28,7 @@ from .entry_write import (
     append_system_entry as _append_system_entry_impl,
     append_user_entry as _append_user_entry_impl,
 )
-from .index_cache import MATCHED_ENTRY_TAIL, find_matched_entry, message_entry_window
+from .index_cache import MATCHED_ENTRY_TAIL, message_entry_window
 from .font_style import (
     chat_font_settings_inline_style as _chat_font_settings_inline_style_impl,
     font_family_stack as _font_family_stack_impl,
@@ -40,7 +40,6 @@ from .payload import (
     attachment_paths as payload_attachment_paths,
     build_payload_document,
     encode_payload_document,
-    summarize_light_entry,
 )
 from native_log_sync.syncer import NativeLogSyncer
 from native_log_sync.refresh.binding_models import PaneBindingRequest
@@ -70,10 +69,6 @@ ENTRY_WINDOW_LIMIT = 2000
 
 
 class ChatRuntime:
-    PUBLIC_LIGHT_MESSAGE_CHAR_LIMIT = 1500
-    PUBLIC_LIGHT_CODE_THRESHOLD = 800
-    PUBLIC_LIGHT_ATTACHMENT_PREVIEW_LIMIT = 2
-
     def __init__(
         self,
         *,
@@ -197,28 +192,14 @@ class ChatRuntime:
         self,
         *,
         limit_override: int | None = None,
-        before_msg_id: str = "",
+        offset: int = 0,
     ) -> tuple[list[dict], bool, int]:
         return message_entry_window(
             self,
             limit_override=limit_override,
             default_limit=self.limit,
-            before_msg_id=before_msg_id,
+            offset=offset,
         )
-
-    def _light_entry(self, entry: dict) -> dict:
-        return summarize_light_entry(
-            entry,
-            message_char_limit=self.PUBLIC_LIGHT_MESSAGE_CHAR_LIMIT,
-            code_threshold=self.PUBLIC_LIGHT_CODE_THRESHOLD,
-            attachment_preview_limit=self.PUBLIC_LIGHT_ATTACHMENT_PREVIEW_LIMIT,
-        )
-
-    def entry_by_id(self, msg_id: str, *, light_mode: bool = False):
-        entry = find_matched_entry(self, msg_id)
-        if entry is None:
-            return None
-        return self._light_entry(entry) if light_mode else entry
 
     def session_metadata(self) -> dict:
         session_slug = quote(self.session_name, safe="")
@@ -259,8 +240,7 @@ class ChatRuntime:
     def payload(
         self,
         limit_override: int | None = None,
-        before_msg_id: str = "",
-        light_mode: bool = False,
+        offset: int = 0,
     ) -> bytes:
         now = time.monotonic()
         try:
@@ -271,8 +251,7 @@ class ChatRuntime:
         cache_key = (
             index_sig,
             limit_override,
-            before_msg_id,
-            bool(light_mode),
+            offset,
             bool(self.session_is_active),
         )
         with self._payload_cache_lock:
@@ -282,11 +261,9 @@ class ChatRuntime:
         meta = self.session_metadata()
         entries, has_older, total_count = self._entry_window(
             limit_override=limit_override,
-            before_msg_id=before_msg_id,
+            offset=offset,
         )
         meta["total_messages"] = total_count
-        if light_mode:
-            entries = [self._light_entry(entry) for entry in entries]
         targets_cached_at, cached_targets = self._payload_targets_cache
         if now - targets_cached_at < 2.0:
             targets = list(cached_targets)
@@ -297,7 +274,6 @@ class ChatRuntime:
             meta=meta,
             targets=targets,
             has_older=has_older,
-            light_mode=bool(light_mode),
             entries=entries,
         )
         body = encode_payload_document(payload_doc)

@@ -1,37 +1,3 @@
-    const loadFullMessageEntry = async (msgId, button) => {
-      const targetMsgId = String(msgId || "").trim();
-      if (!isPublicChatView || !targetMsgId) return;
-      if (publicFullEntryCache.has(targetMsgId)) {
-        rerenderCurrentMessages();
-        return;
-      }
-      if (publicDeferredLoading.has(targetMsgId)) return;
-      publicDeferredLoading.add(targetMsgId);
-      if (publicDeferredObserver && button) {
-        try { publicDeferredObserver.unobserve(button); } catch (_) {}
-      }
-      if (button) {
-        button.disabled = true;
-        button.textContent = "Loading...";
-      }
-      try {
-        const res = await fetch(`/message-entry?msg_id=${encodeURIComponent(targetMsgId)}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("message body unavailable");
-        const data = await res.json().catch(() => ({}));
-        if (data?.entry) {
-          publicFullEntryCache.set(targetMsgId, data.entry);
-          rerenderCurrentMessages();
-          return;
-        }
-      } catch (_) {
-      } finally {
-        publicDeferredLoading.delete(targetMsgId);
-      }
-      if (button) {
-        button.disabled = false;
-        button.textContent = "Retry full message";
-      }
-    };
     let refreshEpoch = 0;
     const applyLocalEntry = (entry) => {
       const msgId = String(entry?.msg_id || "").trim();
@@ -81,8 +47,6 @@
         if (nextServerInstance && currentServerInstance && nextServerInstance !== currentServerInstance) {
           olderEntries = [];
           olderHasMore = false;
-          publicFullEntryCache = new Map();
-          publicDeferredLoading = new Set();
         }
         if (nextServerInstance) currentServerInstance = nextServerInstance;
         latestPayloadData = data;

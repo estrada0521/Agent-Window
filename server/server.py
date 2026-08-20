@@ -168,14 +168,12 @@ def _queued_send_worker() -> None:
                 runtime.append_system_entry(
                     f"Send failed: {error}",
                     kind="send-error",
-                    related_msg_id=job.get("msg_id", ""),
                     failed_targets=list(job.get("targets") or []),
                 )
         except Exception as exc:
             runtime.append_system_entry(
                 f"Send failed: {exc}",
                 kind="send-error",
-                related_msg_id=job.get("msg_id", ""),
                 failed_targets=list(job.get("targets") or []),
             )
         finally:
@@ -200,7 +198,6 @@ def _send_or_enqueue_message(
             "target": ",".join(queue_targets),
             "targets": queue_targets,
             "message": str(message or "").strip(),
-            "msg_id": entry["msg_id"],
         }
     )
     return 200, {

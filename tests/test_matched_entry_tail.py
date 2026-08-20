@@ -9,7 +9,6 @@ from pathlib import Path
 
 from server.index_cache import (
     MATCHED_ENTRY_TAIL,
-    find_matched_entry,
     message_entry_window,
 )
 
@@ -50,7 +49,7 @@ class MatchedEntryTailTests(unittest.TestCase):
             self.assertEqual(entries[-1]["msg_id"], "m199")
             self.assertLessEqual(len(runtime._matched_entries_cache_entries), MATCHED_ENTRY_TAIL)
 
-    def test_older_window_and_lookup_read_past_the_tail(self) -> None:
+    def test_older_window_reads_past_the_tail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             log_path = Path(tmp) / "log.jsonl"
             _write_log(log_path, 200)
@@ -60,15 +59,12 @@ class MatchedEntryTailTests(unittest.TestCase):
                 runtime,
                 limit_override=50,
                 default_limit=2000,
-                before_msg_id="m150",
+                offset=50,
             )
             self.assertEqual(total, 200)
             self.assertTrue(has_older)
             self.assertEqual(older[0]["msg_id"], "m100")
             self.assertEqual(older[-1]["msg_id"], "m149")
-            found = find_matched_entry(runtime, "m3")
-            self.assertIsNotNone(found)
-            self.assertEqual(found["message"], "hello 3")
 
     def test_append_keeps_new_tail_without_growing_cache(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
