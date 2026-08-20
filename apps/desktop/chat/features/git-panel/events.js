@@ -4,7 +4,14 @@
         requireOpen: () => dpPanelOpen,
         onFileRow: async (fileRow) => {
           const p = String(fileRow.dataset.path || "").trim();
-          if (p) await dpPostOpenFile(p);
+          if (!p) return;
+          const isUncommittedRow = !!fileRow.closest(".git-commit-file-section");
+          const isUntracked = fileRow.dataset.untracked === "1";
+          if (isUncommittedRow && !isUntracked) {
+            await dpPostOpenDiff(p);
+            return;
+          }
+          await dpPostOpenFile(p);
         },
         closeWorktreeSummaryClick: true,
       });
@@ -155,7 +162,12 @@
         const file = event.target.closest(".git-pinned-expand-file");
         if (!file) return;
         const path = file.dataset.path || "";
-        if (path) dpPostOpenFile(path);
+        if (!path) return;
+        if (file.dataset.scope !== "untracked") {
+          void dpPostOpenDiff(path);
+          return;
+        }
+        void dpPostOpenFile(path);
       });
 
       aside.addEventListener("mouseenter", () => { cancelTimers(); openTimer = setTimeout(open, 60); });

@@ -411,6 +411,29 @@ def _post_open_file(handler, _parsed, ctx) -> None:
     handler._send_json(200, result)
 
 
+def _post_open_diff(handler, _parsed, ctx) -> None:
+    data, err = _read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
+        return
+    rel = (data.get("path") or "").strip()
+    if not rel:
+        handler._send_json(400, {"ok": False, "error": "path required"})
+        return
+    try:
+        result = ctx["workspace_sync_api"].open_diff_tool(rel)
+    except PermissionError:
+        handler._send_json(403, {"ok": False, "error": "forbidden"})
+        return
+    except ValueError as exc:
+        handler._send_json(400, {"ok": False, "error": str(exc)})
+        return
+    except Exception as exc:
+        handler._send_json(500, {"ok": False, "error": str(exc)})
+        return
+    handler._send_json(200, result)
+
+
 def _run_nativelog_command(ctx, *, target: str) -> tuple[int, dict]:
     rt = ctx["runtime"]
     workspace_sync_api = ctx["workspace_sync_api"]
@@ -482,6 +505,7 @@ _POST_ROUTES = {
     "/files-exist": _post_files_exist,
     "/files-resolve": _post_files_resolve,
     "/open-file": _post_open_file,
+    "/open-diff": _post_open_diff,
     "/shortcut-command": _post_shortcut_command,
     "/send": _post_send,
 }

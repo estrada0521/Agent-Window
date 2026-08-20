@@ -47,6 +47,23 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
         throw err;
       }
     };
+    const postOpenDiff = async (path) => {
+      const res = await fetch("/open-diff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path }),
+      });
+      if (!res.ok) {
+        let detail = "Failed to open diff tool.";
+        try {
+          const data = await res.json();
+          if (data && data.error) detail = data.error;
+        } catch (_) {}
+        const err = new Error(detail);
+        err.status = res.status;
+        throw err;
+      }
+    };
     const openFile = async (path) => {
       const normalizedPath = normalizeWorkspaceFilePath(path);
       if (!normalizedPath) return false;

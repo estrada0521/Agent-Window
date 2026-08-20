@@ -44,6 +44,19 @@
         setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       }
     };
+    const dpPostOpenDiff = async (rawPath) => {
+      const normalizedPath = normalizeWorkspaceFilePath(rawPath);
+      if (!normalizedPath) return;
+      const errMsg = "Failed to open diff tool.";
+      try {
+        await postOpenDiff(normalizedPath);
+        setStatus(`Opened diff for ${normalizedPath}`);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
+      } catch (err) {
+        setStatus(err?.message || errMsg, true);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
+      }
+    };
     const dpFileStatsRowKey = (scope, entry) => `${String(scope || "")}\u001f${String(entry?.path || "").trim()}`;
     const dpCssEscape = (value) => {
       if (window.CSS?.escape) return CSS.escape(String(value || ""));
