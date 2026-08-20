@@ -1,18 +1,4 @@
-    const mergeEntriesById = (...groups) => {
-      const merged = [];
-      const seen = new Set();
-      for (const group of groups) {
-        for (const entry of (group || [])) {
-          const msgId = String(entry?.msg_id || "");
-          if (msgId) {
-            if (seen.has(msgId)) continue;
-            seen.add(msgId);
-          }
-          merged.push(entry);
-        }
-      }
-      return merged;
-    };
+    const mergeEntriesById = (...groups) => groups.flatMap((group) => group || []);
     const entryRenderKey = (entry) => JSON.stringify([
       String(entry?.msg_id || ""),
       String(entry?.kind || ""),
