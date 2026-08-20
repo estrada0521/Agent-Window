@@ -15,7 +15,7 @@ def _between(text: str, start: str, end: str) -> str:
 
 
 class ChatRendererCoreTests(unittest.TestCase):
-    def test_renderer_does_not_swallow_marked_failures(self) -> None:
+    def test_renderer_falls_back_to_plain_text_on_marked_failure(self) -> None:
         base = (ROOT / "apps/shared/chat/base.js").read_text()
         messages = (ROOT / "apps/shared/chat/runtime/messages.js").read_text()
         render_markdown = _between(base, "    const applyWrittenOrderedListNumbers =", "    const wrapFileIcon")
@@ -55,15 +55,19 @@ const isCollapsibleMessageSender = (sender) => {{
 }};
 const emphasizeSystemMessageKeyword = (message, kind = "") =>
   kind === "git-commit" ? message.replace(/^Commit\\b/i, "<b>Commit</b>") : message;
+const stripUnsafeMarkup = () => {{}};
 {render_markdown}
 {build_message}
 
-const entry = {{ sender: "user", targets: ["cursor"], message: "hi", context_hash: "m1" }};
+const entry = {{ sender: "user", targets: ["cursor"], message: "hi <b>there</b>\\nline2", context_hash: "m1" }};
 marked.parse = () => {{ throw new Error("synthetic marked failure"); }};
-assert.throws(() => buildMsgHTML(entry), /synthetic marked failure/);
+let html = buildMsgHTML(entry);
+assert.match(html, /hi &lt;b&gt;there&lt;\\/b&gt;<br>line2/);
+assert.doesNotMatch(html, /<b>there<\\/b>/);
 marked = undefined;
-assert.throws(() => buildMsgHTML(entry), /marked is unavailable/);
-console.log("marked-failure-propagated");
+html = buildMsgHTML(entry);
+assert.match(html, /hi &lt;b&gt;there&lt;\\/b&gt;<br>line2/);
+console.log("marked-failure-falls-back-to-plain-text");
 """
         completed = subprocess.run(
             ["node"],
@@ -73,7 +77,7 @@ console.log("marked-failure-propagated");
             check=False,
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn("marked-failure-propagated", completed.stdout)
+        self.assertIn("marked-failure-falls-back-to-plain-text", completed.stdout)
 
 
     def test_written_ordered_list_numbers_are_preserved(self) -> None:
