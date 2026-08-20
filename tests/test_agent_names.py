@@ -35,9 +35,6 @@ class _NameRuntime(AgentSendRuntime):
     def current_pane_role(self, _session_name: str) -> str | None:
         return str(self.env.get("AGENT_WINDOW_AGENT_NAME") or "") or None
 
-    def _session_attached_count(self, _session_name: str) -> int | None:
-        return 1
-
     def send_to_pane(
         self,
         pane_id: str,
@@ -45,9 +42,8 @@ class _NameRuntime(AgentSendRuntime):
         agent_name: str = "",
         *,
         session_name: str = "",
-        session_attached_count: int | None = None,
     ) -> bool:
-        del pane_id, payload, agent_name, session_name, session_attached_count
+        del pane_id, payload, agent_name, session_name
         return True
 
     def _mark_agent_running(self, _session_name: str, _agent_name: str) -> None:
