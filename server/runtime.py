@@ -148,6 +148,8 @@ class ChatRuntime:
         return self._native_log.refresh(pane_requests, replace_all=replace_all, reason=reason)
 
     def start_native_log_sync(self) -> None:
+        if not self.session_is_active:
+            return
         from native_log_sync.api import start_watchers
         self.refresh_native_log_bindings(reason="startup")
         start_watchers(self._native_log)

@@ -5,6 +5,8 @@ import subprocess
 
 
 def active_agents(runtime, *, subprocess_module=subprocess) -> list[str]:
+    if not runtime.session_is_active:
+        return []
     r = subprocess_module.run(
         [*runtime.tmux_prefix, "show-environment", "-t", runtime.session_name, "AGENT_WINDOW_AGENTS"],
         capture_output=True,
