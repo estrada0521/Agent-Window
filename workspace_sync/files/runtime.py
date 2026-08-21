@@ -11,6 +11,11 @@ from pathlib import Path
 from workspace_sync.files.ignore import FileIndexIgnoreRules
 
 
+class _WorkspaceNotAGitRepo(Exception):
+    """The workspace isn't Git-managed -- not an error, just a signal to
+    fall back to a plain directory scan."""
+
+
 class FileRuntime:
     INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES = 512 * 1024
     RAW_STREAM_CHUNK_BYTES = 64 * 1024
@@ -298,7 +303,7 @@ class FileRuntime:
             with self._file_list_cache_lock:
                 return [dict(item) for item in (self._file_list_cache or [])]
         try:
-            files = self._git_search_paths()
+            files = self._search_paths()
             with self._file_list_cache_lock:
                 self._file_list_cache = files
                 self._file_list_cache_at = time.time()
@@ -306,6 +311,16 @@ class FileRuntime:
                 return [dict(item) for item in files]
         finally:
             self._file_list_refresh_lock.release()
+
+    def _search_paths(self) -> list[dict]:
+        """Git-tracked search is the fast path (native .gitignore handling,
+        no per-file stat) for Git-managed workspaces. A workspace does not
+        have to be a Git repo -- DESIGN.md is explicit about that -- so a
+        directory scan is the equivalent for the rest, not an error."""
+        try:
+            return self._git_search_paths()
+        except _WorkspaceNotAGitRepo:
+            return self._scandir_search_paths()
 
     def _git_search_paths(self) -> list[dict]:
         result = subprocess.run(
@@ -315,6 +330,8 @@ class FileRuntime:
         )
         if result.returncode != 0:
             detail = (result.stderr or result.stdout or b"").decode("utf-8", "replace").strip()
+            if "not a git repository" in detail.lower():
+                raise _WorkspaceNotAGitRepo(detail)
             raise RuntimeError(detail or f"git ls-files exited {result.returncode}")
         files: list[dict] = []
         for raw in (result.stdout or b"").split(b"\0"):
@@ -324,6 +341,35 @@ class FileRuntime:
             if not rel or self._rel_path_is_skipped(rel):
                 continue
             files.append({"path": rel, "size": None})
+        files.sort(key=lambda item: str(item.get("path") or "").casefold())
+        return files
+
+    def _scandir_search_paths(self) -> list[dict]:
+        files: list[dict] = []
+        pending = [""]
+        while pending:
+            rel_dir = pending.pop()
+            abs_dir = os.path.join(self.workspace, rel_dir) if rel_dir else self.workspace
+            try:
+                scanner = os.scandir(abs_dir)
+            except OSError:
+                continue
+            with scanner:
+                for entry in scanner:
+                    rel = f"{rel_dir}/{entry.name}" if rel_dir else entry.name
+                    if self._rel_path_is_skipped(rel):
+                        continue
+                    try:
+                        is_dir = entry.is_dir(follow_symlinks=False)
+                    except OSError:
+                        try:
+                            is_dir = entry.is_dir(follow_symlinks=True)
+                        except OSError:
+                            is_dir = False
+                    if is_dir:
+                        pending.append(rel)
+                        continue
+                    files.append({"path": rel, "size": None})
         files.sort(key=lambda item: str(item.get("path") or "").casefold())
         return files
 
