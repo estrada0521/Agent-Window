@@ -5,7 +5,6 @@ set -euo pipefail
 _REAL_SCRIPT="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "${BASH_SOURCE[0]:-$0}")"
 OPS_DIR="$(cd "$(dirname "$_REAL_SCRIPT")" && pwd)"
 REPO_ROOT="$(cd "$OPS_DIR/.." && pwd)"
-SCRIPT_DIR="$REPO_ROOT/bin"
 
 # shellcheck source=/dev/null
 source "$REPO_ROOT/bin/lib/tmux_session.sh"
@@ -25,300 +24,39 @@ for _cmd in python3 tmux; do
   fi
 done
 
-eval "$(PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -m backend_core.cli.agent_registry_shell)"
-APP_NAME="$(basename "$0")"
-AGENT_WINDOW_RUN_DIR="${AGENT_WINDOW_RUN_DIR:-$(python3 - "$REPO_ROOT" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(repo_root))
-from backend_core.access.settings import agent_window_run_dir
-
-print(agent_window_run_dir())
-PYEOF
-)}"
-export AGENT_WINDOW_RUN_DIR
-SESSION_NAME=""
-SESSION_NAME_EXPLICIT=0
-WORKSPACE="$PWD"
-DETACH=0
-FRESH=0
-AGENTS_ARG=""
-NO_AGENTS=0
-MODE="up"
-LIST_VERBOSE=0
-ALL_SESSIONS=0
-LATEST_SESSION=0
-CONTEXT_JSON=0
-AGENT_WINDOW_WIDTH=66
-AGENT_WINDOW_HEIGHT=40
-
 TMUX_SOCKET_NAME="$(resolve_tmux_socket_name)"
-canonical_agent_name() {
-  local candidate="$1"
-  python3 - "$REPO_ROOT" "$candidate" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-name = sys.argv[2]
-
-sys.path.insert(0, str(repo_root))
-from backend_core.agents.registry import canonical_agent_name
-
-print(canonical_agent_name(name))
-PYEOF
-}
-
-agent_var() {
-  local prefix="$1"
-  local agent="$2"
-  local var_name="${prefix}_${agent}"
-  eval "printf '%s' \"\${${var_name}:-}\""
-}
-
-resolve_agent_executable() {
-  local agent="$1"
-  python3 - "$REPO_ROOT" "$agent" <<'PYEOF'
-import os
-import shutil
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-agent_name = sys.argv[2]
-
-sys.path.insert(0, str(repo_root))
-from backend_core.agents.executables import resolve_agent_executable
-from backend_core.agents.registry import canonical_agent_name
-
-resolved = resolve_agent_executable(repo_root, agent_name)
-if resolved:
-    print(resolved)
-    raise SystemExit(0)
-
-base = canonical_agent_name(agent_name.split("-", 1)[0])
-print(base)
-raise SystemExit(1)
-PYEOF
-}
-
-tmux() {
-  case "$TMUX_SOCKET_NAME" in
-    /*) command tmux -S "$TMUX_SOCKET_NAME" "$@" ;;
-    *) command tmux -L "$TMUX_SOCKET_NAME" "$@" ;;
-  esac
-}
-
-exec_tmux() {
-  case "$TMUX_SOCKET_NAME" in
-    /*) exec command tmux -S "$TMUX_SOCKET_NAME" "$@" ;;
-    *) exec command tmux -L "$TMUX_SOCKET_NAME" "$@" ;;
-  esac
-}
-
-default_session_name() {
-  basename "$WORKSPACE"
-}
-
-# The AW session's log folder is its identity; whether/where it's live in
-# tmux is resolved by workspace (never by name-matching) via session_control,
-# which is the single shared bridge every entry point in this repo uses.
-repo_session_names() {
-  session_control list --tmux-socket "$TMUX_SOCKET_NAME" --json | python3 -c '
-import json, sys
-
-for item in json.load(sys.stdin):
-    print(item["session"])
-'
-}
-
-resolve_target_session_name() {
-  if [[ "$LATEST_SESSION" -eq 1 ]]; then
-    session_control latest
-    return $?
-  fi
-  session_control current --workspace "$WORKSPACE"
-}
+SESSION_NAME=""
+WORKSPACE="$PWD"
+CONTEXT_JSON=0
 
 usage() {
-  cat <<EOF
-Usage:
-  agent-window list [--verbose] [--all]
-  agent-window [status] [--session NAME] [--all]
-  agent-window context [--session NAME] [--json]
-  agent-window add-agent --session NAME --agent AGENT
-  agent-window remove-agent --session NAME --agent INSTANCE
-  agent-window kill [--session NAME | --all]
-  agent-window [--session NAME] [--workspace PATH] [--detach] [--fresh] [--agents AGENT_LIST]
+  cat <<'EOF'
+Usage: agent-window context [--session NAME] [--workspace PATH] [--json]
 
-Creates a tmux session where window 0 is reserved for the human terminal,
-and each agent gets its own tmux window.
-
-Options:
-  --agents AGENT_LIST  Comma-separated list of agents to launch (default: none)
-                       Available: $ALL_AGENTS_DISPLAY
-                       Examples:
-                         --agents claude,gemini
-                         --agents claude,codex,cursor
-
-  --session NAME       Name of the session (default: current directory name)
-  --workspace PATH     Working directory (default: current directory)
-  --detach             Start session in detached mode
-  --fresh              Delete existing logs for the session name before starting
-  --all                For list: include archived sessions. For status/kill: target all active sessions
-  --latest             Target the most recently created agent-window session
-  --verbose            Show extra details in list output
-  list                 List sessions for this agent-window install
-  context              Print session/workspace/agent-pane summary for the current pane (or --session)
-  add-agent            Add a new agent to an existing session
-  remove-agent         Remove one agent pane (INSTANCE e.g. claude, gemini-2); chat jsonl is untouched
-  status               Show session status without starting or changing anything
-  kill                 Kill an existing session explicitly
+Print session/workspace/agent-pane summary for the current pane (or --session).
+Session creation and management are done through Hub.
 EOF
 }
 
-CMD_DISPATCH_CORE_SH="$REPO_ROOT/bin/lib/cmd_dispatch.sh"
-if [[ ! -f "$CMD_DISPATCH_CORE_SH" ]]; then
-  echo "Missing required command-dispatch helper script: $CMD_DISPATCH_CORE_SH" >&2
-  exit 1
-fi
-source "$CMD_DISPATCH_CORE_SH"
+case "${1:-}" in
+  -h|--help) usage; exit 0 ;;
+  context)   shift ;;
+  *)         usage >&2; exit 1 ;;
+esac
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    list)        MODE="list"; shift ;;
-    context)     MODE="context"; shift ;;
-    add-agent)   MODE="add-agent"; shift ;;
-    remove-agent) MODE="remove-agent"; shift ;;
-    status)      MODE="status"; shift ;;
-    kill)        MODE="kill"; shift ;;
-    --session)   SESSION_NAME="$2"; SESSION_NAME_EXPLICIT=1; shift 2 ;;
+    --session)   SESSION_NAME="$2"; shift 2 ;;
     --workspace) WORKSPACE="$2"; shift 2 ;;
-    --detach)    DETACH=1; shift ;;
-    --fresh)     FRESH=1; shift ;;
-    --all)       ALL_SESSIONS=1; shift ;;
-    --latest)    LATEST_SESSION=1; shift ;;
-    --verbose)   LIST_VERBOSE=1; shift ;;
     --json)      CONTEXT_JSON=1; shift ;;
-    --agents|--agent) AGENTS_ARG="$2"; shift 2 ;;
-    --no-agents) NO_AGENTS=1; shift ;;
     -h|--help)   usage; exit 0 ;;
     *)           echo "Unknown argument: $1" >&2; usage >&2; exit 1 ;;
   esac
 done
 
 WORKSPACE="$(cd "$WORKSPACE" && pwd)"
-if [[ -z "$SESSION_NAME" ]] && [[ "$MODE" == "up" ]]; then
-  SESSION_NAME="$(default_session_name)"
-fi
 
-if [[ "$ALL_SESSIONS" -eq 1 ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 1 ]]; then
-  echo "Cannot combine --all with --session" >&2
-  exit 1
-fi
-
-if [[ "$LATEST_SESSION" -eq 1 ]] && [[ "$SESSION_NAME_EXPLICIT" -eq 1 ]]; then
-  echo "Cannot combine --latest with --session" >&2
-  exit 1
-fi
-
-if [[ "$ALL_SESSIONS" -eq 1 ]] && [[ "$LATEST_SESSION" -eq 1 ]]; then
-  echo "Cannot combine --all with --latest" >&2
-  exit 1
-fi
-
-agent_window_dispatch_prelaunch_modes
-
-if [[ "$NO_AGENTS" -eq 1 || -z "$AGENTS_ARG" || "$AGENTS_ARG" == "-" ]]; then
-  NO_AGENTS=1
-  SELECTED_AGENTS=()
-  INSTANCE_NAMES=()
-elif [[ -n "$AGENTS_ARG" ]]; then
-  IFS=',' read -ra SELECTED_AGENTS <<< "$AGENTS_ARG"
-  _normalised=()
-  for agent in "${SELECTED_AGENTS[@]}"; do
-    base_agent="$(canonical_agent_name "${agent%%-[0-9]*}")"
-    valid=0
-    for a in "${ALL_AGENTS[@]}"; do
-      [[ "$base_agent" == "$a" ]] && valid=1 && break
-    done
-    if [[ "$valid" -eq 0 ]]; then
-      echo "Unknown agent: $agent (available: ${ALL_AGENTS[*]})" >&2
-      exit 1
-    fi
-    _normalised+=("$base_agent")
-  done
-  SELECTED_AGENTS=("${_normalised[@]}")
-fi
-
-if [[ ${#SELECTED_AGENTS[@]} -lt 1 && "$NO_AGENTS" -eq 0 ]]; then
-  echo "At least one agent must be specified." >&2
-  exit 1
-fi
-
-if [[ "$NO_AGENTS" -eq 0 ]]; then
-  _instance_names_str="$(python3 -c "
-import sys
-agents = sys.argv[1:]
-from collections import Counter
-counts = Counter(agents)
-indices = {}
-result = []
-for a in agents:
-    if counts[a] > 1:
-        indices[a] = indices.get(a, 0) + 1
-        result.append(f'{a}-{indices[a]}')
-    else:
-        result.append(a)
-print(','.join(result))
-" "${SELECTED_AGENTS[@]}")"
-  IFS=',' read -ra INSTANCE_NAMES <<< "$_instance_names_str"
-
-fi
-
-command -v tmux >/dev/null 2>&1 || { echo "tmux is required." >&2; exit 1; }
-if [[ "$NO_AGENTS" -eq 0 ]]; then
-  _checked_cmds=""
-  for agent in "${SELECTED_AGENTS[@]}"; do
-    case ",$_checked_cmds," in
-      *,"$agent",*) ;;
-      *)
-        check_cmd="$(resolve_agent_executable "$agent")" || {
-          check_cmd="$(agent_var AGENT_EXECUTABLE "$agent")"
-          [[ -n "$check_cmd" ]] || check_cmd="$agent"
-          echo "Required command not found: $check_cmd" >&2
-          exit 1
-        }
-        _checked_cmds="${_checked_cmds:+$_checked_cmds,}$agent"
-        ;;
-    esac
-  done
-fi
-
-agent_window_dispatch_agent_mutation_modes
-
-_create_args=(
-  create
-  --session "$SESSION_NAME"
-  --workspace "$WORKSPACE"
-  --tmux-socket "$TMUX_SOCKET_NAME"
-)
-if [[ "$FRESH" -eq 1 ]]; then
-  _create_args+=(--fresh)
-fi
-if [[ "$NO_AGENTS" -eq 0 && ${#INSTANCE_NAMES[@]} -gt 0 ]]; then
-  _create_args+=(--agents "$(IFS=,; echo "${INSTANCE_NAMES[*]}")")
-fi
-session_control "${_create_args[@]}"
-[[ "$DETACH" -eq 1 ]] && exit 0
-# tmux's own name for this session is derived from the workspace, not the
-# AW session name -- ask session_control (the same folder-first bridge used
-# everywhere else) rather than assuming they match.
-TMUX_TARGET_NAME="$(session_json_field "$(session_control describe --session "$SESSION_NAME" --tmux-socket "$TMUX_SOCKET_NAME" --json)" tmux_name)"
-if [[ -z "$TMUX_TARGET_NAME" ]]; then
-  echo "Session was created but no live tmux session was found for it: $SESSION_NAME" >&2
-  exit 1
-fi
-exec_tmux attach-session -t "$TMUX_TARGET_NAME"
+_context_args=(context --workspace "$WORKSPACE" --tmux-socket "$TMUX_SOCKET_NAME")
+[[ -n "$SESSION_NAME" ]] && _context_args+=(--session "$SESSION_NAME")
+[[ "$CONTEXT_JSON" -eq 1 ]] && _context_args+=(--json)
+session_control "${_context_args[@]}"
