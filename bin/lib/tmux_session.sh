@@ -13,6 +13,21 @@ session_control() {
   PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -m backend_core.cli.session_control "$@"
 }
 
+# Nothing about which tmux socket a session runs on needs to live inside
+# tmux itself: an explicit AGENT_WINDOW_TMUX_SOCKET always wins, and any
+# process actually running inside a pane already has it for free via tmux's
+# own $TMUX (its first field is the real socket path), so this is the same
+# resolution agent-send already uses -- not a second, bash-only guess.
+resolve_tmux_socket_name() {
+  PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -c '
+import os
+
+from message_delivery.send import tmux_socket_from_env
+
+print(tmux_socket_from_env(dict(os.environ)))
+'
+}
+
 session_json_field() {
   local json="$1" field="$2"
   python3 -c '

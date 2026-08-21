@@ -586,7 +586,6 @@ def create_session(
     bin_dir = str(root / "bin")
     path_value = f"{bin_dir}:{os.environ.get('PATH', '')}"
     _set_env(prefix, tmux_name, "AGENT_WINDOW_WORKSPACE", str(workspace_path))
-    _set_env(prefix, tmux_name, "AGENT_WINDOW_TMUX_SOCKET", socket_name)
     _set_env(prefix, tmux_name, "PATH", path_value)
     _unset_env(prefix, tmux_name, "CLAUDECODE")
     _unset_env(prefix, tmux_name, "AGENT_WINDOW_PANE_USER")
@@ -807,7 +806,6 @@ def remove_agent(
         if os.environ.get("TMUX_PANE") == pane_id and os.environ.get("AGENT_WINDOW_REMOVE_HELPER") != "1":
             env = os.environ.copy()
             env["AGENT_WINDOW_REMOVE_HELPER"] = "1"
-            env["AGENT_WINDOW_TMUX_SOCKET"] = socket_name
             pythonpath = [str(_repo_root())]
             existing = (env.get("PYTHONPATH") or "").strip()
             if existing:

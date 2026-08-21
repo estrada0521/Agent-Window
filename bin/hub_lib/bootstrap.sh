@@ -38,11 +38,9 @@ done
 _ALL_AGENTS="$(PYTHONPATH="$HUB_PYTHONPATH" python3 -c "from backend_core.agents.registry import ALL_AGENT_NAMES; print(' '.join(ALL_AGENT_NAMES))" 2>/dev/null || echo "claude codex gemini cursor")"
 read -ra _ALL_AGENTS_ARR <<< "$_ALL_AGENTS"
 
-default_tmux_socket_name() {
-  printf '%s\n' "agent-window"
-}
-
-TMUX_SOCKET_NAME="${AGENT_WINDOW_TMUX_SOCKET:-$(default_tmux_socket_name)}"
+# shellcheck source=/dev/null
+source "$REPO_ROOT/bin/lib/tmux_session.sh"
+TMUX_SOCKET_NAME="$(resolve_tmux_socket_name)"
 
 tmux() {
   if [[ "$TMUX_SOCKET_NAME" == */* ]]; then
