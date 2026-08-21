@@ -16,6 +16,7 @@ from hub_backend.chat_supervisor import (
     delete_archived_session as _delete_archived_session_impl,
     ensure_chat_server as _ensure_chat_server_impl,
     kill_repo_session as _kill_repo_session_impl,
+    rename_repo_session as _rename_repo_session_impl,
     revive_archived_session as _revive_archived_session_impl,
     stop_chat_server as _stop_chat_server_impl,
     stop_inactive_chat_servers as _stop_inactive_chat_servers_impl,
@@ -246,6 +247,9 @@ class HubRuntime:
 
     def kill_repo_session(self, session_name: str) -> tuple[bool, str]:
         return _kill_repo_session_impl(self, session_name)
+
+    def rename_repo_session(self, old_name: str, new_name: str) -> tuple[bool, str]:
+        return _rename_repo_session_impl(self, old_name, new_name)
 
     def delete_archived_session(self, session_name: str) -> tuple[bool, str]:
         return _delete_archived_session_impl(self, session_name)

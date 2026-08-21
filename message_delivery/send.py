@@ -18,6 +18,7 @@ from message_delivery.names import (
 from backend_core.agents.names import agent_base_name
 from backend_core.agents.registry import ALL_AGENT_NAMES
 from backend_core.access.files import append_jsonl_entry
+from backend_core.access.session_meta import find_session_for_workspace
 from backend_core.tmux.topology import default_tmux_socket_name, session_topology_lock_path
 from message_delivery.paste_timing import delivery_paste_delay_seconds
 
@@ -85,6 +86,7 @@ class AgentSendRuntime:
         self.tmux_socket_name = tmux_socket_from_env(self.env)
         self.tmux = TmuxClient(self.tmux_socket_name, self.env)
         self.all_agents = list(ALL_AGENT_NAMES)
+        self._tmux_session_name: str | None = None
 
     def list_sessions(self) -> list[str]:
         result = self.tmux.run(["list-sessions", "-F", "#S"])
@@ -92,38 +94,62 @@ class AgentSendRuntime:
             return []
         return [line.strip() for line in (result.stdout or "").splitlines() if line.strip()]
 
+    def resolve_tmux_session_name(self) -> str:
+        """Find the live tmux session this process's own pane belongs to.
+
+        tmux never knows this AW session's own name (which can be renamed
+        independently of the tmux session underneath it) -- only where it's
+        running. `display-message` with no `-t` asks tmux directly, using
+        this process's own TMUX/TMUX_PANE context, so it needs no name or
+        workspace matching at all and can't be fooled by a rename.
+        """
+        if self._tmux_session_name is not None:
+            return self._tmux_session_name
+        resolved = ""
+        if self.env.get("TMUX"):
+            result = self.tmux.run(["display-message", "-p", "#{session_name}"])
+            resolved = (result.stdout or "").strip()
+        if not resolved:
+            workspace = (self.env.get("AGENT_WINDOW_WORKSPACE") or "").strip()
+            if workspace:
+                target = str(Path(workspace).expanduser().resolve())
+                for candidate in self.list_sessions():
+                    result = self.tmux.run(["show-environment", "-t", candidate, "AGENT_WINDOW_WORKSPACE"])
+                    line = (result.stdout or "").strip()
+                    if result.returncode == 0 and "=" in line:
+                        value = line.split("=", 1)[1].strip()
+                        if value and str(Path(value).expanduser().resolve()) == target:
+                            resolved = candidate
+                            break
+        self._tmux_session_name = resolved
+        return resolved
+
     def tmux_env(self, session_name: str, key: str) -> str:
-        result = self.tmux.run(["show-environment", "-t", session_name, key])
+        # Every caller in this file is asking about its own session (there
+        # is no "query a different session" path here), so the real tmux
+        # target is always this process's own live session.
+        target_name = self.resolve_tmux_session_name()
+        result = self.tmux.run(["show-environment", "-t", target_name, key])
         line = (result.stdout or "").strip()
         if result.returncode == 0 and "=" in line:
             return line.split("=", 1)[1]
-        if session_name and session_name == (self.env.get("AGENT_WINDOW_SESSION") or "").strip():
-            return (self.env.get(key) or "").strip()
-        return ""
-
-    def session_workspace_value(self, session_name: str) -> str:
-        return self.tmux_env(session_name, "AGENT_WINDOW_WORKSPACE")
+        return (self.env.get(key) or "").strip()
 
     def resolve_session_name(self) -> str:
-        env_session = (self.env.get("AGENT_WINDOW_SESSION") or "").strip()
-        if env_session:
-            return env_session
+        """Return the current AW session name -- looked up by workspace.
 
-        if self.env.get("TMUX"):
-            result = self.tmux.run(["display-message", "-p", "#{session_name}"])
-            session_name = (result.stdout or "").strip()
-            if session_name:
-                return session_name
-
-        # A workspace has at most one session (enforced at creation in
-        # backend_core.tmux.control.create_session), so this is a lookup,
-        # not a "which of these did you mean" search.
-        matched_workspace_sessions = [
-            session for session in self.list_sessions() if self.session_workspace_value(session) == str(self.cwd)
-        ]
-        if matched_workspace_sessions:
-            return matched_workspace_sessions[0]
-
+        tmux never carries this (an AW session's name can be renamed
+        independently of the tmux session underneath it), so the only
+        reliable source is the same one the rest of AW uses: which log
+        folder's .meta currently claims this workspace. AGENT_WINDOW_WORKSPACE
+        is set once at session creation and never rewritten, so it's a
+        stable key even if this process's own environment is otherwise
+        stale.
+        """
+        workspace = (self.env.get("AGENT_WINDOW_WORKSPACE") or "").strip() or str(self.cwd)
+        resolved = find_session_for_workspace(workspace)
+        if resolved:
+            return resolved
         raise AgentSendError("No active agent-window session found for this workspace.")
 
     def resolve_pane(self, session_name: str, key: str) -> str:
@@ -352,7 +378,8 @@ class AgentSendRuntime:
         if base not in self.all_agents:
             return
         upper = name.upper().replace("-", "_")
-        self.tmux.run(["set-environment", "-t", session_name, f"AGENT_WINDOW_RUNNING_{upper}", "1"])
+        target = self.resolve_tmux_session_name() or session_name
+        self.tmux.run(["set-environment", "-t", target, f"AGENT_WINDOW_RUNNING_{upper}", "1"])
 
     def send_to_pane(
         self,

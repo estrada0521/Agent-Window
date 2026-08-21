@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
-from backend_core.access.settings import session_log_path
+from backend_core.access.session_meta import session_workspace
+from backend_core.access.settings import agent_window_session_root, session_log_path
 
 
 _PREVIEW_TAIL_BYTES = 2 * 1024 * 1024
@@ -170,66 +171,91 @@ def build_session_record(
     }
 
 
-def collect_repo_sessions(runtime: Any) -> tuple[list[dict], str, str]:
+def _live_tmux_workspaces(runtime: Any) -> tuple[dict[str, str], str, str]:
+    """Map each live tmux session's workspace to its (real, possibly AW-name
+    diverged) tmux session name. AGENT_WINDOW_WORKSPACE is the only thing
+    tmux itself genuinely knows -- it never carries an AW session's name.
+    """
     result = runtime.tmux_run(["list-sessions", "-F", "#{session_name}"])
     if result.timed_out:
-        return [], "unhealthy", "tmux list-sessions timed out"
+        return {}, "unhealthy", "tmux list-sessions timed out"
     if result.returncode != 0:
         stderr = result.stderr.strip()
         if "no server running" in stderr or "No such file or directory" in stderr:
-            return [], "ok", ""
-        return [], "unhealthy", stderr or f"tmux list-sessions failed (exit {result.returncode})"
+            return {}, "ok", ""
+        return {}, "unhealthy", stderr or f"tmux list-sessions failed (exit {result.returncode})"
 
+    workspace_to_tmux: dict[str, str] = {}
+    for tmux_name in result.stdout.splitlines():
+        tmux_name = tmux_name.strip()
+        if not tmux_name:
+            continue
+        workspace, timed_out = runtime.tmux_env_query(tmux_name, "AGENT_WINDOW_WORKSPACE")
+        if timed_out:
+            return {}, "unhealthy", f"tmux show-environment (WORKSPACE) timed out for {tmux_name}"
+        if workspace:
+            workspace_to_tmux[str(Path(workspace).expanduser().resolve())] = tmux_name
+    return workspace_to_tmux, "ok", ""
+
+
+def collect_repo_sessions(runtime: Any) -> tuple[list[dict], str, str]:
+    workspace_to_tmux, state, detail = _live_tmux_workspaces(runtime)
+    if state != "ok":
+        return [], state, detail
+
+    session_root = agent_window_session_root()
     sessions: list[dict] = []
     any_timeout = False
     timeout_detail = ""
 
-    for name in result.stdout.splitlines():
-        if not name or any_timeout:
-            continue
+    if session_root.is_dir():
+        for entry in sorted(session_root.iterdir()):
+            if not entry.is_dir() or any_timeout:
+                continue
+            name = entry.name
+            workspace = session_workspace(name)
+            if not workspace:
+                continue
+            tmux_name = workspace_to_tmux.get(str(Path(workspace).expanduser().resolve()))
+            if not tmux_name:
+                continue
 
-        workspace, t2 = runtime.tmux_env_query(name, "AGENT_WINDOW_WORKSPACE")
-        if t2:
-            any_timeout, timeout_detail = True, f"tmux show-environment (WORKSPACE) timed out for {name}"
-            break
-        if not workspace:
-            continue
-        r_attached = runtime.tmux_run(["display-message", "-p", "-t", name, "#{session_attached}"])
-        r_created = runtime.tmux_run(["display-message", "-p", "-t", name, "#{session_created}"])
-        r_dead = runtime.tmux_run(["list-panes", "-t", name, "-F", "#{pane_dead}"])
-        agents, t5 = runtime.session_agents_query(name)
+            r_attached = runtime.tmux_run(["display-message", "-p", "-t", tmux_name, "#{session_attached}"])
+            r_created = runtime.tmux_run(["display-message", "-p", "-t", tmux_name, "#{session_created}"])
+            r_dead = runtime.tmux_run(["list-panes", "-t", tmux_name, "-F", "#{pane_dead}"])
+            agents, t5 = runtime.session_agents_query(tmux_name)
 
-        if t2 or r_attached.timed_out or r_created.timed_out or r_dead.timed_out or t5:
-            any_timeout = True
-            timeout_detail = f"tmux query timed out during session scan for {name}"
-            break
+            if r_attached.timed_out or r_created.timed_out or r_dead.timed_out or t5:
+                any_timeout = True
+                timeout_detail = f"tmux query timed out during session scan for {name}"
+                continue
 
-        attached = r_attached.stdout.strip() or "0"
-        created_epoch = r_created.stdout.strip() or "0"
-        created_at = dt.datetime.fromtimestamp(int(created_epoch)).strftime("%Y-%m-%d %H:%M")
+            attached = r_attached.stdout.strip() or "0"
+            created_epoch = r_created.stdout.strip() or "0"
+            created_at = dt.datetime.fromtimestamp(int(created_epoch)).strftime("%Y-%m-%d %H:%M")
 
-        dead_panes = sum(1 for line in r_dead.stdout.splitlines() if line.strip() == "1")
+            dead_panes = sum(1 for line in r_dead.stdout.splitlines() if line.strip() == "1")
 
-        if dead_panes > 0:
-            status = "degraded"
-        elif attached != "0":
-            status = "attached"
-        else:
-            status = "idle"
+            if dead_panes > 0:
+                status = "degraded"
+            elif attached != "0":
+                status = "attached"
+            else:
+                status = "idle"
 
-        sessions.append(
-            build_session_record(
-                runtime,
-                name=name,
-                workspace=workspace,
-                agents=agents,
-                status=status,
-                attached=int(attached) if attached.isdigit() else 0,
-                dead_panes=dead_panes,
-                created_epoch=int(created_epoch) if created_epoch.isdigit() else 0,
-                created_at=created_at,
+            sessions.append(
+                build_session_record(
+                    runtime,
+                    name=name,
+                    workspace=workspace,
+                    agents=agents,
+                    status=status,
+                    attached=int(attached) if attached.isdigit() else 0,
+                    dead_panes=dead_panes,
+                    created_epoch=int(created_epoch) if created_epoch.isdigit() else 0,
+                    created_at=created_at,
+                )
             )
-        )
 
     if any_timeout:
         return sessions, "unhealthy", timeout_detail

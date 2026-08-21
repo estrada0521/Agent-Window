@@ -2,13 +2,57 @@ from __future__ import annotations
 
 import logging
 import subprocess
+from pathlib import Path
+
+
+def resolve_tmux_session_name(runtime, *, subprocess_module=subprocess) -> str:
+    """Find the live tmux session actually backing this AW session.
+
+    tmux only ever genuinely knows the workspace it was started in
+    (AGENT_WINDOW_WORKSPACE, set once at creation and never rewritten) --
+    never the AW session's own name, which can be renamed independently of
+    the tmux session underneath it. Falls back to the AW session name
+    itself when nothing is found (inactive session, or nothing live yet).
+    """
+    if not getattr(runtime, "session_is_active", True):
+        return runtime.session_name
+    workspace = str(getattr(runtime, "workspace", "") or "").strip()
+    if not workspace:
+        return runtime.session_name
+    target = str(Path(workspace).expanduser().resolve())
+    result = subprocess_module.run(
+        [*runtime.tmux_prefix, "list-sessions", "-F", "#{session_name}"],
+        capture_output=True,
+        text=True,
+        timeout=2,
+        check=False,
+    )
+    if result.returncode != 0:
+        return runtime.session_name
+    for candidate in result.stdout.splitlines():
+        candidate = candidate.strip()
+        if not candidate:
+            continue
+        env_result = subprocess_module.run(
+            [*runtime.tmux_prefix, "show-environment", "-t", candidate, "AGENT_WINDOW_WORKSPACE"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
+        )
+        line = env_result.stdout.strip()
+        if env_result.returncode == 0 and "=" in line:
+            value = line.split("=", 1)[1].strip()
+            if value and str(Path(value).expanduser().resolve()) == target:
+                return candidate
+    return runtime.session_name
 
 
 def active_agents(runtime, *, subprocess_module=subprocess) -> list[str]:
     if not runtime.session_is_active:
         return []
     r = subprocess_module.run(
-        [*runtime.tmux_prefix, "show-environment", "-t", runtime.session_name, "AGENT_WINDOW_AGENTS"],
+        [*runtime.tmux_prefix, "show-environment", "-t", runtime.tmux_session_name, "AGENT_WINDOW_AGENTS"],
         capture_output=True,
         text=True,
         timeout=2,
@@ -40,7 +84,7 @@ def running_agents_from_env(runtime, agents: list[str], *, subprocess_module=sub
         var = f"AGENT_WINDOW_RUNNING_{upper}"
         try:
             result = subprocess_module.run(
-                [*runtime.tmux_prefix, "show-environment", "-t", runtime.session_name, var],
+                [*runtime.tmux_prefix, "show-environment", "-t", runtime.tmux_session_name, var],
                 capture_output=True,
                 text=True,
                 timeout=1,
@@ -58,7 +102,7 @@ def running_agents_from_env(runtime, agents: list[str], *, subprocess_module=sub
 def pane_id_for_agent(runtime, agent_name: str, *, subprocess_module=subprocess) -> str:
     pane_var = f"AGENT_WINDOW_PANE_{agent_name.upper().replace('-', '_')}"
     res = subprocess_module.run(
-        [*runtime.tmux_prefix, "show-environment", "-t", runtime.session_name, pane_var],
+        [*runtime.tmux_prefix, "show-environment", "-t", runtime.tmux_session_name, pane_var],
         capture_output=True,
         text=True,
         timeout=2,

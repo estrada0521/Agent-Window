@@ -80,21 +80,39 @@ def _reconcile_agent_names(
         meta.pop("agent_names", None)
 
 
+def session_workspace(session_name: str) -> str | None:
+    """Return the workspace path recorded in a session's own .meta file.
+
+    Used to resolve which live tmux session (if any) is currently backing
+    an AW session: tmux only ever knows its own workspace, never an AW
+    session's name, so the .meta-recorded workspace is the bridge between
+    the two.
+    """
+    meta_path = agent_window_session_root() / str(session_name or "").strip() / ".meta"
+    if not meta_path.is_file():
+        return None
+    try:
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(meta, dict):
+        return None
+    return str(meta.get("workspace") or "").strip() or None
+
+
 def write_session_meta_file(
+    session_name: str,
     agents_csv: str,
     tmux_env_output: str,
     *,
     rename: tuple[str, str] | None = None,
 ) -> None:
     env_map = _parse_tmux_environment_output(tmux_env_output)
-    index_path_raw = str(env_map.get("AGENT_WINDOW_INDEX_PATH") or "").strip()
-    if not index_path_raw:
-        raise ValueError("AGENT_WINDOW_INDEX_PATH is required to write session meta")
     workspace = str(env_map.get("AGENT_WINDOW_WORKSPACE") or "").strip()
     if not workspace:
         raise ValueError("AGENT_WINDOW_WORKSPACE is required to write session meta")
 
-    meta_path = Path(index_path_raw).expanduser().resolve().parent / ".meta"
+    meta_path = agent_window_session_root() / str(session_name or "").strip() / ".meta"
     updated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
     meta: dict[str, object] = {}
     if meta_path.is_file():

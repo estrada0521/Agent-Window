@@ -47,6 +47,7 @@ from backend_core.tmux.session import (
     active_agents as _active_agents_impl,
     pane_field as _pane_field_impl,
     pane_id_for_agent as _pane_id_for_agent_impl,
+    resolve_tmux_session_name as _resolve_tmux_session_name_impl,
     running_agents_from_env as _running_agents_from_env_impl,
 )
 from .session_state import (
@@ -92,6 +93,11 @@ class ChatRuntime:
         self.session_is_active = bool(session_is_active)
         self.server_instance = uuid.uuid4().hex
         self.tmux_prefix = tmux_prefix_args(self.tmux_socket) if self.tmux_socket else ["tmux"]
+        # tmux never knows this session's AW name -- only the workspace it
+        # runs in (AGENT_WINDOW_WORKSPACE, set once at creation and never
+        # rewritten). Resolved once here and cached: it can't legitimately
+        # change for the life of this process.
+        self.tmux_session_name = _resolve_tmux_session_name_impl(self)
         self._agent_running: set[str] = self._restore_running_agents_from_tmux_env()
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(
