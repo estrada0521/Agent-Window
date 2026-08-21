@@ -7,7 +7,8 @@ import time
 from pathlib import Path
 from urllib.parse import parse_qs
 
-from backend_core.access.settings import sanitize_session_name
+from backend_core.access.session_meta import find_session_for_workspace
+from backend_core.access.settings import default_chat_port, port_is_bindable, sanitize_session_name
 from backend_core.tmux.control import SessionControlError, create_session
 
 
@@ -124,6 +125,21 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         session_name = override_name
     else:
         session_name = ctx["session_api"].unique_session_name_for_workspace(resolved_workspace)
+    # Checked before anything is created: write_session_metadata() has no
+    # rollback, so finding out about a conflict only after it runs would
+    # leave a stale .meta file behind with no session backing it.
+    workspace_owner = find_session_for_workspace(resolved_workspace, exclude_session=session_name)
+    if workspace_owner:
+        handler._send_json(409, {"ok": False, "error": f"A session already exists for this workspace: {workspace_owner}"})
+        return
+    # Checked before anything is created: session_name alone determines the
+    # chat port, so a collision is knowable up front. Finding out only after
+    # the tmux session already exists would leave a session running with no
+    # way to reach it -- and nothing here would clean that session back up.
+    chat_port = default_chat_port(session_name)
+    if not port_is_bindable(chat_port):
+        handler._send_json(409, {"ok": False, "error": f"chat port {chat_port} is occupied"})
+        return
     try:
         # Write session metadata files before launching the empty tmux session.
         session_state = ctx["session_api"].write_session_metadata(
@@ -136,7 +152,7 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
                 workspace=resolved_workspace,
                 agents=[],
                 tmux_socket=str(getattr(ctx["session_api"].ctx.hub, "tmux_socket", "") or ""),
-                repo_root=ctx["session_api"].ctx.repo_root,
+                repo_root=ctx["session_api"].ctx.hub.repo_root,
             )
         except SessionControlError as exc:
             handler._send_json(500, {"ok": False, "error": str(exc)})
