@@ -35,6 +35,7 @@ from backend_core.agents.instances import (
 )
 from backend_core.agents.registry import AGENTS, base_agent_name
 from backend_core.tmux.process_cleanup import cleanup_target_process_groups
+from backend_core.tmux.resolve import find_tmux_session_for_workspace
 from backend_core.tmux.topology import (
     acquire_topology_lock,
     default_tmux_socket_name,
@@ -93,15 +94,14 @@ def _live_tmux_session_for_workspace(prefix: list[str], workspace: str) -> str |
     rewritten). This is the only bridge from an AW session (identified by
     its log folder / .meta) to whichever live tmux session backs it.
     """
-    target = str(Path(workspace).expanduser().resolve())
     result = _run(prefix, ["list-sessions", "-F", "#{session_name}"])
     if result.returncode != 0:
         return None
-    for candidate in result.stdout.splitlines():
-        candidate = candidate.strip()
-        if candidate and _env_value(prefix, candidate, "AGENT_WINDOW_WORKSPACE") == target:
-            return candidate
-    return None
+    return find_tmux_session_for_workspace(
+        workspace,
+        result.stdout.splitlines(),
+        lambda name: _env_value(prefix, name, "AGENT_WINDOW_WORKSPACE") or None,
+    )
 
 
 def _resolve_tmux_name(prefix: list[str], session_name: str) -> str | None:
