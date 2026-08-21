@@ -234,8 +234,13 @@ def workspace_upload_dir(workspace: Path | str) -> Path:
 
 
 def default_chat_port(session_name: str) -> int:
+    # 30000-48999: wide enough that a real collision with another program
+    # is rare, inside the IANA "registered" range so it needs no elevated
+    # privileges, clear of both the low end (where nearly every dev tool's
+    # conventional default port lives -- 3000, 5432, 6379, 8080, 8888...)
+    # and the 49152+ dynamic/ephemeral range OS-assigned ports come from.
     digest = int(hashlib.md5(session_name.encode()).hexdigest(), 16)
-    return 8200 + (digest % 700)
+    return 30000 + (digest % 19000)
 
 
 def port_is_bindable(port: int) -> bool:
@@ -249,18 +254,6 @@ def port_is_bindable(port: int) -> bool:
     finally:
         sock.close()
 
-
-def allocate_ephemeral_port() -> int:
-    """Ask the OS for a free port. Used when a session's default (hashed)
-    chat port is already held by something else; the port is only reserved
-    for the instant this call takes, so a caller must bind it promptly."""
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    try:
-        sock.bind((local_bind_host(), 0))
-        return sock.getsockname()[1]
-    finally:
-        sock.close()
 
 
 def hub_settings_path() -> Path:

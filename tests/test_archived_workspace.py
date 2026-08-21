@@ -218,7 +218,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             def __init__(self, args, **kwargs):
                 launched["args"] = list(args)
                 launched["cwd"] = kwargs.get("cwd")
-                self.pid = 99999
 
         class _Sys:
             executable = "/usr/bin/python3"
@@ -277,7 +276,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             def __init__(self, args, **kwargs):
                 launched["args"] = list(args)
                 launched["cwd"] = kwargs.get("cwd")
-                self.pid = 99999
 
         class _Sys:
             executable = "/usr/bin/python3"
@@ -337,7 +335,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             def __init__(self, args, **kwargs):
                 launched["args"] = list(args)
                 launched["cwd"] = kwargs.get("cwd")
-                self.pid = 99999
 
         class _Sys:
             executable = "/usr/bin/python3"
