@@ -14,6 +14,7 @@ from backend_core.tmux.control import SessionControlError, create_session, kill_
 from backend_core.access.settings import (
     agent_window_run_dir,
     agent_window_session_root,
+    default_chat_port,
     port_is_bindable,
     pwa_https_enabled,
     session_log_path,
@@ -276,6 +277,13 @@ def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
     stop_ok, stop_detail = self.stop_chat_server(session_name)
     if not stop_ok:
         return False, stop_detail
+    # Checked before create_session: session_name alone determines the chat
+    # port, so a collision is knowable up front. Finding out only after the
+    # tmux session is revived would leave it running with no way to reach
+    # it, and revive_archived_session doesn't roll a revive back on failure.
+    chat_port = default_chat_port(session_name)
+    if not port_is_bindable(chat_port):
+        return False, f"chat port {chat_port} is occupied"
     try:
         create_session(
             session_name=session_name,
