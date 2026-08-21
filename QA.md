@@ -16,10 +16,6 @@ Cross-platform support is not a goal.
 
 Because it is a low-level, well-established, observable foundation.
 
-### Why isn't the conversation split per Agent?
-
-Because Agent Window defines its concrete implementation unit as the tmux session, not the Agent process.
-
 ### Why don't you use SDKs or structured protocols?
 
 There are several reasons:
