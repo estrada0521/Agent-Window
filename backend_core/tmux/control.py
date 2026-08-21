@@ -9,7 +9,6 @@ import subprocess
 import sys
 import time
 from collections import Counter
-from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -353,16 +352,6 @@ def _prepare_instances(repo_root: Path, requested: list[str]) -> list[str]:
     return _instance_names(kept)
 
 
-def _parse_meta_timestamp(value: str) -> float:
-    value = (value or "").strip()
-    if not value:
-        return 0.0
-    try:
-        return datetime.strptime(value, "%Y-%m-%d %H:%M").timestamp()
-    except ValueError:
-        return 0.0
-
-
 def _pane_status(prefix: list[str], pane_id: str) -> dict:
     title = _run(prefix, ["display-message", "-p", "-t", pane_id, "#{pane_title}"]).stdout.strip()
     command = _run(prefix, ["display-message", "-p", "-t", pane_id, "#{pane_current_command}"]).stdout.strip()
@@ -443,48 +432,6 @@ def describe_session(session_name: str, *, tmux_socket: str = "") -> dict:
         }
     )
     return info
-
-
-def list_sessions(*, tmux_socket: str = "") -> list[dict]:
-    """All AW sessions, active and archived alike, in one folder-first pass."""
-    root = agent_window_session_root()
-    if not root.is_dir():
-        return []
-    sessions: list[dict] = []
-    for entry in sorted(root.iterdir()):
-        if not entry.is_dir():
-            continue
-        try:
-            sessions.append(describe_session(entry.name, tmux_socket=tmux_socket))
-        except SessionControlError:
-            continue
-    sessions.sort(key=lambda item: (not item["active"], -_parse_meta_timestamp(item["updated_at"])))
-    return sessions
-
-
-def latest_session_name() -> str | None:
-    root = agent_window_session_root()
-    if not root.is_dir():
-        return None
-    best_name: str | None = None
-    best_epoch = -1.0
-    for entry in root.iterdir():
-        if not entry.is_dir():
-            continue
-        meta_path = entry / ".meta"
-        if not meta_path.is_file():
-            continue
-        try:
-            meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if not isinstance(meta, dict):
-            continue
-        epoch = _parse_meta_timestamp(str(meta.get("created_at") or ""))
-        if epoch > best_epoch:
-            best_epoch = epoch
-            best_name = entry.name
-    return best_name
 
 
 def create_session(
