@@ -204,13 +204,17 @@
       if (!raw) return raw;
       try {
         const next = new URL(raw, window.location.href);
-        if (next.origin === window.location.origin) {
-          // This page only ever runs as the mobile Hub, so it already knows
-          // the answer the framed chat page would otherwise have to guess
-          // from headers alone -- guessing is what fails for iPad Safari.
-          next.searchParams.set("view", "mobile");
-          return next.pathname + next.search + next.hash;
-        }
+        // Direct (non-proxied) access points the iframe at the session's own
+        // chat_port, a different port on this same host, not the same
+        // origin as the Hub -- only reject truly foreign hosts here.
+        if (next.hostname !== window.location.hostname) return raw;
+        // This page only ever runs as the mobile Hub, so it already knows
+        // the answer the framed chat page would otherwise have to guess
+        // from headers alone -- guessing is what fails for iPad Safari.
+        next.searchParams.set("view", "mobile");
+        return next.origin === window.location.origin
+          ? next.pathname + next.search + next.hash
+          : next.toString();
       } catch (_) {}
       return raw;
     }
