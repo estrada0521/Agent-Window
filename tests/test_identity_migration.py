@@ -5,6 +5,7 @@ import tempfile
 import threading
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from backend_core.access.session_meta import write_session_meta_file
 from backend_core.agents.instances import renumber_exact_instance
@@ -32,11 +33,14 @@ class RenumberExactInstanceTests(unittest.TestCase):
 class SessionMetaDisplayNameRenameTests(unittest.TestCase):
     def _write_and_read(self, *, rename) -> dict:
         with tempfile.TemporaryDirectory() as tmp:
-            log_path = Path(tmp) / "session.log.jsonl"
-            meta_path = log_path.parent / ".meta"
+            session_root = Path(tmp)
+            session_dir = session_root / "sess"
+            session_dir.mkdir()
+            meta_path = session_dir / ".meta"
             meta_path.write_text(json.dumps({"agent_names": {"claude": "Fable"}}), encoding="utf-8")
-            tmux_env = f"AGENT_WINDOW_INDEX_PATH={log_path}\nAGENT_WINDOW_WORKSPACE=/tmp/ws\n"
-            write_session_meta_file("claude-1,claude-2", tmux_env, rename=rename)
+            tmux_env = "AGENT_WINDOW_WORKSPACE=/tmp/ws\n"
+            with patch("backend_core.access.session_meta.agent_window_session_root", return_value=session_root):
+                write_session_meta_file("sess", "claude-1,claude-2", tmux_env, rename=rename)
             return json.loads(meta_path.read_text(encoding="utf-8"))
 
     def test_display_name_survives_a_rename(self) -> None:

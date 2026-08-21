@@ -10,7 +10,13 @@ import sys
 import time
 from pathlib import Path
 
-from backend_core.tmux.control import SessionControlError, create_session, kill_session, stop_chat_server as stop_chat_server_impl
+from backend_core.tmux.control import (
+    SessionControlError,
+    create_session,
+    kill_session,
+    rename_session,
+    stop_chat_server as stop_chat_server_impl,
+)
 from backend_core.access.settings import (
     agent_window_run_dir,
     agent_window_session_root,
@@ -218,15 +224,6 @@ def ensure_chat_server(
                 return False, chat_port, stop_detail
 
         session_dir = self._chat_launch_session_dir(session_name)
-        if session_is_active:
-            log_path = session_log_path(session_name)
-            result = self.tmux_run(
-                ["set-environment", "-t", session_name, "AGENT_WINDOW_INDEX_PATH", str(log_path)],
-                timeout=2,
-            )
-            if result.timed_out or result.returncode != 0:
-                detail = (result.stderr or result.stdout or "").strip() or "tmux set-environment failed"
-                return False, chat_port, detail
         env = self._chat_launch_env(session_is_active=session_is_active)
         try:
             subprocess_module.Popen(
@@ -293,6 +290,22 @@ def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
             repo_root=self.repo_root,
             lifecycle_action="revived",
         )
+    except SessionControlError as exc:
+        return False, str(exc)
+    return True, ""
+
+
+def rename_repo_session(self, old_name: str, new_name: str) -> tuple[bool, str]:
+    query = self.active_session_records_query()
+    if query.state == "unhealthy":
+        return False, f"tmux is unresponsive, cannot safely rename ({query.detail})"
+
+    active = query.records
+    archived = self.archived_session_records(active.keys())
+    if old_name not in active and old_name not in archived:
+        return False, "That session is not available in this repo."
+    try:
+        rename_session(old_name=old_name, new_name=new_name)
     except SessionControlError as exc:
         return False, str(exc)
     return True, ""
