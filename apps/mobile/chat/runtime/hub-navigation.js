@@ -16,7 +16,18 @@
     };
     const hubUrlForPath = (path = "/") => {
       const normalizedPath = normalizeHubPath(path);
-      return `${hubRootUrl().replace(/\/$/, "")}${normalizedPath}`;
+      const raw = `${hubRootUrl().replace(/\/$/, "")}${normalizedPath}`;
+      try {
+        // This file only ever runs as the mobile chat, so a bare hub URL
+        // would otherwise re-render as desktop for non-touch browsers
+        // (e.g. leaving the chat as a top-level tab, not inside the hub's
+        // iframe, where nothing else re-adds view=mobile for us).
+        const url = new URL(raw);
+        url.searchParams.set("view", "mobile");
+        return url.toString();
+      } catch (_) {
+        return raw;
+      }
     };
     const requestHubTop = () => {
       const hubUrl = hubUrlForPath("/");
