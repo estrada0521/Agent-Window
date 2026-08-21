@@ -99,7 +99,12 @@
     function updateDeskWindowTitle(name) {
       const textEl = document.getElementById("deskSessionTitleText");
       if (!textEl) return;
-      textEl.textContent = name || "";
+      if (!name) {
+        textEl.textContent = "";
+        return;
+      }
+      const port = findSessionRecord(name)?.session?.chat_port;
+      textEl.textContent = port ? `${name} (${port})` : name;
     }
     function cachedActiveSession(sessionName) {
       const normalized = String(sessionName || "").trim();
@@ -1167,6 +1172,7 @@
         const active = data.active_sessions || data.sessions || [];
         const archived = data.archived_sessions || [];
         _hubSessionsCache = { active, archived };
+        if (_deskSelectedSessionName) updateDeskWindowTitle(_deskSelectedSessionName);
 
         const signature = JSON.stringify({
           active,
