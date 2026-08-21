@@ -14,7 +14,7 @@ Use this skill only for agent-to-agent communication in an Agent Window session.
 printf '%s' '<message body>' | agent-send <target>
 ```
 
-`agent-send` always targets the current tmux session; it cannot send to a different session.
+`agent-send` always targets the current Agent Window session; it cannot send to a different session.
 
 ## Rules
 
