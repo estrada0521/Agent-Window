@@ -135,7 +135,7 @@ if [[ ! -f "$INDEX_FILE" && "$CHAT_MODE" -ne 1 ]]; then
 fi
 
 if [[ "$CHAT_MODE" -eq 1 ]]; then
-  CHAT_PORT="$(PYTHONPATH="$HUB_PYTHONPATH" python3 -m server.port_cli "$REPO_ROOT" "$SESSION_NAME")"
+  CHAT_PORT="$(PYTHONPATH="$HUB_PYTHONPATH" python3 -m server.port_cli "$SESSION_NAME")"
   CHAT_ALREADY_UP=0
   if [[ "${AGENT_WINDOW_CHAT_RESTART_HANDOFF:-}" != "1" ]] \
     && port_serves_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/app.webmanifest"; then
