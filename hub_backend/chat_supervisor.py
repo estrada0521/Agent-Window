@@ -14,7 +14,6 @@ from backend_core.tmux.control import (
     SessionControlError,
     create_session,
     kill_session,
-    rename_session,
     stop_chat_server as stop_chat_server_impl,
 )
 from backend_core.access.settings import (
@@ -290,22 +289,6 @@ def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
             repo_root=self.repo_root,
             lifecycle_action="revived",
         )
-    except SessionControlError as exc:
-        return False, str(exc)
-    return True, ""
-
-
-def rename_repo_session(self, old_name: str, new_name: str) -> tuple[bool, str]:
-    query = self.active_session_records_query()
-    if query.state == "unhealthy":
-        return False, f"tmux is unresponsive, cannot safely rename ({query.detail})"
-
-    active = query.records
-    archived = self.archived_session_records(active.keys())
-    if old_name not in active and old_name not in archived:
-        return False, "That session is not available in this repo."
-    try:
-        rename_session(old_name=old_name, new_name=new_name)
     except SessionControlError as exc:
         return False, str(exc)
     return True, ""

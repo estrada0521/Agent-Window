@@ -19,7 +19,6 @@ from backend_core.access.settings import (
     agent_window_session_root,
     default_chat_port,
     ensure_session_workspace_mirrors,
-    port_is_bindable,
     sanitize_session_name,
     session_log_path,
 )
@@ -632,52 +631,6 @@ def kill_session(
         detail = (result.stderr or result.stdout or "").strip() or "tmux kill-session failed"
         raise SessionControlError(detail)
     append_session_lifecycle_entry(name, "archived")
-
-
-def rename_session(*, old_name: str, new_name: str) -> None:
-    """Rename an AW session's log folder -- its only real identity.
-
-    tmux (if a live session is currently bound to this AW session) is left
-    completely untouched: it never carries the AW session's name at all,
-    only the workspace it runs in (which a rename doesn't change), so
-    there's nothing on the tmux side to reconcile.
-
-    Any chat server currently serving the old name is stopped, not
-    relaunched: the old log folder no longer exists at that path once the
-    rename lands, and a chat server that's still running with the old path
-    cached in memory would silently recreate an empty one on its next
-    write. The next time anyone opens the (renamed) session, the normal
-    on-demand launch picks it up correctly under the new name.
-    """
-    old = (old_name or "").strip()
-    new = sanitize_session_name(str(new_name or ""))
-    if not old:
-        raise SessionControlError("old_name is required")
-    if not new:
-        raise SessionControlError("new_name is required")
-    if old == new:
-        return
-    old_dir = agent_window_session_root() / old
-    if not old_dir.is_dir():
-        raise SessionControlError(f"Session does not exist: {old}")
-    new_dir = agent_window_session_root() / new
-    if new_dir.exists():
-        raise SessionControlError(f"A session named '{new}' already exists")
-    new_port = default_chat_port(new)
-    if not port_is_bindable(new_port):
-        raise SessionControlError(f"chat port {new_port} is occupied")
-
-    old_dir.rename(new_dir)
-    _append_log(
-        new,
-        f"Session renamed: {old} -> {new}",
-        kind="session-lifecycle",
-        extra={"lifecycle_action": "renamed", "previous_name": old},
-    )
-
-    stop_ok, stop_detail = stop_chat_server(old)
-    if not stop_ok:
-        raise SessionControlError(f"renamed, but failed to stop the old chat server: {stop_detail}")
 
 
 def _with_topology_lock(tmux_socket: str, session_name: str):
