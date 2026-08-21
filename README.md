@@ -91,6 +91,8 @@ Git and workspace state are watched with FSEvents and projected onto the right p
 
 Clicking a file opens it in the macOS default application. The desktop version of Agent Window does not reimplement a file viewer that already exists elsewhere. Mobile can't rely on that, so a bottom-sheet-style built-in viewer opens instead.
 
+Clicking an uncommitted change opens it in git's configured diff viewer (`git difftool`).
+
 ## Connect Agents to each other
 
 An Agent can send a message directly to another Agent in the session with `agent-send`. Place `SKILL.md` at the designated location if needed — it is the only SKILL Agent Window has committed to.
