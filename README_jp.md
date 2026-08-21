@@ -140,6 +140,8 @@ https://<Mac名>.local:8788/
 
 ホーム画面へ追加するとPWAとして使用できます。
 
+LANの外からHubへ到達する方法は [`external-access/README.md`](external-access/README.md) を参照してください。
+
 <p align="center">
   <img src="media/agent-window-mobile-1.png" width="24%" alt="Mobile UI 1">
   <img src="media/agent-window-mobile-2.png" width="24%" alt="Mobile UI 2">
