@@ -268,7 +268,7 @@ if os.path.isdir(central_log_dir):
                 meta = json.load(f)
             if not isinstance(meta, dict):
                 raise SystemExit(f"invalid session meta: {meta_path}")
-        session = str(meta.get("session") or entry or "").strip()
+        session = str(entry or "").strip()
         workspace = str(meta.get("workspace") or "").strip()
         if not session:
             continue

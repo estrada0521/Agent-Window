@@ -262,7 +262,7 @@ def archived_sessions(runtime: Any, active_names: set[str] | list[str] | None = 
                 meta = json.loads(meta_path.read_text(encoding="utf-8"))
                 if not isinstance(meta, dict):
                     raise ValueError(f"invalid session meta: {meta_path}")
-            session_name = str(meta.get("session") or entry.name or "").strip()
+            session_name = entry.name.strip()
             if not session_name or session_name in active_names_set:
                 continue
             workspace = str(meta.get("workspace") or "").strip()

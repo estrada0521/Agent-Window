@@ -121,7 +121,7 @@ def _show_environment(prefix: list[str], session_name: str) -> str:
 
 def _write_meta(prefix: list[str], session_name: str, *, rename: tuple[str, str] | None = None) -> None:
     agents = _env_value(prefix, session_name, "AGENT_WINDOW_AGENTS")
-    write_session_meta_file(session_name, agents or "-", _show_environment(prefix, session_name), rename=rename)
+    write_session_meta_file(agents or "-", _show_environment(prefix, session_name), rename=rename)
 
 
 def _append_log(session_name: str, message: str, *, kind: str, extra: dict | None = None) -> None:

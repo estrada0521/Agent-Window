@@ -71,15 +71,14 @@ class ArchivedWorkspaceTests(unittest.TestCase):
     def test_archived_sessions_keep_a_non_git_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            workspace = root / "Lab"
+            workspace = root / "Lab-workspace"
             workspace.mkdir()
-            session_dir = root / "Lab-session"
+            session_dir = root / "Lab"
             session_dir.mkdir()
             (session_dir / ".log.jsonl").write_text("", encoding="utf-8")
             (session_dir / ".meta").write_text(
                 json.dumps(
                     {
-                        "session": "Lab",
                         "workspace": str(workspace),
                         "agents": ["codex"],
                         "created_at": "2026-04-22 23:43",
@@ -107,14 +106,13 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             session_dir.mkdir()
             meta_path = session_dir / ".meta"
             meta_path.write_text(
-                json.dumps({"session": "Lab", "workspace": "/old/lab"}) + "\n",
+                json.dumps({"workspace": "/old/lab"}) + "\n",
                 encoding="utf-8",
             )
             index_path = session_dir / ".log.jsonl"
             index_path.write_text("", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "AGENT_WINDOW_WORKSPACE"):
                 write_session_meta_file(
-                    "Lab",
                     "codex",
                     f"AGENT_WINDOW_INDEX_PATH={index_path}\n",
                 )

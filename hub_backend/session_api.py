@@ -104,7 +104,6 @@ class HubSessionApi:
         created_at = str(existing_meta.get("created_at") or "").strip() or self.format_session_timestamp()
         updated_at = self.format_session_timestamp()
         meta_payload = {
-            "session": session_name,
             "workspace": workspace,
             "agents": [],
             "created_at": created_at,
