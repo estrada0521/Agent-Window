@@ -22,7 +22,6 @@ from server.routes.read import dispatch_get_read_route
 from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
 from backend_core.access.pwa import pwa_icon_entries
-from backend_core.tmux.process_cleanup import install_child_reaper
 from backend_core.access.settings import (
     default_chat_port,
     hub_settings_path,
@@ -460,7 +459,6 @@ class Handler(BaseHTTPRequestHandler):
 def main(argv: list[str] | None = None) -> None:
     global server
 
-    install_child_reaper()
     initialize_from_argv(argv)
     cert_file = os.environ.get("AGENT_WINDOW_CERT_FILE", "")
     key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")
