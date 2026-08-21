@@ -22,11 +22,12 @@ from server.routes.read import dispatch_get_read_route
 from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
 from backend_core.access.pwa import pwa_icon_entries
+from backend_core.tmux.process_cleanup import install_child_reaper
 from backend_core.access.settings import (
+    default_chat_port,
     hub_settings_path,
     local_bind_host,
     local_bind_scheme,
-    resolve_chat_port,
     session_log_path,
 )
 from workspace_sync.api import WorkspaceSyncApi
@@ -242,7 +243,8 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_path.touch(exist_ok=True)
     log_dir = str(log_path.parent)
-    port = resolve_chat_port(_repo_root, session_name)
+    port_override = (os.environ.get("AGENT_WINDOW_CHAT_PORT") or "").strip()
+    port = int(port_override) if port_override else default_chat_port(session_name)
     tmux_socket = (os.environ.get("AGENT_WINDOW_TMUX_SOCKET") or DEFAULT_TMUX_SOCKET).strip()
     hub_port = int(os.environ.get("AGENT_INDEX_HUB_PORT") or DEFAULT_HUB_PORT)
     PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
@@ -458,6 +460,7 @@ class Handler(BaseHTTPRequestHandler):
 def main(argv: list[str] | None = None) -> None:
     global server
 
+    install_child_reaper()
     initialize_from_argv(argv)
     cert_file = os.environ.get("AGENT_WINDOW_CERT_FILE", "")
     key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")

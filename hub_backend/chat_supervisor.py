@@ -11,9 +11,11 @@ import time
 from pathlib import Path
 
 from backend_core.tmux.control import SessionControlError, create_session, kill_session, stop_chat_server as stop_chat_server_impl
+from backend_core.tmux.process_cleanup import track_fire_and_forget_pid
 from backend_core.access.settings import (
     agent_window_run_dir,
     agent_window_session_root,
+    allocate_ephemeral_port,
     port_is_bindable,
     pwa_https_enabled,
     session_log_path,
@@ -101,7 +103,7 @@ def chat_server_matches(self, session_name: str, chat_port: int, *, workspace: s
 
 
 def stop_chat_server(self, session_name: str) -> tuple[bool, str]:
-    return stop_chat_server_impl(self.repo_root, session_name)
+    return stop_chat_server_impl(session_name)
 
 
 def chat_launch_session_dir(self, session_name: str) -> Path:
@@ -113,7 +115,7 @@ def chat_launch_session_dir(self, session_name: str) -> Path:
     return session_dir
 
 
-def chat_launch_env(self, *, session_is_active: bool = True) -> dict[str, str]:
+def chat_launch_env(self, *, session_is_active: bool = True, chat_port: int) -> dict[str, str]:
     env = os.environ.copy()
     env["AGENT_WINDOW_AGENT_NAME"] = "user"
     if self.tmux_socket:
@@ -121,6 +123,7 @@ def chat_launch_env(self, *, session_is_active: bool = True) -> dict[str, str]:
     env["AGENT_INDEX_HUB_PORT"] = str(self.hub_port)
     env["AGENT_WINDOW_RUN_DIR"] = str(agent_window_run_dir())
     env["SESSION_IS_ACTIVE"] = "1" if session_is_active else "0"
+    env["AGENT_WINDOW_CHAT_PORT"] = str(chat_port)
     pythonpath_parts = [str(self.repo_root)]
     existing_pythonpath = (env.get("PYTHONPATH") or "").strip()
     if existing_pythonpath:
@@ -160,7 +163,11 @@ def _chat_launch_port(
     if self.chat_ready(chat_port) or not port_is_bindable(chat_port):
         if state and str(state.get("session") or "").strip() == session_name:
             return chat_port, False, ""
-        return chat_port, False, f"chat port {chat_port} is occupied"
+        # Default (hashed) port is held by something unrelated to this
+        # session -- ask the OS for a free one for this launch instead of
+        # failing outright. chat_port_for_session() finds it again later via
+        # a live process scan, not by re-deriving the default.
+        return allocate_ephemeral_port(), False, ""
     return chat_port, False, ""
 
 
@@ -226,9 +233,9 @@ def ensure_chat_server(
             if result.timed_out or result.returncode != 0:
                 detail = (result.stderr or result.stdout or "").strip() or "tmux set-environment failed"
                 return False, chat_port, detail
-        env = self._chat_launch_env(session_is_active=session_is_active)
+        env = self._chat_launch_env(session_is_active=session_is_active, chat_port=chat_port)
         try:
-            subprocess_module.Popen(
+            proc = subprocess_module.Popen(
                 [
                     sys_module.executable,
                     "-m",
@@ -242,6 +249,7 @@ def ensure_chat_server(
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
+            track_fire_and_forget_pid(proc.pid)
         except OSError as exc:
             return False, chat_port, str(exc)
 
@@ -299,7 +307,7 @@ def kill_repo_session(self, session_name: str) -> tuple[bool, str]:
     if session_name not in active:
         return False, "That active session is not available in this repo."
     try:
-        kill_session(session_name=session_name, tmux_socket=self.tmux_socket, repo_root=self.repo_root)
+        kill_session(session_name=session_name, tmux_socket=self.tmux_socket)
     except SessionControlError as exc:
         return False, str(exc)
     return True, ""

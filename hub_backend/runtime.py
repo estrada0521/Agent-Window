@@ -28,10 +28,11 @@ from hub_backend.session_query import (
     host_without_port as _host_without_port_impl,
 )
 from backend_core.access.settings import agent_window_session_root
+from backend_core.access.settings import default_chat_port
 from backend_core.access.settings import load_hub_settings as load_shared_hub_settings
 from backend_core.access.settings import pwa_https_enabled
-from backend_core.access.settings import resolve_chat_port
 from backend_core.access.settings import save_hub_settings as save_shared_hub_settings
+from backend_core.tmux.control import chat_server_listen_port
 from backend_core.tmux.window import tmux_prefix_args
 
 
@@ -129,7 +130,8 @@ class HubRuntime:
         return [a.strip() for a in cleaned.split(",") if a.strip() and a.strip() != "-"], False
 
     def chat_port_for_session(self, session_name: str) -> int:
-        return resolve_chat_port(self.repo_root, session_name)
+        live_port = chat_server_listen_port(session_name)
+        return live_port if live_port is not None else default_chat_port(session_name)
 
     @staticmethod
     def host_without_port(host_header: str) -> str:
@@ -207,8 +209,8 @@ class HubRuntime:
     def _chat_launch_session_dir(self, session_name: str) -> Path:
         return _chat_launch_session_dir_impl(self, session_name)
 
-    def _chat_launch_env(self, *, session_is_active: bool = True) -> dict[str, str]:
-        return _chat_launch_env_impl(self, session_is_active=session_is_active)
+    def _chat_launch_env(self, *, session_is_active: bool = True, chat_port: int) -> dict[str, str]:
+        return _chat_launch_env_impl(self, session_is_active=session_is_active, chat_port=chat_port)
 
     def _chat_launch_port(
         self,

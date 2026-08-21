@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, quote as url_quote, urlparse
 
 from hub_backend.runtime import HubRuntime
 from backend_core.access.pwa import pwa_icon_entries as _pwa_icon_entries_impl
+from backend_core.tmux.process_cleanup import install_child_reaper
 from backend_core.agents.executables import agent_launch_readiness
 from hub_backend.presentation.hub.header_assets import (
     DEFAULT_HUB_HEADER_ACTIONS,
@@ -660,6 +661,7 @@ class Handler(BaseHTTPRequestHandler):
 def main(argv: list[str] | None = None) -> None:
     global _scheme, hub_server
 
+    install_child_reaper()
     initialize_from_argv(argv)
 
     from backend_core.access.settings import local_bind_host, local_bind_scheme

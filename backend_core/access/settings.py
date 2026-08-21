@@ -238,48 +238,6 @@ def default_chat_port(session_name: str) -> int:
     return 8200 + (digest % 700)
 
 
-def chat_ports_path(repo_root: Path | str, *, create_parent: bool = True) -> Path:
-    path = agent_window_state_dir() / ".chat-ports.json"
-    if create_parent:
-        path.parent.mkdir(parents=True, exist_ok=True)
-    return path
-
-
-def _read_json_dict(path: Path) -> dict:
-    if not path.is_file():
-        return {}
-    raw = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(raw, dict):
-        raise ValueError(f"invalid json object: {path}")
-    return raw
-
-
-def load_chat_port_overrides(repo_root: Path | str) -> dict[str, int]:
-    raw = _read_json_dict(chat_ports_path(repo_root, create_parent=False))
-    overrides = {}
-    for key, value in raw.items():
-        if not isinstance(key, str):
-            raise ValueError(f"invalid chat port key: {key!r}")
-        try:
-            port = int(value)
-        except (TypeError, ValueError) as exc:
-            raise ValueError(f"invalid chat port for {key!r}: {value!r}") from exc
-        if not (1 <= port <= 65535):
-            raise ValueError(f"chat port out of range for {key!r}: {port}")
-        overrides[key] = port
-    return overrides
-
-
-def resolve_chat_port(repo_root: Path | str, session_name: str) -> int:
-    return int(load_chat_port_overrides(repo_root).get(session_name) or default_chat_port(session_name))
-
-
-def save_chat_port_override(repo_root: Path | str, session_name: str, port: int) -> None:
-    overrides = load_chat_port_overrides(repo_root)
-    overrides[str(session_name)] = int(port)
-    chat_ports_path(repo_root).write_text(json.dumps(overrides, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
 def port_is_bindable(port: int) -> bool:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -288,6 +246,19 @@ def port_is_bindable(port: int) -> bool:
         return True
     except OSError:
         return False
+    finally:
+        sock.close()
+
+
+def allocate_ephemeral_port() -> int:
+    """Ask the OS for a free port. Used when a session's default (hashed)
+    chat port is already held by something else; the port is only reserved
+    for the instant this call takes, so a caller must bind it promptly."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        sock.bind((local_bind_host(), 0))
+        return sock.getsockname()[1]
     finally:
         sock.close()
 

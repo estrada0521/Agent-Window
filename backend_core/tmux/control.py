@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import shutil
 import signal
-import socket
 import subprocess
 import sys
 import time
@@ -16,7 +15,6 @@ from backend_core.access.session_meta import find_session_for_workspace, write_s
 from backend_core.access.settings import (
     agent_window_session_root,
     ensure_session_workspace_mirrors,
-    resolve_chat_port,
     session_log_path,
 )
 from backend_core.agents.executables import agent_launch_cmd, resolve_agent_executable
@@ -30,7 +28,7 @@ from backend_core.agents.instances import (
     resolve_canonical_instance,
 )
 from backend_core.agents.registry import AGENTS, base_agent_name
-from backend_core.tmux.process_cleanup import cleanup_target_process_groups
+from backend_core.tmux.process_cleanup import cleanup_target_process_groups, track_fire_and_forget_pid
 from backend_core.tmux.topology import (
     acquire_topology_lock,
     default_tmux_socket_name,
@@ -153,25 +151,6 @@ def append_session_lifecycle_entry(session_name: str, action: str) -> None:
     )
 
 
-def _chat_listener_pids(chat_port: int) -> list[int]:
-    try:
-        result = subprocess.run(
-            ["lsof", "-nP", f"-tiTCP:{int(chat_port)}", "-sTCP:LISTEN"],
-            capture_output=True,
-            text=True,
-            timeout=1,
-            check=False,
-        )
-    except subprocess.TimeoutExpired as exc:
-        raise SessionControlError(f"lsof timed out for port {chat_port}") from exc
-    except OSError as exc:
-        raise SessionControlError(f"lsof failed for port {chat_port}: {exc}") from exc
-    if result.returncode not in (0, 1):
-        detail = (result.stderr or result.stdout or "").strip() or f"lsof exited {result.returncode}"
-        raise SessionControlError(f"lsof failed for port {chat_port}: {detail}")
-    return [int(line.strip()) for line in (result.stdout or "").splitlines() if line.strip().isdigit()]
-
-
 def _process_command(pid: int) -> str | None:
     try:
         result = subprocess.run(
@@ -207,34 +186,87 @@ def _is_own_chat_server(command: str, session_name: str) -> bool:
     return False
 
 
-def _own_chat_listener_pids(chat_port: int, session_name: str) -> list[int]:
-    ours: list[int] = []
-    foreign: list[int] = []
-    for pid in _chat_listener_pids(chat_port):
-        command = _process_command(pid)
-        if command is None:
-            continue
-        if _is_own_chat_server(command, session_name):
-            ours.append(pid)
-        else:
-            foreign.append(pid)
-    if foreign:
-        shown = ", ".join(str(pid) for pid in foreign)
-        raise SessionControlError(
-            f"chat port {chat_port} is occupied by pid {shown}, not this session's chat server"
-        )
-    return ours
+_CHAT_SERVER_SCAN_CACHE_TTL_SEC = 1.0
+_chat_server_scan_cache: tuple[float, dict[str, int]] = (0.0, {})
 
 
-def _chat_port_open(chat_port: int) -> bool:
+def _scan_own_chat_server_pids(*, force_refresh: bool = False) -> dict[str, int]:
+    """session_name -> pid for every live `python -m server.server <name>`
+    process, found by scanning processes rather than assuming a port --
+    a session's chat server can end up on a fallback port (see
+    _chat_launch_port), so its port is never reliable as a lookup key.
+    Cached briefly since callers like the /sessions listing look this up
+    once per session in a tight loop."""
+    global _chat_server_scan_cache
+    cached_at, cached = _chat_server_scan_cache
+    now = time.monotonic()
+    if not force_refresh and now - cached_at < _CHAT_SERVER_SCAN_CACHE_TTL_SEC:
+        return cached
     try:
-        with socket.create_connection(("127.0.0.1", int(chat_port)), timeout=0.35):
-            return True
-    except OSError:
-        return False
+        result = subprocess.run(
+            ["pgrep", "-f", "server.server"],
+            capture_output=True,
+            text=True,
+            timeout=1,
+            check=False,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        mapping: dict[str, int] = {}
+        _chat_server_scan_cache = (now, mapping)
+        return mapping
+    mapping = {}
+    if result.returncode in (0, 1):
+        for line in (result.stdout or "").splitlines():
+            line = line.strip()
+            if not line.isdigit():
+                continue
+            pid = int(line)
+            command = _process_command(pid)
+            if not command:
+                continue
+            tokens = command.split()
+            for i, token in enumerate(tokens):
+                if token == "-m" and i + 2 < len(tokens) and tokens[i + 1] == "server.server":
+                    mapping[tokens[i + 2]] = pid
+                    break
+    _chat_server_scan_cache = (now, mapping)
+    return mapping
+
+
+def _listening_port_for_pid(pid: int) -> int | None:
+    try:
+        result = subprocess.run(
+            ["lsof", "-nP", "-a", "-p", str(pid), "-iTCP", "-sTCP:LISTEN", "-Fn"],
+            capture_output=True,
+            text=True,
+            timeout=1,
+            check=False,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    if result.returncode not in (0, 1):
+        return None
+    for line in (result.stdout or "").splitlines():
+        if not line.startswith("n"):
+            continue
+        name = line[1:]
+        port_str = name.rsplit(":", 1)[-1] if ":" in name else ""
+        if port_str.isdigit():
+            return int(port_str)
+    return None
+
+
+def chat_server_listen_port(session_name: str) -> int | None:
+    """The port this session's chat server is actually bound to right now,
+    or None if it isn't running."""
+    pid = _scan_own_chat_server_pids().get(str(session_name or "").strip())
+    if pid is None:
+        return None
+    return _listening_port_for_pid(pid)
 
 
 _CHAT_STOP_WAIT_SEC = 2.0
+_CHAT_KILL_WAIT_SEC = 1.0
 
 
 def _signal_chat_pids(pids: list[int], sig: int) -> str:
@@ -248,33 +280,38 @@ def _signal_chat_pids(pids: list[int], sig: int) -> str:
     return ""
 
 
-def stop_chat_server(repo_root: Path | str, session_name: str) -> tuple[bool, str]:
+def stop_chat_server(session_name: str) -> tuple[bool, str]:
     name = (session_name or "").strip()
     if not name:
         return False, "session_name is required"
-    chat_port = int(resolve_chat_port(repo_root, name))
-    try:
-        pids = _own_chat_listener_pids(chat_port, name)
-    except SessionControlError as exc:
-        return False, str(exc)
-    if not pids:
+    pid = _scan_own_chat_server_pids(force_refresh=True).get(name)
+    if pid is None:
         return True, ""
-    detail = _signal_chat_pids(pids, signal.SIGTERM)
+    # Liveness is checked via the pid's listening socket, not os.kill(pid, 0)
+    # -- Popen(..., start_new_session=True) launches these detached and
+    # nothing ever reaps them, so a killed process lingers as a zombie
+    # (still "exists" for os.kill) until this process exits. A zombie has
+    # already closed its sockets, so the port check reports it correctly.
+    detail = _signal_chat_pids([pid], signal.SIGTERM)
     if detail:
         return False, detail
     deadline = time.monotonic() + _CHAT_STOP_WAIT_SEC
     while time.monotonic() < deadline:
-        if not _chat_port_open(chat_port):
+        if _listening_port_for_pid(pid) is None:
             return True, ""
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             break
         time.sleep(min(0.1, remaining))
-    detail = _signal_chat_pids(pids, signal.SIGKILL)
+    detail = _signal_chat_pids([pid], signal.SIGKILL)
     if detail:
         return False, detail
-    if _chat_port_open(chat_port):
-        return False, f"chat server on port {chat_port} still running after SIGKILL"
+    kill_deadline = time.monotonic() + _CHAT_KILL_WAIT_SEC
+    while _listening_port_for_pid(pid) is not None:
+        remaining = kill_deadline - time.monotonic()
+        if remaining <= 0:
+            return False, f"chat server for {name} (pid {pid}) still running after SIGKILL"
+        time.sleep(min(0.1, remaining))
     return True, ""
 
 
@@ -445,16 +482,14 @@ def kill_session(
     *,
     session_name: str,
     tmux_socket: str = "",
-    repo_root: Path | str | None = None,
 ) -> None:
     name = (session_name or "").strip()
     if not name:
         raise SessionControlError("session_name is required")
-    root = Path(repo_root).resolve() if repo_root is not None else _repo_root()
     prefix = _prefix(tmux_socket)
     if not _has_session(prefix, name):
         raise SessionControlError(f"Session does not exist: {name}")
-    stop_ok, stop_detail = stop_chat_server(root, name)
+    stop_ok, stop_detail = stop_chat_server(name)
     if not stop_ok:
         raise SessionControlError(f"failed to stop chat server for {name}: {stop_detail}")
     cleanup_target_process_groups(target=name, tmux_prefix=prefix)
@@ -599,7 +634,7 @@ def remove_agent(
             if existing:
                 pythonpath.append(existing)
             env["PYTHONPATH"] = os.pathsep.join(pythonpath)
-            subprocess.Popen(
+            proc = subprocess.Popen(
                 [
                     sys.executable,
                     "-m",
@@ -618,6 +653,7 @@ def remove_agent(
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
+            track_fire_and_forget_pid(proc.pid)
             return canonical, True
         window_target = window_target_for_pane(pane_id=pane_id, tmux_socket=socket_name)
         if not window_target:

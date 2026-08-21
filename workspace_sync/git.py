@@ -7,6 +7,8 @@ import threading
 import time
 from pathlib import Path
 
+from backend_core.tmux.process_cleanup import track_fire_and_forget_pid
+
 _workspace: str = ""
 _runtime = None
 _GIT_OVERVIEW_CACHE_TTL_SECONDS = 5.0
@@ -427,10 +429,11 @@ def open_diff_tool(rel_path: str) -> dict:
         (root / rel).resolve().relative_to(root.resolve())
     except ValueError:
         raise PermissionError(rel)
-    subprocess.Popen(
+    proc = subprocess.Popen(
         ["git", "-C", str(root), "difftool", "-y", "--", rel],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
+    track_fire_and_forget_pid(proc.pid)
     return {"ok": True, "path": rel}
 
