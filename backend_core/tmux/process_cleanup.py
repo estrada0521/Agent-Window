@@ -3,45 +3,7 @@ from __future__ import annotations
 import os
 import signal
 import subprocess
-import threading
 import time
-
-_fire_and_forget_pids: set[int] = set()
-_fire_and_forget_lock = threading.Lock()
-
-
-def track_fire_and_forget_pid(pid: int) -> None:
-    """Register a Popen() child that nothing will ever call .wait() on, so
-    install_child_reaper() knows to reap it once it exits instead of
-    leaving a zombie behind."""
-    with _fire_and_forget_lock:
-        _fire_and_forget_pids.add(pid)
-
-
-def install_child_reaper() -> None:
-    """Reap tracked fire-and-forget children (chat servers, `open`,
-    osascript, difftool, ...) as soon as they exit.
-
-    Only reaps pids registered via track_fire_and_forget_pid() -- never a
-    wildcard waitpid(-1, ...). This process also calls subprocess.run()
-    constantly (tmux, git, lsof, ps); a wildcard reap could win the race
-    and steal one of those children before subprocess.run()'s own wait()
-    gets to it, breaking it outright.
-    """
-
-    def _reap(_signum, _frame) -> None:
-        with _fire_and_forget_lock:
-            pids = list(_fire_and_forget_pids)
-        for pid in pids:
-            try:
-                reaped_pid, _status = os.waitpid(pid, os.WNOHANG)
-            except ChildProcessError:
-                reaped_pid = pid
-            if reaped_pid == pid:
-                with _fire_and_forget_lock:
-                    _fire_and_forget_pids.discard(pid)
-
-    signal.signal(signal.SIGCHLD, _reap)
 
 
 def pane_pid_for_target(*, target: str, tmux_prefix: list[str]) -> int | None:

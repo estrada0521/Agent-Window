@@ -8,7 +8,6 @@ import threading
 import time
 from pathlib import Path
 
-from backend_core.tmux.process_cleanup import track_fire_and_forget_pid
 from workspace_sync.files.ignore import FileIndexIgnoreRules
 
 
@@ -249,13 +248,12 @@ class FileRuntime:
 
     @staticmethod
     def _reveal_in_finder(full: str) -> None:
-        proc = subprocess.Popen(
+        subprocess.Popen(
             ["open", "-R", full],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
         )
-        track_fire_and_forget_pid(proc.pid)
 
     @classmethod
     def _open_with_system_default(cls, full: str) -> bool:

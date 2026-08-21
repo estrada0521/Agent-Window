@@ -28,7 +28,7 @@ from backend_core.agents.instances import (
     resolve_canonical_instance,
 )
 from backend_core.agents.registry import AGENTS, base_agent_name
-from backend_core.tmux.process_cleanup import cleanup_target_process_groups, track_fire_and_forget_pid
+from backend_core.tmux.process_cleanup import cleanup_target_process_groups
 from backend_core.tmux.topology import (
     acquire_topology_lock,
     default_tmux_socket_name,
@@ -634,7 +634,7 @@ def remove_agent(
             if existing:
                 pythonpath.append(existing)
             env["PYTHONPATH"] = os.pathsep.join(pythonpath)
-            proc = subprocess.Popen(
+            subprocess.Popen(
                 [
                     sys.executable,
                     "-m",
@@ -653,7 +653,6 @@ def remove_agent(
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            track_fire_and_forget_pid(proc.pid)
             return canonical, True
         window_target = window_target_for_pane(pane_id=pane_id, tmux_socket=socket_name)
         if not window_target:
