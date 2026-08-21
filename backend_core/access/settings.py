@@ -110,10 +110,9 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
     if "message_font" in raw:
         message_font = canonicalize_message_font(raw.get("message_font"))
     else:
-        legacy = str(raw.get("user_message_font") or raw.get("agent_message_font") or "").strip()
-        message_font = canonicalize_message_font(legacy or settings.get("message_font"))
+        message_font = canonicalize_message_font(settings.get("message_font"))
     settings["message_font"] = _require_css_font_family(message_font)
-    
+
     if "code_font" in raw:
         code_font = str(raw.get("code_font") or "").strip()
         if code_font:
@@ -122,9 +121,6 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
             settings["code_font"] = DEFAULT_CODE_FONT
     elif "code_font" not in settings:
         settings["code_font"] = DEFAULT_CODE_FONT
-
-    settings.pop("user_message_font", None)
-    settings.pop("agent_message_font", None)
 
     try:
         text_size = int(raw.get("text_size", settings.get("text_size") or 13))
