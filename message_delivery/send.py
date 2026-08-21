@@ -19,6 +19,7 @@ from backend_core.agents.names import agent_base_name
 from backend_core.agents.registry import ALL_AGENT_NAMES
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.session_meta import find_session_for_workspace
+from backend_core.tmux.resolve import find_tmux_session_for_workspace
 from backend_core.tmux.topology import default_tmux_socket_name, session_topology_lock_path
 from message_delivery.paste_timing import delivery_paste_delay_seconds
 
@@ -112,17 +113,18 @@ class AgentSendRuntime:
         if not resolved:
             workspace = (self.env.get("AGENT_WINDOW_WORKSPACE") or "").strip()
             if workspace:
-                target = str(Path(workspace).expanduser().resolve())
-                for candidate in self.list_sessions():
-                    result = self.tmux.run(["show-environment", "-t", candidate, "AGENT_WINDOW_WORKSPACE"])
-                    line = (result.stdout or "").strip()
-                    if result.returncode == 0 and "=" in line:
-                        value = line.split("=", 1)[1].strip()
-                        if value and str(Path(value).expanduser().resolve()) == target:
-                            resolved = candidate
-                            break
+                resolved = (
+                    find_tmux_session_for_workspace(workspace, self.list_sessions(), self._tmux_env_workspace) or ""
+                )
         self._tmux_session_name = resolved
         return resolved
+
+    def _tmux_env_workspace(self, session_name: str) -> str | None:
+        result = self.tmux.run(["show-environment", "-t", session_name, "AGENT_WINDOW_WORKSPACE"])
+        line = (result.stdout or "").strip()
+        if result.returncode != 0 or "=" not in line:
+            return None
+        return line.split("=", 1)[1].strip() or None
 
     def tmux_env(self, session_name: str, key: str) -> str:
         # Every caller in this file is asking about its own session (there

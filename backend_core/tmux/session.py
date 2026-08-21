@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import logging
 import subprocess
-from pathlib import Path
+
+from backend_core.tmux.resolve import find_tmux_session_for_workspace
 
 
 def resolve_tmux_session_name(runtime, *, subprocess_module=subprocess) -> str:
@@ -19,7 +20,6 @@ def resolve_tmux_session_name(runtime, *, subprocess_module=subprocess) -> str:
     workspace = str(getattr(runtime, "workspace", "") or "").strip()
     if not workspace:
         return runtime.session_name
-    target = str(Path(workspace).expanduser().resolve())
     result = subprocess_module.run(
         [*runtime.tmux_prefix, "list-sessions", "-F", "#{session_name}"],
         capture_output=True,
@@ -29,23 +29,22 @@ def resolve_tmux_session_name(runtime, *, subprocess_module=subprocess) -> str:
     )
     if result.returncode != 0:
         return runtime.session_name
-    for candidate in result.stdout.splitlines():
-        candidate = candidate.strip()
-        if not candidate:
-            continue
+
+    def workspace_of(name: str) -> str | None:
         env_result = subprocess_module.run(
-            [*runtime.tmux_prefix, "show-environment", "-t", candidate, "AGENT_WINDOW_WORKSPACE"],
+            [*runtime.tmux_prefix, "show-environment", "-t", name, "AGENT_WINDOW_WORKSPACE"],
             capture_output=True,
             text=True,
             timeout=2,
             check=False,
         )
         line = env_result.stdout.strip()
-        if env_result.returncode == 0 and "=" in line:
-            value = line.split("=", 1)[1].strip()
-            if value and str(Path(value).expanduser().resolve()) == target:
-                return candidate
-    return runtime.session_name
+        if env_result.returncode != 0 or "=" not in line:
+            return None
+        return line.split("=", 1)[1].strip() or None
+
+    resolved = find_tmux_session_for_workspace(workspace, result.stdout.splitlines(), workspace_of)
+    return resolved or runtime.session_name
 
 
 def active_agents(runtime, *, subprocess_module=subprocess) -> list[str]:

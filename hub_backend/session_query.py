@@ -10,6 +10,7 @@ from urllib.parse import quote
 
 from backend_core.access.session_meta import session_workspace
 from backend_core.access.settings import agent_window_session_root, session_log_path
+from backend_core.tmux.resolve import live_tmux_workspaces
 
 
 _PREVIEW_TAIL_BYTES = 2 * 1024 * 1024
@@ -171,6 +172,10 @@ def build_session_record(
     }
 
 
+class _TmuxQueryTimeout(RuntimeError):
+    pass
+
+
 def _live_tmux_workspaces(runtime: Any) -> tuple[dict[str, str], str, str]:
     """Map each live tmux session's workspace to its (real, possibly AW-name
     diverged) tmux session name. AGENT_WINDOW_WORKSPACE is the only thing
@@ -185,16 +190,16 @@ def _live_tmux_workspaces(runtime: Any) -> tuple[dict[str, str], str, str]:
             return {}, "ok", ""
         return {}, "unhealthy", stderr or f"tmux list-sessions failed (exit {result.returncode})"
 
-    workspace_to_tmux: dict[str, str] = {}
-    for tmux_name in result.stdout.splitlines():
-        tmux_name = tmux_name.strip()
-        if not tmux_name:
-            continue
+    def workspace_of(tmux_name: str) -> str | None:
         workspace, timed_out = runtime.tmux_env_query(tmux_name, "AGENT_WINDOW_WORKSPACE")
         if timed_out:
-            return {}, "unhealthy", f"tmux show-environment (WORKSPACE) timed out for {tmux_name}"
-        if workspace:
-            workspace_to_tmux[str(Path(workspace).expanduser().resolve())] = tmux_name
+            raise _TmuxQueryTimeout(tmux_name)
+        return workspace or None
+
+    try:
+        workspace_to_tmux = live_tmux_workspaces(result.stdout.splitlines(), workspace_of)
+    except _TmuxQueryTimeout as exc:
+        return {}, "unhealthy", f"tmux show-environment (WORKSPACE) timed out for {exc}"
     return workspace_to_tmux, "ok", ""
 
 
