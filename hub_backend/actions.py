@@ -119,32 +119,6 @@ def get_kill_session(handler, parsed, ctx) -> None:
         handler.end_headers()
 
 
-def get_rename_session(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    session_name = (qs.get("session", [""])[0] or "").strip()
-    new_name = (qs.get("new_name", [""])[0] or "").strip()
-    fmt = qs.get("format", [""])[0]
-    if not session_name or not new_name:
-        if fmt == "json":
-            handler._send_json(400, {"ok": False, "error": "session and new_name are required"})
-        else:
-            handler._send_html(400, ctx["error_page_fn"]("session and new_name are required"))
-        return
-    ok, detail = ctx["rename_repo_session_fn"](session_name, new_name)
-    if not ok:
-        if fmt == "json":
-            handler._send_json(500, {"ok": False, "error": detail or f"Failed to rename {session_name}"})
-        else:
-            handler._send_html(500, ctx["error_page_fn"](f"Failed to rename {session_name}: {detail}"))
-        return
-    if fmt == "json":
-        handler._send_json(200, {"ok": True, "session": new_name, "previous_name": session_name, "action": "renamed"})
-    else:
-        handler.send_response(302)
-        handler.send_header("Location", "/")
-        handler.end_headers()
-
-
 def get_delete_archived_session(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     session_name = (qs.get("session", [""])[0] or "").strip()

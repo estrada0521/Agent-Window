@@ -61,6 +61,7 @@ from backend_core.tmux.instances import resolve_target_agents as resolve_target_
 from backend_core.tmux.window import tmux_prefix_args
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.settings import (
+    ensure_session_workspace_mirrors,
     load_hub_settings as load_shared_hub_settings,
     session_log_path,
 )
@@ -87,6 +88,13 @@ class ChatRuntime:
         self.port = int(port)
         self.workspace = workspace
         self.log_dir = str(self.log_path.parent)
+        # The workspace-side symlink mirror is a point-in-time snapshot, not
+        # something that watches for the log folder moving out from under it
+        # (a rename, or a manual mv). Opening a session's chat -- this
+        # process starting up -- is the one moment every open path already
+        # goes through, active or archived, so repairing it here catches a
+        # stale mirror left behind by any prior rename, cheaply either way.
+        ensure_session_workspace_mirrors(session_name, workspace)
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port)
         self.repo_root = Path(repo_root).resolve()
