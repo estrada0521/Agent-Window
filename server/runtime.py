@@ -117,7 +117,7 @@ class ChatRuntime:
         self._matched_entries_total = 0
 
     def load_chat_settings(self) -> dict:
-        return load_shared_hub_settings(self.repo_root)
+        return load_shared_hub_settings()
 
     def refresh_native_log_bindings(
         self,

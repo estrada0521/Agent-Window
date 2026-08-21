@@ -13,7 +13,7 @@ from pathlib import Path
 from backend_core.tmux.control import SessionControlError, create_session, kill_session, stop_chat_server as stop_chat_server_impl
 from backend_core.access.settings import (
     agent_window_run_dir,
-    local_runtime_log_dir,
+    agent_window_session_root,
     port_is_bindable,
     pwa_https_enabled,
     session_log_path,
@@ -105,7 +105,7 @@ def stop_chat_server(self, session_name: str) -> tuple[bool, str]:
 
 
 def chat_launch_session_dir(self, session_name: str) -> Path:
-    session_dir = local_runtime_log_dir(self.repo_root) / session_name
+    session_dir = agent_window_session_root() / session_name
     session_dir.mkdir(parents=True, exist_ok=True)
     canonical_index = session_log_path(session_name)
     if not canonical_index.exists():

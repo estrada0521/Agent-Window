@@ -461,7 +461,6 @@ def hub_settings_html(saved=False, variant="desktop"):
 def _hub_session_api() -> HubSessionApi:
     return HubSessionApi(
         HubSessionApiContext(
-            repo_root=repo_root,
             hub=hub,
             active_session_records_query=hub.active_session_records_query,
             archived_session_records=hub.archived_session_records,

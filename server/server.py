@@ -87,7 +87,7 @@ def _send_is_queueable(target: str, message: str) -> list[str] | None:
 
 
 def _hub_settings_watcher() -> None:
-    settings_file = hub_settings_path(_repo_root)
+    settings_file = hub_settings_path()
     if not settings_file.exists():
         return
     try:

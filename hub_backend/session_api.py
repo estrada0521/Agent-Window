@@ -6,12 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from backend_core.access.settings import local_runtime_log_dir, sanitize_session_name, session_log_path
+from backend_core.access.settings import agent_window_session_root, sanitize_session_name, session_log_path
 
 
 @dataclass(frozen=True)
 class HubSessionApiContext:
-    repo_root: Path
     hub: object
     active_session_records_query: Callable
     archived_session_records: Callable
@@ -24,7 +23,7 @@ class HubSessionApi:
         self.ctx = ctx
 
     def session_logs_dir(self, session_name: str) -> Path:
-        return local_runtime_log_dir(self.ctx.repo_root) / str(session_name or "").strip()
+        return agent_window_session_root() / str(session_name or "").strip()
 
     def read_json_file(self, path: Path) -> dict:
         data = json.loads(path.read_text(encoding="utf-8"))
