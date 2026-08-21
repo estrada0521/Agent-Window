@@ -10,10 +10,6 @@ SCRIPT_DIR="$REPO_ROOT/bin"
 # shellcheck source=/dev/null
 source "$REPO_ROOT/bin/lib/tmux_session.sh"
 
-session_control() {
-  PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -m backend_core.cli.session_control "$@"
-}
-
 for _hp in /opt/homebrew/bin /usr/local/bin; do
   case ":${PATH:-}:" in *:"${_hp}":*) ;; *)
     [[ -d "$_hp" ]] && PATH="${_hp}:$PATH"
@@ -31,17 +27,6 @@ done
 
 eval "$(PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -m backend_core.cli.agent_registry_shell)"
 APP_NAME="$(basename "$0")"
-CENTRAL_LOG_DIR="$(python3 - "$REPO_ROOT" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(repo_root))
-from backend_core.access.settings import local_runtime_log_dir
-
-print(local_runtime_log_dir())
-PYEOF
-)"
 AGENT_WINDOW_RUN_DIR="${AGENT_WINDOW_RUN_DIR:-$(python3 - "$REPO_ROOT" <<'PYEOF'
 import sys
 from pathlib import Path
@@ -65,7 +50,6 @@ MODE="up"
 LIST_VERBOSE=0
 ALL_SESSIONS=0
 LATEST_SESSION=0
-RENAME_TO=""
 CONTEXT_JSON=0
 AGENT_WINDOW_WIDTH=66
 AGENT_WINDOW_HEIGHT=40
@@ -151,211 +135,24 @@ default_session_name() {
   basename "$WORKSPACE"
 }
 
-session_pane_count() {
-  local session="$1"
-  tmux list-panes -s -t "$session" 2>/dev/null | wc -l | tr -d ' '
-}
+# The AW session's log folder is its identity; whether/where it's live in
+# tmux is resolved by workspace (never by name-matching) via session_control,
+# which is the single shared bridge every entry point in this repo uses.
+repo_session_names() {
+  session_control list --tmux-socket "$TMUX_SOCKET_NAME" --json | python3 -c '
+import json, sys
 
-session_window_count() {
-  local session="$1"
-  tmux list-windows -t "$session" 2>/dev/null | wc -l | tr -d ' '
-}
-
-session_created_value() {
-  local session="$1"
-  local epoch
-  epoch="$(tmux display-message -p -t "$session" '#{session_created}' 2>/dev/null || true)"
-  [[ -n "$epoch" ]] && date -r "$epoch" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || true
-}
-
-session_attached_value() {
-  local session="$1"
-  tmux display-message -p -t "$session" '#{session_attached}' 2>/dev/null || true
-}
-
-session_agents_value() {
-  local session="$1"
-  local agents_str
-  agents_str="$(tmux show-environment -t "$session" AGENT_WINDOW_AGENTS 2>/dev/null | sed 's/^[^=]*=//' || true)"
-  if [[ -n "$agents_str" ]]; then
-    printf '%s\n' "$agents_str"
-    return
-  fi
-  printf '%s\n' "-"
-}
-
-session_agent_state_lines() {
-  local session="$1" instance upper pane_id pane_title pane_dead pane_current_command
-  local agents_str
-  agents_str="$(session_agents_value "$session")"
-  [[ "$agents_str" == "-" ]] && return 0
-  IFS=',' read -ra agent_list <<< "$agents_str"
-  for instance in "${agent_list[@]}"; do
-    upper="$(printf '%s' "$instance" | tr '[:lower:]-' '[:upper:]_')"
-    pane_id="$(tmux show-environment -t "$session" "AGENT_WINDOW_PANE_${upper}" 2>/dev/null | sed 's/^[^=]*=//' || true)"
-    if [[ -z "$pane_id" ]]; then
-      printf '  - %s: not configured\n' "$instance"
-      continue
-    fi
-    pane_title="$(tmux display-message -p -t "$pane_id" '#{pane_title}' 2>/dev/null || true)"
-    pane_dead="$(tmux display-message -p -t "$pane_id" '#{pane_dead}' 2>/dev/null || true)"
-    pane_current_command="$(tmux display-message -p -t "$pane_id" '#{pane_current_command}' 2>/dev/null || true)"
-    if [[ "$pane_dead" == "1" ]]; then
-      printf '  - %s: pane=%s dead title=%s\n' "$instance" "$pane_id" "${pane_title:-unknown}"
-    else
-      printf '  - %s: pane=%s running cmd=%s title=%s\n' "$instance" "$pane_id" "${pane_current_command:-unknown}" "${pane_title:-unknown}"
-    fi
-  done
-}
-
-session_dead_pane_count() {
-  local session="$1"
-  tmux list-panes -s -t "$session" -F '#{pane_dead}' 2>/dev/null | awk '$1==1 {c++} END {print c+0}'
-}
-
-session_status_summary() {
-  local session="$1"
-  local dead attached
-  dead="$(session_dead_pane_count "$session")"
-  attached="$(session_attached_value "$session")"
-  if [[ "$dead" != "0" ]]; then
-    printf 'degraded'
-  elif [[ "$attached" != "0" ]]; then
-    printf 'attached'
-  else
-    printf 'idle'
-  fi
-}
-
-repo_sessions() {
-  while IFS= read -r session; do
-    [[ -z "$session" ]] && continue
-    local workspace
-    workspace="$(session_workspace_value "$session")"
-    [[ -n "$workspace" ]] || continue
-    printf '%s\n' "$session"
-  done < <(tmux list-sessions -F '#S' 2>/dev/null || true)
-}
-
-archived_repo_sessions() {
-  python3 - "$CENTRAL_LOG_DIR" <<'PYEOF'
-import json
-import os
-import sys
-from datetime import datetime
-
-central_log_dir = os.path.realpath(sys.argv[1])
-
-def format_mtime(path):
-    try:
-        return datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
-    except OSError:
-        return ""
-
-records = {}
-if os.path.isdir(central_log_dir):
-    for entry in os.listdir(central_log_dir):
-        path = os.path.join(central_log_dir, entry)
-        if not os.path.isdir(path):
-            continue
-        meta_path = os.path.join(path, ".meta")
-        index_path = os.path.join(path, ".log.jsonl")
-        if not os.path.exists(meta_path) and not os.path.exists(index_path):
-            continue
-        meta = {}
-        if os.path.exists(meta_path):
-            with open(meta_path, "r") as f:
-                meta = json.load(f)
-            if not isinstance(meta, dict):
-                raise SystemExit(f"invalid session meta: {meta_path}")
-        session = str(entry or "").strip()
-        workspace = str(meta.get("workspace") or "").strip()
-        if not session:
-            continue
-        created = meta.get("created_at") or format_mtime(path)
-        updated = meta.get("updated_at") or format_mtime(path)
-        meta_agents = meta.get("agents")
-        agents = []
-        if isinstance(meta_agents, list):
-            agents = [str(a).strip() for a in meta_agents if str(a).strip()]
-        elif isinstance(meta_agents, str) and meta_agents.strip() and meta_agents.strip() != "-":
-            agents = [a.strip() for a in meta_agents.split(",") if a.strip()]
-        seen = set()
-        unique_agents = []
-        for a in agents:
-            if a not in seen:
-                seen.add(a)
-                unique_agents.append(a)
-        agents = unique_agents
-        record = {
-            "session": session,
-            "workspace": workspace,
-            "created": created,
-            "updated": updated,
-            "agents": ",".join(agents) if agents else "-",
-            "log_dir": path,
-        }
-        existing = records.get(session)
-        if existing is None or (record["updated"], record["log_dir"]) > (existing["updated"], existing["log_dir"]):
-            records[session] = record
-
-for session in sorted(records):
-    record = records[session]
-    print(
-        "\t".join(
-            [
-                record["session"],
-                record["workspace"],
-                record["created"],
-                record["updated"],
-                record["agents"],
-                record["log_dir"],
-            ]
-        )
-    )
-PYEOF
-}
-
-latest_repo_session() {
-  while IFS= read -r session; do
-    [[ -z "$session" ]] && continue
-    tmux display-message -p -t "$session" '#{session_created} #{session_name}' 2>/dev/null || true
-  done < <(repo_sessions) | sort -nr | awk 'NR==1 {print $2}'
-}
-
-resolve_existing_session_name() {
-  local default_name matched=()
-  default_name="$(default_session_name)"
-
-  if tmux has-session -t "=$default_name" 2>/dev/null; then
-    printf '%s\n' "$default_name"
-    return 0
-  fi
-
-  while IFS= read -r session; do
-    [[ -z "$session" ]] && continue
-    matched+=("$session")
-  done < <(repo_sessions)
-
-  if [[ ${#matched[@]} -eq 1 ]]; then
-    printf '%s\n' "${matched[0]}"
-    return 0
-  fi
-
-  if [[ ${#matched[@]} -gt 1 ]]; then
-    printf 'Multiple sessions exist; specify --session: %s\n' "${matched[*]}" >&2
-    return 1
-  fi
-
-  printf '%s\n' "$default_name"
+for item in json.load(sys.stdin):
+    print(item["session"])
+'
 }
 
 resolve_target_session_name() {
   if [[ "$LATEST_SESSION" -eq 1 ]]; then
-    latest_repo_session
-    return 0
+    session_control latest
+    return $?
   fi
-  resolve_existing_session_name
+  session_control current --workspace "$WORKSPACE"
 }
 
 usage() {
@@ -366,9 +163,7 @@ Usage:
   agent-window context [--session NAME] [--json]
   agent-window add-agent --session NAME --agent AGENT
   agent-window remove-agent --session NAME --agent INSTANCE
-  agent-window resume [--session NAME | --latest] [--detach]
   agent-window kill [--session NAME | --all]
-  agent-window rename --session NAME --to NEW_NAME
   agent-window [--session NAME] [--workspace PATH] [--detach] [--fresh] [--agents AGENT_LIST]
 
 Creates a tmux session where window 0 is reserved for the human terminal,
@@ -381,199 +176,20 @@ Options:
                          --agents claude,gemini
                          --agents claude,codex,cursor
 
-  --session NAME       Name of the tmux session (default: current directory name)
+  --session NAME       Name of the session (default: current directory name)
   --workspace PATH     Working directory (default: current directory)
   --detach             Start session in detached mode
   --fresh              Delete existing logs for the session name before starting
   --all                For list: include archived sessions. For status/kill: target all active sessions
-  --latest             Target the most recently created session for this agent-window install
-  --to NEW_NAME        New session name for rename
+  --latest             Target the most recently created agent-window session
   --verbose            Show extra details in list output
-  list                 List active sessions for this agent-window install
+  list                 List sessions for this agent-window install
   context              Print session/workspace/agent-pane summary for the current pane (or --session)
   add-agent            Add a new agent to an existing session
   remove-agent         Remove one agent pane (INSTANCE e.g. claude, gemini-2); chat jsonl is untouched
   status               Show session status without starting or changing anything
-  resume               Attach to an existing session without creating a new one
   kill                 Kill an existing session explicitly
-  rename               Rename an existing session explicitly
 EOF
-}
-
-list_sessions() {
-  local found=0 session active_sessions=""
-  while IFS= read -r session; do
-    [[ -z "$session" ]] && continue
-    active_sessions="${active_sessions}"$'\n'"${session}"
-    if [[ "$LIST_VERBOSE" -eq 1 ]]; then
-      printf 'Session: %s\n' "$session"
-      printf '  Status: %s\n' "$(session_status_summary "$session")"
-      printf '  Running: yes\n'
-      printf '  Workspace: %s\n' "$(session_workspace_value "$session")"
-      printf '  Windows: %s\n' "$(session_window_count "$session")"
-      printf '  Panes: %s\n' "$(session_pane_count "$session")"
-      printf '  Dead panes: %s\n' "$(session_dead_pane_count "$session")"
-      printf '  Attached clients: %s\n' "$(session_attached_value "$session")"
-      printf '  Agents: %s\n' "$(session_agents_value "$session")"
-      printf '  Created: %s\n' "$(session_created_value "$session")"
-      printf '%s\n' "$(session_agent_state_lines "$session")"
-      echo
-    else
-      printf '%s\tstatus=%s\trunning=yes\tpanes=%s\tagents=%s\tcreated=%s\n' \
-        "$session" \
-        "$(session_status_summary "$session")" \
-        "$(session_pane_count "$session")" \
-        "$(session_agents_value "$session")" \
-        "$(session_created_value "$session")"
-    fi
-    found=1
-  done < <(repo_sessions)
-
-  if [[ "$ALL_SESSIONS" -eq 1 ]]; then
-    local archived_session archived_workspace archived_created archived_updated archived_agents archived_log_dir
-    while IFS=$'\t' read -r archived_session archived_workspace archived_created archived_updated archived_agents archived_log_dir; do
-      [[ -n "$archived_session" ]] || continue
-      if printf '%s\n' "$active_sessions" | grep -Fqx "$archived_session"; then
-        continue
-      fi
-      if [[ "$LIST_VERBOSE" -eq 1 ]]; then
-        printf 'Session: %s\n' "$archived_session"
-        printf '  Status: archived\n'
-        printf '  Running: no\n'
-        [[ -n "$archived_workspace" && "$archived_workspace" != "-" ]] && printf '  Workspace: %s\n' "$archived_workspace"
-        printf '  Log dir: %s\n' "$archived_log_dir"
-        printf '  Agents: %s\n' "$archived_agents"
-        [[ -n "$archived_created" ]] && printf '  Created: %s\n' "$archived_created"
-        [[ -n "$archived_updated" ]] && printf '  Updated: %s\n' "$archived_updated"
-        echo
-      else
-        printf '%s\tstatus=archived\trunning=no\tagents=%s\tcreated=%s\tupdated=%s\tlog_dir=%s\n' \
-          "$archived_session" \
-          "$archived_agents" \
-          "$archived_created" \
-          "$archived_updated" \
-          "$archived_log_dir"
-      fi
-      found=1
-    done < <(archived_repo_sessions)
-  fi
-
-  [[ "$found" -eq 1 ]] || echo "No sessions found for this agent-window install"
-}
-
-show_status() {
-  local session="$1"
-  if ! tmux has-session -t "=$session" 2>/dev/null; then
-    echo "Session not found: $session"
-    return 0
-  fi
-
-  local workspace window_count pane_count
-  workspace="$(tmux show-environment -t "$session" AGENT_WINDOW_WORKSPACE 2>/dev/null | sed 's/^[^=]*=//')"
-  window_count="$(tmux list-windows -t "$session" 2>/dev/null | wc -l | tr -d ' ')"
-  pane_count="$(tmux list-panes -s -t "$session" 2>/dev/null | wc -l | tr -d ' ')"
-
-  echo "Session: $session"
-  echo "Running: yes"
-  [[ -n "$workspace" ]] && echo "Workspace: $workspace"
-  echo "Windows: $window_count"
-  echo "Panes: $pane_count"
-  echo "Agents:"
-
-  local instance upper pane_id pane_title pane_dead agents_str
-  agents_str="$(session_agents_value "$session")"
-  [[ "$agents_str" == "-" ]] && agents_str="$ALL_AGENTS_CSV"
-  IFS=',' read -ra _status_agents <<< "$agents_str"
-  for instance in "${_status_agents[@]}"; do
-    upper="$(printf '%s' "$instance" | tr '[:lower:]-' '[:upper:]_')"
-    pane_id="$(tmux show-environment -t "$session" "AGENT_WINDOW_PANE_${upper}" 2>/dev/null | sed 's/^[^=]*=//' || true)"
-    if [[ -z "$pane_id" ]]; then
-      echo "  - $instance: not configured"
-      continue
-    fi
-    pane_title="$(tmux display-message -p -t "$pane_id" '#{pane_title}' 2>/dev/null || true)"
-    pane_dead="$(tmux display-message -p -t "$pane_id" '#{pane_dead}' 2>/dev/null || true)"
-    if [[ "$pane_dead" == "1" ]]; then
-      echo "  - $instance: pane=$pane_id dead"
-    else
-      echo "  - $instance: pane=$pane_id title=${pane_title:-unknown} running"
-    fi
-  done
-}
-
-print_agent_context() {
-  local session="$1" resolved_note="$2"
-  local workspace agents_str inst upper pane_id pane_title pane_dead pane_cmd
-  local current_pane instance_guess sock
-
-  workspace="$(tmux show-environment -t "$session" AGENT_WINDOW_WORKSPACE 2>/dev/null | sed 's/^[^=]*=//' || true)"
-  sock="$(tmux show-environment -t "$session" AGENT_WINDOW_TMUX_SOCKET 2>/dev/null | sed 's/^[^=]*=//' || true)"
-  [[ -z "$sock" ]] && sock="$TMUX_SOCKET_NAME"
-  agents_str="$(session_agents_value "$session")"
-  [[ "$agents_str" == "-" ]] && agents_str=""
-
-  current_pane="${TMUX_PANE:-}"
-  instance_guess=""
-  if [[ -n "$current_pane" && -n "$agents_str" ]]; then
-    IFS=',' read -ra _ctx_agents <<< "$agents_str"
-    for inst in "${_ctx_agents[@]}"; do
-      [[ -n "$inst" ]] || continue
-      upper="$(printf '%s' "$inst" | tr '[:lower:]-' '[:upper:]_')"
-      pane_id="$(tmux show-environment -t "$session" "AGENT_WINDOW_PANE_${upper}" 2>/dev/null | sed 's/^[^=]*=//' || true)"
-      [[ "$pane_id" == "$current_pane" ]] && instance_guess="$inst" && break
-    done
-  fi
-  [[ -n "$instance_guess" ]] || instance_guess="${AGENT_WINDOW_AGENT_NAME:-}"
-
-  if [[ "$CONTEXT_JSON" -eq 1 ]]; then
-    python3 - "$session" "$resolved_note" "$sock" "${AGENT_WINDOW_SESSION:-}" "$workspace" \
-      "$agents_str" "$current_pane" "$instance_guess" "$CENTRAL_LOG_DIR" <<'PYEOF'
-import json
-import os
-import sys
-
-session, resolved_note, sock, mult_session, workspace = sys.argv[1:6]
-agents_str, current_pane, instance_guess, central_log = sys.argv[6:10]
-
-agents = [a.strip() for a in agents_str.split(",") if a.strip()] if agents_str else []
-out = {
-    "tmux_session": session,
-    "session_resolved_via": resolved_note or None,
-    "tmux_socket_effective": sock or None,
-    "AGENT_WINDOW_SESSION_env": mult_session or None,
-    "workspace": workspace or None,
-    "central_log_repo": central_log or None,
-    "AGENT_WINDOW_AGENTS": agents,
-    "current_tmux_pane": current_pane or None,
-    "this_pane_role": instance_guess or None,
-}
-print(json.dumps(out, indent=2, ensure_ascii=False))
-PYEOF
-    return 0
-  fi
-
-  printf '%s\n' "## agent-window context"
-  printf '%s\n' ""
-  printf '%s\n' "- **tmux session**: ${session}"
-  printf '%s\n' "- **session resolved via**: ${resolved_note:-unknown}"
-  printf '%s\n' "- **tmux socket (effective)**: ${sock}"
-  [[ -n "${AGENT_WINDOW_SESSION:-}" ]] && printf '%s\n' "- **AGENT_WINDOW_SESSION (env)**: ${AGENT_WINDOW_SESSION}"
-  [[ -n "$workspace" ]] && printf '%s\n' "- **AGENT_WINDOW_WORKSPACE**: ${workspace}"
-  printf '%s\n' "- **central runtime logs**: ${CENTRAL_LOG_DIR}"
-  printf '%s\n' "- **AGENT_WINDOW_AGENTS**: ${agents_str:-<unset>}"
-  [[ -n "$current_pane" ]] && printf '%s\n' "- **this tmux pane (TMUX_PANE)**: ${current_pane}"
-  [[ -n "$instance_guess" ]] && printf '%s\n' "- **this pane as agent instance (best effort)**: ${instance_guess}"
-  printf '%s\n' ""
-  printf '%s\n' "### Agent panes"
-  if [[ -n "$agents_str" ]]; then
-    session_agent_state_lines "$session"
-  else
-    printf '%s\n' "  (AGENT_WINDOW_AGENTS unset and no fallback; use \`agent-window status --session '${session}'\`.)"
-  fi
-  printf '%s\n' ""
-  printf '%s\n' "### Hints"
-  printf '%s\n' "- \`agent-send\` uses \`AGENT_WINDOW_SESSION\` (and tmux); targets come from AGENT_WINDOW_AGENTS and AGENT_WINDOW_PANE_* in this session."
-  printf '%s\n' "- Chat jsonl lives at \`${CENTRAL_LOG_DIR}/${session}/.log.jsonl\`; workspace mirror is \`${workspace}/.agent-window/.log.jsonl\`."
 }
 
 CMD_DISPATCH_CORE_SH="$REPO_ROOT/bin/lib/cmd_dispatch.sh"
@@ -590,16 +206,13 @@ while [[ $# -gt 0 ]]; do
     add-agent)   MODE="add-agent"; shift ;;
     remove-agent) MODE="remove-agent"; shift ;;
     status)      MODE="status"; shift ;;
-    resume)      MODE="resume"; shift ;;
     kill)        MODE="kill"; shift ;;
-    rename)      MODE="rename"; shift ;;
     --session)   SESSION_NAME="$2"; SESSION_NAME_EXPLICIT=1; shift 2 ;;
     --workspace) WORKSPACE="$2"; shift 2 ;;
     --detach)    DETACH=1; shift ;;
     --fresh)     FRESH=1; shift ;;
     --all)       ALL_SESSIONS=1; shift ;;
     --latest)    LATEST_SESSION=1; shift ;;
-    --to)        RENAME_TO="$2"; shift 2 ;;
     --verbose)   LIST_VERBOSE=1; shift ;;
     --json)      CONTEXT_JSON=1; shift ;;
     --agents|--agent) AGENTS_ARG="$2"; shift 2 ;;
@@ -713,4 +326,12 @@ if [[ "$NO_AGENTS" -eq 0 && ${#INSTANCE_NAMES[@]} -gt 0 ]]; then
 fi
 session_control "${_create_args[@]}"
 [[ "$DETACH" -eq 1 ]] && exit 0
-exec_tmux attach-session -t "$SESSION_NAME"
+# tmux's own name for this session is derived from the workspace, not the
+# AW session name -- ask session_control (the same folder-first bridge used
+# everywhere else) rather than assuming they match.
+TMUX_TARGET_NAME="$(session_json_field "$(session_control describe --session "$SESSION_NAME" --tmux-socket "$TMUX_SOCKET_NAME" --json)" tmux_name)"
+if [[ -z "$TMUX_TARGET_NAME" ]]; then
+  echo "Session was created but no live tmux session was found for it: $SESSION_NAME" >&2
+  exit 1
+fi
+exec_tmux attach-session -t "$TMUX_TARGET_NAME"

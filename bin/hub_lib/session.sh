@@ -31,52 +31,24 @@ ensure_session_workspace_mirrors(sys.argv[1], sys.argv[2])
 PYEOF
 }
 
-repo_log_roots() {
-  printf '%s\n' "$AGENT_WINDOW_LOG_DIR"
-}
-
-find_archived_index_files() {
-  local session_filter="${1:-}" root
-  while IFS= read -r root; do
-    [[ -d "$root" ]] || continue
-    if [[ -n "$session_filter" ]]; then
-      find "$root" -maxdepth 2 -type f -path "*/${session_filter}/.log.jsonl" 2>/dev/null
-    else
-      find "$root" -maxdepth 2 -type f -name '.log.jsonl' 2>/dev/null
-    fi
-  done < <(repo_log_roots)
-}
-
-latest_archived_index_file() {
-  local session_filter="${1:-}"
-  find_archived_index_files "$session_filter" | sort | tail -n 1
-}
-
 # A workspace has at most one session, active or archived (enforced at
 # creation in backend_core.tmux.control.create_session), so this is a
 # lookup, not a "which of these did you mean" search. Delegates to the
 # same .meta-scanning helper that guards session creation, instead of
-# re-deriving matching semantics separately in bash.
+# re-deriving matching semantics separately in bash. Prefers
+# AGENT_WINDOW_WORKSPACE (set once at session creation, stable even if this
+# process's own cwd has since moved) over the current directory.
 resolve_workspace_session() {
-  PYTHONPATH="$HUB_PYTHONPATH" python3 - <<'PYEOF'
+  PYTHONPATH="$HUB_PYTHONPATH" python3 - "${AGENT_WINDOW_WORKSPACE:-$PWD}" <<'PYEOF'
+import sys
 from pathlib import Path
 
 from backend_core.access.session_meta import find_session_for_workspace
 
-found = find_session_for_workspace(Path.cwd())
+found = find_session_for_workspace(Path(sys.argv[1]))
 if found:
     print(found)
 PYEOF
-}
-
-available_agents() {
-  local agents_str
-  agents_str="$(tmux show-environment -t "$SESSION_NAME" AGENT_WINDOW_AGENTS 2>/dev/null | sed 's/^[^=]*=//' || true)"
-  if [[ -n "$agents_str" ]]; then
-    printf '%s\n' "$agents_str"
-    return
-  fi
-  printf '\n'
 }
 
 resolve_session_log_dir() {
@@ -91,18 +63,14 @@ resolve_session_log_dir() {
   printf '%s\n' "$session_dir"
 }
 
+# tmux never knows an AW session's own name -- only the workspace it runs
+# in -- so "which AW session am I in" can only be answered by that
+# workspace, never by asking tmux for its own session name directly (that
+# name is workspace-derived internal tmux plumbing, not the AW identity).
 resolve_session_name() {
   if [[ -n "$SESSION_NAME" ]]; then
     printf '%s\n' "$SESSION_NAME"
     return 0
-  fi
-
-  if [[ -n "${TMUX:-}" ]]; then
-    SESSION_NAME="$(tmux display-message -p '#{session_name}' 2>/dev/null || true)"
-    if [[ -n "$SESSION_NAME" ]]; then
-      printf '%s\n' "$SESSION_NAME"
-      return 0
-    fi
   fi
 
   local workspace_session

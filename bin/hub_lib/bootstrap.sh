@@ -20,17 +20,13 @@ print(agent_window_run_dir())
 PYEOF
 )}"
 export AGENT_WINDOW_RUN_DIR
-AGENT_WINDOW_LOG_DIR="${AGENT_WINDOW_LOG_DIR:-$(PYTHONPATH="$HUB_PYTHONPATH" python3 - "$REPO_ROOT" <<'PYEOF'
-import sys
-from pathlib import Path
-
-repo_root = Path(sys.argv[1]).resolve()
-from backend_core.access.settings import local_runtime_log_dir
-
-print(local_runtime_log_dir())
-PYEOF
-)}"
-export AGENT_WINDOW_LOG_DIR
+# Not exported: this is agent-index's own lookup of a fixed, hardcoded
+# path (backend_core.access.settings.agent_window_session_root() is
+# `~/.agent-window/session`, unconditionally -- no repo, workspace, or
+# session ever changes it), used only by the bash helpers below. Nothing
+# else needs it, and nothing downstream (a spawned chat server, a tmux
+# session) should ever see this name in its own environment.
+AGENT_WINDOW_LOG_DIR="$HOME/.agent-window/session"
 
 for _cmd in python3 tmux; do
   if ! command -v "$_cmd" >/dev/null 2>&1; then
