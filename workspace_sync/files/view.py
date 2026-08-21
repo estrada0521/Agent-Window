@@ -80,7 +80,7 @@ def render_file_view(
     theme_palette = None
     if runtime.repo_root:
         try:
-            theme_palette = resolve_theme_palette(load_hub_settings(runtime.repo_root))
+            theme_palette = resolve_theme_palette(load_hub_settings())
         except Exception as exc:
             logging.error(f"Unexpected error: {exc}", exc_info=True)
     requested_base_theme = str(preview_base_theme or "").strip().lower()

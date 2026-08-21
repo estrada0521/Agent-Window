@@ -14,8 +14,8 @@ from types import SimpleNamespace
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.session_meta import find_session_for_workspace, write_session_meta_file
 from backend_core.access.settings import (
+    agent_window_session_root,
     ensure_session_workspace_mirrors,
-    local_runtime_log_dir,
     resolve_chat_port,
     session_log_path,
 )
@@ -351,7 +351,7 @@ def create_session(
     )
 
     if fresh:
-        log_dir = local_runtime_log_dir(root) / name
+        log_dir = agent_window_session_root() / name
         if log_dir.is_dir():
             shutil.rmtree(log_dir)
         workspace_runtime = workspace_path / ".agent-window"

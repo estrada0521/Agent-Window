@@ -27,8 +27,8 @@ from hub_backend.session_query import (
     collect_repo_sessions as _collect_repo_sessions_impl,
     host_without_port as _host_without_port_impl,
 )
+from backend_core.access.settings import agent_window_session_root
 from backend_core.access.settings import load_hub_settings as load_shared_hub_settings
-from backend_core.access.settings import local_runtime_log_dir
 from backend_core.access.settings import pwa_https_enabled
 from backend_core.access.settings import resolve_chat_port
 from backend_core.access.settings import save_hub_settings as save_shared_hub_settings
@@ -62,7 +62,7 @@ class HubRuntime:
     def __init__(self, repo_root: Path | str, script_path: Path | str, tmux_socket: str = "", hub_port: int = 0):
         self.repo_root = Path(repo_root).resolve()
         self.script_path = Path(script_path).resolve()
-        self.central_log_dir = local_runtime_log_dir(self.repo_root)
+        self.central_log_dir = agent_window_session_root()
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port or 0)
         self.hub_scheme = "https" if pwa_https_enabled() else "http"
@@ -184,10 +184,10 @@ class HubRuntime:
         return {item["name"]: item for item in self.archived_sessions(active_names)}
 
     def load_hub_settings(self) -> dict:
-        return load_shared_hub_settings(self.repo_root)
+        return load_shared_hub_settings()
 
     def save_hub_settings(self, raw: dict) -> dict:
-        return save_shared_hub_settings(self.repo_root, raw)
+        return save_shared_hub_settings(raw)
 
     def chat_ready(self, chat_port: int) -> bool:
         return _chat_ready_impl(self, chat_port)

@@ -134,7 +134,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             workspace.mkdir()
             api = HubSessionApi(
                 HubSessionApiContext(
-                    repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
                     hub=object(),
                     active_session_records_query=lambda: _Query({}),
                     archived_session_records=lambda _active: {
@@ -165,7 +164,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
 
         api = HubSessionApi(
             HubSessionApiContext(
-                repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
                 hub=object(),
                 active_session_records_query=lambda: _Query({}),
                 archived_session_records=lambda _active: {
@@ -447,7 +445,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             logs = Path(tmp) / "logs"
             missing = Path(tmp) / "Even-Parity"
             hub = SimpleNamespace(repo_root=Path(tmp) / "hub")
-            with patch("hub_backend.chat_supervisor.local_runtime_log_dir", return_value=logs), patch(
+            with patch("hub_backend.chat_supervisor.agent_window_session_root", return_value=logs), patch(
                 "hub_backend.chat_supervisor.session_log_path",
                 return_value=logs / "Even-Parity" / ".log.jsonl",
             ):

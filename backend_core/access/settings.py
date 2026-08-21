@@ -183,14 +183,6 @@ def agent_window_session_root() -> Path:
     return agent_window_root() / "session"
 
 
-def local_state_dir(repo_root: Path | str | None = None) -> Path:
-    return agent_window_state_dir()
-
-
-def local_runtime_log_dir(repo_root: Path | str | None = None) -> Path:
-    return agent_window_session_root()
-
-
 def session_artifact_dir(session_name: str) -> Path:
     return agent_window_session_root() / str(session_name or "").strip()
 
@@ -247,7 +239,7 @@ def default_chat_port(session_name: str) -> int:
 
 
 def chat_ports_path(repo_root: Path | str, *, create_parent: bool = True) -> Path:
-    path = local_state_dir(repo_root) / ".chat-ports.json"
+    path = agent_window_state_dir() / ".chat-ports.json"
     if create_parent:
         path.parent.mkdir(parents=True, exist_ok=True)
     return path
@@ -300,15 +292,15 @@ def port_is_bindable(port: int) -> bool:
         sock.close()
 
 
-def hub_settings_path(repo_root: Path | str) -> Path:
-    local_path = local_state_dir(repo_root) / ".hub-settings.json"
+def hub_settings_path() -> Path:
+    local_path = agent_window_state_dir() / ".hub-settings.json"
     local_path.parent.mkdir(parents=True, exist_ok=True)
     return local_path
 
 
-def load_hub_settings(repo_root: Path | str) -> dict:
+def load_hub_settings() -> dict:
     settings = dict(HUB_SETTINGS_DEFAULTS)
-    path = hub_settings_path(repo_root)
+    path = hub_settings_path()
     if path.is_file():
         raw = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(raw, dict):
@@ -317,10 +309,10 @@ def load_hub_settings(repo_root: Path | str) -> dict:
     return settings
 
 
-def save_hub_settings(repo_root: Path | str, raw: dict) -> dict:
-    settings = load_hub_settings(repo_root)
+def save_hub_settings(raw: dict) -> dict:
+    settings = load_hub_settings()
     settings = _apply_hub_settings(raw, settings, missing_flags_false=True)
-    path = hub_settings_path(repo_root)
+    path = hub_settings_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
     return settings
