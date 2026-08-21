@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import threading
+from collections import deque
 
 
 MIN_RUNTIME_DISPLAY_SECONDS = 0.75
+# Bounds how far the display can lag live activity: at one item per
+# MIN_RUNTIME_DISPLAY_SECONDS, this is ~15s of worst-case backlog. Beyond
+# that, older queued events are dropped in favor of newer ones.
+MAX_RUNTIME_DISPLAY_QUEUE = 20
 
 
 def _runtime_event_payload(runtime, agent: str, text: str, source_id: str) -> dict:
@@ -24,11 +29,11 @@ def _publish_next_runtime_display(runtime, agent: str) -> None:
     with lock:
         queues = getattr(runtime, "_idle_running_display_queues", {})
         timers = getattr(runtime, "_idle_running_display_timers", {})
-        queue = queues.get(agent) or []
+        queue = queues.get(agent)
         if not queue:
             timers.pop(agent, None)
             return
-        text, source_id = queue.pop(0)
+        text, source_id = queue.popleft()
         runtime._idle_running_display_by_agent[agent] = _runtime_event_payload(runtime, agent, text, source_id)
         timer = threading.Timer(MIN_RUNTIME_DISPLAY_SECONDS, _publish_next_runtime_display, args=(runtime, agent))
         timer.daemon = True
@@ -63,7 +68,7 @@ def push_runtime_display(runtime, agent: str, events: list[dict]) -> None:
     with lock:
         queues = getattr(runtime, "_idle_running_display_queues", {})
         timers = getattr(runtime, "_idle_running_display_timers", {})
-        queue = queues.setdefault(agent, [])
+        queue = queues.setdefault(agent, deque(maxlen=MAX_RUNTIME_DISPLAY_QUEUE))
         current_event = ((runtime._idle_running_display_by_agent.get(agent) or {}).get("current_event") or {})
         current_key = (
             str(current_event.get("text") or "").strip(),
