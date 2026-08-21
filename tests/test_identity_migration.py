@@ -36,7 +36,7 @@ class SessionMetaDisplayNameRenameTests(unittest.TestCase):
             meta_path = log_path.parent / ".meta"
             meta_path.write_text(json.dumps({"agent_names": {"claude": "Fable"}}), encoding="utf-8")
             tmux_env = f"AGENT_WINDOW_INDEX_PATH={log_path}\nAGENT_WINDOW_WORKSPACE=/tmp/ws\n"
-            write_session_meta_file("sess", "claude-1,claude-2", tmux_env, rename=rename)
+            write_session_meta_file("claude-1,claude-2", tmux_env, rename=rename)
             return json.loads(meta_path.read_text(encoding="utf-8"))
 
     def test_display_name_survives_a_rename(self) -> None:

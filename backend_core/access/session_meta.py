@@ -81,7 +81,6 @@ def _reconcile_agent_names(
 
 
 def write_session_meta_file(
-    session: str,
     agents_csv: str,
     tmux_env_output: str,
     *,
@@ -108,7 +107,7 @@ def write_session_meta_file(
 
     parsed_agents = _parse_agents_csv(agents_csv)
     _reconcile_agent_names(meta, parsed_agents, rename=rename)
-    meta["session"] = session
+    meta.pop("session", None)
     meta["workspace"] = workspace
     meta["agents"] = parsed_agents
     meta["created_at"] = created_at
