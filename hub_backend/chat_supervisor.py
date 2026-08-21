@@ -11,7 +11,6 @@ import time
 from pathlib import Path
 
 from backend_core.tmux.control import SessionControlError, create_session, kill_session, stop_chat_server as stop_chat_server_impl
-from backend_core.tmux.process_cleanup import track_fire_and_forget_pid
 from backend_core.access.settings import (
     agent_window_run_dir,
     agent_window_session_root,
@@ -235,7 +234,7 @@ def ensure_chat_server(
                 return False, chat_port, detail
         env = self._chat_launch_env(session_is_active=session_is_active, chat_port=chat_port)
         try:
-            proc = subprocess_module.Popen(
+            subprocess_module.Popen(
                 [
                     sys_module.executable,
                     "-m",
@@ -249,7 +248,6 @@ def ensure_chat_server(
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            track_fire_and_forget_pid(proc.pid)
         except OSError as exc:
             return False, chat_port, str(exc)
 

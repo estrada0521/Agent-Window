@@ -10,7 +10,6 @@ from urllib.parse import unquote as url_unquote
 
 from backend_core.access.settings import workspace_upload_dir
 from backend_core.tmux.control import SessionControlError, add_agent, remove_agent
-from backend_core.tmux.process_cleanup import track_fire_and_forget_pid
 from backend_core.tmux.window import tmux_prefix_args
 from shortcut_command.execute import run_shortcut_command
 
@@ -278,12 +277,11 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
                 [*prefix, "select-pane", "-t", pane_id],
                 capture_output=True, check=False,
             )
-            proc = subprocess.Popen(
+            subprocess.Popen(
                 ["osascript", "-e", 'tell application "Terminal" to activate'],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            track_fire_and_forget_pid(proc.pid)
             handler._send_json(200, {"ok": True})
             return
     try:
@@ -327,12 +325,11 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
             f'  activate\n'
             f'end tell'
         )
-        proc = subprocess.Popen(
+        subprocess.Popen(
             ["osascript", "-e", apple_script],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        track_fire_and_forget_pid(proc.pid)
         handler._send_json(200, {"ok": True})
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
@@ -348,12 +345,11 @@ def _post_open_finder(handler, _parsed, ctx) -> None:
         if not target.exists():
             handler._send_json(404, {"ok": False, "error": "workspace not found"})
             return
-        proc = subprocess.Popen(
+        subprocess.Popen(
             ["open", str(target)],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        track_fire_and_forget_pid(proc.pid)
         handler._send_json(200, {"ok": True, "path": str(target)})
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
