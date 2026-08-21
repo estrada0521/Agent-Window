@@ -91,6 +91,8 @@ git と workspaceの状態はFSEventsで監視され、右paneに投影されま
 
 fileをクリックすると、はmacOSの既定のapplicationで展開されます。desktop版のAgent Windowでは既に存在しているfile viewerの再実装をしていません。mobileではそれらに頼れないため、bottom sheet型の内蔵viewerが開きます。
 
+uncommitted changeをクリックすると、gitに設定されたdiff viewer（`git difftool`）で開かれます。
+
 ## Agent同士をつなぐ
 
 Agentは `agent-send` で、session内の別のAgentへ直接メッセージを送れます。必要な場合は、`SKILL.md`を所定の場所に配置してください。これはAgent Windowが契約した唯一のSKILLです。
