@@ -22,9 +22,7 @@ from hub_backend.runtime import HubRuntime
 from hub_backend.session_api import HubSessionApi, HubSessionApiContext
 from server.runtime import ChatRuntime
 from backend_core.access.settings import DEFAULT_MESSAGE_FONT, load_hub_settings, settings_for_chat_render
-from backend_core.tmux.process_cleanup import install_child_reaper
 
-install_child_reaper()
 hub = HubRuntime(repo_root, script_path, tmux_socket, hub_port=hub_port)
 ensure_chat_server = hub.ensure_chat_server
 session_api = HubSessionApi(
