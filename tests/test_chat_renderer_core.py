@@ -15,6 +15,33 @@ def _between(text: str, start: str, end: str) -> str:
 
 
 class ChatRendererCoreTests(unittest.TestCase):
+    def test_local_file_link_location_is_not_part_of_the_path(self) -> None:
+        parser = (ROOT / "apps/shared/chat/file-link-parse.js").read_text()
+        script = f"""
+const assert = require("node:assert/strict");
+const window = {{ location: {{ href: "https://127.0.0.1:47616/", origin: "https://127.0.0.1:47616" }} }};
+const CHAT_BASE_PATH = "";
+{parser}
+assert.equal(
+  pathFromLocalHref("/Users/okadaharuto/workspace/Agent-Window/README.md:54"),
+  "/Users/okadaharuto/workspace/Agent-Window/README.md",
+);
+assert.equal(pathFromLocalHref("src/app.py:12:7"), "src/app.py");
+assert.equal(pathFromLocalHref("/tmp/report.md"), "/tmp/report.md");
+assert.equal(
+  pathFromLocalHref("/file-view?path=%2Ftmp%2Freport%3A54"),
+  "/tmp/report:54",
+);
+"""
+        completed = subprocess.run(
+            ["node"],
+            input=script,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+
     def test_renderer_falls_back_to_plain_text_on_marked_failure(self) -> None:
         base = (ROOT / "apps/shared/chat/base.js").read_text()
         messages = (ROOT / "apps/shared/chat/runtime/messages.js").read_text()
