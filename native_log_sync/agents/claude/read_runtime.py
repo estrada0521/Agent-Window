@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from native_log_sync.agents._shared.runtime_display import runtime_event, short_line
+from native_log_sync.agents._shared.runtime_display import runtime_event, short_line, unknown_tool_label
 from native_log_sync.agents._shared.runtime_paths import display_path
 
 _QUIET: frozenset[str] = frozenset({"write_stdin", "todoread"})
@@ -239,6 +239,7 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
     else:
         main = _MAIN_LABEL.get(lower)
         if main is None:
-            return [runtime_event("Tool", raw_name, source_id=_source_id("tool:unknown", raw_name))]
+            fallback_main, fallback_sub = unknown_tool_label(raw_name)
+            return [runtime_event(fallback_main, fallback_sub, source_id=_source_id("tool:unknown", raw_name))]
         sub = _claude_tool_subline(lower, a, workspace=ws).strip()
     return [runtime_event(main, sub, source_id=_source_id(f"tool:{lower}", sub))]

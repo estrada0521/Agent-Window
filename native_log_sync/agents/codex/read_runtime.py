@@ -6,7 +6,7 @@ import os
 import re
 import shlex
 
-from native_log_sync.agents._shared.runtime_display import runtime_event, short_line
+from native_log_sync.agents._shared.runtime_display import runtime_event, short_line, unknown_tool_label
 from native_log_sync.agents._shared.runtime_paths import display_path
 
 # Transport/polling calls were also intentionally quiet in the 5.5 display.
@@ -452,12 +452,10 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
         sub = short_line(_pick(a, "query") or "tools")
         return [runtime_event("Tool Search", sub, source_id=_sid("tool:tool_search", sub))]
     main = MAIN_LABEL.get(lower)
-    sub = _codex_subline(lower, a, workspace=str(workspace or "")).strip() if main else ""
     if main is None:
         # 5.6 can add connector/MCP tools without changing the envelope. Do
         # not silently lose them: preserve a compact generic runtime event.
-        main = "Tool"
-        sub = lower
-    if not sub:
-        sub = lower
+        main, sub = unknown_tool_label(lower)
+    else:
+        sub = _codex_subline(lower, a, workspace=str(workspace or "")).strip() or lower
     return [runtime_event(main, sub, source_id=_sid(f"tool:{lower}", sub))]

@@ -4,7 +4,7 @@ import json
 import os
 import shlex
 
-from native_log_sync.agents._shared.runtime_display import runtime_event, short_line
+from native_log_sync.agents._shared.runtime_display import runtime_event, short_line, unknown_tool_label
 from native_log_sync.agents._shared.runtime_paths import display_path
 
 
@@ -137,8 +137,7 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
         main = "Message"
         sub = _pick(args, "Recipient")
     else:
-        main = "Tool"
-        sub = raw_name
+        main, sub = unknown_tool_label(raw_name)
 
     sub = short_line(sub)
     if not main:
