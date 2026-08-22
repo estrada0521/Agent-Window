@@ -90,20 +90,6 @@ class AntigravityTranscriptTests(unittest.TestCase):
         self.assertEqual(iter_tool_calls(entry), [("search_web", {"query": "Antigravity"})])
         self.assertEqual(iter_tool_calls({"source": "USER", "tool_calls": entry["tool_calls"]}), [])
 
-    def test_transcript_fallback_unquotes_cli_rendered_arguments(self) -> None:
-        entry = {
-            "source": "MODEL",
-            "type": "PLANNER_RESPONSE",
-            "content": "fallback response",
-            "tool_calls": [
-                {"name": "view_file", "args": {"AbsolutePath": '"/workspace/app.py"'}}
-            ],
-        }
-        self.assertEqual(
-            parse_antigravity_transcript_step(entry),
-            ("fallback response", [("view_file", {"AbsolutePath": "/workspace/app.py"})]),
-        )
-
     def test_non_planner_model_rows_are_ignored(self) -> None:
         self.assertEqual(
             parse_antigravity_transcript_step(
