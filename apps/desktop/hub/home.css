@@ -1363,7 +1363,6 @@
     .desk-session-title-text {
       color: var(--fg);
       font-size: 13px;
-      font-weight: 500;
       letter-spacing: 0.01em;
       white-space: nowrap;
       overflow: hidden;
