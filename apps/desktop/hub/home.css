@@ -17,7 +17,6 @@
       --icon-fg: __ICON_FG__;
       --icon-muted: __ICON_MUTED__;
       --icon-hover: __ICON_HOVER__;
-      --desk-chrome-fg: var(--icon-fg);
       --desk-chrome-hover-bg: var(--bg);
       --session-hover-bg: __SESSION_HOVER_BG__;
       --session-selected-bg: __SESSION_SELECTED_BG__;
@@ -34,7 +33,6 @@
       --icon-fg: rgb(11, 11, 11);
       --icon-muted: rgb(120, 120, 120);
       --icon-hover: rgb(35, 35, 35);
-      --desk-chrome-fg: rgb(11, 11, 11);
       --desk-chrome-hover-bg: var(--bg);
       --panel: rgba(250, 250, 250, 0.72);
       --panel-2: rgba(245, 245, 245, 0.82);
@@ -56,7 +54,6 @@
       --icon-fg: rgb(200, 200, 200);
       --icon-muted: rgb(150, 150, 150);
       --icon-hover: rgb(190, 190, 190);
-      --desk-chrome-fg: rgb(255, 255, 255);
       --desk-chrome-hover-bg: var(--bg);
       --panel: rgba(10, 10, 10, 0.86);
       --panel-2: rgba(15, 15, 15, 0.82);
@@ -183,8 +180,7 @@
       -webkit-backdrop-filter: none;
       -webkit-tap-highlight-color: transparent;
       transition: none;
-      color: var(--desk-chrome-fg);
-      mix-blend-mode: difference;
+      color: var(--fg);
       justify-content: flex-end;
       padding-right: 0;
     }
@@ -369,7 +365,7 @@
       bottom: 0;
       right: 0;
       width: 1px;
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--line);
       pointer-events: none;
       z-index: 2;
     }
@@ -428,7 +424,7 @@
       width: var(--desk-chrome-size);
       height: var(--desk-chrome-size);
       padding: 0;
-      color: var(--desk-chrome-fg);
+      color: var(--fg);
       background: none;
       border: none;
       border-radius: var(--desk-chrome-radius);
@@ -453,21 +449,21 @@
       display: block;
       width: var(--desk-chrome-icon-size);
       height: var(--desk-chrome-icon-size);
-      color: var(--desk-chrome-fg);
-      stroke: var(--desk-chrome-fg);
+      color: var(--fg);
+      stroke: var(--fg);
       stroke-width: 1.8;
     }
     .desk-floating-controls .desk-settings-icon-btn:hover {
-      color: var(--desk-chrome-fg);
+      color: var(--fg);
       background: var(--desk-chrome-hover-bg);
     }
     .desk-floating-controls .desk-settings-icon-btn .desk-settings-filled-icon {
       display: none;
-      fill: var(--desk-chrome-fg);
+      fill: var(--fg);
       stroke: none;
     }
     .desk-floating-controls .desk-settings-icon-btn .desk-settings-filled-icon path {
-      fill: var(--desk-chrome-fg);
+      fill: var(--fg);
       stroke: none;
     }
     .desk-floating-controls .desk-settings-icon-btn.is-active .desk-settings-outline-icon {
@@ -502,7 +498,7 @@
       -webkit-app-region: no-drag;
       -webkit-tap-highlight-color: transparent;
       transition: color 0.15s ease, background 0.15s ease, transform 0.1s ease;
-      color: var(--desk-chrome-fg);
+      color: var(--fg);
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-app-sidebar-toggle {
       top: env(safe-area-inset-top, 0px);
@@ -545,7 +541,7 @@
       height: var(--desk-chrome-size);
       margin: 0;
       padding: 0;
-      color: var(--desk-chrome-fg);
+      color: var(--fg);
       background: transparent;
       border: none;
       border-radius: var(--desk-chrome-radius);
@@ -589,7 +585,7 @@
       height: var(--desk-chrome-size);
       margin: 0;
       padding: 0;
-      color: var(--desk-chrome-fg);
+      color: var(--fg);
       background: transparent;
       border: none;
       border-radius: var(--desk-chrome-radius);
@@ -606,8 +602,8 @@
       display: block;
       width: var(--desk-chrome-icon-size);
       height: var(--desk-chrome-icon-size);
-      color: var(--desk-chrome-fg);
-      stroke: var(--desk-chrome-fg);
+      color: var(--fg);
+      stroke: var(--fg);
       stroke-width: 1.8;
     }
     .desk-floating-controls .desk-settings-icon-btn svg *,
@@ -615,7 +611,7 @@
     .desk-chat-menu-btn svg *,
     .desk-chat-reload-btn svg *,
     .desk-panel-ctrl-btn svg * {
-      stroke: var(--desk-chrome-fg);
+      stroke: var(--fg);
     }
     .desk-app-sidebar-toggle .desk-pane-active-icon,
     .desk-panel-ctrl-btn .desk-pane-active-icon {
@@ -623,7 +619,7 @@
     }
     .desk-app-sidebar-toggle .desk-pane-active-fill,
     .desk-panel-ctrl-btn .desk-pane-active-fill {
-      fill: var(--desk-chrome-fg);
+      fill: var(--fg);
       stroke: none;
     }
     .desk-app-sidebar-toggle.is-active .desk-pane-outline-icon,
@@ -637,12 +633,12 @@
       display: block;
     }
     .desk-panel-ctrl-btn:hover {
-      color: var(--desk-chrome-fg);
+      color: var(--fg);
       background: var(--desk-chrome-hover-bg);
     }
     .desk-panel-ctrl-btn.active,
     .desk-panel-ctrl-btn[aria-pressed="true"] {
-      color: var(--desk-chrome-fg);
+      color: var(--fg);
     }
     .desk-panel-ctrl-btn:active {
       transform: scale(0.9);
@@ -651,8 +647,8 @@
       display: block;
       width: var(--desk-chrome-icon-size);
       height: var(--desk-chrome-icon-size);
-      color: var(--desk-chrome-fg);
-      stroke: var(--desk-chrome-fg);
+      color: var(--fg);
+      stroke: var(--fg);
       stroke-width: 1.8;
     }
     .desk-chat-menu-btn svg,
@@ -660,25 +656,25 @@
       display: block;
       width: var(--desk-chrome-icon-size);
       height: var(--desk-chrome-icon-size);
-      color: var(--desk-chrome-fg);
-      stroke: var(--desk-chrome-fg);
+      color: var(--fg);
+      stroke: var(--fg);
       stroke-width: 1.8;
     }
     .desk-app-sidebar-toggle:hover {
-      color: var(--desk-chrome-fg);
+      color: var(--fg);
       background: var(--desk-chrome-hover-bg);
     }
     .desk-app-sidebar-toggle.is-active {
-      color: var(--desk-chrome-fg);
+      color: var(--fg);
     }
     .desk-chat-menu-btn:hover,
     .desk-chat-reload-btn:hover {
-      color: var(--desk-chrome-fg);
+      color: var(--fg);
       background: var(--desk-chrome-hover-bg);
     }
     .desk-chat-menu-btn.is-active,
     .desk-chat-reload-btn.restarting {
-      color: var(--desk-chrome-fg);
+      color: var(--fg);
     }
     .desk-app-sidebar-toggle:active,
     .desk-chat-menu-btn:active,
@@ -1365,7 +1361,7 @@
       background: transparent;
     }
     .desk-session-title-text {
-      color: var(--desk-chrome-fg);
+      color: var(--fg);
       font-size: 13px;
       font-weight: 500;
       letter-spacing: 0.01em;
