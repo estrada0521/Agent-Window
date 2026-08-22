@@ -94,13 +94,10 @@
       line-height: inherit;
     }
 
-    .md-body a.inline-file-link {
-      color: var(--inline-file-link-fg);
-      text-decoration: none;
-    }
-
+    .md-body a.inline-file-link,
     .md-body a.local-file-link {
       color: var(--inline-file-link-fg);
+      font-weight: 650;
       text-decoration: none;
     }
 
