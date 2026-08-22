@@ -11,32 +11,19 @@ source "$HUB_LIB_DIR/bootstrap.sh"
 # shellcheck source=/dev/null
 source "$HUB_LIB_DIR/https.sh"
 
-HTTPS_MODE=0
-HTTPS_MODE_EXPLICIT=0
 HUB_PORT="${AGENT_INDEX_HUB_PORT:-8788}"
 READY_TIMEOUT_SEC=6
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --hub-port) HUB_PORT="$2"; shift 2 ;;
-    --https) HTTPS_MODE=1; HTTPS_MODE_EXPLICIT=1; shift ;;
-    --http) HTTPS_MODE=0; HTTPS_MODE_EXPLICIT=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 1 ;;
   esac
 done
 
 PWA_ENABLED_FILE="${AGENT_WINDOW_STATE_DIR:-$HOME/.agent-window/state}/pwa/enabled"
-if [[ "$HTTPS_MODE_EXPLICIT" -eq 0 && ( "${AGENT_WINDOW_ENABLE_LOCAL_HTTPS:-}" == "1" || -f "$PWA_ENABLED_FILE" ) ]]; then
-  HTTPS_MODE=1
-fi
-if [[ "$HTTPS_MODE" -eq 1 ]]; then
-  if [[ ! -f "$PWA_ENABLED_FILE" ]]; then
-    echo "PWA HTTPS is not enabled yet." >&2
-    echo "Start the HTTP Tauri app first, then run ./setup/pwa/enable." >&2
-    exit 1
-  fi
-  export AGENT_WINDOW_ENABLE_LOCAL_HTTPS=1
+if [[ -f "$PWA_ENABLED_FILE" ]]; then
   CERTS_DIR="${AGENT_WINDOW_CERTS_DIR:-$HOME/.agent-window/state/certs}"
   : "${AGENT_WINDOW_CERT_FILE:=$CERTS_DIR/cert.pem}"
   : "${AGENT_WINDOW_KEY_FILE:=$CERTS_DIR/key.pem}"
@@ -51,7 +38,7 @@ else
     echo "PWA is enabled; HTTP is not allowed." >&2
     exit 1
   fi
-  unset AGENT_WINDOW_CERT_FILE AGENT_WINDOW_KEY_FILE AGENT_WINDOW_ENABLE_LOCAL_HTTPS
+  unset AGENT_WINDOW_CERT_FILE AGENT_WINDOW_KEY_FILE
   HTTPS_SCHEME="http"
 fi
 if [[ "$HTTPS_SCHEME" == "https" ]]; then

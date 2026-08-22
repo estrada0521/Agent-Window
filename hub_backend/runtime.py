@@ -5,30 +5,7 @@ import threading
 from dataclasses import dataclass
 from pathlib import Path
 
-from hub_backend.chat_supervisor import (
-    chat_launch_env as _chat_launch_env_impl,
-    chat_ready as _chat_ready_impl,
-    chat_server_state as _chat_server_state_impl,
-    delete_archived_session as _delete_archived_session_impl,
-    ensure_chat_server as _ensure_chat_server_impl,
-    kill_repo_session as _kill_repo_session_impl,
-    revive_archived_session as _revive_archived_session_impl,
-    stop_chat_server as _stop_chat_server_impl,
-    stop_inactive_chat_servers as _stop_inactive_chat_servers_impl,
-    _chat_launch_port as _chat_launch_port_impl,
-)
-from hub_backend.session_query import (
-    archived_sessions as _archived_sessions_impl,
-    build_session_record as _build_session_record_impl,
-    collect_repo_sessions as _collect_repo_sessions_impl,
-    host_without_port as _host_without_port_impl,
-    live_tmux_workspaces_query as _live_tmux_workspaces_query_impl,
-)
-from backend_core.access.settings import agent_window_session_root
-from backend_core.access.settings import workspace_chat_port
-from backend_core.access.settings import load_hub_settings as load_shared_hub_settings
 from backend_core.access.settings import pwa_https_enabled
-from backend_core.access.settings import save_hub_settings as save_shared_hub_settings
 from backend_core.tmux.window import tmux_prefix_args
 from backend_core.tmux.resolve import normalize_workspace
 
@@ -42,30 +19,9 @@ class TmuxRunResult:
     timed_out: bool = False
 
 
-@dataclass(frozen=True)
-class SessionQueryResult:
-    records: dict[str, dict]
-    warnings: dict[str, dict]
-    state: str
-    detail: str = ""
-
-    @property
-    def non_archived_names(self) -> set[str]:
-        return set(self.records) | set(self.warnings)
-
-
-@dataclass(frozen=True)
-class RepoSessionsQueryResult:
-    sessions: list[dict]
-    warnings: list[dict]
-    state: str
-    detail: str = ""
-
-
 class HubRuntime:
     def __init__(self, repo_root: Path | str, tmux_socket: str = "", hub_port: int = 0):
         self.repo_root = Path(repo_root).resolve()
-        self.central_log_dir = agent_window_session_root()
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port or 0)
         self.hub_scheme = "https" if pwa_https_enabled() else "http"
@@ -105,144 +61,9 @@ class HubRuntime:
                 timed_out=True,
             )
 
-    def tmux_env(self, session_name: str, key: str) -> str:
-        result = self.tmux_run(["show-environment", "-t", session_name, key])
-        line = result.stdout.strip()
-        if result.returncode == 0 and "=" in line:
-            return line.split("=", 1)[1]
-        return ""
-
     def tmux_env_query(self, session_name: str, key: str) -> tuple[str, bool]:
         result = self.tmux_run(["show-environment", "-t", session_name, key])
         line = result.stdout.strip()
         if result.returncode == 0 and "=" in line:
             return line.split("=", 1)[1], result.timed_out
         return "", result.timed_out
-
-    def session_agents_query(self, tmux_name: str) -> tuple[list[str], bool]:
-        agents_str, timed_out = self.tmux_env_query(tmux_name, "AGENT_WINDOW_AGENTS")
-        if timed_out:
-            return [], True
-        cleaned = str(agents_str or "").strip()
-        if not cleaned or cleaned == "-":
-            return [], False
-        return [a.strip() for a in cleaned.split(",") if a.strip() and a.strip() != "-"], False
-
-    def resolve_tmux_session_name_for_workspace(self, workspace: str) -> str:
-        target = str(workspace or "").strip()
-        if not target:
-            return ""
-        workspace_to_tmux, state, detail = _live_tmux_workspaces_query_impl(self)
-        if state != "ok":
-            raise RuntimeError(detail or "tmux session resolution failed")
-        return workspace_to_tmux.get(normalize_workspace(target), "")
-
-    def chat_port_for_workspace(self, workspace: str) -> int:
-        return workspace_chat_port(workspace)
-
-    @staticmethod
-    def host_without_port(host_header: str) -> str:
-        return _host_without_port_impl(host_header)
-
-    def _build_session_record(
-        self,
-        *,
-        name: str,
-        workspace: str,
-        agents: list[str],
-        status: str,
-        attached: int,
-        dead_panes: int,
-        created_epoch: int = 0,
-        created_at: str = "",
-        updated_epoch: int = 0,
-        updated_at: str = "",
-        log_path: Path | None = None,
-    ) -> dict:
-        return _build_session_record_impl(
-            self,
-            name=name,
-            workspace=workspace,
-            agents=agents,
-            status=status,
-            attached=attached,
-            dead_panes=dead_panes,
-            created_epoch=created_epoch,
-            created_at=created_at,
-            updated_epoch=updated_epoch,
-            updated_at=updated_at,
-            log_path=log_path,
-        )
-
-    def repo_sessions_query(self) -> RepoSessionsQueryResult:
-        sessions, warnings, state, detail = _collect_repo_sessions_impl(self)
-        return RepoSessionsQueryResult(sessions, warnings, state, detail)
-
-    def archived_sessions(self, excluded_names: set[str] | list[str] | None = None) -> list[dict]:
-        return _archived_sessions_impl(self, excluded_names)
-
-    def active_session_records_query(self) -> SessionQueryResult:
-        res = self.repo_sessions_query()
-        return SessionQueryResult(
-            records={item["name"]: item for item in res.sessions},
-            warnings={item["name"]: item for item in res.warnings},
-            state=res.state,
-            detail=res.detail,
-        )
-
-    def archived_session_records(self, excluded_names: set[str] | list[str] | None = None) -> dict[str, dict]:
-        return {item["name"]: item for item in self.archived_sessions(excluded_names)}
-
-    def load_hub_settings(self) -> dict:
-        return load_shared_hub_settings()
-
-    def save_hub_settings(self, raw: dict) -> dict:
-        return save_shared_hub_settings(raw)
-
-    def chat_ready(self, chat_port: int) -> bool:
-        return _chat_ready_impl(self, chat_port)
-
-    def chat_server_state(self, chat_port: int) -> dict | None:
-        return _chat_server_state_impl(self, chat_port)
-
-    def stop_chat_server(self, workspace: str) -> tuple[bool, str]:
-        return _stop_chat_server_impl(self, workspace)
-
-    def stop_inactive_chat_servers(self, *, keep_workspace: str = "") -> str:
-        return _stop_inactive_chat_servers_impl(self, keep_workspace=keep_workspace)
-
-    def _chat_launch_env(self) -> dict[str, str]:
-        return _chat_launch_env_impl(self)
-
-    def _chat_launch_port(
-        self,
-        *,
-        workspace: str,
-        expected_active: bool = True,
-    ) -> tuple[int, bool, str]:
-        return _chat_launch_port_impl(
-            self,
-            workspace=workspace,
-            expected_active=expected_active,
-        )
-
-    def ensure_chat_server(
-        self,
-        *,
-        expected_active: bool = True,
-        workspace: str = "",
-    ) -> tuple[bool, int, str]:
-        return _ensure_chat_server_impl(
-            self,
-            expected_active=expected_active,
-            workspace=workspace,
-        )
-
-    def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
-        return _revive_archived_session_impl(self, session_name)
-
-    def kill_repo_session(self, session_name: str) -> tuple[bool, str]:
-        return _kill_repo_session_impl(self, session_name)
-
-    def delete_archived_session(self, session_name: str) -> tuple[bool, str]:
-        return _delete_archived_session_impl(self, session_name)

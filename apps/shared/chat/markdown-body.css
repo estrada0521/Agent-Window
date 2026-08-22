@@ -22,15 +22,6 @@
       line-height: calc(var(--text-line-height, 22px) + 2px);
     }
 
-    __AGENT_SEL_GOTHIC_MD_BODY__ {
-      font-size: var(--text-size, 13px);
-      line-height: var(--text-line-height, 22px);
-    }
-
-    __AGENT_SEL_GOTHIC_MD_LI__ {
-      line-height: var(--text-line-height, 22px);
-    }
-
     .md-body>*:first-child {
       margin-top: 0;
     }

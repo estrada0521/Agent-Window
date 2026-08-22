@@ -39,12 +39,6 @@ Run the following from the repository root.
 
 This builds and launches the Tauri App. The Hub is started by the Tauri App and uses port `8788` by default.
 
-To rebuild only the Tauri App, use:
-
-```bash
-./tauri_app/tauri-build
-```
-
 # Use
 
 ## Start a session

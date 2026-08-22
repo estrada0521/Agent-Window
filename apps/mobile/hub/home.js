@@ -511,11 +511,12 @@
     function openSessionFrame(openHref, name) {
       rememberLastSession(name);
       resetLaunchShellCard();
-      if (/^\/revive-session(?:[/?]|$)/.test(String(openHref || ""))) showLaunchShell();
-      resolveChatUrl(openHref, name)
+      const needsReviveTransition = /^\/revive-session(?:[/?]|$)/.test(String(openHref || ""));
+      if (needsReviveTransition) showLaunchShell();
+      resolveChatUrl(openHref, name, { force: needsReviveTransition })
         .then((chatUrl) => {
           openChatInFrame(chatUrl, name);
-          if (/^\/revive-session(?:[/?]|$)/.test(String(openHref || ""))) {
+          if (needsReviveTransition) {
             if (refreshMobSessions) void refreshMobSessions(true);
           }
         })

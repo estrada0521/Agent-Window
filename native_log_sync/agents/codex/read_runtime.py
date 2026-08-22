@@ -161,7 +161,7 @@ def _exec_command_event(args: object, *, workspace: str) -> tuple[str, str] | No
     if lower in {"ditto", "rm", "cp", "mv", "mkdir", "install", "chmod"}:
         return "File", short_line(line)
 
-    if lower in {"cargo", "tauri-build", "tauri_start"} or lower.endswith("tauri-build"):
+    if lower in {"cargo", "tauri_start"}:
         return "Build", short_line(line)
 
     return "Shell", short_line(line)

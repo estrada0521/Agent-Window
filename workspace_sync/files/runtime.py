@@ -1,5 +1,4 @@
 from __future__ import annotations
-import logging
 import re
 
 import os
@@ -632,7 +631,6 @@ class FileRuntime:
         base_path: str = "",
         preview_base_theme: str = "",
         preview_variant: str = "",
-        agent_font_mode: str = "serif",
         agent_font_family: str | None = None,
         agent_text_size: int | None = None,
         preview_chrome: str = "",
@@ -648,7 +646,6 @@ class FileRuntime:
             base_path=base_path,
             preview_base_theme=preview_base_theme,
             preview_variant=preview_variant,
-            agent_font_mode=agent_font_mode,
             agent_font_family=agent_font_family,
             agent_text_size=agent_text_size,
             preview_chrome=preview_chrome,

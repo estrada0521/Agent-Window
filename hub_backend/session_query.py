@@ -4,17 +4,29 @@ import datetime as dt
 import json
 import logging
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
 
 from backend_core.access.session_meta import session_workspace_claims, workspace_claim_conflict_message
 from backend_core.access.settings import agent_window_session_root, session_log_path
-from backend_core.tmux.resolve import live_tmux_workspaces
+from backend_core.tmux.resolve import normalize_workspace
 
 
 _PREVIEW_TAIL_BYTES = 2 * 1024 * 1024
 _PREVIEW_TAIL_CHUNK_BYTES = 64 * 1024
+
+
+@dataclass(frozen=True)
+class SessionQueryResult:
+    records: dict[str, dict]
+    warnings: dict[str, dict]
+    state: str
+    detail: str = ""
+
+    @property
+    def non_archived_names(self) -> set[str]:
+        return set(self.records) | set(self.warnings)
 
 
 def parse_saved_time(value: str) -> float:
@@ -26,16 +38,6 @@ def parse_saved_time(value: str) -> float:
         except ValueError:
             pass
     return 0
-
-
-def format_epoch(epoch: float) -> str:
-    if not epoch:
-        return ""
-    try:
-        return dt.datetime.fromtimestamp(epoch).strftime("%Y-%m-%d %H:%M")
-    except Exception as exc:
-        logging.error(f"Unexpected error: {exc}", exc_info=True)
-        return ""
 
 
 def _compact_message_preview(entry: dict[str, Any]) -> dict[str, str]:
@@ -134,39 +136,17 @@ def host_without_port(host_header: str) -> str:
 
 
 def build_session_record(
-    runtime: Any,
     *,
     name: str,
     workspace: str,
-    agents: list[str],
-    status: str,
-    attached: int,
-    dead_panes: int,
-    created_epoch: int = 0,
-    created_at: str = "",
-    updated_epoch: int = 0,
-    updated_at: str = "",
     log_path: Path | None = None,
 ) -> dict:
     path = Path(log_path) if log_path is not None else session_log_path(name)
     primary = path if path.is_file() else None
     preview = latest_message_preview(primary)
-    session_slug = quote(name, safe="")
     return {
         "name": name,
         "workspace": workspace,
-        "created_at": created_at,
-        "created_epoch": int(created_epoch or 0),
-        "updated_at": updated_at,
-        "updated_epoch": int(updated_epoch or 0),
-        "attached": int(attached or 0),
-        "dead_panes": int(dead_panes or 0),
-        "agents": list(agents or []),
-        "status": status,
-        "chat_port": runtime.chat_port_for_workspace(workspace) if workspace else 0,
-        "session_path": f"/session/{session_slug}/",
-        "log_dir": str(path.parent),
-        "log_path": str(path),
         "latest_message_sender": preview["sender"],
         "latest_message_preview": preview["text"],
     }
@@ -175,7 +155,6 @@ def build_session_record(
 def build_warning_session_record(*, name: str, warning: str) -> dict:
     return {
         "name": name,
-        "status": "warning",
         "warning": warning,
     }
 
@@ -184,12 +163,9 @@ class _TmuxQueryTimeout(RuntimeError):
     pass
 
 
-def live_tmux_workspaces_query(runtime: Any) -> tuple[dict[str, str], str, str]:
-    """Map each live tmux session's workspace to its (real, possibly AW-name
-    diverged) tmux session name. AGENT_WINDOW_WORKSPACE is the only thing
-    tmux itself genuinely knows -- it never carries an AW session's name.
-    """
-    result = runtime.tmux_run(["list-sessions", "-F", "#{session_name}"])
+def live_tmux_sessions_query(runtime: Any) -> tuple[dict[str, tuple[str, int]], str, str]:
+    """Map each live workspace to its tmux name and creation time."""
+    result = runtime.tmux_run(["list-sessions", "-F", "#{session_name}\t#{session_created}"])
     if result.timed_out:
         return {}, "unhealthy", "tmux list-sessions timed out"
     if result.returncode != 0:
@@ -198,6 +174,15 @@ def live_tmux_workspaces_query(runtime: Any) -> tuple[dict[str, str], str, str]:
             return {}, "ok", ""
         return {}, "unhealthy", stderr or f"tmux list-sessions failed (exit {result.returncode})"
 
+    sessions: list[tuple[str, int]] = []
+    for raw_line in result.stdout.splitlines():
+        tmux_name, separator, created_raw = raw_line.partition("\t")
+        tmux_name = tmux_name.strip()
+        if not tmux_name:
+            continue
+        created_epoch = int(created_raw) if separator and created_raw.isdigit() else 0
+        sessions.append((tmux_name, created_epoch))
+
     def workspace_of(tmux_name: str) -> str | None:
         workspace, timed_out = runtime.tmux_env_query(tmux_name, "AGENT_WINDOW_WORKSPACE")
         if timed_out:
@@ -205,7 +190,12 @@ def live_tmux_workspaces_query(runtime: Any) -> tuple[dict[str, str], str, str]:
         return workspace or None
 
     try:
-        workspace_to_tmux = live_tmux_workspaces(result.stdout.splitlines(), workspace_of)
+        workspace_to_tmux: dict[str, tuple[str, int]] = {}
+        for tmux_name, created_epoch in sessions:
+            workspace = workspace_of(tmux_name)
+            if not workspace:
+                continue
+            workspace_to_tmux.setdefault(normalize_workspace(workspace), (tmux_name, created_epoch))
     except _TmuxQueryTimeout as exc:
         return {}, "unhealthy", f"tmux show-environment (WORKSPACE) timed out for {exc}"
     return workspace_to_tmux, "ok", ""
@@ -229,70 +219,43 @@ def collect_repo_sessions(runtime: Any) -> tuple[list[dict], list[dict], str, st
         unique_claims.append((normalized_workspace, name, workspace))
     warnings.sort(key=lambda item: item["name"])
 
-    workspace_to_tmux, state, detail = live_tmux_workspaces_query(runtime)
+    workspace_to_tmux, state, detail = live_tmux_sessions_query(runtime)
     if state != "ok":
         return [], warnings, state, detail
 
-    sessions: list[dict] = []
-    any_timeout = False
-    timeout_detail = ""
+    sessions: list[tuple[int, dict]] = []
 
     for normalized_workspace, name, workspace in unique_claims:
-        if any_timeout:
+        tmux_session = workspace_to_tmux.get(normalized_workspace)
+        if not tmux_session:
             continue
-        tmux_name = workspace_to_tmux.get(normalized_workspace)
-        if not tmux_name:
-            continue
-
-        r_attached = runtime.tmux_run(["display-message", "-p", "-t", tmux_name, "#{session_attached}"])
-        r_created = runtime.tmux_run(["display-message", "-p", "-t", tmux_name, "#{session_created}"])
-        r_dead = runtime.tmux_run(["list-panes", "-t", tmux_name, "-F", "#{pane_dead}"])
-        agents, t5 = runtime.session_agents_query(tmux_name)
-
-        if r_attached.timed_out or r_created.timed_out or r_dead.timed_out or t5:
-            any_timeout = True
-            timeout_detail = f"tmux query timed out during session scan for {name}"
-            continue
-
-        attached = r_attached.stdout.strip() or "0"
-        created_epoch = r_created.stdout.strip() or "0"
-        created_at = dt.datetime.fromtimestamp(int(created_epoch)).strftime("%Y-%m-%d %H:%M")
-
-        dead_panes = sum(1 for line in r_dead.stdout.splitlines() if line.strip() == "1")
-
-        if dead_panes > 0:
-            status = "degraded"
-        elif attached != "0":
-            status = "attached"
-        else:
-            status = "idle"
-
+        _tmux_name, created_epoch = tmux_session
         sessions.append(
-            build_session_record(
-                runtime,
-                name=name,
-                workspace=workspace,
-                agents=agents,
-                status=status,
-                attached=int(attached) if attached.isdigit() else 0,
-                dead_panes=dead_panes,
-                created_epoch=int(created_epoch) if created_epoch.isdigit() else 0,
-                created_at=created_at,
+            (
+                created_epoch,
+                build_session_record(name=name, workspace=workspace),
             )
         )
 
-    if any_timeout:
-        return sessions, warnings, "unhealthy", timeout_detail
-
-    sessions.sort(key=lambda item: item["created_epoch"], reverse=True)
-    return sessions, warnings, "ok", ""
+    sessions.sort(key=lambda item: item[0], reverse=True)
+    return [record for _created_epoch, record in sessions], warnings, "ok", ""
 
 
-def archived_sessions(runtime: Any, excluded_names: set[str] | list[str] | None = None) -> list[dict]:
+def active_session_records_query(runtime: Any) -> SessionQueryResult:
+    sessions, warnings, state, detail = collect_repo_sessions(runtime)
+    return SessionQueryResult(
+        records={item["name"]: item for item in sessions},
+        warnings={item["name"]: item for item in warnings},
+        state=state,
+        detail=detail,
+    )
+
+
+def archived_sessions(excluded_names: set[str] | list[str] | None = None) -> list[dict]:
     excluded_names_set = set(excluded_names or [])
-    records: dict[str, dict] = {}
+    records: dict[str, tuple[float, dict]] = {}
     log_roots: list[Path] = []
-    for candidate in (runtime.central_log_dir,):
+    for candidate in (agent_window_session_root(),):
         if not candidate or not Path(candidate).is_dir():
             continue
         root = Path(candidate)
@@ -332,22 +295,20 @@ def archived_sessions(runtime: Any, excluded_names: set[str] | list[str] | None 
                         seen_agents.add(name)
                         agents.append(name)
             record = build_session_record(
-                runtime,
                 name=session_name,
                 workspace=workspace,
-                agents=agents,
-                status="archived",
-                attached=0,
-                dead_panes=0,
-                created_epoch=int(created_epoch or 0),
-                created_at=str(meta.get("created_at") or format_epoch(created_epoch)),
-                updated_epoch=int(updated_epoch or 0),
-                updated_at=str(meta.get("updated_at") or format_epoch(updated_epoch)),
                 log_path=log_path,
             )
+            record["agents"] = agents
+            record["log_dir"] = str(log_path.parent)
             existing = records.get(session_name)
-            if existing is None or record["updated_epoch"] > existing["updated_epoch"]:
-                records[session_name] = record
-    sessions = list(records.values())
-    sessions.sort(key=lambda item: item["updated_epoch"], reverse=True)
-    return sessions
+            if existing is None or updated_epoch > existing[0]:
+                records[session_name] = (updated_epoch, record)
+    sessions = sorted(records.values(), key=lambda item: item[0], reverse=True)
+    return [record for _updated_epoch, record in sessions]
+
+
+def archived_session_records(
+    excluded_names: set[str] | list[str] | None = None,
+) -> dict[str, dict]:
+    return {item["name"]: item for item in archived_sessions(excluded_names)}

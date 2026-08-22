@@ -61,31 +61,7 @@ __CHAT_INCLUDE:../messages-data.js__
         </div>
       </article>`;
     };
-    const updateSessionUI = (data, displayEntries) => {
-      currentSessionName = data.session || "";
-      if (document.documentElement.dataset.mobile === "1") repoSession = currentSessionName;
-      restoreComposerDraft();
-      sessionActive = !!data.active;
-      const resolvedTargets = normalizedSessionTargets(data.targets);
-      const picker = document.getElementById("targetPicker");
-      if (!picker.dataset.loaded) {
-        const restoredTargets = loadTargetSelection(currentSessionName, resolvedTargets);
-        selectedTargets = restoredTargets.length ? restoredTargets : [];
-        saveTargetSelection(currentSessionName, selectedTargets);
-        picker.dataset.loaded = "1";
-      }
-      const nextTargetsSig = JSON.stringify(resolvedTargets);
-      if (nextTargetsSig !== JSON.stringify(availableTargets)) {
-        availableTargets = resolvedTargets;
-        selectedTargets = selectedTargets.filter((target) => availableTargets.includes(target));
-        saveTargetSelection(data.session, selectedTargets);
-        renderTargetPicker(availableTargets);
-      }
-      document.getElementById("message").disabled = !sessionActive;
-
-      if (!sessionActive) {
-        setStatus("archived session is read-only");
-      }
+    const updateMessageProjectionUI = (displayEntries) => {
       if (document.documentElement.dataset.mobile === "1") {
         updateRepoPanel(displayEntries);
       } else {

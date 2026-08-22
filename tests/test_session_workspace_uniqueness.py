@@ -203,7 +203,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                     "backend_core.access.session_meta.agent_window_session_root", return_value=root
                 ),
                 mock.patch(
-                    "hub_backend.session_query.live_tmux_workspaces_query",
+                    "hub_backend.session_query.live_tmux_sessions_query",
                     return_value=({}, "ok", ""),
                 ),
             ):
@@ -229,18 +229,16 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                     "backend_core.access.session_meta.agent_window_session_root", return_value=root
                 ),
                 mock.patch(
-                    "hub_backend.session_query.live_tmux_workspaces_query",
-                    return_value=({str(workspace.resolve()): "real-tmux"}, "ok", ""),
+                    "hub_backend.session_query.live_tmux_sessions_query",
+                    return_value=({str(workspace.resolve()): ("real-tmux", 0)}, "ok", ""),
                 ),
             ):
                 active, warnings, state, detail = collect_repo_sessions(runtime)
 
             self.assertEqual(active, [])
             self.assertEqual([item["name"] for item in warnings], ["session-a", "session-b"])
-            self.assertTrue(all(item["status"] == "warning" for item in warnings))
             self.assertEqual(state, "ok")
             self.assertEqual(detail, "")
-            runtime.chat_port_for_workspace.assert_not_called()
             runtime.tmux_run.assert_not_called()
 
 

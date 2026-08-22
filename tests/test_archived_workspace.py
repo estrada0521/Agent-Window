@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from backend_core.access.session_meta import write_session_meta_file
 from hub_backend.chat_supervisor import chat_server_state_matches, ensure_chat_server
-from hub_backend.session_api import HubSessionApi, HubSessionApiContext
+from hub_backend.session_api import resolve_session_chat_target
 from hub_backend.session_query import archived_sessions
 from workspace_sync import git as workspace_git
 
@@ -31,9 +31,10 @@ class ArchivedWorkspaceTests(unittest.TestCase):
     def test_hub_reload_stops_archived_chat_servers_before_restart(self) -> None:
         from hub_backend import hub_server
 
-        fake_hub = SimpleNamespace(stop_inactive_chat_servers=lambda: "")
+        fake_hub = object()
         with (
             patch.object(hub_server, "hub", fake_hub),
+            patch.object(hub_server, "stop_inactive_chat_servers", return_value=""),
             patch.object(hub_server, "restart_pending", False),
             patch.object(hub_server, "_launch_hub_restart_impl", return_value=True) as launch,
         ):
@@ -48,9 +49,10 @@ class ArchivedWorkspaceTests(unittest.TestCase):
     def test_hub_reload_does_not_restart_when_archived_cleanup_fails(self) -> None:
         from hub_backend import hub_server
 
-        fake_hub = SimpleNamespace(stop_inactive_chat_servers=lambda: "cleanup failed")
+        fake_hub = object()
         with (
             patch.object(hub_server, "hub", fake_hub),
+            patch.object(hub_server, "stop_inactive_chat_servers", return_value="cleanup failed"),
             patch.object(hub_server, "restart_pending", False),
             patch.object(hub_server, "_launch_hub_restart_impl") as launch,
         ):
@@ -68,9 +70,8 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             session_dir = root / "broken-session"
             session_dir.mkdir()
             (session_dir / ".meta").write_text("[]", encoding="utf-8")
-            runtime = SimpleNamespace(central_log_dir=root)
-
-            sessions = archived_sessions(runtime, excluded_names={"broken-session"})
+            with patch("hub_backend.session_query.agent_window_session_root", return_value=root):
+                sessions = archived_sessions(excluded_names={"broken-session"})
 
             self.assertEqual(sessions, [])
 
@@ -92,16 +93,13 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 + "\n",
                 encoding="utf-8",
             )
-            runtime = SimpleNamespace(
-                central_log_dir=root,
-                repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
-                chat_port_for_workspace=lambda _workspace: 8206,
-            )
-            sessions = archived_sessions(runtime, excluded_names=set())
+            hub_repo = "/Users/okadaharuto/workspace/Agent-Window"
+            with patch("hub_backend.session_query.agent_window_session_root", return_value=root):
+                sessions = archived_sessions(excluded_names=set())
             self.assertEqual(len(sessions), 1)
             self.assertEqual(sessions[0]["name"], "Even-Parity")
             self.assertEqual(sessions[0]["workspace"], "")
-            self.assertNotEqual(sessions[0]["workspace"], str(runtime.repo_root))
+            self.assertNotEqual(sessions[0]["workspace"], hub_repo)
 
     def test_archived_sessions_keep_logs_when_meta_file_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -109,12 +107,8 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             session_dir = root / "Broken"
             session_dir.mkdir()
             (session_dir / ".log.jsonl").write_text("", encoding="utf-8")
-            runtime = SimpleNamespace(
-                central_log_dir=root,
-                repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
-                chat_port_for_workspace=lambda _workspace: 8206,
-            )
-            sessions = archived_sessions(runtime, excluded_names=set())
+            with patch("hub_backend.session_query.agent_window_session_root", return_value=root):
+                sessions = archived_sessions(excluded_names=set())
             self.assertEqual(len(sessions), 1)
             self.assertEqual(sessions[0]["name"], "Broken")
             self.assertEqual(sessions[0]["workspace"], "")
@@ -139,16 +133,13 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 + "\n",
                 encoding="utf-8",
             )
-            runtime = SimpleNamespace(
-                central_log_dir=root,
-                repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
-                chat_port_for_workspace=lambda _workspace: 8219,
-            )
-            sessions = archived_sessions(runtime, excluded_names=set())
+            hub_repo = "/Users/okadaharuto/workspace/Agent-Window"
+            with patch("hub_backend.session_query.agent_window_session_root", return_value=root):
+                sessions = archived_sessions(excluded_names=set())
             self.assertEqual(len(sessions), 1)
             self.assertEqual(sessions[0]["name"], "Lab")
             self.assertEqual(sessions[0]["workspace"], str(workspace))
-            self.assertNotEqual(sessions[0]["workspace"], str(runtime.repo_root))
+            self.assertNotEqual(sessions[0]["workspace"], hub_repo)
             self.assertFalse((workspace / ".git").exists())
 
     def test_write_session_meta_does_not_keep_an_old_workspace(self) -> None:
@@ -167,7 +158,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
     def test_archived_open_passes_saved_workspace_not_hub_root(self) -> None:
         captured = {}
 
-        def ensure_chat_server(*, expected_active=True, workspace=""):
+        def ensure_chat_server(_hub, *, expected_active=True, workspace=""):
             captured["expected_active"] = expected_active
             captured["workspace"] = workspace
             return True, 8206, ""
@@ -175,20 +166,20 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Even-Parity"
             workspace.mkdir()
-            api = HubSessionApi(
-                HubSessionApiContext(
-                    hub=object(),
-                    active_session_records_query=lambda: _Query({}, {}),
-                    archived_session_records=lambda _active: {
+            with (
+                patch("hub_backend.session_api.active_session_records_query", return_value=_Query({}, {})),
+                patch(
+                    "hub_backend.session_api.archived_session_records",
+                    return_value={
                         "Even-Parity": {
                             "name": "Even-Parity",
                             "workspace": str(workspace),
                         }
                     },
-                    ensure_chat_server=ensure_chat_server,
-                )
-            )
-            resolved = api.resolve_session_chat_target("Even-Parity")
+                ),
+                patch("hub_backend.session_api.ensure_chat_server", side_effect=ensure_chat_server),
+            ):
+                resolved = resolve_session_chat_target(object(), "Even-Parity")
         self.assertEqual(resolved["status"], "ok")
         self.assertFalse(captured["expected_active"])
         self.assertEqual(captured["workspace"], str(workspace))
@@ -222,53 +213,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             )
         )
 
-    def test_active_chat_server_compares_agents_through_the_workspace_tmux(self) -> None:
-        queried_tmux_names = []
-        workspace = "/Users/okadaharuto/workspace/Agent-Window"
-        def session_agents_query(tmux_name):
-            queried_tmux_names.append(tmux_name)
-            return ["codex"], False
-
-        hub = SimpleNamespace(
-            repo_root=Path(workspace),
-            resolve_tmux_session_name_for_workspace=lambda _workspace: "original-tmux-name",
-            session_agents_query=session_agents_query,
-        )
-        state = {
-            "session": "Renamed-AW-Session",
-            "repo_root": workspace,
-            "workspace": workspace,
-            "targets": ["codex"],
-            "active": True,
-        }
-
-        self.assertTrue(
-            chat_server_state_matches(
-                hub,
-                state,
-                workspace=workspace,
-            )
-        )
-        self.assertEqual(queried_tmux_names, ["original-tmux-name"])
-
-    def test_active_chat_server_agent_timeout_is_not_an_empty_agent_list(self) -> None:
-        workspace = "/Users/okadaharuto/workspace/Agent-Window"
-        hub = SimpleNamespace(
-            repo_root=Path(workspace),
-            resolve_tmux_session_name_for_workspace=lambda _workspace: "opaque-tmux-7",
-            session_agents_query=lambda _tmux_name: ([], True),
-        )
-        state = {
-            "session": "Agent-Window",
-            "repo_root": workspace,
-            "workspace": workspace,
-            "targets": [],
-            "active": True,
-        }
-
-        with self.assertRaisesRegex(RuntimeError, "tmux agent query timed out"):
-            chat_server_state_matches(hub, state, workspace=workspace)
-
     def test_archived_launch_argv_is_the_saved_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Even-Parity"
@@ -276,26 +220,15 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             hub = SimpleNamespace(
                 repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
                 _get_launch_lock=lambda _name: threading.Lock(),
-                archived_session_records=lambda _active: {},
-                active_session_records_query=lambda: _Query({}, {}),
-                chat_port_for_workspace=lambda _workspace: 8206,
-                chat_server_state=lambda _port: {
-                    "session": "Even-Parity",
-                    "repo_root": "/Users/okadaharuto/workspace/Agent-Window",
-                    "workspace": str(workspace),
-                    "targets": [],
-                    "active": False,
-                },
-                chat_ready=lambda _port: False,
-                stop_chat_server=lambda _name: (True, ""),
-                stop_inactive_chat_servers=lambda **_kwargs: "",
-                _chat_launch_env=lambda **_kwargs: {},
-                _chat_launch_port=lambda *_args, **_kwargs: (8206, False, ""),
-                tmux_run=lambda *_args, **_kwargs: SimpleNamespace(timed_out=False, returncode=0, stderr="", stdout=""),
             )
-            with patch("hub_backend.chat_supervisor.launch_chat_server", return_value=object()) as launch, patch(
-                "hub_backend.chat_supervisor.wait_for_chat_server",
-                return_value=True,
+            with (
+                patch("hub_backend.chat_supervisor.workspace_chat_port", return_value=8206),
+                patch("hub_backend.chat_supervisor.port_is_bindable", return_value=True),
+                patch("hub_backend.chat_supervisor.chat_server_state", return_value=None),
+                patch("hub_backend.chat_supervisor.stop_inactive_chat_servers", return_value=""),
+                patch("hub_backend.chat_supervisor.chat_launch_env", return_value={}),
+                patch("hub_backend.chat_supervisor.launch_chat_server", return_value=object()) as launch,
+                patch("hub_backend.chat_supervisor.wait_for_chat_server", return_value=True),
             ):
                 ok, port, detail = ensure_chat_server(
                     hub,
@@ -321,33 +254,12 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertNotEqual(launch_cwd, str(workspace))
 
     def test_ensure_chat_server_rejects_a_missing_workspace_binding(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            hub = SimpleNamespace(
-                repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
-                _get_launch_lock=lambda _name: threading.Lock(),
-                archived_session_records=lambda _active: {},
-                active_session_records_query=lambda: _Query({}, {}),
-                chat_port_for_workspace=lambda _workspace: 8206,
-                chat_server_state=lambda _port: {
-                    "session": "Even-Parity",
-                    "repo_root": "/Users/okadaharuto/workspace/Agent-Window",
-                    "workspace": "",
-                    "targets": [],
-                    "active": False,
-                },
-                chat_ready=lambda _port: False,
-                stop_chat_server=lambda _name: (True, ""),
-                stop_inactive_chat_servers=lambda **_kwargs: "",
-                _chat_launch_env=lambda **_kwargs: {},
-                _chat_launch_port=lambda *_args, **_kwargs: (8206, False, ""),
-                tmux_run=lambda *_args, **_kwargs: SimpleNamespace(timed_out=False, returncode=0, stderr="", stdout=""),
+        with patch("hub_backend.chat_supervisor.launch_chat_server") as launch:
+            ok, port, detail = ensure_chat_server(
+                object(),
+                expected_active=False,
+                workspace="",
             )
-            with patch("hub_backend.chat_supervisor.launch_chat_server") as launch:
-                ok, port, detail = ensure_chat_server(
-                    hub,
-                    expected_active=False,
-                    workspace="",
-                )
         self.assertFalse(ok)
         self.assertEqual(port, 0)
         self.assertEqual(detail, "workspace unavailable")

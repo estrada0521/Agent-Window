@@ -72,7 +72,6 @@ def _agent_css_selectors() -> dict[str, str]:
     def _cross(suffixes, prefix=""):
         parts = [f"    {prefix}.message:not(.user):not(.system) .md-body {s}" for s in suffixes]
         return ",\n".join(parts)
-    gothic = 'html[data-agent-font-mode="gothic"] '
     return {
         "__AGENT_MESSAGE_SELECTORS__": _sel(),
         "__AGENT_ROW_MESSAGE_SELECTORS__": _row_sel(".message"),
@@ -81,10 +80,6 @@ def _agent_css_selectors() -> dict[str, str]:
         "__AGENT_SEL_MD_HEADING__": _cross(["h1", "h2", "h3", "h4"]),
         "__AGENT_SEL_MD_BODY_TEXT__": _cross(["p", "li", "blockquote"]),
         "__AGENT_SEL_MD_BODY_LI__": _sel(" .md-body li"),
-        "__AGENT_SEL_GOTHIC_MD_BODY__": _sel(" .md-body", prefix=gothic),
-        "__AGENT_SEL_GOTHIC_MD_DETAIL__": _cross(["p", "li", "blockquote"], prefix=gothic),
-        "__AGENT_SEL_GOTHIC_MD_HEADING__": _cross(["h1", "h2", "h3", "h4"], prefix=gothic),
-        "__AGENT_SEL_GOTHIC_MD_LI__": _sel(" .md-body li", prefix=gothic),
         "__AGENT_ICON_NAMES_JS_SET__": agent_names_js_set(),
         "__ALL_BASE_AGENTS_JS_ARRAY__": agent_names_js_array(),
     }
@@ -98,7 +93,7 @@ def _chat_html(variant: str = "desktop") -> str:
     return CHAT_MOBILE_HTML if _normalized_chat_variant(variant) == "mobile" else CHAT_DESKTOP_HTML
 
 
-def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings, agent_font_mode_inline_style, chat_base_path="", eager_optional_vendors=True, variant="desktop", session_name=""):
+def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings, chat_font_settings_inline_style, chat_base_path="", eager_optional_vendors=True, variant="desktop", session_name=""):
     normalized_variant = _normalized_chat_variant(variant)
     base_path = chat_base_path.rstrip("/")
     normalized_session_name = str(session_name or "").strip()
@@ -131,7 +126,7 @@ def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings
         server_instance=server_instance,
         hub_port=hub_port,
         chat_settings=chat_settings,
-        agent_font_mode_inline_style=agent_font_mode_inline_style(chat_settings),
+        chat_font_settings_inline_style=chat_font_settings_inline_style(chat_settings),
         hub_header_css=PAGE_HEADER_CSS,
         chat_document_title=chat_document_title,
     )

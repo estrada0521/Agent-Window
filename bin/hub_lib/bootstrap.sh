@@ -41,7 +41,7 @@ tmux() {
 
 usage() {
   cat <<'EOF'
-Usage: agent-index [--hub-port N] [--http|--https]
+Usage: agent-index [--hub-port N]
 
 Start Hub.
 EOF

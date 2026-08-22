@@ -11,6 +11,8 @@ from urllib.parse import parse_qs, quote as url_quote, urlparse
 
 from hub_backend.runtime import HubRuntime
 from backend_core.access.pwa import pwa_icon_entries as _pwa_icon_entries_impl
+from backend_core.access.settings import load_hub_settings, workspace_chat_port
+from hub_backend.chat_supervisor import chat_server_state, stop_inactive_chat_servers
 from hub_backend.presentation.hub.header_assets import (
     DEFAULT_HUB_HEADER_ACTIONS,
     DEFAULT_HUB_HEADER_PANELS,
@@ -19,7 +21,12 @@ from hub_backend.presentation.hub.header_assets import (
     MOBILE_HUB_HEADER_ACTIONS,
     render_page_header,
 )
-from hub_backend.session_api import HubSessionApi, HubSessionApiContext
+from hub_backend.session_api import running_agents_from_session_state
+from hub_backend.session_query import (
+    active_session_records_query,
+    archived_session_records,
+    host_without_port,
+)
 
 from hub_backend.branding import APP_DISPLAY_NAME
 from hub_backend.color_constants import apply_color_tokens, resolve_theme_palette
@@ -69,7 +76,7 @@ def resolve_external_origin(host_header: str, local_port: int) -> dict[str, obje
     return _resolve_external_origin_impl(
         host_header,
         local_port,
-        host_without_port_fn=hub.host_without_port,
+        host_without_port_fn=host_without_port,
         public_host=PUBLIC_HOST,
         public_hub_port=PUBLIC_HUB_PORT,
         hub_port=port,
@@ -135,7 +142,7 @@ def queue_hub_restart():
     with restart_lock:
         if restart_pending:
             return False, "restart already pending", False
-        cleanup_detail = hub.stop_inactive_chat_servers()
+        cleanup_detail = stop_inactive_chat_servers(hub)
         if cleanup_detail:
             return False, cleanup_detail, False
         restart_pending = True
@@ -407,12 +414,11 @@ def hub_settings_html(saved=False, variant="desktop"):
         resolve_theme,
     )
 
-    settings = hub.load_hub_settings()
+    settings = load_hub_settings()
 
     text_size = int(settings.get("text_size", 13) or 13)
 
-    theme = str(settings.get("theme", "dark") or "dark").strip().lower()
-    theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", theme))
+    theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", "dark"))
     render_theme = resolve_theme(settings, variant=variant)
     
     theme_desktop_choices = (
@@ -460,30 +466,13 @@ def hub_settings_html(saved=False, variant="desktop"):
 
 
 
-def _hub_session_api() -> HubSessionApi:
-    return HubSessionApi(
-        HubSessionApiContext(
-            hub=hub,
-            active_session_records_query=hub.active_session_records_query,
-            archived_session_records=hub.archived_session_records,
-            ensure_chat_server=hub.ensure_chat_server,
-        )
-    )
-
-
 def _hub_action_context() -> dict[str, object]:
     return {
-        "active_session_records_query_fn": hub.active_session_records_query,
-        "delete_archived_session_fn": hub.delete_archived_session,
-        "ensure_chat_server_fn": hub.ensure_chat_server,
+        "hub": hub,
         "error_page_fn": error_page,
         "format_session_chat_url_fn": format_session_chat_url,
-        "kill_repo_session_fn": hub.kill_repo_session,
         "queue_hub_restart_fn": queue_hub_restart,
         "release_restart_hold_fn": release_restart_hold,
-        "revive_archived_session_fn": hub.revive_archived_session,
-        "save_hub_settings_fn": hub.save_hub_settings,
-        "session_api": _hub_session_api(),
     }
 
 
@@ -560,7 +549,7 @@ class Handler(BaseHTTPRequestHandler):
         return True
 
     def _get_hub_manifest(self, _parsed):
-        settings = hub.load_hub_settings()
+        settings = load_hub_settings()
         palette = resolve_theme_palette(settings)
         bg = str(palette["dark_bg"])
         body = json.dumps({
@@ -581,28 +570,41 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _get_hub_launch_shell(self, _parsed):
-        settings = hub.load_hub_settings()
+        settings = load_hub_settings()
         self._send_html(200, apply_color_tokens(HUB_LAUNCH_SHELL_HTML, settings=settings))
 
     def _get_sessions(self, _parsed):
-        query = hub.active_session_records_query()
+        query = active_session_records_query(hub)
         active_map = query.records
         warnings = list(query.warnings.values())
         active = []
         for record in active_map.values():
-            session_record = dict(record)
+            workspace = str(record.get("workspace") or "").strip()
+            chat_port = workspace_chat_port(workspace) if workspace else 0
             running_agents: list[str] = []
-            raw_port = session_record.get("chat_port")
-            chat_port = 0 if raw_port in (None, "", 0, "0") else int(raw_port)
-            if chat_port > 0 and hub.chat_ready(chat_port):
-                running_agents = _hub_session_api().running_agents_from_session_state(hub.chat_server_state(chat_port))
-            session_record["running_agents"] = running_agents
-            session_record["is_running"] = bool(running_agents)
-            active.append(session_record)
+            if chat_port > 0:
+                running_agents = running_agents_from_session_state(
+                    chat_server_state(hub, chat_port)
+                )
+            active.append({
+                "name": record["name"],
+                "chat_port": chat_port,
+                "is_running": bool(running_agents),
+                "latest_message_sender": record["latest_message_sender"],
+                "latest_message_preview": record["latest_message_preview"],
+            })
         if query.state == "unhealthy":
             archived = []
         else:
-            archived = list(hub.archived_session_records(query.non_archived_names).values())
+            archived = [
+                {
+                    "name": record["name"],
+                    "chat_port": workspace_chat_port(record["workspace"]) if record.get("workspace") else 0,
+                    "latest_message_sender": record["latest_message_sender"],
+                    "latest_message_preview": record["latest_message_preview"],
+                }
+                for record in archived_session_records(query.non_archived_names).values()
+            ]
         self._send_json(200, {
             "active_sessions": active,
             "archived_sessions": archived,
@@ -615,12 +617,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def _get_home(self, _parsed):
         variant = request_view_variant(headers=self.headers, query_string=_parsed.query)
-        settings = hub.load_hub_settings()
+        settings = load_hub_settings()
         from backend_core.access.settings import normalize_theme_desktop, settings_for_hub_render
 
         page = HUB_HOME_MOBILE_HTML if variant == "mobile" else HUB_HOME_DESKTOP_HTML
         if variant == "desktop":
-            theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
+            theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", "dark"))
             page = page.replace("__THEME_DESKTOP__", theme_desktop)
         render_settings = settings_for_hub_render(settings, variant=variant)
         self._send_html(200, apply_color_tokens(page, settings=render_settings))

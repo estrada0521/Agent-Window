@@ -1,26 +1,14 @@
 from __future__ import annotations
 
 import json
-import re
-
-_ATTACHED_PATH_PATTERN = re.compile(r"\[Attached:\s*([^\]]+)\]")
-
-
-def attachment_paths(message: str) -> list[str]:
-    text = str(message or "")
-    return [match.strip() for match in _ATTACHED_PATH_PATTERN.findall(text)]
-
-
 def build_payload_document(
     *,
-    meta: dict,
-    targets: list[str],
+    server_instance: str,
     has_older: bool,
     entries: list[dict],
 ) -> dict:
     return {
-        **meta,
-        "targets": list(targets or []),
+        "server_instance": str(server_instance),
         "has_older": bool(has_older),
         "entries": list(entries or []),
     }

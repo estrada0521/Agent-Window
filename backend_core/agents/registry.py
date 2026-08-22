@@ -27,12 +27,6 @@ class AgentDef:
 
 
 AGENTS: dict[str, AgentDef] = {}
-AGENT_ALIASES: dict[str, str] = {
-    "agy": "gemini",
-    "antigravity": "gemini",
-    "antigravity-ide": "gemini",
-}
-
 AGENT_ICONS_DIR = "assets/icons/agents"
 
 _AGENT_TMUX_COLOR_SUFFIX = "-u NO_COLOR -u CI FORCE_COLOR=1"
@@ -108,19 +102,6 @@ SELECTABLE_AGENT_NAMES: list[str] = [
 def icon_file_map(repo_root: Path) -> dict[str, Path]:
     base = Path(repo_root).resolve() / AGENT_ICONS_DIR
     return {name: base / Path(a.icon_file).name for name, a in AGENTS.items()}
-
-
-def icon_filename_map() -> dict[str, str]:
-    return {name: a.icon_file for name, a in AGENTS.items()}
-
-
-def canonical_agent_name(name: str) -> str:
-    base = (name or "").strip().lower()
-    return AGENT_ALIASES.get(base, base)
-
-
-def base_agent_name(instance_name: str) -> str:
-    return canonical_agent_name((instance_name or "").split("-", 1)[0])
 
 
 def generate_agent_message_selectors(suffix: str = "", prefix: str = "") -> str:

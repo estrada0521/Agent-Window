@@ -14,6 +14,7 @@ from backend_core.access.settings import (
     workspace_chat_port,
 )
 from backend_core.tmux.control import SessionControlError, create_session
+from hub_backend.chat_supervisor import ensure_chat_server
 
 
 def _workspace_claim_failure(workspace: str) -> tuple[int, str] | None:
@@ -147,22 +148,20 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
                 session_name=session_name,
                 workspace=resolved_workspace,
                 agents=[],
-                tmux_socket=ctx["session_api"].ctx.hub.tmux_socket,
-                repo_root=ctx["session_api"].ctx.hub.repo_root,
+                tmux_socket=ctx["hub"].tmux_socket,
+                repo_root=ctx["hub"].repo_root,
             )
         except SessionControlError as exc:
             handler._send_json(500, {"ok": False, "error": str(exc)})
             return
-        ok, chat_port, detail = ctx["session_api"].ensure_active_chat_server(
-            resolved_workspace,
+        ok, chat_port, detail = ensure_chat_server(
+            ctx["hub"],
+            expected_active=True,
+            workspace=resolved_workspace,
         )
         if not ok:
             handler._send_json(500, {"ok": False, "error": detail})
             return
-        record = ctx["session_api"].build_active_session_record(
-            session_name,
-            resolved_workspace,
-        )
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
@@ -178,6 +177,5 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
             "ok": True,
             "session": session_name,
             "chat_url": chat_url,
-            "session_record": record,
         },
     )

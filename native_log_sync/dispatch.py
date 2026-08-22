@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from backend_core.agents.names import agent_base_name
-from backend_core.agents.registry import canonical_agent_name
 from native_log_sync.agents.claude.read_updates import sync_claude_native_log
 from native_log_sync.agents.codex.read_updates import sync_codex_native_log
 from native_log_sync.agents.cursor.read_updates import sync_cursor_native_log
@@ -22,7 +21,7 @@ def sync_agent(runtime, agent: str, path: str | None = None) -> None:
     # triggers like first-message/reload can both target the same agent) so
     # two syncs never read the same progress offset and double-append.
     with runtime._native_log_sync_lock:
-        base = canonical_agent_name(agent_base_name(agent))
+        base = agent_base_name(agent)
         sync_fn = _SYNC_BY_BASE.get(base)
         if sync_fn is None:
             raise ValueError(f"unknown agent type: {agent}")

@@ -18,20 +18,12 @@ sys.path.insert(0, str(repo_root))
 from backend_core.net import http_proxy
 from workspace_sync.files.runtime import FileRuntime
 from hub_backend.runtime import HubRuntime
-from hub_backend.session_api import HubSessionApi, HubSessionApiContext
+from hub_backend.chat_supervisor import ensure_chat_server
+from hub_backend.session_api import resolve_session_chat_target
 from server.runtime import ChatRuntime
 from backend_core.access.settings import DEFAULT_MESSAGE_FONT, load_hub_settings, settings_for_chat_render
 
 hub = HubRuntime(repo_root, tmux_socket, hub_port=hub_port)
-ensure_chat_server = hub.ensure_chat_server
-session_api = HubSessionApi(
-    HubSessionApiContext(
-        hub=hub,
-        active_session_records_query=hub.active_session_records_query,
-        archived_session_records=hub.archived_session_records,
-        ensure_chat_server=hub.ensure_chat_server,
-    )
-)
 
 SESSION_GET_RETRY_WINDOW = 3.0
 SESSION_GET_RETRY_DELAY = 0.1
@@ -127,7 +119,7 @@ class Handler(BaseHTTPRequestHandler):
         reviving it. Reviving is exclusively a /revive-session action, proxied
         straight through to the local hub."""
         self.__tmux_unhealthy_detail = ""
-        resolved = session_api.resolve_session_chat_target(session_name)
+        resolved = resolve_session_chat_target(hub, session_name)
         if resolved["status"] == "unhealthy":
             self.__tmux_unhealthy_detail = resolved.get("detail", "")
             return None
@@ -135,21 +127,18 @@ class Handler(BaseHTTPRequestHandler):
             return None
         return resolved
 
-    def _session_file_runtime(self, session_name: str, record: dict | None = None) -> FileRuntime | None:
-        if record is None:
+    def _session_file_runtime(self, session_name: str, workspace: str = "") -> FileRuntime | None:
+        if not workspace:
             resolved = self._resolve_session(session_name)
-            record = resolved.get("session_record") if resolved else None
-        if record is None:
-            return None
-        workspace = (record.get("workspace") or "").strip()
+            workspace = str((resolved or {}).get("workspace") or "").strip()
         if not workspace:
             return None
         return FileRuntime(workspace=workspace)
 
-    def _handle_session_file_request(self, session_name: str, suffix: str, parsed, *, record: dict | None = None) -> bool:
+    def _handle_session_file_request(self, session_name: str, suffix: str, parsed, *, workspace: str = "") -> bool:
         if suffix not in {"/file-raw", "/file-view"}:
             return False
-        runtime = self._session_file_runtime(session_name, record)
+        runtime = self._session_file_runtime(session_name, workspace)
         if runtime is None:
             self.send_response(404)
             self.end_headers()
@@ -190,7 +179,6 @@ class Handler(BaseHTTPRequestHandler):
                 rel,
                 embed=embed,
                 base_path=f"/session/{url_quote(session_name)}",
-                agent_font_mode="gothic",
                 agent_font_family=ChatRuntime._font_family_stack(message_font, "user"),
             )
         except PermissionError:
@@ -210,7 +198,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _proxy_hub(self, method: str):
         parsed = urlparse(self.path)
-        upstream = f"https://127.0.0.1:{hub_port}{parsed.path}"
+        upstream = f"{hub.hub_scheme}://127.0.0.1:{hub_port}{parsed.path}"
         if parsed.query:
             upstream += f"?{parsed.query}"
         self._proxy(method, upstream)
@@ -232,9 +220,9 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
             return
-        record = resolved.get("session_record") or {}
+        workspace = str(resolved.get("workspace") or "").strip()
         session_is_active = bool(resolved.get("session_is_active", True))
-        if method == "GET" and self._handle_session_file_request(session_name, suffix, parsed, record=record):
+        if method == "GET" and self._handle_session_file_request(session_name, suffix, parsed, workspace=workspace):
             return
         body = self._read_request_body(method)
         forwarded_prefix = f"/session/{session_name}"
@@ -242,8 +230,11 @@ class Handler(BaseHTTPRequestHandler):
         deadline = time.time() + SESSION_GET_RETRY_WINDOW if method == "GET" else time.time()
         post_deadline = time.time() + SESSION_POST_RETRY_WINDOW if method == "POST" and suffix == "/new-chat" else time.time()
         while True:
-            workspace = str((record or {}).get("workspace") or "").strip()
-            ok, chat_port, detail = ensure_chat_server(expected_active=session_is_active, workspace=workspace)
+            ok, chat_port, detail = ensure_chat_server(
+                hub,
+                expected_active=session_is_active,
+                workspace=workspace,
+            )
             if not ok:
                 body_bytes = f"Failed to start chat for {session_name}: {detail}".encode("utf-8")
                 self.send_response(500)
@@ -258,18 +249,15 @@ class Handler(BaseHTTPRequestHandler):
             status = 0
             resp_headers = None
             resp = None
-            for scheme in ("http", "https"):
-                upstream = f"{scheme}://127.0.0.1:{chat_port}{upstream_suffix}"
-                try:
-                    if method == "POST" and suffix == "/new-chat":
-                        response = self._request_upstream(method, upstream, body=body, headers=headers)
-                    else:
-                        status, resp_headers, resp = self._open_upstream(method, upstream, body=body, headers=headers)
-                    last_exc = None
-                    break
-                except TRANSIENT_UPSTREAM_ERRORS as exc:
-                    last_exc = exc
-                    continue
+            upstream = f"{hub.hub_scheme}://127.0.0.1:{chat_port}{upstream_suffix}"
+            try:
+                if method == "POST" and suffix == "/new-chat":
+                    response = self._request_upstream(method, upstream, body=body, headers=headers)
+                else:
+                    status, resp_headers, resp = self._open_upstream(method, upstream, body=body, headers=headers)
+                last_exc = None
+            except TRANSIENT_UPSTREAM_ERRORS as exc:
+                last_exc = exc
             if last_exc is not None:
                 if method == "GET" and time.time() < deadline:
                     time.sleep(SESSION_GET_RETRY_DELAY)

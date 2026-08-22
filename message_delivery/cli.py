@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import argparse
 import os
 import sys
 from dataclasses import dataclass
-from pathlib import Path
 
 from backend_core.agents.registry import ALL_AGENT_NAMES
 from message_delivery.send import AgentSendError, AgentSendRuntime
@@ -92,16 +90,8 @@ def _parse_agent_send_args(argv: list[str]) -> ParsedAgentSendArgs:
 
 
 def run(argv: list[str] | None = None) -> int:
-    args = list(sys.argv[1:] if argv is None else argv)
-
-    bootstrap = argparse.ArgumentParser(add_help=False)
-    bootstrap.add_argument("--repo-root", default="")
-    known, remaining = bootstrap.parse_known_args(args)
-
-    repo_root = Path(known.repo_root).resolve() if known.repo_root else Path(__file__).resolve().parents[2]
-
     try:
-        parsed = _parse_agent_send_args(remaining)
+        parsed = _parse_agent_send_args(list(sys.argv[1:] if argv is None else argv))
     except AgentSendError as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -114,13 +104,8 @@ def run(argv: list[str] | None = None) -> int:
         print(_usage_text(), file=sys.stderr)
         return 1
 
-    runtime = AgentSendRuntime(
-        repo_root=repo_root,
-        env=dict(os.environ),
-        cwd=Path.cwd(),
-    )
-
     try:
+        runtime = AgentSendRuntime(env=dict(os.environ))
         session_name = runtime.resolve_session_name()
         if parsed.operation == "names":
             names = runtime.agent_names(session_name)
@@ -152,9 +137,6 @@ def run(argv: list[str] | None = None) -> int:
         return 1
 
     payload = sys.stdin.read()
-    if payload == "":
-        print("agent-send: empty message body", file=sys.stderr)
-        return 1
     if not payload:
         print("agent-send: empty message body", file=sys.stderr)
         return 1

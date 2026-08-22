@@ -39,12 +39,6 @@ repo rootで次を実行します。
 
 Tauri Appをbuildして起動します。HubはTauri Appから起動され、既定のportは `8788` です。
 
-Tauri Appのrebuildだけを行う場合は、次を使用します。
-
-```bash
-./tauri_app/tauri-build
-```
-
 # 使う
 
 ## sessionを始める

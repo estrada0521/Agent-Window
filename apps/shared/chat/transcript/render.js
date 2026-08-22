@@ -11,7 +11,7 @@
         const metaHiddenIds = computeMetaHiddenIds(displayEntries);
         const previousRenderedIds = new Set(_renderedIds);
 
-        updateSessionUI(data, displayEntries);
+        updateMessageProjectionUI(displayEntries);
 
         const renderSig = displayEntries.map((entry) => entryRenderKey(entry)).join("\u0002");
         if (!forceScroll && renderSig === lastMessagesSig) return;

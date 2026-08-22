@@ -7,7 +7,6 @@ import uuid
 from collections import deque
 from datetime import datetime as dt_datetime
 from pathlib import Path
-from urllib.parse import quote
 
 from backend_core.agents.executables import (
     agent_launch_cmd as _agent_launch_cmd_impl,
@@ -36,7 +35,6 @@ from workspace_sync.commit import (
     ensure_commit_announcements as _ensure_commit_announcements_impl,
 )
 from .payload import (
-    attachment_paths as payload_attachment_paths,
     build_payload_document,
     encode_payload_document,
 )
@@ -202,10 +200,6 @@ class ChatRuntime:
     def ensure_commit_announcements(self) -> None:
         _ensure_commit_announcements_impl(self)
 
-    @staticmethod
-    def attachment_paths(message: str) -> list[str]:
-        return payload_attachment_paths(message)
-
     def _entry_window(
         self,
         *,
@@ -218,20 +212,6 @@ class ChatRuntime:
             default_limit=self.limit,
             offset=offset,
         )
-
-    def session_metadata(self) -> dict:
-        session_slug = quote(self.session_name, safe="")
-        return {
-            "server_instance": self.server_instance,
-            "session": self.session_name,
-            "active": self.session_is_active,
-            "source": str(self.log_path),
-            "workspace": self.workspace,
-            "log_dir": self.log_dir,
-            "port": self.port,
-            "hub_port": self.hub_port,
-            "session_path": f"/session/{session_slug}/",
-        }
 
     def notify_session_state_changed(
         self,
@@ -276,15 +256,12 @@ class ChatRuntime:
             cached = self._payload_cache.get(cache_key)
             if cached is not None:
                 return cached
-        meta = self.session_metadata()
-        entries, has_older, total_count = self._entry_window(
+        entries, has_older, _total_count = self._entry_window(
             limit_override=limit_override,
             offset=offset,
         )
-        meta["total_messages"] = total_count
         payload_doc = build_payload_document(
-            meta=meta,
-            targets=self.active_agents(),
+            server_instance=self.server_instance,
             has_older=has_older,
             entries=entries,
         )
@@ -436,9 +413,6 @@ class ChatRuntime:
 
     def agent_runtime_state(self) -> dict[str, dict]:
         return self._native_log.agent_runtime_state()
-
-    def cursor_status(self) -> list[dict]:
-        return self._native_log.cursor_status()
 
     def native_log_watched_paths(self) -> dict[str, str]:
         return self._native_log.watched_paths()

@@ -61,7 +61,6 @@ chat_font_settings_inline_style = _not_initialized
 payload = _not_initialized
 append_system_entry = _not_initialized
 send_message = _not_initialized
-agent_statuses = _not_initialized
 file_runtime = None
 workspace_sync_api = None
 asset_runtime = None
@@ -215,7 +214,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     global PUBLIC_HOST, PUBLIC_HUB_PORT, _repo_root, runtime
     global _PWA_STATIC_DIR, server_instance, load_chat_settings, chat_font_settings_inline_style
     global payload, append_system_entry
-    global send_message, agent_statuses, file_runtime, asset_runtime
+    global send_message, file_runtime, asset_runtime
     global send_queue, send_queue_thread, workspace_sync_api
 
     if _initialized:
@@ -251,7 +250,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     payload = runtime.payload
     append_system_entry = runtime.append_system_entry
     send_message = _send_or_enqueue_message
-    agent_statuses = runtime.agent_statuses
     workspace_sync_api = WorkspaceSyncApi(
         workspace=workspace,
         allowed_roots_fn=lambda: [runtime.session_dir],
@@ -388,7 +386,6 @@ def _route_context() -> dict:
         "payload_fn": payload,
         "append_system_entry_fn": append_system_entry,
         "send_message_fn": send_message,
-        "agent_statuses_fn": agent_statuses,
         "file_runtime": file_runtime,
         "workspace_sync_api": workspace_sync_api,
         "asset_runtime": asset_runtime,

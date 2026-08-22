@@ -13,6 +13,10 @@ __CHAT_INCLUDE:../session-state-projections.js__
       const hasOwn = (key) => Object.prototype.hasOwnProperty.call(data, key);
       if (typeof data.session === "string" && data.session) {
         currentSessionName = data.session;
+        if (document.documentElement.dataset.mobile === "1") {
+          repoSession = currentSessionName;
+          if (latestPayloadData) updateRepoPanel(displayEntriesForData(latestPayloadData));
+        }
         restoreComposerDraft();
       }
       if (typeof data.active === "boolean") {
@@ -20,6 +24,12 @@ __CHAT_INCLUDE:../session-state-projections.js__
       }
       if (hasOwn("targets")) {
         const resolvedTargets = normalizedSessionTargets(data.targets);
+        const picker = document.getElementById("targetPicker");
+        if (!picker.dataset.loaded) {
+          selectedTargets = loadTargetSelection(currentSessionName, resolvedTargets);
+          saveTargetSelection(currentSessionName, selectedTargets);
+          picker.dataset.loaded = "1";
+        }
         const nextTargetsSig = JSON.stringify(resolvedTargets);
         if (nextTargetsSig !== JSON.stringify(availableTargets)) {
           availableTargets = resolvedTargets;
