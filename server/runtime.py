@@ -383,8 +383,8 @@ class ChatRuntime:
 
     def _mark_idle(self, agent: str) -> None:
         was_running = agent in self._agent_running
-        self._agent_running.discard(agent)
         _update_running_env_impl(self, agent, False)
+        self._agent_running.discard(agent)
         cleared = self._native_log.clear_agent_runtime_display(agent)
         if was_running:
             self.notify_session_state_changed(["statuses", "agent_runtime"], reason="agent-status")
