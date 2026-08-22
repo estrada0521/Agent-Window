@@ -38,7 +38,6 @@
 
 ## 6. Tests lock a live contract; they are not a second product
 
-- A test is allowed when it names a contract that can break without the change being obvious in the diff — a native-log shape, a bind or scheme, a public URL rule. Coverage, a refactor souvenir, and "while I am here" are not reasons.
+- A test is allowed only when it names a contract that can break without the change being obvious in the diff — a native-log shape, a bind or scheme, a public URL rule — and the user has agreed it is worth locking before it gets written. Coverage, a refactor souvenir, and "while I am here" are not reasons, and neither is your own initiative. The suite is swept, not maintained.
 - If a test disagrees with the product, the test is the suspect. Delete it. Do not bend the implementation to satisfy it. Do not rewrite the test just so the suite stays green.
 - When a path is cut, cut its tests in the same change. A failing test of a deleted name is not a regression; it is leftover.
-- Do not add a test for work the user did not ask to lock. The suite is swept, not maintained.
