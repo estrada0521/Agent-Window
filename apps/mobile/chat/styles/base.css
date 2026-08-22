@@ -93,8 +93,8 @@
       --fab-hover-bg: __FAB_HOVER_BG__;
       --external-link-fg: #ff6b6b;
 
-      --link-blue: rgb(122, 166, 231);
-      --link-blue-channels: 122, 166, 231;
+      --link-blue: __DARK_LINK_BLUE__;
+      --link-blue-channels: __DARK_LINK_BLUE_CHANNELS__;
       --git-ins-green: rgb(74, 222, 128);
       --git-ins-green-channels: 74, 222, 128;
       --git-del-red: rgb(248, 113, 113);
@@ -191,8 +191,8 @@
       --panel-row-active-bg: rgba(255, 255, 255, 0.16);
       --panel-row-selected-bg: rgba(255, 255, 255, 0.045);
 
-      --link-blue: rgb(122, 166, 231);
-      --link-blue-channels: 122, 166, 231;
+      --link-blue: __DARK_LINK_BLUE__;
+      --link-blue-channels: __DARK_LINK_BLUE_CHANNELS__;
       --git-ins-green: rgb(74, 222, 128);
       --git-ins-green-channels: 74, 222, 128;
       --git-del-red: rgb(248, 113, 113);
