@@ -49,15 +49,18 @@ To rebuild only the Tauri App, use:
 
 ## Start a session
 
-Choose a workspace root from `New Session` in the Hub to set up a session.
-The Hub manages the list of sessions; archiving and deleting are also done from here.
+Choose a workspace from `New Session` in the Hub.
+
+The session name is a display label the Hub uses for that thread of work. The workspace is simply wherever it currently works — neither is fixed as the session's identity. Both can change: rename the session by renaming its `~/.agent-window/session/{session_name}` folder directly; change its workspace by archiving it and editing `workspace` in its `.meta` file. The chat port is derived from a hash of the session name into the `30000`–`48999` range, so it changes when the session is renamed.
+
+Archive, revive, and delete sessions from the Hub.
 
 ## Add an Agent
 
 `Add / Remove Agent` in the top right adds or removes Agents from the session. Running more than one instance of the same CLI Agent produces instance names such as `Claude-2`.
 
-* `Terminal` — opens a compact, pane-switching tmux terminal directly
-* `Finder` — opens the session's workspace in Finder
+* `Terminal` — opens a compact, pane-switching tmux terminal directly (the tmux socket name is fixed as `agent-window`)
+* `Finder` — opens the current workspace in Finder
 
 The separate reload button beside it hard-reloads the GUI server. If the source code has changed, the running server is replaced with the new implementation.
 
@@ -71,23 +74,27 @@ Typing `@` searches files in the workspace. Files can also be attached with the 
 
 ## Read
 
-The GUI displays messages from the human and every Agent participating in the session as a single timeline. **It is not split into independent chat rooms per Agent or per worktree.** Switching CLIs, or running multiple Agents at once, does not split the conversation — everything that happens within the same session stays in the same flow.
+The GUI displays messages from the human and every Agent participating in the session as a single timeline. **It is not split into independent chat rooms per Agent or per worktree.**
 
-Even when a CLI exits, restarts, is removed, or is added again, the timeline continues as long as the session stays the same.
+Switching CLIs, running multiple Agents at once, or a process ending and restarting — none of it interrupts the timeline; events keep landing in the same unified log. Even if the session name or workspace changes, past entries don't.
 
-It actually lives at the following location, symlinked into the workspace.
+The unified log's substance is an append-only JSONL file.
 
 ```text
 ~/.agent-window/session/{session_name}/.log.jsonl
 ```
 
+It's also reachable from the current workspace via a symlink. It isn't a database closed inside Agent Window — it survives Agent Window stopping, and reads as an ordinary file.
+
+The unified log isn't each CLI's detailed execution history. It's a projection, reduced to a granularity both humans and Agents can read across.
+
 Tool calls are streamed to the screen while running, for a sense of progress, but are not kept in this timeline.
 
-Technically, each CLI's native log path is resolved from its PID tree and similar process information, and kqueue watches it directly. The mapping between process and log path is re-resolved whenever necessary — a CLI restart, an Agent being re-added, a GUI server reload. So the session's timeline continues even when the CLI process is replaced.
+Each CLI's execution record is watched from outside, and the process/log-path mapping is re-resolved whenever necessary. So the CLI process's lifespan and the unified log's lifespan don't have to match.
 
 ## Watch the workspace
 
-Git and workspace state are watched with FSEvents and projected onto the right pane. File search uses a cache of file information obtained the same way.
+Git and workspace state are watched and projected onto the right pane. File search also uses the observed workspace information.
 
 Clicking a file opens it in the macOS default application. The desktop version of Agent Window does not reimplement a file viewer that already exists elsewhere. Mobile can't rely on that, so a bottom-sheet-style built-in viewer opens instead.
 
@@ -101,7 +108,9 @@ An Agent can send a message directly to another Agent in the session with `agent
 agent-send <target> <message>
 ```
 
-Technically, `agent-send` is a thin wrapper around the same `tmux send-keys` a human uses. It only resolves the destination and attaches a prefix such as `[From: Claude]`. Success here means the same thing it does for the input field above: tmux accepted the keystrokes, not that the target Agent understood or acted on it.
+`agent-send` is a thin wrapper around the same `tmux send-keys` a human uses. It only resolves the destination and attaches a prefix such as `[From: Claude]`.
+
+Here, success only means the input was delivered to the runtime. It doesn't mean the target Agent understood it or acted on it.
 
 ## Give a name
 
@@ -154,7 +163,7 @@ For reaching Hub from outside the LAN, see [`external-access/README.md`](externa
 Claude, Codex, Antigravity, Cursor, Grok.
 
 The receiving side needs to know where each CLI's native log lives and what format it's in, so there is per-CLI handling.
-The sending side is the same for every CLI. It only enters text into a pane, so there is no CLI-specific implementation.
+The sending side is the same for every CLI. It only enters text into a pane, so there is no CLI-specific message protocol.
 
 # License
 

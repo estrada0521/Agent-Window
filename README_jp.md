@@ -2,7 +2,7 @@
 
 Agent Windowは、複数のAgent CLIが動いている作業場所を外から眺めるための、UNIX哲学に則った**macOS向けのローカルインターフェース**です。
 
-各Agent CLIは、tmuxのpane内で通常どおり起動します。APIやSDK等を経由してmodelを呼ぶことはありません。**CLIが既に備えている機能を、そのまま利用します。**
+各Agent CLIはtmuxのpane内で通常どおり起動します。APIやSDK等を経由してmodelを呼ぶことはありません。**CLIが既に備えている機能を、そのまま利用します。**
 
 [設計哲学](DESIGN_jp.md) · [English](README.md)
 
@@ -25,9 +25,9 @@ Agent Windowは、複数のAgent CLIが動いている作業場所を外から�
 * `tauri-cli`
 * Xcode Command Line Tools
 
- `./setup/preflight` は、不足している依存関係と、その導入コマンドを確認します。このscriptが何かをinstallすることはありません。
+`./setup/preflight` は、不足している依存関係と、その導入コマンドを確認します。このscriptが何かをinstallすることはありません。
 
-使用するAgent CLIは個別にインストールし、通常の方法で認証を済ませてください。
+使用するAgent CLIは個別にinstallし、通常の方法で認証を済ませてください。
 
 ## 起動
 
@@ -49,59 +49,70 @@ Tauri Appのrebuildだけを行う場合は、次を使用します。
 
 ## sessionを始める
 
-Hubの `New Session` からworkspace root を選択し、sessionを設立します。
-Hubはsessionの一覧を管理し、Archive、削除もここから行います。
+Hubの `New Session` からworkspaceを選択します。
+
+session名はHub上でその流れを呼ぶための表示名です。workspaceはその時点の作業場所であり、sessionのidentityとして固定されません。どちらも変更できます — session名は `~/.agent-window/session/{session_name}` のフォルダ名を、workspaceは一度archiveしてから `.meta` の `workspace` を直接書き換えます。chat portはsession名のhashから `30000`–`48999` の範囲で決まるため、改名すると変わります。
+
+HubからsessionのArchive、revive、削除を行えます。
 
 ## Agentを足す
 
-右上の `Add / Remove Agent` から、Agent を該当sessionに追加/削除できます。同種のCLI Agentを複数起動した場合は `Claude-2` のようなinstance名になります。
+右上の `Add / Remove Agent` からAgentを追加・削除できます。同種のCLI Agentを複数起動した場合は `Claude-2` のようなinstance名になります。
 
-* `Terminal` —compactなpane切り替え式のtmux terminalを直接開きます
-* `Finder` — sessionのworkspaceをFinderで開きます
+* `Terminal` — compactなpane切り替え式のtmux terminalを直接開きます(tmux socket名は `agent-window` で固定です)
+* `Finder` — 現在のworkspaceをFinderで開きます
 
-隣の独立したreload buttonは、GUI serverをhard reloadします。source codeを変更している場合は、動作中のserverを新しい実装へ置き換えます。
+隣のreload buttonはGUI serverをhard reloadします。source codeを変更している場合は、動作中のserverを新しい実装へ置き換えます。
 
 ## 送る
 
-入力欄は通常、chatの表示領域を広く取るために最小化されており、画面下部の `O` button、またはホイール押し込みで展開されます。Agent Iconの選択状態が、メッセージの送信先を指定します。
+入力欄は通常、chatの表示領域を広く取るために最小化されており、画面下部の `O` button、またはホイール押し込みで展開されます。Agent Iconの選択状態がメッセージの送信先を指定します。
 
-入力欄の文字列は、選択中のAgent CLIが動作するpaneへ`tmux send-keys` を介して直接入力されます。Agent Window専用のmessage形式へは変換しません。。従って、**各CLIのslash commandやその他のCLIコマンドも、同じ入力欄から通ります。** 入力に失敗した場合は`send_error`として検出されますが、成功は通知しません。Pane自体の`restart`やmobileからの中断等、CLIの既定コマンドでは実現できない最小限の制御はAgent Windowが配線しています。
+入力された文字列は、選択中のAgent CLIが動作するpaneへ `tmux send-keys` を介して直接入力されます。Agent Window専用のmessage形式へ変換しないため、**各CLIのslash commandやその他のCLIコマンドも同じ入力欄から通ります。**
 
-`@` を入力すると、workspace内のfileを検索できます。fileはplus buttonまたはdrag-and-dropでも添付できます。添付されたfileは `<workspace>/.agent-window/uploads/` に保存され、そのpathがAgentへ通常テキストとして渡されます。
+入力に失敗した場合は `send_error` として検出されますが、成功は通知しません。paneのrestartやmobileからのinterruptなど、CLIの既定コマンドだけでは届かない最小限の制御はAgent Windowが配線します。
 
+`@` を入力するとworkspace内のfileを検索できます。fileはplus buttonまたはdrag-and-dropでも添付できます。添付されたfileは `<workspace>/.agent-window/uploads/` に保存され、そのpathがAgentへ通常のtextとして渡されます。
 
 ## 読む
 
-GUI は、sessionに参加した人間と各Agentのメッセージを、一つの時系列として表示します。**Agentごと、Worktreeごとの独立したchat roomには分割されません。** CLIを切り替えても、複数のAgentを同時に動かしても、同じsession内で発生した会話は同じ流れに残ります。
-CLIを終了、再起動、削除、再追加しても、同じsessionである限り、時系列は続きます。
+GUIは、人間と各Agentのメッセージを一つの時系列として表示します。**Agentごと、worktreeごとの独立したchat roomには分割されません。**
 
-実体は次の場所にあり、workspaceにはsymlinkが貼られます。
+CLIを切り替えたり、複数のAgentを同時に動かしたり、processを終了・再起動したりしても、出来事は同じ統一ログへ続いていきます。session名やworkspaceが変わっても、過去の記録そのものは変わりません。
+
+統一ログの実体はappend-only JSONLです。
 
 ```text
 ~/.agent-window/session/{session_name}/.log.jsonl
 ```
 
-tool callは体感のために実行中に画面へstreamされますが、この時系列には残りません。
+現在のworkspaceからもsymlinkで参照できます。Agent Window内部に閉じたdatabaseではなく、Agent Windowが停止してもそのまま残り、通常のfileとして読めます。
 
-技術的には、PID treeなどから各CLIのnative log pathを解決し、kqueueがこれを直接監視しています。CLIの再起動、Agentの再追加、GUI serverのreloadなど、必要なタイミングでprocessとlog pathの対応が再解決されます。したがって、CLI processが入れ替わっても、session側の時系列は継続します
+統一ログは各CLIの詳細な実行履歴そのものではありません。人間とAgentが横断して読める粒度へのprojectionです。
+
+tool callは進行状況を示すため実行中にstreamされますが、この時系列には残りません。
+
+各CLIの実行記録は外側から監視され、processやlog pathが変われば必要に応じて再解決されます。そのためCLI processの寿命と統一ログの寿命は一致しません。
 
 ## workspaceを見る
 
-git と workspaceの状態はFSEventsで監視され、右paneに投影されます。file検索は、このFSEventsで取得したfile情報のcacheを使用しています
+gitとworkspaceの状態は監視され、右paneへ投影されます。file検索も観測したworkspaceの情報を利用します。
 
-fileをクリックすると、はmacOSの既定のapplicationで展開されます。desktop版のAgent Windowでは既に存在しているfile viewerの再実装をしていません。mobileではそれらに頼れないため、bottom sheet型の内蔵viewerが開きます。
+fileをクリックするとmacOSの既定applicationで開きます。desktop版では、既に存在するfile viewerを再実装しません。mobileではそれらに頼れないため、bottom sheet型の内蔵viewerが開きます。
 
-uncommitted changeをクリックすると、gitに設定されたdiff viewer（`git difftool`）で開かれます。
+uncommitted changeをクリックすると、gitに設定されたdiff viewer (`git difftool`) で開きます。
 
 ## Agent同士をつなぐ
 
-Agentは `agent-send` で、session内の別のAgentへ直接メッセージを送れます。必要な場合は、`SKILL.md`を所定の場所に配置してください。これはAgent Windowが契約した唯一のSKILLです。
+Agentは `agent-send` で別のAgentへ直接メッセージを送れます。必要な場合は `SKILL.md` を所定の場所に配置してください。これはAgent Windowが契約した唯一のSKILLです。
 
 ```bash
 agent-send <target> <message>
 ```
 
-技術的には、`agent-send` は、人間の使う経路と同じ`tmux send-keys`の薄いwrapperです。宛先の解決と`[From: Claude]`のような Prefixの付与のみを行います。ここでの「成功」の意味は上の入力欄と同じで、tmuxがキー入力を受け付けたということだけであり、送信先のAgentが理解した・行動したことを意味しません。
+`agent-send` は、人間の入力と同じ `tmux send-keys` を使う薄いwrapperです。宛先を解決し、`[From: Claude]` のようなprefixを付けて入力します。
+
+ここでのsuccessは、入力がruntimeへ渡されたことだけを意味します。送信先のAgentが理解した、あるいは行動したことを意味しません。
 
 ## 名前をつける
 
@@ -111,13 +122,13 @@ Agent Windowの唯一の不要な機能です。
 agent-send name <target> <name>
 ```
 
-Agentに、session内で通じる名前を付けられます。名前が使われるのは `agent-send` の宛先と `[From: ...]` prefixだけで、既存のinstance名とlog上の識別子は変わりません。
+Agentに、その場で通じる名前を付けられます。名前が使われるのは `agent-send` の宛先と `[From: ...]` prefixだけで、既存のinstance名やlog上の識別子は変わりません。
 
 ## スマートフォンから使う
 
 同一LAN上のmobile端末から、同じ画面へ接続できます。
 
-最初に、HTTP modeでTauri AppとHubを起動します。その状態で次を実行します。
+最初にHTTP modeでTauri AppとHubを起動し、その状態で次を実行します。
 
 ```bash
 ./setup/pwa/enable
@@ -149,13 +160,13 @@ LANの外からHubへ到達する方法は [`external-access/README.md`](externa
   <img src="media/agent-window-mobile-4.png" width="24%" alt="Mobile UI 4">
 </p>
 
-
 ## 対応CLI
 
 Claude、Codex、Antigravity、Cursor、Grok。
 
-受信側は、各CLIのnative logの置き場所と形式を知る必要があるため、CLIごとの対応が入ります。
-送信側はどのCLIも同じです。paneへ文字列を入力するだけなので、CLI固有の実装はありません。
+受信側は各CLIの実行記録の置き場所と形式を知る必要があるため、CLIごとの対応があります。
+
+送信側は共通です。paneへ文字列を入力するだけなので、CLI固有のmessage protocolはありません。
 
 # License
 
