@@ -24,7 +24,7 @@ agent と人間は、その現実に一時的あるいは半永続的に参加�
 
 実体は append-only JSONL であり、現在の workspace から symlink で参照できます。application 内部の状態ではなく、Agent Window が停止してもそのまま残り、読める記録です。
 
-名前、process、workspace が変わっても、過去の記録はその時に観測された事実と provenance を保ったまま残ります。
+名前、process、workspace が変わっても、過去の記録はその時に観測された事実と provenance を保ったまま残ります。各entryは、それが参照する native log の位置まで遡れます。射影は不可逆ではありません。
 
 ## 何を実装しないか
 

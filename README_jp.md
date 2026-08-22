@@ -51,7 +51,7 @@ Tauri Appのrebuildだけを行う場合は、次を使用します。
 
 Hubの `New Session` からworkspaceを選択します。
 
-session名は表示名、workspaceは現在の作業場所です。session名を変更する場合は `~/.agent-window/session/{session_name}` のフォルダ名を変更します。workspaceを変更する場合は、archive、Hubのreload、`.meta` の `workspace` の書き換え、reviveの順で行います。session名を変更してもchat serverは再起動せず、URLも変わりません。
+sessionは、workspaceに対して今開かれているlogに過ぎず、作業そのもののdurable identityではありません。名前は表示名、workspaceは現在の作業場所です。session名を変更する場合は `~/.agent-window/session/{session_name}` のフォルダ名を変更します。workspaceを変更する場合は、archive、Hubのreload、`.meta` の `workspace` の書き換え、reviveの順で行います。session名を変更してもchat serverは再起動せず、URLも変わりません。
 
 HubからsessionのArchive、revive、削除を行えます。
 
@@ -76,7 +76,7 @@ HubからsessionのArchive、revive、削除を行えます。
 
 ## 読む
 
-GUIは、人間と各Agentのメッセージを一つの時系列として表示します。**Agentごと、worktreeごとの独立したchat roomには分割されません。**
+GUIは、人間と各Agentのメッセージを一つの時系列——このsessionに今開かれている統一ログ——として表示します。**Agentごと、worktreeごとの独立したchat roomには分割されません。**
 
 CLIを切り替えたり、複数のAgentを同時に動かしたり、processを終了・再起動したりしても、出来事は同じ統一ログへ続いていきます。session名やworkspaceが変わっても、過去の記録そのものは変わりません。
 
@@ -93,6 +93,8 @@ CLIを切り替えたり、複数のAgentを同時に動かしたり、process�
 tool callは進行状況を示すため実行中にstreamされますが、この時系列には残りません。
 
 各CLIの実行記録は外側から監視され、processやlog pathが変われば必要に応じて再解決されます。そのためCLI processの寿命と統一ログの寿命は一致しません。
+
+各entryには、参照元のnative logのpathとその中の位置が記録されています。
 
 ## workspaceを見る
 

@@ -51,7 +51,7 @@ To rebuild only the Tauri App, use:
 
 Choose a workspace from `New Session` in the Hub.
 
-The session name is a display label, and the workspace is its current working location. To rename a session, rename its `~/.agent-window/session/{session_name}` folder. To change its workspace, archive it, reload the Hub, edit `workspace` in its `.meta` file, and revive it. Renaming a session does not restart its chat server or change its URL.
+A session is just the log currently open for a workspace, not a durable identity for the work — its name is a display label, and its workspace is wherever it currently runs. To rename a session, rename its `~/.agent-window/session/{session_name}` folder. To change its workspace, archive it, reload the Hub, edit `workspace` in its `.meta` file, and revive it. Renaming a session does not restart its chat server or change its URL.
 
 Archive, revive, and delete sessions from the Hub.
 
@@ -74,7 +74,7 @@ Typing `@` searches files in the workspace. Files can also be attached with the 
 
 ## Read
 
-The GUI displays messages from the human and every Agent participating in the session as a single timeline. **It is not split into independent chat rooms per Agent or per worktree.**
+The GUI displays every human and Agent message as a single timeline — the unified log currently open for this session. **It is not split into independent chat rooms per Agent or per worktree.**
 
 Switching CLIs, running multiple Agents at once, or a process ending and restarting — none of it interrupts the timeline; events keep landing in the same unified log. Even if the session name or workspace changes, past entries don't.
 
@@ -91,6 +91,8 @@ The unified log isn't each CLI's detailed execution history. It's a projection, 
 Tool calls are streamed to the screen while running, for a sense of progress, but are not kept in this timeline.
 
 Each CLI's execution record is watched from outside, and the process/log-path mapping is re-resolved whenever necessary. So the CLI process's lifespan and the unified log's lifespan don't have to match.
+
+Each entry records the path of its source native log, and its position within it.
 
 ## Watch the workspace
 

@@ -24,7 +24,7 @@ This is not the original record of the world. Each original lives in its own pro
 
 What it actually is: an append-only JSONL file, reachable from the current workspace via a symlink. It isn't application-internal state — it survives Agent Window stopping, and stays readable.
 
-Names, processes, and workspaces can change; past entries stay exactly as observed, with their provenance intact.
+Names, processes, and workspaces can change; past entries stay exactly as observed, with their provenance intact. Each entry traces back to the position in the native log it references. The projection is not one-way.
 
 ## What I Don't Implement
 
