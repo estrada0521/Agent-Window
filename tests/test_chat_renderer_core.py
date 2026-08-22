@@ -46,7 +46,7 @@ assert.equal(
         base = (ROOT / "apps/shared/chat/base.js").read_text()
         messages = (ROOT / "apps/shared/chat/runtime/messages.js").read_text()
         render_markdown = _between(base, "    const applyWrittenOrderedListNumbers =", "    const wrapFileIcon")
-        build_message = _between(messages, "    const buildMsgHTML =", "    const updateSessionUI")
+        build_message = _between(messages, "    const buildMsgHTML =", "    const updateMessageProjectionUI")
 
         script = f"""
 const assert = require("node:assert/strict");

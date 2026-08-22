@@ -4,6 +4,16 @@ import json
 import time
 from urllib.parse import parse_qs
 
+from backend_core.access.settings import save_hub_settings
+from hub_backend.chat_supervisor import (
+    delete_archived_session,
+    ensure_chat_server,
+    kill_repo_session,
+    revive_archived_session,
+)
+from hub_backend.session_api import resolve_session_chat_target
+from hub_backend.session_query import active_session_records_query
+
 
 def get_open_session(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
@@ -15,7 +25,7 @@ def get_open_session(handler, parsed, ctx) -> None:
         else:
             handler._send_html(404, ctx["error_page_fn"]("That session is not available in this repo."))
         return
-    resolved = ctx["session_api"].resolve_session_chat_target(session_name)
+    resolved = resolve_session_chat_target(ctx["hub"], session_name)
     if resolved["status"] == "unhealthy":
         handler._send_unhealthy(fmt, resolved.get("detail", ""))
         return
@@ -40,7 +50,7 @@ def get_open_session(handler, parsed, ctx) -> None:
         f"/?ts={int(time.time() * 1000)}",
     )
     if fmt == "json":
-        handler._send_json(200, {"ok": True, "chat_url": location, "session_record": resolved.get("session_record", {})})
+        handler._send_json(200, {"ok": True, "chat_url": location})
     else:
         handler.send_response(302)
         handler.send_header("Location", location)
@@ -57,7 +67,7 @@ def get_revive_session(handler, parsed, ctx) -> None:
         else:
             handler._send_html(404, ctx["error_page_fn"]("That archived session is not available in this repo."))
         return
-    ok, detail = ctx["revive_archived_session_fn"](session_name)
+    ok, detail = revive_archived_session(ctx["hub"], session_name)
     if not ok:
         if "unresponsive" in (detail or ""):
             handler._send_unhealthy(fmt, detail)
@@ -67,9 +77,10 @@ def get_revive_session(handler, parsed, ctx) -> None:
         else:
             handler._send_html(500, ctx["error_page_fn"](f"Failed to revive {session_name}: {detail}"))
         return
-    query = ctx["active_session_records_query_fn"]()
+    query = active_session_records_query(ctx["hub"])
     workspace = str((query.records.get(session_name) or {}).get("workspace") or "").strip()
-    ok, chat_port, detail = ctx["ensure_chat_server_fn"](
+    ok, chat_port, detail = ensure_chat_server(
+        ctx["hub"],
         expected_active=True,
         workspace=workspace,
     )
@@ -86,8 +97,7 @@ def get_revive_session(handler, parsed, ctx) -> None:
         f"/?ts={int(time.time() * 1000)}",
     )
     if fmt == "json":
-        query = ctx["active_session_records_query_fn"]()
-        handler._send_json(200, {"ok": True, "chat_url": location, "session_record": query.records.get(session_name, {})})
+        handler._send_json(200, {"ok": True, "chat_url": location})
     else:
         handler.send_response(302)
         handler.send_header("Location", location)
@@ -104,7 +114,7 @@ def get_kill_session(handler, parsed, ctx) -> None:
         else:
             handler._send_html(404, ctx["error_page_fn"]("That active session is not available in this repo."))
         return
-    ok, detail = ctx["kill_repo_session_fn"](session_name)
+    ok, detail = kill_repo_session(ctx["hub"], session_name)
     if not ok:
         if fmt == "json":
             handler._send_json(500, {"ok": False, "error": detail or f"Failed to kill {session_name}"})
@@ -129,7 +139,7 @@ def get_delete_archived_session(handler, parsed, ctx) -> None:
         else:
             handler._send_html(404, ctx["error_page_fn"]("That archived session is not available in this repo."))
         return
-    ok, detail = ctx["delete_archived_session_fn"](session_name)
+    ok, detail = delete_archived_session(ctx["hub"], session_name)
     if not ok:
         if fmt == "json":
             handler._send_json(500, {"ok": False, "error": detail or f"Failed to delete archived session {session_name}"})
@@ -168,7 +178,7 @@ def post_restart_hub(handler, _parsed, ctx) -> None:
 
 def post_settings(handler, parsed, ctx) -> None:
     data = handler._read_form()
-    ctx["save_hub_settings_fn"](data)
+    save_hub_settings(data)
     qs = parse_qs(parsed.query)
     if qs.get("embed", ["0"])[0] == "1":
         handler._redirect("/settings?embed=1&saved=1")

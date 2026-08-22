@@ -4,7 +4,8 @@ import os
 import shutil
 from pathlib import Path
 
-from backend_core.agents.registry import AGENTS, base_agent_name
+from backend_core.agents.names import agent_base_name
+from backend_core.agents.registry import AGENTS
 
 
 def _repo_root() -> Path:
@@ -12,7 +13,7 @@ def _repo_root() -> Path:
 
 
 def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
-    base = base_agent_name(agent_name)
+    base = agent_base_name(agent_name)
     adef = AGENTS.get(base)
     exe_name = adef.exe if adef else agent_name
 
@@ -32,10 +33,6 @@ def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
     found = shutil.which(exe_name)
     if found:
         return found
-    if base == "cursor":
-        found = shutil.which("cursor-agent")
-        if found:
-            return found
     if adef:
         found = fallback_path()
         if found:
@@ -58,26 +55,12 @@ def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
     return None
 
 
-def agent_launch_readiness(repo_root: Path, agent_name: str) -> dict[str, str]:
-    base = base_agent_name(agent_name)
-    executable = resolve_agent_executable(repo_root, base)
-    if not executable:
-        disp = AGENTS[base].display_name if base in AGENTS else base
-        return {
-            "agent": base,
-            "status": "missing_cli",
-            "error": f"{disp} CLI is not installed on this Mac.",
-        }
-    return {"agent": base, "status": "ok", "executable": executable}
-
-
 def resolve_agent_executable_for_runtime(agent_name: str, repo_root: Path | str | None = None) -> str:
-    import shlex as _shlex
     resolved_root = Path(repo_root).resolve() if repo_root is not None else _repo_root()
     found = resolve_agent_executable(resolved_root, agent_name)
     if found:
         return found
-    base = base_agent_name(agent_name)
+    base = agent_base_name(agent_name)
     adef = AGENTS.get(base)
     return adef.exe if adef else agent_name
 
@@ -86,7 +69,7 @@ def _build_agent_exec(runtime, agent_name: str) -> tuple[str, object]:
     import shlex as _shlex
     agent_exec_path = Path(resolve_agent_executable_for_runtime(agent_name, repo_root=runtime.repo_root))
     agent_exec = _shlex.quote(str(agent_exec_path))
-    base = base_agent_name(agent_name)
+    base = agent_base_name(agent_name)
     adef = AGENTS.get(base)
     return agent_exec, adef
 
@@ -102,7 +85,7 @@ def agent_launch_cmd(runtime, agent_name: str) -> str:
 
 
 def agent_resume_cmd(runtime, agent_name: str) -> str:
-    base = base_agent_name(agent_name)
+    base = agent_base_name(agent_name)
     adef = AGENTS.get(base)
     if not adef or not adef.resume_flag:
         return agent_launch_cmd(runtime, agent_name)

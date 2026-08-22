@@ -34,9 +34,6 @@ def _chat_markdown_preview_css(preview_variant: str = "") -> str:
         "__AGENT_SEL_MD_BODY__": ".md-body",
         "__AGENT_SEL_MD_BODY_LI__": ".md-body li",
         "__AGENT_SEL_MD_HEADING__": ".md-body h1, .md-body h2, .md-body h3, .md-body h4",
-        "__AGENT_SEL_GOTHIC_MD_BODY__": 'html[data-agent-font-mode="gothic"] .md-body',
-        "__AGENT_SEL_GOTHIC_MD_LI__": 'html[data-agent-font-mode="gothic"] .md-body li',
-        "__AGENT_SEL_GOTHIC_MD_HEADING__": 'html[data-agent-font-mode="gothic"] .md-body h1, html[data-agent-font-mode="gothic"] .md-body h2, html[data-agent-font-mode="gothic"] .md-body h3, html[data-agent-font-mode="gothic"] .md-body h4',
     }
     for placeholder, value in replacements.items():
         markdown_css = markdown_css.replace(placeholder, value)
@@ -52,7 +49,6 @@ def render_file_view(
     base_path: str = "",
     preview_base_theme: str = "",
     preview_variant: str = "",
-    agent_font_mode: str = "serif",
     agent_font_family: str | None = None,
     agent_text_size: int | None = None,
     preview_chrome: str = "",
@@ -67,7 +63,6 @@ def render_file_view(
     prefix = (base_path or "").rstrip("/")
     raw_url = f"{prefix}/file-raw?path={url_quote(rel)}"
     size = os.path.getsize(full)
-    agent_font_mode = "gothic" if str(agent_font_mode or "").strip().lower() == "gothic" else "serif"
     resolved_agent_font_family = str(agent_font_family).strip() if agent_font_family else DEFAULT_MESSAGE_FONT
     code_font_family = (
         '"SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", monospace'
@@ -94,7 +89,6 @@ def render_file_view(
     embed_bg = "transparent" if embed else pane_bg
     pane_fg = str((theme_palette or {}).get("light_fg") or LIGHT_FG)
     pane_fg_channels = str((theme_palette or {}).get("light_fg_channels") or LIGHT_FG_CHANNELS)
-    pane_muted = pane_fg
     is_light_theme = str((theme_palette or {}).get("theme") or "").lower() == "light"
     pane_ln_color = "rgba(0,0,0,0.22)" if is_light_theme else f"rgba({pane_fg_channels},0.22)"
     pane_line = f"rgba({pane_fg_channels},0.08)"
@@ -431,7 +425,7 @@ def render_file_view(
             f'.md-preview-shell>.md-body{{padding:{markdown_top_padding} 16px 18px}}'
         )
         return (
-            f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-agent-font-mode="{agent_font_mode}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
+            f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
             f'{markdown_head_libs}'
             f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}'
             '</style></head>'
@@ -443,7 +437,6 @@ const __fileBase = {prefix_json};
 const __previewEmbed = {json.dumps(embed)};
 const __previewPane = {json.dumps(pane)};
 const __previewBasePath = {prefix_json};
-const __previewAgentFontMode = {json.dumps(agent_font_mode)};
 const __previewAgentTextSize = {json.dumps(resolved_text_size)};
 const __previewVariant = {json.dumps(resolved_preview_variant)};
 const __rawBase = `${{__fileBase}}/file-raw?path=`;
@@ -513,7 +506,6 @@ const buildPreviewHref = (relPath) => {{
   if (__previewEmbed) params.set("embed", "1");
   if (__previewPane) params.set("pane", "1");
   if (__previewBasePath) params.set("base_path", __previewBasePath);
-  if (__previewAgentFontMode) params.set("agent_font_mode", __previewAgentFontMode);
   if (__previewAgentTextSize) params.set("agent_text_size", String(__previewAgentTextSize));
   if (__previewVariant) params.set("preview_variant", __previewVariant);
   return `${{__fileBase}}/file-view?${{params.toString()}}`;

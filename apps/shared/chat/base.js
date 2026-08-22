@@ -250,10 +250,6 @@
     };
     const loadingIndicatorHtml = () =>
       '<span class="inline-loading"><span class="inline-loading-spinner" aria-hidden="true"></span></span>';
-    const currentFilePreviewFontMode = () => {
-      const mode = String(document.documentElement.getAttribute("data-agent-font-mode") || "").trim().toLowerCase();
-      return mode === "gothic" ? "gothic" : "serif";
-    };
     const currentFilePreviewTextSize = () => {
       try {
         const rawSize = window.getComputedStyle(document.documentElement).getPropertyValue("--text-size") || "";
@@ -277,7 +273,6 @@
           params.set("chrome", "header");
         }
       }
-      params.set("agent_font_mode", currentFilePreviewFontMode());
       if (CHAT_BASE_PATH) params.set("base_path", CHAT_BASE_PATH);
       params.set("base_theme", document.documentElement.dataset.theme === "light" ? "light" : "dark");
       params.set("preview_variant", isMobile ? "mobile" : "desktop");

@@ -3,11 +3,10 @@ from __future__ import annotations
 from importlib import import_module
 
 from backend_core.agents.names import agent_base_name
-from backend_core.agents.registry import canonical_agent_name
 
 
 def _agent_module(agent: str):
-    base = canonical_agent_name(agent_base_name(agent))
+    base = agent_base_name(agent)
     return import_module(f"native_log_sync.agents.{base}")
 
 

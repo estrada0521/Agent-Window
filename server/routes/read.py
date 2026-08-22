@@ -6,7 +6,6 @@ from urllib.parse import parse_qs
 
 from backend_core.access.settings import (
     normalize_theme_desktop,
-    resolve_theme,
     settings_for_chat_render,
 )
 from hub_backend.transport.request_base_path import request_base_path
@@ -153,7 +152,6 @@ def _get_file_view(handler, parsed, ctx) -> None:
     try:
         settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant=preview_variant)
         message_font = str(settings.get("message_font") or "").strip()
-        preview_font_mode = "gothic"
         preview_text_size = settings.get("text_size")
         requested_text_size = str(qs.get("agent_text_size", [""])[0] or "").strip()
         if requested_text_size:
@@ -168,7 +166,6 @@ def _get_file_view(handler, parsed, ctx) -> None:
             base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
             preview_base_theme=str(qs.get("base_theme", [""])[0] or "").strip(),
             preview_variant=preview_variant,
-            agent_font_mode=preview_font_mode,
             agent_font_family=ctx["runtime"]._font_family_stack(message_font, "user"),
             agent_text_size=preview_text_size,
             preview_chrome=preview_chrome,
@@ -182,19 +179,6 @@ def _get_file_view(handler, parsed, ctx) -> None:
         return
     body = page.encode("utf-8")
     _send_bytes(handler, 200, body, content_type="text/html; charset=utf-8")
-
-
-def _get_files(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    force_refresh = (qs.get("refresh", [""])[0] or "").lower() in ("1", "true", "yes")
-    try:
-        files = ctx["workspace_sync_api"].list_files(force_refresh=force_refresh)
-        body = json.dumps(files, ensure_ascii=True).encode("utf-8")
-    except Exception as exc:
-        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
-        _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
-        return
-    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
 def _get_files_dir(handler, parsed, ctx) -> None:
@@ -236,20 +220,13 @@ def _get_files_search(handler, parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
-def _get_agents(handler, _parsed, ctx) -> None:
-    body = json.dumps(ctx["agent_statuses_fn"](), ensure_ascii=True).encode("utf-8")
-    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
-
-
 def _get_hub_settings(handler, parsed, ctx) -> None:
     settings = ctx["load_chat_settings_fn"]()
     variant = request_view_variant(headers=handler.headers, query_string=parsed.query)
     chat_render_settings = settings_for_chat_render(settings, variant=variant)
     body = json.dumps(
         {
-            "agent_font_mode": str(chat_render_settings.get("agent_font_mode", "serif")),
-            "theme": resolve_theme(settings, variant=variant),
-            "theme_desktop": normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark"))),
+            "theme_desktop": normalize_theme_desktop(settings.get("theme_desktop", "dark")),
             "chat_font_settings_css": ctx["chat_font_settings_inline_style_fn"](chat_render_settings),
         },
         ensure_ascii=True,
@@ -382,10 +359,8 @@ _GET_ROUTES = {
     "/trace": _get_trace,
     "/file-raw": _get_file_raw,
     "/file-view": _get_file_view,
-    "/files": _get_files,
     "/files-search": _get_files_search,
     "/files-dir": _get_files_dir,
-    "/agents": _get_agents,
     "/hub-settings": _get_hub_settings,
     "/session-state": _get_session_state,
     "/session-state-events": _get_session_state_events,

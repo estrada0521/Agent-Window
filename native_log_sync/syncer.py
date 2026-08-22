@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import time
 from pathlib import Path
 from typing import Callable
@@ -19,7 +18,6 @@ from native_log_sync.agents._shared.projection_status import (
 from native_log_sync.io.sync_state import (
     load_sync_state as _load_sync_state_impl,
     save_sync_state as _save_sync_state_impl,
-    sync_cursor_status as _sync_cursor_status_impl,
 )
 from native_log_sync.refresh.binding_models import PaneBindingRequest
 from native_log_sync.refresh.refresh_bindings import refresh_native_log_bindings as _refresh_bindings_impl
@@ -146,9 +144,6 @@ class NativeLogSyncer:
 
     def agent_runtime_state(self) -> dict[str, dict]:
         return idle_running_display_for_api(self._idle_running_display_by_agent)
-
-    def cursor_status(self) -> list[dict]:
-        return _sync_cursor_status_impl(self, os_module=os)
 
     def watched_paths(self) -> dict[str, str]:
         watcher = getattr(self, "_native_log_vnode_watcher", None)

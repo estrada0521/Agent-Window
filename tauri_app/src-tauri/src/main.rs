@@ -436,15 +436,6 @@ fn main() {
                 .unwrap_or_else(|_| format!("{}/.agent-window/state", home));
             let pwa_enabled_file = format!("{}/pwa/enabled", state_dir);
             let use_https = Path::new(&pwa_enabled_file).exists();
-            if std::env::var("AGENT_WINDOW_TAURI_USE_HTTPS").ok().as_deref() == Some("1")
-                && !use_https
-            {
-                show_hub_error(
-                    &window,
-                    "PWA HTTPS is not enabled. Start the HTTP app first, then run ./setup/pwa/enable.",
-                );
-                return Ok(());
-            }
             if use_https && !has_certs {
                 show_hub_error(
                     &window,
@@ -457,11 +448,7 @@ fn main() {
             let mut spawned_hub: Option<Child> = None;
             if !hub_already_up {
                 let mut cmd = Command::new(format!("{}/bin/agent-index", repo_root));
-                cmd.args([
-                    "--hub-port",
-                    &hub_port.to_string(),
-                    if use_https { "--https" } else { "--http" },
-                ])
+                cmd.args(["--hub-port", &hub_port.to_string()])
                     .current_dir(&repo_root)
                     .env("PATH", &path)
                     .env("AGENT_INDEX_HUB_PORT", hub_port.to_string())

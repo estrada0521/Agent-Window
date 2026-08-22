@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import io
 import tempfile
 import unittest
-from contextlib import redirect_stderr
 from pathlib import Path
-from unittest import mock
 
 from message_delivery.cli import _parse_agent_send_args, _usage_text
 from message_delivery.send import AgentSendError, AgentSendRuntime
@@ -13,10 +10,13 @@ from message_delivery.send import AgentSendError, AgentSendRuntime
 
 class _NameRuntime(AgentSendRuntime):
     def __init__(self, root: Path, *, source_session: str = "test-session") -> None:
+        self.root = root
         super().__init__(
-            repo_root=root,
-            env={"AGENT_WINDOW_SESSION": source_session, "AGENT_WINDOW_AGENT_NAME": "codex"},
-            cwd=root,
+            env={
+                "TMUX": "/tmp/test-tmux,1,0",
+                "TMUX_PANE": "%2",
+                "AGENT_WINDOW_SESSION": source_session,
+            },
         )
         self.session_agents = {
             "test-session": ["claude", "codex"],
@@ -25,55 +25,31 @@ class _NameRuntime(AgentSendRuntime):
     def resolve_session_name(self) -> str:
         return str(self.env.get("AGENT_WINDOW_SESSION") or "test-session")
 
-    def tmux_env(self, session_name: str, key: str) -> str:
+    def tmux_env(self, key: str) -> str:
         if key == "AGENT_WINDOW_AGENTS":
-            return ",".join(self.session_agents.get(session_name, []))
+            return ",".join(self.session_agents.get("test-session", []))
         if key.startswith("AGENT_WINDOW_PANE_"):
             requested = key.removeprefix("AGENT_WINDOW_PANE_").lower().replace("_", "-")
-            for index, instance in enumerate(self.session_agents.get(session_name, []), start=1):
+            for index, instance in enumerate(self.session_agents.get("test-session", []), start=1):
                 if requested == instance:
                     return f"%{index}"
         return ""
 
-    def current_pane_role(self, _session_name: str) -> str | None:
-        return str(self.env.get("AGENT_WINDOW_AGENT_NAME") or "") or None
-
-    def send_to_pane(
-        self,
-        pane_id: str,
-        payload: str,
-        agent_name: str = "",
-        *,
-        session_name: str = "",
-    ) -> bool:
-        del pane_id, payload, agent_name, session_name
+    def send_to_pane(self, pane_id: str, payload: str) -> bool:
+        del pane_id, payload
         return True
 
-    def _mark_agent_running(self, _session_name: str, _agent_name: str) -> bool:
+    def _mark_agent_running(self, _agent_name: str) -> bool:
         return True
 
     def resolve_session_log_path(self, session_name: str) -> Path:
-        path = self.repo_root / session_name / ".log.jsonl"
+        path = self.root / session_name / ".log.jsonl"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.touch(exist_ok=True)
         return path
 
 
 class AgentNameTests(unittest.TestCase):
-    def test_running_marker_does_not_fall_back_to_the_aw_session_name(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            runtime = AgentSendRuntime(repo_root=tmp, env={}, cwd=tmp)
-            runtime.resolve_tmux_session_name = lambda: ""
-            runtime.tmux = mock.Mock()
-            error_output = io.StringIO()
-
-            with redirect_stderr(error_output):
-                marked = runtime._mark_agent_running("renamed-aw-session", "codex")
-
-        self.assertFalse(marked)
-        runtime.tmux.run.assert_not_called()
-        self.assertIn("tmux session could not be resolved", error_output.getvalue())
-
     def test_cli_subcommands_do_not_change_send_syntax(self) -> None:
         send = _parse_agent_send_args(["claude"])
         self.assertEqual((send.operation, send.target), ("send", "claude"))

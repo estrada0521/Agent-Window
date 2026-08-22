@@ -798,8 +798,8 @@
       renderDesktopSessions(_hubSessionsCache.active, _hubSessionsCache.warnings, _hubSessionsCache.archived);
     }
 
-    function resolveSessionChatUrl(openHref) {
-      return hubChatUrls.resolve(openHref);
+    function resolveSessionChatUrl(openHref, { force = false } = {}) {
+      return hubChatUrls.resolve(openHref, "", { force });
     }
 
     async function openSessionFrame(openHref, name) {
@@ -818,7 +818,7 @@
       if (needsReviveTransition) setDeskChatLoading(true);
       const openToken = ++_deskOpenToken;
       try {
-        const chatUrl = await resolveSessionChatUrl(openHref);
+        const chatUrl = await resolveSessionChatUrl(openHref, { force: needsReviveTransition });
         if (openToken !== _deskOpenToken) return;
         openChatInDesk(chatUrl, name);
         if (closeOnOpen) setDeskSidebarOpen(false);

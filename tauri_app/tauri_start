@@ -14,7 +14,7 @@ ROOT="$(cd "$_TAURI_DIR/.." && pwd)"
 
 usage() {
   cat <<'EOF'
-Usage: tauri_app/tauri_start [--dev] [--build-only] [--no-open] [--setup-only] [--local-https]
+Usage: tauri_app/tauri_start [--dev] [--no-open]
 
 Desktop app entry:
   - builds and opens the local macOS .app by default
@@ -26,18 +26,13 @@ After phone/PWA access is enabled with ./setup/pwa/enable, this command starts H
 
 Options:
   --dev         run `cargo tauri dev` instead of building a .app bundle
-  --build-only  build the .app bundle but do not open it
-  --no-open     alias for --build-only
-  --setup-only  prepare dependencies/certificates, then exit (skip build)
-  --local-https require the Tauri-launched Hub to use HTTPS
+  --no-open     build and install the app without opening it
   --help        show this help
 EOF
 }
 
 MODE="build"
 OPEN_APP=1
-SETUP_ONLY=0
-LOCAL_HTTPS=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -45,16 +40,8 @@ while [[ $# -gt 0 ]]; do
       MODE="dev"
       shift
       ;;
-    --build-only|--no-open)
+    --no-open)
       OPEN_APP=0
-      shift
-      ;;
-    --setup-only)
-      SETUP_ONLY=1
-      shift
-      ;;
-    --local-https)
-      LOCAL_HTTPS=1
       shift
       ;;
     --help|-h)
@@ -90,32 +77,13 @@ for _cmd in python3 tmux; do
 done
 
 PWA_ENABLED_FILE="${AGENT_WINDOW_STATE_DIR:-$HOME/.agent-window/state}/pwa/enabled"
-if [[ "$LOCAL_HTTPS" != "1" && -f "$PWA_ENABLED_FILE" ]]; then
-  LOCAL_HTTPS=1
-fi
-
-if [[ "$LOCAL_HTTPS" == "1" ]]; then
-  if [[ ! -f "$PWA_ENABLED_FILE" ]]; then
-    echo "tauri_start: PWA HTTPS is not enabled yet." >&2
-    echo "tauri_start: start the HTTP app first, then run ./setup/pwa/enable." >&2
-    exit 1
-  fi
+if [[ -f "$PWA_ENABLED_FILE" ]]; then
   CERTS_DIR="${AGENT_WINDOW_CERTS_DIR:-$HOME/.agent-window/state/certs}"
   if [[ ! -f "$CERTS_DIR/cert.pem" || ! -f "$CERTS_DIR/key.pem" ]]; then
     echo "tauri_start: local HTTPS certificates are missing." >&2
     echo "tauri_start: start the HTTP app first, then run ./setup/pwa/enable." >&2
     exit 1
   fi
-fi
-
-if [[ "$SETUP_ONLY" == "1" ]]; then
-  cat <<EOF
-tauri_start: setup complete.
-tauri_start: build and open the app: ./tauri_app/tauri_start
-tauri_start: rebuild only:           ./tauri_app/tauri-build
-tauri_start: enable phone/PWA later: ./setup/pwa/enable
-EOF
-  exit 0
 fi
 
 if ! command -v cargo >/dev/null 2>&1; then
@@ -137,11 +105,6 @@ if ! cargo tauri --help >/dev/null 2>&1; then
 fi
 
 mkdir -p "$ROOT/assets/sounds"
-if [[ "$LOCAL_HTTPS" == "1" ]]; then
-  export AGENT_WINDOW_TAURI_USE_HTTPS=1
-else
-  unset AGENT_WINDOW_TAURI_USE_HTTPS AGENT_WINDOW_ENABLE_LOCAL_HTTPS AGENT_WINDOW_CERT_FILE AGENT_WINDOW_KEY_FILE
-fi
 
 cd "$_TAURI_DIR/src-tauri"
 
@@ -151,17 +114,20 @@ fi
 
 cargo tauri build --bundles app
 
-app_path="$(find "$CARGO_TARGET_DIR/release/bundle/macos" -maxdepth 1 -name '*.app' -print -quit)"
-if [[ -z "$app_path" ]]; then
+bundle_dir="$CARGO_TARGET_DIR/release/bundle/macos"
+app_path="$bundle_dir/Agent Window.app"
+if [[ ! -d "$app_path" ]]; then
   echo "tauri_start: built app bundle was not found." >&2
   exit 1
 fi
 
-install_dir="$HOME/Applications"
-mkdir -p "$install_dir"
-installed_app="$install_dir/$(basename "$app_path")"
-rm -rf "$installed_app"
-cp -R "$app_path" "$installed_app"
+installed_app="/Applications/Agent Window.app"
+rm -rf "/Applications/Agent Window.app"
+rm -rf "/Applications/Multiagent Chat.app"
+rm -rf "$HOME/Applications/Agent Window.app"
+rm -rf "$HOME/Applications/Multiagent Chat.app"
+mv "$app_path" "$installed_app"
+find "$bundle_dir" -mindepth 1 -maxdepth 1 -type d -name '*.app' -exec rm -rf {} +
 
 printf 'tauri_start: installed app at %s\n' "$installed_app"
 if [[ "$OPEN_APP" == "1" ]]; then

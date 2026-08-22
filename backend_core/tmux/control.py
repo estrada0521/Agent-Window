@@ -27,6 +27,7 @@ from backend_core.access.settings import (
     workspace_chat_port,
 )
 from backend_core.agents.executables import agent_launch_cmd, resolve_agent_executable
+from backend_core.agents.names import agent_base_name
 from backend_core.agents.instances import (
     agents_to_csv,
     append_instance,
@@ -36,7 +37,7 @@ from backend_core.agents.instances import (
     renumber_exact_instance,
     resolve_canonical_instance,
 )
-from backend_core.agents.registry import AGENTS, base_agent_name
+from backend_core.agents.registry import AGENTS
 from backend_core.tmux.process_cleanup import cleanup_target_process_groups
 from backend_core.tmux.resolve import find_tmux_session_for_workspace
 from backend_core.tmux.topology import (
@@ -307,7 +308,7 @@ def _start_agent(
 def _prepare_instances(repo_root: Path, requested: list[str]) -> list[str]:
     bases: list[str] = []
     for raw in requested:
-        base = base_agent_name(raw)
+        base = agent_base_name(raw)
         if not base or base not in AGENTS:
             raise SessionControlError(f"Unknown agent: {raw}")
         bases.append(base)
@@ -575,7 +576,7 @@ def add_agent(
     initiator: str = "",
 ) -> tuple[str, tuple[str, str] | None]:
     name = (session_name or "").strip()
-    base = base_agent_name(agent)
+    base = agent_base_name(agent)
     if not name:
         raise SessionControlError("session_name is required")
     if not base or base not in AGENTS:

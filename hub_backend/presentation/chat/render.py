@@ -16,7 +16,7 @@ def build_chat_template_replacements(
     server_instance: str,
     hub_port: int,
     chat_settings: dict,
-    agent_font_mode_inline_style: str,
+    chat_font_settings_inline_style: str,
     hub_header_css: str,
     chat_document_title: str = APP_DISPLAY_NAME,
 ) -> dict[str, str]:
@@ -29,7 +29,7 @@ def build_chat_template_replacements(
         "__CHAT_SERVICE_WORKER_HTML__": chat_service_worker_html,
         "__SERVER_INSTANCE__": server_instance,
         "__HUB_PORT__": str(hub_port),
-        "__AGENT_FONT_MODE_INLINE_STYLE__": agent_font_mode_inline_style,
+        "__CHAT_FONT_SETTINGS_INLINE_STYLE__": chat_font_settings_inline_style,
         "__HUB_HEADER_CSS__": hub_header_css,
         "__APP_DISPLAY_NAME__": APP_DISPLAY_NAME,
         "__CHAT_DOCUMENT_TITLE__": chat_document_title,

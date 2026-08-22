@@ -63,7 +63,6 @@ if [[ -z "$HUB_MODE" ]]; then
 fi
 
 bash "$REPO_ROOT/setup/pwa/ensure-local-https" >/dev/null
-export AGENT_WINDOW_ENABLE_LOCAL_HTTPS=1
 ensure_repo_https_cert
 
 if [[ -z "${AGENT_WINDOW_CERT_FILE:-}" || -z "${AGENT_WINDOW_KEY_FILE:-}" ]]; then

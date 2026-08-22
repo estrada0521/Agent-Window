@@ -48,9 +48,6 @@ class WorkspaceSyncApi:
     def file_view(self, rel: str, **kwargs):
         return self.file_runtime.file_view(rel, **kwargs)
 
-    def list_files(self, *, force_refresh: bool = False):
-        return self.file_runtime.list_files(force_refresh=force_refresh)
-
     def invalidate_file_index_cache(self) -> None:
         self.file_runtime.invalidate_file_list_cache()
 

@@ -40,7 +40,7 @@ def resolve_theme(settings: dict, *, variant: str) -> str:
         # Mobile always follows the OS preference; the server has no access
         # to it, so client-side code upgrades this fallback after load.
         return "dark"
-    desktop = normalize_theme_desktop(settings.get("theme_desktop", settings.get("theme", "dark")))
+    desktop = normalize_theme_desktop(settings.get("theme_desktop", "dark"))
     if desktop == "system":
         return "dark"
     return desktop
@@ -89,25 +89,12 @@ def settings_for_chat_render(settings: dict, *, variant: str) -> dict:
     return _with_derived_font_fields(rendered)
 
 
-def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool = False) -> dict:
+def _apply_hub_settings(raw: dict, settings: dict) -> dict:
     if not isinstance(raw, dict):
         return settings
 
-    theme_raw = "dark" if missing_flags_false and "theme" not in raw else raw.get("theme")
-    theme = str(theme_raw or settings.get("theme") or "dark").strip().lower()
-    settings["theme"] = "light" if theme == "light" else "dark"
-
-    if missing_flags_false and "theme_desktop" not in raw:
-        # unchecked checkbox → dark
-        settings["theme_desktop"] = "dark"
-    elif raw.get("theme_desktop") is not None:
+    if raw.get("theme_desktop") is not None:
         settings["theme_desktop"] = normalize_theme_desktop(raw.get("theme_desktop"))
-    else:
-        # loading from file without this key → inherit global theme
-        settings["theme_desktop"] = settings["theme"]
-
-    # keep global theme in sync with desktop so hub renders correctly
-    settings["theme"] = settings["theme_desktop"]
 
     if "message_font" in raw:
         message_font = canonicalize_message_font(raw.get("message_font"))
@@ -134,7 +121,6 @@ def _apply_hub_settings(raw: dict, settings: dict, *, missing_flags_false: bool 
 
 
 HUB_SETTINGS_DEFAULTS = {
-    "theme": "dark",
     "theme_desktop": "dark",
     "message_font": DEFAULT_MESSAGE_FONT,
     "code_font": DEFAULT_CODE_FONT,
@@ -278,7 +264,7 @@ def load_hub_settings() -> dict:
 
 def save_hub_settings(raw: dict) -> dict:
     settings = load_hub_settings()
-    settings = _apply_hub_settings(raw, settings, missing_flags_false=True)
+    settings = _apply_hub_settings(raw, settings)
     path = hub_settings_path()
     write_json_atomically(path, settings, indent=2)
     return settings
