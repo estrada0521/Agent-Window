@@ -126,9 +126,12 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             handler = self._draft_handler(workspace)
             session_api = mock.Mock()
 
-            with mock.patch(
-                "hub_backend.new_session.handlers.find_session_for_workspace",
-                return_value="existing-session",
+            with (
+                mock.patch(
+                    "hub_backend.new_session.handlers.find_session_for_workspace",
+                    return_value="existing-session",
+                ),
+                mock.patch("hub_backend.new_session.handlers.session_artifact_dir") as session_dir,
             ):
                 post_start_session_draft(handler, None, {"session_api": session_api})
 
@@ -136,7 +139,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                 409,
                 {"ok": False, "error": "A session already exists for this workspace: existing-session"},
             )
-            session_api.session_logs_dir.assert_not_called()
+            session_dir.assert_not_called()
 
     def test_duplicate_workspace_basename_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -146,11 +149,17 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             existing_session_dir.mkdir(parents=True)
             handler = self._draft_handler(workspace)
             session_api = mock.Mock()
-            session_api.session_logs_dir.return_value = existing_session_dir
 
-            with mock.patch(
-                "hub_backend.new_session.handlers.find_session_for_workspace",
-                return_value=None,
+            with (
+                mock.patch(
+                    "hub_backend.new_session.handlers.find_session_for_workspace",
+                    return_value=None,
+                ),
+                mock.patch(
+                    "hub_backend.new_session.handlers.session_artifact_dir",
+                    return_value=existing_session_dir,
+                ),
+                mock.patch("hub_backend.new_session.handlers.create_session") as create_session,
             ):
                 post_start_session_draft(handler, None, {"session_api": session_api})
 
@@ -164,7 +173,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                     ),
                 },
             )
-            session_api.write_session_metadata.assert_not_called()
+            create_session.assert_not_called()
 
     def test_invalid_meta_is_not_skipped(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -7,6 +7,8 @@ import re
 import socket
 from pathlib import Path
 
+from backend_core.access.atomic_json import write_json_atomically
+
 SESSION_LOG_FILENAME = ".log.jsonl"
 NATIVE_LOG_STATE_FILENAME = ".native-log-sync-state.json"
 DESKTOP_THEME_CHOICES = frozenset({"system", "light", "dark"})
@@ -278,6 +280,5 @@ def save_hub_settings(raw: dict) -> dict:
     settings = load_hub_settings()
     settings = _apply_hub_settings(raw, settings, missing_flags_false=True)
     path = hub_settings_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
+    write_json_atomically(path, settings, indent=2)
     return settings

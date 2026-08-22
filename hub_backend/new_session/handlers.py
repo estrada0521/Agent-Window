@@ -5,8 +5,14 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
+
 from backend_core.access.session_meta import SessionMetaError, WorkspaceClaimConflict, find_session_for_workspace
-from backend_core.access.settings import port_is_bindable, sanitize_session_name, workspace_chat_port
+from backend_core.access.settings import (
+    port_is_bindable,
+    sanitize_session_name,
+    session_artifact_dir,
+    workspace_chat_port,
+)
 from backend_core.tmux.control import SessionControlError, create_session
 
 
@@ -108,16 +114,14 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     if not Path(resolved_workspace).is_dir():
         handler._send_json(400, {"ok": False, "error": f"Invalid workspace: {resolved_workspace}"})
         return
-    # Checked before anything is created: write_session_metadata() has no
-    # rollback, so finding out about a conflict only after it runs would
-    # leave a stale .meta file behind with no session backing it.
+    # Check the claim before creating the tmux session or its metadata.
     claim_failure = _workspace_claim_failure(resolved_workspace)
     if claim_failure:
         status, error = claim_failure
         handler._send_json(status, {"ok": False, "error": error})
         return
     session_name = sanitize_session_name(Path(resolved_workspace).name or "session") or "session"
-    if ctx["session_api"].session_logs_dir(session_name).exists():
+    if session_artifact_dir(session_name).exists():
         handler._send_json(
             409,
             {
@@ -138,11 +142,6 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         handler._send_json(409, {"ok": False, "error": f"chat port {chat_port} is occupied"})
         return
     try:
-        # Write session metadata files before launching the empty tmux session.
-        session_state = ctx["session_api"].write_session_metadata(
-            session_name,
-            resolved_workspace,
-        )
         try:
             create_session(
                 session_name=session_name,
@@ -164,8 +163,6 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         record = ctx["session_api"].build_active_session_record(
             session_name,
             resolved_workspace,
-            created_at=session_state["created_at"],
-            updated_at=session_state["updated_at"],
         )
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
