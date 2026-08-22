@@ -28,6 +28,40 @@ class _Query:
 
 
 class ArchivedWorkspaceTests(unittest.TestCase):
+    def test_hub_reload_stops_archived_chat_servers_before_restart(self) -> None:
+        from hub_backend import hub_server
+
+        fake_hub = SimpleNamespace(stop_inactive_chat_servers=lambda: "")
+        with (
+            patch.object(hub_server, "hub", fake_hub),
+            patch.object(hub_server, "restart_pending", False),
+            patch.object(hub_server, "_launch_hub_restart_impl", return_value=True) as launch,
+        ):
+            ok, detail, owns_restart = hub_server.queue_hub_restart()
+            self.assertTrue(hub_server.restart_pending)
+
+        self.assertTrue(ok)
+        self.assertEqual(detail, "")
+        self.assertTrue(owns_restart)
+        launch.assert_called_once()
+
+    def test_hub_reload_does_not_restart_when_archived_cleanup_fails(self) -> None:
+        from hub_backend import hub_server
+
+        fake_hub = SimpleNamespace(stop_inactive_chat_servers=lambda: "cleanup failed")
+        with (
+            patch.object(hub_server, "hub", fake_hub),
+            patch.object(hub_server, "restart_pending", False),
+            patch.object(hub_server, "_launch_hub_restart_impl") as launch,
+        ):
+            ok, detail, owns_restart = hub_server.queue_hub_restart()
+            self.assertFalse(hub_server.restart_pending)
+
+        self.assertFalse(ok)
+        self.assertEqual(detail, "cleanup failed")
+        self.assertFalse(owns_restart)
+        launch.assert_not_called()
+
     def test_warning_session_meta_is_not_reparsed_as_archived(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

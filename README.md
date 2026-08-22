@@ -51,7 +51,7 @@ To rebuild only the Tauri App, use:
 
 Choose a workspace from `New Session` in the Hub.
 
-The session name is a display label the Hub uses for that thread of work. The workspace is simply wherever it currently works — neither is fixed as the session's identity. Both can change: rename the session by renaming its `~/.agent-window/session/{session_name}` folder directly, then reload the Hub; change its workspace by archiving it and editing `workspace` in its `.meta` file. The chat server follows the session folder currently bound to its workspace, and its port is derived from that workspace, so a label rename neither restarts the server nor changes its URL.
+The session name is a display label, and the workspace is its current working location. To rename a session, rename its `~/.agent-window/session/{session_name}` folder. To change its workspace, archive it, reload the Hub, edit `workspace` in its `.meta` file, and revive it. Renaming a session does not restart its chat server or change its URL.
 
 Archive, revive, and delete sessions from the Hub.
 
