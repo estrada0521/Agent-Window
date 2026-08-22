@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -8,6 +9,7 @@ from pathlib import Path
 
 from backend_core.access.session_meta import SessionMetaError, WorkspaceClaimConflict, find_session_for_workspace
 from backend_core.access.settings import (
+    SESSION_NAME_MAX_LENGTH,
     port_is_bindable,
     sanitize_session_name,
     session_artifact_dir,
@@ -15,6 +17,36 @@ from backend_core.access.settings import (
 )
 from backend_core.tmux.control import SessionControlError, create_session
 from hub_backend.chat_supervisor import ensure_chat_server
+
+
+_GENERATED_SESSION_PREFIX = "aw-"
+
+
+def _session_name_for_workspace(workspace: str) -> tuple[str, str]:
+    basename_name = sanitize_session_name(Path(workspace).name)
+    if basename_name and not session_artifact_dir(basename_name).exists():
+        return basename_name, ""
+
+    digest = hashlib.sha256(workspace.encode("utf-8")).hexdigest()
+    max_digest_length = SESSION_NAME_MAX_LENGTH - len(_GENERATED_SESSION_PREFIX)
+    digest_length = 8
+    while True:
+        candidate = f"{_GENERATED_SESSION_PREFIX}{digest[:digest_length]}"
+        if not session_artifact_dir(candidate).exists():
+            if basename_name:
+                notice = (
+                    f"'{basename_name}' is already in use. Created this session as '{candidate}'. "
+                    "Rename the session folder if desired."
+                )
+            else:
+                notice = (
+                    f"Created this session as '{candidate}' because its workspace folder name cannot be used "
+                    "as a session name. Rename the session folder if desired."
+                )
+            return candidate, notice
+        if digest_length >= max_digest_length:
+            raise RuntimeError("No generated session name is available for this workspace")
+        digest_length = min(digest_length + 4, max_digest_length)
 
 
 def _workspace_claim_failure(workspace: str) -> tuple[int, str] | None:
@@ -121,18 +153,10 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         status, error = claim_failure
         handler._send_json(status, {"ok": False, "error": error})
         return
-    session_name = sanitize_session_name(Path(resolved_workspace).name or "session") or "session"
-    if session_artifact_dir(session_name).exists():
-        handler._send_json(
-            409,
-            {
-                "ok": False,
-                "error": (
-                    f"A session named '{session_name}' already exists. "
-                    "Rename the workspace folder and try again."
-                ),
-            },
-        )
+    try:
+        session_name, notice = _session_name_for_workspace(resolved_workspace)
+    except RuntimeError as exc:
+        handler._send_json(500, {"ok": False, "error": str(exc)})
         return
     # Checked before anything is created: workspace alone determines the
     # chat port, so a collision is knowable up front. Finding out only after
@@ -177,5 +201,6 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
             "ok": True,
             "session": session_name,
             "chat_url": chat_url,
+            **({"notice": notice} if notice else {}),
         },
     )

@@ -45,7 +45,7 @@
     const _deskSettingsBtn = document.getElementById("deskSettingsBtn");
     const _deskReloadBtn = document.getElementById("deskReloadBtn");
     const _deskNewSessionToggle = document.getElementById("deskNewSessionToggle");
-    const _deskHubError = document.getElementById("deskHubError");
+    const _deskHubMessage = document.getElementById("deskHubMessage");
     const DESK_SELECTED_KEY = "agent_window_hub_selected_session";
     const DESK_SIDEBAR_WIDTH_KEY = "agent_window_hub_sidebar_width";
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
@@ -57,7 +57,7 @@
     const DESK_SIDEBAR_CLOSE_SWIPE_EDGE_PX = 36;
     const DESK_SIDEBAR_CLOSE_SWIPE_THRESHOLD = 54;
     const DESK_CHAT_URL_CACHE_LIMIT = 3;
-    const DESK_HUB_ERROR_VISIBLE_MS = 5000;
+    const DESK_HUB_MESSAGE_VISIBLE_MS = 5000;
     const hubChatUrls = createHubChatUrlResolver({
       cacheLimit: DESK_CHAT_URL_CACHE_LIMIT,
       cacheKey: (openHref) => String(openHref || "").trim(),
@@ -97,7 +97,7 @@
     let _deskSidebarWidth = DESK_DEFAULT_SIDEBAR_WIDTH;
     let _deskOpenSwipeRow = null;
     let _deskNewSessionStarting = false;
-    let _deskHubErrorTimer = 0;
+    let _deskHubMessageTimer = 0;
 
     function updateDeskWindowTitle(name) {
       const textEl = document.getElementById("deskSessionTitleText");
@@ -168,19 +168,21 @@
       showDeskSidebarList({ open: true });
     }
 
-    function setDeskHubError(message = "") {
-      if (!_deskHubError) return;
-      window.clearTimeout(_deskHubErrorTimer);
-      _deskHubErrorTimer = 0;
+    function showDeskHubMessage(message = "", { error = false } = {}) {
+      if (!_deskHubMessage) return;
+      window.clearTimeout(_deskHubMessageTimer);
+      _deskHubMessageTimer = 0;
       const text = String(message || "").trim();
-      _deskHubError.textContent = text;
-      _deskHubError.hidden = !text;
+      _deskHubMessage.textContent = text;
+      _deskHubMessage.classList.toggle("is-error", !!text && error);
+      _deskHubMessage.hidden = !text;
       if (text) {
-        _deskHubErrorTimer = window.setTimeout(() => {
-          _deskHubError.textContent = "";
-          _deskHubError.hidden = true;
-          _deskHubErrorTimer = 0;
-        }, DESK_HUB_ERROR_VISIBLE_MS);
+        _deskHubMessageTimer = window.setTimeout(() => {
+          _deskHubMessage.textContent = "";
+          _deskHubMessage.classList.remove("is-error");
+          _deskHubMessage.hidden = true;
+          _deskHubMessageTimer = 0;
+        }, DESK_HUB_MESSAGE_VISIBLE_MS);
       }
     }
 
@@ -224,7 +226,7 @@
         message = "";
       }
       if (!message) return;
-      setDeskHubError(message);
+      showDeskHubMessage(message, { error: true });
     }
 
     function isPhoneViewport() {
@@ -712,7 +714,7 @@
       if (_deskNewSessionStarting) return;
       _deskNewSessionStarting = true;
       _deskNewSessionToggle?.classList.add("archived");
-      setDeskHubError();
+      showDeskHubMessage();
       try {
         const workspace = await pickWorkspaceForNewSession();
         if (!workspace) return;
@@ -726,6 +728,7 @@
           throw new Error(data.error || "Failed to open draft session.");
         }
         openChatInDesk(data.chat_url, data.session || "");
+        showDeskHubMessage(data.notice || "", { error: !!data.notice });
         if (isPhoneViewport()) {
           setDeskSidebarOpen(false);
         } else {
@@ -733,7 +736,7 @@
         }
         void refreshHubSessions(true, { skipRestore: true });
       } catch (err) {
-        setDeskHubError(err?.message || "Failed to open draft session.");
+        showDeskHubMessage(err?.message || "Failed to open draft session.", { error: true });
       } finally {
         _deskNewSessionStarting = false;
         _deskNewSessionToggle?.classList.remove("archived");
@@ -998,7 +1001,7 @@
 
     async function runDeskContextAction(sessionName, kind) {
       if (!sessionName || !kind) return;
-      setDeskHubError();
+      showDeskHubMessage();
       const isDelete = kind === "delete-archived";
       const confirmed = isTauriDesktopApp()
         ? true
@@ -1033,7 +1036,10 @@
         clearDeskSelection();
         showDeskSidebarList({ open: true });
       } catch (err) {
-        setDeskHubError(err?.message || (isDelete ? "Failed to delete session." : "Failed to archive session."));
+        showDeskHubMessage(
+          err?.message || (isDelete ? "Failed to delete session." : "Failed to archive session."),
+          { error: true },
+        );
       }
     }
 
