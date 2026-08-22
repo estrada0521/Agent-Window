@@ -5,6 +5,7 @@ import json
 import os
 import time
 
+from backend_core.access.atomic_json import write_json_atomically
 from native_log_sync.agents._shared.path_state import (
     _agent_base_name,
     _normalized_native_log_path,
@@ -50,23 +51,6 @@ def load_sync_state(runtime) -> dict:
     return data
 
 
-def _atomic_write_json(path, data: dict) -> None:
-    """Write `data` to `path` so a reader never observes a truncated file.
-
-    A plain open(path, "w") truncates before the new content is written, so
-    a crash mid-write leaves an empty/corrupt file behind. Writing to a
-    sibling temp file first and renaming over the target makes the switch
-    atomic: readers see either the old complete file or the new one.
-    """
-    tmp_path = path.with_name(f"{path.name}.tmp-{os.getpid()}")
-    with tmp_path.open("w", encoding="utf-8") as handle:
-        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-        handle.write(json.dumps(data, ensure_ascii=False))
-        handle.flush()
-        os.fsync(handle.fileno())
-    os.replace(tmp_path, path)
-
-
 def save_sync_state(runtime, *, time_module=time) -> None:
     last_sync = time_module.strftime("%Y-%m-%d %H:%M:%S")
     session_dir = runtime.log_path.parent
@@ -74,7 +58,7 @@ def save_sync_state(runtime, *, time_module=time) -> None:
         "native_log_current_paths": dict(runtime._native_log_current_paths),
         "last_sync": last_sync,
     }
-    _atomic_write_json(canonical_native_log_sync_state_path(session_dir), pointer_state)
+    write_json_atomically(canonical_native_log_sync_state_path(session_dir), pointer_state)
 
     internal_state = {
         "agent_first_seen_ts": dict(runtime._agent_first_seen_ts),
@@ -82,7 +66,7 @@ def save_sync_state(runtime, *, time_module=time) -> None:
         "last_sync": last_sync,
     }
     internal_path = canonical_native_log_sync_internal_path(session_dir)
-    _atomic_write_json(internal_path, internal_state)
+    write_json_atomically(internal_path, internal_state)
 
     # Both renames above only guarantee the file *content* is durable; the
     # directory entry pointing at the new inode still needs its own fsync

@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from backend_core.access.atomic_json import write_json_atomically
 from backend_core.access.settings import agent_window_session_root
 
 
@@ -164,5 +165,4 @@ def write_session_meta_file(
     meta["agents"] = parsed_agents
     meta["created_at"] = created_at
     meta["updated_at"] = updated_at
-    meta_path.parent.mkdir(parents=True, exist_ok=True)
-    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_json_atomically(meta_path, meta, indent=2)
