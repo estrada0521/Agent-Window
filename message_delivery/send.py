@@ -375,16 +375,24 @@ class AgentSendRuntime:
             targets.append(DeliveryTarget(agent_name=name, pane_id=pane))
         return targets
 
-    def _mark_agent_running(self, session_name: str, agent_name: str) -> None:
+    def _mark_agent_running(self, session_name: str, agent_name: str) -> bool:
         name = str(agent_name or "").strip()
         if not session_name or not name:
-            return
+            return False
         base = agent_base_name(name)
         if base not in self.all_agents:
-            return
+            return False
         upper = name.upper().replace("-", "_")
-        target = self.resolve_tmux_session_name() or session_name
-        self.tmux.run(["set-environment", "-t", target, f"AGENT_WINDOW_RUNNING_{upper}", "1"])
+        target = self.resolve_tmux_session_name()
+        if not target:
+            print(f"Failed to mark {name} running: tmux session could not be resolved", file=sys.stderr)
+            return False
+        result = self.tmux.run(["set-environment", "-t", target, f"AGENT_WINDOW_RUNNING_{upper}", "1"])
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout or "").strip()
+            print(f"Failed to mark {name} running: {detail or 'tmux set-environment failed'}", file=sys.stderr)
+            return False
+        return True
 
     def send_to_pane(
         self,

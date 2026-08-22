@@ -11,7 +11,6 @@ from hub_backend.chat_supervisor import (
     chat_launch_env as _chat_launch_env_impl,
     chat_launch_session_dir as _chat_launch_session_dir_impl,
     chat_ready as _chat_ready_impl,
-    chat_server_matches as _chat_server_matches_impl,
     chat_server_state as _chat_server_state_impl,
     delete_archived_session as _delete_archived_session_impl,
     ensure_chat_server as _ensure_chat_server_impl,
@@ -26,6 +25,7 @@ from hub_backend.session_query import (
     build_session_record as _build_session_record_impl,
     collect_repo_sessions as _collect_repo_sessions_impl,
     host_without_port as _host_without_port_impl,
+    live_tmux_workspaces_query as _live_tmux_workspaces_query_impl,
 )
 from backend_core.access.settings import agent_window_session_root
 from backend_core.access.settings import default_chat_port
@@ -33,6 +33,7 @@ from backend_core.access.settings import load_hub_settings as load_shared_hub_se
 from backend_core.access.settings import pwa_https_enabled
 from backend_core.access.settings import save_hub_settings as save_shared_hub_settings
 from backend_core.tmux.window import tmux_prefix_args
+from backend_core.tmux.resolve import normalize_workspace
 
 
 @dataclass(frozen=True)
@@ -121,18 +122,23 @@ class HubRuntime:
             return line.split("=", 1)[1], result.timed_out
         return "", result.timed_out
 
-    def session_agents(self, session_name: str) -> list[str]:
-        agents, _ = self.session_agents_query(session_name)
-        return agents
-
-    def session_agents_query(self, session_name: str) -> tuple[list[str], bool]:
-        agents_str, timed_out = self.tmux_env_query(session_name, "AGENT_WINDOW_AGENTS")
+    def session_agents_query(self, tmux_name: str) -> tuple[list[str], bool]:
+        agents_str, timed_out = self.tmux_env_query(tmux_name, "AGENT_WINDOW_AGENTS")
         if timed_out:
             return [], True
         cleaned = str(agents_str or "").strip()
         if not cleaned or cleaned == "-":
             return [], False
         return [a.strip() for a in cleaned.split(",") if a.strip() and a.strip() != "-"], False
+
+    def resolve_tmux_session_name_for_workspace(self, workspace: str) -> str:
+        target = str(workspace or "").strip()
+        if not target:
+            return ""
+        workspace_to_tmux, state, detail = _live_tmux_workspaces_query_impl(self)
+        if state != "ok":
+            raise RuntimeError(detail or "tmux session resolution failed")
+        return workspace_to_tmux.get(normalize_workspace(target), "")
 
     def chat_port_for_session(self, session_name: str) -> int:
         return default_chat_port(session_name)
@@ -201,9 +207,6 @@ class HubRuntime:
 
     def chat_server_state(self, chat_port: int) -> dict | None:
         return _chat_server_state_impl(self, chat_port)
-
-    def chat_server_matches(self, session_name: str, chat_port: int, *, workspace: str = "") -> bool:
-        return _chat_server_matches_impl(self, session_name, chat_port, workspace=workspace)
 
     def stop_chat_server(self, session_name: str) -> tuple[bool, str]:
         return _stop_chat_server_impl(self, session_name)

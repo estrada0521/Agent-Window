@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import io
 import tempfile
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
+from unittest import mock
 
 from message_delivery.cli import _parse_agent_send_args, _usage_text
 from message_delivery.send import AgentSendError, AgentSendRuntime
@@ -46,8 +49,8 @@ class _NameRuntime(AgentSendRuntime):
         del pane_id, payload, agent_name, session_name
         return True
 
-    def _mark_agent_running(self, _session_name: str, _agent_name: str) -> None:
-        pass
+    def _mark_agent_running(self, _session_name: str, _agent_name: str) -> bool:
+        return True
 
     def resolve_session_log_path(self, session_name: str) -> Path:
         path = self.repo_root / session_name / ".log.jsonl"
@@ -57,6 +60,20 @@ class _NameRuntime(AgentSendRuntime):
 
 
 class AgentNameTests(unittest.TestCase):
+    def test_running_marker_does_not_fall_back_to_the_aw_session_name(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime = AgentSendRuntime(repo_root=tmp, env={}, cwd=tmp)
+            runtime.resolve_tmux_session_name = lambda: ""
+            runtime.tmux = mock.Mock()
+            error_output = io.StringIO()
+
+            with redirect_stderr(error_output):
+                marked = runtime._mark_agent_running("renamed-aw-session", "codex")
+
+        self.assertFalse(marked)
+        runtime.tmux.run.assert_not_called()
+        self.assertIn("tmux session could not be resolved", error_output.getvalue())
+
     def test_cli_subcommands_do_not_change_send_syntax(self) -> None:
         send = _parse_agent_send_args(["claude"])
         self.assertEqual((send.operation, send.target), ("send", "claude"))

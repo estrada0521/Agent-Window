@@ -194,7 +194,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                     "backend_core.access.session_meta.agent_window_session_root", return_value=root
                 ),
                 mock.patch(
-                    "hub_backend.session_query._live_tmux_workspaces",
+                    "hub_backend.session_query.live_tmux_workspaces_query",
                     return_value=({}, "ok", ""),
                 ),
             ):
@@ -220,7 +220,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                     "backend_core.access.session_meta.agent_window_session_root", return_value=root
                 ),
                 mock.patch(
-                    "hub_backend.session_query._live_tmux_workspaces",
+                    "hub_backend.session_query.live_tmux_workspaces_query",
                     return_value=({str(workspace.resolve()): "real-tmux"}, "ok", ""),
                 ),
             ):

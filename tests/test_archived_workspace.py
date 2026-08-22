@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from backend_core.access.session_meta import write_session_meta_file
-from hub_backend.chat_supervisor import chat_server_matches, ensure_chat_server
+from hub_backend.chat_supervisor import chat_server_state_matches, ensure_chat_server
 from hub_backend.session_api import HubSessionApi, HubSessionApiContext
 from hub_backend.session_query import archived_sessions
 from workspace_sync import git as workspace_git
@@ -189,35 +189,83 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertEqual(captured["session_name"], "Even-Parity")
         self.assertEqual(captured["workspace"], "")
 
-    def test_chat_server_matches_rejects_wrong_workspace(self) -> None:
+    def test_chat_server_state_rejects_wrong_workspace(self) -> None:
+        repo_root = "/Users/okadaharuto/workspace/Agent-Window"
+        state = {
+            "session": "Even-Parity",
+            "repo_root": repo_root,
+            "workspace": repo_root,
+            "targets": [],
+            "active": False,
+        }
         hub = SimpleNamespace(
-            repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
-            chat_server_state=lambda _port: {
-                "session": "Even-Parity",
-                "repo_root": "/Users/okadaharuto/workspace/Agent-Window",
-                "workspace": "/Users/okadaharuto/workspace/Agent-Window",
-                "targets": [],
-                "active": False,
-            },
-            session_agents=lambda _name: [],
+            repo_root=Path(repo_root),
         )
         self.assertFalse(
-            chat_server_matches(
+            chat_server_state_matches(
                 hub,
+                state,
                 "Even-Parity",
-                8206,
                 workspace="/Users/okadaharuto/workspace/Even-Parity",
             )
         )
-        self.assertFalse(chat_server_matches(hub, "Even-Parity", 8206, workspace=""))
+        self.assertFalse(chat_server_state_matches(hub, state, "Even-Parity", workspace=""))
         self.assertTrue(
-            chat_server_matches(
+            chat_server_state_matches(
                 hub,
+                state,
                 "Even-Parity",
-                8206,
-                workspace="/Users/okadaharuto/workspace/Agent-Window",
+                workspace=repo_root,
             )
         )
+
+    def test_active_chat_server_compares_agents_through_the_workspace_tmux(self) -> None:
+        queried_tmux_names = []
+        workspace = "/Users/okadaharuto/workspace/Agent-Window"
+        def session_agents_query(tmux_name):
+            queried_tmux_names.append(tmux_name)
+            return ["codex"], False
+
+        hub = SimpleNamespace(
+            repo_root=Path(workspace),
+            resolve_tmux_session_name_for_workspace=lambda _workspace: "original-tmux-name",
+            session_agents_query=session_agents_query,
+        )
+        state = {
+            "session": "Renamed-AW-Session",
+            "repo_root": workspace,
+            "workspace": workspace,
+            "targets": ["codex"],
+            "active": True,
+        }
+
+        self.assertTrue(
+            chat_server_state_matches(
+                hub,
+                state,
+                "Renamed-AW-Session",
+                workspace=workspace,
+            )
+        )
+        self.assertEqual(queried_tmux_names, ["original-tmux-name"])
+
+    def test_active_chat_server_agent_timeout_is_not_an_empty_agent_list(self) -> None:
+        workspace = "/Users/okadaharuto/workspace/Agent-Window"
+        hub = SimpleNamespace(
+            repo_root=Path(workspace),
+            resolve_tmux_session_name_for_workspace=lambda _workspace: "opaque-tmux-7",
+            session_agents_query=lambda _tmux_name: ([], True),
+        )
+        state = {
+            "session": "Agent-Window",
+            "repo_root": workspace,
+            "workspace": workspace,
+            "targets": [],
+            "active": True,
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "tmux agent query timed out"):
+            chat_server_state_matches(hub, state, "Agent-Window", workspace=workspace)
 
     def test_archived_launch_argv_is_the_saved_workspace(self) -> None:
         launched = {}
@@ -251,7 +299,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                     "targets": [],
                     "active": False,
                 },
-                chat_server_matches=lambda *args, **kwargs: True,
                 chat_ready=lambda _port: False,
                 stop_chat_server=lambda _name: (True, ""),
                 stop_inactive_chat_servers=lambda **_kwargs: "",
@@ -310,7 +357,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                     "targets": [],
                     "active": False,
                 },
-                chat_server_matches=lambda *args, **kwargs: True,
                 chat_ready=lambda _port: False,
                 stop_chat_server=lambda _name: (True, ""),
                 stop_inactive_chat_servers=lambda **_kwargs: "",
@@ -368,7 +414,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                     "targets": [],
                     "active": False,
                 },
-                chat_server_matches=lambda *args, **kwargs: True,
                 chat_ready=lambda _port: False,
                 stop_chat_server=lambda _name: (True, ""),
                 stop_inactive_chat_servers=lambda **_kwargs: "",
@@ -392,13 +437,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertEqual(detail, "")
         self.assertEqual(launched["args"][4], "")
         self.assertEqual(launched["cwd"], "/Users/okadaharuto/workspace/Agent-Window")
-
-    def test_hub_runtime_forwards_workspace_into_chat_server_match(self) -> None:
-        import inspect
-        from hub_backend.runtime import HubRuntime
-
-        params = inspect.signature(HubRuntime.chat_server_matches).parameters
-        self.assertIn("workspace", params)
 
     def test_git_overview_does_not_use_hub_repo_as_the_project(self) -> None:
         workspace_git.configure(workspace="", runtime=None)

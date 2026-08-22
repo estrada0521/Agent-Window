@@ -63,7 +63,7 @@ resolve_session_log_dir() {
 # tmux never knows an AW session's own name -- only the workspace it runs
 # in -- so "which AW session am I in" can only be answered by that
 # workspace, never by asking tmux for its own session name directly (that
-# name is workspace-derived internal tmux plumbing, not the AW identity).
+# name is opaque internal tmux plumbing, not the AW identity).
 resolve_session_name() {
   if [[ -n "$SESSION_NAME" ]]; then
     printf '%s\n' "$SESSION_NAME"

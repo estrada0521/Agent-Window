@@ -184,7 +184,7 @@ class _TmuxQueryTimeout(RuntimeError):
     pass
 
 
-def _live_tmux_workspaces(runtime: Any) -> tuple[dict[str, str], str, str]:
+def live_tmux_workspaces_query(runtime: Any) -> tuple[dict[str, str], str, str]:
     """Map each live tmux session's workspace to its (real, possibly AW-name
     diverged) tmux session name. AGENT_WINDOW_WORKSPACE is the only thing
     tmux itself genuinely knows -- it never carries an AW session's name.
@@ -229,7 +229,7 @@ def collect_repo_sessions(runtime: Any) -> tuple[list[dict], list[dict], str, st
         unique_claims.append((normalized_workspace, name, workspace))
     warnings.sort(key=lambda item: item["name"])
 
-    workspace_to_tmux, state, detail = _live_tmux_workspaces(runtime)
+    workspace_to_tmux, state, detail = live_tmux_workspaces_query(runtime)
     if state != "ok":
         return [], warnings, state, detail
 
