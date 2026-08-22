@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import time
 from urllib.parse import parse_qs
 
@@ -145,19 +146,25 @@ def get_delete_archived_session(handler, parsed, ctx) -> None:
 
 
 def post_restart_hub(handler, _parsed, ctx) -> None:
-    ok = ctx["queue_hub_restart_fn"]()
+    ok, detail, owns_restart = ctx["queue_hub_restart_fn"]()
+    body = json.dumps(
+        {"ok": ok, "error": "" if ok else detail},
+        ensure_ascii=True,
+    ).encode("utf-8")
     try:
         handler.send_response(200 if ok else 503)
-        handler.send_header("Content-Type", "application/json")
+        handler.send_header("Content-Type", "application/json; charset=utf-8")
+        handler.send_header("Content-Length", str(len(body)))
         handler.end_headers()
-        handler.wfile.write(b'{"ok":true}' if ok else b'{"ok":false}')
+        handler.wfile.write(body)
         handler.wfile.flush()
     finally:
         # queue_hub_restart_fn() may have left this process's request
         # threads as the only thing keeping it alive (see
         # release_restart_hold's docstring) -- only safe to let it exit
         # once the response above has actually gone out.
-        ctx["release_restart_hold_fn"]()
+        if owns_restart:
+            ctx["release_restart_hold_fn"]()
 
 
 def post_settings(handler, parsed, ctx) -> None:

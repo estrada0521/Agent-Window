@@ -51,7 +51,7 @@ Tauri Appのrebuildだけを行う場合は、次を使用します。
 
 Hubの `New Session` からworkspaceを選択します。
 
-session名はHub上でその流れを呼ぶための表示名です。workspaceはその時点の作業場所であり、sessionのidentityとして固定されません。どちらも変更できます — session名は `~/.agent-window/session/{session_name}` のフォルダ名を、workspaceは一度archiveしてから `.meta` の `workspace` を直接書き換えます。chat portはsession名のhashから `30000`–`48999` の範囲で決まるため、改名すると変わります。
+session名は表示名、workspaceは現在の作業場所です。session名を変更する場合は `~/.agent-window/session/{session_name}` のフォルダ名を変更します。workspaceを変更する場合は、archive、Hubのreload、`.meta` の `workspace` の書き換え、reviveの順で行います。session名を変更してもchat serverは再起動せず、URLも変わりません。
 
 HubからsessionのArchive、revive、削除を行えます。
 

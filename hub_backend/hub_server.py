@@ -134,15 +134,19 @@ def queue_hub_restart():
     global restart_pending
     with restart_lock:
         if restart_pending:
-            return False
+            return False, "restart already pending", False
+        cleanup_detail = hub.stop_inactive_chat_servers()
+        if cleanup_detail:
+            return False, cleanup_detail, False
         restart_pending = True
-    return _launch_hub_restart_impl(
+    ok = _launch_hub_restart_impl(
         script_path=script_path,
         port=port,
         repo_root=repo_root,
         clean_env_fn=_clean_env_impl,
         hub_server_getter=lambda: hub_server,
     )
+    return ok, "" if ok else "reload failed", True
 
 
 def release_restart_hold():
