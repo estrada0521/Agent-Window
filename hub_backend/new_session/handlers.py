@@ -6,7 +6,7 @@ import subprocess
 import time
 from pathlib import Path
 from backend_core.access.session_meta import SessionMetaError, WorkspaceClaimConflict, find_session_for_workspace
-from backend_core.access.settings import default_chat_port, port_is_bindable, sanitize_session_name
+from backend_core.access.settings import port_is_bindable, sanitize_session_name, workspace_chat_port
 from backend_core.tmux.control import SessionControlError, create_session
 
 
@@ -129,11 +129,11 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
             },
         )
         return
-    # Checked before anything is created: session_name alone determines the
+    # Checked before anything is created: workspace alone determines the
     # chat port, so a collision is knowable up front. Finding out only after
     # the tmux session already exists would leave a session running with no
     # way to reach it -- and nothing here would clean that session back up.
-    chat_port = default_chat_port(session_name)
+    chat_port = workspace_chat_port(resolved_workspace)
     if not port_is_bindable(chat_port):
         handler._send_json(409, {"ok": False, "error": f"chat port {chat_port} is occupied"})
         return

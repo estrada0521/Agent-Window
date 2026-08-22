@@ -24,11 +24,10 @@ from server.asset_runtime import ChatAssetRuntime
 from backend_core.access.pwa import pwa_icon_entries
 from backend_core.access.session_meta import SessionMetaError, find_session_for_workspace
 from backend_core.access.settings import (
-    default_chat_port,
     hub_settings_path,
     local_bind_host,
     local_bind_scheme,
-    session_log_path,
+    workspace_chat_port,
 )
 from workspace_sync.api import WorkspaceSyncApi
 
@@ -48,11 +47,8 @@ def _not_initialized(*_args, **_kwargs):
 
 
 _initialized = False
-log_path = Path()
-session_name = ""
 port = 0
 workspace = ""
-log_dir = ""
 tmux_socket = ""
 hub_port = 0
 PUBLIC_HOST = ""
@@ -124,11 +120,9 @@ def _message_index_watcher() -> None:
     while True:
         fd = None
         try:
-            log_path.parent.mkdir(parents=True, exist_ok=True)
-            if not log_path.exists():
-                log_path.touch()
+            current_log_path = runtime.log_path
             kq = select.kqueue()
-            fd = os.open(str(log_path), os.O_RDONLY)
+            fd = os.open(str(current_log_path), os.O_RDONLY)
             ev = select.kevent(
                 fd,
                 filter=select.KQ_FILTER_VNODE,
@@ -218,8 +212,7 @@ def _clean_env():
 
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
-    global log_path, session_name
-    global port, workspace, log_dir, tmux_socket, hub_port
+    global port, workspace, tmux_socket, hub_port
     global PUBLIC_HOST, PUBLIC_HUB_PORT, _repo_root, runtime
     global _PWA_STATIC_DIR, server_instance, load_chat_settings, chat_font_settings_inline_style
     global payload, append_system_entry
@@ -230,27 +223,21 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         return
 
     argv = list(sys.argv[1:] if argv is None else argv)
-    if len(argv) != 2:
-        raise SystemExit("usage: python -m server.server <session_name> <workspace>")
+    if len(argv) != 1:
+        raise SystemExit("usage: python -m server.server <workspace>")
 
-    session_name = str(argv[0] or "").strip()
-    workspace = str(argv[1] or "").strip()
-    if not session_name:
-        raise SystemExit("usage: python -m server.server <session_name> <workspace>")
+    workspace = str(argv[0] or "").strip()
+    if not workspace:
+        raise SystemExit("usage: python -m server.server <workspace>")
 
     _repo_root = Path(__file__).resolve().parent.parent
-    log_path = session_log_path(session_name)
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    log_path.touch(exist_ok=True)
-    log_dir = str(log_path.parent)
-    port = default_chat_port(session_name)
+    port = workspace_chat_port(workspace)
     tmux_socket = (os.environ.get("AGENT_WINDOW_TMUX_SOCKET") or DEFAULT_TMUX_SOCKET).strip()
     hub_port = int(os.environ.get("AGENT_INDEX_HUB_PORT") or DEFAULT_HUB_PORT)
     PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
     PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
 
     runtime = ChatRuntime(
-        session_name=session_name,
         port=port,
         workspace=workspace,
         tmux_socket=tmux_socket,
@@ -268,7 +255,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     agent_statuses = runtime.agent_statuses
     workspace_sync_api = WorkspaceSyncApi(
         workspace=workspace,
-        allowed_roots=[log_path.parent],
+        allowed_roots_fn=lambda: [runtime.session_dir],
         repo_root=_repo_root,
         runtime=runtime,
     )
@@ -391,13 +378,14 @@ def release_chat_restart() -> None:
 
 
 def _route_context() -> dict:
+    current_session_name, current_log_path = runtime.session_binding_snapshot()
     return {
-        "session_name": session_name,
+        "session_name": current_session_name,
         "server_instance": server_instance,
         "runtime": runtime,
         "workspace": workspace,
-        "session_dir": str(log_path.parent),
-        "log_dir": log_dir,
+        "session_dir": str(current_log_path.parent),
+        "log_dir": str(current_log_path.parent),
         "port": port,
         "hub_port": hub_port,
         "tmux_socket": tmux_socket,

@@ -61,7 +61,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             runtime = SimpleNamespace(
                 central_log_dir=root,
                 repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
-                chat_port_for_session=lambda _name: 8206,
+                chat_port_for_workspace=lambda _workspace: 8206,
             )
             sessions = archived_sessions(runtime, excluded_names=set())
             self.assertEqual(len(sessions), 1)
@@ -78,7 +78,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             runtime = SimpleNamespace(
                 central_log_dir=root,
                 repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
-                chat_port_for_session=lambda _name: 8206,
+                chat_port_for_workspace=lambda _workspace: 8206,
             )
             sessions = archived_sessions(runtime, excluded_names=set())
             self.assertEqual(len(sessions), 1)
@@ -108,7 +108,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             runtime = SimpleNamespace(
                 central_log_dir=root,
                 repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
-                chat_port_for_session=lambda _name: 8219,
+                chat_port_for_workspace=lambda _workspace: 8219,
             )
             sessions = archived_sessions(runtime, excluded_names=set())
             self.assertEqual(len(sessions), 1)
@@ -205,16 +205,14 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             chat_server_state_matches(
                 hub,
                 state,
-                "Even-Parity",
                 workspace="/Users/okadaharuto/workspace/Even-Parity",
             )
         )
-        self.assertFalse(chat_server_state_matches(hub, state, "Even-Parity", workspace=""))
+        self.assertFalse(chat_server_state_matches(hub, state, workspace=""))
         self.assertTrue(
             chat_server_state_matches(
                 hub,
                 state,
-                "Even-Parity",
                 workspace=repo_root,
             )
         )
@@ -243,7 +241,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             chat_server_state_matches(
                 hub,
                 state,
-                "Renamed-AW-Session",
                 workspace=workspace,
             )
         )
@@ -265,7 +262,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         }
 
         with self.assertRaisesRegex(RuntimeError, "tmux agent query timed out"):
-            chat_server_state_matches(hub, state, "Agent-Window", workspace=workspace)
+            chat_server_state_matches(hub, state, workspace=workspace)
 
     def test_archived_launch_argv_is_the_saved_workspace(self) -> None:
         launched = {}
@@ -291,7 +288,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 _get_launch_lock=lambda _name: threading.Lock(),
                 archived_session_records=lambda _active: {},
                 active_session_records_query=lambda: _Query({}, {}),
-                chat_port_for_session=lambda _name: 8206,
+                chat_port_for_workspace=lambda _workspace: 8206,
                 chat_server_state=lambda _port: {
                     "session": "Even-Parity",
                     "repo_root": "/Users/okadaharuto/workspace/Agent-Window",
@@ -320,8 +317,10 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertTrue(ok)
         self.assertEqual(port, 8206)
         self.assertEqual(detail, "")
-        self.assertEqual(launched["args"][3], "Even-Parity")
-        self.assertEqual(launched["args"][4], str(workspace))
+        self.assertEqual(
+            launched["args"],
+            ["/usr/bin/python3", "-m", "server.server", str(workspace.resolve())],
+        )
         self.assertEqual(launched["cwd"], "/Users/okadaharuto/workspace/Agent-Window")
 
     def test_chat_launch_cwd_is_not_a_workspace_that_contains_server_py(self) -> None:
@@ -349,7 +348,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 _get_launch_lock=lambda _name: threading.Lock(),
                 archived_session_records=lambda _active: {},
                 active_session_records_query=lambda: _Query({}, {}),
-                chat_port_for_session=lambda _name: 8568,
+                chat_port_for_workspace=lambda _workspace: 8568,
                 chat_server_state=lambda _port: {
                     "session": "xray-structure-factor",
                     "repo_root": "/Users/okadaharuto/workspace/Agent-Window",
@@ -378,11 +377,14 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertTrue(ok)
         self.assertEqual(port, 8568)
         self.assertEqual(detail, "")
-        self.assertEqual(launched["args"][4], str(workspace))
+        self.assertEqual(
+            launched["args"],
+            ["/usr/bin/python3", "-m", "server.server", str(workspace.resolve())],
+        )
         self.assertEqual(launched["cwd"], "/Users/okadaharuto/workspace/Agent-Window")
         self.assertNotEqual(launched["cwd"], str(workspace))
 
-    def test_ensure_chat_server_opens_logs_without_a_workspace_folder(self) -> None:
+    def test_ensure_chat_server_rejects_a_missing_workspace_binding(self) -> None:
         launched = {}
 
         class _Popen:
@@ -406,7 +408,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 _get_launch_lock=lambda _name: threading.Lock(),
                 archived_session_records=lambda _active: {},
                 active_session_records_query=lambda: _Query({}, {}),
-                chat_port_for_session=lambda _name: 8206,
+                chat_port_for_workspace=lambda _workspace: 8206,
                 chat_server_state=lambda _port: {
                     "session": "Even-Parity",
                     "repo_root": "/Users/okadaharuto/workspace/Agent-Window",
@@ -432,11 +434,10 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                     sys_module=_Sys,
                     time_module=_Time,
                 )
-        self.assertTrue(ok)
-        self.assertEqual(port, 8206)
-        self.assertEqual(detail, "")
-        self.assertEqual(launched["args"][4], "")
-        self.assertEqual(launched["cwd"], "/Users/okadaharuto/workspace/Agent-Window")
+        self.assertFalse(ok)
+        self.assertEqual(port, 0)
+        self.assertEqual(detail, "workspace unavailable")
+        self.assertEqual(launched, {})
 
     def test_git_overview_does_not_use_hub_repo_as_the_project(self) -> None:
         workspace_git.configure(workspace="", runtime=None)

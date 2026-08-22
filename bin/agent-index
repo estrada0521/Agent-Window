@@ -121,7 +121,7 @@ if [[ ! -f "$INDEX_FILE" && "$CHAT_MODE" -ne 1 ]]; then
 fi
 
 if [[ "$CHAT_MODE" -eq 1 ]]; then
-  CHAT_PORT="$(PYTHONPATH="$HUB_PYTHONPATH" python3 -m server.port_cli "$SESSION_NAME")"
+  CHAT_PORT="$(PYTHONPATH="$HUB_PYTHONPATH" python3 -m server.port_cli "$SESSION_WORKSPACE")"
   CHAT_ALREADY_UP=0
   if [[ "${AGENT_WINDOW_CHAT_RESTART_HANDOFF:-}" != "1" ]] \
     && port_serves_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/app.webmanifest"; then
@@ -137,7 +137,7 @@ if [[ "$CHAT_MODE" -eq 1 ]]; then
       AGENT_WINDOW_AGENT_NAME="user" \
       AGENT_INDEX_HUB_PORT="$HUB_PORT" \
       AGENT_WINDOW_TMUX_SOCKET="$TMUX_SOCKET_NAME" \
-      nohup python3 -m server.server "$SESSION_NAME" "$SESSION_WORKSPACE" >/dev/null 2>&1 </dev/null &
+      nohup python3 -m server.server "$SESSION_WORKSPACE" >/dev/null 2>&1 </dev/null &
     CHAT_SERVER_PID=$!
     disown "$CHAT_SERVER_PID" || true
     if ! wait_for_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/app.webmanifest" "$READY_TIMEOUT_SEC"; then
