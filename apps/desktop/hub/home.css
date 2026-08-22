@@ -776,15 +776,18 @@
       -ms-overflow-style: none;
     }
     .desk-session-list::-webkit-scrollbar { display: none; }
-    .desk-hub-error {
+    .desk-hub-message {
       flex: none;
       padding: 10px 12px 12px;
-      color: var(--session-danger-fg);
+      color: var(--muted);
       font-size: 12px;
       line-height: 1.4;
       overflow-wrap: anywhere;
     }
-    .desk-hub-error[hidden] {
+    .desk-hub-message.is-error {
+      color: var(--session-danger-fg);
+    }
+    .desk-hub-message[hidden] {
       display: none;
     }
     .desk-new-session-section {

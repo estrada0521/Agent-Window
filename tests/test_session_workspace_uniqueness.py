@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import tempfile
@@ -119,7 +120,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
         handler.rfile = io.BytesIO(body)
         return handler
 
-    def test_workspace_claim_is_rejected_before_session_name_collision(self) -> None:
+    def test_workspace_claim_is_rejected_before_session_name_allocation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Agent-Window"
             workspace.mkdir()
@@ -141,14 +142,17 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             )
             session_dir.assert_not_called()
 
-    def test_duplicate_workspace_basename_is_rejected(self) -> None:
+    def test_duplicate_workspace_basename_gets_an_opaque_session_name(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "new-parent" / "Agent-Window"
             workspace.mkdir(parents=True)
-            existing_session_dir = Path(tmp) / "session-root" / "Agent-Window"
-            existing_session_dir.mkdir(parents=True)
+            session_root = Path(tmp) / "session-root"
+            (session_root / "Agent-Window").mkdir(parents=True)
+            digest = hashlib.sha256(str(workspace.resolve()).encode("utf-8")).hexdigest()
+            (session_root / f"aw-{digest[:8]}").mkdir()
+            expected_name = f"aw-{digest[:12]}"
             handler = self._draft_handler(workspace)
-            session_api = mock.Mock()
+            hub = mock.Mock(tmux_socket="agent-window", repo_root=Path(tmp))
 
             with (
                 mock.patch(
@@ -157,23 +161,46 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                 ),
                 mock.patch(
                     "hub_backend.new_session.handlers.session_artifact_dir",
-                    return_value=existing_session_dir,
+                    side_effect=lambda name: session_root / name,
                 ),
                 mock.patch("hub_backend.new_session.handlers.create_session") as create_session,
+                mock.patch("hub_backend.new_session.handlers.workspace_chat_port", return_value=41000),
+                mock.patch("hub_backend.new_session.handlers.port_is_bindable", return_value=True),
+                mock.patch(
+                    "hub_backend.new_session.handlers.ensure_chat_server",
+                    return_value=(True, 41000, ""),
+                ),
             ):
-                post_start_session_draft(handler, None, {"session_api": session_api})
+                post_start_session_draft(
+                    handler,
+                    None,
+                    {
+                        "hub": hub,
+                        "format_session_chat_url_fn": (
+                            lambda _host, session, _port, _path: f"/session/{session}/"
+                        ),
+                    },
+                )
 
             handler._send_json.assert_called_once_with(
-                409,
+                200,
                 {
-                    "ok": False,
-                    "error": (
-                        "A session named 'Agent-Window' already exists. "
-                        "Rename the workspace folder and try again."
+                    "ok": True,
+                    "session": expected_name,
+                    "chat_url": f"/session/{expected_name}/",
+                    "notice": (
+                        f"'Agent-Window' is already in use. Created this session as '{expected_name}'. "
+                        "Rename the session folder if desired."
                     ),
                 },
             )
-            create_session.assert_not_called()
+            create_session.assert_called_once_with(
+                session_name=expected_name,
+                workspace=str(workspace.resolve()),
+                agents=[],
+                tmux_socket="agent-window",
+                repo_root=Path(tmp),
+            )
 
     def test_invalid_meta_is_not_skipped(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
