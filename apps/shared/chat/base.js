@@ -98,8 +98,9 @@
         }
       });
     };
-    const revealMarkdownLinkTargets = (root) => {
+    const revealExternalMarkdownLinkTargets = (root) => {
       root.querySelectorAll("a[href]").forEach((anchor) => {
+        if (anchor.classList.contains("inline-file-link") || anchor.classList.contains("local-file-link")) return;
         const href = String(anchor.getAttribute("href") || "").trim();
         const label = String(anchor.textContent || "").trim();
         if (!href || label === href) return;
@@ -190,8 +191,6 @@
         marker.hidden = true;
         tempDiv.prepend(marker);
       }
-      revealMarkdownLinkTargets(tempDiv);
-
       const copySvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
       tempDiv.querySelectorAll("pre").forEach(pre => {
         const wrap = document.createElement("div");

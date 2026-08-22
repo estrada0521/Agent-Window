@@ -15,6 +15,47 @@ def _between(text: str, start: str, end: str) -> str:
 
 
 class ChatRendererCoreTests(unittest.TestCase):
+    def test_local_file_links_do_not_reveal_their_targets(self) -> None:
+        base = (ROOT / "apps/shared/chat/base.js").read_text()
+        reveal_targets = _between(
+            base,
+            "    const revealExternalMarkdownLinkTargets =",
+            "    const applyWrittenOrderedListNumbers =",
+        )
+        script = f"""
+const assert = require("node:assert/strict");
+const document = {{
+  createElement: () => ({{ className: "", textContent: "" }}),
+}};
+const anchor = (href, label, classes = []) => {{
+  const inserted = [];
+  return {{
+    classList: {{ contains: (name) => classes.includes(name) }},
+    getAttribute: () => href,
+    textContent: label,
+    after: (target) => inserted.push(target),
+    inserted,
+  }};
+}};
+{reveal_targets}
+const local = anchor("/Users/example/repo/app.py:12", "app.py", ["local-file-link"]);
+const inline = anchor("/file-view?path=README.md", "README.md", ["inline-file-link"]);
+const external = anchor("https://example.com/reference", "reference");
+revealExternalMarkdownLinkTargets({{ querySelectorAll: () => [local, inline, external] }});
+assert.equal(local.inserted.length, 0);
+assert.equal(inline.inserted.length, 0);
+assert.equal(external.inserted.length, 1);
+assert.equal(external.inserted[0].textContent, " (https://example.com/reference)");
+"""
+        completed = subprocess.run(
+            ["node"],
+            input=script,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+
     def test_local_file_link_location_is_not_part_of_the_path(self) -> None:
         parser = (ROOT / "apps/shared/chat/file-link-parse.js").read_text()
         script = f"""
@@ -60,7 +101,6 @@ const document = {{
   createTextNode: (content) => ({{ content }}),
 }};
 let marked = {{ parse: (text) => `<p>${{text}}</p>`, lexer: () => [] }};
-const revealMarkdownLinkTargets = () => {{}};
 const injectFileCards = (html) => html;
 const normalizeEscapedLineBreaks = (text) => String(text ?? "").replace(/\\\\n/g, "\\n");
 const escapeHtml = (value) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
