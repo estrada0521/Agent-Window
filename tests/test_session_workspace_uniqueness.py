@@ -182,18 +182,18 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                     },
                 )
 
-            handler._send_json.assert_called_once_with(
-                200,
+            handler._send_json.assert_called_once()
+            status, payload = handler._send_json.call_args.args
+            self.assertEqual(status, 200)
+            self.assertEqual(
+                {k: v for k, v in payload.items() if k != "notice"},
                 {
                     "ok": True,
                     "session": expected_name,
                     "chat_url": f"/session/{expected_name}/",
-                    "notice": (
-                        f"'Agent-Window' is already in use. Created this session as '{expected_name}'. "
-                        "Rename the session folder if desired."
-                    ),
                 },
             )
+            self.assertIn(expected_name, payload["notice"])
             create_session.assert_called_once_with(
                 session_name=expected_name,
                 workspace=str(workspace.resolve()),

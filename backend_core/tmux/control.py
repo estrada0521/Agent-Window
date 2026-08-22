@@ -172,12 +172,13 @@ def _append_log(session_name: str, message: str, *, kind: str, extra: dict | Non
 
 
 def append_session_lifecycle_entry(session_name: str, action: str) -> None:
-    message = {
-        "archived": "Session archived.",
-        "revived": "Session revived.",
-    }.get(action)
-    if not message:
-        return
+    try:
+        message = {
+            "archived": "Session archived.",
+            "revived": "Session revived.",
+        }[action]
+    except KeyError:
+        raise SessionControlError(f"Unknown session lifecycle action: {action!r}") from None
     _append_log(
         session_name,
         message,
