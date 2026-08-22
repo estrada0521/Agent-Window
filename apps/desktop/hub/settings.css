@@ -118,7 +118,7 @@
     }
     .chat-toggles { display: flex; flex-direction: column; gap: 0; }
     .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 3px 0; min-height: 30px; font-size: 12px; line-height: 1.18; font-weight: 500; cursor: pointer; color: var(--fg); }
-    .toggle-section-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 10px 0 9px; min-height: 30px; box-sizing: border-box; font-weight: 500; pointer-events: none; display: flex; align-items: flex-end; }
+    .toggle-section-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 10px 0 9px; min-height: 30px; box-sizing: border-box; pointer-events: none; display: flex; align-items: flex-end; }
     .toggle-section-label:first-child { padding-top: 2px; }
     .toggle-row-copy { display: inline-flex; align-items: center; gap: 7px; min-width: 0; color: var(--fg); }
     .toggle-row label { color: var(--fg); }
