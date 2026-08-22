@@ -26,19 +26,17 @@ class _JsonHandler:
 
 
 class RenamedSessionRouteTests(unittest.TestCase):
-    def test_new_chat_hands_off_to_current_workspace_claim(self) -> None:
+    def test_new_chat_restarts_the_current_workspace_without_an_aw_name(self) -> None:
         old_pending = chat_server.chat_restart_pending
         try:
             chat_server.chat_restart_pending = False
             fake_server = mock.Mock()
-            completed = SimpleNamespace(returncode=0)
             with (
                 mock.patch.object(chat_server, "workspace", "/work/project"),
-                mock.patch.object(chat_server, "_repo_root", Path("/repo")),
                 mock.patch.object(chat_server, "server", fake_server),
-                mock.patch.object(chat_server, "find_session_for_workspace", return_value="renamed-aw-session"),
                 mock.patch.object(chat_server, "_clean_env", return_value={}),
-                mock.patch.object(chat_server.subprocess, "run", return_value=completed) as run,
+                mock.patch.object(chat_server, "launch_chat_server", return_value=object()) as launch,
+                mock.patch.object(chat_server, "wait_for_chat_server", return_value=True),
             ):
                 ok, detail, owns_restart = chat_server.queue_chat_restart()
 
@@ -47,10 +45,7 @@ class RenamedSessionRouteTests(unittest.TestCase):
             self.assertTrue(owns_restart)
             fake_server.shutdown.assert_called_once_with()
             fake_server.server_close.assert_called_once_with()
-            self.assertEqual(
-                run.call_args.args[0],
-                ["/repo/bin/agent-index", "--chat", "--session", "renamed-aw-session"],
-            )
+            launch.assert_called_once_with("/work/project", env={})
         finally:
             chat_server.chat_restart_pending = old_pending
 

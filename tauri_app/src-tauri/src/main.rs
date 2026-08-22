@@ -458,7 +458,6 @@ fn main() {
             if !hub_already_up {
                 let mut cmd = Command::new(format!("{}/bin/agent-index", repo_root));
                 cmd.args([
-                    "--hub",
                     "--hub-port",
                     &hub_port.to_string(),
                     if use_https { "--https" } else { "--http" },

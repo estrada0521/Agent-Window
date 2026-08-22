@@ -133,7 +133,7 @@ def launch_hub_restart(
             env = clean_env_fn()
             env["AGENT_WINDOW_AGENT_NAME"] = "user"
             completed = subprocess.run(
-                ["bash", str(script_path), "--hub", "--hub-port", str(port)],
+                ["bash", str(script_path), "--hub-port", str(port)],
                 cwd=repo_root,
                 env=env,
                 stdin=subprocess.DEVNULL,

@@ -10,10 +10,9 @@ from pathlib import Path
 from urllib.parse import parse_qs, quote as url_quote, urlparse
 
 repo_root = Path(sys.argv[1]).resolve()
-script_path = Path(sys.argv[2]).resolve()
-hub_port = int(sys.argv[3])
-edge_port = int(sys.argv[4])
-tmux_socket = sys.argv[5] if len(sys.argv) > 5 else ""
+hub_port = int(sys.argv[2])
+edge_port = int(sys.argv[3])
+tmux_socket = sys.argv[4] if len(sys.argv) > 4 else ""
 
 sys.path.insert(0, str(repo_root))
 from backend_core.net import http_proxy
@@ -23,7 +22,7 @@ from hub_backend.session_api import HubSessionApi, HubSessionApiContext
 from server.runtime import ChatRuntime
 from backend_core.access.settings import DEFAULT_MESSAGE_FONT, load_hub_settings, settings_for_chat_render
 
-hub = HubRuntime(repo_root, script_path, tmux_socket, hub_port=hub_port)
+hub = HubRuntime(repo_root, tmux_socket, hub_port=hub_port)
 ensure_chat_server = hub.ensure_chat_server
 session_api = HubSessionApi(
     HubSessionApiContext(
@@ -244,7 +243,7 @@ class Handler(BaseHTTPRequestHandler):
         post_deadline = time.time() + SESSION_POST_RETRY_WINDOW if method == "POST" and suffix == "/new-chat" else time.time()
         while True:
             workspace = str((record or {}).get("workspace") or "").strip()
-            ok, chat_port, detail = ensure_chat_server(session_name, expected_active=session_is_active, workspace=workspace)
+            ok, chat_port, detail = ensure_chat_server(expected_active=session_is_active, workspace=workspace)
             if not ok:
                 body_bytes = f"Failed to start chat for {session_name}: {detail}".encode("utf-8")
                 self.send_response(500)

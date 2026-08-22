@@ -3,7 +3,6 @@ import logging
 
 import subprocess
 import threading
-import time
 import uuid
 from collections import deque
 from datetime import datetime as dt_datetime
@@ -110,7 +109,6 @@ class ChatRuntime:
         self._payload_cache_lock = threading.Lock()
         self._payload_cache: dict[tuple, bytes] = {}
         self._payload_cache_order: deque[tuple] = deque(maxlen=8)
-        self._payload_targets_cache: tuple[float, list[str]] = (0.0, [])
         self._matched_entries_cache_lock = threading.Lock()
         self._matched_entries_cache_sig: tuple[int, int] = (0, 0)
         self._matched_entries_cache_size = 0
@@ -262,7 +260,6 @@ class ChatRuntime:
         limit_override: int | None = None,
         offset: int = 0,
     ) -> bytes:
-        now = time.monotonic()
         try:
             stat = self.log_path.stat()
             index_sig = (stat.st_size, stat.st_mtime_ns)
@@ -285,15 +282,9 @@ class ChatRuntime:
             offset=offset,
         )
         meta["total_messages"] = total_count
-        targets_cached_at, cached_targets = self._payload_targets_cache
-        if now - targets_cached_at < 2.0:
-            targets = list(cached_targets)
-        else:
-            targets = self.active_agents()
-            self._payload_targets_cache = (now, list(targets))
         payload_doc = build_payload_document(
             meta=meta,
-            targets=targets,
+            targets=self.active_agents(),
             has_older=has_older,
             entries=entries,
         )

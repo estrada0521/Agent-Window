@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 import subprocess
-import sys
 import threading
-import time
 from dataclasses import dataclass
 from pathlib import Path
 
 from hub_backend.chat_supervisor import (
     chat_launch_env as _chat_launch_env_impl,
-    chat_launch_session_dir as _chat_launch_session_dir_impl,
     chat_ready as _chat_ready_impl,
     chat_server_state as _chat_server_state_impl,
     delete_archived_session as _delete_archived_session_impl,
@@ -66,9 +63,8 @@ class RepoSessionsQueryResult:
 
 
 class HubRuntime:
-    def __init__(self, repo_root: Path | str, script_path: Path | str, tmux_socket: str = "", hub_port: int = 0):
+    def __init__(self, repo_root: Path | str, tmux_socket: str = "", hub_port: int = 0):
         self.repo_root = Path(repo_root).resolve()
-        self.script_path = Path(script_path).resolve()
         self.central_log_dir = agent_window_session_root()
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port or 0)
@@ -215,9 +211,6 @@ class HubRuntime:
     def stop_inactive_chat_servers(self, *, keep_workspace: str = "") -> str:
         return _stop_inactive_chat_servers_impl(self, keep_workspace=keep_workspace)
 
-    def _chat_launch_session_dir(self, session_name: str) -> Path:
-        return _chat_launch_session_dir_impl(self, session_name)
-
     def _chat_launch_env(self) -> dict[str, str]:
         return _chat_launch_env_impl(self)
 
@@ -235,19 +228,14 @@ class HubRuntime:
 
     def ensure_chat_server(
         self,
-        session_name: str,
         *,
         expected_active: bool = True,
         workspace: str = "",
     ) -> tuple[bool, int, str]:
         return _ensure_chat_server_impl(
             self,
-            session_name,
             expected_active=expected_active,
             workspace=workspace,
-            subprocess_module=subprocess,
-            sys_module=sys,
-            time_module=time,
         )
 
     def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
