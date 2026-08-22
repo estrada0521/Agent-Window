@@ -2,63 +2,56 @@
 
 [日本語](DESIGN_jp.md)
 
-Agent Window is a thin interface for projecting **space** (where the work happens), **time** (its history), and the **intelligence** that acts within them — without modeling any of it.
-
 ## Assumptions
 
-A place to work already exists. A git repository, a database, a temporary directory for an investigation, or just a folder for writing a paper. Agent Window maps it to a single implementation unit — a tmux session tied to that workspace — and does not ask what it actually is.
+Agent Window returns semantics, and their abstraction, to where they actually belong — inside human perception — and lets no software own them.
 
-Time already exists too. Its trace remains as an observable order of change: commits, file updates, processes starting and exiting.
+What a human recognizes as one continuous thing changes names along the way. The workspace may change too. Agents get swapped; processes end and restart. Recognition stays softly continuous across all of it.
 
-And agents and humans are the intelligence that exists in that space and time, temporarily or semi-permanently. Both are present in the same place, read the same history, and speak to each other.
-Their standing differs, though. An agent is inside the workspace and reads files directly. A human is outside, and needs a window. **The Agent Window GUI is a thin window through which a human watches an agent.**
-The window can break without the space breaking. tmux holds the session; the GUI only looks in from outside.
+Agent Window doesn't convert that continuity into a fixed application object. A session name is just a display label. A workspace is just wherever work currently happens. A runtime is just an environment for keeping a process alive. A log just records the trace of what happened. Agent Window keeps no institution that syncs these as if they were one entity.
+
+A workspace already exists. Whether it's a repository, a database, a temporary directory, or just a folder — Agent Window doesn't ask. A workspace isn't identity; it's simply where participants currently work. It can change when it needs to.
+
+Agents and humans are the intelligence that participates in that reality, temporarily or semi-permanently. An agent handles reality directly from inside. A human needs a window to see across it from outside. Agent Window's GUI is that window.
+
+The window can break without reality breaking.
 
 ## Unified Log
 
-It records messages — human → agent, agent → human, agent → agent — along with session topology such as Add / Remove Agent, in chronological order.
+Human → agent, agent → human, and agent → agent messages, along with events Agent Window itself causes, are recorded to one log in observed order.
 
-This is not the original record. The originals are each CLI's native log, git, and the filesystem. The unified log is a **projection** of those, reduced to a granularity that humans and agents can both reference across. Native logs sitting at different paths, and history spanning process restarts, converge here into a single space and time.
+This is not the original record of the world. Each original lives in its own proper place; the unified log is a projection of them, reduced to a granularity both humans and agents can reference across.
 
-A few entries, like Add / Remove Agent, are Agent Window's own record rather than a projection. Timestamps mark observation, not event time. A malformed native-log line is skipped, not failed on — but never silently: each agent carries a projection status (ok / warning / unavailable).
+What it actually is: an append-only JSONL file, reachable from the current workspace via a symlink. It isn't application-internal state — it survives Agent Window stopping, and stays readable.
 
-What it is: a single append-only jsonl, symlinked into the workspace. It does not depend on Agent Window. The log is not application-internal state; it is a record left in the workspace.
-
-Ordinary exchanges happen directly through `agent-send`. When you want a cross-cutting view of who is handling what and where someone is stuck, you read the unified log. And when exact reproduction is needed, each line leads back to the native log it references, and to its position within it.
+Names, processes, and workspaces can change; past entries stay exactly as observed, with their provenance intact.
 
 ## What I Don't Implement
 
-plan, role, task graph, handoff. These are things **a sufficiently capable intelligence can settle by thinking**.
+Agent Window doesn't assume work divides into clean boundaries.
 
-Additional contracts introduced to compensate for the current limits of LLMs go stale as models improve. There is no reason to convert something into an institution of my own when it can be expressed in natural language and already exists on the side of reality.
+Multiple agents may work the same workspace. One continuous thread of work may move to a different workspace. Agent Window never assumes the lifespans or boundaries of an agent, a task, a worktree, and a workspace line up.
 
-Isolation is no different. The guarantee is necessary, but it already exists within the space, as a git primitive. If needed, an intelligence can use `git worktree` directly — there is no reason for the application to own it. Owning it immediately creates the next problem:
+It doesn't map an agent to a git worktree 1:1, for instance. Their lifespans and boundaries don't match, and persisting that mapping would make Agent Window itself a new source of truth.
 
-- An agent and a worktree are not 1:1.
-- Their lifetimes don't match.
-- It becomes a second source of truth, duplicating the git state that already lives outside the application.
+Contracts like plan, role, task graph, or handoff aren't fixed in place just to compensate for current LLM limitations, either. Whatever intelligence itself can already handle with natural language and existing tools turns any application-side institution stale as models improve.
 
-Agent Window does not only target projects with clear boundaries that decompose neatly into independent tasks. It is meant to also handle work where **how to divide and proceed is itself non-obvious**.
-
-Communication between agents is the same. `agent-send` is technically an extremely thin wrapper around `tmux send-keys`, short-circuiting — in the smallest possible form — the act of a human typing text into a CLI. It has no dedicated protocol and no shared mailbox.
+Whatever isolation or history-tracking is needed uses existing primitives. None of it becomes a permanent, Agent-Window-specific domain model.
 
 ## What I Implement
 
-There is one criterion:
+What Agent Window implements is limited to facts that wouldn't exist unless Agent Window created them, or mechanisms a participant can't reach directly from within reality.
 
-> **What a participant cannot invoke from within reality.**
+For example:
 
-Only this is unavoidable.
+- Launching participants, keeping them alive, and making them reachable to each other
+- Observing scattered events and workspace changes, and projecting them into a form a human can read across
+- Preserving the minimum information needed to reconstruct state across a runtime's death
 
-- Launching CLIs, and keeping the processes alive
-- Delivering input, and attaching the sender prefix
-- Watching native logs, and merging them into the unified log
-- Making the workspace observable
-
-Launching a CLI is necessary at the point when the participant to call does not yet exist. Native logs sit at a different path for each agent, and break across process restarts. Merging a scattered space into one requires a vantage point outside every participant. None of this is reachable from inside.
+`agent-send`, too, stays a razor-thin wrapper that delivers a string to an existing input path — not a messaging protocol of its own.
 
 ## Summary
 
-Implement the mechanisms that are unavoidable; do not institutionalize what an intelligent actor can judge for itself.
+Own no meaning.
 
-Without layering new truth on top, project the reality that already exists.
+Implement only what's unavoidable, and read facts from where they actually live.
