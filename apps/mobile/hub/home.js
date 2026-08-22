@@ -615,7 +615,7 @@
     (function () {
       const wrap = document.getElementById("mobListWrap");
       if (!wrap) return;
-      let _mobSessionsCache = { active: [], archived: [] };
+      let _mobSessionsCache = { active: [], warnings: [], archived: [] };
       let _mobSessionsRequestSeq = 0;
       let _mobSessionsRenderedOnce = false;
 
@@ -717,7 +717,7 @@
         });
       };
 
-      const renderRows = (active, archived) => {
+      const renderRows = (active, warnings, archived) => {
         let html = "";
         const trashSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
         const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
@@ -751,12 +751,23 @@
               `</div></div>`;
           }).join("");
         }
-        if (!active.length && !archived.length) {
+        if (warnings.length) {
+          html += `<div class="mob-section-label">Warning</div>`;
+          html += warnings.map((s) =>
+            `<div class="swipe-row mob-warning-row" data-session-name="${esc(s.name)}">` +
+              `<div class="mob-session-row" data-session-name="${esc(s.name)}" aria-disabled="true">` +
+                `<div class="mob-row-head"><div class="mob-row-name">${esc(s.name)}</div></div>` +
+                `<div class="mob-row-preview">${esc(s.warning)}</div>` +
+              `</div>` +
+            `</div>`
+          ).join("");
+        }
+        if (!active.length && !warnings.length && !archived.length) {
           html += `<div class="mob-empty">No sessions found</div>`;
         }
         wrap.innerHTML = html;
         syncMobileSelectedSessionRows();
-        wrap.querySelectorAll(".swipe-row").forEach(initSwipeRow);
+        wrap.querySelectorAll(".swipe-row:not(.mob-warning-row)").forEach(initSwipeRow);
       };
       const refresh = async (force) => {
         const requestSeq = ++_mobSessionsRequestSeq;
@@ -765,12 +776,14 @@
           if (!res.ok) throw new Error("failed");
           const data = await res.json();
           if (requestSeq !== _mobSessionsRequestSeq) return;
-          const activeSessions = data.active_sessions || data.sessions || [];
-          const archivedSessions = data.archived_sessions || [];
-          _mobSessionsCache = { active: activeSessions, archived: archivedSessions };
+          const activeSessions = data.active_sessions;
+          const warningSessions = data.warning_sessions;
+          const archivedSessions = data.archived_sessions;
+          _mobSessionsCache = { active: activeSessions, warnings: warningSessions, archived: archivedSessions };
 
           const sig = JSON.stringify({
             active: activeSessions,
+            warnings: warningSessions,
             archived: archivedSessions,
           });
           if (!force && window._lastMobRenderSig === sig) {
@@ -781,13 +794,13 @@
           }
           window._lastMobRenderSig = sig;
 
-          renderRows(activeSessions, archivedSessions);
+          renderRows(activeSessions, warningSessions, archivedSessions);
           _mobSessionsRenderedOnce = true;
           scheduleActiveSessionPrewarm(activeSessions);
           releaseHubLaunchShellAfterRender();
         } catch (_) {
           if (requestSeq !== _mobSessionsRequestSeq) return;
-          if (_mobSessionsRenderedOnce || _mobSessionsCache.active.length || _mobSessionsCache.archived.length) return;
+          if (_mobSessionsRenderedOnce || _mobSessionsCache.active.length || _mobSessionsCache.warnings.length || _mobSessionsCache.archived.length) return;
           wrap.innerHTML = `<div class="mob-empty">Failed to load sessions</div>`;
           if (_hubLaunchShellPending) failHubReadyWait("Failed to load sessions");
         }

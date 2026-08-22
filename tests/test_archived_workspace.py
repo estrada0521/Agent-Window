@@ -16,13 +16,30 @@ from workspace_sync import git as workspace_git
 
 
 class _Query:
-    def __init__(self, records, state="ok", detail=""):
+    def __init__(self, records, warnings, state="ok", detail=""):
         self.records = records
+        self.warnings = warnings
         self.state = state
         self.detail = detail
 
+    @property
+    def non_archived_names(self):
+        return set(self.records) | set(self.warnings)
+
 
 class ArchivedWorkspaceTests(unittest.TestCase):
+    def test_warning_session_meta_is_not_reparsed_as_archived(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            session_dir = root / "broken-session"
+            session_dir.mkdir()
+            (session_dir / ".meta").write_text("[]", encoding="utf-8")
+            runtime = SimpleNamespace(central_log_dir=root)
+
+            sessions = archived_sessions(runtime, excluded_names={"broken-session"})
+
+            self.assertEqual(sessions, [])
+
     def test_archived_sessions_keep_logs_when_meta_has_no_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -46,7 +63,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
                 chat_port_for_session=lambda _name: 8206,
             )
-            sessions = archived_sessions(runtime, active_names=set())
+            sessions = archived_sessions(runtime, excluded_names=set())
             self.assertEqual(len(sessions), 1)
             self.assertEqual(sessions[0]["name"], "Even-Parity")
             self.assertEqual(sessions[0]["workspace"], "")
@@ -63,7 +80,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
                 chat_port_for_session=lambda _name: 8206,
             )
-            sessions = archived_sessions(runtime, active_names=set())
+            sessions = archived_sessions(runtime, excluded_names=set())
             self.assertEqual(len(sessions), 1)
             self.assertEqual(sessions[0]["name"], "Broken")
             self.assertEqual(sessions[0]["workspace"], "")
@@ -93,7 +110,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
                 chat_port_for_session=lambda _name: 8219,
             )
-            sessions = archived_sessions(runtime, active_names=set())
+            sessions = archived_sessions(runtime, excluded_names=set())
             self.assertEqual(len(sessions), 1)
             self.assertEqual(sessions[0]["name"], "Lab")
             self.assertEqual(sessions[0]["workspace"], str(workspace))
@@ -116,9 +133,9 @@ class ArchivedWorkspaceTests(unittest.TestCase):
     def test_archived_open_passes_saved_workspace_not_hub_root(self) -> None:
         captured = {}
 
-        def ensure_chat_server(session_name, *, session_is_active=True, workspace=""):
+        def ensure_chat_server(session_name, *, expected_active=True, workspace=""):
             captured["session_name"] = session_name
-            captured["session_is_active"] = session_is_active
+            captured["expected_active"] = expected_active
             captured["workspace"] = workspace
             return True, 8206, ""
 
@@ -128,7 +145,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             api = HubSessionApi(
                 HubSessionApiContext(
                     hub=object(),
-                    active_session_records_query=lambda: _Query({}),
+                    active_session_records_query=lambda: _Query({}, {}),
                     archived_session_records=lambda _active: {
                         "Even-Parity": {
                             "name": "Even-Parity",
@@ -136,29 +153,28 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                         }
                     },
                     ensure_chat_server=ensure_chat_server,
-                    delete_archived_session=lambda _name: (False, ""),
                 )
             )
             resolved = api.resolve_session_chat_target("Even-Parity")
         self.assertEqual(resolved["status"], "ok")
         self.assertEqual(captured["session_name"], "Even-Parity")
-        self.assertFalse(captured["session_is_active"])
+        self.assertFalse(captured["expected_active"])
         self.assertEqual(captured["workspace"], str(workspace))
         self.assertNotEqual(captured["workspace"], "/Users/okadaharuto/workspace/Agent-Window")
 
     def test_archived_open_without_workspace_still_starts_chat(self) -> None:
         captured = {}
 
-        def ensure_chat_server(session_name, *, session_is_active=True, workspace=""):
+        def ensure_chat_server(session_name, *, expected_active=True, workspace=""):
             captured["session_name"] = session_name
-            captured["session_is_active"] = session_is_active
+            captured["expected_active"] = expected_active
             captured["workspace"] = workspace
             return True, 8206, ""
 
         api = HubSessionApi(
             HubSessionApiContext(
                 hub=object(),
-                active_session_records_query=lambda: _Query({}),
+                active_session_records_query=lambda: _Query({}, {}),
                 archived_session_records=lambda _active: {
                     "Even-Parity": {
                         "name": "Even-Parity",
@@ -166,7 +182,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                     }
                 },
                 ensure_chat_server=ensure_chat_server,
-                delete_archived_session=lambda _name: (False, ""),
             )
         )
         resolved = api.resolve_session_chat_target("Even-Parity")
@@ -227,7 +242,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
                 _get_launch_lock=lambda _name: threading.Lock(),
                 archived_session_records=lambda _active: {},
-                active_session_records_query=lambda: _Query({}),
+                active_session_records_query=lambda: _Query({}, {}),
                 chat_port_for_session=lambda _name: 8206,
                 chat_server_state=lambda _port: {
                     "session": "Even-Parity",
@@ -249,7 +264,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 ok, port, detail = ensure_chat_server(
                     hub,
                     "Even-Parity",
-                    session_is_active=False,
+                    expected_active=False,
                     workspace=str(workspace),
                     subprocess_module=SimpleNamespace(Popen=_Popen),
                     sys_module=_Sys,
@@ -286,7 +301,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
                 _get_launch_lock=lambda _name: threading.Lock(),
                 archived_session_records=lambda _active: {},
-                active_session_records_query=lambda: _Query({}),
+                active_session_records_query=lambda: _Query({}, {}),
                 chat_port_for_session=lambda _name: 8568,
                 chat_server_state=lambda _port: {
                     "session": "xray-structure-factor",
@@ -308,7 +323,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 ok, port, detail = ensure_chat_server(
                     hub,
                     "xray-structure-factor",
-                    session_is_active=False,
+                    expected_active=False,
                     workspace=str(workspace),
                     subprocess_module=SimpleNamespace(Popen=_Popen),
                     sys_module=_Sys,
@@ -344,7 +359,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
                 _get_launch_lock=lambda _name: threading.Lock(),
                 archived_session_records=lambda _active: {},
-                active_session_records_query=lambda: _Query({}),
+                active_session_records_query=lambda: _Query({}, {}),
                 chat_port_for_session=lambda _name: 8206,
                 chat_server_state=lambda _port: {
                     "session": "Even-Parity",
@@ -366,7 +381,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 ok, port, detail = ensure_chat_server(
                     hub,
                     "Even-Parity",
-                    session_is_active=False,
+                    expected_active=False,
                     workspace="",
                     subprocess_module=SimpleNamespace(Popen=_Popen),
                     sys_module=_Sys,

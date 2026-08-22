@@ -18,7 +18,7 @@ from message_delivery.names import (
 from backend_core.agents.names import agent_base_name
 from backend_core.agents.registry import ALL_AGENT_NAMES
 from backend_core.access.files import append_jsonl_entry
-from backend_core.access.session_meta import find_session_for_workspace
+from backend_core.access.session_meta import SessionMetaError, find_session_for_workspace
 from backend_core.tmux.resolve import find_tmux_session_for_workspace
 from backend_core.tmux.topology import default_tmux_socket_name, session_topology_lock_path
 from message_delivery.paste_timing import delivery_paste_delay_seconds
@@ -149,7 +149,10 @@ class AgentSendRuntime:
         stale.
         """
         workspace = (self.env.get("AGENT_WINDOW_WORKSPACE") or "").strip() or str(self.cwd)
-        resolved = find_session_for_workspace(workspace)
+        try:
+            resolved = find_session_for_workspace(workspace)
+        except SessionMetaError as exc:
+            raise AgentSendError(str(exc)) from exc
         if resolved:
             return resolved
         raise AgentSendError("No active agent-window session found for this workspace.")

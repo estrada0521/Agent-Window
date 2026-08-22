@@ -718,6 +718,11 @@
       overflow-x: hidden;
       scrollbar-width: none;
     }
+    .desk-sidebar-sessions {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
     .desk-sidebar-pane::-webkit-scrollbar,
     .desk-sidebar-sessions::-webkit-scrollbar {
       display: none;
@@ -771,6 +776,17 @@
       -ms-overflow-style: none;
     }
     .desk-session-list::-webkit-scrollbar { display: none; }
+    .desk-hub-error {
+      flex: none;
+      padding: 10px 12px 12px;
+      color: var(--session-danger-fg);
+      font-size: 12px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .desk-hub-error[hidden] {
+      display: none;
+    }
     .desk-new-session-section {
       padding: 8px 0 0;
       border-bottom: none;
@@ -865,6 +881,12 @@
     }
     .desk-session-row.archived {
       opacity: 1;
+    }
+    .desk-warning-session-row {
+      cursor: default;
+    }
+    .desk-warning-session-row:hover::before {
+      opacity: 0;
     }
     .desk-swipe-row {
       position: relative;
@@ -972,8 +994,8 @@
       pointer-events: auto;
       transform: translateY(-50%) scale(1);
     }
-    .desk-session-row:hover .desk-row-stack,
-    .desk-session-row:focus-within .desk-row-stack {
+    .desk-action-session-row:hover .desk-row-stack,
+    .desk-action-session-row:focus-within .desk-row-stack {
       padding-right: 32px;
     }
     .desk-row-hover-action:hover,

@@ -31,7 +31,6 @@ session_api = HubSessionApi(
         active_session_records_query=hub.active_session_records_query,
         archived_session_records=hub.archived_session_records,
         ensure_chat_server=hub.ensure_chat_server,
-        delete_archived_session=hub.delete_archived_session,
     )
 )
 
@@ -245,7 +244,7 @@ class Handler(BaseHTTPRequestHandler):
         post_deadline = time.time() + SESSION_POST_RETRY_WINDOW if method == "POST" and suffix == "/new-chat" else time.time()
         while True:
             workspace = str((record or {}).get("workspace") or "").strip()
-            ok, chat_port, detail = ensure_chat_server(session_name, session_is_active=session_is_active, workspace=workspace)
+            ok, chat_port, detail = ensure_chat_server(session_name, expected_active=session_is_active, workspace=workspace)
             if not ok:
                 body_bytes = f"Failed to start chat for {session_name}: {detail}".encode("utf-8")
                 self.send_response(500)

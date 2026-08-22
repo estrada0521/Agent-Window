@@ -119,14 +119,13 @@ def chat_launch_session_dir(self, session_name: str) -> Path:
     return session_dir
 
 
-def chat_launch_env(self, *, session_is_active: bool = True) -> dict[str, str]:
+def chat_launch_env(self) -> dict[str, str]:
     env = os.environ.copy()
     env["AGENT_WINDOW_AGENT_NAME"] = "user"
     if self.tmux_socket:
         env["AGENT_WINDOW_TMUX_SOCKET"] = self.tmux_socket
     env["AGENT_INDEX_HUB_PORT"] = str(self.hub_port)
     env["AGENT_WINDOW_RUN_DIR"] = str(agent_window_run_dir())
-    env["SESSION_IS_ACTIVE"] = "1" if session_is_active else "0"
     pythonpath_parts = [str(self.repo_root)]
     existing_pythonpath = (env.get("PYTHONPATH") or "").strip()
     if existing_pythonpath:
@@ -145,7 +144,7 @@ def _chat_launch_port(
     session_name: str,
     *,
     workspace: str = "",
-    session_is_active: bool = True,
+    expected_active: bool = True,
 ) -> tuple[int, bool, str]:
     """Return the session's designated chat port, or fail if it cannot be used.
 
@@ -160,7 +159,7 @@ def _chat_launch_port(
     if (
         self.chat_server_matches(session_name, chat_port, workspace=workspace)
         and state is not None
-        and bool(state.get("active")) == bool(session_is_active)
+        and bool(state.get("active")) == bool(expected_active)
     ):
         return chat_port, True, ""
     if self.chat_ready(chat_port) or not port_is_bindable(chat_port):
@@ -172,7 +171,7 @@ def _chat_launch_port(
 
 def stop_inactive_chat_servers(self, *, keep_session: str = "") -> str:
     query = self.active_session_records_query()
-    archived = self.archived_session_records(query.records.keys())
+    archived = self.archived_session_records(query.non_archived_names)
     keep = str(keep_session or "").strip()
     for name in archived:
         if name == keep:
@@ -193,7 +192,7 @@ def ensure_chat_server(
     self,
     session_name: str,
     *,
-    session_is_active: bool = True,
+    expected_active: bool = True,
     workspace: str = "",
     subprocess_module=subprocess,
     sys_module=sys,
@@ -206,7 +205,7 @@ def ensure_chat_server(
         chat_port, ready, error = self._chat_launch_port(
             session_name,
             workspace=resolved_workspace,
-            session_is_active=session_is_active,
+            expected_active=expected_active,
         )
         if error:
             return False, chat_port, error
@@ -217,13 +216,13 @@ def ensure_chat_server(
             if not stop_ok:
                 return False, chat_port, stop_detail
 
-        if not session_is_active:
+        if not expected_active:
             stop_detail = self.stop_inactive_chat_servers(keep_session=session_name)
             if stop_detail:
                 return False, chat_port, stop_detail
 
         session_dir = self._chat_launch_session_dir(session_name)
-        env = self._chat_launch_env(session_is_active=session_is_active)
+        env = self._chat_launch_env()
         try:
             subprocess_module.Popen(
                 [
@@ -248,7 +247,7 @@ def ensure_chat_server(
                 bool(state)
                 and str(state.get("session") or "").strip() == session_name
                 and str(state.get("workspace") or "").strip() == resolved_workspace
-                and bool(state.get("active")) == bool(session_is_active)
+                and bool(state.get("active")) == bool(expected_active)
             )
 
         if _wait_until(_ready, SERVER_READY_TIMEOUT_SEC, time_module=time_module):
@@ -263,7 +262,7 @@ def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
     active_records = query.records
     if session_name in active_records:
         return True, ""
-    archived = self.archived_session_records(active_records.keys())
+    archived = self.archived_session_records(query.non_archived_names)
     record = archived.get(session_name)
     if not record:
         return False, "That archived session is not available in this repo."
@@ -314,8 +313,7 @@ def delete_archived_session(self, session_name: str) -> tuple[bool, str]:
     if query.state == "unhealthy":
         return False, f"tmux is unresponsive, cannot safely delete archived session ({query.detail})"
 
-    active = query.records
-    archived = self.archived_session_records(active.keys())
+    archived = self.archived_session_records(query.non_archived_names)
     record = archived.get(session_name)
     if not record:
         return False, "That archived session is not available in this repo."

@@ -80,7 +80,6 @@ class ChatRuntime:
         tmux_socket: str,
         hub_port: int,
         repo_root: Path | str,
-        session_is_active: bool,
     ):
         self.session_name = session_name
         self.log_path = session_log_path(session_name)
@@ -98,14 +97,14 @@ class ChatRuntime:
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port)
         self.repo_root = Path(repo_root).resolve()
-        self.session_is_active = bool(session_is_active)
         self.server_instance = uuid.uuid4().hex
         self.tmux_prefix = tmux_prefix_args(self.tmux_socket) if self.tmux_socket else ["tmux"]
         # tmux never knows this session's AW name -- only the workspace it
         # runs in (AGENT_WINDOW_WORKSPACE, set once at creation and never
         # rewritten). Resolved once here and cached: it can't legitimately
         # change for the life of this process.
-        self.tmux_session_name = _resolve_tmux_session_name_impl(self)
+        self.tmux_session_name = _resolve_tmux_session_name_impl(self) or ""
+        self.session_is_active = bool(self.tmux_session_name)
         self._agent_running: set[str] = self._restore_running_agents_from_tmux_env()
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(

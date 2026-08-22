@@ -19,7 +19,6 @@ HUB_MODE=0
 HTTPS_MODE=0
 HTTPS_MODE_EXPLICIT=0
 HUB_PORT="${AGENT_INDEX_HUB_PORT:-8788}"
-SESSION_IS_ACTIVE=0
 READY_TIMEOUT_SEC=6
 
 while [[ $# -gt 0 ]]; do
@@ -108,12 +107,7 @@ if [[ "$HUB_MODE" -eq 1 ]]; then
 fi
 
 SESSION_NAME="$(resolve_session_name)" || exit 1
-# The log folder is this session's only real identity; tmux is asked (via
-# session_control, which resolves by workspace, never by name-matching)
-# only to learn whether it's currently active.
-SESSION_STATUS_JSON="$(session_control describe --session "$SESSION_NAME" --json)" || exit 1
-SESSION_IS_ACTIVE="$(session_json_field "$SESSION_STATUS_JSON" active)"
-SESSION_WORKSPACE="$(session_json_field "$SESSION_STATUS_JSON" workspace)"
+SESSION_WORKSPACE="$(resolve_session_workspace "$SESSION_NAME")" || exit 1
 if [[ -z "$SESSION_WORKSPACE" ]]; then
   echo "workspace unavailable for session: $SESSION_NAME" >&2
   exit 1
@@ -139,8 +133,7 @@ if [[ "$CHAT_MODE" -eq 1 ]]; then
       echo "Chat port $CHAT_PORT is occupied by a listener that is not ${HTTPS_SCHEME}." >&2
       exit 1
     fi
-    SESSION_IS_ACTIVE="$SESSION_IS_ACTIVE" \
-      PYTHONPATH="$HUB_PYTHONPATH" \
+    PYTHONPATH="$HUB_PYTHONPATH" \
       AGENT_WINDOW_AGENT_NAME="user" \
       AGENT_INDEX_HUB_PORT="$HUB_PORT" \
       AGENT_WINDOW_TMUX_SOCKET="$TMUX_SOCKET_NAME" \

@@ -7,29 +7,63 @@ from pathlib import Path
 from backend_core.access.settings import agent_window_session_root
 
 
+class SessionMetaError(ValueError):
+    pass
+
+
+def workspace_claim_conflict_message(workspace: str, sessions: list[str]) -> str:
+    return f"Multiple sessions claim workspace {workspace}: {', '.join(sessions)}"
+
+
+class WorkspaceClaimConflict(SessionMetaError):
+    def __init__(self, workspace: str, sessions: list[str]):
+        self.workspace = workspace
+        self.sessions = list(sessions)
+        super().__init__(workspace_claim_conflict_message(workspace, self.sessions))
+
+
+def session_workspace_claims(
+    *,
+    exclude_session: str = "",
+) -> tuple[dict[str, list[tuple[str, str]]], list[tuple[str, str]]]:
+    """Group valid workspace claims and report unreadable session metadata."""
+    exclude = str(exclude_session or "").strip()
+    root = agent_window_session_root()
+    claims: dict[str, list[tuple[str, str]]] = {}
+    errors: list[tuple[str, str]] = []
+    if not root.is_dir():
+        return claims, errors
+    for entry in sorted(root.iterdir()):
+        if not entry.is_dir() or entry.name == exclude:
+            continue
+        try:
+            workspace = session_workspace(entry.name)
+        except SessionMetaError as exc:
+            errors.append((entry.name, str(exc)))
+            continue
+        if not workspace:
+            continue
+        normalized = str(Path(workspace).expanduser().resolve())
+        claims.setdefault(normalized, []).append((entry.name, workspace))
+    return claims, errors
+
+
 def find_session_for_workspace(workspace: Path | str, *, exclude_session: str = "") -> str | None:
     """Return the name of an existing session (active or archived) whose
     recorded workspace matches. A session's .meta file persists after the
     tmux session itself is gone, so this covers archived sessions too.
     """
     target = str(Path(workspace).expanduser().resolve())
-    exclude = str(exclude_session or "").strip()
-    root = agent_window_session_root()
-    if not root.is_dir():
+    claims, errors = session_workspace_claims(exclude_session=exclude_session)
+    if errors:
+        raise SessionMetaError("; ".join(detail for _name, detail in errors))
+    matches = claims.get(target, [])
+    if not matches:
         return None
-    for entry in sorted(root.iterdir()):
-        if not entry.is_dir() or entry.name == exclude:
-            continue
-        meta_path = entry / ".meta"
-        if not meta_path.is_file():
-            continue
-        try:
-            meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if isinstance(meta, dict) and str(meta.get("workspace") or "").strip() == target:
-            return entry.name
-    return None
+    names = [name for name, _raw_workspace in matches]
+    if len(names) > 1:
+        raise WorkspaceClaimConflict(target, names)
+    return names[0]
 
 
 def _parse_tmux_environment_output(output: str) -> dict[str, str]:
@@ -93,10 +127,10 @@ def session_workspace(session_name: str) -> str | None:
         return None
     try:
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SessionMetaError(f"invalid session meta: {meta_path}") from exc
     if not isinstance(meta, dict):
-        return None
+        raise SessionMetaError(f"invalid session meta: {meta_path}")
     return str(meta.get("workspace") or "").strip() or None
 
 

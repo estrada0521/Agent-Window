@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from backend_core.access.settings import agent_window_session_root, sanitize_session_name, session_log_path
+from backend_core.access.settings import agent_window_session_root, session_log_path
 
 
 @dataclass(frozen=True)
@@ -15,7 +15,6 @@ class HubSessionApiContext:
     active_session_records_query: Callable
     archived_session_records: Callable
     ensure_chat_server: Callable
-    delete_archived_session: Callable
 
 
 class HubSessionApi:
@@ -37,7 +36,7 @@ class HubSessionApi:
             workspace = str((query.records.get(session_name) or {}).get("workspace") or "").strip()
             ok, chat_port, detail = self.ctx.ensure_chat_server(
                 session_name,
-                session_is_active=True,
+                expected_active=True,
                 workspace=workspace,
             )
             if not ok:
@@ -50,14 +49,14 @@ class HubSessionApi:
             }
         if query.state == "unhealthy":
             return {"status": "unhealthy", "detail": query.detail}
-        archived = self.ctx.archived_session_records(query.records.keys())
+        archived = self.ctx.archived_session_records(query.non_archived_names)
         record = archived.get(session_name)
         if not record:
             return {"status": "missing"}
         workspace = str(record.get("workspace") or "").strip()
         ok, chat_port, detail = self.ctx.ensure_chat_server(
             session_name,
-            session_is_active=False,
+            expected_active=False,
             workspace=workspace,
         )
         if not ok:
@@ -72,20 +71,6 @@ class HubSessionApi:
     def format_session_timestamp(self, epoch: int | None = None) -> str:
         ts = int(epoch or time.time())
         return time.strftime("%Y-%m-%d %H:%M", time.localtime(ts))
-
-    def unique_session_name_for_workspace(self, workspace: str) -> str:
-        raw_name = Path(workspace).name or "session"
-        base = sanitize_session_name(raw_name) or "session"
-        query = self.ctx.active_session_records_query()
-        existing = set(query.records.keys())
-        existing.update(self.ctx.archived_session_records(existing).keys())
-        candidate = base
-        suffix = 2
-        while candidate in existing or self.session_logs_dir(candidate).exists():
-            suffix_text = f"-{suffix}"
-            candidate = f"{base[:max(1, 64 - len(suffix_text))]}{suffix_text}"
-            suffix += 1
-        return candidate
 
     def write_session_metadata(self, session_name: str, workspace: str) -> dict:
         """Write .meta and ensure .log.jsonl exists."""
@@ -163,6 +148,6 @@ class HubSessionApi:
     def ensure_active_chat_server(self, session_name: str, workspace: str) -> tuple[bool, int, str]:
         return self.ctx.ensure_chat_server(
             session_name,
-            session_is_active=True,
+            expected_active=True,
             workspace=workspace,
         )

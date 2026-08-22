@@ -5,27 +5,21 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
-from urllib.parse import parse_qs
-
-from backend_core.access.session_meta import find_session_for_workspace
+from backend_core.access.session_meta import SessionMetaError, WorkspaceClaimConflict, find_session_for_workspace
 from backend_core.access.settings import default_chat_port, port_is_bindable, sanitize_session_name
 from backend_core.tmux.control import SessionControlError, create_session
 
 
-def get_check_session_name(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    workspace = (qs.get("workspace", [""])[0] or "").strip()
-    if not workspace:
-        handler._send_json(400, {"ok": False, "error": "workspace required"})
-        return
+def _workspace_claim_failure(workspace: str) -> tuple[int, str] | None:
     try:
-        resolved = str(Path(workspace).expanduser().resolve())
-    except Exception as exc:
-        handler._send_json(400, {"ok": False, "error": str(exc)})
-        return
-    original = sanitize_session_name(Path(resolved).name or "session") or "session"
-    proposed = ctx["session_api"].unique_session_name_for_workspace(resolved)
-    handler._send_json(200, {"ok": True, "name": proposed, "original": original, "conflict": proposed != original})
+        owner = find_session_for_workspace(workspace)
+    except WorkspaceClaimConflict as exc:
+        return 409, str(exc)
+    except SessionMetaError as exc:
+        return 500, str(exc)
+    if owner:
+        return 409, f"A session already exists for this workspace: {owner}"
+    return None
 
 
 def post_pick_workspace(handler, _parsed, _ctx) -> None:
@@ -114,23 +108,26 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     if not Path(resolved_workspace).is_dir():
         handler._send_json(400, {"ok": False, "error": f"Invalid workspace: {resolved_workspace}"})
         return
-    override_name = sanitize_session_name(str(data.get("session_name") or ""))
-    if override_name:
-        query = ctx["active_session_records_query_fn"]()
-        existing = set(query.records.keys())
-        existing.update(ctx["archived_session_records_fn"](existing).keys())
-        if override_name in existing or ctx["session_api"].session_logs_dir(override_name).exists():
-            handler._send_json(409, {"ok": False, "error": f"セッション名 '{override_name}' は既に使用されています"})
-            return
-        session_name = override_name
-    else:
-        session_name = ctx["session_api"].unique_session_name_for_workspace(resolved_workspace)
     # Checked before anything is created: write_session_metadata() has no
     # rollback, so finding out about a conflict only after it runs would
     # leave a stale .meta file behind with no session backing it.
-    workspace_owner = find_session_for_workspace(resolved_workspace, exclude_session=session_name)
-    if workspace_owner:
-        handler._send_json(409, {"ok": False, "error": f"A session already exists for this workspace: {workspace_owner}"})
+    claim_failure = _workspace_claim_failure(resolved_workspace)
+    if claim_failure:
+        status, error = claim_failure
+        handler._send_json(status, {"ok": False, "error": error})
+        return
+    session_name = sanitize_session_name(Path(resolved_workspace).name or "session") or "session"
+    if ctx["session_api"].session_logs_dir(session_name).exists():
+        handler._send_json(
+            409,
+            {
+                "ok": False,
+                "error": (
+                    f"A session named '{session_name}' already exists. "
+                    "Rename the workspace folder and try again."
+                ),
+            },
+        )
         return
     # Checked before anything is created: session_name alone determines the
     # chat port, so a collision is knowable up front. Finding out only after
@@ -151,13 +148,12 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
                 session_name=session_name,
                 workspace=resolved_workspace,
                 agents=[],
-                tmux_socket=str(getattr(ctx["session_api"].ctx.hub, "tmux_socket", "") or ""),
+                tmux_socket=ctx["session_api"].ctx.hub.tmux_socket,
                 repo_root=ctx["session_api"].ctx.hub.repo_root,
             )
         except SessionControlError as exc:
             handler._send_json(500, {"ok": False, "error": str(exc)})
             return
-        # Start chat server with SESSION_IS_ACTIVE=1 (session is live immediately)
         ok, chat_port, detail = ctx["session_api"].ensure_active_chat_server(
             session_name,
             resolved_workspace,
@@ -165,13 +161,11 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         if not ok:
             handler._send_json(500, {"ok": False, "error": detail})
             return
-        # Get session record from active sessions query
-        query = ctx["active_session_records_query_fn"]()
-        record = query.records.get(session_name) or ctx["session_api"].build_active_session_record(
+        record = ctx["session_api"].build_active_session_record(
             session_name,
             resolved_workspace,
-            created_at=session_state.get("created_at", ""),
-            updated_at=session_state.get("updated_at", ""),
+            created_at=session_state["created_at"],
+            updated_at=session_state["updated_at"],
         )
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
@@ -179,7 +173,7 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     chat_url = ctx["format_session_chat_url_fn"](
         handler.headers.get("Host", "127.0.0.1"),
         session_name,
-        int(chat_port or 0),
+        int(chat_port),
         f"/?ts={int(time.time() * 1000)}",
     )
     handler._send_json(

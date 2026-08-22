@@ -11,7 +11,6 @@ from urllib.parse import parse_qs, quote as url_quote, urlparse
 
 from hub_backend.runtime import HubRuntime
 from backend_core.access.pwa import pwa_icon_entries as _pwa_icon_entries_impl
-from backend_core.agents.executables import agent_launch_readiness
 from hub_backend.presentation.hub.header_assets import (
     DEFAULT_HUB_HEADER_ACTIONS,
     DEFAULT_HUB_HEADER_PANELS,
@@ -25,7 +24,6 @@ from hub_backend.session_api import HubSessionApi, HubSessionApiContext
 from hub_backend.branding import APP_DISPLAY_NAME
 from hub_backend.color_constants import apply_color_tokens, resolve_theme_palette
 from hub_backend.new_session.handlers import (
-    get_check_session_name as _get_check_session_name_action,
     post_pick_workspace as _post_pick_workspace_action,
     post_start_session_draft as _post_start_session_draft_action,
 )
@@ -465,7 +463,6 @@ def _hub_session_api() -> HubSessionApi:
             active_session_records_query=hub.active_session_records_query,
             archived_session_records=hub.archived_session_records,
             ensure_chat_server=hub.ensure_chat_server,
-            delete_archived_session=hub.delete_archived_session,
         )
     )
 
@@ -473,8 +470,6 @@ def _hub_session_api() -> HubSessionApi:
 def _hub_action_context() -> dict[str, object]:
     return {
         "active_session_records_query_fn": hub.active_session_records_query,
-        "agent_launch_readiness_fn": agent_launch_readiness,
-        "archived_session_records_fn": hub.archived_session_records,
         "delete_archived_session_fn": hub.delete_archived_session,
         "ensure_chat_server_fn": hub.ensure_chat_server,
         "error_page_fn": error_page,
@@ -484,7 +479,6 @@ def _hub_action_context() -> dict[str, object]:
         "release_restart_hold_fn": release_restart_hold,
         "revive_archived_session_fn": hub.revive_archived_session,
         "save_hub_settings_fn": hub.save_hub_settings,
-        "script_path": script_path,
         "session_api": _hub_session_api(),
     }
 
@@ -500,7 +494,6 @@ _GET_ROUTE_HANDLERS = {
     "/": "_get_home",
     "/index.html": "_get_home",
     "/settings": "_get_settings",
-    "/check-session-name": _get_check_session_name_action,
 }
 
 _POST_ROUTE_HANDLERS = {
@@ -590,6 +583,7 @@ class Handler(BaseHTTPRequestHandler):
     def _get_sessions(self, _parsed):
         query = hub.active_session_records_query()
         active_map = query.records
+        warnings = list(query.warnings.values())
         active = []
         for record in active_map.values():
             session_record = dict(record)
@@ -604,11 +598,11 @@ class Handler(BaseHTTPRequestHandler):
         if query.state == "unhealthy":
             archived = []
         else:
-            archived = list(hub.archived_session_records(active_map.keys()).values())
+            archived = list(hub.archived_session_records(query.non_archived_names).values())
         self._send_json(200, {
-            "sessions": active,
             "active_sessions": active,
             "archived_sessions": archived,
+            "warning_sessions": warnings,
             "tmux_state": query.state,
             "tmux_detail": query.detail,
         })
