@@ -15,27 +15,26 @@ hub_session_log_dir() {
   printf '%s/%s\n' "$AGENT_WINDOW_LOG_DIR" "$session"
 }
 
-hub_ensure_session_log() {
-  local session="$1" session_dir index_path
-  session_dir="$(hub_session_log_dir "$session")"
-  index_path="${session_dir}/.log.jsonl"
-  mkdir -p "$session_dir"
-  [[ -e "$index_path" ]] || : > "$index_path"
-  [[ -n "${SESSION_WORKSPACE:-}" ]] || return 0
-  PYTHONPATH="$HUB_PYTHONPATH" python3 - "$session" "$SESSION_WORKSPACE" <<'PYEOF'
+resolve_session_workspace() {
+  PYTHONPATH="$HUB_PYTHONPATH" python3 - "$1" <<'PYEOF'
 import sys
 
-from backend_core.access.settings import ensure_session_workspace_mirrors
+from backend_core.access.session_meta import SessionMetaError, session_workspace
 
-ensure_session_workspace_mirrors(sys.argv[1], sys.argv[2])
+try:
+    workspace = session_workspace(sys.argv[1])
+except SessionMetaError as exc:
+    raise SystemExit(str(exc)) from exc
+if workspace:
+    print(workspace)
 PYEOF
 }
 
-# A workspace has at most one session, active or archived (enforced at
-# creation in backend_core.tmux.control.create_session), so this is a
-# lookup, not a "which of these did you mean" search. Delegates to the
-# same .meta-scanning helper that guards session creation, instead of
-# re-deriving matching semantics separately in bash. Prefers
+# A valid workspace binding resolves to exactly one session. Manual
+# duplicate claims and unreadable metadata are errors, not an arbitrary
+# "first match" choice. Delegates to the same .meta-scanning helper that
+# guards session creation instead of re-deriving matching semantics in
+# bash. Prefers
 # AGENT_WINDOW_WORKSPACE (set once at session creation, stable even if this
 # process's own cwd has since moved) over the current directory.
 resolve_workspace_session() {
@@ -43,9 +42,12 @@ resolve_workspace_session() {
 import sys
 from pathlib import Path
 
-from backend_core.access.session_meta import find_session_for_workspace
+from backend_core.access.session_meta import SessionMetaError, find_session_for_workspace
 
-found = find_session_for_workspace(Path(sys.argv[1]))
+try:
+    found = find_session_for_workspace(Path(sys.argv[1]))
+except SessionMetaError as exc:
+    raise SystemExit(str(exc)) from exc
 if found:
     print(found)
 PYEOF
@@ -53,11 +55,6 @@ PYEOF
 
 resolve_session_log_dir() {
   local session_dir
-  if [[ "${SESSION_IS_ACTIVE:-0}" == "1" && -n "$SESSION_NAME" ]]; then
-    hub_ensure_session_log "$SESSION_NAME"
-    printf '%s\n' "$(hub_session_log_dir "$SESSION_NAME")"
-    return
-  fi
   session_dir="$(hub_session_log_dir "$SESSION_NAME")"
   mkdir -p "$session_dir"
   printf '%s\n' "$session_dir"

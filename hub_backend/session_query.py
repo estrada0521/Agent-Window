@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
-from backend_core.access.session_meta import session_workspace
+from backend_core.access.session_meta import session_workspace_claims, workspace_claim_conflict_message
 from backend_core.access.settings import agent_window_session_root, session_log_path
 from backend_core.tmux.resolve import live_tmux_workspaces
 
@@ -172,6 +172,14 @@ def build_session_record(
     }
 
 
+def build_warning_session_record(*, name: str, warning: str) -> dict:
+    return {
+        "name": name,
+        "status": "warning",
+        "warning": warning,
+    }
+
+
 class _TmuxQueryTimeout(RuntimeError):
     pass
 
@@ -203,74 +211,85 @@ def _live_tmux_workspaces(runtime: Any) -> tuple[dict[str, str], str, str]:
     return workspace_to_tmux, "ok", ""
 
 
-def collect_repo_sessions(runtime: Any) -> tuple[list[dict], str, str]:
+def collect_repo_sessions(runtime: Any) -> tuple[list[dict], list[dict], str, str]:
+    claims, claim_errors = session_workspace_claims()
+    unique_claims: list[tuple[str, str, str]] = []
+    warnings: list[dict] = [
+        build_warning_session_record(name=name, warning=detail)
+        for name, detail in claim_errors
+    ]
+    for normalized_workspace, claimants in claims.items():
+        claimant_names = [name for name, _workspace in claimants]
+        if len(claimants) > 1:
+            warning = workspace_claim_conflict_message(normalized_workspace, claimant_names)
+            for name, _workspace in claimants:
+                warnings.append(build_warning_session_record(name=name, warning=warning))
+            continue
+        name, workspace = claimants[0]
+        unique_claims.append((normalized_workspace, name, workspace))
+    warnings.sort(key=lambda item: item["name"])
+
     workspace_to_tmux, state, detail = _live_tmux_workspaces(runtime)
     if state != "ok":
-        return [], state, detail
+        return [], warnings, state, detail
 
-    session_root = agent_window_session_root()
     sessions: list[dict] = []
     any_timeout = False
     timeout_detail = ""
 
-    if session_root.is_dir():
-        for entry in sorted(session_root.iterdir()):
-            if not entry.is_dir() or any_timeout:
-                continue
-            name = entry.name
-            workspace = session_workspace(name)
-            if not workspace:
-                continue
-            tmux_name = workspace_to_tmux.get(str(Path(workspace).expanduser().resolve()))
-            if not tmux_name:
-                continue
+    for normalized_workspace, name, workspace in unique_claims:
+        if any_timeout:
+            continue
+        tmux_name = workspace_to_tmux.get(normalized_workspace)
+        if not tmux_name:
+            continue
 
-            r_attached = runtime.tmux_run(["display-message", "-p", "-t", tmux_name, "#{session_attached}"])
-            r_created = runtime.tmux_run(["display-message", "-p", "-t", tmux_name, "#{session_created}"])
-            r_dead = runtime.tmux_run(["list-panes", "-t", tmux_name, "-F", "#{pane_dead}"])
-            agents, t5 = runtime.session_agents_query(tmux_name)
+        r_attached = runtime.tmux_run(["display-message", "-p", "-t", tmux_name, "#{session_attached}"])
+        r_created = runtime.tmux_run(["display-message", "-p", "-t", tmux_name, "#{session_created}"])
+        r_dead = runtime.tmux_run(["list-panes", "-t", tmux_name, "-F", "#{pane_dead}"])
+        agents, t5 = runtime.session_agents_query(tmux_name)
 
-            if r_attached.timed_out or r_created.timed_out or r_dead.timed_out or t5:
-                any_timeout = True
-                timeout_detail = f"tmux query timed out during session scan for {name}"
-                continue
+        if r_attached.timed_out or r_created.timed_out or r_dead.timed_out or t5:
+            any_timeout = True
+            timeout_detail = f"tmux query timed out during session scan for {name}"
+            continue
 
-            attached = r_attached.stdout.strip() or "0"
-            created_epoch = r_created.stdout.strip() or "0"
-            created_at = dt.datetime.fromtimestamp(int(created_epoch)).strftime("%Y-%m-%d %H:%M")
+        attached = r_attached.stdout.strip() or "0"
+        created_epoch = r_created.stdout.strip() or "0"
+        created_at = dt.datetime.fromtimestamp(int(created_epoch)).strftime("%Y-%m-%d %H:%M")
 
-            dead_panes = sum(1 for line in r_dead.stdout.splitlines() if line.strip() == "1")
+        dead_panes = sum(1 for line in r_dead.stdout.splitlines() if line.strip() == "1")
 
-            if dead_panes > 0:
-                status = "degraded"
-            elif attached != "0":
-                status = "attached"
-            else:
-                status = "idle"
+        if dead_panes > 0:
+            status = "degraded"
+        elif attached != "0":
+            status = "attached"
+        else:
+            status = "idle"
 
-            sessions.append(
-                build_session_record(
-                    runtime,
-                    name=name,
-                    workspace=workspace,
-                    agents=agents,
-                    status=status,
-                    attached=int(attached) if attached.isdigit() else 0,
-                    dead_panes=dead_panes,
-                    created_epoch=int(created_epoch) if created_epoch.isdigit() else 0,
-                    created_at=created_at,
-                )
+        sessions.append(
+            build_session_record(
+                runtime,
+                name=name,
+                workspace=workspace,
+                agents=agents,
+                status=status,
+                attached=int(attached) if attached.isdigit() else 0,
+                dead_panes=dead_panes,
+                created_epoch=int(created_epoch) if created_epoch.isdigit() else 0,
+                created_at=created_at,
             )
+        )
 
     if any_timeout:
-        return sessions, "unhealthy", timeout_detail
+        return sessions, warnings, "unhealthy", timeout_detail
 
     sessions.sort(key=lambda item: item["created_epoch"], reverse=True)
-    return sessions, "ok", ""
+    return sessions, warnings, "ok", ""
 
 
-def archived_sessions(runtime: Any, active_names: set[str] | list[str] | None = None) -> list[dict]:
-    active_names_set = set(active_names or [])
+def archived_sessions(runtime: Any, excluded_names: set[str] | list[str] | None = None) -> list[dict]:
+    excluded_names_set = set(excluded_names or [])
     records: dict[str, dict] = {}
     log_roots: list[Path] = []
     for candidate in (runtime.central_log_dir,):
@@ -284,6 +303,9 @@ def archived_sessions(runtime: Any, active_names: set[str] | list[str] | None = 
     for log_root in log_roots:
         entries = [entry for entry in log_root.iterdir() if entry.is_dir()]
         for entry in entries:
+            session_name = entry.name.strip()
+            if not session_name or session_name in excluded_names_set:
+                continue
             meta_path = entry / ".meta"
             log_path = entry / ".log.jsonl"
             if not meta_path.exists() and not log_path.exists():
@@ -293,9 +315,6 @@ def archived_sessions(runtime: Any, active_names: set[str] | list[str] | None = 
                 meta = json.loads(meta_path.read_text(encoding="utf-8"))
                 if not isinstance(meta, dict):
                     raise ValueError(f"invalid session meta: {meta_path}")
-            session_name = entry.name.strip()
-            if not session_name or session_name in active_names_set:
-                continue
             workspace = str(meta.get("workspace") or "").strip()
             created_epoch = parse_saved_time(str(meta.get("created_at", "")))
             updated_epoch = parse_saved_time(str(meta.get("updated_at", "")))

@@ -254,10 +254,15 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
     if err:
         handler._send_json(400, {"ok": False, "error": err})
         return
+    runtime = ctx["runtime"]
+    if not runtime.session_is_active:
+        handler._send_json(409, {"ok": False, "error": "tmux session is not active"})
+        return
+    tmux_name = runtime.tmux_session_name
     agent = str((data or {}).get("agent") or "").strip()
     if agent:
         try:
-            pane_id = ctx["runtime"].pane_id_for_agent(agent)
+            pane_id = runtime.pane_id_for_agent(agent)
         except Exception as exc:
             handler._send_json(500, {"ok": False, "error": str(exc)})
             return
@@ -295,7 +300,7 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
                     "display-message",
                     "-p",
                     "-t",
-                    f"={ctx['session_name']}:0",
+                    f"={tmux_name}:0",
                     "#{window_width} #{window_height}",
                 ],
                 capture_output=True,
@@ -314,7 +319,7 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
             pass
         attach_cmd = (
             f"env -u TMUX -u TMUX_PANE tmux {socket_flag} "
-            f"{shlex.quote(ctx['tmux_socket'])} attach-session -t {shlex.quote(ctx['session_name'])}"
+            f"{shlex.quote(ctx['tmux_socket'])} attach-session -t {shlex.quote(tmux_name)}"
         )
         apple_script = (
             f'tell application "Terminal"\n'

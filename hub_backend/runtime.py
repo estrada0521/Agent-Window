@@ -47,13 +47,19 @@ class TmuxRunResult:
 @dataclass(frozen=True)
 class SessionQueryResult:
     records: dict[str, dict]
+    warnings: dict[str, dict]
     state: str
     detail: str = ""
+
+    @property
+    def non_archived_names(self) -> set[str]:
+        return set(self.records) | set(self.warnings)
 
 
 @dataclass(frozen=True)
 class RepoSessionsQueryResult:
     sessions: list[dict]
+    warnings: list[dict]
     state: str
     detail: str = ""
 
@@ -166,22 +172,23 @@ class HubRuntime:
         )
 
     def repo_sessions_query(self) -> RepoSessionsQueryResult:
-        sessions, state, detail = _collect_repo_sessions_impl(self)
-        return RepoSessionsQueryResult(sessions, state, detail)
+        sessions, warnings, state, detail = _collect_repo_sessions_impl(self)
+        return RepoSessionsQueryResult(sessions, warnings, state, detail)
 
-    def archived_sessions(self, active_names: set[str] | list[str] | None = None) -> list[dict]:
-        return _archived_sessions_impl(self, active_names)
+    def archived_sessions(self, excluded_names: set[str] | list[str] | None = None) -> list[dict]:
+        return _archived_sessions_impl(self, excluded_names)
 
     def active_session_records_query(self) -> SessionQueryResult:
         res = self.repo_sessions_query()
         return SessionQueryResult(
             records={item["name"]: item for item in res.sessions},
+            warnings={item["name"]: item for item in res.warnings},
             state=res.state,
             detail=res.detail,
         )
 
-    def archived_session_records(self, active_names: set[str] | list[str] | None = None) -> dict[str, dict]:
-        return {item["name"]: item for item in self.archived_sessions(active_names)}
+    def archived_session_records(self, excluded_names: set[str] | list[str] | None = None) -> dict[str, dict]:
+        return {item["name"]: item for item in self.archived_sessions(excluded_names)}
 
     def load_hub_settings(self) -> dict:
         return load_shared_hub_settings()
@@ -207,34 +214,34 @@ class HubRuntime:
     def _chat_launch_session_dir(self, session_name: str) -> Path:
         return _chat_launch_session_dir_impl(self, session_name)
 
-    def _chat_launch_env(self, *, session_is_active: bool = True) -> dict[str, str]:
-        return _chat_launch_env_impl(self, session_is_active=session_is_active)
+    def _chat_launch_env(self) -> dict[str, str]:
+        return _chat_launch_env_impl(self)
 
     def _chat_launch_port(
         self,
         session_name: str,
         *,
         workspace: str = "",
-        session_is_active: bool = True,
+        expected_active: bool = True,
     ) -> tuple[int, bool, str]:
         return _chat_launch_port_impl(
             self,
             session_name,
             workspace=workspace,
-            session_is_active=session_is_active,
+            expected_active=expected_active,
         )
 
     def ensure_chat_server(
         self,
         session_name: str,
         *,
-        session_is_active: bool = True,
+        expected_active: bool = True,
         workspace: str = "",
     ) -> tuple[bool, int, str]:
         return _ensure_chat_server_impl(
             self,
             session_name,
-            session_is_active=session_is_active,
+            expected_active=expected_active,
             workspace=workspace,
             subprocess_module=subprocess,
             sys_module=sys,

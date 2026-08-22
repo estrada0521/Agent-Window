@@ -13,7 +13,12 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from backend_core.access.files import append_jsonl_entry
-from backend_core.access.session_meta import find_session_for_workspace, session_workspace, write_session_meta_file
+from backend_core.access.session_meta import (
+    SessionMetaError,
+    find_session_for_workspace,
+    session_workspace,
+    write_session_meta_file,
+)
 from backend_core.access.settings import (
     agent_window_session_root,
     default_chat_port,
@@ -103,7 +108,10 @@ def _live_tmux_session_for_workspace(prefix: list[str], workspace: str) -> str |
 
 
 def _resolve_tmux_name(prefix: list[str], session_name: str) -> str | None:
-    workspace = session_workspace(session_name)
+    try:
+        workspace = session_workspace(session_name)
+    except SessionMetaError as exc:
+        raise SessionControlError(str(exc)) from exc
     if not workspace:
         return None
     return _live_tmux_session_for_workspace(prefix, workspace)
@@ -450,7 +458,10 @@ def create_session(
         raise SessionControlError("session_name is required")
     if not workspace_path.is_dir():
         raise SessionControlError(f"Invalid workspace: {workspace_path}")
-    existing = find_session_for_workspace(workspace_path, exclude_session=name)
+    try:
+        existing = find_session_for_workspace(workspace_path, exclude_session=name)
+    except SessionMetaError as exc:
+        raise SessionControlError(str(exc)) from exc
     if existing:
         raise SessionControlError(f"A session already exists for this workspace: {existing}")
     root = Path(repo_root).resolve() if repo_root is not None else _repo_root()

@@ -441,6 +441,12 @@
       opacity: 0.58;
     }
 
+    .mob-warning-row .mob-session-row {
+      cursor: default;
+    }
+    .mob-warning-row .mob-session-row:active::before {
+      opacity: 0;
+    }
     .mob-session-row.is-selected .mob-row-name,
     .mob-session-row.is-selected .mob-row-preview {
       opacity: 1;

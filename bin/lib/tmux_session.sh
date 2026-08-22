@@ -27,18 +27,3 @@ from message_delivery.send import tmux_socket_from_env
 print(tmux_socket_from_env(dict(os.environ)))
 '
 }
-
-session_json_field() {
-  local json="$1" field="$2"
-  python3 -c '
-import json, sys
-
-value = json.loads(sys.argv[1]).get(sys.argv[2])
-if isinstance(value, bool):
-    print(1 if value else 0)
-elif value is None:
-    print("")
-else:
-    print(value)
-' "$json" "$field"
-}

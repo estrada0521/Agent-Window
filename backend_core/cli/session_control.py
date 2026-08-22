@@ -5,7 +5,7 @@ import json
 import os
 import sys
 
-from backend_core.access.session_meta import find_session_for_workspace
+from backend_core.access.session_meta import SessionMetaError, find_session_for_workspace
 from backend_core.tmux.control import (
     SessionControlError,
     describe_session,
@@ -128,7 +128,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             info = describe_session(session_name, tmux_socket=socket_name)
             print(json.dumps(info, ensure_ascii=False) if args.json else format_context_text(info))
-    except SessionControlError as exc:
+    except (SessionControlError, SessionMetaError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
     return 0

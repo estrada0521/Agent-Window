@@ -70,7 +70,7 @@ def get_revive_session(handler, parsed, ctx) -> None:
     workspace = str((query.records.get(session_name) or {}).get("workspace") or "").strip()
     ok, chat_port, detail = ctx["ensure_chat_server_fn"](
         session_name,
-        session_is_active=True,
+        expected_active=True,
         workspace=workspace,
     )
     if not ok:

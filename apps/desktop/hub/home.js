@@ -45,6 +45,7 @@
     const _deskSettingsBtn = document.getElementById("deskSettingsBtn");
     const _deskReloadBtn = document.getElementById("deskReloadBtn");
     const _deskNewSessionToggle = document.getElementById("deskNewSessionToggle");
+    const _deskHubError = document.getElementById("deskHubError");
     const DESK_SELECTED_KEY = "agent_window_hub_selected_session";
     const DESK_SIDEBAR_WIDTH_KEY = "agent_window_hub_sidebar_width";
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
@@ -56,6 +57,7 @@
     const DESK_SIDEBAR_CLOSE_SWIPE_EDGE_PX = 36;
     const DESK_SIDEBAR_CLOSE_SWIPE_THRESHOLD = 54;
     const DESK_CHAT_URL_CACHE_LIMIT = 3;
+    const DESK_HUB_ERROR_VISIBLE_MS = 5000;
     const hubChatUrls = createHubChatUrlResolver({
       cacheLimit: DESK_CHAT_URL_CACHE_LIMIT,
       cacheKey: (openHref) => String(openHref || "").trim(),
@@ -86,7 +88,7 @@
       } catch (_) {}
     });
 
-    let _hubSessionsCache = { active: [], archived: [] };
+    let _hubSessionsCache = { active: [], warnings: [], archived: [] };
     let _deskSessionsRequestSeq = 0;
     let _deskSessionsRenderedOnce = false;
     let _deskSelectedSessionName = "";
@@ -95,6 +97,7 @@
     let _deskSidebarWidth = DESK_DEFAULT_SIDEBAR_WIDTH;
     let _deskOpenSwipeRow = null;
     let _deskNewSessionStarting = false;
+    let _deskHubErrorTimer = 0;
 
     function updateDeskWindowTitle(name) {
       const textEl = document.getElementById("deskSessionTitleText");
@@ -165,6 +168,22 @@
       showDeskSidebarList({ open: true });
     }
 
+    function setDeskHubError(message = "") {
+      if (!_deskHubError) return;
+      window.clearTimeout(_deskHubErrorTimer);
+      _deskHubErrorTimer = 0;
+      const text = String(message || "").trim();
+      _deskHubError.textContent = text;
+      _deskHubError.hidden = !text;
+      if (text) {
+        _deskHubErrorTimer = window.setTimeout(() => {
+          _deskHubError.textContent = "";
+          _deskHubError.hidden = true;
+          _deskHubErrorTimer = 0;
+        }, DESK_HUB_ERROR_VISIBLE_MS);
+      }
+    }
+
     function openDeskChatHeaderMenu() {
       const frameWin = _deskChatFrame?.contentWindow;
       if (!frameWin) return;
@@ -205,9 +224,7 @@
         message = "";
       }
       if (!message) return;
-      window.setTimeout(() => {
-        window.alert(message);
-      }, 0);
+      setDeskHubError(message);
     }
 
     function isPhoneViewport() {
@@ -691,56 +708,18 @@
       throw new Error(data.error || "Workspace picker failed.");
     }
 
-    function promptSessionNameConflict(original, proposed) {
-      return new Promise((resolve) => {
-        const overlay = document.createElement("div");
-        overlay.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;";
-        const panel = document.createElement("div");
-        panel.style.cssText = "background:var(--surface,#1a1a1a);border:1px solid var(--border,#333);border-radius:14px;padding:24px 28px;min-width:320px;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.5);";
-        panel.innerHTML = `
-          <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--fg,#eee);">セッション名が重複しています</div>
-          <div style="font-size:12px;color:var(--fg-muted,#888);margin-bottom:16px;">「${original}」は既に使われています。別の名前を入力してください。</div>
-          <input id="_snConflictInput" type="text" value="${proposed}" maxlength="64"
-            style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid var(--border,#444);background:var(--surface-alt,#222);color:var(--fg,#eee);font-size:13px;outline:none;margin-bottom:16px;">
-          <div style="display:flex;gap:8px;justify-content:flex-end;">
-            <button id="_snConflictCancel" style="padding:7px 16px;border-radius:8px;border:1px solid var(--border,#444);background:transparent;color:var(--fg-muted,#888);font-size:12px;cursor:pointer;">キャンセル</button>
-            <button id="_snConflictOk" style="padding:7px 16px;border-radius:8px;border:none;background:var(--accent,#3b82f6);color:var(--fg);font-size:12px;cursor:pointer;font-weight:600;">作成</button>
-          </div>`;
-        overlay.appendChild(panel);
-        document.body.appendChild(overlay);
-        const input = panel.querySelector("#_snConflictInput");
-        const ok = panel.querySelector("#_snConflictOk");
-        const cancel = panel.querySelector("#_snConflictCancel");
-        const cleanup = (result) => { overlay.remove(); resolve(result); };
-        ok.addEventListener("click", () => cleanup(input.value.trim() || null));
-        cancel.addEventListener("click", () => cleanup(null));
-        overlay.addEventListener("click", (e) => { if (e.target === overlay) cleanup(null); });
-        input.addEventListener("keydown", (e) => { if (e.key === "Enter") cleanup(input.value.trim() || null); if (e.key === "Escape") cleanup(null); });
-        setTimeout(() => { input.select(); }, 30);
-      });
-    }
-
     async function startDeskNewSessionFlow() {
       if (_deskNewSessionStarting) return;
       _deskNewSessionStarting = true;
       _deskNewSessionToggle?.classList.add("archived");
+      setDeskHubError();
       try {
         const workspace = await pickWorkspaceForNewSession();
         if (!workspace) return;
-        const checkRes = await fetch(`/check-session-name?workspace=${encodeURIComponent(workspace)}`);
-        const checkData = await checkRes.json().catch(() => ({}));
-        if (!checkData.ok) throw new Error(checkData.error || "Failed to check session name.");
-        let sessionName = null;
-        if (checkData.conflict) {
-          const confirmed = await promptSessionNameConflict(checkData.original, checkData.name);
-          if (!confirmed) return;
-          sessionName = confirmed;
-        }
-        const body = sessionName ? { workspace, session_name: sessionName } : { workspace };
         const res = await fetch("/start-session-draft", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ workspace }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok || !data.chat_url) {
@@ -754,7 +733,7 @@
         }
         void refreshHubSessions(true, { skipRestore: true });
       } catch (err) {
-        window.alert(err?.message || "Failed to open draft session.");
+        setDeskHubError(err?.message || "Failed to open draft session.");
       } finally {
         _deskNewSessionStarting = false;
         _deskNewSessionToggle?.classList.remove("archived");
@@ -789,7 +768,7 @@
       persistDeskSelection("");
       setDeskSelectionInUrl("");
       clearDeskChatFrame();
-      renderDesktopSessions(_hubSessionsCache.active || [], _hubSessionsCache.archived || []);
+      renderDesktopSessions(_hubSessionsCache.active, _hubSessionsCache.warnings, _hubSessionsCache.archived);
     }
 
     function openChatInDesk(url, name) {
@@ -816,7 +795,7 @@
       } else {
         setDeskChatLoading(false);
       }
-      renderDesktopSessions(_hubSessionsCache.active || [], _hubSessionsCache.archived || []);
+      renderDesktopSessions(_hubSessionsCache.active, _hubSessionsCache.warnings, _hubSessionsCache.archived);
     }
 
     function resolveSessionChatUrl(openHref) {
@@ -835,7 +814,7 @@
       updateDeskWindowTitle(name);
       persistDeskSelection(name);
       setDeskSelectionInUrl(name);
-      renderDesktopSessions(_hubSessionsCache.active || [], _hubSessionsCache.archived || []);
+      renderDesktopSessions(_hubSessionsCache.active, _hubSessionsCache.warnings, _hubSessionsCache.archived);
       if (needsReviveTransition) setDeskChatLoading(true);
       const openToken = ++_deskOpenToken;
       try {
@@ -945,7 +924,7 @@
     }
 
     function renderDeskSessionRow(session, archived) {
-      const sessionName = String(session.name || "");
+      const sessionName = String(session.name);
       const archivedClass = archived ? " archived" : "";
       const selectedClass = _deskSelectedSessionName === sessionName ? " is-selected" : "";
       const swipeActionLabel = archived ? "Delete" : "Archive";
@@ -968,7 +947,7 @@
           `</button>` +
         `</div>` +
         `<div class="desk-swipe-track">` +
-          `<div class="desk-session-row${archivedClass}${selectedClass}" data-session-name="${esc(sessionName)}" data-open-href="${buildSessionOpenHref(sessionName, archived)}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
+          `<div class="desk-session-row desk-action-session-row${archivedClass}${selectedClass}" data-session-name="${esc(sessionName)}" data-open-href="${buildSessionOpenHref(sessionName, archived)}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
             `<div class="desk-row-head">` +
                 `<div class="desk-row-main">` +
                   `<span class="desk-row-bullet${runningClass}" aria-hidden="true">` +
@@ -989,6 +968,24 @@
         `</div>`;
     }
 
+    function renderDeskWarningRow(session) {
+      const sessionName = String(session.name || "");
+      const warning = String(session.warning);
+      return `<div class="desk-swipe-row desk-warning-row" data-session-name="${esc(sessionName)}">` +
+        `<div class="desk-swipe-track">` +
+          `<div class="desk-session-row desk-warning-session-row" data-session-name="${esc(sessionName)}" aria-disabled="true">` +
+            `<div class="desk-row-head"><div class="desk-row-main">` +
+              `<span class="desk-row-bullet" aria-hidden="true"><i></i></span>` +
+              `<div class="desk-row-stack">` +
+                `<div class="desk-row-name">${esc(sessionName)}</div>` +
+                `<div class="desk-row-preview">${esc(warning)}</div>` +
+              `</div>` +
+            `</div></div>` +
+          `</div>` +
+        `</div>` +
+      `</div>`;
+    }
+
     function closeDeskSwipeRow(wrapper, animate = true) {
       if (!wrapper) return;
       const track = wrapper.querySelector(".desk-swipe-track");
@@ -1001,6 +998,7 @@
 
     async function runDeskContextAction(sessionName, kind) {
       if (!sessionName || !kind) return;
+      setDeskHubError();
       const isDelete = kind === "delete-archived";
       const confirmed = isTauriDesktopApp()
         ? true
@@ -1035,7 +1033,7 @@
         clearDeskSelection();
         showDeskSidebarList({ open: true });
       } catch (err) {
-        window.alert(err?.message || (isDelete ? "Failed to delete session." : "Failed to archive session."));
+        setDeskHubError(err?.message || (isDelete ? "Failed to delete session." : "Failed to archive session."));
       }
     }
 
@@ -1143,7 +1141,7 @@
       });
     }
 
-    function renderDesktopSessions(active, archived) {
+    function renderDesktopSessions(active, warnings, archived) {
       if (!_deskSessionList) return;
       let html = "";
       if (active.length) {
@@ -1154,7 +1152,11 @@
         html += `<div class="desk-section-label">Archived</div>`;
         html += archived.map((session) => renderDeskSessionRow(session, true)).join("");
       }
-      if (!active.length && !archived.length) {
+      if (warnings.length) {
+        html += `<div class="desk-section-label">Warning</div>`;
+        html += warnings.map(renderDeskWarningRow).join("");
+      }
+      if (!active.length && !warnings.length && !archived.length) {
         html = `<div class="desk-empty-list">No sessions found</div>`;
       }
       _deskSessionList.innerHTML = html;
@@ -1169,19 +1171,21 @@
         if (!response.ok) throw new Error("failed");
         const data = await response.json();
         if (requestSeq !== _deskSessionsRequestSeq) return;
-        const active = data.active_sessions || data.sessions || [];
-        const archived = data.archived_sessions || [];
-        _hubSessionsCache = { active, archived };
+        const active = data.active_sessions;
+        const warnings = data.warning_sessions;
+        const archived = data.archived_sessions;
+        _hubSessionsCache = { active, warnings, archived };
         if (_deskSelectedSessionName) updateDeskWindowTitle(_deskSelectedSessionName);
 
         const signature = JSON.stringify({
           active,
+          warnings,
           archived,
           selected: _deskSelectedSessionName,
         });
         if (force || window._lastHubRenderSig !== signature) {
           window._lastHubRenderSig = signature;
-          renderDesktopSessions(active, archived);
+          renderDesktopSessions(active, warnings, archived);
         } else {
           active.forEach((session) => refreshDeskSessionRunningRow(session?.name || ""));
         }
@@ -1189,7 +1193,7 @@
         if (!skipRestore) maybeRestoreDeskSelection();
       } catch (_) {
         if (requestSeq !== _deskSessionsRequestSeq) return;
-        if (_deskSessionsRenderedOnce || _hubSessionsCache.active.length || _hubSessionsCache.archived.length) return;
+        if (_deskSessionsRenderedOnce || _hubSessionsCache.active.length || _hubSessionsCache.warnings.length || _hubSessionsCache.archived.length) return;
         if (_deskSessionList) {
           _deskSessionList.innerHTML = `<div class="desk-empty-list">Failed to load sessions</div>`;
         }

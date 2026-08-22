@@ -6,20 +6,18 @@ import subprocess
 from backend_core.tmux.resolve import find_tmux_session_for_workspace
 
 
-def resolve_tmux_session_name(runtime, *, subprocess_module=subprocess) -> str:
-    """Find the live tmux session actually backing this AW session.
+def resolve_tmux_session_name(runtime, *, subprocess_module=subprocess) -> str | None:
+    """Find the live tmux session actually backing this AW session, if any.
 
     tmux only ever genuinely knows the workspace it was started in
     (AGENT_WINDOW_WORKSPACE, set once at creation and never rewritten) --
     never the AW session's own name, which can be renamed independently of
-    the tmux session underneath it. Falls back to the AW session name
-    itself when nothing is found (inactive session, or nothing live yet).
+    the tmux session underneath it. Whether the AW session is active is the
+    result of this lookup, not an input to it.
     """
-    if not getattr(runtime, "session_is_active", True):
-        return runtime.session_name
-    workspace = str(getattr(runtime, "workspace", "") or "").strip()
+    workspace = str(runtime.workspace or "").strip()
     if not workspace:
-        return runtime.session_name
+        return None
     result = subprocess_module.run(
         [*runtime.tmux_prefix, "list-sessions", "-F", "#{session_name}"],
         capture_output=True,
@@ -28,7 +26,12 @@ def resolve_tmux_session_name(runtime, *, subprocess_module=subprocess) -> str:
         check=False,
     )
     if result.returncode != 0:
-        return runtime.session_name
+        detail = (result.stderr or result.stdout or "").strip()
+        if "no server running" in detail.lower() or "no such file or directory" in detail.lower():
+            return None
+        raise RuntimeError(
+            f"tmux list-sessions failed while resolving workspace (exit {result.returncode}): {detail}"
+        )
 
     def workspace_of(name: str) -> str | None:
         env_result = subprocess_module.run(
@@ -39,12 +42,20 @@ def resolve_tmux_session_name(runtime, *, subprocess_module=subprocess) -> str:
             check=False,
         )
         line = env_result.stdout.strip()
-        if env_result.returncode != 0 or "=" not in line:
+        if env_result.returncode != 0:
+            detail = (env_result.stderr or env_result.stdout or "").strip()
+            lowered = detail.lower()
+            if "unknown variable" in lowered or "can't find session" in lowered:
+                return None
+            raise RuntimeError(
+                f"tmux show-environment AGENT_WINDOW_WORKSPACE failed for {name} "
+                f"(exit {env_result.returncode}): {detail}"
+            )
+        if "=" not in line:
             return None
         return line.split("=", 1)[1].strip() or None
 
-    resolved = find_tmux_session_for_workspace(workspace, result.stdout.splitlines(), workspace_of)
-    return resolved or runtime.session_name
+    return find_tmux_session_for_workspace(workspace, result.stdout.splitlines(), workspace_of)
 
 
 def active_agents(runtime, *, subprocess_module=subprocess) -> list[str]:
