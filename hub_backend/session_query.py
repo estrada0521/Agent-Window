@@ -163,7 +163,7 @@ def build_session_record(
         "dead_panes": int(dead_panes or 0),
         "agents": list(agents or []),
         "status": status,
-        "chat_port": runtime.chat_port_for_session(name),
+        "chat_port": runtime.chat_port_for_workspace(workspace) if workspace else 0,
         "session_path": f"/session/{session_slug}/",
         "log_dir": str(path.parent),
         "log_path": str(path),

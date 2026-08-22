@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 import time
+import os
 from collections import deque
 
 SESSION_STATE_PROJECTIONS = (
@@ -125,6 +126,7 @@ def build_session_state_payload(
         payload.update(
             {
                 "server_instance": server_instance,
+                "pid": os.getpid(),
                 "session": session_name,
                 "active": bool(runtime.session_is_active),
                 "workspace": str(getattr(runtime, "workspace", "") or ""),

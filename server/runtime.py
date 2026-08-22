@@ -61,10 +61,9 @@ from backend_core.tmux.instances import resolve_target_agents as resolve_target_
 from backend_core.tmux.window import tmux_prefix_args
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.settings import (
-    ensure_session_workspace_mirrors,
     load_hub_settings as load_shared_hub_settings,
-    session_log_path,
 )
+from .session_binding import WorkspaceSessionBinding
 
 
 ENTRY_WINDOW_LIMIT = 2000
@@ -74,26 +73,16 @@ class ChatRuntime:
     def __init__(
         self,
         *,
-        session_name: str,
         port: int,
         workspace: str,
         tmux_socket: str,
         hub_port: int,
         repo_root: Path | str,
     ):
-        self.session_name = session_name
-        self.log_path = session_log_path(session_name)
+        self._session_binding = WorkspaceSessionBinding(workspace)
         self.limit = ENTRY_WINDOW_LIMIT
         self.port = int(port)
-        self.workspace = workspace
-        self.log_dir = str(self.log_path.parent)
-        # The workspace-side symlink mirror is a point-in-time snapshot, not
-        # something that watches for the log folder moving out from under it
-        # (a rename, or a manual mv). Opening a session's chat -- this
-        # process starting up -- is the one moment every open path already
-        # goes through, active or archived, so repairing it here catches a
-        # stale mirror left behind by any prior rename, cheaply either way.
-        ensure_session_workspace_mirrors(session_name, workspace)
+        self.workspace = self._session_binding.workspace
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port)
         self.repo_root = Path(repo_root).resolve()
@@ -108,8 +97,7 @@ class ChatRuntime:
         self._agent_running: set[str] = self._restore_running_agents_from_tmux_env()
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(
-            log_path=self.log_path,
-            session_name=self.session_name,
+            session_binding=self._session_binding,
             workspace=self.workspace,
             mark_idle_fn=self._mark_idle,
             mark_running_from_native_activity_fn=self._mark_running_from_native_activity,
@@ -128,6 +116,25 @@ class ChatRuntime:
         self._matched_entries_cache_size = 0
         self._matched_entries_cache_entries: deque[dict] = deque(maxlen=MATCHED_ENTRY_TAIL)
         self._matched_entries_total = 0
+
+    @property
+    def session_name(self) -> str:
+        return self._session_binding.session_name
+
+    @property
+    def log_path(self) -> Path:
+        return self._session_binding.log_path
+
+    @property
+    def log_dir(self) -> str:
+        return str(self._session_binding.session_dir)
+
+    @property
+    def session_dir(self) -> Path:
+        return self._session_binding.session_dir
+
+    def session_binding_snapshot(self) -> tuple[str, Path]:
+        return self._session_binding.snapshot()
 
     def load_chat_settings(self) -> dict:
         return load_shared_hub_settings()
@@ -262,6 +269,7 @@ class ChatRuntime:
         except OSError:
             index_sig = (0, 0)
         cache_key = (
+            self.session_name,
             index_sig,
             limit_override,
             offset,

@@ -231,7 +231,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             self.assertTrue(all(item["status"] == "warning" for item in warnings))
             self.assertEqual(state, "ok")
             self.assertEqual(detail, "")
-            runtime.chat_port_for_session.assert_not_called()
+            runtime.chat_port_for_workspace.assert_not_called()
             runtime.tmux_run.assert_not_called()
 
 

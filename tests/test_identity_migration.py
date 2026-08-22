@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from backend_core.access.session_meta import write_session_meta_file
 from backend_core.agents.instances import renumber_exact_instance
-from backend_core.tmux.control import _create_tmux_session
+from backend_core.tmux.control import SessionControlError, _create_tmux_session, _own_chat_listener_pids
 from native_log_sync.agents._shared.runtime_state import rename_agent_identity
 from native_log_sync.refresh.binding_models import NativeLogBinding
 
@@ -27,6 +27,30 @@ class TmuxIdentityTests(unittest.TestCase):
         self.assertIn("-P", args)
         self.assertEqual(args[args.index("-F") + 1], "#{session_name}")
         self.assertNotIn("-s", args)
+
+
+class ChatServerIdentityTests(unittest.TestCase):
+    def test_listener_is_owned_by_its_reported_workspace_and_pid(self) -> None:
+        workspace = "/work/project with spaces"
+        with (
+            patch("backend_core.tmux.control._chat_listener_pids", return_value=[4123]),
+            patch(
+                "backend_core.tmux.control.read_chat_server_state",
+                return_value={"pid": 4123, "workspace": workspace},
+            ),
+        ):
+            self.assertEqual(_own_chat_listener_pids(38000, workspace), [4123])
+
+    def test_listener_from_another_workspace_is_never_signaled(self) -> None:
+        with (
+            patch("backend_core.tmux.control._chat_listener_pids", return_value=[4123]),
+            patch(
+                "backend_core.tmux.control.read_chat_server_state",
+                return_value={"pid": 4123, "workspace": "/work/other"},
+            ),
+        ):
+            with self.assertRaisesRegex(SessionControlError, "not this workspace"):
+                _own_chat_listener_pids(38000, "/work/project")
 
 
 class RenumberExactInstanceTests(unittest.TestCase):

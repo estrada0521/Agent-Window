@@ -7,6 +7,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
+from typing import Callable, Iterable
 
 from workspace_sync.files.ignore import FileIndexIgnoreRules
 
@@ -69,6 +70,7 @@ class FileRuntime:
         *,
         workspace: str | Path,
         allowed_roots: list[str | Path] | tuple[str | Path, ...] | None = None,
+        allowed_roots_fn: Callable[[], Iterable[str | Path]] | None = None,
         repo_root: str | Path | None = None,
     ):
         raw = str(workspace or "").strip()
@@ -82,6 +84,7 @@ class FileRuntime:
             if resolved not in roots:
                 roots.append(resolved)
         self.allowed_roots = tuple(roots)
+        self._allowed_roots_fn = allowed_roots_fn
         self._file_list_cache: list[dict] | None = None
         self._file_list_cache_at = 0.0
         self._file_list_cache_lock = threading.Lock()
@@ -96,7 +99,13 @@ class FileRuntime:
             return False
         if not resolved:
             return False
-        for root in self.allowed_roots:
+        roots = list(self.allowed_roots)
+        if self._allowed_roots_fn is not None:
+            for candidate in self._allowed_roots_fn():
+                resolved_root = os.path.realpath(os.path.normpath(str(candidate)))
+                if resolved_root not in roots:
+                    roots.append(resolved_root)
+        for root in roots:
             if resolved == root or resolved.startswith(root + os.sep):
                 return True
         return False

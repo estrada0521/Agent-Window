@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-import http.client
-import json
 import os
 import shutil
-import ssl
 import subprocess
 import sys
 import time
 from pathlib import Path
 
+from backend_core.access.chat_server import read_chat_server_state
 from backend_core.tmux.control import (
     SessionControlError,
     create_session,
@@ -19,10 +17,10 @@ from backend_core.tmux.control import (
 from backend_core.access.settings import (
     agent_window_run_dir,
     agent_window_session_root,
-    default_chat_port,
     port_is_bindable,
     pwa_https_enabled,
     session_log_path,
+    workspace_chat_port,
 )
 
 SERVER_READY_TIMEOUT_SEC = 6.0
@@ -52,49 +50,21 @@ def chat_ready(self, chat_port: int) -> bool:
 
 def chat_server_state(self, chat_port: int) -> dict | None:
     scheme = str(getattr(self, "hub_scheme", "") or "").strip().lower()
-    if scheme not in {"http", "https"}:
-        return None
-    try:
-        if scheme == "https":
-            conn = http.client.HTTPSConnection(
-                "127.0.0.1",
-                chat_port,
-                timeout=HTTPS_PROBE_TIMEOUT_SEC,
-                context=ssl._create_unverified_context(),
-            )
-        else:
-            conn = http.client.HTTPConnection(
-                "127.0.0.1",
-                chat_port,
-                timeout=HTTPS_PROBE_TIMEOUT_SEC,
-            )
-        conn.request(
-            "GET",
-            f"/session-state?ts={int(time.time() * 1000)}",
-            headers={"Host": f"127.0.0.1:{chat_port}"},
-        )
-        resp = conn.getresponse()
-        body = resp.read()
-        conn.close()
-        if 200 <= resp.status < 300:
-            data = json.loads(body.decode("utf-8", errors="replace"))
-            if isinstance(data, dict):
-                return data
-    except (OSError, http.client.HTTPException, json.JSONDecodeError, TimeoutError):
-        return None
-    return None
+    return read_chat_server_state(chat_port, scheme=scheme)
 
 
-def chat_server_state_matches(self, state: dict | None, session_name: str, *, workspace: str = "") -> bool:
+def chat_server_state_matches(self, state: dict | None, *, workspace: str) -> bool:
     if not state:
         return False
-    if (state.get("session") or "") != session_name:
+    raw_workspace = str(workspace or "").strip()
+    if not raw_workspace:
         return False
     reported_repo_root = str(state.get("repo_root") or "").strip()
     if reported_repo_root != str(self.repo_root):
         return False
-    expected_workspace = str(workspace or "").strip()
-    if str(state.get("workspace") or "").strip() != expected_workspace:
+    expected_workspace = str(Path(raw_workspace).expanduser().resolve())
+    reported_workspace = str(state.get("workspace") or "").strip()
+    if not reported_workspace or str(Path(reported_workspace).expanduser().resolve()) != expected_workspace:
         return False
     reported_agents = [str(a).strip() for a in (state.get("targets") or []) if str(a).strip()]
     if not state.get("active"):
@@ -108,8 +78,8 @@ def chat_server_state_matches(self, state: dict | None, session_name: str, *, wo
     return set(expected_agents) == set(reported_agents)
 
 
-def stop_chat_server(self, session_name: str) -> tuple[bool, str]:
-    return stop_chat_server_impl(session_name)
+def stop_chat_server(self, workspace: str) -> tuple[bool, str]:
+    return stop_chat_server_impl(workspace)
 
 
 def chat_launch_session_dir(self, session_name: str) -> Path:
@@ -143,9 +113,8 @@ def chat_launch_env(self) -> dict[str, str]:
 
 def _chat_launch_port(
     self,
-    session_name: str,
     *,
-    workspace: str = "",
+    workspace: str,
     expected_active: bool = True,
 ) -> tuple[int, bool, str]:
     """Return the session's designated chat port, or fail if it cannot be used.
@@ -153,37 +122,38 @@ def _chat_launch_port(
     Returns (chat_port, ready, error). ready=True means this session already
     answers at chat_port on the Hub scheme with the expected workspace.
     Occupied-by-something-else is an error; this does not stop or replace a
-    foreign listener. A listener for this session with the wrong workspace or
-    active flag is not ready; the caller stops it and relaunches.
+    foreign listener. A listener for this workspace with the wrong active
+    state is not ready; the caller stops it and relaunches.
     """
-    chat_port = self.chat_port_for_session(session_name)
+    chat_port = self.chat_port_for_workspace(workspace)
     state = self.chat_server_state(chat_port)
     if (
-        chat_server_state_matches(self, state, session_name, workspace=workspace)
+        chat_server_state_matches(self, state, workspace=workspace)
         and bool(state.get("active")) == bool(expected_active)
     ):
         return chat_port, True, ""
     if self.chat_ready(chat_port) or not port_is_bindable(chat_port):
-        if state and str(state.get("session") or "").strip() == session_name:
+        if chat_server_state_matches(self, state, workspace=workspace):
             return chat_port, False, ""
         return chat_port, False, f"chat port {chat_port} is occupied"
     return chat_port, False, ""
 
 
-def stop_inactive_chat_servers(self, *, keep_session: str = "") -> str:
+def stop_inactive_chat_servers(self, *, keep_workspace: str = "") -> str:
     query = self.active_session_records_query()
     archived = self.archived_session_records(query.non_archived_names)
-    keep = str(keep_session or "").strip()
-    for name in archived:
-        if name == keep:
+    keep = str(keep_workspace or "").strip()
+    for record in archived.values():
+        workspace = str(record.get("workspace") or "").strip()
+        if not workspace or workspace == keep:
             continue
-        port = self.chat_port_for_session(name)
+        port = self.chat_port_for_workspace(workspace)
         if not self.chat_ready(port):
             continue
         state = self.chat_server_state(port)
         if not state or state.get("active"):
             continue
-        stop_ok, stop_detail = self.stop_chat_server(name)
+        stop_ok, stop_detail = self.stop_chat_server(workspace)
         if not stop_ok:
             return stop_detail
     return ""
@@ -199,12 +169,13 @@ def ensure_chat_server(
     sys_module=sys,
     time_module=time,
 ) -> tuple[bool, int, str]:
-    lock = self._get_launch_lock(session_name)
+    raw_workspace = str(workspace or "").strip()
+    if not raw_workspace:
+        return False, 0, "workspace unavailable"
+    resolved_workspace = str(Path(raw_workspace).expanduser().resolve())
+    lock = self._get_launch_lock(resolved_workspace)
     with lock:
-        resolved_workspace = str(workspace or "").strip()
-
         chat_port, ready, error = self._chat_launch_port(
-            session_name,
             workspace=resolved_workspace,
             expected_active=expected_active,
         )
@@ -213,16 +184,16 @@ def ensure_chat_server(
         if ready:
             return True, chat_port, ""
         if self.chat_ready(chat_port):
-            stop_ok, stop_detail = self.stop_chat_server(session_name)
+            stop_ok, stop_detail = self.stop_chat_server(resolved_workspace)
             if not stop_ok:
                 return False, chat_port, stop_detail
 
         if not expected_active:
-            stop_detail = self.stop_inactive_chat_servers(keep_session=session_name)
+            stop_detail = self.stop_inactive_chat_servers(keep_workspace=resolved_workspace)
             if stop_detail:
                 return False, chat_port, stop_detail
 
-        session_dir = self._chat_launch_session_dir(session_name)
+        self._chat_launch_session_dir(session_name)
         env = self._chat_launch_env()
         try:
             subprocess_module.Popen(
@@ -230,7 +201,6 @@ def ensure_chat_server(
                     sys_module.executable,
                     "-m",
                     "server.server",
-                    session_name,
                     resolved_workspace,
                 ],
                 cwd=str(self.repo_root),
@@ -246,8 +216,7 @@ def ensure_chat_server(
             state = self.chat_server_state(chat_port)
             return (
                 bool(state)
-                and str(state.get("session") or "").strip() == session_name
-                and str(state.get("workspace") or "").strip() == resolved_workspace
+                and chat_server_state_matches(self, state, workspace=resolved_workspace)
                 and bool(state.get("active")) == bool(expected_active)
             )
 
@@ -270,14 +239,14 @@ def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
     workspace = (record.get("workspace") or "").strip()
     if not workspace or not Path(workspace).is_dir():
         return False, f"Saved workspace is unavailable: {workspace or 'unknown'}"
-    stop_ok, stop_detail = self.stop_chat_server(session_name)
+    stop_ok, stop_detail = self.stop_chat_server(workspace)
     if not stop_ok:
         return False, stop_detail
-    # Checked before create_session: session_name alone determines the chat
+    # Checked before create_session: workspace alone determines the chat
     # port, so a collision is knowable up front. Finding out only after the
     # tmux session is revived would leave it running with no way to reach
     # it, and revive_archived_session doesn't roll a revive back on failure.
-    chat_port = default_chat_port(session_name)
+    chat_port = workspace_chat_port(workspace)
     if not port_is_bindable(chat_port):
         return False, f"chat port {chat_port} is occupied"
     try:
@@ -318,7 +287,10 @@ def delete_archived_session(self, session_name: str) -> tuple[bool, str]:
     record = archived.get(session_name)
     if not record:
         return False, "That archived session is not available in this repo."
-    stop_ok, stop_detail = self.stop_chat_server(session_name)
+    workspace = str(record.get("workspace") or "").strip()
+    if not workspace:
+        return False, "workspace unavailable"
+    stop_ok, stop_detail = self.stop_chat_server(workspace)
     if not stop_ok:
         return False, stop_detail
     log_dir = Path((record.get("log_dir") or "").strip())

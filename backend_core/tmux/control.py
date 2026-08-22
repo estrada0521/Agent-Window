@@ -13,6 +13,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from backend_core.access.files import append_jsonl_entry
+from backend_core.access.chat_server import read_chat_server_state
 from backend_core.access.session_meta import (
     SessionMetaError,
     find_session_for_workspace,
@@ -21,9 +22,9 @@ from backend_core.access.session_meta import (
 )
 from backend_core.access.settings import (
     agent_window_session_root,
-    default_chat_port,
     ensure_session_workspace_mirrors,
     session_log_path,
+    workspace_chat_port,
 )
 from backend_core.agents.executables import agent_launch_cmd, resolve_agent_executable
 from backend_core.agents.instances import (
@@ -184,41 +185,6 @@ def append_session_lifecycle_entry(session_name: str, action: str) -> None:
     )
 
 
-def _process_command(pid: int) -> str | None:
-    try:
-        result = subprocess.run(
-            ["ps", "-p", str(pid), "-ww", "-o", "command="],
-            capture_output=True,
-            text=True,
-            timeout=1,
-            check=False,
-        )
-    except subprocess.TimeoutExpired as exc:
-        raise SessionControlError(f"ps timed out for pid {pid}") from exc
-    except OSError as exc:
-        raise SessionControlError(f"ps failed for pid {pid}: {exc}") from exc
-    if result.returncode == 1:
-        return None
-    if result.returncode != 0:
-        detail = (result.stderr or result.stdout or "").strip() or f"ps exited {result.returncode}"
-        raise SessionControlError(f"ps failed for pid {pid}: {detail}")
-    command = (result.stdout or "").strip()
-    return command or None
-
-
-def _is_own_chat_server(command: str, session_name: str) -> bool:
-    tokens = command.split()
-    for i, token in enumerate(tokens):
-        if token != "-m":
-            continue
-        if i + 2 >= len(tokens):
-            return False
-        if tokens[i + 1] != "server.server":
-            continue
-        return tokens[i + 2] == session_name
-    return False
-
-
 def _chat_listener_pids(chat_port: int) -> list[int]:
     try:
         result = subprocess.run(
@@ -235,26 +201,29 @@ def _chat_listener_pids(chat_port: int) -> list[int]:
     if result.returncode not in (0, 1):
         detail = (result.stderr or result.stdout or "").strip() or f"lsof exited {result.returncode}"
         raise SessionControlError(f"lsof failed for port {chat_port}: {detail}")
-    return [int(line.strip()) for line in (result.stdout or "").splitlines() if line.strip().isdigit()]
+    return sorted({int(line.strip()) for line in (result.stdout or "").splitlines() if line.strip().isdigit()})
 
 
-def _own_chat_listener_pids(chat_port: int, session_name: str) -> list[int]:
-    ours: list[int] = []
-    foreign: list[int] = []
-    for pid in _chat_listener_pids(chat_port):
-        command = _process_command(pid)
-        if command is None:
-            continue
-        if _is_own_chat_server(command, session_name):
-            ours.append(pid)
-        else:
-            foreign.append(pid)
-    if foreign:
-        shown = ", ".join(str(pid) for pid in foreign)
+def _own_chat_listener_pids(chat_port: int, workspace: str) -> list[int]:
+    listeners = _chat_listener_pids(chat_port)
+    if not listeners:
+        return []
+    state = read_chat_server_state(chat_port)
+    expected_workspace = str(Path(workspace).expanduser().resolve())
+    reported_workspace = str((state or {}).get("workspace") or "").strip()
+    if not reported_workspace or str(Path(reported_workspace).expanduser().resolve()) != expected_workspace:
+        shown = ", ".join(str(pid) for pid in listeners)
         raise SessionControlError(
-            f"chat port {chat_port} is occupied by pid {shown}, not this session's chat server"
+            f"chat port {chat_port} is occupied by pid {shown}, not this workspace's chat server"
         )
-    return ours
+    try:
+        reported_pid = int(state.get("pid") or 0)
+    except (TypeError, ValueError):
+        reported_pid = 0
+    if reported_pid <= 0 or listeners != [reported_pid]:
+        shown = ", ".join(str(pid) for pid in listeners)
+        raise SessionControlError(f"chat server pid mismatch on port {chat_port}: {shown}")
+    return listeners
 
 
 def _chat_port_open(chat_port: int) -> bool:
@@ -279,13 +248,14 @@ def _signal_chat_pids(pids: list[int], sig: int) -> str:
     return ""
 
 
-def stop_chat_server(session_name: str) -> tuple[bool, str]:
-    name = (session_name or "").strip()
-    if not name:
-        return False, "session_name is required"
-    chat_port = default_chat_port(name)
+def stop_chat_server(workspace: str) -> tuple[bool, str]:
+    raw_workspace = str(workspace or "").strip()
+    if not raw_workspace:
+        return False, "workspace is required"
+    resolved_workspace = str(Path(raw_workspace).expanduser().resolve())
+    chat_port = workspace_chat_port(resolved_workspace)
     try:
-        pids = _own_chat_listener_pids(chat_port, name)
+        pids = _own_chat_listener_pids(chat_port, resolved_workspace)
     except SessionControlError as exc:
         return False, str(exc)
     if not pids:
@@ -571,7 +541,10 @@ def kill_session(
     tmux_name = _resolve_tmux_name(prefix, name)
     if not tmux_name:
         raise SessionControlError(f"Session does not exist: {name}")
-    stop_ok, stop_detail = stop_chat_server(name)
+    workspace = _env_value(prefix, tmux_name, "AGENT_WINDOW_WORKSPACE")
+    if not workspace:
+        raise SessionControlError("workspace unavailable")
+    stop_ok, stop_detail = stop_chat_server(workspace)
     if not stop_ok:
         raise SessionControlError(f"failed to stop chat server for {name}: {stop_detail}")
     cleanup_target_process_groups(target=tmux_name, tmux_prefix=prefix)

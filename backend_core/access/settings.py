@@ -233,13 +233,14 @@ def workspace_upload_dir(workspace: Path | str) -> Path:
     return workspace_agent_window_dir(workspace) / "uploads"
 
 
-def default_chat_port(session_name: str) -> int:
+def workspace_chat_port(workspace: Path | str) -> int:
     # 30000-48999: wide enough that a real collision with another program
     # is rare, inside the IANA "registered" range so it needs no elevated
     # privileges, clear of both the low end (where nearly every dev tool's
     # conventional default port lives -- 3000, 5432, 6379, 8080, 8888...)
     # and the 49152+ dynamic/ephemeral range OS-assigned ports come from.
-    digest = int(hashlib.md5(session_name.encode()).hexdigest(), 16)
+    canonical_workspace = str(Path(workspace).expanduser().resolve())
+    digest = int(hashlib.md5(canonical_workspace.encode()).hexdigest(), 16)
     return 30000 + (digest % 19000)
 
 

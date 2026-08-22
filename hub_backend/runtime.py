@@ -28,7 +28,7 @@ from hub_backend.session_query import (
     live_tmux_workspaces_query as _live_tmux_workspaces_query_impl,
 )
 from backend_core.access.settings import agent_window_session_root
-from backend_core.access.settings import default_chat_port
+from backend_core.access.settings import workspace_chat_port
 from backend_core.access.settings import load_hub_settings as load_shared_hub_settings
 from backend_core.access.settings import pwa_https_enabled
 from backend_core.access.settings import save_hub_settings as save_shared_hub_settings
@@ -77,11 +77,12 @@ class HubRuntime:
         self._launch_locks = {}
         self._launch_locks_master = threading.Lock()
 
-    def _get_launch_lock(self, session_name: str) -> threading.Lock:
+    def _get_launch_lock(self, workspace: str) -> threading.Lock:
+        key = normalize_workspace(workspace)
         with self._launch_locks_master:
-            if session_name not in self._launch_locks:
-                self._launch_locks[session_name] = threading.Lock()
-            return self._launch_locks[session_name]
+            if key not in self._launch_locks:
+                self._launch_locks[key] = threading.Lock()
+            return self._launch_locks[key]
 
     def tmux_run(self, args, timeout=2) -> TmuxRunResult:
         try:
@@ -140,8 +141,8 @@ class HubRuntime:
             raise RuntimeError(detail or "tmux session resolution failed")
         return workspace_to_tmux.get(normalize_workspace(target), "")
 
-    def chat_port_for_session(self, session_name: str) -> int:
-        return default_chat_port(session_name)
+    def chat_port_for_workspace(self, workspace: str) -> int:
+        return workspace_chat_port(workspace)
 
     @staticmethod
     def host_without_port(host_header: str) -> str:
@@ -208,11 +209,11 @@ class HubRuntime:
     def chat_server_state(self, chat_port: int) -> dict | None:
         return _chat_server_state_impl(self, chat_port)
 
-    def stop_chat_server(self, session_name: str) -> tuple[bool, str]:
-        return _stop_chat_server_impl(self, session_name)
+    def stop_chat_server(self, workspace: str) -> tuple[bool, str]:
+        return _stop_chat_server_impl(self, workspace)
 
-    def stop_inactive_chat_servers(self, *, keep_session: str = "") -> str:
-        return _stop_inactive_chat_servers_impl(self, keep_session=keep_session)
+    def stop_inactive_chat_servers(self, *, keep_workspace: str = "") -> str:
+        return _stop_inactive_chat_servers_impl(self, keep_workspace=keep_workspace)
 
     def _chat_launch_session_dir(self, session_name: str) -> Path:
         return _chat_launch_session_dir_impl(self, session_name)
@@ -222,14 +223,12 @@ class HubRuntime:
 
     def _chat_launch_port(
         self,
-        session_name: str,
         *,
-        workspace: str = "",
+        workspace: str,
         expected_active: bool = True,
     ) -> tuple[int, bool, str]:
         return _chat_launch_port_impl(
             self,
-            session_name,
             workspace=workspace,
             expected_active=expected_active,
         )

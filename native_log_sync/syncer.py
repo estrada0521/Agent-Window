@@ -36,8 +36,7 @@ class NativeLogSyncer:
     def __init__(
         self,
         *,
-        log_path: Path | str,
-        session_name: str,
+        session_binding,
         workspace: str,
         mark_idle_fn: Callable[[str], None],
         mark_running_from_native_activity_fn: Callable[[str], None],
@@ -47,8 +46,7 @@ class NativeLogSyncer:
         pane_id_fn: Callable[[str], str | None],
         session_is_active_fn: Callable[[], bool],
     ) -> None:
-        self.log_path = Path(log_path)
-        self.session_name = session_name
+        self._session_binding = session_binding
         self.workspace = workspace
         self._mark_idle = mark_idle_fn
         self._mark_running_from_native_activity = mark_running_from_native_activity_fn
@@ -58,6 +56,14 @@ class NativeLogSyncer:
         self._pane_id_fn = pane_id_fn
         self._session_is_active_fn = session_is_active_fn
         _init_state(self)
+
+    @property
+    def log_path(self) -> Path:
+        return self._session_binding.log_path
+
+    @property
+    def session_name(self) -> str:
+        return self._session_binding.session_name
 
     # ── callbacks required by native_log_sync internals ──
 

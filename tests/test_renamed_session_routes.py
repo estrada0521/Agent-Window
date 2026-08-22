@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import io
+import json
+import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
 from backend_core.tmux.session import resolve_tmux_session_name
+from backend_core.access.settings import workspace_chat_port
 from server import server as chat_server
 from server.routes.write import _post_open_terminal
+from server.session_binding import WorkspaceSessionBinding
 
 
 class _JsonHandler:
@@ -30,7 +34,6 @@ class RenamedSessionRouteTests(unittest.TestCase):
             completed = SimpleNamespace(returncode=0)
             with (
                 mock.patch.object(chat_server, "workspace", "/work/project"),
-                mock.patch.object(chat_server, "session_name", "old-aw-name"),
                 mock.patch.object(chat_server, "_repo_root", Path("/repo")),
                 mock.patch.object(chat_server, "server", fake_server),
                 mock.patch.object(chat_server, "find_session_for_workspace", return_value="renamed-aw-session"),
@@ -50,6 +53,34 @@ class RenamedSessionRouteTests(unittest.TestCase):
             )
         finally:
             chat_server.chat_restart_pending = old_pending
+
+    def test_running_server_binding_follows_a_folder_rename_without_changing_port(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "sessions"
+            workspace = Path(tmp) / "workspace"
+            root.mkdir()
+            workspace.mkdir()
+            old_dir = root / "old-label"
+            old_dir.mkdir()
+            (old_dir / ".log.jsonl").write_text("", encoding="utf-8")
+            (old_dir / ".meta").write_text(
+                json.dumps({"workspace": str(workspace)}) + "\n",
+                encoding="utf-8",
+            )
+
+            with (
+                mock.patch("server.session_binding.agent_window_session_root", return_value=root),
+                mock.patch("backend_core.access.session_meta.agent_window_session_root", return_value=root),
+                mock.patch("backend_core.access.settings.agent_window_session_root", return_value=root),
+            ):
+                binding = WorkspaceSessionBinding(workspace)
+                port_before = workspace_chat_port(workspace)
+                old_dir.rename(root / "new-label")
+                session_name, log_path = binding.snapshot()
+
+            self.assertEqual(session_name, "new-label")
+            self.assertEqual(log_path, root / "new-label" / ".log.jsonl")
+            self.assertEqual(workspace_chat_port(workspace), port_before)
 
     def test_terminal_attaches_to_real_tmux_name_after_aw_rename(self) -> None:
         handler = _JsonHandler()

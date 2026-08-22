@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading
 import time
 from pathlib import Path
+from typing import Callable, Iterable
 
 from workspace_sync.files.runtime import FileRuntime
 from . import git as workspace_git
@@ -15,6 +16,7 @@ class WorkspaceSyncApi:
         *,
         workspace: str | Path,
         allowed_roots: list[str | Path] | tuple[str | Path, ...] | None = None,
+        allowed_roots_fn: Callable[[], Iterable[str | Path]] | None = None,
         repo_root: str | Path,
         runtime,
     ) -> None:
@@ -28,6 +30,7 @@ class WorkspaceSyncApi:
         self.file_runtime = FileRuntime(
             workspace=workspace,
             allowed_roots=allowed_roots,
+            allowed_roots_fn=allowed_roots_fn,
             repo_root=repo_root,
         )
         workspace_git.configure(
