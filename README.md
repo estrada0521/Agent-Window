@@ -51,7 +51,7 @@ To rebuild only the Tauri App, use:
 
 Choose a workspace from `New Session` in the Hub.
 
-A session is just the log currently open for a workspace, not a durable identity for the work — its name is a display label, and its workspace is wherever it currently runs. To rename a session, rename its `~/.agent-window/session/{session_name}` folder. To change its workspace, archive it, reload the Hub, edit `workspace` in its `.meta` file, and revive it. Renaming a session does not restart its chat server or change its URL.
+A unified log continues across changes in session name, workspace, and participating Agents. `New Session` starts another log; when to do that is up to the human. To rename a session, rename its `~/.agent-window/session/{session_name}` folder. To change its workspace, archive it, reload the Hub, edit `workspace` in its `.meta` file, and revive it. Renaming a session does not restart its chat server or change its URL.
 
 Archive, revive, and delete sessions from the Hub.
 
@@ -74,9 +74,9 @@ Typing `@` searches files in the workspace. Files can also be attached with the 
 
 ## Read
 
-The GUI displays every human and Agent message as a single timeline — the unified log currently open for this session. **It is not split into independent chat rooms per Agent or per worktree.**
+The GUI displays the unified log as a single timeline across the human and all Agents.
 
-Switching CLIs, running multiple Agents at once, or a process ending and restarting — none of it interrupts the timeline; events keep landing in the same unified log. Even if the session name or workspace changes, past entries don't.
+Messages continue in the same unified log as CLIs switch, Agents run concurrently, and processes restart. Changes to the session name or workspace leave past entries unchanged.
 
 The unified log's substance is an append-only JSONL file.
 
