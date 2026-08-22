@@ -51,7 +51,7 @@ Tauri Appのrebuildだけを行う場合は、次を使用します。
 
 Hubの `New Session` からworkspaceを選択します。
 
-sessionは、workspaceに対して今開かれているlogに過ぎず、作業そのもののdurable identityではありません。名前は表示名、workspaceは現在の作業場所です。session名を変更する場合は `~/.agent-window/session/{session_name}` のフォルダ名を変更します。workspaceを変更する場合は、archive、Hubのreload、`.meta` の `workspace` の書き換え、reviveの順で行います。session名を変更してもchat serverは再起動せず、URLも変わりません。
+一つの統一ログは、session名、workspace、参加Agentが変わっても続きます。`New Session` は別のlogを始める操作であり、いつそうするかは人間が決めます。session名を変更する場合は `~/.agent-window/session/{session_name}` のフォルダ名を変更します。workspaceを変更する場合は、archive、Hubのreload、`.meta` の `workspace` の書き換え、reviveの順で行います。session名を変更してもchat serverは再起動せず、URLも変わりません。
 
 HubからsessionのArchive、revive、削除を行えます。
 
@@ -76,9 +76,9 @@ HubからsessionのArchive、revive、削除を行えます。
 
 ## 読む
 
-GUIは、人間と各Agentのメッセージを一つの時系列——このsessionに今開かれている統一ログ——として表示します。**Agentごと、worktreeごとの独立したchat roomには分割されません。**
+GUIは統一ログを、人間と各Agentを横断する一つの時系列として表示します。
 
-CLIを切り替えたり、複数のAgentを同時に動かしたり、processを終了・再起動したりしても、出来事は同じ統一ログへ続いていきます。session名やworkspaceが変わっても、過去の記録そのものは変わりません。
+CLIの切り替え、複数Agentの同時実行、processの再起動を跨いで、メッセージは同じ統一ログへ続きます。session名やworkspaceを変更しても、過去の記録はそのまま残ります。
 
 統一ログの実体はappend-only JSONLです。
 
