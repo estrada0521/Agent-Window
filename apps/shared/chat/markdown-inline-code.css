@@ -1,13 +1,9 @@
     .md-body :not(pre)>code:not(:where(a.inline-file-link > code, a.local-file-link > code)),
     .message.user .md-body :not(pre)>code:not(:where(a.inline-file-link > code, a.local-file-link > code)) {
-      background: rgba(255, 255, 250, 0.09);
+      background: var(--code-bg);
       border-radius: 0.45em;
       font-family: var(--font-code);
       padding: 0 0.3em;
       -webkit-box-decoration-break: clone;
       box-decoration-break: clone;
-    }
-    html[data-theme="light"] .md-body :not(pre)>code:not(:where(a.inline-file-link > code, a.local-file-link > code)),
-    html[data-theme="light"] .message.user .md-body :not(pre)>code:not(:where(a.inline-file-link > code, a.local-file-link > code)) {
-      background: rgba(40, 40, 34, 0.07);
     }
