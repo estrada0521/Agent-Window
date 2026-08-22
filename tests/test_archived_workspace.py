@@ -167,8 +167,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
     def test_archived_open_passes_saved_workspace_not_hub_root(self) -> None:
         captured = {}
 
-        def ensure_chat_server(session_name, *, expected_active=True, workspace=""):
-            captured["session_name"] = session_name
+        def ensure_chat_server(*, expected_active=True, workspace=""):
             captured["expected_active"] = expected_active
             captured["workspace"] = workspace
             return True, 8206, ""
@@ -191,37 +190,9 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             )
             resolved = api.resolve_session_chat_target("Even-Parity")
         self.assertEqual(resolved["status"], "ok")
-        self.assertEqual(captured["session_name"], "Even-Parity")
         self.assertFalse(captured["expected_active"])
         self.assertEqual(captured["workspace"], str(workspace))
         self.assertNotEqual(captured["workspace"], "/Users/okadaharuto/workspace/Agent-Window")
-
-    def test_archived_open_without_workspace_still_starts_chat(self) -> None:
-        captured = {}
-
-        def ensure_chat_server(session_name, *, expected_active=True, workspace=""):
-            captured["session_name"] = session_name
-            captured["expected_active"] = expected_active
-            captured["workspace"] = workspace
-            return True, 8206, ""
-
-        api = HubSessionApi(
-            HubSessionApiContext(
-                hub=object(),
-                active_session_records_query=lambda: _Query({}, {}),
-                archived_session_records=lambda _active: {
-                    "Even-Parity": {
-                        "name": "Even-Parity",
-                        "workspace": "",
-                    }
-                },
-                ensure_chat_server=ensure_chat_server,
-            )
-        )
-        resolved = api.resolve_session_chat_target("Even-Parity")
-        self.assertEqual(resolved["status"], "ok")
-        self.assertEqual(captured["session_name"], "Even-Parity")
-        self.assertEqual(captured["workspace"], "")
 
     def test_chat_server_state_rejects_wrong_workspace(self) -> None:
         repo_root = "/Users/okadaharuto/workspace/Agent-Window"
@@ -299,21 +270,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             chat_server_state_matches(hub, state, workspace=workspace)
 
     def test_archived_launch_argv_is_the_saved_workspace(self) -> None:
-        launched = {}
-
-        class _Popen:
-            def __init__(self, args, **kwargs):
-                launched["args"] = list(args)
-                launched["cwd"] = kwargs.get("cwd")
-
-        class _Sys:
-            executable = "/usr/bin/python3"
-
-        class _Time:
-            @staticmethod
-            def monotonic():
-                return 0.0
-
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Even-Parity"
             workspace.mkdir()
@@ -333,110 +289,39 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 chat_ready=lambda _port: False,
                 stop_chat_server=lambda _name: (True, ""),
                 stop_inactive_chat_servers=lambda **_kwargs: "",
-                _chat_launch_session_dir=lambda *_args: None,
                 _chat_launch_env=lambda **_kwargs: {},
                 _chat_launch_port=lambda *_args, **_kwargs: (8206, False, ""),
                 tmux_run=lambda *_args, **_kwargs: SimpleNamespace(timed_out=False, returncode=0, stderr="", stdout=""),
             )
-            with patch("hub_backend.chat_supervisor._wait_until", return_value=True):
+            with patch("hub_backend.chat_supervisor.launch_chat_server", return_value=object()) as launch, patch(
+                "hub_backend.chat_supervisor.wait_for_chat_server",
+                return_value=True,
+            ):
                 ok, port, detail = ensure_chat_server(
                     hub,
-                    "Even-Parity",
                     expected_active=False,
                     workspace=str(workspace),
-                    subprocess_module=SimpleNamespace(Popen=_Popen),
-                    sys_module=_Sys,
-                    time_module=_Time,
                 )
         self.assertTrue(ok)
         self.assertEqual(port, 8206)
         self.assertEqual(detail, "")
-        self.assertEqual(
-            launched["args"],
-            ["/usr/bin/python3", "-m", "server.server", str(workspace.resolve())],
-        )
-        self.assertEqual(launched["cwd"], "/Users/okadaharuto/workspace/Agent-Window")
+        self.assertEqual(launch.call_args.args, (str(workspace.resolve()),))
 
     def test_chat_launch_cwd_is_not_a_workspace_that_contains_server_py(self) -> None:
-        launched = {}
-
-        class _Popen:
-            def __init__(self, args, **kwargs):
-                launched["args"] = list(args)
-                launched["cwd"] = kwargs.get("cwd")
-
-        class _Sys:
-            executable = "/usr/bin/python3"
-
-        class _Time:
-            @staticmethod
-            def monotonic():
-                return 0.0
+        from server.chat_process import launch_chat_server
 
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "xray-structure-factor"
             workspace.mkdir()
             (workspace / "server.py").write_text("raise SystemExit('shadow')\n", encoding="utf-8")
-            hub = SimpleNamespace(
-                repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
-                _get_launch_lock=lambda _name: threading.Lock(),
-                archived_session_records=lambda _active: {},
-                active_session_records_query=lambda: _Query({}, {}),
-                chat_port_for_workspace=lambda _workspace: 8568,
-                chat_server_state=lambda _port: {
-                    "session": "xray-structure-factor",
-                    "repo_root": "/Users/okadaharuto/workspace/Agent-Window",
-                    "workspace": str(workspace),
-                    "targets": [],
-                    "active": False,
-                },
-                chat_ready=lambda _port: False,
-                stop_chat_server=lambda _name: (True, ""),
-                stop_inactive_chat_servers=lambda **_kwargs: "",
-                _chat_launch_session_dir=lambda *_args: None,
-                _chat_launch_env=lambda **_kwargs: {},
-                _chat_launch_port=lambda *_args, **_kwargs: (8568, False, ""),
-                tmux_run=lambda *_args, **_kwargs: SimpleNamespace(timed_out=False, returncode=0, stderr="", stdout=""),
-            )
-            with patch("hub_backend.chat_supervisor._wait_until", return_value=True):
-                ok, port, detail = ensure_chat_server(
-                    hub,
-                    "xray-structure-factor",
-                    expected_active=False,
-                    workspace=str(workspace),
-                    subprocess_module=SimpleNamespace(Popen=_Popen),
-                    sys_module=_Sys,
-                    time_module=_Time,
-                )
-        self.assertTrue(ok)
-        self.assertEqual(port, 8568)
-        self.assertEqual(detail, "")
-        self.assertEqual(
-            launched["args"],
-            ["/usr/bin/python3", "-m", "server.server", str(workspace.resolve())],
-        )
-        self.assertEqual(launched["cwd"], "/Users/okadaharuto/workspace/Agent-Window")
-        self.assertNotEqual(launched["cwd"], str(workspace))
+            with patch("server.chat_process.subprocess.Popen") as popen:
+                launch_chat_server(workspace, env={})
+        launch_cwd = popen.call_args.kwargs["cwd"]
+        self.assertEqual(launch_cwd, "/Users/okadaharuto/workspace/Agent-Window")
+        self.assertNotEqual(launch_cwd, str(workspace))
 
     def test_ensure_chat_server_rejects_a_missing_workspace_binding(self) -> None:
-        launched = {}
-
-        class _Popen:
-            def __init__(self, args, **kwargs):
-                launched["args"] = list(args)
-                launched["cwd"] = kwargs.get("cwd")
-
-        class _Sys:
-            executable = "/usr/bin/python3"
-
-        class _Time:
-            @staticmethod
-            def monotonic():
-                return 0.0
-
         with tempfile.TemporaryDirectory() as tmp:
-            session_dir = Path(tmp) / "Even-Parity"
-            session_dir.mkdir()
             hub = SimpleNamespace(
                 repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
                 _get_launch_lock=lambda _name: threading.Lock(),
@@ -453,25 +338,20 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 chat_ready=lambda _port: False,
                 stop_chat_server=lambda _name: (True, ""),
                 stop_inactive_chat_servers=lambda **_kwargs: "",
-                _chat_launch_session_dir=lambda *_args: session_dir,
                 _chat_launch_env=lambda **_kwargs: {},
                 _chat_launch_port=lambda *_args, **_kwargs: (8206, False, ""),
                 tmux_run=lambda *_args, **_kwargs: SimpleNamespace(timed_out=False, returncode=0, stderr="", stdout=""),
             )
-            with patch("hub_backend.chat_supervisor._wait_until", return_value=True):
+            with patch("hub_backend.chat_supervisor.launch_chat_server") as launch:
                 ok, port, detail = ensure_chat_server(
                     hub,
-                    "Even-Parity",
                     expected_active=False,
                     workspace="",
-                    subprocess_module=SimpleNamespace(Popen=_Popen),
-                    sys_module=_Sys,
-                    time_module=_Time,
                 )
         self.assertFalse(ok)
         self.assertEqual(port, 0)
         self.assertEqual(detail, "workspace unavailable")
-        self.assertEqual(launched, {})
+        launch.assert_not_called()
 
     def test_git_overview_does_not_use_hub_repo_as_the_project(self) -> None:
         workspace_git.configure(workspace="", runtime=None)
@@ -518,23 +398,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             link = workspace / ".agent-window" / SESSION_LOG_FILENAME
             self.assertTrue(link.is_symlink())
             self.assertEqual(link.resolve(), log_target.resolve())
-
-    def test_chat_launch_does_not_touch_a_missing_workspace(self) -> None:
-        from hub_backend.chat_supervisor import chat_launch_session_dir
-
-        with tempfile.TemporaryDirectory() as tmp:
-            logs = Path(tmp) / "logs"
-            missing = Path(tmp) / "Even-Parity"
-            hub = SimpleNamespace(repo_root=Path(tmp) / "hub")
-            with patch("hub_backend.chat_supervisor.agent_window_session_root", return_value=logs), patch(
-                "hub_backend.chat_supervisor.session_log_path",
-                return_value=logs / "Even-Parity" / ".log.jsonl",
-            ):
-                session_dir = chat_launch_session_dir(hub, "Even-Parity")
-            self.assertEqual(session_dir, logs / "Even-Parity")
-            self.assertTrue(session_dir.is_dir())
-            self.assertFalse(missing.exists())
-
 
 if __name__ == "__main__":
     unittest.main()

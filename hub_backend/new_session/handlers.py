@@ -154,7 +154,6 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
             handler._send_json(500, {"ok": False, "error": str(exc)})
             return
         ok, chat_port, detail = ctx["session_api"].ensure_active_chat_server(
-            session_name,
             resolved_workspace,
         )
         if not ok:

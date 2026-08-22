@@ -82,12 +82,10 @@ class HubRuntimeSchemeTests(unittest.TestCase):
     def test_scheme_follows_pwa_without_hub_main(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            script = root / "agent-index"
-            script.write_text("", encoding="utf-8")
             with patch("hub_backend.runtime.pwa_https_enabled", return_value=False):
-                self.assertEqual(HubRuntime(root, script).hub_scheme, "http")
+                self.assertEqual(HubRuntime(root).hub_scheme, "http")
             with patch("hub_backend.runtime.pwa_https_enabled", return_value=True):
-                self.assertEqual(HubRuntime(root, script).hub_scheme, "https")
+                self.assertEqual(HubRuntime(root).hub_scheme, "https")
 
 
 if __name__ == "__main__":

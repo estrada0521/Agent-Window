@@ -6,7 +6,6 @@ import os
 import queue
 import select
 import ssl
-import subprocess
 import sys
 import threading
 import time
@@ -15,14 +14,14 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from hub_backend.presentation.chat.assets import render_chat_html
-from hub_backend.server_helpers import PROCESS_HANDOFF_TIMEOUT_SEC
 from server.runtime import ChatRuntime
+from server.chat_process import launch_chat_server, wait_for_chat_server
 from server.routes.assets import dispatch_get_assets_route
 from server.routes.read import dispatch_get_read_route
 from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
 from backend_core.access.pwa import pwa_icon_entries
-from backend_core.access.session_meta import SessionMetaError, find_session_for_workspace
+from backend_core.access.chat_server import read_chat_server_state
 from backend_core.access.settings import (
     hub_settings_path,
     local_bind_host,
@@ -327,20 +326,12 @@ def queue_chat_restart():
     current_workspace = str(workspace or "").strip()
     if not current_workspace:
         return False, "workspace unavailable", False
-    try:
-        restart_session_name = find_session_for_workspace(current_workspace)
-    except SessionMetaError as exc:
-        return False, str(exc), False
-    if not restart_session_name:
-        return False, "No agent-window session claims this workspace", False
 
     with chat_restart_lock:
         if chat_restart_pending:
             return False, "restart already pending", False
         chat_restart_pending = True
 
-    bin_dir = _repo_root / "bin"
-    script_path = str(bin_dir / "agent-index")
     done = threading.Event()
     result = {"ok": False}
 
@@ -350,20 +341,22 @@ def queue_chat_restart():
                 server.shutdown()
                 server.server_close()
             env = _clean_env()
-            env["AGENT_WINDOW_AGENT_NAME"] = "user"
-            env["AGENT_WINDOW_CHAT_RESTART_HANDOFF"] = "1"
-            completed = subprocess.run(
-                [script_path, "--chat", "--session", restart_session_name],
-                cwd=str(_repo_root),
-                env=env,
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-                timeout=PROCESS_HANDOFF_TIMEOUT_SEC,
+            process = launch_chat_server(current_workspace, env=env)
+            expected_workspace = str(Path(current_workspace).expanduser().resolve())
+
+            def _ready() -> bool:
+                state = read_chat_server_state(port)
+                reported_workspace = str((state or {}).get("workspace") or "").strip()
+                return bool(
+                    reported_workspace
+                    and str(Path(reported_workspace).expanduser().resolve()) == expected_workspace
+                )
+
+            result["ok"] = wait_for_chat_server(
+                process,
+                _ready,
             )
-            result["ok"] = completed.returncode == 0
-        except subprocess.TimeoutExpired:
+        except OSError:
             result["ok"] = False
         finally:
             done.set()

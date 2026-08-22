@@ -24,7 +24,6 @@ class HubSessionApi:
         if session_name in query.records:
             workspace = str((query.records.get(session_name) or {}).get("workspace") or "").strip()
             ok, chat_port, detail = self.ctx.ensure_chat_server(
-                session_name,
                 expected_active=True,
                 workspace=workspace,
             )
@@ -44,7 +43,6 @@ class HubSessionApi:
             return {"status": "missing"}
         workspace = str(record.get("workspace") or "").strip()
         ok, chat_port, detail = self.ctx.ensure_chat_server(
-            session_name,
             expected_active=False,
             workspace=workspace,
         )
@@ -102,9 +100,8 @@ class HubSessionApi:
                 running.append(agent_name)
         return running
 
-    def ensure_active_chat_server(self, session_name: str, workspace: str) -> tuple[bool, int, str]:
+    def ensure_active_chat_server(self, workspace: str) -> tuple[bool, int, str]:
         return self.ctx.ensure_chat_server(
-            session_name,
             expected_active=True,
             workspace=workspace,
         )

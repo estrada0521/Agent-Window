@@ -10,12 +10,7 @@ HUB_LIB_DIR="$_BIN/hub_lib"
 source "$HUB_LIB_DIR/bootstrap.sh"
 # shellcheck source=/dev/null
 source "$HUB_LIB_DIR/https.sh"
-# shellcheck source=/dev/null
-source "$HUB_LIB_DIR/session.sh"
 
-SESSION_NAME=""
-CHAT_MODE=0
-HUB_MODE=0
 HTTPS_MODE=0
 HTTPS_MODE_EXPLICIT=0
 HUB_PORT="${AGENT_INDEX_HUB_PORT:-8788}"
@@ -23,9 +18,6 @@ READY_TIMEOUT_SEC=6
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --session) SESSION_NAME="$2"; shift 2 ;;
-    --chat) CHAT_MODE=1; shift ;;
-    --hub) HUB_MODE=1; shift ;;
     --hub-port) HUB_PORT="$2"; shift 2 ;;
     --https) HTTPS_MODE=1; HTTPS_MODE_EXPLICIT=1; shift ;;
     --http) HTTPS_MODE=0; HTTPS_MODE_EXPLICIT=1; shift ;;
@@ -73,85 +65,32 @@ if [[ "$HTTPS_SCHEME" == "https" ]]; then
 else
   unset AGENT_WINDOW_PUBLIC_HOST AGENT_WINDOW_PUBLIC_HUB_PORT
 fi
-if [[ "$HUB_MODE" -eq 1 ]]; then
-  if ! port_serves_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/hub.webmanifest"; then
-    STALE_HUB_PIDS="$(list_listening_pids "$HUB_PORT")"
-    if [[ -n "${STALE_HUB_PIDS//[[:space:]]/}" ]]; then
-      echo "Hub port $HUB_PORT is occupied by a listener that is not ${HTTPS_SCHEME}." >&2
-      exit 1
-    fi
-    PYTHONPATH="$HUB_PYTHONPATH" AGENT_WINDOW_AGENT_NAME="user" nohup python3 -m hub_backend.hub_server "$REPO_ROOT" "$SCRIPT_DIR/agent-index" "$HUB_PORT" "$TMUX_SOCKET_NAME" >/dev/null 2>&1 </dev/null &
-    HUB_SERVER_PID=$!
-    disown "$HUB_SERVER_PID" || true
-    if ! wait_for_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/hub.webmanifest" "$READY_TIMEOUT_SEC"; then
-      echo "Hub server failed to start on ${HTTPS_SCHEME}://127.0.0.1:${HUB_PORT}/." >&2
-      exit 1
-    fi
+if ! port_serves_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/hub.webmanifest"; then
+  STALE_HUB_PIDS="$(list_listening_pids "$HUB_PORT")"
+  if [[ -n "${STALE_HUB_PIDS//[[:space:]]/}" ]]; then
+    echo "Hub port $HUB_PORT is occupied by a listener that is not ${HTTPS_SCHEME}." >&2
+    exit 1
   fi
-
-  HUB_URL="${HTTPS_SCHEME}://127.0.0.1:${HUB_PORT}/"
-  LOCAL_IP="$(detect_local_ip || true)"
-
-  echo "Hub:                $HUB_URL"
-  if [[ -n "$LOCAL_IP" ]]; then
-    echo "Hub (LAN / phone): ${HTTPS_SCHEME}://${LOCAL_IP}:${HUB_PORT}/"
-  else
-    echo "Tip (phone): open Hub using this Mac's LAN IP instead of 127.0.0.1 (same Wi‑Fi)."
+  PYTHONPATH="$HUB_PYTHONPATH" AGENT_WINDOW_AGENT_NAME="user" nohup python3 -m hub_backend.hub_server "$REPO_ROOT" "$SCRIPT_DIR/agent-index" "$HUB_PORT" "$TMUX_SOCKET_NAME" >/dev/null 2>&1 </dev/null &
+  HUB_SERVER_PID=$!
+  disown "$HUB_SERVER_PID" || true
+  if ! wait_for_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/hub.webmanifest" "$READY_TIMEOUT_SEC"; then
+    echo "Hub server failed to start on ${HTTPS_SCHEME}://127.0.0.1:${HUB_PORT}/." >&2
+    exit 1
   fi
-  if [[ "$HTTPS_SCHEME" == "https" ]]; then
-    echo "From Hub: New Session, Resume, Settings, ... — see README if HTTPS warns on iPhone."
-  else
-    echo "From Hub: New Session, Resume, Settings, ..."
-  fi
-  exit 0
 fi
 
-SESSION_NAME="$(resolve_session_name)" || exit 1
-SESSION_WORKSPACE="$(resolve_session_workspace "$SESSION_NAME")" || exit 1
-if [[ -z "$SESSION_WORKSPACE" ]]; then
-  echo "workspace unavailable for session: $SESSION_NAME" >&2
-  exit 1
+HUB_URL="${HTTPS_SCHEME}://127.0.0.1:${HUB_PORT}/"
+LOCAL_IP="$(detect_local_ip || true)"
+
+echo "Hub:                $HUB_URL"
+if [[ -n "$LOCAL_IP" ]]; then
+  echo "Hub (LAN / phone): ${HTTPS_SCHEME}://${LOCAL_IP}:${HUB_PORT}/"
+else
+  echo "Tip (phone): open Hub using this Mac's LAN IP instead of 127.0.0.1 (same Wi‑Fi)."
 fi
-SESSION_LOG_DIR="$(resolve_session_log_dir)"
-INDEX_FILE="${SESSION_LOG_DIR}/.log.jsonl"
-
-if [[ ! -f "$INDEX_FILE" && "$CHAT_MODE" -ne 1 ]]; then
-  echo "No indexed messages found for session: $SESSION_NAME"
-  exit 0
-fi
-
-if [[ "$CHAT_MODE" -eq 1 ]]; then
-  CHAT_PORT="$(PYTHONPATH="$HUB_PYTHONPATH" python3 -m server.port_cli "$SESSION_WORKSPACE")"
-  CHAT_ALREADY_UP=0
-  if [[ "${AGENT_WINDOW_CHAT_RESTART_HANDOFF:-}" != "1" ]] \
-    && port_serves_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/app.webmanifest"; then
-    CHAT_ALREADY_UP=1
-  fi
-  if [[ "$CHAT_ALREADY_UP" -ne 1 ]]; then
-    STALE_CHAT_PIDS="$(list_listening_pids "$CHAT_PORT")"
-    if [[ -n "${STALE_CHAT_PIDS//[[:space:]]/}" ]]; then
-      echo "Chat port $CHAT_PORT is occupied by a listener that is not ${HTTPS_SCHEME}." >&2
-      exit 1
-    fi
-    PYTHONPATH="$HUB_PYTHONPATH" \
-      AGENT_WINDOW_AGENT_NAME="user" \
-      AGENT_INDEX_HUB_PORT="$HUB_PORT" \
-      AGENT_WINDOW_TMUX_SOCKET="$TMUX_SOCKET_NAME" \
-      nohup python3 -m server.server "$SESSION_WORKSPACE" >/dev/null 2>&1 </dev/null &
-    CHAT_SERVER_PID=$!
-    disown "$CHAT_SERVER_PID" || true
-    if ! wait_for_expected_url "$HTTPS_SCHEME" "$CHAT_PORT" "/app.webmanifest" "$READY_TIMEOUT_SEC"; then
-      echo "Chat server failed to start on ${HTTPS_SCHEME}://127.0.0.1:${CHAT_PORT}/." >&2
-      exit 1
-    fi
-  fi
-  CHAT_URL="${HTTPS_SCHEME}://127.0.0.1:${CHAT_PORT}/"
-  LOCAL_IP="$(detect_local_ip || true)"
-
-  echo "Opened chat view: $CHAT_URL"
-  if [[ -n "$LOCAL_IP" ]]; then
-    echo "Network access:   ${HTTPS_SCHEME}://${LOCAL_IP}:${CHAT_PORT}/"
-  fi
-  echo "Log file:         $INDEX_FILE"
-  exit 0
+if [[ "$HTTPS_SCHEME" == "https" ]]; then
+  echo "From Hub: New Session, Resume, Settings, ... — see README if HTTPS warns on iPhone."
+else
+  echo "From Hub: New Session, Resume, Settings, ..."
 fi

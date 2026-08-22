@@ -117,7 +117,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     repo_root = Path(root_arg).resolve()
     script_path = Path(script_arg).resolve()
     port = int(port_arg)
-    hub = HubRuntime(repo_root, script_path, tmux_socket, hub_port=port)
+    hub = HubRuntime(repo_root, tmux_socket, hub_port=port)
     PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
     PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
     restart_pending, hub_server = False, None

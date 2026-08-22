@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
-import sys
-import time
 from pathlib import Path
 
 from backend_core.access.chat_server import read_chat_server_state
@@ -19,23 +16,11 @@ from backend_core.access.settings import (
     agent_window_session_root,
     port_is_bindable,
     pwa_https_enabled,
-    session_log_path,
     workspace_chat_port,
 )
+from server.chat_process import launch_chat_server, wait_for_chat_server
 
-SERVER_READY_TIMEOUT_SEC = 6.0
 HTTPS_PROBE_TIMEOUT_SEC = 1.0
-
-
-def _wait_until(predicate, timeout_sec: float, *, time_module=time, interval: float = 0.1) -> bool:
-    deadline = time_module.monotonic() + timeout_sec
-    while True:
-        if predicate():
-            return True
-        remaining = deadline - time_module.monotonic()
-        if remaining <= 0:
-            return False
-        time_module.sleep(min(interval, remaining))
 
 
 def chat_ready(self, chat_port: int) -> bool:
@@ -80,15 +65,6 @@ def chat_server_state_matches(self, state: dict | None, *, workspace: str) -> bo
 
 def stop_chat_server(self, workspace: str) -> tuple[bool, str]:
     return stop_chat_server_impl(workspace)
-
-
-def chat_launch_session_dir(self, session_name: str) -> Path:
-    session_dir = agent_window_session_root() / session_name
-    session_dir.mkdir(parents=True, exist_ok=True)
-    canonical_index = session_log_path(session_name)
-    if not canonical_index.exists():
-        canonical_index.touch()
-    return session_dir
 
 
 def chat_launch_env(self) -> dict[str, str]:
@@ -161,13 +137,9 @@ def stop_inactive_chat_servers(self, *, keep_workspace: str = "") -> str:
 
 def ensure_chat_server(
     self,
-    session_name: str,
     *,
     expected_active: bool = True,
     workspace: str = "",
-    subprocess_module=subprocess,
-    sys_module=sys,
-    time_module=time,
 ) -> tuple[bool, int, str]:
     raw_workspace = str(workspace or "").strip()
     if not raw_workspace:
@@ -193,22 +165,9 @@ def ensure_chat_server(
             if stop_detail:
                 return False, chat_port, stop_detail
 
-        self._chat_launch_session_dir(session_name)
         env = self._chat_launch_env()
         try:
-            subprocess_module.Popen(
-                [
-                    sys_module.executable,
-                    "-m",
-                    "server.server",
-                    resolved_workspace,
-                ],
-                cwd=str(self.repo_root),
-                env=env,
-                start_new_session=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+            process = launch_chat_server(resolved_workspace, env=env)
         except OSError as exc:
             return False, chat_port, str(exc)
 
@@ -220,7 +179,7 @@ def ensure_chat_server(
                 and bool(state.get("active")) == bool(expected_active)
             )
 
-        if _wait_until(_ready, SERVER_READY_TIMEOUT_SEC, time_module=time_module):
+        if wait_for_chat_server(process, _ready):
             return True, chat_port, ""
         return False, chat_port, "chat server did not become ready"
 

@@ -20,23 +20,12 @@ print(agent_window_run_dir())
 PYEOF
 )}"
 export AGENT_WINDOW_RUN_DIR
-# Not exported: this is agent-index's own lookup of a fixed, hardcoded
-# path (backend_core.access.settings.agent_window_session_root() is
-# `~/.agent-window/session`, unconditionally -- no repo, workspace, or
-# session ever changes it), used only by the bash helpers below. Nothing
-# else needs it, and nothing downstream (a spawned chat server, a tmux
-# session) should ever see this name in its own environment.
-AGENT_WINDOW_LOG_DIR="$HOME/.agent-window/session"
-
 for _cmd in python3 tmux; do
   if ! command -v "$_cmd" >/dev/null 2>&1; then
     echo "agent-index: $_cmd is required on PATH. Install it, then re-run this command." >&2
     exit 1
   fi
 done
-
-_ALL_AGENTS="$(PYTHONPATH="$HUB_PYTHONPATH" python3 -c "from backend_core.agents.registry import ALL_AGENT_NAMES; print(' '.join(ALL_AGENT_NAMES))" 2>/dev/null || echo "claude codex gemini cursor")"
-read -ra _ALL_AGENTS_ARR <<< "$_ALL_AGENTS"
 
 # shellcheck source=/dev/null
 source "$REPO_ROOT/bin/lib/tmux_session.sh"
@@ -52,9 +41,9 @@ tmux() {
 
 usage() {
   cat <<'EOF'
-Usage: agent-index [--session NAME] [--chat] [--hub] [--hub-port N] [--http|--https]
+Usage: agent-index [--hub-port N] [--http|--https]
 
-Start Hub or the chat server for the current or archived session.
+Start Hub.
 EOF
 }
 
