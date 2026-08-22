@@ -624,6 +624,7 @@ class Handler(BaseHTTPRequestHandler):
         if variant == "desktop":
             theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", "dark"))
             page = page.replace("__THEME_DESKTOP__", theme_desktop)
+            page = page.replace("__TEXT_SIZE_PX__", f'{int(settings["text_size"])}px')
         render_settings = settings_for_hub_render(settings, variant=variant)
         self._send_html(200, apply_color_tokens(page, settings=render_settings))
 
