@@ -23,7 +23,6 @@ from backend_core.access.settings import (
     agent_window_session_root,
     default_chat_port,
     ensure_session_workspace_mirrors,
-    sanitize_session_name,
     session_log_path,
 )
 from backend_core.agents.executables import agent_launch_cmd, resolve_agent_executable
@@ -79,14 +78,6 @@ def _run(prefix: list[str], args: list[str], *, timeout: float | None = None) ->
         timeout=timeout,
         check=False,
     )
-
-
-def _has_session(prefix: list[str], session_name: str) -> bool:
-    return _run(prefix, ["has-session", "-t", f"={session_name}"]).returncode == 0
-
-
-def _tmux_name_for_workspace(workspace: str) -> str:
-    return sanitize_session_name(str(workspace)) or "workspace"
 
 
 def _live_tmux_session_for_workspace(prefix: list[str], workspace: str) -> str | None:
@@ -360,6 +351,32 @@ def _prepare_instances(repo_root: Path, requested: list[str]) -> list[str]:
     return _instance_names(kept)
 
 
+def _create_tmux_session(prefix: list[str], workspace: Path) -> str:
+    created = _run(
+        prefix,
+        [
+            "new-session",
+            "-d",
+            "-P",
+            "-F",
+            "#{session_name}",
+            "-x",
+            str(SESSION_WIDTH),
+            "-y",
+            str(SESSION_HEIGHT),
+            "-c",
+            str(workspace),
+        ],
+    )
+    if created.returncode != 0:
+        detail = (created.stderr or created.stdout or "").strip() or "tmux new-session failed"
+        raise SessionControlError(detail)
+    tmux_name = (created.stdout or "").strip()
+    if not tmux_name or "\n" in tmux_name:
+        raise SessionControlError("tmux new-session returned an unreadable session name")
+    return tmux_name
+
+
 def _pane_status(prefix: list[str], pane_id: str) -> dict:
     title = _run(prefix, ["display-message", "-p", "-t", pane_id, "#{pane_title}"]).stdout.strip()
     command = _run(prefix, ["display-message", "-p", "-t", pane_id, "#{pane_current_command}"]).stdout.strip()
@@ -467,15 +484,6 @@ def create_session(
     root = Path(repo_root).resolve() if repo_root is not None else _repo_root()
     prefix = _prefix(tmux_socket)
     socket_name = (tmux_socket or "").strip() or default_tmux_socket_name()
-    # tmux's own session name is derived from the workspace, not the AW
-    # session name: tmux only ever genuinely knows where it was started,
-    # never what an AW session happens to be called right now. Deriving it
-    # from the AW name would leave a stale tmux name behind the moment the
-    # AW session is renamed.
-    tmux_name = _tmux_name_for_workspace(str(workspace_path))
-    if _has_session(prefix, tmux_name):
-        raise SessionControlError(f"Session already exists: {tmux_name}")
-
     instances = _prepare_instances(
         root,
         [str(item).strip() for item in (agents or []) if str(item).strip()],
@@ -495,24 +503,7 @@ def create_session(
         log_path.touch()
     ensure_session_workspace_mirrors(name, str(workspace_path))
 
-    created = _run(
-        prefix,
-        [
-            "new-session",
-            "-d",
-            "-x",
-            str(SESSION_WIDTH),
-            "-y",
-            str(SESSION_HEIGHT),
-            "-s",
-            tmux_name,
-            "-c",
-            str(workspace_path),
-        ],
-    )
-    if created.returncode != 0:
-        detail = (created.stderr or created.stdout or "").strip() or "tmux new-session failed"
-        raise SessionControlError(detail)
+    tmux_name = _create_tmux_session(prefix, workspace_path)
 
     configure_window_size(target=f"{tmux_name}:0", width=SESSION_WIDTH, tmux_socket=socket_name)
     _run(prefix, ["rename-window", "-t", f"{tmux_name}:0", "terminal"])

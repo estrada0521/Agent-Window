@@ -5,12 +5,28 @@ import tempfile
 import threading
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from backend_core.access.session_meta import write_session_meta_file
 from backend_core.agents.instances import renumber_exact_instance
+from backend_core.tmux.control import _create_tmux_session
 from native_log_sync.agents._shared.runtime_state import rename_agent_identity
 from native_log_sync.refresh.binding_models import NativeLogBinding
+
+
+class TmuxIdentityTests(unittest.TestCase):
+    def test_tmux_allocates_its_own_opaque_session_name(self) -> None:
+        created = SimpleNamespace(returncode=0, stdout="7\n", stderr="")
+        with patch("backend_core.tmux.control._run", return_value=created) as run:
+            tmux_name = _create_tmux_session(["tmux", "-L", "dummy"], Path("/workspace/project"))
+
+        self.assertEqual(tmux_name, "7")
+        prefix, args = run.call_args.args
+        self.assertEqual(prefix, ["tmux", "-L", "dummy"])
+        self.assertIn("-P", args)
+        self.assertEqual(args[args.index("-F") + 1], "#{session_name}")
+        self.assertNotIn("-s", args)
 
 
 class RenumberExactInstanceTests(unittest.TestCase):

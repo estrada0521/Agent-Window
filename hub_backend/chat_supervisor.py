@@ -85,8 +85,7 @@ def chat_server_state(self, chat_port: int) -> dict | None:
     return None
 
 
-def chat_server_matches(self, session_name: str, chat_port: int, *, workspace: str = "") -> bool:
-    state = self.chat_server_state(chat_port)
+def chat_server_state_matches(self, state: dict | None, session_name: str, *, workspace: str = "") -> bool:
     if not state:
         return False
     if (state.get("session") or "") != session_name:
@@ -97,13 +96,16 @@ def chat_server_matches(self, session_name: str, chat_port: int, *, workspace: s
     expected_workspace = str(workspace or "").strip()
     if str(state.get("workspace") or "").strip() != expected_workspace:
         return False
-    expected_agents = self.session_agents(session_name)
     reported_agents = [str(a).strip() for a in (state.get("targets") or []) if str(a).strip()]
-    if expected_agents and reported_agents and set(expected_agents) != set(reported_agents):
+    if not state.get("active"):
+        return not reported_agents
+    tmux_name = self.resolve_tmux_session_name_for_workspace(expected_workspace)
+    if not tmux_name:
         return False
-    if expected_agents and not reported_agents:
-        return False
-    return True
+    expected_agents, timed_out = self.session_agents_query(tmux_name)
+    if timed_out:
+        raise RuntimeError(f"tmux agent query timed out for {tmux_name}")
+    return set(expected_agents) == set(reported_agents)
 
 
 def stop_chat_server(self, session_name: str) -> tuple[bool, str]:
@@ -157,8 +159,7 @@ def _chat_launch_port(
     chat_port = self.chat_port_for_session(session_name)
     state = self.chat_server_state(chat_port)
     if (
-        self.chat_server_matches(session_name, chat_port, workspace=workspace)
-        and state is not None
+        chat_server_state_matches(self, state, session_name, workspace=workspace)
         and bool(state.get("active")) == bool(expected_active)
     ):
         return chat_port, True, ""

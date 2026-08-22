@@ -55,7 +55,7 @@ class RenamedSessionRouteTests(unittest.TestCase):
         handler = _JsonHandler()
         runtime = SimpleNamespace(
             session_is_active=True,
-            tmux_session_name="workspace-derived-tmux",
+            tmux_session_name="opaque-tmux-7",
         )
         size_result = SimpleNamespace(returncode=0, stdout="160 48")
         ctx = {
@@ -71,9 +71,9 @@ class RenamedSessionRouteTests(unittest.TestCase):
             _post_open_terminal(handler, None, ctx)
 
         self.assertEqual(handler.response, (200, {"ok": True}))
-        self.assertIn("=workspace-derived-tmux:0", run.call_args.args[0])
+        self.assertIn("=opaque-tmux-7:0", run.call_args.args[0])
         apple_script = popen.call_args.args[0][-1]
-        self.assertIn("attach-session -t workspace-derived-tmux", apple_script)
+        self.assertIn("attach-session -t opaque-tmux-7", apple_script)
         self.assertNotIn("renamed-aw-session", apple_script)
 
     def test_tmux_resolution_does_not_hide_query_failure_as_inactive(self) -> None:
