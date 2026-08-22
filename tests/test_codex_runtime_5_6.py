@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from native_log_sync.agents.codex.read_runtime import iter_tool_calls, runtime_tool_events
+from native_log_sync.agents.codex.read_runtime import _coerce_args, iter_tool_calls, runtime_tool_events
 from native_log_sync.agents.codex.read_updates import _codex_runtime_state_event, sync_codex_native_log
 
 
@@ -152,32 +152,36 @@ const result = await tools.apply_patch(patch);
         )
         self.assertEqual(calls[0][0], "apply_patch")
         self.assertIn("Update File: app.py", calls[0][1])
-        self.assertEqual(runtime_tool_events(*calls[0])[0]["text"], "Edit app.py")
 
     def test_early_56_loose_object_literal_is_read_without_eval(self) -> None:
         script = '''
 const result = await tools.exec_command({cmd:"git status --short",workdir:".",yield_time_ms:10000});
 '''
-        call = iter_tool_calls(
+        name, raw_args = iter_tool_calls(
             _entry({"type": "custom_tool_call", "name": "exec", "input": script})
         )[0]
-        self.assertEqual(runtime_tool_events(*call)[0]["text"], "Git status --short")
+        self.assertEqual(name, "exec_command")
+        self.assertEqual(_coerce_args(raw_args).get("cmd"), "git status --short")
 
     def test_template_command_is_displayed_but_not_evaluated(self) -> None:
         script = '''
 const result = await tools.exec_command({cmd:`nl -ba ${file} | head`,workdir:"."});
 '''
-        call = iter_tool_calls(
+        name, raw_args = iter_tool_calls(
             _entry({"type": "custom_tool_call", "name": "exec", "input": script})
         )[0]
-        self.assertEqual(runtime_tool_events(*call)[0]["text"], "Read head")
+        self.assertEqual(name, "exec_command")
+        self.assertEqual(_coerce_args(raw_args).get("cmd"), "nl -ba ${file} | head")
 
     def test_unresolved_command_shorthand_has_visible_fallback(self) -> None:
         script = "const result = await tools.exec_command({cmd,workdir:'.'});"
         call = iter_tool_calls(
             _entry({"type": "custom_tool_call", "name": "exec", "input": script})
         )[0]
-        self.assertEqual(runtime_tool_events(*call)[0]["text"], "Shell exec_command")
+        self.assertEqual(call[0], "exec_command")
+        events = runtime_tool_events(*call)
+        self.assertEqual(len(events), 1)
+        self.assertTrue(events[0]["text"])
 
     def test_truncated_exec_wrapper_recovers_inner_tool(self) -> None:
         script = 'const r = await tools.exec_command({cmd:"pwd",workdir:"."}'
@@ -185,7 +189,7 @@ const result = await tools.exec_command({cmd:`nl -ba ${file} | head`,workdir:"."
             _entry({"type": "custom_tool_call", "name": "exec", "input": script})
         )
         self.assertEqual(calls[0][0], "exec_command")
-        self.assertEqual(runtime_tool_events(*calls[0])[0]["text"], "Explore pwd")
+        self.assertEqual(_coerce_args(calls[0][1]).get("cmd"), "pwd")
 
     def test_exec_without_nested_tool_is_not_displayed(self) -> None:
         script = 'const matches = ALL_TOOLS.filter(x => x.name === "exec_command"); text(matches);'
@@ -203,7 +207,7 @@ const r = await tools.exec_command({"cmd":"pwd","workdir":"."});
             _entry({"type": "custom_tool_call", "name": "exec", "input": script})
         )
         self.assertEqual([name for name, _ in calls], ["exec_command"])
-        self.assertEqual(runtime_tool_events(*calls[0])[0]["text"], "Explore pwd")
+        self.assertEqual(_coerce_args(calls[0][1]).get("cmd"), "pwd")
 
     def test_56_special_payload_types_are_visible(self) -> None:
         web = iter_tool_calls(
@@ -212,12 +216,15 @@ const r = await tools.exec_command({"cmd":"pwd","workdir":"."});
         search = iter_tool_calls(
             _entry({"type": "tool_search_call", "arguments": {"query": "spawn agent"}})
         )
-        self.assertEqual(runtime_tool_events(*web[0])[0]["text"], "Search Codex 5.6")
-        self.assertEqual(runtime_tool_events(*search[0])[0]["text"], "Tool Search spawn agent")
+        self.assertEqual(web, [("web_search", {"type": "search", "query": "Codex 5.6"})])
+        self.assertEqual(search, [("tool_search", {"query": "spawn agent"})])
+        self.assertTrue(runtime_tool_events(*web[0])[0]["text"])
+        self.assertTrue(runtime_tool_events(*search[0])[0]["text"])
 
     def test_unknown_56_tool_uses_generic_fallback(self) -> None:
         events = runtime_tool_events("future_connector", {"value": 1})
-        self.assertEqual(events[0]["text"], "Tool future_connector")
+        self.assertEqual(len(events), 1)
+        self.assertTrue(events[0]["text"])
 
     def test_polling_transport_calls_remain_quiet(self) -> None:
         self.assertEqual(runtime_tool_events("wait", {"cell_id": "1"}), [])

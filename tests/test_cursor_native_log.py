@@ -32,6 +32,14 @@ class _Runtime:
 
 class CursorNativeLogTests(unittest.TestCase):
     def test_mid_line_offset_skips_to_next_row(self) -> None:
+        # `align_mid_line` in complete_jsonl_scan is shared code, but Cursor is
+        # the only caller that passes it. When stored progress is missing,
+        # sync_cursor_native_log recovers the resume offset by locating the
+        # last already-projected message inside the raw transcript, and that
+        # recovery can legitimately land mid-line. The other agents always
+        # resume from their own stored byte offset, which is already
+        # line-aligned by construction, so they never need this. Do not
+        # "simplify" this away as duplicate provider logic.
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             transcript = root / "transcript.jsonl"
