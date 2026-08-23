@@ -30,12 +30,6 @@
       background: rgba(var(--bg-rgb), 0.22);
     }
 
-    .composer-overlay.visible.composer-attach-drag .composer {
-      outline: 2px dashed rgba(255, 255, 255, 0.32);
-      outline-offset: 6px;
-      border-radius: 14px;
-    }
-
     .composer-overlay.closing {
       opacity: 0;
       pointer-events: none;
