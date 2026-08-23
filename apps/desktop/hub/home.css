@@ -1062,7 +1062,7 @@
     .desk-new-session-toggle .desk-row-name {
       text-align: left;
       font-size: var(--text-size, 13px);
-      font-weight: 500;
+      font-weight: inherit;
       opacity: 1;
     }
     .desk-new-session-toggle .desk-row-leading-icon {
@@ -1281,7 +1281,7 @@
       html:not([data-tauri-app="1"]) .desk-row-name {
         font-size: 18px;
         line-height: 1.18;
-        font-weight: 500;
+        font-weight: inherit;
       }
       html:not([data-tauri-app="1"]) .desk-row-preview {
         font-size: 14px;
