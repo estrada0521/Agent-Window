@@ -1082,11 +1082,6 @@
       min-width: 0;
       flex: 1;
     }
-    .desk-row-preview:not(:empty)::before {
-      content: "·";
-      margin-right: 4px;
-      opacity: 0.5;
-    }
     .desk-row-preview.is-empty {
       opacity: 1;
       font-style: italic;
