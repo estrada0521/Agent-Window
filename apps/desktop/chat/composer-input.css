@@ -115,14 +115,8 @@
       position: relative;
       width: 80px;
       flex-shrink: 0;
-      cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
-    }
-    .attach-card:focus-visible {
-      outline: 2px solid var(--line-strong);
-      outline-offset: 3px;
-      border-radius: 10px;
     }
     .attach-card-thumb {
       width: 80px;
@@ -145,10 +139,6 @@
       letter-spacing: 0.08em;
       color: var(--muted);
       text-transform: uppercase;
-    }
-    .has-hover .attach-card:hover .attach-card-thumb,
-    .has-hover .attach-card:hover .attach-card-ext {
-      filter: brightness(1.06);
     }
     .attach-card-remove {
       position: absolute;
