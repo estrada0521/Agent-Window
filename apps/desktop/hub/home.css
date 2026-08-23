@@ -303,10 +303,6 @@
     .desk-workbench-resizing .desk-sidebar {
       transition: none;
     }
-    .desk-workbench-resizing .desk-sidebar {
-      border-right-color: rgba(196, 196, 201, 0.8);
-      box-shadow: inset -2px 0 0 rgba(196, 196, 201, 0.56);
-    }
     .desk-sidebar-resizer {
       position: absolute;
       top: 0;
