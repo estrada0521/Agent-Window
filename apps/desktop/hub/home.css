@@ -923,7 +923,7 @@
       opacity: 0;
       overflow: hidden;
       pointer-events: none;
-      transition: opacity 140ms ease, transform 140ms ease, color 120ms ease;
+      transition: color 120ms ease;
       z-index: 2;
       -webkit-tap-highlight-color: transparent;
     }

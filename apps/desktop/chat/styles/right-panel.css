@@ -1019,7 +1019,7 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       color: var(--muted);
-      font-size: calc(var(--text-size, 13px) - 2px);
+      font-size: var(--text-size, 13px);
     }
     .git-commit-file-meta {
       display: flex;
