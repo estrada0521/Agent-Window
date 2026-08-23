@@ -120,7 +120,7 @@
       -webkit-user-select: none;
     }
     .attach-card:focus-visible {
-      outline: 2px solid rgba(252, 252, 252, 0.72);
+      outline: 2px solid var(--line-strong);
       outline-offset: 3px;
       border-radius: 10px;
     }
@@ -128,7 +128,7 @@
       width: 80px;
       height: 80px;
       border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid var(--line-strong);
       object-fit: cover;
       display: block;
     }
@@ -136,14 +136,13 @@
       width: 80px;
       height: 80px;
       border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid var(--line-strong);
       background: transparent;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: .04em;
+      font-size: 10px;
+      letter-spacing: 0.08em;
       color: var(--muted);
       text-transform: uppercase;
     }
@@ -155,7 +154,7 @@
       position: absolute;
       top: -8px;
       left: -8px;
-      background: var(--surface);
+      background: var(--panel-row-bg);
       border: 1px solid var(--line-strong);
       color: var(--fg);
       width: 26px;
