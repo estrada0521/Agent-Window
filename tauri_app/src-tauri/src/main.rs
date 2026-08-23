@@ -480,6 +480,18 @@ fn main() {
                         | tauri::WindowEvent::ScaleFactorChanged { .. }
                 ) {
                     center_traffic_lights(&traffic_window);
+                } else if let tauri::WindowEvent::ThemeChanged(_) = event {
+                    let w = traffic_window.clone();
+                    std::thread::spawn(move || {
+                        // FIXME: This 500ms delay is unoptimized.
+                        // It is a workaround to wait for macOS theme transition animations
+                        // and layout passes to complete before overriding button positions.
+                        std::thread::sleep(std::time::Duration::from_millis(500));
+                        let value = w.clone();
+                        let _ = w.app_handle().run_on_main_thread(move || {
+                            center_traffic_lights(&value);
+                        });
+                    });
                 } else if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                     api.prevent_close();
                     let _ = traffic_window.hide();
