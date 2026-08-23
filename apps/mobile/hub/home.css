@@ -336,7 +336,7 @@
 
     .mob-section-label {
       padding: 14px 20px 5px;
-      font-size: 11px;
+      font-size: var(--text-size, 13px);
       font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
