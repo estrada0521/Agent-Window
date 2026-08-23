@@ -41,10 +41,10 @@ def _set_agent_runtime_env(runtime, agent_name: str, *, subprocess_module=subpro
     )
 
 
-def _refresh_agent_bindings(runtime, pane_id: str, agent_name: str, *, reason: str) -> None:
+def _refresh_agent_bindings(runtime, pane_id: str, agent_name: str) -> None:
     runtime._native_log._pane_native_log_paths.pop(pane_id, None)
     runtime._native_log.on_pane_restart(agent_name)
-    runtime.refresh_native_log_bindings([agent_name], reason=reason)
+    runtime.refresh_native_log_bindings([agent_name])
 
 
 def restart_agent_pane(runtime, agent_name: str, *, subprocess_module=subprocess, os_module=os) -> tuple[bool, str]:
@@ -55,13 +55,13 @@ def restart_agent_pane(runtime, agent_name: str, *, subprocess_module=subprocess
     ok, detail = _respawn_agent_pane(
         runtime,
         pane_id,
-        agent_launch_cmd(runtime, agent_name),
+        agent_launch_cmd(agent_name),
         subprocess_module=subprocess_module,
         os_module=os_module,
     )
     if not ok:
         return False, detail or f"failed to restart {agent_name}"
-    _refresh_agent_bindings(runtime, pane_id, agent_name, reason="restart")
+    _refresh_agent_bindings(runtime, pane_id, agent_name)
     subprocess_module.run(
         [*runtime.tmux_prefix, "select-pane", "-t", pane_id, "-T", agent_name],
         capture_output=True,
@@ -78,13 +78,13 @@ def resume_agent_pane(runtime, agent_name: str, *, subprocess_module=subprocess,
     ok, detail = _respawn_agent_pane(
         runtime,
         pane_id,
-        agent_resume_cmd(runtime, agent_name),
+        agent_resume_cmd(agent_name),
         subprocess_module=subprocess_module,
         os_module=os_module,
     )
     if not ok:
         return False, detail or f"failed to resume {agent_name}"
-    _refresh_agent_bindings(runtime, pane_id, agent_name, reason="resume")
+    _refresh_agent_bindings(runtime, pane_id, agent_name)
     subprocess_module.run(
         [*runtime.tmux_prefix, "select-pane", "-t", pane_id, "-T", agent_name],
         capture_output=True,

@@ -20,7 +20,7 @@ from workspace_sync.files.runtime import FileRuntime
 from hub_backend.runtime import HubRuntime
 from hub_backend.chat_supervisor import ensure_chat_server
 from hub_backend.session_api import resolve_session_chat_target
-from server.runtime import ChatRuntime
+from server.font_style import font_family_stack
 from backend_core.access.settings import DEFAULT_MESSAGE_FONT, load_hub_settings, settings_for_chat_render
 
 hub = HubRuntime(repo_root, tmux_socket, hub_port=hub_port)
@@ -179,7 +179,7 @@ class Handler(BaseHTTPRequestHandler):
                 rel,
                 embed=embed,
                 base_path=f"/session/{url_quote(session_name)}",
-                agent_font_family=ChatRuntime._font_family_stack(message_font, "user"),
+                agent_font_family=font_family_stack(message_font),
             )
         except PermissionError:
             self.send_error(403)

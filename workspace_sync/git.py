@@ -8,17 +8,15 @@ import time
 from pathlib import Path
 
 _workspace: str = ""
-_runtime = None
 _GIT_OVERVIEW_CACHE_TTL_SECONDS = 5.0
 _git_overview_cache_lock = threading.Lock()
 _git_overview_cache: dict[tuple[str, int, int], tuple[float, dict]] = {}
 _commit_list_cache: dict[tuple[str, str, int, int], dict] = {}
 
 
-def configure(*, workspace: str, runtime) -> None:
-    global _workspace, _runtime
+def configure(*, workspace: str) -> None:
+    global _workspace
     _workspace = workspace or ""
-    _runtime = runtime
     invalidate_git_overview_cache()
 
 

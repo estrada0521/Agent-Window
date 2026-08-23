@@ -4,7 +4,7 @@ from backend_core.access.settings import DEFAULT_MESSAGE_FONT, canonicalize_mess
 from backend_core.agents.registry import generate_agent_message_selectors
 
 
-def font_family_stack(selection: str, role: str = "user") -> str:
+def font_family_stack(selection: str) -> str:
     return canonicalize_message_font(selection)
 
 
@@ -16,12 +16,8 @@ def agent_detail_selectors(prefix: str = "") -> str:
     return ",\n".join(parts)
 
 
-def chat_font_settings_inline_style(
-    settings: dict,
-    *,
-    font_family_stack_fn=font_family_stack,
-) -> str:
-    message_family = font_family_stack_fn(settings.get("message_font", DEFAULT_MESSAGE_FONT), "user")
+def chat_font_settings_inline_style(settings: dict) -> str:
+    message_family = font_family_stack(settings.get("message_font", DEFAULT_MESSAGE_FONT))
     code_family = settings.get("code_font", "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace")
     try:
         text_size = int(settings.get("text_size", 13))

@@ -9,9 +9,7 @@ def refresh_native_log_bindings(
     pane_requests: list[PaneBindingRequest],
     *,
     replace_all: bool = True,
-    reason: str = "",
 ) -> list[NativeLogBinding]:
-    del reason
     bindings: list[NativeLogBinding] = []
     with getattr(runtime, "_native_log_bindings_lock"):
         if replace_all:

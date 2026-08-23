@@ -71,7 +71,6 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
             session_name=ctx["session_name"],
             agent=agent,
             tmux_socket=str(getattr(ctx["runtime"], "tmux_socket", "") or ""),
-            repo_root=ctx["repo_root"],
         )
     except SessionControlError as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
@@ -105,7 +104,7 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     except Exception as exc:
         warnings.append(str(exc))
     try:
-        ctx["runtime"].refresh_native_log_bindings([instance], reason="add-agent")
+        ctx["runtime"].refresh_native_log_bindings([instance])
     except Exception as exc:
         warnings.append(str(exc))
     try:
@@ -137,7 +136,6 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
             session_name=ctx["session_name"],
             agent=agent,
             tmux_socket=str(getattr(ctx["runtime"], "tmux_socket", "") or ""),
-            repo_root=ctx["repo_root"],
         )
     except SessionControlError as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
@@ -160,7 +158,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         ctx["runtime"]._payload_cache.clear()
         ctx["runtime"]._payload_cache_order.clear()
     try:
-        ctx["runtime"].refresh_native_log_bindings(reason="remove-agent")
+        ctx["runtime"].refresh_native_log_bindings()
     except Exception as exc:
         warnings.append(str(exc))
     try:

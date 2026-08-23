@@ -10,7 +10,6 @@ import sys
 import time
 from collections import Counter
 from pathlib import Path
-from types import SimpleNamespace
 
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.chat_server import read_chat_server_state
@@ -284,14 +283,12 @@ def stop_chat_server(workspace: str) -> tuple[bool, str]:
 def _start_agent(
     *,
     prefix: list[str],
-    repo_root: Path,
     session_name: str,
     workspace: str,
     pane_id: str,
     instance_name: str,
 ) -> None:
-    runtime = SimpleNamespace(repo_root=repo_root, workspace=workspace, session_name=session_name, tmux_prefix=prefix)
-    command = agent_launch_cmd(runtime, instance_name)
+    command = agent_launch_cmd(instance_name)
     _run(prefix, ["select-pane", "-t", pane_id, "-T", instance_name])
     _set_env(prefix, session_name, "AGENT_WINDOW_AGENT_NAME", instance_name)
     shell = os.environ.get("SHELL") or "/bin/zsh"
@@ -306,7 +303,7 @@ def _start_agent(
         raise SessionControlError(detail)
 
 
-def _prepare_instances(repo_root: Path, requested: list[str]) -> list[str]:
+def _prepare_instances(requested: list[str]) -> list[str]:
     bases: list[str] = []
     for raw in requested:
         base = agent_base_name(raw)
@@ -317,7 +314,7 @@ def _prepare_instances(repo_root: Path, requested: list[str]) -> list[str]:
         return []
     kept: list[str] = []
     for base in bases:
-        if not resolve_agent_executable(repo_root, base):
+        if not resolve_agent_executable(base):
             raise SessionControlError(f"Required command not found for {base}")
         kept.append(base)
     return _instance_names(kept)
@@ -457,7 +454,6 @@ def create_session(
     prefix = _prefix(tmux_socket)
     socket_name = (tmux_socket or "").strip() or default_tmux_socket_name()
     instances = _prepare_instances(
-        root,
         [str(item).strip() for item in (agents or []) if str(item).strip()],
     )
 
@@ -519,7 +515,6 @@ def create_session(
         for instance, pane_id in zip(instances, panes):
             _start_agent(
                 prefix=prefix,
-                repo_root=root,
                 session_name=tmux_name,
                 workspace=str(workspace_path),
                 pane_id=pane_id,
@@ -573,7 +568,6 @@ def add_agent(
     session_name: str,
     agent: str,
     tmux_socket: str = "",
-    repo_root: Path | str | None = None,
     initiator: str = "",
 ) -> tuple[str, tuple[str, str] | None]:
     name = (session_name or "").strip()
@@ -582,8 +576,7 @@ def add_agent(
         raise SessionControlError("session_name is required")
     if not base or base not in AGENTS:
         raise SessionControlError(f"Unknown agent: {agent}")
-    root = Path(repo_root).resolve() if repo_root is not None else _repo_root()
-    if not resolve_agent_executable(root, base):
+    if not resolve_agent_executable(base):
         raise SessionControlError(f"Required command not found for {base}")
     prefix = _prefix(tmux_socket)
     socket_name = (tmux_socket or "").strip() or default_tmux_socket_name()
@@ -627,7 +620,6 @@ def add_agent(
         _write_meta(prefix, tmux_name, name, rename=rename)
         _start_agent(
             prefix=prefix,
-            repo_root=root,
             session_name=tmux_name,
             workspace=workspace,
             pane_id=pane_id,
@@ -650,7 +642,6 @@ def remove_agent(
     session_name: str,
     agent: str,
     tmux_socket: str = "",
-    repo_root: Path | str | None = None,
     initiator: str = "",
 ) -> tuple[str, bool]:
     name = (session_name or "").strip()

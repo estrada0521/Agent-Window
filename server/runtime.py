@@ -27,10 +27,7 @@ from .entry_write import (
     append_user_entry as _append_user_entry_impl,
 )
 from .index_cache import MATCHED_ENTRY_TAIL, message_entry_window
-from .font_style import (
-    chat_font_settings_inline_style as _chat_font_settings_inline_style_impl,
-    font_family_stack as _font_family_stack_impl,
-)
+from .font_style import chat_font_settings_inline_style as _chat_font_settings_inline_style_impl
 from workspace_sync.commit import (
     ensure_commit_announcements as _ensure_commit_announcements_impl,
 )
@@ -135,12 +132,7 @@ class ChatRuntime:
     def load_chat_settings(self) -> dict:
         return load_shared_hub_settings()
 
-    def refresh_native_log_bindings(
-        self,
-        agents: list[str] | None = None,
-        *,
-        reason: str = "",
-    ) -> list[dict]:
+    def refresh_native_log_bindings(self, agents: list[str] | None = None) -> list[dict]:
         replace_all = agents is None
         target_agents = list(agents) if agents is not None else self.active_agents()
         pane_requests: list[PaneBindingRequest] = []
@@ -156,25 +148,18 @@ class ChatRuntime:
                     pane_pid=str(pane_pid or "").strip(),
                 )
             )
-        return self._native_log.refresh(pane_requests, replace_all=replace_all, reason=reason)
+        return self._native_log.refresh(pane_requests, replace_all=replace_all)
 
     def start_native_log_sync(self) -> None:
         if not self.session_is_active:
             return
         from native_log_sync.api import start_watchers
-        self.refresh_native_log_bindings(reason="startup")
+        self.refresh_native_log_bindings()
         start_watchers(self._native_log)
 
     @staticmethod
-    def _font_family_stack(selection: str, role: str) -> str:
-        return _font_family_stack_impl(selection, role)
-
-    @classmethod
-    def chat_font_settings_inline_style(cls, settings: dict) -> str:
-        return _chat_font_settings_inline_style_impl(
-            settings,
-            font_family_stack_fn=cls._font_family_stack,
-        )
+    def chat_font_settings_inline_style(settings: dict) -> str:
+        return _chat_font_settings_inline_style_impl(settings)
 
 
     def append_user_entry(self, message: str, *, targets: list[str], client: str | None = None) -> dict:
@@ -320,7 +305,7 @@ class ChatRuntime:
         _update_running_env_impl(self, agent, True)
         if not already_running:
             if not self._native_log.has_log_binding(agent):
-                self.refresh_native_log_bindings([agent], reason="first-message")
+                self.refresh_native_log_bindings([agent])
                 if self._native_log.has_log_binding(agent):
                     self._initial_sync_agent(agent)
                 else:
@@ -328,7 +313,7 @@ class ChatRuntime:
             else:
                 # Re-resolve to detect session switches (e.g. new Claude conversation file)
                 old_path = self._native_log.log_path_for_agent(agent)
-                self.refresh_native_log_bindings([agent], reason="session-check")
+                self.refresh_native_log_bindings([agent])
                 new_path = self._native_log.log_path_for_agent(agent)
                 if new_path and new_path != old_path:
                     self._initial_sync_agent(agent)

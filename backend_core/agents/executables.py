@@ -8,11 +8,7 @@ from backend_core.agents.names import agent_base_name
 from backend_core.agents.registry import AGENTS
 
 
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
-
-
-def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
+def resolve_agent_executable(agent_name: str) -> str | None:
     base = agent_base_name(agent_name)
     adef = AGENTS.get(base)
     exe_name = adef.exe if adef else agent_name
@@ -55,9 +51,8 @@ def resolve_agent_executable(repo_root: Path, agent_name: str) -> str | None:
     return None
 
 
-def resolve_agent_executable_for_runtime(agent_name: str, repo_root: Path | str | None = None) -> str:
-    resolved_root = Path(repo_root).resolve() if repo_root is not None else _repo_root()
-    found = resolve_agent_executable(resolved_root, agent_name)
+def resolve_agent_executable_for_runtime(agent_name: str) -> str:
+    found = resolve_agent_executable(agent_name)
     if found:
         return found
     base = agent_base_name(agent_name)
@@ -65,17 +60,17 @@ def resolve_agent_executable_for_runtime(agent_name: str, repo_root: Path | str 
     return adef.exe if adef else agent_name
 
 
-def _build_agent_exec(runtime, agent_name: str) -> tuple[str, object]:
+def _build_agent_exec(agent_name: str) -> tuple[str, object]:
     import shlex as _shlex
-    agent_exec_path = Path(resolve_agent_executable_for_runtime(agent_name, repo_root=runtime.repo_root))
+    agent_exec_path = Path(resolve_agent_executable_for_runtime(agent_name))
     agent_exec = _shlex.quote(str(agent_exec_path))
     base = agent_base_name(agent_name)
     adef = AGENTS.get(base)
     return agent_exec, adef
 
 
-def agent_launch_cmd(runtime, agent_name: str) -> str:
-    agent_exec, adef = _build_agent_exec(runtime, agent_name)
+def agent_launch_cmd(agent_name: str) -> str:
+    agent_exec, adef = _build_agent_exec(agent_name)
     launch_extra = adef.launch_extra if adef else ""
     launch_flags = adef.launch_flags if adef else ""
     extra = f" {launch_extra}" if launch_extra else ""
@@ -84,12 +79,12 @@ def agent_launch_cmd(runtime, agent_name: str) -> str:
     return f"{env_prefix}exec{extra} {agent_exec}{flags}"
 
 
-def agent_resume_cmd(runtime, agent_name: str) -> str:
+def agent_resume_cmd(agent_name: str) -> str:
     base = agent_base_name(agent_name)
     adef = AGENTS.get(base)
     if not adef or not adef.resume_flag:
-        return agent_launch_cmd(runtime, agent_name)
-    agent_exec, adef = _build_agent_exec(runtime, agent_name)
+        return agent_launch_cmd(agent_name)
+    agent_exec, adef = _build_agent_exec(agent_name)
     launch_extra = adef.launch_extra or ""
     resume_extra = adef.resume_extra_flags or ""
     extra = f" {launch_extra}" if launch_extra else ""

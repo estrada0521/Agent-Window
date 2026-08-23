@@ -33,10 +33,7 @@ class WorkspaceSyncApi:
             allowed_roots_fn=allowed_roots_fn,
             repo_root=repo_root,
         )
-        workspace_git.configure(
-            workspace=self.workspace,
-            runtime=runtime,
-        )
+        workspace_git.configure(workspace=self.workspace)
         start_workspace_fsevents_watcher(self)
 
     def raw_response_metadata(self, rel: str, range_header: str = "") -> dict:

@@ -10,6 +10,7 @@ from backend_core.access.settings import (
 )
 from hub_backend.transport.request_base_path import request_base_path
 from hub_backend.transport.request_view import request_view_variant
+from server.font_style import font_family_stack
 from server.runtime import ENTRY_WINDOW_LIMIT
 from shortcut_command.catalog import public_command_dicts
 
@@ -166,7 +167,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
             base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
             preview_base_theme=str(qs.get("base_theme", [""])[0] or "").strip(),
             preview_variant=preview_variant,
-            agent_font_family=ctx["runtime"]._font_family_stack(message_font, "user"),
+            agent_font_family=font_family_stack(message_font),
             agent_text_size=preview_text_size,
             preview_chrome=preview_chrome,
             force_progressive_text=force_progressive_text,

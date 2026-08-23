@@ -266,17 +266,17 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         launch.assert_not_called()
 
     def test_git_overview_does_not_use_hub_repo_as_the_project(self) -> None:
-        workspace_git.configure(workspace="", runtime=None)
+        workspace_git.configure(workspace="")
         with self.assertRaisesRegex(RuntimeError, "git workspace is not configured"):
             workspace_git.git_overview()
         with tempfile.TemporaryDirectory() as tmp:
-            workspace_git.configure(workspace=tmp, runtime=None)
+            workspace_git.configure(workspace=tmp)
             self.assertEqual(str(workspace_git._git_root()), tmp)
             self.assertNotEqual(str(workspace_git._git_root()), "/Users/okadaharuto/workspace/Agent-Window")
-        workspace_git.configure(workspace="/no/such/even-parity", runtime=None)
+        workspace_git.configure(workspace="/no/such/even-parity")
         with self.assertRaisesRegex(RuntimeError, "workspace is not available"):
             workspace_git.git_overview()
-        workspace_git.configure(workspace="", runtime=None)
+        workspace_git.configure(workspace="")
 
     def test_mirrors_do_not_create_a_missing_workspace(self) -> None:
         from backend_core.access.settings import ensure_session_workspace_mirrors
