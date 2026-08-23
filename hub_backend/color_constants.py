@@ -3,8 +3,13 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 
-DARK_LINK_BLUE_CHANNELS = "75, 132, 208"
+DARK_LINK_BLUE_CHANNELS = "139, 196, 218"
 DARK_LINK_BLUE = f"rgb({DARK_LINK_BLUE_CHANNELS})"
+
+DARK_EXTERNAL_LINK_RED_CHANNELS = "255, 107, 107"
+DARK_EXTERNAL_LINK_RED = f"rgb({DARK_EXTERNAL_LINK_RED_CHANNELS})"
+LIGHT_EXTERNAL_LINK_RED_CHANNELS = "207, 34, 46"
+LIGHT_EXTERNAL_LINK_RED = f"rgb({LIGHT_EXTERNAL_LINK_RED_CHANNELS})"
 
 
 def _gray_rgb(level: int) -> tuple[int, int, int]:
@@ -97,6 +102,8 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
         "color_scheme": color_scheme,
         "dark_link_blue": DARK_LINK_BLUE,
         "dark_link_blue_channels": DARK_LINK_BLUE_CHANNELS,
+        "dark_external_link_red": DARK_EXTERNAL_LINK_RED,
+        "light_external_link_red": LIGHT_EXTERNAL_LINK_RED,
         "bg_level": bg_level,
         "fg_level": fg_level,
         "fg_soft_level": fg_soft_level,
@@ -196,6 +203,8 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
     chip_color = str(palette["chip_color"])
     dark_link_blue = str(palette["dark_link_blue"])
     dark_link_blue_channels = str(palette["dark_link_blue_channels"])
+    dark_external_link_red = str(palette["dark_external_link_red"])
+    light_external_link_red = str(palette["light_external_link_red"])
 
     import html
     from backend_core.access.settings import canonicalize_message_font, DEFAULT_CODE_FONT
@@ -239,6 +248,8 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
         ("__CHIP_COLOR__", chip_color),
         ("__DARK_LINK_BLUE__", dark_link_blue),
         ("__DARK_LINK_BLUE_CHANNELS__", dark_link_blue_channels),
+        ("__DARK_EXTERNAL_LINK_RED__", dark_external_link_red),
+        ("__LIGHT_EXTERNAL_LINK_RED__", light_external_link_red),
         ("__LINE__", str(palette["line"])),
         ("__LINE_STRONG__", str(palette["line_strong"])),
         ("__TABLE_LINE__", str(palette["table_line"])),

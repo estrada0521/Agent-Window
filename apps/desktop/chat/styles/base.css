@@ -66,12 +66,12 @@
       --inline-code-border: __GRAY_INLINE_BORDER__;
       --warn: #fbbf24;
       --warn-bright: #fcd34d;
-      --error: #ff6b6b;
+      --error: __DARK_EXTERNAL_LINK_RED__;
       --inline-file-link-fg: var(--link-blue);
       --code-copy-bg: transparent;
       --code-copy-hover-bg: __CODE_COPY_HOVER_BG__;
       --fab-hover-bg: __FAB_HOVER_BG__;
-      --external-link-fg: #ff6b6b;
+      --external-link-fg: __DARK_EXTERNAL_LINK_RED__;
 
       --link-blue: __DARK_LINK_BLUE__;
       --link-blue-channels: __DARK_LINK_BLUE_CHANNELS__;
@@ -119,8 +119,8 @@
       --glass-filter-16: blur(16px) saturate(180%);
       --glass-filter-18: blur(18px) saturate(160%);
       --glass-filter-20: blur(20px) saturate(180%);
-      --external-link-fg: rgb(207, 34, 46);
-      --error: rgb(207, 34, 46);
+      --external-link-fg: __LIGHT_EXTERNAL_LINK_RED__;
+      --error: __LIGHT_EXTERNAL_LINK_RED__;
 
       --link-blue: rgb(36, 85, 161);
       --link-blue-channels: 36, 85, 161;
