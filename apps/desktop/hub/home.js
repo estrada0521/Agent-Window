@@ -107,13 +107,18 @@
     }
     window.addEventListener("keydown", (event) => {
       if (!(event.metaKey || event.ctrlKey)) return;
-      if (event.key === "=" || event.key === "+") {
+      // event.code (physical key) instead of event.key: with metaKey held,
+      // some WebViews don't reliably report the shift-modified character for
+      // "=" (i.e. "+"), so matching on .key alone silently misses ⌘+. Also
+      // accept "Semicolon": on JIS keyboards the physical key that types "+"
+      // reports code "Semicolon", not "Equal" (confirmed via live testing).
+      if (event.code === "Equal" || event.code === "Semicolon" || event.key === "=" || event.key === "+") {
         event.preventDefault();
         applyDeskTextSizeAndBroadcast(currentDeskTextSizePx() + 1);
-      } else if (event.key === "-" || event.key === "_") {
+      } else if (event.code === "Minus" || event.key === "-" || event.key === "_") {
         event.preventDefault();
         applyDeskTextSizeAndBroadcast(currentDeskTextSizePx() - 1);
-      } else if (event.key === "0") {
+      } else if (event.code === "Digit0" || event.key === "0") {
         event.preventDefault();
         applyDeskTextSizeAndBroadcast(DESK_TEXT_SIZE_DEFAULT);
       }
@@ -1271,9 +1276,13 @@
         applyIncomingThemeDesktop(event.data.themeDesktop || event.data.theme);
         return;
       }
-      if (event.data && event.data.type === "text-size-changed") {
-        const px = Number(event.data.textSize);
-        if (Number.isFinite(px)) applyDeskTextSizeLocal(px);
+      if (event.data && event.data.type === "text-size-shortcut") {
+        if (event.data.reset) {
+          applyDeskTextSizeAndBroadcast(DESK_TEXT_SIZE_DEFAULT);
+        } else {
+          const delta = Number(event.data.delta) || 0;
+          if (delta) applyDeskTextSizeAndBroadcast(currentDeskTextSizePx() + delta);
+        }
         return;
       }
       if (event.data && event.data.type === "open-hub-path") {

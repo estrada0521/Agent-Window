@@ -614,41 +614,29 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       }
     });
     (() => {
-      const TEXT_SIZE_MIN = 8;
-      const TEXT_SIZE_MAX = 16;
-      const TEXT_SIZE_DEFAULT = 12;
-      const currentTextSizePx = () => {
-        const raw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
-        return Number.isFinite(raw) ? raw : TEXT_SIZE_DEFAULT;
-      };
-      let persistTimer = 0;
-      const applyTextSizePx = (px) => {
-        const clamped = Math.max(TEXT_SIZE_MIN, Math.min(TEXT_SIZE_MAX, Math.round(px)));
-        document.documentElement.style.setProperty("--text-size", `${clamped}px`);
-        try {
-          window.parent?.postMessage({ type: "text-size-changed", textSize: clamped }, "*");
-        } catch (_) {}
-        clearTimeout(persistTimer);
-        persistTimer = setTimeout(() => {
-          fetch("/settings", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-            body: new URLSearchParams({ text_size: String(clamped) }).toString(),
-            cache: "no-store",
-          }).catch(() => {});
-        }, 200);
-      };
+      // Text size has exactly one writer: the Hub (home.js). This frame only
+      // forwards the key intent and waits for the authoritative new value to
+      // come back over "hub-text-size-changed" (handled above). It must NOT
+      // compute-and-persist its own value here -- two independent writers
+      // (this frame and the Hub) racing to read-modify-write the same
+      // setting is exactly what caused the size to end up wrong on disk.
       window.addEventListener("keydown", (event) => {
         if (!(event.metaKey || event.ctrlKey)) return;
-        if (event.key === "=" || event.key === "+") {
+        // event.code (physical key) instead of event.key: with metaKey held,
+        // some WebViews don't reliably report the shift-modified character
+        // for "=" (i.e. "+"), so matching on .key alone silently misses ⌘+.
+        // Also accept "Semicolon": on JIS keyboards the physical key that
+        // types "+" reports code "Semicolon", not "Equal" (confirmed via
+        // live testing).
+        if (event.code === "Equal" || event.code === "Semicolon" || event.key === "=" || event.key === "+") {
           event.preventDefault();
-          applyTextSizePx(currentTextSizePx() + 1);
-        } else if (event.key === "-" || event.key === "_") {
+          window.parent?.postMessage({ type: "text-size-shortcut", delta: 1 }, "*");
+        } else if (event.code === "Minus" || event.key === "-" || event.key === "_") {
           event.preventDefault();
-          applyTextSizePx(currentTextSizePx() - 1);
-        } else if (event.key === "0") {
+          window.parent?.postMessage({ type: "text-size-shortcut", delta: -1 }, "*");
+        } else if (event.code === "Digit0" || event.key === "0") {
           event.preventDefault();
-          applyTextSizePx(TEXT_SIZE_DEFAULT);
+          window.parent?.postMessage({ type: "text-size-shortcut", reset: true }, "*");
         }
       });
     })();
