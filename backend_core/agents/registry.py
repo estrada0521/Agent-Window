@@ -15,7 +15,6 @@ class AgentDef:
     launch_env: str = ""
     resume_flag: str = ""
     resume_extra_flags: str = ""
-    ready_pattern: str = ""
     fallback_paths: tuple[str, ...] = ()
     prefer_fallback_paths: bool = False
     fallback_nvm: bool = False
@@ -45,7 +44,6 @@ _register(
         executable="claude",
         launch_extra=f"env -u CLAUDECODE {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="--continue",
-        ready_pattern=r"Claude Code|Tips for getting started|Recent activity",
         fallback_paths=("~/.local/bin/claude",),
     ),
     AgentDef(
@@ -55,7 +53,6 @@ _register(
         executable="codex",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="resume --last",
-        ready_pattern=r"OpenAI Codex|model:|Tip: New",
         fallback_nvm=True,
     ),
     AgentDef(
@@ -65,7 +62,6 @@ _register(
         executable="agy",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="--continue",
-        ready_pattern=r"Ready \(multiagent\)|Antigravity|Type your message",
         fallback_paths=("~/.local/bin/agy",),
         fallback_nvm=True,
     ),
@@ -76,7 +72,6 @@ _register(
         executable="cursor-agent",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="--continue",
-        ready_pattern=r"Cursor Agent|resume previous session|Output the version number|Bypassing Permissions",
         fallback_paths=("~/.local/bin/cursor-agent",),
     ),
     AgentDef(
@@ -86,7 +81,6 @@ _register(
         executable="grok",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         resume_flag="--continue",
-        ready_pattern=r"Grok Build|What can I help|Type your message",
         fallback_paths=("~/.local/bin/grok",),
         prefer_fallback_paths=True,
     ),

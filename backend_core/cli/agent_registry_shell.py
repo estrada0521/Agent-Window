@@ -36,7 +36,6 @@ def main() -> None:
         emit_scalar(f"AGENT_EXECUTABLE_{name}", agent.exe)
         emit_scalar(f"AGENT_DISPLAY_NAME_{name}", agent.display_name)
         emit_scalar(f"AGENT_ICON_FILE_{name}", agent.icon_file)
-        emit_scalar(f"AGENT_READY_PATTERN_{name}", agent.ready_pattern)
         emit_scalar(f"AGENT_LAUNCH_EXTRA_{name}", agent.launch_extra)
         emit_scalar(f"AGENT_LAUNCH_FLAGS_{name}", agent.launch_flags)
         emit_scalar(f"AGENT_LAUNCH_ENV_{name}", agent.launch_env)
