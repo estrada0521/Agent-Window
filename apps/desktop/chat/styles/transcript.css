@@ -303,7 +303,7 @@
       flex-wrap: wrap;
       margin-top: 4px;
       color: var(--muted);
-      font-size: 12px;
+      font-size: var(--text-size, 13px);
       line-height: 1.2;
     }
 
@@ -333,11 +333,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
+      font-size: var(--text-size, 13px);
       line-height: 1;
       color: var(--muted);
       opacity: 1;
-      font-weight: 500;
+      font-weight: inherit;
     }
 
     .message-meta-below .meta-agent.icon-right .agent-icon-slot--meta {
@@ -375,7 +375,7 @@
       margin-top: 0px;
       margin-bottom: var(--message-vertical-rhythm);
       gap: 6px;
-      font-size: 13px;
+      font-size: var(--text-size, 13px);
     }
 
     .message:not(.user) .message-meta-below .copy-btn {
@@ -401,7 +401,7 @@
       margin-right: auto;
       padding-top: 0;
       gap: 6px;
-      font-size: 13px;
+      font-size: var(--text-size, 13px);
       justify-content: flex-start;
       background: transparent;
     }
@@ -877,7 +877,7 @@
       align-items: center;
       flex-wrap: wrap;
       color: var(--muted);
-      font-size: 12px;
+      font-size: var(--text-size, 13px);
       margin-bottom: 8px;
     }
 
@@ -888,7 +888,7 @@
     .sender {
       padding: 2px 0;
       color: var(--muted);
-      font-weight: 700;
+      font-weight: inherit;
       text-transform: capitalize;
       background: transparent;
       border: none;
