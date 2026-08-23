@@ -491,17 +491,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const pathText = document.createElement("span");
       pathText.className = "repo-path-label";
       pathText.textContent = path ? `/ ${path}` : "/";
-      const rootBtn = document.createElement("button");
-      rootBtn.type = "button";
-      rootBtn.className = "repo-path-nav-btn repo-path-home-btn";
-      rootBtn.innerHTML = wrapFileIcon('<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>');
-      rootBtn.title = "ルートへ";
-      rootBtn.disabled = !path;
-      rootBtn.addEventListener("click", (e) => {
-        e.preventDefault(); e.stopPropagation();
-        void dpLoadRepoDir("");
-      });
-      pathRow.append(backIcon, pathText, rootBtn);
+      pathRow.append(backIcon, pathText);
       pathWrap.appendChild(pathRow);
       stack.appendChild(pathWrap);
       const scroll = document.createElement("div");

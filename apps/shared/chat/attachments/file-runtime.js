@@ -162,7 +162,7 @@ __CHAT_INCLUDE:../file-autocomplete.js__
         messageInput.style.height = baseHeight + "px";
         const scrollH = messageInput.scrollHeight;
         const maxHeight = 200;
-        const nextHeight = Math.min(maxHeight, Math.max(baseHeight, scrollH + 2));
+        const nextHeight = Math.min(maxHeight, scrollH > baseHeight ? scrollH + 2 : baseHeight);
         messageInput.style.height = nextHeight + "px";
         messageInput.style.marginTop = (baseHeight - nextHeight) + "px";
         composerShellEl?.style.setProperty("--composer-input-rise", Math.max(0, nextHeight - baseHeight) + "px");
@@ -174,7 +174,7 @@ __CHAT_INCLUDE:../file-autocomplete.js__
         messageInput.style.height = baseHeight + "px";
         const scrollH = messageInput.scrollHeight;
         const maxHeight = 200;
-        const nextHeight = Math.min(maxHeight, Math.max(baseHeight, scrollH + 2));
+        const nextHeight = Math.min(maxHeight, scrollH > baseHeight ? scrollH + 2 : baseHeight);
         messageInput.style.height = nextHeight + "px";
         if (composerFieldEl) {
           composerFieldEl.style.minHeight = nextHeight + "px";

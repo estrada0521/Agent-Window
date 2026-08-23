@@ -909,7 +909,7 @@
     }
     .desk-row-hover-action {
       position: absolute;
-      right: 8px;
+      right: 4px;
       top: 50%;
       transform: translateY(-50%) scale(0.96);
       width: 24px;
@@ -948,7 +948,7 @@
     }
     .desk-action-session-row:hover .desk-row-stack,
     .desk-action-session-row:focus-within .desk-row-stack {
-      padding-right: 32px;
+      padding-right: 24px;
     }
     .desk-row-hover-action:hover,
     .desk-row-hover-action:focus-visible {

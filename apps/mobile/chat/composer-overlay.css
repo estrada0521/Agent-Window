@@ -220,7 +220,7 @@
       width: 42px;
       height: 42px;
       padding: 0;
-      border-radius: 10px;
+      border-radius: 50%;
       border: none;
       background: transparent;
       color: var(--icon-fg);

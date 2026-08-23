@@ -154,7 +154,7 @@
           ).join("");
         } catch (_) {
           if (seq !== fetchSeq) return;
-          expand.innerHTML = `<div class="git-pinned-expand-empty">読み込み失敗</div>`;
+          expand.innerHTML = `<div class="git-pinned-expand-empty">Failed to load</div>`;
         }
       }
 

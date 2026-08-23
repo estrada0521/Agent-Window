@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 
-DARK_LINK_BLUE_CHANNELS = "139, 196, 218"
+DARK_LINK_BLUE_CHANNELS = "96, 184, 197"
 DARK_LINK_BLUE = f"rgb({DARK_LINK_BLUE_CHANNELS})"
 
 DARK_EXTERNAL_LINK_RED_CHANNELS = "255, 107, 107"

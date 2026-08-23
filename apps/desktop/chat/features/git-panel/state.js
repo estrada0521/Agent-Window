@@ -14,7 +14,7 @@
       root.querySelectorAll(".git-summary-pin").forEach((btn) => {
         btn.setAttribute("aria-pressed", dpGitSummaryPinned ? "true" : "false");
         btn.classList.toggle("is-pinned", dpGitSummaryPinned);
-        btn.title = dpGitSummaryPinned ? "ピンを外して右端の表示を消す" : "右ペインを閉じても右端にこの概要を表示";
+        btn.title = dpGitSummaryPinned ? "Unpin from Chat" : "Pin to Chat";
       });
     };
     const dpRenderGitSummaryRoot = (root, rowHtml) => {

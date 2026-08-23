@@ -52,14 +52,11 @@
       -webkit-tap-highlight-color: transparent;
       opacity: 0;
       pointer-events: none;
-      transform: translateY(10px);
-      transition: transform 260ms ease-out, opacity 220ms ease-out;
     }
 
     .send-btn.visible {
       opacity: 1;
       pointer-events: auto;
-      transform: translateY(0);
     }
 
     .send-btn svg {

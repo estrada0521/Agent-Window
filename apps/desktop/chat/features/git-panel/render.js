@@ -1,6 +1,6 @@
     const DP_GIT_SUMMARY_PIN_SVG = '📌';
     const dpBuildSummaryHtml = (data) => {
-      const pinBtn = `<button type="button" class="git-summary-pin" aria-pressed="false" aria-label="未コミット概要をチャット右端に固定表示" title="右ペインを閉じても右端にこの概要を表示">${DP_GIT_SUMMARY_PIN_SVG}</button>`;
+      const pinBtn = `<button type="button" class="git-summary-pin" aria-pressed="false" aria-label="Pin Git Summary" title="Pin to Chat">${DP_GIT_SUMMARY_PIN_SVG}</button>`;
       return gitSummaryRowHtml(data, { leadingHtml: pinBtn });
     };
     const dpBuildSummaryState = (data) => {
