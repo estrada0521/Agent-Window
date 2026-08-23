@@ -701,7 +701,7 @@
     }
     .git-commit-file-section-title {
       padding: 9px 12px 8px;
-      font-size: var(--text-size, 13px);
+      font-size: calc(var(--text-size, 13px) - 2px);
       font-weight: inherit;
       text-transform: uppercase;
       letter-spacing: 0.08em;

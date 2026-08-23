@@ -22,6 +22,7 @@
       --session-hover-bg: __SESSION_HOVER_BG__;
       --session-selected-bg: __SESSION_SELECTED_BG__;
       --session-danger-fg: rgb(255, 108, 102);
+      --session-revive-fg: rgb(74, 222, 128);
       --glass-bg-90: rgba(var(--bg-rgb), 0.90);
       --glass-filter-20: blur(20px);
     }
@@ -42,6 +43,7 @@
       --session-hover-bg: rgba(0, 0, 0, 0.04);
       --session-selected-bg: rgba(0, 0, 0, 0.07);
       --session-danger-fg: rgb(207, 34, 46);
+      --session-revive-fg: rgb(26, 127, 55);
       --chat-pane-bg: rgba(var(--bg-rgb), 0.95);
       --chat-pane-filter: blur(20px);
     }
@@ -63,6 +65,7 @@
       --session-hover-bg: rgba(255, 255, 255, 0.05);
       --session-selected-bg: rgba(255, 255, 255, 0.08);
       --session-danger-fg: rgb(255, 108, 102);
+      --session-revive-fg: rgb(74, 222, 128);
       --chat-pane-bg: rgba(var(--bg-rgb), 0.95);
       --chat-pane-filter: var(--glass-filter-20);
     }
@@ -780,7 +783,7 @@
     }
     .desk-section-label {
       padding: 9px 12px 8px;
-      font-size: var(--text-size, 13px);
+      font-size: calc(var(--text-size, 13px) - 2px);
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--muted);
@@ -1271,7 +1274,7 @@
       }
       html:not([data-tauri-app="1"]) .desk-section-label {
         padding: 12px 16px 10px;
-        font-size: var(--text-size, 13px);
+        font-size: calc(var(--text-size, 13px) - 2px);
       }
       html:not([data-tauri-app="1"]) .desk-row-name {
         font-size: 18px;
@@ -1330,7 +1333,7 @@
     .desk-sidebar-hover-popover::-webkit-scrollbar { display: none; }
     .desk-sidebar-hover-list .desk-section-label {
       padding: 6px 12px 4px;
-      font-size: var(--text-size, 13px);
+      font-size: calc(var(--text-size, 13px) - 2px);
     }
     .desk-sidebar-hover-list .desk-session-row {
       border-radius: 8px;
@@ -1350,4 +1353,26 @@
     }
     .desk-sidebar-hover-list .desk-row-preview {
       line-height: 1.25;
+    }
+
+    .desk-row-hover-action[data-desk-hover-action="revive"]:hover,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible {
+      color: var(--session-revive-fg);
+    }
+    .desk-row-hover-action[data-desk-hover-action="revive"]:hover svg,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:hover polyline,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:hover path,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:hover line,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible svg,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible polyline,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible path,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible line {
+      color: var(--session-revive-fg);
+      stroke: var(--session-revive-fg);
+    }
+    .desk-row-hover-action[data-desk-hover-action="revive"]:active {
+      color: var(--session-revive-fg);
+    }
+    .desk-swipe-action-btn[data-desk-swipe-action="revive"] {
+      background: var(--session-revive-fg);
     }

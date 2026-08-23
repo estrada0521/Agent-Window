@@ -862,9 +862,7 @@
 
     function deskSessionOpenHref(row) {
       const name = row?.dataset.sessionName || "";
-      if (row?.classList.contains("archived") && _deskSelectedSessionName === name) {
-        return `/revive-session?session=${encodeURIComponent(name)}`;
-      }
+      
       return row?.dataset.openHref || "";
     }
 
@@ -935,11 +933,14 @@
       const sessionName = String(session.name);
       const archivedClass = archived ? " archived" : "";
       const selectedClass = _deskSelectedSessionName === sessionName ? " is-selected" : "";
-      const swipeActionLabel = archived ? "Delete" : "Archive";
-      const swipeActionRoute = archived ? "delete-archived" : "kill";
+      const isSelected = _deskSelectedSessionName === sessionName;
+      const showRevive = archived && isSelected;
+      const swipeActionLabel = showRevive ? "Revive" : (archived ? "Delete" : "Archive");
+      const swipeActionRoute = showRevive ? "revive" : (archived ? "delete-archived" : "kill");
       const trashSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
       const killSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`;
-      const actionSvg = archived ? trashSvg : killSvg;
+      const reviveSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`;
+      const actionSvg = showRevive ? reviveSvg : (archived ? trashSvg : killSvg);
       const runningClass = !archived && session.is_running ? " is-running" : "";
       const previewText = String(session.latest_message_preview || "").trim();
       const previewSender = String(session.latest_message_sender || "").trim();
@@ -1461,7 +1462,12 @@
           const sessionName = row?.dataset.sessionName || "";
           const kind = hoverAction.dataset.deskHoverAction || "";
           if (sessionName && kind) {
-            void runDeskContextAction(sessionName, kind);
+            if (kind === "revive") {
+              const href = `/revive-session?session=${encodeURIComponent(sessionName)}`;
+              openSessionFrame(href, sessionName);
+            } else {
+              void runDeskContextAction(sessionName, kind);
+            }
           }
           return;
         }
