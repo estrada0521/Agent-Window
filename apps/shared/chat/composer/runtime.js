@@ -42,8 +42,10 @@
     const composerShellEl = document.querySelector(".composer-shell");
     if (attachBtn && attachInput && attachPreviewRow) {
       const addCard = (file, attachment) => {
-        const card = document.createElement("div");
+        const card = document.createElement("button");
+        card.type = "button";
         card.className = "attach-card";
+        card.setAttribute("aria-label", `Remove ${file.name}`);
         if (file.type.startsWith("image/")) {
           const img = document.createElement("img");
           img.className = "attach-card-thumb";
@@ -56,15 +58,7 @@
           ext.textContent = file.name.split(".").pop().slice(0, 5) || "FILE";
           card.appendChild(ext);
         }
-
-        const rmBtn = document.createElement("button");
-        rmBtn.type = "button";
-        rmBtn.className = "attach-card-remove";
-        rmBtn.setAttribute("aria-label", "Remove");
-        rmBtn.textContent = "\u2715";
-        rmBtn.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
+        card.addEventListener("click", () => {
           pendingAttachments = pendingAttachments.filter((a) => a !== attachment);
           card.remove();
           if (!attachPreviewRow.children.length) attachPreviewRow.style.display = "none";
@@ -76,7 +70,6 @@
             }).catch(() => {});
           }
         });
-        card.appendChild(rmBtn);
         attachPreviewRow.appendChild(card);
         attachPreviewRow.style.display = "flex";
       };
