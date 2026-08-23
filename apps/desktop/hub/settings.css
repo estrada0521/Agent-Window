@@ -63,7 +63,7 @@
     }
     .field + .field { margin-top: 16px; }
     .label { display:block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-    select, input[type="text"], input[type="number"], textarea {
+    select, input[type="number"] {
       width: 100%;
       border: 0.5px solid var(--line-strong);
       color: var(--fg);
@@ -79,27 +79,16 @@
     select {
       background: transparent;
     }
-    input[type="text"], input[type="number"], textarea {
+    input[type="number"] {
       background: var(--panel-2);
-    }
-    textarea.message-font-input {
-      resize: vertical;
-      min-height: 5.5em;
-      font-family: var(--font-code);
-      font-size: 12px;
-      line-height: 1.45;
-      font-weight: 400;
-      cursor: text;
     }
     #text_size {
       background: transparent;
     }
-    select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+    select:focus, input[type="number"]:focus {
       border-color: rgba(255,255,255,0.22);
     }
-    html[data-theme="dark"] input[type="text"],
-    html[data-theme="dark"] input[type="number"],
-    html[data-theme="dark"] textarea {
+    html[data-theme="dark"] input[type="number"] {
       background: rgba(20, 20, 20, 0.6);
       backdrop-filter: blur(20px) saturate(160%);
       -webkit-backdrop-filter: blur(20px) saturate(160%);
