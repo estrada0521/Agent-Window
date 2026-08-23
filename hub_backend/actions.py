@@ -176,11 +176,7 @@ def post_restart_hub(handler, _parsed, ctx) -> None:
             ctx["release_restart_hold_fn"]()
 
 
-def post_settings(handler, parsed, ctx) -> None:
+def post_settings(handler, _parsed, ctx) -> None:
     data = handler._read_form()
     save_hub_settings(data)
-    qs = parse_qs(parsed.query)
-    if qs.get("embed", ["0"])[0] == "1":
-        handler._redirect("/settings?embed=1&saved=1")
-        return
-    handler._redirect("/settings?saved=1")
+    handler._send_json(200, {"ok": True})

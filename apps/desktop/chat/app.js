@@ -589,6 +589,11 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         }
         return;
       }
+      if (event.data.type === "hub-text-size-changed") {
+        const px = Number(event.data.textSize);
+        if (Number.isFinite(px)) document.documentElement.style.setProperty("--text-size", `${px}px`);
+        return;
+      }
       if (event.data.type === "desktop-panel-sync-request") {
         notifyParentPanelState();
         return;
@@ -608,6 +613,45 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         toggleDesktopRightPanel();
       }
     });
+    (() => {
+      const TEXT_SIZE_MIN = 8;
+      const TEXT_SIZE_MAX = 16;
+      const TEXT_SIZE_DEFAULT = 12;
+      const currentTextSizePx = () => {
+        const raw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
+        return Number.isFinite(raw) ? raw : TEXT_SIZE_DEFAULT;
+      };
+      let persistTimer = 0;
+      const applyTextSizePx = (px) => {
+        const clamped = Math.max(TEXT_SIZE_MIN, Math.min(TEXT_SIZE_MAX, Math.round(px)));
+        document.documentElement.style.setProperty("--text-size", `${clamped}px`);
+        try {
+          window.parent?.postMessage({ type: "text-size-changed", textSize: clamped }, "*");
+        } catch (_) {}
+        clearTimeout(persistTimer);
+        persistTimer = setTimeout(() => {
+          fetch("/settings", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+            body: new URLSearchParams({ text_size: String(clamped) }).toString(),
+            cache: "no-store",
+          }).catch(() => {});
+        }, 200);
+      };
+      window.addEventListener("keydown", (event) => {
+        if (!(event.metaKey || event.ctrlKey)) return;
+        if (event.key === "=" || event.key === "+") {
+          event.preventDefault();
+          applyTextSizePx(currentTextSizePx() + 1);
+        } else if (event.key === "-" || event.key === "_") {
+          event.preventDefault();
+          applyTextSizePx(currentTextSizePx() - 1);
+        } else if (event.key === "0") {
+          event.preventDefault();
+          applyTextSizePx(TEXT_SIZE_DEFAULT);
+        }
+      });
+    })();
     let workspaceSyncEventSource = null;
     let workspaceSyncLastSeq = 0;
     let workspaceSyncLastGitVersion = 0;

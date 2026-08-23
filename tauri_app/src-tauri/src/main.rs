@@ -5,15 +5,15 @@ use std::io::Read;
 use std::process::{Child, Command, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
-use tauri::menu::{MenuBuilder, NativeIcon, SubmenuBuilder};
+use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, NativeIcon, SubmenuBuilder};
 use tauri::webview::WebviewWindowBuilder;
 use tauri::Manager;
 
 const DARK_BG: &str = "rgb(4,4,4)";
 
 use window_vibrancy::{
-    apply_liquid_glass, apply_vibrancy, NSGlassEffectViewStyle, NSVisualEffectMaterial,
-    NSVisualEffectState,
+    apply_liquid_glass, apply_vibrancy, clear_liquid_glass, clear_vibrancy, NSGlassEffectViewStyle,
+    NSVisualEffectMaterial, NSVisualEffectState,
 };
 
 #[derive(Debug, serde::Deserialize)]
@@ -26,6 +26,14 @@ struct ChatHeaderMenuPayload {
     remove_agents: Vec<String>,
     #[serde(default)]
     agent_icons: HashMap<String, Vec<u8>>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AppearanceMenuPayload {
+    x: f64,
+    y: f64,
+    theme_desktop: String,
 }
 
 fn agent_base_name(name: &str) -> String {
@@ -44,6 +52,7 @@ struct NativeMenuActionPayload {
     action: String,
     mode: Option<String>,
     agent: Option<String>,
+    theme: Option<String>,
 }
 
 const INJECT_JS: &str = include_str!("inject.js");
@@ -160,6 +169,40 @@ fn show_chat_header_menu(
         .map_err(|err| err.to_string())
 }
 
+#[tauri::command]
+fn show_appearance_menu(
+    window: tauri::WebviewWindow,
+    app: tauri::AppHandle,
+    payload: AppearanceMenuPayload,
+) -> Result<(), String> {
+    let current = payload.theme_desktop.as_str();
+    let theme_item = |value: &str, label: &str| -> Result<tauri::menu::CheckMenuItem<_>, String> {
+        CheckMenuItemBuilder::with_id(format!("{}theme:{}", NATIVE_MENU_PREFIX, value), label)
+            .checked(current == value)
+            .build(&app)
+            .map_err(|err| err.to_string())
+    };
+    let system_item = theme_item("system", "System")?;
+    let light_item = theme_item("light", "Light")?;
+    let dark_item = theme_item("dark", "Dark")?;
+
+    let theme_submenu = SubmenuBuilder::with_id(&app, format!("{}submenu:theme", NATIVE_MENU_PREFIX), "Theme")
+        .item(&system_item)
+        .item(&light_item)
+        .item(&dark_item)
+        .build()
+        .map_err(|err| err.to_string())?;
+
+    let menu = MenuBuilder::new(&app)
+        .item(&theme_submenu)
+        .build()
+        .map_err(|err| err.to_string())?;
+
+    window
+        .popup_menu_at(&menu, tauri::LogicalPosition::new(payload.x, payload.y))
+        .map_err(|err| err.to_string())
+}
+
 fn emit_native_menu_action(app: &tauri::AppHandle, id: &str) {
     if !id.starts_with(NATIVE_MENU_PREFIX) {
         return;
@@ -170,18 +213,28 @@ fn emit_native_menu_action(app: &tauri::AppHandle, id: &str) {
             action: action.to_string(),
             mode: None,
             agent: None,
+            theme: None,
         }
     } else if let Some(agent) = rest.strip_prefix("add:") {
         NativeMenuActionPayload {
             action: "agent".to_string(),
             mode: Some("add".to_string()),
             agent: Some(decode_menu_component(agent)),
+            theme: None,
         }
     } else if let Some(agent) = rest.strip_prefix("remove:") {
         NativeMenuActionPayload {
             action: "agent".to_string(),
             mode: Some("remove".to_string()),
             agent: Some(decode_menu_component(agent)),
+            theme: None,
+        }
+    } else if let Some(theme) = rest.strip_prefix("theme:") {
+        NativeMenuActionPayload {
+            action: "theme".to_string(),
+            mode: None,
+            agent: None,
+            theme: Some(theme.to_string()),
         }
     } else {
         return;
@@ -292,6 +345,14 @@ fn wait_for_child_success(child: &mut Child, timeout: Duration) -> bool {
 }
 
 fn apply_app_vibrancy(window: &tauri::WebviewWindow) {
+    // apply_liquid_glass()/apply_vibrancy() both unconditionally add a new
+    // effect view on every call rather than replacing an existing one, so a
+    // repeated call (e.g. on refocus) stacks another translucent layer on
+    // top instead of refreshing the material in place. Clearing first makes
+    // reapplication idempotent; without this the window visibly whitens out
+    // a little more each time it regains focus.
+    let _ = clear_liquid_glass(window);
+    let _ = clear_vibrancy(window);
     if let Err(err) = apply_liquid_glass(window, NSGlassEffectViewStyle::Clear, None, Some(26.0)) {
         eprintln!("[app] liquid glass apply failed: {}", err);
         if let Err(err) = apply_vibrancy(
@@ -368,7 +429,7 @@ fn reveal_main_window(app: &tauri::AppHandle) {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![show_chat_header_menu])
+        .invoke_handler(tauri::generate_handler![show_chat_header_menu, show_appearance_menu])
         .on_menu_event(|app, event| {
             emit_native_menu_action(app, event.id().as_ref());
         })
@@ -402,6 +463,13 @@ fn main() {
                     // repaint (large attachment thumbnails have triggered it),
                     // leaving the desktop showing through. Reapplying on focus
                     // self-heals it without requiring a full app restart.
+                    //
+                    // Deliberately NOT reapplying on WindowEvent::ThemeChanged:
+                    // tried that once as a fix for a glass-turns-white bug on
+                    // OS theme change, and it did not fix it -- the bug was
+                    // already present in the build before this branch existed,
+                    // so the real cause is elsewhere. Left as a known-tried,
+                    // ineffective idea rather than silently dropped.
                     apply_app_vibrancy(&traffic_window);
                 }
                 if matches!(

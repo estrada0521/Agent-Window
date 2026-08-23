@@ -387,10 +387,6 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
 _HUB_SHARED_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "shared" / "hub" / "templates"
 _HUB_DESKTOP_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "desktop" / "hub"
 _HUB_MOBILE_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "mobile" / "hub"
-_HUB_SETTINGS_TEMPLATE = _expand_hub_template_includes(
-    (_HUB_DESKTOP_TEMPLATE_DIR / "settings.html").read_text(),
-    [_HUB_DESKTOP_TEMPLATE_DIR, _HUB_SHARED_TEMPLATE_DIR],
-)
 _hub_pages = _build_hub_html_pages_impl(
     desktop_template_dir=_HUB_DESKTOP_TEMPLATE_DIR,
     mobile_template_dir=_HUB_MOBILE_TEMPLATE_DIR,
@@ -405,65 +401,6 @@ _hub_pages = _build_hub_html_pages_impl(
 )
 HUB_HOME_DESKTOP_HTML = _hub_pages["hub_home_html_desktop"]
 HUB_HOME_MOBILE_HTML = _hub_pages["hub_home_html_mobile"]
-
-
-def hub_settings_html(saved=False, variant="desktop"):
-    import html
-    from backend_core.access.settings import (
-        normalize_theme_desktop,
-        resolve_theme,
-    )
-
-    settings = load_hub_settings()
-
-    text_size = int(settings.get("text_size", 13) or 13)
-
-    theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", "dark"))
-    render_theme = resolve_theme(settings, variant=variant)
-    
-    theme_desktop_choices = (
-        ("system", "System"),
-        ("light", "Light"),
-        ("dark", "Dark"),
-    )
-    theme_desktop_options = "".join(
-        f'<option value="{html.escape(value)}"' + (' selected' if value == theme_desktop else '') + f'>{html.escape(label)}</option>'
-        for value, label in theme_desktop_choices
-    )
-    
-    notice = (
-        '<div style="margin:0 0 16px;padding:10px 14px;border:1px solid var(--line);'
-        'border-radius:8px;color:var(--fg);font-size:13px;">Settings saved.</div>'
-        if saved else ""
-    )
-    
-    header_html = render_page_header(
-        title_href="/",
-        title_id="pageTitleLink",
-        actions_html=DEFAULT_HUB_HEADER_ACTIONS,
-        panels_html=DEFAULT_HUB_HEADER_PANELS,
-    )
-
-    page = (
-        _HUB_SETTINGS_TEMPLATE
-        .replace("__HUB_MANIFEST_URL__", _PWA_HUB_MANIFEST_URL)
-        .replace("__PWA_ICON_192_URL__", _PWA_ICON_192_URL)
-        .replace("__APPLE_TOUCH_ICON_URL__", _PWA_APPLE_TOUCH_ICON_URL)
-        .replace("__NOTICE_HTML__", notice)
-        .replace("__TEXT_SIZE__", str(text_size))
-        .replace("__THEME_DESKTOP_OPTIONS__", theme_desktop_options)
-        .replace("__VIEW_VARIANT__", "desktop")
-        .replace("__HUB_HEADER_CSS__", _PAGE_HEADER_CSS)
-        .replace("__HUB_HEADER_HTML__", header_html)
-        .replace("__HUB_HEADER_JS__", _PAGE_HEADER_JS)
-    )
-    
-    from hub_backend.server_helpers import apply_hub_page_branding
-    page = apply_hub_page_branding(page, page_title=f"Settings · {APP_DISPLAY_NAME}")
-    
-    render_settings = dict(settings, theme=render_theme)
-    return apply_color_tokens(page, settings=render_settings)
-
 
 
 def _hub_action_context() -> dict[str, object]:
@@ -486,7 +423,6 @@ _GET_ROUTE_HANDLERS = {
     "/delete-archived-session": _get_delete_archived_session_action,
     "/": "_get_home",
     "/index.html": "_get_home",
-    "/settings": "_get_settings",
 }
 
 _POST_ROUTE_HANDLERS = {
@@ -627,14 +563,6 @@ class Handler(BaseHTTPRequestHandler):
             page = page.replace("__TEXT_SIZE_PX__", f'{int(settings["text_size"])}px')
         render_settings = settings_for_hub_render(settings, variant=variant)
         self._send_html(200, apply_color_tokens(page, settings=render_settings))
-
-    def _get_settings(self, parsed):
-        variant = request_view_variant(headers=self.headers, query_string=parsed.query)
-        if variant == "mobile":
-            self._redirect("/")
-            return
-        saved = (parse_qs(parsed.query).get("saved", ["0"])[0] == "1")
-        self._send_html(200, hub_settings_html(saved=saved, variant=variant))
 
 
 

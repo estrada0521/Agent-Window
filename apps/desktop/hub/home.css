@@ -252,8 +252,7 @@
       transition: grid-template-columns 220ms cubic-bezier(0.22, 1, 0.36, 1), column-gap 220ms cubic-bezier(0.22, 1, 0.36, 1);
     }
     html[data-tauri-app="1"] .desk-workbench,
-    html[data-tauri-app="1"] .desk-chat-frame,
-    html[data-tauri-app="1"] .desk-sidebar-frame {
+    html[data-tauri-app="1"] .desk-chat-frame {
       background: transparent;
     }
     .desk-workbench,
@@ -265,8 +264,7 @@
     .desk-workbench-outline {
       display: none;
     }
-    .desk-workbench.sidebar-open,
-    .desk-workbench.settings-open {
+    .desk-workbench.sidebar-open {
       --desk-sidebar-gap: 0px;
       grid-template-columns: var(--desk-sidebar-width) minmax(0, 1fr);
     }
@@ -287,8 +285,7 @@
       isolation: isolate;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
     }
-    .desk-workbench.sidebar-open .desk-sidebar,
-    .desk-workbench.settings-open .desk-sidebar {
+    .desk-workbench.sidebar-open .desk-sidebar {
       width: var(--desk-sidebar-width);
       opacity: 1;
       pointer-events: auto;
@@ -369,8 +366,7 @@
     .desk-sidebar-shell * {
       color: inherit;
     }
-    .desk-workbench.sidebar-open .desk-main,
-    .desk-workbench.settings-open .desk-main {
+    .desk-workbench.sidebar-open .desk-main {
       display: flex;
       pointer-events: auto;
       border-radius: 0 26px 26px 0;
@@ -702,7 +698,6 @@
       box-sizing: border-box;
       padding-top: 0;
     }
-    .desk-sidebar-pane,
     .desk-sidebar-sessions {
       grid-area: 1 / 1;
       min-height: 0;
@@ -710,54 +705,17 @@
       overflow-y: auto;
       overflow-x: hidden;
       scrollbar-width: none;
-    }
-    .desk-sidebar-sessions {
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
-    .desk-sidebar-pane::-webkit-scrollbar,
     .desk-sidebar-sessions::-webkit-scrollbar {
       display: none;
     }
-    .desk-sidebar-pane[hidden],
     .desk-sidebar-sessions[hidden] {
       display: none;
       visibility: hidden;
       pointer-events: none;
-    }
-    .desk-sidebar-pane {
-      display: flex;
-      flex-direction: column;
-      background: var(--bg);
-    }
-    .desk-sidebar-pane:not([hidden]) {
-      z-index: 1;
-    }
-    .desk-sidebar-pane.settings-mode .desk-sidebar-pane-head {
-      display: none;
-    }
-    .desk-sidebar-pane-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 8px 16px 12px;
-      border-bottom: none;
-    }
-    .desk-sidebar-pane-title {
-      font-size: 18px;
-      line-height: 1.05;
-      font-weight: 650;
-      letter-spacing: -0.03em;
-      color: var(--fg);
-    }
-    .desk-sidebar-frame {
-      flex: 1;
-      min-height: 0;
-      width: 100%;
-      border: none;
-      background: var(--bg);
     }
     .desk-session-list {
       flex: 1;
@@ -815,14 +773,9 @@
     .desk-sidebar-sessions,
     .desk-session-list,
     .desk-new-session-section,
-    .desk-sidebar-pane,
-    .desk-sidebar-pane-head,
     .desk-swipe-row,
     .desk-swipe-track,
     .desk-swipe-action-rail {
-      background: transparent;
-    }
-    .desk-sidebar-frame {
       background: transparent;
     }
     .desk-section-label {
@@ -1280,8 +1233,7 @@
     }
     @media (max-width: 480px) {
       html:not([data-tauri-app="1"]) .desk-workbench,
-      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open,
-      html:not([data-tauri-app="1"]) .desk-workbench.settings-open {
+      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open {
         display: block;
       }
       html:not([data-tauri-app="1"]) .desk-sidebar {
@@ -1305,16 +1257,14 @@
       html:not([data-tauri-app="1"]) .desk-sidebar-shell::before {
         display: none;
       }
-      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open .desk-sidebar,
-      html:not([data-tauri-app="1"]) .desk-workbench.settings-open .desk-sidebar {
+      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open .desk-sidebar {
         width: 100vw;
         transform: translateX(0);
       }
       html:not([data-tauri-app="1"]) .desk-main {
         transition: none;
       }
-      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open .desk-main,
-      html:not([data-tauri-app="1"]) .desk-workbench.settings-open .desk-main {
+      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open .desk-main {
         display: none;
         pointer-events: none;
       }
