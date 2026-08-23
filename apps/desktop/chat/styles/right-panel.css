@@ -700,11 +700,11 @@
       gap: 0;
     }
     .git-commit-file-section-title {
-      padding: 12px 10px 4px;
-      font-size: 11px;
-      font-weight: 600;
+      padding: 9px 12px 8px;
+      font-size: 10px;
+      font-weight: inherit;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
       color: var(--muted);
       opacity: 1;
     }
