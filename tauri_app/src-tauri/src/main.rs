@@ -396,6 +396,14 @@ fn main() {
             center_traffic_lights(&window);
             let traffic_window = window.clone();
             window.on_window_event(move |event| {
+                if let tauri::WindowEvent::Focused(true) = event {
+                    // The NSVisualEffectView backing occasionally drops out from
+                    // under the transparent window during a heavy WebView
+                    // repaint (large attachment thumbnails have triggered it),
+                    // leaving the desktop showing through. Reapplying on focus
+                    // self-heals it without requiring a full app restart.
+                    apply_app_vibrancy(&traffic_window);
+                }
                 if matches!(
                     event,
                     tauri::WindowEvent::Resized(_)
