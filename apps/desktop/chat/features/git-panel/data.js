@@ -13,10 +13,9 @@
     const dpBootstrapPinnedGitSummary = async () => {
       if (!hasDesktopRightPanelOverlay() || !dpGitSummaryPinned) return;
       try {
-        const data = await fetchGitOverview({ offset: 0, refresh: true });
+        const data = await fetchGitOverview({ offset: 0, refresh: true, summary: true });
         dpGitHeaderSummaryState = dpBuildSummaryState(data);
         dpApplyGitOverviewHeader();
-        gitSession.setFingerprint(gitOverviewFingerprint(data));
       } catch (_) {}
     };
     const dpOnSessionSummaryPinReload = ({ force = false } = {}) => {

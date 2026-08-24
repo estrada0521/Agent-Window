@@ -109,8 +109,13 @@ class WorkspaceSyncApi:
     def reveal_in_finder(self, rel: str):
         return self.file_runtime.reveal_in_finder(rel)
 
-    def git_overview(self, *, offset=0, limit=50, force_refresh: bool = False):
-        return workspace_git.git_overview(offset=offset, limit=limit, force_refresh=force_refresh)
+    def git_overview(self, *, offset=0, limit=50, force_refresh: bool = False, include_commits: bool = True):
+        return workspace_git.git_overview(
+            offset=offset,
+            limit=limit,
+            force_refresh=force_refresh,
+            include_commits=include_commits,
+        )
 
     def git_diff_files(self, *, commit_hash: str = "", scope: str = ""):
         return workspace_git.git_diff_files(commit_hash=commit_hash, scope=scope)

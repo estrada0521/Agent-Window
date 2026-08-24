@@ -319,11 +319,12 @@ def _get_git_overview(handler, parsed, ctx) -> None:
     raw_offset = (qs.get("offset", ["0"])[0] or "0").strip()
     raw_limit = (qs.get("limit", ["50"])[0] or "50").strip()
     force_refresh = (qs.get("refresh", [""])[0] or "").lower() in ("1", "true", "yes")
+    summary_only = (qs.get("summary", [""])[0] or "").lower() in ("1", "true", "yes")
     try:
         offset = int(raw_offset)
         limit = int(raw_limit)
         data = ctx["workspace_sync_api"].git_overview(
-            offset=offset, limit=limit, force_refresh=force_refresh
+            offset=offset, limit=limit, force_refresh=force_refresh, include_commits=not summary_only
         )
         body = json.dumps(data, ensure_ascii=True).encode("utf-8")
     except Exception as exc:

@@ -22,17 +22,18 @@
       ).join(","),
       gitStatusLinesDigest(data),
     ].join("|");
-    const gitOverviewQuery = ({ offset = 0, limit = GIT_PANEL_BATCH, refresh = false } = {}) => {
+    const gitOverviewQuery = ({ offset = 0, limit = GIT_PANEL_BATCH, refresh = false, summary = false } = {}) => {
       const params = new URLSearchParams({
         offset: String(offset),
         limit: String(limit),
       });
       if (refresh) params.set("refresh", "1");
+      if (summary) params.set("summary", "1");
       return params;
     };
-    const fetchGitOverview = async ({ offset = 0, limit = GIT_PANEL_BATCH, refresh = false } = {}) => {
+    const fetchGitOverview = async ({ offset = 0, limit = GIT_PANEL_BATCH, refresh = false, summary = false } = {}) => {
       const res = await fetchWithTimeout(
-        `/git-overview?${gitOverviewQuery({ offset, limit, refresh })}`,
+        `/git-overview?${gitOverviewQuery({ offset, limit, refresh, summary })}`,
         {},
         GIT_PANEL_FETCH_MS,
       );
