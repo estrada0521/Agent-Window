@@ -231,9 +231,6 @@
       padding: 8px 7px 10px 7px;
       border-radius: 28px;
     }
-    html[data-mobile="1"] .composer-main-shell::before {
-      content: none;
-    }
     main {
       --chat-scrollbar-width: 2px;
       --chat-scrollbar-layout-width: 2px;
