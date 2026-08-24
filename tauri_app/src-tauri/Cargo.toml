@@ -11,6 +11,7 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["macos-private-api", "devtools", "tray-icon"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+image = { version = "0.25", default-features = false, features = ["png"] }
 window-vibrancy = "0.7.1"
 url = "2.5"
 
@@ -18,7 +19,7 @@ url = "2.5"
 objc2 = "0.6.4"
 objc2-app-kit = { version = "0.3", default-features = false, features = [
     "std", "NSBezierPath", "NSColor", "NSFont", "NSImage",
-    "NSMenuItem", "NSMenu", "NSResponder", "NSView", "NSScreen",
+    "NSBitmapImageRep", "NSImageRep", "NSMenuItem", "NSMenu", "NSResponder", "NSView", "NSScreen", "NSWorkspace",
     "NSAttributedString", "NSStringDrawing", "objc2-core-foundation",
 ] }
 objc2-foundation = { version = "0.3", default-features = false, features = [

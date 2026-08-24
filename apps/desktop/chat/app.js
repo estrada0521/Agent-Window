@@ -611,6 +611,18 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       // (this frame and the Hub) racing to read-modify-write the same
       // setting is exactly what caused the size to end up wrong on disk.
       window.addEventListener("keydown", (event) => {
+        if (event.metaKey && event.altKey) {
+          if (event.code === "KeyT") {
+            event.preventDefault();
+            window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openTerminal" }, "*");
+            return;
+          }
+          if (event.code === "KeyR") {
+            event.preventDefault();
+            window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openFinder" }, "*");
+            return;
+          }
+        }
         if (!(event.metaKey || event.ctrlKey)) return;
         // event.code (physical key) instead of event.key: with metaKey held,
         // some WebViews don't reliably report the shift-modified character

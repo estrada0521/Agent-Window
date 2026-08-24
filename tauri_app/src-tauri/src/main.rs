@@ -1,11 +1,18 @@
-use objc2_app_kit::{NSView, NSWindow, NSWindowButton};
+use objc2_app_kit::{
+    NSBitmapImageFileType, NSBitmapImageRep, NSView, NSWindow, NSWindowButton, NSWorkspace,
+};
+use objc2_foundation::{NSDictionary, NSString};
 use std::collections::HashMap;
-use std::path::Path;
 use std::io::Read;
+use std::path::Path;
 use std::process::{Child, Command, Stdio};
+use std::sync::OnceLock;
 use std::thread;
 use std::time::{Duration, Instant};
-use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, NativeIcon, SubmenuBuilder};
+use tauri::menu::{
+    CheckMenuItemBuilder, IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, NativeIcon,
+    SubmenuBuilder,
+};
 use tauri::webview::WebviewWindowBuilder;
 use tauri::Manager;
 
@@ -34,6 +41,7 @@ struct AppearanceMenuPayload {
     x: f64,
     y: f64,
     theme_desktop: String,
+    text_size: i32,
 }
 
 fn agent_base_name(name: &str) -> String {
@@ -92,6 +100,49 @@ fn decode_menu_component(value: &str) -> String {
     String::from_utf8_lossy(&out).to_string()
 }
 
+fn system_app_icon(path: &str) -> Result<tauri::image::Image<'static>, String> {
+    let path = NSString::from_str(path);
+    let image = NSWorkspace::sharedWorkspace().iconForFile(&path);
+    let tiff = image
+        .TIFFRepresentation()
+        .ok_or_else(|| format!("could not render system app icon: {}", path))?;
+    let bitmap = NSBitmapImageRep::imageRepWithData(&tiff)
+        .ok_or_else(|| format!("could not decode system app icon: {}", path))?;
+    let properties = NSDictionary::new();
+    let png = unsafe {
+        bitmap.representationUsingType_properties(NSBitmapImageFileType::PNG, &properties)
+    }
+    .ok_or_else(|| format!("could not encode system app icon: {}", path))?;
+    let decoded = image::load_from_memory_with_format(&png.to_vec(), image::ImageFormat::Png)
+        .map_err(|err| err.to_string())
+        .map(image::DynamicImage::into_rgba8)?;
+    let (width, height) = decoded.dimensions();
+    Ok(tauri::image::Image::new_owned(
+        decoded.into_raw(),
+        width,
+        height,
+    ))
+}
+
+struct SystemAppIcons {
+    terminal: tauri::image::Image<'static>,
+    finder: tauri::image::Image<'static>,
+}
+
+static SYSTEM_APP_ICONS: OnceLock<Result<SystemAppIcons, String>> = OnceLock::new();
+
+fn system_app_icons() -> Result<&'static SystemAppIcons, String> {
+    SYSTEM_APP_ICONS
+        .get_or_init(|| {
+            Ok(SystemAppIcons {
+                terminal: system_app_icon("/System/Applications/Utilities/Terminal.app")?,
+                finder: system_app_icon("/System/Library/CoreServices/Finder.app")?,
+            })
+        })
+        .as_ref()
+        .map_err(Clone::clone)
+}
+
 #[tauri::command]
 fn show_chat_header_menu(
     window: tauri::WebviewWindow,
@@ -147,17 +198,25 @@ fn show_chat_header_menu(
     }
     let remove_submenu = remove_builder.build().map_err(|err| err.to_string())?;
 
+    let icons = system_app_icons()?;
+    let terminal_item = IconMenuItemBuilder::with_id(
+        format!("{}action:openTerminal", NATIVE_MENU_PREFIX),
+        "Terminal",
+    )
+    .icon(icons.terminal.clone())
+    .accelerator("Alt+Cmd+T")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+    let finder_item =
+        IconMenuItemBuilder::with_id(format!("{}action:openFinder", NATIVE_MENU_PREFIX), "Finder")
+            .icon(icons.finder.clone())
+            .accelerator("Alt+Cmd+R")
+            .build(&app)
+            .map_err(|err| err.to_string())?;
+
     let menu = MenuBuilder::new(&app)
-        .native_icon(
-            format!("{}action:openTerminal", NATIVE_MENU_PREFIX),
-            "Terminal",
-            NativeIcon::Computer,
-        )
-        .native_icon(
-            format!("{}action:openFinder", NATIVE_MENU_PREFIX),
-            "Finder",
-            NativeIcon::Folder,
-        )
+        .item(&terminal_item)
+        .item(&finder_item)
         .separator()
         .item(&add_submenu)
         .item(&remove_submenu)
@@ -186,15 +245,46 @@ fn show_appearance_menu(
     let light_item = theme_item("light", "Light")?;
     let dark_item = theme_item("dark", "Dark")?;
 
-    let theme_submenu = SubmenuBuilder::with_id(&app, format!("{}submenu:theme", NATIVE_MENU_PREFIX), "Theme")
-        .item(&system_item)
-        .item(&light_item)
-        .item(&dark_item)
-        .build()
-        .map_err(|err| err.to_string())?;
+    let theme_submenu = SubmenuBuilder::with_id(
+        &app,
+        format!("{}submenu:theme", NATIVE_MENU_PREFIX),
+        "Theme",
+    )
+    .item(&system_item)
+    .item(&light_item)
+    .item(&dark_item)
+    .build()
+    .map_err(|err| err.to_string())?;
+
+    let actual_size = MenuItemBuilder::with_id(
+        format!("{}textSize:actual", NATIVE_MENU_PREFIX),
+        "Actual Size",
+    )
+    .enabled(payload.text_size != 12)
+    .accelerator("Cmd+0")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+    let zoom_in = MenuItemBuilder::with_id(
+        format!("{}textSize:increase", NATIVE_MENU_PREFIX),
+        "Zoom In",
+    )
+    .accelerator("Cmd+Equal")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+    let zoom_out = MenuItemBuilder::with_id(
+        format!("{}textSize:decrease", NATIVE_MENU_PREFIX),
+        "Zoom Out",
+    )
+    .accelerator("Cmd+-")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
 
     let menu = MenuBuilder::new(&app)
         .item(&theme_submenu)
+        .separator()
+        .item(&actual_size)
+        .item(&zoom_in)
+        .item(&zoom_out)
         .build()
         .map_err(|err| err.to_string())?;
 
@@ -235,6 +325,13 @@ fn emit_native_menu_action(app: &tauri::AppHandle, id: &str) {
             mode: None,
             agent: None,
             theme: Some(theme.to_string()),
+        }
+    } else if let Some(mode) = rest.strip_prefix("textSize:") {
+        NativeMenuActionPayload {
+            action: "textSize".to_string(),
+            mode: Some(mode.to_string()),
+            agent: None,
+            theme: None,
         }
     } else {
         return;
@@ -428,6 +525,9 @@ fn reveal_main_window(app: &tauri::AppHandle) {
 }
 
 fn main() {
+    if let Err(err) = system_app_icons() {
+        panic!("could not load required macOS app icons: {}", err);
+    }
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![show_chat_header_menu, show_appearance_menu])
         .on_menu_event(|app, event| {

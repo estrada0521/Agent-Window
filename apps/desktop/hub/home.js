@@ -105,7 +105,24 @@
         _deskChatFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
       } catch (_) {}
     }
+    function dispatchDeskNativeMenuAction(payload) {
+      try {
+        _deskChatFrame?.contentWindow?.postMessage({ type: "native-menu-action", payload }, "*");
+      } catch (_) {}
+    }
     window.addEventListener("keydown", (event) => {
+      if (event.metaKey && event.altKey) {
+        if (event.code === "KeyT") {
+          event.preventDefault();
+          dispatchDeskNativeMenuAction({ action: "openTerminal" });
+          return;
+        }
+        if (event.code === "KeyR") {
+          event.preventDefault();
+          dispatchDeskNativeMenuAction({ action: "openFinder" });
+          return;
+        }
+      }
       if (!(event.metaKey || event.ctrlKey)) return;
       // event.code (physical key) instead of event.key: with metaKey held,
       // some WebViews don't reliably report the shift-modified character for
@@ -137,6 +154,7 @@
             x: Math.round(rect.left || 0),
             y: Math.round((rect.bottom || 0) + 2),
             themeDesktop: document.documentElement.dataset.themeDesktop || "dark",
+            textSize: currentDeskTextSizePx(),
           },
         });
       } catch (_) {
@@ -147,6 +165,17 @@
 
     window.addEventListener("native-menu-action", (event) => {
       const detail = event.detail || {};
+      if (detail.action === "textSize") {
+        const mode = String(detail.mode || "");
+        if (mode === "increase") {
+          applyDeskTextSizeAndBroadcast(currentDeskTextSizePx() + 1);
+        } else if (mode === "decrease") {
+          applyDeskTextSizeAndBroadcast(currentDeskTextSizePx() - 1);
+        } else if (mode === "actual") {
+          applyDeskTextSizeAndBroadcast(DESK_TEXT_SIZE_DEFAULT);
+        }
+        return;
+      }
       if (detail.action === "theme") {
         const theme = String(detail.theme || "").trim().toLowerCase();
         if (theme !== "system" && theme !== "light" && theme !== "dark") return;
@@ -154,12 +183,7 @@
         persistHubSettings({ theme_desktop: theme });
         return;
       }
-      try {
-        _deskChatFrame?.contentWindow?.postMessage({
-          type: "native-menu-action",
-          payload: detail,
-        }, "*");
-      } catch (_) {}
+      dispatchDeskNativeMenuAction(detail);
     });
 
     let _hubSessionsCache = { active: [], warnings: [], archived: [] };
@@ -1284,6 +1308,10 @@
           const delta = Number(event.data.delta) || 0;
           if (delta) applyDeskTextSizeAndBroadcast(currentDeskTextSizePx() + delta);
         }
+        return;
+      }
+      if (event.data && event.data.type === "desktop-menu-shortcut") {
+        dispatchDeskNativeMenuAction({ action: String(event.data.action || "") });
         return;
       }
       if (event.data && event.data.type === "open-hub-path") {
