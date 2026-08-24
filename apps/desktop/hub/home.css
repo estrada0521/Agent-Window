@@ -1160,21 +1160,7 @@
       pointer-events: none;
     }
     .desk-chat-shell.loading::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 18px;
-      height: 18px;
-      margin-left: -9px;
-      margin-top: -9px;
-      border-radius: 999px;
-      border: 2px solid var(--icon-muted);
-      border-top-color: var(--icon-fg);
-      animation: desk-inline-loading-spin 800ms linear infinite;
-      z-index: 3;
-      pointer-events: none;
-      box-sizing: border-box;
+      display: none;
     }
     .desk-reload-shell {
       position: absolute;
