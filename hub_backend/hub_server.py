@@ -286,6 +286,10 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       -webkit-backdrop-filter: none;
       box-shadow: none;
     }}
+    @keyframes titleFadeIn {{
+      0% {{ opacity: 0; }}
+      100% {{ opacity: 1; }}
+    }}
     .launch-shell-title {{
       color: var(--launch-shell-title-fg, var(--fg));
       font-family: "Snell Roundhand", "Apple Chancery", cursive;
@@ -293,8 +297,9 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       font-weight: 200;
       letter-spacing: -0.04em;
       line-height: 1;
-      opacity: 1.00;
       white-space: nowrap;
+      opacity: 0;
+      animation: titleFadeIn 800ms ease-out forwards;
     }}
     html[data-view="mobile"] .launch-shell-title {{ display: none; }}
     html[data-view="desktop"] .launch-shell-spinner {{ display: none; }}

@@ -315,15 +315,16 @@
       left: 20px;
       margin: 0;
       padding: 0;
-      font-size: 18px;
+      font-size: 26px;
       color: var(--fg);
+      font-family: "Snell Roundhand", "Apple Chancery", cursive;
       pointer-events: none;
       z-index: 101;
-      transform: translateY(7px);
+      transform: translateY(3px);
     }
 
     .hub-mobile-tagline b {
-      font-weight: 700;
+      font-weight: 1000;
     }
 
     .mob-list-wrap {
