@@ -62,7 +62,7 @@
       --session-danger-fg: rgb(255, 59, 48);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --glass-filter-20: blur(20px) saturate(180%);
-      --mob-top-gradient-rgb: var(--bg-rgb);
+      --mob-top-gradient-rgb: __MOBILE_HUB_DARK_BG_CHANNELS__;
       --code-bg: rgba(255, 255, 255, 0.05);
     }
 
@@ -273,14 +273,12 @@
       position: relative;
       overflow: hidden;
       isolation: isolate;
-      background:
-        var(--liquid-glass-lg-sheen),
-        rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
+      background: var(--bg);
       border: 0.5px solid var(--liquid-glass-lg-border);
       border-radius: 999px;
       box-shadow: var(--liquid-glass-lg-shadow);
-      backdrop-filter: var(--liquid-glass-blur);
-      -webkit-backdrop-filter: var(--liquid-glass-blur);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
       -webkit-tap-highlight-color: transparent;
       transition:
         background 160ms ease,
@@ -300,9 +298,7 @@
     }
 
     .page-header .page-header-actions .page-menu-btn:active {
-      background:
-        var(--liquid-glass-lg-active-sheen),
-        rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
+      background: var(--session-hover-bg);
       border-color: var(--liquid-glass-lg-active-border);
       box-shadow: var(--liquid-glass-lg-active-shadow);
       border-radius: 999px;
