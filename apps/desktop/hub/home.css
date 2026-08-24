@@ -408,10 +408,10 @@
       top: 0;
       left: 0;
       right: calc(var(--page-side-pad, 14px) + var(--chrome-icon-btn-size, 28px) + 12px);
-      height: var(--tauri-drag-height);
+      height: var(--tauri-window-inset-top);
       z-index: 1205;
       background: transparent;
-      pointer-events: auto;
+      pointer-events: none;
     }
     .desk-floating-controls .desk-settings-icon-btn {
       display: inline-flex;

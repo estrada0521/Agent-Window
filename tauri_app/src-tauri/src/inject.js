@@ -14,21 +14,33 @@
     }
   `;
 
+  function isHubDocument(doc) {
+    try {
+      return !!doc?.getElementById("deskWorkbench");
+    } catch (_) {
+      return false;
+    }
+  }
+
   function ensureTopDragStrip(doc) {
     if (!doc || !doc.documentElement || !doc.body) return;
-    if (doc.documentElement.dataset.tauriRootWindow === "0") return;
-    let hasHeader = false;
-    try {
-      hasHeader = !!doc.querySelector(".page-header");
-    } catch (_) {}
-    if (!hasHeader) return;
+    if (!isHubDocument(doc)) return;
+    doc.documentElement.dataset.tauriRootWindow = "1";
+    if (doc.documentElement.dataset.tauriDragListener !== "1") {
+      doc.documentElement.dataset.tauriDragListener = "1";
+      doc.addEventListener("mousedown", (event) => {
+        if (event.button !== 0 || event.clientY > 26) return;
+        const target = event.target;
+        if (target?.closest?.("button, a, input, select, textarea, [role=button]")) return;
+        doc.defaultView?.__TAURI__?.window?.getCurrentWindow?.().startDragging?.().catch(() => {});
+      }, true);
+    }
     try {
       let strip = doc.getElementById("__ma-top-drag-strip");
       if (!strip) {
         strip = doc.createElement("div");
         strip.id = "__ma-top-drag-strip";
         strip.className = "tauri-top-drag-strip";
-        strip.setAttribute("data-tauri-drag-region", "");
         doc.body.appendChild(strip);
       } else if (strip.parentElement !== doc.body) {
         doc.body.appendChild(strip);
@@ -36,25 +48,9 @@
     } catch (_) {}
   }
 
-  function markDragRegions(doc) {
-    if (!doc || !doc.documentElement) return;
-    if (doc.documentElement.dataset.tauriRootWindow === "0") return;
-    try {
-      doc
-        .querySelectorAll(".page-header, .page-header-top")
-        .forEach((node) => node.setAttribute("data-tauri-drag-region", ""));
-    } catch (_) {}
-  }
-
   function applyCssToDocument(doc) {
     if (!doc || !doc.documentElement) return false;
-    let isRootWindow = true;
-    try {
-      const view = doc.defaultView;
-      isRootWindow = !!(view && view.top === view);
-    } catch (_) {
-      isRootWindow = true;
-    }
+    const isRootWindow = isHubDocument(doc);
     try {
       doc.documentElement.dataset.tauriApp = "1";
       doc.documentElement.dataset.tauriRootWindow = isRootWindow ? "1" : "0";
@@ -76,7 +72,6 @@
         if (style.textContent !== cssText) style.textContent = cssText;
       } catch (_) {}
       ensureTopDragStrip(doc);
-      markDragRegions(doc);
     };
     if (doc.head) install();
     else doc.addEventListener("DOMContentLoaded", install, { once: true });
