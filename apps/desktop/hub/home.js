@@ -854,6 +854,10 @@
       try {
         const chatUrl = await resolveSessionChatUrl(openHref, { force: needsReviveTransition });
         if (openToken !== _deskOpenToken) return;
+        if (needsReviveTransition) {
+          await refreshHubSessions(true, { skipRestore: true });
+          if (openToken !== _deskOpenToken) return;
+        }
         openChatInDesk(chatUrl, name);
         if (closeOnOpen) setDeskSidebarOpen(false);
       } catch (err) {
