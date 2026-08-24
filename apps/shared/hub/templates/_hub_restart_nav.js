@@ -5,7 +5,10 @@
         button.disabled = true;
         button.classList.add("restarting");
       }
-      var launchShellTarget = "/hub-launch-shell.html?restart=1&target=" + encodeURIComponent("/");
+      var current = new URL(window.location.href);
+      var view = current.searchParams.get("view") === "mobile" ? "mobile" : "";
+      var target = view ? "/?view=mobile" : "/";
+      var launchShellTarget = "/hub-launch-shell.html?restart=1" + (view ? "&view=mobile" : "") + "&target=" + encodeURIComponent(target);
       try {
         location.replace(launchShellTarget);
       } catch (_) {

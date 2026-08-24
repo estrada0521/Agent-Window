@@ -27,6 +27,10 @@ def _gray_rgb_string(level: int) -> str:
     return f"rgb({value},{value},{value})"
 
 
+MOBILE_HUB_LIGHT_BG_RGB = (243, 243, 241)
+MOBILE_HUB_DARK_BG_RGB = (10, 10, 9)
+
+
 def resolve_theme_levels(settings: Mapping[str, object] | None = None) -> tuple[int, int]:
     theme = str((settings or {}).get("theme", "dark") or "dark").strip().lower()
     if theme == "light":
@@ -111,6 +115,10 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
         "dark_bg_rgb": bg_rgb,
         "dark_bg_channels": ", ".join(str(v) for v in bg_rgb),
         "dark_bg": f"rgb({','.join(str(v) for v in bg_rgb)})",
+        "mobile_hub_light_bg_channels": ", ".join(str(v) for v in MOBILE_HUB_LIGHT_BG_RGB),
+        "mobile_hub_light_bg": f"rgb({','.join(str(v) for v in MOBILE_HUB_LIGHT_BG_RGB)})",
+        "mobile_hub_dark_bg_channels": ", ".join(str(v) for v in MOBILE_HUB_DARK_BG_RGB),
+        "mobile_hub_dark_bg": f"rgb({','.join(str(v) for v in MOBILE_HUB_DARK_BG_RGB)})",
         "light_fg_rgb": fg_rgb,
         "light_fg_channels": ", ".join(str(v) for v in fg_rgb),
         "light_fg": f"rgb({','.join(str(v) for v in fg_rgb)})",
@@ -179,6 +187,10 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
     palette = resolve_theme_palette(settings)
     dark_bg = str(palette["dark_bg"])
     dark_bg_channels = str(palette["dark_bg_channels"])
+    mobile_hub_light_bg = str(palette["mobile_hub_light_bg"])
+    mobile_hub_light_bg_channels = str(palette["mobile_hub_light_bg_channels"])
+    mobile_hub_dark_bg = str(palette["mobile_hub_dark_bg"])
+    mobile_hub_dark_bg_channels = str(palette["mobile_hub_dark_bg_channels"])
     light_fg = str(palette["light_fg"])
     light_fg_channels = str(palette["light_fg_channels"])
     light_fg_soft = str(palette["light_fg_soft"])
@@ -224,6 +236,10 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
         ("__COLOR_SCHEME__", str(palette["color_scheme"])),
         ("__DARK_BG__", dark_bg),
         ("__DARK_BG_CHANNELS__", dark_bg_channels),
+        ("__MOBILE_HUB_LIGHT_BG__", mobile_hub_light_bg),
+        ("__MOBILE_HUB_LIGHT_BG_CHANNELS__", mobile_hub_light_bg_channels),
+        ("__MOBILE_HUB_DARK_BG__", mobile_hub_dark_bg),
+        ("__MOBILE_HUB_DARK_BG_CHANNELS__", mobile_hub_dark_bg_channels),
         ("__LIGHT_FG__", light_fg),
         ("__LIGHT_FG_CHANNELS__", light_fg_channels),
         ("__LIGHT_FG_SOFT__", light_fg_soft),

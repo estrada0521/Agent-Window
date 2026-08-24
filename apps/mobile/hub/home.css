@@ -25,8 +25,8 @@
     }
     html[data-theme="light"] {
       color-scheme: light;
-      --bg-rgb: 243, 243, 241;
-      --bg: rgb(243, 243, 241);
+      --bg-rgb: __MOBILE_HUB_LIGHT_BG_CHANNELS__;
+      --bg: __MOBILE_HUB_LIGHT_BG__;
       --fg: rgb(19, 19, 19);
       --muted: rgb(120, 120, 120);
       --icon-fg: rgb(19, 19, 19);
@@ -41,13 +41,13 @@
       --session-danger-fg: rgb(207, 34, 46);
       --glass-bg-72: var(--bg);
       --glass-filter-20: blur(20px) saturate(180%);
-      --mob-top-gradient-rgb: 243, 243, 241;
+      --mob-top-gradient-rgb: __MOBILE_HUB_LIGHT_BG_CHANNELS__;
       --code-bg: rgba(0, 0, 0, 0.05);
     }
     html[data-theme="dark"] {
       color-scheme: dark;
-      --bg-rgb: 10, 10, 9;
-      --bg: rgb(10, 10, 9);
+      --bg-rgb: __MOBILE_HUB_DARK_BG_CHANNELS__;
+      --bg: __MOBILE_HUB_DARK_BG__;
       --fg: rgb(200, 200, 200);
       --muted: rgb(150, 150, 150);
       --icon-fg: rgb(200, 200, 200);

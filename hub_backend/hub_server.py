@@ -227,23 +227,38 @@ _PAGE_HEADER_HTML_MOBILE = render_page_header(actions_html=MOBILE_HUB_HEADER_ACT
 _PAGE_HEADER_JS = PAGE_HEADER_JS
 _HUB_LAUNCH_SHELL_BODY_HTML = (
     '<div class="launch-shell-card" id="launchShellCard">'
+    '<span class="launch-shell-title">Agent Window</span>'
     '<span class="launch-shell-spinner" aria-hidden="true"></span>'
     "</div>"
 )
 HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
-<html lang="en">
+<html lang="en" data-theme-desktop="__THEME_DESKTOP__" data-view="__VIEW_VARIANT__">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="__DARK_BG__">
   <title>{APP_DISPLAY_NAME}</title>
   <style>
-    :root {{ color-scheme: __COLOR_SCHEME__; --fg: __LIGHT_FG__; --icon-fg: __ICON_FG__; --icon-muted: __ICON_MUTED__; --icon-hover: __ICON_HOVER__; }}
+    :root {{ color-scheme: __COLOR_SCHEME__; --bg: __DARK_BG__; --fg: __LIGHT_FG__; --icon-fg: __ICON_FG__; --icon-muted: __ICON_MUTED__; --icon-hover: __ICON_HOVER__; }}
+    html[data-theme-desktop="dark"] {{ --launch-shell-title-fg: rgb(255,255,255); }}
     html, body {{
       margin: 0;
       min-height: 100%;
-      background: transparent;
+      background: var(--bg);
       color: var(--fg);
+    }}
+    html[data-view="mobile"] {{ --bg: __MOBILE_HUB_DARK_BG__; }}
+    html[data-tauri-app="1"],
+    html[data-tauri-app="1"] body {{ background: transparent; }}
+    @media (prefers-color-scheme: light) {{
+      html[data-theme-desktop="system"] {{
+        color-scheme: light;
+        --fg: __SYSTEM_LIGHT_FG__;
+      }}
+      html[data-view="mobile"] {{ --bg: __MOBILE_HUB_LIGHT_BG__; }}
+    }}
+    @media (prefers-color-scheme: dark) {{
+      html[data-theme-desktop="system"] {{ --launch-shell-title-fg: rgb(255,255,255); }}
     }}
     body {{
       display: grid;
@@ -262,8 +277,8 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 18px;
-      height: 18px;
+      width: auto;
+      height: auto;
       border-radius: 0;
       background: transparent;
       border: none;
@@ -271,6 +286,18 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       -webkit-backdrop-filter: none;
       box-shadow: none;
     }}
+    .launch-shell-title {{
+      color: var(--launch-shell-title-fg, var(--fg));
+      font-family: "Snell Roundhand", "Apple Chancery", cursive;
+      font-size: 36px;
+      font-weight: 200;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      opacity: 1.00;
+      white-space: nowrap;
+    }}
+    html[data-view="mobile"] .launch-shell-title {{ display: none; }}
+    html[data-view="desktop"] .launch-shell-spinner {{ display: none; }}
     .launch-shell-spinner {{
       width: 18px;
       height: 18px;
@@ -507,7 +534,19 @@ class Handler(BaseHTTPRequestHandler):
 
     def _get_hub_launch_shell(self, _parsed):
         settings = load_hub_settings()
-        self._send_html(200, apply_color_tokens(HUB_LAUNCH_SHELL_HTML, settings=settings))
+        from backend_core.access.settings import normalize_theme_desktop, settings_for_hub_render
+
+        variant = request_view_variant(headers=self.headers, query_string=_parsed.query)
+        theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", "dark"))
+        page = HUB_LAUNCH_SHELL_HTML.replace("__THEME_DESKTOP__", theme_desktop).replace(
+            "__VIEW_VARIANT__", variant
+        )
+        page = page.replace(
+            "__SYSTEM_LIGHT_FG__",
+            str(resolve_theme_palette({"theme": "light"})["light_fg"]),
+        )
+        render_settings = settings_for_hub_render(settings, variant="desktop")
+        self._send_html(200, apply_color_tokens(page, settings=render_settings))
 
     def _get_sessions(self, _parsed):
         query = active_session_records_query(hub)
