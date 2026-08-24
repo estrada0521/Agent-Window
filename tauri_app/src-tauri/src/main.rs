@@ -42,6 +42,7 @@ struct AppearanceMenuPayload {
     y: f64,
     theme_desktop: String,
     text_size: i32,
+    text_size_default: i32,
 }
 
 fn agent_base_name(name: &str) -> String {
@@ -260,7 +261,7 @@ fn show_appearance_menu(
         format!("{}textSize:actual", NATIVE_MENU_PREFIX),
         "Actual Size",
     )
-    .enabled(payload.text_size != 12)
+    .enabled(payload.text_size != payload.text_size_default)
     .accelerator("Cmd+0")
     .build(&app)
     .map_err(|err| err.to_string())?;

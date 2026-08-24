@@ -17,10 +17,13 @@ __CHAT_INCLUDE:../session-state-projections.js__
           repoSession = currentSessionName;
           if (latestPayloadData) updateRepoPanel(displayEntriesForData(latestPayloadData));
         }
-        restoreComposerDraft();
       }
       if (typeof data.active === "boolean") {
         sessionActive = data.active;
+      }
+      document.getElementById("message").disabled = !sessionActive;
+      if (typeof data.session === "string" && data.session) {
+        restoreComposerDraft();
       }
       if (hasOwn("targets")) {
         const resolvedTargets = normalizedSessionTargets(data.targets);
@@ -38,8 +41,6 @@ __CHAT_INCLUDE:../session-state-projections.js__
           renderTargetPicker(availableTargets);
         }
       }
-      document.getElementById("message").disabled = !sessionActive;
-
       if (!sessionActive) {
         setStatus("archived session is read-only");
       }

@@ -88,7 +88,7 @@
 
     const DESK_TEXT_SIZE_MIN = 8;
     const DESK_TEXT_SIZE_MAX = 16;
-    const DESK_TEXT_SIZE_DEFAULT = 12;
+    const DESK_TEXT_SIZE_DEFAULT = 13;
     function currentDeskTextSizePx() {
       const raw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
       return Number.isFinite(raw) ? raw : DESK_TEXT_SIZE_DEFAULT;
@@ -155,6 +155,7 @@
             y: Math.round((rect.bottom || 0) + 2),
             themeDesktop: document.documentElement.dataset.themeDesktop || "dark",
             textSize: currentDeskTextSizePx(),
+            textSizeDefault: DESK_TEXT_SIZE_DEFAULT,
           },
         });
       } catch (_) {
@@ -1244,6 +1245,10 @@
       if (event.data && event.data.type === "session-running-state" && event.source === _deskChatFrame?.contentWindow) {
         const sessionName = String(event.data.sessionName || "").trim();
         if (!sessionName) return;
+        // A messages-triggered /sessions request can have observed the prior
+        // running state, then resolve after this newer status event. Invalidate
+        // that snapshot so it cannot put the row back to Running.
+        _deskSessionsRequestSeq += 1;
         setCachedSessionRunning(sessionName, !!event.data.isRunning);
         refreshDeskSessionRunningRow(sessionName);
         return;

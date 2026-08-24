@@ -10,6 +10,7 @@
           messageInput.setSelectionRange(end, end);
         } catch (_) {}
       }
+      messageInput.scrollTop = messageInput.scrollHeight;
     };
     const focusComposerTextarea = ({ sync = false } = {}) => {
       if (!messageInput) return;
@@ -63,6 +64,8 @@
         focusComposerTextarea({ sync: true });
       }
       requestAnimationFrame(() => {
+        if (typeof autoResizeTextarea === "function") autoResizeTextarea();
+        setComposerCaretToEnd();
         composerOverlay.classList.add("visible");
         if (!immediateFocus && canFocus) {
           focusComposerTextarea();
