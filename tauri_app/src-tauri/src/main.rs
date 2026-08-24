@@ -562,7 +562,7 @@ fn main() {
                 tauri::WebviewUrl::App("index.html".into()),
             )
             .title("Agent Window")
-            .inner_size(1000.0, 1000.0)
+            .inner_size(896.0, 896.0)
             .min_inner_size(400.0, 500.0)
             .decorations(true)
             .hidden_title(true)
