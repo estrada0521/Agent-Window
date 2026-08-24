@@ -170,8 +170,7 @@
       box-shadow: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
-      transition: background-color 200ms ease;
-      overflow-y: auto;
+      overflow-y: hidden;
       box-sizing: border-box;
       mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);

@@ -155,34 +155,20 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       const item = e.target.closest(".file-item");
       if (item) { e.preventDefault(); selectFile(item.dataset.path); }
     });
-    const autoResizeTextarea = document.documentElement.dataset.mobile === "1"
-      ? () => {
-        const baseHeight = 54;
-        messageInput.style.marginTop = "0px";
-        messageInput.style.height = baseHeight + "px";
-        const scrollH = messageInput.scrollHeight;
-        const maxHeight = 200;
-        const nextHeight = Math.min(maxHeight, scrollH > baseHeight ? scrollH + 2 : baseHeight);
-        messageInput.style.height = nextHeight + "px";
+    const autoResizeTextarea = () => {
+      const baseHeight = isMobileComposer ? 54 : 52;
+      const maxHeight = 200;
+      messageInput.style.height = "auto";
+      const nextHeight = Math.min(maxHeight, Math.max(baseHeight, messageInput.scrollHeight));
+      messageInput.style.height = nextHeight + "px";
+      messageInput.style.overflowY = nextHeight >= maxHeight ? "auto" : "hidden";
+      if (isMobileComposer) {
         messageInput.style.marginTop = (baseHeight - nextHeight) + "px";
         composerShellEl?.style.setProperty("--composer-input-rise", Math.max(0, nextHeight - baseHeight) + "px");
+      } else {
+        messageInput.style.marginTop = "0px";
       }
-      : () => {
-        const baseHeight = 52;
-        const composerFieldEl = document.querySelector(".composer-field");
-        messageInput.style.marginTop = "0px";
-        messageInput.style.height = baseHeight + "px";
-        const scrollH = messageInput.scrollHeight;
-        const maxHeight = 200;
-        const nextHeight = Math.min(maxHeight, scrollH > baseHeight ? scrollH + 2 : baseHeight);
-        messageInput.style.height = nextHeight + "px";
-        if (composerFieldEl) {
-          composerFieldEl.style.minHeight = nextHeight + "px";
-          composerFieldEl.style.height = nextHeight + "px";
-        }
-        messageInput.style.marginTop = "0px";
-        composerShellEl?.style.setProperty("--composer-input-rise", Math.max(0, nextHeight - baseHeight) + "px");
-      };
+    };
     const positionComposerDropdown = (dropdown) => {
       if (!dropdown) return;
       const taRect = messageInput.getBoundingClientRect();
