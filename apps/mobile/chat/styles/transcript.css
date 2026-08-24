@@ -487,7 +487,7 @@
       left: -16px;
       top: 0;
       bottom: 4px;
-      width: 2px;
+      width: 1px;
       border-radius: 1px;
       background: var(--fg);
       opacity: 0;
@@ -708,3 +708,7 @@
 
     .katex-display::-webkit-scrollbar { display: none; }
     .katex-display { scrollbar-width: none; -ms-overflow-style: none; }
+
+    html[data-theme="light"] .message-row:not(.user) .message::before {
+      width: 2px;
+    }
