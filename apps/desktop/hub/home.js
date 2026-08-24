@@ -24,6 +24,9 @@
       } catch (_) {}
       return false;
     }
+    function getTauriInvoke() {
+      try { return window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke || null; } catch (_) { return null; }
+    }
     isTauriDesktopApp();
     const PHONE_VIEWPORT_MAX_PX = 480;
     const _deskWorkbench = document.getElementById("deskWorkbench");
@@ -142,9 +145,7 @@
     });
 
     async function openAppearanceMenu() {
-      const invoke = (() => {
-        try { return window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke || null; } catch (_) { return null; }
-      })();
+      const invoke = getTauriInvoke();
       if (typeof invoke !== "function" || !_deskSettingsBtn) return;
       const rect = _deskSettingsBtn.getBoundingClientRect();
       _deskSettingsBtn.classList.add("is-active");
@@ -1264,10 +1265,19 @@
         );
         return;
       }
+      if (event.data && event.data.type === "open-external-url" && event.source === _deskChatFrame?.contentWindow) {
+        const invoke = getTauriInvoke();
+        if (typeof invoke !== "function") {
+          event.source?.postMessage({ type: "external-url-open-failed" }, "*");
+          return;
+        }
+        invoke("open_external_url", { url: String(event.data.url || "") }).catch(() => {
+          event.source?.postMessage({ type: "external-url-open-failed" }, "*");
+        });
+        return;
+      }
       if (event.data && event.data.type === "show-chat-header-menu") {
-        const invoke = (() => {
-          try { return window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke || null; } catch (_) { return null; }
-        })();
+        const invoke = getTauriInvoke();
         if (typeof invoke !== "function") return;
         const childPayload = event.data.payload || {};
         const frameRect = _deskChatFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };

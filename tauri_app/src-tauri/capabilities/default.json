@@ -11,6 +11,7 @@
   },
   "windows": ["main"],
   "permissions": [
+    "allow-open-external-url",
     "allow-show-chat-header-menu",
     "allow-show-appearance-menu",
     "core:default",

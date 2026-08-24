@@ -220,6 +220,24 @@
       timeline?.addEventListener("scroll", clearHoverCopyBody, { passive: true });
       window.addEventListener("resize", clearHoverCopyBody, { passive: true });
     }
+    const openExternalLink = (href) => {
+      if (document.documentElement.dataset.tauriApp === "1") {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: "open-external-url", url: href }, "*");
+          return Promise.resolve();
+        }
+        const invoke = window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke;
+        if (typeof invoke === "function") return invoke("open_external_url", { url: href });
+        return Promise.reject(new Error("Tauri external-link bridge is unavailable"));
+      }
+      window.open(href, "_blank", "noopener,noreferrer");
+      return Promise.resolve();
+    };
+    const reportExternalLinkFailure = () => setStatus("could not open external link", true);
+    window.addEventListener("message", (event) => {
+      if (event.source !== window.parent || event.data?.type !== "external-url-open-failed") return;
+      reportExternalLinkFailure();
+    });
     messagesEl.addEventListener("click", (e) => {
       const metaBtn = e.target.closest(".message-meta-below button, .user-message-meta button, .message-meta-below .meta-agent, .user-message-meta .meta-agent");
       if (metaBtn) {
@@ -250,7 +268,7 @@
         if (href && !href.startsWith("#") && !href.startsWith("javascript:")) {
           e.preventDefault();
           e.stopPropagation();
-          window.open(href, "_blank", "noopener,noreferrer");
+          void openExternalLink(href).catch(reportExternalLinkFailure);
           return;
         }
       }
@@ -294,6 +312,6 @@
         if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
         e.preventDefault();
         e.stopPropagation();
-        window.open(href, "_blank", "noopener,noreferrer");
+        void openExternalLink(href).catch(reportExternalLinkFailure);
       });
     }

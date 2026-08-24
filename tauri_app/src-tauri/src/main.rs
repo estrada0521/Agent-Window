@@ -15,6 +15,7 @@ use tauri::menu::{
 };
 use tauri::webview::WebviewWindowBuilder;
 use tauri::Manager;
+use url::Url;
 
 const DARK_BG: &str = "rgb(4,4,4)";
 
@@ -43,6 +44,22 @@ struct AppearanceMenuPayload {
     theme_desktop: String,
     text_size: i32,
     text_size_default: i32,
+}
+
+#[tauri::command]
+fn open_external_url(url: String) -> Result<(), String> {
+    let parsed = Url::parse(&url).map_err(|err| format!("invalid external URL: {err}"))?;
+    if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
+        return Err("external URL must be an absolute http or https URL".to_string());
+    }
+    let status = Command::new("/usr/bin/open")
+        .arg(parsed.as_str())
+        .status()
+        .map_err(|err| format!("could not start macOS URL opener: {err}"))?;
+    if !status.success() {
+        return Err("macOS URL opener failed".to_string());
+    }
+    Ok(())
 }
 
 fn agent_base_name(name: &str) -> String {
@@ -530,7 +547,11 @@ fn main() {
         panic!("could not load required macOS app icons: {}", err);
     }
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![show_chat_header_menu, show_appearance_menu])
+        .invoke_handler(tauri::generate_handler![
+            open_external_url,
+            show_chat_header_menu,
+            show_appearance_menu
+        ])
         .on_menu_event(|app, event| {
             emit_native_menu_action(app, event.id().as_ref());
         })
