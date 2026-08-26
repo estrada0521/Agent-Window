@@ -70,26 +70,19 @@
       align-items: center;
       justify-content: center;
       padding: 0;
-      box-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
       opacity: 0;
       pointer-events: none;
-      transition: box-shadow 150ms ease;
     }
     .send-btn.visible {
       opacity: 1;
       pointer-events: auto;
     }
-    .has-hover .send-btn:hover {
-      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.55);
-    }
     .send-btn:active {
       transform: scale(0.93);
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-      transition: transform 80ms ease-out, box-shadow 80ms ease;
+      transition: transform 80ms ease-out;
     }
     .send-btn:disabled {
       cursor: not-allowed;
-      box-shadow: none;
     }
     .attach-preview-row {
       display: flex;
