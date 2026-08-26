@@ -79,7 +79,7 @@
       --git-ins-green-channels: 74, 222, 128;
       --git-del-red: rgb(248, 113, 113);
       --git-del-red-channels: 248, 113, 113;
-      --code-bg: rgba(255, 255, 255, 0.05);
+      --code-bg: rgba(255, 255, 255, 0.10);
       --code-scrollbar-thumb: rgba(255, 255, 255, 0.45);
       --code-scrollbar-thumb-hover: rgba(255, 255, 255, 0.65);
       --scrollbar-thumb: color-mix(in srgb, var(--muted) 55%, transparent);
@@ -152,7 +152,7 @@
       --git-ins-green-channels: 74, 222, 128;
       --git-del-red: rgb(248, 113, 113);
       --git-del-red-channels: 248, 113, 113;
-      --code-bg: rgba(180, 180, 180, 0.05);
+      --code-bg: rgba(180, 180, 180, 0.10);
       --code-scrollbar-thumb: rgba(180, 180, 180, 0.45);
       --code-scrollbar-thumb-hover: rgba(180, 180, 180, 0.65);
       --surface: rgb(10, 10, 10);

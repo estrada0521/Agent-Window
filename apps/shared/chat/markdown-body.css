@@ -52,6 +52,7 @@
       margin: 0.8em 0 0.5em;
       font-weight: 700;
       line-height: 1.2;
+      color: var(--fg-bold, var(--fg));
     }
 
     .md-body h1 {
@@ -382,6 +383,7 @@
 
     .md-body strong {
       font-weight: 650;
+      color: var(--fg-bold, var(--fg));
     }
 
     .md-body em {

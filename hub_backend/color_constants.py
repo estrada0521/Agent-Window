@@ -14,10 +14,17 @@ LIGHT_EXTERNAL_LINK_RED = f"rgb({LIGHT_EXTERNAL_LINK_RED_CHANNELS})"
 # Single source of truth for mobile's body text color in each theme, shared by
 # the chat shell CSS (via __MOBILE_DARK_FG_CHANNELS__ / __MOBILE_LIGHT_FG_CHANNELS__)
 # and the server-rendered file/markdown viewer, which mobile is the only consumer of.
-MOBILE_DARK_FG_CHANNELS = "249, 249, 247"
+# Kept a shade back from the theme's extreme (pure white/black) so that bold
+# text, set to the extreme via MOBILE_*_FG_BOLD_CHANNELS, reads as heavier.
+MOBILE_DARK_FG_CHANNELS = "232, 232, 230"
 MOBILE_DARK_FG = f"rgb({MOBILE_DARK_FG_CHANNELS})"
-MOBILE_LIGHT_FG_CHANNELS = "19, 19, 19"
+MOBILE_LIGHT_FG_CHANNELS = "34, 34, 34"
 MOBILE_LIGHT_FG = f"rgb({MOBILE_LIGHT_FG_CHANNELS})"
+
+MOBILE_DARK_FG_BOLD_CHANNELS = "255, 255, 255"
+MOBILE_DARK_FG_BOLD = f"rgb({MOBILE_DARK_FG_BOLD_CHANNELS})"
+MOBILE_LIGHT_FG_BOLD_CHANNELS = "0, 0, 0"
+MOBILE_LIGHT_FG_BOLD = f"rgb({MOBILE_LIGHT_FG_BOLD_CHANNELS})"
 
 
 def _gray_rgb(level: int) -> tuple[int, int, int]:
@@ -276,6 +283,8 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
         ("__LIGHT_EXTERNAL_LINK_RED__", light_external_link_red),
         ("__MOBILE_DARK_FG_CHANNELS__", MOBILE_DARK_FG_CHANNELS),
         ("__MOBILE_LIGHT_FG_CHANNELS__", MOBILE_LIGHT_FG_CHANNELS),
+        ("__MOBILE_DARK_FG_BOLD_CHANNELS__", MOBILE_DARK_FG_BOLD_CHANNELS),
+        ("__MOBILE_LIGHT_FG_BOLD_CHANNELS__", MOBILE_LIGHT_FG_BOLD_CHANNELS),
         ("__LINE__", str(palette["line"])),
         ("__LINE_STRONG__", str(palette["line_strong"])),
         ("__TABLE_LINE__", str(palette["table_line"])),
