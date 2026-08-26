@@ -8,8 +8,16 @@ DARK_LINK_BLUE = f"rgb({DARK_LINK_BLUE_CHANNELS})"
 
 DARK_EXTERNAL_LINK_RED_CHANNELS = "255, 107, 107"
 DARK_EXTERNAL_LINK_RED = f"rgb({DARK_EXTERNAL_LINK_RED_CHANNELS})"
-LIGHT_EXTERNAL_LINK_RED_CHANNELS = "207, 34, 46"
+LIGHT_EXTERNAL_LINK_RED_CHANNELS = "197, 24, 36"
 LIGHT_EXTERNAL_LINK_RED = f"rgb({LIGHT_EXTERNAL_LINK_RED_CHANNELS})"
+
+# Single source of truth for mobile's body text color in each theme, shared by
+# the chat shell CSS (via __MOBILE_DARK_FG_CHANNELS__ / __MOBILE_LIGHT_FG_CHANNELS__)
+# and the server-rendered file/markdown viewer, which mobile is the only consumer of.
+MOBILE_DARK_FG_CHANNELS = "249, 249, 247"
+MOBILE_DARK_FG = f"rgb({MOBILE_DARK_FG_CHANNELS})"
+MOBILE_LIGHT_FG_CHANNELS = "19, 19, 19"
+MOBILE_LIGHT_FG = f"rgb({MOBILE_LIGHT_FG_CHANNELS})"
 
 
 def _gray_rgb(level: int) -> tuple[int, int, int]:
@@ -266,6 +274,8 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
         ("__DARK_LINK_BLUE_CHANNELS__", dark_link_blue_channels),
         ("__DARK_EXTERNAL_LINK_RED__", dark_external_link_red),
         ("__LIGHT_EXTERNAL_LINK_RED__", light_external_link_red),
+        ("__MOBILE_DARK_FG_CHANNELS__", MOBILE_DARK_FG_CHANNELS),
+        ("__MOBILE_LIGHT_FG_CHANNELS__", MOBILE_LIGHT_FG_CHANNELS),
         ("__LINE__", str(palette["line"])),
         ("__LINE_STRONG__", str(palette["line_strong"])),
         ("__TABLE_LINE__", str(palette["table_line"])),

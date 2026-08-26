@@ -7,7 +7,14 @@ from pathlib import Path
 from html import escape as html_escape
 from urllib.parse import quote as url_quote
 
-from hub_backend.color_constants import DARK_BG, LIGHT_FG, LIGHT_FG_CHANNELS, resolve_theme_palette
+from hub_backend.color_constants import (
+    DARK_BG,
+    LIGHT_FG,
+    LIGHT_FG_CHANNELS,
+    MOBILE_DARK_FG_CHANNELS,
+    MOBILE_LIGHT_FG_CHANNELS,
+    resolve_theme_palette,
+)
 from hub_backend.presentation.chat.script_assets import (
     KATEX_CDN_AUTO_RENDER_SRC,
     KATEX_CDN_CSS_HREF,
@@ -22,13 +29,12 @@ from .view_scripts import (
 )
 
 
-def _chat_markdown_preview_css(preview_variant: str = "") -> str:
+def _chat_markdown_preview_css() -> str:
     repo_root = Path(__file__).resolve().parents[2]
     inline_code_css = (repo_root / "apps/shared/chat/markdown-inline-code.css").read_text(encoding="utf-8")
     code_block_css = (repo_root / "apps/shared/chat/markdown-code-block.css").read_text(encoding="utf-8")
-    variant_name = "mobile" if str(preview_variant or "").strip().lower() == "mobile" else "desktop"
     shared_body_css = (repo_root / "apps/shared/chat/markdown-body.css").read_text(encoding="utf-8")
-    variant_body_css = (repo_root / f"apps/shared/chat/markdown-body-{variant_name}.css").read_text(encoding="utf-8")
+    variant_body_css = (repo_root / "apps/shared/chat/markdown-body-mobile.css").read_text(encoding="utf-8")
     markdown_css = f"{shared_body_css}\n{variant_body_css}"
     replacements = {
         "__AGENT_SEL_MD_BODY__": ".md-body",
@@ -45,13 +51,10 @@ def render_file_view(
     rel: str,
     *,
     embed: bool = False,
-    pane: bool = False,
     base_path: str = "",
     preview_base_theme: str = "",
-    preview_variant: str = "",
     agent_font_family: str | None = None,
     agent_text_size: int | None = None,
-    preview_chrome: str = "",
     force_progressive_text: bool = False,
 ) -> str:
     full = runtime._resolve_reference_path(rel)
@@ -79,7 +82,6 @@ def render_file_view(
         except Exception as exc:
             logging.error(f"Unexpected error: {exc}", exc_info=True)
     requested_base_theme = str(preview_base_theme or "").strip().lower()
-    resolved_preview_variant = "mobile" if str(preview_variant or "").strip().lower() == "mobile" else "desktop"
     if requested_base_theme == "dark":
         theme_palette = resolve_theme_palette({"theme": "dark"})
     elif requested_base_theme == "light":
@@ -97,14 +99,6 @@ def render_file_view(
     gutter_padding_left = 1
     gutter_padding_right = 5
     code_cell_padding_left = 12
-    is_mobile_preview = resolved_preview_variant == "mobile"
-    preview_scrollbar_size = "2px" if is_mobile_preview else "6px"
-    preview_scrollbar_thumb = "var(--fg)" if is_mobile_preview else f"rgba({pane_fg_channels},0.15)"
-    preview_scrollbar_thumb_hover = "var(--fg)" if is_mobile_preview else f"rgba({pane_fg_channels},0.25)"
-    preview_scrollbar_border = "0" if is_mobile_preview else "1px solid transparent"
-    preview_scrollbar_bg_clip = "border-box" if is_mobile_preview else "padding-box"
-    preview_scrollbar_thumb_light = "var(--fg)" if is_mobile_preview else "rgba(0,0,0,0.22)"
-    preview_scrollbar_thumb_hover_light = "var(--fg)" if is_mobile_preview else "rgba(0,0,0,0.35)"
     preview_text_size_sync_js = (
         'window.addEventListener("message",(e)=>{'
         'const d=e?.data;if(d?.type!=="agent-preview-text-size")return;'
@@ -119,23 +113,11 @@ def render_file_view(
         f'@font-face{{font-family:"anthropicSans";src:url("{font_base}/font/anthropic-sans-italic.ttf") format("truetype-variations"),url("{font_base}/font/anthropic-sans-italic.ttf") format("truetype");font-style:italic;font-weight:300 800;font-optical-sizing:auto;font-display:swap}}'
         f'@font-face{{font-family:"jetbrainsMono";src:local("JetBrains Mono"),local("JetBrainsMono-Regular"),url("{font_base}/font/jetbrains-mono.ttf") format("truetype-variations"),url("{font_base}/font/jetbrains-mono.ttf") format("truetype");font-style:normal;font-weight:100 800;font-display:swap}}'
     )
-    preview_top_offset = "0px" if preview_chrome == "header" else ("max(48px, calc(21px + env(safe-area-inset-top)))" if embed else "0px")
-    preview_scrollbar_css = (
-        ""
-        if is_mobile_preview
-        else (
-            '.md-preview-shell::-webkit-scrollbar,.view-container::-webkit-scrollbar,.html-preview-text-wrap::-webkit-scrollbar,.html-preview-text-scroll::-webkit-scrollbar,.code-scroll::-webkit-scrollbar,.table-scroll::-webkit-scrollbar,.katex-display::-webkit-scrollbar,.md-body pre::-webkit-scrollbar{width:var(--preview-scrollbar-size);height:var(--preview-scrollbar-size)}'
-            '.md-preview-shell::-webkit-scrollbar-track,.view-container::-webkit-scrollbar-track,.html-preview-text-wrap::-webkit-scrollbar-track,.html-preview-text-scroll::-webkit-scrollbar-track,.code-scroll::-webkit-scrollbar-track,.table-scroll::-webkit-scrollbar-track,.katex-display::-webkit-scrollbar-track,.md-body pre::-webkit-scrollbar-track{background:transparent}'
-            '.md-preview-shell::-webkit-scrollbar-thumb,.view-container::-webkit-scrollbar-thumb,.html-preview-text-wrap::-webkit-scrollbar-thumb,.html-preview-text-scroll::-webkit-scrollbar-thumb,.code-scroll::-webkit-scrollbar-thumb,.table-scroll::-webkit-scrollbar-thumb,.katex-display::-webkit-scrollbar-thumb,.md-body pre::-webkit-scrollbar-thumb{background:var(--preview-scrollbar-thumb);border-radius:999px;border:var(--preview-scrollbar-border);background-clip:var(--preview-scrollbar-bg-clip)}'
-            '.md-preview-shell::-webkit-scrollbar-thumb:hover,.view-container::-webkit-scrollbar-thumb:hover,.html-preview-text-wrap::-webkit-scrollbar-thumb:hover,.html-preview-text-scroll::-webkit-scrollbar-thumb:hover,.code-scroll::-webkit-scrollbar-thumb:hover,.table-scroll::-webkit-scrollbar-thumb:hover,.katex-display::-webkit-scrollbar-thumb:hover,.md-body pre::-webkit-scrollbar-thumb:hover{background:var(--preview-scrollbar-thumb-hover);border:var(--preview-scrollbar-border);background-clip:var(--preview-scrollbar-bg-clip)}'
-        )
-    )
+    preview_top_offset = "max(48px, calc(21px + env(safe-area-inset-top)))" if embed else "0px"
     base_css = (
-        f':root{{color-scheme: dark;--font-main:{resolved_agent_font_family};--font-code:{code_font_family};--text-size:{resolved_text_size}px;--text-line-height:{resolved_line_height}px;--tpad:{preview_top_offset};--preview-scrollbar-size:{preview_scrollbar_size};--preview-scrollbar-thumb:{preview_scrollbar_thumb};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover};--preview-scrollbar-border:{preview_scrollbar_border};--preview-scrollbar-bg-clip:{preview_scrollbar_bg_clip};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
-        f':root[data-preview-theme="light"]{{--preview-scrollbar-thumb:{preview_scrollbar_thumb_light};--preview-scrollbar-thumb-hover:{preview_scrollbar_thumb_hover_light}}}'
+        f':root{{color-scheme: dark;--font-main:{resolved_agent_font_family};--font-code:{code_font_family};--text-size:{resolved_text_size}px;--text-line-height:{resolved_line_height}px;--tpad:{preview_top_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
         f"{font_face_css}"
         f"*{{box-sizing:border-box}}"
-        f"{preview_scrollbar_css}"
         f"html,body{{margin:0;background:{embed_bg};color:{pane_fg};font-family:sans-serif;display:flex;flex-direction:column;height:100vh;font-size:var(--text-size);line-height:var(--text-line-height)}}"
         f".hdr{{padding:10px 16px;background:{embed_bg};border-bottom:0.5px solid {pane_line};display:flex;align-items:center;gap:8px;flex-shrink:0}}"
         f".fn{{font-weight:700;font-size:14px;color:{pane_fg}}}"
@@ -401,7 +383,7 @@ def render_file_view(
             f'<script src="{KATEX_CDN_AUTO_RENDER_SRC}"></script>',
         ]
         markdown_head_libs = "".join(markdown_head_tags)
-        markdown_preview_css = _chat_markdown_preview_css(resolved_preview_variant)
+        markdown_preview_css = _chat_markdown_preview_css()
         markdown_typography_css = (
             ".md-body,.md-body p,.md-body li,.md-body li p,.md-body blockquote,.md-body blockquote p{"
             "font-family:var(--font-main);font-weight:430;"
@@ -410,17 +392,19 @@ def render_file_view(
             "line-height:calc(var(--text-size,16px) + 8px)}"
         )
         initial_preview_theme = "light" if str((theme_palette or {}).get("theme") or "").lower() == "light" else "dark"
-        dark_preview_fg = "rgb(200,200,200)"
-        dark_preview_fg_channels = "200,200,200"
-        light_preview_bg_channels = "249,249,247" if resolved_preview_variant == "mobile" else "255,255,255"
+        dark_preview_fg_channels = MOBILE_DARK_FG_CHANNELS.replace(" ", "")
+        dark_preview_fg = f"rgb({dark_preview_fg_channels})"
+        light_preview_fg_channels = MOBILE_LIGHT_FG_CHANNELS.replace(" ", "")
+        light_preview_fg = f"rgb({light_preview_fg_channels})"
+        light_preview_bg_channels = "249,249,247"
         light_preview_bg = f"rgb({light_preview_bg_channels})"
         markdown_theme_css = (
             f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette.get("dark_bg") or DARK_BG)};--fg:{dark_preview_fg};--muted:rgb(150,150,150);--icon-fg:{dark_preview_fg};--icon-muted:rgb(150,150,150);--icon-hover:rgb(190,190,190);--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba({dark_preview_fg_channels},0.09);--external-link-fg:rgb(255,107,107);--link-blue:{str(dark_theme_palette["dark_link_blue"])};--link-blue-channels:{str(dark_theme_palette["dark_link_blue_channels"])};--git-ins-green:rgb(74,222,128);--git-ins-green-channels:74,222,128;--git-del-red:rgb(248,113,113);--git-del-red-channels:248,113,113;--code-bg:rgba({dark_preview_fg_channels},0.05);--code-scrollbar-thumb:rgba({dark_preview_fg_channels},0.45);--code-scrollbar-thumb-hover:rgba({dark_preview_fg_channels},0.65);--line:rgba({dark_preview_fg_channels},0.07);--line-strong:rgba({dark_preview_fg_channels},0.12);--table-line:rgba({dark_preview_fg_channels},0.12);--table-header-line:rgba({dark_preview_fg_channels},0.28);}}'
-            f'html[data-preview-theme="light"]{{color-scheme:light;--bg-rgb:{light_preview_bg_channels};--bg:{light_preview_bg};--fg:rgb(0,0,0);--muted:rgb(120,120,120);--icon-fg:rgb(0,0,0);--icon-muted:rgb(120,120,120);--icon-hover:rgb(35,35,35);--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:rgb(207,34,46);--link-blue:rgb(9,105,218);--link-blue-channels:9,105,218;--git-ins-green:rgb(26,127,55);--git-ins-green-channels:26,127,55;--git-del-red:rgb(207,34,46);--git-del-red-channels:207,34,46;--code-bg:rgba(0,0,0,0.05);--code-scrollbar-thumb:rgba(0,0,0,0.25);--code-scrollbar-thumb-hover:rgba(0,0,0,0.45);--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);--table-line:rgba(0,0,0,0.18);}}'
+            f'html[data-preview-theme="light"]{{color-scheme:light;--bg-rgb:{light_preview_bg_channels};--bg:{light_preview_bg};--fg:{light_preview_fg};--muted:rgb(120,120,120);--icon-fg:{light_preview_fg};--icon-muted:rgb(120,120,120);--icon-hover:rgb(35,35,35);--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:rgb(207,34,46);--link-blue:rgb(9,105,218);--link-blue-channels:9,105,218;--git-ins-green:rgb(26,127,55);--git-ins-green-channels:26,127,55;--git-del-red:rgb(207,34,46);--git-del-red-channels:207,34,46;--code-bg:rgba(0,0,0,0.05);--code-scrollbar-thumb:rgba(0,0,0,0.25);--code-scrollbar-thumb-hover:rgba(0,0,0,0.45);--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);--table-line:rgba(0,0,0,0.18);}}'
             'html,body{background:transparent;color:var(--fg)}'
             '.md-preview-shell{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:transparent;scrollbar-gutter:auto;padding-top:0}'
         )
-        markdown_top_padding = "0px" if preview_chrome == "header" else ("calc(14px + max(48px, calc(21px + env(safe-area-inset-top))))" if embed else "14px")
+        markdown_top_padding = "calc(14px + max(48px, calc(21px + env(safe-area-inset-top))))" if embed else "14px"
         markdown_layout_css = (
             f'.md-preview-shell>.md-body{{padding:{markdown_top_padding} 16px 18px}}'
         )
@@ -435,10 +419,8 @@ const __mdText = {content_json};
 const __mdRel = {rel_json};
 const __fileBase = {prefix_json};
 const __previewEmbed = {json.dumps(embed)};
-const __previewPane = {json.dumps(pane)};
 const __previewBasePath = {prefix_json};
 const __previewAgentTextSize = {json.dumps(resolved_text_size)};
-const __previewVariant = {json.dumps(resolved_preview_variant)};
 const __rawBase = `${{__fileBase}}/file-raw?path=`;
 const __root = document.documentElement;
 const KATEX_CSS_HREF = {json.dumps(KATEX_CDN_CSS_HREF)};
@@ -504,10 +486,8 @@ const buildPreviewHref = (relPath) => {{
   const params = new URLSearchParams();
   params.set("path", String(relPath || ""));
   if (__previewEmbed) params.set("embed", "1");
-  if (__previewPane) params.set("pane", "1");
   if (__previewBasePath) params.set("base_path", __previewBasePath);
   if (__previewAgentTextSize) params.set("agent_text_size", String(__previewAgentTextSize));
-  if (__previewVariant) params.set("preview_variant", __previewVariant);
   return `${{__fileBase}}/file-view?${{params.toString()}}`;
 }};
 const __normalizeMdPath = (baseRel, src) => {{

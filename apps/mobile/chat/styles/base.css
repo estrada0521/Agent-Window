@@ -35,6 +35,8 @@
       --table-line: __TABLE_LINE__;
       --table-header-line: __TABLE_HEADER_LINE__;
       --fg: __LIGHT_FG__;
+      --dark-fg-rgb: __MOBILE_DARK_FG_CHANNELS__;
+      --light-fg-rgb: __MOBILE_LIGHT_FG_CHANNELS__;
       --muted: __GRAY_MUTED__;
       --icon-fg: __ICON_FG__;
       --icon-muted: __ICON_MUTED__;
@@ -106,9 +108,9 @@
     html[data-theme="light"] {
       color-scheme: light;
       --bg-rgb: 249, 249, 247;
-      --fg: rgb(19, 19, 19);
+      --fg: rgb(var(--light-fg-rgb));
       --muted: rgb(120, 120, 120);
-      --icon-fg: rgb(19, 19, 19);
+      --icon-fg: rgb(var(--light-fg-rgb));
       --icon-muted: rgb(120, 120, 120);
       --icon-hover: rgb(35, 35, 35);
       --chip-color: rgb(180, 180, 180);
@@ -179,9 +181,9 @@
     html[data-theme="dark"] {
       color-scheme: dark;
       --bg-rgb: 13, 13, 12;
-      --fg: rgb(200, 200, 200);
+      --fg: rgb(var(--dark-fg-rgb));
       --muted: rgb(150, 150, 150);
-      --icon-fg: rgb(200, 200, 200);
+      --icon-fg: rgb(var(--dark-fg-rgb));
       --icon-muted: rgb(150, 150, 150);
       --icon-hover: rgb(190, 190, 190);
       --chip-color: rgb(70, 70, 70);

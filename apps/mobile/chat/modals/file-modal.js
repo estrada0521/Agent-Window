@@ -133,8 +133,12 @@
           return true;
         }
         const isLight = resolvedBaseTheme === "light";
-        const fg = isLight ? "rgb(0,0,0)" : "rgb(200,200,200)";
-        const lnFg = isLight ? "rgba(0,0,0,0.22)" : "rgba(200,200,200,0.22)";
+        const rootFgStyle = getComputedStyle(document.documentElement);
+        const darkFgRgb = rootFgStyle.getPropertyValue("--dark-fg-rgb").trim() || "249, 249, 247";
+        const lightFgRgb = rootFgStyle.getPropertyValue("--light-fg-rgb").trim() || "19, 19, 19";
+        const fgRgb = isLight ? lightFgRgb : darkFgRgb;
+        const fg = `rgb(${fgRgb})`;
+        const lnFg = `rgba(${fgRgb},0.22)`;
         const scheme = isLight ? "light" : "dark";
         frameDoc.documentElement.setAttribute("data-preview-base-theme", scheme);
         let style = frameDoc.getElementById("agent-index-base-theme-style");

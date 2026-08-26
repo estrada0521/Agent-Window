@@ -710,5 +710,5 @@
     .katex-display { scrollbar-width: none; -ms-overflow-style: none; }
 
     html[data-theme="light"] .message-row:not(.user) .message::before {
-      width: 2px;
+      width: 1.5px;
     }

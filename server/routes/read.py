@@ -145,13 +145,9 @@ def _get_file_view(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     rel = qs.get("path", [""])[0]
     embed = qs.get("embed", [""])[0] == "1"
-    pane = qs.get("pane", [""])[0] == "1"
-    preview_chrome = str(qs.get("chrome", [""])[0] or "").strip().lower()
     force_progressive_text = qs.get("progressive", [""])[0] == "1"
-    requested_preview_variant = str(qs.get("preview_variant", [""])[0] or "").strip().lower()
-    preview_variant = "mobile" if requested_preview_variant == "mobile" else "desktop"
     try:
-        settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant=preview_variant)
+        settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant="mobile")
         message_font = str(settings.get("message_font") or "").strip()
         preview_text_size = settings.get("text_size")
         requested_text_size = str(qs.get("agent_text_size", [""])[0] or "").strip()
@@ -163,13 +159,10 @@ def _get_file_view(handler, parsed, ctx) -> None:
         page = ctx["workspace_sync_api"].file_view(
             rel,
             embed=embed,
-            pane=pane,
             base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
             preview_base_theme=str(qs.get("base_theme", [""])[0] or "").strip(),
-            preview_variant=preview_variant,
             agent_font_family=font_family_stack(message_font),
             agent_text_size=preview_text_size,
-            preview_chrome=preview_chrome,
             force_progressive_text=force_progressive_text,
         )
     except PermissionError:

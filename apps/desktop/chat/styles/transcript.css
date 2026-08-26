@@ -931,5 +931,5 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-body.css__
 __CHAT_INCLUDE:../../../shared/chat/markdown-body-desktop.css__
 
     html[data-theme="light"] .message-row:not(.user) .message::before {
-      width: 2px;
+      width: 1.5px;
     }

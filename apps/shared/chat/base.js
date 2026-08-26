@@ -260,21 +260,14 @@
       return "";
     };
     const fileViewHrefForPath = (path, { embed = false } = {}) => {
-      const isMobile = document.documentElement.dataset.mobile === "1";
       const params = new URLSearchParams();
       params.set("path", normalizeWorkspaceFilePath(path) || String(path || "").trim());
       if (embed) {
         params.set("embed", "1");
-        if (isMobile) {
-          params.set("progressive", "1");
-        } else {
-          params.set("pane", "1");
-          params.set("chrome", "header");
-        }
+        params.set("progressive", "1");
       }
       if (CHAT_BASE_PATH) params.set("base_path", CHAT_BASE_PATH);
       params.set("base_theme", document.documentElement.dataset.theme === "light" ? "light" : "dark");
-      params.set("preview_variant", isMobile ? "mobile" : "desktop");
       const textSize = currentFilePreviewTextSize();
       if (textSize) params.set("agent_text_size", textSize);
       return withChatBase(`/file-view?${params.toString()}`);

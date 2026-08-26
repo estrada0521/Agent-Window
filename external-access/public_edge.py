@@ -173,7 +173,7 @@ class Handler(BaseHTTPRequestHandler):
             return True
         embed = qs.get("embed", [""])[0] == "1"
         try:
-            settings = settings_for_chat_render(load_hub_settings(), variant="desktop")
+            settings = settings_for_chat_render(load_hub_settings(), variant="mobile")
             message_font = str(settings.get("message_font") or DEFAULT_MESSAGE_FONT).strip()
             page = runtime.file_view(
                 rel,

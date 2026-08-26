@@ -1,9 +1,9 @@
     #paneTracePanel {
       --bg-rgb: var(--pane-trace-body-bg-channels);
       --bg: var(--pane-trace-body-bg);
-      --fg: rgb(200, 200, 200);
+      --fg: rgb(var(--dark-fg-rgb));
       --muted: rgb(150, 150, 150);
-      --icon-fg: rgb(200, 200, 200);
+      --icon-fg: rgb(var(--dark-fg-rgb));
       --icon-muted: rgb(150, 150, 150);
       --bottom-sheet-top-gradient-rgb: var(--pane-trace-body-bg-channels);
       color-scheme: dark;
