@@ -59,9 +59,7 @@ server_instance = ""
 load_chat_settings = _not_initialized
 chat_font_settings_inline_style = _not_initialized
 payload = _not_initialized
-append_system_entry = _not_initialized
 send_message = _not_initialized
-file_runtime = None
 workspace_sync_api = None
 asset_runtime = None
 send_queue = None
@@ -213,8 +211,8 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     global port, workspace, tmux_socket, hub_port
     global PUBLIC_HOST, PUBLIC_HUB_PORT, _repo_root, runtime
     global _PWA_STATIC_DIR, server_instance, load_chat_settings, chat_font_settings_inline_style
-    global payload, append_system_entry
-    global send_message, file_runtime, asset_runtime
+    global payload
+    global send_message, asset_runtime
     global send_queue, send_queue_thread, workspace_sync_api
 
     if _initialized:
@@ -248,7 +246,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     load_chat_settings = runtime.load_chat_settings
     chat_font_settings_inline_style = runtime.chat_font_settings_inline_style
     payload = runtime.payload
-    append_system_entry = runtime.append_system_entry
     send_message = _send_or_enqueue_message
     workspace_sync_api = WorkspaceSyncApi(
         workspace=workspace,
@@ -256,7 +253,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         repo_root=_repo_root,
         runtime=runtime,
     )
-    file_runtime = workspace_sync_api.file_runtime
     asset_runtime = ChatAssetRuntime(
         repo_root=_repo_root,
     )
@@ -369,24 +365,18 @@ def release_chat_restart() -> None:
 
 
 def _route_context() -> dict:
-    current_session_name, current_log_path = runtime.session_binding_snapshot()
+    current_session_name, _current_log_path = runtime.session_binding_snapshot()
     return {
         "session_name": current_session_name,
         "server_instance": server_instance,
         "runtime": runtime,
         "workspace": workspace,
-        "session_dir": str(current_log_path.parent),
-        "log_dir": str(current_log_path.parent),
-        "port": port,
         "hub_port": hub_port,
         "tmux_socket": tmux_socket,
-        "repo_root": _repo_root,
         "public_host": PUBLIC_HOST,
         "public_hub_port": PUBLIC_HUB_PORT,
         "payload_fn": payload,
-        "append_system_entry_fn": append_system_entry,
         "send_message_fn": send_message,
-        "file_runtime": file_runtime,
         "workspace_sync_api": workspace_sync_api,
         "asset_runtime": asset_runtime,
         "load_chat_settings_fn": load_chat_settings,
@@ -395,7 +385,6 @@ def _route_context() -> dict:
         "pwa_icon_entries_fn": _pwa_icon_entries,
         "serve_pwa_static_fn": _serve_pwa_static,
         "render_chat_html_fn": render_chat_html,
-        "clean_env_fn": _clean_env,
         "queue_chat_restart_fn": queue_chat_restart,
         "release_chat_restart_fn": release_chat_restart,
     }
