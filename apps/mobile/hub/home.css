@@ -13,8 +13,8 @@
       --icon-hover: __ICON_HOVER__;
       --session-hover-bg: __SESSION_HOVER_BG__;
       --session-selected-bg: __SESSION_SELECTED_BG__;
-      --session-danger-fg: rgb(255, 59, 48);
-      --session-success-fg: rgb(48, 209, 88);
+      --session-danger-fg: rgb(204, 47, 38);
+      --session-success-fg: rgb(41, 178, 75);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: __DARK_BG_CHANNELS__;
@@ -40,7 +40,7 @@
       --session-hover-bg: rgba(0, 0, 0, 0.04);
       --session-selected-bg: rgba(0, 0, 0, 0.07);
       --session-danger-fg: rgb(207, 34, 46);
-      --session-success-fg: rgb(48, 209, 88);
+      --session-success-fg: rgb(36, 157, 66);
       --glass-bg-72: var(--bg);
       --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: __MOBILE_HUB_LIGHT_BG_CHANNELS__;
@@ -61,8 +61,8 @@
       --line-strong: rgba(255, 255, 255, 0.12);
       --session-hover-bg: rgba(255, 255, 255, 0.028);
       --session-selected-bg: rgba(255, 255, 255, 0.045);
-      --session-danger-fg: rgb(255, 59, 48);
-      --session-success-fg: rgb(48, 209, 88);
+      --session-danger-fg: rgb(204, 47, 38);
+      --session-success-fg: rgb(41, 178, 75);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: __MOBILE_HUB_DARK_BG_CHANNELS__;
