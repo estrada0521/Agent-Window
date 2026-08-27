@@ -74,7 +74,6 @@ class ChatRuntime:
         repo_root: Path | str,
     ):
         self._session_binding = WorkspaceSessionBinding(workspace)
-        self.limit = ENTRY_WINDOW_LIMIT
         self.port = int(port)
         self.workspace = self._session_binding.workspace
         self.tmux_socket = tmux_socket
@@ -202,7 +201,7 @@ class ChatRuntime:
         return message_entry_window(
             self,
             limit_override=limit_override,
-            default_limit=self.limit,
+            default_limit=ENTRY_WINDOW_LIMIT,
             offset=offset,
         )
 

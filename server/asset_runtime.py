@@ -10,8 +10,8 @@ from backend_core.agents.registry import icon_file_map
 
 class ChatAssetRuntime:
     def __init__(self, *, repo_root: Path | str):
-        self.repo_root = Path(repo_root).resolve()
-        self.icon_files = icon_file_map(self.repo_root)
+        repo_root = Path(repo_root).resolve()
+        self.icon_files = icon_file_map(repo_root)
         self.font_files = {
             "anthropic-serif-roman.ttf": [
                 Path.home() / "Library/Fonts/AnthropicSerif-Romans-Variable-25x258.ttf",

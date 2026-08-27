@@ -197,7 +197,8 @@ def start_workspace_fsevents_watcher(workspace_sync_api) -> None:
                     if not raw:
                         continue
                     debouncer.add_path(raw.decode("utf-8"))
-                except Exception:
+                except Exception as exc:
+                    logging.error("Workspace FSEvents path decode/enqueue error: %s", exc)
                     continue
 
         callback = FSEventCallback(on_events)
