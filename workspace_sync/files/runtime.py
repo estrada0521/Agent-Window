@@ -131,7 +131,7 @@ class FileRuntime:
             raise RuntimeError("workspace is not available")
         return root
 
-    def _resolve_path(self, rel: str, *, allow_workspace_root: bool = False) -> str:
+    def _resolve_path(self, rel: str) -> str:
         self._require_workspace()
         rel = rel or ""
         if rel.startswith("~"):
@@ -154,7 +154,7 @@ class FileRuntime:
         rel_raw = str(rel or "").strip()
         if rel_raw.startswith("~") or os.path.isabs(rel_raw):
             return os.path.realpath(os.path.expanduser(rel_raw))
-        return self._resolve_path(rel_raw, allow_workspace_root=True)
+        return self._resolve_path(rel_raw)
 
     def files_exist(self, paths: list[str]) -> dict[str, bool]:
         result = {}
@@ -500,7 +500,7 @@ class FileRuntime:
                 result["size"] = None
                 return result
             try:
-                full = self._resolve_path(rel, allow_workspace_root=True)
+                full = self._resolve_path(rel)
             except PermissionError:
                 result["size"] = None
                 return result
@@ -588,7 +588,7 @@ class FileRuntime:
 
     def list_dir(self, rel: str = ""):
         normalized_rel = str(rel or "").strip("/")
-        full = self._resolve_path(normalized_rel, allow_workspace_root=True)
+        full = self._resolve_path(normalized_rel)
         if not os.path.isdir(full):
             raise NotADirectoryError(full)
         entries: list[dict] = []
