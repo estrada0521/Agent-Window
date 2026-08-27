@@ -136,9 +136,14 @@
         const rootFgStyle = getComputedStyle(document.documentElement);
         const darkFgRgb = rootFgStyle.getPropertyValue("--dark-fg-rgb").trim() || "249, 249, 247";
         const lightFgRgb = rootFgStyle.getPropertyValue("--light-fg-rgb").trim() || "19, 19, 19";
+        const darkMutedRgb = rootFgStyle.getPropertyValue("--dark-muted-rgb").trim() || "150, 150, 150";
+        const lightMutedRgb = rootFgStyle.getPropertyValue("--light-muted-rgb").trim() || "120, 120, 120";
         const fgRgb = isLight ? lightFgRgb : darkFgRgb;
         const fg = `rgb(${fgRgb})`;
-        const lnFg = `rgba(${fgRgb},0.22)`;
+        // Line numbers are text-muted, not a translucent tint of fg -- same
+        // constant the initial server-rendered pane_ln_color reads, so this
+        // live theme-toggle update can't drift from it.
+        const lnFg = `rgb(${isLight ? lightMutedRgb : darkMutedRgb})`;
         const scheme = isLight ? "light" : "dark";
         frameDoc.documentElement.setAttribute("data-preview-base-theme", scheme);
         let style = frameDoc.getElementById("agent-index-base-theme-style");

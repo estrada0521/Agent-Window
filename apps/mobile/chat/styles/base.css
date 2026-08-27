@@ -37,6 +37,8 @@
       --fg: __LIGHT_FG__;
       --dark-fg-rgb: __TEXT_PRIMARY_MOBILE_DARK_CHANNELS__;
       --light-fg-rgb: __TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS__;
+      --dark-muted-rgb: __TEXT_MUTED_DARK_CHANNELS__;
+      --light-muted-rgb: __TEXT_MUTED_LIGHT_CHANNELS__;
       --muted: __GRAY_MUTED__;
       --icon-fg: __ICON_FG__;
       --icon-muted: __ICON_MUTED__;
