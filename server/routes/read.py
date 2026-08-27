@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from urllib.parse import parse_qs
 
 from backend_core.access.settings import (
@@ -266,6 +267,7 @@ def _get_session_state_events(handler, parsed, ctx) -> None:
     except (BrokenPipeError, ConnectionResetError):
         return
     except Exception:
+        logging.exception("SSE stream failed")
         return
 
 
@@ -304,6 +306,7 @@ def _get_workspace_sync_events(handler, parsed, ctx) -> None:
     except (BrokenPipeError, ConnectionResetError):
         return
     except Exception:
+        logging.exception("SSE stream failed")
         return
 
 
