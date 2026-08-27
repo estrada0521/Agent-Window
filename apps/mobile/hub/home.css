@@ -14,6 +14,7 @@
       --session-hover-bg: __SESSION_HOVER_BG__;
       --session-selected-bg: __SESSION_SELECTED_BG__;
       --session-danger-fg: rgb(255, 59, 48);
+      --session-success-fg: rgb(48, 209, 88);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: __DARK_BG_CHANNELS__;
@@ -39,6 +40,7 @@
       --session-hover-bg: rgba(0, 0, 0, 0.04);
       --session-selected-bg: rgba(0, 0, 0, 0.07);
       --session-danger-fg: rgb(207, 34, 46);
+      --session-success-fg: rgb(48, 209, 88);
       --glass-bg-72: var(--bg);
       --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: __MOBILE_HUB_LIGHT_BG_CHANNELS__;
@@ -60,6 +62,7 @@
       --session-hover-bg: rgba(255, 255, 255, 0.028);
       --session-selected-bg: rgba(255, 255, 255, 0.045);
       --session-danger-fg: rgb(255, 59, 48);
+      --session-success-fg: rgb(48, 209, 88);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: __MOBILE_HUB_DARK_BG_CHANNELS__;
@@ -507,14 +510,15 @@
 
     .swipe-act {
       position: absolute;
-      top: 0;
-      bottom: 0;
+      top: 4px;
+      bottom: 4px;
+      border-radius: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-width: 80px;
-      padding: 0 18px;
+      min-width: 68px;
+      padding: 0 10px;
       gap: 5px;
       font-size: 12px;
       font-weight: 600;
@@ -530,13 +534,13 @@
     }
 
     .swipe-act-right {
-      right: 0;
+      right: 6px;
       background: var(--session-danger-fg);
     }
 
     .swipe-act-left {
-      left: 0;
-      background: rgb(48, 209, 88);
+      left: 6px;
+      background: var(--session-success-fg);
     }
 
     html[data-theme="dark"] .swipe-act-left {
