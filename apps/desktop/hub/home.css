@@ -30,11 +30,12 @@
       color-scheme: light;
       --bg-rgb: 253, 253, 252;
       --bg: rgb(253, 253, 252);
-      --fg: __DESKTOP_HUB_LIGHT_FG__;
-      --muted: __DESKTOP_LIGHT_MUTED__;
-      --icon-fg: __DESKTOP_HUB_LIGHT_FG__;
-      --icon-muted: __DESKTOP_LIGHT_MUTED__;
+      --fg: __TEXT_SESSION_DESKTOP_LIGHT__;
+      --muted: __TEXT_MUTED_LIGHT__;
+      --icon-fg: __TEXT_SESSION_DESKTOP_LIGHT__;
+      --icon-muted: __TEXT_MUTED_LIGHT__;
       --icon-hover: __DESKTOP_LIGHT_ICON_HOVER__;
+      --error: __TEXT_ERROR_LIGHT__;
       --desk-chrome-hover-bg: var(--bg);
       --panel: rgba(250, 250, 250, 0.72);
       --panel-2: rgba(245, 245, 245, 0.82);
@@ -52,11 +53,12 @@
       --bg-rgb: 13, 13, 12;
       --bg: rgb(13, 13, 12);
       --glass-bg-90: rgba(var(--bg-rgb), 0.95);
-      --fg: __DESKTOP_HUB_DARK_FG__;
-      --muted: __DESKTOP_DARK_MUTED__;
-      --icon-fg: __DESKTOP_HUB_DARK_FG__;
-      --icon-muted: __DESKTOP_DARK_MUTED__;
+      --fg: __TEXT_SESSION_DESKTOP_DARK__;
+      --muted: __TEXT_MUTED_DARK__;
+      --icon-fg: __TEXT_SESSION_DESKTOP_DARK__;
+      --icon-muted: __TEXT_MUTED_DARK__;
       --icon-hover: __DESKTOP_DARK_ICON_HOVER__;
+      --error: __TEXT_ERROR_DARK__;
       --desk-chrome-hover-bg: var(--bg);
       --panel: rgba(10, 10, 10, 0.86);
       --panel-2: rgba(15, 15, 15, 0.82);
@@ -739,7 +741,7 @@
       overflow-wrap: anywhere;
     }
     .desk-hub-message.is-error {
-      color: var(--session-danger-fg);
+      color: var(--error);
     }
     .desk-hub-message[hidden] {
       display: none;
@@ -1191,7 +1193,7 @@
     .desk-reload-shell-card.is-error {
       width: auto;
       height: auto;
-      color: var(--session-danger-fg);
+      color: var(--error);
       font-size: 13px;
     }
     .desk-reload-shell-spinner {

@@ -3,49 +3,112 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 
-DARK_LINK_BLUE_CHANNELS = "134, 156, 184"
-DARK_LINK_BLUE = f"rgb({DARK_LINK_BLUE_CHANNELS})"
-LIGHT_LINK_BLUE_CHANNELS = "36, 85, 161"
-LIGHT_LINK_BLUE = f"rgb({LIGHT_LINK_BLUE_CHANNELS})"
+# ---------------------------------------------------------------------------
+# Text-color roles.
+#
+# Every role below is one fact per (client, theme) -- desktop/mobile x
+# light/dark -- named once and read from here everywhere it's needed. A role
+# is never redefined under a second name, and a client/theme that doesn't
+# use a role simply doesn't reference its constant; there is no "default
+# plus override" tier. Where a role's value is identical across desktop and
+# mobile (or across light/dark), it gets one constant, not two copies of the
+# same channels string.
+#
+# Icon colors (icon-fg/icon-muted/icon-hover/chip-color) and the code-pane
+# line-number gray are a separate, still-scattered system and out of scope
+# here; see resolve_theme_palette() below.
+# ---------------------------------------------------------------------------
 
-DARK_EXTERNAL_LINK_RED_CHANNELS = "224, 88, 88"
-DARK_EXTERNAL_LINK_RED = f"rgb({DARK_EXTERNAL_LINK_RED_CHANNELS})"
-LIGHT_EXTERNAL_LINK_RED_CHANNELS = "196, 42, 30"
-LIGHT_EXTERNAL_LINK_RED = f"rgb({LIGHT_EXTERNAL_LINK_RED_CHANNELS})"
+TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS = "11, 11, 11"
+TEXT_PRIMARY_DESKTOP_DARK_CHANNELS = "200, 200, 200"
+TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS = "34, 34, 34"
+TEXT_PRIMARY_MOBILE_DARK_CHANNELS = "232, 232, 230"
 
-# Single source of truth for mobile's body text color in each theme, shared by
-# the chat shell CSS (via __MOBILE_DARK_FG_CHANNELS__ / __MOBILE_LIGHT_FG_CHANNELS__)
-# and the server-rendered file/markdown viewer, which mobile is the only consumer of.
-# Kept a shade back from the theme's extreme (pure white/black) so that bold
-# text, set to the extreme via MOBILE_*_FG_BOLD_CHANNELS, reads as heavier.
-MOBILE_DARK_FG_CHANNELS = "232, 232, 230"
-MOBILE_LIGHT_FG_CHANNELS = "34, 34, 34"
+# Bold/strong emphasis. Desktop has no entry: markdown-body.css falls back
+# to text-primary via `var(--fg-bold, var(--fg))` when --fg-bold is
+# undefined, so desktop's base CSS simply never defines it. Mobile pushes to
+# the theme's pure extreme (opposite of text-primary, which is kept a shade
+# back) so bold reads heavier against the dimmer body text.
+TEXT_STRONG_MOBILE_LIGHT_CHANNELS = "0, 0, 0"
+TEXT_STRONG_MOBILE_DARK_CHANNELS = "255, 255, 255"
 
-DESKTOP_CHAT_LIGHT_FG = "rgb(11, 11, 11)"
-DESKTOP_CHAT_DARK_FG = "rgb(200, 200, 200)"
-DESKTOP_HUB_LIGHT_FG = "rgb(11, 11, 11)"
-DESKTOP_HUB_DARK_FG = "rgb(200, 200, 200)"
-MOBILE_HUB_LIGHT_FG = "rgb(19, 19, 19)"
-MOBILE_HUB_DARK_FG = "rgb(200, 200, 200)"
-DESKTOP_LIGHT_MUTED = "rgb(120, 120, 120)"
-DESKTOP_DARK_MUTED = "rgb(150, 150, 150)"
+TEXT_MUTED_LIGHT_CHANNELS = "120, 120, 120"
+TEXT_MUTED_DARK_CHANNELS = "150, 150, 150"
+
+TEXT_LINK_LIGHT_CHANNELS = "36, 85, 161"
+TEXT_LINK_DARK_CHANNELS = "134, 156, 184"
+
+TEXT_EXTERNAL_LINK_LIGHT_CHANNELS = "196, 42, 30"
+TEXT_EXTERNAL_LINK_DARK_CHANNELS = "224, 88, 88"
+# Error text (e.g. a failed panel load) currently reads the same as
+# text-external-link in both themes. Kept as its own constant: the decision
+# to redden an external link and the decision to redden an error message
+# are independent, even though they resolve to the same color today.
+TEXT_ERROR_LIGHT_CHANNELS = TEXT_EXTERNAL_LINK_LIGHT_CHANNELS
+TEXT_ERROR_DARK_CHANNELS = TEXT_EXTERNAL_LINK_DARK_CHANNELS
+
+TEXT_DIFF_INSERT_LIGHT_CHANNELS = "26, 127, 55"
+TEXT_DIFF_INSERT_DARK_CHANNELS = "74, 222, 128"
+TEXT_DIFF_DELETE_LIGHT_CHANNELS = "207, 34, 46"
+TEXT_DIFF_DELETE_DARK_CHANNELS = "248, 113, 113"
+
+# Hub-only: the session/window title text ("Agent Window", session names).
+# A distinct role from text-primary even on desktop, where the value
+# happens to match today -- the hub title and the chat body are different
+# decisions that are free to diverge.
+TEXT_SESSION_DESKTOP_LIGHT_CHANNELS = "11, 11, 11"
+TEXT_SESSION_DESKTOP_DARK_CHANNELS = "200, 200, 200"
+TEXT_SESSION_MOBILE_LIGHT_CHANNELS = "19, 19, 19"
+TEXT_SESSION_MOBILE_DARK_CHANNELS = "200, 200, 200"
+
+
+def _rgb(channels: str) -> str:
+    return f"rgb({channels})"
+
+
+# Icon-hover is icon scope, not text scope -- left as-is, untouched by the
+# text-color-role cleanup above.
 DESKTOP_LIGHT_ICON_HOVER = "rgb(35, 35, 35)"
 DESKTOP_DARK_ICON_HOVER = "rgb(190, 190, 190)"
-
-MOBILE_DARK_FG_BOLD_CHANNELS = "255, 255, 255"
-MOBILE_DARK_FG_BOLD = f"rgb({MOBILE_DARK_FG_BOLD_CHANNELS})"
-MOBILE_LIGHT_FG_BOLD_CHANNELS = "0, 0, 0"
-MOBILE_LIGHT_FG_BOLD = f"rgb({MOBILE_LIGHT_FG_BOLD_CHANNELS})"
-
-MOBILE_DARK_MUTED = "rgb(150, 150, 150)"
-MOBILE_LIGHT_MUTED = "rgb(120, 120, 120)"
-MOBILE_DARK_ICON_HOVER = "rgb(190, 190, 190)"
 MOBILE_LIGHT_ICON_HOVER = "rgb(35, 35, 35)"
+MOBILE_DARK_ICON_HOVER = "rgb(190, 190, 190)"
 
-DARK_GIT_INSERTION = "rgb(74, 222, 128)"
-LIGHT_GIT_INSERTION = "rgb(26, 127, 55)"
-DARK_GIT_DELETION = "rgb(248, 113, 113)"
-LIGHT_GIT_DELETION = "rgb(207, 34, 46)"
+
+# name -> channels, for every text-color role constant above. The single
+# place that has to know all 9 roles exist; apply_color_tokens() stays
+# generic over whatever's listed here.
+_TEXT_COLOR_CHANNELS: dict[str, str] = {
+    "TEXT_PRIMARY_DESKTOP_LIGHT": TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS,
+    "TEXT_PRIMARY_DESKTOP_DARK": TEXT_PRIMARY_DESKTOP_DARK_CHANNELS,
+    "TEXT_PRIMARY_MOBILE_LIGHT": TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS,
+    "TEXT_PRIMARY_MOBILE_DARK": TEXT_PRIMARY_MOBILE_DARK_CHANNELS,
+    "TEXT_STRONG_MOBILE_LIGHT": TEXT_STRONG_MOBILE_LIGHT_CHANNELS,
+    "TEXT_STRONG_MOBILE_DARK": TEXT_STRONG_MOBILE_DARK_CHANNELS,
+    "TEXT_MUTED_LIGHT": TEXT_MUTED_LIGHT_CHANNELS,
+    "TEXT_MUTED_DARK": TEXT_MUTED_DARK_CHANNELS,
+    "TEXT_LINK_LIGHT": TEXT_LINK_LIGHT_CHANNELS,
+    "TEXT_LINK_DARK": TEXT_LINK_DARK_CHANNELS,
+    "TEXT_EXTERNAL_LINK_LIGHT": TEXT_EXTERNAL_LINK_LIGHT_CHANNELS,
+    "TEXT_EXTERNAL_LINK_DARK": TEXT_EXTERNAL_LINK_DARK_CHANNELS,
+    "TEXT_ERROR_LIGHT": TEXT_ERROR_LIGHT_CHANNELS,
+    "TEXT_ERROR_DARK": TEXT_ERROR_DARK_CHANNELS,
+    "TEXT_DIFF_INSERT_LIGHT": TEXT_DIFF_INSERT_LIGHT_CHANNELS,
+    "TEXT_DIFF_INSERT_DARK": TEXT_DIFF_INSERT_DARK_CHANNELS,
+    "TEXT_DIFF_DELETE_LIGHT": TEXT_DIFF_DELETE_LIGHT_CHANNELS,
+    "TEXT_DIFF_DELETE_DARK": TEXT_DIFF_DELETE_DARK_CHANNELS,
+    "TEXT_SESSION_DESKTOP_LIGHT": TEXT_SESSION_DESKTOP_LIGHT_CHANNELS,
+    "TEXT_SESSION_DESKTOP_DARK": TEXT_SESSION_DESKTOP_DARK_CHANNELS,
+    "TEXT_SESSION_MOBILE_LIGHT": TEXT_SESSION_MOBILE_LIGHT_CHANNELS,
+    "TEXT_SESSION_MOBILE_DARK": TEXT_SESSION_MOBILE_DARK_CHANNELS,
+}
+
+
+def _text_color_token_replacements() -> tuple[tuple[str, str], ...]:
+    pairs: list[tuple[str, str]] = []
+    for name, channels in _TEXT_COLOR_CHANNELS.items():
+        pairs.append((f"__{name}__", _rgb(channels)))
+        pairs.append((f"__{name}_CHANNELS__", channels))
+    return tuple(pairs)
 
 
 def _gray_rgb(level: int) -> tuple[int, int, int]:
@@ -140,12 +203,6 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
     return {
         "theme": theme,
         "color_scheme": color_scheme,
-        "dark_link_blue": DARK_LINK_BLUE,
-        "dark_link_blue_channels": DARK_LINK_BLUE_CHANNELS,
-        "light_link_blue": LIGHT_LINK_BLUE,
-        "light_link_blue_channels": LIGHT_LINK_BLUE_CHANNELS,
-        "dark_external_link_red": DARK_EXTERNAL_LINK_RED,
-        "light_external_link_red": LIGHT_EXTERNAL_LINK_RED,
         "bg_level": bg_level,
         "fg_level": fg_level,
         "fg_soft_level": fg_soft_level,
@@ -251,12 +308,6 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
     icon_muted = str(palette["icon_muted"])
     icon_hover = str(palette["icon_hover"])
     chip_color = str(palette["chip_color"])
-    dark_link_blue = str(palette["dark_link_blue"])
-    dark_link_blue_channels = str(palette["dark_link_blue_channels"])
-    light_link_blue = str(palette["light_link_blue"])
-    light_link_blue_channels = str(palette["light_link_blue_channels"])
-    dark_external_link_red = str(palette["dark_external_link_red"])
-    light_external_link_red = str(palette["light_external_link_red"])
 
     import html
     from backend_core.access.settings import canonicalize_message_font, DEFAULT_CODE_FONT
@@ -302,34 +353,11 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
         ("__ICON_MUTED__", icon_muted),
         ("__ICON_HOVER__", icon_hover),
         ("__CHIP_COLOR__", chip_color),
-        ("__DARK_LINK_BLUE__", dark_link_blue),
-        ("__DARK_LINK_BLUE_CHANNELS__", dark_link_blue_channels),
-        ("__LIGHT_LINK_BLUE__", light_link_blue),
-        ("__LIGHT_LINK_BLUE_CHANNELS__", light_link_blue_channels),
-        ("__DARK_EXTERNAL_LINK_RED__", dark_external_link_red),
-        ("__LIGHT_EXTERNAL_LINK_RED__", light_external_link_red),
-        ("__MOBILE_DARK_FG_CHANNELS__", MOBILE_DARK_FG_CHANNELS),
-        ("__MOBILE_LIGHT_FG_CHANNELS__", MOBILE_LIGHT_FG_CHANNELS),
-        ("__DESKTOP_CHAT_LIGHT_FG__", DESKTOP_CHAT_LIGHT_FG),
-        ("__DESKTOP_CHAT_DARK_FG__", DESKTOP_CHAT_DARK_FG),
-        ("__DESKTOP_HUB_LIGHT_FG__", DESKTOP_HUB_LIGHT_FG),
-        ("__DESKTOP_HUB_DARK_FG__", DESKTOP_HUB_DARK_FG),
-        ("__MOBILE_HUB_LIGHT_FG__", MOBILE_HUB_LIGHT_FG),
-        ("__MOBILE_HUB_DARK_FG__", MOBILE_HUB_DARK_FG),
-        ("__DESKTOP_LIGHT_MUTED__", DESKTOP_LIGHT_MUTED),
-        ("__DESKTOP_DARK_MUTED__", DESKTOP_DARK_MUTED),
         ("__DESKTOP_LIGHT_ICON_HOVER__", DESKTOP_LIGHT_ICON_HOVER),
         ("__DESKTOP_DARK_ICON_HOVER__", DESKTOP_DARK_ICON_HOVER),
-        ("__MOBILE_DARK_FG_BOLD_CHANNELS__", MOBILE_DARK_FG_BOLD_CHANNELS),
-        ("__MOBILE_LIGHT_FG_BOLD_CHANNELS__", MOBILE_LIGHT_FG_BOLD_CHANNELS),
-        ("__MOBILE_DARK_MUTED__", MOBILE_DARK_MUTED),
-        ("__MOBILE_LIGHT_MUTED__", MOBILE_LIGHT_MUTED),
-        ("__MOBILE_DARK_ICON_HOVER__", MOBILE_DARK_ICON_HOVER),
         ("__MOBILE_LIGHT_ICON_HOVER__", MOBILE_LIGHT_ICON_HOVER),
-        ("__DARK_GIT_INSERTION__", DARK_GIT_INSERTION),
-        ("__LIGHT_GIT_INSERTION__", LIGHT_GIT_INSERTION),
-        ("__DARK_GIT_DELETION__", DARK_GIT_DELETION),
-        ("__LIGHT_GIT_DELETION__", LIGHT_GIT_DELETION),
+        ("__MOBILE_DARK_ICON_HOVER__", MOBILE_DARK_ICON_HOVER),
+        *_text_color_token_replacements(),
         ("__LINE__", str(palette["line"])),
         ("__LINE_STRONG__", str(palette["line_strong"])),
         ("__TABLE_LINE__", str(palette["table_line"])),

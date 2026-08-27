@@ -62,19 +62,19 @@
       --surface-alt: __GRAY_SURFACE_ALT__;
       --bg-hover: __GRAY_HOVER__;
       --inline-code-border: __GRAY_INLINE_BORDER__;
-      --error: __DARK_EXTERNAL_LINK_RED__;
+      --error: __TEXT_ERROR_DARK__;
       --inline-file-link-fg: var(--link-blue);
       --code-copy-bg: transparent;
       --code-copy-hover-bg: __CODE_COPY_HOVER_BG__;
       --fab-hover-bg: __FAB_HOVER_BG__;
-      --external-link-fg: __DARK_EXTERNAL_LINK_RED__;
+      --external-link-fg: __TEXT_EXTERNAL_LINK_DARK__;
 
-      --link-blue: __DARK_LINK_BLUE__;
-      --link-blue-channels: __DARK_LINK_BLUE_CHANNELS__;
-      --git-ins-green: __DARK_GIT_INSERTION__;
-      --git-ins-green-channels: 74, 222, 128;
-      --git-del-red: __DARK_GIT_DELETION__;
-      --git-del-red-channels: 248, 113, 113;
+      --link-blue: __TEXT_LINK_DARK__;
+      --link-blue-channels: __TEXT_LINK_DARK_CHANNELS__;
+      --git-ins-green: __TEXT_DIFF_INSERT_DARK__;
+      --git-ins-green-channels: __TEXT_DIFF_INSERT_DARK_CHANNELS__;
+      --git-del-red: __TEXT_DIFF_DELETE_DARK__;
+      --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
       --code-bg: rgba(255, 255, 255, 0.10);
       --code-scrollbar-thumb: rgba(255, 255, 255, 0.45);
       --code-scrollbar-thumb-hover: rgba(255, 255, 255, 0.65);
@@ -83,10 +83,10 @@
     html[data-theme="light"] {
       color-scheme: light;
       --bg-rgb: 253, 253, 252;
-      --fg: __DESKTOP_CHAT_LIGHT_FG__;
-      --muted: __DESKTOP_LIGHT_MUTED__;
-      --icon-fg: __DESKTOP_CHAT_LIGHT_FG__;
-      --icon-muted: __DESKTOP_LIGHT_MUTED__;
+      --fg: __TEXT_PRIMARY_DESKTOP_LIGHT__;
+      --muted: __TEXT_MUTED_LIGHT__;
+      --icon-fg: __TEXT_PRIMARY_DESKTOP_LIGHT__;
+      --icon-muted: __TEXT_MUTED_LIGHT__;
       --icon-hover: __DESKTOP_LIGHT_ICON_HOVER__;
       --chip-color: rgb(180, 180, 180);
       --panel-row-bg: rgba(0, 0, 0, 0.06);
@@ -115,15 +115,15 @@
       --glass-filter-16: blur(16px) saturate(180%);
       --glass-filter-18: blur(18px) saturate(160%);
       --glass-filter-20: blur(20px) saturate(180%);
-      --external-link-fg: __LIGHT_EXTERNAL_LINK_RED__;
-      --error: __LIGHT_EXTERNAL_LINK_RED__;
+      --external-link-fg: __TEXT_EXTERNAL_LINK_LIGHT__;
+      --error: __TEXT_ERROR_LIGHT__;
 
-      --link-blue: __LIGHT_LINK_BLUE__;
-      --link-blue-channels: __LIGHT_LINK_BLUE_CHANNELS__;
-      --git-ins-green: __LIGHT_GIT_INSERTION__;
-      --git-ins-green-channels: 26, 127, 55;
-      --git-del-red: __LIGHT_GIT_DELETION__;
-      --git-del-red-channels: 207, 34, 46;
+      --link-blue: __TEXT_LINK_LIGHT__;
+      --link-blue-channels: __TEXT_LINK_LIGHT_CHANNELS__;
+      --git-ins-green: __TEXT_DIFF_INSERT_LIGHT__;
+      --git-ins-green-channels: __TEXT_DIFF_INSERT_LIGHT_CHANNELS__;
+      --git-del-red: __TEXT_DIFF_DELETE_LIGHT__;
+      --git-del-red-channels: __TEXT_DIFF_DELETE_LIGHT_CHANNELS__;
       --code-bg: rgba(0, 0, 0, 0.05);
       --code-scrollbar-thumb: rgba(0, 0, 0, 0.25);
       --code-scrollbar-thumb-hover: rgba(0, 0, 0, 0.45);
@@ -131,10 +131,10 @@
     html[data-theme="dark"] {
       color-scheme: dark;
       --bg-rgb: 13, 13, 12;
-      --fg: __DESKTOP_CHAT_DARK_FG__;
-      --muted: __DESKTOP_DARK_MUTED__;
-      --icon-fg: __DESKTOP_CHAT_DARK_FG__;
-      --icon-muted: __DESKTOP_DARK_MUTED__;
+      --fg: __TEXT_PRIMARY_DESKTOP_DARK__;
+      --muted: __TEXT_MUTED_DARK__;
+      --icon-fg: __TEXT_PRIMARY_DESKTOP_DARK__;
+      --icon-muted: __TEXT_MUTED_DARK__;
       --icon-hover: __DESKTOP_DARK_ICON_HOVER__;
       --chip-color: rgb(70, 70, 70);
       --panel-row-bg: rgba(180, 180, 180, 0.10);
@@ -142,12 +142,12 @@
       --panel-row-hover-bg: rgba(180, 180, 180, 0.13);
       --panel-row-active-bg: rgba(180, 180, 180, 0.16);
 
-      --link-blue: __DARK_LINK_BLUE__;
-      --link-blue-channels: __DARK_LINK_BLUE_CHANNELS__;
-      --git-ins-green: __DARK_GIT_INSERTION__;
-      --git-ins-green-channels: 74, 222, 128;
-      --git-del-red: __DARK_GIT_DELETION__;
-      --git-del-red-channels: 248, 113, 113;
+      --link-blue: __TEXT_LINK_DARK__;
+      --link-blue-channels: __TEXT_LINK_DARK_CHANNELS__;
+      --git-ins-green: __TEXT_DIFF_INSERT_DARK__;
+      --git-ins-green-channels: __TEXT_DIFF_INSERT_DARK_CHANNELS__;
+      --git-del-red: __TEXT_DIFF_DELETE_DARK__;
+      --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
       --code-bg: rgba(180, 180, 180, 0.10);
       --code-scrollbar-thumb: rgba(180, 180, 180, 0.45);
       --code-scrollbar-thumb-hover: rgba(180, 180, 180, 0.65);
