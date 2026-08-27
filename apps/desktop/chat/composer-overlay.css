@@ -280,8 +280,7 @@
     }
 
     @media (hover: hover) and (pointer: fine) {
-      .target-chip:hover:not(.active),
-      .target-chip:active:not(.active) {
+      .target-chip:hover:not(.active) {
         background: transparent;
         border-color: transparent;
         color: color-mix(in srgb, var(--chip-color) 45%, var(--icon-hover));
