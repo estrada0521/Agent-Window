@@ -285,20 +285,7 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
     icon_hover = str(palette["icon_hover"])
     chip_color = str(palette["chip_color"])
 
-    import html
-    from backend_core.access.settings import canonicalize_message_font, DEFAULT_CODE_FONT
-    message_font = canonicalize_message_font((settings or {}).get("message_font"))
-    message_font_css = message_font
-    message_font = html.escape(message_font)
-    code_font_raw = str((settings or {}).get("code_font") or "").strip()
-    code_font_css = code_font_raw if code_font_raw else DEFAULT_CODE_FONT
-    code_font = html.escape(code_font_css)
-
     replacements: tuple[tuple[str, str], ...] = (
-        ("__MESSAGE_FONT_CSS__", message_font_css),
-        ("__CODE_FONT_CSS__", code_font_css),
-        ("__MESSAGE_FONT__", message_font),
-        ("__CODE_FONT__", code_font),
         ("__THEME__", str(palette["theme"])),
         ("__COLOR_SCHEME__", str(palette["color_scheme"])),
         ("__DARK_BG__", dark_bg),
@@ -346,7 +333,6 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
         ("__PANEL_ROW_BORDER__", str(palette["panel_row_border"])),
         ("__PANEL_ROW_HOVER_BG__", str(palette["panel_row_hover_bg"])),
         ("__PANEL_ROW_ACTIVE_BG__", str(palette["panel_row_active_bg"])),
-        ("__DESK_SIDEBAR_OPACITY__", "0.90"),
     )
     resolved = text
     for old, new in replacements:

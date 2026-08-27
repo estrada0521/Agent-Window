@@ -11,7 +11,7 @@ from urllib.parse import parse_qs, quote as url_quote, urlparse
 
 from hub_backend.runtime import HubRuntime
 from backend_core.access.pwa import pwa_icon_entries as _pwa_icon_entries_impl
-from backend_core.access.settings import load_hub_settings, workspace_chat_port
+from backend_core.access.settings import apply_font_tokens, load_hub_settings, workspace_chat_port
 from hub_backend.chat_supervisor import chat_server_state, stop_inactive_chat_servers
 from hub_backend.presentation.hub.header_assets import (
     DEFAULT_HUB_HEADER_ACTIONS,
@@ -551,6 +551,7 @@ class Handler(BaseHTTPRequestHandler):
             str(resolve_theme_palette({"theme": "light"})["light_fg"]),
         )
         render_settings = settings_for_hub_render(settings, variant="desktop")
+        page = apply_font_tokens(page, settings=render_settings)
         self._send_html(200, apply_color_tokens(page, settings=render_settings))
 
     def _get_sessions(self, _parsed):
@@ -606,6 +607,7 @@ class Handler(BaseHTTPRequestHandler):
             page = page.replace("__THEME_DESKTOP__", theme_desktop)
             page = page.replace("__TEXT_SIZE_PX__", f'{int(settings["text_size"])}px')
         render_settings = settings_for_hub_render(settings, variant=variant)
+        page = apply_font_tokens(page, settings=render_settings)
         self._send_html(200, apply_color_tokens(page, settings=render_settings))
 
 

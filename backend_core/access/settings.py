@@ -73,6 +73,25 @@ def _with_derived_font_fields(settings: dict) -> dict:
     return settings
 
 
+def apply_font_tokens(text: str, settings: dict | None = None) -> str:
+    import html
+
+    message_font_css = canonicalize_message_font((settings or {}).get("message_font"))
+    message_font = html.escape(message_font_css)
+    code_font_css = str((settings or {}).get("code_font") or "").strip() or DEFAULT_CODE_FONT
+    code_font = html.escape(code_font_css)
+    replacements = (
+        ("__MESSAGE_FONT_CSS__", message_font_css),
+        ("__CODE_FONT_CSS__", code_font_css),
+        ("__MESSAGE_FONT__", message_font),
+        ("__CODE_FONT__", code_font),
+    )
+    resolved = text
+    for old, new in replacements:
+        resolved = resolved.replace(old, new)
+    return resolved
+
+
 def settings_for_hub_render(settings: dict, *, variant: str) -> dict:
     view = str(variant or "desktop").strip().lower()
     rendered = dict(settings, theme=resolve_theme(settings, variant=view))

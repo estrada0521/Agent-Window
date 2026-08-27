@@ -13,6 +13,7 @@ from .script_assets import (
 )
 from .render import apply_chat_template_replacements, build_chat_template_replacements
 from .template_loader import load_chat_template
+from backend_core.access.settings import apply_font_tokens
 from hub_backend.branding import APP_DISPLAY_NAME
 from hub_backend.color_constants import apply_color_tokens
 from ..hub.header_assets import PAGE_HEADER_CSS, render_page_header
@@ -131,5 +132,6 @@ def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings
         chat_document_title=chat_document_title,
     )
     html = apply_chat_template_replacements(html, replacements)
+    html = apply_font_tokens(html, settings=chat_settings)
     html = apply_color_tokens(html, settings=chat_settings)
     return html
