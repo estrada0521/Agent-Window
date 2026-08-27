@@ -74,40 +74,17 @@ MOBILE_LIGHT_ICON_HOVER = "rgb(35, 35, 35)"
 MOBILE_DARK_ICON_HOVER = "rgb(190, 190, 190)"
 
 
-# name -> channels, for every text-color role constant above. The single
-# place that has to know all 9 roles exist; apply_color_tokens() stays
-# generic over whatever's listed here.
-_TEXT_COLOR_CHANNELS: dict[str, str] = {
-    "TEXT_PRIMARY_DESKTOP_LIGHT": TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS,
-    "TEXT_PRIMARY_DESKTOP_DARK": TEXT_PRIMARY_DESKTOP_DARK_CHANNELS,
-    "TEXT_PRIMARY_MOBILE_LIGHT": TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS,
-    "TEXT_PRIMARY_MOBILE_DARK": TEXT_PRIMARY_MOBILE_DARK_CHANNELS,
-    "TEXT_STRONG_MOBILE_LIGHT": TEXT_STRONG_MOBILE_LIGHT_CHANNELS,
-    "TEXT_STRONG_MOBILE_DARK": TEXT_STRONG_MOBILE_DARK_CHANNELS,
-    "TEXT_MUTED_LIGHT": TEXT_MUTED_LIGHT_CHANNELS,
-    "TEXT_MUTED_DARK": TEXT_MUTED_DARK_CHANNELS,
-    "TEXT_LINK_LIGHT": TEXT_LINK_LIGHT_CHANNELS,
-    "TEXT_LINK_DARK": TEXT_LINK_DARK_CHANNELS,
-    "TEXT_EXTERNAL_LINK_LIGHT": TEXT_EXTERNAL_LINK_LIGHT_CHANNELS,
-    "TEXT_EXTERNAL_LINK_DARK": TEXT_EXTERNAL_LINK_DARK_CHANNELS,
-    "TEXT_ERROR_LIGHT": TEXT_ERROR_LIGHT_CHANNELS,
-    "TEXT_ERROR_DARK": TEXT_ERROR_DARK_CHANNELS,
-    "TEXT_DIFF_INSERT_LIGHT": TEXT_DIFF_INSERT_LIGHT_CHANNELS,
-    "TEXT_DIFF_INSERT_DARK": TEXT_DIFF_INSERT_DARK_CHANNELS,
-    "TEXT_DIFF_DELETE_LIGHT": TEXT_DIFF_DELETE_LIGHT_CHANNELS,
-    "TEXT_DIFF_DELETE_DARK": TEXT_DIFF_DELETE_DARK_CHANNELS,
-    "TEXT_SESSION_DESKTOP_LIGHT": TEXT_SESSION_DESKTOP_LIGHT_CHANNELS,
-    "TEXT_SESSION_DESKTOP_DARK": TEXT_SESSION_DESKTOP_DARK_CHANNELS,
-    "TEXT_SESSION_MOBILE_LIGHT": TEXT_SESSION_MOBILE_LIGHT_CHANNELS,
-    "TEXT_SESSION_MOBILE_DARK": TEXT_SESSION_MOBILE_DARK_CHANNELS,
-}
-
-
+# Every TEXT_*_CHANNELS constant defined above is a role; nothing else has
+# to re-list their names. Adding a role is declaring one constant, not also
+# registering it somewhere.
 def _text_color_token_replacements() -> tuple[tuple[str, str], ...]:
     pairs: list[tuple[str, str]] = []
-    for name, channels in _TEXT_COLOR_CHANNELS.items():
-        pairs.append((f"__{name}__", _rgb(channels)))
-        pairs.append((f"__{name}_CHANNELS__", channels))
+    for name, value in globals().items():
+        if not (name.startswith("TEXT_") and name.endswith("_CHANNELS")):
+            continue
+        base = name[: -len("_CHANNELS")]
+        pairs.append((f"__{base}__", _rgb(value)))
+        pairs.append((f"__{name}__", value))
     return tuple(pairs)
 
 
