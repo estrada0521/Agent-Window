@@ -185,7 +185,24 @@ __CHAT_INCLUDE:../file-autocomplete.js__
     messageInput.addEventListener("input", () => {
       autoResizeTextarea();
     });
-    window.addEventListener("resize", autoResizeTextarea);
+    if (typeof ResizeObserver === "function") {
+      let _composerWidthForResize = messageInput.getBoundingClientRect().width;
+      new ResizeObserver((entries) => {
+        const width = entries[entries.length - 1].contentRect.width;
+        if (width === _composerWidthForResize) return;
+        _composerWidthForResize = width;
+        // A width change (e.g. the right panel opening) reflows the text
+        // and can change how many lines it needs, but never moves the
+        // caret -- unlike typing, nothing here keeps the caret in view.
+        // If it's at (or near) the end, where active composing leaves it,
+        // follow it back into view rather than leaving it scrolled off.
+        const caretNearEnd = messageInput.value.length - messageInput.selectionEnd <= 1;
+        autoResizeTextarea();
+        if (caretNearEnd) messageInput.scrollTop = messageInput.scrollHeight;
+      }).observe(messageInput);
+    } else {
+      window.addEventListener("resize", autoResizeTextarea);
+    }
     const updateFileAutocomplete = async () => {
       const requestSeq = ++_fileAutocompleteRequestSeq;
       const pos = messageInput.selectionEnd;
