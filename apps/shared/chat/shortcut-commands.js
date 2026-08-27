@@ -16,10 +16,10 @@
         const slash = String(c.slash || "");
         if (!slash.startsWith("/")) continue;
         if (normalized === slash) {
-          return { id: c.id, arg: "" };
+          return { id: c.id, arg: "", path: c.path };
         }
         if (c.has_arg && normalized.startsWith(slash + " ")) {
-          return { id: c.id, arg: normalized.slice(slash.length + 1) };
+          return { id: c.id, arg: normalized.slice(slash.length + 1), path: c.path };
         }
       }
       return null;

@@ -96,11 +96,9 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     except Exception as exc:
         targets = []
         warnings.append(str(exc))
-    with ctx["runtime"]._payload_cache_lock:
-        ctx["runtime"]._payload_cache.clear()
-        ctx["runtime"]._payload_cache_order.clear()
+    ctx["runtime"].invalidate_payload_cache()
     try:
-        ctx["runtime"]._native_log.on_pane_add(instance)
+        ctx["runtime"].on_agent_pane_added(instance)
     except Exception as exc:
         warnings.append(str(exc))
     try:
@@ -154,9 +152,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
     except Exception as exc:
         targets = []
         warnings.append(str(exc))
-    with ctx["runtime"]._payload_cache_lock:
-        ctx["runtime"]._payload_cache.clear()
-        ctx["runtime"]._payload_cache_order.clear()
+    ctx["runtime"].invalidate_payload_cache()
     try:
         ctx["runtime"].refresh_native_log_bindings()
     except Exception as exc:
@@ -486,19 +482,21 @@ def _run_nativelog_command(ctx, *, target: str) -> tuple[int, dict]:
     return 200, {"ok": True, "status_message": f"revealed native log for {agent} in Finder"}
 
 
+def _post_native_log(handler, _parsed, ctx) -> None:
+    data, err = _read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
+        return
+    status, body = _run_nativelog_command(ctx, target=str(data.get("target") or ""))
+    handler._send_json(status, body)
+
+
 def _post_shortcut_command(handler, _parsed, ctx) -> None:
     data, err = _read_json_body(handler)
     if err:
         handler._send_json(400, {"ok": False, "error": err})
         return
     command_id = str(data.get("command_id") or "")
-    if command_id == "nativelog":
-        status, body = _run_nativelog_command(
-            ctx,
-            target=str(data.get("target") or ""),
-        )
-        handler._send_json(status, body)
-        return
     status, body = run_shortcut_command(
         ctx["runtime"],
         command_id=command_id,
@@ -535,6 +533,7 @@ _POST_ROUTES = {
     "/open-file": _post_open_file,
     "/open-diff": _post_open_diff,
     "/shortcut-command": _post_shortcut_command,
+    "/native-log": _post_native_log,
     "/send": _post_send,
 }
 

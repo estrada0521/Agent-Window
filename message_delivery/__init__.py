@@ -3,32 +3,9 @@ from __future__ import annotations
 import logging
 import os
 import subprocess
-import time
 
 from native_log_sync.agents._shared.path_state import _agent_base_name
-from message_delivery.paste_timing import delivery_paste_delay_seconds
-
-
-def _send_keys_literal(runtime, pane_id: str, text: str, *, subprocess_module=subprocess) -> bool:
-    pane = str(pane_id or "").strip()
-    if not pane:
-        return False
-    result = subprocess_module.run(
-        [*runtime.tmux_prefix, "send-keys", "-t", pane, "-l", "--", str(text)],
-        capture_output=True, text=True, check=False,
-    )
-    return result.returncode == 0
-
-
-def _send_enter(runtime, pane_id: str, *, subprocess_module=subprocess) -> bool:
-    pane = str(pane_id or "").strip()
-    if not pane:
-        return False
-    result = subprocess_module.run(
-        [*runtime.tmux_prefix, "send-keys", "-t", pane, "", "Enter"],
-        capture_output=True, check=False,
-    )
-    return result.returncode == 0
+from message_delivery.paste import deliver_text_to_pane
 
 
 def send_message(
@@ -73,17 +50,20 @@ def send_message(
     payload = message
     successful_targets: list[str] = []
     failed_targets: list[str] = []
+    def run_tmux(args):
+        return subprocess.run(
+            [*self.tmux_prefix, *args],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
     try:
         for agent in delivery_targets:
             pane_id = self.pane_id_for_agent(agent)
             if not pane_id:
                 failed_targets.append(agent)
                 continue
-            if not _send_keys_literal(self, pane_id, payload, subprocess_module=subprocess):
-                failed_targets.append(agent)
-                continue
-            time.sleep(delivery_paste_delay_seconds(env=os.environ))
-            if not _send_enter(self, pane_id, subprocess_module=subprocess):
+            if not deliver_text_to_pane(run_tmux, pane_id, payload, env=os.environ):
                 failed_targets.append(agent)
                 continue
             self._mark_agent_sent(agent)

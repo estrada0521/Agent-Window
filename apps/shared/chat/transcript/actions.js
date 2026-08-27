@@ -48,7 +48,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         renderTargetPicker(availableTargets);
       }
     };
-    const postShortcutCommand = async ({ command_id, arg = "" }) => {
+    const postShortcutCommand = async ({ command_id, arg = "", path = "/shortcut-command" }) => {
       if (sendLocked) {
         return false;
       }
@@ -61,7 +61,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
       }
       setStatus(`running ${command_id}...`);
       try {
-        const res = await fetch("/shortcut-command", {
+        const res = await fetch(path, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -118,7 +118,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
             closeComposerOverlay();
           }
           try {
-            const res = await fetch("/shortcut-command", {
+            const res = await fetch(parsed.path || "/shortcut-command", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({

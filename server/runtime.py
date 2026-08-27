@@ -153,9 +153,17 @@ class ChatRuntime:
     def start_native_log_sync(self) -> None:
         if not self.session_is_active:
             return
-        from native_log_sync.api import start_watchers
+        from native_log_sync.watch.watch_bindings import start_native_log_vnode_watcher
         self.refresh_native_log_bindings()
-        start_watchers(self._native_log)
+        start_native_log_vnode_watcher(self._native_log)
+
+    def invalidate_payload_cache(self) -> None:
+        with self._payload_cache_lock:
+            self._payload_cache.clear()
+            self._payload_cache_order.clear()
+
+    def on_agent_pane_added(self, agent: str) -> None:
+        self._native_log.on_pane_add(agent)
 
     @staticmethod
     def chat_font_settings_inline_style(settings: dict) -> str:

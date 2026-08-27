@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from shortcut_command.catalog import command_by_id
+from shortcut_command.catalog import pane_control_by_id
 from shortcut_command.control import try_deliver_shortcut_control
 
 
@@ -13,7 +13,7 @@ def run_shortcut_command(
     arg: str,
     target: str,
 ) -> tuple[int, dict[str, Any]]:
-    spec = command_by_id(command_id)
+    spec = pane_control_by_id(command_id)
     if spec is None:
         msg = "unknown shortcut command"
         return 400, {"ok": False, "error": msg, "status_message": msg}

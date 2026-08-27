@@ -12,7 +12,7 @@ from hub_backend.transport.request_base_path import request_base_path
 from hub_backend.transport.request_view import request_view_variant
 from server.font_style import font_family_stack
 from server.runtime import ENTRY_WINDOW_LIMIT
-from shortcut_command.catalog import public_command_dicts
+from shortcut_command.catalog import public_slash_command_dicts
 
 
 def _send_bytes(
@@ -345,7 +345,7 @@ def _get_git_diff_files(handler, parsed, ctx) -> None:
 
 def _get_shortcut_commands(handler, _parsed, ctx) -> None:
     del ctx
-    body = json.dumps({"commands": public_command_dicts()}, ensure_ascii=True).encode("utf-8")
+    body = json.dumps({"commands": public_slash_command_dicts()}, ensure_ascii=True).encode("utf-8")
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 

@@ -10,7 +10,6 @@ from shortcut_command.parsing import parse_pane_direct_command
 
 class ShortcutControlRuntime(Protocol):
     tmux_prefix: list[str]
-    _agent_running: set[str]
 
     def restart_agent_pane(self, agent: str) -> tuple[bool, str]: ...
 

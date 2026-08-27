@@ -43,7 +43,7 @@
       messageInput.value = "";
       autoResizeTextarea();
       closeCmdDrop();
-      void postShortcutCommand({ command_id: item.id, arg: "" });
+      void postShortcutCommand({ command_id: item.id, arg: "", path: item.path });
       requestAnimationFrame(() => focusMessageInputWithoutScroll(0));
     };
     let _lastCmdQuery = "";
@@ -80,6 +80,7 @@
           slash: c.slash,
           desc: c.desc,
           has_arg: !!c.has_arg,
+          path: c.path,
           type: "command",
           label: c.slash,
         }));
