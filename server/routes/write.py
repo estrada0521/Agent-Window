@@ -546,6 +546,9 @@ def _post_native_log(handler, _parsed, ctx) -> None:
     if err:
         handler._send_json(400, {"ok": False, "error": err})
         return
+    if str(data.get("client") or "").strip().lower() == "mobile":
+        handler._send_json(403, {"ok": False, "error": "nativelog is available on desktop only"})
+        return
     status, body = _run_nativelog_command(ctx, target=str(data.get("target") or ""))
     handler._send_json(status, body)
 

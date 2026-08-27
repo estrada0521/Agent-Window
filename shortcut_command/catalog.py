@@ -46,7 +46,7 @@ PANE_CONTROL_COMMANDS = (
 APPLICATION_COMMANDS = (
     SlashCommandSpec(
         id="nativelog", slash="/nativelog", desc="選択中エージェントのネイティブログをFinderで表示する",
-        has_arg=False, path="/native-log",
+        has_arg=False, path="/native-log", desktop_only=True,
     ),
     SlashCommandSpec(
         id="openpane", slash="/open-pane", desc="選択中エージェントの tmux pane を開く",
