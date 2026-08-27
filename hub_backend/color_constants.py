@@ -53,13 +53,13 @@ TEXT_DIFF_DELETE_LIGHT_CHANNELS = "207, 34, 46"
 TEXT_DIFF_DELETE_DARK_CHANNELS = "248, 113, 113"
 
 # Hub-only: the session/window title text ("Agent Window", session names).
-# A distinct role from text-primary even on desktop, where the value
-# happens to match today -- the hub title and the chat body are different
-# decisions that are free to diverge.
+# A distinct role from text-primary even where the value happens to match
+# today (desktop both themes, mobile dark) -- the hub title and the chat
+# body are different decisions that are free to diverge.
 TEXT_SESSION_DESKTOP_LIGHT_CHANNELS = "11, 11, 11"
 TEXT_SESSION_DESKTOP_DARK_CHANNELS = "200, 200, 200"
 TEXT_SESSION_MOBILE_LIGHT_CHANNELS = "19, 19, 19"
-TEXT_SESSION_MOBILE_DARK_CHANNELS = "200, 200, 200"
+TEXT_SESSION_MOBILE_DARK_CHANNELS = "232, 232, 230"
 
 
 # Icon-hover is icon scope, not text scope -- left as-is, untouched by the
