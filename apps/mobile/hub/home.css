@@ -333,7 +333,7 @@
 
     .hub-footer-credit {
       margin-top: 60vh;
-      padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+      padding: 12px 0 calc(4px + env(safe-area-inset-bottom, 0px));
       text-align: center;
       font-size: 12px;
       color: var(--muted);
