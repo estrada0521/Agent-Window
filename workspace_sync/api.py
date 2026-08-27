@@ -17,6 +17,7 @@ class WorkspaceSyncApi:
         workspace: str | Path,
         allowed_roots: list[str | Path] | tuple[str | Path, ...] | None = None,
         allowed_roots_fn: Callable[[], Iterable[str | Path]] | None = None,
+        repo_root: str | Path | None = None,
         runtime,
     ) -> None:
         self.workspace = str(workspace)
@@ -29,6 +30,7 @@ class WorkspaceSyncApi:
             workspace=workspace,
             allowed_roots=allowed_roots,
             allowed_roots_fn=allowed_roots_fn,
+            repo_root=repo_root,
         )
         workspace_git.configure(workspace=self.workspace)
         start_workspace_fsevents_watcher(self)
