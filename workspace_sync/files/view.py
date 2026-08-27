@@ -9,8 +9,20 @@ from urllib.parse import quote as url_quote
 
 from hub_backend.color_constants import (
     DARK_BG,
+    DARK_EXTERNAL_LINK_RED,
+    DARK_GIT_DELETION,
+    DARK_GIT_INSERTION,
+    MOBILE_DARK_ICON_HOVER,
+    MOBILE_DARK_MUTED,
     LIGHT_FG,
     LIGHT_FG_CHANNELS,
+    LIGHT_EXTERNAL_LINK_RED,
+    LIGHT_GIT_DELETION,
+    LIGHT_GIT_INSERTION,
+    LIGHT_LINK_BLUE,
+    LIGHT_LINK_BLUE_CHANNELS,
+    MOBILE_LIGHT_ICON_HOVER,
+    MOBILE_LIGHT_MUTED,
     MOBILE_DARK_FG_BOLD,
     MOBILE_DARK_FG_CHANNELS,
     MOBILE_LIGHT_FG_BOLD,
@@ -401,8 +413,8 @@ def render_file_view(
         light_preview_bg_channels = "249,249,247"
         light_preview_bg = f"rgb({light_preview_bg_channels})"
         markdown_theme_css = (
-            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette.get("dark_bg") or DARK_BG)};--fg:{dark_preview_fg};--fg-bold:{MOBILE_DARK_FG_BOLD};--muted:rgb(150,150,150);--icon-fg:{dark_preview_fg};--icon-muted:rgb(150,150,150);--icon-hover:rgb(190,190,190);--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba({dark_preview_fg_channels},0.09);--external-link-fg:rgb(255,107,107);--link-blue:{str(dark_theme_palette["dark_link_blue"])};--link-blue-channels:{str(dark_theme_palette["dark_link_blue_channels"])};--git-ins-green:rgb(74,222,128);--git-ins-green-channels:74,222,128;--git-del-red:rgb(248,113,113);--git-del-red-channels:248,113,113;--code-bg:rgba({dark_preview_fg_channels},0.10);--code-scrollbar-thumb:rgba({dark_preview_fg_channels},0.45);--code-scrollbar-thumb-hover:rgba({dark_preview_fg_channels},0.65);--line:rgba({dark_preview_fg_channels},0.07);--line-strong:rgba({dark_preview_fg_channels},0.12);--table-line:rgba({dark_preview_fg_channels},0.12);--table-header-line:rgba({dark_preview_fg_channels},0.28);}}'
-            f'html[data-preview-theme="light"]{{color-scheme:light;--bg-rgb:{light_preview_bg_channels};--bg:{light_preview_bg};--fg:{light_preview_fg};--fg-bold:{MOBILE_LIGHT_FG_BOLD};--muted:rgb(120,120,120);--icon-fg:{light_preview_fg};--icon-muted:rgb(120,120,120);--icon-hover:rgb(35,35,35);--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:rgb(207,34,46);--link-blue:rgb(9,105,218);--link-blue-channels:9,105,218;--git-ins-green:rgb(26,127,55);--git-ins-green-channels:26,127,55;--git-del-red:rgb(207,34,46);--git-del-red-channels:207,34,46;--code-bg:rgba(0,0,0,0.05);--code-scrollbar-thumb:rgba(0,0,0,0.25);--code-scrollbar-thumb-hover:rgba(0,0,0,0.45);--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);--table-line:rgba(0,0,0,0.18);}}'
+            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette.get("dark_bg") or DARK_BG)};--fg:{dark_preview_fg};--fg-bold:{MOBILE_DARK_FG_BOLD};--muted:{MOBILE_DARK_MUTED};--icon-fg:{dark_preview_fg};--icon-muted:{MOBILE_DARK_MUTED};--icon-hover:{MOBILE_DARK_ICON_HOVER};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba({dark_preview_fg_channels},0.09);--external-link-fg:{DARK_EXTERNAL_LINK_RED};--link-blue:{str(dark_theme_palette["dark_link_blue"])};--link-blue-channels:{str(dark_theme_palette["dark_link_blue_channels"])};--git-ins-green:{DARK_GIT_INSERTION};--git-ins-green-channels:74,222,128;--git-del-red:{DARK_GIT_DELETION};--git-del-red-channels:248,113,113;--code-bg:rgba({dark_preview_fg_channels},0.10);--code-scrollbar-thumb:rgba({dark_preview_fg_channels},0.45);--code-scrollbar-thumb-hover:rgba({dark_preview_fg_channels},0.65);--line:rgba({dark_preview_fg_channels},0.07);--line-strong:rgba({dark_preview_fg_channels},0.12);--table-line:rgba({dark_preview_fg_channels},0.12);--table-header-line:rgba({dark_preview_fg_channels},0.28);}}'
+            f'html[data-preview-theme="light"]{{color-scheme:light;--bg-rgb:{light_preview_bg_channels};--bg:{light_preview_bg};--fg:{light_preview_fg};--fg-bold:{MOBILE_LIGHT_FG_BOLD};--muted:{MOBILE_LIGHT_MUTED};--icon-fg:{light_preview_fg};--icon-muted:{MOBILE_LIGHT_MUTED};--icon-hover:{MOBILE_LIGHT_ICON_HOVER};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:{LIGHT_EXTERNAL_LINK_RED};--link-blue:{LIGHT_LINK_BLUE};--link-blue-channels:{LIGHT_LINK_BLUE_CHANNELS};--git-ins-green:{LIGHT_GIT_INSERTION};--git-ins-green-channels:26,127,55;--git-del-red:{LIGHT_GIT_DELETION};--git-del-red-channels:207,34,46;--code-bg:rgba(0,0,0,0.05);--code-scrollbar-thumb:rgba(0,0,0,0.25);--code-scrollbar-thumb-hover:rgba(0,0,0,0.45);--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);--table-line:rgba(0,0,0,0.18);}}'
             'html,body{background:transparent;color:var(--fg)}'
             '.md-preview-shell{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:transparent;scrollbar-gutter:auto;padding-top:0}'
         )

@@ -27,9 +27,9 @@
       color-scheme: light;
       --bg-rgb: __MOBILE_HUB_LIGHT_BG_CHANNELS__;
       --bg: __MOBILE_HUB_LIGHT_BG__;
-      --fg: rgb(19, 19, 19);
+      --fg: __MOBILE_HUB_LIGHT_FG__;
       --muted: rgb(120, 120, 120);
-      --icon-fg: rgb(19, 19, 19);
+      --icon-fg: __MOBILE_HUB_LIGHT_FG__;
       --icon-muted: rgb(120, 120, 120);
       --icon-hover: rgb(35, 35, 35);
       --panel: rgba(250, 250, 250, 0.72);
@@ -48,9 +48,9 @@
       color-scheme: dark;
       --bg-rgb: __MOBILE_HUB_DARK_BG_CHANNELS__;
       --bg: __MOBILE_HUB_DARK_BG__;
-      --fg: rgb(200, 200, 200);
+      --fg: __MOBILE_HUB_DARK_FG__;
       --muted: rgb(150, 150, 150);
-      --icon-fg: rgb(200, 200, 200);
+      --icon-fg: __MOBILE_HUB_DARK_FG__;
       --icon-muted: rgb(150, 150, 150);
       --icon-hover: rgb(190, 190, 190);
       --panel: rgba(14, 14, 13, 0.72);

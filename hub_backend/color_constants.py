@@ -5,6 +5,8 @@ from collections.abc import Mapping
 
 DARK_LINK_BLUE_CHANNELS = "134, 156, 184"
 DARK_LINK_BLUE = f"rgb({DARK_LINK_BLUE_CHANNELS})"
+LIGHT_LINK_BLUE_CHANNELS = "36, 85, 161"
+LIGHT_LINK_BLUE = f"rgb({LIGHT_LINK_BLUE_CHANNELS})"
 
 DARK_EXTERNAL_LINK_RED_CHANNELS = "224, 88, 88"
 DARK_EXTERNAL_LINK_RED = f"rgb({DARK_EXTERNAL_LINK_RED_CHANNELS})"
@@ -17,14 +19,33 @@ LIGHT_EXTERNAL_LINK_RED = f"rgb({LIGHT_EXTERNAL_LINK_RED_CHANNELS})"
 # Kept a shade back from the theme's extreme (pure white/black) so that bold
 # text, set to the extreme via MOBILE_*_FG_BOLD_CHANNELS, reads as heavier.
 MOBILE_DARK_FG_CHANNELS = "232, 232, 230"
-MOBILE_DARK_FG = f"rgb({MOBILE_DARK_FG_CHANNELS})"
 MOBILE_LIGHT_FG_CHANNELS = "34, 34, 34"
-MOBILE_LIGHT_FG = f"rgb({MOBILE_LIGHT_FG_CHANNELS})"
+
+DESKTOP_CHAT_LIGHT_FG = "rgb(11, 11, 11)"
+DESKTOP_CHAT_DARK_FG = "rgb(200, 200, 200)"
+DESKTOP_HUB_LIGHT_FG = "rgb(11, 11, 11)"
+DESKTOP_HUB_DARK_FG = "rgb(200, 200, 200)"
+MOBILE_HUB_LIGHT_FG = "rgb(19, 19, 19)"
+MOBILE_HUB_DARK_FG = "rgb(200, 200, 200)"
+DESKTOP_LIGHT_MUTED = "rgb(120, 120, 120)"
+DESKTOP_DARK_MUTED = "rgb(150, 150, 150)"
+DESKTOP_LIGHT_ICON_HOVER = "rgb(35, 35, 35)"
+DESKTOP_DARK_ICON_HOVER = "rgb(190, 190, 190)"
 
 MOBILE_DARK_FG_BOLD_CHANNELS = "255, 255, 255"
 MOBILE_DARK_FG_BOLD = f"rgb({MOBILE_DARK_FG_BOLD_CHANNELS})"
 MOBILE_LIGHT_FG_BOLD_CHANNELS = "0, 0, 0"
 MOBILE_LIGHT_FG_BOLD = f"rgb({MOBILE_LIGHT_FG_BOLD_CHANNELS})"
+
+MOBILE_DARK_MUTED = "rgb(150, 150, 150)"
+MOBILE_LIGHT_MUTED = "rgb(120, 120, 120)"
+MOBILE_DARK_ICON_HOVER = "rgb(190, 190, 190)"
+MOBILE_LIGHT_ICON_HOVER = "rgb(35, 35, 35)"
+
+DARK_GIT_INSERTION = "rgb(74, 222, 128)"
+LIGHT_GIT_INSERTION = "rgb(26, 127, 55)"
+DARK_GIT_DELETION = "rgb(248, 113, 113)"
+LIGHT_GIT_DELETION = "rgb(207, 34, 46)"
 
 
 def _gray_rgb(level: int) -> tuple[int, int, int]:
@@ -121,6 +142,8 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
         "color_scheme": color_scheme,
         "dark_link_blue": DARK_LINK_BLUE,
         "dark_link_blue_channels": DARK_LINK_BLUE_CHANNELS,
+        "light_link_blue": LIGHT_LINK_BLUE,
+        "light_link_blue_channels": LIGHT_LINK_BLUE_CHANNELS,
         "dark_external_link_red": DARK_EXTERNAL_LINK_RED,
         "light_external_link_red": LIGHT_EXTERNAL_LINK_RED,
         "bg_level": bg_level,
@@ -230,6 +253,8 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
     chip_color = str(palette["chip_color"])
     dark_link_blue = str(palette["dark_link_blue"])
     dark_link_blue_channels = str(palette["dark_link_blue_channels"])
+    light_link_blue = str(palette["light_link_blue"])
+    light_link_blue_channels = str(palette["light_link_blue_channels"])
     dark_external_link_red = str(palette["dark_external_link_red"])
     light_external_link_red = str(palette["light_external_link_red"])
 
@@ -279,12 +304,32 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
         ("__CHIP_COLOR__", chip_color),
         ("__DARK_LINK_BLUE__", dark_link_blue),
         ("__DARK_LINK_BLUE_CHANNELS__", dark_link_blue_channels),
+        ("__LIGHT_LINK_BLUE__", light_link_blue),
+        ("__LIGHT_LINK_BLUE_CHANNELS__", light_link_blue_channels),
         ("__DARK_EXTERNAL_LINK_RED__", dark_external_link_red),
         ("__LIGHT_EXTERNAL_LINK_RED__", light_external_link_red),
         ("__MOBILE_DARK_FG_CHANNELS__", MOBILE_DARK_FG_CHANNELS),
         ("__MOBILE_LIGHT_FG_CHANNELS__", MOBILE_LIGHT_FG_CHANNELS),
+        ("__DESKTOP_CHAT_LIGHT_FG__", DESKTOP_CHAT_LIGHT_FG),
+        ("__DESKTOP_CHAT_DARK_FG__", DESKTOP_CHAT_DARK_FG),
+        ("__DESKTOP_HUB_LIGHT_FG__", DESKTOP_HUB_LIGHT_FG),
+        ("__DESKTOP_HUB_DARK_FG__", DESKTOP_HUB_DARK_FG),
+        ("__MOBILE_HUB_LIGHT_FG__", MOBILE_HUB_LIGHT_FG),
+        ("__MOBILE_HUB_DARK_FG__", MOBILE_HUB_DARK_FG),
+        ("__DESKTOP_LIGHT_MUTED__", DESKTOP_LIGHT_MUTED),
+        ("__DESKTOP_DARK_MUTED__", DESKTOP_DARK_MUTED),
+        ("__DESKTOP_LIGHT_ICON_HOVER__", DESKTOP_LIGHT_ICON_HOVER),
+        ("__DESKTOP_DARK_ICON_HOVER__", DESKTOP_DARK_ICON_HOVER),
         ("__MOBILE_DARK_FG_BOLD_CHANNELS__", MOBILE_DARK_FG_BOLD_CHANNELS),
         ("__MOBILE_LIGHT_FG_BOLD_CHANNELS__", MOBILE_LIGHT_FG_BOLD_CHANNELS),
+        ("__MOBILE_DARK_MUTED__", MOBILE_DARK_MUTED),
+        ("__MOBILE_LIGHT_MUTED__", MOBILE_LIGHT_MUTED),
+        ("__MOBILE_DARK_ICON_HOVER__", MOBILE_DARK_ICON_HOVER),
+        ("__MOBILE_LIGHT_ICON_HOVER__", MOBILE_LIGHT_ICON_HOVER),
+        ("__DARK_GIT_INSERTION__", DARK_GIT_INSERTION),
+        ("__LIGHT_GIT_INSERTION__", LIGHT_GIT_INSERTION),
+        ("__DARK_GIT_DELETION__", DARK_GIT_DELETION),
+        ("__LIGHT_GIT_DELETION__", LIGHT_GIT_DELETION),
         ("__LINE__", str(palette["line"])),
         ("__LINE_STRONG__", str(palette["line_strong"])),
         ("__TABLE_LINE__", str(palette["table_line"])),
