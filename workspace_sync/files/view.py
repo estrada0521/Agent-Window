@@ -106,7 +106,9 @@ def render_file_view(
     pane_fg = str((theme_palette or {}).get("light_fg") or LIGHT_FG)
     pane_fg_channels = str((theme_palette or {}).get("light_fg_channels") or LIGHT_FG_CHANNELS)
     is_light_theme = str((theme_palette or {}).get("theme") or "").lower() == "light"
-    pane_ln_color = "rgba(0,0,0,0.22)" if is_light_theme else f"rgba({pane_fg_channels},0.22)"
+    # Line numbers are text, not decoration: read text-muted directly rather
+    # than a translucent tint of the code pane's own (separate) fg system.
+    pane_ln_color = f"rgb({TEXT_MUTED_LIGHT_CHANNELS if is_light_theme else TEXT_MUTED_DARK_CHANNELS})"
     pane_line = f"rgba({pane_fg_channels},0.08)"
     pane_gutter_bg = "transparent"
     pane_gutter_divider = f"rgba({pane_fg_channels},0.16)"
