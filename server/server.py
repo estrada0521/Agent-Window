@@ -21,6 +21,10 @@ from server.routes.read import dispatch_get_read_route
 from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
 from backend_core.access.pwa import pwa_icon_entries
+from hub_backend.server_helpers import (
+    pwa_asset_url as _pwa_asset_url_impl,
+    pwa_asset_version as _pwa_asset_version_impl,
+)
 from backend_core.access.chat_server import read_chat_server_state
 from backend_core.access.settings import (
     hub_settings_path,
@@ -276,15 +280,29 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     _initialized = True
 
 
-def _pwa_asset_url(path: str, base_path: str = "") -> str:
-    prefix = (base_path or "").rstrip("/")
-    return f"{prefix}{path}" if prefix else path
+def _pwa_asset_version(path: str) -> str:
+    return _pwa_asset_version_impl(
+        path,
+        pwa_asset_version_overrides={},
+        pwa_static_routes=_PWA_STATIC_ROUTES,
+        pwa_static_dir=_PWA_STATIC_DIR,
+        fallback_file=__file__,
+    )
+
+
+def _pwa_asset_url(path: str, base_path: str = "", *, bust: bool = False) -> str:
+    return _pwa_asset_url_impl(
+        path,
+        base_path=base_path,
+        bust=bust,
+        pwa_asset_version_fn=_pwa_asset_version,
+    )
 
 
 def _pwa_icon_entries(base_path: str = "") -> list[dict[str, str]]:
     return pwa_icon_entries(
         base_path=base_path,
-        pwa_asset_url_fn=lambda path, *, base_path="", bust=False: _pwa_asset_url(path, base_path),
+        pwa_asset_url_fn=lambda path, *, base_path="", bust=False: _pwa_asset_url(path, base_path, bust=bust),
     )
 
 
