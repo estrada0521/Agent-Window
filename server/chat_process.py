@@ -15,8 +15,6 @@ def launch_chat_server(workspace: Path | str, *, env: Mapping[str, str]) -> subp
     if not raw_workspace:
         raise ValueError("workspace is required")
     workspace_path = Path(raw_workspace).expanduser().resolve()
-    if not workspace_path.is_dir():
-        raise FileNotFoundError(f"workspace is unavailable: {workspace_path}")
     resolved_workspace = str(workspace_path)
     repo_root = Path(__file__).resolve().parent.parent
     return subprocess.Popen(
