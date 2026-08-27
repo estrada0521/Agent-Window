@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 
 from native_log_sync.agents._shared.path_state import (
@@ -13,6 +14,18 @@ from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.codex.read_runtime import iter_tool_calls, runtime_tool_events
 from native_log_sync.io.jsonl_read import complete_jsonl_scan
 from native_log_sync.io.projected import append_projected_entry
+
+
+_CODEX_MEMORY_CITATION_SUFFIX = re.compile(
+    r"\s*<oai-mem-citation>\s*<citation_entries>.*?</citation_entries>"
+    r"\s*<rollout_ids>.*?</rollout_ids>\s*</oai-mem-citation>\s*\Z",
+    re.DOTALL,
+)
+
+
+def _without_codex_memory_citation(text: str) -> str:
+    """Keep Codex's internal memory citation footer out of the chat projection."""
+    return _CODEX_MEMORY_CITATION_SUFFIX.sub("", text).strip()
 
 
 def _codex_runtime_state_event(entry: object) -> str:
@@ -107,7 +120,7 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
                                 texts.append(str(t).strip())
                 if not texts:
                     return False
-                display = "\n".join(texts)
+                display = _without_codex_memory_citation("\n".join(texts))
         elif entry_type == "event_msg":
             payload = entry.get("payload", {})
             payload_type = str(payload.get("type") or "").strip().lower()
