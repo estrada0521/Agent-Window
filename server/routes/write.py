@@ -280,13 +280,21 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
                 [*prefix, "select-pane", "-t", pane_id],
                 capture_output=True, check=False,
             )
-            subprocess.Popen(
-                ["osascript", "-e", 'tell application "Terminal" to activate'],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+            attached_res = subprocess.run(
+                [*prefix, "display-message", "-p", "-t", tmux_name, "#{session_attached}"],
+                capture_output=True, text=True, check=False,
             )
-            handler._send_json(200, {"ok": True})
-            return
+            if attached_res.returncode != 0:
+                handler._send_json(500, {"ok": False, "error": "could not determine tmux session attachment"})
+                return
+            if int((attached_res.stdout or "0").strip() or "0") > 0:
+                subprocess.Popen(
+                    ["osascript", "-e", 'tell application "Terminal" to activate'],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                handler._send_json(200, {"ok": True})
+                return
     try:
         prefix = tmux_prefix_args(ctx["tmux_socket"])
         socket_flag = prefix[1]
