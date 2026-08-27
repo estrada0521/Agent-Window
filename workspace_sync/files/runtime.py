@@ -70,11 +70,9 @@ class FileRuntime:
         workspace: str | Path,
         allowed_roots: list[str | Path] | tuple[str | Path, ...] | None = None,
         allowed_roots_fn: Callable[[], Iterable[str | Path]] | None = None,
-        repo_root: str | Path | None = None,
     ):
         raw = str(workspace or "").strip()
         self.workspace = os.path.realpath(os.path.normpath(raw)) if raw else ""
-        self.repo_root = os.path.realpath(os.path.normpath(str(repo_root))) if repo_root else None
         roots = [self.workspace] if self.workspace else []
         for candidate in allowed_roots or ():
             if not candidate:

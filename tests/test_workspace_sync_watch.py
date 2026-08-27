@@ -57,7 +57,6 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
             ):
                 WorkspaceSyncApi(
                     workspace=workspace,
-                    repo_root=workspace,
                     runtime=mock.Mock(),
                 )
 

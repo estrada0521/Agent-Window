@@ -250,7 +250,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     workspace_sync_api = WorkspaceSyncApi(
         workspace=workspace,
         allowed_roots_fn=lambda: [runtime.session_dir],
-        repo_root=_repo_root,
         runtime=runtime,
     )
     asset_runtime = ChatAssetRuntime(

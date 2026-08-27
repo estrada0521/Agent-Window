@@ -16,7 +16,7 @@ class FileRuntimeListTests(unittest.TestCase):
             (workspace / "apps" / "test.md").write_text("hi\n", encoding="utf-8")
             (workspace / "scratch").mkdir()
             (workspace / "scratch" / "blob.bin").write_bytes(b"x" * 1024)
-            runtime = FileRuntime(workspace=workspace, repo_root=workspace)
+            runtime = FileRuntime(workspace=workspace)
 
             root_entries = runtime.list_dir("")
             names = {entry["name"] for entry in root_entries}
@@ -28,16 +28,13 @@ class FileRuntimeListTests(unittest.TestCase):
             self.assertEqual(app_entries[0]["kind"], "file")
 
     def test_list_dir_fails_when_workspace_is_missing(self) -> None:
-        runtime = FileRuntime(workspace="", repo_root="/Users/okadaharuto/workspace/Agent-Window")
+        runtime = FileRuntime(workspace="")
         self.assertEqual(runtime.workspace, "")
         with self.assertRaisesRegex(RuntimeError, "workspace is not configured"):
             runtime.list_dir("")
 
     def test_list_dir_fails_when_workspace_folder_is_gone(self) -> None:
-        runtime = FileRuntime(
-            workspace="/no/such/even-parity",
-            repo_root="/Users/okadaharuto/workspace/Agent-Window",
-        )
+        runtime = FileRuntime(workspace="/no/such/even-parity")
         with self.assertRaisesRegex(RuntimeError, "workspace is not available"):
             runtime.list_dir("")
 
@@ -50,7 +47,7 @@ class FileRuntimeListTests(unittest.TestCase):
             (workspace / "apps" / "test.md").write_text("hi\n", encoding="utf-8")
             (workspace / "scratch").mkdir()
             (workspace / "scratch" / "blob.bin").write_bytes(b"x" * 1024)
-            runtime = FileRuntime(workspace=workspace, repo_root=workspace)
+            runtime = FileRuntime(workspace=workspace)
 
             hits = runtime.search_files("test.md", limit=20)
             paths = [entry["path"] for entry in hits]

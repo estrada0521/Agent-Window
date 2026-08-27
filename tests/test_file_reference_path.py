@@ -30,7 +30,7 @@ class ReferencePathBypassIsIntentionalTests(unittest.TestCase):
             target = outside / "secret.txt"
             target.write_text("outside content\n", encoding="utf-8")
 
-            runtime = FileRuntime(workspace=workspace, repo_root=workspace)
+            runtime = FileRuntime(workspace=workspace)
             self.assertFalse(runtime._is_allowed_path(str(target)))
 
             resolved = runtime._resolve_reference_path(str(target))
@@ -40,7 +40,7 @@ class ReferencePathBypassIsIntentionalTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
-            runtime = FileRuntime(workspace=workspace, repo_root=workspace)
+            runtime = FileRuntime(workspace=workspace)
 
             resolved = runtime._resolve_reference_path("~/.bashrc")
             self.assertEqual(resolved, str(Path("~/.bashrc").expanduser().resolve()))
@@ -51,7 +51,7 @@ class ReferencePathBypassIsIntentionalTests(unittest.TestCase):
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
             (workspace / "in-workspace.txt").write_text("hi\n", encoding="utf-8")
-            runtime = FileRuntime(workspace=workspace, repo_root=workspace)
+            runtime = FileRuntime(workspace=workspace)
 
             resolved = runtime._resolve_reference_path("in-workspace.txt")
             self.assertEqual(resolved, str((workspace / "in-workspace.txt").resolve()))
