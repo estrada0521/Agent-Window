@@ -252,19 +252,32 @@
       pointer-events: none;
     }
 
+    @keyframes titleFadeIn {
+      0% {
+        opacity: 0;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
     html[data-launch-shell="1"] body::before {
-      content: "";
+      content: "Agent Window";
       position: fixed;
       left: 50%;
       top: 50%;
-      width: 18px;
-      height: 18px;
-      margin-left: -9px;
-      margin-top: -9px;
-      border-radius: 999px;
-      border: 2px solid var(--icon-muted);
-      border-top-color: var(--icon-fg);
-      animation: hub-inline-loading-spin 800ms linear infinite;
+      transform: translate(-50%, -50%);
+      color: var(--fg);
+      font-family: "Snell Roundhand", "Apple Chancery", cursive;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      white-space: nowrap;
+      padding: 0 12px;
+      opacity: 0;
+      animation: titleFadeIn 800ms ease-out forwards;
       z-index: 12000;
       pointer-events: none;
       box-sizing: border-box;
