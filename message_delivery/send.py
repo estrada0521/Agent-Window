@@ -245,7 +245,6 @@ class AgentSendRuntime:
     def _build_delivery_targets(self, session_name: str, target_spec: str, sender_role: str | None) -> list[DeliveryTarget]:
         targets: list[DeliveryTarget] = []
         panes_by_target: dict[str, str] = {}
-        names = self.agent_names(session_name)
         active = self.active_agent_instances()
 
         def queue(agent_name: str, pane_id: str) -> None:
@@ -254,47 +253,6 @@ class AgentSendRuntime:
             panes_by_target[agent_name] = pane_id
 
         for raw_target in [item.strip() for item in (target_spec or "").split(",") if item.strip()]:
-            resolved_name = self.resolve_agent_name(raw_target)
-            if resolved_name and resolved_name != "user":
-                base_name = agent_base_name(resolved_name)
-                if re.search(r"-\d+$", resolved_name):
-                    upper = resolved_name.upper().replace("-", "_")
-                    if resolved_name not in active:
-                        raise AgentSendError(f"Agent instance not found: {resolved_name}")
-                    pane = self.resolve_pane(f"AGENT_WINDOW_PANE_{upper}")
-                    if not pane:
-                        raise AgentSendError(f"Target pane not found: {resolved_name}")
-                    queue(resolved_name, pane)
-                    continue
-
-                found = False
-                for instance in active:
-                    if instance == base_name or instance.startswith(f"{base_name}-"):
-                        pane = self.resolve_pane(f"AGENT_WINDOW_PANE_{instance.upper().replace('-', '_')}")
-                        if pane:
-                            queue(instance, pane)
-                            found = True
-                if not found:
-                    raise AgentSendError(f"Target pane not found: {raw_target}")
-                continue
-
-            alias_matches = [
-                canonical
-                for canonical, display in names.items()
-                if display.casefold() == raw_target.casefold()
-            ]
-            if len(alias_matches) == 1:
-                canonical = alias_matches[0]
-                if canonical not in active:
-                    raise AgentSendError(f"Agent instance not found: {raw_target}")
-                pane = self.resolve_pane(f"AGENT_WINDOW_PANE_{canonical.upper().replace('-', '_')}")
-                if not pane:
-                    raise AgentSendError(f"Target pane not found: {raw_target}")
-                queue(canonical, pane)
-                continue
-            if len(alias_matches) > 1:
-                raise AgentSendError(f'Agent name is ambiguous: "{raw_target}"')
-
             lower_target = raw_target.lower()
             if lower_target == "user":
                 raise AgentSendError(
@@ -313,7 +271,11 @@ class AgentSendRuntime:
                         queue(instance, pane)
                 continue
 
-            raise AgentSendError(f"Unknown target: {raw_target}")
+            canonical = self.resolve_agent_name_target(session_name, raw_target)
+            pane = self.resolve_pane(f"AGENT_WINDOW_PANE_{canonical.upper().replace('-', '_')}")
+            if not pane:
+                raise AgentSendError(f"Target pane not found: {raw_target}")
+            queue(canonical, pane)
 
         for name, pane in panes_by_target.items():
             targets.append(DeliveryTarget(agent_name=name, pane_id=pane))

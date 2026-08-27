@@ -29,22 +29,24 @@ printf '%s' '<message body>' | agent-send <target>
 
 ## Base Targets and Instance Targets
 
-A base target sends the message to every active instance of that agent:
+A base target such as `codex` addresses the agent by type:
 
 ```bash
 printf '%s' 'Please review this.' | agent-send codex
 ```
 
-For example, if both `codex-1` and `codex-2` are active, targeting `codex` sends the message to both.
-
-An instance target sends the message only to that exact instance:
+When exactly one `codex` instance is active, `codex` addresses it directly. When more than one is active, `codex` is ambiguous and `agent-send` rejects it — name the exact instance instead:
 
 ```bash
 printf '%s' 'Please inspect the parser.' | agent-send codex-1
 printf '%s' 'Please inspect the UI.' | agent-send codex-2
 ```
 
-This distinction applies to every agent type, such as `claude-1`, `claude-2`, `gemini-1`, or `cursor-2`.
+This applies to every agent type, such as `claude-1`, `claude-2`, `gemini-1`, or `cursor-2`. To reach more than one instance, list them explicitly:
+
+```bash
+printf '%s' 'Please review this together.' | agent-send codex-1,codex-2
+```
 
 Use the exact instance names shown in the current session topology. They are available in `AGENT_WINDOW_AGENTS` and through:
 
@@ -92,7 +94,7 @@ agent-send name claude-2 Fable
 printf '%s' 'Please review this.' | agent-send Fable
 ```
 
-The assigned name is an additional address, not a replacement. In this example, both `Fable` and `claude-2` address the same instance. The base target `claude` also keeps its existing behavior: it addresses the only Claude instance when one is active, or every active Claude instance when duplicated.
+The assigned name is an additional address, not a replacement. In this example, both `Fable` and `claude-2` address the same instance.
 
 Names affect only `agent-send` addressing and the automatic `[From: ...]` prefix. Canonical instance names and JSONL sender/target identities do not change. Names are local to the Agent Window session.
 

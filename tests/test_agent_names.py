@@ -66,7 +66,7 @@ class AgentNameTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             runtime = _NameRuntime(Path(tmp))
             self.assertIsNone(runtime.resolve_agent_name("1"))
-            with self.assertRaisesRegex(AgentSendError, "Unknown target: 1"):
+            with self.assertRaisesRegex(AgentSendError, "Agent instance not found: 1"):
                 runtime.send_message(
                     target_spec="1",
                     payload="hello",
