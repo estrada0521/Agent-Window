@@ -62,10 +62,6 @@ TEXT_SESSION_MOBILE_LIGHT_CHANNELS = "19, 19, 19"
 TEXT_SESSION_MOBILE_DARK_CHANNELS = "200, 200, 200"
 
 
-def _rgb(channels: str) -> str:
-    return f"rgb({channels})"
-
-
 # Icon-hover is icon scope, not text scope -- left as-is, untouched by the
 # text-color-role cleanup above.
 DESKTOP_LIGHT_ICON_HOVER = "rgb(35, 35, 35)"
@@ -77,15 +73,18 @@ MOBILE_DARK_ICON_HOVER = "rgb(190, 190, 190)"
 # Every TEXT_*_CHANNELS constant defined above is a role; nothing else has
 # to re-list their names. Adding a role is declaring one constant, not also
 # registering it somewhere.
+#
+# Only the bare channels are emitted -- CSS already has a way to build a
+# full color from channels (`rgb(__X_CHANNELS__)`, or `rgb(var(--x-channels))`
+# where a var needs to be shared), so there's nothing for Python to convert;
+# emitting a second, pre-wrapped "__X__" token would just be the same fact
+# spelled two ways.
 def _text_color_token_replacements() -> tuple[tuple[str, str], ...]:
-    pairs: list[tuple[str, str]] = []
-    for name, value in globals().items():
-        if not (name.startswith("TEXT_") and name.endswith("_CHANNELS")):
-            continue
-        base = name[: -len("_CHANNELS")]
-        pairs.append((f"__{base}__", _rgb(value)))
-        pairs.append((f"__{name}__", value))
-    return tuple(pairs)
+    return tuple(
+        (f"__{name}__", value)
+        for name, value in globals().items()
+        if name.startswith("TEXT_") and name.endswith("_CHANNELS")
+    )
 
 
 def _gray_rgb(level: int) -> tuple[int, int, int]:
