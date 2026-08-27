@@ -91,9 +91,8 @@
     function resetLaunchShellCard() {
       const card = _launchShell?.querySelector(".launch-shell-card");
       if (!card) return;
-      card.classList.remove("is-error");
       card.setAttribute("aria-hidden", "true");
-      card.innerHTML = '<span class="launch-shell-spinner"></span>';
+      card.innerHTML = '<span class="launch-shell-title">Agent Window</span>';
     }
     function hideLaunchShell() {
       if (!_launchShell) return;

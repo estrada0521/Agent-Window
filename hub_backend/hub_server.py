@@ -228,7 +228,6 @@ _PAGE_HEADER_JS = PAGE_HEADER_JS
 _HUB_LAUNCH_SHELL_BODY_HTML = (
     '<div class="launch-shell-card" id="launchShellCard">'
     '<span class="launch-shell-title">Agent Window</span>'
-    '<span class="launch-shell-spinner" aria-hidden="true"></span>'
     "</div>"
 )
 HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
@@ -239,7 +238,7 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
   <meta name="theme-color" content="__DARK_BG__">
   <title>{APP_DISPLAY_NAME}</title>
   <style>
-    :root {{ color-scheme: __COLOR_SCHEME__; --bg: __DARK_BG__; --fg: __LIGHT_FG__; --icon-fg: __ICON_FG__; --icon-muted: __ICON_MUTED__; --icon-hover: __ICON_HOVER__; }}
+    :root {{ color-scheme: __COLOR_SCHEME__; --bg: __DARK_BG__; --fg: __LIGHT_FG__; }}
     html[data-theme-desktop="dark"] {{ --launch-shell-title-fg: rgb(255,255,255); }}
     html, body {{
       margin: 0;
@@ -301,19 +300,14 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       opacity: 0;
       animation: titleFadeIn 800ms ease-out forwards;
     }}
-    html[data-view="mobile"] .launch-shell-title {{ display: none; }}
-    html[data-view="desktop"] .launch-shell-spinner {{ display: none; }}
-    .launch-shell-spinner {{
-      width: 18px;
-      height: 18px;
-      border-radius: 999px;
-      border: 2px solid var(--icon-muted);
-      border-top-color: var(--icon-fg);
-      box-sizing: border-box;
-      animation: launch-shell-spin 800ms linear infinite;
+    html[data-view="mobile"] .launch-shell-title {{
+      color: rgb(__TEXT_SESSION_MOBILE_DARK_CHANNELS__);
+      font-size: 26px;
+      font-weight: 900;
+      padding: 0 12px;
     }}
-    @keyframes launch-shell-spin {{
-      to {{ transform: rotate(360deg); }}
+    @media (prefers-color-scheme: light) {{
+      html[data-view="mobile"] .launch-shell-title {{ color: rgb(__TEXT_SESSION_MOBILE_LIGHT_CHANNELS__); }}
     }}
     .launch-shell-card.is-error {{
       width: auto;
