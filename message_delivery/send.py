@@ -154,9 +154,6 @@ class AgentSendRuntime:
                 return agent
         return None
 
-    def current_pane_role(self) -> str | None:
-        return self.resolve_self_agent()
-
     def agent_names(self, session_name: str) -> dict[str, str]:
         return load_agent_names(session_name)
 
@@ -377,7 +374,7 @@ class AgentSendRuntime:
         payload: str,
     ) -> bool:
         session_name = self.resolve_session_name()
-        sender_role = self.current_pane_role() or "user"
+        sender_role = self.resolve_self_agent() or "user"
         sender_label = self.agent_names(session_name).get(sender_role, sender_role)
         delivery_payload = self.normalize_payload(sender_label, payload)
         delivery_targets = self._build_delivery_targets(session_name, target_spec, sender_role)
