@@ -126,6 +126,11 @@
           return;
         }
       }
+      if (event.metaKey && event.code === "Comma") {
+        event.preventDefault();
+        dispatchDeskNativeMenuAction({ action: "openSettingsFile" });
+        return;
+      }
       if (!(event.metaKey || event.ctrlKey)) return;
       // event.code (physical key) instead of event.key: with metaKey held,
       // some WebViews don't reliably report the shift-modified character for

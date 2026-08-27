@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 from urllib.parse import unquote as url_unquote
 
-from backend_core.access.settings import workspace_upload_dir
+from backend_core.access.settings import hub_settings_path, workspace_upload_dir
 from backend_core.tmux.control import SessionControlError, add_agent, remove_agent
 from backend_core.tmux.window import tmux_prefix_args
 from shortcut_command.execute import run_shortcut_command
@@ -366,6 +366,22 @@ def _post_open_finder(handler, _parsed, ctx) -> None:
         handler._send_json(500, {"ok": False, "error": str(exc)})
 
 
+def _post_open_settings_file(handler, _parsed, ctx) -> None:
+    try:
+        target = hub_settings_path()
+        if not target.exists():
+            handler._send_json(404, {"ok": False, "error": "settings file not found"})
+            return
+        subprocess.Popen(
+            ["open", str(target)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        handler._send_json(200, {"ok": True, "path": str(target)})
+    except Exception as exc:
+        handler._send_json(500, {"ok": False, "error": str(exc)})
+
+
 def _post_files_exist(handler, _parsed, ctx) -> None:
     data, err = _read_json_body(handler)
     if err:
@@ -513,6 +529,7 @@ _POST_ROUTES = {
     "/delete-upload": _post_delete_upload,
     "/open-terminal": _post_open_terminal,
     "/open-finder": _post_open_finder,
+    "/open-settings-file": _post_open_settings_file,
     "/files-exist": _post_files_exist,
     "/files-resolve": _post_files_resolve,
     "/open-file": _post_open_file,

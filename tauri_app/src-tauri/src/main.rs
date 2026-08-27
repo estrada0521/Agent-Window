@@ -297,12 +297,22 @@ fn show_appearance_menu(
     .build(&app)
     .map_err(|err| err.to_string())?;
 
+    let open_settings_file = MenuItemBuilder::with_id(
+        format!("{}action:openSettingsFile", NATIVE_MENU_PREFIX),
+        "Open Settings File",
+    )
+    .accelerator("Cmd+,")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+
     let menu = MenuBuilder::new(&app)
         .item(&theme_submenu)
         .separator()
         .item(&actual_size)
         .item(&zoom_in)
         .item(&zoom_out)
+        .separator()
+        .item(&open_settings_file)
         .build()
         .map_err(|err| err.to_string())?;
 

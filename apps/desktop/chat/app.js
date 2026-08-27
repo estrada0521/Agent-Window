@@ -623,6 +623,11 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             return;
           }
         }
+        if (event.metaKey && event.code === "Comma") {
+          event.preventDefault();
+          window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openSettingsFile" }, "*");
+          return;
+        }
         if (!(event.metaKey || event.ctrlKey)) return;
         // event.code (physical key) instead of event.key: with metaKey held,
         // some WebViews don't reliably report the shift-modified character
