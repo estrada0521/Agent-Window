@@ -243,22 +243,47 @@ def _post_delete_upload(handler, _parsed, ctx) -> None:
     handler._send_json(200, {"ok": True})
 
 
-def _post_open_terminal(handler, _parsed, ctx) -> None:
-    data, err = _read_json_body(handler)
-    if err:
-        handler._send_json(400, {"ok": False, "error": err})
-        return
+def _switch_front_terminal_client(prefix: list[str], tmux_name: str) -> bool:
+    terminal_tty = subprocess.run(
+        ["osascript", "-e", 'tell application "Terminal" to get tty of selected tab of front window'],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    tty = (terminal_tty.stdout or "").strip()
+    if terminal_tty.returncode != 0 or not tty:
+        return False
+    clients = subprocess.run(
+        [*prefix, "list-clients", "-F", "#{client_tty}"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if clients.returncode != 0 or tty not in {(line or "").strip() for line in (clients.stdout or "").splitlines()}:
+        return False
+    switched = subprocess.run(
+        [*prefix, "switch-client", "-c", tty, "-t", tmux_name],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return switched.returncode == 0
+
+
+def _open_terminal(handler, ctx, *, agent: str = "", pane_required: bool = False) -> None:
     runtime = ctx["runtime"]
     if not runtime.session_is_active:
         handler._send_json(409, {"ok": False, "error": "tmux session is not active"})
         return
     tmux_name = runtime.tmux_session_name
-    agent = str((data or {}).get("agent") or "").strip()
     if agent:
         try:
             pane_id = runtime.pane_id_for_agent(agent)
         except Exception as exc:
             handler._send_json(500, {"ok": False, "error": str(exc)})
+            return
+        if not pane_id and pane_required:
+            handler._send_json(404, {"ok": False, "error": f"pane not found for {agent}"})
             return
         if pane_id:
             prefix = tmux_prefix_args(ctx["tmux_socket"])
@@ -276,6 +301,14 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
                 [*prefix, "select-pane", "-t", pane_id],
                 capture_output=True, check=False,
             )
+            if _switch_front_terminal_client(prefix, tmux_name):
+                subprocess.Popen(
+                    ["osascript", "-e", 'tell application "Terminal" to activate'],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                handler._send_json(200, {"ok": True})
+                return
             attached_res = subprocess.run(
                 [*prefix, "display-message", "-p", "-t", tmux_name, "#{session_attached}"],
                 capture_output=True, text=True, check=False,
@@ -340,6 +373,32 @@ def _post_open_terminal(handler, _parsed, ctx) -> None:
         handler._send_json(200, {"ok": True})
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
+
+
+def _post_open_terminal(handler, _parsed, ctx) -> None:
+    data, err = _read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
+        return
+    _open_terminal(handler, ctx, agent=str((data or {}).get("agent") or "").strip())
+
+
+def _post_open_pane(handler, _parsed, ctx) -> None:
+    data, err = _read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
+        return
+    if str(data.get("client") or "").strip().lower() == "mobile":
+        handler._send_json(403, {"ok": False, "error": "open-pane is available on desktop only"})
+        return
+    runtime = ctx["runtime"]
+    raw_targets = [item.strip() for item in str(data.get("target") or "").split(",") if item.strip()]
+    resolved = runtime.resolve_target_agents(",".join(raw_targets)) if raw_targets else []
+    agents = [item for item in resolved if item]
+    if len(agents) != 1:
+        handler._send_json(400, {"ok": False, "error": "select exactly one target"})
+        return
+    _open_terminal(handler, ctx, agent=agents[0], pane_required=True)
 
 
 def _post_open_finder(handler, _parsed, ctx) -> None:
@@ -526,6 +585,7 @@ _POST_ROUTES = {
     "/upload": _post_upload,
     "/delete-upload": _post_delete_upload,
     "/open-terminal": _post_open_terminal,
+    "/open-pane": _post_open_pane,
     "/open-finder": _post_open_finder,
     "/open-settings-file": _post_open_settings_file,
     "/files-exist": _post_files_exist,

@@ -10,81 +10,47 @@ class SlashCommandSpec:
     desc: str
     has_arg: bool
     path: str
+    desktop_only: bool = False
 
 
 PANE_CONTROL_COMMANDS = (
     SlashCommandSpec(
-            id="up",
-            slash="/up",
-            desc="選択中 pane に上移動を送信",
-            has_arg=True,
-            path="/shortcut-command",
+        id="up", slash="/up", desc="選択中 pane に上移動を送信", has_arg=True, path="/shortcut-command",
     ),
     SlashCommandSpec(
-            id="down",
-            slash="/down",
-            desc="選択中 pane に下移動を送信",
-            has_arg=True,
-            path="/shortcut-command",
+        id="down", slash="/down", desc="選択中 pane に下移動を送信", has_arg=True, path="/shortcut-command",
     ),
     SlashCommandSpec(
-            id="left",
-            slash="/left",
-            desc="選択中 pane に左移動を送信",
-            has_arg=True,
-            path="/shortcut-command",
+        id="left", slash="/left", desc="選択中 pane に左移動を送信", has_arg=True, path="/shortcut-command",
     ),
     SlashCommandSpec(
-            id="right",
-            slash="/right",
-            desc="選択中 pane に右移動を送信",
-            has_arg=True,
-            path="/shortcut-command",
+        id="right", slash="/right", desc="選択中 pane に右移動を送信", has_arg=True, path="/shortcut-command",
     ),
     SlashCommandSpec(
-            id="restart",
-            slash="/restart",
-            desc="エージェント再起動",
-            has_arg=False,
-            path="/shortcut-command",
+        id="restart", slash="/restart", desc="エージェント再起動", has_arg=False, path="/shortcut-command",
     ),
     SlashCommandSpec(
-            id="resume",
-            slash="/resume",
-            desc="エージェント再開",
-            has_arg=False,
-            path="/shortcut-command",
+        id="resume", slash="/resume", desc="エージェント再開", has_arg=False, path="/shortcut-command",
     ),
     SlashCommandSpec(
-            id="ctrlc",
-            slash="/ctrlc",
-            desc="エージェントに Ctrl+C 送信",
-            has_arg=False,
-            path="/shortcut-command",
+        id="ctrlc", slash="/ctrlc", desc="エージェントに Ctrl+C 送信", has_arg=False, path="/shortcut-command",
     ),
     SlashCommandSpec(
-            id="esc",
-            slash="/esc",
-            desc="エージェントに Esc 送信",
-            has_arg=False,
-            path="/shortcut-command",
+        id="esc", slash="/esc", desc="エージェントに Esc 送信", has_arg=False, path="/shortcut-command",
     ),
     SlashCommandSpec(
-            id="enter",
-            slash="/enter",
-            desc="エージェントに Enter 送信",
-            has_arg=False,
-            path="/shortcut-command",
+        id="enter", slash="/enter", desc="エージェントに Enter 送信", has_arg=False, path="/shortcut-command",
     ),
 )
 
 APPLICATION_COMMANDS = (
     SlashCommandSpec(
-            id="nativelog",
-            slash="/nativelog",
-            desc="選択中エージェントのネイティブログをFinderで表示する",
-            has_arg=False,
-            path="/native-log",
+        id="nativelog", slash="/nativelog", desc="選択中エージェントのネイティブログをFinderで表示する",
+        has_arg=False, path="/native-log",
+    ),
+    SlashCommandSpec(
+        id="openpane", slash="/open-pane", desc="選択中エージェントの tmux pane を開く",
+        has_arg=False, path="/open-pane", desktop_only=True,
     ),
 )
 
@@ -98,7 +64,14 @@ def pane_control_by_id(command_id: str) -> SlashCommandSpec | None:
 
 def public_slash_command_dicts() -> list[dict[str, str | bool]]:
     return [
-        {"id": c.id, "slash": c.slash, "desc": c.desc, "has_arg": c.has_arg, "path": c.path}
+        {
+            "id": c.id,
+            "slash": c.slash,
+            "desc": c.desc,
+            "has_arg": c.has_arg,
+            "path": c.path,
+            "desktop_only": c.desktop_only,
+        }
         for c in SLASH_COMMANDS
     ]
 

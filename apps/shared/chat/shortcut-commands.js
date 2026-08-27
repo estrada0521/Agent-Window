@@ -4,7 +4,10 @@
       const r = await fetch("/shortcut-commands", { cache: "no-store" });
       if (!r.ok) throw new Error("shortcut-commands failed");
       const j = await r.json();
-      const list = Array.isArray(j.commands) ? j.commands : [];
+      const commands = Array.isArray(j.commands) ? j.commands : [];
+      const list = document.documentElement.dataset.mobile === "1"
+        ? commands.filter((command) => !command.desktop_only)
+        : commands;
       if (!list.length) throw new Error("empty shortcut commands");
       _shortcutCommandsCache = list;
       return list;

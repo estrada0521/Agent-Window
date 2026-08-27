@@ -55,7 +55,7 @@ from backend_core.tmux.window import (
 
 
 SESSION_WIDTH = 66
-SESSION_HEIGHT = 80
+SESSION_HEIGHT = 40
 
 
 class SessionControlError(RuntimeError):
