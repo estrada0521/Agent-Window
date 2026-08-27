@@ -161,7 +161,7 @@ class FileRuntime:
         for rel in paths:
             try:
                 result[rel] = os.path.exists(self._resolve_reference_path(rel))
-            except (PermissionError, Exception):
+            except (PermissionError, RuntimeError):
                 result[rel] = False
         return result
 
