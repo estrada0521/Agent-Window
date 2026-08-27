@@ -623,23 +623,75 @@
 
       const SNAP_W = 84;
       const THRESH = 48;
+      const trashSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+      const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
+      const reviveSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
+      const SWIPE_ACTIONS = {
+        kill: { svg: killSvg, label: "Archive" },
+        "delete-archived": { svg: trashSvg, label: "Delete" },
+        revive: { svg: reviveSvg, label: "Revive" },
+      };
       let anyOpen = null;
+      const removeSwipeActs = (sr) => {
+        sr.querySelectorAll(".swipe-act").forEach((n) => n.remove());
+      };
       const closeRow = (sr, animate) => {
         const el = sr && sr.querySelector(".mob-session-row");
         if (!el) return;
         el.style.transition = animate ? "transform 220ms cubic-bezier(.25,.46,.45,.94)" : "none";
         el.style.transform = "";
         sr._snap = 0;
+        if (animate) {
+          el.addEventListener("transitionend", () => removeSwipeActs(sr), { once: true });
+        } else {
+          removeSwipeActs(sr);
+        }
       };
       const initSwipeRow = (sr) => {
         const inner = sr.querySelector(".mob-session-row");
-        const actR = sr.querySelector(".swipe-act-right");
-        const actL = sr.querySelector(".swipe-act-left");
         if (!inner) return;
+        const rightAction = sr.dataset.swipeRight || "";
+        const leftAction = sr.dataset.swipeLeft || "";
+        const actRDef = SWIPE_ACTIONS[rightAction];
+        const actLDef = SWIPE_ACTIONS[leftAction];
         sr._snap = 0;
         let sx = 0, sy = 0, dx = 0, axis = null, active = false, didSwipe = false;
-        const minX = actR ? -SNAP_W : 0;
-        const maxX = actL ? SNAP_W : 0;
+        const minX = actRDef ? -SNAP_W : 0;
+        const maxX = actLDef ? SNAP_W : 0;
+        const onActClick = (e) => {
+          e.stopPropagation();
+          const action = e.currentTarget.dataset.action;
+          const n = sr.dataset.sessionName;
+          if (action === "revive") {
+            if (n) openSessionFrame(`/revive-session?session=${encodeURIComponent(n)}`, n);
+            return;
+          }
+          if (action === "delete-archived") {
+            if (confirm("Delete archived logs for " + n + "? This cannot be undone.")) {
+              window.location.href = `/delete-archived-session?session=${encodeURIComponent(n)}`;
+            }
+            return;
+          }
+          if (confirm("Archive " + n + "?")) window.location.href = `/kill-session?session=${encodeURIComponent(n)}`;
+        };
+        const ensureActs = () => {
+          if (actRDef && !sr.querySelector(".swipe-act-right")) {
+            const el = document.createElement("div");
+            el.className = "swipe-act swipe-act-right";
+            el.dataset.action = rightAction;
+            el.innerHTML = `${actRDef.svg}<span>${actRDef.label}</span>`;
+            el.addEventListener("click", onActClick);
+            sr.insertBefore(el, inner);
+          }
+          if (actLDef && !sr.querySelector(".swipe-act-left")) {
+            const el = document.createElement("div");
+            el.className = "swipe-act swipe-act-left";
+            el.dataset.action = leftAction;
+            el.innerHTML = `${actLDef.svg}<span>${actLDef.label}</span>`;
+            el.addEventListener("click", onActClick);
+            sr.insertBefore(el, inner);
+          }
+        };
         const startDrag = (clientX, clientY) => {
           if (anyOpen && anyOpen !== sr) { closeRow(anyOpen, true); anyOpen = null; }
           sx = clientX; sy = clientY;
@@ -651,7 +703,7 @@
           const cx = clientX - sx, cy = clientY - sy;
           if (!axis) {
             if (Math.abs(cy) > Math.abs(cx) + 4) { axis = "y"; return; }
-            if (Math.abs(cx) > 6) axis = "x";
+            if (Math.abs(cx) > 6) { axis = "x"; ensureActs(); }
           }
           if (axis !== "x") return;
           if (preventDefault) preventDefault();
@@ -667,10 +719,10 @@
           const base = (sr._snap || 0) * SNAP_W;
           const fx = base + dx;
           const ease = "transform 220ms cubic-bezier(.25,.46,.45,.94)";
-          if (fx < -THRESH && actR) {
+          if (fx < -THRESH && actRDef) {
             inner.style.transition = ease; inner.style.transform = `translateX(${-SNAP_W}px)`;
             sr._snap = -1; anyOpen = sr;
-          } else if (fx > THRESH && actL) {
+          } else if (fx > THRESH && actLDef) {
             inner.style.transition = ease; inner.style.transform = `translateX(${SNAP_W}px)`;
             sr._snap = 1; anyOpen = sr;
           } else {
@@ -678,6 +730,7 @@
             sr._snap = 0; if (anyOpen === sr) anyOpen = null;
           }
           dx = 0;
+          inner.addEventListener("transitionend", () => { if (!sr._snap) removeSwipeActs(sr); }, { once: true });
         };
         inner.addEventListener("touchstart", (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
         inner.addEventListener("touchmove", (e) => moveDrag(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault()), { passive: false });
@@ -691,23 +744,6 @@
           document.addEventListener("mousemove", onMove);
           document.addEventListener("mouseup", onUp);
         });
-        if (actL) actL.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const n = sr.dataset.sessionName;
-          if (n) openSessionFrame(`/revive-session?session=${encodeURIComponent(n)}`, n);
-        });
-        if (actR) actR.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const n = sr.dataset.sessionName;
-          const action = actR.dataset.action;
-          if (action === "delete-archived") {
-            if (confirm("Delete archived logs for " + n + "? This cannot be undone.")) {
-              window.location.href = `/delete-archived-session?session=${encodeURIComponent(n)}`;
-            }
-            return;
-          }
-          if (confirm("Archive " + n + "?")) window.location.href = `/kill-session?session=${encodeURIComponent(n)}`;
-        });
         inner.addEventListener("click", (e) => {
           if (didSwipe) { didSwipe = false; e.stopPropagation(); return; }
           if (sr._snap !== 0) { closeRow(sr, true); anyOpen = null; e.stopPropagation(); return; }
@@ -719,15 +755,11 @@
 
       const renderRows = (active, warnings, archived) => {
         let html = "";
-        const trashSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
-        const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
-        const reviveSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
         if (active.length) {
           html += `<div class="mob-section-label">Active</div>`;
           html += active.map((s) => {
             const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
-            return `<div class="swipe-row" data-session-name="${esc(s.name)}">` +
-              `<div class="swipe-act swipe-act-right" data-action="kill">${killSvg}<span>Archive</span></div>` +
+            return `<div class="swipe-row" data-session-name="${esc(s.name)}" data-swipe-right="kill">` +
               `<div class="mob-session-row" data-session-name="${esc(s.name)}" data-open-href="/open-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +
@@ -740,9 +772,7 @@
           html += `<div class="mob-section-label">Archived</div>`;
           html += archived.map((s) => {
             const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
-            return `<div class="swipe-row" data-session-name="${esc(s.name)}">` +
-              `<div class="swipe-act swipe-act-left" data-action="revive">${reviveSvg}<span>Revive</span></div>` +
-              `<div class="swipe-act swipe-act-right" data-action="delete-archived">${trashSvg}<span>Delete</span></div>` +
+            return `<div class="swipe-row" data-session-name="${esc(s.name)}" data-swipe-left="revive" data-swipe-right="delete-archived">` +
               `<div class="mob-session-row archived-row" data-session-name="${esc(s.name)}" data-open-href="/open-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +
