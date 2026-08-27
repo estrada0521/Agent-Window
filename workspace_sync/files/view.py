@@ -135,12 +135,6 @@ def render_file_view(
         f"{font_face_css}"
         f"*{{box-sizing:border-box}}"
         f"html,body{{margin:0;background:{embed_bg};color:{pane_fg};font-family:sans-serif;display:flex;flex-direction:column;height:100vh;font-size:var(--text-size);line-height:var(--text-line-height)}}"
-        f".hdr{{padding:10px 16px;background:{embed_bg};border-bottom:0.5px solid {pane_line};display:flex;align-items:center;gap:8px;flex-shrink:0}}"
-        f".fn{{font-weight:700;font-size:14px;color:{pane_fg}}}"
-    )
-    header = "" if embed else (
-        f'<div class="hdr"><span>{{icon}}</span><span class="fn">{html_escape(filename)}</span>'
-        f"</div>"
     )
 
     def build_gutter_metrics(
@@ -195,27 +189,27 @@ def render_file_view(
             f'.wrap{{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:16px;background:{embed_bg};padding-top:calc(16px + var(--tpad,0px))}}'
             f'@media (max-width: 480px) {{.wrap{{padding-left:0;padding-right:0}}}}'
             f'img{{max-width:100%;max-height:100%;object-fit:contain}}</style></head>'
-            f'<body>{header.format(icon="🖼️")}<div class="wrap"><img src="{raw_url}" alt="{html_escape(filename)}"></div></body></html>'
+            f'<body><div class="wrap"><img src="{raw_url}" alt="{html_escape(filename)}"></div></body></html>'
         )
     if ext in runtime.PDF_EXTS:
         return (
             f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}.wrap{{flex:1;min-height:0;background:{embed_bg};padding-top:var(--tpad,0px)}}iframe{{width:100%;height:100%;border:0;background:{embed_bg}}}</style></head>'
-            f'<body>{header.format(icon="📕")}<div class="wrap"><iframe src="{raw_url}" title="{html_escape(filename)}"></iframe></div></body></html>'
+            f'<body><div class="wrap"><iframe src="{raw_url}" title="{html_escape(filename)}"></iframe></div></body></html>'
         )
     if ext in runtime.VIDEO_EXTS:
         return (
             f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;background:{embed_bg};padding-top:var(--tpad,0px)}}'
             f'video{{max-width:100%;max-height:100%}}</style></head>'
-            f'<body>{header.format(icon="🎬")}<div class="wrap"><video controls src="{raw_url}"></video></div></body></html>'
+            f'<body><div class="wrap"><video controls src="{raw_url}"></video></div></body></html>'
         )
     if ext in runtime.AUDIO_EXTS:
         return (
             f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;background:{embed_bg};padding-top:var(--tpad,0px)}}'
             f'audio{{width:100%;max-width:500px}}</style></head>'
-            f'<body>{header.format(icon="🎵")}<div class="wrap"><audio controls src="{raw_url}"></audio></div></body></html>'
+            f'<body><div class="wrap"><audio controls src="{raw_url}"></audio></div></body></html>'
         )
     is_text_like = ext in runtime.EDITABLE_TEXT_EXTS or runtime._is_probably_text_file(full)
     if ext in {".html", ".htm"}:
@@ -310,7 +304,7 @@ def render_file_view(
             '.html-preview-text-table .lc pre{margin:0;min-height:var(--text-line-height);line-height:var(--text-line-height);font:inherit;white-space:pre}'
             '.html-preview-gutter-table tbody tr:last-child .ln,.html-preview-text-table tbody tr:last-child .lc pre{padding-bottom:24px}'
             '</style></head>'
-            f'<body>{header.format(icon="🌐")}<div class="html-preview-shell">{tabs_markup}'
+            f'<body><div class="html-preview-shell">{tabs_markup}'
             '<div class="html-preview-panels">'
             f'<div class="html-preview-panel html-preview-panel-web" data-preview-panel="web"><iframe src="{raw_url}" title="{html_escape(filename)}"></iframe></div>'
             f'<div class="html-preview-panel html-preview-panel-text active" data-preview-panel="text"><div class="html-preview-text-wrap" id="htmlTextViewContainer"><div class="html-preview-gutter" id="htmlTextGutter"><div class="html-preview-gutter-inner" id="htmlTextGutterInner"><table class="html-preview-gutter-table" role="presentation"><tbody id="htmlTextGutterBody">{gutter_rows}</tbody></table></div></div><div class="html-preview-text-scroll" id="htmlTextCodeScroll"><table class="html-preview-text-table" role="presentation"><tbody id="htmlTextCodeBody">{code_rows}</tbody></table></div></div></div>'
@@ -335,8 +329,6 @@ def render_file_view(
         return (
             f'<!DOCTYPE html><html{preview_shell_attrs(gutter_width=gutter_width, title_offset=title_offset)}><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}body{{background:{embed_bg};color:{pane_fg}}}'
-            f'.hdr{{background:{embed_bg};border-bottom-color:{pane_line}}}'
-            f'.fn{{color:{pane_fg}}}'
             f'.view-container{{--preview-gutter-width:{gutter_width}px;height:{height};display:flex;min-width:0;position:relative;overflow:hidden;background:{embed_bg}}}'
             '.code-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:0;background:var(--preview-gutter-bg);padding-top:var(--tpad,0px)}'
             '.code-gutter-inner{min-width:0;will-change:transform}'
@@ -350,7 +342,7 @@ def render_file_view(
             '.code-table .lc pre{margin:0;min-height:var(--text-line-height);line-height:var(--text-line-height);font:inherit;white-space:pre}'
             '.code-gutter-table tbody tr:last-child .ln,.code-table tbody tr:last-child .lc pre{padding-bottom:24px}'
             '</style></head>'
-            f'<body>{header.format(icon="📄")}'
+            f'<body>'
             '<div class="view-container" id="viewContainer">'
             '<div class="code-gutter" id="codeGutter"><div class="code-gutter-inner" id="codeGutterInner"><table class="code-gutter-table" role="presentation"><tbody id="codeGutterBody"></tbody></table></div></div>'
             '<div class="code-scroll" id="codeScroll"><table class="code-table" role="presentation"><tbody id="codeBody"></tbody></table></div>'
@@ -366,8 +358,6 @@ def render_file_view(
         return (
             f'<!DOCTYPE html><html{preview_shell_attrs(gutter_width=gutter_width, title_offset=title_offset)}><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}body{{background:{embed_bg};color:{pane_fg}}}'
-            f'.hdr{{background:{embed_bg};border-bottom-color:{pane_line}}}'
-            f'.fn{{color:{pane_fg}}}'
             f'.view-container{{--preview-gutter-width:{gutter_width}px;height:{height};display:flex;min-width:0;position:relative;overflow:hidden;background:{embed_bg}}}'
             '.code-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:0;background:var(--preview-gutter-bg);padding-top:var(--tpad,0px)}'
             '.code-gutter-inner{min-width:0;will-change:transform}'
@@ -381,7 +371,7 @@ def render_file_view(
             '.code-table .lc pre{margin:0;min-height:var(--text-line-height);line-height:var(--text-line-height);font:inherit;white-space:pre}'
             '.code-gutter-table tbody tr:last-child .ln,.code-table tbody tr:last-child .lc pre{padding-bottom:24px}'
             '</style></head>'
-            f'<body>{header.format(icon="📄")}'
+            f'<body>'
             f'<div class="view-container" id="viewContainer"><div class="code-gutter" id="codeGutter"><div class="code-gutter-inner" id="codeGutterInner"><table class="code-gutter-table" role="presentation"><tbody>{gutter_rows}</tbody></table></div></div><div class="code-scroll" id="codeScroll"><table class="code-table" role="presentation"><tbody>{code_rows}</tbody></table></div></div><script>{build_vertical_bias_wheel_js(view_container_id="viewContainer", code_scroll_id="codeScroll")}{build_gutter_scroll_sync_js(code_scroll_id="codeScroll", gutter_id="codeGutter", gutter_inner_id="codeGutterInner")}{preview_text_size_sync_js}</script></body></html>'
         )
     if ext == ".md":
@@ -441,7 +431,7 @@ def render_file_view(
             f'{markdown_head_libs}'
             f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}'
             '</style></head>'
-            f'<body>{header.format(icon="📝")}<div class="md-preview-shell"><div class="md-body" id="out"></div></div>'
+            f'<body><div class="md-preview-shell"><div class="md-body" id="out"></div></div>'
             f'''<script>
 const __mdText = {content_json};
 const __mdRel = {rel_json};
@@ -746,9 +736,7 @@ applyPreviewTheme("dark");
     return (
         f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
         f'<style>{base_css}body{{background:{embed_bg};color:{pane_fg};font-family:var(--font-code);font-size:13px}}'
-        f'.hdr{{padding:10px 16px;background:{embed_bg};border-bottom:1px solid {pane_line};display:flex;align-items:center;gap:8px}}'
-        f'.fn{{font-weight:700;font-size:14px;color:{pane_fg}}}'
         f'pre{{margin:0;padding:16px;white-space:pre;overflow:auto;height:{pre_height};background:{embed_bg};padding-top:calc(16px + var(--tpad,0px))}}'
         '</style></head>'
-        f'<body>{header.format(icon="📄")}<pre>{escaped}</pre></body></html>'
+        f'<body><pre>{escaped}</pre></body></html>'
     )
