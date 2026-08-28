@@ -121,7 +121,7 @@
     body { padding: 0; }
     __HUB_HEADER_CSS__
     :root {
-      --desk-chrome-size: 24px;
+      --desk-chrome-size: 20px;
       --desk-chrome-icon-size: 15px;
       --desk-chrome-radius: 8px;
       --desk-chrome-top: 4px;
