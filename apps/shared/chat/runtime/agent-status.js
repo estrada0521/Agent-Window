@@ -1,4 +1,3 @@
-__CHAT_INCLUDE:../hub-session-events.js__
     const renderAgentStatus = (statuses) => {
       currentAgentStatuses = { ...statuses };
       if (document.documentElement.dataset.mobile === "1") {

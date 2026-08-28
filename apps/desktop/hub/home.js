@@ -1225,10 +1225,6 @@
         failDeskOpen(event.data.message || "open session failed");
         return;
       }
-      if (event.data && event.data.type === "session-messages-changed" && event.source === _deskChatFrame?.contentWindow) {
-        void refreshHubSessions(true, { skipRestore: true });
-        return;
-      }
       if (event.data && event.data.type === "desktop-panel-state" && event.source === _deskChatFrame?.contentWindow) {
         updateDeskPanelButtonState(
           String(event.data.mode || ""),
@@ -1519,6 +1515,7 @@
     }
 
     window.refreshHubSessionLists = refreshHubSessions;
+    startHubSessionMessagesEvents(() => refreshHubSessions(true, { skipRestore: true }));
     consumeHubPendingError();
     if (isTauriDesktopApp() && !isPhoneViewport()) {
       showDeskSidebarList({ open: true });

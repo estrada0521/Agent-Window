@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import threading
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -28,6 +29,8 @@ class HubRuntime:
         self.tmux_prefix = tmux_prefix_args(tmux_socket) if tmux_socket else ["tmux"]
         self._launch_locks = {}
         self._launch_locks_master = threading.Lock()
+        self._session_messages_condition = threading.Condition()
+        self._session_messages_seq = 0
 
     def _get_launch_lock(self, workspace: str) -> threading.Lock:
         key = normalize_workspace(workspace)
@@ -35,6 +38,21 @@ class HubRuntime:
             if key not in self._launch_locks:
                 self._launch_locks[key] = threading.Lock()
             return self._launch_locks[key]
+
+    def publish_session_messages_changed(self) -> None:
+        with self._session_messages_condition:
+            self._session_messages_seq += 1
+            self._session_messages_condition.notify_all()
+
+    def wait_for_session_messages_changed(self, after_seq: int, timeout: float = 15.0) -> int | None:
+        deadline = time.monotonic() + max(0.1, float(timeout))
+        with self._session_messages_condition:
+            while self._session_messages_seq <= after_seq:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return None
+                self._session_messages_condition.wait(timeout=remaining)
+            return self._session_messages_seq
 
     def tmux_run(self, args, timeout=2) -> TmuxRunResult:
         try:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import ssl
 import sys
@@ -442,6 +443,7 @@ _GET_ROUTE_HANDLERS = {
     "/hub.webmanifest": "_get_hub_manifest",
     "/hub-launch-shell.html": "_get_hub_launch_shell",
     "/sessions": "_get_sessions",
+    "/session-messages-events": "_get_session_messages_events",
     "/open-session": _get_open_session_action,
     "/revive-session": _get_revive_session_action,
     "/kill-session": _get_kill_session_action,
@@ -455,6 +457,7 @@ _POST_ROUTE_HANDLERS = {
     "/settings": _post_settings_action,
     "/pick-workspace": _post_pick_workspace_action,
     "/start-session-draft": _post_start_session_draft_action,
+    "/session-messages-changed": "_post_session_messages_changed",
 }
 
 class Handler(BaseHTTPRequestHandler):
@@ -580,6 +583,38 @@ class Handler(BaseHTTPRequestHandler):
             "tmux_state": query.state,
             "tmux_detail": query.detail,
         })
+
+    def _get_session_messages_events(self, _parsed):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Connection", "keep-alive")
+        self.end_headers()
+        after_seq = 0
+        try:
+            while True:
+                seq = hub.wait_for_session_messages_changed(after_seq, timeout=15.0)
+                if seq is None:
+                    self.wfile.write(b": keepalive\n\n")
+                else:
+                    after_seq = seq
+                    self.wfile.write(f"event: messages\ndata: {seq}\n\n".encode("utf-8"))
+                self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            return
+        except Exception:
+            logging.exception("Hub session messages event stream failed")
+
+    def _post_session_messages_changed(self, _parsed):
+        client_host = str(self.client_address[0] or "").strip()
+        if client_host not in {"127.0.0.1", "::1"}:
+            self._send_json(403, {"ok": False, "error": "loopback only"})
+            return
+        hub.publish_session_messages_changed()
+        self.send_response(204)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
 
 

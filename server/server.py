@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 from hub_backend.presentation.chat.assets import render_chat_html
 from server.runtime import ChatRuntime
 from server.chat_process import launch_chat_server, wait_for_chat_server
+from server.hub_session_events import notify_hub_session_messages_changed
 from server.routes.assets import dispatch_get_assets_route
 from server.routes.read import dispatch_get_read_route
 from server.routes.write import dispatch_post_write_route
@@ -30,6 +31,7 @@ from backend_core.access.settings import (
     hub_settings_path,
     local_bind_host,
     local_bind_scheme,
+    pwa_https_enabled,
     workspace_chat_port,
 )
 from workspace_sync.api import WorkspaceSyncApi
@@ -137,6 +139,13 @@ def _message_index_watcher() -> None:
                     if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
                         if runtime is not None:
                             runtime.notify_session_state_changed(["messages", "statuses"], reason="messages")
+                            try:
+                                notify_hub_session_messages_changed(
+                                    hub_port,
+                                    scheme="https" if pwa_https_enabled() else "http",
+                                )
+                            except Exception as exc:
+                                logging.warning("Hub message notification failed: %s", exc)
                     if event.fflags & (select.KQ_NOTE_RENAME | select.KQ_NOTE_DELETE):
                         raise OSError("message log path changed")
         except Exception as exc:

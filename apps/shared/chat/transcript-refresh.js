@@ -6,7 +6,6 @@
       const current = latestPayloadData || {};
       latestPayloadData = { ...current, entries: mergeEntriesById(current.entries || [], [entry]) };
       render(latestPayloadData);
-      notifyHubMessagesChanged();
     };
     const refresh = async (options = {}) => {
       const refreshOptions = !hasInitialRefreshHydrated
@@ -59,7 +58,6 @@
           releaseLaunchShellGate();
         }
         notifyHubChatRenderReady();
-        notifyHubMessagesChanged();
       } catch (err) {
         const detail = err?.message || String(err);
         if (!hasInitialRefreshHydrated) {
