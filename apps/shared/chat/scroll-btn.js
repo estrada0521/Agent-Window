@@ -5,11 +5,30 @@
     timeline.addEventListener("wheel", clearPollScrollLock, { passive: true });
     timeline.addEventListener("touchstart", clearPollScrollLock, { passive: true });
     timeline.addEventListener("scroll", updateStickyState, { passive: true });
-    timeline.addEventListener("scroll", () => {
-      if (olderLoading || !olderHasMore) return;
-      const threshold = Math.max(OLDER_AUTOLOAD_MIN_THRESHOLD, timeline.clientHeight * 1.25);
-      if (timeline.scrollTop > threshold) return;
+    let _olderAutoloadPolling = false;
+    const olderAutoloadThreshold = () => Math.max(OLDER_AUTOLOAD_MIN_THRESHOLD, timeline.clientHeight * 1.25);
+    const olderAutoloadCheck = () => {
+      if (olderLoading || !olderHasMore || timeline.scrollTop > olderAutoloadThreshold()) return false;
       void loadOlderMessages();
+      return true;
+    };
+    const olderAutoloadTick = () => {
+      if (olderAutoloadCheck() || olderLoading || !olderHasMore || timeline.scrollTop > olderAutoloadThreshold() * 3) {
+        _olderAutoloadPolling = false;
+        return;
+      }
+      requestAnimationFrame(olderAutoloadTick);
+    };
+    timeline.addEventListener("scroll", () => {
+      // A scroll event's own scrollTop can already be past the trigger point
+      // during fast/momentum scrolling on mobile, where scroll events fire
+      // too sparsely to catch the threshold crossing in time. Polling every
+      // frame while position stays near the danger zone closes that gap, so
+      // loading starts with a comfortable lead instead of several small
+      // catch-up loads landing back-to-back once already at the edge.
+      if (olderAutoloadCheck() || _olderAutoloadPolling || olderLoading || !olderHasMore) return;
+      _olderAutoloadPolling = true;
+      requestAnimationFrame(olderAutoloadTick);
     }, { passive: true });
     const updateScrollBtn = () => {
       if (!hasInitialRefreshHydrated) {
