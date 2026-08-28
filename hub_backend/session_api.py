@@ -34,16 +34,3 @@ def resolve_session_chat_target(hub, session_name: str) -> dict:
         "workspace": workspace,
         "session_is_active": False,
     }
-
-
-def running_agents_from_session_state(session_state: dict | None) -> list[str]:
-    if not isinstance(session_state, dict):
-        return []
-    statuses = session_state.get("statuses")
-    if not isinstance(statuses, dict):
-        return []
-    return [
-        str(agent).strip()
-        for agent, status in statuses.items()
-        if str(agent).strip() and str(status).strip().lower() == "running"
-    ]

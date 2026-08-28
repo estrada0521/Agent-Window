@@ -213,27 +213,6 @@
       const port = findSessionRecord(name)?.session?.chat_port;
       textEl.textContent = port ? `${name} (${port})` : name;
     }
-    function cachedActiveSession(sessionName) {
-      const normalized = String(sessionName || "").trim();
-      if (!normalized) return null;
-      return (_hubSessionsCache.active || []).find((session) => String(session?.name || "").trim() === normalized) || null;
-    }
-    function setCachedSessionRunning(sessionName, isRunning) {
-      const session = cachedActiveSession(sessionName);
-      if (!session) return false;
-      session.is_running = !!isRunning;
-      return true;
-    }
-    function refreshDeskSessionRunningRow(sessionName) {
-      if (!_deskSessionList) return;
-      const normalized = String(sessionName || "").trim();
-      if (!normalized) return;
-      const row = _deskSessionList.querySelector(`.desk-session-row[data-session-name="${cssEsc(normalized)}"]`);
-      if (!row || row.classList.contains("archived")) return;
-      const bullet = row.querySelector(".desk-row-bullet");
-      if (!bullet) return;
-      bullet.classList.toggle("is-running", !!cachedActiveSession(normalized)?.is_running);
-    }
     function updateDeskPanelButtonState(mode = "", width = _deskPanelWidth) {
       _deskPanelActiveMode = mode ? "open" : "";
       _deskPanelWidth = Math.max(0, Number(width) || 0);
@@ -976,7 +955,6 @@
       const killSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`;
       const reviveSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`;
       const actionSvg = showRevive ? reviveSvg : (archived ? trashSvg : killSvg);
-      const runningClass = !archived && session.is_running ? " is-running" : "";
       const previewText = String(session.latest_message_preview || "").trim();
       const previewSender = String(session.latest_message_sender || "").trim();
       const previewDisplay = previewSender ? `${previewSender} ${previewText}` : previewText;
@@ -994,10 +972,7 @@
           `<div class="desk-session-row desk-action-session-row${archivedClass}${selectedClass}" data-session-name="${esc(sessionName)}" data-open-href="${buildSessionOpenHref(sessionName, archived)}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
             `<div class="desk-row-head">` +
                 `<div class="desk-row-main">` +
-                  `<span class="desk-row-bullet${runningClass}" aria-hidden="true">` +
-                    `<i style="grid-area:1/1"></i><i style="grid-area:1/2"></i><i style="grid-area:2/2"></i>` +
-                    `<i style="grid-area:3/2"></i><i style="grid-area:3/1"></i><i style="grid-area:2/1"></i>` +
-                  `</span>` +
+                  `<span class="desk-row-bullet" aria-hidden="true"><i></i></span>` +
                   `<div class="desk-row-stack">` +
                     `<div class="desk-row-name">${esc(sessionName)}</div>` +
                     previewHtml +
@@ -1233,8 +1208,6 @@
         if (force || window._lastHubRenderSig !== signature) {
           window._lastHubRenderSig = signature;
           renderDesktopSessions(active, warnings, archived);
-        } else {
-          active.forEach((session) => refreshDeskSessionRunningRow(session?.name || ""));
         }
         _deskSessionsRenderedOnce = true;
         if (!skipRestore) maybeRestoreDeskSelection();
@@ -1250,17 +1223,6 @@
     window.addEventListener("message", (event) => {
       if (event.data && event.data.type === "hub-session-error") {
         failDeskOpen(event.data.message || "open session failed");
-        return;
-      }
-      if (event.data && event.data.type === "session-running-state" && event.source === _deskChatFrame?.contentWindow) {
-        const sessionName = String(event.data.sessionName || "").trim();
-        if (!sessionName) return;
-        // A messages-triggered /sessions request can have observed the prior
-        // running state, then resolve after this newer status event. Invalidate
-        // that snapshot so it cannot put the row back to Running.
-        _deskSessionsRequestSeq += 1;
-        setCachedSessionRunning(sessionName, !!event.data.isRunning);
-        refreshDeskSessionRunningRow(sessionName);
         return;
       }
       if (event.data && event.data.type === "session-messages-changed" && event.source === _deskChatFrame?.contentWindow) {

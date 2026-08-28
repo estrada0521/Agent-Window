@@ -5,7 +5,6 @@ __CHAT_INCLUDE:../hub-session-events.js__
         syncPaneViewerTabThinkingStatuses();
       }
       renderThinkingIndicator();
-      notifyHubRunningState();
     };
 __CHAT_INCLUDE:../session-state-projections.js__
     const applySessionState = (data) => {

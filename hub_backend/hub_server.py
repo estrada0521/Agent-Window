@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, quote as url_quote, urlparse
 from hub_backend.runtime import HubRuntime
 from backend_core.access.pwa import pwa_icon_entries as _pwa_icon_entries_impl
 from backend_core.access.settings import apply_font_tokens, load_hub_settings, workspace_chat_port
-from hub_backend.chat_supervisor import chat_server_state, stop_inactive_chat_servers
+from hub_backend.chat_supervisor import stop_inactive_chat_servers
 from hub_backend.presentation.hub.header_assets import (
     DEFAULT_HUB_HEADER_ACTIONS,
     DEFAULT_HUB_HEADER_PANELS,
@@ -21,7 +21,6 @@ from hub_backend.presentation.hub.header_assets import (
     MOBILE_HUB_HEADER_ACTIONS,
     render_page_header,
 )
-from hub_backend.session_api import running_agents_from_session_state
 from hub_backend.session_query import (
     active_session_records_query,
     archived_session_records,
@@ -556,15 +555,9 @@ class Handler(BaseHTTPRequestHandler):
         for record in active_map.values():
             workspace = str(record.get("workspace") or "").strip()
             chat_port = workspace_chat_port(workspace) if workspace else 0
-            running_agents: list[str] = []
-            if chat_port > 0:
-                running_agents = running_agents_from_session_state(
-                    chat_server_state(hub, chat_port)
-                )
             active.append({
                 "name": record["name"],
                 "chat_port": chat_port,
-                "is_running": bool(running_agents),
                 "latest_message_sender": record["latest_message_sender"],
                 "latest_message_preview": record["latest_message_preview"],
             })
