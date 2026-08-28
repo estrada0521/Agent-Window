@@ -130,10 +130,6 @@ def _pane_env_key(instance_name: str) -> str:
     return f"AGENT_WINDOW_PANE_{instance_name.upper().replace('-', '_')}"
 
 
-def _running_env_key(instance_name: str) -> str:
-    return f"AGENT_WINDOW_RUNNING_{instance_name.upper().replace('-', '_')}"
-
-
 def _instance_names(bases: list[str]) -> list[str]:
     counts = Counter(bases)
     indices: dict[str, int] = {}
@@ -504,8 +500,6 @@ def create_session(
     _set_env(prefix, tmux_name, "AGENT_WINDOW_WORKSPACE", str(workspace_path))
     _set_env(prefix, tmux_name, "PATH", path_value)
     _unset_env(prefix, tmux_name, "CLAUDECODE")
-    _unset_env(prefix, tmux_name, "AGENT_WINDOW_PANE_USER")
-    _unset_env(prefix, tmux_name, "AGENT_WINDOW_PANES_USER")
     for instance, pane_id in zip(instances, panes):
         _set_env(prefix, tmux_name, _pane_env_key(instance), pane_id)
     _set_env(prefix, tmux_name, "AGENT_WINDOW_AGENTS", agents_to_csv(instances) if instances else "-")
@@ -598,9 +592,6 @@ def add_agent(
             if old_pane:
                 _unset_env(prefix, tmux_name, _pane_env_key(old_name))
                 _set_env(prefix, tmux_name, _pane_env_key(new_name), old_pane)
-            if _env_value(prefix, tmux_name, _running_env_key(old_name)) == "1":
-                _unset_env(prefix, tmux_name, _running_env_key(old_name))
-                _set_env(prefix, tmux_name, _running_env_key(new_name), "1")
             _set_env(prefix, tmux_name, "AGENT_WINDOW_AGENTS", agents_to_csv(current))
         instance = next_instance_name(current, base)
         if _env_value(prefix, tmux_name, _pane_env_key(instance)):

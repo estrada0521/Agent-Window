@@ -18,7 +18,6 @@ from backend_core.tmux.lifecycle import (
     resume_agent_pane as _resume_agent_pane_impl,
 )
 from message_delivery import (
-    _update_running_env as _update_running_env_impl,
     mark_agent_sent as _mark_agent_sent_impl,
     send_message as _send_message_impl,
 )
@@ -42,7 +41,6 @@ from backend_core.tmux.session import (
     pane_field as _pane_field_impl,
     pane_id_for_agent as _pane_id_for_agent_impl,
     resolve_tmux_session_name as _resolve_tmux_session_name_impl,
-    running_agents_from_env as _running_agents_from_env_impl,
 )
 from .session_state import (
     build_session_state_payload as _build_session_state_payload_impl,
@@ -72,6 +70,7 @@ class ChatRuntime:
         tmux_socket: str,
         hub_port: int,
         repo_root: Path | str,
+        initial_running_agents: list[str] | None = None,
     ):
         self._session_binding = WorkspaceSessionBinding(workspace)
         self.port = int(port)
@@ -87,7 +86,7 @@ class ChatRuntime:
         # change for the life of this process.
         self.tmux_session_name = _resolve_tmux_session_name_impl(self) or ""
         self.session_is_active = bool(self.tmux_session_name)
-        self._agent_running: set[str] = self._restore_running_agents_from_tmux_env()
+        self._agent_running = set(initial_running_agents or [])
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(
             session_binding=self._session_binding,
@@ -290,26 +289,18 @@ class ChatRuntime:
     def _mark_agent_sent(self, agent_name: str) -> None:
         _mark_agent_sent_impl(self, agent_name)
 
-    def _restore_running_agents_from_tmux_env(self) -> set[str]:
-        if not self.session_is_active:
-            return set()
-        agents = _active_agents_impl(
-            self,
-            subprocess_module=subprocess,
-        )
-        return _running_agents_from_env_impl(
-            self,
-            agents,
-            subprocess_module=subprocess,
-            logging_module=logging,
-        )
+    def mark_agents_running(self, agents: list[str]) -> None:
+        for agent in agents:
+            self._mark_running(agent)
+
+    def running_agents_for_reload(self) -> list[str]:
+        return sorted(self._agent_running)
 
     def _mark_running(self, agent: str) -> None:
         already_running = agent in self._agent_running
         if not already_running:
             self._native_log.clear_agent_runtime_display(agent)
         self._agent_running.add(agent)
-        _update_running_env_impl(self, agent, True)
         if not already_running:
             if not self._native_log.has_log_binding(agent):
                 self.refresh_native_log_bindings([agent])
@@ -331,7 +322,6 @@ class ChatRuntime:
         if agent in self._agent_running:
             return
         self._agent_running.add(agent)
-        _update_running_env_impl(self, agent, True)
         self.notify_session_state_changed(["statuses"], reason="agent-native-activity")
 
     def _initial_sync_agent(self, agent: str) -> None:
@@ -343,7 +333,6 @@ class ChatRuntime:
 
     def _mark_idle(self, agent: str) -> None:
         was_running = agent in self._agent_running
-        _update_running_env_impl(self, agent, False)
         self._agent_running.discard(agent)
         cleared = self._native_log.clear_agent_runtime_display(agent)
         if was_running:
@@ -398,9 +387,6 @@ class ChatRuntime:
         )
 
     def agent_statuses(self) -> dict[str, str]:
-        restored = self._restore_running_agents_from_tmux_env()
-        if restored:
-            self._agent_running.update(restored)
         return self._native_log.agent_statuses(self._agent_running)
 
     def agent_runtime_state(self) -> dict[str, dict]:

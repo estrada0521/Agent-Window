@@ -39,9 +39,6 @@ class _NameRuntime(AgentSendRuntime):
         del pane_id, payload
         return True
 
-    def _mark_agent_running(self, _agent_name: str) -> bool:
-        return True
-
     def resolve_session_log_path(self, session_name: str) -> Path:
         path = self.root / session_name / ".log.jsonl"
         path.parent.mkdir(parents=True, exist_ok=True)

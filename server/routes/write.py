@@ -581,6 +581,24 @@ def _post_send(handler, _parsed, ctx) -> None:
     handler._send_json(status, body)
 
 
+def _post_agent_running(handler, _parsed, ctx) -> None:
+    data, err = _read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
+        return
+    requested = data.get("targets")
+    if not isinstance(requested, list):
+        handler._send_json(400, {"ok": False, "error": "targets must be an array"})
+        return
+    active = set(ctx["runtime"].active_agents())
+    targets = [str(item or "").strip() for item in requested]
+    if not targets or any(not target or target not in active for target in targets):
+        handler._send_json(400, {"ok": False, "error": "targets must name active agents"})
+        return
+    ctx["runtime"].mark_agents_running(list(dict.fromkeys(targets)))
+    handler._send_json(200, {"ok": True})
+
+
 _POST_ROUTES = {
     "/new-chat": _post_new_chat,
     "/add-agent": _post_add_agent,
@@ -597,6 +615,7 @@ _POST_ROUTES = {
     "/open-diff": _post_open_diff,
     "/shortcut-command": _post_shortcut_command,
     "/native-log": _post_native_log,
+    "/agent-running": _post_agent_running,
     "/send": _post_send,
 }
 

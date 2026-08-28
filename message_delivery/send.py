@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import http.client
+import json
 import os
 import re
+import ssl
 import subprocess
 import sys
 import time
@@ -23,7 +26,7 @@ from backend_core.tmux.topology import default_tmux_socket_name
 from message_delivery.paste import deliver_text_to_pane
 
 
-from backend_core.access.settings import session_log_path
+from backend_core.access.settings import pwa_https_enabled, session_log_path, workspace_chat_port
 
 
 class AgentSendError(RuntimeError):
@@ -281,28 +284,41 @@ class AgentSendRuntime:
             targets.append(DeliveryTarget(agent_name=name, pane_id=pane))
         return targets
 
-    def _mark_agent_running(self, agent_name: str) -> bool:
-        name = str(agent_name or "").strip()
-        if not name:
-            return False
-        base = agent_base_name(name)
-        if base not in self.all_agents:
-            return False
-        upper = name.upper().replace("-", "_")
+    def _notify_running_agents(self, agents: list[str]) -> None:
+        workspace = str(self.env.get("AGENT_WINDOW_WORKSPACE") or "").strip()
+        if not workspace:
+            raise AgentSendError("AGENT_WINDOW_WORKSPACE is not set in this pane.")
+        port = workspace_chat_port(workspace)
+        body = json.dumps({"targets": agents}).encode("utf-8")
+        connection: http.client.HTTPConnection | http.client.HTTPSConnection
+        if pwa_https_enabled():
+            connection = http.client.HTTPSConnection(
+                "127.0.0.1",
+                port,
+                timeout=1,
+                context=ssl._create_unverified_context(),
+            )
+        else:
+            connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
         try:
-            target = self.resolve_tmux_session_name()
-        except AgentSendError as exc:
-            print(f"Failed to mark {name} running: {exc}", file=sys.stderr)
-            return False
-        if not target:
-            print(f"Failed to mark {name} running: tmux session could not be resolved", file=sys.stderr)
-            return False
-        result = self.tmux.run(["set-environment", "-t", target, f"AGENT_WINDOW_RUNNING_{upper}", "1"])
-        if result.returncode != 0:
-            detail = (result.stderr or result.stdout or "").strip()
-            print(f"Failed to mark {name} running: {detail or 'tmux set-environment failed'}", file=sys.stderr)
-            return False
-        return True
+            connection.request(
+                "POST",
+                "/agent-running",
+                body=body,
+                headers={
+                    "Content-Type": "application/json",
+                    "Content-Length": str(len(body)),
+                    "Host": f"127.0.0.1:{port}",
+                },
+            )
+            response = connection.getresponse()
+            detail = response.read().decode("utf-8", errors="replace").strip()
+            if not 200 <= response.status < 300:
+                raise AgentSendError(detail or f"chat server returned {response.status}")
+        except (OSError, http.client.HTTPException, TimeoutError) as exc:
+            raise AgentSendError(f"could not notify chat server: {exc}") from exc
+        finally:
+            connection.close()
 
     def send_to_pane(
         self,
@@ -350,7 +366,6 @@ class AgentSendRuntime:
         failed_any = False
         for target in delivery_targets:
             if self.send_to_pane(target.pane_id, delivery_payload):
-                self._mark_agent_running(target.agent_name)
                 if target.agent_name not in successful_targets:
                     successful_targets.append(target.agent_name)
             else:
@@ -366,6 +381,10 @@ class AgentSendRuntime:
             targets=successful_targets,
             payload=delivery_payload,
         )
+        try:
+            self._notify_running_agents(successful_targets)
+        except AgentSendError as exc:
+            print(f"Delivered, but Agent Window was not notified: {exc}", file=sys.stderr)
 
         target_names = ", ".join(successful_targets)
         display = delivery_payload if len(delivery_payload) <= 200 else delivery_payload[:200] + "..."
