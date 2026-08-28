@@ -6,15 +6,7 @@
         );
         if (!res.ok) return;
         const data = await res.json();
-        if (document.documentElement.dataset.mobile === "1") {
-          // When Chat is inside the mobile Hub, the Hub supplies the resolved
-          // theme after the iframe loads.  Mobile always follows the OS
-          // preference, so only resolve it here when standalone (no parent).
-          if (window.parent === window) {
-            document.documentElement.dataset.theme =
-              window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-          }
-        } else {
+        if (document.documentElement.dataset.mobile !== "1") {
           const _themeDesktop = String(data?.theme_desktop ?? "").trim().toLowerCase();
           const _chatTheme = _themeDesktop === "system"
             ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
