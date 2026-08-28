@@ -170,6 +170,12 @@ __CHAT_INCLUDE:../upload-attached-files.js__
         maybeOpenComposerForAttachDrag();
         await uploadAttachedFiles(e.dataTransfer.files);
       }, true);
+      messageInput.addEventListener("paste", async (e) => {
+        if (!dtHasFiles(e.clipboardData)) return;
+        e.preventDefault();
+        maybeOpenComposerForAttachDrag();
+        await uploadAttachedFiles(e.clipboardData.files);
+      });
     }
 
     const updateSendBtnVisibility = () => {
