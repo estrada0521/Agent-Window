@@ -563,6 +563,7 @@ class Handler(BaseHTTPRequestHandler):
                 "chat_port": chat_port,
                 "latest_message_sender": record["latest_message_sender"],
                 "latest_message_preview": record["latest_message_preview"],
+                "latest_message_revision": record["latest_message_revision"],
             })
         if query.state == "unhealthy":
             archived = []
@@ -573,6 +574,7 @@ class Handler(BaseHTTPRequestHandler):
                     "chat_port": workspace_chat_port(record["workspace"]) if record.get("workspace") else 0,
                     "latest_message_sender": record["latest_message_sender"],
                     "latest_message_preview": record["latest_message_preview"],
+                    "latest_message_revision": record["latest_message_revision"],
                 }
                 for record in archived_session_records(query.non_archived_names).values()
             ]

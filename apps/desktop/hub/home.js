@@ -194,6 +194,8 @@
     });
 
     let _hubSessionsCache = { active: [], warnings: [], archived: [] };
+    let _deskPreviewRevisions = new Map();
+    const _deskUnreadSessions = new Set();
     let _deskSessionsRequestSeq = 0;
     let _deskSessionsRenderedOnce = false;
     let _deskSelectedSessionName = "";
@@ -792,6 +794,7 @@
     function openChatInDesk(url, name) {
       if (!_deskChatFrame) return;
       _deskSelectedSessionName = name || "";
+      _deskUnreadSessions.delete(_deskSelectedSessionName);
       updateDeskWindowTitle(_deskSelectedSessionName);
       persistDeskSelection(_deskSelectedSessionName);
       setDeskSelectionInUrl(_deskSelectedSessionName);
@@ -948,6 +951,7 @@
       const archivedClass = archived ? " archived" : "";
       const selectedClass = _deskSelectedSessionName === sessionName ? " is-selected" : "";
       const isSelected = _deskSelectedSessionName === sessionName;
+      const unreadClass = !isSelected && _deskUnreadSessions.has(sessionName) ? " is-unread" : "";
       const showRevive = archived && isSelected;
       const swipeActionLabel = showRevive ? "Revive" : (archived ? "Delete" : "Archive");
       const swipeActionRoute = showRevive ? "revive" : (archived ? "delete-archived" : "kill");
@@ -969,7 +973,7 @@
           `</button>` +
         `</div>` +
         `<div class="desk-swipe-track">` +
-          `<div class="desk-session-row desk-action-session-row${archivedClass}${selectedClass}" data-session-name="${esc(sessionName)}" data-open-href="${buildSessionOpenHref(sessionName, archived)}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
+          `<div class="desk-session-row desk-action-session-row${archivedClass}${selectedClass}${unreadClass}" data-session-name="${esc(sessionName)}" data-open-href="${buildSessionOpenHref(sessionName, archived)}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
             `<div class="desk-row-head">` +
                 `<div class="desk-row-main">` +
                   `<span class="desk-row-bullet" aria-hidden="true"><i></i></span>` +
@@ -1185,6 +1189,32 @@
       _deskSessionList.querySelectorAll(".desk-swipe-row").forEach(initDeskSwipeRow);
     }
 
+    function updateDeskUnreadSessions(active) {
+      const nextRevisions = new Map();
+      const activeNames = new Set();
+      active.forEach((session) => {
+        const name = String(session.name || "").trim();
+        if (!name) return;
+        activeNames.add(name);
+        const revision = String(session.latest_message_revision || "").trim();
+        const previousRevision = _deskPreviewRevisions.get(name);
+        if (
+          previousRevision &&
+          revision &&
+          revision !== previousRevision &&
+          name !== _deskSelectedSessionName &&
+          String(session.latest_message_sender || "").trim() !== "user"
+        ) {
+          _deskUnreadSessions.add(name);
+        }
+        nextRevisions.set(name, revision);
+      });
+      Array.from(_deskUnreadSessions).forEach((name) => {
+        if (!activeNames.has(name)) _deskUnreadSessions.delete(name);
+      });
+      _deskPreviewRevisions = nextRevisions;
+    }
+
     async function refreshHubSessions(force = false, options = {}) {
       const skipRestore = !!(options && options.skipRestore);
       const requestSeq = ++_deskSessionsRequestSeq;
@@ -1196,6 +1226,7 @@
         const active = data.active_sessions;
         const warnings = data.warning_sessions;
         const archived = data.archived_sessions;
+        updateDeskUnreadSessions(active);
         _hubSessionsCache = { active, warnings, archived };
         if (_deskSelectedSessionName) updateDeskWindowTitle(_deskSelectedSessionName);
 

@@ -43,18 +43,21 @@ def parse_saved_time(value: str) -> float:
 def _compact_message_preview(entry: dict[str, Any]) -> dict[str, str]:
     sender = (entry.get("sender") or "").strip()
     if sender == "system":
-        return {"sender": "", "text": ""}
+        return {"sender": "", "text": "", "revision": ""}
     message = str(entry.get("message") or "").strip()
     if not message:
-        return {"sender": "", "text": ""}
+        return {"sender": "", "text": "", "revision": ""}
     compact = re.sub(r"^\[From:\s*[^\]]+\]\s*", "", message, flags=re.IGNORECASE)
     compact = re.sub(r"^\[[^\]]*msg-id:[^\]]+\]\s*", "", compact, flags=re.IGNORECASE)
     compact = re.sub(r"\s+", " ", compact)
     compact = re.sub(r"\[Attached:\s*[^\]]+\]", "", compact).strip()
     compact = compact[:140].rstrip()
     if not compact:
-        return {"sender": "", "text": ""}
-    return {"sender": sender, "text": compact}
+        return {"sender": "", "text": "", "revision": ""}
+    context_hash = str(entry.get("context_hash") or "").strip()
+    native_log_offset = str(entry.get("native_log_offset") or "").strip()
+    revision = f"{context_hash}:{native_log_offset}" if native_log_offset else context_hash
+    return {"sender": sender, "text": compact, "revision": revision}
 
 
 def _iter_tail_lines(path: Path, *, max_bytes: int = _PREVIEW_TAIL_BYTES):
@@ -84,7 +87,7 @@ def _iter_tail_lines(path: Path, *, max_bytes: int = _PREVIEW_TAIL_BYTES):
 
 
 def _latest_message_preview_from_full_scan(log_path: Path) -> dict[str, str]:
-    last_preview = {"sender": "", "text": ""}
+    last_preview = {"sender": "", "text": "", "revision": ""}
     with log_path.open("r", encoding="utf-8") as handle:
         for line in handle:
             line = line.strip()
@@ -105,7 +108,7 @@ def _latest_message_preview_from_full_scan(log_path: Path) -> dict[str, str]:
 
 def latest_message_preview(log_path: Path | None) -> dict[str, str]:
     if not log_path or not log_path.is_file():
-        return {"sender": "", "text": ""}
+        return {"sender": "", "text": "", "revision": ""}
     try:
         size = log_path.stat().st_size
         for line in _iter_tail_lines(log_path):
@@ -123,8 +126,8 @@ def latest_message_preview(log_path: Path | None) -> dict[str, str]:
             return _latest_message_preview_from_full_scan(log_path)
     except Exception as exc:
         logging.error(f"Unexpected error: {exc}", exc_info=True)
-        return {"sender": "", "text": ""}
-    return {"sender": "", "text": ""}
+        return {"sender": "", "text": "", "revision": ""}
+    return {"sender": "", "text": "", "revision": ""}
 
 
 def host_without_port(host_header: str) -> str:
@@ -149,6 +152,7 @@ def build_session_record(
         "workspace": workspace,
         "latest_message_sender": preview["sender"],
         "latest_message_preview": preview["text"],
+        "latest_message_revision": preview["revision"],
     }
 
 

@@ -828,10 +828,12 @@
     .desk-session-row.is-selected .desk-row-preview {
       opacity: 1;
     }
-    .desk-session-row.is-selected .desk-row-bullet i {
+    .desk-session-row.is-selected .desk-row-bullet i,
+    .desk-session-row.is-unread .desk-row-bullet i {
       width: 6px;
       height: 6px;
       background: var(--icon-fg);
+      box-shadow: 0 0 5px color-mix(in srgb, var(--icon-fg) 68%, transparent);
     }
     .desk-session-row.archived {
       opacity: 1;
@@ -1017,6 +1019,10 @@
       flex-direction: row;
       align-items: baseline;
       gap: 6px;
+    }
+    .desk-action-session-row .desk-row-stack {
+      position: relative;
+      top: 1px;
     }
     .desk-row-name {
       font-size: var(--text-size, 13px);
