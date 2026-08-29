@@ -351,15 +351,20 @@
       border-top: none;
       border-left: none;
       border-right: none;
+      border-bottom: var(--table-line-width) solid var(--table-line);
       padding: 5px 12px;
       text-align: left;
       font: inherit;
     }
 
+    .md-body tr:last-child td {
+      border-bottom: var(--table-line-width) solid var(--table-header-line);
+    }
+
     .md-body th {
       background: transparent;
       font-weight: inherit;
-      border-bottom: 1px solid var(--fg);
+      border-bottom: var(--table-line-width) solid var(--table-header-line);
     }
 
     .md-body a:not(.inline-file-link):not(.local-file-link) {

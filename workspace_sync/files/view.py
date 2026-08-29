@@ -45,6 +45,7 @@ from .view_scripts import (
 
 def _chat_markdown_preview_css() -> str:
     repo_root = Path(__file__).resolve().parents[2]
+    theme_vars_css = (repo_root / "apps/shared/chat/markdown-theme-vars.css").read_text(encoding="utf-8")
     inline_code_css = (repo_root / "apps/shared/chat/markdown-inline-code.css").read_text(encoding="utf-8")
     code_block_css = (repo_root / "apps/shared/chat/markdown-code-block.css").read_text(encoding="utf-8")
     shared_body_css = (repo_root / "apps/shared/chat/markdown-body.css").read_text(encoding="utf-8")
@@ -57,7 +58,7 @@ def _chat_markdown_preview_css() -> str:
     }
     for placeholder, value in replacements.items():
         markdown_css = markdown_css.replace(placeholder, value)
-    return f"{inline_code_css}\n{code_block_css}\n{markdown_css}"
+    return f"{theme_vars_css}\n{inline_code_css}\n{code_block_css}\n{markdown_css}"
 
 
 def render_file_view(
@@ -417,8 +418,8 @@ def render_file_view(
         dark_preview_diff_delete = f"rgb({TEXT_DIFF_DELETE_DARK_CHANNELS})"
         light_preview_diff_delete = f"rgb({TEXT_DIFF_DELETE_LIGHT_CHANNELS})"
         markdown_theme_css = (
-            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette.get("dark_bg") or DARK_BG)};--fg:{dark_preview_fg};--fg-bold:{dark_preview_fg_bold};--muted:{dark_preview_muted};--icon-fg:{dark_preview_fg};--icon-muted:{dark_preview_muted};--icon-hover:{MOBILE_DARK_ICON_HOVER};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba({dark_preview_fg_channels},0.09);--external-link-fg:{dark_preview_external_link};--link-blue:{dark_preview_link};--link-blue-channels:{TEXT_LINK_DARK_CHANNELS};--git-ins-green:{dark_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_DARK_CHANNELS};--git-del-red:{dark_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_DARK_CHANNELS};--code-bg:rgba({dark_preview_fg_channels},0.10);--code-scrollbar-thumb:rgba({dark_preview_fg_channels},0.45);--code-scrollbar-thumb-hover:rgba({dark_preview_fg_channels},0.65);--line:rgba({dark_preview_fg_channels},0.07);--line-strong:rgba({dark_preview_fg_channels},0.12);--table-line:rgba({dark_preview_fg_channels},0.12);--table-header-line:rgba({dark_preview_fg_channels},0.28);}}'
-            f'html[data-preview-theme="light"]{{color-scheme:light;--bg-rgb:{light_preview_bg_channels};--bg:{light_preview_bg};--fg:{light_preview_fg};--fg-bold:{light_preview_fg_bold};--muted:{light_preview_muted};--icon-fg:{light_preview_fg};--icon-muted:{light_preview_muted};--icon-hover:{MOBILE_LIGHT_ICON_HOVER};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:{light_preview_external_link};--link-blue:{light_preview_link};--link-blue-channels:{TEXT_LINK_LIGHT_CHANNELS};--git-ins-green:{light_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_LIGHT_CHANNELS};--git-del-red:{light_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_LIGHT_CHANNELS};--code-bg:rgba(0,0,0,0.05);--code-scrollbar-thumb:rgba(0,0,0,0.25);--code-scrollbar-thumb-hover:rgba(0,0,0,0.45);--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);--table-line:rgba(0,0,0,0.18);}}'
+            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette.get("dark_bg") or DARK_BG)};--fg:{dark_preview_fg};--fg-bold:{dark_preview_fg_bold};--muted:{dark_preview_muted};--icon-fg:{dark_preview_fg};--icon-muted:{dark_preview_muted};--icon-hover:{MOBILE_DARK_ICON_HOVER};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba({dark_preview_fg_channels},0.09);--external-link-fg:{dark_preview_external_link};--link-blue:{dark_preview_link};--link-blue-channels:{TEXT_LINK_DARK_CHANNELS};--git-ins-green:{dark_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_DARK_CHANNELS};--git-del-red:{dark_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_DARK_CHANNELS};--line:rgba({dark_preview_fg_channels},0.07);--line-strong:rgba({dark_preview_fg_channels},0.12);}}'
+            f'html[data-preview-theme="light"]{{color-scheme:light;--bg-rgb:{light_preview_bg_channels};--bg:{light_preview_bg};--fg:{light_preview_fg};--fg-bold:{light_preview_fg_bold};--muted:{light_preview_muted};--icon-fg:{light_preview_fg};--icon-muted:{light_preview_muted};--icon-hover:{MOBILE_LIGHT_ICON_HOVER};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:{light_preview_external_link};--link-blue:{light_preview_link};--link-blue-channels:{TEXT_LINK_LIGHT_CHANNELS};--git-ins-green:{light_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_LIGHT_CHANNELS};--git-del-red:{light_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_LIGHT_CHANNELS};--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);}}'
             'html,body{background:transparent;color:var(--fg)}'
             '.md-preview-shell{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:transparent;scrollbar-gutter:auto;padding-top:0}'
         )
