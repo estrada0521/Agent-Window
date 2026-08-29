@@ -858,6 +858,13 @@
     .desk-session-row.archived {
       opacity: 1;
     }
+    .desk-session-row.archived .desk-row-name {
+      opacity: 0.85;
+    }
+    .desk-session-row.archived:hover .desk-row-name,
+    .desk-session-row.archived.is-selected .desk-row-name {
+      opacity: 1;
+    }
     .desk-warning-session-row {
       cursor: default;
     }
