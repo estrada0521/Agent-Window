@@ -1,5 +1,7 @@
 # Agent Window Agent Handbook
 
+Before adding an application-owned record, mapping, or protocol, read [DESIGN.md](DESIGN.md).
+
 ## 1. Prefer the intended path
 
 - Do not replace a broken input, a broken progress record, or an unreadable source with an empty stand-in, a zero, or a skipped step just to let the rest of the work continue.
