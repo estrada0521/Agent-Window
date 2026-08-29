@@ -109,16 +109,11 @@
         expand.innerHTML = "";
       }
 
-      async function open() {
-        cancelTimers();
-        if (aside.hidden) return;
+      async function refreshContent() {
         if (!dpGitHeaderSummaryState?.clickable) {
           close();
           return;
         }
-        aside.classList.add("is-expanded");
-        animatePopoverIn(aside, inner);
-
         const seq = ++fetchSeq;
         expand.innerHTML = `<div class="git-pinned-expand-loading"><span></span><span></span><span></span></div>`;
 
@@ -157,6 +152,28 @@
           expand.innerHTML = `<div class="git-pinned-expand-empty">Failed to load</div>`;
         }
       }
+
+      async function open() {
+        cancelTimers();
+        if (aside.hidden) return;
+        if (!dpGitHeaderSummaryState?.clickable) {
+          close();
+          return;
+        }
+        aside.classList.add("is-expanded");
+        animatePopoverIn(aside, inner);
+        await refreshContent();
+      }
+
+      // The summary row's own counts already refresh whenever a workspace
+      // sync event reports the git state changed (dpApplyGitOverviewHeader),
+      // but this popover only ever fetched once, when the mouse first opened
+      // it -- a commit landing while it's still open left it showing files
+      // that no longer differ. Re-run the fetch in place (no re-triggered
+      // pop-in animation) on that same event, if it's open.
+      dpPinnedExpandRefresh = () => {
+        if (aside.classList.contains("is-expanded")) void refreshContent();
+      };
 
       expand.addEventListener("click", (event) => {
         const file = event.target.closest(".git-pinned-expand-file");

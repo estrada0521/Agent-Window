@@ -1,5 +1,9 @@
     const dpGitSummaryPinnedStorageKey = () => `agent_window_git_summary_pinned:${String(currentSessionName || "").trim() || "__none"}`;
     let dpGitSummaryPinned = true;
+    // Set by events.js's pinned-summary hover popover once it's wired up;
+    // lets dpApplyGitOverviewHeader below nudge it to re-fetch in place when
+    // it's already open, instead of only refreshing on the next hover.
+    let dpPinnedExpandRefresh = null;
     let _dpGitSummaryPinnedLoadedForKey = "";
     const dpReadGitSummaryPinnedFromStorage = () => {
       try {
@@ -80,6 +84,7 @@
           inner.innerHTML = rowHtml;
           dpApplySummaryPinButtonPressed(inner);
         }
+        dpPinnedExpandRefresh?.();
       } else if (dpPanelOpen && panelWrap) {
         if (shouldAnimate) dpRenderGitSummaryRoot(panelWrap, rowHtml);
         else {
