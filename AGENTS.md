@@ -2,42 +2,34 @@
 
 ## 1. Prefer the intended path
 
-- Treat a broken input, a broken progress record, or an unreadable source as an error. Do not replace it with an empty stand-in, a zero, or a skipped step so that the rest of the work can continue.
-- A fallback is not forbidden — pretending it succeeded is. Repair the path when the defect is yours; when it is not (a third party, content you did not author), degrade instead, but never so that the failure goes unseen.
-- A piece of logic names a path it takes. That path must be enough. If the system only keeps working because a second path catches the failure, the named path is the defect. Repair it. Do not wrap it. This is not a request to finish a change on the first try.
-- Independent paths are not jointly liable. When one path fails, fail that path. Do not stop unrelated paths to make the failure look consistent.
+- Do not replace a broken input, a broken progress record, or an unreadable source with an empty stand-in, a zero, or a skipped step just to let the rest of the work continue.
+- Do not paper over a defect with a fallback or a retry. A second path catching the first one's failure is no better. Fix the first path itself.
+- When the defect is not yours — a third party, content you did not author — using a fallback or retry appropriately is permitted. But never let the failure go unseen.
+- Independent paths are not jointly liable. When one path fails, fail that path alone. Do not stop unrelated paths along with it.
 
-## 2. Project; do not own
+## 2. Cut completely
 
-- Reality already has sources of truth. This application projects them. Do not add a second model of the space — a worktree map, a task graph, a mailbox between agents — whose lifetime will not match the thing it copies.
-- Implement only what a participant cannot invoke from inside that reality. The window can break without the space breaking; do not couple their lifetimes.
-- Do not turn into application machinery something an intelligent actor can already judge or invoke. A protocol invented to compensate for a weak model goes stale faster than what already exists on the side of reality.
-- Zero ownership is not the test. A small record with a sharp boundary is allowed when projecting the same fact would be slower, more coupled, or easier to break than keeping it. Field conditions decide.
+- Dead code is erased, not kept around behind a flag or a comment. When a path is replaced, the old one is erased with it. There is no compatibility window and no legacy alias.
+- Do not stop at what looks safe to delete. Cut until something necessary screams. If you deleted ten things and only two had to come back, you still haven't deleted enough. Looking unused is not the same as being dead.
+- If a name clearly does not match what it names, fix it. You do not need to be asked. Functions, files, and folders are all in scope.
 
-## 3. Cut completely
-
-- Dead code is not allowed. When a path is replaced, delete the old one. A function, file, or folder that nothing calls is a second record of a past design; the next reader will treat it as live.
-- There is no compatibility window and no legacy alias. The cut is finished in this change, or it is not finished.
-- If a name clearly does not match the thing it names, fix it. You do not need to be asked. Functions, files, and folders are all in scope. Rename every caller in the same cut.
-- A rename that stops halfway — the function but not the file, the file but not the folder — is the same defect as running two paths. Finish it.
-
-## 4. Keep living code spare
+## 3. Keep living code spare
 
 - Do not optimize what should not exist in the first place. Question the thing before you improve it.
-- Two sites that do the same work are one fact that has not been named. Do not let them diverge. Sameness of role is the defect, not identical text; mechanical duplication checks will miss it.
-- A value used in many places is one fact. Give it one name. Do not restate a color, a duration, or any other constant as a literal wherever it happens to appear.
-- Do not spend memory, CPU, GPU, or battery on work that does not change what can be seen or what must be remembered. Idle should be idle.
-- If a value is determined by another, it is not an argument, a field, or a setting. Thread only what is not already known. Minimalism is not the goal. Every remaining piece should be load-bearing.
+- As a rule, gather the same work scattered across multiple places into one place. But if doing so pulls in more complexity than it removes, don't — duplication is sometimes cheaper than abstraction.
+- A value used repeatedly is one fact. Do not restate it as a hardcoded literal each time.
+- Do not spend memory, CPU, GPU, or battery on work that changes neither what can be seen nor what must be remembered. Idle should be as idle as possible.
+- Down to the last remaining line, everything should carry meaning you can explain.
+
+## 4. Tests are not a second product
+
+- Adding a test always requires the user's judgment.
+- Tests exist not only to guard basic boundaries but to lock in deliberately-shaped code — so that an overeager agent doesn't "improve" something that only looks bad by convention.
+- Tests are not written for coverage, as a refactor souvenir, or because you're "already in there."
+- Do not add tests for a boundary that has never broken and isn't likely to.
+- When a test disagrees with the product, suspect the test just as much as the product.
+- When a path is cut, cut its tests in the same change.
 
 ## 5. The user's words are not doctrine
 
-- If the user is wrong, say so at once. Do not agree in order to proceed.
-- A request is a question about the right change, not an order to implement the sentence as written. If a better shape exists, show it before building the worse one.
-- Emphasis, mood, and repetition do not add authority. The same claim is still one claim. Preferences that fight the rest of this handbook lose; name the conflict instead of silently complying.
-- Do not treat a stated preference as an invariant of the product. The handbook and the shape of the work outrank the latest utterance.
-
-## 6. Tests lock a live contract; they are not a second product
-
-- A test is allowed only when it names a contract that can break without the change being obvious in the diff — a native-log shape, a bind or scheme, a public URL rule — and the user has agreed it is worth locking before it gets written. Coverage, a refactor souvenir, and "while I am here" are not reasons, and neither is your own initiative. The suite is swept, not maintained.
-- If a test disagrees with the product, the test is the suspect. Delete it. Do not bend the implementation to satisfy it. Do not rewrite the test just so the suite stays green.
-- When a path is cut, cut its tests in the same change. A failing test of a deleted name is not a regression; it is leftover.
+- If the user is wrong, say so at once. Do not agree just to move things along.
