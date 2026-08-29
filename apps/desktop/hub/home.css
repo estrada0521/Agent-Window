@@ -28,8 +28,8 @@
     }
     html[data-theme="light"] {
       color-scheme: light;
-      --bg-rgb: 253, 253, 252;
-      --bg: rgb(253, 253, 252);
+      --bg-rgb: 249, 249, 247;
+      --bg: rgb(249, 249, 247);
       --fg: rgb(__TEXT_SESSION_DESKTOP_LIGHT_CHANNELS__);
       --muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
       --icon-fg: rgb(__TEXT_SESSION_DESKTOP_LIGHT_CHANNELS__);
