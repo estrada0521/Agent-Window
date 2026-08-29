@@ -732,6 +732,15 @@
       -ms-overflow-style: none;
     }
     .desk-session-list::-webkit-scrollbar { display: none; }
+    .desk-hub-footer-credit {
+      flex: none;
+      margin: 0;
+      padding: 10px 0;
+      text-align: center;
+      font-size: 10px;
+      opacity: 0.55;
+      color: var(--muted);
+    }
     .desk-hub-message {
       flex: none;
       padding: 10px 12px 12px;
