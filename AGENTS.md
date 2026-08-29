@@ -15,7 +15,7 @@
 
 ## 3. Keep living code spare
 
-- Do not optimize what should not exist in the first place. Question the thing before you improve it.
+- Do not optimize what should not exist in the first place. Question the thing before you improve it. The best implementation is no implementation.
 - As a rule, gather the same work scattered across multiple places into one place. But if doing so pulls in more complexity than it removes, don't — duplication is sometimes cheaper than abstraction.
 - A value used repeatedly is one fact. Do not restate it as a hardcoded literal each time.
 - Do not spend memory, CPU, GPU, or battery on work that changes neither what can be seen nor what must be remembered. Idle should be as idle as possible.
