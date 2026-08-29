@@ -2,6 +2,25 @@
       _pollScrollLockTop = null;
       _pollScrollAnchor = null;
     };
+    let _scrollbarFadeTimer = null;
+    const revealScrollbar = () => {
+      timeline.classList.add("is-scrolling");
+      clearTimeout(_scrollbarFadeTimer);
+      _scrollbarFadeTimer = setTimeout(() => {
+        timeline.classList.remove("is-scrolling");
+      }, 1000);
+    };
+    // Only a real user gesture (wheel/touch) shows the scrollbar. A plain
+    // "scroll" event also fires for programmatic jumps -- the initial
+    // scroll-to-bottom on entering a chat, "jump to bottom" clicks -- and
+    // reacting to those flashed the scrollbar on every chat open. Once a
+    // gesture has shown it, though, "scroll" extends the timer so momentum
+    // scrolling after the gesture ends doesn't cut it off early.
+    timeline.addEventListener("wheel", revealScrollbar, { passive: true });
+    timeline.addEventListener("touchstart", revealScrollbar, { passive: true });
+    timeline.addEventListener("scroll", () => {
+      if (timeline.classList.contains("is-scrolling")) revealScrollbar();
+    }, { passive: true });
     timeline.addEventListener("wheel", clearPollScrollLock, { passive: true });
     timeline.addEventListener("touchstart", clearPollScrollLock, { passive: true });
     timeline.addEventListener("scroll", updateStickyState, { passive: true });
