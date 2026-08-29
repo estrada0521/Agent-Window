@@ -103,6 +103,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       color-scheme: light;
       --bg-rgb: 249, 249, 247;
       --fg: rgb(var(--light-fg-rgb));
+      --user-message-divider: var(--fg);
       --fg-bold: rgb(__TEXT_STRONG_MOBILE_LIGHT_CHANNELS__);
       --muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
       --icon-fg: rgb(var(--light-fg-rgb));
@@ -172,6 +173,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       color-scheme: dark;
       --bg-rgb: 13, 13, 12;
       --fg: rgb(var(--dark-fg-rgb));
+      --user-message-divider: rgba(255, 255, 255, 0.55);
       --fg-bold: rgb(__TEXT_STRONG_MOBILE_DARK_CHANNELS__);
       --muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
       --icon-fg: rgb(var(--dark-fg-rgb));

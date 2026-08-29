@@ -410,7 +410,7 @@
       position: relative;
       width: 100%;
       height: 1px;
-      background: var(--fg);
+      background: var(--user-message-divider);
       opacity: 1;
       margin-top: 0;
       max-width: 100%;

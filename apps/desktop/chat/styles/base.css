@@ -87,6 +87,7 @@
       color-scheme: light;
       --bg-rgb: 253, 253, 252;
       --fg: rgb(__TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS__);
+      --user-message-divider: var(--fg);
       --muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
       --icon-fg: rgb(__TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS__);
       --icon-muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
@@ -138,6 +139,7 @@
       color-scheme: dark;
       --bg-rgb: 13, 13, 12;
       --fg: rgb(__TEXT_PRIMARY_DESKTOP_DARK_CHANNELS__);
+      --user-message-divider: rgba(180, 180, 180, 0.55);
       --muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
       --icon-fg: rgb(__TEXT_PRIMARY_DESKTOP_DARK_CHANNELS__);
       --icon-muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
