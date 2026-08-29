@@ -746,6 +746,17 @@
     .desk-hub-message[hidden] {
       display: none;
     }
+    .desk-hub-tagline {
+      margin: 0;
+      padding: 18px 12px 0;
+      font-size: 22px;
+      font-weight: 200;
+      letter-spacing: -0.04em;
+      color: var(--fg);
+      font-family: "Snell Roundhand", "Apple Chancery", cursive;
+      white-space: nowrap;
+      pointer-events: none;
+    }
     .desk-new-session-section {
       padding: 8px 0 0;
       border-bottom: none;
