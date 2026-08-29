@@ -1,6 +1,6 @@
     .md-body :not(pre)>code:not(:where(a.inline-file-link > code, a.local-file-link > code)),
     .message.user .md-body :not(pre)>code:not(:where(a.inline-file-link > code, a.local-file-link > code)) {
-      background: var(--code-bg);
+      background: var(--inline-code-bg);
       border-radius: 0.45em;
       font-family: var(--font-code);
       padding: 0 0.3em;
