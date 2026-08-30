@@ -288,8 +288,6 @@ def _start_agent(
     _run(prefix, ["select-pane", "-t", pane_id, "-T", instance_name])
     _set_env(prefix, session_name, "AGENT_WINDOW_AGENT_NAME", instance_name)
     shell = os.environ.get("SHELL") or "/bin/zsh"
-    if not os.path.isfile(shell) or not os.access(shell, os.X_OK):
-        raise SessionControlError(f"shell is not executable: {shell}")
     result = _run(
         prefix,
         ["respawn-pane", "-k", "-t", pane_id, "-c", workspace, shell, "-lc", command],
