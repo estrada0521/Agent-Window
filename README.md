@@ -58,6 +58,10 @@ Archive, revive, and delete sessions from the Hub.
 
 The separate reload button beside it hard-reloads the GUI server. If the source code has changed, the running server is replaced with the new implementation.
 
+<p align="center">
+  <img src="media/agent-window-menu.png" width="50%" alt="Menu">
+</p>
+
 ## Send
 
 The input field is normally minimized to leave more room for the chat, and expands with the `O` button at the bottom of the screen or by pressing the scroll wheel. Which Agent icons are selected determines who a message is sent to.

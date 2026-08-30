@@ -58,6 +58,10 @@ HubからsessionのArchive、revive、削除を行えます。
 
 隣のreload buttonはGUI serverをhard reloadします。source codeを変更している場合は、動作中のserverを新しい実装へ置き換えます。
 
+<p align="center">
+  <img src="media/agent-window-menu.png" width="50%" alt="Menu">
+</p>
+
 ## 送る
 
 入力欄は通常、chatの表示領域を広く取るために最小化されており、画面下部の `O` button、またはホイール押し込みで展開されます。Agent Iconの選択状態がメッセージの送信先を指定します。
