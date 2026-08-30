@@ -15,8 +15,6 @@ def write_json_atomically(path: Path, data: dict, *, indent: int | None = None) 
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             json.dump(data, handle, ensure_ascii=False, indent=indent)
             handle.write("\n")
-            handle.flush()
-            os.fsync(handle.fileno())
         os.replace(tmp_path, path)
     except BaseException:
         tmp_path.unlink(missing_ok=True)
