@@ -35,8 +35,8 @@
     });
     const applyMobThemeGradientVars = () => {
       const root = document.documentElement;
-      const channels = root.dataset.theme === "light" ? "255, 255, 255" : "10, 10, 9";
-      root.style.setProperty("--mob-top-gradient-rgb", channels);
+      const channels = getComputedStyle(root).getPropertyValue("--bg-rgb").trim();
+      if (channels) root.style.setProperty("--mob-top-gradient-rgb", channels);
     };
     applyMobThemeGradientVars();
     new MutationObserver((mutations) => {

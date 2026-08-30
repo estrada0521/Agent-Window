@@ -17,7 +17,7 @@
       --session-success-fg: rgb(41, 178, 75);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --glass-filter-20: blur(20px) saturate(180%);
-      --mob-top-gradient-rgb: __DARK_BG_CHANNELS__;
+      --mob-top-gradient-rgb: var(--bg-rgb);
       --top-gradient-68: rgba(var(--mob-top-gradient-rgb), 0.68);
       --top-gradient-50: rgba(var(--mob-top-gradient-rgb), 0.50);
       --top-gradient-28: rgba(var(--mob-top-gradient-rgb), 0.28);
@@ -43,7 +43,7 @@
       --session-success-fg: rgb(36, 157, 66);
       --glass-bg-72: var(--bg);
       --glass-filter-20: blur(20px) saturate(180%);
-      --mob-top-gradient-rgb: __MOBILE_HUB_LIGHT_BG_CHANNELS__;
+      --mob-top-gradient-rgb: var(--bg-rgb);
       --code-bg: rgba(0, 0, 0, 0.05);
     }
     html[data-theme="dark"] {
@@ -65,7 +65,7 @@
       --session-success-fg: rgb(41, 178, 75);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --glass-filter-20: blur(20px) saturate(180%);
-      --mob-top-gradient-rgb: __MOBILE_HUB_DARK_BG_CHANNELS__;
+      --mob-top-gradient-rgb: var(--bg-rgb);
       --code-bg: rgba(255, 255, 255, 0.05);
     }
 
