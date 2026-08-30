@@ -91,7 +91,11 @@ def ensure_chat_server(
 ) -> tuple[bool, int, str]:
     raw_workspace = str(workspace or "").strip()
     if not raw_workspace:
-        return False, 0, "workspace unavailable"
+        return False, 0, (
+            "No workspace is set for this session. A workspace is required "
+            "to determine the chat server's port; if you only need to view "
+            "this session, set any placeholder workspace path."
+        )
     resolved_workspace = str(Path(raw_workspace).expanduser().resolve())
     lock = self._get_launch_lock(resolved_workspace)
     with lock:
