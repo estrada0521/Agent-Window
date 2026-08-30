@@ -63,12 +63,6 @@ def canonicalize_message_font(value: object) -> str:
     return text
 
 
-def _require_css_font_family(value: str) -> str:
-    if any(ch in value for ch in "{};"):
-        raise ValueError(f"invalid message_font: {value!r}")
-    return value
-
-
 def _with_derived_font_fields(settings: dict) -> dict:
     settings["message_font"] = canonicalize_message_font(settings.get("message_font"))
     code_font = str(settings.get("code_font") or "").strip()
@@ -125,12 +119,12 @@ def _apply_hub_settings(raw: dict, settings: dict) -> dict:
         message_font = canonicalize_message_font(raw.get("message_font"))
     else:
         message_font = canonicalize_message_font(settings.get("message_font"))
-    settings["message_font"] = _require_css_font_family(message_font)
+    settings["message_font"] = message_font
 
     if "code_font" in raw:
         code_font = str(raw.get("code_font") or "").strip()
         if code_font:
-            settings["code_font"] = _require_css_font_family(code_font)
+            settings["code_font"] = code_font
         else:
             settings["code_font"] = DEFAULT_CODE_FONT
     elif "code_font" not in settings:
