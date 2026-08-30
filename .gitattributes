@@ -1,0 +1,5 @@
+media/*.webp filter=lfs diff=lfs merge=lfs -text
+media/*.png filter=lfs diff=lfs merge=lfs -text
+media/*.jpg filter=lfs diff=lfs merge=lfs -text
+media/*.jpeg filter=lfs diff=lfs merge=lfs -text
+media/*.gif filter=lfs diff=lfs merge=lfs -text
