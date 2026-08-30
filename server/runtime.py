@@ -395,7 +395,7 @@ class ChatRuntime:
     def native_log_watched_paths(self) -> dict[str, str]:
         return self._native_log.watched_paths()
 
-    def trace_content(self, agent: str, *, tail_lines: int | None = None) -> str:
+    def trace_content(self, agent: str, *, tail_lines: int) -> str:
         pane_id = self.pane_id_for_agent(agent)
         if not pane_id:
             return "Offline"

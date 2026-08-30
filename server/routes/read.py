@@ -91,18 +91,19 @@ def _get_messages(handler, parsed, ctx) -> None:
     )
 
 
+DEFAULT_TRACE_TAIL_LINES = 160  # matches the only caller, apps/mobile/chat/panes/pane-viewer.js
+
+
 def _get_trace(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     agent = qs.get("agent", [""])[0].lower()
     tail_raw = (qs.get("lines", qs.get("tail", [""]))[0] or "").strip()
-    tail_lines = None
+    tail_lines = DEFAULT_TRACE_TAIL_LINES
     if tail_raw:
         try:
-            tail_lines = int(tail_raw)
+            tail_lines = max(1, min(int(tail_raw), 10_000))
         except ValueError:
-            tail_lines = None
-        if tail_lines is not None:
-            tail_lines = max(1, min(tail_lines, 10_000))
+            pass
     try:
         content_str = ctx["runtime"].trace_content(agent, tail_lines=tail_lines)
     except Exception as exc:
