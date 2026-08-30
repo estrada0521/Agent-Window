@@ -59,7 +59,7 @@ HubからsessionのArchive、revive、削除を行えます。
 隣のreload buttonはGUI serverをhard reloadします。source codeを変更している場合は、動作中のserverを新しい実装へ置き換えます。
 
 <p align="center">
-  <img src="media/agent-window-menu.png" width="50%" alt="Menu">
+  <img src="media/agent-window-menu.png" width="500" alt="Menu">
 </p>
 
 ## 送る
