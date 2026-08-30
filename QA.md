@@ -19,6 +19,7 @@ Because it is a low-level, well-established, observable foundation.
 ### Why don't you use SDKs or structured protocols?
 
 There are several reasons:
+
 - To use each CLI's capabilities directly
 - Because this carries the lowest risk of being cut off under a normal subscription, the way the Claude SDK once was
 - Because, on the sending side, no CLI-specific implementation is needed
