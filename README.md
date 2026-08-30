@@ -152,10 +152,10 @@ Add it to the Home Screen to use it as a PWA.
 For reaching Hub from outside the LAN, see [`external-access/README.md`](external-access/README.md).
 
 <p align="center">
-  <img src="media/agent-window-mobile-1.png" width="24%" alt="Mobile UI 1">
-  <img src="media/agent-window-mobile-2.png" width="24%" alt="Mobile UI 2">
-  <img src="media/agent-window-mobile-3.png" width="24%" alt="Mobile UI 3">
-  <img src="media/agent-window-mobile-4.png" width="24%" alt="Mobile UI 4">
+  <img src="media/agent-window-mobile-1.png" width="48%" alt="Mobile UI 1">
+  <img src="media/agent-window-mobile-2.png" width="48%" alt="Mobile UI 2">
+  <img src="media/agent-window-mobile-3.png" width="48%" alt="Mobile UI 3">
+  <img src="media/agent-window-mobile-4.png" width="48%" alt="Mobile UI 4">
 </p>
 
 ## Supported CLIs
