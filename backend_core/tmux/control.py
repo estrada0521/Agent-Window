@@ -334,10 +334,7 @@ def _create_tmux_session(prefix: list[str], workspace: Path) -> str:
     if created.returncode != 0:
         detail = (created.stderr or created.stdout or "").strip() or "tmux new-session failed"
         raise SessionControlError(detail)
-    tmux_name = (created.stdout or "").strip()
-    if not tmux_name or "\n" in tmux_name:
-        raise SessionControlError("tmux new-session returned an unreadable session name")
-    return tmux_name
+    return (created.stdout or "").strip()
 
 
 def _pane_status(prefix: list[str], pane_id: str) -> dict:
