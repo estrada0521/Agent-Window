@@ -6,7 +6,7 @@ import logging
 from urllib.parse import parse_qs
 
 from backend_core.access.settings import (
-    normalize_theme_desktop,
+    normalize_theme_choice,
     settings_for_chat_render,
 )
 from hub_backend.transport.request_base_path import request_base_path
@@ -221,7 +221,8 @@ def _get_hub_settings(handler, parsed, ctx) -> None:
     chat_render_settings = settings_for_chat_render(settings, variant=variant)
     body = json.dumps(
         {
-            "theme_desktop": normalize_theme_desktop(settings.get("theme_desktop", "dark")),
+            "theme_desktop": normalize_theme_choice(settings.get("theme_desktop", "dark")),
+            "theme_mobile": normalize_theme_choice(settings.get("theme_mobile", "system")),
             "chat_font_settings_css": ctx["chat_font_settings_inline_style_fn"](chat_render_settings),
         },
         ensure_ascii=True,

@@ -45,6 +45,8 @@
       }
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     const resolveMobileTheme = () => {
+      const setting = document.documentElement.dataset.themeMobileSetting;
+      if (setting === "light" || setting === "dark") return setting;
       try { return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } catch (_) { return "dark"; }
     };
     const publishMobileTheme = (observedTheme = "") => {
@@ -582,6 +584,12 @@
         return;
       }
       if (e.data && e.data.type === "hub-mobile-system-theme-observed") {
+        // Only a live OS-preference change, relayed from the chat iframe's
+        // own matchMedia listener -- irrelevant once theme_mobile pins an
+        // explicit choice, since publishMobileTheme/resolveMobileTheme
+        // would just override it back to that choice regardless.
+        const setting = document.documentElement.dataset.themeMobileSetting;
+        if (setting === "light" || setting === "dark") return;
         const theme = e.data.theme === "light" ? "light" : (e.data.theme === "dark" ? "dark" : "");
         if (theme) publishMobileTheme(theme);
         return;

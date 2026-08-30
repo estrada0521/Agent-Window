@@ -231,7 +231,7 @@ _HUB_LAUNCH_SHELL_BODY_HTML = (
     "</div>"
 )
 HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
-<html lang="en" data-theme-desktop="__THEME_DESKTOP__" data-view="__VIEW_VARIANT__">
+<html lang="en" data-theme-desktop="__THEME_DESKTOP__" data-theme-mobile="__THEME_MOBILE__" data-view="__VIEW_VARIANT__">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -247,6 +247,7 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       color: var(--fg);
     }}
     html[data-view="mobile"] {{ --bg: __MOBILE_HUB_DARK_BG__; }}
+    html[data-view="mobile"][data-theme-mobile="light"] {{ --bg: __MOBILE_HUB_LIGHT_BG__; }}
     html[data-tauri-app="1"],
     html[data-tauri-app="1"] body {{ background: transparent; }}
     @media (prefers-color-scheme: light) {{
@@ -254,7 +255,7 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
         color-scheme: light;
         --fg: __SYSTEM_LIGHT_FG__;
       }}
-      html[data-view="mobile"] {{ --bg: __MOBILE_HUB_LIGHT_BG__; }}
+      html[data-view="mobile"][data-theme-mobile="system"] {{ --bg: __MOBILE_HUB_LIGHT_BG__; }}
     }}
     @media (prefers-color-scheme: dark) {{
       html[data-theme-desktop="system"] {{ --launch-shell-title-fg: rgb(255,255,255); }}
@@ -306,8 +307,9 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       font-weight: 900;
       padding: 0 12px;
     }}
+    html[data-view="mobile"][data-theme-mobile="light"] .launch-shell-title {{ color: rgb(__TEXT_SESSION_MOBILE_LIGHT_CHANNELS__); }}
     @media (prefers-color-scheme: light) {{
-      html[data-view="mobile"] .launch-shell-title {{ color: rgb(__TEXT_SESSION_MOBILE_LIGHT_CHANNELS__); }}
+      html[data-view="mobile"][data-theme-mobile="system"] .launch-shell-title {{ color: rgb(__TEXT_SESSION_MOBILE_LIGHT_CHANNELS__); }}
     }}
     .launch-shell-card.is-error {{
       width: auto;
@@ -535,12 +537,16 @@ class Handler(BaseHTTPRequestHandler):
 
     def _get_hub_launch_shell(self, _parsed):
         settings = load_hub_settings()
-        from backend_core.access.settings import normalize_theme_desktop, settings_for_hub_render
+        from backend_core.access.settings import normalize_theme_choice, settings_for_hub_render
 
         variant = request_view_variant(headers=self.headers, query_string=_parsed.query)
-        theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", "dark"))
-        page = HUB_LAUNCH_SHELL_HTML.replace("__THEME_DESKTOP__", theme_desktop).replace(
-            "__VIEW_VARIANT__", variant
+        theme_desktop = normalize_theme_choice(settings.get("theme_desktop", "dark"))
+        theme_mobile = normalize_theme_choice(settings.get("theme_mobile", "system"))
+        page = (
+            HUB_LAUNCH_SHELL_HTML
+            .replace("__THEME_DESKTOP__", theme_desktop)
+            .replace("__THEME_MOBILE__", theme_mobile)
+            .replace("__VIEW_VARIANT__", variant)
         )
         page = page.replace(
             "__SYSTEM_LIGHT_FG__",
@@ -623,11 +629,11 @@ class Handler(BaseHTTPRequestHandler):
     def _get_home(self, _parsed):
         variant = request_view_variant(headers=self.headers, query_string=_parsed.query)
         settings = load_hub_settings()
-        from backend_core.access.settings import normalize_theme_desktop, settings_for_hub_render
+        from backend_core.access.settings import normalize_theme_choice, settings_for_hub_render
 
         page = HUB_HOME_MOBILE_HTML if variant == "mobile" else HUB_HOME_DESKTOP_HTML
         if variant == "desktop":
-            theme_desktop = normalize_theme_desktop(settings.get("theme_desktop", "dark"))
+            theme_desktop = normalize_theme_choice(settings.get("theme_desktop", "dark"))
             page = page.replace("__THEME_DESKTOP__", theme_desktop)
             page = page.replace("__TEXT_SIZE_PX__", f'{int(settings["text_size"])}px')
         render_settings = settings_for_hub_render(settings, variant=variant)

@@ -11,7 +11,7 @@ from backend_core.access.atomic_json import write_json_atomically
 
 SESSION_LOG_FILENAME = ".log.jsonl"
 NATIVE_LOG_STATE_FILENAME = ".native-log-sync-state.json"
-DESKTOP_THEME_CHOICES = frozenset({"system", "light", "dark"})
+THEME_CHOICES = frozenset({"system", "light", "dark"})
 SESSION_NAME_MAX_LENGTH = 64
 DEFAULT_MESSAGE_FONT = (
     '"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", '
@@ -29,18 +29,21 @@ def sanitize_session_name(raw: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_.\-]", "-", str(raw or "")).strip(".-")[:SESSION_NAME_MAX_LENGTH]
 
 
-def normalize_theme_desktop(value: object) -> str:
+def normalize_theme_choice(value: object) -> str:
     theme = str(value or "").strip().lower()
-    return theme if theme in DESKTOP_THEME_CHOICES else "dark"
+    return theme if theme in THEME_CHOICES else "dark"
 
 
 def resolve_theme(settings: dict, *, variant: str) -> str:
     view = str(variant or "desktop").strip().lower()
     if view == "mobile":
-        # Mobile always follows the OS preference; the server has no access
-        # to it, so client-side code upgrades this fallback after load.
+        mobile = normalize_theme_choice(settings.get("theme_mobile", "system"))
+        if mobile in ("light", "dark"):
+            return mobile
+        # "system": the server has no access to the client's OS preference,
+        # so client-side code upgrades this fallback after load.
         return "dark"
-    desktop = normalize_theme_desktop(settings.get("theme_desktop", "dark"))
+    desktop = normalize_theme_choice(settings.get("theme_desktop", "dark"))
     if desktop == "system":
         return "dark"
     return desktop
@@ -113,7 +116,10 @@ def _apply_hub_settings(raw: dict, settings: dict) -> dict:
         return settings
 
     if raw.get("theme_desktop") is not None:
-        settings["theme_desktop"] = normalize_theme_desktop(raw.get("theme_desktop"))
+        settings["theme_desktop"] = normalize_theme_choice(raw.get("theme_desktop"))
+
+    if raw.get("theme_mobile") is not None:
+        settings["theme_mobile"] = normalize_theme_choice(raw.get("theme_mobile"))
 
     if "message_font" in raw:
         message_font = canonicalize_message_font(raw.get("message_font"))
@@ -141,6 +147,7 @@ def _apply_hub_settings(raw: dict, settings: dict) -> dict:
 
 HUB_SETTINGS_DEFAULTS = {
     "theme_desktop": "dark",
+    "theme_mobile": "system",
     "message_font": DEFAULT_MESSAGE_FONT,
     "code_font": DEFAULT_CODE_FONT,
     "text_size": 13,

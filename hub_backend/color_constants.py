@@ -285,8 +285,10 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
     icon_hover = str(palette["icon_hover"])
     chip_color = str(palette["chip_color"])
 
+    theme_mobile_setting = str((settings or {}).get("theme_mobile", "system") or "system").strip().lower()
     replacements: tuple[tuple[str, str], ...] = (
         ("__THEME__", str(palette["theme"])),
+        ("__THEME_MOBILE_SETTING__", theme_mobile_setting),
         ("__COLOR_SCHEME__", str(palette["color_scheme"])),
         ("__DARK_BG__", dark_bg),
         ("__DARK_BG_CHANNELS__", dark_bg_channels),

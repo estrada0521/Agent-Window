@@ -6,13 +6,15 @@
         );
         if (!res.ok) return;
         const data = await res.json();
-        if (document.documentElement.dataset.mobile !== "1") {
-          const _themeDesktop = String(data?.theme_desktop ?? "").trim().toLowerCase();
-          const _chatTheme = _themeDesktop === "system"
-            ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-            : (_themeDesktop === "light" ? "light" : "dark");
-          document.documentElement.dataset.theme = _chatTheme;
-        }
+        const _isMobile = document.documentElement.dataset.mobile === "1";
+        const _themeSetting = String(
+          (_isMobile ? data?.theme_mobile : data?.theme_desktop) ?? "",
+        ).trim().toLowerCase();
+        const _chatTheme = _themeSetting === "system" || (_isMobile && !_themeSetting)
+          ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+          : (_themeSetting === "light" ? "light" : "dark");
+        document.documentElement.dataset.theme = _chatTheme;
+        if (_isMobile) document.documentElement.dataset.themeMobileSetting = _themeSetting || "system";
         if (typeof data?.chat_font_settings_css === "string") {
           const styleNode = document.getElementById("chatFontSettingsStyle");
           if (styleNode && styleNode.textContent !== data.chat_font_settings_css) {
