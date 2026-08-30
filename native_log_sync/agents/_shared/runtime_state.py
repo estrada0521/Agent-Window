@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import dataclasses
 import threading
 import time
 
@@ -59,31 +58,3 @@ def first_seen_for_agent(runtime: object, agent: str, *, time_module=time) -> fl
     return ts
 
 
-def rename_agent_identity(runtime: object, old: str, new: str) -> None:
-    """Move native-log-sync state keyed by `old` to `new`.
-
-    Fires when singleton -> multi-instance renumbering changes which
-    canonical name an already-running pane answers to. The pane, process,
-    and log file are unchanged - only the key filing them needs to move.
-
-    Transient runtime-display bookkeeping (queued tool-call text, its
-    self-expiring timer) is deliberately left alone: it clears itself out
-    within MIN_RUNTIME_DISPLAY_SECONDS on its own, and its timers already
-    have `old` bound into their callback args, so renaming the dict key
-    without also chasing down in-flight Timer objects would just trade one
-    stale-name edge case for another.
-    """
-    with runtime._native_log_bindings_lock:
-        binding = runtime._native_log_bindings_by_agent.pop(old, None)
-        if binding is not None:
-            runtime._native_log_bindings_by_agent[new] = dataclasses.replace(binding, agent=new)
-        runtime._native_log_watch_reconfigure.set()
-
-    for store_name in ("_agent_first_seen_ts", "_native_log_projection_status", "_native_log_blocked_paths"):
-        store = getattr(runtime, store_name)
-        if old in store:
-            store[new] = store.pop(old)
-
-    watcher = getattr(runtime, "_native_log_vnode_watcher", None)
-    if watcher is not None:
-        watcher.wake()

@@ -33,7 +33,6 @@ from backend_core.agents.instances import (
     next_instance_name,
     parse_agents_csv,
     remove_instance,
-    renumber_exact_instance,
     resolve_canonical_instance,
 )
 from backend_core.agents.registry import AGENTS
@@ -147,9 +146,9 @@ def _show_environment(prefix: list[str], session_name: str) -> str:
     return _run(prefix, ["show-environment", "-t", session_name]).stdout or ""
 
 
-def _write_meta(prefix: list[str], tmux_name: str, aw_name: str, *, rename: tuple[str, str] | None = None) -> None:
+def _write_meta(prefix: list[str], tmux_name: str, aw_name: str) -> None:
     agents = _env_value(prefix, tmux_name, "AGENT_WINDOW_AGENTS")
-    write_session_meta_file(aw_name, agents or "-", _show_environment(prefix, tmux_name), rename=rename)
+    write_session_meta_file(aw_name, agents or "-", _show_environment(prefix, tmux_name))
 
 
 def _append_log(session_name: str, message: str, *, kind: str, extra: dict | None = None) -> None:
@@ -558,7 +557,7 @@ def add_agent(
     agent: str,
     tmux_socket: str = "",
     initiator: str = "",
-) -> tuple[str, tuple[str, str] | None]:
+) -> str:
     name = (session_name or "").strip()
     base = agent_base_name(agent)
     if not name:
@@ -580,14 +579,6 @@ def add_agent(
     lock_dir = _with_topology_lock(socket_name, name)
     try:
         current = _session_agents(prefix, tmux_name)
-        current, rename = renumber_exact_instance(current, base)
-        if rename:
-            old_name, new_name = rename
-            old_pane = _env_value(prefix, tmux_name, _pane_env_key(old_name))
-            if old_pane:
-                _unset_env(prefix, tmux_name, _pane_env_key(old_name))
-                _set_env(prefix, tmux_name, _pane_env_key(new_name), old_pane)
-            _set_env(prefix, tmux_name, "AGENT_WINDOW_AGENTS", agents_to_csv(current))
         instance = next_instance_name(current, base)
         if _env_value(prefix, tmux_name, _pane_env_key(instance)):
             raise SessionControlError(f"Agent instance already exists: {instance}")
@@ -603,7 +594,7 @@ def add_agent(
         updated = append_instance(current, instance)
         _set_env(prefix, tmux_name, _pane_env_key(instance), pane_id)
         _set_env(prefix, tmux_name, "AGENT_WINDOW_AGENTS", agents_to_csv(updated))
-        _write_meta(prefix, tmux_name, name, rename=rename)
+        _write_meta(prefix, tmux_name, name)
         _start_agent(
             prefix=prefix,
             session_name=tmux_name,
@@ -618,7 +609,7 @@ def add_agent(
             kind="session-topology",
             extra={"topology_action": "add-agent", "agent_instance": instance, "initiator": actor},
         )
-        return instance, rename
+        return instance
     finally:
         release_topology_lock(lock_dir)
 

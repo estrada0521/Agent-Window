@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import shlex
 import subprocess
 from pathlib import Path
@@ -28,19 +27,15 @@ def _read_json_body(handler):
         return None, "invalid json"
 
 
-def _resolve_within_root(path_value: str, *, workspace_root: str, allowed_root: Path) -> Path:
+def _resolve_within_root(path_value: str, *, workspace_root: str) -> Path:
     raw = str(path_value or "").strip()
     if not raw:
         raise ValueError("path required")
     if raw.startswith("~"):
-        candidate = Path(raw).expanduser().resolve()
-    elif os.path.isabs(raw):
-        candidate = Path(raw).resolve()
-    else:
-        candidate = (Path(workspace_root).resolve() / raw.lstrip("/")).resolve()
-    root = allowed_root.resolve()
-    candidate.relative_to(root)
-    return candidate
+        return Path(raw).expanduser().resolve()
+    if os.path.isabs(raw):
+        return Path(raw).resolve()
+    return (Path(workspace_root).resolve() / raw.lstrip("/")).resolve()
 
 
 def _post_new_chat(handler, _parsed, ctx) -> None:
@@ -67,7 +62,7 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         handler._send_json(400, {"ok": False, "error": "agent required"})
         return
     try:
-        instance, rename = add_agent(
+        instance = add_agent(
             session_name=ctx["session_name"],
             agent=agent,
             tmux_socket=str(getattr(ctx["runtime"], "tmux_socket", "") or ""),
@@ -86,11 +81,6 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     # is independent of the others, so each gets its own try/except: one
     # failing must not stop the rest from running.
     warnings: list[str] = []
-    if rename:
-        try:
-            ctx["runtime"].rename_agent_identity(*rename)
-        except Exception as exc:
-            warnings.append(str(exc))
     try:
         targets = ctx["runtime"].active_agents()
     except Exception as exc:
@@ -179,10 +169,6 @@ def _post_upload(handler, _parsed, ctx) -> None:
         filename = url_unquote(raw_name)
     except Exception:
         filename = raw_name
-    filename = re.sub(r"[\x00-\x1f\x7f\u200b-\u200f\u2028\u2029]", "", str(filename)).strip()
-    filename = Path(filename).name or "upload.bin"
-    if filename in (".", ".."):
-        filename = "upload.bin"
     try:
         length = int(handler.headers.get("Content-Length", "0"))
     except ValueError:
@@ -229,9 +215,8 @@ def _post_delete_upload(handler, _parsed, ctx) -> None:
     if not path_rel:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
-    upload_dir = workspace_upload_dir(ctx["workspace"])
     try:
-        target = _resolve_within_root(path_rel, workspace_root=ctx["workspace"], allowed_root=upload_dir)
+        target = _resolve_within_root(path_rel, workspace_root=ctx["workspace"])
     except ValueError as exc:
         handler._send_json(400, {"ok": False, "error": str(exc)})
         return

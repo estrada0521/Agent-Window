@@ -16,32 +16,18 @@ def next_instance_name(current_agents: list[str], base_agent: str) -> str:
     base = (base_agent or "").strip()
     if not base:
         return ""
-    max_n = 0
+    if base not in (current_agents or []):
+        return base
     prefix = f"{base}-"
+    max_n = 1
     for instance in current_agents or []:
-        if instance == base:
-            max_n = max(max_n, 1)
-            continue
         if not instance.startswith(prefix):
             continue
         suffix = instance[len(prefix) :]
         if not suffix.isdigit():
             continue
         max_n = max(max_n, int(suffix))
-    return base if max_n == 0 else f"{base}-{max_n + 1}"
-
-
-def renumber_exact_instance(current_agents: list[str], base_agent: str) -> tuple[list[str], tuple[str, str] | None]:
-    base = (base_agent or "").strip()
-    if not base:
-        return list(current_agents or []), None
-    replacement = f"{base}-1"
-    agents = list(current_agents or [])
-    if base not in agents:
-        return agents, None
-    if replacement in agents:
-        return agents, None
-    return [replacement if agent == base else agent for agent in agents], (base, replacement)
+    return f"{base}-{max_n + 1}"
 
 
 def resolve_canonical_instance(current_agents: list[str], requested_name: str) -> str | None:

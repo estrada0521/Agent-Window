@@ -89,19 +89,12 @@ def _parse_agents_csv(agents_csv: str) -> list[str]:
 def _reconcile_agent_names(
     meta: dict[str, object],
     current_agents: list[str],
-    *,
-    rename: tuple[str, str] | None = None,
 ) -> None:
     raw_names = meta.get("agent_names")
     if raw_names is None:
         return
     if not isinstance(raw_names, dict):
         raise ValueError("agent_names must be an object")
-    if rename:
-        old_key = str(rename[0] or "").strip().lower()
-        new_key = str(rename[1] or "").strip().lower()
-        if old_key and new_key and old_key in raw_names and new_key not in raw_names:
-            raw_names = {**raw_names, new_key: raw_names[old_key]}
     current = {str(agent or "").strip().lower() for agent in current_agents if str(agent or "").strip()}
     reconciled = {
         str(canonical or "").strip().lower(): str(display or "").strip()
@@ -139,8 +132,6 @@ def write_session_meta_file(
     session_name: str,
     agents_csv: str,
     tmux_env_output: str,
-    *,
-    rename: tuple[str, str] | None = None,
 ) -> None:
     env_map = _parse_tmux_environment_output(tmux_env_output)
     workspace = str(env_map.get("AGENT_WINDOW_WORKSPACE") or "").strip()
@@ -159,7 +150,7 @@ def write_session_meta_file(
     created_at = str(meta.get("created_at") or "").strip() or updated_at
 
     parsed_agents = _parse_agents_csv(agents_csv)
-    _reconcile_agent_names(meta, parsed_agents, rename=rename)
+    _reconcile_agent_names(meta, parsed_agents)
     meta.pop("session", None)
     meta["workspace"] = workspace
     meta["agents"] = parsed_agents
