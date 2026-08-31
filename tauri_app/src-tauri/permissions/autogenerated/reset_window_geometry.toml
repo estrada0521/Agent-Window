@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-reset-window-geometry"
+description = "Enables the reset_window_geometry command without any pre-configured scope."
+commands.allow = ["reset_window_geometry"]
+
+[[permission]]
+identifier = "deny-reset-window-geometry"
+description = "Denies the reset_window_geometry command without any pre-configured scope."
+commands.deny = ["reset_window_geometry"]

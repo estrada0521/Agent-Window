@@ -622,6 +622,11 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openFinder" }, "*");
             return;
           }
+          if (event.code === "Digit0" || event.key === "0") {
+            event.preventDefault();
+            window.parent?.postMessage({ type: "reset-window-shortcut" }, "*");
+            return;
+          }
         }
         if (event.metaKey && event.code === "Comma") {
           event.preventDefault();

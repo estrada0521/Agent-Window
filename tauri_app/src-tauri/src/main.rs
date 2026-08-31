@@ -18,6 +18,7 @@ use tauri::Manager;
 use url::Url;
 
 const DARK_BG: &str = "rgb(4,4,4)";
+const DEFAULT_WINDOW_SIZE: f64 = 896.0;
 
 use window_vibrancy::{
     apply_liquid_glass, apply_vibrancy, clear_liquid_glass, clear_vibrancy, NSGlassEffectViewStyle,
@@ -297,6 +298,14 @@ fn show_appearance_menu(
     .build(&app)
     .map_err(|err| err.to_string())?;
 
+    let reset_window = MenuItemBuilder::with_id(
+        format!("{}action:resetWindow", NATIVE_MENU_PREFIX),
+        "Reset Window",
+    )
+    .accelerator("Cmd+Alt+0")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+
     let open_settings_file = MenuItemBuilder::with_id(
         format!("{}action:openSettingsFile", NATIVE_MENU_PREFIX),
         "Open Settings File",
@@ -312,12 +321,41 @@ fn show_appearance_menu(
         .item(&zoom_in)
         .item(&zoom_out)
         .separator()
+        .item(&reset_window)
+        .separator()
         .item(&open_settings_file)
         .build()
         .map_err(|err| err.to_string())?;
 
     window
         .popup_menu_at(&menu, tauri::LogicalPosition::new(payload.x, payload.y))
+        .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+fn reset_window_geometry(window: tauri::WebviewWindow) -> Result<(), String> {
+    // .center() reads the window's own current size to compute a centered
+    // position; called right after set_size(), that read can still see the
+    // pre-resize size, landing off-center. Compute the target position from
+    // the monitor instead, independent of the window's (possibly not yet
+    // applied) size.
+    let scale_factor = window.scale_factor().map_err(|err| err.to_string())?;
+    let monitor = window
+        .current_monitor()
+        .map_err(|err| err.to_string())?
+        .ok_or_else(|| "no monitor available".to_string())?;
+    let monitor_pos = monitor.position().to_logical::<f64>(scale_factor);
+    let monitor_size = monitor.size().to_logical::<f64>(scale_factor);
+    let x = monitor_pos.x + ((monitor_size.width - DEFAULT_WINDOW_SIZE) / 2.0).max(0.0);
+    let y = monitor_pos.y + ((monitor_size.height - DEFAULT_WINDOW_SIZE) / 2.0).max(0.0);
+    window
+        .set_size(tauri::LogicalSize::new(
+            DEFAULT_WINDOW_SIZE,
+            DEFAULT_WINDOW_SIZE,
+        ))
+        .map_err(|err| err.to_string())?;
+    window
+        .set_position(tauri::LogicalPosition::new(x, y))
         .map_err(|err| err.to_string())
 }
 
@@ -560,7 +598,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             open_external_url,
             show_chat_header_menu,
-            show_appearance_menu
+            show_appearance_menu,
+            reset_window_geometry
         ])
         .on_menu_event(|app, event| {
             emit_native_menu_action(app, event.id().as_ref());
@@ -572,7 +611,7 @@ fn main() {
                 tauri::WebviewUrl::App("index.html".into()),
             )
             .title("Agent Window")
-            .inner_size(896.0, 896.0)
+            .inner_size(DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE)
             .min_inner_size(400.0, 500.0)
             .decorations(true)
             .hidden_title(true)

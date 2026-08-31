@@ -113,6 +113,19 @@
         _deskChatFrame?.contentWindow?.postMessage({ type: "native-menu-action", payload }, "*");
       } catch (_) {}
     }
+    async function resetDeskWindowState() {
+      showDeskSidebarList({ open: true });
+      const invoke = getTauriInvoke();
+      if (typeof invoke !== "function") {
+        showDeskHubMessage("reset window: no tauri invoke available", { error: true });
+        return;
+      }
+      try {
+        await invoke("reset_window_geometry");
+      } catch (err) {
+        showDeskHubMessage(`reset window failed: ${err}`, { error: true });
+      }
+    }
     window.addEventListener("keydown", (event) => {
       if (event.metaKey && event.altKey) {
         if (event.code === "KeyT") {
@@ -125,6 +138,11 @@
           dispatchDeskNativeMenuAction({ action: "openFinder" });
           return;
         }
+      }
+      if (event.metaKey && event.altKey && (event.code === "Digit0" || event.key === "0")) {
+        event.preventDefault();
+        void resetDeskWindowState();
+        return;
       }
       if (event.metaKey && event.code === "Comma") {
         event.preventDefault();
@@ -181,6 +199,10 @@
         } else if (mode === "actual") {
           applyDeskTextSizeAndBroadcast(DESK_TEXT_SIZE_DEFAULT);
         }
+        return;
+      }
+      if (detail.action === "resetWindow") {
+        void resetDeskWindowState();
         return;
       }
       if (detail.action === "theme") {
@@ -1325,6 +1347,10 @@
       }
       if (event.data && event.data.type === "desktop-menu-shortcut") {
         dispatchDeskNativeMenuAction({ action: String(event.data.action || "") });
+        return;
+      }
+      if (event.data && event.data.type === "reset-window-shortcut") {
+        void resetDeskWindowState();
         return;
       }
       if (event.data && event.data.type === "open-hub-path") {
