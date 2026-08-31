@@ -238,6 +238,9 @@
         resetEmbeddedFilePreviewFrame(repoPreviewFrameEl());
         _repoBrowserPath = "";
         repoPanelRenderSig = "";
+        repoBrowserMountEl()?.replaceChildren();
+        setRepoSheetTitle(repoBrowserTitleForPath(""));
+        syncRepoSheetBackBtn();
       },
     });
     const closeRepoSheet = (options) => repoSheet.close(options);
