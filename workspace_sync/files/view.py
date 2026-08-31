@@ -35,7 +35,7 @@ from hub_backend.presentation.chat.script_assets import (
     KATEX_CDN_JS_SRC,
     MARKED_CDN_SRC,
 )
-from backend_core.access.settings import DEFAULT_MESSAGE_FONT, load_hub_settings
+from backend_core.access.settings import DEFAULT_CODE_FONT, DEFAULT_MESSAGE_FONT, load_hub_settings
 from .view_scripts import (
     build_gutter_scroll_sync_js,
     build_progressive_loader_js,
@@ -69,6 +69,7 @@ def render_file_view(
     base_path: str = "",
     preview_base_theme: str = "",
     agent_font_family: str | None = None,
+    agent_code_font: str | None = None,
     agent_text_size: int | None = None,
     force_progressive_text: bool = False,
 ) -> str:
@@ -82,9 +83,7 @@ def render_file_view(
     raw_url = f"{prefix}/file-raw?path={url_quote(rel)}"
     size = os.path.getsize(full)
     resolved_agent_font_family = str(agent_font_family).strip() if agent_font_family else DEFAULT_MESSAGE_FONT
-    code_font_family = (
-        '"SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", monospace'
-    )
+    code_font_family = str(agent_code_font).strip() if agent_code_font else DEFAULT_CODE_FONT
     try:
         resolved_text_size = int(agent_text_size or 13)
     except (TypeError, ValueError):

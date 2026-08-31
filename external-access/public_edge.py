@@ -175,11 +175,13 @@ class Handler(BaseHTTPRequestHandler):
         try:
             settings = settings_for_chat_render(load_hub_settings(), variant="mobile")
             message_font = str(settings.get("message_font") or DEFAULT_MESSAGE_FONT).strip()
+            code_font = str(settings.get("code_font") or "").strip()
             page = runtime.file_view(
                 rel,
                 embed=embed,
                 base_path=f"/session/{url_quote(session_name)}",
                 agent_font_family=font_family_stack(message_font),
+                agent_code_font=code_font,
             )
         except PermissionError:
             self.send_error(403)

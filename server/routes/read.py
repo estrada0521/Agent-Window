@@ -151,6 +151,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
     try:
         settings = settings_for_chat_render(ctx["load_chat_settings_fn"](), variant="mobile")
         message_font = str(settings.get("message_font") or "").strip()
+        code_font = str(settings.get("code_font") or "").strip()
         preview_text_size = settings.get("text_size")
         requested_text_size = str(qs.get("agent_text_size", [""])[0] or "").strip()
         if requested_text_size:
@@ -164,6 +165,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
             base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
             preview_base_theme=str(qs.get("base_theme", [""])[0] or "").strip(),
             agent_font_family=font_family_stack(message_font),
+            agent_code_font=code_font,
             agent_text_size=preview_text_size,
             force_progressive_text=force_progressive_text,
         )
