@@ -236,6 +236,8 @@
         _repoPreviewExt = "";
         repoPanel?.classList.remove("repo-mode-preview");
         resetEmbeddedFilePreviewFrame(repoPreviewFrameEl());
+        _repoBrowserPath = "";
+        repoPanelRenderSig = "";
       },
     });
     const closeRepoSheet = (options) => repoSheet.close(options);
