@@ -10,7 +10,9 @@
       renderMathInScope(scope);
       syncWideBlockRows(scope);
       syncMessageCollapse(scope);
+      registerLazyImages(scope);
     };
+__CHAT_INCLUDE:../transcript/image-lazy-unload.js__
 __CHAT_INCLUDE:../messages-data.js__
     const buildMsgHTML = (entry, options = {}) => {
         const safeEntry = (entry && typeof entry === "object") ? entry : {};

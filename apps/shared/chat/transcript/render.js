@@ -22,6 +22,7 @@
         const root = document.getElementById("messages");
         if (!displayEntries.length) {
           _renderedIds.clear();
+          if (_lazyImageObserver) _lazyImageObserver.disconnect();
           root.innerHTML = emptyConversationHTML();
           renderThinkingIndicator();
           updateScrollBtn();
@@ -85,7 +86,10 @@
           if (hasRemovals) {
             root.querySelectorAll("[data-context-hash]").forEach((node) => {
               const contextHash = String(node.dataset.contextHash || "");
-              if (contextHash && !displayIdSet.has(contextHash)) node.remove();
+              if (contextHash && !displayIdSet.has(contextHash)) {
+                unregisterLazyImages(node);
+                node.remove();
+              }
             });
           }
           const frag = document.createDocumentFragment();
@@ -141,6 +145,7 @@
           lastRenderPrepended = true;
           queueMicrotask(() => { _programmaticScroll = false; });
         } else {
+          if (_lazyImageObserver) _lazyImageObserver.disconnect();
           root.innerHTML = displayEntries.map((entry) => {
             const entryContextHash = String(entry?.context_hash || "");
             return buildMsgHTML(entry, {

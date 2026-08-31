@@ -18,10 +18,13 @@
       max-width: var(--message-max-width, 600px);
       min-width: 0;
       transform-origin: left center;
-      will-change: transform, opacity, filter;
       margin-left: auto;
       margin-right: auto;
       position: relative;
+    }
+
+    .message-row.animate-in {
+      will-change: transform, opacity, filter;
     }
 
     .message-row:not(.user) {

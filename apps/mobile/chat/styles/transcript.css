@@ -18,8 +18,11 @@
       max-width: 100%;
       min-width: 0;
       transform-origin: left center;
-      will-change: transform, opacity, filter;
       position: relative;
+    }
+
+    .message-row.animate-in {
+      will-change: transform, opacity, filter;
     }
 
     .message-row:not(.user) {
