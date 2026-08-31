@@ -87,6 +87,7 @@ class ChatRuntime:
         self.tmux_session_name = _resolve_tmux_session_name_impl(self) or ""
         self.session_is_active = bool(self.tmux_session_name)
         self._agent_running = set(initial_running_agents or [])
+        self._pane_id_cache: dict[str, str] = {}
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(
             session_binding=self._session_binding,
@@ -96,7 +97,7 @@ class ChatRuntime:
             notify_state_fn=self.notify_session_state_changed,
             active_agents_fn=self.active_agents,
             running_agents_fn=lambda: self._agent_running,
-            pane_id_fn=lambda agent: _pane_id_for_agent_impl(self, agent, subprocess_module=subprocess),
+            pane_id_fn=self.pane_id_for_agent,
             session_is_active_fn=lambda: self.session_is_active,
         )
         self._payload_cache_lock = threading.Lock()
@@ -277,11 +278,25 @@ class ChatRuntime:
         return resolve_target_agent_names(target, self.active_agents())
 
     def pane_id_for_agent(self, agent_name: str) -> str:
-        return _pane_id_for_agent_impl(
+        cached = self._pane_id_cache.get(agent_name)
+        if cached:
+            return cached
+        pane_id = _pane_id_for_agent_impl(
             self,
             agent_name,
             subprocess_module=subprocess,
         )
+        if pane_id:
+            self._pane_id_cache[agent_name] = pane_id
+        return pane_id
+
+    def invalidate_pane_id_cache(self) -> None:
+        """Drop cached pane IDs after a topology change (add/remove agent).
+
+        A pane's tmux env var is only ever written at those two points, so
+        the cache only needs invalidating there -- not on every send.
+        """
+        self._pane_id_cache.clear()
 
     def pane_field(self, pane_id: str, field: str) -> str:
         return _pane_field_impl(self, pane_id, field, subprocess_module=subprocess)

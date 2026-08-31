@@ -87,6 +87,7 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         targets = []
         warnings.append(str(exc))
     ctx["runtime"].invalidate_payload_cache()
+    ctx["runtime"].invalidate_pane_id_cache()
     try:
         ctx["runtime"].on_agent_pane_added(instance)
     except Exception as exc:
@@ -143,6 +144,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         targets = []
         warnings.append(str(exc))
     ctx["runtime"].invalidate_payload_cache()
+    ctx["runtime"].invalidate_pane_id_cache()
     try:
         ctx["runtime"].refresh_native_log_bindings()
     except Exception as exc:
