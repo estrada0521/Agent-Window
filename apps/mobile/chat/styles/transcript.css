@@ -247,7 +247,7 @@
     }
 
     .message-row.meta-hidden .message {
-      padding-top: var(--message-vertical-rhythm);
+      padding-top: 8px;
     }
 
     .message-row.meta-hidden .message-body-row {
