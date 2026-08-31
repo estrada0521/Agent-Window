@@ -26,11 +26,12 @@ TEXT_PRIMARY_MOBILE_DARK_CHANNELS = "232, 232, 230"
 
 # Bold/strong emphasis. Desktop has no entry: markdown-body.css falls back
 # to text-primary via `var(--fg-bold, var(--fg))` when --fg-bold is
-# undefined, so desktop's base CSS simply never defines it. Mobile pushes to
-# the theme's pure extreme (opposite of text-primary, which is kept a shade
-# back) so bold reads heavier against the dimmer body text.
-TEXT_STRONG_MOBILE_LIGHT_CHANNELS = "0, 0, 0"
-TEXT_STRONG_MOBILE_DARK_CHANNELS = "255, 255, 255"
+# undefined, so desktop's base CSS simply never defines it. Mobile light
+# sits halfway between pure black and text-primary (34) -- heavier than
+# body text without the starker pure extreme. Mobile dark matches
+# text-primary exactly -- pure white read as too stark against it.
+TEXT_STRONG_MOBILE_LIGHT_CHANNELS = "17, 17, 17"
+TEXT_STRONG_MOBILE_DARK_CHANNELS = TEXT_PRIMARY_MOBILE_DARK_CHANNELS
 
 TEXT_MUTED_LIGHT_CHANNELS = "120, 120, 120"
 TEXT_MUTED_DARK_CHANNELS = "150, 150, 150"
