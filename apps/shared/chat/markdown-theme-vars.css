@@ -12,7 +12,7 @@
     html[data-theme="dark"] {
       --code-bg: rgba(255, 255, 255, 0.07);
       --inline-code-bg: rgba(255, 255, 255, 0.07);
-      --blockquote-bg: rgba(255, 255, 255, 0.04);
+      --blockquote-bg: rgba(255, 255, 255, 0.045);
       --blockquote-border: rgba(255, 255, 255, 0.45);
       --table-line: rgba(255, 255, 255, 0.12);
       --table-header-line: rgba(255, 255, 255, 0.40);
