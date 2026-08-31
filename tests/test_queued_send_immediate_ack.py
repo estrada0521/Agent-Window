@@ -11,8 +11,6 @@ class _FakeQueueRuntime:
     tried to validate a target before acking, this would raise instead of
     silently passing."""
 
-    session_is_active = True
-
     def resolve_target_agents(self, target: str) -> list[str]:
         return [item.strip() for item in target.split(",") if item.strip()]
 
@@ -33,17 +31,16 @@ class QueuedSendImmediateAckTest(unittest.TestCase):
 
     def test_queued_send_acks_before_any_target_validation(self) -> None:
         # "nonexistent-agent" resolves (permissively) but corresponds to no
-        # real pane. The queued-send path must ack immediately regardless -
-        # deferring that failure to the async queue worker, which surfaces
-        # it later as a "Send failed" system entry, is the intended design
-        # (prioritizes the UI reflecting the send instantly). This must not
-        # be "fixed" into a synchronous pre-check.
+        # real pane. Every agent-directed send acks immediately regardless -
+        # deferring delivery (and any failure) to the async queue worker,
+        # which surfaces it later as a "Send failed" system entry, is the
+        # intended design (prioritizes the UI reflecting the send instantly).
+        # This must not be "fixed" into a synchronous pre-check.
         status, body = server_module._send_or_enqueue_message("nonexistent-agent", "hello")
 
         self.assertEqual(status, 200)
         self.assertTrue(body["ok"])
-        self.assertTrue(body["queued"])
-        self.assertEqual(body["targets"], ["nonexistent-agent"])
+        self.assertEqual(body["entry"]["targets"], ["nonexistent-agent"])
 
         job = server_module.send_queue.get_nowait()
         self.assertEqual(job["targets"], ["nonexistent-agent"])

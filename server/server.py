@@ -73,19 +73,6 @@ send_queue = None
 send_queue_thread = None
 
 
-def _send_is_queueable(target: str, message: str) -> list[str] | None:
-    if runtime is None or not runtime.session_is_active:
-        return None
-    normalized_target = str(target or "").strip()
-    normalized_message = str(message or "").strip()
-    if not normalized_target or not normalized_message:
-        return None
-    resolved_targets = runtime.resolve_target_agents(normalized_target)
-    if not resolved_targets or resolved_targets == ["user"] or "user" in resolved_targets:
-        return None
-    return list(resolved_targets)
-
-
 def _hub_settings_watcher() -> None:
     settings_file = hub_settings_path()
     if not settings_file.exists():
@@ -190,28 +177,31 @@ def _send_or_enqueue_message(
     message: str,
     client: str | None = None,
 ) -> tuple[int, dict]:
-    queue_targets = _send_is_queueable(target, message)
-    if not queue_targets:
-        return runtime.send_message(
-            target,
-            message,
-            client=client,
-        )
-    entry = runtime.append_user_entry(message, targets=queue_targets, client=client)
+    """Append the entry and ack immediately; deliver to tmux in the background.
+
+    Whether the message actually reaches the pane is a separate concern from
+    whether the UI reflects it: delivery runs on send_queue/_queued_send_worker
+    and reports failure later as a system entry, never blocking this return.
+    """
+    normalized_message = str(message or "").strip()
+    if not normalized_message:
+        return 400, {"ok": False, "error": "message is required"}
+    normalized_target = str(target or "").strip()
+    resolved_targets = runtime.resolve_target_agents(normalized_target) if normalized_target else []
+    if not resolved_targets or resolved_targets == ["user"]:
+        entry = runtime.append_user_entry(normalized_message, targets=["user"], client=client)
+        return 200, {"ok": True, "mode": "note", "entry": entry}
+    if "user" in resolved_targets:
+        return 400, {"ok": False, "error": 'target "user" cannot be combined with other targets'}
+    entry = runtime.append_user_entry(normalized_message, targets=resolved_targets, client=client)
     send_queue.put(
         {
-            "target": ",".join(queue_targets),
-            "targets": queue_targets,
-            "message": str(message or "").strip(),
+            "target": ",".join(resolved_targets),
+            "targets": resolved_targets,
+            "message": normalized_message,
         }
     )
-    return 200, {
-        "ok": True,
-        "queued": True,
-        "context_hash": entry["context_hash"],
-        "targets": queue_targets,
-        "entry": entry,
-    }
+    return 200, {"ok": True, "entry": entry}
 
 
 def _clean_env():

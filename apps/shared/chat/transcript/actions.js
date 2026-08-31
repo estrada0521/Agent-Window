@@ -197,11 +197,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
           if (row) { row.innerHTML = ""; row.style.display = "none"; }
         }
         closeComposerOverlay();
-        setStatus(
-          isNote
-            ? "note saved"
-            : (data.queued ? `queued for ${target}` : `sent to ${target}`)
-        );
+        setStatus(isNote ? "note saved" : `sent to ${target}`);
         applyLocalEntry(data.entry);
         if (data.activated) {
           void refreshSessionState();
