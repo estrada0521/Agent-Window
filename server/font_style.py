@@ -16,6 +16,69 @@ def agent_detail_selectors(prefix: str = "") -> str:
     return ",\n".join(parts)
 
 
+def body_typography_css() -> str:
+    """Message-body font weight/rendering rules, shared by chat and the
+    markdown/file preview viewer so the two never render text differently.
+    Depends only on --font-main and --text-size, both already defined
+    independently by each caller's own :root block."""
+    body_weight_tokens = """
+    html:not([data-mobile="1"])[data-theme="light"] {
+      --body-weight: 400;
+    }
+    html:not([data-mobile="1"])[data-theme="dark"] {
+      --body-weight: 300;
+    }
+    html[data-mobile="1"][data-theme="light"] {
+      --body-weight: 430;
+    }
+    html[data-mobile="1"][data-theme="dark"] {
+      --body-weight: 300;
+    }"""
+    # Every message role (user, agent, sysmsg) and the standalone preview
+    # viewer render body text identically, line-height included.
+    typography_override = """
+    .message.user .md-body,
+    .message.user .md-body p,
+    .message.user .md-body li,
+    .message.user .md-body li p,
+    .message:not(.user):not(.system) .md-body,
+    .message:not(.user):not(.system) .md-body p,
+    .message:not(.user):not(.system) .md-body li,
+    .message:not(.user):not(.system) .md-body li p,
+    .sysmsg-text,
+    .md-body,
+    .md-body p,
+    .md-body li,
+    .md-body li p,
+    .md-body blockquote,
+    .md-body blockquote p {
+      font-family: var(--font-main);
+      font-weight: var(--body-weight);
+      font-optical-sizing: auto;
+      font-variation-settings: "opsz" 16;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    .message.user .md-body,
+    .message.user .md-body p,
+    .message.user .md-body li,
+    .message.user .md-body li p,
+    .message:not(.user):not(.system) .md-body,
+    .message:not(.user):not(.system) .md-body p,
+    .message:not(.user):not(.system) .md-body li,
+    .message:not(.user):not(.system) .md-body li p,
+    .md-body,
+    .md-body p,
+    .md-body li,
+    .md-body li p,
+    .md-body blockquote,
+    .md-body blockquote p {
+      line-height: calc(var(--text-size, 16px) + 8px);
+    }"""
+    return body_weight_tokens + typography_override
+
+
 def chat_font_settings_inline_style(settings: dict) -> str:
     message_family = font_family_stack(settings.get("message_font", DEFAULT_MESSAGE_FONT))
     code_family = settings.get("code_font", "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace")
@@ -24,55 +87,6 @@ def chat_font_settings_inline_style(settings: dict) -> str:
     except Exception:
         text_size = 13
     message_max_width = 900
-
-    mobile_body_weight_override = """
-    html[data-mobile="1"] .message.user .md-body,
-    html[data-mobile="1"] .message.user .md-body p,
-    html[data-mobile="1"] .message.user .md-body li,
-    html[data-mobile="1"] .message.user .md-body li p,
-    html[data-mobile="1"] .message:not(.user):not(.system) .md-body,
-    html[data-mobile="1"] .message:not(.user):not(.system) .md-body p,
-    html[data-mobile="1"] .message:not(.user):not(.system) .md-body li,
-    html[data-mobile="1"] .message:not(.user):not(.system) .md-body li p,
-    html[data-mobile="1"] .sysmsg-text {
-      font-weight: 430;
-    }"""
-    typography_override = """
-    .message.user .md-body,
-    .message.user .md-body p,
-    .message.user .md-body li,
-    .message.user .md-body li p {
-      font-family: var(--font-main);
-      font-weight: 400;
-      font-optical-sizing: auto;
-      font-variation-settings: "opsz" 16;
-      font-synthesis: none;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-      line-height: calc(var(--text-size, 16px) + 6px);
-    }
-    .message:not(.user):not(.system) .md-body,
-    .message:not(.user):not(.system) .md-body p,
-    .message:not(.user):not(.system) .md-body li,
-    .message:not(.user):not(.system) .md-body li p {
-      font-family: var(--font-main);
-      font-weight: 400;
-      font-optical-sizing: auto;
-      font-variation-settings: "opsz" 16;
-      font-synthesis: none;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-      line-height: calc(var(--text-size, 16px) + 8px);
-    }
-    .sysmsg-text {
-      font-family: var(--font-main);
-      font-weight: 400;
-      font-optical-sizing: auto;
-      font-variation-settings: "opsz" 16;
-      font-synthesis: none;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-    }"""
     return f"""
     :root {{
       --text-size: {text_size}px;
@@ -113,6 +127,5 @@ def chat_font_settings_inline_style(settings: dict) -> str:
       font-family: var(--font-main);
       color: var(--fg);
     }}
-    {typography_override}
-    {mobile_body_weight_override}
+    {body_typography_css()}
     """

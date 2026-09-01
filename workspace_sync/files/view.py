@@ -36,6 +36,7 @@ from hub_backend.presentation.chat.script_assets import (
     MARKED_CDN_SRC,
 )
 from backend_core.access.settings import DEFAULT_CODE_FONT, DEFAULT_MESSAGE_FONT, load_hub_settings
+from server.font_style import body_typography_css
 from .view_scripts import (
     build_gutter_scroll_sync_js,
     build_progressive_loader_js,
@@ -390,13 +391,7 @@ def render_file_view(
         ]
         markdown_head_libs = "".join(markdown_head_tags)
         markdown_preview_css = _chat_markdown_preview_css()
-        markdown_typography_css = (
-            ".md-body,.md-body p,.md-body li,.md-body li p,.md-body blockquote,.md-body blockquote p{"
-            "font-family:var(--font-main);font-weight:430;"
-            'font-optical-sizing:auto;font-variation-settings:"opsz" 16;font-synthesis:none;'
-            "-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;"
-            "line-height:calc(var(--text-size,16px) + 8px)}"
-        )
+        markdown_typography_css = body_typography_css()
         initial_preview_theme = "light" if str((theme_palette or {}).get("theme") or "").lower() == "light" else "dark"
         dark_preview_fg_channels = TEXT_PRIMARY_MOBILE_DARK_CHANNELS.replace(" ", "")
         dark_preview_fg = f"rgb({dark_preview_fg_channels})"
@@ -427,7 +422,7 @@ def render_file_view(
             f'.md-preview-shell>.md-body{{padding:{markdown_top_padding} 16px 18px}}'
         )
         return (
-            f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-mobile-chat="1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
+            f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-mobile-chat="1" data-mobile="1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
             f'{markdown_head_libs}'
             f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}'
             '</style></head>'
