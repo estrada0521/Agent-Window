@@ -54,7 +54,7 @@
       color-scheme: dark;
       --bg-rgb: 13, 13, 12;
       --bg: rgb(13, 13, 12);
-      --glass-bg-90: rgba(var(--bg-rgb), 0.95);
+      --glass-bg-90: rgba(var(--bg-rgb), 0.93);
       --fg: rgb(__TEXT_SESSION_DESKTOP_DARK_CHANNELS__);
       --muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
       --icon-fg: rgb(__TEXT_SESSION_DESKTOP_DARK_CHANNELS__);
