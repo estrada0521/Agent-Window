@@ -1288,25 +1288,26 @@
         const response = await fetch(`/sessions?ts=${Date.now()}`, { cache: "no-store" });
         if (!response.ok) throw new Error("failed");
         const data = await response.json();
-        if (requestSeq !== _deskSessionsRequestSeq) return;
         const active = data.active_sessions;
         const warnings = data.warning_sessions;
         const archived = data.archived_sessions;
-        updateDeskUnreadSessions(active);
         _hubSessionsCache = { active, warnings, archived };
-        if (_deskSelectedSessionName) updateDeskWindowTitle(_deskSelectedSessionName);
+        if (requestSeq === _deskSessionsRequestSeq) {
+          updateDeskUnreadSessions(active);
+          if (_deskSelectedSessionName) updateDeskWindowTitle(_deskSelectedSessionName);
 
-        const signature = JSON.stringify({
-          active,
-          warnings,
-          archived,
-          selected: _deskSelectedSessionName,
-        });
-        if (force || window._lastHubRenderSig !== signature) {
-          window._lastHubRenderSig = signature;
-          renderDesktopSessions(active, warnings, archived);
+          const signature = JSON.stringify({
+            active,
+            warnings,
+            archived,
+            selected: _deskSelectedSessionName,
+          });
+          if (force || window._lastHubRenderSig !== signature) {
+            window._lastHubRenderSig = signature;
+            renderDesktopSessions(active, warnings, archived);
+          }
+          _deskSessionsRenderedOnce = true;
         }
-        _deskSessionsRenderedOnce = true;
         if (!skipRestore) maybeRestoreDeskSelection();
       } catch (_) {
         if (requestSeq !== _deskSessionsRequestSeq) return;
