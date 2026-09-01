@@ -236,9 +236,6 @@
       transform: none;
     }
     .desk-workbench {
-      --desk-sidebar-width: 304px;
-      --desk-sidebar-min-width: 248px;
-      --desk-sidebar-max-width: 420px;
       --desk-sidebar-gap: 0px;
       --desk-phone-gap: 48px;
       --desk-phone-sidebar-width: min(var(--desk-sidebar-width), calc(100vw - var(--desk-phone-gap)));

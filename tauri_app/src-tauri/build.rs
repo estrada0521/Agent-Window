@@ -5,6 +5,7 @@ fn main() {
             "show_chat_header_menu",
             "show_appearance_menu",
             "reset_window_geometry",
+            "compact_window_geometry",
         ]),
     ))
     .expect("failed to run Tauri build script")

@@ -35,7 +35,7 @@
       --code-scrollbar-thumb-hover: rgba(0, 0, 0, 0.45);
     }
     html[data-desktop-chat][data-theme="dark"] {
-      --code-bg: rgba(180, 180, 180, 0.07);
+      --code-bg: rgba(180, 180, 180, 0.05);
       --inline-code-bg: rgba(180, 180, 180, 0.00);
       --inline-code-fg: rgb(142, 142, 142);
       --blockquote-bg: rgba(180, 180, 180, 0.04);

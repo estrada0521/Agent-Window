@@ -15,6 +15,7 @@
     "allow-show-chat-header-menu",
     "allow-show-appearance-menu",
     "allow-reset-window-geometry",
+    "allow-compact-window-geometry",
     "core:default",
     "core:window:allow-start-dragging"
   ]

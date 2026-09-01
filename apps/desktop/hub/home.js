@@ -48,7 +48,7 @@
     const DESK_SELECTED_KEY = "agent_window_hub_selected_session";
     const DESK_SIDEBAR_WIDTH_KEY = "agent_window_hub_sidebar_width";
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
-    const DESK_DEFAULT_SIDEBAR_WIDTH = 160;
+    const DESK_DEFAULT_SIDEBAR_WIDTH = 262;
     const DESK_MIN_SIDEBAR_WIDTH = 160;
     const DESK_MAX_SIDEBAR_WIDTH = 420;
     const DESK_SWIPE_ACTION_WIDTH = 92;
@@ -115,6 +115,7 @@
     }
     async function resetDeskWindowState() {
       showDeskSidebarList({ open: true });
+      setDeskSidebarWidth(DESK_DEFAULT_SIDEBAR_WIDTH);
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") {
         showDeskHubMessage("reset window: no tauri invoke available", { error: true });
@@ -124,6 +125,20 @@
         await invoke("reset_window_geometry");
       } catch (err) {
         showDeskHubMessage(`reset window failed: ${err}`, { error: true });
+      }
+    }
+
+    async function compactDeskWindowState() {
+      setDeskSidebarOpen(false);
+      const invoke = getTauriInvoke();
+      if (typeof invoke !== "function") {
+        showDeskHubMessage("compact window: no tauri invoke available", { error: true });
+        return;
+      }
+      try {
+        await invoke("compact_window_geometry");
+      } catch (err) {
+        showDeskHubMessage(`compact window failed: ${err}`, { error: true });
       }
     }
     window.addEventListener("keydown", (event) => {
@@ -142,6 +157,11 @@
       if (event.metaKey && event.altKey && (event.code === "Digit0" || event.key === "0")) {
         event.preventDefault();
         void resetDeskWindowState();
+        return;
+      }
+      if (event.metaKey && event.altKey && (event.code === "Digit9" || event.key === "9")) {
+        event.preventDefault();
+        void compactDeskWindowState();
         return;
       }
       if (event.metaKey && event.code === "Comma") {
@@ -203,6 +223,10 @@
       }
       if (detail.action === "resetWindow") {
         void resetDeskWindowState();
+        return;
+      }
+      if (detail.action === "compactWindow") {
+        void compactDeskWindowState();
         return;
       }
       if (detail.action === "theme") {
@@ -1351,6 +1375,10 @@
       }
       if (event.data && event.data.type === "reset-window-shortcut") {
         void resetDeskWindowState();
+        return;
+      }
+      if (event.data && event.data.type === "compact-window-shortcut") {
+        void compactDeskWindowState();
         return;
       }
       if (event.data && event.data.type === "open-hub-path") {
