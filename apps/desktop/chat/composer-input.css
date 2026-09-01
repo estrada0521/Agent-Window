@@ -168,13 +168,16 @@
       height: 52px;
       max-height: 200px;
       resize: none;
-      padding: 14px 52px 14px 14px;
+      padding: 14px;
       font: 400 15px/1.6 var(--font-main);
       box-shadow: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
       overflow-y: hidden;
       box-sizing: border-box;
+    }
+    .composer-field:has(.send-btn.visible) textarea {
+      padding-right: 52px;
     }
     .composer textarea:focus {
       outline: none;
@@ -183,6 +186,9 @@
     }
     .composer textarea::placeholder {
       color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     html:not([data-mobile="1"]) .composer textarea {
       scrollbar-width: none;

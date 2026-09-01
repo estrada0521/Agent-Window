@@ -754,7 +754,7 @@
         document.body.appendChild(hoverPopover);
 
         const wbRect = _deskWorkbench ? _deskWorkbench.getBoundingClientRect() : null;
-        const gap = 6;
+        const gap = 10;
         hoverPopover.style.top = `${Math.round((wbRect ? wbRect.top : _deskAppSidebarToggle.getBoundingClientRect().bottom) + gap)}px`;
         hoverPopover.style.left = `${Math.round((wbRect ? wbRect.left : 0) + gap)}px`;
         animatePopoverIn(hoverPopover);
@@ -1233,6 +1233,26 @@
       }
       _deskSessionList.innerHTML = html;
       _deskSessionList.querySelectorAll(".desk-swipe-row").forEach(initDeskSwipeRow);
+      updateDeskSessionListFade();
+    }
+
+    function updateDeskSessionListFade() {
+      if (!_deskSessionList) return;
+      const { scrollTop, scrollHeight, clientHeight } = _deskSessionList;
+      const overflowing = scrollHeight > clientHeight + 1;
+      if (!overflowing) {
+        _deskSessionList.dataset.scrollFade = "none";
+        return;
+      }
+      const atTop = scrollTop <= 1;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
+      if (atTop && !atBottom) {
+        _deskSessionList.dataset.scrollFade = "bottom";
+      } else if (atBottom && !atTop) {
+        _deskSessionList.dataset.scrollFade = "top";
+      } else {
+        _deskSessionList.dataset.scrollFade = "both";
+      }
     }
 
     function updateDeskUnreadSessions(active) {
@@ -1548,6 +1568,8 @@
       beginHubRestart(_deskReloadBtn);
     });
     if (_deskSessionList) {
+      _deskSessionList.addEventListener("scroll", updateDeskSessionListFade, { passive: true });
+      window.addEventListener("resize", updateDeskSessionListFade, { passive: true });
       _deskSessionList.addEventListener("click", (event) => {
         const hoverAction = event.target.closest("[data-desk-hover-action]");
         if (hoverAction) {

@@ -19,7 +19,8 @@ use url::Url;
 
 const DARK_BG: &str = "rgb(4,4,4)";
 const DEFAULT_WINDOW_SIZE: f64 = 896.0;
-const MIN_WINDOW_WIDTH: f64 = 400.0;
+const MIN_WINDOW_WIDTH: f64 = 160.0;
+const MIN_WINDOW_HEIGHT: f64 = 90.0;
 const COMPACT_WINDOW_WIDTH: f64 = 560.0;
 
 use window_vibrancy::{
@@ -647,7 +648,7 @@ fn main() {
             )
             .title("Agent Window")
             .inner_size(DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE)
-            .min_inner_size(MIN_WINDOW_WIDTH, 500.0)
+            .min_inner_size(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
             .decorations(true)
             .hidden_title(true)
             .title_bar_style(tauri::TitleBarStyle::Overlay)
