@@ -154,10 +154,14 @@ https://<Mac名>.local:8788/
 LANの外からHubへ到達する方法は [`external-access/README.md`](external-access/README.md) を参照してください。
 
 <p align="center">
-  <img src="media/agent-window-mobile-1.png" width="48%" alt="Mobile UI 1">
-  <img src="media/agent-window-mobile-2.png" width="48%" alt="Mobile UI 2">
-  <img src="media/agent-window-mobile-3.png" width="48%" alt="Mobile UI 3">
-  <img src="media/agent-window-mobile-4.png" width="48%" alt="Mobile UI 4">
+  <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">
+  <img src="media/agent-window-mobile-dark-1.png" width="48%" alt="Mobile UI, dark 1">
+  <img src="media/agent-window-mobile-light-2.png" width="48%" alt="Mobile UI, light 2">
+  <img src="media/agent-window-mobile-dark-2.png" width="48%" alt="Mobile UI, dark 2">
+  <img src="media/agent-window-mobile-light-3.png" width="48%" alt="Mobile UI, light 3">
+  <img src="media/agent-window-mobile-dark-3.png" width="48%" alt="Mobile UI, dark 3">
+  <img src="media/agent-window-mobile-light-4.png" width="48%" alt="Mobile UI, light 4">
+  <img src="media/agent-window-mobile-dark-4.png" width="48%" alt="Mobile UI, dark 4">
 </p>
 
 ## 対応CLI

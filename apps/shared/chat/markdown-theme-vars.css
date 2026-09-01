@@ -13,7 +13,7 @@
     html[data-mobile-chat][data-theme="dark"] {
       --code-bg: rgba(255, 255, 255, 0.035);
       --inline-code-bg: rgba(255, 255, 255, 0.00);
-      --inline-code-fg: rgb(142, 142, 142);
+      --inline-code-fg: rgb(160, 160, 160);
       --blockquote-bg: rgba(255, 255, 255, 0.045);
       --blockquote-border: rgba(255, 255, 255, 0.45);
       --table-line: rgba(255, 255, 255, 0.12);
