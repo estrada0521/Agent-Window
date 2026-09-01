@@ -50,7 +50,7 @@
     .md-body h3,
     .md-body h4 {
       margin: 0.8em 0 0.5em;
-      font-weight: 700;
+      font-weight: 600;
       line-height: 1.2;
     }
 
@@ -68,7 +68,6 @@
 
     .md-body h4 {
       font-size: 1em;
-      font-weight: 600;
     }
 
     .md-body ul,

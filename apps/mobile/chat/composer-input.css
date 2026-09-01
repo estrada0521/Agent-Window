@@ -178,6 +178,11 @@
       mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
     }
+    /* Deliberate exception: the composer input stays at the light-mode
+       weight even in dark mode, unlike the rest of the dark-mode UI. */
+    html[data-mobile="1"][data-theme="dark"] .composer textarea {
+      font-weight: 400;
+    }
 
     .composer textarea:focus {
       outline: none;
