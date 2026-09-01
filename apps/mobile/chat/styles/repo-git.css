@@ -793,6 +793,11 @@
     .git-commit-file-name {
       color: var(--fg);
       flex-shrink: 0;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .git-commit-file-dir {
