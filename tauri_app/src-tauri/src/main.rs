@@ -20,7 +20,7 @@ use url::Url;
 const DARK_BG: &str = "rgb(4,4,4)";
 const DEFAULT_WINDOW_SIZE: f64 = 896.0;
 const MIN_WINDOW_WIDTH: f64 = 160.0;
-const MIN_WINDOW_HEIGHT: f64 = 90.0;
+const MIN_WINDOW_HEIGHT: f64 = 103.0;
 const COMPACT_WINDOW_WIDTH: f64 = 560.0;
 
 use window_vibrancy::{
