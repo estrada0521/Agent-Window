@@ -86,7 +86,7 @@ def chat_font_settings_inline_style(settings: dict) -> str:
         text_size = int(settings.get("text_size", 13))
     except Exception:
         text_size = 13
-    message_max_width = 900
+    message_max_width = 640
     return f"""
     :root {{
       --text-size: {text_size}px;

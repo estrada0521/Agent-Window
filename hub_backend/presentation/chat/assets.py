@@ -21,8 +21,6 @@ from ..hub.header_assets import PAGE_HEADER_CSS, render_page_header
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-CHAT_DESKTOP_HTML = load_chat_template("desktop")
-CHAT_MOBILE_HTML = load_chat_template("mobile")
 _CHAT_PWA_STATIC_DIR = _REPO_ROOT / "apps" / "shared" / "pwa"
 
 
@@ -91,7 +89,7 @@ def _normalized_chat_variant(variant: str = "desktop") -> str:
 
 
 def _chat_html(variant: str = "desktop") -> str:
-    return CHAT_MOBILE_HTML if _normalized_chat_variant(variant) == "mobile" else CHAT_DESKTOP_HTML
+    return load_chat_template(_normalized_chat_variant(variant))
 
 
 def render_chat_html(*, icon_data_uris, server_instance, hub_port, chat_settings, chat_font_settings_inline_style, chat_base_path="", eager_optional_vendors=True, variant="desktop", session_name=""):

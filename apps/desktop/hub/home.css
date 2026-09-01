@@ -48,6 +48,7 @@
       --session-revive-fg: rgb(26, 127, 55);
       --chat-pane-bg: rgba(var(--bg-rgb), 0.95);
       --chat-pane-filter: blur(20px);
+      --hub-body-weight: 400;
     }
     html[data-theme="dark"] {
       color-scheme: dark;
@@ -71,6 +72,7 @@
       --session-revive-fg: rgb(74, 222, 128);
       --chat-pane-bg: rgba(var(--bg-rgb), 0.95);
       --chat-pane-filter: var(--glass-filter-20);
+      --hub-body-weight: 300;
     }
     * { box-sizing: border-box; }    html, body {
       margin: 0;
@@ -1064,7 +1066,7 @@
     .desk-row-name {
       font-size: var(--text-size, 13px);
       line-height: 1.2;
-      font-weight: 400;
+      font-weight: var(--hub-body-weight);
       letter-spacing: -0.01em;
       color: var(--fg);
       overflow: hidden;
@@ -1098,7 +1100,7 @@
       opacity: 1;
       font-size: var(--text-size, 13px);
       line-height: 1.2;
-      font-weight: 400;
+      font-weight: var(--hub-body-weight);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1355,7 +1357,7 @@
     }
     .desk-sidebar-hover-list .desk-row-name {
       line-height: 1.3;
-      font-weight: 400;
+      font-weight: var(--hub-body-weight);
     }
     .desk-sidebar-hover-list .desk-row-preview {
       line-height: 1.25;

@@ -340,7 +340,7 @@
       padding: 12px 0 calc(4px + env(safe-area-inset-bottom, 0px));
       text-align: center;
       font-size: 12px;
-      color: var(--muted);
+      color: color-mix(in srgb, var(--fg) 15%, var(--bg));
     }
 
     .mob-section-label {
