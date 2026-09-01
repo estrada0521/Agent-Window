@@ -174,7 +174,7 @@
     .inline-loading-spinner {
       width: 15px;
       height: 15px;
-      border: 2px solid var(--icon-muted);
+      border: 2px solid var(--spinner-ring-color);
       border-top-color: var(--icon-fg);
       border-radius: 50%;
       animation: hub-inline-loading-spin 800ms linear infinite;

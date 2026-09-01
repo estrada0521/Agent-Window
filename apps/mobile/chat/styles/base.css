@@ -41,6 +41,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --muted: __GRAY_MUTED__;
       --icon-fg: __ICON_FG__;
       --icon-muted: __ICON_MUTED__;
+      --spinner-ring-color: color-mix(in srgb, var(--icon-muted) 50%, transparent);
       --icon-hover: __ICON_HOVER__;
       --chip-color: __CHIP_COLOR__;
       --panel-row-bg: __PANEL_ROW_BG__;

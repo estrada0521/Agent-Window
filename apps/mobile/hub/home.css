@@ -10,6 +10,7 @@
       --muted: __GRAY_MUTED__;
       --icon-fg: __ICON_FG__;
       --icon-muted: __ICON_MUTED__;
+      --spinner-ring-color: color-mix(in srgb, var(--icon-muted) 50%, transparent);
       --icon-hover: __ICON_HOVER__;
       --session-hover-bg: __SESSION_HOVER_BG__;
       --session-selected-bg: __SESSION_SELECTED_BG__;
@@ -494,7 +495,7 @@
       width: 17px;
       height: 17px;
       border-radius: 999px;
-      border: 2px solid var(--icon-muted);
+      border: 2px solid var(--spinner-ring-color);
       border-top-color: var(--icon-fg);
       animation: hub-inline-loading-spin 800ms linear infinite;
       display: inline-block;
