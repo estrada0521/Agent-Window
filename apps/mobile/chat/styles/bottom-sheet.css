@@ -217,6 +217,7 @@
       top: 50%;
       transform: translate(-50%, -50%);
       height: var(--mobile-sheet-floating-height);
+      line-height: var(--mobile-sheet-floating-height);
       max-width: calc(100% - 112px);
       overflow: hidden;
       text-overflow: ellipsis;
@@ -229,9 +230,7 @@
       background: transparent;
       border-radius: 8px;
       padding: 0 10px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      display: block;
     }
 
     .mobile-bottom-sheet-content {
