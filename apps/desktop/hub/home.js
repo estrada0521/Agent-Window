@@ -45,6 +45,9 @@
     const _deskReloadBtn = document.getElementById("deskReloadBtn");
     const _deskNewSessionToggle = document.getElementById("deskNewSessionToggle");
     const _deskHubMessage = document.getElementById("deskHubMessage");
+    const _deskFloatingControls = document.querySelector(".desk-floating-controls");
+    const _deskTopRightControls = document.querySelector(".desk-top-right-controls");
+    const _deskSessionTitleTextEl = document.getElementById("deskSessionTitleText");
     const DESK_SELECTED_KEY = "agent_window_hub_selected_session";
     const DESK_SIDEBAR_WIDTH_KEY = "agent_window_hub_sidebar_width";
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
@@ -252,14 +255,15 @@
     let _deskHubMessageTimer = 0;
 
     function updateDeskWindowTitle(name) {
-      const textEl = document.getElementById("deskSessionTitleText");
+      const textEl = _deskSessionTitleTextEl;
       if (!textEl) return;
       if (!name) {
         textEl.textContent = "";
-        return;
+      } else {
+        const port = findSessionRecord(name)?.session?.chat_port;
+        textEl.textContent = port ? `${name} (${port})` : name;
       }
-      const port = findSessionRecord(name)?.session?.chat_port;
-      textEl.textContent = port ? `${name} (${port})` : name;
+      updateDeskChromeOverflow();
     }
     function updateDeskPanelButtonState(mode = "", width = _deskPanelWidth) {
       _deskPanelActiveMode = mode ? "open" : "";
@@ -1253,6 +1257,29 @@
       return "both";
     }
 
+    const DESK_CHROME_GROUP_GAP = 16;
+    // macOS centers the native traffic-light cluster (close/miniaturize/zoom)
+    // on the window's full width -- see center_traffic_lights() in main.rs.
+    // It isn't in the DOM, so its safe zone has to be computed the same way
+    // here rather than measured.
+    const DESK_TRAFFIC_LIGHTS_WIDTH = 56;
+    function updateDeskChromeOverflow() {
+      if (!_deskFloatingControls || !_deskTopRightControls) return;
+      _deskFloatingControls.classList.remove("is-title-hidden", "is-buttons-hidden");
+      _deskTopRightControls.classList.remove("is-buttons-hidden");
+      // Left and right groups are mirror-symmetric (same buttons, same
+      // --desk-chrome-edge inset), and the traffic lights are centered, so
+      // checking the left group against the traffic-light zone alone is
+      // enough -- the right side collides at the same threshold.
+      const trafficLeft = window.innerWidth / 2 - (DESK_TRAFFIC_LIGHTS_WIDTH / 2);
+      const collides = () => _deskFloatingControls.getBoundingClientRect().right + DESK_CHROME_GROUP_GAP > trafficLeft;
+      if (!collides()) return;
+      _deskFloatingControls.classList.add("is-title-hidden");
+      if (!collides()) return;
+      _deskFloatingControls.classList.add("is-buttons-hidden");
+      _deskTopRightControls.classList.add("is-buttons-hidden");
+    }
+
     function updateDeskSessionListFade() {
       if (!_deskSessionList) return;
       _deskSessionList.dataset.scrollFade = computeScrollFadeState(_deskSessionList);
@@ -1571,6 +1598,8 @@
       setDeskReloadShell(true);
       beginHubRestart(_deskReloadBtn);
     });
+    window.addEventListener("resize", updateDeskChromeOverflow, { passive: true });
+    updateDeskChromeOverflow();
     if (_deskSessionList) {
       _deskSessionList.addEventListener("scroll", updateDeskSessionListFade, { passive: true });
       window.addEventListener("resize", updateDeskSessionListFade, { passive: true });

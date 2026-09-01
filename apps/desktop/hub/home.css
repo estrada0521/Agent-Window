@@ -747,13 +747,12 @@
     }
     .desk-hub-footer-credit {
       position: absolute;
-      left: 50%;
+      left: 26px;
       bottom: 8px;
-      transform: translateX(-50%);
       z-index: 1;
       margin: 0;
       padding: 0;
-      text-align: center;
+      text-align: left;
       font-size: 10px;
       opacity: 0.55;
       color: var(--muted);
@@ -791,7 +790,7 @@
       pointer-events: none;
     }
     .desk-new-session-section {
-      padding: 8px 0 0;
+      padding: 16px 0 0;
       border-bottom: none;
       display: block;
       background: transparent;
@@ -1335,6 +1334,15 @@
       padding-left: 4px;
     }
     .desk-session-title-text:empty { display: none; }
+    .desk-floating-controls.is-title-hidden .desk-session-title-text {
+      display: none;
+    }
+    .desk-floating-controls.is-buttons-hidden,
+    .desk-top-right-controls.is-buttons-hidden,
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-top-right-controls.is-buttons-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
     .desk-sidebar-hover-popover {
       position: fixed;
       z-index: 2000;
