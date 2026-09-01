@@ -713,6 +713,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      position: relative;
     }
     .desk-sidebar-sessions::-webkit-scrollbar {
       display: none;
@@ -727,7 +728,7 @@
       min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 0 0 20px;
+      padding: 0 0 28px;
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
@@ -745,13 +746,24 @@
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
     }
     .desk-hub-footer-credit {
-      flex: none;
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      transform: translateX(-50%);
+      z-index: 1;
       margin: 0;
-      padding: 10px 0;
+      padding: 0;
       text-align: center;
       font-size: 10px;
       opacity: 0.55;
       color: var(--muted);
+      pointer-events: none;
+      white-space: nowrap;
+      text-shadow:
+        0 0 3px var(--glass-bg-90),
+        0 0 3px var(--glass-bg-90),
+        0 0 6px var(--glass-bg-90),
+        0 0 6px var(--glass-bg-90);
     }
     .desk-hub-message {
       flex: none;
