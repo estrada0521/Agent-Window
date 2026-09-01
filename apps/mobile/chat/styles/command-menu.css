@@ -16,6 +16,7 @@
       border-radius: 10px;
       font-size: 14px;
       line-height: 20px;
+      font-weight: var(--body-weight);
       color: var(--fg);
       cursor: pointer;
       white-space: nowrap;

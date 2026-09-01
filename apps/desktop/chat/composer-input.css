@@ -169,7 +169,10 @@
       max-height: 200px;
       resize: none;
       padding: 14px;
-      font: 400 15px/1.6 var(--font-main);
+      font-family: var(--font-main);
+      font-size: 15px;
+      line-height: 1.6;
+      font-weight: var(--body-weight);
       box-shadow: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
