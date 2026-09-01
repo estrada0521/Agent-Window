@@ -5,7 +5,7 @@
       height: 100%;
       min-height: 0;
       font-family: var(--font-main);
-      font-weight: 480;
+      font-weight: var(--body-weight);
     }
 
     #repoPanel .repo-sheet-back[disabled] {
@@ -397,7 +397,7 @@
       position: relative;
       cursor: pointer;
       font-family: var(--font-main);
-      font-weight: 480;
+      font-weight: var(--body-weight);
       transition: background 120ms ease;
       box-sizing: border-box;
     }
@@ -556,7 +556,7 @@
       line-height: 1.35;
       color: var(--fg);
       font-family: var(--font-main);
-      font-weight: 480;
+      font-weight: var(--body-weight);
       cursor: default;
       transition: background 120ms ease;
     }
@@ -613,14 +613,14 @@
     .git-summary-wrap .git-summary-meta-text {
       font-size: var(--text-size, 13px);
       font-family: var(--font-main);
-      font-weight: 480;
+      font-weight: var(--body-weight);
       color: var(--fg);
     }
 
     .git-summary-wrap .git-summary-counts {
       font-size: var(--text-size, 13px);
       font-family: var(--font-main);
-      font-weight: 480;
+      font-weight: var(--body-weight);
     }
 
     .git-summary-meta-text {
@@ -734,7 +734,7 @@
       border-radius: 8px;
       background: transparent;
       font-family: var(--font-main);
-      font-weight: 480;
+      font-weight: var(--body-weight);
       overflow: hidden;
       transition: background 120ms ease;
       animation: git-commit-file-row-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -784,7 +784,7 @@
       white-space: nowrap;
       color: var(--fg);
       font-size: var(--text-size, 13px);
-      font-weight: 500;
+      font-weight: var(--body-weight);
       line-height: 1.3;
       display: flex;
       align-items: baseline;
@@ -804,7 +804,7 @@
       white-space: nowrap;
       color: var(--muted);
       font-size: var(--text-size, 13px);
-      font-weight: 500;
+      font-weight: var(--body-weight);
     }
 
     .git-commit-file-meta {

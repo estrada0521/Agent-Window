@@ -37,7 +37,7 @@
     html[data-desktop-chat][data-theme="dark"] {
       --code-bg: rgba(180, 180, 180, 0.05);
       --inline-code-bg: rgba(180, 180, 180, 0.00);
-      --inline-code-fg: rgb(142, 142, 142);
+      --inline-code-fg: rgb(150, 150, 150);
       --blockquote-bg: rgba(180, 180, 180, 0.04);
       --blockquote-border: rgba(180, 180, 180, 0.45);
       --table-line: rgba(180, 180, 180, 0.12);

@@ -11,7 +11,7 @@
     }
     .desktop-right-panel {
       font-family: var(--font-main);
-      font-weight: 430;
+      font-weight: var(--body-weight);
       font-optical-sizing: auto;
       font-variation-settings: "opsz" 16;
       font-synthesis: none;

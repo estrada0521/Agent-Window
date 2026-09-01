@@ -233,7 +233,7 @@
       -webkit-overflow-scrolling: touch;
       padding: 100px 12px 0;
       font-family: var(--font-code);
-      font-weight: 400;
+      font-weight: var(--body-weight);
       font-style: normal;
       font-size: 9.5px;
       line-height: 1.35;

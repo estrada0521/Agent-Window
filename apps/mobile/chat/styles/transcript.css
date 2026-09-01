@@ -577,7 +577,7 @@
       font-family: var(--font-main);
       font-size: var(--text-size, 13px);
       line-height: var(--text-line-height, 22px);
-      font-weight: 430;
+      font-weight: var(--body-weight);
       font-optical-sizing: auto;
       font-variation-settings: "opsz" 16;
       font-synthesis: none;

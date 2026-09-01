@@ -38,7 +38,7 @@
     }
 
     .message-thinking-runtime-detail {
-      font-weight: 430;
+      font-weight: var(--body-weight);
       color: var(--muted);
     }
 

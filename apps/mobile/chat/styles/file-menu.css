@@ -110,7 +110,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       color: var(--muted);
-      font-weight: 400;
+      font-weight: var(--body-weight);
     }
 
     .file-item-size {
