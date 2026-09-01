@@ -758,6 +758,12 @@
         hoverPopover.style.top = `${Math.round((wbRect ? wbRect.top : _deskAppSidebarToggle.getBoundingClientRect().bottom) + gap)}px`;
         hoverPopover.style.left = `${Math.round((wbRect ? wbRect.left : 0) + gap)}px`;
         animatePopoverIn(hoverPopover);
+
+        const updatePopoverFade = () => {
+          listEl.dataset.scrollFade = computeScrollFadeState(listEl);
+        };
+        updatePopoverFade();
+        listEl.addEventListener("scroll", updatePopoverFade, { passive: true });
       }
 
       _deskAppSidebarToggle.addEventListener("mouseenter", open);
@@ -1236,23 +1242,20 @@
       updateDeskSessionListFade();
     }
 
-    function updateDeskSessionListFade() {
-      if (!_deskSessionList) return;
-      const { scrollTop, scrollHeight, clientHeight } = _deskSessionList;
+    function computeScrollFadeState(el) {
+      const { scrollTop, scrollHeight, clientHeight } = el;
       const overflowing = scrollHeight > clientHeight + 1;
-      if (!overflowing) {
-        _deskSessionList.dataset.scrollFade = "none";
-        return;
-      }
+      if (!overflowing) return "none";
       const atTop = scrollTop <= 1;
       const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
-      if (atTop && !atBottom) {
-        _deskSessionList.dataset.scrollFade = "bottom";
-      } else if (atBottom && !atTop) {
-        _deskSessionList.dataset.scrollFade = "top";
-      } else {
-        _deskSessionList.dataset.scrollFade = "both";
-      }
+      if (atTop && !atBottom) return "bottom";
+      if (atBottom && !atTop) return "top";
+      return "both";
+    }
+
+    function updateDeskSessionListFade() {
+      if (!_deskSessionList) return;
+      _deskSessionList.dataset.scrollFade = computeScrollFadeState(_deskSessionList);
     }
 
     function updateDeskUnreadSessions(active) {
