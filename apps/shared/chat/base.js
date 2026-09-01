@@ -133,6 +133,7 @@
         if (values[index]) item.setAttribute("value", values[index]);
       });
     };
+    __CHAT_INCLUDE:markdown-frontmatter.js__
     const renderMarkdownFallback = (text) => escapeHtml(String(text ?? "")).replace(/\n/g, "<br>");
     const renderMarkdown = (text) => {
       try {
@@ -146,6 +147,17 @@
       if (typeof marked === "undefined") {
         throw new Error("marked is unavailable");
       }
+      let frontmatterHtml = "";
+      let bodyText = text;
+      const frontmatter = extractFrontmatter(text);
+      if (frontmatter) {
+        const parsed = parseSimpleFrontmatter(frontmatter.yamlText);
+        if (Object.keys(parsed).length) {
+          frontmatterHtml = frontmatterTableHtml(parsed);
+          bodyText = frontmatter.body;
+        }
+      }
+      text = bodyText;
       const mathBlocks = [];
       let placeholderCount = 0;
 
@@ -199,6 +211,8 @@
         wrap.appendChild(pre);
         wrap.insertAdjacentHTML("beforeend", `<button class="code-copy-btn" title="Copy">${copySvg}</button>`);
       });
+
+      if (frontmatterHtml) tempDiv.insertAdjacentHTML("afterbegin", frontmatterHtml);
 
       return injectFileCards(tempDiv.innerHTML);
     };

@@ -339,32 +339,74 @@
     .md-body table {
       display: table;
       table-layout: auto;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
       width: 100%;
       margin: 0.5em 0;
       font: inherit;
+      border-bottom: var(--table-line-width) solid var(--table-mid-line);
     }
 
     .md-body th,
     .md-body td {
       white-space: nowrap;
-      border-top: none;
-      border-left: none;
-      border-right: none;
-      border-bottom: var(--table-line-width) solid var(--table-line);
+      border: none;
       padding: 5px 12px;
       text-align: left;
       font: inherit;
     }
 
-    .md-body tr:last-child td {
-      border-bottom: var(--table-line-width) solid var(--table-header-line);
+    /* Each row's separator is drawn by exactly one side of one element
+       (the body row's own bottom edge), never by two adjacent cells'
+       borders meeting -- border-collapse's conflict resolution across
+       cells has no say here, so there is nothing that can double up. */
+    .md-body tbody tr:not(:last-child) td {
+      border-bottom: var(--table-line-width) solid var(--table-mid-line);
     }
 
     .md-body th {
       background: transparent;
-      font-weight: inherit;
-      border-bottom: var(--table-line-width) solid var(--table-header-line);
+      font-size: calc(var(--text-size, 13px) - 2px);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: var(--table-line-width) solid var(--table-mid-line);
+    }
+
+    .md-body .md-frontmatter {
+      margin: 0 0 0.8em;
+      background: transparent;
+      border-collapse: separate;
+      border-spacing: 0;
+      border: var(--table-line-width) solid var(--table-mid-line);
+    }
+
+    .md-body .md-frontmatter td {
+      white-space: normal;
+      vertical-align: top;
+      border: none;
+      background: transparent;
+    }
+
+    /* Each line is drawn by exactly one side of one element, never two --
+       border-collapse's conflict resolution across adjacent cells has no
+       say here, so there is nothing that can double up. */
+    .md-body .md-frontmatter tr:not(:last-child) td {
+      border-bottom: var(--table-line-width) solid var(--table-mid-line);
+    }
+
+    .md-body .md-frontmatter .md-frontmatter-key {
+      font-weight: 650;
+      color: var(--fg-bold, var(--fg));
+      width: 1%;
+      white-space: nowrap;
+      border-right: var(--table-line-width) solid var(--table-mid-line);
+    }
+
+    .md-body .md-frontmatter .md-frontmatter {
+      margin: 0;
+      width: 100%;
     }
 
     .md-body a:not(.inline-file-link):not(.local-file-link) {

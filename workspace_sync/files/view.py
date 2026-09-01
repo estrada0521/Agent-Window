@@ -62,6 +62,11 @@ def _chat_markdown_preview_css() -> str:
     return f"{theme_vars_css}\n{inline_code_css}\n{code_block_css}\n{markdown_css}"
 
 
+def _chat_markdown_frontmatter_js() -> str:
+    repo_root = Path(__file__).resolve().parents[2]
+    return (repo_root / "apps/shared/chat/markdown-frontmatter.js").read_text(encoding="utf-8")
+
+
 def render_file_view(
     runtime,
     rel: str,
@@ -392,6 +397,7 @@ def render_file_view(
         markdown_head_libs = "".join(markdown_head_tags)
         markdown_preview_css = _chat_markdown_preview_css()
         markdown_typography_css = body_typography_css()
+        markdown_frontmatter_js = _chat_markdown_frontmatter_js()
         initial_preview_theme = "light" if str((theme_palette or {}).get("theme") or "").lower() == "light" else "dark"
         dark_preview_fg_channels = TEXT_PRIMARY_MOBILE_DARK_CHANNELS.replace(" ", "")
         dark_preview_fg = f"rgb({dark_preview_fg_channels})"
@@ -549,6 +555,7 @@ anchor.setAttribute("href", buildPreviewHref(resolved) + suffix);
   }});
 }};
 const escapeHtml = (value) => String(value || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+{markdown_frontmatter_js}
 const mathRenderOptions = {{
   delimiters: [
 {{left: "$$", right: "$$", display: true}},
@@ -562,6 +569,15 @@ const mathRenderOptions = {{
 const renderMarkdown = (text) => {{
   if (typeof marked === "undefined") return "<pre>" + escapeHtml(text) + "</pre>";
   try {{
+let frontmatterHtml = "";
+const frontmatter = extractFrontmatter(text);
+if (frontmatter) {{
+  const parsed = parseSimpleFrontmatter(frontmatter.yamlText);
+  if (Object.keys(parsed).length) {{
+    frontmatterHtml = frontmatterTableHtml(parsed);
+    text = frontmatter.body;
+  }}
+}}
 const mathBlocks = [];
 let placeholderCount = 0;
 const codeBlocks = [];
@@ -631,6 +647,7 @@ tempDiv.querySelectorAll("pre").forEach((pre) => {{
   wrap.appendChild(pre);
   wrap.insertAdjacentHTML("beforeend", `<button class="code-copy-btn" type="button" title="Copy">${{copySvg}}</button>`);
 }});
+if (frontmatterHtml) tempDiv.insertAdjacentHTML("afterbegin", frontmatterHtml);
 return tempDiv.innerHTML;
   }} catch (_) {{
 return "<pre>" + escapeHtml(text) + "</pre>";
