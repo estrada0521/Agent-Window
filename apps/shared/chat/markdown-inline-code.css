@@ -1,9 +1,11 @@
     .md-body :not(pre)>code:not(:where(a.inline-file-link > code, a.local-file-link > code)),
     .message.user .md-body :not(pre)>code:not(:where(a.inline-file-link > code, a.local-file-link > code)) {
       background: var(--inline-code-bg);
+      color: var(--inline-code-fg);
       border-radius: 0.45em;
       font-family: var(--font-code);
-      padding: 0 0.3em;
+      padding: 0 0.4em;
+      margin: 0 0.20em;
       -webkit-box-decoration-break: clone;
       box-decoration-break: clone;
     }

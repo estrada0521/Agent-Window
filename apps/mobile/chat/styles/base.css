@@ -74,7 +74,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --mobile-sheet-floating-hover-bg: var(--panel-row-hover-bg);
       --mobile-sheet-pill-bg: rgba(255, 255, 255, 0.22);
       --mobile-sheet-top-border: rgba(255, 255, 255, 0.08);
-      --mobile-top-gradient-rgb: __DARK_BG_CHANNELS__;
+      --mobile-top-gradient-rgb: var(--bg-rgb);
       --mobile-sheet-gradient-rgb: var(--mobile-top-gradient-rgb);
       --bottom-sheet-top-gradient-rgb: var(--mobile-sheet-gradient-rgb);
       --mobile-sheet-content-offset: 72px;
@@ -136,7 +136,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --glass-filter-20: blur(20px) saturate(180%);
       --mobile-sheet-pill-bg: rgba(20, 20, 19, 0.24);
       --mobile-sheet-top-border: rgba(255, 255, 255, 0.15);
-      --mobile-top-gradient-rgb: 249, 249, 247;
+      --mobile-top-gradient-rgb: var(--bg-rgb);
       --mobile-sheet-gradient-rgb: var(--mobile-top-gradient-rgb);
       --mobile-sheet-floating-bg: rgba(0, 0, 0, 0.10);
       --mobile-sheet-floating-hover-bg: rgba(0, 0, 0, 0.13);
@@ -171,7 +171,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
     }
     html[data-theme="dark"] {
       color-scheme: dark;
-      --bg-rgb: 13, 13, 12;
+      --bg-rgb: 13, 11, 11;
       --fg: rgb(var(--dark-fg-rgb));
       --user-message-divider: rgba(255, 255, 255, 0.55);
       --fg-bold: rgb(__TEXT_STRONG_MOBILE_DARK_CHANNELS__);
@@ -207,7 +207,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --mobile-sheet-pill-bg: rgba(255, 255, 255, 0.22);
       --mobile-sheet-top-border: rgba(255, 255, 255, 0.08);
-      --mobile-top-gradient-rgb: 0, 0, 0;
+      --mobile-top-gradient-rgb: var(--bg-rgb);
       --mobile-sheet-gradient-rgb: var(--bg-rgb);
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);
 

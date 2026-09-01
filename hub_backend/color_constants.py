@@ -21,8 +21,8 @@ from collections.abc import Mapping
 
 TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS = "11, 11, 11"
 TEXT_PRIMARY_DESKTOP_DARK_CHANNELS = "200, 200, 200"
-TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS = "34, 34, 34"
-TEXT_PRIMARY_MOBILE_DARK_CHANNELS = "232, 232, 230"
+TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS = "31, 31, 31"
+TEXT_PRIMARY_MOBILE_DARK_CHANNELS = "229, 229, 229"
 
 # Bold/strong emphasis. Desktop has no entry: markdown-body.css falls back
 # to text-primary via `var(--fg-bold, var(--fg))` when --fg-bold is

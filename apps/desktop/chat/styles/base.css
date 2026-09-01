@@ -19,6 +19,7 @@
       font-optical-sizing: auto;
       font-display: swap;
     }
+__CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
     :root {
       color-scheme: __COLOR_SCHEME__;
       --app-shell-height: 100dvh;
@@ -36,9 +37,6 @@
       --panel-strong: rgba(__GRAY_PANEL_STRONG_CHANNELS__, 0.99);
       --line: __LINE__;
       --line-strong: __LINE_STRONG__;
-      --table-line: __TABLE_LINE__;
-      --table-header-line: __TABLE_HEADER_LINE__;
-      --table-line-width: 0.5px;
       --fg: __LIGHT_FG__;
       --muted: __GRAY_MUTED__;
       --icon-fg: __ICON_FG__;
@@ -76,12 +74,6 @@
       --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
       --git-del-red: rgb(var(--git-del-red-channels));
-      --code-bg: rgba(255, 255, 255, 0.07);
-      --inline-code-bg: rgba(255, 255, 255, 0.07);
-      --blockquote-bg: rgba(255, 255, 255, 0.04);
-      --blockquote-border: rgba(255, 255, 255, 0.45);
-      --code-scrollbar-thumb: rgba(255, 255, 255, 0.45);
-      --code-scrollbar-thumb-hover: rgba(255, 255, 255, 0.65);
       --scrollbar-thumb: color-mix(in srgb, var(--muted) 55%, transparent);
     }
     html[data-theme="light"] {
@@ -109,8 +101,6 @@
       --panel-strong: rgba(250, 250, 250, 0.99);
       --line: rgba(0, 0, 0, 0.10);
       --line-strong: rgba(0, 0, 0, 0.18);
-      --table-line: rgba(0, 0, 0, 0.10);
-      --table-header-line: var(--fg);
       --code-copy-hover-bg: rgba(0, 0, 0, 0.08);
       --fab-hover-bg: rgba(235, 235, 235, 0.92);
       --glass-bg-64: var(--bg);
@@ -129,13 +119,6 @@
       --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_LIGHT_CHANNELS__;
       --git-del-red: rgb(var(--git-del-red-channels));
-      --code-bg: rgba(0, 0, 0, 0.05);
-      --inline-code-bg: rgba(0, 0, 0, 0.05);
-      --blockquote-bg: rgba(0, 0, 0, 0.03);
-      --blockquote-border: rgba(0, 0, 0, 0.45);
-      --table-line-width: 1px;
-      --code-scrollbar-thumb: rgba(0, 0, 0, 0.25);
-      --code-scrollbar-thumb-hover: rgba(0, 0, 0, 0.45);
     }
     html[data-theme="dark"] {
       color-scheme: dark;
@@ -158,13 +141,6 @@
       --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
       --git-del-red: rgb(var(--git-del-red-channels));
-      --code-bg: rgba(180, 180, 180, 0.07);
-      --inline-code-bg: rgba(180, 180, 180, 0.07);
-      --blockquote-bg: rgba(180, 180, 180, 0.04);
-      --blockquote-border: rgba(180, 180, 180, 0.45);
-      --table-line-width: 0.5px;
-      --code-scrollbar-thumb: rgba(180, 180, 180, 0.45);
-      --code-scrollbar-thumb-hover: rgba(180, 180, 180, 0.65);
       --surface: rgb(10, 10, 10);
       --surface-alt: rgb(15, 15, 15);
       --bg-hover: rgb(20, 20, 20);
@@ -173,8 +149,6 @@
       --panel-strong: rgba(5, 5, 5, 0.99);
       --line: rgba(180, 180, 180, 0.07);
       --line-strong: rgba(180, 180, 180, 0.12);
-      --table-line: rgba(180, 180, 180, 0.12);
-      --table-header-line: rgba(180, 180, 180, 0.55);
       --code-copy-hover-bg: rgba(180, 180, 180, 0.09);
       --fab-hover-bg: rgba(28, 28, 27, 0.94);
       --glass-bg-64: rgba(var(--bg-rgb), 0.64);

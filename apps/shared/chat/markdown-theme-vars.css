@@ -1,6 +1,7 @@
-    html[data-theme="light"] {
+    html[data-mobile-chat][data-theme="light"] {
       --code-bg: rgba(0, 0, 0, 0.05);
       --inline-code-bg: rgba(0, 0, 0, 0.05);
+      --inline-code-fg: rgb(100, 100, 100);
       --blockquote-bg: rgba(0, 0, 0, 0.03);
       --blockquote-border: rgba(0, 0, 0, 0.45);
       --table-line: rgba(0, 0, 0, 0.10);
@@ -9,9 +10,10 @@
       --code-scrollbar-thumb: rgba(0, 0, 0, 0.25);
       --code-scrollbar-thumb-hover: rgba(0, 0, 0, 0.45);
     }
-    html[data-theme="dark"] {
-      --code-bg: rgba(255, 255, 255, 0.07);
-      --inline-code-bg: rgba(255, 255, 255, 0.07);
+    html[data-mobile-chat][data-theme="dark"] {
+      --code-bg: rgba(255, 255, 255, 0.035);
+      --inline-code-bg: rgba(255, 255, 255, 0.00);
+      --inline-code-fg: rgb(142, 142, 142);
       --blockquote-bg: rgba(255, 255, 255, 0.045);
       --blockquote-border: rgba(255, 255, 255, 0.45);
       --table-line: rgba(255, 255, 255, 0.12);
@@ -19,4 +21,28 @@
       --table-line-width: 1px;
       --code-scrollbar-thumb: rgba(255, 255, 255, 0.45);
       --code-scrollbar-thumb-hover: rgba(255, 255, 255, 0.65);
+    }
+    html[data-desktop-chat][data-theme="light"] {
+      --code-bg: rgba(0, 0, 0, 0.05);
+      --inline-code-bg: rgba(0, 0, 0, 0.05);
+      --inline-code-fg: rgb(60, 60, 60);
+      --blockquote-bg: rgba(0, 0, 0, 0.03);
+      --blockquote-border: rgba(0, 0, 0, 0.45);
+      --table-line: rgba(0, 0, 0, 0.10);
+      --table-header-line: var(--fg);
+      --table-line-width: 1px;
+      --code-scrollbar-thumb: rgba(0, 0, 0, 0.25);
+      --code-scrollbar-thumb-hover: rgba(0, 0, 0, 0.45);
+    }
+    html[data-desktop-chat][data-theme="dark"] {
+      --code-bg: rgba(180, 180, 180, 0.07);
+      --inline-code-bg: rgba(180, 180, 180, 0.00);
+      --inline-code-fg: rgb(142, 142, 142);
+      --blockquote-bg: rgba(180, 180, 180, 0.04);
+      --blockquote-border: rgba(180, 180, 180, 0.45);
+      --table-line: rgba(180, 180, 180, 0.12);
+      --table-header-line: rgba(180, 180, 180, 0.55);
+      --table-line-width: 0.5px;
+      --code-scrollbar-thumb: rgba(180, 180, 180, 0.45);
+      --code-scrollbar-thumb-hover: rgba(180, 180, 180, 0.65);
     }
