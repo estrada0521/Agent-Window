@@ -328,7 +328,10 @@
             <span class="message-thinking-label message-thinking-label-agent"></span>
           `;
         }
-        row.style.setProperty("--agent-pulse-delay", `${pulse}s`);
+        const pulseDelay = `${pulse}s`;
+        if (row.style.getPropertyValue("--agent-pulse-delay") !== pulseDelay) {
+          row.style.setProperty("--agent-pulse-delay", pulseDelay);
+        }
         const runtimeItem = currentThinkingRuntimeItem(agent);
         const label = row.querySelector(".message-thinking-label-agent");
 
