@@ -588,6 +588,14 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         notifyParentPanelState();
         return;
       }
+      if (event.data.type === "desktop-chat-reset") {
+        closeDesktopRightPanel();
+        _pollScrollLockTop = null;
+        _pollScrollAnchor = null;
+        _stickyToBottom = true;
+        scrollConversationToBottom("auto");
+        return;
+      }
       if (event.data.type !== "desktop-panel") return;
       if (!hasDesktopRightPanelOverlay()) return;
       const mode = String(event.data.mode || "");

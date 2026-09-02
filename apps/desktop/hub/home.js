@@ -116,9 +116,15 @@
         _deskChatFrame?.contentWindow?.postMessage({ type: "native-menu-action", payload }, "*");
       } catch (_) {}
     }
+    function resetDeskChatView() {
+      try {
+        _deskChatFrame?.contentWindow?.postMessage({ type: "desktop-chat-reset" }, "*");
+      } catch (_) {}
+    }
     async function resetDeskWindowState() {
       showDeskSidebarList({ open: true });
       setDeskSidebarWidth(DESK_DEFAULT_SIDEBAR_WIDTH);
+      resetDeskChatView();
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") {
         showDeskHubMessage("reset window: no tauri invoke available", { error: true });
@@ -133,6 +139,7 @@
 
     async function compactDeskWindowState() {
       setDeskSidebarOpen(false);
+      resetDeskChatView();
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") {
         showDeskHubMessage("compact window: no tauri invoke available", { error: true });
