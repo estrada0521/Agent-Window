@@ -172,7 +172,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
     }
     html[data-theme="dark"] {
       color-scheme: dark;
-      --bg-rgb: 13, 11, 11;
+      --bg-rgb: 11, 11, 11;
       --fg: rgb(var(--dark-fg-rgb));
       --user-message-divider: rgba(255, 255, 255, 0.55);
       --fg-bold: rgb(__TEXT_STRONG_MOBILE_DARK_CHANNELS__);

@@ -104,7 +104,7 @@ def _gray_rgb_string(level: int) -> str:
 
 
 MOBILE_HUB_LIGHT_BG_RGB = (243, 243, 241)
-MOBILE_HUB_DARK_BG_RGB = (10, 8, 8)
+MOBILE_HUB_DARK_BG_RGB = (9, 9, 9)
 
 
 def resolve_theme_levels(settings: Mapping[str, object] | None = None) -> tuple[int, int]:
