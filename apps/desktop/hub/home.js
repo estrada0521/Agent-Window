@@ -255,6 +255,7 @@
     let _deskSessionsRequestSeq = 0;
     let _deskSessionsRenderedOnce = false;
     let _deskSelectedSessionName = "";
+    let _deskChatFrameLoadedUrl = "";
     let _deskOpenToken = 0;
     let _deskSidebarWidth = DESK_DEFAULT_SIDEBAR_WIDTH;
     let _deskOpenSwipeRow = null;
@@ -613,11 +614,11 @@
     window.__agentWindowRefreshTauriFrames = () => {
       if (!isTauriDesktopApp()) return;
       if (!_deskChatFrame) return;
-      const current = String(_deskChatFrame.getAttribute("src") || _deskChatFrame.src || "");
+      const current = _deskChatFrameLoadedUrl || String(_deskChatFrame.getAttribute("src") || _deskChatFrame.src || "");
       if (!current || current === "about:blank") return;
       const next = buildDeskChatFrameUrl(current);
       if (next && normalizeComparableUrl(current) !== normalizeComparableUrl(next)) {
-        _deskChatFrame.src = next;
+        navigateDeskChatFrame(next);
       }
     };
 
@@ -839,8 +840,30 @@
       }
     }
 
+    // One persistent iframe is reused for every session. Assigning `.src` is a
+    // navigation that appends an entry to the Hub's joint session history, and
+    // WebKit then keeps the whole outgoing chat Document resident (bfcache) so
+    // "back" would be instant -- measured at ~+150 MB per switch, never freed.
+    // location.replace() navigates without adding a history entry (verified to
+    // work even though the chat frame is a cross-origin per-session origin), so
+    // the outgoing Document has no entry pinning it and can be torn down.
+    function navigateDeskChatFrame(url) {
+      const target = String(url || "") || "about:blank";
+      _deskChatFrameLoadedUrl = target === "about:blank" ? "" : target;
+      const win = _deskChatFrame && _deskChatFrame.contentWindow;
+      if (win) {
+        try {
+          win.location.replace(target);
+          return;
+        } catch (_) {
+          // detached document -- fall back to an attribute navigation
+        }
+      }
+      if (_deskChatFrame) _deskChatFrame.src = target;
+    }
+
     function clearDeskChatFrame() {
-      if (_deskChatFrame) _deskChatFrame.src = "about:blank";
+      navigateDeskChatFrame("about:blank");
       setDeskChatLoading(false);
     }
 
@@ -868,11 +891,11 @@
       }
       const frameUrl = buildDeskChatFrameUrl(url);
       if (frameUrl) {
-        const currentUrl = normalizeComparableUrl(_deskChatFrame.src);
+        const currentUrl = normalizeComparableUrl(_deskChatFrameLoadedUrl);
         const nextUrl = normalizeComparableUrl(frameUrl);
         if (!currentUrl || currentUrl !== nextUrl) {
           setDeskChatLoading(true);
-          _deskChatFrame.src = frameUrl;
+          navigateDeskChatFrame(frameUrl);
         } else {
           setDeskChatLoading(false);
         }
