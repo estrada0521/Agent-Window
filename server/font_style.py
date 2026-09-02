@@ -22,17 +22,14 @@ def body_typography_css() -> str:
     Depends only on --font-main and --text-size, both already defined
     independently by each caller's own :root block."""
     body_weight_tokens = """
-    html:not([data-mobile="1"])[data-theme="light"] {
-      --body-weight: 400;
-    }
-    html:not([data-mobile="1"])[data-theme="dark"] {
+    html[data-theme="dark"] {
       --body-weight: 300;
+    }
+    html[data-theme="light"] {
+      --body-weight: 400;
     }
     html[data-mobile="1"][data-theme="light"] {
       --body-weight: 430;
-    }
-    html[data-mobile="1"][data-theme="dark"] {
-      --body-weight: 300;
     }"""
     # Every message role (user, agent, sysmsg) and the standalone preview
     # viewer render body text identically, line-height included.
