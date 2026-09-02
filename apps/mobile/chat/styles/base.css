@@ -29,8 +29,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       color-scheme: __COLOR_SCHEME__;
       --bg-rgb: __DARK_BG_CHANNELS__;
       --bg: rgb(var(--bg-rgb));
-      --panel: rgba(__GRAY_SURFACE_CHANNELS__, 0.98);
-      --panel-strong: rgba(__GRAY_PANEL_STRONG_CHANNELS__, 0.99);
       --line: __LINE__;
       --line-strong: __LINE_STRONG__;
       --fg: __LIGHT_FG__;
@@ -70,8 +68,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --mobile-sheet-content-offset: 72px;
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);
       --surface: __GRAY_SURFACE__;
-      --surface-alt: __GRAY_SURFACE_ALT__;
-      --bg-hover: __GRAY_HOVER__;
       --inline-code-border: __GRAY_INLINE_BORDER__;
       --pane-trace-body-bg-channels: 13, 13, 12;
       --pane-trace-body-bg: rgb(var(--pane-trace-body-bg-channels));
@@ -109,11 +105,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --composer-menu-row-active-bg: rgba(0, 0, 0, 0.06);
       --panel-row-selected-bg: rgba(0, 0, 0, 0.07);
       --surface: rgb(250, 250, 250);
-      --surface-alt: rgb(245, 245, 245);
-      --bg-hover: rgb(235, 235, 235);
       --inline-code-border: rgb(202, 202, 202);
-      --panel: rgba(250, 250, 250, 0.98);
-      --panel-strong: rgba(250, 250, 250, 0.99);
       --line: rgba(0, 0, 0, 0.10);
       --line-strong: rgba(0, 0, 0, 0.18);
       --code-copy-hover-bg: rgba(0, 0, 0, 0.08);
@@ -183,11 +175,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
       --git-del-red: rgb(var(--git-del-red-channels));
       --surface: rgb(10, 10, 10);
-      --surface-alt: rgb(15, 15, 15);
-      --bg-hover: rgb(20, 20, 20);
       --inline-code-border: rgb(54, 54, 54);
-      --panel: rgba(10, 10, 10, 0.98);
-      --panel-strong: rgba(5, 5, 5, 0.99);
       --line: rgba(255, 255, 255, 0.07);
       --line-strong: rgba(255, 255, 255, 0.12);
       --code-copy-hover-bg: rgba(255, 255, 255, 0.09);

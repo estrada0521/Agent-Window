@@ -8,9 +8,6 @@ from html import escape as html_escape
 from urllib.parse import quote as url_quote
 
 from hub_backend.color_constants import (
-    DARK_BG,
-    LIGHT_FG,
-    LIGHT_FG_CHANNELS,
     MOBILE_DARK_ICON_HOVER,
     MOBILE_LIGHT_ICON_HOVER,
     TEXT_DIFF_DELETE_DARK_CHANNELS,
@@ -102,16 +99,16 @@ def render_file_view(
         except Exception as exc:
             logging.error(f"Unexpected error: {exc}", exc_info=True)
     requested_base_theme = str(preview_base_theme or "").strip().lower()
-    if requested_base_theme == "dark":
+    if requested_base_theme in ("dark", "light"):
+        theme_palette = resolve_theme_palette({"theme": requested_base_theme})
+    if theme_palette is None:
         theme_palette = resolve_theme_palette({"theme": "dark"})
-    elif requested_base_theme == "light":
-        theme_palette = resolve_theme_palette({"theme": "light"})
     dark_theme_palette = resolve_theme_palette({"theme": "dark"})
-    pane_bg = str((theme_palette or {}).get("dark_bg") or DARK_BG)
+    pane_bg = str(theme_palette["dark_bg"])
     embed_bg = "transparent" if embed else pane_bg
-    pane_fg = str((theme_palette or {}).get("light_fg") or LIGHT_FG)
-    pane_fg_channels = str((theme_palette or {}).get("light_fg_channels") or LIGHT_FG_CHANNELS)
-    is_light_theme = str((theme_palette or {}).get("theme") or "").lower() == "light"
+    pane_fg = str(theme_palette["light_fg"])
+    pane_fg_channels = str(theme_palette["light_fg_channels"])
+    is_light_theme = str(theme_palette.get("theme") or "").lower() == "light"
     # Line numbers are text, not decoration: read text-muted directly rather
     # than a translucent tint of the code pane's own (separate) fg system.
     pane_ln_color = f"rgb({TEXT_MUTED_LIGHT_CHANNELS if is_light_theme else TEXT_MUTED_DARK_CHANNELS})"
@@ -418,7 +415,7 @@ def render_file_view(
         dark_preview_diff_delete = f"rgb({TEXT_DIFF_DELETE_DARK_CHANNELS})"
         light_preview_diff_delete = f"rgb({TEXT_DIFF_DELETE_LIGHT_CHANNELS})"
         markdown_theme_css = (
-            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette.get("dark_bg") or DARK_BG)};--fg:{dark_preview_fg};--fg-bold:{dark_preview_fg_bold};--muted:{dark_preview_muted};--icon-fg:{dark_preview_fg};--icon-muted:{dark_preview_muted};--icon-hover:{MOBILE_DARK_ICON_HOVER};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba({dark_preview_fg_channels},0.09);--external-link-fg:{dark_preview_external_link};--link-blue:{dark_preview_link};--link-blue-channels:{TEXT_LINK_DARK_CHANNELS};--git-ins-green:{dark_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_DARK_CHANNELS};--git-del-red:{dark_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_DARK_CHANNELS};--line:rgba({dark_preview_fg_channels},0.07);--line-strong:rgba({dark_preview_fg_channels},0.12);}}'
+            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette["dark_bg"])};--fg:{dark_preview_fg};--fg-bold:{dark_preview_fg_bold};--muted:{dark_preview_muted};--icon-fg:{dark_preview_fg};--icon-muted:{dark_preview_muted};--icon-hover:{MOBILE_DARK_ICON_HOVER};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba({dark_preview_fg_channels},0.09);--external-link-fg:{dark_preview_external_link};--link-blue:{dark_preview_link};--link-blue-channels:{TEXT_LINK_DARK_CHANNELS};--git-ins-green:{dark_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_DARK_CHANNELS};--git-del-red:{dark_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_DARK_CHANNELS};--line:rgba({dark_preview_fg_channels},0.07);--line-strong:rgba({dark_preview_fg_channels},0.12);}}'
             f'html[data-preview-theme="light"]{{color-scheme:light;--bg-rgb:{light_preview_bg_channels};--bg:{light_preview_bg};--fg:{light_preview_fg};--fg-bold:{light_preview_fg_bold};--muted:{light_preview_muted};--icon-fg:{light_preview_fg};--icon-muted:{light_preview_muted};--icon-hover:{MOBILE_LIGHT_ICON_HOVER};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:{light_preview_external_link};--link-blue:{light_preview_link};--link-blue-channels:{TEXT_LINK_LIGHT_CHANNELS};--git-ins-green:{light_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_LIGHT_CHANNELS};--git-del-red:{light_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_LIGHT_CHANNELS};--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);}}'
             'html,body{background:transparent;color:var(--fg)}'
             '.md-preview-shell{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:transparent;scrollbar-gutter:auto;padding-top:0}'

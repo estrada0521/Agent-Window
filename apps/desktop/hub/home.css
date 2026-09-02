@@ -3,14 +3,11 @@
       color-scheme: __COLOR_SCHEME__;
       --text-size: __TEXT_SIZE_PX__;
       --bg: __DARK_BG__;
-      --bg-rgb: __DARK_BG_CHANNELS__;
       --page-side-pad: 14px;
       --chrome-icon-btn-size: 26px;
       --chrome-icon-size: 16px;
       --chrome-icon-stroke: 1.5;
       --chrome-icon-gap: 2px;
-      --panel: rgba(__GRAY_SURFACE_CHANNELS__, 0.72);
-      --panel-2: rgba(__GRAY_SURFACE_ALT_CHANNELS__, 0.82);
       --line: __LINE__;
       --line-strong: __LINE_STRONG__;
       --fg: __LIGHT_FG__;
@@ -24,13 +21,12 @@
       --session-selected-bg: __SESSION_SELECTED_BG__;
       --session-danger-fg: rgb(255, 108, 102);
       --session-revive-fg: rgb(74, 222, 128);
-      --glass-bg-90: rgba(var(--bg-rgb), 0.90);
+      --hub-glass: __DESKTOP_HUB_DARK_BG_FILL__;
       --glass-filter-20: blur(20px);
     }
     html[data-theme="light"] {
       color-scheme: light;
-      --bg-rgb: 249, 249, 247;
-      --bg: rgb(249, 249, 247);
+      --bg: __DESKTOP_HUB_LIGHT_BG__;
       --fg: rgb(__TEXT_SESSION_DESKTOP_LIGHT_CHANNELS__);
       --muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
       --icon-fg: rgb(__TEXT_SESSION_DESKTOP_LIGHT_CHANNELS__);
@@ -38,23 +34,23 @@
       --icon-hover: __DESKTOP_LIGHT_ICON_HOVER__;
       --error: rgb(__TEXT_ERROR_LIGHT_CHANNELS__);
       --desk-chrome-hover-bg: var(--bg);
-      --panel: rgba(250, 250, 250, 0.72);
-      --panel-2: rgba(245, 245, 245, 0.82);
+      --hub-glass: __DESKTOP_HUB_LIGHT_BG_FILL__;
       --line: rgba(0, 0, 0, 0.10);
       --line-strong: rgba(0, 0, 0, 0.18);
       --session-hover-bg: rgba(0, 0, 0, 0.04);
       --session-selected-bg: rgba(0, 0, 0, 0.07);
       --session-danger-fg: rgb(207, 34, 46);
       --session-revive-fg: rgb(26, 127, 55);
-      --chat-pane-bg: rgba(var(--bg-rgb), 0.95);
+      /* .desk-main is the chat surface's own backdrop (the iframe body is
+         transparent), so it takes the chat color, not the hub's --bg-rgb. */
+      --chat-pane-bg: __DESKTOP_CHAT_LIGHT_BG_FILL__;
       --chat-pane-filter: blur(20px);
       --hub-body-weight: 400;
     }
     html[data-theme="dark"] {
       color-scheme: dark;
-      --bg-rgb: 13, 13, 12;
-      --bg: rgb(13, 13, 12);
-      --glass-bg-90: rgba(var(--bg-rgb), 0.93);
+      --bg: __DESKTOP_HUB_DARK_BG__;
+      --hub-glass: __DESKTOP_HUB_DARK_BG_FILL__;
       --fg: rgb(__TEXT_SESSION_DESKTOP_DARK_CHANNELS__);
       --muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
       --icon-fg: rgb(__TEXT_SESSION_DESKTOP_DARK_CHANNELS__);
@@ -62,15 +58,14 @@
       --icon-hover: __DESKTOP_DARK_ICON_HOVER__;
       --error: rgb(__TEXT_ERROR_DARK_CHANNELS__);
       --desk-chrome-hover-bg: var(--bg);
-      --panel: rgba(10, 10, 10, 0.86);
-      --panel-2: rgba(15, 15, 15, 0.82);
       --line: rgba(255, 255, 255, 0.07);
       --line-strong: rgba(255, 255, 255, 0.12);
       --session-hover-bg: rgba(255, 255, 255, 0.05);
       --session-selected-bg: rgba(255, 255, 255, 0.08);
       --session-danger-fg: rgb(255, 108, 102);
       --session-revive-fg: rgb(74, 222, 128);
-      --chat-pane-bg: rgba(var(--bg-rgb), 0.95);
+      /* chat surface backdrop -- chat color, not the hub's --bg-rgb (see light) */
+      --chat-pane-bg: __DESKTOP_CHAT_DARK_BG_FILL__;
       --chat-pane-filter: var(--glass-filter-20);
       --hub-body-weight: 300;
     }
@@ -348,7 +343,7 @@
       padding-top: 0;
       position: relative;
       border: none;
-      background: var(--glass-bg-90);
+      background: var(--hub-glass);
       backdrop-filter: var(--glass-filter-20);
       -webkit-backdrop-filter: var(--glass-filter-20);
       border-radius: 26px 0 0 26px;
@@ -759,10 +754,10 @@
       pointer-events: none;
       white-space: nowrap;
       text-shadow:
-        0 0 3px var(--glass-bg-90),
-        0 0 3px var(--glass-bg-90),
-        0 0 6px var(--glass-bg-90),
-        0 0 6px var(--glass-bg-90);
+        0 0 3px var(--hub-glass),
+        0 0 3px var(--hub-glass),
+        0 0 6px var(--hub-glass),
+        0 0 6px var(--hub-glass);
     }
     .desk-hub-message {
       flex: none;
@@ -1350,7 +1345,7 @@
     .desk-sidebar-hover-popover {
       position: fixed;
       z-index: 2000;
-      background: var(--glass-bg-90);
+      background: var(--hub-glass);
       border: none;
       box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--muted) 28%, transparent), 0 2px 5px color-mix(in srgb, var(--icon-fg) 14%, transparent);
       border-radius: 17px;

@@ -17,7 +17,6 @@ use tauri::webview::WebviewWindowBuilder;
 use tauri::Manager;
 use url::Url;
 
-const DARK_BG: &str = "rgb(4,4,4)";
 const DEFAULT_WINDOW_SIZE: f64 = 896.0;
 const MIN_WINDOW_WIDTH: f64 = 160.0;
 const MIN_WINDOW_HEIGHT: f64 = 103.0;
@@ -468,9 +467,13 @@ fn find_repo_root() -> Option<String> {
 
 fn show_hub_error(window: &tauri::WebviewWindow, message: &str) {
     let escaped = message.replace('\\', "\\\\").replace('\'', "\\'");
+    // No background: the window is transparent and there is no Python/CSS to
+    // pull a page color from at this point anyway. The text-shadow keeps the
+    // message legible over whatever shows through (the vibrancy layer, or the
+    // desktop on the rare frame it drops out).
     let _ = window.eval(&format!(
-        "document.body.style.cssText='background:{};color:#fff;padding:60px 40px;font:18px -apple-system,sans-serif';document.body.textContent='{}';",
-        DARK_BG, escaped
+        "document.body.style.cssText='background:transparent;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.9);padding:60px 40px;font:18px -apple-system,sans-serif';document.body.textContent='{}';",
+        escaped
     ));
     let _ = window.show();
 }

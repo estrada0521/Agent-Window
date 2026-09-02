@@ -105,27 +105,36 @@ def _gray_rgb_string(level: int) -> str:
 
 MOBILE_HUB_LIGHT_BG_RGB = (243, 243, 241)
 MOBILE_HUB_DARK_BG_RGB = (9, 9, 9)
+# Desktop page background, one value per (surface, theme). Theme-independent
+# constants so the runtime [data-theme] toggle blocks can reference them
+# without picking up whatever theme the page first rendered under. Hub and
+# chat are separate decisions, free to diverge.
+DESKTOP_HUB_LIGHT_BG_RGB = (249, 249, 247)
+DESKTOP_HUB_DARK_BG_RGB = (13, 13, 12)
+DESKTOP_CHAT_LIGHT_BG_RGB = (249, 249, 247)
+DESKTOP_CHAT_DARK_BG_RGB = (12, 12, 12)
+# How translucent each surface reads over the window. Color + alpha are one
+# decision about how the pane looks, kept adjacent so tuning is one edit.
+# Hub alpha drives --hub-glass (the sidebar glass etc.); chat alpha drives
+# --chat-pane-bg (the .desk-main backdrop behind the transparent iframe).
+DESKTOP_HUB_LIGHT_BG_ALPHA = 0.90
+DESKTOP_HUB_DARK_BG_ALPHA = 0.93
+DESKTOP_CHAT_LIGHT_BG_ALPHA = 0.95
+DESKTOP_CHAT_DARK_BG_ALPHA = 0.95
 
 
-def resolve_theme_levels(settings: Mapping[str, object] | None = None) -> tuple[int, int]:
+def resolve_theme_fg_level(settings: Mapping[str, object] | None = None) -> int:
     theme = str((settings or {}).get("theme", "dark") or "dark").strip().lower()
-    if theme == "light":
-        return 255, 0
-    return 4, 180
+    return 0 if theme == "light" else 180
 
 
 def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[str, object]:
     theme = str((settings or {}).get("theme", "dark") or "dark").strip().lower()
     theme = "light" if theme == "light" else "dark"
-    bg_level, fg_level = resolve_theme_levels(settings)
+    fg_level = resolve_theme_fg_level(settings)
     if theme == "light":
         color_scheme = "light"
-        fg_soft_level = 18
-        fg_bright_level = 0
-        panel_strong_level = 250
         surface_level = 250
-        surface_alt_level = 245
-        hover_level = 235
         inline_border_level = 202
         muted_level = 120
         icon_fg_level = 0
@@ -134,8 +143,6 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
         chip_color_level = 180
         line = "rgba(0, 0, 0, 0.10)"
         line_strong = "rgba(0, 0, 0, 0.18)"
-        table_line = "rgba(0, 0, 0, 0.18)"
-        table_header_line = "rgba(0, 0, 0, 0.28)"
         code_copy_hover_bg = "rgba(0, 0, 0, 0.08)"
         fab_hover_bg = "rgba(235, 235, 235, 0.92)"
         session_hover_bg = "rgba(0, 0, 0, 0.04)"
@@ -146,12 +153,7 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
         panel_row_active_bg = "rgba(0, 0, 0, 0.10)"
     else:
         color_scheme = "dark"
-        fg_soft_level = max(0, fg_level - 7)
-        fg_bright_level = min(255, fg_level + 3)
-        panel_strong_level = 5
         surface_level = 10
-        surface_alt_level = 15
-        hover_level = 20
         inline_border_level = 54
         icon_fg_level = 180
         icon_muted_level = 128
@@ -160,8 +162,6 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
         chip_color_level = 70
         line = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.07)"
         line_strong = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.12)"
-        table_line = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.12)"
-        table_header_line = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.28)"
         code_copy_hover_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.09)"
         fab_hover_bg = "rgba(40, 40, 40, 0.88)"
         session_hover_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.05)"
@@ -170,74 +170,39 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
         panel_row_border = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.14)"
         panel_row_hover_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.13)"
         panel_row_active_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.16)"
-    bg_rgb = (bg_level, bg_level, bg_level)
+    # __DARK_BG__/__DARK_BG_CHANNELS__ feed the :root pre-toggle fallback, the
+    # launch shell, the meta theme-color and the error page -- shell contexts,
+    # not the chat surface -- so they track the hub value.
+    bg_rgb = DESKTOP_HUB_LIGHT_BG_RGB if theme == "light" else DESKTOP_HUB_DARK_BG_RGB
     fg_rgb = (fg_level, fg_level, fg_level)
-    fg_soft_rgb = (fg_soft_level, fg_soft_level, fg_soft_level)
-    fg_bright_rgb = (fg_bright_level, fg_bright_level, fg_bright_level)
-    icon_fg_rgb = _gray_rgb(icon_fg_level)
-    icon_muted_rgb = _gray_rgb(icon_muted_level)
-    icon_hover_rgb = _gray_rgb(icon_hover_level)
     return {
         "theme": theme,
         "color_scheme": color_scheme,
-        "bg_level": bg_level,
-        "fg_level": fg_level,
-        "fg_soft_level": fg_soft_level,
-        "fg_bright_level": fg_bright_level,
-        "dark_bg_rgb": bg_rgb,
         "dark_bg_channels": ", ".join(str(v) for v in bg_rgb),
         "dark_bg": f"rgb({','.join(str(v) for v in bg_rgb)})",
+        "desktop_hub_light_bg": f"rgb({','.join(str(v) for v in DESKTOP_HUB_LIGHT_BG_RGB)})",
+        "desktop_hub_light_bg_fill": f"rgba({', '.join(str(v) for v in DESKTOP_HUB_LIGHT_BG_RGB)}, {DESKTOP_HUB_LIGHT_BG_ALPHA})",
+        "desktop_hub_dark_bg": f"rgb({','.join(str(v) for v in DESKTOP_HUB_DARK_BG_RGB)})",
+        "desktop_hub_dark_bg_fill": f"rgba({', '.join(str(v) for v in DESKTOP_HUB_DARK_BG_RGB)}, {DESKTOP_HUB_DARK_BG_ALPHA})",
+        "desktop_chat_light_bg_channels": ", ".join(str(v) for v in DESKTOP_CHAT_LIGHT_BG_RGB),
+        "desktop_chat_light_bg_fill": f"rgba({', '.join(str(v) for v in DESKTOP_CHAT_LIGHT_BG_RGB)}, {DESKTOP_CHAT_LIGHT_BG_ALPHA})",
+        "desktop_chat_dark_bg_channels": ", ".join(str(v) for v in DESKTOP_CHAT_DARK_BG_RGB),
+        "desktop_chat_dark_bg_fill": f"rgba({', '.join(str(v) for v in DESKTOP_CHAT_DARK_BG_RGB)}, {DESKTOP_CHAT_DARK_BG_ALPHA})",
         "mobile_hub_light_bg_channels": ", ".join(str(v) for v in MOBILE_HUB_LIGHT_BG_RGB),
         "mobile_hub_light_bg": f"rgb({','.join(str(v) for v in MOBILE_HUB_LIGHT_BG_RGB)})",
         "mobile_hub_dark_bg_channels": ", ".join(str(v) for v in MOBILE_HUB_DARK_BG_RGB),
         "mobile_hub_dark_bg": f"rgb({','.join(str(v) for v in MOBILE_HUB_DARK_BG_RGB)})",
-        "light_fg_rgb": fg_rgb,
-        "light_fg_channels": ", ".join(str(v) for v in fg_rgb),
         "light_fg": f"rgb({','.join(str(v) for v in fg_rgb)})",
-        "light_fg_soft_rgb": fg_soft_rgb,
-        "light_fg_soft_channels": ", ".join(str(v) for v in fg_soft_rgb),
-        "light_fg_soft": f"rgb({','.join(str(v) for v in fg_soft_rgb)})",
-        "light_fg_bright_rgb": fg_bright_rgb,
-        "light_fg_bright_channels": ", ".join(str(v) for v in fg_bright_rgb),
-        "light_fg_bright": f"rgb({','.join(str(v) for v in fg_bright_rgb)})",
-        "gray_panel_strong_level": panel_strong_level,
-        "gray_panel_strong_rgb": _gray_rgb(panel_strong_level),
-        "gray_panel_strong_channels": _gray_channels(panel_strong_level),
-        "gray_panel_strong": _gray_rgb_string(panel_strong_level),
-        "gray_surface_level": surface_level,
-        "gray_surface_rgb": _gray_rgb(surface_level),
-        "gray_surface_channels": _gray_channels(surface_level),
+        "light_fg_channels": ", ".join(str(v) for v in fg_rgb),
         "gray_surface": _gray_rgb_string(surface_level),
-        "gray_surface_alt_level": surface_alt_level,
-        "gray_surface_alt_rgb": _gray_rgb(surface_alt_level),
-        "gray_surface_alt_channels": _gray_channels(surface_alt_level),
-        "gray_surface_alt": _gray_rgb_string(surface_alt_level),
-        "gray_hover_level": hover_level,
-        "gray_hover_rgb": _gray_rgb(hover_level),
-        "gray_hover_channels": _gray_channels(hover_level),
-        "gray_hover": _gray_rgb_string(hover_level),
-        "gray_inline_border_level": inline_border_level,
-        "gray_inline_border_rgb": _gray_rgb(inline_border_level),
-        "gray_inline_border_channels": _gray_channels(inline_border_level),
         "gray_inline_border": _gray_rgb_string(inline_border_level),
-        "gray_muted_level": muted_level,
-        "gray_muted_rgb": _gray_rgb(muted_level),
-        "gray_muted_channels": _gray_channels(muted_level),
         "gray_muted": _gray_rgb_string(muted_level),
-        "icon_fg_rgb": icon_fg_rgb,
-        "icon_fg_channels": _gray_channels(icon_fg_level),
         "icon_fg": _gray_rgb_string(icon_fg_level),
-        "icon_muted_rgb": icon_muted_rgb,
-        "icon_muted_channels": _gray_channels(icon_muted_level),
         "icon_muted": _gray_rgb_string(icon_muted_level),
-        "icon_hover_rgb": icon_hover_rgb,
-        "icon_hover_channels": _gray_channels(icon_hover_level),
         "icon_hover": _gray_rgb_string(icon_hover_level),
         "chip_color": _gray_rgb_string(chip_color_level),
         "line": line,
         "line_strong": line_strong,
-        "table_line": table_line,
-        "table_header_line": table_header_line,
         "code_copy_hover_bg": code_copy_hover_bg,
         "fab_hover_bg": fab_hover_bg,
         "session_hover_bg": session_hover_bg,
@@ -251,36 +216,28 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
 
 _DEFAULT_THEME = resolve_theme_palette()
 DARK_BG = _DEFAULT_THEME["dark_bg"]
-LIGHT_FG_CHANNELS = _DEFAULT_THEME["light_fg_channels"]
-LIGHT_FG = _DEFAULT_THEME["light_fg"]
 
 
 def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) -> str:
     palette = resolve_theme_palette(settings)
     dark_bg = str(palette["dark_bg"])
     dark_bg_channels = str(palette["dark_bg_channels"])
+    desktop_hub_light_bg = str(palette["desktop_hub_light_bg"])
+    desktop_hub_light_bg_fill = str(palette["desktop_hub_light_bg_fill"])
+    desktop_hub_dark_bg = str(palette["desktop_hub_dark_bg"])
+    desktop_hub_dark_bg_fill = str(palette["desktop_hub_dark_bg_fill"])
+    desktop_chat_light_bg_channels = str(palette["desktop_chat_light_bg_channels"])
+    desktop_chat_light_bg_fill = str(palette["desktop_chat_light_bg_fill"])
+    desktop_chat_dark_bg_channels = str(palette["desktop_chat_dark_bg_channels"])
+    desktop_chat_dark_bg_fill = str(palette["desktop_chat_dark_bg_fill"])
     mobile_hub_light_bg = str(palette["mobile_hub_light_bg"])
     mobile_hub_light_bg_channels = str(palette["mobile_hub_light_bg_channels"])
     mobile_hub_dark_bg = str(palette["mobile_hub_dark_bg"])
     mobile_hub_dark_bg_channels = str(palette["mobile_hub_dark_bg_channels"])
     light_fg = str(palette["light_fg"])
-    light_fg_channels = str(palette["light_fg_channels"])
-    light_fg_soft = str(palette["light_fg_soft"])
-    light_fg_soft_channels = str(palette["light_fg_soft_channels"])
-    light_fg_bright = str(palette["light_fg_bright"])
-    light_fg_bright_channels = str(palette["light_fg_bright_channels"])
-    gray_panel_strong = str(palette["gray_panel_strong"])
-    gray_panel_strong_channels = str(palette["gray_panel_strong_channels"])
     gray_surface = str(palette["gray_surface"])
-    gray_surface_channels = str(palette["gray_surface_channels"])
-    gray_surface_alt = str(palette["gray_surface_alt"])
-    gray_surface_alt_channels = str(palette["gray_surface_alt_channels"])
-    gray_hover = str(palette["gray_hover"])
-    gray_hover_channels = str(palette["gray_hover_channels"])
     gray_inline_border = str(palette["gray_inline_border"])
-    gray_inline_border_channels = str(palette["gray_inline_border_channels"])
     gray_muted = str(palette["gray_muted"])
-    gray_muted_channels = str(palette["gray_muted_channels"])
     icon_fg = str(palette["icon_fg"])
     icon_muted = str(palette["icon_muted"])
     icon_hover = str(palette["icon_hover"])
@@ -293,28 +250,22 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
         ("__COLOR_SCHEME__", str(palette["color_scheme"])),
         ("__DARK_BG__", dark_bg),
         ("__DARK_BG_CHANNELS__", dark_bg_channels),
+        ("__DESKTOP_HUB_LIGHT_BG__", desktop_hub_light_bg),
+        ("__DESKTOP_HUB_LIGHT_BG_FILL__", desktop_hub_light_bg_fill),
+        ("__DESKTOP_HUB_DARK_BG__", desktop_hub_dark_bg),
+        ("__DESKTOP_HUB_DARK_BG_FILL__", desktop_hub_dark_bg_fill),
+        ("__DESKTOP_CHAT_LIGHT_BG_CHANNELS__", desktop_chat_light_bg_channels),
+        ("__DESKTOP_CHAT_LIGHT_BG_FILL__", desktop_chat_light_bg_fill),
+        ("__DESKTOP_CHAT_DARK_BG_CHANNELS__", desktop_chat_dark_bg_channels),
+        ("__DESKTOP_CHAT_DARK_BG_FILL__", desktop_chat_dark_bg_fill),
         ("__MOBILE_HUB_LIGHT_BG__", mobile_hub_light_bg),
         ("__MOBILE_HUB_LIGHT_BG_CHANNELS__", mobile_hub_light_bg_channels),
         ("__MOBILE_HUB_DARK_BG__", mobile_hub_dark_bg),
         ("__MOBILE_HUB_DARK_BG_CHANNELS__", mobile_hub_dark_bg_channels),
         ("__LIGHT_FG__", light_fg),
-        ("__LIGHT_FG_CHANNELS__", light_fg_channels),
-        ("__LIGHT_FG_SOFT__", light_fg_soft),
-        ("__LIGHT_FG_SOFT_CHANNELS__", light_fg_soft_channels),
-        ("__LIGHT_FG_BRIGHT__", light_fg_bright),
-        ("__LIGHT_FG_BRIGHT_CHANNELS__", light_fg_bright_channels),
-        ("__GRAY_PANEL_STRONG__", gray_panel_strong),
-        ("__GRAY_PANEL_STRONG_CHANNELS__", gray_panel_strong_channels),
         ("__GRAY_SURFACE__", gray_surface),
-        ("__GRAY_SURFACE_CHANNELS__", gray_surface_channels),
-        ("__GRAY_SURFACE_ALT__", gray_surface_alt),
-        ("__GRAY_SURFACE_ALT_CHANNELS__", gray_surface_alt_channels),
-        ("__GRAY_HOVER__", gray_hover),
-        ("__GRAY_HOVER_CHANNELS__", gray_hover_channels),
         ("__GRAY_INLINE_BORDER__", gray_inline_border),
-        ("__GRAY_INLINE_BORDER_CHANNELS__", gray_inline_border_channels),
         ("__GRAY_MUTED__", gray_muted),
-        ("__GRAY_MUTED_CHANNELS__", gray_muted_channels),
         ("__ICON_FG__", icon_fg),
         ("__ICON_MUTED__", icon_muted),
         ("__ICON_HOVER__", icon_hover),
@@ -326,8 +277,6 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
         *_text_color_token_replacements(),
         ("__LINE__", str(palette["line"])),
         ("__LINE_STRONG__", str(palette["line_strong"])),
-        ("__TABLE_LINE__", str(palette["table_line"])),
-        ("__TABLE_HEADER_LINE__", str(palette["table_header_line"])),
         ("__CODE_COPY_HOVER_BG__", str(palette["code_copy_hover_bg"])),
         ("__FAB_HOVER_BG__", str(palette["fab_hover_bg"])),
         ("__SESSION_HOVER_BG__", str(palette["session_hover_bg"])),
