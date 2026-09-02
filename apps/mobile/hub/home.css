@@ -280,12 +280,14 @@
       position: relative;
       overflow: hidden;
       isolation: isolate;
-      background: var(--bg);
+      background:
+        var(--liquid-glass-lg-sheen),
+        rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
       border: 0.5px solid var(--liquid-glass-lg-border);
       border-radius: 999px;
       box-shadow: var(--liquid-glass-lg-shadow);
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
+      backdrop-filter: var(--liquid-glass-blur);
+      -webkit-backdrop-filter: var(--liquid-glass-blur);
       -webkit-tap-highlight-color: transparent;
       transition:
         background 160ms ease,
@@ -305,7 +307,9 @@
     }
 
     .page-header .page-header-actions .page-menu-btn:active {
-      background: var(--session-hover-bg);
+      background:
+        var(--liquid-glass-lg-active-sheen),
+        rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
       border-color: var(--liquid-glass-lg-active-border);
       box-shadow: var(--liquid-glass-lg-active-shadow);
       border-radius: 999px;
