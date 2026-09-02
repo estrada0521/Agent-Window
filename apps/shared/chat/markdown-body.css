@@ -244,6 +244,7 @@
       box-shadow: none;
       min-height: var(--code-scroll-stable-height, auto);
       color: var(--fg);
+      line-height: 1.5;
     }
 
     .md-body .code-block-wrap {
