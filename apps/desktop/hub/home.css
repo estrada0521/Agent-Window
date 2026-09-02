@@ -791,6 +791,10 @@
     }
     .desk-new-session-section {
       padding: 16px 0 0;
+      /* Pull the list up by roughly what .desk-section-label now adds on top
+         (24px, up from 9px), so New Session -> Active keeps its old gap while
+         Active/Archived/Warning still get the headroom. */
+      margin-bottom: -13px;
       border-bottom: none;
       display: block;
       background: transparent;

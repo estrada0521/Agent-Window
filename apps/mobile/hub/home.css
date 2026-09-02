@@ -24,6 +24,9 @@
       --top-gradient-28: rgba(var(--mob-top-gradient-rgb), 0.28);
       --top-gradient-10: rgba(var(--mob-top-gradient-rgb), 0.10);
       --code-bg: rgba(255, 255, 255, 0.05);
+      --row-preview-fg: var(--muted);
+      --dim-row-name-opacity: 0.65;
+      --row-name-weight: 700;
     }
     html[data-theme="light"] {
       color-scheme: light;
@@ -46,6 +49,9 @@
       --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: var(--bg-rgb);
       --code-bg: rgba(0, 0, 0, 0.05);
+      --row-preview-fg: var(--muted);
+      --dim-row-name-opacity: 0.65;
+      --row-name-weight: 700;
     }
     html[data-theme="dark"] {
       color-scheme: dark;
@@ -68,6 +74,9 @@
       --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: var(--bg-rgb);
       --code-bg: rgba(255, 255, 255, 0.05);
+      --row-preview-fg: color-mix(in srgb, var(--muted) 85%, var(--bg));
+      --dim-row-name-opacity: 0.8;
+      --row-name-weight: 600;
     }
 
     * {
@@ -331,7 +340,7 @@
       display: block;
       margin: 0 auto;
       width: 100%;
-      padding-top: 64px;
+      padding-top: 56px;
       padding-bottom: 20px;
     }
 
@@ -344,7 +353,7 @@
     }
 
     .mob-section-label {
-      padding: 14px 20px 5px;
+      padding: 24px 20px 5px;
       font-size: calc(var(--text-size, 13px) - 2px);
       font-weight: 600;
       letter-spacing: 0.08em;
@@ -402,7 +411,7 @@
     .mob-row-name {
       font-family: var(--font-main);
       font-size: 15px;
-      font-weight: 700;
+      font-weight: var(--row-name-weight);
       letter-spacing: 0;
       line-height: 1.2;
       min-width: 0;
@@ -431,7 +440,7 @@
 
     .mob-row-preview {
       margin-top: 3px;
-      color: var(--muted);
+      color: var(--row-preview-fg);
       font-family: var(--font-main);
       font-size: 13px;
       font-weight: 430;
@@ -442,12 +451,13 @@
     }
 
     .mob-row-preview .sender {
-      color: var(--muted);
+      color: var(--row-preview-fg);
       opacity: 1;
     }
 
-    .mob-session-row.archived-row .mob-row-name {
-      opacity: 0.65;
+    .mob-session-row.archived-row .mob-row-name,
+    .mob-warning-row .mob-row-name {
+      opacity: var(--dim-row-name-opacity);
     }
 
     .mob-warning-row .mob-session-row {
