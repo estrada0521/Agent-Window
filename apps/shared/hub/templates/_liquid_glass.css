@@ -1,7 +1,9 @@
-    /* Same liquid-glass button recipe as the mobile chat header
-       (apps/mobile/chat/styles/base.css). The sheen colour is nudged a few
-       levels from the chat values to sit right on the hub's background --
-       darker on dark, off-white on light. */
+    /* The one liquid-glass button recipe -- pulled into both the mobile hub
+       (home.html) and the mobile chat (main.css). Every glass pill (hub menu
+       button, chat header menu, composer, git rows, bottom-sheet button)
+       resolves these tokens; only --bg-rgb differs between the two surfaces.
+       It lives under hub/templates/ because that is the one directory both
+       template include resolvers can read. */
     :root {
       --liquid-glass-blur: blur(28px) saturate(220%) contrast(114%);
     }

@@ -56,7 +56,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --glass-filter-16: blur(16px) saturate(180%);
       --glass-filter-18: blur(18px) saturate(160%);
       --glass-filter-20: blur(20px) saturate(180%);
-      --liquid-glass-blur: blur(28px) saturate(220%) contrast(114%);
       --mobile-sheet-floating-height: 44px;
       --mobile-sheet-floating-bg: var(--panel-row-bg);
       --mobile-sheet-floating-hover-bg: var(--panel-row-hover-bg);
@@ -132,16 +131,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_LIGHT_CHANNELS__;
       --git-del-red: rgb(var(--git-del-red-channels));
-
-      --liquid-glass-lg-sheen: linear-gradient(135deg, rgba(224, 224, 224, 0.82), rgba(224, 224, 224, 0.34) 44%, rgba(224, 224, 224, 0.56));
-      --liquid-glass-lg-border: rgba(0, 0, 0, 0.12);
-      --liquid-glass-lg-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 4px 14px rgba(0, 0, 0, 0.14), 0 1px 0 rgba(255, 255, 255, 0.3);
-      --liquid-glass-lg-fill-opacity: 0.30;
-
-      --liquid-glass-lg-active-sheen: linear-gradient(180deg, rgba(210, 210, 210, 0.30), rgba(210, 210, 210, 0.18) 48%, rgba(210, 210, 210, 0.24));
-      --liquid-glass-lg-active-border: rgba(0, 0, 0, 0.16);
-      --liquid-glass-lg-active-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 6px 18px rgba(0, 0, 0, 0.2);
-      --liquid-glass-lg-active-fill-opacity: 0.60;
     }
     html[data-theme="dark"] {
       color-scheme: dark;
@@ -180,16 +169,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --mobile-top-gradient-rgb: var(--bg-rgb);
       --mobile-sheet-gradient-rgb: var(--bg-rgb);
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);
-
-      --liquid-glass-lg-sheen: linear-gradient(135deg, rgba(108, 108, 108, 0.25), rgba(108, 108, 108, 0.14) 44%, rgba(108, 108, 108, 0.19));
-      --liquid-glass-lg-border: rgba(255, 255, 255, 0.05);
-      --liquid-glass-lg-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.18), 0 8px 26px rgba(0, 0, 0, 0.32);
-      --liquid-glass-lg-fill-opacity: 0.16;
-
-      --liquid-glass-lg-active-sheen: linear-gradient(180deg, rgba(120, 120, 120, 0.32), rgba(120, 120, 120, 0.20) 48%, rgba(120, 120, 120, 0.25));
-      --liquid-glass-lg-active-border: rgba(255, 255, 255, 0.09);
-      --liquid-glass-lg-active-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), inset 0 -1px 0 rgba(0, 0, 0, 0.2), 0 8px 26px rgba(0, 0, 0, 0.34);
-      --liquid-glass-lg-active-fill-opacity: 0.28;
     }
 
     html[data-launch-shell],

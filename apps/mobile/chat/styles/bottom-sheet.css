@@ -202,6 +202,7 @@
       background:
         var(--liquid-glass-lg-active-sheen),
         rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
+      box-shadow: var(--liquid-glass-lg-active-shadow);
       transform: scale(0.94);
     }
 

@@ -107,7 +107,7 @@
         var(--liquid-glass-lg-active-sheen),
         rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
       border: 0.5px solid var(--liquid-glass-lg-active-border);
-      box-shadow: var(--liquid-glass-lg-shadow);
+      box-shadow: var(--liquid-glass-lg-active-shadow);
       border-radius: 8px;
       transition: left 350ms cubic-bezier(0.4, 0, 0.2, 1), width 350ms cubic-bezier(0.4, 0, 0.2, 1);
       pointer-events: none;
