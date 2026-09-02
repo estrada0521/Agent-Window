@@ -2,7 +2,10 @@
       --liquid-glass-blur: blur(28px) saturate(220%) contrast(114%);
     }
     html[data-theme="dark"] {
-      --liquid-glass-lg-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.016) 48%, rgba(255, 255, 255, 0.035));
+      /* Mirror of the light sheen: same gradient, 255,255,255 -> 0,0,0. Light
+         glass reads as flat white on a near-white page; dark glass reads as
+         flat black on a near-black page. */
+      --liquid-glass-lg-sheen: linear-gradient(135deg, rgba(0, 0, 0, 0.14), rgba(0, 0, 0, 0.05) 44%, rgba(0, 0, 0, 0.09));
       --liquid-glass-lg-border: rgba(0, 0, 0, 0.20);
       --liquid-glass-lg-shadow:
         inset 0 1px 0 rgba(0, 0, 0, 0.28),
@@ -11,7 +14,7 @@
         0 8px 26px rgba(255, 255, 255, 0.05);
       --liquid-glass-lg-fill-opacity: 0.58;
 
-      --liquid-glass-lg-active-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.022) 48%, rgba(255, 255, 255, 0.048));
+      --liquid-glass-lg-active-sheen: linear-gradient(180deg, rgba(0, 0, 0, 0.095), rgba(0, 0, 0, 0.024) 48%, rgba(0, 0, 0, 0.055));
       --liquid-glass-lg-active-border: rgba(0, 0, 0, 0.26);
       --liquid-glass-lg-active-shadow: var(--liquid-glass-lg-shadow);
       --liquid-glass-lg-active-fill-opacity: 0.72;

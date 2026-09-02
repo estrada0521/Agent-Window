@@ -1,4 +1,9 @@
-    #paneTracePanel {
+    /* The pane-trace overlay renders dark in either page theme, so it carries
+       its own local token scope (bg / fg here, liquid-glass below) -- the same
+       dark values as base.css's [data-theme="dark"] block, kept here rather
+       than as a "dark-only" set of :root primitives that light has no mirror of. */
+    #paneTracePanel,
+    .pane-viewer {
       --bg-rgb: var(--pane-trace-body-bg-channels);
       --bg: var(--pane-trace-body-bg);
       --fg: rgb(var(--dark-fg-rgb));
@@ -7,6 +12,22 @@
       --icon-muted: rgb(150, 150, 150);
       --bottom-sheet-top-gradient-rgb: var(--pane-trace-body-bg-channels);
       color-scheme: dark;
+
+      --liquid-glass-lg-sheen: linear-gradient(135deg, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.34) 44%, rgba(0, 0, 0, 0.56));
+      --liquid-glass-lg-active-sheen: linear-gradient(180deg, rgba(0, 0, 0, 0.095), rgba(0, 0, 0, 0.024) 48%, rgba(0, 0, 0, 0.055));
+      --liquid-glass-lg-border: rgba(0, 0, 0, 0.20);
+      --liquid-glass-lg-active-border: rgba(0, 0, 0, 0.26);
+      --liquid-glass-lg-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.08), inset 0 0 18px rgba(0, 0, 0, 0.05), 0 8px 26px rgba(255, 255, 255, 0.05);
+      --liquid-glass-lg-active-shadow: var(--liquid-glass-lg-shadow);
+      --liquid-glass-lg-fill-opacity: 0.58;
+      --liquid-glass-lg-active-fill-opacity: 0.72;
+      --liquid-glass-sm-sheen: var(--liquid-glass-lg-sheen);
+      --liquid-glass-sm-sheen-active: var(--liquid-glass-lg-active-sheen);
+      --liquid-glass-sm-border: var(--liquid-glass-lg-border);
+      --liquid-glass-sm-border-active: var(--liquid-glass-lg-active-border);
+      --liquid-glass-sm-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.08), inset 0 0 18px rgba(0, 0, 0, 0.05), 0 4px 18px rgba(255, 255, 255, 0.045);
+      --liquid-glass-sm-fill-opacity: var(--liquid-glass-lg-fill-opacity);
+      --liquid-glass-sm-fill-opacity-active: var(--liquid-glass-lg-active-fill-opacity);
     }
 
     .shell>.page-header>#paneTracePanel {
@@ -32,21 +53,6 @@
       min-height: 0;
       display: flex;
       flex-direction: column;
-    }
-
-    html[data-theme="light"] #paneTracePanel .mobile-bottom-sheet-button {
-      background:
-        var(--liquid-glass-dark-sheen),
-        rgba(var(--bg-rgb), var(--liquid-glass-dark-fill-opacity));
-      border-color: var(--liquid-glass-dark-border);
-      box-shadow: var(--liquid-glass-dark-sm-shadow);
-    }
-
-    html[data-theme="light"] #paneTracePanel .mobile-bottom-sheet-button:active {
-      background:
-        var(--liquid-glass-dark-sheen-active),
-        rgba(var(--bg-rgb), var(--liquid-glass-dark-fill-opacity-active));
-      border-color: var(--liquid-glass-dark-border-active);
     }
 
     .pane-viewer {
@@ -87,10 +93,10 @@
       max-width: calc(100% - 16px);
       transform: translateX(-50%);
       background:
-        var(--liquid-glass-dark-sheen),
-        rgba(var(--bg-rgb), var(--liquid-glass-dark-fill-opacity));
-      border: 0.5px solid var(--liquid-glass-dark-border);
-      box-shadow: var(--liquid-glass-dark-lg-shadow);
+        var(--liquid-glass-lg-sheen),
+        rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
+      border: 0.5px solid var(--liquid-glass-lg-border);
+      box-shadow: var(--liquid-glass-lg-shadow);
       backdrop-filter: var(--liquid-glass-blur);
       -webkit-backdrop-filter: var(--liquid-glass-blur);
     }
@@ -105,10 +111,10 @@
       bottom: 2px;
       height: auto;
       background:
-        var(--liquid-glass-dark-sheen-active),
-        rgba(var(--bg-rgb), var(--liquid-glass-dark-fill-opacity-active));
-      border: 0.5px solid var(--liquid-glass-dark-border-active);
-      box-shadow: var(--liquid-glass-dark-lg-shadow);
+        var(--liquid-glass-lg-active-sheen),
+        rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
+      border: 0.5px solid var(--liquid-glass-lg-active-border);
+      box-shadow: var(--liquid-glass-lg-shadow);
       border-radius: 8px;
       transition: left 350ms cubic-bezier(0.4, 0, 0.2, 1), width 350ms cubic-bezier(0.4, 0, 0.2, 1);
       pointer-events: none;
