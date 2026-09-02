@@ -827,8 +827,8 @@
       background: transparent;
     }
     .desk-section-label {
-      padding: 9px 12px 8px;
-      font-size: calc(var(--text-size, 13px) - 2px);
+      padding: 24px 12px 5px;
+      font-size: calc(var(--text-size, 13px) - 3px);
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--muted);
@@ -1375,8 +1375,8 @@
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
     }
     .desk-sidebar-hover-list .desk-section-label {
-      padding: 6px 12px 4px;
-      font-size: calc(var(--text-size, 13px) - 2px);
+      padding: 14px 12px 3px;
+      font-size: calc(var(--text-size, 13px) - 3px);
     }
     .desk-sidebar-hover-list .desk-session-row {
       border-radius: 8px;
