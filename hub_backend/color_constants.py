@@ -118,7 +118,7 @@ DESKTOP_CHAT_DARK_BG_RGB = (13, 13, 13)
 # Hub alpha drives --hub-glass (the sidebar glass etc.); chat alpha drives
 # --chat-pane-bg (the .desk-main backdrop behind the transparent iframe).
 DESKTOP_HUB_LIGHT_BG_ALPHA = 0.88
-DESKTOP_HUB_DARK_BG_ALPHA = 0.88
+DESKTOP_HUB_DARK_BG_ALPHA = 0.90
 DESKTOP_CHAT_LIGHT_BG_ALPHA = 0.93
 DESKTOP_CHAT_DARK_BG_ALPHA = 0.93
 
