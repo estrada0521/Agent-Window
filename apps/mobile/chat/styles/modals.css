@@ -21,13 +21,6 @@
       --liquid-glass-lg-active-shadow: var(--liquid-glass-lg-shadow);
       --liquid-glass-lg-fill-opacity: 0.16;
       --liquid-glass-lg-active-fill-opacity: 0.28;
-      --liquid-glass-sm-sheen: var(--liquid-glass-lg-sheen);
-      --liquid-glass-sm-sheen-active: var(--liquid-glass-lg-active-sheen);
-      --liquid-glass-sm-border: var(--liquid-glass-lg-border);
-      --liquid-glass-sm-border-active: var(--liquid-glass-lg-active-border);
-      --liquid-glass-sm-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.20), 0 4px 18px rgba(0, 0, 0, 0.35);
-      --liquid-glass-sm-fill-opacity: var(--liquid-glass-lg-fill-opacity);
-      --liquid-glass-sm-fill-opacity-active: var(--liquid-glass-lg-active-fill-opacity);
     }
 
     .shell>.page-header>#paneTracePanel {
