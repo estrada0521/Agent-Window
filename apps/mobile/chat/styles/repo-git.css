@@ -563,14 +563,6 @@
       cursor: pointer;
     }
 
-    .git-summary-row.clickable:active {
-      background: var(--panel-row-selected-bg);
-    }
-
-    .has-hover .git-summary-row.clickable:hover {
-      background: var(--panel-row-bg);
-    }
-
     .git-summary-row .git-commit-info {
       flex-direction: row;
       align-items: center;
@@ -594,14 +586,6 @@
 
     .git-summary-wrap .git-summary-label {
       display: none;
-    }
-
-    .git-summary-wrap .git-summary-row.clickable:active,
-    .has-hover .git-summary-wrap .git-summary-row.clickable:hover {
-      background:
-        var(--liquid-glass-lg-active-sheen),
-        rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
-      border-color: var(--liquid-glass-lg-active-border);
     }
 
     .git-summary-wrap .git-summary-row .git-commit-chevron {
