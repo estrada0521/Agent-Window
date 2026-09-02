@@ -369,7 +369,7 @@
       font-weight: 600;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--fg);
       border-bottom: var(--table-line-width) solid var(--table-mid-line);
     }
 
