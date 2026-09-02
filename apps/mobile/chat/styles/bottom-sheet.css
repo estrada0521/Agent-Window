@@ -69,7 +69,6 @@
       overflow: hidden;
       pointer-events: auto;
       border-radius: 28px 28px 0 0;
-      border-top: 0.5px solid var(--mobile-sheet-top-border);
       background: var(--bg);
       backdrop-filter: none;
       -webkit-backdrop-filter: none;

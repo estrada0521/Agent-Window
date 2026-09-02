@@ -30,6 +30,16 @@
       background: rgba(var(--bg-rgb), 0.22);
     }
 
+    html[data-theme="dark"] .composer-overlay.visible {
+      background: rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    html[data-theme="dark"] .composer-overlay.visible.composer-attach-drag {
+      background: rgba(0, 0, 0, 0.32);
+    }
+
     .composer-overlay.closing {
       opacity: 0;
       pointer-events: none;
