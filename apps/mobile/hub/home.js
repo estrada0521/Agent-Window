@@ -9,11 +9,7 @@
     let _hubPreOverlayScrollY = 0;
     let _currentChatSessionName = "";
     let _currentChatUrl = "";
-    let _prewarmedSessionName = "";
-    let _prewarmedChatUrl = "";
-    let _prewarmedFrameReady = false;
-    let _prewarmedFrameRenderReady = false;
-    let _prewarmToken = 0;
+    let _chatFrameRenderReady = false;
     let _hubLaunchShellPending = false;
     let _awaitingChatRenderReady = false;
     let _hubReadyTimeoutTimer = 0;
@@ -24,7 +20,6 @@
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
     const HUB_CHAT_URL_CACHE_TTL_MS = 180000;
     const HUB_CHAT_URL_CACHE_LIMIT = 3;
-    const HUB_ACTIVE_PREWARM_LIMIT = 3;
     const HUB_LAUNCH_SHELL_PARAM = "launch_shell";
     const hubChatUrls = createHubChatUrlResolver({
       cacheLimit: HUB_CHAT_URL_CACHE_LIMIT,
@@ -227,93 +222,6 @@
     function cacheChatUrl(name, url) {
       hubChatUrls.write(name, url);
     }
-    function setPrewarmingOverlayActive(active) {
-      _chatOverlay.classList.toggle("prewarming", !!active);
-      if (active) {
-        _chatOverlay.classList.remove("overlay-visible", "overlay-closing");
-        resetChatOverlayMotionStyles();
-        _chatOverlay.hidden = false;
-      } else {
-        _chatOverlay.classList.remove("prewarming", "overlay-closing");
-        resetChatOverlayMotionStyles();
-      }
-    }
-    function primeChatFrame(sessionName, chatUrl) {
-      const normalizedName = String(sessionName || "").trim();
-      const normalizedUrl = hubFrameChatUrl(chatUrl, normalizedName);
-      if (!normalizedName || !normalizedUrl) return;
-      const reusingSameSrc = hubFrameSrcMatches(normalizedUrl);
-      _prewarmedSessionName = normalizedName;
-      _prewarmedChatUrl = normalizedUrl;
-      if (!reusingSameSrc) {
-        _prewarmedFrameReady = false;
-        _prewarmedFrameRenderReady = false;
-      }
-      setPrewarmingOverlayActive(true);
-      _chatFrame.onload = function () {
-        _prewarmedFrameReady = true;
-        publishMobileTheme();
-      };
-      if (!reusingSameSrc) {
-        _chatFrame.style.transition = "none";
-        _chatFrame.style.opacity = "0";
-        _chatFrame.src = normalizedUrl;
-      } else {
-        _prewarmedFrameReady = true;
-      }
-    }
-    async function resolveChatUrl(openHref, name, { force = false, prewarm = false } = {}) {
-      const chatUrl = await hubChatUrls.resolve(openHref, name, { force });
-      if (prewarm && chatUrl) primeChatFrame(name, chatUrl);
-      return chatUrl;
-    }
-    function activeWarmCandidates(activeSessions) {
-      return (activeSessions || [])
-        .filter((session) => String(session?.name || "").trim());
-    }
-    function choosePrewarmSession(activeSessions) {
-      const active = activeWarmCandidates(activeSessions);
-      if (!active.length) return null;
-      const remembered = lastRememberedSession();
-      return active.find((session) => String(session?.name || "") === remembered) || active[0];
-    }
-    function scheduleActiveSessionPrewarm(activeSessions) {
-      if (_chatOverlay && !_chatOverlay.hidden && !_chatOverlay.classList.contains("prewarming")) return;
-      const token = ++_prewarmToken;
-      const active = activeWarmCandidates(activeSessions).slice(0, HUB_ACTIVE_PREWARM_LIMIT);
-      if (!active.length) return;
-      const primary = choosePrewarmSession(active) || active[0];
-      const primaryName = String(primary?.name || "").trim();
-      const orderedActive = [
-        primary,
-        ...active.filter((session) => String(session?.name || "").trim() !== primaryName),
-      ];
-      orderedActive.forEach((session, index) => {
-        const sessionName = String(session?.name || "").trim();
-        if (!sessionName) return;
-        const openHref = `/open-session?session=${encodeURIComponent(sessionName)}`;
-        const shouldPrimeFrame = index === 0;
-        const runWarm = () => {
-          if (token !== _prewarmToken) return;
-          resolveChatUrl(openHref, sessionName, { prewarm: shouldPrimeFrame }).catch(() => {
-            if (token !== _prewarmToken) return;
-          });
-        };
-        const delayMs = shouldPrimeFrame ? 0 : Math.min(2500, index * 180);
-        if (delayMs <= 0) runWarm();
-        else setTimeout(runWarm, delayMs);
-      });
-    }
-    function kickstartRememberedSessionPrewarm() {
-      if (_chatOverlay && !_chatOverlay.hidden && !_chatOverlay.classList.contains("prewarming")) return;
-      const sessionName = lastRememberedSession();
-      if (!sessionName) return;
-      const token = ++_prewarmToken;
-      const openHref = `/open-session?session=${encodeURIComponent(sessionName)}`;
-      resolveChatUrl(openHref, sessionName, { prewarm: true }).catch(() => {
-        if (token !== _prewarmToken) return;
-      });
-    }
     function _bumpHubChatParentLayoutMax() {
       if (_chatOverlay.hidden) return;
       const ih = window.innerHeight || 0;
@@ -416,38 +324,30 @@
       _hubLayoutRefH = window.innerHeight || 0;
       _hubChatParentLayoutMax = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
       const onChatReady = function () {
-        _prewarmedSessionName = normalizedName;
-        _prewarmedChatUrl = normalizedUrl;
-        _prewarmedFrameReady = true;
         _chatFrame.style.transition = "opacity 140ms ease";
         _chatFrame.style.opacity = "1";
         _bumpHubChatParentLayoutMax();
         _postHubLayoutToChat();
         publishMobileTheme();
-        if (_prewarmedFrameRenderReady) {
+        if (_chatFrameRenderReady) {
           persistChatFrameState(normalizedUrl, normalizedName);
           finishChatRenderWait();
         }
       };
-      const canReusePrewarm =
-        normalizedName &&
-        _prewarmedFrameRenderReady &&
-        _prewarmedSessionName === normalizedName &&
-        normalizeComparableUrl(_prewarmedChatUrl) === normalizeComparableUrl(normalizedUrl) &&
-        hubFrameSrcMatches(normalizedUrl);
-      if (!canReusePrewarm) {
-        _chatFrame.style.transition = "none";
-        _chatFrame.style.opacity = "0";
-      } else {
-        _chatFrame.style.opacity = "1";
-      }
+      // chat -> hub -> same chat: the frame still holds that rendered
+      // session, so re-show it as-is instead of blanking and reloading --
+      // the session should feel continuous, not rebuilt. (A stale ts in the
+      // resolved URL past the cache TTL falls through to a fresh load.)
+      const reuseLoadedFrame =
+        !!normalizedName && _chatFrameRenderReady && hubFrameSrcMatches(normalizedUrl);
+      _chatFrame.style.transition = "none";
+      _chatFrame.style.opacity = reuseLoadedFrame ? "1" : "0";
       _chatFrame.onload = onChatReady;
       _attachHubViewportBridge();
       updateMenuContext(true);
       _hubPreOverlayScrollY = window.scrollY || document.documentElement.scrollTop || 0;
       document.documentElement.classList.add("hub-chat-overlay-active");
       document.body.classList.add("hub-chat-overlay-active");
-      setPrewarmingOverlayActive(false);
       const _wasPeeking = _chatOverlay.classList.contains("overlay-peeking");
       document.documentElement.classList.remove("hub-chat-peeking");
       _chatOverlay.classList.remove("overlay-visible", "overlay-closing", "overlay-peeking");
@@ -459,7 +359,7 @@
       } else {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            if (_chatOverlay.hidden || _chatOverlay.classList.contains("prewarming")) return;
+            if (_chatOverlay.hidden) return;
             _chatOverlay.classList.add("overlay-visible");
             document.documentElement.classList.add("hub-chat-ui-active");
           });
@@ -467,15 +367,14 @@
       }
       _currentChatSessionName = normalizedName;
       syncMobileSelectedSessionRows();
-      if (!canReusePrewarm) {
-        _prewarmedFrameReady = false;
-        _prewarmedFrameRenderReady = false;
+      if (reuseLoadedFrame) {
+        requestAnimationFrame(onChatReady);
+      } else {
+        _chatFrameRenderReady = false;
         if (hubFrameSrcMatches(normalizedUrl)) {
           _chatFrame.src = "about:blank";
         }
         _chatFrame.src = normalizedUrl;
-      } else if (_prewarmedFrameReady) {
-        requestAnimationFrame(onChatReady);
       }
       _fitChatOverlay();
     }
@@ -514,7 +413,7 @@
       resetLaunchShellCard();
       const needsReviveTransition = /^\/revive-session(?:[/?]|$)/.test(String(openHref || ""));
       if (needsReviveTransition) showLaunchShell();
-      resolveChatUrl(openHref, name, { force: needsReviveTransition })
+      hubChatUrls.resolve(openHref, name, { force: needsReviveTransition })
         .then((chatUrl) => {
           openChatInFrame(chatUrl, name);
           if (needsReviveTransition) {
@@ -527,17 +426,16 @@
     }
     window.addEventListener("message", function (e) {
       if (e.data && e.data.type === "chat-render-error" && e.source === _chatFrame.contentWindow) {
-        _prewarmedFrameReady = false;
-        _prewarmedFrameRenderReady = false;
-        if (_chatOverlay.classList.contains("prewarming") || !_awaitingChatRenderReady) {
+        _chatFrameRenderReady = false;
+        if (!_awaitingChatRenderReady) {
           return;
         }
         failHubReadyWait(e.data.message || "render failed");
         return;
       }
       if (e.data && e.data.type === "chat-render-ready" && e.source === _chatFrame.contentWindow) {
-        _prewarmedFrameRenderReady = true;
-        if (!_chatOverlay.hidden && !_chatOverlay.classList.contains("prewarming")) {
+        _chatFrameRenderReady = true;
+        if (!_chatOverlay.hidden) {
           _chatFrame.style.transition = "opacity 140ms ease";
           _chatFrame.style.opacity = "1";
           if (_currentChatUrl) {
@@ -822,7 +720,6 @@
           });
           if (!force && window._lastMobRenderSig === sig) {
             _mobSessionsRenderedOnce = true;
-            scheduleActiveSessionPrewarm(activeSessions);
             releaseHubLaunchShellAfterRender();
             return;
           }
@@ -830,7 +727,6 @@
 
           renderRows(activeSessions, warningSessions, archivedSessions);
           _mobSessionsRenderedOnce = true;
-          scheduleActiveSessionPrewarm(activeSessions);
           releaseHubLaunchShellAfterRender();
         } catch (_) {
           if (requestSeq !== _mobSessionsRequestSeq) return;
@@ -839,7 +735,6 @@
           if (_hubLaunchShellPending) failHubReadyWait("Failed to load sessions");
         }
       };
-      kickstartRememberedSessionPrewarm();
       refreshMobSessions = refresh;
       startHubSessionMessagesEvents(() => refresh(true));
       refresh();

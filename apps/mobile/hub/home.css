@@ -652,21 +652,6 @@
       }
     }
 
-    #chatOverlay.prewarming {
-      display: block;
-      left: -9999px;
-      top: -9999px;
-      right: auto;
-      bottom: auto;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      pointer-events: none;
-      background: transparent;
-      opacity: 0;
-      transform: none;
-      transition: none;
-    }
 
     @media (prefers-reduced-motion: reduce) {
       #chatOverlay {
