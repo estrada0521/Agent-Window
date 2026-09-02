@@ -110,17 +110,17 @@ MOBILE_HUB_DARK_BG_RGB = (9, 9, 9)
 # without picking up whatever theme the page first rendered under. Hub and
 # chat are separate decisions, free to diverge.
 DESKTOP_HUB_LIGHT_BG_RGB = (249, 249, 247)
-DESKTOP_HUB_DARK_BG_RGB = (13, 13, 12)
+DESKTOP_HUB_DARK_BG_RGB = (13, 13, 13)
 DESKTOP_CHAT_LIGHT_BG_RGB = (249, 249, 247)
-DESKTOP_CHAT_DARK_BG_RGB = (12, 12, 12)
+DESKTOP_CHAT_DARK_BG_RGB = (13, 13, 13)
 # How translucent each surface reads over the window. Color + alpha are one
 # decision about how the pane looks, kept adjacent so tuning is one edit.
 # Hub alpha drives --hub-glass (the sidebar glass etc.); chat alpha drives
 # --chat-pane-bg (the .desk-main backdrop behind the transparent iframe).
-DESKTOP_HUB_LIGHT_BG_ALPHA = 0.90
-DESKTOP_HUB_DARK_BG_ALPHA = 0.93
-DESKTOP_CHAT_LIGHT_BG_ALPHA = 0.95
-DESKTOP_CHAT_DARK_BG_ALPHA = 0.95
+DESKTOP_HUB_LIGHT_BG_ALPHA = 0.88
+DESKTOP_HUB_DARK_BG_ALPHA = 0.88
+DESKTOP_CHAT_LIGHT_BG_ALPHA = 0.93
+DESKTOP_CHAT_DARK_BG_ALPHA = 0.93
 
 
 def resolve_theme_fg_level(settings: Mapping[str, object] | None = None) -> int:

@@ -545,6 +545,17 @@ fn wait_for_child_success(child: &mut Child, timeout: Duration) -> bool {
     }
 }
 
+// A soft dark veil over the vibrancy in dark mode so the window reads as
+// tinted glass; in light mode the glass stays fully clear (no tint). Follows
+// the effective macOS appearance -- window.theme() tracks the OS, since the
+// app never calls set_theme().
+fn glass_tint(window: &tauri::WebviewWindow) -> Option<(u8, u8, u8, u8)> {
+    match window.theme() {
+        Ok(tauri::Theme::Light) => None,
+        _ => Some((0, 0, 0, 97)),
+    }
+}
+
 fn apply_app_vibrancy(window: &tauri::WebviewWindow) {
     // apply_liquid_glass()/apply_vibrancy() both unconditionally add a new
     // effect view on every call rather than replacing an existing one, so a
@@ -554,7 +565,7 @@ fn apply_app_vibrancy(window: &tauri::WebviewWindow) {
     // a little more each time it regains focus.
     let _ = clear_liquid_glass(window);
     let _ = clear_vibrancy(window);
-    if let Err(err) = apply_liquid_glass(window, NSGlassEffectViewStyle::Clear, None, Some(26.0)) {
+    if let Err(err) = apply_liquid_glass(window, NSGlassEffectViewStyle::Clear, glass_tint(window), Some(26.0)) {
         eprintln!("[app] liquid glass apply failed: {}", err);
         if let Err(err) = apply_vibrancy(
             window,
@@ -691,6 +702,8 @@ fn main() {
                 ) {
                     center_traffic_lights(&traffic_window);
                 } else if let tauri::WindowEvent::ThemeChanged(_) = event {
+                    // The glass tint follows the OS appearance, so rebuild it.
+                    apply_app_vibrancy(&traffic_window);
                     let w = traffic_window.clone();
                     std::thread::spawn(move || {
                         // FIXME: This 500ms delay is unoptimized.
