@@ -13,14 +13,14 @@
       --bottom-sheet-top-gradient-rgb: var(--pane-trace-body-bg-channels);
       color-scheme: dark;
 
-      --liquid-glass-lg-sheen: linear-gradient(135deg, rgba(108, 108, 108, 0.25), rgba(108, 108, 108, 0.14) 44%, rgba(108, 108, 108, 0.19));
-      --liquid-glass-lg-active-sheen: linear-gradient(180deg, rgba(120, 120, 120, 0.32), rgba(120, 120, 120, 0.20) 48%, rgba(120, 120, 120, 0.25));
-      --liquid-glass-lg-border: rgba(255, 255, 255, 0.12);
-      --liquid-glass-lg-active-border: rgba(255, 255, 255, 0.18);
+      --liquid-glass-lg-sheen: linear-gradient(135deg, rgba(40, 40, 40, 0.5), rgba(36, 36, 36, 0.36) 44%, rgba(40, 40, 40, 0.46));
+      --liquid-glass-lg-active-sheen: linear-gradient(180deg, rgba(52, 52, 52, 0.54), rgba(47, 47, 47, 0.4) 48%, rgba(52, 52, 52, 0.5));
+      --liquid-glass-lg-border: rgba(255, 255, 255, 0.05);
+      --liquid-glass-lg-active-border: rgba(255, 255, 255, 0.09);
       --liquid-glass-lg-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
       --liquid-glass-lg-active-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
       --liquid-glass-lg-fill-opacity: 0.16;
-      --liquid-glass-lg-active-fill-opacity: 0.28;
+      --liquid-glass-lg-active-fill-opacity: 0.24;
     }
 
     .shell>.page-header>#paneTracePanel {
