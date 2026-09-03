@@ -325,10 +325,12 @@
         var(--liquid-glass-lg-sheen),
         rgba(var(--bg-rgb), 0.58);
     }
-    html[data-theme="light"] .has-hover #scrollToBottomBtn:hover,
-    html[data-theme="light"] .has-hover #composerFabBtn:hover,
+    html[data-theme="light"].has-hover #scrollToBottomBtn:hover,
+    html[data-theme="light"].has-hover #composerFabBtn:hover,
     html[data-theme="light"] #composerFabBtn:active,
-    html[data-theme="light"] #scrollToBottomBtn:active {
+    html[data-theme="light"] #composerFabBtn.visible:active,
+    html[data-theme="light"] #scrollToBottomBtn:active,
+    html[data-theme="light"] #scrollToBottomBtn.visible:active {
       background:
         var(--liquid-glass-lg-sheen),
         rgba(var(--bg-rgb), 0.90);
