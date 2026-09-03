@@ -301,8 +301,9 @@
     #scrollToBottomBtn,
     #composerFabBtn {
       background:
+        linear-gradient(rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.42)),
         var(--liquid-glass-lg-sheen),
-        rgba(var(--bg-rgb), 0.86);
+        rgba(var(--bg-rgb), 0.5);
     }
     html[data-theme="light"] #scrollToBottomBtn,
     html[data-theme="light"] #composerFabBtn {
@@ -320,8 +321,9 @@
     #scrollToBottomBtn:active,
     #scrollToBottomBtn.visible:active {
       background:
+        linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
         var(--liquid-glass-lg-sheen),
-        rgba(var(--bg-rgb), 0.92);
+        rgba(var(--bg-rgb), 0.58);
     }
     html[data-theme="light"] .has-hover #scrollToBottomBtn:hover,
     html[data-theme="light"] .has-hover #composerFabBtn:hover,
