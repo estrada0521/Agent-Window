@@ -637,6 +637,9 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         document.documentElement.dataset.autoWindowHeight = event.data.on ? "1" : "0";
         syncMainAfterHeight();
         if (event.data.on) {
+          // Entering the mode: the window gets short, so drop the pinned git
+          // summary. Only here — a later explicit re-pin by the user stands.
+          if (dpGitSummaryPinned) dpToggleGitSummaryPinned();
           requestAnimationFrame(reportFitHeight);
         } else {
           // The 50vh spacers just came back; the old scrollTop now points
@@ -652,6 +655,9 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       }
       if (event.data.type === "desktop-chat-reset") {
         closeDesktopRightPanel();
+        // Reset / Compact Window restore the default layout, which includes the
+        // pinned git summary (Fit Height mode drops it and doesn't put it back).
+        if (!dpGitSummaryPinned) dpToggleGitSummaryPinned();
         _pollScrollLockTop = null;
         _pollScrollAnchor = null;
         _stickyToBottom = true;

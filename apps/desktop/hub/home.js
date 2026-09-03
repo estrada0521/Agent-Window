@@ -154,10 +154,15 @@
         );
       } catch (_) {}
     }
-    function toggleDeskAutoWindowHeight() {
-      _deskAutoWindowHeight = !_deskAutoWindowHeight;
+    function setDeskAutoWindowHeight(on) {
+      const next = !!on;
+      if (next === _deskAutoWindowHeight) return;
+      _deskAutoWindowHeight = next;
       persistHubSettings({ auto_window_height: _deskAutoWindowHeight ? "1" : "0" });
       pushDeskAutoWindowHeight();
+    }
+    function toggleDeskAutoWindowHeight() {
+      setDeskAutoWindowHeight(!_deskAutoWindowHeight);
     }
     function fitDeskWindowHeight(contentHeight) {
       if (!_deskAutoWindowHeight) return;
@@ -179,6 +184,7 @@
       showDeskSidebarList({ open: true });
       setDeskSidebarWidth(DESK_DEFAULT_SIDEBAR_WIDTH);
       resetDeskChatView();
+      setDeskAutoWindowHeight(false);
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") {
         showDeskHubMessage("reset window: no tauri invoke available", { error: true });
@@ -194,6 +200,7 @@
     async function compactDeskWindowState() {
       setDeskSidebarOpen(false);
       resetDeskChatView();
+      setDeskAutoWindowHeight(false);
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") {
         showDeskHubMessage("compact window: no tauri invoke available", { error: true });
