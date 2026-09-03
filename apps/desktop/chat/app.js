@@ -178,20 +178,27 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       const topPx = lastRow.getBoundingClientRect().top;
       const bottomPx = (thinkEl || lastRow).getBoundingClientRect().bottom;
       let contentHeight = Math.ceil(bottomPx - topPx);
-      // In this mode the composer overlay is bottom-aligned (see
-      // composer-overlay.css). Its visible height = the field's height + the
-      // fixed structure below it (plus/targets row, statusline). `fieldHeight`
-      // lets the input handler pass the field's *predicted* post-grow height so
-      // the resize is requested before the browser paints the taller field.
+      // The composer overlay is bottom-aligned (see composer-overlay.css). It
+      // only ever grows the window: if the composer already fits the current
+      // viewport, this fit is skipped entirely so a tall transcript isn't
+      // shrink-wrapped; only when the composer would be clipped do we report a
+      // height that fits it.
+      // Measure with offsetHeight, not getBoundingClientRect -- the composer
+      // flies in on a ~620ms transform and rects are scaled/offset during it,
+      // whereas offset metrics are the settled layout box. #composer's own box
+      // stays at the one-line height (the field grows upward out of an
+      // absolutely-positioned anchor), so add the field's overflow above it.
       if (isComposerOverlayOpen()) {
         const box = document.getElementById("composer");
         const ta = document.getElementById("message");
         if (box && ta) {
-          const taRect = ta.getBoundingClientRect();
-          const belowField = box.getBoundingClientRect().bottom - taRect.bottom;
-          const fh = Number.isFinite(fieldHeight) ? fieldHeight : taRect.height;
-          const h = Math.ceil(fh + belowField) + COMPOSER_FIT_SLACK;
-          if (h > 0) contentHeight = h;
+          const FIELD_BASE = 52;
+          const fh = Number.isFinite(fieldHeight)
+            ? fieldHeight
+            : Math.min(200, Math.max(FIELD_BASE, ta.offsetHeight || FIELD_BASE));
+          const need = Math.ceil(box.offsetHeight + Math.max(0, fh - FIELD_BASE)) + COMPOSER_FIT_SLACK;
+          if (need <= window.innerHeight + 1) return; // already fits -- don't resize
+          contentHeight = need;
         }
       }
       if (contentHeight > 0) {
@@ -213,11 +220,11 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     };
     document.addEventListener("chat-transcript-settled", scheduleFitHeight);
     // While the composer is open the window tracks it (open, type, close).
+    // reportFitHeight measures with offset metrics, so this one call on open
+    // sizes the window correctly even though the composer is still flying in.
     document.addEventListener("composer-overlay-open", () => {
       if (document.documentElement.dataset.autoWindowHeight !== "1") return;
       requestAnimationFrame(() => reportFitHeight({ fromComposer: true }));
-      // The composer has a ~620ms open transform; re-measure once it settles.
-      setTimeout(() => reportFitHeight({ fromComposer: true }), 300);
     });
     document.addEventListener("composer-overlay-close-start", () => {
       // Deferred so isComposerOverlayOpen() is already false: re-fit to the
