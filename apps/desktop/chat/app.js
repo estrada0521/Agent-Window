@@ -187,7 +187,7 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       // currently taller. The input then always lands at the same place, and
       // typing never resizes the window.
       // Measure with offsetHeight, not getBoundingClientRect -- the composer
-      // animates in with a scale() and rects are distorted during it, whereas
+      // animates in with a transform and rects are distorted during it, whereas
       // offset metrics are the settled layout box. #composer's own box stays at
       // the one-line height (the field grows upward out of an absolutely-
       // positioned anchor), so add the field's max overflow above it.
