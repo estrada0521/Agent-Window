@@ -322,6 +322,23 @@
       pointer-events: none;
       z-index: 101;
       transform: translateY(3px);
+      /* Blurs with the list during the chat transition. Safe to filter
+         directly -- it has no position:fixed descendants of its own. */
+      transition: filter 440ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    html.hub-chat-ui-active .hub-mobile-tagline {
+      filter: blur(4px);
+    }
+
+    html.hub-chat-peeking .hub-mobile-tagline {
+      transition-duration: 280ms;
+    }
+
+    @media (min-width: 600px) {
+      html.hub-chat-ui-active .hub-mobile-tagline {
+        filter: none;
+      }
     }
 
     .hub-mobile-tagline b {
@@ -334,6 +351,24 @@
       width: 100%;
       padding-top: 56px;
       padding-bottom: 20px;
+      /* Hub list recedes in focus as the chat comes forward -- inverse of the
+         chat's blur, same easing. Only the list (no position:fixed descendants);
+         the fixed header / tagline are siblings, untouched. */
+      transition: filter 440ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    html.hub-chat-ui-active .mob-list-wrap {
+      filter: blur(4px);
+    }
+
+    html.hub-chat-peeking .mob-list-wrap {
+      transition-duration: 280ms;
+    }
+
+    @media (min-width: 600px) {
+      html.hub-chat-ui-active .mob-list-wrap {
+        filter: none;
+      }
     }
 
     .hub-footer-credit {
