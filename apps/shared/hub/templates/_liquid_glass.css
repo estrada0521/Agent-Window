@@ -8,23 +8,23 @@
       --liquid-glass-blur: blur(28px) saturate(220%) contrast(114%);
     }
     html[data-theme="dark"] {
-      --liquid-glass-lg-sheen: linear-gradient(135deg, rgba(64, 64, 64, 0.5), rgba(54, 54, 54, 0.3) 44%, rgba(64, 64, 64, 0.46));
+      --liquid-glass-lg-sheen: linear-gradient(rgba(37, 37, 37, 0.5), rgba(37, 37, 37, 0.5));
       --liquid-glass-lg-border: rgba(255, 255, 255, 0.05);
       --liquid-glass-lg-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.26), 0 4px 14px rgba(0, 0, 0, 0.4);
       --liquid-glass-lg-fill-opacity: 0.16;
 
-      --liquid-glass-lg-active-sheen: linear-gradient(180deg, rgba(76, 76, 76, 0.54), rgba(66, 66, 66, 0.34) 48%, rgba(76, 76, 76, 0.5));
+      --liquid-glass-lg-active-sheen: linear-gradient(rgba(48, 48, 48, 0.52), rgba(48, 48, 48, 0.52));
       --liquid-glass-lg-active-border: rgba(255, 255, 255, 0.09);
       --liquid-glass-lg-active-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.32), 0 6px 18px rgba(0, 0, 0, 0.45);
       --liquid-glass-lg-active-fill-opacity: 0.24;
     }
     html[data-theme="light"] {
-      --liquid-glass-lg-sheen: linear-gradient(135deg, rgba(224, 224, 224, 0.82), rgba(224, 224, 224, 0.34) 44%, rgba(224, 224, 224, 0.56));
+      --liquid-glass-lg-sheen: linear-gradient(rgba(238, 238, 238, 0.42), rgba(238, 238, 238, 0.42));
       --liquid-glass-lg-border: rgba(0, 0, 0, 0.12);
       --liquid-glass-lg-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 4px 14px rgba(0, 0, 0, 0.14), 0 1px 0 rgba(255, 255, 255, 0.3);
       --liquid-glass-lg-fill-opacity: 0.30;
 
-      --liquid-glass-lg-active-sheen: linear-gradient(180deg, rgba(210, 210, 210, 0.30), rgba(210, 210, 210, 0.18) 48%, rgba(210, 210, 210, 0.24));
+      --liquid-glass-lg-active-sheen: linear-gradient(rgba(226, 226, 226, 0.2), rgba(226, 226, 226, 0.2));
       --liquid-glass-lg-active-border: rgba(0, 0, 0, 0.16);
       --liquid-glass-lg-active-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 6px 18px rgba(0, 0, 0, 0.2);
       --liquid-glass-lg-active-fill-opacity: 0.60;
