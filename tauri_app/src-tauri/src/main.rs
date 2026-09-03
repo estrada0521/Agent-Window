@@ -21,8 +21,6 @@ const DEFAULT_WINDOW_SIZE: f64 = 896.0;
 const MIN_WINDOW_WIDTH: f64 = 160.0;
 const MIN_WINDOW_HEIGHT: f64 = 103.0;
 const COMPACT_WINDOW_WIDTH: f64 = 560.0;
-const MINI_WINDOW_WIDTH: f64 = 560.0;
-const MINI_WINDOW_HEIGHT: f64 = 141.0;
 
 use window_vibrancy::{
     apply_liquid_glass, apply_vibrancy, clear_liquid_glass, clear_vibrancy, NSGlassEffectViewStyle,
@@ -320,14 +318,6 @@ fn show_appearance_menu(
     .build(&app)
     .map_err(|err| err.to_string())?;
 
-    let mini_window = MenuItemBuilder::with_id(
-        format!("{}action:miniWindow", NATIVE_MENU_PREFIX),
-        "Mini Window",
-    )
-    .accelerator("Cmd+Alt+8")
-    .build(&app)
-    .map_err(|err| err.to_string())?;
-
     let always_on_top = CheckMenuItemBuilder::with_id(
         format!("{}action:toggleAlwaysOnTop", NATIVE_MENU_PREFIX),
         "Always on Top",
@@ -363,7 +353,6 @@ fn show_appearance_menu(
         .separator()
         .item(&reset_window)
         .item(&compact_window)
-        .item(&mini_window)
         .item(&always_on_top)
         .item(&auto_window_height)
         .separator()
@@ -440,28 +429,6 @@ fn set_window_height(window: tauri::WebviewWindow, height: f64) -> Result<(), St
         .map_err(|err| err.to_string())?;
     window
         .set_position(tauri::LogicalPosition::new(cur_pos.x, y))
-        .map_err(|err| err.to_string())
-}
-
-#[tauri::command]
-fn mini_window_geometry(window: tauri::WebviewWindow) -> Result<(), String> {
-    // Same monitor-based centering as reset/compact.
-    let width = MINI_WINDOW_WIDTH;
-    let height = MINI_WINDOW_HEIGHT;
-    let scale_factor = window.scale_factor().map_err(|err| err.to_string())?;
-    let monitor = window
-        .current_monitor()
-        .map_err(|err| err.to_string())?
-        .ok_or_else(|| "no monitor available".to_string())?;
-    let monitor_pos = monitor.position().to_logical::<f64>(scale_factor);
-    let monitor_size = monitor.size().to_logical::<f64>(scale_factor);
-    let x = monitor_pos.x + ((monitor_size.width - width) / 2.0).max(0.0);
-    let y = monitor_pos.y + ((monitor_size.height - height) / 2.0).max(0.0);
-    window
-        .set_size(tauri::LogicalSize::new(width, height))
-        .map_err(|err| err.to_string())?;
-    window
-        .set_position(tauri::LogicalPosition::new(x, y))
         .map_err(|err| err.to_string())
 }
 
@@ -746,7 +713,6 @@ fn main() {
             reset_window_geometry,
             compact_window_geometry,
             set_always_on_top,
-            mini_window_geometry,
             set_window_height
         ])
         .on_menu_event(|app, event| {

@@ -179,7 +179,6 @@
       showDeskSidebarList({ open: true });
       setDeskSidebarWidth(DESK_DEFAULT_SIDEBAR_WIDTH);
       resetDeskChatView();
-      setDeskAlwaysOnTopPersisted(false);
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") {
         showDeskHubMessage("reset window: no tauri invoke available", { error: true });
@@ -195,7 +194,6 @@
     async function compactDeskWindowState() {
       setDeskSidebarOpen(false);
       resetDeskChatView();
-      setDeskAlwaysOnTopPersisted(false);
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") {
         showDeskHubMessage("compact window: no tauri invoke available", { error: true });
@@ -205,22 +203,6 @@
         await invoke("compact_window_geometry");
       } catch (err) {
         showDeskHubMessage(`compact window failed: ${err}`, { error: true });
-      }
-    }
-
-    async function miniDeskWindowState() {
-      setDeskSidebarOpen(false);
-      resetDeskChatView();
-      setDeskAlwaysOnTopPersisted(true);
-      const invoke = getTauriInvoke();
-      if (typeof invoke !== "function") {
-        showDeskHubMessage("mini window: no tauri invoke available", { error: true });
-        return;
-      }
-      try {
-        await invoke("mini_window_geometry");
-      } catch (err) {
-        showDeskHubMessage(`mini window failed: ${err}`, { error: true });
       }
     }
 
@@ -255,11 +237,6 @@
       if (event.metaKey && event.altKey && (event.code === "Digit9" || event.key === "9")) {
         event.preventDefault();
         void compactDeskWindowState();
-        return;
-      }
-      if (event.metaKey && event.altKey && (event.code === "Digit8" || event.key === "8")) {
-        event.preventDefault();
-        void miniDeskWindowState();
         return;
       }
       if (event.metaKey && event.code === "Comma") {
@@ -327,10 +304,6 @@
       }
       if (detail.action === "compactWindow") {
         void compactDeskWindowState();
-        return;
-      }
-      if (detail.action === "miniWindow") {
-        void miniDeskWindowState();
         return;
       }
       if (detail.action === "toggleAlwaysOnTop") {
@@ -1563,10 +1536,6 @@
       }
       if (event.data && event.data.type === "compact-window-shortcut") {
         void compactDeskWindowState();
-        return;
-      }
-      if (event.data && event.data.type === "mini-window-shortcut") {
-        void miniDeskWindowState();
         return;
       }
       if (event.data && event.data.type === "always-on-top-shortcut") {
