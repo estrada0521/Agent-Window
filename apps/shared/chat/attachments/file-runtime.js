@@ -3,17 +3,7 @@ __CHAT_INCLUDE:../file-resolve.js__
     const fileDrop = document.getElementById("fileDropdown");
     let _dropActiveIdx = -1;
     let _ignoreGlobalClick = false;
-    let _keepAutocompleteMenuOnBlur = false;
-    let _keepAutocompleteMenuBlurTimer = null;
     let _dropTimeout = null;
-    const armAutocompleteMenuBlurGuard = () => {
-      _keepAutocompleteMenuOnBlur = true;
-      if (_keepAutocompleteMenuBlurTimer) clearTimeout(_keepAutocompleteMenuBlurTimer);
-      _keepAutocompleteMenuBlurTimer = setTimeout(() => {
-        _keepAutocompleteMenuOnBlur = false;
-        _keepAutocompleteMenuBlurTimer = null;
-      }, 260);
-    };
     const _dropItems = () => fileDrop.querySelectorAll(".file-item");
     const closeDrop = ({ immediate = false } = {}) => {
       if (immediate) {
@@ -149,8 +139,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
     fileDrop.addEventListener("click", (e) => {
       e.stopPropagation();
     });
-    fileDrop.addEventListener("pointerdown", armAutocompleteMenuBlurGuard);
-    fileDrop.addEventListener("touchstart", armAutocompleteMenuBlurGuard, { passive: true });
     fileDrop.addEventListener("mousedown", (e) => {
       const item = e.target.closest(".file-item");
       if (item) { e.preventDefault(); selectFile(item.dataset.path); }

@@ -105,8 +105,6 @@
     };
     messageInput.addEventListener("input", updateCmdAutocomplete);
     cmdDrop.addEventListener("click", (e) => e.stopPropagation());
-    cmdDrop.addEventListener("pointerdown", armAutocompleteMenuBlurGuard);
-    cmdDrop.addEventListener("touchstart", armAutocompleteMenuBlurGuard, { passive: true });
     cmdDrop.addEventListener("mousedown", (e) => {
       const item = e.target.closest(".cmd-item");
       if (item) { e.preventDefault(); selectCmd(parseInt(item.dataset.idx, 10)); }
@@ -134,16 +132,6 @@
         closeCmdDrop();
       }
     }, true);
-
-    messageInput.addEventListener("blur", (event) => {
-      const nextTarget = event.relatedTarget;
-      const keepAutocompleteMenusOpen = _keepAutocompleteMenuOnBlur
-        || !!(nextTarget && (fileDrop.contains(nextTarget) || cmdDrop.contains(nextTarget)));
-      if (!keepAutocompleteMenusOpen) {
-        setTimeout(closeDrop, 150);
-        setTimeout(closeCmdDrop, 150);
-      }
-    });
 
     const doCopyFallback = (text) => {
       const ta = document.createElement("textarea");
