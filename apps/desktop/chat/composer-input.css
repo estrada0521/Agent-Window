@@ -35,39 +35,18 @@
       position: relative;
       border-radius: 26px;
       min-height: 52px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 0.5px solid rgba(255, 255, 255, 0.10);
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+      background: rgba(var(--bg-rgb), 0.8);
+      border: 0.5px solid rgba(0, 0, 0, 0.45);
+      box-shadow:
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.12);
       overflow: hidden;
       isolation: isolate;
-      transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
-    }
-    .composer-overlay.visible .composer-field,
-    .composer-overlay.closing .composer-field,
-    .composer-field:focus-within {
-      background: rgba(255, 255, 255, 0.09);
-      border-color: rgba(255, 255, 255, 0.20);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.07);
-    }
-    html[data-theme="light"] .composer-field {
-      border: none;
-      box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--icon-fg) 10%, transparent), 0 2px 5px 1px color-mix(in srgb, var(--icon-fg) 30%, transparent);
-    }
-    html[data-theme="light"] .composer-overlay.visible .composer-field,
-    html[data-theme="light"] .composer-overlay.closing .composer-field,
-    html[data-theme="light"] .composer-field:focus-within {
-      border: none;
-      box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--icon-fg) 20%, transparent), 0 3px 7px 1px color-mix(in srgb, var(--icon-fg) 34%, transparent);
+      transition: background 150ms ease, border-color 150ms ease;
     }
     html[data-theme="dark"] .composer-field {
       background: rgba(255, 255, 255, 0.035);
-      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
-    }
-    html[data-theme="dark"] .composer-overlay.visible .composer-field,
-    html[data-theme="dark"] .composer-overlay.closing .composer-field,
-    html[data-theme="dark"] .composer-field:focus-within {
-      background: rgba(255, 255, 255, 0.055);
-      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.22);
     }
     .send-btn {
       position: absolute;
