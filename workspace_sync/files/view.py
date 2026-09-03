@@ -91,7 +91,7 @@ def render_file_view(
         resolved_text_size = int(agent_text_size or 13)
     except (TypeError, ValueError):
         resolved_text_size = 13
-    resolved_line_height = resolved_text_size + 9
+    resolved_line_height = resolved_text_size * 1.5
     theme_palette = None
     if runtime.repo_root:
         try:
@@ -113,7 +113,7 @@ def render_file_view(
     # than a translucent tint of the code pane's own (separate) fg system.
     pane_ln_color = f"rgb({TEXT_MUTED_LIGHT_CHANNELS if is_light_theme else TEXT_MUTED_DARK_CHANNELS})"
     pane_line = f"rgba({pane_fg_channels},0.08)"
-    pane_gutter_bg = "transparent"
+    pane_gutter_bg = f"rgba({pane_fg_channels},0.06)"
     pane_gutter_divider = f"rgba({pane_fg_channels},0.16)"
     gutter_padding_left = 1
     gutter_padding_right = 5
@@ -123,7 +123,7 @@ def render_file_view(
         'const d=e?.data;if(d?.type!=="agent-preview-text-size")return;'
         'const s=Number(d.size);if(!Number.isFinite(s)||s<8)return;'
         'document.documentElement.style.setProperty("--text-size",s+"px");'
-        'document.documentElement.style.setProperty("--text-line-height",(s+9)+"px");'
+        'document.documentElement.style.setProperty("--text-line-height",(s*1.5)+"px");'
         '});'
     )
     font_base = prefix or ""
@@ -140,15 +140,8 @@ def render_file_view(
         f"html,body{{margin:0;background:{embed_bg};color:{pane_fg};font-family:sans-serif;display:flex;flex-direction:column;height:100vh;font-size:var(--text-size);line-height:var(--text-line-height);font-weight:var(--body-weight);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-synthesis:none}}"
     )
 
-    def build_gutter_metrics(
-        line_count: int,
-        *,
-        min_content_width: int = 0,
-    ) -> tuple[int, int]:
-        gutter_content_width = max(
-            min_content_width,
-            len(str(max(1, line_count))) * 8 + 6,
-        )
+    def build_gutter_metrics(line_count: int) -> tuple[int, int]:
+        gutter_content_width = len(str(max(1, line_count))) * 8 + 2
         gutter_column_width = gutter_content_width + gutter_padding_left + gutter_padding_right
         title_offset = gutter_column_width + code_cell_padding_left
         return gutter_column_width, title_offset
@@ -219,8 +212,7 @@ def render_file_view(
         progressive_html = bool(force_progressive_text) or size > runtime.INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES
         if progressive_html:
             gutter_width, title_offset = build_gutter_metrics(
-                max(1, int(size / 12)),
-                min_content_width=42,
+                max(1, int(size / 32)),
             )
             gutter_rows = ""
             code_rows = ""
@@ -262,7 +254,7 @@ def render_file_view(
             'window.addEventListener("message",(event)=>{'
             'const data=event.data||{};'
             'if(data.type==="agent-index-file-preview-mode"){setMode(data.mode);return;}'
-            'if(data.type==="agent-preview-text-size"){const sz=Number(data.size);if(Number.isFinite(sz)&&sz>=8){document.documentElement.style.setProperty("--text-size",sz+"px");document.documentElement.style.setProperty("--text-line-height",(sz+9)+"px");}}'
+            'if(data.type==="agent-preview-text-size"){const sz=Number(data.size);if(Number.isFinite(sz)&&sz>=8){document.documentElement.style.setProperty("--text-size",sz+"px");document.documentElement.style.setProperty("--text-line-height",(sz*1.5)+"px");}}'
             '});'
             'const bindButtons=()=>{'
             'buttons.forEach((button)=>button.addEventListener("click",()=>setMode(button.dataset.previewMode||"text")));'
@@ -295,7 +287,7 @@ def render_file_view(
             '.html-preview-panel-web iframe{flex:1;min-height:0;width:100%;border:0;background:white}'
             '.html-preview-panel-text{min-height:0;flex-direction:column}'
             f'.html-preview-text-wrap{{--preview-gutter-width:{gutter_width}px;flex:1;min-height:0;display:flex;min-width:0;position:relative;overflow:hidden;background:transparent}}'
-            '.html-preview-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:0;background:var(--preview-gutter-bg);padding-top:var(--tpad,0px)}'
+            '.html-preview-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--tpad,0px)}'
             '.html-preview-gutter-inner{min-width:0;will-change:transform}'
             '.html-preview-gutter-table{border-collapse:collapse;width:100%;table-layout:fixed;font-family:var(--font-code);font-size:var(--text-size);line-height:var(--text-line-height)}'
             '.html-preview-gutter-table td{padding:0;vertical-align:top}'
@@ -316,8 +308,7 @@ def render_file_view(
     if is_text_like and ext != ".md" and (bool(force_progressive_text) or size > runtime.INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES):
         chunk_bytes = runtime.PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES
         gutter_width, title_offset = build_gutter_metrics(
-            max(1, int(size / 12)),
-            min_content_width=42,
+            max(1, int(size / 32)),
         )
         height = "100vh" if embed else "calc(100vh - 43px)"
         progressive_loader_js = build_progressive_loader_js(
@@ -333,7 +324,7 @@ def render_file_view(
             f'<!DOCTYPE html><html{preview_shell_attrs(gutter_width=gutter_width, title_offset=title_offset)}><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}body{{background:{embed_bg};color:{pane_fg}}}'
             f'.view-container{{--preview-gutter-width:{gutter_width}px;height:{height};display:flex;min-width:0;position:relative;overflow:hidden;background:{embed_bg}}}'
-            '.code-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:0;background:var(--preview-gutter-bg);padding-top:var(--tpad,0px)}'
+            '.code-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--tpad,0px)}'
             '.code-gutter-inner{min-width:0;will-change:transform}'
             '.code-gutter-table{border-collapse:collapse;width:100%;table-layout:fixed;font-family:var(--font-code);font-size:var(--text-size);line-height:var(--text-line-height)}'
             '.code-gutter-table td{padding:0;vertical-align:top}'
@@ -362,7 +353,7 @@ def render_file_view(
             f'<!DOCTYPE html><html{preview_shell_attrs(gutter_width=gutter_width, title_offset=title_offset)}><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}body{{background:{embed_bg};color:{pane_fg}}}'
             f'.view-container{{--preview-gutter-width:{gutter_width}px;height:{height};display:flex;min-width:0;position:relative;overflow:hidden;background:{embed_bg}}}'
-            '.code-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:0;background:var(--preview-gutter-bg);padding-top:var(--tpad,0px)}'
+            '.code-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--tpad,0px)}'
             '.code-gutter-inner{min-width:0;will-change:transform}'
             '.code-gutter-table{border-collapse:collapse;width:100%;table-layout:fixed;font-family:var(--font-code);font-size:var(--text-size);line-height:var(--text-line-height)}'
             '.code-gutter-table td{padding:0;vertical-align:top}'
@@ -726,7 +717,7 @@ window.addEventListener("message", (event) => {{
   const sz = Number(data.size);
   if (!Number.isFinite(sz) || sz < 8) return;
   document.documentElement.style.setProperty("--text-size", sz + "px");
-  document.documentElement.style.setProperty("--text-line-height", (sz + 9) + "px");
+  document.documentElement.style.setProperty("--text-line-height", (sz * 1.5) + "px");
 }});
 const out = document.getElementById("out");
 out.innerHTML = renderMarkdown(__mdText);
