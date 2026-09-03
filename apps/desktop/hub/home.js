@@ -146,6 +146,7 @@
     // (width and x untouched). Between messages the user is free to resize.
     const DESK_FIT_BOTTOM_BUFFER = 16;
     let _deskAutoWindowHeight = (document.documentElement.dataset.autoWindowHeight || "0") === "1";
+    let _deskLastFitTarget = 0;
     function pushDeskAutoWindowHeight() {
       try {
         _deskChatFrame?.contentWindow?.postMessage(
@@ -158,6 +159,7 @@
       const next = !!on;
       if (next === _deskAutoWindowHeight) return;
       _deskAutoWindowHeight = next;
+      _deskLastFitTarget = 0;
       // The window is too short for the hub sidebar in this mode; sessions are
       // switched through a native menu instead (collapsed sidebar, on click).
       if (_deskAutoWindowHeight) setDeskSidebarOpen(false);
@@ -178,6 +180,10 @@
       // transient bad iframe measurement can't blow the target up to full screen.
       const overhead = Math.min(240, Math.max(0, window.innerHeight - iframeH));
       const target = Math.round(content + overhead + DESK_FIT_BOTTOM_BUFFER);
+      // The composer predict + ResizeObserver paths both fire per keystroke;
+      // drop the redundant second call so it isn't two invokes per line.
+      if (Math.abs(target - _deskLastFitTarget) < 4) return;
+      _deskLastFitTarget = target;
       invoke("set_window_height", { height: target }).catch((err) => {
         showDeskHubMessage(`fit height failed: ${err}`, { error: true });
       });

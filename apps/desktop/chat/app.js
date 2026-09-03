@@ -162,11 +162,9 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     // independent, and it ignores main::before / main::after (the 50vh scroll
     // spacers, which is why scrollHeight is useless here). Debounced for bursts.
     let _fitHeightTimer = 0;
-    // A little breathing room above/below the composer box when the window has
-    // to grow to fit it (the overlay is vertically centred, so this is split
-    // top and bottom).
+    // Breathing room above the composer field when the window is sized to it.
     const COMPOSER_FIT_SLACK = 20;
-    const reportFitHeight = ({ fromComposer = false } = {}) => {
+    const reportFitHeight = ({ fromComposer = false, fieldHeight = null } = {}) => {
       if (!isHubIframeChat() || document.documentElement.dataset.autoWindowHeight !== "1") return;
       const scroller = timeline || document.getElementById("messages");
       const rows = scroller
@@ -180,15 +178,21 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       const topPx = lastRow.getBoundingClientRect().top;
       const bottomPx = (thinkEl || lastRow).getBoundingClientRect().bottom;
       let contentHeight = Math.ceil(bottomPx - topPx);
-      // The composer overlay is centred in the viewport. Only grow the window
-      // when it would otherwise be clipped (e.g. the last message is one line so
-      // the window is shorter than the composer); if it already fits, leave the
-      // window alone rather than shrink-wrapping it.
+      // In this mode the composer overlay is bottom-aligned (see
+      // composer-overlay.css). Its visible height = the field's height + the
+      // fixed structure below it (plus/targets row, statusline). `fieldHeight`
+      // lets the input handler pass the field's *predicted* post-grow height so
+      // the resize is requested before the browser paints the taller field.
       if (isComposerOverlayOpen()) {
         const box = document.getElementById("composer");
-        const h = box ? Math.ceil(box.getBoundingClientRect().height) + COMPOSER_FIT_SLACK : 0;
-        if (h > 0 && h <= window.innerHeight) return;
-        if (h > 0) contentHeight = h;
+        const ta = document.getElementById("message");
+        if (box && ta) {
+          const taRect = ta.getBoundingClientRect();
+          const belowField = box.getBoundingClientRect().bottom - taRect.bottom;
+          const fh = Number.isFinite(fieldHeight) ? fieldHeight : taRect.height;
+          const h = Math.ceil(fh + belowField) + COMPOSER_FIT_SLACK;
+          if (h > 0) contentHeight = h;
+        }
       }
       if (contentHeight > 0) {
         if (!fromComposer) {
@@ -208,12 +212,48 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       _fitHeightTimer = setTimeout(reportFitHeight, 120);
     };
     document.addEventListener("chat-transcript-settled", scheduleFitHeight);
-    // On composer open, grow the window if the composer would be clipped (see
-    // reportFitHeight). Closing it does nothing -- the next message re-fits.
+    // While the composer is open the window tracks it (open, type, close).
     document.addEventListener("composer-overlay-open", () => {
       if (document.documentElement.dataset.autoWindowHeight !== "1") return;
       requestAnimationFrame(() => reportFitHeight({ fromComposer: true }));
+      // The composer has a ~620ms open transform; re-measure once it settles.
+      setTimeout(() => reportFitHeight({ fromComposer: true }), 300);
     });
+    document.addEventListener("composer-overlay-close-start", () => {
+      // Deferred so isComposerOverlayOpen() is already false: re-fit to the
+      // transcript now that the composer is gone.
+      requestAnimationFrame(() => reportFitHeight());
+    });
+    // The textarea (not #composer) grows as text is typed. Two paths keep the
+    // window in step:
+    //  - `input` (synchronous, before autoResizeTextarea and before paint):
+    //    predict the field's grown height with the same formula and request the
+    //    resize now, so it's in flight a frame or two earlier than a post-layout
+    //    observer would manage.
+    //  - ResizeObserver (post-layout, no rAF): catches paste / IME commit /
+    //    shrink and corrects the prediction from the real measurement.
+    const _composerTextarea = document.getElementById("message");
+    const predictComposerFieldHeight = () => {
+      const ta = _composerTextarea;
+      if (!ta) return null;
+      const prev = ta.style.height;
+      ta.style.height = "auto";
+      const h = Math.min(200, Math.max(52, ta.scrollHeight));
+      ta.style.height = prev;
+      return h;
+    };
+    if (_composerTextarea) {
+      _composerTextarea.addEventListener("input", () => {
+        if (document.documentElement.dataset.autoWindowHeight !== "1" || !isComposerOverlayOpen()) return;
+        reportFitHeight({ fromComposer: true, fieldHeight: predictComposerFieldHeight() });
+      });
+      if (typeof ResizeObserver === "function") {
+        new ResizeObserver(() => {
+          if (document.documentElement.dataset.autoWindowHeight !== "1" || !isComposerOverlayOpen()) return;
+          reportFitHeight({ fromComposer: true });
+        }).observe(_composerTextarea);
+      }
+    }
 __CHAT_INCLUDE:../../shared/chat/scroll-focus.js__
 __CHAT_INCLUDE:attachments/file-open.js__
 __CHAT_INCLUDE:../../shared/chat/composer-overlay.js__

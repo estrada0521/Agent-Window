@@ -17,6 +17,13 @@
       pointer-events: none;
       transition: opacity 240ms ease, background 320ms ease, backdrop-filter 320ms ease, -webkit-backdrop-filter 320ms ease;
     }
+    /* Fit Height to Message: the window tracks the composer, so bottom-align it
+       instead of centring -- the geometry (grow the window as the field rises)
+       is only tractable when the composer is pinned to one edge. */
+    html[data-auto-window-height="1"] .composer-overlay {
+      align-items: flex-end;
+      padding-bottom: 12px;
+    }
     .composer-overlay::before {
       content: "";
       position: absolute;
