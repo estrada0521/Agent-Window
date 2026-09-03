@@ -20,6 +20,9 @@ use url::Url;
 const DEFAULT_WINDOW_SIZE: f64 = 896.0;
 const MIN_WINDOW_WIDTH: f64 = 160.0;
 const MIN_WINDOW_HEIGHT: f64 = 103.0;
+// "Fit Height to Message" mode drops the height floor to zero so a one-line
+// message really does get a one-line window.
+const FIT_WINDOW_MIN_HEIGHT: f64 = 0.0;
 const COMPACT_WINDOW_WIDTH: f64 = 560.0;
 
 use window_vibrancy::{
@@ -453,6 +456,16 @@ fn set_always_on_top(window: tauri::WebviewWindow, on: bool) -> Result<(), Strin
 }
 
 #[tauri::command]
+fn set_fit_height_min(window: tauri::WebviewWindow, enabled: bool) -> Result<(), String> {
+    // In Fit Height to Message mode the window may need to be far shorter than
+    // the normal minimum; drop the floor while it is on, restore it when off.
+    let min_h = if enabled { FIT_WINDOW_MIN_HEIGHT } else { MIN_WINDOW_HEIGHT };
+    window
+        .set_min_size(Some(tauri::LogicalSize::new(MIN_WINDOW_WIDTH, min_h)))
+        .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
 fn set_window_height(window: tauri::WebviewWindow, height: f64) -> Result<(), String> {
     // Width and x stay; only the height (and, if it would spill off the
     // bottom, y) change. Clamped to a sane floor and the monitor height.
@@ -471,7 +484,9 @@ fn set_window_height(window: tauri::WebviewWindow, height: f64) -> Result<(), St
         .outer_position()
         .map_err(|err| err.to_string())?
         .to_logical::<f64>(scale_factor);
-    let h = height.max(MIN_WINDOW_HEIGHT).min(monitor_size.height);
+    // set_window_height is only used by Fit Height mode, where the floor is
+    // deliberately near-zero (set_fit_height_min lowers the window minimum).
+    let h = height.max(FIT_WINDOW_MIN_HEIGHT).min(monitor_size.height);
     let mut y = cur_pos.y;
     if y + h > monitor_pos.y + monitor_size.height {
         y = monitor_pos.y + monitor_size.height - h;
@@ -779,6 +794,7 @@ fn main() {
             compact_window_geometry,
             set_always_on_top,
             set_window_height,
+            set_fit_height_min,
             show_session_switcher_menu
         ])
         .on_menu_event(|app, event| {

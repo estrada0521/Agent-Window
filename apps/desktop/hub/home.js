@@ -155,6 +155,12 @@
         );
       } catch (_) {}
     }
+    function applyDeskFitHeightMin() {
+      const invoke = getTauriInvoke();
+      if (typeof invoke === "function") {
+        invoke("set_fit_height_min", { enabled: _deskAutoWindowHeight }).catch(() => {});
+      }
+    }
     function setDeskAutoWindowHeight(on) {
       const next = !!on;
       if (next === _deskAutoWindowHeight) return;
@@ -163,9 +169,12 @@
       // The window is too short for the hub sidebar in this mode; sessions are
       // switched through a native menu instead (collapsed sidebar, on click).
       if (_deskAutoWindowHeight) setDeskSidebarOpen(false);
+      // Fit Height needs the window minimum height dropped to ~0.
+      applyDeskFitHeightMin();
       persistHubSettings({ auto_window_height: _deskAutoWindowHeight ? "1" : "0" });
       pushDeskAutoWindowHeight();
     }
+    if (_deskAutoWindowHeight) applyDeskFitHeightMin();
     function toggleDeskAutoWindowHeight() {
       setDeskAutoWindowHeight(!_deskAutoWindowHeight);
     }

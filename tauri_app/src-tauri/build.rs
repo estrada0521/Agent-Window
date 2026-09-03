@@ -8,6 +8,7 @@ fn main() {
             "compact_window_geometry",
             "set_always_on_top",
             "set_window_height",
+            "set_fit_height_min",
             "show_session_switcher_menu",
         ]),
     ))
