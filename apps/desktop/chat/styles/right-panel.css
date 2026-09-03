@@ -1136,6 +1136,18 @@
       padding-bottom: 0;
     }
     .git-pinned-summary-aside.is-expanded .git-pinned-expand::-webkit-scrollbar { display: none; }
+    .git-pinned-summary-aside.is-expanded .git-pinned-expand[data-scroll-fade="top"] {
+      mask-image: linear-gradient(to bottom, transparent 0, black 32px);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 32px);
+    }
+    .git-pinned-summary-aside.is-expanded .git-pinned-expand[data-scroll-fade="bottom"] {
+      mask-image: linear-gradient(to bottom, black calc(100% - 32px), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 32px), transparent 100%);
+    }
+    .git-pinned-summary-aside.is-expanded .git-pinned-expand[data-scroll-fade="both"] {
+      mask-image: linear-gradient(to bottom, transparent 0, black 32px, black calc(100% - 32px), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 32px, black calc(100% - 32px), transparent 100%);
+    }
     .git-pinned-expand-section {
       padding: 8px 0 0;
     }

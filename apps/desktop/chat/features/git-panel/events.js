@@ -46,6 +46,17 @@
       expand.className = "git-pinned-expand";
       aside.appendChild(expand);
 
+      // Fade the top/bottom edges of the scrolled file list, like the hub's
+      // hover popover (see computeScrollFadeState in home.js).
+      const updateExpandFade = () => {
+        const { scrollTop, scrollHeight, clientHeight } = expand;
+        if (scrollHeight <= clientHeight + 1) { expand.dataset.scrollFade = "none"; return; }
+        const atTop = scrollTop <= 1;
+        const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
+        expand.dataset.scrollFade = atTop && !atBottom ? "bottom" : atBottom && !atTop ? "top" : "both";
+      };
+      expand.addEventListener("scroll", updateExpandFade, { passive: true });
+
       let openTimer = null;
       let closeTimer = null;
       let fetchSeq = 0;
@@ -107,6 +118,7 @@
         aside.classList.remove("is-expanded");
         fetchSeq++;
         expand.innerHTML = "";
+        expand.dataset.scrollFade = "none";
       }
 
       async function refreshContent() {
@@ -151,6 +163,7 @@
           if (seq !== fetchSeq) return;
           expand.innerHTML = `<div class="git-pinned-expand-empty">Failed to load</div>`;
         }
+        requestAnimationFrame(updateExpandFade);
       }
 
       async function open() {
