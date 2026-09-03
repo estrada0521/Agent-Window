@@ -162,7 +162,11 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     // independent, and it ignores main::before / main::after (the 50vh scroll
     // spacers, which is why scrollHeight is useless here). Debounced for bursts.
     let _fitHeightTimer = 0;
-    const reportFitHeight = () => {
+    // A little breathing room above/below the composer box when the window has
+    // to grow to fit it (the overlay is vertically centred, so this is split
+    // top and bottom).
+    const COMPOSER_FIT_SLACK = 20;
+    const reportFitHeight = ({ fromComposer = false } = {}) => {
       if (!isHubIframeChat() || document.documentElement.dataset.autoWindowHeight !== "1") return;
       const scroller = timeline || document.getElementById("messages");
       const rows = scroller
@@ -175,10 +179,22 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       const thinkEl = scroller.querySelector(":scope > .message-thinking-container");
       const topPx = lastRow.getBoundingClientRect().top;
       const bottomPx = (thinkEl || lastRow).getBoundingClientRect().bottom;
-      const contentHeight = Math.ceil(bottomPx - topPx);
+      let contentHeight = Math.ceil(bottomPx - topPx);
+      // The composer overlay is centred in the viewport. Only grow the window
+      // when it would otherwise be clipped (e.g. the last message is one line so
+      // the window is shorter than the composer); if it already fits, leave the
+      // window alone rather than shrink-wrapping it.
+      if (isComposerOverlayOpen()) {
+        const box = document.getElementById("composer");
+        const h = box ? Math.ceil(box.getBoundingClientRect().height) + COMPOSER_FIT_SLACK : 0;
+        if (h > 0 && h <= window.innerHeight) return;
+        if (h > 0) contentHeight = h;
+      }
       if (contentHeight > 0) {
-        _stickyToBottom = true;
-        scrollConversationToBottom("auto");
+        if (!fromComposer) {
+          _stickyToBottom = true;
+          scrollConversationToBottom("auto");
+        }
         try {
           window.parent.postMessage({ type: "fit-window-height", contentHeight }, "*");
         } catch (_) {}
@@ -192,6 +208,12 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       _fitHeightTimer = setTimeout(reportFitHeight, 120);
     };
     document.addEventListener("chat-transcript-settled", scheduleFitHeight);
+    // On composer open, grow the window if the composer would be clipped (see
+    // reportFitHeight). Closing it does nothing -- the next message re-fits.
+    document.addEventListener("composer-overlay-open", () => {
+      if (document.documentElement.dataset.autoWindowHeight !== "1") return;
+      requestAnimationFrame(() => reportFitHeight({ fromComposer: true }));
+    });
 __CHAT_INCLUDE:../../shared/chat/scroll-focus.js__
 __CHAT_INCLUDE:attachments/file-open.js__
 __CHAT_INCLUDE:../../shared/chat/composer-overlay.js__

@@ -67,6 +67,7 @@
         if (typeof autoResizeTextarea === "function") autoResizeTextarea();
         setComposerCaretToEnd();
         composerOverlay.classList.add("visible");
+        document.dispatchEvent(new CustomEvent("composer-overlay-open"));
         if (!immediateFocus && canFocus) {
           focusComposerTextarea();
         }
