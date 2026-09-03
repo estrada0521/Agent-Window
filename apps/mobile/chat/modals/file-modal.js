@@ -257,11 +257,6 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
       if (event.key === "Escape" && repoPanel?.classList.contains("repo-mode-preview")) {
         event.preventDefault();
         closeRepoPreview();
-        return;
-      }
-      if (event.key === "Escape" && isComposerOverlayOpen()) {
-        event.preventDefault();
-        closeComposerOverlay({ restoreFocus: true });
       }
     });
     if (typeof MutationObserver !== "undefined") {

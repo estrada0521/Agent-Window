@@ -107,6 +107,19 @@
         closeComposerOverlay({ restoreFocus: true });
       }
     });
+    // Esc closes the expanded composer. Capture phase so it runs before the
+    // @/-menu Esc handlers on the textarea: if one of those menus is open, bail
+    // and let it consume the Esc (a second Esc then closes the overlay).
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || event.isComposing || event.keyCode === 229) return;
+      if (!isComposerOverlayOpen()) return;
+      const fileDrop = document.getElementById("fileDropdown");
+      const cmdDrop = document.getElementById("cmdDropdown");
+      if (fileDrop?.classList.contains("visible") || cmdDrop?.classList.contains("visible")) return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeComposerOverlay({ restoreFocus: true });
+    }, true);
     if (document.documentElement.dataset.mobile !== "1") {
       const shouldIgnoreComposerMouseShortcut = (target) => !!target?.closest?.("a, button, input, textarea, select, summary, label, [contenteditable='true'], #fileDropdown, #cmdDropdown");
       document.addEventListener("mousedown", (event) => {
