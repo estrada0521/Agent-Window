@@ -6,6 +6,8 @@ fn main() {
             "show_appearance_menu",
             "reset_window_geometry",
             "compact_window_geometry",
+            "set_always_on_top",
+            "mini_window_geometry",
         ]),
     ))
     .expect("failed to run Tauri build script")

@@ -630,6 +630,11 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openFinder" }, "*");
             return;
           }
+          if (event.code === "KeyP") {
+            event.preventDefault();
+            window.parent?.postMessage({ type: "always-on-top-shortcut" }, "*");
+            return;
+          }
           if (event.code === "Digit0" || event.key === "0") {
             event.preventDefault();
             window.parent?.postMessage({ type: "reset-window-shortcut" }, "*");
@@ -638,6 +643,11 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           if (event.code === "Digit9" || event.key === "9") {
             event.preventDefault();
             window.parent?.postMessage({ type: "compact-window-shortcut" }, "*");
+            return;
+          }
+          if (event.code === "Digit8" || event.key === "8") {
+            event.preventDefault();
+            window.parent?.postMessage({ type: "mini-window-shortcut" }, "*");
             return;
           }
         }

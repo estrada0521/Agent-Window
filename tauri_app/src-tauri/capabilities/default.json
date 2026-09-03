@@ -16,6 +16,8 @@
     "allow-show-appearance-menu",
     "allow-reset-window-geometry",
     "allow-compact-window-geometry",
+    "allow-set-always-on-top",
+    "allow-mini-window-geometry",
     "core:default",
     "core:window:allow-start-dragging"
   ]

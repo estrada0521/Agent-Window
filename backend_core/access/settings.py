@@ -136,6 +136,12 @@ def _apply_hub_settings(raw: dict, settings: dict) -> dict:
         raise ValueError(f"invalid text_size: {raw.get('text_size')!r}") from exc
     settings["text_size"] = text_size
 
+    if raw.get("always_on_top") is not None:
+        value = raw.get("always_on_top")
+        if isinstance(value, str):
+            value = value.strip().lower() in ("1", "true", "yes", "on")
+        settings["always_on_top"] = bool(value)
+
     return settings
 
 
@@ -145,6 +151,7 @@ HUB_SETTINGS_DEFAULTS = {
     "message_font": DEFAULT_MESSAGE_FONT,
     "code_font": DEFAULT_CODE_FONT,
     "text_size": 13,
+    "always_on_top": False,
 }
 
 MOBILE_CHAT_TEXT_SIZE = {

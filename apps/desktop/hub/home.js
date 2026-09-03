@@ -121,10 +121,30 @@
         _deskChatFrame?.contentWindow?.postMessage({ type: "desktop-chat-reset" }, "*");
       } catch (_) {}
     }
+    let _deskAlwaysOnTop = (document.documentElement.dataset.alwaysOnTop || "0") === "1";
+    function applyDeskAlwaysOnTop(on) {
+      _deskAlwaysOnTop = !!on;
+      const invoke = getTauriInvoke();
+      if (typeof invoke === "function") {
+        invoke("set_always_on_top", { on: _deskAlwaysOnTop }).catch((err) => {
+          showDeskHubMessage(`always on top failed: ${err}`, { error: true });
+        });
+      }
+    }
+    function setDeskAlwaysOnTopPersisted(on) {
+      applyDeskAlwaysOnTop(on);
+      persistHubSettings({ always_on_top: _deskAlwaysOnTop ? "1" : "0" });
+    }
+    function toggleDeskAlwaysOnTop() {
+      setDeskAlwaysOnTopPersisted(!_deskAlwaysOnTop);
+    }
+    if (_deskAlwaysOnTop) applyDeskAlwaysOnTop(true);
+
     async function resetDeskWindowState() {
       showDeskSidebarList({ open: true });
       setDeskSidebarWidth(DESK_DEFAULT_SIDEBAR_WIDTH);
       resetDeskChatView();
+      setDeskAlwaysOnTopPersisted(false);
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") {
         showDeskHubMessage("reset window: no tauri invoke available", { error: true });
@@ -140,6 +160,7 @@
     async function compactDeskWindowState() {
       setDeskSidebarOpen(false);
       resetDeskChatView();
+      setDeskAlwaysOnTopPersisted(false);
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") {
         showDeskHubMessage("compact window: no tauri invoke available", { error: true });
@@ -151,11 +172,33 @@
         showDeskHubMessage(`compact window failed: ${err}`, { error: true });
       }
     }
+
+    async function miniDeskWindowState() {
+      setDeskSidebarOpen(false);
+      resetDeskChatView();
+      setDeskAlwaysOnTopPersisted(true);
+      const invoke = getTauriInvoke();
+      if (typeof invoke !== "function") {
+        showDeskHubMessage("mini window: no tauri invoke available", { error: true });
+        return;
+      }
+      try {
+        await invoke("mini_window_geometry");
+      } catch (err) {
+        showDeskHubMessage(`mini window failed: ${err}`, { error: true });
+      }
+    }
+
     window.addEventListener("keydown", (event) => {
       if (event.metaKey && event.altKey) {
         if (event.code === "KeyT") {
           event.preventDefault();
           dispatchDeskNativeMenuAction({ action: "openTerminal" });
+          return;
+        }
+        if (event.code === "KeyP") {
+          event.preventDefault();
+          toggleDeskAlwaysOnTop();
           return;
         }
         if (event.code === "KeyR") {
@@ -172,6 +215,11 @@
       if (event.metaKey && event.altKey && (event.code === "Digit9" || event.key === "9")) {
         event.preventDefault();
         void compactDeskWindowState();
+        return;
+      }
+      if (event.metaKey && event.altKey && (event.code === "Digit8" || event.key === "8")) {
+        event.preventDefault();
+        void miniDeskWindowState();
         return;
       }
       if (event.metaKey && event.code === "Comma") {
@@ -210,6 +258,7 @@
             themeDesktop: document.documentElement.dataset.themeDesktop || "dark",
             textSize: currentDeskTextSizePx(),
             textSizeDefault: DESK_TEXT_SIZE_DEFAULT,
+            alwaysOnTop: _deskAlwaysOnTop,
           },
         });
       } catch (_) {
@@ -237,6 +286,14 @@
       }
       if (detail.action === "compactWindow") {
         void compactDeskWindowState();
+        return;
+      }
+      if (detail.action === "miniWindow") {
+        void miniDeskWindowState();
+        return;
+      }
+      if (detail.action === "toggleAlwaysOnTop") {
+        toggleDeskAlwaysOnTop();
         return;
       }
       if (detail.action === "theme") {
@@ -1460,6 +1517,14 @@
       }
       if (event.data && event.data.type === "compact-window-shortcut") {
         void compactDeskWindowState();
+        return;
+      }
+      if (event.data && event.data.type === "mini-window-shortcut") {
+        void miniDeskWindowState();
+        return;
+      }
+      if (event.data && event.data.type === "always-on-top-shortcut") {
+        toggleDeskAlwaysOnTop();
         return;
       }
       if (event.data && event.data.type === "open-hub-path") {
