@@ -3,64 +3,57 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 
-# ---------------------------------------------------------------------------
-# Text-color roles.
-#
-# Every role below is one fact per (client, theme) -- desktop/mobile x
-# light/dark -- named once and read from here everywhere it's needed. A role
-# is never redefined under a second name, and a client/theme that doesn't
-# use a role simply doesn't reference its constant; there is no "default
-# plus override" tier. Where a role's value is identical across desktop and
-# mobile (or across light/dark), it gets one constant, not two copies of the
-# same channels string.
-#
-# Icon colors (icon-fg/icon-muted/icon-hover/chip-color) and the code-pane
-# line-number gray are a separate, still-scattered system and out of scope
-# here; see resolve_theme_palette() below.
-# ---------------------------------------------------------------------------
+# Text-color roles: one value per (client, theme). A role that equals another
+# is set to it, not re-typed. Order: Base -> Hub -> Chat -> Fine details.
+# The :root `--fg` fallback (light_fg) and icon grays live in
+# resolve_theme_palette() instead.
 
+# --- Base ---
 TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS = "11, 11, 11"
 TEXT_PRIMARY_DESKTOP_DARK_CHANNELS = "200, 200, 200"
-TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS = "31, 31, 31"
-TEXT_PRIMARY_MOBILE_DARK_CHANNELS = "229, 229, 229"
+TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS = "19, 19, 19"
+TEXT_PRIMARY_MOBILE_DARK_CHANNELS = "232, 232, 232"
 
-# Bold/strong emphasis. Desktop has no entry: markdown-body.css falls back
-# to text-primary via `var(--fg-bold, var(--fg))` when --fg-bold is
-# undefined, so desktop's base CSS simply never defines it. Mobile light
-# sits halfway between pure black and text-primary (34) -- heavier than
-# body text without the starker pure extreme. Mobile dark matches
-# text-primary exactly -- pure white read as too stark against it.
-TEXT_STRONG_MOBILE_LIGHT_CHANNELS = "17, 17, 17"
-TEXT_STRONG_MOBILE_DARK_CHANNELS = TEXT_PRIMARY_MOBILE_DARK_CHANNELS
-
+# Muted / secondary (timestamps, previews, labels).
 TEXT_MUTED_LIGHT_CHANNELS = "120, 120, 120"
 TEXT_MUTED_DARK_CHANNELS = "150, 150, 150"
 
-TEXT_LINK_LIGHT_CHANNELS = "36, 85, 161"
-TEXT_LINK_DARK_CHANNELS = "144, 157, 174"
+# --- Hub ---
+# Session / window title.
+TEXT_SESSION_DESKTOP_LIGHT_CHANNELS = TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS
+TEXT_SESSION_DESKTOP_DARK_CHANNELS = TEXT_PRIMARY_DESKTOP_DARK_CHANNELS
+TEXT_SESSION_MOBILE_LIGHT_CHANNELS = "19, 19, 19"
+TEXT_SESSION_MOBILE_DARK_CHANNELS = TEXT_PRIMARY_MOBILE_DARK_CHANNELS
 
+# Archived / warning session name (dimmer than active).
+TEXT_SESSION_DIM_DESKTOP_LIGHT_CHANNELS = TEXT_SESSION_DESKTOP_LIGHT_CHANNELS
+TEXT_SESSION_DIM_DESKTOP_DARK_CHANNELS = TEXT_SESSION_DESKTOP_DARK_CHANNELS
+TEXT_SESSION_DIM_MOBILE_LIGHT_CHANNELS = "100, 100, 100"
+TEXT_SESSION_DIM_MOBILE_DARK_CHANNELS = "180, 180, 180"
+
+# --- Chat (rendered markdown) ---
+# Bold. Desktop falls back to text-primary via var(--fg-bold, var(--fg)).
+TEXT_STRONG_MOBILE_LIGHT_CHANNELS = TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS
+TEXT_STRONG_MOBILE_DARK_CHANNELS = TEXT_PRIMARY_MOBILE_DARK_CHANNELS
+
+# Inline / file link.
+TEXT_LINK_LIGHT_CHANNELS = "36, 85, 161"
+TEXT_LINK_DARK_CHANNELS = "96, 132, 203"
+
+# External (web) link.
 TEXT_EXTERNAL_LINK_LIGHT_CHANNELS = "196, 42, 30"
 TEXT_EXTERNAL_LINK_DARK_CHANNELS = "224, 88, 88"
-# Error text (e.g. a failed panel load) currently reads the same as
-# text-external-link in both themes. Kept as its own constant: the decision
-# to redden an external link and the decision to redden an error message
-# are independent, even though they resolve to the same color today.
-TEXT_ERROR_LIGHT_CHANNELS = TEXT_EXTERNAL_LINK_LIGHT_CHANNELS
-TEXT_ERROR_DARK_CHANNELS = TEXT_EXTERNAL_LINK_DARK_CHANNELS
 
+# Diff add / remove.
 TEXT_DIFF_INSERT_LIGHT_CHANNELS = "26, 127, 55"
 TEXT_DIFF_INSERT_DARK_CHANNELS = "74, 222, 128"
 TEXT_DIFF_DELETE_LIGHT_CHANNELS = "207, 34, 46"
 TEXT_DIFF_DELETE_DARK_CHANNELS = "248, 113, 113"
 
-# Hub-only: the session/window title text ("Agent Window", session names).
-# A distinct role from text-primary even where the value happens to match
-# today (desktop both themes, mobile dark) -- the hub title and the chat
-# body are different decisions that are free to diverge.
-TEXT_SESSION_DESKTOP_LIGHT_CHANNELS = "11, 11, 11"
-TEXT_SESSION_DESKTOP_DARK_CHANNELS = "200, 200, 200"
-TEXT_SESSION_MOBILE_LIGHT_CHANNELS = "19, 19, 19"
-TEXT_SESSION_MOBILE_DARK_CHANNELS = "200, 200, 200"
+# --- Fine details ---
+# Error text; matches external-link today but tuned independently.
+TEXT_ERROR_LIGHT_CHANNELS = TEXT_EXTERNAL_LINK_LIGHT_CHANNELS
+TEXT_ERROR_DARK_CHANNELS = TEXT_EXTERNAL_LINK_DARK_CHANNELS
 
 
 # Icon-hover is icon scope, not text scope -- left as-is, untouched by the
@@ -104,7 +97,7 @@ def _gray_rgb_string(level: int) -> str:
 
 
 MOBILE_HUB_LIGHT_BG_RGB = (243, 243, 241)
-MOBILE_HUB_DARK_BG_RGB = (9, 9, 9)
+MOBILE_HUB_DARK_BG_RGB = (8, 8, 8)
 # Desktop page background, one value per (surface, theme). Theme-independent
 # constants so the runtime [data-theme] toggle blocks can reference them
 # without picking up whatever theme the page first rendered under. Hub and
@@ -119,8 +112,8 @@ DESKTOP_CHAT_DARK_BG_RGB = (13, 13, 13)
 # --chat-pane-bg (the .desk-main backdrop behind the transparent iframe).
 DESKTOP_HUB_LIGHT_BG_ALPHA = 0.88
 DESKTOP_HUB_DARK_BG_ALPHA = 0.90
-DESKTOP_CHAT_LIGHT_BG_ALPHA = 0.93
-DESKTOP_CHAT_DARK_BG_ALPHA = 0.93
+DESKTOP_CHAT_LIGHT_BG_ALPHA = 0.94
+DESKTOP_CHAT_DARK_BG_ALPHA = 0.96
 
 
 def resolve_theme_fg_level(settings: Mapping[str, object] | None = None) -> int:

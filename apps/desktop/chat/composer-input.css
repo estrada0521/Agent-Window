@@ -302,41 +302,17 @@
     main.is-scrolling { scrollbar-color: var(--scrollbar-thumb) transparent; }
     main::-webkit-scrollbar { width: var(--chat-scrollbar-width) !important; height: var(--chat-scrollbar-width) !important; }
     /* The floating pill buttons live in ../../shared/chat/floating-btn.css.
-       Desktop leans them more opaque than the mobile glass (denser fill layer),
-       and keeps a hover fill (no hover on touch). */
+       Desktop leans them more opaque than the mobile glass (denser fill layer).
+       One fill for every state -- hover and press don't shift the colour. */
     #scrollToBottomBtn,
     #composerFabBtn {
-      background:
-        linear-gradient(rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.42)),
-        var(--liquid-glass-lg-sheen),
-        rgba(var(--bg-rgb), 0.5);
-    }
-    html[data-theme="light"] #scrollToBottomBtn,
-    html[data-theme="light"] #composerFabBtn {
-      background:
-        var(--liquid-glass-lg-sheen),
-        rgba(var(--bg-rgb), 0.82);
-    }
-    /* Hover / active keep the rest state's sheen (same gradient, same direction)
-       -- only the fill gets denser. The shared :active rule already supplies the
-       pressed border + shadow. */
-    .has-hover #scrollToBottomBtn:hover,
-    .has-hover #composerFabBtn:hover,
-    #composerFabBtn:active,
-    #composerFabBtn.visible:active,
-    #scrollToBottomBtn:active,
-    #scrollToBottomBtn.visible:active {
       background:
         linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
         var(--liquid-glass-lg-sheen),
         rgba(var(--bg-rgb), 0.58);
     }
-    html[data-theme="light"].has-hover #scrollToBottomBtn:hover,
-    html[data-theme="light"].has-hover #composerFabBtn:hover,
-    html[data-theme="light"] #composerFabBtn:active,
-    html[data-theme="light"] #composerFabBtn.visible:active,
-    html[data-theme="light"] #scrollToBottomBtn:active,
-    html[data-theme="light"] #scrollToBottomBtn.visible:active {
+    html[data-theme="light"] #scrollToBottomBtn,
+    html[data-theme="light"] #composerFabBtn {
       background:
         var(--liquid-glass-lg-sheen),
         rgba(var(--bg-rgb), 0.90);

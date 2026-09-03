@@ -23,7 +23,7 @@
       --top-gradient-10: rgba(var(--mob-top-gradient-rgb), 0.10);
       --code-bg: rgba(255, 255, 255, 0.05);
       --row-preview-fg: var(--muted);
-      --dim-row-name-opacity: 0.65;
+      --session-dim-fg: rgb(__TEXT_SESSION_DIM_MOBILE_LIGHT_CHANNELS__);
       --row-name-weight: 700;
     }
     html[data-theme="light"] {
@@ -46,7 +46,7 @@
       --mob-top-gradient-rgb: var(--bg-rgb);
       --code-bg: rgba(0, 0, 0, 0.05);
       --row-preview-fg: var(--muted);
-      --dim-row-name-opacity: 0.65;
+      --session-dim-fg: rgb(__TEXT_SESSION_DIM_MOBILE_LIGHT_CHANNELS__);
       --row-name-weight: 700;
     }
     html[data-theme="dark"] {
@@ -69,7 +69,7 @@
       --mob-top-gradient-rgb: var(--bg-rgb);
       --code-bg: rgba(255, 255, 255, 0.05);
       --row-preview-fg: color-mix(in srgb, var(--muted) 85%, var(--bg));
-      --dim-row-name-opacity: 0.8;
+      --session-dim-fg: rgb(__TEXT_SESSION_DIM_MOBILE_DARK_CHANNELS__);
       --row-name-weight: 600;
     }
 
@@ -455,7 +455,7 @@
 
     .mob-session-row.archived-row .mob-row-name,
     .mob-warning-row .mob-row-name {
-      opacity: var(--dim-row-name-opacity);
+      color: var(--session-dim-fg);
     }
 
     .mob-warning-row .mob-session-row {
