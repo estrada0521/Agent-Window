@@ -100,6 +100,13 @@
       text-decoration: none;
     }
 
+    /* Dark body text is already light-weight, so a 650 file link reads as an
+       odd bold stab; let it match the surrounding weight and lean on colour. */
+    html[data-theme="dark"] .md-body a.inline-file-link,
+    html[data-theme="dark"] .md-body a.local-file-link {
+      font-weight: inherit;
+    }
+
     .md-body a.inline-file-link code,
     .md-body a.local-file-link code {
       color: inherit;
@@ -344,7 +351,7 @@
       width: 100%;
       margin: 0.5em 0;
       font: inherit;
-      border-bottom: var(--table-line-width) solid var(--table-mid-line);
+      border-bottom: var(--table-line-width) solid var(--table-line);
     }
 
     .md-body th,
@@ -361,7 +368,7 @@
        borders meeting -- border-collapse's conflict resolution across
        cells has no say here, so there is nothing that can double up. */
     .md-body tbody tr:not(:last-child) td {
-      border-bottom: var(--table-line-width) solid var(--table-mid-line);
+      border-bottom: var(--table-line-width) solid var(--table-line);
     }
 
     .md-body th {
@@ -371,7 +378,7 @@
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--fg);
-      border-bottom: var(--table-line-width) solid var(--table-mid-line);
+      border-bottom: var(--table-line-width) solid var(--table-line);
     }
 
     .md-body .md-frontmatter {
@@ -379,7 +386,7 @@
       background: transparent;
       border-collapse: separate;
       border-spacing: 0;
-      border: var(--table-line-width) solid var(--table-mid-line);
+      border: var(--table-line-width) solid var(--table-line);
     }
 
     .md-body .md-frontmatter td {
@@ -393,7 +400,7 @@
        border-collapse's conflict resolution across adjacent cells has no
        say here, so there is nothing that can double up. */
     .md-body .md-frontmatter tr:not(:last-child) td {
-      border-bottom: var(--table-line-width) solid var(--table-mid-line);
+      border-bottom: var(--table-line-width) solid var(--table-line);
     }
 
     .md-body .md-frontmatter .md-frontmatter-key {
@@ -401,7 +408,7 @@
       color: var(--fg-bold, var(--fg));
       width: 1%;
       white-space: nowrap;
-      border-right: var(--table-line-width) solid var(--table-mid-line);
+      border-right: var(--table-line-width) solid var(--table-line);
     }
 
     .md-body .md-frontmatter .md-frontmatter {

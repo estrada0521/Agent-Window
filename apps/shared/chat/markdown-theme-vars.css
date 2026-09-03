@@ -4,9 +4,7 @@
       --inline-code-fg: var(--fg);
       --blockquote-bg: rgba(0, 0, 0, 0.03);
       --blockquote-border: rgba(0, 0, 0, 0.45);
-      --table-line: rgba(0, 0, 0, 0.10);
-      --table-header-line: rgba(0, 0, 0, 0.45);
-      --table-mid-line: color-mix(in srgb, var(--table-line) 70%, var(--table-header-line) 30%);
+      --table-line: rgba(0, 0, 0, 0.2);
       --table-line-width: 1px;
       --code-scrollbar-thumb: rgba(0, 0, 0, 0.25);
       --code-scrollbar-thumb-hover: rgba(0, 0, 0, 0.45);
@@ -17,9 +15,7 @@
       --inline-code-fg: rgb(160, 160, 160);
       --blockquote-bg: rgba(255, 255, 255, 0.045);
       --blockquote-border: rgba(255, 255, 255, 0.45);
-      --table-line: rgba(255, 255, 255, 0.12);
-      --table-header-line: rgba(255, 255, 255, 0.40);
-      --table-mid-line: color-mix(in srgb, var(--table-line), var(--table-header-line));
+      --table-line: rgba(255, 255, 255, 0.085);
       --table-line-width: 1px;
       --code-scrollbar-thumb: rgba(255, 255, 255, 0.45);
       --code-scrollbar-thumb-hover: rgba(255, 255, 255, 0.65);
@@ -30,9 +26,7 @@
       --inline-code-fg: var(--fg);
       --blockquote-bg: rgba(0, 0, 0, 0.03);
       --blockquote-border: rgba(0, 0, 0, 0.45);
-      --table-line: rgba(0, 0, 0, 0.10);
-      --table-header-line: var(--fg);
-      --table-mid-line: color-mix(in srgb, var(--table-line) 70%, var(--table-header-line) 30%);
+      --table-line: rgba(0, 0, 0, 0.22);
       --table-line-width: 1px;
       --code-scrollbar-thumb: rgba(0, 0, 0, 0.25);
       --code-scrollbar-thumb-hover: rgba(0, 0, 0, 0.45);
@@ -43,9 +37,7 @@
       --inline-code-fg: rgb(150, 150, 150);
       --blockquote-bg: rgba(180, 180, 180, 0.04);
       --blockquote-border: rgba(180, 180, 180, 0.45);
-      --table-line: rgba(180, 180, 180, 0.12);
-      --table-header-line: rgba(180, 180, 180, 0.55);
-      --table-mid-line: color-mix(in srgb, var(--table-line), var(--table-header-line));
+      --table-line: rgba(180, 180, 180, 0.22);
       --table-line-width: 0.5px;
       --code-scrollbar-thumb: rgba(180, 180, 180, 0.45);
       --code-scrollbar-thumb-hover: rgba(180, 180, 180, 0.65);
