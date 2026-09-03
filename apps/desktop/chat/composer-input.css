@@ -389,6 +389,26 @@
       pointer-events: none;
       transform: translateX(-50%) translateY(10px) scale(0.75);
     }
+
+    /* Fit Height to Message: the window is small, so tuck the floating buttons
+       into the bottom-right corner instead of centred ~160px up. */
+    html[data-auto-window-height="1"] #composerFabBtn,
+    html[data-auto-window-height="1"] #scrollToBottomBtn {
+      left: auto;
+      right: 8px;
+      bottom: 8px;
+      transform: translateY(10px) scale(0.75);
+    }
+    html[data-auto-window-height="1"] #composerFabBtn.visible,
+    html[data-auto-window-height="1"] #scrollToBottomBtn.visible {
+      transform: translateY(0) scale(1);
+    }
+    html[data-auto-window-height="1"] #composerFabBtn:active,
+    html[data-auto-window-height="1"] #composerFabBtn.visible:active,
+    html[data-auto-window-height="1"] #scrollToBottomBtn:active,
+    html[data-auto-window-height="1"] #scrollToBottomBtn.visible:active {
+      transform: translateY(0) scale(0.94);
+    }
     .conversation-empty {
       display: flex;
       align-items: center;

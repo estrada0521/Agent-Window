@@ -210,6 +210,13 @@
             if (sendBtnEl) sendBtnEl.classList.toggle("visible", hasText);
           }
         }
+        // The message's final height is known the instant its row is in the DOM
+        // (the char reveal is a client-side opacity animation over text that's
+        // already there). Fire now so "Fit Height to Message" resizes in step
+        // with the message appearing, not after the reveal finishes.
+        if (pendingStreamRowCleanups.length) {
+          document.dispatchEvent(new CustomEvent("chat-transcript-settled"));
+        }
       } catch (err) {
         console.error("chat render failed", err);
         const root = document.getElementById("messages");

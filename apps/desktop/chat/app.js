@@ -185,8 +185,11 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       }
     };
     const scheduleFitHeight = () => {
+      // Fire immediately (message just entered the DOM -> resize in step), then
+      // a short follow-up to catch late layout: code blocks, KaTeX, image loads.
+      reportFitHeight();
       clearTimeout(_fitHeightTimer);
-      _fitHeightTimer = setTimeout(reportFitHeight, 150);
+      _fitHeightTimer = setTimeout(reportFitHeight, 120);
     };
     document.addEventListener("chat-transcript-settled", scheduleFitHeight);
 __CHAT_INCLUDE:../../shared/chat/scroll-focus.js__
@@ -633,7 +636,14 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       if (event.data.type === "hub-auto-window-height") {
         document.documentElement.dataset.autoWindowHeight = event.data.on ? "1" : "0";
         syncMainAfterHeight();
-        if (event.data.on) requestAnimationFrame(reportFitHeight);
+        if (event.data.on) {
+          requestAnimationFrame(reportFitHeight);
+        } else {
+          // The 50vh spacers just came back; the old scrollTop now points
+          // mid-transcript. Snap to the bottom.
+          _stickyToBottom = true;
+          requestAnimationFrame(() => scrollConversationToBottom("auto"));
+        }
         return;
       }
       if (event.data.type === "desktop-panel-sync-request") {
