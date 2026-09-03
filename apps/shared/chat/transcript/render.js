@@ -1,4 +1,5 @@
     let lastRenderPrepended = false;
+    let _firstContentSettleFired = false;
     const render = (data, {
       forceScroll = false,
       forceFullRender = false,
@@ -213,8 +214,11 @@
         // The message's final height is known the instant its row is in the DOM
         // (the char reveal is a client-side opacity animation over text that's
         // already there). Fire now so "Fit Height to Message" resizes in step
-        // with the message appearing, not after the reveal finishes.
-        if (pendingStreamRowCleanups.length) {
+        // with the message appearing, not after the reveal finishes. Also fire
+        // once on the first content render of the page so switching session or
+        // reloading the chat re-fits the window.
+        if (pendingStreamRowCleanups.length || !_firstContentSettleFired) {
+          _firstContentSettleFired = true;
           document.dispatchEvent(new CustomEvent("chat-transcript-settled"));
         }
       } catch (err) {
