@@ -292,9 +292,6 @@
     .target-chip:active:not(:disabled) {
       transform: none;
     }
-    #composerFabBtn:active {
-      transform: translateX(-50%) translateY(0) scale(0.94);
-    }
 
     @media (hover: hover) and (pointer: fine) {
       .target-chip:hover:not(.active) {

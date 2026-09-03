@@ -636,8 +636,6 @@ class Handler(BaseHTTPRequestHandler):
             theme_desktop = normalize_theme_choice(settings.get("theme_desktop", "dark"))
             page = page.replace("__THEME_DESKTOP__", theme_desktop)
             page = page.replace("__TEXT_SIZE_PX__", f'{int(settings["text_size"])}px')
-            page = page.replace("__ALWAYS_ON_TOP__", "1" if settings.get("always_on_top") else "0")
-            page = page.replace("__AUTO_WINDOW_HEIGHT__", "1" if settings.get("auto_window_height") else "0")
         render_settings = settings_for_hub_render(settings, variant=variant)
         page = apply_font_tokens(page, settings=render_settings)
         self._send_html(200, apply_color_tokens(page, settings=render_settings))

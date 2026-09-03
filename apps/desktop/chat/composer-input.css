@@ -273,8 +273,11 @@
     #composerFabBtn {
       position: fixed;
       bottom: var(--floating-btn-bottom, 160px);
-      left: 50%;
-      transform: translateX(-50%) translateY(10px) scale(0.75);
+      /* Centre via left, not translateX(-50%), so the Fit Height tuck (which
+         swaps to right: 8px) is a plain snap with no transform to animate.
+         -19px == -(width / 2). */
+      left: calc(50% - 19px);
+      transform: translateY(10px) scale(0.75);
       width: 38px;
       height: 38px;
       border-radius: 999px;
@@ -311,7 +314,7 @@
     #scrollToBottomBtn.thinking-scroll-btn-swapping {
       opacity: 0;
       pointer-events: none;
-      transform: translateX(-50%) translateY(10px) scale(0.75);
+      transform: translateY(10px) scale(0.75);
     }
     #scrollToBottomBtn.thinking-scroll-btn .message-thinking-icon-wrap {
       width: 18px;
@@ -322,18 +325,18 @@
     #composerFabBtn.visible:active,
     #scrollToBottomBtn:active,
     #scrollToBottomBtn.visible:active {
-      transform: translateX(-50%) translateY(0) scale(0.94);
+      transform: translateY(0) scale(0.94);
     }
     #scrollToBottomBtn.visible,
     #composerFabBtn.visible {
       opacity: 1;
       pointer-events: auto;
-      transform: translateX(-50%) translateY(0) scale(1);
+      transform: translateY(0) scale(1);
     }
     #scrollToBottomBtn.visible.thinking-scroll-btn-swapping {
       opacity: 0;
       pointer-events: none;
-      transform: translateX(-50%) translateY(10px) scale(0.75);
+      transform: translateY(10px) scale(0.75);
     }
 
     /* Fit Height to Message: the window is small, so tuck the floating buttons

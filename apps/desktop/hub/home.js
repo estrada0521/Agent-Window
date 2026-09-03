@@ -122,7 +122,9 @@
         _deskChatFrame?.contentWindow?.postMessage({ type: "desktop-chat-reset" }, "*");
       } catch (_) {}
     }
-    let _deskAlwaysOnTop = (document.documentElement.dataset.alwaysOnTop || "0") === "1";
+    // Always on Top and Fit Height to Message are per-session toggles: both
+    // start off on every launch and are never written back to hub settings.
+    let _deskAlwaysOnTop = false;
     function applyDeskAlwaysOnTop(on) {
       _deskAlwaysOnTop = !!on;
       const invoke = getTauriInvoke();
@@ -132,20 +134,15 @@
         });
       }
     }
-    function setDeskAlwaysOnTopPersisted(on) {
-      applyDeskAlwaysOnTop(on);
-      persistHubSettings({ always_on_top: _deskAlwaysOnTop ? "1" : "0" });
-    }
     function toggleDeskAlwaysOnTop() {
-      setDeskAlwaysOnTopPersisted(!_deskAlwaysOnTop);
+      applyDeskAlwaysOnTop(!_deskAlwaysOnTop);
     }
-    if (_deskAlwaysOnTop) applyDeskAlwaysOnTop(true);
 
     // "Fit Height to Message" mode: on each agent-message stream completion the
     // chat frame reports the height it needs, and we resize the window to it
     // (width and x untouched). Between messages the user is free to resize.
     const DESK_FIT_BOTTOM_BUFFER = 16;
-    let _deskAutoWindowHeight = (document.documentElement.dataset.autoWindowHeight || "0") === "1";
+    let _deskAutoWindowHeight = false;
     let _deskLastFitTarget = 0;
     function pushDeskAutoWindowHeight() {
       try {
@@ -171,10 +168,8 @@
       if (_deskAutoWindowHeight) setDeskSidebarOpen(false);
       // Fit Height needs the window minimum height dropped to ~0.
       applyDeskFitHeightMin();
-      persistHubSettings({ auto_window_height: _deskAutoWindowHeight ? "1" : "0" });
       pushDeskAutoWindowHeight();
     }
-    if (_deskAutoWindowHeight) applyDeskFitHeightMin();
     function toggleDeskAutoWindowHeight() {
       setDeskAutoWindowHeight(!_deskAutoWindowHeight);
     }
