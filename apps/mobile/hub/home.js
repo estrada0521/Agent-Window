@@ -80,6 +80,40 @@
       _chatOverlay.style.transition = "";
       _chatOverlay.style.opacity = "";
     }
+    // The overlay's edge line must vanish when the slide *looks* seated, which
+    // the hard-decelerating ease reaches well before the transition's nominal
+    // end. Fire .overlay-settled on a lead-time timer, with transitionend as a
+    // backstop.
+    const CHAT_OVERLAY_SLIDE_MS = 440;        // matches #chatOverlay transform transition
+    const CHAT_OVERLAY_SETTLE_LEAD_MS = 130;
+    let _overlaySettleHandler = null;
+    let _overlaySettleTimer = 0;
+    function clearOverlaySettle() {
+      if (_overlaySettleHandler) {
+        _chatOverlay.removeEventListener("transitionend", _overlaySettleHandler);
+        _overlaySettleHandler = null;
+      }
+      if (_overlaySettleTimer) {
+        clearTimeout(_overlaySettleTimer);
+        _overlaySettleTimer = 0;
+      }
+      _chatOverlay.classList.remove("overlay-settled");
+    }
+    function armOverlaySettle() {
+      clearOverlaySettle();
+      const settle = () => {
+        clearOverlaySettle();
+        if (_chatOverlay.classList.contains("overlay-visible")) {
+          _chatOverlay.classList.add("overlay-settled");
+        }
+      };
+      _overlaySettleHandler = (event) => {
+        if (event.target !== _chatOverlay || event.propertyName !== "transform") return;
+        settle();
+      };
+      _chatOverlay.addEventListener("transitionend", _overlaySettleHandler);
+      _overlaySettleTimer = setTimeout(settle, Math.max(0, CHAT_OVERLAY_SLIDE_MS - CHAT_OVERLAY_SETTLE_LEAD_MS));
+    }
     function showLaunchShell() {
       if (!_launchShell) return;
       _launchShell.hidden = false;
@@ -351,16 +385,19 @@
       const _wasPeeking = _chatOverlay.classList.contains("overlay-peeking");
       document.documentElement.classList.remove("hub-chat-peeking");
       _chatOverlay.classList.remove("overlay-visible", "overlay-closing", "overlay-peeking");
+      clearOverlaySettle();
       resetChatOverlayMotionStyles();
       _chatOverlay.hidden = false;
       if (_wasPeeking) {
         _chatOverlay.classList.add("overlay-visible");
+        armOverlaySettle();
         document.documentElement.classList.add("hub-chat-ui-active");
       } else {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             if (_chatOverlay.hidden) return;
             _chatOverlay.classList.add("overlay-visible");
+            armOverlaySettle();
             document.documentElement.classList.add("hub-chat-ui-active");
           });
         });
@@ -389,6 +426,7 @@
       } catch (_) { }
       _chatFrame.onload = null;
       _chatOverlay.classList.remove("overlay-visible");
+      clearOverlaySettle();
       document.documentElement.classList.remove("hub-chat-ui-active");
       resetChatOverlayMotionStyles();
       updateMenuContext(false);

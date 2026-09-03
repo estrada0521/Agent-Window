@@ -654,7 +654,9 @@
       border: 1px solid var(--line);
       border-radius: inherit;
       pointer-events: none;
-      transition: opacity 440ms cubic-bezier(0.32, 0.72, 0, 1);
+      /* No fade: full strength while detached, gone the frame it lands
+         (.overlay-settled, set on the real transform transitionend). */
+      transition: none;
     }
 
     html[data-theme="light"] #chatOverlay::after {
@@ -672,7 +674,7 @@
       box-shadow: none;
     }
 
-    #chatOverlay.overlay-visible::after {
+    #chatOverlay.overlay-settled::after {
       opacity: 0;
     }
 
@@ -680,10 +682,6 @@
       opacity: 1;
       transform: translate3d(calc(100% - var(--hub-chat-peek-width, 25vw)), 0, 0);
       transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
-    }
-
-    #chatOverlay.overlay-closing::after {
-      transition: none;
     }
 
     #chatOverlay.overlay-peeking {
