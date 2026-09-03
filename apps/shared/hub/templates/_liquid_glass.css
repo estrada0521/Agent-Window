@@ -8,7 +8,12 @@
     :root {
       --liquid-glass-blur: blur(28px) saturate(220%) contrast(114%);
     }
-    html[data-theme="dark"] {
+    /* #paneTracePanel / .pane-viewer (mobile chat) render dark on a light page,
+       so they take the dark set regardless of theme -- listed here so the values
+       live in one rule. */
+    html[data-theme="dark"],
+    #paneTracePanel,
+    .pane-viewer {
       --liquid-glass-lg-tint: linear-gradient(rgba(37, 37, 37, 0.5), rgba(37, 37, 37, 0.5));
       --liquid-glass-lg-border: rgba(255, 255, 255, 0.05);
       --liquid-glass-lg-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.26), 0 4px 14px rgba(0, 0, 0, 0.4);
