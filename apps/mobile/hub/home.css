@@ -610,10 +610,55 @@
       background: var(--bg);
       opacity: 1;
       transform: translate3d(100%, 0, 0);
-      transition: transform 440ms cubic-bezier(0.32, 0.72, 0, 1), opacity 180ms ease;
+      /* iOS-style: rounded to the device radius while detached / mid-slide, then
+         snaps flush once it has finished seating (border-radius 0s, but delayed
+         by the slide duration -- no radius animation, just a hard switch at the
+         end). The blur + corner clip live on .chat-frame-clip so this element's
+         drop shadow isn't blurred with them. */
+      border-radius: 47px;
+      /* chat sits above the hub -- a faint shadow at constant strength while
+         detached, then off the instant it seats flush (same hard-switch-at-end
+         treatment as border-radius; a shadow that fades while the view is still
+         raised reads wrong). */
+      box-shadow: 0 0 3px rgba(0, 0, 0, 0.18), 0 0 11px rgba(0, 0, 0, 0.09);
+      transition: transform 440ms cubic-bezier(0.32, 0.72, 0, 1), opacity 180ms ease, border-radius 0s 440ms, box-shadow 0s 440ms;
       will-change: transform, opacity;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
+    }
+
+    .chat-frame-clip {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      border-radius: inherit;
+      filter: blur(0);
+      transition: filter 440ms cubic-bezier(0.32, 0.72, 0, 1);
+      will-change: filter;
+    }
+
+    #chatOverlay.overlay-closing .chat-frame-clip,
+    #chatOverlay.overlay-peeking .chat-frame-clip {
+      filter: blur(4px);
+    }
+
+    #chatOverlay.overlay-closing .chat-frame-clip {
+      transition: filter 280ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    /* A barely-there edge line, above the blurred clip. */
+    #chatOverlay::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 1px solid var(--line);
+      border-radius: inherit;
+      pointer-events: none;
+      transition: opacity 440ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    html[data-theme="light"] #chatOverlay::after {
+      border-color: rgba(0, 0, 0, 0.07);
     }
 
     #chatOverlay[hidden] {
@@ -623,12 +668,22 @@
     #chatOverlay.overlay-visible {
       opacity: 1;
       transform: translate3d(0, 0, 0);
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    #chatOverlay.overlay-visible::after {
+      opacity: 0;
     }
 
     #chatOverlay.overlay-closing {
       opacity: 1;
       transform: translate3d(calc(100% - var(--hub-chat-peek-width, 25vw)), 0, 0);
       transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    #chatOverlay.overlay-closing::after {
+      transition: none;
     }
 
     #chatOverlay.overlay-peeking {
@@ -638,6 +693,15 @@
     }
 
     @media (min-width: 600px) {
+      #chatOverlay {
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      #chatOverlay::after {
+        display: none;
+      }
+
       #chatOverlay.overlay-closing,
       #chatOverlay.overlay-peeking {
         transform: translate3d(var(--hub-sidebar-width), 0, 0);
@@ -663,16 +727,6 @@
       border: none;
       display: block;
       background: var(--bg);
-    }
-
-    #chatOverlay.overlay-closing #chatFrame,
-    #chatOverlay.overlay-peeking #chatFrame {
-      filter: blur(4px);
-    }
-
-    #chatOverlay.overlay-closing,
-    #chatOverlay.overlay-peeking {
-      box-shadow: none;
     }
 
     html.hub-chat-overlay-active {
