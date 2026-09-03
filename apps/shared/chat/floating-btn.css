@@ -1,8 +1,7 @@
-    /* The floating pill buttons (composer FAB + scroll-to-bottom), shared
-       byte-for-byte by desktop and mobile chat. Liquid-glass face; resolves
-       --liquid-glass-* from _liquid_glass.css, so that must be included first.
-       Platform-specific bits (desktop hover, desktop Fit Height tuck, mobile
-       focus ring) stay in each app's composer-input / composer-overlay CSS. */
+    /* The floating pill buttons (composer FAB + scroll-to-bottom) for mobile
+       chat. Liquid-glass face; resolves --liquid-glass-* from _liquid_glass.css,
+       so that must be included first. Desktop chat styles the same two IDs its
+       own way, directly in its composer-input.css -- not this file. */
     #scrollToBottomBtn,
     #composerFabBtn {
       position: fixed;
@@ -14,7 +13,7 @@
       border-radius: 999px;
       border: 0.5px solid var(--liquid-glass-lg-border);
       background:
-        var(--liquid-glass-lg-sheen),
+        var(--liquid-glass-lg-tint),
         rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
       box-shadow: var(--liquid-glass-lg-shadow);
       color: var(--icon-fg);
@@ -66,9 +65,7 @@
       font-size: 12px;
     }
 
-    /* Pressed = just a small shrink. The face (border / sheen / shadow) stays
-       put; swapping in the "active" glass tokens flipped the gradient and read
-       as a different element. */
+    /* Pressed = just a small shrink; the face (border / tint / shadow) stays put. */
     #composerFabBtn:active,
     #composerFabBtn.visible:active,
     #scrollToBottomBtn:active,

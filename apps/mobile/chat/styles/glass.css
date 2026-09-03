@@ -11,7 +11,7 @@
     .pane-viewer-tabs {
       border: 0.5px solid var(--liquid-glass-lg-border);
       background:
-        var(--liquid-glass-lg-sheen),
+        var(--liquid-glass-lg-tint),
         rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
       box-shadow: var(--liquid-glass-lg-shadow);
       backdrop-filter: var(--liquid-glass-blur);

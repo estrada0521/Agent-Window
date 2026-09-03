@@ -14,8 +14,6 @@
       --session-selected-bg: __SESSION_SELECTED_BG__;
       --session-danger-fg: rgb(204, 47, 38);
       --session-success-fg: rgb(41, 178, 75);
-      --glass-bg-72: rgba(var(--bg-rgb), 0.72);
-      --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: var(--bg-rgb);
       --top-gradient-68: rgba(var(--mob-top-gradient-rgb), 0.68);
       --top-gradient-50: rgba(var(--mob-top-gradient-rgb), 0.50);
@@ -41,8 +39,6 @@
       --session-selected-bg: rgba(0, 0, 0, 0.07);
       --session-danger-fg: rgb(207, 34, 46);
       --session-success-fg: rgb(36, 157, 66);
-      --glass-bg-72: var(--bg);
-      --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: var(--bg-rgb);
       --code-bg: rgba(0, 0, 0, 0.05);
       --row-preview-fg: var(--muted);
@@ -64,8 +60,6 @@
       --session-selected-bg: rgba(255, 255, 255, 0.045);
       --session-danger-fg: rgb(204, 47, 38);
       --session-success-fg: rgb(41, 178, 75);
-      --glass-bg-72: rgba(var(--bg-rgb), 0.72);
-      --glass-filter-20: blur(20px) saturate(180%);
       --mob-top-gradient-rgb: var(--bg-rgb);
       --code-bg: rgba(255, 255, 255, 0.05);
       --row-preview-fg: color-mix(in srgb, var(--muted) 85%, var(--bg));
@@ -281,7 +275,7 @@
       overflow: hidden;
       isolation: isolate;
       background:
-        var(--liquid-glass-lg-sheen),
+        var(--liquid-glass-lg-tint),
         rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
       border: 0.5px solid var(--liquid-glass-lg-border);
       border-radius: 999px;
@@ -308,7 +302,7 @@
 
     .page-header .page-header-actions .page-menu-btn:active {
       background:
-        var(--liquid-glass-lg-active-sheen),
+        var(--liquid-glass-lg-active-tint),
         rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
       border-color: var(--liquid-glass-lg-active-border);
       box-shadow: var(--liquid-glass-lg-active-shadow);

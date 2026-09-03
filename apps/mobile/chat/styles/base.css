@@ -50,10 +50,8 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --composer-menu-row-hover-bg: rgba(255, 255, 255, 0.05);
       --composer-menu-row-active-bg: rgba(255, 255, 255, 0.07);
       --panel-row-selected-bg: rgba(255, 255, 255, 0.045);
-      --glass-bg-64: rgba(var(--bg-rgb), 0.64);
       --glass-bg-68: rgba(var(--bg-rgb), 0.68);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
-      --glass-filter-16: blur(16px) saturate(180%);
       --glass-filter-18: blur(18px) saturate(160%);
       --glass-filter-20: blur(20px) saturate(180%);
       --mobile-sheet-floating-height: 44px;
@@ -106,10 +104,8 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --line: rgba(0, 0, 0, 0.10);
       --line-strong: rgba(0, 0, 0, 0.18);
       --code-copy-hover-bg: rgba(0, 0, 0, 0.08);
-      --glass-bg-64: var(--bg);
       --glass-bg-68: var(--bg);
       --glass-bg-72: var(--bg);
-      --glass-filter-16: blur(16px) saturate(180%);
       --glass-filter-18: blur(18px) saturate(160%);
       --glass-filter-20: blur(20px) saturate(180%);
       --mobile-sheet-pill-bg: rgba(20, 20, 19, 0.24);
@@ -156,7 +152,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --line: rgba(255, 255, 255, 0.07);
       --line-strong: rgba(255, 255, 255, 0.12);
       --code-copy-hover-bg: rgba(255, 255, 255, 0.09);
-      --glass-bg-64: rgba(var(--bg-rgb), 0.64);
       --glass-bg-68: rgba(var(--bg-rgb), 0.68);
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --mobile-sheet-pill-bg: rgba(255, 255, 255, 0.22);
