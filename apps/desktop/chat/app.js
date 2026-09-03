@@ -182,10 +182,10 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       const topPx = lastRow.getBoundingClientRect().top;
       const bottomPx = (thinkEl || lastRow).getBoundingClientRect().bottom;
       let contentHeight = Math.ceil(bottomPx - topPx);
-      // While the composer overlay is open, size the window for a fully-grown
-      // composer (field at its max-height) so typing never resizes it. Only
-      // ever grows: if the transcript already made the window tall enough, this
-      // fit is skipped so a long transcript isn't shrink-wrapped.
+      // While the composer overlay is open, always size the window for a
+      // fully-grown composer (field at its max-height) -- even if the window is
+      // currently taller. The input then always lands at the same place, and
+      // typing never resizes the window.
       // Measure with offsetHeight, not getBoundingClientRect -- the composer
       // flies in on a ~620ms transform and rects are scaled/offset during it,
       // whereas offset metrics are the settled layout box. #composer's own box
@@ -195,9 +195,7 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
         const box = document.getElementById("composer");
         if (box) {
           const FIELD_BASE = 52;
-          const need = Math.ceil(box.offsetHeight + (COMPOSER_MAX_FIELD - FIELD_BASE)) + COMPOSER_FIT_SLACK;
-          if (need <= window.innerHeight + 1) return; // already fits -- don't resize
-          contentHeight = need;
+          contentHeight = Math.ceil(box.offsetHeight + (COMPOSER_MAX_FIELD - FIELD_BASE)) + COMPOSER_FIT_SLACK;
         }
       }
       if (contentHeight > 0) {
