@@ -199,11 +199,6 @@
       overflow-y: hidden;
       box-sizing: border-box;
     }
-    /* Deliberate exception: the composer input stays at the light-mode
-       weight even in dark mode, unlike the rest of the dark-mode UI. */
-    html:not([data-mobile="1"])[data-theme="dark"] .composer textarea {
-      font-weight: 400;
-    }
     .composer-field:has(.send-btn.visible) textarea {
       padding-right: 52px;
     }
@@ -302,10 +297,12 @@
     main.is-scrolling { scrollbar-color: var(--scrollbar-thumb) transparent; }
     main::-webkit-scrollbar { width: var(--chat-scrollbar-width) !important; height: var(--chat-scrollbar-width) !important; }
     /* The floating pill buttons live in ../../shared/chat/floating-btn.css.
-       Desktop leans them more opaque than the mobile glass (denser fill layer).
+       Desktop runs them smaller than mobile's 44px, and leans the fill denser.
        One fill for every state -- hover and press don't shift the colour. */
     #scrollToBottomBtn,
     #composerFabBtn {
+      width: 38px;
+      height: 38px;
       background:
         linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
         var(--liquid-glass-lg-sheen),
