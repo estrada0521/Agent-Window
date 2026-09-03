@@ -141,6 +141,40 @@
     }
     if (_deskAlwaysOnTop) applyDeskAlwaysOnTop(true);
 
+    // "Fit Height to Message" mode: on each agent-message stream completion the
+    // chat frame reports the height it needs, and we resize the window to it
+    // (width and x untouched). Between messages the user is free to resize.
+    const DESK_FIT_BOTTOM_BUFFER = 16;
+    let _deskAutoWindowHeight = (document.documentElement.dataset.autoWindowHeight || "0") === "1";
+    function pushDeskAutoWindowHeight() {
+      try {
+        _deskChatFrame?.contentWindow?.postMessage(
+          { type: "hub-auto-window-height", on: _deskAutoWindowHeight },
+          "*",
+        );
+      } catch (_) {}
+    }
+    function toggleDeskAutoWindowHeight() {
+      _deskAutoWindowHeight = !_deskAutoWindowHeight;
+      persistHubSettings({ auto_window_height: _deskAutoWindowHeight ? "1" : "0" });
+      pushDeskAutoWindowHeight();
+    }
+    function fitDeskWindowHeight(contentHeight) {
+      if (!_deskAutoWindowHeight) return;
+      const content = Number(contentHeight);
+      if (!Number.isFinite(content) || content <= 0) return;
+      const invoke = getTauriInvoke();
+      if (typeof invoke !== "function" || !_deskChatFrame) return;
+      const iframeH = _deskChatFrame.getBoundingClientRect().height;
+      // Chrome around the chat frame (hub header + window insets). Clamped so a
+      // transient bad iframe measurement can't blow the target up to full screen.
+      const overhead = Math.min(240, Math.max(0, window.innerHeight - iframeH));
+      const target = Math.round(content + overhead + DESK_FIT_BOTTOM_BUFFER);
+      invoke("set_window_height", { height: target }).catch((err) => {
+        showDeskHubMessage(`fit height failed: ${err}`, { error: true });
+      });
+    }
+
     async function resetDeskWindowState() {
       showDeskSidebarList({ open: true });
       setDeskSidebarWidth(DESK_DEFAULT_SIDEBAR_WIDTH);
@@ -202,6 +236,11 @@
           toggleDeskAlwaysOnTop();
           return;
         }
+        if (event.code === "KeyH") {
+          event.preventDefault();
+          toggleDeskAutoWindowHeight();
+          return;
+        }
         if (event.code === "KeyR") {
           event.preventDefault();
           dispatchDeskNativeMenuAction({ action: "openFinder" });
@@ -260,6 +299,7 @@
             textSize: currentDeskTextSizePx(),
             textSizeDefault: DESK_TEXT_SIZE_DEFAULT,
             alwaysOnTop: _deskAlwaysOnTop,
+            autoWindowHeight: _deskAutoWindowHeight,
           },
         });
       } catch (_) {
@@ -295,6 +335,10 @@
       }
       if (detail.action === "toggleAlwaysOnTop") {
         toggleDeskAlwaysOnTop();
+        return;
+      }
+      if (detail.action === "toggleAutoWindowHeight") {
+        toggleDeskAutoWindowHeight();
         return;
       }
       if (detail.action === "theme") {
@@ -1529,6 +1573,14 @@
         toggleDeskAlwaysOnTop();
         return;
       }
+      if (event.data && event.data.type === "auto-window-height-shortcut") {
+        toggleDeskAutoWindowHeight();
+        return;
+      }
+      if (event.data && event.data.type === "fit-window-height" && event.source === _deskChatFrame?.contentWindow) {
+        fitDeskWindowHeight(event.data.contentHeight);
+        return;
+      }
       if (event.data && event.data.type === "open-hub-path") {
         const nextUrl = typeof event.data.url === "string" ? event.data.url : "";
         if (!nextUrl) return;
@@ -1567,6 +1619,7 @@
       setDeskChatLoading(false);
       syncDeskChatShellState();
       applyDeskChatTheme();
+      pushDeskAutoWindowHeight();
       try {
         _deskChatFrame.contentWindow?.postMessage({ type: "desktop-panel-sync-request" }, "*");
       } catch (_) {}

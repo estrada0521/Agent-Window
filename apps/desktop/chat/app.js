@@ -26,7 +26,13 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     const syncMainAfterHeight = () => {
       const mainEl = document.querySelector("main");
       if (!mainEl) return;
-      mainEl.style.removeProperty("--main-spacer-height");
+      // In "Fit Height to Message" mode the window equals the last message, so
+      // the 50vh scroll spacers would just blank the view -- collapse them.
+      if (document.documentElement.dataset.autoWindowHeight === "1") {
+        mainEl.style.setProperty("--main-spacer-height", "0px");
+      } else {
+        mainEl.style.removeProperty("--main-spacer-height");
+      }
       mainEl.style.removeProperty("--main-after-height");
     };
     const syncAppShellHeight = () => {
@@ -40,6 +46,12 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     window.addEventListener("resize", () => {
       syncAppShellHeight();
       scheduleChatScrollbarLayoutWidthSync();
+      // "Fit Height to Message": the window just resized to the last message --
+      // pin the transcript to the bottom so that message is what's shown.
+      if (document.documentElement.dataset.autoWindowHeight === "1") {
+        _stickyToBottom = true;
+        requestAnimationFrame(() => scrollConversationToBottom("auto"));
+      }
     });
     if (window.visualViewport) {
       let _vvSyncTimer = 0;
@@ -143,6 +155,40 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       timeline.addEventListener("scroll", hubPingParentForSafariChrome, { passive: true });
       requestHubParentLayout();
     }
+
+    // "Fit Height to Message": after a message settles, report the transcript's
+    // rendered content extent so the hub can size the window to it. Measured as
+    // (last row bottom - first row top) in viewport px -- scroll-position
+    // independent, and it ignores main::before / main::after (the 50vh scroll
+    // spacers, which is why scrollHeight is useless here). Debounced for bursts.
+    let _fitHeightTimer = 0;
+    const reportFitHeight = () => {
+      if (!isHubIframeChat() || document.documentElement.dataset.autoWindowHeight !== "1") return;
+      const scroller = timeline || document.getElementById("messages");
+      const rows = scroller
+        ? scroller.querySelectorAll(":scope > article.message-row, :scope > .sysmsg-row")
+        : null;
+      if (!rows || !rows.length) return;
+      // The last message row, plus the running/thinking indicator below it when
+      // one is up (so sending doesn't push the message off the top).
+      const lastRow = rows[rows.length - 1];
+      const thinkEl = scroller.querySelector(":scope > .message-thinking-container");
+      const topPx = lastRow.getBoundingClientRect().top;
+      const bottomPx = (thinkEl || lastRow).getBoundingClientRect().bottom;
+      const contentHeight = Math.ceil(bottomPx - topPx);
+      if (contentHeight > 0) {
+        _stickyToBottom = true;
+        scrollConversationToBottom("auto");
+        try {
+          window.parent.postMessage({ type: "fit-window-height", contentHeight }, "*");
+        } catch (_) {}
+      }
+    };
+    const scheduleFitHeight = () => {
+      clearTimeout(_fitHeightTimer);
+      _fitHeightTimer = setTimeout(reportFitHeight, 150);
+    };
+    document.addEventListener("chat-transcript-settled", scheduleFitHeight);
 __CHAT_INCLUDE:../../shared/chat/scroll-focus.js__
 __CHAT_INCLUDE:attachments/file-open.js__
 __CHAT_INCLUDE:../../shared/chat/composer-overlay.js__
@@ -584,6 +630,12 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         if (Number.isFinite(px)) document.documentElement.style.setProperty("--text-size", `${px}px`);
         return;
       }
+      if (event.data.type === "hub-auto-window-height") {
+        document.documentElement.dataset.autoWindowHeight = event.data.on ? "1" : "0";
+        syncMainAfterHeight();
+        if (event.data.on) requestAnimationFrame(reportFitHeight);
+        return;
+      }
       if (event.data.type === "desktop-panel-sync-request") {
         notifyParentPanelState();
         return;
@@ -633,6 +685,11 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           if (event.code === "KeyP") {
             event.preventDefault();
             window.parent?.postMessage({ type: "always-on-top-shortcut" }, "*");
+            return;
+          }
+          if (event.code === "KeyH") {
+            event.preventDefault();
+            window.parent?.postMessage({ type: "auto-window-height-shortcut" }, "*");
             return;
           }
           if (event.code === "Digit0" || event.key === "0") {

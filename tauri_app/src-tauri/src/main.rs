@@ -50,6 +50,7 @@ struct AppearanceMenuPayload {
     text_size: i32,
     text_size_default: i32,
     always_on_top: bool,
+    auto_window_height: bool,
 }
 
 #[tauri::command]
@@ -336,6 +337,15 @@ fn show_appearance_menu(
     .build(&app)
     .map_err(|err| err.to_string())?;
 
+    let auto_window_height = CheckMenuItemBuilder::with_id(
+        format!("{}action:toggleAutoWindowHeight", NATIVE_MENU_PREFIX),
+        "Fit Height to Message",
+    )
+    .checked(payload.auto_window_height)
+    .accelerator("Cmd+Alt+H")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+
     let open_settings_file = MenuItemBuilder::with_id(
         format!("{}action:openSettingsFile", NATIVE_MENU_PREFIX),
         "Open Settings File",
@@ -355,6 +365,7 @@ fn show_appearance_menu(
         .item(&compact_window)
         .item(&mini_window)
         .item(&always_on_top)
+        .item(&auto_window_height)
         .separator()
         .item(&open_settings_file)
         .build()
@@ -395,6 +406,41 @@ fn reset_window_geometry(window: tauri::WebviewWindow) -> Result<(), String> {
 #[tauri::command]
 fn set_always_on_top(window: tauri::WebviewWindow, on: bool) -> Result<(), String> {
     window.set_always_on_top(on).map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+fn set_window_height(window: tauri::WebviewWindow, height: f64) -> Result<(), String> {
+    // Width and x stay; only the height (and, if it would spill off the
+    // bottom, y) change. Clamped to a sane floor and the monitor height.
+    let scale_factor = window.scale_factor().map_err(|err| err.to_string())?;
+    let monitor = window
+        .current_monitor()
+        .map_err(|err| err.to_string())?
+        .ok_or_else(|| "no monitor available".to_string())?;
+    let monitor_pos = monitor.position().to_logical::<f64>(scale_factor);
+    let monitor_size = monitor.size().to_logical::<f64>(scale_factor);
+    let cur_size = window
+        .inner_size()
+        .map_err(|err| err.to_string())?
+        .to_logical::<f64>(scale_factor);
+    let cur_pos = window
+        .outer_position()
+        .map_err(|err| err.to_string())?
+        .to_logical::<f64>(scale_factor);
+    let h = height.max(MIN_WINDOW_HEIGHT).min(monitor_size.height);
+    let mut y = cur_pos.y;
+    if y + h > monitor_pos.y + monitor_size.height {
+        y = monitor_pos.y + monitor_size.height - h;
+    }
+    if y < monitor_pos.y {
+        y = monitor_pos.y;
+    }
+    window
+        .set_size(tauri::LogicalSize::new(cur_size.width, h))
+        .map_err(|err| err.to_string())?;
+    window
+        .set_position(tauri::LogicalPosition::new(cur_pos.x, y))
+        .map_err(|err| err.to_string())
 }
 
 #[tauri::command]
@@ -700,7 +746,8 @@ fn main() {
             reset_window_geometry,
             compact_window_geometry,
             set_always_on_top,
-            mini_window_geometry
+            mini_window_geometry,
+            set_window_height
         ])
         .on_menu_event(|app, event| {
             emit_native_menu_action(app, event.id().as_ref());

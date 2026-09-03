@@ -18,6 +18,7 @@
     "allow-compact-window-geometry",
     "allow-set-always-on-top",
     "allow-mini-window-geometry",
+    "allow-set-window-height",
     "core:default",
     "core:window:allow-start-dragging"
   ]

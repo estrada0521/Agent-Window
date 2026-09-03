@@ -142,6 +142,12 @@ def _apply_hub_settings(raw: dict, settings: dict) -> dict:
             value = value.strip().lower() in ("1", "true", "yes", "on")
         settings["always_on_top"] = bool(value)
 
+    if raw.get("auto_window_height") is not None:
+        value = raw.get("auto_window_height")
+        if isinstance(value, str):
+            value = value.strip().lower() in ("1", "true", "yes", "on")
+        settings["auto_window_height"] = bool(value)
+
     return settings
 
 
@@ -152,6 +158,7 @@ HUB_SETTINGS_DEFAULTS = {
     "code_font": DEFAULT_CODE_FONT,
     "text_size": 13,
     "always_on_top": False,
+    "auto_window_height": False,
 }
 
 MOBILE_CHAT_TEXT_SIZE = {

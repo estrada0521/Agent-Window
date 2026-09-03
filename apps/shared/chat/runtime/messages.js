@@ -82,6 +82,11 @@ __CHAT_INCLUDE:../messages-data.js__
         if (animateInDone) return;
         animateInDone = true;
         row.classList.remove("animate-in");
+        // A non-streaming row is fully settled here; a streaming one settles
+        // later in finishStream(). "Fit Height to Message" mode listens.
+        if (!streamBody) {
+          document.dispatchEvent(new CustomEvent("chat-transcript-settled"));
+        }
       };
       const messageEl = row.querySelector(".message");
       if (messageEl) {
@@ -113,6 +118,7 @@ __CHAT_INCLUDE:../messages-data.js__
         row.classList.remove("streaming-body-reveal");
         delete row._streamRevealTotalMs;
         if (row.isConnected) linkifyInlineCodeFileRefsImmediate(row);
+        document.dispatchEvent(new CustomEvent("chat-transcript-settled"));
       };
       const ms = typeof row._streamRevealTotalMs === "number" ? row._streamRevealTotalMs : 1700;
       if (ms <= 0) {
