@@ -97,7 +97,9 @@ def _gray_rgb_string(level: int) -> str:
 
 
 MOBILE_HUB_LIGHT_BG_RGB = (243, 243, 241)
-MOBILE_HUB_DARK_BG_RGB = (8, 8, 8)
+MOBILE_HUB_DARK_BG_RGB = (11, 11, 11)
+MOBILE_CHAT_LIGHT_BG_RGB = (249, 249, 247)
+MOBILE_CHAT_DARK_BG_RGB = (8, 8, 8)
 # Desktop page background, one value per (surface, theme). Theme-independent
 # constants so the runtime [data-theme] toggle blocks can reference them
 # without picking up whatever theme the page first rendered under. Hub and
@@ -165,6 +167,10 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
     # launch shell, the meta theme-color and the error page -- shell contexts,
     # not the chat surface -- so they track the hub value.
     bg_rgb = DESKTOP_HUB_LIGHT_BG_RGB if theme == "light" else DESKTOP_HUB_DARK_BG_RGB
+    # The mobile chat :root pre-toggle fallback tracks the resolved theme's
+    # own chat bg (not the hub value), so hand-tuning MOBILE_CHAT_*_BG_RGB
+    # can't leave it out of sync.
+    mobile_chat_bg_rgb = MOBILE_CHAT_LIGHT_BG_RGB if theme == "light" else MOBILE_CHAT_DARK_BG_RGB
     fg_rgb = (fg_level, fg_level, fg_level)
     return {
         "theme": theme,
@@ -183,6 +189,9 @@ def resolve_theme_palette(settings: Mapping[str, object] | None = None) -> dict[
         "mobile_hub_light_bg": f"rgb({','.join(str(v) for v in MOBILE_HUB_LIGHT_BG_RGB)})",
         "mobile_hub_dark_bg_channels": ", ".join(str(v) for v in MOBILE_HUB_DARK_BG_RGB),
         "mobile_hub_dark_bg": f"rgb({','.join(str(v) for v in MOBILE_HUB_DARK_BG_RGB)})",
+        "mobile_chat_light_bg_channels": ", ".join(str(v) for v in MOBILE_CHAT_LIGHT_BG_RGB),
+        "mobile_chat_dark_bg_channels": ", ".join(str(v) for v in MOBILE_CHAT_DARK_BG_RGB),
+        "mobile_chat_bg_channels": ", ".join(str(v) for v in mobile_chat_bg_rgb),
         "light_fg": f"rgb({','.join(str(v) for v in fg_rgb)})",
         "light_fg_channels": ", ".join(str(v) for v in fg_rgb),
         "gray_surface": _gray_rgb_string(surface_level),
@@ -224,6 +233,9 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
     mobile_hub_light_bg_channels = str(palette["mobile_hub_light_bg_channels"])
     mobile_hub_dark_bg = str(palette["mobile_hub_dark_bg"])
     mobile_hub_dark_bg_channels = str(palette["mobile_hub_dark_bg_channels"])
+    mobile_chat_light_bg_channels = str(palette["mobile_chat_light_bg_channels"])
+    mobile_chat_dark_bg_channels = str(palette["mobile_chat_dark_bg_channels"])
+    mobile_chat_bg_channels = str(palette["mobile_chat_bg_channels"])
     light_fg = str(palette["light_fg"])
     gray_surface = str(palette["gray_surface"])
     gray_inline_border = str(palette["gray_inline_border"])
@@ -252,6 +264,9 @@ def apply_color_tokens(text: str, settings: Mapping[str, object] | None = None) 
         ("__MOBILE_HUB_LIGHT_BG_CHANNELS__", mobile_hub_light_bg_channels),
         ("__MOBILE_HUB_DARK_BG__", mobile_hub_dark_bg),
         ("__MOBILE_HUB_DARK_BG_CHANNELS__", mobile_hub_dark_bg_channels),
+        ("__MOBILE_CHAT_LIGHT_BG_CHANNELS__", mobile_chat_light_bg_channels),
+        ("__MOBILE_CHAT_DARK_BG_CHANNELS__", mobile_chat_dark_bg_channels),
+        ("__MOBILE_CHAT_BG_CHANNELS__", mobile_chat_bg_channels),
         ("__LIGHT_FG__", light_fg),
         ("__GRAY_SURFACE__", gray_surface),
         ("__GRAY_INLINE_BORDER__", gray_inline_border),
