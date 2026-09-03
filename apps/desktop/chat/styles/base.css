@@ -55,7 +55,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --inline-file-link-fg: var(--link-blue);
       --code-copy-bg: transparent;
       --code-copy-hover-bg: __CODE_COPY_HOVER_BG__;
-      --fab-hover-bg: __FAB_HOVER_BG__;
       --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_DARK_CHANNELS__);
 
       --link-blue-channels: __TEXT_LINK_DARK_CHANNELS__;
@@ -88,7 +87,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --line: rgba(0, 0, 0, 0.10);
       --line-strong: rgba(0, 0, 0, 0.18);
       --code-copy-hover-bg: rgba(0, 0, 0, 0.08);
-      --fab-hover-bg: rgba(235, 235, 235, 0.92);
       --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_LIGHT_CHANNELS__);
       --error: rgb(__TEXT_ERROR_LIGHT_CHANNELS__);
 
@@ -125,7 +123,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --line: rgba(180, 180, 180, 0.07);
       --line-strong: rgba(180, 180, 180, 0.12);
       --code-copy-hover-bg: rgba(180, 180, 180, 0.09);
-      --fab-hover-bg: rgba(28, 28, 27, 0.94);
     }
     html[data-launch-shell],
     html[data-launch-shell] body {

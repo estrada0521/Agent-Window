@@ -49,14 +49,6 @@ __CHAT_INCLUDE:../../shared/chat/markdown-inline-code.css__
       background: var(--surface);
     }
 __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
-    #scrollToBottomBtn,
-    #composerFabBtn {
-      background: rgba(var(--bg-rgb), 0.96);
-    }
-    .has-hover #scrollToBottomBtn:hover,
-    .has-hover #composerFabBtn:hover {
-      background: var(--fab-hover-bg);
-    }
     .composer-attach-btn:active {
       background: transparent;
     }
