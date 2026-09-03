@@ -1,9 +1,7 @@
-__CHAT_INCLUDE:../../shared/hub/templates/_liquid_glass.css__
 __CHAT_INCLUDE:styles/base.css__
 __CHAT_INCLUDE:styles/right-panel.css__
 __CHAT_INCLUDE:styles/file-menu.css__
 __CHAT_INCLUDE:composer-overlay.css__
-__CHAT_INCLUDE:../../shared/chat/floating-btn.css__
 __CHAT_INCLUDE:composer-input.css__
 __CHAT_INCLUDE:styles/transcript.css__
     .copy-btn {
@@ -51,6 +49,14 @@ __CHAT_INCLUDE:../../shared/chat/markdown-inline-code.css__
       background: var(--surface);
     }
 __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
+    #scrollToBottomBtn,
+    #composerFabBtn {
+      background: rgba(var(--bg-rgb), 0.96);
+    }
+    .has-hover #scrollToBottomBtn:hover,
+    .has-hover #composerFabBtn:hover {
+      background: var(--fab-hover-bg);
+    }
     .composer-attach-btn:active {
       background: transparent;
     }

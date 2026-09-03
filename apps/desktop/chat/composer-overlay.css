@@ -69,18 +69,6 @@
         rgba(var(--bg-rgb), 0.22) 100%
       );
     }
-    /* Dark desktop: the transcript behind the composer stayed too readable --
-       lift the tint (especially at the edges) so it reads as backdrop, not
-       content. */
-    html[data-hub-shell="1"][data-theme="dark"] .composer-overlay.visible::before {
-      background: radial-gradient(
-        125% 100% at 50% 50%,
-        rgba(var(--bg-rgb), 0.93) 0%,
-        rgba(var(--bg-rgb), 0.88) 38%,
-        rgba(var(--bg-rgb), 0.72) 72%,
-        rgba(var(--bg-rgb), 0.48) 100%
-      );
-    }
     .composer-overlay.visible::before {
       background: radial-gradient(
         125% 100% at 50% 50%,
