@@ -137,6 +137,21 @@
       pointer-events: none;
       transition: opacity 90ms linear, transform 90ms ease;
     }
+    /* Fit Height to Message: no big slide up from below (the short window makes
+       it read as rising out of nothing). Zoom in place instead -- head-on, "from
+       the front" -- and give it a long duration so it stays visible through the
+       window resize that happens at the same time. */
+    html[data-auto-window-height="1"] .composer {
+      transform: scale(0.9);
+      transition: opacity 420ms ease, transform 560ms cubic-bezier(0.18, 0.9, 0.22, 1);
+    }
+    html[data-auto-window-height="1"] .composer-overlay.visible .composer {
+      transform: scale(1);
+    }
+    html[data-auto-window-height="1"] .composer-overlay.closing .composer {
+      transform: scale(0.97);
+      transition: opacity 120ms linear, transform 120ms ease;
+    }
     .composer-main-shell {
       grid-column: 1 / -1;
       display: grid;
