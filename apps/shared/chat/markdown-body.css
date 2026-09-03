@@ -100,11 +100,12 @@
       text-decoration: none;
     }
 
-    /* Dark body text is already light-weight, so a 650 file link reads as an
-       odd bold stab; let it match the surrounding weight and lean on colour. */
+    /* Dark body text is light-weight, so a 650 file link reads as an odd bold
+       stab; inheriting (~300) went too thin. 400 sits between, leaning on
+       colour for the rest of the distinction. */
     html[data-theme="dark"] .md-body a.inline-file-link,
     html[data-theme="dark"] .md-body a.local-file-link {
-      font-weight: inherit;
+      font-weight: 400;
     }
 
     .md-body a.inline-file-link code,
