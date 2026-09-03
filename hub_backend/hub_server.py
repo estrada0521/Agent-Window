@@ -293,7 +293,7 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
     .launch-shell-title {{
       color: var(--launch-shell-title-fg, var(--fg));
       font-family: "Snell Roundhand", "Apple Chancery", cursive;
-      font-size: 36px;
+      font-size: 30px;
       font-weight: 200;
       letter-spacing: -0.04em;
       line-height: 1;
