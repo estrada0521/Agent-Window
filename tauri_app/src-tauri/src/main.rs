@@ -51,6 +51,24 @@ struct AppearanceMenuPayload {
     auto_window_height: bool,
 }
 
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SessionSwitcherMenuPayload {
+    x: f64,
+    y: f64,
+    items: Vec<SessionSwitcherMenuItem>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SessionSwitcherMenuItem {
+    label: String,
+    #[serde(default)]
+    section: bool,
+    #[serde(default)]
+    current: bool,
+}
+
 #[tauri::command]
 fn open_external_url(url: String) -> Result<(), String> {
     let parsed = Url::parse(&url).map_err(|err| format!("invalid external URL: {err}"))?;
@@ -365,6 +383,43 @@ fn show_appearance_menu(
         .map_err(|err| err.to_string())
 }
 
+// "Fit Height to Message" shrinks the window below the height the DOM session
+// popover needs, and a DOM popover can't paint past the window edge. A native
+// menu can, so in that mode the collapsed sidebar switches sessions through it.
+#[tauri::command]
+fn show_session_switcher_menu(
+    window: tauri::WebviewWindow,
+    app: tauri::AppHandle,
+    payload: SessionSwitcherMenuPayload,
+) -> Result<(), String> {
+    let mut builder = MenuBuilder::new(&app);
+    for (index, item) in payload.items.iter().enumerate() {
+        if item.section {
+            let label = MenuItemBuilder::with_id(
+                format!("{}session:section:{}", NATIVE_MENU_PREFIX, index),
+                &item.label,
+            )
+            .enabled(false)
+            .build(&app)
+            .map_err(|err| err.to_string())?;
+            builder = builder.item(&label);
+        } else {
+            let entry = CheckMenuItemBuilder::with_id(
+                format!("{}session:{}", NATIVE_MENU_PREFIX, index),
+                &item.label,
+            )
+            .checked(item.current)
+            .build(&app)
+            .map_err(|err| err.to_string())?;
+            builder = builder.item(&entry);
+        }
+    }
+    let menu = builder.build().map_err(|err| err.to_string())?;
+    window
+        .popup_menu_at(&menu, tauri::LogicalPosition::new(payload.x, payload.y))
+        .map_err(|err| err.to_string())
+}
+
 #[tauri::command]
 fn reset_window_geometry(window: tauri::WebviewWindow) -> Result<(), String> {
     // .center() reads the window's own current size to compute a centered
@@ -492,6 +547,16 @@ fn emit_native_menu_action(app: &tauri::AppHandle, id: &str) {
         NativeMenuActionPayload {
             action: "textSize".to_string(),
             mode: Some(mode.to_string()),
+            agent: None,
+            theme: None,
+        }
+    } else if let Some(session) = rest.strip_prefix("session:") {
+        if session.starts_with("section:") {
+            return;
+        }
+        NativeMenuActionPayload {
+            action: "switchSession".to_string(),
+            mode: Some(session.to_string()),
             agent: None,
             theme: None,
         }
@@ -713,7 +778,8 @@ fn main() {
             reset_window_geometry,
             compact_window_geometry,
             set_always_on_top,
-            set_window_height
+            set_window_height,
+            show_session_switcher_menu
         ])
         .on_menu_event(|app, event| {
             emit_native_menu_action(app, event.id().as_ref());

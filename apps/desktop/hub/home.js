@@ -158,6 +158,9 @@
       const next = !!on;
       if (next === _deskAutoWindowHeight) return;
       _deskAutoWindowHeight = next;
+      // The window is too short for the hub sidebar in this mode; sessions are
+      // switched through a native menu instead (collapsed sidebar, on click).
+      if (_deskAutoWindowHeight) setDeskSidebarOpen(false);
       persistHubSettings({ auto_window_height: _deskAutoWindowHeight ? "1" : "0" });
       pushDeskAutoWindowHeight();
     }
@@ -292,8 +295,56 @@
       }
     }
 
+    // Fit Height to Message shrinks the window past what the DOM session
+    // popover needs, and a DOM popover can't cross the window edge. In that
+    // mode the collapsed sidebar opens a native menu (which can) instead.
+    let _deskSessionSwitcherItems = [];
+    let _deskSessionSwitcherOpen = false;
+    async function openDeskNativeSessionSwitcher() {
+      const invoke = getTauriInvoke();
+      if (typeof invoke !== "function" || !_deskSessionList || !_deskAppSidebarToggle) return;
+      if (_deskSessionSwitcherOpen) return;
+      const items = [];
+      for (const child of Array.from(_deskSessionList.children)) {
+        if (child.classList.contains("desk-section-label")) {
+          items.push({ label: child.textContent.trim(), section: true });
+        } else if (child.classList.contains("desk-swipe-row")) {
+          const row = child.querySelector(".desk-session-row");
+          const href = row?.dataset.openHref || "";
+          if (!row || !href) continue;
+          items.push({
+            label: (row.querySelector(".desk-row-name")?.textContent || row.dataset.sessionName || "").trim(),
+            current: row.classList.contains("is-selected"),
+            href,
+            name: row.dataset.sessionName || "",
+          });
+        }
+      }
+      if (!items.some((it) => !it.section)) return;
+      _deskSessionSwitcherItems = items;
+      const rect = _deskAppSidebarToggle.getBoundingClientRect();
+      _deskSessionSwitcherOpen = true;
+      try {
+        await invoke("show_session_switcher_menu", {
+          payload: {
+            x: Math.round(rect.right || 0),
+            y: Math.round(rect.top || 0),
+            items: items.map(({ label, section, current }) => ({ label, section: !!section, current: !!current })),
+          },
+        });
+      } catch (_) {
+      } finally {
+        _deskSessionSwitcherOpen = false;
+      }
+    }
+
     window.addEventListener("native-menu-action", (event) => {
       const detail = event.detail || {};
+      if (detail.action === "switchSession") {
+        const item = _deskSessionSwitcherItems[Number(detail.mode)];
+        if (item && item.href) openSessionFrame(item.href, item.name);
+        return;
+      }
       if (detail.action === "textSize") {
         const mode = String(detail.mode || "");
         if (mode === "increase") {
@@ -815,6 +866,7 @@
       function open() {
         cancelDismiss();
         if (isDeskSidebarOpen()) return;
+        if (_deskAutoWindowHeight) return; // this mode switches sessions via a native menu on click
         if (hoverPopover) return;
         if (!_deskSessionList) return;
 
@@ -1610,6 +1662,10 @@
       event.preventDefault();
       if (isDeskSidebarOpen()) {
         setDeskSidebarOpen(false);
+        return;
+      }
+      if (_deskAutoWindowHeight) {
+        void openDeskNativeSessionSwitcher();
         return;
       }
       showDeskSidebarList({ open: true });
