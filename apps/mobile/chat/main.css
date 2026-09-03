@@ -1,4 +1,5 @@
 __CHAT_INCLUDE:../../shared/hub/templates/_liquid_glass.css__
+__CHAT_INCLUDE:styles/glass.css__
 __CHAT_INCLUDE:styles/base.css__
 __CHAT_INCLUDE:styles/bottom-sheet.css__
 __CHAT_INCLUDE:styles/file-menu.css__
@@ -6,6 +7,7 @@ __CHAT_INCLUDE:styles/repo-git.css__
 __CHAT_INCLUDE:styles/command-menu.css__
 __CHAT_INCLUDE:composer-overlay.css__
 __CHAT_INCLUDE:styles/modals.css__
+__CHAT_INCLUDE:../../shared/chat/floating-btn.css__
 __CHAT_INCLUDE:composer-input.css__
 __CHAT_INCLUDE:styles/transcript.css__
 __CHAT_INCLUDE:styles/thinking.css__
@@ -109,14 +111,7 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       position: relative;
       isolation: isolate;
       overflow: hidden;
-      border: 0.5px solid var(--liquid-glass-lg-border);
       border-radius: 999px;
-      background:
-        var(--liquid-glass-lg-sheen),
-        rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
-      box-shadow: var(--liquid-glass-lg-shadow);
-      backdrop-filter: var(--liquid-glass-blur);
-      -webkit-backdrop-filter: var(--liquid-glass-blur);
       -webkit-tap-highlight-color: transparent;
       transition:
         background 160ms ease,
@@ -158,14 +153,7 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       position: relative;
       isolation: isolate;
       overflow: hidden;
-      border: 0.5px solid var(--liquid-glass-lg-border);
       border-radius: 999px;
-      background:
-        var(--liquid-glass-lg-sheen),
-        rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
-      box-shadow: var(--liquid-glass-lg-shadow);
-      backdrop-filter: var(--liquid-glass-blur);
-      -webkit-backdrop-filter: var(--liquid-glass-blur);
       -webkit-tap-highlight-color: transparent;
       transition:
         background 160ms ease,
@@ -181,16 +169,6 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       transform: none;
       position: relative;
       z-index: 1;
-    }
-
-    .shell>.page-header .page-header-actions .page-menu-btn:active {
-      border-radius: 999px;
-      border-color: var(--liquid-glass-lg-active-border);
-      background:
-        var(--liquid-glass-lg-active-sheen),
-        rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
-      box-shadow: var(--liquid-glass-lg-active-shadow);
-      transform: translateY(8px) scale(0.94);
     }
 
     .composer-main-shell {

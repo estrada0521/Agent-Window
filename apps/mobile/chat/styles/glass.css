@@ -1,0 +1,25 @@
+    /* The liquid-glass face, in one place for mobile chat. Every glass pill /
+       card / surface below shares exactly this; each keeps its own size,
+       radius, position, transition and interaction states elsewhere.
+       Resolves --liquid-glass-* from _liquid_glass.css (included first). */
+    .shell > .page-header .page-title,
+    .shell > .page-header .page-header-actions .page-menu-btn,
+    .mobile-bottom-sheet .mobile-bottom-sheet-button,
+    .git-commit-detail-head .git-commit-row,
+    .git-commit-detail-head .git-summary-row,
+    .git-summary-wrap .git-summary-row,
+    .pane-viewer-tabs {
+      border: 0.5px solid var(--liquid-glass-lg-border);
+      background:
+        var(--liquid-glass-lg-sheen),
+        rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
+      box-shadow: var(--liquid-glass-lg-shadow);
+      backdrop-filter: var(--liquid-glass-blur);
+      -webkit-backdrop-filter: var(--liquid-glass-blur);
+    }
+
+    /* Pressed = a small shrink; the face stays put. */
+    .shell > .page-header .page-header-actions .page-menu-btn:active,
+    .mobile-bottom-sheet .mobile-bottom-sheet-button:active {
+      transform: scale(0.94);
+    }

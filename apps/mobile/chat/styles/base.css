@@ -389,13 +389,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       pointer-events: none;
       min-height: 34px;
       padding: 0 10px;
-      background:
-        var(--liquid-glass-lg-sheen),
-        rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
-      border: 0.5px solid var(--liquid-glass-lg-border);
-      box-shadow: var(--liquid-glass-lg-shadow);
-      backdrop-filter: var(--liquid-glass-blur);
-      -webkit-backdrop-filter: var(--liquid-glass-blur);
       transition: background 120ms ease;
     }
 
@@ -423,13 +416,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
     }
 
     .git-commit-detail-head .git-summary-row {
-      background:
-        var(--liquid-glass-lg-sheen),
-        rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
-      border: 0.5px solid var(--liquid-glass-lg-border);
-      box-shadow: var(--liquid-glass-lg-shadow);
-      backdrop-filter: var(--liquid-glass-blur);
-      -webkit-backdrop-filter: var(--liquid-glass-blur);
       border-radius: 26px;
       min-height: 34px;
       pointer-events: none;

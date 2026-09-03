@@ -85,13 +85,6 @@
       z-index: 6;
       max-width: calc(100% - 16px);
       transform: translateX(-50%);
-      background:
-        var(--liquid-glass-lg-sheen),
-        rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
-      border: 0.5px solid var(--liquid-glass-lg-border);
-      box-shadow: var(--liquid-glass-lg-shadow);
-      backdrop-filter: var(--liquid-glass-blur);
-      -webkit-backdrop-filter: var(--liquid-glass-blur);
     }
 
     .pane-viewer-tabs::-webkit-scrollbar {
