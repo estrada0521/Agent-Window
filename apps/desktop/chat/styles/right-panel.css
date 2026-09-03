@@ -498,6 +498,9 @@
       transform-origin: top right;
       font-family: var(--font-main);
     }
+    html[data-theme="dark"][data-tauri-app="1"][data-hub-iframe-chat="1"] .git-pinned-summary-aside {
+      box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.55), 0 2px 5px color-mix(in srgb, var(--icon-fg) 14%, transparent);
+    }
     .git-pinned-summary-aside > * {
       position: relative;
       z-index: 1;
