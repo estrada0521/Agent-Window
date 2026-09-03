@@ -91,7 +91,7 @@ def render_file_view(
         resolved_text_size = int(agent_text_size or 13)
     except (TypeError, ValueError):
         resolved_text_size = 13
-    resolved_line_height = resolved_text_size * 1.5
+    resolved_line_height = round(resolved_text_size * 1.5)
     theme_palette = None
     if runtime.repo_root:
         try:
@@ -123,7 +123,7 @@ def render_file_view(
         'const d=e?.data;if(d?.type!=="agent-preview-text-size")return;'
         'const s=Number(d.size);if(!Number.isFinite(s)||s<8)return;'
         'document.documentElement.style.setProperty("--text-size",s+"px");'
-        'document.documentElement.style.setProperty("--text-line-height",(s*1.5)+"px");'
+        'document.documentElement.style.setProperty("--text-line-height",Math.round(s*1.5)+"px");'
         '});'
     )
     font_base = prefix or ""
@@ -254,7 +254,7 @@ def render_file_view(
             'window.addEventListener("message",(event)=>{'
             'const data=event.data||{};'
             'if(data.type==="agent-index-file-preview-mode"){setMode(data.mode);return;}'
-            'if(data.type==="agent-preview-text-size"){const sz=Number(data.size);if(Number.isFinite(sz)&&sz>=8){document.documentElement.style.setProperty("--text-size",sz+"px");document.documentElement.style.setProperty("--text-line-height",(sz*1.5)+"px");}}'
+            'if(data.type==="agent-preview-text-size"){const sz=Number(data.size);if(Number.isFinite(sz)&&sz>=8){document.documentElement.style.setProperty("--text-size",sz+"px");document.documentElement.style.setProperty("--text-line-height",Math.round(sz*1.5)+"px");}}'
             '});'
             'const bindButtons=()=>{'
             'buttons.forEach((button)=>button.addEventListener("click",()=>setMode(button.dataset.previewMode||"text")));'
@@ -717,7 +717,7 @@ window.addEventListener("message", (event) => {{
   const sz = Number(data.size);
   if (!Number.isFinite(sz) || sz < 8) return;
   document.documentElement.style.setProperty("--text-size", sz + "px");
-  document.documentElement.style.setProperty("--text-line-height", (sz * 1.5) + "px");
+  document.documentElement.style.setProperty("--text-line-height", Math.round(sz * 1.5) + "px");
 }});
 const out = document.getElementById("out");
 out.innerHTML = renderMarkdown(__mdText);
