@@ -50,6 +50,7 @@
     const _deskSessionTitleTextEl = document.getElementById("deskSessionTitleText");
     const DESK_SELECTED_KEY = "agent_window_hub_selected_session";
     const DESK_SIDEBAR_WIDTH_KEY = "agent_window_hub_sidebar_width";
+    const DESK_SIDEBAR_OPEN_KEY = "agent_window_hub_sidebar_open";
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
     const DESK_DEFAULT_SIDEBAR_WIDTH = 262;
     const DESK_MIN_SIDEBAR_WIDTH = 160;
@@ -712,6 +713,7 @@
     function setDeskSidebarOpen(isOpen) {
       if (!_deskWorkbench) return;
       _deskWorkbench.classList.toggle("sidebar-open", !!isOpen);
+      try { sessionStorage.setItem(DESK_SIDEBAR_OPEN_KEY, isOpen ? "1" : "0"); } catch (_) {}
       if (_deskAppSidebarToggle) {
         _deskAppSidebarToggle.classList.toggle("is-active", isDeskSessionSidebarOpen());
       }
@@ -1753,7 +1755,13 @@
     startHubSessionMessagesEvents(() => refreshHubSessions(true, { skipRestore: true }));
     consumeHubPendingError();
     if (isTauriDesktopApp() && !isPhoneViewport()) {
-      showDeskSidebarList({ open: true });
+      // sessionStorage, not localStorage: a same-session reload keeps whatever
+      // state it was in, but a fresh app launch has no entry and falls back to
+      // open -- the default stays "open".
+      let wantSidebarOpen = true;
+      try { wantSidebarOpen = sessionStorage.getItem(DESK_SIDEBAR_OPEN_KEY) !== "0"; } catch (_) {}
+      if (wantSidebarOpen) showDeskSidebarList({ open: true });
+      else setDeskSidebarOpen(false);
     }
     refreshHubSessions(true);
   __HUB_HEADER_JS__
