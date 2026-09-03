@@ -24,6 +24,16 @@
       align-items: flex-end;
       padding-bottom: 12px;
     }
+    /* ...and the backdrop tint/blur snap to full strength instead of easing
+       over 320ms -- in this tiny window the lag showed the raw transcript for a
+       beat after the resize. Only opacity fades. */
+    html[data-auto-window-height="1"] .composer-overlay,
+    html[data-auto-window-height="1"] .composer-overlay.closing {
+      transition: opacity 160ms ease;
+    }
+    html[data-auto-window-height="1"] .composer-overlay::before {
+      transition: none;
+    }
     .composer-overlay::before {
       content: "";
       position: absolute;
@@ -47,8 +57,8 @@
     }
     html[data-hub-shell="1"] .composer-overlay.visible,
     html[data-hub-shell="1"] .composer-overlay.closing {
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
     }
     html[data-hub-shell="1"] .composer-overlay.visible::before {
       background: radial-gradient(
@@ -57,6 +67,18 @@
         rgba(var(--bg-rgb), 0.74) 38%,
         rgba(var(--bg-rgb), 0.50) 72%,
         rgba(var(--bg-rgb), 0.22) 100%
+      );
+    }
+    /* Dark desktop: the transcript behind the composer stayed too readable --
+       lift the tint (especially at the edges) so it reads as backdrop, not
+       content. */
+    html[data-hub-shell="1"][data-theme="dark"] .composer-overlay.visible::before {
+      background: radial-gradient(
+        125% 100% at 50% 50%,
+        rgba(var(--bg-rgb), 0.93) 0%,
+        rgba(var(--bg-rgb), 0.88) 38%,
+        rgba(var(--bg-rgb), 0.72) 72%,
+        rgba(var(--bg-rgb), 0.48) 100%
       );
     }
     .composer-overlay.visible::before {
