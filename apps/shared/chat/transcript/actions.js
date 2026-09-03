@@ -198,6 +198,17 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         }
         closeComposerOverlay();
         setStatus(isNote ? "note saved" : `sent to ${target}`);
+        // Mark the target agents running *before* rendering the sent message so
+        // render() draws the running indicator in the same pass -- otherwise it
+        // arrives a session-state round-trip later and forces a second resize
+        // that flashes the message off-screen in Fit Height mode.
+        // markAgentOptimisticallyRunning holds it through racing session-state
+        // updates until the server confirms.
+        if (!isNote) {
+          for (const t of selectedTargets) {
+            if (agentBaseName(t) !== "user") markAgentOptimisticallyRunning(t);
+          }
+        }
         applyLocalEntry(data.entry);
         if (data.activated) {
           void refreshSessionState();

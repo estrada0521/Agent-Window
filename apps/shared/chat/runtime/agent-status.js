@@ -1,5 +1,28 @@
+    // When a message is sent to an agent we mark it running immediately, before
+    // the server round-trip. session-state polls can then briefly race back with
+    // a stale "not running" and make the indicator flicker; hold the optimistic
+    // "running" until the server confirms it running at least once (after which
+    // its later "idle" is the genuine end of the turn) or a grace period lapses.
+    const _optimisticRunning = new Map(); // agent -> { until, confirmed }
+    const markAgentOptimisticallyRunning = (agent) => {
+      _optimisticRunning.set(agent, { until: Date.now() + 4000, confirmed: false });
+      currentAgentStatuses[agent] = "running";
+    };
     const renderAgentStatus = (statuses) => {
-      currentAgentStatuses = { ...statuses };
+      let merged = statuses;
+      if (_optimisticRunning.size) {
+        const now = Date.now();
+        for (const [agent, o] of _optimisticRunning) {
+          if (statuses[agent] === "running") { o.confirmed = true; continue; }
+          if (!o.confirmed && now < o.until) {
+            if (merged === statuses) merged = { ...statuses };
+            merged[agent] = "running";
+          } else {
+            _optimisticRunning.delete(agent);
+          }
+        }
+      }
+      currentAgentStatuses = { ...merged };
       if (document.documentElement.dataset.mobile === "1") {
         syncPaneViewerTabThinkingStatuses();
       }
