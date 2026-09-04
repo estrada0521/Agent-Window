@@ -112,7 +112,7 @@ Clicking an uncommitted change opens it in git's configured diff viewer (`git di
 The first two are window-size presets. With Fit Height (`⌥⌘H`) on, the Hub and the right pane are replaced by native macOS menus.
 
 <p align="center">
-  <video src="media/agent-window-fit.mp4" width="100%" controls></video>
+  <img src="media/agent-window-fit.gif" width="100%" alt="Fit Height demo">
 </p>
 
 ## Connect Agents to each other

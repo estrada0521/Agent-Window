@@ -114,7 +114,7 @@ uncommitted changeをクリックすると、gitに設定されたdiff viewer (`
 上2つはウィンドウサイズのプリセットです。Fit Height (`⌥⌘H`) を有効にすると、Hubと右paneがOSのnative menuに置き換えられます。
 
 <p align="center">
-  <video src="media/agent-window-fit.mp4" width="100%" controls></video>
+  <img src="media/agent-window-fit.gif" width="100%" alt="Fit Height demo">
 </p>
 
 ## Agent同士をつなぐ

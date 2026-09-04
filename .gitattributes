@@ -4,4 +4,3 @@ media/*.jpg filter=lfs diff=lfs merge=lfs -text
 media/*.jpeg filter=lfs diff=lfs merge=lfs -text
 media/*.gif filter=lfs diff=lfs merge=lfs -text
 media/*.mov filter=lfs diff=lfs merge=lfs -text
-media/*.mp4 filter=lfs diff=lfs merge=lfs -text
