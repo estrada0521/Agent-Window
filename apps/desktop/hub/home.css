@@ -268,9 +268,44 @@
       display: block;
       width: 14px;
       /* ~ the rendered stroke of the icons this replaces (1.8 * 15/24). */
-      height: 1.5px;
+      height: 2px;
+      border-radius: 3px;
       background: var(--fg);
     }
+    /* Fit Height replacement for the macOS traffic lights (hidden in that
+       mode): three crushed bars in the real button colours, centred in the
+       strip. Consistent with the compressed buttons, and the colour gives
+       the window a "top". A touch thicker than the mono bars. These are live:
+       close / minimize / zoom. */
+    .fit-window-dots { display: none; }
+    html[data-tauri-app="1"][data-auto-window-height="1"] .fit-window-dots {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      height: var(--tauri-chrome-band-h);
+      z-index: 1300;
+      -webkit-app-region: no-drag;
+    }
+    .fit-window-dots i {
+      position: relative;
+      width: 14px;
+      height: 7px;
+      border-radius: 2px;
+      background: #ff5f57;
+      cursor: pointer;
+    }
+    /* transparent hit-area so the 7px bars are easy to click */
+    .fit-window-dots i::before {
+      content: "";
+      position: absolute;
+      inset: -6px -4px;
+    }
+    .fit-window-dots i:nth-child(2) { background: #febc2e; }
+    .fit-window-dots i:nth-child(3) { background: #28c840; }
     html[data-tauri-app="1"] .page-header-actions.page-header-actions-floating #pageNativeMenuBridge {
       position: absolute;
       top: 0;

@@ -1896,6 +1896,25 @@
       updateDeskPanelButtonState("open", _deskPanelWidth);
       sendDeskPanelCommand("repo");
     });
+    // The Fit Height traffic-light indicator (shown only in that mode) is a
+    // live stand-in for the hidden native buttons.
+    (function armFitWindowDots() {
+      const dotsEl = document.querySelector(".fit-window-dots");
+      const win = window.__TAURI__?.window?.getCurrentWindow?.();
+      if (!dotsEl || !win) return;
+      const actions = [
+        ["Close", () => win.close()],
+        ["Minimize", () => win.minimize()],
+        ["Zoom", () => win.toggleMaximize()],
+      ];
+      dotsEl.querySelectorAll("i").forEach((bar, i) => {
+        const [label, run] = actions[i] || [];
+        if (!run) return;
+        bar.setAttribute("role", "button");
+        bar.setAttribute("aria-label", label);
+        bar.addEventListener("click", () => { try { void run(); } catch (_) {} });
+      });
+    })();
     _deskSettingsBtn && _deskSettingsBtn.addEventListener("click", () => { void openAppearanceMenu(); });
     _deskReloadBtn && _deskReloadBtn.addEventListener("click", () => {
       if (_deskReloadBtn.classList.contains("restarting")) return;
