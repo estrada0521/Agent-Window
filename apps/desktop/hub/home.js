@@ -164,6 +164,10 @@
       if (next === _deskAutoWindowHeight) return;
       _deskAutoWindowHeight = next;
       _deskLastFitTarget = 0;
+      // Fit Height hides the traffic lights, so the 26px title-bar inset at the
+      // top of the window can shrink to match the 4px sides.
+      if (next) document.documentElement.dataset.autoWindowHeight = "1";
+      else delete document.documentElement.dataset.autoWindowHeight;
       // sessionStorage, not localStorage: a same-session hub reload keeps Fit
       // Height mode, but a fresh app launch has no entry and starts off.
       try { sessionStorage.setItem(DESK_AUTO_HEIGHT_KEY, next ? "1" : "0"); } catch (_) {}

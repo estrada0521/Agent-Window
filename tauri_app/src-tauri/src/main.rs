@@ -518,7 +518,31 @@ fn set_fit_height_min(window: tauri::WebviewWindow, enabled: bool) -> Result<(),
     };
     window
         .set_min_size(Some(tauri::LogicalSize::new(MIN_WINDOW_WIDTH, min_h)))
-        .map_err(|err| err.to_string())
+        .map_err(|err| err.to_string())?;
+    // The window is small in this mode and driven entirely by shortcut, so the
+    // macOS traffic lights only loom. Hide them while it is on, restore (and
+    // re-centre) them when it is off.
+    set_traffic_lights_hidden(&window, enabled);
+    if !enabled {
+        center_traffic_lights(&window);
+    }
+    Ok(())
+}
+
+fn set_traffic_lights_hidden(window: &tauri::WebviewWindow, hidden: bool) {
+    let Ok(handle) = window.ns_window() else { return };
+    unsafe {
+        let ns_window: &NSWindow = &*(handle as *const NSWindow);
+        for kind in [
+            NSWindowButton::CloseButton,
+            NSWindowButton::MiniaturizeButton,
+            NSWindowButton::ZoomButton,
+        ] {
+            if let Some(button) = ns_window.standardWindowButton(kind) {
+                button.setHidden(hidden);
+            }
+        }
+    }
 }
 
 #[tauri::command]

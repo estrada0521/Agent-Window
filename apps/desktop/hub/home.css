@@ -84,12 +84,19 @@
     }
     html[data-tauri-app="1"] {
       --tauri-drag-height: 36px;
+      /* Height of the top chrome band (traffic lights / action buttons). */
       --tauri-window-inset-top: 26px;
       --tauri-window-inset-x: 4px;
       --tauri-window-inset-bottom: 4px;
+      /* Space reserved above the content. Same as the band by default; in Fit
+         Height the traffic lights are gone so it drops to the side inset. */
+      --tauri-window-pad-top: var(--tauri-window-inset-top);
+    }
+    html[data-tauri-app="1"][data-auto-window-height="1"] {
+      --tauri-window-pad-top: 4px;
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] {
-      --app-shell-height: calc(100dvh - var(--tauri-window-inset-top) - var(--tauri-window-inset-bottom));
+      --app-shell-height: calc(100dvh - var(--tauri-window-pad-top) - var(--tauri-window-inset-bottom));
     }
     html[data-tauri-app="1"],
     html[data-tauri-app="1"] body {
@@ -97,7 +104,7 @@
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] body {
       margin: 0;
-      padding: var(--tauri-window-inset-top) var(--tauri-window-inset-x) var(--tauri-window-inset-bottom);
+      padding: var(--tauri-window-pad-top) var(--tauri-window-inset-x) var(--tauri-window-inset-bottom);
       box-sizing: border-box;
       min-height: 100dvh;
       overflow: hidden;
@@ -128,6 +135,9 @@
       --desk-chrome-top: 4px;
       --desk-chrome-edge: 10px;
       --desk-chrome-gap: 4px;
+      /* The inner content's corner radius. A hair under the Tauri window's own
+         radius so the inset gap reads as even all the way around the corner. */
+      --desk-inner-radius: 23px;
     }
     .page-header {
       --page-side-pad: 12px;
@@ -246,7 +256,7 @@
       min-height: 0;
       width: 100%;
       background: var(--bg);
-      border-radius: 26px;
+      border-radius: var(--desk-inner-radius);
       overflow: hidden;
       isolation: isolate;
       grid-template-columns: 0 minmax(0, 1fr);
@@ -284,7 +294,7 @@
       background: transparent;
       box-shadow: none;
       z-index: 6;
-      border-radius: 26px 0 0 26px;
+      border-radius: var(--desk-inner-radius) 0 0 var(--desk-inner-radius);
       isolation: isolate;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
     }
@@ -349,7 +359,7 @@
       background: var(--hub-glass);
       backdrop-filter: var(--glass-filter-20);
       -webkit-backdrop-filter: var(--glass-filter-20);
-      border-radius: 26px 0 0 26px;
+      border-radius: var(--desk-inner-radius) 0 0 var(--desk-inner-radius);
       box-shadow: none;
       transition: none;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
@@ -372,7 +382,7 @@
     .desk-workbench.sidebar-open .desk-main {
       display: flex;
       pointer-events: auto;
-      border-radius: 0 26px 26px 0;
+      border-radius: 0 var(--desk-inner-radius) var(--desk-inner-radius) 0;
     }
     .desk-sidebar-shell > * {
       position: relative;
@@ -1154,7 +1164,7 @@
       overflow: hidden;
       isolation: isolate;
       border: none;
-      border-radius: 26px;
+      border-radius: var(--desk-inner-radius);
       -webkit-mask-image: -webkit-radial-gradient(white, black);
       transition: none;
     }
