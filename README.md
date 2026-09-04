@@ -111,6 +111,10 @@ Clicking an uncommitted change opens it in git's configured diff viewer (`git di
 
 The first two are window-size presets. With Fit Height (`⌥⌘H`) on, the Hub and the right pane are replaced by native macOS menus.
 
+<p align="center">
+  <video src="media/agent-window-fit.mp4" width="100%" controls></video>
+</p>
+
 ## Connect Agents to each other
 
 An Agent can send a message directly to another Agent in the session with `agent-send`. Place `SKILL.md` at the designated location if needed — it is the only SKILL Agent Window has committed to.

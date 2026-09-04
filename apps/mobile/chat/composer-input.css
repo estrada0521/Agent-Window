@@ -175,6 +175,11 @@
       -webkit-backdrop-filter: none;
       overflow-y: hidden;
       box-sizing: border-box;
+    }
+    /* The top/bottom fade only makes sense once the field is capped and
+       actually scrolling; applied always it washed out a resting one-line
+       message too (its text sits inside the fade band of a 54px box). */
+    .composer textarea.is-scrollable {
       mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
     }

@@ -30,16 +30,6 @@
       background: rgba(var(--bg-rgb), 0.22);
     }
 
-    html[data-theme="dark"] .composer-overlay.visible {
-      background: rgba(0, 0, 0, 0.24);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    html[data-theme="dark"] .composer-overlay.visible.composer-attach-drag {
-      background: rgba(0, 0, 0, 0.32);
-    }
-
     .composer-overlay.closing {
       opacity: 0;
       pointer-events: none;
@@ -159,18 +149,6 @@
       -webkit-backdrop-filter: none;
       position: relative;
       isolation: isolate;
-    }
-
-    .composer-main-shell::before {
-      content: "";
-      position: absolute;
-      inset: 6px 8px 8px;
-      border-radius: 30px;
-      background: radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.045) 34%, rgba(255, 255, 255, 0.012) 58%, rgba(255, 255, 255, 0) 76%);
-      filter: blur(18px);
-      opacity: 0.82;
-      pointer-events: none;
-      z-index: 0;
     }
 
     .composer-main-shell>* {

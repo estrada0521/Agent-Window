@@ -151,6 +151,11 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       messageInput.style.height = nextHeight + "px";
       const scrollable = nextHeight >= maxHeight;
       messageInput.style.overflowY = scrollable ? "auto" : "hidden";
+      // Mobile's top/bottom fade mask is only meaningful once the field is
+      // actually capped and scrolling -- applied unconditionally it washed
+      // out a normal one-line message too (its text sits inside the fade
+      // band of a field that never scrolls).
+      messageInput.classList.toggle("is-scrollable", scrollable);
       if (isMobileComposer) {
         messageInput.style.marginTop = (baseHeight - nextHeight) + "px";
         composerShellEl?.style.setProperty("--composer-input-rise", Math.max(0, nextHeight - baseHeight) + "px");

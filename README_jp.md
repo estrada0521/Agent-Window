@@ -113,6 +113,10 @@ uncommitted changeをクリックすると、gitに設定されたdiff viewer (`
 
 上2つはウィンドウサイズのプリセットです。Fit Height (`⌥⌘H`) を有効にすると、Hubと右paneがOSのnative menuに置き換えられます。
 
+<p align="center">
+  <video src="media/agent-window-fit.mp4" width="100%" controls></video>
+</p>
+
 ## Agent同士をつなぐ
 
 Agentは `agent-send` で別のAgentへ直接メッセージを送れます。必要な場合は `SKILL.md` を所定の場所に配置してください。これはAgent Windowが契約した唯一のSKILLです。
