@@ -177,6 +177,17 @@
     function toggleDeskAutoWindowHeight() {
       setDeskAutoWindowHeight(!_deskAutoWindowHeight);
     }
+    // Pressing ⌥⌘H to enter Fit Height snaps the window to the compact width
+    // first -- the ⌥⌘9 -> ⌥⌘H sequence that always gets done by hand. Leaving
+    // the mode doesn't touch the width.
+    async function toggleDeskAutoWindowHeightFromShortcut() {
+      if (_deskAutoWindowHeight) {
+        setDeskAutoWindowHeight(false);
+        return;
+      }
+      await compactDeskWindowState();
+      setDeskAutoWindowHeight(true);
+    }
     function fitDeskWindowHeight(contentHeight) {
       if (!_deskAutoWindowHeight) return;
       const content = Number(contentHeight);
@@ -244,7 +255,7 @@
         }
         if (event.code === "KeyH") {
           event.preventDefault();
-          toggleDeskAutoWindowHeight();
+          void toggleDeskAutoWindowHeightFromShortcut();
           return;
         }
         if (event.code === "KeyR") {
@@ -1702,7 +1713,7 @@
         return;
       }
       if (event.data && event.data.type === "auto-window-height-shortcut") {
-        toggleDeskAutoWindowHeight();
+        void toggleDeskAutoWindowHeightFromShortcut();
         return;
       }
       if (event.data && event.data.type === "fit-window-height" && event.source === _deskChatFrame?.contentWindow) {
