@@ -20,6 +20,7 @@
     "allow-set-window-height",
     "allow-set-fit-height-min",
     "allow-show-session-switcher-menu",
+    "allow-show-git-changes-menu",
     "core:default",
     "core:window:allow-start-dragging"
   ]

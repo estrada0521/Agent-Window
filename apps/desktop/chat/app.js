@@ -689,6 +689,38 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         notifyParentPanelState();
         return;
       }
+      // Fit Height mode: the hub asks for the uncommitted-file list to build a
+      // native menu (the DOM panel can't fit the tiny window).
+      if (event.data.type === "desk-git-changes-request") {
+        (async () => {
+          let files = [];
+          let error = false;
+          try {
+            const loaded = await loadGitDiffFileStats({});
+            const byPath = new Map();
+            for (const f of (Array.isArray(loaded?.files) ? loaded.files : [])) {
+              const p = String(f?.path || "").trim();
+              if (!p) continue;
+              const cur = byPath.get(p) || { path: p, ins: 0, dels: 0, untracked: !!f?.untracked };
+              cur.ins += Number(f?.ins) || 0;
+              cur.dels += Number(f?.dels) || 0;
+              cur.untracked = cur.untracked || !!f?.untracked;
+              byPath.set(p, cur);
+            }
+            files = Array.from(byPath.values());
+          } catch (_) { error = true; }
+          try { window.parent?.postMessage({ type: "desk-git-changes", files, error }, "*"); } catch (_) {}
+        })();
+        return;
+      }
+      if (event.data.type === "desk-open-git-file") {
+        const p = String(event.data.path || "").trim();
+        if (p) {
+          if (event.data.untracked) void dpPostOpenFile(p);
+          else void dpPostOpenDiff(p);
+        }
+        return;
+      }
       if (event.data.type === "desktop-chat-reset") {
         closeDesktopRightPanel();
         // Reset / Compact Window restore the default layout, which includes the

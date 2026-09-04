@@ -423,6 +423,58 @@ fn show_session_switcher_menu(
         .map_err(|err| err.to_string())
 }
 
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct GitChangesMenuPayload {
+    x: f64,
+    y: f64,
+    items: Vec<GitChangesMenuItem>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct GitChangesMenuItem {
+    label: String,
+    #[serde(default)]
+    section: bool,
+}
+
+// Fit Height to Message shrinks the window below what the right panel needs, so
+// in that mode the panel toggle pops the uncommitted-file list through a native
+// menu instead (the DOM panel can't paint past the tiny window).
+#[tauri::command]
+fn show_git_changes_menu(
+    window: tauri::WebviewWindow,
+    app: tauri::AppHandle,
+    payload: GitChangesMenuPayload,
+) -> Result<(), String> {
+    let mut builder = MenuBuilder::new(&app);
+    for (index, item) in payload.items.iter().enumerate() {
+        if item.section {
+            let label = MenuItemBuilder::with_id(
+                format!("{}gitfile:section:{}", NATIVE_MENU_PREFIX, index),
+                &item.label,
+            )
+            .enabled(false)
+            .build(&app)
+            .map_err(|err| err.to_string())?;
+            builder = builder.item(&label);
+        } else {
+            let entry = MenuItemBuilder::with_id(
+                format!("{}gitfile:{}", NATIVE_MENU_PREFIX, index),
+                &item.label,
+            )
+            .build(&app)
+            .map_err(|err| err.to_string())?;
+            builder = builder.item(&entry);
+        }
+    }
+    let menu = builder.build().map_err(|err| err.to_string())?;
+    window
+        .popup_menu_at(&menu, tauri::LogicalPosition::new(payload.x, payload.y))
+        .map_err(|err| err.to_string())
+}
+
 #[tauri::command]
 fn reset_window_geometry(window: tauri::WebviewWindow) -> Result<(), String> {
     // .center() reads the window's own current size to compute a centered
@@ -459,7 +511,11 @@ fn set_always_on_top(window: tauri::WebviewWindow, on: bool) -> Result<(), Strin
 fn set_fit_height_min(window: tauri::WebviewWindow, enabled: bool) -> Result<(), String> {
     // In Fit Height to Message mode the window may need to be far shorter than
     // the normal minimum; drop the floor while it is on, restore it when off.
-    let min_h = if enabled { FIT_WINDOW_MIN_HEIGHT } else { MIN_WINDOW_HEIGHT };
+    let min_h = if enabled {
+        FIT_WINDOW_MIN_HEIGHT
+    } else {
+        MIN_WINDOW_HEIGHT
+    };
     window
         .set_min_size(Some(tauri::LogicalSize::new(MIN_WINDOW_WIDTH, min_h)))
         .map_err(|err| err.to_string())
@@ -572,6 +628,16 @@ fn emit_native_menu_action(app: &tauri::AppHandle, id: &str) {
         NativeMenuActionPayload {
             action: "switchSession".to_string(),
             mode: Some(session.to_string()),
+            agent: None,
+            theme: None,
+        }
+    } else if let Some(gitfile) = rest.strip_prefix("gitfile:") {
+        if gitfile.starts_with("section:") {
+            return;
+        }
+        NativeMenuActionPayload {
+            action: "gitChange".to_string(),
+            mode: Some(gitfile.to_string()),
             agent: None,
             theme: None,
         }
@@ -707,7 +773,12 @@ fn apply_app_vibrancy(window: &tauri::WebviewWindow) {
     // a little more each time it regains focus.
     let _ = clear_liquid_glass(window);
     let _ = clear_vibrancy(window);
-    if let Err(err) = apply_liquid_glass(window, NSGlassEffectViewStyle::Clear, glass_tint(window), Some(26.0)) {
+    if let Err(err) = apply_liquid_glass(
+        window,
+        NSGlassEffectViewStyle::Clear,
+        glass_tint(window),
+        Some(26.0),
+    ) {
         eprintln!("[app] liquid glass apply failed: {}", err);
         if let Err(err) = apply_vibrancy(
             window,
@@ -795,7 +866,8 @@ fn main() {
             set_always_on_top,
             set_window_height,
             set_fit_height_min,
-            show_session_switcher_menu
+            show_session_switcher_menu,
+            show_git_changes_menu
         ])
         .on_menu_event(|app, event| {
             emit_native_menu_action(app, event.id().as_ref());

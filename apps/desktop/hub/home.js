@@ -51,6 +51,7 @@
     const DESK_SELECTED_KEY = "agent_window_hub_selected_session";
     const DESK_SIDEBAR_WIDTH_KEY = "agent_window_hub_sidebar_width";
     const DESK_SIDEBAR_OPEN_KEY = "agent_window_hub_sidebar_open";
+    const DESK_AUTO_HEIGHT_KEY = "agent_window_hub_auto_window_height";
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
     const DESK_DEFAULT_SIDEBAR_WIDTH = 262;
     const DESK_MIN_SIDEBAR_WIDTH = 160;
@@ -163,6 +164,9 @@
       if (next === _deskAutoWindowHeight) return;
       _deskAutoWindowHeight = next;
       _deskLastFitTarget = 0;
+      // sessionStorage, not localStorage: a same-session hub reload keeps Fit
+      // Height mode, but a fresh app launch has no entry and starts off.
+      try { sessionStorage.setItem(DESK_AUTO_HEIGHT_KEY, next ? "1" : "0"); } catch (_) {}
       // The window is too short for the hub sidebar in this mode; sessions are
       // switched through a native menu instead (collapsed sidebar, on click).
       if (_deskAutoWindowHeight) setDeskSidebarOpen(false);
@@ -348,11 +352,97 @@
       }
     }
 
+    // Fit Height to Message: the right panel can't paint past the tiny window,
+    // so its toggle pops the uncommitted-file list through a native menu. The
+    // list lives in the chat frame; ask it, then build the menu.
+    let _deskGitChangesItems = [];
+    let _deskGitChangesOpen = false;
+    function requestDeskGitChanges(timeoutMs = 4000) {
+      return new Promise((resolve) => {
+        const frameWin = _deskChatFrame?.contentWindow;
+        if (!frameWin) { resolve(null); return; }
+        let settled = false;
+        const done = (value) => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener("message", onMsg);
+          resolve(value);
+        };
+        const onMsg = (e) => {
+          if (e.source !== frameWin || !e.data || e.data.type !== "desk-git-changes") return;
+          done(e.data);
+        };
+        window.addEventListener("message", onMsg);
+        setTimeout(() => done(null), timeoutMs);
+        frameWin.postMessage({ type: "desk-git-changes-request" }, "*");
+      });
+    }
+    function buildDeskGitChangesItems(files) {
+      if (!files.length) return [{ label: "No uncommitted changes", section: true }];
+      const norm = files
+        .map((f) => ({
+          path: String(f.path || "").trim(),
+          ins: Number(f.ins) || 0,
+          dels: Number(f.dels) || 0,
+          untracked: !!f.untracked,
+        }))
+        .filter((f) => f.path)
+        .sort((a, b) => a.path.localeCompare(b.path));
+      const ins = norm.reduce((n, f) => n + f.ins, 0);
+      const dels = norm.reduce((n, f) => n + f.dels, 0);
+      const items = [{ label: `${norm.length} file${norm.length === 1 ? "" : "s"}  +${ins} -${dels}`, section: true }];
+      const base = (p) => { const s = p.lastIndexOf("/"); return s >= 0 ? p.slice(s + 1) : p; };
+      const push = (f, withStat) => {
+        const stat = withStat && (f.ins || f.dels) ? `  +${f.ins} -${f.dels}` : "";
+        items.push({ label: `${base(f.path)}${stat}`, path: f.path, untracked: f.untracked });
+      };
+      for (const f of norm.filter((f) => !f.untracked)) push(f, true);
+      const untracked = norm.filter((f) => f.untracked);
+      if (untracked.length) {
+        items.push({ label: "Untracked", section: true });
+        for (const f of untracked) push(f, false);
+      }
+      return items;
+    }
+    async function openDeskNativeGitChanges() {
+      const invoke = getTauriInvoke();
+      if (typeof invoke !== "function" || !_deskPanelToggle || _deskGitChangesOpen) return;
+      _deskGitChangesOpen = true;
+      try {
+        const data = await requestDeskGitChanges();
+        const files = Array.isArray(data?.files) ? data.files : [];
+        const items = data?.error
+          ? [{ label: "Git unavailable", section: true }]
+          : buildDeskGitChangesItems(files);
+        _deskGitChangesItems = items;
+        const rect = _deskPanelToggle.getBoundingClientRect();
+        await invoke("show_git_changes_menu", {
+          payload: {
+            x: Math.round(rect.right || 0),
+            y: Math.round(rect.bottom || 0),
+            items: items.map(({ label, section }) => ({ label, section: !!section })),
+          },
+        });
+      } catch (_) {
+      } finally {
+        _deskGitChangesOpen = false;
+      }
+    }
+
     window.addEventListener("native-menu-action", (event) => {
       const detail = event.detail || {};
       if (detail.action === "switchSession") {
         const item = _deskSessionSwitcherItems[Number(detail.mode)];
         if (item && item.href) openSessionFrame(item.href, item.name);
+        return;
+      }
+      if (detail.action === "gitChange") {
+        const item = _deskGitChangesItems[Number(detail.mode)];
+        if (item && item.path) {
+          _deskChatFrame?.contentWindow?.postMessage(
+            { type: "desk-open-git-file", path: item.path, untracked: !!item.untracked }, "*",
+          );
+        }
         return;
       }
       if (detail.action === "textSize") {
@@ -1776,6 +1866,10 @@
     _deskPanelToggle && _deskPanelToggle.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (_deskAutoWindowHeight) {
+        void openDeskNativeGitChanges();
+        return;
+      }
       if (_deskPanelActiveMode) {
         updateDeskPanelButtonState("", 0);
         sendDeskPanelCommand("close");
@@ -1857,6 +1951,9 @@
       try { wantSidebarOpen = sessionStorage.getItem(DESK_SIDEBAR_OPEN_KEY) !== "0"; } catch (_) {}
       if (wantSidebarOpen) showDeskSidebarList({ open: true });
       else setDeskSidebarOpen(false);
+      let wantAutoHeight = false;
+      try { wantAutoHeight = sessionStorage.getItem(DESK_AUTO_HEIGHT_KEY) === "1"; } catch (_) {}
+      if (wantAutoHeight) setDeskAutoWindowHeight(true);
     }
     refreshHubSessions(true);
   __HUB_HEADER_JS__
