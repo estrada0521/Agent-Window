@@ -178,15 +178,18 @@
       setDeskAutoWindowHeight(!_deskAutoWindowHeight);
     }
     // Pressing ⌥⌘H to enter Fit Height snaps the window to the compact width
-    // first -- the ⌥⌘9 -> ⌥⌘H sequence that always gets done by hand. Leaving
-    // the mode doesn't touch the width.
+    // first -- the ⌥⌘9 -> ⌥⌘H sequence that always gets done by hand -- and
+    // pins the window, since Fit Height is only useful kept in front. Leaving
+    // the mode unpins and doesn't touch the width.
     async function toggleDeskAutoWindowHeightFromShortcut() {
       if (_deskAutoWindowHeight) {
         setDeskAutoWindowHeight(false);
+        applyDeskAlwaysOnTop(false);
         return;
       }
       await compactDeskWindowState();
       setDeskAutoWindowHeight(true);
+      applyDeskAlwaysOnTop(true);
     }
     function fitDeskWindowHeight(contentHeight) {
       if (!_deskAutoWindowHeight) return;
