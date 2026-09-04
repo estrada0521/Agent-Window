@@ -149,12 +149,20 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       messageInput.style.height = "auto";
       const nextHeight = Math.min(maxHeight, Math.max(baseHeight, messageInput.scrollHeight));
       messageInput.style.height = nextHeight + "px";
-      messageInput.style.overflowY = nextHeight >= maxHeight ? "auto" : "hidden";
+      const scrollable = nextHeight >= maxHeight;
+      messageInput.style.overflowY = scrollable ? "auto" : "hidden";
       if (isMobileComposer) {
         messageInput.style.marginTop = (baseHeight - nextHeight) + "px";
         composerShellEl?.style.setProperty("--composer-input-rise", Math.max(0, nextHeight - baseHeight) + "px");
       } else {
         messageInput.style.marginTop = "0px";
+      }
+      // The height = "auto" round-trip drops scrollTop to 0. Once the field is
+      // capped and scrolls, that leaves the just-typed last line a few px below
+      // the fold (and the desktop scrollbar is hidden, so there's no cue).
+      // Follow the caret back down whenever it's sitting at the end.
+      if (scrollable && messageInput.value.length - messageInput.selectionEnd <= 1) {
+        messageInput.scrollTop = messageInput.scrollHeight;
       }
     };
     const positionComposerDropdown = (dropdown) => {
@@ -179,14 +187,10 @@ __CHAT_INCLUDE:../file-autocomplete.js__
         const width = entries[entries.length - 1].contentRect.width;
         if (width === _composerWidthForResize) return;
         _composerWidthForResize = width;
-        // A width change (e.g. the right panel opening) reflows the text
-        // and can change how many lines it needs, but never moves the
-        // caret -- unlike typing, nothing here keeps the caret in view.
-        // If it's at (or near) the end, where active composing leaves it,
-        // follow it back into view rather than leaving it scrolled off.
-        const caretNearEnd = messageInput.value.length - messageInput.selectionEnd <= 1;
+        // A width change (e.g. the right panel opening) reflows the text and
+        // can change how many lines it needs; autoResizeTextarea keeps the
+        // caret in view when it's at the end.
         autoResizeTextarea();
-        if (caretNearEnd) messageInput.scrollTop = messageInput.scrollHeight;
       }).observe(messageInput);
     } else {
       window.addEventListener("resize", autoResizeTextarea);
