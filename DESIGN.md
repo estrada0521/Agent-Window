@@ -14,7 +14,7 @@ A workspace already exists. Whether it's a repository, a database, a temporary d
 
 Agents and humans are the intelligence that participates in that reality, temporarily or semi-permanently. An agent handles reality directly from inside. A human needs a window to see across it from outside. Agent Window's GUI is that window.
 
-The window can break without reality breaking.
+The window is not a fixed container; it can change shape to fit reality. The window can break without reality breaking.
 
 ## Unified Log
 

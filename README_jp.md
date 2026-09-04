@@ -102,6 +102,17 @@ fileをクリックするとmacOSの既定applicationで開きます。desktop�
 
 uncommitted changeをクリックすると、gitに設定されたdiff viewer (`git difftool`) で開きます。
 
+## ウィンドウを合わせる
+
+| キー | 動作 |
+|---|---|
+| `⌥⌘0` | 既定のサイズに戻す |
+| `⌥⌘9` | コンパクト表示にする |
+| `⌥⌘H` | ウィンドウの高さを最新メッセージに動的に合わせ続ける |
+| `⌥⌘P` | 最前面に固定 |
+
+上2つはウィンドウサイズのプリセットです。Fit Height (`⌥⌘H`) を有効にすると、Hubと右paneがOSのnative menuに置き換えられます。
+
 ## Agent同士をつなぐ
 
 Agentは `agent-send` で別のAgentへ直接メッセージを送れます。必要な場合は `SKILL.md` を所定の場所に配置してください。これはAgent Windowが契約した唯一のSKILLです。

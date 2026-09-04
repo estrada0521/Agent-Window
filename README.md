@@ -100,6 +100,17 @@ Clicking a file opens it in the macOS default application. The desktop version o
 
 Clicking an uncommitted change opens it in git's configured diff viewer (`git difftool`).
 
+## Fit the window
+
+| Key | Action |
+|---|---|
+| `⌥⌘0` | Restore the default size |
+| `⌥⌘9` | Switch to a compact size |
+| `⌥⌘H` | Keep the window height matched to the latest message |
+| `⌥⌘P` | Keep above other windows |
+
+The first two are window-size presets. With Fit Height (`⌥⌘H`) on, the Hub and the right pane are replaced by native macOS menus.
+
 ## Connect Agents to each other
 
 An Agent can send a message directly to another Agent in the session with `agent-send`. Place `SKILL.md` at the designated location if needed — it is the only SKILL Agent Window has committed to.
