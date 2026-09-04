@@ -45,9 +45,6 @@ __CHAT_INCLUDE:../../shared/chat/markdown-inline-code.css__
     #fileDropdown {
       background: transparent;
     }
-    .attach-card-ext {
-      background: var(--surface);
-    }
 __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
     .composer-attach-btn:active {
       background: transparent;

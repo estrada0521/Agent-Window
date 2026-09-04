@@ -124,24 +124,28 @@
     .attach-card:active {
       transform: scale(0.95);
     }
-    .has-hover .attach-card:hover .attach-card-thumb,
-    .has-hover .attach-card:hover .attach-card-ext {
-      filter: brightness(0.92);
-    }
-    .attach-card-thumb {
-      width: 80px;
-      height: 80px;
-      border-radius: 26px;
-      border: 1px solid var(--line-strong);
-      object-fit: cover;
-      display: block;
-    }
+    /* Translucent chat-bg fill (on .attach-card-ext, below) + hairline border +
+       the same faint depth cue as the composer field / popups. */
+    .attach-card-thumb,
     .attach-card-ext {
       width: 80px;
       height: 80px;
       border-radius: 26px;
-      border: 1px solid var(--line-strong);
-      background: transparent;
+      border: 0.5px solid rgba(0, 0, 0, 0.45);
+      box-shadow:
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.12);
+    }
+    html[data-theme="dark"] .attach-card-thumb,
+    html[data-theme="dark"] .attach-card-ext {
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+    .attach-card-thumb {
+      object-fit: cover;
+      display: block;
+    }
+    .attach-card-ext {
+      background: rgba(var(--bg-rgb), 0.75);
       display: flex;
       align-items: center;
       justify-content: center;
