@@ -18,12 +18,12 @@ PAGE_HEADER_CSS = """
     }
     [hidden] { display: none; }
     @font-face {
-      font-family: "anthropicSans";
+      font-family: "__MESSAGE_FONT_FAMILY__";
       src: url("/font/anthropic-sans-roman.ttf") format("truetype");
       font-style: normal; font-weight: 300 800; font-display: swap;
     }
     @font-face {
-      font-family: "anthropicSans";
+      font-family: "__MESSAGE_FONT_FAMILY__";
       src: url("/font/anthropic-sans-italic.ttf") format("truetype");
       font-style: italic; font-weight: 300 800; font-display: swap;
     }

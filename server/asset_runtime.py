@@ -28,7 +28,12 @@ class ChatAssetRuntime:
                 Path("/Applications/Claude.app/Contents/Resources/fonts/AnthropicSans-Italics-Variable-25x258.ttf"),
             ],
             "jetbrains-mono.ttf": [
-                Path.home() / "Library/Fonts/JetBrainsMono-Variable.ttf",
+                # "JetBrainsMono-Variable.ttf" is not a name any real install
+                # of this font produces -- the Homebrew cask (font-jetbrains-
+                # mono) installs it as "JetBrainsMono[wght].ttf". Whatever
+                # used to sit at the old path wasn't a real install of this
+                # font at all (verified corrupt: HTML, not font data).
+                Path.home() / "Library/Fonts/JetBrainsMono[wght].ttf",
                 Path("/System/Library/Fonts/Supplemental/JetBrainsMono-Variable.ttf"),
             ],
         }

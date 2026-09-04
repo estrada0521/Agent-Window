@@ -21,7 +21,7 @@ from hub_backend.runtime import HubRuntime
 from hub_backend.chat_supervisor import ensure_chat_server
 from hub_backend.session_api import resolve_session_chat_target
 from server.font_style import font_family_stack
-from backend_core.access.settings import DEFAULT_MESSAGE_FONT, load_hub_settings, settings_for_chat_render
+from backend_core.access.settings import load_hub_settings, settings_for_chat_render
 
 hub = HubRuntime(repo_root, tmux_socket, hub_port=hub_port)
 
@@ -174,7 +174,7 @@ class Handler(BaseHTTPRequestHandler):
         embed = qs.get("embed", [""])[0] == "1"
         try:
             settings = settings_for_chat_render(load_hub_settings(), variant="mobile")
-            message_font = str(settings.get("message_font") or DEFAULT_MESSAGE_FONT).strip()
+            message_font = str(settings.get("message_font") or "").strip()
             code_font = str(settings.get("code_font") or "").strip()
             page = runtime.file_view(
                 rel,

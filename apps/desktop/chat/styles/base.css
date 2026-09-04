@@ -1,24 +1,5 @@
     [hidden] { display: none; }
-    @font-face {
-      font-family: "anthropicSans";
-      src:
-        url("__CHAT_BASE_PATH__/font/anthropic-sans-roman.ttf") format("truetype-variations"),
-        url("__CHAT_BASE_PATH__/font/anthropic-sans-roman.ttf") format("truetype");
-      font-style: normal;
-      font-weight: 300 800;
-      font-optical-sizing: auto;
-      font-display: swap;
-    }
-    @font-face {
-      font-family: "anthropicSans";
-      src:
-        url("__CHAT_BASE_PATH__/font/anthropic-sans-italic.ttf") format("truetype-variations"),
-        url("__CHAT_BASE_PATH__/font/anthropic-sans-italic.ttf") format("truetype");
-      font-style: italic;
-      font-weight: 300 800;
-      font-optical-sizing: auto;
-      font-display: swap;
-    }
+__CHAT_INCLUDE:../../../shared/chat/font-faces.css__
 __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
     :root {
       color-scheme: __COLOR_SCHEME__;

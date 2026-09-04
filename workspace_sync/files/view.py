@@ -32,7 +32,14 @@ from hub_backend.presentation.chat.script_assets import (
     KATEX_CDN_JS_SRC,
     MARKED_CDN_SRC,
 )
-from backend_core.access.settings import DEFAULT_CODE_FONT, DEFAULT_MESSAGE_FONT, load_hub_settings
+from backend_core.access.settings import load_hub_settings
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+# Same @font-face declarations the chat UI loads (apps/shared/chat/font-faces.css,
+# included there via __CHAT_INCLUDE__); this preview pane isn't part of that
+# template pipeline, so it reads the one shared source directly instead of
+# carrying its own copy.
+_FONT_FACES_CSS = (_REPO_ROOT / "apps" / "shared" / "chat" / "font-faces.css").read_text()
 from server.font_style import body_typography_css
 from .view_scripts import (
     build_gutter_scroll_sync_js,
@@ -85,8 +92,8 @@ def render_file_view(
     prefix = (base_path or "").rstrip("/")
     raw_url = f"{prefix}/file-raw?path={url_quote(rel)}"
     size = os.path.getsize(full)
-    resolved_agent_font_family = str(agent_font_family).strip() if agent_font_family else DEFAULT_MESSAGE_FONT
-    code_font_family = str(agent_code_font).strip() if agent_code_font else DEFAULT_CODE_FONT
+    resolved_agent_font_family = str(agent_font_family).strip() if agent_font_family else ""
+    code_font_family = str(agent_code_font).strip() if agent_code_font else ""
     try:
         resolved_text_size = int(agent_text_size or 13)
     except (TypeError, ValueError):
@@ -127,10 +134,12 @@ def render_file_view(
         '});'
     )
     font_base = prefix or ""
+    message_font_family = resolved_agent_font_family.split(",", 1)[0].strip().strip('"')
+    code_font_family_name = code_font_family.split(",", 1)[0].strip().strip('"')
     font_face_css = (
-        f'@font-face{{font-family:"anthropicSans";src:url("{font_base}/font/anthropic-sans-roman.ttf") format("truetype-variations"),url("{font_base}/font/anthropic-sans-roman.ttf") format("truetype");font-style:normal;font-weight:300 800;font-optical-sizing:auto;font-display:swap}}'
-        f'@font-face{{font-family:"anthropicSans";src:url("{font_base}/font/anthropic-sans-italic.ttf") format("truetype-variations"),url("{font_base}/font/anthropic-sans-italic.ttf") format("truetype");font-style:italic;font-weight:300 800;font-optical-sizing:auto;font-display:swap}}'
-        f'@font-face{{font-family:"jetbrainsMono";src:local("JetBrains Mono"),local("JetBrainsMono-Regular"),url("{font_base}/font/jetbrains-mono.ttf") format("truetype-variations"),url("{font_base}/font/jetbrains-mono.ttf") format("truetype");font-style:normal;font-weight:100 800;font-display:swap}}'
+        _FONT_FACES_CSS.replace("__CHAT_BASE_PATH__", font_base)
+        .replace("__MESSAGE_FONT_FAMILY__", message_font_family)
+        .replace("__CODE_FONT_FAMILY__", code_font_family_name)
     )
     preview_top_offset = "max(48px, calc(21px + env(safe-area-inset-top)))" if embed else "0px"
     base_css = (

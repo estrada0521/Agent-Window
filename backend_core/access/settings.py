@@ -13,16 +13,6 @@ SESSION_LOG_FILENAME = ".log.jsonl"
 NATIVE_LOG_STATE_FILENAME = ".native-log-sync-state.json"
 THEME_CHOICES = frozenset({"system", "light", "dark"})
 SESSION_NAME_MAX_LENGTH = 64
-DEFAULT_MESSAGE_FONT = (
-    '"anthropicSans", "Anthropic Sans", "SF Pro Text", "Segoe UI", '
-    '"Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", '
-    '"PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", '
-    '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", '
-    '"Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif'
-)
-DEFAULT_CODE_FONT = (
-    '"SF Mono", "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace'
-)
 
 
 def sanitize_session_name(raw: str) -> str:
@@ -50,38 +40,46 @@ def resolve_theme(settings: dict, *, variant: str) -> str:
 
 
 def canonicalize_message_font(value: object) -> str:
+    """`value` is either already a full CSS font-family value (the normal
+    case: whatever's in settings.json, verbatim) or a "system:<family>"
+    selector naming one system font, quoted for CSS. There is no built-in
+    default to fall back to here -- an empty/absent setting means no
+    message-font override is applied at all, letting the surrounding CSS's
+    own inherited/generic font stand."""
     text = " ".join(str(value or "").split())
     if not text:
         return ""
-    if text == "preset-gothic":
-        return DEFAULT_MESSAGE_FONT
     if text.startswith("system:"):
         family = text.split(":", 1)[1].strip()
-        if family:
-            return f'"{family}", {DEFAULT_MESSAGE_FONT}'
-        return ""
+        return f'"{family}"' if family else ""
     return text
 
 
 def _with_derived_font_fields(settings: dict) -> dict:
     settings["message_font"] = canonicalize_message_font(settings.get("message_font"))
-    code_font = str(settings.get("code_font") or "").strip()
-    settings["code_font"] = code_font if code_font else DEFAULT_CODE_FONT
+    settings["code_font"] = str(settings.get("code_font") or "").strip()
     return settings
 
 
 def apply_font_tokens(text: str, settings: dict | None = None) -> str:
     import html
 
-    message_font_css = canonicalize_message_font((settings or {}).get("message_font"))
-    message_font = html.escape(message_font_css)
-    code_font_css = str((settings or {}).get("code_font") or "").strip() or DEFAULT_CODE_FONT
-    code_font = html.escape(code_font_css)
+    settings = settings or {}
+    message_font_css = canonicalize_message_font(settings.get("message_font"))
+    code_font_css = str(settings.get("code_font") or "").strip()
+    # The bare family name (no quotes, no fallback chain) is all an
+    # @font-face declaration's own font-family needs; settings.json is the
+    # only place either name is spelled out, so an unconfigured font means
+    # an inert (empty) @font-face rather than a value guessed here.
+    message_font_family = message_font_css.split(",", 1)[0].strip().strip('"')
+    code_font_family = code_font_css.split(",", 1)[0].strip().strip('"')
     replacements = (
         ("__MESSAGE_FONT_CSS__", message_font_css),
         ("__CODE_FONT_CSS__", code_font_css),
-        ("__MESSAGE_FONT__", message_font),
-        ("__CODE_FONT__", code_font),
+        ("__MESSAGE_FONT__", html.escape(message_font_css)),
+        ("__CODE_FONT__", html.escape(code_font_css)),
+        ("__MESSAGE_FONT_FAMILY__", html.escape(message_font_family)),
+        ("__CODE_FONT_FAMILY__", html.escape(code_font_family)),
     )
     resolved = text
     for old, new in replacements:
@@ -122,13 +120,9 @@ def _apply_hub_settings(raw: dict, settings: dict) -> dict:
     settings["message_font"] = message_font
 
     if "code_font" in raw:
-        code_font = str(raw.get("code_font") or "").strip()
-        if code_font:
-            settings["code_font"] = code_font
-        else:
-            settings["code_font"] = DEFAULT_CODE_FONT
+        settings["code_font"] = str(raw.get("code_font") or "").strip()
     elif "code_font" not in settings:
-        settings["code_font"] = DEFAULT_CODE_FONT
+        settings["code_font"] = ""
 
     try:
         text_size = int(raw.get("text_size", settings.get("text_size") or 13))
@@ -142,8 +136,8 @@ def _apply_hub_settings(raw: dict, settings: dict) -> dict:
 HUB_SETTINGS_DEFAULTS = {
     "theme_desktop": "dark",
     "theme_mobile": "system",
-    "message_font": DEFAULT_MESSAGE_FONT,
-    "code_font": DEFAULT_CODE_FONT,
+    "message_font": "",
+    "code_font": "",
     "text_size": 13,
 }
 

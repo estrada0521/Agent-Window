@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from backend_core.access.settings import DEFAULT_MESSAGE_FONT, canonicalize_message_font
+from backend_core.access.settings import canonicalize_message_font
 from backend_core.agents.registry import generate_agent_message_selectors
 
 
@@ -77,8 +77,8 @@ def body_typography_css() -> str:
 
 
 def chat_font_settings_inline_style(settings: dict) -> str:
-    message_family = font_family_stack(settings.get("message_font", DEFAULT_MESSAGE_FONT))
-    code_family = settings.get("code_font", "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace")
+    message_family = font_family_stack(settings.get("message_font", ""))
+    code_family = settings.get("code_font", "")
     try:
         text_size = int(settings.get("text_size", 13))
     except Exception:

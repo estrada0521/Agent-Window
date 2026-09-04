@@ -1,0 +1,34 @@
+    @font-face {
+      font-family: "__MESSAGE_FONT_FAMILY__";
+      src:
+        url("__CHAT_BASE_PATH__/font/anthropic-sans-roman.ttf") format("truetype-variations"),
+        url("__CHAT_BASE_PATH__/font/anthropic-sans-roman.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 300 800;
+      font-optical-sizing: auto;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "__MESSAGE_FONT_FAMILY__";
+      src:
+        url("__CHAT_BASE_PATH__/font/anthropic-sans-italic.ttf") format("truetype-variations"),
+        url("__CHAT_BASE_PATH__/font/anthropic-sans-italic.ttf") format("truetype");
+      font-style: italic;
+      font-weight: 300 800;
+      font-optical-sizing: auto;
+      font-display: swap;
+    }
+    /* No local() sources: WebKit's local() matching for a variable font is
+       unreliable -- it tends to lock onto one static instance (e.g. always
+       Regular) instead of interpolating the requested weight, which is
+       exactly why this rendered differently from the site (url()-only,
+       correctly interpolated) even after the underlying file was fixed. */
+    @font-face {
+      font-family: "__CODE_FONT_FAMILY__";
+      src:
+        url("__CHAT_BASE_PATH__/font/jetbrains-mono.ttf") format("truetype-variations"),
+        url("__CHAT_BASE_PATH__/font/jetbrains-mono.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 100 800;
+      font-display: swap;
+    }
