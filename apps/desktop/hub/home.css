@@ -17,7 +17,11 @@
       --session-dim-fg: rgb(__TEXT_SESSION_DIM_DESKTOP_LIGHT_CHANNELS__);
       --spinner-ring-color: color-mix(in srgb, var(--icon-muted) 50%, transparent);
       --icon-hover: __ICON_HOVER__;
-      --desk-chrome-hover-bg: var(--bg);
+      /* Chrome button hover scrim: theme sets the colour, mode sets the alpha
+         (nearly opaque normally, half in Fit Height where it sits on a bar). */
+      --desk-chrome-hover-rgb: 0, 0, 0;
+      --desk-chrome-hover-a: 0.9;
+      --desk-chrome-hover-bg: rgba(var(--desk-chrome-hover-rgb), var(--desk-chrome-hover-a));
       --session-hover-bg: __SESSION_HOVER_BG__;
       --session-selected-bg: __SESSION_SELECTED_BG__;
       --session-danger-fg: rgb(255, 108, 102);
@@ -35,7 +39,7 @@
       --icon-muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
       --icon-hover: __DESKTOP_LIGHT_ICON_HOVER__;
       --error: rgb(__TEXT_ERROR_LIGHT_CHANNELS__);
-      --desk-chrome-hover-bg: var(--bg);
+      --desk-chrome-hover-rgb: 255, 255, 255;
       --hub-glass: __DESKTOP_HUB_LIGHT_BG_FILL__;
       --line: rgba(0, 0, 0, 0.10);
       --line-strong: rgba(0, 0, 0, 0.18);
@@ -60,7 +64,7 @@
       --icon-muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
       --icon-hover: __DESKTOP_DARK_ICON_HOVER__;
       --error: rgb(__TEXT_ERROR_DARK_CHANNELS__);
-      --desk-chrome-hover-bg: var(--bg);
+      --desk-chrome-hover-rgb: 0, 0, 0;
       --line: rgba(255, 255, 255, 0.07);
       --line-strong: rgba(255, 255, 255, 0.12);
       --session-hover-bg: rgba(255, 255, 255, 0.05);
@@ -88,12 +92,21 @@
       --tauri-window-inset-top: 26px;
       --tauri-window-inset-x: 4px;
       --tauri-window-inset-bottom: 4px;
-      /* Space reserved above the content. Same as the band by default; in Fit
-         Height the traffic lights are gone so it drops to the side inset. */
+      /* Space reserved above the content, and the height of the top chrome
+         band. Equal by default. In Fit Height both shrink to a thin strip:
+         wide enough to stay an anchor / hold compressed buttons, far short of
+         the 26px title-bar band. */
       --tauri-window-pad-top: var(--tauri-window-inset-top);
+      --tauri-chrome-band-h: var(--tauri-window-inset-top);
     }
     html[data-tauri-app="1"][data-auto-window-height="1"] {
-      --tauri-window-pad-top: 4px;
+      --tauri-window-pad-top: 8px;
+      --tauri-chrome-band-h: 8px;
+      --desk-chrome-hover-a: 0.7;
+      /* Push the edge buttons past the window's corner curve so the outermost
+         bar's end lands where the top edge goes straight. ~ the OS corner
+         radius; nudge if a bar still clips into the curve. */
+      --desk-chrome-edge: 28px;
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] {
       --app-shell-height: calc(100dvh - var(--tauri-window-pad-top) - var(--tauri-window-inset-bottom));
@@ -178,7 +191,7 @@
       top: env(safe-area-inset-top, 0px);
       right: calc(var(--desk-chrome-edge) + env(safe-area-inset-right, 0px));
       width: 24px;
-      height: var(--tauri-window-inset-top);
+      height: var(--tauri-chrome-band-h);
       margin: 0;
       padding: 0;
       gap: 0;
@@ -221,6 +234,42 @@
       height: 15px;
       margin: 0 auto;
       transform: none;
+    }
+    /* Fit Height: no room for a real toolbar. Keep every top chrome button
+       where it is but compress its icon to a thin horizontal bar in the ~8px
+       anchor strip -- the window keeps a "top" without a 26px band. Telling
+       the bars apart doesn't matter; position is enough here. */
+    html[data-tauri-app="1"][data-auto-window-height="1"] .page-menu-btn,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-menu-btn,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-reload-btn,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-panel-ctrl-btn {
+      height: var(--tauri-chrome-band-h);
+      min-height: 0;
+      justify-content: center;
+      border-radius: 0;
+    }
+    html[data-tauri-app="1"][data-auto-window-height="1"] .page-menu-btn svg,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn svg,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-menu-btn svg,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-reload-btn svg,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle svg,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-panel-ctrl-btn svg {
+      display: none;
+    }
+    html[data-tauri-app="1"][data-auto-window-height="1"] .page-menu-btn::after,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn::after,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-menu-btn::after,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-reload-btn::after,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle::after,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-panel-ctrl-btn::after {
+      content: "";
+      display: block;
+      width: 14px;
+      /* ~ the rendered stroke of the icons this replaces (1.8 * 15/24). */
+      height: 1.5px;
+      background: var(--fg);
     }
     html[data-tauri-app="1"] .page-header-actions.page-header-actions-floating #pageNativeMenuBridge {
       position: absolute;
@@ -418,7 +467,7 @@
       top: 0;
       left: 0;
       right: calc(var(--page-side-pad, 14px) + var(--chrome-icon-btn-size, 28px) + 12px);
-      height: var(--tauri-window-inset-top);
+      height: var(--tauri-chrome-band-h);
       z-index: 1205;
       background: transparent;
       pointer-events: none;
@@ -444,7 +493,7 @@
       top: env(safe-area-inset-top, 0px);
       right: auto;
       bottom: auto;
-      height: var(--tauri-window-inset-top);
+      height: var(--tauri-chrome-band-h);
       gap: 6px;
       z-index: 1306;
     }
@@ -533,7 +582,7 @@
       display: inline-flex;
       top: env(safe-area-inset-top, 0px);
       right: calc(var(--desk-chrome-edge) + env(safe-area-inset-right, 0px));
-      height: var(--tauri-window-inset-top);
+      height: var(--tauri-chrome-band-h);
       opacity: 1;
       z-index: 1306;
     }
