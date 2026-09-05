@@ -98,9 +98,6 @@
       font-weight: var(--body-weight);
       color: var(--fg);
       cursor: pointer;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
       transition: background 120ms ease;
     }
     .file-item-icon {
@@ -229,15 +226,21 @@
       }
 
     }
+    /* Background, not border-bottom -- a border curves into border-radius's
+       corner instead of stopping cleanly, reading as a permanent faint
+       rounding at rest. Sized short of the row so it can't reach the corner. */
     .file-item:not(:last-child) {
-      border-bottom: 0.5px solid var(--composer-menu-row-border);
+      background-image: linear-gradient(var(--composer-menu-row-border), var(--composer-menu-row-border));
+      background-repeat: no-repeat;
+      background-position: bottom center;
+      background-size: calc(100% - 28px) 0.5px;
     }
     .has-hover .file-item:hover {
-      background: var(--composer-menu-row-hover-bg);
+      background-color: var(--composer-menu-row-hover-bg);
       color: var(--fg);
     }
     .file-item.active {
-      background: var(--composer-menu-row-active-bg);
+      background-color: var(--composer-menu-row-active-bg);
       color: var(--fg);
     }
     #cmdDropdown.visible {
@@ -268,15 +271,21 @@
       margin: 0;
       transition: background 120ms ease;
     }
+    /* Background, not border-bottom -- a border curves into border-radius's
+       corner instead of stopping cleanly, reading as a permanent faint
+       rounding at rest. Sized short of the row so it can't reach the corner. */
     .cmd-item:not(:last-child) {
-      border-bottom: 0.5px solid var(--composer-menu-row-border);
+      background-image: linear-gradient(var(--composer-menu-row-border), var(--composer-menu-row-border));
+      background-repeat: no-repeat;
+      background-position: bottom center;
+      background-size: calc(100% - 36px) 0.5px;
     }
     .has-hover .cmd-item:hover {
-      background: var(--composer-menu-row-hover-bg);
+      background-color: var(--composer-menu-row-hover-bg);
       color: var(--fg);
     }
     .cmd-item.active {
-      background: var(--composer-menu-row-active-bg);
+      background-color: var(--composer-menu-row-active-bg);
       color: var(--fg);
     }
     .cmd-item-name {

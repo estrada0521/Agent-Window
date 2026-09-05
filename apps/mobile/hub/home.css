@@ -477,6 +477,14 @@
       text-overflow: ellipsis;
     }
 
+    /* 430 above is chat's own mobile-light body weight, copied in as a
+       literal rather than referencing it (the hub page doesn't have
+       --body-weight) -- it was never given dark's counterpart, so dark mode
+       has been stuck at the light value here regardless of theme. */
+    html[data-theme="dark"] .mob-row-preview {
+      font-weight: 300;
+    }
+
     .mob-row-preview .sender {
       color: var(--row-preview-fg);
       opacity: 1;

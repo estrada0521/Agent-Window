@@ -13,7 +13,6 @@
       align-items: center;
       gap: 12px;
       padding: 10px 18px;
-      border-radius: 10px;
       font-size: 14px;
       line-height: 20px;
       font-weight: var(--body-weight);
@@ -26,28 +25,16 @@
       box-sizing: border-box;
       max-width: 100%;
       margin: 0;
-      transition: background 120ms ease;
     }
 
     .cmd-item:not(:last-child) {
       border-bottom: 0.5px solid var(--composer-menu-row-border);
     }
 
-    .has-hover .cmd-item:hover {
-      background: var(--composer-menu-row-hover-bg);
-      color: var(--fg);
-    }
-
-    .cmd-item.active {
-      background: var(--composer-menu-row-active-bg);
-      color: var(--fg);
-    }
-
     .cmd-item-name {
       font-size: 14px;
       color: var(--fg);
       flex-shrink: 0;
-      transition: color 120ms ease;
     }
 
     .cmd-item-desc {
@@ -57,12 +44,4 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      transition: color 120ms ease;
-    }
-
-    .has-hover .cmd-item:hover .cmd-item-name,
-    .cmd-item.active .cmd-item-name,
-    .has-hover .cmd-item:hover .cmd-item-desc,
-    .cmd-item.active .cmd-item-desc {
-      color: var(--fg);
     }
