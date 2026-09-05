@@ -170,19 +170,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
         messageInput.scrollTop = messageInput.scrollHeight;
       }
     };
-    const positionComposerDropdown = (dropdown) => {
-      if (!dropdown) return;
-      const taRect = messageInput.getBoundingClientRect();
-      const aboveInput = document.querySelector(".composer-above-input");
-      const aboveInputHeight = aboveInput ? Math.max(0, Math.ceil(aboveInput.getBoundingClientRect().height)) : 0;
-      const gap = 8;
-      const availableSpace = Math.max(96, taRect.top - aboveInputHeight - 20);
-      dropdown.style.left = taRect.left + "px";
-      dropdown.style.width = taRect.width + "px";
-      dropdown.style.minWidth = "0";
-      dropdown.style.bottom = Math.max(12, window.innerHeight - taRect.top + gap + aboveInputHeight) + "px";
-      dropdown.style.maxHeight = Math.min(208, availableSpace) + "px";
-    };
     messageInput.addEventListener("input", () => {
       autoResizeTextarea();
     });
@@ -229,7 +216,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       fileDrop.appendChild(list);
 
       _dropActiveIdx = -1;
-      positionComposerDropdown(fileDrop);
       if (!fileDrop.classList.contains("visible")) {
         if (_dropTimeout) { clearTimeout(_dropTimeout); _dropTimeout = null; }
         fileDrop.classList.remove("closing");

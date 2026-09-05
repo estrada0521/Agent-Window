@@ -1,7 +1,6 @@
     const showFileAutocompleteLoading = () => {
       fileDrop.innerHTML = `<div class="file-dropdown-loading">${loadingIndicatorHtml()}</div>`;
       _dropActiveIdx = -1;
-      positionComposerDropdown(fileDrop);
       if (!fileDrop.classList.contains("visible")) {
         if (_dropTimeout) { clearTimeout(_dropTimeout); _dropTimeout = null; }
         fileDrop.classList.remove("closing");

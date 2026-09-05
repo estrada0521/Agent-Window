@@ -9,9 +9,17 @@
     body.composer-overlay-open {
       overflow: hidden;
     }
+    /* A normal child of .composer-above-input (apps/shared/chat/composer.html),
+       not position:fixed with a JS-computed left/width/bottom -- that snapshot
+       goes stale the instant the composer's own size or position changes
+       (right panel toggled, window resized) while the menu is open. Being an
+       actual child of the already-correct composer-tracking box means there
+       is nothing to keep in sync: it cannot drift from the composer, because
+       it never has its own independent position to drift from. */
     #fileDropdown,
     #cmdDropdown {
-      position: fixed;
+      width: 100%;
+      min-width: 0;
       background: transparent;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
@@ -22,8 +30,7 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
-      max-height: 200px;
-      z-index: 390;
+      max-height: 208px;
       display: none;
       box-shadow: none;
       padding: 0;
@@ -125,7 +132,7 @@
     }
     .file-item-name {
       flex: 0 0 auto;
-      min-width: 0;
+      min-width: 3em;
       max-width: 58%;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -138,9 +145,14 @@
       text-overflow: ellipsis;
       color: var(--muted);
     }
+    /* flex-shrink, not flex:0 0 auto with a floor -- the size text is the
+       least useful part of the row, so it should give way to the name (which
+       has its own floor above) before the name does, not force the name down
+       to a couple of characters by holding its own width fixed. */
     .file-item-size {
-      flex: 0 0 auto;
-      min-width: 3.8em;
+      flex: 0 1 auto;
+      min-width: 0;
+      overflow: hidden;
       text-align: right;
       color: var(--muted);
       font-size: 12px;

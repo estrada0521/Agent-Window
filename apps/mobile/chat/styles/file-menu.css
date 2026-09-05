@@ -2,9 +2,14 @@
       overflow: hidden;
     }
 
+    /* A normal child of .composer-above-input (apps/shared/chat/composer.html),
+       not position:fixed with a JS-computed left/width/bottom -- see the
+       desktop copy of this rule (apps/desktop/chat/styles/file-menu.css) for
+       why. */
     #fileDropdown,
     #cmdDropdown {
-      position: fixed;
+      width: 100%;
+      min-width: 0;
       background: transparent;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
@@ -15,8 +20,7 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
-      max-height: 200px;
-      z-index: 390;
+      max-height: 208px;
       display: none;
       box-shadow: none;
       padding: 0;
@@ -93,7 +97,7 @@
 
     .file-item-name {
       flex: 0 0 auto;
-      min-width: 0;
+      min-width: 3em;
       max-width: 58%;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -108,9 +112,13 @@
       color: var(--muted);
     }
 
+    /* flex-shrink, not flex:0 0 auto with a floor -- the size text is the
+       least useful part of the row, so it should give way to the name (which
+       has its own floor above) before the name does. */
     .file-item-size {
-      flex: 0 0 auto;
-      min-width: 3.8em;
+      flex: 0 1 auto;
+      min-width: 0;
+      overflow: hidden;
       text-align: right;
       color: var(--muted);
       font-size: 12px;
