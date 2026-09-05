@@ -2,6 +2,19 @@
     const composerOverlay = document.getElementById("composerOverlay");
     const composerForm = document.getElementById("composer");
     const isComposerOverlayOpen = () => !!composerOverlay && !composerOverlay.hidden && composerOverlay.classList.contains("visible");
+    if (document.documentElement.dataset.mobile === "1" && document.documentElement.dataset.hubIframeChat === "1") {
+      const mobileComposerInput = document.getElementById("message");
+      mobileComposerInput?.addEventListener("touchstart", (event) => {
+        if (document.activeElement !== mobileComposerInput) return;
+        const parentChromeGap = Number.parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue("--hub-parent-chrome-gap"),
+        );
+        if (!Number.isFinite(parentChromeGap) || parentChromeGap >= HUB_KEYBOARD_GAP_THRESHOLD) return;
+        event.preventDefault();
+        mobileComposerInput.blur();
+        mobileComposerInput.focus({ preventScroll: true });
+      }, { passive: false });
+    }
     const setComposerCaretToEnd = () => {
       if (!messageInput) return;
       const end = messageInput.value.length;

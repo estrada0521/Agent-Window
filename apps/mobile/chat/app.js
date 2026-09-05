@@ -57,6 +57,7 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     let _hubIframeLayoutMaxH = 0;
     let _hubIframeLayoutFromParent = 0;
     let _hubChromeGapClientMin = Infinity;
+    const HUB_KEYBOARD_GAP_THRESHOLD = 150;
     let _hubChildOriW = 0;
     let _hubChildOriH = 0;
     const isEmbeddedHubChat = window.parent !== window;
@@ -124,10 +125,10 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
           const fallbackRaw = Math.max(0, Math.round(pih - top - pvh));
           const incoming =
             typeof pcg === "number" && Number.isFinite(pcg) && pcg >= 0 ? pcg : fallbackRaw;
-          if (incoming < 150) {
+          if (incoming < HUB_KEYBOARD_GAP_THRESHOLD) {
             _hubChromeGapClientMin = Math.min(_hubChromeGapClientMin, incoming);
           }
-          const effective = incoming >= 150 ? incoming : _hubChromeGapClientMin;
+          const effective = incoming >= HUB_KEYBOARD_GAP_THRESHOLD ? incoming : _hubChromeGapClientMin;
           document.documentElement.style.setProperty(
             "--hub-parent-chrome-gap",
             (effective === Infinity ? incoming : effective) + "px",
