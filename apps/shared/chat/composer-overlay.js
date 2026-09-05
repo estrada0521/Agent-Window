@@ -4,6 +4,17 @@
     const isComposerOverlayOpen = () => !!composerOverlay && !composerOverlay.hidden && composerOverlay.classList.contains("visible");
     if (document.documentElement.dataset.mobile === "1" && document.documentElement.dataset.hubIframeChat === "1") {
       const mobileComposerInput = document.getElementById("message");
+      composerOverlay?.addEventListener("touchstart", (event) => {
+        if (event.target !== composerOverlay) return;
+        event.preventDefault();
+        if (composing && document.activeElement === mobileComposerInput) return;
+        closeComposerOverlay();
+      }, { passive: false });
+      composerOverlay?.addEventListener("touchmove", (event) => {
+        const target = event.target;
+        if (target instanceof Element && target.closest("textarea, .attach-preview-row, .target-picker")) return;
+        event.preventDefault();
+      }, { passive: false });
       mobileComposerInput?.addEventListener("touchstart", (event) => {
         if (document.activeElement !== mobileComposerInput) return;
         const parentChromeGap = Number.parseFloat(
@@ -88,6 +99,10 @@
     };
     const closeComposerOverlay = ({ restoreFocus = false } = {}) => {
       if (!composerOverlay || composerOverlay.hidden) return;
+      const isMobileComposer = document.documentElement.dataset.mobile === "1";
+      if (isMobileComposer && document.activeElement === messageInput) {
+        messageInput.blur();
+      }
       document.dispatchEvent(new CustomEvent("composer-overlay-close-start"));
       composerOverlay.classList.remove("visible");
       composerOverlay.classList.add("closing");
@@ -99,7 +114,7 @@
         }
       }, 90);
       updateScrollBtn();
-      if (restoreFocus && composerFabBtn && typeof composerFabBtn.focus === "function") {
+      if (!isMobileComposer && restoreFocus && composerFabBtn && typeof composerFabBtn.focus === "function") {
         try {
           composerFabBtn.focus({ preventScroll: true });
         } catch (_) {

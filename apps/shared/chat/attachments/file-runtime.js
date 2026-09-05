@@ -6,6 +6,7 @@ __CHAT_INCLUDE:../file-resolve.js__
     let _dropTimeout = null;
     const _dropItems = () => fileDrop.querySelectorAll(".file-item");
     const closeDrop = ({ immediate = false } = {}) => {
+      _fileAutocompleteRequestSeq += 1;
       if (immediate) {
         if (_dropTimeout) {
           clearTimeout(_dropTimeout);
@@ -132,6 +133,7 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       if (atIdx === -1) return closeDrop();
       const inlineRef = "`" + path + "`";
       ta.value = ta.value.slice(0, atIdx) + inlineRef + ta.value.slice(pos);
+      composing = false;
       const newPos = atIdx + inlineRef.length;
       ta.setSelectionRange(newPos, newPos);
       focusMessageInputWithoutScroll(newPos, newPos);
@@ -206,6 +208,10 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       window.addEventListener("resize", autoResizeTextarea);
     }
     const updateFileAutocomplete = async () => {
+      if (!isComposerOverlayOpen()) {
+        closeDrop({ immediate: true });
+        return;
+      }
       const requestSeq = ++_fileAutocompleteRequestSeq;
       const pos = messageInput.selectionEnd;
       const val = messageInput.value;

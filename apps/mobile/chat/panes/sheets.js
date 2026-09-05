@@ -773,7 +773,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
     };
     const closeHeaderMenus = () => {
       resetAgentActionNativeMenu({ clearOptions: true });
-      closeGitDetail();
+      gitSession.closeDetail();
       exitPaneTraceMode();
       closeGitSheet({ immediate: true });
       closeRepoSheet({ immediate: true });
@@ -906,4 +906,3 @@ __CHAT_INCLUDE:../features/git-panel.js__
       }
       throw new Error(`unknown menu action: ${action}`);
     }
-
