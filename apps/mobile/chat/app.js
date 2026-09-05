@@ -33,7 +33,7 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
         ? lockHeight
         : Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
       if (baseHeight <= 0) return;
-      const fixedSpacerHeight = Math.round(baseHeight * 0.5);
+      const fixedSpacerHeight = Math.round(baseHeight * 0.4);
       mainEl.style.setProperty("--main-spacer-height", fixedSpacerHeight + "px");
       mainEl.style.removeProperty("--main-after-height");
     };

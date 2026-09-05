@@ -247,7 +247,7 @@
 
     main::before,
     main::after {
-      min-height: var(--main-spacer-height, 50vh);
+      min-height: var(--main-spacer-height, 40vh);
     }
 
     html[data-mobile="1"] main {
