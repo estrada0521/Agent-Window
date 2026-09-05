@@ -257,6 +257,32 @@ def _switch_front_terminal_client(prefix: list[str], tmux_name: str) -> bool:
     return switched.returncode == 0
 
 
+def _raise_terminal_window_for_tty(tty: str) -> bool:
+    """Bring the specific Terminal.app window whose selected tab has this tty
+    to the front. Plain "activate" only focuses the app, not any particular
+    window -- if an unrelated (non-tmux) Terminal window was more recently
+    focused, that's what surfaces instead of the one actually attached to
+    this tmux session."""
+    apple_script = (
+        f'tell application "Terminal"\n'
+        f"  set targetTTY to {json.dumps(tty)}\n"
+        f"  repeat with w in windows\n"
+        f"    if (tty of selected tab of w) is targetTTY then\n"
+        f"      set index of w to 1\n"
+        f"      activate\n"
+        f"      return true\n"
+        f"    end if\n"
+        f"  end repeat\n"
+        f"  return false\n"
+        f"end tell"
+    )
+    result = subprocess.run(
+        ["osascript", "-e", apple_script],
+        capture_output=True, text=True, check=False,
+    )
+    return result.returncode == 0 and (result.stdout or "").strip() == "true"
+
+
 def _open_terminal(handler, ctx, *, agent: str = "", pane_required: bool = False) -> None:
     runtime = ctx["runtime"]
     if not runtime.session_is_active:
@@ -296,19 +322,24 @@ def _open_terminal(handler, ctx, *, agent: str = "", pane_required: bool = False
                 )
                 handler._send_json(200, {"ok": True})
                 return
-            attached_res = subprocess.run(
-                [*prefix, "display-message", "-p", "-t", tmux_name, "#{session_attached}"],
+            clients_res = subprocess.run(
+                [*prefix, "list-clients", "-t", tmux_name, "-F", "#{client_tty}"],
                 capture_output=True, text=True, check=False,
             )
-            if attached_res.returncode != 0:
+            if clients_res.returncode != 0:
                 handler._send_json(500, {"ok": False, "error": "could not determine tmux session attachment"})
                 return
-            if int((attached_res.stdout or "0").strip() or "0") > 0:
-                subprocess.Popen(
-                    ["osascript", "-e", 'tell application "Terminal" to activate'],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
+            attached_ttys = [line.strip() for line in (clients_res.stdout or "").splitlines() if line.strip()]
+            if attached_ttys:
+                if not _raise_terminal_window_for_tty(attached_ttys[0]):
+                    # The attached client's window vanished from Terminal's
+                    # own list (rare) -- fall back to a plain activate rather
+                    # than silently doing nothing.
+                    subprocess.Popen(
+                        ["osascript", "-e", 'tell application "Terminal" to activate'],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
                 handler._send_json(200, {"ok": True})
                 return
     try:
