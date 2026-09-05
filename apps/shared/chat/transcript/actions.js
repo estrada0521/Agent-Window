@@ -116,6 +116,10 @@ __CHAT_INCLUDE:../shortcut-commands.js__
           const arg = parsed.arg;
           if (closeOverlayOnStart && isComposerOverlayOpen()) {
             blurComposerOnMobile(message);
+            // Read by the close-start Fit Height refit: the transcript is
+            // about to change (refresh() below), so that refit should wait
+            // for it instead of measuring the stale last message.
+            document.documentElement.dataset.sendInFlight = "1";
             closeComposerOverlay();
           }
           try {
@@ -153,6 +157,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
             return false;
           } finally {
             sendLocked = false;
+            delete document.documentElement.dataset.sendInFlight;
           }
         }
         // ショートカット未一致 → 通常メッセージとして送信
@@ -171,6 +176,11 @@ __CHAT_INCLUDE:../shortcut-commands.js__
       }
       if (closeOverlayOnStart && isComposerOverlayOpen()) {
         blurComposerOnMobile(message);
+        // Read by the close-start Fit Height refit: the just-sent message
+        // hasn't rendered yet (that happens after the /send round trip
+        // below), so that refit should wait for it instead of measuring the
+        // previous last message.
+        document.documentElement.dataset.sendInFlight = "1";
         closeComposerOverlay();
       }
       setStatus(isNote ? "saving note..." : `sending to ${target}...`);
@@ -219,6 +229,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         return false;
       } finally {
         sendLocked = false;
+        delete document.documentElement.dataset.sendInFlight;
       }
     };
     document.getElementById("composer").addEventListener("submit", async (event) => {

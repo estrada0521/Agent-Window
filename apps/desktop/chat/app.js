@@ -162,6 +162,7 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     // independent, and it ignores main::before / main::after (the 50vh scroll
     // spacers, which is why scrollHeight is useless here). Debounced for bursts.
     let _fitHeightTimer = 0;
+    let _closeRefitTimer = 0;
     // Breathing room above the composer field when the window is sized to it.
     const COMPOSER_FIT_SLACK = 20;
     // The composer textarea stops growing at this height (composer-input.css
@@ -214,6 +215,10 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       reportFitHeight();
       clearTimeout(_fitHeightTimer);
       _fitHeightTimer = setTimeout(reportFitHeight, 120);
+      // A real transcript update supersedes whatever the composer-close refit
+      // below was about to (re)measure -- drop it so it doesn't fire a moment
+      // later and redundantly resize to the same value it's already at.
+      clearTimeout(_closeRefitTimer);
     };
     document.addEventListener("chat-transcript-settled", scheduleFitHeight);
     // Composer open: size the window once for a fully-grown composer. Typing
@@ -224,8 +229,20 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       requestAnimationFrame(() => reportFitHeight({ fromComposer: true }));
     });
     document.addEventListener("composer-overlay-close-start", () => {
-      // Deferred so isComposerOverlayOpen() is already false: re-fit to the
-      // transcript now that the composer is gone.
+      clearTimeout(_closeRefitTimer);
+      if (document.documentElement.dataset.sendInFlight === "1") {
+        // Closing on send fires this before the just-sent message has
+        // actually rendered (that happens after the /send round trip
+        // resolves), so an immediate refit here would measure the *previous*
+        // last message and snap the window to that size for a moment before
+        // "chat-transcript-settled" (for the new message) corrects it right
+        // after -- a visible flash. Give the round trip a head start instead;
+        // scheduleFitHeight cancels this if the real message settles first.
+        _closeRefitTimer = setTimeout(reportFitHeight, 200);
+        return;
+      }
+      // Plain close (Escape / click-outside, nothing being sent): no new
+      // message is coming, so refit immediately -- no reason to wait.
       requestAnimationFrame(() => reportFitHeight());
     });
 __CHAT_INCLUDE:../../shared/chat/scroll-focus.js__
