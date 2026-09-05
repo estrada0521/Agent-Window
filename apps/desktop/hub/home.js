@@ -248,6 +248,21 @@
       }
     }
 
+    // Pure reposition -- unlike reset/compact above, this touches only the
+    // window's position (size untouched, no sidebar/chat-view/height reset).
+    async function moveDeskWindowToEdge(command) {
+      const invoke = getTauriInvoke();
+      if (typeof invoke !== "function") {
+        showDeskHubMessage(`${command}: no tauri invoke available`, { error: true });
+        return;
+      }
+      try {
+        await invoke(command);
+      } catch (err) {
+        showDeskHubMessage(`${command} failed: ${err}`, { error: true });
+      }
+    }
+
     window.addEventListener("keydown", (event) => {
       if (event.metaKey && event.altKey) {
         if (event.code === "KeyT") {
@@ -268,6 +283,21 @@
         if (event.code === "KeyR") {
           event.preventDefault();
           dispatchDeskNativeMenuAction({ action: "openFinder" });
+          return;
+        }
+        if (event.code === "ArrowUp") {
+          event.preventDefault();
+          void moveDeskWindowToEdge("move_window_top");
+          return;
+        }
+        if (event.code === "ArrowLeft") {
+          event.preventDefault();
+          void moveDeskWindowToEdge("move_window_top_left");
+          return;
+        }
+        if (event.code === "ArrowRight") {
+          event.preventDefault();
+          void moveDeskWindowToEdge("move_window_top_right");
           return;
         }
       }
@@ -480,6 +510,18 @@
       }
       if (detail.action === "compactWindow") {
         void compactDeskWindowState();
+        return;
+      }
+      if (detail.action === "moveWindowTop") {
+        void moveDeskWindowToEdge("move_window_top");
+        return;
+      }
+      if (detail.action === "moveWindowTopLeft") {
+        void moveDeskWindowToEdge("move_window_top_left");
+        return;
+      }
+      if (detail.action === "moveWindowTopRight") {
+        void moveDeskWindowToEdge("move_window_top_right");
         return;
       }
       if (detail.action === "toggleAlwaysOnTop") {

@@ -339,6 +339,28 @@ fn show_appearance_menu(
     .build(&app)
     .map_err(|err| err.to_string())?;
 
+    let move_top = MenuItemBuilder::with_id(
+        format!("{}action:moveWindowTop", NATIVE_MENU_PREFIX),
+        "Move to Top",
+    )
+    .accelerator("Cmd+Alt+Up")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+    let move_top_left = MenuItemBuilder::with_id(
+        format!("{}action:moveWindowTopLeft", NATIVE_MENU_PREFIX),
+        "Move to Top Left",
+    )
+    .accelerator("Cmd+Alt+Left")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+    let move_top_right = MenuItemBuilder::with_id(
+        format!("{}action:moveWindowTopRight", NATIVE_MENU_PREFIX),
+        "Move to Top Right",
+    )
+    .accelerator("Cmd+Alt+Right")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+
     let always_on_top = CheckMenuItemBuilder::with_id(
         format!("{}action:toggleAlwaysOnTop", NATIVE_MENU_PREFIX),
         "Always on Top",
@@ -374,6 +396,9 @@ fn show_appearance_menu(
         .separator()
         .item(&reset_window)
         .item(&compact_window)
+        .item(&move_top)
+        .item(&move_top_left)
+        .item(&move_top_right)
         .item(&always_on_top)
         .item(&auto_window_height)
         .separator()
@@ -603,6 +628,75 @@ fn compact_window_geometry(window: tauri::WebviewWindow) -> Result<(), String> {
     window
         .set_position(tauri::LogicalPosition::new(x, y))
         .map_err(|err| err.to_string())
+}
+
+// How tall the menu bar (and, on a notched Mac, the extra strip beside it)
+// actually is varies by machine and can't be hardcoded -- NSScreen's own
+// frame vs visibleFrame is the only reliable source. Cocoa reports both in
+// points, the same unit as Tauri's "logical" pixels, so the result needs no
+// scale-factor conversion.
+fn menu_bar_inset(window: &tauri::WebviewWindow) -> f64 {
+    let Ok(handle) = window.ns_window() else {
+        return 0.0;
+    };
+    unsafe {
+        let ns_window: &NSWindow = &*(handle as *const NSWindow);
+        let Some(screen) = ns_window.screen() else {
+            return 0.0;
+        };
+        let frame = screen.frame();
+        let visible = screen.visibleFrame();
+        (frame.size.height - (visible.origin.y + visible.size.height)).max(0.0)
+    }
+}
+
+#[derive(Clone, Copy)]
+enum ScreenEdge {
+    TopCenter,
+    TopLeft,
+    TopRight,
+}
+
+// Moves the window to sit against the chosen edge, flush under the menu bar.
+// Size is left alone -- only x/y change.
+fn move_window_to_edge(window: &tauri::WebviewWindow, edge: ScreenEdge) -> Result<(), String> {
+    let scale_factor = window.scale_factor().map_err(|err| err.to_string())?;
+    let monitor = window
+        .current_monitor()
+        .map_err(|err| err.to_string())?
+        .ok_or_else(|| "no monitor available".to_string())?;
+    let monitor_pos = monitor.position().to_logical::<f64>(scale_factor);
+    let monitor_size = monitor.size().to_logical::<f64>(scale_factor);
+    let cur_size = window
+        .outer_size()
+        .map_err(|err| err.to_string())?
+        .to_logical::<f64>(scale_factor);
+    let x = match edge {
+        ScreenEdge::TopLeft => monitor_pos.x,
+        ScreenEdge::TopRight => monitor_pos.x + (monitor_size.width - cur_size.width).max(0.0),
+        ScreenEdge::TopCenter => {
+            monitor_pos.x + ((monitor_size.width - cur_size.width) / 2.0).max(0.0)
+        }
+    };
+    let y = monitor_pos.y + menu_bar_inset(window);
+    window
+        .set_position(tauri::LogicalPosition::new(x, y))
+        .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+fn move_window_top(window: tauri::WebviewWindow) -> Result<(), String> {
+    move_window_to_edge(&window, ScreenEdge::TopCenter)
+}
+
+#[tauri::command]
+fn move_window_top_left(window: tauri::WebviewWindow) -> Result<(), String> {
+    move_window_to_edge(&window, ScreenEdge::TopLeft)
+}
+
+#[tauri::command]
+fn move_window_top_right(window: tauri::WebviewWindow) -> Result<(), String> {
+    move_window_to_edge(&window, ScreenEdge::TopRight)
 }
 
 fn emit_native_menu_action(app: &tauri::AppHandle, id: &str) {
@@ -887,6 +981,9 @@ fn main() {
             show_appearance_menu,
             reset_window_geometry,
             compact_window_geometry,
+            move_window_top,
+            move_window_top_left,
+            move_window_top_right,
             set_always_on_top,
             set_window_height,
             set_fit_height_min,

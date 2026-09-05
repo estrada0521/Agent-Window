@@ -108,6 +108,9 @@ Clicking an uncommitted change opens it in git's configured diff viewer (`git di
 | `⌥⌘9` | Switch to a compact size |
 | `⌥⌘H` | Keep the window height matched to the latest message |
 | `⌥⌘P` | Keep above other windows |
+| `⌥⌘↑` | Move to the top, centered |
+| `⌥⌘←` | Move to the top left |
+| `⌥⌘→` | Move to the top right |
 
 The first two are window-size presets. With Fit Height (`⌥⌘H`) on, the Hub and the right pane are replaced by native macOS menus.
 
