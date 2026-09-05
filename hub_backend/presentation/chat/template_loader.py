@@ -12,8 +12,14 @@ _CHAT_TEMPLATE_DIRS = {
 _STYLE_MARKER = "__CHAT_MAIN_STYLE_BLOCK__"
 _SHELL_STYLE_MARKER = "__CHAT_SHELL_STYLE_BLOCK__"
 _COMPOSER_MARKER = "__CHAT_COMPOSER_HTML__"
+_COMPOSER_DROPDOWNS_MARKER = "__CHAT_COMPOSER_DROPDOWNS__"
 _SCRIPT_MARKER = "__CHAT_APP_SCRIPT_BLOCK__"
 _INCLUDE_RE = re.compile(r"__CHAT_INCLUDE:([A-Za-z0-9_./-]+)__")
+
+_COMPOSER_DROPDOWNS_HTML = (
+    '<div id="fileDropdown"></div>\n'
+    '                <div id="cmdDropdown"></div>'
+)
 
 
 def _read_text(path: Path) -> str:
@@ -52,6 +58,13 @@ def load_chat_template(variant: str) -> str:
     shell = _read_text(template_dir / "shell.html")
     shared_chat_dir = _APPS_ROOT / "shared" / "chat"
     composer = _expand_includes(_read_text(shared_chat_dir / "composer.html"), shared_chat_dir)
+    if _COMPOSER_DROPDOWNS_MARKER not in composer:
+        raise ValueError(f"Chat composer missing {_COMPOSER_DROPDOWNS_MARKER}")
+    composer = composer.replace(
+        _COMPOSER_DROPDOWNS_MARKER,
+        _COMPOSER_DROPDOWNS_HTML if normalized == "desktop" else "",
+        1,
+    )
     css = _expand_includes(_read_text(template_dir / "main.css"), template_dir)
     shell_css = _read_text(template_dir / "shell.css")
     js = _expand_includes(_read_text(template_dir / "app.js"), template_dir)

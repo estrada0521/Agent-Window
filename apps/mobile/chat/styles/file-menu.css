@@ -2,14 +2,12 @@
       overflow: hidden;
     }
 
-    /* A normal child of .composer-above-input (apps/shared/chat/composer.html),
-       not position:fixed with a JS-computed left/width/bottom -- see the
-       desktop copy of this rule (apps/desktop/chat/styles/file-menu.css) for
-       why. */
+    /* Mobile's dropdowns are body children, as they were before desktop made
+       its copies structural composer children. Keeping them outside the
+       transformed composer preserves iOS momentum scrolling. */
     #fileDropdown,
     #cmdDropdown {
-      width: 100%;
-      min-width: 0;
+      position: fixed;
       background: transparent;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
@@ -20,7 +18,8 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
-      max-height: 208px;
+      max-height: 200px;
+      z-index: 390;
       display: none;
       box-shadow: none;
       padding: 0;
@@ -56,6 +55,10 @@
       width: 100%;
       box-sizing: border-box;
       padding: 6px 18px;
+      /* Inherited by .file-item-name/-relpath below, which rely on it for
+         their own overflow:hidden + text-overflow:ellipsis to mean anything
+         -- without it, text wraps to a second line instead of eliding. */
+      white-space: nowrap;
       font-size: 14px;
       line-height: 20px;
       font-weight: var(--body-weight);
@@ -86,35 +89,34 @@
       stroke-width: 2.5px;
     }
 
+    /* relpath + name is one path, not two independently-truncating labels --
+       ellipsis-from-the-left on the pair as a whole, so the directory prefix
+       erodes first and the filename is the last thing touched. rtl direction
+       + text-align:left is the standard trick for a leading (not trailing)
+       ellipsis; the two spans are plain (not bidi-isolated) so they stay one
+       continuous run and keep DOM order (relpath, then name) in the visible
+       remainder, matching how the plain-string version of this trick reads. */
     .file-item-path {
       flex: 1;
       min-width: 0;
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
+      direction: rtl;
+      text-align: left;
+      white-space: nowrap;
       overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .file-item-name {
-      flex: 0 0 auto;
-      min-width: 3em;
-      max-width: 58%;
-      overflow: hidden;
-      text-overflow: ellipsis;
       color: var(--fg);
     }
 
     .file-item-relpath {
-      flex: 1 1 0;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
       color: var(--muted);
     }
 
     /* flex-shrink, not flex:0 0 auto with a floor -- the size text is the
-       least useful part of the row, so it should give way to the name (which
-       has its own floor above) before the name does. */
+       least useful part of the row, so it should give way before the path
+       (see .file-item-path above) ever loses a character of the filename. */
     .file-item-size {
       flex: 0 1 auto;
       min-width: 0;

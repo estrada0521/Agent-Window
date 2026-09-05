@@ -94,6 +94,7 @@
           ).join("") +
           `</div>`;
         _cmdActiveIdx = -1;
+        positionComposerDropdown(cmdDrop);
         if (!cmdDrop.classList.contains("visible")) {
           if (_cmdTimeout) { clearTimeout(_cmdTimeout); _cmdTimeout = null; }
           cmdDrop.classList.remove("closing");
