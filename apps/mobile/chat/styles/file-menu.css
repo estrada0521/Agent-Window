@@ -89,18 +89,11 @@
       stroke-width: 2.5px;
     }
 
-    /* relpath + name is one path, not two independently-truncating labels --
-       ellipsis-from-the-left on the pair as a whole, so the directory prefix
-       erodes first and the filename is the last thing touched. rtl direction
-       + text-align:left is the standard trick for a leading (not trailing)
-       ellipsis; the two spans are plain (not bidi-isolated) so they stay one
-       continuous run and keep DOM order (relpath, then name) in the visible
-       remainder, matching how the plain-string version of this trick reads. */
+    /* Basename + path is one right-truncating line. Because the path is the
+       second span, it disappears before the basename is touched. */
     .file-item-path {
       flex: 1;
       min-width: 0;
-      direction: rtl;
-      text-align: left;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -111,6 +104,7 @@
     }
 
     .file-item-relpath {
+      margin-left: 8px;
       color: var(--muted);
     }
 

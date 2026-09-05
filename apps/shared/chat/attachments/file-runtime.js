@@ -113,11 +113,10 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       const row = document.createElement("div");
       row.className = "file-item";
       row.dataset.path = path;
-      // relpath before name, in real-path order (dir/subdir/file) -- the pair
-      // truncates from the left as one unit (see .file-item-path), so which
-      // end survives depends on this order, not on any styling.
+      // Keep the original basename-then-path presentation. The two spans are
+      // one truncation unit in CSS, so the path on the right disappears first.
       const pathInner = relDir
-        ? `<span class="file-item-relpath">${escapeHtml(relDir)}/</span><span class="file-item-name">${escapeHtml(label)}</span>`
+        ? `<span class="file-item-name">${escapeHtml(label)}</span><span class="file-item-relpath">${escapeHtml(relDir)}</span>`
         : `<span class="file-item-name">${escapeHtml(label)}</span>`;
       row.innerHTML =
         `<span class="file-item-icon">${icon}</span>` +
