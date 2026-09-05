@@ -252,6 +252,7 @@
       box-shadow: none;
       min-height: var(--code-scroll-stable-height, auto);
       color: var(--fg);
+      font-weight: var(--code-weight);
       line-height: 1.5;
     }
 

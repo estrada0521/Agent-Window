@@ -20,16 +20,25 @@ def body_typography_css() -> str:
     """Message-body font weight/rendering rules, shared by chat and the
     markdown/file preview viewer so the two never render text differently.
     Depends only on --font-main and --text-size, both already defined
-    independently by each caller's own :root block."""
+    independently by each caller's own :root block.
+
+    --code-weight lives right here too -- the one place either weight's
+    per (desktop/mobile x light/dark) numbers are set. Starts equal to
+    --body-weight (independent variable, same numbers); tune it here if
+    JetBrains Mono needs to read heavier than that to look equally
+    weighted against anthropicSans/Hiragino Sans."""
     body_weight_tokens = """
     html[data-theme="dark"] {
       --body-weight: 300;
+      --code-weight: 300;
     }
     html[data-theme="light"] {
       --body-weight: 400;
+      --code-weight: 400;
     }
     html[data-mobile="1"][data-theme="light"] {
       --body-weight: 430;
+      --code-weight: 500;
     }"""
     # Every message role (user, agent, sysmsg) and the standalone preview
     # viewer render body text identically, line-height included.

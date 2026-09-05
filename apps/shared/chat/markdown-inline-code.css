@@ -4,6 +4,7 @@
       color: var(--inline-code-fg);
       border-radius: 0.45em;
       font-family: var(--font-code);
+      font-weight: var(--code-weight);
       padding: 0 0.4em;
       margin: 0 0.20em;
       -webkit-box-decoration-break: clone;
