@@ -220,6 +220,7 @@
       setDeskSidebarWidth(DESK_DEFAULT_SIDEBAR_WIDTH);
       resetDeskChatView();
       setDeskAutoWindowHeight(false);
+      applyDeskAlwaysOnTop(false);
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") {
         showDeskHubMessage("reset window: no tauri invoke available", { error: true });
@@ -236,6 +237,7 @@
       setDeskSidebarOpen(false);
       resetDeskChatView();
       setDeskAutoWindowHeight(false);
+      applyDeskAlwaysOnTop(false);
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") {
         showDeskHubMessage("compact window: no tauri invoke available", { error: true });
@@ -1763,6 +1765,10 @@
       }
       if (event.data && event.data.type === "auto-window-height-shortcut") {
         void toggleDeskAutoWindowHeightFromShortcut();
+        return;
+      }
+      if (event.data && event.data.type === "move-window-shortcut") {
+        void moveDeskWindowToEdge(String(event.data.command || ""));
         return;
       }
       if (event.data && event.data.type === "fit-window-height" && event.source === _deskChatFrame?.contentWindow) {

@@ -786,6 +786,21 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             window.parent?.postMessage({ type: "compact-window-shortcut" }, "*");
             return;
           }
+          if (event.code === "ArrowUp") {
+            event.preventDefault();
+            window.parent?.postMessage({ type: "move-window-shortcut", command: "move_window_top" }, "*");
+            return;
+          }
+          if (event.code === "ArrowLeft") {
+            event.preventDefault();
+            window.parent?.postMessage({ type: "move-window-shortcut", command: "move_window_top_left" }, "*");
+            return;
+          }
+          if (event.code === "ArrowRight") {
+            event.preventDefault();
+            window.parent?.postMessage({ type: "move-window-shortcut", command: "move_window_top_right" }, "*");
+            return;
+          }
         }
         if (event.metaKey && event.code === "Comma") {
           event.preventDefault();
