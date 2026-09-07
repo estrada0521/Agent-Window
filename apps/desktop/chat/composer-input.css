@@ -286,7 +286,8 @@
       min-height: var(--main-spacer-height, 50vh);
     }
     html[data-auto-window-height="1"] main {
-      --message-step-top-gap: 20px;
+      --message-step-top-gap: calc(var(--text-size, 13px) * 20 / 13);
+      scroll-padding-top: var(--message-step-top-gap);
     }
     html[data-auto-window-height="1"] main::before {
       min-height: var(--message-step-top-gap);
@@ -388,8 +389,8 @@
     html[data-auto-window-height="1"] #composerFabBtn,
     html[data-auto-window-height="1"] #scrollToBottomBtn {
       left: auto;
-      right: 8px;
-      bottom: 8px;
+      right: calc(var(--text-size, 13px) * 8 / 13);
+      bottom: calc(var(--text-size, 13px) * 8 / 13);
       margin-inline: 0;
       transform: translateY(10px) scale(0.75);
     }

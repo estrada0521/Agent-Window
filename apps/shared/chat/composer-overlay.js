@@ -123,7 +123,9 @@
       }
     };
     const messageStepTopGap = () => {
-      const value = parseFloat(getComputedStyle(timeline).getPropertyValue("--message-step-top-gap"));
+      const style = getComputedStyle(timeline);
+      const value = parseFloat(document.documentElement.dataset.mobile !== "1" && document.documentElement.dataset.autoWindowHeight === "1"
+        ? style.scrollPaddingTop : style.getPropertyValue("--message-step-top-gap"));
       return Number.isFinite(value) ? Math.max(0, value) : 0;
     };
     const positionConversationRowAtStepTop = (row, behavior) => {

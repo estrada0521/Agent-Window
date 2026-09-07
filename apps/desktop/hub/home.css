@@ -104,7 +104,7 @@
       /* Push the edge buttons past the window's corner curve so the outermost
          bar's end lands where the top edge goes straight. ~ the OS corner
          radius; nudge if a bar still clips into the curve. */
-      --desk-chrome-edge: 28px;
+      --desk-chrome-edge: calc(var(--text-size, 13px) * 28 / 13);
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] {
       --app-shell-height: calc(100dvh - var(--tauri-window-pad-top) - var(--tauri-window-edge-inset));

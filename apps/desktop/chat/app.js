@@ -833,7 +833,9 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           document.documentElement.style.setProperty("--text-size", `${px}px`);
           if (isComposerOverlayOpen()) {
             autoResizeTextarea();
-            requestAnimationFrame(() => reportFitHeight({ fromComposer: true }));
+            if (document.documentElement.dataset.tauriApp !== "1") {
+              requestAnimationFrame(() => reportFitHeight({ fromComposer: true }));
+            }
           }
           dpApplyPanelWidth();
           notifyParentPanelState();

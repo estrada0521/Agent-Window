@@ -917,17 +917,18 @@ fn scale_window_from_top_center(
         .to_logical::<f64>(scale_factor);
     let next_inner_width = inner_size.width * scale;
     let next_inner_height = inner_size.height * scale;
-    if next_inner_width < MIN_WINDOW_WIDTH || next_inner_height < MIN_WINDOW_HEIGHT {
-        return Err(format!(
-            "scaled window would fall below the minimum ({MIN_WINDOW_WIDTH} x {MIN_WINDOW_HEIGHT})"
-        ));
-    }
-
     let width_delta = next_inner_width - inner_size.width;
     let height_delta = next_inner_height - inner_size.height;
     let handle = window.ns_window().map_err(|err| err.to_string())?;
     unsafe {
         let ns_window: &NSWindow = &*(handle as *const NSWindow);
+        let minimum = ns_window.contentMinSize();
+        if next_inner_width < minimum.width || next_inner_height < minimum.height {
+            return Err(format!(
+                "scaled window would fall below the minimum ({} x {})",
+                minimum.width, minimum.height
+            ));
+        }
         let mut frame = ns_window.frame();
         frame.origin.x -= width_delta / 2.0;
         frame.origin.y -= height_delta;

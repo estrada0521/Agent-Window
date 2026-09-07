@@ -107,7 +107,7 @@
       const previous = currentDeskTextSizePx();
       const clamped = clampDeskTextSize(px);
       const invoke = getTauriInvoke();
-      const scalesWindow = clamped !== previous && !_deskAutoWindowHeight && typeof invoke === "function";
+      const scalesWindow = clamped !== previous && typeof invoke === "function";
       applyDeskTextSizeLocal(clamped);
       applyDeskSidebarWidth();
       updateDeskChromeOverflow();
@@ -116,6 +116,7 @@
         _deskChatFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
       } catch (_) {}
       if (scalesWindow) {
+        _deskLastFitTarget *= clamped / previous;
         invoke("scale_window_from_top_center", { scale: clamped / previous, cornerRadius: clamped * 2 }).catch((err) => {
           showDeskHubMessage(`window zoom resize failed: ${err}`, { error: true });
         });
