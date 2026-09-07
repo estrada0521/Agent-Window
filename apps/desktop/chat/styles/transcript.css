@@ -16,6 +16,7 @@
       --message-copy-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
       --message-copy-bottom: round(nearest, calc(var(--text-size, 13px) * 6 / 13), 1px);
       --message-copy-radius: round(nearest, calc(var(--text-size, 13px) * 6 / 13), 1px);
+      --agent-message-rule-offset: round(nearest, calc(var(--text-size, 13px) * 16 / 13), 1px);
       font-size: var(--text-size, 13px);
       gap: 12px;
       width: min(100%, var(--message-max-width));
@@ -500,7 +501,7 @@
     .message-row:not(.user) .message::before {
       content: "";
       position: absolute;
-      left: -16px;
+      left: calc(-1 * var(--agent-message-rule-offset));
       top: 0;
       bottom: 0.62em;
       width: 1px;
