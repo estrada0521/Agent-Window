@@ -86,7 +86,7 @@ assert.equal(
     def test_renderer_falls_back_to_plain_text_on_marked_failure(self) -> None:
         base = (ROOT / "apps/shared/chat/base.js").read_text()
         messages = (ROOT / "apps/shared/chat/runtime/messages.js").read_text()
-        render_markdown = _between(base, "    const applyWrittenOrderedListNumbers =", "    const wrapFileIcon")
+        render_markdown = _between(base, "    const renderMarkdownFallback =", "    const wrapFileIcon")
         build_message = _between(messages, "    const buildMsgHTML =", "    const updateMessageProjectionUI")
 
         script = f"""
@@ -123,6 +123,7 @@ const isCollapsibleMessageSender = (sender) => {{
 const emphasizeSystemMessageKeyword = (message, kind = "") =>
   kind === "git-commit" ? message.replace(/^Commit\\b/i, "<b>Commit</b>") : message;
 const stripUnsafeMarkup = () => {{}};
+const extractFrontmatter = () => null;
 {render_markdown}
 {build_message}
 

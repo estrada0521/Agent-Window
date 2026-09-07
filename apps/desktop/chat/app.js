@@ -80,7 +80,7 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     const isHubIframeChat = () =>
       document.documentElement.dataset.hubIframeChat === "1" ||
       document.documentElement.dataset.hubShell === "1" ||
-      !!window.frameElement;
+      window.parent !== window;
     const applyHubIframeLockHeight = () => {
       if (!isHubIframeChat()) return;
       const local = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);

@@ -1128,17 +1128,6 @@
       const resolvedThemeDesktop = themeDesktop || document.documentElement.dataset.themeDesktop || document.documentElement.dataset.theme || "dark";
       const chatTheme = deskChatThemeFromDesktop(resolvedThemeDesktop);
       try {
-        const root = _deskChatFrame?.contentDocument?.documentElement;
-        if (root) {
-          root.dataset.theme = chatTheme;
-          if (resolvedThemeDesktop) {
-            root.dataset.themeDesktop = resolvedThemeDesktop;
-          } else {
-            delete root.dataset.themeDesktop;
-          }
-        }
-      } catch (_) {}
-      try {
         _deskChatFrame?.contentWindow?.postMessage(
           { type: "hub-theme-changed", theme: chatTheme, chatTheme, themeDesktop: resolvedThemeDesktop },
           "*"

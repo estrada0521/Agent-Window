@@ -53,7 +53,6 @@
       // compositing layer for a frame after an appearance change.
       root.style.colorScheme = theme;
       applyMobThemeGradientVars();
-      try { _chatFrame.contentDocument.documentElement.dataset.theme = theme; } catch (_) {}
       try { _chatFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*"); } catch (_) {}
       return theme;
     };
@@ -527,7 +526,6 @@
         if (e.data.theme !== "light" && e.data.theme !== "dark") return;
         const theme = e.data.theme;
         document.documentElement.dataset.theme = theme;
-        try { _chatFrame.contentDocument.documentElement.dataset.theme = theme; } catch (_) {}
         try { _chatFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*"); } catch (_) {}
         return;
       }

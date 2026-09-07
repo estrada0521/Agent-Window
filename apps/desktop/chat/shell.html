@@ -60,15 +60,7 @@
       if (params.get("launch_shell") === "1") {
         document.documentElement.dataset.launchShell = "1";
       }
-      try {
-        const frameSidebarOpen =
-          params.get("hub_sidebar") === "1" ||
-          (window.frameElement && window.frameElement.dataset && window.frameElement.dataset.hubSidebarOpen === "1");
-        if (frameSidebarOpen) {
-          document.documentElement.dataset.hubSidebarOpen = "1";
-        }
-      } catch (_) {}
-      // Detect Tauri desktop app via URL param, session marker, Tauri globals, or parent frame flag.
+      // Detect Tauri desktop app via URL param, session marker, or Tauri globals.
       function _detectTauri() {
         try {
           const stored = sessionStorage.getItem("agent_window_tauri_app") === "1";
@@ -76,8 +68,7 @@
             params.get("tauri") === "1" ||
             stored ||
             typeof window.__TAURI__ !== "undefined" ||
-            typeof window.__TAURI_INTERNALS__ !== "undefined" ||
-            (window.parent !== window && window.parent.__agentWindowNative?.appSettingsLoaded)
+            typeof window.__TAURI_INTERNALS__ !== "undefined"
           ) {
             document.documentElement.dataset.tauriApp = "1";
             try { sessionStorage.setItem("agent_window_tauri_app", "1"); } catch (_) {}
