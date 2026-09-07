@@ -26,18 +26,6 @@
     if (!doc || !doc.documentElement || !doc.body) return;
     if (!isHubDocument(doc)) return;
     doc.documentElement.dataset.tauriRootWindow = "1";
-    if (doc.documentElement.dataset.tauriDragListener !== "1") {
-      doc.documentElement.dataset.tauriDragListener = "1";
-      doc.addEventListener("mousedown", (event) => {
-        const dragHeight = Number.parseFloat(
-          doc.defaultView?.getComputedStyle(doc.documentElement).getPropertyValue("--tauri-chrome-band-h") || "",
-        );
-        if (!Number.isFinite(dragHeight) || event.button !== 0 || event.clientY > dragHeight) return;
-        const target = event.target;
-        if (target?.closest?.("button, a, input, select, textarea, [role=button]")) return;
-        doc.defaultView?.__TAURI__?.window?.getCurrentWindow?.().startDragging?.().catch(() => {});
-      }, true);
-    }
     try {
       let strip = doc.getElementById("__ma-top-drag-strip");
       if (!strip) {
@@ -48,6 +36,7 @@
       } else if (strip.parentElement !== doc.body) {
         doc.body.appendChild(strip);
       }
+      strip.setAttribute("data-tauri-drag-region", "");
     } catch (_) {}
   }
 

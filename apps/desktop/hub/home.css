@@ -140,7 +140,6 @@
     body { padding: 0; }
     __HUB_HEADER_CSS__
     :root {
-      --desk-drag-strip-right: 4em;
       --desk-chrome-size: 1.54em;
       --desk-chrome-icon-size: 1.15em;
       --desk-chrome-radius: 0.62em;
@@ -295,7 +294,7 @@
       position: fixed;
       top: 0;
       left: 50%;
-      transform: translateX(calc(-50% + var(--desk-window-resize-compensation, 0px)));
+      transform: translateX(-50%);
       height: var(--tauri-chrome-band-h);
       z-index: 1300;
       -webkit-app-region: no-drag;
@@ -341,6 +340,7 @@
       height: 100%;
       margin: 0;
       color: var(--desk-window-glyph);
+      overflow: visible;
       pointer-events: none;
     }
     .desk-window-traffic-btn circle {
@@ -601,12 +601,12 @@
       position: fixed;
       top: 0;
       left: 0;
-      right: var(--desk-drag-strip-right);
+      right: 0;
       font-size: var(--text-size, 13px);
       height: var(--tauri-chrome-band-h);
       z-index: 1205;
       background: transparent;
-      pointer-events: none;
+      pointer-events: auto;
     }
     .desk-floating-controls .desk-settings-icon-btn {
       display: inline-flex;

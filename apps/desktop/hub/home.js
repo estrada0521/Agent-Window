@@ -72,7 +72,6 @@
     let _deskPanelActiveMode = "";
     let _deskPanelWidth = 0;
     let _deskOutwardResizeInFlight = false;
-    let _deskWindowResizeCompensationClear = null;
     const _phoneViewportQuery = window.matchMedia(`(max-width: ${PHONE_VIEWPORT_MAX_PX}px)`);
     const esc = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
     const cssEsc = (value) => {
@@ -104,29 +103,11 @@
       document.documentElement.style.setProperty("--text-size", `${clamped}px`);
       return clamped;
     }
-    function compensateDeskWindowResize(scale) {
-      if (_deskWindowResizeCompensationClear) _deskWindowResizeCompensationClear();
-      const root = document.documentElement;
-      root.style.setProperty("--desk-window-resize-compensation", `${window.innerWidth * (scale - 1) / 2}px`);
-      _deskWindowTraffic?.getBoundingClientRect();
-      let active = true;
-      const clear = () => {
-        if (!active) return;
-        active = false;
-        root.style.removeProperty("--desk-window-resize-compensation");
-        if (_deskWindowResizeCompensationClear === clear) _deskWindowResizeCompensationClear = null;
-      };
-      _deskWindowResizeCompensationClear = clear;
-      return clear;
-    }
     function applyDeskTextSizeAndBroadcast(px) {
       const previous = currentDeskTextSizePx();
       const clamped = clampDeskTextSize(px);
       const invoke = getTauriInvoke();
       const scalesWindow = clamped !== previous && !_deskAutoWindowHeight && typeof invoke === "function";
-      const clearResizeCompensation = scalesWindow
-        ? compensateDeskWindowResize(clamped / previous)
-        : null;
       applyDeskTextSizeLocal(clamped);
       applyDeskSidebarWidth();
       updateDeskChromeOverflow();
@@ -136,7 +117,6 @@
       } catch (_) {}
       if (scalesWindow) {
         invoke("scale_window_from_top_center", { scale: clamped / previous }).catch((err) => {
-          clearResizeCompensation();
           showDeskHubMessage(`window zoom resize failed: ${err}`, { error: true });
         });
       }
@@ -2476,10 +2456,7 @@
     })();
     _deskSettingsBtn && _deskSettingsBtn.addEventListener("click", () => { void openAppearanceMenu(); });
     _deskReloadBtn && _deskReloadBtn.addEventListener("click", triggerDeskHubReload);
-    window.addEventListener("resize", () => {
-      if (_deskWindowResizeCompensationClear) _deskWindowResizeCompensationClear();
-      updateDeskChromeOverflow();
-    }, { passive: true });
+    window.addEventListener("resize", updateDeskChromeOverflow, { passive: true });
     updateDeskChromeOverflow();
     if (_deskSessionList) {
       _deskSessionList.addEventListener("scroll", updateDeskSessionListFade, { passive: true });
