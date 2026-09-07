@@ -94,12 +94,16 @@
       const raw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
       return Number.isFinite(raw) ? raw : DESK_TEXT_SIZE_DEFAULT;
     }
+    function clampDeskTextSize(px) {
+      return Math.max(DESK_TEXT_SIZE_MIN, Math.min(DESK_TEXT_SIZE_MAX, Math.round(px)));
+    }
     function applyDeskTextSizeLocal(px) {
-      const clamped = Math.max(DESK_TEXT_SIZE_MIN, Math.min(DESK_TEXT_SIZE_MAX, Math.round(px)));
+      const clamped = clampDeskTextSize(px);
       document.documentElement.style.setProperty("--text-size", `${clamped}px`);
       return clamped;
     }
     function applyDeskTextSizeAndBroadcast(px) {
+      const previous = currentDeskTextSizePx();
       const clamped = applyDeskTextSizeLocal(px);
       applyDeskSidebarWidth();
       updateDeskChromeOverflow();
@@ -107,6 +111,12 @@
       try {
         _deskChatFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
       } catch (_) {}
+      const invoke = getTauriInvoke();
+      if (clamped !== previous && !_deskAutoWindowHeight && typeof invoke === "function") {
+        invoke("scale_window_from_top_center", { scale: clamped / previous }).catch((err) => {
+          showDeskHubMessage(`window zoom resize failed: ${err}`, { error: true });
+        });
+      }
     }
     function dispatchDeskNativeMenuAction(payload) {
       try {

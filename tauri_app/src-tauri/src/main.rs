@@ -900,6 +900,41 @@ fn resize_window_from_edge(
     Ok(())
 }
 
+#[tauri::command]
+fn scale_window_from_top_center(window: tauri::WebviewWindow, scale: f64) -> Result<(), String> {
+    if !scale.is_finite() || scale <= 0.0 {
+        return Err("window scale must be a positive finite number".to_string());
+    }
+
+    let scale_factor = window.scale_factor().map_err(|err| err.to_string())?;
+    let inner_size = window
+        .inner_size()
+        .map_err(|err| err.to_string())?
+        .to_logical::<f64>(scale_factor);
+    let next_inner_width = inner_size.width * scale;
+    let next_inner_height = inner_size.height * scale;
+    if next_inner_width < MIN_WINDOW_WIDTH || next_inner_height < MIN_WINDOW_HEIGHT {
+        return Err(format!(
+            "scaled window would fall below the minimum ({MIN_WINDOW_WIDTH} x {MIN_WINDOW_HEIGHT})"
+        ));
+    }
+
+    let width_delta = next_inner_width - inner_size.width;
+    let height_delta = next_inner_height - inner_size.height;
+    let handle = window.ns_window().map_err(|err| err.to_string())?;
+    unsafe {
+        let ns_window: &NSWindow = &*(handle as *const NSWindow);
+        let mut frame = ns_window.frame();
+        frame.origin.x -= width_delta / 2.0;
+        frame.origin.y -= height_delta;
+        frame.size.width += width_delta;
+        frame.size.height += height_delta;
+        ns_window.setFrame_display(frame, true);
+    }
+    center_traffic_lights(&window);
+    Ok(())
+}
+
 // How tall the menu bar (and, on a notched Mac, the extra strip beside it)
 // actually is varies by machine and can't be hardcoded -- NSScreen's own
 // frame vs visibleFrame is the only reliable source. Cocoa reports both in
@@ -1268,6 +1303,7 @@ fn main() {
             compact_window_geometry,
             mini_window_geometry,
             resize_window_from_edge,
+            scale_window_from_top_center,
             move_window_top,
             move_window_top_left,
             move_window_top_right,

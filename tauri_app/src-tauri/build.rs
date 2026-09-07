@@ -8,6 +8,7 @@ fn main() {
             "compact_window_geometry",
             "mini_window_geometry",
             "resize_window_from_edge",
+            "scale_window_from_top_center",
             "move_window_top",
             "move_window_top_left",
             "move_window_top_right",
