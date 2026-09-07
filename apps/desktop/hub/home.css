@@ -145,7 +145,7 @@
       --desk-chrome-icon-size: 1.15em;
       --desk-chrome-radius: 0.62em;
       --desk-chrome-top: 0.31em;
-      --desk-chrome-edge: 0.77em;
+      --desk-chrome-edge: max(10px, 0.77em);
       --desk-chrome-gap: 0.46em;
       /* Preserve the tuned 23px radius at the 4px default inset, then move the
          inner curve by the same amount as the scaled edge inset. */
