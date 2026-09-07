@@ -27,6 +27,7 @@ from .entry_write import (
 )
 from .index_cache import MATCHED_ENTRY_TAIL, message_entry_window
 from workspace_sync.commit import (
+    adopt_commit_baseline as _adopt_commit_baseline_impl,
     ensure_commit_announcements as _ensure_commit_announcements_impl,
 )
 from .payload import (
@@ -176,6 +177,9 @@ class ChatRuntime:
             datetime_class=dt_datetime,
             append_jsonl_entry_fn=append_jsonl_entry,
         )
+
+    def adopt_commit_baseline(self) -> None:
+        _adopt_commit_baseline_impl(self)
 
     def ensure_commit_announcements(self) -> None:
         _ensure_commit_announcements_impl(self)

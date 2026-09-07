@@ -234,9 +234,9 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     )
     runtime.start_native_log_sync()
     try:
-        runtime.ensure_commit_announcements()
+        runtime.adopt_commit_baseline()
     except Exception as exc:
-        logging.error("commit announcement startup refresh failed: %s", exc)
+        logging.error("commit baseline adoption failed: %s", exc)
     threading.Thread(
         target=_message_index_watcher,
         daemon=True,

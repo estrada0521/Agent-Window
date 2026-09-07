@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from workspace_sync.commit import ensure_commit_announcements
+from workspace_sync.commit import adopt_commit_baseline, ensure_commit_announcements
 
 
 def _git(workspace: Path, *args: str) -> None:
@@ -27,9 +27,8 @@ def _head(workspace: Path) -> str:
 
 
 class _FakeRuntime:
-    def __init__(self, workspace: Path, session_dir: Path) -> None:
+    def __init__(self, workspace: Path) -> None:
         self.workspace = str(workspace)
-        self.log_path = session_dir / "session.log.jsonl"
         self.announced: list[dict] = []
 
     def append_system_entry(self, message: str, *, kind: str = "", **extra) -> dict:
@@ -38,55 +37,71 @@ class _FakeRuntime:
         return entry
 
 
-class NonFastForwardTimelineIsNotDetectedTests(unittest.TestCase):
-    """`ensure_commit_announcements()` reconciles the commit timeline with a
-    plain `last_hash..HEAD` git-log range and nothing more. It intentionally
-    does NOT run `git merge-base --is-ancestor` (or any equivalent check) to
-    tell a fast-forward advance apart from a diverged branch switch or a
-    reset to unrelated history.
+class CommitTimelineSemanticsTests(unittest.TestCase):
+    """The timeline projects the commit HEAD moved to while this process was
+    watching -- that one, once. No `last..HEAD` range replay, so commits made
+    while the process was down are absorbed as the baseline, not back-filled.
 
-    This is a conscious simplicity tradeoff, not a gap: adding ancestor
-    detection would turn this module into an opinionated arbiter of git
-    history semantics (what counts as a "real" advance vs. a "rewrite"),
-    which is exactly the kind of ownership over the user's git state this
-    project avoids taking. Do not "fix" this by adding a fast-forward guard
-    -- that would be re-introducing scope this project deliberately doesn't
-    want. If this test starts failing, the fix is almost certainly wrong.
+    It also does NOT run `git merge-base --is-ancestor` (or any equivalent) to
+    tell a fast-forward apart from a diverged branch switch: deciding what
+    counts as a "real" advance is ownership over the user's git history this
+    project doesn't take. Don't "fix" either of these by adding a range walk
+    or a fast-forward guard.
     """
 
-    def test_diverged_branch_switch_is_announced_like_a_fast_forward(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            workspace = Path(tmp) / "repo"
-            workspace.mkdir()
-            session_dir = Path(tmp) / "session"
-            session_dir.mkdir()
+    def _repo(self, tmp: str) -> tuple[Path, _FakeRuntime]:
+        workspace = Path(tmp) / "repo"
+        workspace.mkdir()
+        _git(workspace, "init", "-q")
+        _git(workspace, "config", "user.email", "test@example.com")
+        _git(workspace, "config", "user.name", "Test")
+        return workspace, _FakeRuntime(workspace)
 
-            _git(workspace, "init", "-q")
-            _git(workspace, "config", "user.email", "test@example.com")
-            _git(workspace, "config", "user.name", "Test")
+    def test_startup_absorbs_head_without_announcing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace, runtime = self._repo(tmp)
+            _commit(workspace, "base.txt", "base")
+            _commit(workspace, "more.txt", "more")
+
+            adopt_commit_baseline(runtime)
+            self.assertEqual(runtime.announced, [])
+
+            # A refire with HEAD unchanged stays silent too.
+            ensure_commit_announcements(runtime)
+            self.assertEqual(runtime.announced, [])
+
+    def test_observed_advance_announces_only_the_new_head(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace, runtime = self._repo(tmp)
+            _commit(workspace, "base.txt", "base")
+            adopt_commit_baseline(runtime)
+
+            _commit(workspace, "a.txt", "a")
+            _commit(workspace, "b.txt", "b")
+            head = _head(workspace)
+
+            ensure_commit_announcements(runtime)
+            self.assertEqual(len(runtime.announced), 1)
+            self.assertEqual(runtime.announced[0]["commit_hash"], head)
+
+    def test_diverged_branch_switch_is_announced_like_any_advance(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace, runtime = self._repo(tmp)
             _commit(workspace, "base.txt", "base")
             base_hash = _head(workspace)
-
             _commit(workspace, "main-only.txt", "on-main")
             main_hash = _head(workspace)
 
-            runtime = _FakeRuntime(workspace, session_dir)
+            adopt_commit_baseline(runtime)
             ensure_commit_announcements(runtime)
-            self.assertEqual(len(runtime.announced), 1)
-            self.assertEqual(runtime.announced[0]["commit_hash"], main_hash)
+            self.assertEqual(runtime.announced, [])
 
-            # Diverge: branch off the pre-main-only base, not off main_hash.
             _git(workspace, "checkout", "-q", "-b", "other", base_hash)
             _commit(workspace, "other-only.txt", "on-other")
             other_hash = _head(workspace)
             self.assertNotEqual(other_hash, main_hash)
 
-            # `other_hash` is NOT a descendant of `main_hash` -- this is a
-            # non-fast-forward transition. The mechanism announces it anyway,
-            # with no ancestor check and no error.
-            runtime.announced.clear()
             ensure_commit_announcements(runtime)
-
             self.assertEqual(len(runtime.announced), 1)
             self.assertEqual(runtime.announced[0]["commit_hash"], other_hash)
 
