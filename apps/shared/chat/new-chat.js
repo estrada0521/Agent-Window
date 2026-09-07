@@ -1,6 +1,7 @@
     const beginNewChat = async (button) => {
       if (reloadInFlight) return;
       reloadInFlight = true;
+      if (document.body.classList.contains("right-panel-open")) closeDesktopRightPanel();
       document.documentElement.dataset.launchShell = "1";
       if (button) {
         button.disabled = true;
