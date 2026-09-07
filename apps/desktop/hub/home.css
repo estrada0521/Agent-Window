@@ -1329,7 +1329,7 @@
       margin-left: auto;
       margin-right: 0.54em;
       flex: none;
-      font-size: 0.85em;
+      font-size: var(--text-size, 13px);
       color: var(--muted);
       visibility: hidden;
       pointer-events: none;
