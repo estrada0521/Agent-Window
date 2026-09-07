@@ -1037,9 +1037,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         }
         if (event.metaKey && !event.altKey && event.code === "KeyE") {
           event.preventDefault();
-          // toggleDesktopRightPanel no-ops when the overlay is unavailable
-          // (Fit Height).
-          toggleDesktopRightPanel();
+          // The right pane is a native menu in Fit Height -- nothing to toggle.
+          if (document.documentElement.dataset.autoWindowHeight !== "1") {
+            toggleDesktopRightPanel();
+          }
           return;
         }
         if (event.metaKey && !event.altKey && !event.shiftKey && !event.ctrlKey && event.code === "KeyT") {
