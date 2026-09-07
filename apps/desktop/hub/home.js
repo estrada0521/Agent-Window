@@ -1454,7 +1454,7 @@
       persistDeskSelection("");
       setDeskSelectionInUrl("");
       clearDeskChatFrame();
-      renderDesktopSessions(_hubSessionsCache.active, _hubSessionsCache.archived);
+      applyDeskSessionSelection();
     }
 
     function openChatInDesk(url, name) {
@@ -1482,7 +1482,7 @@
       } else {
         setDeskChatLoading(false);
       }
-      renderDesktopSessions(_hubSessionsCache.active, _hubSessionsCache.archived);
+      applyDeskSessionSelection();
     }
 
     function resolveSessionChatUrl(openHref, { force = false } = {}) {
@@ -1502,7 +1502,7 @@
       updateDeskWindowTitle(name);
       persistDeskSelection(name);
       setDeskSelectionInUrl(name);
-      renderDesktopSessions(_hubSessionsCache.active, _hubSessionsCache.archived);
+      applyDeskSessionSelection();
       setDeskChatLoading(true);
       const openToken = ++_deskOpenToken;
       try {
@@ -1615,6 +1615,12 @@
       clearDeskChatFrame();
     }
 
+    // Session-row action icons. Module-scope constants, not rebuilt per row,
+    // and shared with applyDeskSessionSelection()'s in-place archived-row swap.
+    const DESK_TRASH_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+    const DESK_KILL_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`;
+    const DESK_REVIVE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`;
+
     function renderDeskSessionRow(session, archived) {
       const sessionName = String(session.name);
       const archivedClass = archived ? " archived" : "";
@@ -1624,10 +1630,7 @@
       const showDelete = archived && isSelected;
       const swipeActionLabel = showDelete ? "Delete" : (archived ? "Revive" : "Archive");
       const swipeActionRoute = showDelete ? "delete-archived" : (archived ? "revive" : "kill");
-      const trashSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
-      const killSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`;
-      const reviveSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`;
-      const actionSvg = showDelete ? trashSvg : (archived ? reviveSvg : killSvg);
+      const actionSvg = showDelete ? DESK_TRASH_SVG : (archived ? DESK_REVIVE_SVG : DESK_KILL_SVG);
       const previewText = String(session.latest_message_preview || "").trim();
       const previewSender = String(session.latest_message_sender || "").trim();
       const previewDisplay = previewSender ? `${previewSender} ${previewText}` : previewText;
@@ -1658,6 +1661,44 @@
             `</div>` +
           `</div>` +
         `</div>`;
+    }
+
+    // Selecting a session only changes which row is selected (and, for an
+    // archived row, whether its action reads Revive or Delete). Rebuilding the
+    // whole list's innerHTML for that recreates every row -- the action icons
+    // visibly blink. Patch the affected rows in place instead; the delegated
+    // click handlers read data- attributes at event time, and initDeskSwipeRow
+    // is a no-op on an already-bound wrapper, so nothing needs re-wiring.
+    function applyDeskSessionSelection() {
+      if (!_deskSessionList) return;
+      for (const wrap of _deskSessionList.querySelectorAll(".desk-swipe-row")) {
+        const row = wrap.querySelector(".desk-session-row");
+        if (!row) continue;
+        const name = row.dataset.sessionName || "";
+        const isSelected = name === _deskSelectedSessionName;
+        row.classList.toggle("is-selected", isSelected);
+        row.classList.toggle("is-unread", !isSelected && _deskUnreadSessions.has(name));
+        row.setAttribute("aria-current", isSelected ? "page" : "false");
+        if (!row.classList.contains("archived")) continue;
+        const kind = isSelected ? "delete-archived" : "revive";
+        if (wrap.dataset.deskSwipeKind === kind) continue;
+        wrap.dataset.deskSwipeKind = kind;
+        const label = isSelected ? "Delete" : "Revive";
+        const svg = isSelected ? DESK_TRASH_SVG : DESK_REVIVE_SVG;
+        const swipeBtn = wrap.querySelector(".desk-swipe-action-btn");
+        if (swipeBtn) {
+          swipeBtn.dataset.deskSwipeAction = kind;
+          swipeBtn.setAttribute("aria-label", `${label} ${name}`);
+          swipeBtn.innerHTML = svg + `<span>${label}</span>`;
+        }
+        const hoverBtn = wrap.querySelector(".desk-row-hover-action");
+        if (hoverBtn) {
+          hoverBtn.dataset.deskHoverAction = kind;
+          hoverBtn.setAttribute("aria-label", `${label} ${name}`);
+          hoverBtn.setAttribute("title", label);
+          hoverBtn.innerHTML = svg;
+        }
+      }
     }
 
     function closeDeskSwipeRow(wrapper, animate = true) {
