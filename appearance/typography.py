@@ -18,6 +18,8 @@ DESKTOP_LIGHT_BODY_WEIGHT = 400
 DESKTOP_LIGHT_CODE_WEIGHT = 400
 MOBILE_LIGHT_BODY_WEIGHT = 430
 MOBILE_LIGHT_CODE_WEIGHT = 500
+MOBILE_DARK_BODY_WEIGHT = 300
+MOBILE_DARK_CODE_WEIGHT = 400
 TEXT_LINE_HEIGHT_RATIO = 1.62
 
 
@@ -66,6 +68,10 @@ def body_typography_css() -> str:
     html[data-mobile="1"][data-theme="light"] {{
       --body-weight: {MOBILE_LIGHT_BODY_WEIGHT};
       --code-weight: {MOBILE_LIGHT_CODE_WEIGHT};
+    }}
+    html[data-mobile="1"][data-theme="dark"] {{
+      --body-weight: {MOBILE_DARK_BODY_WEIGHT};
+      --code-weight: {MOBILE_DARK_CODE_WEIGHT};
     }}"""
     typography_override = """
     .message.user .md-body,
