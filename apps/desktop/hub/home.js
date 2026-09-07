@@ -102,6 +102,7 @@
     function applyDeskTextSizeAndBroadcast(px) {
       const clamped = applyDeskTextSizeLocal(px);
       applyDeskSidebarWidth();
+      updateDeskChromeOverflow();
       try { localStorage.setItem(DESK_TEXT_SIZE_KEY, String(clamped)); } catch (_) {}
       try {
         _deskChatFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
@@ -2002,7 +2003,7 @@
       return "both";
     }
 
-    const DESK_CHROME_GROUP_GAP = 16;
+    const DESK_CHROME_GROUP_GAP_AT_DEFAULT_TEXT_SIZE = 16;
     // macOS centers the native traffic-light cluster (close/miniaturize/zoom)
     // on the window's full width -- see center_traffic_lights() in main.rs.
     // It isn't in the DOM, so its safe zone has to be computed the same way
@@ -2017,7 +2018,9 @@
       // checking the left group against the traffic-light zone alone is
       // enough -- the right side collides at the same threshold.
       const trafficLeft = window.innerWidth / 2 - (DESK_TRAFFIC_LIGHTS_WIDTH / 2);
-      const collides = () => _deskFloatingControls.getBoundingClientRect().right + DESK_CHROME_GROUP_GAP > trafficLeft;
+      const chromeGroupGap = DESK_CHROME_GROUP_GAP_AT_DEFAULT_TEXT_SIZE
+        * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT;
+      const collides = () => _deskFloatingControls.getBoundingClientRect().right + chromeGroupGap > trafficLeft;
       if (!collides()) return;
       // Drop the "(port)" suffix first -- the session name alone often still fits.
       _deskFloatingControls.classList.add("is-port-hidden");

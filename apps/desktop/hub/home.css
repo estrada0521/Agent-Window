@@ -142,20 +142,31 @@
     body { padding: 0; }
     __HUB_HEADER_CSS__
     :root {
-      --desk-chrome-size: 20px;
-      --desk-chrome-icon-size: 15px;
-      --desk-chrome-radius: 8px;
-      --desk-chrome-top: 4px;
-      --desk-chrome-edge: 10px;
-      --desk-chrome-gap: 4px;
+      --desk-drag-strip-right: 4em;
+      --desk-chrome-size: 1.54em;
+      --desk-chrome-icon-size: 1.15em;
+      --desk-chrome-radius: 0.62em;
+      --desk-chrome-top: 0.31em;
+      --desk-chrome-edge: 0.77em;
+      --desk-chrome-gap: 0.46em;
       /* The inner content's corner radius. A hair under the Tauri window's own
          radius so the inset gap reads as even all the way around the corner. */
       --desk-inner-radius: 23px;
     }
     .page-header {
-      --page-side-pad: 12px;
-      --chrome-icon-btn-size: 24px;
-      --chrome-icon-size: 15px;
+      --page-side-pad: 0.92em;
+      --chrome-icon-btn-size: 1.85em;
+      --chrome-icon-size: 1.15em;
+      --chrome-icon-gap: 0.15em;
+      font-size: var(--text-size, 13px);
+    }
+    .page-menu-btn,
+    .desk-settings-icon-btn,
+    .desk-chat-menu-btn,
+    .desk-chat-reload-btn,
+    .desk-app-sidebar-toggle,
+    .desk-panel-ctrl-btn {
+      font-size: inherit;
     }
     html[data-tauri-app="1"] .shell > .page-header {
       position: absolute;
@@ -190,7 +201,7 @@
       position: fixed;
       top: env(safe-area-inset-top, 0px);
       right: calc(var(--desk-chrome-edge) + env(safe-area-inset-right, 0px));
-      width: 24px;
+      width: var(--chrome-icon-btn-size);
       height: var(--tauri-chrome-band-h);
       margin: 0;
       padding: 0;
@@ -219,8 +230,8 @@
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] .page-header .page-header-actions .page-menu-btn,
     html[data-tauri-app="1"][data-tauri-root-window="1"] .page-header-actions.page-header-actions-floating .page-menu-btn {
-      width: 24px;
-      height: 24px;
+      width: var(--chrome-icon-btn-size);
+      height: var(--chrome-icon-btn-size);
       margin: 0;
       padding: 0;
       opacity: 1;
@@ -230,8 +241,8 @@
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] .page-header .page-header-actions .page-menu-btn svg,
     html[data-tauri-app="1"][data-tauri-root-window="1"] .page-header-actions.page-header-actions-floating .page-menu-btn svg {
-      width: 15px;
-      height: 15px;
+      width: var(--chrome-icon-size);
+      height: var(--chrome-icon-size);
       margin: 0 auto;
       transform: none;
     }
@@ -271,10 +282,10 @@
     html[data-tauri-app="1"][data-auto-window-height="1"] .desk-panel-ctrl-btn::after {
       content: "";
       display: block;
-      width: 14px;
+      width: 1.08em;
       /* ~ the rendered stroke of the icons this replaces (1.8 * 15/24). */
-      height: 2px;
-      border-radius: 3px;
+      height: 0.15em;
+      border-radius: 0.23em;
       background: var(--fg);
     }
     /* Fit Height replacement for the macOS traffic lights (hidden in that
@@ -286,7 +297,8 @@
     html[data-tauri-app="1"][data-auto-window-height="1"] .fit-window-dots {
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 0.69em;
+      font-size: var(--text-size, 13px);
       position: fixed;
       top: 0;
       left: 50%;
@@ -297,17 +309,17 @@
     }
     .fit-window-dots i {
       position: relative;
-      width: 14px;
-      height: 5px;
-      border-radius: 2px;
+      width: 1.08em;
+      height: 0.38em;
+      border-radius: 0.15em;
       background: #ff5f57;
       cursor: pointer;
     }
-    /* transparent hit-area so the 7px bars are easy to click */
+    /* Transparent hit-area so the compressed bars remain easy to click. */
     .fit-window-dots i::before {
       content: "";
       position: absolute;
-      inset: -6px -4px;
+      inset: -0.46em -0.31em;
     }
     .fit-window-dots i:nth-child(2) { background: #febc2e; }
     .fit-window-dots i:nth-child(3) { background: #28c840; }
@@ -481,7 +493,8 @@
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      gap: 6px;
+      gap: var(--desk-chrome-gap);
+      font-size: var(--text-size, 13px);
       position: fixed;
       left: calc(var(--desk-chrome-edge) + env(safe-area-inset-left, 0px));
       top: var(--desk-chrome-top);
@@ -506,7 +519,8 @@
       position: fixed;
       top: 0;
       left: 0;
-      right: calc(var(--page-side-pad, 14px) + var(--chrome-icon-btn-size, 28px) + 12px);
+      right: var(--desk-drag-strip-right);
+      font-size: var(--text-size, 13px);
       height: var(--tauri-chrome-band-h);
       z-index: 1205;
       background: transparent;
@@ -534,7 +548,7 @@
       right: auto;
       bottom: auto;
       height: var(--tauri-chrome-band-h);
-      gap: 6px;
+      gap: var(--desk-chrome-gap);
       z-index: 1306;
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-floating-controls .desk-settings-icon-btn {
@@ -570,10 +584,10 @@
     html[data-always-on-top="1"]:not([data-auto-window-height="1"]) #deskSettingsBtn::after {
       content: "";
       position: absolute;
-      top: 3px;
-      right: 3px;
-      width: 5px;
-      height: 5px;
+      top: 0.23em;
+      right: 0.23em;
+      width: 0.38em;
+      height: 0.38em;
       border-radius: 50%;
       background: var(--fg);
       pointer-events: none;
@@ -630,7 +644,8 @@
       top: var(--desk-chrome-top);
       z-index: 1000;
       align-items: center;
-      gap: 6px;
+      gap: var(--desk-chrome-gap);
+      font-size: var(--text-size, 13px);
       flex-direction: row;
       pointer-events: auto;
       -webkit-app-region: no-drag;
@@ -684,7 +699,7 @@
     .desk-right-panel-controls {
       display: none;
       align-items: center;
-      gap: 6px;
+      gap: var(--desk-chrome-gap);
       position: static;
       pointer-events: auto;
       -webkit-app-region: no-drag;
@@ -1452,17 +1467,19 @@
       background: transparent;
     }
     .desk-session-title-text {
+      position: relative;
+      top: 0.08em;
       color: var(--fg);
-      font-size: 13px;
+      font-size: 1em;
       letter-spacing: 0.01em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 220px;
-      line-height: 18px;
+      max-width: 16.92em;
+      line-height: 1.38;
       pointer-events: none;
       -webkit-app-region: no-drag;
-      padding-left: 4px;
+      padding-left: 0.31em;
     }
     .desk-session-title-text:empty { display: none; }
     .desk-floating-controls.is-port-hidden .desk-session-title-port {
