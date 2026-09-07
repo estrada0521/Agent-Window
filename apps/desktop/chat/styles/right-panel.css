@@ -1089,7 +1089,7 @@
     }
     html[data-tauri-app="1"][data-hub-iframe-chat="1"] body.right-panel-open .composer-overlay {
       --desktop-overlay-exclude-right: var(--desktop-right-panel-reserved-width, 0px);
-      padding-right: 12px;
+      padding-right: calc(var(--text-size, 13px) * 12 / 13);
     }
     .git-pinned-expand {
       contain: inline-size;

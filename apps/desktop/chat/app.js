@@ -165,7 +165,6 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     let _fitHeightTimer = 0;
     let _closeRefitTimer = 0;
     // Breathing room above the composer field when the window is sized to it.
-    const COMPOSER_FIT_SLACK = 20;
     const reportFitHeight = ({ fromComposer = false } = {}) => {
       if (!isHubIframeChat() || document.documentElement.dataset.autoWindowHeight !== "1") return;
       const scroller = timeline || document.getElementById("messages");
@@ -199,7 +198,8 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
         if (box) {
           const inputStyle = getComputedStyle(messageInput);
           const fieldOverflow = parseFloat(inputStyle.maxHeight) - parseFloat(inputStyle.minHeight);
-          contentHeight = Math.ceil(box.offsetHeight + fieldOverflow) + COMPOSER_FIT_SLACK;
+          const fitSlack = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size")) * 20 / 13;
+          contentHeight = Math.ceil(box.offsetHeight + fieldOverflow + fitSlack);
         }
       }
       contentHeight += messageStepTopGap();
@@ -831,6 +831,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         const px = Number(event.data.textSize);
         if (Number.isFinite(px)) {
           document.documentElement.style.setProperty("--text-size", `${px}px`);
+          if (isComposerOverlayOpen()) {
+            autoResizeTextarea();
+            requestAnimationFrame(() => reportFitHeight({ fromComposer: true }));
+          }
           dpApplyPanelWidth();
           notifyParentPanelState();
           try {

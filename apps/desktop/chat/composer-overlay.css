@@ -1,5 +1,5 @@
     .composer-overlay {
-      --composer-overlay-max-width: 680px;
+      --composer-overlay-max-width: calc(var(--text-size, 13px) * 680 / 13);
       position: fixed;
       top: 0;
       right: var(--desktop-overlay-exclude-right, 0px);
@@ -9,7 +9,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 12px;
+      padding: 0 calc(var(--text-size, 13px) * 12 / 13);
       background: transparent;
       backdrop-filter: blur(0px);
       -webkit-backdrop-filter: blur(0px);
@@ -22,7 +22,7 @@
        is only tractable when the composer is pinned to one edge. */
     html[data-auto-window-height="1"] .composer-overlay {
       align-items: flex-end;
-      padding-bottom: 12px;
+      padding-bottom: calc(var(--text-size, 13px) * 12 / 13);
     }
     /* ...and the backdrop tint/blur snap to full strength instead of easing
        over 320ms -- in this tiny window the lag showed the raw transcript for a
@@ -124,7 +124,7 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       justify-items: center;
-      gap: 10px;
+      gap: calc(var(--text-size, 13px) * 10 / 13);
       width: min(var(--composer-overlay-max-width), 100%);
       max-width: 100%;
       padding: 0;
@@ -133,7 +133,7 @@
       background: transparent;
       z-index: 1;
       opacity: 0;
-      transform: translateY(42px) scale(0.952);
+      transform: translateY(calc(var(--text-size, 13px) * 42 / 13)) scale(0.952);
       transition: opacity 320ms ease, transform 620ms cubic-bezier(0.18, 0.9, 0.22, 1);
     }
     .composer-overlay.visible .composer {
@@ -143,7 +143,7 @@
     }
     .composer-overlay.closing .composer {
       opacity: 0;
-      transform: translateY(6px) scale(0.992);
+      transform: translateY(calc(var(--text-size, 13px) * 6 / 13)) scale(0.992);
       pointer-events: none;
       transition: opacity 90ms linear, transform 90ms ease;
     }
@@ -155,12 +155,12 @@
         "input input"
         "plus targets";
       row-gap: 0;
-      column-gap: 4px;
+      column-gap: calc(var(--text-size, 13px) * 4 / 13);
       width: 100%;
       max-width: 100%;
       margin: 0 auto;
-      padding: 1px 7px 1px 7px;
-      border-radius: 8px;
+      padding: calc(var(--text-size, 13px) / 13) calc(var(--text-size, 13px) * 7 / 13);
+      border-radius: calc(var(--text-size, 13px) * 8 / 13);
       border: none;
       background: transparent;
       backdrop-filter: none;
@@ -178,7 +178,7 @@
       scrollbar-width: none;
       -ms-overflow-style: none;
       margin: 0;
-      padding: 4px 20px 4px 10px;
+      padding: calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 20 / 13) calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 10 / 13);
       align-self: center;
       -webkit-overflow-scrolling: touch;
       mask-image: linear-gradient(to right, black 85%, transparent 100%);
@@ -197,17 +197,17 @@
       grid-area: plus;
       justify-self: start;
       align-self: center;
-      padding: 4px 8px 4px 0;
+      padding: calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 8 / 13) calc(var(--text-size, 13px) * 4 / 13) 0;
       z-index: 100;
-      margin: 0 2px 1px;
+      margin: 0 calc(var(--text-size, 13px) * 2 / 13) calc(var(--text-size, 13px) / 13);
       transition: opacity 180ms ease, transform 240ms ease;
     }
     .composer-attach-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 34px;
-      height: 34px;
+      width: calc(var(--text-size, 13px) * 34 / 13);
+      height: calc(var(--text-size, 13px) * 34 / 13);
       padding: 0;
       border-radius: 50%;
       border: none;
@@ -236,8 +236,8 @@
       transition: transform 80ms ease, background 0ms;
     }
     .composer-attach-btn svg {
-      width: 22px;
-      height: 22px;
+      width: calc(var(--text-size, 13px) * 22 / 13);
+      height: calc(var(--text-size, 13px) * 22 / 13);
       display: block;
       stroke-width: 1.7;
     }
@@ -247,8 +247,8 @@
       justify-content: center;
       gap: 0;
       position: relative;
-      padding: 8px;
-      margin-right: 8px;
+      padding: calc(var(--text-size, 13px) * 8 / 13);
+      margin-right: calc(var(--text-size, 13px) * 8 / 13);
       border: none;
       background: transparent;
       color: var(--chip-color);
@@ -259,8 +259,8 @@
       pointer-events: none;
     }
     .target-chip .target-icon {
-      width: 20px;
-      height: 20px;
+      width: calc(var(--text-size, 13px) * 20 / 13);
+      height: calc(var(--text-size, 13px) * 20 / 13);
       flex-shrink: 0;
       display: block;
       color: currentColor;
@@ -352,8 +352,8 @@
       flex-shrink: 0;
       line-height: 0;
       vertical-align: middle;
-      --agent-icon-sub-font-size: 11px;
-      --agent-icon-sub-right: -8px;
+      --agent-icon-sub-font-size: calc(var(--text-size, 13px) * 11 / 13);
+      --agent-icon-sub-right: calc(var(--text-size, 13px) * -8 / 13);
       --agent-icon-sub-bottom: 0px;
     }
     .agent-icon-instance-sub {
@@ -379,10 +379,10 @@
         0 0 2px var(--bg-color);
     }
     .agent-icon-slot--chip {
-      width: 20px;
-      height: 20px;
-      --agent-icon-sub-font-size: 12px;
-      --agent-icon-sub-right: -9px;
+      width: calc(var(--text-size, 13px) * 20 / 13);
+      height: calc(var(--text-size, 13px) * 20 / 13);
+      --agent-icon-sub-font-size: calc(var(--text-size, 13px) * 12 / 13);
+      --agent-icon-sub-right: calc(var(--text-size, 13px) * -9 / 13);
       --agent-icon-sub-bottom: 0px;
     }
     .agent-icon-slot--chip .target-icon {

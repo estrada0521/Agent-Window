@@ -24,13 +24,13 @@
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
       border: none;
-      border-radius: 16px 16px 0 0;
+      border-radius: calc(var(--text-size, 13px) * 16 / 13) calc(var(--text-size, 13px) * 16 / 13) 0 0;
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
-      max-height: 208px;
+      max-height: calc(var(--text-size, 13px) * 208 / 13);
       display: none;
       box-shadow: none;
       padding: 0;
@@ -42,8 +42,8 @@
 
     #fileDropdown,
     #cmdDropdown {
-      mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0, black calc(var(--text-size, 13px) * 16 / 13), black calc(100% - calc(var(--text-size, 13px) * 16 / 13)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black calc(var(--text-size, 13px) * 16 / 13), black calc(100% - calc(var(--text-size, 13px) * 16 / 13)), transparent 100%);
     }
 
     #fileDropdown {
@@ -59,7 +59,7 @@
     #fileDropdown::-webkit-scrollbar-thumb,
     #cmdDropdown::-webkit-scrollbar-thumb {
       background: var(--scrollbar-thumb);
-      border-radius: 999px;
+      border-radius: calc(var(--text-size, 13px) * 999 / 13);
     }
     #fileDropdown.visible {
       display: flex;
@@ -73,10 +73,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 64px;
-      padding: 12px 18px;
+      min-height: calc(var(--text-size, 13px) * 64 / 13);
+      padding: calc(var(--text-size, 13px) * 12 / 13) calc(var(--text-size, 13px) * 18 / 13);
       color: var(--muted);
-      font-size: 12.5px;
+      font-size: calc(var(--text-size, 13px) * 12.5 / 13);
     }
     .file-dropdown-loading .inline-loading-row {
       padding: 0;
@@ -87,32 +87,32 @@
       color: inherit;
     }
     .file-dropdown-loading .inline-loading-spinner {
-      width: 14px;
-      height: 14px;
+      width: calc(var(--text-size, 13px) * 14 / 13);
+      height: calc(var(--text-size, 13px) * 14 / 13);
       border-width: 1.8px;
     }
     .file-item {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: calc(var(--text-size, 13px) * 12 / 13);
       width: 100%;
       box-sizing: border-box;
-      padding: 8px 14px;
-      border-radius: 10px;
+      padding: calc(var(--text-size, 13px) * 8 / 13) calc(var(--text-size, 13px) * 14 / 13);
+      border-radius: calc(var(--text-size, 13px) * 10 / 13);
       /* Inherited by .file-item-name/-relpath below, which rely on it for
          their own overflow:hidden + text-overflow:ellipsis to mean anything
          -- without it, text wraps to a second line instead of eliding. */
       white-space: nowrap;
-      font-size: 13.5px;
-      line-height: 20px;
+      font-size: calc(var(--text-size, 13px) * 13.5 / 13);
+      line-height: calc(var(--text-size, 13px) * 20 / 13);
       font-weight: var(--body-weight);
       color: var(--fg);
       cursor: pointer;
       transition: background 120ms ease;
     }
     .file-item-icon {
-      width: 16px;
-      height: 16px;
+      width: calc(var(--text-size, 13px) * 16 / 13);
+      height: calc(var(--text-size, 13px) * 16 / 13);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -138,7 +138,7 @@
       color: var(--fg);
     }
     .file-item-relpath {
-      margin-left: 8px;
+      margin-left: calc(var(--text-size, 13px) * 8 / 13);
       color: var(--muted);
     }
     /* flex-shrink, not flex:0 0 auto with a floor -- the size text is the
@@ -150,13 +150,13 @@
       overflow: hidden;
       text-align: right;
       color: var(--muted);
-      font-size: 12px;
+      font-size: calc(var(--text-size, 13px) * 12 / 13);
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
     .file-dropdown-list,
     .cmd-dropdown-list {
-      padding-bottom: 10px;
+      padding-bottom: calc(var(--text-size, 13px) * 10 / 13);
     }
     .file-dropdown-list {
       display: block;
@@ -173,13 +173,13 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: calc(var(--text-size, 13px) * 10 / 13);
       color: var(--muted);
       vertical-align: middle;
     }
     .inline-loading-spinner {
-      width: 15px;
-      height: 15px;
+      width: calc(var(--text-size, 13px) * 15 / 13);
+      height: calc(var(--text-size, 13px) * 15 / 13);
       border: 2px solid var(--spinner-ring-color);
       border-top-color: var(--icon-fg);
       border-radius: 50%;
@@ -242,7 +242,7 @@
       background-image: linear-gradient(var(--composer-menu-row-border), var(--composer-menu-row-border));
       background-repeat: no-repeat;
       background-position: bottom center;
-      background-size: calc(100% - 28px) 0.5px;
+      background-size: calc(100% - calc(var(--text-size, 13px) * 28 / 13)) 0.5px;
     }
     .has-hover .file-item:hover {
       background-color: var(--composer-menu-row-hover-bg);
@@ -263,11 +263,11 @@
     .cmd-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 10px 18px;
-      border-radius: 10px;
-      font-size: 14px;
-      line-height: 20px;
+      gap: calc(var(--text-size, 13px) * 12 / 13);
+      padding: calc(var(--text-size, 13px) * 10 / 13) calc(var(--text-size, 13px) * 18 / 13);
+      border-radius: calc(var(--text-size, 13px) * 10 / 13);
+      font-size: calc(var(--text-size, 13px) * 14 / 13);
+      line-height: calc(var(--text-size, 13px) * 20 / 13);
       font-weight: var(--body-weight);
       color: var(--fg);
       cursor: pointer;
@@ -287,7 +287,7 @@
       background-image: linear-gradient(var(--composer-menu-row-border), var(--composer-menu-row-border));
       background-repeat: no-repeat;
       background-position: bottom center;
-      background-size: calc(100% - 36px) 0.5px;
+      background-size: calc(100% - calc(var(--text-size, 13px) * 36 / 13)) 0.5px;
     }
     .has-hover .cmd-item:hover {
       background-color: var(--composer-menu-row-hover-bg);
@@ -298,14 +298,14 @@
       color: var(--fg);
     }
     .cmd-item-name {
-      font-size: 14px;
+      font-size: calc(var(--text-size, 13px) * 14 / 13);
       color: var(--fg);
       flex-shrink: 0;
       transition: color 120ms ease;
     }
     .cmd-item-desc {
       display: none;
-      font-size: 14px;
+      font-size: calc(var(--text-size, 13px) * 14 / 13);
       color: var(--muted);
       overflow: hidden;
       text-overflow: ellipsis;
