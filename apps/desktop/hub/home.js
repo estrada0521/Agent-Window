@@ -208,7 +208,7 @@
         applyDeskAlwaysOnTop(false);
         const invoke = getTauriInvoke();
         if (typeof invoke === "function") {
-          invoke("set_window_height", { height: DESK_DEFAULT_WINDOW_HEIGHT }).catch((err) => {
+          invoke("set_window_height", { height: DESK_DEFAULT_WINDOW_HEIGHT * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT }).catch((err) => {
             showDeskHubMessage(`fit height exit resize failed: ${err}`, { error: true });
           });
         }
@@ -238,7 +238,10 @@
       // drop the redundant second call so it isn't two invokes per line.
       if (!snapWidth && Math.abs(target - _deskLastFitTarget) < 4) return;
       _deskLastFitTarget = target;
-      invoke("set_window_height", { height: target, snapCompactWidth: snapWidth }).catch((err) => {
+      invoke("set_window_height", {
+        height: target,
+        compactWidthScale: snapWidth ? currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT : null,
+      }).catch((err) => {
         showDeskHubMessage(`fit height failed: ${err}`, { error: true });
       });
     }
@@ -254,7 +257,7 @@
       const invoke = getTauriInvoke();
       if (typeof invoke === "function") {
         try {
-          await invoke("reset_window_geometry");
+          await invoke("reset_window_geometry", { scale: currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT });
         } catch (err) {
           showDeskHubMessage(`reset window failed: ${err}`, { error: true });
         }
@@ -271,7 +274,7 @@
       const invoke = getTauriInvoke();
       if (typeof invoke === "function") {
         try {
-          await invoke(command);
+          await invoke(command, { scale: currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT });
         } catch (err) {
           showDeskHubMessage(`${label} failed: ${err}`, { error: true });
         }

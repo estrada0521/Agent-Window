@@ -723,30 +723,8 @@ fn show_session_context_menu(
 }
 
 #[tauri::command]
-fn reset_window_geometry(window: tauri::WebviewWindow) -> Result<(), String> {
-    // .center() reads the window's own current size to compute a centered
-    // position; called right after set_size(), that read can still see the
-    // pre-resize size, landing off-center. Compute the target position from
-    // the monitor instead, independent of the window's (possibly not yet
-    // applied) size.
-    let scale_factor = window.scale_factor().map_err(|err| err.to_string())?;
-    let monitor = window
-        .current_monitor()
-        .map_err(|err| err.to_string())?
-        .ok_or_else(|| "no monitor available".to_string())?;
-    let monitor_pos = monitor.position().to_logical::<f64>(scale_factor);
-    let monitor_size = monitor.size().to_logical::<f64>(scale_factor);
-    let x = monitor_pos.x + ((monitor_size.width - DEFAULT_WINDOW_SIZE) / 2.0).max(0.0);
-    let y = monitor_pos.y + ((monitor_size.height - DEFAULT_WINDOW_SIZE) / 2.0).max(0.0);
-    window
-        .set_size(tauri::LogicalSize::new(
-            DEFAULT_WINDOW_SIZE,
-            DEFAULT_WINDOW_SIZE,
-        ))
-        .map_err(|err| err.to_string())?;
-    window
-        .set_position(tauri::LogicalPosition::new(x, y))
-        .map_err(|err| err.to_string())
+fn reset_window_geometry(window: tauri::WebviewWindow, scale: f64) -> Result<(), String> {
+    place_centered_window(&window, DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE, scale)
 }
 
 #[tauri::command]
@@ -789,11 +767,11 @@ fn hide_native_traffic_lights(window: &tauri::WebviewWindow) {
 fn set_window_height(
     window: tauri::WebviewWindow,
     height: f64,
-    snap_compact_width: Option<bool>,
+    compact_width_scale: Option<f64>,
 ) -> Result<(), String> {
     // Width and x stay; only the height (and, if it would spill off the
     // bottom, y) change. Clamped to a sane floor and the monitor height.
-    // snap_compact_width also pulls the width to the compact size and recenters
+    // compact_width_scale also pulls the width to the compact size and recenters
     // x -- the one-shot the Fit Height toggle fires on entry so the window
     // lands at its final size in a single resize instead of visibly stopping at
     // the compact width first.
@@ -815,8 +793,11 @@ fn set_window_height(
     // set_window_height is only used by Fit Height mode, where the floor is
     // deliberately near-zero (set_fit_height_min lowers the window minimum).
     let h = height.max(FIT_WINDOW_MIN_HEIGHT).min(monitor_size.height);
-    let (w, x) = if snap_compact_width.unwrap_or(false) {
-        let w = COMPACT_WINDOW_WIDTH.min(monitor_size.width);
+    let (w, x) = if let Some(scale) = compact_width_scale {
+        if !scale.is_finite() || scale <= 0.0 {
+            return Err("preset scale must be positive and finite".to_string());
+        }
+        let w = (COMPACT_WINDOW_WIDTH * scale).min(monitor_size.width);
         (w, monitor_pos.x + ((monitor_size.width - w) / 2.0).max(0.0))
     } else {
         (cur_size.width, cur_pos.x)
@@ -842,7 +823,13 @@ fn place_centered_window(
     window: &tauri::WebviewWindow,
     width: f64,
     height: f64,
+    scale: f64,
 ) -> Result<(), String> {
+    if !scale.is_finite() || scale <= 0.0 {
+        return Err("preset scale must be positive and finite".to_string());
+    }
+    let width = width * scale;
+    let height = height * scale;
     let scale_factor = window.scale_factor().map_err(|err| err.to_string())?;
     let monitor = window
         .current_monitor()
@@ -861,13 +848,13 @@ fn place_centered_window(
 }
 
 #[tauri::command]
-fn compact_window_geometry(window: tauri::WebviewWindow) -> Result<(), String> {
-    place_centered_window(&window, COMPACT_WINDOW_WIDTH, DEFAULT_WINDOW_SIZE)
+fn compact_window_geometry(window: tauri::WebviewWindow, scale: f64) -> Result<(), String> {
+    place_centered_window(&window, COMPACT_WINDOW_WIDTH, DEFAULT_WINDOW_SIZE, scale)
 }
 
 #[tauri::command]
-fn mini_window_geometry(window: tauri::WebviewWindow) -> Result<(), String> {
-    place_centered_window(&window, MINI_WINDOW_WIDTH, MINI_WINDOW_HEIGHT)
+fn mini_window_geometry(window: tauri::WebviewWindow, scale: f64) -> Result<(), String> {
+    place_centered_window(&window, MINI_WINDOW_WIDTH, MINI_WINDOW_HEIGHT, scale)
 }
 
 #[tauri::command]
