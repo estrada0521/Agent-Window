@@ -45,6 +45,7 @@ __CHAT_INCLUDE:../session-state-projections.js__
       document.getElementById("message").disabled = !sessionActive;
       const _attachBtn = document.getElementById("attachBtn");
       if (_attachBtn) _attachBtn.disabled = !sessionActive;
+      renderStatus();
       if (typeof data.session === "string" && data.session) {
         restoreComposerDraft();
       }
@@ -63,9 +64,6 @@ __CHAT_INCLUDE:../session-state-projections.js__
           saveTargetSelection(currentSessionName, selectedTargets);
           renderTargetPicker(availableTargets);
         }
-      }
-      if (!sessionActive) {
-        setStatus("archived session is read-only");
       }
       if (hasOwn("agent_runtime") && data.agent_runtime && typeof data.agent_runtime === "object") {
         currentAgentRuntime = { ...data.agent_runtime };

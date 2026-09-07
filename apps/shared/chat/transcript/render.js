@@ -234,17 +234,24 @@
         throw err;
       }
     };
-    const setStatus = (text, isError = false) => {
+    let statusText = "";
+    let statusIsError = false;
+    const renderStatus = () => {
       const node = document.getElementById("statusline");
-      if (!sessionActive) {
+      if (sessionActive === false) {
         // Archived session: the statusline is a fixed read-only label. Nothing
         // transient (toasts, the SSE reconnect blank) gets to overwrite it.
         node.textContent = "archived session is read-only";
         node.classList.remove("is-error");
         return;
       }
-      node.textContent = text;
-      node.classList.toggle("is-error", isError);
+      node.textContent = statusText;
+      node.classList.toggle("is-error", statusIsError);
+    };
+    const setStatus = (text, isError = false) => {
+      statusText = text;
+      statusIsError = isError;
+      renderStatus();
     };
     const agentActionCandidates = (mode) => {
       if (mode === "add") return ALL_BASE_AGENTS.filter(Boolean);

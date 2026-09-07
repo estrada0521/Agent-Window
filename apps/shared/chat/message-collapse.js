@@ -1,7 +1,7 @@
     let selectedTargets = [];
     let sendLocked = false;
-    let sessionActive = false;
-    const canComposeInSession = () => !!sessionActive;
+    let sessionActive = null;
+    const canComposeInSession = () => sessionActive === true;
     let pendingAttachments = [];
     let availableTargets = [];
     let currentSessionName = "";
