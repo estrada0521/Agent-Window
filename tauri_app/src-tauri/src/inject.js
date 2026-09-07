@@ -25,6 +25,8 @@
   function ensureTopDragStrip(doc) {
     if (!doc || !doc.documentElement || !doc.body) return;
     if (!isHubDocument(doc)) return;
+    const workbench = doc.getElementById("deskWorkbench");
+    if (!workbench) return;
     doc.documentElement.dataset.tauriRootWindow = "1";
     try {
       let strip = doc.getElementById("__ma-top-drag-strip");
@@ -32,11 +34,19 @@
         strip = doc.createElement("div");
         strip.id = "__ma-top-drag-strip";
         strip.className = "tauri-top-drag-strip";
-        doc.body.appendChild(strip);
-      } else if (strip.parentElement !== doc.body) {
-        doc.body.appendChild(strip);
+        workbench.appendChild(strip);
+      } else if (strip.parentElement !== workbench) {
+        workbench.appendChild(strip);
       }
-      strip.setAttribute("data-tauri-drag-region", "");
+      strip.removeAttribute("data-tauri-drag-region");
+      if (strip.dataset.tauriDragListener !== "1") {
+        strip.dataset.tauriDragListener = "1";
+        strip.addEventListener("mousedown", (event) => {
+          if (event.button !== 0) return;
+          event.preventDefault();
+          doc.defaultView?.__TAURI__?.window?.getCurrentWindow?.().startDragging?.().catch(() => {});
+        });
+      }
     } catch (_) {}
   }
 

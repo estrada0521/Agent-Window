@@ -592,7 +592,6 @@
       -webkit-backdrop-filter: none;
       box-shadow: none;
     }
-    html[data-tauri-app="1"] .tauri-top-drag-strip,
     html[data-tauri-app="1"] [data-tauri-drag-region] {
       app-region: drag;
       -webkit-app-region: drag;
