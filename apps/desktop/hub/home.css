@@ -286,8 +286,80 @@
       border-radius: 0.23em;
       background: var(--fg);
     }
-    /* Fit Height replacement for the macOS traffic lights (hidden in that
-       mode): three crushed bars in the real button colours, centred in the
+    .desk-window-traffic { display: none; }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-window-traffic {
+      display: flex;
+      align-items: center;
+      gap: 0.69em;
+      font-size: var(--text-size, 13px);
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(calc(-50% + var(--desk-window-resize-compensation, 0px)));
+      height: var(--tauri-chrome-band-h);
+      z-index: 1300;
+      -webkit-app-region: no-drag;
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"][data-auto-window-height="1"] .desk-window-traffic {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .desk-window-traffic-btn {
+      --desk-window-fill: rgb(236, 103, 101);
+      --desk-window-glyph: rgb(119, 52, 50);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: inherit;
+      width: 1.08em;
+      height: 1.08em;
+      flex: 0 0 1.08em;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: var(--desk-window-fill);
+      box-shadow: inset 0 0 0 0.06em color-mix(in srgb, var(--desk-window-glyph) 38%, transparent);
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: default;
+    }
+    .desk-window-traffic-btn.is-minimize {
+      --desk-window-fill: rgb(242, 202, 68);
+      --desk-window-glyph: rgb(122, 101, 34);
+    }
+    .desk-window-traffic-btn.is-zoom {
+      --desk-window-fill: rgb(101, 196, 102);
+      --desk-window-glyph: rgb(51, 98, 51);
+    }
+    .desk-window-traffic-btn svg {
+      display: block;
+      width: 1em;
+      height: 1em;
+      margin: auto;
+      opacity: 0;
+      color: var(--desk-window-glyph);
+      pointer-events: none;
+    }
+    .desk-window-traffic:hover .desk-window-traffic-btn svg {
+      opacity: 1;
+    }
+    .desk-window-traffic-btn.is-close path,
+    .desk-window-traffic-btn.is-minimize path {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+    }
+    .desk-window-traffic-btn.is-zoom path {
+      fill: currentColor;
+      stroke: currentColor;
+      stroke-width: 0.6;
+      stroke-linejoin: round;
+    }
+    /* Fit Height replacement for the window controls: three crushed bars in
+       the real button colours, centred in the
        strip. Consistent with the compressed buttons, and the colour gives
        the window a "top". A touch thicker than the mono bars. These are live:
        close / minimize / zoom. */

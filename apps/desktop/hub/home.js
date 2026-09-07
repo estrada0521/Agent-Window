@@ -47,6 +47,7 @@
     const _deskHubMessage = document.getElementById("deskHubMessage");
     const _deskFloatingControls = document.querySelector(".desk-floating-controls");
     const _deskTopRightControls = document.querySelector(".desk-top-right-controls");
+    const _deskWindowTraffic = document.querySelector(".desk-window-traffic");
     const _deskSessionTitleTextEl = document.getElementById("deskSessionTitleText");
     const DESK_SELECTED_KEY = "agent_window_hub_selected_session";
     const DESK_SIDEBAR_WIDTH_KEY = "agent_window_hub_sidebar_width_at_default_text_size";
@@ -71,6 +72,7 @@
     let _deskPanelActiveMode = "";
     let _deskPanelWidth = 0;
     let _deskOutwardResizeInFlight = false;
+    let _deskWindowResizeCompensationClear = null;
     const _phoneViewportQuery = window.matchMedia(`(max-width: ${PHONE_VIEWPORT_MAX_PX}px)`);
     const esc = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
     const cssEsc = (value) => {
@@ -102,18 +104,39 @@
       document.documentElement.style.setProperty("--text-size", `${clamped}px`);
       return clamped;
     }
+    function compensateDeskWindowResize(scale) {
+      if (_deskWindowResizeCompensationClear) _deskWindowResizeCompensationClear();
+      const root = document.documentElement;
+      root.style.setProperty("--desk-window-resize-compensation", `${window.innerWidth * (scale - 1) / 2}px`);
+      _deskWindowTraffic?.getBoundingClientRect();
+      let active = true;
+      const clear = () => {
+        if (!active) return;
+        active = false;
+        root.style.removeProperty("--desk-window-resize-compensation");
+        if (_deskWindowResizeCompensationClear === clear) _deskWindowResizeCompensationClear = null;
+      };
+      _deskWindowResizeCompensationClear = clear;
+      return clear;
+    }
     function applyDeskTextSizeAndBroadcast(px) {
       const previous = currentDeskTextSizePx();
-      const clamped = applyDeskTextSizeLocal(px);
+      const clamped = clampDeskTextSize(px);
+      const invoke = getTauriInvoke();
+      const scalesWindow = clamped !== previous && !_deskAutoWindowHeight && typeof invoke === "function";
+      const clearResizeCompensation = scalesWindow
+        ? compensateDeskWindowResize(clamped / previous)
+        : null;
+      applyDeskTextSizeLocal(clamped);
       applyDeskSidebarWidth();
       updateDeskChromeOverflow();
       try { localStorage.setItem(DESK_TEXT_SIZE_KEY, String(clamped)); } catch (_) {}
       try {
         _deskChatFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
       } catch (_) {}
-      const invoke = getTauriInvoke();
-      if (clamped !== previous && !_deskAutoWindowHeight && typeof invoke === "function") {
+      if (scalesWindow) {
         invoke("scale_window_from_top_center", { scale: clamped / previous }).catch((err) => {
+          clearResizeCompensation();
           showDeskHubMessage(`window zoom resize failed: ${err}`, { error: true });
         });
       }
@@ -2014,20 +2037,12 @@
     }
 
     const DESK_CHROME_GROUP_GAP_AT_DEFAULT_TEXT_SIZE = 16;
-    // macOS centers the native traffic-light cluster (close/miniaturize/zoom)
-    // on the window's full width -- see center_traffic_lights() in main.rs.
-    // It isn't in the DOM, so its safe zone has to be computed the same way
-    // here rather than measured.
-    const DESK_TRAFFIC_LIGHTS_WIDTH = 56;
     function updateDeskChromeOverflow() {
-      if (!_deskFloatingControls || !_deskTopRightControls) return;
+      if (!_deskFloatingControls || !_deskTopRightControls || !_deskWindowTraffic) return;
       _deskFloatingControls.classList.remove("is-port-hidden", "is-title-hidden", "is-buttons-hidden");
       _deskTopRightControls.classList.remove("is-buttons-hidden");
-      // Left and right groups are mirror-symmetric (same buttons, same
-      // --desk-chrome-edge inset), and the traffic lights are centered, so
-      // checking the left group against the traffic-light zone alone is
-      // enough -- the right side collides at the same threshold.
-      const trafficLeft = window.innerWidth / 2 - (DESK_TRAFFIC_LIGHTS_WIDTH / 2);
+      const trafficLeft = _deskWindowTraffic.getBoundingClientRect().left;
+      if (trafficLeft <= 0) return;
       const chromeGroupGap = DESK_CHROME_GROUP_GAP_AT_DEFAULT_TEXT_SIZE
         * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT;
       const collides = () => _deskFloatingControls.getBoundingClientRect().right + chromeGroupGap > trafficLeft;
@@ -2427,6 +2442,19 @@
       updateDeskPanelButtonState("open", _deskPanelWidth);
       sendDeskPanelCommand("repo");
     });
+    (function armDeskWindowTraffic() {
+      const win = window.__TAURI__?.window?.getCurrentWindow?.();
+      if (!_deskWindowTraffic || !win) return;
+      const actions = {
+        close: () => win.close(),
+        minimize: () => win.minimize(),
+        zoom: () => win.toggleMaximize(),
+      };
+      _deskWindowTraffic.querySelectorAll("[data-window-action]").forEach((button) => {
+        const run = actions[button.dataset.windowAction];
+        if (run) button.addEventListener("click", () => { try { void run(); } catch (_) {} });
+      });
+    })();
     // The Fit Height traffic-light indicator (shown only in that mode) is a
     // live stand-in for the hidden native buttons.
     (function armFitWindowDots() {
@@ -2448,7 +2476,10 @@
     })();
     _deskSettingsBtn && _deskSettingsBtn.addEventListener("click", () => { void openAppearanceMenu(); });
     _deskReloadBtn && _deskReloadBtn.addEventListener("click", triggerDeskHubReload);
-    window.addEventListener("resize", updateDeskChromeOverflow, { passive: true });
+    window.addEventListener("resize", () => {
+      if (_deskWindowResizeCompensationClear) _deskWindowResizeCompensationClear();
+      updateDeskChromeOverflow();
+    }, { passive: true });
     updateDeskChromeOverflow();
     if (_deskSessionList) {
       _deskSessionList.addEventListener("scroll", updateDeskSessionListFade, { passive: true });

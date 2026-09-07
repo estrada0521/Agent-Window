@@ -1,5 +1,5 @@
 use objc2_app_kit::{
-    NSBitmapImageFileType, NSBitmapImageRep, NSView, NSWindow, NSWindowButton, NSWorkspace,
+    NSBitmapImageFileType, NSBitmapImageRep, NSWindow, NSWindowButton, NSWorkspace,
 };
 use objc2_foundation::{NSDictionary, NSString};
 use std::collections::HashMap;
@@ -759,17 +759,10 @@ fn set_fit_height_min(window: tauri::WebviewWindow, enabled: bool) -> Result<(),
     window
         .set_min_size(Some(tauri::LogicalSize::new(MIN_WINDOW_WIDTH, min_h)))
         .map_err(|err| err.to_string())?;
-    // The window is small in this mode and driven entirely by shortcut, so the
-    // macOS traffic lights only loom. Hide them while it is on, restore (and
-    // re-centre) them when it is off.
-    set_traffic_lights_hidden(&window, enabled);
-    if !enabled {
-        center_traffic_lights(&window);
-    }
     Ok(())
 }
 
-fn set_traffic_lights_hidden(window: &tauri::WebviewWindow, hidden: bool) {
+fn hide_native_traffic_lights(window: &tauri::WebviewWindow) {
     let Ok(handle) = window.ns_window() else { return };
     unsafe {
         let ns_window: &NSWindow = &*(handle as *const NSWindow);
@@ -779,7 +772,7 @@ fn set_traffic_lights_hidden(window: &tauri::WebviewWindow, hidden: bool) {
             NSWindowButton::ZoomButton,
         ] {
             if let Some(button) = ns_window.standardWindowButton(kind) {
-                button.setHidden(hidden);
+                button.setHidden(true);
             }
         }
     }
@@ -931,7 +924,6 @@ fn scale_window_from_top_center(window: tauri::WebviewWindow, scale: f64) -> Res
         frame.size.height += height_delta;
         ns_window.setFrame_display(frame, true);
     }
-    center_traffic_lights(&window);
     Ok(())
 }
 
@@ -1229,55 +1221,6 @@ fn apply_app_vibrancy(window: &tauri::WebviewWindow) {
     }
 }
 
-fn center_traffic_lights(window: &tauri::WebviewWindow) {
-    unsafe {
-        let ns_window = match window.ns_window() {
-            Ok(handle) => handle as *const objc2::runtime::AnyObject,
-            Err(err) => {
-                eprintln!("[app] traffic lights unavailable: {}", err);
-                return;
-            }
-        };
-        let ns_window_obj: &NSWindow = &*(ns_window as *const _);
-        let Some(close) = ns_window_obj.standardWindowButton(NSWindowButton::CloseButton) else {
-            return;
-        };
-        let Some(miniaturize) =
-            ns_window_obj.standardWindowButton(NSWindowButton::MiniaturizeButton)
-        else {
-            return;
-        };
-        let zoom = ns_window_obj.standardWindowButton(NSWindowButton::ZoomButton);
-
-        let Some(title_bar_view) = close.superview().and_then(|view| view.superview()) else {
-            return;
-        };
-
-        let close_rect = NSView::frame(&close);
-        let spacing = NSView::frame(&miniaturize).origin.x - close_rect.origin.x;
-        let button_count = if zoom.is_some() { 3.0 } else { 2.0 };
-        let cluster_width = close_rect.size.width + (spacing * (button_count - 1.0));
-        let target_x = ((ns_window_obj.frame().size.width - cluster_width) / 2.0).round();
-        let title_bar_height = 26.0;
-
-        let mut title_bar_rect = NSView::frame(&title_bar_view);
-        title_bar_rect.size.height = title_bar_height;
-        title_bar_rect.origin.y = ns_window_obj.frame().size.height - title_bar_height;
-        title_bar_view.setFrame(title_bar_rect);
-
-        let mut buttons = vec![close, miniaturize];
-        if let Some(zoom) = zoom {
-            buttons.push(zoom);
-        }
-        for (index, button) in buttons.into_iter().enumerate() {
-            let mut rect = NSView::frame(&button);
-            rect.origin.x = target_x + (index as f64 * spacing);
-            rect.origin.y = ((title_bar_height - rect.size.height) / 2.0).round();
-            button.setFrameOrigin(rect.origin);
-        }
-    }
-}
-
 fn reveal_main_window(app: &tauri::AppHandle) {
     let _ = app.show();
     let Some(window) = app.get_webview_window("main") else {
@@ -1340,8 +1283,8 @@ fn main() {
             .build()?;
 
             apply_app_vibrancy(&window);
-            center_traffic_lights(&window);
-            let traffic_window = window.clone();
+            hide_native_traffic_lights(&window);
+            let event_window = window.clone();
             window.on_window_event(move |event| {
                 if let tauri::WindowEvent::Focused(true) = event {
                     // The NSVisualEffectView backing occasionally drops out from
@@ -1356,34 +1299,15 @@ fn main() {
                     // already present in the build before this branch existed,
                     // so the real cause is elsewhere. Left as a known-tried,
                     // ineffective idea rather than silently dropped.
-                    apply_app_vibrancy(&traffic_window);
+                    apply_app_vibrancy(&event_window);
                 }
-                if matches!(
-                    event,
-                    tauri::WindowEvent::Resized(_)
-                        | tauri::WindowEvent::Moved(_)
-                        | tauri::WindowEvent::Focused(_)
-                        | tauri::WindowEvent::ScaleFactorChanged { .. }
-                ) {
-                    center_traffic_lights(&traffic_window);
-                } else if let tauri::WindowEvent::ThemeChanged(_) = event {
+                if let tauri::WindowEvent::ThemeChanged(_) = event {
                     // The glass tint follows the OS appearance, so rebuild it.
-                    apply_app_vibrancy(&traffic_window);
-                    let w = traffic_window.clone();
-                    std::thread::spawn(move || {
-                        // FIXME: This 500ms delay is unoptimized.
-                        // It is a workaround to wait for macOS theme transition animations
-                        // and layout passes to complete before overriding button positions.
-                        std::thread::sleep(std::time::Duration::from_millis(500));
-                        let value = w.clone();
-                        let _ = w.app_handle().run_on_main_thread(move || {
-                            center_traffic_lights(&value);
-                        });
-                    });
+                    apply_app_vibrancy(&event_window);
                 } else if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                     api.prevent_close();
-                    let _ = traffic_window.hide();
-                    let _ = traffic_window.app_handle().hide();
+                    let _ = event_window.hide();
+                    let _ = event_window.app_handle().hide();
                 }
             });
 
