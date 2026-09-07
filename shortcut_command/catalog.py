@@ -19,45 +19,45 @@ class SlashCommandSpec:
 
 PANE_CONTROL_COMMANDS = (
     SlashCommandSpec(
-        id="up", slash="/up", desc="選択中 pane に上移動を送信", has_arg=True, path="/shortcut-command",
+        id="up", slash="/up", desc="Send Up to the selected pane", has_arg=True, path="/shortcut-command",
     ),
     SlashCommandSpec(
-        id="down", slash="/down", desc="選択中 pane に下移動を送信", has_arg=True, path="/shortcut-command",
+        id="down", slash="/down", desc="Send Down to the selected pane", has_arg=True, path="/shortcut-command",
     ),
     SlashCommandSpec(
-        id="left", slash="/left", desc="選択中 pane に左移動を送信", has_arg=True, path="/shortcut-command",
+        id="left", slash="/left", desc="Send Left to the selected pane", has_arg=True, path="/shortcut-command",
     ),
     SlashCommandSpec(
-        id="right", slash="/right", desc="選択中 pane に右移動を送信", has_arg=True, path="/shortcut-command",
+        id="right", slash="/right", desc="Send Right to the selected pane", has_arg=True, path="/shortcut-command",
     ),
     SlashCommandSpec(
-        id="restart", slash="/restart", desc="エージェント再起動", has_arg=False, path="/shortcut-command",
+        id="restart", slash="/restart", desc="Restart the agent", has_arg=False, path="/shortcut-command",
     ),
     SlashCommandSpec(
-        id="resume", slash="/resume", desc="エージェント再開", has_arg=False, path="/shortcut-command",
+        id="resume", slash="/resume", desc="Resume the agent", has_arg=False, path="/shortcut-command",
     ),
     SlashCommandSpec(
-        id="ctrlc", slash="/ctrlc", desc="エージェントに Ctrl+C 送信", has_arg=False, path="/shortcut-command",
+        id="ctrlc", slash="/ctrlc", desc="Send Ctrl+C to the agent", has_arg=False, path="/shortcut-command",
     ),
     SlashCommandSpec(
-        id="esc", slash="/esc", desc="エージェントに Esc 送信", has_arg=False, path="/shortcut-command",
+        id="esc", slash="/esc", desc="Send Esc to the agent", has_arg=False, path="/shortcut-command",
     ),
     SlashCommandSpec(
-        id="enter", slash="/enter", desc="エージェントに Enter 送信", has_arg=False, path="/shortcut-command",
+        id="enter", slash="/enter", desc="Send Enter to the agent", has_arg=False, path="/shortcut-command",
     ),
 )
 
 APPLICATION_COMMANDS = (
     SlashCommandSpec(
-        id="nativelog", slash="/nativelog", desc="選択中エージェントのネイティブログをFinderで表示する",
+        id="nativelog", slash="/nativelog", desc="Reveal the agent's native log in Finder",
         has_arg=False, path="/native-log", desktop_only=True,
     ),
     SlashCommandSpec(
-        id="openpane", slash="/open-pane", desc="選択中エージェントの tmux pane を開く",
+        id="openpane", slash="/open-pane", desc="Open the agent's tmux pane",
         has_arg=False, path="/open-pane", desktop_only=True,
     ),
     SlashCommandSpec(
-        id="log", slash="/log", desc="`.agent-window/.log.jsonl` を挿入",
+        id="log", slash="/log", desc="Insert `.agent-window/.log.jsonl`",
         has_arg=False, path="", insert="`.agent-window/.log.jsonl`",
     ),
 )
