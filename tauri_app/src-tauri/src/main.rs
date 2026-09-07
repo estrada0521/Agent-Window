@@ -747,6 +747,70 @@ fn set_fit_height_min(window: tauri::WebviewWindow, enabled: bool) -> Result<(),
     Ok(())
 }
 
+// window-vibrancy tags its NSGlassEffectView with this (NS_VIEW_TAG_GLASS_VIEW
+// in window_vibrancy::macos::liquid_glass -- not re-exported).
+const GLASS_EFFECT_VIEW_TAG: isize = 96_945_937;
+
+// On focus regain (Stage Manager un-collapse, Cmd-Tab) the glass is normally
+// still in the hierarchy -- a full clear + re-add there flashes the window
+// black for a frame. Only rebuild when the glass view has actually dropped
+// out; otherwise just mark it for redraw, which also heals a live-but-stale
+// backing without the flash.
+fn heal_app_vibrancy(window: &tauri::WebviewWindow) {
+    let Ok(handle) = window.ns_window() else {
+        apply_app_vibrancy(window);
+        return;
+    };
+    let glass = unsafe {
+        let ns_window: &NSWindow = &*(handle as *const NSWindow);
+        ns_window
+            .contentView()
+            .and_then(|content| content.viewWithTag(GLASS_EFFECT_VIEW_TAG))
+    };
+    match glass {
+        Some(view) => view.setNeedsDisplay(true),
+        None => apply_app_vibrancy(window),
+    }
+}
+
+// NSGlassEffectView renders its flat "inactive" material whenever its window
+// lacks key appearance, so the glass dims the instant another window takes
+// focus. Add a -hasKeyAppearance override that always returns YES onto tao's
+// own window class (not a KVO notifying subclass, and without touching the
+// isa -- swapping it crashes KVO). isKeyWindow is left honest so keyboard
+// input still routes to whoever actually holds focus.
+fn keep_glass_key_appearance(window: &tauri::WebviewWindow) {
+    use objc2::ffi;
+    use objc2::runtime::{AnyClass, AnyObject, Bool, Imp, Sel};
+    use objc2::sel;
+
+    extern "C-unwind" fn always_key_appearance(_this: *mut AnyObject, _cmd: Sel) -> Bool {
+        Bool::YES
+    }
+
+    let Ok(handle) = window.ns_window() else { return };
+    unsafe {
+        let ns_window = handle as *mut AnyObject;
+        let mut cls: &AnyClass = (*ns_window).class();
+        while cls.name().to_bytes().starts_with(b"NSKVONotifying_") {
+            match cls.superclass() {
+                Some(sup) => cls = sup,
+                None => return,
+            }
+        }
+        let imp: Imp = std::mem::transmute::<
+            extern "C-unwind" fn(*mut AnyObject, Sel) -> Bool,
+            Imp,
+        >(always_key_appearance);
+        let _ = ffi::class_addMethod(
+            (cls as *const AnyClass) as *mut AnyClass,
+            sel!(hasKeyAppearance),
+            imp,
+            c"B@:".as_ptr(),
+        );
+    }
+}
+
 fn hide_native_traffic_lights(window: &tauri::WebviewWindow) {
     let Ok(handle) = window.ns_window() else { return };
     unsafe {
@@ -1287,24 +1351,19 @@ fn main() {
             .disable_drag_drop_handler()
             .build()?;
 
+            keep_glass_key_appearance(&window);
             apply_app_vibrancy(&window);
             hide_native_traffic_lights(&window);
             let event_window = window.clone();
             window.on_window_event(move |event| {
                 if let tauri::WindowEvent::Focused(true) = event {
-                    // The NSVisualEffectView backing occasionally drops out from
-                    // under the transparent window during a heavy WebView
-                    // repaint (large attachment thumbnails have triggered it),
-                    // leaving the desktop showing through. Reapplying on focus
-                    // self-heals it without requiring a full app restart.
-                    //
-                    // Deliberately NOT reapplying on WindowEvent::ThemeChanged:
-                    // tried that once as a fix for a glass-turns-white bug on
-                    // OS theme change, and it did not fix it -- the bug was
-                    // already present in the build before this branch existed,
-                    // so the real cause is elsewhere. Left as a known-tried,
-                    // ineffective idea rather than silently dropped.
-                    apply_app_vibrancy(&event_window);
+                    // The glass occasionally drops out from under the
+                    // transparent window during a heavy WebView repaint (large
+                    // attachment thumbnails have triggered it), leaving the
+                    // desktop showing through. Heal on focus regain -- but
+                    // without a clear + re-add unless the view is actually gone,
+                    // so an ordinary refocus doesn't flash the window black.
+                    heal_app_vibrancy(&event_window);
                 }
                 if let tauri::WindowEvent::ThemeChanged(_) = event {
                     // The glass tint follows the OS appearance, so rebuild it.
