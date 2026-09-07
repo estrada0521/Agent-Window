@@ -1557,16 +1557,22 @@
       background: transparent;
     }
     .desk-session-title-text {
-      position: relative;
-      top: 0.08em;
+      /* Centre the visible cap-to-baseline text against the icons, not the
+         line box -- the font's leading and descender room were biasing the
+         label upward, and a fixed nudge only lined it up at one text size.
+         Descenders spill past the trimmed box; overflow-clip-margin keeps
+         them from being sheared while the ellipsis still clips horizontally. */
+      text-box-trim: trim-both;
+      text-box-edge: cap alphabetic;
       color: var(--fg);
       font-size: 1em;
       letter-spacing: 0.01em;
       white-space: nowrap;
-      overflow: hidden;
+      overflow: clip;
+      overflow-clip-margin: 0.35em;
       text-overflow: ellipsis;
       max-width: 16.92em;
-      line-height: 1.38;
+      line-height: 1.2;
       pointer-events: none;
       -webkit-app-region: no-drag;
       padding-left: 0.31em;
