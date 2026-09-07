@@ -140,8 +140,12 @@
     body { padding: 0; }
     __HUB_HEADER_CSS__
     :root {
-      --desk-chrome-size: round(nearest, calc(var(--text-size, 13px) * 20 / 13), 1px);
       --desk-chrome-icon-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
+      /* Button = icon + an even gap, so the SVG always centres on a whole
+         pixel. Rounding the button size on its own gave an odd gap at some
+         zoom steps, and flex splitting that in half biased the glyph
+         down-right. */
+      --desk-chrome-size: calc(var(--desk-chrome-icon-size) + round(nearest, calc(var(--text-size, 13px) * 6 / 13), 2px));
       --desk-chrome-radius: round(nearest, calc(var(--text-size, 13px) * 8 / 13), 1px);
       --desk-chrome-top: round(nearest, calc(var(--text-size, 13px) * 4 / 13), 1px);
       --desk-chrome-edge: max(10px, 0.77em);
