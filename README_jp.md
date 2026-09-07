@@ -143,16 +143,6 @@ agent-send <target> <message>
 
 ここでのsuccessは、入力がruntimeへ渡されたことだけを意味します。送信先のAgentが理解した、あるいは行動したことを意味しません。
 
-## 名前をつける
-
-Agent Windowの唯一の不要な機能です。
-
-```bash
-agent-send name <target> <name>
-```
-
-Agentに、その場で通じる名前を付けられます。名前が使われるのは `agent-send` の宛先と `[From: ...]` prefixだけで、既存のinstance名やlog上の識別子は変わりません。
-
 ## スマートフォンから使う
 
 同一LAN上のmobile端末から、同じ画面へ接続できます。

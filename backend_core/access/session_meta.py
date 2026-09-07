@@ -65,28 +65,6 @@ def _parse_agents_csv(agents_csv: str) -> list[str]:
     ]
 
 
-def _reconcile_agent_names(
-    meta: dict[str, object],
-    current_agents: list[str],
-) -> None:
-    raw_names = meta.get("agent_names")
-    if raw_names is None:
-        return
-    if not isinstance(raw_names, dict):
-        raise ValueError("agent_names must be an object")
-    current = {str(agent or "").strip().lower() for agent in current_agents if str(agent or "").strip()}
-    reconciled = {
-        str(canonical or "").strip().lower(): str(display or "").strip()
-        for canonical, display in raw_names.items()
-        if str(canonical or "").strip() and str(display or "").strip()
-        and str(canonical or "").strip().lower() in current
-    }
-    if reconciled:
-        meta["agent_names"] = reconciled
-    else:
-        meta.pop("agent_names", None)
-
-
 def session_workspace(session_name: str) -> str | None:
     """Return the workspace path recorded in a session's own .meta file.
 
@@ -152,7 +130,7 @@ def set_session_workspace(session_name: str, workspace: str) -> None:
 
 
 def reset_session_agents(session_name: str) -> None:
-    """Drop the recorded agent list and name overrides from a session's .meta.
+    """Drop the recorded agent list from a session's .meta.
 
     Offered for any archived session; a later revive starts without the old
     agent set. Like set_session_workspace, this touches nothing else.
@@ -170,7 +148,6 @@ def reset_session_agents(session_name: str) -> None:
     if not isinstance(raw, dict):
         raise SessionMetaError(f"invalid session meta: {meta_path}")
     raw.pop("agents", None)
-    raw.pop("agent_names", None)
     write_json_atomically(meta_path, raw, indent=2)
 
 
@@ -193,7 +170,6 @@ def write_session_meta_file(
         meta = raw
 
     parsed_agents = _parse_agents_csv(agents_csv)
-    _reconcile_agent_names(meta, parsed_agents)
     # Timestamps lived here once; .log.jsonl is the real record of when a
     # session started and last moved, so a copy in .meta only went stale.
     meta.pop("session", None)

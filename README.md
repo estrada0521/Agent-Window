@@ -141,16 +141,6 @@ agent-send <target> <message>
 
 Here, success only means the input was delivered to the runtime. It doesn't mean the target Agent understood it or acted on it.
 
-## Give a name
-
-Agent Window's one and only unnecessary feature.
-
-```bash
-agent-send name <target> <name>
-```
-
-An Agent can be given a name that works within the session. The name is used only as an `agent-send` address and in the `[From: ...]` prefix; existing instance names and log identities are unchanged.
-
 ## Use it from a phone
 
 You can connect to the same screen from a mobile device on the same LAN.

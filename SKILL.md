@@ -1,10 +1,10 @@
 ---
 name: agent-send
 description: >-
-  Use when the user wants to contact, notify, relay to, ask help from, broadcast to, or assign a session-local name to other agents in an Agent Window session. Use normal assistant output for replies to the user; never use agent-send for user-facing responses.
+  Use when the user wants to contact, notify, relay to, ask help from, or broadcast to other agents in an Agent Window session. Use normal assistant output for replies to the user; never use agent-send for user-facing responses.
 ---
 
-# Send Messages to and Name Other Agents
+# Send Messages to Other Agents
 
 Use this skill only for agent-to-agent communication in an Agent Window session. Replies to the user must use normal assistant output because native event logs are synchronized automatically.
 
@@ -78,35 +78,3 @@ printf '%s' 'Please check this change.' | agent-send claude,codex-2,gemini
 ```
 
 Duplicate resolved targets are delivered only once.
-
-## Agent Names
-
-Assign a session-local name to one active agent instance:
-
-```bash
-agent-send name <target> <name>
-```
-
-For example:
-
-```bash
-agent-send name claude-2 Fable
-printf '%s' 'Please review this.' | agent-send Fable
-```
-
-The assigned name is an additional address, not a replacement. In this example, both `Fable` and `claude-2` address the same instance.
-
-Names affect only `agent-send` addressing and the automatic `[From: ...]` prefix. Canonical instance names and JSONL sender/target identities do not change. Names are local to the Agent Window session.
-
-The target passed to `name` must identify exactly one active instance. Use an exact instance target such as `claude-2` when duplicate instances exist. An existing assigned name may also be used as the target. Quote a name containing spaces:
-
-```bash
-agent-send name claude-2 'Blue Fable'
-```
-
-List or remove names without piping stdin:
-
-```bash
-agent-send names
-agent-send unname <target-or-name>
-```
