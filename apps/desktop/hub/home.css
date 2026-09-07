@@ -140,20 +140,20 @@
     body { padding: 0; }
     __HUB_HEADER_CSS__
     :root {
-      --desk-chrome-size: 1.54em;
-      --desk-chrome-icon-size: 1.15em;
-      --desk-chrome-radius: 0.62em;
-      --desk-chrome-top: 0.31em;
+      --desk-chrome-size: round(nearest, calc(var(--text-size, 13px) * 20 / 13), 1px);
+      --desk-chrome-icon-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
+      --desk-chrome-radius: round(nearest, calc(var(--text-size, 13px) * 8 / 13), 1px);
+      --desk-chrome-top: round(nearest, calc(var(--text-size, 13px) * 4 / 13), 1px);
       --desk-chrome-edge: max(10px, 0.77em);
-      --desk-chrome-gap: 0.46em;
+      --desk-chrome-gap: round(nearest, calc(var(--text-size, 13px) * 6 / 13), 1px);
       /* Preserve the tuned 23px radius at the 4px default inset, then move the
          inner curve by the same amount as the scaled edge inset. */
       --desk-inner-radius: calc(27px - var(--tauri-window-edge-inset));
     }
     .page-header {
       --page-side-pad: 0.92em;
-      --chrome-icon-btn-size: 1.85em;
-      --chrome-icon-size: 1.15em;
+      --chrome-icon-btn-size: round(nearest, calc(var(--text-size, 13px) * 24 / 13), 1px);
+      --chrome-icon-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
       --chrome-icon-gap: 0.15em;
       font-size: var(--text-size, 13px);
     }
@@ -621,7 +621,7 @@
       appearance: none;
       -webkit-appearance: none;
       cursor: pointer;
-      transition: color 0.15s ease, opacity 0.15s ease, background 0.15s ease, transform 0.1s ease;
+      transition: color 0.15s ease, opacity 0.15s ease, background 0.15s ease;
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-floating-controls {
       left: calc(var(--desk-chrome-edge) + env(safe-area-inset-left, 0px));
@@ -679,9 +679,6 @@
     .desk-floating-controls .desk-settings-icon-btn.is-active .desk-settings-filled-icon {
       display: block;
     }
-    .desk-floating-controls .desk-settings-icon-btn:active {
-      transform: scale(0.9);
-    }
     .desk-app-sidebar-toggle {
       display: inline-flex;
       align-items: center;
@@ -704,7 +701,7 @@
       pointer-events: auto;
       -webkit-app-region: no-drag;
       -webkit-tap-highlight-color: transparent;
-      transition: color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+      transition: color 0.15s ease, background 0.15s ease;
       color: var(--fg);
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-app-sidebar-toggle {
@@ -760,7 +757,7 @@
       pointer-events: auto;
       -webkit-app-region: no-drag;
       -webkit-tap-highlight-color: transparent;
-      transition: color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+      transition: color 0.15s ease, background 0.15s ease;
     }
     html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-chat-menu-btn,
     html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-chat-reload-btn {
@@ -804,7 +801,7 @@
       pointer-events: auto;
       -webkit-app-region: no-drag;
       -webkit-tap-highlight-color: transparent;
-      transition: color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+      transition: color 0.15s ease, background 0.15s ease;
     }
     .desk-panel-ctrl-btn svg {
       display: block;
@@ -848,9 +845,6 @@
     .desk-panel-ctrl-btn[aria-pressed="true"] {
       color: var(--fg);
     }
-    .desk-panel-ctrl-btn:active {
-      transform: scale(0.9);
-    }
     .desk-app-sidebar-toggle svg {
       display: block;
       width: var(--desk-chrome-icon-size);
@@ -883,11 +877,6 @@
     .desk-chat-menu-btn.is-active,
     .desk-chat-reload-btn.restarting {
       color: var(--fg);
-    }
-    .desk-app-sidebar-toggle:active,
-    .desk-chat-menu-btn:active,
-    .desk-chat-reload-btn:active {
-      transform: scale(0.9);
     }
     .desk-top-right-controls {
       display: inline-flex;
@@ -1009,6 +998,8 @@
     .desk-new-session-toggle {
       width: 100%;
       margin: 0;
+      padding: round(nearest, calc(var(--text-size, 13px) * 10 / 13), 1px)
+        round(nearest, calc(var(--text-size, 13px) * 12 / 13), 1px);
       opacity: 1;
     }
     .desk-sidebar-sessions,
@@ -1040,16 +1031,15 @@
       overflow: hidden;
       background: transparent;
       position: relative;
-      isolation: isolate;
     }
     .desk-session-row::before {
       content: "";
       position: absolute;
-      inset: 2px 0.62em;
-      border-radius: 10px;
+      inset: round(nearest, calc(var(--text-size, 13px) * 2 / 13), 1px) 0.62em;
+      border-radius: round(nearest, calc(var(--text-size, 13px) * 10 / 13), 1px);
       background: var(--session-hover-bg);
       opacity: 0;
-      z-index: -1;
+      z-index: 0;
       pointer-events: none;
       transition: opacity 150ms ease;
     }
@@ -1144,6 +1134,7 @@
       gap: 0;
       min-width: 0;
       position: relative;
+      z-index: 1;
     }
     .desk-row-main {
       flex: 1;
@@ -1311,11 +1302,15 @@
       flex: 1;
       min-width: 0;
       position: relative;
-      top: 0.08em;
+      top: round(nearest, calc(var(--text-size, 13px) / 13), 1px);
+    }
+    .desk-new-session-toggle .desk-row-main {
+      gap: round(nearest, calc(var(--text-size, 13px) * 8 / 13), 1px);
     }
     .desk-new-session-toggle .desk-row-name {
       text-align: left;
       font-size: var(--text-size, 13px);
+      line-height: round(nearest, calc(var(--text-size, 13px) * 1.2), 1px);
       font-weight: inherit;
       opacity: 1;
     }
@@ -1330,13 +1325,21 @@
       flex: none;
       font-size: 0.85em;
       color: var(--muted);
-      opacity: 0;
+      visibility: hidden;
       pointer-events: none;
-      transition: opacity 150ms ease;
+    }
+    .desk-new-session-toggle::before {
+      background: transparent;
+      opacity: 1;
+      transition: none;
     }
     .desk-new-session-toggle:hover .desk-row-kbd,
     .desk-new-session-toggle:focus-visible .desk-row-kbd {
-      opacity: 1;
+      visibility: visible;
+    }
+    .desk-new-session-toggle:hover::before,
+    .desk-new-session-toggle:focus-visible::before {
+      background: var(--session-hover-bg);
     }
     .desk-new-session-toggle .desk-row-leading-icon svg {
       stroke-width: 2;
