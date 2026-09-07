@@ -1087,10 +1087,6 @@
       padding-right: var(--desktop-right-panel-reserved-width, 0px);
       box-sizing: border-box;
     }
-    html[data-tauri-app="1"][data-hub-iframe-chat="1"] body.right-panel-open #scrollToBottomBtn,
-    html[data-tauri-app="1"][data-hub-iframe-chat="1"] body.right-panel-open #composerFabBtn {
-      left: calc((100vw - var(--desktop-right-panel-reserved-width, 0px)) / 2);
-    }
     html[data-tauri-app="1"][data-hub-iframe-chat="1"] body.right-panel-open .composer-overlay {
       --desktop-overlay-exclude-right: var(--desktop-right-panel-reserved-width, 0px);
       padding-right: 12px;

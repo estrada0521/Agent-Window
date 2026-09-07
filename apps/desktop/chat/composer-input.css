@@ -238,10 +238,14 @@
       padding: 8px 7px 10px 7px;
       border-radius: 28px;
     }
+    .shell {
+      /* On .shell (not main) so the fixed floating buttons -- siblings of
+         main, not descendants -- can centre on the same content column. */
+      --message-side-padding: calc(var(--text-size, 13px) * 1.54);
+      --chat-scrollbar-layout-width: 2px;
+    }
     main {
       --chat-scrollbar-width: 2px;
-      --chat-scrollbar-layout-width: 2px;
-      --message-side-padding: 1.54em;
       --message-step-top-gap: 16px;
       font-size: var(--text-size, 13px);
       position: absolute;
@@ -291,10 +295,16 @@
       /* 18% of the window height -- ~160px at the 896px preset height that
          both size presets (Restore / Compact) use. */
       bottom: var(--floating-btn-bottom, 18%);
-      /* Centre via left, not translateX(-50%), so the Fit Height tuck (which
-         swaps to right: 8px) is a plain snap with no transform to animate.
-         -19px == -(width / 2). */
-      left: calc(50% - 19px);
+      /* Centre on main's content column, not the viewport: same left/right
+         inset as main's padding box (plus the reserved panel width on the
+         right), then margin-inline: auto. No translateX, so the Fit Height
+         tuck to right: 8px is a plain snap. */
+      left: var(--message-side-padding);
+      right: calc(
+        var(--desktop-right-panel-reserved-width, 0px)
+        + var(--message-side-padding) - var(--chat-scrollbar-layout-width)
+      );
+      margin-inline: auto;
       transform: translateY(10px) scale(0.75);
       width: 38px;
       height: 38px;
@@ -364,6 +374,7 @@
       left: auto;
       right: 8px;
       bottom: 8px;
+      margin-inline: 0;
       transform: translateY(10px) scale(0.75);
     }
     html[data-auto-window-height="1"] #composerFabBtn.visible,
