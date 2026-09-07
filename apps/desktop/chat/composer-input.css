@@ -291,6 +291,11 @@
     main::-webkit-scrollbar { width: var(--chat-scrollbar-width) !important; height: var(--chat-scrollbar-width) !important; }
     #scrollToBottomBtn,
     #composerFabBtn {
+      --fab-icon-size: round(nearest, calc(var(--text-size, 13px) * 20 / 13), 1px);
+      /* Box = icon + an even gap, so the SVG always centres on a whole pixel
+         (independent rounding gave an odd gap that pushed it off-centre when
+         small). */
+      --fab-size: calc(var(--fab-icon-size) + round(nearest, calc(var(--text-size, 13px) * 18 / 13), 2px));
       position: fixed;
       /* 18% of the window height -- ~160px at the 896px preset height that
          both size presets (Restore / Compact) use. */
@@ -306,8 +311,8 @@
       );
       margin-inline: auto;
       transform: translateY(10px) scale(0.75);
-      width: 38px;
-      height: 38px;
+      width: var(--fab-size);
+      height: var(--fab-size);
       border-radius: 999px;
       border: 0.5px solid var(--line-strong);
       background: rgba(var(--bg-rgb), 0.8);
@@ -315,7 +320,7 @@
         inset 0 0.5px 0 rgba(255, 255, 255, 0.06),
         0 1px 2px rgba(0, 0, 0, 0.12);
       color: var(--icon-fg);
-      font-size: 17px;
+      font-size: round(nearest, calc(var(--text-size, 13px) * 17 / 13), 1px);
       line-height: 1;
       cursor: pointer;
       display: flex;
@@ -330,8 +335,8 @@
     }
     #scrollToBottomBtn svg,
     #composerFabBtn svg {
-      width: 20px;
-      height: 20px;
+      width: var(--fab-icon-size);
+      height: var(--fab-icon-size);
       display: block;
       stroke: currentColor;
       stroke-width: 1.7;
@@ -345,9 +350,9 @@
       transform: translateY(10px) scale(0.75);
     }
     #scrollToBottomBtn.thinking-scroll-btn .message-thinking-icon-wrap {
-      width: 18px;
-      height: 18px;
-      font-size: 12px;
+      width: var(--fab-icon-size);
+      height: var(--fab-icon-size);
+      font-size: round(nearest, calc(var(--text-size, 13px) * 12 / 13), 1px);
     }
     #composerFabBtn:active,
     #composerFabBtn.visible:active,
