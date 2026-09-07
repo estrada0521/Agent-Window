@@ -5,7 +5,7 @@ import json
 import logging
 from urllib.parse import parse_qs
 
-from appearance.typography import CODE_FONT, MESSAGE_FONT, MOBILE_TEXT_SIZE
+from appearance.typography import MOBILE_TEXT_SIZE
 from hub_backend.transport.request_base_path import request_base_path
 from server.runtime import ENTRY_WINDOW_LIMIT
 from shortcut_command.catalog import public_slash_command_dicts
@@ -156,8 +156,6 @@ def _get_file_view(handler, parsed, ctx) -> None:
             embed=embed,
             base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
             preview_base_theme=str(qs.get("base_theme", [""])[0] or "").strip(),
-            agent_font_family=MESSAGE_FONT,
-            agent_code_font=CODE_FONT,
             agent_text_size=preview_text_size,
             force_progressive_text=force_progressive_text,
         )

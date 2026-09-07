@@ -20,7 +20,6 @@ from workspace_sync.files.runtime import FileRuntime
 from hub_backend.runtime import HubRuntime
 from hub_backend.chat_supervisor import ensure_chat_server
 from hub_backend.session_api import resolve_session_chat_target
-from appearance.typography import CODE_FONT, MESSAGE_FONT
 
 hub = HubRuntime(repo_root, tmux_socket, hub_port=hub_port)
 
@@ -176,8 +175,6 @@ class Handler(BaseHTTPRequestHandler):
                 rel,
                 embed=embed,
                 base_path=f"/session/{url_quote(session_name)}",
-                agent_font_family=MESSAGE_FONT,
-                agent_code_font=CODE_FONT,
             )
         except PermissionError:
             self.send_error(403)

@@ -5,8 +5,15 @@ import html
 from backend_core.agents.registry import generate_agent_message_selectors
 
 
-MESSAGE_FONT = '"anthropicSans", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif'
-CODE_FONT = '"jetbrainsMono", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", monospace'
+MESSAGE_FONT_FAMILY = "anthropicSans"
+CODE_FONT_FAMILY = "jetbrainsMono"
+MESSAGE_FONT = f'"{MESSAGE_FONT_FAMILY}", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif'
+CODE_FONT = f'"{CODE_FONT_FAMILY}", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", monospace'
+FONT_ASSET_FILES = {
+    "anthropic-sans-roman.ttf": "AnthropicSans-Romans-Variable-25x258.ttf",
+    "anthropic-sans-italic.ttf": "AnthropicSans-Italics-Variable-25x258.ttf",
+    "jetbrains-mono.ttf": "JetBrainsMono[wght].ttf",
+}
 DESKTOP_TEXT_SIZE = 13
 MOBILE_TEXT_SIZE = 13
 TEXT_SIZE_MIN = 8
@@ -38,8 +45,8 @@ def apply_font_tokens(text: str) -> str:
         ("__CODE_FONT_CSS__", CODE_FONT),
         ("__MESSAGE_FONT__", html.escape(MESSAGE_FONT)),
         ("__CODE_FONT__", html.escape(CODE_FONT)),
-        ("__MESSAGE_FONT_FAMILY__", html.escape(MESSAGE_FONT.split(",", 1)[0].strip().strip('"'))),
-        ("__CODE_FONT_FAMILY__", html.escape(CODE_FONT.split(",", 1)[0].strip().strip('"'))),
+        ("__MESSAGE_FONT_FAMILY__", html.escape(MESSAGE_FONT_FAMILY)),
+        ("__CODE_FONT_FAMILY__", html.escape(CODE_FONT_FAMILY)),
     )
     resolved = text
     for old, new in replacements:

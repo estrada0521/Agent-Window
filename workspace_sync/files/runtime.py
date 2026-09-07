@@ -629,8 +629,6 @@ class FileRuntime:
         embed: bool = False,
         base_path: str = "",
         preview_base_theme: str = "",
-        agent_font_family: str | None = None,
-        agent_code_font: str | None = None,
         agent_text_size: int | None = None,
         force_progressive_text: bool = False,
     ) -> str:
@@ -642,8 +640,6 @@ class FileRuntime:
             embed=embed,
             base_path=base_path,
             preview_base_theme=preview_base_theme,
-            agent_font_family=agent_font_family,
-            agent_code_font=agent_code_font,
             agent_text_size=agent_text_size,
             force_progressive_text=force_progressive_text,
         )

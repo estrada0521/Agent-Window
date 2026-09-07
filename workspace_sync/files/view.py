@@ -31,7 +31,14 @@ from hub_backend.presentation.chat.script_assets import (
     KATEX_CDN_JS_SRC,
     MARKED_CDN_SRC,
 )
-from appearance.typography import TEXT_LINE_HEIGHT_RATIO, body_typography_css, text_line_height_px
+from appearance.typography import (
+    CODE_FONT,
+    MESSAGE_FONT,
+    TEXT_LINE_HEIGHT_RATIO,
+    apply_font_tokens,
+    body_typography_css,
+    text_line_height_px,
+)
 from .view_scripts import (
     build_gutter_scroll_sync_js,
     build_progressive_loader_js,
@@ -75,8 +82,6 @@ def render_file_view(
     embed: bool = False,
     base_path: str = "",
     preview_base_theme: str = "",
-    agent_font_family: str | None = None,
-    agent_code_font: str | None = None,
     agent_text_size: int | None = None,
     force_progressive_text: bool = False,
 ) -> str:
@@ -89,8 +94,6 @@ def render_file_view(
     prefix = (base_path or "").rstrip("/")
     raw_url = f"{prefix}/file-raw?path={url_quote(rel)}"
     size = os.path.getsize(full)
-    resolved_agent_font_family = str(agent_font_family).strip() if agent_font_family else ""
-    code_font_family = str(agent_code_font).strip() if agent_code_font else ""
     try:
         resolved_text_size = int(agent_text_size or 13)
     except (TypeError, ValueError):
@@ -125,16 +128,10 @@ def render_file_view(
         '});'
     )
     font_base = prefix or ""
-    message_font_family = resolved_agent_font_family.split(",", 1)[0].strip().strip('"')
-    code_font_family_name = code_font_family.split(",", 1)[0].strip().strip('"')
-    font_face_css = (
-        _FONT_FACES_CSS.replace("__CHAT_BASE_PATH__", font_base)
-        .replace("__MESSAGE_FONT_FAMILY__", message_font_family)
-        .replace("__CODE_FONT_FAMILY__", code_font_family_name)
-    )
+    font_face_css = apply_font_tokens(_FONT_FACES_CSS.replace("__CHAT_BASE_PATH__", font_base))
     preview_top_offset = "max(48px, calc(21px + env(safe-area-inset-top)))" if embed else "0px"
     base_css = (
-        f':root{{color-scheme: dark;--font-main:{resolved_agent_font_family};--font-code:{code_font_family};--text-size:{resolved_text_size}px;--text-line-height:{resolved_line_height}px;--body-weight:{"430" if is_light_theme else "300"};--tpad:{preview_top_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
+        f':root{{color-scheme: dark;--font-main:{MESSAGE_FONT};--font-code:{CODE_FONT};--text-size:{resolved_text_size}px;--text-line-height:{resolved_line_height}px;--body-weight:{"430" if is_light_theme else "300"};--tpad:{preview_top_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
         f"{font_face_css}"
         f"*{{box-sizing:border-box}}"
         f"html,body{{margin:0;background:{embed_bg};color:{pane_fg};font-family:sans-serif;display:flex;flex-direction:column;height:100vh;font-size:var(--text-size);line-height:var(--text-line-height);font-weight:var(--body-weight);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-synthesis:none}}"
