@@ -13,6 +13,9 @@
       align-items: flex-start;
       --message-vertical-rhythm: 0.31em;
       --message-hidden-meta-lift: 0.92em;
+      --message-copy-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
+      --message-copy-bottom: round(nearest, calc(var(--text-size, 13px) * 6 / 13), 1px);
+      --message-copy-radius: round(nearest, calc(var(--text-size, 13px) * 6 / 13), 1px);
       font-size: var(--text-size, 13px);
       gap: 12px;
       width: min(100%, var(--message-max-width));
@@ -456,10 +459,10 @@
     .message-row .message-hover-copy-zone {
       position: absolute;
       right: 0;
-      bottom: 6px;
+      bottom: var(--message-copy-bottom);
       z-index: 3;
-      width: 15px;
-      height: 15px;
+      width: var(--message-copy-size);
+      height: var(--message-copy-size);
       box-sizing: border-box;
       display: flex;
       align-items: flex-end;
@@ -469,9 +472,9 @@
 
     .message-row .message-hover-copy {
       align-self: flex-end;
-      width: 15px;
-      height: 15px;
-      border-radius: 6px;
+      width: var(--message-copy-size);
+      height: var(--message-copy-size);
+      border-radius: var(--message-copy-radius);
       color: var(--icon-muted);
       background: transparent;
       opacity: 0;
@@ -480,8 +483,8 @@
     }
 
     .message-row .message-hover-copy svg {
-      width: 15px;
-      height: 15px;
+      width: var(--message-copy-size);
+      height: var(--message-copy-size);
     }
 
     .message-row .message-hover-copy svg * {
