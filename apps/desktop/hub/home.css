@@ -148,7 +148,7 @@
       --desk-chrome-size: calc(var(--desk-chrome-icon-size) + round(nearest, calc(var(--text-size, 13px) * 6 / 13), 2px));
       --desk-chrome-radius: round(nearest, calc(var(--text-size, 13px) * 8 / 13), 1px);
       --desk-chrome-top: round(nearest, calc(var(--text-size, 13px) * 4 / 13), 1px);
-      --desk-chrome-edge: max(10px, 0.77em);
+      --desk-chrome-edge: round(nearest, calc(var(--text-size, 13px) * 10 / 13), 1px);
       --desk-chrome-gap: round(nearest, calc(var(--text-size, 13px) * 6 / 13), 1px);
       /* Sits just inside the window's visible corner (the glass radius in
          main.rs, = 2x the text size), pulled in by the scaled edge inset with
