@@ -319,8 +319,8 @@
       padding: 0;
       border: 0;
       border-radius: 50%;
-      background: var(--desk-window-fill);
-      box-shadow: inset 0 0 0 0.06em color-mix(in srgb, var(--desk-window-glyph) 38%, transparent);
+      background: transparent;
+      box-shadow: none;
       appearance: none;
       -webkit-appearance: none;
       cursor: default;
@@ -335,27 +335,39 @@
     }
     .desk-window-traffic-btn svg {
       display: block;
-      width: 1em;
-      height: 1em;
-      margin: auto;
-      opacity: 0;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
       color: var(--desk-window-glyph);
       pointer-events: none;
     }
-    .desk-window-traffic:hover .desk-window-traffic-btn svg {
+    .desk-window-traffic-btn circle {
+      fill: var(--desk-window-fill);
+      stroke: var(--desk-window-glyph);
+      stroke-width: 0.7;
+      stroke-opacity: 0.38;
+    }
+    .desk-window-traffic-btn path {
+      opacity: 0;
+    }
+    .desk-window-traffic:hover .desk-window-traffic-btn path {
       opacity: 1;
     }
     .desk-window-traffic-btn.is-close path,
     .desk-window-traffic-btn.is-minimize path {
       fill: none;
       stroke: currentColor;
-      stroke-width: 2.2;
+      stroke-width: 2;
       stroke-linecap: round;
     }
+    /* The green glyph's rounding lives in the path (Q corners); the hairline
+       stroke only smooths the diagonal edges. */
     .desk-window-traffic-btn.is-zoom path {
       fill: currentColor;
       stroke: currentColor;
-      stroke-width: 0.6;
+      stroke-width: 0.35;
       stroke-linejoin: round;
     }
     /* Fit Height replacement for the window controls: three crushed bars in
