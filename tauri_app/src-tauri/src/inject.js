@@ -29,7 +29,10 @@
     if (doc.documentElement.dataset.tauriDragListener !== "1") {
       doc.documentElement.dataset.tauriDragListener = "1";
       doc.addEventListener("mousedown", (event) => {
-        if (event.button !== 0 || event.clientY > 26) return;
+        const dragHeight = Number.parseFloat(
+          doc.defaultView?.getComputedStyle(doc.documentElement).getPropertyValue("--tauri-chrome-band-h") || "",
+        );
+        if (!Number.isFinite(dragHeight) || event.button !== 0 || event.clientY > dragHeight) return;
         const target = event.target;
         if (target?.closest?.("button, a, input, select, textarea, [role=button]")) return;
         doc.defaultView?.__TAURI__?.window?.getCurrentWindow?.().startDragging?.().catch(() => {});
