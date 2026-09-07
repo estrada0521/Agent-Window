@@ -1557,20 +1557,18 @@
       background: transparent;
     }
     .desk-session-title-text {
-      /* Centre the visible cap-to-baseline text against the icons, not the
-         line box -- the font's leading and descender room were biasing the
-         label upward, and a fixed nudge only lined it up at one text size.
-         Descenders spill past the trimmed box; overflow-clip-margin keeps
-         them from being sheared while the ellipsis still clips horizontally. */
+      /* Align on cap-to-baseline; padding+negative margin keeps the descender
+         inside the clip box without moving the aligned box. */
       text-box-trim: trim-both;
       text-box-edge: cap alphabetic;
       color: var(--fg);
       font-size: 1em;
       letter-spacing: 0.01em;
       white-space: nowrap;
-      overflow: clip;
-      overflow-clip-margin: 0.35em;
+      overflow: hidden;
       text-overflow: ellipsis;
+      padding-bottom: 0.25em;
+      margin-bottom: -0.25em;
       max-width: 16.92em;
       line-height: 1.2;
       pointer-events: none;
