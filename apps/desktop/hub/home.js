@@ -116,7 +116,7 @@
         _deskChatFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
       } catch (_) {}
       if (scalesWindow) {
-        invoke("scale_window_from_top_center", { scale: clamped / previous }).catch((err) => {
+        invoke("scale_window_from_top_center", { scale: clamped / previous, cornerRadius: clamped * 2 }).catch((err) => {
           showDeskHubMessage(`window zoom resize failed: ${err}`, { error: true });
         });
       }

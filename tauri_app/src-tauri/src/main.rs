@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::OnceLock;
 use std::thread;
 use std::time::{Duration, Instant};
@@ -26,6 +27,12 @@ const FIT_WINDOW_MIN_HEIGHT: f64 = 0.0;
 const COMPACT_WINDOW_WIDTH: f64 = 560.0;
 const MINI_WINDOW_WIDTH: f64 = 384.0;
 const MINI_WINDOW_HEIGHT: f64 = 600.0;
+
+// Visible window corner radius (the NSGlassEffectView's rounding). Kept equal
+// to the top glass band, which is 2x the desktop text size -- 26 at the
+// default 13. scale_window_from_top_center updates it on zoom; the focus and
+// theme re-apply paths read it back so a rebuilt glass keeps the zoomed radius.
+static GLASS_CORNER_RADIUS: AtomicU32 = AtomicU32::new(26);
 
 use window_vibrancy::{
     apply_liquid_glass, apply_vibrancy, clear_liquid_glass, clear_vibrancy, NSGlassEffectViewStyle,
@@ -894,7 +901,11 @@ fn resize_window_from_edge(
 }
 
 #[tauri::command]
-fn scale_window_from_top_center(window: tauri::WebviewWindow, scale: f64) -> Result<(), String> {
+fn scale_window_from_top_center(
+    window: tauri::WebviewWindow,
+    scale: f64,
+    corner_radius: f64,
+) -> Result<(), String> {
     if !scale.is_finite() || scale <= 0.0 {
         return Err("window scale must be a positive finite number".to_string());
     }
@@ -923,6 +934,11 @@ fn scale_window_from_top_center(window: tauri::WebviewWindow, scale: f64) -> Res
         frame.size.width += width_delta;
         frame.size.height += height_delta;
         ns_window.setFrame_display(frame, true);
+    }
+    // Match the visible corner to the (now scaled) top glass band.
+    if corner_radius.is_finite() && corner_radius > 0.0 {
+        GLASS_CORNER_RADIUS.store(corner_radius.round().clamp(4.0, 80.0) as u32, Ordering::Relaxed);
+        apply_app_vibrancy(&window);
     }
     Ok(())
 }
@@ -1203,18 +1219,19 @@ fn apply_app_vibrancy(window: &tauri::WebviewWindow) {
     // a little more each time it regains focus.
     let _ = clear_liquid_glass(window);
     let _ = clear_vibrancy(window);
+    let radius = GLASS_CORNER_RADIUS.load(Ordering::Relaxed) as f64;
     if let Err(err) = apply_liquid_glass(
         window,
         NSGlassEffectViewStyle::Clear,
         glass_tint(window),
-        Some(26.0),
+        Some(radius),
     ) {
         eprintln!("[app] liquid glass apply failed: {}", err);
         if let Err(err) = apply_vibrancy(
             window,
             NSVisualEffectMaterial::HudWindow,
             Some(NSVisualEffectState::Active),
-            Some(18.0),
+            Some(radius * 18.0 / 26.0),
         ) {
             eprintln!("[app] vibrancy apply failed: {}", err);
         }

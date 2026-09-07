@@ -150,9 +150,11 @@
       --desk-chrome-top: round(nearest, calc(var(--text-size, 13px) * 4 / 13), 1px);
       --desk-chrome-edge: max(10px, 0.77em);
       --desk-chrome-gap: round(nearest, calc(var(--text-size, 13px) * 6 / 13), 1px);
-      /* Preserve the tuned 23px radius at the 4px default inset, then move the
-         inner curve by the same amount as the scaled edge inset. */
-      --desk-inner-radius: calc(27px - var(--tauri-window-edge-inset));
+      /* Sits just inside the window's visible corner (the glass radius in
+         main.rs, = 2x the text size), pulled in by the scaled edge inset with
+         a 1px nudge so the gap reads even around the curve -- 23px at the 4px
+         default inset. */
+      --desk-inner-radius: calc(var(--text-size, 13px) * 2 + 1px - var(--tauri-window-edge-inset));
     }
     .page-header {
       --page-side-pad: 0.92em;
