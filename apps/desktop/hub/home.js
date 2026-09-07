@@ -2519,7 +2519,7 @@
             resetAgentsEnabled: archived && !rec.session.agents_reset,
             changeWorkspaceEnabled: archived && !selected,
             archiveEnabled: !archived,
-            deleteEnabled: archived && selected,
+            deleteEnabled: archived,
             reviveEnabled: archived,
           },
         }).catch((err) => {
