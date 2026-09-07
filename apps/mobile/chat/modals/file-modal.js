@@ -152,7 +152,7 @@
           style.id = "agent-index-base-theme-style";
           frameDoc.head?.appendChild(style);
         }
-        style.textContent = `:root{--body-weight:${isLight ? "430" : "300"}}html,body{color-scheme:${scheme};background:${bg};color:${fg}}.view-container,.html-preview-shell,.wrap{background:${bg}}.fn{color:${fg}}.code-gutter-table .ln,.html-preview-gutter-table .ln{color:${lnFg}}.code-table,.html-preview-text-table,pre{color:${fg}}`;
+        style.textContent = `:root{--body-weight:${isLight ? "430" : "300"};--preview-gutter-bg:rgba(${fgRgb},0.06);--preview-gutter-divider:rgba(${fgRgb},0.16)}html,body{color-scheme:${scheme};background:${bg};color:${fg}}.view-container,.html-preview-shell,.wrap{background:${bg}}.fn{color:${fg}}.code-gutter-table .ln,.html-preview-gutter-table .ln{color:${lnFg}}.code-table,.html-preview-text-table,pre{color:${fg}}`;
         return true;
       } catch (_) { }
       return false;
