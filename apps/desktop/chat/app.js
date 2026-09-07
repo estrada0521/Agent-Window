@@ -166,10 +166,6 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     let _closeRefitTimer = 0;
     // Breathing room above the composer field when the window is sized to it.
     const COMPOSER_FIT_SLACK = 20;
-    // The composer textarea stops growing at this height (composer-input.css
-    // max-height). When the composer opens we size the window for this maximum
-    // once, so typing never has to resize the window afterwards.
-    const COMPOSER_MAX_FIELD = 200;
     const reportFitHeight = ({ fromComposer = false } = {}) => {
       if (!isHubIframeChat() || document.documentElement.dataset.autoWindowHeight !== "1") return;
       const scroller = timeline || document.getElementById("messages");
@@ -201,8 +197,9 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       if (isComposerOverlayOpen()) {
         const box = document.getElementById("composer");
         if (box) {
-          const FIELD_BASE = 52;
-          contentHeight = Math.ceil(box.offsetHeight + (COMPOSER_MAX_FIELD - FIELD_BASE)) + COMPOSER_FIT_SLACK;
+          const inputStyle = getComputedStyle(messageInput);
+          const fieldOverflow = parseFloat(inputStyle.maxHeight) - parseFloat(inputStyle.minHeight);
+          contentHeight = Math.ceil(box.offsetHeight + fieldOverflow) + COMPOSER_FIT_SLACK;
         }
       }
       contentHeight += messageStepTopGap();

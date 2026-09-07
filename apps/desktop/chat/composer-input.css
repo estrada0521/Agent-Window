@@ -1,9 +1,17 @@
+    .composer {
+      --composer-input-font-size: 15px;
+      --composer-input-line-height: 1.6;
+      --composer-input-padding: 14px;
+      --composer-field-base-height: calc(var(--composer-input-font-size) * var(--composer-input-line-height) + 2 * var(--composer-input-padding));
+      --composer-field-max-height: 200px;
+      --composer-send-inset: 8px;
+    }
     .composer-shell {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       grid-area: input;
       min-width: 0;
-      min-height: 52px;
+      min-height: var(--composer-field-base-height);
       align-self: stretch;
       position: relative;
       overflow: visible;
@@ -33,8 +41,7 @@
     }
     .composer-field {
       position: relative;
-      border-radius: 26px;
-      min-height: 52px;
+      border-radius: calc(var(--composer-field-base-height) / 2);
       background: rgba(var(--bg-rgb), 0.8);
       border: 0.5px solid rgba(0, 0, 0, 0.45);
       box-shadow:
@@ -50,11 +57,11 @@
     }
     .send-btn {
       position: absolute;
-      right: 8px;
-      bottom: 8px;
-      width: 36px;
-      height: 36px;
-      border-radius: 26px;
+      right: var(--composer-send-inset);
+      bottom: var(--composer-send-inset);
+      width: calc(var(--composer-field-base-height) - 2 * var(--composer-send-inset));
+      aspect-ratio: 1;
+      border-radius: 50%;
       border: none;
       background: var(--fg);
       color: var(--surface);
@@ -128,8 +135,8 @@
        the same faint depth cue as the composer field / popups. */
     .attach-card-thumb,
     .attach-card-ext {
-      width: 80px;
-      height: 80px;
+      width: 100%;
+      aspect-ratio: 1;
       border-radius: 26px;
       border: 0.5px solid rgba(0, 0, 0, 0.45);
       box-shadow:
@@ -160,15 +167,14 @@
       border: none;
       background: transparent;
       color: var(--fg);
-      border-radius: 14px;
-      min-height: 52px;
-      height: 52px;
-      max-height: 200px;
+      min-height: var(--composer-field-base-height);
+      height: var(--composer-field-base-height);
+      max-height: var(--composer-field-max-height);
       resize: none;
-      padding: 14px;
+      padding: var(--composer-input-padding);
       font-family: var(--font-main);
-      font-size: 15px;
-      line-height: 1.6;
+      font-size: var(--composer-input-font-size);
+      line-height: var(--composer-input-line-height);
       font-weight: var(--body-weight);
       box-shadow: none;
       backdrop-filter: none;
@@ -177,7 +183,7 @@
       box-sizing: border-box;
     }
     .composer-field:has(.send-btn.visible) textarea {
-      padding-right: 52px;
+      padding-right: var(--composer-field-base-height);
     }
     .composer textarea:focus {
       outline: none;

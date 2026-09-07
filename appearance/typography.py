@@ -105,14 +105,14 @@ def chat_font_style(*, text_size: object = DESKTOP_TEXT_SIZE) -> str:
       --font-main: {MESSAGE_FONT};
       --font-code: {CODE_FONT};
     }}
-    .composer {{
+    html[data-mobile="1"] .composer {{
       width: min(var(--composer-overlay-max-width, var(--message-max-width)), calc(100vw - 24px));
       max-width: var(--composer-overlay-max-width, var(--message-max-width));
     }}
-    .composer-main-shell {{
+    html[data-mobile="1"] .composer-main-shell {{
       max-width: var(--composer-overlay-max-width, var(--message-max-width));
     }}
-    .statusline {{
+    html[data-mobile="1"] .statusline {{
       width: min(var(--composer-overlay-max-width, var(--message-max-width)), calc(100vw - 16px));
     }}
     .message.user .md-body {{

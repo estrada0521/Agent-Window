@@ -38,13 +38,6 @@ __CHAT_INCLUDE:styles/transcript.css__
       color: var(--fg);
     }
 __CHAT_INCLUDE:../../shared/chat/markdown-inline-code.css__
-    .send-btn {
-      background: var(--fg);
-      color: var(--surface);
-    }
-    #fileDropdown {
-      background: transparent;
-    }
 __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
     .composer-attach-btn:active {
       background: transparent;

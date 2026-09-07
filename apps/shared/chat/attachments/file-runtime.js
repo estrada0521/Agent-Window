@@ -148,8 +148,9 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       if (item) { e.preventDefault(); selectFile(item.dataset.path); }
     });
     const autoResizeTextarea = () => {
-      const baseHeight = isMobileComposer ? 54 : 52;
-      const maxHeight = 200;
+      const inputStyle = getComputedStyle(messageInput);
+      const baseHeight = parseFloat(inputStyle.minHeight);
+      const maxHeight = parseFloat(inputStyle.maxHeight);
       messageInput.style.height = "auto";
       const nextHeight = Math.min(maxHeight, Math.max(baseHeight, messageInput.scrollHeight));
       messageInput.style.height = nextHeight + "px";
