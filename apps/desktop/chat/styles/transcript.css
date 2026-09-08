@@ -480,7 +480,6 @@
       background: transparent;
       opacity: 0;
       pointer-events: auto;
-      transition: opacity 120ms ease, color 120ms ease;
     }
 
     .message-row .message-hover-copy svg {
