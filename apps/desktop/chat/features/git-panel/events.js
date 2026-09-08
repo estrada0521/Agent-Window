@@ -44,8 +44,7 @@
 
     (function initPinnedSummaryExpand() {
       const aside = document.getElementById("gitPinnedSummaryAside");
-      const inner = document.getElementById("gitPinnedSummaryInner");
-      if (!aside || !inner) return;
+      if (!aside) return;
 
       const expand = document.createElement("div");
       expand.className = "git-pinned-expand";
@@ -62,118 +61,119 @@
       };
       expand.addEventListener("scroll", updateExpandFade, { passive: true });
 
-      let openTimer = null;
       let closeTimer = null;
       let fetchSeq = 0;
+      let refreshPromise = null;
+      let expandAnimation = null;
 
       function cancelTimers() {
-        clearTimeout(openTimer); openTimer = null;
         clearTimeout(closeTimer); closeTimer = null;
       }
 
-      function animatePopoverIn(popover, stableElement) {
-        if (!popover || typeof popover.animate !== "function") return;
-        if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+      function cancelExpandAnimation() {
+        expandAnimation?.cancel();
+        expandAnimation = null;
+      }
 
-        const frames = [];
-        const stableFrames = [];
-        const steps = 48;
-        const frequency = Math.PI * 2.55;
-        const damping = 3.8;
-        for (let i = 0; i <= steps; i += 1) {
-          const progress = i / steps;
-          const decay = Math.exp(-damping * progress);
-          const wave = Math.sin((frequency * progress) - (Math.PI / 2));
-          let scaleX = 1;
-          let scaleY = 1 + (0.24 * decay * wave);
-          if (i === steps) {
-            scaleX = 1;
-            scaleY = 1;
-          }
-          frames.push({
-            transform: `scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)})`,
-          });
-          if (stableElement) {
-            stableFrames.push({
-              transform: `scale(1, ${ (1/scaleY).toFixed(4) })`
-            });
-          }
-        }
-        const animation = popover.animate(frames, {
-          duration: 360,
-          easing: "linear",
+      function animateExpandFrom(startHeight) {
+        const targetHeight = expand.getBoundingClientRect().height;
+        updateExpandFade();
+        if (typeof expand.animate !== "function") return;
+        if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+        if (Math.abs(targetHeight - startHeight) < 0.5) return;
+        const animation = expand.animate([
+          { height: `${startHeight}px` },
+          { height: `${targetHeight}px` },
+        ], {
+          duration: 120,
+          easing: "cubic-bezier(0.16, 1, 0.3, 1)",
           fill: "both",
         });
-        if (stableElement && stableFrames.length) {
-          stableElement.animate(stableFrames, {
-            duration: 360,
-            easing: "linear",
-            fill: "both",
-          });
-        }
+        expandAnimation = animation;
         animation.addEventListener("finish", () => {
-          popover.style.transform = "";
-          if (stableElement) stableElement.style.transform = "";
+          if (expandAnimation !== animation) return;
+          animation.cancel();
+          expandAnimation = null;
         }, { once: true });
       }
 
-      function close() {
+      function replaceExpandContent(html) {
+        const shouldAnimate = aside.classList.contains("is-expanded");
+        const startHeight = shouldAnimate ? expand.getBoundingClientRect().height : 0;
+        cancelExpandAnimation();
+        expand.innerHTML = html;
+        if (shouldAnimate) animateExpandFrom(startHeight);
+      }
+
+      function close({ clear = false } = {}) {
         cancelTimers();
+        cancelExpandAnimation();
         aside.classList.remove("is-expanded");
-        fetchSeq++;
-        expand.innerHTML = "";
         expand.dataset.scrollFade = "none";
+        if (!clear) return;
+        fetchSeq++;
+        refreshPromise = null;
+        expand.innerHTML = "";
       }
 
-      async function refreshContent() {
+      function refreshContent() {
+        if (refreshPromise) return refreshPromise;
         if (!dpGitHeaderSummaryState?.clickable) {
-          close();
-          return;
+          close({ clear: true });
+          return Promise.resolve();
         }
-        const seq = ++fetchSeq;
-        expand.innerHTML = `<div class="git-pinned-expand-loading"><span></span><span></span><span></span></div>`;
+        const seq = fetchSeq;
 
-        try {
-          const { sections } = await fetchGitWorktreeFileSections();
-          if (seq !== fetchSeq) return;
+        const promise = (async () => {
+          try {
+            const { sections } = await fetchGitWorktreeFileSections();
+            if (seq !== fetchSeq) return;
 
-          if (!sections.length) {
-            close();
-            return;
+            if (!sections.length) {
+              close({ clear: true });
+              return;
+            }
+
+            replaceExpandContent(sections.map(s =>
+              `<div class="git-pinned-expand-section">` +
+              gitCommitFileListHtml(s.files) +
+              `</div>`
+            ).join(""));
+          } catch (_) {
+            if (seq !== fetchSeq) return;
+            replaceExpandContent(`<div class="git-pinned-expand-empty">Failed to load</div>`);
           }
-
-          expand.innerHTML = sections.map(s =>
-            `<div class="git-pinned-expand-section">` +
-            gitCommitFileListHtml(s.files) +
-            `</div>`
-          ).join("");
-        } catch (_) {
-          if (seq !== fetchSeq) return;
-          expand.innerHTML = `<div class="git-pinned-expand-empty">Failed to load</div>`;
-        }
-        requestAnimationFrame(updateExpandFade);
+          requestAnimationFrame(updateExpandFade);
+        })();
+        refreshPromise = promise;
+        void promise.finally(() => {
+          if (refreshPromise === promise) refreshPromise = null;
+        });
+        return promise;
       }
 
-      async function open() {
+      function open() {
         cancelTimers();
         if (aside.hidden) return;
         if (!dpGitHeaderSummaryState?.clickable) {
-          close();
+          close({ clear: true });
           return;
         }
         aside.classList.add("is-expanded");
-        animatePopoverIn(aside, inner);
-        await refreshContent();
+        if (expand.firstElementChild) {
+          cancelExpandAnimation();
+          animateExpandFrom(0);
+        }
+        void refreshContent();
       }
 
       // The summary row's own counts already refresh whenever a workspace
       // sync event reports the git state changed (dpApplyGitOverviewHeader),
-      // but this popover only ever fetched once, when the mouse first opened
-      // it -- a commit landing while it's still open left it showing files
-      // that no longer differ. Re-run the fetch in place (no re-triggered
-      // pop-in animation) on that same event, if it's open.
+      // Keep the content ready while the pin is visible so hover can begin
+      // expanding immediately. The same event refreshes an open popover in
+      // place when the worktree changes.
       dpPinnedExpandRefresh = () => {
-        if (aside.classList.contains("is-expanded")) void refreshContent();
+        if (!aside.hidden) void refreshContent();
       };
 
       expand.addEventListener("click", (event) => {
@@ -194,6 +194,6 @@
         if (path) void dpOpenFileContextMenu(path, event);
       });
 
-      aside.addEventListener("mouseenter", () => { cancelTimers(); openTimer = setTimeout(open, 60); });
+      aside.addEventListener("mouseenter", open);
       aside.addEventListener("mouseleave", () => { cancelTimers(); closeTimer = setTimeout(close, 60); });
     })();
