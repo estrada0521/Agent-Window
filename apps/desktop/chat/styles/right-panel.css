@@ -867,13 +867,18 @@
       background: var(--panel-row-bg);
     }
     .git-summary-counts {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.92em;
-      flex-shrink: 0;
+      display: block;
+      flex-shrink: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       font-variant-numeric: tabular-nums;
       font-size: 0.85em;
       font-family: var(--font-main);
+    }
+    .git-summary-count + .git-summary-count {
+      margin-left: 0.92em;
     }
     .git-summary-counts.clean {
       color: var(--muted);
