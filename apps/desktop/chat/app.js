@@ -176,14 +176,21 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
         ? _fitTargetRow
         : null;
       if (_fitTargetRow && !fitTarget) _fitTargetRow = null;
-      // Normally use the last row plus its running/thinking indicator. While
-      // stepping, measure only the selected message.
       const lastRow = rows[rows.length - 1];
-      const targetRow = fitTarget || lastRow;
-      const thinkEl = fitTarget ? null : scroller.querySelector(":scope > .message-thinking-container");
-      const topPx = targetRow.getBoundingClientRect().top;
-      const bottomPx = (thinkEl || targetRow).getBoundingClientRect().bottom;
-      let contentHeight = Math.ceil(bottomPx - topPx);
+      let contentHeight;
+      if (fitTarget) {
+        // A stepped-to message: just its own box.
+        const r = fitTarget.getBoundingClientRect();
+        contentHeight = Math.ceil(r.bottom - r.top);
+      } else {
+        // Latest: from the last row's top to the end of the scrollable content
+        // -- running indicator, its margins, trailing spacers and all. Measured
+        // off scrollHeight (what scrollConversationToBottom targets) so the room
+        // above is the same whether or not a running indicator sits below.
+        const lastTopWithin = lastRow.getBoundingClientRect().top
+          - scroller.getBoundingClientRect().top + scroller.scrollTop;
+        contentHeight = Math.ceil(scroller.scrollHeight - lastTopWithin);
+      }
       // While the composer overlay is open, always size the window for a
       // fully-grown composer (field at its max-height) -- even if the window is
       // currently taller. The input then always lands at the same place, and
@@ -219,24 +226,30 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       }
     };
     const fitMessageRows = () => [...timeline.querySelectorAll(":scope > article.message-row")];
-    const fitStepToMessage = (down) => {
-      const rows = fitMessageRows();
-      if (!rows.length) return;
-      const current = rows.includes(_fitTargetRow) ? _fitTargetRow : rows[rows.length - 1];
-      const index = rows.indexOf(current);
-      const next = rows[down ? Math.min(rows.length - 1, index + 1) : Math.max(0, index - 1)];
-      if (next === current) return;
-      _fitTargetRow = next;
-      _pollScrollLockTop = null;
-      _pollScrollAnchor = null;
-      _stickyToBottom = false;
-      reportFitHeight();
-    };
     const fitStepToLatest = () => {
       _fitTargetRow = null;
       _pollScrollLockTop = null;
       _pollScrollAnchor = null;
       _stickyToBottom = true;
+      reportFitHeight();
+    };
+    const fitStepToMessage = (down) => {
+      const rows = fitMessageRows();
+      if (!rows.length) return;
+      const current = rows.includes(_fitTargetRow) ? _fitTargetRow : rows[rows.length - 1];
+      const index = rows.indexOf(current);
+      if (down) {
+        // The last message and "latest" are one stop via one path -- stepping
+        // down to the bottom is identical to jumping to it, nothing to sync.
+        if (index >= rows.length - 2) { fitStepToLatest(); return; }
+        _fitTargetRow = rows[index + 1];
+      } else {
+        if (index <= 0) return;
+        _fitTargetRow = rows[index - 1];
+      }
+      _pollScrollLockTop = null;
+      _pollScrollAnchor = null;
+      _stickyToBottom = false;
       reportFitHeight();
     };
     const scheduleFitHeight = () => {
@@ -251,6 +264,16 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       clearTimeout(_closeRefitTimer);
     };
     document.addEventListener("chat-transcript-settled", scheduleFitHeight);
+    // The running indicator changes height between tools/phases -- re-fit so the
+    // window tracks it instead of clipping it or drifting the message above.
+    let _thinkingRefitFrame = 0;
+    document.addEventListener("chat-thinking-updated", () => {
+      if (document.documentElement.dataset.autoWindowHeight !== "1" || _thinkingRefitFrame) return;
+      _thinkingRefitFrame = requestAnimationFrame(() => {
+        _thinkingRefitFrame = 0;
+        reportFitHeight();
+      });
+    });
     // Composer open: size the window once for a fully-grown composer. Typing
     // grows the field inside that already-large-enough window -- no per-keystroke
     // resize. Close: re-fit to the transcript.
@@ -261,6 +284,10 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     document.addEventListener("composer-overlay-close-start", () => {
       clearTimeout(_closeRefitTimer);
       if (document.documentElement.dataset.sendInFlight === "1") {
+        // A send snaps back to the latest message, not whatever old row the
+        // transcript was scrolled to while composing.
+        _fitTargetRow = null;
+        _stickyToBottom = true;
         // Closing on send fires this before the just-sent message has
         // actually rendered (that happens after the /send round trip
         // resolves), so an immediate refit here would measure the *previous*

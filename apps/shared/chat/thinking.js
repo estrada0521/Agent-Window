@@ -276,7 +276,10 @@
       const existingContainer = root.querySelector(".message-thinking-container");
 
       if (!root.querySelector("article.message-row") || !hasRuntimeRunning) {
-        if (existingContainer) existingContainer.remove();
+        if (existingContainer) {
+          existingContainer.remove();
+          document.dispatchEvent(new CustomEvent("chat-thinking-updated"));
+        }
         root.dataset.thinkingSig = "";
         removeThinkingFloatingIcons();
         maybeRestorePollScrollLock();
@@ -355,6 +358,9 @@
         root.appendChild(container);
       }
       root.dataset.thinkingSig = nextThinkingSig;
+      // The container's height just changed; let Fit Height re-measure so the
+      // window grows with it instead of clipping the indicator.
+      document.dispatchEvent(new CustomEvent("chat-thinking-updated"));
       scheduleThinkingFloatingIcons();
       maybeRestorePollScrollLock();
     };
