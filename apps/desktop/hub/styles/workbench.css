@@ -226,9 +226,11 @@
       stroke: none;
     }
     /* Always on Top badge: a small dot on the settings button while pinned.
-       Scoped by id -- Reload Hub shares .desk-settings-icon-btn. Not in Fit
-       Height, where the window is pinned as part of the mode. */
-    html[data-always-on-top="1"]:not([data-auto-window-height="1"]) #deskSettingsBtn {
+       Scoped by id -- Reload Hub shares .desk-settings-icon-btn. Fit Height
+       auto-pins on entry but can be unpinned from there, so it earns a dot
+       too -- smaller, sitting just right of the compressed icon bar, and on
+       ::before since ::after is that bar in this mode. */
+    html[data-always-on-top="1"] #deskSettingsBtn {
       position: relative;
     }
     html[data-always-on-top="1"]:not([data-auto-window-height="1"]) #deskSettingsBtn::after {
@@ -238,6 +240,21 @@
       right: 0.23em;
       width: 0.38em;
       height: 0.38em;
+      border-radius: 50%;
+      background: var(--fg);
+      pointer-events: none;
+    }
+    html[data-always-on-top="1"][data-auto-window-height="1"] #deskSettingsBtn {
+      overflow: visible;
+    }
+    html[data-always-on-top="1"][data-auto-window-height="1"] #deskSettingsBtn::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -0.05em;
+      width: 0.24em;
+      height: 0.24em;
+      transform: translateY(-50%);
       border-radius: 50%;
       background: var(--fg);
       pointer-events: none;
