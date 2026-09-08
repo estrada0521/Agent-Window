@@ -1,0 +1,352 @@
+    body {
+      padding: 0;
+    }
+    html[data-tauri-app="1"] {
+      /* Height of the top chrome band (traffic lights / action buttons). */
+      --tauri-window-inset-top: calc(var(--text-size, 13px) + var(--text-size, 13px));
+      --tauri-window-edge-inset: calc(var(--text-size, 13px) * 4 / 13);
+      /* Space reserved above the content, and the height of the top chrome
+         band. Equal by default. In Fit Height both shrink to a thin strip:
+         wide enough to stay an anchor / hold compressed buttons, far short of
+         the 26px title-bar band. */
+      --tauri-window-pad-top: var(--tauri-window-inset-top);
+      --tauri-chrome-band-h: var(--tauri-window-inset-top);
+    }
+    html[data-tauri-app="1"][data-auto-window-height="1"] {
+      --tauri-window-pad-top: calc(var(--text-size, 13px) * 8 / 13);
+      --tauri-chrome-band-h: var(--tauri-window-pad-top);
+      --desk-chrome-hover-a: 0.7;
+      /* Push the edge buttons past the window's corner curve so the outermost
+         bar's end lands where the top edge goes straight. ~ the OS corner
+         radius; nudge if a bar still clips into the curve. */
+      --desk-chrome-edge: calc(var(--text-size, 13px) * 28 / 13);
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] {
+      --app-shell-height: calc(100dvh - var(--tauri-window-pad-top) - var(--tauri-window-edge-inset));
+    }
+    html[data-tauri-app="1"],
+    html[data-tauri-app="1"] body {
+      background: transparent;
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] body {
+      margin: 0;
+      padding: var(--tauri-window-pad-top) var(--tauri-window-edge-inset) var(--tauri-window-edge-inset);
+      box-sizing: border-box;
+      min-height: 100dvh;
+      overflow: hidden;
+    }
+    .shell {
+      width: 100%;
+      min-height: var(--app-shell-height, 100dvh);
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .shell,
+    html[data-tauri-app="1"][data-tauri-root-window="1"] body > .shell {
+      background: transparent;
+      border: none;
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: var(--app-shell-height);
+      max-height: var(--app-shell-height);
+      box-shadow: none;
+    }
+    body { padding: 0; }
+    __HUB_HEADER_CSS__
+    :root {
+      --desk-chrome-icon-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
+      /* Button = icon + an even gap, so the SVG always centres on a whole
+         pixel. Rounding the button size on its own gave an odd gap at some
+         zoom steps, and flex splitting that in half biased the glyph
+         down-right. */
+      --desk-chrome-size: calc(var(--desk-chrome-icon-size) + round(nearest, calc(var(--text-size, 13px) * 6 / 13), 2px));
+      --desk-chrome-radius: round(nearest, calc(var(--text-size, 13px) * 8 / 13), 1px);
+      --desk-chrome-top: round(nearest, calc(var(--text-size, 13px) * 4 / 13), 1px);
+      --desk-chrome-edge: round(nearest, calc(var(--text-size, 13px) * 10 / 13), 1px);
+      --desk-chrome-gap: round(nearest, calc(var(--text-size, 13px) * 6 / 13), 1px);
+      /* Sits just inside the window's visible corner (the glass radius in
+         main.rs, = 2x the text size), pulled in by the scaled edge inset with
+         a 1px nudge so the gap reads even around the curve -- 23px at the 4px
+         default inset. */
+      --desk-inner-radius: calc(var(--text-size, 13px) * 2 + 1px - var(--tauri-window-edge-inset));
+    }
+    .page-header {
+      --page-side-pad: 0.92em;
+      --chrome-icon-btn-size: round(nearest, calc(var(--text-size, 13px) * 24 / 13), 1px);
+      --chrome-icon-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
+      --chrome-icon-gap: 0.15em;
+      font-size: var(--text-size, 13px);
+    }
+    .page-menu-btn,
+    .desk-settings-icon-btn,
+    .desk-chat-menu-btn,
+    .desk-chat-reload-btn,
+    .desk-app-sidebar-toggle,
+    .desk-panel-ctrl-btn {
+      font-size: inherit;
+    }
+    html[data-tauri-app="1"] .shell > .page-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 0;
+      min-height: var(--tauri-chrome-band-h);
+      z-index: 1001;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+    .page-header .page-header-top {
+      min-height: 32px;
+      padding-top: 4px;
+      padding-bottom: 4px;
+      padding-left: 104px;
+    }
+    html[data-tauri-app="1"] .shell > .page-header > .page-header-top {
+      min-height: var(--tauri-chrome-band-h);
+    }
+    .page-title {
+      display: none;
+    }
+    .page-header .page-header-actions {
+      gap: 0;
+      margin-left: auto;
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .page-header .page-header-actions,
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .page-header-actions.page-header-actions-floating {
+      position: fixed;
+      top: env(safe-area-inset-top, 0px);
+      right: calc(var(--desk-chrome-edge) + env(safe-area-inset-right, 0px));
+      width: var(--chrome-icon-btn-size);
+      height: var(--tauri-chrome-band-h);
+      margin: 0;
+      padding: 0;
+      gap: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1306;
+      pointer-events: auto;
+      line-height: 0;
+    }
+    .page-header .page-header-actions .page-menu-btn {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: none;
+      color: var(--fg);
+      justify-content: flex-end;
+      padding-right: 0;
+    }
+    .page-header .page-header-actions .page-menu-btn svg {
+      transform: translateY(-2px);
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .page-header .page-header-actions .page-menu-btn,
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .page-header-actions.page-header-actions-floating .page-menu-btn {
+      width: var(--chrome-icon-btn-size);
+      height: var(--chrome-icon-btn-size);
+      margin: 0;
+      padding: 0;
+      opacity: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .page-header .page-header-actions .page-menu-btn svg,
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .page-header-actions.page-header-actions-floating .page-menu-btn svg {
+      width: var(--chrome-icon-size);
+      height: var(--chrome-icon-size);
+      margin: 0 auto;
+      transform: none;
+    }
+    /* Fit Height: no room for a real toolbar. Keep every top chrome button
+       where it is but compress its icon to a thin horizontal bar in the ~8px
+       anchor strip -- the window keeps a "top" without a 26px band. Telling
+       the bars apart doesn't matter; position is enough here. */
+    html[data-tauri-app="1"][data-auto-window-height="1"] .page-menu-btn,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-menu-btn,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-reload-btn,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-panel-ctrl-btn {
+      height: var(--tauri-chrome-band-h);
+      min-height: 0;
+      justify-content: center;
+      border-radius: 0;
+    }
+    /* The window is too short to fit the "session (port)" label without
+       clipping it in half, so drop it in Fit Height. */
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-session-title-text {
+      display: none;
+    }
+    html[data-tauri-app="1"][data-auto-window-height="1"] .page-menu-btn svg,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn svg,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-menu-btn svg,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-reload-btn svg,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle svg,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-panel-ctrl-btn svg {
+      display: none;
+    }
+    html[data-tauri-app="1"][data-auto-window-height="1"] .page-menu-btn::after,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn::after,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-menu-btn::after,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-reload-btn::after,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle::after,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-panel-ctrl-btn::after {
+      content: "";
+      display: block;
+      width: 1.08em;
+      /* ~ the rendered stroke of the icons this replaces (1.8 * 15/24). */
+      height: 0.15em;
+      border-radius: 0.23em;
+      background: var(--fg);
+    }
+    .desk-window-traffic { display: none; }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-window-traffic {
+      display: flex;
+      align-items: center;
+      gap: 0.69em;
+      font-size: var(--text-size, 13px);
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      height: var(--tauri-chrome-band-h);
+      z-index: 1300;
+      -webkit-app-region: no-drag;
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"][data-auto-window-height="1"] .desk-window-traffic {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .desk-window-traffic-btn {
+      --desk-window-fill: rgb(236, 103, 101);
+      --desk-window-glyph: rgb(119, 52, 50);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: inherit;
+      width: 1.08em;
+      height: 1.08em;
+      flex: 0 0 1.08em;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      box-shadow: none;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: default;
+    }
+    .desk-window-traffic-btn.is-minimize {
+      --desk-window-fill: rgb(242, 202, 68);
+      --desk-window-glyph: rgb(122, 101, 34);
+    }
+    .desk-window-traffic-btn.is-zoom {
+      --desk-window-fill: rgb(101, 196, 102);
+      --desk-window-glyph: rgb(51, 98, 51);
+    }
+    .desk-window-traffic-btn svg {
+      display: block;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      color: var(--desk-window-glyph);
+      overflow: visible;
+      pointer-events: none;
+    }
+    .desk-window-traffic-btn circle {
+      fill: var(--desk-window-fill);
+      stroke: var(--desk-window-glyph);
+      stroke-width: 0.7;
+      stroke-opacity: 0.38;
+    }
+    .desk-window-traffic-btn path {
+      opacity: 0;
+    }
+    .desk-window-traffic:hover .desk-window-traffic-btn path {
+      opacity: 1;
+    }
+    .desk-window-traffic-btn.is-close path,
+    .desk-window-traffic-btn.is-minimize path {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+    /* The green glyph's rounding lives in the path (Q corners); the hairline
+       stroke only smooths the diagonal edges. */
+    .desk-window-traffic-btn.is-zoom path {
+      fill: currentColor;
+      stroke: currentColor;
+      stroke-width: 0.35;
+      stroke-linejoin: round;
+    }
+    /* Fit Height replacement for the window controls: three crushed bars in
+       the real button colours, centred in the
+       strip. Consistent with the compressed buttons, and the colour gives
+       the window a "top". A touch thicker than the mono bars. These are live:
+       close / minimize / zoom. */
+    .fit-window-dots { display: none; }
+    html[data-tauri-app="1"][data-auto-window-height="1"] .fit-window-dots {
+      display: flex;
+      align-items: center;
+      gap: 0.69em;
+      font-size: var(--text-size, 13px);
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      height: var(--tauri-chrome-band-h);
+      z-index: 1300;
+      -webkit-app-region: no-drag;
+    }
+    .fit-window-dots i {
+      position: relative;
+      width: 1.08em;
+      height: 0.38em;
+      border-radius: 0.15em;
+      background: #ff5f57;
+      cursor: pointer;
+    }
+    /* Transparent hit-area so the compressed bars remain easy to click. */
+    .fit-window-dots i::before {
+      content: "";
+      position: absolute;
+      inset: -0.46em -0.31em;
+    }
+    .fit-window-dots i:nth-child(2) { background: #febc2e; }
+    .fit-window-dots i:nth-child(3) { background: #28c840; }
+    html[data-tauri-app="1"] .page-header-actions.page-header-actions-floating #pageNativeMenuBridge {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: auto;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      opacity: 0.001;
+      z-index: 2;
+      pointer-events: auto;
+      -webkit-app-region: no-drag;
+      border: 0;
+      outline: none;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .page-header .page-header-actions .page-menu-btn:active {
+      background: transparent;
+      transform: none;
+    }

@@ -1,0 +1,105 @@
+    .desk-main {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      height: 100%;
+      width: 100%;
+      background: var(--chat-pane-bg);
+      backdrop-filter: var(--chat-pane-filter);
+      -webkit-backdrop-filter: var(--chat-pane-filter);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 0;
+      overflow: hidden;
+      isolation: isolate;
+      border: none;
+      border-radius: var(--desk-inner-radius);
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
+      transition: none;
+    }
+    .desk-main::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0);
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        opacity 220ms ease,
+        background 220ms ease,
+        backdrop-filter 220ms ease,
+        -webkit-backdrop-filter 220ms ease;
+      z-index: 0;
+    }
+    .desk-main > * {
+      position: relative;
+      z-index: 1;
+    }
+    .desk-chat-shell {
+      position: relative;
+      width: 100%;
+      min-width: 0;
+      height: 100%;
+      margin: 0;
+      background: transparent;
+      overflow: hidden;
+    }
+    .desk-chat-shell.loading .desk-chat-frame {
+      visibility: hidden;
+    }
+    .desk-reload-shell {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      background: var(--chat-pane-bg);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .desk-reload-shell.visible {
+      display: flex;
+    }
+    .desk-reload-shell-card {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 0;
+      background: transparent;
+      border: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
+    }
+    .desk-reload-shell-card.is-error {
+      width: auto;
+      height: auto;
+      color: var(--error);
+      font-size: 13px;
+    }
+    .desk-reload-shell-spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 2px solid var(--spinner-ring-color);
+      border-top-color: var(--icon-fg);
+      animation: desk-inline-loading-spin 800ms linear infinite;
+      box-sizing: border-box;
+    }
+    @keyframes desk-inline-loading-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    .desk-chat-frame {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+    }

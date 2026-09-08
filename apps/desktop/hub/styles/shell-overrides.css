@@ -1,0 +1,104 @@
+    @media (max-width: 480px) {
+      html:not([data-tauri-app="1"]) .desk-workbench,
+      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open {
+        display: block;
+      }
+      html:not([data-tauri-app="1"]) .desk-sidebar {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 100vw;
+        max-width: 100vw;
+        transform: translateX(calc(-100% - 14px));
+        background: var(--bg);
+        box-shadow: none;
+        border-right: none;
+      }
+      html:not([data-tauri-app="1"]) .desk-sidebar-shell {
+        width: 100%;
+        background: var(--bg);
+        box-shadow: none;
+        border: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+      }
+      html:not([data-tauri-app="1"]) .desk-sidebar-shell::before {
+        display: none;
+      }
+      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open .desk-sidebar {
+        width: 100vw;
+        transform: translateX(0);
+      }
+      html:not([data-tauri-app="1"]) .desk-main {
+        transition: none;
+      }
+      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open .desk-main {
+        display: none;
+        pointer-events: none;
+      }
+      html:not([data-tauri-app="1"]) .desk-swipe-action-rail {
+        display: flex;
+      }
+      html:not([data-tauri-app="1"]) .desk-session-row {
+        padding: 15px 16px 14px;
+      }
+      html:not([data-tauri-app="1"]) .desk-section-label {
+        padding: 12px 16px 10px;
+        font-size: calc(var(--text-size, 13px) - 2px);
+      }
+      html:not([data-tauri-app="1"]) .desk-row-name {
+        font-size: 18px;
+        line-height: 1.18;
+        font-weight: inherit;
+      }
+      html:not([data-tauri-app="1"]) .desk-row-preview {
+        font-size: 14px;
+        line-height: 1.32;
+      }
+      html:not([data-tauri-app="1"]) .desk-sidebar-resizer {
+        display: none;
+      }
+    }
+    body {
+      padding-bottom: 0;
+      overflow: hidden;
+    }
+    .shell {
+      height: var(--app-shell-height, 100dvh);
+    }
+    html,
+    body,
+    .shell {
+      background: transparent;
+    }
+    .desk-session-title-text {
+      /* Align on cap-to-baseline; padding+negative margin keeps the descender
+         inside the clip box without moving the aligned box. */
+      text-box-trim: trim-both;
+      text-box-edge: cap alphabetic;
+      color: var(--fg);
+      font-size: 1em;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-bottom: 0.25em;
+      margin-bottom: -0.25em;
+      max-width: 16.92em;
+      line-height: 1.2;
+      pointer-events: none;
+      -webkit-app-region: no-drag;
+      padding-left: 0.31em;
+    }
+    .desk-session-title-text:empty { display: none; }
+    .desk-floating-controls.is-port-hidden .desk-session-title-port {
+      display: none;
+    }
+    .desk-floating-controls.is-title-hidden .desk-session-title-text {
+      display: none;
+    }
+    .desk-floating-controls.is-buttons-hidden,
+    .desk-top-right-controls.is-buttons-hidden,
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-top-right-controls.is-buttons-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }

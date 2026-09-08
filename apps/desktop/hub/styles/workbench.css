@@ -1,0 +1,460 @@
+    .desk-workbench {
+      --desk-sidebar-gap: 0px;
+      --desk-phone-gap: 48px;
+      --desk-phone-sidebar-width: min(var(--desk-sidebar-width), calc(100vw - var(--desk-phone-gap)));
+      display: grid;
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      background: var(--bg);
+      border-radius: var(--desk-inner-radius);
+      overflow: hidden;
+      isolation: isolate;
+      grid-template-columns: 0 minmax(0, 1fr);
+      column-gap: var(--desk-sidebar-gap);
+      align-items: stretch;
+      transition: grid-template-columns 220ms cubic-bezier(0.22, 1, 0.36, 1), column-gap 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    html[data-tauri-app="1"] .desk-workbench,
+    html[data-tauri-app="1"] .desk-chat-frame {
+      background: transparent;
+    }
+    .desk-workbench,
+    .desk-sidebar,
+    .desk-main,
+    .desk-sidebar-shell {
+      transition: none;
+    }
+    .desk-workbench-outline {
+      display: none;
+    }
+    .desk-workbench.sidebar-open {
+      --desk-sidebar-gap: 0px;
+      grid-template-columns: var(--desk-sidebar-width) minmax(0, 1fr);
+    }
+    .desk-sidebar {
+      position: relative;
+      width: var(--desk-sidebar-width);
+      max-width: none;
+      min-width: 0;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transform: none;
+      transition: none;
+      background: transparent;
+      box-shadow: none;
+      z-index: 6;
+      border-radius: var(--desk-inner-radius) 0 0 var(--desk-inner-radius);
+      isolation: isolate;
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
+    }
+    .desk-workbench.sidebar-open .desk-sidebar {
+      width: var(--desk-sidebar-width);
+      opacity: 1;
+      pointer-events: auto;
+      transform: none;
+    }
+    .desk-workbench-resizing,
+    .desk-workbench-resizing * {
+      cursor: col-resize;
+      user-select: none;
+    }
+    .desk-workbench-resizing .desk-workbench,
+    .desk-workbench-resizing .desk-sidebar {
+      transition: none;
+    }
+    .desk-sidebar-resizer {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: calc(var(--desk-sidebar-width) + var(--desk-sidebar-gap) - 6px);
+      width: 14px;
+      z-index: 10;
+      cursor: col-resize;
+      opacity: 0;
+      touch-action: none;
+    }
+    .desk-sidebar-resizer::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 2px;
+      transform: translateX(-50%);
+      background: var(--icon-muted);
+      opacity: 0;
+      transition: opacity 120ms ease, background 120ms ease, box-shadow 120ms ease;
+    }
+    .has-hover .desk-sidebar-resizer:hover::before {
+      opacity: 1;
+      background: var(--icon-hover);
+    }
+    .desk-workbench-resizing .desk-sidebar-resizer::before {
+      opacity: 1;
+      background: rgba(208, 208, 212, 0.94);
+      box-shadow: none;
+    }
+    .desk-sidebar-shell {
+      height: 100%;
+      width: 100%;
+      max-width: 100%;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr);
+      min-width: 0;
+      overflow: hidden;
+      padding-top: 0;
+      position: relative;
+      border: none;
+      background: var(--hub-glass);
+      backdrop-filter: var(--glass-filter-20);
+      -webkit-backdrop-filter: var(--glass-filter-20);
+      border-radius: var(--desk-inner-radius) 0 0 var(--desk-inner-radius);
+      box-shadow: none;
+      transition: none;
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
+      color: var(--fg);
+    }
+    .desk-sidebar-shell::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 1px;
+      background: var(--line);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .desk-sidebar-shell * {
+      color: inherit;
+    }
+    .desk-workbench.sidebar-open .desk-main {
+      display: flex;
+      pointer-events: auto;
+      border-radius: 0 var(--desk-inner-radius) var(--desk-inner-radius) 0;
+    }
+    .desk-sidebar-shell > * {
+      position: relative;
+      z-index: 1;
+    }
+    .desk-floating-controls {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: var(--desk-chrome-gap);
+      font-size: var(--text-size, 13px);
+      position: fixed;
+      left: calc(var(--desk-chrome-edge) + env(safe-area-inset-left, 0px));
+      top: var(--desk-chrome-top);
+      right: auto;
+      bottom: auto;
+      z-index: 25;
+      box-sizing: border-box;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
+    }
+    html[data-tauri-app="1"] [data-tauri-drag-region] {
+      app-region: drag;
+      -webkit-app-region: drag;
+    }
+    html[data-tauri-app="1"] .tauri-top-drag-strip {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      font-size: var(--text-size, 13px);
+      height: var(--tauri-chrome-band-h);
+      z-index: 1205;
+      background: transparent;
+      pointer-events: auto;
+    }
+    .desk-floating-controls .desk-settings-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--desk-chrome-size);
+      height: var(--desk-chrome-size);
+      padding: 0;
+      color: var(--fg);
+      background: none;
+      border: none;
+      border-radius: var(--desk-chrome-radius);
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      transition: color 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-floating-controls {
+      left: calc(var(--desk-chrome-edge) + env(safe-area-inset-left, 0px));
+      top: env(safe-area-inset-top, 0px);
+      right: auto;
+      bottom: auto;
+      height: var(--tauri-chrome-band-h);
+      gap: var(--desk-chrome-gap);
+      z-index: 1306;
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-floating-controls .desk-settings-icon-btn {
+      opacity: 1;
+    }
+    .desk-floating-controls .desk-settings-icon-btn svg {
+      display: block;
+      width: var(--desk-chrome-icon-size);
+      height: var(--desk-chrome-icon-size);
+      color: var(--fg);
+      stroke: var(--fg);
+      stroke-width: 1.8;
+    }
+    .desk-floating-controls .desk-settings-icon-btn:hover {
+      color: var(--fg);
+      background: var(--desk-chrome-hover-bg);
+    }
+    .desk-floating-controls .desk-settings-icon-btn .desk-settings-filled-icon {
+      display: none;
+      fill: var(--fg);
+      stroke: none;
+    }
+    .desk-floating-controls .desk-settings-icon-btn .desk-settings-filled-icon path {
+      fill: var(--fg);
+      stroke: none;
+    }
+    /* Always on Top badge: a small dot on the settings button while pinned.
+       Scoped by id -- Reload Hub shares .desk-settings-icon-btn. Not in Fit
+       Height, where the window is pinned as part of the mode. */
+    html[data-always-on-top="1"]:not([data-auto-window-height="1"]) #deskSettingsBtn {
+      position: relative;
+    }
+    html[data-always-on-top="1"]:not([data-auto-window-height="1"]) #deskSettingsBtn::after {
+      content: "";
+      position: absolute;
+      top: 0.23em;
+      right: 0.23em;
+      width: 0.38em;
+      height: 0.38em;
+      border-radius: 50%;
+      background: var(--fg);
+      pointer-events: none;
+    }
+    .desk-floating-controls .desk-settings-icon-btn.is-active .desk-settings-outline-icon {
+      display: none;
+    }
+    .desk-floating-controls .desk-settings-icon-btn.is-active .desk-settings-filled-icon {
+      display: block;
+    }
+    .desk-app-sidebar-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: fixed;
+      left: calc(var(--desk-chrome-edge) + env(safe-area-inset-left, 0px));
+      top: var(--desk-chrome-top);
+      z-index: 1000;
+      width: var(--desk-chrome-size);
+      height: var(--desk-chrome-size);
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      border-radius: var(--desk-chrome-radius);
+      box-shadow: none;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-app-region: no-drag;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.15s ease, background 0.15s ease;
+      color: var(--fg);
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-app-sidebar-toggle {
+      top: env(safe-area-inset-top, 0px);
+      left: calc(var(--desk-chrome-edge) + env(safe-area-inset-left, 0px));
+    }
+    .desk-floating-controls .desk-app-sidebar-toggle,
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-floating-controls .desk-app-sidebar-toggle {
+      position: static;
+      left: auto;
+      top: auto;
+      z-index: auto;
+    }
+    .desk-top-right-controls {
+      display: none;
+      position: fixed;
+      right: calc(var(--desk-chrome-edge) + env(safe-area-inset-right, 0px));
+      top: var(--desk-chrome-top);
+      z-index: 1000;
+      align-items: center;
+      gap: var(--desk-chrome-gap);
+      font-size: var(--text-size, 13px);
+      flex-direction: row;
+      pointer-events: auto;
+      -webkit-app-region: no-drag;
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-top-right-controls {
+      display: inline-flex;
+      top: env(safe-area-inset-top, 0px);
+      right: calc(var(--desk-chrome-edge) + env(safe-area-inset-right, 0px));
+      height: var(--tauri-chrome-band-h);
+      opacity: 1;
+      z-index: 1306;
+    }
+    .desk-chat-menu-btn,
+    .desk-chat-reload-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      position: static;
+      width: var(--desk-chrome-size);
+      height: var(--desk-chrome-size);
+      margin: 0;
+      padding: 0;
+      color: var(--fg);
+      background: transparent;
+      border: none;
+      border-radius: var(--desk-chrome-radius);
+      box-shadow: none;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-app-region: no-drag;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-chat-menu-btn,
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-chat-reload-btn {
+      position: static;
+      right: auto;
+      top: auto;
+      opacity: 1;
+      z-index: auto;
+    }
+    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-right-panel-controls {
+      position: static;
+      right: auto;
+      top: auto;
+      opacity: 1;
+      z-index: auto;
+    }
+    .desk-right-panel-controls {
+      display: none;
+      align-items: center;
+      gap: var(--desk-chrome-gap);
+      position: static;
+      pointer-events: auto;
+      -webkit-app-region: no-drag;
+    }
+    .desk-panel-ctrl-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--desk-chrome-size);
+      height: var(--desk-chrome-size);
+      margin: 0;
+      padding: 0;
+      color: var(--fg);
+      background: transparent;
+      border: none;
+      border-radius: var(--desk-chrome-radius);
+      box-shadow: none;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-app-region: no-drag;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+    .desk-panel-ctrl-btn svg {
+      display: block;
+      width: var(--desk-chrome-icon-size);
+      height: var(--desk-chrome-icon-size);
+      color: var(--fg);
+      stroke: var(--fg);
+      stroke-width: 1.8;
+    }
+    .desk-floating-controls .desk-settings-icon-btn svg *,
+    .desk-app-sidebar-toggle svg *,
+    .desk-chat-menu-btn svg *,
+    .desk-chat-reload-btn svg *,
+    .desk-panel-ctrl-btn svg * {
+      stroke: var(--fg);
+    }
+    .desk-app-sidebar-toggle .desk-pane-active-icon,
+    .desk-panel-ctrl-btn .desk-pane-active-icon {
+      display: none;
+    }
+    .desk-app-sidebar-toggle .desk-pane-active-fill,
+    .desk-panel-ctrl-btn .desk-pane-active-fill {
+      fill: var(--fg);
+      stroke: none;
+    }
+    .desk-app-sidebar-toggle.is-active .desk-pane-outline-icon,
+    .desk-panel-ctrl-btn.active .desk-pane-outline-icon,
+    .desk-panel-ctrl-btn[aria-pressed="true"] .desk-pane-outline-icon {
+      display: none;
+    }
+    .desk-app-sidebar-toggle.is-active .desk-pane-active-icon,
+    .desk-panel-ctrl-btn.active .desk-pane-active-icon,
+    .desk-panel-ctrl-btn[aria-pressed="true"] .desk-pane-active-icon {
+      display: block;
+    }
+    .desk-panel-ctrl-btn:hover {
+      color: var(--fg);
+      background: var(--desk-chrome-hover-bg);
+    }
+    .desk-panel-ctrl-btn.active,
+    .desk-panel-ctrl-btn[aria-pressed="true"] {
+      color: var(--fg);
+    }
+    .desk-app-sidebar-toggle svg {
+      display: block;
+      width: var(--desk-chrome-icon-size);
+      height: var(--desk-chrome-icon-size);
+      color: var(--fg);
+      stroke: var(--fg);
+      stroke-width: 1.8;
+    }
+    .desk-chat-menu-btn svg,
+    .desk-chat-reload-btn svg {
+      display: block;
+      width: var(--desk-chrome-icon-size);
+      height: var(--desk-chrome-icon-size);
+      color: var(--fg);
+      stroke: var(--fg);
+      stroke-width: 1.8;
+    }
+    .desk-app-sidebar-toggle:hover {
+      color: var(--fg);
+      background: var(--desk-chrome-hover-bg);
+    }
+    .desk-app-sidebar-toggle.is-active {
+      color: var(--fg);
+    }
+    .desk-chat-menu-btn:hover,
+    .desk-chat-reload-btn:hover {
+      color: var(--fg);
+      background: var(--desk-chrome-hover-bg);
+    }
+    .desk-top-right-controls {
+      display: inline-flex;
+    }
+    .desk-chat-menu-btn,
+    .desk-chat-reload-btn {
+      display: inline-flex;
+    }
+    .desk-right-panel-controls {
+      display: inline-flex;
+    }
+    @media (max-width: 480px) {
+      html:not([data-tauri-app="1"]) .desk-right-panel-controls {
+        display: none;
+      }
+    }

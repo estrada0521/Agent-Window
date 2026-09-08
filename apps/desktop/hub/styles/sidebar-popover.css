@@ -1,0 +1,76 @@
+    .desk-sidebar-hover-popover {
+      position: fixed;
+      z-index: 2000;
+      background: var(--hub-glass);
+      border: 0.5px solid var(--line-strong);
+      box-shadow:
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.06),
+        0 1px 2px rgba(0, 0, 0, 0.12);
+      border-radius: 17px;
+      padding: 6px 0;
+      min-width: 160px;
+      max-width: 220px;
+      transform-origin: top left;
+    }
+    .desk-sidebar-hover-list {
+      display: block;
+      max-height: 70vh;
+      overflow-y: auto;
+      scrollbar-width: none;
+      font-size: var(--text-size, 13px);
+    }
+    .desk-sidebar-hover-list::-webkit-scrollbar { display: none; }
+    .desk-sidebar-hover-list[data-scroll-fade="top"] {
+      mask-image: linear-gradient(to bottom, transparent 0, black 48px);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 48px);
+    }
+    .desk-sidebar-hover-list[data-scroll-fade="bottom"] {
+      mask-image: linear-gradient(to bottom, black calc(100% - 48px), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 48px), transparent 100%);
+    }
+    .desk-sidebar-hover-list[data-scroll-fade="both"] {
+      mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
+    }
+    .desk-sidebar-hover-list .desk-section-label {
+      padding: 1.4em 1.2em 0.3em;
+      font-size: 0.77em;
+    }
+    .desk-sidebar-hover-list .desk-session-row {
+      border-radius: 8px;
+      margin: 0;
+      padding: 0.62em 0.77em;
+    }
+    .desk-sidebar-hover-list .desk-session-row:hover .desk-row-stack,
+    .desk-sidebar-hover-list .desk-session-row:focus-within .desk-row-stack {
+      padding-right: 0;
+    }
+    .desk-sidebar-hover-list .desk-row-name {
+      line-height: 1.3;
+      font-weight: var(--hub-body-weight);
+    }
+    .desk-sidebar-hover-list .desk-row-preview {
+      line-height: 1.25;
+    }
+
+    .desk-row-hover-action[data-desk-hover-action="revive"]:hover,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible {
+      color: var(--session-revive-fg);
+    }
+    .desk-row-hover-action[data-desk-hover-action="revive"]:hover svg,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:hover polyline,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:hover path,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:hover line,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible svg,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible polyline,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible path,
+    .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible line {
+      color: var(--session-revive-fg);
+      stroke: var(--session-revive-fg);
+    }
+    .desk-row-hover-action[data-desk-hover-action="revive"]:active {
+      color: var(--session-revive-fg);
+    }
+    .desk-swipe-action-btn[data-desk-swipe-action="revive"] {
+      background: var(--session-revive-fg);
+    }
