@@ -701,6 +701,9 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     const dpRenderRepoPanel = (rawPath, entries, { loading = false, error = "", direction = "forward" } = {}) => {
       if (!dpRepoContent) return;
       const path = dpNormalizePath(rawPath);
+      const pathParts = path.split("/").filter(Boolean);
+      const parentPath = pathParts.slice(0, -1).join("/");
+      const pathBasename = pathParts[pathParts.length - 1] || "/";
       dpRepoBrowserPath = path;
       dpRepoContent.innerHTML = "";
       const stack = document.createElement("div");
@@ -716,23 +719,19 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       pathRow.addEventListener("click", (e) => {
         e.preventDefault(); e.stopPropagation();
         if (!path) return;
-        const parts = path.split("/").filter(Boolean);
-        parts.pop();
-        void dpLoadRepoDir(parts.join("/"));
+        void dpLoadRepoDir(parentPath);
       });
       pathRow.addEventListener("keydown", (e) => {
         if (!path || (e.key !== "Enter" && e.key !== " ")) return;
         e.preventDefault(); e.stopPropagation();
-        const parts = path.split("/").filter(Boolean);
-        parts.pop();
-        void dpLoadRepoDir(parts.join("/"));
+        void dpLoadRepoDir(parentPath);
       });
       const backIcon = document.createElement("span");
       backIcon.className = "repo-path-back-icon-slot";
       backIcon.innerHTML = dpBackIcon;
       const pathText = document.createElement("span");
       pathText.className = "repo-path-label";
-      pathText.textContent = path ? `/ ${path}` : "/";
+      pathText.textContent = pathBasename;
       pathRow.append(backIcon, pathText);
       pathWrap.appendChild(pathRow);
       stack.appendChild(pathWrap);
