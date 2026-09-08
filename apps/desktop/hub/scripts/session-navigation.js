@@ -125,8 +125,10 @@
         failDeskOpen("Session not found");
         return;
       }
-      setDeskReloadShell(false);
       const needsReviveTransition = /^\/revive-session(?:[/?]|$)/.test(String(openHref || ""));
+      const openFailed = !!_deskReloadShell?.classList.contains("visible");
+      if (!needsReviveTransition && name === _deskSelectedSessionName && !openFailed) return;
+      setDeskReloadShell(false);
       const archived = !!findSessionRecord(name)?.archived;
       const closeOnOpen = isPhoneViewport();
       _deskSelectedSessionName = name;
