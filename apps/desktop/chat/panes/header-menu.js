@@ -72,7 +72,7 @@
           const action = String(e.target.value || "");
           e.target.value = "";
           if (!action) return;
-          void runForwardAction(action, { sourceNode: null });
+          void runForwardAction(action);
         });
       }
     }

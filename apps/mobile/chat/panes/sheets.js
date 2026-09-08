@@ -57,7 +57,7 @@
       clearNativeHeaderMenuSelection();
       if (!target) return;
       _ignoreGlobalClick = true;
-      void runForwardAction(target, { sourceNode: null });
+      void runForwardAction(target);
     });
     nativeHeaderMenuSelect?.addEventListener("blur", () => {
       setTimeout(clearNativeHeaderMenuSelection, 0);
@@ -792,7 +792,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
       }
       const action = String(data.action || "");
       if (!action) return;
-      await runForwardAction(action, { sourceNode: null });
+      await runForwardAction(action);
     };
     window.addEventListener("message", (event) => {
       if (!(event.data && event.data.type === "native-menu-action")) return;
@@ -863,7 +863,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
         closeHeaderMenus();
       }
     });
-    async function runForwardAction(target, { sourceNode = null } = {}) {
+    async function runForwardAction(target) {
       const action = String(target || "");
       if (!action) return;
       if (action === "esc" || action === "restart" || action === "resume" || action === "ctrlc" || action === "enter") {
@@ -871,7 +871,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
         return;
       }
       if (action === "reloadChat") {
-        await beginNewChat(sourceNode);
+        await beginNewChat();
         return;
       }
       if (action === "openGitMenu") {

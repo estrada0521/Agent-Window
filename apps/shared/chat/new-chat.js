@@ -1,13 +1,8 @@
-    const beginNewChat = async (button) => {
+    const beginNewChat = async () => {
       if (reloadInFlight) return;
       reloadInFlight = true;
       if (document.body.classList.contains("right-panel-open")) closeDesktopRightPanel();
       document.documentElement.dataset.launchShell = "1";
-      if (button) {
-        button.disabled = true;
-        button.classList.add("restarting");
-        button.textContent = "Restarting…";
-      }
       let response;
       try {
         response = await fetch("/new-chat", { method: "POST", cache: "no-store" });
@@ -15,11 +10,6 @@
       if (!response?.ok) {
         reloadInFlight = false;
         releaseLaunchShellGate();
-        if (button) {
-          button.disabled = false;
-          button.classList.remove("restarting");
-          button.textContent = "Reload";
-        }
         setStatus("reload failed", true);
         return;
       }

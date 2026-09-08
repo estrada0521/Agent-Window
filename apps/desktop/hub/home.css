@@ -880,10 +880,6 @@
       color: var(--fg);
       background: var(--desk-chrome-hover-bg);
     }
-    .desk-chat-menu-btn.is-active,
-    .desk-chat-reload-btn.restarting {
-      color: var(--fg);
-    }
     .desk-top-right-controls {
       display: inline-flex;
     }

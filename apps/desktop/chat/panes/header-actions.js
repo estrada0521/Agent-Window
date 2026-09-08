@@ -90,7 +90,7 @@
       }
       const action = String(data.action || "");
       if (!action) return;
-      void runForwardAction(action, { sourceNode: null });
+      void runForwardAction(action);
     };
     window.addEventListener("message", (event) => {
       if (!(event.data && event.data.type === "native-menu-action")) return;
@@ -148,7 +148,7 @@
         closeHeaderMenus();
       }
     });
-    async function runForwardAction(target, { sourceNode = null } = {}) {
+    async function runForwardAction(target) {
       const action = String(target || "");
       if (!action) return;
       if (action === "esc" || action === "restart" || action === "resume" || action === "ctrlc" || action === "enter") {
@@ -156,7 +156,7 @@
         return;
       }
       if (action === "reloadChat") {
-        await beginNewChat(sourceNode);
+        await beginNewChat();
         return;
       }
       if (action === "openTerminal") {
