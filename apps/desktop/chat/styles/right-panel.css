@@ -1,6 +1,6 @@
     html[data-tauri-app="1"][data-hub-iframe-chat="1"] {
-      --right-panel-row-min-height: 2.31em;
-      --right-panel-summary-row-min-height: 2.62em;
+      --right-panel-row-height: calc(var(--text-size, 13px) * 30 / 13);
+      --right-panel-pinned-row-height: calc(var(--text-size, 13px) * 28 / 13);
       --right-panel-row-pad-x: 0.46em;
       --right-panel-item-gap: 0.46em;
       --right-panel-path-gap: 0.62em;
@@ -10,6 +10,7 @@
       --right-panel-chevron-size: 1.08em;
       --right-panel-item-radius: 0.62em;
       --right-panel-pill-radius: 2em;
+      --right-panel-floating-inset: calc(var(--text-size, 13px) * 10 / 13);
     }
     .desktop-right-panel {
       font-family: var(--font-main);
@@ -192,7 +193,7 @@
       align-items: center;
       gap: var(--right-panel-path-gap);
       width: 100%;
-      min-height: var(--right-panel-row-min-height);
+      height: var(--right-panel-row-height);
       padding: 0 var(--right-panel-row-pad-x);
       background: var(--panel-row-bg);
       border: 0.5px solid var(--panel-row-border);
@@ -259,6 +260,7 @@
       display: flex;
       align-items: center;
       gap: var(--right-panel-item-gap);
+      height: var(--right-panel-row-height);
       padding: var(--right-panel-row-pad-x);
       border: none;
       border-radius: var(--right-panel-item-radius);
@@ -460,8 +462,8 @@
     }
     html[data-tauri-app="1"][data-hub-iframe-chat="1"] .git-pinned-summary-aside {
       position: fixed;
-      top: calc(10px + env(safe-area-inset-top, 0px));
-      right: 10px;
+      top: calc(var(--right-panel-floating-inset) + env(safe-area-inset-top, 0px));
+      right: var(--right-panel-floating-inset);
       left: auto;
       width: max-content;
       max-width: calc(100vw - 16px);
@@ -505,8 +507,8 @@
       background: transparent;
       border: none;
       border-radius: 0.77em;
+      height: var(--right-panel-pinned-row-height);
       margin: 0.46em;
-      min-height: var(--right-panel-row-min-height);
       padding-top: 0;
       padding-bottom: 0;
     }
@@ -520,7 +522,6 @@
       background: var(--panel-row-bg);
       border: 0.5px solid var(--panel-row-border);
       border-radius: var(--right-panel-pill-radius);
-      min-height: var(--right-panel-summary-row-min-height);
       position: relative;
     }
     @keyframes git-commit-slide-in {
@@ -606,7 +607,6 @@
       border-bottom: none;
       border-radius: var(--right-panel-pill-radius);
       pointer-events: none;
-      min-height: var(--right-panel-summary-row-min-height);
       padding: 0 var(--right-panel-row-pad-x);
       background: var(--panel-row-bg);
       border: 0.5px solid var(--panel-row-border);
@@ -644,7 +644,6 @@
       background: var(--panel-row-bg);
       border: 0.5px solid var(--panel-row-border);
       border-radius: var(--right-panel-pill-radius);
-      min-height: var(--right-panel-summary-row-min-height);
       position: relative;
     }
     .git-commit-detail-head:active > .git-summary-row {
@@ -699,7 +698,7 @@
       display: flex;
       align-items: center;
       gap: var(--right-panel-item-gap);
-      min-height: 0;
+      height: var(--right-panel-row-height);
       padding: var(--right-panel-row-pad-x);
       border-radius: var(--right-panel-item-radius);
       font-size: var(--text-size, 13px);
@@ -848,7 +847,7 @@
       display: flex;
       align-items: center;
       gap: var(--right-panel-item-gap);
-      min-height: var(--right-panel-summary-row-min-height);
+      height: var(--right-panel-row-height);
       padding: 0 var(--right-panel-row-pad-x);
       border-radius: var(--right-panel-item-radius);
       font-size: var(--text-size, 13px);
@@ -974,7 +973,7 @@
       display: flex;
       align-items: center;
       gap: var(--right-panel-item-gap);
-      min-height: 2.15em;
+      height: var(--right-panel-row-height);
       padding: var(--right-panel-list-inset) var(--right-panel-row-pad-x) var(--right-panel-list-inset) calc(var(--right-panel-row-pad-x) + var(--right-panel-icon-slot-size) + var(--right-panel-item-gap));
       position: relative;
       box-sizing: border-box;
@@ -1122,77 +1121,15 @@
     .git-pinned-expand-section:last-child {
       padding-bottom: 0.62em;
     }
-    .git-pinned-expand-file {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 0.46em;
+    .git-pinned-expand .git-commit-file-list {
+      padding: 0;
+    }
+    .git-pinned-expand .git-commit-file-row {
       margin: 0 0.62em;
-      padding: 0.46em 0.62em;
-      border-radius: 0.77em;
-      cursor: pointer;
     }
-    .git-pinned-expand-file:hover { background: var(--panel-row-bg); }
-    .git-pinned-expand-file-main {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.46em;
-      min-width: 0;
-      flex: 1 1 auto;
-      overflow: hidden;
+    .git-pinned-expand .git-commit-file-header {
+      height: var(--right-panel-pinned-row-height);
     }
-    .git-pinned-expand-file-icon {
-      width: 1.23em;
-      height: 1.23em;
-      flex: 0 0 auto;
-      color: var(--icon-fg);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-    .git-pinned-expand-file-icon svg {
-      width: 1.15em;
-      height: 1.15em;
-      stroke-width: 1.45;
-    }
-    .git-pinned-expand-file-label {
-      display: flex;
-      align-items: baseline;
-      gap: 0.38em;
-      min-width: 0;
-      overflow: hidden;
-      flex: 1 1 auto;
-    }
-    .git-pinned-expand-file-label .n {
-      font-size: var(--text-size, 13px);
-      color: var(--fg);
-      white-space: nowrap;
-      flex-shrink: 0;
-      max-width: 12.31em;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .git-pinned-expand-file-label .d {
-      font-size: 0.92em;
-      color: var(--muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      min-width: 0;
-    }
-    .git-pinned-expand-counts {
-      display: none;
-      gap: 0.25em;
-      font-size: 0.92em;
-      flex-shrink: 0;
-      margin-left: auto;
-    }
-    .git-pinned-expand-file:hover .git-pinned-expand-counts {
-      display: flex;
-    }
-    .git-pinned-expand-counts .ins { color: var(--git-ins-green); }
-    .git-pinned-expand-counts .del { color: var(--git-del-red); }
     .git-pinned-expand-loading {
       display: flex;
       gap: 0.31em;

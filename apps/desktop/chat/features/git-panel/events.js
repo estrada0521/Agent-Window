@@ -65,7 +65,6 @@
       let openTimer = null;
       let closeTimer = null;
       let fetchSeq = 0;
-      const _e = (s) => String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
       function cancelTimers() {
         clearTimeout(openTimer); openTimer = null;
@@ -145,23 +144,7 @@
 
           expand.innerHTML = sections.map(s =>
             `<div class="git-pinned-expand-section">` +
-            s.files.map(f => {
-              const path = String(f.path || "");
-              const slash = path.lastIndexOf("/");
-              const name = slash >= 0 ? path.slice(slash + 1) : path;
-              const dir  = slash >= 0 ? path.slice(0, slash)  : "";
-              const ins  = Math.max(0, parseInt(f.ins)  || 0);
-              const dels = Math.max(0, parseInt(f.dels) || 0);
-              const icon = FILE_ICONS[extFromPath(path)] || FILE_SVG_ICONS.file;
-              const counts = (!f.untracked && (ins || dels))
-                ? `<span class="git-pinned-expand-counts"><span class="ins">+${ins}</span><span class="del">-${dels}</span></span>`
-                : "";
-              return `<div class="git-pinned-expand-file" data-path="${_e(path)}" data-scope="${_e(s.kind)}">` +
-                `<span class="git-pinned-expand-file-main"><span class="git-pinned-expand-file-icon">${icon}</span>` +
-                `<span class="git-pinned-expand-file-label"><span class="n">${_e(name)}</span>${dir ? `<span class="d">${_e(dir)}</span>` : ""}</span></span>` +
-                counts +
-                `</div>`;
-            }).join("") +
+            gitCommitFileListHtml(s.files) +
             `</div>`
           ).join("");
         } catch (_) {
@@ -194,11 +177,11 @@
       };
 
       expand.addEventListener("click", (event) => {
-        const file = event.target.closest(".git-pinned-expand-file");
+        const file = event.target.closest(".git-commit-file-row");
         if (!file) return;
         const path = file.dataset.path || "";
         if (!path) return;
-        if (file.dataset.scope !== "untracked") {
+        if (file.dataset.untracked !== "1") {
           void dpPostOpenDiff(path);
           return;
         }
@@ -206,7 +189,7 @@
       });
 
       expand.addEventListener("contextmenu", (event) => {
-        const file = event.target.closest(".git-pinned-expand-file");
+        const file = event.target.closest(".git-commit-file-row");
         const path = String(file?.dataset.path || "").trim();
         if (path) void dpOpenFileContextMenu(path, event);
       });
