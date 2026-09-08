@@ -36,7 +36,8 @@
       if (!event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
       if (event.isComposing || event.keyCode === 229 || event.repeat) return;
       const match = /^Digit([1-9])$/.exec(event.code || "");
-      if (!match || !canComposeInSession()) return;
+      // Only while the picker is on screen -- closed, Ctrl+<n> opens agent panes.
+      if (!match || !canComposeInSession() || !document.body.classList.contains("composer-overlay-open")) return;
       const chips = document.querySelectorAll("#targetPicker .target-chip");
       const chip = chips[Number(match[1]) - 1];
       if (!chip) return;
