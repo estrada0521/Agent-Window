@@ -290,19 +290,7 @@
       justify-content: center;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
-      opacity: 0;
-    }
-
-    .has-hover .md-body .code-block-wrap:hover .code-copy-btn,
-    .md-body .code-block-wrap:focus-within .code-copy-btn,
-    .md-body .code-block-wrap .code-copy-btn.copied {
       opacity: 1;
-    }
-
-    @media (pointer: coarse) {
-      .md-body .code-block-wrap .code-copy-btn {
-        opacity: 1;
-      }
     }
 
     .has-hover .md-body .code-block-wrap .code-copy-btn:hover {

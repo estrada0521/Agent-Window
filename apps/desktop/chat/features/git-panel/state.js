@@ -78,9 +78,9 @@
         aside.hidden = !stripShown;
       }
 
-      if (stripShown && inner && overlay) {
-        dpRenderGitSummaryRoot(inner, rowHtml);
-        dpPinnedExpandRefresh?.();
+      if (inner && overlay) {
+        dpRenderGitSummaryRoot(inner, rowHtml, { animateCounts: stripShown });
+        if (stripShown) dpPinnedExpandRefresh?.();
       }
       if (panelWrap) dpRenderGitSummaryRoot(panelWrap, rowHtml, { animateCounts: dpPanelOpen });
 
