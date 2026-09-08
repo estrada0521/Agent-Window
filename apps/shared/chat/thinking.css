@@ -1,0 +1,107 @@
+    .message-thinking-runtime-slot {
+      display: inline-grid;
+      grid-template-columns: 1fr;
+      align-items: center;
+      vertical-align: middle;
+      height: 1.6em;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .message-thinking-runtime-line {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 1.03em;
+      line-height: 1.25;
+      letter-spacing: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      grid-area: 1 / 1;
+      min-width: 0;
+      max-width: 100%;
+      white-space: nowrap;
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
+    }
+
+    .message-thinking-runtime-body {
+      flex: 0 1 auto;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .message-thinking-runtime-keyword {
+      font-weight: 600;
+      display: inline;
+      white-space: normal;
+      font-size: 1.25em;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      background-image: linear-gradient(
+        90deg,
+        var(--fg) 0%,
+        var(--muted) 12%,
+        var(--muted) 66%,
+        var(--fg) 78%,
+        var(--fg) 100%
+      );
+      background-repeat: repeat-x;
+      background-size: 8.33ch 100%;
+      background-position: 0 0;
+      background-clip: text;
+      -webkit-background-clip: text;
+      animation: thinking-keyword-flow 1s linear infinite;
+    }
+
+    .message-thinking-runtime-detail {
+      font-weight: var(--body-weight);
+      color: var(--muted);
+    }
+
+    .message-thinking-runtime-line[data-state="enter"] {
+      opacity: 0;
+      transform: translateY(100%);
+      z-index: 1;
+    }
+
+    .message-thinking-runtime-line[data-state="live"] {
+      opacity: 1;
+      transform: translateY(0);
+      z-index: 2;
+    }
+
+    .message-thinking-runtime-line[data-state="leave"] {
+      opacity: 0;
+      transform: translateY(-100%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    @keyframes thinking-keyword-flow {
+      to {
+        background-position: 8.33ch 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .message-thinking-icon-wrap,
+      .message-thinking-icon,
+      .message-thinking-runtime-keyword {
+        animation: none;
+      }
+
+      .message-thinking-runtime-keyword {
+        color: var(--muted);
+        -webkit-text-fill-color: var(--muted);
+        background: none;
+      }
+
+      .message-thinking-runtime-line,
+      .message-thinking-runtime-line[data-state="enter"],
+      .message-thinking-runtime-line[data-state="leave"],
+      .message-thinking-runtime-line[data-state="live"] {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+    }

@@ -15,12 +15,4 @@ def unknown_tool_label(raw_name: object) -> tuple[str, str]:
 def runtime_event(main: str, sub: str = "", *, source_id: str) -> dict:
     m = str(main or "").strip()
     s = str(sub or "").strip()
-    if m and s:
-        text = f"{m} {s}"
-    elif m:
-        text = m
-    elif s:
-        text = s
-    else:
-        text = ""
-    return {"text": text, "source_id": source_id}
+    return {"keyword": m, "detail": s, "source_id": source_id}

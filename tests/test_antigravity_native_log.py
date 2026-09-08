@@ -103,7 +103,7 @@ class AntigravityRuntimeTests(unittest.TestCase):
     def test_status_polls_are_quiet_and_unknown_tools_stay_visible(self) -> None:
         self.assertEqual(runtime_tool_events("command_status", {"CommandId": "x"}), [])
         self.assertEqual(runtime_tool_events("manage_task", {"Action": "status"}), [])
-        self.assertTrue(runtime_tool_events("future_tool", {})[0]["text"])
+        self.assertTrue(runtime_tool_events("future_tool", {})[0]["keyword"])
 
 
 class AntigravitySyncTests(unittest.TestCase):
@@ -132,7 +132,7 @@ class AntigravitySyncTests(unittest.TestCase):
 
         self.assertEqual([entry["message"] for entry in entries], ["完了しました。"])
         self.assertTrue(entries[0]["context_hash"])
-        self.assertTrue(runtime._idle_running_display_by_agent["gemini"]["current_event"]["text"])
+        self.assertTrue(runtime._idle_running_display_by_agent["gemini"]["current_event"]["keyword"])
         self.assertEqual(runtime.idled, ["gemini"])
 
     def test_wrong_filename_fails_loud(self) -> None:

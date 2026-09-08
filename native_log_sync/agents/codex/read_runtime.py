@@ -450,7 +450,7 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
         return [runtime_event(main, sub, source_id=_sid("tool:web_search", f"{action}:{sub}"))]
     if lower == "tool_search":
         sub = short_line(_pick(a, "query") or "tools")
-        return [runtime_event("Tool Search", sub, source_id=_sid("tool:tool_search", sub))]
+        return [runtime_event("Tool", f"Search {sub}".strip(), source_id=_sid("tool:tool_search", sub))]
     main = MAIN_LABEL.get(lower)
     if main is None:
         # 5.6 can add connector/MCP tools without changing the envelope. Do

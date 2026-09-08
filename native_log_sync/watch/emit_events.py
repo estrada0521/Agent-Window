@@ -33,10 +33,13 @@ def idle_running_display_for_api(display_by_agent: dict[str, dict]) -> dict[str,
         if not isinstance(raw_event, dict):
             continue
         event_id = str(raw_event.get("id") or "").strip()
-        text = str(raw_event.get("text") or "").rstrip()
-        if not event_id or not text:
+        keyword = str(raw_event.get("keyword") or "").strip()
+        detail = str(raw_event.get("detail") or "").strip()
+        if not event_id or not keyword:
             continue
-        result[agent] = {"current_event": {"id": event_id, "text": text}}
+        result[agent] = {
+            "current_event": {"id": event_id, "keyword": keyword, "detail": detail}
+        }
     return result
 
 

@@ -145,11 +145,13 @@ class GrokNativeLogTests(unittest.TestCase):
 
             payload = runtime._idle_running_display_by_agent.get("grok") or {}
             event = payload.get("current_event") or {}
-            text = str(event.get("text") or "")
-            self.assertTrue(text)
+            display = " ".join(
+                part for part in (str(event.get("keyword") or ""), str(event.get("detail") or "")) if part
+            )
+            self.assertTrue(display)
             # The noise row is a tool_call_update, not a tool_call: it must
             # not overwrite the running display the actual call already set.
-            self.assertNotIn("very long execute title that should not display", text)
+            self.assertNotIn("very long execute title that should not display", display)
             self.assertTrue(runtime.runtime_notifies)
 
     def test_initial_latest_reply_then_turn_completed_are_synced(self) -> None:

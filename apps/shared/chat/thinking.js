@@ -18,16 +18,17 @@
     const setThinkingRuntimeItem = (agent, event, { suppressRender = false } = {}) => {
       const entry = {
         id: String(event?.id || "").trim(),
-        text: String(event?.text || "").trim(),
+        keyword: String(event?.keyword || "").trim(),
+        detail: String(event?.detail || "").trim(),
         phase: "live",
         enterTimer: 0,
         updatedAt: Number.isFinite(Number(event?.updatedAt)) && Number(event.updatedAt) > 0
           ? Number(event.updatedAt)
           : Date.now(),
       };
-      if (!entry.id || !entry.text) return false;
+      if (!entry.id || !entry.keyword) return false;
       const current = currentThinkingRuntimeItem(agent);
-      if (current && current.id === entry.id && current.text === entry.text) return false;
+      if (current && current.id === entry.id && current.keyword === entry.keyword && current.detail === entry.detail) return false;
       clearThinkingRuntimeItemTimers(current);
       thinkingRuntimeItems[agent] = entry;
       if (!suppressRender) renderThinkingIndicator();
@@ -48,48 +49,23 @@
         const payload = currentAgentRuntime?.[agent];
         const raw = payload?.current_event;
         const id = String(raw?.id || "").trim();
-        const text = String(raw?.text || "").trim();
-        if (!id || !text) {
+        const keyword = String(raw?.keyword || "").trim();
+        const detail = String(raw?.detail || "").trim();
+        if (!id || !keyword) {
           changed = clearThinkingRuntimeAgent(agent, { suppressRender: true }) || changed;
         } else {
-          changed = setThinkingRuntimeItem(agent, { id, text }, { suppressRender: true }) || changed;
+          changed = setThinkingRuntimeItem(agent, { id, keyword, detail }, { suppressRender: true }) || changed;
         }
       });
       if (changed && !suppressRender) {
         renderThinkingIndicator();
       }
     };
-    const wrapThinkingChars = (text, offset = 0) => {
-      return Array.from(String(text || "")).map((ch, i) =>
-        `<span class="thinking-char" style="--char-i:${i + offset}">${escapeHtml(ch)}</span>`
-      ).join("");
-    };
-    const buildThinkingRuntimeHtml = (text) => {
-      const raw = String(text || "").replace(/\r\n?/g, "\n");
-      if (!raw) return "";
-      const lines = raw.split("\n");
-      const firstLine = lines.find((line) => line.trim().length > 0) ?? lines[0] ?? "";
-      const cleanedLine = firstLine.replace(/^[⏺●•·◦○]\s+/, "").trim();
-      const asciiToken = cleanedLine.match(/^([A-Za-z][A-Za-z0-9_.:-]*)([\s\S]*)$/);
-      if (asciiToken) {
-        const keyword = String(asciiToken[1] || "");
-        const rest = String(asciiToken[2] || "");
-        const trimmedRest = rest.trim();
-        const tokenLooksStructured = /[._:]/.test(keyword);
-        const detailText = trimmedRest ? (tokenLooksStructured ? ` ${cleanedLine}` : rest) : "";
-        const detail = detailText
-          ? `<span class="message-thinking-runtime-detail">${escapeHtml(detailText)}</span>`
-          : "";
-        return `<span class="message-thinking-runtime-keyword">${wrapThinkingChars(keyword)}</span>${detail}`;
-      }
-      const leading = cleanedLine.match(/^(\S+)([\s\S]*)$/);
-      if (leading) {
-        const keyword = String(leading[1] || "");
-        const rest = String(leading[2] || "");
-        const detail = rest ? `<span class="message-thinking-runtime-detail">${escapeHtml(rest)}</span>` : "";
-        return `<span class="message-thinking-runtime-keyword">${wrapThinkingChars(keyword)}</span>${detail}`;
-      }
-      return escapeHtml(cleanedLine || firstLine);
+    const buildThinkingRuntimeHtml = (keyword, detail = "") => {
+      const detailHtml = detail
+        ? `<span class="message-thinking-runtime-detail"> ${escapeHtml(detail)}</span>`
+        : "";
+      return `<span class="message-thinking-runtime-keyword">${escapeHtml(keyword)}</span>${detailHtml}`;
     };
     const buildThinkingRuntimeLineInnerHtml = (contentHtml) => {
       return `<span class="message-thinking-runtime-body">${contentHtml}</span>`;
@@ -104,7 +80,16 @@
       }
       const stableId = String(eventId || "");
       const lines = Array.from(slot.querySelectorAll(".message-thinking-runtime-line"));
-      const activeLine = lines.find((line) => String(line.dataset.state || "") !== "leave") || lines[lines.length - 1] || null;
+      const lineMatches = (line) => {
+        const body = line?.querySelector(".message-thinking-runtime-body");
+        return !!line
+          && (body ? body.innerHTML : "") === contentHtml
+          && String(line.dataset.eventId || "") === stableId;
+      };
+      const pendingLine = lines.find((line) => line.dataset.state === "enter" && lineMatches(line));
+      if (pendingLine) return;
+
+      const activeLine = [...lines].reverse().find((line) => line.dataset.state === "live") || null;
       const activeBody = activeLine?.querySelector(".message-thinking-runtime-body");
       const activeHtml = activeBody ? activeBody.innerHTML : "";
       const sameText = !!activeLine && activeHtml === contentHtml;
@@ -115,12 +100,15 @@
         return;
       }
 
-      if (activeLine) {
-        if (activeLine._runtimeRemoveTimer) {
-          clearTimeout(activeLine._runtimeRemoveTimer);
-          activeLine._runtimeRemoveTimer = 0;
+      lines.forEach((line) => {
+        if (line === activeLine) return;
+        if (line._runtimeRemoveTimer) {
+          clearTimeout(line._runtimeRemoveTimer);
+          line._runtimeRemoveTimer = 0;
         }
-      }
+        line.dataset.state = "superseded";
+        line.remove();
+      });
 
       const nextLine = document.createElement("span");
       nextLine.className = "message-thinking-runtime-line";
@@ -133,7 +121,7 @@
       // lines together so neither transition starts ahead of the other.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          if (nextLine.dataset.state !== "enter") return;
+          if (!nextLine.isConnected || nextLine.dataset.state !== "enter") return;
           if (activeLine?.isConnected) {
             activeLine.dataset.state = "leave";
             const lineToRemove = activeLine;
@@ -144,17 +132,6 @@
           nextLine.dataset.state = "live";
         });
       });
-
-      const allLines = Array.from(slot.querySelectorAll(".message-thinking-runtime-line"));
-      if (allLines.length > 2) {
-        allLines.slice(0, allLines.length - 2).forEach((line) => {
-          if (line._runtimeRemoveTimer) {
-            clearTimeout(line._runtimeRemoveTimer);
-            line._runtimeRemoveTimer = 0;
-          }
-          line.remove();
-        });
-      }
     };
     let thinkingFloatingIconFrame = 0;
     const animateScrollButtonContentSwap = (button, apply) => {
@@ -255,9 +232,6 @@
         });
         return;
       }
-      button.classList.add("thinking-scroll-btn");
-      button.setAttribute("aria-label", "Scroll to bottom");
-      button.setAttribute("title", "Scroll to bottom");
     };
     const scheduleThinkingFloatingIcons = () => {
       if (thinkingFloatingIconFrame) return;
@@ -290,7 +264,7 @@
         runningAgents.map((agent) => [
           agent,
           currentThinkingRuntimeItem(agent)
-            ? [currentThinkingRuntimeItem(agent).id, currentThinkingRuntimeItem(agent).text, currentThinkingRuntimeItem(agent).phase]
+            ? [currentThinkingRuntimeItem(agent).id, currentThinkingRuntimeItem(agent).keyword, currentThinkingRuntimeItem(agent).detail, currentThinkingRuntimeItem(agent).phase]
             : null,
         ])
       );
@@ -335,7 +309,9 @@
         const runtimeItem = currentThinkingRuntimeItem(agent);
         const label = row.querySelector(".message-thinking-label-agent");
 
-        const nextText = runtimeItem ? buildThinkingRuntimeHtml(runtimeItem.text) : `<span class="message-thinking-runtime-keyword">${wrapThinkingChars("Running...")}</span>`;
+        const nextText = runtimeItem
+          ? buildThinkingRuntimeHtml(runtimeItem.keyword, runtimeItem.detail)
+          : '<span class="message-thinking-runtime-keyword">Running...</span>';
         const nextId = runtimeItem ? (String(runtimeItem.id || "")) : "generic";
         if (label) {
           syncThinkingRuntimeSlot(label, {

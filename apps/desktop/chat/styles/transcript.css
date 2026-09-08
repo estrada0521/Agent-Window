@@ -734,19 +734,17 @@
       min-width: 0;
     }
 
+__CHAT_INCLUDE:../../../shared/chat/thinking.css__
+
     .message-thinking-runtime-slot {
-      --thinking-runtime-edge-fade: 0.18em;
-      display: inline-grid;
-      grid-template-columns: 1fr;
-      align-items: center;
-      vertical-align: middle;
       min-width: 0;
       max-width: min(72vw, 560px);
       width: auto;
       min-height: 1.6em;
-      height: 1.6em;
-      overflow: hidden;
-      position: relative;
+    }
+
+    .message-thinking-runtime-slot:has(> .message-thinking-runtime-line[data-state="leave"]) {
+      --thinking-runtime-edge-fade: 0.18em;
       mask-image: linear-gradient(
         to bottom,
         transparent 0,
@@ -764,132 +762,18 @@
     }
 
     .message-thinking-runtime-line {
-      color: var(--muted);
-      font-weight: 600;
-      font-size: 1.03em;
-      line-height: 1.25;
-      letter-spacing: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
       vertical-align: middle;
       position: relative;
       inset: auto;
-      grid-area: 1 / 1;
       justify-self: start;
-      min-width: 0;
-      max-width: 100%;
       opacity: 1;
       transform: translateY(0);
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.04);
-      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
     }
 
     .message-thinking-runtime-body {
       min-width: 0;
       max-width: 100%;
-      flex: 0 1 auto;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .message-thinking-runtime-keyword {
-      font-weight: 600;
-      color: var(--fg);
-      display: inline;
-      white-space: normal;
-    }
-
-    .message-thinking-runtime-detail {
-      font-weight: var(--body-weight);
-      color: var(--muted);
-    }
-
-    .message-thinking-runtime-line[data-state="enter"] {
-      opacity: 0;
-      transform: translateY(100%);
-      z-index: 1;
-    }
-
-    .message-thinking-runtime-line[data-state="live"] {
-      opacity: 1;
-      transform: translateY(0);
-      z-index: 2;
-    }
-
-    .message-thinking-runtime-line[data-state="leave"] {
-      opacity: 0;
-      transform: translateY(-100%);
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    .thinking-char {
-      color: var(--muted);
-      font-size: 1.25em;
-      animation: thinking-char-pulse 1s linear infinite;
-      animation-delay: calc(var(--char-i) * 0.12s);
-    }
-
-    @keyframes thinking-char-pulse {
-      0% {
-        color: var(--fg);
-      }
-
-      10% {
-        color: var(--fg);
-      }
-
-      22% {
-        color: var(--fg);
-      }
-
-      34% {
-        color: var(--muted);
-      }
-
-      88% {
-        color: var(--muted);
-      }
-
-      100% {
-        color: var(--fg);
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .message-thinking-icon-wrap {
-        animation: none;
-      }
-
-      .message-thinking-icon {
-        animation: none;
-      }
-
-      .message-thinking-glow {
-        animation: none;
-        display: none;
-      }
-
-      .thinking-char {
-        animation: none;
-        color: var(--muted);
-      }
-
-      .message-thinking-runtime-line {
-        transition: none;
-      }
-
-      .message-thinking-runtime-line[data-state="enter"],
-      .message-thinking-runtime-line[data-state="leave"],
-      .message-thinking-runtime-line[data-state="live"] {
-        animation: none;
-        opacity: 1;
-        transform: none;
-        transition: none;
-      }
-
     }
 
     .meta {

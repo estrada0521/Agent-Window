@@ -4,19 +4,20 @@ import threading
 from collections import deque
 
 
-MIN_RUNTIME_DISPLAY_SECONDS = 0.75
+MIN_RUNTIME_DISPLAY_SECONDS = 0.5
 # Bounds how far the display can lag live activity: at one item per
-# MIN_RUNTIME_DISPLAY_SECONDS, this is ~15s of worst-case backlog. Beyond
+# MIN_RUNTIME_DISPLAY_SECONDS, this is ~10s of worst-case backlog. Beyond
 # that, older queued events are dropped in favor of newer ones.
 MAX_RUNTIME_DISPLAY_QUEUE = 20
 
 
-def _runtime_event_payload(runtime, agent: str, text: str, source_id: str) -> dict:
+def _runtime_event_payload(runtime, agent: str, keyword: str, detail: str, source_id: str) -> dict:
     runtime._idle_running_event_seq += 1
     return {
         "current_event": {
             "id": f"{agent}:{runtime._idle_running_event_seq}",
-            "text": text,
+            "keyword": keyword,
+            "detail": detail,
             "source_id": source_id,
         }
     }
@@ -33,8 +34,10 @@ def _publish_next_runtime_display(runtime, agent: str) -> None:
         if not queue:
             timers.pop(agent, None)
             return
-        text, source_id = queue.popleft()
-        runtime._idle_running_display_by_agent[agent] = _runtime_event_payload(runtime, agent, text, source_id)
+        keyword, detail, source_id = queue.popleft()
+        runtime._idle_running_display_by_agent[agent] = _runtime_event_payload(
+            runtime, agent, keyword, detail, source_id
+        )
         timer = threading.Timer(MIN_RUNTIME_DISPLAY_SECONDS, _publish_next_runtime_display, args=(runtime, agent))
         timer.daemon = True
         timers[agent] = timer
@@ -44,17 +47,18 @@ def _publish_next_runtime_display(runtime, agent: str) -> None:
 
 
 def push_runtime_display(runtime, agent: str, events: list[dict]) -> None:
-    normalized: list[tuple[str, str]] = []
+    normalized: list[tuple[str, str, str]] = []
     for ev in events:
         if not isinstance(ev, dict):
             continue
-        text = str(ev.get("text") or "").strip()
-        if not text:
+        keyword = str(ev.get("keyword") or "").strip()
+        if not keyword:
             continue
+        detail = str(ev.get("detail") or "").strip()
         source_id = str(ev.get("source_id") or "").strip()
-        if normalized and normalized[-1] == (text, source_id):
+        if normalized and normalized[-1] == (keyword, detail, source_id):
             continue
-        normalized.append((text, source_id))
+        normalized.append((keyword, detail, source_id))
     if not normalized:
         return
 
@@ -71,7 +75,8 @@ def push_runtime_display(runtime, agent: str, events: list[dict]) -> None:
         queue = queues.setdefault(agent, deque(maxlen=MAX_RUNTIME_DISPLAY_QUEUE))
         current_event = ((runtime._idle_running_display_by_agent.get(agent) or {}).get("current_event") or {})
         current_key = (
-            str(current_event.get("text") or "").strip(),
+            str(current_event.get("keyword") or "").strip(),
+            str(current_event.get("detail") or "").strip(),
             str(current_event.get("source_id") or "").strip(),
         )
         for item in normalized:

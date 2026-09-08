@@ -115,12 +115,12 @@ class CodexRuntime56Tests(unittest.TestCase):
         )
         self.assertEqual(web, [("web_search", {"type": "search", "query": "Codex 5.6"})])
         self.assertEqual(search, [("tool_search", {"query": "spawn agent"})])
-        self.assertTrue(runtime_tool_events(*web[0])[0]["text"])
-        self.assertTrue(runtime_tool_events(*search[0])[0]["text"])
+        self.assertTrue(runtime_tool_events(*web[0])[0]["keyword"])
+        self.assertTrue(runtime_tool_events(*search[0])[0]["keyword"])
 
     def test_unknown_56_tool_uses_generic_fallback(self) -> None:
         events = runtime_tool_events("future_connector", {"value": 1})
-        self.assertTrue(events[0]["text"])
+        self.assertTrue(events[0]["keyword"])
 
     def test_polling_transport_calls_remain_quiet(self) -> None:
         self.assertEqual(runtime_tool_events("wait", {"cell_id": "1"}), [])
