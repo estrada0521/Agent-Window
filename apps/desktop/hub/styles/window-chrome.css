@@ -190,7 +190,7 @@
     html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-reload-btn svg,
     html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle svg,
     html[data-tauri-app="1"][data-auto-window-height="1"] .desk-panel-ctrl-btn svg {
-      display: none;
+      display: none !important;
     }
     html[data-tauri-app="1"][data-auto-window-height="1"] .page-menu-btn::after,
     html[data-tauri-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn::after,
