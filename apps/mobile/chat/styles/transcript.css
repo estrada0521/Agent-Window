@@ -142,20 +142,20 @@
       }
     }
 
-    @keyframes streamCharReveal {
+    @keyframes streamReveal {
       to {
         opacity: 1;
       }
     }
 
-    .streaming-body-reveal .md-body .stream-char {
+    .streaming-body-reveal .md-body .stream-reveal-chunk {
       opacity: 0;
-      animation: streamCharReveal 0.021s ease forwards;
-      animation-delay: calc(var(--stream-char-i) * var(--stream-char-delay, 8ms));
+      animation: streamReveal 0.021s ease forwards;
+      animation-delay: calc(var(--stream-reveal-step) * var(--stream-reveal-delay, 8ms));
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .streaming-body-reveal .md-body .stream-char {
+      .streaming-body-reveal .md-body .stream-reveal-chunk {
         animation: none;
         opacity: 1;
       }

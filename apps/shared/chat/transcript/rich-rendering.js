@@ -147,9 +147,10 @@
       const s = String(entry?.sender || "").trim().toLowerCase();
       return s !== "" && s !== "user" && s !== "system";
     };
-    const STREAM_CHAR_SKIP_SEL = ".katex, .katex-display, table, .table-scroll, script, style";
-    const STREAM_CHAR_ANIM_MS = 21;
-    const STREAM_CHAR_CAP = 3600;
+    const STREAM_REVEAL_SKIP_SEL = ".katex, .katex-display, table, .table-scroll, script, style";
+    const STREAM_REVEAL_ANIM_MS = 21;
+    const STREAM_REVEAL_STEP_MS = 8;
+    const STREAM_REVEAL_MAX_MS = 750;
     const streamGraphemeSegmenter = typeof Intl !== "undefined" && Intl.Segmenter
       ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
       : null;
@@ -163,67 +164,76 @@
       }
       return Array.from(raw);
     };
-    const unwrapStreamCharSpans = (row) => {
+    const unwrapStreamRevealSpans = (row) => {
       if (!row) return;
       row.querySelectorAll(".md-body").forEach((md) => {
-        md.querySelectorAll(".stream-char").forEach((span) => {
+        md.querySelectorAll(".stream-reveal-chunk").forEach((span) => {
           span.replaceWith(document.createTextNode(span.textContent));
         });
         try { md.normalize(); } catch (_) {}
-        delete md.dataset.streamCharsApplied;
+        md.style.removeProperty("--stream-reveal-delay");
+        delete md.dataset.streamRevealApplied;
       });
     };
-    const applyCharStreamRevealToRow = (row) => {
+    const applyStreamRevealToRow = (row) => {
       const mdBody = row?.querySelector?.(".md-body");
-      if (!mdBody || mdBody.dataset.streamCharsApplied) return;
+      if (!mdBody || mdBody.dataset.streamRevealApplied) return;
       if (scopeNeedsMathRender(mdBody)) {
-        mdBody.dataset.streamCharsApplied = "1";
+        mdBody.dataset.streamRevealApplied = "1";
         row._streamRevealTotalMs = 0;
         return;
       }
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        mdBody.dataset.streamCharsApplied = "1";
+        mdBody.dataset.streamRevealApplied = "1";
         row._streamRevealTotalMs = 0;
         return;
       }
-      let idx = 0;
-      const wrapText = (node) => {
-        if (idx >= STREAM_CHAR_CAP) return;
-        const text = node.nodeValue;
-        if (!text || !/\S/.test(text)) return;
-        const parentEl = node.parentElement;
-        if (!parentEl || parentEl.closest(STREAM_CHAR_SKIP_SEL)) return;
-        const units = streamTextUnits(text);
-        const take = Math.min(units.length, STREAM_CHAR_CAP - idx);
-        const head = units.slice(0, take);
-        const tail = units.slice(take).join("");
-        const frag = document.createDocumentFragment();
-        for (const ch of head) {
-          const span = document.createElement("span");
-          span.className = "stream-char";
-          span.textContent = ch;
-          span.style.setProperty("--stream-char-i", String(idx++));
-          frag.appendChild(span);
-        }
-        if (tail) frag.appendChild(document.createTextNode(tail));
-        node.parentNode.replaceChild(frag, node);
-      };
+      const textNodes = [];
+      let totalUnits = 0;
       const walk = (node) => {
-        if (idx >= STREAM_CHAR_CAP) return;
         if (node.nodeType === Node.TEXT_NODE) {
-          wrapText(node);
+          const text = node.nodeValue;
+          const parentEl = node.parentElement;
+          if (!text || !/\S/.test(text) || !parentEl || parentEl.closest(STREAM_REVEAL_SKIP_SEL)) return;
+          const units = streamTextUnits(text);
+          if (!units.length) return;
+          textNodes.push({ node, units });
+          totalUnits += units.length;
           return;
         }
         if (node.nodeType !== Node.ELEMENT_NODE) return;
-        if (node.matches(STREAM_CHAR_SKIP_SEL)) return;
+        if (node.matches(STREAM_REVEAL_SKIP_SEL)) return;
         Array.from(node.childNodes).forEach(walk);
       };
       walk(mdBody);
-      mdBody.dataset.streamCharsApplied = "1";
-      const totalDuration = Math.min(idx * 8, 750);
-      const charDelay = idx > 0 ? totalDuration / idx : 8;
-      mdBody.style.setProperty("--stream-char-delay", charDelay + "ms");
-      row._streamRevealTotalMs = totalDuration + STREAM_CHAR_ANIM_MS + 80;
+      mdBody.dataset.streamRevealApplied = "1";
+      if (!totalUnits) {
+        row._streamRevealTotalMs = 0;
+        return;
+      }
+      const totalDuration = Math.min(totalUnits * STREAM_REVEAL_STEP_MS, STREAM_REVEAL_MAX_MS);
+      const revealSteps = Math.min(totalUnits, Math.ceil(totalDuration / STREAM_REVEAL_STEP_MS));
+      let globalIndex = 0;
+      for (const { node, units } of textNodes) {
+        const frag = document.createDocumentFragment();
+        let localIndex = 0;
+        while (localIndex < units.length) {
+          const step = Math.min(revealSteps - 1, Math.floor(globalIndex * revealSteps / totalUnits));
+          const nextStepAt = Math.ceil((step + 1) * totalUnits / revealSteps);
+          const take = Math.max(1, Math.min(units.length - localIndex, nextStepAt - globalIndex));
+          const span = document.createElement("span");
+          span.className = "stream-reveal-chunk";
+          span.textContent = units.slice(localIndex, localIndex + take).join("");
+          span.style.setProperty("--stream-reveal-step", String(step));
+          frag.appendChild(span);
+          localIndex += take;
+          globalIndex += take;
+        }
+        node.parentNode.replaceChild(frag, node);
+      }
+      const stepDelay = totalDuration / revealSteps;
+      mdBody.style.setProperty("--stream-reveal-delay", stepDelay + "ms");
+      row._streamRevealTotalMs = totalDuration + STREAM_REVEAL_ANIM_MS + 80;
     };
     const metaAgentLabel = (name, textClass, iconSide = "right", { iconOnly = false } = {}) => {
       const raw = (name || "").trim() || "unknown";

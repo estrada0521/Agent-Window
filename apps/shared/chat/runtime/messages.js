@@ -116,6 +116,7 @@ __CHAT_INCLUDE:../messages-data.js__
         streamDone = true;
         row.classList.remove("streaming-body-reveal");
         delete row._streamRevealTotalMs;
+        unwrapStreamRevealSpans(row);
         if (row.isConnected) linkifyInlineCodeFileRefsImmediate(row);
         document.dispatchEvent(new CustomEvent("chat-transcript-settled"));
       };

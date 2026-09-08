@@ -168,7 +168,7 @@
 
         queueStableCodeBlockSync(root);
         pendingStreamRowCleanups.forEach(({ row, stream }) => {
-          if (stream) applyCharStreamRevealToRow(row);
+          if (stream) applyStreamRevealToRow(row);
           scheduleAnimateInCleanup(row, { streamBody: stream });
         });
         renderThinkingIndicator();
