@@ -13,9 +13,9 @@ from backend_core.tmux.control import (
 )
 from backend_core.access.settings import (
     agent_window_run_dir,
-    agent_window_session_root,
     port_is_bindable,
     pwa_https_enabled,
+    session_artifact_dir,
     workspace_chat_port,
 )
 from server.chat_process import launch_chat_server, wait_for_chat_server
@@ -203,20 +203,11 @@ def delete_archived_session(self, session_name: str) -> tuple[bool, str]:
     stop_ok, stop_detail = stop_chat_server(self, workspace)
     if not stop_ok:
         return False, stop_detail
-    log_dir = Path((record.get("log_dir") or "").strip())
+    log_dir = session_artifact_dir(session_name)
     if not log_dir.exists():
         return True, ""
-    allowed_roots = [
-        agent_window_session_root().resolve(),
-    ]
     try:
-        resolved = log_dir.resolve()
-    except OSError as exc:
-        return False, str(exc)
-    if not any(root == resolved or root in resolved.parents for root in allowed_roots):
-        return False, "Refusing to delete a path outside agent-window log roots."
-    try:
-        shutil.rmtree(resolved)
+        shutil.rmtree(log_dir)
     except OSError as exc:
         return False, str(exc)
     return True, ""

@@ -12,7 +12,6 @@ from backend_core.access.settings import agent_window_session_root, session_log_
 from backend_core.tmux.resolve import normalize_workspace
 
 
-_PREVIEW_TAIL_BYTES = 2 * 1024 * 1024
 _PREVIEW_TAIL_CHUNK_BYTES = 64 * 1024
 
 
@@ -47,21 +46,19 @@ def _compact_message_preview(entry: dict[str, Any]) -> dict[str, str]:
     return {"sender": sender, "text": compact, "revision": revision}
 
 
-def _iter_tail_lines(path: Path, *, max_bytes: int = _PREVIEW_TAIL_BYTES):
+def _iter_tail_lines(path: Path):
     try:
         with path.open("rb") as handle:
             handle.seek(0, 2)
             pos = handle.tell()
-            remaining = min(max_bytes, pos)
             buffer = b""
-            while pos > 0 and remaining > 0:
-                read_size = min(_PREVIEW_TAIL_CHUNK_BYTES, pos, remaining)
+            while pos > 0:
+                read_size = min(_PREVIEW_TAIL_CHUNK_BYTES, pos)
                 pos -= read_size
-                remaining -= read_size
                 handle.seek(pos)
                 buffer = handle.read(read_size) + buffer
                 parts = buffer.split(b"\n")
-                if pos > 0 and remaining > 0:
+                if pos > 0:
                     buffer = parts[0]
                     parts = parts[1:]
                 else:
@@ -73,31 +70,10 @@ def _iter_tail_lines(path: Path, *, max_bytes: int = _PREVIEW_TAIL_BYTES):
         logging.error(f"Unexpected error: {exc}", exc_info=True)
 
 
-def _latest_message_preview_from_full_scan(log_path: Path) -> dict[str, str]:
-    last_preview = {"sender": "", "text": "", "revision": ""}
-    with log_path.open("r", encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                entry = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            except Exception as exc:
-                logging.error(f"Unexpected error: {exc}", exc_info=True)
-                continue
-            preview = _compact_message_preview(entry)
-            if preview["text"]:
-                last_preview = preview
-    return last_preview
-
-
 def latest_message_preview(log_path: Path | None) -> dict[str, str]:
     if not log_path or not log_path.is_file():
         return {"sender": "", "text": "", "revision": ""}
     try:
-        size = log_path.stat().st_size
         for line in _iter_tail_lines(log_path):
             try:
                 entry = json.loads(line)
@@ -109,8 +85,6 @@ def latest_message_preview(log_path: Path | None) -> dict[str, str]:
             preview = _compact_message_preview(entry)
             if preview["text"]:
                 return preview
-        if size > _PREVIEW_TAIL_BYTES:
-            return _latest_message_preview_from_full_scan(log_path)
     except Exception as exc:
         logging.error(f"Unexpected error: {exc}", exc_info=True)
         return {"sender": "", "text": "", "revision": ""}
@@ -272,7 +246,6 @@ def archived_sessions(excluded_names: set[str] | list[str] | None = None) -> lis
             )
             record["agents"] = agents
             record["agents_reset"] = "agents" not in meta
-            record["log_dir"] = str(log_path.parent)
             existing = records.get(session_name)
             if existing is None or mtime > existing[0]:
                 records[session_name] = (mtime, record)
