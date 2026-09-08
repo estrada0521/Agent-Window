@@ -21,7 +21,7 @@
         btn.title = dpGitSummaryPinned ? "Unpin from Chat" : "Pin to Chat";
       });
     };
-    const dpRenderGitSummaryRoot = (root, rowHtml) => {
+    const dpRenderGitSummaryRoot = (root, rowHtml, { animateCounts = true } = {}) => {
       if (!root) return;
       const existingRow = root.querySelector(".git-summary-row");
       if (existingRow && rowHtml) {
@@ -50,7 +50,7 @@
             const nextValue = Math.max(0, parseInt(nextCount.dataset.countValue || nextCount.textContent || "0") || 0);
             const prevValue = Math.max(0, parseInt(countEl.dataset.countValue || countEl.textContent || "0") || 0);
             countEl.dataset.countValue = String(nextValue);
-            animateGitCount(countEl, prevValue, nextValue);
+            animateGitCount(countEl, prevValue, nextValue, { animate: animateCounts });
           });
           const existingChevron = existingRow.querySelector(".git-commit-chevron");
           const nextChevron = nextRow.querySelector(".git-commit-chevron");
@@ -63,7 +63,7 @@
       const previous = gitCountSnapshot(root);
       root.innerHTML = rowHtml;
       dpApplySummaryPinButtonPressed(root);
-      animateGitCountsFromSnapshot(root, previous);
+      if (animateCounts) animateGitCountsFromSnapshot(root, previous);
     };
     let dpGitHeaderSummaryState = null;
     const dpApplyGitOverviewHeader = () => {
@@ -81,9 +81,8 @@
       if (stripShown && inner && overlay) {
         dpRenderGitSummaryRoot(inner, rowHtml);
         dpPinnedExpandRefresh?.();
-      } else if (panelWrap) {
-        dpRenderGitSummaryRoot(panelWrap, rowHtml);
       }
+      if (panelWrap) dpRenderGitSummaryRoot(panelWrap, rowHtml, { animateCounts: dpPanelOpen });
 
       if (overlay && aside && inner) dpApplyPanelWidth();
     };

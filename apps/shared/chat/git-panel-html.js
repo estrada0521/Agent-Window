@@ -98,17 +98,25 @@
       }).join("");
       return `<span class="git-count-roll"><span class="git-count-roll-prefix">${prefix}</span><span class="git-count-roll-digits">${digitHtml}</span></span>`;
     };
-    const animateGitCount = (el, fromValue, toValue) => {
+    const animateGitCount = (el, fromValue, toValue, { animate = true } = {}) => {
       const prefix = el.dataset.countPrefix || "";
       const from = Math.max(0, parseInt(fromValue) || 0);
       const to = Math.max(0, parseInt(toValue) || 0);
-      if (!shouldAnimateGitCounts() || from === to) {
+      const token = `${Date.now()}:${Math.random()}`;
+      el.dataset.countAnimationToken = token;
+      const finish = () => {
+        if (el.dataset.countAnimationToken !== token) return;
+        delete el.dataset.countAnimationToken;
+        el.classList.remove("is-rolling");
         el.textContent = `${prefix}${to}`;
+      };
+      if (!animate || !shouldAnimateGitCounts() || from === to) {
+        finish();
         return;
       }
       const columns = visibleGitCountRollColumns(alignGitCountDigits(from, to), to);
       if (!columns.length || columns.every((col) => col.start === col.end)) {
-        el.textContent = `${prefix}${to}`;
+        finish();
         return;
       }
       const durationMs = 900;
@@ -116,12 +124,9 @@
       el.innerHTML = buildGitCountRollHtml(prefix, columns);
       el.classList.add("is-rolling");
       const strips = Array.from(el.querySelectorAll(".git-count-roll-strip"));
-      const finish = () => {
-        el.classList.remove("is-rolling");
-        el.textContent = `${prefix}${to}`;
-      };
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+          if (el.dataset.countAnimationToken !== token) return;
           strips.forEach((strip, i) => {
             const end = columns[i].end;
             strip.style.transition = `transform ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
