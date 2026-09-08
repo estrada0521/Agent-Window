@@ -14,7 +14,6 @@
       data?.worktree_unstaged_changed_paths ?? "",
       data?.worktree_unstaged_added ?? "",
       data?.worktree_unstaged_deleted ?? "",
-      data?.worktree_fingerprint ?? "",
       data?.worktree_has_diff ? "1" : "0",
       data?.total_commits ?? "",
       (Array.isArray(data?.recent_commits) ? data.recent_commits : []).map((commit) =>

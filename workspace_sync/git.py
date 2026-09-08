@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import re
 import subprocess
 import threading
@@ -17,7 +16,7 @@ _commit_list_cache: dict[tuple[str, str, int, int], dict] = {}
 def configure(*, workspace: str) -> None:
     global _workspace
     _workspace = workspace or ""
-    invalidate_git_overview_cache()
+    invalidate_git_cache(include_commits=True)
 
 
 def _git_root() -> Path:
@@ -41,13 +40,11 @@ def _run_git(root: Path, *args: str) -> subprocess.CompletedProcess:
     )
 
 
-def invalidate_git_overview_cache() -> None:
-    # Both caches key off HEAD/paths derived from the same repo state, so a
-    # change that invalidates one invalidates the other - there's no case
-    # where only the overview or only the commit list has gone stale.
+def invalidate_git_cache(*, include_commits: bool = False) -> None:
     with _git_overview_cache_lock:
         _git_overview_cache.clear()
-        _commit_list_cache.clear()
+        if include_commits:
+            _commit_list_cache.clear()
 
 
 def git_ignored_rel_paths(workspace: str, rel_paths: list[str]) -> set[str]:
@@ -178,13 +175,19 @@ def git_overview(*, offset=0, limit=50, force_refresh: bool = False, include_com
             if dels.isdigit():
                 deleted += int(dels)
         return added, deleted
+    def _status_path(line: str) -> str:
+        raw = str(line or "")
+        path = raw[3:] if len(raw) > 3 else raw
+        if " -> " in path:
+            path = path.rsplit(" -> ", 1)[-1]
+        return path.strip().strip('"')
     def _status_bucket_paths(lines: list[str]) -> tuple[set[str], set[str], set[str]]:
         staged: set[str] = set()
         unstaged: set[str] = set()
         untracked: set[str] = set()
         for raw in lines:
             line = str(raw or "")
-            path = _status_path_for_fingerprint(line)
+            path = _status_path(line)
             if not path:
                 continue
             if line.startswith("??"):
@@ -214,30 +217,6 @@ def git_overview(*, offset=0, limit=50, force_refresh: bool = False, include_com
         if not line or line.startswith("## "):
             continue
         status_lines.append(line)
-    def _status_path_for_fingerprint(line: str) -> str:
-        raw = str(line or "")
-        path = raw[3:] if len(raw) > 3 else raw
-        if " -> " in path:
-            path = path.rsplit(" -> ", 1)[-1]
-        return path.strip().strip('"')
-    def _worktree_fingerprint() -> str:
-        digest = hashlib.sha1()
-        for line in sorted(status_lines):
-            digest.update(line.encode("utf-8", "surrogateescape"))
-            digest.update(b"\0")
-            rel = _status_path_for_fingerprint(line)
-            if not rel:
-                continue
-            try:
-                st = (root / rel).stat()
-            except OSError:
-                digest.update(b"missing\0")
-                continue
-            digest.update(str(st.st_size).encode("ascii", "ignore"))
-            digest.update(b":")
-            digest.update(str(st.st_mtime_ns).encode("ascii", "ignore"))
-            digest.update(b"\0")
-        return digest.hexdigest()
     staged_paths, unstaged_paths, untracked_paths = _status_bucket_paths(status_lines)
     staged_diff_res = _run("diff", "--numstat", "--cached", "--")
     unstaged_diff_res = _run("diff", "--numstat", "--")
@@ -284,7 +263,6 @@ def git_overview(*, offset=0, limit=50, force_refresh: bool = False, include_com
         "worktree_unstaged_added": worktree_unstaged_added,
         "worktree_unstaged_deleted": worktree_unstaged_deleted,
         "worktree_unstaged_changed_paths": len(unstaged_paths),
-        "worktree_fingerprint": _worktree_fingerprint(),
         "status_lines": status_lines[:8],
         "recent_commits": recent_commits,
     }

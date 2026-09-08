@@ -133,7 +133,7 @@ class _DebouncedWorkspaceRefresh:
                 logging.error("Commit announcement refresh failed: %s", exc)
         if git_relevant:
             try:
-                self._api.invalidate_git_cache()
+                self._api.invalidate_git_cache(head_changed=git_head_changed or full_rescan)
             except Exception as exc:
                 logging.error("Workspace git cache invalidation failed: %s", exc)
         try:

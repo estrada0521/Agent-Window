@@ -46,8 +46,8 @@ class WorkspaceSyncApi:
     def invalidate_file_index_cache(self) -> None:
         self.file_runtime.invalidate_file_list_cache()
 
-    def invalidate_git_cache(self) -> None:
-        workspace_git.invalidate_git_overview_cache()
+    def invalidate_git_cache(self, *, head_changed: bool = False) -> None:
+        workspace_git.invalidate_git_cache(include_commits=head_changed)
         with self._sync_event_condition:
             self._git_cache_version += 1
 

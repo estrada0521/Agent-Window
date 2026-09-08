@@ -38,7 +38,8 @@ class _FakeApi:
     def invalidate_file_index_cache(self) -> None:
         self.file_invalidations += 1
 
-    def invalidate_git_cache(self) -> None:
+    def invalidate_git_cache(self, *, head_changed: bool = False) -> None:
+        del head_changed
         self.git_invalidations += 1
 
     def publish_sync_event(self) -> None:
