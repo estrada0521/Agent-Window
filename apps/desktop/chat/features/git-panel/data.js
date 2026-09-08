@@ -205,7 +205,6 @@
         if (!dpPanelOpen && dpGitSummaryPinned) {
           return { updateList: false };
         }
-        dpSyncSummaryWrap();
         if (detailContext) return { updateList: false };
         return {
           updateList: true,
