@@ -187,11 +187,14 @@
     }
 
     function toggleDeskSidebar() {
-      if (!_deskAutoWindowHeight) setDeskSidebarOpen(!isDeskSidebarOpen());
+      // Fit Height collapses the sidebar to a native menu -- open that instead.
+      if (_deskAutoWindowHeight) { void openDeskNativeSessionSwitcher(); return; }
+      setDeskSidebarOpen(!isDeskSidebarOpen());
     }
 
     function toggleDeskRightPanel() {
-      if (!_deskAutoWindowHeight) sendDeskPanelCommand("");
+      if (_deskAutoWindowHeight) { void openDeskNativeGitChanges(); return; }
+      sendDeskPanelCommand("");
     }
 
     function toggleDeskSidebarOutward() {
@@ -304,8 +307,8 @@
         return;
       }
       // In-app view toggles: plain ⌘ (like ⌘, and the text-size chords), not
-      // the ⌥⌘ family that resizes/moves the window. No-ops in Fit Height,
-      // where both panels are native menus.
+      // the ⌥⌘ family that resizes/moves the window. In Fit Height both panels
+      // are native menus, so these open those instead (see toggleDesk* above).
       if (event.metaKey && !event.altKey && event.code === "KeyB") {
         event.preventDefault();
         toggleDeskSidebar();

@@ -63,6 +63,10 @@
         toggleDeskSidebar();
         return;
       }
+      if (event.data && event.data.type === "toggle-desktop-right-panel") {
+        toggleDeskRightPanel();
+        return;
+      }
       if (event.data && event.data.type === "toggle-hub-sidebar-outward" && event.source === _deskChatFrame?.contentWindow) {
         toggleDeskSidebarOutward();
         return;

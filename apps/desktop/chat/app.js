@@ -1033,20 +1033,18 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           return;
         }
         // In-app view toggles: plain ⌘ (like ⌘, and the text-size chords),
-        // not the ⌥⌘ family that resizes/moves the window.
+        // not the ⌥⌘ family that resizes/moves the window. In Fit Height both
+        // panels are native menus, so the same keys open those (like ⌘,).
         if (event.metaKey && !event.altKey && event.code === "KeyB") {
           event.preventDefault();
-          // Nothing to toggle while Fit Height has the sidebar collapsed to
-          // native menus.
-          if (document.documentElement.dataset.autoWindowHeight !== "1") {
-            window.parent?.postMessage({ type: "toggle-hub-sidebar" }, "*");
-          }
+          window.parent?.postMessage({ type: "toggle-hub-sidebar" }, "*");
           return;
         }
         if (event.metaKey && !event.altKey && event.code === "KeyE") {
           event.preventDefault();
-          // The right pane is a native menu in Fit Height -- nothing to toggle.
-          if (document.documentElement.dataset.autoWindowHeight !== "1") {
+          if (document.documentElement.dataset.autoWindowHeight === "1") {
+            window.parent?.postMessage({ type: "toggle-desktop-right-panel" }, "*");
+          } else {
             toggleDesktopRightPanel();
           }
           return;
