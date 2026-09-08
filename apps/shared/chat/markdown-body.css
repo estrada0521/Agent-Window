@@ -98,11 +98,12 @@
       text-decoration: none;
     }
 
-    /* Dark body text is light-weight, so a 650 file link reads as an odd bold
+    /* Dark body text is light-weight, so a 650 colored link reads as an odd bold
        stab; inheriting (~300) went too thin. 400 sits between, leaning on
        colour for the rest of the distinction. */
     html[data-theme="dark"] .md-body a.inline-file-link,
-    html[data-theme="dark"] .md-body a.local-file-link {
+    html[data-theme="dark"] .md-body a.local-file-link,
+    html[data-theme="dark"] .md-body a:not(.inline-file-link):not(.local-file-link) {
       font-weight: 400;
     }
 
@@ -418,11 +419,8 @@
 
     .md-body a:not(.inline-file-link):not(.local-file-link) {
       color: var(--external-link-fg);
+      font-weight: 650;
       text-decoration: none;
-    }
-
-    .md-body .markdown-link-target {
-      color: var(--external-link-fg);
     }
 
     .has-hover .md-body a:hover {

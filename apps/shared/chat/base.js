@@ -98,18 +98,6 @@
         }
       });
     };
-    const revealExternalMarkdownLinkTargets = (root) => {
-      root.querySelectorAll("a[href]").forEach((anchor) => {
-        if (anchor.classList.contains("inline-file-link") || anchor.classList.contains("local-file-link")) return;
-        const href = String(anchor.getAttribute("href") || "").trim();
-        const label = String(anchor.textContent || "").trim();
-        if (!href || label === href) return;
-        const target = document.createElement("span");
-        target.className = "markdown-link-target";
-        target.textContent = ` (${href})`;
-        anchor.after(target);
-      });
-    };
     const applyWrittenOrderedListNumbers = (root, source) => {
       if (!root || typeof marked?.lexer !== "function") return;
       const values = [];

@@ -6,7 +6,6 @@
     const postRenderScope = (scope) => {
       decorateLocalFileLinks(scope);
       linkifyInlineCodeFileRefs(scope);
-      revealExternalMarkdownLinkTargets(scope);
       renderMathInScope(scope);
       syncWideBlockRows(scope);
       syncMessageCollapse(scope);
