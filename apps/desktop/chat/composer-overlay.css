@@ -24,11 +24,11 @@
       align-items: flex-end;
       padding-bottom: calc(var(--text-size, 13px) * 12 / 13);
     }
-    /* ...and the backdrop tint/blur snap to full strength instead of easing
-       over 320ms -- in this tiny window the lag showed the raw transcript for a
-       beat after the resize. Only opacity fades. */
+    /* ...and the whole overlay snaps in, no fade: a fading backdrop layer that
+       the concurrent window resize catches half-composited is the "ghost" seen
+       at the top. Only .composer itself keeps its slide/fade. */
     html[data-auto-window-height="1"] .composer-overlay {
-      transition: opacity 160ms ease;
+      transition: none;
     }
     html[data-auto-window-height="1"] .composer-overlay::before {
       transition: none;
