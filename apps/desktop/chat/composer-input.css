@@ -295,9 +295,15 @@
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent var(--chat-edge-fade-hard), #000 var(--chat-edge-fade), #000 calc(100% - var(--chat-edge-fade)), transparent calc(100% - var(--chat-edge-fade-hard)), transparent 100%);
       mask-image: linear-gradient(to bottom, transparent 0, transparent var(--chat-edge-fade-hard), #000 var(--chat-edge-fade), #000 calc(100% - var(--chat-edge-fade)), transparent calc(100% - var(--chat-edge-fade-hard)), transparent 100%);
     }
-    html[data-auto-window-height="1"] main::before,
-    html[data-auto-window-height="1"] main::after {
+    html[data-auto-window-height="1"] main::before {
       min-height: var(--message-step-top-gap);
+    }
+    /* The last flow item already carries 0.92em of its own trailing space
+       (message-row padding-bottom, or the running indicator's margin-bottom);
+       top it up to one step gap so the room below the fitted content matches
+       main::before above it. */
+    html[data-auto-window-height="1"] main::after {
+      min-height: calc(var(--message-step-top-gap) - 0.92em);
     }
     html[data-mobile="1"] main {
       padding-right: var(--message-side-padding);
