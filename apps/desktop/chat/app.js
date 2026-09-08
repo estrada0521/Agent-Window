@@ -162,8 +162,6 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     // "Fit Height to Message": after a message settles, report the target row's
     // rendered extent so the hub can size the window to it. Bounding-rect height
     // is scroll-position independent and ignores the transcript spacers.
-    let _fitHeightTimer = 0;
-    let _closeRefitTimer = 0;
     // Breathing room above the composer field when the window is sized to it.
     const reportFitHeight = ({ fromComposer = false } = {}) => {
       if (!isHubIframeChat() || document.documentElement.dataset.autoWindowHeight !== "1") return;
@@ -252,20 +250,9 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       _stickyToBottom = false;
       reportFitHeight();
     };
-    const scheduleFitHeight = () => {
-      // Fire immediately (message just entered the DOM -> resize in step), then
-      // a short follow-up to catch late layout: code blocks, KaTeX, image loads.
-      reportFitHeight();
-      clearTimeout(_fitHeightTimer);
-      _fitHeightTimer = setTimeout(reportFitHeight, 120);
-      // A real transcript update supersedes whatever the composer-close refit
-      // below was about to (re)measure -- drop it so it doesn't fire a moment
-      // later and redundantly resize to the same value it's already at.
-      clearTimeout(_closeRefitTimer);
-    };
-    document.addEventListener("chat-transcript-settled", scheduleFitHeight);
-    // The running indicator changes height between tools/phases -- re-fit so the
-    // window tracks it instead of clipping it or drifting the message above.
+    document.addEventListener("chat-transcript-settled", () => reportFitHeight());
+    // The running indicator only enters, leaves, or gains/loses an agent row
+    // (thinking.js fires this then) -- re-fit so the window follows that step.
     let _thinkingRefitFrame = 0;
     document.addEventListener("chat-thinking-updated", () => {
       if (document.documentElement.dataset.autoWindowHeight !== "1" || _thinkingRefitFrame) return;
@@ -282,20 +269,13 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       requestAnimationFrame(() => reportFitHeight({ fromComposer: true }));
     });
     document.addEventListener("composer-overlay-close-start", () => {
-      clearTimeout(_closeRefitTimer);
       if (document.documentElement.dataset.sendInFlight === "1") {
         // A send snaps back to the latest message, not whatever old row the
-        // transcript was scrolled to while composing.
+        // transcript was scrolled to while composing. The refit itself waits
+        // for the sent message's own "chat-transcript-settled" -- refitting now
+        // would measure the previous last message and flash.
         _fitTargetRow = null;
         _stickyToBottom = true;
-        // Closing on send fires this before the just-sent message has
-        // actually rendered (that happens after the /send round trip
-        // resolves), so an immediate refit here would measure the *previous*
-        // last message and snap the window to that size for a moment before
-        // "chat-transcript-settled" (for the new message) corrects it right
-        // after -- a visible flash. Give the round trip a head start instead;
-        // scheduleFitHeight cancels this if the real message settles first.
-        _closeRefitTimer = setTimeout(reportFitHeight, 200);
         return;
       }
       // Plain close (Escape / click-outside, nothing being sent): no new

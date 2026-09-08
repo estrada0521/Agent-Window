@@ -303,6 +303,10 @@
         return;
       }
 
+      const hadContainer = !!existingContainer;
+      const prevRowCount = existingContainer
+        ? existingContainer.querySelectorAll(".message-thinking-row[data-agent]").length
+        : 0;
       const container = existingContainer || document.createElement("div");
       container.className = "message-thinking-container";
 
@@ -358,9 +362,13 @@
         root.appendChild(container);
       }
       root.dataset.thinkingSig = nextThinkingSig;
-      // The container's height just changed; let Fit Height re-measure so the
-      // window grows with it instead of clipping the indicator.
-      document.dispatchEvent(new CustomEvent("chat-thinking-updated"));
+      // Only the indicator appearing or its agent-row count changing alters its
+      // height -- a keyword or tool swap inside a fixed-height row does not. Let
+      // Fit Height re-measure on that alone, not on every runtime update.
+      const rowCount = container.querySelectorAll(".message-thinking-row[data-agent]").length;
+      if (!hadContainer || rowCount !== prevRowCount) {
+        document.dispatchEvent(new CustomEvent("chat-thinking-updated"));
+      }
       scheduleThinkingFloatingIcons();
       maybeRestorePollScrollLock();
     };
