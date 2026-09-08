@@ -123,6 +123,13 @@
       transform: translateY(0) scale(1);
       pointer-events: auto;
     }
+    /* Fit Height: hold the composer at its start pose until the window has
+       actually grown, so it only ever slides up from the post-resize bottom. */
+    html[data-auto-window-height="1"] .composer-overlay.fit-arming .composer {
+      transition: none;
+      opacity: 0;
+      transform: translateY(42px) scale(0.952);
+    }
     .composer-main-shell {
       grid-column: 1 / -1;
       display: grid;

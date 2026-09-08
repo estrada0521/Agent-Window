@@ -90,12 +90,29 @@
       requestAnimationFrame(() => {
         if (typeof autoResizeTextarea === "function") autoResizeTextarea();
         setComposerCaretToEnd();
+        armFitComposerHold();
         composerOverlay.classList.add("visible");
         document.dispatchEvent(new CustomEvent("composer-overlay-open"));
         if (!immediateFocus && canFocus) {
           focusComposerTextarea();
         }
       });
+    };
+    // Fit Height: opening asks the hub to grow the window; pin the composer at
+    // its start pose until that resize lands so it only rises from the new bottom.
+    const armFitComposerHold = () => {
+      if (!composerOverlay || document.documentElement.dataset.autoWindowHeight !== "1") return;
+      composerOverlay.classList.add("fit-arming");
+      let done = false;
+      const disarm = () => {
+        if (done) return;
+        done = true;
+        window.removeEventListener("resize", disarm);
+        clearTimeout(fallback);
+        requestAnimationFrame(() => composerOverlay.classList.remove("fit-arming"));
+      };
+      const fallback = setTimeout(disarm, 200);
+      window.addEventListener("resize", disarm);
     };
     const closeComposerOverlay = ({ restoreFocus = false } = {}) => {
       if (!composerOverlay || composerOverlay.hidden) return;
@@ -104,7 +121,7 @@
         messageInput.blur();
       }
       document.dispatchEvent(new CustomEvent("composer-overlay-close-start"));
-      composerOverlay.classList.remove("visible");
+      composerOverlay.classList.remove("visible", "fit-arming");
       document.body.classList.remove("composer-overlay-open");
       if (isMobileComposer) {
         composerOverlay.classList.add("closing");
