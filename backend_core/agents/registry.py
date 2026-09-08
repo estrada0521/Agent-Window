@@ -18,7 +18,6 @@ class AgentDef:
     fallback_paths: tuple[str, ...] = ()
     prefer_fallback_paths: bool = False
     fallback_nvm: bool = False
-    selectable: bool = True
 
     @property
     def exe(self) -> str:
@@ -88,9 +87,6 @@ _register(
 
 
 ALL_AGENT_NAMES: list[str] = list(AGENTS.keys())
-SELECTABLE_AGENT_NAMES: list[str] = [
-    name for name, d in AGENTS.items() if d.selectable
-]
 
 
 def icon_file_map(repo_root: Path) -> dict[str, Path]:
@@ -108,5 +104,5 @@ def agent_names_js_set() -> str:
 
 
 def agent_names_js_array() -> str:
-    items = ", ".join(f'"{n}"' for n in SELECTABLE_AGENT_NAMES)
+    items = ", ".join(f'"{n}"' for n in ALL_AGENT_NAMES)
     return f"[{items}]"

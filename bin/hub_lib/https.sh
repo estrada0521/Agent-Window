@@ -82,8 +82,7 @@ ensure_repo_https_cert() {
   local cert_dir="${AGENT_WINDOW_CERTS_DIR:-$HOME/.agent-window/state/certs}"
   local cert_file="$cert_dir/cert.pem"
   local key_file="$cert_dir/key.pem"
-  local archive_dir="$cert_dir/archive"
-  local current_ip local_name ts
+  local current_ip local_name
   local required_missing=0
   local names=()
   local extra_name=""
@@ -123,10 +122,6 @@ ensure_repo_https_cert() {
 
   if [[ "$required_missing" -eq 1 ]]; then
     mkdir -p "$cert_dir"
-    mkdir -p "$archive_dir"
-    ts="$(date +%Y%m%d-%H%M%S)"
-    [[ -f "$cert_file" ]] && cp "$cert_file" "$archive_dir/cert.pem.${ts}"
-    [[ -f "$key_file" ]] && cp "$key_file" "$archive_dir/key.pem.${ts}"
     mkcert -cert-file "$cert_file" -key-file "$key_file" "${names[@]}" >/dev/null
   fi
 
