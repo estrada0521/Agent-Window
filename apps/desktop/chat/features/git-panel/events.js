@@ -85,8 +85,8 @@
           { height: `${startHeight}px` },
           { height: `${targetHeight}px` },
         ], {
-          duration: 120,
-          easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+          duration: 150,
+          easing: "ease",
           fill: "both",
         });
         expandAnimation = animation;

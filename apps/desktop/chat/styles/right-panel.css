@@ -919,7 +919,7 @@
     }
     .git-pinned-summary-aside .git-commit-chevron {
       transform: rotate(0deg) translateZ(0);
-      transition-duration: 120ms;
+      transition-duration: 150ms;
     }
     .git-pinned-summary-aside.is-expanded .git-commit-chevron {
       transform: rotate(90deg) translateZ(0);
