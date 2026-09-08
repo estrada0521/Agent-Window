@@ -38,7 +38,7 @@
       box-sizing: border-box;
     }
 
-    .message-row:not(.user):has(+ .sysmsg-row) {
+    .message-row:not(.user).precedes-system-message {
       padding-bottom: 0;
     }
 
