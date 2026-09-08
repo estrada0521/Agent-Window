@@ -32,6 +32,11 @@
           existingRow.className = nextRow.className;
           if (nextRow.dataset.diffKind) existingRow.dataset.diffKind = nextRow.dataset.diffKind;
           else delete existingRow.dataset.diffKind;
+          const existingLabel = existingRow.querySelector(".git-summary-label");
+          const nextLabel = nextRow.querySelector(".git-summary-label");
+          if (existingLabel && nextLabel && existingLabel.textContent !== nextLabel.textContent) {
+            existingLabel.textContent = nextLabel.textContent;
+          }
           const existingMeta = existingRow.querySelector(".git-summary-meta-text");
           const nextMeta = nextRow.querySelector(".git-summary-meta-text");
           if (existingMeta && nextMeta && existingMeta.textContent !== nextMeta.textContent) {
@@ -60,14 +65,9 @@
       dpApplySummaryPinButtonPressed(root);
       animateGitCountsFromSnapshot(root, previous);
     };
-    const dpSummaryCountsKey = (state) =>
-      Array.isArray(state?.counts) ? state.counts.map((value) => Math.max(0, parseInt(value) || 0)).join(":") : "";
     let dpGitHeaderSummaryState = null;
-    let dpGitAppliedSummaryCountsKey = "";
     const dpApplyGitOverviewHeader = () => {
       const rowHtml = dpGitHeaderSummaryState?.rowHtml || "";
-      const countsKey = dpSummaryCountsKey(dpGitHeaderSummaryState);
-      const shouldAnimate = countsKey !== dpGitAppliedSummaryCountsKey;
       const panelWrap = dpGitContent?.querySelector(".git-summary-wrap");
       const aside = document.getElementById("gitPinnedSummaryAside");
       const inner = document.getElementById("gitPinnedSummaryInner");
@@ -79,26 +79,11 @@
       }
 
       if (stripShown && inner && overlay) {
-        if (shouldAnimate) dpRenderGitSummaryRoot(inner, rowHtml);
-        else {
-          inner.innerHTML = rowHtml;
-          dpApplySummaryPinButtonPressed(inner);
-        }
+        dpRenderGitSummaryRoot(inner, rowHtml);
         dpPinnedExpandRefresh?.();
-      } else if (dpPanelOpen && panelWrap) {
-        if (shouldAnimate) dpRenderGitSummaryRoot(panelWrap, rowHtml);
-        else {
-          panelWrap.innerHTML = rowHtml;
-          dpApplySummaryPinButtonPressed(panelWrap);
-        }
       } else if (panelWrap) {
-        if (shouldAnimate) dpRenderGitSummaryRoot(panelWrap, rowHtml);
-        else {
-          panelWrap.innerHTML = rowHtml;
-          dpApplySummaryPinButtonPressed(panelWrap);
-        }
+        dpRenderGitSummaryRoot(panelWrap, rowHtml);
       }
-      dpGitAppliedSummaryCountsKey = countsKey;
 
       if (overlay && aside && inner) dpApplyPanelWidth();
     };
