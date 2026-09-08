@@ -111,9 +111,7 @@ fi
 
 installed_app="/Applications/Agent Window.app"
 rm -rf "/Applications/Agent Window.app"
-rm -rf "/Applications/Multiagent Chat.app"
 rm -rf "$HOME/Applications/Agent Window.app"
-rm -rf "$HOME/Applications/Multiagent Chat.app"
 mv "$app_path" "$installed_app"
 find "$bundle_dir" -mindepth 1 -maxdepth 1 -type d -name '*.app' -exec rm -rf {} +
 

@@ -31,13 +31,8 @@ def next_instance_name(current_agents: list[str], base_agent: str) -> str:
 
 
 def resolve_canonical_instance(current_agents: list[str], requested_name: str) -> str | None:
-    target = (requested_name or "").strip().lower()
-    if not target:
-        return None
-    for agent in current_agents or []:
-        if agent.strip().lower() == target:
-            return agent
-    return None
+    target = (requested_name or "").strip()
+    return target if target and target in (current_agents or []) else None
 
 
 def append_instance(current_agents: list[str], instance_name: str) -> list[str]:

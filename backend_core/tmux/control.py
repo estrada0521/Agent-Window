@@ -620,7 +620,7 @@ def remove_agent(
     initiator: str = "",
 ) -> tuple[str, bool]:
     name = (session_name or "").strip()
-    requested = (agent or "").strip().lower()
+    requested = (agent or "").strip()
     if not name:
         raise SessionControlError("session_name is required")
     if not requested:
