@@ -1,13 +1,5 @@
     let lastRenderPrepended = false;
     let _firstContentSettleFired = false;
-    const syncSystemMessageSpacing = (root) => {
-      if (!root) return;
-      root.querySelectorAll(".message-row").forEach((row) => {
-        const precedesSystem = !row.classList.contains("user")
-          && row.nextElementSibling?.classList.contains("sysmsg-row");
-        row.classList.toggle("precedes-system-message", !!precedesSystem);
-      });
-    };
     const render = (data, {
       forceScroll = false,
       forceFullRender = false,
@@ -174,7 +166,6 @@
           pendingStreamRowCleanups = pendingFullRowCleanup;
         }
 
-        syncSystemMessageSpacing(root);
         queueStableCodeBlockSync(root);
         pendingStreamRowCleanups.forEach(({ row, stream }) => {
           if (stream) applyCharStreamRevealToRow(row);
