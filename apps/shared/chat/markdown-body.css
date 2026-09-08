@@ -283,29 +283,39 @@
       border: none;
       border-radius: 8px;
       background: var(--code-copy-bg);
-      color: var(--icon-muted);
+      color: var(--muted);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
-      transition: background 0.15s, color 0.15s;
+      opacity: 0;
     }
 
-    .md-body .code-block-wrap:hover .code-copy-btn {
-      color: var(--icon-hover);
+    .has-hover .md-body .code-block-wrap:hover .code-copy-btn,
+    .md-body .code-block-wrap:focus-within .code-copy-btn,
+    .md-body .code-block-wrap .code-copy-btn.copied {
+      opacity: 1;
     }
 
     @media (pointer: coarse) {
       .md-body .code-block-wrap .code-copy-btn {
-        color: var(--icon-muted);
+        opacity: 1;
       }
     }
 
-    .md-body .code-block-wrap .code-copy-btn:hover {
+    .has-hover .md-body .code-block-wrap .code-copy-btn:hover {
       background: transparent;
-      color: var(--icon-hover);
+      color: var(--fg);
+    }
+
+    .md-body .code-block-wrap .code-copy-btn:active {
+      background: transparent;
+    }
+
+    .md-body .code-block-wrap .code-copy-btn.copied {
+      color: var(--fg);
     }
 
     .md-body .code-block-wrap .code-copy-btn svg {
