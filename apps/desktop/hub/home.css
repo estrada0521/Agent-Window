@@ -1000,8 +1000,6 @@
     .desk-new-session-toggle {
       width: 100%;
       margin: 0;
-      padding: round(nearest, calc(var(--text-size, 13px) * 10 / 13), 1px)
-        round(nearest, calc(var(--text-size, 13px) * 12 / 13), 1px);
       opacity: 1;
     }
     .desk-sidebar-sessions,
@@ -1312,7 +1310,6 @@
     .desk-new-session-toggle .desk-row-name {
       text-align: left;
       font-size: var(--text-size, 13px);
-      line-height: round(nearest, calc(var(--text-size, 13px) * 1.2), 1px);
       font-weight: inherit;
       opacity: 1;
     }
@@ -1326,6 +1323,7 @@
       margin-right: 0.54em;
       flex: none;
       font-size: var(--text-size, 13px);
+      line-height: 1.2;
       color: var(--muted);
       visibility: hidden;
       pointer-events: none;
