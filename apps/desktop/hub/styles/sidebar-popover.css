@@ -6,10 +6,10 @@
       box-shadow:
         inset 0 0.5px 0 rgba(255, 255, 255, 0.06),
         0 1px 2px rgba(0, 0, 0, 0.12);
-      border-radius: 17px;
+      border-radius: calc(var(--text-size, 13px) * 17 / 13);
       padding: 6px 0;
-      min-width: 160px;
-      max-width: 220px;
+      min-width: round(nearest, calc(var(--text-size, 13px) * 160 / 13), 1px);
+      max-width: round(nearest, calc(var(--text-size, 13px) * 220 / 13), 1px);
       transform-origin: top left;
     }
     .desk-sidebar-hover-list {
@@ -18,19 +18,20 @@
       overflow-y: auto;
       scrollbar-width: none;
       font-size: var(--text-size, 13px);
+      --hover-fade: round(nearest, calc(var(--text-size, 13px) * 32 / 13), 1px);
     }
     .desk-sidebar-hover-list::-webkit-scrollbar { display: none; }
     .desk-sidebar-hover-list[data-scroll-fade="top"] {
-      mask-image: linear-gradient(to bottom, transparent 0, black 48px);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 48px);
+      mask-image: linear-gradient(to bottom, transparent 0, black var(--hover-fade));
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--hover-fade));
     }
     .desk-sidebar-hover-list[data-scroll-fade="bottom"] {
-      mask-image: linear-gradient(to bottom, black calc(100% - 48px), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 48px), transparent 100%);
+      mask-image: linear-gradient(to bottom, black calc(100% - var(--hover-fade)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black calc(100% - var(--hover-fade)), transparent 100%);
     }
     .desk-sidebar-hover-list[data-scroll-fade="both"] {
-      mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0, black var(--hover-fade), black calc(100% - var(--hover-fade)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--hover-fade), black calc(100% - var(--hover-fade)), transparent 100%);
     }
     .desk-sidebar-hover-list .desk-section-label {
       padding: 1.4em 1.2em 0.3em;
