@@ -446,7 +446,9 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     };
     const loadDesktopRightPanelView = ({ reset = false, animateRepo = true } = {}) => {
       if (!dpPanelOpen) return Promise.resolve();
-      const gitP = dpLoadGitPage({ reset: true });
+      const hasGitShell = gitSession.hasShell();
+      if (reset && hasGitShell) dpCloseGitDetail();
+      const gitP = hasGitShell ? dpRefreshGitOverview() : dpLoadGitPage({ reset: true });
       dpLoadRepoDir(dpRepoBrowserPath || "", { animate: animateRepo });
       return Promise.resolve(gitP);
     };
