@@ -350,31 +350,18 @@
     };
     timeline?.addEventListener("scroll", scheduleThinkingFloatingIcons, { passive: true });
     window.addEventListener("resize", scheduleThinkingFloatingIcons, { passive: true });
-    // Clicking a running agent's icon opens that agent's tmux pane. Ctrl+<n>
-    // opens the n-th agent's pane, n being its position in the target picker --
-    // the same order Ctrl+<n> selects a chip in while the composer is open.
-    const openAgentTerminalPane = (agent) => {
-      if (!agent) return;
-      fetch("/open-terminal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ agent }),
-      }).catch(() => {});
-    };
     if (document.documentElement.dataset.mobile !== "1") {
       timeline?.addEventListener("click", (event) => {
-        const row = event.target.closest(".message-thinking-icon-wrap")?.closest(".message-thinking-row[data-agent]");
-        if (row) openAgentTerminalPane(row.dataset.agent || "");
-      });
-      document.addEventListener("keydown", (event) => {
-        if (!event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || event.repeat) return;
-        const match = /^Digit([1-9])$/.exec(event.code || "");
-        // Composer open: this chord is the target picker's.
-        if (!match || document.body.classList.contains("composer-overlay-open")) return;
-        const chip = document.querySelectorAll("#targetPicker .target-chip")[Number(match[1]) - 1];
-        const agent = chip?.dataset.target || "";
+        const wrap = event.target.closest(".message-thinking-icon-wrap");
+        if (!wrap) return;
+        const row = wrap.closest(".message-thinking-row[data-agent]");
+        if (!row) return;
+        const agent = row.dataset.agent || "";
         if (!agent) return;
-        event.preventDefault();
-        openAgentTerminalPane(agent);
+        fetch("/open-terminal", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent }),
+        }).catch(() => {});
       });
     }
