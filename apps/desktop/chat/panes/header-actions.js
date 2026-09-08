@@ -156,7 +156,7 @@
         return;
       }
       if (action === "reloadChat") {
-        await beginNewChat();
+        await reloadChat();
         return;
       }
       if (action === "openTerminal") {

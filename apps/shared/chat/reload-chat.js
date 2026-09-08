@@ -1,11 +1,11 @@
-    const beginNewChat = async () => {
+    const reloadChat = async () => {
       if (reloadInFlight) return;
       reloadInFlight = true;
       if (document.body.classList.contains("right-panel-open")) closeDesktopRightPanel();
       document.documentElement.dataset.launchShell = "1";
       let response;
       try {
-        response = await fetch("/new-chat", { method: "POST", cache: "no-store" });
+        response = await fetch("/reload-chat", { method: "POST", cache: "no-store" });
       } catch (_) {}
       if (!response?.ok) {
         reloadInFlight = false;

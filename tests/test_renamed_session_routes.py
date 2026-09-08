@@ -26,7 +26,7 @@ class _JsonHandler:
 
 
 class RenamedSessionRouteTests(unittest.TestCase):
-    def test_new_chat_restarts_the_current_workspace_without_an_aw_name(self) -> None:
+    def test_reload_chat_restarts_the_current_workspace_without_an_aw_name(self) -> None:
         old_pending = chat_server.chat_restart_pending
         try:
             chat_server.chat_restart_pending = False

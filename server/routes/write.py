@@ -38,7 +38,7 @@ def _resolve_within_root(path_value: str, *, workspace_root: str) -> Path:
     return (Path(workspace_root).resolve() / raw.lstrip("/")).resolve()
 
 
-def _post_new_chat(handler, _parsed, ctx) -> None:
+def _post_reload_chat(handler, _parsed, ctx) -> None:
     owns_restart = False
     try:
         ok, detail, owns_restart = ctx["queue_chat_restart_fn"]()
@@ -665,7 +665,7 @@ def _post_agent_running(handler, _parsed, ctx) -> None:
 
 
 _POST_ROUTES = {
-    "/new-chat": _post_new_chat,
+    "/reload-chat": _post_reload_chat,
     "/add-agent": _post_add_agent,
     "/remove-agent": _post_remove_agent,
     "/upload": _post_upload,

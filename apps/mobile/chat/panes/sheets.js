@@ -871,7 +871,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
         return;
       }
       if (action === "reloadChat") {
-        await beginNewChat();
+        await reloadChat();
         return;
       }
       if (action === "openGitMenu") {

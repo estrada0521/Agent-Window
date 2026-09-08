@@ -223,7 +223,7 @@ class Handler(BaseHTTPRequestHandler):
         forwarded_prefix = f"/session/{session_name}"
         headers = self._forward_headers(forwarded_prefix=forwarded_prefix)
         deadline = time.time() + SESSION_GET_RETRY_WINDOW if method == "GET" else time.time()
-        post_deadline = time.time() + SESSION_POST_RETRY_WINDOW if method == "POST" and suffix == "/new-chat" else time.time()
+        post_deadline = time.time() + SESSION_POST_RETRY_WINDOW if method == "POST" and suffix == "/reload-chat" else time.time()
         while True:
             ok, chat_port, detail = ensure_chat_server(
                 hub,
@@ -246,7 +246,7 @@ class Handler(BaseHTTPRequestHandler):
             resp = None
             upstream = f"{hub.hub_scheme}://127.0.0.1:{chat_port}{upstream_suffix}"
             try:
-                if method == "POST" and suffix == "/new-chat":
+                if method == "POST" and suffix == "/reload-chat":
                     response = self._request_upstream(method, upstream, body=body, headers=headers)
                 else:
                     status, resp_headers, resp = self._open_upstream(method, upstream, body=body, headers=headers)
@@ -257,12 +257,12 @@ class Handler(BaseHTTPRequestHandler):
                 if method == "GET" and time.time() < deadline:
                     time.sleep(SESSION_GET_RETRY_DELAY)
                     continue
-                if method == "POST" and suffix == "/new-chat" and time.time() < post_deadline:
+                if method == "POST" and suffix == "/reload-chat" and time.time() < post_deadline:
                     time.sleep(SESSION_GET_RETRY_DELAY)
                     continue
                 self._send_bad_gateway(last_exc)
                 return
-            if method == "POST" and suffix == "/new-chat":
+            if method == "POST" and suffix == "/reload-chat":
                 self._relay_upstream(response)
                 return
             if method == "GET" and status in {502, 503, 504} and time.time() < deadline:
