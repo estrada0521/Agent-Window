@@ -44,7 +44,8 @@
 
     (function initPinnedSummaryExpand() {
       const aside = document.getElementById("gitPinnedSummaryAside");
-      if (!aside) return;
+      const summary = document.getElementById("gitPinnedSummaryInner");
+      if (!aside || !summary) return;
 
       const expand = document.createElement("div");
       expand.className = "git-pinned-expand";
@@ -194,6 +195,11 @@
         if (path) void dpOpenFileContextMenu(path, event);
       });
 
-      aside.addEventListener("mouseenter", open);
+      summary.addEventListener("mouseover", (event) => {
+        const row = event.target.closest(".git-summary-row");
+        const from = event.relatedTarget;
+        if (!row || !summary.contains(row) || (from instanceof Node && row.contains(from))) return;
+        open();
+      });
       aside.addEventListener("mouseleave", () => { cancelTimers(); closeTimer = setTimeout(close, 60); });
     })();
