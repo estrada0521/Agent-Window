@@ -557,7 +557,7 @@
       display: none;
     }
     .git-stack.git-mode-worktree-detail .git-summary-wrap .git-commit-chevron {
-      transform: rotate(90deg);
+      transform: rotate(90deg) translateZ(0);
     }
     .git-commit-detail-body {
       flex: 1;
@@ -600,7 +600,7 @@
       transition: background 120ms ease;
     }
     .git-commit-detail-head .git-commit-chevron {
-      transform: rotate(90deg);
+      transform: rotate(90deg) translateZ(0);
       color: var(--icon-muted);
     }
     .git-commit-detail-head .git-summary-pin {
@@ -642,7 +642,7 @@
       border-radius: var(--right-panel-pill-radius);
     }
     .git-commit-detail-head .git-summary-row .git-commit-chevron {
-      transform: rotate(90deg);
+      transform: rotate(90deg) translateZ(0);
       color: var(--icon-fg);
     }
     .git-commit-detail-body {
@@ -915,13 +915,15 @@
       height: var(--right-panel-chevron-size);
       flex-shrink: 0;
       color: var(--icon-muted);
+      transform: translateZ(0);
+      backface-visibility: hidden;
       transition: transform 220ms ease, color 200ms ease;
     }
     .git-pinned-summary-aside .git-commit-chevron {
-      transform: rotate(0deg);
+      transform: rotate(0deg) translateZ(0);
     }
     .git-pinned-summary-aside.is-expanded .git-commit-chevron {
-      transform: rotate(90deg);
+      transform: rotate(90deg) translateZ(0);
     }
     .git-commit-row:hover .git-commit-chevron,
     .git-commit-list .git-summary-row.clickable:hover .git-commit-chevron {
