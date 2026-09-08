@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+import os
 from collections import deque
 from pathlib import Path
 
 from native_log_sync.redacted import omit_redacted_log_entry
 
 MATCHED_ENTRY_TAIL = 64
+_REVERSE_READ_BLOCK = 64 * 1024
 
 
 def _classify_log_segment(raw_segment: bytes) -> tuple[str, dict | None]:
@@ -32,15 +34,59 @@ def _classify_log_segment(raw_segment: bytes) -> tuple[str, dict | None]:
     return "entry", entry
 
 
-def _iter_matched_log_entries(path: Path, *, start: int = 0):
+def _iter_matched_log_entries_reversed(path: Path):
+    """Yield matched log entries newest-first, reading the file back from EOF.
+
+    Work is bounded by how far back the caller consumes -- it never scans the
+    whole file to serve a window near the tail.
+    """
     with path.open("rb") as handle:
-        handle.seek(start)
-        for raw_segment in handle:
-            kind, entry = _classify_log_segment(raw_segment)
-            if kind == "incomplete":
-                return
-            if kind == "entry" and entry is not None:
-                yield entry
+        handle.seek(0, os.SEEK_END)
+        pos = handle.tell()
+        carry = b""  # bytes of a line whose newline sits to the right of `pos`
+        dropped_partial_tail = False
+        while pos > 0:
+            size = min(_REVERSE_READ_BLOCK, pos)
+            pos -= size
+            handle.seek(pos)
+            chunk = handle.read(size) + carry
+            if not dropped_partial_tail:
+                dropped_partial_tail = True
+                if chunk and not chunk.endswith((b"\n", b"\r")):
+                    nl = chunk.rfind(b"\n")
+                    chunk = chunk[: nl + 1] if nl != -1 else b""
+            if pos > 0:
+                split = chunk.find(b"\n")
+                if split == -1:
+                    carry = chunk  # no line boundary yet -- fold into the next block
+                    continue
+                carry, body = chunk[:split], chunk[split + 1:]
+            else:
+                carry, body = b"", chunk  # reached BOF: `body` starts on a line boundary
+            end = len(body)
+            while end > 0:
+                start = body.rfind(b"\n", 0, end - 1) + 1
+                raw = body[start:end]
+                end = start
+                if not raw:
+                    continue
+                kind, entry = _classify_log_segment(raw)
+                if kind == "entry" and entry is not None:
+                    yield entry
+
+
+def _entry_window_from_tail(path: Path, offset: int, limit: int):
+    picked: list[dict] = []
+    skipped = 0
+    for entry in _iter_matched_log_entries_reversed(path):
+        if skipped < offset:
+            skipped += 1
+            continue
+        picked.append(entry)
+        if len(picked) >= limit:
+            break
+    picked.reverse()
+    return picked
 
 
 def _ingest_matched_tail(runtime) -> None:
@@ -84,23 +130,6 @@ def _ingest_matched_tail(runtime) -> None:
     )
 
 
-def _window_before_offset_from_disk(path: Path, offset: int, limit: int, total_count: int):
-    window: deque[dict] = deque(maxlen=offset + limit)
-    for entry in _iter_matched_log_entries(path):
-        window.append(entry)
-    kept = list(window)
-    older_batch = kept[: max(0, len(kept) - offset)]
-    has_older = total_count > offset + len(older_batch)
-    return older_batch, has_older, total_count
-
-
-def _window_tail_from_disk(path: Path, limit: int, total_count: int):
-    window: deque[dict] = deque(maxlen=limit)
-    for entry in _iter_matched_log_entries(path):
-        window.append(entry)
-    return list(window), total_count > limit, total_count
-
-
 def message_entry_window(
     runtime,
     *,
@@ -117,7 +146,9 @@ def message_entry_window(
         tail = list(runtime._matched_entries_cache_entries)
         log_path = runtime.log_path
     if offset > 0:
-        return _window_before_offset_from_disk(log_path, offset, limit, total_count)
+        batch = _entry_window_from_tail(log_path, offset, limit)
+        return batch, total_count > offset + len(batch), total_count
     if len(tail) >= min(limit, total_count):
         return tail[-limit:], total_count > limit, total_count
-    return _window_tail_from_disk(log_path, limit, total_count)
+    batch = _entry_window_from_tail(log_path, 0, limit)
+    return batch, total_count > len(batch), total_count
