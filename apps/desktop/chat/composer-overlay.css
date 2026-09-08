@@ -217,7 +217,7 @@
       cursor: pointer;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
-      transition: transform 120ms ease, border-color 120ms ease, background 250ms ease;
+      transition: border-color 120ms ease, background 250ms ease;
     }
     .has-hover .composer-attach-btn:hover {
       color: var(--icon-hover);
@@ -229,11 +229,9 @@
       cursor: default;
       pointer-events: none;
     }
-    .composer-attach-btn:active,
-    .composer-attach-btn.pressing {
-      transform: scale(0.92);
+    .composer-attach-btn:active {
       background: var(--panel-row-active-bg);
-      transition: transform 80ms ease, background 0ms;
+      transition: background 0ms;
     }
     .composer-attach-btn svg {
       width: calc(var(--text-size, 13px) * 22 / 13);

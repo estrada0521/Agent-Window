@@ -5,15 +5,7 @@
     const attachBtn = document.getElementById("attachBtn");
     attachBtn?.addEventListener("mousedown", (e) => {
       e.preventDefault();
-      if (!isMobileComposer) attachBtn.classList.add("pressing");
     });
-    if (!isMobileComposer) {
-      const _clearPressing = () => attachBtn?.classList.remove("pressing");
-      attachBtn?.addEventListener("mouseup", _clearPressing);
-      attachBtn?.addEventListener("mouseleave", _clearPressing);
-      attachBtn?.addEventListener("touchend", _clearPressing, { passive: true });
-      attachBtn?.addEventListener("touchcancel", _clearPressing, { passive: true });
-    }
     if (isMobileComposer) {
       let composerBlurCloseTimer = null;
       const clearComposerBlurCloseTimer = () => {
