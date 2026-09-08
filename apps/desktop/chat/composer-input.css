@@ -288,7 +288,10 @@
     }
     html[data-auto-window-height="1"] main {
       --message-step-top-gap: calc(var(--text-size, 13px) * 20 / 13);
+      --chat-edge-fade: round(nearest, calc(var(--text-size, 13px) * 34 / 13), 1px);
       scroll-padding-top: var(--message-step-top-gap);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--chat-edge-fade), #000 calc(100% - var(--chat-edge-fade)), transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0, #000 var(--chat-edge-fade), #000 calc(100% - var(--chat-edge-fade)), transparent 100%);
     }
     html[data-auto-window-height="1"] main::before {
       min-height: var(--message-step-top-gap);
