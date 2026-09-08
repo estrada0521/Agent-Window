@@ -51,12 +51,7 @@ done
 
 "$REPO_ROOT/setup/preflight" --pwa --quiet
 
-HUB_MODE=""
-if port_serves_expected_url "http" "$HUB_PORT" "/hub.webmanifest"; then
-  HUB_MODE="http"
-fi
-
-if [[ -z "$HUB_MODE" ]]; then
+if ! port_serves_expected_url "http" "$HUB_PORT" "/hub.webmanifest"; then
   echo "pwa-enable: Hub is not running on http://127.0.0.1:${HUB_PORT}/." >&2
   echo "pwa-enable: start the Tauri app first: ./tauri_app/tauri_start" >&2
   exit 1
@@ -72,11 +67,7 @@ fi
 
 PWA_STATE_DIR="${AGENT_WINDOW_STATE_DIR:-$HOME/.agent-window/state}/pwa"
 mkdir -p "$PWA_STATE_DIR"
-cat > "$PWA_STATE_DIR/enabled" <<EOF
-enabled_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-hub_port=$HUB_PORT
-cert_file=$AGENT_WINDOW_CERT_FILE
-EOF
+: > "$PWA_STATE_DIR/enabled"
 
 echo "pwa-enable: PWA HTTPS preparation complete."
 echo "pwa-enable: next, quit the HTTP Tauri app and restart with:"

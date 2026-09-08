@@ -51,10 +51,6 @@ reveal_root_ca_in_finder() {
   open -R "$root_ca" >/dev/null 2>&1 || true
 }
 
-emit_mode() {
-  printf '%s\n' "$1"
-}
-
 announce_local_https_requirement() {
   cat >&2 <<'EOF'
 agent-window: phone/PWA access requires local HTTPS.
@@ -80,7 +76,6 @@ main() {
   "$mkcert_bin" -install >&2
   reveal_root_ca_in_finder "$mkcert_bin"
   show_ios_trust_help "$mkcert_bin"
-  emit_mode enabled
 }
 
 main "$@"

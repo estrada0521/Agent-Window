@@ -12,7 +12,6 @@ from backend_core.tmux.control import (
     stop_chat_server as stop_chat_server_impl,
 )
 from backend_core.access.settings import (
-    agent_window_run_dir,
     port_is_bindable,
     pwa_https_enabled,
     session_artifact_dir,
@@ -52,7 +51,6 @@ def chat_launch_env(self) -> dict[str, str]:
     if self.tmux_socket:
         env["AGENT_WINDOW_TMUX_SOCKET"] = self.tmux_socket
     env["AGENT_INDEX_HUB_PORT"] = str(self.hub_port)
-    env["AGENT_WINDOW_RUN_DIR"] = str(agent_window_run_dir())
     pythonpath_parts = [str(self.repo_root)]
     existing_pythonpath = (env.get("PYTHONPATH") or "").strip()
     if existing_pythonpath:

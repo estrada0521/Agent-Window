@@ -34,10 +34,6 @@ if [[ -f "$PWA_ENABLED_FILE" ]]; then
   fi
   HTTPS_SCHEME="https"
 else
-  if [[ -f "$PWA_ENABLED_FILE" ]]; then
-    echo "PWA is enabled; HTTP is not allowed." >&2
-    exit 1
-  fi
   unset AGENT_WINDOW_CERT_FILE AGENT_WINDOW_KEY_FILE
   HTTPS_SCHEME="http"
 fi
@@ -53,9 +49,12 @@ else
   unset AGENT_WINDOW_PUBLIC_HOST AGENT_WINDOW_PUBLIC_HUB_PORT
 fi
 if ! port_serves_expected_url "$HTTPS_SCHEME" "$HUB_PORT" "/hub.webmanifest"; then
-  STALE_HUB_PIDS="$(list_listening_pids "$HUB_PORT")"
-  if [[ -n "${STALE_HUB_PIDS//[[:space:]]/}" ]]; then
-    echo "Hub port $HUB_PORT is occupied by a listener that is not ${HTTPS_SCHEME}." >&2
+  if ! command -v lsof >/dev/null 2>&1; then
+    echo "lsof is required to inspect port $HUB_PORT." >&2
+    exit 1
+  fi
+  if port_has_listener "$HUB_PORT"; then
+    echo "Hub port $HUB_PORT is occupied by a listener that does not serve the expected ${HTTPS_SCHEME} Hub." >&2
     exit 1
   fi
   PYTHONPATH="$HUB_PYTHONPATH" AGENT_WINDOW_AGENT_NAME="user" nohup python3 -m hub_backend.hub_server "$REPO_ROOT" "$SCRIPT_DIR/agent-index" "$HUB_PORT" "$TMUX_SOCKET_NAME" >/dev/null 2>&1 </dev/null &

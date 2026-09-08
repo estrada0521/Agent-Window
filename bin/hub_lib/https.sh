@@ -214,11 +214,7 @@ sys.exit(1)
 PYEOF
 }
 
-list_listening_pids() {
+port_has_listener() {
   local port="$1"
-  command -v lsof >/dev/null 2>&1 || {
-    echo "lsof is required to inspect port $port." >&2
-    return 1
-  }
-  lsof -nP -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true
+  lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
 }

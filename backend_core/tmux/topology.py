@@ -6,6 +6,8 @@ import shutil
 import time
 from pathlib import Path
 
+from backend_core.access.settings import agent_window_run_dir
+
 
 def default_tmux_socket_name() -> str:
     return "agent-window"
@@ -15,8 +17,7 @@ def session_topology_lock_path(tmux_socket: str, session_name: str) -> Path:
     safe = (session_name or "default").replace("/", "_")
     sock = tmux_socket or "default"
     digest = hashlib.sha1(f"{sock}|{safe}".encode()).hexdigest()[:20]
-    run_dir = Path(os.environ.get("AGENT_WINDOW_RUN_DIR") or (Path.home() / ".agent-window" / "run"))
-    return run_dir / "topology-locks" / f"{digest}.lock"
+    return agent_window_run_dir() / "topology-locks" / f"{digest}.lock"
 
 
 def _pid_alive(pid: int) -> bool:
