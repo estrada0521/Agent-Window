@@ -105,14 +105,19 @@
       }
       document.dispatchEvent(new CustomEvent("composer-overlay-close-start"));
       composerOverlay.classList.remove("visible");
-      composerOverlay.classList.add("closing");
       document.body.classList.remove("composer-overlay-open");
-      setTimeout(() => {
-        if (!composerOverlay.classList.contains("visible")) {
-          composerOverlay.hidden = true;
-          composerOverlay.classList.remove("closing");
-        }
-      }, 90);
+      if (isMobileComposer) {
+        composerOverlay.classList.add("closing");
+        setTimeout(() => {
+          if (!composerOverlay.classList.contains("visible")) {
+            composerOverlay.hidden = true;
+            composerOverlay.classList.remove("closing");
+          }
+        }, 90);
+      } else {
+        composerOverlay.classList.remove("closing");
+        composerOverlay.hidden = true;
+      }
       updateScrollBtn();
       if (!isMobileComposer && restoreFocus && composerFabBtn && typeof composerFabBtn.focus === "function") {
         try {

@@ -27,8 +27,7 @@
     /* ...and the backdrop tint/blur snap to full strength instead of easing
        over 320ms -- in this tiny window the lag showed the raw transcript for a
        beat after the resize. Only opacity fades. */
-    html[data-auto-window-height="1"] .composer-overlay,
-    html[data-auto-window-height="1"] .composer-overlay.closing {
+    html[data-auto-window-height="1"] .composer-overlay {
       transition: opacity 160ms ease;
     }
     html[data-auto-window-height="1"] .composer-overlay::before {
@@ -55,8 +54,7 @@
       opacity: 1;
       pointer-events: auto;
     }
-    html[data-hub-shell="1"] .composer-overlay.visible,
-    html[data-hub-shell="1"] .composer-overlay.closing {
+    html[data-hub-shell="1"] .composer-overlay.visible {
       backdrop-filter: blur(30px);
       -webkit-backdrop-filter: blur(30px);
     }
@@ -76,22 +74,6 @@
         rgba(var(--bg-rgb), 0.80) 38%,
         rgba(var(--bg-rgb), 0.58) 72%,
         rgba(var(--bg-rgb), 0.28) 100%
-      );
-    }
-    .composer-overlay.closing {
-      opacity: 0;
-      pointer-events: none;
-      backdrop-filter: blur(0px);
-      -webkit-backdrop-filter: blur(0px);
-      transition: opacity 90ms linear, background 90ms linear, backdrop-filter 90ms linear, -webkit-backdrop-filter 90ms linear;
-    }
-    .composer-overlay.closing::before {
-      background: radial-gradient(
-        125% 100% at 50% 50%,
-        rgba(0, 0, 0, 0.03) 0%,
-        rgba(0, 0, 0, 0.02) 46%,
-        rgba(0, 0, 0, 0.01) 78%,
-        rgba(0, 0, 0, 0) 100%
       );
     }
     html[data-hub-iframe-chat="1"]:not([data-tauri-app="1"]) .composer-overlay.visible {
@@ -140,12 +122,6 @@
       opacity: 1;
       transform: translateY(0) scale(1);
       pointer-events: auto;
-    }
-    .composer-overlay.closing .composer {
-      opacity: 0;
-      transform: translateY(6px) scale(0.992);
-      pointer-events: none;
-      transition: opacity 90ms linear, transform 90ms ease;
     }
     .composer-main-shell {
       grid-column: 1 / -1;
