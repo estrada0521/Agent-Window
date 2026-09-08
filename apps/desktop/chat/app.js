@@ -1074,7 +1074,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           if (hasDesktopRightPanelOverlay()) dpToggleGitSummaryPinned();
           return;
         }
-        if (!(event.metaKey || event.ctrlKey)) return;
+        if (!event.metaKey || event.ctrlKey) return;
         // event.code (physical key) instead of event.key: with metaKey held,
         // some WebViews don't reliably report the shift-modified character
         // for "=" (i.e. "+"), so matching on .key alone silently misses ⌘+.
