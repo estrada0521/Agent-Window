@@ -116,19 +116,10 @@
       }
 
       if (activeLine) {
-        if (activeLine._runtimeStateTimer) {
-          clearTimeout(activeLine._runtimeStateTimer);
-          activeLine._runtimeStateTimer = 0;
-        }
         if (activeLine._runtimeRemoveTimer) {
           clearTimeout(activeLine._runtimeRemoveTimer);
           activeLine._runtimeRemoveTimer = 0;
         }
-        activeLine.dataset.state = "leave";
-        const lineToRemove = activeLine;
-        lineToRemove._runtimeRemoveTimer = setTimeout(() => {
-          lineToRemove.remove();
-        }, 300);
       }
 
       const nextLine = document.createElement("span");
@@ -138,23 +129,25 @@
       nextLine.innerHTML = buildThinkingRuntimeLineInnerHtml(contentHtml);
       slot.appendChild(nextLine);
 
-      // Use double requestAnimationFrame to guarantee layout transition triggers,
-      // even if the element/container is currently detached or hidden during sync.
+      // Let the enter position reach a painted frame first, then move both
+      // lines together so neither transition starts ahead of the other.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          if (nextLine.dataset.state === "enter") {
-            nextLine.dataset.state = "live";
+          if (nextLine.dataset.state !== "enter") return;
+          if (activeLine?.isConnected) {
+            activeLine.dataset.state = "leave";
+            const lineToRemove = activeLine;
+            lineToRemove._runtimeRemoveTimer = setTimeout(() => {
+              lineToRemove.remove();
+            }, 300);
           }
+          nextLine.dataset.state = "live";
         });
       });
 
       const allLines = Array.from(slot.querySelectorAll(".message-thinking-runtime-line"));
       if (allLines.length > 2) {
         allLines.slice(0, allLines.length - 2).forEach((line) => {
-          if (line._runtimeStateTimer) {
-            clearTimeout(line._runtimeStateTimer);
-            line._runtimeStateTimer = 0;
-          }
           if (line._runtimeRemoveTimer) {
             clearTimeout(line._runtimeRemoveTimer);
             line._runtimeRemoveTimer = 0;
@@ -353,8 +346,10 @@
         }
       });
 
-      runningAgents.forEach((agent) => {
-        container.appendChild(ensureAgentRow(agent));
+      runningAgents.forEach((agent, index) => {
+        const row = ensureAgentRow(agent);
+        const rowAtIndex = container.children[index] || null;
+        if (rowAtIndex !== row) container.insertBefore(row, rowAtIndex);
       });
       if (root.lastElementChild !== container) {
         root.appendChild(container);

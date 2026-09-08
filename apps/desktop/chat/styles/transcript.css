@@ -735,6 +735,7 @@
     }
 
     .message-thinking-runtime-slot {
+      --thinking-runtime-edge-fade: 0.18em;
       display: inline-grid;
       grid-template-columns: 1fr;
       align-items: center;
@@ -746,6 +747,20 @@
       height: 1.6em;
       overflow: hidden;
       position: relative;
+      mask-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        black var(--thinking-runtime-edge-fade),
+        black calc(100% - var(--thinking-runtime-edge-fade)),
+        transparent 100%
+      );
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        black var(--thinking-runtime-edge-fade),
+        black calc(100% - var(--thinking-runtime-edge-fade)),
+        transparent 100%
+      );
     }
 
     .message-thinking-runtime-line {
