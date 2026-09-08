@@ -49,6 +49,7 @@
         if (file.type.startsWith("image/")) {
           const img = document.createElement("img");
           img.className = "attach-card-thumb";
+          img.draggable = false;
           img.src = URL.createObjectURL(file);
           img.alt = file.name;
           card.appendChild(img);
