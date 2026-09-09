@@ -641,8 +641,10 @@ def remove_agent(
         if not canonical:
             raise SessionControlError(f"Agent instance not in this session: {agent}")
         remaining = remove_instance(current, canonical)
-        if len(remaining) < 1:
-            raise SessionControlError("Cannot remove the last agent pane")
+        # Zero agents is a valid state -- the "terminal" window (0) keeps the
+        # tmux session alive, AGENT_WINDOW_AGENTS goes empty, and add_agent can
+        # bring one back. Agent Window doesn't own a "sessions must have an
+        # agent" rule.
         pane_id = _env_value(prefix, tmux_name, _pane_env_key(canonical))
         if not pane_id:
             raise SessionControlError(f"No tmux pane recorded for instance: {canonical}")
