@@ -33,7 +33,6 @@ def initialize_native_log_runtime_state(runtime: object) -> None:
     # Recomputed from path resolution every sync; safe to lose or rebuild.
     runtime._native_log_current_paths = _load_pane_paths(runtime._sync_state.get("native_log_current_paths"))
 
-    runtime._native_log_blocked_paths: dict[str, str] = {}
     runtime._native_log_projection_status: dict[str, dict] = {}
 
     runtime._agent_first_seen_ts = {}
@@ -56,5 +55,4 @@ def first_seen_for_agent(runtime: object, agent: str, *, time_module=time) -> fl
         ts = time_module.time()
         runtime._agent_first_seen_ts[agent] = ts
     return ts
-
 

@@ -17,17 +17,7 @@ def resolve_native_log_binding(runtime, request):
 
 
 def on_pane_restart(runtime, agent: str) -> None:
-    # Path resolves dynamically via lsof on the new PID tree; empty until first message.
-    # Mirror the claude handler: drop the stale cursor and block the previous
-    # native log so a context reset / resume does not replay the old rollout's
-    # backlog into the session chat log.
-    from native_log_sync.agents._shared.path_state import _normalized_native_log_path
-
-    old_path = runtime._native_log_current_paths.pop(agent, None)
-    if old_path:
-        runtime._native_log_blocked_paths[agent] = _normalized_native_log_path(old_path)
-    else:
-        runtime._native_log_blocked_paths.pop(agent, None)
+    runtime._native_log_current_paths.pop(agent, None)
 
 
 def on_pane_add(runtime, agent: str) -> None:

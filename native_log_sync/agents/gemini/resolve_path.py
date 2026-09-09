@@ -1,59 +1,33 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
+from native_log_sync.agents._shared.process_tree import lsof_text, process_tree
 
-def _resolve_antigravity_transcript(runtime, workspace_text: str) -> str:
+
+def resolve_gemini_native_log(pane_pid: str) -> str:
     base = Path.home() / ".gemini" / "antigravity-cli"
-    history_path = base / "history.jsonl"
-    if not history_path.is_file():
+    presence_root = str((base / "presence").resolve()).rstrip("/") + "/"
+    conversation_ids: set[str] = set()
+    for pid in process_tree(pane_pid):
+        output = lsof_text(pid)
+        if output is None:
+            continue
+        for line in output.splitlines()[1:]:
+            parts = line.split()
+            if len(parts) < 9:
+                continue
+            path = " ".join(parts[8:]).strip()
+            if not path.startswith(presence_root) or not path.endswith(".lock"):
+                continue
+            conversation_id = Path(path).stem
+            if conversation_id:
+                conversation_ids.add(conversation_id)
+
+    if not conversation_ids:
         return ""
-
-    workspace_aliases = {str(Path(alias).resolve()) for alias in runtime._workspace_aliases(workspace_text)}
-    try:
-        lines = history_path.read_text(encoding="utf-8", errors="replace").splitlines()
-    except OSError as exc:
-        raise RuntimeError(f"unreadable Antigravity history.jsonl: {history_path}: {exc}") from exc
-    for line in reversed(lines):
-        try:
-            item = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if not isinstance(item, dict):
-            continue
-        workspace = str(item.get("workspace") or "").strip()
-        if workspace:
-            try:
-                workspace = str(Path(workspace).resolve())
-            except OSError:
-                pass
-        if workspace_aliases and workspace not in workspace_aliases:
-            continue
-        conversation_id = str(item.get("conversationId") or "").strip()
-        if not conversation_id:
-            continue
-        candidate = (
-            base
-            / "brain"
-            / conversation_id
-            / ".system_generated"
-            / "logs"
-            / "transcript_full.jsonl"
-        )
-        if candidate.is_file():
-            return str(candidate)
-
-    # Never bind an unrelated workspace's newest conversation. Waiting
-    # for Antigravity to append its history record is safer than leaking
-    # another project's assistant output into this session.
-    return ""
-
-
-def resolve_gemini_native_log(runtime, agent: str, native_log_path: str | None) -> str:
-    del agent, native_log_path
-    workspace_text = str(runtime.workspace or "").strip()
-    if not workspace_text:
-        return ""
-
-    return _resolve_antigravity_transcript(runtime, workspace_text)
+    if len(conversation_ids) != 1:
+        raise RuntimeError(f"multiple Antigravity conversations match pane PID {pane_pid}")
+    conversation_id = next(iter(conversation_ids))
+    candidate = base / "brain" / conversation_id / ".system_generated" / "logs" / "transcript_full.jsonl"
+    return str(candidate) if candidate.is_file() else ""

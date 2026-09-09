@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from native_log_sync.agents._shared.resolve_path import pick_latest_unclaimed_for_agent
+from native_log_sync.agents._shared.process_tree import process_tree
 
 
 def _normalized_path(value: str) -> str:
@@ -16,50 +16,45 @@ def _normalized_path(value: str) -> str:
         return raw
 
 
-def _session_workspace(summary_path: Path) -> str:
+def _active_sessions(path: Path) -> list[dict]:
     try:
-        raw = json.loads(summary_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return ""
-    if not isinstance(raw, dict):
-        return ""
-    info = raw.get("info")
-    if not isinstance(info, dict):
-        return ""
-    return _normalized_path(str(info.get("cwd") or ""))
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"unreadable Grok active session registry: {path}: {exc}") from exc
+    if not isinstance(raw, list) or any(not isinstance(item, dict) for item in raw):
+        raise RuntimeError(f"Grok active session registry is not a list of objects: {path}")
+    return raw
 
 
-def resolve_grok_updates_path(runtime, agent: str) -> str:
-    """Return the newest unclaimed Grok update stream for this workspace.
-
-    Grok's session directory does not identify a tmux pane.  Restricting the
-    lookup to the exact recorded cwd and refusing already claimed histories
-    keeps concurrent Agent Window panes from sharing a transcript.
-    """
+def resolve_grok_updates_path(runtime, pane_pid: str) -> str:
     workspace = _normalized_path(str(runtime.workspace or ""))
     if not workspace:
         return ""
-    sessions_root = Path.home() / ".grok" / "sessions"
-    if not sessions_root.is_dir():
+    registry_path = Path.home() / ".grok" / "active_sessions.json"
+    if not registry_path.is_file():
         return ""
 
-    candidates: list[Path] = []
-    for summary_path in sessions_root.glob("*/*/summary.json"):
-        history_path = summary_path.parent / "chat_history.jsonl"
-        updates_path = summary_path.parent / "updates.jsonl"
-        if not history_path.is_file() or not updates_path.is_file():
+    pane_pids = process_tree(pane_pid)
+    matches: list[str] = []
+    for item in _active_sessions(registry_path):
+        if str(item.get("pid") or "") not in pane_pids:
             continue
-        if _session_workspace(summary_path) == workspace:
-            candidates.append(updates_path)
+        if _normalized_path(str(item.get("cwd") or "")) != workspace:
+            continue
+        session_id = str(item.get("session_id") or "").strip()
+        if session_id:
+            matches.append(session_id)
 
-    blocked_path = getattr(runtime, "_native_log_blocked_paths", {}).get(agent, "")
-    picked = pick_latest_unclaimed_for_agent(
-        candidates,
-        runtime._native_log_current_paths,
-        agent,
-        blocked_path=blocked_path,
-    )
-    if picked and picked.is_file():
-        runtime._native_log_blocked_paths.pop(agent, None)
-        return str(picked)
-    return ""
+    if not matches:
+        return ""
+    if len(matches) != 1:
+        raise RuntimeError(f"multiple Grok sessions match pane PID {pane_pid}")
+
+    session_id = matches[0]
+    candidates = list((Path.home() / ".grok" / "sessions").glob(f"*/{session_id}/updates.jsonl"))
+    if not candidates:
+        return ""
+    if len(candidates) != 1:
+        raise RuntimeError(f"multiple Grok update logs match session {session_id}")
+    history_path = candidates[0].with_name("chat_history.jsonl")
+    return str(candidates[0]) if history_path.is_file() else ""

@@ -5,7 +5,7 @@ from .resolve_path import resolve_gemini_native_log
 
 
 def resolve_native_log_binding(runtime, request):
-    path = resolve_gemini_native_log(runtime, request.agent, None)
+    path = resolve_gemini_native_log(request.pane_pid)
     return binding_for_path(
         agent=request.agent,
         pane_id=request.pane_id,

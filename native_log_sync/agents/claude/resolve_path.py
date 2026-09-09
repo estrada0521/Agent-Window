@@ -1,41 +1,56 @@
 from __future__ import annotations
 
-import os
+import json
 from pathlib import Path
 
-from native_log_sync.agents._shared.resolve_path import path_within_roots, pick_latest_unclaimed_for_agent, workspace_slug_variants
+from native_log_sync.agents._shared.process_tree import process_tree
 
 
-def resolve_claude_session_jsonl_path(runtime, agent: str, native_log_path: str | None, workspace_hint: str | None) -> str:
-    workspace_text = str(workspace_hint or runtime.workspace or "").strip()
-    if not workspace_text:
+def _normalized_path(value: str) -> str:
+    return str(Path(value).expanduser().resolve())
+
+
+def resolve_claude_session_jsonl_path(runtime, pane_id: str, pane_pid: str) -> str:
+    workspace = str(runtime.workspace or "").strip()
+    if not workspace:
         return ""
+    workspace_aliases = {
+        _normalized_path(alias)
+        for alias in runtime._workspace_aliases(workspace)
+    }
 
-    roots: list[Path] = []
-    seen_roots: set[str] = set()
-    for alias in runtime._workspace_aliases(workspace_text):
-        for slug in workspace_slug_variants(alias):
-            root = Path.home() / ".claude" / "projects" / f"-{slug}"
-            if not root.is_dir():
-                continue
-            key = str(root.resolve())
-            if key in seen_roots:
-                continue
-            seen_roots.add(key)
-            roots.append(root)
-    if not roots:
+    matches: list[dict] = []
+    sessions_root = Path.home() / ".claude" / "sessions"
+    for pid in process_tree(pane_pid):
+        record_path = sessions_root / f"{pid}.json"
+        if not record_path.is_file():
+            continue
+        try:
+            record = json.loads(record_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RuntimeError(f"unreadable Claude session record: {record_path}: {exc}") from exc
+        if not isinstance(record, dict):
+            raise RuntimeError(f"Claude session record is not an object: {record_path}")
+        if str(record.get("pid") or "") != pid:
+            raise RuntimeError(f"Claude session PID mismatch: {record_path}")
+        cwd = str(record.get("cwd") or "").strip()
+        tmux = str(record.get("tmux") or "").strip()
+        if not cwd or _normalized_path(cwd) not in workspace_aliases:
+            continue
+        if tmux and pane_id and not tmux.endswith(f".{pane_id}"):
+            continue
+        matches.append(record)
+
+    if not matches:
         return ""
+    if len(matches) != 1:
+        raise RuntimeError(f"multiple Claude sessions match pane {pane_id}")
 
-    resolved = str(Path(native_log_path)) if native_log_path else ""
-    if resolved and path_within_roots(resolved, roots) and os.path.exists(resolved):
-        return resolved
-
-    candidates: list[Path] = []
-    for root in roots:
-        candidates.extend(root.glob("*.jsonl"))
-    blocked_path = getattr(runtime, "_native_log_blocked_paths", {}).get(agent, "")
-    picked = pick_latest_unclaimed_for_agent(candidates, runtime._native_log_current_paths, agent, blocked_path=blocked_path)
-    if picked and picked.exists():
-        runtime._native_log_blocked_paths.pop(agent, None)
-        return str(picked)
-    return ""
+    record = matches[0]
+    session_id = str(record.get("sessionId") or "").strip()
+    cwd = str(record.get("cwd") or "").strip()
+    if not session_id or not cwd:
+        raise RuntimeError(f"Claude session record is incomplete for pane {pane_id}")
+    project_slug = cwd.replace("/", "-").lstrip("-")
+    candidate = Path.home() / ".claude" / "projects" / f"-{project_slug}" / f"{session_id}.jsonl"
+    return str(candidate) if candidate.is_file() else ""

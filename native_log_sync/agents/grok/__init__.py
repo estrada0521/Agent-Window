@@ -10,19 +10,13 @@ def resolve_native_log_binding(runtime, request):
         agent=request.agent,
         pane_id=request.pane_id,
         pane_pid=request.pane_pid,
-        path=resolve_grok_updates_path(runtime, request.agent),
+        path=resolve_grok_updates_path(runtime, request.pane_pid),
         source="grok-updates",
     )
 
 
 def on_pane_restart(runtime, agent: str) -> None:
-    from native_log_sync.agents._shared.path_state import _normalized_native_log_path
-
-    old_path = runtime._native_log_current_paths.pop(agent, None)
-    if old_path:
-        runtime._native_log_blocked_paths[agent] = _normalized_native_log_path(old_path)
-    else:
-        runtime._native_log_blocked_paths.pop(agent, None)
+    runtime._native_log_current_paths.pop(agent, None)
 
 
 def on_pane_add(runtime, agent: str) -> None:

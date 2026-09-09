@@ -4,7 +4,6 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 from native_log_sync.agents.gemini.read_runtime import (
     iter_tool_calls,
@@ -12,7 +11,6 @@ from native_log_sync.agents.gemini.read_runtime import (
     runtime_tool_events,
 )
 from native_log_sync.agents.gemini.read_updates import sync_gemini_native_log
-from native_log_sync.agents.gemini.resolve_path import _resolve_antigravity_transcript
 
 
 def _planner(
@@ -142,63 +140,6 @@ class AntigravitySyncTests(unittest.TestCase):
             runtime = _FakeRuntime(Path(td) / "session.jsonl")
             with self.assertRaises(RuntimeError):
                 sync_gemini_native_log(runtime, "gemini", str(truncated))
-
-
-class _ResolveRuntime:
-    workspace = "/workspace/current"
-
-    @staticmethod
-    def _workspace_aliases(workspace: str) -> list[str]:
-        return [workspace]
-
-
-class AntigravityResolveTests(unittest.TestCase):
-    def test_resolver_scans_full_history_and_skips_deleted_newest_conversation(self) -> None:
-        with tempfile.TemporaryDirectory() as td:
-            home = Path(td)
-            base = home / ".gemini/antigravity-cli"
-            valid = _transcript_path(base, "valid")
-            valid.parent.mkdir(parents=True)
-            valid.touch()
-            lines = [
-                {"workspace": "/workspace/current", "conversationId": "valid"},
-                *({"workspace": f"/workspace/other-{i}", "conversationId": f"other-{i}"} for i in range(250)),
-                {"workspace": "/workspace/current", "conversationId": "deleted"},
-            ]
-            base.mkdir(parents=True, exist_ok=True)
-            (base / "history.jsonl").write_text("\n".join(json.dumps(line) for line in lines))
-            with patch("native_log_sync.agents.gemini.resolve_path.Path.home", return_value=home):
-                resolved = _resolve_antigravity_transcript(_ResolveRuntime(), _ResolveRuntime.workspace)
-        self.assertEqual(resolved, str(valid))
-
-    def test_resolver_never_falls_back_to_another_workspace(self) -> None:
-        with tempfile.TemporaryDirectory() as td:
-            home = Path(td)
-            base = home / ".gemini/antigravity-cli"
-            other = _transcript_path(base, "other")
-            other.parent.mkdir(parents=True)
-            other.touch()
-            base.mkdir(parents=True, exist_ok=True)
-            (base / "history.jsonl").write_text(
-                json.dumps({"workspace": "/workspace/other", "conversationId": "other"})
-            )
-            with patch("native_log_sync.agents.gemini.resolve_path.Path.home", return_value=home):
-                resolved = _resolve_antigravity_transcript(_ResolveRuntime(), _ResolveRuntime.workspace)
-        self.assertEqual(resolved, "")
-
-    def test_resolver_does_not_bind_truncated_transcript(self) -> None:
-        with tempfile.TemporaryDirectory() as td:
-            home = Path(td)
-            base = home / ".gemini/antigravity-cli"
-            logs = base / "brain/only-trunc/.system_generated/logs"
-            logs.mkdir(parents=True)
-            (logs / "transcript.jsonl").touch()
-            (base / "history.jsonl").write_text(
-                json.dumps({"workspace": "/workspace/current", "conversationId": "only-trunc"})
-            )
-            with patch("native_log_sync.agents.gemini.resolve_path.Path.home", return_value=home):
-                resolved = _resolve_antigravity_transcript(_ResolveRuntime(), _ResolveRuntime.workspace)
-        self.assertEqual(resolved, "")
 
 
 if __name__ == "__main__":
