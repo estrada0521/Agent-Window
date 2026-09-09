@@ -140,12 +140,16 @@
         void toggleDeskAutoWindowHeight();
         return;
       }
+      if (event.data && event.data.type === "fit-collapse-shortcut") {
+        toggleDeskFitCollapsed();
+        return;
+      }
       if (event.data && event.data.type === "move-window-shortcut") {
         void moveDeskWindowToSpot(String(event.data.command || ""));
         return;
       }
       if (event.data && event.data.type === "fit-window-height" && event.source === _deskChatFrame?.contentWindow) {
-        fitDeskWindowHeight(event.data.contentHeight);
+        fitDeskWindowHeight(event.data.contentHeight, { restore: !!event.data.restore });
         return;
       }
       if (event.data && event.data.type === "open-hub-path") {

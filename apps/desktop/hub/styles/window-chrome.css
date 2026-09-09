@@ -326,6 +326,39 @@
     }
     .fit-window-dots i:nth-child(2) { background: #febc2e; }
     .fit-window-dots i:nth-child(3) { background: #28c840; }
+    /* Fit Height standby (⌥⌘M): the window shrinks to this line and holds
+       there until a new message or ⌥⌘M. It is still just the shrunk window --
+       the transcript is only faded out (opacity, not hidden), so a wheel
+       press or Enter still opens the composer under the "Agent Window" mark.
+       The mark itself never eats a pointer event. */
+    .desk-fit-standby { display: none; }
+    html[data-fit-collapsed="1"] .desk-main { opacity: 0; }
+    html[data-fit-collapsed="1"] .desk-window-traffic,
+    html[data-fit-collapsed="1"] .fit-window-dots,
+    html[data-fit-collapsed="1"] .desk-top-right-controls,
+    html[data-fit-collapsed="1"] .desk-floating-controls,
+    html[data-fit-collapsed="1"] .desk-app-sidebar-toggle {
+      visibility: hidden;
+    }
+    html[data-fit-collapsed="1"] .desk-fit-standby {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      pointer-events: none;
+    }
+    .desk-fit-standby-text {
+      font-family: "Snell Roundhand", "Apple Chancery", cursive;
+      font-size: calc(var(--text-size, 13px) * 1.69);
+      font-weight: 200;
+      letter-spacing: -0.04em;
+      color: var(--fg);
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+    }
     html[data-tauri-app="1"] .page-header-actions.page-header-actions-floating #pageNativeMenuBridge {
       position: absolute;
       top: 0;

@@ -27,6 +27,44 @@
     // the compact width, so entry is one motion instead of a visible width jump
     // followed by a height shrink.
     let _deskFitWidthSnapPending = false;
+    // Fit Height, minimised (⌥⌘M): the window is held small and passive resize
+    // requests are dropped until a new message settles (or ⌥⌘M again). Stays in
+    // Fit Height the whole time.
+    let _deskFitCollapsed = false;
+    // Just tall enough for the "Agent Window" standby line (.desk-fit-standby).
+    const DESK_COLLAPSED_FIT_HEIGHT = 48;
+    function setDeskFitCollapsed(on) {
+      const next = !!on;
+      if (next === _deskFitCollapsed) return;
+      _deskFitCollapsed = next;
+      _deskLastFitTarget = 0;
+      if (next) document.documentElement.dataset.fitCollapsed = "1";
+      else delete document.documentElement.dataset.fitCollapsed;
+      try {
+        _deskChatFrame?.contentWindow?.postMessage({ type: "hub-fit-collapsed", on: next }, "*");
+      } catch (_) {}
+      if (next) {
+        const invoke = getTauriInvoke();
+        if (typeof invoke === "function") {
+          invoke("set_window_height", {
+            height: Math.round(DESK_COLLAPSED_FIT_HEIGHT * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT),
+          }).catch(() => {});
+        }
+        // So Enter still reaches the chat frame's "open composer" handler.
+        try { _deskChatFrame?.contentWindow?.focus(); } catch (_) {}
+      }
+    }
+    function toggleDeskFitCollapsed() {
+      if (!_deskAutoWindowHeight) return;
+      if (_deskFitCollapsed) {
+        setDeskFitCollapsed(false);
+        try {
+          _deskChatFrame?.contentWindow?.postMessage({ type: "hub-refit" }, "*");
+        } catch (_) {}
+      } else {
+        setDeskFitCollapsed(true);
+      }
+    }
     function pushDeskAutoWindowHeight() {
       try {
         _deskChatFrame?.contentWindow?.postMessage(
@@ -46,6 +84,7 @@
       if (next === _deskAutoWindowHeight) return;
       _deskAutoWindowHeight = next;
       _deskLastFitTarget = 0;
+      setDeskFitCollapsed(false);
       // Fit Height hides the traffic lights, so the 26px title-bar inset at the
       // top of the window can shrink to match the 4px sides.
       if (next) document.documentElement.dataset.autoWindowHeight = "1";
@@ -83,8 +122,12 @@
       setDeskAutoWindowHeight(true);
       applyDeskAlwaysOnTop(true);
     }
-    function fitDeskWindowHeight(contentHeight) {
+    function fitDeskWindowHeight(contentHeight, { restore = false } = {}) {
       if (!_deskAutoWindowHeight) return;
+      if (_deskFitCollapsed) {
+        if (!restore) return;   // held on the standby screen until a new message settles
+        setDeskFitCollapsed(false);
+      }
       const content = Number(contentHeight);
       if (!Number.isFinite(content) || content <= 0) return;
       const invoke = getTauriInvoke();
@@ -258,6 +301,11 @@
         if (event.code === "KeyH") {
           event.preventDefault();
           void toggleDeskAutoWindowHeight();
+          return;
+        }
+        if (event.code === "KeyM") {
+          event.preventDefault();
+          toggleDeskFitCollapsed();
           return;
         }
         if (event.code === "KeyR") {

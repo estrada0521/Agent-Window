@@ -4,6 +4,7 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     const DESKTOP_FILE_PANE_MIN_VIEWPORT_PX = 961;
     let _scrollbarLayoutSyncFrame = 0;
     let _fitTargetRow = null;
+    let _fitCollapsed = false;
     const syncChatScrollbarLayoutWidth = () => {
       const mainEl = document.querySelector("main");
       if (!mainEl || document.documentElement.dataset.mobile === "1") return;
@@ -163,7 +164,7 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     // rendered extent so the hub can size the window to it. Bounding-rect height
     // is scroll-position independent and ignores the transcript spacers.
     // Breathing room above the composer field when the window is sized to it.
-    const reportFitHeight = ({ fromComposer = false } = {}) => {
+    const reportFitHeight = ({ fromComposer = false, restore = false } = {}) => {
       if (!isHubIframeChat() || document.documentElement.dataset.autoWindowHeight !== "1") return;
       const scroller = timeline || document.getElementById("messages");
       const rows = scroller
@@ -219,7 +220,7 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
           scrollConversationToBottom("auto");
         }
         try {
-          window.parent.postMessage({ type: "fit-window-height", contentHeight }, "*");
+          window.parent.postMessage({ type: "fit-window-height", contentHeight, restore }, "*");
         } catch (_) {}
       }
     };
@@ -266,7 +267,13 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       _stickyToBottom = false;
       reportFitHeight();
     };
-    document.addEventListener("chat-transcript-settled", () => reportFitHeight());
+    // A settled message is the one thing that grows a minimised (⌥⌘M) Fit
+    // window back -- and it comes back on the latest message, not whatever
+    // older row was stepped to before minimising.
+    document.addEventListener("chat-transcript-settled", () => {
+      if (_fitCollapsed) { _fitTargetRow = null; _stickyToBottom = true; }
+      reportFitHeight({ restore: true });
+    });
     // The running indicator only enters, leaves, or gains/loses an agent row
     // (thinking.js fires this then) -- re-fit so the window follows that step.
     let _thinkingRefitFrame = 0;
@@ -280,9 +287,13 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     // Composer open: size the window once for a fully-grown composer. Typing
     // grows the field inside that already-large-enough window -- no per-keystroke
     // resize. Close: re-fit to the transcript.
+    let _recollapseOnComposerClose = false;
     document.addEventListener("composer-overlay-open", () => {
       if (document.documentElement.dataset.autoWindowHeight !== "1") return;
-      requestAnimationFrame(() => reportFitHeight({ fromComposer: true }));
+      // Opening the composer off the standby screen also lands on the latest,
+      // and closing it without sending drops back to the standby screen.
+      if (_fitCollapsed) { _fitTargetRow = null; _stickyToBottom = true; _recollapseOnComposerClose = true; }
+      requestAnimationFrame(() => reportFitHeight({ fromComposer: true, restore: true }));
     });
     document.addEventListener("composer-overlay-close-start", () => {
       if (document.documentElement.dataset.sendInFlight === "1") {
@@ -290,8 +301,15 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
         // transcript was scrolled to while composing. The refit itself waits
         // for the sent message's own "chat-transcript-settled" -- refitting now
         // would measure the previous last message and flash.
+        _recollapseOnComposerClose = false;
         _fitTargetRow = null;
         _stickyToBottom = true;
+        return;
+      }
+      if (_recollapseOnComposerClose) {
+        // Opened from the standby screen and closed with nothing sent -- go back.
+        _recollapseOnComposerClose = false;
+        window.parent?.postMessage({ type: "fit-collapse-shortcut" }, "*");
         return;
       }
       // Plain close (Escape / click-outside, nothing being sent): no new
@@ -871,6 +889,21 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         }
         return;
       }
+      if (event.data.type === "hub-fit-collapsed") {
+        _fitCollapsed = !!event.data.on;
+        // Minimising with the composer open would strand it in the 48px window.
+        if (_fitCollapsed && typeof isComposerOverlayOpen === "function" && isComposerOverlayOpen()) {
+          closeComposerOverlay();
+        }
+        return;
+      }
+      if (event.data.type === "hub-refit") {
+        // Coming off the standby screen lands on the latest message.
+        _fitTargetRow = null;
+        _stickyToBottom = true;
+        requestAnimationFrame(() => reportFitHeight({ restore: true }));
+        return;
+      }
       if (event.data.type === "hub-auto-window-height") {
         _fitTargetRow = null;
         document.documentElement.dataset.autoWindowHeight = event.data.on ? "1" : "0";
@@ -1005,6 +1038,11 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           if (event.code === "KeyH") {
             event.preventDefault();
             window.parent?.postMessage({ type: "auto-window-height-shortcut" }, "*");
+            return;
+          }
+          if (event.code === "KeyM") {
+            event.preventDefault();
+            window.parent?.postMessage({ type: "fit-collapse-shortcut" }, "*");
             return;
           }
           if (event.code === "Digit0" || event.key === "0") {
