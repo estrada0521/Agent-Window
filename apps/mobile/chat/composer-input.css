@@ -75,17 +75,26 @@
     }
 
     .attach-preview-row {
+      position: fixed;
+      z-index: 390;
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 8px;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
       padding: 10px 6px 0 10px;
-      max-height: min(38vh, 260px);
-      overflow-y: auto;
-      overflow-x: hidden;
-      overscroll-behavior-y: contain;
-      touch-action: pan-y;
+      overflow-x: auto;
+      overflow-y: hidden;
+      overscroll-behavior-x: contain;
+      touch-action: pan-x;
       -webkit-overflow-scrolling: touch;
       box-sizing: border-box;
+    }
+
+    body:not(.composer-overlay-open) > .attach-preview-row {
+      visibility: hidden;
+      pointer-events: none;
     }
 
     .attach-file-input {

@@ -174,6 +174,9 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       if (scrollable && messageInput.value.length - messageInput.selectionEnd <= 1) {
         messageInput.scrollTop = messageInput.scrollHeight;
       }
+      if (isMobileComposer && isComposerOverlayOpen() && attachPreviewRow?.children.length) {
+        positionComposerDropdown(attachPreviewRow);
+      }
     };
     // Mobile retains the original fixed dropdowns outside the transformed
     // composer. Desktop's dropdowns are composer children and need no JS
@@ -182,7 +185,10 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       if (!dropdown || !isMobileComposer) return;
       const taRect = messageInput.getBoundingClientRect();
       const aboveInput = document.querySelector(".composer-above-input");
-      const aboveInputHeight = aboveInput ? Math.max(0, Math.ceil(aboveInput.getBoundingClientRect().height)) : 0;
+      let aboveInputHeight = aboveInput ? Math.max(0, Math.ceil(aboveInput.getBoundingClientRect().height)) : 0;
+      if (dropdown !== attachPreviewRow && attachPreviewRow?.children.length) {
+        aboveInputHeight += Math.max(0, Math.ceil(attachPreviewRow.getBoundingClientRect().height));
+      }
       const gap = 8;
       const availableSpace = Math.max(96, taRect.top - aboveInputHeight - 20);
       dropdown.style.left = taRect.left + "px";
@@ -191,6 +197,10 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       dropdown.style.bottom = Math.max(12, window.innerHeight - taRect.top + gap + aboveInputHeight) + "px";
       dropdown.style.maxHeight = Math.min(208, availableSpace) + "px";
     };
+    document.addEventListener("composer-overlay-open", () => {
+      if (!isMobileComposer || !attachPreviewRow?.children.length) return;
+      requestAnimationFrame(() => positionComposerDropdown(attachPreviewRow));
+    });
     messageInput.addEventListener("input", () => {
       autoResizeTextarea();
     });

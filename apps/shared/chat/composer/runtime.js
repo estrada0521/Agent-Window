@@ -32,6 +32,7 @@
     const attachInput = document.getElementById("attachInput");
     const attachPreviewRow = document.getElementById("attachPreviewRow");
     const composerShellEl = document.querySelector(".composer-shell");
+    if (isMobileComposer && attachPreviewRow) document.body.appendChild(attachPreviewRow);
     if (attachBtn && attachInput && attachPreviewRow) {
       const addCard = (file, attachment) => {
         const card = document.createElement("button");
@@ -51,6 +52,7 @@
           ext.textContent = file.name.split(".").pop().slice(0, 5) || "FILE";
           card.appendChild(ext);
         }
+        card.addEventListener("mousedown", (event) => event.preventDefault());
         card.addEventListener("click", () => {
           pendingAttachments = pendingAttachments.filter((a) => a !== attachment);
           card.remove();

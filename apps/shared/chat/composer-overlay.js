@@ -13,9 +13,7 @@
       composerOverlay?.addEventListener("touchmove", (event) => {
         const target = event.target;
         if (target instanceof Element) {
-          if (target.closest("textarea.is-scrollable, .target-picker")) return;
-          const attachments = target.closest(".attach-preview-row");
-          if (attachments && attachments.scrollHeight > attachments.clientHeight) return;
+          if (target.closest("textarea.is-scrollable, .attach-preview-row, .target-picker")) return;
         }
         event.preventDefault();
       }, { passive: false });
