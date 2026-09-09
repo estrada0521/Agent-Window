@@ -170,7 +170,6 @@ def _send_or_enqueue_message(
 
 def _clean_env():
     env = os.environ.copy()
-    env["AGENT_WINDOW_AGENT_NAME"] = "user"
     if runtime is None:
         raise RuntimeError("chat runtime is unavailable during reload")
     env[RELOAD_RUNNING_AGENTS_ENV] = json.dumps(runtime.running_agents_for_reload())

@@ -47,7 +47,6 @@ def stop_chat_server(self, workspace: str) -> tuple[bool, str]:
 
 def chat_launch_env(self) -> dict[str, str]:
     env = os.environ.copy()
-    env["AGENT_WINDOW_AGENT_NAME"] = "user"
     if self.tmux_socket:
         env["AGENT_WINDOW_TMUX_SOCKET"] = self.tmux_socket
     env["AGENT_INDEX_HUB_PORT"] = str(self.hub_port)

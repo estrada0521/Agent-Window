@@ -28,16 +28,18 @@ from backend_core.access.settings import (
 from backend_core.agents.executables import agent_launch_cmd, resolve_agent_executable
 from backend_core.agents.names import agent_base_name
 from backend_core.agents.instances import (
-    agents_to_csv,
-    append_instance,
     next_instance_name,
-    parse_agents_csv,
-    remove_instance,
     resolve_canonical_instance,
 )
 from backend_core.agents.registry import AGENTS
 from backend_core.tmux.process_cleanup import cleanup_target_process_groups
-from backend_core.tmux.resolve import find_tmux_session_for_workspace
+from backend_core.tmux.session import (
+    AgentPane,
+    TERMINAL_WINDOW_NAME,
+    agent_topology,
+    find_session_for_workspace as find_live_session_for_workspace,
+    tmux_session_workspace,
+)
 from backend_core.tmux.topology import (
     acquire_topology_lock,
     default_tmux_socket_name,
@@ -81,21 +83,7 @@ def _run(prefix: list[str], args: list[str], *, timeout: float | None = None) ->
 
 
 def _live_tmux_session_for_workspace(prefix: list[str], workspace: str) -> str | None:
-    """Find the tmux session (if any) currently running at a workspace path.
-
-    tmux never knows an AW session's name -- only the workspace it was
-    started in (AGENT_WINDOW_WORKSPACE, set once at creation and never
-    rewritten). This is the only bridge from an AW session (identified by
-    its log folder / .meta) to whichever live tmux session backs it.
-    """
-    result = _run(prefix, ["list-sessions", "-F", "#{session_name}"])
-    if result.returncode != 0:
-        return None
-    return find_tmux_session_for_workspace(
-        workspace,
-        result.stdout.splitlines(),
-        lambda name: _env_value(prefix, name, "AGENT_WINDOW_WORKSPACE") or None,
-    )
+    return find_live_session_for_workspace(prefix, workspace)
 
 
 def _resolve_tmux_name(prefix: list[str], session_name: str) -> str | None:
@@ -108,25 +96,12 @@ def _resolve_tmux_name(prefix: list[str], session_name: str) -> str | None:
     return _live_tmux_session_for_workspace(prefix, workspace)
 
 
-def _env_value(prefix: list[str], session_name: str, key: str) -> str:
-    result = _run(prefix, ["show-environment", "-t", session_name, key])
-    line = (result.stdout or "").strip()
-    if result.returncode != 0 or "=" not in line:
-        return ""
-    value = line.split("=", 1)[1].strip()
-    return "" if value == "-" else value
-
-
 def _set_env(prefix: list[str], session_name: str, key: str, value: str) -> None:
     _run(prefix, ["set-environment", "-t", session_name, key, value])
 
 
 def _unset_env(prefix: list[str], session_name: str, key: str) -> None:
     _run(prefix, ["set-environment", "-t", session_name, "-u", key])
-
-
-def _pane_env_key(instance_name: str) -> str:
-    return f"AGENT_WINDOW_PANE_{instance_name.upper().replace('-', '_')}"
 
 
 def _instance_names(bases: list[str]) -> list[str]:
@@ -142,13 +117,18 @@ def _instance_names(bases: list[str]) -> list[str]:
     return result
 
 
-def _show_environment(prefix: list[str], session_name: str) -> str:
-    return _run(prefix, ["show-environment", "-t", session_name]).stdout or ""
-
-
 def _write_meta(prefix: list[str], tmux_name: str, aw_name: str) -> None:
-    agents = _env_value(prefix, tmux_name, "AGENT_WINDOW_AGENTS")
-    write_session_meta_file(aw_name, agents or "-", _show_environment(prefix, tmux_name))
+    workspace = tmux_session_workspace(prefix, tmux_name)
+    agents = [pane.name for pane in agent_topology(prefix, tmux_name)]
+    write_session_meta_file(aw_name, workspace, agents)
+
+
+def _actor(initiator: str, topology: list[AgentPane]) -> str:
+    explicit = (initiator or "").strip()
+    if explicit:
+        return explicit
+    current_pane = (os.environ.get("TMUX_PANE") or "").strip()
+    return next((pane.name for pane in topology if pane.pane_id == current_pane), "user")
 
 
 def _append_log(session_name: str, message: str, *, kind: str, extra: dict | None = None) -> None:
@@ -278,14 +258,12 @@ def stop_chat_server(workspace: str) -> tuple[bool, str]:
 def _start_agent(
     *,
     prefix: list[str],
-    session_name: str,
     workspace: str,
     pane_id: str,
     instance_name: str,
 ) -> None:
     command = agent_launch_cmd(instance_name)
     _run(prefix, ["select-pane", "-t", pane_id, "-T", instance_name])
-    _set_env(prefix, session_name, "AGENT_WINDOW_AGENT_NAME", instance_name)
     shell = os.environ.get("SHELL") or "/bin/zsh"
     result = _run(
         prefix,
@@ -387,18 +365,15 @@ def describe_session(session_name: str, *, tmux_socket: str = "") -> dict:
         for line in _run(prefix, ["list-panes", "-s", "-t", tmux_name, "-F", "#{pane_dead}"]).stdout.splitlines()
         if line.strip() == "1"
     )
-    agents = _session_agents(prefix, tmux_name)
+    topology = agent_topology(prefix, tmux_name)
+    agents = [pane.name for pane in topology]
     current_pane = os.environ.get("TMUX_PANE") or ""
     this_pane_role = None
     panes: dict[str, dict | None] = {}
-    for instance in agents:
-        pane_id = _env_value(prefix, tmux_name, _pane_env_key(instance))
-        if not pane_id:
-            panes[instance] = None
-            continue
-        panes[instance] = _pane_status(prefix, pane_id)
-        if current_pane and pane_id == current_pane:
-            this_pane_role = instance
+    for pane in topology:
+        panes[pane.name] = _pane_status(prefix, pane.pane_id)
+        if current_pane and pane.pane_id == current_pane:
+            this_pane_role = pane.name
 
     info.update(
         {
@@ -462,7 +437,7 @@ def create_session(
     tmux_name = _create_tmux_session(prefix, workspace_path)
 
     configure_window_size(target=f"{tmux_name}:0", width=SESSION_WIDTH, tmux_socket=socket_name)
-    _run(prefix, ["rename-window", "-t", f"{tmux_name}:0", "terminal"])
+    _run(prefix, ["rename-window", "-t", f"{tmux_name}:0", TERMINAL_WINDOW_NAME])
     for args in (
         ["set-option", "-t", tmux_name, "-g", "remain-on-exit", "on"],
         ["set-option", "-t", tmux_name, "-g", "mouse", "on"],
@@ -489,19 +464,14 @@ def create_session(
 
     bin_dir = str(root / "bin")
     path_value = f"{bin_dir}:{os.environ.get('PATH', '')}"
-    _set_env(prefix, tmux_name, "AGENT_WINDOW_WORKSPACE", str(workspace_path))
     _set_env(prefix, tmux_name, "PATH", path_value)
     _unset_env(prefix, tmux_name, "CLAUDECODE")
-    for instance, pane_id in zip(instances, panes):
-        _set_env(prefix, tmux_name, _pane_env_key(instance), pane_id)
-    _set_env(prefix, tmux_name, "AGENT_WINDOW_AGENTS", agents_to_csv(instances) if instances else "-")
     _write_meta(prefix, tmux_name, name)
 
     if panes:
         for instance, pane_id in zip(instances, panes):
             _start_agent(
                 prefix=prefix,
-                session_name=tmux_name,
                 workspace=str(workspace_path),
                 pane_id=pane_id,
                 instance_name=instance,
@@ -524,9 +494,7 @@ def kill_session(
     tmux_name = _resolve_tmux_name(prefix, name)
     if not tmux_name:
         raise SessionControlError(f"Session does not exist: {name}")
-    workspace = _env_value(prefix, tmux_name, "AGENT_WINDOW_WORKSPACE")
-    if not workspace:
-        raise SessionControlError("workspace unavailable")
+    workspace = tmux_session_workspace(prefix, tmux_name)
     stop_ok, stop_detail = stop_chat_server(workspace)
     if not stop_ok:
         raise SessionControlError(f"failed to stop chat server for {name}: {stop_detail}")
@@ -543,10 +511,6 @@ def _with_topology_lock(tmux_socket: str, session_name: str):
     if not acquire_topology_lock(lock_dir, os.getpid()):
         raise SessionControlError(f"Timed out waiting for topology lock: {session_name}")
     return lock_dir
-
-
-def _session_agents(prefix: list[str], session_name: str) -> list[str]:
-    return parse_agents_csv(_env_value(prefix, session_name, "AGENT_WINDOW_AGENTS"))
 
 
 def add_agent(
@@ -569,16 +533,15 @@ def add_agent(
     tmux_name = _resolve_tmux_name(prefix, name)
     if not tmux_name:
         raise SessionControlError(f"Session does not exist: {name}")
-    workspace = _env_value(prefix, tmux_name, "AGENT_WINDOW_WORKSPACE")
-    if not workspace:
-        raise SessionControlError("workspace unavailable")
+    workspace = tmux_session_workspace(prefix, tmux_name)
     ensure_session_workspace_mirrors(name, workspace)
 
     lock_dir = _with_topology_lock(socket_name, name)
     try:
-        current = _session_agents(prefix, tmux_name)
+        topology = agent_topology(prefix, tmux_name)
+        current = [pane.name for pane in topology]
         instance = next_instance_name(current, base)
-        if _env_value(prefix, tmux_name, _pane_env_key(instance)):
+        if any(pane.name == instance for pane in topology):
             raise SessionControlError(f"Agent instance already exists: {instance}")
         pane_id = create_agent_window(
             session=tmux_name,
@@ -589,18 +552,14 @@ def add_agent(
         )
         if not pane_id:
             raise SessionControlError("Failed to create agent window")
-        updated = append_instance(current, instance)
-        _set_env(prefix, tmux_name, _pane_env_key(instance), pane_id)
-        _set_env(prefix, tmux_name, "AGENT_WINDOW_AGENTS", agents_to_csv(updated))
         _write_meta(prefix, tmux_name, name)
         _start_agent(
             prefix=prefix,
-            session_name=tmux_name,
             workspace=workspace,
             pane_id=pane_id,
             instance_name=instance,
         )
-        actor = (initiator or os.environ.get("AGENT_WINDOW_AGENT_NAME") or "user").strip() or "user"
+        actor = _actor(initiator, topology)
         _append_log(
             name,
             f"Add Agent: {actor} -> {instance}",
@@ -630,24 +589,23 @@ def remove_agent(
     tmux_name = _resolve_tmux_name(prefix, name)
     if not tmux_name:
         raise SessionControlError(f"Session does not exist: {name}")
-    workspace = _env_value(prefix, tmux_name, "AGENT_WINDOW_WORKSPACE")
-    if workspace:
-        ensure_session_workspace_mirrors(name, workspace)
+    workspace = tmux_session_workspace(prefix, tmux_name)
+    ensure_session_workspace_mirrors(name, workspace)
 
     lock_dir = _with_topology_lock(socket_name, name)
     try:
-        current = _session_agents(prefix, tmux_name)
+        topology = agent_topology(prefix, tmux_name)
+        current = [pane.name for pane in topology]
         canonical = resolve_canonical_instance(current, requested)
         if not canonical:
             raise SessionControlError(f"Agent instance not in this session: {agent}")
-        remaining = remove_instance(current, canonical)
         # Zero agents is a valid state -- the "terminal" window (0) keeps the
-        # tmux session alive, AGENT_WINDOW_AGENTS goes empty, and add_agent can
-        # bring one back. Agent Window doesn't own a "sessions must have an
-        # agent" rule.
-        pane_id = _env_value(prefix, tmux_name, _pane_env_key(canonical))
+        # tmux session alive and add_agent can bring one back. Agent Window
+        # doesn't own a "sessions must have an agent" rule.
+        pane_id = next((pane.pane_id for pane in topology if pane.name == canonical), "")
         if not pane_id:
-            raise SessionControlError(f"No tmux pane recorded for instance: {canonical}")
+            raise SessionControlError(f"No tmux pane found for instance: {canonical}")
+        actor = _actor(initiator, topology)
         if os.environ.get("TMUX_PANE") == pane_id and os.environ.get("AGENT_WINDOW_REMOVE_HELPER") != "1":
             env = os.environ.copy()
             env["AGENT_WINDOW_REMOVE_HELPER"] = "1"
@@ -681,10 +639,7 @@ def remove_agent(
             raise SessionControlError(f"No tmux window recorded for instance: {canonical}")
         if not kill_window_target(window_target=window_target, tmux_socket=socket_name):
             raise SessionControlError(f"tmux kill-window failed for {window_target}")
-        _unset_env(prefix, tmux_name, _pane_env_key(canonical))
-        _set_env(prefix, tmux_name, "AGENT_WINDOW_AGENTS", agents_to_csv(remaining))
         _write_meta(prefix, tmux_name, name)
-        actor = (initiator or os.environ.get("AGENT_WINDOW_AGENT_NAME") or "user").strip() or "user"
         _append_log(
             name,
             f"Remove Agent: {actor} -> {canonical}",

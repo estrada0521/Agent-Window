@@ -50,6 +50,7 @@ def send_message(
     payload = message
     successful_targets: list[str] = []
     failed_targets: list[str] = []
+    panes_by_agent = self.agent_panes()
     def run_tmux(args):
         return subprocess.run(
             [*self.tmux_prefix, *args],
@@ -59,7 +60,7 @@ def send_message(
         )
     try:
         for agent in delivery_targets:
-            pane_id = self.pane_id_for_agent(agent)
+            pane_id = panes_by_agent.get(agent, "")
             if not pane_id:
                 failed_targets.append(agent)
                 continue

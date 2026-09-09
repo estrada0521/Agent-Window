@@ -93,9 +93,7 @@ PROCESS_HANDOFF_TIMEOUT_SEC = 8.0
 
 
 def clean_env() -> dict:
-    env = dict(os.environ)
-    env["AGENT_WINDOW_AGENT_NAME"] = "user"
-    return env
+    return dict(os.environ)
 
 
 def launch_hub_restart(
@@ -131,7 +129,6 @@ def launch_hub_restart(
                 server.shutdown()
                 server.server_close()
             env = clean_env_fn()
-            env["AGENT_WINDOW_AGENT_NAME"] = "user"
             completed = subprocess.run(
                 ["bash", str(script_path), "--hub-port", str(port)],
                 cwd=repo_root,

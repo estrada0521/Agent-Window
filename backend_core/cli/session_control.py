@@ -56,8 +56,8 @@ def format_context_text(info: dict) -> str:
     lines.append("")
     lines.append("### Hints")
     lines.append(
-        "- `agent-send` uses this pane's tmux session directly; targets come from "
-        "its AGENT_WINDOW_AGENTS and AGENT_WINDOW_PANE_* values."
+        "- `agent-send` uses this pane's tmux session directly; targets are the "
+        "session's agent windows."
     )
     workspace = info.get("workspace") or "<workspace>"
     lines.append(

@@ -78,10 +78,3 @@ class HubRuntime:
                 stderr=f"tmux command timed out after {timeout} seconds",
                 timed_out=True,
             )
-
-    def tmux_env_query(self, session_name: str, key: str) -> tuple[str, bool]:
-        result = self.tmux_run(["show-environment", "-t", session_name, key])
-        line = result.stdout.strip()
-        if result.returncode == 0 and "=" in line:
-            return line.split("=", 1)[1], result.timed_out
-        return "", result.timed_out

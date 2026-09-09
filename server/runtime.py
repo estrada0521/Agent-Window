@@ -37,9 +37,8 @@ from .payload import (
 from native_log_sync.syncer import NativeLogSyncer
 from native_log_sync.refresh.binding_models import PaneBindingRequest
 from backend_core.tmux.session import (
-    active_agents as _active_agents_impl,
+    agent_topology as _agent_topology_impl,
     pane_field as _pane_field_impl,
-    pane_id_for_agent as _pane_id_for_agent_impl,
     resolve_tmux_session_name as _resolve_tmux_session_name_impl,
 )
 from .session_state import (
@@ -77,14 +76,11 @@ class ChatRuntime:
         self.repo_root = Path(repo_root).resolve()
         self.server_instance = uuid.uuid4().hex
         self.tmux_prefix = tmux_prefix_args(self.tmux_socket) if self.tmux_socket else ["tmux"]
-        # tmux never knows this session's AW name -- only the workspace it
-        # runs in (AGENT_WINDOW_WORKSPACE, set once at creation and never
-        # rewritten). Resolved once here and cached: it can't legitimately
-        # change for the life of this process.
+        # The AW label may change independently, so bind this process to the
+        # live tmux session by its native session working directory.
         self.tmux_session_name = _resolve_tmux_session_name_impl(self) or ""
         self.session_is_active = bool(self.tmux_session_name)
         self._agent_running = set(initial_running_agents or [])
-        self._pane_id_cache: dict[str, str] = {}
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(
             session_binding=self._session_binding,
@@ -127,10 +123,11 @@ class ChatRuntime:
 
     def refresh_native_log_bindings(self, agents: list[str] | None = None) -> list[dict]:
         replace_all = agents is None
-        target_agents = list(agents) if agents is not None else self.active_agents()
+        panes_by_agent = self.agent_panes()
+        target_agents = list(agents) if agents is not None else list(panes_by_agent)
         pane_requests: list[PaneBindingRequest] = []
         for agent in target_agents:
-            pane_id = self.pane_id_for_agent(agent)
+            pane_id = panes_by_agent.get(agent, "")
             if not pane_id:
                 continue
             pane_pid = self.pane_field(pane_id, "#{pane_pid}")
@@ -261,34 +258,25 @@ class ChatRuntime:
 
 
     def active_agents(self) -> list[str]:
-        return _active_agents_impl(
-            self,
-            subprocess_module=subprocess,
-        )
+        return list(self.agent_panes())
+
+    def agent_panes(self) -> dict[str, str]:
+        if not self.session_is_active:
+            return {}
+        return {
+            pane.name: pane.pane_id
+            for pane in _agent_topology_impl(
+                self.tmux_prefix,
+                self.tmux_session_name,
+                subprocess_module=subprocess,
+            )
+        }
 
     def resolve_target_agents(self, target: str) -> list[str]:
         return resolve_target_agent_names(target, self.active_agents())
 
     def pane_id_for_agent(self, agent_name: str) -> str:
-        cached = self._pane_id_cache.get(agent_name)
-        if cached:
-            return cached
-        pane_id = _pane_id_for_agent_impl(
-            self,
-            agent_name,
-            subprocess_module=subprocess,
-        )
-        if pane_id:
-            self._pane_id_cache[agent_name] = pane_id
-        return pane_id
-
-    def invalidate_pane_id_cache(self) -> None:
-        """Drop cached pane IDs after a topology change (add/remove agent).
-
-        A pane's tmux env var is only ever written at those two points, so
-        the cache only needs invalidating there -- not on every send.
-        """
-        self._pane_id_cache.clear()
+        return self.agent_panes().get(agent_name, "")
 
     def pane_field(self, pane_id: str, field: str) -> str:
         return _pane_field_impl(self, pane_id, field, subprocess_module=subprocess)

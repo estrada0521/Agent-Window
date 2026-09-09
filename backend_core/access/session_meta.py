@@ -46,25 +46,6 @@ def find_session_for_workspace(workspace: Path | str, *, exclude_session: str = 
     return claim[0] if claim else None
 
 
-def _parse_tmux_environment_output(output: str) -> dict[str, str]:
-    env_map: dict[str, str] = {}
-    for raw in (output or "").splitlines():
-        line = raw.strip()
-        if "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        env_map[key] = value
-    return env_map
-
-
-def _parse_agents_csv(agents_csv: str) -> list[str]:
-    return [
-        item.strip()
-        for item in (agents_csv or "").split(",")
-        if item.strip() and item.strip() != "-"
-    ]
-
-
 def session_workspace(session_name: str) -> str | None:
     """Return the workspace path recorded in a session's own .meta file.
 
@@ -153,13 +134,12 @@ def reset_session_agents(session_name: str) -> None:
 
 def write_session_meta_file(
     session_name: str,
-    agents_csv: str,
-    tmux_env_output: str,
+    workspace: str,
+    agents: list[str],
 ) -> None:
-    env_map = _parse_tmux_environment_output(tmux_env_output)
-    workspace = str(env_map.get("AGENT_WINDOW_WORKSPACE") or "").strip()
-    if not workspace:
-        raise ValueError("AGENT_WINDOW_WORKSPACE is required to write session meta")
+    recorded_workspace = str(workspace or "").strip()
+    if not recorded_workspace:
+        raise ValueError("workspace is required to write session meta")
 
     meta_path = agent_window_session_root() / str(session_name or "").strip() / ".meta"
     meta: dict[str, object] = {}
@@ -169,12 +149,11 @@ def write_session_meta_file(
             raise ValueError(f"invalid session meta: {meta_path}")
         meta = raw
 
-    parsed_agents = _parse_agents_csv(agents_csv)
     # Timestamps lived here once; .log.jsonl is the real record of when a
     # session started and last moved, so a copy in .meta only went stale.
     meta.pop("session", None)
     meta.pop("created_at", None)
     meta.pop("updated_at", None)
-    meta["workspace"] = workspace
-    meta["agents"] = parsed_agents
+    meta["workspace"] = recorded_workspace
+    meta["agents"] = [str(agent).strip() for agent in agents if str(agent).strip()]
     write_json_atomically(meta_path, meta, indent=2)

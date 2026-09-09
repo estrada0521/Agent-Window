@@ -117,13 +117,11 @@ def build_session_record(
     }
 
 
-class _TmuxQueryTimeout(RuntimeError):
-    pass
-
-
 def live_tmux_sessions_query(runtime: Any) -> tuple[dict[str, tuple[str, int]], str, str]:
     """Map each live workspace to its tmux name and creation time."""
-    result = runtime.tmux_run(["list-sessions", "-F", "#{session_name}\t#{session_created}"])
+    result = runtime.tmux_run(
+        ["list-sessions", "-F", "#{session_name}\t#{session_created}\t#{session_path}"]
+    )
     if result.timed_out:
         return {}, "unhealthy", "tmux list-sessions timed out"
     if result.returncode != 0:
@@ -132,30 +130,20 @@ def live_tmux_sessions_query(runtime: Any) -> tuple[dict[str, tuple[str, int]], 
             return {}, "ok", ""
         return {}, "unhealthy", stderr or f"tmux list-sessions failed (exit {result.returncode})"
 
-    sessions: list[tuple[str, int]] = []
+    workspace_to_tmux: dict[str, tuple[str, int]] = {}
     for raw_line in result.stdout.splitlines():
-        tmux_name, separator, created_raw = raw_line.partition("\t")
+        fields = raw_line.split("\t", 2)
+        if len(fields) != 3:
+            return {}, "unhealthy", f"tmux list-sessions returned unreadable output: {raw_line!r}"
+        tmux_name, created_raw, workspace = fields
         tmux_name = tmux_name.strip()
-        if not tmux_name:
-            continue
-        created_epoch = int(created_raw) if separator and created_raw.isdigit() else 0
-        sessions.append((tmux_name, created_epoch))
-
-    def workspace_of(tmux_name: str) -> str | None:
-        workspace, timed_out = runtime.tmux_env_query(tmux_name, "AGENT_WINDOW_WORKSPACE")
-        if timed_out:
-            raise _TmuxQueryTimeout(tmux_name)
-        return workspace or None
-
-    try:
-        workspace_to_tmux: dict[str, tuple[str, int]] = {}
-        for tmux_name, created_epoch in sessions:
-            workspace = workspace_of(tmux_name)
-            if not workspace:
-                continue
-            workspace_to_tmux.setdefault(normalize_workspace(workspace), (tmux_name, created_epoch))
-    except _TmuxQueryTimeout as exc:
-        return {}, "unhealthy", f"tmux show-environment (WORKSPACE) timed out for {exc}"
+        workspace = workspace.strip()
+        if not tmux_name or not workspace or not created_raw.isdigit():
+            return {}, "unhealthy", f"tmux list-sessions returned unreadable output: {raw_line!r}"
+        workspace_to_tmux.setdefault(
+            normalize_workspace(workspace),
+            (tmux_name, int(created_raw)),
+        )
     return workspace_to_tmux, "ok", ""
 
 

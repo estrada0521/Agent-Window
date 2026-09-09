@@ -48,7 +48,7 @@ This applies to every agent type, such as `claude-1`, `claude-2`, `gemini-1`, or
 printf '%s' 'Please review this together.' | agent-send codex-1,codex-2
 ```
 
-Use the exact instance names shown in the current session topology. They are available in `AGENT_WINDOW_AGENTS` and through:
+Use the exact instance names shown in the current session topology:
 
 ```bash
 agent-window context

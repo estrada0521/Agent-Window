@@ -33,14 +33,6 @@ def _respawn_agent_pane(runtime, pane_id: str, command: str, *, subprocess_modul
     return True, pane_id
 
 
-def _set_agent_runtime_env(runtime, agent_name: str, *, subprocess_module=subprocess) -> None:
-    subprocess_module.run(
-        [*runtime.tmux_prefix, "set-environment", "-t", runtime.tmux_session_name, "AGENT_WINDOW_AGENT_NAME", agent_name],
-        capture_output=True,
-        check=False,
-    )
-
-
 def _refresh_agent_bindings(runtime, agent_name: str) -> None:
     runtime._native_log.on_pane_restart(agent_name)
     runtime.refresh_native_log_bindings([agent_name])
@@ -50,7 +42,6 @@ def restart_agent_pane(runtime, agent_name: str, *, subprocess_module=subprocess
     pane_id = runtime.pane_id_for_agent(agent_name)
     if not pane_id:
         return False, f"pane not found for {agent_name}"
-    _set_agent_runtime_env(runtime, agent_name, subprocess_module=subprocess_module)
     ok, detail = _respawn_agent_pane(
         runtime,
         pane_id,
@@ -73,7 +64,6 @@ def resume_agent_pane(runtime, agent_name: str, *, subprocess_module=subprocess,
     pane_id = runtime.pane_id_for_agent(agent_name)
     if not pane_id:
         return False, f"pane not found for {agent_name}"
-    _set_agent_runtime_env(runtime, agent_name, subprocess_module=subprocess_module)
     ok, detail = _respawn_agent_pane(
         runtime,
         pane_id,

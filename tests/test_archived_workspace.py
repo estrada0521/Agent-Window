@@ -135,8 +135,8 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 json.dumps({"workspace": "/old/lab"}) + "\n",
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(ValueError, "AGENT_WINDOW_WORKSPACE"):
-                write_session_meta_file("Lab", "codex", "")
+            with self.assertRaisesRegex(ValueError, "workspace is required"):
+                write_session_meta_file("Lab", "", ["codex"])
             self.assertEqual(json.loads(meta_path.read_text(encoding="utf-8"))["workspace"], "/old/lab")
 
     def test_archived_open_passes_saved_workspace_not_hub_root(self) -> None:

@@ -1,108 +1,141 @@
 from __future__ import annotations
 
 import subprocess
+from dataclasses import dataclass
 
-from backend_core.tmux.resolve import find_tmux_session_for_workspace
+from backend_core.tmux.resolve import normalize_workspace
 
 
-def resolve_tmux_session_name(runtime, *, subprocess_module=subprocess) -> str | None:
-    """Find the live tmux session actually backing this AW session, if any.
+TERMINAL_WINDOW_NAME = "terminal"
 
-    tmux only ever genuinely knows the workspace it was started in
-    (AGENT_WINDOW_WORKSPACE, set once at creation and never rewritten) --
-    never the AW session's own name, which can be renamed independently of
-    the tmux session underneath it. Whether the AW session is active is the
-    result of this lookup, not an input to it.
-    """
-    workspace = str(runtime.workspace or "").strip()
-    if not workspace:
-        return None
-    result = subprocess_module.run(
-        [*runtime.tmux_prefix, "list-sessions", "-F", "#{session_name}"],
+
+@dataclass(frozen=True)
+class AgentPane:
+    name: str
+    pane_id: str
+
+
+def _run(prefix: list[str], args: list[str], *, subprocess_module=subprocess):
+    return subprocess_module.run(
+        [*prefix, *args],
         capture_output=True,
         text=True,
         timeout=2,
         check=False,
+    )
+
+
+def live_sessions(prefix: list[str], *, subprocess_module=subprocess) -> list[tuple[str, str]]:
+    """Return live tmux sessions as ``(name, session_path)`` pairs."""
+    result = _run(
+        prefix,
+        ["list-sessions", "-F", "#{session_name}\t#{session_path}"],
+        subprocess_module=subprocess_module,
     )
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip()
-        if "no server running" in detail.lower() or "no such file or directory" in detail.lower():
-            return None
-        raise RuntimeError(
-            f"tmux list-sessions failed while resolving workspace (exit {result.returncode}): {detail}"
-        )
-
-    def workspace_of(name: str) -> str | None:
-        env_result = subprocess_module.run(
-            [*runtime.tmux_prefix, "show-environment", "-t", name, "AGENT_WINDOW_WORKSPACE"],
-            capture_output=True,
-            text=True,
-            timeout=2,
-            check=False,
-        )
-        line = env_result.stdout.strip()
-        if env_result.returncode != 0:
-            detail = (env_result.stderr or env_result.stdout or "").strip()
-            lowered = detail.lower()
-            if "unknown variable" in lowered or "can't find session" in lowered:
-                return None
-            raise RuntimeError(
-                f"tmux show-environment AGENT_WINDOW_WORKSPACE failed for {name} "
-                f"(exit {env_result.returncode}): {detail}"
-            )
-        if "=" not in line:
-            return None
-        return line.split("=", 1)[1].strip() or None
-
-    return find_tmux_session_for_workspace(workspace, result.stdout.splitlines(), workspace_of)
-
-
-def active_agents(runtime, *, subprocess_module=subprocess) -> list[str]:
-    if not runtime.session_is_active:
-        return []
-    r = subprocess_module.run(
-        [*runtime.tmux_prefix, "show-environment", "-t", runtime.tmux_session_name, "AGENT_WINDOW_AGENTS"],
-        capture_output=True,
-        text=True,
-        timeout=2,
-        check=False,
-    )
-    line = r.stdout.strip()
-    if r.returncode == 0 and "=" in line:
-        raw = line.split("=", 1)[1].strip()
-        if not raw or raw == "-":
+        lowered = detail.lower()
+        if "no server running" in lowered or "no such file or directory" in lowered:
             return []
-        return [a for a in raw.split(",") if a and a != "-"]
-    if r.returncode != 0:
-        detail = (r.stderr or r.stdout or "").strip()
-        if "unknown variable" in detail.lower():
-            return []
-        raise RuntimeError(
-            f"tmux show-environment AGENT_WINDOW_AGENTS failed (exit {r.returncode}): {detail or line!r}"
-        )
-    raise RuntimeError(f"tmux show-environment AGENT_WINDOW_AGENTS returned unreadable output: {line!r}")
+        raise RuntimeError(f"tmux list-sessions failed (exit {result.returncode}): {detail}")
+
+    sessions: list[tuple[str, str]] = []
+    for raw_line in result.stdout.splitlines():
+        name, separator, workspace = raw_line.partition("\t")
+        name = name.strip()
+        workspace = workspace.strip()
+        if not separator or not name or not workspace:
+            raise RuntimeError(f"tmux list-sessions returned unreadable output: {raw_line!r}")
+        sessions.append((name, workspace))
+    return sessions
 
 
-def pane_id_for_agent(runtime, agent_name: str, *, subprocess_module=subprocess) -> str:
-    pane_var = f"AGENT_WINDOW_PANE_{agent_name.upper().replace('-', '_')}"
-    res = subprocess_module.run(
-        [*runtime.tmux_prefix, "show-environment", "-t", runtime.tmux_session_name, pane_var],
-        capture_output=True,
-        text=True,
-        timeout=2,
-        check=False,
+def find_session_for_workspace(
+    prefix: list[str],
+    workspace: str,
+    *,
+    subprocess_module=subprocess,
+) -> str | None:
+    wanted = normalize_workspace(workspace)
+    for name, session_path in live_sessions(prefix, subprocess_module=subprocess_module):
+        if normalize_workspace(session_path) == wanted:
+            return name
+    return None
+
+
+def tmux_session_workspace(
+    prefix: list[str],
+    session_name: str,
+    *,
+    subprocess_module=subprocess,
+) -> str:
+    result = _run(
+        prefix,
+        ["display-message", "-p", "-t", session_name, "#{session_path}"],
+        subprocess_module=subprocess_module,
     )
-    line = res.stdout.strip()
-    if res.returncode == 0 and "=" in line:
-        return line.split("=", 1)[1].strip()
-    if res.returncode != 0:
-        detail = (res.stderr or res.stdout or "").strip()
-        if "unknown variable" in detail.lower():
-            return ""
-        raise RuntimeError(
-            f"tmux show-environment {pane_var} failed (exit {res.returncode}): {detail or line!r}"
-        )
-    raise RuntimeError(f"tmux show-environment {pane_var} returned unreadable output: {line!r}")
+    workspace = (result.stdout or "").strip()
+    if result.returncode != 0 or not workspace:
+        detail = (result.stderr or result.stdout or "").strip()
+        raise RuntimeError(detail or f"workspace unavailable for tmux session {session_name}")
+    return workspace
+
+
+def agent_topology(
+    prefix: list[str],
+    session_name: str,
+    *,
+    subprocess_module=subprocess,
+) -> list[AgentPane]:
+    """Project AW's one-window-per-agent tmux topology in window order."""
+    result = _run(
+        prefix,
+        [
+            "list-windows",
+            "-t",
+            session_name,
+            "-F",
+            "#{window_name}\t#{window_panes}\t#{pane_id}",
+        ],
+        subprocess_module=subprocess_module,
+    )
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip()
+        raise RuntimeError(detail or f"cannot read tmux topology for {session_name}")
+
+    return parse_agent_topology(result.stdout)
+
+
+def parse_agent_topology(output: str) -> list[AgentPane]:
+    panes: list[AgentPane] = []
+    seen_names: set[str] = set()
+    for raw_line in output.splitlines():
+        fields = raw_line.split("\t")
+        if len(fields) != 3:
+            raise RuntimeError(f"tmux list-windows returned unreadable output: {raw_line!r}")
+        name, pane_count_raw, pane_id = (field.strip() for field in fields)
+        if not pane_count_raw.isdigit():
+            raise RuntimeError(f"tmux list-windows returned unreadable output: {raw_line!r}")
+        if name == TERMINAL_WINDOW_NAME:
+            continue
+        if int(pane_count_raw) != 1 or not name or not pane_id:
+            raise RuntimeError(f"invalid agent window topology: {raw_line!r}")
+        if name in seen_names:
+            raise RuntimeError(f"duplicate agent window name: {name}")
+        seen_names.add(name)
+        panes.append(AgentPane(name, pane_id))
+    return panes
+
+
+def resolve_tmux_session_name(runtime, *, subprocess_module=subprocess) -> str | None:
+    workspace = str(runtime.workspace or "").strip()
+    if not workspace:
+        return None
+    return find_session_for_workspace(
+        runtime.tmux_prefix,
+        workspace,
+        subprocess_module=subprocess_module,
+    )
 
 
 def pane_field(runtime, pane_id: str, field: str, *, subprocess_module=subprocess) -> str:

@@ -16,6 +16,7 @@ from backend_core.agents.names import agent_base_name
 from backend_core.agents.registry import ALL_AGENT_NAMES
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.session_meta import SessionMetaError, find_session_for_workspace
+from backend_core.tmux.session import AgentPane, parse_agent_topology
 from backend_core.tmux.topology import default_tmux_socket_name
 from message_delivery.paste import deliver_text_to_pane
 
@@ -96,31 +97,44 @@ class AgentSendRuntime:
         self._tmux_session_name = resolved
         return resolved
 
-    def tmux_env(self, key: str) -> str:
-        target_name = self.resolve_tmux_session_name()
-        result = self.tmux.run(["show-environment", "-t", target_name, key])
-        line = (result.stdout or "").strip()
-        if result.returncode == 0 and "=" in line:
-            return line.split("=", 1)[1]
-        detail = (result.stderr or result.stdout or "").strip()
-        if "unknown variable" in detail.lower():
-            return ""
-        raise AgentSendError(detail or f"Cannot read {key} from the current tmux session.")
+    def session_workspace(self) -> str:
+        result = self.tmux.run(
+            ["display-message", "-p", "-t", self.resolve_tmux_session_name(), "#{session_path}"]
+        )
+        workspace = (result.stdout or "").strip()
+        if result.returncode != 0 or not workspace:
+            detail = (result.stderr or result.stdout or "").strip()
+            raise AgentSendError(detail or "Cannot resolve the current tmux session workspace.")
+        return workspace
 
-    def resolve_session_name(self) -> str:
+    def agent_topology(self) -> list[AgentPane]:
+        result = self.tmux.run(
+            [
+                "list-windows",
+                "-t",
+                self.resolve_tmux_session_name(),
+                "-F",
+                "#{window_name}\t#{window_panes}\t#{pane_id}",
+            ]
+        )
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout or "").strip()
+            raise AgentSendError(detail or "Cannot read the current tmux topology.")
+        try:
+            return parse_agent_topology(result.stdout)
+        except RuntimeError as exc:
+            raise AgentSendError(str(exc)) from exc
+
+    def resolve_session_name(self, workspace: str | None = None) -> str:
         """Return the current AW session name -- looked up by workspace.
 
         tmux never carries this (an AW session's name can be renamed
         independently of the tmux session underneath it), so the only
         reliable source is the same one the rest of AW uses: which log
-        folder's .meta currently claims this workspace. AGENT_WINDOW_WORKSPACE
-        is set once at session creation and never rewritten, so it's a
-        stable key even if this process's own environment is otherwise
-        stale.
+        folder's .meta currently claims this workspace. The workspace itself
+        comes from tmux's native session working directory.
         """
-        workspace = (self.env.get("AGENT_WINDOW_WORKSPACE") or "").strip()
-        if not workspace:
-            raise AgentSendError("AGENT_WINDOW_WORKSPACE is not set in this pane.")
+        workspace = (workspace or self.session_workspace()).strip()
         try:
             resolved = find_session_for_workspace(workspace)
         except SessionMetaError as exc:
@@ -128,9 +142,6 @@ class AgentSendRuntime:
         if resolved:
             return resolved
         raise AgentSendError("No active agent-window session found for this workspace.")
-
-    def resolve_pane(self, key: str) -> str:
-        return self.tmux_env(key)
 
     def resolve_agent_name(self, token: str) -> str | None:
         lower = (token or "").strip().lower()
@@ -141,31 +152,26 @@ class AgentSendRuntime:
             return lower
         return None
 
-    def resolve_self_agent(self) -> str | None:
+    def resolve_self_agent(self, topology: list[AgentPane] | None = None) -> str | None:
         current_pane = (self.env.get("TMUX_PANE") or "").strip()
         if not current_pane:
             raise AgentSendError("TMUX_PANE is not set in this pane.")
-        for agent in self.active_agent_instances():
-            pane = self.resolve_pane(f"AGENT_WINDOW_PANE_{agent.upper().replace('-', '_')}")
-            if pane == current_pane:
-                return agent
+        for pane in topology if topology is not None else self.agent_topology():
+            if pane.pane_id == current_pane:
+                return pane.name
         return None
 
-    def active_agent_instances(self) -> list[str]:
-        agents_str = self.tmux_env("AGENT_WINDOW_AGENTS")
-        if agents_str == "-":
-            return []
-        if not agents_str:
-            raise AgentSendError("AGENT_WINDOW_AGENTS is not set in the current tmux session.")
-        return [item.strip() for item in agents_str.split(",") if item.strip()]
+    def active_agent_instances(self, topology: list[AgentPane] | None = None) -> list[str]:
+        current = topology if topology is not None else self.agent_topology()
+        return [pane.name for pane in current]
 
-    def resolve_agent_name_target(self, requested: str) -> str:
+    def resolve_agent_name_target(self, requested: str, available: list[str] | None = None) -> str:
         raw = str(requested or "").strip()
         lowered = raw.lower()
         if not lowered:
             raise AgentSendError("Agent target is required.")
 
-        available = self.active_agent_instances()
+        available = available if available is not None else self.active_agent_instances()
         for instance in available:
             if instance.lower() == lowered:
                 return instance
@@ -198,10 +204,16 @@ class AgentSendRuntime:
             default_path.touch()
         return default_path
 
-    def _build_delivery_targets(self, target_spec: str, sender_role: str | None) -> list[DeliveryTarget]:
+    def _build_delivery_targets(
+        self,
+        target_spec: str,
+        sender_role: str | None,
+        topology: list[AgentPane],
+    ) -> list[DeliveryTarget]:
         targets: list[DeliveryTarget] = []
         panes_by_target: dict[str, str] = {}
-        active = self.active_agent_instances()
+        panes_by_name = {pane.name: pane.pane_id for pane in topology}
+        active = list(panes_by_name)
 
         def queue(agent_name: str, pane_id: str) -> None:
             if not agent_name or not pane_id:
@@ -222,13 +234,11 @@ class AgentSendRuntime:
                 for instance in active:
                     if sender_role != "user" and instance == sender_role:
                         continue
-                    pane = self.resolve_pane(f"AGENT_WINDOW_PANE_{instance.upper().replace('-', '_')}")
-                    if pane:
-                        queue(instance, pane)
+                    queue(instance, panes_by_name[instance])
                 continue
 
-            canonical = self.resolve_agent_name_target(raw_target)
-            pane = self.resolve_pane(f"AGENT_WINDOW_PANE_{canonical.upper().replace('-', '_')}")
+            canonical = self.resolve_agent_name_target(raw_target, active)
+            pane = panes_by_name.get(canonical, "")
             if not pane:
                 raise AgentSendError(f"Target pane not found: {raw_target}")
             queue(canonical, pane)
@@ -237,10 +247,7 @@ class AgentSendRuntime:
             targets.append(DeliveryTarget(agent_name=name, pane_id=pane))
         return targets
 
-    def _notify_running_agents(self, agents: list[str]) -> None:
-        workspace = str(self.env.get("AGENT_WINDOW_WORKSPACE") or "").strip()
-        if not workspace:
-            raise AgentSendError("AGENT_WINDOW_WORKSPACE is not set in this pane.")
+    def _notify_running_agents(self, agents: list[str], workspace: str) -> None:
         port = workspace_chat_port(workspace)
         body = json.dumps({"targets": agents}).encode("utf-8")
         connection: http.client.HTTPConnection | http.client.HTTPSConnection
@@ -304,10 +311,12 @@ class AgentSendRuntime:
         target_spec: str,
         payload: str,
     ) -> bool:
-        session_name = self.resolve_session_name()
-        sender_role = self.resolve_self_agent() or "user"
+        workspace = self.session_workspace()
+        session_name = self.resolve_session_name(workspace)
+        topology = self.agent_topology()
+        sender_role = self.resolve_self_agent(topology) or "user"
         delivery_payload = self.normalize_payload(sender_role, payload)
-        delivery_targets = self._build_delivery_targets(target_spec, sender_role)
+        delivery_targets = self._build_delivery_targets(target_spec, sender_role, topology)
         if not delivery_targets:
             raise AgentSendError("No target panes resolved.")
 
@@ -334,7 +343,7 @@ class AgentSendRuntime:
             payload=delivery_payload,
         )
         try:
-            self._notify_running_agents(successful_targets)
+            self._notify_running_agents(successful_targets, workspace)
         except AgentSendError as exc:
             print(f"Delivered, but Agent Window was not notified: {exc}", file=sys.stderr)
 
