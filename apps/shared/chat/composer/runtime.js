@@ -37,6 +37,13 @@
       if (!attachPreviewRow) return;
       attachPreviewRow.style.setProperty("--attach-preview-fade-left", attachPreviewRow.scrollLeft > 1 ? "16px" : "0px");
     };
+    // Mobile: the @ / menu is fixed above the attach row, so its offset goes
+    // stale when the row grows or empties -- re-place whichever menu is open.
+    const repositionOpenComposerMenu = () => {
+      if (!isMobileComposer || typeof positionComposerDropdown !== "function") return;
+      const openMenu = document.querySelector("#fileDropdown.visible, #cmdDropdown.visible");
+      if (openMenu) positionComposerDropdown(openMenu);
+    };
     if (isMobileComposer && attachPreviewRow) {
       document.body.appendChild(attachPreviewRow);
       attachPreviewRow.addEventListener("scroll", syncAttachPreviewFade, { passive: true });
@@ -67,6 +74,7 @@
           updateSendBtnVisibility();
           syncAttachPreviewFade();
           if (!attachPreviewRow.children.length) attachPreviewRow.style.display = "none";
+          repositionOpenComposerMenu();
           if (attachment.path) {
             fetch("/delete-upload", {
               method: "POST",
@@ -78,6 +86,7 @@
         attachPreviewRow.appendChild(card);
         attachPreviewRow.style.display = "flex";
         syncAttachPreviewFade();
+        repositionOpenComposerMenu();
       };
 __CHAT_INCLUDE:../upload-attached-files.js__
       const dtHasFiles = (dt) => dt && [...dt.types].includes("Files");
