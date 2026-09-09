@@ -231,20 +231,36 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       _stickyToBottom = true;
       reportFitHeight();
     };
+    const fitStepToFirst = () => {
+      const rows = fitMessageRows();
+      if (!rows.length) return;
+      _fitTargetRow = rows[0];
+      _pollScrollLockTop = null;
+      _pollScrollAnchor = null;
+      _stickyToBottom = false;
+      reportFitHeight();
+    };
     const fitStepToMessage = (down) => {
       const rows = fitMessageRows();
       if (!rows.length) return;
-      const current = rows.includes(_fitTargetRow) ? _fitTargetRow : rows[rows.length - 1];
-      const index = rows.indexOf(current);
+      // Step from where the transcript actually sits, not a stored _fitTargetRow:
+      // free scrolling and older-batch loads never update it. Same probe as the
+      // non-Fit stepper -- the row that reaches the step-top line.
+      const stepTop = timeline.getBoundingClientRect().top + messageStepTopGap();
+      let next = null;
       if (down) {
-        // The last message and "latest" are one stop via one path -- stepping
-        // down to the bottom is identical to jumping to it, nothing to sync.
-        if (index >= rows.length - 2) { fitStepToLatest(); return; }
-        _fitTargetRow = rows[index + 1];
+        for (const row of rows) {
+          if (row.getBoundingClientRect().top - stepTop > 2) { next = row; break; }
+        }
+        // Onto (or past) the last message is the single "latest" stop, as Cmd-Down.
+        if (!next || next === rows[rows.length - 1]) { fitStepToLatest(); return; }
       } else {
-        if (index <= 0) return;
-        _fitTargetRow = rows[index - 1];
+        for (const row of rows) {
+          if (row.getBoundingClientRect().top - stepTop < -2) next = row; else break;
+        }
+        if (!next) return;
       }
+      _fitTargetRow = next;
       _pollScrollLockTop = null;
       _pollScrollAnchor = null;
       _stickyToBottom = false;

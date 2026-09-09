@@ -133,7 +133,12 @@
           for (const { row } of pendingRowCleanup) {
             if (row.isConnected) postRenderScope(row);
           }
-          pendingStreamRowCleanups = pendingRowCleanup;
+          // Older messages loaded above the view have no reveal animation, and
+          // "chat-transcript-settled" is only a re-fit trigger for Fit Height --
+          // firing it here (now and again on each row's 850ms cleanup timer)
+          // yanks the window back to the last stepped-to message. The prepend
+          // changes nothing it would need to re-measure, so stay silent.
+          pendingStreamRowCleanups = [];
           void timeline.offsetHeight;
           _programmaticScroll = true;
           timeline.scrollTop = topBefore + (timeline.scrollHeight - heightBefore);

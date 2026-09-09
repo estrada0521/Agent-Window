@@ -168,6 +168,10 @@
     const jumpConversationToTop = () => {
       // Top of what's loaded, not the first entry ever -- the transcript is a
       // tail window and older batches auto-load on the way up.
+      if (document.documentElement.dataset.autoWindowHeight === "1" && typeof fitStepToFirst === "function") {
+        fitStepToFirst();
+        return;
+      }
       _pollScrollLockTop = null;
       _pollScrollAnchor = null;
       _stickyToBottom = false;
