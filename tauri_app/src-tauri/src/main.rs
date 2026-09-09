@@ -1,5 +1,6 @@
 use objc2_app_kit::{
-    NSBitmapImageFileType, NSBitmapImageRep, NSWindow, NSWindowButton, NSWorkspace,
+    NSAnimatablePropertyContainer, NSAnimationContext, NSBitmapImageFileType, NSBitmapImageRep,
+    NSWindow, NSWindowButton, NSWorkspace,
 };
 use objc2_foundation::{NSDictionary, NSString};
 use std::collections::HashMap;
@@ -985,7 +986,15 @@ fn scale_window_from_top_center(
         frame.origin.y -= height_delta;
         frame.size.width += width_delta;
         frame.size.height += height_delta;
-        ns_window.setFrame_display(frame, true);
+        // Schedule the resize without blocking WebKit's own painting. Exact
+        // frame-for-frame synchronization is not available across the native
+        // window and WebKit compositor, but concurrent motion keeps the lag
+        // from presenting as two hard jumps.
+        NSAnimationContext::beginGrouping();
+        let context = NSAnimationContext::currentContext();
+        context.setDuration(ns_window.animationResizeTime(frame));
+        ns_window.animator().setFrame_display(frame, true);
+        NSAnimationContext::endGrouping();
     }
     // Match the visible corner to the (now scaled) top glass band.
     if corner_radius.is_finite() && corner_radius > 0.0 {
