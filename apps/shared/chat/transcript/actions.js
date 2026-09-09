@@ -185,14 +185,17 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         sendLocked = false;
         return false;
       }
-      if (closeOverlayOnStart && isComposerOverlayOpen()) {
-        blurComposerOnMobile(message);
-        // Read by the close-start Fit Height refit: the just-sent message
-        // hasn't rendered yet (that happens after the /send round trip
-        // below), so that refit should wait for it instead of measuring the
-        // previous last message.
+      if (isComposerOverlayOpen()) {
+        // Fit Height's close-start refit reads this: a send always returns to
+        // the latest message from wherever the transcript was parked, and that
+        // refit waits for the sent message to render rather than measuring the
+        // previous one. Set for every send path, not just the send button --
+        // Enter closes the overlay only after the round trip below.
         document.documentElement.dataset.sendInFlight = "1";
-        closeComposerOverlay();
+        if (closeOverlayOnStart) {
+          blurComposerOnMobile(message);
+          closeComposerOverlay();
+        }
       }
       setStatus(isNote ? "saving note..." : `sending to ${target}...`);
       try {
