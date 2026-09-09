@@ -164,8 +164,12 @@
       padding: calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 20 / 13) calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 10 / 13);
       align-self: center;
       -webkit-overflow-scrolling: touch;
-      mask-image: linear-gradient(to right, black 85%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+      /* Each edge fades only while more row is hidden past it -- JS sets the
+         widths on scroll / resize (shared/chat/target-picker.js). */
+      --target-picker-fade-left: 0px;
+      --target-picker-fade-right: 0px;
+      mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black calc(100% - var(--target-picker-fade-right)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black calc(100% - var(--target-picker-fade-right)), transparent 100%);
     }
     .target-picker::-webkit-scrollbar {
       display: none;

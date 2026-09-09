@@ -31,7 +31,24 @@
         node.classList.toggle("active", selectedSet.has(node.dataset.target));
       });
       root.dataset.renderSig = renderSig;
+      syncTargetPickerFade();
     };
+    // Each edge fades only while there is more row hidden past it -- the left
+    // once scrolled off the first chip, the right until the last is reached.
+    const syncTargetPickerFade = () => {
+      const el = document.getElementById("targetPicker");
+      if (!el) return;
+      const max = el.scrollWidth - el.clientWidth;
+      el.style.setProperty("--target-picker-fade-left", el.scrollLeft > 1 ? "16px" : "0px");
+      el.style.setProperty("--target-picker-fade-right", max > 1 && el.scrollLeft < max - 1 ? "16px" : "0px");
+    };
+    {
+      const el = document.getElementById("targetPicker");
+      if (el) {
+        el.addEventListener("scroll", syncTargetPickerFade, { passive: true });
+        if (typeof ResizeObserver === "function") new ResizeObserver(syncTargetPickerFade).observe(el);
+      }
+    }
     window.addEventListener("keydown", (event) => {
       if (!event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
       if (event.isComposing || event.keyCode === 229 || event.repeat) return;

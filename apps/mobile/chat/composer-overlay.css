@@ -174,11 +174,12 @@
       padding: 4px 20px 4px 10px;
       align-self: center;
       -webkit-overflow-scrolling: touch;
-      /* Left fade only once scrolled off the first chip (JS sets the width);
-         the right side always hints at more, like the other row scrollers. */
+      /* Each edge fades only while more row is hidden past it -- JS sets the
+         widths on scroll / resize (shared/chat/target-picker.js). */
       --target-picker-fade-left: 0px;
-      mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black 85%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black 85%, transparent 100%);
+      --target-picker-fade-right: 0px;
+      mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black calc(100% - var(--target-picker-fade-right)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black calc(100% - var(--target-picker-fade-right)), transparent 100%);
     }
 
     .target-picker-anchor {

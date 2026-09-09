@@ -183,10 +183,6 @@ __CHAT_INCLUDE:../../shared/chat/target-picker.js__
     {
       const picker = document.getElementById("targetPicker");
       let anchor = null;
-      // Left edge fades only when the first chip has scrolled out of view.
-      const syncPickerFade = () => {
-        picker.style.setProperty("--target-picker-fade-left", picker.scrollLeft > 1 ? "15%" : "0px");
-      };
       const positionPicker = () => {
         if (!anchor || !document.body.classList.contains("composer-overlay-open")) return;
         const rect = anchor.getBoundingClientRect();
@@ -194,9 +190,8 @@ __CHAT_INCLUDE:../../shared/chat/target-picker.js__
         picker.style.top = `${rect.top}px`;
         picker.style.width = `${rect.width}px`;
         picker.style.height = `${rect.height}px`;
-        syncPickerFade();
+        syncTargetPickerFade();
       };
-      picker.addEventListener("scroll", syncPickerFade, { passive: true });
       document.addEventListener("composer-overlay-open", () => {
         requestAnimationFrame(() => {
           if (!anchor) {
