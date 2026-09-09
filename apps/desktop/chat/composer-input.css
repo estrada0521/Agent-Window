@@ -93,14 +93,24 @@
     }
     .attach-preview-row {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: calc(var(--text-size, 13px) * 8 / 13);
       padding: calc(var(--text-size, 13px) * 10 / 13) calc(var(--text-size, 13px) * 6 / 13) 0 calc(var(--text-size, 13px) * 10 / 13);
-      max-height: min(38vh, calc(var(--text-size, 13px) * 260 / 13));
-      overflow-y: auto;
-      overflow-x: hidden;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
       -webkit-overflow-scrolling: touch;
       box-sizing: border-box;
+      /* Each edge fades only while more of the one-line row is hidden past it
+         -- JS sets the widths (shared/chat/composer/runtime.js). */
+      --attach-preview-fade-left: 0px;
+      --attach-preview-fade-right: 0px;
+      mask-image: linear-gradient(to right, transparent 0, black var(--attach-preview-fade-left), black calc(100% - var(--attach-preview-fade-right)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--attach-preview-fade-left), black calc(100% - var(--attach-preview-fade-right)), transparent 100%);
+    }
+    .attach-preview-row::-webkit-scrollbar {
+      display: none;
     }
     .attach-file-input {
       position: absolute;
