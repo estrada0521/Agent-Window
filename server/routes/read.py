@@ -333,7 +333,7 @@ def _get_shortcut_commands(handler, _parsed, ctx) -> None:
 
 _GET_ROUTES = {
     "/messages": _get_messages,
-    "/trace": _get_trace,
+    "/trace": _get_trace,  # mobile Pane Trace sheet only; desktop opens the real pane
     "/file-raw": _get_file_raw,
     "/file-view": _get_file_view,
     "/files-search": _get_files_search,

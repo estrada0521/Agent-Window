@@ -1,3 +1,10 @@
+"""Rendered-text capture of a tmux pane for the mobile chat's Pane Trace sheet.
+
+Mobile-only. On desktop the user opens the real pane in Terminal
+(the /open-terminal route), so nothing there reaches this -- the sole
+consumer is apps/mobile/chat/panes/pane-viewer.js via the /trace route.
+"""
+
 from __future__ import annotations
 
 from .pane import capture_pane_text
