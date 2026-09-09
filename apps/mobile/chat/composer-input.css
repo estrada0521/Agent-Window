@@ -92,6 +92,11 @@
       -ms-overflow-style: none;
       -webkit-overflow-scrolling: touch;
       box-sizing: border-box;
+      /* Left fade only once scrolled off the first card (JS sets the width);
+         the right always hints at more, like the target picker. */
+      --attach-preview-fade-left: 0px;
+      mask-image: linear-gradient(to right, transparent 0, black var(--attach-preview-fade-left), black calc(100% - 16px), transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--attach-preview-fade-left), black calc(100% - 16px), transparent 100%);
     }
 
     .attach-preview-row::-webkit-scrollbar {

@@ -32,7 +32,15 @@
     const attachInput = document.getElementById("attachInput");
     const attachPreviewRow = document.getElementById("attachPreviewRow");
     const composerShellEl = document.querySelector(".composer-shell");
-    if (isMobileComposer && attachPreviewRow) document.body.appendChild(attachPreviewRow);
+    // Left edge fades only once the first card has scrolled out of view.
+    const syncAttachPreviewFade = () => {
+      if (!attachPreviewRow) return;
+      attachPreviewRow.style.setProperty("--attach-preview-fade-left", attachPreviewRow.scrollLeft > 1 ? "16px" : "0px");
+    };
+    if (isMobileComposer && attachPreviewRow) {
+      document.body.appendChild(attachPreviewRow);
+      attachPreviewRow.addEventListener("scroll", syncAttachPreviewFade, { passive: true });
+    }
     if (attachBtn && attachInput && attachPreviewRow) {
       const addCard = (file, attachment) => {
         const card = document.createElement("button");
@@ -57,6 +65,7 @@
           pendingAttachments = pendingAttachments.filter((a) => a !== attachment);
           card.remove();
           updateSendBtnVisibility();
+          syncAttachPreviewFade();
           if (!attachPreviewRow.children.length) attachPreviewRow.style.display = "none";
           if (attachment.path) {
             fetch("/delete-upload", {
@@ -68,6 +77,7 @@
         });
         attachPreviewRow.appendChild(card);
         attachPreviewRow.style.display = "flex";
+        syncAttachPreviewFade();
       };
 __CHAT_INCLUDE:../upload-attached-files.js__
       const dtHasFiles = (dt) => dt && [...dt.types].includes("Files");
