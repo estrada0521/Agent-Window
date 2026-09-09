@@ -33,7 +33,9 @@
       right: 0;
       bottom: calc(100% + calc(var(--text-size, 13px) * 8 / 13));
       display: flex;
-      flex-direction: column;
+      /* DOM order is attachments then dropdowns; reversed so, like mobile, the
+         attachment row sits just above the input and the @ / menu above it. */
+      flex-direction: column-reverse;
       align-items: stretch;
       gap: calc(var(--text-size, 13px) * 8 / 13);
       z-index: 3;
