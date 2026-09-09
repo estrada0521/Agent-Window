@@ -82,6 +82,8 @@
       max-height: min(38vh, 260px);
       overflow-y: auto;
       overflow-x: hidden;
+      overscroll-behavior-y: contain;
+      touch-action: pan-y;
       -webkit-overflow-scrolling: touch;
       box-sizing: border-box;
     }

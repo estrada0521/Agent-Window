@@ -12,7 +12,11 @@
       }, { passive: false });
       composerOverlay?.addEventListener("touchmove", (event) => {
         const target = event.target;
-        if (target instanceof Element && target.closest("textarea, .attach-preview-row, .target-picker")) return;
+        if (target instanceof Element) {
+          if (target.closest("textarea.is-scrollable, .target-picker")) return;
+          const attachments = target.closest(".attach-preview-row");
+          if (attachments && attachments.scrollHeight > attachments.clientHeight) return;
+        }
         event.preventDefault();
       }, { passive: false });
       mobileComposerInput?.addEventListener("touchstart", (event) => {

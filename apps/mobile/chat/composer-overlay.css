@@ -166,6 +166,8 @@
       white-space: nowrap;
       overflow-x: auto;
       overflow-y: hidden;
+      overscroll-behavior-x: contain;
+      touch-action: pan-x;
       scrollbar-width: none;
       -ms-overflow-style: none;
       margin: 0;
