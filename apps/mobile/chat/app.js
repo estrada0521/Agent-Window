@@ -180,6 +180,40 @@ __CHAT_INCLUDE:../../shared/chat/rich-rendering-setup.js__
 __CHAT_INCLUDE:../../shared/chat/transcript/rich-rendering.js__
 __CHAT_INCLUDE:../../shared/chat/message-collapse.js__
 __CHAT_INCLUDE:../../shared/chat/target-picker.js__
+    {
+      const picker = document.getElementById("targetPicker");
+      let anchor = null;
+      // Left edge fades only when the first chip has scrolled out of view.
+      const syncPickerFade = () => {
+        picker.style.setProperty("--target-picker-fade-left", picker.scrollLeft > 1 ? "15%" : "0px");
+      };
+      const positionPicker = () => {
+        if (!anchor || !document.body.classList.contains("composer-overlay-open")) return;
+        const rect = anchor.getBoundingClientRect();
+        picker.style.left = `${rect.left}px`;
+        picker.style.top = `${rect.top}px`;
+        picker.style.width = `${rect.width}px`;
+        picker.style.height = `${rect.height}px`;
+        syncPickerFade();
+      };
+      picker.addEventListener("scroll", syncPickerFade, { passive: true });
+      document.addEventListener("composer-overlay-open", () => {
+        requestAnimationFrame(() => {
+          if (!anchor) {
+            const rect = picker.getBoundingClientRect();
+            anchor = document.createElement("div");
+            anchor.className = "target-picker-anchor";
+            anchor.style.height = `${rect.height}px`;
+            picker.replaceWith(anchor);
+            document.body.appendChild(picker);
+          }
+          positionPicker();
+        });
+      });
+      window.addEventListener("resize", positionPicker, { passive: true });
+      window.visualViewport?.addEventListener("resize", positionPicker, { passive: true });
+      window.visualViewport?.addEventListener("scroll", positionPicker, { passive: true });
+    }
 __CHAT_INCLUDE:../../shared/chat/target-selection.js__
 __CHAT_INCLUDE:../../shared/chat/composer-draft.js__
 __CHAT_INCLUDE:../../shared/chat/scroll-lock.js__

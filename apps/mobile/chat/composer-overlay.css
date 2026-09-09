@@ -174,8 +174,26 @@
       padding: 4px 20px 4px 10px;
       align-self: center;
       -webkit-overflow-scrolling: touch;
-      mask-image: linear-gradient(to right, black 85%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+      /* Left fade only once scrolled off the first chip (JS sets the width);
+         the right side always hints at more, like the other row scrollers. */
+      --target-picker-fade-left: 0px;
+      mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black 85%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black 85%, transparent 100%);
+    }
+
+    .target-picker-anchor {
+      grid-area: targets;
+      min-width: 0;
+    }
+
+    body > .target-picker {
+      position: fixed;
+      z-index: 390;
+    }
+
+    body:not(.composer-overlay-open) > .target-picker {
+      visibility: hidden;
+      pointer-events: none;
     }
 
     .target-picker::-webkit-scrollbar {
