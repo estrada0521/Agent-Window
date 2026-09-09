@@ -125,7 +125,6 @@
           _deskSelectedSessionName = "";
           updateDeskWindowTitle("");
           persistDeskSelection("");
-          setDeskSelectionInUrl("");
         }
         await refreshHubSessions(true, { skipRestore: true });
         if (!isSelected) return;
@@ -163,7 +162,6 @@
           _deskSelectedSessionName = renamed;
           updateDeskWindowTitle(renamed);
           persistDeskSelection(renamed);
-          setDeskSelectionInUrl(renamed);
         }
         return true;
       } catch (err) {

@@ -302,15 +302,6 @@
       if (!dropped.length) return false;
       return postDeskChatFrameMessage({ type: "parent-drop-files", files: dropped });
     };
-    function setDeskSelectionInUrl(name) {
-      try {
-        const next = new URL(window.location.href);
-        if (name) next.searchParams.set("session", name);
-        else next.searchParams.delete("session");
-        history.replaceState(null, "", `${next.pathname}${next.search}${next.hash}`);
-      } catch (_) {}
-    }
-
     function persistDeskSelection(name) {
       try {
         if (name) localStorage.setItem(DESK_SELECTED_KEY, name);
@@ -318,11 +309,7 @@
       } catch (_) {}
     }
 
-    function getRequestedDeskSelection() {
-      try {
-        const queryName = new URL(window.location.href).searchParams.get("session");
-        if (queryName) return queryName;
-      } catch (_) {}
+    function getPersistedDeskSelection() {
       try {
         return localStorage.getItem(DESK_SELECTED_KEY) || "";
       } catch (_) {

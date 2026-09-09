@@ -83,7 +83,6 @@
       _deskSelectedSessionName = "";
       updateDeskWindowTitle("");
       persistDeskSelection("");
-      setDeskSelectionInUrl("");
       clearDeskChatFrame();
       applyDeskSessionSelection();
     }
@@ -94,7 +93,6 @@
       _deskUnreadSessions.delete(_deskSelectedSessionName);
       updateDeskWindowTitle(_deskSelectedSessionName);
       persistDeskSelection(_deskSelectedSessionName);
-      setDeskSelectionInUrl(_deskSelectedSessionName);
       if (isDeskSessionSidebarOpen()) _deskChatFrame.dataset.hubSidebarOpen = "1";
       else delete _deskChatFrame.dataset.hubSidebarOpen;
       if (_deskSelectedSessionName) {
@@ -134,7 +132,6 @@
       _deskSelectedSessionName = name;
       updateDeskWindowTitle(name);
       persistDeskSelection(name);
-      setDeskSelectionInUrl(name);
       applyDeskSessionSelection();
       setDeskChatLoading(true);
       const openToken = ++_deskOpenToken;
@@ -226,7 +223,7 @@
         showDeskSidebarList({ open: true });
         return;
       }
-      const requested = getRequestedDeskSelection();
+      const requested = getPersistedDeskSelection();
       if (requested) {
         const match = findSessionRecord(requested);
         if (match && !match.archived) {
@@ -234,7 +231,6 @@
           return;
         }
         persistDeskSelection("");
-        setDeskSelectionInUrl("");
         failDeskOpen("Session not found");
         showDeskSidebarList({ open: true });
         return;

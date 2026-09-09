@@ -16,8 +16,8 @@ session_control() {
 # Nothing about which tmux socket a session runs on needs to live inside
 # tmux itself: an explicit AGENT_WINDOW_TMUX_SOCKET always wins, and any
 # process actually running inside a pane already has it for free via tmux's
-# own $TMUX (its first field is the real socket path), so this is the same
-# resolution agent-send already uses -- not a second, bash-only guess.
+# own $TMUX (its first field is the real socket path), so this does not need
+# a second, bash-only socket mapping.
 resolve_tmux_socket_name() {
   PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -c '
 import os

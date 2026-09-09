@@ -81,6 +81,8 @@ class AgentSendRuntime:
         if not tmux_context:
             raise AgentSendError("agent-send must run inside an active tmux pane.")
         self.tmux_socket_name = tmux_context.split(",", 1)[0]
+        if Path(self.tmux_socket_name).name != default_tmux_socket_name():
+            raise AgentSendError("agent-send must run inside an Agent Window tmux pane.")
         self.tmux = TmuxClient(self.tmux_socket_name, self.env)
         self.all_agents = list(ALL_AGENT_NAMES)
         self._tmux_session_name: str | None = None
