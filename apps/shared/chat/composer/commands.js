@@ -1,33 +1,12 @@
     let _cmdActiveIdx = -1;
-    let _cmdTimeout = null;
     let _lastCmdItemsData = [];
     const _cmdItems = () => cmdDrop.querySelectorAll(".cmd-item");
-    const closeCmdDrop = ({ immediate = false } = {}) => {
-      if (immediate) {
-        if (_cmdTimeout) {
-          clearTimeout(_cmdTimeout);
-          _cmdTimeout = null;
-        }
-        cmdDrop.classList.remove("visible", "closing");
-        cmdDrop.style.display = "none";
-        _cmdActiveIdx = -1;
-        return;
-      }
-      if (cmdDrop.classList.contains("visible")) {
-        cmdDrop.classList.remove("visible");
-        cmdDrop.classList.add("closing");
-        _cmdTimeout = setTimeout(() => {
-          if (cmdDrop.classList.contains("closing")) {
-            cmdDrop.style.display = "none";
-            cmdDrop.classList.remove("closing");
-          }
-        }, 160);
-      } else if (!cmdDrop.classList.contains("closing")) {
-        cmdDrop.style.display = "none";
-      }
+    const closeCmdDrop = () => {
+      cmdDrop.classList.remove("visible");
+      cmdDrop.style.display = "none";
       _cmdActiveIdx = -1;
     };
-    document.addEventListener("composer-overlay-close-start", () => closeCmdDrop({ immediate: true }));
+    document.addEventListener("composer-overlay-close-start", closeCmdDrop);
     const selectCmd = (idx) => {
       const item = _lastCmdItemsData[idx];
       if (!item) return;
@@ -122,8 +101,6 @@
         _cmdActiveIdx = -1;
         positionComposerDropdown(cmdDrop);
         if (!cmdDrop.classList.contains("visible")) {
-          if (_cmdTimeout) { clearTimeout(_cmdTimeout); _cmdTimeout = null; }
-          cmdDrop.classList.remove("closing");
           cmdDrop.style.display = "block";
           cmdDrop.classList.add("visible");
         }

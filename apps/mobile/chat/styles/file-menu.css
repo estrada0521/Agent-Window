@@ -43,11 +43,6 @@
       animation: dropdownIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    #fileDropdown.closing {
-      display: flex;
-      animation: dropdownOut 150ms ease-in forwards;
-    }
-
     .file-item {
       display: flex;
       align-items: center;

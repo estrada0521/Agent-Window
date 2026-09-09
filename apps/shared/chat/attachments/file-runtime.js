@@ -3,37 +3,14 @@ __CHAT_INCLUDE:../file-resolve.js__
     const fileDrop = document.getElementById("fileDropdown");
     let _dropActiveIdx = -1;
     let _ignoreGlobalClick = false;
-    let _dropTimeout = null;
     const _dropItems = () => fileDrop.querySelectorAll(".file-item");
-    const closeDrop = ({ immediate = false } = {}) => {
+    const closeDrop = () => {
       _fileAutocompleteRequestSeq += 1;
-      if (immediate) {
-        if (_dropTimeout) {
-          clearTimeout(_dropTimeout);
-          _dropTimeout = null;
-        }
-        fileDrop.classList.remove("visible", "closing");
-        fileDrop.style.display = "none";
-        _dropActiveIdx = -1;
-        return;
-      }
-      if (fileDrop.classList.contains("visible")) {
-        fileDrop.classList.remove("visible");
-        fileDrop.classList.add("closing");
-        if (_dropTimeout) clearTimeout(_dropTimeout);
-        _dropTimeout = setTimeout(() => {
-          if (fileDrop.classList.contains("closing")) {
-            fileDrop.style.display = "none";
-            fileDrop.classList.remove("closing");
-          }
-          _dropTimeout = null;
-        }, 160);
-      } else if (!fileDrop.classList.contains("closing")) {
-        fileDrop.style.display = "none";
-      }
+      fileDrop.classList.remove("visible");
+      fileDrop.style.display = "none";
       _dropActiveIdx = -1;
     };
-    document.addEventListener("composer-overlay-close-start", () => closeDrop({ immediate: true }));
+    document.addEventListener("composer-overlay-close-start", closeDrop);
 __CHAT_INCLUDE:../file-autocomplete.js__
     const LINKIFY_INLINE_CODE_CHUNK = 20;
     let _linkifyInlineCodeRunSeq = 0;
@@ -220,7 +197,7 @@ __CHAT_INCLUDE:../file-autocomplete.js__
     }
     const updateFileAutocomplete = async () => {
       if (!isComposerOverlayOpen()) {
-        closeDrop({ immediate: true });
+        closeDrop();
         return;
       }
       const requestSeq = ++_fileAutocompleteRequestSeq;
@@ -253,8 +230,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       _dropActiveIdx = -1;
       positionComposerDropdown(fileDrop);
       if (!fileDrop.classList.contains("visible")) {
-        if (_dropTimeout) { clearTimeout(_dropTimeout); _dropTimeout = null; }
-        fileDrop.classList.remove("closing");
         fileDrop.style.display = "block";
         fileDrop.classList.add("visible");
       }

@@ -3,8 +3,6 @@
       _dropActiveIdx = -1;
       positionComposerDropdown(fileDrop);
       if (!fileDrop.classList.contains("visible")) {
-        if (_dropTimeout) { clearTimeout(_dropTimeout); _dropTimeout = null; }
-        fileDrop.classList.remove("closing");
         fileDrop.style.display = "block";
         fileDrop.classList.add("visible");
       }
