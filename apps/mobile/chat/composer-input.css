@@ -88,8 +88,14 @@
       overflow-y: hidden;
       overscroll-behavior-x: contain;
       touch-action: pan-x;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
       -webkit-overflow-scrolling: touch;
       box-sizing: border-box;
+    }
+
+    .attach-preview-row::-webkit-scrollbar {
+      display: none;
     }
 
     body:not(.composer-overlay-open) > .attach-preview-row {
