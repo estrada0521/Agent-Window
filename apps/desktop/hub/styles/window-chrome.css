@@ -331,7 +331,7 @@
        the transcript is only faded out (opacity, not hidden), so a wheel
        press or Enter still opens the composer under the "Agent Window" mark.
        The mark itself never eats a pointer event. */
-    .desk-fit-standby { display: none; }
+    .desk-fit-standby { display: none; font-size: var(--text-size, 13px); }
     html[data-fit-collapsed="1"] .desk-main { opacity: 0; }
     html[data-fit-collapsed="1"] .desk-window-traffic,
     html[data-fit-collapsed="1"] .fit-window-dots,
@@ -343,15 +343,22 @@
     html[data-fit-collapsed="1"] .desk-fit-standby {
       display: flex;
       position: fixed;
-      inset: 0;
+      /* The chat surface, sitting on the same edge inset all round -- the top
+         matched to the sides/bottom, not the taller chrome-band gap. */
+      inset: var(--tauri-window-edge-inset, 4px);
       align-items: center;
       justify-content: center;
+      /* A faint wash of the chat colour -- the window glass reads through it. */
+      background: color-mix(in srgb, var(--bg) 28%, transparent);
+      border-radius: var(--desk-inner-radius);
       z-index: 2000;
       pointer-events: none;
     }
     .desk-fit-standby-text {
+      /* Exactly the sidebar's "Agent Window" tagline (.desk-hub-tagline):
+         1.69em over a var(--text-size) base. */
       font-family: "Snell Roundhand", "Apple Chancery", cursive;
-      font-size: calc(var(--text-size, 13px) * 1.69);
+      font-size: 1.69em;
       font-weight: 200;
       letter-spacing: -0.04em;
       color: var(--fg);
