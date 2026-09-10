@@ -76,6 +76,12 @@ def ensure_session_workspace_mirrors(session_name: str, workspace: Path | str) -
     workspace_path = Path(raw).expanduser()
     if not workspace_path.is_dir():
         return
+    aw_dir = workspace_agent_window_dir(workspace_path)
+    aw_dir.mkdir(parents=True, exist_ok=True)
+    # Keep the whole mirror out of the host repo without touching its .gitignore.
+    gitignore = aw_dir / ".gitignore"
+    if not gitignore.exists():
+        gitignore.write_text("*\n", encoding="utf-8")
     mirrors = ((session_log_path(session_name), workspace_log_link_path(workspace_path)),)
     for target, link_path in mirrors:
         link_path.parent.mkdir(parents=True, exist_ok=True)
