@@ -573,6 +573,8 @@
       const removeSwipeActs = (sr) => {
         const tray = sr.querySelector(".swipe-act-tray");
         if (tray) tray.remove();
+        sr.classList.remove("swipe-settling");
+        sr.style.removeProperty("--swipe-p");
       };
       const closeRow = (sr, animate) => {
         const el = sr && sr.querySelector(".mob-session-row");
@@ -581,6 +583,8 @@
         el.style.transform = "";
         sr._snap = 0;
         sr.classList.remove("swipe-open");
+        if (animate) sr.classList.add("swipe-settling");
+        sr.style.setProperty("--swipe-p", "0");
         if (animate) {
           el.addEventListener("transitionend", () => removeSwipeActs(sr), { once: true });
         } else {
@@ -629,6 +633,8 @@
             tray.appendChild(el);
           });
           sr.insertBefore(tray, inner);
+          sr.classList.remove("swipe-settling");
+          sr.style.setProperty("--swipe-p", "0");
         };
         const startDrag = (clientX, clientY) => {
           if (anyOpen && anyOpen !== sr) { closeRow(anyOpen, true); anyOpen = null; }
@@ -654,20 +660,25 @@
           if (x > 0) x = 0;
           else if (x < minX) x = minX + (x - minX) * 0.14;
           inner.style.transform = x ? `translateX(${x}px)` : "";
+          sr.classList.remove("swipe-settling");
+          sr.style.setProperty("--swipe-p", SNAP_W ? (Math.min(1, Math.abs(x) / SNAP_W)).toFixed(3) : "0");
         };
         const endDrag = () => {
           if (!active || axis !== "x") { active = false; return; }
           active = false;
           const base = (sr._snap || 0) * SNAP_W;
           const fx = base + dx;
+          sr.classList.add("swipe-settling");
           if (fx < -THRESH && acts.length) {
             inner.style.transition = SNAP_EASE; inner.style.transform = `translateX(${-SNAP_W}px)`;
             sr._snap = -1; anyOpen = sr;
             sr.classList.add("swipe-open");
+            sr.style.setProperty("--swipe-p", "1");
           } else {
             inner.style.transition = SNAP_EASE; inner.style.transform = "";
             sr._snap = 0; if (anyOpen === sr) anyOpen = null;
             sr.classList.remove("swipe-open");
+            sr.style.setProperty("--swipe-p", "0");
           }
           dx = 0;
           inner.addEventListener("transitionend", () => { if (!sr._snap) removeSwipeActs(sr); }, { once: true });
