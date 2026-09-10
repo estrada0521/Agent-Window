@@ -11,7 +11,7 @@
       }
     };
     const dpBootstrapPinnedGitSummary = async () => {
-      if (!hasDesktopRightPanelOverlay() || !dpGitSummaryPinned) return;
+      if (!hasDesktopRightPanelOverlay() || !dpPinnedStripActive()) return;
       try {
         const data = await fetchGitOverview({ offset: 0, refresh: true, summary: true });
         dpGitHeaderSummaryState = dpBuildSummaryState(data);
@@ -178,8 +178,8 @@
       modeEl: () => dpGitContent?.querySelector(".git-stack") || dpGitContent,
       observerRoot: () => dpGitContent?.querySelector(".git-commit-scroll") ?? dpGitContent,
       scrollRoot: () => dpGitContent,
-      canLoad: () => (dpPanelOpen || dpGitSummaryPinned) && !!dpGitContent,
-      canRefresh: () => dpPanelOpen || dpGitSummaryPinned,
+      canLoad: () => (dpPanelOpen || dpPinnedStripActive()) && !!dpGitContent,
+      canRefresh: () => dpPanelOpen || dpPinnedStripActive(),
       renderShell: () => dpRenderGitShell(),
       setBodyHtml: (html) => {
         if (dpGitContent) dpGitContent.innerHTML = html;
@@ -202,7 +202,7 @@
         dpSyncSummaryWrap();
       },
       onFingerprintChanged: (data, { isFirst, previousCommits, detailContext }) => {
-        if (!dpPanelOpen && dpGitSummaryPinned) {
+        if (!dpPanelOpen && dpPinnedStripActive()) {
           return { updateList: false };
         }
         if (detailContext) return { updateList: false };
