@@ -130,7 +130,7 @@ class ChatRuntime:
         agents: list[str] | None = None,
         *,
         start_at_end: bool = False,
-    ) -> list[dict]:
+    ) -> None:
         replace_all = agents is None
         panes_by_agent = self.agent_panes()
         target_agents = list(agents) if agents is not None else list(panes_by_agent)
@@ -147,7 +147,7 @@ class ChatRuntime:
                     pane_pid=str(pane_pid or "").strip(),
                 )
             )
-        return self._native_log.refresh(
+        self._native_log.refresh(
             pane_requests,
             replace_all=replace_all,
             start_at_end=start_at_end,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Iterator
 
 _PROBE_TIMEOUT_SEC = 5.0
 _PROBE_ERRORS = (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired)
@@ -57,3 +58,20 @@ def lsof_text(pid: str) -> str | None:
         ).stdout
     except _PROBE_ERRORS:
         return None
+
+
+def iter_open_paths_in_process_tree(pane_pid: str) -> Iterator[str]:
+    seen: set[str] = set()
+    for pid in sorted(process_tree(pane_pid)):
+        output = lsof_text(pid)
+        if output is None:
+            continue
+        for line in output.splitlines()[1:]:
+            parts = line.split()
+            if len(parts) < 9:
+                continue
+            path = " ".join(parts[8:]).strip()
+            if not path or path in seen:
+                continue
+            seen.add(path)
+            yield path

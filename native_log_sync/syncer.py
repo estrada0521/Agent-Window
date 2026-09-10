@@ -87,7 +87,7 @@ class NativeLogSyncer:
         *,
         replace_all: bool = True,
         start_at_end: bool = False,
-    ) -> list[dict]:
+    ) -> None:
         bindings = _refresh_bindings_impl(self, pane_requests, replace_all=replace_all)
         from native_log_sync.dispatch import sync_agent
         for binding in bindings:
@@ -96,18 +96,6 @@ class NativeLogSyncer:
             except Exception as exc:
                 logging.exception("native log sync failed for %s", binding.agent)
                 _record_projection_sync_failure_impl(self, binding.agent, exc)
-        return [
-            {
-                "agent": item.agent,
-                "type": item.base,
-                "pane_id": item.pane_id,
-                "pane_pid": item.pane_pid,
-                "log_path": item.path,
-                "watch_roots": list(item.watch_roots),
-                "source": item.source,
-            }
-            for item in bindings
-        ]
 
     def remove_binding(self, agent: str) -> None:
         _remove_binding_impl(self, agent)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from native_log_sync.agents._shared.process_tree import lsof_text, process_tree
+from native_log_sync.agents._shared.process_tree import iter_open_paths_in_process_tree
 
 
 def resolve_codex_rollout_jsonl_path(pane_pid: str) -> str:
@@ -14,32 +14,24 @@ def resolve_codex_rollout_jsonl_path(pane_pid: str) -> str:
     # and pick the one with the newest mtime.
     sessions_root = str((Path.home() / ".codex" / "sessions").resolve())
     candidates: dict[str, float] = {}
-    for pid in sorted(process_tree(pane_pid)):
-        out = lsof_text(pid)
-        if out is None:
+    for path in iter_open_paths_in_process_tree(pane_pid):
+        if not path.endswith(".jsonl"):
             continue
-        for line in out.splitlines()[1:]:
-            parts = line.split()
-            if len(parts) < 9:
-                continue
-            path = " ".join(parts[8:]).strip()
-            if not path.endswith(".jsonl"):
-                continue
-            if "/rollout-" not in path:
-                continue
-            try:
-                resolved = str(Path(path).resolve())
-            except OSError:
-                resolved = path
-            if resolved in candidates:
-                continue
-            if not resolved.startswith(sessions_root + "/"):
-                continue
-            try:
-                mtime = os.path.getmtime(resolved)
-            except OSError:
-                continue
-            candidates[resolved] = mtime
+        if "/rollout-" not in path:
+            continue
+        try:
+            resolved = str(Path(path).resolve())
+        except OSError:
+            resolved = path
+        if resolved in candidates:
+            continue
+        if not resolved.startswith(sessions_root + "/"):
+            continue
+        try:
+            mtime = os.path.getmtime(resolved)
+        except OSError:
+            continue
+        candidates[resolved] = mtime
     if not candidates:
         return ""
     return max(candidates, key=candidates.get)

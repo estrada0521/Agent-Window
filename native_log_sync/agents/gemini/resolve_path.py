@@ -2,27 +2,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from native_log_sync.agents._shared.process_tree import lsof_text, process_tree
+from native_log_sync.agents._shared.process_tree import iter_open_paths_in_process_tree
 
 
 def resolve_gemini_native_log(pane_pid: str) -> str:
     base = Path.home() / ".gemini" / "antigravity-cli"
     presence_root = str((base / "presence").resolve()).rstrip("/") + "/"
     conversation_ids: set[str] = set()
-    for pid in process_tree(pane_pid):
-        output = lsof_text(pid)
-        if output is None:
+    for path in iter_open_paths_in_process_tree(pane_pid):
+        if not path.startswith(presence_root) or not path.endswith(".lock"):
             continue
-        for line in output.splitlines()[1:]:
-            parts = line.split()
-            if len(parts) < 9:
-                continue
-            path = " ".join(parts[8:]).strip()
-            if not path.startswith(presence_root) or not path.endswith(".lock"):
-                continue
-            conversation_id = Path(path).stem
-            if conversation_id:
-                conversation_ids.add(conversation_id)
+        conversation_id = Path(path).stem
+        if conversation_id:
+            conversation_ids.add(conversation_id)
 
     if not conversation_ids:
         return ""

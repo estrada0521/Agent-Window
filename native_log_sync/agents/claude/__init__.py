@@ -7,12 +7,9 @@ from .resolve_path import resolve_claude_session_jsonl_path
 def resolve_native_log_binding(runtime, request):
     return binding_for_path(
         agent=request.agent,
-        pane_id=request.pane_id,
-        pane_pid=request.pane_pid,
         path=resolve_claude_session_jsonl_path(
             runtime,
             request.pane_id,
             request.pane_pid,
         ),
-        source="claude-session",
     )
