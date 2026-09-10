@@ -142,18 +142,8 @@ def write_session_meta_file(
         raise ValueError("workspace is required to write session meta")
 
     meta_path = agent_window_session_root() / str(session_name or "").strip() / ".meta"
-    meta: dict[str, object] = {}
-    if meta_path.is_file():
-        raw = json.loads(meta_path.read_text(encoding="utf-8"))
-        if not isinstance(raw, dict):
-            raise ValueError(f"invalid session meta: {meta_path}")
-        meta = raw
-
-    # Timestamps lived here once; .log.jsonl is the real record of when a
-    # session started and last moved, so a copy in .meta only went stale.
-    meta.pop("session", None)
-    meta.pop("created_at", None)
-    meta.pop("updated_at", None)
-    meta["workspace"] = recorded_workspace
-    meta["agents"] = [str(agent).strip() for agent in agents if str(agent).strip()]
+    meta = {
+        "workspace": recorded_workspace,
+        "agents": [str(agent).strip() for agent in agents if str(agent).strip()],
+    }
     write_json_atomically(meta_path, meta, indent=2)
