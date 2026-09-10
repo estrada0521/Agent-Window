@@ -1315,9 +1315,9 @@ fn reveal_main_window(app: &tauri::AppHandle) {
 }
 
 fn main() {
-    if let Err(err) = system_app_icons() {
-        panic!("could not load required macOS app icons: {}", err);
-    }
+    // System app icons are decoded lazily on first native-menu build (see
+    // system_app_icons()); a slow NSWorkspace decode must not sit on the
+    // launch path.
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             open_external_url,
@@ -1387,70 +1387,12 @@ fn main() {
                 }
             });
 
-            let repo_root = find_repo_root().unwrap_or_default();
-            if repo_root.is_empty() {
-                show_hub_error(&window, "Could not find the Agent Window repo.");
-                return Ok(());
-            }
-            eprintln!("[app] repo = {}", repo_root);
-
-            let hub_port = match configured_hub_port(&repo_root) {
-                Ok(value) => value,
-                Err(message) => {
-                    show_hub_error(&window, &message);
-                    return Ok(());
-                }
-            };
-            let path = match login_shell_path() {
-                Ok(value) => value,
-                Err(message) => {
-                    show_hub_error(&window, &message);
-                    return Ok(());
-                }
-            };
-            let home = std::env::var("HOME").unwrap_or_default();
-            let cert_dir = std::env::var("AGENT_WINDOW_CERTS_DIR")
-                .unwrap_or_else(|_| format!("{}/.agent-window/state/certs", home));
-            let cert_file = format!("{}/cert.pem", cert_dir);
-            let key_file = format!("{}/key.pem", cert_dir);
-            let has_certs = Path::new(&cert_file).exists() && Path::new(&key_file).exists();
-            let state_dir = std::env::var("AGENT_WINDOW_STATE_DIR")
-                .unwrap_or_else(|_| format!("{}/.agent-window/state", home));
-            let lan_https_enabled_file = format!("{}/access/lan-https-enabled", state_dir);
-            let use_https = Path::new(&lan_https_enabled_file).exists();
-            if use_https && !has_certs {
-                show_hub_error(
-                    &window,
-                    "LAN HTTPS is enabled, but certificate files are missing from ~/.agent-window/state/certs.",
-                );
-                return Ok(());
-            }
-
-            let hub_already_up = hub_ready(hub_port, use_https);
-            let mut spawned_hub: Option<Child> = None;
-            if !hub_already_up {
-                let mut cmd = Command::new(format!("{}/bin/agent-index", repo_root));
-                cmd.current_dir(&repo_root)
-                    .env("PATH", &path)
-                    .env("PYTHONPATH", repo_root.clone());
-                if use_https {
-                    cmd.env("AGENT_WINDOW_CERT_FILE", &cert_file)
-                        .env("AGENT_WINDOW_KEY_FILE", &key_file);
-                }
-                match cmd.spawn() {
-                    Ok(c) => {
-                        eprintln!("[app] Hub spawned pid={}", c.id());
-                        spawned_hub = Some(c);
-                    }
-                    Err(e) => {
-                        eprintln!("[app] Hub spawn failed: {}", e);
-                        show_hub_error(&window, &format!("Failed to start Hub: {}", e));
-                        return Ok(());
-                    }
-                }
-            } else {
-                eprintln!("[app] Hub already up");
-            }
+            // Show the local splash now. Everything the Hub needs -- repo
+            // root, port, login-shell PATH, certs, the agent-index spawn and
+            // its startup wait -- is resolved on a background thread so the
+            // main run loop stays free to paint. Blocking setup() here is
+            // what kept the window invisible for ~50 frames after launch.
+            let _ = window.show();
 
             let app_handle = app.handle().clone();
             thread::spawn(move || {
@@ -1459,13 +1401,80 @@ fn main() {
                         show_hub_error(&w, &message);
                     }
                 };
-                if let Some(mut child) = spawned_hub {
-                    if !wait_for_child_success(&mut child, Duration::from_secs(8)) {
-                        eprintln!("[app] Hub failed to start");
-                        show_error(format!("Hub failed to start on port {}", hub_port));
+
+                let repo_root = find_repo_root().unwrap_or_default();
+                if repo_root.is_empty() {
+                    show_error("Could not find the Agent Window repo.".to_string());
+                    return;
+                }
+                eprintln!("[app] repo = {}", repo_root);
+
+                let hub_port = match configured_hub_port(&repo_root) {
+                    Ok(value) => value,
+                    Err(message) => {
+                        show_error(message);
                         return;
                     }
+                };
+                let home = std::env::var("HOME").unwrap_or_default();
+                let state_dir = std::env::var("AGENT_WINDOW_STATE_DIR")
+                    .unwrap_or_else(|_| format!("{}/.agent-window/state", home));
+                let use_https =
+                    Path::new(&format!("{}/access/lan-https-enabled", state_dir)).exists();
+
+                // The login-shell PATH probe (`zsh -lic`) costs ~0.5s, and
+                // certs are only needed to spawn the Hub. When the Hub is
+                // already serving -- the common case across app launches --
+                // none of that is on the path: just navigate.
+                if hub_ready(hub_port, use_https) {
+                    eprintln!("[app] Hub already up");
+                } else {
+                    let path = match login_shell_path() {
+                        Ok(value) => value,
+                        Err(message) => {
+                            show_error(message);
+                            return;
+                        }
+                    };
+                    let cert_dir = std::env::var("AGENT_WINDOW_CERTS_DIR")
+                        .unwrap_or_else(|_| format!("{}/.agent-window/state/certs", home));
+                    let cert_file = format!("{}/cert.pem", cert_dir);
+                    let key_file = format!("{}/key.pem", cert_dir);
+                    let has_certs =
+                        Path::new(&cert_file).exists() && Path::new(&key_file).exists();
+                    if use_https && !has_certs {
+                        show_error(
+                            "LAN HTTPS is enabled, but certificate files are missing from ~/.agent-window/state/certs."
+                                .to_string(),
+                        );
+                        return;
+                    }
+
+                    let mut cmd = Command::new(format!("{}/bin/agent-index", repo_root));
+                    cmd.current_dir(&repo_root)
+                        .env("PATH", &path)
+                        .env("PYTHONPATH", repo_root.clone());
+                    if use_https {
+                        cmd.env("AGENT_WINDOW_CERT_FILE", &cert_file)
+                            .env("AGENT_WINDOW_KEY_FILE", &key_file);
+                    }
+                    match cmd.spawn() {
+                        Ok(mut child) => {
+                            eprintln!("[app] Hub spawned pid={}", child.id());
+                            if !wait_for_child_success(&mut child, Duration::from_secs(8)) {
+                                eprintln!("[app] Hub failed to start");
+                                show_error(format!("Hub failed to start on port {}", hub_port));
+                                return;
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("[app] Hub spawn failed: {}", e);
+                            show_error(format!("Failed to start Hub: {}", e));
+                            return;
+                        }
+                    }
                 }
+
                 let scheme = if use_https { "https" } else { "http" };
                 let hub_url = format!("{}://127.0.0.1:{}/?tauri=1", scheme, hub_port);
                 eprintln!("[app] Navigating to {}", hub_url);
