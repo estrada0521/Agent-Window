@@ -1366,6 +1366,9 @@ fn main() {
             keep_glass_key_appearance(&window);
             apply_app_vibrancy(&window);
             hide_native_traffic_lights(&window);
+            // Don't leave the first position to AppKit's placement (it lands a
+            // bit high) -- put it where Cmd+Alt+0 would.
+            let _ = place_centered_window(&window, DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE, 1.0);
             let event_window = window.clone();
             window.on_window_event(move |event| {
                 if let tauri::WindowEvent::Focused(true) = event {
