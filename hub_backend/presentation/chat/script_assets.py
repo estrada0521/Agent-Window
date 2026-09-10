@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 
-ANSI_UP_VERSION = "5.1.0"
 MARKED_VERSION = "18.0.12"
 KATEX_VERSION = "0.16.11"
 
-ANSI_UP_CDN_SRC = f"https://cdn.jsdelivr.net/npm/ansi_up@{ANSI_UP_VERSION}/ansi_up.min.js"
 MARKED_CDN_SRC = f"https://cdn.jsdelivr.net/npm/marked@{MARKED_VERSION}/lib/marked.umd.min.js"
 KATEX_CDN_CSS_HREF = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/katex.min.css"
 KATEX_CDN_JS_SRC = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/katex.min.js"
@@ -41,9 +39,3 @@ CHAT_SHEET_PANELS_HTML = """
   </div>
 </div>
 """
-CHAT_ANSI_UP_HEAD_TAG = f'  <script src="{ANSI_UP_CDN_SRC}"></script>\n'
-CHAT_KATEX_HEAD_TAGS = (
-    f'  <link rel="stylesheet" href="{KATEX_CDN_CSS_HREF}">\n'
-    f'  <script src="{KATEX_CDN_JS_SRC}"></script>\n'
-    f'  <script src="{KATEX_CDN_AUTO_RENDER_SRC}"></script>\n'
-)

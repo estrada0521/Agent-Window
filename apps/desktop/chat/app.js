@@ -372,6 +372,15 @@ __CHAT_INCLUDE:../../shared/chat/scroll-btn.js__
 
 __CHAT_INCLUDE:../../shared/chat/runtime/messages.js__
 __CHAT_INCLUDE:../../shared/chat/transcript/render.js__
+    // marked loads deferred so it never blocks first paint. The first
+    // render(s) then fall back to plain text; re-render once it is in.
+    if (typeof marked === "undefined") {
+      const _rerenderWhenMarkedReady = () => {
+        if (typeof marked !== "undefined") rerenderCurrentMessages({ suppressEntryAnimation: true });
+      };
+      window.addEventListener("DOMContentLoaded", _rerenderWhenMarkedReady, { once: true });
+      window.addEventListener("load", _rerenderWhenMarkedReady, { once: true });
+    }
 __CHAT_INCLUDE:../../shared/chat/transcript/actions.js__
 __CHAT_INCLUDE:runtime/hub-navigation.js__
 __CHAT_INCLUDE:panes/header-menu.js__

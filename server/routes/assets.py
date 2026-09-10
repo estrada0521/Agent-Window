@@ -101,7 +101,6 @@ def _get_chat_index(handler, parsed, ctx) -> None:
         server_instance=ctx["server_instance"],
         hub_port=effective_hub_port,
         chat_base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
-        eager_optional_vendors=False,
         variant=variant,
         session_name=ctx["session_name"],
         theme=theme,

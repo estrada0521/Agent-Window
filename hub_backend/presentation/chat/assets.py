@@ -5,11 +5,9 @@ from pathlib import Path
 
 from backend_core.agents.registry import agent_names_js_set, agent_names_js_array
 from .script_assets import (
-    CHAT_ANSI_UP_HEAD_TAG,
     CHAT_HEADER_ACTIONS_HTML,
     CHAT_HEADER_ACTIONS_HTML_MOBILE,
     CHAT_SHEET_PANELS_HTML,
-    CHAT_KATEX_HEAD_TAGS,
 )
 from .render import apply_chat_template_replacements, build_chat_template_replacements
 from .template_loader import load_chat_template
@@ -100,7 +98,6 @@ def render_chat_html(
     server_instance,
     hub_port,
     chat_base_path="",
-    eager_optional_vendors=True,
     variant="desktop",
     session_name="",
     theme="dark",
@@ -119,9 +116,6 @@ def render_chat_html(
         panels_html=panels_html,
     )
     html = _chat_html(normalized_variant)
-    if not eager_optional_vendors:
-        html = html.replace(CHAT_ANSI_UP_HEAD_TAG, "", 1)
-        html = html.replace(CHAT_KATEX_HEAD_TAGS, "", 1)
     for placeholder, value in _agent_css_selectors().items():
         html = html.replace(placeholder, value)
     if "__CHAT_HEADER_HTML__" in html:
