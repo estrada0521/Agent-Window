@@ -21,7 +21,7 @@ from backend_core.tmux.topology import default_tmux_socket_name
 from message_delivery.paste import deliver_text_to_pane
 
 
-from backend_core.access.settings import pwa_https_enabled, session_log_path, workspace_chat_port
+from backend_core.access.settings import lan_https_enabled, session_log_path, workspace_chat_port
 
 
 class AgentSendError(RuntimeError):
@@ -253,7 +253,7 @@ class AgentSendRuntime:
         port = workspace_chat_port(workspace)
         body = json.dumps({"targets": agents}).encode("utf-8")
         connection: http.client.HTTPConnection | http.client.HTTPSConnection
-        if pwa_https_enabled():
+        if lan_https_enabled():
             connection = http.client.HTTPSConnection(
                 "127.0.0.1",
                 port,

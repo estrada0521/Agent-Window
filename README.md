@@ -145,19 +145,30 @@ Here, success only means the input was delivered to the runtime. It doesn't mean
 
 You can connect to the same screen from a mobile device on the same LAN.
 
-First, start the Tauri App and Hub in HTTP mode. While they are running, run:
+Agent Window binds only to `127.0.0.1` over HTTP by default. Phone access is an explicit opt-in: install `mkcert`, trust its local CA, and provide the certificate yourself.
 
 ```bash
-./setup/pwa/enable
+brew install mkcert
+mkcert -install
+
+mkdir -p "$HOME/.agent-window/state/certs"
+LOCAL_NAME="$(scutil --get LocalHostName)"
+mkcert \
+  -cert-file "$HOME/.agent-window/state/certs/cert.pem" \
+  -key-file "$HOME/.agent-window/state/certs/key.pem" \
+  localhost 127.0.0.1 ::1 "${LOCAL_NAME}.local"
 ```
 
-This script checks the running Hub and prepares mkcert and a local certificate. **mkcert installs a local CA on the system.**
+Add any other hostname or IP address you will actually use to the final `mkcert` command. **`mkcert -install` adds a local CA to the system trust store.**
 
-From then on, `~/.agent-window/state/pwa/enabled` is detected at launch and Agent Window starts in HTTPS mode.
+Then explicitly allow LAN HTTPS and restart Agent Window:
 
 ```bash
-./tauri_app/tauri_start
+mkdir -p "$HOME/.agent-window/state/access"
+touch "$HOME/.agent-window/state/access/lan-https-enabled"
 ```
+
+The marker changes the bind from HTTP on `127.0.0.1` to HTTPS on `0.0.0.0`. Agent Window only reads the marker and certificate files; it does not install `mkcert`, alter the trust store, or generate certificates.
 
 Send mkcert's `rootCA.pem` to the device that will connect, install the certificate profile, and enable trust for it. Then open either of the following in Safari:
 

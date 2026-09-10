@@ -12,8 +12,8 @@ from backend_core.tmux.control import (
     stop_chat_server as stop_chat_server_impl,
 )
 from backend_core.access.settings import (
+    lan_https_enabled,
     port_is_bindable,
-    pwa_https_enabled,
     session_artifact_dir,
     workspace_chat_port,
 )
@@ -55,7 +55,7 @@ def chat_launch_env(self) -> dict[str, str]:
     if existing_pythonpath:
         pythonpath_parts.append(existing_pythonpath)
     env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
-    if pwa_https_enabled():
+    if lan_https_enabled():
         return env
     env.pop("AGENT_WINDOW_CERT_FILE", None)
     env.pop("AGENT_WINDOW_KEY_FILE", None)

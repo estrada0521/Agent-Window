@@ -5,7 +5,7 @@ import json
 import ssl
 import time
 
-from .settings import pwa_https_enabled
+from .settings import lan_https_enabled
 
 
 CHAT_PROBE_TIMEOUT_SEC = 1.0
@@ -14,7 +14,7 @@ CHAT_PROBE_TIMEOUT_SEC = 1.0
 def read_chat_server_state(chat_port: int, *, scheme: str = "") -> dict | None:
     resolved_scheme = str(scheme or "").strip().lower()
     if not resolved_scheme:
-        resolved_scheme = "https" if pwa_https_enabled() else "http"
+        resolved_scheme = "https" if lan_https_enabled() else "http"
     if resolved_scheme not in {"http", "https"}:
         raise ValueError(f"unsupported chat scheme: {resolved_scheme}")
     connection = None

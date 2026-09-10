@@ -147,19 +147,30 @@ agent-send <target> <message>
 
 同一LAN上のmobile端末から、同じ画面へ接続できます。
 
-最初にHTTP modeでTauri AppとHubを起動し、その状態で次を実行します。
+Agent Windowは規定ではHTTPで `127.0.0.1` のみにbindします。phone accessは明示的なopt-inです。`mkcert`をinstallしてlocal CAを信頼し、certificateを自分で用意します。
 
 ```bash
-./setup/pwa/enable
+brew install mkcert
+mkcert -install
+
+mkdir -p "$HOME/.agent-window/state/certs"
+LOCAL_NAME="$(scutil --get LocalHostName)"
+mkcert \
+  -cert-file "$HOME/.agent-window/state/certs/cert.pem" \
+  -key-file "$HOME/.agent-window/state/certs/key.pem" \
+  localhost 127.0.0.1 ::1 "${LOCAL_NAME}.local"
 ```
 
-このscriptは実行中のHubを確認し、mkcertとlocal certificateを準備します。**mkcertはシステムにlocal CAをinstallします。**
+実際に使う他のhostnameやIP addressがあれば、最後の `mkcert` commandへ追加してください。**`mkcert -install` はシステムのtrust storeへlocal CAを追加します。**
 
-以降は起動時に `~/.agent-window/state/pwa/enabled` が検出され、HTTPS modeで起動します。
+次にLAN HTTPSを明示的に許可し、Agent Windowを再起動します。
 
 ```bash
-./tauri_app/tauri_start
+mkdir -p "$HOME/.agent-window/state/access"
+touch "$HOME/.agent-window/state/access/lan-https-enabled"
 ```
+
+このmarkerにより、bindはHTTPの `127.0.0.1` からHTTPSの `0.0.0.0` へ変わります。Agent Windowはmarkerとcertificate filesを読むだけで、`mkcert`のinstall、trust storeの変更、certificate生成は行いません。
 
 mkcertの `rootCA.pem` を接続する端末へ送り、certificate profileをinstallして信頼を有効にします。その後、Safariで次のいずれかを開きます。
 

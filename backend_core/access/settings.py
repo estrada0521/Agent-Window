@@ -25,24 +25,24 @@ def agent_window_state_dir() -> Path:
     return agent_window_root() / "state"
 
 
-def pwa_https_enabled() -> bool:
-    return (agent_window_state_dir() / "pwa" / "enabled").is_file()
+def lan_https_enabled() -> bool:
+    return (agent_window_state_dir() / "access" / "lan-https-enabled").is_file()
 
 
 def local_bind_scheme(*, cert_file: str = "", key_file: str = "") -> str:
-    """PWA on → HTTPS only. PWA off → HTTP."""
-    if not pwa_https_enabled():
+    """LAN access on → HTTPS only. LAN access off → HTTP."""
+    if not lan_https_enabled():
         return "http"
     if not cert_file or not key_file:
-        raise SystemExit("PWA is enabled; HTTPS certificate and key are required")
+        raise SystemExit("LAN HTTPS is enabled; certificate and key are required")
     if not Path(cert_file).is_file() or not Path(key_file).is_file():
-        raise SystemExit("PWA is enabled; HTTPS certificate files are missing")
+        raise SystemExit("LAN HTTPS is enabled; certificate files are missing")
     return "https"
 
 
 def local_bind_host() -> str:
-    """PWA on → LAN. PWA off → loopback."""
-    return "0.0.0.0" if pwa_https_enabled() else "127.0.0.1"
+    """LAN access requires explicit opt-in; otherwise bind only to loopback."""
+    return "0.0.0.0" if lan_https_enabled() else "127.0.0.1"
 
 
 def agent_window_run_dir() -> Path:

@@ -18,11 +18,11 @@ Usage: tauri_app/tauri_start [--no-open]
 
 Desktop app entry:
   - builds and opens the local macOS .app by default
-  - starts the local Hub over HTTP unless PWA HTTPS has been enabled
+  - starts the local Hub over HTTP unless LAN HTTPS has been enabled
 
 Requires python3, tmux, cargo, tauri-cli, and Xcode Command Line Tools; install them yourself before running.
 
-After phone/PWA access is enabled with ./setup/pwa/enable, this command starts HTTPS automatically.
+When ~/.agent-window/state/access/lan-https-enabled exists, this command starts HTTPS automatically.
 
 Options:
   --no-open     build and install the app without opening it
@@ -58,7 +58,7 @@ for _hp in /opt/homebrew/bin /usr/local/bin "$HOME/.cargo/bin"; do
 done
 export PATH
 
-"$ROOT/setup/preflight" --desktop --quiet
+"$ROOT/setup/preflight" --quiet
 
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$HOME/.agent-window/cache/tauri-target}"
 mkdir -p "$CARGO_TARGET_DIR"
@@ -70,12 +70,12 @@ for _cmd in python3 tmux; do
   fi
 done
 
-PWA_ENABLED_FILE="${AGENT_WINDOW_STATE_DIR:-$HOME/.agent-window/state}/pwa/enabled"
-if [[ -f "$PWA_ENABLED_FILE" ]]; then
+LAN_HTTPS_ENABLED_FILE="${AGENT_WINDOW_STATE_DIR:-$HOME/.agent-window/state}/access/lan-https-enabled"
+if [[ -f "$LAN_HTTPS_ENABLED_FILE" ]]; then
   CERTS_DIR="${AGENT_WINDOW_CERTS_DIR:-$HOME/.agent-window/state/certs}"
   if [[ ! -f "$CERTS_DIR/cert.pem" || ! -f "$CERTS_DIR/key.pem" ]]; then
-    echo "tauri_start: local HTTPS certificates are missing." >&2
-    echo "tauri_start: start the HTTP app first, then run ./setup/pwa/enable." >&2
+    echo "tauri_start: LAN HTTPS is enabled, but certificate files are missing." >&2
+    echo "tauri_start: provide $CERTS_DIR/cert.pem and $CERTS_DIR/key.pem." >&2
     exit 1
   fi
 fi

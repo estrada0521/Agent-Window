@@ -11,14 +11,14 @@ from hub_backend.server_helpers import format_session_chat_url, resolve_external
 from hub_backend.session_query import host_without_port
 
 
-class PwaBindTests(unittest.TestCase):
-    def test_pwa_off_is_http_loopback(self) -> None:
-        with patch("backend_core.access.settings.pwa_https_enabled", return_value=False):
+class LanHttpsBindTests(unittest.TestCase):
+    def test_lan_https_off_is_http_loopback(self) -> None:
+        with patch("backend_core.access.settings.lan_https_enabled", return_value=False):
             self.assertEqual(local_bind_host(), "127.0.0.1")
             self.assertEqual(local_bind_scheme(), "http")
 
-    def test_pwa_on_is_https_lan_and_does_not_fall_back_to_http(self) -> None:
-        with patch("backend_core.access.settings.pwa_https_enabled", return_value=True):
+    def test_lan_https_on_binds_lan_and_does_not_fall_back_to_http(self) -> None:
+        with patch("backend_core.access.settings.lan_https_enabled", return_value=True):
             self.assertEqual(local_bind_host(), "0.0.0.0")
             with self.assertRaises(SystemExit):
                 local_bind_scheme()
@@ -79,12 +79,12 @@ class SessionChatUrlTests(unittest.TestCase):
 
 
 class HubRuntimeSchemeTests(unittest.TestCase):
-    def test_scheme_follows_pwa_without_hub_main(self) -> None:
+    def test_scheme_follows_lan_https_without_hub_main(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            with patch("hub_backend.runtime.pwa_https_enabled", return_value=False):
+            with patch("hub_backend.runtime.lan_https_enabled", return_value=False):
                 self.assertEqual(HubRuntime(root).hub_scheme, "http")
-            with patch("hub_backend.runtime.pwa_https_enabled", return_value=True):
+            with patch("hub_backend.runtime.lan_https_enabled", return_value=True):
                 self.assertEqual(HubRuntime(root).hub_scheme, "https")
 
 

@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from backend_core.access.settings import pwa_https_enabled
+from backend_core.access.settings import lan_https_enabled
 from backend_core.tmux.window import tmux_prefix_args
 from backend_core.tmux.resolve import normalize_workspace
 
@@ -25,7 +25,7 @@ class HubRuntime:
         self.repo_root = Path(repo_root).resolve()
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port or 0)
-        self.hub_scheme = "https" if pwa_https_enabled() else "http"
+        self.hub_scheme = "https" if lan_https_enabled() else "http"
         self.tmux_prefix = tmux_prefix_args(tmux_socket) if tmux_socket else ["tmux"]
         self._launch_locks = {}
         self._launch_locks_master = threading.Lock()

@@ -30,7 +30,7 @@ from backend_core.access.chat_server import read_chat_server_state
 from backend_core.access.settings import (
     local_bind_host,
     local_bind_scheme,
-    pwa_https_enabled,
+    lan_https_enabled,
     workspace_chat_port,
 )
 from workspace_sync.api import WorkspaceSyncApi
@@ -92,7 +92,7 @@ def _message_index_watcher() -> None:
                             try:
                                 notify_hub_session_messages_changed(
                                     hub_port,
-                                    scheme="https" if pwa_https_enabled() else "http",
+                                    scheme="https" if lan_https_enabled() else "http",
                                 )
                             except Exception as exc:
                                 logging.warning("Hub message notification failed: %s", exc)

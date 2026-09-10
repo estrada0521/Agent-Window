@@ -1407,12 +1407,12 @@ fn main() {
             let has_certs = Path::new(&cert_file).exists() && Path::new(&key_file).exists();
             let state_dir = std::env::var("AGENT_WINDOW_STATE_DIR")
                 .unwrap_or_else(|_| format!("{}/.agent-window/state", home));
-            let pwa_enabled_file = format!("{}/pwa/enabled", state_dir);
-            let use_https = Path::new(&pwa_enabled_file).exists();
+            let lan_https_enabled_file = format!("{}/access/lan-https-enabled", state_dir);
+            let use_https = Path::new(&lan_https_enabled_file).exists();
             if use_https && !has_certs {
                 show_hub_error(
                     &window,
-                    "Local HTTPS certificates are missing. Start the HTTP app first, then run ./setup/pwa/enable.",
+                    "LAN HTTPS is enabled, but certificate files are missing from ~/.agent-window/state/certs.",
                 );
                 return Ok(());
             }

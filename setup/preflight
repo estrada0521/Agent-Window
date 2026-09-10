@@ -2,19 +2,16 @@
 
 set -u
 
-MODE="desktop"
 QUIET=0
 
 usage() {
   cat <<'EOF'
-Usage: setup/preflight [--desktop | --pwa] [--quiet]
+Usage: setup/preflight [--quiet]
 
 Checks required commands without installing anything. If something is missing,
 prints every missing requirement and the exact command needed to install it.
 
 Options:
-  --desktop  check requirements for the macOS desktop app (default)
-  --pwa      check the additional requirement for PWA HTTPS
   --quiet    print only failures
   --help     show this help
 EOF
@@ -22,14 +19,6 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --desktop)
-      MODE="desktop"
-      shift
-      ;;
-    --pwa)
-      MODE="pwa"
-      shift
-      ;;
     --quiet)
       QUIET=1
       shift
@@ -70,22 +59,18 @@ add_missing() {
   [[ "${3:-}" == "brew" ]] && brew_needed=1
 }
 
-if [[ "$MODE" == "desktop" ]]; then
-  command -v python3 >/dev/null 2>&1 || add_missing "python3" "brew install python" brew
-  command -v tmux >/dev/null 2>&1 || add_missing "tmux" "brew install tmux" brew
+command -v python3 >/dev/null 2>&1 || add_missing "python3" "brew install python" brew
+command -v tmux >/dev/null 2>&1 || add_missing "tmux" "brew install tmux" brew
 
-  if ! command -v cargo >/dev/null 2>&1; then
-    add_missing "Rust / cargo" "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
-    add_missing "tauri-cli" "cargo install tauri-cli --version \"^2\" --locked"
-  elif ! cargo tauri --help >/dev/null 2>&1; then
-    add_missing "tauri-cli" "cargo install tauri-cli --version \"^2\" --locked"
-  fi
+if ! command -v cargo >/dev/null 2>&1; then
+  add_missing "Rust / cargo" "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+  add_missing "tauri-cli" "cargo install tauri-cli --version \"^2\" --locked"
+elif ! cargo tauri --help >/dev/null 2>&1; then
+  add_missing "tauri-cli" "cargo install tauri-cli --version \"^2\" --locked"
+fi
 
-  if ! command -v xcode-select >/dev/null 2>&1 || ! xcode-select -p >/dev/null 2>&1; then
-    add_missing "Xcode Command Line Tools" "xcode-select --install"
-  fi
-else
-  command -v mkcert >/dev/null 2>&1 || add_missing "mkcert" "brew install mkcert" brew
+if ! command -v xcode-select >/dev/null 2>&1 || ! xcode-select -p >/dev/null 2>&1; then
+  add_missing "Xcode Command Line Tools" "xcode-select --install"
 fi
 
 if (( ${#missing_names[@]} > 0 )); then
@@ -103,9 +88,5 @@ if (( ${#missing_names[@]} > 0 )); then
 fi
 
 if [[ "$QUIET" != "1" ]]; then
-  if [[ "$MODE" == "pwa" ]]; then
-    echo "Agent Window preflight: PWA HTTPS requirement is available."
-  else
-    echo "Agent Window preflight: desktop requirements are available."
-  fi
+  echo "Agent Window preflight: desktop requirements are available."
 fi
