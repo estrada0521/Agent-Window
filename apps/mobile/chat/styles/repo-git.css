@@ -58,6 +58,31 @@
       text-align: left;
     }
 
+    /* Leaving root: the back button and folder name slide in leftward from
+       around the centre. Fires on the class drop, not on deeper navigation. */
+    #repoPanel .repo-sheet-nav-bar:not(.repo-sheet-nav-at-root) .repo-sheet-back,
+    #repoPanel .repo-sheet-nav-bar:not(.repo-sheet-nav-at-root) .repo-sheet-title {
+      animation: repoSheetNavRevealLeft 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes repoSheetNavRevealLeft {
+      0% {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #repoPanel .repo-sheet-nav-bar:not(.repo-sheet-nav-at-root) .repo-sheet-back,
+      #repoPanel .repo-sheet-nav-bar:not(.repo-sheet-nav-at-root) .repo-sheet-title {
+        animation: none;
+      }
+    }
+
     #repoPanel .repo-preview-actions {
       grid-column: 3;
       margin-left: 0;
