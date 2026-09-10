@@ -161,7 +161,7 @@ mkcert \
   localhost 127.0.0.1 ::1 "${LOCAL_NAME}.local"
 ```
 
-実際に使う他のhostnameやIP addressがあれば、最後の `mkcert` commandへ追加してください。**`mkcert -install` はシステムのtrust storeへlocal CAを追加します。**
+実際に使う他のhostnameやIP addressがあれば、最後の `mkcert` commandへ追加してください。
 
 次にLAN HTTPSを明示的に許可し、Agent Windowを再起動します。
 
@@ -170,7 +170,7 @@ mkdir -p "$HOME/.agent-window/state/access"
 touch "$HOME/.agent-window/state/access/lan-https-enabled"
 ```
 
-このmarkerにより、bindはHTTPの `127.0.0.1` からHTTPSの `0.0.0.0` へ変わります。Agent Windowはmarkerとcertificate filesを読むだけで、`mkcert`のinstall、trust storeの変更、certificate生成は行いません。
+このmarkerにより、bindはHTTPの `127.0.0.1` からHTTPSの `0.0.0.0` へ変わります。
 
 mkcertの `rootCA.pem` を接続する端末へ送り、certificate profileをinstallして信頼を有効にします。その後、Safariで次のいずれかを開きます。
 

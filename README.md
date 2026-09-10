@@ -159,7 +159,7 @@ mkcert \
   localhost 127.0.0.1 ::1 "${LOCAL_NAME}.local"
 ```
 
-Add any other hostname or IP address you will actually use to the final `mkcert` command. **`mkcert -install` adds a local CA to the system trust store.**
+Add any other hostname or IP address you will actually use to the final `mkcert` command.
 
 Then explicitly allow LAN HTTPS and restart Agent Window:
 
@@ -168,7 +168,7 @@ mkdir -p "$HOME/.agent-window/state/access"
 touch "$HOME/.agent-window/state/access/lan-https-enabled"
 ```
 
-The marker changes the bind from HTTP on `127.0.0.1` to HTTPS on `0.0.0.0`. Agent Window only reads the marker and certificate files; it does not install `mkcert`, alter the trust store, or generate certificates.
+The marker changes the bind from HTTP on `127.0.0.1` to HTTPS on `0.0.0.0`.
 
 Send mkcert's `rootCA.pem` to the device that will connect, install the certificate profile, and enable trust for it. Then open either of the following in Safari:
 
