@@ -556,6 +556,16 @@
       display: flex;
       align-items: stretch;
       gap: 8px;
+      /* Revive + Delete grow in together from the right edge, staying a set
+         (--swipe-p: 0..1, set per row in JS). */
+      transform: scale(calc(0.3 + 0.7 * var(--swipe-p, 1)));
+      transform-origin: right center;
+      opacity: calc(0.05 + 0.95 * var(--swipe-p, 1));
+    }
+
+    .swipe-row.swipe-settling .swipe-act-tray {
+      transition: transform 720ms cubic-bezier(.2, .85, .14, 1),
+                  opacity 720ms cubic-bezier(.2, .85, .14, 1);
     }
 
     .swipe-act {
@@ -572,14 +582,6 @@
       user-select: none;
       -webkit-user-select: none;
       cursor: pointer;
-      /* Grow in with the swipe (--swipe-p: 0..1, set per row in JS). */
-      transform: scale(calc(0.3 + 0.7 * var(--swipe-p, 1)));
-      opacity: calc(0.05 + 0.95 * var(--swipe-p, 1));
-    }
-
-    .swipe-row.swipe-settling .swipe-act {
-      transition: transform 720ms cubic-bezier(.2, .85, .14, 1),
-                  opacity 720ms cubic-bezier(.2, .85, .14, 1);
     }
 
     .swipe-act-btn {
