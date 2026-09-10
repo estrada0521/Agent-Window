@@ -5,39 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agent Window</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* Nothing is drawn before the Hub loads -- just the transparent glass. */
+    * { margin: 0; padding: 0; }
     html, body {
       height: 100%;
       background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       -webkit-user-select: none;
       user-select: none;
     }
-    .splash {
-      animation: fadeIn 400ms ease;
-    }
-    .spinner {
-      width: 24px;
-      height: 24px;
-      border: 2px solid rgba(255,255,255,0.15);
-      border-top-color: rgba(255,255,255,0.6);
-      border-radius: 50%;
-      animation: spin 800ms linear infinite;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
   </style>
 </head>
-<body>
-  <div class="splash">
-    <div class="spinner"></div>
-  </div>
-</body>
+<body></body>
 </html>
