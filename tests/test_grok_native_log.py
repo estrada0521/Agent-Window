@@ -11,20 +11,15 @@ from native_log_sync.agents.grok.read_updates import _turn_completed, extract_gr
 
 class _Runtime:
     def __init__(self, root: Path) -> None:
-        self._native_log_progress = {}
-        self._native_log_current_paths = {}
+        self._native_log_read_offsets = {}
         self._native_log_projection_status = {}
         self.log_path = root / "agent-index.jsonl"
         self.session_name = "test-session"
         self.workspace = str(root)
-        self.saved = 0
         self.idle_agents: list[str] = []
         self._idle_running_event_seq = 0
         self._idle_running_display_by_agent: dict = {}
         self.runtime_notifies: list[str] = []
-
-    def save_sync_state(self) -> None:
-        self.saved += 1
 
     def _mark_idle(self, agent: str) -> None:
         self.idle_agents.append(agent)

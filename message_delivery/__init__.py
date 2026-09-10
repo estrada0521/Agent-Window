@@ -4,7 +4,7 @@ import logging
 import os
 import subprocess
 
-from native_log_sync.agents._shared.path_state import _agent_base_name
+from backend_core.agents.names import agent_base_name
 from message_delivery.paste import deliver_text_to_pane
 
 
@@ -87,6 +87,7 @@ def send_message(
 
 
 def mark_agent_sent(self, agent_name: str) -> None:
-    base = _agent_base_name(agent_name)
+    base = agent_base_name(agent_name)
     if base in {"claude", "cursor", "codex", "gemini", "grok"}:
         self._mark_running(agent_name)
+        self._bind_native_log_after_send(agent_name)

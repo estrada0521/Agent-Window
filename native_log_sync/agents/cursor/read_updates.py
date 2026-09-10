@@ -5,9 +5,8 @@ import re
 import time
 
 from native_log_sync.agents._shared.path_state import (
-    _normalized_native_log_path,
-    advance_read_progress,
-    read_progress_start,
+    advance_read_offset,
+    read_offset_start,
 )
 from native_log_sync.agents._shared.projection_status import record_projection_scan_result
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
@@ -95,47 +94,27 @@ def _cursor_display_for_sync(entry: dict) -> str:
     return normalize_cursor_plaintext_for_index(display) or ""
 
 
-def last_synced_cursor_offset(log_path: str, transcript_path: str) -> int | None:
-    key = _normalized_native_log_path(transcript_path)
-    if not key or not os.path.exists(log_path):
-        return None
-    last: int | None = None
-    for _line_start, entry in complete_jsonl_scan(log_path):
-        path = entry.get("native_log_path")
-        if not isinstance(path, str) or _normalized_native_log_path(path) != key:
-            continue
-        off = entry.get("native_log_offset")
-        if isinstance(off, int) and (last is None or off > last):
-            last = off
-    return last
-
-
-def _offset_after_native_line(transcript_path: str, line_start: int) -> int:
-    with open(transcript_path, "rb") as handle:
-        handle.seek(max(line_start, 0))
-        handle.readline()
-        return handle.tell()
-
-
-def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None) -> None:
+def sync_cursor_native_log(
+    self,
+    agent: str,
+    native_log_path: str | None = None,
+    *,
+    start_at_end: bool = False,
+) -> None:
     transcript_path = str(native_log_path or "").strip()
     if not transcript_path or not os.path.exists(transcript_path):
         return
 
-    self._native_log_current_paths[agent] = transcript_path
     file_size = os.path.getsize(transcript_path)
-    start = read_progress_start(
-        self._native_log_progress,
+    if start_at_end:
+        advance_read_offset(self._native_log_read_offsets, transcript_path, file_size)
+        return
+    start = read_offset_start(
+        self._native_log_read_offsets,
         transcript_path,
         file_size,
         on_shrink="wait",
     )
-    if start == 0:
-        last_off = last_synced_cursor_offset(str(self.log_path), transcript_path)
-        if last_off is not None:
-            start = _offset_after_native_line(transcript_path, last_off)
-            advance_read_progress(self._native_log_progress, transcript_path, start)
-            self.save_sync_state()
     if start >= file_size:
         return
 
@@ -166,8 +145,7 @@ def sync_cursor_native_log(self, agent: str, native_log_path: str | None = None)
         if tool_evs:
             push_runtime_display(self, agent, tool_evs)
 
-    advance_read_progress(self._native_log_progress, transcript_path, scan.consumed)
+    advance_read_offset(self._native_log_read_offsets, transcript_path, scan.consumed)
     record_projection_scan_result(self, agent, scan)
-    self.save_sync_state()
     if turn_done_seen:
         self._mark_idle(agent)

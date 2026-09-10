@@ -13,11 +13,3 @@ def resolve_native_log_binding(runtime, request):
         path=resolve_grok_updates_path(runtime, request.pane_pid),
         source="grok-updates",
     )
-
-
-def on_pane_restart(runtime, agent: str) -> None:
-    runtime._native_log_current_paths.pop(agent, None)
-
-
-def on_pane_add(runtime, agent: str) -> None:
-    pass

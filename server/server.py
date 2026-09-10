@@ -37,7 +37,6 @@ from workspace_sync.api import WorkspaceSyncApi
 
 DEFAULT_HUB_PORT = 8788
 DEFAULT_TMUX_SOCKET = "agent-window"
-RELOAD_RUNNING_AGENTS_ENV = "AGENT_WINDOW_RELOAD_RUNNING_AGENTS"
 
 _PWA_STATIC_ROUTES = {
     "/pwa-icon-192.png": ("icon-192.png", "image/png", "public, max-age=3600"),
@@ -168,14 +167,6 @@ def _send_or_enqueue_message(
     return 200, {"ok": True, "entry": entry}
 
 
-def _clean_env():
-    env = os.environ.copy()
-    if runtime is None:
-        raise RuntimeError("chat runtime is unavailable during reload")
-    env[RELOAD_RUNNING_AGENTS_ENV] = json.dumps(runtime.running_agents_for_reload())
-    return env
-
-
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
     global port, workspace, tmux_socket, hub_port
@@ -202,20 +193,12 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     hub_port = int(os.environ.get("AGENT_INDEX_HUB_PORT") or DEFAULT_HUB_PORT)
     PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
     PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
-    reload_running_raw = os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, "")
-    reload_running_agents = json.loads(reload_running_raw) if reload_running_raw else []
-    if not isinstance(reload_running_agents, list) or any(
-        not isinstance(agent, str) or not agent for agent in reload_running_agents
-    ):
-        raise RuntimeError(f"invalid {RELOAD_RUNNING_AGENTS_ENV}")
-
     runtime = ChatRuntime(
         port=port,
         workspace=workspace,
         tmux_socket=tmux_socket,
         hub_port=hub_port,
         repo_root=_repo_root,
-        initial_running_agents=reload_running_agents,
     )
 
     _PWA_STATIC_DIR = _repo_root / "apps" / "shared" / "pwa"
@@ -315,7 +298,7 @@ def queue_chat_restart():
 
     def worker():
         try:
-            env = _clean_env()
+            env = os.environ.copy()
             if server is not None:
                 server.shutdown()
                 server.server_close()

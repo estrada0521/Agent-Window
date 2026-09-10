@@ -18,7 +18,6 @@ def refresh_native_log_bindings(
             next_by_agent = dict(getattr(runtime, "_native_log_bindings_by_agent", {}))
 
         for request in pane_requests:
-            runtime._pane_native_log_paths.pop(request.pane_id, None)
             if not replace_all:
                 next_by_agent.pop(request.agent, None)
             binding = resolve_binding(runtime, request)
@@ -33,3 +32,12 @@ def refresh_native_log_bindings(
     if watcher is not None:
         watcher.wake()
     return bindings
+
+
+def remove_native_log_binding(runtime, agent: str) -> None:
+    with getattr(runtime, "_native_log_bindings_lock"):
+        getattr(runtime, "_native_log_bindings_by_agent", {}).pop(agent, None)
+        runtime._native_log_watch_reconfigure.set()
+    watcher = getattr(runtime, "_native_log_vnode_watcher", None)
+    if watcher is not None:
+        watcher.wake()

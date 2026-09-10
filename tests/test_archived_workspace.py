@@ -261,7 +261,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
     def test_mirrors_link_inside_an_existing_workspace(self) -> None:
         from backend_core.access.settings import (
             SESSION_LOG_FILENAME,
-            NATIVE_LOG_STATE_FILENAME,
             ensure_session_workspace_mirrors,
         )
 
@@ -271,13 +270,8 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             canonical = Path(tmp) / "session"
             canonical.mkdir()
             log_target = canonical / SESSION_LOG_FILENAME
-            native_target = canonical / NATIVE_LOG_STATE_FILENAME
             log_target.write_text("", encoding="utf-8")
-            native_target.write_text("", encoding="utf-8")
-            with patch("backend_core.access.settings.session_log_path", return_value=log_target), patch(
-                "backend_core.access.settings.session_native_log_state_path",
-                return_value=native_target,
-            ):
+            with patch("backend_core.access.settings.session_log_path", return_value=log_target):
                 ensure_session_workspace_mirrors("Lab", str(workspace))
             link = workspace / ".agent-window" / SESSION_LOG_FILENAME
             self.assertTrue(link.is_symlink())

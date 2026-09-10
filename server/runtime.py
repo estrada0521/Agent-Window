@@ -3,6 +3,7 @@ import logging
 
 import subprocess
 import threading
+import time
 import uuid
 from collections import deque
 from datetime import datetime as dt_datetime
@@ -55,6 +56,8 @@ from .session_binding import WorkspaceSessionBinding
 
 
 ENTRY_WINDOW_LIMIT = 2000
+NATIVE_LOG_BIND_INTERVAL_SECONDS = 0.5
+NATIVE_LOG_BIND_TIMEOUT_SECONDS = 3.0
 
 
 class ChatRuntime:
@@ -66,7 +69,6 @@ class ChatRuntime:
         tmux_socket: str,
         hub_port: int,
         repo_root: Path | str,
-        initial_running_agents: list[str] | None = None,
     ):
         self._session_binding = WorkspaceSessionBinding(workspace)
         self.port = int(port)
@@ -80,7 +82,7 @@ class ChatRuntime:
         # live tmux session by its native session working directory.
         self.tmux_session_name = _resolve_tmux_session_name_impl(self) or ""
         self.session_is_active = bool(self.tmux_session_name)
-        self._agent_running = set(initial_running_agents or [])
+        self._agent_running: set[str] = set()
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(
             session_binding=self._session_binding,
@@ -93,6 +95,8 @@ class ChatRuntime:
             pane_id_fn=self.pane_id_for_agent,
             session_is_active_fn=lambda: self.session_is_active,
         )
+        self._native_log_bind_workers_lock = threading.Lock()
+        self._native_log_bind_workers: set[str] = set()
         self._payload_cache_lock = threading.Lock()
         self._payload_cache: dict[tuple, bytes] = {}
         self._payload_cache_order: deque[tuple] = deque(maxlen=8)
@@ -121,7 +125,12 @@ class ChatRuntime:
     def session_binding_snapshot(self) -> tuple[str, Path]:
         return self._session_binding.snapshot()
 
-    def refresh_native_log_bindings(self, agents: list[str] | None = None) -> list[dict]:
+    def refresh_native_log_bindings(
+        self,
+        agents: list[str] | None = None,
+        *,
+        start_at_end: bool = False,
+    ) -> list[dict]:
         replace_all = agents is None
         panes_by_agent = self.agent_panes()
         target_agents = list(agents) if agents is not None else list(panes_by_agent)
@@ -138,13 +147,17 @@ class ChatRuntime:
                     pane_pid=str(pane_pid or "").strip(),
                 )
             )
-        return self._native_log.refresh(pane_requests, replace_all=replace_all)
+        return self._native_log.refresh(
+            pane_requests,
+            replace_all=replace_all,
+            start_at_end=start_at_end,
+        )
 
     def start_native_log_sync(self) -> None:
         if not self.session_is_active:
             return
         from native_log_sync.watch.watch_bindings import start_native_log_vnode_watcher
-        self.refresh_native_log_bindings()
+        self.refresh_native_log_bindings(start_at_end=True)
         start_native_log_vnode_watcher(self._native_log)
 
     def invalidate_payload_cache(self) -> None:
@@ -152,8 +165,8 @@ class ChatRuntime:
             self._payload_cache.clear()
             self._payload_cache_order.clear()
 
-    def on_agent_pane_added(self, agent: str) -> None:
-        self._native_log.on_pane_add(agent)
+    def remove_native_log_binding(self, agent: str) -> None:
+        self._native_log.remove_binding(agent)
 
     def append_user_entry(self, message: str, *, targets: list[str], client: str | None = None) -> dict:
         return _append_user_entry_impl(
@@ -288,29 +301,49 @@ class ChatRuntime:
         for agent in agents:
             self._mark_running(agent)
 
-    def running_agents_for_reload(self) -> list[str]:
-        return sorted(self._agent_running)
-
     def _mark_running(self, agent: str) -> None:
         already_running = agent in self._agent_running
         if not already_running:
             self._native_log.clear_agent_runtime_display(agent)
         self._agent_running.add(agent)
         if not already_running:
-            if not self._native_log.has_log_binding(agent):
-                self.refresh_native_log_bindings([agent])
-                if self._native_log.has_log_binding(agent):
-                    self._initial_sync_agent(agent)
-                else:
-                    logging.error("native log bind failed for %s", agent)
-            else:
-                # Re-resolve to detect session switches (e.g. new Claude conversation file)
-                old_path = self._native_log.log_path_for_agent(agent)
-                self.refresh_native_log_bindings([agent])
-                new_path = self._native_log.log_path_for_agent(agent)
-                if new_path and new_path != old_path:
-                    self._initial_sync_agent(agent)
             self.notify_session_state_changed(["statuses", "agent_runtime"], reason="agent-status")
+
+    def _bind_native_log_after_send(self, agent: str) -> None:
+        with self._native_log_bind_workers_lock:
+            if agent in self._native_log_bind_workers:
+                return
+            self._native_log_bind_workers.add(agent)
+
+        def bind() -> None:
+            deadline = time.monotonic() + NATIVE_LOG_BIND_TIMEOUT_SECONDS
+            try:
+                while agent in self.active_agents():
+                    try:
+                        self.refresh_native_log_bindings([agent])
+                    except Exception:
+                        logging.exception("native log bind failed for %s", agent)
+                        return
+                    if self._native_log.has_log_binding(agent):
+                        return
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        logging.error(
+                            "native log did not appear within %.1fs for %s",
+                            NATIVE_LOG_BIND_TIMEOUT_SECONDS,
+                            agent,
+                        )
+                        return
+                    time.sleep(min(NATIVE_LOG_BIND_INTERVAL_SECONDS, remaining))
+            finally:
+                with self._native_log_bind_workers_lock:
+                    self._native_log_bind_workers.discard(agent)
+
+        threading.Thread(
+            target=bind,
+            daemon=True,
+            name=f"native-bind-{agent}",
+        ).start()
 
     def _mark_running_from_native_activity(self, agent: str) -> None:
         """Mark an idle agent running without rebinding its already-watched log."""
@@ -318,13 +351,6 @@ class ChatRuntime:
             return
         self._agent_running.add(agent)
         self.notify_session_state_changed(["statuses"], reason="agent-native-activity")
-
-    def _initial_sync_agent(self, agent: str) -> None:
-        """Run a full initial emit to capture any log content written before binding."""
-        from native_log_sync.watch.emit_events import emit_agent_updates
-        path = self._native_log.log_path_for_agent(agent)
-        if path:
-            emit_agent_updates(self._native_log, agent, path)
 
     def _mark_idle(self, agent: str) -> None:
         was_running = agent in self._agent_running

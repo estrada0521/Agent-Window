@@ -16,7 +16,13 @@ _SYNC_BY_BASE = {
 }
 
 
-def sync_agent(runtime, agent: str, path: str | None = None) -> None:
+def sync_agent(
+    runtime,
+    agent: str,
+    path: str | None = None,
+    *,
+    start_at_end: bool = False,
+) -> None:
     # Serialize concurrent callers (the kqueue watcher thread and refresh()
     # triggers like first-message/reload can both target the same agent) so
     # two syncs never read the same progress offset and double-append.
@@ -25,4 +31,4 @@ def sync_agent(runtime, agent: str, path: str | None = None) -> None:
         sync_fn = _SYNC_BY_BASE.get(base)
         if sync_fn is None:
             raise ValueError(f"unknown agent type: {agent}")
-        sync_fn(runtime, agent, path)
+        sync_fn(runtime, agent, path, start_at_end=start_at_end)

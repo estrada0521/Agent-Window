@@ -11,18 +11,11 @@ from native_log_sync.agents.codex.read_updates import sync_codex_native_log
 
 class _SyncRuntime:
     def __init__(self, root: Path) -> None:
-        self._native_log_progress = {}
-        self._native_log_current_paths = {}
+        self._native_log_read_offsets = {}
         self._native_log_projection_status = {}
         self.log_path = root / "agent-index.jsonl"
         self.session_name = "test-session"
         self.workspace = str(root)
-
-    def save_sync_state(self) -> None:
-        pass
-
-    def _first_seen_for_agent(self, _agent: str) -> float:
-        return 0
 
     def _mark_idle(self, _agent: str) -> None:
         pass

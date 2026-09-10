@@ -7,7 +7,6 @@ import socket
 from pathlib import Path
 
 SESSION_LOG_FILENAME = ".log.jsonl"
-NATIVE_LOG_STATE_FILENAME = ".native-log-sync-state.json"
 SESSION_NAME_MAX_LENGTH = 64
 
 
@@ -62,20 +61,12 @@ def session_log_path(session_name: str) -> Path:
     return session_artifact_dir(session_name) / SESSION_LOG_FILENAME
 
 
-def session_native_log_state_path(session_name: str) -> Path:
-    return session_artifact_dir(session_name) / NATIVE_LOG_STATE_FILENAME
-
-
 def workspace_agent_window_dir(workspace: Path | str) -> Path:
     return Path(workspace).expanduser() / ".agent-window"
 
 
 def workspace_log_link_path(workspace: Path | str) -> Path:
     return workspace_agent_window_dir(workspace) / SESSION_LOG_FILENAME
-
-
-def workspace_native_log_state_link_path(workspace: Path | str) -> Path:
-    return workspace_agent_window_dir(workspace) / NATIVE_LOG_STATE_FILENAME
 
 
 def ensure_session_workspace_mirrors(session_name: str, workspace: Path | str) -> None:
@@ -85,10 +76,7 @@ def ensure_session_workspace_mirrors(session_name: str, workspace: Path | str) -
     workspace_path = Path(raw).expanduser()
     if not workspace_path.is_dir():
         return
-    mirrors = (
-        (session_log_path(session_name), workspace_log_link_path(workspace_path)),
-        (session_native_log_state_path(session_name), workspace_native_log_state_link_path(workspace_path)),
-    )
+    mirrors = ((session_log_path(session_name), workspace_log_link_path(workspace_path)),)
     for target, link_path in mirrors:
         link_path.parent.mkdir(parents=True, exist_ok=True)
         if link_path.is_symlink():

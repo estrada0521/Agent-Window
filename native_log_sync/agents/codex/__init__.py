@@ -14,11 +14,3 @@ def resolve_native_log_binding(runtime, request):
         path=path,
         source="codex-rollout",
     )
-
-
-def on_pane_restart(runtime, agent: str) -> None:
-    runtime._native_log_current_paths.pop(agent, None)
-
-
-def on_pane_add(runtime, agent: str) -> None:
-    pass

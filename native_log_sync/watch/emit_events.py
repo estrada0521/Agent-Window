@@ -4,7 +4,6 @@ from native_log_sync.dispatch import sync_agent
 
 
 def emit_agent_updates(runtime, agent: str, path: str) -> None:
-    runtime._first_seen_for_agent(agent)
     sync_agent(runtime, agent, path)
 
 

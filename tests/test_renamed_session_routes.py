@@ -34,7 +34,7 @@ class RenamedSessionRouteTests(unittest.TestCase):
             with (
                 mock.patch.object(chat_server, "workspace", "/work/project"),
                 mock.patch.object(chat_server, "server", fake_server),
-                mock.patch.object(chat_server, "_clean_env", return_value={}),
+                mock.patch.object(chat_server.os.environ, "copy", return_value={}),
                 mock.patch.object(chat_server, "launch_chat_server", return_value=object()) as launch,
                 mock.patch.object(chat_server, "wait_for_chat_server", return_value=True),
             ):

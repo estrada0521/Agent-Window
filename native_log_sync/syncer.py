@@ -1,25 +1,19 @@
 from __future__ import annotations
 
 import logging
-import time
 from pathlib import Path
 from typing import Callable
 
-from native_log_sync.agents._shared.runtime_state import (
-    first_seen_for_agent as _first_seen_for_agent_impl,
-    initialize_native_log_runtime_state as _init_state,
-)
-from native_log_sync.agents import on_pane_restart as _on_pane_restart_impl, on_pane_add as _on_pane_add_impl
+from native_log_sync.agents._shared.runtime_state import initialize_native_log_runtime_state as _init_state
 from native_log_sync.agents._shared.workspace_paths import workspace_aliases as _workspace_aliases_impl
 from native_log_sync.agents._shared.projection_status import (
     record_projection_sync_failure as _record_projection_sync_failure_impl,
 )
-from native_log_sync.io.sync_state import (
-    load_sync_state as _load_sync_state_impl,
-    save_sync_state as _save_sync_state_impl,
-)
 from native_log_sync.refresh.binding_models import PaneBindingRequest
-from native_log_sync.refresh.refresh_bindings import refresh_native_log_bindings as _refresh_bindings_impl
+from native_log_sync.refresh.refresh_bindings import (
+    refresh_native_log_bindings as _refresh_bindings_impl,
+    remove_native_log_binding as _remove_binding_impl,
+)
 from native_log_sync.watch.emit_events import (
     clear_agent_runtime_display,
     idle_running_display_for_api,
@@ -80,41 +74,25 @@ class NativeLogSyncer:
     def session_is_active(self) -> bool:
         return bool(self._session_is_active_fn())
 
-    # ── state persistence ──
-
-    def load_sync_state(self) -> dict:
-        return _load_sync_state_impl(self)
-
-    def save_sync_state(self) -> None:
-        _save_sync_state_impl(self, time_module=time)
-
     # ── helpers used by sync functions ──
-
-    def _first_seen_for_agent(self, agent: str) -> float:
-        return _first_seen_for_agent_impl(self, agent, time_module=time)
 
     def _workspace_aliases(self, workspace: str) -> list[str]:
         return _workspace_aliases_impl(self, workspace, path_class=Path)
 
     # ── public API called by ChatRuntime ──
 
-    def on_pane_restart(self, agent: str) -> None:
-        _on_pane_restart_impl(self, agent)
-
-    def on_pane_add(self, agent: str) -> None:
-        _on_pane_add_impl(self, agent)
-
     def refresh(
         self,
         pane_requests: list[PaneBindingRequest],
         *,
         replace_all: bool = True,
+        start_at_end: bool = False,
     ) -> list[dict]:
         bindings = _refresh_bindings_impl(self, pane_requests, replace_all=replace_all)
         from native_log_sync.dispatch import sync_agent
         for binding in bindings:
             try:
-                sync_agent(self, binding.agent, binding.path)
+                sync_agent(self, binding.agent, binding.path, start_at_end=start_at_end)
             except Exception as exc:
                 logging.exception("native log sync failed for %s", binding.agent)
                 _record_projection_sync_failure_impl(self, binding.agent, exc)
@@ -131,6 +109,9 @@ class NativeLogSyncer:
             for item in bindings
         ]
 
+    def remove_binding(self, agent: str) -> None:
+        _remove_binding_impl(self, agent)
+
     def agent_statuses(self, running_agents: set[str]) -> dict[str, str]:
         return refresh_idle_statuses(self, running_agents)
 
@@ -146,7 +127,3 @@ class NativeLogSyncer:
 
     def has_log_binding(self, agent: str) -> bool:
         return bool(getattr(self, "_native_log_bindings_by_agent", {}).get(agent))
-
-    def log_path_for_agent(self, agent: str) -> str:
-        binding = getattr(self, "_native_log_bindings_by_agent", {}).get(agent)
-        return binding.path if binding else ""

@@ -15,8 +15,7 @@ def _entry(payload: dict) -> dict:
 
 class _CodexSyncRuntime:
     def __init__(self, root: Path) -> None:
-        self._native_log_progress = {}
-        self._native_log_current_paths = {}
+        self._native_log_read_offsets = {}
         self._native_log_projection_status = {}
         self.log_path = root / "agent-index.jsonl"
         self.session_name = "test-session"
@@ -24,9 +23,6 @@ class _CodexSyncRuntime:
         self.idle_agents: list[str] = []
         self.running_marks: list[str] = []
         self._running: set[str] = set()
-
-    def save_sync_state(self) -> None:
-        pass
 
     def _mark_idle(self, agent: str) -> None:
         self.idle_agents.append(agent)

@@ -6,8 +6,8 @@ import re
 import time
 
 from native_log_sync.agents._shared.path_state import (
-    advance_read_progress,
-    read_progress_start,
+    advance_read_offset,
+    read_offset_start,
 )
 from native_log_sync.agents._shared.projection_status import record_projection_scan_result
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
@@ -87,14 +87,22 @@ def _codex_task_error_message(payload: dict) -> str:
     return message
 
 
-def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) -> None:
+def sync_codex_native_log(
+    self,
+    agent: str,
+    native_log_path: str | None = None,
+    *,
+    start_at_end: bool = False,
+) -> None:
     resolved_path = str(native_log_path or "").strip()
     if not resolved_path or not os.path.exists(resolved_path):
         return
 
-    self._native_log_current_paths[agent] = resolved_path
     file_size = os.path.getsize(resolved_path)
-    start = read_progress_start(self._native_log_progress, resolved_path, file_size)
+    if start_at_end:
+        advance_read_offset(self._native_log_read_offsets, resolved_path, file_size)
+        return
+    start = read_offset_start(self._native_log_read_offsets, resolved_path, file_size)
     if start >= file_size:
         return
 
@@ -158,7 +166,7 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
         return True
 
     last_runtime_state_event = ""
-    scan = complete_jsonl_scan(resolved_path, start)
+    scan = complete_jsonl_scan(resolved_path, start, align_mid_line=True)
     for line_start, entry in scan:
         _append_codex_entry(entry, line_start)
         runtime_state_event = _codex_runtime_state_event(entry)
@@ -170,9 +178,8 @@ def sync_codex_native_log(self, agent: str, native_log_path: str | None = None) 
         if tool_evs:
             push_runtime_display(self, agent, tool_evs)
 
-    advance_read_progress(self._native_log_progress, resolved_path, scan.consumed)
+    advance_read_offset(self._native_log_read_offsets, resolved_path, scan.consumed)
     record_projection_scan_result(self, agent, scan)
-    self.save_sync_state()
     if last_runtime_state_event == "completed":
         self._mark_idle(agent)
     elif last_runtime_state_event == "active" and agent not in self.running_agents():

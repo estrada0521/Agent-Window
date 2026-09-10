@@ -33,9 +33,8 @@ def _respawn_agent_pane(runtime, pane_id: str, command: str, *, subprocess_modul
     return True, pane_id
 
 
-def _refresh_agent_bindings(runtime, agent_name: str) -> None:
-    runtime._native_log.on_pane_restart(agent_name)
-    runtime.refresh_native_log_bindings([agent_name])
+def _remove_agent_binding(runtime, agent_name: str) -> None:
+    runtime.remove_native_log_binding(agent_name)
 
 
 def restart_agent_pane(runtime, agent_name: str, *, subprocess_module=subprocess, os_module=os) -> tuple[bool, str]:
@@ -51,7 +50,7 @@ def restart_agent_pane(runtime, agent_name: str, *, subprocess_module=subprocess
     )
     if not ok:
         return False, detail or f"failed to restart {agent_name}"
-    _refresh_agent_bindings(runtime, agent_name)
+    _remove_agent_binding(runtime, agent_name)
     subprocess_module.run(
         [*runtime.tmux_prefix, "select-pane", "-t", pane_id, "-T", agent_name],
         capture_output=True,
@@ -73,7 +72,7 @@ def resume_agent_pane(runtime, agent_name: str, *, subprocess_module=subprocess,
     )
     if not ok:
         return False, detail or f"failed to resume {agent_name}"
-    _refresh_agent_bindings(runtime, agent_name)
+    _remove_agent_binding(runtime, agent_name)
     subprocess_module.run(
         [*runtime.tmux_prefix, "select-pane", "-t", pane_id, "-T", agent_name],
         capture_output=True,

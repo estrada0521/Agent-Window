@@ -15,15 +15,3 @@ def resolve_binding(runtime, request):
     if resolver is None:
         raise RuntimeError(f"no native log resolver for {request.agent}")
     return resolver(runtime, request)
-
-
-def on_pane_restart(runtime, agent: str) -> None:
-    hook = getattr(_agent_module(agent), "on_pane_restart", None)
-    if hook is not None:
-        hook(runtime, agent)
-
-
-def on_pane_add(runtime, agent: str) -> None:
-    hook = getattr(_agent_module(agent), "on_pane_add", None)
-    if hook is not None:
-        hook(runtime, agent)

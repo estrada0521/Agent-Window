@@ -60,16 +60,11 @@ class _FakeRuntime:
         self.log_path = log_path
         self.session_name = "TEST"
         self.workspace = "/workspace"
-        self._native_log_progress = {}
-        self._native_log_current_paths = {}
+        self._native_log_read_offsets = {}
         self._native_log_projection_status = {}
         self._idle_running_event_seq = 0
         self._idle_running_display_by_agent = {}
-        self.saved = 0
         self.idled = []
-
-    def save_sync_state(self) -> None:
-        self.saved += 1
 
     def _mark_idle(self, agent: str) -> None:
         self.idled.append(agent)

@@ -5,8 +5,8 @@ import time
 from pathlib import Path
 
 from native_log_sync.agents._shared.path_state import (
-    advance_read_progress,
-    read_progress_start,
+    advance_read_offset,
+    read_offset_start,
 )
 from native_log_sync.agents._shared.projection_status import record_projection_scan_result
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
@@ -18,20 +18,28 @@ from native_log_sync.io.jsonl_read import complete_jsonl_scan
 from native_log_sync.io.projected import append_projected_entry
 
 
-def sync_gemini_native_log(self, agent: str, native_log_path: str | None = None) -> None:
+def sync_gemini_native_log(
+    self,
+    agent: str,
+    native_log_path: str | None = None,
+    *,
+    start_at_end: bool = False,
+) -> None:
     session_path_str = str(native_log_path or "").strip()
     if not session_path_str or not os.path.exists(session_path_str):
         return
     if Path(session_path_str).name != "transcript_full.jsonl":
         raise RuntimeError(f"Antigravity native log is not transcript_full.jsonl: {session_path_str}")
 
-    self._native_log_current_paths[agent] = session_path_str
     file_size = os.path.getsize(session_path_str)
-    start = read_progress_start(self._native_log_progress, session_path_str, file_size)
+    if start_at_end:
+        advance_read_offset(self._native_log_read_offsets, session_path_str, file_size)
+        return
+    start = read_offset_start(self._native_log_read_offsets, session_path_str, file_size)
     if start >= file_size:
         return
 
-    scan = complete_jsonl_scan(session_path_str, start)
+    scan = complete_jsonl_scan(session_path_str, start, align_mid_line=True)
     appended = False
     for line_start, entry in scan:
         text, tool_calls = parse_antigravity_transcript_step(entry)
@@ -60,8 +68,7 @@ def sync_gemini_native_log(self, agent: str, native_log_path: str | None = None)
         )
         appended = True
 
-    advance_read_progress(self._native_log_progress, session_path_str, scan.consumed)
+    advance_read_offset(self._native_log_read_offsets, session_path_str, scan.consumed)
     record_projection_scan_result(self, agent, scan)
-    self.save_sync_state()
     if appended:
         self._mark_idle(agent)

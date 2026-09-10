@@ -88,14 +88,6 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         warnings.append(str(exc))
     ctx["runtime"].invalidate_payload_cache()
     try:
-        ctx["runtime"].on_agent_pane_added(instance)
-    except Exception as exc:
-        warnings.append(str(exc))
-    try:
-        ctx["runtime"].refresh_native_log_bindings([instance])
-    except Exception as exc:
-        warnings.append(str(exc))
-    try:
         ctx["runtime"].notify_session_state_changed(["targets", "statuses"], reason="targets-changed")
     except Exception as exc:
         warnings.append(str(exc))
@@ -144,7 +136,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         warnings.append(str(exc))
     ctx["runtime"].invalidate_payload_cache()
     try:
-        ctx["runtime"].refresh_native_log_bindings()
+        ctx["runtime"].remove_native_log_binding(instance)
     except Exception as exc:
         warnings.append(str(exc))
     try:
