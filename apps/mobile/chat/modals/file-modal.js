@@ -243,14 +243,6 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
       if (!normalizedPath) return;
       const normalizedExt = String(ext || extFromPath(normalizedPath) || "").toLowerCase();
       if (typeof repoPanel?._openFilePreview !== "function") return;
-      if (!isPublicChatView) {
-        const exists = await fileExistsOnDisk(normalizedPath);
-        if (!exists) {
-          setStatus(`file not found: ${displayAttachmentFilename(normalizedPath) || normalizedPath}`, true);
-          setTimeout(() => setStatus(""), STATUS_TOAST_MS);
-          return;
-        }
-      }
       await repoPanel._openFilePreview(normalizedPath, normalizedExt);
     };
     document.addEventListener("keydown", (event) => {

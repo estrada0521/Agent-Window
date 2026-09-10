@@ -503,13 +503,11 @@
       const normalizedExt = String(ext || fileExtForPath(path) || "").toLowerCase();
       if (!path || !repoPanel) return;
       if (!ensureRepoSheetDom()) return;
-      if (!isPublicChatView) {
-        const exists = await fileExistsOnDisk(path);
-        if (!exists) {
-          setStatus(`file not found: ${displayAttachmentFilename(path) || path}`, true);
-          setTimeout(() => setStatus(""), STATUS_TOAST_MS);
-          return;
-        }
+      const exists = await fileExistsOnDisk(path);
+      if (!exists) {
+        setStatus(`file not found: ${displayAttachmentFilename(path) || path}`, true);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
+        return;
       }
       const frame = repoPreviewFrameEl();
       if (!frame) return;
