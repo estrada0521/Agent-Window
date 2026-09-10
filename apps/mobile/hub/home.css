@@ -12,6 +12,7 @@
       --icon-hover: __ICON_HOVER__;
       --session-hover-bg: __SESSION_HOVER_BG__;
       --session-selected-bg: __SESSION_SELECTED_BG__;
+      --chat-overlay-glow: 0 0 5px rgba(0, 0, 0, 0.34), 0 0 16px rgba(0, 0, 0, 0.2);
       --session-danger-fg: rgb(204, 47, 38);
       --session-success-fg: rgb(41, 178, 75);
       --mob-top-gradient-rgb: var(--bg-rgb);
@@ -37,6 +38,7 @@
       --line-strong: rgba(0, 0, 0, 0.18);
       --session-hover-bg: rgba(0, 0, 0, 0.04);
       --session-selected-bg: rgba(0, 0, 0, 0.07);
+      --chat-overlay-glow: 0 0 3px rgba(0, 0, 0, 0.18), 0 0 11px rgba(0, 0, 0, 0.09);
       --session-danger-fg: rgb(207, 34, 46);
       --session-success-fg: rgb(36, 157, 66);
       --mob-top-gradient-rgb: var(--bg-rgb);
@@ -58,6 +60,7 @@
       --line-strong: rgba(255, 255, 255, 0.12);
       --session-hover-bg: rgba(255, 255, 255, 0.028);
       --session-selected-bg: rgba(255, 255, 255, 0.045);
+      --chat-overlay-glow: 0 0 5px rgba(0, 0, 0, 0.34), 0 0 16px rgba(0, 0, 0, 0.2);
       --session-danger-fg: rgb(204, 47, 38);
       --session-success-fg: rgb(41, 178, 75);
       --mob-top-gradient-rgb: var(--bg-rgb);
@@ -685,7 +688,7 @@
          detached, then off the instant it seats flush (same hard-switch-at-end
          treatment as border-radius; a shadow that fades while the view is still
          raised reads wrong). */
-      box-shadow: 0 0 3px rgba(0, 0, 0, 0.18), 0 0 11px rgba(0, 0, 0, 0.09);
+      box-shadow: var(--chat-overlay-glow);
       transition: transform 440ms cubic-bezier(0.32, 0.72, 0, 1), opacity 180ms ease, border-radius 0s 440ms, box-shadow 0s 440ms;
       will-change: transform, opacity;
       backface-visibility: hidden;
@@ -726,6 +729,10 @@
 
     html[data-theme="light"] #chatOverlay::after {
       border-color: rgba(0, 0, 0, 0.07);
+    }
+
+    html[data-theme="dark"] #chatOverlay::after {
+      border-color: rgba(255, 255, 255, 0.035);
     }
 
     #chatOverlay[hidden] {
