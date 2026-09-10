@@ -320,7 +320,10 @@ class ChatRuntime:
             try:
                 while agent in self.active_agents():
                     try:
-                        self.refresh_native_log_bindings([agent])
+                        # A binding that only just appeared has no backlog to
+                        # project -- follow it from EOF, like start_native_log_sync.
+                        # Without this, a resumed CLI's whole history replays in.
+                        self.refresh_native_log_bindings([agent], start_at_end=True)
                     except Exception:
                         logging.exception("native log bind failed for %s", agent)
                         return
