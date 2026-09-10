@@ -1218,12 +1218,15 @@ fn login_shell_path() -> Result<String, String> {
     Ok(path.to_string())
 }
 
-fn configured_hub_port() -> u16 {
-    std::env::var("AGENT_INDEX_HUB_PORT")
+fn configured_hub_port(repo_root: &str) -> Result<u16, String> {
+    let path = Path::new(repo_root).join("hub-port");
+    let raw = std::fs::read_to_string(&path)
+        .map_err(|e| format!("Could not read {}: {}", path.display(), e))?;
+    raw.trim()
+        .parse::<u16>()
         .ok()
-        .and_then(|value| value.parse::<u16>().ok())
         .filter(|port| *port > 0)
-        .unwrap_or(8788)
+        .ok_or_else(|| format!("{} does not contain a valid port", path.display()))
 }
 
 fn hub_ready(port: u16, use_https: bool) -> bool {
@@ -1391,7 +1394,13 @@ fn main() {
             }
             eprintln!("[app] repo = {}", repo_root);
 
-            let hub_port = configured_hub_port();
+            let hub_port = match configured_hub_port(&repo_root) {
+                Ok(value) => value,
+                Err(message) => {
+                    show_hub_error(&window, &message);
+                    return Ok(());
+                }
+            };
             let path = match login_shell_path() {
                 Ok(value) => value,
                 Err(message) => {
@@ -1421,10 +1430,8 @@ fn main() {
             let mut spawned_hub: Option<Child> = None;
             if !hub_already_up {
                 let mut cmd = Command::new(format!("{}/bin/agent-index", repo_root));
-                cmd.args(["--hub-port", &hub_port.to_string()])
-                    .current_dir(&repo_root)
+                cmd.current_dir(&repo_root)
                     .env("PATH", &path)
-                    .env("AGENT_INDEX_HUB_PORT", hub_port.to_string())
                     .env("PYTHONPATH", repo_root.clone());
                 if use_https {
                     cmd.env("AGENT_WINDOW_CERT_FILE", &cert_file)

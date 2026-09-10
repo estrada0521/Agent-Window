@@ -99,7 +99,6 @@ def clean_env() -> dict:
 def launch_hub_restart(
     *,
     script_path,
-    port: int,
     repo_root,
     clean_env_fn,
     hub_server_getter,
@@ -130,7 +129,7 @@ def launch_hub_restart(
                 server.server_close()
             env = clean_env_fn()
             completed = subprocess.run(
-                ["bash", str(script_path), "--hub-port", str(port)],
+                ["bash", str(script_path)],
                 cwd=repo_root,
                 env=env,
                 stdin=subprocess.DEVNULL,

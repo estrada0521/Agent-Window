@@ -35,7 +35,6 @@ from backend_core.access.settings import (
 )
 from workspace_sync.api import WorkspaceSyncApi
 
-DEFAULT_HUB_PORT = 8788
 DEFAULT_TMUX_SOCKET = "agent-window"
 
 _PWA_STATIC_ROUTES = {
@@ -190,7 +189,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     _repo_root = Path(__file__).resolve().parent.parent
     port = workspace_chat_port(workspace)
     tmux_socket = (os.environ.get("AGENT_WINDOW_TMUX_SOCKET") or DEFAULT_TMUX_SOCKET).strip()
-    hub_port = int(os.environ.get("AGENT_INDEX_HUB_PORT") or DEFAULT_HUB_PORT)
+    hub_port = int((_repo_root / "hub-port").read_text().strip())
     PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
     PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
     runtime = ChatRuntime(

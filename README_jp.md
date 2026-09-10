@@ -37,7 +37,7 @@ repo rootで次を実行します。
 ./tauri_app/tauri_start
 ```
 
-Tauri Appをbuildして起動します。HubはTauri Appから起動され、既定のportは `8788` です。
+Tauri Appをbuildして起動します。HubはTauri Appから起動され、portはrepoの `hub-port` fileの値（`8788`）です。変えるにはこのfileを書き換えます。
 
 # 使う
 

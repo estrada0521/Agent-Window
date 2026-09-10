@@ -117,15 +117,15 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         return
 
     args = list(sys.argv[1:] if argv is None else argv)
-    if len(args) != 4:
+    if len(args) != 3:
         raise SystemExit(
-            "usage: python -m hub_backend.hub_server <repo_root> <script_path> <port> <tmux_socket>"
+            "usage: python -m hub_backend.hub_server <repo_root> <script_path> <tmux_socket>"
         )
 
-    root_arg, script_arg, port_arg, tmux_socket = args
+    root_arg, script_arg, tmux_socket = args
     repo_root = Path(root_arg).resolve()
     script_path = Path(script_arg).resolve()
-    port = int(port_arg)
+    port = int((repo_root / "hub-port").read_text().strip())
     hub = HubRuntime(repo_root, tmux_socket, hub_port=port)
     PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
     PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
@@ -150,7 +150,6 @@ def queue_hub_restart():
         restart_pending = True
     ok = _launch_hub_restart_impl(
         script_path=script_path,
-        port=port,
         repo_root=repo_root,
         clean_env_fn=_clean_env_impl,
         hub_server_getter=lambda: hub_server,

@@ -49,7 +49,6 @@ def chat_launch_env(self) -> dict[str, str]:
     env = os.environ.copy()
     if self.tmux_socket:
         env["AGENT_WINDOW_TMUX_SOCKET"] = self.tmux_socket
-    env["AGENT_INDEX_HUB_PORT"] = str(self.hub_port)
     pythonpath_parts = [str(self.repo_root)]
     existing_pythonpath = (env.get("PYTHONPATH") or "").strip()
     if existing_pythonpath:

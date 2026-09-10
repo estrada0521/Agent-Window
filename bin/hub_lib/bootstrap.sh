@@ -22,7 +22,7 @@ TMUX_SOCKET_NAME="$(resolve_tmux_socket_name)"
 
 usage() {
   cat <<'EOF'
-Usage: agent-index [--hub-port N]
+Usage: agent-index
 
 Start Hub.
 EOF

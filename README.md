@@ -37,7 +37,7 @@ Run the following from the repository root.
 ./tauri_app/tauri_start
 ```
 
-This builds and launches the Tauri App. The Hub is started by the Tauri App and uses port `8788` by default.
+This builds and launches the Tauri App. The Hub is started by the Tauri App on the port in the repo's `hub-port` file (`8788`); change that file to move it.
 
 # Use
 

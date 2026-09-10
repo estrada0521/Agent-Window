@@ -11,12 +11,11 @@ source "$HUB_LIB_DIR/bootstrap.sh"
 # shellcheck source=/dev/null
 source "$HUB_LIB_DIR/network.sh"
 
-HUB_PORT="${AGENT_INDEX_HUB_PORT:-8788}"
+HUB_PORT="$(cat "$REPO_ROOT/hub-port")"
 READY_TIMEOUT_SEC=6
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --hub-port) HUB_PORT="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 1 ;;
   esac
@@ -57,7 +56,7 @@ if ! port_serves_expected_url "$LOCAL_SCHEME" "$HUB_PORT" "/hub.webmanifest"; th
     echo "Hub port $HUB_PORT is occupied by a listener that does not serve the expected ${LOCAL_SCHEME} Hub." >&2
     exit 1
   fi
-  PYTHONPATH="$HUB_PYTHONPATH" nohup python3 -m hub_backend.hub_server "$REPO_ROOT" "$SCRIPT_DIR/agent-index" "$HUB_PORT" "$TMUX_SOCKET_NAME" >/dev/null 2>&1 </dev/null &
+  PYTHONPATH="$HUB_PYTHONPATH" nohup python3 -m hub_backend.hub_server "$REPO_ROOT" "$SCRIPT_DIR/agent-index" "$TMUX_SOCKET_NAME" >/dev/null 2>&1 </dev/null &
   HUB_SERVER_PID=$!
   disown "$HUB_SERVER_PID" || true
   if ! wait_for_expected_url "$LOCAL_SCHEME" "$HUB_PORT" "/hub.webmanifest" "$READY_TIMEOUT_SEC"; then

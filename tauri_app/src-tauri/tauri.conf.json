@@ -4,8 +4,7 @@
   "identifier": "com.agentwindow.chat",
   "version": "0.0.0",
   "build": {
-    "frontendDist": "../src",
-    "devUrl": "http://localhost:8788"
+    "frontendDist": "../src"
   },
   "app": {
     "withGlobalTauri": true,
