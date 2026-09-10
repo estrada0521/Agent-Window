@@ -552,19 +552,24 @@
 
       const esc = (v) => String(v || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-      const SNAP_W = 84;
-      const THRESH = 48;
+      // Match the CSS: .swipe-act width, .swipe-act-tray gap and right inset.
+      // The row slides exactly far enough to uncover the tray, no more.
+      const ACT_W = 52;
+      const ACT_GAP = 8;
+      const TRAY_INSET = 10;
+      const THRESH = 36;
       const trashSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
       const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
       const reviveSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
       const SWIPE_ACTIONS = {
-        kill: { svg: killSvg, label: "Archive" },
-        "delete-archived": { svg: trashSvg, label: "Delete" },
-        revive: { svg: reviveSvg, label: "Revive" },
+        kill: { svg: killSvg, label: "Archive", tone: "warn" },
+        "delete-archived": { svg: trashSvg, label: "Delete", tone: "danger" },
+        revive: { svg: reviveSvg, label: "Revive", tone: "success" },
       };
       let anyOpen = null;
       const removeSwipeActs = (sr) => {
-        sr.querySelectorAll(".swipe-act").forEach((n) => n.remove());
+        const tray = sr.querySelector(".swipe-act-tray");
+        if (tray) tray.remove();
       };
       const closeRow = (sr, animate) => {
         const el = sr && sr.querySelector(".mob-session-row");
@@ -572,6 +577,7 @@
         el.style.transition = animate ? "transform 220ms cubic-bezier(.25,.46,.45,.94)" : "none";
         el.style.transform = "";
         sr._snap = 0;
+        sr.classList.remove("swipe-open");
         if (animate) {
           el.addEventListener("transitionend", () => removeSwipeActs(sr), { once: true });
         } else {
@@ -581,14 +587,16 @@
       const initSwipeRow = (sr) => {
         const inner = sr.querySelector(".mob-session-row");
         if (!inner) return;
-        const rightAction = sr.dataset.swipeRight || "";
-        const leftAction = sr.dataset.swipeLeft || "";
-        const actRDef = SWIPE_ACTIONS[rightAction];
-        const actLDef = SWIPE_ACTIONS[leftAction];
+        const acts = (sr.dataset.swipeRight || "").split(",")
+          .map((name) => name.trim())
+          .map((name) => ({ name, def: SWIPE_ACTIONS[name] }))
+          .filter((a) => a.def);
         sr._snap = 0;
         let sx = 0, sy = 0, dx = 0, axis = null, active = false, didSwipe = false;
-        const minX = actRDef ? -SNAP_W : 0;
-        const maxX = actLDef ? SNAP_W : 0;
+        const SNAP_W = acts.length
+          ? acts.length * ACT_W + (acts.length - 1) * ACT_GAP + TRAY_INSET
+          : 0;
+        const minX = -SNAP_W;
         const onActClick = (e) => {
           e.stopPropagation();
           const action = e.currentTarget.dataset.action;
@@ -606,22 +614,18 @@
           if (confirm("Archive " + n + "?")) window.location.href = `/kill-session?session=${encodeURIComponent(n)}`;
         };
         const ensureActs = () => {
-          if (actRDef && !sr.querySelector(".swipe-act-right")) {
+          if (!acts.length || sr.querySelector(".swipe-act-tray")) return;
+          const tray = document.createElement("div");
+          tray.className = "swipe-act-tray";
+          acts.forEach(({ name, def }) => {
             const el = document.createElement("div");
-            el.className = "swipe-act swipe-act-right";
-            el.dataset.action = rightAction;
-            el.innerHTML = `${actRDef.svg}<span>${actRDef.label}</span>`;
+            el.className = "swipe-act";
+            el.dataset.action = name;
+            el.innerHTML = `<span class="swipe-act-btn is-${def.tone}">${def.svg}</span><span>${def.label}</span>`;
             el.addEventListener("click", onActClick);
-            sr.insertBefore(el, inner);
-          }
-          if (actLDef && !sr.querySelector(".swipe-act-left")) {
-            const el = document.createElement("div");
-            el.className = "swipe-act swipe-act-left";
-            el.dataset.action = leftAction;
-            el.innerHTML = `${actLDef.svg}<span>${actLDef.label}</span>`;
-            el.addEventListener("click", onActClick);
-            sr.insertBefore(el, inner);
-          }
+            tray.appendChild(el);
+          });
+          sr.insertBefore(tray, inner);
         };
         const startDrag = (clientX, clientY) => {
           if (anyOpen && anyOpen !== sr) { closeRow(anyOpen, true); anyOpen = null; }
@@ -641,7 +645,7 @@
           didSwipe = true;
           dx = cx;
           const base = (sr._snap || 0) * SNAP_W;
-          const x = Math.max(minX, Math.min(maxX, base + dx));
+          const x = Math.max(minX, Math.min(0, base + dx));
           inner.style.transform = x ? `translateX(${x}px)` : "";
         };
         const endDrag = () => {
@@ -650,15 +654,14 @@
           const base = (sr._snap || 0) * SNAP_W;
           const fx = base + dx;
           const ease = "transform 220ms cubic-bezier(.25,.46,.45,.94)";
-          if (fx < -THRESH && actRDef) {
+          if (fx < -THRESH && acts.length) {
             inner.style.transition = ease; inner.style.transform = `translateX(${-SNAP_W}px)`;
             sr._snap = -1; anyOpen = sr;
-          } else if (fx > THRESH && actLDef) {
-            inner.style.transition = ease; inner.style.transform = `translateX(${SNAP_W}px)`;
-            sr._snap = 1; anyOpen = sr;
+            sr.classList.add("swipe-open");
           } else {
             inner.style.transition = ease; inner.style.transform = "";
             sr._snap = 0; if (anyOpen === sr) anyOpen = null;
+            sr.classList.remove("swipe-open");
           }
           dx = 0;
           inner.addEventListener("transitionend", () => { if (!sr._snap) removeSwipeActs(sr); }, { once: true });
@@ -703,7 +706,7 @@
           html += `<div class="mob-section-label">Archived</div>`;
           html += archived.map((s) => {
             const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
-            return `<div class="swipe-row" data-session-name="${esc(s.name)}" data-swipe-left="revive" data-swipe-right="delete-archived">` +
+            return `<div class="swipe-row" data-session-name="${esc(s.name)}" data-swipe-right="revive,delete-archived">` +
               `<div class="mob-session-row archived-row" data-session-name="${esc(s.name)}" data-open-href="/open-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +

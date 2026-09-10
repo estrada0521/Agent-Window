@@ -413,7 +413,8 @@
       transition: opacity 120ms ease;
     }
 
-    .mob-session-row:active::before {
+    .mob-session-row:active::before,
+    .swipe-row.swipe-open .mob-session-row::before {
       opacity: 1;
     }
 
@@ -543,43 +544,67 @@
       border-bottom: none;
     }
 
-    .swipe-act {
+    .swipe-act-tray {
       position: absolute;
+      /* Match the row's card inset so the buttons line up with it. */
       top: 4px;
       bottom: 4px;
-      border-radius: 12px;
+      right: 10px;
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    .swipe-act {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      min-width: 68px;
-      padding: 0 10px;
-      gap: 5px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--icon-fg);
+      justify-content: flex-start;
+      align-self: stretch;
+      gap: 3px;
+      width: 52px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--row-preview-fg);
       user-select: none;
       -webkit-user-select: none;
       cursor: pointer;
-      overflow: hidden;
     }
 
-    .swipe-act svg {
+    .swipe-act-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1 1 auto;
+      width: 46px;
+      min-height: 30px;
+      border-radius: 13px;
+      color: rgb(255, 255, 255);
+    }
+
+    .swipe-act-btn svg {
       display: block;
+      width: auto;
+      height: 76%;
     }
 
-    .swipe-act-right {
-      right: 6px;
-      background: var(--session-danger-fg);
+    /* iOS system colours, matching Safari's own swipe actions. */
+    .swipe-act-btn.is-danger,
+    .swipe-act-btn.is-warn {
+      background: rgb(255, 69, 58);
     }
 
-    .swipe-act-left {
-      left: 6px;
-      background: var(--session-success-fg);
+    .swipe-act-btn.is-success {
+      background: rgb(99, 99, 102);
     }
 
-    html[data-theme="dark"] .swipe-act-left {
-      color: rgb(10, 10, 9);
+    html[data-theme="light"] .swipe-act-btn.is-danger,
+    html[data-theme="light"] .swipe-act-btn.is-warn {
+      background: rgb(255, 59, 48);
+    }
+
+    html[data-theme="light"] .swipe-act-btn.is-success {
+      background: rgb(142, 142, 147);
     }
 
     .mob-session-row {
