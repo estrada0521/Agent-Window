@@ -520,6 +520,8 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       if (!desktopRightPanel) return;
       dpStopPanelResize();
       dpPanelOpen = false;
+      // Reopening starts from the commit list, not whatever detail was left open.
+      if (gitSession.hasShell()) dpCloseGitDetail();
       desktopRightPanel.classList.remove("open");
       desktopRightPanel.hidden = true;
       document.body.classList.remove("right-panel-open");
