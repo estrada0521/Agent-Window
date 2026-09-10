@@ -405,7 +405,7 @@
       content: "";
       position: absolute;
       inset: 4px 12px;
-      border-radius: 12px;
+      border-radius: 18px;
       background: var(--session-hover-bg);
       opacity: 0;
       z-index: -1;

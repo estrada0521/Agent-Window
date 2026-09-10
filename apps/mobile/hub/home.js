@@ -552,15 +552,18 @@
 
       const esc = (v) => String(v || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+      // A slow, gently decelerating snap so the reveal reads as deliberate
+      // rather than snappy.
+      const SNAP_EASE = "transform 720ms cubic-bezier(.2, .85, .14, 1)";
       // Match the CSS: .swipe-act width, .swipe-act-tray gap and right inset.
       // The row slides exactly far enough to uncover the tray, no more.
       const ACT_W = 52;
       const ACT_GAP = 8;
       const TRAY_INSET = 10;
       const THRESH = 36;
-      const trashSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
-      const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
-      const reviveSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
+      const trashSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+      const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
+      const reviveSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
       const SWIPE_ACTIONS = {
         kill: { svg: killSvg, label: "Archive", tone: "warn" },
         "delete-archived": { svg: trashSvg, label: "Delete", tone: "danger" },
@@ -574,7 +577,7 @@
       const closeRow = (sr, animate) => {
         const el = sr && sr.querySelector(".mob-session-row");
         if (!el) return;
-        el.style.transition = animate ? "transform 220ms cubic-bezier(.25,.46,.45,.94)" : "none";
+        el.style.transition = animate ? SNAP_EASE : "none";
         el.style.transform = "";
         sr._snap = 0;
         sr.classList.remove("swipe-open");
@@ -645,7 +648,11 @@
           didSwipe = true;
           dx = cx;
           const base = (sr._snap || 0) * SNAP_W;
-          const x = Math.max(minX, Math.min(0, base + dx));
+          // Track a touch behind the finger, and resist past the open point,
+          // so the row feels weighted rather than snappy.
+          let x = base + dx * 0.62;
+          if (x > 0) x = 0;
+          else if (x < minX) x = minX + (x - minX) * 0.14;
           inner.style.transform = x ? `translateX(${x}px)` : "";
         };
         const endDrag = () => {
@@ -653,13 +660,12 @@
           active = false;
           const base = (sr._snap || 0) * SNAP_W;
           const fx = base + dx;
-          const ease = "transform 220ms cubic-bezier(.25,.46,.45,.94)";
           if (fx < -THRESH && acts.length) {
-            inner.style.transition = ease; inner.style.transform = `translateX(${-SNAP_W}px)`;
+            inner.style.transition = SNAP_EASE; inner.style.transform = `translateX(${-SNAP_W}px)`;
             sr._snap = -1; anyOpen = sr;
             sr.classList.add("swipe-open");
           } else {
-            inner.style.transition = ease; inner.style.transform = "";
+            inner.style.transition = SNAP_EASE; inner.style.transform = "";
             sr._snap = 0; if (anyOpen === sr) anyOpen = null;
             sr.classList.remove("swipe-open");
           }

@@ -62,7 +62,7 @@ MOBILE_DARK_ICON_HOVER = "rgb(190, 190, 190)"
 # One RGB per (surface, theme), fixed so the runtime [data-theme] toggle
 # doesn't inherit the first-render theme. Hub and chat may diverge.
 MOBILE_HUB_LIGHT_BG_RGB = (243, 243, 241)
-MOBILE_HUB_DARK_BG_RGB = (12, 12, 12)
+MOBILE_HUB_DARK_BG_RGB = (15, 15, 15)
 MOBILE_CHAT_LIGHT_BG_RGB = (249, 249, 247)
 MOBILE_CHAT_DARK_BG_RGB = (11, 11, 11)
 DESKTOP_HUB_LIGHT_BG_RGB = (249, 249, 247)
