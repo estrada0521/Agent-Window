@@ -43,7 +43,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
       --git-del-red: rgb(var(--git-del-red-channels));
-      --scrollbar-thumb: color-mix(in srgb, var(--muted) 55%, transparent);
     }
     html[data-theme="light"] {
       color-scheme: light;
@@ -76,6 +75,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_LIGHT_CHANNELS__;
       --git-del-red: rgb(var(--git-del-red-channels));
+      --scrollbar-thumb: __DESKTOP_SCROLLBAR_THUMB_LIGHT__;
     }
     html[data-theme="dark"] {
       color-scheme: dark;
@@ -103,6 +103,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --line: rgba(180, 180, 180, 0.07);
       --line-strong: rgba(180, 180, 180, 0.12);
       --code-copy-hover-bg: rgba(180, 180, 180, 0.09);
+      --scrollbar-thumb: __DESKTOP_SCROLLBAR_THUMB_DARK__;
     }
     html[data-launch-shell],
     html[data-launch-shell] body {

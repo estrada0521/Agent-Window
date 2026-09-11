@@ -58,6 +58,10 @@ DESKTOP_DARK_ICON_HOVER = "rgb(190, 190, 190)"
 MOBILE_LIGHT_ICON_HOVER = "rgb(35, 35, 35)"
 MOBILE_DARK_ICON_HOVER = "rgb(190, 190, 190)"
 
+# --- Scrollbar thumb (desktop chat) ---
+DESKTOP_SCROLLBAR_THUMB_LIGHT = "rgb(200, 200, 198)"
+DESKTOP_SCROLLBAR_THUMB_DARK = "rgb(35, 35, 35)"
+
 # --- Page backgrounds ---
 # One RGB per (surface, theme), fixed so the runtime [data-theme] toggle
 # doesn't inherit the first-render theme. Hub and chat may diverge.
@@ -275,6 +279,8 @@ def apply_color_tokens(
         ("__DESKTOP_DARK_ICON_HOVER__", DESKTOP_DARK_ICON_HOVER),
         ("__MOBILE_LIGHT_ICON_HOVER__", MOBILE_LIGHT_ICON_HOVER),
         ("__MOBILE_DARK_ICON_HOVER__", MOBILE_DARK_ICON_HOVER),
+        ("__DESKTOP_SCROLLBAR_THUMB_LIGHT__", DESKTOP_SCROLLBAR_THUMB_LIGHT),
+        ("__DESKTOP_SCROLLBAR_THUMB_DARK__", DESKTOP_SCROLLBAR_THUMB_DARK),
         *_text_color_token_replacements(),
         ("__LINE__", str(palette["line"])),
         ("__LINE_STRONG__", str(palette["line_strong"])),

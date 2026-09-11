@@ -17,8 +17,8 @@
       --blockquote-border: rgba(255, 255, 255, 0.45);
       --table-line: rgba(255, 255, 255, 0.085);
       --table-line-width: 1px;
-      --code-scrollbar-thumb: rgba(255, 255, 255, 0.45);
-      --code-scrollbar-thumb-hover: rgba(255, 255, 255, 0.65);
+      --code-scrollbar-thumb: rgb(35, 35, 35);
+      --code-scrollbar-thumb-hover: rgb(35, 35, 35);
     }
     html[data-desktop-chat][data-theme="light"] {
       --code-bg: rgba(0, 0, 0, 0.05);
@@ -39,6 +39,6 @@
       --blockquote-border: rgba(180, 180, 180, 0.45);
       --table-line: rgba(180, 180, 180, 0.22);
       --table-line-width: 0.5px;
-      --code-scrollbar-thumb: rgba(180, 180, 180, 0.45);
-      --code-scrollbar-thumb-hover: rgba(180, 180, 180, 0.65);
+      --code-scrollbar-thumb: rgb(35, 35, 35);
+      --code-scrollbar-thumb-hover: rgb(35, 35, 35);
     }
