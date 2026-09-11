@@ -16,6 +16,17 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 240ms ease, background 320ms ease, backdrop-filter 320ms ease, -webkit-backdrop-filter 320ms ease;
+      /* The middle-click that opens this is misread as half of a
+         double-click by the next left-click (e.g. to close it), which
+         otherwise fires a native text-selection sweep across whatever's
+         under the cursor -- the field, the statusline, blank padding.
+         #message re-enables selection for actual editing. */
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    #message {
+      user-select: text;
+      -webkit-user-select: text;
     }
     /* Fit Height to Message: the window tracks the composer, so bottom-align it
        instead of centring -- the geometry (grow the window as the field rises)
