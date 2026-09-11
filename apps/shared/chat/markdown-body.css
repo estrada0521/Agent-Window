@@ -311,6 +311,11 @@
       height: 15px;
     }
 
+    /* Matches the message copy button's stroke (transcript.css). */
+    .md-body .code-block-wrap .code-copy-btn svg * {
+      stroke-width: 1.45;
+    }
+
     .md-body pre code {
       font: inherit;
       color: inherit;
