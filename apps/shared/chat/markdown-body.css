@@ -125,16 +125,6 @@
       box-shadow: none;
     }
 
-    .has-hover .md-body a.inline-file-link:hover {
-      color: var(--inline-file-link-fg);
-      text-decoration: none;
-    }
-
-    .has-hover .md-body a.local-file-link:hover {
-      color: var(--inline-file-link-fg);
-      text-decoration: none;
-    }
-
     .has-hover .md-body a.inline-file-link:hover code,
     .has-hover .md-body a.local-file-link:hover code {
       color: inherit;
@@ -434,8 +424,12 @@
       text-decoration: underline;
     }
 
-    .has-hover .md-body a.inline-file-link:hover,
-    .has-hover .md-body a.local-file-link:hover {
+    /* Light only: file links have no underline at rest, so the generic
+       a:hover underline above must be cancelled back off. Dark's file-link
+       underline (above) sits at rest already and outranks this rule's
+       specificity, so it stays through hover with no override needed. */
+    html[data-theme="light"] .has-hover .md-body a.inline-file-link:hover,
+    html[data-theme="light"] .has-hover .md-body a.local-file-link:hover {
       text-decoration: none;
     }
 
