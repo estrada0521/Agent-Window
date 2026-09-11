@@ -102,6 +102,15 @@
       text-decoration: none;
     }
 
+    /* Dark-only: a hairline underline, as thin as the user-message divider
+       (.user-message-divider), to read as a link against the dimmer body. */
+    html[data-theme="dark"] .md-body a.inline-file-link,
+    html[data-theme="dark"] .md-body a.local-file-link {
+      text-decoration: underline;
+      text-decoration-thickness: clamp(0.5px, 0.0769em, 1px);
+      text-decoration-color: color-mix(in srgb, var(--fg) 65%, transparent);
+    }
+
     .md-body a.inline-file-link code,
     .md-body a.local-file-link code {
       color: inherit;
