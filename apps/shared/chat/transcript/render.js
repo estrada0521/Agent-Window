@@ -379,12 +379,6 @@
     };
     const openAgentActionMenu = (mode) => {
       const candidates = agentActionCandidates(mode);
-      if (mode === "remove" && candidates.length <= 1) {
-        resetAgentActionMenus();
-        setStatus("need at least 2 agents to remove one", true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
-        return true;
-      }
       if (!candidates.length) {
         resetAgentActionMenus();
         setStatus("no agents available", true);

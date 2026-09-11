@@ -229,7 +229,7 @@ fn show_chat_header_menu(
     payload: ChatHeaderMenuPayload,
 ) -> Result<(), String> {
     let add_enabled = payload.session_active && !payload.add_agents.is_empty();
-    let remove_enabled = payload.session_active && payload.remove_agents.len() > 1;
+    let remove_enabled = payload.session_active && !payload.remove_agents.is_empty();
 
     let mut add_builder = SubmenuBuilder::with_id(
         &app,
