@@ -8,7 +8,7 @@
       --right-panel-icon-slot-size: 1.38em;
       --right-panel-small-icon-size: 1.23em;
       --right-panel-chevron-size: 1.08em;
-      --right-panel-item-radius: 0.62em;
+      --right-panel-item-radius: 0.77em;
       --right-panel-pill-radius: 2em;
       --right-panel-floating-inset: calc(var(--text-size, 13px) * 10 / 13);
     }
