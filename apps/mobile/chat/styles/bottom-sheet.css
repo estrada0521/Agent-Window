@@ -93,36 +93,8 @@
       );
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      -webkit-mask-image: linear-gradient(to bottom,
-        black 0%,
-        rgba(0, 0, 0, 0.981) 7%,
-        rgba(0, 0, 0, 0.926) 14%,
-        rgba(0, 0, 0, 0.838) 21%,
-        rgba(0, 0, 0, 0.726) 29%,
-        rgba(0, 0, 0, 0.597) 36%,
-        rgba(0, 0, 0, 0.462) 43%,
-        rgba(0, 0, 0, 0.329) 50%,
-        rgba(0, 0, 0, 0.209) 57%,
-        rgba(0, 0, 0, 0.117) 64%,
-        rgba(0, 0, 0, 0.056) 71%,
-        rgba(0, 0, 0, 0.019) 79%,
-        transparent 86%
-      );
-      mask-image: linear-gradient(to bottom,
-        black 0%,
-        rgba(0, 0, 0, 0.981) 7%,
-        rgba(0, 0, 0, 0.926) 14%,
-        rgba(0, 0, 0, 0.838) 21%,
-        rgba(0, 0, 0, 0.726) 29%,
-        rgba(0, 0, 0, 0.597) 36%,
-        rgba(0, 0, 0, 0.462) 43%,
-        rgba(0, 0, 0, 0.329) 50%,
-        rgba(0, 0, 0, 0.209) 57%,
-        rgba(0, 0, 0, 0.117) 64%,
-        rgba(0, 0, 0, 0.056) 71%,
-        rgba(0, 0, 0, 0.019) 79%,
-        transparent 86%
-      );
+      -webkit-mask-image: linear-gradient(to bottom, var(--mobile-edge-fade-mask));
+      mask-image: linear-gradient(to bottom, var(--mobile-edge-fade-mask));
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-nav {

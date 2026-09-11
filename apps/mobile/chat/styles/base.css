@@ -41,6 +41,10 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --mobile-top-gradient-rgb: var(--bg-rgb);
       --mobile-sheet-gradient-rgb: var(--mobile-top-gradient-rgb);
       --bottom-sheet-top-gradient-rgb: var(--mobile-sheet-gradient-rgb);
+      /* Eased top-edge fade mask, shared by .shell::before and the bottom
+         sheet's own top gradient (bottom-sheet.css) -- one stop list, both
+         mask-image and -webkit-mask-image read it. */
+      --mobile-edge-fade-mask: black 0%, rgba(0, 0, 0, 0.981) 7%, rgba(0, 0, 0, 0.926) 14%, rgba(0, 0, 0, 0.838) 21%, rgba(0, 0, 0, 0.726) 29%, rgba(0, 0, 0, 0.597) 36%, rgba(0, 0, 0, 0.462) 43%, rgba(0, 0, 0, 0.329) 50%, rgba(0, 0, 0, 0.209) 57%, rgba(0, 0, 0, 0.117) 64%, rgba(0, 0, 0, 0.056) 71%, rgba(0, 0, 0, 0.019) 79%, transparent 86%;
       --mobile-sheet-content-offset: 72px;
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);
       --surface: __GRAY_SURFACE__;
@@ -497,36 +501,8 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       );
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      -webkit-mask-image: linear-gradient(to bottom,
-        black 0%,
-        rgba(0, 0, 0, 0.981) 7%,
-        rgba(0, 0, 0, 0.926) 14%,
-        rgba(0, 0, 0, 0.838) 21%,
-        rgba(0, 0, 0, 0.726) 29%,
-        rgba(0, 0, 0, 0.597) 36%,
-        rgba(0, 0, 0, 0.462) 43%,
-        rgba(0, 0, 0, 0.329) 50%,
-        rgba(0, 0, 0, 0.209) 57%,
-        rgba(0, 0, 0, 0.117) 64%,
-        rgba(0, 0, 0, 0.056) 71%,
-        rgba(0, 0, 0, 0.019) 79%,
-        transparent 86%
-      );
-      mask-image: linear-gradient(to bottom,
-        black 0%,
-        rgba(0, 0, 0, 0.981) 7%,
-        rgba(0, 0, 0, 0.926) 14%,
-        rgba(0, 0, 0, 0.838) 21%,
-        rgba(0, 0, 0, 0.726) 29%,
-        rgba(0, 0, 0, 0.597) 36%,
-        rgba(0, 0, 0, 0.462) 43%,
-        rgba(0, 0, 0, 0.329) 50%,
-        rgba(0, 0, 0, 0.209) 57%,
-        rgba(0, 0, 0, 0.117) 64%,
-        rgba(0, 0, 0, 0.056) 71%,
-        rgba(0, 0, 0, 0.019) 79%,
-        transparent 86%
-      );
+      -webkit-mask-image: linear-gradient(to bottom, var(--mobile-edge-fade-mask));
+      mask-image: linear-gradient(to bottom, var(--mobile-edge-fade-mask));
     }
 
     @keyframes dropdownIn {
