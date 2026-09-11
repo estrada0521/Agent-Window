@@ -122,8 +122,9 @@ Clicking an uncommitted change opens it in git's configured diff viewer (`git di
 | `⌥⌘↑` `←` `→` `↓` | Move to that screen edge; `↓` centers |
 | `⌥⌘P` | Keep above other windows |
 | `⌥⌘H` | Match the window height to the latest message |
+| `⌥⌘M` | In Fit Height, collapse the window to its minimum and hold it there (restores on a new message) |
 
-With Fit Height (`⌥⌘H`) on, the Hub and right pane become native macOS menus, so `⌘B` / `⌘E` do nothing.
+With Fit Height (`⌥⌘H`) on, the Hub and right pane become native macOS menus.
 
 <p align="center">
   <img src="media/agent-window-fit.gif" width="100%" alt="Fit Height demo">

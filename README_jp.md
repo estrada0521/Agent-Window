@@ -124,8 +124,9 @@ uncommitted changeをクリックすると、gitに設定されたdiff viewer (`
 | `⌥⌘↑` `←` `→` `↓` | その画面端へ移動。`↓` は中央 |
 | `⌥⌘P` | 最前面に固定 |
 | `⌥⌘H` | ウィンドウの高さを最新メッセージに合わせ続ける |
+| `⌥⌘M` | Fit Height中、ウィンドウを最小に畳んで保持（新規メッセージで復帰） |
 
-Fit Height (`⌥⌘H`) を有効にすると、Hubと右paneがOSのnative menuに置き換えられ、`⌘B` / `⌘E` は無効になります。
+Fit Height (`⌥⌘H`) を有効にすると、Hubと右paneがOSのnative menuに置き換えられます。
 
 <p align="center">
   <img src="media/agent-window-fit.gif" width="100%" alt="Fit Height demo">
