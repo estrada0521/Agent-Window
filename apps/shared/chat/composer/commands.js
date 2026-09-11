@@ -107,10 +107,15 @@
       })();
     };
     messageInput.addEventListener("input", updateCmdAutocomplete);
-    cmdDrop.addEventListener("click", (e) => e.stopPropagation());
-    cmdDrop.addEventListener("mousedown", (e) => {
+    cmdDrop.addEventListener("click", (e) => {
+      e.stopPropagation();
       const item = e.target.closest(".cmd-item");
-      if (item) { e.preventDefault(); selectCmd(parseInt(item.dataset.idx, 10)); }
+      if (item) selectCmd(parseInt(item.dataset.idx, 10));
+    });
+    cmdDrop.addEventListener("mousedown", (e) => {
+      // preventDefault only -- see the matching fileDrop mousedown handler
+      // (file-runtime.js) for why selecting waits for click.
+      if (e.target.closest(".cmd-item")) e.preventDefault();
     });
     messageInput.addEventListener("keydown", (e) => {
       if (cmdDrop.style.display === "none" || !cmdDrop.classList.contains("visible")) return;

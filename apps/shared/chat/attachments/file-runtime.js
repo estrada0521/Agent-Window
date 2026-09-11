@@ -119,10 +119,16 @@ __CHAT_INCLUDE:../file-autocomplete.js__
     };
     fileDrop.addEventListener("click", (e) => {
       e.stopPropagation();
+      const item = e.target.closest(".file-item");
+      if (item) selectFile(item.dataset.path);
     });
     fileDrop.addEventListener("mousedown", (e) => {
-      const item = e.target.closest(".file-item");
-      if (item) { e.preventDefault(); selectFile(item.dataset.path); }
+      // preventDefault only -- keep #message focused. Selecting the file
+      // (which hides fileDrop) waits for click: hiding it mid-mousedown, before
+      // click has fired on the original target, has the browser fall back to
+      // whatever's now under the cursor -- the composer-overlay backdrop --
+      // and its own "click outside closes this" handler takes it from there.
+      if (e.target.closest(".file-item")) e.preventDefault();
     });
     const autoResizeTextarea = () => {
       const inputStyle = getComputedStyle(messageInput);
