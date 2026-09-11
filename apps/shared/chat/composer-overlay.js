@@ -38,46 +38,38 @@
       }
       messageInput.scrollTop = messageInput.scrollHeight;
     };
-    const focusComposerTextarea = ({ sync = false } = {}) => {
+    // One focus() call, at the one moment the composer is actually laid out
+    // and visible (the caller's rAF, or -- if already open -- right now).
+    // Mobile keeps its Safari select-on-focus workaround alongside it.
+    const focusComposerTextarea = () => {
       if (!messageInput) return;
-      const applyFocus = () => {
-        try {
-          messageInput.focus({ preventScroll: true });
-        } catch (_) {
-          messageInput.focus();
-        }
+      const isMobileComposer = document.documentElement.dataset.mobile === "1" && composerForm;
+      if (isMobileComposer) composerForm.classList.add("composer-focus-hack");
+      try {
+        messageInput.focus({ preventScroll: true });
+      } catch (_) {
+        messageInput.focus();
+      }
+      setComposerCaretToEnd();
+      if (!isMobileComposer) return;
+      let restored = false;
+      const restore = () => {
+        if (restored) return;
+        restored = true;
+        composerForm.classList.remove("composer-focus-hack");
         setComposerCaretToEnd();
       };
-      if (sync) {
-        if (document.documentElement.dataset.mobile === "1" && composerForm) {
-          composerForm.classList.add("composer-focus-hack");
-          applyFocus();
-          let restored = false;
-          const restore = () => {
-            if (restored) return;
-            restored = true;
-            composerForm.classList.remove("composer-focus-hack");
-            setComposerCaretToEnd();
-          };
-          requestAnimationFrame(() => requestAnimationFrame(restore));
-          setTimeout(restore, 120);
-          return;
-        }
-        applyFocus();
-        setTimeout(applyFocus, 0);
-        requestAnimationFrame(applyFocus);
-        return;
-      }
-      requestAnimationFrame(() => {
-        applyFocus();
-        setTimeout(applyFocus, 0);
-      });
+      requestAnimationFrame(() => requestAnimationFrame(restore));
+      setTimeout(restore, 120);
     };
+    // immediateFocus: whether this open should also move keyboard focus into
+    // the textarea (e.g. false for a drag-to-attach open, which shouldn't
+    // steal focus from the drag).
     const openComposerOverlay = ({ immediateFocus = false } = {}) => {
       if (!composerOverlay) return;
-      const canFocus = canComposeInSession();
+      const canFocus = immediateFocus && canComposeInSession();
       if (isComposerOverlayOpen()) {
-        if (canFocus) focusComposerTextarea({ sync: immediateFocus });
+        if (canFocus) focusComposerTextarea();
         return;
       }
       requestHubParentLayout();
@@ -86,18 +78,19 @@
       composerOverlay.classList.remove("closing");
       document.body.classList.add("composer-overlay-open");
       updateScrollBtn();
-      if (immediateFocus && canFocus) {
-        focusComposerTextarea({ sync: true });
-      }
+      // Mobile's focus hack (position: fixed, opacity: 0) has to run and
+      // settle before .visible starts the slide/fade -- doing it after would
+      // fight the reveal transition. Desktop has no such constraint, so it
+      // focuses at the one already-scheduled post-layout point below.
+      const isMobileComposer = document.documentElement.dataset.mobile === "1";
+      if (canFocus && isMobileComposer) focusComposerTextarea();
       requestAnimationFrame(() => {
         if (typeof autoResizeTextarea === "function") autoResizeTextarea();
         setComposerCaretToEnd();
         armFitComposerHold();
         composerOverlay.classList.add("visible");
         document.dispatchEvent(new CustomEvent("composer-overlay-open"));
-        if (!immediateFocus && canFocus) {
-          focusComposerTextarea();
-        }
+        if (canFocus && !isMobileComposer) focusComposerTextarea();
       });
     };
     // Fit Height: opening asks the hub to grow the window; pin the composer at
