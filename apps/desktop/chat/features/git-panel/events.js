@@ -160,8 +160,12 @@
           close({ clear: true });
           return;
         }
+        // A second mouseover while already expanded (re-entering the summary
+        // row before the close timer fires, moving between rows) must not
+        // replay the from-0 grow -- that reads as the panel re-expanding.
+        const wasExpanded = aside.classList.contains("is-expanded");
         aside.classList.add("is-expanded");
-        if (expand.firstElementChild) {
+        if (!wasExpanded && expand.firstElementChild) {
           cancelExpandAnimation();
           animateExpandFrom(0);
         }

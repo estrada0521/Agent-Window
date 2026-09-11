@@ -18,7 +18,8 @@
       overflow-y: auto;
       scrollbar-width: none;
       font-size: var(--text-size, 13px);
-      --hover-fade: round(nearest, calc(var(--text-size, 13px) * 32 / 13), 1px);
+      /* Matches the git pinned summary strip's scroll fade. */
+      --hover-fade: round(nearest, calc(var(--text-size, 13px) * 16 / 13), 1px);
     }
     .desk-sidebar-hover-list::-webkit-scrollbar { display: none; }
     .desk-sidebar-hover-list[data-scroll-fade="top"] {
