@@ -11,6 +11,11 @@
         closeComposerOverlay();
       }, { passive: false });
       composerOverlay?.addEventListener("touchmove", (event) => {
+        // A selection-handle drag can land outside #message's own box (the
+        // handle sits below/beside the glyph it's on), so it isn't caught by
+        // the target-based checks below -- an active selection means this
+        // touchmove is almost certainly that drag, not a page-scroll attempt.
+        if (mobileComposerInput && mobileComposerInput.selectionStart !== mobileComposerInput.selectionEnd) return;
         const target = event.target;
         if (target instanceof Element) {
           if (target.closest("textarea.is-scrollable, .attach-preview-row, .target-picker")) return;
