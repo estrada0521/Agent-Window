@@ -31,9 +31,12 @@ MOBILE_DARK_CODE_WEIGHT = 200
 # desktop and mobile, so markdown-body.css isn't split by [data-mobile="1"].
 LINK_LIGHT_WEIGHT = 650
 LINK_DARK_WEIGHT = 500
-# Headings/table-header and frontmatter-key weight -- same across theme and
-# desktop/mobile today, so these aren't split.
-MD_HEADING_WEIGHT = 500
+# Headings/table-header weight. Split like strong: dark leans lighter so the
+# same numeric weight doesn't read heavier against the dark background.
+MD_HEADING_LIGHT_WEIGHT = 600
+MD_HEADING_DARK_WEIGHT = 550
+# Frontmatter-key weight -- same across theme and desktop/mobile today, so
+# this isn't split.
 MD_FRONTMATTER_KEY_WEIGHT = 650
 # Bold text. Split like body/code/link: dark leans lighter so the same
 # numeric weight doesn't read heavier against the dark background.
@@ -81,12 +84,14 @@ def body_typography_css() -> str:
       --code-weight: {DESKTOP_DARK_CODE_WEIGHT};
       --link-weight: {LINK_DARK_WEIGHT};
       --md-strong-weight: {MD_STRONG_DARK_WEIGHT};
+      --md-heading-weight: {MD_HEADING_DARK_WEIGHT};
     }}
     html[data-theme="light"] {{
       --body-weight: {DESKTOP_LIGHT_BODY_WEIGHT};
       --code-weight: {DESKTOP_LIGHT_CODE_WEIGHT};
       --link-weight: {LINK_LIGHT_WEIGHT};
       --md-strong-weight: {MD_STRONG_LIGHT_WEIGHT};
+      --md-heading-weight: {MD_HEADING_LIGHT_WEIGHT};
     }}
     html[data-mobile="1"][data-theme="light"] {{
       --body-weight: {MOBILE_LIGHT_BODY_WEIGHT};
@@ -131,7 +136,6 @@ def chat_font_style(*, text_size: object = DESKTOP_TEXT_SIZE) -> str:
       --text-size: {size}px;
       --text-line-height: {TEXT_LINE_HEIGHT_RATIO:g};
       --message-max-width: {MESSAGE_MAX_WIDTH_EM:g}em;
-      --md-heading-weight: {MD_HEADING_WEIGHT};
       --md-frontmatter-key-weight: {MD_FRONTMATTER_KEY_WEIGHT};
       --font-main: {MESSAGE_FONT};
       --font-code: {CODE_FONT};
