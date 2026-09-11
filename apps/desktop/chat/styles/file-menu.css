@@ -90,7 +90,7 @@
       width: 100%;
       box-sizing: border-box;
       padding: calc(var(--text-size, 13px) * 8 / 13) calc(var(--text-size, 13px) * 14 / 13);
-      border-radius: calc(var(--text-size, 13px) * 10 / 13);
+      border-radius: calc(var(--text-size, 13px) * 14 / 13);
       /* Inherited by .file-item-name/-relpath below, which rely on it for
          their own overflow:hidden + text-overflow:ellipsis to mean anything
          -- without it, text wraps to a second line instead of eliding. */
@@ -256,7 +256,7 @@
       align-items: center;
       gap: calc(var(--text-size, 13px) * 12 / 13);
       padding: calc(var(--text-size, 13px) * 10 / 13) calc(var(--text-size, 13px) * 18 / 13);
-      border-radius: calc(var(--text-size, 13px) * 10 / 13);
+      border-radius: calc(var(--text-size, 13px) * 14 / 13);
       font-size: calc(var(--text-size, 13px) * 14 / 13);
       line-height: calc(var(--text-size, 13px) * 20 / 13);
       font-weight: var(--body-weight);
