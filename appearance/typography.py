@@ -33,7 +33,7 @@ LINK_LIGHT_WEIGHT = 650
 LINK_DARK_WEIGHT = 500
 # Headings/table-header and frontmatter-key weight -- same across theme and
 # desktop/mobile today, so these aren't split.
-MD_HEADING_WEIGHT = 600
+MD_HEADING_WEIGHT = 500
 MD_FRONTMATTER_KEY_WEIGHT = 650
 # Bold text. Split like body/code/link: dark leans lighter so the same
 # numeric weight doesn't read heavier against the dark background.
