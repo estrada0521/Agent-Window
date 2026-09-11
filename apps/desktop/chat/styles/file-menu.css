@@ -148,6 +148,9 @@
     }
     .file-dropdown-list,
     .cmd-dropdown-list {
+      /* Matches the top mask fade's height -- at rest that fade covers this
+         padding, not the first row, so scrolled-to-top shows no fade. */
+      padding-top: calc(var(--text-size, 13px) * 16 / 13);
       padding-bottom: calc(var(--text-size, 13px) * 10 / 13);
     }
     .file-dropdown-list {
