@@ -6,11 +6,7 @@ import os
 import sys
 
 from backend_core.access.session_meta import SessionMetaError, find_session_for_workspace
-from backend_core.tmux.control import (
-    SessionControlError,
-    describe_session,
-    remove_agent,
-)
+from backend_core.tmux.control import SessionControlError, describe_session
 from backend_core.tmux.topology import default_tmux_socket_name
 
 
@@ -71,11 +67,6 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="session_control")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    remove_cmd = sub.add_parser("remove-agent")
-    remove_cmd.add_argument("--session", required=True)
-    remove_cmd.add_argument("--agent", required=True)
-    remove_cmd.add_argument("--tmux-socket", default="")
-
     context_cmd = sub.add_parser("context")
     context_cmd.add_argument("--session", default="")
     context_cmd.add_argument("--workspace", default="")
@@ -85,13 +76,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     socket_name = _socket(getattr(args, "tmux_socket", ""))
     try:
-        if args.cmd == "remove-agent":
-            instance, scheduled = remove_agent(session_name=args.session, agent=args.agent, tmux_socket=socket_name)
-            if scheduled:
-                print(f"Scheduled removal of agent {instance} from session: {args.session}")
-            else:
-                print(f"Removed agent {instance} from session: {args.session}")
-        elif args.cmd == "context":
+        if args.cmd == "context":
             workspace_hint = (args.workspace or "").strip() or os.getcwd()
             session_name = (args.session or "").strip() or find_session_for_workspace(workspace_hint)
             if not session_name:

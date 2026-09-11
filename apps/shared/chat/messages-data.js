@@ -67,7 +67,7 @@
       patterns.push(
         /^\/(?:restart|resume|add-agent|remove-agent)\b/i,
         /^(?:Restarted|Resumed|Restart|Resume)\b/i,
-        /^(?:Added agent|Removed agent|Add agent|Remove agent)\b/i,
+        /^(?:Add agent|Remove agent)\b/i,
       );
       for (const pattern of patterns) {
         if (pattern.test(message)) {

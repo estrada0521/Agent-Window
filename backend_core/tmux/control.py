@@ -6,7 +6,6 @@ import shutil
 import signal
 import socket
 import subprocess
-import sys
 import time
 from collections import Counter
 from pathlib import Path
@@ -34,7 +33,6 @@ from backend_core.agents.instances import (
 from backend_core.agents.registry import AGENTS
 from backend_core.tmux.process_cleanup import cleanup_target_process_groups
 from backend_core.tmux.session import (
-    AgentPane,
     TERMINAL_WINDOW_NAME,
     agent_topology,
     find_session_for_workspace as find_live_session_for_workspace,
@@ -121,14 +119,6 @@ def _write_meta(prefix: list[str], tmux_name: str, aw_name: str) -> None:
     workspace = tmux_session_workspace(prefix, tmux_name)
     agents = [pane.name for pane in agent_topology(prefix, tmux_name)]
     write_session_meta_file(aw_name, workspace, agents)
-
-
-def _actor(initiator: str, topology: list[AgentPane]) -> str:
-    explicit = (initiator or "").strip()
-    if explicit:
-        return explicit
-    current_pane = (os.environ.get("TMUX_PANE") or "").strip()
-    return next((pane.name for pane in topology if pane.pane_id == current_pane), "user")
 
 
 def _append_log(session_name: str, message: str, *, kind: str, extra: dict | None = None) -> None:
@@ -518,7 +508,6 @@ def add_agent(
     session_name: str,
     agent: str,
     tmux_socket: str = "",
-    initiator: str = "",
 ) -> str:
     name = (session_name or "").strip()
     base = agent_base_name(agent)
@@ -559,12 +548,11 @@ def add_agent(
             pane_id=pane_id,
             instance_name=instance,
         )
-        actor = _actor(initiator, topology)
         _append_log(
             name,
-            f"Add Agent: {actor} -> {instance}",
+            f"Add Agent: {instance}",
             kind="session-topology",
-            extra={"topology_action": "add-agent", "agent_instance": instance, "initiator": actor},
+            extra={"topology_action": "add-agent", "agent_instance": instance},
         )
         return instance
     finally:
@@ -576,8 +564,7 @@ def remove_agent(
     session_name: str,
     agent: str,
     tmux_socket: str = "",
-    initiator: str = "",
-) -> tuple[str, bool]:
+) -> str:
     name = (session_name or "").strip()
     requested = (agent or "").strip()
     if not name:
@@ -605,35 +592,6 @@ def remove_agent(
         pane_id = next((pane.pane_id for pane in topology if pane.name == canonical), "")
         if not pane_id:
             raise SessionControlError(f"No tmux pane found for instance: {canonical}")
-        actor = _actor(initiator, topology)
-        if os.environ.get("TMUX_PANE") == pane_id and os.environ.get("AGENT_WINDOW_REMOVE_HELPER") != "1":
-            env = os.environ.copy()
-            env["AGENT_WINDOW_REMOVE_HELPER"] = "1"
-            pythonpath = [str(_repo_root())]
-            existing = (env.get("PYTHONPATH") or "").strip()
-            if existing:
-                pythonpath.append(existing)
-            env["PYTHONPATH"] = os.pathsep.join(pythonpath)
-            subprocess.Popen(
-                [
-                    sys.executable,
-                    "-m",
-                    "backend_core.cli.session_control",
-                    "remove-agent",
-                    "--session",
-                    name,
-                    "--agent",
-                    canonical,
-                    "--tmux-socket",
-                    socket_name,
-                ],
-                cwd=str(_repo_root()),
-                env=env,
-                start_new_session=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            return canonical, True
         window_target = window_target_for_pane(pane_id=pane_id, tmux_socket=socket_name)
         if not window_target:
             raise SessionControlError(f"No tmux window recorded for instance: {canonical}")
@@ -642,10 +600,10 @@ def remove_agent(
         _write_meta(prefix, tmux_name, name)
         _append_log(
             name,
-            f"Remove Agent: {actor} -> {canonical}",
+            f"Remove Agent: {canonical}",
             kind="session-topology",
-            extra={"topology_action": "remove-agent", "agent_instance": canonical, "initiator": actor},
+            extra={"topology_action": "remove-agent", "agent_instance": canonical},
         )
-        return canonical, False
+        return canonical
     finally:
         release_topology_lock(lock_dir)

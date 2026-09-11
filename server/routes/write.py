@@ -112,7 +112,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         handler._send_json(400, {"ok": False, "error": "agent required"})
         return
     try:
-        instance, _scheduled = remove_agent(
+        instance = remove_agent(
             session_name=ctx["session_name"],
             agent=agent,
             tmux_socket=str(getattr(ctx["runtime"], "tmux_socket", "") or ""),
