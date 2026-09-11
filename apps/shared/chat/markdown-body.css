@@ -48,7 +48,7 @@
     .md-body h3,
     .md-body h4 {
       margin: 0.8em 0 0.5em;
-      font-weight: 600;
+      font-weight: var(--md-heading-weight);
       line-height: 1.2;
     }
 
@@ -382,7 +382,7 @@
     .md-body th {
       background: transparent;
       font-size: 0.85em;
-      font-weight: 600;
+      font-weight: var(--md-heading-weight);
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--fg);
@@ -412,7 +412,7 @@
     }
 
     .md-body .md-frontmatter .md-frontmatter-key {
-      font-weight: 650;
+      font-weight: var(--md-frontmatter-key-weight);
       color: var(--fg-bold, var(--fg));
       width: 1%;
       white-space: nowrap;
@@ -440,7 +440,7 @@
     }
 
     .md-body strong {
-      font-weight: 650;
+      font-weight: var(--md-strong-weight);
       color: var(--fg-bold, var(--fg));
     }
 

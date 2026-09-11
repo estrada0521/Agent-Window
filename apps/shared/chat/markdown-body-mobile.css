@@ -6,11 +6,11 @@
     .message.user .md-body h2,
     .message.user .md-body h3,
     .message.user .md-body h4 {
-      font-weight: 600;
+      font-weight: var(--md-heading-weight);
     }
 
     __AGENT_SEL_MD_HEADING__ {
-      font-weight: 600;
+      font-weight: var(--md-heading-weight);
     }
 
     .md-body pre {
