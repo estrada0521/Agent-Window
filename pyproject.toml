@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+cache_dir = "~/.agent-window/cache/pytest"
+
+[tool.ruff]
+cache-dir = "~/.agent-window/cache/ruff"
