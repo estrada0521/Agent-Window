@@ -27,6 +27,10 @@ MOBILE_LIGHT_BODY_WEIGHT = 430
 MOBILE_LIGHT_CODE_WEIGHT = 500
 MOBILE_DARK_BODY_WEIGHT = 300
 MOBILE_DARK_CODE_WEIGHT = 200
+# Weight of a colored inline link (file link or external link) -- same for
+# desktop and mobile, so markdown-body.css isn't split by [data-mobile="1"].
+LINK_LIGHT_WEIGHT = 650
+LINK_DARK_WEIGHT = 550
 TEXT_LINE_HEIGHT_RATIO = 1.62
 
 
@@ -67,10 +71,12 @@ def body_typography_css() -> str:
     html[data-theme="dark"] {{
       --body-weight: {DESKTOP_DARK_BODY_WEIGHT};
       --code-weight: {DESKTOP_DARK_CODE_WEIGHT};
+      --link-weight: {LINK_DARK_WEIGHT};
     }}
     html[data-theme="light"] {{
       --body-weight: {DESKTOP_LIGHT_BODY_WEIGHT};
       --code-weight: {DESKTOP_LIGHT_CODE_WEIGHT};
+      --link-weight: {LINK_LIGHT_WEIGHT};
     }}
     html[data-mobile="1"][data-theme="light"] {{
       --body-weight: {MOBILE_LIGHT_BODY_WEIGHT};

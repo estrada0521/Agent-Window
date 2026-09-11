@@ -91,20 +91,15 @@
       line-height: inherit;
     }
 
+    /* Weight is theme-driven (--link-weight, appearance/typography.py):
+       dark body text is light-weight, so a heavy colored link reads as an
+       odd bold stab there, leaning on colour instead for the distinction.
+       Shared by file links and the plain external link below. */
     .md-body a.inline-file-link,
     .md-body a.local-file-link {
       color: var(--inline-file-link-fg);
-      font-weight: 650;
+      font-weight: var(--link-weight);
       text-decoration: none;
-    }
-
-    /* Dark body text is light-weight, so a 650 colored link reads as an odd bold
-       stab; inheriting (~300) went too thin. 400 sits between, leaning on
-       colour for the rest of the distinction. */
-    html[data-theme="dark"] .md-body a.inline-file-link,
-    html[data-theme="dark"] .md-body a.local-file-link,
-    html[data-theme="dark"] .md-body a:not(.inline-file-link):not(.local-file-link) {
-      font-weight: 400;
     }
 
     .md-body a.inline-file-link code,
@@ -422,7 +417,7 @@
 
     .md-body a:not(.inline-file-link):not(.local-file-link) {
       color: var(--external-link-fg);
-      font-weight: 650;
+      font-weight: var(--link-weight);
       text-decoration: none;
     }
 
