@@ -30,7 +30,7 @@ MOBILE_DARK_CODE_WEIGHT = 200
 # Weight of a colored inline link (file link or external link) -- same for
 # desktop and mobile, so markdown-body.css isn't split by [data-mobile="1"].
 LINK_LIGHT_WEIGHT = 650
-LINK_DARK_WEIGHT = 500
+LINK_DARK_WEIGHT = 550
 # Headings/table-header weight. Split like strong: dark leans lighter so the
 # same numeric weight doesn't read heavier against the dark background.
 MD_HEADING_LIGHT_WEIGHT = 600
