@@ -25,7 +25,7 @@
       --session-hover-bg: __SESSION_HOVER_BG__;
       --session-selected-bg: __SESSION_SELECTED_BG__;
       --session-danger-fg: rgb(255, 108, 102);
-      --session-revive-fg: rgb(74, 222, 128);
+      --session-revive-fg: rgb(__TEXT_DIFF_INSERT_DARK_CHANNELS__);
       --hub-glass: __DESKTOP_HUB_DARK_BG_FILL__;
       --glass-filter-20: blur(20px);
     }
@@ -46,7 +46,7 @@
       --session-hover-bg: rgba(0, 0, 0, 0.04);
       --session-selected-bg: rgba(0, 0, 0, 0.07);
       --session-danger-fg: rgb(207, 34, 46);
-      --session-revive-fg: rgb(26, 127, 55);
+      --session-revive-fg: rgb(__TEXT_DIFF_INSERT_LIGHT_CHANNELS__);
       /* .desk-main is the chat surface's own backdrop (the iframe body is
          transparent), so it takes the chat color, not the hub's --bg-rgb. */
       --chat-pane-bg: __DESKTOP_CHAT_LIGHT_BG_FILL__;
@@ -70,7 +70,7 @@
       --session-hover-bg: rgba(255, 255, 255, 0.05);
       --session-selected-bg: rgba(255, 255, 255, 0.08);
       --session-danger-fg: rgb(255, 108, 102);
-      --session-revive-fg: rgb(74, 222, 128);
+      --session-revive-fg: rgb(__TEXT_DIFF_INSERT_DARK_CHANNELS__);
       /* chat surface backdrop -- chat color, not the hub's --bg-rgb (see light) */
       --chat-pane-bg: __DESKTOP_CHAT_DARK_BG_FILL__;
       --chat-pane-filter: var(--glass-filter-20);
