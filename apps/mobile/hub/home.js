@@ -527,6 +527,12 @@
         clearPersistedChatFrameState();
       }, CHAT_OVERLAY_CLOSE_MS);
     }
+    _chatOverlay.addEventListener("click", () => {
+      if (!_chatOverlay.classList.contains("overlay-peeking")) return;
+      const chatUrl = _chatFrame.src;
+      if (!chatUrl || chatUrl === "about:blank") return;
+      openChatInFrame(chatUrl, _currentChatSessionName);
+    });
     function openSessionFrame(openHref, name) {
       rememberLastSession(name);
       resetLaunchShellCard();
