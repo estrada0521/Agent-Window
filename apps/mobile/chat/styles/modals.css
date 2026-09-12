@@ -9,6 +9,7 @@
       --muted: rgb(150, 150, 150);
       --icon-fg: rgb(var(--dark-fg-rgb));
       --icon-muted: rgb(150, 150, 150);
+      --line-strong: rgba(255, 255, 255, 0.12);
       --bottom-sheet-top-gradient-rgb: var(--pane-trace-body-bg-channels);
       color-scheme: dark;
     }

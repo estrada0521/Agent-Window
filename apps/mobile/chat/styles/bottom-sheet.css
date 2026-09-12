@@ -57,6 +57,7 @@
       overflow: hidden;
       pointer-events: auto;
       border-radius: 28px 28px 0 0;
+      border-top: 1px solid var(--line-strong);
       background: var(--bg);
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
