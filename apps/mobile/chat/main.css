@@ -75,7 +75,8 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       --chrome-icon-gap: 0;
       /* no transform: this is the containing block for its fixed-position sheet children */
       position: fixed;
-      top: calc(50% + var(--floating-stack-top));
+      top: auto;
+      bottom: calc(var(--floating-stack-bottom) + env(safe-area-inset-bottom, 0px));
       left: calc(var(--page-side-pad, 14px) + env(safe-area-inset-left, 0px));
       width: var(--chrome-icon-btn-size);
     }

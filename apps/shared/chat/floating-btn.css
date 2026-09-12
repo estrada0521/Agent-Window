@@ -5,9 +5,9 @@
     #scrollToBottomBtn,
     #composerFabBtn {
       position: fixed;
-      top: calc(50% + var(--floating-stack-top) + var(--floating-stack-gap));
-      left: calc(var(--page-side-pad, 14px) + env(safe-area-inset-left, 0px));
-      transform: translateY(10px) scale(0.75);
+      bottom: var(--floating-btn-bottom, 194px);
+      left: 50%;
+      transform: translateX(-50%) translateY(10px) scale(0.75);
       width: 44px;
       height: 44px;
       border-radius: 999px;
@@ -55,7 +55,7 @@
     #scrollToBottomBtn.thinking-scroll-btn-swapping {
       opacity: 0;
       pointer-events: none;
-      transform: translateY(10px) scale(0.75);
+      transform: translateX(-50%) translateY(10px) scale(0.75);
     }
 
     #scrollToBottomBtn.thinking-scroll-btn .message-thinking-icon-wrap {
@@ -69,18 +69,18 @@
     #composerFabBtn.visible:active,
     #scrollToBottomBtn:active,
     #scrollToBottomBtn.visible:active {
-      transform: translateY(0) scale(0.94);
+      transform: translateX(-50%) translateY(0) scale(0.94);
     }
 
     #scrollToBottomBtn.visible,
     #composerFabBtn.visible {
       opacity: 1;
       pointer-events: auto;
-      transform: translateY(0) scale(1);
+      transform: translateX(-50%) translateY(0) scale(1);
     }
 
     #scrollToBottomBtn.visible.thinking-scroll-btn-swapping {
       opacity: 0;
       pointer-events: none;
-      transform: translateY(10px) scale(0.75);
+      transform: translateX(-50%) translateY(10px) scale(0.75);
     }

@@ -60,11 +60,6 @@
       padding-bottom: calc(var(--composer-height, 0px) + env(safe-area-inset-bottom, 0px));
     }
 
-    html[data-hub-iframe-chat="1"] #scrollToBottomBtn,
-    html[data-hub-iframe-chat="1"] #composerFabBtn {
-      bottom: calc(var(--floating-btn-bottom, 160px) + env(safe-area-inset-bottom, 0px));
-    }
-
     .composer {
       position: relative;
       right: auto;

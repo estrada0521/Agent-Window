@@ -30,14 +30,19 @@
     .composer-field {
       position: relative;
       min-height: 54px;
+      --composer-row-h: 54px;
+      --composer-line-h: 24px;
+      --composer-btn-d: 38px;
+      --composer-btn-bottom: 8px;
+      --composer-pad-top: calc(var(--composer-row-h) - var(--composer-btn-bottom) - var(--composer-btn-d) / 2 - var(--composer-line-h) / 2);
     }
 
     .send-btn {
       position: absolute;
-      right: 9px;
-      bottom: 9px;
-      width: 38px;
-      height: 38px;
+      left: 4px;
+      bottom: var(--composer-btn-bottom);
+      width: var(--composer-btn-d);
+      height: var(--composer-btn-d);
       appearance: none;
       -webkit-appearance: none;
       border-radius: 999px;
@@ -184,11 +189,14 @@
       border: none;
       background: transparent;
       color: var(--fg);
-      min-height: 54px;
-      height: 54px;
+      min-height: var(--composer-row-h);
+      height: var(--composer-row-h);
       max-height: 200px;
       resize: none;
-      padding: 12px 46px 12px 10px;
+      padding-top: var(--composer-pad-top);
+      padding-right: 10px;
+      padding-bottom: calc(var(--composer-row-h) - var(--composer-pad-top) - var(--composer-line-h));
+      padding-left: 56px;
       font-family: var(--font-main);
       font-size: 16px;
       line-height: 1.5;
