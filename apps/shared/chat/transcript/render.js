@@ -206,7 +206,7 @@
         _stickyToBottom = isNearBottom();
         updateScrollBtn();
         requestCenteredMessageRowUpdate();
-        {
+        if (document.documentElement.dataset.mobile !== "1") {
           const input = document.getElementById("message");
           const sendBtnEl = document.querySelector(".send-btn");
           const hasText = !!(input && input.value.trim().length > 0);

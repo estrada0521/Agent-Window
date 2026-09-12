@@ -197,7 +197,13 @@ __CHAT_INCLUDE:../upload-attached-files.js__
     }
 
     const updateSendBtnVisibility = () => {
-      if (sendBtn) sendBtn.classList.toggle("visible", sessionActive);
+      if (!sendBtn || isMobileComposer) return;
+      if (!sessionActive) {
+        sendBtn.classList.remove("visible");
+        return;
+      }
+      const hasContent = messageInput.value.trim().length > 0 || pendingAttachments.length > 0;
+      sendBtn.classList.toggle("visible", hasContent);
     };
     messageInput.addEventListener("input", updateSendBtnVisibility);
     messageInput.addEventListener("input", saveComposerDraft);
