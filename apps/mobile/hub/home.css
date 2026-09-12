@@ -109,7 +109,6 @@
     }
 
     @media (min-width: 600px) {
-      html.hub-chat-ui-active,
       html.hub-chat-peeking {
         --hub-sidebar-width: min(400px, 75vw);
       }
@@ -220,11 +219,9 @@
     .hub-mobile-tagline {
       position: fixed;
       top: calc(env(safe-area-inset-top, 0px) + 22px);
-      left: 0;
-      right: 0;
+      left: 8px;
       margin: 0;
       padding: 0 12px;
-      text-align: center;
       font-size: 26px;
       color: var(--fg);
       font-family: "Snell Roundhand", "Apple Chancery", cursive;
@@ -239,29 +236,18 @@
       filter: blur(4px);
     }
 
-    html.hub-chat-ui-active .hub-mobile-tagline,
-    html.hub-chat-peeking .hub-mobile-tagline {
-      right: var(--hub-chat-peek-width, 25vw);
-    }
-
     html.hub-chat-peeking .hub-mobile-tagline {
       transition-duration: 280ms;
     }
 
     @media (min-width: 600px) {
-      html.hub-chat-ui-active .hub-mobile-tagline,
-      html.hub-chat-peeking .hub-mobile-tagline {
-        right: auto;
-        width: var(--hub-sidebar-width);
-      }
-
       html.hub-chat-ui-active .hub-mobile-tagline {
         filter: none;
       }
     }
 
     .hub-mobile-tagline b {
-      font-weight: 900;
+      font-weight: 800;
     }
 
     .mob-list-wrap {

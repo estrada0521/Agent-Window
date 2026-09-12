@@ -207,6 +207,7 @@
     }
     const _launchShellParams = new URLSearchParams(window.location.search || "");
     _hubLaunchShellPending = _launchShellParams.get(HUB_LAUNCH_SHELL_PARAM) === "1";
+    const _restoreLatestSessionOnLaunch = _hubLaunchShellPending;
     if (_hubLaunchShellPending) {
       showLaunchShell();
       startHubReadyTimeout();
@@ -214,10 +215,10 @@
     function rememberLastSession(name) {
       const normalized = String(name || "").trim();
       if (!normalized) return;
-      try { sessionStorage.setItem(HUB_LAST_SESSION_KEY, normalized); } catch (_) { }
+      try { localStorage.setItem(HUB_LAST_SESSION_KEY, normalized); } catch (_) { }
     }
     function lastRememberedSession() {
-      try { return (sessionStorage.getItem(HUB_LAST_SESSION_KEY) || "").trim(); } catch (_) { return ""; }
+      try { return (localStorage.getItem(HUB_LAST_SESSION_KEY) || "").trim(); } catch (_) { return ""; }
     }
     function syncMobileSelectedSessionRows() {
       const selectedName = String(_currentChatSessionName || lastRememberedSession() || "").trim();
@@ -538,7 +539,7 @@
       resetLaunchShellCard();
       const needsReviveTransition = /^\/revive-session(?:[/?]|$)/.test(String(openHref || ""));
       if (needsReviveTransition) showLaunchShell();
-      hubChatUrls.resolve(openHref, name, { force: needsReviveTransition })
+      return hubChatUrls.resolve(openHref, name, { force: needsReviveTransition })
         .then((chatUrl) => {
           openChatInFrame(chatUrl, name);
           if (needsReviveTransition) {
@@ -848,9 +849,20 @@
           }
           window._lastMobRenderSig = sig;
 
+          const rememberedName = lastRememberedSession();
+          const launchSession = !_mobSessionsRenderedOnce && _restoreLatestSessionOnLaunch && !_currentChatSessionName
+            ? activeSessions.find((session) => session.name === rememberedName) || activeSessions[0]
+            : null;
           renderRows(activeSessions, archivedSessions);
           _mobSessionsRenderedOnce = true;
-          releaseHubLaunchShellAfterRender();
+          if (launchSession?.name) {
+            void openSessionFrame(
+              `/open-session?session=${encodeURIComponent(launchSession.name)}`,
+              launchSession.name,
+            ).finally(releaseHubLaunchShellAfterRender);
+          } else {
+            releaseHubLaunchShellAfterRender();
+          }
         } catch (_) {
           if (requestSeq !== _mobSessionsRequestSeq) return;
           if (_mobSessionsRenderedOnce || _mobSessionsCache.active.length || _mobSessionsCache.archived.length) return;
