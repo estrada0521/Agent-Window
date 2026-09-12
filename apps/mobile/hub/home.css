@@ -15,11 +15,9 @@
       --chat-overlay-glow: 0 0 5px rgba(0, 0, 0, 0.34), 0 0 16px rgba(0, 0, 0, 0.2);
       --session-danger-fg: rgb(204, 47, 38);
       --session-success-fg: rgb(41, 178, 75);
+      --hub-tagline-top: calc(env(safe-area-inset-top, 0px) + 22px);
+      --hub-tagline-fade-height: 64px;
       --mob-top-gradient-rgb: var(--bg-rgb);
-      --top-gradient-68: rgba(var(--mob-top-gradient-rgb), 0.68);
-      --top-gradient-50: rgba(var(--mob-top-gradient-rgb), 0.50);
-      --top-gradient-28: rgba(var(--mob-top-gradient-rgb), 0.28);
-      --top-gradient-10: rgba(var(--mob-top-gradient-rgb), 0.10);
       --code-bg: rgba(255, 255, 255, 0.05);
       --row-preview-fg: var(--muted);
       --session-dim-fg: rgb(__TEXT_SESSION_DIM_MOBILE_LIGHT_CHANNELS__);
@@ -58,8 +56,8 @@
       --icon-hover: rgb(190, 190, 190);
       --line: rgba(255, 255, 255, 0.07);
       --line-strong: rgba(255, 255, 255, 0.12);
-      --session-hover-bg: rgb(24, 24, 24);
-      --session-selected-bg: rgb(28, 28, 28);
+      --session-hover-bg: rgb(28, 28, 28);
+      --session-selected-bg: rgb(32, 32, 32);
       --chat-overlay-glow: 0 0 5px rgba(0, 0, 0, 0.34), 0 0 16px rgba(0, 0, 0, 0.2);
       --session-danger-fg: rgb(204, 47, 38);
       --session-success-fg: rgb(41, 178, 75);
@@ -218,7 +216,7 @@
 
     .hub-mobile-tagline {
       position: fixed;
-      top: calc(env(safe-area-inset-top, 0px) + 22px);
+      top: var(--hub-tagline-top);
       left: 8px;
       margin: 0;
       padding: 0 12px;
@@ -230,6 +228,22 @@
       /* Blurs with the list during the chat transition. Safe to filter
          directly -- it has no position:fixed descendants of its own. */
       transition: filter 440ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .hub-mobile-tagline::before {
+      content: "";
+      position: absolute;
+      top: calc(0px - var(--hub-tagline-top));
+      left: -8px;
+      width: 100vw;
+      height: calc(100% + var(--hub-tagline-top) + var(--hub-tagline-fade-height));
+      background: linear-gradient(
+        rgba(var(--mob-top-gradient-rgb), 0.82) 0,
+        rgba(var(--mob-top-gradient-rgb), 0.82) calc(100% - var(--hub-tagline-fade-height)),
+        rgba(var(--mob-top-gradient-rgb), 0) 100%
+      );
+      pointer-events: none;
+      z-index: -1;
     }
 
     html.hub-chat-ui-active .hub-mobile-tagline {
