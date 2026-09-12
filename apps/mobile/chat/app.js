@@ -18,6 +18,51 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
         applyMobileThemeGradientVars();
       }
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const _hubBackLink = document.querySelector(".page-title");
+    if (_hubBackLink) {
+      let _hubSwipeStartX = 0;
+      let _hubSwipeStartY = 0;
+      let _hubSwipeTracking = false;
+      let _hubSwipeReady = false;
+      const _resetHubSwipe = () => {
+        _hubSwipeTracking = false;
+        _hubSwipeReady = false;
+      };
+      document.addEventListener("touchstart", (event) => {
+        if (document.getElementById("composerOverlay")?.classList.contains("visible")) return;
+        if (document.querySelector(".mobile-sheet-overlay.open")) return;
+        const touch = event.touches?.[0];
+        if (!touch) return;
+        _hubSwipeStartX = touch.clientX;
+        _hubSwipeStartY = touch.clientY;
+        _hubSwipeTracking = true;
+        _hubSwipeReady = false;
+      }, { passive: true });
+      document.addEventListener("touchmove", (event) => {
+        if (!_hubSwipeTracking) return;
+        const touch = event.touches?.[0];
+        if (!touch) {
+          _resetHubSwipe();
+          return;
+        }
+        const deltaX = touch.clientX - _hubSwipeStartX;
+        const deltaY = touch.clientY - _hubSwipeStartY;
+        if (Math.abs(deltaY) > 42) {
+          _resetHubSwipe();
+          return;
+        }
+        if (deltaX > 56 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+          _hubSwipeReady = true;
+        }
+      }, { passive: true });
+      document.addEventListener("touchend", () => {
+        if (!_hubSwipeTracking) return;
+        const shouldGo = _hubSwipeReady;
+        _resetHubSwipe();
+        if (shouldGo) _hubBackLink.click();
+      }, { passive: true });
+      document.addEventListener("touchcancel", _resetHubSwipe, { passive: true });
+    }
     const _pageParams = new URLSearchParams(window.location.search || "");
     const launchShellMode = _pageParams.get("launch_shell") === "1";
 __CHAT_INCLUDE:../../shared/chat/conversation-state.js__
