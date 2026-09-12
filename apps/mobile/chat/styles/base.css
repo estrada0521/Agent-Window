@@ -464,7 +464,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
     }
 
     .shell {
-      --floating-stack-bottom: 20px;
       position: absolute;
       top: 0;
       left: 0;

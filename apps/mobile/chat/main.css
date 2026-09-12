@@ -76,7 +76,7 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       /* no transform: this is the containing block for its fixed-position sheet children */
       position: fixed;
       top: auto;
-      bottom: calc(var(--floating-stack-bottom) + env(safe-area-inset-bottom, 0px));
+      bottom: 167px;
       left: calc(var(--page-side-pad, 14px) + env(safe-area-inset-left, 0px));
       width: var(--chrome-icon-btn-size);
     }
