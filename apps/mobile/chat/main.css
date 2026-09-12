@@ -171,6 +171,11 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       display: none;
     }
 
+    /* Experiment: hidden now that long-pressing the composer FAB opens it. May come back. */
+    .shell>.page-header .page-header-actions .page-menu-btn {
+      display: none;
+    }
+
     .composer-main-shell {
       padding-right: 0;
     }
