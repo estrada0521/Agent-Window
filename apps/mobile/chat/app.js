@@ -2,56 +2,7 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     document.documentElement.dataset.mobile = "1";
     const _menuBtnSvg = document.querySelector("#pageMenuBtn svg");
     if (_menuBtnSvg) {
-      _menuBtnSvg.innerHTML = '<rect x="6" y="6" width="12" height="12" rx="3" stroke-width="1.7"></rect>';
-    }
-    const _menuLongPressBtn = document.getElementById("pageMenuBtn");
-    const _menuLongPressTargets = [document.getElementById("composerFabBtn"), document.getElementById("scrollToBottomBtn")].filter(Boolean);
-    if (_menuLongPressBtn && _menuLongPressTargets.length) {
-      let _menuLongPressStartX = 0;
-      let _menuLongPressStartY = 0;
-      let _menuLongPressMoved = false;
-      let _menuLongPressReady = false;
-      let _menuLongPressTimer = 0;
-      const _clearMenuLongPressTimer = () => {
-        clearTimeout(_menuLongPressTimer);
-        _menuLongPressTimer = 0;
-      };
-      _menuLongPressTargets.forEach((el) => {
-        el.addEventListener("touchstart", (event) => {
-          const touch = event.touches?.[0];
-          if (!touch) return;
-          _menuLongPressStartX = touch.clientX;
-          _menuLongPressStartY = touch.clientY;
-          _menuLongPressMoved = false;
-          _menuLongPressReady = false;
-          _clearMenuLongPressTimer();
-          _menuLongPressTimer = setTimeout(() => {
-            _menuLongPressReady = true;
-          }, 200);
-        }, { passive: true });
-        el.addEventListener("touchmove", (event) => {
-          const touch = event.touches?.[0];
-          if (!touch) return;
-          const dx = touch.clientX - _menuLongPressStartX;
-          const dy = touch.clientY - _menuLongPressStartY;
-          if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
-            _menuLongPressMoved = true;
-            _clearMenuLongPressTimer();
-          }
-        }, { passive: true });
-        el.addEventListener("touchend", (event) => {
-          _clearMenuLongPressTimer();
-          if (_menuLongPressReady && !_menuLongPressMoved) {
-            event.preventDefault();
-            _menuLongPressBtn.click();
-          }
-          _menuLongPressReady = false;
-        }, { passive: false });
-        el.addEventListener("touchcancel", () => {
-          _clearMenuLongPressTimer();
-          _menuLongPressReady = false;
-        }, { passive: true });
-      });
+      _menuBtnSvg.innerHTML = '<rect x="6" y="6" width="12" height="12" rx="3" stroke-width="1.4"></rect>';
     }
     const _safariSafeAreaDummy = document.createElement("div");
     _safariSafeAreaDummy.style.cssText = "position:absolute;bottom:0;width:100%;height:env(safe-area-inset-bottom);pointer-events:none;opacity:0;z-index:-1;";

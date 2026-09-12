@@ -13,14 +13,9 @@
       if (!nativeHeaderMenuSelect) return;
       nativeHeaderMenuSelect.value = "";
     };
-    const syncNativeHeaderMenuSelectAnchor = (forOpen) => {
+    const syncNativeHeaderMenuSelectAnchor = () => {
       if (!useNativeHeaderMenuPicker || !nativeHeaderMenuSelect || !rightMenuBtn) return;
-      let rect = rightMenuBtn.getBoundingClientRect();
-      if (forOpen && (!rect.width || !rect.height)) {
-        const fallbackAnchor = document.querySelector("#composerFabBtn.visible, #scrollToBottomBtn.visible")
-          || document.getElementById("composerFabBtn");
-        if (fallbackAnchor) rect = fallbackAnchor.getBoundingClientRect();
-      }
+      const rect = rightMenuBtn.getBoundingClientRect();
       nativeHeaderMenuSelect.style.left = `${Math.round(rect.left)}px`;
       nativeHeaderMenuSelect.style.top = `${Math.round(rect.top)}px`;
       nativeHeaderMenuSelect.style.width = `${Math.max(1, Math.round(rect.width))}px`;
@@ -28,7 +23,7 @@
     };
     const openNativeHeaderMenuPicker = () => {
       if (!useNativeHeaderMenuPicker || !nativeHeaderMenuSelect) return false;
-      syncNativeHeaderMenuSelectAnchor(true);
+      syncNativeHeaderMenuSelectAnchor();
       clearNativeHeaderMenuSelection();
       const show = () => {
         if (typeof nativeHeaderMenuSelect.showPicker === "function") {
@@ -66,7 +61,6 @@
     });
     nativeHeaderMenuSelect?.addEventListener("blur", () => {
       setTimeout(clearNativeHeaderMenuSelection, 0);
-      syncNativeHeaderMenuSelectAnchor();
     });
     const headerRoot = document.querySelector(".page-header");
     const hasOpenHeaderMenu = () => !!(gitPanel?.classList.contains("open") || repoPanel?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
