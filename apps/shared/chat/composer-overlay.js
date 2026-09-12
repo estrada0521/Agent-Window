@@ -46,7 +46,7 @@
     // One focus() call, at the one moment the composer is actually laid out
     // and visible (the caller's rAF, or -- if already open -- right now).
     // Mobile keeps its Safari select-on-focus workaround alongside it.
-    const focusComposerTextarea = () => {
+    const focusComposerTextarea = (onReady = null) => {
       if (!messageInput) return;
       const isMobileComposer = document.documentElement.dataset.mobile === "1" && composerForm;
       if (isMobileComposer) composerForm.classList.add("composer-focus-hack");
@@ -56,13 +56,17 @@
         messageInput.focus();
       }
       setComposerCaretToEnd();
-      if (!isMobileComposer) return;
+      if (!isMobileComposer) {
+        if (onReady) onReady();
+        return;
+      }
       let restored = false;
       const restore = () => {
         if (restored) return;
         restored = true;
         composerForm.classList.remove("composer-focus-hack");
         setComposerCaretToEnd();
+        if (onReady) onReady();
       };
       requestAnimationFrame(() => requestAnimationFrame(restore));
       setTimeout(restore, 120);
@@ -84,20 +88,24 @@
       document.body.classList.add("composer-overlay-open");
       updateScrollBtn();
       if (typeof updateSendBtnVisibility === "function") updateSendBtnVisibility();
-      // Mobile's focus hack (position: fixed, opacity: 0) has to run and
-      // settle before .visible starts the slide/fade -- doing it after would
-      // fight the reveal transition. Desktop has no such constraint, so it
-      // focuses at the one already-scheduled post-layout point below.
       const isMobileComposer = document.documentElement.dataset.mobile === "1";
-      if (canFocus && isMobileComposer) focusComposerTextarea();
-      requestAnimationFrame(() => {
+      const reveal = () => {
+        composerForm?.classList.remove("composer-opening-ready");
         if (typeof autoResizeTextarea === "function") autoResizeTextarea();
         setComposerCaretToEnd();
         armFitComposerHold();
         composerOverlay.classList.add("visible");
         document.dispatchEvent(new CustomEvent("composer-overlay-open"));
         if (canFocus && !isMobileComposer) focusComposerTextarea();
-      });
+      };
+      if (canFocus && isMobileComposer) {
+        focusComposerTextarea(() => {
+          composerForm.classList.add("composer-opening-ready");
+          requestAnimationFrame(reveal);
+        });
+      } else {
+        requestAnimationFrame(reveal);
+      }
     };
     // Fit Height: opening asks the hub to grow the window; pin the composer at
     // its start pose until that resize lands so it only rises from the new bottom.
@@ -122,6 +130,7 @@
         messageInput.blur();
       }
       document.dispatchEvent(new CustomEvent("composer-overlay-close-start"));
+      composerForm?.classList.remove("composer-opening-ready");
       composerOverlay.classList.remove("visible", "fit-arming");
       document.body.classList.remove("composer-overlay-open");
       if (isMobileComposer) {

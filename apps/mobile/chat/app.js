@@ -247,14 +247,16 @@ __CHAT_INCLUDE:../../shared/chat/target-picker.js__
       const positionPicker = () => {
         if (!anchor || !document.body.classList.contains("composer-overlay-open")) return;
         const rect = anchor.getBoundingClientRect();
+        const transform = getComputedStyle(composerForm).transform;
+        const composerOffsetY = transform === "none" ? 0 : new DOMMatrixReadOnly(transform).m42;
         picker.style.left = `${rect.left}px`;
-        picker.style.top = `${rect.top}px`;
+        picker.style.top = `${rect.top - composerOffsetY}px`;
         picker.style.width = `${rect.width}px`;
         picker.style.height = `${rect.height}px`;
         syncTargetPickerFade();
       };
       document.addEventListener("composer-overlay-open", () => {
-        requestAnimationFrame(() => {
+        const revealPicker = () => {
           if (!anchor) {
             const rect = picker.getBoundingClientRect();
             anchor = document.createElement("div");
@@ -264,7 +266,13 @@ __CHAT_INCLUDE:../../shared/chat/target-picker.js__
             document.body.appendChild(picker);
           }
           positionPicker();
-        });
+          document.body.classList.add("composer-target-picker-visible");
+        };
+        if (composerForm?.classList.contains("composer-focus-hack")) requestAnimationFrame(revealPicker);
+        else revealPicker();
+      });
+      document.addEventListener("composer-overlay-close-start", () => {
+        document.body.classList.remove("composer-target-picker-visible");
       });
       window.addEventListener("resize", positionPicker, { passive: true });
       window.visualViewport?.addEventListener("resize", positionPicker, { passive: true });
