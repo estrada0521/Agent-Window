@@ -35,6 +35,9 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
       document.addEventListener("touchstart", (event) => {
         if (document.getElementById("composerOverlay")?.classList.contains("visible")) return;
         if (document.querySelector(".mobile-sheet-overlay.open")) return;
+        // Tables, code blocks, and math scroll horizontally themselves --
+        // don't race that with the hub swipe.
+        if (event.target.closest?.(".table-scroll, .katex-display, pre")) return;
         const touch = event.touches?.[0];
         if (!touch) return;
         _hubSwipeStartX = touch.clientX;
