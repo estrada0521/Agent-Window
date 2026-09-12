@@ -31,9 +31,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --composer-menu-row-active-bg: rgba(255, 255, 255, 0.07);
       --panel-row-selected-bg: rgba(255, 255, 255, 0.045);
       --glass-bg-68: rgba(var(--bg-rgb), 0.68);
-      --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --glass-filter-18: blur(18px) saturate(160%);
-      --glass-filter-20: blur(20px) saturate(180%);
       --mobile-sheet-panel-height: 94dvh;
       --mobile-sheet-floating-height: 44px;
       --mobile-sheet-floating-bg: var(--panel-row-bg);
@@ -91,9 +89,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --line-strong: rgba(0, 0, 0, 0.18);
       --code-copy-hover-bg: rgba(0, 0, 0, 0.08);
       --glass-bg-68: var(--bg);
-      --glass-bg-72: var(--bg);
       --glass-filter-18: blur(18px) saturate(160%);
-      --glass-filter-20: blur(20px) saturate(180%);
       --mobile-sheet-pill-bg: rgba(20, 20, 19, 0.24);
       --mobile-top-gradient-rgb: var(--bg-rgb);
       --mobile-sheet-gradient-rgb: var(--mobile-top-gradient-rgb);
@@ -139,7 +135,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --line-strong: rgba(255, 255, 255, 0.12);
       --code-copy-hover-bg: rgba(255, 255, 255, 0.09);
       --glass-bg-68: rgba(var(--bg-rgb), 0.68);
-      --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --mobile-sheet-pill-bg: rgba(255, 255, 255, 0.22);
       --mobile-top-gradient-rgb: var(--bg-rgb);
       --mobile-sheet-gradient-rgb: var(--bg-rgb);
@@ -225,9 +220,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       overflow-y: auto;
       border-top: 0.5px solid transparent;
       border-bottom: 0.5px solid transparent;
-      background: var(--glass-bg-72);
-      backdrop-filter: var(--glass-filter-20);
-      -webkit-backdrop-filter: var(--glass-filter-20);
       opacity: 0;
       transform: translateY(12px) scale(0.985);
       pointer-events: none;

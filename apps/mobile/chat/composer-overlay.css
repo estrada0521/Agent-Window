@@ -5,7 +5,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px 12px;
+      padding: 24px 12px 40px;
       background: rgba(var(--bg-rgb), 0.10);
       backdrop-filter: blur(0px);
       -webkit-backdrop-filter: blur(0px);
