@@ -20,7 +20,7 @@
     }
 
     #paneTracePanel .mobile-bottom-sheet-panel {
-      --mobile-sheet-panel-height: 88dvh;
+      --mobile-sheet-panel-height: 92dvh;
     }
 
     .shell>.page-header>#paneTracePanel.open {
