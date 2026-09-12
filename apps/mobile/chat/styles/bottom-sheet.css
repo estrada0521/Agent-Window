@@ -97,28 +97,6 @@
       mask-image: linear-gradient(to bottom, var(--mobile-edge-fade-mask));
     }
 
-    .mobile-bottom-sheet > .mobile-bottom-sheet-panel::after {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: var(--bottom-sheet-top-gradient-height, 100px);
-      z-index: 4;
-      pointer-events: none;
-      background: linear-gradient(to top,
-        rgba(var(--bottom-sheet-top-gradient-rgb), 0.84) 0%,
-        rgba(var(--bottom-sheet-top-gradient-rgb), 0.68) 22%,
-        rgba(var(--bottom-sheet-top-gradient-rgb), 0.38) 52%,
-        rgba(var(--bottom-sheet-top-gradient-rgb), 0.12) 74%,
-        rgba(var(--bottom-sheet-top-gradient-rgb), 0) 100%
-      );
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      -webkit-mask-image: linear-gradient(to top, var(--mobile-edge-fade-mask));
-      mask-image: linear-gradient(to top, var(--mobile-edge-fade-mask));
-    }
-
     .mobile-bottom-sheet .mobile-bottom-sheet-nav {
       position: absolute;
       top: 0;
