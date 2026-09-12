@@ -292,6 +292,10 @@
       }
     }
 
+    .mob-list-top-spacer {
+      height: 250px;
+    }
+
     .hub-footer-credit {
       margin-top: 60vh;
       padding: 12px 0 calc(4px + env(safe-area-inset-bottom, 0px));

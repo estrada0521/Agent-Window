@@ -1,3 +1,4 @@
+    window.scrollTo(0, 250);
     const _chatOverlay = document.getElementById("chatOverlay");
     const _chatFrame = document.getElementById("chatFrame");
     const _launchShell = document.getElementById("launchShell");
