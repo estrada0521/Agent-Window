@@ -69,20 +69,24 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
     }
 
     .shell>.page-header {
-      --mobile-header-edge-gap: 14px;
       --chrome-icon-btn-size: 44px;
       --chrome-icon-size: 24px;
       --chrome-icon-stroke: 1.6;
       --chrome-icon-gap: 0;
+      /* no transform: this is the containing block for its fixed-position sheet children */
+      position: fixed;
+      top: calc(50% + var(--floating-stack-top));
+      left: calc(var(--page-side-pad, 14px) + env(safe-area-inset-left, 0px));
+      width: var(--chrome-icon-btn-size);
     }
 
     .shell>.page-header .page-header-top {
-      padding-top: max(0px, calc(env(safe-area-inset-top, 0px) - 8px));
-      padding-right: calc(var(--mobile-header-edge-gap) + env(safe-area-inset-right, 0px));
-      padding-bottom: 2px;
-      padding-left: calc(var(--mobile-header-edge-gap) + env(safe-area-inset-left, 0px));
-      min-height: 44px;
+      flex-direction: column;
+      justify-content: center;
       align-items: center;
+      gap: 10px;
+      padding: 0;
+      min-height: 0;
     }
 
     .shell>.page-header .page-title,
@@ -96,12 +100,11 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       justify-content: center;
       padding: 0;
       border-radius: 999px;
-      transform: translateY(7px);
     }
 
     .shell>.page-header .page-header-actions {
       gap: 0;
-      margin-left: auto;
+      margin: 0;
       min-height: var(--chrome-icon-btn-size);
     }
 
@@ -118,15 +121,6 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
         border-color 160ms ease,
         box-shadow 160ms ease,
         transform 160ms ease;
-    }
-
-    .shell>.page-header .page-title:hover {
-      opacity: 1;
-      transform: translateY(7px);
-    }
-
-    .shell>.page-header .page-title:active {
-      transform: translateY(7px) scale(0.94);
     }
 
     .shell>.page-header .page-title .page-logo {

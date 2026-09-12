@@ -297,10 +297,10 @@
     const updateHeaderMenuViewportMetrics = () => {
       if (!headerRoot) return;
       const rect = headerRoot.getBoundingClientRect();
-      const top = Math.max(0, Math.round(rect.bottom));
+      const height = Math.max(0, Math.round(rect.top));
       const left = Math.max(0, Math.round(rect.left));
       const width = Math.max(0, Math.round(rect.width));
-      document.documentElement.style.setProperty("--header-menu-top", `${top}px`);
+      document.documentElement.style.setProperty("--header-menu-height", `${height}px`);
       document.documentElement.style.setProperty("--header-menu-left", `${left}px`);
       document.documentElement.style.setProperty("--header-menu-width", `${width}px`);
     };

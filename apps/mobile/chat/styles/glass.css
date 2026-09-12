@@ -19,6 +19,7 @@
     }
 
     /* Pressed = a small shrink; the face stays put. */
+    .shell > .page-header .page-title:active,
     .shell > .page-header .page-header-actions .page-menu-btn:active,
     .mobile-bottom-sheet .mobile-bottom-sheet-button:active {
       transform: scale(0.94);
