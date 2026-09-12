@@ -146,6 +146,8 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
     }
 
     .shell>.page-header .page-header-actions .page-menu-btn {
+      visibility: hidden;
+      pointer-events: none;
       position: relative;
       isolation: isolate;
       overflow: hidden;
@@ -195,7 +197,7 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       width: 44px;
       height: 44px;
       opacity: 0.01;
-      pointer-events: auto;
+      pointer-events: none;
       z-index: 220;
       background: transparent;
       color: transparent;

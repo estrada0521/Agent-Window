@@ -65,6 +65,12 @@
       stroke-width: 1.7;
     }
 
+    .send-btn::before {
+      content: "";
+      position: absolute;
+      inset: -8px;
+    }
+
     .send-btn:active {
       transform: scale(0.94);
     }

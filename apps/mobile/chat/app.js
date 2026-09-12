@@ -28,9 +28,11 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
       let _hubSwipeStartY = 0;
       let _hubSwipeTracking = false;
       let _hubSwipeReady = false;
+      let _menuSwipeReady = false;
       const _resetHubSwipe = () => {
         _hubSwipeTracking = false;
         _hubSwipeReady = false;
+        _menuSwipeReady = false;
       };
       document.addEventListener("touchstart", (event) => {
         if (document.getElementById("composerOverlay")?.classList.contains("visible")) return;
@@ -44,6 +46,7 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
         _hubSwipeStartY = touch.clientY;
         _hubSwipeTracking = true;
         _hubSwipeReady = false;
+        _menuSwipeReady = false;
       }, { passive: true });
       document.addEventListener("touchmove", (event) => {
         if (!_hubSwipeTracking) return;
@@ -60,13 +63,19 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
         }
         if (deltaX > 56 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
           _hubSwipeReady = true;
+          _menuSwipeReady = false;
+        } else if (deltaX < -56 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+          _hubSwipeReady = false;
+          _menuSwipeReady = true;
         }
       }, { passive: true });
       document.addEventListener("touchend", () => {
         if (!_hubSwipeTracking) return;
-        const shouldGo = _hubSwipeReady;
+        const shouldOpenHub = _hubSwipeReady;
+        const shouldOpenMenu = _menuSwipeReady;
         _resetHubSwipe();
-        if (shouldGo) _hubBackLink.click();
+        if (shouldOpenHub) _hubBackLink.click();
+        else if (shouldOpenMenu) document.getElementById("pageMenuBtn")?.click();
       }, { passive: true });
       document.addEventListener("touchcancel", _resetHubSwipe, { passive: true });
     }
