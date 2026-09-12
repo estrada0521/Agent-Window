@@ -69,6 +69,7 @@ class ChatRuntime:
         tmux_socket: str,
         hub_port: int,
         repo_root: Path | str,
+        initial_running_agents: list[str] | None = None,
     ):
         self._session_binding = WorkspaceSessionBinding(workspace)
         self.port = int(port)
@@ -82,7 +83,7 @@ class ChatRuntime:
         # live tmux session by its native session working directory.
         self.tmux_session_name = _resolve_tmux_session_name_impl(self) or ""
         self.session_is_active = bool(self.tmux_session_name)
-        self._agent_running: set[str] = set()
+        self._agent_running = set(initial_running_agents or [])
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(
             session_binding=self._session_binding,
@@ -300,6 +301,9 @@ class ChatRuntime:
     def mark_agents_running(self, agents: list[str]) -> None:
         for agent in agents:
             self._mark_running(agent)
+
+    def running_agents_for_reload(self) -> list[str]:
+        return sorted(self._agent_running)
 
     def _mark_running(self, agent: str) -> None:
         already_running = agent in self._agent_running
