@@ -1,7 +1,7 @@
 __CHAT_INCLUDE:../../../shared/chat/git-panel-html.js__
 __CHAT_INCLUDE:../../../shared/chat/git-panel-data.js__
 __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
-    const gitSheetTitleEl = () => gitPanel?.querySelector(".git-sheet-title");
+    const gitSheetTitleEl = () => sharedSheetTitleEl;
     const setGitSheetTitle = () => {
       const titleEl = gitSheetTitleEl();
       if (!titleEl) return;

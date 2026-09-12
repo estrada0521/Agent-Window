@@ -14,25 +14,12 @@
     }
 
     .shell>.page-header>#paneTracePanel {
-      bottom: -6px;
-      height: calc(100dvh + 6px);
-      min-height: calc(100dvh + 6px);
-      max-height: none;
       z-index: 1000;
       pointer-events: none;
     }
 
     .shell>.page-header>#paneTracePanel.open {
       pointer-events: auto;
-    }
-
-    #paneTracePanel .mobile-bottom-sheet-panel {
-      margin-bottom: -2px;
-      padding-bottom: 2px;
-    }
-
-    #paneTracePanel .mobile-bottom-sheet-footer {
-      bottom: 6px;
     }
 
     #paneTracePanel .pane-trace-sheet-content .hub-main-menu-stack {

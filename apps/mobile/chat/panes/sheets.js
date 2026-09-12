@@ -77,7 +77,7 @@
         });
       });
     };
-    const wireMobileSheetNavDrag = (sheetNav, sheetPanel, onClose) => {
+    const wireMobileSheetNavDrag = (sheetNav, activeSheetRef, onClose) => {
       let startY = 0;
       let dragY = 0;
       let dragging = false;
@@ -87,91 +87,114 @@
         startY = touch.clientY;
         dragY = 0;
         dragging = true;
-        sheetPanel.style.transition = "none";
+        if (activeSheetRef.panel) activeSheetRef.panel.style.transition = "none";
       }, { passive: true });
       sheetNav.addEventListener("touchmove", (event) => {
         if (!dragging) return;
         const touch = event.touches?.[0];
         if (!touch) return;
         dragY = Math.max(0, touch.clientY - startY);
-        sheetPanel.style.transform = `translateY(${dragY}px)`;
+        if (activeSheetRef.panel) activeSheetRef.panel.style.transform = `translateY(${dragY}px)`;
       }, { passive: true });
       const finishDrag = () => {
         if (!dragging) return;
         dragging = false;
-        sheetPanel.style.transition = "";
-        sheetPanel.style.transform = "";
+        if (activeSheetRef.panel) {
+          activeSheetRef.panel.style.transition = "";
+          activeSheetRef.panel.style.transform = "";
+        }
         if (dragY > 80) onClose();
       };
       sheetNav.addEventListener("touchend", finishDrag, { passive: true });
       sheetNav.addEventListener("touchcancel", finishDrag, { passive: true });
     };
     const MOBILE_SHEET_ACTIVE_CLASS = "mobile-sheet-active";
-    const buildMobileBottomSheet = ({
-      kind,
-      title = "",
-      closeLabel = "Close",
-      onClose = () => { },
-      leadingButtonHtml = "",
-    }) => {
-      const sheet = document.createElement("div");
-      sheet.className = `${kind}-sheet mobile-bottom-sheet`;
-      const sheetPanel = document.createElement("div");
-      sheetPanel.className = `${kind}-sheet-panel mobile-bottom-sheet-panel`;
-      const sheetNav = document.createElement("div");
-      sheetNav.className = `${kind}-sheet-nav mobile-bottom-sheet-nav`;
-      sheetNav.innerHTML = `
-        <div class="${kind}-sheet-pill mobile-bottom-sheet-pill"></div>
-        <div class="${kind}-sheet-nav-bar mobile-bottom-sheet-nav-bar">
-          <div class="${kind}-sheet-title mobile-bottom-sheet-title"></div>
-        </div>`;
-      const titleEl = sheetNav.querySelector(`.${kind}-sheet-title`);
-      if (titleEl) titleEl.textContent = title;
-      const sheetFooter = document.createElement("div");
-      sheetFooter.className = `${kind}-sheet-footer mobile-bottom-sheet-footer`;
-      const leading = leadingButtonHtml || "";
-      sheetFooter.innerHTML = `
-        ${leading}
-        <button type="button" class="${kind}-sheet-close mobile-bottom-sheet-close mobile-bottom-sheet-button" aria-label="${closeLabel}">
-          ${mobileSheetCloseIcon}
-        </button>`;
-      const contentEl = document.createElement("div");
-      contentEl.className = `${kind}-sheet-content mobile-bottom-sheet-content`;
-      const closeBtn = sheetFooter.querySelector(`.${kind}-sheet-close`);
-      closeBtn?.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        onClose();
-      });
-      wireMobileSheetNavDrag(sheetNav, sheetPanel, onClose);
-      sheetPanel.append(sheetNav, contentEl, sheetFooter);
-      sheet.appendChild(sheetPanel);
-      return { sheet, sheetPanel, sheetNav, sheetFooter, contentEl, titleEl, closeBtn };
+    // One physical nav + one physical footer, re-parented into whichever
+    // sheet is currently open. Never three independently-built copies that
+    // only agree by coincidence -- there is exactly one of each, always.
+    const sharedSheetActiveRef = { panel: null };
+    let sharedSheetOnClose = () => { };
+    const sharedSheetNav = document.createElement("div");
+    sharedSheetNav.className = "mobile-bottom-sheet-nav";
+    sharedSheetNav.innerHTML = `
+      <div class="mobile-bottom-sheet-pill"></div>
+      <div class="mobile-bottom-sheet-nav-bar">
+        <div class="mobile-bottom-sheet-title"></div>
+      </div>`;
+    const sharedSheetTitleEl = sharedSheetNav.querySelector(".mobile-bottom-sheet-title");
+    const sharedSheetFooter = document.createElement("div");
+    sharedSheetFooter.className = "mobile-bottom-sheet-footer";
+    sharedSheetFooter.innerHTML = `
+      <button type="button" class="mobile-bottom-sheet-leading mobile-bottom-sheet-button" hidden></button>
+      <button type="button" class="mobile-bottom-sheet-close mobile-bottom-sheet-button" aria-label="Close">
+        ${mobileSheetCloseIcon}
+      </button>`;
+    const sharedSheetLeadingBtn = sharedSheetFooter.querySelector(".mobile-bottom-sheet-leading");
+    const sharedSheetCloseBtn = sharedSheetFooter.querySelector(".mobile-bottom-sheet-close");
+    let sharedSheetLeadingOnClick = null;
+    sharedSheetLeadingBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      sharedSheetLeadingOnClick?.(event);
+    });
+    sharedSheetCloseBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      sharedSheetOnClose();
+    });
+    wireMobileSheetNavDrag(sharedSheetNav, sharedSheetActiveRef, () => sharedSheetOnClose());
+    const attachSharedSheetChrome = (sheetPanel, { title, closeLabel, onClose }) => {
+      sharedSheetOnClose = onClose;
+      sharedSheetActiveRef.panel = sheetPanel;
+      sharedSheetTitleEl.textContent = title;
+      sharedSheetCloseBtn.setAttribute("aria-label", closeLabel);
+      sheetPanel.prepend(sharedSheetNav);
+      sheetPanel.appendChild(sharedSheetFooter);
+    };
+    const setSharedSheetLeading = (onClick, ariaLabel, html) => {
+      if (!onClick) {
+        sharedSheetLeadingBtn.hidden = true;
+        sharedSheetLeadingOnClick = null;
+        return;
+      }
+      sharedSheetLeadingBtn.hidden = false;
+      sharedSheetLeadingOnClick = onClick;
+      if (html) sharedSheetLeadingBtn.innerHTML = html;
+      if (ariaLabel) sharedSheetLeadingBtn.setAttribute("aria-label", ariaLabel);
     };
     const ensureMobileSheetDom = (panel, {
       kind,
       title,
       closeLabel,
       onClose,
-      leadingButtonHtml = "",
+      leading = null,
       afterBuild = null,
     }) => {
       if (!panel) return null;
+      const activate = () => {
+        attachSharedSheetChrome(panel.querySelector(".mobile-bottom-sheet-panel"), { title, closeLabel, onClose });
+        setSharedSheetLeading(leading?.onClick || null, leading?.ariaLabel, leading?.html);
+      };
       const existingContent = panel.querySelector(`.${kind}-sheet-content`);
-      if (existingContent) return existingContent;
+      if (existingContent) {
+        activate();
+        return existingContent;
+      }
+      const sheet = document.createElement("div");
+      sheet.className = `${kind}-sheet mobile-bottom-sheet`;
+      const sheetPanel = document.createElement("div");
+      sheetPanel.className = `${kind}-sheet-panel mobile-bottom-sheet-panel`;
+      const contentEl = document.createElement("div");
+      contentEl.className = `${kind}-sheet-content mobile-bottom-sheet-content`;
       const existing = document.createDocumentFragment();
       while (panel.firstChild) existing.appendChild(panel.firstChild);
-      const built = buildMobileBottomSheet({
-        kind,
-        title,
-        closeLabel,
-        onClose,
-        leadingButtonHtml,
-      });
-      if (existing.childNodes.length) built.contentEl.appendChild(existing);
-      afterBuild?.(built);
-      panel.appendChild(built.sheet);
-      return built.contentEl;
+      if (existing.childNodes.length) contentEl.appendChild(existing);
+      sheetPanel.appendChild(contentEl);
+      sheet.appendChild(sheetPanel);
+      afterBuild?.({ sheetPanel, contentEl });
+      panel.appendChild(sheet);
+      activate();
+      return contentEl;
     };
     const createMobileSheetController = (panel, activeClass, { onOpened = () => { }, onClosed = () => { } } = {}) => {
       let closeTimer = 0;
@@ -369,8 +392,8 @@
       const joined = parts.join("/");
       return isAbsolute ? `/${joined}` : joined;
     };
-    const repoSheetTitleEl = () => repoPanel?.querySelector(".repo-sheet-title");
-    const repoSheetBackBtn = () => repoPanel?.querySelector(".repo-sheet-back");
+    const repoSheetTitleEl = () => sharedSheetTitleEl;
+    const repoSheetBackBtn = () => sharedSheetLeadingBtn;
     const repoBrowserMountEl = () => repoPanel?.querySelector(".repo-browser-mount");
     const repoBrowserTitleForPath = (rawPath) => {
       const path = normalizeRepoPath(rawPath);
@@ -421,14 +444,13 @@
     };
     const ensureRepoSheetDom = () => {
       if (!repoPanel) return false;
-      if (repoPanel.querySelector(".repo-sheet")) return true;
       ensureMobileSheetDom(repoPanel, {
         kind: "repo",
         title: "Repository",
         closeLabel: "Close repository",
         onClose: () => closeRepoSheet(),
-        leadingButtonHtml: `<button type="button" class="repo-sheet-back mobile-bottom-sheet-button" aria-label="Go to parent directory">${repoSheetBackIcon}</button>`,
-        afterBuild: ({ sheetFooter, contentEl }) => {
+        leading: { onClick: handleRepoSheetBack, ariaLabel: "Go to parent directory", html: repoSheetBackIcon },
+        afterBuild: ({ contentEl }) => {
           const stack = document.createElement("div");
           stack.className = "repo-stack";
           const browserView = document.createElement("div");
@@ -443,13 +465,6 @@
           previewFrame.title = "File preview";
           previewView.appendChild(previewFrame);
           stack.append(browserView, previewView);
-
-          sheetFooter.querySelector(".repo-sheet-back")?.addEventListener("click", (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            handleRepoSheetBack();
-          });
-          wireRepoPreviewControls(sheetFooter);
 
           let swipeStartX = 0;
           let swipeStartY = 0;
@@ -495,6 +510,7 @@
           contentEl.appendChild(stack);
         },
       });
+      wireRepoPreviewControls(sharedSheetFooter);
       syncRepoSheetBackBtn();
       return true;
     };

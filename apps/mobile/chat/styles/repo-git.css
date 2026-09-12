@@ -8,7 +8,7 @@
       font-weight: var(--body-weight);
     }
 
-    #repoPanel .repo-sheet-back[disabled] {
+    #repoPanel .mobile-bottom-sheet-leading[disabled] {
       visibility: hidden;
       pointer-events: none;
     }
@@ -106,10 +106,6 @@
     #repoPanel.sheet-closing .repo-sheet-panel .repo-browser {
       opacity: 0;
       transform: translateY(8px);
-    }
-
-    #gitPanel .git-sheet-title {
-      max-width: calc(100% - 72px);
     }
 
     #gitPanel .git-sheet-content {

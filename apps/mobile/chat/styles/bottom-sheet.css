@@ -163,11 +163,12 @@
 
     .mobile-bottom-sheet .mobile-bottom-sheet-footer {
       position: absolute;
-      bottom: 0;
+      bottom: 16px;
       left: 0;
       right: 0;
       z-index: 5;
       width: 100%;
+      height: var(--mobile-sheet-floating-height);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -193,6 +194,21 @@
 
     .mobile-bottom-sheet .mobile-bottom-sheet-close:active {
       transform: translate(-50%, -50%) scale(0.94);
+    }
+
+    .mobile-bottom-sheet .mobile-bottom-sheet-leading[hidden] {
+      display: none;
+    }
+
+    .mobile-bottom-sheet .mobile-bottom-sheet-leading {
+      position: absolute;
+      left: calc(14px + env(safe-area-inset-left, 0px));
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .mobile-bottom-sheet .mobile-bottom-sheet-leading:active {
+      transform: translateY(-50%) scale(0.94);
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-button svg {

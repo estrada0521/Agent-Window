@@ -81,7 +81,7 @@
     };
     const wireRepoPreviewControls = (sheetFooter) => {
       if (repoPreviewControlsWired || !sheetFooter) return;
-      const closeBtn = sheetFooter.querySelector(".repo-sheet-close");
+      const closeBtn = sheetFooter.querySelector(".mobile-bottom-sheet-close");
       if (!closeBtn) return;
       repoPreviewControlsWired = true;
       const htmlBtn = document.createElement("button");
