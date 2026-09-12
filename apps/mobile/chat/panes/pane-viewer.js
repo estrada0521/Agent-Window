@@ -6,6 +6,11 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
     const paneViewerEl = document.getElementById("paneViewer");
     const paneViewerTabs = document.getElementById("paneViewerTabs");
     const paneViewerCarousel = document.getElementById("paneViewerCarousel");
+    document.getElementById("paneViewerShortcuts")?.querySelectorAll(".pane-viewer-shortcut-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        void postShortcutCommand({ command_id: btn.dataset.shortcut, arg: "" });
+      });
+    });
     const scrollPaneSlideToBottom = (slide) => {
       if (!slide) return;
       requestAnimationFrame(() => {

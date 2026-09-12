@@ -35,6 +35,25 @@ CHAT_SHEET_PANELS_HTML = """
         <div class="pane-viewer-tabs" id="paneViewerTabs"></div>
         <div class="pane-viewer-carousel" id="paneViewerCarousel"></div>
       </div>
+      <div class="pane-viewer-shortcuts" id="paneViewerShortcuts">
+        <button type="button" class="pane-viewer-shortcut-btn" data-shortcut="up" aria-label="Up">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
+        </button>
+        <button type="button" class="pane-viewer-shortcut-btn" data-shortcut="down" aria-label="Down">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
+        </button>
+        <button type="button" class="pane-viewer-shortcut-btn" data-shortcut="left" aria-label="Left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="11 6 5 12 11 18"/></svg>
+        </button>
+        <button type="button" class="pane-viewer-shortcut-btn" data-shortcut="right" aria-label="Right">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>
+        </button>
+        <button type="button" class="pane-viewer-shortcut-btn" data-shortcut="enter" aria-label="Enter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>
+        </button>
+        <button type="button" class="pane-viewer-shortcut-btn pane-viewer-shortcut-btn-text" data-shortcut="esc" aria-label="Escape">Esc</button>
+        <button type="button" class="pane-viewer-shortcut-btn pane-viewer-shortcut-btn-text" data-shortcut="ctrlc" aria-label="Ctrl+C">^C</button>
+      </div>
     </div>
   </div>
 </div>

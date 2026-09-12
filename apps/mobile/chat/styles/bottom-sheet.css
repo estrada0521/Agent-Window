@@ -151,7 +151,7 @@
 
     .mobile-bottom-sheet .mobile-bottom-sheet-footer {
       position: absolute;
-      bottom: 26px;
+      bottom: var(--mobile-sheet-footer-bottom);
       left: 0;
       right: 0;
       z-index: 5;
