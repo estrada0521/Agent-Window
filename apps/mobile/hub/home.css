@@ -169,21 +169,11 @@
     .page-header .page-header-actions {
       gap: 0;
       position: fixed;
-      top: calc(env(safe-area-inset-top, 0px) + 27px);
-      right: calc(14px + env(safe-area-inset-right, 0px));
+      bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+      left: calc(14px + env(safe-area-inset-left, 0px));
       z-index: 160;
       margin-left: 0;
       min-height: var(--chrome-icon-btn-size);
-    }
-
-    html.hub-chat-peeking .page-header .page-header-actions {
-      right: calc(14px + env(safe-area-inset-right, 0px) + var(--hub-chat-peek-width, 25vw));
-    }
-
-    @media (min-width: 600px) {
-      html.hub-chat-peeking .page-header .page-header-actions {
-        right: calc(100vw - var(--hub-sidebar-width) + 14px + env(safe-area-inset-right, 0px));
-      }
     }
 
     .page-header .page-header-actions .page-menu-btn {
