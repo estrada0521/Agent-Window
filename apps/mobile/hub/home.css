@@ -598,8 +598,8 @@
       /* iOS-style: rounded to the device radius while detached / mid-slide, then
          snaps flush once it has finished seating (border-radius 0s, but delayed
          by the slide duration -- no radius animation, just a hard switch at the
-         end). The blur + corner clip live on .chat-frame-clip so this element's
-         drop shadow isn't blurred with them. */
+         end). The corner clip lives on .chat-frame-clip so this element's
+         drop shadow remains outside it. */
       border-radius: 47px;
       /* chat sits above the hub -- a faint shadow at constant strength while
          detached, then off the instant it seats flush (same hard-switch-at-end
@@ -617,21 +617,28 @@
       inset: 0;
       overflow: hidden;
       border-radius: inherit;
-      filter: blur(0);
-      transition: filter 440ms cubic-bezier(0.32, 0.72, 0, 1);
-      will-change: filter;
     }
 
-    #chatOverlay.overlay-closing .chat-frame-clip,
-    #chatOverlay.overlay-peeking .chat-frame-clip {
-      filter: blur(4px);
+    .chat-frame-clip::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(var(--bg-rgb), 0.48);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 440ms cubic-bezier(0.32, 0.72, 0, 1);
     }
 
-    #chatOverlay.overlay-closing .chat-frame-clip {
-      transition: filter 280ms cubic-bezier(0.32, 0.72, 0, 1);
+    #chatOverlay.overlay-closing .chat-frame-clip::after,
+    #chatOverlay.overlay-peeking .chat-frame-clip::after {
+      opacity: 1;
     }
 
-    /* A fine, crisp edge line above the blurred clip. */
+    #chatOverlay.overlay-closing .chat-frame-clip::after {
+      transition-duration: 280ms;
+    }
+
+    /* A fine, crisp edge line above the clipped frame. */
     #chatOverlay::after {
       content: "";
       position: absolute;
