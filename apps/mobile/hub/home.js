@@ -1,4 +1,6 @@
-    window.scrollTo(0, 250);
+    const HUB_SESSION_SCROLL_ORIGIN = document.querySelector(".mob-list-top-spacer").offsetHeight;
+    const resetHubSessionScroll = () => window.scrollTo(0, HUB_SESSION_SCROLL_ORIGIN);
+    resetHubSessionScroll();
     const _chatOverlay = document.getElementById("chatOverlay");
     const _chatFrame = document.getElementById("chatFrame");
     const _launchShell = document.getElementById("launchShell");
@@ -7,7 +9,6 @@
     let _hubLayoutRefW = 0;
     let _hubLayoutRefH = 0;
     let _hubVVBridgeHandler = null;
-    let _hubPreOverlayScrollY = 0;
     let _currentChatSessionName = "";
     let _currentChatUrl = "";
     let _chatFrameRenderReady = false;
@@ -123,6 +124,7 @@
         clearOverlaySettle();
         if (_chatOverlay.classList.contains("overlay-visible")) {
           _chatOverlay.classList.add("overlay-settled");
+          resetHubSessionScroll();
         }
       };
       _overlaySettleHandler = (event) => {
@@ -461,7 +463,6 @@
       _chatFrame.onload = onChatReady;
       _attachHubViewportBridge();
       updateMenuContext(true);
-      _hubPreOverlayScrollY = window.scrollY || document.documentElement.scrollTop || 0;
       document.documentElement.classList.add("hub-chat-overlay-active");
       document.body.classList.add("hub-chat-overlay-active");
       const _wasPeeking = _chatOverlay.classList.contains("overlay-peeking");
@@ -503,9 +504,6 @@
       _detachHubViewportBridge();
       _chatFrame.style.transition = "";
       _chatFrame.style.opacity = "1";
-      try {
-        window.scrollTo(0, _hubPreOverlayScrollY);
-      } catch (_) { }
       _chatFrame.onload = null;
       _chatOverlay.classList.remove("overlay-visible");
       clearOverlaySettle();
