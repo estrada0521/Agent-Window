@@ -217,7 +217,7 @@ def apply_color_tokens(
     text: str,
     *,
     theme: str = "dark",
-    mobile_theme_setting: str = "system",
+    mobile_theme_default: str = "system",
 ) -> str:
     palette = resolve_theme_palette(theme)
     dark_bg = str(palette["dark_bg"])
@@ -248,7 +248,7 @@ def apply_color_tokens(
 
     replacements: tuple[tuple[str, str], ...] = (
         ("__THEME__", str(palette["theme"])),
-        ("__THEME_MOBILE_SETTING__", mobile_theme_setting),
+        ("__THEME_MOBILE_DEFAULT__", mobile_theme_default),
         ("__COLOR_SCHEME__", str(palette["color_scheme"])),
         ("__DARK_BG__", dark_bg),
         ("__DARK_BG_CHANNELS__", dark_bg_channels),

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="__THEME__" data-theme-mobile-setting="__THEME_MOBILE_SETTING__">
+<html lang="en" data-theme="__THEME__" data-theme-mobile-default="__THEME_MOBILE_DEFAULT__">
 
 <head>
   <meta charset="utf-8">
@@ -14,7 +14,13 @@
   <link rel="apple-touch-icon" href="__APPLE_TOUCH_ICON_URL__">
   <script>
     (() => {
-      const setting = document.documentElement.dataset.themeMobileSetting;
+      const root = document.documentElement;
+      let setting = root.dataset.themeMobileDefault;
+      try {
+        const stored = String(localStorage.getItem("agent_window_theme_mobile") || "").trim().toLowerCase();
+        if (["system", "light", "dark"].includes(stored)) setting = stored;
+      } catch (_) {}
+      root.dataset.themeMobile = setting;
       document.documentElement.dataset.theme = setting === "system"
         ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
         : setting;

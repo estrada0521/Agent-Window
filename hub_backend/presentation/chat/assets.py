@@ -12,7 +12,7 @@ from .script_assets import (
 from .render import apply_chat_template_replacements, build_chat_template_replacements
 from .template_loader import load_chat_template
 from appearance.colors import apply_color_tokens
-from appearance.theme import MOBILE_THEME_SETTING
+from appearance.theme import MOBILE_THEME_DEFAULT
 from appearance.typography import DESKTOP_TEXT_SIZE, apply_font_tokens, chat_font_style
 from hub_backend.branding import APP_DISPLAY_NAME
 from ..hub.header_assets import PAGE_HEADER_CSS, render_page_header
@@ -141,6 +141,6 @@ def render_chat_html(
     html = apply_color_tokens(
         html,
         theme=theme,
-        mobile_theme_setting=MOBILE_THEME_SETTING,
+        mobile_theme_default=MOBILE_THEME_DEFAULT,
     )
     return html

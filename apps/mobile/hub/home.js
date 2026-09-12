@@ -40,9 +40,16 @@
         applyMobThemeGradientVars();
       }
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    const mobileThemeSetting = document.documentElement.dataset.themeMobileSetting;
+    const MOBILE_THEME_KEY = "agent_window_theme_mobile";
+    const currentMobileThemeSetting = () => {
+      const value = document.documentElement.dataset.themeMobile;
+      return ["system", "light", "dark"].includes(value)
+        ? value
+        : document.documentElement.dataset.themeMobileDefault;
+    };
     const resolveMobileTheme = (observedTheme = "") => {
-      if (mobileThemeSetting !== "system") return mobileThemeSetting;
+      const setting = currentMobileThemeSetting();
+      if (setting !== "system") return setting;
       if (observedTheme === "light" || observedTheme === "dark") return observedTheme;
       try { return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } catch (_) { return "dark"; }
     };
@@ -55,23 +62,35 @@
       // compositing layer for a frame after an appearance change.
       root.style.colorScheme = theme;
       applyMobThemeGradientVars();
-      try { _chatFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*"); } catch (_) {}
+      try {
+        _chatFrame?.contentWindow?.postMessage({
+          type: "hub-theme-changed",
+          theme,
+          themeMobile: currentMobileThemeSetting(),
+        }, "*");
+      } catch (_) {}
       return theme;
     };
+    const applyMobileThemeSetting = (setting) => {
+      if (!["system", "light", "dark"].includes(setting)) return;
+      document.documentElement.dataset.themeMobile = setting;
+      try { localStorage.setItem(MOBILE_THEME_KEY, setting); } catch (_) {}
+      publishMobileTheme();
+    };
     publishMobileTheme();
-    if (mobileThemeSetting === "system") {
-      const refreshSystemMobileTheme = () => publishMobileTheme();
-      try {
-        const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
-        if (systemThemeQuery.addEventListener) systemThemeQuery.addEventListener("change", refreshSystemMobileTheme);
-        else if (systemThemeQuery.addListener) systemThemeQuery.addListener(refreshSystemMobileTheme);
-      } catch (_) {}
-      window.addEventListener("pageshow", refreshSystemMobileTheme);
-      window.addEventListener("focus", refreshSystemMobileTheme);
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) refreshSystemMobileTheme();
-      });
-    }
+    const refreshSystemMobileTheme = () => {
+      if (currentMobileThemeSetting() === "system") publishMobileTheme();
+    };
+    try {
+      const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      if (systemThemeQuery.addEventListener) systemThemeQuery.addEventListener("change", refreshSystemMobileTheme);
+      else if (systemThemeQuery.addListener) systemThemeQuery.addListener(refreshSystemMobileTheme);
+    } catch (_) {}
+    window.addEventListener("pageshow", refreshSystemMobileTheme);
+    window.addEventListener("focus", refreshSystemMobileTheme);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) refreshSystemMobileTheme();
+    });
     const HUB_READY_TIMEOUT_MS = 5000;
     const CHAT_OVERLAY_CLOSE_MS = 300;
     function resetChatOverlayMotionStyles() {
@@ -241,6 +260,8 @@
         // the answer the framed chat page would otherwise have to guess
         // from headers alone -- guessing is what fails for iPad Safari.
         next.searchParams.set("view", "mobile");
+        next.searchParams.set("theme", resolveMobileTheme());
+        next.searchParams.set("theme_mobile", currentMobileThemeSetting());
         return next.origin === window.location.origin
           ? next.pathname + next.search + next.hash
           : next.toString();
@@ -322,6 +343,65 @@
       _chatOverlay.style.top = "";
       _chatOverlay.style.height = "";
     }
+    let skipThemeMenuBlur = false;
+    const resetThemeNativeMenu = () => {
+      const select = document.getElementById("themeNativeMenuSelect");
+      if (!select) return;
+      select.value = "";
+      select.style.top = "-9999px";
+      select.style.left = "-9999px";
+    };
+    const themeNativeMenuIsArmed = () => {
+      const select = document.getElementById("themeNativeMenuSelect");
+      return !!(select && select.options.length > 1 && select.style.top !== "-9999px");
+    };
+    const showArmedThemeNativeMenu = () => {
+      const select = document.getElementById("themeNativeMenuSelect");
+      if (!select || !themeNativeMenuIsArmed()) return false;
+      if (typeof select.showPicker === "function") {
+        try { select.showPicker(); return true; } catch (_) {}
+      }
+      try { select.focus({ preventScroll: true }); } catch (_) {
+        try { select.focus(); } catch (_) {}
+      }
+      try { select.click(); return true; } catch (_) {}
+      return false;
+    };
+    const ensureThemeNativeMenu = () => {
+      let select = document.getElementById("themeNativeMenuSelect");
+      if (select) return select;
+      select = document.createElement("select");
+      select.id = "themeNativeMenuSelect";
+      select.setAttribute("aria-hidden", "true");
+      select.tabIndex = -1;
+      select.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0.001;pointer-events:auto;appearance:none;-webkit-appearance:none;border:0;outline:none;background:transparent;color:transparent;font-size:13px;z-index:1000";
+      select.innerHTML = '<option value="" disabled selected>Theme</option><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option>';
+      select.addEventListener("change", () => {
+        const setting = String(select.value || "");
+        resetThemeNativeMenu();
+        applyMobileThemeSetting(setting);
+      });
+      select.addEventListener("blur", () => {
+        setTimeout(() => {
+          if (!skipThemeMenuBlur) resetThemeNativeMenu();
+        }, 0);
+      });
+      document.body.appendChild(select);
+      return select;
+    };
+    const openThemeNativeMenu = () => {
+      const select = ensureThemeNativeMenu();
+      const menuButton = document.getElementById("pageMenuBtn");
+      const rect = menuButton?.getBoundingClientRect() || { left: 0, top: 0, width: 1, height: 1 };
+      select.value = "";
+      select.style.left = `${Math.max(0, Math.round(rect.left))}px`;
+      select.style.top = `${Math.max(0, Math.round(rect.top))}px`;
+      select.style.width = `${Math.max(1, Math.round(rect.width || 1))}px`;
+      select.style.height = `${Math.max(1, Math.round(rect.height || 1))}px`;
+      skipThemeMenuBlur = true;
+      let opened = showArmedThemeNativeMenu();
+      if (!opened) setTimeout(() => { opened = showArmedThemeNativeMenu(); }, 0);
+    };
     function updateMenuContext(isChat) {
       const bridge = document.getElementById("pageNativeMenuBridge");
       if (!bridge) return;
@@ -329,11 +409,13 @@
         bridge.innerHTML = `
           <option value="" disabled selected>Menu</option>
           <option value="close-session">Close Session</option>
+          <option value="theme">Theme</option>
           <option value="restart-hub">Reload</option>
         `;
       } else {
         bridge.innerHTML = `
           <option value="" disabled selected>Menu</option>
+          <option value="theme">Theme</option>
           <option value="restart-hub">Reload</option>
         `;
       }
@@ -518,7 +600,7 @@
         _postHubLayoutToChat();
         return;
       }
-      if (e.data && e.data.type === "hub-mobile-system-theme-observed" && mobileThemeSetting === "system") {
+      if (e.data && e.data.type === "hub-mobile-system-theme-observed" && currentMobileThemeSetting() === "system") {
         const theme = e.data.theme === "light" ? "light" : (e.data.theme === "dark" ? "dark" : "");
         if (theme) publishMobileTheme(theme);
         return;
@@ -777,7 +859,15 @@
 
     (function () {
       var bridge = document.getElementById("pageNativeMenuBridge");
+      var menuButton = document.getElementById("pageMenuBtn");
       if (bridge) {
+        bridge.addEventListener("pointerdown", function (e) {
+          if (!themeNativeMenuIsArmed()) return;
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          skipThemeMenuBlur = false;
+          showArmedThemeNativeMenu();
+        });
         bridge.addEventListener("change", function (e) {
           var val = bridge.value;
           if (!val) return;
@@ -785,9 +875,25 @@
             e.stopImmediatePropagation();
             bridge.value = "";
             closeChatFrame();
+          } else if (val === "theme") {
+            e.stopImmediatePropagation();
+            bridge.value = "";
+            openThemeNativeMenu();
           }
         });
       }
+      if (menuButton) {
+        menuButton.addEventListener("click", function (e) {
+          if (!themeNativeMenuIsArmed()) return;
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          skipThemeMenuBlur = false;
+          showArmedThemeNativeMenu();
+        });
+      }
+      document.addEventListener("click", function () {
+        if (skipThemeMenuBlur) setTimeout(function () { skipThemeMenuBlur = false; }, 0);
+      });
     })();
 
 

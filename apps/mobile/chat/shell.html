@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="__THEME__" data-theme-mobile-setting="__THEME_MOBILE_SETTING__" data-mobile-chat="1">
+<html lang="en" data-theme="__THEME__" data-theme-mobile-default="__THEME_MOBILE_DEFAULT__" data-mobile-chat="1">
 
 <head>
   <meta charset="utf-8">
@@ -18,10 +18,19 @@
       document.documentElement.dataset.launchShell = "1";
     }
     (() => {
-      const setting = document.documentElement.dataset.themeMobileSetting;
-      document.documentElement.dataset.theme = setting === "system"
-        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-        : setting;
+      const root = document.documentElement;
+      const params = new URLSearchParams(window.location.search);
+      const requestedSetting = params.get("theme_mobile");
+      const setting = ["system", "light", "dark"].includes(requestedSetting)
+        ? requestedSetting
+        : root.dataset.themeMobileDefault;
+      const requestedTheme = params.get("theme");
+      root.dataset.themeMobile = setting;
+      root.dataset.theme = requestedTheme === "light" || requestedTheme === "dark"
+        ? requestedTheme
+        : (setting === "system"
+          ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+          : setting);
     })();
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/marked@18.0.12/lib/marked.umd.min.js"></script>

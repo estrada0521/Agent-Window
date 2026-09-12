@@ -3,7 +3,7 @@ from __future__ import annotations
 
 THEME_CHOICES = frozenset({"system", "light", "dark"})
 DESKTOP_THEME_DEFAULT = "system"
-MOBILE_THEME_SETTING = "dark"
+MOBILE_THEME_DEFAULT = "dark"
 SERVER_THEME_FALLBACK = "dark"
 
 

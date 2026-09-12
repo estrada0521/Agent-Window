@@ -213,9 +213,13 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     window.addEventListener("message", (e) => {
       if (!e.data || e.data.type !== "hub-theme-changed") return;
       document.documentElement.dataset.theme = e.data.theme === "light" ? "light" : "dark";
+      if (["system", "light", "dark"].includes(e.data.themeMobile)) {
+        document.documentElement.dataset.themeMobile = e.data.themeMobile;
+      }
     });
-    if (window.parent !== window && document.documentElement.dataset.themeMobileSetting === "system") {
+    if (window.parent !== window) {
       const reportObservedSystemTheme = () => {
+        if (document.documentElement.dataset.themeMobile !== "system") return;
         try {
           window.parent.postMessage({
             type: "hub-mobile-system-theme-observed",

@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, quote as url_quote, urlparse
 
 from hub_backend.runtime import HubRuntime
 from appearance.colors import apply_color_tokens, resolve_theme_palette
-from appearance.theme import DESKTOP_THEME_DEFAULT, MOBILE_THEME_SETTING
+from appearance.theme import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from backend_core.access.pwa import pwa_icon_entries as _pwa_icon_entries_impl
 from backend_core.access.settings import workspace_chat_port
@@ -238,7 +238,15 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <script>
     (() => {{
-      if (document.documentElement.dataset.view === "mobile") return;
+      if (document.documentElement.dataset.view === "mobile") {{
+        let setting = document.documentElement.dataset.themeMobile;
+        try {{
+          const stored = String(localStorage.getItem("agent_window_theme_mobile") || "").trim().toLowerCase();
+          if (["system", "light", "dark"].includes(stored)) setting = stored;
+        }} catch (_) {{}}
+        document.documentElement.dataset.themeMobile = setting;
+        return;
+      }}
       try {{
         const stored = String(localStorage.getItem("agent_window_theme_desktop") || "").trim().toLowerCase();
         if (["system", "light", "dark"].includes(stored)) {{
@@ -560,7 +568,7 @@ class Handler(BaseHTTPRequestHandler):
         page = (
             HUB_LAUNCH_SHELL_HTML
             .replace("__THEME_DESKTOP__", DESKTOP_THEME_DEFAULT)
-            .replace("__THEME_MOBILE__", MOBILE_THEME_SETTING)
+            .replace("__THEME_MOBILE__", MOBILE_THEME_DEFAULT)
             .replace("__VIEW_VARIANT__", variant)
         )
         page = page.replace(
@@ -651,7 +659,7 @@ class Handler(BaseHTTPRequestHandler):
         page = apply_font_tokens(page)
         self._send_html(
             200,
-            apply_color_tokens(page, mobile_theme_setting=MOBILE_THEME_SETTING),
+            apply_color_tokens(page, mobile_theme_default=MOBILE_THEME_DEFAULT),
         )
 
 
