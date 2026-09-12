@@ -139,7 +139,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       position: relative;
-      padding: var(--mobile-sheet-content-offset) 6px env(safe-area-inset-bottom, 0px);
+      padding: var(--mobile-sheet-content-offset) 6px var(--mobile-sheet-content-bottom-offset);
       -webkit-overflow-scrolling: touch;
       display: grid;
       grid-template-columns: 1fr;

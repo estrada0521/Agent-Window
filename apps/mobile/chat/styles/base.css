@@ -34,6 +34,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --glass-bg-72: rgba(var(--bg-rgb), 0.72);
       --glass-filter-18: blur(18px) saturate(160%);
       --glass-filter-20: blur(20px) saturate(180%);
+      --mobile-sheet-panel-height: 94dvh;
       --mobile-sheet-floating-height: 44px;
       --mobile-sheet-floating-bg: var(--panel-row-bg);
       --mobile-sheet-floating-hover-bg: var(--panel-row-hover-bg);
@@ -46,6 +47,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
          -webkit-mask-image read it. */
       --mobile-edge-fade-mask: black 0%, rgba(0, 0, 0, 0.981) 7%, rgba(0, 0, 0, 0.926) 14%, rgba(0, 0, 0, 0.838) 21%, rgba(0, 0, 0, 0.726) 29%, rgba(0, 0, 0, 0.597) 36%, rgba(0, 0, 0, 0.462) 43%, rgba(0, 0, 0, 0.329) 50%, rgba(0, 0, 0, 0.209) 57%, rgba(0, 0, 0, 0.117) 64%, rgba(0, 0, 0, 0.056) 71%, rgba(0, 0, 0, 0.019) 79%, transparent 86%;
       --mobile-sheet-content-offset: 72px;
+      --mobile-sheet-content-bottom-offset: calc(45px + env(safe-area-inset-bottom, 0px));
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);
       --surface: __GRAY_SURFACE__;
       --inline-code-border: __GRAY_INLINE_BORDER__;

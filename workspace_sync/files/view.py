@@ -130,8 +130,9 @@ def render_file_view(
     font_base = prefix or ""
     font_face_css = apply_font_tokens(_FONT_FACES_CSS.replace("__CHAT_BASE_PATH__", font_base))
     preview_top_offset = "max(48px, calc(21px + env(safe-area-inset-top)))" if embed else "0px"
+    preview_bottom_offset = "calc(45px + env(safe-area-inset-bottom))" if embed else "0px"
     base_css = (
-        f':root{{color-scheme: dark;--font-main:{MESSAGE_FONT};--font-code:{CODE_FONT};--text-size:{resolved_text_size}px;--text-line-height:{resolved_line_height}px;--body-weight:{"430" if is_light_theme else "300"};--tpad:{preview_top_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
+        f':root{{color-scheme: dark;--font-main:{MESSAGE_FONT};--font-code:{CODE_FONT};--text-size:{resolved_text_size}px;--text-line-height:{resolved_line_height}px;--body-weight:{"430" if is_light_theme else "300"};--tpad:{preview_top_offset};--bpad:{preview_bottom_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
         f"{font_face_css}"
         f"*{{box-sizing:border-box}}"
         f"html,body{{margin:0;background:{embed_bg};color:{pane_fg};font-family:sans-serif;display:flex;flex-direction:column;height:100vh;font-size:var(--text-size);line-height:var(--text-line-height);font-weight:var(--body-weight);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-synthesis:none}}"
@@ -179,7 +180,7 @@ def render_file_view(
             f'<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
             f'<title>{html_escape(filename)}</title>'
             f'<style>{base_css}'
-            f'.wrap{{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:16px;background:{embed_bg};padding-top:calc(16px + var(--tpad,0px))}}'
+            f'.wrap{{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:16px;background:{embed_bg};padding-top:calc(16px + var(--tpad,0px));padding-bottom:calc(16px + var(--bpad,0px))}}'
             f'@media (max-width: 480px) {{.wrap{{padding-left:0;padding-right:0}}}}'
             f'img{{max-width:100%;max-height:100%;object-fit:contain}}</style></head>'
             f'<body><div class="wrap"><img src="{raw_url}" alt="{html_escape(filename)}"></div></body></html>'
@@ -187,20 +188,20 @@ def render_file_view(
     if ext in runtime.PDF_EXTS:
         return (
             f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
-            f'<style>{base_css}.wrap{{flex:1;min-height:0;background:{embed_bg};padding-top:var(--tpad,0px)}}iframe{{width:100%;height:100%;border:0;background:{embed_bg}}}</style></head>'
+            f'<style>{base_css}.wrap{{flex:1;min-height:0;background:{embed_bg};padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}}iframe{{width:100%;height:100%;border:0;background:{embed_bg}}}</style></head>'
             f'<body><div class="wrap"><iframe src="{raw_url}" title="{html_escape(filename)}"></iframe></div></body></html>'
         )
     if ext in runtime.VIDEO_EXTS:
         return (
             f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
-            f'<style>{base_css}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;background:{embed_bg};padding-top:var(--tpad,0px)}}'
+            f'<style>{base_css}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;background:{embed_bg};padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}}'
             f'video{{max-width:100%;max-height:100%}}</style></head>'
             f'<body><div class="wrap"><video controls src="{raw_url}"></video></div></body></html>'
         )
     if ext in runtime.AUDIO_EXTS:
         return (
             f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
-            f'<style>{base_css}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;background:{embed_bg};padding-top:var(--tpad,0px)}}'
+            f'<style>{base_css}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;background:{embed_bg};padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}}'
             f'audio{{width:100%;max-width:500px}}</style></head>'
             f'<body><div class="wrap"><audio controls src="{raw_url}"></audio></div></body></html>'
         )
@@ -280,16 +281,16 @@ def render_file_view(
             '.html-preview-panels{flex:1;min-height:0;position:relative}'
             '.html-preview-panel{display:none;width:100%;height:100%}'
             '.html-preview-panel.active{display:flex}'
-            '.html-preview-panel-web{min-height:0;flex-direction:column;padding-top:var(--tpad,0px)}'
+            '.html-preview-panel-web{min-height:0;flex-direction:column;padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}'
             '.html-preview-panel-web iframe{flex:1;min-height:0;width:100%;border:0;background:white}'
             '.html-preview-panel-text{min-height:0;flex-direction:column}'
             f'.html-preview-text-wrap{{--preview-gutter-width:{gutter_width}px;flex:1;min-height:0;display:flex;min-width:0;position:relative;overflow:hidden;background:transparent}}'
-            '.html-preview-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--tpad,0px)}'
+            '.html-preview-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}'
             '.html-preview-gutter-inner{min-width:0;will-change:transform}'
             '.html-preview-gutter-table{border-collapse:collapse;width:100%;table-layout:fixed;font-family:var(--font-code);font-size:var(--text-size);line-height:var(--text-line-height)}'
             '.html-preview-gutter-table td{padding:0;vertical-align:top}'
             f'.html-preview-gutter-table .ln{{padding:0 {gutter_padding_right}px 0 {gutter_padding_left}px;width:{gutter_width}px;min-width:{gutter_width}px;box-sizing:border-box;text-align:right;color:{pane_ln_color};user-select:none;font-variant-numeric:tabular-nums;line-height:var(--text-line-height);font-family:var(--font-code);font-size:var(--text-size);background:transparent}}'
-            '.html-preview-text-scroll{position:relative;z-index:1;flex:1;min-height:0;min-width:0;width:auto;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:auto;padding-top:var(--tpad,0px)}'
+            '.html-preview-text-scroll{position:relative;z-index:1;flex:1;min-height:0;min-width:0;width:auto;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:auto;padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}'
             '.html-preview-text-table{border-collapse:collapse;min-width:100%;width:max-content;table-layout:auto;font-family:var(--font-code);font-size:var(--text-size);line-height:var(--text-line-height)}'
             '.html-preview-text-table td{padding:0;vertical-align:top}'
             '.html-preview-text-table .lc{padding-left:12px;padding-right:min(7vw,52px)}'
@@ -321,12 +322,12 @@ def render_file_view(
             f'<!DOCTYPE html><html{preview_shell_attrs(gutter_width=gutter_width, title_offset=title_offset)}><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}body{{background:{embed_bg};color:{pane_fg}}}'
             f'.view-container{{--preview-gutter-width:{gutter_width}px;height:{height};display:flex;min-width:0;position:relative;overflow:hidden;background:{embed_bg}}}'
-            '.code-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--tpad,0px)}'
+            '.code-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}'
             '.code-gutter-inner{min-width:0;will-change:transform}'
             '.code-gutter-table{border-collapse:collapse;width:100%;table-layout:fixed;font-family:var(--font-code);font-size:var(--text-size);line-height:var(--text-line-height)}'
             '.code-gutter-table td{padding:0;vertical-align:top}'
             f'.code-gutter-table .ln{{padding:0 {gutter_padding_right}px 0 {gutter_padding_left}px;width:{gutter_width}px;min-width:{gutter_width}px;box-sizing:border-box;text-align:right;color:{pane_ln_color};user-select:none;font-variant-numeric:tabular-nums;line-height:var(--text-line-height);font-family:var(--font-code);font-size:var(--text-size);background:transparent}}'
-            '.code-scroll{position:relative;z-index:1;flex:1;min-width:0;min-height:0;width:auto;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:auto;padding-top:var(--tpad,0px)}'
+            '.code-scroll{position:relative;z-index:1;flex:1;min-width:0;min-height:0;width:auto;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:auto;padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}'
             '.code-table{border-collapse:collapse;min-width:100%;width:max-content;table-layout:auto;font-family:var(--font-code);font-size:var(--text-size);line-height:var(--text-line-height)}'
             '.code-table td{padding:0;vertical-align:top}'
             '.code-table .lc{padding-left:12px;padding-right:min(7vw,52px)}'
@@ -350,12 +351,12 @@ def render_file_view(
             f'<!DOCTYPE html><html{preview_shell_attrs(gutter_width=gutter_width, title_offset=title_offset)}><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}body{{background:{embed_bg};color:{pane_fg}}}'
             f'.view-container{{--preview-gutter-width:{gutter_width}px;height:{height};display:flex;min-width:0;position:relative;overflow:hidden;background:{embed_bg}}}'
-            '.code-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--tpad,0px)}'
+            '.code-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}'
             '.code-gutter-inner{min-width:0;will-change:transform}'
             '.code-gutter-table{border-collapse:collapse;width:100%;table-layout:fixed;font-family:var(--font-code);font-size:var(--text-size);line-height:var(--text-line-height)}'
             '.code-gutter-table td{padding:0;vertical-align:top}'
             f'.code-gutter-table .ln{{padding:0 {gutter_padding_right}px 0 {gutter_padding_left}px;width:{gutter_width}px;min-width:{gutter_width}px;box-sizing:border-box;text-align:right;color:{pane_ln_color};user-select:none;font-variant-numeric:tabular-nums;line-height:var(--text-line-height);font-family:var(--font-code);font-size:var(--text-size);background:transparent}}'
-            '.code-scroll{position:relative;z-index:1;flex:1;min-width:0;min-height:0;width:auto;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:auto;padding-top:var(--tpad,0px)}'
+            '.code-scroll{position:relative;z-index:1;flex:1;min-width:0;min-height:0;width:auto;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:auto;padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}'
             '.code-table{border-collapse:collapse;min-width:100%;width:max-content;table-layout:auto;font-family:var(--font-code);font-size:var(--text-size);line-height:var(--text-line-height)}'
             '.code-table td{padding:0;vertical-align:top}'
             '.code-table .lc{padding-left:12px;padding-right:min(7vw,52px)}'
@@ -408,9 +409,10 @@ def render_file_view(
             'html,body{background:transparent;color:var(--fg)}'
             '.md-preview-shell{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:transparent;scrollbar-gutter:auto;padding-top:0}'
         )
-        markdown_top_padding = "calc(14px + max(48px, calc(21px + env(safe-area-inset-top))))" if embed else "14px"
+        markdown_top_padding = "calc(14px + var(--tpad,0px))" if embed else "14px"
+        markdown_bottom_padding = "calc(18px + var(--bpad,0px))" if embed else "18px"
         markdown_layout_css = (
-            f'.md-preview-shell>.md-body{{padding:{markdown_top_padding} 16px 18px}}'
+            f'.md-preview-shell>.md-body{{padding:{markdown_top_padding} 16px {markdown_bottom_padding}}}'
         )
         return (
             f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-mobile-chat="1" data-mobile="1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
@@ -733,7 +735,7 @@ applyPreviewTheme("dark");
     return (
         f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
         f'<style>{base_css}body{{background:{embed_bg};color:{pane_fg};font-family:var(--font-code);font-size:13px}}'
-        f'pre{{margin:0;padding:16px;white-space:pre;overflow:auto;height:{pre_height};background:{embed_bg};padding-top:calc(16px + var(--tpad,0px))}}'
+        f'pre{{margin:0;padding:16px;white-space:pre;overflow:auto;height:{pre_height};background:{embed_bg};padding-top:calc(16px + var(--tpad,0px));padding-bottom:calc(16px + var(--bpad,0px))}}'
         '</style></head>'
         f'<body><pre>{escaped}</pre></body></html>'
     )

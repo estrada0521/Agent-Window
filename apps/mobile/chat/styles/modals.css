@@ -18,6 +18,10 @@
       pointer-events: none;
     }
 
+    #paneTracePanel .mobile-bottom-sheet-panel {
+      --mobile-sheet-panel-height: 85dvh;
+    }
+
     .shell>.page-header>#paneTracePanel.open {
       pointer-events: auto;
     }

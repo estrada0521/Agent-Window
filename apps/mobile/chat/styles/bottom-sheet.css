@@ -59,8 +59,8 @@
 
     .mobile-bottom-sheet > .mobile-bottom-sheet-panel {
       width: 100%;
-      height: min(95dvh, calc(100dvh - 8px));
-      max-height: 95dvh;
+      height: min(var(--mobile-sheet-panel-height), calc(100dvh - 8px));
+      max-height: var(--mobile-sheet-panel-height);
       display: flex;
       flex-direction: column;
       position: relative;
@@ -163,7 +163,7 @@
 
     .mobile-bottom-sheet .mobile-bottom-sheet-footer {
       position: absolute;
-      bottom: 16px;
+      bottom: 26px;
       left: 0;
       right: 0;
       z-index: 5;
