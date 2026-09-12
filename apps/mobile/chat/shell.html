@@ -17,10 +17,12 @@
     if (new URLSearchParams(window.location.search).get("launch_shell") === "1") {
       document.documentElement.dataset.launchShell = "1";
     }
-    // Mobile has no persisted appearance choice; resolve System before the
-    // first stylesheet applies so the server's dark placeholder never flashes.
-    document.documentElement.dataset.theme =
-      window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    (() => {
+      const setting = document.documentElement.dataset.themeMobileSetting;
+      document.documentElement.dataset.theme = setting === "system"
+        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : setting;
+    })();
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/marked@18.0.12/lib/marked.umd.min.js"></script>
 __CHAT_MAIN_STYLE_BLOCK____CHAT_SHELL_STYLE_BLOCK__  <style id="chatFontSettingsStyle">

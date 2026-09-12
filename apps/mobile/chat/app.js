@@ -214,7 +214,7 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       if (!e.data || e.data.type !== "hub-theme-changed") return;
       document.documentElement.dataset.theme = e.data.theme === "light" ? "light" : "dark";
     });
-    if (window.parent !== window) {
+    if (window.parent !== window && document.documentElement.dataset.themeMobileSetting === "system") {
       const reportObservedSystemTheme = () => {
         try {
           window.parent.postMessage({

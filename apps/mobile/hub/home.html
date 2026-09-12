@@ -14,6 +14,14 @@
   <link rel="apple-touch-icon" href="__APPLE_TOUCH_ICON_URL__">
   <script>
     (() => {
+      const setting = document.documentElement.dataset.themeMobileSetting;
+      document.documentElement.dataset.theme = setting === "system"
+        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : setting;
+    })();
+  </script>
+  <script>
+    (() => {
       if (!("serviceWorker" in navigator)) return;
       const isLocalHost = location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.hostname === "[::1]";
       if (!(window.isSecureContext || isLocalHost)) return;

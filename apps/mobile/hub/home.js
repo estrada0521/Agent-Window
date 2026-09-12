@@ -40,13 +40,14 @@
         applyMobThemeGradientVars();
       }
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    const resolveMobileTheme = () => {
+    const mobileThemeSetting = document.documentElement.dataset.themeMobileSetting;
+    const resolveMobileTheme = (observedTheme = "") => {
+      if (mobileThemeSetting !== "system") return mobileThemeSetting;
+      if (observedTheme === "light" || observedTheme === "dark") return observedTheme;
       try { return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } catch (_) { return "dark"; }
     };
     const publishMobileTheme = (observedTheme = "") => {
-      const theme = observedTheme === "light" || observedTheme === "dark"
-        ? observedTheme
-        : resolveMobileTheme();
+      const theme = resolveMobileTheme(observedTheme);
       const root = document.documentElement;
       root.dataset.theme = theme;
       // Do this synchronously as well as through the CSS selector.  Safari's
@@ -58,19 +59,19 @@
       return theme;
     };
     publishMobileTheme();
-    const refreshSystemMobileTheme = () => publishMobileTheme();
-    try {
-      const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      if (systemThemeQuery.addEventListener) systemThemeQuery.addEventListener("change", refreshSystemMobileTheme);
-      else if (systemThemeQuery.addListener) systemThemeQuery.addListener(refreshSystemMobileTheme);
-    } catch (_) {}
-    // iOS may defer a media-query change while an installed PWA is in the
-    // background. Reconcile on every return to the Hub.
-    window.addEventListener("pageshow", refreshSystemMobileTheme);
-    window.addEventListener("focus", refreshSystemMobileTheme);
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) refreshSystemMobileTheme();
-    });
+    if (mobileThemeSetting === "system") {
+      const refreshSystemMobileTheme = () => publishMobileTheme();
+      try {
+        const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        if (systemThemeQuery.addEventListener) systemThemeQuery.addEventListener("change", refreshSystemMobileTheme);
+        else if (systemThemeQuery.addListener) systemThemeQuery.addListener(refreshSystemMobileTheme);
+      } catch (_) {}
+      window.addEventListener("pageshow", refreshSystemMobileTheme);
+      window.addEventListener("focus", refreshSystemMobileTheme);
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) refreshSystemMobileTheme();
+      });
+    }
     const HUB_READY_TIMEOUT_MS = 5000;
     const CHAT_OVERLAY_CLOSE_MS = 300;
     function resetChatOverlayMotionStyles() {
@@ -517,8 +518,7 @@
         _postHubLayoutToChat();
         return;
       }
-      if (e.data && e.data.type === "hub-mobile-system-theme-observed") {
-        // A live OS-preference change relayed from the chat iframe.
+      if (e.data && e.data.type === "hub-mobile-system-theme-observed" && mobileThemeSetting === "system") {
         const theme = e.data.theme === "light" ? "light" : (e.data.theme === "dark" ? "dark" : "");
         if (theme) publishMobileTheme(theme);
         return;
