@@ -32,7 +32,7 @@
       min-height: 54px;
       --composer-row-h: 54px;
       --composer-line-h: 24px;
-      --composer-btn-d: 34px;
+      --composer-btn-d: 28px;
       --composer-btn-bottom: 8px;
       --composer-pad-top: calc(var(--composer-row-h) - var(--composer-btn-bottom) - var(--composer-btn-d) / 2 - var(--composer-line-h) / 2);
     }

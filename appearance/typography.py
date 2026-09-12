@@ -27,6 +27,9 @@ MOBILE_LIGHT_BODY_WEIGHT = 420
 MOBILE_LIGHT_CODE_WEIGHT = 500
 MOBILE_DARK_BODY_WEIGHT = 300
 MOBILE_DARK_CODE_WEIGHT = 200
+FILE_PREVIEW_CODE_FONT = CODE_FONT
+FILE_PREVIEW_LIGHT_CODE_WEIGHT = 550
+FILE_PREVIEW_DARK_CODE_WEIGHT = 250
 # Weight of a colored inline link (file link or external link) -- same for
 # desktop and mobile, so markdown-body.css isn't split by [data-mobile="1"].
 LINK_LIGHT_WEIGHT = 650
