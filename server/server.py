@@ -168,11 +168,25 @@ def _send_or_enqueue_message(
 
 
 def _clean_env():
+    # reload-chat replaces this whole process, but tmux panes keep running
+    # underneath it. "Running" is a transient display, not durable truth, so
+    # handing the next process a snapshot here (rather than tmux state or a
+    # file -- no per-event cost) is fine even though it can go briefly stale.
+    # See tests/test_reload_running_agents.py before deleting this.
     env = os.environ.copy()
     if runtime is None:
         raise RuntimeError("chat runtime is unavailable during reload")
     env[RELOAD_RUNNING_AGENTS_ENV] = json.dumps(runtime.running_agents_for_reload())
     return env
+
+
+def _validated_reload_running_agents(raw: str) -> list[str]:
+    agents = json.loads(raw) if raw else []
+    if not isinstance(agents, list) or any(
+        not isinstance(agent, str) or not agent for agent in agents
+    ):
+        raise RuntimeError(f"invalid {RELOAD_RUNNING_AGENTS_ENV}")
+    return agents
 
 
 def initialize_from_argv(argv: list[str] | None = None) -> None:
@@ -201,12 +215,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     hub_port = int((_repo_root / "hub-port").read_text().strip())
     PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
     PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
-    reload_running_raw = os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, "")
-    reload_running_agents = json.loads(reload_running_raw) if reload_running_raw else []
-    if not isinstance(reload_running_agents, list) or any(
-        not isinstance(agent, str) or not agent for agent in reload_running_agents
-    ):
-        raise RuntimeError(f"invalid {RELOAD_RUNNING_AGENTS_ENV}")
+    reload_running_agents = _validated_reload_running_agents(os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, ""))
     runtime = ChatRuntime(
         port=port,
         workspace=workspace,

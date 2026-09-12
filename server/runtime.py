@@ -83,6 +83,7 @@ class ChatRuntime:
         # live tmux session by its native session working directory.
         self.tmux_session_name = _resolve_tmux_session_name_impl(self) or ""
         self.session_is_active = bool(self.tmux_session_name)
+        # Seeded from server._clean_env()'s reload handoff -- see its comment.
         self._agent_running = set(initial_running_agents or [])
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(
