@@ -109,6 +109,7 @@
     }
 
     @media (min-width: 600px) {
+      html.hub-chat-ui-active,
       html.hub-chat-peeking {
         --hub-sidebar-width: min(400px, 75vw);
       }
@@ -238,12 +239,17 @@
       filter: blur(4px);
     }
 
+    html.hub-chat-ui-active .hub-mobile-tagline,
     html.hub-chat-peeking .hub-mobile-tagline {
       right: var(--hub-chat-peek-width, 25vw);
+    }
+
+    html.hub-chat-peeking .hub-mobile-tagline {
       transition-duration: 280ms;
     }
 
     @media (min-width: 600px) {
+      html.hub-chat-ui-active .hub-mobile-tagline,
       html.hub-chat-peeking .hub-mobile-tagline {
         right: auto;
         width: var(--hub-sidebar-width);
