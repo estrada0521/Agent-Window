@@ -197,12 +197,7 @@ __CHAT_INCLUDE:../upload-attached-files.js__
     }
 
     const updateSendBtnVisibility = () => {
-      if (!sessionActive) {
-        if (sendBtn) sendBtn.classList.remove("visible");
-        return;
-      }
-      const hasContent = messageInput.value.trim().length > 0 || pendingAttachments.length > 0;
-      if (sendBtn) sendBtn.classList.toggle("visible", hasContent);
+      if (sendBtn) sendBtn.classList.toggle("visible", sessionActive);
     };
     messageInput.addEventListener("input", updateSendBtnVisibility);
     messageInput.addEventListener("input", saveComposerDraft);

@@ -83,6 +83,7 @@
       composerOverlay.classList.remove("closing");
       document.body.classList.add("composer-overlay-open");
       updateScrollBtn();
+      if (typeof updateSendBtnVisibility === "function") updateSendBtnVisibility();
       // Mobile's focus hack (position: fixed, opacity: 0) has to run and
       // settle before .visible starts the slide/fade -- doing it after would
       // fight the reveal transition. Desktop has no such constraint, so it
