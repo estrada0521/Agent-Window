@@ -32,14 +32,14 @@
       min-height: 54px;
       --composer-row-h: 54px;
       --composer-line-h: 24px;
-      --composer-btn-d: 38px;
+      --composer-btn-d: 34px;
       --composer-btn-bottom: 8px;
       --composer-pad-top: calc(var(--composer-row-h) - var(--composer-btn-bottom) - var(--composer-btn-d) / 2 - var(--composer-line-h) / 2);
     }
 
     .send-btn {
       position: absolute;
-      left: 4px;
+      left: calc(23px - var(--composer-btn-d) / 2);
       bottom: var(--composer-btn-bottom);
       width: var(--composer-btn-d);
       height: var(--composer-btn-d);
@@ -57,11 +57,14 @@
       -webkit-tap-highlight-color: transparent;
       opacity: 0;
       pointer-events: none;
+      transform: translateX(-16px);
+      transition: opacity 180ms ease, transform 180ms ease;
     }
 
     .send-btn.visible {
       opacity: 1;
       pointer-events: auto;
+      transform: translateX(0);
     }
 
     .send-btn svg {
