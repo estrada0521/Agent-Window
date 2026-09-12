@@ -36,8 +36,8 @@
       --icon-hover: rgb(35, 35, 35);
       --line: rgba(0, 0, 0, 0.10);
       --line-strong: rgba(0, 0, 0, 0.18);
-      --session-hover-bg: rgba(0, 0, 0, 0.04);
-      --session-selected-bg: rgba(0, 0, 0, 0.07);
+      --session-hover-bg: rgb(233, 233, 231);
+      --session-selected-bg: rgb(226, 226, 224);
       --chat-overlay-glow: 0 0 3px rgba(0, 0, 0, 0.18), 0 0 11px rgba(0, 0, 0, 0.09);
       --session-danger-fg: rgb(207, 34, 46);
       --session-success-fg: rgb(36, 157, 66);
@@ -58,8 +58,8 @@
       --icon-hover: rgb(190, 190, 190);
       --line: rgba(255, 255, 255, 0.07);
       --line-strong: rgba(255, 255, 255, 0.12);
-      --session-hover-bg: rgba(255, 255, 255, 0.028);
-      --session-selected-bg: rgba(255, 255, 255, 0.045);
+      --session-hover-bg: rgb(24, 24, 24);
+      --session-selected-bg: rgb(28, 28, 28);
       --chat-overlay-glow: 0 0 5px rgba(0, 0, 0, 0.34), 0 0 16px rgba(0, 0, 0, 0.2);
       --session-danger-fg: rgb(204, 47, 38);
       --session-success-fg: rgb(41, 178, 75);
@@ -348,11 +348,6 @@
       background: var(--session-selected-bg);
     }
 
-    .mob-session-row:hover,
-    .mob-session-row:active {
-      background: var(--bg);
-    }
-
     .mob-row-head {
       display: flex;
       align-items: center;
@@ -543,16 +538,11 @@
     }
 
     .mob-session-row {
-      background: var(--bg);
       opacity: 1;
       position: relative;
       z-index: 1;
       will-change: transform;
       border-bottom: none;
-    }
-
-    html[data-theme="dark"] .mob-session-row {
-      background: var(--bg);
     }
 
     .launch-shell {

@@ -556,8 +556,6 @@
       // A slow, gently decelerating snap so the reveal reads as deliberate
       // rather than snappy.
       const SNAP_EASE = "transform 720ms cubic-bezier(.2, .85, .14, 1)";
-      // Match the CSS: .swipe-act width, .swipe-act-tray gap and right inset.
-      // The row slides exactly far enough to uncover the tray, no more.
       const ACT_W = 52;
       const ACT_GAP = 8;
       const TRAY_INSET = 10;
