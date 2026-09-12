@@ -13,81 +13,6 @@
       pointer-events: none;
     }
 
-    #repoPanel .repo-sheet-nav-bar.repo-sheet-nav-at-root {
-      display: flex;
-    }
-
-    #repoPanel .repo-sheet-nav-bar.repo-sheet-nav-at-root .repo-sheet-back {
-      display: none;
-    }
-
-    #repoPanel .repo-sheet-nav-bar.repo-sheet-nav-at-root .repo-sheet-title {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: auto;
-      max-width: calc(100% - 112px);
-      min-width: 0;
-      transform: translate(-50%, -50%);
-      padding: 0 10px;
-      text-align: center;
-    }
-
-    #repoPanel .repo-sheet-nav-bar.repo-sheet-nav-at-root .repo-preview-actions {
-      margin-left: auto;
-    }
-
-    #repoPanel .repo-sheet-nav-bar {
-      display: grid;
-      grid-template-columns: var(--mobile-sheet-floating-height) minmax(0, 1fr) max-content;
-      column-gap: 8px;
-    }
-
-    #repoPanel .repo-sheet-back {
-      grid-column: 1;
-    }
-
-    #repoPanel .repo-sheet-title {
-      position: static;
-      grid-column: 2;
-      width: 100%;
-      max-width: none;
-      min-width: 0;
-      transform: none;
-      padding: 0;
-      text-align: left;
-    }
-
-    /* Leaving root: the back button and folder name slide in leftward from
-       around the centre. Fires on the class drop, not on deeper navigation. */
-    #repoPanel .repo-sheet-nav-bar:not(.repo-sheet-nav-at-root) .repo-sheet-back,
-    #repoPanel .repo-sheet-nav-bar:not(.repo-sheet-nav-at-root) .repo-sheet-title {
-      animation: repoSheetNavRevealLeft 200ms cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    @keyframes repoSheetNavRevealLeft {
-      0% {
-        opacity: 0;
-        transform: translateX(30px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      #repoPanel .repo-sheet-nav-bar:not(.repo-sheet-nav-at-root) .repo-sheet-back,
-      #repoPanel .repo-sheet-nav-bar:not(.repo-sheet-nav-at-root) .repo-sheet-title {
-        animation: none;
-      }
-    }
-
-    #repoPanel .repo-preview-actions {
-      grid-column: 3;
-      margin-left: 0;
-    }
-
     .repo-stack {
       position: relative;
       flex: 1 1 auto;
@@ -142,19 +67,22 @@
       background: transparent;
     }
 
-    .repo-preview-actions {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      flex: 0 0 auto;
-      margin-left: auto;
+    .repo-preview-html-mode {
+      position: absolute;
+      right: calc(50% + 30px);
+      top: 50%;
+      transform: translateY(-50%);
     }
 
-    .repo-preview-actions .repo-preview-html-mode[hidden] {
+    .repo-preview-html-mode:active {
+      transform: translateY(-50%) scale(0.94);
+    }
+
+    .repo-preview-html-mode[hidden] {
       display: none;
     }
 
-    .repo-preview-actions .repo-preview-html-mode svg {
+    .repo-preview-html-mode svg {
       width: 18px;
       height: 18px;
       stroke-width: 1.5;

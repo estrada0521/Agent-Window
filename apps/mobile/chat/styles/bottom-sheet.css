@@ -187,11 +187,12 @@
     .mobile-bottom-sheet .mobile-bottom-sheet-close {
       position: absolute;
       left: 50%;
-      transform: translateX(-50%);
+      top: 50%;
+      transform: translate(-50%, -50%);
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-close:active {
-      transform: translateX(-50%) scale(0.94);
+      transform: translate(-50%, -50%) scale(0.94);
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-button svg {
@@ -207,7 +208,7 @@
       transform: translate(-50%, -50%);
       height: var(--mobile-sheet-floating-height);
       line-height: var(--mobile-sheet-floating-height);
-      max-width: calc(100% - 112px);
+      max-width: calc(100% - 32px);
       overflow: hidden;
       text-overflow: ellipsis;
       text-align: center;

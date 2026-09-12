@@ -385,15 +385,12 @@
     const syncRepoSheetBackBtn = () => {
       const backBtn = repoSheetBackBtn();
       if (!backBtn) return;
-      const navBar = backBtn.closest(".repo-sheet-nav-bar");
       if (repoPanel?.classList.contains("repo-mode-preview")) {
-        navBar?.classList.remove("repo-sheet-nav-at-root");
         backBtn.disabled = false;
         backBtn.setAttribute("aria-label", "Back to directory");
         return;
       }
       const atRoot = !normalizeRepoPath(_repoBrowserPath);
-      navBar?.classList.toggle("repo-sheet-nav-at-root", atRoot);
       backBtn.disabled = atRoot;
       backBtn.setAttribute("aria-label", atRoot ? "No parent directory" : "Go to parent directory");
     };
