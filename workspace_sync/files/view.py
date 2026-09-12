@@ -133,7 +133,7 @@ def render_file_view(
     font_base = prefix or ""
     font_face_css = apply_font_tokens(_FONT_FACES_CSS.replace("__CHAT_BASE_PATH__", font_base))
     preview_top_offset = "max(32px, calc(10px + env(safe-area-inset-top)))" if embed else "0px"
-    preview_bottom_offset = "calc(32px + env(safe-area-inset-bottom))" if embed else "0px"
+    preview_bottom_offset = "calc(20px + env(safe-area-inset-bottom) + env(safe-area-inset-bottom))" if embed else "0px"
     base_css = (
         f':root{{color-scheme: dark;--font-main:{MESSAGE_FONT};--font-code:{CODE_FONT};--file-preview-code-font:{FILE_PREVIEW_CODE_FONT};--file-preview-code-weight:{FILE_PREVIEW_LIGHT_CODE_WEIGHT if is_light_theme else FILE_PREVIEW_DARK_CODE_WEIGHT};--text-size:{resolved_text_size}px;--text-line-height:{resolved_line_height}px;--body-weight:{"430" if is_light_theme else "300"};--tpad:{preview_top_offset};--bpad:{preview_bottom_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
         f"{font_face_css}"

@@ -163,11 +163,7 @@
       gap: 8px;
       background: transparent;
       pointer-events: none;
-      padding:
-        6px
-        calc(14px + env(safe-area-inset-right, 0px))
-        calc(6px + env(safe-area-inset-bottom, 0px))
-        calc(14px + env(safe-area-inset-left, 0px));
+      padding: 0;
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-footer .mobile-bottom-sheet-button {

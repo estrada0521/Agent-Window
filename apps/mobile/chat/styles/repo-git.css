@@ -114,7 +114,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
-      padding: var(--mobile-sheet-content-offset) 4px calc(10px + env(safe-area-inset-bottom, 0px));
+      padding: var(--mobile-sheet-content-offset) 4px var(--mobile-sheet-compact-bottom-offset);
       -webkit-overflow-scrolling: touch;
       opacity: 0;
       transform: translateY(8px);
