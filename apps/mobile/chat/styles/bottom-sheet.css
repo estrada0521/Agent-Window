@@ -97,6 +97,28 @@
       mask-image: linear-gradient(to bottom, var(--mobile-edge-fade-mask));
     }
 
+    .mobile-bottom-sheet > .mobile-bottom-sheet-panel::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--bottom-sheet-top-gradient-height, 100px);
+      z-index: 4;
+      pointer-events: none;
+      background: linear-gradient(to top,
+        rgba(var(--bottom-sheet-top-gradient-rgb), 0.84) 0%,
+        rgba(var(--bottom-sheet-top-gradient-rgb), 0.68) 22%,
+        rgba(var(--bottom-sheet-top-gradient-rgb), 0.38) 52%,
+        rgba(var(--bottom-sheet-top-gradient-rgb), 0.12) 74%,
+        rgba(var(--bottom-sheet-top-gradient-rgb), 0) 100%
+      );
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      -webkit-mask-image: linear-gradient(to top, var(--mobile-edge-fade-mask));
+      mask-image: linear-gradient(to top, var(--mobile-edge-fade-mask));
+    }
+
     .mobile-bottom-sheet .mobile-bottom-sheet-nav {
       position: absolute;
       top: 0;
@@ -159,6 +181,39 @@
 
     .mobile-bottom-sheet .mobile-bottom-sheet-nav-bar > .mobile-bottom-sheet-button:last-child {
       margin-left: auto;
+    }
+
+    .mobile-bottom-sheet .mobile-bottom-sheet-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 5;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      pointer-events: none;
+      padding:
+        6px
+        calc(14px + env(safe-area-inset-right, 0px))
+        calc(6px + env(safe-area-inset-bottom, 0px))
+        calc(14px + env(safe-area-inset-left, 0px));
+    }
+
+    .mobile-bottom-sheet .mobile-bottom-sheet-footer .mobile-bottom-sheet-button {
+      pointer-events: auto;
+    }
+
+    .mobile-bottom-sheet .mobile-bottom-sheet-close {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .mobile-bottom-sheet .mobile-bottom-sheet-close:active {
+      transform: translateX(-50%) scale(0.94);
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-button svg {

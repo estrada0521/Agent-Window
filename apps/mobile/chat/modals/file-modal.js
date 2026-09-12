@@ -79,11 +79,10 @@
       if (!frame?.src) return;
       postPreviewHtmlModeToFrame(frame, repoPreviewExt(), repoHtmlPreviewMode);
     };
-    const wireRepoPreviewControls = (sheetNav) => {
-      if (repoPreviewControlsWired || !sheetNav) return;
-      const navBar = sheetNav.querySelector(".repo-sheet-nav-bar");
-      const closeBtn = navBar?.querySelector(".repo-sheet-close");
-      if (!navBar || !closeBtn) return;
+    const wireRepoPreviewControls = (sheetFooter) => {
+      if (repoPreviewControlsWired || !sheetFooter) return;
+      const closeBtn = sheetFooter.querySelector(".repo-sheet-close");
+      if (!closeBtn) return;
       repoPreviewControlsWired = true;
       const actions = document.createElement("div");
       actions.className = "repo-preview-actions";
@@ -93,7 +92,7 @@
       htmlBtn.hidden = true;
       htmlBtn.innerHTML = '<svg class="repo-preview-html-mode-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>';
       actions.append(htmlBtn, closeBtn);
-      navBar.appendChild(actions);
+      sheetFooter.appendChild(actions);
       htmlBtn.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();

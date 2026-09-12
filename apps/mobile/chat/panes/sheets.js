@@ -120,30 +120,33 @@
       sheetPanel.className = `${kind}-sheet-panel mobile-bottom-sheet-panel`;
       const sheetNav = document.createElement("div");
       sheetNav.className = `${kind}-sheet-nav mobile-bottom-sheet-nav`;
-      const leading = leadingButtonHtml || "";
       sheetNav.innerHTML = `
         <div class="${kind}-sheet-pill mobile-bottom-sheet-pill"></div>
         <div class="${kind}-sheet-nav-bar mobile-bottom-sheet-nav-bar">
-          ${leading}
           <div class="${kind}-sheet-title mobile-bottom-sheet-title"></div>
-          <button type="button" class="${kind}-sheet-close mobile-bottom-sheet-button" aria-label="${closeLabel}">
-            ${mobileSheetCloseIcon}
-          </button>
         </div>`;
       const titleEl = sheetNav.querySelector(`.${kind}-sheet-title`);
       if (titleEl) titleEl.textContent = title;
+      const sheetFooter = document.createElement("div");
+      sheetFooter.className = `${kind}-sheet-footer mobile-bottom-sheet-footer`;
+      const leading = leadingButtonHtml || "";
+      sheetFooter.innerHTML = `
+        ${leading}
+        <button type="button" class="${kind}-sheet-close mobile-bottom-sheet-close mobile-bottom-sheet-button" aria-label="${closeLabel}">
+          ${mobileSheetCloseIcon}
+        </button>`;
       const contentEl = document.createElement("div");
       contentEl.className = `${kind}-sheet-content mobile-bottom-sheet-content`;
-      const closeBtn = sheetNav.querySelector(`.${kind}-sheet-close`);
+      const closeBtn = sheetFooter.querySelector(`.${kind}-sheet-close`);
       closeBtn?.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
         onClose();
       });
       wireMobileSheetNavDrag(sheetNav, sheetPanel, onClose);
-      sheetPanel.append(sheetNav, contentEl);
+      sheetPanel.append(sheetNav, contentEl, sheetFooter);
       sheet.appendChild(sheetPanel);
-      return { sheet, sheetPanel, sheetNav, contentEl, titleEl, closeBtn };
+      return { sheet, sheetPanel, sheetNav, sheetFooter, contentEl, titleEl, closeBtn };
     };
     const ensureMobileSheetDom = (panel, {
       kind,
@@ -428,7 +431,7 @@
         closeLabel: "Close repository",
         onClose: () => closeRepoSheet(),
         leadingButtonHtml: `<button type="button" class="repo-sheet-back mobile-bottom-sheet-button" aria-label="Go to parent directory">${repoSheetBackIcon}</button>`,
-        afterBuild: ({ sheetNav, contentEl }) => {
+        afterBuild: ({ sheetFooter, contentEl }) => {
           const stack = document.createElement("div");
           stack.className = "repo-stack";
           const browserView = document.createElement("div");
@@ -444,12 +447,12 @@
           previewView.appendChild(previewFrame);
           stack.append(browserView, previewView);
 
-          sheetNav.querySelector(".repo-sheet-back")?.addEventListener("click", (event) => {
+          sheetFooter.querySelector(".repo-sheet-back")?.addEventListener("click", (event) => {
             event.preventDefault();
             event.stopPropagation();
             handleRepoSheetBack();
           });
-          wireRepoPreviewControls(sheetNav);
+          wireRepoPreviewControls(sheetFooter);
 
           let swipeStartX = 0;
           let swipeStartY = 0;
