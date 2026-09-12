@@ -182,6 +182,10 @@ Add it to the Home Screen to use it as a PWA.
 
 For reaching Hub from outside the LAN, see [`external-access/README.md`](external-access/README.md).
 
+<!-- Regenerate from the "(original)" screenshots in media/ with (defaults only, no flags):
+     python3 user/round_and_glow.py media/agent-window-mobile-{dark,light}*"(original)".png
+     Then rename each "...(original)-rounded-glow.png" output to its plain
+     "agent-window-mobile-{dark,light}-N.png" name below. -->
 <p align="center">
   <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">
   <img src="media/agent-window-mobile-dark-1.png" width="48%" alt="Mobile UI, dark 1">
