@@ -2,7 +2,7 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     document.documentElement.dataset.mobile = "1";
     const _menuBtnSvg = document.querySelector("#pageMenuBtn svg");
     if (_menuBtnSvg) {
-      _menuBtnSvg.innerHTML = '<rect x="6" y="6" width="12" height="12" rx="1" stroke-width="1.7"></rect>';
+      _menuBtnSvg.innerHTML = '<rect x="6" y="6" width="12" height="12" rx="3" stroke-width="1.7"></rect>';
     }
     const _safariSafeAreaDummy = document.createElement("div");
     _safariSafeAreaDummy.style.cssText = "position:absolute;bottom:0;width:100%;height:env(safe-area-inset-bottom);pointer-events:none;opacity:0;z-index:-1;";
