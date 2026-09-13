@@ -80,7 +80,7 @@ Agent Window also recognizes these shortcut commands:
 | `/nativelog` | Reveal the selected Agent's native log in Finder. Desktop only. |
 | `/log` | Insert `.agent-window/.log.jsonl` into the message. Also works in the middle of text. |
 
-On mobile, `Pane Trace` in the menu shows the pane via `tmux capture-pane` and provides buttons for `Esc`, `Ctrl-C`, the arrow keys, and `Enter`.
+On mobile, `Pane Trace` in the menu shows the pane via `tmux capture-pane` and provides buttons for `Esc`, `Ctrl-C`, the arrow keys, `Enter`, and the common CLI commands `/model`, `/usage`, and `/permission`.
 
 Typing `@` searches files in the workspace. Files can also be attached with the plus button or by drag-and-drop. Attached files are saved to `<workspace>/.agent-window/uploads/`, and their path is passed to the Agent as ordinary text.
 

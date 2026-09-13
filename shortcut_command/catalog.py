@@ -18,6 +18,7 @@ class SlashCommandSpec:
 
 
 PANE_KEY_COMMAND_IDS = frozenset({"up", "down", "left", "right", "enter", "esc", "ctrlc"})
+PANE_TEXT_MACROS = ("/model", "/usage", "/permission")
 
 PANE_CONTROL_COMMANDS = (
     SlashCommandSpec(
@@ -44,7 +45,11 @@ APPLICATION_COMMANDS = (
 )
 
 SLASH_COMMANDS = PANE_CONTROL_COMMANDS + APPLICATION_COMMANDS
-PANE_CONTROL_COMMAND_IDS = PANE_KEY_COMMAND_IDS | frozenset(command.id for command in PANE_CONTROL_COMMANDS)
+PANE_CONTROL_COMMAND_IDS = (
+    PANE_KEY_COMMAND_IDS
+    | frozenset(PANE_TEXT_MACROS)
+    | frozenset(command.id for command in PANE_CONTROL_COMMANDS)
+)
 
 
 def public_slash_command_dicts() -> list[dict[str, str | bool]]:

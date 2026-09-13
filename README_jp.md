@@ -106,7 +106,7 @@ Agent Windowは次のshortcut commandも認識します。
 | `/nativelog` | 選択中のAgentのnative logをFinderで表示します。desktopのみ。 |
 | `/log` | `.agent-window/.log.jsonl` をmessageへ挿入します。文中でも使用できます。 |
 
-スマートフォンではmenuの `Pane Trace` から、`tmux capture-pane` でpane本体を確認できます。その画面のボタンから `Esc`、`Ctrl-C`、矢印key、`Enter` を送れます。
+スマートフォンではmenuの `Pane Trace` から、`tmux capture-pane` でpane本体を確認できます。その画面のボタンから `Esc`、`Ctrl-C`、矢印key、`Enter`、よく使うCLI commandの `/model`、`/usage`、`/permission` を送れます。
 
 `@` を入力するとworkspace内のfileを検索できます。fileはplus buttonまたはdrag-and-dropでも添付できます。添付されたfileは `<workspace>/.agent-window/uploads/` に保存され、そのpathがAgentへ通常のtextとして渡されます。
 

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import logging
+import os
 import subprocess
 from typing import Any, Protocol
 
-from shortcut_command.catalog import PANE_SINGLE_CONTROL_MESSAGES
+from message_delivery.paste import deliver_text_to_pane
+from shortcut_command.catalog import PANE_SINGLE_CONTROL_MESSAGES, PANE_TEXT_MACROS
 from shortcut_command.parsing import parse_pane_direct_command
 
 
@@ -28,11 +30,18 @@ def try_deliver_shortcut_control(
     message: str,
 ) -> tuple[int, dict] | None:
     pane_direct = parse_pane_direct_command(message)
-    if message not in PANE_SINGLE_CONTROL_MESSAGES and not pane_direct:
+    text_macro = message if message in PANE_TEXT_MACROS else ""
+    if message not in PANE_SINGLE_CONTROL_MESSAGES and not pane_direct and not text_macro:
         return None
     if not target:
         return 400, {"ok": False, "error": "target is required"}
     control_targets = [item.strip() for item in target.split(",") if item.strip()]
+    def run_tmux(args):
+        return subprocess.run(
+            [*rt.tmux_prefix, *args],
+            capture_output=True,
+            check=False,
+        )
     try:
         for agent in control_targets:
             if message == "restart":
@@ -48,6 +57,10 @@ def try_deliver_shortcut_control(
             pane_id = rt.pane_id_for_agent(agent)
             if not pane_id:
                 return 400, {"ok": False, "error": f"pane not found for {agent}"}
+            if text_macro:
+                if not deliver_text_to_pane(run_tmux, pane_id, text_macro, env=os.environ):
+                    return 400, {"ok": False, "error": f"send-keys failed for {agent}"}
+                continue
             if pane_direct:
                 tmux_key = {"up": "Up", "down": "Down", "left": "Left", "right": "Right"}[pane_direct["name"]]
                 for _ in range(pane_direct["repeat"]):

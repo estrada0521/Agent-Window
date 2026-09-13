@@ -6,7 +6,18 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
     const paneViewerEl = document.getElementById("paneViewer");
     const paneViewerTabs = document.getElementById("paneViewerTabs");
     const paneViewerCarousel = document.getElementById("paneViewerCarousel");
-    document.getElementById("paneViewerShortcuts")?.querySelectorAll(".pane-viewer-shortcut-btn").forEach((btn) => {
+    const paneViewerMacroSelect = document.getElementById("paneViewerMacroSelect");
+    paneViewerMacroSelect?.addEventListener("change", () => {
+      const commandId = String(paneViewerMacroSelect.value || "");
+      paneViewerMacroSelect.value = "";
+      const agent = paneViewerAgents[lastPaneViewerTabIdx];
+      if (!commandId || !agent) return;
+      void postShortcutCommand({ command_id: commandId, arg: "", target: agent });
+    });
+    paneViewerMacroSelect?.addEventListener("blur", () => {
+      setTimeout(() => { paneViewerMacroSelect.value = ""; }, 0);
+    });
+    document.getElementById("paneViewerShortcuts")?.querySelectorAll(".pane-viewer-shortcut-btn[data-shortcut]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const agent = paneViewerAgents[lastPaneViewerTabIdx];
         if (!agent) return;

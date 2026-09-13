@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from shortcut_command.catalog import PANE_TEXT_MACROS
+
 
 MARKED_VERSION = "18.0.12"
 KATEX_VERSION = "0.16.11"
@@ -8,6 +10,10 @@ MARKED_CDN_SRC = f"https://cdn.jsdelivr.net/npm/marked@{MARKED_VERSION}/lib/mark
 KATEX_CDN_CSS_HREF = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/katex.min.css"
 KATEX_CDN_JS_SRC = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/katex.min.js"
 KATEX_CDN_AUTO_RENDER_SRC = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/contrib/auto-render.min.js"
+
+_PANE_TEXT_MACRO_OPTIONS_HTML = "\n".join(
+    f'          <option value="{macro}">{macro}</option>' for macro in PANE_TEXT_MACROS
+)
 
 CHAT_HEADER_MENU_BUTTON_HTML = """
 <button type="button" class="page-menu-btn" id="pageMenuBtn" title="Menu" aria-label="Menu">
@@ -25,7 +31,7 @@ CHAT_HEADER_ACTIONS_HTML = CHAT_HEADER_MENU_BUTTON_HTML + """
   <option value="removeAgent">Remove Agent</option>
 </select>
 """
-CHAT_SHEET_PANELS_HTML = """
+CHAT_SHEET_PANELS_HTML = f"""
 <div class="page-menu-panel mobile-sheet-overlay" id="gitPanel" hidden></div>
 <div class="page-menu-panel mobile-sheet-overlay" id="repoPanel" hidden></div>
 <div class="page-menu-panel mobile-sheet-overlay" id="paneTracePanel" hidden>
@@ -36,6 +42,13 @@ CHAT_SHEET_PANELS_HTML = """
         <div class="pane-viewer-carousel" id="paneViewerCarousel"></div>
       </div>
       <div class="pane-viewer-shortcuts" id="paneViewerShortcuts">
+        <div class="pane-viewer-shortcut-menu">
+          <span class="pane-viewer-shortcut-btn pane-viewer-shortcut-btn-text" aria-hidden="true">/</span>
+          <select id="paneViewerMacroSelect" class="pane-viewer-shortcut-native-select" aria-label="Command">
+            <option value="" disabled selected>Command</option>
+{_PANE_TEXT_MACRO_OPTIONS_HTML}
+          </select>
+        </div>
         <button type="button" class="pane-viewer-shortcut-btn pane-viewer-shortcut-btn-text" data-shortcut="esc" aria-label="Escape">Esc</button>
         <button type="button" class="pane-viewer-shortcut-btn pane-viewer-shortcut-btn-text" data-shortcut="ctrlc" aria-label="Ctrl+C">^C</button>
         <button type="button" class="pane-viewer-shortcut-btn" data-shortcut="up" aria-label="Up">
