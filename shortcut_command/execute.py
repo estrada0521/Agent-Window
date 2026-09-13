@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from shortcut_command.catalog import pane_control_by_id
+from shortcut_command.catalog import PANE_CONTROL_COMMAND_IDS
 from shortcut_command.control import try_deliver_shortcut_control
 
 
@@ -13,8 +13,8 @@ def run_shortcut_command(
     arg: str,
     target: str,
 ) -> tuple[int, dict[str, Any]]:
-    spec = pane_control_by_id(command_id)
-    if spec is None:
+    normalized_command_id = (command_id or "").strip().lower()
+    if normalized_command_id not in PANE_CONTROL_COMMAND_IDS:
         msg = "unknown shortcut command"
         return 400, {"ok": False, "error": msg, "status_message": msg}
     resolved = (target or "").strip()
@@ -25,7 +25,7 @@ def run_shortcut_command(
         msg = "target is required"
         return 400, {"ok": False, "error": msg, "status_message": msg}
 
-    wire = _wire_payload(spec.id, arg)
+    wire = _wire_payload(normalized_command_id, arg)
     out = try_deliver_shortcut_control(rt, resolved, wire)
     if out is None:
         msg = "shortcut dispatch failed"
