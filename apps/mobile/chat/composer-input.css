@@ -5,6 +5,7 @@
       min-width: 0;
       align-self: stretch;
       position: relative;
+      top: -4px;
       overflow: visible;
       --composer-input-rise: 0px;
     }
