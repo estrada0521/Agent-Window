@@ -204,28 +204,6 @@
       background: currentColor;
     }
 
-    @keyframes pane-viewer-badge-icon-heartbeat {
-      0%,
-      100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-1px);
-      }
-    }
-
-    .pane-viewer-tab.pane-viewer-tab-thinking .pane-viewer-tab-icon {
-      animation: pane-viewer-badge-icon-heartbeat 1s ease-in-out infinite;
-      animation-delay: var(--agent-pulse-delay, 0s);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .pane-viewer-tab.pane-viewer-tab-thinking .pane-viewer-tab-icon {
-        animation: none;
-        filter: none;
-      }
-    }
-
     .pane-viewer-carousel {
       flex: 1 1 auto;
       min-height: 0;

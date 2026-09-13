@@ -140,16 +140,6 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
       movePaneViewerIndicator(idx, { scrollTabIntoView: true });
       fetchPaneViewerSlideByIndex(idx, true);
     };
-    const syncPaneViewerTabThinkingStatuses = () => {
-      const tabsRoot = document.getElementById("paneViewerTabs");
-      if (tabsRoot) {
-        tabsRoot.querySelectorAll(".pane-viewer-tab").forEach((tab) => {
-          const a = tab.dataset.agent;
-          if (!a) return;
-          tab.classList.toggle("pane-viewer-tab-thinking", currentAgentStatuses[a] === "running");
-        });
-      }
-    };
     const buildPaneViewer = () => {
       paneViewerAgents = availableTargets.filter(t => t !== "others");
       const restoreAgent = paneViewerLastAgent && paneViewerAgents.includes(paneViewerLastAgent)
@@ -157,7 +147,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
         : paneViewerAgents[0];
       const initialIdx = restoreAgent ? Math.max(0, paneViewerAgents.indexOf(restoreAgent)) : 0;
       paneViewerTabs.innerHTML = `<div class="pane-viewer-tab-indicator"></div>` + paneViewerAgents.map((a, i) =>
-        `<button class="pane-viewer-tab${i === initialIdx ? " active" : ""}" data-agent="${escapeHtml(a)}" title="${escapeHtml(a)}" aria-label="${escapeHtml(a)}" style="--agent-pulse-delay:${agentPulseOffset(a)}s">${paneViewerTabIconHtml(a)}</button>`
+        `<button class="pane-viewer-tab${i === initialIdx ? " active" : ""}" data-agent="${escapeHtml(a)}" title="${escapeHtml(a)}" aria-label="${escapeHtml(a)}">${paneViewerTabIconHtml(a)}</button>`
       ).join("");
       paneViewerCarousel.innerHTML = paneViewerAgents.map(a =>
         `<div class="pane-viewer-slide" data-agent="${escapeHtml(a)}"><div class="pane-viewer-header-shadow"></div><div class="pane-viewer-body inline-loading-pane">${loadingIndicatorHtml()}</div></div>`
@@ -169,7 +159,6 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
         paneViewerCarousel._paneViewerScrollBound = true;
         paneViewerCarousel.addEventListener("scroll", onPaneViewerCarouselScroll, { passive: true });
       }
-      syncPaneViewerTabThinkingStatuses();
       lastPaneViewerTabIdx = initialIdx;
       requestAnimationFrame(() => {
         movePaneViewerIndicator(initialIdx);

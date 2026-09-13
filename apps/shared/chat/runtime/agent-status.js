@@ -23,9 +23,6 @@
         }
       }
       currentAgentStatuses = { ...merged };
-      if (document.documentElement.dataset.mobile === "1") {
-        syncPaneViewerTabThinkingStatuses();
-      }
       renderThinkingIndicator();
     };
 __CHAT_INCLUDE:../session-state-projections.js__
