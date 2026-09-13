@@ -48,12 +48,16 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         renderTargetPicker(availableTargets);
       }
     };
-    const postShortcutCommand = async ({ command_id, arg = "", path = "/shortcut-command" }) => {
+    const postShortcutCommand = async ({
+      command_id,
+      arg = "",
+      path = "/shortcut-command",
+      target = selectedTargets.join(","),
+    }) => {
       if (sendLocked) {
         return false;
       }
       sendLocked = true;
-      const target = selectedTargets.join(",");
       if (!target.trim()) {
         setStatus("select at least one target", true);
         sendLocked = false;

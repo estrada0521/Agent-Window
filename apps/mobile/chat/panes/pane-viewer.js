@@ -8,7 +8,9 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
     const paneViewerCarousel = document.getElementById("paneViewerCarousel");
     document.getElementById("paneViewerShortcuts")?.querySelectorAll(".pane-viewer-shortcut-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
-        void postShortcutCommand({ command_id: btn.dataset.shortcut, arg: "" });
+        const agent = paneViewerAgents[lastPaneViewerTabIdx];
+        if (!agent) return;
+        void postShortcutCommand({ command_id: btn.dataset.shortcut, arg: "", target: agent });
       });
     });
     const scrollPaneSlideToBottom = (slide) => {
