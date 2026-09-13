@@ -261,6 +261,7 @@
         _repoPreviewPath = "";
         _repoPreviewExt = "";
         repoPanel?.classList.remove("repo-mode-preview");
+        resetRepoPreviewControls();
         resetEmbeddedFilePreviewFrame(repoPreviewFrameEl());
         _repoBrowserPath = "";
         repoPanelRenderSig = "";

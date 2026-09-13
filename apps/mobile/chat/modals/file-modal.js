@@ -9,7 +9,7 @@
     const currentFileModalBaseTheme = () => document.documentElement.dataset.theme === "light" ? "light" : "dark";
     const isHtmlPreviewExt = (ext) => ext === "html" || ext === "htm";
     const repoPreviewFrameEl = () => repoPanel?.querySelector(".repo-preview-frame");
-    const repoPreviewHtmlModeBtn = () => repoPanel?.querySelector(".repo-preview-html-mode");
+    const repoPreviewHtmlModeBtn = () => document.querySelector(".repo-preview-html-mode");
     const repoPreviewHtmlModeIcon = () => repoPanel?.querySelector(".repo-preview-html-mode-icon");
     const repoPreviewExt = () => String(repoPanel?._previewExt || "").toLowerCase();
     const repoPreviewInPreviewMode = () => !!repoPanel?.classList.contains("repo-mode-preview");
