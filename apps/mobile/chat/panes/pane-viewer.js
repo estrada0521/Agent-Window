@@ -219,7 +219,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
             paneViewerInitialFetchTimer = 0;
             fetchPaneViewerSlideByIndex(lastPaneViewerTabIdx, true);
             if (paneViewerInterval) clearInterval(paneViewerInterval);
-            paneViewerInterval = setInterval(() => fetchVisiblePaneViewerSlide(false), 1000);
+            paneViewerInterval = setInterval(() => fetchVisiblePaneViewerSlide(false), 500);
           }, 24);
         });
       });
