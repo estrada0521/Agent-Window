@@ -442,6 +442,48 @@
       }
       _repoGoToParentPath();
     };
+    const wireRepoSwipeBack = (surface, canGoBack, goBack) => {
+      if (!surface) return;
+      let startX = 0;
+      let startY = 0;
+      let tracking = false;
+      let ready = false;
+      const reset = () => {
+        tracking = false;
+        ready = false;
+      };
+      surface.addEventListener("touchstart", (event) => {
+        if (!canGoBack()) return;
+        const touch = event.touches?.[0];
+        if (!touch) return;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        tracking = true;
+        ready = false;
+      }, { passive: true });
+      surface.addEventListener("touchmove", (event) => {
+        if (!tracking) return;
+        const touch = event.touches?.[0];
+        if (!touch) {
+          reset();
+          return;
+        }
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+        if (Math.abs(deltaY) > 42) {
+          reset();
+          return;
+        }
+        if (deltaX > 56 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) ready = true;
+      }, { passive: true });
+      surface.addEventListener("touchend", () => {
+        if (!tracking) return;
+        const shouldGoBack = ready;
+        reset();
+        if (shouldGoBack) goBack();
+      }, { passive: true });
+      surface.addEventListener("touchcancel", reset, { passive: true });
+    };
     const ensureRepoSheetDom = () => {
       if (!repoPanel) return false;
       ensureMobileSheetDom(repoPanel, {
@@ -465,48 +507,8 @@
           previewFrame.title = "File preview";
           previewView.appendChild(previewFrame);
           stack.append(browserView, previewView);
-
-          let swipeStartX = 0;
-          let swipeStartY = 0;
-          let swipeTracking = false;
-          let swipeBackReady = false;
-          const resetSwipeBack = () => {
-            swipeTracking = false;
-            swipeBackReady = false;
-          };
-          browserView.addEventListener("touchstart", (event) => {
-            if (!normalizeRepoPath(_repoBrowserPath)) return;
-            const touch = event.touches?.[0];
-            if (!touch) return;
-            swipeStartX = touch.clientX;
-            swipeStartY = touch.clientY;
-            swipeTracking = true;
-            swipeBackReady = false;
-          }, { passive: true });
-          browserView.addEventListener("touchmove", (event) => {
-            if (!swipeTracking) return;
-            const touch = event.touches?.[0];
-            if (!touch) {
-              resetSwipeBack();
-              return;
-            }
-            const deltaX = touch.clientX - swipeStartX;
-            const deltaY = touch.clientY - swipeStartY;
-            if (Math.abs(deltaY) > 42) {
-              resetSwipeBack();
-              return;
-            }
-            if (deltaX > 56 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
-              swipeBackReady = true;
-            }
-          }, { passive: true });
-          browserView.addEventListener("touchend", () => {
-            if (!swipeTracking) return;
-            const shouldBack = swipeBackReady;
-            resetSwipeBack();
-            if (shouldBack) _repoGoToParentPath();
-          }, { passive: true });
-          browserView.addEventListener("touchcancel", resetSwipeBack, { passive: true });
+          wireRepoSwipeBack(browserView, () => !!normalizeRepoPath(_repoBrowserPath), _repoGoToParentPath);
+          wireRepoSwipeBack(previewView, repoPreviewInPreviewMode, closeRepoPreview);
           contentEl.appendChild(stack);
         },
       });

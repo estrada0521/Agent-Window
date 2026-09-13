@@ -184,6 +184,7 @@
       frame.onload = () => {
         frame.style.transition = "opacity 200ms ease-out";
         frame.style.opacity = "1";
+        wireRepoSwipeBack(frame.contentDocument, repoPreviewInPreviewMode, closeRepoPreview);
         repoPreviewBaseTheme = currentFileModalBaseTheme();
         postPreviewThemeToFrame(frame, normalizedExt, repoPreviewBaseTheme);
         postPreviewHtmlModeToFrame(frame, normalizedExt, repoHtmlPreviewMode);
