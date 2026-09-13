@@ -296,10 +296,6 @@
       white-space: normal;
     }
 
-    .pane-viewer-slide .ansi-bright-black-fg {
-      color: var(--muted);
-    }
-
     .trace-dot {
       font-family: var(--font-main);
       font-variant-emoji: text;

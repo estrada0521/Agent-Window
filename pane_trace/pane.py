@@ -8,7 +8,6 @@ def capture_pane_text(
     pane_id: str,
     *,
     start: str,
-    include_escape: bool = False,
     timeout_seconds: int = 2,
     subprocess_module=subprocess,
 ) -> str:
@@ -16,8 +15,6 @@ def capture_pane_text(
     if not pane:
         return ""
     cmd = [*runtime.tmux_prefix, "capture-pane", "-p"]
-    if include_escape:
-        cmd.append("-e")
     cmd.extend(["-S", str(start), "-t", pane])
     result = subprocess_module.run(
         cmd,

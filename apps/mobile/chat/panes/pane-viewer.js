@@ -1,4 +1,4 @@
-__CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
+__CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
 
     let paneViewerAgents = [];
     let paneViewerLastAgent = null;
@@ -28,7 +28,6 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
       if (!body) return;
       if (!scrollToBottomAfter && !_paneSlideAtBottom(body)) return;
       try {
-        const ansiReady = ensurePaneTraceAnsiUp();
         const res = await fetch(`/trace?agent=${encodeURIComponent(agent)}&lines=160&ts=${Date.now()}`);
         if (!res.ok) return;
         const data = await res.json();
@@ -41,7 +40,6 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-ansi.js__
           return;
         }
         paneViewerContentCache[cacheKey] = content;
-        await ansiReady;
         body.classList.remove("inline-loading-pane");
         body.innerHTML = paneTraceHtml(content || "No output");
         if (scrollToBottomAfter || atBottom) scrollPaneSlideToBottom(body);

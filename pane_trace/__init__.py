@@ -21,7 +21,6 @@ def trace_content(
         runtime,
         pane_id,
         start=f"-{n}",
-        include_escape=True,
         timeout_seconds=3,
     )
     return "\n".join(line.rstrip() for line in raw.splitlines())

@@ -70,7 +70,6 @@
         return promise;
       };
     })();
-    const ANSI_UP_SRC = "https://cdn.jsdelivr.net/npm/ansi_up@5.1.0/ansi_up.min.js";
     const KATEX_CSS_HREF = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
     const KATEX_JS_SRC = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
     const KATEX_AUTO_RENDER_SRC = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
