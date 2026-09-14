@@ -101,7 +101,7 @@ Agent Windowは次のshortcut commandも認識します。
 
 | Command | 操作 |
 | --- | --- |
-| `/restart`, `/resume` | CLIをrestart/resumeします。 |
+| `/restart` | CLIをrestartします。 |
 | `/open-pane` | 選択中のAgentのtmux paneを開きます。desktopのみ。 |
 | `/nativelog` | 選択中のAgentのnative logをFinderで表示します。desktopのみ。 |
 | `/log` | `.agent-window/.log.jsonl` をmessageへ挿入します。文中でも使用できます。 |

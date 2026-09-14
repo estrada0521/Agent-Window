@@ -77,19 +77,3 @@ def agent_launch_cmd(agent_name: str) -> str:
     flags = f" {launch_flags}" if launch_flags else ""
     env_prefix = f"{adef.launch_env} " if adef and adef.launch_env else ""
     return f"{env_prefix}exec{extra} {agent_exec}{flags}"
-
-
-def agent_resume_cmd(agent_name: str) -> str:
-    base = agent_base_name(agent_name)
-    adef = AGENTS.get(base)
-    if not adef or not adef.resume_flag:
-        return agent_launch_cmd(agent_name)
-    agent_exec, adef = _build_agent_exec(agent_name)
-    launch_extra = adef.launch_extra or ""
-    resume_extra = adef.resume_extra_flags or ""
-    extra = f" {launch_extra}" if launch_extra else ""
-    flags = f" {adef.resume_flag}"
-    if resume_extra:
-        flags += f" {resume_extra}"
-    env_prefix = f"{adef.launch_env} " if adef.launch_env else ""
-    return f"{env_prefix}exec{extra} {agent_exec}{flags}"

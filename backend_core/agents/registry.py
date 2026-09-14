@@ -13,8 +13,6 @@ class AgentDef:
     launch_extra: str = ""
     launch_flags: str = ""
     launch_env: str = ""
-    resume_flag: str = ""
-    resume_extra_flags: str = ""
     fallback_paths: tuple[str, ...] = ()
     prefer_fallback_paths: bool = False
     fallback_nvm: bool = False
@@ -42,7 +40,6 @@ _register(
         icon_file="claude.svg",
         executable="claude",
         launch_extra=f"env -u CLAUDECODE {_AGENT_TMUX_COLOR_SUFFIX}",
-        resume_flag="--continue",
         fallback_paths=("~/.local/bin/claude",),
     ),
     AgentDef(
@@ -51,7 +48,6 @@ _register(
         icon_file="codex.svg",
         executable="codex",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
-        resume_flag="resume --last",
         fallback_nvm=True,
     ),
     AgentDef(
@@ -60,7 +56,6 @@ _register(
         icon_file="antigravity.svg",
         executable="agy",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
-        resume_flag="--continue",
         fallback_paths=("~/.local/bin/agy",),
         fallback_nvm=True,
     ),
@@ -70,7 +65,6 @@ _register(
         icon_file="cursor.svg",
         executable="cursor-agent",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
-        resume_flag="--continue",
         fallback_paths=("~/.local/bin/cursor-agent",),
     ),
     AgentDef(
@@ -79,7 +73,6 @@ _register(
         icon_file="grok.svg",
         executable="grok",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
-        resume_flag="--continue",
         fallback_paths=("~/.local/bin/grok",),
         prefer_fallback_paths=True,
     ),

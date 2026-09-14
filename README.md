@@ -75,7 +75,7 @@ Agent Window also recognizes these shortcut commands:
 
 | Command | Action |
 | --- | --- |
-| `/restart`, `/resume` | Restart / resume the CLI. |
+| `/restart` | Restart the CLI. |
 | `/open-pane` | Open the selected Agent's tmux pane. Desktop only. |
 | `/nativelog` | Reveal the selected Agent's native log in Finder. Desktop only. |
 | `/log` | Insert `.agent-window/.log.jsonl` into the message. Also works in the middle of text. |

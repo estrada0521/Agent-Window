@@ -15,8 +15,6 @@ class ShortcutControlRuntime(Protocol):
 
     def restart_agent_pane(self, agent: str) -> tuple[bool, str]: ...
 
-    def resume_agent_pane(self, agent: str) -> tuple[bool, str]: ...
-
     def pane_id_for_control_target(self, target: str) -> str | None: ...
 
     def _mark_idle(self, agent: str) -> None: ...
@@ -46,11 +44,6 @@ def try_deliver_shortcut_control(
         for target_item in control_targets:
             if message == "restart":
                 ok, detail = rt.restart_agent_pane(target_item)
-                if not ok:
-                    return 400, {"ok": False, "error": detail}
-                continue
-            if message == "resume":
-                ok, detail = rt.resume_agent_pane(target_item)
                 if not ok:
                     return 400, {"ok": False, "error": detail}
                 continue
@@ -87,10 +80,9 @@ def try_deliver_shortcut_control(
     except Exception as exc:
         logging.error("Unexpected error: %s", exc, exc_info=True)
         return 500, {"ok": False, "error": str(exc)}
-    if message in {"restart", "resume"} and control_targets:
-        action = "Restarted" if message == "restart" else "Resumed"
+    if message == "restart" and control_targets:
         rt.append_system_entry(
-            f"{action}: {', '.join(control_targets)}",
+            f"Restarted: {', '.join(control_targets)}",
             kind="agent-control",
             command=message,
             targets=control_targets,

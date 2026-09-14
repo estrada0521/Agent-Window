@@ -10,13 +10,10 @@ from datetime import datetime as dt_datetime
 from pathlib import Path
 
 from backend_core.agents.executables import (
-    agent_launch_cmd as _agent_launch_cmd_impl,
-    agent_resume_cmd as _agent_resume_cmd_impl,
     resolve_agent_executable_for_runtime as _resolve_agent_executable_impl,
 )
 from backend_core.tmux.lifecycle import (
     restart_agent_pane as _restart_agent_pane_impl,
-    resume_agent_pane as _resume_agent_pane_impl,
 )
 from message_delivery import (
     mark_agent_sent as _mark_agent_sent_impl,
@@ -381,21 +378,12 @@ class ChatRuntime:
         elif cleared:
             self.notify_session_state_changed(["agent_runtime"], reason="agent-runtime-clear")
 
-    def agent_launch_cmd(self, agent_name: str) -> str:
-        return _agent_launch_cmd_impl(self, agent_name)
-
-    def agent_resume_cmd(self, agent_name: str) -> str:
-        return _agent_resume_cmd_impl(self, agent_name)
-
     @staticmethod
     def resolve_agent_executable(agent_name: str) -> str:
         return _resolve_agent_executable_impl(agent_name)
 
     def restart_agent_pane(self, agent_name: str) -> tuple[bool, str]:
         return _restart_agent_pane_impl(self, agent_name)
-
-    def resume_agent_pane(self, agent_name: str) -> tuple[bool, str]:
-        return _resume_agent_pane_impl(self, agent_name)
 
     def send_message(
         self,

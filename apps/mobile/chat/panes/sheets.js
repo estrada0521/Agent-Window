@@ -883,7 +883,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
     async function runForwardAction(target) {
       const action = String(target || "");
       if (!action) return;
-      if (action === "esc" || action === "restart" || action === "resume" || action === "ctrlc" || action === "enter") {
+      if (action === "esc" || action === "restart" || action === "ctrlc" || action === "enter") {
         await postShortcutCommand({ command_id: action, arg: "" });
         return;
       }

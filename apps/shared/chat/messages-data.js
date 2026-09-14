@@ -65,8 +65,8 @@
       const patterns = [];
       if (kindKey === "git-commit") patterns.push(/^Commit\b/i);
       patterns.push(
-        /^\/(?:restart|resume|add-agent|remove-agent)\b/i,
-        /^(?:Restarted|Resumed|Restart|Resume)\b/i,
+        /^\/(?:restart|add-agent|remove-agent)\b/i,
+        /^(?:Restarted|Restart)\b/i,
         /^(?:Add agent|Remove agent)\b/i,
       );
       for (const pattern of patterns) {

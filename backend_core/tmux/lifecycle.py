@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 
-from backend_core.agents.executables import agent_launch_cmd, agent_resume_cmd
+from backend_core.agents.executables import agent_launch_cmd
 from backend_core.tmux.process_cleanup import cleanup_target_process_groups
 
 
@@ -50,28 +50,6 @@ def restart_agent_pane(runtime, agent_name: str, *, subprocess_module=subprocess
     )
     if not ok:
         return False, detail or f"failed to restart {agent_name}"
-    _remove_agent_binding(runtime, agent_name)
-    subprocess_module.run(
-        [*runtime.tmux_prefix, "select-pane", "-t", pane_id, "-T", agent_name],
-        capture_output=True,
-        check=False,
-    )
-    return True, pane_id
-
-
-def resume_agent_pane(runtime, agent_name: str, *, subprocess_module=subprocess, os_module=os) -> tuple[bool, str]:
-    pane_id = runtime.pane_id_for_agent(agent_name)
-    if not pane_id:
-        return False, f"pane not found for {agent_name}"
-    ok, detail = _respawn_agent_pane(
-        runtime,
-        pane_id,
-        agent_resume_cmd(agent_name),
-        subprocess_module=subprocess_module,
-        os_module=os_module,
-    )
-    if not ok:
-        return False, detail or f"failed to resume {agent_name}"
     _remove_agent_binding(runtime, agent_name)
     subprocess_module.run(
         [*runtime.tmux_prefix, "select-pane", "-t", pane_id, "-T", agent_name],

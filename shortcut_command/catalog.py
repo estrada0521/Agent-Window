@@ -24,9 +24,6 @@ PANE_CONTROL_COMMANDS = (
     SlashCommandSpec(
         id="restart", slash="/restart", desc="Restart the agent", has_arg=False, path="/shortcut-command",
     ),
-    SlashCommandSpec(
-        id="resume", slash="/resume", desc="Resume the agent", has_arg=False, path="/shortcut-command",
-    ),
 )
 
 APPLICATION_COMMANDS = (
