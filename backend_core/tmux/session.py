@@ -127,6 +127,30 @@ def parse_agent_topology(output: str) -> list[AgentPane]:
     return panes
 
 
+def terminal_window_pane_id(
+    prefix: list[str],
+    session_name: str,
+    *,
+    subprocess_module=subprocess,
+) -> str:
+    """Pane ID of the session's own "terminal" window -- alive since session
+    creation, before any agent is added, and the one window agent_topology()
+    deliberately excludes."""
+    result = _run(
+        prefix,
+        ["list-windows", "-t", session_name, "-F", "#{window_name}\t#{pane_id}"],
+        subprocess_module=subprocess_module,
+    )
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip()
+        raise RuntimeError(detail or f"cannot read tmux topology for {session_name}")
+    for raw_line in result.stdout.splitlines():
+        name, _, pane_id = raw_line.partition("\t")
+        if name.strip() == TERMINAL_WINDOW_NAME:
+            return pane_id.strip()
+    return ""
+
+
 def resolve_tmux_session_name(runtime, *, subprocess_module=subprocess) -> str | None:
     workspace = str(runtime.workspace or "").strip()
     if not workspace:

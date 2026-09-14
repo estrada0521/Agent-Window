@@ -41,6 +41,7 @@ from backend_core.tmux.session import (
     agent_topology as _agent_topology_impl,
     pane_field as _pane_field_impl,
     resolve_tmux_session_name as _resolve_tmux_session_name_impl,
+    terminal_window_pane_id as _terminal_window_pane_id_impl,
 )
 from .session_state import (
     build_session_state_payload as _build_session_state_payload_impl,
@@ -293,6 +294,17 @@ class ChatRuntime:
     def pane_id_for_agent(self, agent_name: str) -> str:
         return self.agent_panes().get(agent_name, "")
 
+    def pane_id_for_terminal(self) -> str:
+        if not self.session_is_active:
+            return ""
+        return _terminal_window_pane_id_impl(self.tmux_prefix, self.tmux_session_name)
+
+    def pane_id_for_control_target(self, target: str) -> str:
+        """Pane for any pane-level operation (key macros, trace, open-pane) --
+        the "terminal" pane included, without callers needing to know it
+        sits outside the agent topology."""
+        return self.pane_id_for_terminal() if target == "terminal" else self.pane_id_for_agent(target)
+
     def pane_field(self, pane_id: str, field: str) -> str:
         return _pane_field_impl(self, pane_id, field, subprocess_module=subprocess)
 
@@ -410,7 +422,7 @@ class ChatRuntime:
         return self._native_log.watched_paths()
 
     def trace_content(self, agent: str, *, tail_lines: int) -> str:
-        pane_id = self.pane_id_for_agent(agent)
+        pane_id = self.pane_id_for_control_target(agent)
         if not pane_id:
             return "Offline"
         return _trace_content_impl(self, pane_id, tail_lines=tail_lines)

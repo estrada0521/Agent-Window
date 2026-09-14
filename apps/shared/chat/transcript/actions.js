@@ -58,7 +58,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         return false;
       }
       sendLocked = true;
-      if (!target.trim()) {
+      if (!target.trim() && command_id !== "openpane") {
         setStatus("select at least one target", true);
         sendLocked = false;
         return false;

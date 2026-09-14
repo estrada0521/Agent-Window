@@ -1,5 +1,8 @@
 __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
 
+    const PANE_VIEWER_TERMINAL_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="7 9 10 12 7 15"/><line x1="12" y1="15" x2="16" y2="15"/></svg>';
+    const paneViewerTerminalTabIconHtml = () =>
+      `<span class="agent-icon-slot agent-icon-slot--pane-tab"><span class="pane-viewer-tab-icon" aria-hidden="true" style="--agent-icon-mask:url('data:image/svg+xml,${encodeURIComponent(PANE_VIEWER_TERMINAL_ICON_SVG)}')"></span></span>`;
     let paneViewerAgents = [];
     let paneViewerLastAgent = null;
     let paneViewerContentCache = Object.create(null);
@@ -155,12 +158,13 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
     };
     const buildPaneViewer = () => {
       paneViewerAgents = availableTargets.filter(t => t !== "others");
+      if (sessionActive) paneViewerAgents = ["terminal", ...paneViewerAgents];
       const restoreAgent = paneViewerLastAgent && paneViewerAgents.includes(paneViewerLastAgent)
         ? paneViewerLastAgent
         : paneViewerAgents[0];
       const initialIdx = restoreAgent ? Math.max(0, paneViewerAgents.indexOf(restoreAgent)) : 0;
       paneViewerTabs.innerHTML = `<div class="pane-viewer-tab-indicator"></div>` + paneViewerAgents.map((a, i) =>
-        `<button class="pane-viewer-tab${i === initialIdx ? " active" : ""}" data-agent="${escapeHtml(a)}" title="${escapeHtml(a)}" aria-label="${escapeHtml(a)}">${paneViewerTabIconHtml(a)}</button>`
+        `<button class="pane-viewer-tab${i === initialIdx ? " active" : ""}" data-agent="${escapeHtml(a)}" title="${escapeHtml(a)}" aria-label="${escapeHtml(a)}">${a === "terminal" ? paneViewerTerminalTabIconHtml() : paneViewerTabIconHtml(a)}</button>`
       ).join("");
       paneViewerCarousel.innerHTML = paneViewerAgents.map(a =>
         `<div class="pane-viewer-slide" data-agent="${escapeHtml(a)}"><div class="pane-viewer-header-shadow"></div><div class="pane-viewer-body inline-loading-pane">${loadingIndicatorHtml()}</div></div>`

@@ -289,7 +289,7 @@ def _open_terminal(
     tmux_name = runtime.tmux_session_name
     if agent:
         try:
-            pane_id = runtime.pane_id_for_agent(agent)
+            pane_id = runtime.pane_id_for_control_target(agent)
         except Exception as exc:
             handler._send_json(500, {"ok": False, "error": str(exc)})
             return
@@ -409,7 +409,13 @@ def _post_open_pane(handler, _parsed, ctx) -> None:
         return
     runtime = ctx["runtime"]
     raw_targets = [item.strip() for item in str(data.get("target") or "").split(",") if item.strip()]
-    resolved = runtime.resolve_target_agents(",".join(raw_targets)) if raw_targets else []
+    if not raw_targets:
+        _open_terminal(
+            handler, ctx, agent="terminal", pane_required=True,
+            success_message="opened the terminal",
+        )
+        return
+    resolved = runtime.resolve_target_agents(",".join(raw_targets))
     agents = [item for item in resolved if item]
     if len(agents) != 1:
         handler._send_json(400, {"ok": False, "error": "select exactly one target"})

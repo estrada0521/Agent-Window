@@ -17,7 +17,7 @@ class ShortcutControlRuntime(Protocol):
 
     def resume_agent_pane(self, agent: str) -> tuple[bool, str]: ...
 
-    def pane_id_for_agent(self, agent: str) -> str | None: ...
+    def pane_id_for_control_target(self, target: str) -> str | None: ...
 
     def _mark_idle(self, agent: str) -> None: ...
 
@@ -43,23 +43,23 @@ def try_deliver_shortcut_control(
             check=False,
         )
     try:
-        for agent in control_targets:
+        for target_item in control_targets:
             if message == "restart":
-                ok, detail = rt.restart_agent_pane(agent)
+                ok, detail = rt.restart_agent_pane(target_item)
                 if not ok:
                     return 400, {"ok": False, "error": detail}
                 continue
             if message == "resume":
-                ok, detail = rt.resume_agent_pane(agent)
+                ok, detail = rt.resume_agent_pane(target_item)
                 if not ok:
                     return 400, {"ok": False, "error": detail}
                 continue
-            pane_id = rt.pane_id_for_agent(agent)
+            pane_id = rt.pane_id_for_control_target(target_item)
             if not pane_id:
-                return 400, {"ok": False, "error": f"pane not found for {agent}"}
+                return 400, {"ok": False, "error": f"pane not found for {target_item}"}
             if text_macro:
                 if not deliver_text_to_pane(run_tmux, pane_id, text_macro, env=os.environ):
-                    return 400, {"ok": False, "error": f"send-keys failed for {agent}"}
+                    return 400, {"ok": False, "error": f"send-keys failed for {target_item}"}
                 continue
             if pane_direct:
                 tmux_key = {"up": "Up", "down": "Down", "left": "Left", "right": "Right"}[pane_direct["name"]]
@@ -71,7 +71,7 @@ def try_deliver_shortcut_control(
                     )
                     if result.returncode != 0:
                         detail = (result.stderr or result.stdout or b"").decode("utf-8", "replace").strip()
-                        return 400, {"ok": False, "error": detail or f"send-keys failed for {agent}"}
+                        return 400, {"ok": False, "error": detail or f"send-keys failed for {target_item}"}
                 continue
             tmux_key = {"esc": "Escape", "ctrlc": "C-c", "enter": "Enter"}[message]
             result = subprocess.run(
@@ -81,9 +81,9 @@ def try_deliver_shortcut_control(
             )
             if result.returncode != 0:
                 detail = (result.stderr or result.stdout or b"").decode("utf-8", "replace").strip()
-                return 400, {"ok": False, "error": detail or f"send-keys failed for {agent}"}
+                return 400, {"ok": False, "error": detail or f"send-keys failed for {target_item}"}
             if message in {"esc", "ctrlc"}:
-                rt._mark_idle(agent)
+                rt._mark_idle(target_item)
     except Exception as exc:
         logging.error("Unexpected error: %s", exc, exc_info=True)
         return 500, {"ok": False, "error": str(exc)}
