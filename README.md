@@ -76,11 +76,12 @@ Agent Window also recognizes these shortcut commands:
 | Command | Action |
 | --- | --- |
 | `/restart` | Restart the CLI. |
-| `/open-pane` | Open the selected Agent's tmux pane. Desktop only. |
+| `/open-pane` | Open the selected Agent's tmux pane. Opens the terminal if nothing is selected. Desktop only. |
+| `/terminal <text>` | Type text directly into the terminal pane. Mobile only. |
 | `/nativelog` | Reveal the selected Agent's native log in Finder. Desktop only. |
 | `/log` | Insert `.agent-window/.log.jsonl` into the message. Also works in the middle of text. |
 
-On mobile, `Pane Trace` in the menu shows the pane via `tmux capture-pane` and provides buttons for `Esc`, `Ctrl-C`, the arrow keys, `Enter`, and the common CLI commands `/model`, `/usage`, and `/permission`.
+On mobile, `Pane Trace` in the menu shows the Terminal and Agent panes, with buttons for `Esc`, `Ctrl-C`, the arrow keys, and `Enter`. CLI commands can be registered in `PANE_TEXT_MACROS` (`shortcut_command/catalog.py`).
 
 Typing `@` searches files in the workspace. Files can also be attached with the plus button or by drag-and-drop. Attached files are saved to `<workspace>/.agent-window/uploads/`, and their path is passed to the Agent as ordinary text.
 
