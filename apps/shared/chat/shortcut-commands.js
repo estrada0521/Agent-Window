@@ -5,9 +5,8 @@
       if (!r.ok) throw new Error("shortcut-commands failed");
       const j = await r.json();
       const commands = Array.isArray(j.commands) ? j.commands : [];
-      const list = document.documentElement.dataset.mobile === "1"
-        ? commands.filter((command) => !command.desktop_only)
-        : commands;
+      const isMobile = document.documentElement.dataset.mobile === "1";
+      const list = commands.filter((command) => isMobile ? !command.desktop_only : !command.mobile_only);
       if (!list.length) throw new Error("empty shortcut commands");
       _shortcutCommandsCache = list;
       return list;

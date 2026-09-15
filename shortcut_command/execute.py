@@ -25,8 +25,12 @@ def run_shortcut_command(
         msg = "target is required"
         return 400, {"ok": False, "error": msg, "status_message": msg}
 
+    if normalized_command_id == "terminal" and not (arg or "").strip():
+        msg = "text is required"
+        return 400, {"ok": False, "error": msg, "status_message": msg}
+
     wire = _wire_payload(normalized_command_id, arg)
-    out = try_deliver_shortcut_control(rt, resolved, wire)
+    out = try_deliver_shortcut_control(rt, resolved, normalized_command_id, wire)
     if out is None:
         msg = "shortcut dispatch failed"
         return 500, {"ok": False, "error": msg, "status_message": msg}
@@ -37,6 +41,8 @@ def _wire_payload(command_id: str, arg: str) -> str:
     if command_id in {"up", "down", "left", "right"}:
         n = _parse_repeat(arg, default=1)
         return f"{command_id} {n}"
+    if command_id == "terminal":
+        return arg
     return command_id
 
 

@@ -25,11 +25,12 @@ class ShortcutControlRuntime(Protocol):
 def try_deliver_shortcut_control(
     rt: ShortcutControlRuntime,
     target: str,
+    command_id: str,
     message: str,
 ) -> tuple[int, dict] | None:
     pane_direct = parse_pane_direct_command(message)
-    text_macro = message if message in PANE_TEXT_MACROS else ""
-    if message not in PANE_SINGLE_CONTROL_MESSAGES and not pane_direct and not text_macro:
+    is_text_delivery = message in PANE_TEXT_MACROS or command_id == "terminal"
+    if message not in PANE_SINGLE_CONTROL_MESSAGES and not pane_direct and not is_text_delivery:
         return None
     if not target:
         return 400, {"ok": False, "error": "target is required"}
@@ -50,8 +51,8 @@ def try_deliver_shortcut_control(
             pane_id = rt.pane_id_for_control_target(target_item)
             if not pane_id:
                 return 400, {"ok": False, "error": f"pane not found for {target_item}"}
-            if text_macro:
-                if not deliver_text_to_pane(run_tmux, pane_id, text_macro, env=os.environ):
+            if is_text_delivery:
+                if not deliver_text_to_pane(run_tmux, pane_id, message, env=os.environ):
                     return 400, {"ok": False, "error": f"send-keys failed for {target_item}"}
                 continue
             if pane_direct:

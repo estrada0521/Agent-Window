@@ -620,6 +620,9 @@ def _post_shortcut_command(handler, _parsed, ctx) -> None:
         handler._send_json(400, {"ok": False, "error": err})
         return
     command_id = str(data.get("command_id") or "")
+    if command_id == "terminal" and str(data.get("client") or "").strip().lower() != "mobile":
+        handler._send_json(403, {"ok": False, "error": "terminal input is available on mobile only"})
+        return
     status, body = run_shortcut_command(
         ctx["runtime"],
         command_id=command_id,

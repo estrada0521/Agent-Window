@@ -143,7 +143,9 @@ __CHAT_INCLUDE:../shortcut-commands.js__
               body: JSON.stringify({
                 command_id: parsed.id,
                 arg,
-                target: selectedTargets.join(","),
+                // The terminal pane isn't a chat target -- it never appears as
+                // a chip, so it can't come from selectedTargets.
+                target: parsed.id === "terminal" ? "terminal" : selectedTargets.join(","),
                 client: document.documentElement.dataset.mobile === "1" ? "mobile" : "desktop",
               }),
             });
