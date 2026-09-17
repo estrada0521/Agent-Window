@@ -30,8 +30,8 @@
 
     .composer-field {
       position: relative;
-      min-height: 54px;
-      --composer-row-h: 54px;
+      min-height: 44px;
+      --composer-row-h: 44px;
       --composer-line-h: 24px;
       --composer-btn-d: 28px;
       --composer-btn-bottom: 8px;

@@ -212,7 +212,7 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       const before = val.slice(0, pos);
       const match = before.match(/@[\w.\/-]*$/);
 
-      if (!match) {
+      if (!match || match[0].startsWith("@/")) {
         if (requestSeq === _fileAutocompleteRequestSeq) closeDrop();
         return;
       }
