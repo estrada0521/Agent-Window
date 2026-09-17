@@ -87,7 +87,7 @@ PAGE_HEADER_CSS = """
 
 DEFAULT_HUB_HEADER_ACTIONS = """
 <button class="page-menu-btn" id="pageMenuBtn">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="10" y1="15" x2="20" y2="15"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="10" y1="15" x2="20" y2="15"/></svg>
 </button>
 <select id="pageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;color:transparent;font-size:13px;z-index:220;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true" tabindex="-1">
   <option value="" disabled selected>Menu</option>
@@ -97,7 +97,7 @@ DEFAULT_HUB_HEADER_ACTIONS = """
 
 MOBILE_HUB_HEADER_ACTIONS = """
 <button class="page-menu-btn" id="pageMenuBtn">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="10" y1="15" x2="20" y2="15"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="10" y1="15" x2="20" y2="15"/></svg>
 </button>
 <select id="pageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;color:transparent;font-size:13px;z-index:220;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true" tabindex="-1">
   <option value="" disabled selected>Menu</option>

@@ -65,7 +65,7 @@
     const headerRoot = document.querySelector(".page-header");
     const hasOpenHeaderMenu = () => !!(gitPanel?.classList.contains("open") || repoPanel?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
     const MOBILE_BOTTOM_SHEET_CLOSE_MS = 300;
-    const mobileSheetCloseIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+    const mobileSheetCloseIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     const animateBottomSheetOpen = (panel, onOpened = () => { }) => {
       if (!panel) return;
       panel.hidden = false;
@@ -377,7 +377,7 @@
     let _repoPreviewPath = "";
     let _repoPreviewExt = "";
     let _repoGoToParentPath = () => { };
-    const repoSheetBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
+    const repoSheetBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
     const normalizeRepoPath = (value) => {
       const normalized = String(value || "").replace(/\\/g, "/");
       if (normalized.startsWith("/") || normalized.startsWith("~")) {

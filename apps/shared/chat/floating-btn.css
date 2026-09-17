@@ -44,11 +44,11 @@
 
     #scrollToBottomBtn svg,
     #composerFabBtn svg {
-      width: 20px;
-      height: 20px;
+      width: var(--icon-size);
+      height: var(--icon-size);
       display: block;
       stroke: currentColor;
-      stroke-width: 1.7;
+      stroke-width: var(--icon-stroke);
     }
 
     #scrollToBottomBtn.thinking-scroll-btn {

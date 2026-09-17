@@ -265,10 +265,10 @@
     }
 
     .composer-attach-btn svg {
-      width: 22px;
-      height: 22px;
+      width: var(--icon-size);
+      height: var(--icon-size);
       display: block;
-      stroke-width: 1.7;
+      stroke-width: var(--icon-stroke);
     }
 
     .target-chip {

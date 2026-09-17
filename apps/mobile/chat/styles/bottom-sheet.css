@@ -197,9 +197,10 @@
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-button svg {
-      width: 18px;
-      height: 18px;
+      width: var(--icon-size);
+      height: var(--icon-size);
       display: block;
+      stroke-width: var(--icon-stroke);
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-title {
