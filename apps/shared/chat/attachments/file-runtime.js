@@ -167,22 +167,28 @@ __CHAT_INCLUDE:../file-autocomplete.js__
     const positionComposerDropdown = (dropdown) => {
       if (!dropdown || !isMobileComposer) return;
       const taRect = messageInput.getBoundingClientRect();
+      if (!taRect.width && !taRect.height) return;
+      const composerTransform = getComputedStyle(composerForm).transform;
+      const composerOffsetY = composerTransform === "none" ? 0 : new DOMMatrixReadOnly(composerTransform).m42;
+      const taTop = taRect.top - composerOffsetY;
       const aboveInput = document.querySelector(".composer-above-input");
       let aboveInputHeight = aboveInput ? Math.max(0, Math.ceil(aboveInput.getBoundingClientRect().height)) : 0;
       if (dropdown !== attachPreviewRow && attachPreviewRow?.children.length) {
         aboveInputHeight += Math.max(0, Math.ceil(attachPreviewRow.getBoundingClientRect().height));
       }
       const gap = 8;
-      const availableSpace = Math.max(96, taRect.top - aboveInputHeight - 20);
+      const availableSpace = Math.max(96, taTop - aboveInputHeight - 20);
       dropdown.style.left = taRect.left + "px";
       dropdown.style.width = taRect.width + "px";
       dropdown.style.minWidth = "0";
-      dropdown.style.bottom = Math.max(12, window.innerHeight - taRect.top + gap + aboveInputHeight) + "px";
+      dropdown.style.bottom = Math.max(12, window.innerHeight - taTop + gap + aboveInputHeight) + "px";
       dropdown.style.maxHeight = Math.min(208, availableSpace) + "px";
     };
     document.addEventListener("composer-overlay-open", () => {
       if (!isMobileComposer || !attachPreviewRow?.children.length) return;
-      requestAnimationFrame(() => positionComposerDropdown(attachPreviewRow));
+      const reposition = () => positionComposerDropdown(attachPreviewRow);
+      if (composerForm?.classList.contains("composer-focus-hack")) requestAnimationFrame(reposition);
+      else reposition();
     });
     messageInput.addEventListener("input", () => {
       autoResizeTextarea();

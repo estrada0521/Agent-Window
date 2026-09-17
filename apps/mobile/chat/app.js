@@ -111,6 +111,10 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
           _pollScrollAnchor = null;
           timeline.scrollTop = timeline.scrollHeight;
         }
+        if (typeof repositionOpenComposerMenu === "function") repositionOpenComposerMenu();
+        if (typeof positionComposerDropdown === "function" && attachPreviewRow?.children.length) {
+          positionComposerDropdown(attachPreviewRow);
+        }
       };
       visualViewport.addEventListener("resize", onVVResize);
       visualViewport.addEventListener("scroll", onVVResize);

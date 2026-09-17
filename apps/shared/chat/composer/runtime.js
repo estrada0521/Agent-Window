@@ -78,6 +78,7 @@
           syncAttachPreviewFade();
           if (!attachPreviewRow.children.length) attachPreviewRow.style.display = "none";
           repositionOpenComposerMenu();
+          if (typeof positionComposerDropdown === "function") positionComposerDropdown(attachPreviewRow);
           if (attachment.path) {
             fetch("/delete-upload", {
               method: "POST",
@@ -90,6 +91,7 @@
         attachPreviewRow.style.display = "flex";
         syncAttachPreviewFade();
         repositionOpenComposerMenu();
+        if (typeof positionComposerDropdown === "function") positionComposerDropdown(attachPreviewRow);
       };
 __CHAT_INCLUDE:../upload-attached-files.js__
       const dtHasFiles = (dt) => dt && [...dt.types].includes("Files");
