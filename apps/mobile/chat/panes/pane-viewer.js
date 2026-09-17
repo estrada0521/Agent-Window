@@ -1,6 +1,6 @@
 __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
 
-    const PANE_VIEWER_TERMINAL_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="7 9 10 12 7 15"/><line x1="12" y1="15" x2="16" y2="15"/></svg>';
+    const PANE_VIEWER_TERMINAL_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M4.5,1 H19.5 A3.5,3.5 0 0 1 23,4.5 V19.5 A3.5,3.5 0 0 1 19.5,23 H4.5 A3.5,3.5 0 0 1 1,19.5 V4.5 A3.5,3.5 0 0 1 4.5,1 Z M7.2,8.3 L11.3,12 L7.2,15.7 L5.7,14.3 L8.5,12 L5.7,9.7 Z M12.4,14.4 L16,14.4 A0.9,0.9 0 0 1 16.8,15.3 A0.9,0.9 0 0 1 16,16.2 L12.4,16.2 A0.9,0.9 0 0 1 11.6,15.3 A0.9,0.9 0 0 1 12.4,14.4 Z"/></svg>';
     const paneViewerTerminalTabIconHtml = () =>
       `<span class="agent-icon-slot agent-icon-slot--pane-tab"><span class="pane-viewer-tab-icon" aria-hidden="true" style="--agent-icon-mask:url('data:image/svg+xml,${encodeURIComponent(PANE_VIEWER_TERMINAL_ICON_SVG)}')"></span></span>`;
     let paneViewerAgents = [];
