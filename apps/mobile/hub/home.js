@@ -648,8 +648,8 @@
       const TRAY_INSET = 10;
       const THRESH = 36;
       const trashSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
-      const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
-      const reviveSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`;
+      const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="18.55 8.44 18.55 20 5.46 20 5.46 8.44"/><rect x="4" y="4" width="16" height="4.44"/><line x1="10.55" y1="12" x2="13.45" y2="12"/></svg>`;
+      const reviveSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="2.22 4.89 2.22 10.22 7.56 10.22"/><path d="M4.45 14.67a8 8 0 1 0 1.89-8.32L2.22 10.22"/></svg>`;
       const SWIPE_ACTIONS = {
         kill: { svg: killSvg, label: "Archive", tone: "warn" },
         "delete-archived": { svg: trashSvg, label: "Delete", tone: "danger" },
