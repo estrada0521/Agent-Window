@@ -612,7 +612,7 @@
     .git-commit-file-list {
       display: flex;
       flex-direction: column;
-      gap: 0;
+      gap: 2px;
     }
 
     .git-commit-file-sections {
@@ -648,6 +648,9 @@
       background: transparent;
       font-family: var(--font-main);
       font-weight: var(--body-weight);
+      font-size: var(--text-size, 13px);
+      line-height: 1.3;
+      color: var(--fg);
       overflow: hidden;
       transition: background 120ms ease;
       animation: git-commit-file-row-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -684,7 +687,7 @@
       align-items: center;
       gap: 10px;
       min-height: 0;
-      padding: 6px 10px 6px 38px;
+      padding: 6px 10px;
       position: relative;
       box-sizing: border-box;
     }
@@ -749,10 +752,6 @@
     }
 
     .git-commit-file-icon {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
       width: 18px;
       height: 18px;
       flex-shrink: 0;
