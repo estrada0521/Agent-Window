@@ -253,7 +253,8 @@
       --desk-window-fill: rgb(101, 196, 102);
       --desk-window-glyph: 10, 84, 10;
     }
-    .desk-window-traffic-btn svg {
+    .desk-window-traffic-btn svg,
+    .fit-window-dots i svg {
       display: block;
       position: absolute;
       inset: 0;
@@ -312,11 +313,13 @@
       -webkit-app-region: no-drag;
     }
     .fit-window-dots i {
+      --desk-window-fill: #ff5f57;
+      --desk-window-glyph: 180, 11, 10;
       position: relative;
       width: 1.08em;
       height: 0.38em;
       border-radius: 0.15em;
-      background: #ff5f57;
+      background: transparent;
       cursor: pointer;
     }
     /* Transparent hit-area so the compressed bars remain easy to click. */
@@ -325,8 +328,14 @@
       position: absolute;
       inset: -0.46em -0.31em;
     }
-    .fit-window-dots i:nth-child(2) { background: #febc2e; }
-    .fit-window-dots i:nth-child(3) { background: #28c840; }
+    .fit-window-dots i:nth-child(2) {
+      --desk-window-fill: #febc2e;
+      --desk-window-glyph: 145, 32, 10;
+    }
+    .fit-window-dots i:nth-child(3) {
+      --desk-window-fill: #28c840;
+      --desk-window-glyph: 10, 84, 10;
+    }
     /* Fit Height standby (⌥⌘M): the window shrinks to this line and holds
        there until a new message or ⌥⌘M. It is still just the shrunk window --
        the transcript is only faded out (opacity, not hidden), so a wheel
