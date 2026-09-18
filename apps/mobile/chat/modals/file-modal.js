@@ -111,6 +111,10 @@
         const bgRgb = rootStyle.getPropertyValue("--bg-rgb").trim()
           || (resolvedBaseTheme === "light" ? "249,249,247" : "13,13,12");
         const bg = `rgb(${bgRgb})`;
+        const bodyWeight = rootStyle.getPropertyValue("--body-weight").trim();
+        const codeWeight = rootStyle.getPropertyValue("--file-preview-code-weight").trim();
+        frameDoc?.documentElement?.style.setProperty("--body-weight", bodyWeight);
+        frameDoc?.documentElement?.style.setProperty("--file-preview-code-weight", codeWeight);
         if (normalizedExt === "md" && typeof frameWindow?.__agentIndexApplyPreviewTheme === "function") {
           frameWindow.__agentIndexApplyPreviewTheme(resolvedBaseTheme, resolvedBaseTheme);
           frameDoc?.documentElement?.style.setProperty("--bg-rgb", bgRgb);
@@ -148,7 +152,7 @@
           style.id = "agent-index-base-theme-style";
           frameDoc.head?.appendChild(style);
         }
-        style.textContent = `:root{--body-weight:${isLight ? "430" : "300"};--preview-gutter-bg:rgba(${fgRgb},0.06);--preview-gutter-divider:rgba(${fgRgb},0.16)}html,body{color-scheme:${scheme};background:${bg};color:${fg}}.view-container,.html-preview-shell,.wrap{background:${bg}}.fn{color:${fg}}.code-gutter-table .ln,.html-preview-gutter-table .ln{color:${lnFg}}.code-table,.html-preview-text-table,pre{color:${fg}}`;
+        style.textContent = `:root{--body-weight:${bodyWeight};--file-preview-code-weight:${codeWeight};--preview-gutter-bg:rgba(${fgRgb},0.06);--preview-gutter-divider:rgba(${fgRgb},0.16)}html,body{color-scheme:${scheme};background:${bg};color:${fg}}.view-container,.html-preview-shell,.wrap{background:${bg}}.fn{color:${fg}}.code-gutter-table .ln,.html-preview-gutter-table .ln{color:${lnFg}}.code-table,.html-preview-text-table,pre{color:${fg}}`;
         return true;
       } catch (_) { }
       return false;
@@ -184,7 +188,12 @@
       frame.onload = () => {
         frame.style.transition = "opacity 200ms ease-out";
         frame.style.opacity = "1";
-        wireRepoSwipeBack(frame.contentDocument, repoPreviewInPreviewMode, closeRepoPreview);
+        wireMobileSheetSwipeBack(
+          frame.contentDocument,
+          repoPreviewInPreviewMode,
+          closeRepoPreview,
+          { ignore: ".table-scroll, .katex-display, pre, .code-scroll, .html-preview-text-scroll" },
+        );
         repoPreviewBaseTheme = currentFileModalBaseTheme();
         postPreviewThemeToFrame(frame, normalizedExt, repoPreviewBaseTheme);
         postPreviewHtmlModeToFrame(frame, normalizedExt, repoHtmlPreviewMode);

@@ -85,6 +85,7 @@ def body_typography_css() -> str:
     html[data-theme="dark"] {{
       --body-weight: {DESKTOP_DARK_BODY_WEIGHT};
       --code-weight: {DESKTOP_DARK_CODE_WEIGHT};
+      --file-preview-code-weight: {FILE_PREVIEW_DARK_CODE_WEIGHT};
       --link-weight: {LINK_DARK_WEIGHT};
       --md-strong-weight: {MD_STRONG_DARK_WEIGHT};
       --md-heading-weight: {MD_HEADING_DARK_WEIGHT};
@@ -92,6 +93,7 @@ def body_typography_css() -> str:
     html[data-theme="light"] {{
       --body-weight: {DESKTOP_LIGHT_BODY_WEIGHT};
       --code-weight: {DESKTOP_LIGHT_CODE_WEIGHT};
+      --file-preview-code-weight: {FILE_PREVIEW_LIGHT_CODE_WEIGHT};
       --link-weight: {LINK_LIGHT_WEIGHT};
       --md-strong-weight: {MD_STRONG_LIGHT_WEIGHT};
       --md-heading-weight: {MD_HEADING_LIGHT_WEIGHT};

@@ -311,6 +311,13 @@
       title: "Git",
       closeLabel: "Close git",
       onClose: () => closeGitSheet(),
+      afterBuild: ({ contentEl }) => {
+        wireMobileSheetSwipeBack(
+          contentEl,
+          () => !!gitSession.detailContext,
+          () => gitSession.closeDetail({ refreshList: gitSession.detailNeedsRefresh }),
+        );
+      },
     });
     const closeGitSheet = ({ immediate = false } = {}) => {
       if (!gitPanel) return;
@@ -446,7 +453,7 @@
       }
       _repoGoToParentPath();
     };
-    const wireRepoSwipeBack = (surface, canGoBack, goBack) => {
+    const wireMobileSheetSwipeBack = (surface, canGoBack, goBack, { ignore = "" } = {}) => {
       if (!surface) return;
       let startX = 0;
       let startY = 0;
@@ -458,6 +465,7 @@
       };
       surface.addEventListener("touchstart", (event) => {
         if (!canGoBack()) return;
+        if (ignore && event.target.closest?.(ignore)) return;
         const touch = event.touches?.[0];
         if (!touch) return;
         startX = touch.clientX;
@@ -511,8 +519,7 @@
           previewFrame.title = "File preview";
           previewView.appendChild(previewFrame);
           stack.append(browserView, previewView);
-          wireRepoSwipeBack(browserView, () => !!normalizeRepoPath(_repoBrowserPath), _repoGoToParentPath);
-          wireRepoSwipeBack(previewView, repoPreviewInPreviewMode, closeRepoPreview);
+          wireMobileSheetSwipeBack(browserView, () => !!normalizeRepoPath(_repoBrowserPath), () => _repoGoToParentPath());
           contentEl.appendChild(stack);
         },
       });
