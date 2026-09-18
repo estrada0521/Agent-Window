@@ -54,18 +54,18 @@
       opacity: 1;
       pointer-events: auto;
     }
-    html[data-hub-shell="1"] .composer-overlay.visible {
-      backdrop-filter: blur(30px);
-      -webkit-backdrop-filter: blur(30px);
+    html[data-hub-shell="1"] .composer-overlay {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
-    html[data-hub-shell="1"] .composer-overlay.visible::before {
-      background: radial-gradient(
-        125% 100% at 50% 50%,
-        rgba(var(--bg-rgb), 0.82) 0%,
-        rgba(var(--bg-rgb), 0.74) 38%,
-        rgba(var(--bg-rgb), 0.50) 72%,
-        rgba(var(--bg-rgb), 0.22) 100%
-      );
+    html[data-hub-shell="1"] .composer-overlay::before {
+      content: none;
+    }
+    html[data-hub-shell="1"] #messages {
+      transition: opacity 240ms ease;
+    }
+    html[data-hub-shell="1"] body.composer-overlay-open #messages {
+      opacity: 0.2;
     }
     .composer-overlay.visible::before {
       background: radial-gradient(
