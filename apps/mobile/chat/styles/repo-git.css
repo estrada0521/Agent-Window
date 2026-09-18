@@ -114,7 +114,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
-      padding: var(--mobile-sheet-content-offset) 4px var(--mobile-sheet-compact-bottom-offset);
+      padding: var(--mobile-sheet-content-offset) 6px var(--mobile-sheet-compact-bottom-offset);
       -webkit-overflow-scrolling: touch;
       opacity: 0;
       transform: translateY(8px);
@@ -613,7 +613,6 @@
       display: flex;
       flex-direction: column;
       gap: 0;
-      padding: 0 2px;
     }
 
     .git-commit-file-sections {
@@ -639,7 +638,7 @@
     }
 
     .git-commit-file-section .git-commit-file-list {
-      padding: 0 2px;
+      padding: 0;
     }
 
     .git-commit-file-row {
@@ -683,9 +682,9 @@
     .git-commit-file-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      min-height: 28px;
-      padding: 2px 8px 2px 34px;
+      gap: 10px;
+      min-height: 0;
+      padding: 6px 10px 6px 38px;
       position: relative;
       box-sizing: border-box;
     }
@@ -751,7 +750,7 @@
 
     .git-commit-file-icon {
       position: absolute;
-      left: 8px;
+      left: 10px;
       top: 50%;
       transform: translateY(-50%);
       width: 18px;
