@@ -9,16 +9,20 @@
     const currentFileModalBaseTheme = () => document.documentElement.dataset.theme === "light" ? "light" : "dark";
     const isHtmlPreviewExt = (ext) => ext === "html" || ext === "htm";
     const repoPreviewFrameEl = () => repoPanel?.querySelector(".repo-preview-frame");
+    const gitPreviewFrameEl = () => gitPanel?.querySelector(".git-preview-frame");
     const repoPreviewHtmlModeBtn = () => document.querySelector(".repo-preview-html-mode");
-    const repoPreviewHtmlModeIcon = () => repoPanel?.querySelector(".repo-preview-html-mode-icon");
-    const repoPreviewExt = () => String(repoPanel?._previewExt || "").toLowerCase();
+    const repoPreviewHtmlModeIcon = () => document.querySelector(".repo-preview-html-mode-icon");
+    const gitPreviewInPreviewMode = () => !!gitPanel?.classList.contains("git-mode-preview");
     const repoPreviewInPreviewMode = () => !!repoPanel?.classList.contains("repo-mode-preview");
+    const repoPreviewExt = () => String(
+      (gitPreviewInPreviewMode() ? gitPanel?._previewExt : repoPanel?._previewExt) || ""
+    ).toLowerCase();
     const syncRepoPreviewHtmlModeToggle = () => {
       const btn = repoPreviewHtmlModeBtn();
       const icon = repoPreviewHtmlModeIcon();
       if (!btn || !icon) return;
       const isHtml = isHtmlPreviewExt(repoPreviewExt());
-      btn.hidden = !repoPreviewInPreviewMode() || !isHtml;
+      btn.hidden = !(repoPreviewInPreviewMode() || gitPreviewInPreviewMode()) || !isHtml;
       if (btn.hidden) return;
       const nextMode = repoHtmlPreviewMode === "text" ? "web" : "text";
       const title = nextMode === "text" ? "Switch HTML preview to text" : "Switch HTML preview to web";
@@ -70,12 +74,12 @@
       }, 60);
     };
     const postRepoPreviewTheme = () => {
-      const frame = repoPreviewFrameEl();
+      const frame = gitPreviewInPreviewMode() ? gitPreviewFrameEl() : repoPreviewFrameEl();
       if (!frame?.src) return;
       postPreviewThemeToFrame(frame, repoPreviewExt(), repoPreviewBaseTheme);
     };
     const postRepoPreviewHtmlMode = () => {
-      const frame = repoPreviewFrameEl();
+      const frame = gitPreviewInPreviewMode() ? gitPreviewFrameEl() : repoPreviewFrameEl();
       if (!frame?.src) return;
       postPreviewHtmlModeToFrame(frame, repoPreviewExt(), repoHtmlPreviewMode);
     };
@@ -190,8 +194,11 @@
         frame.style.opacity = "1";
         wireMobileSheetSwipeBack(
           frame.contentDocument,
-          repoPreviewInPreviewMode,
-          closeRepoPreview,
+          () => repoPreviewInPreviewMode() || gitPreviewInPreviewMode(),
+          () => {
+            if (gitPreviewInPreviewMode()) closeGitPreview();
+            else closeRepoPreview();
+          },
           { ignore: ".table-scroll, .katex-display, pre, .code-scroll, .html-preview-text-scroll" },
         );
         repoPreviewBaseTheme = currentFileModalBaseTheme();
@@ -252,17 +259,21 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
       await repoPanel._openFilePreview(normalizedPath, normalizedExt);
     };
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && repoPanel?.classList.contains("repo-mode-preview")) {
+      if (event.key !== "Escape") return;
+      if (gitPreviewInPreviewMode()) {
+        event.preventDefault();
+        closeGitPreview();
+        return;
+      }
+      if (repoPreviewInPreviewMode()) {
         event.preventDefault();
         closeRepoPreview();
       }
     });
     if (typeof MutationObserver !== "undefined") {
       new MutationObserver((mutations) => {
-        if (!repoPanel?.classList.contains("repo-mode-preview")) return;
+        if (!repoPreviewInPreviewMode() && !gitPreviewInPreviewMode()) return;
         if (!mutations.some((mutation) => mutation.attributeName === "data-theme")) return;
-        const frame = repoPreviewFrameEl();
-        if (!frame?.src) return;
         repoPreviewBaseTheme = currentFileModalBaseTheme();
         postRepoPreviewTheme();
       }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });

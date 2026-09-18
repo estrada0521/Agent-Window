@@ -174,7 +174,9 @@
     }) => {
       if (!panel) return null;
       const activate = () => {
-        attachSharedSheetChrome(panel.querySelector(".mobile-bottom-sheet-panel"), { title, closeLabel, onClose });
+        const sheetPanel = panel.querySelector(".mobile-bottom-sheet-panel");
+        if (!sheetPanel || sharedSheetNav.parentElement === sheetPanel) return;
+        attachSharedSheetChrome(sheetPanel, { title, closeLabel, onClose });
         setSharedSheetLeading(leading?.onClick || null, leading?.ariaLabel, leading?.html);
       };
       const existingContent = panel.querySelector(`.${kind}-sheet-content`);
@@ -304,7 +306,10 @@
       paneTraceSheet.open(onOpened);
     };
     const gitSheet = createMobileSheetController(gitPanel, MOBILE_SHEET_ACTIVE_CLASS, {
-      onClosed: () => gitSession.closeDetail(),
+      onClosed: () => {
+        clearGitPreview();
+        gitSession.closeDetail();
+      },
     });
     const ensureGitSheetDom = () => ensureMobileSheetDom(gitPanel, {
       kind: "git",
@@ -312,10 +317,14 @@
       closeLabel: "Close git",
       onClose: () => closeGitSheet(),
       afterBuild: ({ contentEl }) => {
+        ensureGitPreviewView(contentEl);
         wireMobileSheetSwipeBack(
           contentEl,
-          () => !!gitSession.detailContext,
-          () => gitSession.closeDetail({ refreshList: gitSession.detailNeedsRefresh }),
+          () => gitPreviewInPreviewMode() || !!gitSession.detailContext,
+          () => {
+            if (gitPreviewInPreviewMode()) closeGitPreview();
+            else gitSession.closeDetail({ refreshList: gitSession.detailNeedsRefresh });
+          },
         );
       },
     });
@@ -325,6 +334,7 @@
     };
     const openGitSheet = async () => {
       if (!gitPanel) return;
+      closeGitPreview();
       closeRepoSheet({ immediate: true });
       closePaneTraceSheet({ immediate: true });
       ensureGitSheetDom();
@@ -531,13 +541,13 @@
       const path = normalizeRepoPath(rawPath);
       const normalizedExt = String(ext || fileExtForPath(path) || "").toLowerCase();
       if (!path || !repoPanel) return;
-      if (!ensureRepoSheetDom()) return;
       const exists = await fileExistsOnDisk(path);
       if (!exists) {
         setStatus(`file not found: ${displayAttachmentFilename(path) || path}`, true);
         setTimeout(() => setStatus(""), STATUS_TOAST_MS);
         return;
       }
+      if (!ensureRepoSheetDom()) return;
       const frame = repoPreviewFrameEl();
       if (!frame) return;
       const parentPath = repoParentPathForFile(path);
@@ -851,6 +861,14 @@ __CHAT_INCLUDE:../features/git-panel.js__
       closeGitSheet();
     });
     headerRoot?.addEventListener("click", (event) => {
+      if (gitPreviewInPreviewMode()) {
+        if (event.defaultPrevented) return;
+        if (event.target.closest(".page-menu-btn, .page-menu-panel, button, a, details, summary, input, textarea, select, label, [role='button']")) {
+          return;
+        }
+        closeGitPreview();
+        return;
+      }
       if (!repoPanel?.classList.contains("repo-mode-preview")) return;
       if (event.defaultPrevented) return;
       if (event.target.closest(".page-menu-btn, .page-menu-panel, button, a, details, summary, input, textarea, select, label, [role='button']")) {

@@ -40,15 +40,27 @@
       display: block;
     }
 
-    html[data-theme="light"] #repoPanel .repo-preview-view {
+    .git-preview-view {
+      display: none;
+    }
+
+    #gitPanel.git-mode-preview .git-preview-view {
+      display: block;
+    }
+
+    #gitPanel.git-mode-preview .git-worktree-summary {
+      display: none;
+    }
+
+    html[data-theme="light"] #repoPanel .repo-preview-view,
+    html[data-theme="dark"] #repoPanel .repo-preview-view,
+    html[data-theme="light"] #gitPanel .git-preview-view,
+    html[data-theme="dark"] #gitPanel .git-preview-view {
       background: var(--bg);
     }
 
-    html[data-theme="dark"] #repoPanel .repo-preview-view {
-      background: var(--bg);
-    }
-
-    .repo-preview-frame {
+    .repo-preview-frame,
+    .git-preview-frame {
       width: 100%;
       height: 100%;
       border: 0;

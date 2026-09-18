@@ -47,7 +47,8 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       btn.innerHTML = `<span class="git-summary-meta-text">${gitPathCountText(changedPaths)}</span>${gitCountsHtml(added, deleted)}`;
       showGitWorktreeSummary();
     };
-    const setGitDetailChrome = ({ rowHtml = "", subject = "Git" } = {}) => {
+    let _gitDetailChrome = null;
+    const applyGitDetailChrome = ({ rowHtml = "", subject = "Git" } = {}) => {
       const titleEl = gitSheetTitleEl();
       if (titleEl) {
         const subjectEl = document.createElement("span");
@@ -67,9 +68,14 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
         "Back to commits",
         mobileSheetBackIcon,
       );
+    };
+    const setGitDetailChrome = ({ rowHtml = "", subject = "Git" } = {}) => {
+      _gitDetailChrome = { rowHtml, subject };
+      applyGitDetailChrome(_gitDetailChrome);
       animateGitSheetList(".git-detail-view", "forward");
     };
     const resetGitDetailChrome = ({ hadDetail = false } = {}) => {
+      _gitDetailChrome = null;
       setGitSheetTitle();
       setSharedSheetLeading(null);
       showGitWorktreeSummary();
@@ -78,10 +84,66 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
     const setGitPanelBodyHtml = (html) => {
       const contentEl = ensureGitSheetDom();
       if (contentEl) {
+        const keep = contentEl.querySelector(".git-preview-view");
         contentEl.innerHTML = html;
+        if (keep) contentEl.appendChild(keep);
+        else ensureGitPreviewView(contentEl);
         return;
       }
       if (gitPanel) gitPanel.innerHTML = html;
+    };
+    const ensureGitPreviewView = (contentEl) => {
+      const host = contentEl || gitPanel?.querySelector(".git-sheet-content");
+      if (!host) return null;
+      let view = host.querySelector(".git-preview-view");
+      if (view) return view;
+      view = document.createElement("div");
+      view.className = "git-preview-view mobile-sheet-view";
+      const frame = document.createElement("iframe");
+      frame.className = "git-preview-frame";
+      frame.title = "File preview";
+      view.appendChild(frame);
+      host.appendChild(view);
+      return view;
+    };
+    const clearGitPreview = () => {
+      if (gitPanel) {
+        delete gitPanel._previewPath;
+        delete gitPanel._previewExt;
+      }
+      gitPanel?.classList.remove("git-mode-preview");
+      resetEmbeddedFilePreviewFrame(gitPreviewFrameEl());
+      resetRepoPreviewControls();
+      if (_gitDetailChrome) applyGitDetailChrome(_gitDetailChrome);
+    };
+    const closeGitPreview = () => {
+      if (!gitPreviewInPreviewMode()) return;
+      clearGitPreview();
+    };
+    const openGitPreview = async (rawPath, ext) => {
+      const path = String(rawPath || "").trim();
+      const normalizedExt = String(ext || fileExtForPath(path) || "").toLowerCase();
+      if (!path || !gitPanel) return;
+      const exists = await fileExistsOnDisk(path);
+      if (!exists) {
+        setStatus(`file not found: ${displayAttachmentFilename(path) || path}`, true);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
+        return;
+      }
+      ensureGitSheetDom();
+      const view = ensureGitPreviewView();
+      const frame = view?.querySelector(".git-preview-frame");
+      if (!frame) return;
+      gitPanel._previewPath = path;
+      gitPanel._previewExt = normalizedExt;
+      gitPanel.classList.add("git-mode-preview");
+      const filename = (displayAttachmentFilename(path) || path || "Preview").trim();
+      sharedSheetTitleEl.textContent = filename;
+      sharedSheetTitleEl.title = filename;
+      sharedSheetTitleEl.classList.remove("git-sheet-detail-title", "git-sheet-title");
+      setSharedSheetLeading(() => closeGitPreview(), "Back", mobileSheetBackIcon);
+      initRepoPreviewControls();
+      wireEmbeddedFilePreviewFrame(frame, path, normalizedExt);
     };
     const gitSheetListEl = () => gitPanel?.querySelector(
       gitSession.detailContext ? ".git-detail-view .mobile-sheet-list" : ".git-list-view .mobile-sheet-list"
@@ -137,5 +199,11 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       await gitSession.loadPage({ reset: true });
     };
     gitPanel?.addEventListener("click", (event) => {
-      void gitSession.handleClick(event);
+      void gitSession.handleClick(event, {
+        onFileRow: async (fileRow) => {
+          const path = String(fileRow.dataset.path || "").trim();
+          if (!path) return;
+          await openGitPreview(path, extFromPath(path));
+        },
+      });
     });
