@@ -180,7 +180,7 @@
       grid-area: plus;
       justify-self: start;
       align-self: center;
-      padding: calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 8 / 13) calc(var(--text-size, 13px) * 4 / 13) 0;
+      padding: calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 2 / 13) calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 6 / 13);
       z-index: 100;
       margin: 0 calc(var(--text-size, 13px) * 2 / 13) calc(var(--text-size, 13px) / 13);
       transition: opacity 180ms ease, transform 240ms ease;
@@ -324,6 +324,10 @@
     .target-chip.active .target-icon {
       color: var(--icon-fg);
       opacity: 1;
+    }
+    html[data-theme="dark"] .target-chip.active .agent-icon-slot--chip,
+    html[data-theme="dark"] .target-chip.active .target-icon {
+      color: color-mix(in srgb, var(--fg) 60%, var(--muted));
     }
     .agent-icon-slot {
       position: relative;
