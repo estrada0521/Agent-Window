@@ -221,7 +221,7 @@
         return;
       }
       if (_deskSelectedSessionName === sessionName) {
-        postDeskChatFrameMessage({ type: "refresh-session-state", projections: ["targets"] });
+        postDeskChatFrameMessage({ type: "refresh-session-state" });
       }
       await refreshHubSessions(true, { skipRestore: true });
       showDeskHubMessage(`Agents reset for ${sessionName}.`);

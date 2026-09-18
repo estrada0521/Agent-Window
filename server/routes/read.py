@@ -209,10 +209,8 @@ def _get_files_search(handler, parsed, ctx) -> None:
 
 
 def _get_session_state(handler, _parsed, ctx) -> None:
-    qs = parse_qs(_parsed.query)
-    projections = (qs.get("projections", [""])[0] or "").strip()
     try:
-        body = json.dumps(ctx["runtime"].session_state_payload(projections or None), ensure_ascii=True).encode("utf-8")
+        body = json.dumps(ctx["runtime"].session_state_payload(), ensure_ascii=True).encode("utf-8")
     except Exception as exc:
         body = json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=True).encode("utf-8")
         _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")

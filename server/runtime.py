@@ -201,26 +201,17 @@ class ChatRuntime:
             offset=offset,
         )
 
-    def notify_session_state_changed(
-        self,
-        projections: str | list[str] | tuple[str, ...] | set[str] | None = None,
-        *,
-        reason: str = "",
-    ) -> None:
-        _publish_session_state_change_impl(self, projections, reason=reason)
+    def notify_session_state_changed(self) -> None:
+        _publish_session_state_change_impl(self)
 
     def wait_for_session_state_change(self, after_seq: int, timeout: float = 15.0) -> dict | None:
         return _wait_for_session_state_change_impl(self, after_seq, timeout=timeout)
 
-    def session_state_payload(
-        self,
-        projections: str | list[str] | tuple[str, ...] | set[str] | None = None,
-    ) -> dict:
+    def session_state_payload(self) -> dict:
         return _build_session_state_payload_impl(
             self,
             server_instance=self.server_instance,
             session_name=self.session_name,
-            projections=projections,
         )
 
     def payload(
@@ -314,7 +305,7 @@ class ChatRuntime:
             self._native_log.clear_agent_runtime_display(agent)
         self._agent_running.add(agent)
         if not already_running:
-            self.notify_session_state_changed(["statuses", "agent_runtime"], reason="agent-status")
+            self.notify_session_state_changed()
 
     def _bind_native_log_after_send(self, agent: str) -> None:
         with self._native_log_bind_workers_lock:
@@ -360,16 +351,14 @@ class ChatRuntime:
         if agent in self._agent_running:
             return
         self._agent_running.add(agent)
-        self.notify_session_state_changed(["statuses"], reason="agent-native-activity")
+        self.notify_session_state_changed()
 
     def _mark_idle(self, agent: str) -> None:
         was_running = agent in self._agent_running
         self._agent_running.discard(agent)
         cleared = self._native_log.clear_agent_runtime_display(agent)
-        if was_running:
-            self.notify_session_state_changed(["statuses", "agent_runtime"], reason="agent-status")
-        elif cleared:
-            self.notify_session_state_changed(["agent_runtime"], reason="agent-runtime-clear")
+        if was_running or cleared:
+            self.notify_session_state_changed()
 
     @staticmethod
     def resolve_agent_executable(agent_name: str) -> str:

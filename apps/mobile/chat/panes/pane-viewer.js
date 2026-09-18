@@ -295,4 +295,4 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
       if (!paneViewerEl?.classList?.contains("visible")) return;
       fetchVisiblePaneViewerSlide(false);
     });
-    refreshSessionState(["statuses"]);
+    refreshSessionState();

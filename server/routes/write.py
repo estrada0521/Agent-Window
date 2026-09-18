@@ -88,7 +88,7 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         warnings.append(str(exc))
     ctx["runtime"].invalidate_payload_cache()
     try:
-        ctx["runtime"].notify_session_state_changed(["targets", "statuses"], reason="targets-changed")
+        ctx["runtime"].notify_session_state_changed()
     except Exception as exc:
         warnings.append(str(exc))
     payload = {
@@ -140,7 +140,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
     except Exception as exc:
         warnings.append(str(exc))
     try:
-        ctx["runtime"].notify_session_state_changed(["targets", "statuses"], reason="targets-changed")
+        ctx["runtime"].notify_session_state_changed()
     except Exception as exc:
         warnings.append(str(exc))
     payload = {

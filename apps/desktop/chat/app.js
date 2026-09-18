@@ -386,7 +386,7 @@ __CHAT_INCLUDE:../../shared/chat/thinking.js__
 __CHAT_INCLUDE:../../shared/chat/runtime/agent-status.js__
     window.addEventListener("message", (event) => {
       if (event.source !== window.parent || event.data?.type !== "refresh-session-state") return;
-      void refreshSessionState(event.data.projections);
+      void refreshSessionState();
     });
 __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
     const desktopRightPanel = document.getElementById("desktopRightPanel");
@@ -639,7 +639,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       let text = path;
       if (absolute) {
         if (!dpWorkspaceRoot) {
-          const response = await fetchWithTimeout("/session-state?projections=base", {}, 4000);
+          const response = await fetchWithTimeout("/session-state", {}, 4000);
           if (!response.ok) throw new Error("Failed to read workspace path.");
           const state = await response.json();
           dpWorkspaceRoot = String(state?.workspace || "").replace(/\/+$/, "");

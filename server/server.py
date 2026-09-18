@@ -79,7 +79,7 @@ def _message_index_watcher() -> None:
                 for event in events:
                     if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
                         if runtime is not None:
-                            runtime.notify_session_state_changed(["messages", "statuses"], reason="messages")
+                            runtime.notify_session_state_changed()
                             try:
                                 notify_hub_session_messages_changed(
                                     hub_port,

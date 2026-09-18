@@ -40,7 +40,7 @@ def _publish_next_runtime_display(runtime, agent: str) -> None:
         timers[agent] = timer
         runtime._idle_running_display_timers = timers
         timer.start()
-    runtime.notify_session_state_changed(["agent_runtime"], reason="agent-runtime")
+    runtime.notify_session_state_changed()
 
 
 def push_runtime_display(runtime, agent: str, events: list[dict]) -> None:

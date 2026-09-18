@@ -30,7 +30,7 @@ class NativeLogSyncer:
         workspace: str,
         mark_idle_fn: Callable[[str], None],
         mark_running_from_native_activity_fn: Callable[[str], None],
-        notify_state_fn: Callable[..., None],
+        notify_state_fn: Callable[[], None],
         active_agents_fn: Callable[[], list[str]],
         running_agents_fn: Callable[[], set[str]],
         pane_id_fn: Callable[[str], str | None],
@@ -59,8 +59,8 @@ class NativeLogSyncer:
 
     # ── callbacks required by native_log_sync internals ──
 
-    def notify_session_state_changed(self, keys, *, reason: str = "") -> None:
-        self._notify_state_fn(keys, reason=reason)
+    def notify_session_state_changed(self) -> None:
+        self._notify_state_fn()
 
     def active_agents(self) -> list[str]:
         return self._active_agents_fn()
