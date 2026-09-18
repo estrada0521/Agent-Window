@@ -96,6 +96,7 @@
     }
 
     .mobile-sheet-list {
+      --sheet-list-row-height: calc(var(--text-size, 13px) * 30 / 13);
       flex: 1 1 auto;
       min-height: 0;
       overflow-y: auto;
@@ -121,8 +122,9 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      min-height: var(--sheet-list-row-height);
       padding: 6px 10px;
-      border-radius: 8px;
+      border-radius: 0.77em;
       text-align: left;
       font: inherit;
       cursor: pointer;
@@ -561,11 +563,14 @@
     }
 
     .git-commit-file-section-title {
-      padding: 12px 8px 4px;
-      font-size: calc(var(--text-size, 13px) - 2px);
-      font-weight: 600;
+      height: var(--sheet-list-row-height);
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      font-size: 0.8em;
+      font-weight: inherit;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
       color: var(--muted);
       opacity: 1;
     }
@@ -577,7 +582,7 @@
     .git-commit-file-row {
       display: flex;
       flex-direction: column;
-      border-radius: 8px;
+      border-radius: 0.77em;
       background: transparent;
       font-family: var(--font-main);
       font-weight: var(--body-weight);
