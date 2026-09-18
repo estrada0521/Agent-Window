@@ -17,8 +17,6 @@ class ShortcutControlRuntime(Protocol):
 
     def pane_id_for_control_target(self, target: str) -> str | None: ...
 
-    def _mark_idle(self, agent: str) -> None: ...
-
     def append_system_entry(self, message: str, *, agent: str = "", **extra: Any) -> dict: ...
 
 
@@ -76,8 +74,6 @@ def try_deliver_shortcut_control(
             if result.returncode != 0:
                 detail = (result.stderr or result.stdout or b"").decode("utf-8", "replace").strip()
                 return 400, {"ok": False, "error": detail or f"send-keys failed for {target_item}"}
-            if message in {"esc", "ctrlc"}:
-                rt._mark_idle(target_item)
     except Exception as exc:
         logging.error("Unexpected error: %s", exc, exc_info=True)
         return 500, {"ok": False, "error": str(exc)}
