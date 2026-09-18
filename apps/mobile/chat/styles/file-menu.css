@@ -13,11 +13,11 @@
       -webkit-backdrop-filter: none;
       border: none;
       border-radius: 0;
-      overflow-y: auto;
+      overflow-y: hidden;
       overflow-x: hidden;
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
-      touch-action: pan-y;
+      touch-action: none;
       max-height: 200px;
       z-index: 390;
       display: none;
@@ -36,6 +36,12 @@
     #cmdDropdown {
       mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
+    }
+
+    #fileDropdown.is-scrollable,
+    #cmdDropdown.is-scrollable {
+      overflow-y: auto;
+      touch-action: pan-y;
     }
 
     #fileDropdown.visible {

@@ -22,6 +22,17 @@
         }
         event.preventDefault();
       }, { passive: false });
+      // @ / menus live on body, not inside the overlay, so the lock above
+      // never sees them. Same rule as the textarea: pan only while overflowing.
+      // by Grok
+      const lockComposerMenuPan = (menu) => {
+        menu?.addEventListener("touchmove", (event) => {
+          if (menu.classList.contains("is-scrollable")) return;
+          event.preventDefault();
+        }, { passive: false });
+      };
+      lockComposerMenuPan(document.getElementById("fileDropdown"));
+      lockComposerMenuPan(document.getElementById("cmdDropdown"));
       mobileComposerInput?.addEventListener("touchstart", (event) => {
         if (document.activeElement !== mobileComposerInput) return;
         const parentChromeGap = Number.parseFloat(

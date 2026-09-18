@@ -2,7 +2,7 @@
     let _lastCmdItemsData = [];
     const _cmdItems = () => cmdDrop.querySelectorAll(".cmd-item");
     const closeCmdDrop = () => {
-      cmdDrop.classList.remove("visible");
+      cmdDrop.classList.remove("visible", "is-scrollable");
       cmdDrop.style.display = "none";
       _cmdActiveIdx = -1;
     };

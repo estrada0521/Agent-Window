@@ -6,7 +6,7 @@ __CHAT_INCLUDE:../file-resolve.js__
     const _dropItems = () => fileDrop.querySelectorAll(".file-item");
     const closeDrop = () => {
       _fileAutocompleteRequestSeq += 1;
-      fileDrop.classList.remove("visible");
+      fileDrop.classList.remove("visible", "is-scrollable");
       fileDrop.style.display = "none";
       _dropActiveIdx = -1;
     };
@@ -183,6 +183,14 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       dropdown.style.minWidth = "0";
       dropdown.style.bottom = Math.max(12, window.innerHeight - taTop + gap + aboveInputHeight) + "px";
       dropdown.style.maxHeight = Math.min(208, availableSpace) + "px";
+      if (dropdown.id === "fileDropdown" || dropdown.id === "cmdDropdown") {
+        requestAnimationFrame(() => {
+          dropdown.classList.toggle(
+            "is-scrollable",
+            dropdown.scrollHeight > dropdown.clientHeight,
+          );
+        });
+      }
     };
     document.addEventListener("composer-overlay-open", () => {
       if (!isMobileComposer || !attachPreviewRow?.children.length) return;
