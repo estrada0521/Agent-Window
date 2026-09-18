@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 import logging
 import sys
-import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -28,9 +27,6 @@ from hub_backend.session_api import (
 
 hub = HubRuntime(repo_root, tmux_socket, hub_port=hub_port)
 
-SESSION_GET_RETRY_WINDOW = 3.0
-SESSION_GET_RETRY_DELAY = 0.1
-SESSION_POST_RETRY_WINDOW = 0.5
 UPSTREAM_TIMEOUT = 30.0
 TRANSIENT_UPSTREAM_ERRORS = http_proxy.TRANSIENT_UPSTREAM_ERRORS
 STREAM_CHUNK_SIZE = 64 * 1024
@@ -219,58 +215,31 @@ class Handler(BaseHTTPRequestHandler):
         body = self._read_request_body(method)
         forwarded_prefix = format_chat_url(chat_port, "/").rstrip("/")
         headers = self._forward_headers(forwarded_prefix=forwarded_prefix)
-        deadline = time.time() + SESSION_GET_RETRY_WINDOW if method == "GET" else time.time()
-        post_deadline = time.time() + SESSION_POST_RETRY_WINDOW if method == "POST" and suffix == "/reload-chat" else time.time()
-        while True:
-            ok, chat_port, detail = ensure_chat_server(
-                hub,
-                expected_active=session_is_active,
-                workspace=workspace,
-            )
-            if not ok:
-                body_bytes = f"Failed to start chat on port {chat_port}: {detail}".encode("utf-8")
-                self.send_response(500)
-                self.send_header("Content-Type", "text/plain; charset=utf-8")
-                self.send_header("Content-Length", str(len(body_bytes)))
-                self.end_headers()
-                self._safe_write(body_bytes)
-                return
-            upstream_suffix = suffix + (f"?{parsed.query}" if parsed.query else "")
-            last_exc = None
-            response = None
-            status = 0
-            resp_headers = None
-            resp = None
-            upstream = f"http://127.0.0.1:{chat_port}{upstream_suffix}"
-            try:
-                if method == "POST" and suffix == "/reload-chat":
-                    response = self._request_upstream(method, upstream, body=body, headers=headers)
-                else:
-                    status, resp_headers, resp = self._open_upstream(method, upstream, body=body, headers=headers)
-                last_exc = None
-            except TRANSIENT_UPSTREAM_ERRORS as exc:
-                last_exc = exc
-            if last_exc is not None:
-                if method == "GET" and time.time() < deadline:
-                    time.sleep(SESSION_GET_RETRY_DELAY)
-                    continue
-                if method == "POST" and suffix == "/reload-chat" and time.time() < post_deadline:
-                    time.sleep(SESSION_GET_RETRY_DELAY)
-                    continue
-                self._send_bad_gateway(last_exc)
-                return
+        ok, chat_port, detail = ensure_chat_server(
+            hub,
+            expected_active=session_is_active,
+            workspace=workspace,
+        )
+        if not ok:
+            body_bytes = f"Failed to start chat on port {chat_port}: {detail}".encode("utf-8")
+            self.send_response(500)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Content-Length", str(len(body_bytes)))
+            self.end_headers()
+            self._safe_write(body_bytes)
+            return
+        upstream_suffix = suffix + (f"?{parsed.query}" if parsed.query else "")
+        upstream = f"http://127.0.0.1:{chat_port}{upstream_suffix}"
+        try:
             if method == "POST" and suffix == "/reload-chat":
+                response = self._request_upstream(method, upstream, body=body, headers=headers)
                 self._relay_upstream(response)
                 return
-            if method == "GET" and status in {502, 503, 504} and time.time() < deadline:
-                try:
-                    resp.close()
-                except Exception:
-                    pass
-                time.sleep(SESSION_GET_RETRY_DELAY)
-                continue
-            self._relay_upstream_stream(status, resp_headers, resp)
+            status, resp_headers, resp = self._open_upstream(method, upstream, body=body, headers=headers)
+        except TRANSIENT_UPSTREAM_ERRORS as exc:
+            self._send_bad_gateway(exc)
             return
+        self._relay_upstream_stream(status, resp_headers, resp)
 
     def _handle_open_session(self):
         parsed = urlparse(self.path)

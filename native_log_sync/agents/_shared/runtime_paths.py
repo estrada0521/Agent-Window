@@ -5,18 +5,6 @@ import re
 from urllib.parse import unquote, urlparse
 
 
-def workspace_roots(workspace: str = "") -> list[str]:
-    roots: list[str] = []
-    for raw_root in (workspace, os.getcwd()):
-        root = str(raw_root or "").strip()
-        if not root:
-            continue
-        normalized = os.path.realpath(root)
-        if normalized not in roots:
-            roots.append(normalized)
-    return roots
-
-
 def display_path(value: object, *, workspace: str = "") -> str:
     text = str(value or "").strip()
     if not text:
@@ -35,11 +23,9 @@ def display_path(value: object, *, workspace: str = "") -> str:
     if not os.path.isabs(normalized):
         return normalized.replace(os.sep, "/")
     normalized_real = os.path.realpath(normalized)
-    for root in workspace_roots(workspace):
-        try:
-            rel = os.path.relpath(normalized_real, root)
-        except Exception:
-            continue
+    root = str(workspace or "").strip()
+    if root:
+        rel = os.path.relpath(normalized_real, os.path.realpath(root))
         if rel == ".":
             return "."
         if rel != ".." and not rel.startswith(f"..{os.sep}"):
