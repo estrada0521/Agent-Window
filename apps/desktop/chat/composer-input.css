@@ -1,6 +1,6 @@
     .composer {
       --composer-input-font-size: calc(var(--text-size, 13px) * 15 / 13);
-      --composer-input-line-height: 1.6;
+      --composer-input-line-height: 1.5;
       --composer-input-padding: calc(var(--text-size, 13px) * 14 / 13);
       --composer-input-padding-y: calc(var(--text-size, 13px) * 12 / 13);
       --composer-field-base-height: calc(var(--composer-input-font-size) * var(--composer-input-line-height) + 2 * var(--composer-input-padding-y));
