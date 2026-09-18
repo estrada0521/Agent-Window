@@ -7,7 +7,6 @@ import queue
 import select
 import sys
 import threading
-import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
@@ -67,11 +66,10 @@ send_queue_thread = None
 
 def _message_index_watcher() -> None:
     while True:
-        fd = None
+        current_log_path = runtime.log_path
+        fd = os.open(str(current_log_path), os.O_RDONLY)
+        kq = select.kqueue()
         try:
-            current_log_path = runtime.log_path
-            kq = select.kqueue()
-            fd = os.open(str(current_log_path), os.O_RDONLY)
             ev = select.kevent(
                 fd,
                 filter=select.KQ_FILTER_VNODE,
@@ -80,6 +78,7 @@ def _message_index_watcher() -> None:
             )
             kq.control([ev], 0)
             while True:
+                rebuilt = False
                 events = kq.control(None, 4, None)
                 for event in events:
                     if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
@@ -92,16 +91,13 @@ def _message_index_watcher() -> None:
                             except Exception as exc:
                                 logging.warning("Hub message notification failed: %s", exc)
                     if event.fflags & (select.KQ_NOTE_RENAME | select.KQ_NOTE_DELETE):
-                        raise OSError("message log path changed")
-        except Exception as exc:
-            logging.error("message index watcher error: %s", exc)
-            time.sleep(1.0)
+                        rebuilt = True
+                        break
+                if rebuilt:
+                    break
         finally:
-            if fd is not None:
-                try:
-                    os.close(fd)
-                except OSError:
-                    pass
+            kq.close()
+            os.close(fd)
 
 
 def _queued_send_worker() -> None:
@@ -255,7 +251,6 @@ def _pwa_asset_version(path: str) -> str:
         pwa_asset_version_overrides={},
         pwa_static_routes=_PWA_STATIC_ROUTES,
         pwa_static_dir=_PWA_STATIC_DIR,
-        fallback_file=__file__,
     )
 
 

@@ -128,7 +128,7 @@ def release_restart_hold():
     """
     _restart_release_event.set()
 
-_PWA_STATIC_DIR = Path()
+_PWA_STATIC_DIR = Path(__file__).resolve().parents[1] / "apps" / "shared" / "pwa"
 _PWA_STATIC_ROUTES = {
     "/pwa-icon-192.png": ("icon-192.png", "image/png", "no-store"),
     "/pwa-icon-512.png": ("icon-512.png", "image/png", "no-store"),
@@ -147,7 +147,6 @@ def _pwa_asset_version(path: str) -> str:
         pwa_asset_version_overrides=_PWA_ASSET_VERSION_OVERRIDES,
         pwa_static_routes=_PWA_STATIC_ROUTES,
         pwa_static_dir=_PWA_STATIC_DIR,
-        fallback_file=__file__,
     )
 
 def _pwa_asset_url(path: str, base_path: str = "", *, bust: bool = False) -> str:
@@ -167,8 +166,8 @@ def _pwa_icon_entries(base_path: str = "") -> list[dict[str, str]]:
 
 
 _PWA_HUB_MANIFEST_URL = _pwa_asset_url("/hub.webmanifest", bust=True)
-_PWA_ICON_192_URL = _pwa_asset_url("/pwa-icon-192.png", bust=True)
-_PWA_APPLE_TOUCH_ICON_URL = _pwa_asset_url("/apple-touch-icon.png", bust=True)
+_PWA_ICON_192_URL = _pwa_asset_url("/pwa-icon-192.png")
+_PWA_APPLE_TOUCH_ICON_URL = _pwa_asset_url("/apple-touch-icon.png")
 
 
 def _serve_pwa_static(handler, path: str) -> bool:

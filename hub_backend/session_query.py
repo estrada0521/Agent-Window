@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,9 +9,7 @@ from typing import Any
 from backend_core.access.session_meta import session_workspace_claims
 from backend_core.access.settings import agent_window_session_root, session_log_path
 from backend_core.tmux.resolve import normalize_workspace
-
-
-_PREVIEW_TAIL_CHUNK_BYTES = 64 * 1024
+from server.index_cache import _iter_matched_log_entries_reversed
 
 
 @dataclass(frozen=True)
@@ -46,48 +43,13 @@ def _compact_message_preview(entry: dict[str, Any]) -> dict[str, str]:
     return {"sender": sender, "text": compact, "revision": revision}
 
 
-def _iter_tail_lines(path: Path):
-    try:
-        with path.open("rb") as handle:
-            handle.seek(0, 2)
-            pos = handle.tell()
-            buffer = b""
-            while pos > 0:
-                read_size = min(_PREVIEW_TAIL_CHUNK_BYTES, pos)
-                pos -= read_size
-                handle.seek(pos)
-                buffer = handle.read(read_size) + buffer
-                parts = buffer.split(b"\n")
-                if pos > 0:
-                    buffer = parts[0]
-                    parts = parts[1:]
-                else:
-                    buffer = b""
-                for raw in reversed(parts):
-                    if raw.strip():
-                        yield raw.decode("utf-8", errors="replace")
-    except Exception as exc:
-        logging.error(f"Unexpected error: {exc}", exc_info=True)
-
-
 def latest_message_preview(log_path: Path | None) -> dict[str, str]:
     if not log_path or not log_path.is_file():
         return {"sender": "", "text": "", "revision": ""}
-    try:
-        for line in _iter_tail_lines(log_path):
-            try:
-                entry = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            except Exception as exc:
-                logging.error(f"Unexpected error: {exc}", exc_info=True)
-                continue
-            preview = _compact_message_preview(entry)
-            if preview["text"]:
-                return preview
-    except Exception as exc:
-        logging.error(f"Unexpected error: {exc}", exc_info=True)
-        return {"sender": "", "text": "", "revision": ""}
+    for entry in _iter_matched_log_entries_reversed(log_path):
+        preview = _compact_message_preview(entry)
+        if preview["text"]:
+            return preview
     return {"sender": "", "text": "", "revision": ""}
 
 

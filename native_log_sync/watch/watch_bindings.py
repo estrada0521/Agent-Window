@@ -70,10 +70,7 @@ class _VnodeNativeSync:
                 logging.exception("native log watch close failed for %s", agent)
 
     def _open_locked(self, agent: str, path: str) -> None:
-        try:
-            fd = os.open(path, os.O_RDONLY)
-        except OSError:
-            return
+        fd = os.open(path, os.O_RDONLY)
         ev = select.kevent(
             fd,
             filter=select.KQ_FILTER_VNODE,
@@ -110,15 +107,16 @@ class _VnodeNativeSync:
                 self._sync_bindings()
             if not self._runtime.session_is_active:
                 continue
-            rebind = False
+            rebind_agents: list[str] = []
             for event in pending:
                 if event.fflags & (select.KQ_NOTE_DELETE | select.KQ_NOTE_RENAME):
+                    agent = None
                     with self._lock:
                         agent = self._agent_by_fd.get(event.ident)
                         if agent:
                             self._close_locked(agent)
                     if agent:
-                        rebind = True
+                        rebind_agents.append(agent)
                     continue
                 if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
                     with self._lock:
@@ -129,7 +127,13 @@ class _VnodeNativeSync:
                             emit_agent_updates(self._runtime, agent, path)
                         except Exception:
                             logging.exception("native log sync failed for %s", agent)
-            if rebind:
+            if rebind_agents:
+                seen: set[str] = set()
+                for agent in rebind_agents:
+                    if agent in seen:
+                        continue
+                    seen.add(agent)
+                    self._runtime.rebind(agent)
                 self._sync_bindings()
 
 

@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-from pathlib import Path
-
 from backend_core.agents.registry import agent_names_js_set, agent_names_js_array
 from .script_assets import (
     CHAT_HEADER_ACTIONS_HTML,
@@ -17,27 +14,13 @@ from appearance.typography import DESKTOP_TEXT_SIZE, apply_font_tokens, chat_fon
 from hub_backend.branding import APP_DISPLAY_NAME
 from ..hub.header_assets import PAGE_HEADER_CSS, render_page_header
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-
-
 CHAT_DESKTOP_HTML = load_chat_template("desktop")
 CHAT_MOBILE_HTML = load_chat_template("mobile")
-_CHAT_PWA_STATIC_DIR = _REPO_ROOT / "apps" / "shared" / "pwa"
 
 
-def _chat_pwa_asset_version(filename: str) -> str:
-    try:
-        return hashlib.sha256((_CHAT_PWA_STATIC_DIR / filename).read_bytes()).hexdigest()[:12]
-    except Exception:
-        return "0"
-
-
-def _chat_pwa_asset_url(path: str, filename: str, chat_base_path: str = "") -> str:
+def _chat_pwa_asset_url(path: str, chat_base_path: str = "") -> str:
     base_path = chat_base_path.rstrip("/")
-    asset_path = f"{base_path}{path}" if base_path else path
-    version = _chat_pwa_asset_version(filename)
-    sep = "&" if "?" in asset_path else "?"
-    return f"{asset_path}{sep}v={version}"
+    return f"{base_path}{path}" if base_path else path
 
 
 def render_chat_service_worker_html() -> str:
@@ -125,9 +108,9 @@ def render_chat_html(
     replacements = build_chat_template_replacements(
         icon_data_uris=icon_data_uris,
         base_path=base_path,
-        chat_manifest_url=_chat_pwa_asset_url("/app.webmanifest", "icon-192.png", base_path),
-        chat_pwa_icon_192_url=_chat_pwa_asset_url("/pwa-icon-192.png", "icon-192.png", base_path),
-        chat_apple_touch_icon_url=_chat_pwa_asset_url("/apple-touch-icon.png", "apple-touch-icon.png", base_path),
+        chat_manifest_url=_chat_pwa_asset_url("/app.webmanifest", base_path),
+        chat_pwa_icon_192_url=_chat_pwa_asset_url("/pwa-icon-192.png", base_path),
+        chat_apple_touch_icon_url=_chat_pwa_asset_url("/apple-touch-icon.png", base_path),
         chat_service_worker_html=render_chat_service_worker_html(),
         server_instance=server_instance,
         hub_port=hub_port,

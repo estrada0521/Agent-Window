@@ -93,6 +93,7 @@ class ChatRuntime:
             active_agents_fn=self.active_agents,
             running_agents_fn=lambda: self._agent_running,
             pane_id_fn=self.pane_id_for_agent,
+            pane_pid_fn=lambda pane_id: str(self.pane_field(pane_id, "#{pane_pid}") or "").strip(),
             session_is_active_fn=lambda: self.session_is_active,
         )
         self._native_log_bind_workers_lock = threading.Lock()

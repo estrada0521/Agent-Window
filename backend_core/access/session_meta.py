@@ -67,18 +67,21 @@ def session_workspace(session_name: str) -> str | None:
 
 
 def session_meta_agents(session_name: str) -> list[str]:
-    """The agent list a session's .meta records. The composer's target row
-    shows these for an archived session so the topology is visible before a
-    revive; an unreadable or missing .meta just yields none.
-    """
+    """The agent list a session's .meta records."""
     meta_path = agent_window_session_root() / str(session_name or "").strip() / ".meta"
+    if not meta_path.is_file():
+        return []
     try:
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SessionMetaError(f"invalid session meta: {meta_path}") from exc
+    if not isinstance(meta, dict):
+        raise SessionMetaError(f"invalid session meta: {meta_path}")
+    raw = meta.get("agents")
+    if raw is None:
         return []
-    raw = meta.get("agents") if isinstance(meta, dict) else None
     if not isinstance(raw, list):
-        return []
+        raise SessionMetaError(f"invalid session meta: {meta_path}")
     return [str(a).strip() for a in raw if str(a).strip()]
 
 

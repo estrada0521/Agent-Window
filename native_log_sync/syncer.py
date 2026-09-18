@@ -35,6 +35,7 @@ class NativeLogSyncer:
         active_agents_fn: Callable[[], list[str]],
         running_agents_fn: Callable[[], set[str]],
         pane_id_fn: Callable[[str], str | None],
+        pane_pid_fn: Callable[[str], str],
         session_is_active_fn: Callable[[], bool],
     ) -> None:
         self._session_binding = session_binding
@@ -45,6 +46,7 @@ class NativeLogSyncer:
         self._active_agents_fn = active_agents_fn
         self._running_agents_fn = running_agents_fn
         self._pane_id_fn = pane_id_fn
+        self._pane_pid_fn = pane_pid_fn
         self._session_is_active_fn = session_is_active_fn
         _init_state(self)
 
@@ -99,6 +101,19 @@ class NativeLogSyncer:
 
     def remove_binding(self, agent: str) -> None:
         _remove_binding_impl(self, agent)
+
+    def rebind(self, agent: str) -> None:
+        pane_id = self.pane_id_for_agent(agent)
+        if not pane_id:
+            self.remove_binding(agent)
+            return
+        pane_pid = str(self._pane_pid_fn(pane_id) or "").strip()
+        if not pane_pid:
+            raise RuntimeError(f"pane pid unavailable for {agent}")
+        self.refresh(
+            [PaneBindingRequest(agent=agent, pane_id=pane_id, pane_pid=pane_pid)],
+            replace_all=False,
+        )
 
     def agent_statuses(self, running_agents: set[str]) -> dict[str, str]:
         return refresh_idle_statuses(self, running_agents)

@@ -197,14 +197,6 @@ class AgentSendRuntime:
     def normalize_payload(sender: str, payload: str) -> str:
         return normalize_sender_payload(sender, payload)
 
-    def resolve_session_log_path(self, session_name: str) -> Path:
-        target_session = session_name or "default"
-        default_path = session_log_path(target_session)
-        default_path.parent.mkdir(parents=True, exist_ok=True)
-        if not default_path.exists():
-            default_path.touch()
-        return default_path
-
     def _build_delivery_targets(
         self,
         target_spec: str,
@@ -287,7 +279,12 @@ class AgentSendRuntime:
         targets: list[str],
         payload: str,
     ) -> None:
-        log_path = self.resolve_session_log_path(session_name)
+        name = str(session_name or "").strip()
+        if not name:
+            raise AgentSendError("session name is required")
+        log_path = session_log_path(name)
+        if not log_path.is_file():
+            raise AgentSendError(f"session log is unavailable: {log_path}")
         entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "session": session_name,

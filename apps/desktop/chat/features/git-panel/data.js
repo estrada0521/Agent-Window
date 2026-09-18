@@ -12,11 +12,9 @@
     };
     const dpBootstrapPinnedGitSummary = async () => {
       if (!hasDesktopRightPanelOverlay() || !dpPinnedStripActive()) return;
-      try {
-        const data = await fetchGitOverview({ offset: 0, refresh: true, summary: true });
-        dpGitHeaderSummaryState = dpBuildSummaryState(data);
-        dpApplyGitOverviewHeader();
-      } catch (_) {}
+      const data = await fetchGitOverview({ offset: 0, refresh: true, summary: true });
+      dpGitHeaderSummaryState = dpBuildSummaryState(data);
+      dpApplyGitOverviewHeader();
     };
     const dpOnSessionSummaryPinReload = ({ force = false } = {}) => {
       const storageKey = dpGitSummaryPinnedStorageKey();
@@ -217,7 +215,5 @@
     const dpCloseGitDetail = (opts) => gitSession.closeDetail(opts);
     const dpDisconnectGitObserver = () => gitSession.disconnectObserver();
     const dpRefreshGitOverview = async () => {
-      try {
-        await gitSession.refresh();
-      } catch (_) {}
+      await gitSession.refresh();
     };

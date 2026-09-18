@@ -110,18 +110,13 @@ def pwa_asset_version(
     pwa_asset_version_overrides: dict[str, str],
     pwa_static_routes: dict[str, tuple[str, str, str]],
     pwa_static_dir: Path,
-    fallback_file: str,
 ) -> str:
     if path in pwa_asset_version_overrides:
         return pwa_asset_version_overrides[path]
     route = pwa_static_routes.get(path)
     if not route:
-        return str(int(Path(fallback_file).stat().st_mtime_ns))
-    filename = route[0]
-    try:
-        return str(int((pwa_static_dir / filename).stat().st_mtime_ns))
-    except OSError:
-        return str(int(Path(fallback_file).stat().st_mtime_ns))
+        raise KeyError(f"unknown pwa asset: {path}")
+    return str(int((pwa_static_dir / route[0]).stat().st_mtime_ns))
 
 
 def pwa_asset_url(path: str, *, base_path: str = "", bust: bool = False, pwa_asset_version_fn) -> str:
