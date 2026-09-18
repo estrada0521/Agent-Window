@@ -35,7 +35,7 @@
       const ins = Math.max(0, parseInt(commit?.ins) || 0);
       const dels = Math.max(0, parseInt(commit?.dels) || 0);
       const animClass = animate ? " new-commit-slide" : "";
-      return `<div class="git-commit-row${animClass}" data-hash="${escapeHtml(commit?.hash || "")}"><span class="git-commit-icon-wrap">${iconInner}</span><div class="git-commit-info">${subjHtml}<div class="git-commit-meta">${gitCountsHtml(ins, dels)}</div></div></div>`;
+      return `<div class="git-commit-row sheet-list-row${animClass}" data-hash="${escapeHtml(commit?.hash || "")}"><span class="git-commit-icon-wrap">${iconInner}</span><div class="git-commit-info">${subjHtml}<div class="git-commit-meta">${gitCountsHtml(ins, dels)}</div></div></div>`;
     };
     const gitCommitFileRowHtml = (entry, { animate = false } = {}) => {
       const path = String(entry?.path || "").trim();
@@ -44,7 +44,7 @@
       const isUntracked = !!entry?.untracked;
       const ext = fileExtForPath(path);
       const iconSvg = FILE_ICONS[ext] || FILE_SVG_ICONS.file;
-      const iconHtml = `<span class="git-commit-file-icon">${iconSvg}</span>`;
+      const iconHtml = `<span class="git-commit-file-icon sheet-list-file-icon">${iconSvg}</span>`;
       const slashIdx = path.lastIndexOf("/");
       const fileName = slashIdx >= 0 ? path.slice(slashIdx + 1) : path;
       const dirPath = slashIdx >= 0 ? path.slice(0, slashIdx) : "";
@@ -55,7 +55,7 @@
       const actionsHtml = fileMetaHtml ? `<div class="git-commit-file-actions">${fileMetaHtml}</div>` : "";
       const animClass = animate ? " new-file-slide" : "";
       const untrackedAttr = isUntracked ? ' data-untracked="1"' : "";
-      return `<div class="git-commit-file-row clickable${animClass}" data-path="${escapeHtml(path)}"${untrackedAttr}><div class="git-commit-file-header">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
+      return `<div class="git-commit-file-row clickable${animClass}" data-path="${escapeHtml(path)}"${untrackedAttr}><div class="git-commit-file-header sheet-list-row">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
     };
     const shouldAnimateGitCounts = () =>
       !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);

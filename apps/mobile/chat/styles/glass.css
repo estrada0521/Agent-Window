@@ -5,9 +5,6 @@
     .shell > .page-header .page-title,
     .shell > .page-header .page-header-actions .page-menu-btn,
     .mobile-bottom-sheet .mobile-bottom-sheet-button,
-    .git-commit-detail-head .git-commit-row,
-    .git-commit-detail-head .git-summary-row,
-    .git-summary-wrap .git-summary-row,
     .pane-viewer-tabs {
       border: 0.5px solid var(--liquid-glass-lg-border);
       background:

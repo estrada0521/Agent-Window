@@ -1,8 +1,8 @@
 __CHAT_INCLUDE:../../../shared/chat/thinking.css__
 
     @media (prefers-reduced-motion: reduce) {
-      .repo-browser-mobile .repo-browser-list[data-transition="forward"],
-      .repo-browser-mobile .repo-browser-list[data-transition="back"] {
+      .mobile-sheet-list[data-transition="forward"],
+      .mobile-sheet-list[data-transition="back"] {
         animation: none;
       }
     }

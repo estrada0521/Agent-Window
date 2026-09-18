@@ -127,7 +127,7 @@
         wrapEl.dataset.fileStatsRequestSeq = String(requestSeq);
         if (!preserveCurrent) {
           delete wrapEl.dataset.fileStatsSignature;
-          wrapEl.innerHTML = `<div class="git-commit-file-empty inline-loading-row">${loadingIndicatorHtml()}</div>`;
+          wrapEl.innerHTML = `<div class="git-commit-file-empty sheet-list-empty inline-loading-row">${loadingIndicatorHtml()}</div>`;
         }
         const loaded = await loadGitDiffFileStats({ hash, scope });
         if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return null;
@@ -138,7 +138,7 @@
           }
           wrapEl.dataset.fileStatsSignature = signature;
           if (!loaded.sections.length) {
-            wrapEl.innerHTML = '<div class="git-commit-file-empty">No changed files</div>';
+            wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty">No changed files</div>';
             return { files: [] };
           }
           wrapEl.innerHTML = gitCommitFileStatsSectionsHtml(loaded.sections, { allowUndo });
@@ -148,7 +148,7 @@
         if (preserveCurrent && wrapEl.dataset.fileStatsSignature === signature) return loaded.data;
         wrapEl.dataset.fileStatsSignature = signature;
         if (!loaded.files.length) {
-          wrapEl.innerHTML = '<div class="git-commit-file-empty">No changed files</div>';
+          wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty">No changed files</div>';
           return loaded.data;
         }
         wrapEl.innerHTML = gitCommitFileListHtml(loaded.files, { allowUndo, scope });
@@ -157,6 +157,7 @@
       const closeDetail = ({ refreshList = false } = {}) => {
         const rootEl = root();
         if (!rootEl) return;
+        const hadDetail = !!state.detailContext;
         const el = modeEl();
         el?.classList.remove("git-transitioning", "git-mode-detail", "git-mode-worktree-detail");
         const body = rootEl.querySelector(".git-commit-detail-body");
@@ -164,7 +165,7 @@
         if (body) body.innerHTML = "";
         if (head) head.innerHTML = "";
         state.detailContext = null;
-        host.onCloseDetail?.();
+        host.onCloseDetail?.({ hadDetail });
         updateLoadMoreUi();
         ensureObserver();
         const shouldRefresh = !!refreshList;
@@ -202,7 +203,7 @@
           hash: diffKind === "worktree" || diffKind === "staged" || diffKind === "unstaged" ? "" : String(hash || ""),
           wrapEl,
         };
-        host.onOpenDetail?.();
+        host.onOpenDetail?.({ diffKind, hash, rowHtml, subject, isWorktree });
         const scroller = scrollRoot();
         if (scroller) scroller.scrollTop = 0;
         requestAnimationFrame(() => el.classList.remove("git-transitioning"));
@@ -212,7 +213,7 @@
             scope: isWorktree ? "" : diffKind,
           });
         } catch (_) {
-          wrapEl.innerHTML = '<div class="git-commit-file-empty error">Failed to load file stats</div>';
+          wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty error">Failed to load file stats</div>';
         }
       };
       const loadPage = async ({ reset = false } = {}) => {

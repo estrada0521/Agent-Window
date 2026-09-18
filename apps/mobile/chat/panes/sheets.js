@@ -66,6 +66,7 @@
     const hasOpenHeaderMenu = () => !!(gitPanel?.classList.contains("open") || repoPanel?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
     const MOBILE_BOTTOM_SHEET_CLOSE_MS = 300;
     const mobileSheetCloseIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+    const mobileSheetBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
     const animateBottomSheetOpen = (panel, onOpened = () => { }) => {
       if (!panel) return;
       panel.hidden = false;
@@ -158,6 +159,7 @@
         return;
       }
       sharedSheetLeadingBtn.hidden = false;
+      sharedSheetLeadingBtn.disabled = false;
       sharedSheetLeadingOnClick = onClick;
       if (html) sharedSheetLeadingBtn.innerHTML = html;
       if (ariaLabel) sharedSheetLeadingBtn.setAttribute("aria-label", ariaLabel);
@@ -301,7 +303,9 @@
       ensurePaneTraceSheetDom();
       paneTraceSheet.open(onOpened);
     };
-    const gitSheet = createMobileSheetController(gitPanel, MOBILE_SHEET_ACTIVE_CLASS);
+    const gitSheet = createMobileSheetController(gitPanel, MOBILE_SHEET_ACTIVE_CLASS, {
+      onClosed: () => gitSession.closeDetail(),
+    });
     const ensureGitSheetDom = () => ensureMobileSheetDom(gitPanel, {
       kind: "git",
       title: "Git",
@@ -377,7 +381,6 @@
     let _repoPreviewPath = "";
     let _repoPreviewExt = "";
     let _repoGoToParentPath = () => { };
-    const repoSheetBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
     const normalizeRepoPath = (value) => {
       const normalized = String(value || "").replace(/\\/g, "/");
       if (normalized.startsWith("/") || normalized.startsWith("~")) {
@@ -492,17 +495,17 @@
         title: "Repository",
         closeLabel: "Close repository",
         onClose: () => closeRepoSheet(),
-        leading: { onClick: handleRepoSheetBack, ariaLabel: "Go to parent directory", html: repoSheetBackIcon },
+        leading: { onClick: handleRepoSheetBack, ariaLabel: "Go to parent directory", html: mobileSheetBackIcon },
         afterBuild: ({ contentEl }) => {
           const stack = document.createElement("div");
-          stack.className = "repo-stack";
+          stack.className = "repo-stack mobile-sheet-stack mobile-sheet-stage";
           const browserView = document.createElement("div");
-          browserView.className = "repo-browser-view";
+          browserView.className = "repo-browser-view mobile-sheet-view mobile-sheet-list-view";
           const browserMount = document.createElement("div");
           browserMount.className = "repo-browser-mount";
           browserView.appendChild(browserMount);
           const previewView = document.createElement("div");
-          previewView.className = "repo-preview-view";
+          previewView.className = "repo-preview-view mobile-sheet-view";
           const previewFrame = document.createElement("iframe");
           previewFrame.className = "repo-preview-frame";
           previewFrame.title = "File preview";
@@ -629,8 +632,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
         if (_repoPreviewPath) clearRepoPreview();
         ensureRepoSheetDom();
 
-        const browser = document.createElement("div");
-        browser.className = "repo-browser repo-browser-mobile";
         const goToParentPath = () => {
           if (!path) return;
           const parts = path.split("/").filter(Boolean);
@@ -640,7 +641,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
         _repoGoToParentPath = goToParentPath;
         const appendMessage = (container, text, className = "repo-browser-empty", { loading = false } = {}) => {
           const node = document.createElement("div");
-          node.className = className;
+          node.className = `${className} sheet-list-empty`;
           if (loading) {
             node.classList.add("inline-loading-row");
             node.innerHTML = loadingIndicatorHtml();
@@ -653,11 +654,11 @@ __CHAT_INCLUDE:../features/git-panel.js__
           const btn = document.createElement("button");
           btn.type = "button";
           const isHidden = dirEntry.name.startsWith(".");
-          btn.className = `repo-browser-item repo-browser-dir${selected ? " selected" : ""}${isHidden ? " repo-browser-item-dimmed" : ""}`;
+          btn.className = `repo-browser-item repo-browser-dir sheet-list-row${selected ? " selected" : ""}${isHidden ? " repo-browser-item-dimmed" : ""}`;
           btn.title = dirEntry.path;
 
           const icon = document.createElement("span");
-          icon.className = "repo-browser-item-icon";
+          icon.className = "repo-browser-item-icon sheet-list-file-icon";
           icon.setAttribute("aria-hidden", "true");
           icon.innerHTML = folderIcon;
 
@@ -686,11 +687,11 @@ __CHAT_INCLUDE:../features/git-panel.js__
           const iconMarkup = FILE_ICONS[ext] || FILE_SVG_ICONS.file;
           const btn = document.createElement("button");
           btn.type = "button";
-          btn.className = `repo-browser-item repo-browser-file${isHidden ? " repo-browser-item-dimmed" : ""}`;
+          btn.className = `repo-browser-item repo-browser-file sheet-list-row${isHidden ? " repo-browser-item-dimmed" : ""}`;
           btn.title = fileEntry.path;
 
           const icon = document.createElement("span");
-          icon.className = "repo-browser-item-icon";
+          icon.className = "repo-browser-item-icon sheet-list-file-icon";
           icon.setAttribute("aria-hidden", "true");
           icon.innerHTML = iconMarkup;
 
@@ -724,7 +725,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
           };
         };
         const list = document.createElement("div");
-        list.className = "repo-browser-list";
+        list.className = "repo-browser-list mobile-sheet-list";
         if (transition === "forward" || transition === "back") {
           list.dataset.transition = transition;
         }
@@ -739,9 +740,8 @@ __CHAT_INCLUDE:../features/git-panel.js__
           directoryEntries.forEach((dirEntry) => appendDirectoryItem(list, dirEntry));
           fileEntries.forEach((fileEntry) => appendFileItem(list, fileEntry));
         }
-        browser.appendChild(list);
         const mount = repoBrowserMountEl();
-        if (mount) mount.replaceChildren(browser);
+        if (mount) mount.replaceChildren(list);
         setRepoSheetTitle(repoBrowserTitleForPath(path));
         syncRepoSheetBackBtn();
       };
