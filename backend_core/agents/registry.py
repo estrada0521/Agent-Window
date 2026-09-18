@@ -87,10 +87,6 @@ def icon_file_map(repo_root: Path) -> dict[str, Path]:
     return {name: base / Path(a.icon_file).name for name, a in AGENTS.items()}
 
 
-def generate_agent_message_selectors(suffix: str = "", prefix: str = "") -> str:
-    return f"    {prefix}.message:not(.user):not(.system){suffix}"
-
-
 def agent_names_js_set() -> str:
     items = ", ".join(f'"{n}"' for n in ALL_AGENT_NAMES)
     return f"new Set([{items}])"

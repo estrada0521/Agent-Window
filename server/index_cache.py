@@ -5,8 +5,6 @@ import os
 from collections import deque
 from pathlib import Path
 
-from native_log_sync.redacted import omit_redacted_log_entry
-
 MATCHED_ENTRY_TAIL = 64
 _REVERSE_READ_BLOCK = 64 * 1024
 
@@ -29,8 +27,6 @@ def _classify_log_segment(raw_segment: bytes) -> tuple[str, dict | None]:
         raise
     if not isinstance(entry, dict):
         raise RuntimeError("unified log line is not an object")
-    if omit_redacted_log_entry(str(entry.get("message") or "")):
-        return "skip", None
     return "entry", entry
 
 

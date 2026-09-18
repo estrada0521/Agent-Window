@@ -7,7 +7,7 @@ import threading
 import time
 from ctypes import c_double, c_uint32, c_uint64, c_void_p
 
-from native_log_sync.io.fsevents_stream import (
+from workspace_sync.fsevents_stream import (
     FSEVENT_CREATE_FLAGS,
     FSEVENT_RESCAN_FLAGS,
     FSEventCallback,

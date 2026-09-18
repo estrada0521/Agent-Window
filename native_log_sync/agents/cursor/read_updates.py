@@ -13,7 +13,6 @@ from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.cursor.read_runtime import iter_tool_calls, runtime_tool_events
 from native_log_sync.io.jsonl_read import CompleteJsonlScan
 from native_log_sync.io.projected import append_projected_entry
-from native_log_sync.redacted import normalize_cursor_plaintext_for_index
 
 
 _CURSOR_INTERNAL_NOTE_RE = re.compile(
@@ -88,10 +87,12 @@ def _extract_cursor_sync_display_text(entry: dict) -> str:
 
 
 def _cursor_display_for_sync(entry: dict) -> str:
-    display = _extract_cursor_sync_display_text(entry)
-    if not display:
+    display = (_extract_cursor_sync_display_text(entry) or "").strip()
+    if not display or display == "[REDACTED]":
         return ""
-    return normalize_cursor_plaintext_for_index(display) or ""
+    if display.endswith("[REDACTED]"):
+        display = display[: -len("[REDACTED]")].rstrip()
+    return display
 
 
 def sync_cursor_native_log(

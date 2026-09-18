@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import html
 
-from backend_core.agents.registry import generate_agent_message_selectors
-
-
 MESSAGE_FONT_FAMILY = "anthropicSans"
 CODE_FONT_FAMILY = "jetbrainsMono"
 MESSAGE_FONT = f'"{MESSAGE_FONT_FAMILY}", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif'
@@ -166,7 +163,7 @@ def chat_font_style(*, text_size: object = DESKTOP_TEXT_SIZE) -> str:
     .message.user .md-body blockquote {{
       color: var(--fg);
     }}
-    {generate_agent_message_selectors(" .md-body")} {{
+    .message:not(.user):not(.system) .md-body {{
       font-family: var(--font-main);
       color: var(--fg);
     }}

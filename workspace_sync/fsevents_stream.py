@@ -1,5 +1,3 @@
-"""Shared macOS FSEvents / CoreFoundation helpers for native log watchers."""
-
 from __future__ import annotations
 
 import ctypes
