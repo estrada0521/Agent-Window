@@ -146,43 +146,7 @@ Here, success only means the input was delivered to the runtime. It doesn't mean
 
 ## Use it from a phone
 
-You can connect to the same screen from a mobile device on the same LAN.
-
-Agent Window binds only to `127.0.0.1` over HTTP by default. Phone access is an explicit opt-in: install `mkcert`, trust its local CA, and provide the certificate yourself.
-
-```bash
-brew install mkcert
-mkcert -install
-
-mkdir -p "$HOME/.agent-window/state/certs"
-LOCAL_NAME="$(scutil --get LocalHostName)"
-mkcert \
-  -cert-file "$HOME/.agent-window/state/certs/cert.pem" \
-  -key-file "$HOME/.agent-window/state/certs/key.pem" \
-  localhost 127.0.0.1 ::1 "${LOCAL_NAME}.local"
-```
-
-Add any other hostname or IP address you will actually use to the final `mkcert` command.
-
-Then explicitly allow LAN HTTPS and restart Agent Window:
-
-```bash
-mkdir -p "$HOME/.agent-window/state/access"
-touch "$HOME/.agent-window/state/access/lan-https-enabled"
-```
-
-The marker changes the bind from HTTP on `127.0.0.1` to HTTPS on `0.0.0.0`.
-
-Send mkcert's `rootCA.pem` to the device that will connect, install the certificate profile, and enable trust for it. Then open either of the following in Safari:
-
-```text
-https://<Mac LAN IP>:8788/
-https://<Mac name>.local:8788/
-```
-
-Add it to the Home Screen to use it as a PWA.
-
-For reaching Hub from outside the LAN, see [`external-access/README.md`](external-access/README.md).
+Hub binds only to `127.0.0.1` over HTTP. A phone reaches that loopback through Tailscale, which supplies the HTTPS a Home Screen PWA needs. Tailscale itself is configured outside this repository; see [`external-access/README.md`](external-access/README.md).
 
 <!-- Regenerate from the "(original)" screenshots in media/ with (defaults only, no flags):
      python3 user/round_and_glow.py media/agent-window-mobile-{dark,light}*"(original)".png

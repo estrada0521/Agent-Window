@@ -197,7 +197,7 @@ restart_hub() {
   tmux new-session -d -s "$HUB_TMUX_SESSION" -c "$REPO_ROOT" "exec '$BIN_DIR/agent-index'"
   local attempt
   for attempt in $(seq 1 30); do
-    if curl -sk "https://127.0.0.1:${HUB_PORT}/" >/dev/null 2>&1; then
+    if curl -s "http://127.0.0.1:${HUB_PORT}/" >/dev/null 2>&1; then
       return 0
     fi
     sleep 1

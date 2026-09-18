@@ -4,7 +4,6 @@ import http.client
 import json
 import os
 import re
-import ssl
 import subprocess
 import sys
 import time
@@ -21,7 +20,7 @@ from backend_core.tmux.topology import default_tmux_socket_name
 from message_delivery.paste import deliver_text_to_pane
 
 
-from backend_core.access.settings import lan_https_enabled, session_log_path, workspace_chat_port
+from backend_core.access.settings import session_log_path, workspace_chat_port
 
 
 class AgentSendError(RuntimeError):
@@ -252,16 +251,7 @@ class AgentSendRuntime:
     def _notify_running_agents(self, agents: list[str], workspace: str) -> None:
         port = workspace_chat_port(workspace)
         body = json.dumps({"targets": agents}).encode("utf-8")
-        connection: http.client.HTTPConnection | http.client.HTTPSConnection
-        if lan_https_enabled():
-            connection = http.client.HTTPSConnection(
-                "127.0.0.1",
-                port,
-                timeout=1,
-                context=ssl._create_unverified_context(),
-            )
-        else:
-            connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
+        connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
         try:
             connection.request(
                 "POST",

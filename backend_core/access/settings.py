@@ -25,26 +25,6 @@ def agent_window_state_dir() -> Path:
     return agent_window_root() / "state"
 
 
-def lan_https_enabled() -> bool:
-    return (agent_window_state_dir() / "access" / "lan-https-enabled").is_file()
-
-
-def local_bind_scheme(*, cert_file: str = "", key_file: str = "") -> str:
-    """LAN access on → HTTPS only. LAN access off → HTTP."""
-    if not lan_https_enabled():
-        return "http"
-    if not cert_file or not key_file:
-        raise SystemExit("LAN HTTPS is enabled; certificate and key are required")
-    if not Path(cert_file).is_file() or not Path(key_file).is_file():
-        raise SystemExit("LAN HTTPS is enabled; certificate files are missing")
-    return "https"
-
-
-def local_bind_host() -> str:
-    """LAN access requires explicit opt-in; otherwise bind only to loopback."""
-    return "0.0.0.0" if lan_https_enabled() else "127.0.0.1"
-
-
 def agent_window_run_dir() -> Path:
     return agent_window_root() / "run"
 
@@ -113,7 +93,7 @@ def port_is_bindable(port: int) -> bool:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     try:
-        sock.bind((local_bind_host(), int(port)))
+        sock.bind(("127.0.0.1", int(port)))
         return True
     except OSError:
         return False

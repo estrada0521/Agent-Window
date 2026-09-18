@@ -183,47 +183,11 @@ printf '%s' '<message>' | agent-send <target>
 
 ## スマートフォンから使う
 
-同一LAN上のmobile端末から、同じ画面へ接続できます。
-
 mobile UIはdesktopを狭くしたものではなく、片手操作を前提にした別のshellです。composer展開buttonとHub menuを左下へ集め、chatを右へswipeするとHub、左へswipeするとmenuが開きます。
 
 起動時は前回開いていたactive sessionを、なければ最新のactive sessionを開きます。Hubのsession rowをswipeするとArchive、Revive、Deleteを操作できます。themeはHub menuからSystem、Light、Darkを選べます。
 
-Agent Windowは規定ではHTTPで `127.0.0.1` のみにbindします。phone accessは明示的なopt-inです。`mkcert`をinstallしてlocal CAを信頼し、certificateを自分で用意します。
-
-```bash
-brew install mkcert
-mkcert -install
-
-mkdir -p "$HOME/.agent-window/state/certs"
-LOCAL_NAME="$(scutil --get LocalHostName)"
-mkcert \
-  -cert-file "$HOME/.agent-window/state/certs/cert.pem" \
-  -key-file "$HOME/.agent-window/state/certs/key.pem" \
-  localhost 127.0.0.1 ::1 "${LOCAL_NAME}.local"
-```
-
-実際に使う他のhostnameやIP addressがあれば、最後の `mkcert` commandへ追加してください。
-
-次にLAN HTTPSを明示的に許可し、Agent Windowを再起動します。
-
-```bash
-mkdir -p "$HOME/.agent-window/state/access"
-touch "$HOME/.agent-window/state/access/lan-https-enabled"
-```
-
-このmarkerにより、bindはHTTPの `127.0.0.1` からHTTPSの `0.0.0.0` へ変わります。認証はないため、信頼できるnetworkでのみ使用してください。無効にするにはmarkerを削除してAgent Windowを再起動します。
-
-mkcertの `rootCA.pem` を接続する端末へ送り、certificate profileをinstallして信頼を有効にします。その後、Safariで次のいずれかを開きます。
-
-```text
-https://<MacのLAN IP>:8788/
-https://<Mac名>.local:8788/
-```
-
-ホーム画面へ追加するとPWAとして使用できます。
-
-LANの外からHubへ到達する方法は [`external-access/README.md`](external-access/README.md) を参照してください。
+HubはHTTPで `127.0.0.1` のみにbindします。phoneはTailscale経由でそのloopbackへ到達し、Home ScreenのPWAに必要なHTTPSはTailscale側が提供します。Tailscale自体はこのrepositoryの外で設定します。詳しくは [`external-access/README.md`](external-access/README.md) を参照してください。
 
 <p align="center">
   <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">

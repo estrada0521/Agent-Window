@@ -39,6 +39,9 @@ def apply_hub_page_branding(html: str, *, page_title: str) -> str:
     )
 
 
+_LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1", "[::1]"}
+
+
 def resolve_external_origin(
     host_header: str,
     local_port: int,
@@ -83,9 +86,10 @@ def format_session_chat_url(
     url_quote_fn,
 ) -> str:
     resolved = resolve_external_origin_fn(host_header, local_port)
-    if resolved["is_public"]:
-        base = f"{resolved['origin']}/session/{url_quote_fn(session_name)}"
-        return f"{base}{path}"
+    host = str(resolved.get("host") or "").lower().rstrip(".")
+    if host not in _LOOPBACK_HOSTS:
+        suffix = path if path.startswith("/") else f"/{path}"
+        return f"/session/{url_quote_fn(session_name, safe='')}{suffix}"
     return format_external_url_fn(host_header, local_port, path)
 
 

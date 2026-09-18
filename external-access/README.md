@@ -1,14 +1,12 @@
 # External access
 
-Files for using Agent Window from **outside the LAN**.
+Hub binds to loopback HTTP. A phone reaches it through Tailscale, which supplies the HTTPS the mobile PWA needs. There is no Tailscale code here.
 
-LAN use (Hub, the mobile PWA, mkcert) is documented in the repository README. This directory is not that. It is the place for off-LAN reachability.
-
-Two paths are in use:
+This directory is the other off-LAN path: Cloudflare Access.
 
 ## Tailscale
 
-Configured outside this repository. Once the Mac is on the tailnet, Hub is reached as a Tailscale host. There is no Tailscale code here.
+Configured outside this repository. Once the Mac is on the tailnet, Hub is reached as a Tailscale host.
 
 ## Cloudflare Access
 

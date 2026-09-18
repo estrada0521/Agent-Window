@@ -5,7 +5,6 @@ import logging
 import os
 import queue
 import select
-import ssl
 import sys
 import threading
 import time
@@ -28,9 +27,6 @@ from hub_backend.server_helpers import (
 )
 from backend_core.access.chat_server import read_chat_server_state
 from backend_core.access.settings import (
-    local_bind_host,
-    local_bind_scheme,
-    lan_https_enabled,
     workspace_chat_port,
 )
 from workspace_sync.api import WorkspaceSyncApi
@@ -92,7 +88,6 @@ def _message_index_watcher() -> None:
                             try:
                                 notify_hub_session_messages_changed(
                                     hub_port,
-                                    scheme="https" if lan_https_enabled() else "http",
                                 )
                             except Exception as exc:
                                 logging.warning("Hub message notification failed: %s", exc)
@@ -425,16 +420,9 @@ def main(argv: list[str] | None = None) -> None:
     global server
 
     initialize_from_argv(argv)
-    cert_file = os.environ.get("AGENT_WINDOW_CERT_FILE", "")
-    key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")
-    scheme = local_bind_scheme(cert_file=cert_file, key_file=key_file)
     ThreadingHTTPServer.allow_reuse_address = True
-    server = ThreadingHTTPServer((local_bind_host(), port), Handler)
-    if scheme == "https":
-        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ctx.load_cert_chain(cert_file, key_file)
-        server.socket = ctx.wrap_socket(server.socket, server_side=True)
-    print(f"{scheme}://127.0.0.1:{port}/", flush=True)
+    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    print(f"http://127.0.0.1:{port}/", flush=True)
     server.serve_forever()
     if chat_restart_pending:
         chat_restart_release_event.wait()

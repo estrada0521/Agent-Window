@@ -12,7 +12,6 @@ from backend_core.tmux.control import (
     stop_chat_server as stop_chat_server_impl,
 )
 from backend_core.access.settings import (
-    lan_https_enabled,
     port_is_bindable,
     session_artifact_dir,
     workspace_chat_port,
@@ -21,8 +20,7 @@ from server.chat_process import launch_chat_server, wait_for_chat_server
 from hub_backend.session_query import active_session_records_query, archived_session_records
 
 def chat_server_state(self, chat_port: int) -> dict | None:
-    scheme = str(getattr(self, "hub_scheme", "") or "").strip().lower()
-    return read_chat_server_state(chat_port, scheme=scheme)
+    return read_chat_server_state(chat_port)
 
 
 def chat_server_state_matches(self, state: dict | None, *, workspace: str) -> bool:
@@ -54,10 +52,6 @@ def chat_launch_env(self) -> dict[str, str]:
     if existing_pythonpath:
         pythonpath_parts.append(existing_pythonpath)
     env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
-    if lan_https_enabled():
-        return env
-    env.pop("AGENT_WINDOW_CERT_FILE", None)
-    env.pop("AGENT_WINDOW_KEY_FILE", None)
     return env
 
 

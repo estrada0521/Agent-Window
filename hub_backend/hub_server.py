@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import ssl
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -16,6 +15,7 @@ from appearance.theme import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from backend_core.access.pwa import pwa_icon_entries as _pwa_icon_entries_impl
 from backend_core.access.settings import workspace_chat_port
+from hub_backend.session_proxy import proxy_chat_session
 from hub_backend.chat_supervisor import stop_inactive_chat_servers
 from hub_backend.presentation.hub.header_assets import (
     PAGE_HEADER_CSS,
@@ -71,7 +71,6 @@ restart_lock = threading.Lock()
 restart_pending = False
 _restart_release_event = threading.Event()
 hub_server = None
-_scheme = "http"
 
 
 def resolve_external_origin(host_header: str, local_port: int) -> dict[str, object]:
@@ -82,7 +81,7 @@ def resolve_external_origin(host_header: str, local_port: int) -> dict[str, obje
         public_host=PUBLIC_HOST,
         public_hub_port=PUBLIC_HUB_PORT,
         hub_port=port,
-        scheme=_scheme,
+        scheme="http",
     )
 
 
@@ -669,6 +668,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path.startswith("/session/"):
+            proxy_chat_session(self, hub, "GET")
+            return
         if _serve_pwa_static(self, parsed.path):
             return
         if self._dispatch_route(parsed, self._GET_ROUTE_HANDLERS):
@@ -678,6 +680,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
+        if parsed.path.startswith("/session/"):
+            proxy_chat_session(self, hub, "POST")
+            return
         if self._dispatch_route(parsed, self._POST_ROUTE_HANDLERS):
             return
         self.send_response(404)
@@ -685,24 +690,13 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main(argv: list[str] | None = None) -> None:
-    global _scheme, hub_server
+    global hub_server
 
     initialize_from_argv(argv)
 
-    from backend_core.access.settings import local_bind_host, local_bind_scheme
-
-    cert_file = os.environ.get("AGENT_WINDOW_CERT_FILE", "")
-    key_file = os.environ.get("AGENT_WINDOW_KEY_FILE", "")
-    _scheme = local_bind_scheme(cert_file=cert_file, key_file=key_file)
-    if hub is not None:
-        hub.hub_scheme = _scheme
     ThreadingHTTPServer.allow_reuse_address = True
-    hub_server = ThreadingHTTPServer((local_bind_host(), port), Handler)
-    if _scheme == "https":
-        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ctx.load_cert_chain(cert_file, key_file)
-        hub_server.socket = ctx.wrap_socket(hub_server.socket, server_side=True)
-    print(f"{_scheme}://127.0.0.1:{port}/", flush=True)
+    hub_server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    print(f"http://127.0.0.1:{port}/", flush=True)
     hub_server.serve_forever()
     if restart_pending:
         # Request-handling threads are daemon threads; once this (the
