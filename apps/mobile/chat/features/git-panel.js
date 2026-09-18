@@ -9,7 +9,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       titleEl.textContent = "Git";
       titleEl.title = "Git";
     };
-    const gitWorktreeSummaryBtn = () => gitPanel?.querySelector(".git-worktree-summary");
+    const gitWorktreeSummaryBtn = () => mobileSheet?.querySelector(".git-worktree-summary");
     const showGitWorktreeSummary = () => {
       const btn = gitWorktreeSummaryBtn();
       if (btn) btn.hidden = !!gitSession.detailContext;
@@ -19,7 +19,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       if (btn) btn.hidden = true;
     };
     const animateGitSheetList = (selector, transition) => {
-      const list = gitPanel?.querySelector(selector);
+      const list = gitHostEl()?.querySelector(selector);
       if (!list) return;
       delete list.dataset.transition;
       void list.offsetWidth;
@@ -28,7 +28,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
     const renderGitWorktreeSummary = (data) => {
       let btn = gitWorktreeSummaryBtn();
       if (!btn) {
-        const sheetPanel = gitPanel?.querySelector(".git-sheet-panel");
+        const sheetPanel = mobileSheet?.querySelector(".mobile-bottom-sheet-panel");
         if (!sheetPanel) return;
         btn = document.createElement("button");
         btn.type = "button";
@@ -81,84 +81,33 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       showGitWorktreeSummary();
       if (hadDetail) animateGitSheetList(".git-list-view", "back");
     };
-    const setGitPanelBodyHtml = (html) => {
-      const contentEl = ensureGitSheetDom();
-      if (contentEl) {
-        const keep = contentEl.querySelector(".git-preview-view");
-        contentEl.innerHTML = html;
-        if (keep) contentEl.appendChild(keep);
-        else ensureGitPreviewView(contentEl);
-        return;
-      }
-      if (gitPanel) gitPanel.innerHTML = html;
-    };
-    const ensureGitPreviewView = (contentEl) => {
-      const host = contentEl || gitPanel?.querySelector(".git-sheet-content");
-      if (!host) return null;
-      let view = host.querySelector(".git-preview-view");
-      if (view) return view;
-      view = document.createElement("div");
-      view.className = "git-preview-view mobile-sheet-view";
-      const frame = document.createElement("iframe");
-      frame.className = "git-preview-frame";
-      frame.title = "File preview";
-      view.appendChild(frame);
-      host.appendChild(view);
-      return view;
-    };
-    const clearGitPreview = () => {
-      if (gitPanel) {
-        delete gitPanel._previewPath;
-        delete gitPanel._previewExt;
-      }
-      gitPanel?.classList.remove("git-mode-preview");
-      resetEmbeddedFilePreviewFrame(gitPreviewFrameEl());
-      resetRepoPreviewControls();
+    const restoreGitChromeAfterPreview = () => {
       if (_gitDetailChrome) applyGitDetailChrome(_gitDetailChrome);
-    };
-    const closeGitPreview = () => {
-      if (!gitPreviewInPreviewMode()) return;
-      clearGitPreview();
-    };
-    const openGitPreview = async (rawPath, ext) => {
-      const path = String(rawPath || "").trim();
-      const normalizedExt = String(ext || fileExtForPath(path) || "").toLowerCase();
-      if (!path || !gitPanel) return;
-      const exists = await fileExistsOnDisk(path);
-      if (!exists) {
-        setStatus(`file not found: ${displayAttachmentFilename(path) || path}`, true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
-        return;
+      else {
+        setGitSheetTitle();
+        setSharedSheetLeading(null);
+        showGitWorktreeSummary();
       }
-      ensureGitSheetDom();
-      const view = ensureGitPreviewView();
-      const frame = view?.querySelector(".git-preview-frame");
-      if (!frame) return;
-      gitPanel._previewPath = path;
-      gitPanel._previewExt = normalizedExt;
-      gitPanel.classList.add("git-mode-preview");
-      const filename = (displayAttachmentFilename(path) || path || "Preview").trim();
-      sharedSheetTitleEl.textContent = filename;
-      sharedSheetTitleEl.title = filename;
-      sharedSheetTitleEl.classList.remove("git-sheet-detail-title", "git-sheet-title");
-      setSharedSheetLeading(() => closeGitPreview(), "Back", mobileSheetBackIcon);
-      initRepoPreviewControls();
-      wireEmbeddedFilePreviewFrame(frame, path, normalizedExt);
     };
-    const gitSheetListEl = () => gitPanel?.querySelector(
+    const setGitPanelBodyHtml = (html) => {
+      ensureSheetDom();
+      const host = gitHostEl();
+      if (host) host.innerHTML = html;
+    };
+    const gitSheetListEl = () => gitHostEl()?.querySelector(
       gitSession.detailContext ? ".git-detail-view .mobile-sheet-list" : ".git-list-view .mobile-sheet-list"
-    ) || gitPanel;
+    ) || gitHostEl();
     const gitSession = createGitPanelSession({
-      root: () => gitPanel,
-      modeEl: () => gitPanel?.querySelector(".git-stack") || gitPanel,
+      root: () => gitHostEl(),
+      modeEl: () => gitHostEl()?.querySelector(".git-stack") || gitHostEl(),
       observerRoot: gitSheetListEl,
       scrollRoot: gitSheetListEl,
-      canLoad: () => !!gitPanel,
-      canRefresh: () => !!gitPanel,
+      canLoad: () => !!mobileSheet,
+      canRefresh: () => !!mobileSheet,
       renderShell: (data) => {
         renderGitWorktreeSummary(data);
         setGitPanelBodyHtml(`
-        <div class="git-stack mobile-sheet-stack mobile-sheet-stage">
+        <div class="git-stack mobile-sheet-stack">
           <div class="git-list-view mobile-sheet-view mobile-sheet-list">
             <div class="git-commit-list"></div>
             <button type="button" class="page-menu-item git-load-more" hidden></button>
@@ -189,7 +138,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       },
     });
     const updateGitPanel = async () => {
-      if (!gitPanel) return;
+      if (!mobileSheet) return;
       if (gitSession.hasShell()) {
         try {
           await gitSession.refresh();
@@ -198,12 +147,12 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       }
       await gitSession.loadPage({ reset: true });
     };
-    gitPanel?.addEventListener("click", (event) => {
+    mobileSheet?.addEventListener("click", (event) => {
       void gitSession.handleClick(event, {
         onFileRow: async (fileRow) => {
           const path = String(fileRow.dataset.path || "").trim();
           if (!path) return;
-          await openGitPreview(path, extFromPath(path));
+          await openSheetPreview(path, extFromPath(path), { kind: "git" });
         },
       });
     });

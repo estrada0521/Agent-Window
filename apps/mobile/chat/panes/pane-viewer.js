@@ -202,8 +202,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
         }
         return;
       }
-      closeGitSheet({ immediate: true });
-      closeRepoSheet({ immediate: true });
+      closeSheet({ immediate: true });
 
       paneViewerEl.classList.remove("visible");
       paneViewerEl.hidden = true;

@@ -8,21 +8,17 @@
     let repoPreviewControlsWired = false;
     const currentFileModalBaseTheme = () => document.documentElement.dataset.theme === "light" ? "light" : "dark";
     const isHtmlPreviewExt = (ext) => ext === "html" || ext === "htm";
-    const repoPreviewFrameEl = () => repoPanel?.querySelector(".repo-preview-frame");
-    const gitPreviewFrameEl = () => gitPanel?.querySelector(".git-preview-frame");
+    const sheetPreviewFrameEl = () => mobileSheet?.querySelector(".sheet-preview-frame");
     const repoPreviewHtmlModeBtn = () => document.querySelector(".repo-preview-html-mode");
     const repoPreviewHtmlModeIcon = () => document.querySelector(".repo-preview-html-mode-icon");
-    const gitPreviewInPreviewMode = () => !!gitPanel?.classList.contains("git-mode-preview");
-    const repoPreviewInPreviewMode = () => !!repoPanel?.classList.contains("repo-mode-preview");
-    const repoPreviewExt = () => String(
-      (gitPreviewInPreviewMode() ? gitPanel?._previewExt : repoPanel?._previewExt) || ""
-    ).toLowerCase();
+    const sheetPreviewOpen = () => !!mobileSheet?.classList.contains("sheet-mode-preview");
+    const repoPreviewExt = () => String(mobileSheet?._previewExt || "").toLowerCase();
     const syncRepoPreviewHtmlModeToggle = () => {
       const btn = repoPreviewHtmlModeBtn();
       const icon = repoPreviewHtmlModeIcon();
       if (!btn || !icon) return;
       const isHtml = isHtmlPreviewExt(repoPreviewExt());
-      btn.hidden = !(repoPreviewInPreviewMode() || gitPreviewInPreviewMode()) || !isHtml;
+      btn.hidden = !sheetPreviewOpen() || !isHtml;
       if (btn.hidden) return;
       const nextMode = repoHtmlPreviewMode === "text" ? "web" : "text";
       const title = nextMode === "text" ? "Switch HTML preview to text" : "Switch HTML preview to web";
@@ -74,12 +70,12 @@
       }, 60);
     };
     const postRepoPreviewTheme = () => {
-      const frame = gitPreviewInPreviewMode() ? gitPreviewFrameEl() : repoPreviewFrameEl();
+      const frame = sheetPreviewFrameEl();
       if (!frame?.src) return;
       postPreviewThemeToFrame(frame, repoPreviewExt(), repoPreviewBaseTheme);
     };
     const postRepoPreviewHtmlMode = () => {
-      const frame = gitPreviewInPreviewMode() ? gitPreviewFrameEl() : repoPreviewFrameEl();
+      const frame = sheetPreviewFrameEl();
       if (!frame?.src) return;
       postPreviewHtmlModeToFrame(frame, repoPreviewExt(), repoHtmlPreviewMode);
     };
@@ -194,11 +190,8 @@
         frame.style.opacity = "1";
         wireMobileSheetSwipeBack(
           frame.contentDocument,
-          () => repoPreviewInPreviewMode() || gitPreviewInPreviewMode(),
-          () => {
-            if (gitPreviewInPreviewMode()) closeGitPreview();
-            else closeRepoPreview();
-          },
+          () => sheetPreviewOpen(),
+          () => closeSheetPreview(),
           { ignore: ".table-scroll, .katex-display, pre, .code-scroll, .html-preview-text-scroll" },
         );
         repoPreviewBaseTheme = currentFileModalBaseTheme();
@@ -255,24 +248,18 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
       const normalizedPath = String(path || "").trim();
       if (!normalizedPath) return;
       const normalizedExt = String(ext || extFromPath(normalizedPath) || "").toLowerCase();
-      if (typeof repoPanel?._openFilePreview !== "function") return;
-      await repoPanel._openFilePreview(normalizedPath, normalizedExt);
+      await openSheetPreview(normalizedPath, normalizedExt, { kind: "repo" });
     };
     document.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") return;
-      if (gitPreviewInPreviewMode()) {
+      if (sheetPreviewOpen()) {
         event.preventDefault();
-        closeGitPreview();
-        return;
-      }
-      if (repoPreviewInPreviewMode()) {
-        event.preventDefault();
-        closeRepoPreview();
+        closeSheetPreview();
       }
     });
     if (typeof MutationObserver !== "undefined") {
       new MutationObserver((mutations) => {
-        if (!repoPreviewInPreviewMode() && !gitPreviewInPreviewMode()) return;
+        if (!sheetPreviewOpen()) return;
         if (!mutations.some((mutation) => mutation.attributeName === "data-theme")) return;
         repoPreviewBaseTheme = currentFileModalBaseTheme();
         postRepoPreviewTheme();

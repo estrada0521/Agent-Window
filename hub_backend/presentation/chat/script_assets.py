@@ -32,8 +32,7 @@ CHAT_HEADER_ACTIONS_HTML = CHAT_HEADER_MENU_BUTTON_HTML + """
 </select>
 """
 CHAT_SHEET_PANELS_HTML = f"""
-<div class="page-menu-panel mobile-sheet-overlay" id="gitPanel" hidden></div>
-<div class="page-menu-panel mobile-sheet-overlay" id="repoPanel" hidden></div>
+<div class="page-menu-panel mobile-sheet-overlay" id="mobileSheet" hidden></div>
 <div class="page-menu-panel mobile-sheet-overlay" id="paneTracePanel" hidden>
   <div class="hub-main-menu-stack">
     <div id="paneViewer" class="pane-viewer" hidden>

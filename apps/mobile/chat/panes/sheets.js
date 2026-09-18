@@ -4,8 +4,7 @@
     let paneViewerOpenRaf = 0;
     let paneViewerInitialFetchTimer = 0;
     let lastPaneViewerTabIdx = 0;
-    const gitPanel = document.getElementById("gitPanel");
-    const repoPanel = document.getElementById("repoPanel");
+    const mobileSheet = document.getElementById("mobileSheet");
     const paneTracePanel = document.getElementById("paneTracePanel");
     const nativeHeaderMenuSelect = document.getElementById("pageNativeMenuSelect");
     const useNativeHeaderMenuPicker = !!(nativeHeaderMenuSelect && rightMenuBtn);
@@ -63,7 +62,7 @@
       setTimeout(clearNativeHeaderMenuSelection, 0);
     });
     const headerRoot = document.querySelector(".page-header");
-    const hasOpenHeaderMenu = () => !!(gitPanel?.classList.contains("open") || repoPanel?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
+    const hasOpenHeaderMenu = () => !!(mobileSheet?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
     const MOBILE_BOTTOM_SHEET_CLOSE_MS = 300;
     const mobileSheetCloseIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     const mobileSheetBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
@@ -260,35 +259,17 @@
       };
       return { open, close, clearCloseTimer, lockScroll, unlockScroll };
     };
-    const repoSheet = createMobileSheetController(repoPanel, MOBILE_SHEET_ACTIVE_CLASS, {
+    const workspaceSheet = createMobileSheetController(mobileSheet, MOBILE_SHEET_ACTIVE_CLASS, {
       onClosed: () => {
-        _repoPreviewPath = "";
-        _repoPreviewExt = "";
-        repoPanel?.classList.remove("repo-mode-preview");
-        resetRepoPreviewControls();
-        resetEmbeddedFilePreviewFrame(repoPreviewFrameEl());
+        clearSheetPreview({ restoreChrome: false });
+        gitSession.closeDetail();
         _repoBrowserPath = "";
         repoPanelRenderSig = "";
         repoBrowserMountEl()?.replaceChildren();
-        setRepoSheetTitle(repoBrowserTitleForPath(""));
-        syncRepoSheetBackBtn();
+        if (mobileSheet) delete mobileSheet.dataset.kind;
       },
     });
-    const closeRepoSheet = (options) => repoSheet.close(options);
-    const openRepoSheet = () => {
-      if (!repoPanel) return;
-      if (repoPanel.classList.contains("repo-mode-preview")) {
-        closeRepoPreview();
-      }
-      closeGitSheet({ immediate: true });
-      closePaneTraceSheet({ immediate: true });
-      repoSheet.open();
-      if (typeof repoPanel._syncCategoryUi === "function") {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => repoPanel._syncCategoryUi());
-        });
-      }
-    };
+    const closeSheet = (options) => workspaceSheet.close(options);
     const paneTraceSheet = createMobileSheetController(paneTracePanel, MOBILE_SHEET_ACTIVE_CLASS);
     const ensurePaneTraceSheetDom = () => ensureMobileSheetDom(paneTracePanel, {
       kind: "pane-trace",
@@ -305,42 +286,14 @@
       ensurePaneTraceSheetDom();
       paneTraceSheet.open(onOpened);
     };
-    const gitSheet = createMobileSheetController(gitPanel, MOBILE_SHEET_ACTIVE_CLASS, {
-      onClosed: () => {
-        clearGitPreview();
-        gitSession.closeDetail();
-      },
-    });
-    const ensureGitSheetDom = () => ensureMobileSheetDom(gitPanel, {
-      kind: "git",
-      title: "Git",
-      closeLabel: "Close git",
-      onClose: () => closeGitSheet(),
-      afterBuild: ({ contentEl }) => {
-        ensureGitPreviewView(contentEl);
-        wireMobileSheetSwipeBack(
-          contentEl,
-          () => gitPreviewInPreviewMode() || !!gitSession.detailContext,
-          () => {
-            if (gitPreviewInPreviewMode()) closeGitPreview();
-            else gitSession.closeDetail({ refreshList: gitSession.detailNeedsRefresh });
-          },
-        );
-      },
-    });
-    const closeGitSheet = ({ immediate = false } = {}) => {
-      if (!gitPanel) return;
-      gitSheet.close({ immediate });
-    };
-    const openGitSheet = async () => {
-      if (!gitPanel) return;
-      closeGitPreview();
-      closeRepoSheet({ immediate: true });
-      closePaneTraceSheet({ immediate: true });
-      ensureGitSheetDom();
-      setGitSheetTitle("Git");
-      gitSheet.open();
-      await updateGitPanel();
+    const sheetIsOpen = () => !!(mobileSheet && mobileSheet.classList.contains("open") && !mobileSheet.hidden);
+    const sheetKind = () => String(mobileSheet?.dataset.kind || "");
+    const gitHostEl = () => mobileSheet?.querySelector(".git-host");
+    const setSheetKind = (kind) => {
+      if (!mobileSheet) return;
+      mobileSheet.dataset.kind = kind;
+      sharedSheetOnClose = () => closeSheet();
+      sharedSheetCloseBtn.setAttribute("aria-label", kind === "git" ? "Close git" : "Close repository");
     };
     const updateHeaderMenuViewportMetrics = () => {
       if (!headerRoot) return;
@@ -395,8 +348,6 @@
     let repoPanelUpdateSeq = 0;
     let repoPanelEntries = [];
     let _repoBrowserPath = "";
-    let _repoPreviewPath = "";
-    let _repoPreviewExt = "";
     let _repoGoToParentPath = () => { };
     const normalizeRepoPath = (value) => {
       const normalized = String(value || "").replace(/\\/g, "/");
@@ -415,7 +366,7 @@
     };
     const repoSheetTitleEl = () => sharedSheetTitleEl;
     const repoSheetBackBtn = () => sharedSheetLeadingBtn;
-    const repoBrowserMountEl = () => repoPanel?.querySelector(".repo-browser-mount");
+    const repoBrowserMountEl = () => mobileSheet?.querySelector(".repo-browser-mount");
     const repoBrowserTitleForPath = (rawPath) => {
       const path = normalizeRepoPath(rawPath);
       return path ? (path.split("/").filter(Boolean).pop() || "Repository") : "Repository";
@@ -429,7 +380,7 @@
     const syncRepoSheetBackBtn = () => {
       const backBtn = repoSheetBackBtn();
       if (!backBtn) return;
-      if (repoPanel?.classList.contains("repo-mode-preview")) {
+      if (sheetPreviewOpen()) {
         backBtn.disabled = false;
         backBtn.setAttribute("aria-label", "Back to directory");
         return;
@@ -438,30 +389,41 @@
       backBtn.disabled = atRoot;
       backBtn.setAttribute("aria-label", atRoot ? "No parent directory" : "Go to parent directory");
     };
-    const clearRepoPreview = () => {
-      _repoPreviewPath = "";
-      _repoPreviewExt = "";
-      if (repoPanel) {
-        delete repoPanel._previewPath;
-        delete repoPanel._previewExt;
-      }
-      repoPanel?.classList.remove("repo-mode-preview");
-      resetEmbeddedFilePreviewFrame(repoPreviewFrameEl());
-      resetRepoPreviewControls();
-      setRepoSheetTitle(repoBrowserTitleForPath(_repoBrowserPath));
-      syncRepoSheetBackBtn();
-    };
-    const closeRepoPreview = () => {
-      if (!_repoPreviewPath) return;
-      clearRepoPreview();
-    };
     const handleRepoSheetBack = () => {
-      if (!repoPanel) return;
-      if (repoPanel.classList.contains("repo-mode-preview")) {
-        closeRepoPreview();
+      if (!mobileSheet) return;
+      if (sheetPreviewOpen()) {
+        closeSheetPreview();
         return;
       }
       _repoGoToParentPath();
+    };
+    const restoreRepoChromeAfterPreview = () => {
+      setRepoSheetTitle(repoBrowserTitleForPath(_repoBrowserPath));
+      setSharedSheetLeading(handleRepoSheetBack, "Go to parent directory", mobileSheetBackIcon);
+      syncRepoSheetBackBtn();
+    };
+    const applyPreviewChrome = (path) => {
+      const filename = (displayAttachmentFilename(path) || path || "Preview").trim();
+      sharedSheetTitleEl.textContent = filename;
+      sharedSheetTitleEl.title = filename;
+      sharedSheetTitleEl.classList.remove("git-sheet-detail-title", "git-sheet-title");
+      setSharedSheetLeading(() => closeSheetPreview(), "Back", mobileSheetBackIcon);
+    };
+    const clearSheetPreview = ({ restoreChrome = true } = {}) => {
+      if (mobileSheet) {
+        delete mobileSheet._previewPath;
+        delete mobileSheet._previewExt;
+        mobileSheet.classList.remove("sheet-mode-preview");
+      }
+      resetEmbeddedFilePreviewFrame(sheetPreviewFrameEl());
+      resetRepoPreviewControls();
+      if (!restoreChrome) return;
+      if (sheetKind() === "git") restoreGitChromeAfterPreview();
+      else restoreRepoChromeAfterPreview();
+    };
+    const closeSheetPreview = () => {
+      if (!sheetPreviewOpen()) return;
+      clearSheetPreview();
     };
     const wireMobileSheetSwipeBack = (surface, canGoBack, goBack, { ignore = "" } = {}) => {
       if (!surface) return;
@@ -506,86 +468,130 @@
       }, { passive: true });
       surface.addEventListener("touchcancel", reset, { passive: true });
     };
-    const ensureRepoSheetDom = () => {
-      if (!repoPanel) return false;
-      ensureMobileSheetDom(repoPanel, {
-        kind: "repo",
-        title: "Repository",
-        closeLabel: "Close repository",
-        onClose: () => closeRepoSheet(),
-        leading: { onClick: handleRepoSheetBack, ariaLabel: "Go to parent directory", html: mobileSheetBackIcon },
+    const ensureSheetDom = () => {
+      if (!mobileSheet) return false;
+      const existing = mobileSheet.querySelector(".mobile-bottom-sheet-content");
+      if (existing) {
+        const sheetPanel = mobileSheet.querySelector(".mobile-bottom-sheet-panel");
+        if (sheetPanel && sharedSheetNav.parentElement !== sheetPanel) {
+          sheetPanel.prepend(sharedSheetNav);
+          sheetPanel.appendChild(sharedSheetFooter);
+          sharedSheetActiveRef.panel = sheetPanel;
+          sharedSheetOnClose = () => closeSheet();
+        }
+        return true;
+      }
+      ensureMobileSheetDom(mobileSheet, {
+        kind: "workspace",
+        title: "",
+        closeLabel: "Close",
+        onClose: () => closeSheet(),
         afterBuild: ({ contentEl }) => {
-          const stack = document.createElement("div");
-          stack.className = "repo-stack mobile-sheet-stack mobile-sheet-stage";
+          contentEl.classList.add("mobile-sheet-stage");
+          const gitHost = document.createElement("div");
+          gitHost.className = "git-host mobile-sheet-stack";
+          const repoStack = document.createElement("div");
+          repoStack.className = "repo-stack mobile-sheet-stack";
           const browserView = document.createElement("div");
           browserView.className = "repo-browser-view mobile-sheet-view mobile-sheet-list-view";
           const browserMount = document.createElement("div");
           browserMount.className = "repo-browser-mount";
           browserView.appendChild(browserMount);
+          repoStack.appendChild(browserView);
           const previewView = document.createElement("div");
-          previewView.className = "repo-preview-view mobile-sheet-view";
+          previewView.className = "sheet-preview-view mobile-sheet-view";
           const previewFrame = document.createElement("iframe");
-          previewFrame.className = "repo-preview-frame";
+          previewFrame.className = "sheet-preview-frame";
           previewFrame.title = "File preview";
           previewView.appendChild(previewFrame);
-          stack.append(browserView, previewView);
-          wireMobileSheetSwipeBack(browserView, () => !!normalizeRepoPath(_repoBrowserPath), () => _repoGoToParentPath());
-          contentEl.appendChild(stack);
+          contentEl.append(gitHost, repoStack, previewView);
+          wireMobileSheetSwipeBack(
+            contentEl,
+            () => sheetPreviewOpen()
+              || (sheetKind() === "git" && !!gitSession.detailContext)
+              || (sheetKind() === "repo" && !!normalizeRepoPath(_repoBrowserPath)),
+            () => {
+              if (sheetPreviewOpen()) closeSheetPreview();
+              else if (sheetKind() === "git") gitSession.closeDetail({ refreshList: gitSession.detailNeedsRefresh });
+              else _repoGoToParentPath();
+            },
+          );
         },
       });
       wireRepoPreviewControls(sharedSheetFooter);
-      syncRepoSheetBackBtn();
       return true;
     };
-    const openRepoPreview = async (rawPath, ext) => {
-      const path = normalizeRepoPath(rawPath);
+    const openSheetPreview = async (rawPath, ext, { kind } = {}) => {
+      const targetKind = kind || sheetKind() || "repo";
+      const path = targetKind === "repo"
+        ? normalizeRepoPath(rawPath)
+        : String(rawPath || "").trim();
       const normalizedExt = String(ext || fileExtForPath(path) || "").toLowerCase();
-      if (!path || !repoPanel) return;
+      if (!path || !mobileSheet) return;
       const exists = await fileExistsOnDisk(path);
       if (!exists) {
         setStatus(`file not found: ${displayAttachmentFilename(path) || path}`, true);
         setTimeout(() => setStatus(""), STATUS_TOAST_MS);
         return;
       }
-      if (!ensureRepoSheetDom()) return;
-      const frame = repoPreviewFrameEl();
+      ensureSheetDom();
+      closePaneTraceSheet({ immediate: true });
+      setSheetKind(targetKind);
+      if (!sheetIsOpen()) workspaceSheet.open();
+      if (sheetPreviewOpen()) clearSheetPreview({ restoreChrome: false });
+      const frame = sheetPreviewFrameEl();
       if (!frame) return;
+      mobileSheet._previewPath = path;
+      mobileSheet._previewExt = normalizedExt;
+      mobileSheet.classList.add("sheet-mode-preview");
+      applyPreviewChrome(path);
+      initRepoPreviewControls();
+      wireEmbeddedFilePreviewFrame(frame, path, normalizedExt);
+      if (targetKind !== "repo") return;
       const parentPath = repoParentPathForFile(path);
-      const sheetOpen = repoPanel.classList.contains("open") && !repoPanel.hidden;
-      if (!sheetOpen) repoSheet.open();
-      if (repoPanel.classList.contains("repo-mode-preview")) {
-        clearRepoPreview();
-      }
-      if (typeof repoPanel._openRepoPath === "function") {
+      if (typeof mobileSheet._openRepoPath === "function") {
         if (_repoBrowserPath !== parentPath || !repoBrowserMountEl()?.childElementCount) {
-          await repoPanel._openRepoPath(parentPath);
+          await mobileSheet._openRepoPath(parentPath);
         }
       } else {
         _repoBrowserPath = parentPath;
       }
-      _repoPreviewPath = path;
-      _repoPreviewExt = normalizedExt;
-      repoPanel._previewPath = path;
-      repoPanel._previewExt = normalizedExt;
-      repoPanel.classList.add("repo-mode-preview");
-      const filename = (displayAttachmentFilename(path) || path || "Preview").trim();
-      setRepoSheetTitle(filename);
-      syncRepoSheetBackBtn();
-      initRepoPreviewControls();
-      wireEmbeddedFilePreviewFrame(frame, path, normalizedExt);
     };
-    if (repoPanel) repoPanel._openFilePreview = openRepoPreview;
 __CHAT_INCLUDE:../features/git-panel.js__
+    const openGitSheet = async () => {
+      if (!mobileSheet) return;
+      ensureSheetDom();
+      closePaneTraceSheet({ immediate: true });
+      closeSheetPreview();
+      setSheetKind("git");
+      restoreGitChromeAfterPreview();
+      if (!sheetIsOpen()) workspaceSheet.open();
+      await updateGitPanel();
+    };
+    const openRepoSheet = () => {
+      if (!mobileSheet) return;
+      ensureSheetDom();
+      closePaneTraceSheet({ immediate: true });
+      closeSheetPreview();
+      setSheetKind("repo");
+      restoreRepoChromeAfterPreview();
+      if (!sheetIsOpen()) workspaceSheet.open();
+      if (typeof mobileSheet._syncCategoryUi === "function") {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => mobileSheet._syncCategoryUi());
+        });
+      }
+    };
     const updateRepoPanel = async (entries) => {
-      if (!repoPanel) return;
+      if (!mobileSheet) return;
       repoPanelEntries = Array.isArray(entries) ? entries : [];
 
       const normalizeRepoPath = (value) => String(value || "")
         .replace(/\\/g, "/")
         .replace(/^\/+|\/+$/g, "");
       const sessionKey = repoSession || currentSessionName || "";
-      if (repoPanel._repoSessionKey !== sessionKey) {
-        repoPanel._repoSessionKey = sessionKey;
+      if (mobileSheet._repoSessionKey !== sessionKey) {
+        mobileSheet._repoSessionKey = sessionKey;
         _repoBrowserPath = "";
         repoPanelRenderSig = "";
       }
@@ -646,8 +652,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
         if (nextRenderSig === repoPanelRenderSig && repoBrowserMountEl()?.childElementCount) return;
         repoPanelRenderSig = nextRenderSig;
         _repoBrowserPath = path;
-        if (_repoPreviewPath) clearRepoPreview();
-        ensureRepoSheetDom();
+        ensureSheetDom();
 
         const goToParentPath = () => {
           if (!path) return;
@@ -730,7 +735,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
           btn.addEventListener("click", async (event) => {
             event.preventDefault();
             event.stopPropagation();
-            await openRepoPreview(fileEntry.path, ext);
+            await openSheetPreview(fileEntry.path, ext, { kind: "repo" });
           });
           container.appendChild(btn);
         };
@@ -759,13 +764,15 @@ __CHAT_INCLUDE:../features/git-panel.js__
         }
         const mount = repoBrowserMountEl();
         if (mount) mount.replaceChildren(list);
-        setRepoSheetTitle(repoBrowserTitleForPath(path));
-        syncRepoSheetBackBtn();
+        if (!sheetPreviewOpen()) {
+          setRepoSheetTitle(repoBrowserTitleForPath(path));
+          syncRepoSheetBackBtn();
+        }
       };
 
       const openRepoPath = async (rawPath, { transition = "none", preserveCurrent = false } = {}) => {
         const path = normalizeRepoPath(rawPath);
-        if (repoPanel._repoSessionKey !== sessionKey) return;
+        if (mobileSheet._repoSessionKey !== sessionKey) return;
         const updateSeq = ++repoPanelUpdateSeq;
         const canPreserveCurrent = !!(
           preserveCurrent
@@ -775,17 +782,17 @@ __CHAT_INCLUDE:../features/git-panel.js__
         if (!canPreserveCurrent) renderPanel(path, [], { loading: true, transition });
         try {
           const entriesForPath = await fetchRepoDir(path);
-          if (updateSeq !== repoPanelUpdateSeq || repoPanel._repoSessionKey !== sessionKey) return;
+          if (updateSeq !== repoPanelUpdateSeq || mobileSheet._repoSessionKey !== sessionKey) return;
           if (canPreserveCurrent && _repoBrowserPath !== path) return;
           renderPanel(path, entriesForPath, { transition });
         } catch (err) {
-          if (updateSeq !== repoPanelUpdateSeq || repoPanel._repoSessionKey !== sessionKey) return;
+          if (updateSeq !== repoPanelUpdateSeq || mobileSheet._repoSessionKey !== sessionKey) return;
           if (canPreserveCurrent) return;
           const errorText = String(err?.message || "Failed to load directory");
           if (path) {
             try {
               const rootEntries = await fetchRepoDir("");
-              if (updateSeq !== repoPanelUpdateSeq || repoPanel._repoSessionKey !== sessionKey) return;
+              if (updateSeq !== repoPanelUpdateSeq || mobileSheet._repoSessionKey !== sessionKey) return;
               renderPanel("", rootEntries, { transition: "back" });
               return;
             } catch (_) { }
@@ -794,23 +801,22 @@ __CHAT_INCLUDE:../features/git-panel.js__
         }
       };
 
-      repoPanel._syncCategoryUi = () => {
-        if (repoPanel.classList.contains("repo-mode-preview")) return;
+      mobileSheet._syncCategoryUi = () => {
+        if (sheetKind() !== "repo" || sheetPreviewOpen()) return;
         void openRepoPath(_repoBrowserPath, { transition: "none", preserveCurrent: true });
       };
-      repoPanel._openRepoPath = openRepoPath;
-      repoPanel._scrollToCategory = () => false;
-      const panelVisible = repoPanel.classList.contains("open") && !repoPanel.hidden;
+      mobileSheet._openRepoPath = openRepoPath;
+      mobileSheet._scrollToCategory = () => false;
+      const panelVisible = sheetIsOpen() && sheetKind() === "repo";
       if (!panelVisible) return;
-      if (repoPanel.classList.contains("repo-mode-preview")) return;
+      if (sheetPreviewOpen()) return;
       await openRepoPath(_repoBrowserPath, { transition: "none", preserveCurrent: true });
     };
     const closeHeaderMenus = () => {
       resetAgentActionNativeMenu({ clearOptions: true });
       gitSession.closeDetail();
       exitPaneTraceMode();
-      closeGitSheet({ immediate: true });
-      closeRepoSheet({ immediate: true });
+      closeSheet({ immediate: true });
       syncHeaderMenuFocus();
     };
     const handleNativeMenuAction = async (payload) => {
@@ -848,39 +854,25 @@ __CHAT_INCLUDE:../features/git-panel.js__
       }
       closeHeaderMenus();
     });
-    repoPanel?.addEventListener("click", (event) => {
-      if (event.target !== repoPanel) return;
+    mobileSheet?.addEventListener("click", (event) => {
+      if (event.target !== mobileSheet) return;
       event.preventDefault();
       event.stopPropagation();
-      closeRepoSheet();
-    });
-    gitPanel?.addEventListener("click", (event) => {
-      if (event.target !== gitPanel) return;
-      event.preventDefault();
-      event.stopPropagation();
-      closeGitSheet();
+      closeSheet();
     });
     headerRoot?.addEventListener("click", (event) => {
-      if (gitPreviewInPreviewMode()) {
-        if (event.defaultPrevented) return;
-        if (event.target.closest(".page-menu-btn, .page-menu-panel, button, a, details, summary, input, textarea, select, label, [role='button']")) {
-          return;
-        }
-        closeGitPreview();
-        return;
-      }
-      if (!repoPanel?.classList.contains("repo-mode-preview")) return;
+      if (!sheetPreviewOpen()) return;
       if (event.defaultPrevented) return;
       if (event.target.closest(".page-menu-btn, .page-menu-panel, button, a, details, summary, input, textarea, select, label, [role='button']")) {
         return;
       }
-      closeRepoPreview();
+      closeSheetPreview();
     });
     window.addEventListener("resize", () => {
       syncNativeHeaderMenuSelectAnchor();
       if (hasOpenHeaderMenu()) updateHeaderMenuViewportMetrics();
-      if (repoPanel && !repoPanel.hidden && typeof repoPanel._syncCategoryUi === "function") {
-        repoPanel._syncCategoryUi();
+      if (sheetIsOpen() && sheetKind() === "repo" && typeof mobileSheet._syncCategoryUi === "function") {
+        mobileSheet._syncCategoryUi();
       }
     });
     window.addEventListener("scroll", () => {
@@ -895,13 +887,12 @@ __CHAT_INCLUDE:../features/git-panel.js__
       }
 
       const inRightMenu = rightMenuBtn?.contains(event.target);
-      const inGitMenu = gitPanel?.contains(event.target);
-      const inFilesMenu = repoPanel?.contains(event.target);
+      const inWorkspaceSheet = mobileSheet?.contains(event.target);
       const inPaneTraceMenu = paneTracePanel?.contains(event.target);
       const inNativeHeaderMenu = nativeHeaderMenuSelect?.contains(event.target);
       const agentActionNativeMenu = document.getElementById("agentActionNativeMenuSelect");
       const inAgentActionMenu = agentActionNativeMenu?.contains(event.target);
-      if (!inRightMenu && !inGitMenu && !inFilesMenu && !inPaneTraceMenu && !inNativeHeaderMenu && !inAgentActionMenu) {
+      if (!inRightMenu && !inWorkspaceSheet && !inPaneTraceMenu && !inNativeHeaderMenu && !inAgentActionMenu) {
         closeHeaderMenus();
       }
     });

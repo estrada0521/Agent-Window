@@ -1,4 +1,4 @@
-    #repoPanel .mobile-bottom-sheet-leading[disabled] {
+    #mobileSheet[data-kind="repo"] .mobile-bottom-sheet-leading[disabled] {
       visibility: hidden;
       pointer-events: none;
     }
@@ -28,39 +28,34 @@
       flex-direction: column;
     }
 
-    .repo-preview-view {
+    #mobileSheet[data-kind="git"] .repo-stack {
       display: none;
     }
 
-    #repoPanel.repo-mode-preview .repo-browser-view {
+    #mobileSheet[data-kind="repo"] .git-host {
       display: none;
     }
 
-    #repoPanel.repo-mode-preview .repo-preview-view {
+    #mobileSheet[data-kind="repo"] .git-worktree-summary,
+    #mobileSheet.sheet-mode-preview .git-worktree-summary {
+      display: none;
+    }
+
+    .sheet-preview-view {
+      display: none;
+      z-index: 2;
+    }
+
+    #mobileSheet.sheet-mode-preview .sheet-preview-view {
       display: block;
     }
 
-    .git-preview-view {
-      display: none;
-    }
-
-    #gitPanel.git-mode-preview .git-preview-view {
-      display: block;
-    }
-
-    #gitPanel.git-mode-preview .git-worktree-summary {
-      display: none;
-    }
-
-    html[data-theme="light"] #repoPanel .repo-preview-view,
-    html[data-theme="dark"] #repoPanel .repo-preview-view,
-    html[data-theme="light"] #gitPanel .git-preview-view,
-    html[data-theme="dark"] #gitPanel .git-preview-view {
+    html[data-theme="light"] #mobileSheet .sheet-preview-view,
+    html[data-theme="dark"] #mobileSheet .sheet-preview-view {
       background: var(--bg);
     }
 
-    .repo-preview-frame,
-    .git-preview-frame {
+    .sheet-preview-frame {
       width: 100%;
       height: 100%;
       border: 0;

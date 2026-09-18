@@ -67,7 +67,7 @@ class MobileAgentPickerTests(unittest.TestCase):
         button = _between(
             SHEETS,
             'rightMenuBtn?.addEventListener("click"',
-            'repoPanel?.addEventListener("click"',
+            'mobileSheet?.addEventListener("click"',
         )
         self.assertLess(
             button.index("agentActionSelectIsArmed()"),

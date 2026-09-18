@@ -331,12 +331,12 @@ __CHAT_INCLUDE:panes/pane-viewer.js__
       const nextFileVersion = parseInt(payload?.file_version);
       const fileChanged = Number.isFinite(nextFileVersion) && nextFileVersion !== workspaceSyncLastFileVersion;
       if (Number.isFinite(nextFileVersion)) workspaceSyncLastFileVersion = nextFileVersion;
-      const repoPanelOpen = !!(repoPanel && repoPanel.classList.contains("open") && !repoPanel.hidden);
-      if (fileChanged && repoPanelOpen && typeof repoPanel._syncCategoryUi === "function") {
-        repoPanel._syncCategoryUi();
+      const sheetOpen = !!(mobileSheet && mobileSheet.classList.contains("open") && !mobileSheet.hidden);
+      const sheetKind = String(mobileSheet?.dataset.kind || "");
+      if (fileChanged && sheetOpen && sheetKind === "repo" && typeof mobileSheet._syncCategoryUi === "function") {
+        mobileSheet._syncCategoryUi();
       }
-      const gitPanelOpen = !!(gitPanel && gitPanel.classList.contains("open") && !gitPanel.hidden);
-      if (gitChanged && gitPanelOpen) {
+      if (gitChanged && sheetOpen && sheetKind === "git") {
         void updateGitPanel().catch(() => {});
       }
     };
