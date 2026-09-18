@@ -11,6 +11,8 @@
       min-width: round(nearest, calc(var(--text-size, 13px) * 160 / 13), 1px);
       max-width: round(nearest, calc(var(--text-size, 13px) * 220 / 13), 1px);
       transform-origin: top left;
+      user-select: none;
+      -webkit-user-select: none;
     }
     .desk-sidebar-hover-list {
       display: block;

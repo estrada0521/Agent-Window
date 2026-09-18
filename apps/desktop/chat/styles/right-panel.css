@@ -30,6 +30,8 @@
       opacity: 0;
       transform: translateX(0);
       pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
     .desktop-right-panel::before {
       content: none;
@@ -464,6 +466,8 @@
       box-sizing: border-box;
       z-index: 1290;
       pointer-events: auto;
+      user-select: none;
+      -webkit-user-select: none;
       font-weight: var(--body-weight);
       display: flex;
       flex-direction: column;

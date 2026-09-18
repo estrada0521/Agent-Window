@@ -49,6 +49,8 @@
       border-radius: var(--desk-inner-radius) 0 0 var(--desk-inner-radius);
       isolation: isolate;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
+      user-select: none;
+      -webkit-user-select: none;
     }
     .desk-workbench.sidebar-open .desk-sidebar {
       width: var(--desk-sidebar-width);
@@ -155,6 +157,8 @@
       box-sizing: border-box;
       padding: 0;
       border: none;
+      user-select: none;
+      -webkit-user-select: none;
       border-radius: 0;
       background: transparent;
       backdrop-filter: none;
