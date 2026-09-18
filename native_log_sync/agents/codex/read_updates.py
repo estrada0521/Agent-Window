@@ -9,10 +9,9 @@ from native_log_sync.agents._shared.path_state import (
     advance_read_offset,
     read_offset_start,
 )
-from native_log_sync.agents._shared.projection_status import record_projection_scan_result
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.codex.read_runtime import iter_tool_calls, runtime_tool_events
-from native_log_sync.io.jsonl_read import CompleteJsonlScan
+from native_log_sync.io.jsonl_read import CompleteJsonlScan, warn_skipped_lines
 from native_log_sync.io.projected import append_projected_entry
 
 
@@ -179,7 +178,7 @@ def sync_codex_native_log(
             push_runtime_display(self, agent, tool_evs)
 
     advance_read_offset(self._native_log_read_offsets, resolved_path, scan.consumed)
-    record_projection_scan_result(self, agent, scan)
+    warn_skipped_lines(agent, scan)
     if last_runtime_state_event == "completed":
         self._mark_idle(agent)
     elif last_runtime_state_event == "active" and agent not in self.running_agents():

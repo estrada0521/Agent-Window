@@ -22,7 +22,7 @@ def _usage_text() -> str:
             f"  {', '.join(ALL_AGENT_NAMES)} | others",
             "  claude-1       (specific instance when duplicates exist)",
             "  claude,codex   (comma-separated targets)",
-            "  claude         (sends to ALL claude instances if duplicated)",
+            "  claude         (ambiguous when duplicates exist; use claude-1)",
         ]
     )
 

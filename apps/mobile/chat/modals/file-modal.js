@@ -106,8 +106,7 @@
         const frameWindow = frame.contentWindow;
         const frameDoc = frame.contentDocument || frameWindow?.document || null;
         const rootStyle = getComputedStyle(document.documentElement);
-        const bgRgb = rootStyle.getPropertyValue("--bg-rgb").trim()
-          || (resolvedBaseTheme === "light" ? "249,249,247" : "13,13,12");
+        const bgRgb = rootStyle.getPropertyValue("--bg-rgb").trim();
         const bg = `rgb(${bgRgb})`;
         const bodyWeight = rootStyle.getPropertyValue("--body-weight").trim();
         const codeWeight = rootStyle.getPropertyValue("--file-preview-code-weight").trim();

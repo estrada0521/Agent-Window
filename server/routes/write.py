@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import shlex
 import subprocess
 from pathlib import Path
@@ -27,15 +26,19 @@ def _read_json_body(handler):
         return None, "invalid json"
 
 
-def _resolve_within_root(path_value: str, *, workspace_root: str) -> Path:
+def _resolve_upload_path(path_value: str, *, workspace: str) -> Path:
     raw = str(path_value or "").strip()
     if not raw:
         raise ValueError("path required")
-    if raw.startswith("~"):
-        return Path(raw).expanduser().resolve()
-    if os.path.isabs(raw):
-        return Path(raw).resolve()
-    return (Path(workspace_root).resolve() / raw.lstrip("/")).resolve()
+    upload_dir = workspace_upload_dir(workspace).resolve()
+    given = Path(raw).expanduser()
+    target = (
+        given.resolve()
+        if given.is_absolute()
+        else (Path(workspace).expanduser().resolve() / given).resolve()
+    )
+    target.relative_to(upload_dir)
+    return target
 
 
 def _post_reload_chat(handler, _parsed, ctx) -> None:
@@ -208,7 +211,7 @@ def _post_delete_upload(handler, _parsed, ctx) -> None:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
     try:
-        target = _resolve_within_root(path_rel, workspace_root=ctx["workspace"])
+        target = _resolve_upload_path(path_rel, workspace=ctx["workspace"])
     except ValueError as exc:
         handler._send_json(400, {"ok": False, "error": str(exc)})
         return

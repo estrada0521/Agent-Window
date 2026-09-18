@@ -5,9 +5,6 @@ from pathlib import Path
 from typing import Callable
 
 from native_log_sync.agents._shared.runtime_state import initialize_native_log_runtime_state as _init_state
-from native_log_sync.agents._shared.projection_status import (
-    record_projection_sync_failure as _record_projection_sync_failure_impl,
-)
 from native_log_sync.refresh.binding_models import PaneBindingRequest
 from native_log_sync.refresh.refresh_bindings import (
     refresh_native_log_bindings as _refresh_bindings_impl,
@@ -89,9 +86,8 @@ class NativeLogSyncer:
         for binding in bindings:
             try:
                 sync_agent(self, binding.agent, binding.path, start_at_end=start_at_end)
-            except Exception as exc:
+            except Exception:
                 logging.exception("native log sync failed for %s", binding.agent)
-                _record_projection_sync_failure_impl(self, binding.agent, exc)
 
     def remove_binding(self, agent: str) -> None:
         _remove_binding_impl(self, agent)
@@ -107,6 +103,7 @@ class NativeLogSyncer:
         self.refresh(
             [PaneBindingRequest(agent=agent, pane_id=pane_id, pane_pid=pane_pid)],
             replace_all=False,
+            start_at_end=True,
         )
 
     def agent_statuses(self, running_agents: set[str]) -> dict[str, str]:

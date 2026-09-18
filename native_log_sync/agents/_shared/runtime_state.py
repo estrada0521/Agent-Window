@@ -13,4 +13,3 @@ def initialize_native_log_runtime_state(runtime: object) -> None:
     runtime._idle_running_display_queues = {}
     runtime._idle_running_display_timers = {}
     runtime._native_log_read_offsets = {}
-    runtime._native_log_projection_status: dict[str, dict] = {}

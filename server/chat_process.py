@@ -42,5 +42,8 @@ def wait_for_chat_server(
             return False
         remaining = deadline - time.monotonic()
         if remaining <= 0:
+            if process.poll() is None:
+                process.kill()
+                process.wait()
             return False
         time.sleep(min(0.1, remaining))

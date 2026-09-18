@@ -7,10 +7,9 @@ from native_log_sync.agents._shared.path_state import (
     advance_read_offset,
     read_offset_start,
 )
-from native_log_sync.agents._shared.projection_status import record_projection_scan_result
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.claude.read_runtime import iter_tool_calls, runtime_tool_events
-from native_log_sync.io.jsonl_read import CompleteJsonlScan
+from native_log_sync.io.jsonl_read import CompleteJsonlScan, warn_skipped_lines
 from native_log_sync.io.projected import append_projected_entry
 
 
@@ -108,6 +107,6 @@ def sync_claude_native_log(
             push_runtime_display(self, agent, tool_evs)
 
     advance_read_offset(self._native_log_read_offsets, session_path_str, scan.consumed)
-    record_projection_scan_result(self, agent, scan)
+    warn_skipped_lines(agent, scan)
     if turn_done_seen:
         self._mark_idle(agent)

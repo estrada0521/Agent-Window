@@ -128,7 +128,10 @@ class _VnodeNativeSync:
                     if agent in seen:
                         continue
                     seen.add(agent)
-                    self._runtime.rebind(agent)
+                    try:
+                        self._runtime.rebind(agent)
+                    except Exception:
+                        logging.exception("native log rebind failed for %s", agent)
                 self._sync_bindings()
 
 

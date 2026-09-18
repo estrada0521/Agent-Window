@@ -54,7 +54,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);
       --surface: __GRAY_SURFACE__;
       --inline-code-border: __GRAY_INLINE_BORDER__;
-      --pane-trace-body-bg-channels: 13, 13, 12;
+      --pane-trace-body-bg-channels: var(--bg-rgb);
       --pane-trace-body-bg: rgb(var(--pane-trace-body-bg-channels));
       --error: rgb(__TEXT_ERROR_DARK_CHANNELS__);
       --inline-file-link-fg: var(--link-blue);

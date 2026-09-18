@@ -15,6 +15,7 @@ from backend_core.access.settings import (
     port_is_bindable,
     session_artifact_dir,
     workspace_chat_port,
+    workspace_log_link_path,
 )
 from server.chat_process import launch_chat_server, wait_for_chat_server
 from hub_backend.session_query import active_session_records_query, archived_session_records
@@ -186,6 +187,12 @@ def delete_archived_session(hub, session_name: str) -> tuple[bool, str]:
     stop_ok, stop_detail = stop_chat_server(workspace)
     if not stop_ok:
         return False, stop_detail
+    link = workspace_log_link_path(workspace)
+    if link.is_symlink():
+        try:
+            link.unlink()
+        except OSError as exc:
+            return False, str(exc)
     log_dir = session_artifact_dir(session_name)
     if not log_dir.exists():
         return True, ""

@@ -8,13 +8,12 @@ from native_log_sync.agents._shared.path_state import (
     advance_read_offset,
     read_offset_start,
 )
-from native_log_sync.agents._shared.projection_status import record_projection_scan_result
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.gemini.read_runtime import (
     parse_antigravity_transcript_step,
     runtime_tool_events,
 )
-from native_log_sync.io.jsonl_read import CompleteJsonlScan
+from native_log_sync.io.jsonl_read import CompleteJsonlScan, warn_skipped_lines
 from native_log_sync.io.projected import append_projected_entry
 
 
@@ -69,6 +68,6 @@ def sync_gemini_native_log(
         appended = True
 
     advance_read_offset(self._native_log_read_offsets, session_path_str, scan.consumed)
-    record_projection_scan_result(self, agent, scan)
+    warn_skipped_lines(agent, scan)
     if appended:
         self._mark_idle(agent)

@@ -6,6 +6,8 @@
       });
       es.onopen = () => {
         setStatus("");
+        void refresh();
+        void refreshSessionState();
       };
       es.onerror = () => {
         setStatus("session events disconnected", true);
