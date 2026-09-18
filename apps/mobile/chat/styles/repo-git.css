@@ -108,14 +108,18 @@
       transform: translateY(8px);
     }
 
-    #gitPanel .git-sheet-content {
+    #gitPanel .git-sheet-content,
+    .repo-browser-list {
       flex: 1 1 auto;
       min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
-      overscroll-behavior: contain;
-      padding: var(--mobile-sheet-content-offset) 6px var(--mobile-sheet-compact-bottom-offset);
+      padding: var(--mobile-sheet-content-offset) 6px var(--mobile-sheet-content-bottom-offset);
       -webkit-overflow-scrolling: touch;
+    }
+
+    #gitPanel .git-sheet-content {
+      overscroll-behavior: contain;
       opacity: 0;
       transform: translateY(8px);
       transition:
@@ -134,13 +138,7 @@
     }
 
     .repo-browser-list {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow-y: auto;
-      overflow-x: hidden;
       position: relative;
-      padding: var(--mobile-sheet-content-offset) 6px var(--mobile-sheet-content-bottom-offset);
-      -webkit-overflow-scrolling: touch;
       display: grid;
       grid-template-columns: 1fr;
       gap: 2px;
