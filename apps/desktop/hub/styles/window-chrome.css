@@ -240,11 +240,7 @@
       padding: 0;
       border: 0;
       border-radius: 50%;
-      overflow: hidden;
-      background: var(--desk-window-fill);
-      box-shadow:
-        inset 0.4px 0 0.35px rgb(var(--desk-window-glyph)),
-        inset -0.4px 0 0.35px rgb(var(--desk-window-glyph));
+      background: transparent;
       appearance: none;
       -webkit-appearance: none;
       cursor: default;
@@ -265,8 +261,15 @@
       height: 100%;
       margin: 0;
       color: rgb(var(--desk-window-glyph));
-      overflow: hidden;
+      overflow: visible;
       pointer-events: none;
+    }
+    .desk-window-traffic-fill {
+      fill: var(--desk-window-fill);
+      stroke: none;
+    }
+    .desk-window-traffic-inset {
+      fill: none;
     }
     .desk-window-traffic-btn path {
       opacity: 0;
