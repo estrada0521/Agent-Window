@@ -83,17 +83,21 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
       idx = Math.max(0, Math.min(paneViewerAgents.length - 1, idx));
       fetchPaneViewerSlideByIndex(idx, scrollToBottomAfter);
     };
+    let paneViewerIgnoreCarouselTabSync = false;
     function movePaneViewerIndicator(idx, { scrollTabIntoView = false } = {}) {
       const indicator = paneViewerTabs.querySelector(".pane-viewer-tab-indicator");
       const tabs = Array.from(paneViewerTabs.querySelectorAll(".pane-viewer-tab"));
       if (!indicator || !tabs.length) return;
       const safeIdx = Math.max(0, Math.min(tabs.length - 1, idx));
       const tab = tabs[safeIdx];
+      if (scrollTabIntoView) {
+        const vis = tab.offsetLeft - paneViewerTabs.scrollLeft;
+        if (vis < 0 || vis + tab.offsetWidth > paneViewerTabs.clientWidth) {
+          tab.scrollIntoView({ inline: "center", block: "nearest", behavior: "auto" });
+        }
+      }
       indicator.style.left = tab.offsetLeft + "px";
       indicator.style.width = tab.offsetWidth + "px";
-      if (scrollTabIntoView && tab) {
-        tab.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
-      }
     }
     const syncPaneViewerTab = () => {
       if (!paneViewerCarousel || !paneViewerAgents.length) return;
@@ -103,6 +107,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
       let idx = Math.round(scrollLeft / width);
       if (!Number.isFinite(idx)) idx = 0;
       idx = Math.max(0, Math.min(paneViewerAgents.length - 1, idx));
+      if (paneViewerIgnoreCarouselTabSync) return;
       lastPaneViewerTabIdx = idx;
       paneViewerLastAgent = paneViewerAgents[idx];
       const tabs = Array.from(paneViewerTabs.querySelectorAll(".pane-viewer-tab"));
@@ -119,7 +124,10 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
       if (paneViewerTabScrollEndTimer) clearTimeout(paneViewerTabScrollEndTimer);
       paneViewerTabScrollEndTimer = setTimeout(() => {
         paneViewerTabScrollEndTimer = null;
-        movePaneViewerIndicator(lastPaneViewerTabIdx, { scrollTabIntoView: true });
+        const tapped = paneViewerIgnoreCarouselTabSync;
+        paneViewerIgnoreCarouselTabSync = false;
+        if (tapped) syncPaneViewerTab();
+        else movePaneViewerIndicator(lastPaneViewerTabIdx, { scrollTabIntoView: true });
         fetchVisiblePaneViewerSlide(false);
       }, 120);
     };
@@ -150,6 +158,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
       if (idx < 0) return;
       lastPaneViewerTabIdx = idx;
       paneViewerLastAgent = agent;
+      paneViewerIgnoreCarouselTabSync = true;
       paneViewerCarousel.scrollTo({ left: idx * paneViewerCarousel.offsetWidth, behavior: "smooth" });
       const tabs = Array.from(paneViewerTabs.querySelectorAll(".pane-viewer-tab"));
       tabs.forEach((t, i) => t.classList.toggle("active", i === idx));
