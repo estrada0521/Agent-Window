@@ -19,26 +19,22 @@ from server.routes.assets import dispatch_get_assets_route
 from server.routes.read import dispatch_get_read_route
 from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
-from backend_core.access.pwa import pwa_icon_entries
+from backend_core.access.pwa import pwa_icon_entries, pwa_static_routes
 from hub_backend.server_helpers import (
     pwa_asset_url as _pwa_asset_url_impl,
     pwa_asset_version as _pwa_asset_version_impl,
+    serve_pwa_static as _serve_pwa_static_impl,
 )
 from backend_core.access.chat_server import read_chat_server_state
 from backend_core.access.settings import (
     workspace_chat_port,
 )
+from backend_core.tmux.topology import default_tmux_socket_name
 from workspace_sync.api import WorkspaceSyncApi
 
-DEFAULT_TMUX_SOCKET = "agent-window"
 RELOAD_RUNNING_AGENTS_ENV = "AGENT_WINDOW_RELOAD_RUNNING_AGENTS"
 
-_PWA_STATIC_ROUTES = {
-    "/pwa-icon-192.png": ("icon-192.png", "image/png", "public, max-age=3600"),
-    "/pwa-icon-512.png": ("icon-512.png", "image/png", "public, max-age=3600"),
-    "/apple-touch-icon.png": ("apple-touch-icon.png", "image/png", "public, max-age=3600"),
-    "/service-worker.js": ("service-worker.js", "application/javascript; charset=utf-8", "no-store"),
-}
+_PWA_STATIC_ROUTES = pwa_static_routes()
 
 
 def _not_initialized(*_args, **_kwargs):
@@ -141,12 +137,17 @@ def _send_or_enqueue_message(
     if not normalized_message:
         return 400, {"ok": False, "error": "message is required"}
     normalized_target = str(target or "").strip()
-    resolved_targets = runtime.resolve_target_agents(normalized_target) if normalized_target else []
-    if not resolved_targets or resolved_targets == ["user"]:
+    if not normalized_target:
+        entry = runtime.append_user_entry(normalized_message, targets=["user"], client=client)
+        return 200, {"ok": True, "mode": "note", "entry": entry}
+    resolved_targets = runtime.resolve_target_agents(normalized_target)
+    if resolved_targets == ["user"]:
         entry = runtime.append_user_entry(normalized_message, targets=["user"], client=client)
         return 200, {"ok": True, "mode": "note", "entry": entry}
     if "user" in resolved_targets:
         return 400, {"ok": False, "error": 'target "user" cannot be combined with other targets'}
+    if not resolved_targets:
+        return 400, {"ok": False, "error": "target is required"}
     entry = runtime.append_user_entry(normalized_message, targets=resolved_targets, client=client)
     send_queue.put(
         {
@@ -202,7 +203,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
 
     _repo_root = Path(__file__).resolve().parent.parent
     port = workspace_chat_port(workspace)
-    tmux_socket = (os.environ.get("AGENT_WINDOW_TMUX_SOCKET") or DEFAULT_TMUX_SOCKET).strip()
+    tmux_socket = (os.environ.get("AGENT_WINDOW_TMUX_SOCKET") or default_tmux_socket_name()).strip()
     hub_port = int((_repo_root / "hub-port").read_text().strip())
     PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
     PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
@@ -271,23 +272,12 @@ def _pwa_icon_entries(base_path: str = "") -> list[dict[str, str]]:
 
 
 def _serve_pwa_static(handler, path: str) -> bool:
-    spec = _PWA_STATIC_ROUTES.get(path)
-    if spec is None:
-        return False
-    filename, content_type, cache_control = spec
-    try:
-        body = (_PWA_STATIC_DIR / filename).read_bytes()
-    except Exception:
-        handler.send_response(404)
-        handler.end_headers()
-        return True
-    handler.send_response(200)
-    handler.send_header("Content-Type", content_type)
-    handler.send_header("Cache-Control", cache_control)
-    handler.send_header("Content-Length", str(len(body)))
-    handler.end_headers()
-    handler.wfile.write(body)
-    return True
+    return _serve_pwa_static_impl(
+        handler,
+        path,
+        pwa_static_routes=_PWA_STATIC_ROUTES,
+        pwa_static_dir=_PWA_STATIC_DIR,
+    )
 
 
 chat_restart_pending = False

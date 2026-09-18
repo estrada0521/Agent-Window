@@ -4,7 +4,6 @@ import logging
 import os
 import subprocess
 
-from backend_core.agents.names import agent_base_name
 from message_delivery.paste import deliver_text_to_pane
 
 
@@ -15,17 +14,16 @@ def send_message(
     append_entry: bool = True,
     client: str | None = None,
 ) -> tuple[int, dict]:
-    target = (target or "").strip()
+    raw_target = (target or "").strip()
     message = (message or "").strip()
     if not message:
         return 400, {"ok": False, "error": "message is required"}
-    if target:
-        target = ",".join(self.resolve_target_agents(target))
-    if not target:
-        target = "user"
-    targets = [item.strip() for item in target.split(",") if item.strip()]
-    if not targets:
-        return 400, {"ok": False, "error": "target is required"}
+    if not raw_target:
+        if append_entry:
+            entry = self.append_user_entry(message, targets=["user"], client=client)
+            return 200, {"ok": True, "mode": "note", "entry": entry}
+        return 200, {"ok": True, "mode": "note"}
+    targets = self.resolve_target_agents(raw_target)
     if targets == ["user"]:
         if append_entry:
             entry = self.append_user_entry(message, targets=["user"], client=client)
@@ -33,19 +31,7 @@ def send_message(
         return 200, {"ok": True, "mode": "note"}
     if "user" in targets:
         return 400, {"ok": False, "error": 'target "user" cannot be combined with other targets'}
-    delivery_targets: list[str] = []
-    seen_targets: set[str] = set()
-    for agent in targets:
-        if agent == "others":
-            for expanded in self.active_agents():
-                if expanded not in seen_targets:
-                    seen_targets.add(expanded)
-                    delivery_targets.append(expanded)
-            continue
-        if agent not in seen_targets:
-            seen_targets.add(agent)
-            delivery_targets.append(agent)
-    if not delivery_targets:
+    if not targets:
         return 400, {"ok": False, "error": "target is required"}
     payload = message
     successful_targets: list[str] = []
@@ -59,7 +45,7 @@ def send_message(
             check=False,
         )
     try:
-        for agent in delivery_targets:
+        for agent in targets:
             pane_id = panes_by_agent.get(agent, "")
             if not pane_id:
                 failed_targets.append(agent)
@@ -87,7 +73,5 @@ def send_message(
 
 
 def mark_agent_sent(self, agent_name: str) -> None:
-    base = agent_base_name(agent_name)
-    if base in {"claude", "cursor", "codex", "gemini", "grok"}:
-        self._mark_running(agent_name)
-        self._bind_native_log_after_send(agent_name)
+    self._mark_running(agent_name)
+    self._bind_native_log_after_send(agent_name)

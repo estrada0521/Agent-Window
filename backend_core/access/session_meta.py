@@ -4,11 +4,52 @@ import json
 from pathlib import Path
 
 from backend_core.access.atomic_json import write_json_atomically
-from backend_core.access.settings import agent_window_session_root
+from backend_core.access.settings import (
+    SESSION_META_FILENAME,
+    agent_window_session_root,
+)
 
 
 class SessionMetaError(ValueError):
     pass
+
+
+def _meta_path(session_name: str) -> Path:
+    return agent_window_session_root() / str(session_name or "").strip() / SESSION_META_FILENAME
+
+
+def read_session_meta_file(path: Path) -> dict | None:
+    if not path.is_file():
+        return None
+    try:
+        meta = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SessionMetaError(f"invalid session meta: {path}") from exc
+    if not isinstance(meta, dict):
+        raise SessionMetaError(f"invalid session meta: {path}")
+    return meta
+
+
+def read_session_meta(session_name: str) -> dict | None:
+    return read_session_meta_file(_meta_path(session_name))
+
+
+def agents_from_meta(meta: dict, *, path: Path) -> list[str]:
+    raw = meta.get("agents")
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        raise SessionMetaError(f"invalid session meta: {path}")
+    return [str(a).strip() for a in raw if str(a).strip()]
+
+
+def _existing_session_meta(session_name: str) -> tuple[Path, dict]:
+    name = str(session_name or "").strip()
+    path = _meta_path(name)
+    meta = read_session_meta(name)
+    if meta is None:
+        raise SessionMetaError(f"session not found: {name}")
+    return path, meta
 
 
 def session_workspace_claims(
@@ -54,35 +95,18 @@ def session_workspace(session_name: str) -> str | None:
     session's name, so the .meta-recorded workspace is the bridge between
     the two.
     """
-    meta_path = agent_window_session_root() / str(session_name or "").strip() / ".meta"
-    if not meta_path.is_file():
+    meta = read_session_meta(session_name)
+    if meta is None:
         return None
-    try:
-        meta = json.loads(meta_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise SessionMetaError(f"invalid session meta: {meta_path}") from exc
-    if not isinstance(meta, dict):
-        raise SessionMetaError(f"invalid session meta: {meta_path}")
     return str(meta.get("workspace") or "").strip() or None
 
 
 def session_meta_agents(session_name: str) -> list[str]:
     """The agent list a session's .meta records."""
-    meta_path = agent_window_session_root() / str(session_name or "").strip() / ".meta"
-    if not meta_path.is_file():
+    meta = read_session_meta(session_name)
+    if meta is None:
         return []
-    try:
-        meta = json.loads(meta_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise SessionMetaError(f"invalid session meta: {meta_path}") from exc
-    if not isinstance(meta, dict):
-        raise SessionMetaError(f"invalid session meta: {meta_path}")
-    raw = meta.get("agents")
-    if raw is None:
-        return []
-    if not isinstance(raw, list):
-        raise SessionMetaError(f"invalid session meta: {meta_path}")
-    return [str(a).strip() for a in raw if str(a).strip()]
+    return agents_from_meta(meta, path=_meta_path(session_name))
 
 
 def set_session_workspace(session_name: str, workspace: str) -> None:
@@ -97,20 +121,12 @@ def set_session_workspace(session_name: str, workspace: str) -> None:
     ws = str(workspace or "").strip()
     if not name or not ws:
         raise SessionMetaError("session name and workspace are required")
-    meta_path = agent_window_session_root() / name / ".meta"
-    if not meta_path.is_file():
-        raise SessionMetaError(f"session not found: {name}")
-    try:
-        raw = json.loads(meta_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise SessionMetaError(f"invalid session meta: {meta_path}") from exc
-    if not isinstance(raw, dict):
-        raise SessionMetaError(f"invalid session meta: {meta_path}")
+    path, raw = _existing_session_meta(name)
     owner = find_session_for_workspace(ws, exclude_session=name)
     if owner:
         raise SessionMetaError(f"A session already exists for this workspace: {owner}")
     raw["workspace"] = ws
-    write_json_atomically(meta_path, raw, indent=2)
+    write_json_atomically(path, raw, indent=2)
 
 
 def reset_session_agents(session_name: str) -> None:
@@ -122,17 +138,9 @@ def reset_session_agents(session_name: str) -> None:
     name = str(session_name or "").strip()
     if not name:
         raise SessionMetaError("session name is required")
-    meta_path = agent_window_session_root() / name / ".meta"
-    if not meta_path.is_file():
-        raise SessionMetaError(f"session not found: {name}")
-    try:
-        raw = json.loads(meta_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise SessionMetaError(f"invalid session meta: {meta_path}") from exc
-    if not isinstance(raw, dict):
-        raise SessionMetaError(f"invalid session meta: {meta_path}")
+    path, raw = _existing_session_meta(name)
     raw.pop("agents", None)
-    write_json_atomically(meta_path, raw, indent=2)
+    write_json_atomically(path, raw, indent=2)
 
 
 def write_session_meta_file(
@@ -144,9 +152,11 @@ def write_session_meta_file(
     if not recorded_workspace:
         raise ValueError("workspace is required to write session meta")
 
-    meta_path = agent_window_session_root() / str(session_name or "").strip() / ".meta"
-    meta = {
-        "workspace": recorded_workspace,
-        "agents": [str(agent).strip() for agent in agents if str(agent).strip()],
-    }
-    write_json_atomically(meta_path, meta, indent=2)
+    write_json_atomically(
+        _meta_path(session_name),
+        {
+            "workspace": recorded_workspace,
+            "agents": [str(agent).strip() for agent in agents if str(agent).strip()],
+        },
+        indent=2,
+    )

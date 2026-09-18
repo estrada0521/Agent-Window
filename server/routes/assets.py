@@ -52,7 +52,6 @@ def _send_asset_bytes(handler, reader, name: str, *, content_type: str) -> None:
         200,
         body,
         content_type=content_type,
-        cache_control="public, max-age=3600",
     )
 
 

@@ -12,7 +12,7 @@ from hub_backend.runtime import HubRuntime
 from appearance.colors import apply_color_tokens, resolve_theme_palette
 from appearance.theme import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
-from backend_core.access.pwa import pwa_icon_entries as _pwa_icon_entries_impl
+from backend_core.access.pwa import pwa_icon_entries as _pwa_icon_entries_impl, pwa_static_routes
 from hub_backend.session_proxy import proxy_chat_session
 from hub_backend.session_api import split_chat_proxy_path
 from hub_backend.chat_supervisor import stop_inactive_chat_servers
@@ -129,13 +129,9 @@ def release_restart_hold():
     _restart_release_event.set()
 
 _PWA_STATIC_DIR = Path(__file__).resolve().parents[1] / "apps" / "shared" / "pwa"
-_PWA_STATIC_ROUTES = {
-    "/pwa-icon-192.png": ("icon-192.png", "image/png", "no-store"),
-    "/pwa-icon-512.png": ("icon-512.png", "image/png", "no-store"),
-    "/apple-touch-icon.png": ("apple-touch-icon.png", "image/png", "no-store"),
-    "/service-worker.js": ("service-worker.js", "application/javascript; charset=utf-8", "no-store"),
-    "/hub-service-worker.js": ("service-worker.js", "application/javascript; charset=utf-8", "no-store"),
-}
+_PWA_STATIC_ROUTES = pwa_static_routes({
+    "/hub-service-worker.js": ("service-worker.js", "application/javascript; charset=utf-8"),
+})
 _PWA_ASSET_VERSION_OVERRIDES = {
     "/hub.webmanifest": str(int(Path(__file__).stat().st_mtime_ns)),
 }

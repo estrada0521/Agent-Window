@@ -16,6 +16,7 @@ from backend_core.agents.registry import ALL_AGENT_NAMES
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.session_meta import SessionMetaError, find_session_for_workspace
 from backend_core.tmux.session import AgentPane, parse_agent_topology
+from backend_core.tmux.instances import agents_except_sender
 from backend_core.tmux.topology import default_tmux_socket_name
 from message_delivery.paste import deliver_text_to_pane
 
@@ -224,9 +225,7 @@ class AgentSendRuntime:
             if lower_target == "others":
                 if not sender_role:
                     raise AgentSendError("Cannot resolve current sender for target: others")
-                for instance in active:
-                    if sender_role != "user" and instance == sender_role:
-                        continue
+                for instance in agents_except_sender(active, sender_role):
                     queue(instance, panes_by_name[instance])
                 continue
 
@@ -303,7 +302,9 @@ class AgentSendRuntime:
         workspace = self.session_workspace()
         session_name = self.resolve_session_name(workspace)
         topology = self.agent_topology()
-        sender_role = self.resolve_self_agent(topology) or "user"
+        sender_role = self.resolve_self_agent(topology)
+        if not sender_role:
+            raise AgentSendError("Cannot resolve current sender.")
         delivery_payload = self.normalize_payload(sender_role, payload)
         delivery_targets = self._build_delivery_targets(target_spec, sender_role, topology)
         if not delivery_targets:

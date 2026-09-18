@@ -1,13 +1,21 @@
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from backend_core.access.session_meta import session_workspace_claims
-from backend_core.access.settings import agent_window_session_root, session_log_path
+from backend_core.access.session_meta import (
+    agents_from_meta,
+    read_session_meta_file,
+    session_workspace_claims,
+)
+from backend_core.access.settings import (
+    SESSION_LOG_FILENAME,
+    SESSION_META_FILENAME,
+    agent_window_session_root,
+    session_log_path,
+)
 from backend_core.tmux.resolve import normalize_workspace
 from server.index_cache import _iter_matched_log_entries_reversed
 
@@ -152,15 +160,11 @@ def archived_sessions(excluded_names: set[str] | list[str] | None = None) -> lis
             session_name = entry.name.strip()
             if not session_name or session_name in excluded_names_set:
                 continue
-            meta_path = entry / ".meta"
-            log_path = entry / ".log.jsonl"
+            meta_path = entry / SESSION_META_FILENAME
+            log_path = entry / SESSION_LOG_FILENAME
             if not meta_path.exists() and not log_path.exists():
                 continue
-            meta: dict[str, Any] = {}
-            if meta_path.exists():
-                meta = json.loads(meta_path.read_text(encoding="utf-8"))
-                if not isinstance(meta, dict):
-                    raise ValueError(f"invalid session meta: {meta_path}")
+            meta = read_session_meta_file(meta_path) or {}
             workspace = str(meta.get("workspace") or "").strip()
             # Recency for dedupe/sort comes from the log itself, not a stored
             # timestamp: whichever copy of a same-named session has the
@@ -172,15 +176,7 @@ def archived_sessions(excluded_names: set[str] | list[str] | None = None) -> lis
                     mtime = meta_path.stat().st_mtime
                 except OSError:
                     mtime = 0.0
-            agents: list[str] = []
-            seen_agents: set[str] = set()
-            meta_agents = meta.get("agents")
-            if isinstance(meta_agents, list) and meta_agents:
-                for a in meta_agents:
-                    name = str(a).strip()
-                    if name and name not in seen_agents:
-                        seen_agents.add(name)
-                        agents.append(name)
+            agents = agents_from_meta(meta, path=meta_path)
             record = build_session_record(
                 name=session_name,
                 workspace=workspace,

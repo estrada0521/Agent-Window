@@ -7,6 +7,7 @@ import socket
 from pathlib import Path
 
 SESSION_LOG_FILENAME = ".log.jsonl"
+SESSION_META_FILENAME = ".meta"
 SESSION_NAME_MAX_LENGTH = 64
 
 
@@ -39,6 +40,10 @@ def session_artifact_dir(session_name: str) -> Path:
 
 def session_log_path(session_name: str) -> Path:
     return session_artifact_dir(session_name) / SESSION_LOG_FILENAME
+
+
+def session_meta_path(session_name: str) -> Path:
+    return session_artifact_dir(session_name) / SESSION_META_FILENAME
 
 
 def workspace_agent_window_dir(workspace: Path | str) -> Path:

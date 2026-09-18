@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import shutil
 import signal
@@ -14,7 +13,9 @@ from backend_core.access.files import append_jsonl_entry
 from backend_core.access.chat_server import read_chat_server_state
 from backend_core.access.session_meta import (
     SessionMetaError,
+    agents_from_meta,
     find_session_for_workspace,
+    read_session_meta,
     session_workspace,
     write_session_meta_file,
 )
@@ -22,6 +23,7 @@ from backend_core.access.settings import (
     agent_window_session_root,
     ensure_session_workspace_mirrors,
     session_log_path,
+    session_meta_path,
     workspace_chat_port,
 )
 from backend_core.agents.executables import agent_launch_cmd, resolve_agent_executable
@@ -321,22 +323,14 @@ def describe_session(session_name: str, *, tmux_socket: str = "") -> dict:
     name = (session_name or "").strip()
     if not name:
         raise SessionControlError("session_name is required")
-    meta_path = agent_window_session_root() / name / ".meta"
-    if not meta_path.is_file():
+    meta = read_session_meta(name)
+    if meta is None:
         raise SessionControlError(f"Session does not exist: {name}")
-    try:
-        meta = json.loads(meta_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise SessionControlError(f"invalid session meta: {meta_path}") from exc
-    if not isinstance(meta, dict):
-        raise SessionControlError(f"invalid session meta: {meta_path}")
-
     workspace = str(meta.get("workspace") or "").strip()
-    meta_agents = meta.get("agents")
     info: dict = {
         "session": name,
         "workspace": workspace or None,
-        "agents": [str(a).strip() for a in meta_agents if str(a).strip()] if isinstance(meta_agents, list) else [],
+        "agents": agents_from_meta(meta, path=session_meta_path(name)),
         "active": False,
     }
     if not workspace:
