@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import os
 import re
 import socket
 from pathlib import Path
@@ -17,13 +16,6 @@ def sanitize_session_name(raw: str) -> str:
 
 def agent_window_root() -> Path:
     return Path.home() / ".agent-window"
-
-
-def agent_window_state_dir() -> Path:
-    override = (os.environ.get("AGENT_WINDOW_STATE_DIR") or "").strip()
-    if override:
-        return Path(override).expanduser()
-    return agent_window_root() / "state"
 
 
 def agent_window_run_dir() -> Path:

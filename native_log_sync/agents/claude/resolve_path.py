@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from native_log_sync.agents._shared.process_tree import process_tree
+from native_log_sync.agents._shared.workspace_paths import workspace_aliases
 
 
 def _normalized_path(value: str) -> str:
@@ -14,9 +15,9 @@ def resolve_claude_session_jsonl_path(runtime, pane_id: str, pane_pid: str) -> s
     workspace = str(runtime.workspace or "").strip()
     if not workspace:
         return ""
-    workspace_aliases = {
+    workspace_aliases_set = {
         _normalized_path(alias)
-        for alias in runtime._workspace_aliases(workspace)
+        for alias in workspace_aliases(workspace)
     }
 
     matches: list[dict] = []
@@ -35,7 +36,7 @@ def resolve_claude_session_jsonl_path(runtime, pane_id: str, pane_pid: str) -> s
             raise RuntimeError(f"Claude session PID mismatch: {record_path}")
         cwd = str(record.get("cwd") or "").strip()
         tmux = str(record.get("tmux") or "").strip()
-        if not cwd or _normalized_path(cwd) not in workspace_aliases:
+        if not cwd or _normalized_path(cwd) not in workspace_aliases_set:
             continue
         if tmux and pane_id and not tmux.endswith(f".{pane_id}"):
             continue

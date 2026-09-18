@@ -11,7 +11,7 @@ from native_log_sync.agents._shared.path_state import (
 from native_log_sync.agents._shared.projection_status import record_projection_scan_result
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.cursor.read_runtime import iter_tool_calls, runtime_tool_events
-from native_log_sync.io.jsonl_read import complete_jsonl_scan
+from native_log_sync.io.jsonl_read import CompleteJsonlScan
 from native_log_sync.io.projected import append_projected_entry
 from native_log_sync.redacted import normalize_cursor_plaintext_for_index
 
@@ -118,7 +118,7 @@ def sync_cursor_native_log(
     if start >= file_size:
         return
 
-    scan = complete_jsonl_scan(transcript_path, start, align_mid_line=True)
+    scan = CompleteJsonlScan(transcript_path, start)
     batch = list(scan)
     turn_done_seen = _cursor_turn_done_from_batch(batch)
 

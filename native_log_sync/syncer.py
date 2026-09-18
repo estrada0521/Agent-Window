@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Callable
 
 from native_log_sync.agents._shared.runtime_state import initialize_native_log_runtime_state as _init_state
-from native_log_sync.agents._shared.workspace_paths import workspace_aliases as _workspace_aliases_impl
 from native_log_sync.agents._shared.projection_status import (
     record_projection_sync_failure as _record_projection_sync_failure_impl,
 )
@@ -76,11 +75,6 @@ class NativeLogSyncer:
     def session_is_active(self) -> bool:
         return bool(self._session_is_active_fn())
 
-    # ── helpers used by sync functions ──
-
-    def _workspace_aliases(self, workspace: str) -> list[str]:
-        return _workspace_aliases_impl(self, workspace, path_class=Path)
-
     # ── public API called by ChatRuntime ──
 
     def refresh(
@@ -129,4 +123,4 @@ class NativeLogSyncer:
         return watcher.get_watched_paths() if watcher else {}
 
     def has_log_binding(self, agent: str) -> bool:
-        return bool(getattr(self, "_native_log_bindings_by_agent", {}).get(agent))
+        return bool(self._native_log_bindings_by_agent.get(agent))

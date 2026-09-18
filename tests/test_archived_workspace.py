@@ -208,7 +208,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             with (
                 patch("hub_backend.chat_supervisor.workspace_chat_port", return_value=8206),
                 patch("hub_backend.chat_supervisor.port_is_bindable", return_value=True),
-                patch("hub_backend.chat_supervisor.chat_server_state", return_value=None),
+                patch("hub_backend.chat_supervisor.read_chat_server_state", return_value=None),
                 patch("hub_backend.chat_supervisor.stop_inactive_chat_servers", return_value=""),
                 patch("hub_backend.chat_supervisor.chat_launch_env", return_value={}),
                 patch("hub_backend.chat_supervisor.launch_chat_server", return_value=object()) as launch,

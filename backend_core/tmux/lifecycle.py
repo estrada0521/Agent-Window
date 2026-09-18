@@ -7,10 +7,10 @@ from backend_core.agents.executables import agent_launch_cmd
 from backend_core.tmux.process_cleanup import cleanup_target_process_groups
 
 
-def _respawn_agent_pane(runtime, pane_id: str, command: str, *, subprocess_module=subprocess, os_module=os) -> tuple[bool, str]:
-    shell = os_module.environ.get("SHELL") or "/bin/zsh"
+def _respawn_agent_pane(runtime, pane_id: str, command: str) -> tuple[bool, str]:
+    shell = os.environ.get("SHELL") or "/bin/zsh"
     cleanup_target_process_groups(target=pane_id, tmux_prefix=runtime.tmux_prefix)
-    respawn_res = subprocess_module.run(
+    respawn_res = subprocess.run(
         [
             *runtime.tmux_prefix,
             "respawn-pane",
@@ -37,7 +37,7 @@ def _remove_agent_binding(runtime, agent_name: str) -> None:
     runtime.remove_native_log_binding(agent_name)
 
 
-def restart_agent_pane(runtime, agent_name: str, *, subprocess_module=subprocess, os_module=os) -> tuple[bool, str]:
+def restart_agent_pane(runtime, agent_name: str) -> tuple[bool, str]:
     pane_id = runtime.pane_id_for_agent(agent_name)
     if not pane_id:
         return False, f"pane not found for {agent_name}"
@@ -45,13 +45,11 @@ def restart_agent_pane(runtime, agent_name: str, *, subprocess_module=subprocess
         runtime,
         pane_id,
         agent_launch_cmd(agent_name),
-        subprocess_module=subprocess_module,
-        os_module=os_module,
     )
     if not ok:
         return False, detail or f"failed to restart {agent_name}"
     _remove_agent_binding(runtime, agent_name)
-    subprocess_module.run(
+    subprocess.run(
         [*runtime.tmux_prefix, "select-pane", "-t", pane_id, "-T", agent_name],
         capture_output=True,
         check=False,

@@ -39,7 +39,6 @@ def _compact_message_preview(entry: dict[str, Any]) -> dict[str, str]:
     if not message:
         return {"sender": "", "text": "", "revision": ""}
     compact = re.sub(r"^\[From:\s*[^\]]+\]\s*", "", message, flags=re.IGNORECASE)
-    compact = re.sub(r"^\[[^\]]*msg-id:[^\]]+\]\s*", "", compact, flags=re.IGNORECASE)
     compact = re.sub(r"\s+", " ", compact)
     compact = re.sub(r"\[Attached:\s*[^\]]+\]", "", compact).strip()
     compact = compact[:140].rstrip()
@@ -144,50 +143,39 @@ def active_session_records_query(runtime: Any) -> SessionQueryResult:
 
 def archived_sessions(excluded_names: set[str] | list[str] | None = None) -> list[dict]:
     excluded_names_set = set(excluded_names or [])
-    records: dict[str, tuple[float, dict]] = {}
-    log_roots: list[Path] = []
-    for candidate in (agent_window_session_root(),):
-        if not candidate or not Path(candidate).is_dir():
-            continue
-        root = Path(candidate)
-        if root not in log_roots:
-            log_roots.append(root)
-    if not log_roots:
+    root = agent_window_session_root()
+    if not root.is_dir():
         return []
-    for log_root in log_roots:
-        entries = [entry for entry in log_root.iterdir() if entry.is_dir()]
-        for entry in entries:
-            session_name = entry.name.strip()
-            if not session_name or session_name in excluded_names_set:
-                continue
-            meta_path = entry / SESSION_META_FILENAME
-            log_path = entry / SESSION_LOG_FILENAME
-            if not meta_path.exists() and not log_path.exists():
-                continue
-            meta = read_session_meta_file(meta_path) or {}
-            workspace = str(meta.get("workspace") or "").strip()
-            # Recency for dedupe/sort comes from the log itself, not a stored
-            # timestamp: whichever copy of a same-named session has the
-            # freshest .log.jsonl wins, else the .meta's own mtime.
+    sessions: list[tuple[float, dict]] = []
+    for entry in root.iterdir():
+        if not entry.is_dir():
+            continue
+        session_name = entry.name.strip()
+        if not session_name or session_name in excluded_names_set:
+            continue
+        meta_path = entry / SESSION_META_FILENAME
+        log_path = entry / SESSION_LOG_FILENAME
+        if not meta_path.exists() and not log_path.exists():
+            continue
+        meta = read_session_meta_file(meta_path) or {}
+        workspace = str(meta.get("workspace") or "").strip()
+        try:
+            mtime = log_path.stat().st_mtime
+        except OSError:
             try:
-                mtime = log_path.stat().st_mtime
+                mtime = meta_path.stat().st_mtime
             except OSError:
-                try:
-                    mtime = meta_path.stat().st_mtime
-                except OSError:
-                    mtime = 0.0
-            agents = agents_from_meta(meta, path=meta_path)
-            record = build_session_record(
-                name=session_name,
-                workspace=workspace,
-                log_path=log_path,
-            )
-            record["agents"] = agents
-            record["agents_reset"] = "agents" not in meta
-            existing = records.get(session_name)
-            if existing is None or mtime > existing[0]:
-                records[session_name] = (mtime, record)
-    sessions = sorted(records.values(), key=lambda item: item[0], reverse=True)
+                mtime = 0.0
+        agents = agents_from_meta(meta, path=meta_path)
+        record = build_session_record(
+            name=session_name,
+            workspace=workspace,
+            log_path=log_path,
+        )
+        record["agents"] = agents
+        record["agents_reset"] = "agents" not in meta
+        sessions.append((mtime, record))
+    sessions.sort(key=lambda item: item[0], reverse=True)
     return [record for _mtime, record in sessions]
 
 

@@ -40,9 +40,7 @@
       _deskLastFitTarget = 0;
       if (next) document.documentElement.dataset.fitCollapsed = "1";
       else delete document.documentElement.dataset.fitCollapsed;
-      try {
-        _deskChatFrame?.contentWindow?.postMessage({ type: "hub-fit-collapsed", on: next }, "*");
-      } catch (_) {}
+      _deskChatFrame?.contentWindow?.postMessage({ type: "hub-fit-collapsed", on: next }, "*");
       if (next) {
         const invoke = getTauriInvoke();
         if (typeof invoke === "function") {
@@ -58,20 +56,16 @@
       if (!_deskAutoWindowHeight) return;
       if (_deskFitCollapsed) {
         setDeskFitCollapsed(false);
-        try {
-          _deskChatFrame?.contentWindow?.postMessage({ type: "hub-refit" }, "*");
-        } catch (_) {}
+        _deskChatFrame?.contentWindow?.postMessage({ type: "hub-refit" }, "*");
       } else {
         setDeskFitCollapsed(true);
       }
     }
     function pushDeskAutoWindowHeight() {
-      try {
-        _deskChatFrame?.contentWindow?.postMessage(
-          { type: "hub-auto-window-height", on: _deskAutoWindowHeight },
-          "*",
-        );
-      } catch (_) {}
+      _deskChatFrame?.contentWindow?.postMessage(
+        { type: "hub-auto-window-height", on: _deskAutoWindowHeight },
+        "*",
+      );
     }
     function applyDeskFitHeightMin() {
       const invoke = getTauriInvoke();

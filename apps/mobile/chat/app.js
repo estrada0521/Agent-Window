@@ -156,23 +156,17 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     };
     const requestHubParentLayout = () => {
       if (!isEmbeddedHubChat) return;
-      try {
-        window.parent.postMessage({ type: "chat-request-hub-layout" }, "*");
-      } catch (_) { }
+      window.parent.postMessage({ type: "chat-request-hub-layout" }, "*");
     };
     const requestHubCloseChat = () => {
       if (!isEmbeddedHubChat) return;
-      try {
-        window.parent.postMessage("hub_close_chat", "*");
-      } catch (_) { }
+      window.parent.postMessage("hub_close_chat", "*");
     };
     const notifyHubChatRenderReady = () => {
       if (!isEmbeddedHubChat) return;
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          try {
-            window.parent.postMessage({ type: "chat-render-ready" }, "*");
-          } catch (_) { }
+          window.parent.postMessage({ type: "chat-render-ready" }, "*");
         });
       });
     };
@@ -235,12 +229,10 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     if (window.parent !== window) {
       const reportObservedSystemTheme = () => {
         if (document.documentElement.dataset.themeMobile !== "system") return;
-        try {
-          window.parent.postMessage({
-            type: "hub-mobile-system-theme-observed",
-            theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
-          }, "*");
-        } catch (_) {}
+        window.parent.postMessage({
+          type: "hub-mobile-system-theme-observed",
+          theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
+        }, "*");
       };
       try {
         const query = window.matchMedia("(prefers-color-scheme: dark)");

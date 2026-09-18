@@ -216,12 +216,6 @@ class AgentSendRuntime:
 
         for raw_target in [item.strip() for item in (target_spec or "").split(",") if item.strip()]:
             lower_target = raw_target.lower()
-            if lower_target == "user":
-                raise AgentSendError(
-                    'agent-send: target "user" has been removed.\n\n'
-                    "Respond to humans in your normal assistant output (native event logs are indexed automatically).\n"
-                    "Use agent-send only for agent-to-agent communication targets."
-                )
             if lower_target == "others":
                 if not sender_role:
                     raise AgentSendError("Cannot resolve current sender for target: others")
@@ -268,7 +262,7 @@ class AgentSendRuntime:
         pane_id: str,
         payload: str,
     ) -> bool:
-        return deliver_text_to_pane(self.tmux.run, pane_id, payload, env=self.env)
+        return deliver_text_to_pane(self.tmux.run, pane_id, payload)
 
     def append_log_entry(
         self,

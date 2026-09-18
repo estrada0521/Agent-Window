@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from datetime import datetime
+
+from backend_core.access.files import append_jsonl_entry
+
 
 def _user_client(client: object) -> str | None:
     value = str(client or "").strip().lower()
@@ -13,12 +17,10 @@ def append_user_entry(
     message: str,
     *,
     targets: list[str],
-    datetime_class,
-    append_jsonl_entry_fn,
     client: str | None = None,
 ) -> dict:
     entry = {
-        "timestamp": datetime_class.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "session": runtime.session_name,
         "sender": "user",
         "targets": list(targets),
@@ -27,7 +29,7 @@ def append_user_entry(
     recorded = _user_client(client)
     if recorded:
         entry["client"] = recorded
-    return append_jsonl_entry_fn(runtime.log_path, entry)
+    return append_jsonl_entry(runtime.log_path, entry)
 
 
 def append_system_entry(
@@ -36,11 +38,9 @@ def append_system_entry(
     *,
     agent: str = "",
     extra: dict | None = None,
-    datetime_class,
-    append_jsonl_entry_fn,
 ) -> dict:
     entry = {
-        "timestamp": datetime_class.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "session": runtime.session_name,
         "sender": "system",
         "targets": [],
@@ -50,4 +50,4 @@ def append_system_entry(
         entry["agent"] = agent
     if extra:
         entry.update(extra)
-    return append_jsonl_entry_fn(runtime.log_path, entry)
+    return append_jsonl_entry(runtime.log_path, entry)

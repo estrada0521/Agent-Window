@@ -56,12 +56,10 @@
     const postPreviewHtmlModeToFrame = (frame, ext, mode) => {
       if (!frame || !isHtmlPreviewExt(ext)) return;
       applyPreviewHtmlModeToFrame(frame, ext, mode);
-      try {
-        frame.contentWindow?.postMessage(
-          { type: "agent-index-file-preview-mode", mode },
-          window.location.origin,
-        );
-      } catch (_) { }
+      frame.contentWindow?.postMessage(
+        { type: "agent-index-file-preview-mode", mode },
+        window.location.origin,
+      );
       requestAnimationFrame(() => {
         applyPreviewHtmlModeToFrame(frame, ext, mode);
       });
@@ -159,12 +157,10 @@
     };
     const postPreviewThemeToFrame = (frame, ext, baseTheme) => {
       applyPreviewThemeToFrame(frame, ext, baseTheme);
-      try {
-        frame.contentWindow?.postMessage(
-          { type: "agent-index-file-preview-theme", theme: baseTheme, baseTheme },
-          window.location.origin,
-        );
-      } catch (_) { }
+      frame.contentWindow?.postMessage(
+        { type: "agent-index-file-preview-theme", theme: baseTheme, baseTheme },
+        window.location.origin,
+      );
       requestAnimationFrame(() => {
         applyPreviewThemeToFrame(frame, ext, baseTheme);
       });

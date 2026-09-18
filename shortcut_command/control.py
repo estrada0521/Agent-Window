@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import subprocess
 from typing import Any, Protocol
 
@@ -50,7 +49,7 @@ def try_deliver_shortcut_control(
             if not pane_id:
                 return 400, {"ok": False, "error": f"pane not found for {target_item}"}
             if is_text_delivery:
-                if not deliver_text_to_pane(run_tmux, pane_id, message, env=os.environ):
+                if not deliver_text_to_pane(run_tmux, pane_id, message):
                     return 400, {"ok": False, "error": f"send-keys failed for {target_item}"}
                 continue
             if pane_direct:

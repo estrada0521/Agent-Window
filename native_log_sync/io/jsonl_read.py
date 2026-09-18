@@ -12,10 +12,9 @@ class CompleteJsonlScan:
     advances, and nothing is yielded. The CLI owns those records.
     """
 
-    def __init__(self, path: str | Path, start: int = 0, *, align_mid_line: bool = False) -> None:
+    def __init__(self, path: str | Path, start: int = 0) -> None:
         self.path = str(path)
         self.start = start
-        self.align_mid_line = align_mid_line
         self.consumed = start
         self.skipped = 0
         self.last_skip_offset: int | None = None
@@ -24,13 +23,10 @@ class CompleteJsonlScan:
     def __iter__(self):
         with open(self.path, "rb") as handle:
             if self.start > 0:
-                if self.align_mid_line:
-                    handle.seek(max(self.start - 1, 0))
-                    prev = handle.read(1)
-                    if prev != b"\n":
-                        handle.readline()
-                else:
-                    handle.seek(self.start)
+                handle.seek(max(self.start - 1, 0))
+                prev = handle.read(1)
+                if prev != b"\n":
+                    handle.readline()
             self.consumed = handle.tell()
             while True:
                 line_start = handle.tell()
@@ -61,12 +57,3 @@ class CompleteJsonlScan:
         self.skipped += 1
         self.last_skip_offset = offset
         self.last_skip_reason = reason
-
-
-def complete_jsonl_scan(
-    path: str | Path,
-    start: int = 0,
-    *,
-    align_mid_line: bool = False,
-) -> CompleteJsonlScan:
-    return CompleteJsonlScan(path, start, align_mid_line=align_mid_line)

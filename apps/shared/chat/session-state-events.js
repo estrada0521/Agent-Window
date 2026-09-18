@@ -1,5 +1,4 @@
     const startSessionStateEvents = () => {
-      if (typeof EventSource !== "function") return;
       const es = new EventSource(withChatBase("/session-state-events"));
       es.addEventListener("state", (event) => {
         const payload = JSON.parse(event.data || "{}");

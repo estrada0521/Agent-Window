@@ -9,7 +9,7 @@ from backend_core.tmux.control import (
     SessionControlError,
     create_session,
     kill_session,
-    stop_chat_server as stop_chat_server_impl,
+    stop_chat_server,
 )
 from backend_core.access.settings import (
     port_is_bindable,
@@ -18,9 +18,6 @@ from backend_core.access.settings import (
 )
 from server.chat_process import launch_chat_server, wait_for_chat_server
 from hub_backend.session_query import active_session_records_query, archived_session_records
-
-def chat_server_state(self, chat_port: int) -> dict | None:
-    return read_chat_server_state(chat_port)
 
 
 def chat_server_state_matches(self, state: dict | None, *, workspace: str) -> bool:
@@ -37,10 +34,6 @@ def chat_server_state_matches(self, state: dict | None, *, workspace: str) -> bo
     if not reported_workspace or str(Path(reported_workspace).expanduser().resolve()) != expected_workspace:
         return False
     return True
-
-
-def stop_chat_server(self, workspace: str) -> tuple[bool, str]:
-    return stop_chat_server_impl(workspace)
 
 
 def chat_launch_env(self) -> dict[str, str]:
@@ -64,10 +57,10 @@ def stop_inactive_chat_servers(self, *, keep_workspace: str = "") -> str:
         if not workspace or workspace == keep:
             continue
         port = workspace_chat_port(workspace)
-        state = chat_server_state(self, port)
+        state = read_chat_server_state(port)
         if not state or state.get("active"):
             continue
-        stop_ok, stop_detail = stop_chat_server(self, workspace)
+        stop_ok, stop_detail = stop_chat_server(workspace)
         if not stop_ok:
             return stop_detail
     return ""
@@ -90,12 +83,12 @@ def ensure_chat_server(
     lock = self._get_launch_lock(resolved_workspace)
     with lock:
         chat_port = workspace_chat_port(resolved_workspace)
-        state = chat_server_state(self, chat_port)
+        state = read_chat_server_state(chat_port)
         same_server = chat_server_state_matches(self, state, workspace=resolved_workspace)
         if same_server and bool(state.get("active")) == bool(expected_active):
             return True, chat_port, ""
         if same_server:
-            stop_ok, stop_detail = stop_chat_server(self, resolved_workspace)
+            stop_ok, stop_detail = stop_chat_server(resolved_workspace)
             if not stop_ok:
                 return False, chat_port, stop_detail
         elif not port_is_bindable(chat_port):
@@ -113,7 +106,7 @@ def ensure_chat_server(
             return False, chat_port, str(exc)
 
         def _ready() -> bool:
-            state = chat_server_state(self, chat_port)
+            state = read_chat_server_state(chat_port)
             return (
                 bool(state)
                 and chat_server_state_matches(self, state, workspace=resolved_workspace)
@@ -139,7 +132,7 @@ def revive_archived_session(self, session_name: str) -> tuple[bool, str]:
     workspace = (record.get("workspace") or "").strip()
     if not workspace or not Path(workspace).is_dir():
         return False, f"Saved workspace is unavailable: {workspace or 'unknown'}"
-    stop_ok, stop_detail = stop_chat_server(self, workspace)
+    stop_ok, stop_detail = stop_chat_server(workspace)
     if not stop_ok:
         return False, stop_detail
     # Checked before create_session: workspace alone determines the chat
@@ -190,7 +183,7 @@ def delete_archived_session(self, session_name: str) -> tuple[bool, str]:
     workspace = str(record.get("workspace") or "").strip()
     if not workspace:
         return False, "workspace unavailable"
-    stop_ok, stop_detail = stop_chat_server(self, workspace)
+    stop_ok, stop_detail = stop_chat_server(workspace)
     if not stop_ok:
         return False, stop_detail
     log_dir = session_artifact_dir(session_name)

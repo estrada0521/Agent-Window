@@ -111,10 +111,11 @@ class RenamedSessionRouteTests(unittest.TestCase):
         failed = SimpleNamespace(returncode=1, stdout="", stderr="tmux unavailable")
 
         with self.assertRaisesRegex(RuntimeError, "tmux list-sessions failed"):
-            resolve_tmux_session_name(
-                runtime,
-                subprocess_module=SimpleNamespace(run=lambda *_args, **_kwargs: failed),
-            )
+            with mock.patch(
+                "backend_core.tmux.session.subprocess.run",
+                return_value=failed,
+            ):
+                resolve_tmux_session_name(runtime)
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ from native_log_sync.agents.gemini.read_runtime import (
     parse_antigravity_transcript_step,
     runtime_tool_events,
 )
-from native_log_sync.io.jsonl_read import complete_jsonl_scan
+from native_log_sync.io.jsonl_read import CompleteJsonlScan
 from native_log_sync.io.projected import append_projected_entry
 
 
@@ -39,7 +39,7 @@ def sync_gemini_native_log(
     if start >= file_size:
         return
 
-    scan = complete_jsonl_scan(session_path_str, start, align_mid_line=True)
+    scan = CompleteJsonlScan(session_path_str, start)
     appended = False
     for line_start, entry in scan:
         text, tool_calls = parse_antigravity_transcript_step(entry)

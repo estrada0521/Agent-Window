@@ -24,12 +24,9 @@ def _runtime_event_payload(runtime, agent: str, keyword: str, detail: str, sourc
 
 
 def _publish_next_runtime_display(runtime, agent: str) -> None:
-    lock = getattr(runtime, "_idle_running_display_lock", None)
-    if lock is None:
-        return
-    with lock:
-        queues = getattr(runtime, "_idle_running_display_queues", {})
-        timers = getattr(runtime, "_idle_running_display_timers", {})
+    with runtime._idle_running_display_lock:
+        queues = runtime._idle_running_display_queues
+        timers = runtime._idle_running_display_timers
         queue = queues.get(agent)
         if not queue:
             timers.pop(agent, None)
@@ -62,16 +59,10 @@ def push_runtime_display(runtime, agent: str, events: list[dict]) -> None:
     if not normalized:
         return
 
-    lock = getattr(runtime, "_idle_running_display_lock", None)
-    if lock is None:
-        runtime._idle_running_display_by_agent[agent] = _runtime_event_payload(runtime, agent, *normalized[-1])
-        runtime.notify_session_state_changed(["agent_runtime"], reason="agent-runtime")
-        return
-
     should_publish_now = False
-    with lock:
-        queues = getattr(runtime, "_idle_running_display_queues", {})
-        timers = getattr(runtime, "_idle_running_display_timers", {})
+    with runtime._idle_running_display_lock:
+        queues = runtime._idle_running_display_queues
+        timers = runtime._idle_running_display_timers
         queue = queues.setdefault(agent, deque(maxlen=MAX_RUNTIME_DISPLAY_QUEUE))
         current_event = ((runtime._idle_running_display_by_agent.get(agent) or {}).get("current_event") or {})
         current_key = (

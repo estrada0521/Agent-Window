@@ -343,12 +343,10 @@
     function applyDeskChatTheme(themeDesktop) {
       const resolvedThemeDesktop = themeDesktop || document.documentElement.dataset.themeDesktop || document.documentElement.dataset.theme || "dark";
       const chatTheme = deskChatThemeFromDesktop(resolvedThemeDesktop);
-      try {
-        _deskChatFrame?.contentWindow?.postMessage(
-          { type: "hub-theme-changed", theme: chatTheme, chatTheme, themeDesktop: resolvedThemeDesktop },
-          "*"
-        );
-      } catch (_) {}
+      _deskChatFrame?.contentWindow?.postMessage(
+        { type: "hub-theme-changed", theme: chatTheme, chatTheme, themeDesktop: resolvedThemeDesktop },
+        "*"
+      );
     }
 
     function applyIncomingThemeDesktop(themeDesktopRaw) {
@@ -418,12 +416,10 @@
         if (isDeskSessionSidebarOpen()) _deskChatFrame.dataset.hubSidebarOpen = "1";
         else delete _deskChatFrame.dataset.hubSidebarOpen;
       }
-      try {
-        _deskChatFrame?.contentWindow?.postMessage({
-          type: "hub-sidebar-state",
-          open: !!isDeskSessionSidebarOpen(),
-        }, "*");
-      } catch (_) {}
+      _deskChatFrame?.contentWindow?.postMessage({
+        type: "hub-sidebar-state",
+        open: !!isDeskSessionSidebarOpen(),
+      }, "*");
     }
 
     function syncDeskSidebarResizerVisibility() {

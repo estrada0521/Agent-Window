@@ -5,7 +5,7 @@ import os
 import select
 import threading
 
-from native_log_sync.watch.emit_events import emit_agent_updates
+from native_log_sync.dispatch import sync_agent
 
 
 class _VnodeNativeSync:
@@ -48,7 +48,7 @@ class _VnodeNativeSync:
                 return
 
     def _sync_bindings(self) -> None:
-        bindings: dict = dict(getattr(self._runtime, "_native_log_bindings_by_agent", {}))
+        bindings: dict = dict(self._runtime._native_log_bindings_by_agent)
         with self._lock:
             for agent in list(self._fd_by_agent):
                 if agent not in bindings:
@@ -87,10 +87,7 @@ class _VnodeNativeSync:
             return dict(self._path_by_agent)
 
     def run(self) -> None:
-        reconfigure = getattr(self._runtime, "_native_log_watch_reconfigure", None)
         self._sync_bindings()
-        if reconfigure:
-            reconfigure.clear()
         while True:
             events = self._kq.control(None, 16, None)
             woke = False
@@ -101,9 +98,7 @@ class _VnodeNativeSync:
                     woke = True
                     continue
                 pending.append(event)
-            if woke or (reconfigure and reconfigure.is_set()):
-                if reconfigure:
-                    reconfigure.clear()
+            if woke:
                 self._sync_bindings()
             if not self._runtime.session_is_active:
                 continue
@@ -124,7 +119,7 @@ class _VnodeNativeSync:
                         path = self._path_by_agent.get(agent) if agent else None
                     if agent and path:
                         try:
-                            emit_agent_updates(self._runtime, agent, path)
+                            sync_agent(self._runtime, agent, path)
                         except Exception:
                             logging.exception("native log sync failed for %s", agent)
             if rebind_agents:

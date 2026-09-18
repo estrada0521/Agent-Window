@@ -3,12 +3,8 @@ from __future__ import annotations
 import subprocess
 
 
-def current_git_commit(
-    runtime,
-    *,
-    subprocess_module=subprocess,
-) -> dict | None:
-    result = subprocess_module.run(
+def current_git_commit(runtime) -> dict | None:
+    result = subprocess.run(
         ["git", "-C", runtime.workspace, "log", "-1", "--format=%H%x1f%h%x1f%s"],
         capture_output=True,
         text=True,

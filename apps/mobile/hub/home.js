@@ -69,13 +69,11 @@
       // compositing layer for a frame after an appearance change.
       root.style.colorScheme = theme;
       applyMobThemeGradientVars();
-      try {
-        _chatFrame?.contentWindow?.postMessage({
-          type: "hub-theme-changed",
-          theme,
-          themeMobile: currentMobileThemeSetting(),
-        }, "*");
-      } catch (_) {}
+      _chatFrame?.contentWindow?.postMessage({
+        type: "hub-theme-changed",
+        theme,
+        themeMobile: currentMobileThemeSetting(),
+      }, "*");
       return theme;
     };
     const applyMobileThemeSetting = (setting) => {
@@ -186,9 +184,7 @@
       params.delete(HUB_LAUNCH_SHELL_PARAM);
       const nextQuery = params.toString();
       const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}${window.location.hash || ""}`;
-      try {
-        window.history.replaceState(window.history.state, "", nextUrl);
-      } catch (_) { }
+      window.history.replaceState(window.history.state, "", nextUrl);
     }
     function releaseHubLaunchShellAfterRender() {
       if (!_hubLaunchShellPending) return;
@@ -312,19 +308,17 @@
         _hubMinParentChromeGap = Math.min(_hubMinParentChromeGap, raw);
       }
       const effectiveGap = raw >= 150 ? raw : _hubMinParentChromeGap;
-      try {
-        w.postMessage(
-          {
-            type: "hub-layout",
-            layoutHeight: _hubChatParentLayoutMax,
-            parentInnerHeight: ih,
-            parentVvHeight: vvH,
-            parentVvOffsetTop: vvTop,
-            parentChromeGap: effectiveGap === Infinity ? raw : effectiveGap,
-          },
-          "*"
-        );
-      } catch (_) { }
+      w.postMessage(
+        {
+          type: "hub-layout",
+          layoutHeight: _hubChatParentLayoutMax,
+          parentInnerHeight: ih,
+          parentVvHeight: vvH,
+          parentVvOffsetTop: vvTop,
+          parentChromeGap: effectiveGap === Infinity ? raw : effectiveGap,
+        },
+        "*"
+      );
     }
     function _attachHubViewportBridge() {
       if (_hubVVBridgeHandler) return;
@@ -617,7 +611,7 @@
         if (e.data.theme !== "light" && e.data.theme !== "dark") return;
         const theme = e.data.theme;
         document.documentElement.dataset.theme = theme;
-        try { _chatFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*"); } catch (_) {}
+        _chatFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*");
         return;
       }
     });

@@ -15,8 +15,8 @@ class AgentPane:
     pane_id: str
 
 
-def _run(prefix: list[str], args: list[str], *, subprocess_module=subprocess):
-    return subprocess_module.run(
+def _run(prefix: list[str], args: list[str]):
+    return subprocess.run(
         [*prefix, *args],
         capture_output=True,
         text=True,
@@ -25,12 +25,11 @@ def _run(prefix: list[str], args: list[str], *, subprocess_module=subprocess):
     )
 
 
-def live_sessions(prefix: list[str], *, subprocess_module=subprocess) -> list[tuple[str, str]]:
+def live_sessions(prefix: list[str]) -> list[tuple[str, str]]:
     """Return live tmux sessions as ``(name, session_path)`` pairs."""
     result = _run(
         prefix,
         ["list-sessions", "-F", "#{session_name}\t#{session_path}"],
-        subprocess_module=subprocess_module,
     )
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip()
@@ -53,11 +52,9 @@ def live_sessions(prefix: list[str], *, subprocess_module=subprocess) -> list[tu
 def find_session_for_workspace(
     prefix: list[str],
     workspace: str,
-    *,
-    subprocess_module=subprocess,
 ) -> str | None:
     wanted = normalize_workspace(workspace)
-    for name, session_path in live_sessions(prefix, subprocess_module=subprocess_module):
+    for name, session_path in live_sessions(prefix):
         if normalize_workspace(session_path) == wanted:
             return name
     return None
@@ -66,13 +63,10 @@ def find_session_for_workspace(
 def tmux_session_workspace(
     prefix: list[str],
     session_name: str,
-    *,
-    subprocess_module=subprocess,
 ) -> str:
     result = _run(
         prefix,
         ["display-message", "-p", "-t", session_name, "#{session_path}"],
-        subprocess_module=subprocess_module,
     )
     workspace = (result.stdout or "").strip()
     if result.returncode != 0 or not workspace:
@@ -84,8 +78,6 @@ def tmux_session_workspace(
 def agent_topology(
     prefix: list[str],
     session_name: str,
-    *,
-    subprocess_module=subprocess,
 ) -> list[AgentPane]:
     """Project AW's one-window-per-agent tmux topology in window order."""
     result = _run(
@@ -97,7 +89,6 @@ def agent_topology(
             "-F",
             "#{window_name}\t#{window_panes}\t#{pane_id}",
         ],
-        subprocess_module=subprocess_module,
     )
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip()
@@ -130,8 +121,6 @@ def parse_agent_topology(output: str) -> list[AgentPane]:
 def terminal_window_pane_id(
     prefix: list[str],
     session_name: str,
-    *,
-    subprocess_module=subprocess,
 ) -> str:
     """Pane ID of the session's own "terminal" window -- alive since session
     creation, before any agent is added, and the one window agent_topology()
@@ -139,7 +128,6 @@ def terminal_window_pane_id(
     result = _run(
         prefix,
         ["list-windows", "-t", session_name, "-F", "#{window_name}\t#{pane_id}"],
-        subprocess_module=subprocess_module,
     )
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip()
@@ -151,21 +139,20 @@ def terminal_window_pane_id(
     return ""
 
 
-def resolve_tmux_session_name(runtime, *, subprocess_module=subprocess) -> str | None:
+def resolve_tmux_session_name(runtime) -> str | None:
     workspace = str(runtime.workspace or "").strip()
     if not workspace:
         return None
     return find_session_for_workspace(
         runtime.tmux_prefix,
         workspace,
-        subprocess_module=subprocess_module,
     )
 
 
-def pane_field(runtime, pane_id: str, field: str, *, subprocess_module=subprocess) -> str:
+def pane_field(runtime, pane_id: str, field: str) -> str:
     if not pane_id:
         return ""
-    result = subprocess_module.run(
+    result = subprocess.run(
         [*runtime.tmux_prefix, "display-message", "-p", "-t", pane_id, field],
         capture_output=True,
         text=True,

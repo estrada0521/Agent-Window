@@ -190,16 +190,12 @@
       setDeskChatLoading(false);
       syncDeskChatShellState();
       applyDeskChatTheme();
-      try {
-        _deskChatFrame.contentWindow?.postMessage(
-          { type: "hub-text-size-changed", textSize: currentDeskTextSizePx() },
-          "*",
-        );
-      } catch (_) {}
+      _deskChatFrame.contentWindow?.postMessage(
+        { type: "hub-text-size-changed", textSize: currentDeskTextSizePx() },
+        "*",
+      );
       pushDeskAutoWindowHeight();
-      try {
-        _deskChatFrame.contentWindow?.postMessage({ type: "desktop-panel-sync-request" }, "*");
-      } catch (_) {}
+      _deskChatFrame.contentWindow?.postMessage({ type: "desktop-panel-sync-request" }, "*");
     });
 
     _deskMain && _deskMain.addEventListener("click", () => {

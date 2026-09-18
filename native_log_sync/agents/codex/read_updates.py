@@ -12,7 +12,7 @@ from native_log_sync.agents._shared.path_state import (
 from native_log_sync.agents._shared.projection_status import record_projection_scan_result
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.codex.read_runtime import iter_tool_calls, runtime_tool_events
-from native_log_sync.io.jsonl_read import complete_jsonl_scan
+from native_log_sync.io.jsonl_read import CompleteJsonlScan
 from native_log_sync.io.projected import append_projected_entry
 
 
@@ -166,7 +166,7 @@ def sync_codex_native_log(
         return True
 
     last_runtime_state_event = ""
-    scan = complete_jsonl_scan(resolved_path, start, align_mid_line=True)
+    scan = CompleteJsonlScan(resolved_path, start)
     for line_start, entry in scan:
         _append_codex_entry(entry, line_start)
         runtime_state_event = _codex_runtime_state_event(entry)

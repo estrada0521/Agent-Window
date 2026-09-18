@@ -1,12 +1,10 @@
 from __future__ import annotations
 import logging
 
-import subprocess
 import threading
 import time
 import uuid
 from collections import deque
-from datetime import datetime as dt_datetime
 from pathlib import Path
 
 from backend_core.agents.executables import (
@@ -49,7 +47,6 @@ from .session_state import (
 from pane_trace import trace_content as _trace_content_impl
 from backend_core.tmux.instances import resolve_target_agents as resolve_target_agent_names
 from backend_core.tmux.window import tmux_prefix_args
-from backend_core.access.files import append_jsonl_entry
 from .session_binding import WorkspaceSessionBinding
 
 
@@ -174,8 +171,6 @@ class ChatRuntime:
             self,
             message,
             targets=targets,
-            datetime_class=dt_datetime,
-            append_jsonl_entry_fn=append_jsonl_entry,
             client=client,
         )
 
@@ -185,8 +180,6 @@ class ChatRuntime:
             message,
             agent=agent,
             extra=extra,
-            datetime_class=dt_datetime,
-            append_jsonl_entry_fn=append_jsonl_entry,
         )
 
     def adopt_commit_baseline(self) -> None:
@@ -282,7 +275,6 @@ class ChatRuntime:
             for pane in _agent_topology_impl(
                 self.tmux_prefix,
                 self.tmux_session_name,
-                subprocess_module=subprocess,
             )
         }
 
@@ -304,7 +296,7 @@ class ChatRuntime:
         return self.pane_id_for_terminal() if target == "terminal" else self.pane_id_for_agent(target)
 
     def pane_field(self, pane_id: str, field: str) -> str:
-        return _pane_field_impl(self, pane_id, field, subprocess_module=subprocess)
+        return _pane_field_impl(self, pane_id, field)
 
     def _mark_agent_sent(self, agent_name: str) -> None:
         _mark_agent_sent_impl(self, agent_name)

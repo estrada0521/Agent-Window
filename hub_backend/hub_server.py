@@ -46,7 +46,7 @@ from hub_backend.actions import (
 from hub_backend.server_helpers import (
     build_hub_html_pages as _build_hub_html_pages_impl,
     clean_env as _clean_env_impl,
-    error_page as _error_page_impl,
+    error_page,
     format_chat_url,
     launch_hub_restart as _launch_hub_restart_impl,
     pwa_asset_url as _pwa_asset_url_impl,
@@ -90,10 +90,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     _PWA_STATIC_DIR = repo_root / "apps" / "shared" / "pwa"
 
     _initialized = True
-
-
-def error_page(message: str) -> str:
-    return _error_page_impl(message)
 
 
 def queue_hub_restart():

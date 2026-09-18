@@ -1,5 +1,4 @@
     const startWorkspaceSyncEvents = () => {
-      if (typeof EventSource !== "function") return;
       if (workspaceSyncEventSource) return;
       const path = workspaceSyncLastSeq > 0
         ? `/workspace-sync-events?after=${encodeURIComponent(String(workspaceSyncLastSeq))}`

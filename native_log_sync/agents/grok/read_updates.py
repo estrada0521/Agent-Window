@@ -15,7 +15,7 @@ from native_log_sync.agents.grok.read_runtime import (
     iter_tool_calls_from_update,
     runtime_tool_events,
 )
-from native_log_sync.io.jsonl_read import complete_jsonl_scan
+from native_log_sync.io.jsonl_read import CompleteJsonlScan
 from native_log_sync.io.projected import append_projected_entry
 
 
@@ -61,7 +61,7 @@ def _sync_grok_chat_history(runtime, agent: str, history_path: str) -> bool:
         return False
 
     appended = False
-    scan = complete_jsonl_scan(history_path, start, align_mid_line=True)
+    scan = CompleteJsonlScan(history_path, start)
     if is_first_encounter:
         latest: tuple[int, dict] | None = None
         for line_start, entry in scan:
@@ -125,7 +125,7 @@ def sync_grok_native_log(
     turn_completed = False
     if start < file_size:
         workspace = str(getattr(runtime, "workspace", "") or "")
-        scan = complete_jsonl_scan(updates_path, start, align_mid_line=True)
+        scan = CompleteJsonlScan(updates_path, start)
         for _line_start, entry in scan:
             turn_completed = _turn_completed(entry) or turn_completed
             tool_evs: list[dict] = []

@@ -6,9 +6,7 @@
       params.delete("launch_shell");
       const nextQuery = params.toString();
       const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}${window.location.hash || ""}`;
-      try {
-        window.history.replaceState(window.history.state, "", nextUrl);
-      } catch (_) {}
+      window.history.replaceState(window.history.state, "", nextUrl);
     };
     const releaseLaunchShellGate = () => {
       if (document.documentElement.dataset.launchShell !== "1") return;

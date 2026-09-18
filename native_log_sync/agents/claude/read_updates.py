@@ -10,7 +10,7 @@ from native_log_sync.agents._shared.path_state import (
 from native_log_sync.agents._shared.projection_status import record_projection_scan_result
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.claude.read_runtime import iter_tool_calls, runtime_tool_events
-from native_log_sync.io.jsonl_read import complete_jsonl_scan
+from native_log_sync.io.jsonl_read import CompleteJsonlScan
 from native_log_sync.io.projected import append_projected_entry
 
 
@@ -96,7 +96,7 @@ def sync_claude_native_log(
         return True
 
     turn_done_seen = False
-    scan = complete_jsonl_scan(session_path_str, start, align_mid_line=True)
+    scan = CompleteJsonlScan(session_path_str, start)
     for line_start, entry in scan:
         if _claude_entry_marks_turn_done(entry):
             turn_done_seen = True

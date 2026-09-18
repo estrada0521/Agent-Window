@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import subprocess
 
 from message_delivery.paste import deliver_text_to_pane
@@ -50,7 +49,7 @@ def send_message(
             if not pane_id:
                 failed_targets.append(agent)
                 continue
-            if not deliver_text_to_pane(run_tmux, pane_id, payload, env=os.environ):
+            if not deliver_text_to_pane(run_tmux, pane_id, payload):
                 failed_targets.append(agent)
                 continue
             self._mark_agent_sent(agent)

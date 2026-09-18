@@ -112,9 +112,7 @@
       applyDeskSidebarWidth();
       updateDeskChromeOverflow();
       try { localStorage.setItem(DESK_TEXT_SIZE_KEY, String(clamped)); } catch (_) {}
-      try {
-        _deskChatFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
-      } catch (_) {}
+      _deskChatFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
       if (scalesWindow) {
         _deskLastFitTarget *= clamped / previous;
         invoke("scale_window_from_top_center", { scale: clamped / previous, cornerRadius: clamped * 2 }).catch((err) => {
@@ -123,14 +121,10 @@
       }
     }
     function dispatchDeskNativeMenuAction(payload) {
-      try {
-        _deskChatFrame?.contentWindow?.postMessage({ type: "native-menu-action", payload }, "*");
-      } catch (_) {}
+      _deskChatFrame?.contentWindow?.postMessage({ type: "native-menu-action", payload }, "*");
     }
     function resetDeskChatView() {
-      try {
-        _deskChatFrame?.contentWindow?.postMessage({ type: "desktop-chat-reset" }, "*");
-      } catch (_) {}
+      _deskChatFrame?.contentWindow?.postMessage({ type: "desktop-chat-reset" }, "*");
     }
     // Always on Top and Fit Height to Message are per-session toggles: both
     // start off on every launch and are never persisted.

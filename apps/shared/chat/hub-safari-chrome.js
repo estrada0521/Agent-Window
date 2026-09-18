@@ -3,9 +3,7 @@
         const now = Date.now();
         if (now - _hubParentScrollSigAt < 220) return;
         _hubParentScrollSigAt = now;
-        try {
-          window.parent.postMessage({ type: "chat-scroll-signal" }, "*");
-        } catch (_) {}
+        window.parent.postMessage({ type: "chat-scroll-signal" }, "*");
       };
       const hubChildResizeChrome = () => {
         const w = window.innerWidth || 0;

@@ -97,17 +97,13 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     };
     const requestHubParentLayout = () => {
       if (!isHubIframeChat()) return;
-      try {
-        window.parent.postMessage({ type: "chat-request-hub-layout" }, "*");
-      } catch (_) {}
+      window.parent.postMessage({ type: "chat-request-hub-layout" }, "*");
     };
     const notifyHubChatRenderReady = () => {
       if (!isHubIframeChat()) return;
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          try {
-            window.parent.postMessage({ type: "chat-render-ready" }, "*");
-          } catch (_) {}
+          window.parent.postMessage({ type: "chat-render-ready" }, "*");
         });
       });
     };
@@ -219,9 +215,7 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
           _stickyToBottom = true;
           scrollConversationToBottom("auto");
         }
-        try {
-          window.parent.postMessage({ type: "fit-window-height", contentHeight, restore }, "*");
-        } catch (_) {}
+        window.parent.postMessage({ type: "fit-window-height", contentHeight, restore }, "*");
       }
     };
     const fitMessageRows = () => [...timeline.querySelectorAll(":scope > article.message-row")];
@@ -475,16 +469,14 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
     };
 __CHAT_INCLUDE:features/git-panel/panel.js__
     const notifyParentPanelState = () => {
-      try {
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({
-            type: "desktop-panel-state",
-            mode: dpPanelOpen ? "open" : "",
-            view: dpActivePanelView,
-            width: dpOutwardPanelWidthPx(),
-          }, "*");
-        }
-      } catch (_) {}
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: "desktop-panel-state",
+          mode: dpPanelOpen ? "open" : "",
+          view: dpActivePanelView,
+          width: dpOutwardPanelWidthPx(),
+        }, "*");
+      }
     };
     window.addEventListener("resize", () => {
       dpApplyPanelWidth();
@@ -872,12 +864,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         } else {
           delete document.documentElement.dataset.themeDesktop;
         }
-        try {
-          const url = new URL(window.location.href);
-          url.searchParams.set("theme", document.documentElement.dataset.theme);
-          if (themeDesktop) url.searchParams.set("theme_desktop", themeDesktop);
-          history.replaceState(history.state, "", url.toString());
-        } catch (_) {}
+        const url = new URL(window.location.href);
+        url.searchParams.set("theme", document.documentElement.dataset.theme);
+        if (themeDesktop) url.searchParams.set("theme_desktop", themeDesktop);
+        history.replaceState(history.state, "", url.toString());
         return;
       }
       if (event.data.type === "hub-text-size-changed") {
@@ -892,11 +882,9 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           }
           dpApplyPanelWidth();
           notifyParentPanelState();
-          try {
-            const url = new URL(window.location.href);
-            url.searchParams.set("text_size", String(px));
-            history.replaceState(history.state, "", url.toString());
-          } catch (_) {}
+          const url = new URL(window.location.href);
+          url.searchParams.set("text_size", String(px));
+          history.replaceState(history.state, "", url.toString());
         }
         return;
       }
@@ -960,7 +948,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             }
             files = Array.from(byPath.values());
           } catch (_) { error = true; }
-          try { window.parent?.postMessage({ type: "desk-git-changes", files, error }, "*"); } catch (_) {}
+          window.parent?.postMessage({ type: "desk-git-changes", files, error }, "*");
         })();
         return;
       }

@@ -13,7 +13,7 @@ def resolve_cursor_session_jsonl_path(runtime, pane_pid: str) -> str:
     workspace_text = str(runtime.workspace or "").strip()
     if not workspace_text:
         return ""
-    roots = cursor_transcript_roots(runtime, workspace_text)
+    roots = cursor_transcript_roots(workspace_text)
     if not roots:
         return ""
 
