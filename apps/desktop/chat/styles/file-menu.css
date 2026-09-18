@@ -23,6 +23,7 @@
       border-radius: calc(var(--text-size, 13px) * 16 / 13) calc(var(--text-size, 13px) * 16 / 13) 0 0;
       overflow-y: auto;
       overflow-x: hidden;
+      scrollbar-gutter: stable;
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
@@ -87,7 +88,6 @@
       display: flex;
       align-items: center;
       gap: calc(var(--text-size, 13px) * 12 / 13);
-      width: 100%;
       box-sizing: border-box;
       height: calc(1em * 30 / 13);
       padding: 0 calc(var(--text-size, 13px) * 14 / 13);
@@ -267,9 +267,8 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      width: 100%;
-      box-sizing: border-box;
       max-width: 100%;
+      box-sizing: border-box;
       margin: 0;
       transition: background 120ms ease;
     }
