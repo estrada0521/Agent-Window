@@ -19,7 +19,7 @@ class SlashCommandSpec:
 
 
 PANE_KEY_COMMAND_IDS = frozenset({"up", "down", "left", "right", "enter", "esc", "ctrlc"})
-PANE_TEXT_MACROS = ("/model", "/usage", "/permission")
+PANE_TEXT_MACROS = ("/model", "/effort", "/usage", "/permission")
 
 PANE_CONTROL_COMMANDS = (
     SlashCommandSpec(
