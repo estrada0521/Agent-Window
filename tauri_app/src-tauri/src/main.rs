@@ -222,12 +222,65 @@ fn system_app_icons() -> Result<&'static SystemAppIcons, String> {
         .map_err(Clone::clone)
 }
 
+fn keep_native_menu_images_visible() {
+    use objc2::ffi;
+    use objc2::runtime::{AnyObject, Bool, Imp, Sel};
+    use objc2::{class, msg_send, sel};
+    use std::sync::Once;
+
+    extern "C-unwind" fn set_visible_menu_image(
+        this: *mut AnyObject,
+        _cmd: Sel,
+        image: *mut AnyObject,
+    ) {
+        unsafe {
+            let _: () = msg_send![this, aw_setImage: image];
+            let setter = sel!(setPreferredImageVisibility:);
+            let responds: Bool = msg_send![this, respondsToSelector: setter];
+            if responds.as_bool() {
+                let _: () = msg_send![this, setPreferredImageVisibility: 1isize];
+            }
+        }
+    }
+
+    static INSTALL: Once = Once::new();
+    INSTALL.call_once(|| unsafe {
+        // macOS 27 hides NSMenuItem images at the new automatic default.
+        // Tauri does not expose preferredImageVisibility yet, so make every
+        // image explicitly visible at the AppKit boundary. by GPT-5.6 Sol
+        let class = class!(NSMenuItem);
+        let original = ffi::class_getInstanceMethod(class, sel!(setImage:));
+        if original.is_null() {
+            return;
+        }
+        let replacement: Imp = std::mem::transmute::<
+            extern "C-unwind" fn(*mut AnyObject, Sel, *mut AnyObject),
+            Imp,
+        >(set_visible_menu_image);
+        if !ffi::class_addMethod(
+            class as *const _ as *mut _,
+            sel!(aw_setImage:),
+            replacement,
+            ffi::method_getTypeEncoding(original),
+        )
+        .as_bool()
+        {
+            return;
+        }
+        let added = ffi::class_getInstanceMethod(class, sel!(aw_setImage:));
+        if !added.is_null() {
+            ffi::method_exchangeImplementations(original as *mut _, added as *mut _);
+        }
+    });
+}
+
 #[tauri::command]
 fn show_chat_header_menu(
     window: tauri::WebviewWindow,
     app: tauri::AppHandle,
     payload: ChatHeaderMenuPayload,
 ) -> Result<(), String> {
+    keep_native_menu_images_visible();
     let add_enabled = payload.session_active && !payload.add_agents.is_empty();
     let remove_enabled = payload.session_active && !payload.remove_agents.is_empty();
 
