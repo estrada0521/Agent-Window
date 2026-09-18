@@ -20,7 +20,7 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
-      max-height: calc(var(--text-size, 13px) * 208 / 13);
+      max-height: calc(var(--text-size, 13px) * 178 / 13);
       display: none;
       box-shadow: none;
       padding: 0;
@@ -60,7 +60,7 @@
       align-items: center;
       justify-content: center;
       min-height: calc(var(--text-size, 13px) * 64 / 13);
-      padding: calc(var(--text-size, 13px) * 12 / 13) calc(var(--text-size, 13px) * 18 / 13);
+      padding: calc(var(--text-size, 13px) * 12 / 13) calc(var(--text-size, 13px) * 16 / 13);
       color: var(--muted);
       font-size: calc(var(--text-size, 13px) * 12.5 / 13);
     }
@@ -83,7 +83,7 @@
       gap: calc(var(--text-size, 13px) * 12 / 13);
       box-sizing: border-box;
       height: calc(1em * 30 / 13);
-      padding: 0 calc(var(--text-size, 13px) * 14 / 13);
+      padding: 0 calc(var(--text-size, 13px) * 12 / 13);
       border-radius: var(--right-panel-item-radius);
       white-space: nowrap;
       font-size: calc(var(--text-size, 13px) * 13.5 / 13);
@@ -135,7 +135,7 @@
     .file-dropdown-list,
     .cmd-dropdown-list {
       padding-top: calc(var(--text-size, 13px) * 16 / 13);
-      padding-bottom: calc(var(--text-size, 13px) * 10 / 13);
+      padding-bottom: calc(var(--text-size, 13px) * 6 / 13);
     }
     .file-dropdown-list {
       display: block;
@@ -218,7 +218,7 @@
       background-image: linear-gradient(var(--composer-menu-row-border), var(--composer-menu-row-border));
       background-repeat: no-repeat;
       background-position: bottom center;
-      background-size: calc(100% - calc(var(--text-size, 13px) * 28 / 13)) 0.5px;
+      background-size: calc(100% - calc(var(--text-size, 13px) * 24 / 13)) 0.5px;
     }
     .has-hover .file-item:hover {
       background-color: var(--composer-menu-row-hover-bg);
@@ -237,7 +237,7 @@
       align-items: center;
       gap: calc(var(--text-size, 13px) * 12 / 13);
       height: calc(1em * 30 / 13);
-      padding: 0 calc(var(--text-size, 13px) * 18 / 13);
+      padding: 0 calc(var(--text-size, 13px) * 16 / 13);
       border-radius: var(--right-panel-item-radius);
       font-size: calc(var(--text-size, 13px) * 13.5 / 13);
       line-height: 1.3;
@@ -256,7 +256,7 @@
       background-image: linear-gradient(var(--composer-menu-row-border), var(--composer-menu-row-border));
       background-repeat: no-repeat;
       background-position: bottom center;
-      background-size: calc(100% - calc(var(--text-size, 13px) * 36 / 13)) 0.5px;
+      background-size: calc(100% - calc(var(--text-size, 13px) * 32 / 13)) 0.5px;
     }
     .has-hover .cmd-item:hover {
       background-color: var(--composer-menu-row-hover-bg);
