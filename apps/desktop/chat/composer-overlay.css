@@ -67,6 +67,11 @@
     html[data-hub-shell="1"] body.composer-overlay-open #messages {
       opacity: 0.2;
     }
+    html[data-hub-shell="1"] body.composer-overlay-open #composerFabBtn,
+    html[data-hub-shell="1"] body.composer-overlay-open #scrollToBottomBtn {
+      opacity: 0;
+      pointer-events: none;
+    }
     .composer-overlay.visible::before {
       background: radial-gradient(
         125% 100% at 50% 50%,
