@@ -91,14 +91,6 @@ def latest_message_preview(log_path: Path | None) -> dict[str, str]:
     return {"sender": "", "text": "", "revision": ""}
 
 
-def host_without_port(host_header: str) -> str:
-    host = (host_header or "").strip() or "127.0.0.1"
-    if host.startswith("["):
-        end = host.find("]")
-        return host[: end + 1] if end != -1 else host
-    return host.split(":", 1)[0]
-
-
 def build_session_record(
     *,
     name: str,

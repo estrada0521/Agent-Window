@@ -19,16 +19,7 @@
       if (!textEl) return;
       textEl.textContent = "";
       if (name) {
-        const port = findSessionRecord(name)?.session?.chat_port;
-        // Two spans so updateDeskChromeOverflow can drop just the "(port)"
-        // suffix a step before hiding the whole label.
-        const nameEl = document.createElement("span");
-        nameEl.className = "desk-session-title-name";
-        nameEl.textContent = name;
-        const portEl = document.createElement("span");
-        portEl.className = "desk-session-title-port";
-        portEl.textContent = port ? ` (${port})` : "";
-        textEl.append(nameEl, portEl);
+        textEl.textContent = name;
       }
       updateDeskChromeOverflow();
     }

@@ -5,7 +5,8 @@ from urllib.parse import urlparse
 
 from backend_core.net import http_proxy
 from hub_backend.chat_supervisor import ensure_chat_server
-from hub_backend.session_api import resolve_session_chat_target
+from hub_backend.server_helpers import format_chat_url
+from hub_backend.session_api import split_chat_proxy_path, resolve_session_chat_target_by_port
 
 SESSION_GET_RETRY_WINDOW = 3.0
 SESSION_GET_RETRY_DELAY = 0.1
@@ -38,14 +39,13 @@ def _send_text(handler, status: int, detail: str) -> None:
 
 def proxy_chat_session(handler, hub, method: str) -> None:
     parsed = urlparse(handler.path)
-    parts = parsed.path.split("/", 3)
-    if len(parts) < 3 or not parts[2]:
+    split = split_chat_proxy_path(parsed.path)
+    if split is None:
         handler.send_response(404)
         handler.end_headers()
         return
-    session_name = parts[2]
-    suffix = "/" if len(parts) < 4 or not parts[3] else f"/{parts[3]}"
-    resolved = resolve_session_chat_target(hub, session_name)
+    chat_port, suffix = split
+    resolved = resolve_session_chat_target_by_port(hub, chat_port)
     if resolved["status"] == "unhealthy":
         _send_text(handler, 503, str(resolved.get("detail") or "tmux unresponsive"))
         return
@@ -56,7 +56,7 @@ def proxy_chat_session(handler, hub, method: str) -> None:
     workspace = str(resolved.get("workspace") or "").strip()
     session_is_active = bool(resolved.get("session_is_active", True))
     body = _read_body(handler, method)
-    forwarded_prefix = f"/session/{session_name}"
+    forwarded_prefix = format_chat_url(chat_port, "/").rstrip("/")
     headers = http_proxy.forward_headers(
         handler.headers,
         host=handler.headers.get("Host", "127.0.0.1"),
@@ -75,7 +75,7 @@ def proxy_chat_session(handler, hub, method: str) -> None:
             workspace=workspace,
         )
         if not ok:
-            _send_text(handler, 500, f"Failed to start chat for {session_name}: {detail}")
+            _send_text(handler, 500, f"Failed to start chat on port {chat_port}: {detail}")
             return
         upstream_suffix = suffix + (f"?{parsed.query}" if parsed.query else "")
         upstream = f"http://127.0.0.1:{chat_port}{upstream_suffix}"

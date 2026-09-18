@@ -39,58 +39,9 @@ def apply_hub_page_branding(html: str, *, page_title: str) -> str:
     )
 
 
-_LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1", "[::1]"}
-
-
-def resolve_external_origin(
-    host_header: str,
-    local_port: int,
-    *,
-    host_without_port_fn,
-    public_host: str,
-    public_hub_port: int,
-    hub_port: int,
-    scheme: str,
-) -> dict[str, object]:
-    host = host_without_port_fn(host_header or "127.0.0.1")
-    host_lc = host.lower()
-    is_public = bool(public_host and host_lc == public_host)
-    if is_public and local_port == hub_port:
-        external_port = public_hub_port
-    else:
-        external_port = local_port
-    default_port = 443 if scheme == "https" else 80
-    authority = host if external_port == default_port else f"{host}:{external_port}"
-    return {
-        "origin": f"{scheme}://{authority}",
-        "host": host,
-        "is_public": bool(is_public),
-        "external_port": external_port,
-    }
-
-
-def format_external_url(host_header: str, local_port: int, path: str, *, resolve_external_origin_fn) -> str:
-    resolved = resolve_external_origin_fn(host_header, local_port)
+def format_chat_url(chat_port: int, path: str) -> str:
     suffix = path if path.startswith("/") else f"/{path}"
-    return f"{resolved['origin']}{suffix}"
-
-
-def format_session_chat_url(
-    host_header: str,
-    session_name: str,
-    local_port: int,
-    path: str,
-    *,
-    resolve_external_origin_fn,
-    format_external_url_fn,
-    url_quote_fn,
-) -> str:
-    resolved = resolve_external_origin_fn(host_header, local_port)
-    host = str(resolved.get("host") or "").lower().rstrip(".")
-    if host not in _LOOPBACK_HOSTS:
-        suffix = path if path.startswith("/") else f"/{path}"
-        return f"/session/{url_quote_fn(session_name, safe='')}{suffix}"
-    return format_external_url_fn(host_header, local_port, path)
+    return f"/{int(chat_port)}{suffix}"
 
 
 PROCESS_HANDOFF_TIMEOUT_SEC = 8.0

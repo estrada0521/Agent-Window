@@ -55,9 +55,8 @@
     // navigation that appends an entry to the Hub's joint session history, and
     // WebKit then keeps the whole outgoing chat Document resident (bfcache) so
     // "back" would be instant -- measured at ~+150 MB per switch, never freed.
-    // location.replace() navigates without adding a history entry (verified to
-    // work even though the chat frame is a cross-origin per-session origin), so
-    // the outgoing Document has no entry pinning it and can be torn down.
+    // location.replace() navigates without adding a history entry, so the
+    // outgoing Document has no entry pinning it and can be torn down.
     function navigateDeskChatFrame(url) {
       const target = String(url || "") || "about:blank";
       _deskChatFrameLoadedUrl = target === "about:blank" ? "" : target;

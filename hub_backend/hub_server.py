@@ -2,20 +2,19 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, quote as url_quote, urlparse
+from urllib.parse import parse_qs, urlparse
 
 from hub_backend.runtime import HubRuntime
 from appearance.colors import apply_color_tokens, resolve_theme_palette
 from appearance.theme import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from backend_core.access.pwa import pwa_icon_entries as _pwa_icon_entries_impl
-from backend_core.access.settings import workspace_chat_port
 from hub_backend.session_proxy import proxy_chat_session
+from hub_backend.session_api import split_chat_proxy_path
 from hub_backend.chat_supervisor import stop_inactive_chat_servers
 from hub_backend.presentation.hub.header_assets import (
     PAGE_HEADER_CSS,
@@ -26,7 +25,6 @@ from hub_backend.presentation.hub.header_assets import (
 from hub_backend.session_query import (
     active_session_records_query,
     archived_session_records,
-    host_without_port,
 )
 
 from hub_backend.branding import APP_DISPLAY_NAME
@@ -49,12 +47,10 @@ from hub_backend.server_helpers import (
     build_hub_html_pages as _build_hub_html_pages_impl,
     clean_env as _clean_env_impl,
     error_page as _error_page_impl,
-    format_external_url as _format_external_url_impl,
-    format_session_chat_url as _format_session_chat_url_impl,
+    format_chat_url,
     launch_hub_restart as _launch_hub_restart_impl,
     pwa_asset_url as _pwa_asset_url_impl,
     pwa_asset_version as _pwa_asset_version_impl,
-    resolve_external_origin as _resolve_external_origin_impl,
     serve_pwa_static as _serve_pwa_static_impl,
 )
 from hub_backend.transport.request_view import request_view_variant
@@ -65,51 +61,15 @@ script_path = Path()
 port = 0
 tmux_socket = ""
 hub = None
-PUBLIC_HOST = ""
-PUBLIC_HUB_PORT = 443
 restart_lock = threading.Lock()
 restart_pending = False
 _restart_release_event = threading.Event()
 hub_server = None
 
 
-def resolve_external_origin(host_header: str, local_port: int) -> dict[str, object]:
-    return _resolve_external_origin_impl(
-        host_header,
-        local_port,
-        host_without_port_fn=host_without_port,
-        public_host=PUBLIC_HOST,
-        public_hub_port=PUBLIC_HUB_PORT,
-        hub_port=port,
-        scheme="http",
-    )
-
-
-def format_external_url(host_header: str, local_port: int, path: str) -> str:
-    return _format_external_url_impl(
-        host_header,
-        local_port,
-        path,
-        resolve_external_origin_fn=resolve_external_origin,
-    )
-
-
-def format_session_chat_url(host_header: str, session_name: str, local_port: int, path: str) -> str:
-    return _format_session_chat_url_impl(
-        host_header,
-        session_name,
-        local_port,
-        path,
-        resolve_external_origin_fn=lambda header, _port: resolve_external_origin(header, port),
-        format_external_url_fn=format_external_url,
-        url_quote_fn=url_quote,
-    )
-
-
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
     global repo_root, script_path, port, tmux_socket, hub
-    global PUBLIC_HOST, PUBLIC_HUB_PORT
     global restart_pending, hub_server, _PWA_STATIC_DIR
 
     if _initialized:
@@ -126,8 +86,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     script_path = Path(script_arg).resolve()
     port = int((repo_root / "hub-port").read_text().strip())
     hub = HubRuntime(repo_root, tmux_socket, hub_port=port)
-    PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
-    PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
     restart_pending, hub_server = False, None
     _PWA_STATIC_DIR = repo_root / "apps" / "shared" / "pwa"
 
@@ -460,7 +418,7 @@ def _hub_action_context() -> dict[str, object]:
     return {
         "hub": hub,
         "error_page_fn": error_page,
-        "format_session_chat_url_fn": format_session_chat_url,
+        "format_chat_url_fn": format_chat_url,
         "queue_hub_restart_fn": queue_hub_restart,
         "release_restart_hold_fn": release_restart_hold,
     }
@@ -582,11 +540,8 @@ class Handler(BaseHTTPRequestHandler):
         active_map = query.records
         active = []
         for record in active_map.values():
-            workspace = str(record.get("workspace") or "").strip()
-            chat_port = workspace_chat_port(workspace) if workspace else 0
             active.append({
                 "name": record["name"],
-                "chat_port": chat_port,
                 "latest_message_sender": record["latest_message_sender"],
                 "latest_message_preview": record["latest_message_preview"],
                 "latest_message_revision": record["latest_message_revision"],
@@ -597,7 +552,6 @@ class Handler(BaseHTTPRequestHandler):
             archived = [
                 {
                     "name": record["name"],
-                    "chat_port": workspace_chat_port(record["workspace"]) if record.get("workspace") else 0,
                     "latest_message_sender": record["latest_message_sender"],
                     "latest_message_preview": record["latest_message_preview"],
                     "latest_message_revision": record["latest_message_revision"],
@@ -668,7 +622,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
-        if parsed.path.startswith("/session/"):
+        if split_chat_proxy_path(parsed.path) is not None:
             proxy_chat_session(self, hub, "GET")
             return
         if _serve_pwa_static(self, parsed.path):
@@ -680,7 +634,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
-        if parsed.path.startswith("/session/"):
+        if split_chat_proxy_path(parsed.path) is not None:
             proxy_chat_session(self, hub, "POST")
             return
         if self._dispatch_route(parsed, self._POST_ROUTE_HANDLERS):

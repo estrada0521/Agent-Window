@@ -455,16 +455,13 @@
     const DESK_CHROME_GROUP_GAP_AT_DEFAULT_TEXT_SIZE = 16;
     function updateDeskChromeOverflow() {
       if (!_deskFloatingControls || !_deskTopRightControls || !_deskWindowTraffic) return;
-      _deskFloatingControls.classList.remove("is-port-hidden", "is-title-hidden", "is-buttons-hidden");
+      _deskFloatingControls.classList.remove("is-title-hidden", "is-buttons-hidden");
       _deskTopRightControls.classList.remove("is-buttons-hidden");
       const trafficLeft = _deskWindowTraffic.getBoundingClientRect().left;
       if (trafficLeft <= 0) return;
       const chromeGroupGap = DESK_CHROME_GROUP_GAP_AT_DEFAULT_TEXT_SIZE
         * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT;
       const collides = () => _deskFloatingControls.getBoundingClientRect().right + chromeGroupGap > trafficLeft;
-      if (!collides()) return;
-      // Drop the "(port)" suffix first -- the session name alone often still fits.
-      _deskFloatingControls.classList.add("is-port-hidden");
       if (!collides()) return;
       _deskFloatingControls.classList.add("is-title-hidden");
       if (!collides()) return;

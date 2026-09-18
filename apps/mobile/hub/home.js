@@ -255,9 +255,6 @@
       if (!raw) return raw;
       try {
         const next = new URL(raw, window.location.href);
-        // Direct (non-proxied) access points the iframe at the session's own
-        // chat_port, a different port on this same host, not the same
-        // origin as the Hub -- only reject truly foreign hosts here.
         if (next.hostname !== window.location.hostname) return raw;
         // This page only ever runs as the mobile Hub, so it already knows
         // the answer the framed chat page would otherwise have to guess

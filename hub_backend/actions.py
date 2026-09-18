@@ -48,11 +48,8 @@ def get_open_session(handler, parsed, ctx) -> None:
         else:
             handler._send_html(500, ctx["error_page_fn"](f"Failed to start chat for {session_name}: {detail}"))
         return
-    chat_port = int(resolved.get("chat_port") or 0)
-    location = ctx["format_session_chat_url_fn"](
-        handler.headers.get("Host", "127.0.0.1"),
-        session_name,
-        chat_port,
+    location = ctx["format_chat_url_fn"](
+        resolved["chat_port"],
         f"/?ts={int(time.time() * 1000)}",
     )
     if fmt == "json":
@@ -96,9 +93,7 @@ def get_revive_session(handler, parsed, ctx) -> None:
         else:
             handler._send_html(500, ctx["error_page_fn"](f"Failed to start chat for {session_name}: {detail}"))
         return
-    location = ctx["format_session_chat_url_fn"](
-        handler.headers.get("Host", "127.0.0.1"),
-        session_name,
+    location = ctx["format_chat_url_fn"](
         chat_port,
         f"/?ts={int(time.time() * 1000)}",
     )

@@ -159,8 +159,8 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                     None,
                     {
                         "hub": hub,
-                        "format_session_chat_url_fn": (
-                            lambda _host, session, _port, _path: f"/session/{session}/"
+                        "format_chat_url_fn": (
+                            lambda port, _path: f"/{port}/"
                         ),
                     },
                 )
@@ -173,7 +173,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                 {
                     "ok": True,
                     "session": expected_name,
-                    "chat_url": f"/session/{expected_name}/",
+                    "chat_url": "/41000/",
                 },
             )
             self.assertIn(expected_name, payload["notice"])

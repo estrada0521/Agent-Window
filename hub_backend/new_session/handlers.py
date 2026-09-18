@@ -187,10 +187,8 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    chat_url = ctx["format_session_chat_url_fn"](
-        handler.headers.get("Host", "127.0.0.1"),
-        session_name,
-        int(chat_port),
+    chat_url = ctx["format_chat_url_fn"](
+        chat_port,
         f"/?ts={int(time.time() * 1000)}",
     )
     handler._send_json(

@@ -1,6 +1,6 @@
     const hubBtn = document.getElementById("pageTitleLink");
     const hubRootUrl = () => {
-      if (CHAT_BASE_PATH || String(window.location.pathname || "").startsWith("/session/")) {
+      if (CHAT_BASE_PATH) {
         return `${window.location.origin}/`;
       }
       const portValue = Number(__HUB_PORT__) || 0;

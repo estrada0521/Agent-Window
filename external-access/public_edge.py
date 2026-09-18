@@ -7,7 +7,7 @@ import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, quote as url_quote, urlparse
+from urllib.parse import parse_qs, urlparse
 
 repo_root = Path(sys.argv[1]).resolve()
 hub_port = int(sys.argv[2])
@@ -19,7 +19,12 @@ from backend_core.net import http_proxy
 from workspace_sync.files.runtime import FileRuntime
 from hub_backend.runtime import HubRuntime
 from hub_backend.chat_supervisor import ensure_chat_server
-from hub_backend.session_api import resolve_session_chat_target
+from hub_backend.server_helpers import format_chat_url
+from hub_backend.session_api import (
+    resolve_session_chat_target,
+    resolve_session_chat_target_by_port,
+    split_chat_proxy_path,
+)
 
 hub = HubRuntime(repo_root, tmux_socket, hub_port=hub_port)
 
@@ -125,22 +130,15 @@ class Handler(BaseHTTPRequestHandler):
             return None
         return resolved
 
-    def _session_file_runtime(self, session_name: str, workspace: str = "") -> FileRuntime | None:
-        if not workspace:
-            resolved = self._resolve_session(session_name)
-            workspace = str((resolved or {}).get("workspace") or "").strip()
-        if not workspace:
-            return None
-        return FileRuntime(workspace=workspace)
-
-    def _handle_session_file_request(self, session_name: str, suffix: str, parsed, *, workspace: str = "") -> bool:
+    def _handle_session_file_request(self, chat_port: int, suffix: str, parsed, *, workspace: str) -> bool:
         if suffix not in {"/file-raw", "/file-view"}:
             return False
-        runtime = self._session_file_runtime(session_name, workspace)
-        if runtime is None:
+        workspace = str(workspace or "").strip()
+        if not workspace:
             self.send_response(404)
             self.end_headers()
             return True
+        runtime = FileRuntime(workspace=workspace)
         qs = parse_qs(parsed.query)
         rel = qs.get("path", [""])[0]
         if suffix == "/file-raw":
@@ -174,7 +172,7 @@ class Handler(BaseHTTPRequestHandler):
             page = runtime.file_view(
                 rel,
                 embed=embed,
-                base_path=f"/session/{url_quote(session_name)}",
+                base_path=format_chat_url(chat_port, "/").rstrip("/"),
             )
         except PermissionError:
             self.send_error(403)
@@ -193,34 +191,33 @@ class Handler(BaseHTTPRequestHandler):
 
     def _proxy_hub(self, method: str):
         parsed = urlparse(self.path)
-        upstream = f"{hub.hub_scheme}://127.0.0.1:{hub_port}{parsed.path}"
+        upstream = f"http://127.0.0.1:{hub_port}{parsed.path}"
         if parsed.query:
             upstream += f"?{parsed.query}"
         self._proxy(method, upstream)
 
     def _proxy_session(self, method: str):
         parsed = urlparse(self.path)
-        parts = parsed.path.split("/", 3)
-        if len(parts) < 3 or not parts[2]:
+        split = split_chat_proxy_path(parsed.path)
+        if split is None:
             self.send_response(404)
             self.end_headers()
             return
-        session_name = parts[2]
-        suffix = "/" if len(parts) < 4 or not parts[3] else f"/{parts[3]}"
-        resolved = self._resolve_session(session_name)
-        if resolved is None:
-            if getattr(self, "_Handler__tmux_unhealthy_detail", ""):
-                self._send_service_unavailable(self._Handler__tmux_unhealthy_detail)
-                return
+        chat_port, suffix = split
+        resolved = resolve_session_chat_target_by_port(hub, chat_port)
+        if resolved["status"] == "unhealthy":
+            self._send_service_unavailable(resolved.get("detail", ""))
+            return
+        if resolved["status"] != "ok":
             self.send_response(404)
             self.end_headers()
             return
         workspace = str(resolved.get("workspace") or "").strip()
         session_is_active = bool(resolved.get("session_is_active", True))
-        if method == "GET" and self._handle_session_file_request(session_name, suffix, parsed, workspace=workspace):
+        if method == "GET" and self._handle_session_file_request(chat_port, suffix, parsed, workspace=workspace):
             return
         body = self._read_request_body(method)
-        forwarded_prefix = f"/session/{session_name}"
+        forwarded_prefix = format_chat_url(chat_port, "/").rstrip("/")
         headers = self._forward_headers(forwarded_prefix=forwarded_prefix)
         deadline = time.time() + SESSION_GET_RETRY_WINDOW if method == "GET" else time.time()
         post_deadline = time.time() + SESSION_POST_RETRY_WINDOW if method == "POST" and suffix == "/reload-chat" else time.time()
@@ -231,7 +228,7 @@ class Handler(BaseHTTPRequestHandler):
                 workspace=workspace,
             )
             if not ok:
-                body_bytes = f"Failed to start chat for {session_name}: {detail}".encode("utf-8")
+                body_bytes = f"Failed to start chat on port {chat_port}: {detail}".encode("utf-8")
                 self.send_response(500)
                 self.send_header("Content-Type", "text/plain; charset=utf-8")
                 self.send_header("Content-Length", str(len(body_bytes)))
@@ -244,7 +241,7 @@ class Handler(BaseHTTPRequestHandler):
             status = 0
             resp_headers = None
             resp = None
-            upstream = f"{hub.hub_scheme}://127.0.0.1:{chat_port}{upstream_suffix}"
+            upstream = f"http://127.0.0.1:{chat_port}{upstream_suffix}"
             try:
                 if method == "POST" and suffix == "/reload-chat":
                     response = self._request_upstream(method, upstream, body=body, headers=headers)
@@ -289,7 +286,7 @@ class Handler(BaseHTTPRequestHandler):
             payload = '{"ok": false, "error": "Session not found"}'
             self._send_json(404, payload)
             return
-        location = f"/session/{url_quote(session_name, safe='')}/?follow=1"
+        location = format_chat_url(resolved["chat_port"], "/?follow=1")
         if fmt == "json":
             self._send_json(200, f'{{"ok": true, "chat_url": "{location}"}}')
         else:
@@ -299,7 +296,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
-        if parsed.path.startswith("/session/"):
+        if split_chat_proxy_path(parsed.path) is not None:
             self._proxy_session("GET")
             return
         if parsed.path == "/open-session":
@@ -309,7 +306,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
-        if parsed.path.startswith("/session/"):
+        if split_chat_proxy_path(parsed.path) is not None:
             self._proxy_session("POST")
             return
         self._proxy_hub("POST")

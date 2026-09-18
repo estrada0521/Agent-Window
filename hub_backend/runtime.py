@@ -24,7 +24,6 @@ class HubRuntime:
         self.repo_root = Path(repo_root).resolve()
         self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port or 0)
-        self.hub_scheme = "http"
         self.tmux_prefix = tmux_prefix_args(tmux_socket) if tmux_socket else ["tmux"]
         self._launch_locks = {}
         self._launch_locks_master = threading.Lock()
