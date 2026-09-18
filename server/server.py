@@ -172,15 +172,6 @@ def _clean_env():
     return env
 
 
-def _validated_reload_running_agents(raw: str) -> list[str]:
-    agents = json.loads(raw) if raw else []
-    if not isinstance(agents, list) or any(
-        not isinstance(agent, str) or not agent for agent in agents
-    ):
-        raise RuntimeError(f"invalid {RELOAD_RUNNING_AGENTS_ENV}")
-    return agents
-
-
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
     global port, workspace, tmux_socket, hub_port
@@ -207,7 +198,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     hub_port = int((_repo_root / "hub-port").read_text().strip())
     PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
     PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
-    reload_running_agents = _validated_reload_running_agents(os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, ""))
+    reload_running_agents = json.loads(os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, "[]"))
     runtime = ChatRuntime(
         port=port,
         workspace=workspace,

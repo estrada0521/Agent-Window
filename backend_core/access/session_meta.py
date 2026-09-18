@@ -4,52 +4,29 @@ import json
 from pathlib import Path
 
 from backend_core.access.atomic_json import write_json_atomically
-from backend_core.access.settings import (
-    SESSION_META_FILENAME,
-    agent_window_session_root,
-)
+from backend_core.access.settings import agent_window_session_root, session_meta_path
 
 
 class SessionMetaError(ValueError):
     pass
 
 
-def _meta_path(session_name: str) -> Path:
-    return agent_window_session_root() / str(session_name or "").strip() / SESSION_META_FILENAME
-
-
 def read_session_meta_file(path: Path) -> dict | None:
     if not path.is_file():
         return None
-    try:
-        meta = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise SessionMetaError(f"invalid session meta: {path}") from exc
-    if not isinstance(meta, dict):
-        raise SessionMetaError(f"invalid session meta: {path}")
-    return meta
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def read_session_meta(session_name: str) -> dict | None:
-    return read_session_meta_file(_meta_path(session_name))
-
-
-def agents_from_meta(meta: dict, *, path: Path) -> list[str]:
-    raw = meta.get("agents")
-    if raw is None:
-        return []
-    if not isinstance(raw, list):
-        raise SessionMetaError(f"invalid session meta: {path}")
-    return [str(a).strip() for a in raw if str(a).strip()]
+    return read_session_meta_file(session_meta_path(session_name))
 
 
 def _existing_session_meta(session_name: str) -> tuple[Path, dict]:
     name = str(session_name or "").strip()
-    path = _meta_path(name)
     meta = read_session_meta(name)
     if meta is None:
         raise SessionMetaError(f"session not found: {name}")
-    return path, meta
+    return session_meta_path(name), meta
 
 
 def session_workspace_claims(
@@ -62,18 +39,13 @@ def session_workspace_claims(
     claims: dict[str, tuple[str, str]] = {}
     if not root.is_dir():
         return claims
-    for entry in sorted(root.iterdir()):
+    for entry in root.iterdir():
         if not entry.is_dir() or entry.name == exclude:
             continue
         workspace = session_workspace(entry.name)
         if not workspace:
             continue
-        normalized = str(Path(workspace).expanduser().resolve())
-        if normalized in claims:
-            raise SessionMetaError(
-                f"workspace {normalized} is claimed by both {claims[normalized][0]} and {entry.name}"
-            )
-        claims[normalized] = (entry.name, workspace)
+        claims[str(Path(workspace).expanduser().resolve())] = (entry.name, workspace)
     return claims
 
 
@@ -98,7 +70,7 @@ def session_workspace(session_name: str) -> str | None:
     meta = read_session_meta(session_name)
     if meta is None:
         return None
-    return str(meta.get("workspace") or "").strip() or None
+    return meta["workspace"]
 
 
 def session_meta_agents(session_name: str) -> list[str]:
@@ -106,7 +78,7 @@ def session_meta_agents(session_name: str) -> list[str]:
     meta = read_session_meta(session_name)
     if meta is None:
         return []
-    return agents_from_meta(meta, path=_meta_path(session_name))
+    return meta.get("agents", [])
 
 
 def set_session_workspace(session_name: str, workspace: str) -> None:
@@ -153,7 +125,7 @@ def write_session_meta_file(
         raise ValueError("workspace is required to write session meta")
 
     write_json_atomically(
-        _meta_path(session_name),
+        session_meta_path(session_name),
         {
             "workspace": recorded_workspace,
             "agents": [str(agent).strip() for agent in agents if str(agent).strip()],

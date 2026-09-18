@@ -63,37 +63,13 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertFalse(owns_restart)
         launch.assert_not_called()
 
-    def test_archived_sessions_keep_logs_when_meta_has_no_workspace(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            session_dir = root / "Even-Parity"
-            session_dir.mkdir()
-            (session_dir / ".log.jsonl").write_text("", encoding="utf-8")
-            (session_dir / ".meta").write_text(
-                json.dumps(
-                    {
-                        "session": "Even-Parity",
-                        "agents": ["codex"],
-                    }
-                )
-                + "\n",
-                encoding="utf-8",
-            )
-            hub_repo = "/Users/okadaharuto/workspace/Agent-Window"
-            with patch("hub_backend.session_query.agent_window_session_root", return_value=root):
-                sessions = archived_sessions(excluded_names=set())
-            self.assertEqual(len(sessions), 1)
-            self.assertEqual(sessions[0]["name"], "Even-Parity")
-            self.assertEqual(sessions[0]["workspace"], "")
-            self.assertNotEqual(sessions[0]["workspace"], hub_repo)
-
     def test_archived_sessions_keep_logs_when_meta_file_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = Path(tmp) / "session"
             session_dir = root / "Broken"
-            session_dir.mkdir()
+            session_dir.mkdir(parents=True)
             (session_dir / ".log.jsonl").write_text("", encoding="utf-8")
-            with patch("hub_backend.session_query.agent_window_session_root", return_value=root):
+            with patch("backend_core.access.settings.agent_window_root", return_value=Path(tmp)):
                 sessions = archived_sessions(excluded_names=set())
             self.assertEqual(len(sessions), 1)
             self.assertEqual(sessions[0]["name"], "Broken")
@@ -101,11 +77,11 @@ class ArchivedWorkspaceTests(unittest.TestCase):
 
     def test_archived_sessions_keep_a_non_git_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            workspace = root / "Lab-workspace"
+            workspace = Path(tmp) / "Lab-workspace"
             workspace.mkdir()
+            root = Path(tmp) / "session"
             session_dir = root / "Lab"
-            session_dir.mkdir()
+            session_dir.mkdir(parents=True)
             (session_dir / ".log.jsonl").write_text("", encoding="utf-8")
             (session_dir / ".meta").write_text(
                 json.dumps(
@@ -118,7 +94,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 encoding="utf-8",
             )
             hub_repo = "/Users/okadaharuto/workspace/Agent-Window"
-            with patch("hub_backend.session_query.agent_window_session_root", return_value=root):
+            with patch("backend_core.access.settings.agent_window_root", return_value=Path(tmp)):
                 sessions = archived_sessions(excluded_names=set())
             self.assertEqual(len(sessions), 1)
             self.assertEqual(sessions[0]["name"], "Lab")

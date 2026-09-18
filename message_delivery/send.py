@@ -14,7 +14,7 @@ from message_delivery.interaction import normalize_sender_payload
 from backend_core.agents.names import agent_base_name
 from backend_core.agents.registry import ALL_AGENT_NAMES
 from backend_core.access.files import append_jsonl_entry
-from backend_core.access.session_meta import SessionMetaError, find_session_for_workspace
+from backend_core.access.session_meta import find_session_for_workspace
 from backend_core.tmux.session import AgentPane, parse_agent_topology
 from backend_core.tmux.instances import agents_except_sender
 from backend_core.tmux.topology import default_tmux_socket_name
@@ -137,10 +137,7 @@ class AgentSendRuntime:
         comes from tmux's native session working directory.
         """
         workspace = (workspace or self.session_workspace()).strip()
-        try:
-            resolved = find_session_for_workspace(workspace)
-        except SessionMetaError as exc:
-            raise AgentSendError(str(exc)) from exc
+        resolved = find_session_for_workspace(workspace)
         if resolved:
             return resolved
         raise AgentSendError("No active agent-window session found for this workspace.")

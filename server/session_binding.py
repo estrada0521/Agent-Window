@@ -42,8 +42,6 @@ class WorkspaceSessionBinding:
             if not session_name:
                 raise RuntimeError(f"No agent-window session claims workspace {self.workspace}")
             log_path = session_log_path(session_name)
-            if not log_path.is_file():
-                raise RuntimeError(f"session log is unavailable: {log_path}")
 
             ensure_session_workspace_mirrors(session_name, self.workspace)
             self._session_name = session_name

@@ -23,13 +23,13 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
 
     def test_finds_the_session_recorded_for_a_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "session-root"
+            root = Path(tmp) / "session"
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
             self._write_meta(root, "my-session", str(workspace.resolve()))
 
             with mock.patch(
-                "backend_core.access.session_meta.agent_window_session_root", return_value=root
+                "backend_core.access.settings.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(workspace)
 
@@ -40,13 +40,13 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
         # find_session_for_workspace has no tmux dependency at all, so
         # archived sessions are found the same way as active ones.
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "session-root"
+            root = Path(tmp) / "session"
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
             self._write_meta(root, "archived-session", str(workspace.resolve()))
 
             with mock.patch(
-                "backend_core.access.session_meta.agent_window_session_root", return_value=root
+                "backend_core.access.settings.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(workspace)
 
@@ -54,13 +54,13 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
 
     def test_excludes_the_named_session_for_the_revive_flow(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "session-root"
+            root = Path(tmp) / "session"
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
             self._write_meta(root, "my-session", str(workspace.resolve()))
 
             with mock.patch(
-                "backend_core.access.session_meta.agent_window_session_root", return_value=root
+                "backend_core.access.settings.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(workspace, exclude_session="my-session")
 
@@ -68,7 +68,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
 
     def test_no_match_for_a_different_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "session-root"
+            root = Path(tmp) / "session"
             workspace = Path(tmp) / "workspace"
             other_workspace = Path(tmp) / "other-workspace"
             workspace.mkdir()
@@ -76,7 +76,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             self._write_meta(root, "my-session", str(workspace.resolve()))
 
             with mock.patch(
-                "backend_core.access.session_meta.agent_window_session_root", return_value=root
+                "backend_core.access.settings.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(other_workspace)
 
@@ -84,12 +84,12 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
 
     def test_no_match_when_the_session_root_does_not_exist_yet(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "does-not-exist"
+            root = Path(tmp) / "session"
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
 
             with mock.patch(
-                "backend_core.access.session_meta.agent_window_session_root", return_value=root
+                "backend_core.access.settings.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(workspace)
 
@@ -129,7 +129,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "new-parent" / "Agent-Window"
             workspace.mkdir(parents=True)
-            session_root = Path(tmp) / "session-root"
+            session_root = Path(tmp) / "session"
             (session_root / "Agent-Window").mkdir(parents=True)
             digest = hashlib.sha256(str(workspace.resolve()).encode("utf-8")).hexdigest()
             (session_root / f"aw-{digest[:8]}").mkdir()

@@ -12,8 +12,6 @@ from pathlib import Path
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.chat_server import read_chat_server_state
 from backend_core.access.session_meta import (
-    SessionMetaError,
-    agents_from_meta,
     find_session_for_workspace,
     read_session_meta,
     session_workspace,
@@ -23,7 +21,6 @@ from backend_core.access.settings import (
     agent_window_session_root,
     ensure_session_workspace_mirrors,
     session_log_path,
-    session_meta_path,
     workspace_chat_port,
 )
 from backend_core.agents.executables import agent_launch_cmd, resolve_agent_executable
@@ -87,10 +84,7 @@ def _live_tmux_session_for_workspace(prefix: list[str], workspace: str) -> str |
 
 
 def _resolve_tmux_name(prefix: list[str], session_name: str) -> str | None:
-    try:
-        workspace = session_workspace(session_name)
-    except SessionMetaError as exc:
-        raise SessionControlError(str(exc)) from exc
+    workspace = session_workspace(session_name)
     if not workspace:
         return None
     return _live_tmux_session_for_workspace(prefix, workspace)
@@ -326,16 +320,13 @@ def describe_session(session_name: str, *, tmux_socket: str = "") -> dict:
     meta = read_session_meta(name)
     if meta is None:
         raise SessionControlError(f"Session does not exist: {name}")
-    workspace = str(meta.get("workspace") or "").strip()
+    workspace = meta["workspace"]
     info: dict = {
         "session": name,
-        "workspace": workspace or None,
-        "agents": agents_from_meta(meta, path=session_meta_path(name)),
+        "workspace": workspace,
+        "agents": meta.get("agents", []),
         "active": False,
     }
-    if not workspace:
-        return info
-
     prefix = _prefix(tmux_socket)
     tmux_name = _live_tmux_session_for_workspace(prefix, workspace)
     if not tmux_name:
@@ -391,10 +382,7 @@ def create_session(
         raise SessionControlError("session_name is required")
     if not workspace_path.is_dir():
         raise SessionControlError(f"Invalid workspace: {workspace_path}")
-    try:
-        existing = find_session_for_workspace(workspace_path, exclude_session=name)
-    except SessionMetaError as exc:
-        raise SessionControlError(str(exc)) from exc
+    existing = find_session_for_workspace(workspace_path, exclude_session=name)
     if existing:
         raise SessionControlError(f"A session already exists for this workspace: {existing}")
     root = Path(repo_root).resolve() if repo_root is not None else _repo_root()

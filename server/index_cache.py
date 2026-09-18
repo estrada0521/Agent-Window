@@ -9,29 +9,8 @@ MATCHED_ENTRY_TAIL = 64
 _REVERSE_READ_BLOCK = 64 * 1024
 
 
-def _classify_log_segment(raw_segment: bytes) -> tuple[str, dict | None]:
-    complete = raw_segment.endswith((b"\n", b"\r"))
-    try:
-        line = raw_segment.rstrip(b"\r\n").decode("utf-8").strip()
-    except UnicodeDecodeError:
-        if not complete:
-            return "incomplete", None
-        raise
-    if not line:
-        return "skip", None
-    try:
-        entry = json.loads(line)
-    except json.JSONDecodeError:
-        if not complete:
-            return "incomplete", None
-        raise
-    if not isinstance(entry, dict):
-        raise RuntimeError("unified log line is not an object")
-    return "entry", entry
-
-
-def _iter_matched_log_entries_reversed(path: Path):
-    """Yield matched log entries newest-first, reading the file back from EOF.
+def iter_log_entries_reversed(path: Path):
+    """Yield log entries newest-first, reading the file back from EOF.
 
     Work is bounded by how far back the caller consumes -- it never scans the
     whole file to serve a window near the tail.
@@ -47,10 +26,11 @@ def _iter_matched_log_entries_reversed(path: Path):
             handle.seek(pos)
             chunk = handle.read(size) + carry
             if not dropped_partial_tail:
+                nl = chunk.rfind(b"\n")
+                if nl == -1:
+                    continue
                 dropped_partial_tail = True
-                if chunk and not chunk.endswith((b"\n", b"\r")):
-                    nl = chunk.rfind(b"\n")
-                    chunk = chunk[: nl + 1] if nl != -1 else b""
+                chunk = chunk[: nl + 1]
             if pos > 0:
                 split = chunk.find(b"\n")
                 if split == -1:
@@ -64,17 +44,14 @@ def _iter_matched_log_entries_reversed(path: Path):
                 start = body.rfind(b"\n", 0, end - 1) + 1
                 raw = body[start:end]
                 end = start
-                if not raw:
-                    continue
-                kind, entry = _classify_log_segment(raw)
-                if kind == "entry" and entry is not None:
-                    yield entry
+                if raw:
+                    yield json.loads(raw)
 
 
 def _entry_window_from_tail(path: Path, offset: int, limit: int):
     picked: list[dict] = []
     skipped = 0
-    for entry in _iter_matched_log_entries_reversed(path):
+    for entry in iter_log_entries_reversed(path):
         if skipped < offset:
             skipped += 1
             continue
@@ -87,12 +64,6 @@ def _entry_window_from_tail(path: Path, offset: int, limit: int):
 
 def _ingest_matched_tail(runtime) -> None:
     tail: deque = runtime._matched_entries_cache_entries
-    if not runtime.log_path.exists():
-        runtime._matched_entries_cache_sig = (0, 0)
-        runtime._matched_entries_cache_size = 0
-        tail.clear()
-        runtime._matched_entries_total = 0
-        return
     stat = runtime.log_path.stat()
     current_sig = (stat.st_size, stat.st_mtime_ns)
     if runtime._matched_entries_cache_sig == current_sig:
@@ -112,13 +83,11 @@ def _ingest_matched_tail(runtime) -> None:
     with runtime.log_path.open("rb") as handle:
         handle.seek(start_offset)
         for raw_segment in handle:
-            kind, entry = _classify_log_segment(raw_segment)
-            if kind == "incomplete":
+            if not raw_segment.endswith(b"\n"):
                 break
             processed_size += len(raw_segment)
-            if kind == "entry" and entry is not None:
-                tail.append(entry)
-                total += 1
+            tail.append(json.loads(raw_segment))
+            total += 1
     runtime._matched_entries_total = total
     runtime._matched_entries_cache_size = processed_size
     runtime._matched_entries_cache_sig = (

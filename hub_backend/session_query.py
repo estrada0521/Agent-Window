@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 from backend_core.access.session_meta import (
-    agents_from_meta,
     read_session_meta_file,
     session_workspace_claims,
 )
@@ -17,7 +16,7 @@ from backend_core.access.settings import (
     session_log_path,
 )
 from backend_core.tmux.resolve import normalize_workspace
-from server.index_cache import _iter_matched_log_entries_reversed
+from server.index_cache import iter_log_entries_reversed
 
 
 @dataclass(frozen=True)
@@ -50,10 +49,8 @@ def _compact_message_preview(entry: dict[str, Any]) -> dict[str, str]:
     return {"sender": sender, "text": compact, "revision": revision}
 
 
-def latest_message_preview(log_path: Path | None) -> dict[str, str]:
-    if not log_path or not log_path.is_file():
-        return {"sender": "", "text": "", "revision": ""}
-    for entry in _iter_matched_log_entries_reversed(log_path):
+def latest_message_preview(log_path: Path) -> dict[str, str]:
+    for entry in iter_log_entries_reversed(log_path):
         preview = _compact_message_preview(entry)
         if preview["text"]:
             return preview
@@ -64,11 +61,8 @@ def build_session_record(
     *,
     name: str,
     workspace: str,
-    log_path: Path | None = None,
 ) -> dict:
-    path = Path(log_path) if log_path is not None else session_log_path(name)
-    primary = path if path.is_file() else None
-    preview = latest_message_preview(primary)
+    preview = latest_message_preview(session_log_path(name))
     return {
         "name": name,
         "workspace": workspace,
@@ -155,23 +149,11 @@ def archived_sessions(excluded_names: set[str] | list[str] | None = None) -> lis
             continue
         meta_path = entry / SESSION_META_FILENAME
         log_path = entry / SESSION_LOG_FILENAME
-        if not meta_path.exists() and not log_path.exists():
-            continue
         meta = read_session_meta_file(meta_path) or {}
-        workspace = str(meta.get("workspace") or "").strip()
-        try:
-            mtime = log_path.stat().st_mtime
-        except OSError:
-            try:
-                mtime = meta_path.stat().st_mtime
-            except OSError:
-                mtime = 0.0
-        agents = agents_from_meta(meta, path=meta_path)
-        record = build_session_record(
-            name=session_name,
-            workspace=workspace,
-            log_path=log_path,
-        )
+        workspace = meta.get("workspace", "")
+        mtime = log_path.stat().st_mtime
+        agents = meta.get("agents", [])
+        record = build_session_record(name=session_name, workspace=workspace)
         record["agents"] = agents
         record["agents_reset"] = "agents" not in meta
         sessions.append((mtime, record))

@@ -30,19 +30,6 @@ class ReloadRunningAgentsHandoffTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 chat_server._clean_env()
 
-    def test_validated_reload_running_agents_round_trips(self) -> None:
-        raw = json.dumps(["claude", "codex"])
-        self.assertEqual(
-            chat_server._validated_reload_running_agents(raw),
-            ["claude", "codex"],
-        )
-        self.assertEqual(chat_server._validated_reload_running_agents(""), [])
-
-    def test_validated_reload_running_agents_rejects_garbage(self) -> None:
-        for bad in ('"claude"', "[1]", '[""]', "not json"):
-            with self.assertRaises(Exception):
-                chat_server._validated_reload_running_agents(bad)
-
     def test_chat_runtime_seeds_agent_running_from_the_handoff(self) -> None:
         fake_binding = SimpleNamespace(workspace="/work/project")
         with (
