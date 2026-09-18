@@ -208,13 +208,7 @@
     }
     .repo-path-back-btn.clickable { cursor: pointer; }
     .has-hover .repo-path-back-btn.clickable:hover { background: var(--panel-row-hover-bg); }
-    html[data-theme="dark"] .repo-path-back-btn,
-    html[data-theme="dark"] .git-summary-wrap .git-summary-row,
-    html[data-theme="dark"] .git-commit-detail-head .git-commit-row,
-    html[data-theme="dark"] .git-commit-detail-head .git-summary-row {
-      --panel-row-bg: rgb(45, 45, 45);
-      --panel-row-hover-bg: rgb(50, 50, 50);
-    }
+    .repo-path-back-btn.clickable:active { background: var(--panel-row-active-bg); }
     .repo-path-back-icon-slot {
       width: var(--right-panel-icon-slot-size);
       height: var(--right-panel-icon-slot-size);
@@ -527,6 +521,9 @@
     .git-commit-row.new-commit-slide {
       animation: git-commit-slide-in 450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+    .git-summary-wrap .git-summary-row.clickable:active {
+      background: var(--panel-row-active-bg);
+    }
     .has-hover .git-summary-wrap .git-summary-row.clickable:hover {
       background: var(--panel-row-hover-bg);
     }
@@ -586,6 +583,10 @@
       font-size: inherit;
       transition: background 120ms ease;
     }
+    .git-commit-detail-head:active > * {
+      background: var(--panel-row-active-bg);
+      border-radius: var(--right-panel-pill-radius);
+    }
     .has-hover .git-commit-detail-head:hover > * {
       background: var(--panel-row-hover-bg);
       border-radius: var(--right-panel-pill-radius);
@@ -633,6 +634,10 @@
       border: 0.5px solid var(--panel-row-border);
       border-radius: var(--right-panel-pill-radius);
       position: relative;
+    }
+    .git-commit-detail-head:active > .git-summary-row {
+      background: var(--panel-row-active-bg);
+      border-radius: var(--right-panel-pill-radius);
     }
     .has-hover .git-commit-detail-head:hover > .git-summary-row {
       background: var(--panel-row-hover-bg);
