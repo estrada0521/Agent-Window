@@ -89,14 +89,15 @@
       gap: calc(var(--text-size, 13px) * 12 / 13);
       width: 100%;
       box-sizing: border-box;
-      padding: calc(var(--text-size, 13px) * 8 / 13) calc(var(--text-size, 13px) * 14 / 13);
-      border-radius: calc(var(--text-size, 13px) * 14 / 13);
+      height: calc(1em * 30 / 13);
+      padding: 0 calc(var(--text-size, 13px) * 14 / 13);
+      border-radius: var(--right-panel-item-radius);
       /* Inherited by .file-item-name/-relpath below, which rely on it for
          their own overflow:hidden + text-overflow:ellipsis to mean anything
          -- without it, text wraps to a second line instead of eliding. */
       white-space: nowrap;
       font-size: calc(var(--text-size, 13px) * 13.5 / 13);
-      line-height: calc(var(--text-size, 13px) * 20 / 13);
+      line-height: 1.3;
       font-weight: var(--body-weight);
       color: var(--fg);
       cursor: pointer;
@@ -255,10 +256,11 @@
       display: flex;
       align-items: center;
       gap: calc(var(--text-size, 13px) * 12 / 13);
-      padding: calc(var(--text-size, 13px) * 10 / 13) calc(var(--text-size, 13px) * 18 / 13);
-      border-radius: calc(var(--text-size, 13px) * 14 / 13);
-      font-size: calc(var(--text-size, 13px) * 14 / 13);
-      line-height: calc(var(--text-size, 13px) * 20 / 13);
+      height: calc(1em * 30 / 13);
+      padding: 0 calc(var(--text-size, 13px) * 18 / 13);
+      border-radius: var(--right-panel-item-radius);
+      font-size: calc(var(--text-size, 13px) * 13.5 / 13);
+      line-height: 1.3;
       font-weight: var(--body-weight);
       color: var(--fg);
       cursor: pointer;
@@ -289,14 +291,12 @@
       color: var(--fg);
     }
     .cmd-item-name {
-      font-size: calc(var(--text-size, 13px) * 14 / 13);
       color: var(--fg);
       flex-shrink: 0;
       transition: color 120ms ease;
     }
     .cmd-item-desc {
       display: none;
-      font-size: calc(var(--text-size, 13px) * 14 / 13);
       color: var(--muted);
       overflow: hidden;
       text-overflow: ellipsis;
