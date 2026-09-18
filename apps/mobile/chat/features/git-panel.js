@@ -5,7 +5,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
     const setGitSheetTitle = () => {
       const titleEl = gitSheetTitleEl();
       if (!titleEl) return;
-      titleEl.classList.remove("git-sheet-detail-title");
+      titleEl.classList.remove("git-sheet-detail-title", "git-sheet-title");
       titleEl.textContent = "Git";
       titleEl.title = "Git";
     };
@@ -56,7 +56,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
         const template = document.createElement("template");
         template.innerHTML = rowHtml.trim();
         const countsEl = template.content.querySelector(".git-summary-counts");
-        titleEl.classList.add("git-sheet-detail-title");
+        titleEl.classList.add("git-sheet-detail-title", "git-sheet-title");
         titleEl.replaceChildren(subjectEl);
         if (countsEl) titleEl.appendChild(countsEl.cloneNode(true));
         titleEl.title = subject;
