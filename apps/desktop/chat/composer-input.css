@@ -315,8 +315,8 @@
     main::-webkit-scrollbar { width: var(--chat-scrollbar-width) !important; height: var(--chat-scrollbar-width) !important; }
     #scrollToBottomBtn,
     #composerFabBtn {
-      --fab-icon-size: round(nearest, calc(var(--text-size, 13px) * 19 / 13), 1px);
-      --fab-size: calc(var(--fab-icon-size) + round(nearest, calc(var(--text-size, 13px) * 17 / 13), 2px));
+      --fab-icon-size: round(nearest, calc(var(--text-size, 13px) * 18 / 13), 1px);
+      --fab-size: calc(var(--fab-icon-size) + round(nearest, calc(var(--text-size, 13px) * 16 / 13), 2px));
       position: fixed;
       bottom: var(--floating-btn-bottom, 18%);
       left: var(--message-side-padding);
@@ -347,6 +347,10 @@
       z-index: 100;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
+    }
+    html[data-theme="dark"] #scrollToBottomBtn,
+    html[data-theme="dark"] #composerFabBtn {
+      background: rgba(48, 48, 48, 0.5);
     }
     #scrollToBottomBtn svg,
     #composerFabBtn svg {
