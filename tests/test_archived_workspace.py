@@ -63,18 +63,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertFalse(owns_restart)
         launch.assert_not_called()
 
-    def test_archived_sessions_keep_logs_when_meta_file_is_missing(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "session"
-            session_dir = root / "Broken"
-            session_dir.mkdir(parents=True)
-            (session_dir / ".log.jsonl").write_text("", encoding="utf-8")
-            with patch("backend_core.access.settings.agent_window_root", return_value=Path(tmp)):
-                sessions = archived_sessions(excluded_names=set())
-            self.assertEqual(len(sessions), 1)
-            self.assertEqual(sessions[0]["name"], "Broken")
-            self.assertEqual(sessions[0]["workspace"], "")
-
     def test_archived_sessions_keep_a_non_git_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Lab-workspace"

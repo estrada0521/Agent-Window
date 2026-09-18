@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import shutil
 import signal
 import socket
 import subprocess
@@ -12,13 +11,12 @@ from pathlib import Path
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.chat_server import read_chat_server_state
 from backend_core.access.session_meta import (
-    find_session_for_workspace,
+    create_session_folder,
     read_session_meta,
     session_workspace,
     write_session_meta_file,
 )
 from backend_core.access.settings import (
-    agent_window_session_root,
     ensure_session_workspace_mirrors,
     session_log_path,
     workspace_chat_port,
@@ -373,8 +371,7 @@ def create_session(
     agents: list[str] | None = None,
     tmux_socket: str = "",
     repo_root: Path | str | None = None,
-    fresh: bool = False,
-    lifecycle_action: str | None = None,
+    revive: bool = False,
 ) -> None:
     name = (session_name or "").strip()
     workspace_path = Path(workspace).expanduser().resolve()
@@ -382,28 +379,14 @@ def create_session(
         raise SessionControlError("session_name is required")
     if not workspace_path.is_dir():
         raise SessionControlError(f"Invalid workspace: {workspace_path}")
-    existing = find_session_for_workspace(workspace_path, exclude_session=name)
-    if existing:
-        raise SessionControlError(f"A session already exists for this workspace: {existing}")
     root = Path(repo_root).resolve() if repo_root is not None else _repo_root()
     prefix = _prefix(tmux_socket)
     socket_name = (tmux_socket or "").strip() or default_tmux_socket_name()
     instances = _prepare_instances(
         [str(item).strip() for item in (agents or []) if str(item).strip()],
     )
-
-    if fresh:
-        log_dir = agent_window_session_root() / name
-        if log_dir.is_dir():
-            shutil.rmtree(log_dir)
-        workspace_runtime = workspace_path / ".agent-window"
-        if workspace_runtime.is_dir():
-            shutil.rmtree(workspace_runtime)
-
-    log_path = session_log_path(name)
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    if not log_path.exists():
-        log_path.touch()
+    if not revive:
+        create_session_folder(name, str(workspace_path), instances)
     ensure_session_workspace_mirrors(name, str(workspace_path))
 
     tmux_name = _create_tmux_session(prefix, workspace_path)
@@ -450,8 +433,8 @@ def create_session(
             )
         _run(prefix, ["select-pane", "-t", panes[0]])
 
-    if lifecycle_action:
-        append_session_lifecycle_entry(name, lifecycle_action)
+    if revive:
+        append_session_lifecycle_entry(name, "revived")
 
 
 def kill_session(

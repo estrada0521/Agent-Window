@@ -149,8 +149,8 @@ def archived_sessions(excluded_names: set[str] | list[str] | None = None) -> lis
             continue
         meta_path = entry / SESSION_META_FILENAME
         log_path = entry / SESSION_LOG_FILENAME
-        meta = read_session_meta_file(meta_path) or {}
-        workspace = meta.get("workspace", "")
+        meta = read_session_meta_file(meta_path)
+        workspace = meta["workspace"]
         mtime = log_path.stat().st_mtime
         agents = meta.get("agents", [])
         record = build_session_record(name=session_name, workspace=workspace)

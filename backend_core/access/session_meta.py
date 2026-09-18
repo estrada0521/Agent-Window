@@ -4,7 +4,12 @@ import json
 from pathlib import Path
 
 from backend_core.access.atomic_json import write_json_atomically
-from backend_core.access.settings import agent_window_session_root, session_meta_path
+from backend_core.access.settings import (
+    agent_window_session_root,
+    session_artifact_dir,
+    session_log_path,
+    session_meta_path,
+)
 
 
 class SessionMetaError(ValueError):
@@ -43,8 +48,6 @@ def session_workspace_claims(
         if not entry.is_dir() or entry.name == exclude:
             continue
         workspace = session_workspace(entry.name)
-        if not workspace:
-            continue
         claims[str(Path(workspace).expanduser().resolve())] = (entry.name, workspace)
     return claims
 
@@ -115,20 +118,26 @@ def reset_session_agents(session_name: str) -> None:
     write_json_atomically(path, raw, indent=2)
 
 
+def _meta_document(workspace: str, agents: list[str]) -> dict:
+    recorded_workspace = str(workspace or "").strip()
+    if not recorded_workspace:
+        raise ValueError("workspace is required to write session meta")
+    return {
+        "workspace": recorded_workspace,
+        "agents": [str(agent).strip() for agent in agents if str(agent).strip()],
+    }
+
+
 def write_session_meta_file(
     session_name: str,
     workspace: str,
     agents: list[str],
 ) -> None:
-    recorded_workspace = str(workspace or "").strip()
-    if not recorded_workspace:
-        raise ValueError("workspace is required to write session meta")
+    write_json_atomically(session_meta_path(session_name), _meta_document(workspace, agents), indent=2)
 
-    write_json_atomically(
-        session_meta_path(session_name),
-        {
-            "workspace": recorded_workspace,
-            "agents": [str(agent).strip() for agent in agents if str(agent).strip()],
-        },
-        indent=2,
-    )
+
+def create_session_folder(session_name: str, workspace: str, agents: list[str]) -> None:
+    document = _meta_document(workspace, agents)
+    session_artifact_dir(session_name).mkdir(parents=True)
+    session_log_path(session_name).touch()
+    write_json_atomically(session_meta_path(session_name), document, indent=2)

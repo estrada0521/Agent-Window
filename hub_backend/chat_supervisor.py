@@ -150,7 +150,7 @@ def revive_archived_session(hub, session_name: str) -> tuple[bool, str]:
             agents=[str(item).strip() for item in (record.get("agents") or []) if str(item).strip()],
             tmux_socket=hub.tmux_socket,
             repo_root=hub.repo_root,
-            lifecycle_action="revived",
+            revive=True,
         )
     except SessionControlError as exc:
         return False, str(exc)

@@ -13,7 +13,6 @@ def _context_hash(*parts: object) -> str:
 
 def append_jsonl_entry(path: Path | str, entry: dict) -> dict:
     target = Path(path)
-    target.parent.mkdir(parents=True, exist_ok=True)
     entry = {
         **entry,
         "context_hash": _context_hash(
