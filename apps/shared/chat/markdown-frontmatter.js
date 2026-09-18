@@ -18,9 +18,6 @@
         while (stack.length > 1 && indent <= stack[stack.length - 1].indent) stack.pop();
         const parent = stack[stack.length - 1].obj;
         let value = match[2];
-        // YAML block scalars ("key: |" literal, "key: >" folded, with
-        // optional -/+ chomping indicator): the value lives in the
-        // following more-indented lines, not on this line.
         const blockMatch = value.match(/^([|>])([+-]?)\d*$/);
         if (blockMatch) {
           const [, style, chomp] = blockMatch;

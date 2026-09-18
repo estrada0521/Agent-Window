@@ -23,17 +23,10 @@ _CODEX_MEMORY_CITATION_SUFFIX = re.compile(
 
 
 def _without_codex_memory_citation(text: str) -> str:
-    """Keep Codex's internal memory citation footer out of the chat projection."""
     return _CODEX_MEMORY_CITATION_SUFFIX.sub("", text).strip()
 
 
 def _codex_runtime_state_event(entry: object) -> str:
-    """Return the last-write-wins runtime state implied by a Codex log entry.
-
-    This deliberately excludes bookkeeping, reasoning, token counts, and tool
-    outputs.  They can trail a completed turn without meaning that Codex has
-    resumed work.
-    """
     if not isinstance(entry, dict):
         return ""
     entry_type = entry.get("type")
@@ -58,14 +51,6 @@ def _codex_runtime_state_event(entry: object) -> str:
 
 
 def _codex_task_error_message(payload: dict) -> str:
-    """Extract a human-readable error from a Codex task_complete event.
-
-    Codex reports a failed turn (rate limit, unsupported model, etc.) by
-    setting `error` on the task_complete event, not as a separate `error`
-    event_msg. `usage_limit_exceeded` carries an already human-readable
-    message; other error kinds carry a raw JSON-encoded API error string,
-    so the inner message is unwrapped when present.
-    """
     error = payload.get("error")
     if not isinstance(error, dict):
         return ""

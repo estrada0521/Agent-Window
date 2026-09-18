@@ -117,8 +117,6 @@
       nextLine.innerHTML = buildThinkingRuntimeLineInnerHtml(contentHtml);
       slot.appendChild(nextLine);
 
-      // Let the enter position reach a painted frame first, then move both
-      // lines together so neither transition starts ahead of the other.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (!nextLine.isConnected || nextLine.dataset.state !== "enter") return;
@@ -338,9 +336,6 @@
         root.appendChild(container);
       }
       root.dataset.thinkingSig = nextThinkingSig;
-      // Only the indicator appearing or its agent-row count changing alters its
-      // height -- a keyword or tool swap inside a fixed-height row does not. Let
-      // Fit Height re-measure on that alone, not on every runtime update.
       const rowCount = container.querySelectorAll(".message-thinking-row[data-agent]").length;
       if (!hadContainer || rowCount !== prevRowCount) {
         document.dispatchEvent(new CustomEvent("chat-thinking-updated"));

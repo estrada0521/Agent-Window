@@ -37,8 +37,6 @@
         }
         openChatInDesk(data.chat_url, data.session || "");
         showDeskHubMessage(data.notice || "", { error: !!data.notice });
-        // Leave the sidebar however it was -- New Session is reachable with it
-        // closed (⌘N). Phone still dismisses its overlay so the new chat shows.
         if (isPhoneViewport()) {
           setDeskSidebarOpen(false);
         }
@@ -51,12 +49,6 @@
       }
     }
 
-    // One persistent iframe is reused for every session. Assigning `.src` is a
-    // navigation that appends an entry to the Hub's joint session history, and
-    // WebKit then keeps the whole outgoing chat Document resident (bfcache) so
-    // "back" would be instant -- measured at ~+150 MB per switch, never freed.
-    // location.replace() navigates without adding a history entry, so the
-    // outgoing Document has no entry pinning it and can be torn down.
     function navigateDeskChatFrame(url) {
       const target = String(url || "") || "about:blank";
       _deskChatFrameLoadedUrl = target === "about:blank" ? "" : target;
@@ -66,7 +58,6 @@
           win.location.replace(target);
           return;
         } catch (_) {
-          // detached document -- fall back to an attribute navigation
         }
       }
       if (_deskChatFrame) _deskChatFrame.src = target;
@@ -135,8 +126,6 @@
       setDeskChatLoading(true);
       const openToken = ++_deskOpenToken;
       try {
-        // Only one archived chat server remains alive. Opening another archived
-        // session stops the previous one, so its cached URL cannot be reused.
         const chatUrl = await resolveSessionChatUrl(openHref, { force: archived || needsReviveTransition });
         if (openToken !== _deskOpenToken) return;
         if (needsReviveTransition) {

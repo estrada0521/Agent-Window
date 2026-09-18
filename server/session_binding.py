@@ -12,7 +12,6 @@ from backend_core.access.settings import (
 
 
 class WorkspaceSessionBinding:
-    """Project the current AW folder that claims one workspace."""
 
     def __init__(self, workspace: Path | str) -> None:
         self.workspace = str(Path(workspace).expanduser().resolve())

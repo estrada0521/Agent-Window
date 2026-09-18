@@ -73,7 +73,6 @@ def build_session_record(
 
 
 def live_tmux_sessions_query(runtime: Any) -> tuple[dict[str, tuple[str, int]], str, str]:
-    """Map each live workspace to its tmux name and creation time."""
     result = runtime.tmux_run(
         ["list-sessions", "-F", "#{session_name}\t#{session_created}\t#{session_path}"]
     )

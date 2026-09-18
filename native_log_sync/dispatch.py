@@ -23,9 +23,6 @@ def sync_agent(
     *,
     start_at_end: bool = False,
 ) -> None:
-    # Serialize concurrent callers (the kqueue watcher thread and refresh()
-    # triggers like first-message/reload can both target the same agent) so
-    # two syncs never read the same progress offset and double-append.
     with runtime._native_log_sync_lock:
         base = agent_base_name(agent)
         sync_fn = _SYNC_BY_BASE.get(base)

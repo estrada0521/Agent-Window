@@ -71,8 +71,6 @@
       background: transparent;
     }
     .desk-session-title-text {
-      /* Align on cap-to-baseline; padding+negative margin keeps the descender
-         inside the clip box without moving the aligned box. */
       text-box-trim: trim-both;
       text-box-edge: cap alphabetic;
       color: var(--fg);

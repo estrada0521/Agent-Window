@@ -51,8 +51,6 @@
       expand.className = "git-pinned-expand";
       aside.appendChild(expand);
 
-      // Fade the top/bottom edges of the scrolled file list, like the hub's
-      // hover popover (see computeScrollFadeState in home.js).
       const updateExpandFade = () => {
         const { scrollTop, scrollHeight, clientHeight } = expand;
         if (scrollHeight <= clientHeight + 1) { expand.dataset.scrollFade = "none"; return; }
@@ -160,9 +158,6 @@
           close({ clear: true });
           return;
         }
-        // A second mouseover while already expanded (re-entering the summary
-        // row before the close timer fires, moving between rows) must not
-        // replay the from-0 grow -- that reads as the panel re-expanding.
         const wasExpanded = aside.classList.contains("is-expanded");
         aside.classList.add("is-expanded");
         if (!wasExpanded && expand.firstElementChild) {
@@ -172,11 +167,6 @@
         void refreshContent();
       }
 
-      // The summary row's own counts already refresh whenever a workspace
-      // sync event reports the git state changed (dpApplyGitOverviewHeader),
-      // Keep the content ready while the pin is visible so hover can begin
-      // expanding immediately. The same event refreshes an open popover in
-      // place when the worktree changes.
       dpPinnedExpandRefresh = () => {
         if (!aside.hidden) void refreshContent();
       };

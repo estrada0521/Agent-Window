@@ -16,11 +16,6 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 240ms ease, background 320ms ease, backdrop-filter 320ms ease, -webkit-backdrop-filter 320ms ease;
-      /* The middle-click that opens this is misread as half of a
-         double-click by the next left-click (e.g. to close it), which
-         otherwise fires a native text-selection sweep across whatever's
-         under the cursor -- the field, the statusline, blank padding.
-         #message re-enables selection for actual editing. */
       user-select: none;
       -webkit-user-select: none;
     }
@@ -28,16 +23,10 @@
       user-select: text;
       -webkit-user-select: text;
     }
-    /* Fit Height to Message: the window tracks the composer, so bottom-align it
-       instead of centring -- the geometry (grow the window as the field rises)
-       is only tractable when the composer is pinned to one edge. */
     html[data-auto-window-height="1"] .composer-overlay {
       align-items: flex-end;
       padding-bottom: calc(var(--text-size, 13px) * 12 / 13);
     }
-    /* ...and the whole overlay snaps in, no fade: a fading backdrop layer that
-       the concurrent window resize catches half-composited is the "ghost" seen
-       at the top. Only .composer itself keeps its slide/fade. */
     html[data-auto-window-height="1"] .composer-overlay {
       transition: none;
     }
@@ -134,8 +123,6 @@
       transform: translateY(0) scale(1);
       pointer-events: auto;
     }
-    /* Fit Height: hold the composer at its start pose until the window has
-       actually grown, so it only ever slides up from the post-resize bottom. */
     html[data-auto-window-height="1"] .composer-overlay.fit-arming .composer {
       transition: none;
       opacity: 0;
@@ -175,8 +162,6 @@
       padding: calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 20 / 13) calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 10 / 13);
       align-self: center;
       -webkit-overflow-scrolling: touch;
-      /* Each edge fades only while more row is hidden past it -- JS sets the
-         widths on scroll / resize (shared/chat/target-picker.js). */
       --target-picker-fade-left: 0px;
       --target-picker-fade-right: 0px;
       mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black calc(100% - var(--target-picker-fade-right)), transparent 100%);

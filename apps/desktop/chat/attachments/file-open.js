@@ -90,9 +90,5 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
     const openFileSurfaceImpl = async (path, ext, sourceEl, triggerEvent) => {
       const normalizedPath = normalizeWorkspaceFilePath(path);
       if (!normalizedPath) return;
-      if (isPublicChatView) {
-        window.open(fileViewHrefForPath(normalizedPath), "_blank", "noopener,noreferrer");
-        return;
-      }
       await openFile(normalizedPath);
     };

@@ -1,7 +1,4 @@
 
-    // Session-row action icons. Module-scope constants, not rebuilt per row.
-    // Delete is right-click-only (see native-menus.js) -- these two icons are
-    // the row's only click actions, and archived rows always read Revive.
     const DESK_KILL_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`;
     const DESK_REVIVE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`;
 
@@ -46,11 +43,6 @@
         `</div>`;
     }
 
-    // Selecting a session only changes which row is selected. Rebuilding the
-    // whole list's innerHTML for that recreates every row -- the action icons
-    // visibly blink. Patch the affected rows in place instead; the delegated
-    // click handlers read data- attributes at event time, and initDeskSwipeRow
-    // is a no-op on an already-bound wrapper, so nothing needs re-wiring.
     function applyDeskSessionSelection() {
       if (!_deskSessionList) return;
       for (const wrap of _deskSessionList.querySelectorAll(".desk-swipe-row")) {
@@ -180,8 +172,6 @@
         showDeskHubMessage(err?.message || "Failed to change workspace.", { error: true });
         return;
       }
-      // A chat URL cached for this archived session was resolved against the
-      // old workspace's port; drop it so the next open re-resolves.
       hubChatUrls.forget(buildSessionOpenHref(sessionName, true));
       showDeskHubMessage(`Workspace updated for ${sessionName}.`);
     }
@@ -388,10 +378,6 @@
       });
     }
 
-    // FLIP: read each row's position before the reorder, then after
-    // rebuilding play a transform from the old spot to the new one. Rows are
-    // rebuilt (not moved) on every render, so this is keyed by session name
-    // rather than node identity.
     const DESK_SESSION_FLIP_MS = 220;
     function captureDeskSessionRowRects() {
       if (!_deskSessionList) return null;

@@ -81,10 +81,6 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
             ".git/index",
             ".git/objects/12/345678",
             ".git/objects/pack/large.pack",
-            # A session's workspace root is a plain folder as far as AW is
-            # concerned; git-worktree awareness is not part of that contract,
-            # so activity in *other* linked worktrees off this repo (which
-            # only shows up under .git/worktrees/) is not HEAD metadata here.
             ".git/worktrees/topic/HEAD",
         ):
             with self.subTest(rel=rel):

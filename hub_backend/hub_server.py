@@ -111,17 +111,6 @@ def queue_hub_restart():
 
 
 def release_restart_hold():
-    """Signal that it's now safe for this process to exit.
-
-    ThreadingHTTPServer's request-handling threads run as daemon threads
-    here, so once serve_forever() returns and main() would otherwise fall
-    off the end of the script, the interpreter tears down every remaining
-    daemon thread immediately -- including whichever one is still in the
-    middle of spawning the replacement process or writing this request's
-    HTTP response. main() blocks on _restart_release_event after
-    serve_forever() returns specifically so that work gets to finish;
-    call this once it actually has (see post_restart_hub).
-    """
     _restart_release_event.set()
 
 _PWA_STATIC_DIR = Path(__file__).resolve().parents[1] / "apps" / "shared" / "pwa"
@@ -644,13 +633,6 @@ def main(argv: list[str] | None = None) -> None:
     print(f"http://127.0.0.1:{port}/", flush=True)
     hub_server.serve_forever()
     if restart_pending:
-        # Request-handling threads are daemon threads; once this (the
-        # only non-daemon) thread falls off the end of the script, the
-        # interpreter kills every remaining daemon thread immediately.
-        # A restart in progress needs those threads to finish spawning
-        # the replacement and sending this response first -- bounded by
-        # launch_hub_restart's own handoff timeout, so no separate timeout
-        # here.
         _restart_release_event.wait()
 
 

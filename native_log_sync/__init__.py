@@ -1,1 +1,1 @@
-"""Native log sync package."""
+pass

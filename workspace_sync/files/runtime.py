@@ -12,8 +12,7 @@ from workspace_sync.files.ignore import FileIndexIgnoreRules
 
 
 class _WorkspaceNotAGitRepo(Exception):
-    """The workspace isn't Git-managed -- not an error, just a signal to
-    fall back to a plain directory scan."""
+    pass
 
 
 class FileRuntime:
@@ -147,12 +146,6 @@ class FileRuntime:
         return full
 
     def _resolve_reference_path(self, rel: str) -> str:
-        """Resolve a chat-style file reference (workspace-relative or fully
-        qualified). A fully-qualified path is self-contained -- it doesn't
-        need a root to disambiguate -- so it bypasses workspace containment;
-        a relative reference stays confined to the workspace via
-        _resolve_path.
-        """
         rel_raw = str(rel or "").strip()
         if rel_raw.startswith("~") or os.path.isabs(rel_raw):
             return os.path.realpath(os.path.expanduser(rel_raw))
@@ -321,10 +314,6 @@ class FileRuntime:
             self._file_list_refresh_lock.release()
 
     def _search_paths(self) -> list[dict]:
-        """Git-tracked search is the fast path (native .gitignore handling,
-        no per-file stat) for Git-managed workspaces. A workspace does not
-        have to be a Git repo -- DESIGN.md is explicit about that -- so a
-        directory scan is the equivalent for the rest, not an error."""
         try:
             return self._git_search_paths()
         except _WorkspaceNotAGitRepo:
@@ -419,8 +408,6 @@ class FileRuntime:
         if not raw_query:
             return ""
         if raw_query.startswith("~") or os.path.isabs(raw_query):
-            # A fully-qualified reference is unambiguous on its own; it
-            # doesn't need to be matched against this workspace's file index.
             full = self._resolve_reference_path(raw_query)
             return full if os.path.exists(full) else ""
         normalized_query = raw_query.lstrip("./").strip("/")

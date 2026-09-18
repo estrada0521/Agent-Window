@@ -57,7 +57,10 @@ class _VnodeNativeSync:
                 if self._path_by_agent.get(agent) != binding.path:
                     if agent in self._fd_by_agent:
                         self._close_locked(agent)
-                    self._open_locked(agent, binding.path)
+                    try:
+                        self._open_locked(agent, binding.path)
+                    except OSError:
+                        logging.exception("native log watch open failed for %s", agent)
 
     def _close_locked(self, agent: str) -> None:
         fd = self._fd_by_agent.pop(agent, None)

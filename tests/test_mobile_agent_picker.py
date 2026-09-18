@@ -17,33 +17,6 @@ def _between(text: str, start: str, end: str) -> str:
 
 
 class MobileAgentPickerTests(unittest.TestCase):
-    """These tests slice JS source by literal markers instead of executing
-    it, which normally makes a test weak (a rename alone breaks it). That is
-    a deliberate tradeoff here, not an oversight -- do not "clean this up"
-    into a behavioral test, and do not delete it as decorative.
-
-    What this locks is a hand-tuned workaround for real iOS Safari bugs
-    around native <select> menus and touch events: showPicker() silently
-    failing on first call, a stray "leftover" pointer/click event from
-    closing the first menu leaking into opening the second one, and a blur
-    handler firing at the wrong time. These aren't behaviors you can trigger
-    from a node/jsdom harness -- there is no real Safari touch/pointer
-    event bug to simulate, only the specific sequence of calls (which
-    listener does what, in what order, with which event flags) that was
-    hand-verified against actual Safari to work around it. Pinning that
-    exact shape is the only honest thing a test can do here: the "ugly,
-    over-specific" string-slicing IS the contract, because the underlying
-    bug it's dodging is itself an arbitrary platform quirk, not a stable
-    API. If you change this code and these tests need updating, you are
-    almost certainly changing real behavior on real Safari -- verify on an
-    actual iOS device before touching either the code or the test.
-
-    Deleted once already (2026-08-19, "Delete decorative tests that lock
-    source text, not behavior") on the fair-sounding but wrong theory that
-    not executing the code makes the test worthless. The code this
-    protected was untouched and still live four days later with zero
-    coverage. Restored 2026-08-23. Do not repeat that deletion.
-    """
 
     def test_add_remove_stay_on_the_first_native_menu(self) -> None:
         self.assertIn('id="pageNativeMenuSelect"', SHELL)

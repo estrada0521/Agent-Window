@@ -18,9 +18,6 @@ def run_shortcut_command(
         msg = "unknown shortcut command"
         return 400, {"ok": False, "error": msg, "status_message": msg}
     resolved = (target or "").strip()
-    if resolved:
-        resolved = ",".join(rt.resolve_target_agents(resolved))
-
     if not resolved:
         msg = "target is required"
         return 400, {"ok": False, "error": msg, "status_message": msg}

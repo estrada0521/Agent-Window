@@ -5,9 +5,6 @@ from collections import deque
 
 
 MIN_RUNTIME_DISPLAY_SECONDS = 0.5
-# Bounds how far the display can lag live activity: at one item per
-# MIN_RUNTIME_DISPLAY_SECONDS, this is ~10s of worst-case backlog. Beyond
-# that, older queued events are dropped in favor of newer ones.
 MAX_RUNTIME_DISPLAY_QUEUE = 20
 
 

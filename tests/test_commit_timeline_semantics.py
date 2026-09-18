@@ -38,16 +38,6 @@ class _FakeRuntime:
 
 
 class CommitTimelineSemanticsTests(unittest.TestCase):
-    """The timeline projects the commit HEAD moved to while this process was
-    watching -- that one, once. No `last..HEAD` range replay, so commits made
-    while the process was down are absorbed as the baseline, not back-filled.
-
-    It also does NOT run `git merge-base --is-ancestor` (or any equivalent) to
-    tell a fast-forward apart from a diverged branch switch: deciding what
-    counts as a "real" advance is ownership over the user's git history this
-    project doesn't take. Don't "fix" either of these by adding a range walk
-    or a fast-forward guard.
-    """
 
     def _repo(self, tmp: str) -> tuple[Path, _FakeRuntime]:
         workspace = Path(tmp) / "repo"
@@ -66,7 +56,6 @@ class CommitTimelineSemanticsTests(unittest.TestCase):
             adopt_commit_baseline(runtime)
             self.assertEqual(runtime.announced, [])
 
-            # A refire with HEAD unchanged stays silent too.
             ensure_commit_announcements(runtime)
             self.assertEqual(runtime.announced, [])
 

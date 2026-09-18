@@ -166,7 +166,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
       fetchPaneViewerSlideByIndex(idx, true);
     };
     const buildPaneViewer = () => {
-      paneViewerAgents = availableTargets.filter(t => t !== "others");
+      paneViewerAgents = [...availableTargets];
       if (sessionActive) paneViewerAgents = ["terminal", ...paneViewerAgents];
       const restoreAgent = paneViewerLastAgent && paneViewerAgents.includes(paneViewerLastAgent)
         ? paneViewerLastAgent
@@ -192,15 +192,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
         if (firstTab) firstTab.scrollIntoView({ inline: "center", block: "nearest" });
       });
     };
-    const resolvePaneFocusAgent = (raw) => {
-      if (!raw) return null;
-      const allowed = availableTargets.filter(t => t !== "others");
-      if (!allowed.length) return null;
-      if (allowed.includes(raw)) return raw;
-      const base = agentBaseName(raw);
-      const hit = allowed.find((t) => t === base || agentBaseName(t) === base);
-      return hit || null;
-    };
+    const resolvePaneFocusAgent = (raw) => (raw && availableTargets.includes(raw) ? raw : null);
     const showPaneTraceViewer = (focusAgent) => {
       if (!paneViewerEl || !paneTracePanel) return;
       const resolved = resolvePaneFocusAgent(focusAgent);

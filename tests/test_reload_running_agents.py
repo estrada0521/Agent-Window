@@ -10,11 +10,6 @@ from server import server as chat_server
 
 
 class ReloadRunningAgentsHandoffTests(unittest.TestCase):
-    """reload-chat replaces the whole server process; the tmux panes underneath
-    don't notice. Without this handoff every agent reads back "idle" right
-    after a reload even if it's still mid-turn. This isn't a second source of
-    truth for anything durable -- "running" is a transient display, and it's
-    fine for it to go briefly stale. Don't delete this as an SoT cleanup."""
 
     def test_clean_env_stamps_the_running_agents_env_var(self) -> None:
         fake_runtime = SimpleNamespace(running_agents_for_reload=lambda: ["claude", "codex"])

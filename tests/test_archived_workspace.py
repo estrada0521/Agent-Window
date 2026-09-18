@@ -8,7 +8,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from backend_core.access.session_meta import write_session_meta_file
 from hub_backend.chat_supervisor import chat_server_state_matches, ensure_chat_server
 from hub_backend.session_api import resolve_session_chat_target
 from hub_backend.session_query import archived_sessions
@@ -90,19 +89,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             self.assertNotEqual(sessions[0]["workspace"], hub_repo)
             self.assertFalse((workspace / ".git").exists())
 
-    def test_write_session_meta_does_not_keep_an_old_workspace(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            session_dir = Path(tmp) / "Lab"
-            session_dir.mkdir()
-            meta_path = session_dir / ".meta"
-            meta_path.write_text(
-                json.dumps({"workspace": "/old/lab"}) + "\n",
-                encoding="utf-8",
-            )
-            with self.assertRaisesRegex(ValueError, "workspace is required"):
-                write_session_meta_file("Lab", "", ["codex"])
-            self.assertEqual(json.loads(meta_path.read_text(encoding="utf-8"))["workspace"], "/old/lab")
-
     def test_archived_open_passes_saved_workspace_not_hub_root(self) -> None:
         captured = {}
 
@@ -152,7 +138,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 workspace="/Users/okadaharuto/workspace/Even-Parity",
             )
         )
-        self.assertFalse(chat_server_state_matches(hub, state, workspace=""))
         self.assertTrue(
             chat_server_state_matches(
                 hub,

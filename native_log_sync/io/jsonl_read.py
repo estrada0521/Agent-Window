@@ -6,12 +6,6 @@ from pathlib import Path
 
 
 class CompleteJsonlScan:
-    """Iterate complete JSON objects in a jsonl file.
-
-    An incomplete trailing line is left unread (`consumed` stays before it).
-    A complete line that is not a UTF-8 JSON object is skipped: the cursor
-    advances, and nothing is yielded. The CLI owns those records.
-    """
 
     def __init__(self, path: str | Path, start: int = 0) -> None:
         self.path = str(path)

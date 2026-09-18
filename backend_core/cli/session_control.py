@@ -55,7 +55,7 @@ def format_context_text(info: dict) -> str:
         "- `agent-send` uses this pane's tmux session directly; targets are the "
         "session's agent windows."
     )
-    workspace = info.get("workspace") or "<workspace>"
+    workspace = info["workspace"]
     lines.append(
         f"- Chat jsonl lives at `~/.agent-window/session/{info['session']}/.log.jsonl`; "
         f"workspace mirror is `{workspace}/.agent-window/.log.jsonl`."

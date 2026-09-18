@@ -1,6 +1,3 @@
-    /* The pane-trace overlay renders dark in either page theme. The dark
-       --liquid-glass-* set is pulled in by selector from _liquid_glass.css; the
-       rest of the dark surface tokens are local. */
     #paneTracePanel,
     .pane-viewer {
       --bg-rgb: var(--pane-trace-body-bg-channels);

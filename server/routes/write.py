@@ -77,12 +77,6 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
 
-    # The mutation above already succeeded (the agent exists in tmux now).
-    # Nothing past this point should turn that success into a reported
-    # failure - a client that saw a 500 here and retried would add a
-    # second agent on top of the one that's already there. Each step below
-    # is independent of the others, so each gets its own try/except: one
-    # failing must not stop the rest from running.
     warnings: list[str] = []
     try:
         targets = ctx["runtime"].active_agents()
@@ -127,10 +121,6 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
 
-    # The mutation above already succeeded (the agent is gone from tmux
-    # now). Nothing past this point should turn that success into a
-    # reported failure. Each step below is independent of the others, so
-    # each gets its own try/except: one failing must not stop the rest.
     warnings: list[str] = []
     try:
         targets = ctx["runtime"].active_agents()
@@ -251,11 +241,6 @@ def _switch_front_terminal_client(prefix: list[str], tmux_name: str) -> bool:
 
 
 def _raise_terminal_window_for_tty(tty: str) -> bool:
-    """Bring the specific Terminal.app window whose selected tab has this tty
-    to the front. Plain "activate" only focuses the app, not any particular
-    window -- if an unrelated (non-tmux) Terminal window was more recently
-    focused, that's what surfaces instead of the one actually attached to
-    this tmux session."""
     apple_script = (
         f'tell application "Terminal"\n'
         f"  set targetTTY to {json.dumps(tty)}\n"
@@ -333,9 +318,6 @@ def _open_terminal(
             attached_ttys = [line.strip() for line in (clients_res.stdout or "").splitlines() if line.strip()]
             if attached_ttys:
                 if not _raise_terminal_window_for_tty(attached_ttys[0]):
-                    # The attached client's window vanished from Terminal's
-                    # own list (rare) -- fall back to a plain activate rather
-                    # than silently doing nothing.
                     subprocess.Popen(
                         ["osascript", "-e", 'tell application "Terminal" to activate'],
                         stdout=subprocess.DEVNULL,
@@ -418,22 +400,17 @@ def _post_open_pane(handler, _parsed, ctx) -> None:
             success_message="opened the terminal",
         )
         return
-    resolved = runtime.resolve_target_agents(",".join(raw_targets))
-    agents = [item for item in resolved if item]
-    if len(agents) != 1:
+    if len(raw_targets) != 1:
         handler._send_json(400, {"ok": False, "error": "select exactly one target"})
         return
     _open_terminal(
-        handler, ctx, agent=agents[0], pane_required=True,
-        success_message=f"opened {agents[0]}'s pane",
+        handler, ctx, agent=raw_targets[0], pane_required=True,
+        success_message=f"opened {raw_targets[0]}'s pane",
     )
 
 
 def _post_open_finder(handler, _parsed, ctx) -> None:
-    workspace = str(ctx["workspace"] or "").strip()
-    if not workspace:
-        handler._send_json(400, {"ok": False, "error": "workspace unavailable"})
-        return
+    workspace = ctx["workspace"]
     try:
         target = Path(workspace).resolve()
         if not target.exists():
@@ -450,10 +427,7 @@ def _post_open_finder(handler, _parsed, ctx) -> None:
 
 
 def _post_open_shell(handler, _parsed, ctx) -> None:
-    workspace = str(ctx["workspace"] or "").strip()
-    if not workspace:
-        handler._send_json(400, {"ok": False, "error": "workspace unavailable"})
-        return
+    workspace = ctx["workspace"]
     try:
         target = Path(workspace).resolve()
         if not target.exists():
@@ -583,12 +557,11 @@ def _post_open_diff(handler, _parsed, ctx) -> None:
 def _run_nativelog_command(ctx, *, target: str) -> tuple[int, dict]:
     rt = ctx["runtime"]
     workspace_sync_api = ctx["workspace_sync_api"]
-    raw_targets = [t.strip() for t in target.split(",") if t.strip()] if target.strip() else []
-    resolved = [t for t in rt.resolve_target_agents(raw_targets[0]) if t] if raw_targets else []
-    if not resolved:
+    raw_targets = [t.strip() for t in target.split(",") if t.strip()]
+    if not raw_targets:
         msg = "target is required"
         return 400, {"ok": False, "error": msg, "status_message": msg}
-    agent = resolved[0]
+    agent = raw_targets[0]
     watched = rt.native_log_watched_paths()
     path = (watched.get(agent) or "").strip()
     if not path:

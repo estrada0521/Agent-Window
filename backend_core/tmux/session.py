@@ -26,7 +26,6 @@ def _run(prefix: list[str], args: list[str]):
 
 
 def live_sessions(prefix: list[str]) -> list[tuple[str, str]]:
-    """Return live tmux sessions as ``(name, session_path)`` pairs."""
     result = _run(
         prefix,
         ["list-sessions", "-F", "#{session_name}\t#{session_path}"],
@@ -79,7 +78,6 @@ def agent_topology(
     prefix: list[str],
     session_name: str,
 ) -> list[AgentPane]:
-    """Project AW's one-window-per-agent tmux topology in window order."""
     result = _run(
         prefix,
         [
@@ -122,9 +120,6 @@ def terminal_window_pane_id(
     prefix: list[str],
     session_name: str,
 ) -> str:
-    """Pane ID of the session's own "terminal" window -- alive since session
-    creation, before any agent is added, and the one window agent_topology()
-    deliberately excludes."""
     result = _run(
         prefix,
         ["list-windows", "-t", session_name, "-F", "#{window_name}\t#{pane_id}"],

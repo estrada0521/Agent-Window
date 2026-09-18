@@ -91,10 +91,6 @@
       line-height: inherit;
     }
 
-    /* Weight is theme-driven (--link-weight, appearance/typography.py):
-       dark body text is light-weight, so a heavy colored link reads as an
-       odd bold stab there, leaning on colour instead for the distinction.
-       Shared by file links and the plain external link below. */
     .md-body a.inline-file-link,
     .md-body a.local-file-link {
       color: var(--inline-file-link-fg);
@@ -102,8 +98,6 @@
       text-decoration: none;
     }
 
-    /* Dark-only: a hairline underline, as thin as the user-message divider
-       (.user-message-divider), to read as a link against the dimmer body. */
     html[data-theme="dark"] .md-body a.inline-file-link,
     html[data-theme="dark"] .md-body a.local-file-link {
       text-decoration: underline;
@@ -131,13 +125,10 @@
       cursor: pointer;
     }
 
-    /* Keep mathematical glyphs in KaTeX, but make only \text{...} read like
-       the surrounding agent message (including CJK fallback glyphs). */
     .katex .text {
       font-family: var(--font-main) !important;
       font-weight: inherit;
       font-style: normal;
-      /* KaTeX's root is 1.21em; restore \text to the surrounding message size. */
       font-size: 0.826446em;
     }
 
@@ -169,7 +160,6 @@
       overflow-y: hidden;
       text-align: left;
       -webkit-overflow-scrolling: touch;
-      /* Mask the content for smooth horizontal fade, but overlay a solid black mask on the bottom 14px to protect the scrollbar */
       -webkit-mask-image: 
         linear-gradient(to right, #000, #000),
         linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
@@ -206,8 +196,6 @@
       margin: 0 auto;
     }
 
-    /* KaTeX pins \tag to right:0 of .katex-html. The max-content box above
-       makes that the formula's right edge, so "(1)" sits on the last glyph. */
     .katex-display>.katex:has(>.katex-html>.tag) {
       display: block;
       width: max-content;
@@ -305,7 +293,6 @@
       height: 15px;
     }
 
-    /* Matches the message copy button's stroke (transcript.css). */
     .md-body .code-block-wrap .code-copy-btn svg * {
       stroke-width: 1.45;
     }
@@ -361,10 +348,6 @@
       font: inherit;
     }
 
-    /* Each row's separator is drawn by exactly one side of one element
-       (the body row's own bottom edge), never by two adjacent cells'
-       borders meeting -- border-collapse's conflict resolution across
-       cells has no say here, so there is nothing that can double up. */
     .md-body tbody tr:not(:last-child) td {
       border-bottom: var(--table-line-width) solid var(--table-line);
     }
@@ -394,9 +377,6 @@
       background: transparent;
     }
 
-    /* Each line is drawn by exactly one side of one element, never two --
-       border-collapse's conflict resolution across adjacent cells has no
-       say here, so there is nothing that can double up. */
     .md-body .md-frontmatter tr:not(:last-child) td {
       border-bottom: var(--table-line-width) solid var(--table-line);
     }
@@ -424,10 +404,6 @@
       text-decoration: underline;
     }
 
-    /* Light only: file links have no underline at rest, so the generic
-       a:hover underline above must be cancelled back off. Dark's file-link
-       underline (above) sits at rest already and outranks this rule's
-       specificity, so it stays through hover with no override needed. */
     html[data-theme="light"] .has-hover .md-body a.inline-file-link:hover,
     html[data-theme="light"] .has-hover .md-body a.local-file-link:hover {
       text-decoration: none;

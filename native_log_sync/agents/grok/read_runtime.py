@@ -5,7 +5,6 @@ import json
 from native_log_sync.agents._shared.runtime_display import runtime_event, short_line
 from native_log_sync.agents._shared.runtime_paths import display_path
 
-# Tools that should not flash the Running strip.
 _QUIET: frozenset[str] = frozenset(
     {
         "todo_write",
@@ -88,7 +87,6 @@ def _tool_name_from_update(update: dict) -> str:
     if isinstance(raw, dict):
         variant = str(raw.get("variant") or "").strip()
         if variant:
-            # e.g. WebSearch → web_search-ish label for mapping
             if variant.lower() == "websearch":
                 return "web_search"
             return variant
@@ -99,11 +97,6 @@ def _tool_name_from_update(update: dict) -> str:
 
 
 def iter_tool_calls_from_update(entry: object) -> list[tuple[str, dict]]:
-    """Extract tool starts from a Grok updates.jsonl row.
-
-    Only ``sessionUpdate: tool_call`` is used for Running display. Updates and
-    completions are ignored so the strip stays calm (matches Claude/Codex).
-    """
     update = _update_payload(entry)
     if update is None:
         return []
@@ -111,7 +104,6 @@ def iter_tool_calls_from_update(entry: object) -> list[tuple[str, dict]]:
         return []
     name = _tool_name_from_update(update)
     args = _coerce_args(update.get("rawInput"))
-    # Prefer toolCallId for stable source ids when present.
     tool_call_id = str(update.get("toolCallId") or "").strip()
     if tool_call_id:
         args = {**args, "_tool_call_id": tool_call_id}
@@ -153,7 +145,6 @@ def _subline(lower: str, args: dict, *, workspace: str) -> str:
         return short_line(pattern or url or "find")
     if lower in {"spawn_subagent", "task"}:
         return short_line(_pick(args, "description", "prompt", "subagent_type") or "subagent")
-    # Generic: first useful string field
     for key in ("path", "target_file", "file_path", "command", "query", "pattern", "description", "url"):
         value = _pick(args, key)
         if value:

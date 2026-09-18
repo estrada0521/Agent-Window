@@ -8,7 +8,7 @@ from collections import deque
 from pathlib import Path
 
 from server.index_cache import (
-    MATCHED_ENTRY_TAIL,
+    LOG_TAIL_SIZE,
     message_entry_window,
 )
 
@@ -16,11 +16,11 @@ from server.index_cache import (
 class _IndexRuntime:
     def __init__(self, log_path: Path) -> None:
         self.log_path = log_path
-        self._matched_entries_cache_lock = threading.Lock()
-        self._matched_entries_cache_sig = (0, 0)
-        self._matched_entries_cache_size = 0
-        self._matched_entries_cache_entries = deque(maxlen=MATCHED_ENTRY_TAIL)
-        self._matched_entries_total = 0
+        self._log_tail_lock = threading.Lock()
+        self._log_tail_sig = (0, 0)
+        self._log_tail_size = 0
+        self._log_tail_entries = deque(maxlen=LOG_TAIL_SIZE)
+        self._log_entry_total = 0
 
 
 def _write_log(path: Path, count: int) -> None:
@@ -31,7 +31,7 @@ def _write_log(path: Path, count: int) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-class MatchedEntryTailTests(unittest.TestCase):
+class LogTailTests(unittest.TestCase):
     def test_tail_cache_stays_bounded_and_serves_latest_window(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             log_path = Path(tmp) / "log.jsonl"
@@ -47,7 +47,7 @@ class MatchedEntryTailTests(unittest.TestCase):
             self.assertEqual(len(entries), 50)
             self.assertEqual(entries[0]["context_hash"], "m150")
             self.assertEqual(entries[-1]["context_hash"], "m199")
-            self.assertLessEqual(len(runtime._matched_entries_cache_entries), MATCHED_ENTRY_TAIL)
+            self.assertLessEqual(len(runtime._log_tail_entries), LOG_TAIL_SIZE)
 
     def test_older_window_reads_past_the_tail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -82,4 +82,4 @@ class MatchedEntryTailTests(unittest.TestCase):
             self.assertEqual(total, 81)
             self.assertTrue(has_older)
             self.assertEqual(entries[-1]["context_hash"], "m80")
-            self.assertLessEqual(len(runtime._matched_entries_cache_entries), MATCHED_ENTRY_TAIL)
+            self.assertLessEqual(len(runtime._log_tail_entries), LOG_TAIL_SIZE)

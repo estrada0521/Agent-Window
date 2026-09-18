@@ -1,7 +1,4 @@
 
-    // Fit Height to Message shrinks the window past what the DOM session
-    // popover needs, and a DOM popover can't cross the window edge. In that
-    // mode the collapsed sidebar opens a native menu (which can) instead.
     let _deskSessionSwitcherItems = [];
     let _deskSessionSwitcherOpen = false;
     async function openDeskNativeSessionSwitcher() {
@@ -42,9 +39,6 @@
       }
     }
 
-    // Fit Height to Message: the right panel can't paint past the tiny window,
-    // so its toggle pops the uncommitted-file list through a native menu. The
-    // list lives in the chat frame; ask it, then build the menu.
     let _deskGitChangesItems = [];
     let _deskGitChangesOpen = false;
     function requestDeskGitChanges(timeoutMs = 4000) {

@@ -28,8 +28,6 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     const syncMainAfterHeight = () => {
       const mainEl = document.querySelector("main");
       if (!mainEl) return;
-      // In "Fit Height to Message" mode the window equals the last message, so
-      // the 50vh scroll spacers would just blank the view -- collapse them.
       if (document.documentElement.dataset.autoWindowHeight === "1") {
         mainEl.style.setProperty("--main-spacer-height", "0px");
       } else {
@@ -48,8 +46,6 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     window.addEventListener("resize", () => {
       syncAppShellHeight();
       scheduleChatScrollbarLayoutWidthSync();
-      // A stepped-to message is positioned before its one resize request. Do
-      // not add a second scroll when that resize lands.
       if (document.documentElement.dataset.autoWindowHeight === "1") {
         if (_fitTargetRow?.isConnected) return;
         _fitTargetRow = null;
@@ -156,10 +152,6 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       requestHubParentLayout();
     }
 
-    // "Fit Height to Message": after a message settles, report the target row's
-    // rendered extent so the hub can size the window to it. Bounding-rect height
-    // is scroll-position independent and ignores the transcript spacers.
-    // Breathing room above the composer field when the window is sized to it.
     const reportFitHeight = ({ fromComposer = false, restore = false } = {}) => {
       if (!isHubIframeChat() || document.documentElement.dataset.autoWindowHeight !== "1") return;
       const scroller = timeline || document.getElementById("messages");
@@ -174,27 +166,13 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       const lastRow = rows[rows.length - 1];
       let contentHeight;
       if (fitTarget) {
-        // A stepped-to message: just its own box.
         const r = fitTarget.getBoundingClientRect();
         contentHeight = Math.ceil(r.bottom - r.top);
       } else {
-        // Latest: from the last row's top to the end of the scrollable content
-        // -- running indicator, its margins, trailing spacers and all. Measured
-        // off scrollHeight (what scrollConversationToBottom targets) so the room
-        // above is the same whether or not a running indicator sits below.
         const lastTopWithin = lastRow.getBoundingClientRect().top
           - scroller.getBoundingClientRect().top + scroller.scrollTop;
         contentHeight = Math.ceil(scroller.scrollHeight - lastTopWithin);
       }
-      // While the composer overlay is open, always size the window for a
-      // fully-grown composer (field at its max-height) -- even if the window is
-      // currently taller. The input then always lands at the same place, and
-      // typing never resizes the window.
-      // Measure with offsetHeight, not getBoundingClientRect -- the composer
-      // animates in with a transform and rects are distorted during it, whereas
-      // offset metrics are the settled layout box. #composer's own box stays at
-      // the one-line height (the field grows upward out of an absolutely-
-      // positioned anchor), so add the field's max overflow above it.
       if (isComposerOverlayOpen()) {
         const box = document.getElementById("composer");
         if (box) {
@@ -238,16 +216,12 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
     const fitStepToMessage = (down) => {
       const rows = fitMessageRows();
       if (!rows.length) return;
-      // Step from where the transcript actually sits, not a stored _fitTargetRow:
-      // free scrolling and older-batch loads never update it. Same probe as the
-      // non-Fit stepper -- the row that reaches the step-top line.
       const stepTop = timeline.getBoundingClientRect().top + messageStepTopGap();
       let next = null;
       if (down) {
         for (const row of rows) {
           if (row.getBoundingClientRect().top - stepTop > 2) { next = row; break; }
         }
-        // Onto (or past) the last message is the single "latest" stop, as Cmd-Down.
         if (!next || next === rows[rows.length - 1]) { fitStepToLatest(); return; }
       } else {
         for (const row of rows) {
@@ -261,15 +235,10 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
       _stickyToBottom = false;
       reportFitHeight();
     };
-    // A settled message is the one thing that grows a minimised (⌥⌘M) Fit
-    // window back -- and it comes back on the latest message, not whatever
-    // older row was stepped to before minimising.
     document.addEventListener("chat-transcript-settled", () => {
       if (_fitCollapsed) { _fitTargetRow = null; _stickyToBottom = true; }
       reportFitHeight({ restore: true });
     });
-    // The running indicator only enters, leaves, or gains/loses an agent row
-    // (thinking.js fires this then) -- re-fit so the window follows that step.
     let _thinkingRefitFrame = 0;
     document.addEventListener("chat-thinking-updated", () => {
       if (document.documentElement.dataset.autoWindowHeight !== "1" || _thinkingRefitFrame) return;
@@ -278,36 +247,24 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
         reportFitHeight();
       });
     });
-    // Composer open: size the window once for a fully-grown composer. Typing
-    // grows the field inside that already-large-enough window -- no per-keystroke
-    // resize. Close: re-fit to the transcript.
     let _recollapseOnComposerClose = false;
     document.addEventListener("composer-overlay-open", () => {
       if (document.documentElement.dataset.autoWindowHeight !== "1") return;
-      // Opening the composer off the standby screen also lands on the latest,
-      // and closing it without sending drops back to the standby screen.
       if (_fitCollapsed) { _fitTargetRow = null; _stickyToBottom = true; _recollapseOnComposerClose = true; }
       requestAnimationFrame(() => reportFitHeight({ fromComposer: true, restore: true }));
     });
     document.addEventListener("composer-overlay-close-start", () => {
       if (document.documentElement.dataset.sendInFlight === "1") {
-        // A send snaps back to the latest message, not whatever old row the
-        // transcript was scrolled to while composing. The refit itself waits
-        // for the sent message's own "chat-transcript-settled" -- refitting now
-        // would measure the previous last message and flash.
         _recollapseOnComposerClose = false;
         _fitTargetRow = null;
         _stickyToBottom = true;
         return;
       }
       if (_recollapseOnComposerClose) {
-        // Opened from the standby screen and closed with nothing sent -- go back.
         _recollapseOnComposerClose = false;
         window.parent?.postMessage({ type: "fit-collapse-shortcut" }, "*");
         return;
       }
-      // Plain close (Escape / click-outside, nothing being sent): no new
-      // message is coming, so refit immediately -- no reason to wait.
       requestAnimationFrame(() => reportFitHeight());
     });
 __CHAT_INCLUDE:../../shared/chat/scroll-focus.js__
@@ -366,8 +323,6 @@ __CHAT_INCLUDE:../../shared/chat/scroll-btn.js__
 
 __CHAT_INCLUDE:../../shared/chat/runtime/messages.js__
 __CHAT_INCLUDE:../../shared/chat/transcript/render.js__
-    // marked loads deferred so it never blocks first paint. The first
-    // render(s) then fall back to plain text; re-render once it is in.
     if (typeof marked === "undefined") {
       const _rerenderWhenMarkedReady = () => {
         if (typeof marked !== "undefined") rerenderCurrentMessages({ suppressEntryAnimation: true });
@@ -521,7 +476,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       if (!desktopRightPanel) return;
       dpStopPanelResize();
       dpPanelOpen = false;
-      // Reopening starts from the commit list, not whatever detail was left open.
       if (gitSession.hasShell()) dpCloseGitDetail();
       desktopRightPanel.classList.remove("open");
       desktopRightPanel.hidden = true;
@@ -890,14 +844,12 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       }
       if (event.data.type === "hub-fit-collapsed") {
         _fitCollapsed = !!event.data.on;
-        // Minimising with the composer open would strand it in the 48px window.
         if (_fitCollapsed && typeof isComposerOverlayOpen === "function" && isComposerOverlayOpen()) {
           closeComposerOverlay();
         }
         return;
       }
       if (event.data.type === "hub-refit") {
-        // Coming off the standby screen lands on the latest message.
         _fitTargetRow = null;
         _stickyToBottom = true;
         requestAnimationFrame(() => reportFitHeight({ restore: true }));
@@ -907,14 +859,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         _fitTargetRow = null;
         document.documentElement.dataset.autoWindowHeight = event.data.on ? "1" : "0";
         syncMainAfterHeight();
-        // The pinned strip is hidden by Fit Height and reappears on exit; the
-        // pin state is not touched either way.
         dpSyncPinnedSummaryStrip();
         if (event.data.on) {
           requestAnimationFrame(reportFitHeight);
         } else {
-          // The 50vh spacers just came back; the old scrollTop now points
-          // mid-transcript. Snap to the bottom.
           _stickyToBottom = true;
           requestAnimationFrame(() => scrollConversationToBottom("auto"));
         }
@@ -928,8 +876,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         dpShowFileActionStatus(String(event.data.message || "Failed to open file menu."), true);
         return;
       }
-      // Fit Height mode: the hub asks for the uncommitted-file list to build a
-      // native menu (the DOM panel can't fit the tiny window).
       if (event.data.type === "desk-git-changes-request") {
         (async () => {
           let files = [];
@@ -969,10 +915,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         _pollScrollLockTop = null;
         _pollScrollAnchor = null;
         _stickyToBottom = true;
-        // The hub sends this only after the window geometry change has landed,
-        // but the webview's own relayout (grid columns, iframe size) still
-        // trails it by a frame or two -- re-assert the bottom across a few
-        // frames so scrollHeight is measured once it has settled.
         let frames = 6;
         const settleToBottom = () => {
           scrollConversationToBottom("auto");
@@ -998,12 +940,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       }
     });
     (() => {
-      // Text size has exactly one writer: the Hub (home.js). This frame only
-      // forwards the key intent and waits for the authoritative new value to
-      // come back over "hub-text-size-changed" (handled above). It must NOT
-      // compute-and-persist its own value here -- two independent writers
-      // (this frame and the Hub) racing to read-modify-write the same
-      // setting is exactly what caused the size to end up wrong on disk.
       window.addEventListener("keydown", (event) => {
         if (event.metaKey && event.altKey) {
           if (event.code === "KeyB") {
@@ -1082,9 +1018,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openAppearanceMenu" }, "*");
           return;
         }
-        // In-app view toggles: plain ⌘ (like ⌘, and the text-size chords),
-        // not the ⌥⌘ family that resizes/moves the window. In Fit Height both
-        // panels are native menus, so the same keys open those (like ⌘,).
         if (event.metaKey && !event.altKey && event.code === "KeyB") {
           event.preventDefault();
           window.parent?.postMessage({ type: "toggle-hub-sidebar" }, "*");
@@ -1125,12 +1058,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           return;
         }
         if (!event.metaKey || event.ctrlKey) return;
-        // event.code (physical key) instead of event.key: with metaKey held,
-        // some WebViews don't reliably report the shift-modified character
-        // for "=" (i.e. "+"), so matching on .key alone silently misses ⌘+.
-        // Also accept "Semicolon": on JIS keyboards the physical key that
-        // types "+" reports code "Semicolon", not "Equal" (confirmed via
-        // live testing).
         if (event.code === "Equal" || event.code === "Semicolon" || event.key === "=" || event.key === "+") {
           event.preventDefault();
           window.parent?.postMessage({ type: "text-size-shortcut", delta: 1 }, "*");

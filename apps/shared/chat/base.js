@@ -82,9 +82,6 @@
     };
     const UNSAFE_URL_ATTR_PATTERN = /^\s*javascript:/i;
     const stripUnsafeMarkup = (root) => {
-      // marked passes raw HTML through unchanged; agent output routinely
-      // quotes HTML it read from the web, so this has to run on every
-      // render, not just ones that look suspicious.
       root.querySelectorAll("iframe, object, embed, form").forEach(el => el.remove());
       root.querySelectorAll("*").forEach(el => {
         for (const attr of Array.from(el.attributes)) {
@@ -150,9 +147,6 @@
 
       const codeBlocks = [];
       let codeCount = 0;
-      // Protect literal code and TeX before expanding serialized newlines.
-      // In particular, `\\right` begins with `\\r`; normalizing first used to
-      // turn it into a newline followed by `ight`, which KaTeX correctly rejects.
       let processedText = String(text ?? "").replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
         const id = `code-placeholder-${codeCount++}`;
         codeBlocks.push({ id, content: match });

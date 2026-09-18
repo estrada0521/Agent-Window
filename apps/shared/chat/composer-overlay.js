@@ -11,10 +11,6 @@
         closeComposerOverlay();
       }, { passive: false });
       composerOverlay?.addEventListener("touchmove", (event) => {
-        // A selection-handle drag can land outside #message's own box (the
-        // handle sits below/beside the glyph it's on), so it isn't caught by
-        // the target-based checks below -- an active selection means this
-        // touchmove is almost certainly that drag, not a page-scroll attempt.
         if (mobileComposerInput && mobileComposerInput.selectionStart !== mobileComposerInput.selectionEnd) return;
         const target = event.target;
         if (target instanceof Element) {
@@ -22,9 +18,6 @@
         }
         event.preventDefault();
       }, { passive: false });
-      // @ / menus live on body, not inside the overlay, so the lock above
-      // never sees them. Same rule as the textarea: pan only while overflowing.
-      // by Grok
       const lockComposerMenuPan = (menu) => {
         menu?.addEventListener("touchmove", (event) => {
           if (menu.classList.contains("is-scrollable")) return;
@@ -54,9 +47,6 @@
       }
       messageInput.scrollTop = messageInput.scrollHeight;
     };
-    // One focus() call, at the one moment the composer is actually laid out
-    // and visible (the caller's rAF, or -- if already open -- right now).
-    // Mobile keeps its Safari select-on-focus workaround alongside it.
     const focusComposerTextarea = (onReady = null) => {
       if (!messageInput) return;
       const isMobileComposer = document.documentElement.dataset.mobile === "1" && composerForm;
@@ -82,9 +72,6 @@
       requestAnimationFrame(() => requestAnimationFrame(restore));
       setTimeout(restore, 120);
     };
-    // immediateFocus: whether this open should also move keyboard focus into
-    // the textarea (e.g. false for a drag-to-attach open, which shouldn't
-    // steal focus from the drag).
     const openComposerOverlay = ({ immediateFocus = false } = {}) => {
       if (!composerOverlay) return;
       const canFocus = immediateFocus && canComposeInSession();
@@ -118,8 +105,6 @@
         requestAnimationFrame(reveal);
       }
     };
-    // Fit Height: opening asks the hub to grow the window; pin the composer at
-    // its start pose until that resize lands so it only rises from the new bottom.
     const armFitComposerHold = () => {
       if (!composerOverlay || document.documentElement.dataset.autoWindowHeight !== "1") return;
       composerOverlay.classList.add("fit-arming");
@@ -187,8 +172,6 @@
       scrollConversationToBottom("smooth");
     };
     const jumpConversationToTop = () => {
-      // Top of what's loaded, not the first entry ever -- the transcript is a
-      // tail window and older batches auto-load on the way up.
       if (document.documentElement.dataset.autoWindowHeight === "1" && typeof fitStepToFirst === "function") {
         fitStepToFirst();
         return;
@@ -201,9 +184,6 @@
       requestAnimationFrame(() => { _programmaticScroll = false; });
     };
     scrollToBottomBtn.addEventListener("click", jumpConversationToBottom);
-    // ⌘↑ / ⌘↓ are the keyboard version of jumping the transcript to its ends.
-    // It is an inner scroll container, so the native ⌘↑/⌘↓ never reach it; skip
-    // only when a text field wants the caret move it would otherwise do.
     document.addEventListener("keydown", (event) => {
       if (!event.metaKey || event.altKey || event.ctrlKey || event.shiftKey) return;
       if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
@@ -212,7 +192,6 @@
       event.preventDefault();
       (event.key === "ArrowDown" ? jumpConversationToBottom : jumpConversationToTop)();
     });
-    // ⌥↓ / ⌥↑ step to the top of the next / previous message.
     const stepConversationByMessage = (down) => {
       if (document.documentElement.dataset.autoWindowHeight === "1") {
         if (typeof fitStepToMessage === "function") fitStepToMessage(down);
@@ -256,9 +235,6 @@
         closeComposerOverlay({ restoreFocus: true });
       }
     });
-    // Esc closes the expanded composer. Capture phase so it runs before the
-    // @/-menu Esc handlers on the textarea: if one of those menus is open, bail
-    // and let it consume the Esc (a second Esc then closes the overlay).
     document.addEventListener("keydown", (event) => {
       if (event.key !== "Escape" || event.isComposing || event.keyCode === 229) return;
       if (!isComposerOverlayOpen()) return;
@@ -282,7 +258,6 @@
         if (shouldIgnoreComposerMouseShortcut(event.target)) return;
         event.preventDefault();
       }, { capture: true });
-      // Enter anywhere in the transcript opens the composer (Esc still closes).
       document.addEventListener("keydown", (event) => {
         if (event.key !== "Enter") return;
         if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;

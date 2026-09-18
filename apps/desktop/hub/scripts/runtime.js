@@ -126,5 +126,3 @@
     function resetDeskChatView() {
       _deskChatFrame?.contentWindow?.postMessage({ type: "desktop-chat-reset" }, "*");
     }
-    // Always on Top and Fit Height to Message are per-session toggles: both
-    // start off on every launch and are never persisted.

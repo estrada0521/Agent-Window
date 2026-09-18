@@ -1,12 +1,7 @@
     const dpGitSummaryPinnedStorageKey = () => `agent_window_git_summary_pinned:${String(currentSessionName || "").trim() || "__none"}`;
     let dpGitSummaryPinned = true;
-    // Fit Height has no room for the pinned strip: it is simply hidden while
-    // that mode is on, and the pin state itself is left untouched.
     const dpPinnedStripActive = () =>
       dpGitSummaryPinned && document.documentElement.dataset.autoWindowHeight !== "1";
-    // Set by events.js's pinned-summary hover popover once it's wired up;
-    // lets dpApplyGitOverviewHeader below nudge it to re-fetch in place when
-    // it's already open, instead of only refreshing on the next hover.
     let dpPinnedExpandRefresh = null;
     let _dpGitSummaryPinnedLoadedForKey = "";
     const dpReadGitSummaryPinnedFromStorage = () => {

@@ -23,17 +23,11 @@ def current_git_commit(runtime) -> dict | None:
 
 
 def adopt_commit_baseline(runtime) -> None:
-    """Take HEAD as the baseline without announcing it -- called at startup so
-    commits landed while this process was down are silently absorbed, not
-    back-filled into the timeline."""
     commit = current_git_commit(runtime)
     runtime._last_announced_commit_hash = commit["hash"] if commit else None
 
 
 def ensure_commit_announcements(runtime) -> None:
-    """Project the commit HEAD just moved to -- only that one, and only when
-    this process was running to see it move. No range walk, no catch-up: the
-    timeline is what was observed, not a git-log replay."""
     commit = current_git_commit(runtime)
     if not commit:
         return

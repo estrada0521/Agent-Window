@@ -336,8 +336,6 @@
         if (run) button.addEventListener("click", () => { try { void run(); } catch (_) {} });
       });
     })();
-    // The Fit Height traffic-light indicator (shown only in that mode) is a
-    // live stand-in for the hidden native buttons.
     (function armFitWindowDots() {
       const dotsEl = document.querySelector(".fit-window-dots");
       const win = window.__TAURI__?.window?.getCurrentWindow?.();
@@ -441,9 +439,6 @@
     startHubSessionMessagesEvents(() => refreshHubSessions(true, { skipRestore: true }));
     consumeHubPendingError();
     if (isTauriDesktopApp() && !isPhoneViewport()) {
-      // sessionStorage, not localStorage: a same-session reload keeps whatever
-      // state it was in, but a fresh app launch has no entry and falls back to
-      // open -- the default stays "open".
       let wantSidebarOpen = true;
       try { wantSidebarOpen = sessionStorage.getItem(DESK_SIDEBAR_OPEN_KEY) !== "0"; } catch (_) {}
       if (wantSidebarOpen) showDeskSidebarList({ open: true });

@@ -7,7 +7,6 @@ from pathlib import Path
 
 
 def write_json_atomically(path: Path, data: dict, *, indent: int | None = None) -> None:
-    """Replace path with one complete, flushed JSON object."""
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     tmp_path = Path(tmp_name)

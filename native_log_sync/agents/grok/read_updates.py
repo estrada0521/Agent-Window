@@ -45,13 +45,6 @@ def _append_grok_reply(runtime, agent: str, history_path: str, line_start: int, 
 
 
 def _sync_grok_chat_history(runtime, agent: str, history_path: str) -> bool:
-    """Sync assistant replies from chat_history.jsonl not yet synced.
-
-    The first time this exact file is seen, only backfill the single latest
-    reply (there may be a long prior conversation in here that predates this
-    Agent Window install ever watching it); every sync after that is a plain
-    incremental read of whatever is new.
-    """
     normalized = _normalized_native_log_path(history_path)
     is_first_encounter = normalized not in runtime._native_log_read_offsets
     file_size = os.path.getsize(history_path)
@@ -104,8 +97,6 @@ def sync_grok_native_log(
     *,
     start_at_end: bool = False,
 ) -> None:
-    """Sync new Grok replies as they land in chat_history.jsonl, and mark
-    idle once the update stream reports the turn as complete."""
     updates_path = str(native_log_path or "").strip()
     if not updates_path or not os.path.isfile(updates_path):
         return

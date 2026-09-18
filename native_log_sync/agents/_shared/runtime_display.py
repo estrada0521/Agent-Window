@@ -7,8 +7,6 @@ def short_line(value: object, limit: int = 120) -> str:
 
 
 def unknown_tool_label(raw_name: object) -> tuple[str, str]:
-    """The generic "Tool <name>" fallback every provider falls back to for an
-    unrecognized tool call, so the call is never silently dropped."""
     return "Tool", str(raw_name or "").strip()
 
 

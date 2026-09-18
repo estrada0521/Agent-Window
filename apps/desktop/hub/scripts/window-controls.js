@@ -1,7 +1,6 @@
     let _deskAlwaysOnTop = false;
     function applyDeskAlwaysOnTop(on) {
       _deskAlwaysOnTop = !!on;
-      // Marks the settings button (its ⌥⌘P / menu is what toggles this).
       if (_deskAlwaysOnTop) document.documentElement.dataset.alwaysOnTop = "1";
       else delete document.documentElement.dataset.alwaysOnTop;
       const invoke = getTauriInvoke();
@@ -15,23 +14,11 @@
       applyDeskAlwaysOnTop(!_deskAlwaysOnTop);
     }
 
-    // "Fit Height to Message" mode: on each agent-message stream completion the
-    // chat frame reports the height it needs, and we resize the window to it
-    // (width and x untouched). Between messages the user is free to resize.
-    // Mirrors DEFAULT_WINDOW_SIZE in tauri_app/src-tauri/src/main.rs -- the
-    // height Fit Height restores on exit.
     const DESK_DEFAULT_WINDOW_HEIGHT = 896;
     let _deskAutoWindowHeight = false;
     let _deskLastFitTarget = 0;
-    // Set on entering Fit Height: the first fit resize also snaps the window to
-    // the compact width, so entry is one motion instead of a visible width jump
-    // followed by a height shrink.
     let _deskFitWidthSnapPending = false;
-    // Fit Height, minimised (⌥⌘M): the window is held small and passive resize
-    // requests are dropped until a new message settles (or ⌥⌘M again). Stays in
-    // Fit Height the whole time.
     let _deskFitCollapsed = false;
-    // Just tall enough for the "Agent Window" standby line (.desk-fit-standby).
     const DESK_COLLAPSED_FIT_HEIGHT = 48;
     function setDeskFitCollapsed(on) {
       const next = !!on;
@@ -48,7 +35,6 @@
             height: Math.round(DESK_COLLAPSED_FIT_HEIGHT * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT),
           }).catch(() => {});
         }
-        // So Enter still reaches the chat frame's "open composer" handler.
         try { _deskChatFrame?.contentWindow?.focus(); } catch (_) {}
       }
     }
@@ -79,26 +65,13 @@
       _deskAutoWindowHeight = next;
       _deskLastFitTarget = 0;
       setDeskFitCollapsed(false);
-      // Fit Height hides the traffic lights, so the 26px title-bar inset at the
-      // top of the window can shrink to match the 4px sides.
       if (next) document.documentElement.dataset.autoWindowHeight = "1";
       else delete document.documentElement.dataset.autoWindowHeight;
-      // sessionStorage, not localStorage: a same-session hub reload keeps Fit
-      // Height mode, but a fresh app launch has no entry and starts off.
       try { sessionStorage.setItem(DESK_AUTO_HEIGHT_KEY, next ? "1" : "0"); } catch (_) {}
-      // The window is too short for the hub sidebar in this mode; sessions are
-      // switched through a native menu instead (collapsed sidebar, on click).
       if (_deskAutoWindowHeight) setDeskSidebarOpen(false);
-      // Fit Height needs the window minimum height dropped to ~0.
       applyDeskFitHeightMin();
       pushDeskAutoWindowHeight();
     }
-    // Entering Fit Height (⌥⌘H or the menu item) snaps the window to the
-    // compact width -- the ⌥⌘9 width that always got paired with it by hand --
-    // folded into the first fit resize (see _deskFitWidthSnapPending), and pins
-    // the window, since Fit Height is only useful kept in front. Leaving the
-    // mode unpins and restores the default height (the width and position at
-    // that point are kept -- entry shrank the height, so exit grows it back).
     function toggleDeskAutoWindowHeight() {
       if (_deskAutoWindowHeight) {
         setDeskAutoWindowHeight(false);
@@ -119,7 +92,7 @@
     function fitDeskWindowHeight(contentHeight, { restore = false } = {}) {
       if (!_deskAutoWindowHeight) return;
       if (_deskFitCollapsed) {
-        if (!restore) return;   // held on the standby screen until a new message settles
+        if (!restore) return;
         setDeskFitCollapsed(false);
       }
       const content = Number(contentHeight);
@@ -127,16 +100,10 @@
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function" || !_deskChatFrame) return;
       const iframeH = _deskChatFrame.getBoundingClientRect().height;
-      // Chrome around the chat frame (hub header + window insets). Clamped so a
-      // transient bad iframe measurement can't blow the target up to full screen.
       const overhead = Math.min(240, Math.max(0, window.innerHeight - iframeH));
       const target = Math.round(content + overhead);
-      // On the first fit after entering the mode, pull the window to the
-      // compact width in the same resize (see toggleDeskAutoWindowHeight).
       const snapWidth = _deskFitWidthSnapPending;
       _deskFitWidthSnapPending = false;
-      // The composer predict + ResizeObserver paths both fire per keystroke;
-      // drop the redundant second call so it isn't two invokes per line.
       if (!snapWidth && Math.abs(target - _deskLastFitTarget) < 4) return;
       _deskLastFitTarget = target;
       invoke("set_window_height", {
@@ -147,9 +114,6 @@
       });
     }
 
-    // The chat view reset (which scrolls the transcript back to the bottom) is
-    // sent *after* the window geometry lands, so the chat frame measures the
-    // final size -- not the pre-preset one, whatever it was.
     async function resetDeskWindowState() {
       showDeskSidebarList({ open: true });
       setDeskSidebarWidthAtDefaultTextSize(DESK_DEFAULT_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE);
@@ -185,9 +149,6 @@
       resetDeskChatView();
     }
 
-    // Pure reposition -- unlike reset/compact above, this touches only the
-    // window's position (size untouched, no sidebar/chat-view/height reset).
-    // The command is move_window_top / _top_left / _top_right / _center.
     async function moveDeskWindowToSpot(command) {
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") {
@@ -224,7 +185,6 @@
     }
 
     function toggleDeskSidebar() {
-      // Fit Height collapses the sidebar to a native menu -- open that instead.
       if (_deskAutoWindowHeight) { void openDeskNativeSessionSwitcher(); return; }
       setDeskSidebarOpen(!isDeskSidebarOpen());
     }
@@ -348,9 +308,6 @@
         void openAppearanceMenu();
         return;
       }
-      // In-app view toggles: plain ⌘ (like ⌘, and the text-size chords), not
-      // the ⌥⌘ family that resizes/moves the window. In Fit Height both panels
-      // are native menus, so these open those instead (see toggleDesk* above).
       if (event.metaKey && !event.altKey && event.code === "KeyB") {
         event.preventDefault();
         toggleDeskSidebar();
@@ -388,11 +345,6 @@
         return;
       }
       if (!event.metaKey || event.ctrlKey) return;
-      // event.code (physical key) instead of event.key: with metaKey held,
-      // some WebViews don't reliably report the shift-modified character for
-      // "=" (i.e. "+"), so matching on .key alone silently misses ⌘+. Also
-      // accept "Semicolon": on JIS keyboards the physical key that types "+"
-      // reports code "Semicolon", not "Equal" (confirmed via live testing).
       if (event.code === "Equal" || event.code === "Semicolon" || event.key === "=" || event.key === "+") {
         event.preventDefault();
         applyDeskTextSizeAndBroadcast(currentDeskTextSizePx() + 1);

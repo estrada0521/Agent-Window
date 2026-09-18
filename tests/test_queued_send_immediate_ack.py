@@ -7,12 +7,6 @@ import server.server as server_module
 
 
 class _FakeQueueRuntime:
-    """Deliberately has no pane_id_for_agent: if the queued-send path ever
-    tried to validate a target before acking, this would raise instead of
-    silently passing."""
-
-    def resolve_target_agents(self, target: str) -> list[str]:
-        return [item.strip() for item in target.split(",") if item.strip()]
 
     def append_user_entry(self, message: str, *, targets: list[str], client: str | None = None) -> dict:
         return {"context_hash": "test-context-hash", "targets": targets, "message": message}
@@ -30,12 +24,6 @@ class QueuedSendImmediateAckTest(unittest.TestCase):
         server_module.send_queue = self._orig_queue
 
     def test_queued_send_acks_before_any_target_validation(self) -> None:
-        # "nonexistent-agent" resolves (permissively) but corresponds to no
-        # real pane. Every agent-directed send acks immediately regardless -
-        # deferring delivery (and any failure) to the async queue worker,
-        # which surfaces it later as a "Send failed" system entry, is the
-        # intended design (prioritizes the UI reflecting the send instantly).
-        # This must not be "fixed" into a synchronous pre-check.
         status, body = server_module._send_or_enqueue_message("nonexistent-agent", "hello")
 
         self.assertEqual(status, 200)

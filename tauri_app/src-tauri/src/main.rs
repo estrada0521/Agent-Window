@@ -22,17 +22,11 @@ use url::Url;
 const DEFAULT_WINDOW_SIZE: f64 = 896.0;
 const MIN_WINDOW_WIDTH: f64 = 160.0;
 const MIN_WINDOW_HEIGHT: f64 = 103.0;
-// "Fit Height to Message" mode drops the height floor to zero so a one-line
-// message really does get a one-line window.
 const FIT_WINDOW_MIN_HEIGHT: f64 = 0.0;
 const COMPACT_WINDOW_WIDTH: f64 = 560.0;
 const MINI_WINDOW_WIDTH: f64 = 384.0;
 const MINI_WINDOW_HEIGHT: f64 = 600.0;
 
-// Visible window corner radius (the NSGlassEffectView's rounding). Kept equal
-// to the top glass band, which is 2x the desktop text size -- 26 at the
-// default 13. scale_window_from_top_center updates it on zoom; the focus and
-// theme re-apply paths read it back so a rebuilt glass keeps the zoomed radius.
 static GLASS_CORNER_RADIUS: AtomicU32 = AtomicU32::new(26);
 
 use window_vibrancy::{
@@ -245,9 +239,6 @@ fn keep_native_menu_images_visible() {
 
     static INSTALL: Once = Once::new();
     INSTALL.call_once(|| unsafe {
-        // macOS 27 hides NSMenuItem images at the new automatic default.
-        // Tauri does not expose preferredImageVisibility yet, so make every
-        // image explicitly visible at the AppKit boundary. by GPT-5.6 Sol
         let class = class!(NSMenuItem);
         let original = ffi::class_getInstanceMethod(class, sel!(setImage:));
         if original.is_null() {
@@ -575,9 +566,6 @@ fn show_appearance_menu(
         .map_err(|err| err.to_string())
 }
 
-// "Fit Height to Message" shrinks the window below the height the DOM session
-// popover needs, and a DOM popover can't paint past the window edge. A native
-// menu can, so in that mode the collapsed sidebar switches sessions through it.
 #[tauri::command]
 fn show_session_switcher_menu(
     window: tauri::WebviewWindow,
@@ -628,9 +616,6 @@ struct GitChangesMenuItem {
     section: bool,
 }
 
-// Fit Height to Message shrinks the window below what the right panel needs, so
-// in that mode the panel toggle pops the uncommitted-file list through a native
-// menu instead (the DOM panel can't paint past the tiny window).
 #[tauri::command]
 fn show_git_changes_menu(
     window: tauri::WebviewWindow,
@@ -720,8 +705,6 @@ fn show_session_context_menu(
     )
     .build(&app)
     .map_err(|err| err.to_string())?;
-    // Archived-session state operations remain visible so the menu layout is
-    // stable; the hub decides whether each operation is currently enabled.
     let change_workspace = MenuItemBuilder::with_id(
         format!("{}action:changeWorkspace", NATIVE_MENU_PREFIX),
         "Change Workspace",
@@ -788,8 +771,6 @@ fn set_always_on_top(window: tauri::WebviewWindow, on: bool) -> Result<(), Strin
 
 #[tauri::command]
 fn set_fit_height_min(window: tauri::WebviewWindow, enabled: bool) -> Result<(), String> {
-    // In Fit Height to Message mode the window may need to be far shorter than
-    // the normal minimum; drop the floor while it is on, restore it when off.
     let min_h = if enabled {
         FIT_WINDOW_MIN_HEIGHT
     } else {
@@ -801,15 +782,8 @@ fn set_fit_height_min(window: tauri::WebviewWindow, enabled: bool) -> Result<(),
     Ok(())
 }
 
-// window-vibrancy tags its NSGlassEffectView with this (NS_VIEW_TAG_GLASS_VIEW
-// in window_vibrancy::macos::liquid_glass -- not re-exported).
 const GLASS_EFFECT_VIEW_TAG: isize = 96_945_937;
 
-// On focus regain (Stage Manager un-collapse, Cmd-Tab) the glass is normally
-// still in the hierarchy -- a full clear + re-add there flashes the window
-// black for a frame. Only rebuild when the glass view has actually dropped
-// out; otherwise just mark it for redraw, which also heals a live-but-stale
-// backing without the flash.
 fn heal_app_vibrancy(window: &tauri::WebviewWindow) {
     let Ok(handle) = window.ns_window() else {
         apply_app_vibrancy(window);
@@ -827,12 +801,6 @@ fn heal_app_vibrancy(window: &tauri::WebviewWindow) {
     }
 }
 
-// NSGlassEffectView renders its flat "inactive" material whenever its window
-// lacks key appearance, so the glass dims the instant another window takes
-// focus. Add a -hasKeyAppearance override that always returns YES onto tao's
-// own window class (not a KVO notifying subclass, and without touching the
-// isa -- swapping it crashes KVO). isKeyWindow is left honest so keyboard
-// input still routes to whoever actually holds focus.
 fn keep_glass_key_appearance(window: &tauri::WebviewWindow) {
     use objc2::ffi;
     use objc2::runtime::{AnyClass, AnyObject, Bool, Imp, Sel};
@@ -887,12 +855,6 @@ fn set_window_height(
     height: f64,
     compact_width_scale: Option<f64>,
 ) -> Result<(), String> {
-    // Width and x stay; only the height (and, if it would spill off the
-    // bottom, y) change. Clamped to a sane floor and the monitor height.
-    // compact_width_scale also pulls the width to the compact size and recenters
-    // x -- the one-shot the Fit Height toggle fires on entry so the window
-    // lands at its final size in a single resize instead of visibly stopping at
-    // the compact width first.
     let scale_factor = window.scale_factor().map_err(|err| err.to_string())?;
     let monitor = window
         .current_monitor()
@@ -908,8 +870,6 @@ fn set_window_height(
         .outer_position()
         .map_err(|err| err.to_string())?
         .to_logical::<f64>(scale_factor);
-    // set_window_height is only used by Fit Height mode, where the floor is
-    // deliberately near-zero (set_fit_height_min lowers the window minimum).
     let h = height.max(FIT_WINDOW_MIN_HEIGHT).min(monitor_size.height);
     let (w, x) = if let Some(scale) = compact_width_scale {
         if !scale.is_finite() || scale <= 0.0 {
@@ -935,8 +895,6 @@ fn set_window_height(
         .map_err(|err| err.to_string())
 }
 
-// Same centering approach as reset_window_geometry: compute the target
-// position from the monitor, not the window's (possibly stale) own size.
 fn place_centered_window(
     window: &tauri::WebviewWindow,
     width: f64,
@@ -1039,17 +997,12 @@ fn scale_window_from_top_center(
         frame.origin.y -= height_delta;
         frame.size.width += width_delta;
         frame.size.height += height_delta;
-        // Schedule the resize without blocking WebKit's own painting. Exact
-        // frame-for-frame synchronization is not available across the native
-        // window and WebKit compositor, but concurrent motion keeps the lag
-        // from presenting as two hard jumps.
         NSAnimationContext::beginGrouping();
         let context = NSAnimationContext::currentContext();
         context.setDuration(ns_window.animationResizeTime(frame));
         ns_window.animator().setFrame_display(frame, true);
         NSAnimationContext::endGrouping();
     }
-    // Match the visible corner to the (now scaled) top glass band.
     if corner_radius.is_finite() && corner_radius > 0.0 {
         GLASS_CORNER_RADIUS.store(corner_radius.round().clamp(4.0, 80.0) as u32, Ordering::Relaxed);
         apply_app_vibrancy(&window);
@@ -1057,11 +1010,6 @@ fn scale_window_from_top_center(
     Ok(())
 }
 
-// How tall the menu bar (and, on a notched Mac, the extra strip beside it)
-// actually is varies by machine and can't be hardcoded -- NSScreen's own
-// frame vs visibleFrame is the only reliable source. Cocoa reports both in
-// points, the same unit as Tauri's "logical" pixels, so the result needs no
-// scale-factor conversion.
 fn menu_bar_inset(window: &tauri::WebviewWindow) -> f64 {
     let Ok(handle) = window.ns_window() else {
         return 0.0;
@@ -1085,9 +1033,6 @@ enum WindowSpot {
     Center,
 }
 
-// Moves the window to a preset spot on the current monitor, keeping its size.
-// Top/Left/Right slide along a single axis, leaving the other axis exactly
-// where it was (Top also tucks under the menu bar); Center recenters on both.
 fn move_window_to_spot(window: &tauri::WebviewWindow, spot: WindowSpot) -> Result<(), String> {
     let scale_factor = window.scale_factor().map_err(|err| err.to_string())?;
     let monitor = window
@@ -1216,12 +1161,6 @@ fn emit_native_menu_action(app: &tauri::AppHandle, id: &str) {
     }
 }
 
-// CARGO_MANIFEST_DIR is set automatically by Cargo for every build, no script
-// or shell needs to export anything. It points at tauri_app/src-tauri; the
-// repo root is two directories up. The installed .app is a standalone copy
-// launched from the Dock/Finder, with no reliable runtime signal for where
-// its source repo lives, so the path is fixed at compile time instead of
-// guessed at launch time.
 const CARGO_MANIFEST_DIR: &str = env!("CARGO_MANIFEST_DIR");
 
 fn find_repo_root() -> Option<String> {
@@ -1235,10 +1174,6 @@ fn find_repo_root() -> Option<String> {
 
 fn show_hub_error(window: &tauri::WebviewWindow, message: &str) {
     let escaped = message.replace('\\', "\\\\").replace('\'', "\\'");
-    // No background: the window is transparent and there is no Python/CSS to
-    // pull a page color from at this point anyway. The text-shadow keeps the
-    // message legible over whatever shows through (the vibrancy layer, or the
-    // desktop on the rare frame it drops out).
     let _ = window.eval(&format!(
         "document.body.style.cssText='background:transparent;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.9);padding:60px 40px;font:18px -apple-system,sans-serif';document.body.textContent='{}';",
         escaped
@@ -1314,10 +1249,6 @@ fn wait_for_child_success(child: &mut Child, timeout: Duration) -> bool {
     }
 }
 
-// A soft dark veil over the vibrancy in dark mode so the window reads as
-// tinted glass; in light mode the glass stays fully clear (no tint). Follows
-// the effective macOS appearance -- window.theme() tracks the OS, since the
-// app never calls set_theme().
 fn glass_tint(window: &tauri::WebviewWindow) -> Option<(u8, u8, u8, u8)> {
     match window.theme() {
         Ok(tauri::Theme::Light) => None,
@@ -1326,12 +1257,6 @@ fn glass_tint(window: &tauri::WebviewWindow) -> Option<(u8, u8, u8, u8)> {
 }
 
 fn apply_app_vibrancy(window: &tauri::WebviewWindow) {
-    // apply_liquid_glass()/apply_vibrancy() both unconditionally add a new
-    // effect view on every call rather than replacing an existing one, so a
-    // repeated call (e.g. on refocus) stacks another translucent layer on
-    // top instead of refreshing the material in place. Clearing first makes
-    // reapplication idempotent; without this the window visibly whitens out
-    // a little more each time it regains focus.
     let _ = clear_liquid_glass(window);
     let _ = clear_vibrancy(window);
     let radius = GLASS_CORNER_RADIUS.load(Ordering::Relaxed) as f64;
@@ -1366,9 +1291,6 @@ fn reveal_main_window(app: &tauri::AppHandle) {
 }
 
 fn main() {
-    // System app icons are decoded lazily on first native-menu build (see
-    // system_app_icons()); a slow NSWorkspace decode must not sit on the
-    // launch path.
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             open_external_url,
@@ -1417,22 +1339,13 @@ fn main() {
             keep_glass_key_appearance(&window);
             apply_app_vibrancy(&window);
             hide_native_traffic_lights(&window);
-            // Don't leave the first position to AppKit's placement (it lands a
-            // bit high) -- put it where Cmd+Alt+0 would.
             let _ = place_centered_window(&window, DEFAULT_WINDOW_SIZE, DEFAULT_WINDOW_SIZE, 1.0);
             let event_window = window.clone();
             window.on_window_event(move |event| {
                 if let tauri::WindowEvent::Focused(true) = event {
-                    // The glass occasionally drops out from under the
-                    // transparent window during a heavy WebView repaint (large
-                    // attachment thumbnails have triggered it), leaving the
-                    // desktop showing through. Heal on focus regain -- but
-                    // without a clear + re-add unless the view is actually gone,
-                    // so an ordinary refocus doesn't flash the window black.
                     heal_app_vibrancy(&event_window);
                 }
                 if let tauri::WindowEvent::ThemeChanged(_) = event {
-                    // The glass tint follows the OS appearance, so rebuild it.
                     apply_app_vibrancy(&event_window);
                 } else if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                     api.prevent_close();
@@ -1441,11 +1354,6 @@ fn main() {
                 }
             });
 
-            // Show the local splash now. Everything the Hub needs -- repo
-            // root, port, login-shell PATH, the agent-index spawn and
-            // its startup wait -- is resolved on a background thread so the
-            // main run loop stays free to paint. Blocking setup() here is
-            // what kept the window invisible for ~50 frames after launch.
             let _ = window.show();
 
             let app_handle = app.handle().clone();
@@ -1470,9 +1378,6 @@ fn main() {
                         return;
                     }
                 };
-                // The login-shell PATH probe (`zsh -lic`) costs ~0.5s.
-                // When the Hub is already serving -- the common case across
-                // app launches -- none of that is on the path: just navigate.
                 if hub_ready(hub_port) {
                     eprintln!("[app] Hub already up");
                 } else {

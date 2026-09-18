@@ -14,14 +14,14 @@ from backend_core.tmux.lifecycle import (
     restart_agent_pane as _restart_agent_pane_impl,
 )
 from message_delivery import (
+    deliver_message as _deliver_message_impl,
     mark_agent_sent as _mark_agent_sent_impl,
-    send_message as _send_message_impl,
 )
 from .entry_write import (
     append_system_entry as _append_system_entry_impl,
     append_user_entry as _append_user_entry_impl,
 )
-from .index_cache import MATCHED_ENTRY_TAIL, message_entry_window
+from .index_cache import LOG_TAIL_SIZE, message_entry_window
 from workspace_sync.commit import (
     adopt_commit_baseline as _adopt_commit_baseline_impl,
     ensure_commit_announcements as _ensure_commit_announcements_impl,
@@ -45,7 +45,6 @@ from .session_state import (
     wait_for_session_state_change as _wait_for_session_state_change_impl,
 )
 from pane_trace import trace_content as _trace_content_impl
-from backend_core.tmux.instances import resolve_target_agents as resolve_target_agent_names
 from backend_core.tmux.window import tmux_prefix_args
 from .session_binding import WorkspaceSessionBinding
 
@@ -74,11 +73,8 @@ class ChatRuntime:
         self.repo_root = Path(repo_root).resolve()
         self.server_instance = uuid.uuid4().hex
         self.tmux_prefix = tmux_prefix_args(self.tmux_socket) if self.tmux_socket else ["tmux"]
-        # The AW label may change independently, so bind this process to the
-        # live tmux session by its native session working directory.
         self.tmux_session_name = _resolve_tmux_session_name_impl(self) or ""
         self.session_is_active = bool(self.tmux_session_name)
-        # Seeded from server._clean_env()'s reload handoff -- see its comment.
         self._agent_running = set(initial_running_agents or [])
         _initialize_session_state_bus_impl(self)
         self._native_log = NativeLogSyncer(
@@ -98,11 +94,11 @@ class ChatRuntime:
         self._payload_cache_lock = threading.Lock()
         self._payload_cache: dict[tuple, bytes] = {}
         self._payload_cache_order: deque[tuple] = deque(maxlen=8)
-        self._matched_entries_cache_lock = threading.Lock()
-        self._matched_entries_cache_sig: tuple[int, int] = (0, 0)
-        self._matched_entries_cache_size = 0
-        self._matched_entries_cache_entries: deque[dict] = deque(maxlen=MATCHED_ENTRY_TAIL)
-        self._matched_entries_total = 0
+        self._log_tail_lock = threading.Lock()
+        self._log_tail_sig: tuple[int, int] = (0, 0)
+        self._log_tail_size = 0
+        self._log_tail_entries: deque[dict] = deque(maxlen=LOG_TAIL_SIZE)
+        self._log_entry_total = 0
 
     @property
     def session_name(self) -> str:
@@ -269,9 +265,6 @@ class ChatRuntime:
             )
         }
 
-    def resolve_target_agents(self, target: str) -> list[str]:
-        return resolve_target_agent_names(target, self.active_agents())
-
     def pane_id_for_agent(self, agent_name: str) -> str:
         return self.agent_panes().get(agent_name, "")
 
@@ -281,9 +274,6 @@ class ChatRuntime:
         return _terminal_window_pane_id_impl(self.tmux_prefix, self.tmux_session_name)
 
     def pane_id_for_control_target(self, target: str) -> str:
-        """Pane for any pane-level operation (key macros, trace, open-pane) --
-        the "terminal" pane included, without callers needing to know it
-        sits outside the agent topology."""
         return self.pane_id_for_terminal() if target == "terminal" else self.pane_id_for_agent(target)
 
     def pane_field(self, pane_id: str, field: str) -> str:
@@ -318,9 +308,6 @@ class ChatRuntime:
             try:
                 while agent in self.active_agents():
                     try:
-                        # A binding that only just appeared has no backlog to
-                        # project -- follow it from EOF, like start_native_log_sync.
-                        # Without this, a resumed CLI's whole history replays in.
                         self.refresh_native_log_bindings([agent], start_at_end=True)
                     except Exception:
                         logging.exception("native log bind failed for %s", agent)
@@ -347,7 +334,6 @@ class ChatRuntime:
         ).start()
 
     def _mark_running_from_native_activity(self, agent: str) -> None:
-        """Mark an idle agent running without rebinding its already-watched log."""
         if agent in self._agent_running:
             return
         self._agent_running.add(agent)
@@ -367,20 +353,8 @@ class ChatRuntime:
     def restart_agent_pane(self, agent_name: str) -> tuple[bool, str]:
         return _restart_agent_pane_impl(self, agent_name)
 
-    def send_message(
-        self,
-        target: str,
-        message: str,
-        append_entry: bool = True,
-        client: str | None = None,
-    ) -> tuple[int, dict]:
-        return _send_message_impl(
-            self,
-            target,
-            message,
-            append_entry=append_entry,
-            client=client,
-        )
+    def deliver_message(self, targets: list[str], message: str) -> list[str]:
+        return _deliver_message_impl(self, targets, message)
 
     def agent_statuses(self) -> dict[str, str]:
         return self._native_log.agent_statuses(self._agent_running)

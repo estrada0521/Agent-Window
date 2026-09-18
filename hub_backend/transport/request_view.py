@@ -25,9 +25,6 @@ def request_view_variant(*, headers, query_string: str = "", default: str = "des
         return "desktop"
 
     user_agent = (headers.get("User-Agent", "") or "").lower()
-    # No "ipad" token: iPadOS Safari's default UA impersonates macOS and
-    # never sends it. The client-side touch-capability check in the
-    # desktop templates' bootstrap script is what actually catches iPad.
     mobile_tokens = (
         "iphone",
         "ipod",

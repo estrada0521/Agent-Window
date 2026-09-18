@@ -8,17 +8,6 @@ from workspace_sync.files.runtime import FileRuntime
 
 
 class ReferencePathBypassIsIntentionalTests(unittest.TestCase):
-    """`_resolve_reference_path()` deliberately does NOT confine absolute or
-    `~`-prefixed references to workspace/allowed_roots the way `_resolve_path()`
-    does. This is a conscious design decision, not an oversight: the LAN this
-    app binds to is already the trust boundary (an agent in this session has
-    full shell access to the whole machine regardless), and adding
-    containment here would just break the common case of referencing files
-    outside the workspace while providing no real security benefit. Do not
-    "fix" this by routing it through `_resolve_path()` -- that would silently
-    break intentional cross-root file references. If this test starts
-    failing, the fix is almost certainly wrong.
-    """
 
     def test_absolute_path_outside_workspace_and_allowed_roots_resolves(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

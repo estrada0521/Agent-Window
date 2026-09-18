@@ -1,1 +1,1 @@
-"""Log path refresh helpers."""
+pass

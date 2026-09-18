@@ -32,15 +32,12 @@
     const attachInput = document.getElementById("attachInput");
     const attachPreviewRow = document.getElementById("attachPreviewRow");
     const composerShellEl = document.querySelector(".composer-shell");
-    // Each edge fades only while more of the one-line row is hidden past it.
     const syncAttachPreviewFade = () => {
       if (!attachPreviewRow) return;
       const max = attachPreviewRow.scrollWidth - attachPreviewRow.clientWidth;
       attachPreviewRow.style.setProperty("--attach-preview-fade-left", attachPreviewRow.scrollLeft > 1 ? "8px" : "0px");
       attachPreviewRow.style.setProperty("--attach-preview-fade-right", max > 1 && attachPreviewRow.scrollLeft < max - 1 ? "8px" : "0px");
     };
-    // Mobile: the @ / menu is fixed above the attach row, so its offset goes
-    // stale when the row grows or empties -- re-place whichever menu is open.
     const repositionOpenComposerMenu = () => {
       if (!isMobileComposer || typeof positionComposerDropdown !== "function") return;
       const openMenu = document.querySelector("#fileDropdown.visible, #cmdDropdown.visible");

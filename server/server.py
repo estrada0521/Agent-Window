@@ -100,23 +100,18 @@ def _queued_send_worker() -> None:
     while True:
         job = send_queue.get()
         try:
-            status, body = runtime.send_message(
-                job.get("target", ""),
-                job.get("message", ""),
-                append_entry=False,
-            )
-            if status != 200 or not body.get("ok"):
-                error = str(body.get("error") or "send failed").strip() or "send failed"
+            failed = runtime.deliver_message(job["targets"], job["message"])
+            if failed:
                 runtime.append_system_entry(
-                    f"Send failed: {error}",
+                    f"Send failed: Failed to deliver to: {', '.join(failed)}",
                     kind="send-error",
-                    failed_targets=list(job.get("targets") or []),
+                    failed_targets=failed,
                 )
         except Exception as exc:
             runtime.append_system_entry(
                 f"Send failed: {exc}",
                 kind="send-error",
-                failed_targets=list(job.get("targets") or []),
+                failed_targets=job["targets"],
             )
         finally:
             send_queue.task_done()
@@ -127,27 +122,13 @@ def _send_or_enqueue_message(
     message: str,
     client: str | None = None,
 ) -> tuple[int, dict]:
-    """Append the entry and ack immediately; deliver to tmux in the background.
-
-    Whether the message actually reaches the pane is a separate concern from
-    whether the UI reflects it: delivery runs on send_queue/_queued_send_worker
-    and reports failure later as a system entry, never blocking this return.
-    """
-    normalized_message = str(message or "").strip()
-    if not normalized_message:
+    normalized_message = str(message or "")
+    if not normalized_message.strip():
         return 400, {"ok": False, "error": "message is required"}
-    normalized_target = str(target or "").strip()
-    if not normalized_target:
-        entry = runtime.append_user_entry(normalized_message, targets=["user"], client=client)
-        return 200, {"ok": True, "mode": "note", "entry": entry}
-    resolved_targets = runtime.resolve_target_agents(normalized_target)
-    if resolved_targets == ["user"]:
-        entry = runtime.append_user_entry(normalized_message, targets=["user"], client=client)
-        return 200, {"ok": True, "mode": "note", "entry": entry}
-    if "user" in resolved_targets:
-        return 400, {"ok": False, "error": 'target "user" cannot be combined with other targets'}
+    resolved_targets = [item.strip() for item in str(target or "").split(",") if item.strip()]
     if not resolved_targets:
-        return 400, {"ok": False, "error": "target is required"}
+        entry = runtime.append_user_entry(normalized_message, targets=["user"], client=client)
+        return 200, {"ok": True, "mode": "note", "entry": entry}
     entry = runtime.append_user_entry(normalized_message, targets=resolved_targets, client=client)
     send_queue.put(
         {
@@ -160,11 +141,6 @@ def _send_or_enqueue_message(
 
 
 def _clean_env():
-    # reload-chat replaces this whole process, but tmux panes keep running
-    # underneath it. "Running" is a transient display, not durable truth, so
-    # handing the next process a snapshot here (rather than tmux state or a
-    # file -- no per-event cost) is fine even though it can go briefly stale.
-    # See tests/test_reload_running_agents.py before deleting this.
     env = os.environ.copy()
     if runtime is None:
         raise RuntimeError("chat runtime is unavailable during reload")
@@ -279,10 +255,7 @@ server = None
 
 def queue_chat_restart():
     global chat_restart_pending
-    current_workspace = str(workspace or "").strip()
-    if not current_workspace:
-        return False, "workspace unavailable", False
-
+    current_workspace = workspace
     with chat_restart_lock:
         if chat_restart_pending:
             return False, "restart already pending", False

@@ -64,9 +64,6 @@
       const theme = resolveMobileTheme(observedTheme);
       const root = document.documentElement;
       root.dataset.theme = theme;
-      // Do this synchronously as well as through the CSS selector.  Safari's
-      // PWA renderer can otherwise keep the fixed Hub gradient in its old
-      // compositing layer for a frame after an appearance change.
       root.style.colorScheme = theme;
       applyMobThemeGradientVars();
       _chatFrame?.contentWindow?.postMessage({
@@ -103,11 +100,7 @@
       _chatOverlay.style.transition = "";
       _chatOverlay.style.opacity = "";
     }
-    // The overlay's edge line must vanish when the slide *looks* seated, which
-    // the hard-decelerating ease reaches well before the transition's nominal
-    // end. Fire .overlay-settled on a lead-time timer, with transitionend as a
-    // backstop.
-    const CHAT_OVERLAY_SLIDE_MS = 440;        // matches #chatOverlay transform transition
+    const CHAT_OVERLAY_SLIDE_MS = 440;
     const CHAT_OVERLAY_SETTLE_LEAD_MS = 130;
     let _overlaySettleHandler = null;
     let _overlaySettleTimer = 0;
@@ -258,9 +251,6 @@
       try {
         const next = new URL(raw, window.location.href);
         if (next.hostname !== window.location.hostname) return raw;
-        // This page only ever runs as the mobile Hub, so it already knows
-        // the answer the framed chat page would otherwise have to guess
-        // from headers alone -- guessing is what fails for iPad Safari.
         next.searchParams.set("view", "mobile");
         next.searchParams.set("theme", resolveMobileTheme());
         next.searchParams.set("theme_mobile", currentMobileThemeSetting());
@@ -449,10 +439,6 @@
           finishChatRenderWait();
         }
       };
-      // chat -> hub -> same chat: the frame still holds that rendered
-      // session, so re-show it as-is instead of blanking and reloading --
-      // the session should feel continuous, not rebuilt. (A stale ts in the
-      // resolved URL past the cache TTL falls through to a fresh load.)
       const reuseLoadedFrame =
         !!normalizedName && _chatFrameRenderReady && hubFrameSrcMatches(normalizedUrl);
       _chatFrame.style.transition = "none";
@@ -637,8 +623,6 @@
 
       const esc = (v) => String(v || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-      // A slow, gently decelerating snap so the reveal reads as deliberate
-      // rather than snappy.
       const SNAP_EASE = "transform 720ms cubic-bezier(.2, .85, .14, 1)";
       const ACT_W = 52;
       const ACT_GAP = 8;
@@ -737,8 +721,6 @@
           didSwipe = true;
           dx = cx;
           const base = (sr._snap || 0) * SNAP_W;
-          // Track a touch behind the finger, and resist past the open point,
-          // so the row feels weighted rather than snappy.
           let x = base + dx * 0.62;
           if (x > 0) x = 0;
           else if (x < minX) x = minX + (x - minX) * 0.14;

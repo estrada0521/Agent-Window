@@ -55,7 +55,6 @@ def ensure_session_workspace_mirrors(session_name: str, workspace: Path | str) -
         return
     aw_dir = workspace_agent_window_dir(workspace_path)
     aw_dir.mkdir(parents=True, exist_ok=True)
-    # Keep the whole mirror out of the host repo without touching its .gitignore.
     gitignore = aw_dir / ".gitignore"
     if not gitignore.exists():
         gitignore.write_text("*\n", encoding="utf-8")
@@ -76,11 +75,6 @@ def workspace_upload_dir(workspace: Path | str) -> Path:
 
 
 def workspace_chat_port(workspace: Path | str) -> int:
-    # 30000-48999: wide enough that a real collision with another program
-    # is rare, inside the IANA "registered" range so it needs no elevated
-    # privileges, clear of both the low end (where nearly every dev tool's
-    # conventional default port lives -- 3000, 5432, 6379, 8080, 8888...)
-    # and the 49152+ dynamic/ephemeral range OS-assigned ports come from.
     canonical_workspace = str(Path(workspace).expanduser().resolve())
     digest = int(hashlib.md5(canonical_workspace.encode()).hexdigest(), 16)
     return 30000 + (digest % 19000)

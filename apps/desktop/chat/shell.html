@@ -14,10 +14,6 @@
   <title>__CHAT_DOCUMENT_TITLE__</title>
   <script>
     (() => {
-      // iPadOS Safari's default UA impersonates macOS and sends no Client
-      // Hints, so the server can't tell it apart from a real Mac -- only
-      // touch capability can. Redirect before the mobile-vendor CDN script
-      // below fetches anything the desktop variant doesn't need.
       try {
         if (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || "")) {
           const url = new URL(window.location.href);
@@ -60,7 +56,6 @@
       if (params.get("launch_shell") === "1") {
         document.documentElement.dataset.launchShell = "1";
       }
-      // Detect Tauri desktop app via URL param, session marker, or Tauri globals.
       function _detectTauri() {
         try {
           const stored = sessionStorage.getItem("agent_window_tauri_app") === "1";

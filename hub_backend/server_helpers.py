@@ -59,20 +59,6 @@ def launch_hub_restart(
     hub_server_getter,
     ready_timeout: float = PROCESS_HANDOFF_TIMEOUT_SEC,
 ) -> bool:
-    """Restart the Hub process and block until agent-index reports ready.
-
-    The actual shutdown/respawn runs on a background daemon thread. This
-    is required, not just a style choice: ThreadingHTTPServer's own
-    request-handling threads are daemon threads here, so if *this*
-    thread (one of them) called server.shutdown() directly, the instant
-    serve_forever() returns, main() falls off the end of the script and
-    the interpreter kills every remaining daemon thread outright --
-    including the one still trying to spawn the replacement or send this
-    response. Doing the work on a second daemon thread and just blocking
-    this one on an Event sidesteps that; main() additionally holds the
-    process open after serve_forever() returns until release_restart_hold()
-    confirms the response was actually sent (see hub_server.py).
-    """
     done = threading.Event()
     result: dict[str, bool] = {"ok": False}
 

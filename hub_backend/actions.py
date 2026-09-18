@@ -81,7 +81,7 @@ def get_revive_session(handler, parsed, ctx) -> None:
             handler._send_html(500, ctx["error_page_fn"](f"Failed to revive {session_name}: {detail}"))
         return
     query = active_session_records_query(ctx["hub"])
-    workspace = str((query.records.get(session_name) or {}).get("workspace") or "").strip()
+    workspace = query.records[session_name]["workspace"]
     ok, chat_port, detail = ensure_chat_server(
         ctx["hub"],
         expected_active=True,
@@ -182,10 +182,6 @@ def post_restart_hub(handler, _parsed, ctx) -> None:
         handler.wfile.write(body)
         handler.wfile.flush()
     finally:
-        # queue_hub_restart_fn() may have left this process's request
-        # threads as the only thing keeping it alive (see
-        # release_restart_hold's docstring) -- only safe to let it exit
-        # once the response above has actually gone out.
         if owns_restart:
             ctx["release_restart_hold_fn"]()
 

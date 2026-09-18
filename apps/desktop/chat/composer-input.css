@@ -34,8 +34,6 @@
       right: 0;
       bottom: calc(100% + calc(var(--text-size, 13px) * 8 / 13));
       display: flex;
-      /* DOM order is attachments then dropdowns; reversed so, like mobile, the
-         attachment row sits just above the input and the @ / menu above it. */
       flex-direction: column-reverse;
       align-items: stretch;
       gap: calc(var(--text-size, 13px) * 8 / 13);
@@ -103,8 +101,6 @@
       -ms-overflow-style: none;
       -webkit-overflow-scrolling: touch;
       box-sizing: border-box;
-      /* Each edge fades only while more of the one-line row is hidden past it
-         -- JS sets the widths (shared/chat/composer/runtime.js). */
       --attach-preview-fade-left: 0px;
       --attach-preview-fade-right: 0px;
       mask-image: linear-gradient(to right, transparent 0, black var(--attach-preview-fade-left), black calc(100% - var(--attach-preview-fade-right)), transparent 100%);
@@ -132,9 +128,6 @@
       flex-shrink: 0;
       -webkit-appearance: none;
       appearance: none;
-      /* Frame the thumbnail like the composer field / popups: translucent
-         chat-bg, hairline border, faint depth cue, and a small inset so the
-         glass shows as a matte around the image. */
       background: rgba(var(--bg-rgb), 0.8);
       border: 0.5px solid rgba(0, 0, 0, 0.45);
       box-shadow:
@@ -264,8 +257,6 @@
       border-radius: calc(var(--text-size, 13px) * 28 / 13);
     }
     .shell {
-      /* On .shell (not main) so the fixed floating buttons -- siblings of
-         main, not descendants -- can centre on the same content column. */
       --message-side-padding: calc(var(--text-size, 13px) * 1.54);
       --chat-scrollbar-layout-width: 2px;
     }
@@ -301,7 +292,6 @@
     }
     html[data-auto-window-height="1"] main {
       --message-step-top-gap: calc(var(--text-size, 13px) * 20 / 13);
-      /* Spans only the step gap so it never reaches the fitted message. */
       --chat-edge-fade: var(--message-step-top-gap);
       --chat-edge-fade-hard: calc(var(--chat-edge-fade) * 0.45);
       scroll-padding-top: var(--message-step-top-gap);
@@ -311,10 +301,6 @@
     html[data-auto-window-height="1"] main::before {
       min-height: var(--message-step-top-gap);
     }
-    /* The last flow item already carries 0.92em of its own trailing space
-       (message-row padding-bottom, or the running indicator's margin-bottom);
-       top it up to one step gap so the room below the fitted content matches
-       main::before above it. */
     html[data-auto-window-height="1"] main::after {
       min-height: calc(var(--message-step-top-gap) - 0.92em);
     }
@@ -327,18 +313,9 @@
     #scrollToBottomBtn,
     #composerFabBtn {
       --fab-icon-size: round(nearest, calc(var(--text-size, 13px) * 20 / 13), 1px);
-      /* Box = icon + an even gap, so the SVG always centres on a whole pixel
-         (independent rounding gave an odd gap that pushed it off-centre when
-         small). */
       --fab-size: calc(var(--fab-icon-size) + round(nearest, calc(var(--text-size, 13px) * 18 / 13), 2px));
       position: fixed;
-      /* 18% of the window height -- ~160px at the 896px preset height that
-         both size presets (Restore / Compact) use. */
       bottom: var(--floating-btn-bottom, 18%);
-      /* Centre on main's content column, not the viewport: same left/right
-         inset as main's padding box (plus the reserved panel width on the
-         right), then margin-inline: auto. No translateX, so the Fit Height
-         tuck to right: 8px is a plain snap. */
       left: var(--message-side-padding);
       right: calc(
         var(--desktop-right-panel-reserved-width, 0px)
@@ -407,8 +384,6 @@
       transform: translateY(10px) scale(0.75);
     }
 
-    /* Fit Height to Message: the window is small, so tuck the floating buttons
-       into the bottom-right corner instead of centred ~160px up. */
     html[data-auto-window-height="1"] #composerFabBtn,
     html[data-auto-window-height="1"] #scrollToBottomBtn {
       left: auto;

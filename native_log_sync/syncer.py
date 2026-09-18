@@ -18,7 +18,6 @@ from native_log_sync.watch.emit_events import (
 
 
 class NativeLogSyncer:
-    """Owns all native-log-sync state. ChatRuntime holds one instance and delegates."""
 
     def __init__(
         self,
@@ -54,7 +53,6 @@ class NativeLogSyncer:
     def session_name(self) -> str:
         return self._session_binding.session_name
 
-    # ── callbacks required by native_log_sync internals ──
 
     def notify_session_state_changed(self) -> None:
         self._notify_state_fn()
@@ -72,7 +70,6 @@ class NativeLogSyncer:
     def session_is_active(self) -> bool:
         return bool(self._session_is_active_fn())
 
-    # ── public API called by ChatRuntime ──
 
     def refresh(
         self,

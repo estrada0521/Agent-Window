@@ -114,9 +114,6 @@ class Handler(BaseHTTPRequestHandler):
         self._relay_upstream_stream(status, resp_headers, resp)
 
     def _resolve_session(self, session_name: str) -> dict | None:
-        """Resolve a session (active, or archived as a read-only viewer) without
-        reviving it. Reviving is exclusively a /revive-session action, proxied
-        straight through to the local hub."""
         self.__tmux_unhealthy_detail = ""
         resolved = resolve_session_chat_target(hub, session_name)
         if resolved["status"] == "unhealthy":

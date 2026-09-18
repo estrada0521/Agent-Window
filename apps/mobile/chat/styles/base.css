@@ -44,9 +44,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --mobile-top-gradient-rgb: var(--bg-rgb);
       --mobile-sheet-gradient-rgb: var(--mobile-top-gradient-rgb);
       --bottom-sheet-top-gradient-rgb: var(--mobile-sheet-gradient-rgb);
-      /* Eased top-edge fade mask for the bottom sheet's own top gradient
-         (bottom-sheet.css) -- one stop list, both mask-image and
-         -webkit-mask-image read it. */
       --mobile-edge-fade-mask: black 0%, rgba(0, 0, 0, 0.981) 7%, rgba(0, 0, 0, 0.926) 14%, rgba(0, 0, 0, 0.838) 21%, rgba(0, 0, 0, 0.726) 29%, rgba(0, 0, 0, 0.597) 36%, rgba(0, 0, 0, 0.462) 43%, rgba(0, 0, 0, 0.329) 50%, rgba(0, 0, 0, 0.209) 57%, rgba(0, 0, 0, 0.117) 64%, rgba(0, 0, 0, 0.056) 71%, rgba(0, 0, 0, 0.019) 79%, transparent 86%;
       --mobile-sheet-content-offset: 72px;
       --mobile-sheet-content-bottom-offset: calc(33px + var(--mobile-sheet-safe-bottom) + var(--mobile-sheet-safe-bottom));
@@ -54,7 +51,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);
       --surface: __GRAY_SURFACE__;
       --inline-code-border: __GRAY_INLINE_BORDER__;
-      --pane-trace-body-bg-channels: var(--bg-rgb);
+      --pane-trace-body-bg-channels: __MOBILE_CHAT_DARK_BG_CHANNELS__;
       --pane-trace-body-bg: rgb(var(--pane-trace-body-bg-channels));
       --error: rgb(__TEXT_ERROR_DARK_CHANNELS__);
       --inline-file-link-fg: var(--link-blue);

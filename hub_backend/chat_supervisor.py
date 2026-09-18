@@ -24,13 +24,10 @@ from hub_backend.session_query import active_session_records_query, archived_ses
 def chat_server_state_matches(hub, state: dict | None, *, workspace: str) -> bool:
     if not state:
         return False
-    raw_workspace = str(workspace or "").strip()
-    if not raw_workspace:
-        return False
     reported_repo_root = str(state.get("repo_root") or "").strip()
     if reported_repo_root != str(hub.repo_root):
         return False
-    expected_workspace = str(Path(raw_workspace).expanduser().resolve())
+    expected_workspace = str(Path(workspace).expanduser().resolve())
     reported_workspace = str(state.get("workspace") or "").strip()
     if not reported_workspace or str(Path(reported_workspace).expanduser().resolve()) != expected_workspace:
         return False
@@ -54,8 +51,8 @@ def stop_inactive_chat_servers(hub, *, keep_workspace: str = "") -> str:
     archived = archived_session_records(query.non_archived_names)
     keep = str(keep_workspace or "").strip()
     for record in archived.values():
-        workspace = str(record.get("workspace") or "").strip()
-        if not workspace or workspace == keep:
+        workspace = record["workspace"]
+        if workspace == keep:
             continue
         port = workspace_chat_port(workspace)
         state = read_chat_server_state(port)
@@ -71,16 +68,9 @@ def ensure_chat_server(
     hub,
     *,
     expected_active: bool = True,
-    workspace: str = "",
+    workspace: str,
 ) -> tuple[bool, int, str]:
-    raw_workspace = str(workspace or "").strip()
-    if not raw_workspace:
-        return False, 0, (
-            "No workspace is set for this session. A workspace is required "
-            "to determine the chat server's port; if you only need to view "
-            "this session, set any placeholder workspace path."
-        )
-    resolved_workspace = str(Path(raw_workspace).expanduser().resolve())
+    resolved_workspace = str(Path(workspace).expanduser().resolve())
     lock = hub._get_launch_lock(resolved_workspace)
     with lock:
         chat_port = workspace_chat_port(resolved_workspace)
@@ -130,16 +120,12 @@ def revive_archived_session(hub, session_name: str) -> tuple[bool, str]:
     record = archived.get(session_name)
     if not record:
         return False, "That archived session is not available in this repo."
-    workspace = (record.get("workspace") or "").strip()
-    if not workspace or not Path(workspace).is_dir():
-        return False, f"Saved workspace is unavailable: {workspace or 'unknown'}"
+    workspace = record["workspace"]
+    if not Path(workspace).is_dir():
+        return False, f"Saved workspace is unavailable: {workspace}"
     stop_ok, stop_detail = stop_chat_server(workspace)
     if not stop_ok:
         return False, stop_detail
-    # Checked before create_session: workspace alone determines the chat
-    # port, so a collision is knowable up front. Finding out only after the
-    # tmux session is revived would leave it running with no way to reach
-    # it, and revive_archived_session doesn't roll a revive back on failure.
     chat_port = workspace_chat_port(workspace)
     if not port_is_bindable(chat_port):
         return False, f"chat port {chat_port} is occupied"
@@ -147,7 +133,7 @@ def revive_archived_session(hub, session_name: str) -> tuple[bool, str]:
         create_session(
             session_name=session_name,
             workspace=workspace,
-            agents=[str(item).strip() for item in (record.get("agents") or []) if str(item).strip()],
+            agents=record["agents"],
             tmux_socket=hub.tmux_socket,
             repo_root=hub.repo_root,
             revive=True,
@@ -181,9 +167,7 @@ def delete_archived_session(hub, session_name: str) -> tuple[bool, str]:
     record = archived.get(session_name)
     if not record:
         return False, "That archived session is not available in this repo."
-    workspace = str(record.get("workspace") or "").strip()
-    if not workspace:
-        return False, "workspace unavailable"
+    workspace = record["workspace"]
     stop_ok, stop_detail = stop_chat_server(workspace)
     if not stop_ok:
         return False, stop_detail

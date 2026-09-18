@@ -10,12 +10,6 @@
         timeline.classList.remove("is-scrolling");
       }, 1000);
     };
-    // Only a real user gesture (wheel/touch) shows the scrollbar. A plain
-    // "scroll" event also fires for programmatic jumps -- the initial
-    // scroll-to-bottom on entering a chat, "jump to bottom" clicks -- and
-    // reacting to those flashed the scrollbar on every chat open. Once a
-    // gesture has shown it, though, "scroll" extends the timer so momentum
-    // scrolling after the gesture ends doesn't cut it off early.
     timeline.addEventListener("wheel", revealScrollbar, { passive: true });
     timeline.addEventListener("touchstart", revealScrollbar, { passive: true });
     timeline.addEventListener("scroll", () => {
@@ -39,12 +33,6 @@
       requestAnimationFrame(olderAutoloadTick);
     };
     timeline.addEventListener("scroll", () => {
-      // A scroll event's own scrollTop can already be past the trigger point
-      // during fast/momentum scrolling on mobile, where scroll events fire
-      // too sparsely to catch the threshold crossing in time. Polling every
-      // frame while position stays near the danger zone closes that gap, so
-      // loading starts with a comfortable lead instead of several small
-      // catch-up loads landing back-to-back once already at the edge.
       if (olderAutoloadCheck() || _olderAutoloadPolling || olderLoading || !olderHasMore) return;
       _olderAutoloadPolling = true;
       requestAnimationFrame(olderAutoloadTick);

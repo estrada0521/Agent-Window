@@ -1,16 +1,6 @@
-    /* The liquid-glass surface recipe for mobile -- pulled into the mobile hub
-       (home.html) and the mobile chat (main.css). Every glass pill / card
-       (floating buttons, page title + menu button, bottom-sheet button, git
-       commit / summary rows, pane-viewer tabs) resolves these tokens; only
-       --bg-rgb differs between the two surfaces. It lives under hub/templates/
-       because that is the one directory both template include resolvers can
-       read. */
     :root {
       --liquid-glass-blur: blur(28px) saturate(220%) contrast(114%);
     }
-    /* #paneTracePanel / .pane-viewer (mobile chat) render dark on a light page,
-       so they take the dark set regardless of theme -- listed here so the values
-       live in one rule. */
     html[data-theme="dark"],
     #paneTracePanel,
     .pane-viewer {

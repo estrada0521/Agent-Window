@@ -5,13 +5,6 @@
     body.composer-overlay-open {
       overflow: hidden;
     }
-    /* A normal child of .composer-above-input (apps/shared/chat/composer.html),
-       not position:fixed with a JS-computed left/width/bottom -- that snapshot
-       goes stale the instant the composer's own size or position changes
-       (right panel toggled, window resized) while the menu is open. Being an
-       actual child of the already-correct composer-tracking box means there
-       is nothing to keep in sync: it cannot drift from the composer, because
-       it never has its own independent position to drift from. */
     #fileDropdown,
     #cmdDropdown {
       width: 100%;
@@ -92,9 +85,6 @@
       height: calc(1em * 30 / 13);
       padding: 0 calc(var(--text-size, 13px) * 14 / 13);
       border-radius: var(--right-panel-item-radius);
-      /* Inherited by .file-item-name/-relpath below, which rely on it for
-         their own overflow:hidden + text-overflow:ellipsis to mean anything
-         -- without it, text wraps to a second line instead of eliding. */
       white-space: nowrap;
       font-size: calc(var(--text-size, 13px) * 13.5 / 13);
       line-height: 1.3;
@@ -118,8 +108,6 @@
       height: 100%;
       stroke-width: 1.6;
     }
-    /* Basename + path is one right-truncating line. Because the path is the
-       second span, it disappears before the basename is touched. */
     .file-item-path {
       flex: 1;
       min-width: 0;
@@ -134,9 +122,6 @@
       margin-left: calc(var(--text-size, 13px) * 8 / 13);
       color: var(--muted);
     }
-    /* flex-shrink, not flex:0 0 auto with a floor -- the size text is the
-       least useful part of the row, so it should give way before the path
-       (see .file-item-path above) ever loses a character of the filename. */
     .file-item-size {
       flex: 0 1 auto;
       min-width: 0;
@@ -149,8 +134,6 @@
     }
     .file-dropdown-list,
     .cmd-dropdown-list {
-      /* Matches the top mask fade's height -- at rest that fade covers this
-         padding, not the first row, so scrolled-to-top shows no fade. */
       padding-top: calc(var(--text-size, 13px) * 16 / 13);
       padding-bottom: calc(var(--text-size, 13px) * 10 / 13);
     }
@@ -231,9 +214,6 @@
       }
 
     }
-    /* Background, not border-bottom -- a border curves into border-radius's
-       corner instead of stopping cleanly, reading as a permanent faint
-       rounding at rest. Sized short of the row so it can't reach the corner. */
     .file-item:not(:last-child) {
       background-image: linear-gradient(var(--composer-menu-row-border), var(--composer-menu-row-border));
       background-repeat: no-repeat;
@@ -272,9 +252,6 @@
       margin: 0;
       transition: background 120ms ease;
     }
-    /* Background, not border-bottom -- a border curves into border-radius's
-       corner instead of stopping cleanly, reading as a permanent faint
-       rounding at rest. Sized short of the row so it can't reach the corner. */
     .cmd-item:not(:last-child) {
       background-image: linear-gradient(var(--composer-menu-row-border), var(--composer-menu-row-border));
       background-repeat: no-repeat;

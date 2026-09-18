@@ -137,9 +137,6 @@
         const lightMutedRgb = rootFgStyle.getPropertyValue("--light-muted-rgb").trim() || "120, 120, 120";
         const fgRgb = isLight ? lightFgRgb : darkFgRgb;
         const fg = `rgb(${fgRgb})`;
-        // Line numbers are text-muted, not a translucent tint of fg -- same
-        // constant the initial server-rendered pane_ln_color reads, so this
-        // live theme-toggle update can't drift from it.
         const lnFg = `rgb(${isLight ? lightMutedRgb : darkMutedRgb})`;
         const scheme = isLight ? "light" : "dark";
         frameDoc.documentElement.setAttribute("data-preview-base-theme", scheme);

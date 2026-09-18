@@ -49,10 +49,6 @@ from .view_scripts import (
 )
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-# Same @font-face declarations the chat UI loads (apps/shared/chat/font-faces.css,
-# included there via __CHAT_INCLUDE__); this preview pane isn't part of that
-# template pipeline, so it reads the one shared source directly instead of
-# carrying its own copy.
 _FONT_FACES_CSS = (_REPO_ROOT / "apps" / "shared" / "chat" / "font-faces.css").read_text()
 
 
@@ -113,8 +109,6 @@ def render_file_view(
     pane_fg = str(theme_palette["light_fg"])
     pane_fg_channels = str(theme_palette["light_fg_channels"])
     is_light_theme = str(theme_palette.get("theme") or "").lower() == "light"
-    # Line numbers are text, not decoration: read text-muted directly rather
-    # than a translucent tint of the code pane's own (separate) fg system.
     pane_ln_color = f"rgb({TEXT_MUTED_LIGHT_CHANNELS if is_light_theme else TEXT_MUTED_DARK_CHANNELS})"
     pane_line = f"rgba({pane_fg_channels},0.08)"
     pane_gutter_bg = f"rgba({pane_fg_channels},0.06)"
@@ -375,8 +369,6 @@ def render_file_view(
         content_json = json.dumps(content)
         rel_json = json.dumps(rel.replace("\\", "/"))
         prefix_json = json.dumps(prefix)
-        # Match the chat shell's cascade: KaTeX loads before its Chat-derived
-        # markdown CSS, with no preview-only math typography overrides.
         markdown_head_tags = [
             f'<script src="{MARKED_CDN_SRC}"></script>',
             f'<link rel="stylesheet" href="{KATEX_CDN_CSS_HREF}">',

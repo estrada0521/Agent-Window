@@ -99,8 +99,6 @@
       -ms-overflow-style: none;
       -webkit-overflow-scrolling: touch;
       box-sizing: border-box;
-      /* Each edge fades only while more of the row is hidden past it -- JS
-         sets the widths (shared/chat/composer/runtime.js). */
       --attach-preview-fade-left: 0px;
       --attach-preview-fade-right: 0px;
       mask-image: linear-gradient(to right, transparent 0, black var(--attach-preview-fade-left), black calc(100% - var(--attach-preview-fade-right)), transparent 100%);
@@ -210,9 +208,6 @@
       touch-action: none;
       box-sizing: border-box;
     }
-    /* The top/bottom fade only makes sense once the field is capped and
-       actually scrolling; applied always it washed out a resting one-line
-       message too (its text sits inside the fade band of a 54px box). */
     .composer textarea.is-scrollable {
       overscroll-behavior-y: contain;
       touch-action: pan-y;
@@ -287,7 +282,6 @@
       padding-right: 20px;
     }
 
-    /* The floating pill buttons live in ../../shared/chat/floating-btn.css. */
 
     .conversation-empty {
       display: flex;

@@ -46,8 +46,6 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
       document.addEventListener("touchstart", (event) => {
         if (document.getElementById("composerOverlay")?.classList.contains("visible")) return;
         if (document.querySelector(".mobile-sheet-overlay.open")) return;
-        // Tables, code blocks, and math scroll horizontally themselves --
-        // don't race that with the hub swipe.
         if (event.target.closest?.(".table-scroll, .katex-display, pre")) return;
         const touch = event.touches?.[0];
         if (!touch) return;
@@ -298,8 +296,6 @@ __CHAT_INCLUDE:../../shared/chat/scroll-btn.js__
 
 __CHAT_INCLUDE:../../shared/chat/runtime/messages.js__
 __CHAT_INCLUDE:../../shared/chat/transcript/render.js__
-    // marked loads deferred so it never blocks first paint. The first
-    // render(s) then fall back to plain text; re-render once it is in.
     if (typeof marked === "undefined") {
       const _rerenderWhenMarkedReady = () => {
         if (typeof marked !== "undefined") rerenderCurrentMessages({ suppressEntryAnimation: true });

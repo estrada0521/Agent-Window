@@ -36,9 +36,6 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             self.assertEqual(found, "my-session")
 
     def test_finds_an_archived_session_with_no_active_tmux_state(self) -> None:
-        # A session's .meta persists after its tmux session is killed --
-        # find_session_for_workspace has no tmux dependency at all, so
-        # archived sessions are found the same way as active ones.
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "session"
             workspace = Path(tmp) / "workspace"

@@ -109,9 +109,6 @@
       sheetNav.addEventListener("touchcancel", finishDrag, { passive: true });
     };
     const MOBILE_SHEET_ACTIVE_CLASS = "mobile-sheet-active";
-    // One physical nav + one physical footer, re-parented into whichever
-    // sheet is currently open. Never three independently-built copies that
-    // only agree by coincidence -- there is exactly one of each, always.
     const sharedSheetActiveRef = { panel: null };
     let sharedSheetOnClose = () => { };
     const sharedSheetNav = document.createElement("div");

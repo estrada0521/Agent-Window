@@ -15,7 +15,7 @@
         root.querySelectorAll(".target-chip").forEach((node) => {
           node.addEventListener("mousedown", (e) => e.preventDefault());
           node.addEventListener("click", () => {
-            if (!canComposeInSession()) return;  // archived session: chips show, selection is frozen
+            if (!canComposeInSession()) return;
             const target = node.dataset.target;
             if (selectedTargets.includes(target)) {
               selectedTargets = selectedTargets.filter((item) => item !== target);
@@ -33,8 +33,6 @@
       root.dataset.renderSig = renderSig;
       syncTargetPickerFade();
     };
-    // Each edge fades only while there is more row hidden past it -- the left
-    // once scrolled off the first chip, the right until the last is reached.
     const syncTargetPickerFade = () => {
       const el = document.getElementById("targetPicker");
       if (!el) return;

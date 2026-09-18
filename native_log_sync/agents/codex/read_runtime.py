@@ -9,7 +9,6 @@ import shlex
 from native_log_sync.agents._shared.runtime_display import runtime_event, short_line, unknown_tool_label
 from native_log_sync.agents._shared.runtime_paths import display_path
 
-# Transport/polling calls were also intentionally quiet in the 5.5 display.
 QUIET: frozenset[str] = frozenset({"wait", "write_stdin"})
 MAIN_LABEL: dict[str, str] = {
     "apply_patch": "Edit",
@@ -43,9 +42,6 @@ def _coerce_args(arguments: object) -> object:
     try:
         return json.loads(t)
     except json.JSONDecodeError:
-        # Early 5.6 builds emitted JavaScript object literals rather than
-        # strict JSON (for example ``{cmd:"pwd",workdir:"."}``). Extract
-        # only the display fields; never evaluate the native-log input.
         loose = {
             key: value
             for key in (
@@ -221,7 +217,6 @@ def _sid(p: str, t: str) -> str:
 
 
 def _skip_js_quoted(text: str, start: int) -> int:
-    """Return the first position after a JS string/template literal."""
 
     quote = text[start]
     i = start + 1
@@ -261,8 +256,6 @@ def _js_object_string_property(source: str, key: str) -> str:
         elif token.startswith("'"):
             value = ast.literal_eval(token)
         else:
-            # Preserve interpolation markers as display text. This parser
-            # never executes them, so templates remain safe and informative.
             value = token[1:-1].replace("\\n", "\n").replace("\\`", "`")
     except (SyntaxError, ValueError, json.JSONDecodeError):
         return ""
@@ -324,8 +317,6 @@ def _decode_js_literal(source: str) -> object:
     except json.JSONDecodeError:
         pass
     if len(value) >= 2 and value[0] == value[-1] == "`" and "${" not in value:
-        # Codex currently uses JSON strings, but accepting a plain template
-        # literal keeps free-form tools such as apply_patch readable.
         return value[1:-1].replace("\\n", "\n").replace("\\`", "`")
     return value
 
@@ -351,7 +342,6 @@ def _resolve_js_argument(source: str, script_prefix: str) -> object:
 
 
 def _iter_codex_5_6_exec_calls(script: object) -> list[tuple[str, object]]:
-    """Unwrap nested tool calls from the Codex 5.6 outer ``exec`` tool."""
 
     if not isinstance(script, str) or not script.strip():
         return []
@@ -376,9 +366,6 @@ def _iter_codex_5_6_exec_calls(script: object) -> list[tuple[str, object]]:
                     open_paren += 1
                 if open_paren < len(script) and script[open_paren] == "(":
                     close_paren = _find_js_call_end(script, open_paren)
-                    # A small number of persisted 5.6 records end before the
-                    # wrapper's closing parenthesis. The tool name and leading
-                    # display fields are still usable, so recover to EOF.
                     call_end = close_paren if close_paren >= 0 else len(script)
                     args_source = script[open_paren + 1 : call_end]
                     calls.append((name, _resolve_js_argument(args_source, script[:i])))
@@ -386,11 +373,6 @@ def _iter_codex_5_6_exec_calls(script: object) -> list[tuple[str, object]]:
                     continue
         i += 1
     if not calls:
-        # Some persisted scripts contain JS regex literals such as /'/g.
-        # The intentionally small lexer can conservatively mistake the quote
-        # inside that regex for a string delimiter. An actual nested call is
-        # still unambiguous when introduced by ``await tools.``; use that
-        # narrow transport-generated anchor only as a second pass.
         awaited = re.compile(r"\bawait\s+tools\.([A-Za-z_$][\w$]*)\s*\(")
         for match in awaited.finditer(script):
             name = match.group(1)
@@ -403,11 +385,6 @@ def _iter_codex_5_6_exec_calls(script: object) -> list[tuple[str, object]]:
 
 
 def iter_tool_calls(entry: dict) -> list[tuple[str, object]]:
-    """Read active Codex 5.6 tool-call envelopes.
-
-    Codex 5.5 ``function_call`` support is intentionally retired from this
-    path.
-    """
 
     if entry.get("type") != "response_item":
         return []
@@ -417,8 +394,6 @@ def iter_tool_calls(entry: dict) -> list[tuple[str, object]]:
         name = str(payload.get("name") or "")
         inp = payload.get("input", "")
         if name.strip().lower() == "exec":
-            # The outer exec is only a transport envelope in 5.6. Some exec
-            # scripts only format output and contain no nested tool at all.
             return _iter_codex_5_6_exec_calls(inp)
         return [(name, inp)]
     if ptype == "web_search_call":
@@ -436,9 +411,6 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
     if lower == "exec_command":
         event = _exec_command_event(a, workspace=str(workspace or ""))
         if event is None:
-            # Some 5.6 scripts pass ``{cmd}`` shorthand where the value comes
-            # from earlier JavaScript. Preserve the call even when there is no
-            # safe, non-evaluating way to reconstruct that variable.
             return [runtime_event("Shell", "exec_command", source_id="tool:exec_command:fallback")]
         main, sub = event
         return [runtime_event(main, sub, source_id=_sid(f"tool:{lower}", f"{main}:{sub}"))]
@@ -453,8 +425,6 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
         return [runtime_event("Tool", f"Search {sub}".strip(), source_id=_sid("tool:tool_search", sub))]
     main = MAIN_LABEL.get(lower)
     if main is None:
-        # 5.6 can add connector/MCP tools without changing the envelope. Do
-        # not silently lose them: preserve a compact generic runtime event.
         main, sub = unknown_tool_label(lower)
     else:
         sub = _codex_subline(lower, a, workspace=str(workspace or "")).strip() or lower

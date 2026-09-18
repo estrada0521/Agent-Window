@@ -81,8 +81,6 @@ __CHAT_INCLUDE:../messages-data.js__
         if (animateInDone) return;
         animateInDone = true;
         row.classList.remove("animate-in");
-        // A non-streaming row is fully settled here; a streaming one settles
-        // later in finishStream(). "Fit Height to Message" mode listens.
         if (!streamBody) {
           document.dispatchEvent(new CustomEvent("chat-transcript-settled"));
         }

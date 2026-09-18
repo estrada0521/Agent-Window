@@ -9,7 +9,6 @@ from native_log_sync.agents._shared.runtime_paths import display_path
 
 
 def iter_tool_calls(entry: dict) -> list[tuple[str, dict]]:
-    """Read tool calls from Antigravity's generated transcript JSONL."""
 
     if not isinstance(entry, dict) or str(entry.get("source") or "").upper() != "MODEL":
         return []

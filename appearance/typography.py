@@ -27,19 +27,11 @@ MOBILE_DARK_CODE_WEIGHT = 200
 FILE_PREVIEW_CODE_FONT = CODE_FONT
 FILE_PREVIEW_LIGHT_CODE_WEIGHT = 550
 FILE_PREVIEW_DARK_CODE_WEIGHT = 250
-# Weight of a colored inline link (file link or external link) -- same for
-# desktop and mobile, so markdown-body.css isn't split by [data-mobile="1"].
 LINK_LIGHT_WEIGHT = 650
 LINK_DARK_WEIGHT = 550
-# Headings/table-header weight. Split like strong: dark leans lighter so the
-# same numeric weight doesn't read heavier against the dark background.
 MD_HEADING_LIGHT_WEIGHT = 600
 MD_HEADING_DARK_WEIGHT = 550
-# Frontmatter-key weight -- same across theme and desktop/mobile today, so
-# this isn't split.
 MD_FRONTMATTER_KEY_WEIGHT = 650
-# Bold text. Split like body/code/link: dark leans lighter so the same
-# numeric weight doesn't read heavier against the dark background.
 MD_STRONG_LIGHT_WEIGHT = 650
 MD_STRONG_DARK_WEIGHT = 600
 TEXT_LINE_HEIGHT_RATIO = 1.62

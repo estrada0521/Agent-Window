@@ -38,7 +38,6 @@ def session_workspace_claims(
     *,
     exclude_session: str = "",
 ) -> dict[str, tuple[str, str]]:
-    """Map each normalized workspace to its session and recorded path."""
     exclude = str(exclude_session or "").strip()
     root = agent_window_session_root()
     claims: dict[str, tuple[str, str]] = {}
@@ -53,23 +52,12 @@ def session_workspace_claims(
 
 
 def find_session_for_workspace(workspace: Path | str, *, exclude_session: str = "") -> str | None:
-    """Return the name of an existing session (active or archived) whose
-    recorded workspace matches. A session's .meta file persists after the
-    tmux session itself is gone, so this covers archived sessions too.
-    """
     target = str(Path(workspace).expanduser().resolve())
     claim = session_workspace_claims(exclude_session=exclude_session).get(target)
     return claim[0] if claim else None
 
 
 def session_workspace(session_name: str) -> str | None:
-    """Return the workspace path recorded in a session's own .meta file.
-
-    Used to resolve which live tmux session (if any) is currently backing
-    an AW session: tmux only ever knows its own workspace, never an AW
-    session's name, so the .meta-recorded workspace is the bridge between
-    the two.
-    """
     meta = read_session_meta(session_name)
     if meta is None:
         return None
@@ -77,7 +65,6 @@ def session_workspace(session_name: str) -> str | None:
 
 
 def session_meta_agents(session_name: str) -> list[str]:
-    """The agent list a session's .meta records."""
     meta = read_session_meta(session_name)
     if meta is None:
         return []
@@ -85,13 +72,6 @@ def session_meta_agents(session_name: str) -> list[str]:
 
 
 def set_session_workspace(session_name: str, workspace: str) -> None:
-    """Overwrite just the workspace path in a session's .meta.
-
-    Nothing else: the port a viewer derives from the workspace only matters
-    for a session that's currently open, and Change Workspace is offered only
-    for an archived session that isn't. Workspace ownership remains unique
-    across active and archived sessions.
-    """
     name = str(session_name or "").strip()
     ws = str(workspace or "").strip()
     if not name or not ws:
@@ -105,11 +85,6 @@ def set_session_workspace(session_name: str, workspace: str) -> None:
 
 
 def reset_session_agents(session_name: str) -> None:
-    """Drop the recorded agent list from a session's .meta.
-
-    Offered for any archived session; a later revive starts without the old
-    agent set. Like set_session_workspace, this touches nothing else.
-    """
     name = str(session_name or "").strip()
     if not name:
         raise SessionMetaError("session name is required")
@@ -118,26 +93,19 @@ def reset_session_agents(session_name: str) -> None:
     write_json_atomically(path, raw, indent=2)
 
 
-def _meta_document(workspace: str, agents: list[str]) -> dict:
-    recorded_workspace = str(workspace or "").strip()
-    if not recorded_workspace:
-        raise ValueError("workspace is required to write session meta")
-    return {
-        "workspace": recorded_workspace,
-        "agents": [str(agent).strip() for agent in agents if str(agent).strip()],
-    }
-
-
 def write_session_meta_file(
     session_name: str,
     workspace: str,
     agents: list[str],
 ) -> None:
-    write_json_atomically(session_meta_path(session_name), _meta_document(workspace, agents), indent=2)
+    write_json_atomically(
+        session_meta_path(session_name),
+        {"workspace": workspace, "agents": list(agents)},
+        indent=2,
+    )
 
 
 def create_session_folder(session_name: str, workspace: str, agents: list[str]) -> None:
-    document = _meta_document(workspace, agents)
     session_artifact_dir(session_name).mkdir(parents=True)
     session_log_path(session_name).touch()
-    write_json_atomically(session_meta_path(session_name), document, indent=2)
+    write_session_meta_file(session_name, workspace, agents)

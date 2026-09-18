@@ -133,11 +133,6 @@
           for (const { row } of pendingRowCleanup) {
             if (row.isConnected) postRenderScope(row);
           }
-          // Older messages loaded above the view have no reveal animation, and
-          // "chat-transcript-settled" is only a re-fit trigger for Fit Height --
-          // firing it here (now and again on each row's 850ms cleanup timer)
-          // yanks the window back to the last stepped-to message. The prepend
-          // changes nothing it would need to re-measure, so stay silent.
           pendingStreamRowCleanups = [];
           void timeline.offsetHeight;
           _programmaticScroll = true;
@@ -216,12 +211,6 @@
             if (sendBtnEl) sendBtnEl.classList.toggle("visible", hasText);
           }
         }
-        // The message's final height is known the instant its row is in the DOM
-        // (the char reveal is a client-side opacity animation over text that's
-        // already there). Fire now so "Fit Height to Message" resizes in step
-        // with the message appearing, not after the reveal finishes. Also fire
-        // once on the first content render of the page so switching session or
-        // reloading the chat re-fits the window.
         if (pendingStreamRowCleanups.length || !_firstContentSettleFired) {
           _firstContentSettleFired = true;
           document.dispatchEvent(new CustomEvent("chat-transcript-settled"));
@@ -244,8 +233,6 @@
     const renderStatus = () => {
       const node = document.getElementById("statusline");
       if (sessionActive === false) {
-        // Archived session: the statusline is a fixed read-only label. Nothing
-        // transient (toasts, the SSE reconnect blank) gets to overwrite it.
         node.textContent = "archived session is read-only";
         node.classList.remove("is-error");
         return;
@@ -260,7 +247,7 @@
     };
     const agentActionCandidates = (mode) => {
       if (mode === "add") return ALL_BASE_AGENTS.filter(Boolean);
-      return (availableTargets || []).filter((agent) => agent && agent !== "others");
+      return availableTargets;
     };
     const performAgentAction = async (mode, selected) => {
       if (!selected) return;

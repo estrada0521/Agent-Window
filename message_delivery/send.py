@@ -16,7 +16,6 @@ from backend_core.agents.registry import ALL_AGENT_NAMES
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.session_meta import find_session_for_workspace
 from backend_core.tmux.session import AgentPane, parse_agent_topology
-from backend_core.tmux.instances import agents_except_sender
 from backend_core.tmux.topology import default_tmux_socket_name
 from message_delivery.paste import deliver_text_to_pane
 
@@ -88,7 +87,6 @@ class AgentSendRuntime:
         self._tmux_session_name: str | None = None
 
     def resolve_tmux_session_name(self) -> str:
-        """Return the tmux session containing this process's own pane."""
         if self._tmux_session_name is not None:
             return self._tmux_session_name
         result = self.tmux.run(["display-message", "-p", "#{session_name}"])
@@ -128,14 +126,6 @@ class AgentSendRuntime:
             raise AgentSendError(str(exc)) from exc
 
     def resolve_session_name(self, workspace: str | None = None) -> str:
-        """Return the current AW session name -- looked up by workspace.
-
-        tmux never carries this (an AW session's name can be renamed
-        independently of the tmux session underneath it), so the only
-        reliable source is the same one the rest of AW uses: which log
-        folder's .meta currently claims this workspace. The workspace itself
-        comes from tmux's native session working directory.
-        """
         workspace = (workspace or self.session_workspace()).strip()
         resolved = find_session_for_workspace(workspace)
         if resolved:
@@ -216,8 +206,9 @@ class AgentSendRuntime:
             if lower_target == "others":
                 if not sender_role:
                     raise AgentSendError("Cannot resolve current sender for target: others")
-                for instance in agents_except_sender(active, sender_role):
-                    queue(instance, panes_by_name[instance])
+                for instance in active:
+                    if instance != sender_role:
+                        queue(instance, panes_by_name[instance])
                 continue
 
             canonical = self.resolve_agent_name_target(raw_target, active)

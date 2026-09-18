@@ -49,8 +49,8 @@ def proxy_chat_session(handler, hub, method: str) -> None:
         handler.send_response(404)
         handler.end_headers()
         return
-    workspace = str(resolved.get("workspace") or "").strip()
-    session_is_active = bool(resolved.get("session_is_active", True))
+    workspace = resolved["workspace"]
+    session_is_active = resolved["session_is_active"]
     body = _read_body(handler, method)
     forwarded_prefix = format_chat_url(chat_port, "/").rstrip("/")
     headers = http_proxy.forward_headers(

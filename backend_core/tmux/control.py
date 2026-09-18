@@ -306,12 +306,6 @@ def _pane_status(prefix: list[str], pane_id: str) -> dict:
 
 
 def describe_session(session_name: str, *, tmux_socket: str = "") -> dict:
-    """Folder-first status for one AW session.
-
-    The log folder (its .meta) is the only identity; tmux is asked only
-    whether a live session is currently bound to the workspace it records,
-    never by matching on the AW name (tmux doesn't know it).
-    """
     name = (session_name or "").strip()
     if not name:
         raise SessionControlError("session_name is required")
@@ -551,9 +545,6 @@ def remove_agent(
         canonical = resolve_canonical_instance(current, requested)
         if not canonical:
             raise SessionControlError(f"Agent instance not in this session: {agent}")
-        # Zero agents is a valid state -- the "terminal" window (0) keeps the
-        # tmux session alive and add_agent can bring one back. Agent Window
-        # doesn't own a "sessions must have an agent" rule.
         pane_id = next((pane.pane_id for pane in topology if pane.name == canonical), "")
         if not pane_id:
             raise SessionControlError(f"No tmux pane found for instance: {canonical}")

@@ -54,10 +54,6 @@ class _DebouncedWorkspaceRefresh:
         self._timer: threading.Timer | None = None
 
     def mark_full_rescan(self) -> None:
-        # FSEvents told us it coalesced or dropped individual path events, so the
-        # reported paths for this batch can't be trusted to cover everything that
-        # changed. Treat the whole workspace as dirty instead of guessing which
-        # subtree needs a rescan.
         with self._lock:
             self._full_rescan_pending = True
             self._git_head_pending = True

@@ -24,10 +24,6 @@ def _chat_pwa_asset_url(path: str, chat_base_path: str = "") -> str:
 
 
 def render_chat_service_worker_html() -> str:
-    # CHAT_BASE_PATH is declared by the main app script, which always
-    # precedes this block in the page -- classic (non-module) <script> tags
-    # share one top-level lexical scope, so a later tag can read an earlier
-    # tag's const/let bindings directly.
     return (
         "  <script>\n"
         "    (() => {\n"

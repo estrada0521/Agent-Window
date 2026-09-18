@@ -73,7 +73,6 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       --chrome-icon-size: 24px;
       --chrome-icon-stroke: 1.6;
       --chrome-icon-gap: 0;
-      /* no transform: this is the containing block for its fixed-position sheet children */
       position: fixed;
       top: auto;
       bottom: 100px;
@@ -169,7 +168,6 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       z-index: 1;
     }
 
-    /* Experiment: hidden now that right-swipe also opens/closes the hub. May come back. */
     .shell>.page-header .page-title {
       display: none;
     }

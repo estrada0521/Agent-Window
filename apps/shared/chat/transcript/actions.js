@@ -99,14 +99,15 @@ __CHAT_INCLUDE:../shortcut-commands.js__
       }
       sendLocked = true;
       const message = document.getElementById("message");
-      const rawInput = (forcedText != null ? forcedText : message.value).trim();
+      const rawInput = forcedText != null ? forcedText : message.value;
+      const commandInput = rawInput.trim();
       const clearComposerDraft = () => {
         message.value = "";
         clearStoredComposerDraft();
         updateSendBtnVisibility();
         autoResizeTextarea();
       };
-      if (rawInput.startsWith("/")) {
+      if (commandInput.startsWith("/")) {
         let list;
         try {
           list = await loadShortcutCommandsOnce();
@@ -115,11 +116,9 @@ __CHAT_INCLUDE:../shortcut-commands.js__
           sendLocked = false;
           return false;
         }
-        const parsed = parseSlashCommandInput(rawInput, list);
+        const parsed = parseSlashCommandInput(commandInput, list);
         if (parsed) {
           if (parsed.insert) {
-            // Not a backend command: drop the token into the composer (like an
-            // @-mention) and leave it for the user to send.
             message.value = parsed.insert + " ";
             updateSendBtnVisibility();
             autoResizeTextarea();
@@ -130,9 +129,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
           const arg = parsed.arg;
           if (closeOverlayOnStart && isComposerOverlayOpen()) {
             blurComposerOnMobile(message);
-            // Read by the close-start Fit Height refit: the transcript is
-            // about to change (refresh() below), so that refit should wait
-            // for it instead of measuring the stale last message.
             document.documentElement.dataset.sendInFlight = "1";
             closeComposerOverlay();
           }
@@ -143,8 +139,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
               body: JSON.stringify({
                 command_id: parsed.id,
                 arg,
-                // The terminal pane isn't a chat target -- it never appears as
-                // a chip, so it can't come from selectedTargets.
                 target: parsed.id === "terminal" ? "terminal" : selectedTargets.join(","),
                 client: document.documentElement.dataset.mobile === "1" ? "mobile" : "desktop",
               }),
@@ -177,7 +171,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
             delete document.documentElement.dataset.sendInFlight;
           }
         }
-        // ショートカット未一致 → 通常メッセージとして送信
       }
       let target = selectedTargets.join(",");
       const isNote = !target;
@@ -192,11 +185,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         return false;
       }
       if (isComposerOverlayOpen()) {
-        // Fit Height's close-start refit reads this: a send always returns to
-        // the latest message from wherever the transcript was parked, and that
-        // refit waits for the sent message to render rather than measuring the
-        // previous one. Set for every send path, not just the send button --
-        // Enter closes the overlay only after the round trip below.
         document.documentElement.dataset.sendInFlight = "1";
         if (closeOverlayOnStart) {
           blurComposerOnMobile(message);
@@ -229,12 +217,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         updateSendBtnVisibility();
         closeComposerOverlay();
         setStatus(isNote ? "note saved" : `sent to ${target}`);
-        // Mark the target agents running *before* rendering the sent message so
-        // render() draws the running indicator in the same pass -- otherwise it
-        // arrives a session-state round-trip later and forces a second resize
-        // that flashes the message off-screen in Fit Height mode.
-        // markAgentOptimisticallyRunning holds it through racing session-state
-        // updates until the server confirms.
         if (!isNote) {
           for (const t of selectedTargets) {
             if (agentBaseName(t) !== "user") markAgentOptimisticallyRunning(t);
@@ -255,7 +237,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
     };
     document.getElementById("composer").addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (!canComposeInSession()) return;  // statusline already shows the read-only label
+      if (!canComposeInSession()) return;
       const submitter = event.submitter;
       const closeOverlayOnStart = !!(submitter && submitter.classList && submitter.classList.contains("send-btn"));
       await submitMessage({ closeOverlayOnStart });

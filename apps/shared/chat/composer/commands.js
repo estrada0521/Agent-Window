@@ -113,8 +113,6 @@
       if (item) selectCmd(parseInt(item.dataset.idx, 10));
     });
     cmdDrop.addEventListener("mousedown", (e) => {
-      // preventDefault only -- see the matching fileDrop mousedown handler
-      // (file-runtime.js) for why selecting waits for click.
       if (e.target.closest(".cmd-item")) e.preventDefault();
     });
     messageInput.addEventListener("keydown", (e) => {

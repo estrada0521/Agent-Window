@@ -8,7 +8,6 @@ SERVER_THEME_FALLBACK = "dark"
 
 
 def resolve_server_theme(value: object) -> str:
-    """Resolve a request choice where the server cannot inspect the OS theme."""
     theme = str(value or "").strip().lower()
     if not theme or theme == "system":
         return SERVER_THEME_FALLBACK

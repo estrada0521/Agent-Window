@@ -40,9 +40,6 @@
   <link rel="apple-touch-icon" href="__APPLE_TOUCH_ICON_URL__">
   <script>
     (() => {
-      // iPadOS Safari's default UA impersonates macOS and sends no Client
-      // Hints, so the server can't tell it apart from a real Mac -- only
-      // touch capability can.
       try {
         if (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || "")) {
           const url = new URL(window.location.href);

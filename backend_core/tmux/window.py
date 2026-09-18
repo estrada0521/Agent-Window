@@ -33,10 +33,6 @@ def configure_window_size(*, target: str, width: int, tmux_socket: str) -> None:
     if not target_name:
         return
     prefix = tmux_prefix_args(tmux_socket)
-    # Width must stay fixed -- mobile's pane trace re-renders the captured
-    # ANSI grid assuming a stable column count. Height has no such consumer,
-    # so it's left untouched: omitting -y here is what leaves it alone,
-    # both now and on whatever the terminal does with it later.
     subprocess.run(
         [*prefix, "resize-window", "-t", target_name, "-x", str(width)],
         stdout=subprocess.DEVNULL,

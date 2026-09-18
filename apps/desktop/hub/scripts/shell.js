@@ -320,8 +320,6 @@
       return `/open-session?session=${encodeURIComponent(sessionName)}`;
     }
 
-    // ⌘1..⌘9 -> the 1st..9th active session (sidebar order). Capped at 9;
-    // archived / warning sessions are not addressable this way.
     function switchToDeskActiveSession(index) {
       const target = (_hubSessionsCache.active || [])[index];
       if (!target || !target.name || target.name === _deskSelectedSessionName) return;
@@ -516,7 +514,7 @@
       function open() {
         cancelDismiss();
         if (isDeskSidebarOpen()) return;
-        if (_deskAutoWindowHeight) return; // this mode switches sessions via a native menu on click
+        if (_deskAutoWindowHeight) return;
         if (hoverPopover) return;
         if (!_deskSessionList) return;
 
@@ -551,7 +549,6 @@
         document.body.appendChild(hoverPopover);
 
         const wbRect = _deskWorkbench ? _deskWorkbench.getBoundingClientRect() : null;
-        // Same inset the git pin floats at (--right-panel-floating-inset), mirrored.
         const gap = Math.round(10 * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT);
         hoverPopover.style.top = `${Math.round((wbRect ? wbRect.top : _deskAppSidebarToggle.getBoundingClientRect().bottom) + gap)}px`;
         hoverPopover.style.left = `${Math.round((wbRect ? wbRect.left : 0) + gap)}px`;

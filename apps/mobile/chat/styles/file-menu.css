@@ -2,9 +2,6 @@
       overflow: hidden;
     }
 
-    /* Mobile's dropdowns are body children, as they were before desktop made
-       its copies structural composer children. Keeping them outside the
-       transformed composer preserves iOS momentum scrolling. */
     #fileDropdown,
     #cmdDropdown {
       position: fixed;
@@ -56,9 +53,6 @@
       width: 100%;
       box-sizing: border-box;
       padding: 6px 18px;
-      /* Inherited by .file-item-name/-relpath below, which rely on it for
-         their own overflow:hidden + text-overflow:ellipsis to mean anything
-         -- without it, text wraps to a second line instead of eliding. */
       white-space: nowrap;
       font-size: 14px;
       line-height: 20px;
@@ -67,8 +61,6 @@
       cursor: pointer;
     }
 
-    /* Keep the candidate list's leading edge on the same 10px rhythm as the
-       composer text, without changing the desktop menu. */
     html[data-mobile="1"] .file-item {
       padding-left: 10px;
     }
@@ -90,8 +82,6 @@
       stroke-width: 2.5px;
     }
 
-    /* Basename + path is one right-truncating line. Because the path is the
-       second span, it disappears before the basename is touched. */
     .file-item-path {
       flex: 1;
       min-width: 0;
@@ -109,9 +99,6 @@
       color: var(--muted);
     }
 
-    /* flex-shrink, not flex:0 0 auto with a floor -- the size text is the
-       least useful part of the row, so it should give way before the path
-       (see .file-item-path above) ever loses a character of the filename. */
     .file-item-size {
       flex: 0 1 auto;
       min-width: 0;

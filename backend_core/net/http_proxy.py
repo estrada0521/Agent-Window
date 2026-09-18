@@ -41,12 +41,6 @@ def open_upstream(
     headers: dict[str, str] | None = None,
     timeout: float | None = 30.0,
 ):
-    """Issue the upstream request. Returns (status, response_headers, response).
-
-    `response` is either the object returned by urlopen() or the HTTPError
-    raised for a non-2xx status (both support .read()/.close()/.headers).
-    The caller is responsible for closing it.
-    """
     ctx = ssl._create_unverified_context() if url.startswith("https://") else None
     req = Request(url, data=body, method=method, headers=headers or {})
     try:
@@ -64,7 +58,6 @@ def read_upstream(
     headers: dict[str, str] | None = None,
     timeout: float | None = 30.0,
 ) -> dict:
-    """Like open_upstream(), but buffers and returns the full response body."""
     status, resp_headers, resp = open_upstream(method, url, body=body, headers=headers, timeout=timeout)
     try:
         resp_body = resp.read()
@@ -85,7 +78,6 @@ def _safe_write(handler, body: bytes) -> bool:
 
 
 def relay_buffered(handler, response: dict, *, extra_headers: dict[str, str] | None = None) -> None:
-    """Send a read_upstream() result back to the client in one shot."""
     status = int(response.get("status", 502))
     resp_headers = response.get("headers") or {}
     resp_body = response.get("body") or b""
@@ -102,7 +94,6 @@ def relay_buffered(handler, response: dict, *, extra_headers: dict[str, str] | N
 
 
 def relay_stream(handler, status: int, resp_headers, resp, *, chunk_size: int = 64 * 1024) -> None:
-    """Stream an open_upstream() response back to the client, then close it."""
     try:
         handler.send_response(status)
         for key, value in resp_headers.items():

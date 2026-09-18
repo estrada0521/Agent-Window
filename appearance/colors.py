@@ -1,70 +1,49 @@
 from __future__ import annotations
 
-# Text-color roles: one value per (client, theme). A role that equals another
-# is set to it, not re-typed. Order: Base -> Hub -> Chat -> Fine details.
-# The :root `--fg` fallback (light_fg) and icon grays live in
-# resolve_theme_palette() instead.
 
-# --- Base ---
 TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS = "9, 9, 9"
 TEXT_PRIMARY_DESKTOP_DARK_CHANNELS = "216, 216, 216"
 TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS = "19, 19, 19"
 TEXT_PRIMARY_MOBILE_DARK_CHANNELS = "232, 232, 232"
 
-# Muted / secondary (timestamps, previews, labels).
 TEXT_MUTED_LIGHT_CHANNELS = "120, 120, 120"
 TEXT_MUTED_DARK_CHANNELS = "150, 150, 150"
 
-# --- Hub ---
-# Session / window title.
 TEXT_SESSION_DESKTOP_LIGHT_CHANNELS = TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS
 TEXT_SESSION_DESKTOP_DARK_CHANNELS = TEXT_PRIMARY_DESKTOP_DARK_CHANNELS
 TEXT_SESSION_MOBILE_LIGHT_CHANNELS = TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS
 TEXT_SESSION_MOBILE_DARK_CHANNELS = TEXT_PRIMARY_MOBILE_DARK_CHANNELS
 
-# Archived / warning session name (dimmer than active).
 TEXT_SESSION_DIM_DESKTOP_LIGHT_CHANNELS = TEXT_SESSION_DESKTOP_LIGHT_CHANNELS
 TEXT_SESSION_DIM_DESKTOP_DARK_CHANNELS = "180, 180, 180"
 TEXT_SESSION_DIM_MOBILE_LIGHT_CHANNELS = "100, 100, 100"
 TEXT_SESSION_DIM_MOBILE_DARK_CHANNELS = "180, 180, 180"
 
-# --- Chat (rendered markdown) ---
-# Bold. Desktop falls back to text-primary via var(--fg-bold, var(--fg)).
 TEXT_STRONG_MOBILE_LIGHT_CHANNELS = TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS
 TEXT_STRONG_MOBILE_DARK_CHANNELS = TEXT_PRIMARY_MOBILE_DARK_CHANNELS
 
-# Inline / file link.
 TEXT_LINK_LIGHT_CHANNELS = "36, 85, 161"
 TEXT_LINK_DARK_CHANNELS = TEXT_PRIMARY_DESKTOP_DARK_CHANNELS
 
-# External (web) link.
 TEXT_EXTERNAL_LINK_LIGHT_CHANNELS = "196, 42, 30"
 TEXT_EXTERNAL_LINK_DARK_CHANNELS = "224, 88, 88"
 
-# Diff add / remove.
 TEXT_DIFF_INSERT_LIGHT_CHANNELS = "105, 126, 65"
 TEXT_DIFF_INSERT_DARK_CHANNELS = "165, 184, 127"
 TEXT_DIFF_DELETE_LIGHT_CHANNELS = "207, 34, 46"
 TEXT_DIFF_DELETE_DARK_CHANNELS = "248, 113, 113"
 
-# --- Fine details ---
-# Error text; matches external-link today but tuned independently.
 TEXT_ERROR_LIGHT_CHANNELS = TEXT_EXTERNAL_LINK_LIGHT_CHANNELS
 TEXT_ERROR_DARK_CHANNELS = TEXT_EXTERNAL_LINK_DARK_CHANNELS
 
-# --- Icon hover (icon scope, not text) ---
 DESKTOP_LIGHT_ICON_HOVER = "rgb(35, 35, 35)"
 DESKTOP_DARK_ICON_HOVER = "rgb(190, 190, 190)"
 MOBILE_LIGHT_ICON_HOVER = "rgb(35, 35, 35)"
 MOBILE_DARK_ICON_HOVER = "rgb(190, 190, 190)"
 
-# --- Scrollbar thumb (desktop chat) ---
 DESKTOP_SCROLLBAR_THUMB_LIGHT = "rgb(200, 200, 198)"
 DESKTOP_SCROLLBAR_THUMB_DARK = "rgb(35, 35, 35)"
 
-# --- Page backgrounds ---
-# One RGB per (surface, theme), fixed so the runtime [data-theme] toggle
-# doesn't inherit the first-render theme. Hub and chat may diverge.
 MOBILE_HUB_LIGHT_BG_RGB = (243, 243, 241)
 MOBILE_HUB_DARK_BG_RGB = (17, 17, 17)
 MOBILE_CHAT_LIGHT_BG_RGB = (249, 249, 247)
@@ -74,23 +53,12 @@ DESKTOP_HUB_DARK_BG_RGB = (13, 13, 13)
 DESKTOP_CHAT_LIGHT_BG_RGB = (249, 249, 247)
 DESKTOP_CHAT_DARK_BG_RGB = (13, 13, 13)
 
-# --- Surface translucency over the window ---
-# Hub alpha -> --hub-glass; chat alpha -> --chat-pane-bg.
 DESKTOP_HUB_LIGHT_BG_ALPHA = 0.88
 DESKTOP_HUB_DARK_BG_ALPHA = 0.90
 DESKTOP_CHAT_LIGHT_BG_ALPHA = 0.94
 DESKTOP_CHAT_DARK_BG_ALPHA = 0.95
 
 
-# Every TEXT_*_CHANNELS constant defined above is a role; nothing else has
-# to re-list their names. Adding a role is declaring one constant, not also
-# registering it somewhere.
-#
-# Only the bare channels are emitted -- CSS already has a way to build a
-# full color from channels (`rgb(__X_CHANNELS__)`, or `rgb(var(--x-channels))`
-# where a var needs to be shared), so there's nothing for Python to convert;
-# emitting a second, pre-wrapped "__X__" token would just be the same fact
-# spelled two ways.
 def _text_color_token_replacements() -> tuple[tuple[str, str], ...]:
     return tuple(
         (f"__{name}__", value)
@@ -159,13 +127,7 @@ def resolve_theme_palette(theme: str = "dark") -> dict[str, object]:
         panel_row_border = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.14)"
         panel_row_hover_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.13)"
         panel_row_active_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.16)"
-    # __DARK_BG__/__DARK_BG_CHANNELS__ feed the :root pre-toggle fallback, the
-    # launch shell, the meta theme-color and the error page -- shell contexts,
-    # not the chat surface -- so they track the hub value.
     bg_rgb = DESKTOP_HUB_LIGHT_BG_RGB if theme == "light" else DESKTOP_HUB_DARK_BG_RGB
-    # The mobile chat :root pre-toggle fallback tracks the resolved theme's
-    # own chat bg (not the hub value), so hand-tuning MOBILE_CHAT_*_BG_RGB
-    # can't leave it out of sync.
     mobile_chat_bg_rgb = MOBILE_CHAT_LIGHT_BG_RGB if theme == "light" else MOBILE_CHAT_DARK_BG_RGB
     fg_rgb = (fg_level, fg_level, fg_level)
     return {

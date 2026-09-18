@@ -142,7 +142,6 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     if not Path(resolved_workspace).is_dir():
         handler._send_json(400, {"ok": False, "error": f"Invalid workspace: {resolved_workspace}"})
         return
-    # Check the claim before creating the tmux session or its metadata.
     claim_failure = _workspace_claim_failure(resolved_workspace)
     if claim_failure:
         status, error = claim_failure
@@ -153,10 +152,6 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     except RuntimeError as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    # Checked before anything is created: workspace alone determines the
-    # chat port, so a collision is knowable up front. Finding out only after
-    # the tmux session already exists would leave a session running with no
-    # way to reach it -- and nothing here would clean that session back up.
     chat_port = workspace_chat_port(resolved_workspace)
     if not port_is_bindable(chat_port):
         handler._send_json(409, {"ok": False, "error": f"chat port {chat_port} is occupied"})

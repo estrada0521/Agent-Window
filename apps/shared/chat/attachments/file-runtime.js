@@ -91,8 +91,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       const row = document.createElement("div");
       row.className = "file-item";
       row.dataset.path = path;
-      // Keep the original basename-then-path presentation. The two spans are
-      // one truncation unit in CSS, so the path on the right disappears first.
       const pathInner = relDir
         ? `<span class="file-item-name">${escapeHtml(label)}</span><span class="file-item-relpath">${escapeHtml(relDir)}</span>`
         : `<span class="file-item-name">${escapeHtml(label)}</span>`;
@@ -123,11 +121,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       if (item) selectFile(item.dataset.path);
     });
     fileDrop.addEventListener("mousedown", (e) => {
-      // preventDefault only -- keep #message focused. Selecting the file
-      // (which hides fileDrop) waits for click: hiding it mid-mousedown, before
-      // click has fired on the original target, has the browser fall back to
-      // whatever's now under the cursor -- the composer-overlay backdrop --
-      // and its own "click outside closes this" handler takes it from there.
       if (e.target.closest(".file-item")) e.preventDefault();
     });
     const autoResizeTextarea = () => {
@@ -139,10 +132,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       messageInput.style.height = nextHeight + "px";
       const scrollable = nextHeight >= maxHeight;
       messageInput.style.overflowY = scrollable ? "auto" : "hidden";
-      // Mobile's top/bottom fade mask is only meaningful once the field is
-      // actually capped and scrolling -- applied unconditionally it washed
-      // out a normal one-line message too (its text sits inside the fade
-      // band of a field that never scrolls).
       messageInput.classList.toggle("is-scrollable", scrollable);
       if (isMobileComposer) {
         messageInput.style.marginTop = (baseHeight - nextHeight) + "px";
@@ -150,10 +139,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       } else {
         messageInput.style.marginTop = "0px";
       }
-      // The height = "auto" round-trip drops scrollTop to 0. Once the field is
-      // capped and scrolls, that leaves the just-typed last line a few px below
-      // the fold (and the desktop scrollbar is hidden, so there's no cue).
-      // Follow the caret back down whenever it's sitting at the end.
       if (scrollable && messageInput.value.length - messageInput.selectionEnd <= 1) {
         messageInput.scrollTop = messageInput.scrollHeight;
       }
@@ -161,9 +146,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
         positionComposerDropdown(attachPreviewRow);
       }
     };
-    // Mobile retains the original fixed dropdowns outside the transformed
-    // composer. Desktop's dropdowns are composer children and need no JS
-    // positioning at all.
     const positionComposerDropdown = (dropdown) => {
       if (!dropdown || !isMobileComposer) return;
       const taRect = messageInput.getBoundingClientRect();
@@ -207,9 +189,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
         const width = entries[entries.length - 1].contentRect.width;
         if (width === _composerWidthForResize) return;
         _composerWidthForResize = width;
-        // A width change (e.g. the right panel opening) reflows the text and
-        // can change how many lines it needs; autoResizeTextarea keeps the
-        // caret in view when it's at the end.
         autoResizeTextarea();
       }).observe(messageInput);
     } else {

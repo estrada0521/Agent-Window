@@ -46,7 +46,7 @@ def resolve_session_chat_target(hub, session_name: str) -> dict:
     query = active_session_records_query(hub)
     if session_name in query.records:
         record = query.records[session_name]
-        workspace = str(record.get("workspace") or "").strip()
+        workspace = record["workspace"]
         return _chat_target(hub, workspace, session_is_active=True)
     if query.state == "unhealthy":
         return {"status": "unhealthy", "detail": query.detail}
@@ -54,7 +54,7 @@ def resolve_session_chat_target(hub, session_name: str) -> dict:
     record = archived.get(session_name)
     if not record:
         return {"status": "missing"}
-    workspace = str(record.get("workspace") or "").strip()
+    workspace = record["workspace"]
     return _chat_target(hub, workspace, session_is_active=False)
 
 
@@ -62,14 +62,14 @@ def resolve_session_chat_target_by_port(hub, chat_port: int) -> dict:
     port = int(chat_port)
     query = active_session_records_query(hub)
     for record in query.records.values():
-        workspace = str(record.get("workspace") or "").strip()
-        if workspace and workspace_chat_port(workspace) == port:
+        workspace = record["workspace"]
+        if workspace_chat_port(workspace) == port:
             return _chat_target(hub, workspace, session_is_active=True)
     if query.state == "unhealthy":
         return {"status": "unhealthy", "detail": query.detail}
     archived = archived_session_records(query.non_archived_names)
     for record in archived.values():
-        workspace = str(record.get("workspace") or "").strip()
-        if workspace and workspace_chat_port(workspace) == port:
+        workspace = record["workspace"]
+        if workspace_chat_port(workspace) == port:
             return _chat_target(hub, workspace, session_is_active=False)
     return {"status": "missing"}

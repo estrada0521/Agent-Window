@@ -412,7 +412,6 @@
       text-overflow: ellipsis;
     }
 
-    /* Literals, not tokens: the hub page has no --body-weight. */
     html[data-theme="dark"] .mob-row-preview {
       font-weight: 400;
     }
@@ -480,15 +479,12 @@
 
     .swipe-act-tray {
       position: absolute;
-      /* Match the row's card inset so the buttons line up with it. */
       top: 4px;
       bottom: 4px;
       right: 10px;
       display: flex;
       align-items: stretch;
       gap: 8px;
-      /* Revive + Delete grow in together from the right edge, staying a set
-         (--swipe-p: 0..1, set per row in JS). */
       transform: scale(calc(0.3 + 0.7 * var(--swipe-p, 1)));
       transform-origin: right center;
       opacity: calc(0.05 + 0.95 * var(--swipe-p, 1));
@@ -532,7 +528,6 @@
       height: 76%;
     }
 
-    /* iOS system colours, matching Safari's own swipe actions. */
     .swipe-act-btn.is-danger,
     .swipe-act-btn.is-warn {
       background: rgb(255, 69, 58);
@@ -606,16 +601,7 @@
       background: var(--bg);
       opacity: 1;
       transform: translate3d(100%, 0, 0);
-      /* iOS-style: rounded to the device radius while detached / mid-slide, then
-         snaps flush once it has finished seating (border-radius 0s, but delayed
-         by the slide duration -- no radius animation, just a hard switch at the
-         end). The corner clip lives on .chat-frame-clip so this element's
-         drop shadow remains outside it. */
       border-radius: 47px;
-      /* chat sits above the hub -- a faint shadow at constant strength while
-         detached, then off the instant it seats flush (same hard-switch-at-end
-         treatment as border-radius; a shadow that fades while the view is still
-         raised reads wrong). */
       box-shadow: var(--chat-overlay-glow);
       transition: transform 440ms cubic-bezier(0.32, 0.72, 0, 1), opacity 180ms ease, border-radius 0s 440ms, box-shadow 0s 440ms;
       will-change: transform, opacity;
@@ -649,7 +635,6 @@
       transition-duration: 280ms;
     }
 
-    /* A fine, crisp edge line above the clipped frame. */
     #chatOverlay::after {
       content: "";
       position: absolute;
@@ -657,8 +642,6 @@
       border: 0.5px solid var(--line-strong);
       border-radius: inherit;
       pointer-events: none;
-      /* No fade: full strength while detached, gone the frame it lands
-         (.overlay-settled, set on the real transform transitionend). */
       transition: none;
     }
 

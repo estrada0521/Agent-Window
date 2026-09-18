@@ -20,7 +20,6 @@ _CURSOR_INTERNAL_NOTE_RE = re.compile(
 
 
 def _cursor_assistant_message_has_no_tool_use(entry: dict) -> bool:
-    """True when this line is an assistant message whose content blocks include no tool_use."""
     if entry.get("role") != "assistant":
         return False
     msg = entry.get("message")
@@ -51,9 +50,6 @@ def _strip_cursor_internal_notes(text: str) -> str:
 def _extract_cursor_sync_display_text(entry: dict) -> str:
     role = entry.get("role", "")
     if role == "assistant":
-        # A text block alongside a tool_use is mid-turn narration/reasoning,
-        # not a message to the user; only a turn with no further tool calls
-        # is an actual reply.
         if not _cursor_assistant_message_has_no_tool_use(entry):
             return ""
         msg_obj = entry.get("message") if isinstance(entry, dict) else {}

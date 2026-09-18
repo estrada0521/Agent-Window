@@ -8,11 +8,6 @@ _PROBE_ERRORS = (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpir
 
 
 def process_tree(pid: str) -> set[str]:
-    """PIDs in the tree rooted at pane_pid.
-
-    pane_pid is the identity we already have from tmux. ps only expands
-    children; if that expansion cannot be read, probe the given pid alone.
-    """
     pid = str(pid or "").strip()
     if not pid:
         return set()
@@ -44,7 +39,6 @@ def process_tree(pid: str) -> set[str]:
 
 
 def lsof_text(pid: str) -> str | None:
-    """lsof stdout for one pid, or None if that pid could not be inspected."""
     pid = str(pid or "").strip()
     if not pid:
         return None
