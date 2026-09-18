@@ -400,13 +400,13 @@
       z-index: 1;
       margin: 4px;
       background: transparent;
-      border: 1.5px solid var(--icon-active);
+      border: 1.5px solid var(--icon-hover);
       transition: border-color 120ms ease, background 120ms ease;
     }
 
     .git-commit-dot.is-origin-main {
-      border-color: var(--icon-active);
-      background: var(--icon-active);
+      border-color: var(--icon-hover);
+      background: var(--icon-hover);
     }
 
     .git-commit-info {
