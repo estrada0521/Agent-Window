@@ -11,6 +11,7 @@ from pathlib import Path
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.chat_server import read_chat_server_state
 from backend_core.access.session_meta import (
+    SessionMetaError,
     create_session_folder,
     read_session_meta,
     session_workspace,
@@ -82,9 +83,10 @@ def _live_tmux_session_for_workspace(prefix: list[str], workspace: str) -> str |
 
 
 def _resolve_tmux_name(prefix: list[str], session_name: str) -> str | None:
-    workspace = session_workspace(session_name)
-    if not workspace:
-        return None
+    try:
+        workspace = session_workspace(session_name)
+    except SessionMetaError as exc:
+        raise SessionControlError(str(exc)) from exc
     return _live_tmux_session_for_workspace(prefix, workspace)
 
 
@@ -309,9 +311,10 @@ def describe_session(session_name: str, *, tmux_socket: str = "") -> dict:
     name = (session_name or "").strip()
     if not name:
         raise SessionControlError("session_name is required")
-    meta = read_session_meta(name)
-    if meta is None:
-        raise SessionControlError(f"Session does not exist: {name}")
+    try:
+        meta = read_session_meta(name)
+    except FileNotFoundError as exc:
+        raise SessionControlError(f"Session does not exist: {name}") from exc
     workspace = meta["workspace"]
     info: dict = {
         "session": name,

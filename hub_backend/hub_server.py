@@ -526,19 +526,16 @@ class Handler(BaseHTTPRequestHandler):
                 "latest_message_preview": record["latest_message_preview"],
                 "latest_message_revision": record["latest_message_revision"],
             })
-        if query.state == "unhealthy":
-            archived = []
-        else:
-            archived = [
-                {
-                    "name": record["name"],
-                    "latest_message_sender": record["latest_message_sender"],
-                    "latest_message_preview": record["latest_message_preview"],
-                    "latest_message_revision": record["latest_message_revision"],
-                    "agents_reset": record["agents_reset"],
-                }
-                for record in archived_session_records(query.non_archived_names).values()
-            ]
+        archived = [
+            {
+                "name": record["name"],
+                "latest_message_sender": record["latest_message_sender"],
+                "latest_message_preview": record["latest_message_preview"],
+                "latest_message_revision": record["latest_message_revision"],
+                "agents_reset": record["agents_reset"],
+            }
+            for record in archived_session_records(query.non_archived_names).values()
+        ]
         self._send_json(200, {
             "active_sessions": active,
             "archived_sessions": archived,

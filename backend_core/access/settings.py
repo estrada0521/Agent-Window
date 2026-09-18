@@ -49,10 +49,10 @@ def workspace_log_link_path(workspace: Path | str) -> Path:
 def ensure_session_workspace_mirrors(session_name: str, workspace: Path | str) -> None:
     raw = str(workspace or "").strip()
     if not raw:
-        return
+        raise ValueError("workspace is required")
     workspace_path = Path(raw).expanduser()
     if not workspace_path.is_dir():
-        return
+        raise FileNotFoundError(f"workspace is not a directory: {workspace_path}")
     aw_dir = workspace_agent_window_dir(workspace_path)
     aw_dir.mkdir(parents=True, exist_ok=True)
     gitignore = aw_dir / ".gitignore"

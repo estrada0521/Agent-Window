@@ -161,9 +161,10 @@ def get_session_workspace(handler, parsed, _ctx) -> None:
     if not session_name:
         handler._send_json(404, {"ok": False, "error": "Session not found"})
         return
-    workspace = session_workspace(session_name)
-    if not workspace:
-        handler._send_json(404, {"ok": False, "error": "Workspace path is unavailable."})
+    try:
+        workspace = session_workspace(session_name)
+    except SessionMetaError:
+        handler._send_json(404, {"ok": False, "error": "Session not found"})
         return
     handler._send_json(200, {"ok": True, "session": session_name, "workspace": workspace})
 

@@ -199,14 +199,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             workspace_git.git_overview()
         workspace_git.configure(workspace="")
 
-    def test_mirrors_do_not_create_a_missing_workspace(self) -> None:
-        from backend_core.access.settings import ensure_session_workspace_mirrors
-
-        with tempfile.TemporaryDirectory() as tmp:
-            missing = Path(tmp) / "Even-Parity"
-            ensure_session_workspace_mirrors("Even-Parity", str(missing))
-            self.assertFalse(missing.exists())
-
     def test_mirrors_link_inside_an_existing_workspace(self) -> None:
         from backend_core.access.settings import (
             SESSION_LOG_FILENAME,

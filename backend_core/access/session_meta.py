@@ -16,22 +16,21 @@ class SessionMetaError(ValueError):
     pass
 
 
-def read_session_meta_file(path: Path) -> dict | None:
-    if not path.is_file():
-        return None
+def read_session_meta_file(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def read_session_meta(session_name: str) -> dict | None:
+def read_session_meta(session_name: str) -> dict:
     return read_session_meta_file(session_meta_path(session_name))
 
 
 def _existing_session_meta(session_name: str) -> tuple[Path, dict]:
     name = str(session_name or "").strip()
-    meta = read_session_meta(name)
-    if meta is None:
-        raise SessionMetaError(f"session not found: {name}")
-    return session_meta_path(name), meta
+    path = session_meta_path(name)
+    try:
+        return path, read_session_meta_file(path)
+    except FileNotFoundError:
+        raise SessionMetaError(f"session not found: {name}") from None
 
 
 def session_workspace_claims(
@@ -57,18 +56,12 @@ def find_session_for_workspace(workspace: Path | str, *, exclude_session: str = 
     return claim[0] if claim else None
 
 
-def session_workspace(session_name: str) -> str | None:
-    meta = read_session_meta(session_name)
-    if meta is None:
-        return None
-    return meta["workspace"]
+def session_workspace(session_name: str) -> str:
+    return _existing_session_meta(session_name)[1]["workspace"]
 
 
 def session_meta_agents(session_name: str) -> list[str]:
-    meta = read_session_meta(session_name)
-    if meta is None:
-        return []
-    return meta.get("agents", [])
+    return _existing_session_meta(session_name)[1].get("agents", [])
 
 
 def set_session_workspace(session_name: str, workspace: str) -> None:
@@ -107,5 +100,5 @@ def write_session_meta_file(
 
 def create_session_folder(session_name: str, workspace: str, agents: list[str]) -> None:
     session_artifact_dir(session_name).mkdir(parents=True)
-    session_log_path(session_name).touch()
     write_session_meta_file(session_name, workspace, agents)
+    session_log_path(session_name).touch()
