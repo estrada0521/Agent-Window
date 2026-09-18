@@ -315,8 +315,8 @@
     main::-webkit-scrollbar { width: var(--chat-scrollbar-width) !important; height: var(--chat-scrollbar-width) !important; }
     #scrollToBottomBtn,
     #composerFabBtn {
-      --fab-icon-size: round(nearest, calc(var(--text-size, 13px) * 20 / 13), 1px);
-      --fab-size: calc(var(--fab-icon-size) + round(nearest, calc(var(--text-size, 13px) * 18 / 13), 2px));
+      --fab-icon-size: round(nearest, calc(var(--text-size, 13px) * 19 / 13), 1px);
+      --fab-size: calc(var(--fab-icon-size) + round(nearest, calc(var(--text-size, 13px) * 17 / 13), 2px));
       position: fixed;
       bottom: var(--floating-btn-bottom, 18%);
       left: var(--message-side-padding);
