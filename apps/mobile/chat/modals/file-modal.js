@@ -194,6 +194,7 @@
           () => closeSheetPreview(),
           { ignore: ".table-scroll, .katex-display, pre, .code-scroll, .html-preview-text-scroll" },
         );
+        blockHistoryEdgeSwipe(frame.contentDocument);
         repoPreviewBaseTheme = currentFileModalBaseTheme();
         postPreviewThemeToFrame(frame, normalizedExt, repoPreviewBaseTheme);
         postPreviewHtmlModeToFrame(frame, normalizedExt, repoHtmlPreviewMode);

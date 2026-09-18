@@ -81,6 +81,7 @@
       font-family: var(--font-main);
       scrollbar-width: none;
       -ms-overflow-style: none;
+      overscroll-behavior-x: none;
     }
 
     html::-webkit-scrollbar,

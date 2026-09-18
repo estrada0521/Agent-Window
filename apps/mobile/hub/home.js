@@ -16,6 +16,12 @@
     let _awaitingChatRenderReady = false;
     let _hubReadyTimeoutTimer = 0;
     let _chatOverlayCloseTimer = 0;
+    document.addEventListener("touchstart", (event) => {
+      const touch = event.touches?.[0];
+      if (!touch) return;
+      const width = window.innerWidth || 0;
+      if (touch.clientX < 24 || touch.clientX > width - 24) event.preventDefault();
+    }, { capture: true, passive: false });
     let refreshMobSessions = null;
     const HUB_CHAT_FRAME_KEY = "hub_chat_frame";
     const HUB_LAST_SESSION_KEY = "agent_window_hub_last_session_name";

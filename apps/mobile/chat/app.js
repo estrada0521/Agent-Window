@@ -7,6 +7,17 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
     const _safariSafeAreaDummy = document.createElement("div");
     _safariSafeAreaDummy.style.cssText = "position:absolute;bottom:0;width:100%;height:env(safe-area-inset-bottom);pointer-events:none;opacity:0;z-index:-1;";
     document.body.appendChild(_safariSafeAreaDummy);
+    const blockHistoryEdgeSwipe = (surface) => {
+      if (!surface?.addEventListener) return;
+      surface.addEventListener("touchstart", (event) => {
+        const touch = event.touches?.[0];
+        if (!touch) return;
+        const view = surface.defaultView || surface.ownerDocument?.defaultView || window;
+        const width = view.innerWidth || 0;
+        if (touch.clientX < 24 || touch.clientX > width - 24) event.preventDefault();
+      }, { capture: true, passive: false });
+    };
+    blockHistoryEdgeSwipe(document);
     const applyMobileThemeGradientVars = () => {
       const root = document.documentElement;
       const sheetChannels = getComputedStyle(root).getPropertyValue("--bg-rgb").trim() || (
