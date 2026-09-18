@@ -21,7 +21,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-PUBLIC_HOST_FILE="${AGENT_WINDOW_CERTS_DIR:-$HOME/.agent-window/state/certs}/public-host.txt"
+PUBLIC_HOST_FILE="$HOME/.agent-window/state/cloudflare/public-host.txt"
 if [[ -z "${AGENT_WINDOW_PUBLIC_HOST:-}" ]] && [[ -f "$PUBLIC_HOST_FILE" ]]; then
   export AGENT_WINDOW_PUBLIC_HOST="$(tr -d '\r\n' < "$PUBLIC_HOST_FILE")"
 fi

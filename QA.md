@@ -29,7 +29,3 @@ There are several reasons:
 
 Because the absence of a detected failure is, in effect, success.
 A strict guarantee using the native log is possible, but the guarantee itself is more likely to break than the delivery it is meant to confirm — which defeats the purpose.
-
-### Why does it only bind to `127.0.0.1`?
-
-The desktop app talks to Hub on loopback. Phone access is Tailscale in front of that, which is also what supplies HTTPS for the PWA. Agent Window does not terminate TLS or bind on the LAN.

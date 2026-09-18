@@ -29,7 +29,3 @@
 
 失敗が検出されなかったことが、事実上の成功を意味するからです。
 native logを利用した厳密な保証は可能ですが、配送よりもその保証が壊れる可能性の方が高く、本末転倒です。
-
-### なぜ `127.0.0.1` にしかbindしないのですか？
-
-desktop appはloopbackのHubと話します。phone accessはその手前のTailscaleで、PWA用のHTTPSもTailscaleが提供します。Agent WindowはTLSを終端せず、LANにもbindしません。
