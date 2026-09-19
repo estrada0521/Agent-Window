@@ -45,8 +45,9 @@
       }
       const overlayOpen = isComposerOverlayOpen();
       const emptyPlaceholder = !!document.querySelector("#messages .conversation-empty");
-      scrollToBottomBtn.classList.toggle("visible", !_stickyToBottom && !overlayOpen && !emptyPlaceholder);
-      composerFabBtn?.classList.toggle("visible", (_stickyToBottom || emptyPlaceholder) && !overlayOpen);
+      const showComposerFab = emptyPlaceholder || isInComposerFabRange();
+      scrollToBottomBtn.classList.toggle("visible", !showComposerFab && !overlayOpen);
+      composerFabBtn?.classList.toggle("visible", showComposerFab && !overlayOpen);
     };
     let centeredRowRaf = 0;
     const updateCenteredMessageRow = () => {

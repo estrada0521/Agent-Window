@@ -58,3 +58,8 @@
     const isNearBottom = () => {
       return timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight < STICKY_THRESHOLD;
     };
+    const isInComposerFabRange = () => {
+      const play = parseFloat(getComputedStyle(timeline).getPropertyValue("--main-spacer-height"));
+      const slack = Number.isFinite(play) && play > 0 ? play : STICKY_THRESHOLD;
+      return timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight < slack;
+    };
