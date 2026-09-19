@@ -35,12 +35,14 @@
       --composer-line-h: 24px;
       --composer-btn-d: 28px;
       --composer-btn-bottom: 8px;
+      --composer-btn-center-x: 23px;
+      --composer-send-text-gap: 14px;
       --composer-pad-top: calc(var(--composer-row-h) - var(--composer-btn-bottom) - var(--composer-btn-d) / 2 - var(--composer-line-h) / 2);
     }
 
     .send-btn {
       position: absolute;
-      left: calc(23px - var(--composer-btn-d) / 2);
+      left: calc(var(--composer-btn-center-x) - var(--composer-btn-d) / 2);
       bottom: var(--composer-btn-bottom);
       width: var(--composer-btn-d);
       height: var(--composer-btn-d);
@@ -196,7 +198,7 @@
       padding-top: var(--composer-pad-top);
       padding-right: 10px;
       padding-bottom: calc(var(--composer-row-h) - var(--composer-pad-top) - var(--composer-line-h));
-      padding-left: 56px;
+      padding-left: calc(var(--composer-btn-center-x) + var(--composer-btn-d) / 2 + var(--composer-send-text-gap));
       font-family: var(--font-main);
       font-size: 16px;
       line-height: 1.5;
