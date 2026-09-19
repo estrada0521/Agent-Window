@@ -415,40 +415,31 @@
     .git-pinned-summary-aside .git-summary-wrap {
       font-weight: var(--body-weight);
     }
-    .git-summary-wrap .git-summary-pin {
+    .git-summary-pin {
       flex-shrink: 0;
       align-self: center;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 1.28em;
-      height: 1.28em;
+      width: var(--right-panel-icon-slot-size);
+      height: var(--right-panel-icon-slot-size);
       margin: 0;
       padding: 0;
       border: none;
       border-radius: 0.29em;
       background: transparent;
-      font-size: 1.08em;
-      line-height: 1;
+      color: var(--icon-muted);
+      font: inherit;
+      line-height: 0;
       cursor: pointer;
-      transition: opacity 120ms ease;
     }
-    .git-summary-wrap .git-summary-pin:not(.is-pinned) {
-      opacity: 0.4;
-      filter: grayscale(1);
+    .git-summary-pin svg {
+      width: var(--right-panel-small-icon-size);
+      height: var(--right-panel-small-icon-size);
+      display: block;
     }
-    .git-summary-wrap .git-summary-pin:hover:not(.is-pinned) {
-      opacity: 0.8;
-      filter: grayscale(0.5);
-    }
-    .git-summary-wrap .git-summary-pin.is-pinned {
-      background: transparent;
-      box-shadow: none;
-      opacity: 1;
-    }
-    .git-summary-wrap .git-summary-pin.is-pinned:hover {
-      background: transparent;
-      opacity: 0.8;
+    .git-summary-pin.is-pinned svg circle {
+      fill: currentColor;
     }
     html[data-tauri-app="1"][data-hub-iframe-chat="1"] .git-pinned-summary-aside {
       position: fixed;
@@ -606,28 +597,7 @@
       color: var(--icon-muted);
     }
     .git-commit-detail-head .git-summary-pin {
-      flex-shrink: 0;
-      align-self: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 1.28em;
-      height: 1.28em;
-      margin: 0;
-      padding: 0;
-      border: none;
-      border-radius: 0.29em;
-      background: transparent;
-      font-size: 1.08em;
-      line-height: 1;
       cursor: default;
-    }
-    .git-commit-detail-head .git-summary-pin:not(.is-pinned) {
-      opacity: 0.4;
-      filter: grayscale(1);
-    }
-    .git-commit-detail-head .git-summary-pin.is-pinned {
-      opacity: 1;
     }
     .git-commit-detail-head .git-summary-row {
       background: var(--panel-row-bg);
