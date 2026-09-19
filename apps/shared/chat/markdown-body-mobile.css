@@ -21,3 +21,12 @@
     .md-body .code-block-wrap .code-copy-btn {
       -webkit-tap-highlight-color: transparent;
     }
+
+    .md-body .code-block-wrap .code-copy-btn::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 28px;
+      height: 28px;
+    }

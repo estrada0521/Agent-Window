@@ -240,6 +240,9 @@
     }
 
     .md-body .code-block-wrap {
+      --code-copy-button-size: round(nearest, calc(var(--text-size, 13px) * 28 / 13), 1px);
+      --code-copy-icon-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
+      --code-copy-radius: round(nearest, calc(var(--text-size, 13px) * 8 / 13), 1px);
       position: relative;
       display: block;
       margin: var(--prose-block-rhythm) 0;
@@ -261,11 +264,11 @@
       top: 0;
       right: 0;
       z-index: 1;
-      width: 28px;
-      height: 28px;
+      width: var(--code-copy-button-size);
+      height: var(--code-copy-button-size);
       padding: 0;
       border: none;
-      border-radius: 8px;
+      border-radius: var(--code-copy-radius);
       background: var(--code-copy-bg);
       color: var(--muted);
       cursor: pointer;
@@ -291,8 +294,8 @@
     }
 
     .md-body .code-block-wrap .code-copy-btn svg {
-      width: 15px;
-      height: 15px;
+      width: var(--code-copy-icon-size);
+      height: var(--code-copy-icon-size);
     }
 
     .md-body .code-block-wrap .code-copy-btn svg * {
