@@ -71,7 +71,9 @@ def agent_detail_selectors(prefix: str = "") -> str:
 
 def body_typography_css() -> str:
     body_weight_tokens = f"""
-    html[data-theme="dark"] {{
+    html[data-theme="dark"],
+    #paneTracePanel,
+    .pane-viewer {{
       --body-weight: {DESKTOP_DARK_BODY_WEIGHT};
       --code-weight: {DESKTOP_DARK_CODE_WEIGHT};
       --file-preview-code-weight: {FILE_PREVIEW_DARK_CODE_WEIGHT};
@@ -91,7 +93,9 @@ def body_typography_css() -> str:
       --body-weight: {MOBILE_LIGHT_BODY_WEIGHT};
       --code-weight: {MOBILE_LIGHT_CODE_WEIGHT};
     }}
-    html[data-mobile="1"][data-theme="dark"] {{
+    html[data-mobile="1"][data-theme="dark"],
+    html[data-mobile="1"] #paneTracePanel,
+    html[data-mobile="1"] .pane-viewer {{
       --body-weight: {MOBILE_DARK_BODY_WEIGHT};
       --code-weight: {MOBILE_DARK_CODE_WEIGHT};
     }}"""

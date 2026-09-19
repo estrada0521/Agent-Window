@@ -109,7 +109,9 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --git-del-red-channels: __TEXT_DIFF_DELETE_LIGHT_CHANNELS__;
       --git-del-red: rgb(var(--git-del-red-channels));
     }
-    html[data-theme="dark"] {
+    html[data-theme="dark"],
+    #paneTracePanel,
+    .pane-viewer {
       color-scheme: dark;
       --bg-rgb: __MOBILE_CHAT_DARK_BG_CHANNELS__;
       --fg: rgb(var(--dark-fg-rgb));
@@ -141,6 +143,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --mobile-sheet-pill-bg: rgba(255, 255, 255, 0.22);
       --mobile-top-gradient-rgb: var(--bg-rgb);
       --mobile-sheet-gradient-rgb: var(--bg-rgb);
+      --bottom-sheet-top-gradient-rgb: var(--bg-rgb);
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);
     }
 
