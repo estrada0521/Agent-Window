@@ -7,7 +7,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 10px 18px;
+      padding: 10px 18px 10px calc(var(--composer-btn-center-x) - var(--composer-menu-icon-size) / 2);
       font-size: 14px;
       line-height: 20px;
       font-weight: var(--body-weight);

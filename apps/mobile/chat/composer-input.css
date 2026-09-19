@@ -28,14 +28,18 @@
       min-width: 0;
     }
 
+    :root {
+      --composer-btn-d: 28px;
+      --composer-btn-center-x: 23px;
+      --composer-menu-icon-size: 14px;
+    }
+
     .composer-field {
       position: relative;
       min-height: 44px;
       --composer-row-h: 44px;
       --composer-line-h: 24px;
-      --composer-btn-d: 28px;
       --composer-btn-bottom: 8px;
-      --composer-btn-center-x: 23px;
       --composer-send-text-gap: 14px;
       --composer-pad-top: calc(var(--composer-row-h) - var(--composer-btn-bottom) - var(--composer-btn-d) / 2 - var(--composer-line-h) / 2);
     }
@@ -65,7 +69,6 @@
       height: 18px;
       display: block;
       transform: rotate(90deg);
-      stroke-width: 1.7;
     }
 
     .send-btn::before {

@@ -52,7 +52,7 @@
       gap: 10px;
       width: 100%;
       box-sizing: border-box;
-      padding: 6px 18px;
+      padding: 6px 18px 6px calc(var(--composer-btn-center-x) - var(--composer-menu-icon-size) / 2);
       white-space: nowrap;
       font-size: 14px;
       line-height: 20px;
@@ -61,13 +61,9 @@
       cursor: pointer;
     }
 
-    html[data-mobile="1"] .file-item {
-      padding-left: 10px;
-    }
-
     .file-item-icon {
-      width: 14px;
-      height: 14px;
+      width: var(--composer-menu-icon-size);
+      height: var(--composer-menu-icon-size);
       display: inline-flex;
       align-items: center;
       justify-content: center;
