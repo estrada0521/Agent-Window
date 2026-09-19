@@ -98,17 +98,19 @@
       text-decoration: none;
     }
 
-    html[data-theme="dark"] .md-body a.inline-file-link,
-    html[data-theme="dark"] .md-body a.local-file-link {
-      text-decoration: underline;
-      text-decoration-thickness: clamp(0.5px, 0.0769em, 1px);
-      text-decoration-color: color-mix(in srgb, var(--fg) 65%, transparent);
-    }
-
     .md-body a.inline-file-link code,
     .md-body a.local-file-link code {
       color: inherit;
       text-decoration: none;
+    }
+
+    html[data-theme="dark"] .md-body a.inline-file-link,
+    html[data-theme="dark"] .md-body a.local-file-link,
+    html[data-theme="dark"] .md-body a.inline-file-link code,
+    html[data-theme="dark"] .md-body a.local-file-link code {
+      text-decoration: underline;
+      text-decoration-thickness: clamp(0.5px, 0.0769em, 1px);
+      text-decoration-color: color-mix(in srgb, var(--fg) 65%, transparent);
     }
 
     .md-body a.inline-file-link:focus,
@@ -397,15 +399,6 @@
     .md-body a:not(.inline-file-link):not(.local-file-link) {
       color: var(--external-link-fg);
       font-weight: var(--link-weight);
-      text-decoration: none;
-    }
-
-    .has-hover .md-body a:hover {
-      text-decoration: underline;
-    }
-
-    html[data-theme="light"] .has-hover .md-body a.inline-file-link:hover,
-    html[data-theme="light"] .has-hover .md-body a.local-file-link:hover {
       text-decoration: none;
     }
 
