@@ -62,7 +62,7 @@
       transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
       overflow: hidden;
       pointer-events: auto;
-      border-radius: 28px 28px 0 0;
+      border-radius: var(--mobile-sheet-corner-radius) var(--mobile-sheet-corner-radius) 0 0;
       border-top: 1px solid var(--line-strong);
       background: var(--bg);
       backdrop-filter: none;

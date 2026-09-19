@@ -2,6 +2,9 @@
     const resetHubSessionScroll = () => window.scrollTo(0, HUB_SESSION_SCROLL_ORIGIN);
     resetHubSessionScroll();
     const _chatOverlay = document.getElementById("chatOverlay");
+    const _chatOverlaySvg = _chatOverlay.querySelector(".chat-overlay-shape");
+    const _chatOverlayShape = _chatOverlaySvg.querySelector("path");
+    const _chatFrameClip = _chatOverlay.querySelector(".chat-frame-clip");
     const _chatFrame = document.getElementById("chatFrame");
     const _launchShell = document.getElementById("launchShell");
     let _hubChatParentLayoutMax = 0;
@@ -114,6 +117,7 @@
         _overlaySettleTimer = 0;
       }
       _chatOverlay.classList.remove("overlay-settled");
+      applyHubChatSquircle();
     }
     function armOverlaySettle() {
       clearOverlaySettle();
@@ -121,6 +125,7 @@
         clearOverlaySettle();
         if (_chatOverlay.classList.contains("overlay-visible")) {
           _chatOverlay.classList.add("overlay-settled");
+          applyHubChatSquircle();
           resetHubSessionScroll();
         }
       };
@@ -312,7 +317,10 @@
     }
     function _attachHubViewportBridge() {
       if (_hubVVBridgeHandler) return;
-      _hubVVBridgeHandler = () => { _bumpHubChatParentLayoutMax(); };
+      _hubVVBridgeHandler = () => {
+        _bumpHubChatParentLayoutMax();
+        applyHubChatSquircle();
+      };
       window.addEventListener("resize", _hubVVBridgeHandler, { passive: true });
       if (window.visualViewport) {
         window.visualViewport.addEventListener("resize", _hubVVBridgeHandler);
@@ -328,10 +336,69 @@
       }
       _hubVVBridgeHandler = null;
     }
+    function hubChatSquirclePath(width, height) {
+      const radius = 160 / 3;
+      const smoothing = 0.6;
+      const budget = Math.min(width, height) / 2;
+      const s = Math.min(smoothing, budget / radius - 1);
+      const p = Math.min((1 + s) * radius, budget);
+      const arcMeasure = 90 * (1 - s);
+      const rad = (deg) => deg * Math.PI / 180;
+      const arc = Math.sin(rad(arcMeasure / 2)) * radius * Math.SQRT2;
+      const p3 = radius * Math.tan(rad((90 - arcMeasure) / 4));
+      const beta = rad(45 * s);
+      const c = p3 * Math.cos(beta);
+      const d = c * Math.tan(beta);
+      const b = (p - arc - c - d) / 3;
+      const a = 2 * b;
+      const n = (value) => value.toFixed(4);
+      return (
+        `M ${n(width - p)} 0 ` +
+        `c ${n(a)} 0 ${n(a + b)} 0 ${n(a + b + c)} ${n(d)} ` +
+        `a ${n(radius)} ${n(radius)} 0 0 1 ${n(arc)} ${n(arc)} ` +
+        `c ${n(d)} ${n(c)} ${n(d)} ${n(b + c)} ${n(d)} ${n(a + b + c)} ` +
+        `L ${n(width)} ${n(height - p)} ` +
+        `c 0 ${n(a)} 0 ${n(a + b)} ${n(-d)} ${n(a + b + c)} ` +
+        `a ${n(radius)} ${n(radius)} 0 0 1 ${n(-arc)} ${n(arc)} ` +
+        `c ${n(-c)} ${n(d)} ${n(-(b + c))} ${n(d)} ${n(-(a + b + c))} ${n(d)} ` +
+        `L ${n(p)} ${n(height)} ` +
+        `c ${n(-a)} 0 ${n(-(a + b))} 0 ${n(-(a + b + c))} ${n(-d)} ` +
+        `a ${n(radius)} ${n(radius)} 0 0 1 ${n(-arc)} ${n(-arc)} ` +
+        `c ${n(-d)} ${n(-c)} ${n(-d)} ${n(-(b + c))} ${n(-d)} ${n(-(a + b + c))} ` +
+        `L 0 ${n(p)} ` +
+        `c 0 ${n(-a)} 0 ${n(-(a + b))} ${n(d)} ${n(-(a + b + c))} ` +
+        `a ${n(radius)} ${n(radius)} 0 0 1 ${n(arc)} ${n(-arc)} ` +
+        `c ${n(c)} ${n(-d)} ${n(b + c)} ${n(-d)} ${n(a + b + c)} ${n(-d)} ` +
+        "Z"
+      );
+    }
+    function applyHubChatSquircle() {
+      const wide = window.matchMedia("(min-width: 600px)").matches;
+      const settled = _chatOverlay.classList.contains("overlay-settled");
+      if (wide || settled || _chatOverlay.hidden) {
+        _chatOverlayShape.removeAttribute("d");
+        _chatFrameClip.style.webkitMaskImage = "";
+        _chatFrameClip.style.maskImage = "";
+        return;
+      }
+      const width = _chatOverlay.clientWidth;
+      const height = _chatOverlay.clientHeight;
+      if (width < 1 || height < 1) return;
+      const d = hubChatSquirclePath(width, height);
+      _chatOverlayShape.setAttribute("d", d);
+      _chatOverlaySvg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      _chatOverlaySvg.setAttribute("preserveAspectRatio", "none");
+      const mask = `url("data:image/svg+xml;utf8,${encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><path fill="white" d="${d}"/></svg>`
+      )}")`;
+      _chatFrameClip.style.webkitMaskImage = mask;
+      _chatFrameClip.style.maskImage = mask;
+    }
     function _fitChatOverlay() {
       if (_chatOverlay.hidden) return;
       _chatOverlay.style.top = "";
       _chatOverlay.style.height = "";
+      applyHubChatSquircle();
     }
     let skipThemeMenuBlur = false;
     const resetThemeNativeMenu = () => {

@@ -12,7 +12,7 @@
       --icon-hover: __ICON_HOVER__;
       --session-hover-bg: __SESSION_HOVER_BG__;
       --session-selected-bg: __SESSION_SELECTED_BG__;
-      --chat-overlay-glow: 0 0 5px rgba(0, 0, 0, 0.34), 0 0 16px rgba(0, 0, 0, 0.2);
+      --chat-overlay-glow: drop-shadow(0 0 5px rgba(0, 0, 0, 0.34)) drop-shadow(0 0 16px rgba(0, 0, 0, 0.2));
       --session-danger-fg: rgb(204, 47, 38);
       --session-success-fg: rgb(41, 178, 75);
       --hub-tagline-top: calc(env(safe-area-inset-top, 0px) + 22px);
@@ -36,7 +36,7 @@
       --line-strong: rgba(0, 0, 0, 0.18);
       --session-hover-bg: rgb(233, 233, 231);
       --session-selected-bg: rgb(226, 226, 224);
-      --chat-overlay-glow: -1px 0 4px rgba(0, 0, 0, 0.14), -7px 0 16px rgba(0, 0, 0, 0.07);
+      --chat-overlay-glow: drop-shadow(-1px 0 4px rgba(0, 0, 0, 0.14)) drop-shadow(-7px 0 16px rgba(0, 0, 0, 0.07));
       --session-danger-fg: rgb(207, 34, 46);
       --session-success-fg: rgb(36, 157, 66);
       --mob-top-gradient-rgb: var(--bg-rgb);
@@ -598,22 +598,48 @@
       position: fixed;
       inset: 0;
       z-index: 9999;
-      background: var(--bg);
+      background: transparent;
       opacity: 1;
       transform: translate3d(100%, 0, 0);
-      border-radius: 47px;
-      box-shadow: var(--chat-overlay-glow);
-      transition: transform 440ms cubic-bezier(0.32, 0.72, 0, 1), opacity 180ms ease, border-radius 0s 440ms, box-shadow 0s 440ms;
+      transition: transform 440ms cubic-bezier(0.32, 0.72, 0, 1), opacity 180ms ease;
       will-change: transform, opacity;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
+    }
+
+    #chatOverlay.overlay-settled {
+      background: var(--bg);
+    }
+
+    .chat-overlay-shape {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+      filter: var(--chat-overlay-glow);
+    }
+
+    .chat-overlay-shape path {
+      fill: var(--bg);
+    }
+
+    html[data-theme="dark"] .chat-overlay-shape path {
+      stroke: var(--line-strong);
+      stroke-width: 0.5px;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #chatOverlay.overlay-settled .chat-overlay-shape {
+      visibility: hidden;
     }
 
     .chat-frame-clip {
       position: absolute;
       inset: 0;
       overflow: hidden;
-      border-radius: inherit;
+      background: var(--bg);
     }
 
     .chat-frame-clip::after {
@@ -635,16 +661,6 @@
       transition-duration: 280ms;
     }
 
-    #chatOverlay::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border: 0.5px solid var(--line-strong);
-      border-radius: inherit;
-      pointer-events: none;
-      transition: none;
-    }
-
     #chatOverlay[hidden] {
       display: none;
     }
@@ -652,12 +668,6 @@
     #chatOverlay.overlay-visible {
       opacity: 1;
       transform: translate3d(0, 0, 0);
-      border-radius: 0;
-      box-shadow: none;
-    }
-
-    #chatOverlay.overlay-settled::after {
-      opacity: 0;
     }
 
     #chatOverlay.overlay-closing {
@@ -678,11 +688,10 @@
 
     @media (min-width: 600px) {
       #chatOverlay {
-        border-radius: 0;
-        box-shadow: none;
+        background: var(--bg);
       }
 
-      #chatOverlay::after {
+      .chat-overlay-shape {
         display: none;
       }
 
