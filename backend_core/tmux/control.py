@@ -26,6 +26,7 @@ from backend_core.agents.executables import agent_launch_cmd, resolve_agent_exec
 from backend_core.agents.names import agent_base_name
 from backend_core.agents.instances import (
     next_instance_name,
+    normalize_agent_names,
     resolve_canonical_instance,
 )
 from backend_core.agents.registry import AGENTS
@@ -262,7 +263,7 @@ def _start_agent(
 
 def _prepare_instances(requested: list[str]) -> list[str]:
     bases: list[str] = []
-    for raw in requested:
+    for raw in normalize_agent_names(requested):
         base = agent_base_name(raw)
         if not base or base not in AGENTS:
             raise SessionControlError(f"Unknown agent: {raw}")

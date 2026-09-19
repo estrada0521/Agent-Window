@@ -10,6 +10,7 @@ from backend_core.access.settings import (
     session_log_path,
     session_meta_path,
 )
+from backend_core.agents.instances import normalize_agent_names
 
 
 class SessionMetaError(ValueError):
@@ -93,7 +94,7 @@ def write_session_meta_file(
 ) -> None:
     write_json_atomically(
         session_meta_path(session_name),
-        {"workspace": workspace, "agents": list(agents)},
+        {"workspace": workspace, "agents": normalize_agent_names(agents)},
         indent=2,
     )
 

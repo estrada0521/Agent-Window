@@ -1,15 +1,23 @@
 from __future__ import annotations
 
 
+def normalize_agent_names(agents: list[str] | None) -> list[str]:
+    return [
+        item.strip()
+        for item in (agents or [])
+        if str(item).strip() and str(item).strip() != "-"
+    ]
+
+
 def parse_agents_csv(agents_csv: str) -> list[str]:
     raw = (agents_csv or "").strip()
-    if not raw or raw == "-":
+    if not raw:
         return []
-    return [item.strip() for item in raw.split(",") if item.strip() and item.strip() != "-"]
+    return normalize_agent_names(raw.split(","))
 
 
 def agents_to_csv(agents: list[str]) -> str:
-    return ",".join([agent for agent in (agents or []) if agent])
+    return ",".join(normalize_agent_names(agents))
 
 
 def next_instance_name(current_agents: list[str], base_agent: str) -> str:
