@@ -14,7 +14,7 @@
       --message-vertical-rhythm: 0.31em;
       --message-hidden-meta-lift: 0.92em;
       font-size: var(--text-size, 13px);
-      gap: 12px;
+      gap: 0.92em;
       width: 100%;
       max-width: 100%;
       min-width: 0;
@@ -226,7 +226,7 @@
     .message-body-row {
       display: flex;
       align-items: flex-start;
-      gap: 6px;
+      gap: 0.46em;
       min-width: 0;
     }
 
@@ -269,8 +269,8 @@
     .message-row.is-collapsible .message-body-row.is-collapsed .md-body {
       overflow: hidden;
       max-height: var(--message-collapse-max-height);
-      mask-image: linear-gradient(to bottom, black 0, black calc(100% - 56px), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, black 0, black calc(100% - 56px), transparent 100%);
+      mask-image: linear-gradient(to bottom, black 0, black calc(100% - 4.31em), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black 0, black calc(100% - 4.31em), transparent 100%);
     }
 
     .message-row.is-collapsible .message-collapse-toggle {
@@ -365,6 +365,20 @@
       margin-top: 0;
       margin-right: 0.15em;
       align-self: center;
+      font-size: inherit;
+      position: relative;
+      width: 1.31em;
+      height: 1.31em;
+    }
+
+    .message-meta-below .copy-btn::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 28px;
+      height: 28px;
+      transform: translate(-50%, -50%);
     }
 
     .message-meta-below .sender,
@@ -528,7 +542,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 0.77em;
       color: var(--muted);
       font-family: var(--font-main);
       font-size: var(--text-size, 13px);
@@ -589,7 +603,7 @@
     .message-thinking-row {
       display: flex;
       align-items: flex-start;
-      gap: 10px;
+      gap: 0.77em;
       padding: 0.46em 20px 0.46em 0;
       color: var(--muted);
       font-size: inherit;
@@ -606,10 +620,10 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 0.46em;
       flex-shrink: 0;
       height: 1.45em;
-      transform: translateY(1px);
+      transform: translateY(0.08em);
       position: sticky;
       left: 0;
       z-index: 1;
@@ -693,7 +707,7 @@
       display: inline-flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 2px;
+      gap: 0.15em;
       min-width: 0;
     }
 
