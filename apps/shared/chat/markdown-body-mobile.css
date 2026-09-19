@@ -22,6 +22,10 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    .md-body .code-block-wrap {
+      --code-copy-icon-size: calc(var(--text-size, 13px) * 1.31);
+    }
+
     .md-body .code-block-wrap .code-copy-btn::before {
       content: "";
       position: absolute;

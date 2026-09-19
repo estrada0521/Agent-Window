@@ -363,6 +363,7 @@
 
     .message-meta-below .copy-btn {
       margin-top: 0;
+      margin-left: 0.15em;
       margin-right: 0.15em;
       align-self: center;
       font-size: inherit;
