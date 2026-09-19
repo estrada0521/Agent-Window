@@ -46,6 +46,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --bottom-sheet-top-gradient-rgb: var(--mobile-sheet-gradient-rgb);
       --mobile-edge-fade-mask: black 0%, rgba(0, 0, 0, 0.981) 7%, rgba(0, 0, 0, 0.926) 14%, rgba(0, 0, 0, 0.838) 21%, rgba(0, 0, 0, 0.726) 29%, rgba(0, 0, 0, 0.597) 36%, rgba(0, 0, 0, 0.462) 43%, rgba(0, 0, 0, 0.329) 50%, rgba(0, 0, 0, 0.209) 57%, rgba(0, 0, 0, 0.117) 64%, rgba(0, 0, 0, 0.056) 71%, rgba(0, 0, 0, 0.019) 79%, transparent 86%;
       --mobile-sheet-content-offset: 72px;
+      --mobile-sheet-list-top-play: 250px;
       --mobile-sheet-content-bottom-offset: calc(33px + var(--mobile-sheet-safe-bottom) + var(--mobile-sheet-safe-bottom));
       --mobile-sheet-compact-bottom-offset: max(0px, calc(-2px + var(--mobile-sheet-safe-bottom) + var(--mobile-sheet-safe-bottom)));
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);

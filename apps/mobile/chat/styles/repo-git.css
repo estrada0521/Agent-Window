@@ -118,6 +118,17 @@
       font-family: var(--font-main);
       font-weight: var(--body-weight);
     }
+    .mobile-sheet-list::before {
+      content: "";
+      flex: 0 0 var(--mobile-sheet-list-top-play);
+    }
+    .mobile-sheet-list-body {
+      display: flex;
+      flex-direction: column;
+      gap: inherit;
+      flex: 0 0 auto;
+      min-height: calc(100% - var(--mobile-sheet-content-offset) - var(--mobile-sheet-content-bottom-offset));
+    }
 
     .sheet-list-row {
       appearance: none;

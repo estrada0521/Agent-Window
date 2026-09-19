@@ -79,7 +79,14 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       setGitSheetTitle();
       setSharedSheetLeading(null);
       showGitWorktreeSummary();
-      if (hadDetail) animateGitSheetList(".git-list-view", "back");
+      if (hadDetail) {
+        animateGitSheetList(".git-list-view", "back");
+        const list = gitHostEl()?.querySelector(".git-list-view");
+        if (list) {
+          pinSheetListBody(list);
+          requestAnimationFrame(() => pinSheetListBody(list));
+        }
+      }
     };
     const restoreGitChromeAfterPreview = () => {
       if (_gitDetailChrome) applyGitDetailChrome(_gitDetailChrome);
@@ -95,13 +102,14 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       if (host) host.innerHTML = html;
     };
     const gitSheetListEl = () => gitHostEl()?.querySelector(
-      gitSession.detailContext ? ".git-detail-view .mobile-sheet-list" : ".git-list-view .mobile-sheet-list"
+      gitSession.detailContext ? ".git-detail-view" : ".git-list-view"
     ) || gitHostEl();
     const gitSession = createGitPanelSession({
       root: () => gitHostEl(),
       modeEl: () => gitHostEl()?.querySelector(".git-stack") || gitHostEl(),
       observerRoot: gitSheetListEl,
       scrollRoot: gitSheetListEl,
+      pinListScroll: resetSheetListScroll,
       canLoad: () => !!mobileSheet,
       canRefresh: () => !!mobileSheet,
       renderShell: (data) => {
@@ -109,17 +117,19 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
         setGitPanelBodyHtml(`
         <div class="git-stack mobile-sheet-stack">
           <div class="git-list-view mobile-sheet-view mobile-sheet-list">
-            <div class="git-commit-list"></div>
-            <button type="button" class="page-menu-item git-load-more" hidden></button>
+            <div class="mobile-sheet-list-body">
+              <div class="git-commit-list"></div>
+              <button type="button" class="page-menu-item git-load-more" hidden></button>
+            </div>
           </div>
           <div class="git-detail-view mobile-sheet-view mobile-sheet-list">
-            <div class="git-commit-detail-body"></div>
+            <div class="git-commit-detail-body mobile-sheet-list-body"></div>
           </div>
         </div>`);
       },
       setBodyHtml: setGitPanelBodyHtml,
-      loadingHtml: `<div class="mobile-sheet-list"><div class="git-commit-file-empty sheet-list-empty inline-loading-row">${loadingIndicatorHtml()}</div></div>`,
-      errorHtml: (message) => `<div class="mobile-sheet-list"><div class="git-commit-file-empty sheet-list-empty error">${escapeHtml(message)}</div></div>`,
+      loadingHtml: `<div class="mobile-sheet-list"><div class="mobile-sheet-list-body"><div class="git-commit-file-empty sheet-list-empty inline-loading-row">${loadingIndicatorHtml()}</div></div></div>`,
+      errorHtml: (message) => `<div class="mobile-sheet-list"><div class="mobile-sheet-list-body"><div class="git-commit-file-empty sheet-list-empty error">${escapeHtml(message)}</div></div></div>`,
       emptyCommitsHtml: '<div class="git-commit-file-empty sheet-list-empty" data-git-empty="1">No commits</div>',
       loadMoreLoadingHtml: loadingIndicatorHtml(),
       loadMoreRetryText: "Retry loading commits",

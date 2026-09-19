@@ -261,6 +261,7 @@
         clearSheetPreview({ restoreChrome: false });
         gitSession.closeDetail();
         _repoBrowserPath = "";
+        repoScrollByPath.clear();
         repoPanelRenderSig = "";
         repoBrowserMountEl()?.replaceChildren();
         if (mobileSheet) delete mobileSheet.dataset.kind;
@@ -345,6 +346,7 @@
     let repoPanelUpdateSeq = 0;
     let repoPanelEntries = [];
     let _repoBrowserPath = "";
+    const repoScrollByPath = new Map();
     let _repoGoToParentPath = () => { };
     const normalizeRepoPath = (value) => {
       const normalized = String(value || "").replace(/\\/g, "/");
@@ -554,6 +556,37 @@
         _repoBrowserPath = parentPath;
       }
     };
+    const sheetListTopPlayPx = () => {
+      const n = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mobile-sheet-list-top-play"));
+      return Number.isFinite(n) ? n : 0;
+    };
+    const pinSheetListBody = (el) => {
+      const body = el?.querySelector(":scope > .mobile-sheet-list-body");
+      if (!body || !el.clientHeight) return;
+      const style = getComputedStyle(el);
+      const padT = parseFloat(style.paddingTop) || 0;
+      const padB = parseFloat(style.paddingBottom) || 0;
+      body.style.minHeight = `${Math.max(0, el.clientHeight - padT - padB)}px`;
+    };
+    const resetSheetListScroll = (el) => {
+      if (!el) return;
+      const play = sheetListTopPlayPx();
+      const pin = () => {
+        pinSheetListBody(el);
+        el.scrollTop = play;
+      };
+      pin();
+      requestAnimationFrame(pin);
+    };
+    const restoreSheetListScroll = (el, top) => {
+      if (!el) return;
+      const pin = () => {
+        pinSheetListBody(el);
+        el.scrollTop = top;
+      };
+      pin();
+      requestAnimationFrame(pin);
+    };
 __CHAT_INCLUDE:../features/git-panel.js__
     const openGitSheet = async () => {
       if (!mobileSheet) return;
@@ -590,6 +623,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
       if (mobileSheet._repoSessionKey !== sessionKey) {
         mobileSheet._repoSessionKey = sessionKey;
         _repoBrowserPath = "";
+        repoScrollByPath.clear();
         repoPanelRenderSig = "";
       }
 
@@ -647,6 +681,8 @@ __CHAT_INCLUDE:../features/git-panel.js__
           })),
         });
         if (nextRenderSig === repoPanelRenderSig && repoBrowserMountEl()?.childElementCount) return;
+        const prevList = repoBrowserMountEl()?.querySelector(".mobile-sheet-list");
+        if (prevList && _repoBrowserPath !== path) repoScrollByPath.set(_repoBrowserPath, prevList.scrollTop);
         repoPanelRenderSig = nextRenderSig;
         _repoBrowserPath = path;
         ensureSheetDom();
@@ -748,19 +784,24 @@ __CHAT_INCLUDE:../features/git-panel.js__
         if (transition === "forward" || transition === "back") {
           list.dataset.transition = transition;
         }
+        const body = document.createElement("div");
+        body.className = "mobile-sheet-list-body";
         const { dirs: directoryEntries, files: fileEntries } = buildEntryGroups(allEntries);
         if (loading) {
-          appendMessage(list, "Loading…", "repo-browser-empty", { loading: true });
+          appendMessage(body, "Loading…", "repo-browser-empty", { loading: true });
         } else if (error) {
-          appendMessage(list, error, "repo-browser-empty error");
+          appendMessage(body, error, "repo-browser-empty error");
         } else if (!directoryEntries.length && !fileEntries.length) {
-          appendMessage(list, "No files in this directory");
+          appendMessage(body, "No files in this directory");
         } else {
-          directoryEntries.forEach((dirEntry) => appendDirectoryItem(list, dirEntry));
-          fileEntries.forEach((fileEntry) => appendFileItem(list, fileEntry));
+          directoryEntries.forEach((dirEntry) => appendDirectoryItem(body, dirEntry));
+          fileEntries.forEach((fileEntry) => appendFileItem(body, fileEntry));
         }
+        list.appendChild(body);
         const mount = repoBrowserMountEl();
         if (mount) mount.replaceChildren(list);
+        if (transition === "back" && repoScrollByPath.has(path)) restoreSheetListScroll(list, repoScrollByPath.get(path));
+        else resetSheetListScroll(list);
         if (!sheetPreviewOpen()) {
           setRepoSheetTitle(repoBrowserTitleForPath(path));
           syncRepoSheetBackBtn();

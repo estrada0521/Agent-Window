@@ -19,6 +19,12 @@
       const modeEl = () => (host.modeEl ? host.modeEl() : root()?.querySelector(".git-stack")) || root();
       const observerRoot = () => (host.observerRoot ? host.observerRoot() : root());
       const scrollRoot = () => (host.scrollRoot ? host.scrollRoot() : observerRoot());
+      const resetListScroll = () => {
+        const scroller = scrollRoot();
+        if (!scroller) return;
+        if (host.pinListScroll) host.pinListScroll(scroller);
+        else scroller.scrollTop = 0;
+      };
       const commitListEl = () => root()?.querySelector(".git-commit-list");
       const loadMoreEl = () => root()?.querySelector(".git-load-more");
       const disconnectObserver = () => {
@@ -113,6 +119,7 @@
         if (reset) host.renderShell(data || {});
         host.onPage?.(data, { reset });
         applyPaging(gitOverviewPagingFromResponse(data, state.commits, { reset }), { reset, newHashes });
+        if (reset) resetListScroll();
       };
       const renderFileStatsInto = async (
         wrapEl,
@@ -204,8 +211,7 @@
           wrapEl,
         };
         host.onOpenDetail?.({ diffKind, hash, rowHtml, subject, isWorktree });
-        const scroller = scrollRoot();
-        if (scroller) scroller.scrollTop = 0;
+        resetListScroll();
         requestAnimationFrame(() => el.classList.remove("git-transitioning"));
         try {
           await renderFileStatsInto(wrapEl, isWorktree ? "" : hash, {
@@ -215,6 +221,7 @@
         } catch (_) {
           wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty error">Failed to load file stats</div>';
         }
+        resetListScroll();
       };
       const loadPage = async ({ reset = false } = {}) => {
         if (host.canLoad && !host.canLoad()) return;
