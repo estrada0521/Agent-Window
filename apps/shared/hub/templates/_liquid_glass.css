@@ -9,7 +9,8 @@
     .page-header .page-header-actions .page-menu-btn,
     .shell > .page-header .page-title,
     #composerFabBtn,
-    #scrollToBottomBtn {
+    #scrollToBottomBtn,
+    .send-btn {
       transition: transform var(--liquid-glass-press-out);
     }
     .mobile-bottom-sheet-button:active:not(:disabled),
@@ -18,7 +19,8 @@
     .page-header .page-header-actions .page-menu-btn:active,
     .shell > .page-header .page-title:active,
     #composerFabBtn:active,
-    #scrollToBottomBtn:active {
+    #scrollToBottomBtn:active,
+    .send-btn:active:not(:disabled) {
       transform: scale(var(--liquid-glass-press-scale));
     }
     .mobile-bottom-sheet-button:active:not(:disabled),
@@ -26,7 +28,8 @@
     .pane-viewer-shortcut-menu:active > .pane-viewer-shortcut-btn,
     .page-header .page-header-actions .page-menu-btn:active,
     .shell > .page-header .page-title:active,
-    #scrollToBottomBtn:active {
+    #scrollToBottomBtn:active,
+    .send-btn:active:not(:disabled) {
       transition: transform var(--liquid-glass-press-in);
     }
     html[data-theme="dark"],
