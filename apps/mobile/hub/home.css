@@ -192,7 +192,7 @@
         background 160ms ease,
         border-color 160ms ease,
         box-shadow 160ms ease,
-        transform 160ms ease;
+        transform var(--liquid-glass-press-out);
       color: var(--icon-fg);
       justify-content: center;
       padding: 0;
@@ -212,7 +212,6 @@
       border-color: var(--liquid-glass-lg-active-border);
       box-shadow: var(--liquid-glass-lg-active-shadow);
       border-radius: 999px;
-      transform: scale(var(--liquid-glass-press-scale));
     }
 
     .hub-mobile-tagline {

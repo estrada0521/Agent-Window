@@ -66,12 +66,9 @@
     .repo-preview-html-mode {
       position: absolute;
       right: calc(50% + 30px);
-      top: 50%;
-      transform: translateY(-50%);
-    }
-
-    .repo-preview-html-mode:active {
-      transform: translateY(-50%) scale(var(--liquid-glass-press-scale));
+      top: 0;
+      bottom: 0;
+      margin-block: auto;
     }
 
     .repo-preview-html-mode[hidden] {
@@ -428,10 +425,6 @@
       min-height: var(--mobile-sheet-floating-height);
       padding: 0 12px;
       justify-content: space-between;
-    }
-
-    .mobile-bottom-sheet .git-worktree-summary:active {
-      transform: scale(0.98);
     }
 
     .mobile-bottom-sheet .git-worktree-summary:disabled {

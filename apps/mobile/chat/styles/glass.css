@@ -10,9 +10,3 @@
       backdrop-filter: var(--liquid-glass-blur);
       -webkit-backdrop-filter: var(--liquid-glass-blur);
     }
-
-    .shell > .page-header .page-title:active,
-    .shell > .page-header .page-header-actions .page-menu-btn:active,
-    .mobile-bottom-sheet .mobile-bottom-sheet-button:active {
-      transform: scale(var(--liquid-glass-press-scale));
-    }

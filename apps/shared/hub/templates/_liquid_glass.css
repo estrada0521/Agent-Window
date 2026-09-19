@@ -1,6 +1,26 @@
     :root {
       --liquid-glass-blur: blur(28px) saturate(220%) contrast(114%);
       --liquid-glass-press-scale: 1.22;
+      --liquid-glass-press-in: 0ms;
+      --liquid-glass-press-out: 680ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .mobile-bottom-sheet-button,
+    .pane-viewer-shortcut-btn,
+    .page-header .page-header-actions .page-menu-btn,
+    .shell > .page-header .page-title,
+    #composerFabBtn,
+    #scrollToBottomBtn {
+      transition: transform var(--liquid-glass-press-out);
+    }
+    .mobile-bottom-sheet-button:active:not(:disabled),
+    .pane-viewer-shortcut-btn:active,
+    .pane-viewer-shortcut-menu:active > .pane-viewer-shortcut-btn,
+    .page-header .page-header-actions .page-menu-btn:active,
+    .shell > .page-header .page-title:active,
+    #composerFabBtn:active,
+    #scrollToBottomBtn:active {
+      transform: scale(var(--liquid-glass-press-scale));
+      transition: transform var(--liquid-glass-press-in);
     }
     html[data-theme="dark"],
     #paneTracePanel,

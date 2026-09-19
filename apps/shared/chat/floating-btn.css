@@ -2,8 +2,8 @@
     #composerFabBtn {
       position: fixed;
       bottom: var(--floating-btn-bottom, 194px);
-      left: 50%;
-      transform: translateX(-50%) translateY(10px) scale(0.75);
+      left: calc(50% - 22px);
+      translate: 0 10px;
       width: 44px;
       height: 44px;
       border-radius: 999px;
@@ -29,7 +29,8 @@
         box-shadow 160ms ease,
         color 180ms cubic-bezier(0.4, 0, 0.2, 1),
         opacity 220ms ease,
-        transform 160ms ease;
+        translate 160ms ease,
+        transform var(--liquid-glass-press-out);
       z-index: 100;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
@@ -54,7 +55,7 @@
     #scrollToBottomBtn.thinking-scroll-btn-swapping {
       opacity: 0;
       pointer-events: none;
-      transform: translateX(-50%) translateY(10px) scale(0.75);
+      translate: 0 10px;
     }
 
     #scrollToBottomBtn.thinking-scroll-btn .message-thinking-icon-wrap {
@@ -63,22 +64,15 @@
       font-size: 12px;
     }
 
-    #composerFabBtn:active,
-    #composerFabBtn.visible:active,
-    #scrollToBottomBtn:active,
-    #scrollToBottomBtn.visible:active {
-      transform: translateX(-50%) translateY(0) scale(var(--liquid-glass-press-scale));
-    }
-
     #scrollToBottomBtn.visible,
     #composerFabBtn.visible {
       opacity: 1;
       pointer-events: auto;
-      transform: translateX(-50%) translateY(0) scale(1);
+      translate: 0 0;
     }
 
     #scrollToBottomBtn.visible.thinking-scroll-btn-swapping {
       opacity: 0;
       pointer-events: none;
-      transform: translateX(-50%) translateY(10px) scale(0.75);
+      translate: 0 10px;
     }

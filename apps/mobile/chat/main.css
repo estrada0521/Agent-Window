@@ -121,7 +121,7 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
         background 160ms ease,
         border-color 160ms ease,
         box-shadow 160ms ease,
-        transform 160ms ease;
+        transform var(--liquid-glass-press-out);
     }
 
     .shell>.page-header .page-title .page-logo {
@@ -156,7 +156,7 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
         background 160ms ease,
         border-color 160ms ease,
         box-shadow 160ms ease,
-        transform 160ms ease;
+        transform var(--liquid-glass-press-out);
       color: var(--icon-fg);
       justify-content: center;
       padding: 0;

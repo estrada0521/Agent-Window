@@ -123,7 +123,7 @@
       cursor: pointer;
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
-      transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+      transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform var(--liquid-glass-press-out);
     }
 
     .pane-viewer-shortcut-menu {
@@ -165,7 +165,6 @@
         rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
       border-color: var(--liquid-glass-lg-active-border);
       box-shadow: var(--liquid-glass-lg-active-shadow);
-      transform: scale(var(--liquid-glass-press-scale));
     }
 
     .pane-viewer-shortcut-btn svg {

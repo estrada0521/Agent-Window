@@ -154,7 +154,7 @@
         background 160ms ease,
         border-color 160ms ease,
         box-shadow 160ms ease,
-        transform 160ms ease;
+        transform var(--liquid-glass-press-out);
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-nav-bar > .mobile-bottom-sheet-button:last-child {
@@ -183,13 +183,8 @@
 
     .mobile-bottom-sheet .mobile-bottom-sheet-close {
       position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-    }
-
-    .mobile-bottom-sheet .mobile-bottom-sheet-close:active {
-      transform: translate(-50%, -50%) scale(var(--liquid-glass-press-scale));
+      inset: 0;
+      margin: auto;
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-leading[hidden] {
@@ -199,12 +194,9 @@
     .mobile-bottom-sheet .mobile-bottom-sheet-leading {
       position: absolute;
       left: calc(14px + env(safe-area-inset-left, 0px));
-      top: 50%;
-      transform: translateY(-50%);
-    }
-
-    .mobile-bottom-sheet .mobile-bottom-sheet-leading:active {
-      transform: translateY(-50%) scale(var(--liquid-glass-press-scale));
+      top: 0;
+      bottom: 0;
+      margin-block: auto;
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-button svg {
