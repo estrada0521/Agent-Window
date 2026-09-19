@@ -63,16 +63,34 @@
     });
     const headerRoot = document.querySelector(".page-header");
     const hasOpenHeaderMenu = () => !!(mobileSheet?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
-    const MOBILE_BOTTOM_SHEET_CLOSE_MS = 300;
     const mobileSheetCloseIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     const mobileSheetBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
-    const animateBottomSheetOpen = (panel, onOpened = () => { }) => {
+    const showBottomSheet = (panel, onOpened = () => { }) => {
       if (!panel) return;
+      const sheetPanel = panel.querySelector(".mobile-bottom-sheet-panel");
+      if (sheetPanel) {
+        sheetPanel.style.transition = "";
+        if (sheetPanel._sheetSlideEnd) {
+          sheetPanel.removeEventListener("transitionend", sheetPanel._sheetSlideEnd);
+          sheetPanel._sheetSlideEnd = null;
+        }
+      }
       panel.hidden = false;
-      panel.classList.remove("sheet-closing");
+      panel.classList.remove("open");
+      panel.classList.add("sheet-sliding");
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           panel.classList.add("open");
+          if (sheetPanel) {
+            const finishSlide = (event) => {
+              if (event.target !== sheetPanel || event.propertyName !== "transform") return;
+              sheetPanel.removeEventListener("transitionend", finishSlide);
+              sheetPanel._sheetSlideEnd = null;
+              panel.classList.remove("sheet-sliding");
+            };
+            sheetPanel._sheetSlideEnd = finishSlide;
+            sheetPanel.addEventListener("transitionend", finishSlide);
+          }
           onOpened();
         });
       });
@@ -137,7 +155,7 @@
     sharedSheetCloseBtn.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      sharedSheetOnClose({ immediate: true });
+      sharedSheetOnClose();
     });
     wireMobileSheetNavDrag(sharedSheetNav, sharedSheetActiveRef, () => sharedSheetOnClose());
     const attachSharedSheetChrome = (sheetPanel, { title, closeLabel, onClose }) => {
@@ -197,14 +215,8 @@
       return contentEl;
     };
     const createMobileSheetController = (panel, activeClass, { onOpened = () => { }, onClosed = () => { } } = {}) => {
-      let closeTimer = 0;
       let scrollY = 0;
       let scrollLocked = false;
-      const clearCloseTimer = () => {
-        if (!closeTimer) return;
-        clearTimeout(closeTimer);
-        closeTimer = 0;
-      };
       const lockScroll = () => {
         if (scrollLocked) return;
         scrollLocked = true;
@@ -221,40 +233,33 @@
         document.body.style.top = "";
         try { window.scrollTo(0, scrollY || 0); } catch (_) { }
       };
-      const close = ({ immediate = false } = {}) => {
+      const close = () => {
         if (!panel) return;
-        clearCloseTimer();
-        panel.classList.remove("open");
-        if (immediate) {
-          panel.classList.remove("sheet-closing");
-          panel.hidden = true;
-          unlockScroll();
-          onClosed();
-          syncHeaderMenuFocus();
-          return;
+        const sheetPanel = panel.querySelector(".mobile-bottom-sheet-panel");
+        if (sheetPanel) {
+          if (sheetPanel._sheetSlideEnd) {
+            sheetPanel.removeEventListener("transitionend", sheetPanel._sheetSlideEnd);
+            sheetPanel._sheetSlideEnd = null;
+          }
+          sheetPanel.style.transition = "none";
+          sheetPanel.style.transform = "";
         }
-        panel.classList.add("sheet-closing");
-        closeTimer = window.setTimeout(() => {
-          closeTimer = 0;
-          panel.classList.remove("sheet-closing");
-          panel.hidden = true;
-          unlockScroll();
-          onClosed();
-          syncHeaderMenuFocus();
-        }, MOBILE_BOTTOM_SHEET_CLOSE_MS);
+        panel.classList.remove("open", "sheet-sliding");
+        panel.hidden = true;
+        unlockScroll();
+        onClosed();
         syncHeaderMenuFocus();
       };
       const open = (afterOpen = () => { }) => {
         if (!panel) return;
-        clearCloseTimer();
         lockScroll();
-        animateBottomSheetOpen(panel, () => {
+        showBottomSheet(panel, () => {
           syncHeaderMenuFocus();
           onOpened();
           afterOpen();
         });
       };
-      return { open, close, clearCloseTimer, lockScroll, unlockScroll };
+      return { open, close, lockScroll, unlockScroll };
     };
     const workspaceSheet = createMobileSheetController(mobileSheet, MOBILE_SHEET_ACTIVE_CLASS, {
       onClosed: () => {
@@ -267,17 +272,17 @@
         if (mobileSheet) delete mobileSheet.dataset.kind;
       },
     });
-    const closeSheet = (options) => workspaceSheet.close(options);
+    const closeSheet = () => workspaceSheet.close();
     const paneTraceSheet = createMobileSheetController(paneTracePanel, MOBILE_SHEET_ACTIVE_CLASS);
     const ensurePaneTraceSheetDom = () => ensureMobileSheetDom(paneTracePanel, {
       kind: "pane-trace",
       title: "Pane Trace",
       closeLabel: "Close pane trace",
-      onClose: (opts) => exitPaneTraceMode(opts),
+      onClose: () => exitPaneTraceMode(),
     });
-    const closePaneTraceSheet = ({ immediate = false } = {}) => {
+    const closePaneTraceSheet = () => {
       if (!paneTracePanel) return;
-      paneTraceSheet.close({ immediate });
+      paneTraceSheet.close();
     };
     const openPaneTraceSheet = (onOpened = () => { }) => {
       if (!paneTracePanel) return;
@@ -290,7 +295,7 @@
     const setSheetKind = (kind) => {
       if (!mobileSheet) return;
       mobileSheet.dataset.kind = kind;
-      sharedSheetOnClose = (opts) => closeSheet(opts);
+      sharedSheetOnClose = () => closeSheet();
       sharedSheetCloseBtn.setAttribute("aria-label", kind === "git" ? "Close git" : "Close repository");
     };
     const updateHeaderMenuViewportMetrics = () => {
@@ -316,7 +321,7 @@
         paneViewerInitialFetchTimer = 0;
       }
     };
-    function exitPaneTraceMode(opts) {
+    function exitPaneTraceMode() {
       const paneEl = document.getElementById("paneViewer");
       clearPaneViewerOpenWork();
       if (paneViewerTabScrollEndTimer) {
@@ -334,7 +339,7 @@
         paneEl.classList.remove("visible");
         paneEl.hidden = true;
       }
-      closePaneTraceSheet(opts);
+      closePaneTraceSheet();
       if (paneViewerInterval) {
         clearInterval(paneViewerInterval);
         paneViewerInterval = null;
@@ -476,7 +481,7 @@
           sheetPanel.prepend(sharedSheetNav);
           sheetPanel.appendChild(sharedSheetFooter);
           sharedSheetActiveRef.panel = sheetPanel;
-          sharedSheetOnClose = (opts) => closeSheet(opts);
+          sharedSheetOnClose = () => closeSheet();
         }
         return true;
       }
@@ -484,9 +489,8 @@
         kind: "workspace",
         title: "",
         closeLabel: "Close",
-        onClose: (opts) => closeSheet(opts),
+        onClose: () => closeSheet(),
         afterBuild: ({ contentEl }) => {
-          contentEl.classList.add("mobile-sheet-stage");
           const gitHost = document.createElement("div");
           gitHost.className = "git-host mobile-sheet-stack";
           const repoStack = document.createElement("div");
@@ -534,7 +538,7 @@
         return;
       }
       ensureSheetDom();
-      closePaneTraceSheet({ immediate: true });
+      closePaneTraceSheet();
       setSheetKind(targetKind);
       if (!sheetIsOpen()) workspaceSheet.open();
       if (sheetPreviewOpen()) clearSheetPreview({ restoreChrome: false });
@@ -591,7 +595,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
     const openGitSheet = async () => {
       if (!mobileSheet) return;
       ensureSheetDom();
-      closePaneTraceSheet({ immediate: true });
+      closePaneTraceSheet();
       closeSheetPreview();
       setSheetKind("git");
       restoreGitChromeAfterPreview();
@@ -601,7 +605,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
     const openRepoSheet = () => {
       if (!mobileSheet) return;
       ensureSheetDom();
-      closePaneTraceSheet({ immediate: true });
+      closePaneTraceSheet();
       closeSheetPreview();
       setSheetKind("repo");
       restoreRepoChromeAfterPreview();
@@ -854,7 +858,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
       resetAgentActionNativeMenu({ clearOptions: true });
       gitSession.closeDetail();
       exitPaneTraceMode();
-      closeSheet({ immediate: true });
+      closeSheet();
       syncHeaderMenuFocus();
     };
     const handleNativeMenuAction = async (payload) => {

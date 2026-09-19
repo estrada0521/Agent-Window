@@ -84,24 +84,6 @@
       stroke-width: 1.5;
     }
 
-    .mobile-sheet-stage {
-      opacity: 0;
-      transform: translateY(8px);
-      transition:
-        opacity 220ms ease,
-        transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    .mobile-sheet-overlay.open .mobile-sheet-stage {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .mobile-sheet-overlay.sheet-closing .mobile-sheet-stage {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-
     .mobile-sheet-list {
       --sheet-list-row-height: calc(var(--text-size, 13px) * 30 / 13);
       flex: 1 1 auto;
