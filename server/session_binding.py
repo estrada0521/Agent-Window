@@ -6,7 +6,6 @@ from pathlib import Path
 from backend_core.access.session_meta import find_session_for_workspace
 from backend_core.access.settings import (
     agent_window_session_root,
-    ensure_session_workspace_mirrors,
     session_log_path,
 )
 
@@ -41,8 +40,6 @@ class WorkspaceSessionBinding:
             if not session_name:
                 raise RuntimeError(f"No agent-window session claims workspace {self.workspace}")
             log_path = session_log_path(session_name)
-
-            ensure_session_workspace_mirrors(session_name, self.workspace)
             self._session_name = session_name
             self._log_path = log_path
             self._root_signature = self._current_root_signature()
