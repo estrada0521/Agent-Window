@@ -76,7 +76,7 @@
         }
       }
       panel.hidden = false;
-      panel.classList.remove("open");
+      panel.classList.remove("open", "sheet-closing");
       panel.classList.add("sheet-sliding");
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -248,7 +248,7 @@
             sheetPanel.style.transition = "";
             sheetPanel.style.transform = "";
           }
-          panel.classList.remove("open", "sheet-sliding");
+          panel.classList.remove("open", "sheet-sliding", "sheet-closing");
           panel.hidden = true;
           unlockScroll();
           onClosed();
@@ -266,20 +266,18 @@
           finish();
           return;
         }
-        panel.classList.add("sheet-sliding");
-        if (sheetPanel) sheetPanel.style.transition = "";
-        panel.classList.remove("open");
+        panel.classList.add("sheet-closing");
+        panel.classList.remove("open", "sheet-sliding");
         if (!sheetPanel) {
           finish();
           return;
         }
-        sheetPanel.style.transform = "";
-        const finishSlide = (event) => {
-          if (event.target !== sheetPanel || event.propertyName !== "transform") return;
+        const finishFade = (event) => {
+          if (event.target !== sheetPanel || event.propertyName !== "opacity") return;
           finish();
         };
-        sheetPanel._sheetSlideEnd = finishSlide;
-        sheetPanel.addEventListener("transitionend", finishSlide);
+        sheetPanel._sheetSlideEnd = finishFade;
+        sheetPanel.addEventListener("transitionend", finishFade);
       };
       const open = (afterOpen = () => { }) => {
         if (!panel) return;

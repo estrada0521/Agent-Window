@@ -59,6 +59,7 @@
       flex-direction: column;
       position: relative;
       transform: translateY(100%);
+      opacity: 1;
       transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
       overflow: hidden;
       pointer-events: auto;
@@ -240,5 +241,11 @@
 
     .mobile-sheet-overlay.open .mobile-bottom-sheet-panel {
       transform: translateY(0);
+    }
+
+    .mobile-sheet-overlay.sheet-closing .mobile-bottom-sheet-panel {
+      transform: translateY(0);
+      opacity: 0;
+      transition: opacity 200ms ease;
     }
 
