@@ -203,7 +203,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
         }
         return;
       }
-      closeSheet();
+      closeSheet({ immediate: true });
 
       paneViewerEl.classList.remove("visible");
       paneViewerEl.hidden = true;

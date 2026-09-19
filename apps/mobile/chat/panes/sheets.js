@@ -117,11 +117,14 @@
       const finishDrag = () => {
         if (!dragging) return;
         dragging = false;
+        if (dragY > 80) {
+          onClose();
+          return;
+        }
         if (activeSheetRef.panel) {
           activeSheetRef.panel.style.transition = "";
           activeSheetRef.panel.style.transform = "";
         }
-        if (dragY > 80) onClose();
       };
       sheetNav.addEventListener("touchend", finishDrag, { passive: true });
       sheetNav.addEventListener("touchcancel", finishDrag, { passive: true });
@@ -233,22 +236,50 @@
         document.body.style.top = "";
         try { window.scrollTo(0, scrollY || 0); } catch (_) { }
       };
-      const close = () => {
-        if (!panel) return;
+      const close = ({ immediate = false } = {}) => {
+        if (!panel || panel.hidden) return;
         const sheetPanel = panel.querySelector(".mobile-bottom-sheet-panel");
-        if (sheetPanel) {
-          if (sheetPanel._sheetSlideEnd) {
-            sheetPanel.removeEventListener("transitionend", sheetPanel._sheetSlideEnd);
-            sheetPanel._sheetSlideEnd = null;
+        const finish = () => {
+          if (sheetPanel) {
+            if (sheetPanel._sheetSlideEnd) {
+              sheetPanel.removeEventListener("transitionend", sheetPanel._sheetSlideEnd);
+              sheetPanel._sheetSlideEnd = null;
+            }
+            sheetPanel.style.transition = "";
+            sheetPanel.style.transform = "";
           }
-          sheetPanel.style.transition = "none";
-          sheetPanel.style.transform = "";
+          panel.classList.remove("open", "sheet-sliding");
+          panel.hidden = true;
+          unlockScroll();
+          onClosed();
+          syncHeaderMenuFocus();
+        };
+        if (sheetPanel?._sheetSlideEnd) {
+          sheetPanel.removeEventListener("transitionend", sheetPanel._sheetSlideEnd);
+          sheetPanel._sheetSlideEnd = null;
         }
-        panel.classList.remove("open", "sheet-sliding");
-        panel.hidden = true;
-        unlockScroll();
-        onClosed();
-        syncHeaderMenuFocus();
+        if (immediate || !panel.classList.contains("open")) {
+          if (sheetPanel) {
+            sheetPanel.style.transition = "none";
+            sheetPanel.style.transform = "";
+          }
+          finish();
+          return;
+        }
+        panel.classList.add("sheet-sliding");
+        if (sheetPanel) sheetPanel.style.transition = "";
+        panel.classList.remove("open");
+        if (!sheetPanel) {
+          finish();
+          return;
+        }
+        sheetPanel.style.transform = "";
+        const finishSlide = (event) => {
+          if (event.target !== sheetPanel || event.propertyName !== "transform") return;
+          finish();
+        };
+        sheetPanel._sheetSlideEnd = finishSlide;
+        sheetPanel.addEventListener("transitionend", finishSlide);
       };
       const open = (afterOpen = () => { }) => {
         if (!panel) return;
@@ -272,7 +303,7 @@
         if (mobileSheet) delete mobileSheet.dataset.kind;
       },
     });
-    const closeSheet = () => workspaceSheet.close();
+    const closeSheet = (options) => workspaceSheet.close(options);
     const paneTraceSheet = createMobileSheetController(paneTracePanel, MOBILE_SHEET_ACTIVE_CLASS);
     const ensurePaneTraceSheetDom = () => ensureMobileSheetDom(paneTracePanel, {
       kind: "pane-trace",
@@ -280,9 +311,9 @@
       closeLabel: "Close pane trace",
       onClose: () => exitPaneTraceMode(),
     });
-    const closePaneTraceSheet = () => {
+    const closePaneTraceSheet = (options) => {
       if (!paneTracePanel) return;
-      paneTraceSheet.close();
+      paneTraceSheet.close(options);
     };
     const openPaneTraceSheet = (onOpened = () => { }) => {
       if (!paneTracePanel) return;
@@ -538,7 +569,7 @@
         return;
       }
       ensureSheetDom();
-      closePaneTraceSheet();
+      closePaneTraceSheet({ immediate: true });
       setSheetKind(targetKind);
       if (!sheetIsOpen()) workspaceSheet.open();
       if (sheetPreviewOpen()) clearSheetPreview({ restoreChrome: false });
@@ -595,7 +626,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
     const openGitSheet = async () => {
       if (!mobileSheet) return;
       ensureSheetDom();
-      closePaneTraceSheet();
+      closePaneTraceSheet({ immediate: true });
       closeSheetPreview();
       setSheetKind("git");
       restoreGitChromeAfterPreview();
@@ -605,7 +636,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
     const openRepoSheet = () => {
       if (!mobileSheet) return;
       ensureSheetDom();
-      closePaneTraceSheet();
+      closePaneTraceSheet({ immediate: true });
       closeSheetPreview();
       setSheetKind("repo");
       restoreRepoChromeAfterPreview();
