@@ -1,7 +1,25 @@
     let _cmdActiveIdx = -1;
     let _lastCmdItemsData = [];
+    let cancelCmdAutocompleteLoading = () => {};
     const _cmdItems = () => cmdDrop.querySelectorAll(".cmd-item");
+    const showCmdAutocompleteLoading = () => {
+      cmdDrop.innerHTML = `<div class="file-dropdown-loading">${loadingIndicatorHtml()}</div>`;
+      _cmdActiveIdx = -1;
+      positionComposerDropdown(cmdDrop);
+      if (!cmdDrop.classList.contains("visible")) {
+        cmdDrop.style.display = "block";
+        cmdDrop.classList.add("visible");
+      }
+    };
+    const scheduleCmdAutocompleteLoading = (contextKey) => {
+      cancelCmdAutocompleteLoading();
+      cancelCmdAutocompleteLoading = startDelayedLoading(
+        showCmdAutocompleteLoading,
+        () => _lastCmdQuery !== contextKey,
+      );
+    };
     const closeCmdDrop = () => {
+      cancelCmdAutocompleteLoading();
       cmdDrop.classList.remove("visible", "is-scrollable");
       cmdDrop.style.display = "none";
       _cmdActiveIdx = -1;
@@ -57,15 +75,18 @@
       const query = token.toLowerCase();
       const contextKey = `${pos}:${before}`;
       _lastCmdQuery = contextKey;
+      scheduleCmdAutocompleteLoading(contextKey);
       void (async () => {
         let list;
         try {
           list = await loadShortcutCommandsOnce();
         } catch (err) {
+          cancelCmdAutocompleteLoading();
           closeCmdDrop();
           setStatus(err?.message || "shortcut commands unavailable", true);
           return;
         }
+        cancelCmdAutocompleteLoading();
         if (_lastCmdQuery !== contextKey) return;
         const matches = list.filter((c) => {
           const slash = String(c.slash || "").toLowerCase();

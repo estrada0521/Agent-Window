@@ -5,6 +5,8 @@
         totalCommits: 0,
         hasMore: false,
         pageLoading: false,
+        showLoadingUi: false,
+        cancelLoading: () => {},
         loadError: "",
         loadSeq: 0,
         refreshSeq: 0,
@@ -67,13 +69,20 @@
         if (state.loadError) {
           btn.classList.remove("inline-loading-row");
           btn.textContent = host.loadMoreRetryText || "Retry loading commits";
-        } else if (state.pageLoading) {
+        } else if (state.pageLoading && state.showLoadingUi) {
           if (host.loadMoreLoadingHtml) {
             btn.classList.add("inline-loading-row");
             btn.innerHTML = host.loadMoreLoadingHtml;
           } else {
             btn.classList.remove("inline-loading-row");
             btn.textContent = "";
+          }
+        } else if (state.pageLoading) {
+          btn.classList.remove("inline-loading-row");
+          if (state.totalCommits > 0 && host.loadMoreCountText) {
+            btn.textContent = host.loadMoreCountText(state.commits.length, state.totalCommits);
+          } else {
+            btn.textContent = host.loadMoreText || "Load more commits";
           }
         } else if (state.totalCommits > 0) {
           btn.classList.remove("inline-loading-row");
@@ -132,11 +141,20 @@
         if (!wrapEl) return null;
         const requestSeq = Math.max(0, parseInt(wrapEl.dataset.fileStatsRequestSeq) || 0) + 1;
         wrapEl.dataset.fileStatsRequestSeq = String(requestSeq);
-        if (!preserveCurrent) {
-          delete wrapEl.dataset.fileStatsSignature;
-          wrapEl.innerHTML = `<div class="git-commit-file-empty sheet-list-empty inline-loading-row">${loadingIndicatorHtml()}</div>`;
+        const cancelStatsLoading = preserveCurrent
+          ? () => {}
+          : startDelayedLoading(() => {
+            if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return;
+            delete wrapEl.dataset.fileStatsSignature;
+            wrapEl.innerHTML = `<div class="git-commit-file-empty sheet-list-empty inline-loading-row">${loadingIndicatorHtml()}</div>`;
+          });
+        if (!preserveCurrent) delete wrapEl.dataset.fileStatsSignature;
+        let loaded;
+        try {
+          loaded = await loadGitDiffFileStats({ hash, scope });
+        } finally {
+          cancelStatsLoading();
         }
-        const loaded = await loadGitDiffFileStats({ hash, scope });
         if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return null;
         if (loaded.mode === "sections") {
           const signature = gitFileStatsRowsSignature(loaded.sections);
@@ -229,8 +247,10 @@
         if (!reset && !state.hasMore && !state.loadError) return;
         const loadSeq = ++state.loadSeq;
         state.pageLoading = true;
+        state.showLoadingUi = false;
         state.loadError = "";
         disconnectObserver();
+        state.cancelLoading();
         if (reset) {
           state.refreshSeq += 1;
           closeDetail();
@@ -239,8 +259,17 @@
           state.nextOffset = 0;
           state.totalCommits = 0;
           state.commits = [];
-          host.setBodyHtml(host.loadingHtml);
+          state.cancelLoading = startDelayedLoading(() => {
+            if (loadSeq !== state.loadSeq) return;
+            state.showLoadingUi = true;
+            host.setBodyHtml(host.loadingHtml);
+          });
         } else {
+          state.cancelLoading = startDelayedLoading(() => {
+            if (loadSeq !== state.loadSeq) return;
+            state.showLoadingUi = true;
+            updateLoadMoreUi();
+          });
           updateLoadMoreUi();
         }
         try {
@@ -259,7 +288,10 @@
           }
         } finally {
           if (loadSeq !== state.loadSeq) return;
+          state.cancelLoading();
+          state.cancelLoading = () => {};
           state.pageLoading = false;
+          state.showLoadingUi = false;
           updateLoadMoreUi();
           ensureObserver();
           if (state.refreshQueued) {

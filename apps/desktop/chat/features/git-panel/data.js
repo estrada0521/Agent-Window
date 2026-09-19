@@ -151,10 +151,21 @@
     };
     const dpRenderFileStatsInto = async (wrapEl, hash, { allowUndo = false, scope = "", incremental = false } = {}) => {
       if (!wrapEl) return null;
-      if (!incremental) {
-        wrapEl.innerHTML = '<div class="git-commit-file-empty inline-loading-row"></div>';
+      const requestSeq = Math.max(0, parseInt(wrapEl.dataset.fileStatsRequestSeq) || 0) + 1;
+      wrapEl.dataset.fileStatsRequestSeq = String(requestSeq);
+      const cancelStatsLoading = incremental
+        ? () => {}
+        : startDelayedLoading(() => {
+          if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return;
+          wrapEl.innerHTML = '<div class="git-commit-file-empty inline-loading-row"></div>';
+        });
+      let loaded;
+      try {
+        loaded = await loadGitDiffFileStats({ hash, scope });
+      } finally {
+        cancelStatsLoading();
       }
-      const loaded = await loadGitDiffFileStats({ hash, scope });
+      if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return null;
       if (loaded.mode === "sections") {
         dpApplyFileStatsSectionsInto(wrapEl, loaded.sections, { allowUndo, incremental });
         return { files: loaded.files };

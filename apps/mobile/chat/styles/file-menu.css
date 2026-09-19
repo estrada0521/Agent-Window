@@ -46,6 +46,13 @@
       animation: dropdownIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
+    #fileDropdown:has(.file-dropdown-loading),
+    #cmdDropdown:has(.file-dropdown-loading) {
+      display: flex;
+      flex-direction: column;
+      height: var(--composer-menu-max-height);
+    }
+
     .file-item {
       display: flex;
       align-items: center;
@@ -116,8 +123,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 46px;
-      padding: 8px 12px 10px;
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
+      padding: 0;
       color: var(--muted);
       font-size: 12px;
     }

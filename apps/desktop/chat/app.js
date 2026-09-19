@@ -365,6 +365,8 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
     let dpPanelOpen = false;
     let dpActivePanelView = "repo";
     let dpRepoBrowserPath = "";
+    let dpRepoLoadSeq = 0;
+    let cancelDpRepoLoading = () => {};
     let dpRepoBrowserNavDirection = "forward";
     let dpPanelWidthAtDefaultTextSize = DP_PANEL_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE;
     let _desktopRightPanelResizeState = null;
@@ -779,13 +781,21 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const newDepth = path.split("/").filter(Boolean).length;
       const direction = animate && newDepth > currentDepth ? "forward" : (animate ? "back" : "none");
       dpRepoBrowserNavDirection = direction;
-      dpRenderRepoPanel(path, [], { loading: true, direction });
+      const loadSeq = ++dpRepoLoadSeq;
+      const repoLoadCancelled = () => loadSeq !== dpRepoLoadSeq || !dpPanelOpen;
+      cancelDpRepoLoading();
+      cancelDpRepoLoading = startDelayedLoading(
+        () => dpRenderRepoPanel(path, [], { loading: true, direction }),
+        repoLoadCancelled,
+      );
       try {
         const entries = await dpFetchRepoDir(path);
-        if (!dpPanelOpen) return;
+        cancelDpRepoLoading();
+        if (repoLoadCancelled()) return;
         dpRenderRepoPanel(path, entries, { direction });
       } catch (err) {
-        if (!dpPanelOpen) return;
+        cancelDpRepoLoading();
+        if (repoLoadCancelled()) return;
         dpRenderRepoPanel(path, [], { error: err?.message || "Failed to load directory", direction });
       }
     };

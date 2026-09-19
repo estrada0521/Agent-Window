@@ -1,3 +1,4 @@
+    let cancelFileAutocompleteLoading = () => {};
     const showFileAutocompleteLoading = () => {
       fileDrop.innerHTML = `<div class="file-dropdown-loading">${loadingIndicatorHtml()}</div>`;
       _dropActiveIdx = -1;
@@ -6,6 +7,13 @@
         fileDrop.style.display = "block";
         fileDrop.classList.add("visible");
       }
+    };
+    const scheduleFileAutocompleteLoading = (requestSeq) => {
+      cancelFileAutocompleteLoading();
+      cancelFileAutocompleteLoading = startDelayedLoading(
+        showFileAutocompleteLoading,
+        () => requestSeq !== _fileAutocompleteRequestSeq,
+      );
     };
     const basename = (path) => {
       const s = String(path || "");

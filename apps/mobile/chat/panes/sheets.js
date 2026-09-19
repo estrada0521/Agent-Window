@@ -380,6 +380,7 @@
     let repoPanelUpdateSeq = 0;
     let repoPanelEntries = [];
     let _repoBrowserPath = "";
+    let cancelRepoLoading = () => {};
     const repoScrollByPath = new Map();
     let _repoGoToParentPath = () => { };
     const normalizeRepoPath = (value) => {
@@ -850,14 +851,23 @@ __CHAT_INCLUDE:../features/git-panel.js__
           && path === _repoBrowserPath
           && repoBrowserMountEl()?.childElementCount
         );
-        if (!canPreserveCurrent) renderPanel(path, [], { loading: true, transition });
+        const repoLoadCancelled = () => updateSeq !== repoPanelUpdateSeq || mobileSheet._repoSessionKey !== sessionKey;
+        cancelRepoLoading();
+        if (!canPreserveCurrent) {
+          cancelRepoLoading = startDelayedLoading(
+            () => renderPanel(path, [], { loading: true, transition }),
+            repoLoadCancelled,
+          );
+        }
         try {
           const entriesForPath = await fetchRepoDir(path);
-          if (updateSeq !== repoPanelUpdateSeq || mobileSheet._repoSessionKey !== sessionKey) return;
+          cancelRepoLoading();
+          if (repoLoadCancelled()) return;
           if (canPreserveCurrent && _repoBrowserPath !== path) return;
           renderPanel(path, entriesForPath, { transition });
         } catch (err) {
-          if (updateSeq !== repoPanelUpdateSeq || mobileSheet._repoSessionKey !== sessionKey) return;
+          cancelRepoLoading();
+          if (repoLoadCancelled()) return;
           if (canPreserveCurrent) return;
           const errorText = String(err?.message || "Failed to load directory");
           if (path) {

@@ -5,6 +5,7 @@ __CHAT_INCLUDE:../file-resolve.js__
     let _ignoreGlobalClick = false;
     const _dropItems = () => fileDrop.querySelectorAll(".file-item");
     const closeDrop = () => {
+      cancelFileAutocompleteLoading();
       _fileAutocompleteRequestSeq += 1;
       fileDrop.classList.remove("visible", "is-scrollable");
       fileDrop.style.display = "none";
@@ -212,8 +213,9 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       }
 
       const query = match[0].slice(1);
-      showFileAutocompleteLoading();
+      scheduleFileAutocompleteLoading(requestSeq);
       const matches = await loadFileSearchMatches(query, 30);
+      cancelFileAutocompleteLoading();
       if (requestSeq !== _fileAutocompleteRequestSeq) return;
 
       if (!matches.length) {

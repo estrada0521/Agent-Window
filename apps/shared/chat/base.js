@@ -243,8 +243,16 @@
       }
       return s;
     };
+    const LOADING_SPINNER_DELAY_MS = 500;
     const loadingIndicatorHtml = () =>
       '<span class="inline-loading"><span class="inline-loading-spinner" aria-hidden="true"></span></span>';
+    const startDelayedLoading = (show, isCancelled) => {
+      const timer = setTimeout(() => {
+        if (isCancelled?.()) return;
+        show();
+      }, LOADING_SPINNER_DELAY_MS);
+      return () => clearTimeout(timer);
+    };
     const currentFilePreviewTextSize = () => {
       try {
         const rawSize = window.getComputedStyle(document.documentElement).getPropertyValue("--text-size") || "";
