@@ -1,5 +1,4 @@
 from __future__ import annotations
-import re
 
 import os
 import subprocess
@@ -384,14 +383,6 @@ class FileRuntime:
         i = s.rfind("/")
         return s if i == -1 else s[i + 1 :]
 
-    @staticmethod
-    def _stem_from_base(base: str) -> str:
-        return re.sub(r"\.[^.]+$", "", str(base or ""))
-
-    @staticmethod
-    def _normalized_loose_file_token(value: str) -> str:
-        return re.sub(r"[^a-z0-9]", "", str(value or "").lower())
-
     def list_files(self, *, force_refresh: bool = False):
         now = time.time()
         if not force_refresh:
@@ -442,29 +433,16 @@ class FileRuntime:
                 return suffix_matches[0]
 
         query_base = self._basename(normalized_query).lower()
-        query_stem = self._stem_from_base(query_base)
-        query_loose = self._normalized_loose_file_token(query_stem)
-
         exact_base_matches = []
-        exact_stem_matches = []
-        loose_stem_matches = []
         for entry in entries:
             path = str(entry.get("path") or "")
             if not path:
                 continue
-            rel_base = self._basename(path).lower()
-            rel_stem = self._stem_from_base(rel_base)
-            if rel_base == query_base:
+            if self._basename(path).lower() == query_base:
                 exact_base_matches.append(path)
-            if rel_stem == query_stem:
-                exact_stem_matches.append(path)
-            if query_loose and self._normalized_loose_file_token(rel_stem) == query_loose:
-                loose_stem_matches.append(path)
-
-        for match_set in (exact_base_matches, exact_stem_matches, loose_stem_matches):
-            deduped = sorted(set(match_set))
-            if len(deduped) == 1:
-                return deduped[0]
+        deduped = sorted(set(exact_base_matches))
+        if len(deduped) == 1:
+            return deduped[0]
 
         return ""
 
