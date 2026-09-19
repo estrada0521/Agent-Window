@@ -6,6 +6,8 @@
     let repoPreviewBaseTheme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
     let repoHtmlPreviewMode = "text";
     let repoPreviewControlsWired = false;
+    let filePreviewLoadSeq = 0;
+    let cancelFilePreviewLoading = () => {};
     const currentFileModalBaseTheme = () => document.documentElement.dataset.theme === "light" ? "light" : "dark";
     const isHtmlPreviewExt = (ext) => ext === "html" || ext === "htm";
     const sheetPreviewFrameEl = () => mobileSheet?.querySelector(".sheet-preview-frame");
@@ -164,7 +166,18 @@
         applyPreviewThemeToFrame(frame, ext, baseTheme, baseTheme);
       }, 60);
     };
+    const filePreviewViewEl = (frame) => frame?.closest(".sheet-preview-view") || frame?.parentElement;
+    const hideFilePreviewLoading = (view) => {
+      view?.querySelector(":scope > .sheet-preview-loading")?.remove();
+    };
+    const stopFilePreviewLoading = (frame) => {
+      filePreviewLoadSeq += 1;
+      cancelFilePreviewLoading();
+      cancelFilePreviewLoading = () => {};
+      hideFilePreviewLoading(filePreviewViewEl(frame));
+    };
     const resetEmbeddedFilePreviewFrame = (frame) => {
+      stopFilePreviewLoading(frame);
       if (!frame) return;
       frame.onload = null;
       frame.style.opacity = "";
@@ -176,8 +189,20 @@
       const normalizedExt = String(ext || "").toLowerCase();
       if (!frame || !normalizedPath) return;
       resetEmbeddedFilePreviewFrame(frame);
+      const view = filePreviewViewEl(frame);
+      const loadSeq = ++filePreviewLoadSeq;
+      cancelFilePreviewLoading = startDelayedLoading(() => {
+        if (loadSeq !== filePreviewLoadSeq || !view) return;
+        if (view.querySelector(":scope > .sheet-preview-loading")) return;
+        const node = document.createElement("div");
+        node.className = "sheet-preview-loading";
+        node.innerHTML = loadingIndicatorHtml();
+        view.appendChild(node);
+      }, () => loadSeq !== filePreviewLoadSeq);
       frame.style.opacity = "0";
       frame.onload = () => {
+        cancelFilePreviewLoading();
+        hideFilePreviewLoading(view);
         frame.style.transition = "opacity 200ms ease-out";
         frame.style.opacity = "1";
         wireMobileSheetSwipeBack(
