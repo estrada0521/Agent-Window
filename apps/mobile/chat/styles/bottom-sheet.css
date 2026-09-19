@@ -218,7 +218,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       text-align: center;
-      font-size: 17px;
+      font-size: max(17px, calc(var(--text-size, 13px) * 17 / 13));
       font-weight: 600;
       color: var(--fg);
       white-space: nowrap;

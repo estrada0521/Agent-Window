@@ -420,7 +420,7 @@
       min-height: 34px;
       padding: 0 8px;
       border-radius: 8px;
-      font-size: var(--text-size, 13px);
+      font-size: max(13px, var(--text-size, 13px));
       line-height: 1.35;
       color: var(--fg);
       font-family: var(--font-main);
@@ -459,7 +459,7 @@
     }
 
     .mobile-bottom-sheet-title.git-sheet-title {
-      font-size: 15px;
+      font-size: max(15px, calc(var(--text-size, 13px) * 15 / 13));
       font-weight: 500;
     }
 
@@ -477,7 +477,7 @@
 
     .git-worktree-button .git-worktree-button-label,
     .git-worktree-button .git-summary-counts {
-      font-size: var(--text-size, 13px);
+      font-size: inherit;
       font-family: var(--font-main);
       font-weight: var(--body-weight);
     }
