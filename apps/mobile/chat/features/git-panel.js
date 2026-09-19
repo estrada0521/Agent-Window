@@ -9,13 +9,13 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       titleEl.textContent = "Git";
       titleEl.title = "Git";
     };
-    const gitWorktreeSummaryBtn = () => mobileSheet?.querySelector(".git-worktree-summary");
-    const showGitWorktreeSummary = () => {
-      const btn = gitWorktreeSummaryBtn();
+    const gitWorktreeButton = () => mobileSheet?.querySelector(".git-worktree-button");
+    const showGitWorktreeButton = () => {
+      const btn = gitWorktreeButton();
       if (btn) btn.hidden = !!gitSession.detailContext;
     };
-    const hideGitWorktreeSummary = () => {
-      const btn = gitWorktreeSummaryBtn();
+    const hideGitWorktreeButton = () => {
+      const btn = gitWorktreeButton();
       if (btn) btn.hidden = true;
     };
     const animateGitSheetList = (selector, transition) => {
@@ -25,14 +25,14 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       void list.offsetWidth;
       list.dataset.transition = transition;
     };
-    const renderGitWorktreeSummary = (data) => {
-      let btn = gitWorktreeSummaryBtn();
+    const renderGitWorktreeButton = (data) => {
+      let btn = gitWorktreeButton();
       if (!btn) {
         const sheetPanel = mobileSheet?.querySelector(".mobile-bottom-sheet-panel");
         if (!sheetPanel) return;
         btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "git-worktree-summary git-summary-row mobile-bottom-sheet-button";
+        btn.className = "git-worktree-button mobile-bottom-sheet-button";
         sheetPanel.appendChild(btn);
       }
       const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
@@ -44,8 +44,8 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       if (hasDiff) btn.dataset.diffKind = "worktree";
       else delete btn.dataset.diffKind;
       btn.setAttribute("aria-label", hasDiff ? "Open uncommitted changes" : "Working tree clean");
-      btn.innerHTML = `<span class="git-summary-meta-text">${gitPathCountText(changedPaths)}</span>${gitCountsHtml(added, deleted)}`;
-      showGitWorktreeSummary();
+      btn.innerHTML = `<span class="git-worktree-button-label">${gitPathCountText(changedPaths)}</span>${gitCountsHtml(added, deleted)}`;
+      showGitWorktreeButton();
     };
     let _gitDetailChrome = null;
     const applyGitDetailChrome = ({ rowHtml = "", subject = "Git" } = {}) => {
@@ -62,7 +62,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
         if (countsEl) titleEl.appendChild(countsEl.cloneNode(true));
         titleEl.title = subject;
       }
-      hideGitWorktreeSummary();
+      hideGitWorktreeButton();
       setSharedSheetLeading(
         () => gitSession.closeDetail({ refreshList: gitSession.detailNeedsRefresh }),
         "Back to commits",
@@ -78,7 +78,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       _gitDetailChrome = null;
       setGitSheetTitle();
       setSharedSheetLeading(null);
-      showGitWorktreeSummary();
+      showGitWorktreeButton();
       if (hadDetail) {
         animateGitSheetList(".git-list-view", "back");
         const list = gitHostEl()?.querySelector(".git-list-view");
@@ -93,7 +93,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       else {
         setGitSheetTitle();
         setSharedSheetLeading(null);
-        showGitWorktreeSummary();
+        showGitWorktreeButton();
       }
     };
     const setGitPanelBodyHtml = (html) => {
@@ -113,7 +113,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       canLoad: () => !!mobileSheet,
       canRefresh: () => !!mobileSheet,
       renderShell: (data) => {
-        renderGitWorktreeSummary(data);
+        renderGitWorktreeButton(data);
         setGitPanelBodyHtml(`
         <div class="git-stack mobile-sheet-stack">
           <div class="git-list-view mobile-sheet-view mobile-sheet-list">
@@ -136,14 +136,14 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       loadMoreCountText: (loaded, total) => `Load more commits (${loaded}/${total})`,
       onLoadReset: () => {
         setGitSheetTitle();
-        hideGitWorktreeSummary();
+        hideGitWorktreeButton();
       },
       onCloseDetail: resetGitDetailChrome,
       onOpenDetail: setGitDetailChrome,
       onFingerprintChanged: (data) => {
-        const previous = gitCountSnapshot(gitWorktreeSummaryBtn());
-        renderGitWorktreeSummary(data || {});
-        animateGitCountsFromSnapshot(gitWorktreeSummaryBtn(), previous);
+        const previous = gitCountSnapshot(gitWorktreeButton());
+        renderGitWorktreeButton(data || {});
+        animateGitCountsFromSnapshot(gitWorktreeButton(), previous);
         return { updateList: true };
       },
     });

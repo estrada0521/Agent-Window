@@ -387,7 +387,7 @@
           closeDetail({ refreshList: state.detailNeedsRefresh });
           return;
         }
-        const row = event.target.closest(".git-commit-row, .git-summary-row");
+        const row = event.target.closest(".git-commit-row, .git-summary-row, .git-worktree-button");
         if (!row) return;
         if (
           closeWorktreeSummaryClick

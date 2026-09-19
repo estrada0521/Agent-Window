@@ -36,8 +36,8 @@
       display: none;
     }
 
-    #mobileSheet[data-kind="repo"] .git-worktree-summary,
-    #mobileSheet.sheet-mode-preview .git-worktree-summary {
+    #mobileSheet[data-kind="repo"] .git-worktree-button,
+    #mobileSheet.sheet-mode-preview .git-worktree-button {
       display: none;
     }
 
@@ -92,6 +92,12 @@
 
     .mobile-sheet-list {
       --sheet-list-row-height: calc(var(--text-size, 13px) * 30 / 13);
+      --sheet-list-item-gap: calc(var(--text-size, 13px) * 2 / 13);
+      --sheet-list-row-gap: calc(var(--text-size, 13px) * 10 / 13);
+      --sheet-list-row-padding-block: calc(var(--text-size, 13px) * 6 / 13);
+      --sheet-list-row-padding-inline: calc(var(--text-size, 13px) * 10 / 13);
+      --sheet-list-icon-size: calc(var(--text-size, 13px) * 18 / 13);
+      --sheet-list-meta-gap: calc(var(--text-size, 13px) * 8 / 13);
       flex: 1 1 auto;
       min-height: 0;
       overflow-y: auto;
@@ -101,7 +107,7 @@
       overscroll-behavior: contain;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: var(--sheet-list-item-gap);
       align-content: start;
       font-family: var(--font-main);
       font-weight: var(--body-weight);
@@ -127,9 +133,9 @@
       width: 100%;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--sheet-list-row-gap);
       min-height: var(--sheet-list-row-height);
-      padding: 6px 10px;
+      padding: var(--sheet-list-row-padding-block) var(--sheet-list-row-padding-inline);
       border-radius: 0.77em;
       text-align: left;
       font: inherit;
@@ -174,8 +180,8 @@
     }
 
     .sheet-list-file-icon {
-      width: 18px;
-      height: 18px;
+      width: var(--sheet-list-icon-size);
+      height: var(--sheet-list-icon-size);
       flex: 0 0 auto;
       display: inline-flex;
       align-items: center;
@@ -204,14 +210,14 @@
       flex: 0 0 auto;
       margin-left: auto;
       color: var(--muted);
-      font-size: calc(var(--text-size, 13px) - 1px);
+      font-size: calc(var(--text-size, 13px) * 12 / 13);
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
 
     .repo-browser-item-chevron {
-      width: 14px;
-      height: 14px;
+      width: calc(var(--text-size, 13px) * 14 / 13);
+      height: calc(var(--text-size, 13px) * 14 / 13);
       color: var(--icon-muted);
       flex: 0 0 auto;
       display: inline-flex;
@@ -235,14 +241,14 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: var(--sheet-list-row-gap);
       color: var(--muted);
       vertical-align: middle;
     }
 
     .inline-loading-spinner {
-      width: 15px;
-      height: 15px;
+      width: calc(var(--text-size, 13px) * 15 / 13);
+      height: calc(var(--text-size, 13px) * 15 / 13);
       border: 2px solid var(--spinner-ring-color);
       border-top-color: var(--icon-fg);
       border-radius: 50%;
@@ -300,8 +306,8 @@
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      top: 14px;
-      height: 22px;
+      top: calc(var(--text-size, 13px) * 14 / 13);
+      height: calc(var(--text-size, 13px) * 22 / 13);
       width: 0.5px;
       background: var(--icon-muted);
       z-index: 0;
@@ -311,20 +317,20 @@
     .git-commit-icon-wrap {
       position: relative;
       flex-shrink: 0;
-      width: 18px;
-      height: 18px;
+      width: var(--sheet-list-icon-size);
+      height: var(--sheet-list-icon-size);
       z-index: 1;
     }
 
     .git-commit-dot {
-      width: 10px;
-      height: 10px;
+      width: calc(var(--text-size, 13px) * 10 / 13);
+      height: calc(var(--text-size, 13px) * 10 / 13);
       border-radius: 50%;
       box-sizing: border-box;
       display: flex;
       position: relative;
       z-index: 1;
-      margin: 4px;
+      margin: calc(var(--text-size, 13px) * 4 / 13);
       background: transparent;
       border: 1.5px solid var(--icon-hover);
       transition: border-color 120ms ease, background 120ms ease;
@@ -340,32 +346,32 @@
       min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: var(--sheet-list-item-gap);
       justify-content: center;
     }
 
     .git-commit-list .git-commit-row .git-commit-info {
       flex-direction: row;
       align-items: center;
-      gap: 8px;
+      gap: var(--sheet-list-meta-gap);
       box-sizing: border-box;
     }
 
     .git-commit-meta {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--sheet-list-meta-gap);
       min-width: 0;
     }
 
     .git-commit-list .git-commit-row .git-commit-meta {
       flex: 0 0 auto;
       justify-content: flex-end;
-      padding-right: 2px;
+      padding-right: var(--sheet-list-item-gap);
     }
 
     .git-commit-list .git-commit-row .git-commit-meta .git-summary-counts {
-      gap: 8px;
+      gap: var(--sheet-list-meta-gap);
       font-size: var(--text-size, 13px);
     }
 
@@ -388,7 +394,7 @@
     .git-commit-list {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: var(--sheet-list-item-gap);
     }
 
     .git-load-more {
@@ -407,7 +413,7 @@
       color: var(--muted);
     }
 
-    .git-summary-row {
+    .git-worktree-button {
       display: flex;
       align-items: center;
       gap: 10px;
@@ -423,7 +429,7 @@
       transition: background 120ms ease;
     }
 
-    .mobile-bottom-sheet .git-worktree-summary {
+    .mobile-bottom-sheet .git-worktree-button {
       position: absolute;
       left: calc(14px + env(safe-area-inset-left, 0px));
       right: calc(50% + 30px);
@@ -436,11 +442,11 @@
       justify-content: space-between;
     }
 
-    .mobile-bottom-sheet .git-worktree-summary:disabled {
+    .mobile-bottom-sheet .git-worktree-button:disabled {
       cursor: default;
     }
 
-    .mobile-bottom-sheet .git-worktree-summary[hidden] {
+    .mobile-bottom-sheet .git-worktree-button[hidden] {
       display: none;
     }
 
@@ -469,24 +475,24 @@
       font-size: inherit;
     }
 
-    .git-worktree-summary .git-summary-meta-text,
-    .git-worktree-summary .git-summary-counts {
+    .git-worktree-button .git-worktree-button-label,
+    .git-worktree-button .git-summary-counts {
       font-size: var(--text-size, 13px);
       font-family: var(--font-main);
       font-weight: var(--body-weight);
     }
 
-    .git-worktree-summary .git-summary-meta-text {
+    .git-worktree-button .git-worktree-button-label {
       color: var(--fg);
     }
 
-    .git-summary-row.clickable {
+    .git-worktree-button.clickable {
       cursor: pointer;
     }
 
-    .git-summary-meta-text {
+    .git-worktree-button-label {
       flex-shrink: 0;
-      font-size: calc(var(--text-size, 13px) - 2px);
+      font-size: calc(var(--text-size, 13px) * 11 / 13);
       color: var(--muted);
       font-variant-numeric: tabular-nums;
     }
@@ -497,7 +503,7 @@
       gap: 12px;
       flex-shrink: 0;
       font-variant-numeric: tabular-nums;
-      font-size: calc(var(--text-size, 13px) - 2px);
+      font-size: calc(var(--text-size, 13px) * 11 / 13);
     }
 
     .git-summary-counts.clean {
@@ -549,7 +555,7 @@
     .git-commit-file-list {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: var(--sheet-list-item-gap);
     }
 
     .git-commit-file-sections {
@@ -566,7 +572,7 @@
 
     .git-commit-file-section-title {
       height: var(--sheet-list-row-height);
-      padding: 0 10px;
+      padding: 0 var(--sheet-list-row-padding-inline);
       display: flex;
       align-items: center;
       font-size: 0.8em;
@@ -607,7 +613,7 @@
       line-height: 1.3;
       display: flex;
       align-items: baseline;
-      gap: 6px;
+      gap: calc(var(--text-size, 13px) * 6 / 13);
       box-sizing: border-box;
     }
 
@@ -634,7 +640,7 @@
     .git-commit-file-meta {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--sheet-list-meta-gap);
       min-width: 0;
       flex: 0 0 auto;
     }
@@ -643,14 +649,14 @@
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 4px;
+      gap: calc(var(--text-size, 13px) * 4 / 13);
       flex: 0 0 auto;
       min-width: 0;
-      padding-right: 2px;
+      padding-right: var(--sheet-list-item-gap);
     }
 
     .git-commit-file-actions .git-summary-counts {
-      gap: 8px;
+      gap: var(--sheet-list-meta-gap);
       font-size: var(--text-size, 13px);
     }
 
