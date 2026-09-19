@@ -30,15 +30,6 @@
       background: rgba(var(--bg-rgb), 0.22);
     }
 
-    .composer-overlay.closing {
-      opacity: 0;
-      pointer-events: none;
-      background: rgba(var(--bg-rgb), 0.02);
-      backdrop-filter: blur(0px);
-      -webkit-backdrop-filter: blur(0px);
-      transition: opacity 90ms linear, background 90ms linear, backdrop-filter 90ms linear, -webkit-backdrop-filter 90ms linear;
-    }
-
     html[data-hub-iframe-chat="1"] .composer-overlay.visible {
       inset: auto;
       top: 0;
@@ -87,13 +78,6 @@
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
-    }
-
-    .composer-overlay.closing .composer {
-      opacity: 0;
-      transform: translateY(6px);
-      pointer-events: none;
-      transition: opacity 90ms linear, transform 90ms ease;
     }
 
     .composer.composer-focus-hack {

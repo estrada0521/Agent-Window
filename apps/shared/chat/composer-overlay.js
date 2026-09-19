@@ -82,7 +82,6 @@
       requestHubParentLayout();
       bumpHubIframeLayoutLock();
       composerOverlay.hidden = false;
-      composerOverlay.classList.remove("closing");
       document.body.classList.add("composer-overlay-open");
       updateScrollBtn();
       if (typeof updateSendBtnVisibility === "function") updateSendBtnVisibility();
@@ -129,18 +128,7 @@
       composerForm?.classList.remove("composer-opening-ready");
       composerOverlay.classList.remove("visible", "fit-arming");
       document.body.classList.remove("composer-overlay-open");
-      if (isMobileComposer) {
-        composerOverlay.classList.add("closing");
-        setTimeout(() => {
-          if (!composerOverlay.classList.contains("visible")) {
-            composerOverlay.hidden = true;
-            composerOverlay.classList.remove("closing");
-          }
-        }, 90);
-      } else {
-        composerOverlay.classList.remove("closing");
-        composerOverlay.hidden = true;
-      }
+      composerOverlay.hidden = true;
       updateScrollBtn();
       if (!isMobileComposer && restoreFocus && composerFabBtn && typeof composerFabBtn.focus === "function") {
         try {
