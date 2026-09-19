@@ -137,7 +137,7 @@
     sharedSheetCloseBtn.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      sharedSheetOnClose();
+      sharedSheetOnClose({ immediate: true });
     });
     wireMobileSheetNavDrag(sharedSheetNav, sharedSheetActiveRef, () => sharedSheetOnClose());
     const attachSharedSheetChrome = (sheetPanel, { title, closeLabel, onClose }) => {
@@ -273,7 +273,7 @@
       kind: "pane-trace",
       title: "Pane Trace",
       closeLabel: "Close pane trace",
-      onClose: () => exitPaneTraceMode(),
+      onClose: (opts) => exitPaneTraceMode(opts),
     });
     const closePaneTraceSheet = ({ immediate = false } = {}) => {
       if (!paneTracePanel) return;
@@ -290,7 +290,7 @@
     const setSheetKind = (kind) => {
       if (!mobileSheet) return;
       mobileSheet.dataset.kind = kind;
-      sharedSheetOnClose = () => closeSheet();
+      sharedSheetOnClose = (opts) => closeSheet(opts);
       sharedSheetCloseBtn.setAttribute("aria-label", kind === "git" ? "Close git" : "Close repository");
     };
     const updateHeaderMenuViewportMetrics = () => {
@@ -316,7 +316,7 @@
         paneViewerInitialFetchTimer = 0;
       }
     };
-    function exitPaneTraceMode() {
+    function exitPaneTraceMode(opts) {
       const paneEl = document.getElementById("paneViewer");
       clearPaneViewerOpenWork();
       if (paneViewerTabScrollEndTimer) {
@@ -334,7 +334,7 @@
         paneEl.classList.remove("visible");
         paneEl.hidden = true;
       }
-      closePaneTraceSheet();
+      closePaneTraceSheet(opts);
       if (paneViewerInterval) {
         clearInterval(paneViewerInterval);
         paneViewerInterval = null;
@@ -476,7 +476,7 @@
           sheetPanel.prepend(sharedSheetNav);
           sheetPanel.appendChild(sharedSheetFooter);
           sharedSheetActiveRef.panel = sheetPanel;
-          sharedSheetOnClose = () => closeSheet();
+          sharedSheetOnClose = (opts) => closeSheet(opts);
         }
         return true;
       }
@@ -484,7 +484,7 @@
         kind: "workspace",
         title: "",
         closeLabel: "Close",
-        onClose: () => closeSheet(),
+        onClose: (opts) => closeSheet(opts),
         afterBuild: ({ contentEl }) => {
           contentEl.classList.add("mobile-sheet-stage");
           const gitHost = document.createElement("div");
