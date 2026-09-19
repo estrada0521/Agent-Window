@@ -38,8 +38,7 @@
       messageInput.value = "";
       autoResizeTextarea();
       closeCmdDrop();
-      void postShortcutCommand({ command_id: item.id, arg: "", path: item.path });
-      requestAnimationFrame(() => focusMessageInputWithoutScroll(0));
+      void submitMessage({ closeOverlayOnStart: true, forcedText: item.slash });
     };
     let _lastCmdQuery = "";
     const updateCmdAutocomplete = () => {
