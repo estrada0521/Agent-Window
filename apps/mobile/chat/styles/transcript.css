@@ -381,7 +381,6 @@
       transform: translate(-50%, -50%);
     }
 
-    .message-meta-below .sender,
     .message-meta-below .arrow,
     .message-meta-below .targets,
     .message-meta-below time {

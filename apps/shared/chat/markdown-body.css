@@ -1,6 +1,10 @@
     .md-body {
       --prose-rhythm: 0.46em;
       --prose-block-rhythm: 0.77em;
+      --code-block-radius: round(nearest, calc(var(--text-size, 13px) * 26 / 13), 1px);
+      --code-block-padding-start: round(nearest, calc(var(--text-size, 13px) * 16 / 13), 1px);
+      --code-block-padding-end: round(nearest, calc(var(--text-size, 13px) * 36 / 13), 1px);
+      --table-cell-padding-inline: round(nearest, calc(var(--text-size, 13px) * 12 / 13), 1px);
       flex: 1;
       min-width: 0;
       font-family: var(--font-main);
@@ -225,8 +229,8 @@
       position: relative;
       background: var(--code-bg);
       border: none;
-      border-radius: 26px;
-      padding: 0.62em 36px 0.62em 16px;
+      border-radius: var(--code-block-radius);
+      padding: 0.62em var(--code-block-padding-end) 0.62em var(--code-block-padding-start);
       margin: 0 0 var(--prose-rhythm);
       overflow-x: auto;
       overflow-y: visible;
@@ -247,7 +251,7 @@
       display: block;
       margin: var(--prose-block-rhythm) 0;
       overflow: hidden;
-      border-radius: 26px;
+      border-radius: var(--code-block-radius);
     }
 
     .md-body li > * + pre,
@@ -348,7 +352,7 @@
     .md-body td {
       white-space: nowrap;
       border: none;
-      padding: 0.38em 12px;
+      padding: 0.38em var(--table-cell-padding-inline);
       text-align: left;
       font: inherit;
     }

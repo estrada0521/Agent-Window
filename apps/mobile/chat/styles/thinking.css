@@ -7,29 +7,6 @@ __CHAT_INCLUDE:../../../shared/chat/thinking.css__
       }
     }
 
-    .meta {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-      color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 8px;
-    }
-
-    .message-row.user .meta {
-      justify-content: flex-start;
-    }
-
-    .sender {
-      padding: 2px 0;
-      color: var(--muted);
-      font-weight: 700;
-      text-transform: capitalize;
-      background: transparent;
-      border: none;
-    }
-
     .arrow {
       color: var(--muted);
     }
