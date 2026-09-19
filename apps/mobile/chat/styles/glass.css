@@ -14,5 +14,5 @@
     .shell > .page-header .page-title:active,
     .shell > .page-header .page-header-actions .page-menu-btn:active,
     .mobile-bottom-sheet .mobile-bottom-sheet-button:active {
-      transform: scale(0.94);
+      transform: scale(var(--liquid-glass-press-scale));
     }

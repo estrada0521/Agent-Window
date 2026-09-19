@@ -1,5 +1,6 @@
     :root {
       --liquid-glass-blur: blur(28px) saturate(220%) contrast(114%);
+      --liquid-glass-press-scale: 1.22;
     }
     html[data-theme="dark"],
     #paneTracePanel,

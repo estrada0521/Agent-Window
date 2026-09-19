@@ -71,7 +71,7 @@
     }
 
     .repo-preview-html-mode:active {
-      transform: translateY(-50%) scale(0.94);
+      transform: translateY(-50%) scale(var(--liquid-glass-press-scale));
     }
 
     .repo-preview-html-mode[hidden] {

@@ -165,7 +165,7 @@
         rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
       border-color: var(--liquid-glass-lg-active-border);
       box-shadow: var(--liquid-glass-lg-active-shadow);
-      transform: scale(0.92);
+      transform: scale(var(--liquid-glass-press-scale));
     }
 
     .pane-viewer-shortcut-btn svg {

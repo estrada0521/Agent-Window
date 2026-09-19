@@ -348,7 +348,7 @@
 
     #scrollToBottomBtn:active,
     #composerFabBtn:active {
-      transform: scale(0.92);
+      transform: translateX(-50%) translateY(0) scale(var(--liquid-glass-press-scale));
     }
 
     @media (hover: hover) and (pointer: fine) {
