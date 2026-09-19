@@ -254,6 +254,7 @@ __CHAT_INCLUDE:../../shared/chat/target-picker.js__
       const positionPicker = () => {
         if (!anchor || !document.body.classList.contains("composer-overlay-open")) return;
         const rect = anchor.getBoundingClientRect();
+        if (rect.width <= 0) return;
         const transform = getComputedStyle(composerForm).transform;
         const composerOffsetY = transform === "none" ? 0 : new DOMMatrixReadOnly(transform).m42;
         picker.style.left = `${rect.left}px`;
@@ -262,16 +263,17 @@ __CHAT_INCLUDE:../../shared/chat/target-picker.js__
         picker.style.height = `${rect.height}px`;
         syncTargetPickerFade();
       };
+      const ensureAnchor = () => {
+        if (anchor) return;
+        anchor = document.createElement("div");
+        anchor.className = "target-picker-anchor";
+        picker.replaceWith(anchor);
+        document.body.appendChild(picker);
+        if (typeof ResizeObserver === "function") new ResizeObserver(positionPicker).observe(anchor);
+      };
       document.addEventListener("composer-overlay-open", () => {
         const revealPicker = () => {
-          if (!anchor) {
-            const rect = picker.getBoundingClientRect();
-            anchor = document.createElement("div");
-            anchor.className = "target-picker-anchor";
-            anchor.style.height = `${rect.height}px`;
-            picker.replaceWith(anchor);
-            document.body.appendChild(picker);
-          }
+          ensureAnchor();
           positionPicker();
           document.body.classList.add("composer-target-picker-visible");
         };

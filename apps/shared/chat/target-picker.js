@@ -36,9 +36,14 @@
     const syncTargetPickerFade = () => {
       const el = document.getElementById("targetPicker");
       if (!el) return;
-      const max = el.scrollWidth - el.clientWidth;
-      el.style.setProperty("--target-picker-fade-left", el.scrollLeft > 1 ? "16px" : "0px");
-      el.style.setProperty("--target-picker-fade-right", max > 1 && el.scrollLeft < max - 1 ? "16px" : "0px");
+      const width = el.clientWidth;
+      const max = el.scrollWidth - width;
+      const fadeLeft = width > 0 && el.scrollLeft > 1;
+      const fadeRight = width > 0 && max > 1 && el.scrollLeft < max - 1;
+      el.style.setProperty("--target-picker-fade-left", fadeLeft ? "16px" : "0px");
+      el.style.setProperty("--target-picker-fade-right", fadeRight ? "16px" : "0px");
+      el.style.maskImage = fadeLeft || fadeRight ? "" : "none";
+      el.style.webkitMaskImage = fadeLeft || fadeRight ? "" : "none";
     };
     {
       const el = document.getElementById("targetPicker");
