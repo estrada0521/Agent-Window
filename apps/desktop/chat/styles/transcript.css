@@ -232,7 +232,7 @@
     .message-body-row {
       display: flex;
       align-items: flex-start;
-      gap: 6px;
+      gap: 0.46em;
       min-width: 0;
     }
 
@@ -372,7 +372,6 @@
       margin-right: 0.15em;
     }
 
-    .message-meta-below .sender,
     .message-meta-below .arrow,
     .message-meta-below .targets,
     .message-meta-below time {
@@ -540,7 +539,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 0.77em;
       width: min(100%, var(--message-max-width));
       padding-bottom: 0.62em;
       color: var(--muted);
@@ -628,7 +627,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 0.46em;
       flex-shrink: 0;
       height: 1.6em;
       position: sticky;
@@ -717,7 +716,7 @@
       display: inline-flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 2px;
+      gap: 0.15em;
       min-width: 0;
     }
 
@@ -761,29 +760,6 @@ __CHAT_INCLUDE:../../../shared/chat/thinking.css__
       min-width: 0;
       max-width: 100%;
       white-space: nowrap;
-    }
-
-    .meta {
-      display: flex;
-      gap: 0.62em;
-      align-items: center;
-      flex-wrap: wrap;
-      color: var(--muted);
-      font-size: var(--text-size, 13px);
-      margin-bottom: 0.62em;
-    }
-
-    .message-row.user .meta {
-      justify-content: flex-start;
-    }
-
-    .sender {
-      padding: 0.15em 0;
-      color: var(--muted);
-      font-weight: inherit;
-      text-transform: capitalize;
-      background: transparent;
-      border: none;
     }
 
     .arrow {
