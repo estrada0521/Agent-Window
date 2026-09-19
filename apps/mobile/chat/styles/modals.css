@@ -10,6 +10,7 @@
 
     #paneTracePanel .mobile-bottom-sheet-panel {
       --mobile-sheet-panel-height: 92dvh;
+      background: var(--pane-trace-body-bg);
     }
 
     .shell>.page-header>#paneTracePanel.open {
@@ -31,7 +32,7 @@
       width: 100%;
       z-index: 1;
       overflow: hidden;
-      background: transparent;
+      background: var(--pane-trace-body-bg);
       border-top: none;
       border-bottom: none;
       box-shadow: none;
@@ -243,6 +244,7 @@
       display: flex;
       overflow-x: auto;
       overflow-y: hidden;
+      background: var(--pane-trace-body-bg);
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
       scroll-behavior: smooth;

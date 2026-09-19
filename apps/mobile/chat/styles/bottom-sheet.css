@@ -16,6 +16,10 @@
       transform: none;
     }
 
+    .shell>.page-header>.mobile-sheet-overlay[hidden] {
+      display: none;
+    }
+
     .shell>.page-header>.mobile-sheet-overlay.open {
       border: none;
       box-shadow: none;
