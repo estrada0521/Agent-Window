@@ -15,7 +15,7 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       touch-action: none;
-      max-height: 200px;
+      max-height: var(--composer-menu-max-height);
       z-index: 390;
       display: none;
       box-shadow: none;

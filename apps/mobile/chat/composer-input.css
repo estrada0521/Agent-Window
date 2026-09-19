@@ -32,6 +32,7 @@
       --composer-btn-d: 28px;
       --composer-btn-center-x: 23px;
       --composer-menu-icon-size: 14px;
+      --composer-menu-max-height: 192px;
     }
 
     .composer-field {

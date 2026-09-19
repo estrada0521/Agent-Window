@@ -164,7 +164,8 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       dropdown.style.width = taRect.width + "px";
       dropdown.style.minWidth = "0";
       dropdown.style.bottom = Math.max(12, window.innerHeight - taTop + gap + aboveInputHeight) + "px";
-      dropdown.style.maxHeight = Math.min(208, availableSpace) + "px";
+      const menuMax = parseFloat(getComputedStyle(dropdown).getPropertyValue("--composer-menu-max-height"));
+      dropdown.style.maxHeight = Math.min(menuMax, availableSpace) + "px";
       if (dropdown.id === "fileDropdown" || dropdown.id === "cmdDropdown") {
         requestAnimationFrame(() => {
           dropdown.classList.toggle(
