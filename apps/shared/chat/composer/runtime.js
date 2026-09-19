@@ -7,6 +7,14 @@
       e.preventDefault();
     });
     if (isMobileComposer) {
+      const clearSendPressed = () => sendBtn?.classList.remove("is-pressed");
+      sendBtn?.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0 || sendBtn.disabled) return;
+        sendBtn.classList.add("is-pressed");
+      });
+      sendBtn?.addEventListener("pointerleave", clearSendPressed);
+      document.addEventListener("pointerup", clearSendPressed, true);
+      document.addEventListener("pointercancel", clearSendPressed, true);
       let composerBlurCloseTimer = null;
       const clearComposerBlurCloseTimer = () => {
         if (composerBlurCloseTimer) {

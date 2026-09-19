@@ -22,8 +22,7 @@
     .page-header .page-header-actions .page-menu-btn:active,
     .shell > .page-header .page-title:active,
     #composerFabBtn:active,
-    #scrollToBottomBtn:active,
-    .send-btn:active:not(:disabled) {
+    #scrollToBottomBtn:active {
       transform: scale(var(--liquid-glass-press-scale));
     }
     .mobile-bottom-sheet-button:active:not(:disabled),
@@ -31,8 +30,14 @@
     .pane-viewer-shortcut-menu:active > .pane-viewer-shortcut-btn,
     .page-header .page-header-actions .page-menu-btn:active,
     .shell > .page-header .page-title:active,
-    #scrollToBottomBtn:active,
-    .send-btn:active:not(:disabled) {
+    #scrollToBottomBtn:active {
+      transition: transform var(--liquid-glass-press-in);
+    }
+    .send-btn {
+      --liquid-glass-press-scale: 1.4;
+    }
+    .send-btn.is-pressed:not(:disabled) {
+      transform: scale(var(--liquid-glass-press-scale));
       transition: transform var(--liquid-glass-press-in);
     }
     html[data-theme="dark"],
