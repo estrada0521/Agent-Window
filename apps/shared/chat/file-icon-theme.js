@@ -62,7 +62,7 @@
       }
       const iconId = resolveFileIconDefinitionId(rawPath, { isDir });
       const def = fileIconThemeState.theme?.iconDefinitions?.[iconId] || {};
-      const classes = ["sheet-list-file-icon", classNames].filter(Boolean).join(" ");
+      const classes = ["file-icon", classNames].filter(Boolean).join(" ");
       if (fileIconThemeState.mono && def.svg) {
         return `<span class="${classes}" aria-hidden="true">${def.svg}</span>`;
       }

@@ -295,21 +295,12 @@
       display: block;
       object-fit: contain;
     }
-    .repo-browser-item-icon svg {
+    .repo-browser-item-icon svg,
+    .git-commit-file-icon svg {
       width: 100%;
       height: 100%;
       display: block;
-    }
-    .repo-browser-item-icon svg,
-    .git-commit-file-icon svg {
       stroke-width: 1.45;
-    }
-    .repo-browser-file .repo-browser-item-icon svg,
-    .git-commit-file-icon svg,
-    .repo-browser-file .repo-browser-item-icon img,
-    .git-commit-file-icon img {
-      width: var(--right-panel-small-icon-size);
-      height: var(--right-panel-small-icon-size);
     }
     .repo-browser-item-name {
       flex: 1 1 auto;

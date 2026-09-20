@@ -164,7 +164,8 @@
       background: var(--mobile-sheet-floating-bg);
     }
 
-    .sheet-list-file-icon {
+    .repo-browser-item-icon,
+    .git-commit-file-icon {
       width: var(--sheet-list-icon-size);
       height: var(--sheet-list-icon-size);
       flex: 0 0 auto;
@@ -173,14 +174,16 @@
       justify-content: center;
       color: var(--icon-fg);
     }
-    .sheet-list-file-icon img {
+    .repo-browser-item-icon img,
+    .git-commit-file-icon img {
       width: 100%;
       height: 100%;
       display: block;
       object-fit: contain;
     }
 
-    .sheet-list-file-icon svg {
+    .repo-browser-item-icon svg,
+    .git-commit-file-icon svg {
       width: 100%;
       height: 100%;
       display: block;
