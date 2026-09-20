@@ -376,9 +376,11 @@
         if (!anyLink) return;
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
+        if (!anyLink.classList.contains("inline-file-link") && !anyLink.classList.contains("local-file-link")) return;
         const path = filePathFromLinkAnchor(anyLink);
         if (path) void dpOpenFileContextMenu(path, e);
-      });
+      }, true);
       messagesEl.addEventListener("auxclick", (e) => {
         if (e.button !== 1) return;
         const anyLink = e.target.closest("a[href]");
