@@ -774,7 +774,7 @@
           if (anyOpen && anyOpen !== sr) { closeRow(anyOpen, true); anyOpen = null; }
           sx = clientX; sy = clientY;
           dx = 0; axis = null; active = true; didSwipe = false;
-          inner.style.transition = "none";
+          inner.classList.add("is-pressed");
         };
         const moveDrag = (clientX, clientY, preventDefault) => {
           if (!active) return;
@@ -784,6 +784,8 @@
             if (Math.abs(cx) > 6) { axis = "x"; ensureActs(); }
           }
           if (axis !== "x") return;
+          inner.classList.remove("is-pressed");
+          inner.style.transition = "none";
           if (preventDefault) preventDefault();
           didSwipe = true;
           dx = cx;
@@ -796,6 +798,7 @@
           sr.style.setProperty("--swipe-p", SNAP_W ? (Math.min(1, Math.abs(x) / SNAP_W)).toFixed(3) : "0");
         };
         const endDrag = () => {
+          inner.classList.remove("is-pressed");
           if (!active || axis !== "x") { active = false; return; }
           active = false;
           const base = (sr._snap || 0) * SNAP_W;
@@ -818,6 +821,7 @@
         inner.addEventListener("touchstart", (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
         inner.addEventListener("touchmove", (e) => moveDrag(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault()), { passive: false });
         inner.addEventListener("touchend", endDrag, { passive: true });
+        inner.addEventListener("touchcancel", endDrag, { passive: true });
         inner.addEventListener("mousedown", (e) => {
           if (e.target.closest("a, button")) return;
           e.preventDefault();

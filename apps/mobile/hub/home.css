@@ -82,6 +82,9 @@
       scrollbar-width: none;
       -ms-overflow-style: none;
       overscroll-behavior-x: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
     html::-webkit-scrollbar,
@@ -334,7 +337,7 @@
       text-decoration: none;
       color: inherit;
       -webkit-tap-highlight-color: transparent;
-      transition: background 80ms ease;
+      transition: background 80ms ease, transform var(--liquid-glass-press-out);
       position: relative;
       isolation: isolate;
     }
@@ -351,7 +354,6 @@
       transition: opacity 120ms ease;
     }
 
-    .mob-session-row:active::before,
     .swipe-row.swipe-open .mob-session-row::before {
       opacity: 1;
     }
@@ -359,6 +361,21 @@
     .mob-session-row.is-selected::before {
       opacity: 1;
       background: var(--session-selected-bg);
+    }
+
+    .mob-session-row {
+      --liquid-glass-press-scale: 1.06;
+    }
+
+    .mob-session-row.is-pressed {
+      transform: scale(var(--liquid-glass-press-scale));
+      transition: background 80ms ease, transform var(--liquid-glass-press-in);
+      z-index: 3;
+    }
+
+    .swipe-row:has(.is-pressed) {
+      overflow: visible;
+      z-index: 2;
     }
 
     .mob-row-head {
