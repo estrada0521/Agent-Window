@@ -199,6 +199,7 @@
           settleScrollLockFrames(10);
         }
         _stickyToBottom = isNearBottom();
+        refreshViewportCenterAnchor();
         updateScrollBtn();
         requestCenteredMessageRowUpdate();
         if (document.documentElement.dataset.mobile !== "1") {

@@ -293,6 +293,7 @@ __CHAT_INCLUDE:../../shared/chat/scroll-lock.js__
     const updateStickyState = () => {
       if (_programmaticScroll) return;
       _stickyToBottom = isNearBottom();
+      refreshViewportCenterAnchor();
     };
 __CHAT_INCLUDE:../../shared/chat/scroll-btn.js__
 

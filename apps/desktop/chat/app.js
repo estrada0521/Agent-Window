@@ -278,10 +278,10 @@ __CHAT_INCLUDE:../../shared/chat/target-picker.js__
 __CHAT_INCLUDE:../../shared/chat/target-selection.js__
 __CHAT_INCLUDE:../../shared/chat/composer-draft.js__
 __CHAT_INCLUDE:../../shared/chat/scroll-lock.js__
-    let _pinStickyThroughWidthChange = false;
     const updateStickyState = () => {
       if (_programmaticScroll || _pinStickyThroughWidthChange) return;
       _stickyToBottom = isNearBottom();
+      refreshViewportCenterAnchor();
     };
 __CHAT_INCLUDE:../../shared/chat/scroll-btn.js__
     let _timelineLayoutWidth = timeline.clientWidth;
@@ -295,21 +295,26 @@ __CHAT_INCLUDE:../../shared/chat/scroll-btn.js__
       _timelineMaxScroll = maxScroll;
       if (width === prevWidth) return;
       const wasSticky = _stickyToBottom || (prevMaxScroll - timeline.scrollTop < STICKY_THRESHOLD);
-      if (!wasSticky) return;
+      const centerAnchor = _viewportCenterAnchor;
       _pinStickyThroughWidthChange = true;
-      scrollConversationToBottom("auto");
-      _stickyToBottom = true;
-      requestAnimationFrame(() => {
-        scrollConversationToBottom("auto");
-        _stickyToBottom = true;
-        requestAnimationFrame(() => {
+      const apply = (remaining) => {
+        if (wasSticky) {
           scrollConversationToBottom("auto");
           _stickyToBottom = true;
+        } else {
+          restoreViewportCenterAnchor(centerAnchor);
+        }
+        if (remaining <= 0) {
           _pinStickyThroughWidthChange = false;
           _timelineMaxScroll = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
+          _anchorLayoutWidth = timeline.clientWidth;
+          if (!wasSticky) refreshViewportCenterAnchor();
           updateScrollBtn();
-        });
-      });
+          return;
+        }
+        requestAnimationFrame(() => apply(remaining - 1));
+      };
+      apply(2);
     }).observe(timeline);
 
     {
