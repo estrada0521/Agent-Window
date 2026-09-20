@@ -38,7 +38,7 @@
         const listEl = commitListEl();
         if (!listEl) return;
         const emptyHtml = host.emptyCommitsHtml
-          || '<div class="git-commit-file-empty" data-git-empty="1">No commits</div>';
+          || '<div class="sheet-list-empty" data-git-empty="1">No commits</div>';
         const rowHtml = (commit) => gitCommitRowHtml(commit, host.commitRowOptions
           ? host.commitRowOptions(commit, newHashes)
           : { animate: !!(newHashes && newHashes.has(commit.hash)) });

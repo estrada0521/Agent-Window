@@ -116,6 +116,10 @@
       content: "";
       flex: 0 0 var(--mobile-sheet-list-top-play);
     }
+    .mobile-sheet-list.is-sheet-status::before {
+      flex-basis: 0;
+      content: none;
+    }
     .mobile-sheet-list-body {
       display: flex;
       flex-direction: column;
@@ -158,25 +162,6 @@
 
     .has-hover .sheet-list-row:hover {
       background: var(--mobile-sheet-floating-bg);
-    }
-
-    .sheet-list-empty {
-      padding: 24px 12px;
-      text-align: center;
-      color: var(--muted);
-      font-size: var(--text-size, 13px);
-      line-height: 1.45;
-    }
-
-    .sheet-list-empty.inline-loading-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px 12px;
-    }
-
-    .sheet-list-empty.error {
-      color: var(--error);
     }
 
     .sheet-list-file-icon {

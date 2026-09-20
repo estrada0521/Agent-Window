@@ -621,6 +621,31 @@
       pin();
       requestAnimationFrame(pin);
     };
+    const mobileSheetStatusClassName = ({ error = false, loading = false } = {}) => {
+      const parts = ["sheet-list-empty"];
+      if (error) parts.push("error");
+      if (loading) parts.push("inline-loading-row");
+      return parts.join(" ");
+    };
+    const mobileSheetStatusInnerHtml = (text, { error = false, loading = false } = {}) => {
+      const content = loading ? loadingIndicatorHtml() : escapeHtml(String(text ?? ""));
+      return `<div class="${mobileSheetStatusClassName({ error, loading })}">${content}</div>`;
+    };
+    const mobileSheetStatusListHtml = (text, opts = {}) =>
+      `<div class="mobile-sheet-view mobile-sheet-list is-sheet-status"><div class="mobile-sheet-list-body">${mobileSheetStatusInnerHtml(text, opts)}</div></div>`;
+    const presentMobileSheetStatus = (mountEl, text, opts = {}) => {
+      if (!mountEl) return null;
+      mountEl.innerHTML = mobileSheetStatusListHtml(text, opts);
+      const list = mountEl.querySelector(":scope > .mobile-sheet-list");
+      if (!list) return null;
+      const pin = () => {
+        pinSheetListBody(list);
+        list.scrollTop = 0;
+      };
+      pin();
+      requestAnimationFrame(pin);
+      return list;
+    };
 __CHAT_INCLUDE:../features/git-panel.js__
     const openGitSheet = async () => {
       if (!mobileSheet) return;
@@ -728,17 +753,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
           void openRepoPath(parts.join("/"), { transition: "back" });
         };
         _repoGoToParentPath = goToParentPath;
-        const appendMessage = (container, text, className = "repo-browser-empty", { loading = false } = {}) => {
-          const node = document.createElement("div");
-          node.className = `${className} sheet-list-empty`;
-          if (loading) {
-            node.classList.add("inline-loading-row");
-            node.innerHTML = loadingIndicatorHtml();
-          } else {
-            node.textContent = text;
-          }
-          container.appendChild(node);
-        };
         const appendDirectoryItem = (container, dirEntry, selected = false) => {
           const btn = document.createElement("button");
           btn.type = "button";
@@ -813,6 +827,29 @@ __CHAT_INCLUDE:../features/git-panel.js__
             files: listItems.filter((entry) => entry?.kind !== "dir"),
           };
         };
+        const mount = repoBrowserMountEl();
+        const { dirs: directoryEntries, files: fileEntries } = buildEntryGroups(allEntries);
+        const finishChrome = () => {
+          if (!sheetPreviewOpen()) {
+            setRepoSheetTitle(repoBrowserTitleForPath(path));
+            syncRepoSheetBackBtn();
+          }
+        };
+        if (loading) {
+          presentMobileSheetStatus(mount, "", { loading: true });
+          finishChrome();
+          return;
+        }
+        if (error) {
+          presentMobileSheetStatus(mount, error, { error: true });
+          finishChrome();
+          return;
+        }
+        if (!directoryEntries.length && !fileEntries.length) {
+          presentMobileSheetStatus(mount, "No files in this directory");
+          finishChrome();
+          return;
+        }
         const list = document.createElement("div");
         list.className = "repo-browser-list mobile-sheet-list";
         if (transition === "forward" || transition === "back") {
@@ -820,26 +857,13 @@ __CHAT_INCLUDE:../features/git-panel.js__
         }
         const body = document.createElement("div");
         body.className = "mobile-sheet-list-body";
-        const { dirs: directoryEntries, files: fileEntries } = buildEntryGroups(allEntries);
-        if (loading) {
-          appendMessage(body, "Loading…", "repo-browser-empty", { loading: true });
-        } else if (error) {
-          appendMessage(body, error, "repo-browser-empty error");
-        } else if (!directoryEntries.length && !fileEntries.length) {
-          appendMessage(body, "No files in this directory");
-        } else {
-          directoryEntries.forEach((dirEntry) => appendDirectoryItem(body, dirEntry));
-          fileEntries.forEach((fileEntry) => appendFileItem(body, fileEntry));
-        }
+        directoryEntries.forEach((dirEntry) => appendDirectoryItem(body, dirEntry));
+        fileEntries.forEach((fileEntry) => appendFileItem(body, fileEntry));
         list.appendChild(body);
-        const mount = repoBrowserMountEl();
         if (mount) mount.replaceChildren(list);
         if (transition === "back" && repoScrollByPath.has(path)) restoreSheetListScroll(list, repoScrollByPath.get(path));
         else resetSheetListScroll(list);
-        if (!sheetPreviewOpen()) {
-          setRepoSheetTitle(repoBrowserTitleForPath(path));
-          syncRepoSheetBackBtn();
-        }
+        finishChrome();
       };
 
       const openRepoPath = async (rawPath, { transition = "none", preserveCurrent = false } = {}) => {

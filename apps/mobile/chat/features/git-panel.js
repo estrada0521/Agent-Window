@@ -110,7 +110,16 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
     const setGitPanelBodyHtml = (html) => {
       ensureSheetDom();
       const host = gitHostEl();
-      if (host) host.innerHTML = html;
+      if (!host) return;
+      host.innerHTML = html;
+      const statusList = host.querySelector(":scope > .mobile-sheet-list.is-sheet-status");
+      if (!statusList) return;
+      const pin = () => {
+        pinSheetListBody(statusList);
+        statusList.scrollTop = 0;
+      };
+      pin();
+      requestAnimationFrame(pin);
     };
     const gitSheetListEl = () => gitHostEl()?.querySelector(
       gitSession.detailContext ? ".git-detail-view" : ".git-list-view"
@@ -139,9 +148,9 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
         </div>`);
       },
       setBodyHtml: setGitPanelBodyHtml,
-      loadingHtml: `<div class="mobile-sheet-list"><div class="mobile-sheet-list-body"><div class="git-commit-file-empty sheet-list-empty inline-loading-row">${loadingIndicatorHtml()}</div></div></div>`,
-      errorHtml: (message) => `<div class="mobile-sheet-list"><div class="mobile-sheet-list-body"><div class="git-commit-file-empty sheet-list-empty error">${escapeHtml(message)}</div></div></div>`,
-      emptyCommitsHtml: '<div class="git-commit-file-empty sheet-list-empty" data-git-empty="1">No commits</div>',
+      loadingHtml: mobileSheetStatusListHtml("", { loading: true }),
+      errorHtml: (message) => mobileSheetStatusListHtml(message, { error: true }),
+      emptyCommitsHtml: '<div class="sheet-list-empty" data-git-empty="1">No commits</div>',
       loadMoreLoadingHtml: loadingIndicatorHtml(),
       loadMoreRetryText: "Retry loading commits",
       loadMoreCountText: (loaded, total) => `Load more commits (${loaded}/${total})`,
