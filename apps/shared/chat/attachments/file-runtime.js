@@ -179,6 +179,7 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       if (atIdx === -1) return closeDrop();
       const inlineRef = "`" + path + "`";
       ta.value = ta.value.slice(0, atIdx) + inlineRef + ta.value.slice(pos);
+      autoResizeTextarea();
       composing = false;
       const newPos = atIdx + inlineRef.length;
       ta.setSelectionRange(newPos, newPos);
