@@ -721,7 +721,6 @@ __CHAT_INCLUDE:../features/git-panel.js__
           });
       };
 
-      const folderIcon = wrapFileIcon('<path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h5.1a1.5 1.5 0 0 1 1.06.44l1.9 1.9a1.5 1.5 0 0 0 1.06.44H19.5A1.5 1.5 0 0 1 21 9.28V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>');
       const chevronRightIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
 
       const renderPanel = (rawPath, entriesForPath, { loading = false, error = "", transition = "none" } = {}) => {
@@ -760,10 +759,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
           btn.className = `repo-browser-item repo-browser-dir sheet-list-row${selected ? " selected" : ""}${isHidden ? " repo-browser-item-dimmed" : ""}`;
           btn.title = dirEntry.path;
 
-          const icon = document.createElement("span");
-          icon.className = "repo-browser-item-icon sheet-list-file-icon";
-          icon.setAttribute("aria-hidden", "true");
-          icon.innerHTML = folderIcon;
+          const icon = fileIconElement(dirEntry.path, { isDir: true }, "repo-browser-item-icon");
 
           const name = document.createElement("span");
           name.className = "repo-browser-item-name";
@@ -784,19 +780,14 @@ __CHAT_INCLUDE:../features/git-panel.js__
           container.appendChild(btn);
         };
         const appendFileItem = (container, fileEntry) => {
-          const ext = fileExtForPath(fileEntry.path);
           const nameText = displayAttachmentFilename(fileEntry.path);
           const isHidden = nameText.startsWith(".");
-          const iconMarkup = FILE_ICONS[ext] || FILE_SVG_ICONS.file;
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = `repo-browser-item repo-browser-file sheet-list-row${isHidden ? " repo-browser-item-dimmed" : ""}`;
           btn.title = fileEntry.path;
 
-          const icon = document.createElement("span");
-          icon.className = "repo-browser-item-icon sheet-list-file-icon";
-          icon.setAttribute("aria-hidden", "true");
-          icon.innerHTML = iconMarkup;
+          const icon = fileIconElement(fileEntry.path, {}, "repo-browser-item-icon");
 
           const name = document.createElement("span");
           name.className = "repo-browser-item-name";
@@ -816,7 +807,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
           btn.addEventListener("click", async (event) => {
             event.preventDefault();
             event.stopPropagation();
-            await openSheetPreview(fileEntry.path, ext, { kind: "repo" });
+            await openSheetPreview(fileEntry.path, fileExtForPath(fileEntry.path), { kind: "repo" });
           });
           container.appendChild(btn);
         };
@@ -884,7 +875,10 @@ __CHAT_INCLUDE:../features/git-panel.js__
           );
         }
         try {
-          const entriesForPath = await fetchRepoDir(path);
+          const [entriesForPath] = await Promise.all([
+            fetchRepoDir(path),
+            ensureFileIconTheme(),
+          ]);
           cancelRepoLoading();
           if (repoLoadCancelled()) return;
           if (canPreserveCurrent && _repoBrowserPath !== path) return;
@@ -896,7 +890,10 @@ __CHAT_INCLUDE:../features/git-panel.js__
           const errorText = String(err?.message || "Failed to load directory");
           if (path) {
             try {
-              const rootEntries = await fetchRepoDir("");
+              const [rootEntries] = await Promise.all([
+                fetchRepoDir(""),
+                ensureFileIconTheme(),
+              ]);
               if (updateSeq !== repoPanelUpdateSeq || mobileSheet._repoSessionKey !== sessionKey) return;
               renderPanel("", rootEntries, { transition: "back" });
               return;

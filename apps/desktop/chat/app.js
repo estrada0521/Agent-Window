@@ -627,7 +627,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       });
       return true;
     }
-    const dpFolderIcon = wrapFileIcon('<path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h5.1a1.5 1.5 0 0 1 1.06.44l1.9 1.9a1.5 1.5 0 0 0 1.06.44H19.5A1.5 1.5 0 0 1 21 9.28V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>');
     const dpChevronIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
     const dpBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
     const dpFetchRepoDir = async (rawPath) => {
@@ -660,9 +659,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const displayName = isDir ? entry.name : displayAttachmentFilename(entry.path);
       btn.className = `repo-browser-item ${isDir ? "repo-browser-dir" : "repo-browser-file"}${displayName.startsWith(".") ? " repo-browser-item-dimmed" : ""}`;
       btn.title = entry.path;
-      const iconEl = document.createElement("span");
-      iconEl.className = "repo-browser-item-icon";
-      iconEl.innerHTML = isDir ? dpFolderIcon : (FILE_ICONS[fileExtForPath(entry.path)] || FILE_SVG_ICONS.file);
+      const iconEl = fileIconElement(entry.path, { isDir }, "repo-browser-item-icon");
       const nameEl = document.createElement("span");
       nameEl.className = "repo-browser-item-name";
       nameEl.textContent = displayName;
@@ -785,7 +782,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         repoLoadCancelled,
       );
       try {
-        const entries = await dpFetchRepoDir(path);
+        const [entries] = await Promise.all([
+          dpFetchRepoDir(path),
+          ensureFileIconTheme(),
+        ]);
         cancelDpRepoLoading();
         if (repoLoadCancelled()) return;
         dpRenderRepoPanel(path, entries, { direction });
@@ -799,7 +799,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       if (!dpPanelOpen || !dpRepoContent?.querySelector(".repo-browser-stack")) return;
       const path = dpNormalizePath(rawPath);
       try {
-        const entries = await dpFetchRepoDir(path);
+        const [entries] = await Promise.all([
+          dpFetchRepoDir(path),
+          ensureFileIconTheme(),
+        ]);
         if (!dpPanelOpen || dpActivePanelView !== "repo" || dpNormalizePath(dpRepoBrowserPath) !== path) return;
         const currentEntries = Array.from(dpRepoContent.querySelectorAll(".repo-browser-item")).map((item) => ({
           kind: item.classList.contains("repo-browser-dir") ? "dir" : "file",

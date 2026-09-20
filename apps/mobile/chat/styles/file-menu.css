@@ -88,6 +88,12 @@
       opacity: 1;
       flex-shrink: 0;
     }
+    .file-item-icon img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
 
     .file-item-icon svg {
       width: 100%;

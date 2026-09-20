@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from backend_core.agents.registry import agent_names_js_set, agent_names_js_array
 from .script_assets import (
     CHAT_HEADER_ACTIONS_HTML,
@@ -9,6 +11,7 @@ from .script_assets import (
 from .render import apply_chat_template_replacements, build_chat_template_replacements
 from .template_loader import load_chat_template
 from appearance.colors import apply_color_tokens
+from appearance.file_icon_theme import load_file_icon_theme_document, resolve_file_icon_theme
 from appearance.theme import MOBILE_THEME_DEFAULT
 from appearance.typography import DESKTOP_TEXT_SIZE, apply_font_tokens, chat_font_style
 from hub_backend.branding import APP_DISPLAY_NAME
@@ -121,4 +124,15 @@ def render_chat_html(
         theme=theme,
         mobile_theme_default=MOBILE_THEME_DEFAULT,
     )
+    _theme_json, _theme_root, _theme_id, mono = resolve_file_icon_theme()
+    # Colored user themes are large; do not embed them in HTML (mobile parse cost).
+    # Builtin mono is small and ships inline SVG, so boot is fine.
+    if mono:
+        boot = load_file_icon_theme_document()
+        boot_json = json.dumps(boot, ensure_ascii=True).replace("<", "\\u003c")
+        boot_script = f"<script>window.__FILE_ICON_THEME__={boot_json};</script>"
+        if "</head>" in html:
+            html = html.replace("</head>", f"{boot_script}</head>", 1)
+        else:
+            html = boot_script + html
     return html

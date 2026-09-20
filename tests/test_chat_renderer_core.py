@@ -18,7 +18,7 @@ class ChatRendererCoreTests(unittest.TestCase):
     def test_renderer_falls_back_to_plain_text_on_marked_failure(self) -> None:
         base = (ROOT / "apps/shared/chat/base.js").read_text()
         messages = (ROOT / "apps/shared/chat/runtime/messages.js").read_text()
-        render_markdown = _between(base, "    const renderMarkdownFallback =", "    const wrapFileIcon")
+        render_markdown = _between(base, "    const renderMarkdownFallback =", "__CHAT_INCLUDE:file-icon-theme.js__")
         build_message = _between(messages, "    const buildMsgHTML =", "    const updateMessageProjectionUI")
 
         script = f"""

@@ -1,0 +1,67 @@
+{
+  "file": "file",
+  "folder": "folder",
+  "folderExpanded": "folder",
+  "fileExtensions": {
+    "png": "image",
+    "jpg": "image",
+    "jpeg": "image",
+    "gif": "image",
+    "webp": "image",
+    "svg": "image",
+    "ico": "image",
+    "pdf": "file",
+    "mp4": "video",
+    "mov": "video",
+    "webm": "video",
+    "avi": "video",
+    "mkv": "video",
+    "mp3": "audio",
+    "wav": "audio",
+    "ogg": "audio",
+    "m4a": "audio",
+    "flac": "audio",
+    "zip": "archive",
+    "tar": "archive",
+    "gz": "archive",
+    "bz2": "archive",
+    "rar": "archive",
+    "md": "file",
+    "txt": "file",
+    "py": "code",
+    "js": "code",
+    "ts": "code",
+    "sh": "code",
+    "json": "code",
+    "yaml": "code",
+    "yml": "code",
+    "html": "web",
+    "css": "web"
+  },
+  "iconDefinitions": {
+    "file": {
+      "iconPath": "./icons/file.svg"
+    },
+    "folder": {
+      "iconPath": "./icons/folder.svg"
+    },
+    "image": {
+      "iconPath": "./icons/image.svg"
+    },
+    "video": {
+      "iconPath": "./icons/video.svg"
+    },
+    "audio": {
+      "iconPath": "./icons/audio.svg"
+    },
+    "code": {
+      "iconPath": "./icons/code.svg"
+    },
+    "archive": {
+      "iconPath": "./icons/archive.svg"
+    },
+    "web": {
+      "iconPath": "./icons/web.svg"
+    }
+  }
+}

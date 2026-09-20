@@ -42,9 +42,7 @@
       const ins = Math.max(0, parseInt(entry?.ins) || 0);
       const dels = Math.max(0, parseInt(entry?.dels) || 0);
       const isUntracked = !!entry?.untracked;
-      const ext = fileExtForPath(path);
-      const iconSvg = FILE_ICONS[ext] || FILE_SVG_ICONS.file;
-      const iconHtml = `<span class="git-commit-file-icon sheet-list-file-icon">${iconSvg}</span>`;
+      const iconHtml = fileIconHtml(path, { classNames: "git-commit-file-icon" });
       const slashIdx = path.lastIndexOf("/");
       const fileName = slashIdx >= 0 ? path.slice(slashIdx + 1) : path;
       const dirPath = slashIdx >= 0 ? path.slice(0, slashIdx) : "";

@@ -4,6 +4,7 @@ import json
 from urllib.parse import parse_qs
 
 from appearance.colors import resolve_theme_palette
+from appearance.file_icon_theme import file_icon_bytes, load_file_icon_theme_document
 from appearance.theme import resolve_server_theme
 from appearance.typography import DESKTOP_TEXT_SIZE, MOBILE_TEXT_SIZE, clamp_text_size
 from hub_backend.branding import APP_DISPLAY_NAME
@@ -73,6 +74,46 @@ def _get_font_asset(handler, parsed, ctx) -> None:
     )
 
 
+def _get_file_icon_theme(handler, _parsed, ctx) -> None:
+    del ctx
+    try:
+        payload = load_file_icon_theme_document()
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        handler.send_error(500, str(exc))
+        return
+    body = json.dumps(payload, ensure_ascii=True).encode("utf-8")
+    _send_bytes(
+        handler,
+        200,
+        body,
+        content_type="application/json; charset=utf-8",
+        cache_control="private, max-age=60",
+    )
+
+
+def _get_file_icon_theme_icon(handler, parsed, ctx) -> None:
+    del ctx
+    from urllib.parse import unquote
+
+    icon_id = unquote(parsed.path[len("/file-icon-theme/icon/") :])
+    try:
+        body = file_icon_bytes(icon_id)
+    except FileNotFoundError:
+        handler.send_error(404, f"unknown icon id: {icon_id}")
+        return
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        handler.send_error(500, str(exc))
+        return
+    content_type = "image/svg+xml" if body.lstrip().startswith(b"<") or body.lstrip().startswith(b"<?xml") else "application/octet-stream"
+    _send_bytes(
+        handler,
+        200,
+        body,
+        content_type=content_type,
+        cache_control="private, max-age=86400",
+    )
+
+
 def _get_chat_index(handler, parsed, ctx) -> None:
     variant = request_view_variant(headers=handler.headers, query_string=parsed.query)
     query = parse_qs(parsed.query)
@@ -112,6 +153,7 @@ _GET_ROUTES = {
     "/app.webmanifest": _get_app_manifest,
     "/": _get_chat_index,
     "/index.html": _get_chat_index,
+    "/file-icon-theme": _get_file_icon_theme,
 }
 
 
@@ -123,6 +165,9 @@ def dispatch_get_assets_route(handler, parsed, ctx) -> bool:
         return True
     if parsed.path.startswith("/font/"):
         _get_font_asset(handler, parsed, ctx)
+        return True
+    if parsed.path.startswith("/file-icon-theme/icon/"):
+        _get_file_icon_theme_icon(handler, parsed, ctx)
         return True
     route = _GET_ROUTES.get(parsed.path)
     if route is None:

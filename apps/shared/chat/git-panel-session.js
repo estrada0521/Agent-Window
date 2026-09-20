@@ -151,7 +151,10 @@
         if (!preserveCurrent) delete wrapEl.dataset.fileStatsSignature;
         let loaded;
         try {
-          loaded = await loadGitDiffFileStats({ hash, scope });
+          [loaded] = await Promise.all([
+            loadGitDiffFileStats({ hash, scope }),
+            ensureFileIconTheme(),
+          ]);
         } finally {
           cancelStatsLoading();
         }

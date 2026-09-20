@@ -85,8 +85,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
     };
     const buildAutocompleteFileItem = (entry) => {
       const path = String(entry?.path || "");
-      const ext = fileExtForPath(path);
-      const icon = FILE_ICONS[ext] || FILE_SVG_ICONS.file;
       const label = (displayAttachmentFilename(path) || basename(path) || path).trim() || path;
       const relDir = composerAutocompleteRelativeDir(path);
       const row = document.createElement("div");
@@ -95,10 +93,14 @@ __CHAT_INCLUDE:../file-autocomplete.js__
       const pathInner = relDir
         ? `<span class="file-item-name">${escapeHtml(label)}</span><span class="file-item-relpath">${escapeHtml(relDir)}</span>`
         : `<span class="file-item-name">${escapeHtml(label)}</span>`;
-      row.innerHTML =
-        `<span class="file-item-icon">${icon}</span>` +
-        `<span class="file-item-path">${pathInner}</span>` +
-        `<span class="file-item-size">${escapeHtml(formatFileSize(entry?.size))}</span>`;
+      row.appendChild(fileIconElement(path, {}, "file-item-icon"));
+      const pathEl = document.createElement("span");
+      pathEl.className = "file-item-path";
+      pathEl.innerHTML = pathInner;
+      const sizeEl = document.createElement("span");
+      sizeEl.className = "file-item-size";
+      sizeEl.textContent = formatFileSize(entry?.size);
+      row.append(pathEl, sizeEl);
       return row;
     };
     const selectFile = (path) => {
@@ -242,7 +244,10 @@ __CHAT_INCLUDE:../file-autocomplete.js__
 
       const query = match[0].slice(1);
       scheduleFileAutocompleteLoading(requestSeq);
-      const matches = await loadFileSearchMatches(query, 30);
+      const [matches] = await Promise.all([
+        loadFileSearchMatches(query, 30),
+        ensureFileIconTheme(),
+      ]);
       cancelFileAutocompleteLoading();
       if (requestSeq !== _fileAutocompleteRequestSeq) return;
 

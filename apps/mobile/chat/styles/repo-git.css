@@ -173,6 +173,12 @@
       justify-content: center;
       color: var(--icon-fg);
     }
+    .sheet-list-file-icon img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
 
     .sheet-list-file-icon svg {
       width: 100%;
@@ -567,6 +573,10 @@
       display: flex;
       flex-direction: column;
       gap: 0;
+    }
+
+    .git-commit-file-section + .git-commit-file-section {
+      margin-top: calc(var(--text-size, 13px) * 10 / 13);
     }
 
     .git-commit-file-section-title {
