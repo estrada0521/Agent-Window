@@ -538,6 +538,7 @@
     }
 
     .message-thinking-row {
+      --liquid-glass-press-scale: 1.08;
       display: flex;
       align-items: flex-start;
       gap: 0.77em;
@@ -551,6 +552,15 @@
       pointer-events: auto;
       background: transparent;
       width: fit-content;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      transition: transform var(--liquid-glass-press-out);
+    }
+
+    .message-thinking-row.is-pressed {
+      transform: scale(var(--liquid-glass-press-scale));
+      transition: transform var(--liquid-glass-press-in);
     }
 
     .message-thinking-icons {

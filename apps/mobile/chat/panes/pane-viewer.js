@@ -240,27 +240,47 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
     let _lastThinkingPaneMs = 0;
     const msgThinking = document.getElementById("messages");
     if (msgThinking) {
+      const clearThinkingRowPressed = () => {
+        msgThinking.querySelectorAll(".message-thinking-row.is-pressed").forEach((node) => {
+          node.classList.remove("is-pressed");
+        });
+      };
       msgThinking.addEventListener("touchstart", (e) => {
         const row = e.target.closest(".message-thinking-row");
         if (!row || !row.dataset.agent) {
+          clearThinkingRowPressed();
           _thinkingRowTouch = null;
           return;
         }
         const t = e.touches && e.touches[0];
         if (!t) {
+          clearThinkingRowPressed();
           _thinkingRowTouch = null;
           return;
         }
+        clearThinkingRowPressed();
+        row.classList.add("is-pressed");
         _thinkingRowTouch = {
           agent: row.dataset.agent || "",
           x: t.clientX,
           y: t.clientY,
+          row,
         };
+      }, { passive: true });
+      msgThinking.addEventListener("touchmove", (e) => {
+        const start = _thinkingRowTouch;
+        if (!start) return;
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        const dx = t.clientX - start.x;
+        const dy = t.clientY - start.y;
+        if (dx * dx + dy * dy > 100) start.row?.classList.remove("is-pressed");
       }, { passive: true });
       msgThinking.addEventListener("touchend", (e) => {
         if (!_thinkingRowTouch) return;
         const start = _thinkingRowTouch;
         _thinkingRowTouch = null;
+        start.row?.classList.remove("is-pressed");
         const row = e.target.closest(".message-thinking-row");
         if (!row) return;
         if ((row.dataset.agent || "") !== (start.agent || "")) return;
@@ -279,6 +299,7 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
         }
       }, { passive: false });
       msgThinking.addEventListener("touchcancel", () => {
+        clearThinkingRowPressed();
         _thinkingRowTouch = null;
       }, { passive: true });
     }
