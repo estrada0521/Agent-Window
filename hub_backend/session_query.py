@@ -39,7 +39,7 @@ def _compact_message_preview(entry: dict[str, Any]) -> dict[str, str]:
         return {"sender": "", "text": "", "revision": ""}
     compact = re.sub(r"^\[From:\s*[^\]]+\]\s*", "", message, flags=re.IGNORECASE)
     compact = re.sub(r"\s+", " ", compact)
-    compact = re.sub(r"\[Attached:\s*[^\]]+\]", "", compact).strip()
+    compact = compact.strip()
     compact = compact[:140].rstrip()
     if not compact:
         return {"sender": "", "text": "", "revision": ""}

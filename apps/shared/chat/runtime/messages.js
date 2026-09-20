@@ -6,7 +6,6 @@
     const postRenderScope = (scope) => {
       decorateLocalFileLinks(scope);
       linkifyInlineCodeFileRefs(scope);
-      void retainResolvedFileLinks(scope);
       void ensureFileIconTheme().then(() => decorateInlineFileLinkIcons(scope));
       renderMathInScope(scope);
       syncWideBlockRows(scope);

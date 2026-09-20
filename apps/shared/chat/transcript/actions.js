@@ -176,7 +176,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
       const isNote = !target;
       const attachSuffix =
         pendingAttachments.length
-          ? pendingAttachments.map((a) => "\n[Attached: " + a.path + "]").join("")
+          ? pendingAttachments.map((a) => "\n`" + a.path + "`").join("")
           : "";
       const messageBody = rawInput + attachSuffix;
       if (!messageBody.trim()) {

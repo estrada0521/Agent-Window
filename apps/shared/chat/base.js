@@ -269,7 +269,6 @@ __CHAT_INCLUDE:file-icon-theme.js__
     };
     const injectFileCards = (html) => {
       return html
-        .replace(/\[Attached:\s*([^\]]+)\]/g, (match, rawPath) => buildInlineFileLinkMarkup(rawPath.trim()))
         .replace(/(^|[\s>(])@((?:[A-Za-z0-9._-]+\/)+[A-Za-z0-9._-]+(?:\.[A-Za-z0-9._-]+)?)/g, (match, prefix, rawPath) => {
           return `${prefix}${buildInlineFileLinkMarkup(rawPath, rawPath)}`;
         });

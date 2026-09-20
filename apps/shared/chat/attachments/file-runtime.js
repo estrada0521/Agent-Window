@@ -86,40 +86,6 @@ __CHAT_INCLUDE:../file-autocomplete.js__
         if (s?.querySelectorAll) linkifyInlineCodeFileRefsImmediate(s);
       }, LINKIFY_POST_RENDER_DEBOUNCE_MS);
     };
-    const unwrapInlineFileLinkAnchor = (anchor) => {
-      if (!anchor) return;
-      const code = anchor.querySelector("code");
-      const icon = anchor.querySelector(".inline-file-link-icon");
-      icon?.remove();
-      if (code) {
-        anchor.replaceWith(code);
-        return;
-      }
-      anchor.replaceWith(document.createTextNode(anchor.textContent || ""));
-    };
-    const retainResolvedFileLinks = async (scope = document) => {
-      if (!scope?.querySelectorAll) return;
-      const anchors = Array.from(scope.querySelectorAll("a.inline-file-link"));
-      if (!anchors.length) return;
-      const queries = anchors.map((anchor) => String(anchor.dataset.filepath || "").trim()).filter(Boolean);
-      const resolved = await resolveInlineCodeFilePaths(queries);
-      anchors.forEach((anchor) => {
-        if (!anchor.isConnected) return;
-        const query = String(anchor.dataset.filepath || "").trim();
-        const path = query ? resolved.get(query) || "" : "";
-        if (!path) {
-          unwrapInlineFileLinkAnchor(anchor);
-          return;
-        }
-        if (path !== query) {
-          anchor.dataset.filepath = path;
-          anchor.dataset.ext = extFromPath(path);
-          anchor.title = path;
-          anchor.href = fileViewHrefForPath(path);
-        }
-        appendInlineFileLinkIcon(anchor, path);
-      });
-    };
     const decorateLocalFileLinks = (scope = document) => {
       if (!scope?.querySelectorAll) return;
       const candidates = [];
