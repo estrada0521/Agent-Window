@@ -96,7 +96,7 @@
       --sheet-list-row-gap: calc(var(--text-size, 13px) * 10 / 13);
       --sheet-list-row-padding-block: calc(var(--text-size, 13px) * 6 / 13);
       --sheet-list-row-padding-inline: calc(var(--text-size, 13px) * 10 / 13);
-      --sheet-list-icon-size: calc(var(--text-size, 13px) * 18 / 13);
+      --sheet-list-icon-size: calc(1em * 18 / 13);
       --sheet-list-meta-gap: calc(var(--text-size, 13px) * 8 / 13);
       flex: 1 1 auto;
       min-height: 0;
@@ -110,6 +110,7 @@
       gap: var(--sheet-list-item-gap);
       align-content: start;
       font-family: var(--font-main);
+      font-size: var(--text-size, 13px);
       font-weight: var(--body-weight);
     }
     .mobile-sheet-list::before {

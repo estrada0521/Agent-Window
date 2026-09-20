@@ -94,8 +94,8 @@
       transition: background 120ms ease;
     }
     .file-item-icon {
-      width: calc(var(--text-size, 13px) * 16 / 13);
-      height: calc(var(--text-size, 13px) * 16 / 13);
+      width: calc(1em * 18 / 13);
+      height: calc(1em * 18 / 13);
       display: inline-flex;
       align-items: center;
       justify-content: center;

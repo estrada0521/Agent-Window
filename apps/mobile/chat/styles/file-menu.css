@@ -59,7 +59,8 @@
       gap: 10px;
       width: 100%;
       box-sizing: border-box;
-      padding: 6px 18px 6px calc(var(--composer-btn-center-x) - var(--composer-menu-icon-size) / 2);
+      --file-menu-icon-size: calc(1em * 18 / 13);
+      padding: 6px 18px 6px calc(var(--composer-btn-center-x) - var(--file-menu-icon-size) / 2);
       white-space: nowrap;
       font-size: 14px;
       line-height: 20px;
@@ -79,8 +80,8 @@
     }
 
     .file-item-icon {
-      width: var(--composer-menu-icon-size);
-      height: var(--composer-menu-icon-size);
+      width: var(--file-menu-icon-size);
+      height: var(--file-menu-icon-size);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -91,8 +92,8 @@
     }
     .file-item-icon img,
     .file-item-icon svg {
-      width: var(--composer-menu-icon-size);
-      height: var(--composer-menu-icon-size);
+      width: var(--file-menu-icon-size);
+      height: var(--file-menu-icon-size);
       display: block;
       object-fit: contain;
     }

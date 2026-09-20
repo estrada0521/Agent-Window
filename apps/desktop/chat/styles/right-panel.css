@@ -5,7 +5,7 @@
       --right-panel-item-gap: 0.46em;
       --right-panel-path-gap: 0.62em;
       --right-panel-list-inset: 0.15em;
-      --right-panel-icon-slot-size: 1.38em;
+      --right-panel-icon-slot-size: calc(18em / 13);
       --right-panel-small-icon-size: 1.23em;
       --right-panel-chevron-size: 1.08em;
       --right-panel-item-radius: 0.77em;
