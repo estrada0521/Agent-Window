@@ -41,7 +41,7 @@
       display: flex;
       align-items: flex-start;
       --message-copy-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
-      --message-copy-bottom: round(nearest, calc(var(--text-size, 13px) * 6 / 13), 1px);
+      --message-copy-bottom: 0.23em;
       --message-copy-radius: round(nearest, calc(var(--text-size, 13px) * 6 / 13), 1px);
       --agent-message-rule-offset: round(nearest, calc(var(--text-size, 13px) * 16 / 13), 1px);
       font-size: var(--text-size, 13px);
