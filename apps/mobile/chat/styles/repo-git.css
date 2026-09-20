@@ -163,11 +163,6 @@
       background: var(--panel-row-selected-bg);
     }
 
-    .sheet-list-row:active :is(.repo-browser-item-name, .git-commit-subject, .git-commit-file-name),
-    .has-hover .sheet-list-row:hover:active :is(.repo-browser-item-name, .git-commit-subject, .git-commit-file-name) {
-      font-weight: var(--md-strong-weight);
-    }
-
     .has-hover .sheet-list-row:hover {
       background: var(--mobile-sheet-floating-bg);
     }
