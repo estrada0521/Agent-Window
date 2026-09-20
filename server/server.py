@@ -46,8 +46,6 @@ port = 0
 workspace = ""
 tmux_socket = ""
 hub_port = 0
-PUBLIC_HOST = ""
-PUBLIC_HUB_PORT = 443
 _repo_root = Path()
 runtime = None
 _PWA_STATIC_DIR = Path()
@@ -151,7 +149,7 @@ def _clean_env():
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
     global port, workspace, tmux_socket, hub_port
-    global PUBLIC_HOST, PUBLIC_HUB_PORT, _repo_root, runtime
+    global _repo_root, runtime
     global _PWA_STATIC_DIR, server_instance
     global payload
     global send_message, asset_runtime
@@ -172,8 +170,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     port = workspace_chat_port(workspace)
     tmux_socket = (os.environ.get("AGENT_WINDOW_TMUX_SOCKET") or default_tmux_socket_name()).strip()
     hub_port = int((_repo_root / "hub-port").read_text().strip())
-    PUBLIC_HOST = (os.environ.get("AGENT_WINDOW_PUBLIC_HOST", "") or "").strip().rstrip(".").lower()
-    PUBLIC_HUB_PORT = int(os.environ.get("AGENT_WINDOW_PUBLIC_HUB_PORT", "443") or "443")
     reload_running_agents = json.loads(os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, "[]"))
     runtime = ChatRuntime(
         port=port,
@@ -308,8 +304,6 @@ def _route_context() -> dict:
         "workspace": workspace,
         "hub_port": hub_port,
         "tmux_socket": tmux_socket,
-        "public_host": PUBLIC_HOST,
-        "public_hub_port": PUBLIC_HUB_PORT,
         "payload_fn": payload,
         "send_message_fn": send_message,
         "workspace_sync_api": workspace_sync_api,

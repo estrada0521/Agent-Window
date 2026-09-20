@@ -187,7 +187,7 @@ mobile UIはdesktopを狭くしたものではなく、片手操作を前提に�
 
 起動時は前回開いていたactive sessionを、なければ最新のactive sessionを開きます。Hubのsession rowをswipeするとArchive、Revive、Deleteを操作できます。themeはHub menuからSystem、Light、Darkを選べます。
 
-HubはHTTPで `127.0.0.1` のみにbindします。phoneはTailscale経由でそのloopbackへ到達し、Home ScreenのPWAに必要なHTTPSはTailscale側が提供します。Tailscale自体はこのrepositoryの外で設定します。詳しくは [`external-access/README.md`](external-access/README.md) を参照してください。
+HubはHTTPで `127.0.0.1` のみにbindします。phoneはTailscale経由でそのloopbackへ到達し、Home ScreenのPWAに必要なHTTPSはTailscale側が提供します。Tailscale自体はこのrepositoryの外で設定します。
 
 <p align="center">
   <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">

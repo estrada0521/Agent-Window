@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ssl
 from http.client import RemoteDisconnected
 from urllib.error import HTTPError
 from urllib.error import URLError
@@ -17,7 +16,6 @@ def forward_headers(
     *,
     host: str,
     forwarded_prefix: str = "",
-    extra: dict[str, str] | None = None,
 ) -> dict[str, str]:
     headers: dict[str, str] = {}
     for key, value in source_headers.items():
@@ -28,8 +26,6 @@ def forward_headers(
     headers["Accept-Encoding"] = "identity"
     if forwarded_prefix:
         headers["X-Forwarded-Prefix"] = forwarded_prefix
-    if extra:
-        headers.update(extra)
     return headers
 
 
@@ -41,10 +37,9 @@ def open_upstream(
     headers: dict[str, str] | None = None,
     timeout: float | None = 30.0,
 ):
-    ctx = ssl._create_unverified_context() if url.startswith("https://") else None
     req = Request(url, data=body, method=method, headers=headers or {})
     try:
-        resp = urlopen(req, context=ctx, timeout=timeout) if ctx is not None else urlopen(req, timeout=timeout)
+        resp = urlopen(req, timeout=timeout)
         return int(getattr(resp, "status", 200) or 200), resp.headers, resp
     except HTTPError as exc:
         return exc.code, exc.headers, exc

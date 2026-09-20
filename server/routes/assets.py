@@ -113,21 +113,10 @@ def _get_chat_index(handler, parsed, ctx) -> None:
     except (TypeError, ValueError) as exc:
         handler.send_error(400, str(exc))
         return
-    request_host = (handler.headers.get("Host", "") or "").strip()
-    request_host_only = request_host.split(":", 1)[0].rstrip(".").lower()
-    forwarded_public_host = (handler.headers.get("X-Forwarded-Public-Host", "") or "").strip()
-    effective_hub_port = (
-        ctx["public_hub_port"]
-        if (
-            forwarded_public_host
-            or (ctx["public_host"] and request_host_only == ctx["public_host"])
-        )
-        else ctx["hub_port"]
-    )
     body = ctx["render_chat_html_fn"](
         icon_data_uris=ctx["asset_runtime"].icon_data_uris,
         server_instance=ctx["server_instance"],
-        hub_port=effective_hub_port,
+        hub_port=ctx["hub_port"],
         chat_base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
         variant=variant,
         session_name=ctx["session_name"],

@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-_HERE="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "${BASH_SOURCE[0]:-$0}")"
-_BIN="$(cd "$(dirname "$_HERE")" && pwd)"
-REPO_ROOT="$(cd "$_BIN/.." && pwd)"
-
-exec bash "$REPO_ROOT/external-access/cloudflare" "$@"

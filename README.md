@@ -146,7 +146,7 @@ Here, success only means the input was delivered to the runtime. It doesn't mean
 
 ## Use it from a phone
 
-Hub binds only to `127.0.0.1` over HTTP. A phone reaches that loopback through Tailscale, which supplies the HTTPS a Home Screen PWA needs. Tailscale itself is configured outside this repository; see [`external-access/README.md`](external-access/README.md).
+Hub binds only to `127.0.0.1` over HTTP. A phone reaches that loopback through Tailscale, which supplies the HTTPS a Home Screen PWA needs. Tailscale itself is configured outside this repository.
 
 <!-- Regenerate from the "(original)" screenshots in media/ with (defaults only, no flags):
      python3 user/round_and_glow.py media/agent-window-mobile-{dark,light}*"(original)".png

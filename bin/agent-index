@@ -21,13 +21,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-PUBLIC_HOST_FILE="$HOME/.agent-window/state/cloudflare/public-host.txt"
-if [[ -z "${AGENT_WINDOW_PUBLIC_HOST:-}" ]] && [[ -f "$PUBLIC_HOST_FILE" ]]; then
-  export AGENT_WINDOW_PUBLIC_HOST="$(tr -d '\r\n' < "$PUBLIC_HOST_FILE")"
-fi
-if [[ -n "${AGENT_WINDOW_PUBLIC_HOST:-}" && -z "${AGENT_WINDOW_PUBLIC_HUB_PORT:-}" ]]; then
-  export AGENT_WINDOW_PUBLIC_HUB_PORT="443"
-fi
 if ! port_serves_expected_url "$HUB_PORT" "/hub.webmanifest"; then
   if ! command -v lsof >/dev/null 2>&1; then
     echo "lsof is required to inspect port $HUB_PORT." >&2
