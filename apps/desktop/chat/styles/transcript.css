@@ -30,11 +30,15 @@
 
     .message-row:not(.user) + .message-row.user,
     .sysmsg-row + .message-row.user {
-      margin-top: 3em;
+      margin-top: 2em;
     }
 
     .message-row.user + .message-row.user {
       margin-top: 0.92em;
+    }
+
+    .message-row.user + .message-row:not(.user) {
+      margin-top: 1.2em;
     }
 
     .message-row {
