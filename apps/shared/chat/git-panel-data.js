@@ -17,7 +17,13 @@
       data?.worktree_has_diff ? "1" : "0",
       data?.total_commits ?? "",
       (Array.isArray(data?.recent_commits) ? data.recent_commits : []).map((commit) =>
-        [commit?.hash || "", commit?.subject || "", commit?.ins ?? "", commit?.dels ?? ""].join(":")
+        [
+          commit?.hash || "",
+          commit?.subject || "",
+          commit?.ins ?? "",
+          commit?.dels ?? "",
+          commit?.is_origin_main ? "1" : "0",
+        ].join(":")
       ).join(","),
       gitStatusLinesDigest(data),
     ].join("|");

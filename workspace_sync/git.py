@@ -203,9 +203,11 @@ def git_overview(*, offset=0, limit=50, force_refresh: bool = False, include_com
     head_res = _run("rev-parse", "HEAD")
     has_head = head_res.returncode == 0
     head = (head_res.stdout or "").strip() if has_head else ""
+    origin_main_res = _run("rev-parse", "refs/remotes/origin/main")
+    origin_main = (origin_main_res.stdout or "").strip() if origin_main_res.returncode == 0 else ""
     cached_commits = None
     if include_commits:
-        commit_key = (str(root.resolve()), head, offset, limit)
+        commit_key = (str(root.resolve()), head, origin_main, offset, limit)
         with _git_overview_cache_lock:
             cached_commits = _commit_list_cache.get(commit_key)
     status_res = _run("status", "--short", "--branch", "--untracked-files=all")
