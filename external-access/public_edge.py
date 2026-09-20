@@ -279,6 +279,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 ThreadingHTTPServer.allow_reuse_address = True
+ThreadingHTTPServer.request_queue_size = 128
 server = ThreadingHTTPServer(("127.0.0.1", edge_port), Handler)
 logging.info("http://127.0.0.1:%s", edge_port)
 server.serve_forever()

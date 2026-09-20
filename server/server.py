@@ -370,6 +370,7 @@ def main(argv: list[str] | None = None) -> None:
 
     initialize_from_argv(argv)
     ThreadingHTTPServer.allow_reuse_address = True
+    ThreadingHTTPServer.request_queue_size = 128
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     print(f"http://127.0.0.1:{port}/", flush=True)
     server.serve_forever()
