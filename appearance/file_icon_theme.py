@@ -30,10 +30,11 @@ def load_file_icon_theme_document() -> dict:
     definitions = document.get("iconDefinitions")
     if not isinstance(definitions, dict) or not definitions:
         raise ValueError("file icon theme has no iconDefinitions")
+    version = theme_json.stat().st_mtime_ns
     rewritten: dict[str, dict] = {}
     for icon_id, raw in definitions.items():
         icon_file = _icon_file(theme_json, icon_id, raw)
-        entry = {**raw, "iconPath": f"/file-icon-theme/icon/{icon_id}"}
+        entry = {**raw, "iconPath": f"/file-icon-theme/icon/{icon_id}?v={version}"}
         if inline:
             entry["svg"] = icon_file.read_text(encoding="utf-8")
         rewritten[icon_id] = entry

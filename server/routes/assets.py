@@ -99,7 +99,7 @@ def _get_file_icon_theme_icon(handler, parsed, ctx) -> None:
         handler.send_error(500, str(exc))
         return
     content_type = "image/svg+xml" if body.lstrip().startswith(b"<") or body.lstrip().startswith(b"<?xml") else "application/octet-stream"
-    _send_bytes(handler, 200, body, content_type=content_type)
+    _send_bytes(handler, 200, body, content_type=content_type, cache_control="private, max-age=31536000, immutable")
 
 
 def _get_chat_index(handler, parsed, ctx) -> None:
