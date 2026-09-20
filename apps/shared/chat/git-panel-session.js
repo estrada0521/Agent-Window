@@ -157,26 +157,27 @@
         }
         if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return null;
         if (loaded.mode === "sections") {
-          const signature = gitFileStatsRowsSignature(loaded.sections);
-          if (preserveCurrent && wrapEl.dataset.fileStatsSignature === signature) {
-            return { files: loaded.files };
-          }
-          wrapEl.dataset.fileStatsSignature = signature;
-          if (!loaded.sections.length) {
-            wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty">No changed files</div>';
-            return { files: [] };
-          }
-          wrapEl.innerHTML = gitCommitFileStatsSectionsHtml(loaded.sections, { allowUndo });
+          applyGitFileStatsSectionsInto(wrapEl, loaded.sections, {
+            allowUndo,
+            incremental,
+            emptyHtml: '<div class="git-commit-file-empty sheet-list-empty">No changed files</div>',
+          });
           return { files: loaded.files };
         }
-        const signature = gitFileStatsRowsSignature([{ kind: scope || "commit", files: loaded.files }]);
-        if (preserveCurrent && wrapEl.dataset.fileStatsSignature === signature) return loaded.data;
-        wrapEl.dataset.fileStatsSignature = signature;
         if (!loaded.files.length) {
+          wrapEl.dataset.fileStatsSignature = "";
           wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty">No changed files</div>';
           return loaded.data;
         }
-        wrapEl.innerHTML = gitCommitFileListHtml(loaded.files, { allowUndo, scope });
+        if (incremental && wrapEl.querySelector(".git-commit-file-list")) {
+          applyGitFileStatsSectionsInto(wrapEl, [{ title: "", kind: scope || "commit", files: loaded.files }], {
+            allowUndo,
+            incremental,
+          });
+        } else {
+          wrapEl.dataset.fileStatsSignature = gitFileStatsRowsSignature([{ kind: scope || "commit", files: loaded.files }]);
+          wrapEl.innerHTML = gitCommitFileListHtml(loaded.files, { allowUndo, scope });
+        }
         return loaded.data;
       };
       const closeDetail = ({ refreshList = false } = {}) => {

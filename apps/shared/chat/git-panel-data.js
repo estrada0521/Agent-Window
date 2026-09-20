@@ -115,3 +115,102 @@
       const data = await fetchGitDiffFiles({ hash, scope });
       return { mode: "list", files: data.files, data };
     };
+    const gitFileStatsRowKey = (scope, entry) => `${String(scope || "")}\u001f${String(entry?.path || "").trim()}`;
+    const gitCssEscape = (value) => {
+      if (window.CSS?.escape) return CSS.escape(String(value || ""));
+      return String(value || "").replace(/["\\]/g, "\\$&");
+    };
+    const updateGitFileStatsRow = (row, entry) => {
+      if (!row) return;
+      const isUntracked = !!entry?.untracked;
+      if (isUntracked) {
+        row.dataset.untracked = "1";
+        return;
+      }
+      delete row.dataset.untracked;
+      const nextIns = Math.max(0, parseInt(entry?.ins) || 0);
+      const nextDels = Math.max(0, parseInt(entry?.dels) || 0);
+      const countEls = Array.from(row.querySelectorAll(".git-commit-file-meta .git-summary-count"));
+      const updates = [
+        { idx: 0, value: nextIns },
+        { idx: 1, value: nextDels },
+      ].map(({ idx, value }) => {
+        const el = countEls[idx];
+        if (!el) return null;
+        const prev = Math.max(0, parseInt(el.dataset.countValue || el.textContent || "0") || 0);
+        return { el, prev, value };
+      }).filter(Boolean);
+      if (updates.some(({ prev, value }) => prev !== value)) {
+        const token = String(Date.now());
+        row.dataset.statsUpdateToken = token;
+        row.classList.add("is-stats-updating");
+        window.setTimeout(() => {
+          if (row.dataset.statsUpdateToken !== token) return;
+          row.classList.remove("is-stats-updating");
+          delete row.dataset.statsUpdateToken;
+        }, 2000);
+      }
+      updates.forEach(({ el, prev, value }) => {
+        el.dataset.countValue = String(value);
+        animateGitCount(el, prev, value);
+      });
+    };
+    const applyGitFileStatsSectionsInto = (wrapEl, sections, {
+      allowUndo = false,
+      incremental = false,
+      emptyHtml = '<div class="git-commit-file-empty sheet-list-empty">No changed files</div>',
+    } = {}) => {
+      const safeSections = (sections || []).filter((section) => Array.isArray(section.files) && section.files.length);
+      const signature = gitFileStatsRowsSignature(safeSections);
+      if (!safeSections.length) {
+        wrapEl.dataset.fileStatsSignature = "";
+        wrapEl.innerHTML = emptyHtml;
+        return;
+      }
+      if (!incremental || !wrapEl.querySelector(".git-commit-file-sections")) {
+        wrapEl.dataset.fileStatsSignature = signature;
+        wrapEl.innerHTML = gitCommitFileStatsSectionsHtml(safeSections, { allowUndo });
+        return;
+      }
+      if (wrapEl.dataset.fileStatsSignature === signature) return;
+
+      const desiredScopes = new Set(safeSections.map((section) => section.kind));
+      wrapEl.querySelectorAll(".git-commit-file-section").forEach((sectionEl) => {
+        if (!desiredScopes.has(sectionEl.dataset.scope || "")) sectionEl.remove();
+      });
+
+      const sectionsRoot = wrapEl.querySelector(".git-commit-file-sections");
+      if (!sectionsRoot) {
+        wrapEl.dataset.fileStatsSignature = signature;
+        wrapEl.innerHTML = gitCommitFileStatsSectionsHtml(safeSections, { allowUndo });
+        return;
+      }
+
+      safeSections.forEach((section) => {
+        let sectionEl = sectionsRoot.querySelector(`.git-commit-file-section[data-scope="${gitCssEscape(section.kind)}"]`);
+        if (!sectionEl) {
+          sectionsRoot.insertAdjacentHTML("beforeend", gitCommitFileStatsSectionHtml(section, { allowUndo }));
+          return;
+        }
+        const listEl = sectionEl.querySelector(".git-commit-file-list");
+        if (!listEl) {
+          sectionEl.outerHTML = gitCommitFileStatsSectionHtml(section, { allowUndo });
+          return;
+        }
+        const desiredKeys = new Set(section.files.map((entry) => gitFileStatsRowKey(section.kind, entry)));
+        listEl.querySelectorAll(".git-commit-file-row").forEach((row) => {
+          const key = gitFileStatsRowKey(section.kind, { path: row.dataset.path || "" });
+          if (!desiredKeys.has(key)) row.remove();
+        });
+        section.files.forEach((entry) => {
+          const selector = `.git-commit-file-row[data-path="${gitCssEscape(String(entry?.path || "").trim())}"]`;
+          const existing = listEl.querySelector(selector);
+          if (!existing) {
+            listEl.insertAdjacentHTML("beforeend", gitCommitFileRowHtml(entry, { allowUndo, scope: section.kind, animate: true }));
+          } else {
+            updateGitFileStatsRow(existing, entry);
+          }
+        });
+      });
+      wrapEl.dataset.fileStatsSignature = signature;
+    };
