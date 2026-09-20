@@ -471,7 +471,7 @@
     }
 
     .git-sheet-detail-title .git-summary-counts {
-      flex: 0 1 auto;
+      flex: 0 0 auto;
       font-size: inherit;
     }
 
