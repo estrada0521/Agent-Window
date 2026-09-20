@@ -164,17 +164,16 @@ def render_file_view(
         return " " + " ".join(attrs)
 
     def build_text_table_markup(text_content: str) -> tuple[str, str, int, int]:
-        escaped = html_escape(text_content)
-        highlighted_lines = escaped.split("\n")
-        line_count = max(1, len(highlighted_lines))
+        lines = html_escape(text_content).split("\n")
+        line_count = len(lines)
         gutter_width, title_offset = build_gutter_metrics(line_count)
         gutter_rows = "".join(
             f'<tr data-line="{idx}"><td class="ln">{idx}</td></tr>'
-            for idx, _line in enumerate(highlighted_lines, start=1)
+            for idx in range(1, line_count + 1)
         )
         code_rows = "".join(
             f'<tr data-line="{idx}"><td class="lc"><pre>{line if line else " "}</pre></td></tr>'
-            for idx, line in enumerate(highlighted_lines, start=1)
+            for idx, line in enumerate(lines, start=1)
         )
         return gutter_rows, code_rows, gutter_width, title_offset
 
