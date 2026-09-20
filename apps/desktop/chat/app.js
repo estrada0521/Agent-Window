@@ -363,7 +363,6 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
     let dpRepoBrowserPath = "";
     let dpRepoLoadSeq = 0;
     let cancelDpRepoLoading = () => {};
-    let dpRepoBrowserNavDirection = "forward";
     let dpPanelWidthAtDefaultTextSize = DP_PANEL_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE;
     let _desktopRightPanelResizeState = null;
     let _dpSplitDragging = false;
@@ -453,6 +452,11 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       dpPanelOpen = true;
       dpApplyPanelWidth();
       dpSyncPinnedSummaryStrip();
+      const existingStack = dpRepoContent?.querySelector(".repo-browser-stack");
+      if (existingStack) {
+        existingStack.classList.remove("repo-browser-nav-forward", "repo-browser-nav-back");
+        existingStack.classList.add("repo-browser-nav-none");
+      }
       desktopRightPanel.hidden = false;
       desktopRightPanel.classList.add("open");
       document.body.classList.add("right-panel-open");
@@ -693,7 +697,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     };
     const dpRepoEntriesStructureSignature = (entries) =>
       (entries || []).map((entry) => `${entry.kind}:${entry.path}`).join("\n");
-    const dpRenderRepoPanel = (rawPath, entries, { loading = false, error = "", direction = "forward" } = {}) => {
+    const dpRenderRepoPanel = (rawPath, entries, { loading = false, error = "", direction = "none" } = {}) => {
       if (!dpRepoContent) return;
       const path = dpNormalizePath(rawPath);
       const pathParts = path.split("/").filter(Boolean);
@@ -772,8 +776,13 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const path = dpNormalizePath(rawPath);
       const currentDepth = dpRepoBrowserPath.split("/").filter(Boolean).length;
       const newDepth = path.split("/").filter(Boolean).length;
-      const direction = animate && newDepth > currentDepth ? "forward" : (animate ? "back" : "none");
-      dpRepoBrowserNavDirection = direction;
+      const direction = !animate
+        ? "none"
+        : newDepth > currentDepth
+          ? "forward"
+          : newDepth < currentDepth
+            ? "back"
+            : "none";
       const loadSeq = ++dpRepoLoadSeq;
       const repoLoadCancelled = () => loadSeq !== dpRepoLoadSeq || !dpPanelOpen;
       cancelDpRepoLoading();
