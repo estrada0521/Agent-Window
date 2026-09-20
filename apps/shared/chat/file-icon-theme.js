@@ -76,6 +76,24 @@
       return host.firstElementChild || host;
     };
 
+    const appendInlineFileLinkIcon = (anchor, path = "") => {
+      if (!anchor || !fileIconThemeState.ready) return;
+      if (anchor.querySelector(".inline-file-link-icon")) return;
+      const normalized = String(path || anchor.dataset?.filepath || "").trim();
+      if (!normalized) return;
+      const icon = fileIconElement(normalized, {}, "inline-file-link-icon");
+      const codeEl = anchor.querySelector("code");
+      if (codeEl) anchor.insertBefore(icon, codeEl);
+      else anchor.prepend(icon);
+    };
+
+    const decorateInlineFileLinkIcons = (scope = document) => {
+      if (!fileIconThemeState.ready || !scope?.querySelectorAll) return;
+      scope.querySelectorAll("a.inline-file-link, a.local-file-link").forEach((anchor) => {
+        appendInlineFileLinkIcon(anchor);
+      });
+    };
+
     const applyFileIconThemePayload = (payload) => {
       if (!payload?.theme || typeof payload.theme !== "object") {
         throw new Error("file icon theme payload is missing theme");
@@ -83,6 +101,7 @@
       fileIconThemeState.theme = payload.theme;
       fileIconThemeState.mono = payload.mono !== false;
       fileIconThemeState.ready = true;
+      decorateInlineFileLinkIcons(document);
       return fileIconThemeState;
     };
 

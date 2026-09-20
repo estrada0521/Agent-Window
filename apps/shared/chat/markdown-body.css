@@ -108,8 +108,32 @@
       text-decoration: none;
     }
 
+    .md-body a.inline-file-link .inline-file-link-icon,
+    .md-body a.local-file-link .inline-file-link-icon {
+      display: inline-block;
+      width: calc(1em * 16 / 13);
+      height: calc(1em * 16 / 13);
+      margin-right: 0.28em;
+      vertical-align: -0.28em;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .md-body a.inline-file-link .inline-file-link-icon svg,
+    .md-body a.inline-file-link .inline-file-link-icon img,
+    .md-body a.local-file-link .inline-file-link-icon svg,
+    .md-body a.local-file-link .inline-file-link-icon img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+
     html[data-theme="dark"] .md-body a.inline-file-link,
-    html[data-theme="dark"] .md-body a.local-file-link,
+    html[data-theme="dark"] .md-body a.local-file-link {
+      text-decoration: none;
+    }
+
     html[data-theme="dark"] .md-body a.inline-file-link code,
     html[data-theme="dark"] .md-body a.local-file-link code {
       text-decoration: underline;

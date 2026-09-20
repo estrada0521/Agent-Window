@@ -400,7 +400,7 @@ class FileRuntime:
             return ""
         if raw_query.startswith("~") or os.path.isabs(raw_query):
             full = self._resolve_reference_path(raw_query)
-            return full if os.path.exists(full) else ""
+            return full if os.path.isfile(full) else ""
         normalized_query = raw_query.lstrip("./").strip("/")
         if not normalized_query:
             return ""

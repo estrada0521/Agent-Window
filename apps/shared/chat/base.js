@@ -262,7 +262,10 @@ __CHAT_INCLUDE:file-icon-theme.js__
       if (!normalizedPath) return "";
       const visible = String(label || displayAttachmentFilename(normalizedPath) || normalizedPath).trim() || normalizedPath;
       const href = fileViewHrefForPath(normalizedPath);
-      return `<a class="inline-file-link" href="${escapeHtml(href)}" data-filepath="${escapeHtml(normalizedPath)}" data-ext="${escapeHtml(extFromPath(normalizedPath))}" title="${escapeHtml(normalizedPath)}"><code>${escapeHtml(visible)}</code></a>`;
+      const iconHtml = fileIconThemeState.ready
+        ? fileIconHtml(normalizedPath, { classNames: "inline-file-link-icon" })
+        : "";
+      return `<a class="inline-file-link" href="${escapeHtml(href)}" data-filepath="${escapeHtml(normalizedPath)}" data-ext="${escapeHtml(extFromPath(normalizedPath))}" title="${escapeHtml(normalizedPath)}">${iconHtml}<code>${escapeHtml(visible)}</code></a>`;
     };
     const injectFileCards = (html) => {
       return html
