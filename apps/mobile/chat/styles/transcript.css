@@ -11,7 +11,7 @@
     }
 
     .message-row:not(.user) + .message-row.meta-hidden {
-      margin-top: 1.6em;
+      margin-top: 1em;
     }
 
     .message-row:not(.user) + .sysmsg-row,
