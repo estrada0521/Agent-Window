@@ -187,9 +187,14 @@
       
       setTimeout(() => {
         if (btn.dataset.copyAnimToken !== token) return;
-        btn.classList.remove("copied");
-        btn.innerHTML = copyIcon;
         onEnded?.();
+        const restoreIcon = () => {
+          if (btn.dataset.copyAnimToken !== token) return;
+          btn.classList.remove("copied");
+          btn.innerHTML = copyIcon;
+        };
+        if (onEnded) setTimeout(restoreIcon, 120);
+        else restoreIcon();
       }, holdMs);
     };
     const messagesEl = document.getElementById("messages");

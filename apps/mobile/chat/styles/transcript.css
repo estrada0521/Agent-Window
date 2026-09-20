@@ -37,6 +37,10 @@
       margin-top: 0.92em;
     }
 
+    .message-row.user + .message-row:not(.user) {
+      margin-top: 0.92em;
+    }
+
     .message-row {
       display: flex;
       align-items: flex-start;
@@ -378,6 +382,7 @@
       align-items: flex-start;
       margin-right: auto;
       margin-left: 0;
+      gap: 0.92em;
       width: 100%;
       max-width: 100%;
       min-width: 0;
@@ -414,31 +419,31 @@
     }
 
     .message-body-row > .message-hover-copy-zone .message-hover-copy {
+      --liquid-glass-press-scale: 1.4;
       position: relative;
       font-size: inherit;
       width: 28px;
       height: 28px;
-      color: var(--muted);
+      color: var(--fg);
       background: transparent;
       opacity: 0;
       pointer-events: none;
       touch-action: manipulation;
-      transition: opacity 120ms ease;
+      transition: opacity 120ms ease, transform var(--liquid-glass-press-out);
     }
 
     .message-row.is-copy-revealed .message-hover-copy-zone,
-    .message-row.is-copy-revealed .message-hover-copy,
-    .message-row .message-hover-copy.copied {
+    .message-row.is-copy-revealed .message-hover-copy {
       pointer-events: auto;
     }
 
-    .message-row.is-copy-revealed .message-hover-copy,
-    .message-row .message-hover-copy.copied {
+    .message-row.is-copy-revealed .message-hover-copy {
       opacity: 1;
     }
 
     .message-body-row > .message-hover-copy-zone .message-hover-copy.copied {
-      color: var(--fg);
+      transform: scale(var(--liquid-glass-press-scale));
+      transition: opacity 120ms ease, transform var(--liquid-glass-press-in);
     }
 
     .message-body-row > .message-hover-copy-zone .message-hover-copy svg {
