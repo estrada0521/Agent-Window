@@ -703,6 +703,9 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const pathParts = path.split("/").filter(Boolean);
       const parentPath = pathParts.slice(0, -1).join("/");
       const pathBasename = pathParts[pathParts.length - 1] || "/";
+      const previousScrollTop = path === dpRepoBrowserPath
+        ? dpRepoContent.querySelector(".repo-browser-scroll")?.scrollTop || 0
+        : 0;
       dpRepoBrowserPath = path;
       dpRepoContent.innerHTML = "";
       const stack = document.createElement("div");
@@ -770,6 +773,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       scroll.appendChild(list);
       stack.appendChild(scroll);
       dpRepoContent.appendChild(stack);
+      scroll.scrollTop = previousScrollTop;
     };
     const dpLoadRepoDir = async (rawPath, { animate = true } = {}) => {
       if (!dpPanelOpen) return;
@@ -818,11 +822,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           path: dpNormalizePath(item.title || ""),
         }));
         if (dpRepoEntriesStructureSignature(currentEntries) === dpRepoEntriesStructureSignature(entries)) return;
-        const scrollEl = dpRepoContent.querySelector(".repo-browser-scroll");
-        const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
         dpRenderRepoPanel(path, entries, { direction: "none" });
-        const nextScroll = dpRepoContent.querySelector(".repo-browser-scroll");
-        if (nextScroll) nextScroll.scrollTop = scrollTop;
       } catch (_) {}
     };
     window.addEventListener("message", (event) => {
