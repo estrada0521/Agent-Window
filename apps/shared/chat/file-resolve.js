@@ -35,21 +35,15 @@
     const resolveInlineCodeFilePaths = async (queries) => {
       const unique = [...new Set((Array.isArray(queries) ? queries : []).map((item) => String(item || "").trim()).filter(Boolean))];
       if (!unique.length) return new Map();
-      try {
-        const response = await fetch("/files-resolve", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ queries: unique }),
-        });
-        const payload = response.ok ? await response.json() : null;
-        const resolved = payload && typeof payload === "object" ? payload.resolved : null;
-        const out = new Map();
-        for (const query of unique) {
-          const path = resolved && typeof resolved[query] === "string" ? resolved[query] : "";
-          if (path) out.set(query, path);
-        }
-        return out;
-      } catch (_) {
-        return new Map();
+      const response = await fetch("/files-resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ queries: unique }),
+      });
+      const { resolved } = await response.json();
+      const out = new Map();
+      for (const query of unique) {
+        if (resolved[query]) out.set(query, resolved[query]);
       }
+      return out;
     };

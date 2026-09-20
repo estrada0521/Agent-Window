@@ -82,13 +82,7 @@ def _get_file_icon_theme(handler, _parsed, ctx) -> None:
         handler.send_error(500, str(exc))
         return
     body = json.dumps(payload, ensure_ascii=True).encode("utf-8")
-    _send_bytes(
-        handler,
-        200,
-        body,
-        content_type="application/json; charset=utf-8",
-        cache_control="private, max-age=60",
-    )
+    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
 def _get_file_icon_theme_icon(handler, parsed, ctx) -> None:
@@ -105,13 +99,7 @@ def _get_file_icon_theme_icon(handler, parsed, ctx) -> None:
         handler.send_error(500, str(exc))
         return
     content_type = "image/svg+xml" if body.lstrip().startswith(b"<") or body.lstrip().startswith(b"<?xml") else "application/octet-stream"
-    _send_bytes(
-        handler,
-        200,
-        body,
-        content_type=content_type,
-        cache_control="private, max-age=86400",
-    )
+    _send_bytes(handler, 200, body, content_type=content_type)
 
 
 def _get_chat_index(handler, parsed, ctx) -> None:

@@ -1,6 +1,6 @@
     const fileIconThemeState = {
       ready: false,
-      mono: true,
+      inline: false,
       theme: null,
       loadPromise: null,
     };
@@ -63,7 +63,7 @@
       const iconId = resolveFileIconDefinitionId(rawPath, { isDir });
       const def = fileIconThemeState.theme?.iconDefinitions?.[iconId] || {};
       const classes = ["file-icon", classNames].filter(Boolean).join(" ");
-      if (fileIconThemeState.mono && def.svg) {
+      if (fileIconThemeState.inline && def.svg) {
         return `<span class="${classes}" aria-hidden="true">${def.svg}</span>`;
       }
       const url = withChatBase(def.iconPath || `/file-icon-theme/icon/${encodeURIComponent(iconId)}`);
@@ -99,7 +99,7 @@
         throw new Error("file icon theme payload is missing theme");
       }
       fileIconThemeState.theme = payload.theme;
-      fileIconThemeState.mono = payload.mono !== false;
+      fileIconThemeState.inline = payload.inline;
       fileIconThemeState.ready = true;
       decorateInlineFileLinkIcons(document);
       return fileIconThemeState;

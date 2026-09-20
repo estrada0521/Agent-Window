@@ -124,15 +124,9 @@ def render_chat_html(
         theme=theme,
         mobile_theme_default=MOBILE_THEME_DEFAULT,
     )
-    _theme_json, _theme_root, _theme_id, mono = resolve_file_icon_theme()
-    # Colored user themes are large; do not embed them in HTML (mobile parse cost).
-    # Builtin mono is small and ships inline SVG, so boot is fine.
-    if mono:
+    _theme_json, inline = resolve_file_icon_theme()
+    if inline:
         boot = load_file_icon_theme_document()
         boot_json = json.dumps(boot, ensure_ascii=True).replace("<", "\\u003c")
-        boot_script = f"<script>window.__FILE_ICON_THEME__={boot_json};</script>"
-        if "</head>" in html:
-            html = html.replace("</head>", f"{boot_script}</head>", 1)
-        else:
-            html = boot_script + html
+        html = html.replace("</head>", f"<script>window.__FILE_ICON_THEME__={boot_json};</script></head>", 1)
     return html

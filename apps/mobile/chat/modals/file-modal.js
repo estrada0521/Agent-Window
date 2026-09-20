@@ -219,36 +219,6 @@
       frame.src = fileViewHrefForPath(normalizedPath, { embed: true });
     };
 __CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
-    const decorateLocalFileLinks = (scope = document) => {
-      if (!scope?.querySelectorAll) return;
-      const candidates = [];
-      scope.querySelectorAll(".md-body a[href]").forEach((anchor) => {
-        if (!anchor) return;
-        if (anchor.classList.contains("inline-file-link")) return;
-        const href = anchor.getAttribute("href") || "";
-        const path = normalizeWorkspaceFilePath(pathFromLocalHref(href));
-        if (!path) return;
-        candidates.push({ anchor, path, href });
-      });
-      if (!candidates.length) return;
-      void resolveInlineCodeFilePaths(candidates.map((item) => item.path)).then((resolved) => {
-        candidates.forEach(({ anchor, path, href }) => {
-          if (!anchor.isConnected) return;
-          const resolvedPath = resolved.get(path) || "";
-          if (!resolvedPath) return;
-          anchor.classList.add("local-file-link");
-          anchor.dataset.filepath = resolvedPath;
-          anchor.dataset.ext = extFromPath(resolvedPath);
-          if (!anchor.title) anchor.title = resolvedPath;
-          if (!anchor.querySelector("code") && anchor.childElementCount === 0) {
-            const label = document.createElement("code");
-            label.textContent = anchor.textContent || resolvedPath;
-            anchor.replaceChildren(label);
-          }
-          appendInlineFileLinkIcon(anchor, resolvedPath);
-        });
-      });
-    };
     const filePathFromLinkAnchor = (anchor) => {
       if (!anchor) return "";
       const fromDataset = String(anchor.dataset?.filepath || "").trim();
