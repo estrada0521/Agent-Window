@@ -405,17 +405,16 @@
     }
 
     .message-body-row > .message-hover-copy-zone .message-hover-copy {
-      --liquid-glass-press-scale: 1.4;
       position: relative;
       font-size: inherit;
       width: 28px;
       height: 28px;
-      color: var(--fg);
+      color: var(--muted);
       background: transparent;
       opacity: 0;
       pointer-events: none;
       touch-action: manipulation;
-      transition: opacity 120ms ease, transform var(--liquid-glass-press-out);
+      transition: opacity 120ms ease;
     }
 
     .message-row.is-copy-revealed .message-hover-copy-zone,
@@ -428,8 +427,7 @@
     }
 
     .message-body-row > .message-hover-copy-zone .message-hover-copy.copied {
-      transform: scale(var(--liquid-glass-press-scale));
-      transition: opacity 120ms ease, transform var(--liquid-glass-press-in);
+      color: var(--fg);
     }
 
     .message-body-row > .message-hover-copy-zone .message-hover-copy svg {

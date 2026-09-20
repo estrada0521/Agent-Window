@@ -284,15 +284,8 @@
       opacity: 1;
     }
 
-    .has-hover .md-body .code-block-wrap .code-copy-btn:hover {
-      background: transparent;
-      color: var(--fg);
-    }
-
-    .md-body .code-block-wrap .code-copy-btn:active {
-      background: transparent;
-    }
-
+    .has-hover .md-body .code-block-wrap .code-copy-btn:hover,
+    .md-body .code-block-wrap .code-copy-btn:active,
     .md-body .code-block-wrap .code-copy-btn.copied {
       color: var(--fg);
     }
@@ -303,6 +296,7 @@
     }
 
     .md-body .code-block-wrap .code-copy-btn svg * {
+      stroke: currentColor;
       stroke-width: 1.45;
     }
 

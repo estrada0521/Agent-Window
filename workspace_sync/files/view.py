@@ -9,6 +9,7 @@ from urllib.parse import quote as url_quote
 from appearance.colors import (
     MOBILE_DARK_ICON_HOVER,
     MOBILE_LIGHT_ICON_HOVER,
+    apply_color_tokens,
     TEXT_DIFF_DELETE_DARK_CHANNELS,
     TEXT_DIFF_DELETE_LIGHT_CHANNELS,
     TEXT_DIFF_INSERT_DARK_CHANNELS,
@@ -66,7 +67,7 @@ def _chat_markdown_preview_css() -> str:
     }
     for placeholder, value in replacements.items():
         markdown_css = markdown_css.replace(placeholder, value)
-    return f"{theme_vars_css}\n{inline_code_css}\n{code_block_css}\n{markdown_css}"
+    return apply_color_tokens(f"{theme_vars_css}\n{inline_code_css}\n{code_block_css}\n{markdown_css}")
 
 
 def _chat_markdown_frontmatter_js() -> str:

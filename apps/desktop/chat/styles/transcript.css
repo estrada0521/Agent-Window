@@ -457,6 +457,7 @@
     .message-row:focus-within .message-hover-copy,
     .message-row .message-hover-copy.copied {
       opacity: 1;
+      color: var(--fg);
     }
 
     .message-row:not(.user) .message::before {

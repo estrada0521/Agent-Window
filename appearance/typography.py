@@ -24,6 +24,7 @@ MOBILE_LIGHT_BODY_WEIGHT = 420
 MOBILE_LIGHT_CODE_WEIGHT = 500
 MOBILE_DARK_BODY_WEIGHT = 300
 MOBILE_DARK_CODE_WEIGHT = 200
+MOBILE_DARK_INLINE_CODE_WEIGHT = 400
 FILE_PREVIEW_CODE_FONT = CODE_FONT
 FILE_PREVIEW_LIGHT_CODE_WEIGHT = 550
 FILE_PREVIEW_DARK_CODE_WEIGHT = 250
@@ -76,6 +77,7 @@ def body_typography_css() -> str:
     .pane-viewer {{
       --body-weight: {DESKTOP_DARK_BODY_WEIGHT};
       --code-weight: {DESKTOP_DARK_CODE_WEIGHT};
+      --inline-code-weight: var(--code-weight);
       --file-preview-code-weight: {FILE_PREVIEW_DARK_CODE_WEIGHT};
       --link-weight: {LINK_DARK_WEIGHT};
       --md-strong-weight: {MD_STRONG_DARK_WEIGHT};
@@ -84,6 +86,7 @@ def body_typography_css() -> str:
     html[data-theme="light"] {{
       --body-weight: {DESKTOP_LIGHT_BODY_WEIGHT};
       --code-weight: {DESKTOP_LIGHT_CODE_WEIGHT};
+      --inline-code-weight: var(--code-weight);
       --file-preview-code-weight: {FILE_PREVIEW_LIGHT_CODE_WEIGHT};
       --link-weight: {LINK_LIGHT_WEIGHT};
       --md-strong-weight: {MD_STRONG_LIGHT_WEIGHT};
@@ -92,12 +95,14 @@ def body_typography_css() -> str:
     html[data-mobile="1"][data-theme="light"] {{
       --body-weight: {MOBILE_LIGHT_BODY_WEIGHT};
       --code-weight: {MOBILE_LIGHT_CODE_WEIGHT};
+      --inline-code-weight: var(--code-weight);
     }}
     html[data-mobile="1"][data-theme="dark"],
     html[data-mobile="1"] #paneTracePanel,
     html[data-mobile="1"] .pane-viewer {{
       --body-weight: {MOBILE_DARK_BODY_WEIGHT};
       --code-weight: {MOBILE_DARK_CODE_WEIGHT};
+      --inline-code-weight: {MOBILE_DARK_INLINE_CODE_WEIGHT};
     }}"""
     typography_override = """
     .message.user .md-body,

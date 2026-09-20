@@ -1,7 +1,7 @@
     html[data-mobile-chat][data-theme="light"] {
       --code-bg: rgba(0, 0, 0, 0.05);
       --inline-code-bg: rgba(0, 0, 0, 0.05);
-      --inline-code-fg: var(--fg);
+      --inline-code-fg: rgb(__TEXT_INLINE_CODE_MOBILE_LIGHT_CHANNELS__);
       --blockquote-bg: rgba(0, 0, 0, 0.03);
       --blockquote-border: rgba(0, 0, 0, 0.45);
       --table-line: rgba(0, 0, 0, 0.2);
@@ -12,7 +12,7 @@
     html[data-mobile-chat][data-theme="dark"] {
       --code-bg: rgba(255, 255, 255, 0.035);
       --inline-code-bg: rgba(255, 255, 255, 0.00);
-      --inline-code-fg: rgb(160, 160, 160);
+      --inline-code-fg: rgb(__TEXT_INLINE_CODE_MOBILE_DARK_CHANNELS__);
       --blockquote-bg: rgba(255, 255, 255, 0.045);
       --blockquote-border: rgba(255, 255, 255, 0.45);
       --table-line: rgba(255, 255, 255, 0.085);
@@ -23,7 +23,7 @@
     html[data-desktop-chat][data-theme="light"] {
       --code-bg: rgba(0, 0, 0, 0.05);
       --inline-code-bg: rgba(0, 0, 0, 0.05);
-      --inline-code-fg: var(--fg);
+      --inline-code-fg: rgb(__TEXT_INLINE_CODE_DESKTOP_LIGHT_CHANNELS__);
       --blockquote-bg: rgba(0, 0, 0, 0.03);
       --blockquote-border: rgba(0, 0, 0, 0.45);
       --table-line: rgba(0, 0, 0, 0.22);
@@ -34,7 +34,7 @@
     html[data-desktop-chat][data-theme="dark"] {
       --code-bg: rgba(180, 180, 180, 0.05);
       --inline-code-bg: rgba(180, 180, 180, 0.00);
-      --inline-code-fg: rgb(150, 150, 150);
+      --inline-code-fg: rgb(__TEXT_INLINE_CODE_DESKTOP_DARK_CHANNELS__);
       --blockquote-bg: rgba(180, 180, 180, 0.04);
       --blockquote-border: rgba(180, 180, 180, 0.45);
       --table-line: rgba(180, 180, 180, 0.22);
