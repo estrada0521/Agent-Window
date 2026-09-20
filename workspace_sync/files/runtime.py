@@ -402,15 +402,15 @@ class FileRuntime:
             full = self._resolve_reference_path(raw_query)
             return full if os.path.isfile(full) else ""
         rel = os.path.normpath(raw_query)
-        if rel != ".." and not rel.startswith("../") and os.path.isfile(os.path.join(self.workspace, rel)):
-            return rel
-        if "/" in raw_query:
+        if rel == ".." or rel.startswith("../"):
             return ""
-        lowered = raw_query.lower()
+        if os.path.isfile(os.path.join(self.workspace, rel)):
+            return rel
+        tail = "/" + rel.lower()
         matches = sorted({
             path
             for path in (str(entry.get("path") or "") for entry in self.list_files(force_refresh=False))
-            if path and self._basename(path).lower() == lowered
+            if path and ("/" + path.lower()).endswith(tail)
         })
         return matches[0] if len(matches) == 1 else ""
 
