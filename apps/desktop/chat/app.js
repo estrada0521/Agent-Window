@@ -736,6 +736,9 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       pathText.textContent = pathBasename;
       pathRow.append(backIcon, pathText);
       pathWrap.appendChild(pathRow);
+      pathWrap.addEventListener("contextmenu", (e) => {
+        void dpOpenFileContextMenu(path, e);
+      });
       stack.appendChild(pathWrap);
       const scroll = document.createElement("div");
       scroll.className = "repo-browser-scroll";
