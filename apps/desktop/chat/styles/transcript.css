@@ -582,6 +582,8 @@
       background: transparent;
       width: 100%;
       box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .message-thinking-icons {
