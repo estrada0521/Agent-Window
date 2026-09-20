@@ -457,6 +457,9 @@
     .message-row:focus-within .message-hover-copy,
     .message-row .message-hover-copy.copied {
       opacity: 1;
+    }
+
+    .message-row .message-hover-copy.copied {
       color: var(--fg);
     }
 
