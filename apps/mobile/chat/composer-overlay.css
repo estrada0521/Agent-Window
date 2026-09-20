@@ -268,7 +268,7 @@
       background: transparent;
       color: var(--chip-color);
       cursor: pointer;
-      transition: none;
+      transition: transform var(--liquid-glass-press-out);
     }
 
     .target-picker-readonly .target-chip {
@@ -328,7 +328,6 @@
 
 
 
-    .target-chip:active:not(:disabled),
     .composer-attach-btn:active {
       transform: none;
     }
@@ -372,7 +371,6 @@
       border: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
-      transform: none;
       box-shadow: none;
       z-index: 10;
     }

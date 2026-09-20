@@ -10,7 +10,8 @@
     .shell > .page-header .page-title,
     #composerFabBtn,
     #scrollToBottomBtn,
-    .send-btn {
+    .send-btn,
+    .target-chip {
       transition: transform var(--liquid-glass-press-out);
       user-select: none;
       -webkit-user-select: none;
@@ -33,10 +34,12 @@
     #scrollToBottomBtn:active {
       transition: transform var(--liquid-glass-press-in);
     }
-    .send-btn {
+    .send-btn,
+    .target-chip {
       --liquid-glass-press-scale: 1.4;
     }
-    .send-btn.is-pressed:not(:disabled) {
+    .send-btn.is-pressed:not(:disabled),
+    .target-chip.is-pressed {
       transform: scale(var(--liquid-glass-press-scale));
       transition: transform var(--liquid-glass-press-in);
     }

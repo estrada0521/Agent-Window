@@ -50,6 +50,26 @@
       if (el) {
         el.addEventListener("scroll", syncTargetPickerFade, { passive: true });
         if (typeof ResizeObserver === "function") new ResizeObserver(syncTargetPickerFade).observe(el);
+        if (document.documentElement.dataset.mobile === "1") {
+          const clearChipPressed = () => {
+            el.querySelectorAll(".target-chip.is-pressed").forEach((node) => node.classList.remove("is-pressed"));
+          };
+          el.addEventListener("pointerdown", (event) => {
+            if (event.button !== 0 || el.classList.contains("target-picker-readonly")) return;
+            const chip = event.target.closest(".target-chip");
+            if (!chip || !el.contains(chip)) return;
+            chip.classList.add("is-pressed");
+          });
+          el.addEventListener("pointerout", (event) => {
+            const chip = event.target.closest(".target-chip");
+            if (!chip || !el.contains(chip)) return;
+            const next = event.relatedTarget;
+            if (next && chip.contains(next)) return;
+            chip.classList.remove("is-pressed");
+          });
+          document.addEventListener("pointerup", clearChipPressed, true);
+          document.addEventListener("pointercancel", clearChipPressed, true);
+        }
       }
     }
     window.addEventListener("keydown", (event) => {
