@@ -365,6 +365,7 @@
 
     .mob-session-row {
       --liquid-glass-press-scale: 1.06;
+      --liquid-glass-press-out: 600ms cubic-bezier(0.32, 0.72, 0, 1);
     }
 
     .mob-session-row.is-pressed {

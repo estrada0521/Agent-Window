@@ -774,6 +774,10 @@
           if (anyOpen && anyOpen !== sr) { closeRow(anyOpen, true); anyOpen = null; }
           sx = clientX; sy = clientY;
           dx = 0; axis = null; active = true; didSwipe = false;
+          if (!sr._snap) {
+            inner.style.removeProperty("transition");
+            inner.style.removeProperty("transform");
+          }
           inner.classList.add("is-pressed");
         };
         const moveDrag = (clientX, clientY, preventDefault) => {
@@ -818,19 +822,19 @@
           dx = 0;
           inner.addEventListener("transitionend", () => { if (!sr._snap) removeSwipeActs(sr); }, { once: true });
         };
-        inner.addEventListener("touchstart", (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-        inner.addEventListener("touchmove", (e) => moveDrag(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault()), { passive: false });
-        inner.addEventListener("touchend", endDrag, { passive: true });
-        inner.addEventListener("touchcancel", endDrag, { passive: true });
-        inner.addEventListener("mousedown", (e) => {
+        inner.addEventListener("pointerdown", (e) => {
+          if (e.button !== 0) return;
           if (e.target.closest("a, button")) return;
-          e.preventDefault();
+          inner.setPointerCapture(e.pointerId);
           startDrag(e.clientX, e.clientY);
-          const onMove = (me) => moveDrag(me.clientX, me.clientY, () => me.preventDefault());
-          const onUp = () => { endDrag(); document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
-          document.addEventListener("mousemove", onMove);
-          document.addEventListener("mouseup", onUp);
         });
+        inner.addEventListener("pointermove", (e) => {
+          moveDrag(e.clientX, e.clientY, () => {
+            if (e.cancelable) e.preventDefault();
+          });
+        }, { passive: false });
+        inner.addEventListener("pointerup", endDrag);
+        inner.addEventListener("pointercancel", endDrag);
         inner.addEventListener("click", (e) => {
           if (didSwipe) { didSwipe = false; e.stopPropagation(); return; }
           if (sr._snap !== 0) { closeRow(sr, true); anyOpen = null; e.stopPropagation(); return; }
