@@ -77,10 +77,6 @@
     const refreshViewportCenterAnchor = () => {
       if (_programmaticScroll || _pinStickyThroughWidthChange) return;
       if (timeline.clientWidth !== _anchorLayoutWidth) return;
-      if (_stickyToBottom || isNearBottom()) {
-        _viewportCenterAnchor = null;
-        return;
-      }
       _viewportCenterAnchor = captureViewportCenterAnchor();
     };
     const restoreViewportCenterAnchor = (anchor) => {

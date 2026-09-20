@@ -285,30 +285,20 @@ __CHAT_INCLUDE:../../shared/chat/scroll-lock.js__
     };
 __CHAT_INCLUDE:../../shared/chat/scroll-btn.js__
     let _timelineLayoutWidth = timeline.clientWidth;
-    let _timelineMaxScroll = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
     new ResizeObserver(() => {
       const width = timeline.clientWidth;
-      const maxScroll = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
       const prevWidth = _timelineLayoutWidth;
-      const prevMaxScroll = _timelineMaxScroll;
       _timelineLayoutWidth = width;
-      _timelineMaxScroll = maxScroll;
       if (width === prevWidth) return;
-      const wasSticky = _stickyToBottom || (prevMaxScroll - timeline.scrollTop < STICKY_THRESHOLD);
-      const centerAnchor = _viewportCenterAnchor;
+      const centerAnchor = _viewportCenterAnchor || captureViewportCenterAnchor();
       _pinStickyThroughWidthChange = true;
       const apply = (remaining) => {
-        if (wasSticky) {
-          scrollConversationToBottom("auto");
-          _stickyToBottom = true;
-        } else {
-          restoreViewportCenterAnchor(centerAnchor);
-        }
+        restoreViewportCenterAnchor(centerAnchor);
         if (remaining <= 0) {
           _pinStickyThroughWidthChange = false;
-          _timelineMaxScroll = Math.max(0, timeline.scrollHeight - timeline.clientHeight);
           _anchorLayoutWidth = timeline.clientWidth;
-          if (!wasSticky) refreshViewportCenterAnchor();
+          refreshViewportCenterAnchor();
+          _stickyToBottom = isNearBottom();
           updateScrollBtn();
           return;
         }
