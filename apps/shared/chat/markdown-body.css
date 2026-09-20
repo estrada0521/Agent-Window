@@ -272,7 +272,7 @@
       border: none;
       border-radius: var(--code-block-radius);
       padding: 0.62em var(--code-block-padding-end) 0.62em var(--code-block-padding-start);
-      margin: 0 0 var(--prose-rhythm);
+      margin: 0.75em 0;
       overflow-x: auto;
       overflow-y: visible;
       white-space: pre;
@@ -290,7 +290,7 @@
       --code-copy-radius: round(nearest, calc(var(--text-size, 13px) * 8 / 13), 1px);
       position: relative;
       display: block;
-      margin: var(--prose-block-rhythm) 0;
+      margin: 0.75em 0;
       overflow: hidden;
       border-radius: var(--code-block-radius);
     }
@@ -356,7 +356,7 @@
     .md-body blockquote {
       border-left: 3px solid var(--blockquote-border);
       background: var(--blockquote-bg);
-      margin: 0.5em 0;
+      margin: 0.75em 0;
       padding: 0.4em 0.8em;
       color: var(--fg);
       opacity: 1;
