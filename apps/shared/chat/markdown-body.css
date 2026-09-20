@@ -103,6 +103,22 @@
       -webkit-touch-callout: none;
     }
 
+    .md-body :is(a.inline-file-link, a.local-file-link):has(> .inline-file-link-icon + code:last-child) {
+      display: inline-flex;
+      align-items: baseline;
+      max-width: 100%;
+    }
+
+    .md-body :is(a.inline-file-link, a.local-file-link):has(> .inline-file-link-icon + code:last-child) .inline-file-link-icon {
+      flex: 0 0 auto;
+      position: relative;
+      top: 0.28em;
+    }
+
+    .md-body :is(a.inline-file-link, a.local-file-link):has(> .inline-file-link-icon + code:last-child) code {
+      min-width: 0;
+    }
+
     .md-body a.inline-file-link code,
     .md-body a.local-file-link code {
       color: inherit;
