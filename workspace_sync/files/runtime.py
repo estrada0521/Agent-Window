@@ -401,50 +401,18 @@ class FileRuntime:
         if raw_query.startswith("~") or os.path.isabs(raw_query):
             full = self._resolve_reference_path(raw_query)
             return full if os.path.isfile(full) else ""
-        normalized_query = raw_query.lstrip("./").strip("/")
-        if not normalized_query:
+        rel = os.path.normpath(raw_query)
+        if rel != ".." and not rel.startswith("../") and os.path.isfile(os.path.join(self.workspace, rel)):
+            return rel
+        if "/" in raw_query:
             return ""
-        entries = self.list_files(force_refresh=False)
-        if not entries:
-            return ""
-
-        variants = {normalized_query}
-        if raw_query.startswith("/"):
-            variants.add(raw_query.lstrip("/"))
-        if raw_query.startswith("~/"):
-            variants.add(raw_query[2:])
-        lowered_variants = {item.lower() for item in variants if item}
-
-        for lowered in lowered_variants:
-            for entry in entries:
-                path = str(entry.get("path") or "")
-                if path.lower() == lowered:
-                    return path
-
-        if raw_query.startswith("/"):
-            lowered = raw_query.lower()
-            suffix_matches = []
-            for entry in entries:
-                rel = str(entry.get("path") or "")
-                rel_lower = rel.lower()
-                if lowered == rel_lower or lowered.endswith(f"/{rel_lower}"):
-                    suffix_matches.append(rel)
-            if len(suffix_matches) == 1:
-                return suffix_matches[0]
-
-        query_base = self._basename(normalized_query).lower()
-        exact_base_matches = []
-        for entry in entries:
-            path = str(entry.get("path") or "")
-            if not path:
-                continue
-            if self._basename(path).lower() == query_base:
-                exact_base_matches.append(path)
-        deduped = sorted(set(exact_base_matches))
-        if len(deduped) == 1:
-            return deduped[0]
-
-        return ""
+        lowered = raw_query.lower()
+        matches = sorted({
+            path
+            for path in (str(entry.get("path") or "") for entry in self.list_files(force_refresh=False))
+            if path and self._basename(path).lower() == lowered
+        })
+        return matches[0] if len(matches) == 1 else ""
 
     def resolve_file_references(self, queries: list[str]) -> dict[str, str]:
         result: dict[str, str] = {}
