@@ -225,6 +225,10 @@
         void toggleDeskAutoWindowHeight();
         return;
       }
+      if (detail.action === "toggleFitCollapsed") {
+        toggleDeskFitCollapsed();
+        return;
+      }
       if (detail.action === "theme") {
         const theme = String(detail.theme || "").trim().toLowerCase();
         if (theme !== "system" && theme !== "light" && theme !== "dark") return;

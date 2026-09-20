@@ -159,6 +159,18 @@
         await reloadChat();
         return;
       }
+      if (action === "messagePrevious" || action === "messageNext") {
+        stepConversationByMessage(action === "messageNext");
+        return;
+      }
+      if (action === "messageJumpTop") {
+        jumpConversationToTop();
+        return;
+      }
+      if (action === "messageJumpBottom") {
+        jumpConversationToBottom();
+        return;
+      }
       if (action === "openTerminal") {
         fetch("/open-terminal", { method: "POST" }).catch(() => {});
         return;

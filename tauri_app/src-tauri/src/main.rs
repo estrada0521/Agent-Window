@@ -56,6 +56,7 @@ struct AppearanceMenuPayload {
     text_size_default: i32,
     always_on_top: bool,
     auto_window_height: bool,
+    fit_collapsed: bool,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -511,6 +512,39 @@ fn show_appearance_menu(
     .build(&app)
     .map_err(|err| err.to_string())?;
 
+    let fit_collapsed = CheckMenuItemBuilder::with_id(
+        format!("{}action:toggleFitCollapsed", NATIVE_MENU_PREFIX),
+        "Collapse Fit Window",
+    )
+    .checked(payload.fit_collapsed)
+    .enabled(payload.auto_window_height)
+    .accelerator("Cmd+Alt+M")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+
+    let message_item = |action: &str, label: &str, accelerator: &str| {
+        MenuItemBuilder::with_id(format!("{}action:{}", NATIVE_MENU_PREFIX, action), label)
+            .accelerator(accelerator)
+            .build(&app)
+            .map_err(|err| err.to_string())
+    };
+    let previous_message = message_item("messagePrevious", "Previous Message", "Alt+Up")?;
+    let next_message = message_item("messageNext", "Next Message", "Alt+Down")?;
+    let jump_to_top = message_item("messageJumpTop", "Jump to Top", "Cmd+Up")?;
+    let jump_to_bottom = message_item("messageJumpBottom", "Jump to Bottom", "Cmd+Down")?;
+
+    let messages_submenu = SubmenuBuilder::with_id(
+        &app,
+        format!("{}submenu:messages", NATIVE_MENU_PREFIX),
+        "Messages",
+    )
+    .item(&previous_message)
+    .item(&next_message)
+    .item(&jump_to_top)
+    .item(&jump_to_bottom)
+    .build()
+    .map_err(|err| err.to_string())?;
+
     let window_presets_submenu = SubmenuBuilder::with_id(
         &app,
         format!("{}submenu:windowPresets", NATIVE_MENU_PREFIX),
@@ -556,8 +590,10 @@ fn show_appearance_menu(
         .item(&window_presets_submenu)
         .item(&move_window_submenu)
         .item(&side_panels_submenu)
+        .item(&messages_submenu)
         .item(&always_on_top)
         .item(&auto_window_height)
+        .item(&fit_collapsed)
         .build()
         .map_err(|err| err.to_string())?;
 

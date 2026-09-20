@@ -372,6 +372,7 @@
             textSizeDefault: DESK_TEXT_SIZE_DEFAULT,
             alwaysOnTop: _deskAlwaysOnTop,
             autoWindowHeight: _deskAutoWindowHeight,
+            fitCollapsed: _deskFitCollapsed,
           },
         });
       } catch (_) {
