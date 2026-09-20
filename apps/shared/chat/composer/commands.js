@@ -371,6 +371,14 @@
       if (row) revealMobileCopy(row);
     });
     if (document.documentElement.dataset.mobile !== "1") {
+      messagesEl.addEventListener("contextmenu", (e) => {
+        const anyLink = e.target.closest("a[href]");
+        if (!anyLink) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const path = filePathFromLinkAnchor(anyLink);
+        if (path) void dpOpenFileContextMenu(path, e);
+      });
       messagesEl.addEventListener("auxclick", (e) => {
         if (e.button !== 1) return;
         const anyLink = e.target.closest("a[href]");
