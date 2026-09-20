@@ -175,7 +175,7 @@
       }
       return doCopyFallback(text);
     };
-    const markCopied = (btn) => {
+    const markCopied = (btn, holdMs = 1500, onEnded) => {
       if (!btn) return;
       const copyIcon = btn.dataset.copyIcon || btn.innerHTML;
       const checkIcon = btn.dataset.checkIcon || btn.innerHTML;
@@ -189,10 +189,31 @@
         if (btn.dataset.copyAnimToken !== token) return;
         btn.classList.remove("copied");
         btn.innerHTML = copyIcon;
-      }, 1500);
+        onEnded?.();
+      }, holdMs);
     };
     const messagesEl = document.getElementById("messages");
-    if (document.documentElement.dataset.mobile !== "1") {
+    let revealMobileCopy = null;
+    let hideMobileCopy = null;
+    if (document.documentElement.dataset.mobile === "1") {
+      let revealedCopyRow = null;
+      let revealCopyTimer = 0;
+      hideMobileCopy = () => {
+        revealedCopyRow?.classList.remove("is-copy-revealed");
+        revealedCopyRow = null;
+        clearTimeout(revealCopyTimer);
+        revealCopyTimer = 0;
+      };
+      revealMobileCopy = (row) => {
+        if (revealedCopyRow && revealedCopyRow !== row) {
+          revealedCopyRow.classList.remove("is-copy-revealed");
+        }
+        revealedCopyRow = row;
+        row.classList.add("is-copy-revealed");
+        clearTimeout(revealCopyTimer);
+        revealCopyTimer = setTimeout(hideMobileCopy, 3000);
+      };
+    } else {
       let activeHoverCopyBody = null;
       let hoverCopyBody = null;
       let hoverCopyRect = null;
@@ -254,18 +275,6 @@
       reportExternalLinkFailure();
     });
     messagesEl.addEventListener("click", (e) => {
-      const metaBtn = e.target.closest(".message-meta-below button, .user-message-meta button, .message-meta-below .meta-agent, .user-message-meta .meta-agent");
-      if (metaBtn) {
-        const row = metaBtn.closest("article.message-row");
-        if (row) {
-          row.classList.add("meta-keep-visible");
-          if (row._metaKeepTimer) clearTimeout(row._metaKeepTimer);
-          row._metaKeepTimer = setTimeout(() => {
-            row.classList.remove("meta-keep-visible");
-            row._metaKeepTimer = null;
-          }, 1800);
-        }
-      }
       const anyLink = e.target.closest("a[href]");
       if (anyLink) {
         const href = anyLink.getAttribute("href");
@@ -311,11 +320,23 @@
         return;
       }
       const btn = e.target.closest(".copy-btn");
-      if (!btn) return;
-      const raw = btn.closest(".message")?.dataset.raw ?? "";
-      doCopyText(raw).then(() => {
-        markCopied(btn);
-      }).catch(() => {});
+      if (btn) {
+        e.preventDefault();
+        const raw = btn.closest(".message")?.dataset.raw ?? "";
+        const row = btn.closest("article.message-row");
+        doCopyText(raw).then(() => {
+          if (revealMobileCopy && row) {
+            revealMobileCopy(row);
+            markCopied(btn, 3000, hideMobileCopy);
+          } else {
+            markCopied(btn);
+          }
+        }).catch(() => {});
+        return;
+      }
+      if (!revealMobileCopy) return;
+      const row = e.target.closest("article.message-row");
+      if (row) revealMobileCopy(row);
     });
     if (document.documentElement.dataset.mobile !== "1") {
       messagesEl.addEventListener("auxclick", (e) => {

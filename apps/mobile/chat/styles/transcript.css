@@ -235,22 +235,15 @@
       align-items: flex-start;
       gap: 0.46em;
       min-width: 0;
+      position: relative;
     }
 
     .message.user .message-body-row {
       display: block;
-      width: fit-content;
+      width: 100%;
       max-width: 100%;
       margin-left: 0;
       margin-right: auto;
-    }
-
-    .message.user .message-body-row.has-structured-block {
-      width: 100%;
-    }
-
-    .message.user .message-body-row {
-      position: relative;
     }
 
     .message-row.is-collapsible .message-body-row {
@@ -351,44 +344,10 @@
       margin: 0 0.15em 0 0.08em;
     }
 
-    .message-meta-below .copy-btn {
-      margin-top: 0;
-      margin-left: 0.15em;
-      margin-right: 0.15em;
-      align-self: center;
-      font-size: inherit;
-      position: relative;
-      width: 1.31em;
-      height: 1.31em;
-    }
-
-    .message-meta-below .copy-btn::before {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 28px;
-      height: 28px;
-      transform: translate(-50%, -50%);
-    }
-
     .message-meta-below .arrow,
     .message-meta-below .targets,
     .message-meta-below time {
       opacity: 1;
-    }
-
-    .message:not(.user) .message-meta-below .copy-btn {
-      margin-right: 0;
-    }
-
-    .message:not(.user) .message-meta-below .copy-btn svg {
-      width: 1.31em;
-      height: 1.31em;
-    }
-
-    .message:not(.user) .message-meta-below .copy-btn svg * {
-      stroke-width: 1.45;
     }
 
     .message.user .user-message-meta {
@@ -411,51 +370,6 @@
       max-width: 100%;
       overflow: hidden;
       transform-origin: left center;
-    }
-
-    .message.user .user-message-meta .copy-btn {
-      margin-right: 0;
-    }
-
-    .message.user .user-message-meta .copy-btn svg {
-      width: 1.31em;
-      height: 1.31em;
-    }
-
-    .message.user .user-message-meta .copy-btn svg * {
-      stroke-width: 1.45;
-    }
-
-    @media (hover: hover) and (pointer: fine) {
-      .message:not(.user) .message-meta-below {
-        opacity: 0;
-        pointer-events: none;
-        transform: scale(0.96) translateY(-4px);
-        transform-origin: left center;
-        transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1), transform 160ms cubic-bezier(0.4, 0, 0.2, 1);
-      }
-
-      .message.user .user-message-meta {
-        opacity: 0;
-        pointer-events: none;
-        transform: scale(0.96) translateY(-4px);
-        transform-origin: left center;
-        transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1), transform 160ms cubic-bezier(0.4, 0, 0.2, 1);
-      }
-
-      .message-row.user:focus-within .user-message-meta,
-      .message-row.user.meta-keep-visible .user-message-meta {
-        opacity: 1;
-        pointer-events: auto;
-        transform: scale(1) translateY(0);
-      }
-
-      .message-row:not(.user):focus-within .message-meta-below,
-      .message-row:not(.user).meta-keep-visible .message-meta-below {
-        opacity: 1;
-        pointer-events: auto;
-        transform: scale(1) translateY(0);
-      }
     }
 
     .message-row.user .message {
@@ -485,6 +399,55 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 120ms ease;
+    }
+
+    .message-body-row > .message-hover-copy-zone {
+      position: absolute;
+      right: calc(1.31em / 2 - 14px);
+      bottom: calc(0.23em + 1.31em / 2 - 14px);
+      z-index: 3;
+      font-size: var(--text-size, 13px);
+      width: 28px;
+      height: 28px;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+
+    .message-body-row > .message-hover-copy-zone .message-hover-copy {
+      position: relative;
+      font-size: inherit;
+      width: 28px;
+      height: 28px;
+      color: var(--muted);
+      background: transparent;
+      opacity: 0;
+      pointer-events: none;
+      touch-action: manipulation;
+      transition: opacity 120ms ease;
+    }
+
+    .message-row.is-copy-revealed .message-hover-copy-zone,
+    .message-row.is-copy-revealed .message-hover-copy,
+    .message-row .message-hover-copy.copied {
+      pointer-events: auto;
+    }
+
+    .message-row.is-copy-revealed .message-hover-copy,
+    .message-row .message-hover-copy.copied {
+      opacity: 1;
+    }
+
+    .message-body-row > .message-hover-copy-zone .message-hover-copy.copied {
+      color: var(--fg);
+    }
+
+    .message-body-row > .message-hover-copy-zone .message-hover-copy svg {
+      width: 1.31em;
+      height: 1.31em;
+    }
+
+    .message-body-row > .message-hover-copy-zone .message-hover-copy svg * {
+      stroke-width: 1.45;
     }
 
     .message-row:not(.user).is-centered .message::before {

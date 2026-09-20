@@ -38,16 +38,15 @@ __CHAT_INCLUDE:../messages-data.js__
         const isCollapsibleMessage = isCollapsibleMessageSender(safeEntry.sender);
         const hideMetaRow = !!options.hideMetaRow;
         const metaHiddenClass = hideMetaRow ? " meta-hidden" : "";
-        const isMobile = document.documentElement.dataset.mobile === "1";
         const copyButtonHtml = (extraClass = "") => `<button class="copy-btn${extraClass}" type="button" title="コピー" aria-label="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
         const messageBodyHtml = `<div class="md-body">${renderMarkdown(body)}</div>`;
         const senderHtml = metaAgentLabel(safeEntry.sender || "unknown", "sender-label", "right", { iconOnly: true });
         const metaRowHtml = hideMetaRow
           ? ""
           : (isUser
-            ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${targetMeta}${isMobile ? copyButtonHtml() : ""}</div>`
-            : `<div class="message-meta-below">${senderHtml}<span class="arrow">to</span>${targetMeta}${isMobile ? copyButtonHtml() : ""}</div>`);
-        const hoverCopyHtml = isMobile ? "" : `<div class="message-hover-copy-zone">${copyButtonHtml(" message-hover-copy")}</div>`;
+            ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${targetMeta}</div>`
+            : `<div class="message-meta-below">${senderHtml}<span class="arrow">to</span>${targetMeta}</div>`);
+        const copyZoneHtml = `<div class="message-hover-copy-zone">${copyButtonHtml(" message-hover-copy")}</div>`;
 
         return `<article class="message-row ${cls}${metaHiddenClass}" data-context-hash="${contextHash}" data-sender="${sender}">
         <div class="message ${cls}" data-raw="${rawAttr}" data-preview="${previewAttr}">
@@ -55,7 +54,7 @@ __CHAT_INCLUDE:../messages-data.js__
         <div class="message-body-row">
           ${messageBodyHtml}
           ${isCollapsibleMessage ? `<button class="message-collapse-toggle" type="button" hidden>More</button>` : ""}
-          ${hoverCopyHtml}
+          ${copyZoneHtml}
         </div>
         ${isUser ? `<div class="user-message-divider" aria-hidden="true"></div>` : ``}
         </div>
