@@ -115,6 +115,8 @@ Clicking a file opens it in the macOS default application. The desktop version o
 
 Clicking an uncommitted change opens it in git's configured diff viewer (`git difftool`).
 
+File icons use a file icon theme from VS Code or similar IDEs as is: put a symlink to the theme's definition JSON at `~/.agent-window/file-icon-theme.json`. Without one, the built-in icons are used.
+
 ## Fit the window
 
 | Key | Action |

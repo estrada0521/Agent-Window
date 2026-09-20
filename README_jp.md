@@ -147,6 +147,8 @@ fileをクリックするとmacOSの既定applicationで開きます。desktop�
 
 uncommitted changeをクリックすると、gitに設定されたdiff viewer (`git difftool`) で開きます。
 
+fileのアイコンは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.agent-window/file-icon-theme.json` に置くと、そのまま使えます。置かなければ内蔵のアイコンです。
+
 ## ウィンドウを合わせる
 
 Agent Windowは作業場所ではなく手段なので、作業領域を占有しないようwindow自体を内容と画面へ合わせます。
