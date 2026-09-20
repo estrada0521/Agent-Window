@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from backend_core.access.settings import agent_window_root
@@ -9,9 +10,9 @@ _BUILTIN_THEME_JSON = Path(__file__).resolve().parents[1] / "assets" / "file-ico
 
 
 def resolve_file_icon_theme() -> tuple[Path, bool]:
-    user_theme = agent_window_root() / "file-icon-theme" / "theme.json"
-    if user_theme.is_file():
-        return user_theme.resolve(), False
+    user_theme = agent_window_root() / "file-icon-theme.json"
+    if os.path.lexists(user_theme):
+        return user_theme.resolve(strict=True), False
     return _BUILTIN_THEME_JSON.resolve(), True
 
 
