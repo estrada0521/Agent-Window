@@ -164,10 +164,11 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
         : null;
       if (_fitTargetRow && !fitTarget) _fitTargetRow = null;
       const lastRow = rows[rows.length - 1];
+      const edgeGap = messageStepTopGap();
       let contentHeight;
       if (fitTarget) {
         const r = fitTarget.getBoundingClientRect();
-        contentHeight = Math.ceil(r.bottom - r.top);
+        contentHeight = Math.ceil(r.bottom - r.top + edgeGap);
       } else {
         const lastTopWithin = lastRow.getBoundingClientRect().top
           - scroller.getBoundingClientRect().top + scroller.scrollTop;
@@ -182,7 +183,7 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
           contentHeight = Math.ceil(box.offsetHeight + fieldOverflow + fitSlack);
         }
       }
-      contentHeight += messageStepTopGap();
+      contentHeight += edgeGap;
       if (contentHeight > 0) {
         if (!fromComposer && fitTarget) {
           _stickyToBottom = false;

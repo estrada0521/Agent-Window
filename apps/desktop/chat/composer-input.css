@@ -305,7 +305,7 @@
       min-height: var(--message-step-top-gap);
     }
     html[data-auto-window-height="1"] main::after {
-      min-height: calc(var(--message-step-top-gap) - 0.92em);
+      min-height: var(--message-step-top-gap);
     }
     html[data-mobile="1"] main {
       padding-right: var(--message-side-padding);

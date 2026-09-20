@@ -54,7 +54,6 @@ def _agent_css_selectors() -> dict[str, str]:
     return {
         "__AGENT_MESSAGE_SELECTORS__": _sel(),
         "__AGENT_ROW_MESSAGE_SELECTORS__": _row_sel(".message"),
-        "__AGENT_ROW_META_SELECTORS__": _row_sel(".meta"),
         "__AGENT_SEL_MD_BODY__": _sel(" .md-body"),
         "__AGENT_SEL_MD_HEADING__": _cross(["h1", "h2", "h3", "h4"]),
         "__AGENT_SEL_MD_BODY_TEXT__": _cross(["p", "li", "blockquote"]),
