@@ -74,6 +74,17 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       applyGitDetailChrome(_gitDetailChrome);
       animateGitSheetList(".git-detail-view", "forward");
     };
+    const refreshGitDetailTitleFromOverview = (data) => {
+      if (!_gitDetailChrome) return;
+      const titleEl = gitSheetTitleEl();
+      if (!titleEl?.classList.contains("git-sheet-detail-title")) return;
+      const previous = gitCountSnapshot(titleEl);
+      const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
+      const subject = changedPaths ? "Uncommitted changes" : "Working tree clean";
+      _gitDetailChrome = { rowHtml: gitSummaryRowHtml(data || {}), subject };
+      applyGitDetailChrome(_gitDetailChrome);
+      animateGitCountsFromSnapshot(titleEl, previous);
+    };
     const resetGitDetailChrome = ({ hadDetail = false } = {}) => {
       _gitDetailChrome = null;
       setGitSheetTitle();
@@ -140,6 +151,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       },
       onCloseDetail: resetGitDetailChrome,
       onOpenDetail: setGitDetailChrome,
+      onOverview: refreshGitDetailTitleFromOverview,
       onFingerprintChanged: (data) => {
         const previous = gitCountSnapshot(gitWorktreeButton());
         renderGitWorktreeButton(data || {});

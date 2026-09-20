@@ -61,7 +61,7 @@
       !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     const gitCountSnapshot = (root) =>
       root
-        ? Array.from(root.querySelectorAll(".git-summary-row .git-summary-count"))
+        ? Array.from(root.querySelectorAll(".git-summary-counts .git-summary-count"))
             .map((el) => Math.max(0, parseInt(el.dataset.countValue || el.textContent || "0") || 0))
         : [];
     const alignGitCountDigits = (from, to) => {
@@ -139,7 +139,7 @@
     };
     const animateGitCountsFromSnapshot = (root, previous) => {
       if (!root || !previous?.length) return;
-      root.querySelectorAll(".git-summary-row .git-summary-count").forEach((el, idx) => {
+      root.querySelectorAll(".git-summary-counts .git-summary-count").forEach((el, idx) => {
         if (idx >= previous.length) return;
         animateGitCount(el, previous[idx], el.dataset.countValue || el.textContent || "0");
       });
