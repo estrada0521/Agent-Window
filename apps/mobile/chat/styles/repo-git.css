@@ -148,6 +148,8 @@
       min-width: 0;
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
       transition: background 120ms ease;
     }
 

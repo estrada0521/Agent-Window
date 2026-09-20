@@ -42,6 +42,10 @@
       flex-shrink: 0;
     }
 
+    .cmd-item.is-pressed .cmd-item-name {
+      font-weight: var(--md-strong-weight);
+    }
+
     .cmd-item-desc {
       display: none;
       font-size: 14px;

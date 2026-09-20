@@ -114,6 +114,10 @@
       color: var(--fg);
     }
 
+    .file-item.is-pressed .file-item-name {
+      font-weight: var(--md-strong-weight);
+    }
+
     .file-item-relpath {
       margin-left: 8px;
       color: var(--muted);
