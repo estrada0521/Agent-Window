@@ -438,7 +438,7 @@
     };
     const applyPreviewChrome = (path) => {
       const filename = (displayAttachmentFilename(path) || path || "Preview").trim();
-      sharedSheetTitleEl.textContent = filename;
+      sharedSheetTitleEl.replaceChildren(fileIconElement(path, {}, "sheet-title-file-icon"), filename);
       sharedSheetTitleEl.title = filename;
       sharedSheetTitleEl.classList.remove("git-sheet-detail-title", "git-sheet-title");
       setSharedSheetLeading(() => closeSheetPreview(), "Back", mobileSheetBackIcon);
@@ -561,7 +561,7 @@
         : String(rawPath || "").trim();
       const normalizedExt = String(ext || fileExtForPath(path) || "").toLowerCase();
       if (!path || !mobileSheet) return;
-      const exists = await fileExistsOnDisk(path);
+      const [exists] = await Promise.all([fileExistsOnDisk(path), ensureFileIconTheme()]);
       if (!exists) {
         setStatus(`file not found: ${displayAttachmentFilename(path) || path}`, true);
         setTimeout(() => setStatus(""), STATUS_TOAST_MS);
