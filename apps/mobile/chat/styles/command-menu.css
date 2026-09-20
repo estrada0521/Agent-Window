@@ -20,6 +20,16 @@
       box-sizing: border-box;
       max-width: 100%;
       margin: 0;
+      border-radius: 0.77em;
+    }
+
+    .has-hover .cmd-item:hover {
+      background-color: var(--composer-menu-row-hover-bg);
+    }
+
+    .cmd-item.active,
+    .cmd-item.is-pressed {
+      background-color: var(--composer-menu-row-active-bg);
     }
 
     .cmd-item:not(:last-child) {

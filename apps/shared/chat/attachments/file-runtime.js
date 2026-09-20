@@ -119,8 +119,36 @@ __CHAT_INCLUDE:../file-autocomplete.js__
     fileDrop.addEventListener("click", (e) => {
       e.stopPropagation();
       const item = e.target.closest(".file-item");
-      if (item) selectFile(item.dataset.path);
+      if (!item) return;
+      const items = _dropItems();
+      items.forEach((node) => node.classList.remove("active"));
+      item.classList.add("active");
+      _dropActiveIdx = Array.prototype.indexOf.call(items, item);
+      const path = item.dataset.path;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => selectFile(path));
+      });
     });
+    if (isMobileComposer) {
+      const clearFilePressed = () => {
+        _dropItems().forEach((node) => node.classList.remove("is-pressed"));
+      };
+      fileDrop.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
+        const item = e.target.closest(".file-item");
+        if (!item) return;
+        clearFilePressed();
+        item.classList.add("is-pressed");
+      });
+      fileDrop.addEventListener("pointerout", (e) => {
+        const item = e.target.closest(".file-item");
+        if (!item) return;
+        const next = e.relatedTarget;
+        if (!next || item.contains(next)) return;
+        item.classList.remove("is-pressed");
+      });
+      document.addEventListener("pointercancel", clearFilePressed, true);
+    }
     fileDrop.addEventListener("mousedown", (e) => {
       if (e.target.closest(".file-item")) e.preventDefault();
     });

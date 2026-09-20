@@ -130,8 +130,35 @@
     cmdDrop.addEventListener("click", (e) => {
       e.stopPropagation();
       const item = e.target.closest(".cmd-item");
-      if (item) selectCmd(parseInt(item.dataset.idx, 10));
+      if (!item) return;
+      const idx = parseInt(item.dataset.idx, 10);
+      _cmdItems().forEach((node) => node.classList.remove("active"));
+      item.classList.add("active");
+      _cmdActiveIdx = idx;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => selectCmd(idx));
+      });
     });
+    if (isMobileComposer) {
+      const clearCmdPressed = () => {
+        _cmdItems().forEach((node) => node.classList.remove("is-pressed"));
+      };
+      cmdDrop.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
+        const item = e.target.closest(".cmd-item");
+        if (!item) return;
+        clearCmdPressed();
+        item.classList.add("is-pressed");
+      });
+      cmdDrop.addEventListener("pointerout", (e) => {
+        const item = e.target.closest(".cmd-item");
+        if (!item) return;
+        const next = e.relatedTarget;
+        if (!next || item.contains(next)) return;
+        item.classList.remove("is-pressed");
+      });
+      document.addEventListener("pointercancel", clearCmdPressed, true);
+    }
     cmdDrop.addEventListener("mousedown", (e) => {
       if (e.target.closest(".cmd-item")) e.preventDefault();
     });
