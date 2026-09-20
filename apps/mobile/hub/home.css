@@ -59,6 +59,7 @@
       --session-hover-bg: rgb(24, 24, 24);
       --session-selected-bg: rgb(28, 28, 28);
       --chat-overlay-glow: none;
+      --chat-overlay-stroke: rgba(255, 255, 255, 0.28);
       --session-danger-fg: rgb(204, 47, 38);
       --session-success-fg: rgb(41, 178, 75);
       --mob-top-gradient-rgb: var(--bg-rgb);
@@ -643,7 +644,7 @@
     }
 
     html[data-theme="dark"] .chat-overlay-shape path {
-      stroke: var(--line-strong);
+      stroke: var(--chat-overlay-stroke);
       stroke-width: 0.5px;
       vector-effect: non-scaling-stroke;
     }
