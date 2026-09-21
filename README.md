@@ -113,7 +113,7 @@ Git and workspace state are watched and projected onto the right pane. File sear
 
 Clicking a file opens it in the macOS default application. The desktop version of Agent Window does not reimplement a file viewer that already exists elsewhere. Mobile can't rely on that, so a bottom-sheet-style built-in viewer opens instead.
 
-Clicking an uncommitted change opens it in git's configured diff viewer (`git difftool`).
+Clicking a changed file, whether uncommitted or inside a past commit, opens it in git's configured diff viewer (`git difftool`).
 
 File icons use a file icon theme from VS Code or similar IDEs as is: put a symlink to the theme's definition JSON at `~/.agent-window/file-icon-theme.json`. Without one, the built-in icons are used.
 

@@ -145,7 +145,7 @@ Git summaryは `⇧⌘P` でchat上にpinできます。
 
 fileをクリックするとmacOSの既定applicationで開きます。desktop版では、既に存在するfile viewerを再実装しません。mobileではそれらに頼れないため、bottom sheet型の内蔵viewerが開きます。
 
-uncommitted changeをクリックすると、gitに設定されたdiff viewer (`git difftool`) で開きます。
+変更されたfileは、uncommittedでも過去のcommit内でも、クリックするとgitに設定されたdiff viewer (`git difftool`) で開きます。
 
 fileのアイコンは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.agent-window/file-icon-theme.json` に置くと、そのまま使えます。置かなければ内蔵のアイコンです。
 

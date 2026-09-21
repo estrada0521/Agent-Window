@@ -541,7 +541,7 @@ def _post_open_diff(handler, _parsed, ctx) -> None:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
     try:
-        result = ctx["workspace_sync_api"].open_diff_tool(rel)
+        result = ctx["workspace_sync_api"].open_diff_tool(rel, (data.get("hash") or "").strip())
     except PermissionError:
         handler._send_json(403, {"ok": False, "error": "forbidden"})
         return

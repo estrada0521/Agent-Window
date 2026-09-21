@@ -398,7 +398,7 @@ def git_diff_files(*, commit_hash: str = "", scope: str = ""):
     }
 
 
-def open_diff_tool(rel_path: str) -> dict:
+def open_diff_tool(rel_path: str, commit_hash: str = "") -> dict:
     root = _git_root()
     rel = str(rel_path or "").strip().lstrip("/")
     if not rel:
@@ -407,8 +407,14 @@ def open_diff_tool(rel_path: str) -> dict:
         (root / rel).resolve().relative_to(root.resolve())
     except ValueError:
         raise PermissionError(rel)
+    revs = []
+    if commit_hash:
+        res = _run_git(root, "rev-parse", "--verify", "--end-of-options", f"{commit_hash}^{{commit}}")
+        if res.returncode != 0:
+            raise ValueError(f"unknown commit: {commit_hash}")
+        revs = [f"{res.stdout.strip()}^!"]
     subprocess.Popen(
-        ["git", "-C", str(root), "difftool", "-y", "--", rel],
+        ["git", "-C", str(root), "difftool", "-y", *revs, "--", rel],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )

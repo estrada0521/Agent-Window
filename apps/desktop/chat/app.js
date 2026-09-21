@@ -567,7 +567,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       event.preventDefault();
       event.stopPropagation();
       const requestSeq = ++dpFileContextRequestSeq;
-      let revealEnabled = false;
+      let fileExists = false;
       try {
         const response = await fetchWithTimeout("/files-exist", {
           method: "POST",
@@ -576,7 +576,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         }, 4000);
         if (!response.ok) throw new Error("Failed to inspect file path.");
         const result = await response.json();
-        revealEnabled = result?.[path] === true;
+        fileExists = result?.[path] === true;
       } catch (err) {
         dpShowFileActionStatus(err?.message || "Failed to inspect file path.", true);
       }
@@ -587,7 +587,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         payload: {
           x: Math.round(Number(event.clientX) || 0),
           y: Math.round(Number(event.clientY) || 0),
-          revealEnabled,
+          fileExists,
         },
       }, "*");
     };
@@ -620,12 +620,14 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     };
     function handleDesktopFileContextMenuAction(payload) {
       const action = String(payload?.action || "");
-      if (!["revealFileInFinder", "copyAbsoluteFilePath", "copyRelativeFilePath"].includes(action)) return false;
+      if (!["openFile", "revealFileInFinder", "copyAbsoluteFilePath", "copyRelativeFilePath"].includes(action)) return false;
       const path = dpFileContextPath;
       if (!path) return true;
-      const operation = action === "revealFileInFinder"
-        ? dpRevealFileInFinder(path)
-        : dpCopyFilePath(path, action === "copyAbsoluteFilePath");
+      const operation = action === "openFile"
+        ? dpPostOpenFile(path)
+        : action === "revealFileInFinder"
+          ? dpRevealFileInFinder(path)
+          : dpCopyFilePath(path, action === "copyAbsoluteFilePath");
       void operation.catch((err) => {
         dpShowFileActionStatus(err?.message || "File action failed.", true);
       });

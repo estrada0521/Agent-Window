@@ -41,12 +41,12 @@
         setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       }
     };
-    const dpPostOpenDiff = async (rawPath) => {
+    const dpPostOpenDiff = async (rawPath, hash = "") => {
       const normalizedPath = normalizeWorkspaceFilePath(rawPath);
       if (!normalizedPath) return;
       const errMsg = "Failed to open diff tool.";
       try {
-        await postOpenDiff(normalizedPath);
+        await postOpenDiff(normalizedPath, hash);
         setStatus(`Opened diff for ${normalizedPath}`);
         setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       } catch (err) {

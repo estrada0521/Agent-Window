@@ -82,7 +82,7 @@ struct SessionSwitcherMenuItem {
 struct FileContextMenuPayload {
     x: f64,
     y: f64,
-    reveal_enabled: bool,
+    file_exists: bool,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -691,11 +691,18 @@ fn show_file_context_menu(
     app: tauri::AppHandle,
     payload: FileContextMenuPayload,
 ) -> Result<(), String> {
+    let open = MenuItemBuilder::with_id(
+        format!("{}action:openFile", NATIVE_MENU_PREFIX),
+        "Open Current File",
+    )
+    .enabled(payload.file_exists)
+    .build(&app)
+    .map_err(|err| err.to_string())?;
     let reveal = MenuItemBuilder::with_id(
         format!("{}action:revealFileInFinder", NATIVE_MENU_PREFIX),
         "Reveal in Finder",
     )
-    .enabled(payload.reveal_enabled)
+    .enabled(payload.file_exists)
     .build(&app)
     .map_err(|err| err.to_string())?;
     let copy_absolute = MenuItemBuilder::with_id(
@@ -711,6 +718,7 @@ fn show_file_context_menu(
     .build(&app)
     .map_err(|err| err.to_string())?;
     let menu = MenuBuilder::new(&app)
+        .item(&open)
         .item(&reveal)
         .separator()
         .item(&copy_absolute)

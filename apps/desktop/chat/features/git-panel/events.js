@@ -5,13 +5,9 @@
         onFileRow: async (fileRow) => {
           const p = String(fileRow.dataset.path || "").trim();
           if (!p) return;
-          const isUncommittedRow = !!fileRow.closest(".git-commit-file-section");
-          const isUntracked = fileRow.dataset.untracked === "1";
-          if (isUncommittedRow && !isUntracked) {
-            await dpPostOpenDiff(p);
-            return;
-          }
-          await dpPostOpenFile(p);
+          const hash = gitSession.detailContext?.hash || "";
+          if (hash || fileRow.dataset.untracked !== "1") await dpPostOpenDiff(p, hash);
+          else await dpPostOpenFile(p);
         },
         closeWorktreeSummaryClick: true,
       });
