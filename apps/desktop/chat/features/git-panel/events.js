@@ -16,10 +16,10 @@
       const head = event.target.closest(".git-commit-detail-head");
       const target = head || event.target.closest(".git-commit-row");
       const hash = String((head ? gitSession.detailContext?.hash : target?.dataset.hash) || "");
-      if (!hash || target.dataset.infoTitle) return;
+      if (!hash) return;
       const info = await gitCommitInfo(hash);
-      target.title = [`${info.author}, ${new Date(info.date).toLocaleString()}`, info.message, info.stat, info.hash].filter(Boolean).join("\n\n");
-      target.dataset.infoTitle = "1";
+      const text = [`${info.author}, ${new Date(info.date).toLocaleString()}`, info.message, info.stat, info.hash].filter(Boolean).join("\n\n");
+      if (target.title !== text) target.title = text;
     });
     dpGitContent?.addEventListener("contextmenu", (event) => {
       const hash = String(event.target.closest(".git-commit-row")?.dataset.hash
