@@ -84,6 +84,16 @@
       if (!res.ok) throw new Error("Failed to load git files");
       return res.json();
     };
+    const gitCommitInfos = new Map();
+    const gitCommitInfo = (hash) => {
+      if (!gitCommitInfos.has(hash)) {
+        gitCommitInfos.set(hash, fetchGitJson(`/git-commit-info?hash=${encodeURIComponent(hash)}`).catch((err) => {
+          gitCommitInfos.delete(hash);
+          throw err;
+        }));
+      }
+      return gitCommitInfos.get(hash);
+    };
     const fetchGitWorktreeFileSections = async () => {
       const [stagedData, unstagedData, untrackedData] = await Promise.all([
         fetchGitJson("/git-diff-files?scope=staged"),

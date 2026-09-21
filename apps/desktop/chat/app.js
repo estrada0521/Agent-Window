@@ -635,7 +635,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const hash = dpCommitContextHash;
       if (!hash) return true;
       void (async () => {
-        const info = await dpCommitInfo(hash);
+        const info = await gitCommitInfo(hash);
         await doCopyText(action === "copyCommitHash" ? info.hash : info.message);
         dpShowActionStatus(action === "copyCommitHash" ? "Copied commit hash" : "Copied commit message");
       })().catch((err) => {

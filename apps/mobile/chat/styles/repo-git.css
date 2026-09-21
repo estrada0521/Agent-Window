@@ -372,6 +372,28 @@
       font-size: var(--text-size, 13px);
     }
 
+    .git-commit-info-block {
+      margin-bottom: 1em;
+      padding: var(--sheet-list-row-padding-block) var(--sheet-list-row-padding-inline);
+      font-size: var(--text-size, 13px);
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .git-commit-info-meta {
+      color: var(--muted);
+    }
+
+    .git-commit-info-message + .git-commit-info-meta {
+      margin-top: 1em;
+    }
+
+    .git-commit-info-message {
+      color: var(--fg);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
     .git-commit-subject {
       width: 100%;
       min-width: 0;

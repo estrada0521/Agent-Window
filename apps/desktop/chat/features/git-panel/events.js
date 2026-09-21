@@ -12,21 +12,11 @@
         closeWorktreeSummaryClick: true,
       });
     });
-    const dpCommitInfos = new Map();
-    const dpCommitInfo = (hash) => {
-      if (!dpCommitInfos.has(hash)) {
-        dpCommitInfos.set(hash, fetchGitJson(`/git-commit-info?hash=${encodeURIComponent(hash)}`).catch((err) => {
-          dpCommitInfos.delete(hash);
-          throw err;
-        }));
-      }
-      return dpCommitInfos.get(hash);
-    };
     dpGitContent?.addEventListener("mouseover", async (event) => {
       const row = event.target.closest(".git-commit-row");
       const hash = String(row?.dataset.hash || "");
       if (!hash || row.title) return;
-      const info = await dpCommitInfo(hash);
+      const info = await gitCommitInfo(hash);
       row.title = [`${info.author}, ${new Date(info.date).toLocaleString()}`, info.message, info.stat, info.hash].filter(Boolean).join("\n\n");
     });
     dpGitContent?.addEventListener("contextmenu", (event) => {

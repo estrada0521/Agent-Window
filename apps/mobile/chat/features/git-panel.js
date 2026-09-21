@@ -69,10 +69,45 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
         mobileSheetBackIcon,
       );
     };
-    const setGitDetailChrome = ({ rowHtml = "", subject = "Git" } = {}) => {
+    const renderGitCommitInfo = async (hash) => {
+      const info = await gitCommitInfo(hash);
+      const bodyEl = gitHostEl()?.querySelector(".git-commit-detail-body");
+      if (!bodyEl || gitSession.detailContext?.hash !== hash) return;
+      const trailers = [];
+      const body = info.message.split("\n").slice(1).filter((line) => {
+        const isTrailer = /^co-authored-by:/i.test(line);
+        if (isTrailer) trailers.push(line.trim());
+        return !isTrailer;
+      }).join("\n").trim();
+      const blockEl = document.createElement("div");
+      blockEl.className = "git-commit-info-block";
+      if (body) {
+        const messageEl = document.createElement("div");
+        messageEl.className = "git-commit-info-message";
+        messageEl.textContent = body;
+        blockEl.append(messageEl);
+      }
+      const metaEl = document.createElement("div");
+      metaEl.className = "git-commit-info-meta";
+      metaEl.append(...[[info.hash.slice(0, 7), info.author, new Date(info.date).toLocaleString()].join(" · "), ...trailers].map((text) => {
+        const lineEl = document.createElement("div");
+        lineEl.textContent = text;
+        return lineEl;
+      }));
+      blockEl.append(metaEl);
+      bodyEl.querySelector(".git-commit-info-block")?.remove();
+      bodyEl.prepend(blockEl);
+    };
+    const setGitDetailChrome = ({ rowHtml = "", subject = "Git", hash = "", isWorktree = false } = {}) => {
       _gitDetailChrome = { rowHtml, subject };
       applyGitDetailChrome(_gitDetailChrome);
       animateGitSheetList(".git-detail-view", "forward");
+      if (isWorktree || !hash) return;
+      const titleEl = document.createElement("div");
+      titleEl.className = "git-commit-file-section-title";
+      titleEl.textContent = "Changed";
+      gitHostEl()?.querySelector(".git-commit-detail-body")?.prepend(titleEl);
+      void renderGitCommitInfo(hash);
     };
     const refreshGitDetailTitleFromOverview = (data) => {
       if (!_gitDetailChrome) return;
