@@ -16,6 +16,25 @@
         closeWorktreeSummaryClick: true,
       });
     });
+    const dpCommitTitles = new Map();
+    const dpCommitTitle = (hash) => {
+      if (!dpCommitTitles.has(hash)) {
+        dpCommitTitles.set(hash, fetchGitJson(`/git-commit-info?hash=${encodeURIComponent(hash)}`).then(
+          (info) => [`${info.author}, ${new Date(info.date).toLocaleString()}`, info.message, info.stat, hash].filter(Boolean).join("\n\n"),
+          (err) => {
+            dpCommitTitles.delete(hash);
+            throw err;
+          },
+        ));
+      }
+      return dpCommitTitles.get(hash);
+    };
+    dpGitContent?.addEventListener("mouseover", async (event) => {
+      const row = event.target.closest(".git-commit-row");
+      const hash = String(row?.dataset.hash || "");
+      if (!hash || row.title) return;
+      row.title = await dpCommitTitle(hash);
+    });
     dpGitContent?.addEventListener("contextmenu", (event) => {
       const fileRow = event.target.closest(".git-commit-file-row");
       const path = String(fileRow?.dataset.path || "").trim();

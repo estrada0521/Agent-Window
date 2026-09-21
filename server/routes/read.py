@@ -323,6 +323,20 @@ def _get_git_diff_files(handler, parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
+def _get_git_commit_info(handler, parsed, ctx) -> None:
+    commit_hash = (parse_qs(parsed.query).get("hash", [""])[0] or "").strip()
+    try:
+        body = json.dumps(
+            ctx["workspace_sync_api"].git_commit_info(commit_hash=commit_hash),
+            ensure_ascii=True,
+        ).encode("utf-8")
+    except Exception as exc:
+        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
+        _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
+        return
+    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
+
+
 def _get_shortcut_commands(handler, _parsed, ctx) -> None:
     del ctx
     body = json.dumps({"commands": public_slash_command_dicts()}, ensure_ascii=True).encode("utf-8")
@@ -341,6 +355,7 @@ _GET_ROUTES = {
     "/workspace-sync-events": _get_workspace_sync_events,
     "/git-overview": _get_git_overview,
     "/git-diff-files": _get_git_diff_files,
+    "/git-commit-info": _get_git_commit_info,
     "/shortcut-commands": _get_shortcut_commands,
 }
 

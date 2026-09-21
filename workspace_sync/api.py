@@ -113,5 +113,8 @@ class WorkspaceSyncApi:
     def git_diff_files(self, *, commit_hash: str = "", scope: str = ""):
         return workspace_git.git_diff_files(commit_hash=commit_hash, scope=scope)
 
+    def git_commit_info(self, *, commit_hash: str):
+        return workspace_git.git_commit_info(commit_hash=commit_hash)
+
     def open_diff_tool(self, rel_path: str):
         return workspace_git.open_diff_tool(rel_path)
