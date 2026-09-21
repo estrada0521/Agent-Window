@@ -252,8 +252,9 @@
     .message-row.is-collapsible .message-body-row.is-collapsed .md-body {
       overflow: hidden;
       max-height: var(--message-collapse-max-height);
-      mask-image: linear-gradient(to bottom, black 0, black calc(100% - 4.31em), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, black 0, black calc(100% - 4.31em), transparent 100%);
+      --message-collapse-fade: linear-gradient(to bottom, black 0, black calc(100% - 4.31em), transparent 100%);
+      mask-image: var(--message-collapse-fade);
+      -webkit-mask-image: var(--message-collapse-fade);
     }
 
     .message-row.is-collapsible .message-collapse-toggle {
@@ -437,6 +438,19 @@
       mask-position: var(--message-zone-positions);
       -webkit-mask-repeat: no-repeat;
       mask-repeat: no-repeat;
+    }
+
+    .message-row.is-copy-revealed.is-collapsible .message-body-row.is-collapsed .md-body {
+      -webkit-mask-image: var(--message-collapse-fade), var(--message-zone-layers);
+      mask-image: var(--message-collapse-fade), var(--message-zone-layers);
+      -webkit-mask-size: 100% 100%, var(--message-zone-sizes);
+      mask-size: 100% 100%, var(--message-zone-sizes);
+      -webkit-mask-position: 0 0, var(--message-zone-positions);
+      mask-position: 0 0, var(--message-zone-positions);
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-composite: source-in, source-over, source-over;
+      mask-composite: intersect, add, add;
     }
 
     .message-body-row > .message-hover-copy-zone .message-hover-copy {
