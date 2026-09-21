@@ -73,6 +73,6 @@
         token = lineMatch[1].trim();
       }
       token = token.replace(/^\.\/+/, "").trim();
-      if (!token || token === "." || token === ".." || /\s/.test(token)) return null;
+      if (!token || token === "." || token === "..") return null;
       return token;
     };
