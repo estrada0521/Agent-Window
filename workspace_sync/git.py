@@ -113,16 +113,18 @@ def _read_commit_list(root: Path, *, offset: int, limit: int) -> dict:
             current_hash = stripped
         elif current_hash and "changed" in stripped:
             ins = dels = 0
+            paths = int(stripped.split()[0])
             for part in stripped.split(","):
                 part = part.strip()
                 if "insertion" in part:
                     ins = int(part.split()[0])
                 elif "deletion" in part:
                     dels = int(part.split()[0])
-            commit_stats[current_hash] = {"ins": ins, "dels": dels}
+            commit_stats[current_hash] = {"paths": paths, "ins": ins, "dels": dels}
             current_hash = None
     for commit in recent_commits:
         stats = commit_stats.get(commit["hash"]) or {}
+        commit["changed_paths"] = int(stats.get("paths", 0) or 0)
         commit["ins"] = int(stats.get("ins", 0) or 0)
         commit["dels"] = int(stats.get("dels", 0) or 0)
     return {

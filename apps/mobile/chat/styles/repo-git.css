@@ -361,6 +361,13 @@
       min-width: 0;
     }
 
+    .git-commit-paths {
+      color: var(--muted);
+      font-size: var(--text-size, 13px);
+      font-variant-numeric: tabular-nums;
+      font-family: var(--font-main);
+    }
+
     .git-commit-list .git-commit-row .git-commit-meta {
       flex: 0 0 auto;
       justify-content: flex-end;

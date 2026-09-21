@@ -32,10 +32,11 @@
       const dotClass = commit?.is_origin_main ? "git-commit-dot is-origin-main" : "git-commit-dot";
       const iconInner = `<span class="${dotClass}" aria-hidden="true"></span>`;
       const subjHtml = `<div class="git-commit-subject">${escapeHtml(commit?.subject || "")}</div>`;
+      const paths = Math.max(0, parseInt(commit?.changed_paths) || 0);
       const ins = Math.max(0, parseInt(commit?.ins) || 0);
       const dels = Math.max(0, parseInt(commit?.dels) || 0);
       const animClass = animate ? " new-commit-slide" : "";
-      return `<div class="git-commit-row sheet-list-row${animClass}" data-hash="${escapeHtml(commit?.hash || "")}"><span class="git-commit-icon-wrap">${iconInner}</span><div class="git-commit-info">${subjHtml}<div class="git-commit-meta">${gitCountsHtml(ins, dels)}</div></div></div>`;
+      return `<div class="git-commit-row sheet-list-row${animClass}" data-hash="${escapeHtml(commit?.hash || "")}"><span class="git-commit-icon-wrap">${iconInner}</span><div class="git-commit-info">${subjHtml}<div class="git-commit-meta"><span class="git-commit-paths">${paths}</span>${gitCountsHtml(ins, dels)}</div></div></div>`;
     };
     const gitCommitFileRowHtml = (entry, { animate = false } = {}) => {
       const path = String(entry?.path || "").trim();
