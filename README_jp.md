@@ -153,7 +153,7 @@ fileのアイコンは、VS Codeなどのfile icon themeの定義JSONへのsymli
 
 Agent Windowは作業場所ではなく手段なので、作業領域を占有しないようwindow自体を内容と画面へ合わせます。
 
-`⌘,` でtheme、text size、window操作をまとめたAppearance menuを開きます。
+`⌘,` でtheme、text size、window操作をまとめたAppearance menuを、`⌘.` でTerminal・Finder・Agentの追加/削除をまとめたchat menuを開きます。
 
 | キー | 動作 |
 |---|---|

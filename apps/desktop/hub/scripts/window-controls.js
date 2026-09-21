@@ -308,6 +308,11 @@
         void openAppearanceMenu();
         return;
       }
+      if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "Period") {
+        event.preventDefault();
+        openDeskChatHeaderMenu();
+        return;
+      }
       if (event.metaKey && !event.altKey && event.code === "KeyB") {
         event.preventDefault();
         toggleDeskSidebar();

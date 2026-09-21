@@ -119,6 +119,10 @@ File icons use a file icon theme from VS Code or similar IDEs as is: put a symli
 
 ## Fit the window
 
+Agent Window is a means, not a place to work, so it fits the window itself to its content and the screen instead of taking up working space.
+
+`⌘,` opens the Appearance menu (theme, text size, window controls) and `⌘.` opens the chat menu (Terminal, Finder, add / remove Agents).
+
 | Key | Action |
 |---|---|
 | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` | Default / compact / mini size |

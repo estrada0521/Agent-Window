@@ -1066,6 +1066,11 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openAppearanceMenu" }, "*");
           return;
         }
+        if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "Period") {
+          event.preventDefault();
+          window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openChatHeaderMenu" }, "*");
+          return;
+        }
         if (event.metaKey && !event.altKey && event.code === "KeyB") {
           event.preventDefault();
           window.parent?.postMessage({ type: "toggle-hub-sidebar" }, "*");
