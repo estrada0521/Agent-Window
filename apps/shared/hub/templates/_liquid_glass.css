@@ -21,6 +21,7 @@
     .pane-viewer-shortcut-btn:active,
     .pane-viewer-shortcut-menu:active > .pane-viewer-shortcut-btn,
     .page-header .page-header-actions .page-menu-btn:active,
+    .page-header .page-header-actions .page-menu-btn:has(+ #pageNativeMenuBridge:active),
     .shell > .page-header .page-title:active,
     #composerFabBtn:active,
     #scrollToBottomBtn:active {
@@ -30,6 +31,7 @@
     .pane-viewer-shortcut-btn:active,
     .pane-viewer-shortcut-menu:active > .pane-viewer-shortcut-btn,
     .page-header .page-header-actions .page-menu-btn:active,
+    .page-header .page-header-actions .page-menu-btn:has(+ #pageNativeMenuBridge:active),
     .shell > .page-header .page-title:active,
     #scrollToBottomBtn:active {
       transition: transform var(--liquid-glass-press-in);
