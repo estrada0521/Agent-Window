@@ -39,7 +39,7 @@ __CHAT_INCLUDE:../messages-data.js__
         const isCollapsibleMessage = isCollapsibleMessageSender(safeEntry.sender);
         const hideMetaRow = !!options.hideMetaRow;
         const metaHiddenClass = hideMetaRow ? " meta-hidden" : "";
-        const copyButtonHtml = (extraClass = "") => `<button class="copy-btn${extraClass}" type="button" title="コピー" aria-label="コピー" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
+        const copyButtonHtml = (extraClass = "") => `<button class="copy-btn${extraClass}" type="button" title="Copy" aria-label="Copy" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
         const messageBodyHtml = `<div class="md-body">${renderMarkdown(body)}</div>`;
         const senderHtml = metaAgentLabel(safeEntry.sender || "unknown", "sender-label", "right", { iconOnly: true });
         const metaRowHtml = hideMetaRow
