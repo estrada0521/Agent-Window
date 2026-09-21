@@ -110,7 +110,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       void renderGitCommitInfo(hash);
     };
     const refreshGitDetailTitleFromOverview = (data) => {
-      if (!_gitDetailChrome) return;
+      if (!_gitDetailChrome || gitSession.detailContext?.kind === "commit") return;
       const titleEl = gitSheetTitleEl();
       if (!titleEl?.classList.contains("git-sheet-detail-title")) return;
       const previous = gitCountSnapshot(titleEl);
