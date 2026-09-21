@@ -28,11 +28,11 @@ __CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
         throw err;
       }
     };
-    const postOpenDiff = async (path, hash = "") => {
+    const postOpenDiff = async (path, hash = "", oldPath = "") => {
       const res = await fetch("/open-diff", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path, hash }),
+        body: JSON.stringify({ path, hash, old_path: oldPath }),
       });
       if (!res.ok) {
         let detail = "Failed to open diff tool.";

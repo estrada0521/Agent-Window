@@ -281,46 +281,49 @@ def git_diff_files(*, commit_hash: str = "", scope: str = ""):
     def _run(*args):
         return _run_git(root, *args)
 
-    def _parse_numstat_lines(lines: list[str]) -> tuple[list[dict], int, int]:
+    def _diff_out(*args):
+        res = _run(*args)
+        if res.returncode != 0:
+            raise RuntimeError((res.stderr or res.stdout or "git diff failed").strip())
+        return res.stdout or ""
+
+    def _parse_numstat(out: str) -> tuple[list[dict], int, int]:
+        tokens = out.split("\0")
         by_path: dict[str, dict] = {}
-        order: list[str] = []
-        for raw in lines:
-            line = str(raw or "").rstrip()
-            if not line:
+        i = 0
+        while i < len(tokens):
+            if not tokens[i]:
+                i += 1
                 continue
-            parts = line.split("\t", 2)
-            if len(parts) < 3:
-                continue
-            ins_raw, dels_raw, path_raw = parts[0], parts[1], parts[2]
-            path = path_raw.strip()
-            if not path:
-                continue
+            ins_raw, dels_raw, path = tokens[i].split("\t", 2)
+            old_path = ""
+            if path:
+                i += 1
+            else:
+                old_path, path = tokens[i + 1], tokens[i + 2]
+                i += 3
             ins = int(ins_raw) if ins_raw.isdigit() else 0
             dels = int(dels_raw) if dels_raw.isdigit() else 0
             binary = not (ins_raw.isdigit() and dels_raw.isdigit())
             if path not in by_path:
-                by_path[path] = {
-                    "path": path,
-                    "ins": 0,
-                    "dels": 0,
-                    "changed": 0,
-                    "binary": False,
-                }
-                order.append(path)
+                by_path[path] = {"path": path, "ins": 0, "dels": 0, "changed": 0, "binary": False}
+                if old_path:
+                    by_path[path]["old_path"] = old_path
             entry = by_path[path]
             entry["ins"] += ins
             entry["dels"] += dels
             entry["changed"] = entry["ins"] + entry["dels"]
-            entry["binary"] = bool(entry.get("binary")) or binary
-        files = [by_path[path] for path in order]
-        total_ins = sum(int(item.get("ins") or 0) for item in files)
-        total_dels = sum(int(item.get("dels") or 0) for item in files)
+            entry["binary"] = entry["binary"] or binary
+        files = list(by_path.values())
+        total_ins = sum(item["ins"] for item in files)
+        total_dels = sum(item["dels"] for item in files)
         return files, total_ins, total_dels
+
     def _untracked_paths() -> list[str]:
-        res = _run("ls-files", "--others", "--exclude-standard", "--full-name", "--")
+        res = _run("ls-files", "--others", "--exclude-standard", "--full-name", "-z", "--")
         if res.returncode != 0:
             raise RuntimeError((res.stderr or res.stdout or "git ls-files failed").strip())
-        return [line.strip() for line in (res.stdout or "").splitlines() if line.strip()]
+        return [path for path in (res.stdout or "").split("\0") if path]
     def _append_untracked(files: list[dict], paths: list[str]) -> list[dict]:
         seen = {str(item.get("path") or "").strip() for item in files}
         merged = list(files)
@@ -340,52 +343,24 @@ def git_diff_files(*, commit_hash: str = "", scope: str = ""):
 
     head_res = _run("rev-parse", "HEAD")
     has_head = head_res.returncode == 0
-    lines: list[str] = []
+    out = ""
     include_untracked = False
     if commit_hash:
-        diff_res = _run(
-            "show",
-            "--numstat",
-            "--format=",
-            "--find-renames",
-            "--find-copies",
-            commit_hash,
-            "--",
-        )
-        if diff_res.returncode != 0:
-            raise RuntimeError((diff_res.stderr or diff_res.stdout or "git diff failed").strip())
-        lines = (diff_res.stdout or "").splitlines()
+        out = _diff_out("show", "--numstat", "-z", "--format=", "--find-renames", "--find-copies", commit_hash, "--")
+    elif scope == "staged":
+        out = _diff_out("diff", "--numstat", "-z", "--cached", "--")
+    elif scope == "unstaged":
+        out = _diff_out("diff", "--numstat", "-z", "--")
+    elif scope == "untracked":
+        include_untracked = True
     else:
-        if scope == "staged":
-            diff_res = _run("diff", "--numstat", "--cached", "--")
-            if diff_res.returncode != 0:
-                raise RuntimeError((diff_res.stderr or diff_res.stdout or "git diff failed").strip())
-            lines = (diff_res.stdout or "").splitlines()
-        elif scope == "unstaged":
-            diff_res = _run("diff", "--numstat", "--")
-            if diff_res.returncode != 0:
-                raise RuntimeError((diff_res.stderr or diff_res.stdout or "git diff failed").strip())
-            lines = (diff_res.stdout or "").splitlines()
-        elif scope == "untracked":
-            lines = []
-            include_untracked = True
+        include_untracked = True
+        if has_head:
+            out = _diff_out("diff", "--numstat", "-z", "HEAD", "--")
         else:
-            include_untracked = True
-            if has_head:
-                diff_res = _run("diff", "--numstat", "HEAD", "--")
-                if diff_res.returncode != 0:
-                    raise RuntimeError((diff_res.stderr or diff_res.stdout or "git diff failed").strip())
-                lines = (diff_res.stdout or "").splitlines()
-            else:
-                staged = _run("diff", "--numstat", "--cached", "--")
-                unstaged = _run("diff", "--numstat", "--")
-                if staged.returncode != 0:
-                    raise RuntimeError((staged.stderr or staged.stdout or "git diff --cached failed").strip())
-                if unstaged.returncode != 0:
-                    raise RuntimeError((unstaged.stderr or unstaged.stdout or "git diff failed").strip())
-                lines = (staged.stdout or "").splitlines() + (unstaged.stdout or "").splitlines()
+            out = _diff_out("diff", "--numstat", "-z", "--cached", "--") + _diff_out("diff", "--numstat", "-z", "--")
 
-    files, total_ins, total_dels = _parse_numstat_lines(lines)
+    files, total_ins, total_dels = _parse_numstat(out)
     if include_untracked:
         files = _append_untracked(files, _untracked_paths())
     return {
@@ -398,15 +373,19 @@ def git_diff_files(*, commit_hash: str = "", scope: str = ""):
     }
 
 
-def open_diff_tool(rel_path: str, commit_hash: str = "") -> dict:
+def open_diff_tool(rel_path: str, commit_hash: str = "", old_path: str = "") -> dict:
     root = _git_root()
     rel = str(rel_path or "").strip().lstrip("/")
     if not rel:
         raise ValueError("path required")
-    try:
-        (root / rel).resolve().relative_to(root.resolve())
-    except ValueError:
-        raise PermissionError(rel)
+    pathspecs = [rel]
+    if old_path:
+        pathspecs.insert(0, str(old_path).strip().lstrip("/"))
+    for spec in pathspecs:
+        try:
+            (root / spec).resolve().relative_to(root.resolve())
+        except ValueError:
+            raise PermissionError(spec)
     revs = []
     if commit_hash:
         res = _run_git(root, "rev-parse", "--verify", "--end-of-options", f"{commit_hash}^{{commit}}")
@@ -414,7 +393,7 @@ def open_diff_tool(rel_path: str, commit_hash: str = "") -> dict:
             raise ValueError(f"unknown commit: {commit_hash}")
         revs = [f"{res.stdout.strip()}^!"]
     subprocess.Popen(
-        ["git", "-C", str(root), "difftool", "-y", *revs, "--", rel],
+        ["git", "-C", str(root), "difftool", "-y", *revs, "--", *pathspecs],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )

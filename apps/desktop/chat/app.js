@@ -909,7 +909,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             for (const f of (Array.isArray(loaded?.files) ? loaded.files : [])) {
               const p = String(f?.path || "").trim();
               if (!p) continue;
-              const cur = byPath.get(p) || { path: p, ins: 0, dels: 0, untracked: !!f?.untracked };
+              const cur = byPath.get(p) || { path: p, oldPath: String(f?.old_path || ""), ins: 0, dels: 0, untracked: !!f?.untracked };
               cur.ins += Number(f?.ins) || 0;
               cur.dels += Number(f?.dels) || 0;
               cur.untracked = cur.untracked || !!f?.untracked;
@@ -925,7 +925,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         const p = String(event.data.path || "").trim();
         if (p) {
           if (event.data.untracked) void dpPostOpenFile(p);
-          else void dpPostOpenDiff(p);
+          else void dpPostOpenDiff(p, "", String(event.data.oldPath || ""));
         }
         return;
       }

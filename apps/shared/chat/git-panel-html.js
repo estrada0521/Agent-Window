@@ -53,7 +53,8 @@
       const actionsHtml = fileMetaHtml ? `<div class="git-commit-file-actions">${fileMetaHtml}</div>` : "";
       const animClass = animate ? " new-file-slide" : "";
       const untrackedAttr = isUntracked ? ' data-untracked="1"' : "";
-      return `<div class="git-commit-file-row clickable${animClass}" data-path="${escapeHtml(path)}"${untrackedAttr}><div class="git-commit-file-header sheet-list-row">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
+      const oldPathAttr = entry?.old_path ? ` data-old-path="${escapeHtml(entry.old_path)}"` : "";
+      return `<div class="git-commit-file-row clickable${animClass}" data-path="${escapeHtml(path)}"${oldPathAttr}${untrackedAttr}><div class="git-commit-file-header sheet-list-row">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
     };
     const shouldAnimateGitCounts = () =>
       !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);

@@ -6,7 +6,7 @@
           const p = String(fileRow.dataset.path || "").trim();
           if (!p) return;
           const hash = gitSession.detailContext?.hash || "";
-          if (hash || fileRow.dataset.untracked !== "1") await dpPostOpenDiff(p, hash);
+          if (hash || fileRow.dataset.untracked !== "1") await dpPostOpenDiff(p, hash, fileRow.dataset.oldPath || "");
           else await dpPostOpenFile(p);
         },
         closeWorktreeSummaryClick: true,
@@ -192,7 +192,7 @@
         const path = file.dataset.path || "";
         if (!path) return;
         if (file.dataset.untracked !== "1") {
-          void dpPostOpenDiff(path);
+          void dpPostOpenDiff(path, "", file.dataset.oldPath || "");
           return;
         }
         void dpPostOpenFile(path);

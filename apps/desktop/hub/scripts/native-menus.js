@@ -66,6 +66,7 @@
       const norm = files
         .map((f) => ({
           path: String(f.path || "").trim(),
+          oldPath: String(f.oldPath || ""),
           ins: Number(f.ins) || 0,
           dels: Number(f.dels) || 0,
           untracked: !!f.untracked,
@@ -78,7 +79,7 @@
       const base = (p) => { const s = p.lastIndexOf("/"); return s >= 0 ? p.slice(s + 1) : p; };
       const push = (f, withStat) => {
         const stat = withStat && (f.ins || f.dels) ? `  +${f.ins} -${f.dels}` : "";
-        items.push({ label: `${base(f.path)}${stat}`, path: f.path, untracked: f.untracked });
+        items.push({ label: `${base(f.path)}${stat}`, path: f.path, oldPath: f.oldPath, untracked: f.untracked });
       };
       for (const f of norm.filter((f) => !f.untracked)) push(f, true);
       const untracked = norm.filter((f) => f.untracked);
@@ -124,7 +125,7 @@
         const item = _deskGitChangesItems[Number(detail.mode)];
         if (item && item.path) {
           _deskChatFrame?.contentWindow?.postMessage(
-            { type: "desk-open-git-file", path: item.path, untracked: !!item.untracked }, "*",
+            { type: "desk-open-git-file", path: item.path, oldPath: item.oldPath, untracked: !!item.untracked }, "*",
           );
         }
         return;
