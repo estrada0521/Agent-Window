@@ -716,6 +716,13 @@
       border-color: var(--icon-muted);
       background: var(--icon-muted);
     }
+    .git-commit-dot.has-body:not(.is-origin-main) {
+      background-image: radial-gradient(circle, var(--icon-muted) 0.13em, transparent 0.15em);
+    }
+    .has-hover .git-commit-row:hover .git-commit-dot.has-body:not(.is-origin-main),
+    .git-commit-detail-head .git-commit-dot.has-body:not(.is-origin-main) {
+      background-image: radial-gradient(circle, var(--icon-hover) 0.13em, transparent 0.15em);
+    }
     .has-hover .git-commit-row:hover .git-commit-dot,
     .git-commit-detail-head .git-commit-dot {
       border-color: var(--icon-hover);

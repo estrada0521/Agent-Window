@@ -81,24 +81,27 @@ def _read_commit_list(root: Path, *, offset: int, limit: int) -> dict:
         "log",
         f"--skip={offset}",
         f"--max-count={limit}",
-        "--format=%h\x1f%s\x1f%D",
+        "--format=%h\x1f%s\x1f%D\x1f%b\x1f%(trailers:only)\x1e",
     )
     if log_res.returncode != 0:
         raise RuntimeError((log_res.stderr or log_res.stdout or "git log failed").strip())
     recent_commits = []
-    for line in (log_res.stdout or "").splitlines():
-        line = line.strip()
-        if not line:
+    for record in (log_res.stdout or "").split("\x1e"):
+        record = record.strip("\n")
+        if not record:
             continue
-        parts = line.split("\x1f")
-        if len(parts) < 2:
-            raise RuntimeError(f"git log returned a malformed commit line: {line!r}")
-        h, subj = parts[0], parts[1]
-        refs = parts[2].strip() if len(parts) > 2 else ""
+        parts = record.split("\x1f")
+        if len(parts) != 5:
+            raise RuntimeError(f"git log returned a malformed commit record: {record!r}")
+        h, subj, refs, body, trailers = parts
+        body, trailers = body.strip(), trailers.strip()
+        if trailers and body.endswith(trailers):
+            body = body[: -len(trailers)].strip()
         recent_commits.append({
             "hash": h,
             "subject": subj,
             "is_origin_main": "origin/main" in refs,
+            "has_body": bool(body),
         })
     stat_res = _run_git(root, "log", f"--skip={offset}", f"--max-count={limit}", "--format=%h", "--shortstat")
     if stat_res.returncode != 0:

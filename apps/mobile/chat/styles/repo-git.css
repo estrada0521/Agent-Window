@@ -338,6 +338,10 @@
       background: var(--icon-hover);
     }
 
+    .git-commit-dot.has-body:not(.is-origin-main) {
+      background-image: radial-gradient(circle, var(--icon-hover) calc(var(--text-size, 13px) * 1.5 / 13), transparent calc(var(--text-size, 13px) * 2 / 13));
+    }
+
     .git-commit-info {
       flex: 1 1 auto;
       min-width: 0;

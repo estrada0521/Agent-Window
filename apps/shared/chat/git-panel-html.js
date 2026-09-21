@@ -29,7 +29,7 @@
     const gitCommitFileStatsSectionsHtml = (sections, rowOptions = {}) =>
       `<div class="git-commit-file-sections">${(sections || []).map((section) => gitCommitFileStatsSectionHtml(section, rowOptions)).join("")}</div>`;
     const gitCommitRowHtml = (commit, { animate = false } = {}) => {
-      const dotClass = commit?.is_origin_main ? "git-commit-dot is-origin-main" : "git-commit-dot";
+      const dotClass = `git-commit-dot${commit?.is_origin_main ? " is-origin-main" : ""}${commit?.has_body ? " has-body" : ""}`;
       const iconInner = `<span class="${dotClass}" aria-hidden="true"></span>`;
       const subjHtml = `<div class="git-commit-subject">${escapeHtml(commit?.subject || "")}</div>`;
       const paths = Math.max(0, parseInt(commit?.changed_paths) || 0);
