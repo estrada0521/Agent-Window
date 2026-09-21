@@ -3,8 +3,8 @@
     };
     const renderAgentIconRgba = (src) => new Promise((resolve) => {
       if (!src) return resolve(null);
-      const SIZE = 22;
-      const PAD = 3;
+      const SIZE = 54;
+      const PAD = 7;
       const img = new window.Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {

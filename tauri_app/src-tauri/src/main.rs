@@ -181,6 +181,11 @@ fn decode_menu_component(value: &str) -> String {
     String::from_utf8_lossy(&out).to_string()
 }
 
+fn square_rgba_image(rgba: &[u8]) -> tauri::image::Image<'static> {
+    let side = ((rgba.len() / 4) as f64).sqrt() as u32;
+    tauri::image::Image::new_owned(rgba.to_vec(), side, side)
+}
+
 fn system_app_icon(path: &str) -> Result<tauri::image::Image<'static>, String> {
     let path = NSString::from_str(path);
     let image = NSWorkspace::sharedWorkspace().iconForFile(&path);
@@ -294,11 +299,8 @@ fn show_chat_header_menu(
         let id = format!("{}add:{}", NATIVE_MENU_PREFIX, encode_menu_component(agent));
         let base = agent_base_name(agent);
         if let Some(rgba) = payload.agent_icons.get(&base) {
-            if rgba.len() == 22 * 22 * 4 {
-                let img = tauri::image::Image::new_owned(rgba.clone(), 22, 22);
-                add_builder = add_builder.icon(id, agent.as_str(), img);
-                continue;
-            }
+            add_builder = add_builder.icon(id, agent.as_str(), square_rgba_image(rgba));
+            continue;
         }
         add_builder = add_builder.native_icon(id, agent.as_str(), NativeIcon::User);
     }
@@ -319,11 +321,8 @@ fn show_chat_header_menu(
         );
         let base = agent_base_name(agent);
         if let Some(rgba) = payload.agent_icons.get(&base) {
-            if rgba.len() == 22 * 22 * 4 {
-                let img = tauri::image::Image::new_owned(rgba.clone(), 22, 22);
-                remove_builder = remove_builder.icon(id, agent.as_str(), img);
-                continue;
-            }
+            remove_builder = remove_builder.icon(id, agent.as_str(), square_rgba_image(rgba));
+            continue;
         }
         remove_builder = remove_builder.native_icon(id, agent.as_str(), NativeIcon::User);
     }
