@@ -13,11 +13,13 @@
       });
     });
     dpGitContent?.addEventListener("mouseover", async (event) => {
-      const row = event.target.closest(".git-commit-row");
-      const hash = String(row?.dataset.hash || "");
-      if (!hash || row.title) return;
+      const head = event.target.closest(".git-commit-detail-head");
+      const target = head || event.target.closest(".git-commit-row");
+      const hash = String((head ? gitSession.detailContext?.hash : target?.dataset.hash) || "");
+      if (!hash || target.dataset.infoTitle) return;
       const info = await gitCommitInfo(hash);
-      row.title = [`${info.author}, ${new Date(info.date).toLocaleString()}`, info.message, info.stat, info.hash].filter(Boolean).join("\n\n");
+      target.title = [`${info.author}, ${new Date(info.date).toLocaleString()}`, info.message, info.stat, info.hash].filter(Boolean).join("\n\n");
+      target.dataset.infoTitle = "1";
     });
     dpGitContent?.addEventListener("contextmenu", (event) => {
       const hash = String(event.target.closest(".git-commit-row")?.dataset.hash
