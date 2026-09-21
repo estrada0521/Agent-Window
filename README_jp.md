@@ -213,3 +213,5 @@ Claude、Codex、Antigravity、Cursor、Grok。
 # License
 
 [0BSD](LICENSE)です。好きにしてください。
+
+画像内のfileアイコンはMaterial Icon Themeのものです。このrepositoryには同梱していません。

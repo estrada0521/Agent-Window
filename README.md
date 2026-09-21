@@ -175,3 +175,5 @@ The sending side is the same for every CLI. It only enters text into a pane, so 
 # License
 
 [0BSD](LICENSE). Do whatever you want with it.
+
+The file icons in the screenshots are from Material Icon Theme. They are not bundled with this repository.
