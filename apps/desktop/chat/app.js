@@ -557,7 +557,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     let dpFileContextPath = "";
     let dpFileContextRequestSeq = 0;
     let dpWorkspaceRoot = "";
-    const dpShowFileActionStatus = (message, error = false) => {
+    const dpShowActionStatus = (message, error = false) => {
       setStatus(message, error);
       setTimeout(() => setStatus(""), STATUS_TOAST_MS);
     };
@@ -578,7 +578,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         const result = await response.json();
         fileExists = result?.[path] === true;
       } catch (err) {
-        dpShowFileActionStatus(err?.message || "Failed to inspect file path.", true);
+        dpShowActionStatus(err?.message || "Failed to inspect file path.", true);
       }
       if (requestSeq !== dpFileContextRequestSeq) return;
       dpFileContextPath = path;
@@ -590,6 +590,16 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           fileExists,
           openFile,
         },
+      }, "*");
+    };
+    let dpCommitContextHash = "";
+    const dpOpenCommitContextMenu = (hash, event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      dpCommitContextHash = hash;
+      window.parent?.postMessage({
+        type: "show-commit-context-menu",
+        payload: { x: Math.round(Number(event.clientX) || 0), y: Math.round(Number(event.clientY) || 0) },
       }, "*");
     };
     const dpCopyFilePath = async (path, absolute) => {
@@ -605,7 +615,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         text = `${dpWorkspaceRoot}/${path}`;
       }
       await doCopyText(text);
-      dpShowFileActionStatus(absolute ? "Copied absolute path" : "Copied relative path");
+      dpShowActionStatus(absolute ? "Copied absolute path" : "Copied relative path");
     };
     const dpRevealFileInFinder = async (path) => {
       const response = await fetchWithTimeout("/reveal-file", {
@@ -617,8 +627,22 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         const data = await response.json().catch(() => ({}));
         throw new Error(data?.error || "Failed to reveal file in Finder.");
       }
-      dpShowFileActionStatus(`Revealed ${path}`);
+      dpShowActionStatus(`Revealed ${path}`);
     };
+    function handleDesktopCommitContextMenuAction(payload) {
+      const action = String(payload?.action || "");
+      if (!["copyCommitHash", "copyCommitMessage"].includes(action)) return false;
+      const hash = dpCommitContextHash;
+      if (!hash) return true;
+      void (async () => {
+        const info = await dpCommitInfo(hash);
+        await doCopyText(action === "copyCommitHash" ? info.hash : info.message);
+        dpShowActionStatus(action === "copyCommitHash" ? "Copied commit hash" : "Copied commit message");
+      })().catch((err) => {
+        dpShowActionStatus(err?.message || "Commit action failed.", true);
+      });
+      return true;
+    }
     function handleDesktopFileContextMenuAction(payload) {
       const action = String(payload?.action || "");
       if (!["openFile", "revealFileInFinder", "copyAbsoluteFilePath", "copyRelativeFilePath"].includes(action)) return false;
@@ -630,7 +654,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           ? dpRevealFileInFinder(path)
           : dpCopyFilePath(path, action === "copyAbsoluteFilePath");
       void operation.catch((err) => {
-        dpShowFileActionStatus(err?.message || "File action failed.", true);
+        dpShowActionStatus(err?.message || "File action failed.", true);
       });
       return true;
     }
@@ -897,7 +921,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         return;
       }
       if (event.data.type === "file-context-menu-error") {
-        dpShowFileActionStatus(String(event.data.message || "Failed to open file menu."), true);
+        dpShowActionStatus(String(event.data.message || "Failed to open file menu."), true);
         return;
       }
       if (event.data.type === "desk-git-changes-request") {

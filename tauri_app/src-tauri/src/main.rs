@@ -87,6 +87,12 @@ struct FileContextMenuPayload {
 }
 
 #[derive(Debug, serde::Deserialize)]
+struct CommitContextMenuPayload {
+    x: f64,
+    y: f64,
+}
+
+#[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct SessionContextMenuPayload {
     x: f64,
@@ -736,6 +742,35 @@ fn show_file_context_menu(
 }
 
 #[tauri::command]
+fn show_commit_context_menu(
+    window: tauri::WebviewWindow,
+    app: tauri::AppHandle,
+    payload: CommitContextMenuPayload,
+) -> Result<(), String> {
+    let copy_hash = MenuItemBuilder::with_id(
+        format!("{}action:copyCommitHash", NATIVE_MENU_PREFIX),
+        "Copy Commit Hash",
+    )
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+    let copy_message = MenuItemBuilder::with_id(
+        format!("{}action:copyCommitMessage", NATIVE_MENU_PREFIX),
+        "Copy Commit Message",
+    )
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+    let menu = MenuBuilder::new(&app)
+        .item(&copy_hash)
+        .item(&copy_message)
+        .build()
+        .map_err(|err| err.to_string())?;
+
+    window
+        .popup_menu_at(&menu, tauri::LogicalPosition::new(payload.x, payload.y))
+        .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
 fn show_session_context_menu(
     window: tauri::WebviewWindow,
     app: tauri::AppHandle,
@@ -1359,6 +1394,7 @@ fn main() {
             show_session_switcher_menu,
             show_git_changes_menu,
             show_file_context_menu,
+            show_commit_context_menu,
             show_session_context_menu
         ])
         .on_menu_event(|app, event| {

@@ -265,12 +265,12 @@ def git_overview(*, offset=0, limit=50, force_refresh: bool = False, include_com
 
 def git_commit_info(*, commit_hash: str) -> dict:
     root = _git_root()
-    res = _run_git(root, "show", "--shortstat", "--format=%an%x1f%aI%x1f%B%x1e", str(commit_hash or "").strip(), "--")
+    res = _run_git(root, "show", "--shortstat", "--format=%H%x1f%an%x1f%aI%x1f%B%x1e", str(commit_hash or "").strip(), "--")
     if res.returncode != 0:
         raise RuntimeError((res.stderr or res.stdout or "git show failed").strip())
     head, _, stat = (res.stdout or "").partition("\x1e")
-    author, date, message = head.split("\x1f", 2)
-    return {"author": author, "date": date, "message": message.strip(), "stat": stat.strip()}
+    full_hash, author, date, message = head.split("\x1f", 3)
+    return {"hash": full_hash, "author": author, "date": date, "message": message.strip(), "stat": stat.strip()}
 
 
 def git_diff_files(*, commit_hash: str = "", scope: str = ""):

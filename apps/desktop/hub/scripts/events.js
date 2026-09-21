@@ -56,6 +56,24 @@
         });
         return;
       }
+      if (event.data && event.data.type === "show-commit-context-menu" && event.source === _deskChatFrame?.contentWindow) {
+        const invoke = getTauriInvoke();
+        const childPayload = event.data.payload || {};
+        const frameRect = _deskChatFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
+        if (typeof invoke !== "function") {
+          event.source?.postMessage({ type: "file-context-menu-error", message: "Native commit menu is unavailable." }, "*");
+          return;
+        }
+        invoke("show_commit_context_menu", {
+          payload: {
+            x: Math.round(Number(childPayload.x || 0) + Number(frameRect.left || 0)),
+            y: Math.round(Number(childPayload.y || 0) + Number(frameRect.top || 0)),
+          },
+        }).catch((err) => {
+          event.source?.postMessage({ type: "file-context-menu-error", message: String(err || "Failed to open commit menu.") }, "*");
+        });
+        return;
+      }
       if (event.data === "hub_close_chat") {
         showDeskSidebarList({ open: true });
         return;

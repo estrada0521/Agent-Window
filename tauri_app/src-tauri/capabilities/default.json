@@ -27,6 +27,7 @@
     "allow-show-session-switcher-menu",
     "allow-show-git-changes-menu",
     "allow-show-file-context-menu",
+    "allow-show-commit-context-menu",
     "allow-show-session-context-menu",
     "core:default",
     "core:window:allow-start-dragging",

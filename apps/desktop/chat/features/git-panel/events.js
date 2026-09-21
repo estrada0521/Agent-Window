@@ -12,26 +12,29 @@
         closeWorktreeSummaryClick: true,
       });
     });
-    const dpCommitTitles = new Map();
-    const dpCommitTitle = (hash) => {
-      if (!dpCommitTitles.has(hash)) {
-        dpCommitTitles.set(hash, fetchGitJson(`/git-commit-info?hash=${encodeURIComponent(hash)}`).then(
-          (info) => [`${info.author}, ${new Date(info.date).toLocaleString()}`, info.message, info.stat, hash].filter(Boolean).join("\n\n"),
-          (err) => {
-            dpCommitTitles.delete(hash);
-            throw err;
-          },
-        ));
+    const dpCommitInfos = new Map();
+    const dpCommitInfo = (hash) => {
+      if (!dpCommitInfos.has(hash)) {
+        dpCommitInfos.set(hash, fetchGitJson(`/git-commit-info?hash=${encodeURIComponent(hash)}`).catch((err) => {
+          dpCommitInfos.delete(hash);
+          throw err;
+        }));
       }
-      return dpCommitTitles.get(hash);
+      return dpCommitInfos.get(hash);
     };
     dpGitContent?.addEventListener("mouseover", async (event) => {
       const row = event.target.closest(".git-commit-row");
       const hash = String(row?.dataset.hash || "");
       if (!hash || row.title) return;
-      row.title = await dpCommitTitle(hash);
+      const info = await dpCommitInfo(hash);
+      row.title = [`${info.author}, ${new Date(info.date).toLocaleString()}`, info.message, info.stat, info.hash].filter(Boolean).join("\n\n");
     });
     dpGitContent?.addEventListener("contextmenu", (event) => {
+      const hash = String(event.target.closest(".git-commit-row")?.dataset.hash || "");
+      if (hash) {
+        dpOpenCommitContextMenu(hash, event);
+        return;
+      }
       const fileRow = event.target.closest(".git-commit-file-row");
       const path = String(fileRow?.dataset.path || "").trim();
       if (path) void dpOpenFileContextMenu(path, event, { openFile: fileRow.dataset.untracked !== "1" });
