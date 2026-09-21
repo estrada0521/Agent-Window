@@ -252,6 +252,15 @@
       position: relative;
     }
 
+    .message-row .md-body {
+      --message-zone-soft: 2.5em;
+      --message-zone-w: calc(var(--message-time-em, 10) * 1em + 1.3em + var(--message-copy-size));
+      --message-zone-h: calc(var(--text-line-height, 1.62) * 1em);
+      --message-zone-layers: linear-gradient(#000, #000), linear-gradient(to right, #000 calc(100% - var(--message-zone-w) - var(--message-zone-soft)), transparent calc(100% - var(--message-zone-w)));
+      --message-zone-sizes: 100% calc(100% - var(--message-zone-h)), 100% var(--message-zone-h);
+      --message-zone-positions: top left, bottom left;
+    }
+
     .message-row.is-collapsible .message-body-row.is-collapsed .md-body {
       overflow: hidden;
       max-height: var(--message-collapse-max-height);
@@ -450,6 +459,19 @@
       background: transparent;
       opacity: 0;
       pointer-events: auto;
+    }
+
+    .has-hover .message-row .message-body-row.is-hover-copy-hotspot:not(.is-collapsed) .md-body,
+    .message-row:focus-within .message-body-row:not(.is-collapsed) .md-body,
+    .message-row .message-body-row:not(.is-collapsed):has(.message-hover-copy.copied) .md-body {
+      -webkit-mask-image: var(--message-zone-layers);
+      mask-image: var(--message-zone-layers);
+      -webkit-mask-size: var(--message-zone-sizes);
+      mask-size: var(--message-zone-sizes);
+      -webkit-mask-position: var(--message-zone-positions);
+      mask-position: var(--message-zone-positions);
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
     }
 
     .message-row .message-hover-copy svg {

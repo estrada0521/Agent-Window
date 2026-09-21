@@ -361,7 +361,7 @@
             revealMobileCopy(row);
             markCopied(btn, 3000, hideMobileCopy);
           } else {
-            markCopied(btn);
+            markCopied(btn, 3000);
           }
         }).catch(() => {});
         return;

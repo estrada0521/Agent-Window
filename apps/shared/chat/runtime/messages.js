@@ -5,7 +5,13 @@
     const checkIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
     const formatMessageTime = (timestamp) => {
       const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(String(timestamp || ""));
-      return m ? `${Number(m[4])}:${m[5]} ${m[1]}/${Number(m[2])}/${Number(m[3])}` : "";
+      return m ? `${Number(m[4])}:${m[5]}, ${m[1]}/${Number(m[2])}/${Number(m[3])}` : "";
+    };
+    const syncMessageTimeWidth = (scope) => {
+      scope?.querySelectorAll?.(".message-time").forEach((time) => {
+        const em = time.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(time).fontSize);
+        if (em > 0) time.closest(".message-body-row").style.setProperty("--message-time-em", em.toFixed(2));
+      });
     };
     const postRenderScope = (scope) => {
       decorateLocalFileLinks(scope);
@@ -14,6 +20,7 @@
       renderMathInScope(scope);
       syncWideBlockRows(scope);
       syncMessageCollapse(scope);
+      syncMessageTimeWidth(scope);
     };
 __CHAT_INCLUDE:../messages-data.js__
     const buildMsgHTML = (entry, options = {}) => {
