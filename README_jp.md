@@ -86,7 +86,7 @@ sessionを右クリックすると、次の状態操作を行えます。
 隣のreload buttonはGUI serverをhard reloadします。source codeを変更している場合は、動作中のserverを新しい実装へ置き換えます。tmux paneとAgent processは再起動しません。`⌘R` でchat server、`⇧⌘R` でHub serverを同様に。
 
 <p align="center">
-  <img src="media/agent-window-menu.png" width="500" alt="Menu">
+  <img src="media/agent-window-menu.png" width="100%" alt="Menu">
 </p>
 
 ## 送る

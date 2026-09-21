@@ -62,7 +62,7 @@ Archive, revive, delete, rename, and change a session's workspace from the Hub (
 The separate reload button beside it hard-reloads the GUI server. If the source code has changed, the running server is replaced with the new implementation. `⌘R` does this for the chat server, `⇧⌘R` for the Hub server.
 
 <p align="center">
-  <img src="media/agent-window-menu.png" width="500" alt="Menu">
+  <img src="media/agent-window-menu.png" width="100%" alt="Menu">
 </p>
 
 ## Send
