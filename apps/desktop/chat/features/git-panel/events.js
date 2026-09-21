@@ -30,7 +30,9 @@
       row.title = [`${info.author}, ${new Date(info.date).toLocaleString()}`, info.message, info.stat, info.hash].filter(Boolean).join("\n\n");
     });
     dpGitContent?.addEventListener("contextmenu", (event) => {
-      const hash = String(event.target.closest(".git-commit-row")?.dataset.hash || "");
+      const hash = String(event.target.closest(".git-commit-row")?.dataset.hash
+        || (event.target.closest(".git-commit-detail-head") ? gitSession.detailContext?.hash : "")
+        || "");
       if (hash) {
         dpOpenCommitContextMenu(hash, event);
         return;
