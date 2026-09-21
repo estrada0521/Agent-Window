@@ -3,6 +3,10 @@
     let initialLoadDone = false;
     const copyIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
     const checkIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+    const formatMessageTime = (timestamp) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(String(timestamp || ""));
+      return m ? `${Number(m[4])}:${m[5]} ${m[1]}/${Number(m[2])}/${Number(m[3])}` : "";
+    };
     const postRenderScope = (scope) => {
       decorateLocalFileLinks(scope);
       linkifyInlineCodeFileRefs(scope);
@@ -47,7 +51,9 @@ __CHAT_INCLUDE:../messages-data.js__
           : (isUser
             ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${targetMeta}</div>`
             : `<div class="message-meta-below">${senderHtml}<span class="arrow">to</span>${targetMeta}</div>`);
-        const copyZoneHtml = `<div class="message-hover-copy-zone">${copyButtonHtml(" message-hover-copy")}</div>`;
+        const messageTime = formatMessageTime(safeEntry.timestamp);
+        const timeHtml = messageTime ? `<span class="message-time">${escapeHtml(messageTime)}</span>` : "";
+        const copyZoneHtml = `<div class="message-hover-copy-zone">${timeHtml}${copyButtonHtml(" message-hover-copy")}</div>`;
 
         return `<article class="message-row ${cls}${metaHiddenClass}" data-context-hash="${contextHash}" data-sender="${sender}">
         <div class="message ${cls}" data-raw="${rawAttr}" data-preview="${previewAttr}">

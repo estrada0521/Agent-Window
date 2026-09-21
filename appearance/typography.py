@@ -115,6 +115,7 @@ def body_typography_css() -> str:
     .message:not(.user):not(.system) .md-body li,
     .message:not(.user):not(.system) .md-body li p,
     .sysmsg-text,
+    .message-time,
     .md-body,
     .md-body p,
     .md-body li,

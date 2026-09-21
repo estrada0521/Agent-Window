@@ -398,10 +398,25 @@
       bottom: calc(0.23em + 1.31em / 2 - 14px);
       z-index: 3;
       font-size: var(--text-size, 13px);
-      width: 28px;
       height: 28px;
       box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
       pointer-events: none;
+    }
+
+    .message-body-row > .message-hover-copy-zone .message-time {
+      color: var(--muted);
+      margin-right: 0.5em;
+      white-space: nowrap;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 120ms ease;
+    }
+
+    .message-row.is-copy-revealed .message-time {
+      opacity: 1;
     }
 
     .message-body-row > .message-hover-copy-zone .message-hover-copy {

@@ -424,13 +424,21 @@
       right: 0;
       bottom: var(--message-copy-bottom);
       z-index: 3;
-      width: var(--message-copy-size);
       height: var(--message-copy-size);
       box-sizing: border-box;
       display: flex;
       align-items: flex-end;
       justify-content: flex-end;
+      gap: 0.9em;
       pointer-events: none;
+    }
+
+    .message-row .message-time {
+      align-self: center;
+      color: var(--muted);
+      white-space: nowrap;
+      user-select: none;
+      opacity: 0;
     }
 
     .message-row .message-hover-copy {
@@ -454,8 +462,11 @@
     }
 
     .has-hover .message-row .message-body-row.is-hover-copy-hotspot .message-hover-copy,
+    .has-hover .message-row .message-body-row.is-hover-copy-hotspot .message-time,
     .message-row:focus-within .message-hover-copy,
-    .message-row .message-hover-copy.copied {
+    .message-row:focus-within .message-time,
+    .message-row .message-hover-copy.copied,
+    .message-row .message-hover-copy-zone:has(.copied) .message-time {
       opacity: 1;
     }
 
