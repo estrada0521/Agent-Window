@@ -112,10 +112,11 @@
 
       const nextLine = document.createElement("span");
       nextLine.className = "message-thinking-runtime-line";
-      nextLine.dataset.state = "enter";
+      nextLine.dataset.state = lines.length ? "enter" : "live";
       nextLine.dataset.eventId = stableId;
       nextLine.innerHTML = buildThinkingRuntimeLineInnerHtml(contentHtml);
       slot.appendChild(nextLine);
+      if (nextLine.dataset.state === "live") return;
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -288,8 +289,11 @@
         const pulse = agentPulseOffset(agent);
         if (!row) {
           row = document.createElement("div");
-          row.className = "message-thinking-row";
+          row.className = "message-thinking-row is-appearing";
           row.dataset.agent = agent;
+          row.addEventListener("animationend", (event) => {
+            if (event.target === row) row.classList.remove("is-appearing");
+          });
           row.innerHTML = `
             <span class="message-thinking-icons">
               <span class="message-thinking-icon-wrap">
