@@ -34,7 +34,7 @@
     dpGitContent?.addEventListener("contextmenu", (event) => {
       const fileRow = event.target.closest(".git-commit-file-row");
       const path = String(fileRow?.dataset.path || "").trim();
-      if (path) void dpOpenFileContextMenu(path, event);
+      if (path) void dpOpenFileContextMenu(path, event, { openFile: fileRow.dataset.untracked !== "1" });
     });
     document.getElementById("gitPinnedSummaryAside")?.addEventListener("click", async (event) => {
       if (event.target.closest(".git-summary-pin")) {
@@ -201,7 +201,7 @@
       expand.addEventListener("contextmenu", (event) => {
         const file = event.target.closest(".git-commit-file-row");
         const path = String(file?.dataset.path || "").trim();
-        if (path) void dpOpenFileContextMenu(path, event);
+        if (path) void dpOpenFileContextMenu(path, event, { openFile: file.dataset.untracked !== "1" });
       });
 
       summary.addEventListener("mouseover", (event) => {

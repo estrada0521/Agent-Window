@@ -83,6 +83,7 @@ struct FileContextMenuPayload {
     x: f64,
     y: f64,
     file_exists: bool,
+    open_file: bool,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -717,8 +718,11 @@ fn show_file_context_menu(
     )
     .build(&app)
     .map_err(|err| err.to_string())?;
-    let menu = MenuBuilder::new(&app)
-        .item(&open)
+    let mut builder = MenuBuilder::new(&app);
+    if payload.open_file {
+        builder = builder.item(&open);
+    }
+    let menu = builder
         .item(&reveal)
         .separator()
         .item(&copy_absolute)

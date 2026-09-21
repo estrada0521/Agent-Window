@@ -49,6 +49,7 @@
             x: Math.round(Number(childPayload.x || 0) + Number(frameRect.left || 0)),
             y: Math.round(Number(childPayload.y || 0) + Number(frameRect.top || 0)),
             fileExists: !!childPayload.fileExists,
+            openFile: !!childPayload.openFile,
           },
         }).catch((err) => {
           event.source?.postMessage({ type: "file-context-menu-error", message: String(err || "Failed to open file menu.") }, "*");

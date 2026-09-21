@@ -561,7 +561,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       setStatus(message, error);
       setTimeout(() => setStatus(""), STATUS_TOAST_MS);
     };
-    const dpOpenFileContextMenu = async (rawPath, event) => {
+    const dpOpenFileContextMenu = async (rawPath, event, { openFile = false } = {}) => {
       const path = dpNormalizePath(rawPath);
       if (!path) return;
       event.preventDefault();
@@ -588,6 +588,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           x: Math.round(Number(event.clientX) || 0),
           y: Math.round(Number(event.clientY) || 0),
           fileExists,
+          openFile,
         },
       }, "*");
     };

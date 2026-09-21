@@ -249,7 +249,7 @@ class FileRuntime:
     @staticmethod
     def _reveal_in_finder(full: str) -> None:
         subprocess.Popen(
-            ["open", "-R", full],
+            ["open", full] if os.path.isdir(full) else ["open", "-R", full],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
