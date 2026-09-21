@@ -81,7 +81,7 @@ def _read_commit_list(root: Path, *, offset: int, limit: int) -> dict:
         "log",
         f"--skip={offset}",
         f"--max-count={limit}",
-        "--format=%h\x1f%aI\x1f%s\x1f%D",
+        "--format=%h\x1f%s\x1f%D",
     )
     if log_res.returncode != 0:
         raise RuntimeError((log_res.stderr or log_res.stdout or "git log failed").strip())
@@ -91,17 +91,12 @@ def _read_commit_list(root: Path, *, offset: int, limit: int) -> dict:
         if not line:
             continue
         parts = line.split("\x1f")
-        if len(parts) < 3:
+        if len(parts) < 2:
             raise RuntimeError(f"git log returned a malformed commit line: {line!r}")
-        h, ts, subj = parts[0], parts[1], parts[2]
-        hhmm = ""
-        t_part = ts.split("T")[1] if "T" in ts else ""
-        if t_part:
-            hhmm = t_part[:5]
-        refs = parts[3].strip() if len(parts) > 3 else ""
+        h, subj = parts[0], parts[1]
+        refs = parts[2].strip() if len(parts) > 2 else ""
         recent_commits.append({
             "hash": h,
-            "time": hhmm,
             "subject": subj,
             "is_origin_main": "origin/main" in refs,
         })
@@ -117,24 +112,19 @@ def _read_commit_list(root: Path, *, offset: int, limit: int) -> dict:
         if len(stripped) <= 12 and all(c in "0123456789abcdef" for c in stripped):
             current_hash = stripped
         elif current_hash and "changed" in stripped:
-            ins = dels = changed_paths = 0
+            ins = dels = 0
             for part in stripped.split(","):
                 part = part.strip()
-                files_match = re.search(r"(\d+)\s+files?\s+changed", part)
-                if files_match:
-                    changed_paths = int(files_match.group(1))
-                    continue
                 if "insertion" in part:
                     ins = int(part.split()[0])
                 elif "deletion" in part:
                     dels = int(part.split()[0])
-            commit_stats[current_hash] = {"ins": ins, "dels": dels, "changed_paths": changed_paths}
+            commit_stats[current_hash] = {"ins": ins, "dels": dels}
             current_hash = None
     for commit in recent_commits:
         stats = commit_stats.get(commit["hash"]) or {}
         commit["ins"] = int(stats.get("ins", 0) or 0)
         commit["dels"] = int(stats.get("dels", 0) or 0)
-        commit["changed_paths"] = int(stats.get("changed_paths", 0) or 0)
     return {
         "total_commits": total_commits,
         "recent_commits": recent_commits,
