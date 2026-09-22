@@ -31,11 +31,6 @@
           existingRow.className = nextRow.className;
           if (nextRow.dataset.diffKind) existingRow.dataset.diffKind = nextRow.dataset.diffKind;
           else delete existingRow.dataset.diffKind;
-          const existingLabel = existingRow.querySelector(".git-summary-label");
-          const nextLabel = nextRow.querySelector(".git-summary-label");
-          if (existingLabel && nextLabel && existingLabel.textContent !== nextLabel.textContent) {
-            existingLabel.textContent = nextLabel.textContent;
-          }
           const existingMeta = existingRow.querySelector(".git-summary-meta-text");
           const nextMeta = nextRow.querySelector(".git-summary-meta-text");
           if (existingMeta && nextMeta && existingMeta.textContent !== nextMeta.textContent) {

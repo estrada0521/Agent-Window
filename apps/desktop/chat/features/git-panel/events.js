@@ -60,7 +60,7 @@
         diffKind: "worktree",
         hash: "",
         rowHtml: row.outerHTML,
-        subject: row.querySelector(".git-summary-label")?.textContent?.trim() || "Uncommitted changes",
+        subject: "Uncommitted changes",
       });
     });
 

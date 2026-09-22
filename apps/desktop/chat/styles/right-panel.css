@@ -526,10 +526,6 @@
     .git-commit-detail-head .git-summary-row .git-commit-chevron {
       color: var(--icon-fg);
     }
-    .git-summary-wrap .git-summary-label,
-    .git-commit-detail-head .git-summary-row .git-summary-label {
-      display: none;
-    }
     .git-summary-wrap .git-summary-meta-text,
     .git-commit-detail-head .git-summary-row .git-summary-meta-text {
       font-size: var(--text-size, 13px);
@@ -751,8 +747,7 @@
     .git-commit-list .git-commit-row .git-commit-info {
       box-sizing: border-box;
     }
-    .git-commit-subject,
-    .git-summary-label {
+    .git-commit-subject {
       width: 100%;
       min-width: 0;
       overflow: hidden;
@@ -770,8 +765,7 @@
     .git-commit-list .git-commit-row .git-summary-meta-text {
       color: var(--fg);
     }
-    .git-commit-detail-head .git-commit-subject,
-    .git-commit-detail-head .git-summary-label {
+    .git-commit-detail-head .git-commit-subject {
       color: var(--fg);
     }
     .git-commit-detail-head .git-commit-chevron {

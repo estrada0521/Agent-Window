@@ -403,7 +403,7 @@
         event.preventDefault();
         event.stopPropagation();
         const subject = diffKind
-          ? (row.querySelector(".git-summary-label")?.textContent?.trim() || "Uncommitted changes")
+          ? "Uncommitted changes"
           : (row.querySelector(".git-commit-subject")?.textContent?.trim() || hash.slice(0, 7));
         await openDetail({ diffKind, hash, rowHtml: row.outerHTML, subject });
       };
