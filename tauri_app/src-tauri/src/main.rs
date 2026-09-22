@@ -701,6 +701,7 @@ fn show_file_context_menu(
         format!("{}action:openFile", NATIVE_MENU_PREFIX),
         "Open Current File",
     )
+    .accelerator("Cmd+O")
     .enabled(payload.file_exists)
     .build(&app)
     .map_err(|err| err.to_string())?;

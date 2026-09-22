@@ -17,7 +17,7 @@
       root.querySelectorAll(".git-summary-pin").forEach((btn) => {
         btn.setAttribute("aria-pressed", dpGitSummaryPinned ? "true" : "false");
         btn.classList.toggle("is-pinned", dpGitSummaryPinned);
-        btn.title = dpGitSummaryPinned ? "Unpin from Chat" : "Pin to Chat";
+        btn.title = dpGitSummaryPinned ? "Unpin from Chat [⇧⌘P]" : "Pin to Chat [⇧⌘P]";
       });
     };
     const dpRenderGitSummaryRoot = (root, rowHtml, { animateCounts = true } = {}) => {

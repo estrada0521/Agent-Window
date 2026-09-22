@@ -1229,6 +1229,16 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           if (hasDesktopRightPanelOverlay()) dpToggleGitSummaryPinned();
           return;
         }
+        if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyO") {
+          const targets = dpActivePanelTargets(
+            dpRepoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
+          );
+          if (targets.length) {
+            event.preventDefault();
+            for (const p of targets) void dpPostOpenFile(p);
+          }
+          return;
+        }
         if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyY") {
           const targets = dpActivePanelTargets(
             dpRepoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
