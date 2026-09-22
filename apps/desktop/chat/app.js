@@ -1235,7 +1235,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           }
           return;
         }
-        if (event.altKey && event.shiftKey && !event.ctrlKey && event.code === "KeyC") {
+        if (event.metaKey && event.altKey && !event.ctrlKey && event.code === "KeyC") {
           if (dpPanelOpen && dpActivePanelView === "repo") {
             let targets = dpRepoOrderedSelectedEntries();
             if (!targets.length) {
@@ -1244,7 +1244,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             }
             if (targets.length) {
               event.preventDefault();
-              void dpCopyFilePath(targets, event.metaKey).catch((err) => {
+              void dpCopyFilePath(targets, !event.shiftKey).catch((err) => {
                 dpShowActionStatus(err?.message || "Failed to copy path.", true);
               });
             }
