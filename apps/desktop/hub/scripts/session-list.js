@@ -463,7 +463,11 @@
 
     function updateDeskSessionListFade() {
       if (!_deskSessionList) return;
-      _deskSessionList.dataset.scrollFade = computeScrollFadeState(_deskSessionList);
+      const { scrollTop, scrollHeight, clientHeight } = _deskSessionList;
+      const overflowing = scrollHeight > clientHeight + 1;
+      const atTop = !overflowing || scrollTop <= 1;
+      // Keep a bottom edge fade above the in-flow footer credit.
+      _deskSessionList.dataset.scrollFade = atTop ? "bottom" : "both";
     }
 
     function updateDeskUnreadSessions(active) {

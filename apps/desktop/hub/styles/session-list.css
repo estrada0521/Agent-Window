@@ -33,7 +33,7 @@
       min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 0 0 2.15em;
+      padding: 0;
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
@@ -51,23 +51,17 @@
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
     }
     .desk-hub-footer-credit {
-      position: absolute;
-      left: 2.6em;
-      bottom: 0.8em;
+      position: relative;
+      flex: none;
       z-index: 1;
       margin: 0;
-      padding: 0;
+      padding: 0.5em 0 0.8em 2.6em;
       text-align: left;
       font-size: 0.77em;
       opacity: 0.55;
       color: var(--muted);
       pointer-events: none;
       white-space: nowrap;
-      text-shadow:
-        0 0 0.3em var(--hub-glass),
-        0 0 0.3em var(--hub-glass),
-        0 0 0.6em var(--hub-glass),
-        0 0 0.6em var(--hub-glass);
     }
     .desk-hub-message {
       flex: none;
