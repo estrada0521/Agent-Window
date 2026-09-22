@@ -175,3 +175,4 @@ Agent Window itself writes filesystem data only under `~/.agent-window/` and `<w
 ## License
 
 [0BSD](LICENSE). The file icons in the screenshots are from Material Icon Theme.
+
