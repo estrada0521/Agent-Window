@@ -71,7 +71,13 @@
       loadMoreRetryText: "Retry loading commits",
       loadMoreCountText: (loaded, total) => `Load more (${loaded}/${total})`,
       worktreeDetailClass: true,
-      detailHeadHtml: ({ isWorktree, rowHtml }) => (isWorktree ? "" : rowHtml),
+      detailHeadHtml: ({ isWorktree, rowHtml }) => {
+        if (isWorktree) return "";
+        const temp = document.createElement("div");
+        temp.innerHTML = rowHtml;
+        temp.querySelector(".git-commit-paths")?.remove();
+        return temp.innerHTML;
+      },
       commitRowOptions: (commit, newHashes) => ({ animate: !!(newHashes && newHashes.has(commit.hash)) }),
       onOverview: (data) => {
         dpGitHeaderSummaryState = dpBuildSummaryState(data || {});
