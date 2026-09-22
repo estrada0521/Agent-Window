@@ -316,11 +316,15 @@
           host.onFingerprintChanged?.(data);
         }
         if (state.detailContext?.kind === "worktree" && state.detailContext?.wrapEl) {
-          await renderFileStatsInto(state.detailContext.wrapEl, "", {
-            allowUndo: true,
-            preserveCurrent: true,
-            incremental: true,
-          });
+          if (!data?.worktree_has_diff) {
+            closeDetail({ refreshList: false });
+          } else {
+            await renderFileStatsInto(state.detailContext.wrapEl, "", {
+              allowUndo: true,
+              preserveCurrent: true,
+              incremental: true,
+            });
+          }
         }
       };
       const refresh = async () => {

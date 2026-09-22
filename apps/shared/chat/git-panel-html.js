@@ -10,17 +10,13 @@
     };
     const gitCommitChevronSvg = '<svg class="git-commit-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
     const gitSummaryRowHtml = (data, { leadingHtml = "" } = {}) => {
+      if (!data?.worktree_has_diff) return "";
       const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
       const worktreeAdded = Math.max(0, parseInt(data?.worktree_added) || 0);
       const worktreeDeleted = Math.max(0, parseInt(data?.worktree_deleted) || 0);
-      const worktreeClickable = !!data?.worktree_has_diff;
-      const worktreeLabel = changedPaths ? "Uncommitted changes" : "Working tree clean";
-      const worktreeMeta = changedPaths
-        ? `<span class="git-summary-meta-text">${gitPathCountText(changedPaths)}</span>`
-        : `<span class="git-summary-meta-text">No changes</span>`;
+      const worktreeMeta = `<span class="git-summary-meta-text">${gitPathCountText(changedPaths)}</span>`;
       const worktreeCounts = gitCountsHtml(worktreeAdded, worktreeDeleted);
-      const chevron = worktreeClickable ? gitCommitChevronSvg : "";
-      return `<div class="git-summary-row${worktreeClickable ? " clickable" : ""}"${worktreeClickable ? ' data-diff-kind="worktree"' : ""}>${leadingHtml}<div class="git-commit-info"><div class="git-summary-label">${escapeHtml(worktreeLabel)}</div><div class="git-commit-meta">${worktreeMeta}${worktreeCounts}</div></div>${chevron}</div>`;
+      return `<div class="git-summary-row clickable" data-diff-kind="worktree">${leadingHtml}<div class="git-commit-info"><div class="git-summary-label">Uncommitted changes</div><div class="git-commit-meta">${worktreeMeta}${worktreeCounts}</div></div>${gitCommitChevronSvg}</div>`;
     };
     const gitCommitFileListHtml = (files, rowOptions = {}) =>
       `<div class="git-commit-file-list">${(files || []).map((entry) => gitCommitFileRowHtml(entry, rowOptions)).join("")}</div>`;
