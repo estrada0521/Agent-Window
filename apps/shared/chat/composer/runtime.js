@@ -57,38 +57,42 @@
       if (typeof ResizeObserver === "function") new ResizeObserver(syncAttachPreviewFade).observe(attachPreviewRow);
     }
     if (attachBtn && attachInput && attachPreviewRow) {
-      const addCard = (file, attachment) => {
+      const beginAttachCard = (file) => {
         const card = document.createElement("button");
         card.type = "button";
-        card.className = "attach-card";
-        card.setAttribute("aria-label", `Remove ${file.name}`);
-        if (file.type.startsWith("image/")) {
-          const img = document.createElement("img");
-          img.className = "attach-card-thumb";
-          img.draggable = false;
-          img.src = URL.createObjectURL(file);
-          img.alt = file.name;
-          card.appendChild(img);
-        } else {
-          const ext = document.createElement("div");
-          ext.className = "attach-card-ext";
-          ext.textContent = file.name.split(".").pop().slice(0, 5) || "FILE";
-          card.appendChild(ext);
-        }
-        card.addEventListener("mousedown", (event) => event.preventDefault());
-        card.addEventListener("click", () => {
-          pendingAttachments = pendingAttachments.filter((a) => a !== attachment);
+        card.className = "attach-card is-uploading";
+        card.setAttribute("aria-label", `Uploading ${file.name}`);
+        card.setAttribute("aria-busy", "true");
+        let attachment = null;
+        let cancelled = false;
+        const abort = new AbortController();
+        let objectUrl = "";
+        const status = document.createElement("div");
+        status.className = "attach-card-ext";
+        status.innerHTML = loadingIndicatorHtml();
+        card.appendChild(status);
+        const removeCard = () => {
+          if (objectUrl) URL.revokeObjectURL(objectUrl);
+          objectUrl = "";
           card.remove();
           updateSendBtnVisibility();
           syncAttachPreviewFade();
           if (!attachPreviewRow.children.length) attachPreviewRow.style.display = "none";
           repositionOpenComposerMenu();
           if (typeof positionComposerDropdown === "function") positionComposerDropdown(attachPreviewRow);
-          if (attachment.path) {
+        };
+        card.addEventListener("mousedown", (event) => event.preventDefault());
+        card.addEventListener("click", () => {
+          cancelled = true;
+          abort.abort();
+          pendingAttachments = pendingAttachments.filter((a) => a !== attachment);
+          const path = attachment?.path;
+          removeCard();
+          if (path) {
             fetch("/delete-upload", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ path: attachment.path }),
+              body: JSON.stringify({ path }),
             }).catch(() => {});
           }
         });
@@ -97,6 +101,36 @@
         syncAttachPreviewFade();
         repositionOpenComposerMenu();
         if (typeof positionComposerDropdown === "function") positionComposerDropdown(attachPreviewRow);
+        return {
+          signal: abort.signal,
+          get cancelled() { return cancelled; },
+          complete(nextAttachment) {
+            if (cancelled || !card.isConnected) return;
+            attachment = nextAttachment;
+            card.classList.remove("is-uploading");
+            card.removeAttribute("aria-busy");
+            card.setAttribute("aria-label", `Remove ${file.name}`);
+            status.remove();
+            if (file.type.startsWith("image/")) {
+              const img = document.createElement("img");
+              img.className = "attach-card-thumb";
+              img.draggable = false;
+              objectUrl = URL.createObjectURL(file);
+              img.src = objectUrl;
+              img.alt = file.name;
+              card.appendChild(img);
+            } else {
+              const ext = document.createElement("div");
+              ext.className = "attach-card-ext";
+              ext.textContent = file.name.split(".").pop().slice(0, 5) || "FILE";
+              card.appendChild(ext);
+            }
+          },
+          discard() {
+            if (!card.isConnected) return;
+            removeCard();
+          },
+        };
       };
 __CHAT_INCLUDE:../upload-attached-files.js__
       const dtHasFiles = (dt) => dt && [...dt.types].includes("Files");

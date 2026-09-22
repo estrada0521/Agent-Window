@@ -97,6 +97,11 @@ __CHAT_INCLUDE:../shortcut-commands.js__
       if (sendLocked) {
         return false;
       }
+      if (attachUploadsInFlight > 0) {
+        setStatus("upload in progress", true);
+        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
+        return false;
+      }
       sendLocked = true;
       const message = document.getElementById("message");
       const rawInput = forcedText != null ? forcedText : message.value;

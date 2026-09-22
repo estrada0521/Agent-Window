@@ -3,6 +3,7 @@
     let sessionActive = null;
     const canComposeInSession = () => sessionActive === true;
     let pendingAttachments = [];
+    let attachUploadsInFlight = 0;
     let availableTargets = [];
     let currentSessionName = "";
     let _renderedIds = new Set();
