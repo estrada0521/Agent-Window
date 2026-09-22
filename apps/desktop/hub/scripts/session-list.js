@@ -415,6 +415,7 @@
     function renderDesktopSessions(active, archived) {
       if (!_deskSessionList) return;
       const firstRects = captureDeskSessionRowRects();
+      const newSessionSection = _deskNewSessionToggle?.closest(".desk-new-session-section") || null;
       let html = "";
       if (active.length) {
         html += `<div class="desk-section-label">Active</div>`;
@@ -428,6 +429,7 @@
         html = `<div class="desk-empty-list">No sessions found</div>`;
       }
       _deskSessionList.innerHTML = html;
+      if (newSessionSection) _deskSessionList.prepend(newSessionSection);
       _deskSessionList.querySelectorAll(".desk-swipe-row").forEach(initDeskSwipeRow);
       updateDeskSessionListFade();
       flipDeskSessionRows(firstRects);
@@ -522,7 +524,9 @@
         if (requestSeq !== _deskSessionsRequestSeq) return;
         if (_deskSessionsRenderedOnce || _hubSessionsCache.active.length || _hubSessionsCache.archived.length) return;
         if (_deskSessionList) {
+          const newSessionSection = _deskNewSessionToggle?.closest(".desk-new-session-section") || null;
           _deskSessionList.innerHTML = `<div class="desk-empty-list">Failed to load sessions</div>`;
+          if (newSessionSection) _deskSessionList.prepend(newSessionSection);
         }
       }
     }
