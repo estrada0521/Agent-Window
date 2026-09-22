@@ -162,31 +162,42 @@
           cancelStatsLoading();
         }
         if (String(requestSeq) !== wrapEl.dataset.fileStatsRequestSeq) return null;
+        const scroller = scrollRoot();
+        const savedScrollTop = preserveCurrent && scroller ? scroller.scrollTop : null;
+        const restoreScroll = () => {
+          if (savedScrollTop != null && scroller) scroller.scrollTop = savedScrollTop;
+        };
         if (loaded.mode === "sections") {
           applyGitFileStatsSectionsInto(wrapEl, loaded.sections, {
             allowUndo,
             incremental,
             emptyHtml: '<div class="git-commit-file-empty sheet-list-empty">No changed files</div>',
+            onBeforeFlip: restoreScroll,
           });
+          restoreScroll();
           return { files: loaded.files };
         }
         if (!loaded.files.length) {
           wrapEl.dataset.fileStatsSignature = "";
           wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty">No changed files</div>';
+          restoreScroll();
           return loaded.data;
         }
         if (incremental && wrapEl.querySelector(".git-commit-file-list")) {
           applyGitFileStatsSectionsInto(wrapEl, [{ title: "", kind: scope || "commit", files: loaded.files }], {
             allowUndo,
             incremental,
+            onBeforeFlip: restoreScroll,
           });
         } else {
           const fileRowKey = (el) => el.dataset.path || "";
           const firstRects = captureListRowRects(wrapEl, ".git-commit-file-row", fileRowKey);
           wrapEl.dataset.fileStatsSignature = gitFileStatsRowsSignature([{ kind: scope || "commit", files: loaded.files }]);
           wrapEl.innerHTML = gitCommitFileListHtml(loaded.files, { allowUndo, scope });
+          restoreScroll();
           flipListRows(wrapEl, ".git-commit-file-row", fileRowKey, firstRects);
         }
+        restoreScroll();
         return loaded.data;
       };
       const closeDetail = ({ refreshList = false } = {}) => {
@@ -224,7 +235,7 @@
         disconnectObserver();
         state.detailNeedsRefresh = false;
         const headEl = rootEl.querySelector(".git-commit-detail-head");
-        const bodyEl = rootEl.querySelector(".git-commit-detail-body");
+        let bodyEl = rootEl.querySelector(".git-commit-detail-body");
         if (headEl) {
           headEl.title = subject;
           headEl.innerHTML = host.detailHeadHtml
@@ -232,6 +243,12 @@
             : rowHtml;
         }
         if (!bodyEl) return;
+        if (!instant) {
+          const freshBody = document.createElement("div");
+          freshBody.className = bodyEl.className;
+          bodyEl.replaceWith(freshBody);
+          bodyEl = freshBody;
+        }
         const wrapEl = document.createElement("div");
         wrapEl.className = "git-commit-file-wrap";
         const allowUndo = isWorktree;
@@ -245,6 +262,8 @@
           wrapEl.innerHTML = gitCommitFileListHtml(seed.files, { allowUndo, scope });
           seeded = true;
         }
+        const holdFiles = !!host.holdDetailFilesUntilReady && !seeded;
+        if (holdFiles) wrapEl.hidden = true;
         if (instant) el.classList.add("git-instant");
         else el.classList.add("git-transitioning");
         bodyEl.appendChild(wrapEl);
@@ -259,7 +278,10 @@
         };
         host.onOpenDetail?.({ diffKind, hash, rowHtml, subject, isWorktree });
         resetListScroll();
-        requestAnimationFrame(() => el.classList.remove("git-transitioning", "git-instant"));
+        requestAnimationFrame(() => {
+          el.classList.remove("git-transitioning");
+          if (!instant) el.classList.remove("git-instant");
+        });
         if (seeded) {
           host.onDetailFilesReady?.({
             wrapEl,
@@ -275,6 +297,7 @@
             allowUndo,
             scope,
           });
+          if (holdFiles) wrapEl.hidden = false;
           host.onDetailFilesReady?.({
             wrapEl,
             hash: state.detailContext.hash,
@@ -283,6 +306,7 @@
           });
         } catch (_) {
           wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty error">Failed to load file stats</div>';
+          if (holdFiles) wrapEl.hidden = false;
           host.onDetailFilesReady?.({
             wrapEl,
             hash: state.detailContext.hash,

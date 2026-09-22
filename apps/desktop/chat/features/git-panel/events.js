@@ -56,7 +56,7 @@
       event.stopPropagation();
       const aside = document.getElementById("gitPinnedSummaryAside");
       const seedSections = Array.isArray(dpPinnedExpandSections) ? dpPinnedExpandSections : null;
-      const instant = !!(aside?.classList.contains("is-expanded") && seedSections?.length);
+      const useSeed = !!(aside?.classList.contains("is-expanded") && seedSections?.length);
       if (!dpGitContent.querySelector(".git-stack")) {
         dpRenderGitShell();
         gitSession.invalidateFingerprint();
@@ -67,8 +67,8 @@
         hash: "",
         rowHtml: row.outerHTML,
         subject: "Uncommitted changes",
-        instant,
-        seed: instant ? { mode: "sections", sections: seedSections } : null,
+        instant: true,
+        seed: useSeed ? { mode: "sections", sections: seedSections } : null,
       });
       void openDesktopRightPanel({ view: "git", reset: false });
     });

@@ -740,6 +740,12 @@ __CHAT_INCLUDE:../features/git-panel.js__
         });
         if (nextRenderSig === repoPanelRenderSig && repoBrowserMountEl()?.childElementCount) return;
         const prevList = repoBrowserMountEl()?.querySelector(".mobile-sheet-list");
+        const isSamePath = path === _repoBrowserPath && !!prevList;
+        const previousScrollTop = isSamePath ? prevList.scrollTop : 0;
+        const rowKey = (el) => el.title || "";
+        const firstRects = transition === "none" && isSamePath
+          ? captureListRowRects(prevList, ".repo-browser-item", rowKey)
+          : null;
         if (prevList && _repoBrowserPath !== path) repoScrollByPath.set(_repoBrowserPath, prevList.scrollTop);
         repoPanelRenderSig = nextRenderSig;
         _repoBrowserPath = path;
@@ -853,7 +859,9 @@ __CHAT_INCLUDE:../features/git-panel.js__
         list.appendChild(body);
         if (mount) mount.replaceChildren(list);
         if (transition === "back" && repoScrollByPath.has(path)) restoreSheetListScroll(list, repoScrollByPath.get(path));
+        else if (transition === "none" && isSamePath) restoreSheetListScroll(list, previousScrollTop);
         else resetSheetListScroll(list);
+        flipListRows(list, ".repo-browser-item", rowKey, firstRects);
         finishChrome();
       };
 

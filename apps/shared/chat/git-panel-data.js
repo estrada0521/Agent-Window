@@ -169,6 +169,7 @@
       allowUndo = false,
       incremental = false,
       emptyHtml = '<div class="git-commit-file-empty sheet-list-empty">No changed files</div>',
+      onBeforeFlip = null,
     } = {}) => {
       const safeSections = (sections || []).filter((section) => Array.isArray(section.files) && section.files.length);
       const signature = gitFileStatsRowsSignature(safeSections);
@@ -178,7 +179,10 @@
         return scope ? `${scope}:${path}` : path;
       };
       const firstRects = captureListRowRects(wrapEl, ".git-commit-file-row", fileRowKey);
-      const finishFlip = () => flipListRows(wrapEl, ".git-commit-file-row", fileRowKey, firstRects);
+      const finishFlip = () => {
+        if (typeof onBeforeFlip === "function") onBeforeFlip();
+        flipListRows(wrapEl, ".git-commit-file-row", fileRowKey, firstRects);
+      };
       if (!safeSections.length) {
         wrapEl.dataset.fileStatsSignature = "";
         wrapEl.innerHTML = emptyHtml;

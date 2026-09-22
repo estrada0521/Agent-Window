@@ -118,10 +118,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
     const setGitDetailChrome = ({ rowHtml = "", subject = "Git", hash = "", isWorktree = false } = {}) => {
       _gitDetailChrome = { rowHtml, subject };
       applyGitDetailChrome(_gitDetailChrome);
-      if (isWorktree || !hash) {
-        animateGitSheetList(".git-detail-view", "from-top");
-        return;
-      }
+      if (isWorktree || !hash) return;
       void renderGitCommitInfo(hash);
     };
     const refreshGitDetailTitleFromOverview = (data) => {
@@ -180,6 +177,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       observerRoot: gitSheetListEl,
       scrollRoot: gitSheetListEl,
       pinListScroll: resetSheetListScroll,
+      holdDetailFilesUntilReady: true,
       canLoad: () => !!mobileSheet,
       canRefresh: () => !!mobileSheet,
       renderShell: (data) => {
@@ -211,8 +209,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       onCloseDetail: resetGitDetailChrome,
       onOpenDetail: setGitDetailChrome,
       onDetailFilesReady: ({ wrapEl, isWorktree }) => {
-        if (isWorktree) return;
-        ensureGitDetailChangedTitle(wrapEl);
+        if (!isWorktree) ensureGitDetailChangedTitle(wrapEl);
         feedInFromTop(wrapEl);
       },
       onOverview: refreshGitDetailTitleFromOverview,
