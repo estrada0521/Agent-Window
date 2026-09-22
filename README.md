@@ -1,10 +1,12 @@
+<div align="center">
+
 # Agent Window
 
-Agent Window is a UNIX-philosophy **local interface for macOS** that watches, from outside, a workspace where multiple Agent CLIs are running.
-
-Each Agent CLI launches normally inside a tmux pane. It never calls a model through an API or SDK. **It uses only the capabilities each CLI already has.**
+A UNIX-philosophy Agent application for macOS.
 
 [Design philosophy](DESIGN.md) · [日本語](README_jp.md)
+
+</div>
 
 <p align="center">
   <img src="media/agent-window-hero-1.png" width="100%" alt="Agent Window hero 1">
@@ -13,151 +15,132 @@ Each Agent CLI launches normally inside a tmux pane. It never calls a model thro
 
 ---
 
-# Setup
+## Principles
 
-The current implementation targets macOS.
+1. The unit is one log. Its file: `~/.agent-window/session/{session_name}/.log.jsonl`.
+2. An Agent is an ordinary CLI, running inside tmux. Any number of them.
+3. Both workspace and CLI can be swapped mid-session. The same log continues.
+4. Sending is `tmux send-keys`. Text from the input field goes into the Agent's pane.
+5. Receiving is watching each CLI's native log. Tool calls show on screen only while running, and aren't kept in the log.
 
-## Requirements
+## Setup
 
-* `python3`
-* `tmux`
-* `cargo`
-* `tauri-cli`
-* Xcode Command Line Tools
-
-`./setup/preflight` checks for missing dependencies and the commands needed to install them. The script never installs anything itself.
-
-Install whichever Agent CLIs you plan to use individually, and authenticate each one the normal way.
-
-## Launch
-
-Run the following from the repository root.
+Requires `python3`, `tmux`, `cargo`, `tauri-cli`, Xcode Command Line Tools. `./setup/preflight` shows what's missing. Install and authenticate the Agent CLIs you'll use yourself.
 
 ```bash
 ./tauri_app/tauri_start
 ```
 
-This builds and launches the Tauri App. The Hub is started by the Tauri App on the port in the repo's `hub-port` file (`8788`); change that file to move it.
+Builds the Tauri App, saves it to `/Applications/Agent Window.app`, and launches it.
 
-# Use
+## session
 
-## Start a session
+`New Session` picks a workspace and starts.
 
-Choose a workspace from `New Session` (`⌘N`) in the Hub.
+| Action | Effect | Note |
+|---|---|---|
+| Archive | Ends the tmux session | Log stays |
+| Revive | Recreates the tmux session from the saved workspace and Agent set | Resume the conversation with the CLI's own `/resume` |
+| Delete | Permanently deletes the session's saved data | Archived only |
+| Rename | Changes the session name | |
+| Change Workspace | Changes the workspace | Archived only |
+| Reset Agents | Clears the saved Agent set | The one used by Revive |
 
-A unified log continues across changes in session name, workspace, and participating Agents. `New Session` starts another log; when to do that is up to the human.
+## Agent
 
-Archive, revive, delete, rename, and change a session's workspace from the Hub (right-click a session in the sidebar). Renaming does not restart the chat server or change the URL.
+`Add / Remove Agent` adds and removes Agents. Adding the same CLI more than once gets an instance name like `Claude-2`.
 
-`⌘1`–`⌘9` switch to the 1st–9th active session.
-
-## Add an Agent
-
-`Add / Remove Agent` in the top right adds or removes Agents from the session. Running more than one instance of the same CLI Agent produces instance names such as `Claude-2`.
-
-* `Terminal` — opens a plain shell at the workspace root
-* `tmux window` — opens a compact, pane-switching tmux terminal directly (the tmux socket name is fixed as `agent-window`)
-* `Finder` — opens the current workspace in Finder
-
-The separate reload button beside it hard-reloads the GUI server. If the source code has changed, the running server is replaced with the new implementation. `⌘R` does this for the chat server, `⇧⌘R` for the Hub server.
-
-<p align="center">
-  <img src="media/agent-window-menu.png" width="100%" alt="Menu">
-</p>
+The CLI itself opens from `tmux window`.
 
 ## Send
 
-The input field is normally minimized to leave more room for the chat, and expands with the `O` button at the bottom of the screen or by pressing the scroll wheel. Which Agent icons are selected determines who a message is sent to.
+The `O` button opens the input field.
 
-Text in the input field is entered directly, via `tmux send-keys`, into the pane running the selected Agent CLI. It is not converted into an Agent Window-specific message format, so **slash commands and other native CLI commands also pass through the same input field.** A failed send is detected as `send_error`, but success is not notified. Minimal controls that CLIs don't offer by default — restarting a pane, interrupting from mobile — are wired in by Agent Window.
+`@` searches files in the workspace. Attached files are saved to `<workspace>/.agent-window/uploads/`, and their path is passed to the Agent as text.
 
-Agent Window also recognizes these shortcut commands:
+Commands in the input field:
 
-| Command | Action |
-| --- | --- |
-| `/restart` | Restart the CLI. |
-| `/open-pane` | Open the selected Agent's tmux pane. Opens the terminal if nothing is selected. Desktop only. |
-| `/terminal <text>` | Type text directly into the terminal pane. Mobile only. |
-| `/nativelog` | Reveal the selected Agent's native log in Finder. Desktop only. |
-| `/log` | Insert `.agent-window/.log.jsonl` into the message. Also works in the middle of text. |
+| Command | Target | Effect | Note |
+| --- | --- | --- | --- |
+| `/restart` |  | Restarts the Agent's pane | |
+| `/log` |  | Inserts the log's path into the message | |
+| `/open-pane` | desktop | Opens the Agent's pane | Opens the terminal pane if none is selected |
+| `/nativelog` | desktop | Reveals the Agent's native log in Finder | |
+| `/terminal <text>` | mobile | Sends text to the terminal pane | |
 
-On mobile, `Pane Trace` in the menu shows the Terminal and Agent panes, with buttons for `Esc`, `Ctrl-C`, the arrow keys, and `Enter`. CLI commands can be registered in `PANE_TEXT_MACROS` (`shortcut_command/catalog.py`).
+An Agent can send to another Agent with `agent-send`. It's typed into the target's pane with a prefix like `[From: Claude]`.
 
-Typing `@` searches files in the workspace. Files can also be attached with the plus button or by drag-and-drop. Attached files are saved to `<workspace>/.agent-window/uploads/`, and their path is passed to the Agent as ordinary text.
-
-## Read
-
-The GUI displays the unified log as a single timeline across the human and all Agents.
-
-Messages continue in the same unified log as CLIs switch, Agents run concurrently, and processes restart. Changes to the session name or workspace leave past entries unchanged.
-
-The unified log's substance is an append-only JSONL file.
-
-```text
-~/.agent-window/session/{session_name}/.log.jsonl
+```bash
+printf '%s' '<message>' | agent-send <target>
 ```
 
-It's also reachable from the current workspace via a symlink. It isn't a database closed inside Agent Window — it survives Agent Window stopping, and reads as an ordinary file.
+To use it, add `message_delivery/agent-send` to PATH and place the repo root's `SKILL.md` yourself.
 
-The unified log isn't each CLI's detailed execution history. It's a projection, reduced to a granularity both humans and Agents can read across.
+## workspace
 
-Tool calls are streamed to the screen while running, for a sense of progress, but are not kept in this timeline. Clicking the icon opens the corresponding tmux pane.
+The right pane shows git status and a file tree. Diffs open in `git difftool`. Files open in the default app; on mobile, a built-in viewer.
 
-Each CLI's execution record is watched from outside, and the process/log-path mapping is re-resolved whenever necessary. So the CLI process's lifespan and the unified log's lifespan don't have to match.
+File icons: put a symlink to a file icon theme's definition JSON (VS Code and similar) at `~/.agent-window/file-icon-theme.json`.
 
-Each entry records the path of its source native log, and its position within it.
+## Fit Height
 
-## Watch the workspace
-
-Git and workspace state are watched and projected onto the right pane. File search also uses the observed workspace information.
-
-Clicking a file opens it in the macOS default application. The desktop version of Agent Window does not reimplement a file viewer that already exists elsewhere. Mobile can't rely on that, so a bottom-sheet-style built-in viewer opens instead.
-
-Clicking a changed file, whether uncommitted or inside a past commit, opens it in git's configured diff viewer (`git difftool`).
-
-File icons use a file icon theme from VS Code or similar IDEs as is: put a symlink to the theme's definition JSON at `~/.agent-window/file-icon-theme.json`. Without one, the built-in icons are used.
-
-## Fit the window
-
-Agent Window is a means, not a place to work, so it fits the window itself to its content and the screen instead of taking up working space.
-
-`⌘,` opens the Appearance menu (theme, text size, window controls) and `⌘.` opens the chat menu (Terminal, Finder, add / remove Agents).
-
-| Key | Action |
-|---|---|
-| `⌥⌘0` / `⌥⌘9` / `⌥⌘8` | Default / compact / mini size |
-| `⌘B` / `⌘E` | Toggle the Hub sidebar / right pane (add `⌥` to grow the window outward instead) |
-| `⌥⌘↑` `←` `→` `↓` | Move to that screen edge; `↓` centers |
-| `⌥⌘P` | Keep above other windows |
-| `⌥⌘H` | Match the window height to the latest message |
-| `⌥⌘M` | In Fit Height, collapse the window to its minimum and hold it there (restores on a new message) |
-
-With Fit Height (`⌥⌘H`) on, the Hub and right pane become native macOS menus.
+`⌥⌘H` keeps the window's height matched to the latest message. `⌥⌘M` collapses the window to its minimum; a new message restores it.
 
 <p align="center">
   <img src="media/agent-window-fit.gif" width="100%" alt="Fit Height demo">
 </p>
 
-## Connect Agents to each other
+## Shortcuts
 
-An Agent can send a message directly to another Agent in the session with `agent-send`. Place `SKILL.md` at the designated location if needed — it is the only SKILL Agent Window has committed to.
+<p align="center">
+  <img src="media/agent-window-menu.png" width="100%" alt="Menu">
+</p>
 
-```bash
-agent-send <target> <message>
-```
+| Hub | Key | Note |
+|---|---|---|
+| New Session | `⌘N` | |
+| Switch active session | `⌘1`–`⌘9` | |
 
-`agent-send` is a thin wrapper around the same `tmux send-keys` a human uses. It only resolves the destination and attaches a prefix such as `[From: Claude]`.
+| Control | Key | Note |
+|---|---|---|
+| Open the input field | `Enter` / wheel click | |
+| Close the input field | `Esc` | |
+| Switch send target | `Ctrl+1`–`Ctrl+9` | |
+| Reload chat server / Hub server | `⌘R` / `⇧⌘R` | Restarts the server and re-reads changed source |
+| Pin Git summary | `⇧⌘P` | |
 
-Here, success only means the input was delivered to the runtime. It doesn't mean the target Agent understood it or acted on it.
+| Appearance menu (`⌘,`) | Key | Note |
+|---|---|---|
+| theme | | System / light / dark |
+| text size | `⌘0` / `⌘+` / `⌘-` | Resizes the window to match |
 
-## Use it from a phone
+| chat menu (`⌘.`) | Key | Note |
+|---|---|---|
+| Terminal | `⌘T` | |
+| tmux window | `⌥⌘T` | |
+| Finder | `⌥⌘R` | |
+| Add / remove Agent | | |
 
-Hub binds only to `127.0.0.1` over HTTP. A phone reaches that loopback through Tailscale, which supplies the HTTPS a Home Screen PWA needs. Tailscale itself is configured outside this repository.
+| timeline | Key | Note |
+|---|---|---|
+| Jump to top / bottom | `⌘↑` / `⌘↓` | |
+| Previous / next message | `⌥↑` / `⌥↓` | |
 
-<!-- Regenerate from the "(original)" screenshots in media/ with (defaults only, no flags):
-     python3 user/round_and_glow.py media/agent-window-mobile-{dark,light}*"(original)".png
-     Then rename each "...(original)-rounded-glow.png" output to its plain
-     "agent-window-mobile-{dark,light}-N.png" name below. -->
+| window | Key | Note |
+|---|---|---|
+| Default / compact / mini size | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` | |
+| Toggle Hub / right pane | `⌘B` / `⌘E` | Add `⌥` to grow the window outward |
+| Move to screen edge | `⌥⌘↑` `←` `→` `↓` | `↓` centers |
+| Keep above other windows | `⌥⌘P` | |
+| Fit Height | `⌥⌘H` | |
+| Collapse to minimum | `⌥⌘M` | Restores on a new message. Fit Height only |
+
+## Mobile
+
+Connect to the Hub via Tailscale or similar, and use it as a PWA. Swipe left to open the menu that leads to git and the file tree.
+
+`Pane Trace` shows the CLI itself. A minimal set of key macros is provided as buttons. Register frequently used CLI commands in `PANE_TEXT_MACROS` in `shortcut_command/catalog.py`.
+
 <p align="center">
   <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">
   <img src="media/agent-window-mobile-dark-1.png" width="48%" alt="Mobile UI, dark 1">
@@ -173,11 +156,22 @@ Hub binds only to `127.0.0.1` over HTTP. A phone reaches that loopback through T
 
 Claude, Codex, Antigravity, Cursor, Grok.
 
-The receiving side needs to know where each CLI's native log lives and what format it's in, so there is per-CLI handling.
-The sending side is the same for every CLI. It only enters text into a pane, so there is no CLI-specific message protocol.
+## Stack
 
-# License
+The stack is mostly HTML/CSS/vanilla JavaScript and the Python standard library. Tauri/Rust is the exception, handling the OS boundary. There is no Node runtime, npm build, or DB; the following are used directly:
 
-[0BSD](LICENSE). Do whatever you want with it.
+- **browser primitive** — DOM, `fetch` / `EventSource`
+- **native OS API** — FSEvents / kqueue, AppKit / Objective-C
+- **canonical CLI** — git, tmux, Agent CLI
 
-The file icons in the screenshots are from Material Icon Theme. They are not bundled with this repository.
+## Footprint
+
+No telemetry. The only network dependencies besides the Agent CLIs are `marked` and `katex` from `cdn.jsdelivr.net`. Vendor them yourself if you want it fully local.
+
+The Hub occupies the port in the `hub-port` file (default `8788`); edit the file to change it. Each session occupies a fixed port derived from its workspace's path.
+
+Agent Window itself writes filesystem data only under `~/.agent-window/` and `<workspace>/.agent-window/`.
+
+## License
+
+[0BSD](LICENSE). The file icons in the screenshots are from Material Icon Theme.
