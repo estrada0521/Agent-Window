@@ -200,7 +200,6 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
         const previous = gitCountSnapshot(gitWorktreeButton());
         renderGitWorktreeButton(data || {});
         animateGitCountsFromSnapshot(gitWorktreeButton(), previous);
-        return { updateList: true };
       },
     });
     const updateGitPanel = async () => {
