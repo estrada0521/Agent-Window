@@ -54,14 +54,23 @@
       if (!row || !dpGitContent) return;
       event.preventDefault();
       event.stopPropagation();
-      const needReset = !dpGitContent.querySelector(".git-stack");
-      await openDesktopRightPanel({ view: "git", reset: needReset });
+      const aside = document.getElementById("gitPinnedSummaryAside");
+      const seedSections = Array.isArray(dpPinnedExpandSections) ? dpPinnedExpandSections : null;
+      const instant = !!(aside?.classList.contains("is-expanded") && seedSections?.length);
+      if (!dpGitContent.querySelector(".git-stack")) {
+        dpRenderGitShell();
+        gitSession.invalidateFingerprint();
+        dpApplyGitOverviewHeader();
+      }
       await dpOpenGitDetail({
         diffKind: "worktree",
         hash: "",
         rowHtml: row.outerHTML,
         subject: "Uncommitted changes",
+        instant,
+        seed: instant ? { mode: "sections", sections: seedSections } : null,
       });
+      void openDesktopRightPanel({ view: "git", reset: false });
     });
 
     (function initPinnedSummaryExpand() {
@@ -134,6 +143,7 @@
         if (!clear) return;
         fetchSeq++;
         refreshPromise = null;
+        dpPinnedExpandSections = null;
         expand.innerHTML = "";
       }
 
@@ -155,6 +165,7 @@
               return;
             }
 
+            dpPinnedExpandSections = sections;
             replaceExpandContent(sections.map(s =>
               `<div class="git-pinned-expand-section">` +
               gitCommitFileListHtml(s.files) +
@@ -162,6 +173,7 @@
             ).join(""));
           } catch (_) {
             if (seq !== fetchSeq) return;
+            dpPinnedExpandSections = null;
             replaceExpandContent(`<div class="git-pinned-expand-empty">Failed to load</div>`);
           }
           requestAnimationFrame(updateExpandFade);

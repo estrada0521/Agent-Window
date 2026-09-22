@@ -188,7 +188,7 @@
         if (!rootEl) return;
         const hadDetail = !!state.detailContext;
         const el = modeEl();
-        el?.classList.remove("git-transitioning", "git-mode-detail", "git-mode-worktree-detail");
+        el?.classList.remove("git-transitioning", "git-instant", "git-mode-detail", "git-mode-worktree-detail");
         const body = rootEl.querySelector(".git-commit-detail-body");
         const head = rootEl.querySelector(".git-commit-detail-head");
         if (body) body.innerHTML = "";
@@ -201,7 +201,14 @@
         state.detailNeedsRefresh = false;
         if (shouldRefresh) void loadPage({ reset: true });
       };
-      const openDetail = async ({ diffKind = "", hash = "", rowHtml = "", subject = "" } = {}) => {
+      const openDetail = async ({
+        diffKind = "",
+        hash = "",
+        rowHtml = "",
+        subject = "",
+        instant = false,
+        seed = null,
+      } = {}) => {
         const rootEl = root();
         if (!rootEl) return;
         const el = modeEl();
@@ -210,7 +217,6 @@
         closeDetail();
         disconnectObserver();
         state.detailNeedsRefresh = false;
-        el.classList.add("git-transitioning");
         const headEl = rootEl.querySelector(".git-commit-detail-head");
         const bodyEl = rootEl.querySelector(".git-commit-detail-body");
         if (headEl) {
@@ -222,6 +228,19 @@
         if (!bodyEl) return;
         const wrapEl = document.createElement("div");
         wrapEl.className = "git-commit-file-wrap";
+        const allowUndo = isWorktree;
+        const scope = isWorktree ? "" : diffKind;
+        let seeded = false;
+        if (seed?.mode === "sections") {
+          applyGitFileStatsSectionsInto(wrapEl, seed.sections, { allowUndo });
+          seeded = true;
+        } else if (Array.isArray(seed?.files) && seed.files.length) {
+          wrapEl.dataset.fileStatsSignature = gitFileStatsRowsSignature([{ kind: scope || "commit", files: seed.files }]);
+          wrapEl.innerHTML = gitCommitFileListHtml(seed.files, { allowUndo, scope });
+          seeded = true;
+        }
+        if (instant) el.classList.add("git-instant");
+        else el.classList.add("git-transitioning");
         bodyEl.appendChild(wrapEl);
         el.classList.add("git-mode-detail");
         if (host.worktreeDetailClass && isWorktree) {
@@ -234,11 +253,15 @@
         };
         host.onOpenDetail?.({ diffKind, hash, rowHtml, subject, isWorktree });
         resetListScroll();
-        requestAnimationFrame(() => el.classList.remove("git-transitioning"));
+        requestAnimationFrame(() => el.classList.remove("git-transitioning", "git-instant"));
+        if (seeded) {
+          resetListScroll();
+          return;
+        }
         try {
           await renderFileStatsInto(wrapEl, isWorktree ? "" : hash, {
-            allowUndo: isWorktree,
-            scope: isWorktree ? "" : diffKind,
+            allowUndo,
+            scope,
           });
         } catch (_) {
           wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty error">Failed to load file stats</div>';

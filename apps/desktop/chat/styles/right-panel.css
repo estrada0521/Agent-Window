@@ -386,6 +386,12 @@
       overflow: hidden;
       align-items: stretch;
     }
+    .git-stack.git-instant .git-commit-chevron {
+      transition: none;
+    }
+    .git-stack.git-instant .git-commit-detail-body {
+      animation: none;
+    }
     .git-list-view {
       display: flex;
       flex-direction: column;

@@ -3,6 +3,7 @@
     const dpPinnedStripActive = () =>
       dpGitSummaryPinned && document.documentElement.dataset.autoWindowHeight !== "1";
     let dpPinnedExpandRefresh = null;
+    let dpPinnedExpandSections = null;
     let _dpGitSummaryPinnedLoadedForKey = "";
     const dpReadGitSummaryPinnedFromStorage = () => {
       try {
