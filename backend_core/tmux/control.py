@@ -118,14 +118,13 @@ def _write_meta(prefix: list[str], tmux_name: str, aw_name: str) -> None:
     write_session_meta_file(aw_name, workspace, agents)
 
 
-def _append_log(session_name: str, message: str, *, kind: str, extra: dict | None = None) -> None:
+def _append_log(session_name: str, message: str, *, extra: dict | None = None) -> None:
     entry = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "session": session_name,
         "sender": "system",
         "targets": [],
         "message": message,
-        "kind": kind,
     }
     if extra:
         entry.update(extra)
@@ -135,17 +134,12 @@ def _append_log(session_name: str, message: str, *, kind: str, extra: dict | Non
 def append_session_lifecycle_entry(session_name: str, action: str) -> None:
     try:
         message = {
-            "archived": "Session archived.",
-            "revived": "Session revived.",
+            "archived": "Session archived:",
+            "revived": "Session revived:",
         }[action]
     except KeyError:
         raise SessionControlError(f"Unknown session lifecycle action: {action!r}") from None
-    _append_log(
-        session_name,
-        message,
-        kind="session-lifecycle",
-        extra={"lifecycle_action": action},
-    )
+    _append_log(session_name, message)
 
 
 def _chat_listener_pids(chat_port: int) -> list[int]:
@@ -514,8 +508,6 @@ def add_agent(
         _append_log(
             name,
             f"Add Agent: {instance}",
-            kind="session-topology",
-            extra={"topology_action": "add-agent", "agent_instance": instance},
         )
         return instance
     finally:
@@ -561,8 +553,6 @@ def remove_agent(
         _append_log(
             name,
             f"Remove Agent: {canonical}",
-            kind="session-topology",
-            extra={"topology_action": "remove-agent", "agent_instance": canonical},
         )
         return canonical
     finally:

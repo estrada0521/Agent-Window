@@ -100,16 +100,14 @@ def _queued_send_worker() -> None:
         try:
             failed = runtime.deliver_message(job["targets"], job["message"])
             if failed:
+                runtime.mark_agents_idle(failed)
                 runtime.append_system_entry(
                     f"Send failed: Failed to deliver to: {', '.join(failed)}",
-                    kind="send-error",
-                    failed_targets=failed,
                 )
         except Exception as exc:
+            runtime.mark_agents_idle(job["targets"])
             runtime.append_system_entry(
                 f"Send failed: {exc}",
-                kind="send-error",
-                failed_targets=job["targets"],
             )
         finally:
             send_queue.task_done()

@@ -92,7 +92,7 @@ def sync_codex_native_log(
 
     def _append_codex_entry(entry: dict, line_start: int) -> bool:
         display = ""
-        provider_notice = False
+        idle_after = False
         entry_type = entry.get("type", "")
         if entry_type == "response_item":
             payload = entry.get("payload", {})
@@ -118,14 +118,14 @@ def sync_codex_native_log(
             payload_type = str(payload.get("type") or "").strip().lower()
             if payload_type == "error":
                 display = str(payload.get("message") or "").strip()
-                provider_notice = True
+                idle_after = True
             elif payload_type == "agent_reasoning":
                 return False
             elif payload_type == "task_complete":
                 display = _codex_task_error_message(payload)
                 if not display:
                     return False
-                provider_notice = True
+                idle_after = True
             else:
                 return False
         else:
@@ -144,9 +144,9 @@ def sync_codex_native_log(
             "native_log_path": resolved_path,
             "native_log_offset": line_start,
         }
-        if provider_notice:
-            jsonl_entry["kind"] = "provider-notice"
         append_projected_entry(self.log_path, jsonl_entry)
+        if idle_after:
+            self._mark_idle(agent)
         return True
 
     last_runtime_state_event = ""

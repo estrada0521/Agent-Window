@@ -52,10 +52,15 @@ const isCollapsibleMessageSender = (sender) => {{
   const normalized = String(sender || "").trim().toLowerCase();
   return !!normalized && normalized !== "system";
 }};
-const emphasizeSystemMessageKeyword = (message, kind = "") =>
-  kind === "git-commit" ? message.replace(/^Commit\\b/i, "<b>Commit</b>") : message;
+const formatSystemMessageHtml = (message) => {{
+  const text = String(message || "");
+  const idx = text.indexOf(":");
+  if (idx < 0) return escapeHtml(text);
+  return `<b>${{escapeHtml(text.slice(0, idx))}}</b>${{escapeHtml(text.slice(idx))}}`;
+}};
 const stripUnsafeMarkup = () => {{}};
 const extractFrontmatter = () => null;
+const formatMessageTime = () => "";
 {render_markdown}
 {build_message}
 

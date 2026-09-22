@@ -36,8 +36,7 @@ def ensure_commit_announcements(runtime) -> None:
     if last is None or last == commit["hash"]:
         return
     runtime.append_system_entry(
-        f"Commit {commit['short']} {commit['subject']}",
-        kind="git-commit",
+        f"Commit: {commit['short']} {commit['subject']}",
         commit_hash=commit["hash"],
         commit_short=commit["short"],
     )

@@ -13,6 +13,9 @@ def deliver_text_to_pane(
     pane = str(pane_id or "").strip()
     if not pane:
         return False
+    dead = run_tmux(["display-message", "-p", "-t", pane, "#{pane_dead}"]).stdout.strip() == "1"
+    if dead:
+        return False
     if run_tmux(["send-keys", "-t", pane, "-l", "--", str(payload)]).returncode != 0:
         return False
     time.sleep(0.2)

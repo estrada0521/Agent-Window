@@ -90,7 +90,9 @@ def sync_claude_native_log(
             "native_log_offset": line_start,
         }
         if entry.get("isApiErrorMessage"):
-            jsonl_entry["kind"] = "provider-notice"
+            append_projected_entry(self.log_path, jsonl_entry)
+            self._mark_idle(agent)
+            return True
         append_projected_entry(self.log_path, jsonl_entry)
         return True
 

@@ -79,8 +79,6 @@ def try_deliver_shortcut_control(
     if message == "restart" and control_targets:
         rt.append_system_entry(
             f"Restarted: {', '.join(control_targets)}",
-            kind="agent-control",
-            command=message,
             targets=control_targets,
         )
     mode = pane_direct["name"] if pane_direct else message

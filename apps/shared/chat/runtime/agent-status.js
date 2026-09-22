@@ -1,7 +1,14 @@
     const _optimisticRunning = new Map();
     const markAgentOptimisticallyRunning = (agent) => {
-      _optimisticRunning.set(agent, { until: Date.now() + 4000, confirmed: false });
+      const now = Date.now();
+      _optimisticRunning.set(agent, { started: now, until: now + 4000, confirmed: false });
       currentAgentStatuses[agent] = "running";
+      const settle = () => {
+        if (!_optimisticRunning.has(agent)) return;
+        renderAgentStatus(currentAgentStatuses);
+      };
+      setTimeout(settle, 600);
+      setTimeout(settle, 4000);
     };
     const renderAgentStatus = (statuses) => {
       let merged = statuses;
@@ -9,12 +16,12 @@
         const now = Date.now();
         for (const [agent, o] of _optimisticRunning) {
           if (statuses[agent] === "running") { o.confirmed = true; continue; }
-          if (!o.confirmed && now < o.until) {
-            if (merged === statuses) merged = { ...statuses };
-            merged[agent] = "running";
-          } else {
+          if (o.confirmed || now >= o.until || now >= o.started + 600) {
             _optimisticRunning.delete(agent);
+            continue;
           }
+          if (merged === statuses) merged = { ...statuses };
+          merged[agent] = "running";
         }
       }
       currentAgentStatuses = { ...merged };

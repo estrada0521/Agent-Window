@@ -1,8 +1,5 @@
     const mergeEntriesById = (...groups) => groups.flatMap((group) => group || []);
-    const entryRenderKey = (entry) => JSON.stringify([
-      String(entry?.context_hash || ""),
-      String(entry?.kind || ""),
-    ]);
+    const entryRenderKey = (entry) => String(entry?.context_hash || "");
     const displayEntriesForData = (data) => {
       const baseEntries = Array.isArray(data?.entries) ? data.entries : [];
       const merged = mergeEntriesById(olderEntries, baseEntries);
@@ -58,21 +55,10 @@
       });
       return `/messages?${params.toString()}`;
     };
-    const emphasizeSystemMessageKeyword = (escapedMessage, kind = "") => {
-      const message = String(escapedMessage || "");
+    const formatSystemMessageHtml = (rawMessage) => {
+      const message = String(rawMessage || "");
       if (!message) return "";
-      const kindKey = String(kind || "").trim().toLowerCase();
-      const patterns = [];
-      if (kindKey === "git-commit") patterns.push(/^Commit\b/i);
-      patterns.push(
-        /^\/(?:restart|add-agent|remove-agent)\b/i,
-        /^(?:Restarted|Restart)\b/i,
-        /^(?:Add agent|Remove agent)\b/i,
-      );
-      for (const pattern of patterns) {
-        if (pattern.test(message)) {
-          return message.replace(pattern, (matched) => `<b>${matched}</b>`);
-        }
-      }
-      return message;
+      const idx = message.indexOf(":");
+      if (idx < 0) return escapeHtml(message);
+      return `<b>${escapeHtml(message.slice(0, idx))}</b>${escapeHtml(message.slice(idx))}`;
     };

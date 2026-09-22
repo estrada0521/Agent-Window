@@ -3,9 +3,11 @@
       const contextHash = String(entry?.context_hash || "").trim();
       if (!contextHash) throw new Error("send did not return entry");
       refreshEpoch += 1;
+      lastMessagesEtag = "";
       const current = latestPayloadData || {};
       latestPayloadData = { ...current, entries: mergeEntriesById(current.entries || [], [entry]) };
       render(latestPayloadData);
+      void refresh();
     };
     const refresh = async (options = {}) => {
       const refreshOptions = !hasInitialRefreshHydrated
@@ -28,6 +30,7 @@
           Object.keys(headers).length ? { headers } : {}
         );
         if (res.status === 304) {
+          if (epoch !== refreshEpoch) return;
           if (!hasInitialRefreshHydrated) {
             hasInitialRefreshHydrated = true;
             releaseLaunchShellGate();
@@ -36,12 +39,12 @@
           return;
         }
         if (!res.ok) throw new Error("messages unavailable");
+        const data = await res.json();
+        if (epoch !== refreshEpoch) return;
         const nextMessagesEtag = res.headers.get("ETag") || "";
         if (nextMessagesEtag) {
           lastMessagesEtag = nextMessagesEtag;
         }
-        const data = await res.json();
-        if (epoch !== refreshEpoch) return;
         const nextServerInstance = data?.server_instance || "";
         if (nextServerInstance && currentServerInstance && nextServerInstance !== currentServerInstance) {
           olderEntries = [];

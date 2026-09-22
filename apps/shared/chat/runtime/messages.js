@@ -26,13 +26,10 @@ __CHAT_INCLUDE:../messages-data.js__
     const buildMsgHTML = (entry, options = {}) => {
         const safeEntry = (entry && typeof entry === "object") ? entry : {};
         if (safeEntry.sender === "system") {
-          const kindRaw = String(safeEntry.kind || "");
-          const systemMessage = emphasizeSystemMessageKeyword(escapeHtml(safeEntry.message || ""), kindRaw);
+          const systemMessage = formatSystemMessageHtml(safeEntry.message || "");
           const systemTitle = systemMessage.replaceAll('"', "&quot;").replace(/<[^>]+>/g, "");
           const contextHash = escapeHtml(safeEntry.context_hash || "");
-          const isSessionLifecycle = /^(?:Session archived|Session revived)\b/i.test(safeEntry.message || "");
-          const extraClass = isSessionLifecycle ? " sysmsg-strong" : "";
-          return `<div class="sysmsg-row${extraClass}" data-context-hash="${contextHash}" data-sender="system"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
+          return `<div class="sysmsg-row" data-context-hash="${contextHash}" data-sender="system"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
         }
         const cls = roleClass(safeEntry.sender);
         const entryTargets = Array.isArray(safeEntry.targets) ? safeEntry.targets : [];

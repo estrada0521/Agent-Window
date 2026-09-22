@@ -286,6 +286,15 @@ class ChatRuntime:
         for agent in agents:
             self._mark_running(agent)
 
+    def mark_agents_idle(self, agents: list[str]) -> None:
+        names = [str(agent or "").strip() for agent in agents if str(agent or "").strip()]
+        if not names:
+            return
+        for name in names:
+            self._agent_running.discard(name)
+            self._native_log.clear_agent_runtime_display(name)
+        self.notify_session_state_changed()
+
     def running_agents_for_reload(self) -> list[str]:
         return sorted(self._agent_running)
 
