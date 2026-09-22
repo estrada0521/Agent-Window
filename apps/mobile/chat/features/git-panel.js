@@ -26,6 +26,12 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       void list.offsetWidth;
       list.dataset.transition = transition;
     };
+    const feedInFromTop = (el) => {
+      if (!el) return;
+      el.classList.remove("git-detail-feed-in");
+      void el.offsetWidth;
+      el.classList.add("git-detail-feed-in");
+    };
     const renderGitWorktreeButton = (data) => {
       let btn = gitWorktreeButton();
       if (!btn) {
@@ -97,17 +103,25 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       }));
       blockEl.append(metaEl);
       bodyEl.querySelector(".git-commit-info-block")?.remove();
-      bodyEl.prepend(blockEl);
+      const wrapEl = bodyEl.querySelector(".git-commit-file-wrap");
+      if (wrapEl) bodyEl.insertBefore(blockEl, wrapEl);
+      else bodyEl.prepend(blockEl);
+      feedInFromTop(blockEl);
+    };
+    const ensureGitDetailChangedTitle = (wrapEl) => {
+      if (!wrapEl || wrapEl.querySelector(":scope > .git-commit-file-section-title")) return;
+      const titleEl = document.createElement("div");
+      titleEl.className = "git-commit-file-section-title";
+      titleEl.textContent = "Changed";
+      wrapEl.prepend(titleEl);
     };
     const setGitDetailChrome = ({ rowHtml = "", subject = "Git", hash = "", isWorktree = false } = {}) => {
       _gitDetailChrome = { rowHtml, subject };
       applyGitDetailChrome(_gitDetailChrome);
-      animateGitSheetList(".git-detail-view", "forward");
-      if (isWorktree || !hash) return;
-      const titleEl = document.createElement("div");
-      titleEl.className = "git-commit-file-section-title";
-      titleEl.textContent = "Changed";
-      gitHostEl()?.querySelector(".git-commit-detail-body")?.prepend(titleEl);
+      if (isWorktree || !hash) {
+        animateGitSheetList(".git-detail-view", "from-top");
+        return;
+      }
       void renderGitCommitInfo(hash);
     };
     const refreshGitDetailTitleFromOverview = (data) => {
@@ -196,6 +210,11 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       },
       onCloseDetail: resetGitDetailChrome,
       onOpenDetail: setGitDetailChrome,
+      onDetailFilesReady: ({ wrapEl, isWorktree }) => {
+        if (isWorktree) return;
+        ensureGitDetailChangedTitle(wrapEl);
+        feedInFromTop(wrapEl);
+      },
       onOverview: refreshGitDetailTitleFromOverview,
       onFingerprintChanged: (data) => {
         const previous = gitCountSnapshot(gitWorktreeButton());

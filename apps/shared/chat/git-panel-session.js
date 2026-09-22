@@ -261,6 +261,12 @@
         resetListScroll();
         requestAnimationFrame(() => el.classList.remove("git-transitioning", "git-instant"));
         if (seeded) {
+          host.onDetailFilesReady?.({
+            wrapEl,
+            hash: state.detailContext.hash,
+            kind: state.detailContext.kind,
+            isWorktree,
+          });
           resetListScroll();
           return;
         }
@@ -269,8 +275,20 @@
             allowUndo,
             scope,
           });
+          host.onDetailFilesReady?.({
+            wrapEl,
+            hash: state.detailContext.hash,
+            kind: state.detailContext.kind,
+            isWorktree,
+          });
         } catch (_) {
           wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty error">Failed to load file stats</div>';
+          host.onDetailFilesReady?.({
+            wrapEl,
+            hash: state.detailContext.hash,
+            kind: state.detailContext.kind,
+            isWorktree,
+          });
         }
         resetListScroll();
       };
