@@ -230,10 +230,17 @@ __CHAT_INCLUDE:../upload-attached-files.js__
         await uploadAttachedFiles(e.dataTransfer.files);
       }, true);
       messageInput.addEventListener("paste", async (e) => {
-        if (!dtHasFiles(e.clipboardData)) return;
+        if (dtHasFiles(e.clipboardData)) {
+          e.preventDefault();
+          maybeOpenComposerForAttachDrag();
+          await uploadAttachedFiles(e.clipboardData.files);
+          return;
+        }
+        const text = e.clipboardData?.getData("text/plain") || "";
+        if (text.length <= LARGE_PASTE_TEXT_CHARS) return;
         e.preventDefault();
         maybeOpenComposerForAttachDrag();
-        await uploadAttachedFiles(e.clipboardData.files);
+        await uploadLargePastedText(text);
       });
     }
 

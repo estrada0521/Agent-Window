@@ -1,3 +1,5 @@
+      const LARGE_PASTE_TEXT_CHARS = 32_768;
+
       const uploadAttachedFiles = async (fileList) => {
         if (!canComposeInSession()) return false;
         const files = Array.from(fileList || []).filter((f) => f && typeof f.name === "string");
@@ -38,4 +40,10 @@
           setTimeout(() => setStatus(""), STATUS_TOAST_MS);
           return false;
         }
+      };
+
+      const uploadLargePastedText = async (text) => {
+        if (typeof text !== "string" || text.length <= LARGE_PASTE_TEXT_CHARS) return false;
+        const file = new File([text], "pasted.txt", { type: "text/plain" });
+        return uploadAttachedFiles([file]);
       };
