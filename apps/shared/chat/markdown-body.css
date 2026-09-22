@@ -101,6 +101,7 @@
       font-weight: var(--link-weight);
       text-decoration: none;
       -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .md-body :is(a.inline-file-link, a.local-file-link):has(> .inline-file-link-icon + code:last-child) {
