@@ -291,6 +291,26 @@ class FileRuntime:
         self._reveal_in_finder(full)
         return {"ok": True, "path": rel, "revealed_in_finder": True}
 
+    def quick_look(self, rels: list[str]):
+        fulls = []
+        for rel in rels:
+            try:
+                full = self._resolve_open_target(rel)
+            except (ValueError, FileNotFoundError):
+                continue
+            if os.path.isdir(full):
+                continue
+            fulls.append(full)
+        if not fulls:
+            raise ValueError("no files to preview")
+        subprocess.Popen(
+            ["qlmanage", "-p", *fulls],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        return {"ok": True, "count": len(fulls)}
+
     def invalidate_file_list_cache(self) -> None:
         with self._file_list_cache_lock:
             self._file_list_cache = None

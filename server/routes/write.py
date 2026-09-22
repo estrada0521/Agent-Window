@@ -531,6 +531,29 @@ def _post_reveal_file(handler, _parsed, ctx) -> None:
     handler._send_json(200, result)
 
 
+def _post_quick_look(handler, _parsed, ctx) -> None:
+    data, err = _read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
+        return
+    paths = data.get("paths", [])
+    if not isinstance(paths, list) or not paths:
+        handler._send_json(400, {"ok": False, "error": "paths required"})
+        return
+    try:
+        result = ctx["workspace_sync_api"].quick_look([str(p or "").strip() for p in paths])
+    except PermissionError:
+        handler._send_json(403, {"ok": False, "error": "forbidden"})
+        return
+    except ValueError as exc:
+        handler._send_json(400, {"ok": False, "error": str(exc)})
+        return
+    except Exception as exc:
+        handler._send_json(500, {"ok": False, "error": str(exc)})
+        return
+    handler._send_json(200, result)
+
+
 def _post_open_diff(handler, _parsed, ctx) -> None:
     data, err = _read_json_body(handler)
     if err:
@@ -653,6 +676,7 @@ _POST_ROUTES = {
     "/files-resolve": _post_files_resolve,
     "/open-file": _post_open_file,
     "/reveal-file": _post_reveal_file,
+    "/quick-look": _post_quick_look,
     "/open-diff": _post_open_diff,
     "/shortcut-command": _post_shortcut_command,
     "/native-log": _post_native_log,

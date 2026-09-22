@@ -363,6 +363,40 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
     let dpRepoBrowserPath = "";
     let dpRepoLoadSeq = 0;
     let cancelDpRepoLoading = () => {};
+    let dpRepoSelectedPaths = new Set();
+    let dpRepoSelectionAnchor = "";
+    let dpRepoFileOrder = [];
+    let dpRepoEntryOrder = [];
+    const dpRepoApplySelectionClasses = () => {
+      dpRepoContent?.querySelectorAll(".repo-browser-item").forEach((btn) => {
+        btn.classList.toggle("is-selected", dpRepoSelectedPaths.has(btn.dataset.path || ""));
+      });
+    };
+    const dpRepoSetSelection = (paths) => {
+      dpRepoSelectedPaths = new Set(paths);
+      dpRepoApplySelectionClasses();
+    };
+    const dpRepoToggleSelection = (path) => {
+      const next = new Set(dpRepoSelectedPaths);
+      if (next.has(path)) next.delete(path); else next.add(path);
+      dpRepoSetSelection(next);
+      dpRepoSelectionAnchor = path;
+    };
+    const dpRepoSelectRangeTo = (path) => {
+      const anchor = dpRepoSelectionAnchor || path;
+      const ai = dpRepoEntryOrder.indexOf(anchor);
+      const ti = dpRepoEntryOrder.indexOf(path);
+      if (ai === -1 || ti === -1) {
+        dpRepoSetSelection([path]);
+      } else {
+        const start = Math.min(ai, ti);
+        const end = Math.max(ai, ti);
+        dpRepoSetSelection(dpRepoEntryOrder.slice(start, end + 1));
+      }
+      dpRepoSelectionAnchor = anchor;
+    };
+    const dpRepoOrderedSelectedFiles = () => dpRepoFileOrder.filter((p) => dpRepoSelectedPaths.has(p));
+    const dpRepoOrderedSelectedEntries = () => dpRepoEntryOrder.filter((p) => dpRepoSelectedPaths.has(p));
     let dpPanelWidthAtDefaultTextSize = DP_PANEL_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE;
     let _desktopRightPanelResizeState = null;
     let _dpSplitDragging = false;
@@ -554,16 +588,19 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       dpStopPanelResize({ persist: true });
     });
     const dpNormalizePath = (value) => String(value || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    let dpFileContextPath = "";
+    let dpFileContextPaths = [];
+    let dpFileContextTriggerPath = "";
     let dpFileContextRequestSeq = 0;
     let dpWorkspaceRoot = "";
     const dpShowActionStatus = (message, error = false) => {
       setStatus(message, error);
       setTimeout(() => setStatus(""), STATUS_TOAST_MS);
     };
-    const dpOpenFileContextMenu = async (rawPath, event, { openFile = false } = {}) => {
-      const path = dpNormalizePath(rawPath);
-      if (!path) return;
+    const dpOpenFileContextMenu = async (rawPathOrPaths, event, { openFile = false, triggerPath = "" } = {}) => {
+      const paths = (Array.isArray(rawPathOrPaths) ? rawPathOrPaths : [rawPathOrPaths])
+        .map(dpNormalizePath)
+        .filter(Boolean);
+      if (!paths.length) return;
       event.preventDefault();
       event.stopPropagation();
       const requestSeq = ++dpFileContextRequestSeq;
@@ -572,16 +609,17 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         const response = await fetchWithTimeout("/files-exist", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paths: [path] }),
+          body: JSON.stringify({ paths }),
         }, 4000);
         if (!response.ok) throw new Error("Failed to inspect file path.");
         const result = await response.json();
-        fileExists = result?.[path] === true;
+        fileExists = paths.every((p) => result?.[p] === true);
       } catch (err) {
         dpShowActionStatus(err?.message || "Failed to inspect file path.", true);
       }
       if (requestSeq !== dpFileContextRequestSeq) return;
-      dpFileContextPath = path;
+      dpFileContextPaths = paths;
+      dpFileContextTriggerPath = dpNormalizePath(triggerPath) || paths[0];
       window.parent?.postMessage({
         type: "show-file-context-menu",
         payload: {
@@ -602,20 +640,18 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         payload: { x: Math.round(Number(event.clientX) || 0), y: Math.round(Number(event.clientY) || 0) },
       }, "*");
     };
-    const dpCopyFilePath = async (path, absolute) => {
-      let text = path;
-      if (absolute) {
-        if (!dpWorkspaceRoot) {
-          const response = await fetchWithTimeout("/session-state", {}, 4000);
-          if (!response.ok) throw new Error("Failed to read workspace path.");
-          const state = await response.json();
-          dpWorkspaceRoot = String(state?.workspace || "").replace(/\/+$/, "");
-          if (!dpWorkspaceRoot) throw new Error("Workspace path is unavailable.");
-        }
-        text = `${dpWorkspaceRoot}/${path}`;
+    const dpCopyFilePath = async (paths, absolute) => {
+      if (absolute && !dpWorkspaceRoot) {
+        const response = await fetchWithTimeout("/session-state", {}, 4000);
+        if (!response.ok) throw new Error("Failed to read workspace path.");
+        const state = await response.json();
+        dpWorkspaceRoot = String(state?.workspace || "").replace(/\/+$/, "");
+        if (!dpWorkspaceRoot) throw new Error("Workspace path is unavailable.");
       }
+      const text = paths.map((p) => (absolute ? `${dpWorkspaceRoot}/${p}` : p)).join("\n");
       await doCopyText(text);
-      dpShowActionStatus(absolute ? "Copied absolute path" : "Copied relative path");
+      const label = absolute ? "absolute path" : "relative path";
+      dpShowActionStatus(paths.length > 1 ? `Copied ${paths.length} ${label}s` : `Copied ${label}`);
     };
     const dpRevealFileInFinder = async (path) => {
       const response = await fetchWithTimeout("/reveal-file", {
@@ -628,6 +664,21 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         throw new Error(data?.error || "Failed to reveal file in Finder.");
       }
       dpShowActionStatus(`Revealed ${path}`);
+    };
+    const dpQuickLookPaths = async (paths) => {
+      try {
+        const response = await fetchWithTimeout("/quick-look", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paths }),
+        }, 8000);
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data?.error || "Failed to open Quick Look.");
+        }
+      } catch (err) {
+        dpShowActionStatus(err?.message || "Failed to open Quick Look.", true);
+      }
     };
     function handleDesktopCommitContextMenuAction(payload) {
       const action = String(payload?.action || "");
@@ -646,13 +697,13 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     function handleDesktopFileContextMenuAction(payload) {
       const action = String(payload?.action || "");
       if (!["openFile", "revealFileInFinder", "copyAbsoluteFilePath", "copyRelativeFilePath"].includes(action)) return false;
-      const path = dpFileContextPath;
-      if (!path) return true;
+      const paths = dpFileContextPaths;
+      if (!paths.length) return true;
       const operation = action === "openFile"
-        ? dpPostOpenFile(path)
+        ? dpPostOpenFile(dpFileContextTriggerPath || paths[0])
         : action === "revealFileInFinder"
-          ? dpRevealFileInFinder(path)
-          : dpCopyFilePath(path, action === "copyAbsoluteFilePath");
+          ? dpRevealFileInFinder(dpFileContextTriggerPath || paths[0])
+          : dpCopyFilePath(paths, action === "copyAbsoluteFilePath");
       void operation.catch((err) => {
         dpShowActionStatus(err?.message || "File action failed.", true);
       });
@@ -690,6 +741,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const displayName = isDir ? entry.name : displayAttachmentFilename(entry.path);
       btn.className = `repo-browser-item ${isDir ? "repo-browser-dir" : "repo-browser-file"}${displayName.startsWith(".") ? " repo-browser-item-dimmed" : ""}`;
       btn.title = entry.path;
+      btn.dataset.path = entry.path;
       const iconEl = fileIconElement(entry.path, { isDir }, "repo-browser-item-icon");
       const nameEl = document.createElement("span");
       nameEl.className = "repo-browser-item-name";
@@ -702,7 +754,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         btn.appendChild(chevronEl);
         btn.addEventListener("click", (e) => {
           e.preventDefault(); e.stopPropagation();
-          void dpLoadRepoDir(entry.path);
+          const path = entry.path;
+          if (e.shiftKey) { dpRepoSelectRangeTo(path); return; }
+          if (e.metaKey) { dpRepoToggleSelection(path); return; }
+          void dpLoadRepoDir(path);
         });
       } else {
         const sizeLabel = formatFileSize(entry.size);
@@ -714,11 +769,32 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         }
         btn.addEventListener("click", async (e) => {
           e.preventDefault(); e.stopPropagation();
-          await openFileSurface(entry.path, fileExtForPath(entry.path), btn, e);
+          const path = entry.path;
+          if (e.shiftKey) { dpRepoSelectRangeTo(path); return; }
+          if (e.metaKey) { dpRepoToggleSelection(path); return; }
+          const isMultiTarget = dpRepoSelectedPaths.size > 1 && dpRepoSelectedPaths.has(path);
+          const targets = isMultiTarget ? dpRepoOrderedSelectedFiles() : [path];
+          if (!isMultiTarget) {
+            dpRepoSetSelection([path]);
+            dpRepoSelectionAnchor = path;
+          }
+          if (e.altKey) {
+            await dpQuickLookPaths(targets);
+            return;
+          }
+          for (const p of targets) {
+            await openFileSurface(p, fileExtForPath(p), btn, e);
+          }
         });
       }
       btn.addEventListener("contextmenu", (e) => {
-        void dpOpenFileContextMenu(entry.path, e);
+        const path = entry.path;
+        const inSelection = dpRepoSelectedPaths.size > 1 && dpRepoSelectedPaths.has(path);
+        if (!inSelection) {
+          dpRepoSetSelection([path]);
+          dpRepoSelectionAnchor = path;
+        }
+        void dpOpenFileContextMenu(dpRepoOrderedSelectedEntries(), e, { triggerPath: path });
       });
       return btn;
     };
@@ -730,10 +806,15 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const pathParts = path.split("/").filter(Boolean);
       const parentPath = pathParts.slice(0, -1).join("/");
       const pathBasename = pathParts[pathParts.length - 1] || "/";
-      const previousScrollTop = path === dpRepoBrowserPath
+      const isSamePath = path === dpRepoBrowserPath;
+      const previousScrollTop = isSamePath
         ? dpRepoContent.querySelector(".repo-browser-scroll")?.scrollTop || 0
         : 0;
       dpRepoBrowserPath = path;
+      if (!isSamePath) {
+        dpRepoSelectedPaths = new Set();
+        dpRepoSelectionAnchor = "";
+      }
       dpRepoContent.innerHTML = "";
       const stack = document.createElement("div");
       stack.className = `repo-browser-stack repo-browser-nav-${direction}`;
@@ -790,6 +871,12 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       } else {
         const dirs = (entries || []).filter(e => e.kind === "dir");
         const files = (entries || []).filter(e => e.kind !== "dir");
+        dpRepoFileOrder = files.map((e) => e.path);
+        dpRepoEntryOrder = [...dirs, ...files].map((e) => e.path);
+        const stillPresent = new Set(dpRepoEntryOrder);
+        if (dpRepoSelectedPaths.size) {
+          dpRepoSelectedPaths = new Set([...dpRepoSelectedPaths].filter((p) => stillPresent.has(p)));
+        }
         if (!dirs.length && !files.length) {
           const node = document.createElement("div");
           node.className = "repo-browser-empty";
@@ -804,6 +891,13 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       stack.appendChild(scroll);
       dpRepoContent.appendChild(stack);
       scroll.scrollTop = previousScrollTop;
+      dpRepoApplySelectionClasses();
+      scroll.addEventListener("mousedown", (e) => {
+        if (e.target === scroll || e.target === list) {
+          dpRepoSetSelection([]);
+          dpRepoSelectionAnchor = "";
+        }
+      });
     };
     const dpLoadRepoDir = async (rawPath, { animate = true } = {}) => {
       if (!dpPanelOpen) return;

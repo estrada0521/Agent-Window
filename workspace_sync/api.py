@@ -102,6 +102,9 @@ class WorkspaceSyncApi:
     def reveal_in_finder(self, rel: str):
         return self.file_runtime.reveal_in_finder(rel)
 
+    def quick_look(self, rels: list[str]):
+        return self.file_runtime.quick_look(rels)
+
     def git_overview(self, *, offset=0, limit=50, force_refresh: bool = False, include_commits: bool = True):
         return workspace_git.git_overview(
             offset=offset,
