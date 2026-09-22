@@ -311,20 +311,9 @@
         host.onOverview?.(data);
         const nextSig = gitOverviewFingerprint(data);
         if (nextSig !== state.overviewSig) {
-          const isFirst = !state.overviewSig;
-          const decision = host.onFingerprintChanged?.(data, {
-            isFirst,
-            previousCommits: state.commits,
-            detailContext: state.detailContext,
-          }) || { updateList: !state.detailContext };
-          if (decision.updateList !== false) {
-            applyPaging(gitOverviewPagingFromResponse(data, [], { reset: true }), {
-              reset: true,
-              newHashes: decision.newHashes ?? null,
-            });
-          } else {
-            state.overviewSig = nextSig;
-          }
+          const newHashes = state.overviewSig ? gitNewCommitHashes(state.commits, data?.recent_commits) : null;
+          applyPaging(gitOverviewPagingFromResponse(data, [], { reset: true }), { reset: true, newHashes });
+          host.onFingerprintChanged?.(data);
         }
         if (state.detailContext?.kind === "worktree" && state.detailContext?.wrapEl) {
           await renderFileStatsInto(state.detailContext.wrapEl, "", {
