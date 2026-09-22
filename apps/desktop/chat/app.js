@@ -363,82 +363,59 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
     let dpRepoBrowserPath = "";
     let dpRepoLoadSeq = 0;
     let cancelDpRepoLoading = () => {};
-    let dpRepoSelectedPaths = new Set();
-    let dpRepoSelectionAnchor = "";
-    let dpRepoFileOrder = [];
-    let dpRepoEntryOrder = [];
-    const dpRepoApplySelectionClasses = () => {
-      dpRepoContent?.querySelectorAll(".repo-browser-item").forEach((btn) => {
-        btn.classList.toggle("is-selected", dpRepoSelectedPaths.has(btn.dataset.path || ""));
-      });
-    };
-    const dpRepoSetSelection = (paths) => {
-      dpRepoSelectedPaths = new Set(paths);
-      dpRepoApplySelectionClasses();
-    };
-    const dpRepoToggleSelection = (path) => {
-      const next = new Set(dpRepoSelectedPaths);
-      if (next.has(path)) next.delete(path); else next.add(path);
-      dpRepoSetSelection(next);
-      dpRepoSelectionAnchor = path;
-    };
-    const dpRepoSelectRangeTo = (path) => {
-      const anchor = dpRepoSelectionAnchor || path;
-      const ai = dpRepoEntryOrder.indexOf(anchor);
-      const ti = dpRepoEntryOrder.indexOf(path);
-      if (ai === -1 || ti === -1) {
-        dpRepoSetSelection([path]);
-      } else {
-        const start = Math.min(ai, ti);
-        const end = Math.max(ai, ti);
-        dpRepoSetSelection(dpRepoEntryOrder.slice(start, end + 1));
-      }
-      dpRepoSelectionAnchor = anchor;
-    };
-    const dpRepoOrderedSelectedFiles = () => dpRepoFileOrder.filter((p) => dpRepoSelectedPaths.has(p));
-    const dpRepoOrderedSelectedEntries = () => dpRepoEntryOrder.filter((p) => dpRepoSelectedPaths.has(p));
-    dpRepoContent?.addEventListener("mouseleave", () => {
-      if (dpRepoSelectedPaths.size) {
-        dpRepoSetSelection([]);
-        dpRepoSelectionAnchor = "";
-      }
-    });
-    let dpGitSelectedPaths = new Set();
-    let dpGitSelectionAnchor = "";
-    const dpGitCurrentFileOrder = () =>
-      Array.from(dpGitContent?.querySelectorAll(".git-commit-file-row") || [])
-        .map((row) => row.dataset.path || "")
+    // A row-list multi-select: a Set of selected paths plus a shift-range anchor,
+    // read fresh from the DOM each time (order, membership) instead of a
+    // separately-maintained array -- one implementation shared by the repo file
+    // tree and the git panel's file rows, which only differ in container/selector.
+    const createRowSelection = ({ container, rowSelector, selectedClass = "is-selected" }) => {
+      let selected = new Set();
+      let anchor = "";
+      const order = () => Array.from(container?.querySelectorAll(rowSelector) || [])
+        .map((el) => el.dataset.path || "")
         .filter(Boolean);
-    const dpGitApplySelectionClasses = () => {
-      dpGitContent?.querySelectorAll(".git-commit-file-row").forEach((row) => {
-        row.classList.toggle("is-selected", dpGitSelectedPaths.has(row.dataset.path || ""));
-      });
+      const applyClasses = () => {
+        container?.querySelectorAll(rowSelector).forEach((el) => {
+          el.classList.toggle(selectedClass, selected.has(el.dataset.path || ""));
+        });
+      };
+      const set = (paths) => { selected = new Set(paths); applyClasses(); };
+      const clear = () => { set([]); anchor = ""; };
+      const toggle = (path) => { const next = new Set(selected); next.has(path) ? next.delete(path) : next.add(path); set(next); anchor = path; };
+      const selectRangeTo = (path) => {
+        const list = order();
+        const a = anchor || path;
+        const ai = list.indexOf(a);
+        const ti = list.indexOf(path);
+        set(ai === -1 || ti === -1 ? [path] : list.slice(Math.min(ai, ti), Math.max(ai, ti) + 1));
+        anchor = a;
+      };
+      const orderedSelected = () => order().filter((p) => selected.has(p));
+      const prune = () => { const present = new Set(order()); if (selected.size) set([...selected].filter((p) => present.has(p))); };
+      container?.addEventListener("mouseleave", clear);
+      return { get selected() { return selected; }, set, clear, toggle, selectRangeTo, orderedSelected, prune, applyClasses };
     };
-    const dpGitSetSelection = (paths) => {
-      dpGitSelectedPaths = new Set(paths);
-      dpGitApplySelectionClasses();
+    // Consumes a click's modifier keys against a selection: shift/meta only
+    // mutate the selection (returns null); otherwise resolves what to act on --
+    // the rest of the current selection if the click landed on it, else just
+    // this row -- and whether it was an option-click (Quick Look) or plain.
+    const dpResolveRowClick = (sel, path, event) => {
+      if (event.shiftKey) { sel.selectRangeTo(path); return null; }
+      if (event.metaKey) { sel.toggle(path); return null; }
+      const isMulti = sel.selected.size > 1 && sel.selected.has(path);
+      const targets = isMulti ? sel.orderedSelected() : [path];
+      if (!isMulti) sel.set([path]);
+      return { targets, quickLook: event.altKey };
     };
-    const dpGitToggleSelection = (path) => {
-      const next = new Set(dpGitSelectedPaths);
-      if (next.has(path)) next.delete(path); else next.add(path);
-      dpGitSetSelection(next);
-      dpGitSelectionAnchor = path;
+    const dpResolveContextMenuTargets = (sel, path) => {
+      if (!(sel.selected.size > 1 && sel.selected.has(path))) sel.set([path]);
+      return sel.orderedSelected();
     };
-    const dpGitSelectRangeTo = (path) => {
-      const order = dpGitCurrentFileOrder();
-      const anchor = dpGitSelectionAnchor || path;
-      const ai = order.indexOf(anchor);
-      const ti = order.indexOf(path);
-      if (ai === -1 || ti === -1) {
-        dpGitSetSelection([path]);
-      } else {
-        const start = Math.min(ai, ti);
-        const end = Math.max(ai, ti);
-        dpGitSetSelection(order.slice(start, end + 1));
-      }
-      dpGitSelectionAnchor = anchor;
-    };
-    const dpGitOrderedSelectedFiles = () => dpGitCurrentFileOrder().filter((p) => dpGitSelectedPaths.has(p));
+    const dpRepoSel = createRowSelection({ container: dpRepoContent, rowSelector: ".repo-browser-item" });
+    const dpRepoFilePathSet = () => new Set(Array.from(dpRepoContent?.querySelectorAll(".repo-browser-file") || []).map((el) => el.dataset.path || ""));
+    const dpRepoOrderedSelectedFiles = () => dpRepoSel.orderedSelected().filter((p) => dpRepoFilePathSet().has(p));
+    const dpRepoOrderedSelectedEntries = () => dpRepoSel.orderedSelected();
+    const dpGitSel = createRowSelection({ container: dpGitContent, rowSelector: ".git-commit-file-row" });
+    const dpGitOrderedSelectedFiles = () => dpGitSel.orderedSelected();
     const dpActivePanelTargets = (repoOrdered, repoHoverSel, gitHoverSel) => {
       if (!dpPanelOpen) return [];
       let repoTargets = repoOrdered();
@@ -454,12 +431,6 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
       }
       return gitTargets;
     };
-    dpGitContent?.addEventListener("mouseleave", () => {
-      if (dpGitSelectedPaths.size) {
-        dpGitSetSelection([]);
-        dpGitSelectionAnchor = "";
-      }
-    });
     let dpPanelWidthAtDefaultTextSize = DP_PANEL_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE;
     let _desktopRightPanelResizeState = null;
     let _dpSplitDragging = false;
@@ -820,8 +791,8 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         btn.addEventListener("click", (e) => {
           e.preventDefault(); e.stopPropagation();
           const path = entry.path;
-          if (e.shiftKey) { dpRepoSelectRangeTo(path); return; }
-          if (e.metaKey) { dpRepoToggleSelection(path); return; }
+          if (e.shiftKey) { dpRepoSel.selectRangeTo(path); return; }
+          if (e.metaKey) { dpRepoSel.toggle(path); return; }
           void dpLoadRepoDir(path);
         });
       } else {
@@ -834,16 +805,12 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         }
         btn.addEventListener("click", async (e) => {
           e.preventDefault(); e.stopPropagation();
-          const path = entry.path;
-          if (e.shiftKey) { dpRepoSelectRangeTo(path); return; }
-          if (e.metaKey) { dpRepoToggleSelection(path); return; }
-          const isMultiTarget = dpRepoSelectedPaths.size > 1 && dpRepoSelectedPaths.has(path);
-          const targets = isMultiTarget ? dpRepoOrderedSelectedFiles() : [path];
-          if (!isMultiTarget) {
-            dpRepoSetSelection([path]);
-            dpRepoSelectionAnchor = path;
-          }
-          if (e.altKey) {
+          const resolved = dpResolveRowClick(dpRepoSel, entry.path, e);
+          if (!resolved) return;
+          const fileSet = dpRepoFilePathSet();
+          const targets = resolved.targets.filter((p) => fileSet.has(p));
+          if (!targets.length) return;
+          if (resolved.quickLook) {
             await dpQuickLookPaths(targets);
             return;
           }
@@ -853,13 +820,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         });
       }
       btn.addEventListener("contextmenu", (e) => {
-        const path = entry.path;
-        const inSelection = dpRepoSelectedPaths.size > 1 && dpRepoSelectedPaths.has(path);
-        if (!inSelection) {
-          dpRepoSetSelection([path]);
-          dpRepoSelectionAnchor = path;
-        }
-        void dpOpenFileContextMenu(dpRepoOrderedSelectedEntries(), e, { triggerPath: path });
+        void dpOpenFileContextMenu(dpResolveContextMenuTargets(dpRepoSel, entry.path), e, { triggerPath: entry.path });
       });
       return btn;
     };
@@ -876,10 +837,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         ? dpRepoContent.querySelector(".repo-browser-scroll")?.scrollTop || 0
         : 0;
       dpRepoBrowserPath = path;
-      if (!isSamePath) {
-        dpRepoSelectedPaths = new Set();
-        dpRepoSelectionAnchor = "";
-      }
+      if (!isSamePath) dpRepoSel.clear();
       dpRepoContent.innerHTML = "";
       const stack = document.createElement("div");
       stack.className = `repo-browser-stack repo-browser-nav-${direction}`;
@@ -936,12 +894,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       } else {
         const dirs = (entries || []).filter(e => e.kind === "dir");
         const files = (entries || []).filter(e => e.kind !== "dir");
-        dpRepoFileOrder = files.map((e) => e.path);
-        dpRepoEntryOrder = [...dirs, ...files].map((e) => e.path);
-        const stillPresent = new Set(dpRepoEntryOrder);
-        if (dpRepoSelectedPaths.size) {
-          dpRepoSelectedPaths = new Set([...dpRepoSelectedPaths].filter((p) => stillPresent.has(p)));
-        }
         if (!dirs.length && !files.length) {
           const node = document.createElement("div");
           node.className = "repo-browser-empty";
@@ -956,12 +908,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       stack.appendChild(scroll);
       dpRepoContent.appendChild(stack);
       scroll.scrollTop = previousScrollTop;
-      dpRepoApplySelectionClasses();
+      dpRepoSel.prune();
+      dpRepoSel.applyClasses();
       scroll.addEventListener("mousedown", (e) => {
-        if (e.target === scroll || e.target === list) {
-          dpRepoSetSelection([]);
-          dpRepoSelectionAnchor = "";
-        }
+        if (e.target === scroll || e.target === list) dpRepoSel.clear();
       });
     };
     const dpLoadRepoDir = async (rawPath, { animate = true } = {}) => {
