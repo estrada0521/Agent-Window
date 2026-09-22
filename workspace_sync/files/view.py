@@ -523,15 +523,6 @@ out.push(part);
   if (!normalized) return srcIsAbsolute || baseIsAbsolute ? "/" : "";
   return srcIsAbsolute || baseIsAbsolute ? `/${{normalized}}` : normalized;
 }};
-const __rewriteMarkdownImages = (root) => {{
-  root.querySelectorAll("img").forEach((img) => {{
-const src = img.getAttribute("src") || "";
-if (!src || __isExternalSrc(src)) return;
-const resolved = __normalizeMdPath(__mdRel, src);
-if (!resolved) return;
-img.setAttribute("src", __rawBase + encodeURIComponent(resolved));
-  }});
-}};
 const __rewriteMarkdownLinks = (root) => {{
   root.querySelectorAll("a[href]").forEach((anchor) => {{
 const href = String(anchor.getAttribute("href") || "").trim();
@@ -545,6 +536,14 @@ anchor.setAttribute("href", buildPreviewHref(resolved) + suffix);
   }});
 }};
 const escapeHtml = (value) => String(value || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+const __rewriteMarkdownImageSrcsInHtml = (html) => String(html || "").replace(/(<img\\b[^>]*\\bsrc\\s*=\\s*)("[^"]*"|'[^']*')/gi, (match, prefix, quoted) => {{
+  const quote = quoted[0];
+  const src = quoted.slice(1, -1);
+  if (!src || src.startsWith(__rawBase) || __isExternalSrc(src)) return match;
+  const resolved = __normalizeMdPath(__mdRel, src);
+  if (!resolved) return match;
+  return `${{prefix}}${{quote}}${{__rawBase}}${{encodeURIComponent(resolved)}}${{quote}}`;
+}}).replace(/<img\\b(?![^>]*\\bloading=)([^>]*)>/gi, '<img loading="lazy"$1>');
 {markdown_frontmatter_js}
 const mathRenderOptions = {{
   delimiters: [
@@ -587,7 +586,7 @@ processedText = processedText.replace(/\\x00CODE:(code-placeholder-\\d+)\\x00/g,
   return block ? block.content : "";
 }});
 const tempDiv = document.createElement("div");
-tempDiv.innerHTML = marked.parse(processedText, {{ breaks: true, gfm: true }});
+tempDiv.innerHTML = __rewriteMarkdownImageSrcsInHtml(marked.parse(processedText, {{ breaks: true, gfm: true }}));
 if (typeof marked.lexer === "function") {{
   const values = [];
   const walk = (tokens) => {{
@@ -723,7 +722,6 @@ window.addEventListener("message", (event) => {{
 }});
 const out = document.getElementById("out");
 out.innerHTML = renderMarkdown(__mdText);
-__rewriteMarkdownImages(out);
 __rewriteMarkdownLinks(out);
 ensureWideTables(out);
 renderMathInScope(out);
