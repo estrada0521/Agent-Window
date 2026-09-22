@@ -574,26 +574,23 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     dpSplitDivider?.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       _dpSplitDragging = true;
-      dpSplitDivider.classList.add("dragging");
       dpSplitDivider.setPointerCapture(e.pointerId);
       document.body.classList.add("dp-split-resizing");
     });
     dpSplitDivider?.addEventListener("pointermove", (e) => {
       if (!_dpSplitDragging || !dpGitContent || !dpSplitPanel) return;
       const rect = dpSplitPanel.getBoundingClientRect();
-      let newH = e.clientY - rect.top - 3;
+      let newH = e.clientY - rect.top;
       newH = Math.max(80, Math.min(rect.height - 66, newH));
       dpGitContent.style.height = `${newH}px`;
       _dpSplitGitHeightPx = newH;
     });
     dpSplitDivider?.addEventListener("pointerup", () => {
       _dpSplitDragging = false;
-      dpSplitDivider.classList.remove("dragging");
       document.body.classList.remove("dp-split-resizing");
     });
     dpSplitDivider?.addEventListener("pointercancel", () => {
       _dpSplitDragging = false;
-      dpSplitDivider.classList.remove("dragging");
       document.body.classList.remove("dp-split-resizing");
     });
     desktopRightPanelResizer?.addEventListener("pointerdown", (event) => {

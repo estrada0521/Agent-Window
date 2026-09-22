@@ -87,18 +87,11 @@
       left: 6px;
       width: 1px;
       background: var(--line);
-      transition: background 140ms ease;
-    }
-    .has-hover .desktop-right-panel-resizer:hover::before {
-      background: var(--line-strong);
     }
     body.desktop-right-panel-resizing,
     body.desktop-right-panel-resizing * {
       cursor: col-resize;
       user-select: none;
-    }
-    body.desktop-right-panel-resizing .desktop-right-panel-resizer::before {
-      background: var(--line-strong);
     }
     .dp-split-panel {
       display: flex;
@@ -122,27 +115,35 @@
     .dp-split-pane-repo {
       flex: 1 1 auto;
       min-height: 60px;
-      padding-top: 0.38em;
+      padding-top: 0;
     }
     .dp-split-divider {
       flex-shrink: 0;
-      height: 6px;
-      cursor: ns-resize;
+      height: 0;
       position: relative;
+      z-index: 3;
+      cursor: ns-resize;
       user-select: none;
       touch-action: none;
+    }
+    .dp-split-divider::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -3px;
+      height: 6px;
     }
     .dp-split-divider::after {
       content: "";
       position: absolute;
-      left: 0; right: 0;
-      top: 50%; transform: translateY(-50%);
+      left: 0;
+      right: 0;
+      top: 0;
       height: 1px;
       background: var(--line);
-      transition: background 120ms ease;
+      pointer-events: none;
     }
-    .has-hover .dp-split-divider:hover::after,
-    .dp-split-divider.dragging::after { background: var(--line-strong); }
     body.dp-split-resizing, body.dp-split-resizing * { cursor: ns-resize; user-select: none; }
     .dp-empty-state {
       padding: 1.85em 0.62em;
@@ -187,7 +188,7 @@
     }
     .repo-path-wrap {
       display: block;
-      padding: 0 var(--right-panel-list-inset) 0.31em;
+      padding: calc(0.38em + 3px) var(--right-panel-list-inset) 0.31em;
       flex-shrink: 0;
     }
     .repo-path-back-btn {
