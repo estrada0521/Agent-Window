@@ -303,11 +303,21 @@ class FileRuntime:
             fulls.append(full)
         if not fulls:
             raise ValueError("no files to preview")
-        subprocess.Popen(
+        proc = subprocess.Popen(
             ["qlmanage", "-p", *fulls],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
+        )
+        time.sleep(0.2)
+        subprocess.Popen(
+            [
+                "osascript", "-e",
+                f'tell application "System Events" to set frontmost of '
+                f'(first process whose unix id is {proc.pid}) to true',
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
         return {"ok": True, "count": len(fulls)}
 

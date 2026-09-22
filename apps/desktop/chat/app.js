@@ -702,14 +702,16 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     }
     function handleDesktopFileContextMenuAction(payload) {
       const action = String(payload?.action || "");
-      if (!["openFile", "revealFileInFinder", "copyAbsoluteFilePath", "copyRelativeFilePath"].includes(action)) return false;
+      if (!["openFile", "quickLook", "revealFileInFinder", "copyAbsoluteFilePath", "copyRelativeFilePath"].includes(action)) return false;
       const paths = dpFileContextPaths;
       if (!paths.length) return true;
       const operation = action === "openFile"
         ? dpPostOpenFile(dpFileContextTriggerPath || paths[0])
-        : action === "revealFileInFinder"
-          ? dpRevealFileInFinder(dpFileContextTriggerPath || paths[0])
-          : dpCopyFilePath(paths, action === "copyAbsoluteFilePath");
+        : action === "quickLook"
+          ? dpQuickLookPaths(paths.filter((p) => dpRepoFileOrder.includes(p)))
+          : action === "revealFileInFinder"
+            ? dpRevealFileInFinder(dpFileContextTriggerPath || paths[0])
+            : dpCopyFilePath(paths, action === "copyAbsoluteFilePath");
       void operation.catch((err) => {
         dpShowActionStatus(err?.message || "File action failed.", true);
       });
@@ -1107,7 +1109,16 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           }
           if (event.code === "KeyR") {
             event.preventDefault();
-            window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openFinder" }, "*");
+            const revealTarget = (dpPanelOpen && dpActivePanelView === "repo")
+              ? (dpRepoOrderedSelectedFiles().slice(-1)[0] || dpRepoContent?.querySelector(".repo-browser-file:hover")?.dataset.path || "")
+              : "";
+            if (revealTarget) {
+              void dpRevealFileInFinder(revealTarget).catch((err) => {
+                dpShowActionStatus(err?.message || "Failed to reveal file in Finder.", true);
+              });
+            } else {
+              window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openFinder" }, "*");
+            }
             return;
           }
           if (event.code === "KeyP") {
@@ -1208,6 +1219,36 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         if (event.metaKey && event.shiftKey && !event.altKey && !event.ctrlKey && event.code === "KeyP") {
           event.preventDefault();
           if (hasDesktopRightPanelOverlay()) dpToggleGitSummaryPinned();
+          return;
+        }
+        if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyY") {
+          if (dpPanelOpen && dpActivePanelView === "repo") {
+            let targets = dpRepoOrderedSelectedFiles();
+            if (!targets.length) {
+              const hovered = dpRepoContent?.querySelector(".repo-browser-file:hover");
+              if (hovered?.dataset.path) targets = [hovered.dataset.path];
+            }
+            if (targets.length) {
+              event.preventDefault();
+              void dpQuickLookPaths(targets);
+            }
+          }
+          return;
+        }
+        if (event.altKey && event.shiftKey && !event.ctrlKey && event.code === "KeyC") {
+          if (dpPanelOpen && dpActivePanelView === "repo") {
+            let targets = dpRepoOrderedSelectedEntries();
+            if (!targets.length) {
+              const hovered = dpRepoContent?.querySelector(".repo-browser-item:hover");
+              if (hovered?.dataset.path) targets = [hovered.dataset.path];
+            }
+            if (targets.length) {
+              event.preventDefault();
+              void dpCopyFilePath(targets, event.metaKey).catch((err) => {
+                dpShowActionStatus(err?.message || "Failed to copy path.", true);
+              });
+            }
+          }
           return;
         }
         if (!event.metaKey || event.ctrlKey) return;

@@ -704,6 +704,13 @@ fn show_file_context_menu(
     .enabled(payload.file_exists)
     .build(&app)
     .map_err(|err| err.to_string())?;
+    let quick_look = MenuItemBuilder::with_id(
+        format!("{}action:quickLook", NATIVE_MENU_PREFIX),
+        "Quick Look",
+    )
+    .enabled(payload.file_exists)
+    .build(&app)
+    .map_err(|err| err.to_string())?;
     let reveal = MenuItemBuilder::with_id(
         format!("{}action:revealFileInFinder", NATIVE_MENU_PREFIX),
         "Reveal in Finder",
@@ -728,6 +735,7 @@ fn show_file_context_menu(
         builder = builder.item(&open);
     }
     let menu = builder
+        .item(&quick_look)
         .item(&reveal)
         .separator()
         .item(&copy_absolute)
