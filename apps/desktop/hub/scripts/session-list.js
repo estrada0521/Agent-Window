@@ -1,6 +1,11 @@
 
     const DESK_KILL_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`;
     const DESK_REVIVE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`;
+    const DESK_SESSION_ACTION_TITLE = {
+      kill: "Archive — Kill tmux session; keep log",
+      revive: "Revive — Restart tmux session with saved agent topology",
+      "delete-archived": "Delete — Delete ~/.agent-window/session/{session}",
+    };
 
     function renderDeskSessionRow(session, archived) {
       const sessionName = String(session.name);
@@ -10,6 +15,7 @@
       const unreadClass = !isSelected && _deskUnreadSessions.has(sessionName) ? " is-unread" : "";
       const swipeActionLabel = archived ? "Revive" : "Archive";
       const swipeActionRoute = archived ? "revive" : "kill";
+      const swipeActionTitle = DESK_SESSION_ACTION_TITLE[swipeActionRoute];
       const actionSvg = archived ? DESK_REVIVE_SVG : DESK_KILL_SVG;
       const previewText = String(session.latest_message_preview || "").trim();
       const previewSender = String(session.latest_message_sender || "").trim();
@@ -19,7 +25,7 @@
         : "";
       return `<div class="desk-swipe-row" data-session-name="${esc(sessionName)}">` +
         `<div class="desk-swipe-action-rail">` +
-          `<button type="button" class="desk-swipe-action-btn" data-desk-swipe-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + sessionName)}">` +
+          `<button type="button" class="desk-swipe-action-btn" data-desk-swipe-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + sessionName)}" title="${esc(swipeActionTitle)}">` +
             actionSvg +
             `<span>${esc(swipeActionLabel)}</span>` +
           `</button>` +
@@ -34,7 +40,7 @@
                     previewHtml +
                   `</div>` +
                 `</div>` +
-                `<button type="button" class="desk-row-hover-action" data-desk-hover-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + sessionName)}" title="${esc(swipeActionLabel)}">` +
+                `<button type="button" class="desk-row-hover-action" data-desk-hover-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + sessionName)}" title="${esc(swipeActionTitle)}">` +
                   actionSvg +
                 `</button>` +
               `</div>` +

@@ -699,9 +699,24 @@
       const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="18.55 8.44 18.55 20 5.46 20 5.46 8.44"/><rect x="4" y="4" width="16" height="4.44"/><line x1="10.55" y1="12" x2="13.45" y2="12"/></svg>`;
       const reviveSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="2.22 4.89 2.22 10.22 7.56 10.22"/><path d="M4.45 14.67a8 8 0 1 0 1.89-8.32L2.22 10.22"/></svg>`;
       const SWIPE_ACTIONS = {
-        kill: { svg: killSvg, label: "Archive", tone: "warn" },
-        "delete-archived": { svg: trashSvg, label: "Delete", tone: "danger" },
-        revive: { svg: reviveSvg, label: "Revive", tone: "success" },
+        kill: {
+          svg: killSvg,
+          label: "Archive",
+          tone: "warn",
+          title: "Archive — Kill tmux session; keep log",
+        },
+        "delete-archived": {
+          svg: trashSvg,
+          label: "Delete",
+          tone: "danger",
+          title: "Delete — Delete ~/.agent-window/session/{session}",
+        },
+        revive: {
+          svg: reviveSvg,
+          label: "Revive",
+          tone: "success",
+          title: "Revive — Restart tmux session with saved agent topology",
+        },
       };
       let anyOpen = null;
       const removeSwipeActs = (sr) => {
@@ -762,6 +777,7 @@
             const el = document.createElement("div");
             el.className = "swipe-act";
             el.dataset.action = name;
+            el.title = def.title;
             el.innerHTML = `<span class="swipe-act-btn is-${def.tone}">${def.svg}</span><span>${def.label}</span>`;
             el.addEventListener("click", onActClick);
             tray.appendChild(el);
