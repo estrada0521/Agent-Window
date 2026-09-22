@@ -532,7 +532,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         requestAnimationFrame(() => {
           const panelH = dpSplitPanel.getBoundingClientRect().height;
           if (panelH > 0 && !_dpSplitGitHeightPx) {
-            const initH = Math.max(80, Math.floor(panelH * 0.5));
+            const initH = Math.floor(panelH * 0.5);
             dpGitContent.style.height = `${initH}px`;
             _dpSplitGitHeightPx = initH;
           }
@@ -581,7 +581,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       if (!_dpSplitDragging || !dpGitContent || !dpSplitPanel) return;
       const rect = dpSplitPanel.getBoundingClientRect();
       let newH = e.clientY - rect.top;
-      newH = Math.max(80, Math.min(rect.height - 66, newH));
+      newH = Math.max(0, Math.min(rect.height, newH));
       dpGitContent.style.height = `${newH}px`;
       _dpSplitGitHeightPx = newH;
     });
