@@ -11,12 +11,10 @@
       grid-area: 1 / 1;
       min-height: 0;
       min-width: 0;
-      overflow-y: auto;
-      overflow-x: hidden;
-      scrollbar-width: none;
-      display: flex;
-      flex-direction: column;
       overflow: hidden;
+      scrollbar-width: none;
+      display: grid;
+      grid-template-rows: auto minmax(0, auto) minmax(0, 1fr) minmax(0, auto) auto;
       position: relative;
       font-size: var(--text-size, 13px);
     }
@@ -28,8 +26,30 @@
       visibility: hidden;
       pointer-events: none;
     }
+    .desk-hub-tagline {
+      grid-row: 1;
+      margin: 0;
+      padding: 0.82em 0.55em 0;
+      font-size: 1.69em;
+      font-weight: 200;
+      letter-spacing: -0.04em;
+      line-height: 1.15;
+      color: var(--fg);
+      font-family: "Snell Roundhand", "Apple Chancery", cursive;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .desk-new-session-section {
+      grid-row: 2;
+      min-height: 0;
+      overflow: hidden;
+      padding: 1.23em 0 0;
+      border-bottom: none;
+      display: block;
+      background: transparent;
+    }
     .desk-session-list {
-      flex: 1;
+      grid-row: 3;
       min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
@@ -50,21 +70,10 @@
       mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
     }
-    .desk-hub-footer-credit {
-      position: relative;
-      flex: none;
-      z-index: 1;
-      margin: 0;
-      padding: 0.5em 0 0.8em 2.6em;
-      text-align: left;
-      font-size: 0.77em;
-      opacity: 0.55;
-      color: var(--muted);
-      pointer-events: none;
-      white-space: nowrap;
-    }
     .desk-hub-message {
-      flex: none;
+      grid-row: 4;
+      min-height: 0;
+      overflow: hidden;
       padding: 0.83em 1em 2.33em;
       color: var(--muted);
       font-size: 0.92em;
@@ -77,22 +86,17 @@
     .desk-hub-message[hidden] {
       display: none;
     }
-    .desk-hub-tagline {
+    .desk-hub-footer-credit {
+      grid-row: 5;
       margin: 0;
-      padding: 0.82em 0.55em 0;
-      font-size: 1.69em;
-      font-weight: 200;
-      letter-spacing: -0.04em;
-      color: var(--fg);
-      font-family: "Snell Roundhand", "Apple Chancery", cursive;
-      white-space: nowrap;
+      padding: 0.5em 0 0.8em 2.6em;
+      text-align: left;
+      font-size: 0.77em;
+      line-height: 1.2;
+      opacity: 0.55;
+      color: var(--muted);
       pointer-events: none;
-    }
-    .desk-new-session-section {
-      padding: 1.23em 0 0;
-      border-bottom: none;
-      display: block;
-      background: transparent;
+      white-space: nowrap;
     }
     .desk-new-session-toggle {
       width: 100%;
