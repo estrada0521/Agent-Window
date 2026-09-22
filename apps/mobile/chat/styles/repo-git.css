@@ -274,11 +274,6 @@
       animation: sheetListSlideFromTop 170ms cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
-    .git-commit-info-block.git-detail-feed-in,
-    .git-commit-file-wrap.git-detail-feed-in {
-      animation: sheetListSlideFromTop 170ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-
     @keyframes sheetListSlideForward {
       0% {
         opacity: 0;
@@ -682,6 +677,16 @@
         opacity: 1;
         transform: translateY(0);
       }
+    }
+
+    .git-commit-file-row.git-file-reveal-in {
+      animation: git-file-reveal-in 90ms ease-out both;
+      animation-delay: calc(var(--file-reveal-i, 0) * 4ms);
+    }
+
+    @keyframes git-file-reveal-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     .git-commit-file-path {

@@ -4,8 +4,7 @@ __CHAT_INCLUDE:../../../shared/chat/thinking.css__
       .mobile-sheet-list[data-transition="forward"],
       .mobile-sheet-list[data-transition="back"],
       .mobile-sheet-list[data-transition="from-top"],
-      .git-commit-info-block.git-detail-feed-in,
-      .git-commit-file-wrap.git-detail-feed-in {
+      .git-commit-file-row.git-file-reveal-in {
         animation: none;
       }
     }

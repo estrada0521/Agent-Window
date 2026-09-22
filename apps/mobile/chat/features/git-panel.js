@@ -26,11 +26,11 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       void list.offsetWidth;
       list.dataset.transition = transition;
     };
-    const feedInFromTop = (el) => {
-      if (!el) return;
-      el.classList.remove("git-detail-feed-in");
-      void el.offsetWidth;
-      el.classList.add("git-detail-feed-in");
+    const revealFilesFromTop = (wrapEl) => {
+      wrapEl?.querySelectorAll(".git-commit-file-row").forEach((row, i) => {
+        row.style.setProperty("--file-reveal-i", Math.min(i, 6));
+        row.classList.add("git-file-reveal-in");
+      });
     };
     const renderGitWorktreeButton = (data) => {
       let btn = gitWorktreeButton();
@@ -106,7 +106,6 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       const wrapEl = bodyEl.querySelector(".git-commit-file-wrap");
       if (wrapEl) bodyEl.insertBefore(blockEl, wrapEl);
       else bodyEl.prepend(blockEl);
-      feedInFromTop(blockEl);
     };
     const ensureGitDetailChangedTitle = (wrapEl) => {
       if (!wrapEl || wrapEl.querySelector(":scope > .git-commit-file-section-title")) return;
@@ -210,7 +209,7 @@ __CHAT_INCLUDE:../../../shared/chat/git-panel-session.js__
       onOpenDetail: setGitDetailChrome,
       onDetailFilesReady: ({ wrapEl, isWorktree }) => {
         if (!isWorktree) ensureGitDetailChangedTitle(wrapEl);
-        feedInFromTop(wrapEl);
+        revealFilesFromTop(wrapEl);
       },
       onOverview: refreshGitDetailTitleFromOverview,
       onFingerprintChanged: (data) => {
