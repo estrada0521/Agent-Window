@@ -833,6 +833,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const previousScrollTop = isSamePath
         ? dpRepoContent.querySelector(".repo-browser-scroll")?.scrollTop || 0
         : 0;
+      const rowKey = (el) => el.title || "";
+      const firstRects = direction === "none" && !loading && !error
+        ? captureListRowRects(dpRepoContent, ".repo-browser-item", rowKey)
+        : null;
       dpRepoBrowserPath = path;
       if (!isSamePath) dpRepoSel.clear();
       dpRepoContent.innerHTML = "";
@@ -905,6 +909,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       stack.appendChild(scroll);
       dpRepoContent.appendChild(stack);
       scroll.scrollTop = previousScrollTop;
+      flipListRows(dpRepoContent, ".repo-browser-item", rowKey, firstRects);
       dpRepoSel.prune();
       dpRepoSel.applyClasses();
       scroll.addEventListener("mousedown", (e) => {

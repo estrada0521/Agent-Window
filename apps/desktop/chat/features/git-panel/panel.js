@@ -1,3 +1,4 @@
+__CHAT_INCLUDE:../../../../shared/chat/list-flip.js__
 __CHAT_INCLUDE:../../../../shared/chat/git-panel-html.js__
 __CHAT_INCLUDE:../../../../shared/chat/git-panel-data.js__
 __CHAT_INCLUDE:../../../../shared/chat/git-panel-session.js__

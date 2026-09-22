@@ -42,12 +42,15 @@
         const rowHtml = (commit) => gitCommitRowHtml(commit, host.commitRowOptions
           ? host.commitRowOptions(commit, newHashes)
           : { animate: !!(newHashes && newHashes.has(commit.hash)) });
+        const rowKey = (el) => el.dataset.hash || "";
         if (!append) {
+          const firstRects = captureListRowRects(listEl, ".git-commit-row", rowKey);
           if (!commits.length) {
             listEl.innerHTML = emptyHtml;
             return;
           }
           listEl.innerHTML = commits.map(rowHtml).join("");
+          flipListRows(listEl, ".git-commit-row", rowKey, firstRects);
           return;
         }
         if (!commits.length) return;
@@ -178,8 +181,11 @@
             incremental,
           });
         } else {
+          const fileRowKey = (el) => el.dataset.path || "";
+          const firstRects = captureListRowRects(wrapEl, ".git-commit-file-row", fileRowKey);
           wrapEl.dataset.fileStatsSignature = gitFileStatsRowsSignature([{ kind: scope || "commit", files: loaded.files }]);
           wrapEl.innerHTML = gitCommitFileListHtml(loaded.files, { allowUndo, scope });
+          flipListRows(wrapEl, ".git-commit-file-row", fileRowKey, firstRects);
         }
         return loaded.data;
       };

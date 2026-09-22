@@ -172,6 +172,13 @@
     } = {}) => {
       const safeSections = (sections || []).filter((section) => Array.isArray(section.files) && section.files.length);
       const signature = gitFileStatsRowsSignature(safeSections);
+      const fileRowKey = (el) => {
+        const path = el.dataset.path || "";
+        const scope = el.closest(".git-commit-file-section")?.dataset.scope || "";
+        return scope ? `${scope}:${path}` : path;
+      };
+      const firstRects = captureListRowRects(wrapEl, ".git-commit-file-row", fileRowKey);
+      const finishFlip = () => flipListRows(wrapEl, ".git-commit-file-row", fileRowKey, firstRects);
       if (!safeSections.length) {
         wrapEl.dataset.fileStatsSignature = "";
         wrapEl.innerHTML = emptyHtml;
@@ -180,6 +187,7 @@
       if (!incremental || !wrapEl.querySelector(".git-commit-file-sections")) {
         wrapEl.dataset.fileStatsSignature = signature;
         wrapEl.innerHTML = gitCommitFileStatsSectionsHtml(safeSections, { allowUndo });
+        finishFlip();
         return;
       }
       if (wrapEl.dataset.fileStatsSignature === signature) return;
@@ -193,6 +201,7 @@
       if (!sectionsRoot) {
         wrapEl.dataset.fileStatsSignature = signature;
         wrapEl.innerHTML = gitCommitFileStatsSectionsHtml(safeSections, { allowUndo });
+        finishFlip();
         return;
       }
 
@@ -223,4 +232,5 @@
         });
       });
       wrapEl.dataset.fileStatsSignature = signature;
+      finishFlip();
     };
