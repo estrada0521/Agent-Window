@@ -403,6 +403,63 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
         dpRepoSelectionAnchor = "";
       }
     });
+    let dpGitSelectedPaths = new Set();
+    let dpGitSelectionAnchor = "";
+    const dpGitCurrentFileOrder = () =>
+      Array.from(dpGitContent?.querySelectorAll(".git-commit-file-row") || [])
+        .map((row) => row.dataset.path || "")
+        .filter(Boolean);
+    const dpGitApplySelectionClasses = () => {
+      dpGitContent?.querySelectorAll(".git-commit-file-row").forEach((row) => {
+        row.classList.toggle("is-selected", dpGitSelectedPaths.has(row.dataset.path || ""));
+      });
+    };
+    const dpGitSetSelection = (paths) => {
+      dpGitSelectedPaths = new Set(paths);
+      dpGitApplySelectionClasses();
+    };
+    const dpGitToggleSelection = (path) => {
+      const next = new Set(dpGitSelectedPaths);
+      if (next.has(path)) next.delete(path); else next.add(path);
+      dpGitSetSelection(next);
+      dpGitSelectionAnchor = path;
+    };
+    const dpGitSelectRangeTo = (path) => {
+      const order = dpGitCurrentFileOrder();
+      const anchor = dpGitSelectionAnchor || path;
+      const ai = order.indexOf(anchor);
+      const ti = order.indexOf(path);
+      if (ai === -1 || ti === -1) {
+        dpGitSetSelection([path]);
+      } else {
+        const start = Math.min(ai, ti);
+        const end = Math.max(ai, ti);
+        dpGitSetSelection(order.slice(start, end + 1));
+      }
+      dpGitSelectionAnchor = anchor;
+    };
+    const dpGitOrderedSelectedFiles = () => dpGitCurrentFileOrder().filter((p) => dpGitSelectedPaths.has(p));
+    const dpActivePanelTargets = (repoOrdered, repoHoverSel, gitHoverSel) => {
+      if (!dpPanelOpen) return [];
+      let repoTargets = repoOrdered();
+      if (!repoTargets.length) {
+        const hovered = dpRepoContent?.querySelector(repoHoverSel);
+        if (hovered?.dataset.path) repoTargets = [hovered.dataset.path];
+      }
+      if (repoTargets.length) return repoTargets;
+      let gitTargets = dpGitOrderedSelectedFiles();
+      if (!gitTargets.length) {
+        const hovered = dpGitContent?.querySelector(gitHoverSel);
+        if (hovered?.dataset.path) gitTargets = [hovered.dataset.path];
+      }
+      return gitTargets;
+    };
+    dpGitContent?.addEventListener("mouseleave", () => {
+      if (dpGitSelectedPaths.size) {
+        dpGitSetSelection([]);
+        dpGitSelectionAnchor = "";
+      }
+    });
     let dpPanelWidthAtDefaultTextSize = DP_PANEL_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE;
     let _desktopRightPanelResizeState = null;
     let _dpSplitDragging = false;
@@ -708,7 +765,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const operation = action === "openFile"
         ? dpPostOpenFile(dpFileContextTriggerPath || paths[0])
         : action === "quickLook"
-          ? dpQuickLookPaths(paths.filter((p) => dpRepoFileOrder.includes(p)))
+          ? dpQuickLookPaths(paths)
           : action === "revealFileInFinder"
             ? dpRevealFileInFinder(dpFileContextTriggerPath || paths[0])
             : dpCopyFilePath(paths, action === "copyAbsoluteFilePath");
@@ -1088,6 +1145,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       } else {
         toggleDesktopRightPanel();
       }
+      window.focus();
     });
     (() => {
       window.addEventListener("keydown", (event) => {
@@ -1109,9 +1167,9 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           }
           if (event.code === "KeyR") {
             event.preventDefault();
-            const revealTarget = (dpPanelOpen && dpActivePanelView === "repo")
-              ? (dpRepoOrderedSelectedFiles().slice(-1)[0] || dpRepoContent?.querySelector(".repo-browser-file:hover")?.dataset.path || "")
-              : "";
+            const revealTarget = dpActivePanelTargets(
+              dpRepoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
+            ).slice(-1)[0] || "";
             if (revealTarget) {
               void dpRevealFileInFinder(revealTarget).catch((err) => {
                 dpShowActionStatus(err?.message || "Failed to reveal file in Finder.", true);
@@ -1222,32 +1280,24 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           return;
         }
         if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyY") {
-          if (dpPanelOpen && dpActivePanelView === "repo") {
-            let targets = dpRepoOrderedSelectedFiles();
-            if (!targets.length) {
-              const hovered = dpRepoContent?.querySelector(".repo-browser-file:hover");
-              if (hovered?.dataset.path) targets = [hovered.dataset.path];
-            }
-            if (targets.length) {
-              event.preventDefault();
-              void dpQuickLookPaths(targets);
-            }
+          const targets = dpActivePanelTargets(
+            dpRepoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
+          );
+          if (targets.length) {
+            event.preventDefault();
+            void dpQuickLookPaths(targets);
           }
           return;
         }
         if (event.metaKey && event.altKey && !event.ctrlKey && event.code === "KeyC") {
-          if (dpPanelOpen && dpActivePanelView === "repo") {
-            let targets = dpRepoOrderedSelectedEntries();
-            if (!targets.length) {
-              const hovered = dpRepoContent?.querySelector(".repo-browser-item:hover");
-              if (hovered?.dataset.path) targets = [hovered.dataset.path];
-            }
-            if (targets.length) {
-              event.preventDefault();
-              void dpCopyFilePath(targets, !event.shiftKey).catch((err) => {
-                dpShowActionStatus(err?.message || "Failed to copy path.", true);
-              });
-            }
+          const targets = dpActivePanelTargets(
+            dpRepoOrderedSelectedEntries, ".repo-browser-item:hover", ".git-commit-file-row:hover",
+          );
+          if (targets.length) {
+            event.preventDefault();
+            void dpCopyFilePath(targets, !event.shiftKey).catch((err) => {
+              dpShowActionStatus(err?.message || "Failed to copy path.", true);
+            });
           }
           return;
         }

@@ -957,6 +957,9 @@
     .has-hover .git-commit-file-row:hover {
       background: var(--panel-row-bg);
     }
+    .git-commit-file-row.is-selected {
+      background: var(--panel-row-bg);
+    }
     .git-commit-file-header {
       display: flex;
       align-items: center;

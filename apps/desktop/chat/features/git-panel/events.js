@@ -5,9 +5,21 @@
         onFileRow: async (fileRow) => {
           const p = String(fileRow.dataset.path || "").trim();
           if (!p) return;
+          if (event.shiftKey) { dpGitSelectRangeTo(p); return; }
+          if (event.metaKey) { dpGitToggleSelection(p); return; }
+          const isMultiTarget = dpGitSelectedPaths.size > 1 && dpGitSelectedPaths.has(p);
+          const targets = isMultiTarget ? dpGitOrderedSelectedFiles() : [p];
+          if (!isMultiTarget) { dpGitSetSelection([p]); dpGitSelectionAnchor = p; }
+          if (event.altKey) {
+            await dpQuickLookPaths(targets);
+            return;
+          }
           const hash = gitSession.detailContext?.hash || "";
-          if (hash || fileRow.dataset.untracked !== "1") await dpPostOpenDiff(p, hash, fileRow.dataset.oldPath || "");
-          else await dpPostOpenFile(p);
+          for (const path of targets) {
+            const row = dpGitContent?.querySelector(`.git-commit-file-row[data-path="${gitCssEscape(path)}"]`);
+            if (hash || row?.dataset.untracked !== "1") await dpPostOpenDiff(path, hash, row?.dataset.oldPath || "");
+            else await dpPostOpenFile(path);
+          }
         },
         closeWorktreeSummaryClick: true,
       });
@@ -31,7 +43,14 @@
       }
       const fileRow = event.target.closest(".git-commit-file-row");
       const path = String(fileRow?.dataset.path || "").trim();
-      if (path) void dpOpenFileContextMenu(path, event, { openFile: fileRow.dataset.untracked !== "1" });
+      if (!path) return;
+      const inSelection = dpGitSelectedPaths.size > 1 && dpGitSelectedPaths.has(path);
+      if (!inSelection) {
+        dpGitSetSelection([path]);
+        dpGitSelectionAnchor = path;
+      }
+      const targets = inSelection ? dpGitOrderedSelectedFiles() : [path];
+      void dpOpenFileContextMenu(targets, event, { openFile: fileRow.dataset.untracked !== "1", triggerPath: path });
     });
     document.getElementById("gitPinnedSummaryAside")?.addEventListener("click", async (event) => {
       if (event.target.closest(".git-summary-pin")) {
