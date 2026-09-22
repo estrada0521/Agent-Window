@@ -81,16 +81,6 @@
         dpGitHeaderSummaryState = dpBuildSummaryState(data || {});
         dpSyncSummaryWrap();
       },
-      onFingerprintChanged: (data, { isFirst, previousCommits, detailContext }) => {
-        if (!dpPanelOpen && dpPinnedStripActive()) {
-          return { updateList: false };
-        }
-        if (detailContext) return { updateList: false };
-        return {
-          updateList: true,
-          newHashes: isFirst ? null : gitNewCommitHashes(previousCommits, data?.recent_commits),
-        };
-      },
     });
     const dpLoadGitPage = (opts) => gitSession.loadPage(opts);
     const dpOpenGitDetail = (opts) => gitSession.openDetail(opts);
