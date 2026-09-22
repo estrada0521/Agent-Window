@@ -279,10 +279,7 @@
       background: var(--panel-row-bg);
     }
     .repo-browser-item.is-selected {
-      background: var(--panel-row-hover-bg);
-    }
-    .has-hover .repo-browser-item.is-selected:hover {
-      background: var(--panel-row-hover-bg);
+      background: var(--panel-row-bg);
     }
     .repo-browser-item-icon {
       width: var(--right-panel-icon-slot-size);

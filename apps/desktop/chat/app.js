@@ -397,6 +397,12 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
     };
     const dpRepoOrderedSelectedFiles = () => dpRepoFileOrder.filter((p) => dpRepoSelectedPaths.has(p));
     const dpRepoOrderedSelectedEntries = () => dpRepoEntryOrder.filter((p) => dpRepoSelectedPaths.has(p));
+    dpRepoContent?.addEventListener("mouseleave", () => {
+      if (dpRepoSelectedPaths.size) {
+        dpRepoSetSelection([]);
+        dpRepoSelectionAnchor = "";
+      }
+    });
     let dpPanelWidthAtDefaultTextSize = DP_PANEL_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE;
     let _desktopRightPanelResizeState = null;
     let _dpSplitDragging = false;
