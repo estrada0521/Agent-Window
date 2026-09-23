@@ -37,7 +37,6 @@
           return true;
         } catch (err) {
           setStatus("upload failed: " + err.message, true);
-          setTimeout(() => setStatus(""), STATUS_TOAST_MS);
           return false;
         }
       };

@@ -27,7 +27,7 @@
           currentServerInstance = data.server_instance;
         }
         if (data.server_instance !== SERVER_INSTANCE_SEED) {
-          setStatus("chat server was restarted elsewhere; Reload chat to update this page", true);
+          setStatus("Server restarted; reload", true);
         }
         latestPayloadData = data;
         if (!olderEntries.length) {

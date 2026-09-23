@@ -51,7 +51,7 @@
             openFile: !!childPayload.openFile,
           },
         }).catch((err) => {
-          event.source?.postMessage({ type: "file-context-menu-error", message: String(err || "Failed to open file menu.") }, "*");
+          event.source?.postMessage({ type: "file-context-menu-error", message: String(err || "File menu failed") }, "*");
         });
         return;
       }

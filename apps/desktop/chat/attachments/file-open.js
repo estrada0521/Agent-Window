@@ -17,7 +17,7 @@
         res = await tryPost();
       }
       if (!res.ok) {
-        let detail = "Failed to open file in the default app.";
+        let detail = "Open failed";
         try {
           const data = await res.json();
           if (data && data.error) detail = data.error;
@@ -34,7 +34,7 @@
         body: JSON.stringify({ path, hash, old_path: oldPath }),
       });
       if (!res.ok) {
-        let detail = "Failed to open diff tool.";
+        let detail = "Diff failed";
         try {
           const data = await res.json();
           if (data && data.error) detail = data.error;
@@ -53,9 +53,8 @@
       } catch (err) {
         const message = err?.status === 404
           ? `file not found: ${displayAttachmentFilename(normalizedPath) || normalizedPath}`
-          : err?.message || "Failed to open file in the default app.";
+          : err?.message || "Open failed";
         setStatus(message, true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
         return false;
       }
     };

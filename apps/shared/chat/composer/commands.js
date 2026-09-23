@@ -83,7 +83,7 @@
         } catch (err) {
           cancelCmdAutocompleteLoading();
           closeCmdDrop();
-          setStatus(err?.message || "shortcut commands unavailable", true);
+          setStatus(err?.message || "Commands unavailable", true);
           return;
         }
         cancelCmdAutocompleteLoading();
@@ -301,7 +301,7 @@
       window.open(href, "_blank", "noopener,noreferrer");
       return Promise.resolve();
     };
-    const reportExternalLinkFailure = () => setStatus("could not open external link", true);
+    const reportExternalLinkFailure = () => setStatus("Link failed", true);
     window.addEventListener("message", (event) => {
       if (event.source !== window.parent || event.data?.type !== "external-url-open-failed") return;
       reportExternalLinkFailure();

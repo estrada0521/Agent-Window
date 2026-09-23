@@ -366,11 +366,9 @@
           if (!res.ok) {
             const data = await res.json().catch(() => ({}));
             setStatus(data.error || "terminal open failed", true);
-            setTimeout(() => setStatus(""), STATUS_TOAST_MS);
           }
         } catch (err) {
-          setStatus(`terminal open error: ${err.message}`, true);
-          setTimeout(() => setStatus(""), STATUS_TOAST_MS);
+          setStatus(`terminal: ${err.message}`, true);
         }
       });
     }

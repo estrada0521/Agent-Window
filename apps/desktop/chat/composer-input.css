@@ -217,29 +217,6 @@
     html:not([data-mobile="1"]) .composer textarea::-webkit-scrollbar {
       display: none;
     }
-    .statusline {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: calc(var(--text-size, 13px) * 12 / 13);
-      width: auto;
-      max-width: 100%;
-      padding: 0 calc(var(--text-size, 13px) * 10 / 13) 2px;
-      min-height: 1.3em;
-      color: var(--muted);
-      font-size: calc(var(--text-size, 13px) * 11 / 13);
-      text-align: right;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      pointer-events: none;
-      z-index: 2;
-      background: transparent;
-      box-sizing: border-box;
-    }
-    .statusline.is-error {
-      color: var(--error);
-    }
     html[data-mobile="1"] .composer-overlay {
       --composer-overlay-max-width: calc(100vw - calc(var(--text-size, 13px) * 16 / 13));
     }

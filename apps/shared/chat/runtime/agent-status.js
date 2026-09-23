@@ -42,12 +42,12 @@
         }
       }
       if (typeof data.active === "boolean") {
+        if (!data.active && sessionActive !== false) setStatus("Archived");
         sessionActive = data.active;
       }
       document.getElementById("message").disabled = !sessionActive;
       const _attachBtn = document.getElementById("attachBtn");
       if (_attachBtn) _attachBtn.disabled = !sessionActive;
-      renderStatus();
       if (typeof data.session === "string" && data.session) {
         restoreComposerDraft();
       }

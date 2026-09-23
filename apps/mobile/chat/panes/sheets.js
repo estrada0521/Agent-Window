@@ -564,7 +564,6 @@
       const [exists] = await Promise.all([fileExistsOnDisk(path), ensureFileIconTheme()]);
       if (!exists) {
         setStatus(`file not found: ${displayAttachmentFilename(path) || path}`, true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
         return;
       }
       ensureSheetDom();

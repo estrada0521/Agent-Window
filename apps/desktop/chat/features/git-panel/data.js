@@ -29,23 +29,21 @@
     const dpPostOpenFile = async (rawPath) => {
       const normalizedPath = normalizeWorkspaceFilePath(rawPath);
       if (!normalizedPath) return;
-      const errMsg = "Failed to open file in the default app.";
+      const errMsg = "Open failed";
       try {
         await postOpenFile(normalizedPath);
       } catch (err) {
         setStatus(err?.message || errMsg, true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       }
     };
     const dpPostOpenDiff = async (rawPath, hash = "", oldPath = "") => {
       const normalizedPath = normalizeWorkspaceFilePath(rawPath);
       if (!normalizedPath) return;
-      const errMsg = "Failed to open diff tool.";
+      const errMsg = "Diff failed";
       try {
         await postOpenDiff(normalizedPath, hash, oldPath);
       } catch (err) {
         setStatus(err?.message || errMsg, true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       }
     };
     const gitSession = createGitPanelSession({

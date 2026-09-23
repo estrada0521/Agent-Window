@@ -617,10 +617,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     let dpFileContextPaths = [];
     let dpFileContextTriggerPath = "";
     let dpWorkspaceRoot = "";
-    const dpShowActionStatus = (message, error = false) => {
-      setStatus(message, error);
-      setTimeout(() => setStatus(""), STATUS_TOAST_MS);
-    };
     const dpOpenFileContextMenu = (rawPathOrPaths, event, { openFile = false, triggerPath = "" } = {}) => {
       const paths = (Array.isArray(rawPathOrPaths) ? rawPathOrPaths : [rawPathOrPaths])
         .map(normalizeWorkspaceFilePath)
@@ -664,7 +660,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       }).join("\n");
       await doCopyText(text);
       const label = absolute ? "absolute path" : "relative path";
-      dpShowActionStatus(paths.length > 1 ? `Copied ${paths.length} ${label}s` : `Copied ${label}`);
+      setStatus(paths.length > 1 ? `Copied ${paths.length} ${label}s` : `Copied ${label}`);
     };
     const dpRevealFileInFinder = async (path) => {
       const response = await fetchWithTimeout("/reveal-file", {
@@ -674,7 +670,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       }, 12000);
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data?.error || "Failed to reveal file in Finder.");
+        throw new Error(data?.error || "Reveal failed");
       }
     };
     const dpQuickLookPaths = async (paths) => {
@@ -686,10 +682,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         }, 8000);
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
-          throw new Error(data?.error || "Failed to open Quick Look.");
+          throw new Error(data?.error || "Quick Look failed");
         }
       } catch (err) {
-        dpShowActionStatus(err?.message || "Failed to open Quick Look.", true);
+        setStatus(err?.message || "Quick Look failed", true);
       }
     };
     function handleDesktopCommitContextMenuAction(payload) {
@@ -700,9 +696,9 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       void (async () => {
         const info = await gitCommitInfo(hash);
         await doCopyText(action === "copyCommitHash" ? info.hash : info.message);
-        dpShowActionStatus(action === "copyCommitHash" ? "Copied commit hash" : "Copied commit message");
+        setStatus(action === "copyCommitHash" ? "Copied hash" : "Copied message");
       })().catch((err) => {
-        dpShowActionStatus(err?.message || "Commit action failed.", true);
+        setStatus(err?.message || "Commit action failed", true);
       });
       return true;
     }
@@ -719,7 +715,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             ? dpRevealFileInFinder(dpFileContextTriggerPath || paths[0])
             : dpCopyFilePath(paths, action === "copyAbsoluteFilePath");
       void operation.catch((err) => {
-        dpShowActionStatus(err?.message || "File action failed.", true);
+        setStatus(err?.message || "File action failed", true);
       });
       return true;
     }
@@ -1013,7 +1009,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         return;
       }
       if (event.data.type === "file-context-menu-error") {
-        dpShowActionStatus(String(event.data.message || "Failed to open file menu."), true);
+        setStatus(String(event.data.message || "File menu failed"), true);
         return;
       }
       if (event.data.type === "desk-git-changes-request") {
@@ -1105,7 +1101,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             ).slice(-1)[0] || "";
             if (revealTarget) {
               void dpRevealFileInFinder(revealTarget).catch((err) => {
-                dpShowActionStatus(err?.message || "Failed to reveal file in Finder.", true);
+                setStatus(err?.message || "Reveal failed", true);
               });
             } else {
               window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openFinder" }, "*");
@@ -1239,7 +1235,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           if (targets.length) {
             event.preventDefault();
             void dpCopyFilePath(targets, !event.shiftKey).catch((err) => {
-              dpShowActionStatus(err?.message || "Failed to copy path.", true);
+              setStatus(err?.message || "Copy failed", true);
             });
           }
           return;

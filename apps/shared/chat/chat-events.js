@@ -17,5 +17,5 @@
       handleWorkspaceGitChanged();
     };
     chatEvents.onerror = () => {
-      setStatus("chat events disconnected", true);
+      setStatus("Disconnected", true);
     };

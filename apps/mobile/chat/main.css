@@ -9,6 +9,7 @@ __CHAT_INCLUDE:composer-overlay.css__
 __CHAT_INCLUDE:styles/modals.css__
 __CHAT_INCLUDE:../../shared/chat/floating-btn.css__
 __CHAT_INCLUDE:composer-input.css__
+__CHAT_INCLUDE:../../shared/chat/hud.css__
 __CHAT_INCLUDE:styles/transcript.css__
 __CHAT_INCLUDE:styles/thinking.css__
     .copy-btn {
@@ -70,9 +71,6 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
 
     .shell>.page-header {
       --chrome-icon-btn-size: 44px;
-      --chrome-icon-size: 24px;
-      --chrome-icon-stroke: 1.6;
-      --chrome-icon-gap: 0;
       position: fixed;
       top: auto;
       bottom: 100px;
@@ -90,82 +88,18 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
       min-height: 0;
     }
 
-    .shell>.page-header .page-title,
     .shell>.page-header .page-header-actions .page-menu-btn {
       width: var(--chrome-icon-btn-size);
       height: var(--chrome-icon-btn-size);
-      min-width: var(--chrome-icon-btn-size);
-      min-height: var(--chrome-icon-btn-size);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
       padding: 0;
-      border-radius: 999px;
+      visibility: hidden;
+      pointer-events: none;
     }
 
     .shell>.page-header .page-header-actions {
       gap: 0;
       margin: 0;
       min-height: var(--chrome-icon-btn-size);
-    }
-
-    .shell>.page-header .page-title {
-      margin: 0;
-      gap: 0;
-      position: relative;
-      isolation: isolate;
-      overflow: hidden;
-      border-radius: 999px;
-      -webkit-tap-highlight-color: transparent;
-      transition:
-        background 160ms ease,
-        border-color 160ms ease,
-        box-shadow 160ms ease,
-        transform var(--liquid-glass-press-out);
-    }
-
-    .shell>.page-header .page-title .page-logo {
-      height: 24px;
-      width: 24px;
-      transform: none;
-      position: relative;
-      z-index: 1;
-      background: linear-gradient(currentColor, currentColor) no-repeat 8.5px 6.1px / 1.8px 11.8px;
-    }
-
-    .shell>.page-header .page-title .page-logo rect {
-      x: 3.7px;
-      y: 4.1px;
-      width: 16.6px;
-      height: 15.8px;
-    }
-
-    .shell>.page-header .page-title .page-logo .hub-logo-line {
-      opacity: 0;
-    }
-
-    .shell>.page-header .page-header-actions .page-menu-btn {
-      visibility: hidden;
-      pointer-events: none;
-      position: relative;
-      isolation: isolate;
-      overflow: hidden;
-      border-radius: 999px;
-      -webkit-tap-highlight-color: transparent;
-      transition:
-        background 160ms ease,
-        border-color 160ms ease,
-        box-shadow 160ms ease,
-        transform var(--liquid-glass-press-out);
-      color: var(--icon-fg);
-      justify-content: center;
-      padding: 0;
-    }
-
-    .shell>.page-header .page-header-actions .page-menu-btn svg {
-      transform: none;
-      position: relative;
-      z-index: 1;
     }
 
     .shell>.page-header .page-title {

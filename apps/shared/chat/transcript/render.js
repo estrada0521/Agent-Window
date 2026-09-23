@@ -229,22 +229,18 @@
         throw err;
       }
     };
-    let statusText = "";
-    let statusIsError = false;
-    const renderStatus = () => {
-      const node = document.getElementById("statusline");
-      if (sessionActive === false) {
-        node.textContent = "archived session is read-only";
-        node.classList.remove("is-error");
+    let hudTimer = 0;
+    const setStatus = (text, isError = false) => {
+      const hud = document.getElementById("chatHud");
+      window.clearTimeout(hudTimer);
+      if (!text) {
+        hud.classList.remove("is-visible");
         return;
       }
-      node.textContent = statusText;
-      node.classList.toggle("is-error", statusIsError);
-    };
-    const setStatus = (text, isError = false) => {
-      statusText = text;
-      statusIsError = isError;
-      renderStatus();
+      hud.textContent = text;
+      hud.classList.toggle("is-error", isError);
+      hud.classList.add("is-visible");
+      hudTimer = window.setTimeout(() => hud.classList.remove("is-visible"), HUD_VISIBLE_MS);
     };
     const agentActionCandidates = (mode) => {
       if (mode === "add") return ALL_BASE_AGENTS.filter(Boolean);
@@ -274,7 +270,6 @@
         }
       } catch (err) {
         setStatus(err?.message || `${adding ? "add" : "remove"} agent failed`, true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       }
     };
     let nativeBridgeAgentActionMode = "";

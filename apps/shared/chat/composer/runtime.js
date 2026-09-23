@@ -99,7 +99,6 @@
               throw new Error(data.error || `HTTP ${res.status}`);
             }).catch((err) => {
               setStatus(`upload delete failed: ${err.message}`, true);
-              setTimeout(() => setStatus(""), STATUS_TOAST_MS);
             });
           }
         });

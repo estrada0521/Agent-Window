@@ -60,7 +60,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
       }
       sendLocked = true;
       if (!target.trim() && command_id !== "openpane") {
-        setStatus("select at least one target", true);
+        setStatus("No target", true);
         sendLocked = false;
         return false;
       }
@@ -97,8 +97,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         return false;
       }
       if (attachUploadsInFlight > 0) {
-        setStatus("upload in progress", true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
+        setStatus("Still uploading", true);
         return false;
       }
       sendLocked = true;
@@ -116,7 +115,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         try {
           list = await loadShortcutCommandsOnce();
         } catch (err) {
-          setStatus(err?.message || "shortcut commands unavailable", true);
+          setStatus(err?.message || "Commands unavailable", true);
           sendLocked = false;
           return false;
         }
@@ -183,7 +182,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
           : "";
       const messageBody = rawInput + attachSuffix;
       if (!messageBody.trim()) {
-        setStatus("message is required", true);
+        setStatus("Empty message", true);
         sendLocked = false;
         return false;
       }
