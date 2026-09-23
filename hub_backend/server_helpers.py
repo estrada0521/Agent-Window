@@ -75,6 +75,7 @@ def build_hub_html_pages(
     desktop_template_dir: Path,
     mobile_template_dir: Path,
     shared_template_dir: Path,
+    shared_chat_dir: Path,
     pwa_hub_manifest_url: str,
     pwa_icon_192_url: str,
     pwa_apple_touch_icon_url: str,
@@ -87,7 +88,10 @@ def build_hub_html_pages(
         template_path = own_dir / "home.html"
         if not template_path.is_file():
             raise FileNotFoundError(f"Hub home template not found: {template_path}")
-        html = _expand_hub_template_includes(template_path.read_text(), [own_dir, shared_template_dir])
+        html = _expand_hub_template_includes(
+            template_path.read_text(),
+            [own_dir, shared_template_dir, shared_chat_dir],
+        )
         html = (
             html
             .replace("__HUB_MANIFEST_URL__", pwa_hub_manifest_url)

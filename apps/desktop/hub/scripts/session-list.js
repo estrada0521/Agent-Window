@@ -384,37 +384,10 @@
       });
     }
 
-    const DESK_SESSION_FLIP_MS = 220;
-    function captureDeskSessionRowRects() {
-      if (!_deskSessionList) return null;
-      const rects = new Map();
-      _deskSessionList.querySelectorAll(".desk-swipe-row").forEach((wrap) => {
-        const name = wrap.dataset.sessionName || "";
-        if (name) rects.set(name, wrap.getBoundingClientRect());
-      });
-      return rects;
-    }
-    function flipDeskSessionRows(firstRects) {
-      if (!_deskSessionList || !firstRects || !firstRects.size) return;
-      if (typeof Element === "undefined" || typeof Element.prototype.animate !== "function") return;
-      if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-      _deskSessionList.querySelectorAll(".desk-swipe-row").forEach((wrap) => {
-        const name = wrap.dataset.sessionName || "";
-        const first = firstRects.get(name);
-        if (!first) return;
-        const last = wrap.getBoundingClientRect();
-        const dx = first.left - last.left;
-        const dy = first.top - last.top;
-        if (!dx && !dy) return;
-        wrap.animate(
-          [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "translate(0, 0)" }],
-          { duration: DESK_SESSION_FLIP_MS, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
-        );
-      });
-    }
     function renderDesktopSessions(active, archived) {
       if (!_deskSessionList) return;
-      const firstRects = captureDeskSessionRowRects();
+      const rowKey = (wrap) => wrap.dataset.sessionName || "";
+      const firstRects = captureListRowRects(_deskSessionList, ".desk-swipe-row", rowKey);
       const newSessionSection = _deskNewSessionToggle?.closest(".desk-new-session-section") || null;
       let html = "";
       if (active.length) {
@@ -432,7 +405,7 @@
       if (newSessionSection) _deskSessionList.prepend(newSessionSection);
       _deskSessionList.querySelectorAll(".desk-swipe-row").forEach(initDeskSwipeRow);
       updateDeskSessionListFade();
-      flipDeskSessionRows(firstRects);
+      flipListRows(_deskSessionList, ".desk-swipe-row", rowKey, firstRects);
     }
 
     function computeScrollFadeState(el) {

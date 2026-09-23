@@ -854,6 +854,8 @@
       };
 
       const renderRows = (active, archived) => {
+        const rowKey = (row) => row.dataset.sessionName || "";
+        const firstRects = captureListRowRects(wrap, ".swipe-row", rowKey);
         let html = "";
         if (active.length) {
           html += `<div class="mob-section-label">Active</div>`;
@@ -887,6 +889,7 @@
         wrap.innerHTML = html;
         syncMobileSelectedSessionRows();
         wrap.querySelectorAll(".swipe-row").forEach(initSwipeRow);
+        flipListRows(wrap, ".swipe-row", rowKey, firstRects);
       };
       const refresh = async (force) => {
         const requestSeq = ++_mobSessionsRequestSeq;
