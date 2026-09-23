@@ -24,19 +24,8 @@
       if (!useNativeHeaderMenuPicker || !nativeHeaderMenuSelect) return false;
       syncNativeHeaderMenuSelectAnchor();
       clearNativeHeaderMenuSelection();
-      const show = () => {
-        if (typeof nativeHeaderMenuSelect.showPicker === "function") {
-          try { nativeHeaderMenuSelect.showPicker(); return true; } catch (_) { }
-        }
-        try { nativeHeaderMenuSelect.focus({ preventScroll: true }); } catch (_) {
-          try { nativeHeaderMenuSelect.focus(); } catch (_) { }
-        }
-        try { nativeHeaderMenuSelect.click(); return true; } catch (_) { }
-        return false;
-      };
-      const opened = show();
-      if (!opened) setTimeout(() => { void show(); }, 0);
-      return opened;
+      openNativeSelect(nativeHeaderMenuSelect);
+      return true;
     };
     if (useNativeHeaderMenuPicker) {
       nativeHeaderMenuSelect.classList.add("is-ios-active");

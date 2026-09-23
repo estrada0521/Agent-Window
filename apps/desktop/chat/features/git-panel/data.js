@@ -1,8 +1,6 @@
     const dpToggleGitSummaryPinned = () => {
       dpGitSummaryPinned = !dpGitSummaryPinned;
-      try {
-        window.localStorage?.setItem(dpGitSummaryPinnedStorageKey(), dpGitSummaryPinned ? "1" : "0");
-      } catch (_) {}
+      localStorage.setItem(dpGitSummaryPinnedStorageKey(), dpGitSummaryPinned ? "1" : "0");
       if (dpGitSummaryPinned) {
         if (!dpGitHeaderSummaryState?.rowHtml) void dpBootstrapPinnedGitSummary();
         else dpSyncPinnedSummaryStrip();

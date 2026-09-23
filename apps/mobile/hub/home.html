@@ -16,10 +16,8 @@
     (() => {
       const root = document.documentElement;
       let setting = root.dataset.themeMobileDefault;
-      try {
-        const stored = String(localStorage.getItem("agent_window_theme_mobile") || "").trim().toLowerCase();
-        if (["system", "light", "dark"].includes(stored)) setting = stored;
-      } catch (_) {}
+      const stored = String(localStorage.getItem("agent_window_theme_mobile") || "").trim().toLowerCase();
+      if (["system", "light", "dark"].includes(stored)) setting = stored;
       root.dataset.themeMobile = setting;
       document.documentElement.dataset.theme = setting === "system"
         ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")

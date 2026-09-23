@@ -234,7 +234,7 @@
         const theme = String(detail.theme || "").trim().toLowerCase();
         if (theme !== "system" && theme !== "light" && theme !== "dark") return;
         applyIncomingThemeDesktop(theme);
-        try { localStorage.setItem(DESK_THEME_KEY, theme); } catch (_) {}
+        localStorage.setItem(DESK_THEME_KEY, theme);
         return;
       }
       dispatchDeskNativeMenuAction(detail);

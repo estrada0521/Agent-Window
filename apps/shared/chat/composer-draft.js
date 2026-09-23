@@ -1,35 +1,26 @@
     const composerDraftStorageKey = (session) => `agent_window_composer_draft:${session}`;
-    const composerDraftSessionKey = () => {
-      const named = String(currentSessionName || "").trim();
-      if (named) return named;
-      const match = String(window.location.pathname || "").match(/\/session\/([^/]+)/);
-      if (!match) return "";
-      try {
-        return decodeURIComponent(match[1]);
-      } catch (_) {
-        return match[1];
-      }
-    };
     let composerDraftRestoredFor = "";
     const saveComposerDraft = () => {
-      const session = composerDraftSessionKey();
+      const session = currentSessionName;
       const input = document.getElementById("message");
       if (!session || !input) return;
-      const text = String(input.value || "");
+      const text = input.value;
+      if (!text) {
+        localStorage.removeItem(composerDraftStorageKey(session));
+        return;
+      }
       try {
-        if (text) localStorage.setItem(composerDraftStorageKey(session), text);
-        else localStorage.removeItem(composerDraftStorageKey(session));
-      } catch (_) {}
+        localStorage.setItem(composerDraftStorageKey(session), text);
+      } catch (err) {
+        setStatus(`draft not saved: ${err.message}`, true);
+      }
     };
     const clearStoredComposerDraft = () => {
-      const session = composerDraftSessionKey();
-      if (!session) return;
-      try {
-        localStorage.removeItem(composerDraftStorageKey(session));
-      } catch (_) {}
+      if (!currentSessionName) return;
+      localStorage.removeItem(composerDraftStorageKey(currentSessionName));
     };
     const restoreComposerDraft = () => {
-      const session = composerDraftSessionKey();
+      const session = currentSessionName;
       const input = document.getElementById("message");
       if (!session || !input) return;
       if (composerDraftRestoredFor === session) return;
@@ -38,12 +29,7 @@
         saveComposerDraft();
         return;
       }
-      let saved = "";
-      try {
-        saved = String(localStorage.getItem(composerDraftStorageKey(session)) || "");
-      } catch (_) {
-        saved = "";
-      }
+      const saved = localStorage.getItem(composerDraftStorageKey(session));
       composerDraftRestoredFor = session;
       if (!saved) return;
       input.value = saved;

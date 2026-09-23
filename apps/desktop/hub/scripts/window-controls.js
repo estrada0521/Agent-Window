@@ -33,9 +33,9 @@
         if (typeof invoke === "function") {
           invoke("set_window_height", {
             height: Math.round(DESK_COLLAPSED_FIT_HEIGHT * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT),
-          }).catch(() => {});
+          }).catch((err) => showDeskHubMessage(`set_window_height failed: ${err}`, { error: true }));
         }
-        try { _deskChatFrame?.contentWindow?.focus(); } catch (_) {}
+        _deskChatFrame?.contentWindow?.focus();
       }
     }
     function toggleDeskFitCollapsed() {
@@ -56,7 +56,8 @@
     function applyDeskFitHeightMin() {
       const invoke = getTauriInvoke();
       if (typeof invoke === "function") {
-        invoke("set_fit_height_min", { enabled: _deskAutoWindowHeight }).catch(() => {});
+        invoke("set_fit_height_min", { enabled: _deskAutoWindowHeight })
+          .catch((err) => showDeskHubMessage(`set_fit_height_min failed: ${err}`, { error: true }));
       }
     }
     function setDeskAutoWindowHeight(on) {
@@ -67,7 +68,7 @@
       setDeskFitCollapsed(false);
       if (next) document.documentElement.dataset.autoWindowHeight = "1";
       else delete document.documentElement.dataset.autoWindowHeight;
-      try { sessionStorage.setItem(DESK_AUTO_HEIGHT_KEY, next ? "1" : "0"); } catch (_) {}
+      sessionStorage.setItem(DESK_AUTO_HEIGHT_KEY, next ? "1" : "0");
       if (_deskAutoWindowHeight) setDeskSidebarOpen(false);
       applyDeskFitHeightMin();
       pushDeskAutoWindowHeight();

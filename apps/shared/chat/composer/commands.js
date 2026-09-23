@@ -192,9 +192,9 @@
       ta.style.cssText = "position:fixed;opacity:0;top:0;left:0";
       document.body.appendChild(ta);
       ta.focus(); ta.select();
-      try { document.execCommand("copy"); } catch (_) {}
+      const copied = document.execCommand("copy");
       document.body.removeChild(ta);
-      return Promise.resolve();
+      return copied ? Promise.resolve() : Promise.reject(new Error("clipboard unavailable"));
     };
     const doCopyText = (text) => {
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -348,7 +348,7 @@
         const code = wrap.querySelector("code") || wrap.querySelector("pre");
         doCopyText(code.textContent).then(() => {
           markCopied(codeCopyBtn);
-        }).catch(() => {});
+        }).catch((err) => setStatus(`copy failed: ${err.message}`, true));
         return;
       }
       const btn = e.target.closest(".copy-btn");
@@ -363,7 +363,7 @@
           } else {
             markCopied(btn, 3000);
           }
-        }).catch(() => {});
+        }).catch((err) => setStatus(`copy failed: ${err.message}`, true));
         return;
       }
       if (!revealMobileCopy) return;

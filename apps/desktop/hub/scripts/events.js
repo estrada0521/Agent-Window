@@ -33,7 +33,7 @@
             x: Math.round(Number(childPayload.x || 0) + Number(frameRect.left || 0)),
             y: Math.round(Number(childPayload.y || 0) + Number(frameRect.top || 0)),
           },
-        }).catch(() => {});
+        }).catch((err) => showDeskHubMessage(`show_chat_header_menu failed: ${err}`, { error: true }));
         return;
       }
       if (event.data && event.data.type === "show-file-context-menu" && event.source === _deskChatFrame?.contentWindow) {
@@ -298,9 +298,7 @@
 
     setDeskSidebarWidthAtDefaultTextSize(readDeskSidebarWidthAtDefaultTextSize(), { persist: false });
     syncDeskSidebarResizerVisibility();
-    try {
-      sessionStorage.removeItem("hub_chat_frame");
-    } catch (_) {}
+    sessionStorage.removeItem("hub_chat_frame");
 
     _deskNewSessionToggle && _deskNewSessionToggle.addEventListener("click", (event) => {
       event.preventDefault();
@@ -458,13 +456,9 @@
     startHubSessionMessagesEvents(() => refreshHubSessions(true, { skipRestore: true }));
     consumeHubPendingError();
     if (isTauriDesktopApp() && !isPhoneViewport()) {
-      let wantSidebarOpen = true;
-      try { wantSidebarOpen = sessionStorage.getItem(DESK_SIDEBAR_OPEN_KEY) !== "0"; } catch (_) {}
-      if (wantSidebarOpen) showDeskSidebarList({ open: true });
+      if (sessionStorage.getItem(DESK_SIDEBAR_OPEN_KEY) !== "0") showDeskSidebarList({ open: true });
       else setDeskSidebarOpen(false);
-      let wantAutoHeight = false;
-      try { wantAutoHeight = sessionStorage.getItem(DESK_AUTO_HEIGHT_KEY) === "1"; } catch (_) {}
-      if (wantAutoHeight) setDeskAutoWindowHeight(true);
+      if (sessionStorage.getItem(DESK_AUTO_HEIGHT_KEY) === "1") setDeskAutoWindowHeight(true);
     }
     refreshHubSessions(true);
   __HUB_HEADER_JS__

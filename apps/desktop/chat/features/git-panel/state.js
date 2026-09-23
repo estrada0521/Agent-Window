@@ -6,12 +6,8 @@
     let dpPinnedExpandSections = null;
     let _dpGitSummaryPinnedLoadedForKey = "";
     const dpReadGitSummaryPinnedFromStorage = () => {
-      try {
-        const stored = window.localStorage?.getItem(dpGitSummaryPinnedStorageKey());
-        dpGitSummaryPinned = stored === null ? true : stored === "1";
-      } catch (_) {
-        dpGitSummaryPinned = true;
-      }
+      const stored = localStorage.getItem(dpGitSummaryPinnedStorageKey());
+      dpGitSummaryPinned = stored === null ? true : stored === "1";
     };
     const dpApplySummaryPinButtonPressed = (root) => {
       if (!root) return;

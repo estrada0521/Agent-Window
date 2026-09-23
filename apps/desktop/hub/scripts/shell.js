@@ -135,14 +135,9 @@
     }
 
     function consumeHubPendingError() {
-      let message = "";
-      try {
-        message = String(sessionStorage.getItem(HUB_PENDING_ERROR_KEY) || "");
-        if (message) sessionStorage.removeItem(HUB_PENDING_ERROR_KEY);
-      } catch (_) {
-        message = "";
-      }
+      const message = sessionStorage.getItem(HUB_PENDING_ERROR_KEY) || "";
       if (!message) return;
+      sessionStorage.removeItem(HUB_PENDING_ERROR_KEY);
       showDeskHubMessage(message, { error: true });
     }
 
@@ -221,11 +216,7 @@
     }
 
     function readDeskSidebarWidthAtDefaultTextSize() {
-      try {
-        return clampDeskSidebarWidthAtDefaultTextSize(localStorage.getItem(DESK_SIDEBAR_WIDTH_KEY));
-      } catch (_) {
-        return DESK_DEFAULT_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE;
-      }
+      return clampDeskSidebarWidthAtDefaultTextSize(localStorage.getItem(DESK_SIDEBAR_WIDTH_KEY));
     }
 
     function applyDeskSidebarWidth() {
@@ -241,9 +232,7 @@
         _deskAppSidebarToggle.classList.toggle("is-active", isDeskSessionSidebarOpen());
       }
       if (persist) {
-        try {
-          localStorage.setItem(DESK_SIDEBAR_WIDTH_KEY, String(_deskSidebarWidthAtDefaultTextSize));
-        } catch (_) {}
+        localStorage.setItem(DESK_SIDEBAR_WIDTH_KEY, String(_deskSidebarWidthAtDefaultTextSize));
       }
     }
 
@@ -294,18 +283,12 @@
       return postDeskChatFrameMessage({ type: "parent-drop-files", files: dropped });
     };
     function persistDeskSelection(name) {
-      try {
-        if (name) localStorage.setItem(DESK_SELECTED_KEY, name);
-        else localStorage.removeItem(DESK_SELECTED_KEY);
-      } catch (_) {}
+      if (name) localStorage.setItem(DESK_SELECTED_KEY, name);
+      else localStorage.removeItem(DESK_SELECTED_KEY);
     }
 
     function getPersistedDeskSelection() {
-      try {
-        return localStorage.getItem(DESK_SELECTED_KEY) || "";
-      } catch (_) {
-        return "";
-      }
+      return localStorage.getItem(DESK_SELECTED_KEY) || "";
     }
 
     function findSessionRecord(name) {
@@ -436,7 +419,7 @@
     function setDeskSidebarOpen(isOpen) {
       if (!_deskWorkbench) return;
       _deskWorkbench.classList.toggle("sidebar-open", !!isOpen);
-      try { sessionStorage.setItem(DESK_SIDEBAR_OPEN_KEY, isOpen ? "1" : "0"); } catch (_) {}
+      sessionStorage.setItem(DESK_SIDEBAR_OPEN_KEY, isOpen ? "1" : "0");
       if (_deskAppSidebarToggle) {
         _deskAppSidebarToggle.classList.toggle("is-active", isDeskSessionSidebarOpen());
       }

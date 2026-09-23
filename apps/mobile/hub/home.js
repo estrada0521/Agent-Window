@@ -79,7 +79,7 @@
     const applyMobileThemeSetting = (setting) => {
       if (!["system", "light", "dark"].includes(setting)) return;
       document.documentElement.dataset.themeMobile = setting;
-      try { localStorage.setItem(MOBILE_THEME_KEY, setting); } catch (_) {}
+      localStorage.setItem(MOBILE_THEME_KEY, setting);
       publishMobileTheme();
     };
     publishMobileTheme();
@@ -217,10 +217,10 @@
     function rememberLastSession(name) {
       const normalized = String(name || "").trim();
       if (!normalized) return;
-      try { localStorage.setItem(HUB_LAST_SESSION_KEY, normalized); } catch (_) { }
+      localStorage.setItem(HUB_LAST_SESSION_KEY, normalized);
     }
     function lastRememberedSession() {
-      try { return (localStorage.getItem(HUB_LAST_SESSION_KEY) || "").trim(); } catch (_) { return ""; }
+      return localStorage.getItem(HUB_LAST_SESSION_KEY) || "";
     }
     function syncMobileSelectedSessionRows() {
       const selectedName = String(_currentChatSessionName || lastRememberedSession() || "").trim();
@@ -235,19 +235,14 @@
       const normalizedUrl = String(url || "").trim();
       if (!normalizedUrl) return;
       const normalizedName = String(name || "").trim();
-      try { sessionStorage.setItem(HUB_CHAT_FRAME_KEY, JSON.stringify({ url: normalizedUrl, name: normalizedName })); } catch (_) { }
+      sessionStorage.setItem(HUB_CHAT_FRAME_KEY, JSON.stringify({ url: normalizedUrl, name: normalizedName }));
     }
     function clearPersistedChatFrameState() {
-      try { sessionStorage.removeItem(HUB_CHAT_FRAME_KEY); } catch (_) { }
+      sessionStorage.removeItem(HUB_CHAT_FRAME_KEY);
     }
     function consumePendingHubErrorMessage() {
-      let message = "";
-      try {
-        message = String(sessionStorage.getItem(HUB_PENDING_ERROR_KEY) || "");
-        if (message) sessionStorage.removeItem(HUB_PENDING_ERROR_KEY);
-      } catch (_) {
-        message = "";
-      }
+      const message = sessionStorage.getItem(HUB_PENDING_ERROR_KEY) || "";
+      if (message) sessionStorage.removeItem(HUB_PENDING_ERROR_KEY);
       return message;
     }
     function hubFrameChatUrl(chatUrl) {
@@ -416,13 +411,14 @@
       const select = document.getElementById("themeNativeMenuSelect");
       if (!select || !themeNativeMenuIsArmed()) return false;
       if (typeof select.showPicker === "function") {
-        try { select.showPicker(); return true; } catch (_) {}
+        try {
+          select.showPicker();
+          return true;
+        } catch (_) {}
       }
-      try { select.focus({ preventScroll: true }); } catch (_) {
-        try { select.focus(); } catch (_) {}
-      }
-      try { select.click(); return true; } catch (_) {}
-      return false;
+      select.focus({ preventScroll: true });
+      select.click();
+      return true;
     };
     const ensureThemeNativeMenu = () => {
       let select = document.getElementById("themeNativeMenuSelect");
@@ -456,8 +452,7 @@
       select.style.width = `${Math.max(1, Math.round(rect.width || 1))}px`;
       select.style.height = `${Math.max(1, Math.round(rect.height || 1))}px`;
       skipThemeMenuBlur = true;
-      let opened = showArmedThemeNativeMenu();
-      if (!opened) setTimeout(() => { opened = showArmedThemeNativeMenu(); }, 0);
+      showArmedThemeNativeMenu();
     };
     function updateMenuContext(isChat) {
       const bridge = document.getElementById("pageNativeMenuBridge");
@@ -673,13 +668,11 @@
       clearPersistedChatFrameState();
       failHubReadyWait(pendingHubErrorMessage);
     }
-    try {
-      const saved = sessionStorage.getItem(HUB_CHAT_FRAME_KEY);
-      if (saved && !pendingHubErrorMessage) {
-        const { url, name } = JSON.parse(saved);
-        if (url) openChatInFrame(url, name);
-      }
-    } catch (_) { }
+    const savedChatFrame = sessionStorage.getItem(HUB_CHAT_FRAME_KEY);
+    if (savedChatFrame && !pendingHubErrorMessage) {
+      const { url, name } = JSON.parse(savedChatFrame);
+      openChatInFrame(url, name);
+    }
 
     (function () {
       const wrap = document.getElementById("mobListWrap");

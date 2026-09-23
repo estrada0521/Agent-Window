@@ -1,4 +1,14 @@
     const STATUS_TOAST_MS = 2500;
+    const openNativeSelect = (select) => {
+      if (typeof select.showPicker === "function") {
+        try {
+          select.showPicker();
+          return;
+        } catch (_) {}
+      }
+      select.focus({ preventScroll: true });
+      select.click();
+    };
     const normalizeHubPath = (path) => {
       const raw = String(path || "/");
       return raw.startsWith("/") ? raw : `/${raw}`;

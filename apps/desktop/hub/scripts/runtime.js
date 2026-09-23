@@ -111,7 +111,7 @@
       applyDeskTextSizeLocal(clamped);
       applyDeskSidebarWidth();
       updateDeskChromeOverflow();
-      try { localStorage.setItem(DESK_TEXT_SIZE_KEY, String(clamped)); } catch (_) {}
+      localStorage.setItem(DESK_TEXT_SIZE_KEY, String(clamped));
       _deskChatFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
       if (scalesWindow) {
         _deskLastFitTarget *= clamped / previous;

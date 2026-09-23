@@ -124,19 +124,15 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
     (() => {{
       if (document.documentElement.dataset.view === "mobile") {{
         let setting = document.documentElement.dataset.themeMobile;
-        try {{
-          const stored = String(localStorage.getItem("agent_window_theme_mobile") || "").trim().toLowerCase();
-          if (["system", "light", "dark"].includes(stored)) setting = stored;
-        }} catch (_) {{}}
+        const stored = String(localStorage.getItem("agent_window_theme_mobile") || "").trim().toLowerCase();
+        if (["system", "light", "dark"].includes(stored)) setting = stored;
         document.documentElement.dataset.themeMobile = setting;
         return;
       }}
-      try {{
-        const stored = String(localStorage.getItem("agent_window_theme_desktop") || "").trim().toLowerCase();
-        if (["system", "light", "dark"].includes(stored)) {{
-          document.documentElement.dataset.themeDesktop = stored;
-        }}
-      }} catch (_) {{}}
+      const stored = String(localStorage.getItem("agent_window_theme_desktop") || "").trim().toLowerCase();
+      if (["system", "light", "dark"].includes(stored)) {{
+        document.documentElement.dataset.themeDesktop = stored;
+      }}
     }})();
   </script>
   <meta name="theme-color" content="__DARK_BG__">

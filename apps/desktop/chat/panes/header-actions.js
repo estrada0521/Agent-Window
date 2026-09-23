@@ -111,12 +111,10 @@
         : null;
       if (hasTauriNativeHeaderMenu()) {
         closeHeaderMenus();
-        openTauriHeaderMenu(anchorRect).catch(() => {});
+        openTauriHeaderMenu(anchorRect).catch((err) => setStatus(`header menu failed: ${err}`, true));
         return;
       }
-      if (typeof nativeHeaderMenuBridge?.showPicker === "function") {
-        try { nativeHeaderMenuBridge.showPicker(); } catch (_) {}
-      }
+      if (nativeHeaderMenuBridge) openNativeSelect(nativeHeaderMenuBridge);
     });
     window.addEventListener("native-menu-action", (event) => {
       void handleTauriNativeMenuAction(event.detail || {});
@@ -127,7 +125,7 @@
 
       if (hasTauriNativeHeaderMenu()) {
         closeHeaderMenus();
-        openTauriHeaderMenu().catch(() => {});
+        openTauriHeaderMenu().catch((err) => setStatus(`header menu failed: ${err}`, true));
         return;
       }
       closeHeaderMenus();

@@ -13,21 +13,19 @@
         textSizeMin: __TEXT_SIZE_MIN__,
         textSizeMax: __TEXT_SIZE_MAX__,
       };
-      try {
-        const storedTheme = String(localStorage.getItem(appearance.themeKey) || "").trim().toLowerCase();
-        const theme = ["system", "light", "dark"].includes(storedTheme) ? storedTheme : appearance.themeDefault;
-        const resolved = theme === "system"
-          ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-          : theme;
-        document.documentElement.dataset.themeDesktop = theme;
-        document.documentElement.dataset.theme = resolved;
+      const storedTheme = String(localStorage.getItem(appearance.themeKey) || "").trim().toLowerCase();
+      const theme = ["system", "light", "dark"].includes(storedTheme) ? storedTheme : appearance.themeDefault;
+      const resolved = theme === "system"
+        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : theme;
+      document.documentElement.dataset.themeDesktop = theme;
+      document.documentElement.dataset.theme = resolved;
 
-        const storedSize = Number(localStorage.getItem(appearance.textSizeKey));
-        const size = Number.isFinite(storedSize)
-          ? Math.max(appearance.textSizeMin, Math.min(appearance.textSizeMax, Math.round(storedSize)))
-          : appearance.textSizeDefault;
-        document.documentElement.style.setProperty("--text-size", `${size}px`);
-      } catch (_) {}
+      const storedSize = Number(localStorage.getItem(appearance.textSizeKey));
+      const size = Number.isFinite(storedSize)
+        ? Math.max(appearance.textSizeMin, Math.min(appearance.textSizeMax, Math.round(storedSize)))
+        : appearance.textSizeDefault;
+      document.documentElement.style.setProperty("--text-size", `${size}px`);
     })();
   </script>
   <meta name="theme-color" content="__DARK_BG__">

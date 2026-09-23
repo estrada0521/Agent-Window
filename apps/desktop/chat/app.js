@@ -459,12 +459,10 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
       }
       return dpRoundPanelWidth(Math.max(DP_PANEL_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE, Math.min(maxWidth, width)));
     };
-    try {
-      const storedPanelWidth = Number.parseFloat(window.localStorage?.getItem(DP_PANEL_WIDTH_KEY) || "");
-      if (Number.isFinite(storedPanelWidth) && storedPanelWidth > 0) {
-        dpPanelWidthAtDefaultTextSize = storedPanelWidth;
-      }
-    } catch (_) {}
+    const storedPanelWidth = Number.parseFloat(localStorage.getItem(DP_PANEL_WIDTH_KEY) || "");
+    if (Number.isFinite(storedPanelWidth) && storedPanelWidth > 0) {
+      dpPanelWidthAtDefaultTextSize = storedPanelWidth;
+    }
     const dpOutwardPanelWidthPx = () => {
       if (dpPanelOpen) return dpCurrentPanelWidthPx();
       return dpScalePanelWidth(dpClampPanelWidthAtDefaultTextSize(
@@ -473,11 +471,9 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
       ));
     };
     const dpPersistPanelWidthAtDefaultTextSize = () => {
-      try {
-        if (dpPanelWidthAtDefaultTextSize > 0) {
-          window.localStorage?.setItem(DP_PANEL_WIDTH_KEY, String(dpPanelWidthAtDefaultTextSize));
-        }
-      } catch (_) {}
+      if (dpPanelWidthAtDefaultTextSize > 0) {
+        localStorage.setItem(DP_PANEL_WIDTH_KEY, String(dpPanelWidthAtDefaultTextSize));
+      }
     };
     const dpCurrentPanelWidthPx = () => dpScalePanelWidth(
       dpClampPanelWidthAtDefaultTextSize(dpPanelWidthAtDefaultTextSize),

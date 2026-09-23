@@ -294,11 +294,8 @@
     const showArmedAgentActionPicker = () => {
       const select = document.getElementById("agentActionNativeMenuSelect");
       if (!select || !agentActionSelectIsArmed()) return false;
-      if (typeof select.showPicker === "function") {
-        try { select.showPicker(); return true; } catch (_) {}
-      }
-      try { select.click(); return true; } catch (_) {}
-      return false;
+      openNativeSelect(select);
+      return true;
     };
     let skipAgentMenuBlur = false;
     const ensureAgentActionNativeMenu = () => {

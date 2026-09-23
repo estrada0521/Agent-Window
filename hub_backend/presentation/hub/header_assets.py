@@ -151,7 +151,7 @@ __HUB_RESTART_NAV_JS__
 
     if (titleLink) {
       titleLink.addEventListener("click", function() {
-        try { sessionStorage.removeItem("hub_chat_frame"); } catch(_) {}
+        sessionStorage.removeItem("hub_chat_frame");
       });
     }
     
