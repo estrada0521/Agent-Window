@@ -37,7 +37,7 @@ def format_context_text(info: dict) -> str:
         lines.append(f"- **workspace**: {info['workspace']}")
     if info.get("tmux_name"):
         lines.append(f"- **tmux session**: {info['tmux_name']}")
-    agents = info.get("agents") or []
+    agents = info["agents"]
     lines.append(f"- **agents**: {', '.join(agents) if agents else '<none>'}")
     if info.get("this_pane_role"):
         lines.append(f"- **this pane's agent instance**: {info['this_pane_role']}")

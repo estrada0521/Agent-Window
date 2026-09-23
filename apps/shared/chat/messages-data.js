@@ -1,5 +1,5 @@
     const mergeEntriesById = (...groups) => groups.flatMap((group) => group || []);
-    const entryRenderKey = (entry) => String(entry?.context_hash || "");
+    const entryRenderKey = (entry) => entry.context_hash;
     const displayEntriesForData = (data) => {
       const baseEntries = Array.isArray(data?.entries) ? data.entries : [];
       const merged = mergeEntriesById(olderEntries, baseEntries);
@@ -25,7 +25,7 @@
       let seenDirectionsForPeer = new Set();
       for (const entry of (entries || [])) {
         const sender = String(entry?.sender || "").trim().toLowerCase();
-        const contextHash = String(entry?.context_hash || "").trim();
+        const contextHash = entry.context_hash;
         const targetsSig = entryTargetsSignature(entry);
         if (!sender || sender === "system") {
           continue;

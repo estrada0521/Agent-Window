@@ -12,7 +12,7 @@ from native_log_sync.agents._shared.path_state import (
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.codex.read_runtime import iter_tool_calls, runtime_tool_events
 from native_log_sync.io.jsonl_read import CompleteJsonlScan, warn_skipped_lines
-from native_log_sync.io.projected import append_projected_entry
+from backend_core.access.files import append_jsonl_entry
 
 
 _CODEX_MEMORY_CITATION_SUFFIX = re.compile(
@@ -144,7 +144,7 @@ def sync_codex_native_log(
             "native_log_path": resolved_path,
             "native_log_offset": line_start,
         }
-        append_projected_entry(self.log_path, jsonl_entry)
+        append_jsonl_entry(self.log_path, jsonl_entry)
         if idle_after:
             self._mark_idle(agent)
         return True

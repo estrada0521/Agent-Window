@@ -172,7 +172,17 @@
         return;
       }
       if (action === "openTerminal") {
-        fetch("/open-terminal", { method: "POST" }).catch(() => {});
+        try {
+          const res = await fetch("/open-terminal", { method: "POST" });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            setStatus(data.error || "terminal open failed", true);
+            setTimeout(() => setStatus(""), STATUS_TOAST_MS);
+          }
+        } catch (err) {
+          setStatus(`terminal open error: ${err.message}`, true);
+          setTimeout(() => setStatus(""), STATUS_TOAST_MS);
+        }
         return;
       }
       if (action === "openShell") {

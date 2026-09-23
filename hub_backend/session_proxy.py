@@ -43,9 +43,12 @@ def proxy_chat_session(handler, hub, method: str) -> None:
     chat_port, suffix = split
     resolved = resolve_session_chat_target_by_port(hub, chat_port)
     if resolved["status"] == "unhealthy":
-        _send_text(handler, 503, str(resolved.get("detail") or "tmux unresponsive"))
+        _send_text(handler, 503, resolved["detail"])
         return
-    if resolved["status"] != "ok":
+    if resolved["status"] == "error":
+        _send_text(handler, 502, resolved["detail"])
+        return
+    if resolved["status"] == "missing":
         handler.send_response(404)
         handler.end_headers()
         return

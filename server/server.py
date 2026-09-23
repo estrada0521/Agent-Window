@@ -136,10 +136,8 @@ def _send_or_enqueue_message(
     return 200, {"ok": True, "entry": entry}
 
 
-def _clean_env():
+def _restart_env():
     env = os.environ.copy()
-    if runtime is None:
-        raise RuntimeError("chat runtime is unavailable during reload")
     env[RELOAD_RUNNING_AGENTS_ENV] = json.dumps(runtime.running_agents_for_reload())
     return env
 
@@ -249,44 +247,30 @@ server = None
 
 def queue_chat_restart():
     global chat_restart_pending
-    current_workspace = workspace
     with chat_restart_lock:
         if chat_restart_pending:
             return False, "restart already pending", False
         chat_restart_pending = True
 
-    done = threading.Event()
-    result = {"ok": False}
+    env = _restart_env()
+    server.shutdown()
+    server.server_close()
+    try:
+        process = launch_chat_server(workspace, env=env)
+    except OSError as exc:
+        return False, str(exc), True
+    expected_workspace = str(Path(workspace).expanduser().resolve())
 
-    def worker():
-        try:
-            env = _clean_env()
-            if server is not None:
-                server.shutdown()
-                server.server_close()
-            process = launch_chat_server(current_workspace, env=env)
-            expected_workspace = str(Path(current_workspace).expanduser().resolve())
+    def _ready() -> bool:
+        state = read_chat_server_state(port)
+        reported_workspace = str((state or {}).get("workspace") or "").strip()
+        return bool(
+            reported_workspace
+            and str(Path(reported_workspace).expanduser().resolve()) == expected_workspace
+        )
 
-            def _ready() -> bool:
-                state = read_chat_server_state(port)
-                reported_workspace = str((state or {}).get("workspace") or "").strip()
-                return bool(
-                    reported_workspace
-                    and str(Path(reported_workspace).expanduser().resolve()) == expected_workspace
-                )
-
-            result["ok"] = wait_for_chat_server(
-                process,
-                _ready,
-            )
-        except OSError:
-            result["ok"] = False
-        finally:
-            done.set()
-
-    threading.Thread(target=worker, daemon=True, name="chat-restart").start()
-    done.wait()
-    return result["ok"], "" if result["ok"] else "reload failed", True
+    ok = wait_for_chat_server(process, _ready)
+    return ok, "" if ok else "reload failed", True
 
 
 def release_chat_restart() -> None:

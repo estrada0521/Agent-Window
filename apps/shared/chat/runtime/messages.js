@@ -28,7 +28,7 @@ __CHAT_INCLUDE:../messages-data.js__
         if (safeEntry.sender === "system") {
           const systemMessage = formatSystemMessageHtml(safeEntry.message || "");
           const systemTitle = systemMessage.replaceAll('"', "&quot;").replace(/<[^>]+>/g, "");
-          const contextHash = escapeHtml(safeEntry.context_hash || "");
+          const contextHash = escapeHtml(safeEntry.context_hash);
           return `<div class="sysmsg-row" data-context-hash="${contextHash}" data-sender="system"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
         }
         const cls = roleClass(safeEntry.sender);
@@ -40,7 +40,7 @@ __CHAT_INCLUDE:../messages-data.js__
         const body = stripSenderPrefix(safeEntry.message || "");
         const rawAttr = escapeHtml(body).replaceAll('"', "&quot;");
         const previewAttr = escapeHtml(body.slice(0, 80)).replaceAll('"', "&quot;");
-        const contextHash = escapeHtml(safeEntry.context_hash || "");
+        const contextHash = escapeHtml(safeEntry.context_hash);
         const targetMeta = `<span class="targets">${targetSpans}</span>`;
         const sender = escapeHtml(safeEntry.sender || "unknown");
         const isUser = cls === "user";

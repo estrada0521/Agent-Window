@@ -14,7 +14,7 @@ from native_log_sync.agents.gemini.read_runtime import (
     runtime_tool_events,
 )
 from native_log_sync.io.jsonl_read import CompleteJsonlScan, warn_skipped_lines
-from native_log_sync.io.projected import append_projected_entry
+from backend_core.access.files import append_jsonl_entry
 
 
 def sync_gemini_native_log(
@@ -52,7 +52,7 @@ def sync_gemini_native_log(
                 push_runtime_display(self, agent, runtime_events)
         if not text:
             continue
-        append_projected_entry(
+        append_jsonl_entry(
             self.log_path,
             {
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),

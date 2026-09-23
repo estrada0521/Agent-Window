@@ -6,12 +6,14 @@ from urllib.parse import parse_qs
 
 from backend_core.access.session_meta import (
     SessionMetaError,
+    rename_session,
     reset_session_agents,
     session_workspace,
     set_session_workspace,
 )
 from backend_core.access.settings import agent_window_session_root
 from hub_backend.chat_supervisor import (
+    TmuxUnhealthy,
     delete_archived_session,
     ensure_chat_server,
     kill_repo_session,
@@ -21,138 +23,102 @@ from hub_backend.session_api import resolve_session_chat_target
 from hub_backend.session_query import active_session_records_query
 
 
-def get_open_session(handler, parsed, ctx) -> None:
+def _session_query(parsed) -> tuple[str, str]:
     qs = parse_qs(parsed.query)
-    session_name = (qs.get("session", [""])[0] or "").strip()
-    fmt = qs.get("format", [""])[0]
+    return (qs.get("session", [""])[0] or "").strip(), qs.get("format", [""])[0]
+
+
+def _fail(handler, ctx, fmt: str, status: int, message: str) -> None:
+    if fmt == "json":
+        handler._send_json(status, {"ok": False, "error": message})
+    else:
+        handler._send_html(status, ctx["error_page_fn"](message))
+
+
+def _open_chat(handler, ctx, fmt: str, chat_port: int) -> None:
+    location = ctx["format_chat_url_fn"](chat_port, f"/?ts={int(time.time() * 1000)}")
+    if fmt == "json":
+        handler._send_json(200, {"ok": True, "chat_url": location})
+    else:
+        handler._redirect(location)
+
+
+def _back_to_hub(handler, fmt: str, session_name: str, action: str) -> None:
+    if fmt == "json":
+        handler._send_json(200, {"ok": True, "session": session_name, "action": action})
+    else:
+        handler._redirect("/")
+
+
+def get_open_session(handler, parsed, ctx) -> None:
+    session_name, fmt = _session_query(parsed)
     if not session_name:
-        if fmt == "json":
-            handler._send_json(404, {"ok": False, "error": "Session not found"})
-        else:
-            handler._send_html(404, ctx["error_page_fn"]("That session is not available in this repo."))
+        _fail(handler, ctx, fmt, 404, "That session is not available in this repo.")
         return
     resolved = resolve_session_chat_target(ctx["hub"], session_name)
     if resolved["status"] == "unhealthy":
-        handler._send_unhealthy(fmt, resolved.get("detail", ""))
+        handler._send_unhealthy(fmt, resolved["detail"])
         return
     if resolved["status"] == "missing":
-        if fmt == "json":
-            handler._send_json(404, {"ok": False, "error": "Session not found"})
-        else:
-            handler._send_html(404, ctx["error_page_fn"]("That session is not available in this repo."))
+        _fail(handler, ctx, fmt, 404, "That session is not available in this repo.")
         return
     if resolved["status"] != "ok":
-        detail = str(resolved.get("detail") or "")
-        if fmt == "json":
-            handler._send_json(500, {"ok": False, "error": detail})
-        else:
-            handler._send_html(500, ctx["error_page_fn"](f"Failed to start chat for {session_name}: {detail}"))
+        _fail(handler, ctx, fmt, 500, f"Failed to start chat for {session_name}: {resolved['detail']}")
         return
-    location = ctx["format_chat_url_fn"](
-        resolved["chat_port"],
-        f"/?ts={int(time.time() * 1000)}",
-    )
-    if fmt == "json":
-        handler._send_json(200, {"ok": True, "chat_url": location})
-    else:
-        handler.send_response(302)
-        handler.send_header("Location", location)
-        handler.end_headers()
+    _open_chat(handler, ctx, fmt, resolved["chat_port"])
 
 
 def get_revive_session(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    session_name = (qs.get("session", [""])[0] or "").strip()
-    fmt = qs.get("format", [""])[0]
+    session_name, fmt = _session_query(parsed)
     if not session_name:
-        if fmt == "json":
-            handler._send_json(404, {"ok": False, "error": "Session not found"})
-        else:
-            handler._send_html(404, ctx["error_page_fn"]("That archived session is not available in this repo."))
+        _fail(handler, ctx, fmt, 404, "That archived session is not available in this repo.")
         return
-    ok, detail = revive_archived_session(ctx["hub"], session_name)
+    try:
+        ok, detail = revive_archived_session(ctx["hub"], session_name)
+    except TmuxUnhealthy as exc:
+        handler._send_unhealthy(fmt, str(exc))
+        return
     if not ok:
-        if "unresponsive" in (detail or ""):
-            handler._send_unhealthy(fmt, detail)
-            return
-        if fmt == "json":
-            handler._send_json(500, {"ok": False, "error": detail})
-        else:
-            handler._send_html(500, ctx["error_page_fn"](f"Failed to revive {session_name}: {detail}"))
+        _fail(handler, ctx, fmt, 500, f"Failed to revive {session_name}: {detail}")
         return
-    query = active_session_records_query(ctx["hub"])
-    workspace = query.records[session_name]["workspace"]
-    ok, chat_port, detail = ensure_chat_server(
-        ctx["hub"],
-        expected_active=True,
-        workspace=workspace,
-    )
+    workspace = active_session_records_query(ctx["hub"]).records[session_name]["workspace"]
+    ok, chat_port, detail = ensure_chat_server(ctx["hub"], expected_active=True, workspace=workspace)
     if not ok:
-        if fmt == "json":
-            handler._send_json(500, {"ok": False, "error": detail})
-        else:
-            handler._send_html(500, ctx["error_page_fn"](f"Failed to start chat for {session_name}: {detail}"))
+        _fail(handler, ctx, fmt, 500, f"Failed to start chat for {session_name}: {detail}")
         return
-    location = ctx["format_chat_url_fn"](
-        chat_port,
-        f"/?ts={int(time.time() * 1000)}",
-    )
-    if fmt == "json":
-        handler._send_json(200, {"ok": True, "chat_url": location})
-    else:
-        handler.send_response(302)
-        handler.send_header("Location", location)
-        handler.end_headers()
+    _open_chat(handler, ctx, fmt, chat_port)
 
 
 def get_kill_session(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    session_name = (qs.get("session", [""])[0] or "").strip()
-    fmt = qs.get("format", [""])[0]
+    session_name, fmt = _session_query(parsed)
     if not session_name:
-        if fmt == "json":
-            handler._send_json(404, {"ok": False, "error": "Session not found"})
-        else:
-            handler._send_html(404, ctx["error_page_fn"]("That active session is not available in this repo."))
+        _fail(handler, ctx, fmt, 404, "That active session is not available in this repo.")
         return
-    ok, detail = kill_repo_session(ctx["hub"], session_name)
+    try:
+        ok, detail = kill_repo_session(ctx["hub"], session_name)
+    except TmuxUnhealthy as exc:
+        handler._send_unhealthy(fmt, str(exc))
+        return
     if not ok:
-        if fmt == "json":
-            handler._send_json(500, {"ok": False, "error": detail or f"Failed to kill {session_name}"})
-        else:
-            handler._send_html(500, ctx["error_page_fn"](f"Failed to kill {session_name}: {detail}"))
+        _fail(handler, ctx, fmt, 500, f"Failed to kill {session_name}: {detail}")
         return
-    if fmt == "json":
-        handler._send_json(200, {"ok": True, "session": session_name, "action": "killed"})
-    else:
-        handler.send_response(302)
-        handler.send_header("Location", "/")
-        handler.end_headers()
+    _back_to_hub(handler, fmt, session_name, "killed")
 
 
 def get_delete_archived_session(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    session_name = (qs.get("session", [""])[0] or "").strip()
-    fmt = qs.get("format", [""])[0]
+    session_name, fmt = _session_query(parsed)
     if not session_name:
-        if fmt == "json":
-            handler._send_json(404, {"ok": False, "error": "Session not found"})
-        else:
-            handler._send_html(404, ctx["error_page_fn"]("That archived session is not available in this repo."))
+        _fail(handler, ctx, fmt, 404, "That archived session is not available in this repo.")
         return
-    ok, detail = delete_archived_session(ctx["hub"], session_name)
+    try:
+        ok, detail = delete_archived_session(ctx["hub"], session_name)
+    except TmuxUnhealthy as exc:
+        handler._send_unhealthy(fmt, str(exc))
+        return
     if not ok:
-        if fmt == "json":
-            handler._send_json(500, {"ok": False, "error": detail or f"Failed to delete archived session {session_name}"})
-        else:
-            handler._send_html(500, ctx["error_page_fn"](f"Failed to delete archived session {session_name}: {detail}"))
+        _fail(handler, ctx, fmt, 500, f"Failed to delete archived session {session_name}: {detail}")
         return
-    if fmt == "json":
-        handler._send_json(200, {"ok": True, "session": session_name, "action": "deleted"})
-    else:
-        handler.send_response(302)
-        handler.send_header("Location", "/")
-        handler.end_headers()
+    _back_to_hub(handler, fmt, session_name, "deleted")
 
 
 def get_session_workspace(handler, parsed, _ctx) -> None:
@@ -204,7 +170,7 @@ def post_rename_session(handler, _parsed, _ctx) -> None:
         return
     try:
         if old_name != new_name:
-            source.rename(target)
+            rename_session(old_name, new_name)
     except OSError as exc:
         handler._send_json(409, {"ok": False, "error": str(exc)})
         return

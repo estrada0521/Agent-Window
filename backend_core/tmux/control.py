@@ -24,11 +24,7 @@ from backend_core.access.settings import (
 )
 from backend_core.agents.executables import agent_launch_cmd, resolve_agent_executable
 from backend_core.agents.names import agent_base_name
-from backend_core.agents.instances import (
-    next_instance_name,
-    normalize_agent_names,
-    resolve_canonical_instance,
-)
+from backend_core.agents.instances import next_instance_name
 from backend_core.agents.registry import AGENTS
 from backend_core.tmux.process_cleanup import cleanup_target_process_groups
 from backend_core.tmux.session import (
@@ -37,12 +33,7 @@ from backend_core.tmux.session import (
     find_session_for_workspace as find_live_session_for_workspace,
     tmux_session_workspace,
 )
-from backend_core.tmux.topology import (
-    acquire_topology_lock,
-    default_tmux_socket_name,
-    release_topology_lock,
-    session_topology_lock_path,
-)
+from backend_core.tmux.topology import default_tmux_socket_name
 from backend_core.tmux.window import (
     configure_window_size,
     create_agent_window,
@@ -118,28 +109,17 @@ def _write_meta(prefix: list[str], tmux_name: str, aw_name: str) -> None:
     write_session_meta_file(aw_name, workspace, agents)
 
 
-def _append_log(session_name: str, message: str, *, extra: dict | None = None) -> None:
-    entry = {
-        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "session": session_name,
-        "sender": "system",
-        "targets": [],
-        "message": message,
-    }
-    if extra:
-        entry.update(extra)
-    append_jsonl_entry(session_log_path(session_name), entry)
-
-
-def append_session_lifecycle_entry(session_name: str, action: str) -> None:
-    try:
-        message = {
-            "archived": "Session archived:",
-            "revived": "Session revived:",
-        }[action]
-    except KeyError:
-        raise SessionControlError(f"Unknown session lifecycle action: {action!r}") from None
-    _append_log(session_name, message)
+def _append_log(session_name: str, message: str) -> None:
+    append_jsonl_entry(
+        session_log_path(session_name),
+        {
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "session": session_name,
+            "sender": "system",
+            "targets": [],
+            "message": message,
+        },
+    )
 
 
 def _chat_listener_pids(chat_port: int) -> list[int]:
@@ -206,10 +186,7 @@ def _signal_chat_pids(pids: list[int], sig: int) -> str:
 
 
 def stop_chat_server(workspace: str) -> tuple[bool, str]:
-    raw_workspace = str(workspace or "").strip()
-    if not raw_workspace:
-        return False, "workspace is required"
-    resolved_workspace = str(Path(raw_workspace).expanduser().resolve())
+    resolved_workspace = str(Path(workspace).expanduser().resolve())
     chat_port = workspace_chat_port(resolved_workspace)
     try:
         pids = _own_chat_listener_pids(chat_port, resolved_workspace)
@@ -257,19 +234,14 @@ def _start_agent(
 
 def _prepare_instances(requested: list[str]) -> list[str]:
     bases: list[str] = []
-    for raw in normalize_agent_names(requested):
+    for raw in requested:
         base = agent_base_name(raw)
-        if not base or base not in AGENTS:
+        if base not in AGENTS:
             raise SessionControlError(f"Unknown agent: {raw}")
-        bases.append(base)
-    if not bases:
-        return []
-    kept: list[str] = []
-    for base in bases:
         if not resolve_agent_executable(base):
             raise SessionControlError(f"Required command not found for {base}")
-        kept.append(base)
-    return _instance_names(kept)
+        bases.append(base)
+    return _instance_names(bases)
 
 
 def _create_tmux_session(prefix: list[str], workspace: Path) -> str:
@@ -303,18 +275,15 @@ def _pane_status(prefix: list[str], pane_id: str) -> dict:
 
 
 def describe_session(session_name: str, *, tmux_socket: str = "") -> dict:
-    name = (session_name or "").strip()
-    if not name:
-        raise SessionControlError("session_name is required")
     try:
-        meta = read_session_meta(name)
+        meta = read_session_meta(session_name)
     except FileNotFoundError as exc:
-        raise SessionControlError(f"Session does not exist: {name}") from exc
+        raise SessionControlError(f"Session does not exist: {session_name}") from exc
     workspace = meta["workspace"]
     info: dict = {
-        "session": name,
+        "session": session_name,
         "workspace": workspace,
-        "agents": meta.get("agents", []),
+        "agents": meta["agents"],
         "active": False,
     }
     prefix = _prefix(tmux_socket)
@@ -360,26 +329,21 @@ def create_session(
     *,
     session_name: str,
     workspace: str,
-    agents: list[str] | None = None,
+    agents: list[str],
     tmux_socket: str = "",
     repo_root: Path | str | None = None,
     revive: bool = False,
 ) -> None:
-    name = (session_name or "").strip()
     workspace_path = Path(workspace).expanduser().resolve()
-    if not name:
-        raise SessionControlError("session_name is required")
     if not workspace_path.is_dir():
         raise SessionControlError(f"Invalid workspace: {workspace_path}")
     root = Path(repo_root).resolve() if repo_root is not None else _repo_root()
     prefix = _prefix(tmux_socket)
     socket_name = (tmux_socket or "").strip() or default_tmux_socket_name()
-    instances = _prepare_instances(
-        [str(item).strip() for item in (agents or []) if str(item).strip()],
-    )
+    instances = _prepare_instances(agents)
     if not revive:
-        create_session_folder(name, str(workspace_path), instances)
-    ensure_session_workspace_mirrors(name, str(workspace_path))
+        create_session_folder(session_name, str(workspace_path), instances)
+    ensure_session_workspace_mirrors(session_name, str(workspace_path))
 
     tmux_name = _create_tmux_session(prefix, workspace_path)
 
@@ -413,7 +377,7 @@ def create_session(
     path_value = f"{bin_dir}:{os.environ.get('PATH', '')}"
     _set_env(prefix, tmux_name, "PATH", path_value)
     _unset_env(prefix, tmux_name, "CLAUDECODE")
-    _write_meta(prefix, tmux_name, name)
+    _write_meta(prefix, tmux_name, session_name)
 
     if panes:
         for instance, pane_id in zip(instances, panes):
@@ -426,7 +390,7 @@ def create_session(
         _run(prefix, ["select-pane", "-t", panes[0]])
 
     if revive:
-        append_session_lifecycle_entry(name, "revived")
+        _append_log(session_name, "Session revived:")
 
 
 def kill_session(
@@ -434,30 +398,20 @@ def kill_session(
     session_name: str,
     tmux_socket: str = "",
 ) -> None:
-    name = (session_name or "").strip()
-    if not name:
-        raise SessionControlError("session_name is required")
     prefix = _prefix(tmux_socket)
-    tmux_name = _resolve_tmux_name(prefix, name)
+    tmux_name = _resolve_tmux_name(prefix, session_name)
     if not tmux_name:
-        raise SessionControlError(f"Session does not exist: {name}")
+        raise SessionControlError(f"Session does not exist: {session_name}")
     workspace = tmux_session_workspace(prefix, tmux_name)
     stop_ok, stop_detail = stop_chat_server(workspace)
     if not stop_ok:
-        raise SessionControlError(f"failed to stop chat server for {name}: {stop_detail}")
+        raise SessionControlError(f"failed to stop chat server for {session_name}: {stop_detail}")
     cleanup_target_process_groups(target=tmux_name, tmux_prefix=prefix)
     result = _run(prefix, ["kill-session", "-t", tmux_name], timeout=4)
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip() or "tmux kill-session failed"
         raise SessionControlError(detail)
-    append_session_lifecycle_entry(name, "archived")
-
-
-def _with_topology_lock(tmux_socket: str, session_name: str):
-    lock_dir = session_topology_lock_path(tmux_socket, session_name)
-    if not acquire_topology_lock(lock_dir, os.getpid()):
-        raise SessionControlError(f"Timed out waiting for topology lock: {session_name}")
-    return lock_dir
+    _append_log(session_name, "Session archived:")
 
 
 def add_agent(
@@ -466,52 +420,40 @@ def add_agent(
     agent: str,
     tmux_socket: str = "",
 ) -> str:
-    name = (session_name or "").strip()
     base = agent_base_name(agent)
-    if not name:
-        raise SessionControlError("session_name is required")
     if not base or base not in AGENTS:
         raise SessionControlError(f"Unknown agent: {agent}")
     if not resolve_agent_executable(base):
         raise SessionControlError(f"Required command not found for {base}")
     prefix = _prefix(tmux_socket)
     socket_name = (tmux_socket or "").strip() or default_tmux_socket_name()
-    tmux_name = _resolve_tmux_name(prefix, name)
+    tmux_name = _resolve_tmux_name(prefix, session_name)
     if not tmux_name:
-        raise SessionControlError(f"Session does not exist: {name}")
+        raise SessionControlError(f"Session does not exist: {session_name}")
     workspace = tmux_session_workspace(prefix, tmux_name)
-    ensure_session_workspace_mirrors(name, workspace)
-
-    lock_dir = _with_topology_lock(socket_name, name)
-    try:
-        topology = agent_topology(prefix, tmux_name)
-        current = [pane.name for pane in topology]
-        instance = next_instance_name(current, base)
-        if any(pane.name == instance for pane in topology):
-            raise SessionControlError(f"Agent instance already exists: {instance}")
-        pane_id = create_agent_window(
-            session=tmux_name,
-            instance_name=instance,
-            workspace=workspace,
-            width=SESSION_WIDTH,
-            tmux_socket=socket_name,
-        )
-        if not pane_id:
-            raise SessionControlError("Failed to create agent window")
-        _write_meta(prefix, tmux_name, name)
-        _start_agent(
-            prefix=prefix,
-            workspace=workspace,
-            pane_id=pane_id,
-            instance_name=instance,
-        )
-        _append_log(
-            name,
-            f"Add Agent: {instance}",
-        )
-        return instance
-    finally:
-        release_topology_lock(lock_dir)
+    topology = agent_topology(prefix, tmux_name)
+    current = [pane.name for pane in topology]
+    instance = next_instance_name(current, base)
+    if any(pane.name == instance for pane in topology):
+        raise SessionControlError(f"Agent instance already exists: {instance}")
+    pane_id = create_agent_window(
+        session=tmux_name,
+        instance_name=instance,
+        workspace=workspace,
+        width=SESSION_WIDTH,
+        tmux_socket=socket_name,
+    )
+    if not pane_id:
+        raise SessionControlError("Failed to create agent window")
+    _write_meta(prefix, tmux_name, session_name)
+    _start_agent(
+        prefix=prefix,
+        workspace=workspace,
+        pane_id=pane_id,
+        instance_name=instance,
+    )
+    _append_log(session_name, f"Add Agent: {instance}")
+    return instance
 
 
 def remove_agent(
@@ -520,40 +462,19 @@ def remove_agent(
     agent: str,
     tmux_socket: str = "",
 ) -> str:
-    name = (session_name or "").strip()
-    requested = (agent or "").strip()
-    if not name:
-        raise SessionControlError("session_name is required")
-    if not requested:
-        raise SessionControlError("agent is required")
     prefix = _prefix(tmux_socket)
     socket_name = (tmux_socket or "").strip() or default_tmux_socket_name()
-    tmux_name = _resolve_tmux_name(prefix, name)
+    tmux_name = _resolve_tmux_name(prefix, session_name)
     if not tmux_name:
-        raise SessionControlError(f"Session does not exist: {name}")
-    workspace = tmux_session_workspace(prefix, tmux_name)
-    ensure_session_workspace_mirrors(name, workspace)
-
-    lock_dir = _with_topology_lock(socket_name, name)
-    try:
-        topology = agent_topology(prefix, tmux_name)
-        current = [pane.name for pane in topology]
-        canonical = resolve_canonical_instance(current, requested)
-        if not canonical:
-            raise SessionControlError(f"Agent instance not in this session: {agent}")
-        pane_id = next((pane.pane_id for pane in topology if pane.name == canonical), "")
-        if not pane_id:
-            raise SessionControlError(f"No tmux pane found for instance: {canonical}")
-        window_target = window_target_for_pane(pane_id=pane_id, tmux_socket=socket_name)
-        if not window_target:
-            raise SessionControlError(f"No tmux window recorded for instance: {canonical}")
-        if not kill_window_target(window_target=window_target, tmux_socket=socket_name):
-            raise SessionControlError(f"tmux kill-window failed for {window_target}")
-        _write_meta(prefix, tmux_name, name)
-        _append_log(
-            name,
-            f"Remove Agent: {canonical}",
-        )
-        return canonical
-    finally:
-        release_topology_lock(lock_dir)
+        raise SessionControlError(f"Session does not exist: {session_name}")
+    pane_id = next((pane.pane_id for pane in agent_topology(prefix, tmux_name) if pane.name == agent), None)
+    if pane_id is None:
+        raise SessionControlError(f"Agent instance not in this session: {agent}")
+    window_target = window_target_for_pane(pane_id=pane_id, tmux_socket=socket_name)
+    if not window_target:
+        raise SessionControlError(f"No tmux window recorded for instance: {agent}")
+    if not kill_window_target(window_target=window_target, tmux_socket=socket_name):
+        raise SessionControlError(f"tmux kill-window failed for {window_target}")
+    _write_meta(prefix, tmux_name, session_name)
+    _append_log(session_name, f"Remove Agent: {agent}")
+    return agent

@@ -44,19 +44,19 @@
           }
         }
 
-        const displayIdSet = new Set(displayEntries.map((e) => String(e.context_hash || "")).filter(Boolean));
+        const displayIdSet = new Set(displayEntries.map((e) => e.context_hash));
         const newEntries = displayEntries.filter((e) => {
-          const id = String(e.context_hash || "");
-          return id && !previousRenderedIds.has(id);
+          const id = e.context_hash;
+          return !previousRenderedIds.has(id);
         });
         const hasRemovals = previousRenderedIds.size > 0 && [...previousRenderedIds].some((id) => !displayIdSet.has(String(id)));
         const currentRenderedOrder = Array.from(root.querySelectorAll("[data-context-hash]"))
           .map((node) => String(node.dataset.contextHash || ""))
           .filter(Boolean);
-        const nextRenderedOrder = displayEntries.map((entry) => String(entry.context_hash || ""));
+        const nextRenderedOrder = displayEntries.map((entry) => entry.context_hash);
         const nextIncrementalOrder = currentRenderedOrder
           .filter((id) => displayIdSet.has(id))
-          .concat(newEntries.map((entry) => String(entry.context_hash || "")));
+          .concat(newEntries.map((entry) => entry.context_hash));
         const canIncrementallyTrimAndAppend = !forceFullRender
           && previousRenderedIds.size > 0
           && newEntries.length > 0
@@ -67,7 +67,7 @@
           && newEntries.length > 0
           && !hasRemovals
           && nextRenderedOrder.length === currentRenderedOrder.length + newEntries.length
-          && newEntries.every((entry, idx) => nextRenderedOrder[idx] === String(entry.context_hash || ""))
+          && newEntries.every((entry, idx) => nextRenderedOrder[idx] === entry.context_hash)
           && currentRenderedOrder.every((id, idx) => nextRenderedOrder[idx + newEntries.length] === id);
 
         const isInitialBulkLoad =
@@ -92,10 +92,10 @@
           const frag = document.createDocumentFragment();
           const pendingRowCleanup = [];
           for (const entry of newEntries) {
-            const entryContextHash = String(entry?.context_hash || "");
+            const entryContextHash = entry.context_hash;
             const tmpl = document.createElement("template");
             tmpl.innerHTML = buildMsgHTML(entry, {
-              hideMetaRow: entryContextHash ? metaHiddenIds.has(entryContextHash) : false,
+              hideMetaRow: metaHiddenIds.has(entryContextHash),
             });
             const row = tmpl.content.firstElementChild;
             if (row) {
@@ -118,10 +118,10 @@
           const frag = document.createDocumentFragment();
           const pendingRowCleanup = [];
           for (const entry of newEntries) {
-            const entryContextHash = String(entry?.context_hash || "");
+            const entryContextHash = entry.context_hash;
             const tmpl = document.createElement("template");
             tmpl.innerHTML = buildMsgHTML(entry, {
-              hideMetaRow: entryContextHash ? metaHiddenIds.has(entryContextHash) : false,
+              hideMetaRow: metaHiddenIds.has(entryContextHash),
             });
             const row = tmpl.content.firstElementChild;
             if (row) pendingRowCleanup.push({ row, stream: false });
@@ -143,15 +143,15 @@
           queueMicrotask(() => { _programmaticScroll = false; });
         } else {
           root.innerHTML = displayEntries.map((entry) => {
-            const entryContextHash = String(entry?.context_hash || "");
+            const entryContextHash = entry.context_hash;
             return buildMsgHTML(entry, {
-              hideMetaRow: entryContextHash ? metaHiddenIds.has(entryContextHash) : false,
+              hideMetaRow: metaHiddenIds.has(entryContextHash),
             });
           }).join("");
           _renderedIds = displayIdSet;
           const pendingFullRowCleanup = [];
           if (shouldMarkNewRowsAnimated) {
-            const newEntryById = new Map(newEntries.map((e) => [String(e.context_hash || ""), e]));
+            const newEntryById = new Map(newEntries.map((e) => [e.context_hash, e]));
             root.querySelectorAll("[data-context-hash]").forEach((row) => {
               const contextHash = String(row.dataset.contextHash || "");
               const entry = newEntryById.get(contextHash);

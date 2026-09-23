@@ -72,7 +72,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
             command_id,
             arg,
             target,
-            client: document.documentElement.dataset.mobile === "1" ? "mobile" : "desktop",
           }),
         });
         const data = await res.json();
@@ -145,7 +144,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
                 command_id: parsed.id,
                 arg,
                 target: parsed.id === "terminal" ? "terminal" : selectedTargets.join(","),
-                client: document.documentElement.dataset.mobile === "1" ? "mobile" : "desktop",
               }),
             });
             const data = await res.json();

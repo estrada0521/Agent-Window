@@ -688,14 +688,7 @@ __CHAT_INCLUDE:../features/git-panel.js__
 
       const fetchRepoDir = async (rawPath) => {
         const path = normalizeRepoPath(rawPath);
-        let res;
-        try {
-          res = await fetchWithTimeout(`/files-dir?path=${encodeURIComponent(path)}`, {}, 12000);
-        } catch (err) {
-          const isTimeout = /timeout/i.test(String(err?.message || ""));
-          if (!isTimeout) throw err;
-          res = await fetchWithTimeout(`/files-dir?path=${encodeURIComponent(path)}`, {}, 20000);
-        }
+        const res = await fetchWithTimeout(`/files-dir?path=${encodeURIComponent(path)}`, {}, 12000);
         if (!res.ok) {
           throw new Error(res.status === 404 ? "Directory not found" : "Failed to load directory");
         }

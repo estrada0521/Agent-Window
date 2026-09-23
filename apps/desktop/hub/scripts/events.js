@@ -394,7 +394,7 @@
           payload: {
             x: Math.round(event.clientX),
             y: Math.round(event.clientY),
-            resetAgentsEnabled: archived && !rec.session.agents_reset,
+            resetAgentsEnabled: archived && rec.session.has_agents,
             changeWorkspaceEnabled: archived && !selected,
             archiveEnabled: !archived,
             deleteEnabled: archived,

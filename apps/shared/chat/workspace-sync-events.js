@@ -1,9 +1,6 @@
     const startWorkspaceSyncEvents = () => {
       if (workspaceSyncEventSource) return;
-      const path = workspaceSyncLastSeq > 0
-        ? `/workspace-sync-events?after=${encodeURIComponent(String(workspaceSyncLastSeq))}`
-        : "/workspace-sync-events";
-      const es = new EventSource(withChatBase(path));
+      const es = new EventSource(withChatBase("/workspace-sync-events"));
       es.addEventListener("sync", (event) => {
         handleWorkspaceSyncUpdate(JSON.parse(event.data || "{}"));
       });

@@ -10,7 +10,7 @@ from native_log_sync.agents._shared.path_state import (
 from native_log_sync.agents._shared.runtime_push import push_runtime_display
 from native_log_sync.agents.claude.read_runtime import iter_tool_calls, runtime_tool_events
 from native_log_sync.io.jsonl_read import CompleteJsonlScan, warn_skipped_lines
-from native_log_sync.io.projected import append_projected_entry
+from backend_core.access.files import append_jsonl_entry
 
 
 def _claude_entry_marks_turn_done(entry: dict) -> bool:
@@ -61,16 +61,16 @@ def sync_claude_native_log(
     if start >= file_size:
         return
 
-    def _append_claude_entry(entry: dict, line_start: int) -> bool:
+    def _append_claude_entry(entry: dict, line_start: int) -> None:
         if entry.get("type") != "assistant":
-            return False
-        msg = entry.get("message") if isinstance(entry, dict) else {}
+            return
+        msg = entry.get("message")
         if not isinstance(msg, dict):
-            return False
+            return
 
         content = msg.get("content", [])
         if not isinstance(content, list):
-            return False
+            return
         texts = []
         for c in content:
             if isinstance(c, dict) and c.get("type") == "text":
@@ -78,7 +78,7 @@ def sync_claude_native_log(
                 if text:
                     texts.append(text)
         if not texts:
-            return False
+            return
         display = "\n".join(texts)
         jsonl_entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -89,12 +89,7 @@ def sync_claude_native_log(
             "native_log_path": session_path_str,
             "native_log_offset": line_start,
         }
-        if entry.get("isApiErrorMessage"):
-            append_projected_entry(self.log_path, jsonl_entry)
-            self._mark_idle(agent)
-            return True
-        append_projected_entry(self.log_path, jsonl_entry)
-        return True
+        append_jsonl_entry(self.log_path, jsonl_entry)
 
     turn_done_seen = False
     scan = CompleteJsonlScan(session_path_str, start)

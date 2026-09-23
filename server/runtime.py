@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 import logging
 
 import threading
@@ -25,10 +26,6 @@ from .index_cache import LOG_TAIL_SIZE, message_entry_window
 from workspace_sync.commit import (
     adopt_commit_baseline as _adopt_commit_baseline_impl,
     ensure_commit_announcements as _ensure_commit_announcements_impl,
-)
-from .payload import (
-    build_payload_document,
-    encode_payload_document,
 )
 from native_log_sync.syncer import NativeLogSyncer
 from native_log_sync.refresh.binding_models import PaneBindingRequest
@@ -235,12 +232,10 @@ class ChatRuntime:
             limit_override=limit_override,
             offset=offset,
         )
-        payload_doc = build_payload_document(
-            server_instance=self.server_instance,
-            has_older=has_older,
-            entries=entries,
-        )
-        body = encode_payload_document(payload_doc)
+        body = json.dumps(
+            {"server_instance": self.server_instance, "has_older": has_older, "entries": entries},
+            ensure_ascii=True,
+        ).encode("utf-8")
         with self._payload_cache_lock:
             if cache_key not in self._payload_cache:
                 self._payload_cache_order.append(cache_key)
@@ -287,12 +282,9 @@ class ChatRuntime:
             self._mark_running(agent)
 
     def mark_agents_idle(self, agents: list[str]) -> None:
-        names = [str(agent or "").strip() for agent in agents if str(agent or "").strip()]
-        if not names:
-            return
-        for name in names:
-            self._agent_running.discard(name)
-            self._native_log.clear_agent_runtime_display(name)
+        for agent in agents:
+            self._agent_running.discard(agent)
+            self._native_log.clear_agent_runtime_display(agent)
         self.notify_session_state_changed()
 
     def running_agents_for_reload(self) -> list[str]:

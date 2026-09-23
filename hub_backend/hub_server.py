@@ -45,10 +45,9 @@ from hub_backend.actions import (
 )
 from hub_backend.server_helpers import (
     build_hub_html_pages as _build_hub_html_pages_impl,
-    clean_env as _clean_env_impl,
     error_page,
     format_chat_url,
-    launch_hub_restart as _launch_hub_restart_impl,
+    launch_hub_restart,
     pwa_asset_url as _pwa_asset_url_impl,
     pwa_asset_version as _pwa_asset_version_impl,
     serve_pwa_static as _serve_pwa_static_impl,
@@ -101,12 +100,7 @@ def queue_hub_restart():
         if cleanup_detail:
             return False, cleanup_detail, False
         restart_pending = True
-    ok = _launch_hub_restart_impl(
-        script_path=script_path,
-        repo_root=repo_root,
-        clean_env_fn=_clean_env_impl,
-        hub_server_getter=lambda: hub_server,
-    )
+    ok = launch_hub_restart(script_path=script_path, repo_root=repo_root, hub_server=hub_server)
     return ok, "" if ok else "reload failed", True
 
 
@@ -453,7 +447,7 @@ class Handler(BaseHTTPRequestHandler):
     def _send_unhealthy(self, fmt, detail):
         msg = f"tmux is currently unresponsive ({detail}). Please wait a few seconds."
         if fmt == "json":
-            self._send_json(503, {"ok": False, "error": "tmux_unhealthy", "detail": msg})
+            self._send_json(503, {"ok": False, "error": msg})
         else:
             self._send_html(503, error_page(msg))
 
@@ -532,7 +526,7 @@ class Handler(BaseHTTPRequestHandler):
                 "latest_message_sender": record["latest_message_sender"],
                 "latest_message_preview": record["latest_message_preview"],
                 "latest_message_revision": record["latest_message_revision"],
-                "agents_reset": record["agents_reset"],
+                "has_agents": bool(record["agents"]),
             }
             for record in archived_session_records(query.non_archived_names).values()
         ]
@@ -565,10 +559,6 @@ class Handler(BaseHTTPRequestHandler):
             logging.exception("Hub session messages event stream failed")
 
     def _post_session_messages_changed(self, _parsed):
-        client_host = str(self.client_address[0] or "").strip()
-        if client_host not in {"127.0.0.1", "::1"}:
-            self._send_json(403, {"ok": False, "error": "loopback only"})
-            return
         hub.publish_session_messages_changed()
         self.send_response(204)
         self.send_header("Cache-Control", "no-store")

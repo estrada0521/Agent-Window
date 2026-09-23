@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.parse import unquote as url_unquote
 
 from backend_core.access.settings import workspace_upload_dir
-from backend_core.tmux.control import SessionControlError, add_agent, remove_agent
+from backend_core.tmux.control import add_agent, remove_agent
 from backend_core.tmux.window import tmux_prefix_args
 from shortcut_command.execute import run_shortcut_command
 
@@ -64,39 +64,18 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     if not agent:
         handler._send_json(400, {"ok": False, "error": "agent required"})
         return
+    runtime = ctx["runtime"]
     try:
-        instance = add_agent(
-            session_name=ctx["session_name"],
-            agent=agent,
-            tmux_socket=str(getattr(ctx["runtime"], "tmux_socket", "") or ""),
-        )
-    except SessionControlError as exc:
-        handler._send_json(500, {"ok": False, "error": str(exc)})
-        return
+        instance = add_agent(session_name=ctx["session_name"], agent=agent, tmux_socket=runtime.tmux_socket)
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-
-    warnings: list[str] = []
-    try:
-        targets = ctx["runtime"].active_agents()
-    except Exception as exc:
-        targets = []
-        warnings.append(str(exc))
-    ctx["runtime"].invalidate_payload_cache()
-    try:
-        ctx["runtime"].notify_session_state_changed()
-    except Exception as exc:
-        warnings.append(str(exc))
-    payload = {
-        "ok": True,
-        "agent": instance,
-        "message": f"Added agent {instance}",
-        "targets": targets,
-    }
-    if warnings:
-        payload["warning"] = "; ".join(warnings)
-    handler._send_json(200, payload)
+    runtime.invalidate_payload_cache()
+    runtime.notify_session_state_changed()
+    handler._send_json(
+        200,
+        {"ok": True, "agent": instance, "message": f"Added agent {instance}", "targets": runtime.active_agents()},
+    )
 
 
 def _post_remove_agent(handler, _parsed, ctx) -> None:
@@ -108,52 +87,25 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
     if not agent:
         handler._send_json(400, {"ok": False, "error": "agent required"})
         return
+    runtime = ctx["runtime"]
     try:
-        instance = remove_agent(
-            session_name=ctx["session_name"],
-            agent=agent,
-            tmux_socket=str(getattr(ctx["runtime"], "tmux_socket", "") or ""),
-        )
-    except SessionControlError as exc:
-        handler._send_json(500, {"ok": False, "error": str(exc)})
-        return
+        instance = remove_agent(session_name=ctx["session_name"], agent=agent, tmux_socket=runtime.tmux_socket)
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-
-    warnings: list[str] = []
-    try:
-        targets = ctx["runtime"].active_agents()
-    except Exception as exc:
-        targets = []
-        warnings.append(str(exc))
-    ctx["runtime"].invalidate_payload_cache()
-    try:
-        ctx["runtime"].remove_native_log_binding(instance)
-    except Exception as exc:
-        warnings.append(str(exc))
-    try:
-        ctx["runtime"].notify_session_state_changed()
-    except Exception as exc:
-        warnings.append(str(exc))
-    payload = {
-        "ok": True,
-        "agent": instance,
-        "message": f"Removed agent {instance}",
-        "targets": targets,
-    }
-    if warnings:
-        payload["warning"] = "; ".join(warnings)
-    handler._send_json(200, payload)
+    runtime.invalidate_payload_cache()
+    runtime.remove_native_log_binding(instance)
+    runtime.notify_session_state_changed()
+    handler._send_json(
+        200,
+        {"ok": True, "agent": instance, "message": f"Removed agent {instance}", "targets": runtime.active_agents()},
+    )
 
 
 def _post_upload(handler, _parsed, ctx) -> None:
     content_type = handler.headers.get("Content-Type", "application/octet-stream")
     raw_name = handler.headers.get("X-Filename", "upload.bin") or "upload.bin"
-    try:
-        filename = url_unquote(raw_name)
-    except Exception:
-        filename = raw_name
+    filename = url_unquote(raw_name)
     try:
         length = int(handler.headers.get("Content-Length", "0"))
     except ValueError:
@@ -184,11 +136,7 @@ def _post_upload(handler, _parsed, ctx) -> None:
         save_name = f"{stem}_{counter}{ext}"
         save_path = upload_dir / save_name
     save_path.write_bytes(data)
-    try:
-        rel_path = str(save_path.relative_to(Path(ctx["workspace"])))
-    except ValueError:
-        rel_path = str(save_path)
-    handler._send_json(200, {"ok": True, "path": rel_path})
+    handler._send_json(200, {"ok": True, "path": str(save_path.relative_to(Path(ctx["workspace"])))})
 
 
 def _post_delete_upload(handler, _parsed, ctx) -> None:
@@ -389,10 +337,6 @@ def _post_open_pane(handler, _parsed, ctx) -> None:
     if err:
         handler._send_json(400, {"ok": False, "error": err})
         return
-    if str(data.get("client") or "").strip().lower() == "mobile":
-        handler._send_json(403, {"ok": False, "error": "open-pane is available on desktop only"})
-        return
-    runtime = ctx["runtime"]
     raw_targets = [item.strip() for item in str(data.get("target") or "").split(",") if item.strip()]
     if not raw_targets:
         _open_terminal(
@@ -479,17 +423,9 @@ def _post_files_resolve(handler, _parsed, ctx) -> None:
     handler._send_json(200, {"ok": True, "resolved": resolved})
 
 
-def _post_open_file(handler, _parsed, ctx) -> None:
-    data, err = _read_json_body(handler)
-    if err:
-        handler._send_json(400, {"ok": False, "error": err})
-        return
-    rel = (data.get("path") or "").strip()
-    if not rel:
-        handler._send_json(400, {"ok": False, "error": "path required"})
-        return
+def _send_workspace_result(handler, call) -> None:
     try:
-        result = ctx["workspace_sync_api"].open_with_default_app(rel)
+        result = call()
     except PermissionError:
         handler._send_json(403, {"ok": False, "error": "forbidden"})
         return
@@ -503,6 +439,18 @@ def _post_open_file(handler, _parsed, ctx) -> None:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
     handler._send_json(200, result)
+
+
+def _post_open_file(handler, _parsed, ctx) -> None:
+    data, err = _read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
+        return
+    rel = (data.get("path") or "").strip()
+    if not rel:
+        handler._send_json(400, {"ok": False, "error": "path required"})
+        return
+    _send_workspace_result(handler, lambda: ctx["workspace_sync_api"].open_with_default_app(rel))
 
 
 def _post_reveal_file(handler, _parsed, ctx) -> None:
@@ -514,21 +462,7 @@ def _post_reveal_file(handler, _parsed, ctx) -> None:
     if not rel:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
-    try:
-        result = ctx["workspace_sync_api"].reveal_in_finder(rel)
-    except PermissionError:
-        handler._send_json(403, {"ok": False, "error": "forbidden"})
-        return
-    except FileNotFoundError:
-        handler._send_json(404, {"ok": False, "error": "file not found"})
-        return
-    except ValueError as exc:
-        handler._send_json(400, {"ok": False, "error": str(exc)})
-        return
-    except Exception as exc:
-        handler._send_json(500, {"ok": False, "error": str(exc)})
-        return
-    handler._send_json(200, result)
+    _send_workspace_result(handler, lambda: ctx["workspace_sync_api"].reveal_in_finder(rel))
 
 
 def _post_quick_look(handler, _parsed, ctx) -> None:
@@ -540,18 +474,7 @@ def _post_quick_look(handler, _parsed, ctx) -> None:
     if not isinstance(paths, list) or not paths:
         handler._send_json(400, {"ok": False, "error": "paths required"})
         return
-    try:
-        result = ctx["workspace_sync_api"].quick_look([str(p or "").strip() for p in paths])
-    except PermissionError:
-        handler._send_json(403, {"ok": False, "error": "forbidden"})
-        return
-    except ValueError as exc:
-        handler._send_json(400, {"ok": False, "error": str(exc)})
-        return
-    except Exception as exc:
-        handler._send_json(500, {"ok": False, "error": str(exc)})
-        return
-    handler._send_json(200, result)
+    _send_workspace_result(handler, lambda: ctx["workspace_sync_api"].quick_look([str(p or "").strip() for p in paths]))
 
 
 def _post_open_diff(handler, _parsed, ctx) -> None:
@@ -563,18 +486,12 @@ def _post_open_diff(handler, _parsed, ctx) -> None:
     if not rel:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
-    try:
-        result = ctx["workspace_sync_api"].open_diff_tool(rel, (data.get("hash") or "").strip(), (data.get("old_path") or "").strip())
-    except PermissionError:
-        handler._send_json(403, {"ok": False, "error": "forbidden"})
-        return
-    except ValueError as exc:
-        handler._send_json(400, {"ok": False, "error": str(exc)})
-        return
-    except Exception as exc:
-        handler._send_json(500, {"ok": False, "error": str(exc)})
-        return
-    handler._send_json(200, result)
+    _send_workspace_result(
+        handler,
+        lambda: ctx["workspace_sync_api"].open_diff_tool(
+            rel, (data.get("hash") or "").strip(), (data.get("old_path") or "").strip()
+        ),
+    )
 
 
 def _run_nativelog_command(ctx, *, target: str) -> tuple[int, dict]:
@@ -606,9 +523,6 @@ def _post_native_log(handler, _parsed, ctx) -> None:
     if err:
         handler._send_json(400, {"ok": False, "error": err})
         return
-    if str(data.get("client") or "").strip().lower() == "mobile":
-        handler._send_json(403, {"ok": False, "error": "nativelog is available on desktop only"})
-        return
     status, body = _run_nativelog_command(ctx, target=str(data.get("target") or ""))
     handler._send_json(status, body)
 
@@ -618,13 +532,9 @@ def _post_shortcut_command(handler, _parsed, ctx) -> None:
     if err:
         handler._send_json(400, {"ok": False, "error": err})
         return
-    command_id = str(data.get("command_id") or "")
-    if command_id == "terminal" and str(data.get("client") or "").strip().lower() != "mobile":
-        handler._send_json(403, {"ok": False, "error": "terminal input is available on mobile only"})
-        return
     status, body = run_shortcut_command(
         ctx["runtime"],
-        command_id=command_id,
+        command_id=str(data.get("command_id") or ""),
         arg=str(data.get("arg") or ""),
         target=str(data.get("target") or ""),
     )

@@ -21,6 +21,10 @@ from server.chat_process import launch_chat_server, wait_for_chat_server
 from hub_backend.session_query import active_session_records_query, archived_session_records
 
 
+class TmuxUnhealthy(RuntimeError):
+    pass
+
+
 def chat_server_state_matches(hub, state: dict | None, *, workspace: str) -> bool:
     if not state:
         return False
@@ -112,7 +116,7 @@ def ensure_chat_server(
 def revive_archived_session(hub, session_name: str) -> tuple[bool, str]:
     query = active_session_records_query(hub)
     if query.state == "unhealthy":
-        return False, f"tmux is currently unresponsive ({query.detail})"
+        raise TmuxUnhealthy(query.detail)
     active_records = query.records
     if session_name in active_records:
         return True, ""
@@ -146,7 +150,7 @@ def revive_archived_session(hub, session_name: str) -> tuple[bool, str]:
 def kill_repo_session(hub, session_name: str) -> tuple[bool, str]:
     query = active_session_records_query(hub)
     if query.state == "unhealthy":
-        return False, f"tmux is unresponsive, cannot confirm session state ({query.detail})"
+        raise TmuxUnhealthy(query.detail)
 
     active = query.records
     if session_name not in active:
@@ -161,7 +165,7 @@ def kill_repo_session(hub, session_name: str) -> tuple[bool, str]:
 def delete_archived_session(hub, session_name: str) -> tuple[bool, str]:
     query = active_session_records_query(hub)
     if query.state == "unhealthy":
-        return False, f"tmux is unresponsive, cannot safely delete archived session ({query.detail})"
+        raise TmuxUnhealthy(query.detail)
 
     archived = archived_session_records(query.non_archived_names)
     record = archived.get(session_name)

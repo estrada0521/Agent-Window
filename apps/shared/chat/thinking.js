@@ -350,17 +350,27 @@
     timeline?.addEventListener("scroll", scheduleThinkingFloatingIcons, { passive: true });
     window.addEventListener("resize", scheduleThinkingFloatingIcons, { passive: true });
     if (document.documentElement.dataset.mobile !== "1") {
-      timeline?.addEventListener("click", (event) => {
+      timeline?.addEventListener("click", async (event) => {
         const wrap = event.target.closest(".message-thinking-icon-wrap");
         if (!wrap) return;
         const row = wrap.closest(".message-thinking-row[data-agent]");
         if (!row) return;
         const agent = row.dataset.agent || "";
         if (!agent) return;
-        fetch("/open-terminal", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ agent }),
-        }).catch(() => {});
+        try {
+          const res = await fetch("/open-terminal", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent }),
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            setStatus(data.error || "terminal open failed", true);
+            setTimeout(() => setStatus(""), STATUS_TOAST_MS);
+          }
+        } catch (err) {
+          setStatus(`terminal open error: ${err.message}`, true);
+          setTimeout(() => setStatus(""), STATUS_TOAST_MS);
+        }
       });
     }

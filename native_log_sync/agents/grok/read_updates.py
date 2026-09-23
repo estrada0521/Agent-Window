@@ -15,7 +15,7 @@ from native_log_sync.agents.grok.read_runtime import (
     runtime_tool_events,
 )
 from native_log_sync.io.jsonl_read import CompleteJsonlScan, warn_skipped_lines
-from native_log_sync.io.projected import append_projected_entry
+from backend_core.access.files import append_jsonl_entry
 
 
 def extract_grok_assistant_text(entry: object) -> str:
@@ -29,7 +29,7 @@ def _append_grok_reply(runtime, agent: str, history_path: str, line_start: int, 
     display = extract_grok_assistant_text(entry)
     if not display:
         return False
-    append_projected_entry(
+    append_jsonl_entry(
         runtime.log_path,
         {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),

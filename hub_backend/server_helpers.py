@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import html
 import json
-import os
 import re
 import subprocess
-import threading
 from pathlib import Path
 
 from hub_backend.branding import APP_DISPLAY_NAME
@@ -47,47 +45,22 @@ def format_chat_url(chat_port: int, path: str) -> str:
 PROCESS_HANDOFF_TIMEOUT_SEC = 8.0
 
 
-def clean_env() -> dict:
-    return dict(os.environ)
-
-
-def launch_hub_restart(
-    *,
-    script_path,
-    repo_root,
-    clean_env_fn,
-    hub_server_getter,
-    ready_timeout: float = PROCESS_HANDOFF_TIMEOUT_SEC,
-) -> bool:
-    done = threading.Event()
-    result: dict[str, bool] = {"ok": False}
-
-    def worker() -> None:
-        try:
-            server = hub_server_getter()
-            if server is not None:
-                server.shutdown()
-                server.server_close()
-            env = clean_env_fn()
-            completed = subprocess.run(
-                ["bash", str(script_path)],
-                cwd=repo_root,
-                env=env,
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-                timeout=ready_timeout,
-            )
-            result["ok"] = completed.returncode == 0
-        except subprocess.TimeoutExpired:
-            result["ok"] = False
-        finally:
-            done.set()
-
-    threading.Thread(target=worker, daemon=True).start()
-    done.wait()
-    return result["ok"]
+def launch_hub_restart(*, script_path, repo_root, hub_server) -> bool:
+    hub_server.shutdown()
+    hub_server.server_close()
+    try:
+        completed = subprocess.run(
+            ["bash", str(script_path)],
+            cwd=repo_root,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=PROCESS_HANDOFF_TIMEOUT_SEC,
+        )
+    except subprocess.TimeoutExpired:
+        return False
+    return completed.returncode == 0
 
 
 def pwa_asset_version(

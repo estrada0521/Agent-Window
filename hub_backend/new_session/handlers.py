@@ -15,7 +15,7 @@ from backend_core.access.settings import (
     session_artifact_dir,
     workspace_chat_port,
 )
-from backend_core.tmux.control import SessionControlError, create_session
+from backend_core.tmux.control import create_session
 from hub_backend.chat_supervisor import ensure_chat_server
 
 
@@ -47,13 +47,6 @@ def _session_name_for_workspace(workspace: str) -> tuple[str, str]:
         if digest_length >= max_digest_length:
             raise RuntimeError("No generated session name is available for this workspace")
         digest_length = min(digest_length + 4, max_digest_length)
-
-
-def _workspace_claim_failure(workspace: str) -> tuple[int, str] | None:
-    owner = find_session_for_workspace(workspace)
-    if owner:
-        return 409, f"A session already exists for this workspace: {owner}"
-    return None
 
 
 def post_pick_workspace(handler, _parsed, _ctx) -> None:
@@ -142,10 +135,9 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     if not Path(resolved_workspace).is_dir():
         handler._send_json(400, {"ok": False, "error": f"Invalid workspace: {resolved_workspace}"})
         return
-    claim_failure = _workspace_claim_failure(resolved_workspace)
-    if claim_failure:
-        status, error = claim_failure
-        handler._send_json(status, {"ok": False, "error": error})
+    owner = find_session_for_workspace(resolved_workspace)
+    if owner:
+        handler._send_json(409, {"ok": False, "error": f"A session already exists for this workspace: {owner}"})
         return
     try:
         session_name, notice = _session_name_for_workspace(resolved_workspace)
@@ -157,17 +149,13 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         handler._send_json(409, {"ok": False, "error": f"chat port {chat_port} is occupied"})
         return
     try:
-        try:
-            create_session(
-                session_name=session_name,
-                workspace=resolved_workspace,
-                agents=[],
-                tmux_socket=ctx["hub"].tmux_socket,
-                repo_root=ctx["hub"].repo_root,
-            )
-        except SessionControlError as exc:
-            handler._send_json(500, {"ok": False, "error": str(exc)})
-            return
+        create_session(
+            session_name=session_name,
+            workspace=resolved_workspace,
+            agents=[],
+            tmux_socket=ctx["hub"].tmux_socket,
+            repo_root=ctx["hub"].repo_root,
+        )
         ok, chat_port, detail = ensure_chat_server(
             ctx["hub"],
             expected_active=True,

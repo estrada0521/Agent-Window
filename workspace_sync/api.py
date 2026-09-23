@@ -51,41 +51,34 @@ class WorkspaceSyncApi:
         with self._sync_event_condition:
             self._git_cache_version += 1
 
-    def _workspace_sync_state_locked(self) -> dict[str, int | float]:
-        file_state = self.file_runtime.file_list_cache_state()
+    def _workspace_sync_state_locked(self) -> dict[str, int]:
         return {
-            "seq": int(self._sync_event_seq),
-            "file_version": int(file_state.get("version") or 0),
-            "git_version": int(self._git_cache_version),
-            "updated_at": float(file_state.get("updated_at") or 0.0),
+            "seq": self._sync_event_seq,
+            "file_version": self.file_runtime.file_list_cache_version(),
+            "git_version": self._git_cache_version,
         }
 
-    def workspace_sync_state(self) -> dict[str, int | float]:
+    def workspace_sync_state(self) -> dict[str, int]:
         with self._sync_event_condition:
             return self._workspace_sync_state_locked()
 
-    def publish_sync_event(self) -> dict[str, int | float]:
+    def publish_sync_event(self) -> None:
         with self._sync_event_condition:
             self._sync_event_seq += 1
-            state = self._workspace_sync_state_locked()
-            state["published_at"] = time.time()
             self._sync_event_condition.notify_all()
-            return state
 
-    def wait_for_sync_event(self, after_seq: int, timeout: float = 15.0) -> dict[str, int | float] | None:
-        deadline = time.monotonic() + max(0.1, float(timeout or 15.0))
+    def wait_for_sync_event(self, after_seq: int, timeout: float = 15.0) -> dict[str, int] | None:
+        deadline = time.monotonic() + timeout
         with self._sync_event_condition:
-            while self._sync_event_seq <= int(after_seq):
+            while self._sync_event_seq <= after_seq:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     return None
                 self._sync_event_condition.wait(timeout=remaining)
-            state = self._workspace_sync_state_locked()
-            state["published_at"] = time.time()
-            return state
+            return self._workspace_sync_state_locked()
 
-    def search_files(self, query: str = "", limit: int = 60, *, force_refresh: bool = False):
-        return self.file_runtime.search_files(query, limit=limit, force_refresh=force_refresh)
+    def search_files(self, query: str = "", limit: int = 60):
+        return self.file_runtime.search_files(query, limit=limit)
 
     def resolve_file_references(self, queries: list[str]) -> dict[str, str]:
         return self.file_runtime.resolve_file_references(queries)

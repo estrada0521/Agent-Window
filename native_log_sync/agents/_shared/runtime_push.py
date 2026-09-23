@@ -35,7 +35,6 @@ def _publish_next_runtime_display(runtime, agent: str) -> None:
         timer = threading.Timer(MIN_RUNTIME_DISPLAY_SECONDS, _publish_next_runtime_display, args=(runtime, agent))
         timer.daemon = True
         timers[agent] = timer
-        runtime._idle_running_display_timers = timers
         timer.start()
     runtime.notify_session_state_changed()
 
@@ -43,29 +42,20 @@ def _publish_next_runtime_display(runtime, agent: str) -> None:
 def push_runtime_display(runtime, agent: str, events: list[dict]) -> None:
     normalized: list[tuple[str, str, str]] = []
     for ev in events:
-        if not isinstance(ev, dict):
+        item = (ev["keyword"], ev["detail"], ev["source_id"])
+        if normalized and normalized[-1] == item:
             continue
-        keyword = str(ev.get("keyword") or "").strip()
-        if not keyword:
-            continue
-        detail = str(ev.get("detail") or "").strip()
-        source_id = str(ev.get("source_id") or "").strip()
-        if normalized and normalized[-1] == (keyword, detail, source_id):
-            continue
-        normalized.append((keyword, detail, source_id))
-    if not normalized:
-        return
+        normalized.append(item)
 
-    should_publish_now = False
     with runtime._idle_running_display_lock:
         queues = runtime._idle_running_display_queues
         timers = runtime._idle_running_display_timers
         queue = queues.setdefault(agent, deque(maxlen=MAX_RUNTIME_DISPLAY_QUEUE))
-        current_event = ((runtime._idle_running_display_by_agent.get(agent) or {}).get("current_event") or {})
+        current = runtime._idle_running_display_by_agent.get(agent)
         current_key = (
-            str(current_event.get("keyword") or "").strip(),
-            str(current_event.get("detail") or "").strip(),
-            str(current_event.get("source_id") or "").strip(),
+            (current["current_event"]["keyword"], current["current_event"]["detail"], current["current_event"]["source_id"])
+            if current
+            else None
         )
         for item in normalized:
             if item == current_key:
@@ -73,7 +63,6 @@ def push_runtime_display(runtime, agent: str, events: list[dict]) -> None:
             if queue and queue[-1] == item:
                 continue
             queue.append(item)
-        runtime._idle_running_display_queues = queues
         should_publish_now = agent not in timers
 
     if should_publish_now:

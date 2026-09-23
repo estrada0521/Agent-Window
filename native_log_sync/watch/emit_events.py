@@ -14,22 +14,16 @@ def clear_agent_runtime_display(runtime, agent: str) -> bool:
 
 
 def idle_running_display_for_api(display_by_agent: dict[str, dict]) -> dict[str, dict]:
-    result: dict[str, dict] = {}
-    for agent, payload in display_by_agent.items():
-        if not isinstance(payload, dict):
-            continue
-        raw_event = payload.get("current_event")
-        if not isinstance(raw_event, dict):
-            continue
-        event_id = str(raw_event.get("id") or "").strip()
-        keyword = str(raw_event.get("keyword") or "").strip()
-        detail = str(raw_event.get("detail") or "").strip()
-        if not event_id or not keyword:
-            continue
-        result[agent] = {
-            "current_event": {"id": event_id, "keyword": keyword, "detail": detail}
+    return {
+        agent: {
+            "current_event": {
+                "id": payload["current_event"]["id"],
+                "keyword": payload["current_event"]["keyword"],
+                "detail": payload["current_event"]["detail"],
+            }
         }
-    return result
+        for agent, payload in display_by_agent.items()
+    }
 
 
 def refresh_idle_statuses(runtime, running_agents: set) -> dict[str, str]:

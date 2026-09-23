@@ -34,7 +34,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             patch.object(hub_server, "hub", fake_hub),
             patch.object(hub_server, "stop_inactive_chat_servers", return_value=""),
             patch.object(hub_server, "restart_pending", False),
-            patch.object(hub_server, "_launch_hub_restart_impl", return_value=True) as launch,
+            patch.object(hub_server, "launch_hub_restart", return_value=True) as launch,
         ):
             ok, detail, owns_restart = hub_server.queue_hub_restart()
             self.assertTrue(hub_server.restart_pending)
@@ -52,7 +52,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             patch.object(hub_server, "hub", fake_hub),
             patch.object(hub_server, "stop_inactive_chat_servers", return_value="cleanup failed"),
             patch.object(hub_server, "restart_pending", False),
-            patch.object(hub_server, "_launch_hub_restart_impl") as launch,
+            patch.object(hub_server, "launch_hub_restart") as launch,
         ):
             ok, detail, owns_restart = hub_server.queue_hub_restart()
             self.assertFalse(hub_server.restart_pending)

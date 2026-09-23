@@ -1,7 +1,5 @@
     let refreshEpoch = 0;
     const applyLocalEntry = (entry) => {
-      const contextHash = String(entry?.context_hash || "").trim();
-      if (!contextHash) throw new Error("send did not return entry");
       refreshEpoch += 1;
       lastMessagesEtag = "";
       const current = latestPayloadData || {};

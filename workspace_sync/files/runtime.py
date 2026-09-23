@@ -399,13 +399,9 @@ class FileRuntime:
         files.sort(key=lambda item: str(item.get("path") or "").casefold())
         return files
 
-    def file_list_cache_state(self) -> dict[str, int | float]:
+    def file_list_cache_version(self) -> int:
         with self._file_list_cache_lock:
-            return {
-                "version": int(self._file_list_cache_version),
-                "updated_at": float(self._file_list_cache_at),
-                "entry_count": len(self._file_list_cache or ()),
-            }
+            return self._file_list_cache_version
 
     @staticmethod
     def _basename(path: str) -> str:
@@ -413,15 +409,14 @@ class FileRuntime:
         i = s.rfind("/")
         return s if i == -1 else s[i + 1 :]
 
-    def list_files(self, *, force_refresh: bool = False):
+    def list_files(self):
         now = time.time()
-        if not force_refresh:
-            with self._file_list_cache_lock:
-                if (
-                    self._file_list_cache is not None
-                    and (now - self._file_list_cache_at) <= self.FILE_LIST_CACHE_TTL_SECONDS
-                ):
-                    return [dict(item) for item in self._file_list_cache]
+        with self._file_list_cache_lock:
+            if (
+                self._file_list_cache is not None
+                and (now - self._file_list_cache_at) <= self.FILE_LIST_CACHE_TTL_SECONDS
+            ):
+                return [dict(item) for item in self._file_list_cache]
         return self.refresh_file_list_cache()
 
     def resolve_file_reference(self, query: str) -> str:
@@ -439,7 +434,7 @@ class FileRuntime:
         tail = "/" + rel.lower()
         matches = sorted({
             path
-            for path in (str(entry.get("path") or "") for entry in self.list_files(force_refresh=False))
+            for path in (str(entry.get("path") or "") for entry in self.list_files())
             if path and ("/" + path.lower()).endswith(tail)
         })
         return matches[0] if len(matches) == 1 else ""
@@ -455,7 +450,7 @@ class FileRuntime:
             result[query] = self.resolve_file_reference(query)
         return result
 
-    def search_files(self, query: str = "", limit: int = 60, *, force_refresh: bool = False):
+    def search_files(self, query: str = "", limit: int = 60):
         def hydrate_size(entry: dict) -> dict:
             result = dict(entry)
             if result.get("size") is not None:
@@ -506,7 +501,7 @@ class FileRuntime:
         except (TypeError, ValueError):
             normalized_limit = 60
         normalized_limit = max(1, min(self.FILE_SEARCH_MAX_LIMIT, normalized_limit))
-        entries = self.list_files(force_refresh=force_refresh)
+        entries = self.list_files()
         needle = str(query or "").strip().lower()
         if not needle:
             preferred_text_exts = self.EDITABLE_TEXT_EXTS | {".md"}

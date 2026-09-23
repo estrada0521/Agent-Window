@@ -18,10 +18,6 @@ def agent_window_root() -> Path:
     return Path.home() / ".agent-window"
 
 
-def agent_window_run_dir() -> Path:
-    return agent_window_root() / "run"
-
-
 def agent_window_session_root() -> Path:
     return agent_window_root() / "session"
 
@@ -47,10 +43,7 @@ def workspace_log_link_path(workspace: Path | str) -> Path:
 
 
 def ensure_session_workspace_mirrors(session_name: str, workspace: Path | str) -> None:
-    raw = str(workspace or "").strip()
-    if not raw:
-        raise ValueError("workspace is required")
-    workspace_path = Path(raw).expanduser()
+    workspace_path = Path(workspace).expanduser()
     if not workspace_path.is_dir():
         raise FileNotFoundError(f"workspace is not a directory: {workspace_path}")
     aw_dir = workspace_agent_window_dir(workspace_path)

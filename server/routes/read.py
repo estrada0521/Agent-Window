@@ -92,7 +92,7 @@ DEFAULT_TRACE_TAIL_LINES = 160
 def _get_trace(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     agent = qs.get("agent", [""])[0].lower()
-    tail_raw = (qs.get("lines", qs.get("tail", [""]))[0] or "").strip()
+    tail_raw = (qs.get("lines", [""])[0] or "").strip()
     tail_lines = DEFAULT_TRACE_TAIL_LINES
     if tail_raw:
         try:
@@ -190,7 +190,7 @@ def _get_files_dir(handler, parsed, ctx) -> None:
 
 def _get_files_search(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
-    query = (qs.get("q", qs.get("query", [""]))[0] or "").strip()
+    query = (qs.get("q", [""])[0] or "").strip()
     limit_raw = (qs.get("limit", [""])[0] or "").strip()
     limit = 60
     if limit_raw:
@@ -199,7 +199,7 @@ def _get_files_search(handler, parsed, ctx) -> None:
         except ValueError:
             limit = 60
     try:
-        files = ctx["workspace_sync_api"].search_files(query, limit=limit, force_refresh=False)
+        files = ctx["workspace_sync_api"].search_files(query, limit=limit)
         body = json.dumps(files, ensure_ascii=True).encode("utf-8")
     except Exception as exc:
         body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
@@ -218,12 +218,8 @@ def _get_session_state(handler, _parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
-def _get_session_state_events(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    try:
-        after_seq = max(0, int((qs.get("after", ["0"])[0] or "0").strip() or "0"))
-    except ValueError:
-        after_seq = 0
+def _get_session_state_events(handler, _parsed, ctx) -> None:
+    after_seq = 0
     handler.send_response(200)
     handler.send_header("Content-Type", "text/event-stream; charset=utf-8")
     handler.send_header("Cache-Control", "no-store")
@@ -237,7 +233,7 @@ def _get_session_state_events(handler, parsed, ctx) -> None:
                 handler.wfile.write(b": keepalive\n\n")
                 handler.wfile.flush()
             else:
-                after_seq = int(event.get("seq") or after_seq)
+                after_seq = event["seq"]
                 body = (f"event: state\ndata: {json.dumps(event, ensure_ascii=True)}\n\n").encode("utf-8")
                 handler.wfile.write(body)
                 handler.wfile.flush()
@@ -248,12 +244,7 @@ def _get_session_state_events(handler, parsed, ctx) -> None:
         return
 
 
-def _get_workspace_sync_events(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    try:
-        after_seq = max(0, int((qs.get("after", ["0"])[0] or "0").strip() or "0"))
-    except ValueError:
-        after_seq = 0
+def _get_workspace_sync_events(handler, _parsed, ctx) -> None:
     handler.send_response(200)
     handler.send_header("Content-Type", "text/event-stream; charset=utf-8")
     handler.send_header("Cache-Control", "no-store")
@@ -271,14 +262,14 @@ def _get_workspace_sync_events(handler, parsed, ctx) -> None:
     try:
         initial = ctx["workspace_sync_api"].workspace_sync_state()
         _write_event("sync", initial)
-        last_seq = max(after_seq, int(initial.get("seq") or 0))
+        last_seq = initial["seq"]
         while True:
             state = ctx["workspace_sync_api"].wait_for_sync_event(last_seq, timeout=15.0)
             if state is None:
                 handler.wfile.write(b": keepalive\n\n")
                 handler.wfile.flush()
                 continue
-            last_seq = int(state.get("seq") or last_seq)
+            last_seq = state["seq"]
             _write_event("sync", state)
     except (BrokenPipeError, ConnectionResetError):
         return

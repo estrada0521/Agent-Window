@@ -31,10 +31,10 @@ class SessionQueryResult:
 
 
 def _compact_message_preview(entry: dict[str, Any]) -> dict[str, str]:
-    sender = (entry.get("sender") or "").strip()
+    sender = entry["sender"]
     if sender == "system":
         return {"sender": "", "text": "", "revision": ""}
-    message = str(entry.get("message") or "").strip()
+    message = entry["message"].strip()
     if not message:
         return {"sender": "", "text": "", "revision": ""}
     compact = re.sub(r"^\[From:\s*[^\]]+\]\s*", "", message, flags=re.IGNORECASE)
@@ -43,9 +43,8 @@ def _compact_message_preview(entry: dict[str, Any]) -> dict[str, str]:
     compact = compact[:140].rstrip()
     if not compact:
         return {"sender": "", "text": "", "revision": ""}
-    context_hash = str(entry.get("context_hash") or "").strip()
-    native_log_offset = str(entry.get("native_log_offset") or "").strip()
-    revision = f"{context_hash}:{native_log_offset}" if native_log_offset else context_hash
+    context_hash = entry["context_hash"]
+    revision = f"{context_hash}:{entry['native_log_offset']}" if "native_log_offset" in entry else context_hash
     return {"sender": sender, "text": compact, "revision": revision}
 
 
@@ -143,18 +142,16 @@ def archived_sessions(excluded_names: set[str] | list[str] | None = None) -> lis
     for entry in root.iterdir():
         if not entry.is_dir():
             continue
-        session_name = entry.name.strip()
-        if not session_name or session_name in excluded_names_set:
+        session_name = entry.name
+        if session_name in excluded_names_set:
             continue
         meta_path = entry / SESSION_META_FILENAME
         log_path = entry / SESSION_LOG_FILENAME
         meta = read_session_meta_file(meta_path)
         workspace = meta["workspace"]
         mtime = log_path.stat().st_mtime
-        agents = meta.get("agents", [])
         record = build_session_record(name=session_name, workspace=workspace)
-        record["agents"] = agents
-        record["agents_reset"] = "agents" not in meta
+        record["agents"] = meta["agents"]
         sessions.append((mtime, record))
     sessions.sort(key=lambda item: item[0], reverse=True)
     return [record for _mtime, record in sessions]

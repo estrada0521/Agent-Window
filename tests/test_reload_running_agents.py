@@ -11,19 +11,14 @@ from server import server as chat_server
 
 class ReloadRunningAgentsHandoffTests(unittest.TestCase):
 
-    def test_clean_env_stamps_the_running_agents_env_var(self) -> None:
+    def test_restart_env_stamps_the_running_agents_env_var(self) -> None:
         fake_runtime = SimpleNamespace(running_agents_for_reload=lambda: ["claude", "codex"])
         with mock.patch.object(chat_server, "runtime", fake_runtime):
-            env = chat_server._clean_env()
+            env = chat_server._restart_env()
         self.assertEqual(
             json.loads(env[chat_server.RELOAD_RUNNING_AGENTS_ENV]),
             ["claude", "codex"],
         )
-
-    def test_clean_env_requires_a_runtime(self) -> None:
-        with mock.patch.object(chat_server, "runtime", None):
-            with self.assertRaises(RuntimeError):
-                chat_server._clean_env()
 
     def test_chat_runtime_seeds_agent_running_from_the_handoff(self) -> None:
         fake_binding = SimpleNamespace(workspace="/work/project")

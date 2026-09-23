@@ -93,7 +93,14 @@
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ path }),
-            }).catch(() => {});
+            }).then(async (res) => {
+              if (res.ok) return;
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.error || `HTTP ${res.status}`);
+            }).catch((err) => {
+              setStatus(`upload delete failed: ${err.message}`, true);
+              setTimeout(() => setStatus(""), STATUS_TOAST_MS);
+            });
           }
         });
         attachPreviewRow.appendChild(card);

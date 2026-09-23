@@ -11,11 +11,7 @@ CHAT_SERVER_READY_TIMEOUT_SEC = 6.0
 
 
 def launch_chat_server(workspace: Path | str, *, env: Mapping[str, str]) -> subprocess.Popen:
-    raw_workspace = str(workspace or "").strip()
-    if not raw_workspace:
-        raise ValueError("workspace is required")
-    workspace_path = Path(raw_workspace).expanduser().resolve()
-    resolved_workspace = str(workspace_path)
+    resolved_workspace = str(Path(workspace).expanduser().resolve())
     repo_root = Path(__file__).resolve().parent.parent
     return subprocess.Popen(
         [sys.executable, "-m", "server.server", resolved_workspace],
