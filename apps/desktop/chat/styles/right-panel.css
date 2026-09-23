@@ -829,6 +829,9 @@
       cursor: default;
       transition: background 120ms ease;
     }
+    .git-summary-row .git-commit-info {
+      overflow: hidden;
+    }
     .git-summary-row.clickable {
       cursor: pointer;
     }
