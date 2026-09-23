@@ -26,6 +26,9 @@ PANE_CONTROL_COMMANDS = (
 
 APPLICATION_COMMANDS = (
     SlashCommandSpec(
+        id="idle", slash="/idle", desc="Mark the agent idle", has_arg=False, path="/shortcut-command",
+    ),
+    SlashCommandSpec(
         id="nativelog", slash="/nativelog", desc="Reveal the agent's native log in Finder",
         has_arg=False, path="/native-log", desktop_only=True,
     ),

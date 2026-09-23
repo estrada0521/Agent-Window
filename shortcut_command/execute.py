@@ -14,12 +14,16 @@ def run_shortcut_command(
     target: str,
 ) -> tuple[int, dict[str, Any]]:
     normalized_command_id = (command_id or "").strip().lower()
-    if normalized_command_id not in PANE_CONTROL_COMMAND_IDS:
-        msg = "unknown shortcut command"
-        return 400, {"ok": False, "error": msg, "status_message": msg}
     resolved = (target or "").strip()
     if not resolved:
         msg = "target is required"
+        return 400, {"ok": False, "error": msg, "status_message": msg}
+    if normalized_command_id == "idle":
+        agents = [item.strip() for item in resolved.split(",") if item.strip()]
+        rt.mark_agents_idle(agents)
+        return 200, {"ok": True, "status_message": f"marked {', '.join(agents)} idle"}
+    if normalized_command_id not in PANE_CONTROL_COMMAND_IDS:
+        msg = "unknown shortcut command"
         return 400, {"ok": False, "error": msg, "status_message": msg}
 
     if normalized_command_id == "terminal" and not (arg or "").strip():
