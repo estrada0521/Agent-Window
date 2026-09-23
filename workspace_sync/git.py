@@ -390,12 +390,17 @@ def open_diff_tool(rel_path: str, commit_hash: str = "", old_path: str = "") -> 
             (root / spec).resolve().relative_to(root.resolve())
         except ValueError:
             raise PermissionError(spec)
-    revs = []
     if commit_hash:
         res = _run_git(root, "rev-parse", "--verify", "--end-of-options", f"{commit_hash}^{{commit}}")
         if res.returncode != 0:
             raise ValueError(f"unknown commit: {commit_hash}")
         revs = [f"{res.stdout.strip()}^!"]
+    elif _run_git(root, "rev-parse", "--verify", "HEAD").returncode == 0:
+        revs = ["HEAD"]
+    else:
+        revs = []
+    if _run_git(root, "diff", "--quiet", *revs, "--", *pathspecs).returncode == 0:
+        raise ValueError(f"no diff to open for {rel}")
     subprocess.Popen(
         ["git", "-C", str(root), "difftool", "-y", *revs, "--", *pathspecs],
         stdout=subprocess.DEVNULL,
