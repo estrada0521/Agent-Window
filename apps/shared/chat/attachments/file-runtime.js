@@ -89,20 +89,26 @@ __CHAT_INCLUDE:../file-autocomplete.js__
     const decorateLocalFileLinks = (scope = document) => {
       if (!scope?.querySelectorAll) return;
       const candidates = [];
-      scope.querySelectorAll(".md-body a.local-file-link[href]").forEach((anchor) => {
+      scope.querySelectorAll(".md-body a.local-file-candidate").forEach((anchor) => {
         if (!anchor || anchor.classList.contains("inline-file-link")) return;
         if (anchor.dataset.filepath) return;
-        const href = anchor.getAttribute("href") || "";
+        const href = anchor.dataset.localFileHref || "";
         const path = normalizeWorkspaceFilePath(pathFromLocalHref(href));
         if (!path) return;
         candidates.push({ anchor, path, href });
       });
       if (!candidates.length) return;
-      void resolveInlineCodeFilePaths(candidates.map((item) => item.path)).then((resolved) => {
+      void Promise.all([
+        resolveInlineCodeFilePaths(candidates.map((item) => item.path)),
+        ensureFileIconTheme(),
+      ]).then(([resolved]) => {
         candidates.forEach(({ anchor, path, href }) => {
           if (!anchor.isConnected) return;
           const resolvedPath = resolved.get(path) || "";
           if (!resolvedPath) return;
+          anchor.setAttribute("href", href);
+          anchor.classList.replace("local-file-candidate", "local-file-link");
+          delete anchor.dataset.localFileHref;
           if (/^file:/i.test(href.trim())) anchor.dataset.fileLinkOpen = "editor";
           anchor.dataset.filepath = resolvedPath;
           anchor.dataset.ext = extFromPath(resolvedPath);
@@ -119,8 +125,8 @@ __CHAT_INCLUDE:../file-autocomplete.js__
               label.textContent = labelText || resolvedPath;
               anchor.replaceChildren(label);
             }
-            appendInlineFileLinkIcon(anchor, resolvedPath);
           }
+          appendInlineFileLinkIcon(anchor, resolvedPath);
         });
       });
     };

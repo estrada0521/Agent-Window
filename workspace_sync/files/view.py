@@ -538,18 +538,35 @@ out.push(part);
   if (!normalized) return srcIsAbsolute || baseIsAbsolute ? "/" : "";
   return srcIsAbsolute || baseIsAbsolute ? `/${{normalized}}` : normalized;
 }};
-const __rewriteMarkdownPreviewHrefs = (root) => {{
-  root.querySelectorAll("a.local-file-link[href]").forEach((anchor) => {{
-const href = String(anchor.getAttribute("href") || "").trim();
-if (!href || href.startsWith("#") || isExternalHref(href)) return;
-if (href.includes("/file-view?") || href.includes("/file-raw?")) return;
-const cutIndex = [href.indexOf("?"), href.indexOf("#")].filter((idx) => idx >= 0).sort((a, b) => a - b)[0] ?? -1;
+const __rewriteMarkdownPreviewHrefs = async (root) => {{
+  const candidates = [];
+  root.querySelectorAll("a.local-file-candidate").forEach((anchor) => {{
+const href = String(anchor.dataset.localFileHref || "").trim();
+if (!href) return;
+const directPath = pathFromLocalHref(href);
+if (!directPath) return;
+const isDirect = isExternalHref(href) || href.includes("/file-view?") || href.includes("/file-raw?");
+const cutIndex = isDirect ? -1 : [href.indexOf("?"), href.indexOf("#")].filter((idx) => idx >= 0).sort((a, b) => a - b)[0] ?? -1;
 const pathPart = cutIndex >= 0 ? href.slice(0, cutIndex) : href;
 const suffix = cutIndex >= 0 ? href.slice(cutIndex) : "";
-const resolved = __normalizeMdPath(__mdRel, pathPart);
+const resolved = isDirect ? directPath : __normalizeMdPath(__mdRel, pathPart);
 if (!resolved) return;
-anchor.dataset.filepath = resolved;
-anchor.setAttribute("href", buildPreviewHref(resolved) + suffix);
+candidates.push({{ anchor, path: resolved, href: buildPreviewHref(resolved) + suffix }});
+  }});
+  if (!candidates.length) return;
+  const response = await fetch(`${{__fileBase}}/files-exist`, {{
+    method: "POST",
+    headers: {{ "Content-Type": "application/json" }},
+    body: JSON.stringify({{ paths: [...new Set(candidates.map((item) => item.path))] }}),
+  }});
+  if (!response.ok) throw new Error(`file existence check failed: ${{response.status}}`);
+  const exists = await response.json();
+  candidates.forEach(({{ anchor, path, href }}) => {{
+    if (!anchor.isConnected || !exists[path]) return;
+    anchor.dataset.filepath = path;
+    anchor.setAttribute("href", href);
+    anchor.classList.replace("local-file-candidate", "local-file-link");
+    delete anchor.dataset.localFileHref;
   }});
 }};
 if (__previewEmbed) {{
@@ -676,7 +693,7 @@ window.addEventListener("message", (event) => {{
 const out = document.getElementById("out");
 out.innerHTML = renderMarkdown(__mdText);
 applyPreviewDiffCode(out);
-__rewriteMarkdownPreviewHrefs(out);
+void __rewriteMarkdownPreviewHrefs(out);
 ensureWideTables(out);
 renderMathInScope(out);
 applyPreviewTheme({json.dumps(initial_preview_theme)});

@@ -46,13 +46,15 @@
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;");
-    const markMarkdownLocalFileLinks = (root) => {
+    const markMarkdownLocalFileCandidates = (root) => {
       if (!root?.querySelectorAll) return;
       root.querySelectorAll("a[href]").forEach((anchor) => {
-        if (!anchor || anchor.classList.contains("inline-file-link") || anchor.classList.contains("local-file-link")) return;
+        if (!anchor || anchor.classList.contains("inline-file-link")) return;
         const href = String(anchor.getAttribute("href") || "").trim();
         if (!pathFromLocalHref(href)) return;
-        anchor.classList.add("local-file-link");
+        anchor.classList.add("local-file-candidate");
+        anchor.dataset.localFileHref = href;
+        anchor.removeAttribute("href");
       });
     };
     const renderMarkdownFallback = (text) => markdownEscapeHtml(String(text ?? "")).replace(/\n/g, "<br>");
@@ -136,7 +138,7 @@
       });
 
       if (frontmatterHtml) tempDiv.insertAdjacentHTML("afterbegin", frontmatterHtml);
-      markMarkdownLocalFileLinks(tempDiv);
+      markMarkdownLocalFileCandidates(tempDiv);
 
       const out = tempDiv.innerHTML;
       return typeof injectFileCards === "function" ? injectFileCards(out) : out;

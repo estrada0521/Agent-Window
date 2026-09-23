@@ -472,6 +472,13 @@
       text-decoration: none;
     }
 
+    .md-body a.local-file-candidate:not(.local-file-link) {
+      color: var(--fg);
+      font-weight: inherit;
+      text-decoration: none;
+      cursor: text;
+    }
+
     .md-body strong {
       font-weight: var(--md-strong-weight);
       color: var(--fg-bold, var(--fg));
