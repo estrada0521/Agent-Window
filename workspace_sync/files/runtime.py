@@ -5,7 +5,6 @@ import subprocess
 import threading
 import time
 from pathlib import Path
-from typing import Callable, Iterable
 
 from workspace_sync.files.ignore import FileIndexIgnoreRules
 
@@ -66,37 +65,16 @@ class FileRuntime:
         self,
         *,
         workspace: str | Path,
-        allowed_roots_fn: Callable[[], Iterable[str | Path]] | None = None,
         repo_root: str | Path | None = None,
     ):
         raw = str(workspace or "").strip()
         self.workspace = os.path.realpath(os.path.normpath(raw)) if raw else ""
         self.repo_root = os.path.realpath(os.path.normpath(str(repo_root))) if repo_root else None
-        self.allowed_roots = (self.workspace,) if self.workspace else ()
-        self._allowed_roots_fn = allowed_roots_fn
         self._file_list_cache: list[dict] | None = None
         self._file_list_cache_at = 0.0
         self._file_list_cache_lock = threading.Lock()
         self._file_list_refresh_lock = threading.Lock()
         self._file_index_ignore = FileIndexIgnoreRules(self.workspace)
-
-    def _is_allowed_path(self, full: str) -> bool:
-        try:
-            resolved = os.path.realpath(full)
-        except OSError:
-            return False
-        if not resolved:
-            return False
-        roots = list(self.allowed_roots)
-        if self._allowed_roots_fn is not None:
-            for candidate in self._allowed_roots_fn():
-                resolved_root = os.path.realpath(os.path.normpath(str(candidate)))
-                if resolved_root not in roots:
-                    roots.append(resolved_root)
-        for root in roots:
-            if resolved == root or resolved.startswith(root + os.sep):
-                return True
-        return False
 
     @staticmethod
     def _normalize_rel_path(rel: str) -> str:
@@ -123,30 +101,16 @@ class FileRuntime:
         return root
 
     def _resolve_path(self, rel: str) -> str:
-        self._require_workspace()
-        rel = rel or ""
-        if rel.startswith("~"):
-            full = os.path.realpath(os.path.expanduser(rel))
-        elif os.path.isabs(rel):
-            full = os.path.realpath(os.path.normpath(rel))
-        else:
-            full = os.path.realpath(os.path.join(self.workspace, rel.lstrip("/")))
-        if not self._is_allowed_path(full):
-            raise PermissionError(full)
-        return full
-
-    def _resolve_reference_path(self, rel: str) -> str:
-        rel_raw = str(rel or "").strip()
-        if rel_raw.startswith("~") or os.path.isabs(rel_raw):
-            return os.path.realpath(os.path.expanduser(rel_raw))
-        return self._resolve_path(rel_raw)
+        if rel.startswith("~") or os.path.isabs(rel):
+            return os.path.realpath(os.path.expanduser(rel))
+        return os.path.realpath(os.path.join(self._require_workspace(), rel))
 
     def files_exist(self, paths: list[str]) -> dict[str, bool]:
         result = {}
         for rel in paths:
             try:
-                result[rel] = os.path.exists(self._resolve_reference_path(rel))
-            except (PermissionError, RuntimeError):
+                result[rel] = os.path.exists(self._resolve_path(rel))
+            except RuntimeError:
                 result[rel] = False
         return result
 
@@ -155,10 +119,7 @@ class FileRuntime:
         for rel in dict.fromkeys(paths):
             if os.path.splitext(rel)[1].lower() not in self.IMAGE_EXTS:
                 continue
-            try:
-                full = self._resolve_path(rel)
-            except PermissionError:
-                continue
+            full = self._resolve_path(rel)
             if not os.path.isfile(full):
                 continue
             try:
@@ -217,7 +178,7 @@ class FileRuntime:
         return start, end, True
 
     def raw_response_metadata(self, rel: str, range_header: str = "") -> dict:
-        full = self._resolve_reference_path(rel)
+        full = self._resolve_path(rel)
         size = os.path.getsize(full)
         try:
             start, end, is_partial = self._parse_single_range(range_header, size)
@@ -304,7 +265,7 @@ class FileRuntime:
     def _resolve_open_target(self, rel: str) -> str:
         if not str(rel or "").strip():
             raise ValueError("path required")
-        full = self._resolve_reference_path(rel)
+        full = self._resolve_path(rel)
         if not os.path.exists(full):
             raise FileNotFoundError(full)
         return full
@@ -452,7 +413,7 @@ class FileRuntime:
         if not raw_query:
             return ""
         if raw_query.startswith("~") or os.path.isabs(raw_query):
-            full = self._resolve_reference_path(raw_query)
+            full = self._resolve_path(raw_query)
             return full if os.path.isfile(full) else ""
         rel = os.path.normpath(raw_query)
         if rel == ".." or rel.startswith("../"):
@@ -487,11 +448,7 @@ class FileRuntime:
             if not rel:
                 result["size"] = None
                 return result
-            try:
-                full = self._resolve_path(rel)
-            except PermissionError:
-                result["size"] = None
-                return result
+            full = self._resolve_path(rel)
             try:
                 result["size"] = os.path.getsize(full) if os.path.isfile(full) else None
             except OSError:

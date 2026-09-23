@@ -167,7 +167,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     send_message = _send_or_enqueue_message
     file_runtime = FileRuntime(
         workspace=workspace,
-        allowed_roots_fn=lambda: [runtime.session_dir],
         repo_root=_repo_root,
     )
     workspace_git.configure(workspace=workspace)

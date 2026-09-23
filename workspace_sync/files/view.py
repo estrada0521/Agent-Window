@@ -96,7 +96,7 @@ def render_file_view(
     agent_text_size: int | None = None,
     force_progressive_text: bool = False,
 ) -> str:
-    full = runtime._resolve_reference_path(rel)
+    full = runtime._resolve_path(rel)
     if not os.path.exists(full):
         raise FileNotFoundError(full)
 
