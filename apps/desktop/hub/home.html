@@ -21,10 +21,10 @@
       document.documentElement.dataset.themeDesktop = theme;
       document.documentElement.dataset.theme = resolved;
 
-      const storedSize = Number(localStorage.getItem(appearance.textSizeKey));
-      const size = Number.isFinite(storedSize)
-        ? Math.max(appearance.textSizeMin, Math.min(appearance.textSizeMax, Math.round(storedSize)))
-        : appearance.textSizeDefault;
+      const storedSize = localStorage.getItem(appearance.textSizeKey);
+      const size = storedSize === null
+        ? appearance.textSizeDefault
+        : Math.max(appearance.textSizeMin, Math.min(appearance.textSizeMax, Math.round(Number(storedSize))));
       document.documentElement.style.setProperty("--text-size", `${size}px`);
     })();
   </script>

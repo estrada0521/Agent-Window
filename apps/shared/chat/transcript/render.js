@@ -378,21 +378,7 @@
         .join("");
       anchorAgentActionNativeMenu(select);
       skipAgentMenuBlur = document.documentElement.dataset.mobile === "1";
-      let opened = false;
-      const show = () => {
-        if (typeof select.showPicker === "function") {
-          try { select.showPicker(); opened = true; return true; } catch (_) {}
-        }
-        try { select.focus({ preventScroll: true }); } catch (_) {
-          try { select.focus(); } catch (_) {}
-        }
-        try { select.click(); opened = true; return true; } catch (_) {}
-        return false;
-      };
-      show();
-      if (!opened) {
-        setTimeout(() => { void show(); }, 0);
-      }
+      openNativeSelect(select);
       return true;
     };
     const showAddAgentModal = () => {

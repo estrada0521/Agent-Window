@@ -50,9 +50,8 @@ class MobileAgentPickerTests(unittest.TestCase):
 
     def test_failed_first_showpicker_leaves_the_select_armed(self) -> None:
         opener = _between(RENDER, "const openAgentActionMenu =", "const showAddAgentModal =")
-        retry = _between(opener, "if (!opened)", "return true;")
-        self.assertIn("setTimeout(() => { void show(); }, 0);", retry)
-        self.assertNotIn("resetAgentActionNativeMenu", retry)
+        after_open = _between(opener, "openNativeSelect(select);", "return true;")
+        self.assertNotIn("resetAgentActionNativeMenu", after_open)
         self.assertNotIn("agent menu unavailable", opener)
 
     def test_add_remove_do_not_reset_before_the_leftover_tap(self) -> None:
