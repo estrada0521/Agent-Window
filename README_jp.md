@@ -128,16 +128,6 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 </details>
 
 <details>
-<summary>Appearance menu (<code>⌘,</code>)</summary>
-
-| 操作 | キー | 備考 |
-|---|---|---|
-| theme | | System/light/dark |
-| text size | `⌘0` / `⌘+` / `⌘-` | windowも相似にresize |
-
-</details>
-
-<details>
 <summary>chat menu (<code>⌘.</code>)</summary>
 
 | 操作 | キー | 備考 |
@@ -160,6 +150,22 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 </details>
 
 <details>
+<summary>git / repo</summary>
+
+| 操作 | キー | 備考 |
+|---|---|---|
+| 選択したfileを開く | `⌘O` | repo browser / git panelのfile行 |
+| Quick Look | `⌘Y` / `⌥` + click | |
+| Finderで表示 | `⌥⌘R` | |
+| 絶対pathをcopy | `⌥⌘C` | |
+| 相対pathをcopy | `⇧⌥⌘C` | |
+| commit hashをcopy |  | commitを右クリック |
+| commit messageをcopy |  | commitを右クリック |
+| commitのinfo表示 |  | hoverでauthor・日時・message・statをtooltip表示 |
+
+</details>
+
+<details>
 <summary>window</summary>
 
 | 操作 | キー | 備考 |
@@ -170,6 +176,16 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | 最前面に固定 | `⌥⌘P` | |
 | Fit Height | `⌥⌘H` | |
 | 最小まで畳む | `⌥⌘M` | 新しいmessageで復帰。Fit Height中のみ |
+
+</details>
+
+<details>
+<summary>Appearance menu (<code>⌘,</code>)</summary>
+
+| 操作 | キー | 備考 |
+|---|---|---|
+| theme | | System/light/dark |
+| text size | `⌘0` / `⌘+` / `⌘-` | windowも相似にresize |
 
 </details>
 

@@ -128,16 +128,6 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 </details>
 
 <details>
-<summary>Appearance menu (<code>⌘,</code>)</summary>
-
-| Action | Key | Note |
-|---|---|---|
-| theme | | System / light / dark |
-| text size | `⌘0` / `⌘+` / `⌘-` | Resizes the window to match |
-
-</details>
-
-<details>
 <summary>chat menu (<code>⌘.</code>)</summary>
 
 | Action | Key | Note |
@@ -160,6 +150,22 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 </details>
 
 <details>
+<summary>git / repo</summary>
+
+| Action | Key | Note |
+|---|---|---|
+| Open selected file(s) | `⌘O` | Repo browser or git file rows |
+| Quick Look | `⌘Y` / `⌥` + click | |
+| Reveal in Finder | `⌥⌘R` | |
+| Copy absolute path | `⌥⌘C` | |
+| Copy relative path | `⇧⌥⌘C` | |
+| Copy commit hash |  | Right-click a commit |
+| Copy commit message |  | Right-click a commit |
+| Commit info |  | Author, date, message, stat as a tooltip on hover |
+
+</details>
+
+<details>
 <summary>window</summary>
 
 | Action | Key | Note |
@@ -170,6 +176,16 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Keep above other windows | `⌥⌘P` | |
 | Fit Height | `⌥⌘H` | |
 | Collapse to minimum | `⌥⌘M` | Restores on a new message. Fit Height only |
+
+</details>
+
+<details>
+<summary>Appearance menu (<code>⌘,</code>)</summary>
+
+| Action | Key | Note |
+|---|---|---|
+| theme | | System / light / dark |
+| text size | `⌘0` / `⌘+` / `⌘-` | Resizes the window to match |
 
 </details>
 
