@@ -4,7 +4,8 @@
       if (document.body.classList.contains("right-panel-open")) closeDesktopRightPanel();
       document.documentElement.dataset.launchShell = "1";
       let error = "";
-      if (currentServerInstance === SERVER_INSTANCE_SEED) {
+      const current = await (await fetch("/session-state", { cache: "no-store" })).json();
+      if (current.server_instance === SERVER_INSTANCE_SEED) {
         try {
           const response = await fetch("/reload-chat", { method: "POST", cache: "no-store" });
           if (!response.ok) {

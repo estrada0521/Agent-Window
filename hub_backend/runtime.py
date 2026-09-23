@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import threading
+import uuid
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +24,7 @@ class HubRuntime:
     def __init__(self, repo_root: Path | str, hub_port: int):
         self.repo_root = Path(repo_root).resolve()
         self.hub_port = hub_port
+        self.instance = uuid.uuid4().hex
         self._launch_locks = {}
         self._launch_locks_master = threading.Lock()
         self._session_messages_condition = threading.Condition()

@@ -481,6 +481,7 @@ class Handler(BaseHTTPRequestHandler):
             for record in archived_session_records(live)
         ]
         self._send_json(200, {
+            "hub_instance": hub.instance,
             "active_sessions": active,
             "archived_sessions": archived,
             "tmux_state": live.state,
@@ -524,7 +525,7 @@ class Handler(BaseHTTPRequestHandler):
             page = page.replace("__TEXT_SIZE_DEFAULT__", str(DESKTOP_TEXT_SIZE))
             page = page.replace("__TEXT_SIZE_MIN__", str(TEXT_SIZE_MIN))
             page = page.replace("__TEXT_SIZE_MAX__", str(TEXT_SIZE_MAX))
-        page = apply_font_tokens(page)
+        page = apply_font_tokens(page.replace("__HUB_INSTANCE__", hub.instance))
         self._send_html(
             200,
             apply_color_tokens(page, mobile_theme_default=MOBILE_THEME_DEFAULT),

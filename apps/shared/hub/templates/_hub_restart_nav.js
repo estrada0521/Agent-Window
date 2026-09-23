@@ -8,10 +8,12 @@
       var current = new URL(window.location.href);
       var view = current.searchParams.get("view") === "mobile" ? "mobile" : "";
       var target = view ? "/?view=mobile" : "/";
-      var launchShellTarget = "/hub-launch-shell.html?restart=1" + (view ? "&view=mobile" : "") + "&target=" + encodeURIComponent(target);
-      try {
-        location.replace(launchShellTarget);
-      } catch (_) {
-        location.href = launchShellTarget;
-      }
+      var open = function (restart) {
+        location.replace(
+          "/hub-launch-shell.html?" + (restart ? "restart=1&" : "") + (view ? "view=mobile&" : "") + "target=" + encodeURIComponent(target)
+        );
+      };
+      fetch("/sessions", { cache: "no-store" })
+        .then(function (res) { return res.json(); })
+        .then(function (data) { open(data.hub_instance === HUB_INSTANCE); });
     }

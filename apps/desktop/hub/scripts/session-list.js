@@ -474,6 +474,9 @@
         const response = await fetch(`/sessions?ts=${Date.now()}`, { cache: "no-store" });
         if (!response.ok) throw new Error("failed");
         const data = await response.json();
+        if (data.hub_instance !== HUB_INSTANCE) {
+          showDeskHubMessage("Hub was restarted elsewhere; Reload Hub to update this page", { error: true });
+        }
         const active = data.active_sessions;
         const archived = data.archived_sessions;
         _hubSessionsCache = { active, archived };
