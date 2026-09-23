@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import threading
-import time
 from pathlib import Path
 from typing import Callable, Iterable
 
@@ -22,9 +20,6 @@ class WorkspaceSyncApi:
     ) -> None:
         self.workspace = str(workspace)
         self.runtime = runtime
-        self._sync_event_condition = threading.Condition()
-        self._sync_event_seq = 0
-        self._git_cache_version = 0
         self.file_runtime = FileRuntime(
             workspace=workspace,
             allowed_roots=allowed_roots,
@@ -48,34 +43,6 @@ class WorkspaceSyncApi:
 
     def invalidate_git_cache(self, *, head_changed: bool = False) -> None:
         workspace_git.invalidate_git_cache(include_commits=head_changed)
-        with self._sync_event_condition:
-            self._git_cache_version += 1
-
-    def _workspace_sync_state_locked(self) -> dict[str, int]:
-        return {
-            "seq": self._sync_event_seq,
-            "file_version": self.file_runtime.file_list_cache_version(),
-            "git_version": self._git_cache_version,
-        }
-
-    def workspace_sync_state(self) -> dict[str, int]:
-        with self._sync_event_condition:
-            return self._workspace_sync_state_locked()
-
-    def publish_sync_event(self) -> None:
-        with self._sync_event_condition:
-            self._sync_event_seq += 1
-            self._sync_event_condition.notify_all()
-
-    def wait_for_sync_event(self, after_seq: int, timeout: float = 15.0) -> dict[str, int] | None:
-        deadline = time.monotonic() + timeout
-        with self._sync_event_condition:
-            while self._sync_event_seq <= after_seq:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    return None
-                self._sync_event_condition.wait(timeout=remaining)
-            return self._workspace_sync_state_locked()
 
     def search_files(self, query: str = "", limit: int = 60):
         return self.file_runtime.search_files(query, limit=limit)

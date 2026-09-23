@@ -16,7 +16,7 @@ from backend_core.access.settings import (
     session_log_path,
 )
 from backend_core.tmux.resolve import normalize_workspace
-from server.index_cache import iter_log_entries_reversed
+from server.log_reader import iter_log_entries_reversed
 
 
 @dataclass(frozen=True)

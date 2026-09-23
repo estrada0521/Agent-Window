@@ -56,7 +56,7 @@ send_queue = None
 send_queue_thread = None
 
 
-def _message_index_watcher() -> None:
+def _log_watcher() -> None:
     while True:
         current_log_path = runtime.log_path
         fd = os.open(str(current_log_path), os.O_RDONLY)
@@ -74,14 +74,11 @@ def _message_index_watcher() -> None:
                 events = kq.control(None, 4, None)
                 for event in events:
                     if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
-                        if runtime is not None:
-                            runtime.notify_session_state_changed()
-                            try:
-                                notify_hub_session_messages_changed(
-                                    hub_port,
-                                )
-                            except Exception as exc:
-                                logging.warning("Hub message notification failed: %s", exc)
+                        runtime.publish_event("messages")
+                        try:
+                            notify_hub_session_messages_changed(hub_port)
+                        except Exception as exc:
+                            logging.warning("Hub message notification failed: %s", exc)
                     if event.fflags & (select.KQ_NOTE_RENAME | select.KQ_NOTE_DELETE):
                         rebuilt = True
                         break
@@ -191,9 +188,9 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     except Exception as exc:
         logging.error("commit baseline adoption failed: %s", exc)
     threading.Thread(
-        target=_message_index_watcher,
+        target=_log_watcher,
         daemon=True,
-        name="message-index-watch",
+        name="log-watch",
     ).start()
     send_queue = queue.Queue()
     send_queue_thread = threading.Thread(target=_queued_send_worker, daemon=True, name="send-queue")

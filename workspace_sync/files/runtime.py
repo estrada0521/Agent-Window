@@ -86,7 +86,6 @@ class FileRuntime:
         self._file_list_cache_at = 0.0
         self._file_list_cache_lock = threading.Lock()
         self._file_list_refresh_lock = threading.Lock()
-        self._file_list_cache_version = 0
         self._file_index_ignore = FileIndexIgnoreRules(self.workspace)
 
     def _is_allowed_path(self, full: str) -> bool:
@@ -325,7 +324,6 @@ class FileRuntime:
         with self._file_list_cache_lock:
             self._file_list_cache = None
             self._file_list_cache_at = 0.0
-            self._file_list_cache_version += 1
 
     def refresh_file_list_cache(self) -> list[dict]:
         self._require_workspace()
@@ -337,7 +335,6 @@ class FileRuntime:
             with self._file_list_cache_lock:
                 self._file_list_cache = files
                 self._file_list_cache_at = time.time()
-                self._file_list_cache_version += 1
                 return [dict(item) for item in files]
         finally:
             self._file_list_refresh_lock.release()
@@ -398,10 +395,6 @@ class FileRuntime:
                     files.append({"path": rel, "size": None})
         files.sort(key=lambda item: str(item.get("path") or "").casefold())
         return files
-
-    def file_list_cache_version(self) -> int:
-        with self._file_list_cache_lock:
-            return self._file_list_cache_version
 
     @staticmethod
     def _basename(path: str) -> str:

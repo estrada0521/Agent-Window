@@ -70,8 +70,7 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    runtime.invalidate_payload_cache()
-    runtime.notify_session_state_changed()
+    runtime.publish_event("state")
     handler._send_json(
         200,
         {"ok": True, "agent": instance, "message": f"Added agent {instance}", "targets": runtime.active_agents()},
@@ -93,9 +92,8 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    runtime.invalidate_payload_cache()
     runtime.remove_native_log_binding(instance)
-    runtime.notify_session_state_changed()
+    runtime.publish_event("state")
     handler._send_json(
         200,
         {"ok": True, "agent": instance, "message": f"Removed agent {instance}", "targets": runtime.active_agents()},

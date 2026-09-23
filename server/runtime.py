@@ -5,7 +5,6 @@ import logging
 import threading
 import time
 import uuid
-from collections import deque
 from pathlib import Path
 
 from backend_core.agents.executables import (
@@ -22,7 +21,7 @@ from .entry_write import (
     append_system_entry as _append_system_entry_impl,
     append_user_entry as _append_user_entry_impl,
 )
-from .index_cache import LOG_TAIL_SIZE, message_entry_window
+from .log_reader import newest_entries
 from workspace_sync.commit import (
     adopt_commit_baseline as _adopt_commit_baseline_impl,
     ensure_commit_announcements as _ensure_commit_announcements_impl,
@@ -35,17 +34,13 @@ from backend_core.tmux.session import (
     resolve_tmux_session_name as _resolve_tmux_session_name_impl,
     terminal_window_pane_id as _terminal_window_pane_id_impl,
 )
-from .session_state import (
-    build_session_state_payload as _build_session_state_payload_impl,
-    initialize_session_state_bus as _initialize_session_state_bus_impl,
-    publish_session_state_change as _publish_session_state_change_impl,
-    wait_for_session_state_change as _wait_for_session_state_change_impl,
-)
+from .session_state import build_session_state_payload as _build_session_state_payload_impl
 from pane_trace import trace_content as _trace_content_impl
 from .session_binding import WorkspaceSessionBinding
 
 
 ENTRY_WINDOW_LIMIT = 2000
+EVENT_KINDS = ("messages", "state", "files", "git")
 NATIVE_LOG_BIND_INTERVAL_SECONDS = 0.5
 NATIVE_LOG_BIND_TIMEOUT_SECONDS = 3.0
 
@@ -69,13 +64,14 @@ class ChatRuntime:
         self.tmux_session_name = _resolve_tmux_session_name_impl(self) or ""
         self.session_is_active = bool(self.tmux_session_name)
         self._agent_running = set(initial_running_agents or [])
-        _initialize_session_state_bus_impl(self)
+        self._events = threading.Condition()
+        self._event_counts = dict.fromkeys(EVENT_KINDS, 0)
         self._native_log = NativeLogSyncer(
             session_binding=self._session_binding,
             workspace=self.workspace,
             mark_idle_fn=self._mark_idle,
             mark_running_from_native_activity_fn=self._mark_running_from_native_activity,
-            notify_state_fn=self.notify_session_state_changed,
+            notify_state_fn=lambda: self.publish_event("state"),
             active_agents_fn=self.active_agents,
             running_agents_fn=lambda: self._agent_running,
             pane_id_fn=self.pane_id_for_agent,
@@ -84,14 +80,6 @@ class ChatRuntime:
         )
         self._native_log_bind_workers_lock = threading.Lock()
         self._native_log_bind_workers: set[str] = set()
-        self._payload_cache_lock = threading.Lock()
-        self._payload_cache: dict[tuple, bytes] = {}
-        self._payload_cache_order: deque[tuple] = deque(maxlen=8)
-        self._log_tail_lock = threading.Lock()
-        self._log_tail_sig: tuple[int, int] = (0, 0)
-        self._log_tail_size = 0
-        self._log_tail_entries: deque[dict] = deque(maxlen=LOG_TAIL_SIZE)
-        self._log_entry_total = 0
 
     @property
     def session_name(self) -> str:
@@ -147,11 +135,6 @@ class ChatRuntime:
         self.refresh_native_log_bindings(start_at_end=True)
         start_native_log_vnode_watcher(self._native_log)
 
-    def invalidate_payload_cache(self) -> None:
-        with self._payload_cache_lock:
-            self._payload_cache.clear()
-            self._payload_cache_order.clear()
-
     def remove_native_log_binding(self, agent: str) -> None:
         self._native_log.remove_binding(agent)
 
@@ -177,24 +160,21 @@ class ChatRuntime:
     def ensure_commit_announcements(self) -> None:
         _ensure_commit_announcements_impl(self)
 
-    def _entry_window(
-        self,
-        *,
-        limit_override: int | None = None,
-        offset: int = 0,
-    ) -> tuple[list[dict], bool, int]:
-        return message_entry_window(
-            self,
-            limit_override=limit_override,
-            default_limit=ENTRY_WINDOW_LIMIT,
-            offset=offset,
-        )
+    def publish_event(self, kind: str) -> None:
+        with self._events:
+            self._event_counts[kind] += 1
+            self._events.notify_all()
 
-    def notify_session_state_changed(self) -> None:
-        _publish_session_state_change_impl(self)
+    def event_counts(self) -> dict[str, int]:
+        with self._events:
+            return dict(self._event_counts)
 
-    def wait_for_session_state_change(self, after_seq: int, timeout: float = 15.0) -> dict | None:
-        return _wait_for_session_state_change_impl(self, after_seq, timeout=timeout)
+    def wait_for_events(self, seen: dict[str, int], timeout: float) -> list[str]:
+        with self._events:
+            self._events.wait_for(lambda: self._event_counts != seen, timeout=timeout)
+            changed = [kind for kind in EVENT_KINDS if self._event_counts[kind] != seen[kind]]
+            seen.update(self._event_counts)
+            return changed
 
     def session_state_payload(self) -> dict:
         return _build_session_state_payload_impl(
@@ -203,44 +183,15 @@ class ChatRuntime:
             session_name=self.session_name,
         )
 
-    def payload(
-        self,
-        limit_override: int | None = None,
-        offset: int = 0,
-    ) -> bytes:
-        try:
-            stat = self.log_path.stat()
-            index_sig = (stat.st_size, stat.st_mtime_ns)
-        except OSError:
-            index_sig = (0, 0)
-        cache_key = (
-            self.session_name,
-            index_sig,
-            limit_override,
-            offset,
-            bool(self.session_is_active),
-        )
-        with self._payload_cache_lock:
-            cached = self._payload_cache.get(cache_key)
-            if cached is not None:
-                return cached
-        entries, has_older, _total_count = self._entry_window(
-            limit_override=limit_override,
-            offset=offset,
-        )
-        body = json.dumps(
+    def payload(self, limit: int, offset: int) -> bytes:
+        entries = newest_entries(self.log_path, offset=offset, limit=limit + 1)
+        has_older = len(entries) > limit
+        if has_older:
+            entries = entries[1:]
+        return json.dumps(
             {"server_instance": self.server_instance, "has_older": has_older, "entries": entries},
             ensure_ascii=True,
         ).encode("utf-8")
-        with self._payload_cache_lock:
-            if cache_key not in self._payload_cache:
-                self._payload_cache_order.append(cache_key)
-            self._payload_cache[cache_key] = body
-            while len(self._payload_cache) > self._payload_cache_order.maxlen:
-                old_key = self._payload_cache_order.popleft()
-                self._payload_cache.pop(old_key, None)
-        return body
-
 
     def active_agents(self) -> list[str]:
         return list(self.agent_panes())
@@ -278,7 +229,7 @@ class ChatRuntime:
         for agent in agents:
             self._agent_running.discard(agent)
             self._native_log.clear_agent_runtime_display(agent)
-        self.notify_session_state_changed()
+        self.publish_event("state")
 
     def running_agents_for_reload(self) -> list[str]:
         return sorted(self._agent_running)
@@ -289,7 +240,7 @@ class ChatRuntime:
             self._native_log.clear_agent_runtime_display(agent)
         self._agent_running.add(agent)
         if not already_running:
-            self.notify_session_state_changed()
+            self.publish_event("state")
 
     def _bind_native_log_after_send(self, agent: str) -> None:
         with self._native_log_bind_workers_lock:
@@ -331,14 +282,14 @@ class ChatRuntime:
         if agent in self._agent_running:
             return
         self._agent_running.add(agent)
-        self.notify_session_state_changed()
+        self.publish_event("state")
 
     def _mark_idle(self, agent: str) -> None:
         was_running = agent in self._agent_running
         self._agent_running.discard(agent)
         cleared = self._native_log.clear_agent_runtime_display(agent)
         if was_running or cleared:
-            self.notify_session_state_changed()
+            self.publish_event("state")
 
     @staticmethod
     def resolve_agent_executable(agent_name: str) -> str:

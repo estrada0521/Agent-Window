@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import hashlib
 import json
-import logging
 from urllib.parse import parse_qs
 
 from appearance.typography import MOBILE_TEXT_SIZE
@@ -32,58 +30,13 @@ def _send_bytes(
     handler.wfile.write(body)
 
 
-def _send_not_modified(
-    handler,
-    *,
-    cache_control: str = "no-cache",
-    extra_headers: dict[str, str] | None = None,
-) -> None:
-    handler.send_response(304)
-    if cache_control:
-        handler.send_header("Cache-Control", cache_control)
-    if extra_headers:
-        for key, value in extra_headers.items():
-            handler.send_header(key, value)
-    handler.send_header("Content-Length", "0")
-    handler.end_headers()
-
-
-def _etag_for_body(body: bytes) -> str:
-    digest = hashlib.blake2s(body, digest_size=12).hexdigest()
-    return f'"ma-{digest}"'
-
-
 def _get_messages(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
-    limit_override = None
-    limit_raw = (qs.get("limit", [""])[0] or "").strip()
-    offset_raw = (qs.get("offset", [""])[0] or "").strip()
-    if limit_raw:
-        try:
-            limit_override = max(1, min(ENTRY_WINDOW_LIMIT, int(limit_raw)))
-        except ValueError:
-            limit_override = None
-    try:
-        offset = max(0, int(offset_raw)) if offset_raw else 0
-    except ValueError:
-        offset = 0
     body = ctx["payload_fn"](
-        limit_override=limit_override,
-        offset=offset,
+        limit=min(ENTRY_WINDOW_LIMIT, int(qs.get("limit", [ENTRY_WINDOW_LIMIT])[0])),
+        offset=int(qs.get("offset", ["0"])[0]),
     )
-    etag = _etag_for_body(body)
-    headers = {"ETag": etag}
-    if (handler.headers.get("If-None-Match") or "").strip() == etag:
-        _send_not_modified(handler, extra_headers=headers)
-        return
-    _send_bytes(
-        handler,
-        200,
-        body,
-        content_type="application/json; charset=utf-8",
-        cache_control="no-cache",
-        extra_headers=headers,
-    )
+    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
 DEFAULT_TRACE_TAIL_LINES = 160
@@ -218,63 +171,21 @@ def _get_session_state(handler, _parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
-def _get_session_state_events(handler, _parsed, ctx) -> None:
-    after_seq = 0
+def _get_events(handler, _parsed, ctx) -> None:
     handler.send_response(200)
     handler.send_header("Content-Type", "text/event-stream; charset=utf-8")
     handler.send_header("Cache-Control", "no-store")
     handler.send_header("Connection", "keep-alive")
     handler.end_headers()
     runtime = ctx["runtime"]
+    seen = runtime.event_counts()
     try:
         while True:
-            event = runtime.wait_for_session_state_change(after_seq, timeout=15.0)
-            if event is None:
-                handler.wfile.write(b": keepalive\n\n")
-                handler.wfile.flush()
-            else:
-                after_seq = event["seq"]
-                body = (f"event: state\ndata: {json.dumps(event, ensure_ascii=True)}\n\n").encode("utf-8")
-                handler.wfile.write(body)
-                handler.wfile.flush()
+            kinds = runtime.wait_for_events(seen, timeout=15.0)
+            body = "".join(f"event: {kind}\ndata: 1\n\n" for kind in kinds) or ": keepalive\n\n"
+            handler.wfile.write(body.encode("utf-8"))
+            handler.wfile.flush()
     except (BrokenPipeError, ConnectionResetError):
-        return
-    except Exception:
-        logging.exception("SSE stream failed")
-        return
-
-
-def _get_workspace_sync_events(handler, _parsed, ctx) -> None:
-    handler.send_response(200)
-    handler.send_header("Content-Type", "text/event-stream; charset=utf-8")
-    handler.send_header("Cache-Control", "no-store")
-    handler.send_header("Connection", "keep-alive")
-    handler.end_headers()
-
-    def _write_event(name: str, payload: dict) -> None:
-        body = (
-            f"event: {name}\n"
-            f"data: {json.dumps(payload, ensure_ascii=True)}\n\n"
-        ).encode("utf-8")
-        handler.wfile.write(body)
-        handler.wfile.flush()
-
-    try:
-        initial = ctx["workspace_sync_api"].workspace_sync_state()
-        _write_event("sync", initial)
-        last_seq = initial["seq"]
-        while True:
-            state = ctx["workspace_sync_api"].wait_for_sync_event(last_seq, timeout=15.0)
-            if state is None:
-                handler.wfile.write(b": keepalive\n\n")
-                handler.wfile.flush()
-                continue
-            last_seq = state["seq"]
-            _write_event("sync", state)
-    except (BrokenPipeError, ConnectionResetError):
-        return
-    except Exception:
-        logging.exception("SSE stream failed")
         return
 
 
@@ -342,8 +253,7 @@ _GET_ROUTES = {
     "/files-search": _get_files_search,
     "/files-dir": _get_files_dir,
     "/session-state": _get_session_state,
-    "/session-state-events": _get_session_state_events,
-    "/workspace-sync-events": _get_workspace_sync_events,
+    "/events": _get_events,
     "/git-overview": _get_git_overview,
     "/git-diff-files": _get_git_diff_files,
     "/git-commit-info": _get_git_commit_info,

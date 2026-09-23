@@ -99,4 +99,4 @@
     };
     refreshSessionState.inFlight = false;
     refreshSessionState.pending = false;
-__CHAT_INCLUDE:../session-state-events.js__
+    void refreshSessionState();

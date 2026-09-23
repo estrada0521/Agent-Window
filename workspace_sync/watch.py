@@ -132,10 +132,10 @@ class _DebouncedWorkspaceRefresh:
                 self._api.invalidate_git_cache(head_changed=git_head_changed or full_rescan)
             except Exception as exc:
                 logging.error("Workspace git cache invalidation failed: %s", exc)
-        try:
-            self._api.publish_sync_event()
-        except Exception as exc:
-            logging.error("Workspace sync event publish failed: %s", exc)
+        if file_rels or full_rescan:
+            self._api.runtime.publish_event("files")
+        if git_relevant:
+            self._api.runtime.publish_event("git")
         with self._lock:
             has_more = bool(self._pending) or self._git_head_pending
         if has_more:

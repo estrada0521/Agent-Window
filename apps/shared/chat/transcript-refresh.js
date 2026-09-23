@@ -1,7 +1,6 @@
     let refreshEpoch = 0;
     const applyLocalEntry = (entry) => {
       refreshEpoch += 1;
-      lastMessagesEtag = "";
       const current = latestPayloadData || {};
       latestPayloadData = { ...current, entries: mergeEntriesById(current.entries || [], [entry]) };
       render(latestPayloadData);
@@ -18,31 +17,10 @@
       refreshInFlight = true;
       const epoch = refreshEpoch;
       try {
-        const url = messagesFetchUrl();
-        const headers = {};
-        if (lastMessagesEtag) {
-          headers["If-None-Match"] = lastMessagesEtag;
-        }
-        const res = await fetchWithTimeout(
-          url,
-          Object.keys(headers).length ? { headers } : {}
-        );
-        if (res.status === 304) {
-          if (epoch !== refreshEpoch) return;
-          if (!hasInitialRefreshHydrated) {
-            hasInitialRefreshHydrated = true;
-            releaseLaunchShellGate();
-          }
-          notifyHubChatRenderReady();
-          return;
-        }
+        const res = await fetchWithTimeout(messagesFetchUrl());
         if (!res.ok) throw new Error("messages unavailable");
         const data = await res.json();
         if (epoch !== refreshEpoch) return;
-        const nextMessagesEtag = res.headers.get("ETag") || "";
-        if (nextMessagesEtag) {
-          lastMessagesEtag = nextMessagesEtag;
-        }
         const nextServerInstance = data?.server_instance || "";
         if (nextServerInstance && currentServerInstance && nextServerInstance !== currentServerInstance) {
           olderEntries = [];

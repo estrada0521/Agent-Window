@@ -1276,33 +1276,21 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         }
       }, true);
     })();
-    let workspaceSyncEventSource = null;
-    let workspaceSyncLastSeq = 0;
-    let workspaceSyncLastGitVersion = 0;
-    let workspaceSyncLastFileVersion = 0;
-    const handleWorkspaceSyncUpdate = (payload = {}) => {
-      const nextSeq = Math.max(0, parseInt(payload?.seq) || 0);
-      if (nextSeq && nextSeq <= workspaceSyncLastSeq) return;
-      if (nextSeq) workspaceSyncLastSeq = nextSeq;
-      const nextGitVersion = parseInt(payload?.git_version);
-      const gitChanged = Number.isFinite(nextGitVersion) && nextGitVersion !== workspaceSyncLastGitVersion;
-      if (Number.isFinite(nextGitVersion)) workspaceSyncLastGitVersion = nextGitVersion;
-      const nextFileVersion = parseInt(payload?.file_version);
-      const fileChanged = Number.isFinite(nextFileVersion) && nextFileVersion !== workspaceSyncLastFileVersion;
-      if (Number.isFinite(nextFileVersion)) workspaceSyncLastFileVersion = nextFileVersion;
-      if (gitChanged) gitSession.invalidateFingerprint();
-      if (fileChanged && dpPanelOpen && dpActivePanelView === "repo") {
+    const handleWorkspaceFilesChanged = () => {
+      if (dpPanelOpen && dpActivePanelView === "repo") {
         void dpRefreshRepoDir(dpRepoBrowserPath || "");
       }
-      if ((gitChanged || fileChanged) && (dpPanelOpen || dpPinnedStripActive())) {
-        if (dpPanelOpen && !gitSession.hasShell()) {
-          void dpLoadGitPage({ reset: true });
-        } else {
-          void dpRefreshGitOverview();
-        }
+    };
+    const handleWorkspaceGitChanged = () => {
+      gitSession.invalidateFingerprint();
+      if (!dpPanelOpen && !dpPinnedStripActive()) return;
+      if (dpPanelOpen && !gitSession.hasShell()) {
+        void dpLoadGitPage({ reset: true });
+      } else {
+        void dpRefreshGitOverview();
       }
     };
-    __CHAT_INCLUDE:../../shared/chat/workspace-sync-events.js__
+    __CHAT_INCLUDE:../../shared/chat/chat-events.js__
     dpOnSessionSummaryPinReload({ force: true });
     dpApplyPanelWidth();
     refresh({ forceScroll: true });
