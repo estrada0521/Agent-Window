@@ -9,7 +9,9 @@
       padding: 0 1.2em;
       border-radius: 999px;
       color: var(--fg);
+      font-family: var(--font-main);
       font-size: var(--text-size, 13px);
+      font-weight: var(--body-weight);
       line-height: calc(var(--chat-hud-height) - 1px);
       white-space: nowrap;
       overflow: hidden;
