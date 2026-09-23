@@ -205,6 +205,17 @@
         hideFilePreviewLoading(view);
         frame.style.transition = "opacity 200ms ease-out";
         frame.style.opacity = "1";
+        if (normalizedExt === "md") {
+          frame.contentDocument.addEventListener("click", (event) => {
+            const anchor = event.target.closest?.("a[href]");
+            if (!anchor || anchor.classList.contains("local-file-link")) return;
+            const href = anchor.getAttribute("href");
+            if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
+            event.preventDefault();
+            event.stopPropagation();
+            void openExternalLink(href).catch(reportExternalLinkFailure);
+          }, true);
+        }
         wireMobileSheetSwipeBack(
           frame.contentDocument,
           () => sheetPreviewOpen(),
