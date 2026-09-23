@@ -30,6 +30,7 @@ class _FakeRuntime:
     def __init__(self, workspace: Path) -> None:
         self.workspace = str(workspace)
         self.announced: list[dict] = []
+        self._last_announced_commit_hash: str | None = None
 
     def append_system_entry(self, message: str, *, kind: str = "", **extra) -> dict:
         entry = {"message": message, "kind": kind, **extra}

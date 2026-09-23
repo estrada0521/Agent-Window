@@ -63,51 +63,6 @@ def launch_hub_restart(*, script_path, repo_root, hub_server) -> bool:
     return completed.returncode == 0
 
 
-def pwa_asset_version(
-    path: str,
-    *,
-    pwa_asset_version_overrides: dict[str, str],
-    pwa_static_routes: dict[str, tuple[str, str, str]],
-    pwa_static_dir: Path,
-) -> str:
-    if path in pwa_asset_version_overrides:
-        return pwa_asset_version_overrides[path]
-    route = pwa_static_routes.get(path)
-    if not route:
-        raise KeyError(f"unknown pwa asset: {path}")
-    return str(int((pwa_static_dir / route[0]).stat().st_mtime_ns))
-
-
-def pwa_asset_url(path: str, *, base_path: str = "", bust: bool = False, pwa_asset_version_fn) -> str:
-    prefix = base_path.rstrip("/")
-    target = path if path.startswith("/") else f"/{path}"
-    url = f"{prefix}{target}" if prefix else target
-    if not bust:
-        return url
-    sep = "&" if "?" in url else "?"
-    return f"{url}{sep}v={pwa_asset_version_fn(target)}"
-
-
-def serve_pwa_static(handler, path: str, *, pwa_static_routes, pwa_static_dir: Path) -> bool:
-    route = pwa_static_routes.get(path)
-    if not route:
-        return False
-    filename, content_type, cache_control = route
-    asset_path = pwa_static_dir / filename
-    if not asset_path.exists():
-        handler.send_response(404)
-        handler.end_headers()
-        return True
-    body = asset_path.read_bytes()
-    handler.send_response(200)
-    handler.send_header("Content-Type", content_type)
-    handler.send_header("Content-Length", str(len(body)))
-    handler.send_header("Cache-Control", cache_control)
-    handler.end_headers()
-    handler.wfile.write(body)
-    return True
-
-
 def error_page(message) -> str:
     text = str(message or "").strip()
     escaped = html.escape(text)

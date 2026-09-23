@@ -127,16 +127,7 @@ def terminal_window_pane_id(
     return ""
 
 
-def resolve_tmux_session_name(runtime) -> str | None:
-    workspace = str(runtime.workspace or "").strip()
-    if not workspace:
-        return None
-    return find_session_for_workspace(workspace)
-
-
-def pane_field(runtime, pane_id: str, field: str) -> str:
-    if not pane_id:
-        return ""
+def pane_field(pane_id: str, field: str) -> str:
     result = subprocess.run(
         [*TMUX, "display-message", "-p", "-t", pane_id, field],
         capture_output=True,

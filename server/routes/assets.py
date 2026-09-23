@@ -4,6 +4,7 @@ import json
 from urllib.parse import parse_qs
 
 from appearance.colors import resolve_theme_palette
+from backend_core.access.pwa import pwa_icon_entries, pwa_url, serve_pwa_file
 from appearance.file_icon_theme import file_icon_bytes, load_file_icon_theme_document
 from appearance.theme import resolve_server_theme
 from appearance.typography import DESKTOP_TEXT_SIZE, MOBILE_TEXT_SIZE, clamp_text_size
@@ -24,9 +25,9 @@ def _get_app_manifest(handler, _parsed, ctx) -> None:
             "display": "standalone",
             "background_color": bg,
             "theme_color": bg,
-            "start_url": ctx["pwa_asset_url_fn"]("/", base_path),
-            "scope": ctx["pwa_asset_url_fn"]("/", base_path),
-            "icons": ctx["pwa_icon_entries_fn"](base_path),
+            "start_url": pwa_url("/", base_path),
+            "scope": pwa_url("/", base_path),
+            "icons": pwa_icon_entries(base_path),
         },
         ensure_ascii=True,
     ).encode("utf-8")
@@ -135,7 +136,7 @@ _GET_ROUTES = {
 
 
 def dispatch_get_assets_route(handler, parsed, ctx) -> bool:
-    if ctx["serve_pwa_static_fn"](handler, parsed.path):
+    if serve_pwa_file(handler, parsed.path):
         return True
     if parsed.path.startswith("/icon/"):
         _get_icon_asset(handler, parsed, ctx)

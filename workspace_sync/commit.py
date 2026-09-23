@@ -31,7 +31,7 @@ def ensure_commit_announcements(runtime) -> None:
     commit = current_git_commit(runtime)
     if not commit:
         return
-    last = getattr(runtime, "_last_announced_commit_hash", None)
+    last = runtime._last_announced_commit_hash
     runtime._last_announced_commit_hash = commit["hash"]
     if last is None or last == commit["hash"]:
         return

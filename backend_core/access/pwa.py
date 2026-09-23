@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
 
-_PWA_STATIC_FILES: dict[str, tuple[str, str]] = {
+PWA_DIR = Path(__file__).resolve().parents[2] / "apps" / "shared" / "pwa"
+PWA_FILES: dict[str, tuple[str, str]] = {
     "/pwa-icon-192.png": ("icon-192.png", "image/png"),
     "/pwa-icon-512.png": ("icon-512.png", "image/png"),
     "/apple-touch-icon.png": ("apple-touch-icon.png", "image/png"),
@@ -9,28 +11,27 @@ _PWA_STATIC_FILES: dict[str, tuple[str, str]] = {
 }
 
 
-def pwa_static_routes(extra: dict[str, tuple[str, str]] | None = None) -> dict[str, tuple[str, str, str]]:
-    files = dict(_PWA_STATIC_FILES)
-    if extra:
-        files.update(extra)
-    return {
-        path: (filename, content_type, "no-store")
-        for path, (filename, content_type) in files.items()
-    }
+def pwa_url(path: str, base_path: str = "") -> str:
+    return f"{base_path.rstrip('/')}{path}"
 
 
-def pwa_icon_entries(*, base_path: str = "", pwa_asset_url_fn) -> list[dict[str, str]]:
+def pwa_icon_entries(base_path: str = "") -> list[dict[str, str]]:
     return [
-        {
-            "src": pwa_asset_url_fn("/pwa-icon-192.png", base_path=base_path),
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any",
-        },
-        {
-            "src": pwa_asset_url_fn("/pwa-icon-512.png", base_path=base_path),
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any",
-        },
+        {"src": pwa_url(f"/pwa-icon-{size}.png", base_path), "sizes": f"{size}x{size}", "type": "image/png", "purpose": "any"}
+        for size in (192, 512)
     ]
+
+
+def serve_pwa_file(handler, path: str, files: dict[str, tuple[str, str]] = PWA_FILES) -> bool:
+    route = files.get(path)
+    if not route:
+        return False
+    filename, content_type = route
+    body = (PWA_DIR / filename).read_bytes()
+    handler.send_response(200)
+    handler.send_header("Content-Type", content_type)
+    handler.send_header("Content-Length", str(len(body)))
+    handler.send_header("Cache-Control", "no-store")
+    handler.end_headers()
+    handler.wfile.write(body)
+    return True

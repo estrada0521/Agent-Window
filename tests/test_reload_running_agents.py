@@ -24,8 +24,7 @@ class ReloadRunningAgentsHandoffTests(unittest.TestCase):
         fake_binding = SimpleNamespace(workspace="/work/project")
         with (
             mock.patch.object(runtime_module, "WorkspaceSessionBinding", return_value=fake_binding),
-            mock.patch.object(runtime_module, "_resolve_tmux_session_name_impl", return_value=""),
-            mock.patch.object(runtime_module, "NativeLogSyncer"),
+            mock.patch.object(runtime_module, "find_session_for_workspace", return_value=None),
         ):
             rt = runtime_module.ChatRuntime(
                 port=1,
@@ -41,8 +40,7 @@ class ReloadRunningAgentsHandoffTests(unittest.TestCase):
         fake_binding = SimpleNamespace(workspace="/work/project")
         with (
             mock.patch.object(runtime_module, "WorkspaceSessionBinding", return_value=fake_binding),
-            mock.patch.object(runtime_module, "_resolve_tmux_session_name_impl", return_value=""),
-            mock.patch.object(runtime_module, "NativeLogSyncer"),
+            mock.patch.object(runtime_module, "find_session_for_workspace", return_value=None),
         ):
             rt = runtime_module.ChatRuntime(
                 port=1,

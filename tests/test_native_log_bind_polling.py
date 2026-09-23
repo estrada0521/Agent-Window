@@ -25,8 +25,7 @@ def _runtime(has_log_binding):
     fake_binding = SimpleNamespace(workspace="/work/project")
     with (
         mock.patch.object(runtime_module, "WorkspaceSessionBinding", return_value=fake_binding),
-        mock.patch.object(runtime_module, "_resolve_tmux_session_name_impl", return_value=""),
-        mock.patch.object(runtime_module, "NativeLogSyncer"),
+        mock.patch.object(runtime_module, "find_session_for_workspace", return_value=None),
     ):
         rt = runtime_module.ChatRuntime(
             port=1,
@@ -35,9 +34,13 @@ def _runtime(has_log_binding):
             repo_root="/tmp",
         )
     rt.active_agents = lambda: ["codex"]
-    rt.refresh_native_log_bindings = mock.Mock()
-    rt._native_log = mock.Mock()
-    rt._native_log.has_log_binding.side_effect = has_log_binding
+    appears = iter(has_log_binding)
+
+    def refresh(_agents, *, start_at_end):
+        if next(appears, False):
+            rt._native_log_bindings_by_agent["codex"] = object()
+
+    rt.refresh_native_log_bindings = mock.Mock(side_effect=refresh)
     return rt
 
 
@@ -62,7 +65,7 @@ class NativeLogBindPollingTests(unittest.TestCase):
 
     def test_send_polls_for_three_seconds_before_giving_up(self) -> None:
         clock = _FakeClock()
-        rt = _runtime(lambda _agent: False)
+        rt = _runtime([])
 
         _bind_and_wait(rt, clock)
 

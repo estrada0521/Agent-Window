@@ -15,7 +15,8 @@ from workspace_sync.fsevents_stream import (
     cf_path_array,
     load_cf_cs,
 )
-from workspace_sync.git import git_ignored_rel_paths
+from workspace_sync.commit import ensure_commit_announcements
+from workspace_sync.git import git_ignored_rel_paths, invalidate_git_cache
 
 _DEBOUNCE_SEC = 0.25
 
@@ -44,8 +45,9 @@ def _is_git_head_metadata_path(rel: str) -> bool:
 
 
 class _DebouncedWorkspaceRefresh:
-    def __init__(self, workspace_sync_api) -> None:
-        self._api = workspace_sync_api
+    def __init__(self, runtime, file_runtime) -> None:
+        self._runtime = runtime
+        self._file_runtime = file_runtime
         self._lock = threading.Lock()
         self._flush_lock = threading.Lock()
         self._pending: set[str] = set()
@@ -61,7 +63,7 @@ class _DebouncedWorkspaceRefresh:
 
     def add_path(self, path: str) -> None:
         normalized = os.path.realpath(path)
-        workspace = self._api.file_runtime.workspace
+        workspace = self._file_runtime.workspace
         if not normalized.startswith(workspace):
             return
         rel = os.path.relpath(normalized, workspace)
@@ -106,12 +108,12 @@ class _DebouncedWorkspaceRefresh:
             self._timer = None
         if not paths and not git_head_changed and not full_rescan:
             return
-        workspace = self._api.file_runtime.workspace
+        workspace = self._file_runtime.workspace
         rels = [os.path.relpath(path, workspace) for path in paths]
-        file_rels = [rel for rel in rels if not self._api.file_runtime.file_index_path_is_ignored(rel)]
+        file_rels = [rel for rel in rels if not self._file_runtime.file_index_path_is_ignored(rel)]
         if file_rels or full_rescan:
             try:
-                self._api.invalidate_file_index_cache()
+                self._file_runtime.invalidate_file_list_cache()
             except Exception as exc:
                 logging.error("Workspace file index invalidation failed: %s", exc)
         git_relevant = git_head_changed or full_rescan
@@ -124,30 +126,30 @@ class _DebouncedWorkspaceRefresh:
             git_relevant = any(rel not in ignored for rel in rels)
         if git_head_changed:
             try:
-                self._api.runtime.ensure_commit_announcements()
+                ensure_commit_announcements(self._runtime)
             except Exception as exc:
                 logging.error("Commit announcement refresh failed: %s", exc)
         if git_relevant:
             try:
-                self._api.invalidate_git_cache(head_changed=git_head_changed or full_rescan)
+                invalidate_git_cache(include_commits=git_head_changed or full_rescan)
             except Exception as exc:
                 logging.error("Workspace git cache invalidation failed: %s", exc)
         if file_rels or full_rescan:
-            self._api.runtime.publish_event("files")
+            self._runtime.publish_event("files")
         if git_relevant:
-            self._api.runtime.publish_event("git")
+            self._runtime.publish_event("git")
         with self._lock:
             has_more = bool(self._pending) or self._git_head_pending
         if has_more:
             self._schedule_flush()
 
 
-def start_workspace_fsevents_watcher(workspace_sync_api) -> None:
-    workspace_root = workspace_sync_api.file_runtime.workspace
+def start_workspace_fsevents_watcher(runtime, file_runtime) -> None:
+    workspace_root = file_runtime.workspace
     if not workspace_root or not os.path.isdir(workspace_root):
         return
 
-    debouncer = _DebouncedWorkspaceRefresh(workspace_sync_api)
+    debouncer = _DebouncedWorkspaceRefresh(runtime, file_runtime)
 
     def run_loop():
         cf, cs = load_cf_cs()
@@ -201,7 +203,7 @@ def start_workspace_fsevents_watcher(workspace_sync_api) -> None:
 
         while True:
             try:
-                watch_root = workspace_sync_api.file_runtime.workspace
+                watch_root = file_runtime.workspace
                 if not watch_root or not os.path.isdir(watch_root):
                     time.sleep(2.0)
                     continue

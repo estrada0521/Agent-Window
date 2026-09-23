@@ -19,21 +19,16 @@ from server.routes.assets import dispatch_get_assets_route
 from server.routes.read import dispatch_get_read_route
 from server.routes.write import dispatch_post_write_route
 from server.asset_runtime import ChatAssetRuntime
-from backend_core.access.pwa import pwa_icon_entries, pwa_static_routes
-from hub_backend.server_helpers import (
-    pwa_asset_url as _pwa_asset_url_impl,
-    pwa_asset_version as _pwa_asset_version_impl,
-    serve_pwa_static as _serve_pwa_static_impl,
-)
 from backend_core.access.chat_server import read_chat_server_state
 from backend_core.access.settings import (
     workspace_chat_port,
 )
-from workspace_sync.api import WorkspaceSyncApi
+from workspace_sync import git as workspace_git
+from workspace_sync.files.runtime import FileRuntime
+from workspace_sync.watch import start_workspace_fsevents_watcher
+from workspace_sync.commit import adopt_commit_baseline
 
 RELOAD_RUNNING_AGENTS_ENV = "AGENT_WINDOW_RELOAD_RUNNING_AGENTS"
-
-_PWA_STATIC_ROUTES = pwa_static_routes()
 
 
 def _not_initialized(*_args, **_kwargs):
@@ -46,11 +41,10 @@ workspace = ""
 hub_port = 0
 _repo_root = Path()
 runtime = None
-_PWA_STATIC_DIR = Path()
 server_instance = ""
 payload = _not_initialized
 send_message = _not_initialized
-workspace_sync_api = None
+file_runtime = None
 asset_runtime = None
 send_queue = None
 send_queue_thread = None
@@ -141,10 +135,10 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
     global port, workspace, hub_port
     global _repo_root, runtime
-    global _PWA_STATIC_DIR, server_instance
+    global server_instance
     global payload
     global send_message, asset_runtime
-    global send_queue, send_queue_thread, workspace_sync_api
+    global send_queue, send_queue_thread, file_runtime
 
     if _initialized:
         return
@@ -169,22 +163,22 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         initial_running_agents=reload_running_agents,
     )
 
-    _PWA_STATIC_DIR = _repo_root / "apps" / "shared" / "pwa"
     server_instance = runtime.server_instance
     payload = runtime.payload
     send_message = _send_or_enqueue_message
-    workspace_sync_api = WorkspaceSyncApi(
+    file_runtime = FileRuntime(
         workspace=workspace,
         allowed_roots_fn=lambda: [runtime.session_dir],
         repo_root=_repo_root,
-        runtime=runtime,
     )
+    workspace_git.configure(workspace=workspace)
+    start_workspace_fsevents_watcher(runtime, file_runtime)
     asset_runtime = ChatAssetRuntime(
         repo_root=_repo_root,
     )
     runtime.start_native_log_sync()
     try:
-        runtime.adopt_commit_baseline()
+        adopt_commit_baseline(runtime)
     except Exception as exc:
         logging.error("commit baseline adoption failed: %s", exc)
     threading.Thread(
@@ -196,40 +190,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     send_queue_thread = threading.Thread(target=_queued_send_worker, daemon=True, name="send-queue")
     send_queue_thread.start()
     _initialized = True
-
-
-def _pwa_asset_version(path: str) -> str:
-    return _pwa_asset_version_impl(
-        path,
-        pwa_asset_version_overrides={},
-        pwa_static_routes=_PWA_STATIC_ROUTES,
-        pwa_static_dir=_PWA_STATIC_DIR,
-    )
-
-
-def _pwa_asset_url(path: str, base_path: str = "", *, bust: bool = False) -> str:
-    return _pwa_asset_url_impl(
-        path,
-        base_path=base_path,
-        bust=bust,
-        pwa_asset_version_fn=_pwa_asset_version,
-    )
-
-
-def _pwa_icon_entries(base_path: str = "") -> list[dict[str, str]]:
-    return pwa_icon_entries(
-        base_path=base_path,
-        pwa_asset_url_fn=lambda path, *, base_path="", bust=False: _pwa_asset_url(path, base_path, bust=bust),
-    )
-
-
-def _serve_pwa_static(handler, path: str) -> bool:
-    return _serve_pwa_static_impl(
-        handler,
-        path,
-        pwa_static_routes=_PWA_STATIC_ROUTES,
-        pwa_static_dir=_PWA_STATIC_DIR,
-    )
 
 
 chat_restart_pending = False
@@ -280,11 +240,8 @@ def _route_context() -> dict:
         "hub_port": hub_port,
         "payload_fn": payload,
         "send_message_fn": send_message,
-        "workspace_sync_api": workspace_sync_api,
+        "file_runtime": file_runtime,
         "asset_runtime": asset_runtime,
-        "pwa_asset_url_fn": _pwa_asset_url,
-        "pwa_icon_entries_fn": _pwa_icon_entries,
-        "serve_pwa_static_fn": _serve_pwa_static,
         "render_chat_html_fn": render_chat_html,
         "queue_chat_restart_fn": queue_chat_restart,
         "release_chat_restart_fn": release_chat_restart,

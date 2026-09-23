@@ -66,21 +66,13 @@ class FileRuntime:
         self,
         *,
         workspace: str | Path,
-        allowed_roots: list[str | Path] | tuple[str | Path, ...] | None = None,
         allowed_roots_fn: Callable[[], Iterable[str | Path]] | None = None,
         repo_root: str | Path | None = None,
     ):
         raw = str(workspace or "").strip()
         self.workspace = os.path.realpath(os.path.normpath(raw)) if raw else ""
         self.repo_root = os.path.realpath(os.path.normpath(str(repo_root))) if repo_root else None
-        roots = [self.workspace] if self.workspace else []
-        for candidate in allowed_roots or ():
-            if not candidate:
-                continue
-            resolved = os.path.realpath(os.path.normpath(str(candidate)))
-            if resolved not in roots:
-                roots.append(resolved)
-        self.allowed_roots = tuple(roots)
+        self.allowed_roots = (self.workspace,) if self.workspace else ()
         self._allowed_roots_fn = allowed_roots_fn
         self._file_list_cache: list[dict] | None = None
         self._file_list_cache_at = 0.0

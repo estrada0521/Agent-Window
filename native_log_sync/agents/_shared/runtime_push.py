@@ -36,7 +36,7 @@ def _publish_next_runtime_display(runtime, agent: str) -> None:
         timer.daemon = True
         timers[agent] = timer
         timer.start()
-    runtime.notify_session_state_changed()
+    runtime.publish_event("state")
 
 
 def push_runtime_display(runtime, agent: str, events: list[dict]) -> None:

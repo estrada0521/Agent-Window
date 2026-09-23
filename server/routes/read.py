@@ -4,6 +4,7 @@ import json
 from urllib.parse import parse_qs
 
 from appearance.typography import MOBILE_TEXT_SIZE
+from workspace_sync import git as workspace_git
 from hub_backend.transport.request_base_path import request_base_path
 from server.runtime import ENTRY_WINDOW_LIMIT
 from shortcut_command.catalog import public_slash_command_dicts
@@ -66,7 +67,7 @@ def _get_file_raw(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     rel = qs.get("path", [""])[0]
     try:
-        metadata = ctx["workspace_sync_api"].raw_response_metadata(rel, handler.headers.get("Range", ""))
+        metadata = ctx["file_runtime"].raw_response_metadata(rel, handler.headers.get("Range", ""))
     except PermissionError:
         handler.send_error(403)
         return
@@ -88,7 +89,7 @@ def _get_file_raw(handler, parsed, ctx) -> None:
         handler.send_header("Content-Range", content_range)
     handler.send_header("Content-Length", str(int(metadata.get("length", 0) or 0)))
     handler.end_headers()
-    ctx["workspace_sync_api"].stream_raw_response(metadata, handler.wfile.write)
+    ctx["file_runtime"].stream_raw_response(metadata, handler.wfile.write)
 
 
 def _get_file_view(handler, parsed, ctx) -> None:
@@ -104,7 +105,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
                 preview_text_size = int(requested_text_size)
             except ValueError:
                 pass
-        page = ctx["workspace_sync_api"].file_view(
+        page = ctx["file_runtime"].file_view(
             rel,
             embed=embed,
             base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
@@ -126,7 +127,7 @@ def _get_files_dir(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     rel = (qs.get("path", [""])[0] or "").strip()
     try:
-        entries = ctx["workspace_sync_api"].list_dir(rel)
+        entries = ctx["file_runtime"].list_dir(rel)
     except PermissionError:
         handler.send_error(403)
         return
@@ -152,7 +153,7 @@ def _get_files_search(handler, parsed, ctx) -> None:
         except ValueError:
             limit = 60
     try:
-        files = ctx["workspace_sync_api"].search_files(query, limit=limit)
+        files = ctx["file_runtime"].search_files(query, limit=limit)
         body = json.dumps(files, ensure_ascii=True).encode("utf-8")
     except Exception as exc:
         body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
@@ -198,7 +199,7 @@ def _get_git_overview(handler, parsed, ctx) -> None:
     try:
         offset = int(raw_offset)
         limit = int(raw_limit)
-        data = ctx["workspace_sync_api"].git_overview(
+        data = workspace_git.git_overview(
             offset=offset, limit=limit, force_refresh=force_refresh, include_commits=not summary_only
         )
         body = json.dumps(data, ensure_ascii=True).encode("utf-8")
@@ -215,7 +216,7 @@ def _get_git_diff_files(handler, parsed, ctx) -> None:
     scope = (qs.get("scope", [""])[0] or "").strip()
     try:
         body = json.dumps(
-            ctx["workspace_sync_api"].git_diff_files(commit_hash=commit_hash, scope=scope),
+            workspace_git.git_diff_files(commit_hash=commit_hash, scope=scope),
             ensure_ascii=True,
         ).encode("utf-8")
     except Exception as exc:
@@ -229,7 +230,7 @@ def _get_git_commit_info(handler, parsed, ctx) -> None:
     commit_hash = (parse_qs(parsed.query).get("hash", [""])[0] or "").strip()
     try:
         body = json.dumps(
-            ctx["workspace_sync_api"].git_commit_info(commit_hash=commit_hash),
+            workspace_git.git_commit_info(commit_hash=commit_hash),
             ensure_ascii=True,
         ).encode("utf-8")
     except Exception as exc:

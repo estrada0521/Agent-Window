@@ -1,41 +1,35 @@
 from __future__ import annotations
 import json
 import logging
-
+import os
+import subprocess
 import threading
 import time
 import uuid
+from datetime import datetime
 from pathlib import Path
 
-from backend_core.agents.executables import (
-    resolve_agent_executable_for_runtime as _resolve_agent_executable_impl,
-)
-from backend_core.tmux.lifecycle import (
-    restart_agent_pane as _restart_agent_pane_impl,
-)
-from message_delivery import (
-    deliver_message as _deliver_message_impl,
-    mark_agent_sent as _mark_agent_sent_impl,
-)
-from .entry_write import (
-    append_system_entry as _append_system_entry_impl,
-    append_user_entry as _append_user_entry_impl,
-)
+from backend_core.access.files import append_jsonl_entry
+from backend_core.access.session_meta import session_meta_agents
+from backend_core.tmux import TMUX
+from message_delivery.paste import deliver_text_to_pane
 from .log_reader import newest_entries
-from workspace_sync.commit import (
-    adopt_commit_baseline as _adopt_commit_baseline_impl,
-    ensure_commit_announcements as _ensure_commit_announcements_impl,
-)
-from native_log_sync.syncer import NativeLogSyncer
+from native_log_sync.dispatch import sync_agent
 from native_log_sync.refresh.binding_models import PaneBindingRequest
-from backend_core.tmux.session import (
-    agent_topology as _agent_topology_impl,
-    pane_field as _pane_field_impl,
-    resolve_tmux_session_name as _resolve_tmux_session_name_impl,
-    terminal_window_pane_id as _terminal_window_pane_id_impl,
+from native_log_sync.refresh.refresh_bindings import refresh_native_log_bindings, remove_native_log_binding
+from native_log_sync.watch.emit_events import (
+    clear_agent_runtime_display,
+    idle_running_display_for_api,
+    refresh_idle_statuses,
 )
-from .session_state import build_session_state_payload as _build_session_state_payload_impl
-from pane_trace import trace_content as _trace_content_impl
+from native_log_sync.watch.watch_bindings import start_native_log_vnode_watcher
+from backend_core.tmux.session import (
+    agent_topology,
+    find_session_for_workspace,
+    pane_field,
+    terminal_window_pane_id,
+)
+from pane_trace import trace_content
 from .session_binding import WorkspaceSessionBinding
 
 
@@ -61,23 +55,22 @@ class ChatRuntime:
         self.hub_port = int(hub_port)
         self.repo_root = Path(repo_root).resolve()
         self.server_instance = uuid.uuid4().hex
-        self.tmux_session_name = _resolve_tmux_session_name_impl(self) or ""
+        self.tmux_session_name = find_session_for_workspace(self.workspace) or ""
         self.session_is_active = bool(self.tmux_session_name)
         self._agent_running = set(initial_running_agents or [])
+        self._last_announced_commit_hash: str | None = None
         self._events = threading.Condition()
         self._event_counts = dict.fromkeys(EVENT_KINDS, 0)
-        self._native_log = NativeLogSyncer(
-            session_binding=self._session_binding,
-            workspace=self.workspace,
-            mark_idle_fn=self._mark_idle,
-            mark_running_from_native_activity_fn=self._mark_running_from_native_activity,
-            notify_state_fn=lambda: self.publish_event("state"),
-            active_agents_fn=self.active_agents,
-            running_agents_fn=lambda: self._agent_running,
-            pane_id_fn=self.pane_id_for_agent,
-            pane_pid_fn=lambda pane_id: str(self.pane_field(pane_id, "#{pane_pid}") or "").strip(),
-            session_is_active_fn=lambda: self.session_is_active,
-        )
+        self._native_log_read_offsets: dict[str, int] = {}
+        self._native_log_bindings_by_agent: dict = {}
+        self._native_log_bindings_lock = threading.Lock()
+        self._native_log_sync_lock = threading.Lock()
+        self._native_log_vnode_watcher = None
+        self._idle_running_display_by_agent: dict[str, dict] = {}
+        self._idle_running_event_seq = 0
+        self._idle_running_display_lock = threading.Lock()
+        self._idle_running_display_queues: dict = {}
+        self._idle_running_display_timers: dict = {}
         self._native_log_bind_workers_lock = threading.Lock()
         self._native_log_bind_workers: set[str] = set()
 
@@ -88,10 +81,6 @@ class ChatRuntime:
     @property
     def log_path(self) -> Path:
         return self._session_binding.log_path
-
-    @property
-    def log_dir(self) -> str:
-        return str(self._session_binding.session_dir)
 
     @property
     def session_dir(self) -> Path:
@@ -114,51 +103,47 @@ class ChatRuntime:
             pane_id = panes_by_agent.get(agent, "")
             if not pane_id:
                 continue
-            pane_pid = self.pane_field(pane_id, "#{pane_pid}")
             pane_requests.append(
-                PaneBindingRequest(
-                    agent=agent,
-                    pane_id=pane_id,
-                    pane_pid=str(pane_pid or "").strip(),
-                )
+                PaneBindingRequest(agent=agent, pane_id=pane_id, pane_pid=pane_field(pane_id, "#{pane_pid}"))
             )
-        self._native_log.refresh(
-            pane_requests,
-            replace_all=replace_all,
-            start_at_end=start_at_end,
-        )
+        for binding in refresh_native_log_bindings(self, pane_requests, replace_all=replace_all):
+            try:
+                sync_agent(self, binding.agent, binding.path, start_at_end=start_at_end)
+            except Exception:
+                logging.exception("native log sync failed for %s", binding.agent)
+
+    def rebind(self, agent: str) -> None:
+        if self.pane_id_for_agent(agent):
+            self.refresh_native_log_bindings([agent], start_at_end=True)
+        else:
+            self.remove_native_log_binding(agent)
 
     def start_native_log_sync(self) -> None:
         if not self.session_is_active:
             return
-        from native_log_sync.watch.watch_bindings import start_native_log_vnode_watcher
         self.refresh_native_log_bindings(start_at_end=True)
-        start_native_log_vnode_watcher(self._native_log)
+        start_native_log_vnode_watcher(self)
 
     def remove_native_log_binding(self, agent: str) -> None:
-        self._native_log.remove_binding(agent)
+        remove_native_log_binding(self, agent)
+
+    def _append_entry(self, entry: dict) -> dict:
+        return append_jsonl_entry(
+            self.log_path,
+            {"timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "session": self.session_name, **entry},
+        )
 
     def append_user_entry(self, message: str, *, targets: list[str], client: str | None = None) -> dict:
-        return _append_user_entry_impl(
-            self,
-            message,
-            targets=targets,
-            client=client,
-        )
+        entry = {"sender": "user", "targets": list(targets), "message": message}
+        if client in ("desktop", "mobile"):
+            entry["client"] = client
+        return self._append_entry(entry)
 
     def append_system_entry(self, message: str, *, agent: str = "", **extra) -> dict:
-        return _append_system_entry_impl(
-            self,
-            message,
-            agent=agent,
-            extra=extra,
-        )
-
-    def adopt_commit_baseline(self) -> None:
-        _adopt_commit_baseline_impl(self)
-
-    def ensure_commit_announcements(self) -> None:
-        _ensure_commit_announcements_impl(self)
+        entry = {"sender": "system", "targets": [], "message": message}
+        if agent:
+            entry["agent"] = agent
+        return self._append_entry({**entry, **extra})
 
     def publish_event(self, kind: str) -> None:
         with self._events:
@@ -177,11 +162,18 @@ class ChatRuntime:
             return changed
 
     def session_state_payload(self) -> dict:
-        return _build_session_state_payload_impl(
-            self,
-            server_instance=self.server_instance,
-            session_name=self.session_name,
-        )
+        session_name = self.session_name
+        return {
+            "server_instance": self.server_instance,
+            "pid": os.getpid(),
+            "session": session_name,
+            "active": self.session_is_active,
+            "workspace": self.workspace,
+            "repo_root": str(self.repo_root),
+            "targets": self.active_agents() if self.session_is_active else session_meta_agents(session_name),
+            "statuses": self.agent_statuses(),
+            "agent_runtime": self.agent_runtime_state(),
+        }
 
     def payload(self, limit: int, offset: int) -> bytes:
         entries = newest_entries(self.log_path, offset=offset, limit=limit + 1)
@@ -201,7 +193,7 @@ class ChatRuntime:
             return {}
         return {
             pane.name: pane.pane_id
-            for pane in _agent_topology_impl(self.tmux_session_name)
+            for pane in agent_topology(self.tmux_session_name)
         }
 
     def pane_id_for_agent(self, agent_name: str) -> str:
@@ -210,16 +202,10 @@ class ChatRuntime:
     def pane_id_for_terminal(self) -> str:
         if not self.session_is_active:
             return ""
-        return _terminal_window_pane_id_impl(self.tmux_session_name)
+        return terminal_window_pane_id(self.tmux_session_name)
 
     def pane_id_for_control_target(self, target: str) -> str:
         return self.pane_id_for_terminal() if target == "terminal" else self.pane_id_for_agent(target)
-
-    def pane_field(self, pane_id: str, field: str) -> str:
-        return _pane_field_impl(self, pane_id, field)
-
-    def _mark_agent_sent(self, agent_name: str) -> None:
-        _mark_agent_sent_impl(self, agent_name)
 
     def mark_agents_running(self, agents: list[str]) -> None:
         for agent in agents:
@@ -228,7 +214,7 @@ class ChatRuntime:
     def mark_agents_idle(self, agents: list[str]) -> None:
         for agent in agents:
             self._agent_running.discard(agent)
-            self._native_log.clear_agent_runtime_display(agent)
+            clear_agent_runtime_display(self, agent)
         self.publish_event("state")
 
     def running_agents_for_reload(self) -> list[str]:
@@ -237,7 +223,7 @@ class ChatRuntime:
     def _mark_running(self, agent: str) -> None:
         already_running = agent in self._agent_running
         if not already_running:
-            self._native_log.clear_agent_runtime_display(agent)
+            clear_agent_runtime_display(self, agent)
         self._agent_running.add(agent)
         if not already_running:
             self.publish_event("state")
@@ -257,7 +243,7 @@ class ChatRuntime:
                     except Exception:
                         logging.exception("native log bind failed for %s", agent)
                         return
-                    if self._native_log.has_log_binding(agent):
+                    if agent in self._native_log_bindings_by_agent:
                         return
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
@@ -287,31 +273,38 @@ class ChatRuntime:
     def _mark_idle(self, agent: str) -> None:
         was_running = agent in self._agent_running
         self._agent_running.discard(agent)
-        cleared = self._native_log.clear_agent_runtime_display(agent)
+        cleared = clear_agent_runtime_display(self, agent)
         if was_running or cleared:
             self.publish_event("state")
 
-    @staticmethod
-    def resolve_agent_executable(agent_name: str) -> str:
-        return _resolve_agent_executable_impl(agent_name)
-
-    def restart_agent_pane(self, agent_name: str) -> tuple[bool, str]:
-        return _restart_agent_pane_impl(self, agent_name)
-
     def deliver_message(self, targets: list[str], message: str) -> list[str]:
-        return _deliver_message_impl(self, targets, message)
+        panes_by_agent = self.agent_panes()
+
+        def run_tmux(args):
+            return subprocess.run([*TMUX, *args], capture_output=True, text=True, check=False)
+
+        failed: list[str] = []
+        for agent in targets:
+            pane_id = panes_by_agent.get(agent, "")
+            if not pane_id or not deliver_text_to_pane(run_tmux, pane_id, message):
+                failed.append(agent)
+                continue
+            self._mark_running(agent)
+            self._bind_native_log_after_send(agent)
+        return failed
 
     def agent_statuses(self) -> dict[str, str]:
-        return self._native_log.agent_statuses(self._agent_running)
+        return refresh_idle_statuses(self, self._agent_running)
 
     def agent_runtime_state(self) -> dict[str, dict]:
-        return self._native_log.agent_runtime_state()
+        return idle_running_display_for_api(self._idle_running_display_by_agent)
 
     def native_log_watched_paths(self) -> dict[str, str]:
-        return self._native_log.watched_paths()
+        watcher = self._native_log_vnode_watcher
+        return watcher.get_watched_paths() if watcher else {}
 
     def trace_content(self, agent: str, *, tail_lines: int) -> str:
         pane_id = self.pane_id_for_control_target(agent)
         if not pane_id:
             return "Offline"
-        return _trace_content_impl(self, pane_id, tail_lines=tail_lines)
+        return trace_content(pane_id, tail_lines=tail_lines)

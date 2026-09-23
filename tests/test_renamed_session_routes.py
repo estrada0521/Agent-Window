@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from backend_core.tmux.session import resolve_tmux_session_name
+from backend_core.tmux.session import find_session_for_workspace
 from backend_core.access.settings import workspace_chat_port
 from server import server as chat_server
 from server.routes.write import _post_open_terminal
@@ -102,10 +102,6 @@ class RenamedSessionRouteTests(unittest.TestCase):
         self.assertNotIn("renamed-aw-session", apple_script)
 
     def test_tmux_resolution_does_not_hide_query_failure_as_inactive(self) -> None:
-        runtime = SimpleNamespace(
-            session_name="renamed-aw-session",
-            workspace="/work/project",
-        )
         failed = SimpleNamespace(returncode=1, stdout="", stderr="tmux unavailable")
 
         with self.assertRaisesRegex(RuntimeError, "tmux list-sessions failed"):
@@ -113,8 +109,7 @@ class RenamedSessionRouteTests(unittest.TestCase):
                 "backend_core.tmux.session.subprocess.run",
                 return_value=failed,
             ):
-                resolve_tmux_session_name(runtime)
-
+                find_session_for_workspace("/work/project")
 
 if __name__ == "__main__":
     unittest.main()

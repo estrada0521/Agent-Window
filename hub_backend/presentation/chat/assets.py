@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+from backend_core.access.pwa import pwa_url
 from backend_core.agents.registry import agent_names_js_set, agent_names_js_array
 from .script_assets import (
     CHAT_HEADER_ACTIONS_HTML,
@@ -19,11 +20,6 @@ from ..hub.header_assets import PAGE_HEADER_CSS, render_page_header
 
 CHAT_DESKTOP_HTML = load_chat_template("desktop")
 CHAT_MOBILE_HTML = load_chat_template("mobile")
-
-
-def _chat_pwa_asset_url(path: str, chat_base_path: str = "") -> str:
-    base_path = chat_base_path.rstrip("/")
-    return f"{base_path}{path}" if base_path else path
 
 
 def render_chat_service_worker_html() -> str:
@@ -106,9 +102,9 @@ def render_chat_html(
     replacements = build_chat_template_replacements(
         icon_data_uris=icon_data_uris,
         base_path=base_path,
-        chat_manifest_url=_chat_pwa_asset_url("/app.webmanifest", base_path),
-        chat_pwa_icon_192_url=_chat_pwa_asset_url("/pwa-icon-192.png", base_path),
-        chat_apple_touch_icon_url=_chat_pwa_asset_url("/apple-touch-icon.png", base_path),
+        chat_manifest_url=pwa_url("/app.webmanifest", base_path),
+        chat_pwa_icon_192_url=pwa_url("/pwa-icon-192.png", base_path),
+        chat_apple_touch_icon_url=pwa_url("/apple-touch-icon.png", base_path),
         chat_service_worker_html=render_chat_service_worker_html(),
         server_instance=server_instance,
         hub_port=hub_port,

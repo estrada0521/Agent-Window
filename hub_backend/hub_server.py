@@ -12,7 +12,7 @@ from hub_backend.runtime import HubRuntime
 from appearance.colors import apply_color_tokens, resolve_theme_palette
 from appearance.theme import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
-from backend_core.access.pwa import pwa_icon_entries as _pwa_icon_entries_impl, pwa_static_routes
+from backend_core.access.pwa import PWA_FILES, pwa_icon_entries, serve_pwa_file
 from hub_backend.session_proxy import proxy_chat_session
 from hub_backend.session_api import split_chat_proxy_path
 from hub_backend.chat_supervisor import stop_inactive_chat_servers
@@ -49,9 +49,6 @@ from hub_backend.server_helpers import (
     error_page,
     format_chat_url,
     launch_hub_restart,
-    pwa_asset_url as _pwa_asset_url_impl,
-    pwa_asset_version as _pwa_asset_version_impl,
-    serve_pwa_static as _serve_pwa_static_impl,
 )
 from hub_backend.transport.request_view import request_view_variant
 
@@ -69,7 +66,7 @@ hub_server = None
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
     global repo_root, script_path, port, hub
-    global restart_pending, hub_server, _PWA_STATIC_DIR
+    global restart_pending, hub_server
 
     if _initialized:
         return
@@ -84,7 +81,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     port = int((repo_root / "hub-port").read_text().strip())
     hub = HubRuntime(repo_root, hub_port=port)
     restart_pending, hub_server = False, None
-    _PWA_STATIC_DIR = repo_root / "apps" / "shared" / "pwa"
 
     _initialized = True
 
@@ -105,51 +101,10 @@ def queue_hub_restart():
 def release_restart_hold():
     _restart_release_event.set()
 
-_PWA_STATIC_DIR = Path(__file__).resolve().parents[1] / "apps" / "shared" / "pwa"
-_PWA_STATIC_ROUTES = pwa_static_routes({
+_HUB_PWA_FILES = {
+    **PWA_FILES,
     "/hub-service-worker.js": ("service-worker.js", "application/javascript; charset=utf-8"),
-})
-_PWA_ASSET_VERSION_OVERRIDES = {
-    "/hub.webmanifest": str(int(Path(__file__).stat().st_mtime_ns)),
 }
-
-
-def _pwa_asset_version(path: str) -> str:
-    return _pwa_asset_version_impl(
-        path,
-        pwa_asset_version_overrides=_PWA_ASSET_VERSION_OVERRIDES,
-        pwa_static_routes=_PWA_STATIC_ROUTES,
-        pwa_static_dir=_PWA_STATIC_DIR,
-    )
-
-def _pwa_asset_url(path: str, base_path: str = "", *, bust: bool = False) -> str:
-    return _pwa_asset_url_impl(
-        path,
-        base_path=base_path,
-        bust=bust,
-        pwa_asset_version_fn=_pwa_asset_version,
-    )
-
-
-def _pwa_icon_entries(base_path: str = "") -> list[dict[str, str]]:
-    return _pwa_icon_entries_impl(
-        base_path=base_path,
-        pwa_asset_url_fn=_pwa_asset_url,
-    )
-
-
-_PWA_HUB_MANIFEST_URL = _pwa_asset_url("/hub.webmanifest", bust=True)
-_PWA_ICON_192_URL = _pwa_asset_url("/pwa-icon-192.png")
-_PWA_APPLE_TOUCH_ICON_URL = _pwa_asset_url("/apple-touch-icon.png")
-
-
-def _serve_pwa_static(handler, path: str) -> bool:
-    return _serve_pwa_static_impl(
-        handler,
-        path,
-        pwa_static_routes=_PWA_STATIC_ROUTES,
-        pwa_static_dir=_PWA_STATIC_DIR,
-    )
 
 _PAGE_HEADER_CSS = PAGE_HEADER_CSS
 _PAGE_HEADER_HTML = render_page_header()
@@ -374,9 +329,9 @@ _hub_pages = _build_hub_html_pages_impl(
     desktop_template_dir=_HUB_DESKTOP_TEMPLATE_DIR,
     mobile_template_dir=_HUB_MOBILE_TEMPLATE_DIR,
     shared_template_dir=_HUB_SHARED_TEMPLATE_DIR,
-    pwa_hub_manifest_url=_PWA_HUB_MANIFEST_URL,
-    pwa_icon_192_url=_PWA_ICON_192_URL,
-    pwa_apple_touch_icon_url=_PWA_APPLE_TOUCH_ICON_URL,
+    pwa_hub_manifest_url=f"/hub.webmanifest?v={Path(__file__).stat().st_mtime_ns}",
+    pwa_icon_192_url="/pwa-icon-192.png",
+    pwa_apple_touch_icon_url="/apple-touch-icon.png",
     hub_header_css=_PAGE_HEADER_CSS,
     hub_header_html=_PAGE_HEADER_HTML,
     hub_header_html_mobile=_PAGE_HEADER_HTML_MOBILE,
@@ -483,7 +438,7 @@ class Handler(BaseHTTPRequestHandler):
             "theme_color": bg,
             "start_url": "/hub-launch-shell.html?target=%2F%3Flaunch_shell%3D1",
             "scope": "/",
-            "icons": _pwa_icon_entries(),
+            "icons": pwa_icon_entries(),
         }, ensure_ascii=True).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/manifest+json; charset=utf-8")
@@ -590,7 +545,7 @@ class Handler(BaseHTTPRequestHandler):
         if split_chat_proxy_path(parsed.path) is not None:
             proxy_chat_session(self, hub, "GET")
             return
-        if _serve_pwa_static(self, parsed.path):
+        if serve_pwa_file(self, parsed.path, _HUB_PWA_FILES):
             return
         if self._dispatch_route(parsed, self._GET_ROUTE_HANDLERS):
             return

@@ -27,15 +27,13 @@ def refresh_native_log_bindings(
             next_by_agent[binding.agent] = binding
 
         runtime._native_log_bindings_by_agent = next_by_agent
-    watcher = getattr(runtime, "_native_log_vnode_watcher", None)
-    if watcher is not None:
-        watcher.wake()
+    if runtime._native_log_vnode_watcher is not None:
+        runtime._native_log_vnode_watcher.wake()
     return bindings
 
 
 def remove_native_log_binding(runtime, agent: str) -> None:
     with runtime._native_log_bindings_lock:
         runtime._native_log_bindings_by_agent.pop(agent, None)
-    watcher = getattr(runtime, "_native_log_vnode_watcher", None)
-    if watcher is not None:
-        watcher.wake()
+    if runtime._native_log_vnode_watcher is not None:
+        runtime._native_log_vnode_watcher.wake()

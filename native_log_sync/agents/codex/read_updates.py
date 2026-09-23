@@ -166,5 +166,5 @@ def sync_codex_native_log(
     warn_skipped_lines(agent, scan)
     if last_runtime_state_event == "completed":
         self._mark_idle(agent)
-    elif last_runtime_state_event == "active" and agent not in self.running_agents():
+    elif last_runtime_state_event == "active" and agent not in self._agent_running:
         self._mark_running_from_native_activity(agent)

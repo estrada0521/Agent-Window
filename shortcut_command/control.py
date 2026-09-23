@@ -5,14 +5,13 @@ import subprocess
 from typing import Any, Protocol
 
 from backend_core.tmux import TMUX
+from backend_core.tmux.lifecycle import restart_agent_pane
 from message_delivery.paste import deliver_text_to_pane
 from shortcut_command.catalog import PANE_SINGLE_CONTROL_MESSAGES, PANE_TEXT_MACROS
 from shortcut_command.parsing import parse_pane_direct_command
 
 
 class ShortcutControlRuntime(Protocol):
-    def restart_agent_pane(self, agent: str) -> tuple[bool, str]: ...
-
     def pane_id_for_control_target(self, target: str) -> str | None: ...
 
     def append_system_entry(self, message: str, *, agent: str = "", **extra: Any) -> dict: ...
@@ -40,7 +39,7 @@ def try_deliver_shortcut_control(
     try:
         for target_item in control_targets:
             if message == "restart":
-                ok, detail = rt.restart_agent_pane(target_item)
+                ok, detail = restart_agent_pane(rt, target_item)
                 if not ok:
                     return 400, {"ok": False, "error": detail}
                 continue

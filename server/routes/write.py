@@ -10,6 +10,7 @@ from backend_core.access.settings import workspace_upload_dir
 from backend_core.tmux.control import add_agent, remove_agent
 from backend_core.tmux import TMUX, TMUX_SOCKET_NAME
 from shortcut_command.execute import run_shortcut_command
+from workspace_sync import git as workspace_git
 
 _MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 
@@ -397,7 +398,7 @@ def _post_files_exist(handler, _parsed, ctx) -> None:
     if not isinstance(paths, list):
         handler._send_json(400, {"ok": False, "error": "paths must be a list"})
         return
-    result = ctx["workspace_sync_api"].files_exist(paths)
+    result = ctx["file_runtime"].files_exist(paths)
     handler._send_json(200, result)
 
 
@@ -411,7 +412,7 @@ def _post_files_resolve(handler, _parsed, ctx) -> None:
         handler._send_json(400, {"ok": False, "error": "queries must be a list"})
         return
     try:
-        resolved = ctx["workspace_sync_api"].resolve_file_references([str(item or "") for item in queries])
+        resolved = ctx["file_runtime"].resolve_file_references([str(item or "") for item in queries])
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
@@ -445,7 +446,7 @@ def _post_open_file(handler, _parsed, ctx) -> None:
     if not rel:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
-    _send_workspace_result(handler, lambda: ctx["workspace_sync_api"].open_with_default_app(rel))
+    _send_workspace_result(handler, lambda: ctx["file_runtime"].open_with_default_app(rel))
 
 
 def _post_reveal_file(handler, _parsed, ctx) -> None:
@@ -457,7 +458,7 @@ def _post_reveal_file(handler, _parsed, ctx) -> None:
     if not rel:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
-    _send_workspace_result(handler, lambda: ctx["workspace_sync_api"].reveal_in_finder(rel))
+    _send_workspace_result(handler, lambda: ctx["file_runtime"].reveal_in_finder(rel))
 
 
 def _post_quick_look(handler, _parsed, ctx) -> None:
@@ -469,7 +470,7 @@ def _post_quick_look(handler, _parsed, ctx) -> None:
     if not isinstance(paths, list) or not paths:
         handler._send_json(400, {"ok": False, "error": "paths required"})
         return
-    _send_workspace_result(handler, lambda: ctx["workspace_sync_api"].quick_look([str(p or "").strip() for p in paths]))
+    _send_workspace_result(handler, lambda: ctx["file_runtime"].quick_look([str(p or "").strip() for p in paths]))
 
 
 def _post_open_diff(handler, _parsed, ctx) -> None:
@@ -483,7 +484,7 @@ def _post_open_diff(handler, _parsed, ctx) -> None:
         return
     _send_workspace_result(
         handler,
-        lambda: ctx["workspace_sync_api"].open_diff_tool(
+        lambda: workspace_git.open_diff_tool(
             rel, (data.get("hash") or "").strip(), (data.get("old_path") or "").strip()
         ),
     )
@@ -491,7 +492,7 @@ def _post_open_diff(handler, _parsed, ctx) -> None:
 
 def _run_nativelog_command(ctx, *, target: str) -> tuple[int, dict]:
     rt = ctx["runtime"]
-    workspace_sync_api = ctx["workspace_sync_api"]
+    file_runtime = ctx["file_runtime"]
     raw_targets = [t.strip() for t in target.split(",") if t.strip()]
     if not raw_targets:
         msg = "target is required"
@@ -503,7 +504,7 @@ def _run_nativelog_command(ctx, *, target: str) -> tuple[int, dict]:
         msg = f"native log path not found for {agent}"
         return 404, {"ok": False, "error": msg, "status_message": msg}
     try:
-        workspace_sync_api.reveal_in_finder(path)
+        file_runtime.reveal_in_finder(path)
     except FileNotFoundError:
         msg = f"native log file not found: {path}"
         return 404, {"ok": False, "error": msg, "status_message": msg}
