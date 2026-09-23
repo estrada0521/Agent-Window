@@ -807,21 +807,21 @@ fn show_session_context_menu(
     .map_err(|err| err.to_string())?;
     let archive = MenuItemBuilder::with_id(
         format!("{}action:archiveSession", NATIVE_MENU_PREFIX),
-        "Archive — Kill tmux session; keep log",
+        "Archive",
     )
     .enabled(payload.archive_enabled)
     .build(&app)
     .map_err(|err| err.to_string())?;
     let delete = MenuItemBuilder::with_id(
         format!("{}action:deleteSession", NATIVE_MENU_PREFIX),
-        "Delete — Delete ~/.agent-window/session/{session}",
+        "Delete",
     )
     .enabled(payload.delete_enabled)
     .build(&app)
     .map_err(|err| err.to_string())?;
     let revive = MenuItemBuilder::with_id(
         format!("{}action:reviveSession", NATIVE_MENU_PREFIX),
-        "Revive — Restart tmux session with saved agent topology",
+        "Revive",
     )
     .enabled(payload.revive_enabled)
     .build(&app)
