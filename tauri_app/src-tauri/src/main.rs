@@ -1306,7 +1306,7 @@ fn configured_hub_port(repo_root: &str) -> Result<u16, String> {
 fn hub_ready(port: u16) -> bool {
     let url = format!("http://127.0.0.1:{}/hub.webmanifest", port);
     let Ok(output) = Command::new("/usr/bin/curl")
-        .args(["-s", "--max-time", "1", url.as_str()])
+        .args(["-sf", "--max-time", "1", url.as_str()])
         .output()
     else {
         return false;
@@ -1315,7 +1315,7 @@ fn hub_ready(port: u16) -> bool {
         return false;
     }
     let body = String::from_utf8_lossy(&output.stdout);
-    body.contains("\"name\"") && body.contains("Agent Window")
+    body.contains("\"name\": \"Agent Window\"")
 }
 
 fn wait_for_child_success(child: &mut Child, timeout: Duration) -> bool {
@@ -1497,7 +1497,7 @@ fn main() {
                     }
                 }
 
-                let hub_url = format!("http://127.0.0.1:{}/?tauri=1", hub_port);
+                let hub_url = format!("http://127.0.0.1:{}/", hub_port);
                 eprintln!("[app] Navigating to {}", hub_url);
                 if let Some(w) = app_handle.get_webview_window("main") {
                     let url: tauri::Url = hub_url.parse().unwrap();

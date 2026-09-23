@@ -63,28 +63,6 @@
   </script>
   <title>__PAGE_TITLE__</title>
   <style>:root { --font-main: __MESSAGE_FONT_CSS__; --font-code: __CODE_FONT_CSS__; }</style>
-  <script>
-    (() => {
-      const markTauriApp = () => {
-        document.documentElement.dataset.tauriApp = "1";
-        try { sessionStorage.setItem("agent_window_tauri_app", "1"); } catch (_) {}
-        window.__agentWindowNative = window.__agentWindowNative || {};
-        window.__agentWindowNative.isTauriApp = true;
-      };
-      try {
-        const params = new URLSearchParams(window.location.search || "");
-        const stored = sessionStorage.getItem("agent_window_tauri_app") === "1";
-        if (
-          params.get("tauri") === "1" ||
-          stored ||
-          typeof window.__TAURI__ !== "undefined" ||
-          typeof window.__TAURI_INTERNALS__ !== "undefined"
-        ) {
-          markTauriApp();
-        }
-      } catch (_) {}
-    })();
-  </script>
   <style>
 __HUB_INCLUDE:styles/theme.css__
 __HUB_INCLUDE:styles/window-chrome.css__

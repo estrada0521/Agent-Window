@@ -56,25 +56,6 @@
       if (params.get("launch_shell") === "1") {
         document.documentElement.dataset.launchShell = "1";
       }
-      function _detectTauri() {
-        try {
-          const stored = sessionStorage.getItem("agent_window_tauri_app") === "1";
-          if (
-            params.get("tauri") === "1" ||
-            stored ||
-            typeof window.__TAURI__ !== "undefined" ||
-            typeof window.__TAURI_INTERNALS__ !== "undefined"
-          ) {
-            document.documentElement.dataset.tauriApp = "1";
-            try { sessionStorage.setItem("agent_window_tauri_app", "1"); } catch (_) {}
-            return true;
-          }
-        } catch (_) {}
-        return false;
-      }
-      if (!_detectTauri()) {
-        window.addEventListener("load", _detectTauri, { once: true });
-      }
     })();
   </script>
 __CHAT_MAIN_STYLE_BLOCK____CHAT_SHELL_STYLE_BLOCK__  <style id="chatFontSettingsStyle">

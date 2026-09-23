@@ -294,7 +294,7 @@
           window.parent.postMessage({ type: "open-external-url", url: href }, "*");
           return Promise.resolve();
         }
-        const invoke = window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke;
+        const invoke = window.__TAURI__?.core?.invoke;
         if (typeof invoke === "function") return invoke("open_external_url", { url: href });
         return Promise.reject(new Error("Tauri external-link bridge is unavailable"));
       }

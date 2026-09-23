@@ -1,33 +1,9 @@
-    function markTauriDesktopApp() {
-      document.documentElement.dataset.tauriApp = "1";
-      try { sessionStorage.setItem("agent_window_tauri_app", "1"); } catch (_) {}
-      window.__agentWindowNative = window.__agentWindowNative || {};
-      window.__agentWindowNative.isTauriApp = true;
-      return true;
-    }
     function isTauriDesktopApp() {
-      if (document.documentElement.dataset.tauriApp === "1" || window.__agentWindowNative?.isTauriApp) return true;
-      try {
-        const params = new URLSearchParams(window.location.search || "");
-        if (params.get("tauri") === "1" || sessionStorage.getItem("agent_window_tauri_app") === "1") {
-          return markTauriDesktopApp();
-        }
-      } catch (_) {}
-      try {
-        if (
-          typeof window.__TAURI__ !== "undefined" ||
-          typeof window.__TAURI_INTERNALS__ !== "undefined" ||
-          window.__agentWindowNative?.appSettingsLoaded
-        ) {
-          return markTauriDesktopApp();
-        }
-      } catch (_) {}
-      return false;
+      return document.documentElement.dataset.tauriApp === "1";
     }
     function getTauriInvoke() {
-      try { return window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke || null; } catch (_) { return null; }
+      return window.__TAURI__?.core?.invoke;
     }
-    isTauriDesktopApp();
     const PHONE_VIEWPORT_MAX_PX = 480;
     const _deskWorkbench = document.getElementById("deskWorkbench");
     const _deskSidebar = document.getElementById("deskSidebar");

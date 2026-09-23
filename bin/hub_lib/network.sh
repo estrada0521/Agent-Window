@@ -7,60 +7,30 @@ if [[ -n "${HUB_LIB_NETWORK_SH:-}" ]]; then
 fi
 HUB_LIB_NETWORK_SH=1
 
-port_serves_expected_url() {
-  local port="$1"
-  local path="$2"
-  python3 - "$port" "$path" <<'PYEOF'
+hub_is_up() {
+  local timeout_sec="${1:-0}"
+  PYTHONPATH="$HUB_PYTHONPATH" python3 - "$HUB_PORT" "$timeout_sec" <<'PYEOF'
 import http.client
-import sys
-
-port = int(sys.argv[1])
-path = sys.argv[2]
-
-try:
-    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=1.0)
-    conn.request("GET", path, headers={"Host": f"127.0.0.1:{port}"})
-    resp = conn.getresponse()
-    resp.read(1)
-    conn.close()
-    if 200 <= resp.status < 500:
-        sys.exit(0)
-except Exception:
-    pass
-sys.exit(1)
-PYEOF
-}
-
-wait_for_expected_url() {
-  local port="$1"
-  local path="$2"
-  local timeout_sec="${3:-6}"
-  python3 - "$port" "$path" "$timeout_sec" <<'PYEOF'
-import http.client
+import json
 import sys
 import time
 
-port = int(sys.argv[1])
-path = sys.argv[2]
-timeout_sec = float(sys.argv[3])
-deadline = time.monotonic() + timeout_sec
+from hub_backend.branding import APP_DISPLAY_NAME
 
-while time.monotonic() < deadline:
+port = int(sys.argv[1])
+deadline = time.monotonic() + float(sys.argv[2])
+while True:
     try:
         conn = http.client.HTTPConnection("127.0.0.1", port, timeout=1.0)
-        conn.request("GET", path, headers={"Host": f"127.0.0.1:{port}"})
+        conn.request("GET", "/hub.webmanifest")
         resp = conn.getresponse()
-        resp.read(1)
-        conn.close()
-        if 200 <= resp.status < 500:
+        if resp.status == 200 and json.loads(resp.read())["name"] == APP_DISPLAY_NAME:
             sys.exit(0)
-    except Exception:
+    except (OSError, ValueError, KeyError, http.client.HTTPException):
         pass
-    remaining = deadline - time.monotonic()
-    if remaining <= 0:
-        break
-    time.sleep(min(0.1, remaining))
-sys.exit(1)
+    if time.monotonic() >= deadline:
+        sys.exit(1)
+    time.sleep(0.1)
 PYEOF
 }
 

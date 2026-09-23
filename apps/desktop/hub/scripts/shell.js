@@ -356,7 +356,6 @@
     function buildDeskChatFrameUrl(chatUrl) {
       const raw = String(chatUrl || "").trim();
       if (!raw) return "";
-      const isTauri = isTauriDesktopApp();
       try {
         const parsed = new URL(raw, window.location.href);
         parsed.searchParams.set("hub_shell", "1");
@@ -364,7 +363,6 @@
         parsed.searchParams.set("theme", deskChatThemeFromDesktop(themeDesktop));
         parsed.searchParams.set("theme_desktop", themeDesktop);
         parsed.searchParams.set("text_size", String(currentDeskTextSizePx()));
-        if (isTauri) parsed.searchParams.set("tauri", "1");
         if (parsed.origin === window.location.origin) {
           return `${parsed.pathname}${parsed.search}${parsed.hash}`;
         }
@@ -372,7 +370,6 @@
       } catch (_) {
         if (/[?&]hub_shell=/.test(raw)) return raw;
         let q = raw + (raw.includes("?") ? "&" : "?") + "hub_shell=1";
-        if (isTauri) q += "&tauri=1";
         return q;
       }
     }

@@ -53,14 +53,8 @@
   function applyCssToDocument(doc) {
     if (!doc || !doc.documentElement) return false;
     const isRootWindow = isHubDocument(doc);
-    try {
-      doc.documentElement.dataset.tauriApp = "1";
-      doc.documentElement.dataset.tauriRootWindow = isRootWindow ? "1" : "0";
-      doc.defaultView?.sessionStorage?.setItem("agent_window_tauri_app", "1");
-      const native = doc.defaultView.__agentWindowNative || (doc.defaultView.__agentWindowNative = {});
-      native.isTauriApp = true;
-      native.appSettingsLoaded = true;
-    } catch (_) {}
+    doc.documentElement.dataset.tauriApp = "1";
+    doc.documentElement.dataset.tauriRootWindow = isRootWindow ? "1" : "0";
     const install = () => {
       try {
         let style = doc.getElementById("__ma-app-native-glass");

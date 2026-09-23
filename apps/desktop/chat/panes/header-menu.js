@@ -7,13 +7,7 @@
       nativeHeaderMenuBridge = null;
     }
     const DESKTOP_HUB_CHROME_SIZE_PX = 24;
-    const getTauriInvoke = () => {
-      try {
-        return window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke || null;
-      } catch (_) {
-        return null;
-      }
-    };
+    const getTauriInvoke = () => window.__TAURI__?.core?.invoke;
     const hasTauriNativeHeaderMenu = () => document.documentElement.dataset.tauriApp === "1";
     {
       const bridge = nativeHeaderMenuBridge;
