@@ -20,14 +20,10 @@ from server.index_cache import iter_log_entries_reversed
 
 
 @dataclass(frozen=True)
-class SessionQueryResult:
-    records: dict[str, dict]
+class LiveSessions:
+    workspaces: dict[str, str]
     state: str
     detail: str = ""
-
-    @property
-    def non_archived_names(self) -> set[str]:
-        return set(self.records)
 
 
 def _compact_message_preview(entry: dict[str, Any]) -> dict[str, str]:
@@ -56,11 +52,7 @@ def latest_message_preview(log_path: Path) -> dict[str, str]:
     return {"sender": "", "text": "", "revision": ""}
 
 
-def build_session_record(
-    *,
-    name: str,
-    workspace: str,
-) -> dict:
+def build_session_record(*, name: str, workspace: str) -> dict:
     preview = latest_message_preview(session_log_path(name))
     return {
         "name": name,
@@ -100,64 +92,37 @@ def live_tmux_sessions_query(runtime: Any) -> tuple[dict[str, tuple[str, int]], 
     return workspace_to_tmux, "ok", ""
 
 
-def collect_repo_sessions(runtime: Any) -> tuple[list[dict], str, str]:
+def live_sessions_query(runtime: Any) -> LiveSessions:
     claims = session_workspace_claims()
     workspace_to_tmux, state, detail = live_tmux_sessions_query(runtime)
     if state != "ok":
-        return [], state, detail
-
-    sessions: list[tuple[int, dict]] = []
-
-    for normalized_workspace, (name, workspace) in claims.items():
-        tmux_session = workspace_to_tmux.get(normalized_workspace)
-        if not tmux_session:
-            continue
-        _tmux_name, created_epoch = tmux_session
-        sessions.append(
-            (
-                created_epoch,
-                build_session_record(name=name, workspace=workspace),
-            )
-        )
-
-    sessions.sort(key=lambda item: item[0], reverse=True)
-    return [record for _created_epoch, record in sessions], "ok", ""
-
-
-def active_session_records_query(runtime: Any) -> SessionQueryResult:
-    sessions, state, detail = collect_repo_sessions(runtime)
-    return SessionQueryResult(
-        records={item["name"]: item for item in sessions},
-        state=state,
-        detail=detail,
+        return LiveSessions({}, state, detail)
+    live = sorted(
+        (
+            (workspace_to_tmux[normalized][1], name, workspace)
+            for normalized, (name, workspace) in claims.items()
+            if normalized in workspace_to_tmux
+        ),
+        reverse=True,
     )
+    return LiveSessions({name: workspace for _created, name, workspace in live}, "ok")
 
 
-def archived_sessions(excluded_names: set[str] | list[str] | None = None) -> list[dict]:
-    excluded_names_set = set(excluded_names or [])
+def active_session_records(live: LiveSessions) -> list[dict]:
+    return [build_session_record(name=name, workspace=workspace) for name, workspace in live.workspaces.items()]
+
+
+def archived_session_records(live: LiveSessions) -> list[dict]:
     root = agent_window_session_root()
     if not root.is_dir():
         return []
     sessions: list[tuple[float, dict]] = []
     for entry in root.iterdir():
-        if not entry.is_dir():
+        if not entry.is_dir() or entry.name in live.workspaces:
             continue
-        session_name = entry.name
-        if session_name in excluded_names_set:
-            continue
-        meta_path = entry / SESSION_META_FILENAME
-        log_path = entry / SESSION_LOG_FILENAME
-        meta = read_session_meta_file(meta_path)
-        workspace = meta["workspace"]
-        mtime = log_path.stat().st_mtime
-        record = build_session_record(name=session_name, workspace=workspace)
+        meta = read_session_meta_file(entry / SESSION_META_FILENAME)
+        record = build_session_record(name=entry.name, workspace=meta["workspace"])
         record["agents"] = meta["agents"]
-        sessions.append((mtime, record))
+        sessions.append(((entry / SESSION_LOG_FILENAME).stat().st_mtime, record))
     sessions.sort(key=lambda item: item[0], reverse=True)
     return [record for _mtime, record in sessions]
-
-
-def archived_session_records(
-    excluded_names: set[str] | list[str] | None = None,
-) -> dict[str, dict]:
-    return {item["name"]: item for item in archived_sessions(excluded_names)}

@@ -20,7 +20,6 @@ from hub_backend.chat_supervisor import (
     revive_archived_session,
 )
 from hub_backend.session_api import resolve_session_chat_target
-from hub_backend.session_query import active_session_records_query
 
 
 def _session_query(parsed) -> tuple[str, str]:
@@ -81,7 +80,7 @@ def get_revive_session(handler, parsed, ctx) -> None:
     if not ok:
         _fail(handler, ctx, fmt, 500, f"Failed to revive {session_name}: {detail}")
         return
-    workspace = active_session_records_query(ctx["hub"]).records[session_name]["workspace"]
+    workspace = session_workspace(session_name)
     ok, chat_port, detail = ensure_chat_server(ctx["hub"], expected_active=True, workspace=workspace)
     if not ok:
         _fail(handler, ctx, fmt, 500, f"Failed to start chat for {session_name}: {detail}")

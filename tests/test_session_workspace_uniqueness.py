@@ -132,7 +132,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             (session_root / f"aw-{digest[:8]}").mkdir()
             expected_name = f"aw-{digest[:12]}"
             handler = self._draft_handler(workspace)
-            hub = mock.Mock(tmux_socket="agent-window", repo_root=Path(tmp))
+            hub = mock.Mock(repo_root=Path(tmp))
 
             with (
                 mock.patch(
@@ -178,7 +178,6 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                 session_name=expected_name,
                 workspace=str(workspace.resolve()),
                 agents=[],
-                tmux_socket="agent-window",
                 repo_root=Path(tmp),
             )
 

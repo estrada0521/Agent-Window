@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import subprocess
 
+from backend_core.tmux import TMUX
+
 
 def capture_pane_text(
     runtime,
@@ -13,7 +15,7 @@ def capture_pane_text(
     pane = str(pane_id or "").strip()
     if not pane:
         return ""
-    cmd = [*runtime.tmux_prefix, "capture-pane", "-p"]
+    cmd = [*TMUX, "capture-pane", "-p"]
     cmd.extend(["-S", str(start), "-t", pane])
     result = subprocess.run(
         cmd,

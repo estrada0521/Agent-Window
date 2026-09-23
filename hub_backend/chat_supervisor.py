@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 
 from backend_core.access.chat_server import read_chat_server_state
+from backend_core.access.session_meta import read_session_meta, session_workspace_claims
 from backend_core.tmux.control import (
     SessionControlError,
     create_session,
@@ -18,7 +19,7 @@ from backend_core.access.settings import (
     workspace_log_link_path,
 )
 from server.chat_process import launch_chat_server, wait_for_chat_server
-from hub_backend.session_query import active_session_records_query, archived_session_records
+from hub_backend.session_query import live_sessions_query
 
 
 class TmuxUnhealthy(RuntimeError):
@@ -40,8 +41,6 @@ def chat_server_state_matches(hub, state: dict | None, *, workspace: str) -> boo
 
 def chat_launch_env(hub) -> dict[str, str]:
     env = os.environ.copy()
-    if hub.tmux_socket:
-        env["AGENT_WINDOW_TMUX_SOCKET"] = hub.tmux_socket
     pythonpath_parts = [str(hub.repo_root)]
     existing_pythonpath = (env.get("PYTHONPATH") or "").strip()
     if existing_pythonpath:
@@ -50,13 +49,9 @@ def chat_launch_env(hub) -> dict[str, str]:
     return env
 
 
-def stop_inactive_chat_servers(hub, *, keep_workspace: str = "") -> str:
-    query = active_session_records_query(hub)
-    archived = archived_session_records(query.non_archived_names)
-    keep = str(keep_workspace or "").strip()
-    for record in archived.values():
-        workspace = record["workspace"]
-        if workspace == keep:
+def stop_inactive_chat_servers(*, keep_workspace: str = "") -> str:
+    for _name, workspace in session_workspace_claims().values():
+        if workspace == keep_workspace:
             continue
         port = workspace_chat_port(workspace)
         state = read_chat_server_state(port)
@@ -90,7 +85,7 @@ def ensure_chat_server(
             return False, chat_port, f"chat port {chat_port} is occupied"
 
         if not expected_active:
-            stop_detail = stop_inactive_chat_servers(hub, keep_workspace=resolved_workspace)
+            stop_detail = stop_inactive_chat_servers(keep_workspace=resolved_workspace)
             if stop_detail:
                 return False, chat_port, stop_detail
 
@@ -114,17 +109,16 @@ def ensure_chat_server(
 
 
 def revive_archived_session(hub, session_name: str) -> tuple[bool, str]:
-    query = active_session_records_query(hub)
-    if query.state == "unhealthy":
-        raise TmuxUnhealthy(query.detail)
-    active_records = query.records
-    if session_name in active_records:
+    live = live_sessions_query(hub)
+    if live.state == "unhealthy":
+        raise TmuxUnhealthy(live.detail)
+    if session_name in live.workspaces:
         return True, ""
-    archived = archived_session_records(query.non_archived_names)
-    record = archived.get(session_name)
-    if not record:
+    try:
+        meta = read_session_meta(session_name)
+    except FileNotFoundError:
         return False, "That archived session is not available in this repo."
-    workspace = record["workspace"]
+    workspace = meta["workspace"]
     if not Path(workspace).is_dir():
         return False, f"Saved workspace is unavailable: {workspace}"
     stop_ok, stop_detail = stop_chat_server(workspace)
@@ -137,8 +131,7 @@ def revive_archived_session(hub, session_name: str) -> tuple[bool, str]:
         create_session(
             session_name=session_name,
             workspace=workspace,
-            agents=record["agents"],
-            tmux_socket=hub.tmux_socket,
+            agents=meta["agents"],
             repo_root=hub.repo_root,
             revive=True,
         )
@@ -148,30 +141,28 @@ def revive_archived_session(hub, session_name: str) -> tuple[bool, str]:
 
 
 def kill_repo_session(hub, session_name: str) -> tuple[bool, str]:
-    query = active_session_records_query(hub)
-    if query.state == "unhealthy":
-        raise TmuxUnhealthy(query.detail)
-
-    active = query.records
-    if session_name not in active:
+    live = live_sessions_query(hub)
+    if live.state == "unhealthy":
+        raise TmuxUnhealthy(live.detail)
+    if session_name not in live.workspaces:
         return False, "That active session is not available in this repo."
     try:
-        kill_session(session_name=session_name, tmux_socket=hub.tmux_socket)
+        kill_session(session_name=session_name)
     except SessionControlError as exc:
         return False, str(exc)
     return True, ""
 
 
 def delete_archived_session(hub, session_name: str) -> tuple[bool, str]:
-    query = active_session_records_query(hub)
-    if query.state == "unhealthy":
-        raise TmuxUnhealthy(query.detail)
-
-    archived = archived_session_records(query.non_archived_names)
-    record = archived.get(session_name)
-    if not record:
+    live = live_sessions_query(hub)
+    if live.state == "unhealthy":
+        raise TmuxUnhealthy(live.detail)
+    if session_name in live.workspaces:
         return False, "That archived session is not available in this repo."
-    workspace = record["workspace"]
+    try:
+        workspace = read_session_meta(session_name)["workspace"]
+    except FileNotFoundError:
+        return False, "That archived session is not available in this repo."
     stop_ok, stop_detail = stop_chat_server(workspace)
     if not stop_ok:
         return False, stop_detail
@@ -181,11 +172,8 @@ def delete_archived_session(hub, session_name: str) -> tuple[bool, str]:
             link.unlink()
         except OSError as exc:
             return False, str(exc)
-    log_dir = session_artifact_dir(session_name)
-    if not log_dir.exists():
-        return True, ""
     try:
-        shutil.rmtree(log_dir)
+        shutil.rmtree(session_artifact_dir(session_name))
     except OSError as exc:
         return False, str(exc)
     return True, ""

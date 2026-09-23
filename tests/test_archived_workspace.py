@@ -10,19 +10,8 @@ from unittest.mock import patch
 
 from hub_backend.chat_supervisor import chat_server_state_matches, ensure_chat_server
 from hub_backend.session_api import resolve_session_chat_target
-from hub_backend.session_query import archived_sessions
+from hub_backend.session_query import LiveSessions, archived_session_records
 from workspace_sync import git as workspace_git
-
-
-class _Query:
-    def __init__(self, records, state="ok", detail=""):
-        self.records = records
-        self.state = state
-        self.detail = detail
-
-    @property
-    def non_archived_names(self):
-        return set(self.records)
 
 
 class ArchivedWorkspaceTests(unittest.TestCase):
@@ -82,7 +71,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             )
             hub_repo = "/Users/okadaharuto/workspace/Agent-Window"
             with patch("backend_core.access.settings.agent_window_root", return_value=Path(tmp)):
-                sessions = archived_sessions(excluded_names=set())
+                sessions = archived_session_records(LiveSessions({}, "ok"))
             self.assertEqual(len(sessions), 1)
             self.assertEqual(sessions[0]["name"], "Lab")
             self.assertEqual(sessions[0]["workspace"], str(workspace))
@@ -101,15 +90,10 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             workspace = Path(tmp) / "Even-Parity"
             workspace.mkdir()
             with (
-                patch("hub_backend.session_api.active_session_records_query", return_value=_Query({})),
+                patch("hub_backend.session_api.live_sessions_query", return_value=LiveSessions({}, "ok")),
                 patch(
-                    "hub_backend.session_api.archived_session_records",
-                    return_value={
-                        "Even-Parity": {
-                            "name": "Even-Parity",
-                            "workspace": str(workspace),
-                        }
-                    },
+                    "hub_backend.session_api.read_session_meta",
+                    return_value={"workspace": str(workspace), "agents": []},
                 ),
                 patch("hub_backend.session_api.ensure_chat_server", side_effect=ensure_chat_server),
             ):

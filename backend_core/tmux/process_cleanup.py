@@ -5,13 +5,15 @@ import signal
 import subprocess
 import time
 
+from backend_core.tmux import TMUX
 
-def pane_pid_for_target(*, target: str, tmux_prefix: list[str]) -> int | None:
+
+def pane_pid_for_target(*, target: str) -> int | None:
     pane = (target or "").strip()
     if not pane:
         return None
     res = subprocess.run(
-        [*tmux_prefix, "display-message", "-p", "-t", pane, "#{pane_pid}"],
+        [*TMUX, "display-message", "-p", "-t", pane, "#{pane_pid}"],
         capture_output=True,
         text=True,
         check=False,
@@ -24,18 +26,18 @@ def pane_pid_for_target(*, target: str, tmux_prefix: list[str]) -> int | None:
     return int(value)
 
 
-def pane_pids_for_target(*, target: str, tmux_prefix: list[str]) -> list[int]:
+def pane_pids_for_target(*, target: str) -> list[int]:
     tmux_target = (target or "").strip()
     if not tmux_target:
         return []
     res = subprocess.run(
-        [*tmux_prefix, "list-panes", "-t", tmux_target, "-F", "#{pane_pid}"],
+        [*TMUX, "list-panes", "-t", tmux_target, "-F", "#{pane_pid}"],
         capture_output=True,
         text=True,
         check=False,
     )
     if res.returncode != 0:
-        pid = pane_pid_for_target(target=tmux_target, tmux_prefix=tmux_prefix)
+        pid = pane_pid_for_target(target=tmux_target)
         return [pid] if pid else []
     pids: list[int] = []
     seen: set[int] = set()
@@ -77,8 +79,8 @@ def cleanup_process_groups_for_pids(
         _wait_for_process_groups(alive, kill_timeout_sec)
 
 
-def cleanup_target_process_groups(*, target: str, tmux_prefix: list[str]) -> None:
-    cleanup_process_groups_for_pids(pane_pids_for_target(target=target, tmux_prefix=tmux_prefix))
+def cleanup_target_process_groups(*, target: str) -> None:
+    cleanup_process_groups_for_pids(pane_pids_for_target(target=target))
 
 
 def _signal_process_groups(pgids: list[int], sig: int) -> None:

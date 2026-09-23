@@ -3,6 +3,7 @@ from __future__ import annotations
 import subprocess
 from dataclasses import dataclass
 
+from backend_core.tmux import TMUX
 from backend_core.tmux.resolve import normalize_workspace
 
 
@@ -15,9 +16,9 @@ class AgentPane:
     pane_id: str
 
 
-def _run(prefix: list[str], args: list[str]):
+def _run(args: list[str]):
     return subprocess.run(
-        [*prefix, *args],
+        [*TMUX, *args],
         capture_output=True,
         text=True,
         timeout=2,
@@ -25,9 +26,8 @@ def _run(prefix: list[str], args: list[str]):
     )
 
 
-def live_sessions(prefix: list[str]) -> list[tuple[str, str]]:
+def live_sessions() -> list[tuple[str, str]]:
     result = _run(
-        prefix,
         ["list-sessions", "-F", "#{session_name}\t#{session_path}"],
     )
     if result.returncode != 0:
@@ -49,22 +49,19 @@ def live_sessions(prefix: list[str]) -> list[tuple[str, str]]:
 
 
 def find_session_for_workspace(
-    prefix: list[str],
     workspace: str,
 ) -> str | None:
     wanted = normalize_workspace(workspace)
-    for name, session_path in live_sessions(prefix):
+    for name, session_path in live_sessions():
         if normalize_workspace(session_path) == wanted:
             return name
     return None
 
 
 def tmux_session_workspace(
-    prefix: list[str],
     session_name: str,
 ) -> str:
     result = _run(
-        prefix,
         ["display-message", "-p", "-t", session_name, "#{session_path}"],
     )
     workspace = (result.stdout or "").strip()
@@ -75,11 +72,9 @@ def tmux_session_workspace(
 
 
 def agent_topology(
-    prefix: list[str],
     session_name: str,
 ) -> list[AgentPane]:
     result = _run(
-        prefix,
         [
             "list-windows",
             "-t",
@@ -117,11 +112,9 @@ def parse_agent_topology(output: str) -> list[AgentPane]:
 
 
 def terminal_window_pane_id(
-    prefix: list[str],
     session_name: str,
 ) -> str:
     result = _run(
-        prefix,
         ["list-windows", "-t", session_name, "-F", "#{window_name}\t#{pane_id}"],
     )
     if result.returncode != 0:
@@ -138,17 +131,14 @@ def resolve_tmux_session_name(runtime) -> str | None:
     workspace = str(runtime.workspace or "").strip()
     if not workspace:
         return None
-    return find_session_for_workspace(
-        runtime.tmux_prefix,
-        workspace,
-    )
+    return find_session_for_workspace(workspace)
 
 
 def pane_field(runtime, pane_id: str, field: str) -> str:
     if not pane_id:
         return ""
     result = subprocess.run(
-        [*runtime.tmux_prefix, "display-message", "-p", "-t", pane_id, field],
+        [*TMUX, "display-message", "-p", "-t", pane_id, field],
         capture_output=True,
         text=True,
         timeout=2,

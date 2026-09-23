@@ -29,7 +29,6 @@ from backend_core.access.chat_server import read_chat_server_state
 from backend_core.access.settings import (
     workspace_chat_port,
 )
-from backend_core.tmux.topology import default_tmux_socket_name
 from workspace_sync.api import WorkspaceSyncApi
 
 RELOAD_RUNNING_AGENTS_ENV = "AGENT_WINDOW_RELOAD_RUNNING_AGENTS"
@@ -44,7 +43,6 @@ def _not_initialized(*_args, **_kwargs):
 _initialized = False
 port = 0
 workspace = ""
-tmux_socket = ""
 hub_port = 0
 _repo_root = Path()
 runtime = None
@@ -144,7 +142,7 @@ def _restart_env():
 
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
-    global port, workspace, tmux_socket, hub_port
+    global port, workspace, hub_port
     global _repo_root, runtime
     global _PWA_STATIC_DIR, server_instance
     global payload
@@ -164,13 +162,11 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
 
     _repo_root = Path(__file__).resolve().parent.parent
     port = workspace_chat_port(workspace)
-    tmux_socket = (os.environ.get("AGENT_WINDOW_TMUX_SOCKET") or default_tmux_socket_name()).strip()
     hub_port = int((_repo_root / "hub-port").read_text().strip())
     reload_running_agents = json.loads(os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, "[]"))
     runtime = ChatRuntime(
         port=port,
         workspace=workspace,
-        tmux_socket=tmux_socket,
         hub_port=hub_port,
         repo_root=_repo_root,
         initial_running_agents=reload_running_agents,
@@ -285,7 +281,6 @@ def _route_context() -> dict:
         "runtime": runtime,
         "workspace": workspace,
         "hub_port": hub_port,
-        "tmux_socket": tmux_socket,
         "payload_fn": payload,
         "send_message_fn": send_message,
         "workspace_sync_api": workspace_sync_api,

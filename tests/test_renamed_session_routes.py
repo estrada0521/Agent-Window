@@ -86,7 +86,6 @@ class RenamedSessionRouteTests(unittest.TestCase):
         size_result = SimpleNamespace(returncode=0, stdout="160 48")
         ctx = {
             "runtime": runtime,
-            "tmux_socket": "agent-window",
             "session_name": "renamed-aw-session",
         }
 
@@ -106,7 +105,6 @@ class RenamedSessionRouteTests(unittest.TestCase):
         runtime = SimpleNamespace(
             session_name="renamed-aw-session",
             workspace="/work/project",
-            tmux_prefix=["tmux", "-L", "agent-window"],
         )
         failed = SimpleNamespace(returncode=1, stdout="", stderr="tmux unavailable")
 

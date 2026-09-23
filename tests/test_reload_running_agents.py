@@ -30,8 +30,7 @@ class ReloadRunningAgentsHandoffTests(unittest.TestCase):
             rt = runtime_module.ChatRuntime(
                 port=1,
                 workspace="/work/project",
-                tmux_socket="",
-                hub_port=1,
+                    hub_port=1,
                 repo_root="/tmp",
                 initial_running_agents=["claude", "codex"],
             )
@@ -48,8 +47,7 @@ class ReloadRunningAgentsHandoffTests(unittest.TestCase):
             rt = runtime_module.ChatRuntime(
                 port=1,
                 workspace="/work/project",
-                tmux_socket="",
-                hub_port=1,
+                    hub_port=1,
                 repo_root="/tmp",
             )
         self.assertEqual(rt._agent_running, set())

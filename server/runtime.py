@@ -42,7 +42,6 @@ from .session_state import (
     wait_for_session_state_change as _wait_for_session_state_change_impl,
 )
 from pane_trace import trace_content as _trace_content_impl
-from backend_core.tmux.window import tmux_prefix_args
 from .session_binding import WorkspaceSessionBinding
 
 
@@ -57,7 +56,6 @@ class ChatRuntime:
         *,
         port: int,
         workspace: str,
-        tmux_socket: str,
         hub_port: int,
         repo_root: Path | str,
         initial_running_agents: list[str] | None = None,
@@ -65,11 +63,9 @@ class ChatRuntime:
         self._session_binding = WorkspaceSessionBinding(workspace)
         self.port = int(port)
         self.workspace = self._session_binding.workspace
-        self.tmux_socket = tmux_socket
         self.hub_port = int(hub_port)
         self.repo_root = Path(repo_root).resolve()
         self.server_instance = uuid.uuid4().hex
-        self.tmux_prefix = tmux_prefix_args(self.tmux_socket) if self.tmux_socket else ["tmux"]
         self.tmux_session_name = _resolve_tmux_session_name_impl(self) or ""
         self.session_is_active = bool(self.tmux_session_name)
         self._agent_running = set(initial_running_agents or [])
@@ -254,10 +250,7 @@ class ChatRuntime:
             return {}
         return {
             pane.name: pane.pane_id
-            for pane in _agent_topology_impl(
-                self.tmux_prefix,
-                self.tmux_session_name,
-            )
+            for pane in _agent_topology_impl(self.tmux_session_name)
         }
 
     def pane_id_for_agent(self, agent_name: str) -> str:
@@ -266,7 +259,7 @@ class ChatRuntime:
     def pane_id_for_terminal(self) -> str:
         if not self.session_is_active:
             return ""
-        return _terminal_window_pane_id_impl(self.tmux_prefix, self.tmux_session_name)
+        return _terminal_window_pane_id_impl(self.tmux_session_name)
 
     def pane_id_for_control_target(self, target: str) -> str:
         return self.pane_id_for_terminal() if target == "terminal" else self.pane_id_for_agent(target)

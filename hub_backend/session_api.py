@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from backend_core.access.session_meta import read_session_meta, session_workspace_claims
 from backend_core.access.settings import workspace_chat_port
 from hub_backend.chat_supervisor import ensure_chat_server
-from hub_backend.session_query import active_session_records_query, archived_session_records
+from hub_backend.session_query import live_sessions_query
 
 
 def parse_chat_port(segment: str) -> int | None:
@@ -34,42 +35,30 @@ def _chat_target(hub, workspace: str, *, session_is_active: bool) -> dict:
     )
     if not ok:
         return {"status": "error", "detail": detail}
-    return {
-        "status": "ok",
-        "chat_port": chat_port,
-        "workspace": workspace,
-        "session_is_active": session_is_active,
-    }
+    return {"status": "ok", "chat_port": chat_port}
 
 
 def resolve_session_chat_target(hub, session_name: str) -> dict:
-    query = active_session_records_query(hub)
-    if session_name in query.records:
-        record = query.records[session_name]
-        workspace = record["workspace"]
-        return _chat_target(hub, workspace, session_is_active=True)
-    if query.state == "unhealthy":
-        return {"status": "unhealthy", "detail": query.detail}
-    archived = archived_session_records(query.non_archived_names)
-    record = archived.get(session_name)
-    if not record:
+    live = live_sessions_query(hub)
+    if session_name in live.workspaces:
+        return _chat_target(hub, live.workspaces[session_name], session_is_active=True)
+    if live.state == "unhealthy":
+        return {"status": "unhealthy", "detail": live.detail}
+    try:
+        workspace = read_session_meta(session_name)["workspace"]
+    except FileNotFoundError:
         return {"status": "missing"}
-    workspace = record["workspace"]
     return _chat_target(hub, workspace, session_is_active=False)
 
 
 def resolve_session_chat_target_by_port(hub, chat_port: int) -> dict:
-    port = int(chat_port)
-    query = active_session_records_query(hub)
-    for record in query.records.values():
-        workspace = record["workspace"]
-        if workspace_chat_port(workspace) == port:
+    live = live_sessions_query(hub)
+    for name, workspace in session_workspace_claims().values():
+        if workspace_chat_port(workspace) != chat_port:
+            continue
+        if name in live.workspaces:
             return _chat_target(hub, workspace, session_is_active=True)
-    if query.state == "unhealthy":
-        return {"status": "unhealthy", "detail": query.detail}
-    archived = archived_session_records(query.non_archived_names)
-    for record in archived.values():
-        workspace = record["workspace"]
-        if workspace_chat_port(workspace) == port:
-            return _chat_target(hub, workspace, session_is_active=False)
+        if live.state == "unhealthy":
+            return {"status": "unhealthy", "detail": live.detail}
+        return _chat_target(hub, workspace, session_is_active=False)
     return {"status": "missing"}

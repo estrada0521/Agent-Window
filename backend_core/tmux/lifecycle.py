@@ -4,15 +4,16 @@ import os
 import subprocess
 
 from backend_core.agents.executables import agent_launch_cmd
+from backend_core.tmux import TMUX
 from backend_core.tmux.process_cleanup import cleanup_target_process_groups
 
 
 def _respawn_agent_pane(runtime, pane_id: str, command: str) -> tuple[bool, str]:
     shell = os.environ.get("SHELL") or "/bin/zsh"
-    cleanup_target_process_groups(target=pane_id, tmux_prefix=runtime.tmux_prefix)
+    cleanup_target_process_groups(target=pane_id)
     respawn_res = subprocess.run(
         [
-            *runtime.tmux_prefix,
+            *TMUX,
             "respawn-pane",
             "-k",
             "-t",
@@ -50,7 +51,7 @@ def restart_agent_pane(runtime, agent_name: str) -> tuple[bool, str]:
         return False, detail or f"failed to restart {agent_name}"
     _remove_agent_binding(runtime, agent_name)
     subprocess.run(
-        [*runtime.tmux_prefix, "select-pane", "-t", pane_id, "-T", agent_name],
+        [*TMUX, "select-pane", "-t", pane_id, "-T", agent_name],
         capture_output=True,
         check=False,
     )

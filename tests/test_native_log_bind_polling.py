@@ -31,7 +31,6 @@ def _runtime(has_log_binding):
         rt = runtime_module.ChatRuntime(
             port=1,
             workspace="/work/project",
-            tmux_socket="",
             hub_port=1,
             repo_root="/tmp",
         )

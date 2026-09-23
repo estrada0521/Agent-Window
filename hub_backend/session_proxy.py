@@ -3,7 +3,6 @@ from __future__ import annotations
 from urllib.parse import urlparse
 
 from backend_core.net import http_proxy
-from hub_backend.chat_supervisor import ensure_chat_server
 from hub_backend.server_helpers import format_chat_url
 from hub_backend.session_api import split_chat_proxy_path, resolve_session_chat_target_by_port
 
@@ -52,8 +51,6 @@ def proxy_chat_session(handler, hub, method: str) -> None:
         handler.send_response(404)
         handler.end_headers()
         return
-    workspace = resolved["workspace"]
-    session_is_active = resolved["session_is_active"]
     body = _read_body(handler, method)
     forwarded_prefix = format_chat_url(chat_port, "/").rstrip("/")
     headers = http_proxy.forward_headers(
@@ -61,14 +58,6 @@ def proxy_chat_session(handler, hub, method: str) -> None:
         host=handler.headers.get("Host", "127.0.0.1"),
         forwarded_prefix=forwarded_prefix,
     )
-    ok, chat_port, detail = ensure_chat_server(
-        hub,
-        expected_active=session_is_active,
-        workspace=workspace,
-    )
-    if not ok:
-        _send_text(handler, 500, f"Failed to start chat on port {chat_port}: {detail}")
-        return
     upstream_suffix = suffix + (f"?{parsed.query}" if parsed.query else "")
     upstream = f"http://127.0.0.1:{chat_port}{upstream_suffix}"
     try:

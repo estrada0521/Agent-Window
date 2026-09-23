@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 
+from backend_core.tmux import TMUX
 from message_delivery.paste import deliver_text_to_pane
 
 
@@ -10,7 +11,7 @@ def deliver_message(self, targets: list[str], message: str) -> list[str]:
 
     def run_tmux(args):
         return subprocess.run(
-            [*self.tmux_prefix, *args],
+            [*TMUX, *args],
             capture_output=True,
             text=True,
             check=False,

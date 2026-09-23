@@ -153,7 +153,6 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
             session_name=session_name,
             workspace=resolved_workspace,
             agents=[],
-            tmux_socket=ctx["hub"].tmux_socket,
             repo_root=ctx["hub"].repo_root,
         )
         ok, chat_port, detail = ensure_chat_server(

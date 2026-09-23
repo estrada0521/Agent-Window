@@ -23,8 +23,9 @@ from hub_backend.presentation.hub.header_assets import (
     render_page_header,
 )
 from hub_backend.session_query import (
-    active_session_records_query,
+    active_session_records,
     archived_session_records,
+    live_sessions_query,
 )
 
 from hub_backend.branding import APP_DISPLAY_NAME
@@ -58,7 +59,6 @@ _initialized = False
 repo_root = Path()
 script_path = Path()
 port = 0
-tmux_socket = ""
 hub = None
 restart_lock = threading.Lock()
 restart_pending = False
@@ -68,23 +68,21 @@ hub_server = None
 
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
-    global repo_root, script_path, port, tmux_socket, hub
+    global repo_root, script_path, port, hub
     global restart_pending, hub_server, _PWA_STATIC_DIR
 
     if _initialized:
         return
 
     args = list(sys.argv[1:] if argv is None else argv)
-    if len(args) != 3:
-        raise SystemExit(
-            "usage: python -m hub_backend.hub_server <repo_root> <script_path> <tmux_socket>"
-        )
+    if len(args) != 2:
+        raise SystemExit("usage: python -m hub_backend.hub_server <repo_root> <script_path>")
 
-    root_arg, script_arg, tmux_socket = args
+    root_arg, script_arg = args
     repo_root = Path(root_arg).resolve()
     script_path = Path(script_arg).resolve()
     port = int((repo_root / "hub-port").read_text().strip())
-    hub = HubRuntime(repo_root, tmux_socket, hub_port=port)
+    hub = HubRuntime(repo_root, hub_port=port)
     restart_pending, hub_server = False, None
     _PWA_STATIC_DIR = repo_root / "apps" / "shared" / "pwa"
 
@@ -96,7 +94,7 @@ def queue_hub_restart():
     with restart_lock:
         if restart_pending:
             return False, "restart already pending", False
-        cleanup_detail = stop_inactive_chat_servers(hub)
+        cleanup_detail = stop_inactive_chat_servers()
         if cleanup_detail:
             return False, cleanup_detail, False
         restart_pending = True
@@ -510,16 +508,16 @@ class Handler(BaseHTTPRequestHandler):
         self._send_html(200, apply_color_tokens(page))
 
     def _get_sessions(self, _parsed):
-        query = active_session_records_query(hub)
-        active_map = query.records
-        active = []
-        for record in active_map.values():
-            active.append({
+        live = live_sessions_query(hub)
+        active = [
+            {
                 "name": record["name"],
                 "latest_message_sender": record["latest_message_sender"],
                 "latest_message_preview": record["latest_message_preview"],
                 "latest_message_revision": record["latest_message_revision"],
-            })
+            }
+            for record in active_session_records(live)
+        ]
         archived = [
             {
                 "name": record["name"],
@@ -528,13 +526,13 @@ class Handler(BaseHTTPRequestHandler):
                 "latest_message_revision": record["latest_message_revision"],
                 "has_agents": bool(record["agents"]),
             }
-            for record in archived_session_records(query.non_archived_names).values()
+            for record in archived_session_records(live)
         ]
         self._send_json(200, {
             "active_sessions": active,
             "archived_sessions": archived,
-            "tmux_state": query.state,
-            "tmux_detail": query.detail,
+            "tmux_state": live.state,
+            "tmux_detail": live.detail,
         })
 
     def _get_session_messages_events(self, _parsed):

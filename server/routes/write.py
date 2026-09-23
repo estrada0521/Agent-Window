@@ -8,7 +8,7 @@ from urllib.parse import unquote as url_unquote
 
 from backend_core.access.settings import workspace_upload_dir
 from backend_core.tmux.control import add_agent, remove_agent
-from backend_core.tmux.window import tmux_prefix_args
+from backend_core.tmux import TMUX, TMUX_SOCKET_NAME
 from shortcut_command.execute import run_shortcut_command
 
 _MAX_UPLOAD_BYTES = 100 * 1024 * 1024
@@ -66,7 +66,7 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         return
     runtime = ctx["runtime"]
     try:
-        instance = add_agent(session_name=ctx["session_name"], agent=agent, tmux_socket=runtime.tmux_socket)
+        instance = add_agent(session_name=ctx["session_name"], agent=agent)
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
@@ -89,7 +89,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         return
     runtime = ctx["runtime"]
     try:
-        instance = remove_agent(session_name=ctx["session_name"], agent=agent, tmux_socket=runtime.tmux_socket)
+        instance = remove_agent(session_name=ctx["session_name"], agent=agent)
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
@@ -161,7 +161,7 @@ def _post_delete_upload(handler, _parsed, ctx) -> None:
     handler._send_json(200, {"ok": True})
 
 
-def _switch_front_terminal_client(prefix: list[str], tmux_name: str) -> bool:
+def _switch_front_terminal_client(tmux_name: str) -> bool:
     terminal_tty = subprocess.run(
         ["osascript", "-e", 'tell application "Terminal" to get tty of selected tab of front window'],
         capture_output=True,
@@ -172,7 +172,7 @@ def _switch_front_terminal_client(prefix: list[str], tmux_name: str) -> bool:
     if terminal_tty.returncode != 0 or not tty:
         return False
     clients = subprocess.run(
-        [*prefix, "list-clients", "-F", "#{client_tty}"],
+        [*TMUX, "list-clients", "-F", "#{client_tty}"],
         capture_output=True,
         text=True,
         check=False,
@@ -180,7 +180,7 @@ def _switch_front_terminal_client(prefix: list[str], tmux_name: str) -> bool:
     if clients.returncode != 0 or tty not in {(line or "").strip() for line in (clients.stdout or "").splitlines()}:
         return False
     switched = subprocess.run(
-        [*prefix, "switch-client", "-c", tty, "-t", tmux_name],
+        [*TMUX, "switch-client", "-c", tty, "-t", tmux_name],
         capture_output=True,
         text=True,
         check=False,
@@ -233,22 +233,21 @@ def _open_terminal(
             handler._send_json(404, {"ok": False, "error": f"pane not found for {agent}"})
             return
         if pane_id:
-            prefix = tmux_prefix_args(ctx["tmux_socket"])
             win_res = subprocess.run(
-                [*prefix, "display-message", "-p", "-t", pane_id, "#{window_id}"],
+                [*TMUX, "display-message", "-p", "-t", pane_id, "#{window_id}"],
                 capture_output=True, text=True, check=False,
             )
             window_id = (win_res.stdout or "").strip()
             if window_id:
                 subprocess.run(
-                    [*prefix, "select-window", "-t", window_id],
+                    [*TMUX, "select-window", "-t", window_id],
                     capture_output=True, check=False,
                 )
             subprocess.run(
-                [*prefix, "select-pane", "-t", pane_id],
+                [*TMUX, "select-pane", "-t", pane_id],
                 capture_output=True, check=False,
             )
-            if _switch_front_terminal_client(prefix, tmux_name):
+            if _switch_front_terminal_client(tmux_name):
                 subprocess.Popen(
                     ["osascript", "-e", 'tell application "Terminal" to activate'],
                     stdout=subprocess.DEVNULL,
@@ -257,7 +256,7 @@ def _open_terminal(
                 _ok()
                 return
             clients_res = subprocess.run(
-                [*prefix, "list-clients", "-t", tmux_name, "-F", "#{client_tty}"],
+                [*TMUX, "list-clients", "-t", tmux_name, "-F", "#{client_tty}"],
                 capture_output=True, text=True, check=False,
             )
             if clients_res.returncode != 0:
@@ -274,13 +273,11 @@ def _open_terminal(
                 _ok()
                 return
     try:
-        prefix = tmux_prefix_args(ctx["tmux_socket"])
-        socket_flag = prefix[1]
         cols, rows = 200, 40
         try:
             size_result = subprocess.run(
                 [
-                    *prefix,
+                    *TMUX,
                     "display-message",
                     "-p",
                     "-t",
@@ -302,8 +299,8 @@ def _open_terminal(
         except Exception:
             pass
         attach_cmd = (
-            f"env -u TMUX -u TMUX_PANE tmux {socket_flag} "
-            f"{shlex.quote(ctx['tmux_socket'])} attach-session -t {shlex.quote(tmux_name)}"
+            f"env -u TMUX -u TMUX_PANE tmux -L {TMUX_SOCKET_NAME} "
+            f"attach-session -t {shlex.quote(tmux_name)}"
         )
         apple_script = (
             f'tell application "Terminal"\n'

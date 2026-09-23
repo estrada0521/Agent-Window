@@ -12,11 +12,10 @@ class TmuxIdentityTests(unittest.TestCase):
     def test_tmux_allocates_its_own_opaque_session_name(self) -> None:
         created = SimpleNamespace(returncode=0, stdout="7\n", stderr="")
         with patch("backend_core.tmux.control._run", return_value=created) as run:
-            tmux_name = _create_tmux_session(["tmux", "-L", "dummy"], Path("/workspace/project"))
+            tmux_name = _create_tmux_session(Path("/workspace/project"))
 
         self.assertEqual(tmux_name, "7")
-        prefix, args = run.call_args.args
-        self.assertEqual(prefix, ["tmux", "-L", "dummy"])
+        (args,) = run.call_args.args
         self.assertIn("-P", args)
         self.assertEqual(args[args.index("-F") + 1], "#{session_name}")
         self.assertNotIn("-s", args)

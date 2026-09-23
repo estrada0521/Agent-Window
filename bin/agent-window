@@ -24,7 +24,6 @@ for _cmd in python3 tmux; do
   fi
 done
 
-TMUX_SOCKET_NAME="$(resolve_tmux_socket_name)"
 SESSION_NAME=""
 WORKSPACE="$PWD"
 CONTEXT_JSON=0
@@ -56,7 +55,7 @@ done
 
 WORKSPACE="$(cd "$WORKSPACE" && pwd)"
 
-_context_args=(context --workspace "$WORKSPACE" --tmux-socket "$TMUX_SOCKET_NAME")
+_context_args=(context --workspace "$WORKSPACE")
 [[ -n "$SESSION_NAME" ]] && _context_args+=(--session "$SESSION_NAME")
 [[ "$CONTEXT_JSON" -eq 1 ]] && _context_args+=(--json)
 session_control "${_context_args[@]}"

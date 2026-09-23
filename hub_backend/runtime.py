@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from backend_core.tmux.window import tmux_prefix_args
+from backend_core.tmux import TMUX
 from backend_core.tmux.resolve import normalize_workspace
 
 
@@ -20,11 +20,9 @@ class TmuxRunResult:
 
 
 class HubRuntime:
-    def __init__(self, repo_root: Path | str, tmux_socket: str = "", hub_port: int = 0):
+    def __init__(self, repo_root: Path | str, hub_port: int):
         self.repo_root = Path(repo_root).resolve()
-        self.tmux_socket = tmux_socket
-        self.hub_port = int(hub_port or 0)
-        self.tmux_prefix = tmux_prefix_args(tmux_socket) if tmux_socket else ["tmux"]
+        self.hub_port = hub_port
         self._launch_locks = {}
         self._launch_locks_master = threading.Lock()
         self._session_messages_condition = threading.Condition()
@@ -55,7 +53,7 @@ class HubRuntime:
     def tmux_run(self, args, timeout=2) -> TmuxRunResult:
         try:
             res = subprocess.run(
-                [*self.tmux_prefix, *args],
+                [*TMUX, *args],
                 capture_output=True,
                 text=True,
                 timeout=timeout,

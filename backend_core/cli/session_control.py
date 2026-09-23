@@ -7,11 +7,6 @@ import sys
 
 from backend_core.access.session_meta import find_session_for_workspace
 from backend_core.tmux.control import SessionControlError, describe_session
-from backend_core.tmux.topology import default_tmux_socket_name
-
-
-def _socket(value: str) -> str:
-    return (value or "").strip() or os.environ.get("AGENT_WINDOW_TMUX_SOCKET", "") or default_tmux_socket_name()
 
 
 def _format_panes(panes: dict) -> list[str]:
@@ -70,11 +65,9 @@ def main(argv: list[str] | None = None) -> int:
     context_cmd = sub.add_parser("context")
     context_cmd.add_argument("--session", default="")
     context_cmd.add_argument("--workspace", default="")
-    context_cmd.add_argument("--tmux-socket", default="")
     context_cmd.add_argument("--json", action="store_true")
 
     args = parser.parse_args(argv)
-    socket_name = _socket(getattr(args, "tmux_socket", ""))
     try:
         if args.cmd == "context":
             workspace_hint = (args.workspace or "").strip() or os.getcwd()
@@ -82,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
             if not session_name:
                 print("No agent-window session found for this workspace; specify --session.", file=sys.stderr)
                 return 1
-            info = describe_session(session_name, tmux_socket=socket_name)
+            info = describe_session(session_name)
             print(json.dumps(info, ensure_ascii=False) if args.json else format_context_text(info))
     except SessionControlError as exc:
         print(str(exc), file=sys.stderr)

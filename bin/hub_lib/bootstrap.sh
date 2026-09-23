@@ -16,10 +16,6 @@ for _cmd in python3 tmux; do
   fi
 done
 
-# shellcheck source=/dev/null
-source "$REPO_ROOT/bin/lib/tmux_session.sh"
-TMUX_SOCKET_NAME="$(resolve_tmux_socket_name)"
-
 usage() {
   cat <<'EOF'
 Usage: agent-index

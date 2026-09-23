@@ -4,14 +4,13 @@ import logging
 import subprocess
 from typing import Any, Protocol
 
+from backend_core.tmux import TMUX
 from message_delivery.paste import deliver_text_to_pane
 from shortcut_command.catalog import PANE_SINGLE_CONTROL_MESSAGES, PANE_TEXT_MACROS
 from shortcut_command.parsing import parse_pane_direct_command
 
 
 class ShortcutControlRuntime(Protocol):
-    tmux_prefix: list[str]
-
     def restart_agent_pane(self, agent: str) -> tuple[bool, str]: ...
 
     def pane_id_for_control_target(self, target: str) -> str | None: ...
@@ -34,7 +33,7 @@ def try_deliver_shortcut_control(
     control_targets = [item.strip() for item in target.split(",") if item.strip()]
     def run_tmux(args):
         return subprocess.run(
-            [*rt.tmux_prefix, *args],
+            [*TMUX, *args],
             capture_output=True,
             check=False,
         )
@@ -56,7 +55,7 @@ def try_deliver_shortcut_control(
                 tmux_key = {"up": "Up", "down": "Down", "left": "Left", "right": "Right"}[pane_direct["name"]]
                 for _ in range(pane_direct["repeat"]):
                     result = subprocess.run(
-                        [*rt.tmux_prefix, "send-keys", "-t", pane_id, tmux_key],
+                        [*TMUX, "send-keys", "-t", pane_id, tmux_key],
                         capture_output=True,
                         check=False,
                     )
@@ -66,7 +65,7 @@ def try_deliver_shortcut_control(
                 continue
             tmux_key = {"esc": "Escape", "ctrlc": "C-c", "enter": "Enter"}[message]
             result = subprocess.run(
-                [*rt.tmux_prefix, "send-keys", "-t", pane_id, tmux_key],
+                [*TMUX, "send-keys", "-t", pane_id, tmux_key],
                 capture_output=True,
                 check=False,
             )

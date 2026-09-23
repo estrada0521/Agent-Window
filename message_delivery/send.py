@@ -3,7 +3,6 @@ from __future__ import annotations
 import http.client
 import json
 import os
-import re
 import subprocess
 import sys
 import time
@@ -16,7 +15,7 @@ from backend_core.agents.registry import ALL_AGENT_NAMES
 from backend_core.access.files import append_jsonl_entry
 from backend_core.access.session_meta import find_session_for_workspace
 from backend_core.tmux.session import AgentPane, parse_agent_topology
-from backend_core.tmux.topology import default_tmux_socket_name
+from backend_core.tmux import TMUX_SOCKET_NAME
 from message_delivery.paste import deliver_text_to_pane
 
 
@@ -33,30 +32,13 @@ class DeliveryTarget:
     pane_id: str
 
 
-def tmux_socket_from_env(env: dict[str, str]) -> str:
-    explicit = (env.get("AGENT_WINDOW_TMUX_SOCKET") or "").strip()
-    if explicit:
-        return explicit
-    tmux_env = (env.get("TMUX") or "").strip()
-    if tmux_env:
-        socket_path = tmux_env.split(",", 1)[0]
-        if re.match(r"^/(private/)?tmp/tmux-[^/]+/.+$", socket_path):
-            return Path(socket_path).name
-        return socket_path
-    return default_tmux_socket_name()
-
 class TmuxClient:
-    def __init__(self, tmux_socket_name: str, env: dict[str, str]):
-        self.tmux_socket_name = tmux_socket_name
+    def __init__(self, socket_path: str, env: dict[str, str]):
+        self.socket_path = socket_path
         self.env = env
 
-    def _prefix(self) -> list[str]:
-        if "/" in self.tmux_socket_name:
-            return ["tmux", "-S", self.tmux_socket_name]
-        return ["tmux", "-L", self.tmux_socket_name]
-
     def run(self, args: list[str]) -> subprocess.CompletedProcess[str]:
-        cmd = [*self._prefix(), *args]
+        cmd = ["tmux", "-S", self.socket_path, *args]
         try:
             return subprocess.run(
                 cmd,
@@ -79,10 +61,10 @@ class AgentSendRuntime:
         tmux_context = (self.env.get("TMUX") or "").strip()
         if not tmux_context:
             raise AgentSendError("agent-send must run inside an active tmux pane.")
-        self.tmux_socket_name = tmux_context.split(",", 1)[0]
-        if Path(self.tmux_socket_name).name != default_tmux_socket_name():
+        socket_path = tmux_context.split(",", 1)[0]
+        if Path(socket_path).name != TMUX_SOCKET_NAME:
             raise AgentSendError("agent-send must run inside an Agent Window tmux pane.")
-        self.tmux = TmuxClient(self.tmux_socket_name, self.env)
+        self.tmux = TmuxClient(socket_path, self.env)
         self.all_agents = list(ALL_AGENT_NAMES)
         self._tmux_session_name: str | None = None
 
