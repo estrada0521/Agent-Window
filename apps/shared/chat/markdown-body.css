@@ -73,7 +73,7 @@
     }
 
     .md-body details {
-      margin: 0 0 var(--prose-block-rhythm);
+      margin: 0.75em 0;
     }
 
     .md-body summary {

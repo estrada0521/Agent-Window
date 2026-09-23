@@ -37,6 +37,9 @@ Builds the Tauri App, saves it to `/Applications/Agent Window.app`, and launches
 
 `New Session` picks a workspace and starts.
 
+<details>
+<summary>Actions</summary>
+
 | Action | Effect | Note |
 |---|---|---|
 | Archive | Ends the tmux session | Log stays |
@@ -45,6 +48,8 @@ Builds the Tauri App, saves it to `/Applications/Agent Window.app`, and launches
 | Rename | Changes the session name | |
 | Change Workspace | Changes the workspace | Archived only |
 | Reset Agents | Clears the saved Agent set | The one used by Revive |
+
+</details>
 
 ## Agent
 
@@ -58,7 +63,8 @@ The `O` button opens the input field.
 
 `@` searches files in the workspace. Attached files are saved to `<workspace>/.agent-window/uploads/`, and their path is passed to the Agent as text.
 
-Commands in the input field:
+<details>
+<summary>Commands in the input field</summary>
 
 | Command | Target | Effect | Note |
 | --- | --- | --- | --- |
@@ -67,6 +73,8 @@ Commands in the input field:
 | `/open-pane` | desktop | Opens the Agent's pane | Opens the terminal pane if none is selected |
 | `/nativelog` | desktop | Reveals the Agent's native log in Finder | |
 | `/terminal <text>` | mobile | Sends text to the terminal pane | |
+
+</details>
 
 An Agent can send to another Agent with `agent-send`. It's typed into the target's pane with a prefix like `[From: Claude]`.
 

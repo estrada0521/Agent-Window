@@ -37,7 +37,10 @@ Tauri Appをbuildし、`/Applications/Agent Window.app` に保存して起動す
 
 `New Session` でworkspaceを選んで始める。
 
-| 状態操作 | 内容 | 備考 |
+<details>
+<summary>状態操作</summary>
+
+| 操作 | 内容 | 備考 |
 |---|---|---|
 | Archive | tmux sessionを終了する | logは残る |
 | Revive | 保存したworkspaceとAgent構成でtmux sessionを作り直す | 会話の再開はCLIの `/resume` |
@@ -45,6 +48,8 @@ Tauri Appをbuildし、`/Applications/Agent Window.app` に保存して起動す
 | Rename | session名を変える | |
 | Change Workspace | workspaceを変える | Archive中のみ |
 | Reset Agents | 保存したAgent構成を消す | Revive用のもの |
+
+</details>
 
 ## Agent
 
@@ -58,7 +63,8 @@ CLI本体は `tmux window` から開ける。
 
 `@` でworkspace内のfileを検索する。添付fileは `<workspace>/.agent-window/uploads/` に保存され、そのpathがtextとしてAgentに渡る。
 
-入力欄のcommand:
+<details>
+<summary>入力欄のcommand</summary>
 
 | Command | 対象 | 内容 | 備考 |
 | --- | --- | --- | --- |
@@ -67,6 +73,8 @@ CLI本体は `tmux window` から開ける。
 | `/open-pane` | desktop | Agentのpaneを開く | 未選択ならterminal paneを開く |
 | `/nativelog` | desktop | Agentのnative logをFinderで表示する | |
 | `/terminal <text>` | mobile | terminal paneに文字列を送る | |
+
+</details>
 
 AgentはAgentに `agent-send` で送れる。宛先のpaneに `[From: Claude]` のようなprefix付きで入力される。
 
