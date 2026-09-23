@@ -700,30 +700,35 @@ fn show_file_context_menu(
         format!("{}action:openFile", NATIVE_MENU_PREFIX),
         "Open Current File",
     )
+    .accelerator("Cmd+O")
     .build(&app)
     .map_err(|err| err.to_string())?;
     let quick_look = MenuItemBuilder::with_id(
         format!("{}action:quickLook", NATIVE_MENU_PREFIX),
         "Quick Look",
     )
+    .accelerator("Cmd+Y")
     .build(&app)
     .map_err(|err| err.to_string())?;
     let reveal = MenuItemBuilder::with_id(
         format!("{}action:revealFileInFinder", NATIVE_MENU_PREFIX),
         "Reveal in Finder",
     )
+    .accelerator("Cmd+Alt+R")
     .build(&app)
     .map_err(|err| err.to_string())?;
     let copy_absolute = MenuItemBuilder::with_id(
         format!("{}action:copyAbsoluteFilePath", NATIVE_MENU_PREFIX),
         "Copy Absolute Path",
     )
+    .accelerator("Alt+Cmd+C")
     .build(&app)
     .map_err(|err| err.to_string())?;
     let copy_relative = MenuItemBuilder::with_id(
         format!("{}action:copyRelativeFilePath", NATIVE_MENU_PREFIX),
         "Copy Relative Path",
     )
+    .accelerator("Shift+Alt+Cmd+C")
     .build(&app)
     .map_err(|err| err.to_string())?;
     let mut builder = MenuBuilder::new(&app);
