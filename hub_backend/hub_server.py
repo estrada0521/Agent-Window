@@ -536,7 +536,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         if split_chat_proxy_path(parsed.path) is not None:
-            proxy_chat_session(self, hub, "GET")
+            proxy_chat_session(self, "GET")
             return
         if serve_pwa_file(self, parsed.path, _HUB_PWA_FILES):
             return
@@ -548,7 +548,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         if split_chat_proxy_path(parsed.path) is not None:
-            proxy_chat_session(self, hub, "POST")
+            proxy_chat_session(self, "POST")
             return
         if self._dispatch_route(parsed, self._POST_ROUTE_HANDLERS):
             return

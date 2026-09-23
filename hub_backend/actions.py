@@ -80,6 +80,7 @@ def get_revive_session(handler, parsed, ctx) -> None:
     if not ok:
         _fail(handler, ctx, fmt, 500, f"Failed to revive {session_name}: {detail}")
         return
+    ctx["hub"].publish_session_messages_changed()
     workspace = session_workspace(session_name)
     ok, chat_port, detail = ensure_chat_server(ctx["hub"], expected_active=True, workspace=workspace)
     if not ok:
@@ -101,6 +102,7 @@ def get_kill_session(handler, parsed, ctx) -> None:
     if not ok:
         _fail(handler, ctx, fmt, 500, f"Failed to kill {session_name}: {detail}")
         return
+    ctx["hub"].publish_session_messages_changed()
     _back_to_hub(handler, fmt, session_name, "killed")
 
 
@@ -117,6 +119,7 @@ def get_delete_archived_session(handler, parsed, ctx) -> None:
     if not ok:
         _fail(handler, ctx, fmt, 500, f"Failed to delete archived session {session_name}: {detail}")
         return
+    ctx["hub"].publish_session_messages_changed()
     _back_to_hub(handler, fmt, session_name, "deleted")
 
 
@@ -152,7 +155,7 @@ def post_restart_hub(handler, _parsed, ctx) -> None:
             ctx["release_restart_hold_fn"]()
 
 
-def post_rename_session(handler, _parsed, _ctx) -> None:
+def post_rename_session(handler, _parsed, ctx) -> None:
     data = handler._read_form()
     old_name = str(data.get("old_name") or "").strip()
     new_name = str(data.get("new_name") or "").strip()
@@ -173,10 +176,11 @@ def post_rename_session(handler, _parsed, _ctx) -> None:
     except OSError as exc:
         handler._send_json(409, {"ok": False, "error": str(exc)})
         return
+    ctx["hub"].publish_session_messages_changed()
     handler._send_json(200, {"ok": True, "old_name": old_name, "new_name": new_name})
 
 
-def post_change_session_workspace(handler, _parsed, _ctx) -> None:
+def post_change_session_workspace(handler, _parsed, ctx) -> None:
     data = handler._read_form()
     session_name = str(data.get("session") or "").strip()
     workspace = str(data.get("workspace") or "").strip()
@@ -185,10 +189,11 @@ def post_change_session_workspace(handler, _parsed, _ctx) -> None:
     except SessionMetaError as exc:
         handler._send_json(409, {"ok": False, "error": str(exc)})
         return
+    ctx["hub"].publish_session_messages_changed()
     handler._send_json(200, {"ok": True, "session": session_name, "workspace": workspace})
 
 
-def post_reset_session_agents(handler, _parsed, _ctx) -> None:
+def post_reset_session_agents(handler, _parsed, ctx) -> None:
     data = handler._read_form()
     session_name = str(data.get("session") or "").strip()
     try:
@@ -196,4 +201,5 @@ def post_reset_session_agents(handler, _parsed, _ctx) -> None:
     except SessionMetaError as exc:
         handler._send_json(409, {"ok": False, "error": str(exc)})
         return
+    ctx["hub"].publish_session_messages_changed()
     handler._send_json(200, {"ok": True, "session": session_name})

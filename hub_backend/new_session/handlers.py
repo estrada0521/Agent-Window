@@ -166,6 +166,7 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
+    ctx["hub"].publish_session_messages_changed()
     chat_url = ctx["format_chat_url_fn"](
         chat_port,
         f"/?ts={int(time.time() * 1000)}",

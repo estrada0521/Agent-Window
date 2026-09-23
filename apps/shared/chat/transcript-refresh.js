@@ -21,12 +21,14 @@
         if (!res.ok) throw new Error("messages unavailable");
         const data = await res.json();
         if (epoch !== refreshEpoch) return;
-        const nextServerInstance = data?.server_instance || "";
-        if (nextServerInstance && currentServerInstance && nextServerInstance !== currentServerInstance) {
+        if (data.server_instance !== currentServerInstance) {
           olderEntries = [];
           olderHasMore = false;
+          currentServerInstance = data.server_instance;
         }
-        if (nextServerInstance) currentServerInstance = nextServerInstance;
+        if (data.server_instance !== SERVER_INSTANCE_SEED) {
+          setStatus("chat server restarted; reload this page", true);
+        }
         latestPayloadData = data;
         if (!olderEntries.length) {
           olderHasMore = !!data?.has_older;

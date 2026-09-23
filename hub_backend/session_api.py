@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from backend_core.access.session_meta import read_session_meta, session_workspace_claims
-from backend_core.access.settings import workspace_chat_port
+from backend_core.access.session_meta import read_session_meta
 from hub_backend.chat_supervisor import ensure_chat_server
 from hub_backend.session_query import live_sessions_query
 
@@ -49,16 +48,3 @@ def resolve_session_chat_target(hub, session_name: str) -> dict:
     except FileNotFoundError:
         return {"status": "missing"}
     return _chat_target(hub, workspace, session_is_active=False)
-
-
-def resolve_session_chat_target_by_port(hub, chat_port: int) -> dict:
-    live = live_sessions_query(hub)
-    for name, workspace in session_workspace_claims().values():
-        if workspace_chat_port(workspace) != chat_port:
-            continue
-        if name in live.workspaces:
-            return _chat_target(hub, workspace, session_is_active=True)
-        if live.state == "unhealthy":
-            return {"status": "unhealthy", "detail": live.detail}
-        return _chat_target(hub, workspace, session_is_active=False)
-    return {"status": "missing"}

@@ -3,14 +3,21 @@
       reloadInFlight = true;
       if (document.body.classList.contains("right-panel-open")) closeDesktopRightPanel();
       document.documentElement.dataset.launchShell = "1";
-      let response;
+      let error = "";
       try {
-        response = await fetch("/reload-chat", { method: "POST", cache: "no-store" });
-      } catch (_) {}
-      if (!response?.ok) {
+        const response = await fetch("/reload-chat", { method: "POST", cache: "no-store" });
+        if (!response.ok) {
+          error = response.headers.get("Content-Type")?.includes("json")
+            ? (await response.json()).error
+            : await response.text();
+        }
+      } catch (err) {
+        error = err.message;
+      }
+      if (error) {
         reloadInFlight = false;
         releaseLaunchShellGate();
-        setStatus("reload failed", true);
+        setStatus(`reload failed: ${error}`, true);
         return;
       }
       const params = new URLSearchParams(window.location.search);
