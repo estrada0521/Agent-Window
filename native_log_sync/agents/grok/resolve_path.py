@@ -6,16 +6,6 @@ from pathlib import Path
 from native_log_sync.agents._shared.process_tree import process_tree
 
 
-def _normalized_path(value: str) -> str:
-    raw = str(value or "").strip()
-    if not raw:
-        return ""
-    try:
-        return str(Path(raw).expanduser().resolve())
-    except OSError:
-        return raw
-
-
 def _active_sessions(path: Path) -> list[dict]:
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
@@ -26,10 +16,7 @@ def _active_sessions(path: Path) -> list[dict]:
     return raw
 
 
-def resolve_grok_updates_path(runtime, pane_pid: str) -> str:
-    workspace = _normalized_path(str(runtime.workspace or ""))
-    if not workspace:
-        return ""
+def resolve_grok_updates_path(pane_pid: str) -> str:
     registry_path = Path.home() / ".grok" / "active_sessions.json"
     if not registry_path.is_file():
         return ""
@@ -38,8 +25,6 @@ def resolve_grok_updates_path(runtime, pane_pid: str) -> str:
     matches: list[str] = []
     for item in _active_sessions(registry_path):
         if str(item.get("pid") or "") not in pane_pids:
-            continue
-        if _normalized_path(str(item.get("cwd") or "")) != workspace:
             continue
         session_id = str(item.get("session_id") or "").strip()
         if session_id:
