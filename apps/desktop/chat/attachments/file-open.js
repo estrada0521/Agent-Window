@@ -1,4 +1,3 @@
-__CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
     const filePathFromLinkAnchor = (anchor) => {
       if (!anchor) return "";
       const fromDataset = String(anchor.dataset?.filepath || "").trim();

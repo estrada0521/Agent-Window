@@ -76,6 +76,16 @@ def _chat_markdown_frontmatter_js() -> str:
     return (repo_root / "apps/shared/chat/markdown-frontmatter.js").read_text(encoding="utf-8")
 
 
+def _chat_file_link_parse_js() -> str:
+    repo_root = Path(__file__).resolve().parents[2]
+    return (repo_root / "apps/shared/chat/file-link-parse.js").read_text(encoding="utf-8")
+
+
+def _chat_markdown_render_js() -> str:
+    repo_root = Path(__file__).resolve().parents[2]
+    return (repo_root / "apps/shared/chat/markdown-render.js").read_text(encoding="utf-8")
+
+
 def render_file_view(
     runtime,
     rel: str,
@@ -137,7 +147,7 @@ def render_file_view(
     code_top_offset = f"calc({preview_top_gap} + {preview_top_offset})" if embed else "0px"
     preview_bottom_offset = "calc(20px + env(safe-area-inset-bottom) + env(safe-area-inset-bottom))" if embed else "0px"
     base_css = (
-        f':root{{color-scheme: dark;--font-main:{MESSAGE_FONT};--font-code:{CODE_FONT};--file-preview-code-font:{FILE_PREVIEW_CODE_FONT};--file-preview-code-weight:{FILE_PREVIEW_LIGHT_CODE_WEIGHT if is_light_theme else FILE_PREVIEW_DARK_CODE_WEIGHT};--text-size:{resolved_text_size}px;--text-line-height:{resolved_line_height}px;--file-preview-code-size:{FILE_PREVIEW_CODE_TEXT_SIZE}px;--file-preview-code-line-height:{text_line_height_px(FILE_PREVIEW_CODE_TEXT_SIZE)}px;--body-weight:{"430" if is_light_theme else "300"};--tpad:{preview_top_offset};--code-tpad:{code_top_offset};--bpad:{preview_bottom_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
+        f':root{{color-scheme: {"light" if is_light_theme else "dark"};--font-main:{MESSAGE_FONT};--font-code:{CODE_FONT};--file-preview-code-font:{FILE_PREVIEW_CODE_FONT};--file-preview-code-weight:{FILE_PREVIEW_LIGHT_CODE_WEIGHT if is_light_theme else FILE_PREVIEW_DARK_CODE_WEIGHT};--text-size:{resolved_text_size}px;--text-line-height:{resolved_line_height}px;--file-preview-code-size:{FILE_PREVIEW_CODE_TEXT_SIZE}px;--file-preview-code-line-height:{text_line_height_px(FILE_PREVIEW_CODE_TEXT_SIZE)}px;--body-weight:{"430" if is_light_theme else "300"};--tpad:{preview_top_offset};--code-tpad:{code_top_offset};--bpad:{preview_bottom_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
         f"{font_face_css}"
         f"*{{box-sizing:border-box}}"
         f".view-container,.html-preview-text-wrap{{--text-size:var(--file-preview-code-size);--text-line-height:var(--file-preview-code-line-height)}}"
@@ -387,6 +397,8 @@ def render_file_view(
         markdown_preview_css = _chat_markdown_preview_css()
         markdown_typography_css = body_typography_css()
         markdown_frontmatter_js = _chat_markdown_frontmatter_js()
+        file_link_parse_js = _chat_file_link_parse_js()
+        markdown_render_js = _chat_markdown_render_js()
         initial_preview_theme = "light" if str((theme_palette or {}).get("theme") or "").lower() == "light" else "dark"
         dark_preview_fg_channels = TEXT_PRIMARY_MOBILE_DARK_CHANNELS.replace(" ", "")
         dark_preview_fg = f"rgb({dark_preview_fg_channels})"
@@ -490,19 +502,22 @@ const ensureKatexReady = async () => {{
   }})().catch(() => false);
   return katexLoadPromise;
 }};
-const __isExternalSrc = (src) => /^(https?:|data:|blob:|file:|\\/\\/)/i.test(src || "");
+const CHAT_BASE_PATH = __previewBasePath || "";
+{file_link_parse_js}
 const buildPreviewHref = (relPath) => {{
   const params = new URLSearchParams();
   params.set("path", String(relPath || ""));
   if (__previewEmbed) params.set("embed", "1");
   if (__previewBasePath) params.set("base_path", __previewBasePath);
   if (__previewAgentTextSize) params.set("agent_text_size", String(__previewAgentTextSize));
+  const theme = __root.getAttribute("data-preview-theme") || __root.getAttribute("data-theme") || "";
+  if (theme === "light" || theme === "dark") params.set("base_theme", theme);
   return `${{__fileBase}}/file-view?${{params.toString()}}`;
 }};
 const __normalizeMdPath = (baseRel, src) => {{
   const cleanSrc = String(src || "").trim();
-  if (!cleanSrc || __isExternalSrc(cleanSrc) || cleanSrc.startsWith("#")) return cleanSrc;
-  const withoutQuery = cleanSrc.split(/[?#]/, 1)[0];
+  if (!cleanSrc || isExternalHref(cleanSrc) || cleanSrc.startsWith("#")) return cleanSrc;
+  const withoutQuery = decodeLocalPathHref(cleanSrc.split(/[?#]/, 1)[0]);
   const normalizedBaseRel = String(baseRel || "").replaceAll("\\\\", "/");
   const baseIsAbsolute = normalizedBaseRel.startsWith("/");
   const srcIsAbsolute = withoutQuery.startsWith("/");
@@ -523,28 +538,53 @@ out.push(part);
   if (!normalized) return srcIsAbsolute || baseIsAbsolute ? "/" : "";
   return srcIsAbsolute || baseIsAbsolute ? `/${{normalized}}` : normalized;
 }};
-const __rewriteMarkdownLinks = (root) => {{
-  root.querySelectorAll("a[href]").forEach((anchor) => {{
+const __rewriteMarkdownPreviewHrefs = (root) => {{
+  root.querySelectorAll("a.local-file-link[href]").forEach((anchor) => {{
 const href = String(anchor.getAttribute("href") || "").trim();
-if (!href || href.startsWith("#") || __isExternalSrc(href)) return;
+if (!href || href.startsWith("#") || isExternalHref(href)) return;
+if (href.includes("/file-view?") || href.includes("/file-raw?")) return;
 const cutIndex = [href.indexOf("?"), href.indexOf("#")].filter((idx) => idx >= 0).sort((a, b) => a - b)[0] ?? -1;
 const pathPart = cutIndex >= 0 ? href.slice(0, cutIndex) : href;
 const suffix = cutIndex >= 0 ? href.slice(cutIndex) : "";
 const resolved = __normalizeMdPath(__mdRel, pathPart);
 if (!resolved) return;
+anchor.dataset.filepath = resolved;
 anchor.setAttribute("href", buildPreviewHref(resolved) + suffix);
   }});
 }};
+if (__previewEmbed) {{
+  document.addEventListener("click", (event) => {{
+    const anchor = event.target.closest?.("a.local-file-link[href]");
+    if (!anchor) return;
+    const path = String(anchor.dataset.filepath || pathFromLocalHref(anchor.getAttribute("href") || "") || "").trim();
+    if (!path) return;
+    event.preventDefault();
+    event.stopPropagation();
+    window.parent.postMessage({{ type: "agent-preview-open-file", path }}, window.location.origin);
+  }}, true);
+}}
 const escapeHtml = (value) => String(value || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 const __rewriteMarkdownImageSrcsInHtml = (html) => String(html || "").replace(/(<img\\b[^>]*\\bsrc\\s*=\\s*)("[^"]*"|'[^']*')/gi, (match, prefix, quoted) => {{
   const quote = quoted[0];
   const src = quoted.slice(1, -1);
-  if (!src || src.startsWith(__rawBase) || __isExternalSrc(src)) return match;
+  if (!src || src.startsWith(__rawBase) || isExternalHref(src)) return match;
   const resolved = __normalizeMdPath(__mdRel, src);
   if (!resolved) return match;
   return `${{prefix}}${{quote}}${{__rawBase}}${{encodeURIComponent(resolved)}}${{quote}}`;
 }}).replace(/<img\\b(?![^>]*\\bloading=)([^>]*)>/gi, '<img loading="lazy"$1>');
+const rewriteMarkdownHtml = (html) => __rewriteMarkdownImageSrcsInHtml(html);
 {markdown_frontmatter_js}
+{markdown_render_js}
+const applyPreviewDiffCode = (root) => {{
+  root.querySelectorAll("code.language-diff").forEach((codeEl) => {{
+    const raw = codeEl.textContent || "";
+    codeEl.innerHTML = raw.split("\\n").map((line) => {{
+      if (line.startsWith("+")) return `<span class="diff-add"><span class="diff-sign">+</span>${{escapeHtml(line.slice(1))}}</span>`;
+      if (line.startsWith("-")) return `<span class="diff-del"><span class="diff-sign">-</span>${{escapeHtml(line.slice(1))}}</span>`;
+      return escapeHtml(line);
+    }}).join("\\n");
+  }});
+}};
 const mathRenderOptions = {{
   delimiters: [
 {{left: "$$", right: "$$", display: true}},
@@ -554,93 +594,6 @@ const mathRenderOptions = {{
   ],
   ignoredClasses: ["no-math"],
   throwOnError: false
-}};
-const renderMarkdown = (text) => {{
-  if (typeof marked === "undefined") return "<pre>" + escapeHtml(text) + "</pre>";
-  try {{
-let frontmatterHtml = "";
-const frontmatter = extractFrontmatter(text);
-if (frontmatter) {{
-  const parsed = parseSimpleFrontmatter(frontmatter.yamlText);
-  if (Object.keys(parsed).length) {{
-    frontmatterHtml = frontmatterTableHtml(parsed);
-    text = frontmatter.body;
-  }}
-}}
-const mathBlocks = [];
-let placeholderCount = 0;
-const codeBlocks = [];
-let codeCount = 0;
-let processedText = String(text || "").replace(/(```[\\s\\S]*?```|`[^`\\n]+`)/g, (match) => {{
-  const id = `code-placeholder-${{codeCount++}}`;
-  codeBlocks.push({{ id, content: match }});
-  return `\\x00CODE:${{id}}\\x00`;
-}});
-processedText = processedText.replace(/(\\\\\\[[\\s\\S]+?\\\\\\]|\\\\\\([\\s\\S]+?\\\\\\)|\\$\\$[\\s\\S]+?\\$\\$|\\$[\\s\\S]+?\\$)/g, (match) => {{
-  const id = `math-placeholder-${{placeholderCount++}}`;
-  mathBlocks.push({{ id, content: match }});
-  return `<span class="MATH_SAFE_BLOCK" data-id="${{id}}"></span>`;
-}});
-processedText = processedText.replace(/\\x00CODE:(code-placeholder-\\d+)\\x00/g, (_, id) => {{
-  const block = codeBlocks.find((entry) => entry.id === id);
-  return block ? block.content : "";
-}});
-const tempDiv = document.createElement("div");
-tempDiv.innerHTML = __rewriteMarkdownImageSrcsInHtml(marked.parse(processedText, {{ breaks: true, gfm: true }}));
-if (typeof marked.lexer === "function") {{
-  const values = [];
-  const walk = (tokens) => {{
-    for (const token of tokens || []) {{
-      if (token.type === "list" && token.ordered) {{
-        for (const item of token.items || []) {{
-          const match = String(item.raw || "").match(/^\\s*(\\d{{1,9}})[.)]/);
-          values.push(match ? match[1] : "");
-          walk(item.tokens);
-        }}
-      }} else if (token.tokens) {{
-        walk(token.tokens);
-      }}
-    }}
-  }};
-  walk(marked.lexer(processedText, {{ breaks: true, gfm: true }}));
-  const items = tempDiv.querySelectorAll("ol > li");
-  if (values.length && values.length === items.length) {{
-    items.forEach((item, index) => {{
-      if (values[index]) item.setAttribute("value", values[index]);
-    }});
-  }}
-}}
-tempDiv.querySelectorAll(".MATH_SAFE_BLOCK").forEach((span) => {{
-  const block = mathBlocks.find((entry) => entry.id === span.dataset.id);
-  if (block) span.replaceWith(document.createTextNode(block.content));
-}});
-if (mathBlocks.length) {{
-  const marker = document.createElement("span");
-  marker.className = "math-render-needed";
-  marker.hidden = true;
-  tempDiv.prepend(marker);
-}}
-tempDiv.querySelectorAll("code.language-diff").forEach((codeEl) => {{
-  const raw = codeEl.textContent || "";
-  codeEl.innerHTML = raw.split("\\n").map((line) => {{
-    if (line.startsWith("+")) return `<span class="diff-add"><span class="diff-sign">+</span>${{escapeHtml(line.slice(1))}}</span>`;
-    if (line.startsWith("-")) return `<span class="diff-del"><span class="diff-sign">-</span>${{escapeHtml(line.slice(1))}}</span>`;
-    return escapeHtml(line);
-  }}).join("\\n");
-}});
-const copySvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-tempDiv.querySelectorAll("pre").forEach((pre) => {{
-  const wrap = document.createElement("div");
-  wrap.className = "code-block-wrap";
-  pre.parentNode.insertBefore(wrap, pre);
-  wrap.appendChild(pre);
-  wrap.insertAdjacentHTML("beforeend", `<button class="code-copy-btn" type="button" title="Copy">${{copySvg}}</button>`);
-}});
-if (frontmatterHtml) tempDiv.insertAdjacentHTML("afterbegin", frontmatterHtml);
-return tempDiv.innerHTML;
-  }} catch (_) {{
-return "<pre>" + escapeHtml(text) + "</pre>";
-  }}
 }};
 const ensureWideTables = (scope = document) => {{
   scope.querySelectorAll(".md-body table").forEach((table) => {{
@@ -722,10 +675,11 @@ window.addEventListener("message", (event) => {{
 }});
 const out = document.getElementById("out");
 out.innerHTML = renderMarkdown(__mdText);
-__rewriteMarkdownLinks(out);
+applyPreviewDiffCode(out);
+__rewriteMarkdownPreviewHrefs(out);
 ensureWideTables(out);
 renderMathInScope(out);
-applyPreviewTheme("dark");
+applyPreviewTheme({json.dumps(initial_preview_theme)});
 let __summaryTouch = null;
 const __clearSummaryPressed = () => {{
   out.querySelectorAll("summary.is-pressed").forEach((node) => node.classList.remove("is-pressed"));

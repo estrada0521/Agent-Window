@@ -16,9 +16,13 @@ def _between(text: str, start: str, end: str) -> str:
 
 class ChatRendererCoreTests(unittest.TestCase):
     def test_renderer_falls_back_to_plain_text_on_marked_failure(self) -> None:
-        base = (ROOT / "apps/shared/chat/base.js").read_text()
+        render_src = (ROOT / "apps/shared/chat/markdown-render.js").read_text()
         messages = (ROOT / "apps/shared/chat/runtime/messages.js").read_text()
-        render_markdown = _between(base, "    const renderMarkdownFallback =", "__CHAT_INCLUDE:file-icon-theme.js__")
+        render_markdown = _between(
+            render_src,
+            "    const renderMarkdownFallback =",
+            "    const renderMarkdownUnsafe =",
+        )
         build_message = _between(messages, "    const buildMsgHTML =", "    const updateMessageProjectionUI")
 
         script = f"""
@@ -36,6 +40,7 @@ let marked = {{ parse: (text) => `<p>${{text}}</p>`, lexer: () => [] }};
 const injectFileCards = (html) => html;
 const normalizeEscapedLineBreaks = (text) => String(text ?? "").replace(/\\\\n/g, "\\n");
 const escapeHtml = (value) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+const markdownEscapeHtml = escapeHtml;
 const stripSenderPrefix = (value) => value.replace(/^\\[From:\\s*[^\\]]+\\]\\s*/i, "");
 const copyIcon = "<svg></svg>";
 const checkIcon = "<svg></svg>";
@@ -61,6 +66,10 @@ const formatSystemMessageHtml = (message) => {{
 const stripUnsafeMarkup = () => {{}};
 const extractFrontmatter = () => null;
 const formatMessageTime = () => "";
+const renderMarkdownUnsafe = (text) => {{
+  if (typeof marked === "undefined") throw new Error("marked is unavailable");
+  return marked.parse(String(text ?? ""), {{ breaks: true, gfm: true }});
+}};
 {render_markdown}
 {build_message}
 

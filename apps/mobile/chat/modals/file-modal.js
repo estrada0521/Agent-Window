@@ -208,7 +208,7 @@
         wireMobileSheetSwipeBack(
           frame.contentDocument,
           () => sheetPreviewOpen(),
-          () => closeSheetPreview(),
+          () => popSheetPreview(),
           { ignore: ".table-scroll, .katex-display, pre, .code-scroll, .html-preview-text-scroll" },
         );
         blockHistoryEdgeSwipe(frame.contentDocument);
@@ -218,7 +218,6 @@
       };
       frame.src = fileViewHrefForPath(normalizedPath, { embed: true });
     };
-__CHAT_INCLUDE:../../../shared/chat/file-link-parse.js__
     const filePathFromLinkAnchor = (anchor) => {
       if (!anchor) return "";
       const fromDataset = String(anchor.dataset?.filepath || "").trim();

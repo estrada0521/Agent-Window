@@ -123,6 +123,8 @@
       text-decoration: none;
       -webkit-touch-callout: none;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .md-body :is(a.inline-file-link, a.local-file-link):has(> .inline-file-link-icon + code:last-child) {
@@ -169,12 +171,16 @@
     }
 
     html[data-theme="dark"] .md-body a.inline-file-link,
-    html[data-theme="dark"] .md-body a.local-file-link {
+    html[data-theme="dark"] .md-body a.local-file-link,
+    html[data-preview-theme="dark"] .md-body a.inline-file-link,
+    html[data-preview-theme="dark"] .md-body a.local-file-link {
       text-decoration: none;
     }
 
-    html[data-theme="dark"] .md-body a.inline-file-link code,
-    html[data-theme="dark"] .md-body a.local-file-link code {
+    html[data-theme="dark"] .md-body :is(a.inline-file-link, a.local-file-link):not(:has(> code)),
+    html[data-theme="dark"] .md-body :is(a.inline-file-link, a.local-file-link) > code,
+    html[data-preview-theme="dark"] .md-body :is(a.inline-file-link, a.local-file-link):not(:has(> code)),
+    html[data-preview-theme="dark"] .md-body :is(a.inline-file-link, a.local-file-link) > code {
       text-decoration: underline;
       text-decoration-thickness: clamp(0.5px, 0.0769em, 1px);
       text-decoration-color: color-mix(in srgb, var(--fg) 65%, transparent);

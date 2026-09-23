@@ -89,9 +89,9 @@ __CHAT_INCLUDE:../file-autocomplete.js__
     const decorateLocalFileLinks = (scope = document) => {
       if (!scope?.querySelectorAll) return;
       const candidates = [];
-      scope.querySelectorAll(".md-body a[href]").forEach((anchor) => {
-        if (!anchor) return;
-        if (anchor.classList.contains("inline-file-link")) return;
+      scope.querySelectorAll(".md-body a.local-file-link[href]").forEach((anchor) => {
+        if (!anchor || anchor.classList.contains("inline-file-link")) return;
+        if (anchor.dataset.filepath) return;
         const href = anchor.getAttribute("href") || "";
         const path = normalizeWorkspaceFilePath(pathFromLocalHref(href));
         if (!path) return;
@@ -103,17 +103,24 @@ __CHAT_INCLUDE:../file-autocomplete.js__
           if (!anchor.isConnected) return;
           const resolvedPath = resolved.get(path) || "";
           if (!resolvedPath) return;
-          anchor.classList.add("local-file-link");
           if (/^file:/i.test(href.trim())) anchor.dataset.fileLinkOpen = "editor";
           anchor.dataset.filepath = resolvedPath;
           anchor.dataset.ext = extFromPath(resolvedPath);
           if (!anchor.title) anchor.title = resolvedPath;
-          if (!anchor.querySelector("code") && anchor.childElementCount === 0) {
-            const label = document.createElement("code");
-            label.textContent = anchor.textContent || resolvedPath;
-            anchor.replaceChildren(label);
+          const labelText = (anchor.textContent || "").trim();
+          const baseName = (resolvedPath.split("/").pop() || resolvedPath).trim();
+          const pathLikeLabel = !labelText
+            || labelText === resolvedPath
+            || labelText === path
+            || labelText === baseName;
+          if (pathLikeLabel) {
+            if (!anchor.querySelector("code") && anchor.childElementCount === 0) {
+              const label = document.createElement("code");
+              label.textContent = labelText || resolvedPath;
+              anchor.replaceChildren(label);
+            }
+            appendInlineFileLinkIcon(anchor, resolvedPath);
           }
-          appendInlineFileLinkIcon(anchor, resolvedPath);
         });
       });
     };

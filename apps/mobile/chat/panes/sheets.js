@@ -426,7 +426,7 @@
     const handleRepoSheetBack = () => {
       if (!mobileSheet) return;
       if (sheetPreviewOpen()) {
-        closeSheetPreview();
+        popSheetPreview();
         return;
       }
       _repoGoToParentPath();
@@ -436,14 +436,16 @@
       setSharedSheetLeading(handleRepoSheetBack, "Go to parent directory", mobileSheetBackIcon);
       syncRepoSheetBackBtn();
     };
+    let _sheetPreviewStack = [];
     const applyPreviewChrome = (path) => {
       const filename = (displayAttachmentFilename(path) || path || "Preview").trim();
       sharedSheetTitleEl.replaceChildren(fileIconElement(path, {}, "sheet-title-file-icon"), filename);
       sharedSheetTitleEl.title = filename;
       sharedSheetTitleEl.classList.remove("git-sheet-detail-title", "git-sheet-title");
-      setSharedSheetLeading(() => closeSheetPreview(), "Back", mobileSheetBackIcon);
+      setSharedSheetLeading(() => popSheetPreview(), "Back", mobileSheetBackIcon);
     };
     const clearSheetPreview = ({ restoreChrome = true } = {}) => {
+      if (restoreChrome) _sheetPreviewStack = [];
       if (mobileSheet) {
         delete mobileSheet._previewPath;
         delete mobileSheet._previewExt;
@@ -458,6 +460,15 @@
     const closeSheetPreview = () => {
       if (!sheetPreviewOpen()) return;
       clearSheetPreview();
+    };
+    const popSheetPreview = () => {
+      if (!sheetPreviewOpen()) return;
+      const prev = _sheetPreviewStack.pop();
+      if (!prev?.path) {
+        closeSheetPreview();
+        return;
+      }
+      void openSheetPreview(prev.path, prev.ext, { kind: prev.kind, pushHistory: false });
     };
     const wireMobileSheetSwipeBack = (surface, canGoBack, goBack, { ignore = "" } = {}) => {
       if (!surface) return;
@@ -544,7 +555,7 @@
               || (sheetKind() === "git" && !!gitSession.detailContext)
               || (sheetKind() === "repo" && !!normalizeRepoPath(_repoBrowserPath)),
             () => {
-              if (sheetPreviewOpen()) closeSheetPreview();
+              if (sheetPreviewOpen()) popSheetPreview();
               else if (sheetKind() === "git") gitSession.closeDetail({ refreshList: gitSession.detailNeedsRefresh });
               else _repoGoToParentPath();
             },
@@ -554,7 +565,7 @@
       wireRepoPreviewControls(sharedSheetFooter);
       return true;
     };
-    const openSheetPreview = async (rawPath, ext, { kind } = {}) => {
+    const openSheetPreview = async (rawPath, ext, { kind, pushHistory = true } = {}) => {
       const targetKind = kind || sheetKind() || "repo";
       const path = targetKind === "repo"
         ? normalizeRepoPath(rawPath)
@@ -571,7 +582,22 @@
       closePaneTraceSheet({ immediate: true });
       setSheetKind(targetKind);
       if (!sheetIsOpen()) workspaceSheet.open();
-      if (sheetPreviewOpen()) clearSheetPreview({ restoreChrome: false });
+      if (sheetPreviewOpen()) {
+        if (
+          pushHistory
+          && mobileSheet._previewPath
+          && mobileSheet._previewPath !== path
+        ) {
+          _sheetPreviewStack.push({
+            path: mobileSheet._previewPath,
+            ext: mobileSheet._previewExt || fileExtForPath(mobileSheet._previewPath),
+            kind: sheetKind() || targetKind,
+          });
+        }
+        clearSheetPreview({ restoreChrome: false });
+      } else {
+        _sheetPreviewStack = [];
+      }
       const frame = sheetPreviewFrameEl();
       if (!frame) return;
       mobileSheet._previewPath = path;
@@ -590,6 +616,15 @@
         _repoBrowserPath = parentPath;
       }
     };
+    window.addEventListener("message", (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== "agent-preview-open-file") return;
+      const path = String(event.data.path || "").trim();
+      if (!path) return;
+      void openSheetPreview(path, extFromPath(path), {
+        kind: sheetKind() || "repo",
+      });
+    });
     const sheetListTopPlayPx = () => {
       const n = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mobile-sheet-list-top-play"));
       return Number.isFinite(n) ? n : 0;
