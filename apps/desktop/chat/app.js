@@ -354,8 +354,7 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
     const DP_PANEL_WIDTH_KEY = "agent_window_desktop_right_panel_width_at_default_text_size";
     const DP_PANEL_GAP = 0;
     const hasDesktopRightPanelOverlay = () => (
-      document.documentElement.dataset.tauriApp === "1"
-      && document.documentElement.dataset.hubIframeChat === "1"
+      document.documentElement.dataset.hubIframeChat === "1"
       && document.documentElement.dataset.mobile !== "1"
     );
     let dpPanelOpen = false;

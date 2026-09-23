@@ -371,6 +371,11 @@
       });
     })();
     _deskSettingsBtn && _deskSettingsBtn.addEventListener("click", () => { void openAppearanceMenu(); });
+    _deskThemeToggleBtn.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+      applyIncomingThemeDesktop(next);
+      localStorage.setItem(DESK_THEME_KEY, next);
+    });
     _deskReloadBtn && _deskReloadBtn.addEventListener("click", triggerDeskHubReload);
     window.addEventListener("resize", updateDeskChromeOverflow, { passive: true });
     updateDeskChromeOverflow();

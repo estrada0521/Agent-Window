@@ -20,6 +20,32 @@
     html[data-tauri-app="1"] body {
       background: transparent;
     }
+    html:not([data-tauri-app="1"]) {
+      --app-shell-height: calc(100dvh - var(--text-size, 13px) * 2);
+    }
+    html:not([data-tauri-app="1"]) body {
+      box-sizing: border-box;
+      padding-top: calc(var(--text-size, 13px) * 2);
+      background: var(--bg);
+    }
+    html:not([data-tauri-app="1"]) .shell {
+      box-sizing: border-box;
+      border-top: 1px solid rgba(0, 0, 0, 0.10);
+    }
+    html:not([data-tauri-app="1"])[data-theme="dark"] .shell {
+      border-top-color: rgba(255, 255, 255, 0.07);
+    }
+    html[data-tauri-app="1"] #deskThemeToggleBtn,
+    html:not([data-tauri-app="1"]) #deskSettingsBtn {
+      display: none;
+    }
+    #deskThemeToggleBtn .desk-theme-sun,
+    html[data-theme="light"] #deskThemeToggleBtn .desk-theme-moon {
+      display: none;
+    }
+    html[data-theme="light"] #deskThemeToggleBtn .desk-theme-sun {
+      display: block;
+    }
     html[data-tauri-app="1"][data-tauri-root-window="1"] body {
       margin: 0;
       padding: var(--tauri-window-pad-top) var(--tauri-window-edge-inset) var(--tauri-window-edge-inset);
