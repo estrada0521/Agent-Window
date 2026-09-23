@@ -402,6 +402,19 @@ def _post_files_exist(handler, _parsed, ctx) -> None:
     handler._send_json(200, result)
 
 
+def _post_file_image_dimensions(handler, _parsed, ctx) -> None:
+    data, err = _read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
+        return
+    paths = data.get("paths", [])
+    if not isinstance(paths, list):
+        handler._send_json(400, {"ok": False, "error": "paths must be a list"})
+        return
+    dimensions = ctx["file_runtime"].image_dimensions([str(path or "") for path in paths])
+    handler._send_json(200, dimensions)
+
+
 def _post_files_resolve(handler, _parsed, ctx) -> None:
     data, err = _read_json_body(handler)
     if err:
@@ -579,6 +592,7 @@ _POST_ROUTES = {
     "/open-finder": _post_open_finder,
     "/open-shell": _post_open_shell,
     "/files-exist": _post_files_exist,
+    "/file-image-dimensions": _post_file_image_dimensions,
     "/files-resolve": _post_files_resolve,
     "/open-file": _post_open_file,
     "/reveal-file": _post_reveal_file,

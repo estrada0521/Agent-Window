@@ -150,6 +150,43 @@ class FileRuntime:
                 result[rel] = False
         return result
 
+    def image_dimensions(self, paths: list[str]) -> dict[str, dict[str, int]]:
+        dimensions = {}
+        for rel in dict.fromkeys(paths):
+            if os.path.splitext(rel)[1].lower() not in self.IMAGE_EXTS:
+                continue
+            try:
+                full = self._resolve_path(rel)
+            except PermissionError:
+                continue
+            if not os.path.isfile(full):
+                continue
+            try:
+                probe = subprocess.run(
+                    ["/usr/bin/sips", "-g", "pixelWidth", "-g", "pixelHeight", full],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired:
+                continue
+            if probe.returncode:
+                continue
+            values = {}
+            for line in probe.stdout.splitlines():
+                key, separator, value = line.strip().partition(":")
+                if separator and key in ("pixelWidth", "pixelHeight"):
+                    try:
+                        values[key] = round(float(value.strip()))
+                    except ValueError:
+                        continue
+            width = values.get("pixelWidth", 0)
+            height = values.get("pixelHeight", 0)
+            if width > 0 and height > 0:
+                dimensions[rel] = {"width": width, "height": height}
+        return dimensions
+
     @classmethod
     def content_type_for_rel(cls, rel: str) -> str:
         ext = os.path.splitext(rel)[1].lower()

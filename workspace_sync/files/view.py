@@ -423,6 +423,7 @@ def render_file_view(
             f'html[data-preview-theme="light"]{{color-scheme:light;--bg-rgb:{light_preview_bg_channels};--bg:{light_preview_bg};--fg:{light_preview_fg};--fg-bold:{light_preview_fg_bold};--muted:{light_preview_muted};--icon-fg:{light_preview_fg};--icon-muted:{light_preview_muted};--icon-hover:{MOBILE_LIGHT_ICON_HOVER};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:{light_preview_external_link};--link-blue:{light_preview_link};--link-blue-channels:{TEXT_LINK_LIGHT_CHANNELS};--git-ins-green:{light_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_LIGHT_CHANNELS};--git-del-red:{light_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_LIGHT_CHANNELS};--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);}}'
             'html,body{background:transparent;color:var(--fg)}'
             '.md-preview-shell{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:transparent;scrollbar-gutter:auto;padding-top:0}'
+            '.md-body img.md-image-loading{background:color-mix(in srgb,var(--fg) 4%,transparent)}'
         )
         markdown_top_padding = f"calc({preview_top_gap} + var(--tpad,0px))" if embed else preview_top_gap
         markdown_bottom_padding = "calc(18px + var(--bpad,0px))" if embed else "18px"
@@ -592,6 +593,41 @@ const __rewriteMarkdownImageSrcsInHtml = (html) => String(html || "").replace(/(
 const rewriteMarkdownHtml = (html) => __rewriteMarkdownImageSrcsInHtml(html);
 {markdown_frontmatter_js}
 {markdown_render_js}
+const __localPreviewImagePath = (img) => {{
+  const src = img.getAttribute("src") || "";
+  if (!src) return "";
+  const url = new URL(src, window.location.href);
+  if (url.origin !== window.location.origin || url.pathname !== `${{__fileBase}}/file-raw`) return "";
+  return url.searchParams.get("path") || "";
+}};
+const reserveMarkdownImageSpace = async (root) => {{
+  const images = [...root.querySelectorAll("img[src]")]
+    .map((img) => ({{ img, path: __localPreviewImagePath(img) }}))
+    .filter((entry) => entry.path);
+  if (!images.length) return;
+  const response = await fetch(`${{__fileBase}}/file-image-dimensions`, {{
+    method: "POST",
+    headers: {{ "Content-Type": "application/json" }},
+    body: JSON.stringify({{ paths: [...new Set(images.map((entry) => entry.path))] }}),
+  }});
+  if (!response.ok) throw new Error(`image dimensions HTTP ${{response.status}}`);
+  const dimensions = await response.json();
+  images.forEach(({{ img, path }}) => {{
+    const size = dimensions[path];
+    if (!size?.width || !size?.height) {{
+      console.warn("image dimensions unavailable", path);
+      return;
+    }}
+    img.style.aspectRatio = `${{size.width}} / ${{size.height}}`;
+    if (!img.hasAttribute("width") && !img.hasAttribute("height")) {{
+      img.setAttribute("width", String(size.width));
+      img.setAttribute("height", String(size.height));
+    }}
+    img.classList.add("md-image-loading");
+    if (img.complete && img.naturalWidth) img.classList.remove("md-image-loading");
+    else img.addEventListener("load", () => img.classList.remove("md-image-loading"), {{ once: true }});
+  }});
+}};
 const applyPreviewDiffCode = (root) => {{
   root.querySelectorAll("code.language-diff").forEach((codeEl) => {{
     const raw = codeEl.textContent || "";
@@ -691,12 +727,31 @@ window.addEventListener("message", (event) => {{
   document.documentElement.style.setProperty("--text-line-height", (sz * {TEXT_LINE_HEIGHT_RATIO}) + "px");
 }});
 const out = document.getElementById("out");
-out.innerHTML = renderMarkdown(__mdText);
-applyPreviewDiffCode(out);
-void __rewriteMarkdownPreviewHrefs(out);
-ensureWideTables(out);
-renderMathInScope(out);
 applyPreviewTheme({json.dumps(initial_preview_theme)});
+const renderPreview = async () => {{
+  const staging = document.createElement("div");
+  staging.innerHTML = renderMarkdown(__mdText);
+  applyPreviewDiffCode(staging);
+  try {{
+    await reserveMarkdownImageSpace(staging);
+  }} catch (err) {{
+    console.error("image layout failed", err);
+    staging.querySelectorAll("img[src]").forEach((img) => {{
+      if (!__localPreviewImagePath(img)) return;
+      const failure = document.createElement("span");
+      failure.textContent = `Image unavailable: ${{img.alt || img.getAttribute("src") || ""}}`;
+      img.replaceWith(failure);
+    }});
+  }}
+  out.replaceChildren(...staging.childNodes);
+  void __rewriteMarkdownPreviewHrefs(out);
+  ensureWideTables(out);
+  renderMathInScope(out);
+}};
+void renderPreview().catch((err) => {{
+  console.error("markdown preview failed", err);
+  out.textContent = `Markdown preview failed: ${{err.message}}`;
+}});
 let __summaryTouch = null;
 const __clearSummaryPressed = () => {{
   out.querySelectorAll("summary.is-pressed").forEach((node) => node.classList.remove("is-pressed"));
