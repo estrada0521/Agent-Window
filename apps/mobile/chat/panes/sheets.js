@@ -1047,20 +1047,10 @@ __CHAT_INCLUDE:../features/git-panel.js__
         return;
       }
       if (action === "addAgent") {
-        if (!sessionActive) {
-          setStatus("archived session is read-only", true);
-          setTimeout(() => setStatus(""), STATUS_TOAST_MS);
-          return;
-        }
         showAddAgentModal();
         return;
       }
       if (action === "removeAgent") {
-        if (!sessionActive) {
-          setStatus("archived session is read-only", true);
-          setTimeout(() => setStatus(""), STATUS_TOAST_MS);
-          return;
-        }
         showRemoveAgentModal();
         return;
       }

@@ -17,24 +17,24 @@ def run_shortcut_command(
     resolved = (target or "").strip()
     if not resolved:
         msg = "target is required"
-        return 400, {"ok": False, "error": msg, "status_message": msg}
+        return 400, {"ok": False, "error": msg}
     if normalized_command_id == "idle":
         agents = [item.strip() for item in resolved.split(",") if item.strip()]
         rt.mark_agents_idle(agents)
-        return 200, {"ok": True, "status_message": f"marked {', '.join(agents)} idle"}
+        return 200, {"ok": True}
     if normalized_command_id not in PANE_CONTROL_COMMAND_IDS:
         msg = "unknown shortcut command"
-        return 400, {"ok": False, "error": msg, "status_message": msg}
+        return 400, {"ok": False, "error": msg}
 
     if normalized_command_id == "terminal" and not (arg or "").strip():
         msg = "text is required"
-        return 400, {"ok": False, "error": msg, "status_message": msg}
+        return 400, {"ok": False, "error": msg}
 
     wire = _wire_payload(normalized_command_id, arg)
     out = try_deliver_shortcut_control(rt, resolved, normalized_command_id, wire)
     if out is None:
         msg = "shortcut dispatch failed"
-        return 500, {"ok": False, "error": msg, "status_message": msg}
+        return 500, {"ok": False, "error": msg}
     return out
 
 

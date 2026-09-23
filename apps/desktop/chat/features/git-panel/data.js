@@ -32,8 +32,6 @@
       const errMsg = "Failed to open file in the default app.";
       try {
         await postOpenFile(normalizedPath);
-        setStatus(`Opened ${normalizedPath}`);
-        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       } catch (err) {
         setStatus(err?.message || errMsg, true);
         setTimeout(() => setStatus(""), STATUS_TOAST_MS);
@@ -45,8 +43,6 @@
       const errMsg = "Failed to open diff tool.";
       try {
         await postOpenDiff(normalizedPath, hash, oldPath);
-        setStatus(`Opened diff for ${normalizedPath}`);
-        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       } catch (err) {
         setStatus(err?.message || errMsg, true);
         setTimeout(() => setStatus(""), STATUS_TOAST_MS);

@@ -250,10 +250,18 @@
       if (mode === "add") return ALL_BASE_AGENTS.filter(Boolean);
       return availableTargets;
     };
+    const syncAgentMenuOptions = () => {
+      document.querySelectorAll('option[value="addAgent"]').forEach((option) => {
+        option.disabled = !sessionActive;
+      });
+      document.querySelectorAll('option[value="removeAgent"]').forEach((option) => {
+        option.disabled = !sessionActive || !availableTargets.length;
+      });
+    };
     const performAgentAction = async (mode, selected) => {
       if (!selected) return;
       const adding = mode === "add";
-      setStatus(`${adding ? "adding" : "removing"} ${selected}...`);
+      setStatus("");
       try {
         const res = await fetch(adding ? "/add-agent" : "/remove-agent", {
           method: "POST",
@@ -264,8 +272,6 @@
         if (!res.ok || !data.ok) {
           throw new Error(data.error || `failed to ${adding ? "add" : "remove"} agent`);
         }
-        setStatus(`${selected} ${adding ? "added" : "removed"}`);
-        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
       } catch (err) {
         setStatus(err?.message || `${adding ? "add" : "remove"} agent failed`, true);
         setTimeout(() => setStatus(""), STATUS_TOAST_MS);
@@ -364,12 +370,6 @@
     };
     const openAgentActionMenu = (mode) => {
       const candidates = agentActionCandidates(mode);
-      if (!candidates.length) {
-        resetAgentActionMenus();
-        setStatus("no agents available", true);
-        setTimeout(() => setStatus(""), STATUS_TOAST_MS);
-        return true;
-      }
       const select = ensureAgentActionNativeMenu();
       const title = mode === "add" ? "Add Agent" : "Remove Agent";
       resetAgentActionNativeMenu({ clearOptions: true });

@@ -77,11 +77,4 @@ def try_deliver_shortcut_control(
             f"Restarted: {', '.join(control_targets)}",
             targets=control_targets,
         )
-    mode = pane_direct["name"] if pane_direct else message
-    return 200, {"ok": True, "mode": mode, "status_message": _status_completed(mode, control_targets)}
-
-
-def _status_completed(mode: str, control_targets: list[str]) -> str:
-    scope = ", ".join(control_targets) if control_targets else ""
-    tail = f" ({scope})" if scope else ""
-    return f"{mode} completed{tail}"
+    return 200, {"ok": True}

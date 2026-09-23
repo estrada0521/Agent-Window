@@ -200,10 +200,7 @@
       if (action === "openFinder") {
         try {
           const res = await fetch("/open-finder", { method: "POST" });
-          if (res.ok) {
-            setStatus("opened Finder");
-            setTimeout(() => setStatus(""), STATUS_TOAST_MS);
-          } else {
+          if (!res.ok) {
             const data = await res.json().catch(() => ({}));
             setStatus(data.error || "Finder open failed", true);
             setTimeout(() => setStatus(""), STATUS_TOAST_MS);
@@ -215,20 +212,10 @@
         return;
       }
       if (action === "addAgent") {
-        if (!sessionActive) {
-          setStatus("archived session is read-only", true);
-          setTimeout(() => setStatus(""), STATUS_TOAST_MS);
-          return;
-        }
         showAddAgentModal();
         return;
       }
       if (action === "removeAgent") {
-        if (!sessionActive) {
-          setStatus("archived session is read-only", true);
-          setTimeout(() => setStatus(""), STATUS_TOAST_MS);
-          return;
-        }
         showRemoveAgentModal();
         return;
       }

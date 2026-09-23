@@ -57,6 +57,7 @@ struct AppearanceMenuPayload {
     always_on_top: bool,
     auto_window_height: bool,
     fit_collapsed: bool,
+    right_pane_available: bool,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -481,6 +482,7 @@ fn show_appearance_menu(
         format!("{}action:toggleRightPane", NATIVE_MENU_PREFIX),
         "Toggle Right Pane",
     )
+    .enabled(payload.right_pane_available)
     .accelerator("Cmd+E")
     .build(&app)
     .map_err(|err| err.to_string())?;
@@ -495,6 +497,7 @@ fn show_appearance_menu(
         format!("{}action:toggleRightPaneOutward", NATIVE_MENU_PREFIX),
         "Toggle Right Pane Outward",
     )
+    .enabled(payload.right_pane_available)
     .accelerator("Cmd+Alt+E")
     .build(&app)
     .map_err(|err| err.to_string())?;

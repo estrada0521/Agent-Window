@@ -47,6 +47,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         saveTargetSelection(currentSessionName, selectedTargets);
         renderTargetPicker(availableTargets);
       }
+      syncAgentMenuOptions();
     };
     const postShortcutCommand = async ({
       command_id,
@@ -63,7 +64,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         sendLocked = false;
         return false;
       }
-      setStatus(`running ${command_id}...`);
+      setStatus("");
       try {
         const res = await fetch(path, {
           method: "POST",
@@ -79,7 +80,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
           throw new Error(data.error || "shortcut failed");
         }
         applySessionActivation(data);
-        setStatus(data.status_message || "done");
         void refresh();
         if (data.activated) {
           void refreshSessionState();
@@ -136,6 +136,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
             document.documentElement.dataset.sendInFlight = "1";
             closeComposerOverlay();
           }
+          setStatus("");
           try {
             const res = await fetch(parsed.path || "/shortcut-command", {
               method: "POST",
@@ -160,7 +161,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
             }
             updateSendBtnVisibility();
             closeComposerOverlay();
-            setStatus(data.status_message || "done");
             void refresh();
             if (data.activated) {
               void refreshSessionState();
@@ -194,7 +194,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
           closeComposerOverlay();
         }
       }
-      setStatus(isNote ? "saving note..." : `sending to ${target}...`);
+      setStatus("");
       try {
         const res = await fetch("/send", {
           method: "POST",
@@ -219,7 +219,6 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         }
         updateSendBtnVisibility();
         closeComposerOverlay();
-        setStatus(isNote ? "note saved" : `sent to ${target}`);
         if (!isNote) {
           for (const t of selectedTargets) {
             if (agentBaseName(t) !== "user") markAgentOptimisticallyRunning(t);

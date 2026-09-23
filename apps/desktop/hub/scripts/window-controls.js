@@ -127,8 +127,6 @@
         } catch (err) {
           showDeskHubMessage(`reset window failed: ${err}`, { error: true });
         }
-      } else {
-        showDeskHubMessage("reset window: no tauri invoke available", { error: true });
       }
       resetDeskChatView();
     }
@@ -144,18 +142,13 @@
         } catch (err) {
           showDeskHubMessage(`${label} failed: ${err}`, { error: true });
         }
-      } else {
-        showDeskHubMessage(`${label}: no tauri invoke available`, { error: true });
       }
       resetDeskChatView();
     }
 
     async function moveDeskWindowToSpot(command) {
       const invoke = getTauriInvoke();
-      if (typeof invoke !== "function") {
-        showDeskHubMessage(`${command}: no tauri invoke available`, { error: true });
-        return;
-      }
+      if (typeof invoke !== "function") return;
       try {
         await invoke(command);
       } catch (err) {
@@ -166,10 +159,7 @@
     async function resizeDeskWindowAroundPane({ edge, delta, apply, rollback, label }) {
       if (_deskOutwardResizeInFlight || _deskAutoWindowHeight) return;
       const invoke = getTauriInvoke();
-      if (typeof invoke !== "function") {
-        showDeskHubMessage(`${label}: no tauri invoke available`, { error: true });
-        return;
-      }
+      if (typeof invoke !== "function") return;
       _deskOutwardResizeInFlight = true;
       let applied = false;
       try {
@@ -208,13 +198,13 @@
       });
     }
 
+    function deskRightPaneAvailable() {
+      return !!_deskChatFrameLoadedUrl && _deskPanelWidth > 0;
+    }
+
     function toggleDeskRightPanelOutward() {
-      if (_deskAutoWindowHeight) return;
+      if (_deskAutoWindowHeight || !deskRightPaneAvailable()) return;
       const width = _deskPanelWidth;
-      if (!(width > 0)) {
-        showDeskHubMessage("toggle right pane outward: pane width unavailable", { error: true });
-        return;
-      }
       const opening = !_deskPanelActiveMode;
       void resizeDeskWindowAroundPane({
         edge: "right",
@@ -379,6 +369,7 @@
             alwaysOnTop: _deskAlwaysOnTop,
             autoWindowHeight: _deskAutoWindowHeight,
             fitCollapsed: _deskFitCollapsed,
+            rightPaneAvailable: deskRightPaneAvailable(),
           },
         });
       } catch (_) {

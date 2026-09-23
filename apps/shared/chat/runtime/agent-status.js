@@ -73,6 +73,7 @@
       });
       syncThinkingRuntimeItems(data.statuses, { suppressRender: true });
       renderAgentStatus(data.statuses);
+      syncAgentMenuOptions();
       if (document.documentElement.dataset.mobile !== "1" && typeof data.session === "string" && data.session) {
         dpOnSessionSummaryPinReload();
       }

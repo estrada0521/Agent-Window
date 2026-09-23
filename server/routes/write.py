@@ -208,14 +208,9 @@ def _raise_terminal_window_for_tty(tty: str) -> bool:
     return result.returncode == 0 and (result.stdout or "").strip() == "true"
 
 
-def _open_terminal(
-    handler, ctx, *, agent: str = "", pane_required: bool = False, success_message: str = ""
-) -> None:
+def _open_terminal(handler, ctx, *, agent: str = "", pane_required: bool = False) -> None:
     def _ok() -> None:
-        payload = {"ok": True}
-        if success_message:
-            payload["status_message"] = success_message
-        handler._send_json(200, payload)
+        handler._send_json(200, {"ok": True})
 
     runtime = ctx["runtime"]
     if not runtime.session_is_active:
@@ -337,7 +332,6 @@ def _post_open_pane(handler, _parsed, ctx) -> None:
     if not raw_targets:
         _open_terminal(
             handler, ctx, agent="terminal", pane_required=True,
-            success_message="opened the terminal",
         )
         return
     if len(raw_targets) != 1:
@@ -345,7 +339,6 @@ def _post_open_pane(handler, _parsed, ctx) -> None:
         return
     _open_terminal(
         handler, ctx, agent=raw_targets[0], pane_required=True,
-        success_message=f"opened {raw_targets[0]}'s pane",
     )
 
 
@@ -509,22 +502,22 @@ def _run_nativelog_command(ctx, *, target: str) -> tuple[int, dict]:
     raw_targets = [t.strip() for t in target.split(",") if t.strip()]
     if not raw_targets:
         msg = "target is required"
-        return 400, {"ok": False, "error": msg, "status_message": msg}
+        return 400, {"ok": False, "error": msg}
     agent = raw_targets[0]
     watched = rt.native_log_watched_paths()
     path = (watched.get(agent) or "").strip()
     if not path:
         msg = f"native log path not found for {agent}"
-        return 404, {"ok": False, "error": msg, "status_message": msg}
+        return 404, {"ok": False, "error": msg}
     try:
         file_runtime.reveal_in_finder(path)
     except FileNotFoundError:
         msg = f"native log file not found: {path}"
-        return 404, {"ok": False, "error": msg, "status_message": msg}
+        return 404, {"ok": False, "error": msg}
     except Exception as exc:
         msg = str(exc)
-        return 500, {"ok": False, "error": msg, "status_message": msg}
-    return 200, {"ok": True, "status_message": f"revealed native log for {agent} in Finder"}
+        return 500, {"ok": False, "error": msg}
+    return 200, {"ok": True}
 
 
 def _post_native_log(handler, _parsed, ctx) -> None:

@@ -676,7 +676,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         const data = await response.json().catch(() => ({}));
         throw new Error(data?.error || "Failed to reveal file in Finder.");
       }
-      dpShowActionStatus(`Revealed ${path}`);
     };
     const dpQuickLookPaths = async (paths) => {
       try {
