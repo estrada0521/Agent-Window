@@ -80,6 +80,17 @@
       font-size: 1.05em;
       font-weight: var(--md-heading-weight);
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      user-select: none;
+      -webkit-user-select: none;
+      transform-origin: left center;
+      transition: transform var(--liquid-glass-press-out, 600ms cubic-bezier(0.16, 1, 0.3, 1));
+    }
+
+    .md-body summary.is-pressed {
+      transform: scale(var(--liquid-glass-press-scale, 1.06));
+      transition: transform var(--liquid-glass-press-in, 120ms ease-out);
     }
 
     .md-body ul,

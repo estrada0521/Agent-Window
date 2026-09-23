@@ -64,14 +64,15 @@
         clearThinkingRowPressed();
         _thinkingRowTouch = null;
       }, { passive: true });
+      const PRESS_SEL = "a.inline-file-link, a.local-file-link, summary";
       let _fileLinkTouch = null;
       const clearFileLinkPressed = () => {
-        msgThinking.querySelectorAll(".inline-file-link.is-pressed, .local-file-link.is-pressed").forEach((node) => {
+        msgThinking.querySelectorAll(".inline-file-link.is-pressed, .local-file-link.is-pressed, summary.is-pressed").forEach((node) => {
           node.classList.remove("is-pressed");
         });
       };
       msgThinking.addEventListener("touchstart", (e) => {
-        const link = e.target.closest("a.inline-file-link, a.local-file-link");
+        const link = e.target.closest(PRESS_SEL);
         const t = e.touches && e.touches[0];
         if (!link || !t) {
           clearFileLinkPressed();
@@ -100,6 +101,6 @@
         clearFileLinkPressed();
       }, { passive: true });
       msgThinking.addEventListener("contextmenu", (e) => {
-        if (e.target.closest("a.inline-file-link, a.local-file-link")) e.preventDefault();
+        if (e.target.closest(PRESS_SEL)) e.preventDefault();
       });
     }

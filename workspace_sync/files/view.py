@@ -726,6 +726,42 @@ __rewriteMarkdownLinks(out);
 ensureWideTables(out);
 renderMathInScope(out);
 applyPreviewTheme("dark");
+let __summaryTouch = null;
+const __clearSummaryPressed = () => {{
+  out.querySelectorAll("summary.is-pressed").forEach((node) => node.classList.remove("is-pressed"));
+}};
+out.addEventListener("touchstart", (e) => {{
+  const el = e.target.closest("summary");
+  const t = e.touches && e.touches[0];
+  if (!el || !t) {{
+    __clearSummaryPressed();
+    __summaryTouch = null;
+    return;
+  }}
+  __clearSummaryPressed();
+  el.classList.add("is-pressed");
+  __summaryTouch = {{ x: t.clientX, y: t.clientY, el }};
+}}, {{ passive: true }});
+out.addEventListener("touchmove", (e) => {{
+  const start = __summaryTouch;
+  if (!start) return;
+  const t = e.touches && e.touches[0];
+  if (!t) return;
+  const dx = t.clientX - start.x;
+  const dy = t.clientY - start.y;
+  if (dx * dx + dy * dy > 100) start.el?.classList.remove("is-pressed");
+}}, {{ passive: true }});
+out.addEventListener("touchend", () => {{
+  __summaryTouch = null;
+  __clearSummaryPressed();
+}}, {{ passive: true }});
+out.addEventListener("touchcancel", () => {{
+  __summaryTouch = null;
+  __clearSummaryPressed();
+}}, {{ passive: true }});
+out.addEventListener("contextmenu", (e) => {{
+  if (e.target.closest("summary")) e.preventDefault();
+}});
 </script></body></html>'''
         )
 
