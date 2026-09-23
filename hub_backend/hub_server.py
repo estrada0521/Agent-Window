@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -94,8 +93,8 @@ def queue_hub_restart():
         if cleanup_detail:
             return False, cleanup_detail, False
         restart_pending = True
-    ok = launch_hub_restart(script_path=script_path, repo_root=repo_root, hub_server=hub_server)
-    return ok, "" if ok else "reload failed", True
+    detail = launch_hub_restart(script_path=script_path, repo_root=repo_root, hub_server=hub_server)
+    return not detail, detail, True
 
 
 def release_restart_hold():
@@ -504,8 +503,6 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.flush()
         except (BrokenPipeError, ConnectionResetError):
             return
-        except Exception:
-            logging.exception("Hub session messages event stream failed")
 
     def _post_session_messages_changed(self, _parsed):
         hub.publish_session_messages_changed()

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import subprocess
 from typing import Any, Protocol
 
@@ -72,7 +71,6 @@ def try_deliver_shortcut_control(
                 detail = (result.stderr or result.stdout or b"").decode("utf-8", "replace").strip()
                 return 400, {"ok": False, "error": detail or f"send-keys failed for {target_item}"}
     except Exception as exc:
-        logging.error("Unexpected error: %s", exc, exc_info=True)
         return 500, {"ok": False, "error": str(exc)}
     if message == "restart" and control_targets:
         rt.append_system_entry(

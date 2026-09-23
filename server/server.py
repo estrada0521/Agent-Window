@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 import queue
 import select
@@ -71,8 +70,8 @@ def _log_watcher() -> None:
                         runtime.publish_event("messages")
                         try:
                             notify_hub_session_messages_changed(hub_port)
-                        except Exception as exc:
-                            logging.warning("Hub message notification failed: %s", exc)
+                        except (OSError, RuntimeError):
+                            pass
                     if event.fflags & (select.KQ_NOTE_RENAME | select.KQ_NOTE_DELETE):
                         rebuilt = True
                         break
@@ -180,7 +179,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     try:
         adopt_commit_baseline(runtime)
     except Exception as exc:
-        logging.error("commit baseline adoption failed: %s", exc)
+        runtime.report_failure(f"commit tracking failed: {exc}")
     threading.Thread(
         target=_log_watcher,
         daemon=True,
@@ -222,8 +221,8 @@ def queue_chat_restart():
             and str(Path(reported_workspace).expanduser().resolve()) == expected_workspace
         )
 
-    ok = wait_for_chat_server(process, _ready)
-    return ok, "" if ok else "reload failed", True
+    detail = wait_for_chat_server(process, _ready)
+    return not detail, detail, True
 
 
 def release_chat_restart() -> None:

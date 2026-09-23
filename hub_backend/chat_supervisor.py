@@ -103,9 +103,8 @@ def ensure_chat_server(
                 and bool(state.get("active")) == bool(expected_active)
             )
 
-        if wait_for_chat_server(process, _ready):
-            return True, chat_port, ""
-        return False, chat_port, "chat server did not become ready"
+        detail = wait_for_chat_server(process, _ready)
+        return not detail, chat_port, detail
 
 
 def revive_archived_session(hub, session_name: str) -> tuple[bool, str]:

@@ -182,8 +182,10 @@ def _get_events(handler, _parsed, ctx) -> None:
     seen = runtime.event_counts()
     try:
         while True:
-            kinds = runtime.wait_for_events(seen, timeout=15.0)
-            body = "".join(f"event: {kind}\ndata: 1\n\n" for kind in kinds) or ": keepalive\n\n"
+            events = runtime.wait_for_events(seen, timeout=15.0)
+            body = "".join(
+                f"event: {kind}\ndata: {json.dumps(data)}\n\n" for kind, data in events
+            ) or ": keepalive\n\n"
             handler.wfile.write(body.encode("utf-8"))
             handler.wfile.flush()
     except (BrokenPipeError, ConnectionResetError):

@@ -23,7 +23,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             patch.object(hub_server, "hub", fake_hub),
             patch.object(hub_server, "stop_inactive_chat_servers", return_value=""),
             patch.object(hub_server, "restart_pending", False),
-            patch.object(hub_server, "launch_hub_restart", return_value=True) as launch,
+            patch.object(hub_server, "launch_hub_restart", return_value="") as launch,
         ):
             ok, detail, owns_restart = hub_server.queue_hub_restart()
             self.assertTrue(hub_server.restart_pending)
@@ -145,7 +145,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 patch("hub_backend.chat_supervisor.stop_inactive_chat_servers", return_value=""),
                 patch("hub_backend.chat_supervisor.chat_launch_env", return_value={}),
                 patch("hub_backend.chat_supervisor.launch_chat_server", return_value=object()) as launch,
-                patch("hub_backend.chat_supervisor.wait_for_chat_server", return_value=True),
+                patch("hub_backend.chat_supervisor.wait_for_chat_server", return_value=""),
             ):
                 ok, port, detail = ensure_chat_server(
                     hub,

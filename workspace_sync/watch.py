@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import ctypes
-import logging
 import os
 import threading
-import time
 from ctypes import c_double, c_uint32, c_uint64, c_void_p
 
 from workspace_sync.fsevents_stream import (
@@ -112,28 +110,22 @@ class _DebouncedWorkspaceRefresh:
         rels = [os.path.relpath(path, workspace) for path in paths]
         file_rels = [rel for rel in rels if not self._file_runtime.file_index_path_is_ignored(rel)]
         if file_rels or full_rescan:
-            try:
-                self._file_runtime.invalidate_file_list_cache()
-            except Exception as exc:
-                logging.error("Workspace file index invalidation failed: %s", exc)
+            self._file_runtime.invalidate_file_list_cache()
         git_relevant = git_head_changed or full_rescan
         if rels and not git_relevant:
             try:
                 ignored = git_ignored_rel_paths(workspace, rels)
-            except Exception as exc:
-                logging.error("git check-ignore failed: %s", exc)
+            except RuntimeError as exc:
+                self._runtime.report_failure(f"git check-ignore failed: {exc}")
                 ignored = set()
             git_relevant = any(rel not in ignored for rel in rels)
         if git_head_changed:
             try:
                 ensure_commit_announcements(self._runtime)
             except Exception as exc:
-                logging.error("Commit announcement refresh failed: %s", exc)
+                self._runtime.report_failure(f"commit tracking failed: {exc}")
         if git_relevant:
-            try:
-                invalidate_git_cache(include_commits=git_head_changed or full_rescan)
-            except Exception as exc:
-                logging.error("Workspace git cache invalidation failed: %s", exc)
+            invalidate_git_cache(include_commits=git_head_changed or full_rescan)
         if file_rels or full_rescan:
             self._runtime.publish_event("files")
         if git_relevant:
@@ -166,15 +158,6 @@ def start_workspace_fsevents_watcher(runtime, file_runtime) -> None:
         FSEventStreamStart = cs.FSEventStreamStart
         FSEventStreamStart.argtypes = [c_void_p]
         FSEventStreamStart.restype = ctypes.c_bool
-        FSEventStreamStop = cs.FSEventStreamStop
-        FSEventStreamStop.argtypes = [c_void_p, c_void_p]
-        FSEventStreamStop.restype = None
-        FSEventStreamInvalidate = cs.FSEventStreamInvalidate
-        FSEventStreamInvalidate.argtypes = [c_void_p]
-        FSEventStreamInvalidate.restype = None
-        FSEventStreamRelease = cs.FSEventStreamRelease
-        FSEventStreamRelease.argtypes = [c_void_p]
-        FSEventStreamRelease.restype = None
         CFRunLoopGetCurrent = cf.CFRunLoopGetCurrent
         CFRunLoopGetCurrent.restype = c_void_p
         CFRunLoopGetCurrent.argtypes = []
@@ -190,53 +173,29 @@ def start_workspace_fsevents_watcher(runtime, file_runtime) -> None:
                 debouncer.mark_full_rescan()
                 return
             for index in range(num):
-                try:
-                    raw = paths[index]
-                    if not raw:
-                        continue
-                    debouncer.add_path(raw.decode("utf-8"))
-                except Exception as exc:
-                    logging.error("Workspace FSEvents path decode/enqueue error: %s", exc)
-                    continue
+                if paths[index]:
+                    debouncer.add_path(os.fsdecode(paths[index]))
 
         callback = FSEventCallback(on_events)
 
-        while True:
-            try:
-                watch_root = file_runtime.workspace
-                if not watch_root or not os.path.isdir(watch_root):
-                    time.sleep(2.0)
-                    continue
-                cfarr = cf_path_array(cf, [watch_root])
-                if not cfarr:
-                    time.sleep(2.0)
-                    continue
-                stream = FSEventStreamCreate(
-                    None,
-                    callback,
-                    None,
-                    cfarr,
-                    c_uint64(KFSEVENTSTREAM_EVENT_ID_SINCE_NOW),
-                    0.05,
-                    c_uint32(FSEVENT_CREATE_FLAGS),
-                )
-                CFRelease(cfarr)
-                if not stream:
-                    time.sleep(2.0)
-                    continue
-                run_loop_handle = CFRunLoopGetCurrent()
-                FSEventStreamScheduleWithRunLoop(stream, run_loop_handle, kCFRunLoopDefaultMode)
-                if not FSEventStreamStart(stream):
-                    FSEventStreamInvalidate(stream)
-                    FSEventStreamRelease(stream)
-                    time.sleep(2.0)
-                    continue
-                CFRunLoopRun()
-                FSEventStreamStop(stream, run_loop_handle)
-                FSEventStreamInvalidate(stream)
-                FSEventStreamRelease(stream)
-            except Exception as exc:
-                logging.error("Workspace FSEvents watcher error: %s", exc)
-                time.sleep(2.0)
+        cfarr = cf_path_array(cf, [workspace_root])
+        stream = FSEventStreamCreate(
+            None,
+            callback,
+            None,
+            cfarr,
+            c_uint64(KFSEVENTSTREAM_EVENT_ID_SINCE_NOW),
+            0.05,
+            c_uint32(FSEVENT_CREATE_FLAGS),
+        )
+        CFRelease(cfarr)
+        if not stream:
+            runtime.report_failure("workspace watch failed: FSEventStreamCreate returned null")
+            return
+        FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode)
+        if not FSEventStreamStart(stream):
+            runtime.report_failure("workspace watch failed: FSEventStreamStart returned false")
+            return
+        CFRunLoopRun()
 
     threading.Thread(target=run_loop, daemon=True, name="workspace-fsevents").start()

@@ -1259,10 +1259,9 @@ fn find_repo_root() -> Option<String> {
 }
 
 fn show_hub_error(window: &tauri::WebviewWindow, message: &str) {
-    let escaped = message.replace('\\', "\\\\").replace('\'', "\\'");
     let _ = window.eval(&format!(
-        "document.body.style.cssText='background:transparent;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.9);padding:60px 40px;font:18px -apple-system,sans-serif';document.body.textContent='{}';",
-        escaped
+        "document.body.style.cssText='background:transparent;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.9);box-sizing:border-box;height:100%;display:flex;align-items:center;justify-content:center;padding:40px;font:13px ui-monospace,monospace;white-space:pre-wrap;overflow:auto';document.body.textContent={};",
+        serde_json::to_string(message).unwrap()
     ));
     let _ = window.show();
 }
@@ -1479,13 +1478,19 @@ fn main() {
                     let mut cmd = Command::new(format!("{}/bin/agent-index", repo_root));
                     cmd.current_dir(&repo_root)
                         .env("PATH", &path)
-                        .env("PYTHONPATH", repo_root.clone());
+                        .env("PYTHONPATH", repo_root.clone())
+                        .stdout(Stdio::null())
+                        .stderr(Stdio::piped());
                     match cmd.spawn() {
                         Ok(mut child) => {
                             eprintln!("[app] Hub spawned pid={}", child.id());
                             if !wait_for_child_success(&mut child, Duration::from_secs(8)) {
-                                eprintln!("[app] Hub failed to start");
-                                show_error(format!("Hub failed to start on port {}", hub_port));
+                                let mut detail = String::new();
+                                if let Some(mut stderr) = child.stderr.take() {
+                                    let _ = stderr.read_to_string(&mut detail);
+                                }
+                                eprintln!("[app] Hub failed to start: {}", detail);
+                                show_error(format!("Hub failed to start on port {}\n\n{}", hub_port, detail.trim()));
                                 return;
                             }
                         }

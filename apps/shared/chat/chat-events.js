@@ -4,6 +4,7 @@
     chatEvents.addEventListener("state", () => { void refreshSessionState(); });
     chatEvents.addEventListener("files", handleWorkspaceFilesChanged);
     chatEvents.addEventListener("git", handleWorkspaceGitChanged);
+    chatEvents.addEventListener("failure", (event) => { setStatus(JSON.parse(event.data), true); });
     chatEvents.onopen = () => {
       setStatus("");
       if (!chatEventsOpened) {

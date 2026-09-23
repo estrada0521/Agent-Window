@@ -45,7 +45,7 @@ def format_chat_url(chat_port: int, path: str) -> str:
 PROCESS_HANDOFF_TIMEOUT_SEC = 8.0
 
 
-def launch_hub_restart(*, script_path, repo_root, hub_server) -> bool:
+def launch_hub_restart(*, script_path, repo_root, hub_server) -> str:
     hub_server.shutdown()
     hub_server.server_close()
     try:
@@ -53,14 +53,14 @@ def launch_hub_restart(*, script_path, repo_root, hub_server) -> bool:
             ["bash", str(script_path)],
             cwd=repo_root,
             stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
             check=False,
             timeout=PROCESS_HANDOFF_TIMEOUT_SEC,
         )
     except subprocess.TimeoutExpired:
-        return False
-    return completed.returncode == 0
+        return f"agent-index did not finish within {PROCESS_HANDOFF_TIMEOUT_SEC:g}s"
+    return "" if completed.returncode == 0 else completed.stderr.strip() or f"agent-index exited {completed.returncode}"
 
 
 def error_page(message) -> str:

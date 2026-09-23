@@ -11,11 +11,9 @@ CHAT_SERVER_READY_TIMEOUT_SEC = 6.0
 
 
 def launch_chat_server(workspace: Path | str, *, env: Mapping[str, str]) -> subprocess.Popen:
-    resolved_workspace = str(Path(workspace).expanduser().resolve())
-    repo_root = Path(__file__).resolve().parent.parent
     return subprocess.Popen(
-        [sys.executable, "-m", "server.server", resolved_workspace],
-        cwd=str(repo_root),
+        [sys.executable, "-m", "server.server", str(Path(workspace).expanduser().resolve())],
+        cwd=str(Path(__file__).resolve().parent.parent),
         env=dict(env),
         start_new_session=True,
         stdin=subprocess.DEVNULL,
@@ -29,17 +27,15 @@ def wait_for_chat_server(
     ready: Callable[[], bool],
     *,
     timeout_sec: float = CHAT_SERVER_READY_TIMEOUT_SEC,
-) -> bool:
+) -> str:
     deadline = time.monotonic() + timeout_sec
-    while True:
-        if ready():
-            return True
-        if process.poll() is not None:
-            return False
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            if process.poll() is None:
-                process.kill()
-                process.wait()
-            return False
-        time.sleep(min(0.1, remaining))
+    while not ready():
+        code = process.poll()
+        if code is not None:
+            return f"chat server exited with code {code} before becoming ready"
+        if time.monotonic() >= deadline:
+            process.kill()
+            process.wait()
+            return f"chat server did not become ready within {timeout_sec:g}s"
+        time.sleep(0.1)
+    return ""

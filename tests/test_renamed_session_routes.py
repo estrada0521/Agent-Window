@@ -36,7 +36,7 @@ class RenamedSessionRouteTests(unittest.TestCase):
                 mock.patch.object(chat_server, "server", fake_server),
                 mock.patch.object(chat_server, "_restart_env", return_value={}),
                 mock.patch.object(chat_server, "launch_chat_server", return_value=object()) as launch,
-                mock.patch.object(chat_server, "wait_for_chat_server", return_value=True),
+                mock.patch.object(chat_server, "wait_for_chat_server", return_value=""),
             ):
                 ok, detail, owns_restart = chat_server.queue_chat_restart()
 

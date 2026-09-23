@@ -13,7 +13,7 @@ from native_log_sync.agents.gemini.read_runtime import (
     parse_antigravity_transcript_step,
     runtime_tool_events,
 )
-from native_log_sync.io.jsonl_read import CompleteJsonlScan, warn_skipped_lines
+from native_log_sync.io.jsonl_read import CompleteJsonlScan, report_skipped_lines
 from backend_core.access.files import append_jsonl_entry
 
 
@@ -68,6 +68,6 @@ def sync_gemini_native_log(
         appended = True
 
     advance_read_offset(self._native_log_read_offsets, session_path_str, scan.consumed)
-    warn_skipped_lines(agent, scan)
+    report_skipped_lines(self, agent, scan)
     if appended:
         self._mark_idle(agent)

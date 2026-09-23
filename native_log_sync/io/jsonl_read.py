@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 from pathlib import Path
 
 
@@ -54,14 +53,10 @@ class CompleteJsonlScan:
         self.last_skip_reason = reason
 
 
-def warn_skipped_lines(agent: str, scan: CompleteJsonlScan) -> None:
+def report_skipped_lines(runtime, agent: str, scan: CompleteJsonlScan) -> None:
     if not scan.skipped:
         return
-    logging.warning(
-        "native log projection warning for %s: %s unparsable line(s) skipped, "
-        "most recent at native offset %s (%s)",
-        agent,
-        scan.skipped,
-        scan.last_skip_offset,
-        scan.last_skip_reason,
+    runtime.report_failure(
+        f"native log lines skipped: {agent}: {scan.skipped} unparsable line(s), "
+        f"latest at offset {scan.last_skip_offset} ({scan.last_skip_reason})"
     )

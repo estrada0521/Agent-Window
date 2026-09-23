@@ -14,7 +14,7 @@ from native_log_sync.agents.grok.read_runtime import (
     iter_tool_calls_from_update,
     runtime_tool_events,
 )
-from native_log_sync.io.jsonl_read import CompleteJsonlScan, warn_skipped_lines
+from native_log_sync.io.jsonl_read import CompleteJsonlScan, report_skipped_lines
 from backend_core.access.files import append_jsonl_entry
 
 
@@ -67,7 +67,7 @@ def _sync_grok_chat_history(runtime, agent: str, history_path: str) -> bool:
                 appended = True
 
     advance_read_offset(runtime._native_log_read_offsets, history_path, scan.consumed)
-    warn_skipped_lines(agent, scan)
+    report_skipped_lines(runtime, agent, scan)
     return appended
 
 
@@ -124,7 +124,7 @@ def sync_grok_native_log(
             if tool_evs:
                 push_runtime_display(runtime, agent, tool_evs)
         advance_read_offset(runtime._native_log_read_offsets, updates_path, scan.consumed)
-        warn_skipped_lines(agent, scan)
+        report_skipped_lines(runtime, agent, scan)
     else:
         advance_read_offset(runtime._native_log_read_offsets, updates_path, file_size)
 

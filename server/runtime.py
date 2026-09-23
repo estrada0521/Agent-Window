@@ -1,6 +1,5 @@
 from __future__ import annotations
 import json
-import logging
 import os
 import subprocess
 import threading
@@ -34,7 +33,7 @@ from .session_binding import WorkspaceSessionBinding
 
 
 ENTRY_WINDOW_LIMIT = 2000
-EVENT_KINDS = ("messages", "state", "files", "git")
+EVENT_KINDS = ("messages", "state", "files", "git", "failure")
 NATIVE_LOG_BIND_INTERVAL_SECONDS = 0.5
 NATIVE_LOG_BIND_TIMEOUT_SECONDS = 3.0
 
@@ -61,6 +60,7 @@ class ChatRuntime:
         self._last_announced_commit_hash: str | None = None
         self._events = threading.Condition()
         self._event_counts = dict.fromkeys(EVENT_KINDS, 0)
+        self._latest_failure = ""
         self._native_log_read_offsets: dict[str, int] = {}
         self._native_log_bindings_by_agent: dict = {}
         self._native_log_bindings_lock = threading.Lock()
@@ -109,8 +109,13 @@ class ChatRuntime:
         for binding in refresh_native_log_bindings(self, pane_requests, replace_all=replace_all):
             try:
                 sync_agent(self, binding.agent, binding.path, start_at_end=start_at_end)
-            except Exception:
-                logging.exception("native log sync failed for %s", binding.agent)
+            except Exception as exc:
+                self.native_log_failed(binding.agent, f"sync failed: {exc}")
+
+    def native_log_failed(self, agent: str, detail: str) -> None:
+        self.remove_native_log_binding(agent)
+        self._mark_idle(agent)
+        self.report_failure(f"native log failed: {agent}: {detail}")
 
     def rebind(self, agent: str) -> None:
         if self.pane_id_for_agent(agent):
@@ -154,10 +159,20 @@ class ChatRuntime:
         with self._events:
             return dict(self._event_counts)
 
-    def wait_for_events(self, seen: dict[str, int], timeout: float) -> list[str]:
+    def report_failure(self, text: str) -> None:
+        with self._events:
+            self._latest_failure = text
+            self._event_counts["failure"] += 1
+            self._events.notify_all()
+
+    def wait_for_events(self, seen: dict[str, int], timeout: float) -> list[tuple[str, str]]:
         with self._events:
             self._events.wait_for(lambda: self._event_counts != seen, timeout=timeout)
-            changed = [kind for kind in EVENT_KINDS if self._event_counts[kind] != seen[kind]]
+            changed = [
+                (kind, self._latest_failure if kind == "failure" else "")
+                for kind in EVENT_KINDS
+                if self._event_counts[kind] != seen[kind]
+            ]
             seen.update(self._event_counts)
             return changed
 
@@ -240,17 +255,16 @@ class ChatRuntime:
                 while agent in self.active_agents():
                     try:
                         self.refresh_native_log_bindings([agent], start_at_end=True)
-                    except Exception:
-                        logging.exception("native log bind failed for %s", agent)
+                    except Exception as exc:
+                        self.native_log_failed(agent, f"bind failed: {exc}")
                         return
                     if agent in self._native_log_bindings_by_agent:
                         return
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
-                        logging.error(
-                            "native log did not appear within %.1fs for %s",
-                            NATIVE_LOG_BIND_TIMEOUT_SECONDS,
+                        self.native_log_failed(
                             agent,
+                            f"no native log appeared within {NATIVE_LOG_BIND_TIMEOUT_SECONDS:g}s of sending",
                         )
                         return
                     time.sleep(min(NATIVE_LOG_BIND_INTERVAL_SECONDS, remaining))

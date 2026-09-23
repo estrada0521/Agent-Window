@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import os
 import select
 import threading
@@ -49,6 +48,7 @@ class _VnodeNativeSync:
 
     def _sync_bindings(self) -> None:
         bindings: dict = dict(self._runtime._native_log_bindings_by_agent)
+        failed_opens: list[tuple[str, OSError]] = []
         with self._lock:
             for agent in list(self._fd_by_agent):
                 if agent not in bindings:
@@ -59,18 +59,17 @@ class _VnodeNativeSync:
                         self._close_locked(agent)
                     try:
                         self._open_locked(agent, binding.path)
-                    except OSError:
-                        logging.exception("native log watch open failed for %s", agent)
+                    except OSError as exc:
+                        failed_opens.append((agent, exc))
+        for agent, exc in failed_opens:
+            self._runtime.native_log_failed(agent, f"watch failed: {exc}")
 
     def _close_locked(self, agent: str) -> None:
         fd = self._fd_by_agent.pop(agent, None)
         self._path_by_agent.pop(agent, None)
         if fd is not None:
             self._agent_by_fd.pop(fd, None)
-            try:
-                os.close(fd)
-            except OSError:
-                logging.exception("native log watch close failed for %s", agent)
+            os.close(fd)
 
     def _open_locked(self, agent: str, path: str) -> None:
         fd = os.open(path, os.O_RDONLY)
@@ -123,8 +122,8 @@ class _VnodeNativeSync:
                     if agent and path:
                         try:
                             sync_agent(self._runtime, agent, path)
-                        except Exception:
-                            logging.exception("native log sync failed for %s", agent)
+                        except Exception as exc:
+                            self._runtime.native_log_failed(agent, f"sync failed: {exc}")
             if rebind_agents:
                 seen: set[str] = set()
                 for agent in rebind_agents:
@@ -133,8 +132,8 @@ class _VnodeNativeSync:
                     seen.add(agent)
                     try:
                         self._runtime.rebind(agent)
-                    except Exception:
-                        logging.exception("native log rebind failed for %s", agent)
+                    except Exception as exc:
+                        self._runtime.native_log_failed(agent, f"rebind failed: {exc}")
                 self._sync_bindings()
 
 
