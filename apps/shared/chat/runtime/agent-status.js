@@ -88,7 +88,7 @@
         if (!res.ok) throw new Error("session state unavailable");
         applySessionState(await res.json());
       } catch (err) {
-        setStatus(err?.message || String(err), true);
+        setStatus(err?.message || String(err));
       } finally {
         refreshSessionState.inFlight = false;
         if (refreshSessionState.pending) {

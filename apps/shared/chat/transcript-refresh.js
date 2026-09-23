@@ -45,7 +45,7 @@
           releaseLaunchShellGate();
           notifyHubChatRenderError(detail);
         }
-        setStatus(detail, true);
+        setStatus(detail);
       } finally {
         refreshInFlight = false;
         if (pendingRefreshOptions) {

@@ -7,7 +7,7 @@ __CHAT_INCLUDE:../../../shared/chat/font-faces.css__
 __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
     :root {
       color-scheme: __COLOR_SCHEME__;
-      --pane-trace-sheet-height: 92dvh;
+      --pane-trace-sheet-height: 91dvh;
       --bg-rgb: __MOBILE_CHAT_BG_CHANNELS__;
       --bg: rgb(var(--bg-rgb));
       --line: __LINE__;
@@ -56,14 +56,12 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --inline-code-border: __GRAY_INLINE_BORDER__;
       --pane-trace-body-bg-channels: __MOBILE_CHAT_DARK_BG_CHANNELS__;
       --pane-trace-body-bg: rgb(var(--pane-trace-body-bg-channels));
-      --error: rgb(__TEXT_ERROR_DARK_CHANNELS__);
-      --inline-file-link-fg: var(--link-blue);
+      --error: rgb(__TEXT_ERROR_MOBILE_DARK_CHANNELS__);
+      --file-link-fg: rgb(__TEXT_FILE_LINK_DARK_CHANNELS__);
       --code-copy-bg: transparent;
       --code-copy-hover-bg: __CODE_COPY_HOVER_BG__;
       --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_DARK_CHANNELS__);
 
-      --link-blue-channels: __TEXT_LINK_DARK_CHANNELS__;
-      --link-blue: rgb(var(--link-blue-channels));
       --git-ins-green-channels: __TEXT_DIFF_INSERT_DARK_CHANNELS__;
       --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
@@ -102,10 +100,9 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --mobile-sheet-floating-hover-bg: rgba(0, 0, 0, 0.13);
       --git-summary-floating-bg: var(--mobile-sheet-floating-bg);
       --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_LIGHT_CHANNELS__);
-      --error: rgb(__TEXT_ERROR_LIGHT_CHANNELS__);
+      --error: rgb(__TEXT_ERROR_MOBILE_LIGHT_CHANNELS__);
 
-      --link-blue-channels: __TEXT_LINK_LIGHT_CHANNELS__;
-      --link-blue: rgb(var(--link-blue-channels));
+      --file-link-fg: rgb(__TEXT_FILE_LINK_LIGHT_CHANNELS__);
       --git-ins-green-channels: __TEXT_DIFF_INSERT_LIGHT_CHANNELS__;
       --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_LIGHT_CHANNELS__;
@@ -131,8 +128,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --panel-row-active-bg: rgba(255, 255, 255, 0.16);
       --panel-row-selected-bg: rgba(255, 255, 255, 0.045);
 
-      --link-blue-channels: __TEXT_LINK_DARK_CHANNELS__;
-      --link-blue: rgb(var(--link-blue-channels));
       --git-ins-green-channels: __TEXT_DIFF_INSERT_DARK_CHANNELS__;
       --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;

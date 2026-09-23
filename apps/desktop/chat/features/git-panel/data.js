@@ -33,7 +33,7 @@
       try {
         await postOpenFile(normalizedPath);
       } catch (err) {
-        setStatus(err?.message || errMsg, true);
+        setStatus(err?.message || errMsg);
       }
     };
     const dpPostOpenDiff = async (rawPath, hash = "", oldPath = "") => {
@@ -43,7 +43,7 @@
       try {
         await postOpenDiff(normalizedPath, hash, oldPath);
       } catch (err) {
-        setStatus(err?.message || errMsg, true);
+        setStatus(err?.message || errMsg);
       }
     };
     const gitSession = createGitPanelSession({

@@ -83,7 +83,7 @@
         } catch (err) {
           cancelCmdAutocompleteLoading();
           closeCmdDrop();
-          setStatus(err?.message || "Commands unavailable", true);
+          setStatus(err?.message || "Commands unavailable");
           return;
         }
         cancelCmdAutocompleteLoading();
@@ -301,7 +301,7 @@
       window.open(href, "_blank", "noopener,noreferrer");
       return Promise.resolve();
     };
-    const reportExternalLinkFailure = () => setStatus("Link failed", true);
+    const reportExternalLinkFailure = () => setStatus("Link failed");
     window.addEventListener("message", (event) => {
       if (event.source !== window.parent || event.data?.type !== "external-url-open-failed") return;
       reportExternalLinkFailure();
@@ -348,7 +348,7 @@
         const code = wrap.querySelector("code") || wrap.querySelector("pre");
         doCopyText(code.textContent).then(() => {
           markCopied(codeCopyBtn);
-        }).catch((err) => setStatus(`copy failed: ${err.message}`, true));
+        }).catch((err) => setStatus(`copy failed: ${err.message}`));
         return;
       }
       const btn = e.target.closest(".copy-btn");
@@ -363,7 +363,7 @@
           } else {
             markCopied(btn, 3000);
           }
-        }).catch((err) => setStatus(`copy failed: ${err.message}`, true));
+        }).catch((err) => setStatus(`copy failed: ${err.message}`));
         return;
       }
       if (!revealMobileCopy) return;

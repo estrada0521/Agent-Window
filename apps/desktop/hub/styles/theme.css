@@ -36,7 +36,7 @@
       --icon-fg: rgb(__TEXT_SESSION_DESKTOP_LIGHT_CHANNELS__);
       --icon-muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
       --icon-hover: __DESKTOP_LIGHT_ICON_HOVER__;
-      --error: rgb(__TEXT_ERROR_LIGHT_CHANNELS__);
+      --error: rgb(__TEXT_ERROR_DESKTOP_LIGHT_CHANNELS__);
       --desk-chrome-hover-rgb: 255, 255, 255;
       --hub-glass: __DESKTOP_HUB_LIGHT_BG_FILL__;
       --line: rgba(0, 0, 0, 0.10);
@@ -59,7 +59,7 @@
       --icon-fg: rgb(__TEXT_SESSION_DESKTOP_DARK_CHANNELS__);
       --icon-muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
       --icon-hover: __DESKTOP_DARK_ICON_HOVER__;
-      --error: rgb(__TEXT_ERROR_DARK_CHANNELS__);
+      --error: rgb(__TEXT_ERROR_DESKTOP_DARK_CHANNELS__);
       --desk-chrome-hover-rgb: 0, 0, 0;
       --line: rgba(255, 255, 255, 0.07);
       --line-strong: rgba(255, 255, 255, 0.12);

@@ -230,8 +230,8 @@
       }
     };
     let hudTimer = 0;
-    let hudTransient = null;
-    let hudResident = null;
+    let hudTransient = "";
+    let hudResident = "";
     const renderHud = () => {
       const hud = document.getElementById("chatHud");
       const shown = hudTransient || hudResident;
@@ -239,23 +239,22 @@
         hud.classList.remove("is-visible");
         return;
       }
-      hud.textContent = shown.text;
-      hud.classList.toggle("is-error", shown.isError);
+      hud.textContent = shown;
       hud.classList.add("is-visible");
     };
-    const setStatus = (text, isError = false) => {
+    const setStatus = (text) => {
       window.clearTimeout(hudTimer);
-      hudTransient = text ? { text, isError } : null;
-      if (hudTransient) {
+      hudTransient = text;
+      if (text) {
         hudTimer = window.setTimeout(() => {
-          hudTransient = null;
+          hudTransient = "";
           renderHud();
         }, HUD_VISIBLE_MS);
       }
       renderHud();
     };
     const setResidentStatus = (text) => {
-      hudResident = text ? { text, isError: true } : null;
+      hudResident = text;
       renderHud();
     };
     const agentActionCandidates = (mode) => {
@@ -285,7 +284,7 @@
           throw new Error(data.error || `failed to ${adding ? "add" : "remove"} agent`);
         }
       } catch (err) {
-        setStatus(err?.message || `${adding ? "add" : "remove"} agent failed`, true);
+        setStatus(err?.message || `${adding ? "add" : "remove"} agent failed`);
       }
     };
     let nativeBridgeAgentActionMode = "";

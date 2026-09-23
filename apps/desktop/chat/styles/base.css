@@ -31,14 +31,12 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --composer-menu-row-active-bg: rgba(255, 255, 255, 0.07);
       --surface: __GRAY_SURFACE__;
       --inline-code-border: __GRAY_INLINE_BORDER__;
-      --error: rgb(__TEXT_ERROR_DARK_CHANNELS__);
-      --inline-file-link-fg: var(--link-blue);
+      --error: rgb(__TEXT_ERROR_DESKTOP_DARK_CHANNELS__);
+      --file-link-fg: rgb(__TEXT_FILE_LINK_DARK_CHANNELS__);
       --code-copy-bg: transparent;
       --code-copy-hover-bg: __CODE_COPY_HOVER_BG__;
       --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_DARK_CHANNELS__);
 
-      --link-blue-channels: __TEXT_LINK_DARK_CHANNELS__;
-      --link-blue: rgb(var(--link-blue-channels));
       --git-ins-green-channels: __TEXT_DIFF_INSERT_DARK_CHANNELS__;
       --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
@@ -67,10 +65,9 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --line-strong: rgba(0, 0, 0, 0.18);
       --code-copy-hover-bg: rgba(0, 0, 0, 0.08);
       --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_LIGHT_CHANNELS__);
-      --error: rgb(__TEXT_ERROR_LIGHT_CHANNELS__);
+      --error: rgb(__TEXT_ERROR_DESKTOP_LIGHT_CHANNELS__);
 
-      --link-blue-channels: __TEXT_LINK_LIGHT_CHANNELS__;
-      --link-blue: rgb(var(--link-blue-channels));
+      --file-link-fg: rgb(__TEXT_FILE_LINK_LIGHT_CHANNELS__);
       --git-ins-green-channels: __TEXT_DIFF_INSERT_LIGHT_CHANNELS__;
       --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_LIGHT_CHANNELS__;
@@ -92,8 +89,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --panel-row-hover-bg: rgba(180, 180, 180, 0.13);
       --panel-row-active-bg: rgba(180, 180, 180, 0.16);
 
-      --link-blue-channels: __TEXT_LINK_DARK_CHANNELS__;
-      --link-blue: rgb(var(--link-blue-channels));
       --git-ins-green-channels: __TEXT_DIFF_INSERT_DARK_CHANNELS__;
       --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;

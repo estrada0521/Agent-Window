@@ -111,7 +111,7 @@
         : null;
       if (hasTauriNativeHeaderMenu()) {
         closeHeaderMenus();
-        openTauriHeaderMenu(anchorRect).catch((err) => setStatus(`header menu failed: ${err}`, true));
+        openTauriHeaderMenu(anchorRect).catch((err) => setStatus(`header menu failed: ${err}`));
         return;
       }
       if (nativeHeaderMenuBridge) openNativeSelect(nativeHeaderMenuBridge);
@@ -125,7 +125,7 @@
 
       if (hasTauriNativeHeaderMenu()) {
         closeHeaderMenus();
-        openTauriHeaderMenu().catch((err) => setStatus(`header menu failed: ${err}`, true));
+        openTauriHeaderMenu().catch((err) => setStatus(`header menu failed: ${err}`));
         return;
       }
       closeHeaderMenus();
@@ -174,10 +174,10 @@
           const res = await fetch("/open-terminal", { method: "POST" });
           if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            setStatus(data.error || "terminal open failed", true);
+            setStatus(data.error || "terminal open failed");
           }
         } catch (err) {
-          setStatus(`terminal: ${err.message}`, true);
+          setStatus(`terminal: ${err.message}`);
         }
         return;
       }
@@ -186,10 +186,10 @@
           const res = await fetch("/open-shell", { method: "POST" });
           if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            setStatus(data.error || "terminal open failed", true);
+            setStatus(data.error || "terminal open failed");
           }
         } catch (err) {
-          setStatus(`terminal: ${err.message}`, true);
+          setStatus(`terminal: ${err.message}`);
         }
         return;
       }
@@ -198,10 +198,10 @@
           const res = await fetch("/open-finder", { method: "POST" });
           if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            setStatus(data.error || "Finder open failed", true);
+            setStatus(data.error || "Finder open failed");
           }
         } catch (err) {
-          setStatus(`Finder: ${err.message}`, true);
+          setStatus(`Finder: ${err.message}`);
         }
         return;
       }

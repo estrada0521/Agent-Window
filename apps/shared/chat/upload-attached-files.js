@@ -36,7 +36,7 @@
           }));
           return true;
         } catch (err) {
-          setStatus("upload failed: " + err.message, true);
+          setStatus("upload failed: " + err.message);
           return false;
         }
       };

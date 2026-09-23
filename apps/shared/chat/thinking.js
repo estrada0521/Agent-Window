@@ -365,10 +365,10 @@
           });
           if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            setStatus(data.error || "terminal open failed", true);
+            setStatus(data.error || "terminal open failed");
           }
         } catch (err) {
-          setStatus(`terminal: ${err.message}`, true);
+          setStatus(`terminal: ${err.message}`);
         }
       });
     }

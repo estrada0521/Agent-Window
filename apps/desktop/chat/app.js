@@ -685,7 +685,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           throw new Error(data?.error || "Quick Look failed");
         }
       } catch (err) {
-        setStatus(err?.message || "Quick Look failed", true);
+        setStatus(err?.message || "Quick Look failed");
       }
     };
     function handleDesktopCommitContextMenuAction(payload) {
@@ -698,7 +698,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         await doCopyText(action === "copyCommitHash" ? info.hash : info.message);
         setStatus(action === "copyCommitHash" ? "Copied hash" : "Copied message");
       })().catch((err) => {
-        setStatus(err?.message || "Commit action failed", true);
+        setStatus(err?.message || "Commit action failed");
       });
       return true;
     }
@@ -715,7 +715,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             ? dpRevealFileInFinder(dpFileContextTriggerPath || paths[0])
             : dpCopyFilePath(paths, action === "copyAbsoluteFilePath");
       void operation.catch((err) => {
-        setStatus(err?.message || "File action failed", true);
+        setStatus(err?.message || "File action failed");
       });
       return true;
     }
@@ -1009,7 +1009,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         return;
       }
       if (event.data.type === "file-context-menu-error") {
-        setStatus(String(event.data.message || "File menu failed"), true);
+        setStatus(String(event.data.message || "File menu failed"));
         return;
       }
       if (event.data.type === "desk-git-changes-request") {
@@ -1101,7 +1101,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             ).slice(-1)[0] || "";
             if (revealTarget) {
               void dpRevealFileInFinder(revealTarget).catch((err) => {
-                setStatus(err?.message || "Reveal failed", true);
+                setStatus(err?.message || "Reveal failed");
               });
             } else {
               window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openFinder" }, "*");
@@ -1235,7 +1235,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           if (targets.length) {
             event.preventDefault();
             void dpCopyFilePath(targets, !event.shiftKey).catch((err) => {
-              setStatus(err?.message || "Copy failed", true);
+              setStatus(err?.message || "Copy failed");
             });
           }
           return;

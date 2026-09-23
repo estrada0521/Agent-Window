@@ -16,8 +16,8 @@ from appearance.colors import (
     TEXT_DIFF_INSERT_LIGHT_CHANNELS,
     TEXT_EXTERNAL_LINK_DARK_CHANNELS,
     TEXT_EXTERNAL_LINK_LIGHT_CHANNELS,
-    TEXT_LINK_DARK_CHANNELS,
-    TEXT_LINK_LIGHT_CHANNELS,
+    TEXT_FILE_LINK_DARK_CHANNELS,
+    TEXT_FILE_LINK_LIGHT_CHANNELS,
     TEXT_MUTED_DARK_CHANNELS,
     TEXT_MUTED_LIGHT_CHANNELS,
     TEXT_PRIMARY_MOBILE_DARK_CHANNELS,
@@ -410,17 +410,14 @@ def render_file_view(
         light_preview_fg_bold = f"rgb({TEXT_STRONG_MOBILE_LIGHT_CHANNELS})"
         dark_preview_muted = f"rgb({TEXT_MUTED_DARK_CHANNELS})"
         light_preview_muted = f"rgb({TEXT_MUTED_LIGHT_CHANNELS})"
-        dark_preview_link = f"rgb({TEXT_LINK_DARK_CHANNELS})"
-        light_preview_link = f"rgb({TEXT_LINK_LIGHT_CHANNELS})"
-        dark_preview_external_link = f"rgb({TEXT_EXTERNAL_LINK_DARK_CHANNELS})"
         light_preview_external_link = f"rgb({TEXT_EXTERNAL_LINK_LIGHT_CHANNELS})"
         dark_preview_diff_insert = f"rgb({TEXT_DIFF_INSERT_DARK_CHANNELS})"
         light_preview_diff_insert = f"rgb({TEXT_DIFF_INSERT_LIGHT_CHANNELS})"
         dark_preview_diff_delete = f"rgb({TEXT_DIFF_DELETE_DARK_CHANNELS})"
         light_preview_diff_delete = f"rgb({TEXT_DIFF_DELETE_LIGHT_CHANNELS})"
         markdown_theme_css = (
-            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette["dark_bg"])};--fg:{dark_preview_fg};--fg-bold:{dark_preview_fg_bold};--muted:{dark_preview_muted};--icon-fg:{dark_preview_fg};--icon-muted:{dark_preview_muted};--icon-hover:{MOBILE_DARK_ICON_HOVER};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba({dark_preview_fg_channels},0.09);--external-link-fg:{dark_preview_external_link};--link-blue:{dark_preview_link};--link-blue-channels:{TEXT_LINK_DARK_CHANNELS};--git-ins-green:{dark_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_DARK_CHANNELS};--git-del-red:{dark_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_DARK_CHANNELS};--line:rgba({dark_preview_fg_channels},0.07);--line-strong:rgba({dark_preview_fg_channels},0.12);}}'
-            f'html[data-preview-theme="light"]{{color-scheme:light;--bg-rgb:{light_preview_bg_channels};--bg:{light_preview_bg};--fg:{light_preview_fg};--fg-bold:{light_preview_fg_bold};--muted:{light_preview_muted};--icon-fg:{light_preview_fg};--icon-muted:{light_preview_muted};--icon-hover:{MOBILE_LIGHT_ICON_HOVER};--inline-file-link-fg:var(--link-blue);--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:{light_preview_external_link};--link-blue:{light_preview_link};--link-blue-channels:{TEXT_LINK_LIGHT_CHANNELS};--git-ins-green:{light_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_LIGHT_CHANNELS};--git-del-red:{light_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_LIGHT_CHANNELS};--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);}}'
+            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette["dark_bg"])};--fg:{dark_preview_fg};--fg-bold:{dark_preview_fg_bold};--muted:{dark_preview_muted};--icon-fg:{dark_preview_fg};--icon-muted:{dark_preview_muted};--icon-hover:{MOBILE_DARK_ICON_HOVER};--file-link-fg:rgb({TEXT_FILE_LINK_DARK_CHANNELS});--code-copy-bg:transparent;--code-copy-hover-bg:rgba({dark_preview_fg_channels},0.09);--external-link-fg:rgb({TEXT_EXTERNAL_LINK_DARK_CHANNELS});--git-ins-green:{dark_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_DARK_CHANNELS};--git-del-red:{dark_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_DARK_CHANNELS};--line:rgba({dark_preview_fg_channels},0.07);--line-strong:rgba({dark_preview_fg_channels},0.12);}}'
+            f'html[data-preview-theme="light"]{{color-scheme:light;--bg-rgb:{light_preview_bg_channels};--bg:{light_preview_bg};--fg:{light_preview_fg};--fg-bold:{light_preview_fg_bold};--muted:{light_preview_muted};--icon-fg:{light_preview_fg};--icon-muted:{light_preview_muted};--icon-hover:{MOBILE_LIGHT_ICON_HOVER};--file-link-fg:rgb({TEXT_FILE_LINK_LIGHT_CHANNELS});--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:{light_preview_external_link};--git-ins-green:{light_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_LIGHT_CHANNELS};--git-del-red:{light_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_LIGHT_CHANNELS};--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);}}'
             'html,body{background:transparent;color:var(--fg)}'
             '.md-preview-shell{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:transparent;scrollbar-gutter:auto;padding-top:0}'
             '.md-body img.md-image-loading{background:color-mix(in srgb,var(--fg) 4%,transparent)}'

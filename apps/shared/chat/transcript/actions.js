@@ -19,7 +19,7 @@
           olderEntries = mergeEntriesById(olderBatch, olderEntries);
         }
       } catch (err) {
-        setStatus(err?.message || String(err), true);
+        setStatus(err?.message || String(err));
       } finally {
         olderLoading = false;
         render(latestPayloadData, { suppressEntryAnimation: true });
@@ -60,7 +60,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
       }
       sendLocked = true;
       if (!target.trim() && command_id !== "openpane") {
-        setStatus("No target", true);
+        setStatus("No target");
         sendLocked = false;
         return false;
       }
@@ -86,7 +86,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         }
         return true;
       } catch (error) {
-        setStatus(error.message, true);
+        setStatus(error.message);
         return false;
       } finally {
         sendLocked = false;
@@ -97,7 +97,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         return false;
       }
       if (attachUploadsInFlight > 0) {
-        setStatus("Still uploading", true);
+        setStatus("Still uploading");
         return false;
       }
       sendLocked = true;
@@ -115,7 +115,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         try {
           list = await loadShortcutCommandsOnce();
         } catch (err) {
-          setStatus(err?.message || "Commands unavailable", true);
+          setStatus(err?.message || "Commands unavailable");
           sendLocked = false;
           return false;
         }
@@ -166,7 +166,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
             }
             return true;
           } catch (error) {
-            setStatus(error.message, true);
+            setStatus(error.message);
             return false;
           } finally {
             sendLocked = false;
@@ -182,7 +182,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
           : "";
       const messageBody = rawInput + attachSuffix;
       if (!messageBody.trim()) {
-        setStatus("Empty message", true);
+        setStatus("Empty message");
         sendLocked = false;
         return false;
       }
@@ -229,7 +229,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         }
         return true;
       } catch (error) {
-        setStatus(error.message, true);
+        setStatus(error.message);
         return false;
       } finally {
         sendLocked = false;

@@ -54,7 +54,7 @@
         const message = err?.status === 404
           ? `file not found: ${displayAttachmentFilename(normalizedPath) || normalizedPath}`
           : err?.message || "Open failed";
-        setStatus(message, true);
+        setStatus(message);
         return false;
       }
     };

@@ -20,7 +20,7 @@
       if (error) {
         reloadInFlight = false;
         releaseLaunchShellGate();
-        setStatus(`reload failed: ${error}`, true);
+        setStatus(`reload failed: ${error}`);
         return;
       }
       const params = new URLSearchParams(window.location.search);

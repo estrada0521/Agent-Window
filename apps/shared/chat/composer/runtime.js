@@ -98,7 +98,7 @@
               const data = await res.json().catch(() => ({}));
               throw new Error(data.error || `HTTP ${res.status}`);
             }).catch((err) => {
-              setStatus(`upload delete failed: ${err.message}`, true);
+              setStatus(`upload delete failed: ${err.message}`);
             });
           }
         });

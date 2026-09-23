@@ -118,7 +118,7 @@
 
     .md-body a.inline-file-link,
     .md-body a.local-file-link {
-      color: var(--inline-file-link-fg);
+      color: var(--file-link-fg);
       font-weight: var(--link-weight);
       text-decoration: none;
       -webkit-touch-callout: none;
@@ -177,10 +177,10 @@
       text-decoration: none;
     }
 
-    html[data-theme="dark"] .md-body :is(a.inline-file-link, a.local-file-link):not(:has(> code)),
-    html[data-theme="dark"] .md-body :is(a.inline-file-link, a.local-file-link) > code,
-    html[data-preview-theme="dark"] .md-body :is(a.inline-file-link, a.local-file-link):not(:has(> code)),
-    html[data-preview-theme="dark"] .md-body :is(a.inline-file-link, a.local-file-link) > code {
+    html[data-theme="dark"] .md-body :is(a[href], a.inline-file-link, a.local-file-link):not(:has(> code)),
+    html[data-theme="dark"] .md-body :is(a[href], a.inline-file-link, a.local-file-link) > code,
+    html[data-preview-theme="dark"] .md-body :is(a[href], a.inline-file-link, a.local-file-link):not(:has(> code)),
+    html[data-preview-theme="dark"] .md-body :is(a[href], a.inline-file-link, a.local-file-link) > code {
       text-decoration: underline;
       text-decoration-thickness: clamp(0.5px, 0.0769em, 1px);
       text-decoration-color: color-mix(in srgb, var(--fg) 65%, transparent);
