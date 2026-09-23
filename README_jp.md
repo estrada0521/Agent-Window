@@ -96,12 +96,20 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
   <img src="media/agent-window-menu.png" width="100%" alt="Menu">
 </p>
 
-| Hub | キー | 備考 |
+<details>
+<summary>Hub</summary>
+
+| 操作 | キー | 備考 |
 |---|---|---|
 | New Session | `⌘N` | |
 | active sessionの切り替え | `⌘1`–`⌘9` | |
 
-| Control | キー | 備考 |
+</details>
+
+<details>
+<summary>Control</summary>
+
+| 操作 | キー | 備考 |
 |---|---|---|
 | 入力欄を開く | `Enter` / ホイール押し込み | |
 | 入力欄を閉じる | `Esc` | |
@@ -109,24 +117,44 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | chat server / Hub serverのreload | `⌘R` / `⇧⌘R` | serverを再起動し、変更後のsourceを読み直す |
 | Git summaryのpin | `⇧⌘P` | |
 
-| Appearance menu (`⌘,`) | キー | 備考 |
+</details>
+
+<details>
+<summary>Appearance menu (<code>⌘,</code>)</summary>
+
+| 操作 | キー | 備考 |
 |---|---|---|
 | theme | | System/light/dark |
 | text size | `⌘0` / `⌘+` / `⌘-` | windowも相似にresize |
 
-| chat menu (`⌘.`) | キー | 備考 |
+</details>
+
+<details>
+<summary>chat menu (<code>⌘.</code>)</summary>
+
+| 操作 | キー | 備考 |
 |---|---|---|
 | Terminal | `⌘T` | |
 | tmux window | `⌥⌘T` | |
 | Finder | `⌥⌘R` | |
 | Agentの追加 / 削除 | | |
 
-| timeline | キー | 備考 |
+</details>
+
+<details>
+<summary>timeline</summary>
+
+| 操作 | キー | 備考 |
 |---|---|---|
 | 先頭 / 末尾へ移動 | `⌘↑` / `⌘↓` | |
 | 前 / 次のmessage | `⌥↑` / `⌥↓` | |
 
-| window | キー | 備考 |
+</details>
+
+<details>
+<summary>window</summary>
+
+| 操作 | キー | 備考 |
 |---|---|---|
 | size 既定 / コンパクト / ミニ | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` | |
 | Hub / 右paneの開閉 | `⌘B` / `⌘E` | `⌥` 併用で外側に広がる |
@@ -134,6 +162,8 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | 最前面に固定 | `⌥⌘P` | |
 | Fit Height | `⌥⌘H` | |
 | 最小まで畳む | `⌥⌘M` | 新しいmessageで復帰。Fit Height中のみ |
+
+</details>
 
 ## Mobile
 

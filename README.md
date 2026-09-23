@@ -96,12 +96,20 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
   <img src="media/agent-window-menu.png" width="100%" alt="Menu">
 </p>
 
-| Hub | Key | Note |
+<details>
+<summary>Hub</summary>
+
+| Action | Key | Note |
 |---|---|---|
 | New Session | `⌘N` | |
 | Switch active session | `⌘1`–`⌘9` | |
 
-| Control | Key | Note |
+</details>
+
+<details>
+<summary>Control</summary>
+
+| Action | Key | Note |
 |---|---|---|
 | Open the input field | `Enter` / wheel click | |
 | Close the input field | `Esc` | |
@@ -109,24 +117,44 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Reload chat server / Hub server | `⌘R` / `⇧⌘R` | Restarts the server and re-reads changed source |
 | Pin Git summary | `⇧⌘P` | |
 
-| Appearance menu (`⌘,`) | Key | Note |
+</details>
+
+<details>
+<summary>Appearance menu (<code>⌘,</code>)</summary>
+
+| Action | Key | Note |
 |---|---|---|
 | theme | | System / light / dark |
 | text size | `⌘0` / `⌘+` / `⌘-` | Resizes the window to match |
 
-| chat menu (`⌘.`) | Key | Note |
+</details>
+
+<details>
+<summary>chat menu (<code>⌘.</code>)</summary>
+
+| Action | Key | Note |
 |---|---|---|
 | Terminal | `⌘T` | |
 | tmux window | `⌥⌘T` | |
 | Finder | `⌥⌘R` | |
 | Add / remove Agent | | |
 
-| timeline | Key | Note |
+</details>
+
+<details>
+<summary>timeline</summary>
+
+| Action | Key | Note |
 |---|---|---|
 | Jump to top / bottom | `⌘↑` / `⌘↓` | |
 | Previous / next message | `⌥↑` / `⌥↓` | |
 
-| window | Key | Note |
+</details>
+
+<details>
+<summary>window</summary>
+
+| Action | Key | Note |
 |---|---|---|
 | Default / compact / mini size | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` | |
 | Toggle Hub / right pane | `⌘B` / `⌘E` | Add `⌥` to grow the window outward |
@@ -134,6 +162,8 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Keep above other windows | `⌥⌘P` | |
 | Fit Height | `⌥⌘H` | |
 | Collapse to minimum | `⌥⌘M` | Restores on a new message. Fit Height only |
+
+</details>
 
 ## Mobile
 

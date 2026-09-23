@@ -72,6 +72,12 @@
       font-size: 1em;
     }
 
+    .md-body summary {
+      font-size: 1.05em;
+      font-weight: var(--md-heading-weight);
+      cursor: pointer;
+    }
+
     .md-body ul,
     .md-body ol {
       margin: 0.4em 0 var(--prose-rhythm);
