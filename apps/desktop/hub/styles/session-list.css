@@ -121,7 +121,7 @@
     }
     .desk-session-row {
       display: block;
-      padding: 0.77em 0.92em;
+      padding: 0.65em 0.92em;
       font-size: var(--text-size, 13px);
       border-bottom: none;
       border-radius: 0;
