@@ -621,42 +621,25 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     const dpNormalizePath = (value) => String(value || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
     let dpFileContextPaths = [];
     let dpFileContextTriggerPath = "";
-    let dpFileContextRequestSeq = 0;
     let dpWorkspaceRoot = "";
     const dpShowActionStatus = (message, error = false) => {
       setStatus(message, error);
       setTimeout(() => setStatus(""), STATUS_TOAST_MS);
     };
-    const dpOpenFileContextMenu = async (rawPathOrPaths, event, { openFile = false, triggerPath = "" } = {}) => {
+    const dpOpenFileContextMenu = (rawPathOrPaths, event, { openFile = false, triggerPath = "" } = {}) => {
       const paths = (Array.isArray(rawPathOrPaths) ? rawPathOrPaths : [rawPathOrPaths])
-        .map(dpNormalizePath)
+        .map(normalizeWorkspaceFilePath)
         .filter(Boolean);
       if (!paths.length) return;
       event.preventDefault();
       event.stopPropagation();
-      const requestSeq = ++dpFileContextRequestSeq;
-      let fileExists = false;
-      try {
-        const response = await fetchWithTimeout("/files-exist", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paths }),
-        }, 4000);
-        if (!response.ok) throw new Error("Failed to inspect file path.");
-        const result = await response.json();
-        fileExists = paths.every((p) => result?.[p] === true);
-      } catch (err) {
-        dpShowActionStatus(err?.message || "Failed to inspect file path.", true);
-      }
-      if (requestSeq !== dpFileContextRequestSeq) return;
       dpFileContextPaths = paths;
-      dpFileContextTriggerPath = dpNormalizePath(triggerPath) || paths[0];
+      dpFileContextTriggerPath = normalizeWorkspaceFilePath(triggerPath) || paths[0];
       window.parent?.postMessage({
         type: "show-file-context-menu",
         payload: {
           x: Math.round(Number(event.clientX) || 0),
           y: Math.round(Number(event.clientY) || 0),
-          fileExists,
           openFile,
         },
       }, "*");
@@ -672,14 +655,18 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       }, "*");
     };
     const dpCopyFilePath = async (paths, absolute) => {
-      if (absolute && !dpWorkspaceRoot) {
+      if (!dpWorkspaceRoot && (absolute || paths.some((path) => String(path).startsWith("/")))) {
         const response = await fetchWithTimeout("/session-state", {}, 4000);
         if (!response.ok) throw new Error("Failed to read workspace path.");
         const state = await response.json();
         dpWorkspaceRoot = String(state?.workspace || "").replace(/\/+$/, "");
         if (!dpWorkspaceRoot) throw new Error("Workspace path is unavailable.");
       }
-      const text = paths.map((p) => (absolute ? `${dpWorkspaceRoot}/${p}` : p)).join("\n");
+      const text = paths.map((p) => {
+        const path = normalizeWorkspaceFilePath(p);
+        if (absolute) return path.startsWith("/") ? path : `${dpWorkspaceRoot}/${path}`;
+        return path.startsWith(`${dpWorkspaceRoot}/`) ? path.slice(dpWorkspaceRoot.length + 1) : path;
+      }).join("\n");
       await doCopyText(text);
       const label = absolute ? "absolute path" : "relative path";
       dpShowActionStatus(paths.length > 1 ? `Copied ${paths.length} ${label}s` : `Copied ${label}`);

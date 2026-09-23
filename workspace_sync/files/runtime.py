@@ -321,15 +321,21 @@ class FileRuntime:
 
     def quick_look(self, rels: list[str]):
         fulls = []
+        missing = False
         for rel in rels:
             try:
                 full = self._resolve_open_target(rel)
-            except (ValueError, FileNotFoundError):
+            except FileNotFoundError:
+                missing = True
+                continue
+            except ValueError:
                 continue
             if os.path.isdir(full):
                 continue
             fulls.append(full)
         if not fulls:
+            if missing:
+                raise FileNotFoundError()
             raise ValueError("no files to preview")
         proc = subprocess.Popen(
             ["qlmanage", "-p", *fulls],
