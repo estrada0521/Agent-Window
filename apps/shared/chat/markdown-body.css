@@ -72,6 +72,10 @@
       font-size: 1em;
     }
 
+    .md-body details {
+      margin: 0 0 var(--prose-block-rhythm);
+    }
+
     .md-body summary {
       font-size: 1.05em;
       font-weight: var(--md-heading-weight);
