@@ -6,7 +6,7 @@
     chatEvents.addEventListener("git", handleWorkspaceGitChanged);
     chatEvents.addEventListener("failure", (event) => { setStatus(JSON.parse(event.data), true); });
     chatEvents.onopen = () => {
-      setStatus("");
+      setResidentStatus("");
       if (!chatEventsOpened) {
         chatEventsOpened = true;
         return;
@@ -17,5 +17,5 @@
       handleWorkspaceGitChanged();
     };
     chatEvents.onerror = () => {
-      setStatus("Disconnected", true);
+      setResidentStatus("Disconnected");
     };

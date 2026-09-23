@@ -27,7 +27,7 @@
           currentServerInstance = data.server_instance;
         }
         if (data.server_instance !== SERVER_INSTANCE_SEED) {
-          setStatus("Server restarted; reload", true);
+          setResidentStatus("Server restarted; reload");
         }
         latestPayloadData = data;
         if (!olderEntries.length) {

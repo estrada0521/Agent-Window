@@ -230,17 +230,33 @@
       }
     };
     let hudTimer = 0;
-    const setStatus = (text, isError = false) => {
+    let hudTransient = null;
+    let hudResident = null;
+    const renderHud = () => {
       const hud = document.getElementById("chatHud");
-      window.clearTimeout(hudTimer);
-      if (!text) {
+      const shown = hudTransient || hudResident;
+      if (!shown) {
         hud.classList.remove("is-visible");
         return;
       }
-      hud.textContent = text;
-      hud.classList.toggle("is-error", isError);
+      hud.textContent = shown.text;
+      hud.classList.toggle("is-error", shown.isError);
       hud.classList.add("is-visible");
-      hudTimer = window.setTimeout(() => hud.classList.remove("is-visible"), HUD_VISIBLE_MS);
+    };
+    const setStatus = (text, isError = false) => {
+      window.clearTimeout(hudTimer);
+      hudTransient = text ? { text, isError } : null;
+      if (hudTransient) {
+        hudTimer = window.setTimeout(() => {
+          hudTransient = null;
+          renderHud();
+        }, HUD_VISIBLE_MS);
+      }
+      renderHud();
+    };
+    const setResidentStatus = (text) => {
+      hudResident = text ? { text, isError: true } : null;
+      renderHud();
     };
     const agentActionCandidates = (mode) => {
       if (mode === "add") return ALL_BASE_AGENTS.filter(Boolean);
