@@ -27,13 +27,14 @@
           currentServerInstance = data.server_instance;
         }
         if (data.server_instance !== SERVER_INSTANCE_SEED) {
-          setResidentStatus("Server restarted; reload");
+          setResidentStatus("server-restarted", "Server restarted; reload");
         }
         latestPayloadData = data;
         if (!olderEntries.length) {
           olderHasMore = !!data?.has_older;
         }
         render(data, refreshOptions);
+        setResidentStatus("messages-failed", "");
         if (!hasInitialRefreshHydrated) {
           hasInitialRefreshHydrated = true;
           releaseLaunchShellGate();
@@ -43,9 +44,9 @@
         const detail = err?.message || String(err);
         if (!hasInitialRefreshHydrated) {
           releaseLaunchShellGate();
-          notifyHubChatRenderError(detail);
+          notifyHubChatRenderError();
         }
-        setStatus(detail);
+        if (!renderFailed) setResidentStatus("messages-failed", detail);
       } finally {
         refreshInFlight = false;
         if (pendingRefreshOptions) {

@@ -162,9 +162,9 @@ __CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
         });
       });
     };
-    const notifyHubChatRenderError = (message) => {
+    const notifyHubChatRenderError = () => {
       if (!isEmbeddedHubChat) return;
-      window.parent.postMessage({ type: "chat-render-error", message: String(message || "render failed") }, "*");
+      window.parent.postMessage({ type: "chat-render-error" }, "*");
     };
     if (isEmbeddedHubChat) {
       document.documentElement.dataset.hubIframeChat = "1";

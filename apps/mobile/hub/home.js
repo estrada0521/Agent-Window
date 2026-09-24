@@ -158,12 +158,15 @@
       clearTimeout(_hubReadyTimeoutTimer);
       _hubReadyTimeoutTimer = 0;
     }
-    function failHubReadyWait(message) {
+    function stopHubReadyWait() {
       _hubLaunchShellPending = false;
       _awaitingChatRenderReady = false;
       clearHubReadyTimeout();
       clearLaunchShellQueryFlag();
       hideLaunchShell();
+    }
+    function failHubReadyWait(message) {
+      stopHubReadyWait();
       setStatus(message);
     }
     function startHubReadyTimeout() {
@@ -601,7 +604,7 @@
         if (!_awaitingChatRenderReady) {
           return;
         }
-        failHubReadyWait(e.data.message || "render failed");
+        stopHubReadyWait();
         return;
       }
       if (e.data && e.data.type === "chat-render-ready" && e.source === _chatFrame.contentWindow) {
@@ -901,7 +904,7 @@
           const data = await res.json();
           if (requestSeq !== _mobSessionsRequestSeq) return;
           if (data.hub_instance !== HUB_INSTANCE) {
-            setResidentStatus("Hub restarted; reload");
+            setResidentStatus("hub-restarted", "Hub restarted; reload");
           }
           const activeSessions = data.active_sessions;
           const archivedSessions = data.archived_sessions;

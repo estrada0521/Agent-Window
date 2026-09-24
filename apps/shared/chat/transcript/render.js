@@ -1,4 +1,5 @@
     let lastRenderPrepended = false;
+    let renderFailed = false;
     let _firstContentSettleFired = false;
     const render = (data, {
       forceScroll = false,
@@ -216,16 +217,18 @@
           _firstContentSettleFired = true;
           document.dispatchEvent(new CustomEvent("chat-transcript-settled"));
         }
+        if (renderFailed) {
+          renderFailed = false;
+          setResidentStatus("render-failed", "");
+        }
       } catch (err) {
         console.error("chat render failed", err);
-        const root = document.getElementById("messages");
-        if (root) {
-          const detail = escapeHtml(String(err?.message || err));
-          root.innerHTML = `<div class="sysmsg-row"><span class="sysmsg-text" style="color: var(--error);">Rendering error: ${detail}</span></div>`;
-        }
+        document.getElementById("messages").replaceChildren();
         _renderedIds.clear();
+        lastMessagesSig = "";
         updateScrollBtn();
-        notifyHubChatRenderError(err?.message || err);
+        renderFailed = true;
+        setResidentStatus("render-failed", `Render failed: ${err?.message || err}`);
         throw err;
       }
     };

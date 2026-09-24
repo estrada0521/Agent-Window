@@ -472,7 +472,7 @@
         if (!response.ok) throw new Error("failed");
         const data = await response.json();
         if (data.hub_instance !== HUB_INSTANCE) {
-          setResidentStatus("Hub restarted; reload");
+          setResidentStatus("hub-restarted", "Hub restarted; reload");
         }
         const active = data.active_sessions;
         const archived = data.archived_sessions;

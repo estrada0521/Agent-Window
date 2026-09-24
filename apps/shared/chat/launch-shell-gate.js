@@ -27,6 +27,6 @@
         document.documentElement.dataset.launchShell = "error";
         launchShellRevealFallbackTimer = 0;
         clearLaunchShellParam();
-        notifyHubChatRenderError("timeout");
+        notifyHubChatRenderError();
       }, 5000);
     };

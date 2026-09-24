@@ -2,10 +2,11 @@
     const createHud = (hud) => {
       let timer = 0;
       let transient = "";
-      let resident = "";
+      const residents = new Map();
       let shownText = "";
       let state = "hidden";
       const transitionMs = parseFloat(getComputedStyle(hud).transitionDuration) * 1000;
+      const currentText = () => transient || [...residents.values()].at(-1) || "";
       const setText = (text) => {
         shownText = text;
         const span = document.createElement("span");
@@ -29,7 +30,7 @@
       };
       const render = () => {
         if (state === "showing" || state === "hiding") return;
-        const target = transient || resident;
+        const target = currentText();
         if (state === "hidden") {
           if (!target) return;
           setText(target);
@@ -45,7 +46,7 @@
       const settle = () => {
         if (state === "showing") {
           state = "visible";
-          if ((transient || resident) !== shownText) {
+          if (currentText() !== shownText) {
             toggle(false);
             return;
           }
@@ -66,8 +67,9 @@
         }
         render();
       };
-      const setResidentStatus = (text) => {
-        resident = text;
+      const setResidentStatus = (key, text) => {
+        residents.delete(key);
+        if (text) residents.set(key, text);
         render();
       };
       return { setStatus, setResidentStatus };

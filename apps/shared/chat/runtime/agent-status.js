@@ -87,8 +87,9 @@
         const res = await fetchWithTimeout(`/session-state?ts=${Date.now()}`, {}, 4000);
         if (!res.ok) throw new Error("session state unavailable");
         applySessionState(await res.json());
+        setResidentStatus("state-failed", "");
       } catch (err) {
-        setStatus(err?.message || String(err));
+        setResidentStatus("state-failed", err?.message || String(err));
       } finally {
         refreshSessionState.inFlight = false;
         if (refreshSessionState.pending) {
