@@ -1,7 +1,7 @@
     const openMenuSelect = (anchor, title, items, onPick) => {
-      document.getElementById("chatMenuSelect")?.remove();
+      document.getElementById("menuSelect")?.remove();
       const select = document.createElement("select");
-      select.id = "chatMenuSelect";
+      select.id = "menuSelect";
       select.append(...[{ value: "", label: title, disabled: true }, ...items].map((item) => {
         const node = document.createElement("option");
         node.value = item.value;

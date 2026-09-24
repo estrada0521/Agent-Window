@@ -18,7 +18,6 @@
     const _deskReloadShell = document.getElementById("deskReloadShell");
     const _deskMain = document.querySelector(".desk-main");
     const _deskSettingsBtn = document.getElementById("deskSettingsBtn");
-    const _deskThemeToggleBtn = document.getElementById("deskThemeToggleBtn");
     const _deskReloadBtn = document.getElementById("deskReloadBtn");
     const _deskNewSessionToggle = document.getElementById("deskNewSessionToggle");
     const _deskFloatingControls = document.querySelector(".desk-floating-controls");

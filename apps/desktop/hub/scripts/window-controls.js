@@ -353,9 +353,52 @@
       }
     });
 
+    function openBrowserAppearanceMenu() {
+      const run = (detail) => window.dispatchEvent(new CustomEvent("native-menu-action", { detail }));
+      const current = document.documentElement.dataset.themeDesktop || "dark";
+      const submenus = {
+        theme: ["system", "light", "dark"].map((theme) => ({
+          value: theme,
+          label: `${theme === current ? "✓ " : ""}${theme[0].toUpperCase()}${theme.slice(1)}`,
+          detail: { action: "theme", theme },
+        })),
+        sidePanels: [
+          { value: "toggleHubSidebar", label: "Toggle Hub Sidebar" },
+          { value: "toggleRightPane", label: "Toggle Right Pane", disabled: !deskRightPaneAvailable() },
+        ],
+        messages: [
+          { value: "messagePrevious", label: "Previous Message" },
+          { value: "messageNext", label: "Next Message" },
+          { value: "messageJumpTop", label: "Jump to Top" },
+          { value: "messageJumpBottom", label: "Jump to Bottom" },
+        ],
+      };
+      const titles = { theme: "Theme", sidePanels: "Side Panels", messages: "Messages" };
+      openMenuSelect(_deskSettingsBtn, "Settings", [
+        { value: "theme", label: "Theme" },
+        { value: "actual", label: "Actual Size", disabled: currentDeskTextSizePx() === DESK_TEXT_SIZE_DEFAULT },
+        { value: "increase", label: "Zoom In" },
+        { value: "decrease", label: "Zoom Out" },
+        { value: "sidePanels", label: "Side Panels" },
+        { value: "messages", label: "Messages" },
+      ], (value) => {
+        if (!submenus[value]) {
+          run({ action: "textSize", mode: value });
+          return;
+        }
+        openMenuSelect(_deskSettingsBtn, titles[value], submenus[value], (picked) => {
+          const item = submenus[value].find((entry) => entry.value === picked);
+          run(item.detail || { action: picked });
+        });
+      });
+    }
+
     async function openAppearanceMenu() {
       const invoke = getTauriInvoke();
-      if (typeof invoke !== "function" || !_deskSettingsBtn) return;
+      if (typeof invoke !== "function") {
+        openBrowserAppearanceMenu();
+        return;
+      }
       const rect = _deskSettingsBtn.getBoundingClientRect();
       _deskSettingsBtn.classList.add("is-active");
       try {
