@@ -28,7 +28,7 @@ A UNIX-philosophy Agent application for macOS.
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="media/agent-window-running-dark.webp">
      <source media="(prefers-color-scheme: light)" srcset="media/agent-window-running-light.webp">
-     <img src="media/agent-window-running-light.webp" width="292" alt="Claude's running tool calls in Agent Window">
+     <img src="media/agent-window-running-light.webp" width="360" alt="Claude's running tool calls in Agent Window">
    </picture>
 
 ## Setup
