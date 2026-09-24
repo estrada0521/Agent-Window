@@ -29,11 +29,12 @@
     const openChatMenu = (anchor, payload, onAction) => {
       const agents = { add: payload.addAgents || [], remove: payload.removeAgents || [] };
       openMenuSelect(anchor, "Menu", [
-        { value: "openShell", label: "Terminal" },
-        { value: "openTerminal", label: "tmux window" },
-        { value: "openFinder", label: "Finder" },
         { value: "add", label: "Add Agent", disabled: !payload.sessionActive || !agents.add.length },
         { value: "remove", label: "Remove Agent", disabled: !payload.sessionActive || !agents.remove.length },
+        { value: "openShell", label: "Terminal" },
+        { value: "openFinder", label: "Finder" },
+        { value: "openTerminal", label: "tmux window" },
+        { value: "revealLog", label: "Reveal Log" },
       ], (action) => {
         if (!agents[action]) {
           onAction({ action });

@@ -467,6 +467,11 @@ def _post_reveal_file(handler, _parsed, ctx) -> None:
     _send_workspace_result(handler, lambda: ctx["file_runtime"].reveal_in_finder(rel))
 
 
+def _post_reveal_log(handler, _parsed, ctx) -> None:
+    _session, log_path = ctx["runtime"].session_binding_snapshot()
+    _send_workspace_result(handler, lambda: ctx["file_runtime"].reveal_in_finder(str(log_path)))
+
+
 def _post_quick_look(handler, _parsed, ctx) -> None:
     data, err = _read_json_body(handler)
     if err:
@@ -589,6 +594,7 @@ _POST_ROUTES = {
     "/files-resolve": _post_files_resolve,
     "/open-file": _post_open_file,
     "/reveal-file": _post_reveal_file,
+    "/reveal-log": _post_reveal_log,
     "/quick-look": _post_quick_look,
     "/open-diff": _post_open_diff,
     "/shortcut-command": _post_shortcut_command,

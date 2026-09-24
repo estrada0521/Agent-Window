@@ -238,6 +238,11 @@
           dispatchDeskNativeMenuAction({ action: "openTerminal" });
           return;
         }
+        if (event.code === "KeyL") {
+          event.preventDefault();
+          dispatchDeskNativeMenuAction({ action: "revealLog" });
+          return;
+        }
         if (event.code === "KeyO" && isTauriDesktopApp()) {
           event.preventDefault();
           if (event.shiftKey) openDeskHubInBrowser();

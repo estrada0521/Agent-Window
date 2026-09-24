@@ -2,7 +2,7 @@ use objc2_app_kit::{
     NSAnimatablePropertyContainer, NSAnimationContext, NSBitmapImageFileType, NSBitmapImageRep,
     NSWindow, NSWindowButton, NSWorkspace,
 };
-use objc2_foundation::{NSDictionary, NSString, NSURL};
+use objc2_foundation::{NSDictionary, NSString};
 use std::collections::HashMap;
 use std::io::Read;
 use std::path::Path;
@@ -210,18 +210,6 @@ fn system_app_icon(path: &str) -> Result<tauri::image::Image<'static>, String> {
     ))
 }
 
-fn default_browser_icon() -> Result<tauri::image::Image<'static>, String> {
-    let probe = NSURL::URLWithString(&NSString::from_str("https://example.com"))
-        .ok_or_else(|| "could not build a URL to find the default browser".to_string())?;
-    let app = NSWorkspace::sharedWorkspace()
-        .URLForApplicationToOpenURL(&probe)
-        .ok_or_else(|| "no default browser is set".to_string())?;
-    let path = app
-        .path()
-        .ok_or_else(|| "default browser has no file path".to_string())?;
-    system_app_icon(&path.to_string())
-}
-
 struct SystemAppIcons {
     terminal: tauri::image::Image<'static>,
     finder: tauri::image::Image<'static>,
@@ -349,11 +337,10 @@ fn show_chat_header_menu(
     .accelerator("Cmd+T")
     .build(&app)
     .map_err(|err| err.to_string())?;
-    let terminal_item = IconMenuItemBuilder::with_id(
+    let terminal_item = MenuItemBuilder::with_id(
         format!("{}action:openTerminal", NATIVE_MENU_PREFIX),
         "tmux window",
     )
-    .icon(icons.terminal.clone())
     .accelerator("Alt+Cmd+T")
     .build(&app)
     .map_err(|err| err.to_string())?;
@@ -363,23 +350,31 @@ fn show_chat_header_menu(
             .accelerator("Alt+Cmd+R")
             .build(&app)
             .map_err(|err| err.to_string())?;
-    let browser_item = IconMenuItemBuilder::with_id(
+    let browser_item = MenuItemBuilder::with_id(
         format!("{}action:openInBrowser", NATIVE_MENU_PREFIX),
         "Open in Browser",
     )
-    .icon(default_browser_icon()?)
     .accelerator("Alt+Cmd+O")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+    let log_item = MenuItemBuilder::with_id(
+        format!("{}action:revealLog", NATIVE_MENU_PREFIX),
+        "Reveal Log",
+    )
+    .accelerator("Alt+Cmd+L")
     .build(&app)
     .map_err(|err| err.to_string())?;
 
     let menu = MenuBuilder::new(&app)
-        .item(&shell_item)
-        .item(&terminal_item)
-        .item(&finder_item)
-        .item(&browser_item)
-        .separator()
         .item(&add_submenu)
         .item(&remove_submenu)
+        .separator()
+        .item(&shell_item)
+        .item(&finder_item)
+        .separator()
+        .item(&browser_item)
+        .item(&terminal_item)
+        .item(&log_item)
         .build()
         .map_err(|err| err.to_string())?;
 

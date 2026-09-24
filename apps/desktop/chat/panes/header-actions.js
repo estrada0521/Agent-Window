@@ -157,6 +157,14 @@
         await reloadChat();
         return;
       }
+      if (action === "revealLog") {
+        const res = await fetch("/reveal-log", { method: "POST" });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setStatus(data.error || "Reveal failed");
+        }
+        return;
+      }
       if (action === "openInBrowser") {
         await openExternalLink(`${window.location.protocol}//${window.location.hostname}:__CHAT_PORT__/`).catch(reportExternalLinkFailure);
         return;
