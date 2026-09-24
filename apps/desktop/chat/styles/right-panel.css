@@ -223,6 +223,25 @@
       height: var(--right-panel-small-icon-size);
       display: block;
     }
+    .repo-path-root-btn {
+      width: var(--right-panel-icon-slot-size);
+      height: var(--right-panel-icon-slot-size);
+      color: var(--icon-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border-radius: 0.29em;
+      cursor: pointer;
+    }
+    .has-hover .repo-path-root-btn:hover {
+      color: var(--icon-fg);
+    }
+    .repo-path-root-btn svg {
+      width: var(--right-panel-small-icon-size);
+      height: var(--right-panel-small-icon-size);
+      display: block;
+    }
     .repo-path-label {
       flex: 1 1 auto;
       min-width: 0;

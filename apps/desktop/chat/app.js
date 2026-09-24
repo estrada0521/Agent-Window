@@ -715,6 +715,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     }
     const dpChevronIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
     const dpBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
+    const dpRootIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 6 6 12 12 18"/><polyline points="19 6 13 12 19 18"/></svg>';
     const dpFetchRepoDir = async (rawPath) => {
       const path = dpNormalizePath(rawPath);
       const res = await fetchWithTimeout(`/files-dir?path=${encodeURIComponent(path)}`, {}, 12000);
@@ -838,6 +839,18 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       pathText.className = "repo-path-label";
       pathText.textContent = pathBasename;
       pathRow.append(backIcon, pathText);
+      if (path) {
+        const rootBtn = document.createElement("span");
+        rootBtn.className = "repo-path-root-btn";
+        rootBtn.setAttribute("role", "button");
+        rootBtn.title = "Root";
+        rootBtn.innerHTML = dpRootIcon;
+        rootBtn.addEventListener("click", (e) => {
+          e.preventDefault(); e.stopPropagation();
+          void dpLoadRepoDir("");
+        });
+        pathRow.append(rootBtn);
+      }
       pathWrap.appendChild(pathRow);
       pathWrap.addEventListener("contextmenu", (e) => {
         void dpOpenFileContextMenu(path, e);
