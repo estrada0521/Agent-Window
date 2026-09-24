@@ -28,7 +28,7 @@ UNIX哲学で作られた、macOS向けのAgentアプリケーション。
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="media/agent-window-running-dark.webp">
      <source media="(prefers-color-scheme: light)" srcset="media/agent-window-running-light.webp">
-     <img src="media/agent-window-running-light.webp" width="360" alt="Claudeの実行中のtool call表示">
+     <img src="media/agent-window-running-light.webp" width="326" alt="Claudeの実行中のtool call表示">
    </picture>
 
 ## Setup
