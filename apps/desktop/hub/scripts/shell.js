@@ -489,8 +489,9 @@
         document.body.appendChild(hoverPopover);
 
         const wbRect = _deskWorkbench ? _deskWorkbench.getBoundingClientRect() : null;
-        hoverPopover.style.top = `calc(${Math.round(wbRect ? wbRect.top : _deskAppSidebarToggle.getBoundingClientRect().bottom)}px + var(--pill-row-margin))`;
-        hoverPopover.style.left = `calc(${Math.round(wbRect ? wbRect.left : 0)}px + var(--pill-row-margin))`;
+        const gap = Math.round(10 * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT);
+        hoverPopover.style.top = `${Math.round((wbRect ? wbRect.top : _deskAppSidebarToggle.getBoundingClientRect().bottom) + gap)}px`;
+        hoverPopover.style.left = `${Math.round((wbRect ? wbRect.left : 0) + gap)}px`;
         animatePopoverIn(hoverPopover);
 
         const updatePopoverFade = () => {

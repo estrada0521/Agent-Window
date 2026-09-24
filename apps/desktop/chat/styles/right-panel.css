@@ -7,6 +7,7 @@
       --right-panel-icon-slot-size: calc(18em / 13);
       --right-panel-small-icon-size: 1.23em;
       --right-panel-chevron-size: 1.08em;
+      --right-panel-floating-inset: calc(var(--text-size, 13px) * 10 / 13);
     }
     .desktop-right-panel {
       font-family: var(--font-main);
@@ -477,8 +478,8 @@
     }
     html[data-desktop-chat="1"] .git-pinned-summary-aside {
       position: fixed;
-      top: calc(var(--chat-band-h) + var(--pill-row-margin) + env(safe-area-inset-top, 0px));
-      right: var(--pill-row-margin);
+      top: calc(var(--chat-band-h) + var(--right-panel-floating-inset) + env(safe-area-inset-top, 0px));
+      right: var(--right-panel-floating-inset);
       left: auto;
       width: max-content;
       max-width: calc(100vw - 16px);
@@ -1115,7 +1116,6 @@
       padding-bottom: var(--pill-row-margin);
     }
     .git-pinned-expand .git-commit-file-list {
-      gap: var(--pill-row-margin);
       padding: 0;
     }
     .git-pinned-expand .git-commit-file-row {

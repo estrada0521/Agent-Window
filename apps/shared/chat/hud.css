@@ -1,7 +1,7 @@
     :root {
       --pill-row-height: calc(var(--text-size, 13px) * 27.5 / 13);
-      --pill-row-margin: 0.31em;
-      --pill-radius: calc(var(--text-size, 13px) * 15 / 13);
+      --pill-row-margin: 0.46em;
+      --pill-radius: calc(var(--text-size, 13px) * 17 / 13);
       --pill-inner-radius: calc(var(--pill-radius) - var(--pill-row-margin) - 0.5px);
       --pill-bg: rgba(24, 24, 24, 0.8);
       --pill-border: rgba(255, 255, 255, 0.22);
