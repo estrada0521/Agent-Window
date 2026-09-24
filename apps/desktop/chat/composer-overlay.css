@@ -85,8 +85,7 @@
       inset: auto;
       top: 0;
       left: 0;
-      right: 0;
-      width: 100%;
+      right: var(--desktop-overlay-exclude-right, 0px);
       height: var(--hub-iframe-lock-height, 100dvh);
       min-height: var(--hub-iframe-lock-height, 100dvh);
     }
