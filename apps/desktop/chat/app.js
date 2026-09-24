@@ -263,6 +263,10 @@ __CHAT_INCLUDE:../../shared/chat/conversation-state.js__
       }
       requestAnimationFrame(() => reportFitHeight());
     });
+    document.addEventListener("chat-send-failed", () => {
+      if (document.documentElement.dataset.autoWindowHeight !== "1") return;
+      requestAnimationFrame(() => reportFitHeight());
+    });
 __CHAT_INCLUDE:../../shared/chat/scroll-focus.js__
 __CHAT_INCLUDE:attachments/file-open.js__
 __CHAT_INCLUDE:../../shared/chat/composer-overlay.js__

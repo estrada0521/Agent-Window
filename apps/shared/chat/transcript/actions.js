@@ -167,6 +167,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
             return true;
           } catch (error) {
             setStatus(error.message);
+            document.dispatchEvent(new CustomEvent("chat-send-failed"));
             return false;
           } finally {
             sendLocked = false;
@@ -230,6 +231,7 @@ __CHAT_INCLUDE:../shortcut-commands.js__
         return true;
       } catch (error) {
         setStatus(error.message);
+        document.dispatchEvent(new CustomEvent("chat-send-failed"));
         return false;
       } finally {
         sendLocked = false;
