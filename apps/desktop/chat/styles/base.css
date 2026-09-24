@@ -103,12 +103,9 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --chat-band-h: 0px;
     }
     html:not([data-hub-iframe-chat="1"]) {
-      --chat-band-h: calc(var(--text-size, 13px) * 2);
-      --app-shell-height: calc(100dvh - var(--chat-band-h));
+      --chat-band-h: var(--browser-band-h);
     }
     html:not([data-hub-iframe-chat="1"]) body {
-      box-sizing: border-box;
-      padding-top: var(--chat-band-h);
       background: var(--bg);
     }
     .chat-band {
@@ -128,7 +125,9 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       box-sizing: border-box;
       padding: var(--desk-chrome-top) var(--desk-chrome-edge) 0;
       border-bottom: 1px solid var(--line);
-      background: var(--bg);
+      background: rgba(var(--bg-rgb), 0.72);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
     }
     html:not([data-hub-iframe-chat="1"]) #chatHud {
       top: calc(var(--chat-band-h) + var(--text-size, 13px) * 10 / 13);

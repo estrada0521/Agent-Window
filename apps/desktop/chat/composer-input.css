@@ -242,7 +242,7 @@
     }
     main {
       --chat-scrollbar-width: 2px;
-      --message-step-top-gap: 16px;
+      --message-step-top-gap: calc(16px + var(--chat-band-h));
       font-size: var(--text-size, 13px);
       position: absolute;
       top: 0;

@@ -21,11 +21,11 @@
       background: transparent;
     }
     html:not([data-tauri-app="1"]) {
-      --app-shell-height: calc(100dvh - var(--text-size, 13px) * 2);
+      --app-shell-height: calc(100dvh - var(--browser-band-h));
     }
     html:not([data-tauri-app="1"]) body {
       box-sizing: border-box;
-      padding-top: calc(var(--text-size, 13px) * 2);
+      padding-top: var(--browser-band-h);
       background: var(--bg);
     }
     html:not([data-tauri-app="1"]) .shell {
