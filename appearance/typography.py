@@ -56,6 +56,8 @@ def apply_font_tokens(text: str) -> str:
         ("__CODE_FONT__", html.escape(CODE_FONT)),
         ("__MESSAGE_FONT_FAMILY__", html.escape(MESSAGE_FONT_FAMILY)),
         ("__CODE_FONT_FAMILY__", html.escape(CODE_FONT_FAMILY)),
+        ("__MOBILE_LIGHT_BODY_WEIGHT__", str(MOBILE_LIGHT_BODY_WEIGHT)),
+        ("__MOBILE_DARK_BODY_WEIGHT__", str(MOBILE_DARK_BODY_WEIGHT)),
     )
     resolved = text
     for old, new in replacements:

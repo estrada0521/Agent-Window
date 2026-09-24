@@ -55,6 +55,6 @@
         0 1px 2px rgba(0, 0, 0, 0.12);
     }
     html[data-mobile="1"] .hud {
-      --hud-height: var(--mobile-sheet-floating-height);
+      --hud-height: var(--liquid-glass-button-size);
       top: 9dvh;
     }

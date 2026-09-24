@@ -16,6 +16,7 @@
       --session-danger-fg: rgb(204, 47, 38);
       --session-success-fg: rgb(41, 178, 75);
       --hub-tagline-top: calc(env(safe-area-inset-top, 0px) + 22px);
+      --hub-chat-peek-width: 25vw;
       --hub-tagline-fade-height: 64px;
       --mob-top-gradient-rgb: var(--bg-rgb);
       --code-bg: rgba(255, 255, 255, 0.05);
@@ -44,6 +45,7 @@
       --row-preview-fg: var(--muted);
       --session-dim-fg: rgb(__TEXT_SESSION_DIM_MOBILE_LIGHT_CHANNELS__);
       --row-name-weight: 700;
+      --hud-weight: __MOBILE_LIGHT_BODY_WEIGHT__;
     }
     html[data-theme="dark"] {
       color-scheme: dark;
@@ -67,6 +69,7 @@
       --row-preview-fg: color-mix(in srgb, var(--muted) 85%, var(--bg));
       --session-dim-fg: rgb(__TEXT_SESSION_DIM_MOBILE_DARK_CHANNELS__);
       --row-name-weight: 600;
+      --hud-weight: __MOBILE_DARK_BODY_WEIGHT__;
     }
 
     * {
@@ -108,11 +111,11 @@
     html.hub-chat-peeking .shell {
       max-width: none;
       margin: 0;
-      padding-right: var(--hub-chat-peek-width, 25vw);
+      padding-right: var(--hub-chat-peek-width);
     }
 
     @media (min-width: 600px) {
-      html.hub-chat-peeking {
+      :root {
         --hub-sidebar-width: min(400px, 75vw);
       }
 
@@ -690,13 +693,13 @@
 
     #chatOverlay.overlay-closing {
       opacity: 1;
-      transform: translate3d(calc(100% - var(--hub-chat-peek-width, 25vw)), 0, 0);
+      transform: translate3d(calc(100% - var(--hub-chat-peek-width)), 0, 0);
       transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
     }
 
     #chatOverlay.overlay-peeking {
       opacity: 1;
-      transform: translate3d(calc(100% - var(--hub-chat-peek-width, 25vw)), 0, 0);
+      transform: translate3d(calc(100% - var(--hub-chat-peek-width)), 0, 0);
       transition: none;
     }
 
@@ -751,4 +754,17 @@
       min-height: 100vh;
       min-height: 100svh;
       min-height: -webkit-fill-available;
+    }
+    #hubHud {
+      top: calc(var(--hub-tagline-top) + 48px);
+      z-index: 9998;
+      --hud-fg: var(--fg);
+    }
+    html:has(#chatOverlay:not([hidden])) #hubHud {
+      left: calc((100vw - var(--hub-chat-peek-width)) / 2);
+    }
+    @media (min-width: 600px) {
+      html:has(#chatOverlay:not([hidden])) #hubHud {
+        left: calc(var(--hub-sidebar-width) / 2);
+      }
     }

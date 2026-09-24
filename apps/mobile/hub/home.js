@@ -7,6 +7,7 @@
     const _chatFrameClip = _chatOverlay.querySelector(".chat-frame-clip");
     const _chatFrame = document.getElementById("chatFrame");
     const _launchShell = document.getElementById("launchShell");
+    const { setStatus, setResidentStatus } = createHud(document.getElementById("hubHud"));
     let _hubChatParentLayoutMax = 0;
     let _hubMinParentChromeGap = Infinity;
     let _hubLayoutRefW = 0;
@@ -163,6 +164,7 @@
       clearHubReadyTimeout();
       clearLaunchShellQueryFlag();
       hideLaunchShell();
+      setStatus(message);
     }
     function startHubReadyTimeout() {
       if (_hubReadyTimeoutTimer) return;
@@ -898,6 +900,9 @@
           if (!res.ok) throw new Error("failed");
           const data = await res.json();
           if (requestSeq !== _mobSessionsRequestSeq) return;
+          if (data.hub_instance !== HUB_INSTANCE) {
+            setResidentStatus("Hub restarted; reload");
+          }
           const activeSessions = data.active_sessions;
           const archivedSessions = data.archived_sessions;
           _mobSessionsCache = { active: activeSessions, archived: archivedSessions };

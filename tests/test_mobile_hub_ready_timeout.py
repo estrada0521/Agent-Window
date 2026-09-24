@@ -36,6 +36,7 @@ const setTimeout = (fn, ms) => {{
 }};
 const clearTimeout = (id) => cleared.push(id);
 const requestAnimationFrame = (fn) => fn();
+const setStatus = () => {{}};
 const card = {{
   classList: {{
     add: (name) => {{ card.errorClass = name; }},

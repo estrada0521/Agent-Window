@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="__THEME__" data-theme-mobile-default="__THEME_MOBILE_DEFAULT__">
+<html lang="en" data-theme="__THEME__" data-theme-mobile-default="__THEME_MOBILE_DEFAULT__" data-mobile="1">
 
 <head>
   <meta charset="utf-8">
@@ -41,6 +41,7 @@
   <style>
 __HUB_INCLUDE:_liquid_glass.css__
 __HUB_INCLUDE:home.css__
+__HUB_INCLUDE:hud.css__
 __HUB_HEADER_CSS__
   </style>
 </head>
@@ -53,6 +54,7 @@ __HUB_HEADER_CSS__
   </div>
   <div id="chatOverlay" hidden><svg class="chat-overlay-shape" aria-hidden="true" preserveAspectRatio="none"><path></path></svg><div class="chat-frame-clip"><iframe id="chatFrame" src="about:blank"
       allow="clipboard-write"></iframe></div></div>
+  <div id="hubHud" class="hud" role="status" aria-live="polite"></div>
   <div class="shell">
     __HUB_HEADER_HTML__
     <p class="hub-mobile-tagline"><b>Agent Window</b></p>
@@ -66,6 +68,7 @@ __HUB_HEADER_CSS__
 __HUB_INCLUDE:_chat_url.js__
 __HUB_INCLUDE:_session_messages_events.js__
 __HUB_INCLUDE:list-flip.js__
+__HUB_INCLUDE:hud.js__
 __HUB_INCLUDE:home.js__
   </script>
 </body>

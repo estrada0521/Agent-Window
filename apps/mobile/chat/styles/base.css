@@ -36,7 +36,7 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --glass-filter-18: blur(18px) saturate(160%);
       --mobile-sheet-panel-height: 94dvh;
       --mobile-sheet-corner-radius: 36px;
-      --mobile-sheet-floating-height: 44px;
+      --mobile-sheet-floating-height: var(--liquid-glass-button-size);
       --mobile-sheet-safe-bottom: env(safe-area-inset-bottom, 0px);
       --mobile-sheet-footer-bottom: calc(14px + var(--mobile-sheet-safe-bottom));
       --mobile-sheet-floating-bg: var(--panel-row-bg);
