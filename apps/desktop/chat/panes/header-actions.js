@@ -26,7 +26,7 @@
       img.onerror = () => resolve(null);
       img.src = src;
     });
-    const openTauriHeaderMenu = async (anchorRect = null) => {
+    const openNativeHeaderMenu = async (anchorRect = null) => {
       const invoke = getTauriInvoke();
       const fallbackRect = rightMenuBtn?.getBoundingClientRect?.() || null;
       const hasExplicitAnchor = !!(anchorRect && typeof anchorRect === "object");
@@ -109,12 +109,8 @@
             height: Number(anchorData.height || 24),
           }
         : null;
-      if (hasTauriNativeHeaderMenu()) {
-        closeHeaderMenus();
-        openTauriHeaderMenu(anchorRect).catch((err) => setStatus(`header menu failed: ${err}`));
-        return;
-      }
-      if (nativeHeaderMenuBridge) openNativeSelect(nativeHeaderMenuBridge);
+      closeHeaderMenus();
+      openNativeHeaderMenu(anchorRect).catch((err) => setStatus(`header menu failed: ${err}`));
     });
     window.addEventListener("native-menu-action", (event) => {
       void handleTauriNativeMenuAction(event.detail || {});
@@ -125,7 +121,7 @@
 
       if (hasTauriNativeHeaderMenu()) {
         closeHeaderMenus();
-        openTauriHeaderMenu().catch((err) => setStatus(`header menu failed: ${err}`));
+        openNativeHeaderMenu().catch((err) => setStatus(`header menu failed: ${err}`));
         return;
       }
       closeHeaderMenus();

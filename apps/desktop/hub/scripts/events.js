@@ -20,8 +20,11 @@
       }
       if (event.data && event.data.type === "show-chat-header-menu") {
         const invoke = getTauriInvoke();
-        if (typeof invoke !== "function") return;
         const childPayload = event.data.payload || {};
+        if (typeof invoke !== "function") {
+          showDeskChatMenuSelect(childPayload);
+          return;
+        }
         const frameRect = _deskChatFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
         invoke("show_chat_header_menu", {
           payload: {
