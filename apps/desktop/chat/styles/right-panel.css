@@ -1,5 +1,5 @@
     html[data-desktop-chat="1"] {
-      --right-panel-row-height: calc(var(--text-size, 13px) * 30 / 13);
+      --right-panel-row-height: calc(var(--text-size, 13px) * 27.5 / 13);
       --right-panel-row-pad-x: 0.46em;
       --right-panel-item-gap: 0.46em;
       --right-panel-path-gap: 0.62em;
