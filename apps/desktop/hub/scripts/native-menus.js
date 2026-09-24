@@ -202,6 +202,10 @@
         void moveDeskWindowToSpot("move_window_center");
         return;
       }
+      if (detail.action === "openHubInBrowser") {
+        openDeskHubInBrowser();
+        return;
+      }
       if (detail.action === "toggleHubSidebar") {
         toggleDeskSidebar();
         return;

@@ -118,6 +118,7 @@ def _get_chat_index(handler, parsed, ctx) -> None:
         icon_data_uris=ctx["asset_runtime"].icon_data_uris,
         server_instance=ctx["server_instance"],
         hub_port=ctx["hub_port"],
+        chat_port=ctx["chat_port"],
         chat_base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
         variant=variant,
         session_name=ctx["session_name"],

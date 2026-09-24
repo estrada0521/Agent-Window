@@ -1087,6 +1087,12 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openTerminal" }, "*");
             return;
           }
+          if (event.code === "KeyO" && document.documentElement.dataset.tauriApp === "1") {
+            event.preventDefault();
+            if (event.shiftKey) window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openHubInBrowser" }, "*");
+            else void runForwardAction("openInBrowser");
+            return;
+          }
           if (event.code === "KeyR") {
             event.preventDefault();
             const revealTarget = dpActivePanelTargets(

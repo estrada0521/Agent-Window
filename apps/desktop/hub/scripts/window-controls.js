@@ -238,6 +238,12 @@
           dispatchDeskNativeMenuAction({ action: "openTerminal" });
           return;
         }
+        if (event.code === "KeyO" && isTauriDesktopApp()) {
+          event.preventDefault();
+          if (event.shiftKey) openDeskHubInBrowser();
+          else sendDeskChatAction("openInBrowser");
+          return;
+        }
         if (event.code === "KeyP") {
           event.preventDefault();
           toggleDeskAlwaysOnTop();
@@ -352,6 +358,11 @@
         applyDeskTextSizeAndBroadcast(DESK_TEXT_SIZE_DEFAULT);
       }
     });
+
+    function openDeskHubInBrowser() {
+      getTauriInvoke()?.("open_external_url", { url: `${window.location.origin}/` })
+        .catch((err) => setStatus(`open in browser failed: ${err}`));
+    }
 
     function openBrowserAppearanceMenu() {
       const run = (detail) => window.dispatchEvent(new CustomEvent("native-menu-action", { detail }));

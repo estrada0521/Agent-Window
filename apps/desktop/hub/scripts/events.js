@@ -124,7 +124,7 @@
       if (event.data && event.data.type === "desktop-menu-shortcut") {
         if (event.data.action === "openAppearanceMenu") void openAppearanceMenu();
         else if (event.data.action === "openChatHeaderMenu") openDeskChatHeaderMenu();
-        else dispatchDeskNativeMenuAction({ action: String(event.data.action || "") });
+        else window.dispatchEvent(new CustomEvent("native-menu-action", { detail: { action: String(event.data.action || "") } }));
         return;
       }
       if (event.data && event.data.type === "reload-shortcut") {

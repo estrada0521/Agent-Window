@@ -236,6 +236,7 @@ def _route_context() -> dict:
         "runtime": runtime,
         "workspace": workspace,
         "hub_port": hub_port,
+        "chat_port": port,
         "payload_fn": payload,
         "send_message_fn": send_message,
         "file_runtime": file_runtime,

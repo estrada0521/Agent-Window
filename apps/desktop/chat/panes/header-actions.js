@@ -157,6 +157,10 @@
         await reloadChat();
         return;
       }
+      if (action === "openInBrowser") {
+        await openExternalLink(`${window.location.protocol}//${window.location.hostname}:__CHAT_PORT__/`).catch(reportExternalLinkFailure);
+        return;
+      }
       if (action === "messagePrevious" || action === "messageNext") {
         stepConversationByMessage(action === "messageNext");
         return;

@@ -351,11 +351,19 @@ fn show_chat_header_menu(
             .accelerator("Alt+Cmd+R")
             .build(&app)
             .map_err(|err| err.to_string())?;
+    let browser_item = MenuItemBuilder::with_id(
+        format!("{}action:openInBrowser", NATIVE_MENU_PREFIX),
+        "Open in Browser",
+    )
+    .accelerator("Alt+Cmd+O")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
 
     let menu = MenuBuilder::new(&app)
         .item(&shell_item)
         .item(&terminal_item)
         .item(&finder_item)
+        .item(&browser_item)
         .separator()
         .item(&add_submenu)
         .item(&remove_submenu)
@@ -530,6 +538,14 @@ fn show_appearance_menu(
     .build(&app)
     .map_err(|err| err.to_string())?;
 
+    let open_hub_in_browser = MenuItemBuilder::with_id(
+        format!("{}action:openHubInBrowser", NATIVE_MENU_PREFIX),
+        "Open in Browser",
+    )
+    .accelerator("Shift+Alt+Cmd+O")
+    .build(&app)
+    .map_err(|err| err.to_string())?;
+
     let message_item = |action: &str, label: &str, accelerator: &str| {
         MenuItemBuilder::with_id(format!("{}action:{}", NATIVE_MENU_PREFIX, action), label)
             .accelerator(accelerator)
@@ -602,6 +618,8 @@ fn show_appearance_menu(
         .item(&always_on_top)
         .item(&auto_window_height)
         .item(&fit_collapsed)
+        .separator()
+        .item(&open_hub_in_browser)
         .build()
         .map_err(|err| err.to_string())?;
 
