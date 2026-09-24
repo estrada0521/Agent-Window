@@ -1,3 +1,5 @@
+    const rightMenuBtn = document.getElementById("chatMenuBtn");
+    const getTauriInvoke = () => window.__TAURI__?.core?.invoke;
     const closeHeaderMenus = () => {
       resetAgentActionMenus();
     };
@@ -41,6 +43,14 @@
         height: Number(rectSource.height || 24),
       };
 
+      if (typeof invoke !== "function" && window.parent === window) {
+        openChatMenu(rightMenuBtn, {
+          sessionActive: !!sessionActive,
+          addAgents: ALL_BASE_AGENTS.filter(Boolean),
+          removeAgents: agentActionCandidates("remove"),
+        }, (action) => void handleChatMenuAction(action));
+        return true;
+      }
       const agentIcons = {};
       const allAgentNames = [...new Set([
         ...ALL_BASE_AGENTS.filter(Boolean),
@@ -66,17 +76,15 @@
       };
       if (typeof invoke === "function") {
         await invoke("show_chat_header_menu", { payload });
-      } else if (window.parent && window.parent !== window) {
+      } else {
         window.parent.postMessage({
           type: "show-chat-header-menu",
           payload,
         }, "*");
-      } else {
-        return false;
       }
       return true;
     };
-    const handleTauriNativeMenuAction = async (payload) => {
+    const handleChatMenuAction = async (payload) => {
       const data = payload || {};
       if (handleDesktopFileContextMenuAction(data) || handleDesktopCommitContextMenuAction(data)) return;
       if (data.action === "agent") {
@@ -94,7 +102,7 @@
     };
     window.addEventListener("message", (event) => {
       if (!(event.data && event.data.type === "native-menu-action")) return;
-      void handleTauriNativeMenuAction(event.data.payload);
+      void handleChatMenuAction(event.data.payload);
     });
     window.addEventListener("message", (event) => {
       if (!(event.data && event.data.type === "open-chat-header-menu")) return;
@@ -113,32 +121,28 @@
       openNativeHeaderMenu(anchorRect).catch((err) => setStatus(`header menu failed: ${err}`));
     });
     window.addEventListener("native-menu-action", (event) => {
-      void handleTauriNativeMenuAction(event.detail || {});
+      void handleChatMenuAction(event.detail || {});
     });
-    rightMenuBtn?.addEventListener("click", (event) => {
+    rightMenuBtn.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-
-      if (hasTauriNativeHeaderMenu()) {
-        closeHeaderMenus();
-        openNativeHeaderMenu().catch((err) => setStatus(`header menu failed: ${err}`));
-        return;
-      }
       closeHeaderMenus();
+      openNativeHeaderMenu().catch((err) => setStatus(`header menu failed: ${err}`));
     });
+    document.getElementById("chatReloadBtn").addEventListener("click", () => void reloadChat());
+    document.getElementById("chatPanelToggle").addEventListener("click", () => toggleDesktopRightPanel());
     window.addEventListener("resize", () => {
       if (dpPanelOpen) {
         dpApplyPanelWidth();
       }
-      notifyParentPanelState();
+      syncPanelState();
     });
     document.addEventListener("click", (event) => {
 
-      const inRightMenu = rightMenuBtn?.contains(event.target);
-      const inNativeBridgeMenu = nativeHeaderMenuBridge?.contains(event.target);
+      const inRightMenu = rightMenuBtn.contains(event.target);
       const agentActionNativeMenu = document.getElementById("agentActionNativeMenuSelect");
       const inAgentActionMenu = agentActionNativeMenu?.contains(event.target);
-      if (!inRightMenu && !inNativeBridgeMenu && !inAgentActionMenu) {
+      if (!inRightMenu && !inAgentActionMenu) {
         closeHeaderMenus();
       }
     });
@@ -199,14 +203,6 @@
         } catch (err) {
           setStatus(`Finder: ${err.message}`);
         }
-        return;
-      }
-      if (action === "addAgent") {
-        showAddAgentModal();
-        return;
-      }
-      if (action === "removeAgent") {
-        showRemoveAgentModal();
         return;
       }
       throw new Error(`unknown menu action: ${action}`);

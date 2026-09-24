@@ -4,10 +4,9 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
     :root {
       color-scheme: __COLOR_SCHEME__;
       --app-shell-height: 100dvh;
-      --page-side-pad: 14px;
       --message-user-indent: min(28%, 280px);
-      --chrome-icon-btn-size: 24px;
-      --chrome-icon-size: 15px;
+      --chrome-icon-btn-size: 26px;
+      --chrome-icon-size: 16px;
       --chrome-icon-stroke: 1.5;
       --chrome-icon-gap: 2px;
       --bg-rgb: __DARK_BG_CHANNELS__;
@@ -100,6 +99,40 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       --code-copy-hover-bg: rgba(180, 180, 180, 0.09);
       --scrollbar-thumb: __DESKTOP_SCROLLBAR_THUMB_DARK__;
     }
+    :root {
+      --chat-band-h: 0px;
+    }
+    html:not([data-hub-iframe-chat="1"]) {
+      --chat-band-h: calc(var(--text-size, 13px) * 2);
+      --app-shell-height: calc(100dvh - var(--chat-band-h));
+    }
+    html:not([data-hub-iframe-chat="1"]) body {
+      box-sizing: border-box;
+      padding-top: var(--chat-band-h);
+      background: var(--bg);
+    }
+    .chat-band {
+      display: none;
+    }
+    html:not([data-hub-iframe-chat="1"]) .chat-band {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1250;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      gap: var(--desk-chrome-gap);
+      height: var(--chat-band-h);
+      box-sizing: border-box;
+      padding: var(--desk-chrome-top) var(--desk-chrome-edge) 0;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+    }
+    html:not([data-hub-iframe-chat="1"]) #chatHud {
+      top: calc(var(--chat-band-h) + var(--text-size, 13px) * 10 / 13);
+    }
     html[data-launch-shell],
     html[data-launch-shell] body {
       background: transparent;
@@ -124,76 +157,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       z-index: 12000;
       pointer-events: none;
       box-sizing: border-box;
-    }
-    .shell > .page-header {
-      position: absolute;
-      overflow: visible;
-      z-index: 155;
-    }
-    html[data-hub-shell="1"] .shell > .page-header .page-title {
-      display: none;
-    }
-    html[data-hub-shell="1"] .shell > .page-header > .page-header-top {
-      min-height: 32px;
-      padding: 4px 0;
-    }
-    html[data-hub-shell="1"] .shell > .page-header .page-header-actions,
-    html[data-hub-shell="1"] .page-header-actions.page-header-actions-floating {
-      position: fixed;
-      top: 4px;
-      right: calc(6px + env(safe-area-inset-right, 0px));
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-      margin: 0;
-      padding: 0;
-      gap: 0;
-      z-index: 1306;
-      line-height: 0;
-      pointer-events: auto;
-      isolation: isolate;
-    }
-    html[data-hub-shell="1"] .shell > .page-header .page-menu-btn,
-    html[data-hub-shell="1"] .page-header-actions.page-header-actions-floating .page-menu-btn {
-      width: 24px;
-      height: 24px;
-      margin: 0;
-      padding: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 0;
-      color: var(--icon-fg);
-      opacity: 1;
-    }
-    html[data-hub-shell="1"] .shell > .page-header .page-menu-btn svg,
-    html[data-hub-shell="1"] .page-header-actions.page-header-actions-floating .page-menu-btn svg {
-      width: 15px;
-      height: 15px;
-      margin: 0 auto;
-      transform: none;
-    }
-    html[data-hub-shell="1"] .page-header-actions.page-header-actions-floating #pageNativeMenuBridge {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: auto;
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      opacity: 0.001;
-      z-index: 2;
-      pointer-events: auto;
-      appearance: none;
-      -webkit-appearance: none;
-      -webkit-app-region: no-drag;
-      border: none;
-      outline: none;
-      background: transparent;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
     }
     .git-commit-detail-body {
       flex: 1 1 auto;

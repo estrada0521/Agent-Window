@@ -1,4 +1,5 @@
 __CHAT_INCLUDE:styles/base.css__
+__CHAT_INCLUDE:../../shared/chat/chat-controls.css__
 __CHAT_INCLUDE:styles/right-panel.css__
 __CHAT_INCLUDE:styles/file-menu.css__
 __CHAT_INCLUDE:composer-overlay.css__

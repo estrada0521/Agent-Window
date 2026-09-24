@@ -4,11 +4,7 @@ import json
 
 from backend_core.access.pwa import pwa_url
 from backend_core.agents.registry import agent_names_js_set, agent_names_js_array
-from .script_assets import (
-    CHAT_HEADER_ACTIONS_HTML,
-    CHAT_HEADER_ACTIONS_HTML_MOBILE,
-    CHAT_SHEET_PANELS_HTML,
-)
+from .script_assets import CHAT_HEADER_MENU_BUTTON_HTML, CHAT_SHEET_PANELS_HTML
 from .render import apply_chat_template_replacements, build_chat_template_replacements
 from .template_loader import load_chat_template
 from appearance.colors import apply_color_tokens
@@ -84,21 +80,16 @@ def render_chat_html(
     base_path = chat_base_path.rstrip("/")
     normalized_session_name = str(session_name or "").strip()
     chat_document_title = f"{normalized_session_name} · {APP_DISPLAY_NAME}" if normalized_session_name else APP_DISPLAY_NAME
-    actions_html = CHAT_HEADER_ACTIONS_HTML_MOBILE if normalized_variant == "mobile" else CHAT_HEADER_ACTIONS_HTML
-    panels_html = CHAT_SHEET_PANELS_HTML if normalized_variant == "mobile" else ""
-    chat_header_html = render_page_header(
-        title_href="/",
-        title_id="pageTitleLink",
-        actions_html=actions_html,
-        panels_html=panels_html,
-    )
     html = _chat_html(normalized_variant)
     for placeholder, value in _agent_css_selectors().items():
         html = html.replace(placeholder, value)
-    if "__CHAT_HEADER_HTML__" in html:
-        html = html.replace("__CHAT_HEADER_HTML__", chat_header_html)
-    else:
-        html = html.replace('<section class="shell">', f'<section class="shell">{chat_header_html}', 1)
+    if normalized_variant == "mobile":
+        html = html.replace("__CHAT_HEADER_HTML__", render_page_header(
+            title_href="/",
+            title_id="pageTitleLink",
+            actions_html=CHAT_HEADER_MENU_BUTTON_HTML,
+            panels_html=CHAT_SHEET_PANELS_HTML,
+        ))
     replacements = build_chat_template_replacements(
         icon_data_uris=icon_data_uris,
         base_path=base_path,

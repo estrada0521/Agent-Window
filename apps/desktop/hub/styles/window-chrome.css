@@ -73,12 +73,6 @@
     body { padding: 0; }
     __HUB_HEADER_CSS__
     :root {
-      --desk-chrome-icon-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
-      --desk-chrome-size: calc(var(--desk-chrome-icon-size) + round(nearest, calc(var(--text-size, 13px) * 6 / 13), 2px));
-      --desk-chrome-radius: round(nearest, calc(var(--text-size, 13px) * 8 / 13), 1px);
-      --desk-chrome-top: round(nearest, calc(var(--text-size, 13px) * 4 / 13), 1px);
-      --desk-chrome-edge: round(nearest, calc(var(--text-size, 13px) * 10 / 13), 1px);
-      --desk-chrome-gap: round(nearest, calc(var(--text-size, 13px) * 6 / 13), 1px);
       --desk-inner-radius: calc(var(--text-size, 13px) * 2 + 1px - var(--tauri-window-edge-inset));
     }
     .page-header {
@@ -90,10 +84,8 @@
     }
     .page-menu-btn,
     .desk-settings-icon-btn,
-    .desk-chat-menu-btn,
-    .desk-chat-reload-btn,
-    .desk-app-sidebar-toggle,
-    .desk-panel-ctrl-btn {
+    .chat-control-btn,
+    .desk-app-sidebar-toggle {
       font-size: inherit;
     }
     html[data-tauri-app="1"] .shell > .page-header {
@@ -176,10 +168,8 @@
     }
     html[data-tauri-app="1"][data-auto-window-height="1"] .page-menu-btn,
     html[data-tauri-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn,
-    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-menu-btn,
-    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-reload-btn,
-    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle,
-    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-panel-ctrl-btn {
+    html[data-tauri-app="1"][data-auto-window-height="1"] .chat-control-btn,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle {
       height: var(--tauri-chrome-band-h);
       min-height: 0;
       justify-content: center;
@@ -190,18 +180,14 @@
     }
     html[data-tauri-app="1"][data-auto-window-height="1"] .page-menu-btn svg,
     html[data-tauri-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn svg,
-    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-menu-btn svg,
-    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-reload-btn svg,
-    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle svg,
-    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-panel-ctrl-btn svg {
+    html[data-tauri-app="1"][data-auto-window-height="1"] .chat-control-btn svg,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle svg {
       display: none !important;
     }
     html[data-tauri-app="1"][data-auto-window-height="1"] .page-menu-btn::after,
     html[data-tauri-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn::after,
-    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-menu-btn::after,
-    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-chat-reload-btn::after,
-    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle::after,
-    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-panel-ctrl-btn::after {
+    html[data-tauri-app="1"][data-auto-window-height="1"] .chat-control-btn::after,
+    html[data-tauri-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle::after {
       content: "";
       display: block;
       width: 1.08em;

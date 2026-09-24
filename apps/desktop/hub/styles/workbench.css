@@ -321,125 +321,24 @@
       opacity: 1;
       z-index: 1306;
     }
-    .desk-chat-menu-btn,
-    .desk-chat-reload-btn {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      position: static;
-      width: var(--desk-chrome-size);
-      height: var(--desk-chrome-size);
-      margin: 0;
-      padding: 0;
-      color: var(--fg);
-      background: transparent;
-      border: none;
-      border-radius: var(--desk-chrome-radius);
-      box-shadow: none;
-      appearance: none;
-      -webkit-appearance: none;
-      cursor: pointer;
-      pointer-events: auto;
-      -webkit-app-region: no-drag;
-      -webkit-tap-highlight-color: transparent;
-      transition: color 0.15s ease, background 0.15s ease;
-    }
-    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-chat-menu-btn,
-    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-chat-reload-btn {
-      position: static;
-      right: auto;
-      top: auto;
-      opacity: 1;
-      z-index: auto;
-    }
-    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-right-panel-controls {
-      position: static;
-      right: auto;
-      top: auto;
-      opacity: 1;
-      z-index: auto;
-    }
-    .desk-right-panel-controls {
-      display: none;
-      align-items: center;
-      gap: var(--desk-chrome-gap);
-      position: static;
-      pointer-events: auto;
-      -webkit-app-region: no-drag;
-    }
-    .desk-panel-ctrl-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: var(--desk-chrome-size);
-      height: var(--desk-chrome-size);
-      margin: 0;
-      padding: 0;
-      color: var(--fg);
-      background: transparent;
-      border: none;
-      border-radius: var(--desk-chrome-radius);
-      box-shadow: none;
-      appearance: none;
-      -webkit-appearance: none;
-      cursor: pointer;
-      pointer-events: auto;
-      -webkit-app-region: no-drag;
-      -webkit-tap-highlight-color: transparent;
-      transition: color 0.15s ease, background 0.15s ease;
-    }
-    .desk-panel-ctrl-btn svg {
-      display: block;
-      width: var(--desk-chrome-icon-size);
-      height: var(--desk-chrome-icon-size);
-      color: var(--fg);
-      stroke: var(--fg);
-      stroke-width: 1.8;
-    }
     .desk-floating-controls .desk-settings-icon-btn svg *,
-    .desk-app-sidebar-toggle svg *,
-    .desk-chat-menu-btn svg *,
-    .desk-chat-reload-btn svg *,
-    .desk-panel-ctrl-btn svg * {
+    .desk-app-sidebar-toggle svg * {
       stroke: var(--fg);
     }
-    .desk-app-sidebar-toggle .desk-pane-active-icon,
-    .desk-panel-ctrl-btn .desk-pane-active-icon {
+    .desk-app-sidebar-toggle .pane-active-icon {
       display: none;
     }
-    .desk-app-sidebar-toggle .desk-pane-active-fill,
-    .desk-panel-ctrl-btn .desk-pane-active-fill {
+    .desk-app-sidebar-toggle .pane-active-fill {
       fill: var(--fg);
       stroke: none;
     }
-    .desk-app-sidebar-toggle.is-active .desk-pane-outline-icon,
-    .desk-panel-ctrl-btn.active .desk-pane-outline-icon,
-    .desk-panel-ctrl-btn[aria-pressed="true"] .desk-pane-outline-icon {
+    .desk-app-sidebar-toggle.is-active .pane-outline-icon {
       display: none;
     }
-    .desk-app-sidebar-toggle.is-active .desk-pane-active-icon,
-    .desk-panel-ctrl-btn.active .desk-pane-active-icon,
-    .desk-panel-ctrl-btn[aria-pressed="true"] .desk-pane-active-icon {
+    .desk-app-sidebar-toggle.is-active .pane-active-icon {
       display: block;
-    }
-    .desk-panel-ctrl-btn:hover {
-      color: var(--fg);
-      background: var(--desk-chrome-hover-bg);
-    }
-    .desk-panel-ctrl-btn.active,
-    .desk-panel-ctrl-btn[aria-pressed="true"] {
-      color: var(--fg);
     }
     .desk-app-sidebar-toggle svg {
-      display: block;
-      width: var(--desk-chrome-icon-size);
-      height: var(--desk-chrome-icon-size);
-      color: var(--fg);
-      stroke: var(--fg);
-      stroke-width: 1.8;
-    }
-    .desk-chat-menu-btn svg,
-    .desk-chat-reload-btn svg {
       display: block;
       width: var(--desk-chrome-icon-size);
       height: var(--desk-chrome-icon-size);
@@ -454,23 +353,11 @@
     .desk-app-sidebar-toggle.is-active {
       color: var(--fg);
     }
-    .desk-chat-menu-btn:hover,
-    .desk-chat-reload-btn:hover {
-      color: var(--fg);
-      background: var(--desk-chrome-hover-bg);
-    }
     .desk-top-right-controls {
       display: inline-flex;
     }
-    .desk-chat-menu-btn,
-    .desk-chat-reload-btn {
-      display: inline-flex;
-    }
-    .desk-right-panel-controls {
-      display: inline-flex;
-    }
     @media (max-width: 480px) {
-      html:not([data-tauri-app="1"]) .desk-right-panel-controls {
+      html:not([data-tauri-app="1"]) #chatPanelToggle {
         display: none;
       }
     }

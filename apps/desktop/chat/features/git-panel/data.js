@@ -9,7 +9,7 @@
       }
     };
     const dpBootstrapPinnedGitSummary = async () => {
-      if (!hasDesktopRightPanelOverlay() || !dpPinnedStripActive()) return;
+      if (!dpPinnedStripActive()) return;
       const data = await fetchGitOverview({ offset: 0, refresh: true, summary: true });
       dpGitHeaderSummaryState = dpBuildSummaryState(data);
       dpApplyGitOverviewHeader();

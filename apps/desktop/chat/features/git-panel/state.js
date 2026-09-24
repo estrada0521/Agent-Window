@@ -62,20 +62,12 @@
       const panelWrap = dpGitContent?.querySelector(".git-summary-wrap");
       const aside = document.getElementById("gitPinnedSummaryAside");
       const inner = document.getElementById("gitPinnedSummaryInner");
-      const overlay = hasDesktopRightPanelOverlay();
       const stripShown = dpPinnedStripActive() && !dpPanelOpen;
-
-      if (overlay && aside && inner) {
-        aside.hidden = !stripShown;
-      }
-
-      if (inner && overlay) {
-        dpRenderGitSummaryRoot(inner, rowHtml, { animateCounts: stripShown });
-        if (stripShown) dpPinnedExpandRefresh?.();
-      }
+      aside.hidden = !stripShown;
+      dpRenderGitSummaryRoot(inner, rowHtml, { animateCounts: stripShown });
+      if (stripShown) dpPinnedExpandRefresh?.();
       if (panelWrap) dpRenderGitSummaryRoot(panelWrap, rowHtml, { animateCounts: dpPanelOpen });
-
-      if (overlay && aside && inner) dpApplyPanelWidth();
+      dpApplyPanelWidth();
     };
     const dpSyncPinnedSummaryStrip = () => {
       dpApplyGitOverviewHeader();

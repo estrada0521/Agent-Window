@@ -326,8 +326,7 @@ __CHAT_INCLUDE:../../shared/chat/transcript/render.js__
       window.addEventListener("load", _rerenderWhenMarkedReady, { once: true });
     }
 __CHAT_INCLUDE:../../shared/chat/transcript/actions.js__
-__CHAT_INCLUDE:runtime/hub-navigation.js__
-__CHAT_INCLUDE:panes/header-menu.js__
+__CHAT_INCLUDE:../../shared/chat/chat-menu.js__
 __CHAT_INCLUDE:panes/header-actions.js__
 __CHAT_INCLUDE:../../shared/chat/composer/runtime.js__
 __CHAT_INCLUDE:../../shared/chat/attachments/file-runtime.js__
@@ -352,10 +351,6 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
     const DP_CHAT_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE = 360;
     const DP_PANEL_WIDTH_KEY = "agent_window_desktop_right_panel_width_at_default_text_size";
     const DP_PANEL_GAP = 0;
-    const hasDesktopRightPanelOverlay = () => (
-      document.documentElement.dataset.hubIframeChat === "1"
-      && document.documentElement.dataset.mobile !== "1"
-    );
     let dpPanelOpen = false;
     let dpActivePanelView = "repo";
     let dpRepoBrowserPath = "";
@@ -477,13 +472,14 @@ __CHAT_INCLUDE:../../shared/chat/pointer-capability.js__
       dpClampPanelWidthAtDefaultTextSize(dpPanelWidthAtDefaultTextSize),
     );
     const dpApplyPanelWidth = () => {
-      const panelWidth = hasDesktopRightPanelOverlay() && dpPanelOpen ? dpCurrentPanelWidthPx() : 0;
+      const panelWidth = dpPanelOpen ? dpCurrentPanelWidthPx() : 0;
       document.documentElement.style.setProperty("--desktop-right-panel-width", `${panelWidth}px`);
       document.documentElement.style.setProperty("--desktop-right-panel-reserved-width", `${panelWidth > 0 ? panelWidth + DP_PANEL_GAP : 0}px`);
     };
 __CHAT_INCLUDE:features/git-panel/panel.js__
-    const notifyParentPanelState = () => {
-      if (window.parent && window.parent !== window) {
+    const syncPanelState = () => {
+      document.getElementById("chatPanelToggle").setAttribute("aria-pressed", dpPanelOpen ? "true" : "false");
+      if (window.parent !== window) {
         window.parent.postMessage({
           type: "desktop-panel-state",
           mode: dpPanelOpen ? "open" : "",
@@ -494,7 +490,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     };
     window.addEventListener("resize", () => {
       dpApplyPanelWidth();
-      notifyParentPanelState();
+      syncPanelState();
     });
     const setDesktopRightPanelView = (view) => {
       dpActivePanelView = view === "git" ? "git" : "repo";
@@ -509,7 +505,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       return Promise.resolve(gitP);
     };
     const openDesktopRightPanel = ({ view = null, reset = false } = {}) => {
-      if (!hasDesktopRightPanelOverlay() || !desktopRightPanel) return Promise.resolve();
+      if (!desktopRightPanel) return Promise.resolve();
       if (view) setDesktopRightPanelView(view);
       dpPanelOpen = true;
       dpApplyPanelWidth();
@@ -533,7 +529,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         });
       }
       const loadP = loadDesktopRightPanelView({ reset, animateRepo: false });
-      notifyParentPanelState();
+      syncPanelState();
       return loadP;
     };
     const closeDesktopRightPanel = () => {
@@ -546,7 +542,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       document.body.classList.remove("right-panel-open");
       dpDisconnectGitObserver();
       dpSyncPinnedSummaryStrip();
-      notifyParentPanelState();
+      syncPanelState();
     };
     const toggleDesktopRightPanel = () => {
       if (dpPanelOpen) closeDesktopRightPanel();
@@ -563,7 +559,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       const nextWidth = _desktopRightPanelResizeState.startWidth + (_desktopRightPanelResizeState.startX - event.clientX);
       dpPanelWidthAtDefaultTextSize = dpClampPanelWidthAtDefaultTextSize(dpUnscalePanelWidth(nextWidth));
       dpApplyPanelWidth();
-      notifyParentPanelState();
+      syncPanelState();
     };
     dpSplitDivider?.addEventListener("pointerdown", (e) => {
       e.preventDefault();
@@ -969,7 +965,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             }
           }
           dpApplyPanelWidth();
-          notifyParentPanelState();
+          syncPanelState();
           const url = new URL(window.location.href);
           url.searchParams.set("text_size", String(px));
           history.replaceState(history.state, "", url.toString());
@@ -1003,7 +999,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         return;
       }
       if (event.data.type === "desktop-panel-sync-request") {
-        notifyParentPanelState();
+        syncPanelState();
         return;
       }
       if (event.data.type === "file-context-menu-error") {
@@ -1041,7 +1037,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         return;
       }
       if (event.data.type === "toggle-git-pin") {
-        if (hasDesktopRightPanelOverlay()) dpToggleGitSummaryPinned();
+        dpToggleGitSummaryPinned();
         return;
       }
       if (event.data.type === "desktop-chat-reset") {
@@ -1059,7 +1055,6 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         return;
       }
       if (event.data.type !== "desktop-panel") return;
-      if (!hasDesktopRightPanelOverlay()) return;
       const mode = String(event.data.mode || "");
       if (mode === "close") {
         closeDesktopRightPanel();
@@ -1203,7 +1198,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         }
         if (event.metaKey && event.shiftKey && !event.altKey && !event.ctrlKey && event.code === "KeyP") {
           event.preventDefault();
-          if (hasDesktopRightPanelOverlay()) dpToggleGitSummaryPinned();
+          dpToggleGitSummaryPinned();
           return;
         }
         if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyO") {

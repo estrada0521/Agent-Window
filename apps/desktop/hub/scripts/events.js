@@ -22,7 +22,9 @@
         const invoke = getTauriInvoke();
         const childPayload = event.data.payload || {};
         if (typeof invoke !== "function") {
-          showDeskChatMenuSelect(childPayload);
+          openChatMenu(_deskChatMenuBtn, childPayload, (payload) => {
+            _deskChatFrame?.contentWindow?.postMessage({ type: "native-menu-action", payload }, "*");
+          });
           return;
         }
         const frameRect = _deskChatFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };

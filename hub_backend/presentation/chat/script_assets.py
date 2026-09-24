@@ -20,17 +20,6 @@ CHAT_HEADER_MENU_BUTTON_HTML = """
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="10" y1="15" x2="20" y2="15"/></svg>
 </button>
 """
-CHAT_HEADER_ACTIONS_HTML_MOBILE = CHAT_HEADER_MENU_BUTTON_HTML
-CHAT_HEADER_ACTIONS_HTML = CHAT_HEADER_MENU_BUTTON_HTML + """
-<select id="pageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0.001;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;font-size:13px;z-index:220;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true">
-  <option value="" disabled selected>Menu</option>
-  <option value="openShell">Terminal</option>
-  <option value="openTerminal">tmux window</option>
-  <option value="openFinder">Finder</option>
-  <option value="addAgent">Add Agent</option>
-  <option value="removeAgent">Remove Agent</option>
-</select>
-"""
 CHAT_SHEET_PANELS_HTML = f"""
 <div class="page-menu-panel mobile-sheet-overlay" id="mobileSheet" hidden></div>
 <div class="page-menu-panel mobile-sheet-overlay" id="paneTracePanel" hidden>

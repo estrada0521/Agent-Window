@@ -84,56 +84,6 @@
         : null;
       frameWin.postMessage({ type: "open-chat-header-menu", anchor }, "*");
     }
-    function openDeskMenuSelect(title, items, onPick) {
-      document.getElementById("deskChatMenuSelect")?.remove();
-      const select = document.createElement("select");
-      select.id = "deskChatMenuSelect";
-      select.append(...[{ value: "", label: title, disabled: true }, ...items].map((item) => {
-        const node = document.createElement("option");
-        node.value = item.value;
-        node.textContent = item.label;
-        node.disabled = !!item.disabled;
-        return node;
-      }));
-      select.value = "";
-      const rect = _deskChatMenuBtn.getBoundingClientRect();
-      select.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;opacity:0.001;z-index:2000;pointer-events:none;`;
-      select.addEventListener("change", () => {
-        const value = select.value;
-        select.remove();
-        onPick(value);
-      });
-      select.addEventListener("blur", () => select.remove());
-      document.body.append(select);
-      try {
-        select.showPicker();
-      } catch (_) {
-        select.focus({ preventScroll: true });
-        select.click();
-      }
-    }
-    function showDeskChatMenuSelect(payload) {
-      const agents = { add: payload.addAgents || [], remove: payload.removeAgents || [] };
-      openDeskMenuSelect("Menu", [
-        { value: "openShell", label: "Terminal" },
-        { value: "openTerminal", label: "tmux window" },
-        { value: "openFinder", label: "Finder" },
-        { value: "add", label: "Add Agent", disabled: !payload.sessionActive || !agents.add.length },
-        { value: "remove", label: "Remove Agent", disabled: !payload.sessionActive || !agents.remove.length },
-      ], (action) => {
-        if (!agents[action]) {
-          sendDeskChatAction(action);
-          return;
-        }
-        const title = action === "add" ? "Add Agent" : "Remove Agent";
-        openDeskMenuSelect(title, agents[action].map((agent) => ({ value: agent, label: agent })), (agent) => {
-          _deskChatFrame?.contentWindow?.postMessage({
-            type: "native-menu-action",
-            payload: { action: "agent", mode: action, agent },
-          }, "*");
-        });
-      });
-    }
     function sendDeskPanelCommand(mode) {
       const frameWin = _deskChatFrame?.contentWindow;
       if (!frameWin) return;
@@ -408,10 +358,6 @@
         if (isDeskSessionSidebarOpen()) _deskChatFrame.dataset.hubSidebarOpen = "1";
         else delete _deskChatFrame.dataset.hubSidebarOpen;
       }
-      _deskChatFrame?.contentWindow?.postMessage({
-        type: "hub-sidebar-state",
-        open: !!isDeskSessionSidebarOpen(),
-      }, "*");
     }
 
     function syncDeskSidebarResizerVisibility() {

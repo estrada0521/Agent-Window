@@ -55,7 +55,7 @@ def _expand_includes(text: str, base_dir: Path, stack: tuple[Path, ...] = ()) ->
 def load_chat_template(variant: str) -> str:
     normalized = "mobile" if str(variant or "").strip().lower() == "mobile" else "desktop"
     template_dir = _CHAT_TEMPLATE_DIRS[normalized]
-    shell = _read_text(template_dir / "shell.html")
+    shell = _expand_includes(_read_text(template_dir / "shell.html"), template_dir)
     shared_chat_dir = _APPS_ROOT / "shared" / "chat"
     composer = _expand_includes(_read_text(shared_chat_dir / "composer.html"), shared_chat_dir)
     if _COMPOSER_DROPDOWNS_MARKER not in composer:

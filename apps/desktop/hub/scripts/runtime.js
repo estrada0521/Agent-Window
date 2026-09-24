@@ -11,9 +11,9 @@
     const _deskAppSidebarToggle = document.getElementById("deskAppSidebarToggle");
     const _deskSessionList = document.getElementById("deskSessionList");
     const _deskChatFrame = document.getElementById("deskChatFrame");
-    const _deskChatMenuBtn = document.getElementById("deskChatMenuBtn");
-    const _deskChatReloadBtn = document.getElementById("deskChatReloadBtn");
-    const _deskPanelToggle = document.getElementById("deskPanelToggle");
+    const _deskChatMenuBtn = document.getElementById("chatMenuBtn");
+    const _deskChatReloadBtn = document.getElementById("chatReloadBtn");
+    const _deskPanelToggle = document.getElementById("chatPanelToggle");
     const _deskChatShell = document.querySelector(".desk-chat-shell");
     const _deskReloadShell = document.getElementById("deskReloadShell");
     const _deskMain = document.querySelector(".desk-main");

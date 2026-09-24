@@ -1,4 +1,4 @@
-    html[data-hub-iframe-chat="1"] {
+    html[data-desktop-chat="1"] {
       --right-panel-row-height: calc(var(--text-size, 13px) * 30 / 13);
       --right-panel-row-pad-x: 0.46em;
       --right-panel-item-gap: 0.46em;
@@ -21,7 +21,7 @@
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
       position: fixed;
-      top: 0;
+      top: var(--chat-band-h);
       right: 0;
       bottom: 0;
       width: var(--desktop-right-panel-width, 0px);
@@ -459,9 +459,9 @@
     .git-summary-pin.is-pinned svg circle {
       fill: currentColor;
     }
-    html[data-hub-iframe-chat="1"] .git-pinned-summary-aside {
+    html[data-desktop-chat="1"] .git-pinned-summary-aside {
       position: fixed;
-      top: calc(var(--right-panel-floating-inset) + env(safe-area-inset-top, 0px));
+      top: calc(var(--chat-band-h) + var(--right-panel-floating-inset) + env(safe-area-inset-top, 0px));
       right: var(--right-panel-floating-inset);
       left: auto;
       width: max-content;
@@ -484,10 +484,10 @@
       font-family: var(--font-main);
       font-size: var(--text-size, 13px);
     }
-    html[data-hub-iframe-chat="1"] .git-pinned-summary-aside[hidden] {
+    html[data-desktop-chat="1"] .git-pinned-summary-aside[hidden] {
       display: none;
     }
-    html[data-hub-iframe-chat="1"] .git-pinned-summary-aside .git-summary-wrap {
+    html[data-desktop-chat="1"] .git-pinned-summary-aside .git-summary-wrap {
       display: inline-flex;
       flex-direction: column;
       gap: 0;
@@ -502,7 +502,7 @@
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
     }
-    html[data-hub-iframe-chat="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row {
+    html[data-desktop-chat="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row {
       background: transparent;
       border: none;
       border-radius: 0.77em;
@@ -511,10 +511,10 @@
       padding-top: 0;
       padding-bottom: 0;
     }
-    html[data-hub-iframe-chat="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row.clickable:hover {
+    html[data-desktop-chat="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row.clickable:hover {
       background: var(--panel-row-bg);
     }
-    html[data-hub-iframe-chat="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row.clickable:active {
+    html[data-desktop-chat="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row.clickable:active {
       background: rgba(255, 255, 255, 0.12);
     }
     .git-summary-wrap .git-summary-row {
@@ -1060,11 +1060,11 @@
       cursor: default;
       color: var(--muted);
     }
-    html[data-hub-iframe-chat="1"] body.right-panel-open {
+    html[data-desktop-chat="1"] body.right-panel-open {
       padding-right: var(--desktop-right-panel-reserved-width, 0px);
       box-sizing: border-box;
     }
-    html[data-hub-iframe-chat="1"] body.right-panel-open .composer-overlay {
+    html[data-desktop-chat="1"] body.right-panel-open .composer-overlay {
       --desktop-overlay-exclude-right: var(--desktop-right-panel-reserved-width, 0px);
       padding-right: calc(var(--text-size, 13px) * 12 / 13);
     }
