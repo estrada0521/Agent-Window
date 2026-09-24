@@ -47,6 +47,10 @@
       background: transparent;
       overflow: hidden;
     }
+    #hubHud {
+      position: absolute;
+      --hud-weight: var(--hub-body-weight);
+    }
     .desk-chat-shell.loading .desk-chat-frame {
       visibility: hidden;
     }

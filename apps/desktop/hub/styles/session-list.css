@@ -14,7 +14,7 @@
       overflow: hidden;
       scrollbar-width: none;
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr) minmax(0, auto) auto;
+      grid-template-rows: auto minmax(0, 1fr) auto;
       position: relative;
       font-size: var(--text-size, 13px);
     }
@@ -67,26 +67,8 @@
       mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
     }
-    .desk-hub-message {
-      grid-row: 3;
-      min-height: 1.3em;
-      overflow: hidden;
-      padding: 0 1em 0.25em;
-      color: var(--muted);
-      font-size: calc(var(--text-size, 13px) * 11 / 13);
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      pointer-events: none;
-      box-sizing: border-box;
-    }
-    .desk-hub-message.is-error {
-      color: var(--error);
-    }
-    .desk-hub-message[hidden] {
-      display: none;
-    }
     .desk-hub-footer-credit {
-      grid-row: 4;
+      grid-row: 3;
       margin: 0;
       padding: 0.5em 0 0.8em 2.6em;
       text-align: left;

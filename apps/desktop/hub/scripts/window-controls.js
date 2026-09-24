@@ -6,7 +6,7 @@
       const invoke = getTauriInvoke();
       if (typeof invoke === "function") {
         invoke("set_always_on_top", { on: _deskAlwaysOnTop }).catch((err) => {
-          showDeskHubMessage(`always on top failed: ${err}`, { error: true });
+          setStatus(`always on top failed: ${err}`);
         });
       }
     }
@@ -33,7 +33,7 @@
         if (typeof invoke === "function") {
           invoke("set_window_height", {
             height: Math.round(DESK_COLLAPSED_FIT_HEIGHT * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT),
-          }).catch((err) => showDeskHubMessage(`set_window_height failed: ${err}`, { error: true }));
+          }).catch((err) => setStatus(`set_window_height failed: ${err}`));
         }
         _deskChatFrame?.contentWindow?.focus();
       }
@@ -57,7 +57,7 @@
       const invoke = getTauriInvoke();
       if (typeof invoke === "function") {
         invoke("set_fit_height_min", { enabled: _deskAutoWindowHeight })
-          .catch((err) => showDeskHubMessage(`set_fit_height_min failed: ${err}`, { error: true }));
+          .catch((err) => setStatus(`set_fit_height_min failed: ${err}`));
       }
     }
     function setDeskAutoWindowHeight(on) {
@@ -80,7 +80,7 @@
         const invoke = getTauriInvoke();
         if (typeof invoke === "function") {
           invoke("set_window_height", { height: DESK_DEFAULT_WINDOW_HEIGHT * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT }).catch((err) => {
-            showDeskHubMessage(`fit height exit resize failed: ${err}`, { error: true });
+            setStatus(`fit height exit resize failed: ${err}`);
           });
         }
         return;
@@ -111,7 +111,7 @@
         height: target,
         compactWidthScale: snapWidth ? currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT : null,
       }).catch((err) => {
-        showDeskHubMessage(`fit height failed: ${err}`, { error: true });
+        setStatus(`fit height failed: ${err}`);
       });
     }
 
@@ -125,7 +125,7 @@
         try {
           await invoke("reset_window_geometry", { scale: currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT });
         } catch (err) {
-          showDeskHubMessage(`reset window failed: ${err}`, { error: true });
+          setStatus(`reset window failed: ${err}`);
         }
       }
       resetDeskChatView();
@@ -140,7 +140,7 @@
         try {
           await invoke(command, { scale: currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT });
         } catch (err) {
-          showDeskHubMessage(`${label} failed: ${err}`, { error: true });
+          setStatus(`${label} failed: ${err}`);
         }
       }
       resetDeskChatView();
@@ -152,7 +152,7 @@
       try {
         await invoke(command);
       } catch (err) {
-        showDeskHubMessage(`${command} failed: ${err}`, { error: true });
+        setStatus(`${command} failed: ${err}`);
       }
     }
 
@@ -169,7 +169,7 @@
         await resizing;
       } catch (err) {
         if (applied) rollback();
-        showDeskHubMessage(`${label} failed: ${err}`, { error: true });
+        setStatus(`${label} failed: ${err}`);
       } finally {
         _deskOutwardResizeInFlight = false;
       }

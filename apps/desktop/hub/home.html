@@ -71,6 +71,7 @@ __HUB_INCLUDE:styles/session-list.css__
 __HUB_INCLUDE:styles/chat-frame.css__
 __HUB_INCLUDE:styles/shell-overrides.css__
 __HUB_INCLUDE:styles/sidebar-popover.css__
+__HUB_INCLUDE:hud.css__
   </style>
 </head>
 <body>
@@ -136,7 +137,6 @@ __HUB_INCLUDE:styles/sidebar-popover.css__
                 </div>
                 <div class="desk-session-list-loading"><span class="desk-reload-shell-spinner" aria-hidden="true"></span></div>
               </div>
-              <div class="desk-hub-message" id="deskHubMessage" role="status" aria-live="polite" aria-atomic="true" hidden></div>
               <p class="desk-hub-footer-credit">Made by H. Okada</p>
             </div>
           </div>
@@ -176,6 +176,7 @@ __HUB_INCLUDE:styles/sidebar-popover.css__
             src="about:blank"
             allow="clipboard-write"
           ></iframe>
+          <div id="hubHud" class="hud" role="status" aria-live="polite"></div>
           <div id="deskReloadShell" class="desk-reload-shell" hidden>
             <div class="desk-reload-shell-card">
               <span class="desk-reload-shell-spinner" aria-hidden="true"></span>
@@ -191,6 +192,7 @@ __HUB_INCLUDE:_hub_restart_nav.js__
 __HUB_INCLUDE:_chat_url.js__
 __HUB_INCLUDE:_session_messages_events.js__
 __HUB_INCLUDE:list-flip.js__
+__HUB_INCLUDE:hud.js__
 __HUB_INCLUDE:scripts/runtime.js__
 __HUB_INCLUDE:scripts/window-controls.js__
 __HUB_INCLUDE:scripts/native-menus.js__

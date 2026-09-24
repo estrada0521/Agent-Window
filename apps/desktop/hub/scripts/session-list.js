@@ -74,7 +74,7 @@
 
     async function runDeskContextAction(sessionName, kind) {
       if (!sessionName || !kind) return;
-      showDeskHubMessage();
+      setStatus("");
       const isDelete = kind === "delete-archived";
       const confirmed = isTauriDesktopApp()
         ? true
@@ -108,10 +108,7 @@
         clearDeskSelection();
         showDeskSidebarList({ open: true });
       } catch (err) {
-        showDeskHubMessage(
-          err?.message || (isDelete ? "Failed to delete session." : "Failed to archive session."),
-          { error: true },
-        );
+        setStatus(err?.message || (isDelete ? "Failed to delete session." : "Failed to archive session."));
       }
     }
 
@@ -119,7 +116,7 @@
       const newName = String(requestedName || "").trim();
       if (!oldName) return false;
       if (oldName === newName) return true;
-      showDeskHubMessage();
+      setStatus("");
       try {
         const response = await fetch("/rename-session", {
           method: "POST",
@@ -142,14 +139,14 @@
         }
         return true;
       } catch (err) {
-        showDeskHubMessage(err?.message || "Failed to rename session.", { error: true });
+        setStatus(err?.message || "Failed to rename session.");
         return false;
       }
     }
 
     async function changeDeskSessionWorkspace(sessionName) {
       if (!sessionName) return;
-      showDeskHubMessage();
+      setStatus("");
       let picked;
       try {
         const res = await fetch("/pick-workspace", {
@@ -161,7 +158,7 @@
         picked = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(picked.error || "Workspace picker failed.");
       } catch (err) {
-        showDeskHubMessage(err?.message || "Workspace picker failed.", { error: true });
+        setStatus(err?.message || "Workspace picker failed.");
         return;
       }
       if (picked.canceled || !picked.path) return;
@@ -175,16 +172,16 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok) throw new Error(data.error || "Failed to change workspace.");
       } catch (err) {
-        showDeskHubMessage(err?.message || "Failed to change workspace.", { error: true });
+        setStatus(err?.message || "Failed to change workspace.");
         return;
       }
       hubChatUrls.forget(buildSessionOpenHref(sessionName, true));
-      showDeskHubMessage(`Workspace updated for ${sessionName}.`);
+      setStatus(`Workspace updated for ${sessionName}.`);
     }
 
     async function copyDeskSessionWorkspace(sessionName) {
       if (!sessionName) return;
-      showDeskHubMessage();
+      setStatus("");
       try {
         const res = await fetch(`/session-workspace?session=${encodeURIComponent(sessionName)}`, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
@@ -194,15 +191,15 @@
         }
         await copyDeskText(workspace);
       } catch (err) {
-        showDeskHubMessage(err?.message || "Failed to copy workspace path.", { error: true });
+        setStatus(err?.message || "Failed to copy workspace path.");
         return;
       }
-      showDeskHubMessage(`Copied workspace path for ${sessionName}.`);
+      setStatus(`Copied workspace path for ${sessionName}.`);
     }
 
     async function resetDeskSessionAgents(sessionName) {
       if (!sessionName) return;
-      showDeskHubMessage();
+      setStatus("");
       try {
         const res = await fetch("/reset-session-agents", {
           method: "POST",
@@ -213,14 +210,14 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok) throw new Error(data.error || "Failed to reset agents.");
       } catch (err) {
-        showDeskHubMessage(err?.message || "Failed to reset agents.", { error: true });
+        setStatus(err?.message || "Failed to reset agents.");
         return;
       }
       if (_deskSelectedSessionName === sessionName) {
         postDeskChatFrameMessage({ type: "refresh-session-state" });
       }
       await refreshHubSessions(true, { skipRestore: true });
-      showDeskHubMessage(`Agents reset for ${sessionName}.`);
+      setStatus(`Agents reset for ${sessionName}.`);
     }
 
     function beginDeskSessionRename(sessionName) {
@@ -475,7 +472,7 @@
         if (!response.ok) throw new Error("failed");
         const data = await response.json();
         if (data.hub_instance !== HUB_INSTANCE) {
-          showDeskHubMessage("Hub was restarted elsewhere; Reload Hub to update this page", { error: true });
+          setResidentStatus("Hub restarted; reload");
         }
         const active = data.active_sessions;
         const archived = data.archived_sessions;

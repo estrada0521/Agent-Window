@@ -12,7 +12,6 @@
     let _deskContextSessionName = "";
     let _deskSessionRename = null;
     let _deskNewSessionStarting = false;
-    let _deskHubMessageTimer = 0;
 
     function updateDeskWindowTitle(name) {
       const textEl = _deskSessionTitleTextEl;
@@ -67,23 +66,7 @@
       showDeskSidebarList({ open: true });
     }
 
-    function showDeskHubMessage(message = "", { error = false } = {}) {
-      if (!_deskHubMessage) return;
-      window.clearTimeout(_deskHubMessageTimer);
-      _deskHubMessageTimer = 0;
-      const text = String(message || "").trim();
-      _deskHubMessage.textContent = text;
-      _deskHubMessage.classList.toggle("is-error", !!text && error);
-      _deskHubMessage.hidden = !text;
-      if (text) {
-        _deskHubMessageTimer = window.setTimeout(() => {
-          _deskHubMessage.textContent = "";
-          _deskHubMessage.classList.remove("is-error");
-          _deskHubMessage.hidden = true;
-          _deskHubMessageTimer = 0;
-        }, DESK_HUB_MESSAGE_VISIBLE_MS);
-      }
-    }
+    const { setStatus, setResidentStatus } = createHud(document.getElementById("hubHud"));
 
     async function copyDeskText(text) {
       if (navigator.clipboard?.writeText) {
@@ -138,7 +121,7 @@
       const message = sessionStorage.getItem(HUB_PENDING_ERROR_KEY) || "";
       if (!message) return;
       sessionStorage.removeItem(HUB_PENDING_ERROR_KEY);
-      showDeskHubMessage(message, { error: true });
+      setStatus(message);
     }
 
     function isPhoneViewport() {

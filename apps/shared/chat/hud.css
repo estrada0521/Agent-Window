@@ -1,18 +1,23 @@
-    .chat-hud {
+    :root {
+      --pill-row-height: calc(var(--text-size, 13px) * 28 / 13);
+      --pill-row-margin: 0.46em;
+      --pill-radius: calc(var(--text-size, 13px) * 17 / 13);
+    }
+    .hud {
       position: fixed;
       top: calc(env(safe-area-inset-top, 0px) + var(--text-size, 13px) * 10 / 13);
-      left: calc((100vw - var(--desktop-right-panel-reserved-width, 0px)) / 2);
+      left: 50%;
       z-index: 1300;
-      max-width: calc(100vw - 32px);
+      max-width: calc(100% - 32px);
       box-sizing: border-box;
-      height: var(--chat-hud-height);
+      height: var(--hud-height);
       padding: 0 1.2em;
       border-radius: 999px;
-      color: var(--fg);
+      color: var(--hud-fg);
       font-family: var(--font-main);
       font-size: var(--text-size, 13px);
-      font-weight: var(--body-weight);
-      line-height: calc(var(--chat-hud-height) - 1px);
+      font-weight: var(--hud-weight);
+      line-height: calc(var(--hud-height) - 1px);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -22,28 +27,34 @@
       transform: translate(-50%, -100%) scale(0.8);
       transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
     }
-    html:not(:has(.mobile-sheet-overlay:is(.open, .sheet-closing))) .chat-hud.is-visible {
+    html:not(:has(.mobile-sheet-overlay:is(.open, .sheet-closing))) .hud.is-visible {
       opacity: 1;
       visibility: visible;
       transform: translate(-50%, 0) scale(1);
       transition: opacity 0.3s ease, transform 0.3s ease, width 0.3s ease;
     }
-    .chat-hud-text {
-      animation: chat-hud-text-in 0.3s ease;
+    .hud-text {
+      animation: hud-text-in 0.3s ease;
     }
-    @keyframes chat-hud-text-in {
+    @keyframes hud-text-in {
       from { opacity: 0; }
     }
-    html:not([data-mobile="1"]) .chat-hud {
-      --chat-hud-height: calc(var(--right-panel-pinned-row-height) + 2 * var(--right-panel-pinned-row-margin) + 1px);
+    #chatHud {
+      left: calc((100vw - var(--desktop-right-panel-reserved-width, 0px)) / 2);
+      --hud-fg: var(--fg);
+      --hud-bg-rgb: var(--bg-rgb);
+      --hud-weight: var(--body-weight);
+    }
+    html:not([data-mobile="1"]) .hud {
+      --hud-height: calc(var(--pill-row-height) + 2 * var(--pill-row-margin) + 1px);
       border: 0.5px solid var(--line-strong);
-      border-radius: var(--right-panel-pinned-radius);
-      background: rgba(var(--bg-rgb), 0.8);
+      border-radius: var(--pill-radius);
+      background: rgba(var(--hud-bg-rgb), 0.8);
       box-shadow:
         inset 0 0.5px 0 rgba(255, 255, 255, 0.06),
         0 1px 2px rgba(0, 0, 0, 0.12);
     }
-    html[data-mobile="1"] .chat-hud {
-      --chat-hud-height: var(--mobile-sheet-floating-height);
+    html[data-mobile="1"] .hud {
+      --hud-height: var(--mobile-sheet-floating-height);
       top: 9dvh;
     }

@@ -1,6 +1,6 @@
     .mobile-bottom-sheet .mobile-bottom-sheet-button,
     .pane-viewer-tabs,
-    .chat-hud {
+    .hud {
       border: 0.5px solid var(--liquid-glass-lg-border);
       background:
         var(--liquid-glass-lg-tint),

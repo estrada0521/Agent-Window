@@ -1,4 +1,3 @@
-    const HUD_VISIBLE_MS = 2500;
     const openNativeSelect = (select) => {
       if (typeof select.showPicker === "function") {
         try {

@@ -21,7 +21,6 @@
     const _deskThemeToggleBtn = document.getElementById("deskThemeToggleBtn");
     const _deskReloadBtn = document.getElementById("deskReloadBtn");
     const _deskNewSessionToggle = document.getElementById("deskNewSessionToggle");
-    const _deskHubMessage = document.getElementById("deskHubMessage");
     const _deskFloatingControls = document.querySelector(".desk-floating-controls");
     const _deskTopRightControls = document.querySelector(".desk-top-right-controls");
     const _deskWindowTraffic = document.querySelector(".desk-window-traffic");
@@ -39,7 +38,6 @@
     const DESK_SIDEBAR_CLOSE_SWIPE_EDGE_PX = 36;
     const DESK_SIDEBAR_CLOSE_SWIPE_THRESHOLD = 54;
     const DESK_CHAT_URL_CACHE_LIMIT = 3;
-    const DESK_HUB_MESSAGE_VISIBLE_MS = 5000;
     const hubChatUrls = createHubChatUrlResolver({
       cacheLimit: DESK_CHAT_URL_CACHE_LIMIT,
       cacheKey: (openHref) => String(openHref || "").trim(),
@@ -93,7 +91,7 @@
       if (scalesWindow) {
         _deskLastFitTarget *= clamped / previous;
         invoke("scale_window_from_top_center", { scale: clamped / previous, cornerRadius: clamped * 2 }).catch((err) => {
-          showDeskHubMessage(`window zoom resize failed: ${err}`, { error: true });
+          setStatus(`window zoom resize failed: ${err}`);
         });
       }
     }

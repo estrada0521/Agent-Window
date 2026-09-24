@@ -22,7 +22,7 @@
       if (_deskNewSessionStarting) return;
       _deskNewSessionStarting = true;
       _deskNewSessionToggle?.classList.add("archived");
-      showDeskHubMessage();
+      setStatus("");
       try {
         const workspace = await pickWorkspaceForNewSession();
         if (!workspace) return;
@@ -36,13 +36,13 @@
           throw new Error(data.error || "Failed to open draft session.");
         }
         openChatInDesk(data.chat_url, data.session || "");
-        showDeskHubMessage(data.notice || "", { error: !!data.notice });
+        setStatus(data.notice || "");
         if (isPhoneViewport()) {
           setDeskSidebarOpen(false);
         }
         void refreshHubSessions(true, { skipRestore: true });
       } catch (err) {
-        showDeskHubMessage(err?.message || "Failed to open draft session.", { error: true });
+        setStatus(err?.message || "Failed to open draft session.");
       } finally {
         _deskNewSessionStarting = false;
         _deskNewSessionToggle?.classList.remove("archived");

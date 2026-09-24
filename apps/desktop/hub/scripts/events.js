@@ -33,7 +33,7 @@
             x: Math.round(Number(childPayload.x || 0) + Number(frameRect.left || 0)),
             y: Math.round(Number(childPayload.y || 0) + Number(frameRect.top || 0)),
           },
-        }).catch((err) => showDeskHubMessage(`show_chat_header_menu failed: ${err}`, { error: true }));
+        }).catch((err) => setStatus(`show_chat_header_menu failed: ${err}`));
         return;
       }
       if (event.data && event.data.type === "show-file-context-menu" && event.source === _deskChatFrame?.contentWindow) {
@@ -403,7 +403,7 @@
             reviveEnabled: archived,
           },
         }).catch((err) => {
-          showDeskHubMessage(String(err || "Failed to open session menu."), { error: true });
+          setStatus(String(err || "Failed to open session menu."));
         });
       });
       _deskSessionList.addEventListener("click", (event) => {
