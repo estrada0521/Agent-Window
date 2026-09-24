@@ -117,7 +117,9 @@
     .desk-session-row::before {
       content: "";
       position: absolute;
-      inset: round(nearest, calc(var(--text-size, 13px) * 2 / 13), 1px) 0.62em;
+      inset: 50% 0.62em auto;
+      height: calc(var(--text-size, 13px) * 30 / 13);
+      transform: translateY(-50%);
       border-radius: round(nearest, calc(var(--text-size, 13px) * 10 / 13), 1px);
       background: var(--session-hover-bg);
       opacity: 0;

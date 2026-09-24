@@ -70,10 +70,10 @@ __CHAT_INCLUDE:../../shared/chat/markdown-code-block.css__
     }
 
     .shell>.page-header {
-      --chrome-icon-btn-size: 44px;
+      --chrome-icon-btn-size: var(--mobile-menu-size);
       position: fixed;
       top: auto;
-      bottom: 100px;
+      bottom: var(--mobile-menu-bottom);
       left: 50%;
       margin-left: calc(var(--chrome-icon-btn-size) / -2);
       width: var(--chrome-icon-btn-size);
