@@ -16,12 +16,20 @@ UNIX哲学で作られた、macOS向けのAgentアプリケーション。
 ---
 
 ## Principle
-œ
+
 1. 単位は一つのlog。実体は `~/.agent-window/session/{session_name}/.log.jsonl`。
 2. Agentは普通のCLIで、tmux内で動く。数は任意。
 3. workspaceもCLIも、途中で差し替えられる。logは同じものが続く。
 4. 送信は `tmux send-keys`。入力欄の文字が、Agentのpaneに入る。
 5. 受信は各CLIのnative logの監視。tool callは実行中だけ画面に出て、logには残らない。
+
+   <br>
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="media/agent-window-running-dark.webp">
+     <source media="(prefers-color-scheme: light)" srcset="media/agent-window-running-light.webp">
+     <img src="media/agent-window-running-light.webp" width="292" alt="Claudeの実行中のtool call表示">
+   </picture>
 
 ## Setup
 
@@ -233,4 +241,3 @@ Agent Window自身がfilesystemへ保存するdataは `~/.agent-window/` と、w
 ## License
 
 [0BSD](LICENSE)。画像内のfile iconはMaterial Icon Themeのもの。
-

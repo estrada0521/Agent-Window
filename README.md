@@ -23,6 +23,14 @@ A UNIX-philosophy Agent application for macOS.
 4. Sending is `tmux send-keys`. Text from the input field goes into the Agent's pane.
 5. Receiving is watching each CLI's native log. Tool calls show on screen only while running, and aren't kept in the log.
 
+   <br>
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="media/agent-window-running-dark.webp">
+     <source media="(prefers-color-scheme: light)" srcset="media/agent-window-running-light.webp">
+     <img src="media/agent-window-running-light.webp" width="292" alt="Claude's running tool calls in Agent Window">
+   </picture>
+
 ## Setup
 
 Requires `python3`, `tmux`, `cargo`, `tauri-cli`, Xcode Command Line Tools. `./setup/preflight` shows what's missing. Install and authenticate the Agent CLIs you'll use yourself.
@@ -233,4 +241,3 @@ Agent Window itself writes filesystem data only under `~/.agent-window/` and `<w
 ## License
 
 [0BSD](LICENSE). The file icons in the screenshots are from Material Icon Theme.
-

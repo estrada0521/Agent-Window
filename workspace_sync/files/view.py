@@ -587,6 +587,19 @@ const __rewriteMarkdownImageSrcsInHtml = (html) => String(html || "").replace(/(
   if (!resolved) return match;
   return `${{prefix}}${{quote}}${{__rawBase}}${{encodeURIComponent(resolved)}}${{quote}}`;
 }}).replace(/<img\\b(?![^>]*\\bloading=)([^>]*)>/gi, '<img loading="lazy"$1>');
+const __rewriteMarkdownPictureSources = (root) => {{
+  root.querySelectorAll("picture source[srcset]").forEach((source) => {{
+    const srcset = String(source.getAttribute("srcset") || "").trim();
+    if (!srcset || isExternalHref(srcset)) return;
+    const candidates = srcset.split(",").map((candidate) => {{
+      const match = candidate.trim().match(/^(\\S+)(\\s+\\d+(?:\\.\\d+)?[wx])?$/);
+      if (!match) return null;
+      const path = __normalizeMdPath(__mdRel, match[1]);
+      return path ? `${{__rawBase}}${{encodeURIComponent(path)}}${{match[2] || ""}}` : null;
+    }});
+    if (candidates.every(Boolean)) source.setAttribute("srcset", candidates.join(", "));
+  }});
+}};
 const rewriteMarkdownHtml = (html) => __rewriteMarkdownImageSrcsInHtml(html);
 {markdown_frontmatter_js}
 {markdown_render_js}
@@ -660,6 +673,19 @@ const applyPreviewTheme = (theme) => {{
   const nextTheme = theme === "light" ? "light" : "dark";
   __root.setAttribute("data-preview-theme", nextTheme);
   __root.setAttribute("data-theme", nextTheme);
+  applyPreviewPictureTheme(out, nextTheme);
+}};
+const applyPreviewPictureTheme = (root, theme) => {{
+  root.querySelectorAll("picture source[media]").forEach((source) => {{
+    let scheme = source.dataset.previewColorScheme;
+    if (!scheme) {{
+      const match = String(source.getAttribute("media") || "").match(/^\\(prefers-color-scheme:\\s*(dark|light)\\)$/i);
+      if (!match) return;
+      scheme = match[1].toLowerCase();
+      source.dataset.previewColorScheme = scheme;
+    }}
+    source.media = scheme === theme ? "all" : "not all";
+  }});
 }};
 window.__agentIndexApplyPreviewTheme = applyPreviewTheme;
 const renderMathInScope = (scope) => {{
@@ -728,6 +754,8 @@ applyPreviewTheme({json.dumps(initial_preview_theme)});
 const renderPreview = async () => {{
   const staging = document.createElement("div");
   staging.innerHTML = renderMarkdown(__mdText);
+  __rewriteMarkdownPictureSources(staging);
+  applyPreviewPictureTheme(staging, __root.getAttribute("data-preview-theme") || "dark");
   applyPreviewDiffCode(staging);
   try {{
     await reserveMarkdownImageSpace(staging);
