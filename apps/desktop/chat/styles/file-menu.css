@@ -84,7 +84,7 @@
       box-sizing: border-box;
       height: calc(1em * 30 / 13);
       padding: 0 calc(var(--text-size, 13px) * 12 / 13);
-      border-radius: var(--right-panel-item-radius);
+      border-radius: var(--pill-inner-radius);
       white-space: nowrap;
       font-size: calc(var(--text-size, 13px) * 13.5 / 13);
       line-height: 1.3;
@@ -244,7 +244,7 @@
       gap: calc(var(--text-size, 13px) * 12 / 13);
       height: calc(1em * 30 / 13);
       padding: 0 calc(var(--text-size, 13px) * 16 / 13);
-      border-radius: var(--right-panel-item-radius);
+      border-radius: var(--pill-inner-radius);
       font-size: calc(var(--text-size, 13px) * 13.5 / 13);
       line-height: 1.3;
       font-weight: var(--body-weight);

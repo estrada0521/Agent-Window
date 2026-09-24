@@ -44,7 +44,7 @@
       --chat-pane-filter: blur(20px);
       --hub-body-weight: 400;
       --hud-fg: rgb(__TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS__);
-      --hud-bg-rgb: __DESKTOP_CHAT_LIGHT_BG_CHANNELS__;
+      --pill-bg-rgb: __DESKTOP_CHAT_LIGHT_BG_CHANNELS__;
     }
     html[data-theme="dark"] {
       color-scheme: dark;
@@ -66,7 +66,6 @@
       --chat-pane-filter: var(--glass-filter-20);
       --hub-body-weight: 300;
       --hud-fg: rgb(__TEXT_PRIMARY_DESKTOP_DARK_CHANNELS__);
-      --hud-bg-rgb: __DESKTOP_CHAT_DARK_BG_CHANNELS__;
     }
     * { box-sizing: border-box; }    html, body {
       margin: 0;

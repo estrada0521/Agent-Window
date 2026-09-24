@@ -1,5 +1,5 @@
     html[data-desktop-chat="1"] {
-      --right-panel-row-height: calc(var(--text-size, 13px) * 27.5 / 13);
+      --right-panel-row-height: var(--pill-row-height);
       --right-panel-row-pad-x: 0.46em;
       --right-panel-item-gap: 0.46em;
       --right-panel-path-gap: 0.62em;
@@ -7,8 +7,6 @@
       --right-panel-icon-slot-size: calc(18em / 13);
       --right-panel-small-icon-size: 1.23em;
       --right-panel-chevron-size: 1.08em;
-      --right-panel-item-radius: 0.77em;
-      --right-panel-pill-radius: 2em;
       --right-panel-floating-inset: calc(var(--text-size, 13px) * 10 / 13);
     }
     .desktop-right-panel {
@@ -196,9 +194,9 @@
       width: 100%;
       height: var(--right-panel-row-height);
       padding: 0 var(--right-panel-row-pad-x);
-      background: var(--panel-row-bg);
+      background: var(--panel-head-bg);
       border: 0.5px solid var(--panel-row-border);
-      border-radius: var(--right-panel-pill-radius);
+      border-radius: var(--pill-inner-radius);
       cursor: default;
       text-align: left;
       font-family: var(--font-main);
@@ -285,7 +283,7 @@
       gap: var(--right-panel-item-gap);
       height: var(--right-panel-row-height);
       padding: var(--right-panel-row-pad-x);
-      border-radius: var(--right-panel-item-radius);
+      border-radius: var(--pill-inner-radius);
       box-sizing: border-box;
       color: var(--fg);
       font-size: var(--text-size, 13px);
@@ -303,7 +301,7 @@
       background: var(--panel-row-hover-bg);
     }
     .has-hover .repo-browser-item:hover {
-      background: var(--panel-row-bg);
+      background: var(--list-row-hover-bg);
     }
     .repo-browser-item.is-selected {
       background: var(--panel-row-bg);
@@ -493,11 +491,9 @@
       font-weight: var(--body-weight);
       display: flex;
       flex-direction: column;
-      background: rgba(var(--bg-rgb), 0.8);
-      border: 0.5px solid var(--line-strong);
-      box-shadow:
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.06),
-        0 1px 2px rgba(0, 0, 0, 0.12);
+      background: var(--pill-bg);
+      border: 0.5px solid var(--pill-border);
+      box-shadow: var(--pill-shadow);
       border-radius: var(--pill-radius);
       overflow: hidden;
       font-family: var(--font-main);
@@ -524,22 +520,22 @@
     html[data-desktop-chat="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row {
       background: transparent;
       border: none;
-      border-radius: 0.77em;
+      border-radius: var(--pill-inner-radius);
       height: var(--pill-row-height);
       margin: var(--pill-row-margin);
       padding-top: 0;
       padding-bottom: 0;
     }
     html[data-desktop-chat="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row.clickable:hover {
-      background: var(--panel-row-bg);
+      background: var(--list-row-hover-bg);
     }
     html[data-desktop-chat="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row.clickable:active {
       background: rgba(255, 255, 255, 0.12);
     }
     .git-summary-wrap .git-summary-row {
-      background: var(--panel-row-bg);
+      background: var(--panel-head-bg);
       border: 0.5px solid var(--panel-row-border);
-      border-radius: var(--right-panel-pill-radius);
+      border-radius: var(--pill-inner-radius);
       position: relative;
     }
     @keyframes git-commit-slide-in {
@@ -609,16 +605,16 @@
     }
     .git-commit-detail-head:active > * {
       background: var(--panel-row-active-bg);
-      border-radius: var(--right-panel-pill-radius);
+      border-radius: var(--pill-inner-radius);
     }
     .has-hover .git-commit-detail-head:hover > * {
       background: var(--panel-row-hover-bg);
-      border-radius: var(--right-panel-pill-radius);
+      border-radius: var(--pill-inner-radius);
     }
     .git-commit-detail-head .git-commit-row,
     .git-commit-detail-head .git-summary-row {
       border-bottom: none;
-      border-radius: var(--right-panel-pill-radius);
+      border-radius: var(--pill-inner-radius);
       pointer-events: none;
       padding: 0 var(--right-panel-row-pad-x);
       background: var(--panel-row-bg);
@@ -635,16 +631,16 @@
     .git-commit-detail-head .git-summary-row {
       background: var(--panel-row-bg);
       border: 0.5px solid var(--panel-row-border);
-      border-radius: var(--right-panel-pill-radius);
+      border-radius: var(--pill-inner-radius);
       position: relative;
     }
     .git-commit-detail-head:active > .git-summary-row {
       background: var(--panel-row-active-bg);
-      border-radius: var(--right-panel-pill-radius);
+      border-radius: var(--pill-inner-radius);
     }
     .has-hover .git-commit-detail-head:hover > .git-summary-row {
       background: var(--panel-row-hover-bg);
-      border-radius: var(--right-panel-pill-radius);
+      border-radius: var(--pill-inner-radius);
     }
     .git-commit-detail-head .git-summary-row .git-commit-chevron {
       transform: rotate(90deg) translateZ(0);
@@ -693,7 +689,7 @@
       background: var(--panel-row-hover-bg);
     }
     .has-hover .git-commit-row:hover {
-      background: var(--panel-row-bg);
+      background: var(--list-row-hover-bg);
     }
     .git-commit-row:not(:last-child) .git-commit-icon-wrap::after {
       content: "";
@@ -701,7 +697,7 @@
       left: 50%;
       transform: translateX(-50%);
       top: 1.08em;
-      height: calc(1.69em + var(--right-panel-list-inset));
+      height: calc(var(--right-panel-row-height) + var(--right-panel-list-inset) - 0.77em);
       width: 0.5px;
       background: var(--icon-muted);
       z-index: 0;
@@ -839,7 +835,7 @@
       gap: var(--right-panel-item-gap);
       height: var(--right-panel-row-height);
       padding: 0 var(--right-panel-row-pad-x);
-      border-radius: var(--right-panel-item-radius);
+      border-radius: var(--pill-inner-radius);
       font-size: var(--text-size, 13px);
       font-family: var(--font-main);
       line-height: 1.35;
@@ -857,7 +853,7 @@
       background: var(--panel-row-hover-bg);
     }
     .has-hover .git-commit-list .git-summary-row.clickable:hover {
-      background: var(--panel-row-bg);
+      background: var(--list-row-hover-bg);
     }
     .git-summary-counts {
       display: block;
@@ -939,7 +935,7 @@
     .git-commit-file-row {
       display: flex;
       flex-direction: column;
-      border-radius: var(--right-panel-item-radius);
+      border-radius: var(--pill-inner-radius);
       background: transparent;
       overflow: hidden;
       transition: background 120ms ease;
@@ -961,7 +957,7 @@
       background: var(--panel-row-hover-bg);
     }
     .has-hover .git-commit-file-row:hover {
-      background: var(--panel-row-bg);
+      background: var(--list-row-hover-bg);
     }
     .git-commit-file-row.is-selected {
       background: var(--panel-row-bg);
@@ -1113,17 +1109,19 @@
       mask-image: linear-gradient(to bottom, transparent 0, black var(--git-pinned-scroll-fade), black calc(100% - var(--git-pinned-scroll-fade)), transparent 100%);
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--git-pinned-scroll-fade), black calc(100% - var(--git-pinned-scroll-fade)), transparent 100%);
     }
-    .git-pinned-expand-section {
-      padding: 0.62em 0 0;
+    .git-pinned-expand-section + .git-pinned-expand-section {
+      margin-top: var(--pill-row-margin);
     }
     .git-pinned-expand-section:last-child {
-      padding-bottom: 0.62em;
+      padding-bottom: var(--pill-row-margin);
     }
     .git-pinned-expand .git-commit-file-list {
+      gap: var(--pill-row-margin);
       padding: 0;
     }
     .git-pinned-expand .git-commit-file-row {
-      margin: 0 0.62em;
+      margin: 0 var(--pill-row-margin);
+      border-radius: var(--pill-inner-radius);
     }
     .git-pinned-expand .git-commit-file-header {
       height: var(--pill-row-height);
