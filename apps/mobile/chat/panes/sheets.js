@@ -66,20 +66,9 @@
       }
       panel.hidden = false;
       panel.classList.remove("open", "sheet-closing");
-      panel.classList.add("sheet-sliding");
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           panel.classList.add("open");
-          if (sheetPanel) {
-            const finishSlide = (event) => {
-              if (event.target !== sheetPanel || event.propertyName !== "transform") return;
-              sheetPanel.removeEventListener("transitionend", finishSlide);
-              sheetPanel._sheetSlideEnd = null;
-              panel.classList.remove("sheet-sliding");
-            };
-            sheetPanel._sheetSlideEnd = finishSlide;
-            sheetPanel.addEventListener("transitionend", finishSlide);
-          }
           onOpened();
         });
       });
@@ -237,7 +226,7 @@
             sheetPanel.style.transition = "";
             sheetPanel.style.transform = "";
           }
-          panel.classList.remove("open", "sheet-sliding", "sheet-closing");
+          panel.classList.remove("open", "sheet-closing");
           panel.hidden = true;
           unlockScroll();
           onClosed();
@@ -256,7 +245,7 @@
           return;
         }
         panel.classList.add("sheet-closing");
-        panel.classList.remove("open", "sheet-sliding");
+        panel.classList.remove("open");
         if (!sheetPanel) {
           finish();
           return;

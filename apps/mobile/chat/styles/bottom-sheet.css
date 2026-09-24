@@ -93,11 +93,6 @@
       mask-image: linear-gradient(to bottom, var(--mobile-edge-fade-mask));
     }
 
-    .mobile-sheet-overlay.sheet-sliding .mobile-bottom-sheet-panel::before {
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-    }
-
     .mobile-bottom-sheet .mobile-bottom-sheet-nav {
       position: absolute;
       top: 0;
@@ -110,6 +105,7 @@
       background: transparent;
       cursor: grab;
       pointer-events: none;
+      transform: translateZ(0);
     }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-pill,

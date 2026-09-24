@@ -9,7 +9,7 @@
     }
 
     #paneTracePanel .mobile-bottom-sheet-panel {
-      --mobile-sheet-panel-height: var(--pane-trace-sheet-height);
+      --mobile-sheet-panel-height: 92dvh;
       background: var(--pane-trace-body-bg);
     }
 

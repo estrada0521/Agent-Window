@@ -232,15 +232,58 @@
     let hudTimer = 0;
     let hudTransient = "";
     let hudResident = "";
+    let hudText = "";
+    let hudState = "hidden";
+    const hud = document.getElementById("chatHud");
+    const HUD_TRANSITION_MS = parseFloat(getComputedStyle(hud).transitionDuration) * 1000;
+    const setHudText = (text) => {
+      hudText = text;
+      const span = document.createElement("span");
+      span.className = "chat-hud-text";
+      span.textContent = text;
+      hud.replaceChildren(span);
+    };
+    const morphHud = (text) => {
+      const from = hud.getBoundingClientRect().width;
+      hud.style.width = "";
+      setHudText(text);
+      const to = hud.getBoundingClientRect().width;
+      hud.style.width = `${from}px`;
+      void hud.offsetWidth;
+      hud.style.width = `${to}px`;
+    };
+    const toggleHud = (visible) => {
+      hudState = visible ? "showing" : "hiding";
+      hud.classList.toggle("is-visible", visible);
+      window.setTimeout(settleHud, HUD_TRANSITION_MS);
+    };
     const renderHud = () => {
-      const hud = document.getElementById("chatHud");
-      const shown = hudTransient || hudResident;
-      if (!shown) {
-        hud.classList.remove("is-visible");
+      if (hudState === "showing" || hudState === "hiding") return;
+      const target = hudTransient || hudResident;
+      if (hudState === "hidden") {
+        if (!target) return;
+        setHudText(target);
+        toggleHud(true);
         return;
       }
-      hud.textContent = shown;
-      hud.classList.add("is-visible");
+      if (!target) {
+        toggleHud(false);
+        return;
+      }
+      if (target !== hudText) morphHud(target);
+    };
+    const settleHud = () => {
+      if (hudState === "showing") {
+        hudState = "visible";
+        if ((hudTransient || hudResident) !== hudText) {
+          toggleHud(false);
+          return;
+        }
+      } else {
+        hudState = "hidden";
+        hud.style.width = "";
+      }
+      renderHud();
     };
     const setStatus = (text) => {
       window.clearTimeout(hudTimer);

@@ -7,7 +7,6 @@ __CHAT_INCLUDE:../../../shared/chat/font-faces.css__
 __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
     :root {
       color-scheme: __COLOR_SCHEME__;
-      --pane-trace-sheet-height: 91dvh;
       --bg-rgb: __MOBILE_CHAT_BG_CHANNELS__;
       --bg: rgb(var(--bg-rgb));
       --line: __LINE__;

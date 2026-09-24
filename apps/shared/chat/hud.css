@@ -19,14 +19,20 @@
       pointer-events: none;
       opacity: 0;
       visibility: hidden;
-      transform: translate(-50%, -100%);
-      transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.18s;
+      transform: translate(-50%, -100%) scale(0.8);
+      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
     }
-    .chat-hud.is-visible {
+    html:not(:has(.mobile-sheet-overlay:is(.open, .sheet-closing))) .chat-hud.is-visible {
       opacity: 1;
       visibility: visible;
-      transform: translate(-50%, 0);
-      transition: opacity 0.18s ease, transform 0.18s ease;
+      transform: translate(-50%, 0) scale(1);
+      transition: opacity 0.3s ease, transform 0.3s ease, width 0.3s ease;
+    }
+    .chat-hud-text {
+      animation: chat-hud-text-in 0.3s ease;
+    }
+    @keyframes chat-hud-text-in {
+      from { opacity: 0; }
     }
     html:not([data-mobile="1"]) .chat-hud {
       --chat-hud-height: calc(var(--right-panel-pinned-row-height) + 2 * var(--right-panel-pinned-row-margin) + 1px);
@@ -39,5 +45,5 @@
     }
     html[data-mobile="1"] .chat-hud {
       --chat-hud-height: var(--mobile-sheet-floating-height);
-      top: calc(100dvh - var(--pane-trace-sheet-height));
+      top: 9dvh;
     }
