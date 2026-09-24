@@ -23,13 +23,9 @@ A UNIX-philosophy Agent application for macOS.
 4. Sending is `tmux send-keys`. Text from the input field goes into the Agent's pane.
 5. Receiving is watching each CLI's native log. Tool calls show on screen only while running, and aren't kept in the log.
 
-   <br>
-
-   <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="media/agent-window-running-dark.webp">
-     <source media="(prefers-color-scheme: light)" srcset="media/agent-window-running-light.webp">
-     <img src="media/agent-window-running-light.webp" width="326" alt="Claude's running tool calls in Agent Window">
-   </picture>
+<p align="center">
+  <img src="media/agent-window-running.gif" width="392" alt="Claude's running tool calls in Agent Window">
+</p>
 
 ## Setup
 

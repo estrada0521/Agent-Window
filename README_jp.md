@@ -23,13 +23,9 @@ UNIX哲学で作られた、macOS向けのAgentアプリケーション。
 4. 送信は `tmux send-keys`。入力欄の文字が、Agentのpaneに入る。
 5. 受信は各CLIのnative logの監視。tool callは実行中だけ画面に出て、logには残らない。
 
-   <br>
-
-   <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="media/agent-window-running-dark.webp">
-     <source media="(prefers-color-scheme: light)" srcset="media/agent-window-running-light.webp">
-     <img src="media/agent-window-running-light.webp" width="326" alt="Claudeの実行中のtool call表示">
-   </picture>
+<p align="center">
+  <img src="media/agent-window-running.gif" width="392" alt="Claudeの実行中のtool call表示">
+</p>
 
 ## Setup
 
