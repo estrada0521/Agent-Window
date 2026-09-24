@@ -38,8 +38,7 @@ def proxy_chat_session(handler, method: str) -> None:
     parsed = urlparse(handler.path)
     chat_port, suffix = split_chat_proxy_path(parsed.path)
     if not any(workspace_chat_port(workspace) == chat_port for _name, workspace in session_workspace_claims().values()):
-        handler.send_response(404)
-        handler.end_headers()
+        _send_text(handler, 404, "404 Not Found")
         return
     body = _read_body(handler, method)
     forwarded_prefix = format_chat_url(chat_port, "/").rstrip("/")
@@ -61,6 +60,6 @@ def proxy_chat_session(handler, method: str) -> None:
             method, upstream, body=body, headers=headers, timeout=UPSTREAM_TIMEOUT,
         )
     except http_proxy.TRANSIENT_UPSTREAM_ERRORS as exc:
-        _send_text(handler, 502, f"Bad Gateway: {exc}")
+        _send_text(handler, 502, f"502 Bad Gateway\n{exc}")
         return
     http_proxy.relay_stream(handler, status, resp_headers, resp, chunk_size=STREAM_CHUNK_SIZE)

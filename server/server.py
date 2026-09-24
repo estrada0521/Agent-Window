@@ -247,6 +247,8 @@ def _route_context() -> dict:
 
 
 class Handler(BaseHTTPRequestHandler):
+    error_message_format = "%(code)d %(message)s\n"
+    error_content_type = "text/plain; charset=utf-8"
     _GET_ROUTE_DISPATCHERS = (
         dispatch_get_assets_route,
         dispatch_get_read_route,

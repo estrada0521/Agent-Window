@@ -19,7 +19,7 @@
       }
       if (error) {
         reloadInFlight = false;
-        releaseLaunchShellGate();
+        document.documentElement.removeAttribute("data-launch-shell");
         setStatus(`reload failed: ${error}`);
         return;
       }

@@ -35,34 +35,15 @@
       if (!_deskChatShell) return;
       _deskChatShell.classList.toggle("loading", !!active);
     }
-    function setDeskReloadShell(active) {
-      if (!_deskReloadShell) return;
-      if (active) {
-        const card = _deskReloadShell.querySelector(".desk-reload-shell-card");
-        if (card) {
-          card.classList.remove("is-error");
-          card.innerHTML = '<span class="desk-reload-shell-spinner" aria-hidden="true"></span>';
-        }
-      }
-      _deskReloadShell.hidden = !active;
-      _deskReloadShell.classList.toggle("visible", !!active);
-    }
     function triggerDeskHubReload() {
       if (!_deskReloadBtn || _deskReloadBtn.classList.contains("restarting")) return;
-      setDeskReloadShell(true);
+      _deskReloadShell.hidden = false;
+      _deskReloadShell.classList.add("visible");
       beginHubRestart(_deskReloadBtn);
     }
     function failDeskOpen(message) {
-      const card = _deskReloadShell?.querySelector(".desk-reload-shell-card");
-      if (card) {
-        card.classList.add("is-error");
-        card.textContent = String(message || "open session failed");
-      }
-      if (_deskReloadShell) {
-        _deskReloadShell.hidden = false;
-        _deskReloadShell.classList.add("visible");
-      }
-      setDeskChatLoading(false);
+      clearDeskChatFrame();
+      setResidentStatus("chat-open", message);
       showDeskSidebarList({ open: true });
     }
 

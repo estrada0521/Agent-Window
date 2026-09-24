@@ -1,6 +1,4 @@
 __CHAT_INCLUDE:../../shared/chat/base.js__
-    const _pageParams = new URLSearchParams(window.location.search);
-    const launchShellMode = _pageParams.get("launch_shell") === "1";
     const DESKTOP_FILE_PANE_MIN_VIEWPORT_PX = 961;
     let _scrollbarLayoutSyncFrame = 0;
     let _fitTargetRow = null;
@@ -63,10 +61,7 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
       window.visualViewport.addEventListener("scroll", scheduleSyncFromVV);
     }
 __CHAT_INCLUDE:../../shared/chat/conversation-state.js__
-__CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
-    if (launchShellMode) {
-      armLaunchShellGate();
-    }
+    const timeline = document.getElementById("messages");
     let _pollScrollLockTop = null;
     let _pollScrollAnchor = null;
     let _hubIframeLayoutMaxH = 0;

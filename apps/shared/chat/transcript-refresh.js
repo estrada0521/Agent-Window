@@ -35,17 +35,11 @@
         }
         render(data, refreshOptions);
         setResidentStatus("messages-failed", "");
-        if (!hasInitialRefreshHydrated) {
-          hasInitialRefreshHydrated = true;
-          releaseLaunchShellGate();
-        }
+        hasInitialRefreshHydrated = true;
         notifyHubChatRenderReady();
       } catch (err) {
         const detail = err?.message || String(err);
-        if (!hasInitialRefreshHydrated) {
-          releaseLaunchShellGate();
-          notifyHubChatRenderError();
-        }
+        if (!hasInitialRefreshHydrated) notifyHubChatRenderError();
         if (!renderFailed) setResidentStatus("messages-failed", detail);
       } finally {
         refreshInFlight = false;

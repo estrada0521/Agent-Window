@@ -114,9 +114,7 @@
         return;
       }
       const needsReviveTransition = /^\/revive-session(?:[/?]|$)/.test(String(openHref || ""));
-      const openFailed = !!_deskReloadShell?.classList.contains("visible");
-      if (!needsReviveTransition && name === _deskSelectedSessionName && !openFailed) return;
-      setDeskReloadShell(false);
+      if (!needsReviveTransition && name === _deskSelectedSessionName && _deskChatFrameLoadedUrl) return;
       const archived = !!findSessionRecord(name)?.archived;
       const closeOnOpen = isPhoneViewport();
       _deskSelectedSessionName = name;

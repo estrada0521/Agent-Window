@@ -80,12 +80,6 @@
       -webkit-backdrop-filter: none;
       box-shadow: none;
     }
-    .desk-reload-shell-card.is-error {
-      width: auto;
-      height: auto;
-      color: var(--error);
-      font-size: 13px;
-    }
     .desk-reload-shell-spinner {
       width: 18px;
       height: 18px;

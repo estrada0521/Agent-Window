@@ -496,6 +496,14 @@
       _hubLayoutRefH = window.innerHeight || 0;
       _hubChatParentLayoutMax = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
       const onChatReady = function () {
+        const frameDoc = _chatFrame.contentDocument;
+        if (frameDoc?.URL === "about:blank") return;
+        if (!frameDoc?.getElementById("chatHud")) {
+          const firstLine = (frameDoc?.body?.innerText || "").trim().split("\n")[0];
+          dismissChatFrame();
+          failHubReadyWait(firstLine || "Empty response");
+          return;
+        }
         _chatFrame.style.transition = "opacity 140ms ease";
         _chatFrame.style.opacity = "1";
         _bumpHubChatParentLayoutMax();
@@ -575,6 +583,31 @@
         _currentChatUrl = "";
         clearPersistedChatFrameState();
       }, CHAT_OVERLAY_CLOSE_MS);
+    }
+    function dismissChatFrame() {
+      cancelChatRenderWait();
+      _detachHubViewportBridge();
+      if (_chatOverlayCloseTimer) {
+        clearTimeout(_chatOverlayCloseTimer);
+        _chatOverlayCloseTimer = 0;
+      }
+      _chatFrame.onload = null;
+      _chatFrame.src = "about:blank";
+      _chatFrame.style.transition = "";
+      _chatFrame.style.opacity = "1";
+      _chatOverlay.classList.remove("overlay-visible", "overlay-closing", "overlay-peeking");
+      clearOverlaySettle();
+      resetChatOverlayMotionStyles();
+      _chatOverlay.style.top = "";
+      _chatOverlay.style.height = "";
+      _chatOverlay.hidden = true;
+      document.documentElement.classList.remove("hub-chat-ui-active", "hub-chat-peeking", "hub-chat-overlay-active");
+      document.body.classList.remove("hub-chat-overlay-active");
+      updateMenuContext(false);
+      _currentChatUrl = "";
+      _currentChatSessionName = "";
+      syncMobileSelectedSessionRows();
+      clearPersistedChatFrameState();
     }
     _chatOverlay.addEventListener("click", () => {
       if (!_chatOverlay.classList.contains("overlay-peeking")) return;

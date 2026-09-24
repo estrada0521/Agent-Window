@@ -14,9 +14,6 @@
   <link rel="apple-touch-icon" href="__CHAT_APPLE_TOUCH_ICON_URL__">
   <title>__CHAT_DOCUMENT_TITLE__</title>
   <script>
-    if (new URLSearchParams(window.location.search).get("launch_shell") === "1") {
-      document.documentElement.dataset.launchShell = "1";
-    }
     (() => {
       const root = document.documentElement;
       const params = new URLSearchParams(window.location.search);

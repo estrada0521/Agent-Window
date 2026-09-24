@@ -1,9 +1,5 @@
 
     window.addEventListener("message", (event) => {
-      if (event.data && event.data.type === "hub-session-error") {
-        failDeskOpen(event.data.message || "open session failed");
-        return;
-      }
       if (event.data && event.data.type === "desktop-panel-state" && event.source === _deskChatFrame?.contentWindow) {
         updateDeskPanelButtonState(
           String(event.data.mode || ""),
@@ -207,6 +203,14 @@
 
     _deskChatFrame && _deskChatFrame.addEventListener("load", () => {
       setDeskChatLoading(false);
+      if (_deskChatFrameLoadedUrl) {
+        const frameDoc = _deskChatFrame.contentDocument;
+        if (!frameDoc?.getElementById("chatHud")) {
+          failDeskOpen((frameDoc?.body?.innerText || "").trim().split("\n")[0] || "Empty response");
+          return;
+        }
+        setResidentStatus("chat-open", "");
+      }
       syncDeskChatShellState();
       applyDeskChatTheme();
       _deskChatFrame.contentWindow?.postMessage(

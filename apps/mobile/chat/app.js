@@ -82,13 +82,8 @@ __CHAT_INCLUDE:../../shared/chat/base.js__
       }, { passive: true });
       document.addEventListener("touchcancel", _resetHubSwipe, { passive: true });
     }
-    const _pageParams = new URLSearchParams(window.location.search || "");
-    const launchShellMode = _pageParams.get("launch_shell") === "1";
 __CHAT_INCLUDE:../../shared/chat/conversation-state.js__
-__CHAT_INCLUDE:../../shared/chat/launch-shell-gate.js__
-    if (launchShellMode) {
-      armLaunchShellGate();
-    }
+    const timeline = document.getElementById("messages");
     const syncMainAfterHeight = () => {
       const mainEl = document.querySelector("main");
       if (!mainEl) return;
