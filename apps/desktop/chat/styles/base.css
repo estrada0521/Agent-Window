@@ -219,7 +219,6 @@ __CHAT_INCLUDE:../../../shared/chat/markdown-theme-vars.css__
       background: transparent;
       box-shadow: none;
       isolation: isolate;
-      -webkit-mask-image: -webkit-radial-gradient(white, black);
       transition: border-radius 220ms ease;
     }
     html[data-hub-iframe-chat="1"] .shell::before,
