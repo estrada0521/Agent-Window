@@ -314,6 +314,10 @@
         if (path) {
           e.preventDefault();
           e.stopPropagation();
+          if (document.documentElement.dataset.mobile !== "1" && e.altKey) {
+            void dpQuickLookPaths([path]);
+            return;
+          }
           if (document.documentElement.dataset.mobile !== "1" && anyLink.dataset.fileLinkOpen === "editor") {
             void openFile(path);
             return;
