@@ -173,7 +173,7 @@
       justify-content: center;
       font-size: calc(var(--text-size, 13px) * 12 / 13);
       letter-spacing: 0.08em;
-      color: var(--muted);
+      color: var(--fg);
       text-transform: uppercase;
     }
     .composer textarea {
