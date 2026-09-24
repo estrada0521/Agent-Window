@@ -112,7 +112,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 |---|---|---|
 | New Session | `⌘N` | |
 | active sessionの切り替え | `⌘1`–`⌘9` | |
-| Open in Browser | `⇧⌥⌘O` | Hubを既定のbrowserで開く |
+| ブラウザでHubを開く | `⇧⌥⌘O` |  |
 
 </details>
 
@@ -124,7 +124,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | 入力欄を開く | `Enter` / ホイール押し込み | |
 | 入力欄を閉じる | `Esc` | |
 | 送信先の切り替え | `Ctrl+1`–`Ctrl+9` | |
-| chat server / Hub serverのreload | `⌘R` / `⇧⌘R` | serverを再起動し、変更後のsourceを読み直す |
+| chat server / Hub serverの再起動 | `⌘R` / `⇧⌘R` | 変更後のsourceを読み直す |
 | Git summaryのpin | `⇧⌘P` | |
 
 </details>
@@ -135,11 +135,11 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | 操作 | キー | 備考 |
 |---|---|---|
 | Agentの追加 / 削除 | | |
-| Terminal | `⌘T` | |
-| Finder | `⌥⌘R` | |
-| Open in Browser | `⌥⌘O` | このchatを単体で既定のbrowserで開く |
-| tmux window | `⌥⌘T` | |
-| Reveal Log | `⌥⌘L` | sessionのlogをFinderで表示 |
+| Terminalを開く | `⌘T` | |
+| Finderでworkspaceを開く | `⌥⌘R` | |
+| tmux windowを開く | `⌥⌘T` | |
+| FinderでLogを開く | `⌥⌘L` |  |
+| ブラウザでチャットを開く | `⌥⌘O` |  |
 
 </details>
 
@@ -158,14 +158,14 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 | 操作 | キー | 備考 |
 |---|---|---|
-| 選択したfileを開く | `⌘O` | repo browser / git panelのfile行 |
+| fileを開く | `⌘O` |  |
 | Quick Look | `⌘Y` / `⌥` + click | |
 | Finderで表示 | `⌥⌘R` | |
 | 絶対pathをcopy | `⌥⌘C` | |
 | 相対pathをcopy | `⇧⌥⌘C` | |
-| commit hashをcopy |  | commitを右クリック |
-| commit messageをcopy |  | commitを右クリック |
-| commitのinfo表示 |  | hoverでauthor・日時・message・statをtooltip表示 |
+| commit hashをcopy |  | |
+| commit messageをcopy |  | |
+| commitのinfo表示 | hover |  |
 
 </details>
 

@@ -221,6 +221,7 @@
           button.innerHTML = "";
           visibleSources.forEach(({ row, wrap }) => {
             const clone = wrap.cloneNode(true);
+            clone.removeAttribute("title");
             clone.classList.add("message-thinking-floating-icon-wrap");
             clone.style.setProperty("--agent-pulse-delay", row.style.getPropertyValue("--agent-pulse-delay") || "0s");
             button.appendChild(clone);
@@ -303,6 +304,9 @@
             </span>
             <span class="message-thinking-label message-thinking-label-agent"></span>
           `;
+          if (document.documentElement.dataset.mobile !== "1") {
+            row.querySelector(".message-thinking-icon-wrap").title = "Open Pane";
+          }
         }
         const pulseDelay = `${pulse}s`;
         if (row.style.getPropertyValue("--agent-pulse-delay") !== pulseDelay) {

@@ -372,9 +372,9 @@ fn show_chat_header_menu(
         .item(&shell_item)
         .item(&finder_item)
         .separator()
-        .item(&browser_item)
         .item(&terminal_item)
         .item(&log_item)
+        .item(&browser_item)
         .build()
         .map_err(|err| err.to_string())?;
 

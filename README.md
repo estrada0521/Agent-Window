@@ -112,7 +112,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 |---|---|---|
 | New Session | `⌘N` | |
 | Switch active session | `⌘1`–`⌘9` | |
-| Open in Browser | `⇧⌥⌘O` | Opens the Hub in the default browser |
+| Open Hub in browser | `⇧⌥⌘O` | |
 
 </details>
 
@@ -124,7 +124,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Open the input field | `Enter` / wheel click | |
 | Close the input field | `Esc` | |
 | Switch send target | `Ctrl+1`–`Ctrl+9` | |
-| Reload chat server / Hub server | `⌘R` / `⇧⌘R` | Restarts the server and re-reads changed source |
+| Restart chat server / Hub server | `⌘R` / `⇧⌘R` | Re-reads changed source |
 | Pin Git summary | `⇧⌘P` | |
 
 </details>
@@ -135,11 +135,11 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Action | Key | Note |
 |---|---|---|
 | Add / remove Agent | | |
-| Terminal | `⌘T` | |
-| Finder | `⌥⌘R` | |
-| Open in Browser | `⌥⌘O` | Opens this chat by itself in the default browser |
-| tmux window | `⌥⌘T` | |
-| Reveal Log | `⌥⌘L` | Reveals the session's log in Finder |
+| Open Terminal | `⌘T` | |
+| Open workspace in Finder | `⌥⌘R` | |
+| Open tmux window | `⌥⌘T` | |
+| Open log in Finder | `⌥⌘L` | |
+| Open chat in browser | `⌥⌘O` | |
 
 </details>
 
@@ -158,14 +158,14 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 
 | Action | Key | Note |
 |---|---|---|
-| Open selected file(s) | `⌘O` | Repo browser or git file rows |
+| Open file | `⌘O` | |
 | Quick Look | `⌘Y` / `⌥` + click | |
 | Reveal in Finder | `⌥⌘R` | |
 | Copy absolute path | `⌥⌘C` | |
 | Copy relative path | `⇧⌥⌘C` | |
-| Copy commit hash |  | Right-click a commit |
-| Copy commit message |  | Right-click a commit |
-| Commit info |  | Author, date, message, stat as a tooltip on hover |
+| Copy commit hash |  | |
+| Copy commit message |  | |
+| Show commit info | hover | |
 
 </details>
 
