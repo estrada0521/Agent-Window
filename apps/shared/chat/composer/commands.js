@@ -395,6 +395,7 @@
         if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
         e.preventDefault();
         e.stopPropagation();
+        if (filePathFromLinkAnchor(anyLink)) return;
         void openExternalLink(href).catch(reportExternalLinkFailure);
       });
     }
