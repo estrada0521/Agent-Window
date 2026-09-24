@@ -659,8 +659,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         return path.startsWith(`${dpWorkspaceRoot}/`) ? path.slice(dpWorkspaceRoot.length + 1) : path;
       }).join("\n");
       await doCopyText(text);
-      const label = absolute ? "absolute path" : "relative path";
-      setStatus(paths.length > 1 ? `Copied ${paths.length} ${label}s` : `Copied ${label}`);
+      setStatus("Copied path");
     };
     const dpRevealFileInFinder = async (path) => {
       const response = await fetchWithTimeout("/reveal-file", {

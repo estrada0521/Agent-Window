@@ -176,7 +176,7 @@
         return;
       }
       hubChatUrls.forget(buildSessionOpenHref(sessionName, true));
-      setStatus(`Workspace updated for ${sessionName}.`);
+      setStatus("Workspace updated");
     }
 
     async function copyDeskSessionWorkspace(sessionName) {
@@ -194,7 +194,7 @@
         setStatus(err?.message || "Failed to copy workspace path.");
         return;
       }
-      setStatus(`Copied workspace path for ${sessionName}.`);
+      setStatus("Copied path");
     }
 
     async function resetDeskSessionAgents(sessionName) {
@@ -217,7 +217,7 @@
         postDeskChatFrameMessage({ type: "refresh-session-state" });
       }
       await refreshHubSessions(true, { skipRestore: true });
-      setStatus(`Agents reset for ${sessionName}.`);
+      setStatus("Agents reset");
     }
 
     function beginDeskSessionRename(sessionName) {
