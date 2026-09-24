@@ -677,14 +677,12 @@ const applyPreviewTheme = (theme) => {{
 }};
 const applyPreviewPictureTheme = (root, theme) => {{
   root.querySelectorAll("picture source[media]").forEach((source) => {{
-    let scheme = source.dataset.previewColorScheme;
-    if (!scheme) {{
-      const match = String(source.getAttribute("media") || "").match(/^\\(prefers-color-scheme:\\s*(dark|light)\\)$/i);
-      if (!match) return;
-      scheme = match[1].toLowerCase();
-      source.dataset.previewColorScheme = scheme;
-    }}
-    source.media = scheme === theme ? "all" : "not all";
+    if (source.dataset.previewMedia === undefined) source.dataset.previewMedia = source.getAttribute("media") || "";
+    const media = source.dataset.previewMedia;
+    const match = media.match(/\\(prefers-color-scheme:\\s*(dark|light)\\)(?:\\s+and\\s+)?/i);
+    if (!match) return;
+    const rest = media.replace(match[0], "").trim();
+    source.media = match[1].toLowerCase() === theme ? (rest || "all") : "not all";
   }});
 }};
 window.__agentIndexApplyPreviewTheme = applyPreviewTheme;
