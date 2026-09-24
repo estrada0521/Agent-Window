@@ -112,6 +112,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 |---|---|---|
 | New Session | `⌘N` | |
 | Switch active session | `⌘1`–`⌘9` | |
+| Open in Browser | `⇧⌥⌘O` | Opens the Hub in the default browser |
 
 </details>
 
@@ -133,10 +134,12 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 
 | Action | Key | Note |
 |---|---|---|
-| Terminal | `⌘T` | |
-| tmux window | `⌥⌘T` | |
-| Finder | `⌥⌘R` | |
 | Add / remove Agent | | |
+| Terminal | `⌘T` | |
+| Finder | `⌥⌘R` | |
+| Open in Browser | `⌥⌘O` | Opens this chat by itself in the default browser |
+| tmux window | `⌥⌘T` | |
+| Reveal Log | `⌥⌘L` | Reveals the session's log in Finder |
 
 </details>
 

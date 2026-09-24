@@ -112,6 +112,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 |---|---|---|
 | New Session | `⌘N` | |
 | active sessionの切り替え | `⌘1`–`⌘9` | |
+| Open in Browser | `⇧⌥⌘O` | Hubを既定のbrowserで開く |
 
 </details>
 
@@ -133,10 +134,12 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 | 操作 | キー | 備考 |
 |---|---|---|
-| Terminal | `⌘T` | |
-| tmux window | `⌥⌘T` | |
-| Finder | `⌥⌘R` | |
 | Agentの追加 / 削除 | | |
+| Terminal | `⌘T` | |
+| Finder | `⌥⌘R` | |
+| Open in Browser | `⌥⌘O` | このchatを単体で既定のbrowserで開く |
+| tmux window | `⌥⌘T` | |
+| Reveal Log | `⌥⌘L` | sessionのlogをFinderで表示 |
 
 </details>
 
