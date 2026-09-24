@@ -5,6 +5,7 @@
     let _pinStickyThroughWidthChange = false;
     let _viewportCenterAnchor = null;
     let _anchorLayoutWidth = timeline.clientWidth;
+    let _atBottomAtAnchorWidth = timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight <= 2;
     let _pollScrollRestoreRaf = 0;
     const maybeRestorePollScrollLock = () => {
       if (_programmaticScroll) return;
@@ -75,8 +76,10 @@
       return fallback;
     };
     const refreshViewportCenterAnchor = () => {
-      if (_programmaticScroll || _pinStickyThroughWidthChange) return;
+      if (_pinStickyThroughWidthChange) return;
       if (timeline.clientWidth !== _anchorLayoutWidth) return;
+      _atBottomAtAnchorWidth = timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight <= 2;
+      if (_programmaticScroll) return;
       _viewportCenterAnchor = captureViewportCenterAnchor();
     };
     const restoreViewportCenterAnchor = (anchor) => {

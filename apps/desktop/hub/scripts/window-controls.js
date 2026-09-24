@@ -156,7 +156,7 @@
       }
     }
 
-    async function resizeDeskWindowAroundPane({ edge, delta, apply, rollback, label }) {
+    async function resizeDeskWindowAroundPane({ edge, delta, apply, rollback, label, applyAfterResize = false }) {
       if (_deskOutwardResizeInFlight || _deskAutoWindowHeight) return;
       const invoke = getTauriInvoke();
       if (typeof invoke !== "function") return;
@@ -164,9 +164,10 @@
       let applied = false;
       try {
         const resizing = invoke("resize_window_from_edge", { edge, delta });
+        if (applyAfterResize) await resizing;
         apply();
         applied = true;
-        await resizing;
+        if (!applyAfterResize) await resizing;
       } catch (err) {
         if (applied) rollback();
         setStatus(`${label} failed: ${err}`);
@@ -209,6 +210,7 @@
       void resizeDeskWindowAroundPane({
         edge: "right",
         delta: opening ? width : -width,
+        applyAfterResize: !opening,
         apply: () => {
           updateDeskPanelButtonState(opening ? "open" : "", width);
           sendDeskPanelCommand("");

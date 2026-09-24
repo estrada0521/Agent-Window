@@ -284,15 +284,20 @@ __CHAT_INCLUDE:../../shared/chat/scroll-lock.js__
     };
 __CHAT_INCLUDE:../../shared/chat/scroll-btn.js__
     let _timelineLayoutWidth = timeline.clientWidth;
+    let _widthChangeSequence = 0;
     new ResizeObserver(() => {
       const width = timeline.clientWidth;
       const prevWidth = _timelineLayoutWidth;
       _timelineLayoutWidth = width;
       if (width === prevWidth) return;
+      const sequence = ++_widthChangeSequence;
+      const wasAtBottom = _atBottomAtAnchorWidth;
       const centerAnchor = _viewportCenterAnchor || captureViewportCenterAnchor();
       _pinStickyThroughWidthChange = true;
       const apply = (remaining) => {
-        restoreViewportCenterAnchor(centerAnchor);
+        if (sequence !== _widthChangeSequence) return;
+        if (wasAtBottom) timeline.scrollTop = timeline.scrollHeight;
+        else restoreViewportCenterAnchor(centerAnchor);
         if (remaining <= 0) {
           _pinStickyThroughWidthChange = false;
           _anchorLayoutWidth = timeline.clientWidth;
@@ -534,12 +539,18 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     };
     const closeDesktopRightPanel = () => {
       if (!desktopRightPanel) return;
+      const wasAtBottom = _atBottomAtAnchorWidth || timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight <= 2;
       dpStopPanelResize();
       dpPanelOpen = false;
       if (gitSession.hasShell()) dpCloseGitDetail();
       desktopRightPanel.classList.remove("open");
       desktopRightPanel.hidden = true;
       document.body.classList.remove("right-panel-open");
+      if (wasAtBottom) {
+        timeline.scrollTop = timeline.scrollHeight;
+        _stickyToBottom = true;
+        updateScrollBtn();
+      }
       dpDisconnectGitObserver();
       dpSyncPinnedSummaryStrip();
       syncPanelState();
