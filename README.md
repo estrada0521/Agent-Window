@@ -4,7 +4,7 @@
 
 A UNIX-philosophy Agent application for macOS.
 
-[Design philosophy](DESIGN.md) · [日本語](README_jp.md)
+[Design philosophy](DESIGN.md) · [日本語](README.jp.md)
 
 </div>
 
