@@ -1,5 +1,4 @@
     const rightMenuBtn = document.getElementById("chatMenuBtn");
-    const getTauriInvoke = () => window.__TAURI__?.core?.invoke;
     const closeHeaderMenus = () => {
       resetAgentActionMenus();
     };
@@ -29,7 +28,6 @@
       img.src = src;
     });
     const openNativeHeaderMenu = async (anchorRect = null) => {
-      const invoke = getTauriInvoke();
       const fallbackRect = rightMenuBtn?.getBoundingClientRect?.() || null;
       const hasExplicitAnchor = !!(anchorRect && typeof anchorRect === "object");
       const rectSource = hasExplicitAnchor ? anchorRect : fallbackRect;
@@ -43,7 +41,7 @@
         height: Number(rectSource.height || 24),
       };
 
-      if (typeof invoke !== "function" && window.parent === window) {
+      if (window.parent === window) {
         openChatMenu(rightMenuBtn, {
           sessionActive: !!sessionActive,
           addAgents: ALL_BASE_AGENTS.filter(Boolean),
@@ -74,14 +72,10 @@
         removeAgents: agentActionCandidates("remove"),
         agentIcons,
       };
-      if (typeof invoke === "function") {
-        await invoke("show_chat_header_menu", { payload });
-      } else {
-        window.parent.postMessage({
-          type: "show-chat-header-menu",
-          payload,
-        }, "*");
-      }
+      window.parent.postMessage({
+        type: "show-chat-header-menu",
+        payload,
+      }, "*");
       return true;
     };
     const handleChatMenuAction = async (payload) => {

@@ -998,7 +998,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           document.documentElement.style.setProperty("--text-size", `${px}px`);
           if (isComposerOverlayOpen()) {
             autoResizeTextarea();
-            if (document.documentElement.dataset.tauriApp !== "1") {
+            if (document.documentElement.dataset.nativeApp !== "1") {
               requestAnimationFrame(() => reportFitHeight({ fromComposer: true }));
             }
           }
@@ -1134,7 +1134,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
             void runForwardAction("revealLog");
             return;
           }
-          if (event.code === "KeyO" && document.documentElement.dataset.tauriApp === "1") {
+          if (event.code === "KeyO" && document.documentElement.dataset.nativeApp === "1") {
             event.preventDefault();
             if (event.shiftKey) window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openHubInBrowser" }, "*");
             else void runForwardAction("openInBrowser");
@@ -1290,7 +1290,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           const target = event.target;
           if (target instanceof Element && (target.closest("input, textarea") || target.isContentEditable)) return;
           if (window.getSelection()?.toString()) return;
-          if (document.documentElement.dataset.tauriApp !== "1") return;
+          if (document.documentElement.dataset.nativeApp !== "1") return;
           const targets = dpActivePanelTargets(
             dpRepoOrderedSelectedEntries, ".repo-browser-item:hover", ".git-commit-file-row:hover",
           );

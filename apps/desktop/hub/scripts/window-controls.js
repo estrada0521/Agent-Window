@@ -3,7 +3,7 @@
       _deskAlwaysOnTop = !!on;
       if (_deskAlwaysOnTop) document.documentElement.dataset.alwaysOnTop = "1";
       else delete document.documentElement.dataset.alwaysOnTop;
-      const invoke = getTauriInvoke();
+      const invoke = getNativeInvoke();
       if (typeof invoke === "function") {
         invoke("set_always_on_top", { on: _deskAlwaysOnTop }).catch((err) => {
           setStatus(`always on top failed: ${err}`);
@@ -29,7 +29,7 @@
       else delete document.documentElement.dataset.fitCollapsed;
       _deskChatFrame?.contentWindow?.postMessage({ type: "hub-fit-collapsed", on: next }, "*");
       if (next) {
-        const invoke = getTauriInvoke();
+        const invoke = getNativeInvoke();
         if (typeof invoke === "function") {
           invoke("set_window_height", {
             height: Math.round(DESK_COLLAPSED_FIT_HEIGHT * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT),
@@ -54,7 +54,7 @@
       );
     }
     function applyDeskFitHeightMin() {
-      const invoke = getTauriInvoke();
+      const invoke = getNativeInvoke();
       if (typeof invoke === "function") {
         invoke("set_fit_height_min", { enabled: _deskAutoWindowHeight })
           .catch((err) => setStatus(`set_fit_height_min failed: ${err}`));
@@ -77,7 +77,7 @@
       if (_deskAutoWindowHeight) {
         setDeskAutoWindowHeight(false);
         applyDeskAlwaysOnTop(false);
-        const invoke = getTauriInvoke();
+        const invoke = getNativeInvoke();
         if (typeof invoke === "function") {
           invoke("set_window_height", { height: DESK_DEFAULT_WINDOW_HEIGHT * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT }).catch((err) => {
             setStatus(`fit height exit resize failed: ${err}`);
@@ -98,7 +98,7 @@
       }
       const content = Number(contentHeight);
       if (!Number.isFinite(content) || content <= 0) return;
-      const invoke = getTauriInvoke();
+      const invoke = getNativeInvoke();
       if (typeof invoke !== "function" || !_deskChatFrame) return;
       const iframeH = _deskChatFrame.getBoundingClientRect().height;
       const overhead = Math.min(240, Math.max(0, window.innerHeight - iframeH));
@@ -120,7 +120,7 @@
       setDeskSidebarWidthAtDefaultTextSize(DESK_DEFAULT_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE);
       setDeskAutoWindowHeight(false);
       applyDeskAlwaysOnTop(false);
-      const invoke = getTauriInvoke();
+      const invoke = getNativeInvoke();
       if (typeof invoke === "function") {
         try {
           await invoke("reset_window_geometry", { scale: currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT });
@@ -135,7 +135,7 @@
       setDeskSidebarOpen(false);
       setDeskAutoWindowHeight(false);
       applyDeskAlwaysOnTop(false);
-      const invoke = getTauriInvoke();
+      const invoke = getNativeInvoke();
       if (typeof invoke === "function") {
         try {
           await invoke(command, { scale: currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT });
@@ -147,7 +147,7 @@
     }
 
     async function moveDeskWindowToSpot(command) {
-      const invoke = getTauriInvoke();
+      const invoke = getNativeInvoke();
       if (typeof invoke !== "function") return;
       try {
         await invoke(command);
@@ -158,7 +158,7 @@
 
     async function resizeDeskWindowAroundPane({ edge, delta, apply, rollback, label, applyAfterResize = false }) {
       if (_deskOutwardResizeInFlight || _deskAutoWindowHeight) return;
-      const invoke = getTauriInvoke();
+      const invoke = getNativeInvoke();
       if (typeof invoke !== "function") return;
       _deskOutwardResizeInFlight = true;
       let applied = false;
@@ -245,7 +245,7 @@
           dispatchDeskNativeMenuAction({ action: "revealLog" });
           return;
         }
-        if (event.code === "KeyO" && isTauriDesktopApp()) {
+        if (event.code === "KeyO" && isNativeApp()) {
           event.preventDefault();
           if (event.shiftKey) openDeskHubInBrowser();
           else sendDeskChatAction("openInBrowser");
@@ -367,7 +367,7 @@
     });
 
     function openDeskHubInBrowser() {
-      getTauriInvoke()?.("open_external_url", { url: `${window.location.origin}/` })
+      getNativeInvoke()?.("open_external_url", { url: `${window.location.origin}/` })
         .catch((err) => setStatus(`open in browser failed: ${err}`));
     }
 
@@ -412,7 +412,7 @@
     }
 
     async function openAppearanceMenu() {
-      const invoke = getTauriInvoke();
+      const invoke = getNativeInvoke();
       if (typeof invoke !== "function") {
         openBrowserAppearanceMenu();
         return;

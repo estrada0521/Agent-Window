@@ -29,13 +29,13 @@ A UNIX-philosophy Agent application for macOS.
 
 ## Setup
 
-Requires `python3`, `tmux`, `cargo`, `tauri-cli`, Xcode Command Line Tools. `./setup/preflight` shows what's missing. Install and authenticate the Agent CLIs you'll use yourself.
+Requires `python3`, `tmux`, Xcode Command Line Tools. `./setup/preflight` shows what's missing. Install and authenticate the Agent CLIs you'll use yourself.
 
 ```bash
-./tauri_app/tauri_start
+./macos_app/start
 ```
 
-Builds the Tauri App, saves it to `/Applications/Agent Window.app`, and launches it.
+Builds the app, saves it to `/Applications/Agent Window.app`, and launches it.
 
 ## session
 
@@ -217,7 +217,7 @@ Claude, Codex, Antigravity, Cursor, Grok.
 
 ## Stack
 
-The stack is mostly HTML/CSS/vanilla JavaScript and the Python standard library. Tauri/Rust is the exception, handling the OS boundary. There is no Node runtime, npm build, or DB; the following are used directly:
+The stack is HTML/CSS/vanilla JavaScript, the Python standard library, and one Objective-C file for the macOS window. There is no Node runtime, npm build, or DB; the following are used directly:
 
 - **browser primitive** — DOM, `fetch` / `EventSource`
 - **native OS API** — FSEvents / kqueue, AppKit / Objective-C

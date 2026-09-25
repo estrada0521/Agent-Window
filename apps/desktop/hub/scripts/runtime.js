@@ -1,8 +1,9 @@
-    function isTauriDesktopApp() {
-      return document.documentElement.dataset.tauriApp === "1";
+    function isNativeApp() {
+      return document.documentElement.dataset.nativeApp === "1";
     }
-    function getTauriInvoke() {
-      return window.__TAURI__?.core?.invoke;
+    function getNativeInvoke() {
+      const handler = window.webkit?.messageHandlers?.agentWindow;
+      return handler ? (cmd, args = {}) => handler.postMessage({ cmd, args }) : undefined;
     }
     const PHONE_VIEWPORT_MAX_PX = 480;
     const _deskWorkbench = document.getElementById("deskWorkbench");
@@ -80,7 +81,7 @@
     function applyDeskTextSizeAndBroadcast(px) {
       const previous = currentDeskTextSizePx();
       const clamped = clampDeskTextSize(px);
-      const invoke = getTauriInvoke();
+      const invoke = getNativeInvoke();
       const scalesWindow = clamped !== previous && typeof invoke === "function";
       applyDeskTextSizeLocal(clamped);
       applyDeskSidebarWidth();

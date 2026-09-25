@@ -152,8 +152,8 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
     }}
     html[data-view="mobile"] {{ --bg: __MOBILE_HUB_DARK_BG__; }}
     html[data-view="mobile"][data-theme-mobile="light"] {{ --bg: __MOBILE_HUB_LIGHT_BG__; }}
-    html[data-tauri-app="1"],
-    html[data-tauri-app="1"] body {{ background: transparent; }}
+    html[data-native-app="1"],
+    html[data-native-app="1"] body {{ background: transparent; }}
     @media (prefers-color-scheme: light) {{
       html[data-theme-desktop="system"] {{
         color-scheme: light;

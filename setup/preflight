@@ -35,7 +35,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-for search_path in /opt/homebrew/bin /usr/local/bin "$HOME/.cargo/bin"; do
+for search_path in /opt/homebrew/bin /usr/local/bin; do
   case ":${PATH:-}:" in
     *:"$search_path":*) ;;
     *) [[ -d "$search_path" ]] && PATH="$search_path:$PATH" ;;
@@ -61,13 +61,6 @@ add_missing() {
 
 command -v python3 >/dev/null 2>&1 || add_missing "python3" "brew install python" brew
 command -v tmux >/dev/null 2>&1 || add_missing "tmux" "brew install tmux" brew
-
-if ! command -v cargo >/dev/null 2>&1; then
-  add_missing "Rust / cargo" "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
-  add_missing "tauri-cli" "cargo install tauri-cli --version \"^2\" --locked"
-elif ! cargo tauri --help >/dev/null 2>&1; then
-  add_missing "tauri-cli" "cargo install tauri-cli --version \"^2\" --locked"
-fi
 
 if ! command -v xcode-select >/dev/null 2>&1 || ! xcode-select -p >/dev/null 2>&1; then
   add_missing "Xcode Command Line Tools" "xcode-select --install"

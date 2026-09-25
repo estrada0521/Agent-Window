@@ -658,7 +658,7 @@
       animation: mono-icon-pulse 1s infinite;
       animation-delay: var(--agent-pulse-delay, 0s);
     }
-    html[data-tauri-app="1"] .message-thinking-icon-wrap {
+    html[data-native-app="1"] .message-thinking-icon-wrap {
       cursor: pointer;
     }
 

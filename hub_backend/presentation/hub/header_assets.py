@@ -79,7 +79,7 @@ PAGE_HEADER_CSS = """
     .page-logo .hub-logo-line {
       transform: none;
     }
-    html[data-tauri-app="1"] .page-header {
+    html[data-native-app="1"] .page-header {
       background: none;
       box-shadow: none;
     }

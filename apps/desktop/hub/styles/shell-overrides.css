@@ -1,9 +1,9 @@
     @media (max-width: 480px) {
-      html:not([data-tauri-app="1"]) .desk-workbench,
-      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open {
+      html:not([data-native-app="1"]) .desk-workbench,
+      html:not([data-native-app="1"]) .desk-workbench.sidebar-open {
         display: block;
       }
-      html:not([data-tauri-app="1"]) .desk-sidebar {
+      html:not([data-native-app="1"]) .desk-sidebar {
         position: absolute;
         inset: 0 auto 0 0;
         width: 100vw;
@@ -13,7 +13,7 @@
         box-shadow: none;
         border-right: none;
       }
-      html:not([data-tauri-app="1"]) .desk-sidebar-shell {
+      html:not([data-native-app="1"]) .desk-sidebar-shell {
         width: 100%;
         background: var(--bg);
         box-shadow: none;
@@ -21,40 +21,40 @@
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
       }
-      html:not([data-tauri-app="1"]) .desk-sidebar-shell::before {
+      html:not([data-native-app="1"]) .desk-sidebar-shell::before {
         display: none;
       }
-      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open .desk-sidebar {
+      html:not([data-native-app="1"]) .desk-workbench.sidebar-open .desk-sidebar {
         width: 100vw;
         transform: translateX(0);
       }
-      html:not([data-tauri-app="1"]) .desk-main {
+      html:not([data-native-app="1"]) .desk-main {
         transition: none;
       }
-      html:not([data-tauri-app="1"]) .desk-workbench.sidebar-open .desk-main {
+      html:not([data-native-app="1"]) .desk-workbench.sidebar-open .desk-main {
         display: none;
         pointer-events: none;
       }
-      html:not([data-tauri-app="1"]) .desk-swipe-action-rail {
+      html:not([data-native-app="1"]) .desk-swipe-action-rail {
         display: flex;
       }
-      html:not([data-tauri-app="1"]) .desk-session-row {
+      html:not([data-native-app="1"]) .desk-session-row {
         padding: 15px 16px 14px;
       }
-      html:not([data-tauri-app="1"]) .desk-section-label {
+      html:not([data-native-app="1"]) .desk-section-label {
         padding: 12px 16px 10px;
         font-size: calc(var(--text-size, 13px) - 2px);
       }
-      html:not([data-tauri-app="1"]) .desk-row-name {
+      html:not([data-native-app="1"]) .desk-row-name {
         font-size: 18px;
         line-height: 1.18;
         font-weight: inherit;
       }
-      html:not([data-tauri-app="1"]) .desk-row-preview {
+      html:not([data-native-app="1"]) .desk-row-preview {
         font-size: 14px;
         line-height: 1.32;
       }
-      html:not([data-tauri-app="1"]) .desk-sidebar-resizer {
+      html:not([data-native-app="1"]) .desk-sidebar-resizer {
         display: none;
       }
     }
@@ -84,7 +84,6 @@
       max-width: 16.92em;
       line-height: 1.2;
       pointer-events: none;
-      -webkit-app-region: no-drag;
       padding-left: 0.31em;
     }
     .desk-session-title-text:empty { display: none; }
@@ -93,7 +92,7 @@
     }
     .desk-floating-controls.is-buttons-hidden,
     .desk-top-right-controls.is-buttons-hidden,
-    html[data-tauri-app="1"][data-tauri-root-window="1"] .desk-top-right-controls.is-buttons-hidden {
+    html[data-native-app="1"][data-native-root-window="1"] .desk-top-right-controls.is-buttons-hidden {
       opacity: 0;
       pointer-events: none;
     }

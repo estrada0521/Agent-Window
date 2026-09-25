@@ -76,7 +76,7 @@
       if (!sessionName || !kind) return;
       setStatus("");
       const isDelete = kind === "delete-archived";
-      const confirmed = isTauriDesktopApp()
+      const confirmed = isNativeApp()
         ? true
         : (isDelete
           ? confirm("Delete archived logs for " + sessionName + "? This cannot be undone.")

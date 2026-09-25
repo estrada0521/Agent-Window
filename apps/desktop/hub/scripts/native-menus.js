@@ -2,7 +2,7 @@
     let _deskSessionSwitcherItems = [];
     let _deskSessionSwitcherOpen = false;
     async function openDeskNativeSessionSwitcher() {
-      const invoke = getTauriInvoke();
+      const invoke = getNativeInvoke();
       if (typeof invoke !== "function" || !_deskSessionList || !_deskAppSidebarToggle) return;
       if (_deskSessionSwitcherOpen) return;
       const items = [];
@@ -90,7 +90,7 @@
       return items;
     }
     async function openDeskNativeGitChanges() {
-      const invoke = getTauriInvoke();
+      const invoke = getNativeInvoke();
       if (typeof invoke !== "function" || !_deskPanelToggle || _deskGitChangesOpen) return;
       _deskGitChangesOpen = true;
       try {

@@ -31,7 +31,6 @@
       -webkit-appearance: none;
       cursor: pointer;
       pointer-events: auto;
-      -webkit-app-region: no-drag;
       -webkit-tap-highlight-color: transparent;
       transition: color 0.15s ease, background 0.15s ease;
     }

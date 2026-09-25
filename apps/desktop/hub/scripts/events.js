@@ -8,7 +8,7 @@
         return;
       }
       if (event.data && event.data.type === "open-external-url" && event.source === _deskChatFrame?.contentWindow) {
-        const invoke = getTauriInvoke();
+        const invoke = getNativeInvoke();
         if (typeof invoke !== "function") {
           event.source?.postMessage({ type: "external-url-open-failed" }, "*");
           return;
@@ -19,7 +19,7 @@
         return;
       }
       if (event.data && event.data.type === "show-chat-header-menu") {
-        const invoke = getTauriInvoke();
+        const invoke = getNativeInvoke();
         const childPayload = event.data.payload || {};
         if (typeof invoke !== "function") {
           openChatMenu(_deskChatMenuBtn, childPayload, (payload) => {
@@ -38,7 +38,7 @@
         return;
       }
       if (event.data && event.data.type === "show-file-context-menu" && event.source === _deskChatFrame?.contentWindow) {
-        const invoke = getTauriInvoke();
+        const invoke = getNativeInvoke();
         const childPayload = event.data.payload || {};
         const frameRect = _deskChatFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
         if (typeof invoke !== "function") {
@@ -57,7 +57,7 @@
         return;
       }
       if (event.data && event.data.type === "copy-files-to-clipboard" && event.source === _deskChatFrame?.contentWindow) {
-        const invoke = getTauriInvoke();
+        const invoke = getNativeInvoke();
         if (typeof invoke !== "function") {
           event.source?.postMessage({ type: "file-copy-result", error: "Native file copy is unavailable." }, "*");
           return;
@@ -70,7 +70,7 @@
         return;
       }
       if (event.data && event.data.type === "show-commit-context-menu" && event.source === _deskChatFrame?.contentWindow) {
-        const invoke = getTauriInvoke();
+        const invoke = getNativeInvoke();
         const childPayload = event.data.payload || {};
         const frameRect = _deskChatFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
         if (typeof invoke !== "function") {
@@ -363,12 +363,12 @@
       sendDeskPanelCommand("repo");
     });
     (function armDeskWindowTraffic() {
-      const win = window.__TAURI__?.window?.getCurrentWindow?.();
-      if (!_deskWindowTraffic || !win) return;
+      const invoke = getNativeInvoke();
+      if (!_deskWindowTraffic || !invoke) return;
       const actions = {
-        close: () => win.close(),
-        minimize: () => win.minimize(),
-        zoom: () => win.toggleMaximize(),
+        close: () => invoke("close_window"),
+        minimize: () => invoke("minimize_window"),
+        zoom: () => invoke("toggle_maximize_window"),
       };
       _deskWindowTraffic.querySelectorAll("[data-window-action]").forEach((button) => {
         const run = actions[button.dataset.windowAction];
@@ -377,12 +377,12 @@
     })();
     (function armFitWindowDots() {
       const dotsEl = document.querySelector(".fit-window-dots");
-      const win = window.__TAURI__?.window?.getCurrentWindow?.();
-      if (!dotsEl || !win) return;
+      const invoke = getNativeInvoke();
+      if (!dotsEl || !invoke) return;
       const actions = [
-        ["Close", () => win.close()],
-        ["Minimize", () => win.minimize()],
-        ["Zoom", () => win.toggleMaximize()],
+        ["Close", () => invoke("close_window")],
+        ["Minimize", () => invoke("minimize_window")],
+        ["Zoom", () => invoke("toggle_maximize_window")],
       ];
       dotsEl.querySelectorAll("i").forEach((bar, i) => {
         const [label, run] = actions[i] || [];
@@ -401,7 +401,7 @@
       window.addEventListener("resize", updateDeskSessionListFade, { passive: true });
       _deskSessionList.addEventListener("contextmenu", (event) => {
         const row = event.target.closest(".desk-action-session-row");
-        const invoke = getTauriInvoke();
+        const invoke = getNativeInvoke();
         const sessionName = row?.dataset.sessionName || "";
         if (!sessionName || typeof invoke !== "function") return;
         event.preventDefault();
@@ -477,7 +477,7 @@
     window.refreshHubSessionLists = refreshHubSessions;
     startHubSessionMessagesEvents(() => refreshHubSessions(true, { skipRestore: true }));
     consumeHubPendingError();
-    if (isTauriDesktopApp() && !isPhoneViewport()) {
+    if (isNativeApp() && !isPhoneViewport()) {
       if (sessionStorage.getItem(DESK_SIDEBAR_OPEN_KEY) !== "0") showDeskSidebarList({ open: true });
       else setDeskSidebarOpen(false);
       if (sessionStorage.getItem(DESK_AUTO_HEIGHT_KEY) === "1") setDeskAutoWindowHeight(true);

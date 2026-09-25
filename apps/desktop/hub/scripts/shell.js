@@ -106,7 +106,7 @@
     }
 
     function isPhoneViewport() {
-      if (isTauriDesktopApp()) return false;
+      if (isNativeApp()) return false;
       return !!_phoneViewportQuery.matches;
     }
 
@@ -338,17 +338,6 @@
       }
     }
 
-    window.__agentWindowRefreshTauriFrames = () => {
-      if (!isTauriDesktopApp()) return;
-      if (!_deskChatFrame) return;
-      const current = _deskChatFrameLoadedUrl || String(_deskChatFrame.getAttribute("src") || _deskChatFrame.src || "");
-      if (!current || current === "about:blank") return;
-      const next = buildDeskChatFrameUrl(current);
-      if (next && normalizeComparableUrl(current) !== normalizeComparableUrl(next)) {
-        navigateDeskChatFrame(next);
-      }
-    };
-
     function cacheDeskChatUrl(cacheKey, chatUrl) {
       hubChatUrls.write(cacheKey, chatUrl);
     }
@@ -362,7 +351,7 @@
 
     function syncDeskSidebarResizerVisibility() {
       if (!_deskSidebarResizer) return;
-      if (isTauriDesktopApp()) {
+      if (isNativeApp()) {
         _deskSidebarResizer.hidden = !isDeskSidebarOpen();
         return;
       }
