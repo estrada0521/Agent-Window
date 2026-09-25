@@ -6,7 +6,7 @@
 
 Meaning goes back into human understanding. Software does not own it.
 
-- **Beyond Abstraction**: Bet on software driven directly from the low level, not stacked on top of it. A layer that has outlived its role drags down everything that depends on it.
+- **Beyond Abstraction**: Bet on software driven directly from the layers below, not stacked on top of them. A layer that has outlived its role drags down everything that depends on it.
 - **Standing on the Shoulders of Giants**: Use low-level primitives that are stable enough at the time, directly. tmux and the agent CLIs run things, git and the filesystem keep history, Tailscale handles reach and auth, the OS default apps are the desktop viewers, and the log is `jsonl`.
 - **No Proxy to Intelligence**: Use the CLIs of the providers that actually hold the compute, directly, and keep the full reach they offer. Never wrap a wrapper.
 - **No Institutional Semantics**: No 1:1 mapping of agents to worktrees, no plans, task graphs, handoffs, or domain types of its own. Institutions that make up for what today's LLMs can't do go stale as models evolve.
@@ -32,7 +32,7 @@ Desire, sense, body.
 How Agent Window is developed.
 
 1. **Question the Requirement**: A wrong requirement wastes every effort built on top of it.
-2. **Delete**: Improvement is only defined against something. Remove that something and the problem goes with it. **The best part is no part**
+2. **Delete**: Improvement is only defined against something. Remove that something and the problem goes with it. **The best part is no part.**
 3. **Simplify and Optimize**: Only what has passed 1 and 2. Never improve what shouldn't exist.
 4. **Accelerate**: Speed up only what has been simplified. Speeding up something **needlessly** complex is foolish.
-5. **Automate**: Conveniences come last.
+5. **Automate**: Automate only the repetition that remains.
