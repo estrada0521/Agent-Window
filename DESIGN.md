@@ -7,7 +7,7 @@
 Meaning goes back into human understanding. Software does not own it.
 
 - **Beyond Abstraction**: Bet on software driven directly from the layers below, not stacked on top of them. A layer that has outlived its role drags down everything that depends on it.
-- **Standing on the Shoulders of Giants**: Use low-level primitives that are stable enough at the time, directly. tmux and the agent CLIs run things, git and the filesystem keep history, Tailscale handles reach and auth, the OS default apps are the desktop viewers, and the log is `jsonl`.
+- **Standing on the Shoulders of Giants**: Use low-level primitives that are stable enough at the time, directly. No bundler, no framework, no DB. The UI is the browser's DOM and `fetch` / `EventSource`, the window is AppKit and WKWebView, tmux runs things, the record is `jsonl`, Tailscale handles reach and auth, and the OS default apps are the viewers.
 - **No Proxy to Intelligence**: Use the CLIs of the providers that actually hold the compute, directly, and keep the full reach they offer. Never wrap a wrapper.
 - **No Institutional Semantics**: No 1:1 mapping of agents to worktrees, no plans, task graphs, handoffs, or domain types of its own. Institutions that make up for what today's LLMs can't do go stale as models evolve.
 

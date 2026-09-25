@@ -7,7 +7,7 @@
 意味を人間の認識へ還し、ソフトウェアに所有させない。
 
 - **Beyond Abstraction**：ソフトウェアは上に積むのではなく、より下位の層から直接駆動される方向へベットする。役目を失った層は、それに依存するすべてを道連れにする。
-- **Standing on the Shoulders of Giants**：その時点で十分に安定した low-level primitive を直接使う。実行は tmux と agent CLI、履歴は git と filesystem、到達と認証は Tailscale、desktop viewer は OS 既定、log は `jsonl`。
+- **Standing on the Shoulders of Giants**：その時点で十分に安定した low-level primitive を直接使う。bundler も framework も DB も持たない。UI はブラウザの DOM と `fetch` / `EventSource`、窓は AppKit と WKWebView、実行は tmux、記録は `jsonl`、到達と認証は Tailscale、viewer は OS 既定。
 - **No Proxy to Intelligence**：実際に計算能力を有するプロバイダの CLI を直接使い、最大到達面を保つ。wrapper を wrap しない。
 - **No Institutional Semantics**：agent と worktree の 1:1 対応、plan、task graph、handoff、固有の domain type を作らない。LLM の能力不足を補う制度は、model の進化とともに陳腐化する。
 

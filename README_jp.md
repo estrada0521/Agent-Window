@@ -217,7 +217,7 @@ Claude、Codex、Antigravity、Cursor、Grok。
 
 ## Stack
 
-HTML/CSS/vanilla JavaScriptとPython標準library、macOSのwindowを担うObjective-Cのfile一つ。Node、npm build、DBなどは使わず、次を直接叩く。
+HTML/CSS/vanilla JavaScript、Python標準libraryと、app用のObjective-Cが1 file。Node、npm build、DBなどは使わず、次を直接叩く。
 
 - **browser primitive** — DOM・`fetch` / `EventSource`
 - **native OS API** — FSEvents / kqueue・AppKit / Objective-C
