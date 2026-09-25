@@ -4,7 +4,7 @@
 
 UNIX哲学で作られた、macOS向けのAgentアプリケーション。
 
-[設計哲学](DESIGN_jp.md) · [English](README.md)
+[設計哲学](DESIGN.jp.md) · [English](README.md)
 
 </div>
 
