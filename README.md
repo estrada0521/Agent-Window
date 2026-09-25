@@ -105,10 +105,6 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 
 ## Shortcuts
 
-<p align="center">
-  <img src="media/agent-window-menu.png" width="100%" alt="Menu">
-</p>
-
 <details>
 <summary>Hub</summary>
 

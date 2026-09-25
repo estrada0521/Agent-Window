@@ -105,10 +105,6 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 ## Shortcut
 
-<p align="center">
-  <img src="media/agent-window-menu.png" width="100%" alt="Menu">
-</p>
-
 <details>
 <summary>Hub</summary>
 
