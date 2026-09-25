@@ -556,8 +556,12 @@
       background: rgb(255, 69, 58);
     }
 
-    .swipe-act-btn.is-success {
-      background: rgb(99, 99, 102);
+    html[data-theme="dark"] .swipe-act-btn.is-success {
+      background:
+        var(--liquid-glass-lg-tint),
+        rgba(var(--bg-rgb), var(--liquid-glass-lg-fill-opacity));
+      backdrop-filter: var(--liquid-glass-blur);
+      -webkit-backdrop-filter: var(--liquid-glass-blur);
     }
 
     html[data-theme="light"] .swipe-act-btn.is-danger,
