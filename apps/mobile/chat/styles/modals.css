@@ -129,7 +129,7 @@
     .pane-viewer-shortcut-native-select {
       position: absolute;
       left: 50%;
-      bottom: calc(100% + 8px);
+      bottom: calc(100% + 16px);
       transform: translateX(-50%);
       z-index: 1;
       width: var(--pane-viewer-shortcuts-height);
