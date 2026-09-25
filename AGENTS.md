@@ -1,8 +1,6 @@
 # Agent Window Agent Handbook
 
-Before adding an application-owned record, mapping, or protocol, read [DESIGN.md](DESIGN.md).
-
-For concrete cases of The Algorithm (see the note at the end), read [ALGORITHM.md](ALGORITHM.md).
+- For Agent Window basics, see [README.md](README.md); for its design philosophy, see [DESIGN.md](DESIGN.md).
 
 ## 1. Prefer the intended path
 
