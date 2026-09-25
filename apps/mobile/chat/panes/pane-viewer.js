@@ -10,6 +10,9 @@ __CHAT_INCLUDE:../../../shared/chat/pane-trace-html.js__
     const paneViewerTabs = document.getElementById("paneViewerTabs");
     const paneViewerCarousel = document.getElementById("paneViewerCarousel");
     const paneViewerMacroSelect = document.getElementById("paneViewerMacroSelect");
+    document.getElementById("paneViewerMacroBtn")?.addEventListener("click", () => {
+      if (paneViewerMacroSelect) openNativeSelect(paneViewerMacroSelect);
+    });
     paneViewerMacroSelect?.addEventListener("change", () => {
       const commandId = String(paneViewerMacroSelect.value || "");
       paneViewerMacroSelect.value = "";

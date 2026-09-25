@@ -126,27 +126,16 @@
       transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform var(--liquid-glass-press-out);
     }
 
-    .pane-viewer-shortcut-menu {
-      position: relative;
-      width: var(--pane-viewer-shortcuts-height);
-      height: var(--pane-viewer-shortcuts-height);
-      flex: 0 0 auto;
-    }
-
-    .pane-viewer-shortcut-menu > .pane-viewer-shortcut-btn {
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-
     .pane-viewer-shortcut-native-select {
       position: absolute;
-      inset: 0;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%);
       z-index: 1;
-      width: 100%;
-      height: 100%;
+      width: var(--pane-viewer-shortcuts-height);
+      height: var(--pane-viewer-shortcuts-height);
       opacity: 0.01;
-      pointer-events: auto;
+      pointer-events: none;
       appearance: none;
       -webkit-appearance: none;
       border: 0;
@@ -158,7 +147,6 @@
       outline: none;
     }
 
-    .pane-viewer-shortcut-menu:active > .pane-viewer-shortcut-btn,
     .pane-viewer-shortcut-btn:active {
       background:
         var(--liquid-glass-lg-active-tint),

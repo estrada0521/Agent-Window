@@ -20,7 +20,6 @@
     }
     .mobile-bottom-sheet-button:active:not(:disabled),
     .pane-viewer-shortcut-btn:active,
-    .pane-viewer-shortcut-menu:active > .pane-viewer-shortcut-btn,
     .page-header .page-header-actions .page-menu-btn:active,
     .page-header .page-header-actions .page-menu-btn:has(+ #pageNativeMenuBridge:active),
     .shell > .page-header .page-title:active,
@@ -30,7 +29,6 @@
     }
     .mobile-bottom-sheet-button:active:not(:disabled),
     .pane-viewer-shortcut-btn:active,
-    .pane-viewer-shortcut-menu:active > .pane-viewer-shortcut-btn,
     .page-header .page-header-actions .page-menu-btn:active,
     .page-header .page-header-actions .page-menu-btn:has(+ #pageNativeMenuBridge:active),
     .shell > .page-header .page-title:active,

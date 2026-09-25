@@ -30,13 +30,11 @@ CHAT_SHEET_PANELS_HTML = f"""
         <div class="pane-viewer-carousel" id="paneViewerCarousel"></div>
       </div>
       <div class="pane-viewer-shortcuts" id="paneViewerShortcuts">
-        <div class="pane-viewer-shortcut-menu">
-          <span class="pane-viewer-shortcut-btn pane-viewer-shortcut-btn-text" aria-hidden="true">/</span>
-          <select id="paneViewerMacroSelect" class="pane-viewer-shortcut-native-select" aria-label="Command">
-            <option value="" disabled selected>Command</option>
+        <button type="button" id="paneViewerMacroBtn" class="pane-viewer-shortcut-btn pane-viewer-shortcut-btn-text" aria-label="Command">/</button>
+        <select id="paneViewerMacroSelect" class="pane-viewer-shortcut-native-select" aria-label="Command" tabindex="-1">
+          <option value="" disabled selected>Command</option>
 {_PANE_TEXT_MACRO_OPTIONS_HTML}
-          </select>
-        </div>
+        </select>
         <button type="button" class="pane-viewer-shortcut-btn pane-viewer-shortcut-btn-text" data-shortcut="esc" aria-label="Escape">Esc</button>
         <button type="button" class="pane-viewer-shortcut-btn pane-viewer-shortcut-btn-text" data-shortcut="ctrlc" aria-label="Ctrl+C">^C</button>
         <button type="button" class="pane-viewer-shortcut-btn" data-shortcut="up" aria-label="Up">
