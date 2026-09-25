@@ -67,6 +67,10 @@
         return `<span class="${classes}" aria-hidden="true">${def.svg}</span>`;
       }
       const url = withChatBase(def.iconPath || `/file-icon-theme/icon/${encodeURIComponent(iconId)}`);
+      if (fileIconThemeState.theme?.usesCurrentColor) {
+        const maskUrl = escapeHtml(url).replaceAll('"', "&quot;");
+        return `<span class="${classes}" aria-hidden="true" style="background:currentColor;-webkit-mask:url(&quot;${maskUrl}&quot;) center/contain no-repeat;mask:url(&quot;${maskUrl}&quot;) center/contain no-repeat"></span>`;
+      }
       return `<span class="${classes}" aria-hidden="true"><img src="${escapeHtml(url)}" alt=""></span>`;
     };
 
