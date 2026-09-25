@@ -29,7 +29,7 @@ UNIX哲学で作られた、macOS向けのAgentアプリケーション。
 
 ## Setup
 
-`python3`、`tmux`、Xcode Command Line Toolsが必要。不足は `./setup/preflight` が表示する。使うAgent CLIは各自installして認証しておく。
+`python3`、`tmux`、Xcode Command Line Toolsが必要。使うAgent CLIは各自installして認証しておく。
 
 ```bash
 ./macos_app/start

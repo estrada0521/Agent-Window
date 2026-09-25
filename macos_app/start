@@ -48,8 +48,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-"$ROOT/setup/preflight" --quiet
-
 build_dir="$HOME/.agent-window/cache/macos-app"
 app_path="$build_dir/Agent Window.app"
 rm -rf "$app_path"

@@ -29,7 +29,7 @@ A UNIX-philosophy Agent application for macOS.
 
 ## Setup
 
-Requires `python3`, `tmux`, Xcode Command Line Tools. `./setup/preflight` shows what's missing. Install and authenticate the Agent CLIs you'll use yourself.
+Requires `python3`, `tmux`, Xcode Command Line Tools. Install and authenticate the Agent CLIs you'll use yourself.
 
 ```bash
 ./macos_app/start
