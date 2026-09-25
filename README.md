@@ -165,6 +165,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Open file | `⌘O` | |
 | Quick Look | `⌘Y` / `⌥` + click | |
 | Reveal in Finder | `⌥⌘R` | |
+| Copy file | `⌘C` | |
 | Copy absolute path | `⌥⌘C` | |
 | Copy relative path | `⇧⌥⌘C` | |
 | Copy commit hash |  | |

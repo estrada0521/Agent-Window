@@ -19,7 +19,7 @@ url = "2.5"
 objc2 = "0.6.4"
 objc2-app-kit = { version = "0.3", default-features = false, features = [
     "std", "NSAnimation", "NSAnimationContext", "NSBezierPath", "NSColor", "NSFont", "NSImage",
-    "NSBitmapImageRep", "NSImageRep", "NSMenuItem", "NSMenu", "NSResponder", "NSView", "NSScreen", "NSWorkspace",
+    "NSBitmapImageRep", "NSImageRep", "NSMenuItem", "NSMenu", "NSResponder", "NSView", "NSScreen", "NSWorkspace", "NSPasteboard",
     "NSAttributedString", "NSStringDrawing", "objc2-core-foundation",
 ] }
 objc2-foundation = { version = "0.3", default-features = false, features = [

@@ -165,6 +165,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | fileを開く | `⌘O` |  |
 | Quick Look | `⌘Y` / `⌥` + click | |
 | Finderで表示 | `⌥⌘R` | |
+| fileをcopy | `⌘C` | |
 | 絶対pathをcopy | `⌥⌘C` | |
 | 相対pathをcopy | `⇧⌥⌘C` | |
 | commit hashをcopy |  | |

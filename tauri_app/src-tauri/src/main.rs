@@ -1,8 +1,9 @@
+use objc2::runtime::ProtocolObject;
 use objc2_app_kit::{
     NSAnimatablePropertyContainer, NSAnimationContext, NSBitmapImageFileType, NSBitmapImageRep,
-    NSWindow, NSWindowButton, NSWorkspace,
+    NSPasteboard, NSPasteboardWriting, NSWindow, NSWindowButton, NSWorkspace,
 };
-use objc2_foundation::{NSDictionary, NSString};
+use objc2_foundation::{NSArray, NSDictionary, NSString, NSURL};
 use std::collections::HashMap;
 use std::io::Read;
 use std::path::Path;
@@ -720,6 +721,35 @@ fn show_git_changes_menu(
 }
 
 #[tauri::command]
+fn copy_files_to_clipboard(paths: Vec<String>) -> Result<(), String> {
+    if paths.is_empty() {
+        return Err("No files selected".to_string());
+    }
+    let urls = paths
+        .iter()
+        .map(|path| {
+            let file = Path::new(path);
+            if !file.is_absolute() {
+                return Err(format!("Not an absolute file path: {path}"));
+            }
+            std::fs::symlink_metadata(file).map_err(|err| format!("Cannot copy {path}: {err}"))?;
+            Ok(NSURL::fileURLWithPath(&NSString::from_str(path)))
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+    let writers: Vec<&ProtocolObject<dyn NSPasteboardWriting>> = urls
+        .iter()
+        .map(|url| ProtocolObject::from_ref(&**url))
+        .collect();
+    let objects = NSArray::from_slice(&writers);
+    let pasteboard = NSPasteboard::generalPasteboard();
+    pasteboard.clearContents();
+    if !pasteboard.writeObjects(&objects) {
+        return Err("Failed to copy files to clipboard".to_string());
+    }
+    Ok(())
+}
+
+#[tauri::command]
 fn show_file_context_menu(
     window: tauri::WebviewWindow,
     app: tauri::AppHandle,
@@ -746,6 +776,10 @@ fn show_file_context_menu(
     .accelerator("Cmd+Alt+R")
     .build(&app)
     .map_err(|err| err.to_string())?;
+    let copy = MenuItemBuilder::with_id(format!("{}action:copyFiles", NATIVE_MENU_PREFIX), "Copy")
+        .accelerator("Cmd+C")
+        .build(&app)
+        .map_err(|err| err.to_string())?;
     let copy_absolute = MenuItemBuilder::with_id(
         format!("{}action:copyAbsoluteFilePath", NATIVE_MENU_PREFIX),
         "Copy Absolute Path",
@@ -768,6 +802,7 @@ fn show_file_context_menu(
         .item(&quick_look)
         .item(&reveal)
         .separator()
+        .item(&copy)
         .item(&copy_absolute)
         .item(&copy_relative)
         .build()
@@ -1429,6 +1464,7 @@ fn main() {
             set_fit_height_min,
             show_session_switcher_menu,
             show_git_changes_menu,
+            copy_files_to_clipboard,
             show_file_context_menu,
             show_commit_context_menu,
             show_session_context_menu

@@ -56,6 +56,19 @@
         });
         return;
       }
+      if (event.data && event.data.type === "copy-files-to-clipboard" && event.source === _deskChatFrame?.contentWindow) {
+        const invoke = getTauriInvoke();
+        if (typeof invoke !== "function") {
+          event.source?.postMessage({ type: "file-copy-result", error: "Native file copy is unavailable." }, "*");
+          return;
+        }
+        invoke("copy_files_to_clipboard", { paths: event.data.paths }).then(() => {
+          event.source?.postMessage({ type: "file-copy-result" }, "*");
+        }).catch((err) => {
+          event.source?.postMessage({ type: "file-copy-result", error: String(err || "Copy failed") }, "*");
+        });
+        return;
+      }
       if (event.data && event.data.type === "show-commit-context-menu" && event.source === _deskChatFrame?.contentWindow) {
         const invoke = getTauriInvoke();
         const childPayload = event.data.payload || {};

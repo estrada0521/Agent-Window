@@ -651,14 +651,18 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         payload: { x: Math.round(Number(event.clientX) || 0), y: Math.round(Number(event.clientY) || 0) },
       }, "*");
     };
-    const dpCopyFilePath = async (paths, absolute) => {
-      if (!dpWorkspaceRoot && (absolute || paths.some((path) => String(path).startsWith("/")))) {
+    const dpLoadWorkspaceRoot = async () => {
+      if (!dpWorkspaceRoot) {
         const response = await fetchWithTimeout("/session-state", {}, 4000);
         if (!response.ok) throw new Error("Failed to read workspace path.");
         const state = await response.json();
         dpWorkspaceRoot = String(state?.workspace || "").replace(/\/+$/, "");
         if (!dpWorkspaceRoot) throw new Error("Workspace path is unavailable.");
       }
+      return dpWorkspaceRoot;
+    };
+    const dpCopyFilePath = async (paths, absolute) => {
+      if (absolute || paths.some((path) => String(path).startsWith("/"))) await dpLoadWorkspaceRoot();
       const text = paths.map((p) => {
         const path = normalizeWorkspaceFilePath(p);
         if (absolute) return path.startsWith("/") ? path : `${dpWorkspaceRoot}/${path}`;
@@ -666,6 +670,14 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
       }).join("\n");
       await doCopyText(text);
       setStatus("Copied path");
+    };
+    const dpCopyFiles = async (paths) => {
+      const normalized = paths.map(normalizeWorkspaceFilePath).filter(Boolean);
+      const root = normalized.some((path) => !path.startsWith("/")) ? await dpLoadWorkspaceRoot() : "";
+      const absolutePaths = normalized.map((path) => {
+        return path.startsWith("/") ? path : `${root}/${path}`;
+      });
+      window.parent?.postMessage({ type: "copy-files-to-clipboard", paths: absolutePaths }, "*");
     };
     const dpRevealFileInFinder = async (path) => {
       const response = await fetchWithTimeout("/reveal-file", {
@@ -709,7 +721,7 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
     }
     function handleDesktopFileContextMenuAction(payload) {
       const action = String(payload?.action || "");
-      if (!["openFile", "quickLook", "revealFileInFinder", "copyAbsoluteFilePath", "copyRelativeFilePath"].includes(action)) return false;
+      if (!["openFile", "quickLook", "revealFileInFinder", "copyFiles", "copyAbsoluteFilePath", "copyRelativeFilePath"].includes(action)) return false;
       const paths = dpFileContextPaths;
       if (!paths.length) return true;
       const operation = action === "openFile"
@@ -718,7 +730,9 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           ? dpQuickLookPaths(paths)
           : action === "revealFileInFinder"
             ? dpRevealFileInFinder(dpFileContextTriggerPath || paths[0])
-            : dpCopyFilePath(paths, action === "copyAbsoluteFilePath");
+            : action === "copyFiles"
+              ? dpCopyFiles(paths)
+              : dpCopyFilePath(paths, action === "copyAbsoluteFilePath");
       void operation.catch((err) => {
         setStatus(err?.message || "File action failed");
       });
@@ -1030,6 +1044,10 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
         setStatus(String(event.data.message || "File menu failed"));
         return;
       }
+      if (event.data.type === "file-copy-result") {
+        setStatus(event.data.error ? String(event.data.error) : "Copied file");
+        return;
+      }
       if (event.data.type === "desk-git-changes-request") {
         (async () => {
           let files = [];
@@ -1263,6 +1281,22 @@ __CHAT_INCLUDE:features/git-panel/panel.js__
           if (targets.length) {
             event.preventDefault();
             void dpCopyFilePath(targets, !event.shiftKey).catch((err) => {
+              setStatus(err?.message || "Copy failed");
+            });
+          }
+          return;
+        }
+        if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyC") {
+          const target = event.target;
+          if (target instanceof Element && (target.closest("input, textarea") || target.isContentEditable)) return;
+          if (window.getSelection()?.toString()) return;
+          if (document.documentElement.dataset.tauriApp !== "1") return;
+          const targets = dpActivePanelTargets(
+            dpRepoOrderedSelectedEntries, ".repo-browser-item:hover", ".git-commit-file-row:hover",
+          );
+          if (targets.length) {
+            event.preventDefault();
+            void dpCopyFiles(targets).catch((err) => {
               setStatus(err?.message || "Copy failed");
             });
           }
