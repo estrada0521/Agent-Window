@@ -110,7 +110,7 @@
 
     async function openSessionFrame(openHref, name) {
       if (!name) {
-        failDeskOpen("Session not found");
+        failDeskOpen("Timeline not found");
         return;
       }
       const needsReviveTransition = /^\/revive-session(?:[/?]|$)/.test(String(openHref || ""));
@@ -217,7 +217,7 @@
           return;
         }
         persistDeskSelection("");
-        failDeskOpen("Session not found");
+        failDeskOpen("Timeline not found");
         showDeskSidebarList({ open: true });
         return;
       }

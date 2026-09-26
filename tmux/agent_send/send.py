@@ -108,7 +108,7 @@ class AgentSender:
         resolved = find_session_for_workspace(workspace)
         if resolved:
             return resolved
-        raise AgentSendError("No active agent-window session found for this workspace.")
+        raise AgentSendError("No active Agent Window timeline found for this workspace.")
 
     def resolve_agent_name(self, token: str) -> str | None:
         lower = (token or "").strip().lower()
@@ -240,10 +240,10 @@ class AgentSender:
     ) -> None:
         name = str(session_name or "").strip()
         if not name:
-            raise AgentSendError("session name is required")
+            raise AgentSendError("label is required")
         log_path = log_jsonl_path(name)
         if not log_path.is_file():
-            raise AgentSendError(f"session log is unavailable: {log_path}")
+            raise AgentSendError(f"log is unavailable: {log_path}")
         entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "sender": sender,

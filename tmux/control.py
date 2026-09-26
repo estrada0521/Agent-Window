@@ -267,7 +267,7 @@ def describe_session(session_name: str) -> dict:
         raise SessionControlError(f"Session does not exist: {session_name}") from exc
     workspace = meta["workspace"]
     info: dict = {
-        "session": session_name,
+        "timeline": session_name,
         "workspace": workspace,
         "agents": meta["agents"],
         "active": False,
@@ -439,7 +439,7 @@ def remove_agent(
         raise SessionControlError(f"Session does not exist: {session_name}")
     pane_id = next((pane.pane_id for pane in agent_topology(tmux_name) if pane.name == agent), None)
     if pane_id is None:
-        raise SessionControlError(f"Agent instance not in this session: {agent}")
+        raise SessionControlError(f"Agent instance not in this room: {agent}")
     window_target = window_target_for_pane(pane_id=pane_id)
     if not window_target:
         raise SessionControlError(f"No tmux window recorded for instance: {agent}")

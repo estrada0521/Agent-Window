@@ -1,12 +1,12 @@
 ---
 name: agent-send
 description: >-
-  Use when the user wants to contact, notify, relay to, ask help from, or broadcast to other agents in an Agent Window session. Use normal assistant output for replies to the user; never use agent-send for user-facing responses.
+  Use when the user wants to contact, notify, relay to, ask help from, or broadcast to other agents in an Agent Window timeline. Use normal assistant output for replies to the user; never use agent-send for user-facing responses.
 ---
 
 # Send Messages to Other Agents
 
-Use this skill only for agent-to-agent communication in an Agent Window session. Replies to the user must use normal assistant output because native event logs are synchronized automatically.
+Use this skill only for agent-to-agent communication in an Agent Window timeline. Replies to the user must use normal assistant output because native event logs are synchronized automatically.
 
 ## Syntax
 
@@ -14,7 +14,7 @@ Use this skill only for agent-to-agent communication in an Agent Window session.
 printf '%s' '<message body>' | agent-send <target>
 ```
 
-`agent-send` always targets the current Agent Window session; it cannot send to a different session.
+`agent-send` always targets the current Agent Window room; it cannot send to a different timeline.
 
 ## Rules
 
@@ -48,7 +48,7 @@ This applies to every agent type, such as `claude-1`, `claude-2`, `gemini-1`, or
 printf '%s' 'Please review this together.' | agent-send codex-1,codex-2
 ```
 
-Use the exact instance names shown in the current session topology:
+Use the exact instance names shown in the current room's topology:
 
 ```bash
 agent-window context

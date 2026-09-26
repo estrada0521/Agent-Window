@@ -17,7 +17,7 @@ UNIX哲学で作られた、macOS向けのAgentアプリケーション。
 
 ## Principle
 
-1. 単位は一つのlog。実体は `~/.agent-window/log/{session_name}/.log.jsonl`。
+1. 単位は一つのlog。実体は `~/.agent-window/log/{label}/.log.jsonl`。
 2. Agentは普通のCLIで、tmux内で動く。数は任意。
 3. workspaceもCLIも、途中で差し替えられる。logは同じものが続く。
 4. 送信は `tmux send-keys`。入力欄の文字が、Agentのpaneに入る。
@@ -37,19 +37,19 @@ UNIX哲学で作られた、macOS向けのAgentアプリケーション。
 
 Appをbuildし、`/Applications/Agent Window.app` に保存して起動する。
 
-## session
+## timeline
 
-`New Session` でworkspaceを選んで始める。
+`New Timeline` でworkspaceを選び、そこにroomを開く。
 
 <details>
 <summary>状態操作</summary>
 
 | 操作 | 内容 | 備考 |
 |---|---|---|
-| Archive | tmux sessionを終了する | logは残る |
-| Revive | 保存したworkspaceとAgent構成でtmux sessionを作り直す | 会話の再開はCLIの `/resume` |
-| Delete | sessionの保存物を完全に削除する | Archive中のみ |
-| Rename | session名を変える | |
+| Archive | roomとそのtmux sessionを閉じる | logは残る |
+| Revive | 保存したworkspaceとAgent構成でroomを開き直す | 会話の再開はCLIの `/resume` |
+| Delete | timelineの保存物を完全に削除する | Archive中のみ |
+| Rename | timelineのlabelを変える | |
 | Change Workspace | workspaceを変える | Archive中のみ |
 | Reset Agents | 保存したAgent構成を消す | Revive用のもの |
 
@@ -110,8 +110,8 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 | 操作 | キー | 備考 |
 |---|---|---|
-| New Session | `⌘N` | |
-| active sessionの切り替え | `⌘1`–`⌘9` | |
+| New Timeline | `⌘N` | |
+| active timelineの切り替え | `⌘1`–`⌘9` | |
 | ブラウザでHubを開く | `⇧⌥⌘O` |  |
 
 </details>
@@ -227,7 +227,7 @@ HTML/CSS/vanilla JavaScript、Python標準libraryと、app用のObjective-Cが1 
 
 telemetryなし。Agent CLI以外のネットワーク依存は `cdn.jsdelivr.net` の `marked` と `katex` のみ。local完結させたいなら、自分でvendorする。
 
-Hubの port は `hub-port` fileの値(既定 `8788`)を専有する。fileを書き換えれば変わる。sessionごとのport はworkspaceのpathから決まる固定値を専有する。
+Hubの port は `hub-port` fileの値(既定 `8788`)を専有する。fileを書き換えれば変わる。roomごとのport はworkspaceのpathから決まる固定値を専有する。
 
 Agent Window自身がfilesystemへ保存するdataは `~/.agent-window/` と、workspace内の `.agent-window/` だけ。
 

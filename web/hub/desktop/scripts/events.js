@@ -420,7 +420,7 @@
             reviveEnabled: archived,
           },
         }).catch((err) => {
-          setStatus(String(err || "Failed to open session menu."));
+          setStatus(String(err || "Failed to open timeline menu."));
         });
       });
       _deskSessionList.addEventListener("click", (event) => {

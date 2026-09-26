@@ -116,7 +116,7 @@ def revive_archived_session(hub, session_name: str) -> tuple[bool, str]:
     try:
         meta = read_session_meta(session_name)
     except FileNotFoundError:
-        return False, "That archived session is not available in this repo."
+        return False, "That archived timeline is not available in this repo."
     workspace = meta["workspace"]
     if not Path(workspace).is_dir():
         return False, f"Saved workspace is unavailable: {workspace}"
@@ -144,7 +144,7 @@ def kill_repo_session(hub, session_name: str) -> tuple[bool, str]:
     if live.state == "unhealthy":
         raise TmuxUnhealthy(live.detail)
     if session_name not in live.workspaces:
-        return False, "That active session is not available in this repo."
+        return False, "That active timeline is not available in this repo."
     try:
         kill_session(session_name=session_name)
     except SessionControlError as exc:
@@ -157,11 +157,11 @@ def delete_archived_session(hub, session_name: str) -> tuple[bool, str]:
     if live.state == "unhealthy":
         raise TmuxUnhealthy(live.detail)
     if session_name in live.workspaces:
-        return False, "That archived session is not available in this repo."
+        return False, "That archived timeline is not available in this repo."
     try:
         workspace = read_session_meta(session_name)["workspace"]
     except FileNotFoundError:
-        return False, "That archived session is not available in this repo."
+        return False, "That archived timeline is not available in this repo."
     stop_ok, stop_detail = stop_room_server(workspace)
     if not stop_ok:
         return False, stop_detail

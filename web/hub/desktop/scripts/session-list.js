@@ -4,7 +4,7 @@
     const DESK_SESSION_ACTION_TITLE = {
       kill: "Archive — Kill tmux session; keep log",
       revive: "Revive — Restart tmux session with saved agent topology",
-      "delete-archived": "Delete — Delete ~/.agent-window/log/{session}",
+      "delete-archived": "Delete — Delete ~/.agent-window/log/{label}",
     };
 
     function renderDeskSessionRow(session, archived) {

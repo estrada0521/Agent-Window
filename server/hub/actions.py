@@ -53,14 +53,14 @@ def _back_to_hub(handler, fmt: str, session_name: str, action: str) -> None:
 def get_open_session(handler, parsed, ctx) -> None:
     session_name, fmt = _session_query(parsed)
     if not session_name:
-        _fail(handler, ctx, fmt, 404, "That session is not available in this repo.")
+        _fail(handler, ctx, fmt, 404, "That timeline is not available in this repo.")
         return
     resolved = resolve_session_room_target(ctx["hub"], session_name)
     if resolved["status"] == "unhealthy":
         handler._send_unhealthy(fmt, resolved["detail"])
         return
     if resolved["status"] == "missing":
-        _fail(handler, ctx, fmt, 404, "That session is not available in this repo.")
+        _fail(handler, ctx, fmt, 404, "That timeline is not available in this repo.")
         return
     if resolved["status"] != "ok":
         _fail(handler, ctx, fmt, 500, f"Failed to start room for {session_name}: {resolved['detail']}")
@@ -71,7 +71,7 @@ def get_open_session(handler, parsed, ctx) -> None:
 def get_revive_session(handler, parsed, ctx) -> None:
     session_name, fmt = _session_query(parsed)
     if not session_name:
-        _fail(handler, ctx, fmt, 404, "That archived session is not available in this repo.")
+        _fail(handler, ctx, fmt, 404, "That archived timeline is not available in this repo.")
         return
     try:
         ok, detail = revive_archived_session(ctx["hub"], session_name)
@@ -93,7 +93,7 @@ def get_revive_session(handler, parsed, ctx) -> None:
 def get_kill_session(handler, parsed, ctx) -> None:
     session_name, fmt = _session_query(parsed)
     if not session_name:
-        _fail(handler, ctx, fmt, 404, "That active session is not available in this repo.")
+        _fail(handler, ctx, fmt, 404, "That active timeline is not available in this repo.")
         return
     try:
         ok, detail = kill_repo_session(ctx["hub"], session_name)
@@ -110,7 +110,7 @@ def get_kill_session(handler, parsed, ctx) -> None:
 def get_delete_archived_session(handler, parsed, ctx) -> None:
     session_name, fmt = _session_query(parsed)
     if not session_name:
-        _fail(handler, ctx, fmt, 404, "That archived session is not available in this repo.")
+        _fail(handler, ctx, fmt, 404, "That archived timeline is not available in this repo.")
         return
     try:
         ok, detail = delete_archived_session(ctx["hub"], session_name)
@@ -128,12 +128,12 @@ def get_session_workspace(handler, parsed, _ctx) -> None:
     qs = parse_qs(parsed.query)
     session_name = (qs.get("session", [""])[0] or "").strip()
     if not session_name:
-        handler._send_json(404, {"ok": False, "error": "Session not found"})
+        handler._send_json(404, {"ok": False, "error": "Timeline not found"})
         return
     try:
         workspace = session_workspace(session_name)
     except SessionMetaError:
-        handler._send_json(404, {"ok": False, "error": "Session not found"})
+        handler._send_json(404, {"ok": False, "error": "Timeline not found"})
         return
     handler._send_json(200, {"ok": True, "session": session_name, "workspace": workspace})
 
@@ -161,15 +161,15 @@ def post_rename_session(handler, _parsed, ctx) -> None:
     old_name = str(data.get("old_name") or "").strip()
     new_name = str(data.get("new_name") or "").strip()
     if any(not name or name in {".", ".."} or "/" in name or "\0" in name for name in (old_name, new_name)):
-        handler._send_json(409, {"ok": False, "error": "Session name is not a valid folder name."})
+        handler._send_json(409, {"ok": False, "error": "Timeline label is not a valid folder name."})
         return
     source = agent_window_log_root() / old_name
     target = agent_window_log_root() / new_name
     if not source.is_dir():
-        handler._send_json(409, {"ok": False, "error": f"Session not found: {old_name}"})
+        handler._send_json(409, {"ok": False, "error": f"Timeline not found: {old_name}"})
         return
     if old_name != new_name and (target.exists() or target.is_symlink()):
-        handler._send_json(409, {"ok": False, "error": f"A session named {new_name} already exists."})
+        handler._send_json(409, {"ok": False, "error": f"A timeline labeled {new_name} already exists."})
         return
     try:
         if old_name != new_name:

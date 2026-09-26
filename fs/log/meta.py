@@ -32,7 +32,7 @@ def _existing_session_meta(session_name: str) -> tuple[Path, dict]:
     try:
         return path, read_session_meta_file(path)
     except FileNotFoundError:
-        raise SessionMetaError(f"session not found: {name}") from None
+        raise SessionMetaError(f"log not found: {name}") from None
 
 
 def session_workspace_claims(
@@ -70,11 +70,11 @@ def set_session_workspace(session_name: str, workspace: str) -> None:
     name = str(session_name or "").strip()
     ws = str(workspace or "").strip()
     if not name or not ws:
-        raise SessionMetaError("session name and workspace are required")
+        raise SessionMetaError("label and workspace are required")
     path, raw = _existing_session_meta(name)
     owner = find_session_for_workspace(ws, exclude_session=name)
     if owner:
-        raise SessionMetaError(f"A session already exists for this workspace: {owner}")
+        raise SessionMetaError(f"A timeline already exists for this workspace: {owner}")
     old_workspace = Path(raw["workspace"]).expanduser().resolve()
     raw["workspace"] = ws
     write_json_atomically(path, raw, indent=2)
@@ -95,7 +95,7 @@ def rename_session(old_name: str, new_name: str) -> None:
 def reset_session_agents(session_name: str) -> None:
     name = str(session_name or "").strip()
     if not name:
-        raise SessionMetaError("session name is required")
+        raise SessionMetaError("label is required")
     path, raw = _existing_session_meta(name)
     raw["agents"] = []
     write_json_atomically(path, raw, indent=2)

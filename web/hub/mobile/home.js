@@ -38,7 +38,7 @@
       ttlMs: HUB_ROOM_URL_CACHE_TTL_MS,
       cacheKey: (openHref, name) => String(name || "").trim() || String(openHref || "").trim(),
       wrapUrl: (url) => hubFrameRoomUrl(url),
-      errorMessage: "open session failed",
+      errorMessage: "open timeline failed",
     });
     const applyMobThemeGradientVars = () => {
       const root = document.documentElement;
@@ -465,7 +465,7 @@
       if (isRoom) {
         bridge.innerHTML = `
           <option value="" disabled selected>Menu</option>
-          <option value="close-session">Close Session</option>
+          <option value="close-session">Close Timeline</option>
           <option value="theme">Theme</option>
           <option value="restart-hub">Reload</option>
         `;
@@ -628,7 +628,7 @@
           }
         })
         .catch((err) => {
-          failHubReadyWait(err?.message || "open session failed");
+          failHubReadyWait(err?.message || "open timeline failed");
         });
     }
     window.addEventListener("message", function (e) {
@@ -740,7 +740,7 @@
           svg: trashSvg,
           label: "Delete",
           tone: "danger",
-          title: "Delete — Delete ~/.agent-window/log/{session}",
+          title: "Delete — Delete ~/.agent-window/log/{label}",
         },
         revive: {
           svg: reviveSvg,
@@ -922,7 +922,7 @@
           }).join("");
         }
         if (!active.length && !archived.length) {
-          html += `<div class="mob-empty">No sessions found</div>`;
+          html += `<div class="mob-empty">No timelines found</div>`;
         }
         wrap.innerHTML = html;
         syncMobileSelectedSessionRows();
@@ -971,8 +971,8 @@
         } catch (_) {
           if (requestSeq !== _mobSessionsRequestSeq) return;
           if (_mobSessionsRenderedOnce || _mobSessionsCache.active.length || _mobSessionsCache.archived.length) return;
-          wrap.innerHTML = `<div class="mob-empty">Failed to load sessions</div>`;
-          if (_hubLaunchShellPending) failHubReadyWait("Failed to load sessions");
+          wrap.innerHTML = `<div class="mob-empty">Failed to load timelines</div>`;
+          if (_hubLaunchShellPending) failHubReadyWait("Failed to load timelines");
         }
       };
       refreshMobSessions = refresh;

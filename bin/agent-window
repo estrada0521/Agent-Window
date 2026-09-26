@@ -22,15 +22,15 @@ for _cmd in python3 tmux; do
   fi
 done
 
-SESSION_NAME=""
+TIMELINE_LABEL=""
 WORKSPACE="$PWD"
 CONTEXT_JSON=0
 
 usage() {
   cat <<'EOF'
-Usage: agent-window context [--session NAME] [--workspace PATH] [--json]
+Usage: agent-window context [--timeline LABEL] [--workspace PATH] [--json]
 
-Print session/workspace/agent-pane summary for the current pane (or --session).
+Print timeline/workspace/agent-pane summary for the current pane (or --timeline).
 Session creation and management are done through Hub.
 EOF
 }
@@ -43,7 +43,7 @@ esac
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --session)   SESSION_NAME="$2"; shift 2 ;;
+    --timeline)  TIMELINE_LABEL="$2"; shift 2 ;;
     --workspace) WORKSPACE="$2"; shift 2 ;;
     --json)      CONTEXT_JSON=1; shift ;;
     -h|--help)   usage; exit 0 ;;
@@ -54,6 +54,6 @@ done
 WORKSPACE="$(cd "$WORKSPACE" && pwd)"
 
 _context_args=(context --workspace "$WORKSPACE")
-[[ -n "$SESSION_NAME" ]] && _context_args+=(--session "$SESSION_NAME")
+[[ -n "$TIMELINE_LABEL" ]] && _context_args+=(--timeline "$TIMELINE_LABEL")
 [[ "$CONTEXT_JSON" -eq 1 ]] && _context_args+=(--json)
 PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -m tmux.context "${_context_args[@]}"
