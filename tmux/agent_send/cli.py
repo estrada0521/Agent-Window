@@ -25,7 +25,7 @@ def _usage_text() -> str:
             "  claude,codex   (comma-separated targets)",
             "  claude         (ambiguous when duplicates exist; use claude-1)",
             "",
-            "--context prints this room's timeline, workspace and agent panes.",
+            "--context prints the current timeline, its workspace and agent panes.",
         ]
     )
 
@@ -47,11 +47,11 @@ def run(argv: list[str] | None = None) -> int:
 
     if args[0] == "--context":
         try:
-            label = sender.resolve_timeline_label()
+            timeline_name = sender.resolve_timeline_name()
         except AgentSendError as exc:
             print(str(exc), file=sys.stderr)
             return 1
-        print(format_context_text(describe_timeline(label)))
+        print(format_context_text(describe_timeline(timeline_name)))
         return 0
 
     if sys.stdin.isatty():

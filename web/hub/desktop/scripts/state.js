@@ -11,11 +11,11 @@
     const _deskSidebarResizer = document.getElementById("deskSidebarResizer");
     const _deskAppSidebarToggle = document.getElementById("deskAppSidebarToggle");
     const _deskTimelineList = document.getElementById("deskTimelineList");
-    const _deskRoomFrame = document.getElementById("deskRoomFrame");
-    const _deskRoomMenuBtn = document.getElementById("roomMenuBtn");
-    const _deskRoomReloadBtn = document.getElementById("roomReloadBtn");
-    const _deskPanelToggle = document.getElementById("roomPanelToggle");
-    const _deskRoomShell = document.querySelector(".desk-room-shell");
+    const _deskTimelineFrame = document.getElementById("deskTimelineFrame");
+    const _deskTimelineMenuBtn = document.getElementById("timelineMenuBtn");
+    const _deskTimelineReloadBtn = document.getElementById("timelineReloadBtn");
+    const _deskPanelToggle = document.getElementById("timelinePanelToggle");
+    const _deskTimelineShell = document.querySelector(".desk-timeline-shell");
     const _deskReloadShell = document.getElementById("deskReloadShell");
     const _deskMain = document.querySelector(".desk-main");
     const _deskSettingsBtn = document.getElementById("deskSettingsBtn");
@@ -37,12 +37,12 @@
     const DESK_SWIPE_OPEN_THRESHOLD = 40;
     const DESK_SIDEBAR_CLOSE_SWIPE_EDGE_PX = 36;
     const DESK_SIDEBAR_CLOSE_SWIPE_THRESHOLD = 54;
-    const DESK_ROOM_URL_CACHE_LIMIT = 3;
-    const hubRoomUrls = createHubRoomUrlResolver({
-      cacheLimit: DESK_ROOM_URL_CACHE_LIMIT,
+    const DESK_TIMELINE_URL_CACHE_LIMIT = 3;
+    const hubTimelineUrls = createHubTimelineUrlResolver({
+      cacheLimit: DESK_TIMELINE_URL_CACHE_LIMIT,
       cacheKey: (openHref) => String(openHref || "").trim(),
       wrapUrl: (url) => String(url || "").trim(),
-      errorMessage: "room url unavailable",
+      errorMessage: "timeline url unavailable",
     });
     let _deskPanelActiveMode = "";
     let _deskPanelWidth = 0;
@@ -87,7 +87,7 @@
       applyDeskSidebarWidth();
       updateDeskChromeOverflow();
       localStorage.setItem(DESK_TEXT_SIZE_KEY, String(clamped));
-      _deskRoomFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
+      _deskTimelineFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
       if (scalesWindow) {
         _deskLastFitTarget *= clamped / previous;
         invoke("scale_window_from_top_center", { scale: clamped / previous, cornerRadius: clamped * 2 }).catch((err) => {
@@ -96,8 +96,8 @@
       }
     }
     function dispatchDeskNativeMenuAction(payload) {
-      _deskRoomFrame?.contentWindow?.postMessage({ type: "native-menu-action", payload }, "*");
+      _deskTimelineFrame?.contentWindow?.postMessage({ type: "native-menu-action", payload }, "*");
     }
-    function resetDeskRoomView() {
-      _deskRoomFrame?.contentWindow?.postMessage({ type: "desktop-room-reset" }, "*");
+    function resetDeskTimelineView() {
+      _deskTimelineFrame?.contentWindow?.postMessage({ type: "desktop-timeline-reset" }, "*");
     }

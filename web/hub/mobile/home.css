@@ -12,11 +12,11 @@
       --icon-hover: __ICON_HOVER__;
       --timeline-hover-bg: __TIMELINE_HOVER_BG__;
       --timeline-selected-bg: __TIMELINE_SELECTED_BG__;
-      --room-overlay-glow: drop-shadow(0 0 5px rgba(0, 0, 0, 0.34)) drop-shadow(0 0 16px rgba(0, 0, 0, 0.2));
+      --timeline-overlay-glow: drop-shadow(0 0 5px rgba(0, 0, 0, 0.34)) drop-shadow(0 0 16px rgba(0, 0, 0, 0.2));
       --timeline-danger-fg: rgb(204, 47, 38);
       --timeline-success-fg: rgb(41, 178, 75);
       --hub-tagline-top: calc(env(safe-area-inset-top, 0px) + 22px);
-      --hub-room-peek-width: 25vw;
+      --hub-timeline-peek-width: 25vw;
       --hub-tagline-fade-height: 64px;
       --mob-top-gradient-rgb: var(--bg-rgb);
       --code-bg: rgba(255, 255, 255, 0.05);
@@ -37,7 +37,7 @@
       --line-strong: rgba(0, 0, 0, 0.18);
       --timeline-hover-bg: rgb(233, 233, 231);
       --timeline-selected-bg: rgb(226, 226, 224);
-      --room-overlay-glow: drop-shadow(-1px 0 4px rgba(0, 0, 0, 0.14)) drop-shadow(-7px 0 16px rgba(0, 0, 0, 0.07));
+      --timeline-overlay-glow: drop-shadow(-1px 0 4px rgba(0, 0, 0, 0.14)) drop-shadow(-7px 0 16px rgba(0, 0, 0, 0.07));
       --timeline-danger-fg: rgb(207, 34, 46);
       --timeline-success-fg: rgb(36, 157, 66);
       --mob-top-gradient-rgb: var(--bg-rgb);
@@ -60,8 +60,8 @@
       --line-strong: rgba(255, 255, 255, 0.12);
       --timeline-hover-bg: rgb(24, 24, 24);
       --timeline-selected-bg: rgb(28, 28, 28);
-      --room-overlay-glow: none;
-      --room-overlay-stroke: rgba(255, 255, 255, 0.50);
+      --timeline-overlay-glow: none;
+      --timeline-overlay-stroke: rgba(255, 255, 255, 0.50);
       --timeline-danger-fg: rgb(204, 47, 38);
       --timeline-success-fg: rgb(41, 178, 75);
       --mob-top-gradient-rgb: var(--bg-rgb);
@@ -110,10 +110,10 @@
       margin: 0 auto;
     }
 
-    html.hub-room-peeking .shell {
+    html.hub-timeline-peeking .shell {
       max-width: none;
       margin: 0;
-      padding-right: var(--hub-room-peek-width);
+      padding-right: var(--hub-timeline-peek-width);
     }
 
     @media (min-width: 600px) {
@@ -121,7 +121,7 @@
         --hub-sidebar-width: min(400px, 75vw);
       }
 
-      html.hub-room-peeking .shell {
+      html.hub-timeline-peeking .shell {
         max-width: var(--hub-sidebar-width);
         margin: 0;
         padding-right: 0;
@@ -262,16 +262,16 @@
       z-index: -1;
     }
 
-    html.hub-room-ui-active .hub-mobile-tagline::after {
+    html.hub-timeline-ui-active .hub-mobile-tagline::after {
       opacity: 1;
     }
 
-    html.hub-room-peeking .hub-mobile-tagline::after {
+    html.hub-timeline-peeking .hub-mobile-tagline::after {
       transition-duration: 280ms;
     }
 
     @media (min-width: 600px) {
-      html.hub-room-ui-active .hub-mobile-tagline::after {
+      html.hub-timeline-ui-active .hub-mobile-tagline::after {
         opacity: 0;
       }
     }
@@ -300,16 +300,16 @@
       transition: opacity 440ms cubic-bezier(0.32, 0.72, 0, 1);
     }
 
-    html.hub-room-ui-active .mob-list-wrap::after {
+    html.hub-timeline-ui-active .mob-list-wrap::after {
       opacity: 1;
     }
 
-    html.hub-room-peeking .mob-list-wrap::after {
+    html.hub-timeline-peeking .mob-list-wrap::after {
       transition-duration: 280ms;
     }
 
     @media (min-width: 600px) {
-      html.hub-room-ui-active .mob-list-wrap::after {
+      html.hub-timeline-ui-active .mob-list-wrap::after {
         opacity: 0;
       }
     }
@@ -621,7 +621,7 @@
       white-space: nowrap;
     }
 
-    #roomOverlay {
+    #timelineOverlay {
       position: fixed;
       inset: 0;
       z-index: 9999;
@@ -634,42 +634,42 @@
       -webkit-backface-visibility: hidden;
     }
 
-    #roomOverlay.overlay-settled {
+    #timelineOverlay.overlay-settled {
       background: var(--bg);
     }
 
-    .room-overlay-shape {
+    .timeline-overlay-shape {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       overflow: visible;
       pointer-events: none;
-      filter: var(--room-overlay-glow);
+      filter: var(--timeline-overlay-glow);
     }
 
-    .room-overlay-shape path {
+    .timeline-overlay-shape path {
       fill: var(--bg);
     }
 
-    html[data-theme="dark"] .room-overlay-shape path {
-      stroke: var(--room-overlay-stroke);
+    html[data-theme="dark"] .timeline-overlay-shape path {
+      stroke: var(--timeline-overlay-stroke);
       stroke-width: 0.5px;
       vector-effect: non-scaling-stroke;
     }
 
-    #roomOverlay.overlay-settled .room-overlay-shape {
+    #timelineOverlay.overlay-settled .timeline-overlay-shape {
       visibility: hidden;
     }
 
-    .room-frame-clip {
+    .timeline-frame-clip {
       position: absolute;
       inset: 0;
       overflow: hidden;
       background: var(--bg);
     }
 
-    .room-frame-clip::after {
+    .timeline-frame-clip::after {
       content: "";
       position: absolute;
       inset: 0;
@@ -679,67 +679,67 @@
       transition: opacity 440ms cubic-bezier(0.32, 0.72, 0, 1);
     }
 
-    #roomOverlay.overlay-closing .room-frame-clip::after,
-    #roomOverlay.overlay-peeking .room-frame-clip::after {
+    #timelineOverlay.overlay-closing .timeline-frame-clip::after,
+    #timelineOverlay.overlay-peeking .timeline-frame-clip::after {
       opacity: 1;
     }
 
-    #roomOverlay.overlay-closing .room-frame-clip::after {
+    #timelineOverlay.overlay-closing .timeline-frame-clip::after {
       transition-duration: 280ms;
     }
 
-    #roomOverlay[hidden] {
+    #timelineOverlay[hidden] {
       display: none;
     }
 
-    #roomOverlay.overlay-visible {
+    #timelineOverlay.overlay-visible {
       opacity: 1;
       transform: translate3d(0, 0, 0);
     }
 
-    #roomOverlay.overlay-closing {
+    #timelineOverlay.overlay-closing {
       opacity: 1;
-      transform: translate3d(calc(100% - var(--hub-room-peek-width)), 0, 0);
+      transform: translate3d(calc(100% - var(--hub-timeline-peek-width)), 0, 0);
       transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
     }
 
-    #roomOverlay.overlay-peeking {
+    #timelineOverlay.overlay-peeking {
       opacity: 1;
-      transform: translate3d(calc(100% - var(--hub-room-peek-width)), 0, 0);
+      transform: translate3d(calc(100% - var(--hub-timeline-peek-width)), 0, 0);
       transition: none;
     }
 
-    #roomOverlay.overlay-peeking iframe {
+    #timelineOverlay.overlay-peeking iframe {
       pointer-events: none;
     }
 
     @media (min-width: 600px) {
-      #roomOverlay {
+      #timelineOverlay {
         background: var(--bg);
       }
 
-      .room-overlay-shape {
+      .timeline-overlay-shape {
         display: none;
       }
 
-      #roomOverlay.overlay-closing,
-      #roomOverlay.overlay-peeking {
+      #timelineOverlay.overlay-closing,
+      #timelineOverlay.overlay-peeking {
         transform: translate3d(var(--hub-sidebar-width), 0, 0);
       }
     }
 
 
     @media (prefers-reduced-motion: reduce) {
-      #roomOverlay {
+      #timelineOverlay {
         transition: opacity 120ms ease;
       }
 
-      #roomOverlay.overlay-closing {
+      #timelineOverlay.overlay-closing {
         transition: opacity 120ms ease;
       }
     }
 
-    #roomFrame {
+    #timelineFrame {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -749,13 +749,13 @@
       background: var(--bg);
     }
 
-    html.hub-room-overlay-active {
+    html.hub-timeline-overlay-active {
       overflow-y: auto;
       height: 100%;
       height: -webkit-fill-available;
     }
 
-    body.hub-room-overlay-active {
+    body.hub-timeline-overlay-active {
       overscroll-behavior-y: none;
       min-height: 100vh;
       min-height: 100svh;
@@ -766,11 +766,11 @@
       z-index: 9998;
       --hud-fg: var(--fg);
     }
-    html:has(#roomOverlay:not([hidden])) #hubHud {
-      left: calc((100vw - var(--hub-room-peek-width)) / 2);
+    html:has(#timelineOverlay:not([hidden])) #hubHud {
+      left: calc((100vw - var(--hub-timeline-peek-width)) / 2);
     }
     @media (min-width: 600px) {
-      html:has(#roomOverlay:not([hidden])) #hubHud {
+      html:has(#timelineOverlay:not([hidden])) #hubHud {
         left: calc(var(--hub-sidebar-width) / 2);
       }
     }

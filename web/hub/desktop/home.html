@@ -68,10 +68,10 @@ __INCLUDE:styles/theme.css__
 __INCLUDE:styles/window-chrome.css__
 __INCLUDE:styles/workbench.css__
 __INCLUDE:styles/timeline-list.css__
-__INCLUDE:styles/room-frame.css__
+__INCLUDE:styles/timeline-frame.css__
 __INCLUDE:styles/shell-overrides.css__
 __INCLUDE:styles/sidebar-popover.css__
-__INCLUDE:../../room/desktop/room-controls.css__
+__INCLUDE:../../timeline/desktop/controls.css__
 __INCLUDE:../../hud.css__
   </style>
 </head>
@@ -95,7 +95,7 @@ __INCLUDE:../../hud.css__
     </div>
     <div class="desk-fit-standby" aria-hidden="true"><span class="desk-fit-standby-text">Agent Window</span></div>
     <div class="desk-top-right-controls" id="deskTopRightControls" aria-label="Window controls">
-__INCLUDE:../../room/desktop/room-controls.html__
+__INCLUDE:../../timeline/desktop/controls.html__
     </div>
     <div class="desk-workbench" id="deskWorkbench">
       <aside class="desk-sidebar" id="deskSidebar">
@@ -152,10 +152,10 @@ __INCLUDE:../../room/desktop/room-controls.html__
       </div>
       <div class="desk-sidebar-resizer" id="deskSidebarResizer" aria-hidden="true"></div>
       <section class="desk-main">
-        <div class="desk-room-shell">
+        <div class="desk-timeline-shell">
           <iframe
-            class="desk-room-frame"
-            id="deskRoomFrame"
+            class="desk-timeline-frame"
+            id="deskTimelineFrame"
             src="about:blank"
             allow="clipboard-write"
           ></iframe>
@@ -172,11 +172,11 @@ __INCLUDE:../../room/desktop/room-controls.html__
   </div>
   <script>
 __INCLUDE:../../restart-nav.js__
-__INCLUDE:../room-url.js__
+__INCLUDE:../timeline-url.js__
 __INCLUDE:../timeline-messages-events.js__
 __INCLUDE:../../list-flip.js__
 __INCLUDE:../../hud.js__
-__INCLUDE:../../room/desktop/room-menu.js__
+__INCLUDE:../../timeline/desktop/menu.js__
 __INCLUDE:scripts/state.js__
 __INCLUDE:scripts/window-controls.js__
 __INCLUDE:scripts/native-menus.js__

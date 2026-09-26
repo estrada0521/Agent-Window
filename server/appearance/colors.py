@@ -53,17 +53,17 @@ DESKTOP_SCROLLBAR_THUMB_DARK = "rgb(35, 35, 35)"
 
 MOBILE_HUB_LIGHT_BG_RGB = (243, 243, 241)
 MOBILE_HUB_DARK_BG_RGB = (21, 21, 21)
-MOBILE_ROOM_LIGHT_BG_RGB = (249, 249, 247)
-MOBILE_ROOM_DARK_BG_RGB = (13, 13, 13)
+MOBILE_TIMELINE_LIGHT_BG_RGB = (249, 249, 247)
+MOBILE_TIMELINE_DARK_BG_RGB = (13, 13, 13)
 DESKTOP_HUB_LIGHT_BG_RGB = (249, 249, 247)
 DESKTOP_HUB_DARK_BG_RGB = (13, 13, 13)
-DESKTOP_ROOM_LIGHT_BG_RGB = (249, 249, 247)
-DESKTOP_ROOM_DARK_BG_RGB = (13, 13, 13)
+DESKTOP_TIMELINE_LIGHT_BG_RGB = (249, 249, 247)
+DESKTOP_TIMELINE_DARK_BG_RGB = (13, 13, 13)
 
 DESKTOP_HUB_LIGHT_BG_ALPHA = 0.88
 DESKTOP_HUB_DARK_BG_ALPHA = 0.90
-DESKTOP_ROOM_LIGHT_BG_ALPHA = 0.94
-DESKTOP_ROOM_DARK_BG_ALPHA = 0.95
+DESKTOP_TIMELINE_LIGHT_BG_ALPHA = 0.94
+DESKTOP_TIMELINE_DARK_BG_ALPHA = 0.95
 
 
 def _text_color_token_replacements() -> tuple[tuple[str, str], ...]:
@@ -135,7 +135,7 @@ def resolve_theme_palette(theme: str = "dark") -> dict[str, object]:
         panel_row_hover_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.13)"
         panel_row_active_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.16)"
     bg_rgb = DESKTOP_HUB_LIGHT_BG_RGB if theme == "light" else DESKTOP_HUB_DARK_BG_RGB
-    mobile_room_bg_rgb = MOBILE_ROOM_LIGHT_BG_RGB if theme == "light" else MOBILE_ROOM_DARK_BG_RGB
+    mobile_timeline_bg_rgb = MOBILE_TIMELINE_LIGHT_BG_RGB if theme == "light" else MOBILE_TIMELINE_DARK_BG_RGB
     fg_rgb = (fg_level, fg_level, fg_level)
     return {
         "theme": theme,
@@ -146,17 +146,17 @@ def resolve_theme_palette(theme: str = "dark") -> dict[str, object]:
         "desktop_hub_light_bg_fill": f"rgba({', '.join(str(v) for v in DESKTOP_HUB_LIGHT_BG_RGB)}, {DESKTOP_HUB_LIGHT_BG_ALPHA})",
         "desktop_hub_dark_bg": f"rgb({','.join(str(v) for v in DESKTOP_HUB_DARK_BG_RGB)})",
         "desktop_hub_dark_bg_fill": f"rgba({', '.join(str(v) for v in DESKTOP_HUB_DARK_BG_RGB)}, {DESKTOP_HUB_DARK_BG_ALPHA})",
-        "desktop_room_light_bg_channels": ", ".join(str(v) for v in DESKTOP_ROOM_LIGHT_BG_RGB),
-        "desktop_room_light_bg_fill": f"rgba({', '.join(str(v) for v in DESKTOP_ROOM_LIGHT_BG_RGB)}, {DESKTOP_ROOM_LIGHT_BG_ALPHA})",
-        "desktop_room_dark_bg_channels": ", ".join(str(v) for v in DESKTOP_ROOM_DARK_BG_RGB),
-        "desktop_room_dark_bg_fill": f"rgba({', '.join(str(v) for v in DESKTOP_ROOM_DARK_BG_RGB)}, {DESKTOP_ROOM_DARK_BG_ALPHA})",
+        "desktop_timeline_light_bg_channels": ", ".join(str(v) for v in DESKTOP_TIMELINE_LIGHT_BG_RGB),
+        "desktop_timeline_light_bg_fill": f"rgba({', '.join(str(v) for v in DESKTOP_TIMELINE_LIGHT_BG_RGB)}, {DESKTOP_TIMELINE_LIGHT_BG_ALPHA})",
+        "desktop_timeline_dark_bg_channels": ", ".join(str(v) for v in DESKTOP_TIMELINE_DARK_BG_RGB),
+        "desktop_timeline_dark_bg_fill": f"rgba({', '.join(str(v) for v in DESKTOP_TIMELINE_DARK_BG_RGB)}, {DESKTOP_TIMELINE_DARK_BG_ALPHA})",
         "mobile_hub_light_bg_channels": ", ".join(str(v) for v in MOBILE_HUB_LIGHT_BG_RGB),
         "mobile_hub_light_bg": f"rgb({','.join(str(v) for v in MOBILE_HUB_LIGHT_BG_RGB)})",
         "mobile_hub_dark_bg_channels": ", ".join(str(v) for v in MOBILE_HUB_DARK_BG_RGB),
         "mobile_hub_dark_bg": f"rgb({','.join(str(v) for v in MOBILE_HUB_DARK_BG_RGB)})",
-        "mobile_room_light_bg_channels": ", ".join(str(v) for v in MOBILE_ROOM_LIGHT_BG_RGB),
-        "mobile_room_dark_bg_channels": ", ".join(str(v) for v in MOBILE_ROOM_DARK_BG_RGB),
-        "mobile_room_bg_channels": ", ".join(str(v) for v in mobile_room_bg_rgb),
+        "mobile_timeline_light_bg_channels": ", ".join(str(v) for v in MOBILE_TIMELINE_LIGHT_BG_RGB),
+        "mobile_timeline_dark_bg_channels": ", ".join(str(v) for v in MOBILE_TIMELINE_DARK_BG_RGB),
+        "mobile_timeline_bg_channels": ", ".join(str(v) for v in mobile_timeline_bg_rgb),
         "light_fg": f"rgb({','.join(str(v) for v in fg_rgb)})",
         "light_fg_channels": ", ".join(str(v) for v in fg_rgb),
         "gray_surface": _gray_rgb_string(surface_level),
@@ -195,17 +195,17 @@ def apply_color_tokens(
     desktop_hub_light_bg_fill = str(palette["desktop_hub_light_bg_fill"])
     desktop_hub_dark_bg = str(palette["desktop_hub_dark_bg"])
     desktop_hub_dark_bg_fill = str(palette["desktop_hub_dark_bg_fill"])
-    desktop_room_light_bg_channels = str(palette["desktop_room_light_bg_channels"])
-    desktop_room_light_bg_fill = str(palette["desktop_room_light_bg_fill"])
-    desktop_room_dark_bg_channels = str(palette["desktop_room_dark_bg_channels"])
-    desktop_room_dark_bg_fill = str(palette["desktop_room_dark_bg_fill"])
+    desktop_timeline_light_bg_channels = str(palette["desktop_timeline_light_bg_channels"])
+    desktop_timeline_light_bg_fill = str(palette["desktop_timeline_light_bg_fill"])
+    desktop_timeline_dark_bg_channels = str(palette["desktop_timeline_dark_bg_channels"])
+    desktop_timeline_dark_bg_fill = str(palette["desktop_timeline_dark_bg_fill"])
     mobile_hub_light_bg = str(palette["mobile_hub_light_bg"])
     mobile_hub_light_bg_channels = str(palette["mobile_hub_light_bg_channels"])
     mobile_hub_dark_bg = str(palette["mobile_hub_dark_bg"])
     mobile_hub_dark_bg_channels = str(palette["mobile_hub_dark_bg_channels"])
-    mobile_room_light_bg_channels = str(palette["mobile_room_light_bg_channels"])
-    mobile_room_dark_bg_channels = str(palette["mobile_room_dark_bg_channels"])
-    mobile_room_bg_channels = str(palette["mobile_room_bg_channels"])
+    mobile_timeline_light_bg_channels = str(palette["mobile_timeline_light_bg_channels"])
+    mobile_timeline_dark_bg_channels = str(palette["mobile_timeline_dark_bg_channels"])
+    mobile_timeline_bg_channels = str(palette["mobile_timeline_bg_channels"])
     light_fg = str(palette["light_fg"])
     gray_surface = str(palette["gray_surface"])
     gray_inline_border = str(palette["gray_inline_border"])
@@ -225,17 +225,17 @@ def apply_color_tokens(
         ("__DESKTOP_HUB_LIGHT_BG_FILL__", desktop_hub_light_bg_fill),
         ("__DESKTOP_HUB_DARK_BG__", desktop_hub_dark_bg),
         ("__DESKTOP_HUB_DARK_BG_FILL__", desktop_hub_dark_bg_fill),
-        ("__DESKTOP_ROOM_LIGHT_BG_CHANNELS__", desktop_room_light_bg_channels),
-        ("__DESKTOP_ROOM_LIGHT_BG_FILL__", desktop_room_light_bg_fill),
-        ("__DESKTOP_ROOM_DARK_BG_CHANNELS__", desktop_room_dark_bg_channels),
-        ("__DESKTOP_ROOM_DARK_BG_FILL__", desktop_room_dark_bg_fill),
+        ("__DESKTOP_TIMELINE_LIGHT_BG_CHANNELS__", desktop_timeline_light_bg_channels),
+        ("__DESKTOP_TIMELINE_LIGHT_BG_FILL__", desktop_timeline_light_bg_fill),
+        ("__DESKTOP_TIMELINE_DARK_BG_CHANNELS__", desktop_timeline_dark_bg_channels),
+        ("__DESKTOP_TIMELINE_DARK_BG_FILL__", desktop_timeline_dark_bg_fill),
         ("__MOBILE_HUB_LIGHT_BG__", mobile_hub_light_bg),
         ("__MOBILE_HUB_LIGHT_BG_CHANNELS__", mobile_hub_light_bg_channels),
         ("__MOBILE_HUB_DARK_BG__", mobile_hub_dark_bg),
         ("__MOBILE_HUB_DARK_BG_CHANNELS__", mobile_hub_dark_bg_channels),
-        ("__MOBILE_ROOM_LIGHT_BG_CHANNELS__", mobile_room_light_bg_channels),
-        ("__MOBILE_ROOM_DARK_BG_CHANNELS__", mobile_room_dark_bg_channels),
-        ("__MOBILE_ROOM_BG_CHANNELS__", mobile_room_bg_channels),
+        ("__MOBILE_TIMELINE_LIGHT_BG_CHANNELS__", mobile_timeline_light_bg_channels),
+        ("__MOBILE_TIMELINE_DARK_BG_CHANNELS__", mobile_timeline_dark_bg_channels),
+        ("__MOBILE_TIMELINE_BG_CHANNELS__", mobile_timeline_bg_channels),
         ("__LIGHT_FG__", light_fg),
         ("__GRAY_SURFACE__", gray_surface),
         ("__GRAY_INLINE_BORDER__", gray_inline_border),

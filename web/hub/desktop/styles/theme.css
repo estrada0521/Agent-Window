@@ -40,11 +40,11 @@
       --timeline-selected-bg: rgba(0, 0, 0, 0.07);
       --timeline-danger-fg: rgb(207, 34, 46);
       --timeline-revive-fg: rgb(__TEXT_DIFF_INSERT_LIGHT_CHANNELS__);
-      --room-pane-bg: __DESKTOP_ROOM_LIGHT_BG_FILL__;
-      --room-pane-filter: blur(20px);
+      --timeline-pane-bg: __DESKTOP_TIMELINE_LIGHT_BG_FILL__;
+      --timeline-pane-filter: blur(20px);
       --hub-body-weight: 400;
       --hud-fg: rgb(__TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS__);
-      --pill-bg-rgb: __DESKTOP_ROOM_LIGHT_BG_CHANNELS__;
+      --pill-bg-rgb: __DESKTOP_TIMELINE_LIGHT_BG_CHANNELS__;
     }
     html[data-theme="dark"] {
       color-scheme: dark;
@@ -62,8 +62,8 @@
       --timeline-selected-bg: rgba(255, 255, 255, 0.08);
       --timeline-danger-fg: rgb(255, 108, 102);
       --timeline-revive-fg: rgb(__TEXT_DIFF_INSERT_DARK_CHANNELS__);
-      --room-pane-bg: __DESKTOP_ROOM_DARK_BG_FILL__;
-      --room-pane-filter: var(--glass-filter-20);
+      --timeline-pane-bg: __DESKTOP_TIMELINE_DARK_BG_FILL__;
+      --timeline-pane-filter: var(--glass-filter-20);
       --hub-body-weight: 300;
       --hud-fg: rgb(__TEXT_PRIMARY_DESKTOP_DARK_CHANNELS__);
     }

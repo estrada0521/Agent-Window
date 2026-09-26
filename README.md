@@ -17,7 +17,7 @@ A UNIX-philosophy Agent application for macOS.
 
 ## Principles
 
-1. The unit is one log. Its file: `~/.agent-window/log/{label}/.log.jsonl`.
+1. The unit is one log. Its file: `~/.agent-window/log/{timeline_name}/.log.jsonl`.
 2. An Agent is an ordinary CLI, running inside tmux. Any number of them.
 3. Both workspace and CLI can be swapped mid-timeline. The same log continues.
 4. Sending is `tmux send-keys`. Text from the input field goes into the Agent's pane.
@@ -39,17 +39,17 @@ Builds the app, saves it to `/Applications/Agent Window.app`, and launches it.
 
 ## timeline
 
-`New Timeline` picks a workspace and opens a room there.
+`New Timeline` picks a workspace and starts a tmux session there.
 
 <details>
 <summary>Actions</summary>
 
 | Action | Effect | Note |
 |---|---|---|
-| Archive | Closes the room and its tmux session | Log stays |
-| Revive | Reopens the room from the saved workspace and Agent set | Resume the conversation with the CLI's own `/resume` |
+| Archive | Kills the tmux session | Log stays |
+| Revive | Creates a new tmux session from the saved workspace and Agent set | Resume the conversation with the CLI's own `/resume` |
 | Delete | Permanently deletes the timeline's saved data | Archived only |
-| Rename | Changes the timeline's label | |
+| Rename | Changes the timeline's name | |
 | Change Workspace | Changes the workspace | Archived only |
 | Reset Agents | Clears the saved Agent set | The one used by Revive |
 
@@ -124,13 +124,13 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Open the input field | `Enter` / wheel click | |
 | Close the input field | `Esc` | |
 | Switch send target | `Ctrl+1`–`Ctrl+9` | |
-| Restart chat server / Hub server | `⌘R` / `⇧⌘R` | Re-reads changed source |
+| Restart timeline server / Hub server | `⌘R` / `⇧⌘R` | Re-reads changed source |
 | Pin Git summary | `⇧⌘P` | |
 
 </details>
 
 <details>
-<summary>chat menu (<code>⌘.</code>)</summary>
+<summary>timeline menu (<code>⌘.</code>)</summary>
 
 | Action | Key | Note |
 |---|---|---|
@@ -139,7 +139,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Open workspace in Finder | `⌥⌘R` | |
 | Open tmux window | `⌥⌘T` | |
 | Open log in Finder | `⌥⌘L` | |
-| Open chat in browser | `⌥⌘O` | |
+| Open timeline in browser | `⌥⌘O` | |
 
 </details>
 
@@ -227,7 +227,7 @@ The stack is HTML/CSS/vanilla JavaScript, the Python standard library, and one O
 
 No telemetry. The only network dependencies besides the Agent CLIs are `marked` and `katex` from `cdn.jsdelivr.net`. Vendor them yourself if you want it fully local.
 
-The Hub occupies the port in the `server/hub/port` file (default `8788`); edit the file to change it. Each room occupies a fixed port derived from its workspace's path.
+The Hub occupies the port in the `server/hub/port` file (default `8788`); edit the file to change it. Each timeline occupies a fixed port derived from its workspace's path.
 
 Agent Window itself writes filesystem data only under `~/.agent-window/` and `<workspace>/.agent-window/`.
 

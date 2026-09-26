@@ -19,11 +19,11 @@ def _pane_status(pane_id: str) -> dict:
     return {"pane_id": pane_id, "title": title, "command": command, "dead": dead}
 
 
-def describe_timeline(timeline_label: str) -> dict:
-    meta = read_log_meta(timeline_label)
+def describe_timeline(timeline_name: str) -> dict:
+    meta = read_log_meta(timeline_name)
     workspace = meta["workspace"]
     info: dict = {
-        "timeline": timeline_label,
+        "timeline": timeline_name,
         "workspace": workspace,
         "agents": meta["agents"],
         "active": False,
@@ -105,7 +105,7 @@ def format_context_text(info: dict) -> str:
     lines.append("### Hints")
     lines.append(
         "- `agent-send` uses this pane's tmux session directly; targets are the "
-        "room's agent windows."
+        "session's agent windows."
     )
     workspace = info["workspace"]
     lines.append(

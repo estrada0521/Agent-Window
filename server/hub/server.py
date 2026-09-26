@@ -8,13 +8,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from server.hub.hub import Hub
+from server.hub.state import HubState
 from server.appearance.colors import apply_color_tokens, resolve_theme_palette
 from server.appearance.theme import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from server.pwa import PWA_FILES, pwa_icon_entries, serve_pwa_file
-from server.hub.room_proxy import format_room_url, proxy_room, split_room_proxy_path
-from server.hub.room_supervisor import stop_inactive_room_servers
+from server.hub.proxy import format_timeline_url, proxy_timeline, split_timeline_proxy_path
+from server.hub.supervisor import stop_inactive_timeline_servers
 from server.page_header import (
     PAGE_HEADER_CSS,
     PAGE_HEADER_JS,
@@ -34,9 +34,9 @@ from server.hub.new_timeline import (
 )
 from server.hub.actions import (
     get_delete_archived_timeline as _get_delete_archived_timeline_action,
-    get_archive_room as _get_archive_room_action,
+    get_archive_timeline as _get_archive_timeline_action,
     get_open_timeline as _get_open_timeline_action,
-    get_revive_room as _get_revive_room_action,
+    get_revive_timeline as _get_revive_timeline_action,
     get_timeline_workspace as _get_timeline_workspace_action,
     post_change_timeline_workspace as _post_change_timeline_workspace_action,
     post_rename_timeline as _post_rename_timeline_action,
@@ -73,7 +73,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     repo_root = Path(root_arg).resolve()
     script_path = Path(script_arg).resolve()
     port = int((repo_root / "server" / "hub" / "port").read_text().strip())
-    hub = Hub(repo_root, hub_port=port)
+    hub = HubState(repo_root, hub_port=port)
     restart_pending, hub_server = False, None
 
     _initialized = True
@@ -105,7 +105,7 @@ def queue_hub_restart():
     with restart_lock:
         if restart_pending:
             return False, "restart already pending", False
-        cleanup_detail = stop_inactive_room_servers()
+        cleanup_detail = stop_inactive_timeline_servers()
         if cleanup_detail:
             return False, cleanup_detail, False
         restart_pending = True
@@ -354,7 +354,7 @@ def _hub_action_context() -> dict[str, object]:
     return {
         "hub": hub,
         "error_page_fn": error_page,
-        "format_room_url_fn": format_room_url,
+        "format_timeline_url_fn": format_timeline_url,
         "queue_hub_restart_fn": queue_hub_restart,
         "release_restart_hold_fn": release_restart_hold,
     }
@@ -366,8 +366,8 @@ _GET_ROUTE_HANDLERS = {
     "/timelines": "_get_timelines",
     "/timeline-messages-events": "_get_timeline_messages_events",
     "/open-timeline": _get_open_timeline_action,
-    "/revive-room": _get_revive_room_action,
-    "/archive-room": _get_archive_room_action,
+    "/revive-timeline": _get_revive_timeline_action,
+    "/archive-timeline": _get_archive_timeline_action,
     "/delete-archived-timeline": _get_delete_archived_timeline_action,
     "/timeline-workspace": _get_timeline_workspace_action,
     "/": "_get_home",
@@ -553,8 +553,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
-        if split_room_proxy_path(parsed.path) is not None:
-            proxy_room(self, "GET")
+        if split_timeline_proxy_path(parsed.path) is not None:
+            proxy_timeline(self, "GET")
             return
         if serve_pwa_file(self, parsed.path, _HUB_PWA_FILES):
             return
@@ -565,8 +565,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
-        if split_room_proxy_path(parsed.path) is not None:
-            proxy_room(self, "POST")
+        if split_timeline_proxy_path(parsed.path) is not None:
+            proxy_timeline(self, "POST")
             return
         if self._dispatch_route(parsed, self._POST_ROUTE_HANDLERS):
             return

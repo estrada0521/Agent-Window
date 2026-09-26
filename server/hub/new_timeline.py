@@ -7,28 +7,28 @@ import subprocess
 import time
 from pathlib import Path
 
-from fs.log.meta import find_label_for_workspace
+from fs.log.meta import find_timeline_name_for_workspace
 from fs.log.paths import (
-    LABEL_MAX_LENGTH,
+    TIMELINE_NAME_MAX_LENGTH,
     port_is_bindable,
-    sanitize_label,
+    sanitize_timeline_name,
     log_dir,
-    workspace_room_port,
+    workspace_timeline_port,
 )
-from server.room.control import open_room
-from server.hub.room_supervisor import ensure_room_server
+from server.timeline.control import create_session
+from server.hub.supervisor import ensure_timeline_server
 
 
 _GENERATED_TIMELINE_PREFIX = "aw-"
 
 
-def _timeline_label_for_workspace(workspace: str) -> tuple[str, str]:
-    basename_name = sanitize_label(Path(workspace).name)
+def _timeline_name_for_workspace(workspace: str) -> tuple[str, str]:
+    basename_name = sanitize_timeline_name(Path(workspace).name)
     if basename_name and not log_dir(basename_name).exists():
         return basename_name, ""
 
     digest = hashlib.sha256(workspace.encode("utf-8")).hexdigest()
-    max_digest_length = LABEL_MAX_LENGTH - len(_GENERATED_TIMELINE_PREFIX)
+    max_digest_length = TIMELINE_NAME_MAX_LENGTH - len(_GENERATED_TIMELINE_PREFIX)
     digest_length = 8
     while True:
         candidate = f"{_GENERATED_TIMELINE_PREFIX}{digest[:digest_length]}"
@@ -41,7 +41,7 @@ def _timeline_label_for_workspace(workspace: str) -> tuple[str, str]:
             else:
                 notice = (
                     f"Created this timeline as '{candidate}' because its workspace folder name cannot be used "
-                    "as a label. Rename the timeline if desired."
+                    "as a timeline name. Rename the timeline if desired."
                 )
             return candidate, notice
         if digest_length >= max_digest_length:
@@ -135,26 +135,26 @@ def post_start_timeline_draft(handler, _parsed, ctx) -> None:
     if not Path(resolved_workspace).is_dir():
         handler._send_json(400, {"ok": False, "error": f"Invalid workspace: {resolved_workspace}"})
         return
-    owner = find_label_for_workspace(resolved_workspace)
+    owner = find_timeline_name_for_workspace(resolved_workspace)
     if owner:
         handler._send_json(409, {"ok": False, "error": f"A timeline already exists for this workspace: {owner}"})
         return
     try:
-        timeline_label, notice = _timeline_label_for_workspace(resolved_workspace)
+        timeline_name, notice = _timeline_name_for_workspace(resolved_workspace)
     except RuntimeError as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    room_port = workspace_room_port(resolved_workspace)
-    if not port_is_bindable(room_port):
-        handler._send_json(409, {"ok": False, "error": f"room port {room_port} is occupied"})
+    timeline_port = workspace_timeline_port(resolved_workspace)
+    if not port_is_bindable(timeline_port):
+        handler._send_json(409, {"ok": False, "error": f"timeline port {timeline_port} is occupied"})
         return
     try:
-        open_room(
-            timeline_label=timeline_label,
+        create_session(
+            timeline_name=timeline_name,
             workspace=resolved_workspace,
             agents=[],
         )
-        ok, room_port, detail = ensure_room_server(
+        ok, timeline_port, detail = ensure_timeline_server(
             ctx["hub"],
             expected_active=True,
             workspace=resolved_workspace,
@@ -166,16 +166,16 @@ def post_start_timeline_draft(handler, _parsed, ctx) -> None:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
     ctx["hub"].publish_timeline_messages_changed()
-    room_url = ctx["format_room_url_fn"](
-        room_port,
+    timeline_url = ctx["format_timeline_url_fn"](
+        timeline_port,
         f"/?ts={int(time.time() * 1000)}",
     )
     handler._send_json(
         200,
         {
             "ok": True,
-            "timeline": timeline_label,
-            "room_url": room_url,
+            "timeline": timeline_name,
+            "timeline_url": timeline_url,
             **({"notice": notice} if notice else {}),
         },
     )

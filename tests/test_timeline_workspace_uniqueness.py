@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from fs.log.meta import find_label_for_workspace
+from fs.log.meta import find_timeline_name_for_workspace
 from server.hub.new_timeline import post_start_timeline_draft
 
 
@@ -31,7 +31,7 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
             with mock.patch(
                 "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
-                found = find_label_for_workspace(workspace)
+                found = find_timeline_name_for_workspace(workspace)
 
             self.assertEqual(found, "my-timeline")
 
@@ -45,7 +45,7 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
             with mock.patch(
                 "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
-                found = find_label_for_workspace(workspace)
+                found = find_timeline_name_for_workspace(workspace)
 
             self.assertEqual(found, "archived-timeline")
 
@@ -59,7 +59,7 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
             with mock.patch(
                 "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
-                found = find_label_for_workspace(workspace, exclude_label="my-timeline")
+                found = find_timeline_name_for_workspace(workspace, exclude_timeline_name="my-timeline")
 
             self.assertIsNone(found)
 
@@ -75,7 +75,7 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
             with mock.patch(
                 "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
-                found = find_label_for_workspace(other_workspace)
+                found = find_timeline_name_for_workspace(other_workspace)
 
             self.assertIsNone(found)
 
@@ -88,7 +88,7 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
             with mock.patch(
                 "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
-                found = find_label_for_workspace(workspace)
+                found = find_timeline_name_for_workspace(workspace)
 
             self.assertIsNone(found)
 
@@ -100,7 +100,7 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
         handler.rfile = io.BytesIO(body)
         return handler
 
-    def test_workspace_claim_is_rejected_before_timeline_label_allocation(self) -> None:
+    def test_workspace_claim_is_rejected_before_timeline_name_allocation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Agent-Window"
             workspace.mkdir()
@@ -109,7 +109,7 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
 
             with (
                 mock.patch(
-                    "server.hub.new_timeline.find_label_for_workspace",
+                    "server.hub.new_timeline.find_timeline_name_for_workspace",
                     return_value="existing-timeline",
                 ),
                 mock.patch("server.hub.new_timeline.log_dir") as log_dir,
@@ -122,7 +122,7 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
             )
             log_dir.assert_not_called()
 
-    def test_duplicate_workspace_basename_gets_an_opaque_timeline_label(self) -> None:
+    def test_duplicate_workspace_basename_gets_an_opaque_timeline_name(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "new-parent" / "Agent-Window"
             workspace.mkdir(parents=True)
@@ -136,18 +136,18 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
 
             with (
                 mock.patch(
-                    "server.hub.new_timeline.find_label_for_workspace",
+                    "server.hub.new_timeline.find_timeline_name_for_workspace",
                     return_value=None,
                 ),
                 mock.patch(
                     "server.hub.new_timeline.log_dir",
                     side_effect=lambda name: log_root / name,
                 ),
-                mock.patch("server.hub.new_timeline.open_room") as open_room,
-                mock.patch("server.hub.new_timeline.workspace_room_port", return_value=41000),
+                mock.patch("server.hub.new_timeline.create_session") as create_session,
+                mock.patch("server.hub.new_timeline.workspace_timeline_port", return_value=41000),
                 mock.patch("server.hub.new_timeline.port_is_bindable", return_value=True),
                 mock.patch(
-                    "server.hub.new_timeline.ensure_room_server",
+                    "server.hub.new_timeline.ensure_timeline_server",
                     return_value=(True, 41000, ""),
                 ),
             ):
@@ -156,7 +156,7 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
                     None,
                     {
                         "hub": hub,
-                        "format_room_url_fn": (
+                        "format_timeline_url_fn": (
                             lambda port, _path: f"/{port}/"
                         ),
                     },
@@ -170,12 +170,12 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
                 {
                     "ok": True,
                     "timeline": expected_name,
-                    "room_url": "/41000/",
+                    "timeline_url": "/41000/",
                 },
             )
             self.assertIn(expected_name, payload["notice"])
-            open_room.assert_called_once_with(
-                timeline_label=expected_name,
+            create_session.assert_called_once_with(
+                timeline_name=expected_name,
                 workspace=str(workspace.resolve()),
                 agents=[],
             )

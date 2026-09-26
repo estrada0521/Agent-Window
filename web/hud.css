@@ -47,7 +47,7 @@
     @keyframes hud-text-in {
       from { opacity: 0; }
     }
-    #roomHud {
+    #timelineHud {
       left: calc((100vw - var(--desktop-right-panel-reserved-width, 0px)) / 2);
       --hud-fg: var(--fg);
       --hud-weight: var(--body-weight);

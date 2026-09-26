@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en" data-theme="__THEME__" data-desktop-timeline="1">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="__DARK_BG__">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="__APP_DISPLAY_NAME__">
+  <link rel="manifest" href="__TIMELINE_MANIFEST_URL__">
+  <link rel="icon" type="image/png" sizes="192x192" href="__TIMELINE_PWA_ICON_192_URL__">
+  <link rel="apple-touch-icon" href="__TIMELINE_APPLE_TOUCH_ICON_URL__">
+  <title>__TIMELINE_DOCUMENT_TITLE__</title>
+  <script>
+    (() => {
+      try {
+        if (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || "")) {
+          const url = new URL(window.location.href);
+          if (url.searchParams.get("view") !== "mobile") {
+            url.searchParams.set("view", "mobile");
+            window.location.replace(url.toString());
+          }
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/marked@18.0.12/lib/marked.umd.min.js"></script>
+  <script>
+    (() => {
+      const params = new URLSearchParams(window.location.search || "");
+      const initialTheme = params.get("theme");
+      if (initialTheme === "light" || initialTheme === "dark") {
+        document.documentElement.dataset.theme = initialTheme;
+      }
+      const initialThemeDesktop = params.get("theme_desktop");
+      if (["system", "light", "dark"].includes(initialThemeDesktop)) {
+        document.documentElement.dataset.themeDesktop = initialThemeDesktop;
+      }
+      if (!initialTheme || initialThemeDesktop === "system") {
+        document.documentElement.dataset.theme =
+          window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      if (!initialThemeDesktop || initialThemeDesktop === "system") {
+        try {
+          window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+            document.documentElement.dataset.theme = event.matches ? "dark" : "light";
+          });
+        } catch (_) {}
+      }
+      const inHubShell = params.get("hub_shell") === "1";
+      if (inHubShell) {
+        document.documentElement.dataset.hubShell = "1";
+        document.documentElement.dataset.hubIframeTimeline = "1";
+      }
+    })();
+  </script>
+__TIMELINE_MAIN_STYLE_BLOCK__  <style id="timelineFontSettingsStyle">
+__TIMELINE_FONT_SETTINGS_INLINE_STYLE__
+  </style>
+</head>
+<body>
+  <header class="timeline-band">
+__INCLUDE:controls.html__
+  </header>
+  <section class="shell">
+    <main id="messages"></main>
+    <button type="button" id="scrollToBottomBtn" title="Scroll to bottom" aria-label="Scroll to bottom"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+__TIMELINE_COMPOSER_HTML__  </section>
+  <aside id="desktopRightPanel" class="desktop-right-panel" hidden>
+    <div id="desktopRightPanelResizer" class="desktop-right-panel-resizer" aria-hidden="true"></div>
+    <div class="desktop-right-panel-card">
+      <div class="dp-split-panel" id="dpSplitPanel">
+        <div id="dpGitContent" class="dp-split-pane dp-split-pane-git active"></div>
+        <div id="dpSplitDivider" class="dp-split-divider" aria-hidden="true"></div>
+        <div id="dpRepoContent" class="dp-split-pane dp-split-pane-repo active"></div>
+      </div>
+    </div>
+  </aside>
+  <aside id="gitPinnedSummaryAside" class="git-pinned-summary-aside" hidden aria-label="Pinned Git Summary">
+    <div id="gitPinnedSummaryInner" class="git-summary-wrap"></div>
+  </aside>
+<div id="timelineHud" class="hud" role="status" aria-live="polite"></div>
+__TIMELINE_APP_SCRIPT_BLOCK____TIMELINE_SERVICE_WORKER_HTML__</body>
+</html>

@@ -4,12 +4,12 @@
     const _deskUnreadTimelines = new Set();
     let _deskTimelinesRequestSeq = 0;
     let _deskTimelinesRenderedOnce = false;
-    let _deskSelectedTimelineLabel = "";
-    let _deskRoomFrameLoadedUrl = "";
+    let _deskSelectedTimelineName = "";
+    let _deskTimelineFrameLoadedUrl = "";
     let _deskOpenToken = 0;
     let _deskSidebarWidthAtDefaultTextSize = DESK_DEFAULT_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE;
     let _deskOpenSwipeRow = null;
-    let _deskContextTimelineLabel = "";
+    let _deskContextTimelineName = "";
     let _deskTimelineRename = null;
     let _deskNewTimelineStarting = false;
 
@@ -31,9 +31,9 @@
         _deskPanelToggle.setAttribute("aria-pressed", _deskPanelActiveMode ? "true" : "false");
       }
     }
-    function setDeskRoomLoading(active) {
-      if (!_deskRoomShell) return;
-      _deskRoomShell.classList.toggle("loading", !!active);
+    function setDeskTimelineLoading(active) {
+      if (!_deskTimelineShell) return;
+      _deskTimelineShell.classList.toggle("loading", !!active);
     }
     function triggerDeskHubReload() {
       if (!_deskReloadBtn || _deskReloadBtn.classList.contains("restarting")) return;
@@ -42,8 +42,8 @@
       beginHubRestart(_deskReloadBtn);
     }
     function failDeskOpen(message) {
-      clearDeskRoomFrame();
-      setResidentStatus("room-open", message);
+      clearDeskTimelineFrame();
+      setResidentStatus("timeline-open", message);
       showDeskSidebarList({ open: true });
     }
 
@@ -67,11 +67,11 @@
       if (!copied) throw new Error("Clipboard is unavailable.");
     }
 
-    function openDeskRoomHeaderMenu() {
-      const frameWin = _deskRoomFrame?.contentWindow;
+    function openDeskTimelineHeaderMenu() {
+      const frameWin = _deskTimelineFrame?.contentWindow;
       if (!frameWin) return;
-      const frameRect = _deskRoomFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
-      const btnRect = _deskRoomMenuBtn?.getBoundingClientRect?.() || null;
+      const frameRect = _deskTimelineFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
+      const btnRect = _deskTimelineMenuBtn?.getBoundingClientRect?.() || null;
       const anchor = btnRect
         ? {
             left: Number(btnRect.left || 0) - Number(frameRect.left || 0),
@@ -82,15 +82,15 @@
             height: Number(btnRect.height || 24),
           }
         : null;
-      frameWin.postMessage({ type: "open-room-header-menu", anchor }, "*");
+      frameWin.postMessage({ type: "open-timeline-header-menu", anchor }, "*");
     }
     function sendDeskPanelCommand(mode) {
-      const frameWin = _deskRoomFrame?.contentWindow;
+      const frameWin = _deskTimelineFrame?.contentWindow;
       if (!frameWin) return;
       frameWin.postMessage({ type: "desktop-panel", mode: String(mode || "") }, "*");
     }
-    function sendDeskRoomAction(action) {
-      const frameWin = _deskRoomFrame?.contentWindow;
+    function sendDeskTimelineAction(action) {
+      const frameWin = _deskTimelineFrame?.contentWindow;
       if (!frameWin) return;
       frameWin.postMessage({
         type: "native-menu-action",
@@ -207,17 +207,17 @@
     }
 
     const deskDtHasFiles = (dt) => !!(dt && Array.from(dt.types || []).includes("Files"));
-    const isDeskRoomFrameDropTarget = (target) => target === _deskRoomFrame;
-    const postDeskRoomFrameMessage = (payload) => {
+    const isDeskTimelineFrameDropTarget = (target) => target === _deskTimelineFrame;
+    const postDeskTimelineFrameMessage = (payload) => {
       try {
-        _deskRoomFrame?.contentWindow?.postMessage(payload, "*");
+        _deskTimelineFrame?.contentWindow?.postMessage(payload, "*");
         return true;
       } catch (_) {
         return false;
       }
     };
     const setDeskAttachDragActive = (active) => {
-      postDeskRoomFrameMessage({ type: "parent-attach-drag", active: !!active });
+      postDeskTimelineFrameMessage({ type: "parent-attach-drag", active: !!active });
     };
     let deskAttachDragClearTimer = 0;
     const showDeskAttachDrag = () => {
@@ -244,7 +244,7 @@
     const forwardDeskDroppedFiles = (files) => {
       const dropped = Array.from(files || []).filter((file) => file && typeof file.name === "string");
       if (!dropped.length) return false;
-      return postDeskRoomFrameMessage({ type: "parent-drop-files", files: dropped });
+      return postDeskTimelineFrameMessage({ type: "parent-drop-files", files: dropped });
     };
     function persistDeskSelection(name) {
       if (name) localStorage.setItem(DESK_SELECTED_KEY, name);
@@ -263,13 +263,13 @@
       return null;
     }
 
-    function buildTimelineOpenHref(timelineLabel, _archived) {
-      return `/open-timeline?timeline=${encodeURIComponent(timelineLabel)}`;
+    function buildTimelineOpenHref(timelineName, _archived) {
+      return `/open-timeline?timeline=${encodeURIComponent(timelineName)}`;
     }
 
     function switchToDeskActiveTimeline(index) {
       const target = (_hubTimelinesCache.active || [])[index];
-      if (!target || !target.name || target.name === _deskSelectedTimelineLabel) return;
+      if (!target || !target.name || target.name === _deskSelectedTimelineName) return;
       openTimelineFrame(buildTimelineOpenHref(target.name, false), target.name);
     }
 
@@ -277,7 +277,7 @@
       try { return window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (_) { return true; }
     }
 
-    function deskRoomThemeFromDesktop(themeDesktop) {
+    function deskTimelineThemeFromDesktop(themeDesktop) {
       const value = String(
         themeDesktop || document.documentElement.dataset.themeDesktop || document.documentElement.dataset.theme || "dark"
       ).trim().toLowerCase();
@@ -285,11 +285,11 @@
       return value === "light" ? "light" : "dark";
     }
 
-    function applyDeskRoomTheme(themeDesktop) {
+    function applyDeskTimelineTheme(themeDesktop) {
       const resolvedThemeDesktop = themeDesktop || document.documentElement.dataset.themeDesktop || document.documentElement.dataset.theme || "dark";
-      const roomTheme = deskRoomThemeFromDesktop(resolvedThemeDesktop);
-      _deskRoomFrame?.contentWindow?.postMessage(
-        { type: "hub-theme-changed", theme: roomTheme, roomTheme, themeDesktop: resolvedThemeDesktop },
+      const timelineTheme = deskTimelineThemeFromDesktop(resolvedThemeDesktop);
+      _deskTimelineFrame?.contentWindow?.postMessage(
+        { type: "hub-theme-changed", theme: timelineTheme, timelineTheme, themeDesktop: resolvedThemeDesktop },
         "*"
       );
     }
@@ -303,7 +303,7 @@
         : (themeDesktop === "light" ? "light" : "dark");
       document.documentElement.dataset.theme = hubTheme;
       document.documentElement.dataset.themeDesktop = themeDesktop;
-      applyDeskRoomTheme(themeDesktop);
+      applyDeskTimelineTheme(themeDesktop);
     }
 
     if ((document.documentElement.dataset.themeDesktop || "").trim().toLowerCase() === "system") {
@@ -317,14 +317,14 @@
       });
     } catch (_) {}
 
-    function buildDeskRoomFrameUrl(roomUrl) {
-      const raw = String(roomUrl || "").trim();
+    function buildDeskTimelineFrameUrl(timelineUrl) {
+      const raw = String(timelineUrl || "").trim();
       if (!raw) return "";
       try {
         const parsed = new URL(raw, window.location.href);
         parsed.searchParams.set("hub_shell", "1");
         const themeDesktop = document.documentElement.dataset.themeDesktop || _deskAppearance.themeDefault;
-        parsed.searchParams.set("theme", deskRoomThemeFromDesktop(themeDesktop));
+        parsed.searchParams.set("theme", deskTimelineThemeFromDesktop(themeDesktop));
         parsed.searchParams.set("theme_desktop", themeDesktop);
         parsed.searchParams.set("text_size", String(currentDeskTextSizePx()));
         if (parsed.origin === window.location.origin) {
@@ -338,14 +338,14 @@
       }
     }
 
-    function cacheDeskRoomUrl(cacheKey, roomUrl) {
-      hubRoomUrls.write(cacheKey, roomUrl);
+    function cacheDeskTimelineUrl(cacheKey, timelineUrl) {
+      hubTimelineUrls.write(cacheKey, timelineUrl);
     }
 
-    function syncDeskRoomShellState() {
-      if (_deskRoomFrame) {
-        if (isDeskTimelineSidebarOpen()) _deskRoomFrame.dataset.hubSidebarOpen = "1";
-        else delete _deskRoomFrame.dataset.hubSidebarOpen;
+    function syncDeskTimelineShellState() {
+      if (_deskTimelineFrame) {
+        if (isDeskTimelineSidebarOpen()) _deskTimelineFrame.dataset.hubSidebarOpen = "1";
+        else delete _deskTimelineFrame.dataset.hubSidebarOpen;
       }
     }
 
@@ -370,7 +370,7 @@
         _deskAppSidebarToggle.classList.toggle("is-active", isDeskTimelineSidebarOpen());
       }
       syncDeskSidebarResizerVisibility();
-      syncDeskRoomShellState();
+      syncDeskTimelineShellState();
     }
 
     function isDeskSidebarOpen() {
@@ -471,7 +471,7 @@
           const row = event.target.closest(".desk-timeline-row");
           if (!row) return;
           const href = row.dataset.openHref;
-          const name = row.dataset.timelineLabel || "";
+          const name = row.dataset.timelineName || "";
           if (href) { dismiss(); openTimelineFrame(href, name); }
         });
         hoverPopover.appendChild(listEl);

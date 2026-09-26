@@ -8,11 +8,11 @@ from pathlib import Path
 
 LOG_FILENAME = ".log.jsonl"
 META_FILENAME = ".meta"
-LABEL_MAX_LENGTH = 64
+TIMELINE_NAME_MAX_LENGTH = 64
 
 
-def sanitize_label(raw: str) -> str:
-    return re.sub(r"[^a-zA-Z0-9_.\-]", "-", str(raw or "")).strip(".-")[:LABEL_MAX_LENGTH]
+def sanitize_timeline_name(raw: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9_.\-]", "-", str(raw or "")).strip(".-")[:TIMELINE_NAME_MAX_LENGTH]
 
 
 def agent_window_root() -> Path:
@@ -23,16 +23,16 @@ def agent_window_log_root() -> Path:
     return agent_window_root() / "log"
 
 
-def log_dir(label: str) -> Path:
-    return agent_window_log_root() / str(label or "").strip()
+def log_dir(timeline_name: str) -> Path:
+    return agent_window_log_root() / str(timeline_name or "").strip()
 
 
-def log_jsonl_path(label: str) -> Path:
-    return log_dir(label) / LOG_FILENAME
+def log_jsonl_path(timeline_name: str) -> Path:
+    return log_dir(timeline_name) / LOG_FILENAME
 
 
-def log_meta_path(label: str) -> Path:
-    return log_dir(label) / META_FILENAME
+def log_meta_path(timeline_name: str) -> Path:
+    return log_dir(timeline_name) / META_FILENAME
 
 
 def workspace_agent_window_dir(workspace: Path | str) -> Path:
@@ -43,7 +43,7 @@ def workspace_log_link_path(workspace: Path | str) -> Path:
     return workspace_agent_window_dir(workspace) / LOG_FILENAME
 
 
-def ensure_workspace_log_link(label: str, workspace: Path | str) -> None:
+def ensure_workspace_log_link(timeline_name: str, workspace: Path | str) -> None:
     workspace_path = Path(workspace).expanduser()
     if not workspace_path.is_dir():
         raise FileNotFoundError(f"workspace is not a directory: {workspace_path}")
@@ -52,7 +52,7 @@ def ensure_workspace_log_link(label: str, workspace: Path | str) -> None:
     gitignore = aw_dir / ".gitignore"
     if not gitignore.exists():
         gitignore.write_text("*\n", encoding="utf-8")
-    mirrors = ((log_jsonl_path(label), workspace_log_link_path(workspace_path)),)
+    mirrors = ((log_jsonl_path(timeline_name), workspace_log_link_path(workspace_path)),)
     for target, link_path in mirrors:
         link_path.parent.mkdir(parents=True, exist_ok=True)
         if link_path.is_symlink():
@@ -68,7 +68,7 @@ def workspace_upload_dir(workspace: Path | str) -> Path:
     return workspace_agent_window_dir(workspace) / "uploads"
 
 
-def workspace_room_port(workspace: Path | str) -> int:
+def workspace_timeline_port(workspace: Path | str) -> int:
     canonical_workspace = str(Path(workspace).expanduser().resolve())
     digest = int(hashlib.md5(canonical_workspace.encode()).hexdigest(), 16)
     return 30000 + (digest % 19000)

@@ -22,12 +22,12 @@ def read_log_meta_file(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def read_log_meta(label: str) -> dict:
-    return read_log_meta_file(log_meta_path(label))
+def read_log_meta(timeline_name: str) -> dict:
+    return read_log_meta_file(log_meta_path(timeline_name))
 
 
-def _existing_log_meta(label: str) -> tuple[Path, dict]:
-    name = str(label or "").strip()
+def _existing_log_meta(timeline_name: str) -> tuple[Path, dict]:
+    name = str(timeline_name or "").strip()
     path = log_meta_path(name)
     try:
         return path, read_log_meta_file(path)
@@ -37,9 +37,9 @@ def _existing_log_meta(label: str) -> tuple[Path, dict]:
 
 def log_workspace_claims(
     *,
-    exclude_label: str = "",
+    exclude_timeline_name: str = "",
 ) -> dict[str, tuple[str, str]]:
-    exclude = str(exclude_label or "").strip()
+    exclude = str(exclude_timeline_name or "").strip()
     root = agent_window_log_root()
     claims: dict[str, tuple[str, str]] = {}
     if not root.is_dir():
@@ -52,27 +52,27 @@ def log_workspace_claims(
     return claims
 
 
-def find_label_for_workspace(workspace: Path | str, *, exclude_label: str = "") -> str | None:
+def find_timeline_name_for_workspace(workspace: Path | str, *, exclude_timeline_name: str = "") -> str | None:
     target = str(Path(workspace).expanduser().resolve())
-    claim = log_workspace_claims(exclude_label=exclude_label).get(target)
+    claim = log_workspace_claims(exclude_timeline_name=exclude_timeline_name).get(target)
     return claim[0] if claim else None
 
 
-def log_workspace(label: str) -> str:
-    return _existing_log_meta(label)[1]["workspace"]
+def log_workspace(timeline_name: str) -> str:
+    return _existing_log_meta(timeline_name)[1]["workspace"]
 
 
-def log_meta_agents(label: str) -> list[str]:
-    return _existing_log_meta(label)[1]["agents"]
+def log_meta_agents(timeline_name: str) -> list[str]:
+    return _existing_log_meta(timeline_name)[1]["agents"]
 
 
-def set_log_workspace(label: str, workspace: str) -> None:
-    name = str(label or "").strip()
+def set_log_workspace(timeline_name: str, workspace: str) -> None:
+    name = str(timeline_name or "").strip()
     ws = str(workspace or "").strip()
     if not name or not ws:
-        raise LogMetaError("label and workspace are required")
+        raise LogMetaError("timeline name and workspace are required")
     path, raw = _existing_log_meta(name)
-    owner = find_label_for_workspace(ws, exclude_label=name)
+    owner = find_timeline_name_for_workspace(ws, exclude_timeline_name=name)
     if owner:
         raise LogMetaError(f"A timeline already exists for this workspace: {owner}")
     old_workspace = Path(raw["workspace"]).expanduser().resolve()
@@ -92,31 +92,31 @@ def rename_log(old_name: str, new_name: str) -> None:
         link.symlink_to(log_jsonl_path(new_name))
 
 
-def reset_log_agents(label: str) -> None:
-    name = str(label or "").strip()
+def reset_log_agents(timeline_name: str) -> None:
+    name = str(timeline_name or "").strip()
     if not name:
-        raise LogMetaError("label is required")
+        raise LogMetaError("timeline name is required")
     path, raw = _existing_log_meta(name)
     raw["agents"] = []
     write_json_atomically(path, raw, indent=2)
 
 
 def write_log_meta_file(
-    label: str,
+    timeline_name: str,
     workspace: str,
     agents: list[str],
 ) -> None:
     write_json_atomically(
-        log_meta_path(label),
+        log_meta_path(timeline_name),
         {"workspace": workspace, "agents": agents},
         indent=2,
     )
 
 
-def create_log_dir(label: str, workspace: str, agents: list[str]) -> None:
-    log_dir(label).mkdir(parents=True)
-    write_log_meta_file(label, workspace, agents)
-    log_jsonl_path(label).touch()
+def create_log_dir(timeline_name: str, workspace: str, agents: list[str]) -> None:
+    log_dir(timeline_name).mkdir(parents=True)
+    write_log_meta_file(timeline_name, workspace, agents)
+    log_jsonl_path(timeline_name).touch()
 
 
 def write_json_atomically(path: Path, data: dict, *, indent: int | None = None) -> None:

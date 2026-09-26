@@ -5,9 +5,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SHEETS = (ROOT / "web/room/mobile/sheets.js").read_text()
-RENDER = (ROOT / "web/room/transcript-render.js").read_text()
-SHELL = (ROOT / "web/room/mobile/shell.html").read_text()
+SHEETS = (ROOT / "web/timeline/mobile/sheets.js").read_text()
+RENDER = (ROOT / "web/timeline/transcript-render.js").read_text()
+SHELL = (ROOT / "web/timeline/mobile/shell.html").read_text()
 
 
 def _between(text: str, start: str, end: str) -> str:

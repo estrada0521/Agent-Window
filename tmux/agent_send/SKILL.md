@@ -14,7 +14,7 @@ Use this skill only for agent-to-agent communication in an Agent Window timeline
 printf '%s' '<message body>' | agent-send <target>
 ```
 
-`agent-send` always targets the current Agent Window room; it cannot send to a different timeline.
+`agent-send` always targets the current Agent Window session; it cannot send to a different timeline.
 
 ## Rules
 
@@ -48,7 +48,7 @@ This applies to every agent type, such as `claude-1`, `claude-2`, `gemini-1`, or
 printf '%s' 'Please review this together.' | agent-send codex-1,codex-2
 ```
 
-Use the exact instance names shown in the current room's topology:
+Use the exact instance names shown in the current session's topology:
 
 ```bash
 agent-send --context

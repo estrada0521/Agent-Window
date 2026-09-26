@@ -11,8 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class MobileHubReadyTimeoutTests(unittest.TestCase):
     def test_cross_origin_iframe_detection_does_not_use_frame_element(self) -> None:
-        app = (ROOT / "web/room/mobile/app.js").read_text()
-        self.assertIn("const isEmbeddedHubRoom = window.parent !== window;", app)
+        app = (ROOT / "web/timeline/mobile/app.js").read_text()
+        self.assertIn("const isEmbeddedHubTimeline = window.parent !== window;", app)
         self.assertNotIn("window.frameElement", app)
 
     def test_one_deadline_controls_success_timeout_and_explicit_error(self) -> None:
@@ -26,7 +26,7 @@ const assert = require("node:assert/strict");
 const HUB_READY_TIMEOUT_MS = 5000;
 const HUB_LAUNCH_SHELL_PARAM = "launch_shell";
 let _hubLaunchShellPending = false;
-let _awaitingRoomRenderReady = false;
+let _awaitingTimelineRenderReady = false;
 let _hubReadyTimeoutTimer = 0;
 const timerCalls = [];
 const cleared = [];
@@ -61,24 +61,24 @@ const window = {{
 }};
 {functions}
 
-startRoomRenderWait();
-startRoomRenderWait();
+startTimelineRenderWait();
+startTimelineRenderWait();
 assert.equal(timerCalls.length, 1);
 assert.equal(timerCalls[0].ms, 5000);
 _hubLaunchShellPending = true;
 releaseHubLaunchShellAfterRender();
 assert.equal(_hubReadyTimeoutTimer, 1);
-finishRoomRenderWait();
+finishTimelineRenderWait();
 assert.equal(_hubReadyTimeoutTimer, 0);
 assert.equal(_launchShell.hidden, true);
 
-startRoomRenderWait();
+startTimelineRenderWait();
 assert.equal(timerCalls.length, 2);
 timerCalls[1].fn();
 assert.equal(_launchShell.hidden, true);
-assert.equal(_awaitingRoomRenderReady, false);
+assert.equal(_awaitingTimelineRenderReady, false);
 
-startRoomRenderWait();
+startTimelineRenderWait();
 failHubReadyWait("messages unavailable");
 assert.equal(_launchShell.hidden, true);
 assert.equal(_hubReadyTimeoutTimer, 0);

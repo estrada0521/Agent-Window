@@ -14,10 +14,10 @@
           const href = row?.dataset.openHref || "";
           if (!row || !href) continue;
           items.push({
-            label: (row.querySelector(".desk-row-name")?.textContent || row.dataset.timelineLabel || "").trim(),
+            label: (row.querySelector(".desk-row-name")?.textContent || row.dataset.timelineName || "").trim(),
             current: row.classList.contains("is-selected"),
             href,
-            name: row.dataset.timelineLabel || "",
+            name: row.dataset.timelineName || "",
           });
         }
       }
@@ -43,7 +43,7 @@
     let _deskGitChangesOpen = false;
     function requestDeskGitChanges(timeoutMs = 4000) {
       return new Promise((resolve) => {
-        const frameWin = _deskRoomFrame?.contentWindow;
+        const frameWin = _deskTimelineFrame?.contentWindow;
         if (!frameWin) { resolve(null); return; }
         let settled = false;
         const done = (value) => {
@@ -124,41 +124,41 @@
       if (detail.action === "gitChange") {
         const item = _deskGitChangesItems[Number(detail.mode)];
         if (item && item.path) {
-          _deskRoomFrame?.contentWindow?.postMessage(
+          _deskTimelineFrame?.contentWindow?.postMessage(
             { type: "desk-open-git-file", path: item.path, oldPath: item.oldPath, untracked: !!item.untracked }, "*",
           );
         }
         return;
       }
       if (detail.action === "renameTimeline") {
-        if (_deskContextTimelineLabel) beginDeskTimelineRename(_deskContextTimelineLabel);
+        if (_deskContextTimelineName) beginDeskTimelineRename(_deskContextTimelineName);
         return;
       }
       if (detail.action === "copyWorkspacePath") {
-        if (_deskContextTimelineLabel) void copyDeskTimelineWorkspace(_deskContextTimelineLabel);
+        if (_deskContextTimelineName) void copyDeskTimelineWorkspace(_deskContextTimelineName);
         return;
       }
       if (detail.action === "changeWorkspace") {
-        if (_deskContextTimelineLabel) void changeDeskTimelineWorkspace(_deskContextTimelineLabel);
+        if (_deskContextTimelineName) void changeDeskTimelineWorkspace(_deskContextTimelineName);
         return;
       }
       if (detail.action === "resetAgents") {
-        if (_deskContextTimelineLabel) void resetDeskTimelineAgents(_deskContextTimelineLabel);
+        if (_deskContextTimelineName) void resetDeskTimelineAgents(_deskContextTimelineName);
         return;
       }
       if (detail.action === "archiveTimeline") {
-        if (_deskContextTimelineLabel) void runDeskContextAction(_deskContextTimelineLabel, "kill");
+        if (_deskContextTimelineName) void runDeskContextAction(_deskContextTimelineName, "kill");
         return;
       }
       if (detail.action === "deleteTimeline") {
-        if (_deskContextTimelineLabel) void runDeskContextAction(_deskContextTimelineLabel, "delete-archived");
+        if (_deskContextTimelineName) void runDeskContextAction(_deskContextTimelineName, "delete-archived");
         return;
       }
       if (detail.action === "reviveTimeline") {
-        if (_deskContextTimelineLabel) {
+        if (_deskContextTimelineName) {
           openTimelineFrame(
-            `/revive-room?timeline=${encodeURIComponent(_deskContextTimelineLabel)}`,
-            _deskContextTimelineLabel,
+            `/revive-timeline?timeline=${encodeURIComponent(_deskContextTimelineName)}`,
+            _deskContextTimelineName,
           );
         }
         return;

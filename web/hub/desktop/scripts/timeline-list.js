@@ -8,11 +8,11 @@
     };
 
     function renderDeskTimelineRow(timeline, archived) {
-      const timelineLabel = String(timeline.name);
+      const timelineName = String(timeline.name);
       const archivedClass = archived ? " archived" : "";
-      const selectedClass = _deskSelectedTimelineLabel === timelineLabel ? " is-selected" : "";
-      const isSelected = _deskSelectedTimelineLabel === timelineLabel;
-      const unreadClass = !isSelected && _deskUnreadTimelines.has(timelineLabel) ? " is-unread" : "";
+      const selectedClass = _deskSelectedTimelineName === timelineName ? " is-selected" : "";
+      const isSelected = _deskSelectedTimelineName === timelineName;
+      const unreadClass = !isSelected && _deskUnreadTimelines.has(timelineName) ? " is-unread" : "";
       const swipeActionLabel = archived ? "Revive" : "Archive";
       const swipeActionRoute = archived ? "revive" : "kill";
       const swipeActionTitle = DESK_TIMELINE_ACTION_TITLE[swipeActionRoute];
@@ -23,24 +23,24 @@
       const previewHtml = previewText
         ? `<div class="desk-row-preview">${esc(previewDisplay)}</div>`
         : "";
-      return `<div class="desk-swipe-row" data-timeline-label="${esc(timelineLabel)}">` +
+      return `<div class="desk-swipe-row" data-timeline-name="${esc(timelineName)}">` +
         `<div class="desk-swipe-action-rail">` +
-          `<button type="button" class="desk-swipe-action-btn" data-desk-swipe-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + timelineLabel)}" title="${esc(swipeActionTitle)}">` +
+          `<button type="button" class="desk-swipe-action-btn" data-desk-swipe-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + timelineName)}" title="${esc(swipeActionTitle)}">` +
             actionSvg +
             `<span>${esc(swipeActionLabel)}</span>` +
           `</button>` +
         `</div>` +
         `<div class="desk-swipe-track">` +
-          `<div class="desk-timeline-row desk-action-timeline-row${archivedClass}${selectedClass}${unreadClass}" data-timeline-label="${esc(timelineLabel)}" data-open-href="${buildTimelineOpenHref(timelineLabel, archived)}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
+          `<div class="desk-timeline-row desk-action-timeline-row${archivedClass}${selectedClass}${unreadClass}" data-timeline-name="${esc(timelineName)}" data-open-href="${buildTimelineOpenHref(timelineName, archived)}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
             `<div class="desk-row-head">` +
                 `<div class="desk-row-main">` +
                   `<span class="desk-row-bullet" aria-hidden="true"><i></i></span>` +
                   `<div class="desk-row-stack">` +
-                    `<div class="desk-row-name">${esc(timelineLabel)}</div>` +
+                    `<div class="desk-row-name">${esc(timelineName)}</div>` +
                     previewHtml +
                   `</div>` +
                 `</div>` +
-                `<button type="button" class="desk-row-hover-action" data-desk-hover-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + timelineLabel)}" title="${esc(swipeActionTitle)}">` +
+                `<button type="button" class="desk-row-hover-action" data-desk-hover-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + timelineName)}" title="${esc(swipeActionTitle)}">` +
                   actionSvg +
                 `</button>` +
               `</div>` +
@@ -54,8 +54,8 @@
       for (const wrap of _deskTimelineList.querySelectorAll(".desk-swipe-row")) {
         const row = wrap.querySelector(".desk-timeline-row");
         if (!row) continue;
-        const name = row.dataset.timelineLabel || "";
-        const isSelected = name === _deskSelectedTimelineLabel;
+        const name = row.dataset.timelineName || "";
+        const isSelected = name === _deskSelectedTimelineName;
         row.classList.toggle("is-selected", isSelected);
         row.classList.toggle("is-unread", !isSelected && _deskUnreadTimelines.has(name));
         row.setAttribute("aria-current", isSelected ? "page" : "false");
@@ -72,34 +72,34 @@
       if (_deskOpenSwipeRow === wrapper) _deskOpenSwipeRow = null;
     }
 
-    async function runDeskContextAction(timelineLabel, kind) {
-      if (!timelineLabel || !kind) return;
+    async function runDeskContextAction(timelineName, kind) {
+      if (!timelineName || !kind) return;
       setStatus("");
       const isDelete = kind === "delete-archived";
       const confirmed = isNativeApp()
         ? true
         : (isDelete
-          ? confirm("Delete archived logs for " + timelineLabel + "? This cannot be undone.")
-          : confirm("Archive " + timelineLabel + "?"));
+          ? confirm("Delete archived logs for " + timelineName + "? This cannot be undone.")
+          : confirm("Archive " + timelineName + "?"));
       if (!confirmed) return;
-      const route = isDelete ? "/delete-archived-timeline" : "/archive-room";
-      const isSelected = _deskSelectedTimelineLabel === timelineLabel;
+      const route = isDelete ? "/delete-archived-timeline" : "/archive-timeline";
+      const isSelected = _deskSelectedTimelineName === timelineName;
       try {
         const response = await fetch(
-          `${route}?timeline=${encodeURIComponent(timelineLabel)}&format=json&ts=${Date.now()}`,
+          `${route}?timeline=${encodeURIComponent(timelineName)}&format=json&ts=${Date.now()}`,
           { cache: "no-store" }
         );
         const data = await response.json();
         if (!response.ok || !data.ok) {
           throw new Error(data.error || (isDelete ? "Failed to delete timeline." : "Failed to archive timeline."));
         }
-        const activeHref = buildTimelineOpenHref(timelineLabel, false);
-        const archivedHref = buildTimelineOpenHref(timelineLabel, true);
-        hubRoomUrls.forget(activeHref);
-        hubRoomUrls.forget(archivedHref);
+        const activeHref = buildTimelineOpenHref(timelineName, false);
+        const archivedHref = buildTimelineOpenHref(timelineName, true);
+        hubTimelineUrls.forget(activeHref);
+        hubTimelineUrls.forget(archivedHref);
         if (isSelected) {
           _deskOpenToken += 1;
-          _deskSelectedTimelineLabel = "";
+          _deskSelectedTimelineName = "";
           updateDeskWindowTitle("");
           persistDeskSelection("");
         }
@@ -129,11 +129,11 @@
           throw new Error(data.error || "Failed to rename timeline.");
         }
         const renamed = String(data.new_name || newName);
-        hubRoomUrls.forget(buildTimelineOpenHref(oldName, false));
-        hubRoomUrls.forget(buildTimelineOpenHref(oldName, true));
+        hubTimelineUrls.forget(buildTimelineOpenHref(oldName, false));
+        hubTimelineUrls.forget(buildTimelineOpenHref(oldName, true));
         if (_deskUnreadTimelines.delete(oldName)) _deskUnreadTimelines.add(renamed);
-        if (_deskSelectedTimelineLabel === oldName) {
-          _deskSelectedTimelineLabel = renamed;
+        if (_deskSelectedTimelineName === oldName) {
+          _deskSelectedTimelineName = renamed;
           updateDeskWindowTitle(renamed);
           persistDeskSelection(renamed);
         }
@@ -144,8 +144,8 @@
       }
     }
 
-    async function changeDeskTimelineWorkspace(timelineLabel) {
-      if (!timelineLabel) return;
+    async function changeDeskTimelineWorkspace(timelineName) {
+      if (!timelineName) return;
       setStatus("");
       let picked;
       try {
@@ -166,7 +166,7 @@
         const res = await fetch("/change-timeline-workspace", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-          body: new URLSearchParams({ timeline: timelineLabel, workspace: picked.path }).toString(),
+          body: new URLSearchParams({ timeline: timelineName, workspace: picked.path }).toString(),
           cache: "no-store",
         });
         const data = await res.json().catch(() => ({}));
@@ -175,15 +175,15 @@
         setStatus(err?.message || "Failed to change workspace.");
         return;
       }
-      hubRoomUrls.forget(buildTimelineOpenHref(timelineLabel, true));
+      hubTimelineUrls.forget(buildTimelineOpenHref(timelineName, true));
       setStatus("Workspace updated");
     }
 
-    async function copyDeskTimelineWorkspace(timelineLabel) {
-      if (!timelineLabel) return;
+    async function copyDeskTimelineWorkspace(timelineName) {
+      if (!timelineName) return;
       setStatus("");
       try {
-        const res = await fetch(`/timeline-workspace?timeline=${encodeURIComponent(timelineLabel)}`, { cache: "no-store" });
+        const res = await fetch(`/timeline-workspace?timeline=${encodeURIComponent(timelineName)}`, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
         const workspace = String(data.workspace || "").trim();
         if (!res.ok || !data.ok || !workspace) {
@@ -197,14 +197,14 @@
       setStatus("Copied path");
     }
 
-    async function resetDeskTimelineAgents(timelineLabel) {
-      if (!timelineLabel) return;
+    async function resetDeskTimelineAgents(timelineName) {
+      if (!timelineName) return;
       setStatus("");
       try {
         const res = await fetch("/reset-timeline-agents", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-          body: new URLSearchParams({ timeline: timelineLabel }).toString(),
+          body: new URLSearchParams({ timeline: timelineName }).toString(),
           cache: "no-store",
         });
         const data = await res.json().catch(() => ({}));
@@ -213,25 +213,25 @@
         setStatus(err?.message || "Failed to reset agents.");
         return;
       }
-      if (_deskSelectedTimelineLabel === timelineLabel) {
-        postDeskRoomFrameMessage({ type: "refresh-room-state" });
+      if (_deskSelectedTimelineName === timelineName) {
+        postDeskTimelineFrameMessage({ type: "refresh-timeline-state" });
       }
       await refreshHubTimelines(true, { skipRestore: true });
       setStatus("Agents reset");
     }
 
-    function beginDeskTimelineRename(timelineLabel) {
+    function beginDeskTimelineRename(timelineName) {
       if (_deskTimelineRename) _deskTimelineRename.cancel();
       const row = Array.from(_deskTimelineList?.querySelectorAll(".desk-action-timeline-row") || [])
-        .find((candidate) => candidate.dataset.timelineLabel === timelineLabel);
+        .find((candidate) => candidate.dataset.timelineName === timelineName);
       const nameEl = row?.querySelector(".desk-row-name");
       if (!row || !nameEl) return;
 
       const input = document.createElement("input");
       input.type = "text";
       input.className = "desk-row-rename-input";
-      input.value = timelineLabel;
-      input.setAttribute("aria-label", `Rename ${timelineLabel}`);
+      input.value = timelineName;
+      input.setAttribute("aria-label", `Rename ${timelineName}`);
       nameEl.replaceWith(input);
       row.classList.add("is-renaming");
 
@@ -246,7 +246,7 @@
         if (_deskTimelineRename?.input !== input || settling) return;
         settling = true;
         input.disabled = true;
-        const renamed = await renameDeskTimeline(timelineLabel, input.value);
+        const renamed = await renameDeskTimeline(timelineName, input.value);
         if (renamed) {
           _deskTimelineRename = null;
           await refreshHubTimelines(true, { skipRestore: true });
@@ -375,15 +375,15 @@
       actionBtn.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        const timelineLabel = wrapper.dataset.timelineLabel || "";
+        const timelineName = wrapper.dataset.timelineName || "";
         const kind = actionBtn.dataset.deskSwipeAction || "";
-        runDeskContextAction(timelineLabel, kind);
+        runDeskContextAction(timelineName, kind);
       });
     }
 
     function renderDesktopTimelines(active, archived) {
       if (!_deskTimelineList) return;
-      const rowKey = (wrap) => wrap.dataset.timelineLabel || "";
+      const rowKey = (wrap) => wrap.dataset.timelineName || "";
       const firstRects = captureListRowRects(_deskTimelineList, ".desk-swipe-row", rowKey);
       const newTimelineSection = _deskNewTimelineToggle?.closest(".desk-new-timeline-section") || null;
       let html = "";
@@ -451,7 +451,7 @@
           previousRevision &&
           revision &&
           revision !== previousRevision &&
-          name !== _deskSelectedTimelineLabel &&
+          name !== _deskSelectedTimelineName &&
           String(timeline.latest_message_sender || "").trim() !== "user"
         ) {
           _deskUnreadTimelines.add(name);
@@ -479,12 +479,12 @@
         _hubTimelinesCache = { active, archived };
         if (requestSeq === _deskTimelinesRequestSeq) {
           updateDeskUnreadTimelines(active);
-          if (_deskSelectedTimelineLabel) updateDeskWindowTitle(_deskSelectedTimelineLabel);
+          if (_deskSelectedTimelineName) updateDeskWindowTitle(_deskSelectedTimelineName);
 
           const signature = JSON.stringify({
             active,
             archived,
-            selected: _deskSelectedTimelineLabel,
+            selected: _deskSelectedTimelineName,
           });
           if (!_deskTimelineRename && (force || window._lastHubRenderSig !== signature)) {
             window._lastHubRenderSig = signature;

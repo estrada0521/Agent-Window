@@ -1,0 +1,487 @@
+    :root {
+      --composer-open-fade: 640ms ease;
+    }
+
+    .composer-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 280;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 12px 40px;
+      background: rgba(var(--bg-rgb), 0.10);
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .composer-overlay[hidden] {
+      display: none;
+    }
+
+    .composer-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+      background: rgba(var(--bg-rgb), 0.16);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .composer-overlay.visible.composer-attach-drag {
+      background: rgba(var(--bg-rgb), 0.22);
+    }
+
+    html[data-hub-iframe-timeline="1"] .composer-overlay.visible {
+      inset: auto;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: var(--hub-iframe-lock-height, 100dvh);
+      min-height: var(--hub-iframe-lock-height, 100dvh);
+    }
+
+    html[data-hub-iframe-timeline="1"],
+    html[data-hub-iframe-timeline="1"] body {
+      overscroll-behavior-y: auto;
+    }
+
+    html[data-hub-iframe-timeline="1"] main {
+      overscroll-behavior-y: contain;
+      touch-action: pan-y;
+      padding-bottom: calc(var(--composer-height, 0px) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .composer {
+      position: relative;
+      right: auto;
+      bottom: auto;
+      left: auto;
+      inset: auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      justify-items: center;
+      gap: 10px;
+      width: min(900px, 100%);
+      max-width: 100%;
+      padding: 0;
+      margin: 0;
+      border-top: none;
+      background: transparent;
+      z-index: 1;
+      opacity: 0;
+      transform: none;
+      transition: opacity var(--composer-open-fade);
+      will-change: opacity;
+    }
+
+    .composer-overlay.visible .composer {
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+
+    .composer.composer-focus-hack {
+      position: fixed;
+      inset: max(0px, env(safe-area-inset-top)) auto auto 0;
+      top: max(0px, env(safe-area-inset-top));
+      right: auto;
+      bottom: auto;
+      left: 0;
+      width: 100vw;
+      max-width: none;
+      margin: 0;
+      opacity: 0;
+      transform: none;
+      transition: none;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .composer.composer-opening-ready {
+      transition: none;
+    }
+
+    .composer::before {
+      content: none;
+    }
+
+    .composer>* {
+      z-index: 1;
+    }
+
+    .composer-main-shell {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr);
+      grid-template-areas:
+        "input input"
+        "plus targets";
+      row-gap: 0;
+      column-gap: 4px;
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 8px 7px 10px 7px;
+      border: none;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .composer-main-shell>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    .has-hover .composer-main-shell:hover {
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .target-picker {
+      grid-area: targets;
+      display: block;
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      overscroll-behavior-x: contain;
+      touch-action: pan-x;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      margin: 0;
+      padding: 4px 20px 4px 10px;
+      align-self: center;
+      -webkit-overflow-scrolling: touch;
+      --target-picker-fade-left: 0px;
+      --target-picker-fade-right: 0px;
+      mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black calc(100% - var(--target-picker-fade-right)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black calc(100% - var(--target-picker-fade-right)), transparent 100%);
+    }
+
+    .target-picker-anchor {
+      grid-area: targets;
+      min-width: 0;
+    }
+
+    body > .target-picker {
+      position: fixed;
+      z-index: 390;
+      opacity: 0;
+      transform: none;
+      transition: opacity var(--composer-open-fade);
+      will-change: opacity;
+      pointer-events: none;
+    }
+
+    body.composer-target-picker-visible > .target-picker {
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+
+    body:not(.composer-overlay-open) > .target-picker {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .target-picker::-webkit-scrollbar {
+      display: none;
+    }
+
+    .composer-stack {
+      display: contents;
+    }
+
+
+
+
+
+    .composer-attach {
+      position: relative;
+      display: block;
+      grid-area: plus;
+      justify-self: start;
+      align-self: center;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      z-index: 100;
+      margin: 0 0 1px 2px;
+    }
+
+    .composer-attach-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--icon-fg);
+      box-shadow: none;
+      cursor: pointer;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      transition: transform 120ms ease, border-color 120ms ease, background 250ms ease;
+    }
+
+    .has-hover .composer-attach-btn:hover {
+      background: transparent;
+      border-color: transparent;
+      color: var(--icon-hover);
+    }
+
+    .composer-attach-btn:disabled {
+      opacity: 0.3;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .composer-attach-btn:active {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .composer-attach-btn svg {
+      width: var(--icon-size);
+      height: var(--icon-size);
+      display: block;
+      stroke-width: var(--icon-stroke);
+    }
+
+    .target-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      position: relative;
+      padding: 8px;
+      margin-right: 8px;
+      border: none;
+      background: transparent;
+      color: var(--chip-color);
+      cursor: pointer;
+      transition: transform var(--liquid-glass-press-out);
+    }
+
+    .target-picker-readonly .target-chip {
+      pointer-events: none;
+    }
+    .target-chip .target-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      display: block;
+      color: currentColor;
+      filter: none;
+      opacity: 1;
+      transition: none;
+    }
+
+    .target-chip .agent-icon-slot--chip {
+      color: var(--chip-color);
+      opacity: 1;
+      transition: none;
+    }
+
+
+
+
+
+    .composer-attach-btn,
+    .target-chip,
+    .copy-btn,
+    .mobile-bottom-sheet-close,
+    .send-btn,
+    #scrollToBottomBtn,
+    #composerFabBtn {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .composer-attach-btn:focus,
+    .composer-attach-btn:focus-visible,
+    .target-chip:focus,
+    .target-chip:focus-visible,
+    .copy-btn:focus,
+    .copy-btn:focus-visible,
+    .mobile-bottom-sheet-close:focus,
+    .mobile-bottom-sheet-close:focus-visible,
+    .send-btn:focus,
+    .send-btn:focus-visible,
+    #scrollToBottomBtn:focus,
+    #scrollToBottomBtn:focus-visible,
+    #composerFabBtn:focus,
+    #composerFabBtn:focus-visible {
+      outline: none;
+      -webkit-focus-ring-color: transparent;
+    }
+
+
+
+
+
+
+    .composer-attach-btn:active {
+      transform: none;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+
+      .target-chip:hover:not(.active),
+      .target-chip:active:not(.active) {
+        background: transparent;
+        border-color: transparent;
+        color: color-mix(in srgb, var(--chip-color) 45%, var(--icon-hover));
+        transform: none;
+        box-shadow: none;
+      }
+
+      .target-chip:hover:not(.active) .target-icon,
+      .target-chip:active:not(.active) .target-icon {
+        color: color-mix(in srgb, var(--chip-color) 45%, var(--icon-hover));
+      }
+
+      .target-chip:hover:not(.active) .agent-icon-slot--chip,
+      .target-chip:active:not(.active) .agent-icon-slot--chip {
+        color: color-mix(in srgb, var(--chip-color) 45%, var(--icon-hover));
+      }
+
+      .target-chip.active:hover {
+        background: transparent;
+        cursor: default;
+      }
+    }
+
+    .target-chip:active:not(.active) {
+      background: transparent;
+      border-color: transparent;
+      color: var(--icon-hover);
+      box-shadow: none;
+    }
+
+    .target-chip.active {
+      background: transparent;
+      border: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
+      z-index: 10;
+    }
+
+    .target-chip.active .agent-icon-slot--chip {
+      color: var(--icon-fg);
+      transform: scale(1.15);
+    }
+
+    .target-chip.active .target-icon {
+      color: var(--icon-fg);
+      opacity: 1;
+    }
+
+    .agent-icon-slot {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      line-height: 0;
+      vertical-align: middle;
+      --agent-icon-sub-font-size: 11px;
+      --agent-icon-sub-right: -8px;
+      --agent-icon-sub-bottom: 0px;
+    }
+
+    .agent-icon-instance-sub {
+      position: absolute;
+      right: var(--agent-icon-sub-right);
+      bottom: var(--agent-icon-sub-bottom);
+      margin: 0;
+      font-size: var(--agent-icon-sub-font-size);
+      font-weight: 700;
+      line-height: 1;
+      font-family: var(--font-main);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+      color: currentColor;
+      opacity: 1;
+      pointer-events: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-shadow:
+        0 0 1px var(--bg-color),
+        0 0 1px var(--bg-color),
+        0 0 2px var(--bg-color);
+    }
+
+    .agent-icon-slot--chip {
+      width: 20px;
+      height: 20px;
+      --agent-icon-sub-font-size: 12px;
+      --agent-icon-sub-right: -9px;
+      --agent-icon-sub-bottom: 0px;
+    }
+
+    .agent-icon-slot--chip .target-icon {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: currentColor;
+      -webkit-mask: var(--agent-icon-mask) center / contain no-repeat;
+      mask: var(--agent-icon-mask) center / contain no-repeat;
+    }
+
+    .target-chip.active .agent-icon-instance-sub {
+      color: currentColor;
+      text-shadow:
+        0 0 1px var(--bg),
+        0 0 1px var(--bg),
+        0 0 2px var(--bg);
+    }
+
+    .agent-icon-slot--meta {
+      display: inline-grid;
+      grid-template-columns: 1.31em auto;
+      column-gap: 0.15em;
+      align-items: end;
+      justify-content: start;
+      width: auto;
+      height: 1.31em;
+      flex: 0 0 auto;
+      --agent-icon-sub-font-size: 0.85em;
+    }
+
+    .agent-icon-slot--meta .meta-agent-icon {
+      position: static;
+      width: 1.31em;
+      height: 1.31em;
+    }
+
+    .agent-icon-slot--meta .agent-icon-instance-sub {
+      position: static;
+      align-self: end;
+      justify-self: start;
+    }
+
+    .agent-icon-slot--thinking {
+      width: 1.55em;
+      height: 1.55em;
+      --agent-icon-sub-font-size: 0.9em;
+      --agent-icon-sub-right: -0.62em;
+      --agent-icon-sub-bottom: 0;
+    }
+
+    .agent-icon-slot--thinking .message-thinking-icon {
+      width: 100%;
+      height: 100%;
+    }
+    .agent-icon-slot--thinking .agent-icon-instance-sub {
+      color: var(--icon-fg);
+    }

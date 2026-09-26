@@ -11,11 +11,11 @@ from pathlib import Path
 from agents import agent_base_name
 from agents.registry import ALL_AGENT_NAMES
 from fs.log.jsonl import append_jsonl_entry
-from fs.log.meta import find_label_for_workspace
+from fs.log.meta import find_timeline_name_for_workspace
 from tmux.session import AgentPane, parse_agent_topology
 from tmux import TMUX_SOCKET_NAME
 from tmux.send_keys import deliver_text_to_pane
-from fs.log.paths import log_jsonl_path, workspace_room_port
+from fs.log.paths import log_jsonl_path, workspace_timeline_port
 
 
 class AgentSendError(RuntimeError):
@@ -103,9 +103,9 @@ class AgentSender:
         except RuntimeError as exc:
             raise AgentSendError(str(exc)) from exc
 
-    def resolve_timeline_label(self, workspace: str | None = None) -> str:
+    def resolve_timeline_name(self, workspace: str | None = None) -> str:
         workspace = (workspace or self.tmux_session_workspace()).strip()
-        resolved = find_label_for_workspace(workspace)
+        resolved = find_timeline_name_for_workspace(workspace)
         if resolved:
             return resolved
         raise AgentSendError("No active Agent Window timeline found for this workspace.")
@@ -200,7 +200,7 @@ class AgentSender:
         return targets
 
     def _notify_running_agents(self, agents: list[str], workspace: str) -> None:
-        port = workspace_room_port(workspace)
+        port = workspace_timeline_port(workspace)
         body = json.dumps({"targets": agents}).encode("utf-8")
         connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
         try:
@@ -217,9 +217,9 @@ class AgentSender:
             response = connection.getresponse()
             detail = response.read().decode("utf-8", errors="replace").strip()
             if not 200 <= response.status < 300:
-                raise AgentSendError(detail or f"room server returned {response.status}")
+                raise AgentSendError(detail or f"timeline server returned {response.status}")
         except (OSError, http.client.HTTPException, TimeoutError) as exc:
-            raise AgentSendError(f"could not notify room server: {exc}") from exc
+            raise AgentSendError(f"could not notify timeline server: {exc}") from exc
         finally:
             connection.close()
 
@@ -233,14 +233,14 @@ class AgentSender:
     def append_log_entry(
         self,
         *,
-        timeline_label: str,
+        timeline_name: str,
         sender: str,
         targets: list[str],
         payload: str,
     ) -> None:
-        name = str(timeline_label or "").strip()
+        name = str(timeline_name or "").strip()
         if not name:
-            raise AgentSendError("label is required")
+            raise AgentSendError("timeline name is required")
         log_path = log_jsonl_path(name)
         if not log_path.is_file():
             raise AgentSendError(f"log is unavailable: {log_path}")
@@ -259,7 +259,7 @@ class AgentSender:
         payload: str,
     ) -> bool:
         workspace = self.tmux_session_workspace()
-        timeline_label = self.resolve_timeline_label(workspace)
+        timeline_name = self.resolve_timeline_name(workspace)
         topology = self.agent_topology()
         sender_role = self.resolve_self_agent(topology)
         if not sender_role:
@@ -286,7 +286,7 @@ class AgentSender:
             raise AgentSendError("Message delivery failed for all targets.")
 
         self.append_log_entry(
-            timeline_label=timeline_label,
+            timeline_name=timeline_name,
             sender=sender_role,
             targets=successful_targets,
             payload=delivery_payload,

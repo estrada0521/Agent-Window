@@ -1,25 +1,25 @@
     const HUB_TIMELINE_SCROLL_ORIGIN = document.querySelector(".mob-list-top-spacer").offsetHeight;
     const resetHubTimelineScroll = () => window.scrollTo(0, HUB_TIMELINE_SCROLL_ORIGIN);
     resetHubTimelineScroll();
-    const _roomOverlay = document.getElementById("roomOverlay");
-    const _roomOverlaySvg = _roomOverlay.querySelector(".room-overlay-shape");
-    const _roomOverlayShape = _roomOverlaySvg.querySelector("path");
-    const _roomFrameClip = _roomOverlay.querySelector(".room-frame-clip");
-    const _roomFrame = document.getElementById("roomFrame");
+    const _timelineOverlay = document.getElementById("timelineOverlay");
+    const _timelineOverlaySvg = _timelineOverlay.querySelector(".timeline-overlay-shape");
+    const _timelineOverlayShape = _timelineOverlaySvg.querySelector("path");
+    const _timelineFrameClip = _timelineOverlay.querySelector(".timeline-frame-clip");
+    const _timelineFrame = document.getElementById("timelineFrame");
     const _launchShell = document.getElementById("launchShell");
     const { setStatus, setResidentStatus } = createHud(document.getElementById("hubHud"));
-    let _hubRoomParentLayoutMax = 0;
+    let _hubTimelineParentLayoutMax = 0;
     let _hubMinParentChromeGap = Infinity;
     let _hubLayoutRefW = 0;
     let _hubLayoutRefH = 0;
     let _hubVVBridgeHandler = null;
-    let _currentRoomTimelineLabel = "";
-    let _currentRoomUrl = "";
-    let _roomFrameRenderReady = false;
+    let _currentTimelineName = "";
+    let _currentTimelineUrl = "";
+    let _timelineFrameRenderReady = false;
     let _hubLaunchShellPending = false;
-    let _awaitingRoomRenderReady = false;
+    let _awaitingTimelineRenderReady = false;
     let _hubReadyTimeoutTimer = 0;
-    let _roomOverlayCloseTimer = 0;
+    let _timelineOverlayCloseTimer = 0;
     document.addEventListener("touchstart", (event) => {
       const touch = event.touches?.[0];
       if (!touch) return;
@@ -27,17 +27,17 @@
       if (touch.clientX < 24 || touch.clientX > width - 24) event.preventDefault();
     }, { capture: true, passive: false });
     let refreshMobTimelines = null;
-    const HUB_ROOM_FRAME_KEY = "hub_room_frame";
-    const HUB_LAST_TIMELINE_KEY = "agent_window_hub_last_timeline_label";
+    const HUB_TIMELINE_FRAME_KEY = "hub_timeline_frame";
+    const HUB_LAST_TIMELINE_KEY = "agent_window_hub_last_timeline_name";
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
-    const HUB_ROOM_URL_CACHE_TTL_MS = 180000;
-    const HUB_ROOM_URL_CACHE_LIMIT = 3;
+    const HUB_TIMELINE_URL_CACHE_TTL_MS = 180000;
+    const HUB_TIMELINE_URL_CACHE_LIMIT = 3;
     const HUB_LAUNCH_SHELL_PARAM = "launch_shell";
-    const hubRoomUrls = createHubRoomUrlResolver({
-      cacheLimit: HUB_ROOM_URL_CACHE_LIMIT,
-      ttlMs: HUB_ROOM_URL_CACHE_TTL_MS,
+    const hubTimelineUrls = createHubTimelineUrlResolver({
+      cacheLimit: HUB_TIMELINE_URL_CACHE_LIMIT,
+      ttlMs: HUB_TIMELINE_URL_CACHE_TTL_MS,
       cacheKey: (openHref, name) => String(name || "").trim() || String(openHref || "").trim(),
-      wrapUrl: (url) => hubFrameRoomUrl(url),
+      wrapUrl: (url) => hubFrameTimelineUrl(url),
       errorMessage: "open timeline failed",
     });
     const applyMobThemeGradientVars = () => {
@@ -70,7 +70,7 @@
       root.dataset.theme = theme;
       root.style.colorScheme = theme;
       applyMobThemeGradientVars();
-      _roomFrame?.contentWindow?.postMessage({
+      _timelineFrame?.contentWindow?.postMessage({
         type: "hub-theme-changed",
         theme,
         themeMobile: currentMobileThemeSetting(),
@@ -98,44 +98,44 @@
       if (!document.hidden) refreshSystemMobileTheme();
     });
     const HUB_READY_TIMEOUT_MS = 5000;
-    const ROOM_OVERLAY_CLOSE_MS = 300;
-    function resetRoomOverlayMotionStyles() {
-      _roomOverlay.style.transform = "";
-      _roomOverlay.style.transition = "";
-      _roomOverlay.style.opacity = "";
+    const TIMELINE_OVERLAY_CLOSE_MS = 300;
+    function resetTimelineOverlayMotionStyles() {
+      _timelineOverlay.style.transform = "";
+      _timelineOverlay.style.transition = "";
+      _timelineOverlay.style.opacity = "";
     }
-    const ROOM_OVERLAY_SLIDE_MS = 440;
-    const ROOM_OVERLAY_SETTLE_LEAD_MS = 130;
+    const TIMELINE_OVERLAY_SLIDE_MS = 440;
+    const TIMELINE_OVERLAY_SETTLE_LEAD_MS = 130;
     let _overlaySettleHandler = null;
     let _overlaySettleTimer = 0;
     function clearOverlaySettle() {
       if (_overlaySettleHandler) {
-        _roomOverlay.removeEventListener("transitionend", _overlaySettleHandler);
+        _timelineOverlay.removeEventListener("transitionend", _overlaySettleHandler);
         _overlaySettleHandler = null;
       }
       if (_overlaySettleTimer) {
         clearTimeout(_overlaySettleTimer);
         _overlaySettleTimer = 0;
       }
-      _roomOverlay.classList.remove("overlay-settled");
-      applyHubRoomSquircle();
+      _timelineOverlay.classList.remove("overlay-settled");
+      applyHubTimelineSquircle();
     }
     function armOverlaySettle() {
       clearOverlaySettle();
       const settle = () => {
         clearOverlaySettle();
-        if (_roomOverlay.classList.contains("overlay-visible")) {
-          _roomOverlay.classList.add("overlay-settled");
-          applyHubRoomSquircle();
+        if (_timelineOverlay.classList.contains("overlay-visible")) {
+          _timelineOverlay.classList.add("overlay-settled");
+          applyHubTimelineSquircle();
           resetHubTimelineScroll();
         }
       };
       _overlaySettleHandler = (event) => {
-        if (event.target !== _roomOverlay || event.propertyName !== "transform") return;
+        if (event.target !== _timelineOverlay || event.propertyName !== "transform") return;
         settle();
       };
-      _roomOverlay.addEventListener("transitionend", _overlaySettleHandler);
-      _overlaySettleTimer = setTimeout(settle, Math.max(0, ROOM_OVERLAY_SLIDE_MS - ROOM_OVERLAY_SETTLE_LEAD_MS));
+      _timelineOverlay.addEventListener("transitionend", _overlaySettleHandler);
+      _overlaySettleTimer = setTimeout(settle, Math.max(0, TIMELINE_OVERLAY_SLIDE_MS - TIMELINE_OVERLAY_SETTLE_LEAD_MS));
     }
     function showLaunchShell() {
       if (!_launchShell) return;
@@ -160,7 +160,7 @@
     }
     function stopHubReadyWait() {
       _hubLaunchShellPending = false;
-      _awaitingRoomRenderReady = false;
+      _awaitingTimelineRenderReady = false;
       clearHubReadyTimeout();
       clearLaunchShellQueryFlag();
       hideLaunchShell();
@@ -177,7 +177,7 @@
       }, HUB_READY_TIMEOUT_MS);
     }
     function finishHubReadyWaitIfComplete() {
-      if (_hubLaunchShellPending || _awaitingRoomRenderReady) return;
+      if (_hubLaunchShellPending || _awaitingTimelineRenderReady) return;
       clearHubReadyTimeout();
       hideLaunchShell();
     }
@@ -199,17 +199,17 @@
         });
       });
     }
-    function startRoomRenderWait() {
-      _awaitingRoomRenderReady = true;
+    function startTimelineRenderWait() {
+      _awaitingTimelineRenderReady = true;
       startHubReadyTimeout();
     }
-    function finishRoomRenderWait() {
-      if (!_awaitingRoomRenderReady) return;
-      _awaitingRoomRenderReady = false;
+    function finishTimelineRenderWait() {
+      if (!_awaitingTimelineRenderReady) return;
+      _awaitingTimelineRenderReady = false;
       finishHubReadyWaitIfComplete();
     }
-    function cancelRoomRenderWait() {
-      _awaitingRoomRenderReady = false;
+    function cancelTimelineRenderWait() {
+      _awaitingTimelineRenderReady = false;
       finishHubReadyWaitIfComplete();
     }
     const _launchShellParams = new URLSearchParams(window.location.search || "");
@@ -228,30 +228,30 @@
       return localStorage.getItem(HUB_LAST_TIMELINE_KEY) || "";
     }
     function syncMobileSelectedTimelineRows() {
-      const selectedName = String(_currentRoomTimelineLabel || lastRememberedTimeline() || "").trim();
-      document.querySelectorAll("#mobListWrap .mob-timeline-row[data-timeline-label]").forEach((row) => {
-        const isSelected = !!selectedName && row.dataset.timelineLabel === selectedName;
+      const selectedName = String(_currentTimelineName || lastRememberedTimeline() || "").trim();
+      document.querySelectorAll("#mobListWrap .mob-timeline-row[data-timeline-name]").forEach((row) => {
+        const isSelected = !!selectedName && row.dataset.timelineName === selectedName;
         row.classList.toggle("is-selected", isSelected);
         if (isSelected) row.setAttribute("aria-current", "page");
         else row.removeAttribute("aria-current");
       });
     }
-    function persistRoomFrameState(url, name) {
+    function persistTimelineFrameState(url, name) {
       const normalizedUrl = String(url || "").trim();
       if (!normalizedUrl) return;
       const normalizedName = String(name || "").trim();
-      sessionStorage.setItem(HUB_ROOM_FRAME_KEY, JSON.stringify({ url: normalizedUrl, name: normalizedName }));
+      sessionStorage.setItem(HUB_TIMELINE_FRAME_KEY, JSON.stringify({ url: normalizedUrl, name: normalizedName }));
     }
-    function clearPersistedRoomFrameState() {
-      sessionStorage.removeItem(HUB_ROOM_FRAME_KEY);
+    function clearPersistedTimelineFrameState() {
+      sessionStorage.removeItem(HUB_TIMELINE_FRAME_KEY);
     }
     function consumePendingHubErrorMessage() {
       const message = sessionStorage.getItem(HUB_PENDING_ERROR_KEY) || "";
       if (message) sessionStorage.removeItem(HUB_PENDING_ERROR_KEY);
       return message;
     }
-    function hubFrameRoomUrl(roomUrl) {
-      const raw = String(roomUrl || "").trim();
+    function hubFrameTimelineUrl(timelineUrl) {
+      const raw = String(timelineUrl || "").trim();
       if (!raw) return raw;
       try {
         const next = new URL(raw, window.location.href);
@@ -266,23 +266,23 @@
       return raw;
     }
     function hubFrameSrcMatches(url) {
-      const current = normalizeComparableUrl(_roomFrame.src);
+      const current = normalizeComparableUrl(_timelineFrame.src);
       const next = normalizeComparableUrl(url);
       return !!current && !!next && current === next;
     }
-    function cacheRoomUrl(name, url) {
-      hubRoomUrls.write(name, url);
+    function cacheTimelineUrl(name, url) {
+      hubTimelineUrls.write(name, url);
     }
-    function _bumpHubRoomParentLayoutMax() {
-      if (_roomOverlay.hidden) return;
+    function _bumpHubTimelineParentLayoutMax() {
+      if (_timelineOverlay.hidden) return;
       const ih = window.innerHeight || 0;
       const ch = document.documentElement.clientHeight || 0;
-      _hubRoomParentLayoutMax = Math.max(_hubRoomParentLayoutMax, ih, ch);
-      _postHubLayoutToRoom();
+      _hubTimelineParentLayoutMax = Math.max(_hubTimelineParentLayoutMax, ih, ch);
+      _postHubLayoutToTimeline();
     }
-    function _postHubLayoutToRoom() {
-      const w = _roomFrame.contentWindow;
-      if (!w || _roomOverlay.hidden) return;
+    function _postHubLayoutToTimeline() {
+      const w = _timelineFrame.contentWindow;
+      if (!w || _timelineOverlay.hidden) return;
       const iw = window.innerWidth || 0;
       const ih = window.innerHeight || 0;
       if (_hubLayoutRefW > 0 && _hubLayoutRefH > 0) {
@@ -306,7 +306,7 @@
       w.postMessage(
         {
           type: "hub-layout",
-          layoutHeight: _hubRoomParentLayoutMax,
+          layoutHeight: _hubTimelineParentLayoutMax,
           parentInnerHeight: ih,
           parentVvHeight: vvH,
           parentVvOffsetTop: vvTop,
@@ -318,8 +318,8 @@
     function _attachHubViewportBridge() {
       if (_hubVVBridgeHandler) return;
       _hubVVBridgeHandler = () => {
-        _bumpHubRoomParentLayoutMax();
-        applyHubRoomSquircle();
+        _bumpHubTimelineParentLayoutMax();
+        applyHubTimelineSquircle();
       };
       window.addEventListener("resize", _hubVVBridgeHandler, { passive: true });
       if (window.visualViewport) {
@@ -336,7 +336,7 @@
       }
       _hubVVBridgeHandler = null;
     }
-    function hubRoomSquirclePath(width, height) {
+    function hubTimelineSquirclePath(width, height) {
       const radius = 160 / 3;
       const smoothing = 0.6;
       const budget = Math.min(width, height) / 2;
@@ -372,33 +372,33 @@
         "Z"
       );
     }
-    function applyHubRoomSquircle() {
+    function applyHubTimelineSquircle() {
       const wide = window.matchMedia("(min-width: 600px)").matches;
-      const settled = _roomOverlay.classList.contains("overlay-settled");
-      if (wide || settled || _roomOverlay.hidden) {
-        _roomOverlayShape.removeAttribute("d");
-        _roomFrameClip.style.webkitMaskImage = "";
-        _roomFrameClip.style.maskImage = "";
+      const settled = _timelineOverlay.classList.contains("overlay-settled");
+      if (wide || settled || _timelineOverlay.hidden) {
+        _timelineOverlayShape.removeAttribute("d");
+        _timelineFrameClip.style.webkitMaskImage = "";
+        _timelineFrameClip.style.maskImage = "";
         return;
       }
-      const width = _roomOverlay.clientWidth;
-      const height = _roomOverlay.clientHeight;
+      const width = _timelineOverlay.clientWidth;
+      const height = _timelineOverlay.clientHeight;
       if (width < 1 || height < 1) return;
-      const d = hubRoomSquirclePath(width, height);
-      _roomOverlayShape.setAttribute("d", d);
-      _roomOverlaySvg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-      _roomOverlaySvg.setAttribute("preserveAspectRatio", "none");
+      const d = hubTimelineSquirclePath(width, height);
+      _timelineOverlayShape.setAttribute("d", d);
+      _timelineOverlaySvg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      _timelineOverlaySvg.setAttribute("preserveAspectRatio", "none");
       const mask = `url("data:image/svg+xml;utf8,${encodeURIComponent(
         `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><path fill="white" d="${d}"/></svg>`
       )}")`;
-      _roomFrameClip.style.webkitMaskImage = mask;
-      _roomFrameClip.style.maskImage = mask;
+      _timelineFrameClip.style.webkitMaskImage = mask;
+      _timelineFrameClip.style.maskImage = mask;
     }
-    function _fitRoomOverlay() {
-      if (_roomOverlay.hidden) return;
-      _roomOverlay.style.top = "";
-      _roomOverlay.style.height = "";
-      applyHubRoomSquircle();
+    function _fitTimelineOverlay() {
+      if (_timelineOverlay.hidden) return;
+      _timelineOverlay.style.top = "";
+      _timelineOverlay.style.height = "";
+      applyHubTimelineSquircle();
     }
     let skipThemeMenuBlur = false;
     const resetThemeNativeMenu = () => {
@@ -459,10 +459,10 @@
       skipThemeMenuBlur = true;
       showArmedThemeNativeMenu();
     };
-    function updateMenuContext(isRoom) {
+    function updateMenuContext(isTimeline) {
       const bridge = document.getElementById("pageNativeMenuBridge");
       if (!bridge) return;
-      if (isRoom) {
+      if (isTimeline) {
         bridge.innerHTML = `
           <option value="" disabled selected>Menu</option>
           <option value="close-timeline">Close Timeline</option>
@@ -478,151 +478,151 @@
       }
     }
     updateMenuContext(false);
-    function openRoomInFrame(url, name) {
-      if (_roomOverlayCloseTimer) {
-        clearTimeout(_roomOverlayCloseTimer);
-        _roomOverlayCloseTimer = 0;
+    function openTimelineInFrame(url, name) {
+      if (_timelineOverlayCloseTimer) {
+        clearTimeout(_timelineOverlayCloseTimer);
+        _timelineOverlayCloseTimer = 0;
       }
       rememberLastTimeline(name);
       if (_hubLaunchShellPending) showLaunchShell();
-      startRoomRenderWait();
+      startTimelineRenderWait();
       const normalizedName = String(name || "").trim();
-      const normalizedUrl = hubFrameRoomUrl(url, normalizedName);
-      cacheRoomUrl(normalizedName, normalizedUrl);
-      clearPersistedRoomFrameState();
-      _currentRoomUrl = normalizedUrl;
+      const normalizedUrl = hubFrameTimelineUrl(url, normalizedName);
+      cacheTimelineUrl(normalizedName, normalizedUrl);
+      clearPersistedTimelineFrameState();
+      _currentTimelineUrl = normalizedUrl;
       _hubMinParentChromeGap = Infinity;
       _hubLayoutRefW = window.innerWidth || 0;
       _hubLayoutRefH = window.innerHeight || 0;
-      _hubRoomParentLayoutMax = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
-      const onRoomReady = function () {
-        const frameDoc = _roomFrame.contentDocument;
+      _hubTimelineParentLayoutMax = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
+      const onTimelineReady = function () {
+        const frameDoc = _timelineFrame.contentDocument;
         if (frameDoc?.URL === "about:blank") return;
-        if (!frameDoc?.getElementById("roomHud")) {
+        if (!frameDoc?.getElementById("timelineHud")) {
           const firstLine = (frameDoc?.body?.innerText || "").trim().split("\n")[0];
-          dismissRoomFrame();
+          dismissTimelineFrame();
           failHubReadyWait(firstLine || "Empty response");
           return;
         }
-        _roomFrame.style.transition = "opacity 140ms ease";
-        _roomFrame.style.opacity = "1";
-        _bumpHubRoomParentLayoutMax();
-        _postHubLayoutToRoom();
+        _timelineFrame.style.transition = "opacity 140ms ease";
+        _timelineFrame.style.opacity = "1";
+        _bumpHubTimelineParentLayoutMax();
+        _postHubLayoutToTimeline();
         publishMobileTheme();
-        if (_roomFrameRenderReady) {
-          persistRoomFrameState(normalizedUrl, normalizedName);
-          finishRoomRenderWait();
+        if (_timelineFrameRenderReady) {
+          persistTimelineFrameState(normalizedUrl, normalizedName);
+          finishTimelineRenderWait();
         }
       };
       const reuseLoadedFrame =
-        !!normalizedName && _roomFrameRenderReady && hubFrameSrcMatches(normalizedUrl);
-      _roomFrame.style.transition = "none";
-      _roomFrame.style.opacity = reuseLoadedFrame ? "1" : "0";
-      _roomFrame.onload = onRoomReady;
+        !!normalizedName && _timelineFrameRenderReady && hubFrameSrcMatches(normalizedUrl);
+      _timelineFrame.style.transition = "none";
+      _timelineFrame.style.opacity = reuseLoadedFrame ? "1" : "0";
+      _timelineFrame.onload = onTimelineReady;
       _attachHubViewportBridge();
       updateMenuContext(true);
-      document.documentElement.classList.add("hub-room-overlay-active");
-      document.body.classList.add("hub-room-overlay-active");
-      const _wasPeeking = _roomOverlay.classList.contains("overlay-peeking");
-      document.documentElement.classList.remove("hub-room-peeking");
-      _roomOverlay.classList.remove("overlay-visible", "overlay-closing", "overlay-peeking");
+      document.documentElement.classList.add("hub-timeline-overlay-active");
+      document.body.classList.add("hub-timeline-overlay-active");
+      const _wasPeeking = _timelineOverlay.classList.contains("overlay-peeking");
+      document.documentElement.classList.remove("hub-timeline-peeking");
+      _timelineOverlay.classList.remove("overlay-visible", "overlay-closing", "overlay-peeking");
       clearOverlaySettle();
-      resetRoomOverlayMotionStyles();
-      _roomOverlay.hidden = false;
+      resetTimelineOverlayMotionStyles();
+      _timelineOverlay.hidden = false;
       if (_wasPeeking) {
-        _roomOverlay.classList.add("overlay-visible");
+        _timelineOverlay.classList.add("overlay-visible");
         armOverlaySettle();
-        document.documentElement.classList.add("hub-room-ui-active");
+        document.documentElement.classList.add("hub-timeline-ui-active");
       } else {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            if (_roomOverlay.hidden) return;
-            _roomOverlay.classList.add("overlay-visible");
+            if (_timelineOverlay.hidden) return;
+            _timelineOverlay.classList.add("overlay-visible");
             armOverlaySettle();
-            document.documentElement.classList.add("hub-room-ui-active");
+            document.documentElement.classList.add("hub-timeline-ui-active");
           });
         });
       }
-      _currentRoomTimelineLabel = normalizedName;
+      _currentTimelineName = normalizedName;
       syncMobileSelectedTimelineRows();
       if (reuseLoadedFrame) {
-        requestAnimationFrame(onRoomReady);
+        requestAnimationFrame(onTimelineReady);
       } else {
-        _roomFrameRenderReady = false;
+        _timelineFrameRenderReady = false;
         if (hubFrameSrcMatches(normalizedUrl)) {
-          _roomFrame.src = "about:blank";
+          _timelineFrame.src = "about:blank";
         }
-        _roomFrame.src = normalizedUrl;
+        _timelineFrame.src = normalizedUrl;
       }
-      _fitRoomOverlay();
+      _fitTimelineOverlay();
     }
-    function closeRoomFrame() {
-      cancelRoomRenderWait();
+    function closeTimelineFrame() {
+      cancelTimelineRenderWait();
       if (!_hubLaunchShellPending) hideLaunchShell();
       _detachHubViewportBridge();
-      _roomFrame.style.transition = "";
-      _roomFrame.style.opacity = "1";
-      _roomFrame.onload = null;
-      _roomOverlay.classList.remove("overlay-visible");
+      _timelineFrame.style.transition = "";
+      _timelineFrame.style.opacity = "1";
+      _timelineFrame.onload = null;
+      _timelineOverlay.classList.remove("overlay-visible");
       clearOverlaySettle();
-      document.documentElement.classList.remove("hub-room-ui-active");
-      resetRoomOverlayMotionStyles();
+      document.documentElement.classList.remove("hub-timeline-ui-active");
+      resetTimelineOverlayMotionStyles();
       updateMenuContext(false);
-      _roomOverlay.classList.add("overlay-closing");
-      document.documentElement.classList.add("hub-room-peeking");
-      if (_roomOverlayCloseTimer) clearTimeout(_roomOverlayCloseTimer);
-      _roomOverlayCloseTimer = setTimeout(() => {
-        _roomOverlayCloseTimer = 0;
-        document.documentElement.classList.remove("hub-room-overlay-active");
-        document.body.classList.remove("hub-room-overlay-active");
-        _roomOverlay.classList.remove("overlay-closing");
-        resetRoomOverlayMotionStyles();
-        _roomOverlay.classList.add("overlay-peeking");
-        _roomOverlay.style.top = "";
-        _roomOverlay.style.height = "";
-        _currentRoomUrl = "";
-        clearPersistedRoomFrameState();
-      }, ROOM_OVERLAY_CLOSE_MS);
+      _timelineOverlay.classList.add("overlay-closing");
+      document.documentElement.classList.add("hub-timeline-peeking");
+      if (_timelineOverlayCloseTimer) clearTimeout(_timelineOverlayCloseTimer);
+      _timelineOverlayCloseTimer = setTimeout(() => {
+        _timelineOverlayCloseTimer = 0;
+        document.documentElement.classList.remove("hub-timeline-overlay-active");
+        document.body.classList.remove("hub-timeline-overlay-active");
+        _timelineOverlay.classList.remove("overlay-closing");
+        resetTimelineOverlayMotionStyles();
+        _timelineOverlay.classList.add("overlay-peeking");
+        _timelineOverlay.style.top = "";
+        _timelineOverlay.style.height = "";
+        _currentTimelineUrl = "";
+        clearPersistedTimelineFrameState();
+      }, TIMELINE_OVERLAY_CLOSE_MS);
     }
-    function dismissRoomFrame() {
-      cancelRoomRenderWait();
+    function dismissTimelineFrame() {
+      cancelTimelineRenderWait();
       _detachHubViewportBridge();
-      if (_roomOverlayCloseTimer) {
-        clearTimeout(_roomOverlayCloseTimer);
-        _roomOverlayCloseTimer = 0;
+      if (_timelineOverlayCloseTimer) {
+        clearTimeout(_timelineOverlayCloseTimer);
+        _timelineOverlayCloseTimer = 0;
       }
-      _roomFrame.onload = null;
-      _roomFrame.src = "about:blank";
-      _roomFrame.style.transition = "";
-      _roomFrame.style.opacity = "1";
-      _roomOverlay.classList.remove("overlay-visible", "overlay-closing", "overlay-peeking");
+      _timelineFrame.onload = null;
+      _timelineFrame.src = "about:blank";
+      _timelineFrame.style.transition = "";
+      _timelineFrame.style.opacity = "1";
+      _timelineOverlay.classList.remove("overlay-visible", "overlay-closing", "overlay-peeking");
       clearOverlaySettle();
-      resetRoomOverlayMotionStyles();
-      _roomOverlay.style.top = "";
-      _roomOverlay.style.height = "";
-      _roomOverlay.hidden = true;
-      document.documentElement.classList.remove("hub-room-ui-active", "hub-room-peeking", "hub-room-overlay-active");
-      document.body.classList.remove("hub-room-overlay-active");
+      resetTimelineOverlayMotionStyles();
+      _timelineOverlay.style.top = "";
+      _timelineOverlay.style.height = "";
+      _timelineOverlay.hidden = true;
+      document.documentElement.classList.remove("hub-timeline-ui-active", "hub-timeline-peeking", "hub-timeline-overlay-active");
+      document.body.classList.remove("hub-timeline-overlay-active");
       updateMenuContext(false);
-      _currentRoomUrl = "";
-      _currentRoomTimelineLabel = "";
+      _currentTimelineUrl = "";
+      _currentTimelineName = "";
       syncMobileSelectedTimelineRows();
-      clearPersistedRoomFrameState();
+      clearPersistedTimelineFrameState();
     }
-    _roomOverlay.addEventListener("click", () => {
-      if (!_roomOverlay.classList.contains("overlay-peeking")) return;
-      const roomUrl = _roomFrame.src;
-      if (!roomUrl || roomUrl === "about:blank") return;
-      openRoomInFrame(roomUrl, _currentRoomTimelineLabel);
+    _timelineOverlay.addEventListener("click", () => {
+      if (!_timelineOverlay.classList.contains("overlay-peeking")) return;
+      const timelineUrl = _timelineFrame.src;
+      if (!timelineUrl || timelineUrl === "about:blank") return;
+      openTimelineInFrame(timelineUrl, _currentTimelineName);
     });
     function openTimelineFrame(openHref, name) {
       rememberLastTimeline(name);
       resetLaunchShellCard();
-      const needsReviveTransition = /^\/revive-room(?:[/?]|$)/.test(String(openHref || ""));
+      const needsReviveTransition = /^\/revive-timeline(?:[/?]|$)/.test(String(openHref || ""));
       if (needsReviveTransition) showLaunchShell();
-      return hubRoomUrls.resolve(openHref, name, { force: needsReviveTransition })
-        .then((roomUrl) => {
-          openRoomInFrame(roomUrl, name);
+      return hubTimelineUrls.resolve(openHref, name, { force: needsReviveTransition })
+        .then((timelineUrl) => {
+          openTimelineInFrame(timelineUrl, name);
           if (needsReviveTransition) {
             if (refreshMobTimelines) void refreshMobTimelines(true);
           }
@@ -632,35 +632,35 @@
         });
     }
     window.addEventListener("message", function (e) {
-      if (e.data && e.data.type === "room-render-error" && e.source === _roomFrame.contentWindow) {
-        _roomFrameRenderReady = false;
-        if (!_awaitingRoomRenderReady) {
+      if (e.data && e.data.type === "timeline-render-error" && e.source === _timelineFrame.contentWindow) {
+        _timelineFrameRenderReady = false;
+        if (!_awaitingTimelineRenderReady) {
           return;
         }
         stopHubReadyWait();
         return;
       }
-      if (e.data && e.data.type === "room-render-ready" && e.source === _roomFrame.contentWindow) {
-        _roomFrameRenderReady = true;
-        if (!_roomOverlay.hidden) {
-          _roomFrame.style.transition = "opacity 140ms ease";
-          _roomFrame.style.opacity = "1";
-          if (_currentRoomUrl) {
-            persistRoomFrameState(_currentRoomUrl, _currentRoomTimelineLabel || "");
+      if (e.data && e.data.type === "timeline-render-ready" && e.source === _timelineFrame.contentWindow) {
+        _timelineFrameRenderReady = true;
+        if (!_timelineOverlay.hidden) {
+          _timelineFrame.style.transition = "opacity 140ms ease";
+          _timelineFrame.style.opacity = "1";
+          if (_currentTimelineUrl) {
+            persistTimelineFrameState(_currentTimelineUrl, _currentTimelineName || "");
           }
-          finishRoomRenderWait();
+          finishTimelineRenderWait();
         }
         return;
       }
-      if (e.data === "hub_close_room") closeRoomFrame();
+      if (e.data === "hub_close_timeline") closeTimelineFrame();
       if (e.data && e.data.type === "toggle-hub-sidebar") {
-        closeRoomFrame();
+        closeTimelineFrame();
         return;
       }
       if (e.data && e.data.type === "open-hub-path") {
         const nextUrl = typeof e.data.url === "string" ? e.data.url : "";
         if (nextUrl) {
-          closeRoomFrame();
+          closeTimelineFrame();
           let sameHubRoot = false;
           try {
             const target = new URL(nextUrl, window.location.href);
@@ -669,13 +669,13 @@
           if (!sameHubRoot) {
             setTimeout(() => {
               window.location.href = nextUrl;
-            }, e.data.reveal ? ROOM_OVERLAY_CLOSE_MS : 0);
+            }, e.data.reveal ? TIMELINE_OVERLAY_CLOSE_MS : 0);
           }
         }
         return;
       }
-      if (e.data && e.data.type === "room-scroll-signal" && e.source === _roomFrame.contentWindow) {
-        if (_roomOverlay.hidden) return;
+      if (e.data && e.data.type === "timeline-scroll-signal" && e.source === _timelineFrame.contentWindow) {
+        if (_timelineOverlay.hidden) return;
         const y = window.scrollY || document.documentElement.scrollTop || 0;
         try {
           window.scrollTo(0, y + 1);
@@ -683,9 +683,9 @@
         } catch (_) { }
         return;
       }
-      if (e.data && e.data.type === "room-request-hub-layout" && e.source === _roomFrame.contentWindow) {
-        _bumpHubRoomParentLayoutMax();
-        _postHubLayoutToRoom();
+      if (e.data && e.data.type === "timeline-request-hub-layout" && e.source === _timelineFrame.contentWindow) {
+        _bumpHubTimelineParentLayoutMax();
+        _postHubLayoutToTimeline();
         return;
       }
       if (e.data && e.data.type === "hub-mobile-system-theme-observed" && currentMobileThemeSetting() === "system") {
@@ -697,19 +697,19 @@
         if (e.data.theme !== "light" && e.data.theme !== "dark") return;
         const theme = e.data.theme;
         document.documentElement.dataset.theme = theme;
-        _roomFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*");
+        _timelineFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*");
         return;
       }
     });
     const pendingHubErrorMessage = consumePendingHubErrorMessage();
     if (pendingHubErrorMessage) {
-      clearPersistedRoomFrameState();
+      clearPersistedTimelineFrameState();
       failHubReadyWait(pendingHubErrorMessage);
     }
-    const savedRoomFrame = sessionStorage.getItem(HUB_ROOM_FRAME_KEY);
-    if (savedRoomFrame && !pendingHubErrorMessage) {
-      const { url, name } = JSON.parse(savedRoomFrame);
-      openRoomInFrame(url, name);
+    const savedTimelineFrame = sessionStorage.getItem(HUB_TIMELINE_FRAME_KEY);
+    if (savedTimelineFrame && !pendingHubErrorMessage) {
+      const { url, name } = JSON.parse(savedTimelineFrame);
+      openTimelineInFrame(url, name);
     }
 
     (function () {
@@ -787,9 +787,9 @@
         const onActClick = (e) => {
           e.stopPropagation();
           const action = e.currentTarget.dataset.action;
-          const n = sr.dataset.timelineLabel;
+          const n = sr.dataset.timelineName;
           if (action === "revive") {
-            if (n) openTimelineFrame(`/revive-room?timeline=${encodeURIComponent(n)}`, n);
+            if (n) openTimelineFrame(`/revive-timeline?timeline=${encodeURIComponent(n)}`, n);
             return;
           }
           if (action === "delete-archived") {
@@ -798,7 +798,7 @@
             }
             return;
           }
-          if (confirm("Archive " + n + "?")) window.location.href = `/archive-room?timeline=${encodeURIComponent(n)}`;
+          if (confirm("Archive " + n + "?")) window.location.href = `/archive-timeline?timeline=${encodeURIComponent(n)}`;
         };
         const ensureActs = () => {
           if (!acts.length || sr.querySelector(".swipe-act-tray")) return;
@@ -887,20 +887,20 @@
           if (sr._snap !== 0) { closeRow(sr, true); anyOpen = null; e.stopPropagation(); return; }
           if (e.target.closest(".swipe-act")) return;
           const href = inner.dataset.openHref;
-          if (href) openTimelineFrame(href, sr.dataset.timelineLabel || "");
+          if (href) openTimelineFrame(href, sr.dataset.timelineName || "");
         });
       };
 
       const renderRows = (active, archived) => {
-        const rowKey = (row) => row.dataset.timelineLabel || "";
+        const rowKey = (row) => row.dataset.timelineName || "";
         const firstRects = captureListRowRects(wrap, ".swipe-row", rowKey);
         let html = "";
         if (active.length) {
           html += `<div class="mob-section-label">Active</div>`;
           html += active.map((s) => {
             const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
-            return `<div class="swipe-row" data-timeline-label="${esc(s.name)}" data-swipe-right="kill">` +
-              `<div class="mob-timeline-row" data-timeline-label="${esc(s.name)}" data-open-href="/open-timeline?timeline=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
+            return `<div class="swipe-row" data-timeline-name="${esc(s.name)}" data-swipe-right="kill">` +
+              `<div class="mob-timeline-row" data-timeline-name="${esc(s.name)}" data-open-href="/open-timeline?timeline=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +
               `</div>` +
@@ -912,8 +912,8 @@
           html += `<div class="mob-section-label">Archived</div>`;
           html += archived.map((s) => {
             const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
-            return `<div class="swipe-row" data-timeline-label="${esc(s.name)}" data-swipe-right="revive,delete-archived">` +
-              `<div class="mob-timeline-row archived-row" data-timeline-label="${esc(s.name)}" data-open-href="/open-timeline?timeline=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
+            return `<div class="swipe-row" data-timeline-name="${esc(s.name)}" data-swipe-right="revive,delete-archived">` +
+              `<div class="mob-timeline-row archived-row" data-timeline-name="${esc(s.name)}" data-open-href="/open-timeline?timeline=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +
               `</div>` +
@@ -955,7 +955,7 @@
           window._lastMobRenderSig = sig;
 
           const rememberedName = lastRememberedTimeline();
-          const launchTimeline = !_mobTimelinesRenderedOnce && _restoreLatestTimelineOnLaunch && !_currentRoomTimelineLabel
+          const launchTimeline = !_mobTimelinesRenderedOnce && _restoreLatestTimelineOnLaunch && !_currentTimelineName
             ? activeTimelines.find((timeline) => timeline.name === rememberedName) || activeTimelines[0]
             : null;
           renderRows(activeTimelines, archivedTimelines);
@@ -997,7 +997,7 @@
           if (val === "close-timeline" || val === "hub") {
             e.stopImmediatePropagation();
             bridge.value = "";
-            closeRoomFrame();
+            closeTimelineFrame();
           } else if (val === "theme") {
             e.stopImmediatePropagation();
             bridge.value = "";

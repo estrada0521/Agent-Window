@@ -27,7 +27,7 @@
       _deskLastFitTarget = 0;
       if (next) document.documentElement.dataset.fitCollapsed = "1";
       else delete document.documentElement.dataset.fitCollapsed;
-      _deskRoomFrame?.contentWindow?.postMessage({ type: "hub-fit-collapsed", on: next }, "*");
+      _deskTimelineFrame?.contentWindow?.postMessage({ type: "hub-fit-collapsed", on: next }, "*");
       if (next) {
         const invoke = getNativeInvoke();
         if (typeof invoke === "function") {
@@ -35,20 +35,20 @@
             height: Math.round(DESK_COLLAPSED_FIT_HEIGHT * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT),
           }).catch((err) => setStatus(`set_window_height failed: ${err}`));
         }
-        _deskRoomFrame?.contentWindow?.focus();
+        _deskTimelineFrame?.contentWindow?.focus();
       }
     }
     function toggleDeskFitCollapsed() {
       if (!_deskAutoWindowHeight) return;
       if (_deskFitCollapsed) {
         setDeskFitCollapsed(false);
-        _deskRoomFrame?.contentWindow?.postMessage({ type: "hub-refit" }, "*");
+        _deskTimelineFrame?.contentWindow?.postMessage({ type: "hub-refit" }, "*");
       } else {
         setDeskFitCollapsed(true);
       }
     }
     function pushDeskAutoWindowHeight() {
-      _deskRoomFrame?.contentWindow?.postMessage(
+      _deskTimelineFrame?.contentWindow?.postMessage(
         { type: "hub-auto-window-height", on: _deskAutoWindowHeight },
         "*",
       );
@@ -85,7 +85,7 @@
         }
         return;
       }
-      resetDeskRoomView();
+      resetDeskTimelineView();
       _deskFitWidthSnapPending = true;
       setDeskAutoWindowHeight(true);
       applyDeskAlwaysOnTop(true);
@@ -99,8 +99,8 @@
       const content = Number(contentHeight);
       if (!Number.isFinite(content) || content <= 0) return;
       const invoke = getNativeInvoke();
-      if (typeof invoke !== "function" || !_deskRoomFrame) return;
-      const iframeH = _deskRoomFrame.getBoundingClientRect().height;
+      if (typeof invoke !== "function" || !_deskTimelineFrame) return;
+      const iframeH = _deskTimelineFrame.getBoundingClientRect().height;
       const overhead = Math.min(240, Math.max(0, window.innerHeight - iframeH));
       const target = Math.round(content + overhead);
       const snapWidth = _deskFitWidthSnapPending;
@@ -128,7 +128,7 @@
           setStatus(`reset window failed: ${err}`);
         }
       }
-      resetDeskRoomView();
+      resetDeskTimelineView();
     }
 
     async function compactDeskWindowState(command = "compact_window_geometry", label = "compact window") {
@@ -143,7 +143,7 @@
           setStatus(`${label} failed: ${err}`);
         }
       }
-      resetDeskRoomView();
+      resetDeskTimelineView();
     }
 
     async function moveDeskWindowToSpot(command) {
@@ -200,7 +200,7 @@
     }
 
     function deskRightPaneAvailable() {
-      return !!_deskRoomFrameLoadedUrl && _deskPanelWidth > 0;
+      return !!_deskTimelineFrameLoadedUrl && _deskPanelWidth > 0;
     }
 
     function toggleDeskRightPanelOutward() {
@@ -248,7 +248,7 @@
         if (event.code === "KeyO" && isNativeApp()) {
           event.preventDefault();
           if (event.shiftKey) openDeskHubInBrowser();
-          else sendDeskRoomAction("openInBrowser");
+          else sendDeskTimelineAction("openInBrowser");
           return;
         }
         if (event.code === "KeyP") {
@@ -314,7 +314,7 @@
       }
       if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "Period") {
         event.preventDefault();
-        openDeskRoomHeaderMenu();
+        openDeskTimelineHeaderMenu();
         return;
       }
       if (event.metaKey && !event.altKey && event.code === "KeyB") {
@@ -335,7 +335,7 @@
       if (event.metaKey && !event.altKey && !event.ctrlKey && event.code === "KeyR") {
         event.preventDefault();
         if (event.shiftKey) triggerDeskHubReload();
-        else sendDeskRoomAction("reloadRoom");
+        else sendDeskTimelineAction("reloadTimeline");
         return;
       }
       if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyN") {
@@ -350,7 +350,7 @@
       }
       if (event.metaKey && event.shiftKey && !event.altKey && !event.ctrlKey && event.code === "KeyP") {
         event.preventDefault();
-        postDeskRoomFrameMessage({ type: "toggle-git-pin" });
+        postDeskTimelineFrameMessage({ type: "toggle-git-pin" });
         return;
       }
       if (!event.metaKey || event.ctrlKey) return;

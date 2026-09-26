@@ -9,10 +9,10 @@ from types import SimpleNamespace
 from unittest import mock
 
 from tmux.session import find_session_for_workspace
-from fs.log.paths import workspace_room_port
-from server.room import server as room_server
-from server.room.routes.write import _post_open_terminal
-from server.room.timeline_binding import WorkspaceTimelineBinding
+from fs.log.paths import workspace_timeline_port
+from server.timeline import server as timeline_server
+from server.timeline.routes.write import _post_open_terminal
+from server.timeline.binding import WorkspaceTimelineBinding
 
 
 class _JsonHandler:
@@ -26,19 +26,19 @@ class _JsonHandler:
 
 
 class RenamedTimelineRouteTests(unittest.TestCase):
-    def test_reload_room_restarts_the_current_workspace_without_an_aw_name(self) -> None:
-        old_pending = room_server.room_restart_pending
+    def test_reload_timeline_restarts_the_current_workspace_without_an_aw_name(self) -> None:
+        old_pending = timeline_server.timeline_restart_pending
         try:
-            room_server.room_restart_pending = False
+            timeline_server.timeline_restart_pending = False
             fake_server = mock.Mock()
             with (
-                mock.patch.object(room_server, "workspace", "/work/project"),
-                mock.patch.object(room_server, "server", fake_server),
-                mock.patch.object(room_server, "_restart_env", return_value={}),
-                mock.patch.object(room_server, "launch_room_server", return_value=object()) as launch,
-                mock.patch.object(room_server, "wait_for_room_server", return_value=""),
+                mock.patch.object(timeline_server, "workspace", "/work/project"),
+                mock.patch.object(timeline_server, "server", fake_server),
+                mock.patch.object(timeline_server, "_restart_env", return_value={}),
+                mock.patch.object(timeline_server, "launch_timeline_server", return_value=object()) as launch,
+                mock.patch.object(timeline_server, "wait_for_timeline_server", return_value=""),
             ):
-                ok, detail, owns_restart = room_server.queue_room_restart()
+                ok, detail, owns_restart = timeline_server.queue_timeline_restart()
 
             self.assertTrue(ok)
             self.assertEqual(detail, "")
@@ -47,7 +47,7 @@ class RenamedTimelineRouteTests(unittest.TestCase):
             fake_server.server_close.assert_called_once_with()
             launch.assert_called_once_with("/work/project", env={})
         finally:
-            room_server.room_restart_pending = old_pending
+            timeline_server.timeline_restart_pending = old_pending
 
     def test_running_server_binding_follows_a_folder_rename_without_changing_port(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -64,34 +64,34 @@ class RenamedTimelineRouteTests(unittest.TestCase):
             )
 
             with (
-                mock.patch("server.room.timeline_binding.agent_window_log_root", return_value=root),
+                mock.patch("server.timeline.binding.agent_window_log_root", return_value=root),
                 mock.patch("fs.log.meta.agent_window_log_root", return_value=root),
                 mock.patch("fs.log.paths.agent_window_log_root", return_value=root),
             ):
                 binding = WorkspaceTimelineBinding(workspace)
-                port_before = workspace_room_port(workspace)
+                port_before = workspace_timeline_port(workspace)
                 old_dir.rename(root / "new-label")
-                timeline_label, log_path = binding.snapshot()
+                timeline_name, log_path = binding.snapshot()
 
-            self.assertEqual(timeline_label, "new-label")
+            self.assertEqual(timeline_name, "new-label")
             self.assertEqual(log_path, root / "new-label" / ".log.jsonl")
-            self.assertEqual(workspace_room_port(workspace), port_before)
+            self.assertEqual(workspace_timeline_port(workspace), port_before)
 
     def test_terminal_attaches_to_real_tmux_name_after_aw_rename(self) -> None:
         handler = _JsonHandler()
         state = SimpleNamespace(
-            room_is_active=True,
+            session_is_active=True,
             tmux_session_name="opaque-tmux-7",
         )
         size_result = SimpleNamespace(returncode=0, stdout="160 48")
         ctx = {
             "state": state,
-            "timeline_label": "renamed-aw-timeline",
+            "timeline_name": "renamed-aw-timeline",
         }
 
         with (
-            mock.patch("server.room.routes.write.subprocess.run", return_value=size_result) as run,
-            mock.patch("server.room.routes.write.subprocess.Popen") as popen,
+            mock.patch("server.timeline.routes.write.subprocess.run", return_value=size_result) as run,
+            mock.patch("server.timeline.routes.write.subprocess.Popen") as popen,
         ):
             _post_open_terminal(handler, None, ctx)
 
