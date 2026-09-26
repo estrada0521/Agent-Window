@@ -102,7 +102,7 @@ class _VnodeNativeSync:
                 pending.append(event)
             if woke:
                 self._sync_bindings()
-            if not self._state.session_is_active:
+            if not self._state.room_is_active:
                 continue
             rebind_agents: list[str] = []
             for event in pending:
