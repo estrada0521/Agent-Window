@@ -1,5 +1,4 @@
     .desk-sidebar-content {
-      transition: opacity 180ms ease;
       min-height: 0;
       min-width: 0;
       display: grid;
@@ -16,7 +15,6 @@
       scrollbar-width: none;
       display: grid;
       grid-template-columns: minmax(0, 1fr);
-      --hub-text-fade-width: calc(var(--text-size, 13px) * 1.5);
       grid-template-rows: auto minmax(0, 1fr) auto;
       position: relative;
       font-size: var(--text-size, 13px);
@@ -40,7 +38,6 @@
       color: var(--fg);
       font-family: "Snell Roundhand", "Apple Chancery", cursive;
       white-space: nowrap;
-      overflow: hidden;
       pointer-events: none;
     }
     .desk-new-timeline-section {
@@ -82,13 +79,6 @@
       color: var(--muted);
       pointer-events: none;
       white-space: nowrap;
-      overflow: hidden;
-    }
-    .desk-hub-tagline,
-    .desk-row-stack,
-    .desk-hub-footer-credit {
-      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--row-fade-end, 0px) - var(--hub-text-fade-width)), transparent calc(100% - var(--row-fade-end, 0px)));
-      mask-image: linear-gradient(to right, #000 calc(100% - var(--row-fade-end, 0px) - var(--hub-text-fade-width)), transparent calc(100% - var(--row-fade-end, 0px)));
     }
     .desk-new-timeline-toggle {
       width: 100%;
@@ -349,6 +339,8 @@
       overflow: hidden;
       white-space: nowrap;
       line-height: 1.2;
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--row-fade-end, 0px) - 1.5em), transparent calc(100% - var(--row-fade-end, 0px)));
+      mask-image: linear-gradient(to right, #000 calc(100% - var(--row-fade-end, 0px) - 1.5em), transparent calc(100% - var(--row-fade-end, 0px)));
     }
     .desk-action-timeline-row .desk-row-stack {
       position: relative;

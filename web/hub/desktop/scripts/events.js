@@ -302,28 +302,18 @@
       if (isPhoneViewport()) return;
       event.preventDefault();
       const startWidth = currentDeskSidebarWidthPx();
-      const startWidthAtDefaultTextSize = _deskSidebarWidthAtDefaultTextSize;
       const startX = event.clientX;
       _deskSidebarResizer.setPointerCapture?.(event.pointerId);
       document.body.classList.add("desk-workbench-resizing");
-      let closing = false;
       const onMove = (moveEvent) => {
         const nextWidth = startWidth + (moveEvent.clientX - startX);
-        closing = deskSidebarWidthAtDefaultTextSize(nextWidth) < DESK_SIDEBAR_CLOSE_WIDTH_AT_DEFAULT_TEXT_SIZE;
-        document.body.classList.toggle("desk-sidebar-closing", closing);
-        if (!closing) setDeskSidebarWidthFromRenderedPx(nextWidth, { persist: false });
+        setDeskSidebarWidthFromRenderedPx(nextWidth);
       };
       const onUp = () => {
-        document.body.classList.remove("desk-workbench-resizing", "desk-sidebar-closing");
+        document.body.classList.remove("desk-workbench-resizing");
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
         window.removeEventListener("pointercancel", onUp);
-        if (closing) {
-          setDeskSidebarOpen(false);
-          setDeskSidebarWidthAtDefaultTextSize(startWidthAtDefaultTextSize);
-          return;
-        }
-        setDeskSidebarWidthAtDefaultTextSize(_deskSidebarWidthAtDefaultTextSize);
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);

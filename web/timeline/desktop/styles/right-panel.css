@@ -8,6 +8,7 @@
       --right-panel-small-icon-size: 1.23em;
       --right-panel-chevron-size: 1.08em;
       --right-panel-floating-inset: calc(var(--text-size, 13px) * 10 / 13);
+      --side-bar-edge-inset: calc(var(--text-size, 13px) * 5 / 13);
     }
     .desktop-right-panel {
       font-family: var(--font-main);
@@ -44,8 +45,11 @@
       left: 0;
       right: auto;
     }
-    .desktop-right-panel.is-closing .desktop-right-panel-card {
-      opacity: 0;
+    html:not([data-side-bar="left"]) .desktop-right-panel-card {
+      padding-right: var(--side-bar-edge-inset);
+    }
+    html[data-side-bar="left"]:not([data-hub-sidebar-open]) .desktop-right-panel-card {
+      padding-left: var(--side-bar-edge-inset);
     }
     .desktop-right-panel.open {
       opacity: 1;
@@ -53,7 +57,6 @@
       pointer-events: auto;
     }
     .desktop-right-panel-card {
-      transition: opacity 180ms ease;
       position: relative;
       display: flex;
       flex-direction: column;

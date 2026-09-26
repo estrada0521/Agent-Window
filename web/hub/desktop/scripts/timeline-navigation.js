@@ -83,8 +83,6 @@
       _deskUnreadTimelines.delete(_deskSelectedTimelineName);
       updateDeskWindowTitle(_deskSelectedTimelineName);
       persistDeskSelection(_deskSelectedTimelineName);
-      if (isDeskTimelineSidebarOpen()) _deskTimelineFrame.dataset.hubSidebarOpen = "1";
-      else delete _deskTimelineFrame.dataset.hubSidebarOpen;
       if (_deskSelectedTimelineName) {
         cacheDeskTimelineUrl(buildTimelineOpenHref(_deskSelectedTimelineName, false), url);
       }
