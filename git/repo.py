@@ -5,21 +5,14 @@ import threading
 import time
 from pathlib import Path
 
-_workspace: str = ""
 _GIT_OVERVIEW_CACHE_TTL_SECONDS = 5.0
 _git_overview_cache_lock = threading.Lock()
 _git_overview_cache: dict[tuple[str, int, int, bool], tuple[float, dict]] = {}
 _commit_list_cache: dict[tuple[str, str, int, int], dict] = {}
 
 
-def configure(*, workspace: str) -> None:
-    global _workspace
-    _workspace = workspace or ""
-    invalidate_git_cache(include_commits=True)
-
-
-def _git_root() -> Path:
-    root = str(_workspace or "").strip()
+def _git_root(workspace: str) -> Path:
+    root = str(workspace or "").strip()
     if not root:
         raise RuntimeError("git workspace is not configured")
     path = Path(root)
@@ -135,8 +128,8 @@ def _read_commit_list(root: Path, *, offset: int, limit: int) -> dict:
     }
 
 
-def git_overview(*, offset=0, limit=50, force_refresh: bool = False, include_commits: bool = True):
-    root = _git_root()
+def git_overview(workspace: str, *, offset=0, limit=50, force_refresh: bool = False, include_commits: bool = True):
+    root = _git_root(workspace)
     offset = int(offset)
     limit = int(limit)
     if offset < 0:
@@ -267,8 +260,8 @@ def git_overview(*, offset=0, limit=50, force_refresh: bool = False, include_com
     return result
 
 
-def git_commit_info(*, commit_hash: str) -> dict:
-    root = _git_root()
+def git_commit_info(workspace: str, *, commit_hash: str) -> dict:
+    root = _git_root(workspace)
     res = _run_git(root, "show", "--shortstat", "--format=%H%x1f%an%x1f%aI%x1f%B%x1e", str(commit_hash or "").strip(), "--")
     if res.returncode != 0:
         raise RuntimeError((res.stderr or res.stdout or "git show failed").strip())
@@ -277,8 +270,8 @@ def git_commit_info(*, commit_hash: str) -> dict:
     return {"hash": full_hash, "author": author, "date": date, "message": message.strip(), "stat": stat.strip()}
 
 
-def git_diff_files(*, commit_hash: str = "", scope: str = ""):
-    root = _git_root()
+def git_diff_files(workspace: str, *, commit_hash: str = "", scope: str = ""):
+    root = _git_root(workspace)
     commit_hash = str(commit_hash or "").strip()
     scope = str(scope or "").strip().lower()
 
@@ -377,8 +370,8 @@ def git_diff_files(*, commit_hash: str = "", scope: str = ""):
     }
 
 
-def open_diff_tool(rel_path: str, commit_hash: str = "", old_path: str = "") -> dict:
-    root = _git_root()
+def open_diff_tool(workspace: str, rel_path: str, commit_hash: str = "", old_path: str = "") -> dict:
+    root = _git_root(workspace)
     rel = str(rel_path or "").strip().lstrip("/")
     if not rel:
         raise ValueError("path required")

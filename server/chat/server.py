@@ -20,7 +20,6 @@ from server.chat.probe import read_chat_server_state
 from fs.session.paths import (
     workspace_chat_port,
 )
-from git import repo as workspace_git
 from fs.files.workspace import WorkspaceFiles
 from fs.watch import start_workspace_fsevents_watcher
 from git.commit import adopt_commit_baseline
@@ -169,7 +168,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         workspace=workspace,
         repo_root=_repo_root,
     )
-    workspace_git.configure(workspace=workspace)
     start_workspace_fsevents_watcher(runtime, file_runtime)
     asset_runtime = ChatAssets(
         repo_root=_repo_root,

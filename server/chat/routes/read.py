@@ -202,6 +202,7 @@ def _get_git_overview(handler, parsed, ctx) -> None:
         offset = int(raw_offset)
         limit = int(raw_limit)
         data = workspace_git.git_overview(
+            ctx["workspace"],
             offset=offset, limit=limit, force_refresh=force_refresh, include_commits=not summary_only
         )
         body = json.dumps(data, ensure_ascii=True).encode("utf-8")
@@ -218,7 +219,7 @@ def _get_git_diff_files(handler, parsed, ctx) -> None:
     scope = (qs.get("scope", [""])[0] or "").strip()
     try:
         body = json.dumps(
-            workspace_git.git_diff_files(commit_hash=commit_hash, scope=scope),
+            workspace_git.git_diff_files(ctx["workspace"], commit_hash=commit_hash, scope=scope),
             ensure_ascii=True,
         ).encode("utf-8")
     except Exception as exc:
@@ -232,7 +233,7 @@ def _get_git_commit_info(handler, parsed, ctx) -> None:
     commit_hash = (parse_qs(parsed.query).get("hash", [""])[0] or "").strip()
     try:
         body = json.dumps(
-            workspace_git.git_commit_info(commit_hash=commit_hash),
+            workspace_git.git_commit_info(ctx["workspace"], commit_hash=commit_hash),
             ensure_ascii=True,
         ).encode("utf-8")
     except Exception as exc:

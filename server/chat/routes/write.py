@@ -496,6 +496,7 @@ def _post_open_diff(handler, _parsed, ctx) -> None:
     _send_workspace_result(
         handler,
         lambda: workspace_git.open_diff_tool(
+            ctx["workspace"],
             rel, (data.get("hash") or "").strip(), (data.get("old_path") or "").strip()
         ),
     )
