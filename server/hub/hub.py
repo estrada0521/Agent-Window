@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from tmux import TMUX
-from fs.session.paths import normalize_workspace
+from fs.log.paths import normalize_workspace
 
 
 @dataclass(frozen=True)

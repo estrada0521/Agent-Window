@@ -5,18 +5,18 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from fs.session.meta import (
+from fs.log.meta import (
     read_session_meta_file,
     session_workspace_claims,
 )
-from fs.session.paths import (
-    SESSION_LOG_FILENAME,
-    SESSION_META_FILENAME,
-    agent_window_session_root,
-    session_log_path,
+from fs.log.paths import (
+    LOG_FILENAME,
+    META_FILENAME,
+    agent_window_log_root,
+    log_jsonl_path,
 )
-from fs.session.paths import normalize_workspace
-from fs.session.log import iter_log_entries_reversed
+from fs.log.paths import normalize_workspace
+from fs.log.jsonl import iter_log_entries_reversed
 
 
 @dataclass(frozen=True)
@@ -53,7 +53,7 @@ def latest_message_preview(log_path: Path) -> dict[str, str]:
 
 
 def build_session_record(*, name: str, workspace: str) -> dict:
-    preview = latest_message_preview(session_log_path(name))
+    preview = latest_message_preview(log_jsonl_path(name))
     return {
         "name": name,
         "workspace": workspace,
@@ -113,16 +113,16 @@ def active_session_records(live: LiveSessions) -> list[dict]:
 
 
 def archived_session_records(live: LiveSessions) -> list[dict]:
-    root = agent_window_session_root()
+    root = agent_window_log_root()
     if not root.is_dir():
         return []
     sessions: list[tuple[float, dict]] = []
     for entry in root.iterdir():
         if not entry.is_dir() or entry.name in live.workspaces:
             continue
-        meta = read_session_meta_file(entry / SESSION_META_FILENAME)
+        meta = read_session_meta_file(entry / META_FILENAME)
         record = build_session_record(name=entry.name, workspace=meta["workspace"])
         record["agents"] = meta["agents"]
-        sessions.append(((entry / SESSION_LOG_FILENAME).stat().st_mtime, record))
+        sessions.append(((entry / LOG_FILENAME).stat().st_mtime, record))
     sessions.sort(key=lambda item: item[0], reverse=True)
     return [record for _mtime, record in sessions]

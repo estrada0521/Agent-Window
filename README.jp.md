@@ -17,7 +17,7 @@ UNIX哲学で作られた、macOS向けのAgentアプリケーション。
 
 ## Principle
 
-1. 単位は一つのlog。実体は `~/.agent-window/session/{session_name}/.log.jsonl`。
+1. 単位は一つのlog。実体は `~/.agent-window/log/{session_name}/.log.jsonl`。
 2. Agentは普通のCLIで、tmux内で動く。数は任意。
 3. workspaceもCLIも、途中で差し替えられる。logは同じものが続く。
 4. 送信は `tmux send-keys`。入力欄の文字が、Agentのpaneに入る。

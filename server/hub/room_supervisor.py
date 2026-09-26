@@ -5,16 +5,16 @@ import shutil
 from pathlib import Path
 
 from server.room.probe import read_room_server_state
-from fs.session.meta import read_session_meta, session_workspace_claims
+from fs.log.meta import read_session_meta, session_workspace_claims
 from tmux.control import (
     SessionControlError,
     create_session,
     kill_session,
     stop_room_server,
 )
-from fs.session.paths import (
+from fs.log.paths import (
     port_is_bindable,
-    session_artifact_dir,
+    log_dir,
     workspace_room_port,
     workspace_log_link_path,
 )
@@ -172,7 +172,7 @@ def delete_archived_session(hub, session_name: str) -> tuple[bool, str]:
         except OSError as exc:
             return False, str(exc)
     try:
-        shutil.rmtree(session_artifact_dir(session_name))
+        shutil.rmtree(log_dir(session_name))
     except OSError as exc:
         return False, str(exc)
     return True, ""

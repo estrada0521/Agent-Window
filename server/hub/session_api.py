@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fs.session.meta import read_session_meta
+from fs.log.meta import read_session_meta
 from server.hub.room_supervisor import ensure_room_server
 from server.hub.session_query import live_sessions_query
 

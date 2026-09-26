@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from urllib.parse import unquote as url_unquote
 
-from fs.session.paths import workspace_upload_dir
+from fs.log.paths import workspace_upload_dir
 from tmux.control import add_agent, remove_agent
 from tmux import TMUX, TMUX_SOCKET_NAME
 from tmux.shortcut_command.execute import run_shortcut_command

@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from fs.session.meta import find_session_for_workspace
+from fs.log.meta import find_session_for_workspace
 from server.hub.new_session import post_start_session_draft
 
 
@@ -23,13 +23,13 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
 
     def test_finds_the_session_recorded_for_a_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "session"
+            root = Path(tmp) / "log"
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
             self._write_meta(root, "my-session", str(workspace.resolve()))
 
             with mock.patch(
-                "fs.session.paths.agent_window_root", return_value=Path(tmp)
+                "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(workspace)
 
@@ -37,13 +37,13 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
 
     def test_finds_an_archived_session_with_no_active_tmux_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "session"
+            root = Path(tmp) / "log"
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
             self._write_meta(root, "archived-session", str(workspace.resolve()))
 
             with mock.patch(
-                "fs.session.paths.agent_window_root", return_value=Path(tmp)
+                "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(workspace)
 
@@ -51,13 +51,13 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
 
     def test_excludes_the_named_session_for_the_revive_flow(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "session"
+            root = Path(tmp) / "log"
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
             self._write_meta(root, "my-session", str(workspace.resolve()))
 
             with mock.patch(
-                "fs.session.paths.agent_window_root", return_value=Path(tmp)
+                "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(workspace, exclude_session="my-session")
 
@@ -65,7 +65,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
 
     def test_no_match_for_a_different_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "session"
+            root = Path(tmp) / "log"
             workspace = Path(tmp) / "workspace"
             other_workspace = Path(tmp) / "other-workspace"
             workspace.mkdir()
@@ -73,7 +73,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             self._write_meta(root, "my-session", str(workspace.resolve()))
 
             with mock.patch(
-                "fs.session.paths.agent_window_root", return_value=Path(tmp)
+                "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(other_workspace)
 
@@ -81,12 +81,12 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
 
     def test_no_match_when_the_session_root_does_not_exist_yet(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "session"
+            root = Path(tmp) / "log"
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
 
             with mock.patch(
-                "fs.session.paths.agent_window_root", return_value=Path(tmp)
+                "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(workspace)
 
@@ -112,7 +112,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                     "server.hub.new_session.find_session_for_workspace",
                     return_value="existing-session",
                 ),
-                mock.patch("server.hub.new_session.session_artifact_dir") as session_dir,
+                mock.patch("server.hub.new_session.log_dir") as session_dir,
             ):
                 post_start_session_draft(handler, None, {"session_api": session_api})
 
@@ -126,7 +126,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "new-parent" / "Agent-Window"
             workspace.mkdir(parents=True)
-            session_root = Path(tmp) / "session"
+            session_root = Path(tmp) / "log"
             (session_root / "Agent-Window").mkdir(parents=True)
             digest = hashlib.sha256(str(workspace.resolve()).encode("utf-8")).hexdigest()
             (session_root / f"aw-{digest[:8]}").mkdir()
@@ -140,7 +140,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                     return_value=None,
                 ),
                 mock.patch(
-                    "server.hub.new_session.session_artifact_dir",
+                    "server.hub.new_session.log_dir",
                     side_effect=lambda name: session_root / name,
                 ),
                 mock.patch("server.hub.new_session.create_session") as create_session,

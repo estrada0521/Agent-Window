@@ -10,12 +10,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from agents import agent_base_name
 from agents.registry import ALL_AGENT_NAMES
-from fs.session.log import append_jsonl_entry
-from fs.session.meta import find_session_for_workspace
+from fs.log.jsonl import append_jsonl_entry
+from fs.log.meta import find_session_for_workspace
 from tmux.session import AgentPane, parse_agent_topology
 from tmux import TMUX_SOCKET_NAME
 from tmux.send_keys import deliver_text_to_pane
-from fs.session.paths import session_log_path, workspace_room_port
+from fs.log.paths import log_jsonl_path, workspace_room_port
 
 
 class AgentSendError(RuntimeError):
@@ -241,7 +241,7 @@ class AgentSender:
         name = str(session_name or "").strip()
         if not name:
             raise AgentSendError("session name is required")
-        log_path = session_log_path(name)
+        log_path = log_jsonl_path(name)
         if not log_path.is_file():
             raise AgentSendError(f"session log is unavailable: {log_path}")
         entry = {

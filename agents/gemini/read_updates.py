@@ -14,7 +14,7 @@ from agents.gemini.read_running import (
     running_tool_events,
 )
 from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
-from fs.session.log import append_jsonl_entry
+from fs.log.jsonl import append_jsonl_entry
 
 
 def sync_gemini_native_log(

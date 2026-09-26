@@ -3,10 +3,10 @@ from __future__ import annotations
 import threading
 from pathlib import Path
 
-from fs.session.meta import find_session_for_workspace
-from fs.session.paths import (
-    agent_window_session_root,
-    session_log_path,
+from fs.log.meta import find_session_for_workspace
+from fs.log.paths import (
+    agent_window_log_root,
+    log_jsonl_path,
 )
 
 
@@ -14,7 +14,7 @@ class WorkspaceSessionBinding:
 
     def __init__(self, workspace: Path | str) -> None:
         self.workspace = str(Path(workspace).expanduser().resolve())
-        self._session_root = agent_window_session_root()
+        self._session_root = agent_window_log_root()
         self._lock = threading.RLock()
         self._root_signature: tuple[int, int] | None = None
         self._session_name = ""
@@ -39,7 +39,7 @@ class WorkspaceSessionBinding:
             session_name = find_session_for_workspace(self.workspace)
             if not session_name:
                 raise RuntimeError(f"No agent-window session claims workspace {self.workspace}")
-            log_path = session_log_path(session_name)
+            log_path = log_jsonl_path(session_name)
             self._session_name = session_name
             self._log_path = log_path
             self._root_signature = self._current_root_signature()

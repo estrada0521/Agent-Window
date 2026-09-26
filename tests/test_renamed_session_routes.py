@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from unittest import mock
 
 from tmux.session import find_session_for_workspace
-from fs.session.paths import workspace_room_port
+from fs.log.paths import workspace_room_port
 from server.room import server as room_server
 from server.room.routes.write import _post_open_terminal
 from server.room.session_binding import WorkspaceSessionBinding
@@ -64,9 +64,9 @@ class RenamedSessionRouteTests(unittest.TestCase):
             )
 
             with (
-                mock.patch("server.room.session_binding.agent_window_session_root", return_value=root),
-                mock.patch("fs.session.meta.agent_window_session_root", return_value=root),
-                mock.patch("fs.session.paths.agent_window_session_root", return_value=root),
+                mock.patch("server.room.session_binding.agent_window_log_root", return_value=root),
+                mock.patch("fs.log.meta.agent_window_log_root", return_value=root),
+                mock.patch("fs.log.paths.agent_window_log_root", return_value=root),
             ):
                 binding = WorkspaceSessionBinding(workspace)
                 port_before = workspace_room_port(workspace)

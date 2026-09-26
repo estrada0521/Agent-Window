@@ -11,7 +11,7 @@ from agents.path_state import (
 from agents.running_push import push_running_display
 from agents.cursor.read_running import iter_tool_calls, running_tool_events
 from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
-from fs.session.log import append_jsonl_entry
+from fs.log.jsonl import append_jsonl_entry
 
 
 _CURSOR_INTERNAL_NOTE_RE = re.compile(

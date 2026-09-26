@@ -4,7 +4,7 @@ import subprocess
 from dataclasses import dataclass
 
 from tmux import TMUX
-from fs.session.paths import normalize_workspace
+from fs.log.paths import normalize_workspace
 
 
 TERMINAL_WINDOW_NAME = "terminal"

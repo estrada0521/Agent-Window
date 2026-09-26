@@ -4,14 +4,14 @@ import json
 import time
 from urllib.parse import parse_qs
 
-from fs.session.meta import (
+from fs.log.meta import (
     SessionMetaError,
     rename_session,
     reset_session_agents,
     session_workspace,
     set_session_workspace,
 )
-from fs.session.paths import agent_window_session_root
+from fs.log.paths import agent_window_log_root
 from server.hub.room_supervisor import (
     TmuxUnhealthy,
     delete_archived_session,
@@ -162,8 +162,8 @@ def post_rename_session(handler, _parsed, ctx) -> None:
     if any(not name or name in {".", ".."} or "/" in name or "\0" in name for name in (old_name, new_name)):
         handler._send_json(409, {"ok": False, "error": "Session name is not a valid folder name."})
         return
-    source = agent_window_session_root() / old_name
-    target = agent_window_session_root() / new_name
+    source = agent_window_log_root() / old_name
+    target = agent_window_log_root() / new_name
     if not source.is_dir():
         handler._send_json(409, {"ok": False, "error": f"Session not found: {old_name}"})
         return

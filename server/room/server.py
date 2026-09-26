@@ -17,7 +17,7 @@ from server.room.routes.read import dispatch_get_read_route
 from server.room.routes.write import dispatch_post_write_route
 from server.room.assets import RoomAssets
 from server.room.probe import read_room_server_state
-from fs.session.paths import (
+from fs.log.paths import (
     workspace_room_port,
 )
 from fs.files.workspace import WorkspaceFiles

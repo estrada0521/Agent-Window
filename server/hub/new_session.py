@@ -7,12 +7,12 @@ import subprocess
 import time
 from pathlib import Path
 
-from fs.session.meta import find_session_for_workspace
-from fs.session.paths import (
-    SESSION_NAME_MAX_LENGTH,
+from fs.log.meta import find_session_for_workspace
+from fs.log.paths import (
+    LABEL_MAX_LENGTH,
     port_is_bindable,
-    sanitize_session_name,
-    session_artifact_dir,
+    sanitize_label,
+    log_dir,
     workspace_room_port,
 )
 from tmux.control import create_session
@@ -23,16 +23,16 @@ _GENERATED_SESSION_PREFIX = "aw-"
 
 
 def _session_name_for_workspace(workspace: str) -> tuple[str, str]:
-    basename_name = sanitize_session_name(Path(workspace).name)
-    if basename_name and not session_artifact_dir(basename_name).exists():
+    basename_name = sanitize_label(Path(workspace).name)
+    if basename_name and not log_dir(basename_name).exists():
         return basename_name, ""
 
     digest = hashlib.sha256(workspace.encode("utf-8")).hexdigest()
-    max_digest_length = SESSION_NAME_MAX_LENGTH - len(_GENERATED_SESSION_PREFIX)
+    max_digest_length = LABEL_MAX_LENGTH - len(_GENERATED_SESSION_PREFIX)
     digest_length = 8
     while True:
         candidate = f"{_GENERATED_SESSION_PREFIX}{digest[:digest_length]}"
-        if not session_artifact_dir(candidate).exists():
+        if not log_dir(candidate).exists():
             if basename_name:
                 notice = (
                     f"'{basename_name}' is already in use. Created this session as '{candidate}'. "

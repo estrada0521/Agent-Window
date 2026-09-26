@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from fs.session.paths import (
-    agent_window_session_root,
-    ensure_session_workspace_mirrors,
-    session_artifact_dir,
-    session_log_path,
-    session_meta_path,
+from fs.log.paths import (
+    agent_window_log_root,
+    ensure_workspace_log_link,
+    log_dir,
+    log_jsonl_path,
+    log_meta_path,
     workspace_log_link_path,
 )
 import os
@@ -23,12 +23,12 @@ def read_session_meta_file(path: Path) -> dict:
 
 
 def read_session_meta(session_name: str) -> dict:
-    return read_session_meta_file(session_meta_path(session_name))
+    return read_session_meta_file(log_meta_path(session_name))
 
 
 def _existing_session_meta(session_name: str) -> tuple[Path, dict]:
     name = str(session_name or "").strip()
-    path = session_meta_path(name)
+    path = log_meta_path(name)
     try:
         return path, read_session_meta_file(path)
     except FileNotFoundError:
@@ -40,7 +40,7 @@ def session_workspace_claims(
     exclude_session: str = "",
 ) -> dict[str, tuple[str, str]]:
     exclude = str(exclude_session or "").strip()
-    root = agent_window_session_root()
+    root = agent_window_log_root()
     claims: dict[str, tuple[str, str]] = {}
     if not root.is_dir():
         return claims
@@ -81,15 +81,15 @@ def set_session_workspace(session_name: str, workspace: str) -> None:
     old_link = workspace_log_link_path(old_workspace)
     if old_workspace != Path(ws).expanduser().resolve() and old_link.is_symlink():
         old_link.unlink()
-    ensure_session_workspace_mirrors(name, ws)
+    ensure_workspace_log_link(name, ws)
 
 
 def rename_session(old_name: str, new_name: str) -> None:
-    session_artifact_dir(old_name).rename(session_artifact_dir(new_name))
+    log_dir(old_name).rename(log_dir(new_name))
     link = workspace_log_link_path(session_workspace(new_name))
     if link.is_symlink():
         link.unlink()
-        link.symlink_to(session_log_path(new_name))
+        link.symlink_to(log_jsonl_path(new_name))
 
 
 def reset_session_agents(session_name: str) -> None:
@@ -107,16 +107,16 @@ def write_session_meta_file(
     agents: list[str],
 ) -> None:
     write_json_atomically(
-        session_meta_path(session_name),
+        log_meta_path(session_name),
         {"workspace": workspace, "agents": agents},
         indent=2,
     )
 
 
 def create_session_folder(session_name: str, workspace: str, agents: list[str]) -> None:
-    session_artifact_dir(session_name).mkdir(parents=True)
+    log_dir(session_name).mkdir(parents=True)
     write_session_meta_file(session_name, workspace, agents)
-    session_log_path(session_name).touch()
+    log_jsonl_path(session_name).touch()
 
 
 def write_json_atomically(path: Path, data: dict, *, indent: int | None = None) -> None:

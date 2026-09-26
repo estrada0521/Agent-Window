@@ -8,11 +8,11 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from fs.session.log import append_jsonl_entry
-from fs.session.meta import session_meta_agents
+from fs.log.jsonl import append_jsonl_entry
+from fs.log.meta import session_meta_agents
 from tmux import TMUX
 from tmux.send_keys import deliver_text_to_pane
-from fs.session.log import newest_entries
+from fs.log.jsonl import newest_entries
 from agents.dispatch import sync_agent
 from agents.binding_models import PaneBindingRequest
 from agents.refresh_bindings import refresh_native_log_bindings, remove_native_log_binding

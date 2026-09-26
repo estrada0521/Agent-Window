@@ -55,7 +55,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Lab-workspace"
             workspace.mkdir()
-            root = Path(tmp) / "session"
+            root = Path(tmp) / "log"
             session_dir = root / "Lab"
             session_dir.mkdir(parents=True)
             (session_dir / ".log.jsonl").write_text("", encoding="utf-8")
@@ -70,7 +70,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 encoding="utf-8",
             )
             hub_repo = "/Users/okadaharuto/workspace/Agent-Window"
-            with patch("fs.session.paths.agent_window_root", return_value=Path(tmp)):
+            with patch("fs.log.paths.agent_window_root", return_value=Path(tmp)):
                 sessions = archived_session_records(LiveSessions({}, "ok"))
             self.assertEqual(len(sessions), 1)
             self.assertEqual(sessions[0]["name"], "Lab")
@@ -180,21 +180,21 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             workspace_git.git_overview("/no/such/even-parity")
 
     def test_mirrors_link_inside_an_existing_workspace(self) -> None:
-        from fs.session.paths import (
-            SESSION_LOG_FILENAME,
-            ensure_session_workspace_mirrors,
+        from fs.log.paths import (
+            LOG_FILENAME,
+            ensure_workspace_log_link,
         )
 
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Lab"
             workspace.mkdir()
-            canonical = Path(tmp) / "session"
+            canonical = Path(tmp) / "log"
             canonical.mkdir()
-            log_target = canonical / SESSION_LOG_FILENAME
+            log_target = canonical / LOG_FILENAME
             log_target.write_text("", encoding="utf-8")
-            with patch("fs.session.paths.session_log_path", return_value=log_target):
-                ensure_session_workspace_mirrors("Lab", str(workspace))
-            link = workspace / ".agent-window" / SESSION_LOG_FILENAME
+            with patch("fs.log.paths.log_jsonl_path", return_value=log_target):
+                ensure_workspace_log_link("Lab", str(workspace))
+            link = workspace / ".agent-window" / LOG_FILENAME
             self.assertTrue(link.is_symlink())
             self.assertEqual(link.resolve(), log_target.resolve())
 

@@ -8,18 +8,18 @@ import time
 from collections import Counter
 from pathlib import Path
 
-from fs.session.log import append_jsonl_entry
+from fs.log.jsonl import append_jsonl_entry
 from server.room.probe import read_room_server_state
-from fs.session.meta import (
+from fs.log.meta import (
     SessionMetaError,
     create_session_folder,
     read_session_meta,
     session_workspace,
     write_session_meta_file,
 )
-from fs.session.paths import (
-    ensure_session_workspace_mirrors,
-    session_log_path,
+from fs.log.paths import (
+    ensure_workspace_log_link,
+    log_jsonl_path,
     workspace_room_port,
 )
 from agents.executables import agent_launch_cmd, resolve_agent_executable
@@ -101,7 +101,7 @@ def _write_meta(tmux_name: str, aw_name: str) -> None:
 
 def _append_log(session_name: str, message: str) -> None:
     append_jsonl_entry(
-        session_log_path(session_name),
+        log_jsonl_path(session_name),
         {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "session": session_name,
@@ -326,7 +326,7 @@ def create_session(
     instances = _prepare_instances(agents)
     if not revive:
         create_session_folder(session_name, str(workspace_path), instances)
-    ensure_session_workspace_mirrors(session_name, str(workspace_path))
+    ensure_workspace_log_link(session_name, str(workspace_path))
 
     tmux_name = _create_tmux_session(workspace_path)
 

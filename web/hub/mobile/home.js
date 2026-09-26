@@ -740,7 +740,7 @@
           svg: trashSvg,
           label: "Delete",
           tone: "danger",
-          title: "Delete — Delete ~/.agent-window/session/{session}",
+          title: "Delete — Delete ~/.agent-window/log/{session}",
         },
         revive: {
           svg: reviveSvg,

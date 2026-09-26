@@ -17,7 +17,7 @@ A UNIX-philosophy Agent application for macOS.
 
 ## Principles
 
-1. The unit is one log. Its file: `~/.agent-window/session/{session_name}/.log.jsonl`.
+1. The unit is one log. Its file: `~/.agent-window/log/{session_name}/.log.jsonl`.
 2. An Agent is an ordinary CLI, running inside tmux. Any number of them.
 3. Both workspace and CLI can be swapped mid-session. The same log continues.
 4. Sending is `tmux send-keys`. Text from the input field goes into the Agent's pane.

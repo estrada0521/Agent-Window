@@ -5,7 +5,7 @@ import json
 import os
 import sys
 
-from fs.session.meta import find_session_for_workspace
+from fs.log.meta import find_session_for_workspace
 from tmux.control import SessionControlError, describe_session
 
 
@@ -52,7 +52,7 @@ def format_context_text(info: dict) -> str:
     )
     workspace = info["workspace"]
     lines.append(
-        f"- Room jsonl lives at `~/.agent-window/session/{info['session']}/.log.jsonl`; "
+        f"- Room jsonl lives at `~/.agent-window/log/{info['session']}/.log.jsonl`; "
         f"workspace mirror is `{workspace}/.agent-window/.log.jsonl`."
     )
     return "\n".join(lines)

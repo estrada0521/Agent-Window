@@ -6,33 +6,33 @@ import socket
 from pathlib import Path
 
 
-SESSION_LOG_FILENAME = ".log.jsonl"
-SESSION_META_FILENAME = ".meta"
-SESSION_NAME_MAX_LENGTH = 64
+LOG_FILENAME = ".log.jsonl"
+META_FILENAME = ".meta"
+LABEL_MAX_LENGTH = 64
 
 
-def sanitize_session_name(raw: str) -> str:
-    return re.sub(r"[^a-zA-Z0-9_.\-]", "-", str(raw or "")).strip(".-")[:SESSION_NAME_MAX_LENGTH]
+def sanitize_label(raw: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9_.\-]", "-", str(raw or "")).strip(".-")[:LABEL_MAX_LENGTH]
 
 
 def agent_window_root() -> Path:
     return Path.home() / ".agent-window"
 
 
-def agent_window_session_root() -> Path:
-    return agent_window_root() / "session"
+def agent_window_log_root() -> Path:
+    return agent_window_root() / "log"
 
 
-def session_artifact_dir(session_name: str) -> Path:
-    return agent_window_session_root() / str(session_name or "").strip()
+def log_dir(session_name: str) -> Path:
+    return agent_window_log_root() / str(session_name or "").strip()
 
 
-def session_log_path(session_name: str) -> Path:
-    return session_artifact_dir(session_name) / SESSION_LOG_FILENAME
+def log_jsonl_path(session_name: str) -> Path:
+    return log_dir(session_name) / LOG_FILENAME
 
 
-def session_meta_path(session_name: str) -> Path:
-    return session_artifact_dir(session_name) / SESSION_META_FILENAME
+def log_meta_path(session_name: str) -> Path:
+    return log_dir(session_name) / META_FILENAME
 
 
 def workspace_agent_window_dir(workspace: Path | str) -> Path:
@@ -40,10 +40,10 @@ def workspace_agent_window_dir(workspace: Path | str) -> Path:
 
 
 def workspace_log_link_path(workspace: Path | str) -> Path:
-    return workspace_agent_window_dir(workspace) / SESSION_LOG_FILENAME
+    return workspace_agent_window_dir(workspace) / LOG_FILENAME
 
 
-def ensure_session_workspace_mirrors(session_name: str, workspace: Path | str) -> None:
+def ensure_workspace_log_link(session_name: str, workspace: Path | str) -> None:
     workspace_path = Path(workspace).expanduser()
     if not workspace_path.is_dir():
         raise FileNotFoundError(f"workspace is not a directory: {workspace_path}")
@@ -52,7 +52,7 @@ def ensure_session_workspace_mirrors(session_name: str, workspace: Path | str) -
     gitignore = aw_dir / ".gitignore"
     if not gitignore.exists():
         gitignore.write_text("*\n", encoding="utf-8")
-    mirrors = ((session_log_path(session_name), workspace_log_link_path(workspace_path)),)
+    mirrors = ((log_jsonl_path(session_name), workspace_log_link_path(workspace_path)),)
     for target, link_path in mirrors:
         link_path.parent.mkdir(parents=True, exist_ok=True)
         if link_path.is_symlink():

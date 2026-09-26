@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 
-from fs.session.paths import agent_window_root
+from fs.log.paths import agent_window_root
 
 _BUILTIN_THEME_JSON = Path(__file__).resolve().parents[2] / "web" / "assets" / "file-icon-theme" / "theme.json"
 

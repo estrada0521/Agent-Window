@@ -4,8 +4,8 @@ from urllib.parse import urlparse
 
 from server import http_proxy
 from server.hub.server_helpers import format_room_url
-from fs.session.meta import session_workspace_claims
-from fs.session.paths import workspace_room_port
+from fs.log.meta import session_workspace_claims
+from fs.log.paths import workspace_room_port
 from server.hub.session_api import split_room_proxy_path
 
 UPSTREAM_TIMEOUT = 30.0
