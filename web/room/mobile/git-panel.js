@@ -1,4 +1,4 @@
-__INCLUDE:../list-flip.js__
+__INCLUDE:../../list-flip.js__
 __INCLUDE:../git-panel-html.js__
 __INCLUDE:../git-panel-data.js__
 __INCLUDE:../git-panel-controller.js__

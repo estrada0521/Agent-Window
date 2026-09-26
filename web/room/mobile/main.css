@@ -17,9 +17,9 @@ __INCLUDE:styles/repo-git.css__
 __INCLUDE:styles/command-menu.css__
 __INCLUDE:styles/composer-overlay.css__
 __INCLUDE:styles/modals.css__
-__INCLUDE:../floating-btn.css__
+__INCLUDE:floating-btn.css__
 __INCLUDE:styles/composer-input.css__
-__INCLUDE:../hud.css__
+__INCLUDE:../../hud.css__
 __INCLUDE:styles/transcript.css__
 __INCLUDE:styles/thinking.css__
     .copy-btn {

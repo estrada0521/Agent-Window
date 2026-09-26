@@ -232,7 +232,7 @@
         throw err;
       }
     };
-__INCLUDE:hud.js__
+__INCLUDE:../hud.js__
     const { setStatus, setResidentStatus } = createHud(document.getElementById("roomHud"));
     const agentActionCandidates = (mode) => {
       if (mode === "add") return ALL_BASE_AGENTS.filter(Boolean);

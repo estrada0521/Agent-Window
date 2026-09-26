@@ -60,7 +60,7 @@ def _room_markdown_preview_css() -> str:
     theme_vars_css = (_REPO_ROOT / "web/room/markdown-theme-vars.css").read_text(encoding="utf-8")
     code_css = (_REPO_ROOT / "web/room/markdown-code.css").read_text(encoding="utf-8")
     shared_body_css = (_REPO_ROOT / "web/room/markdown-body.css").read_text(encoding="utf-8")
-    variant_body_css = (_REPO_ROOT / "web/room/markdown-body-mobile.css").read_text(encoding="utf-8")
+    variant_body_css = (_REPO_ROOT / "web/room/mobile/markdown-body.css").read_text(encoding="utf-8")
     markdown_css = f"{shared_body_css}\n{variant_body_css}"
     replacements = {
         "__AGENT_SEL_MD_BODY__": ".md-body",

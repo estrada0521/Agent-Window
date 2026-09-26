@@ -331,7 +331,7 @@ __INCLUDE:../transcript-render.js__
       window.addEventListener("load", _rerenderWhenMarkedReady, { once: true });
     }
 __INCLUDE:../transcript-actions.js__
-__INCLUDE:../room-menu.js__
+__INCLUDE:room-menu.js__
 __INCLUDE:header-actions.js__
 __INCLUDE:../composer.js__
 __INCLUDE:../file-links.js__
@@ -481,7 +481,7 @@ __INCLUDE:../pointer-capability.js__
       document.documentElement.style.setProperty("--desktop-right-panel-width", `${panelWidth}px`);
       document.documentElement.style.setProperty("--desktop-right-panel-reserved-width", `${panelWidth > 0 ? panelWidth + DP_PANEL_GAP : 0}px`);
     };
-__INCLUDE:../list-flip.js__
+__INCLUDE:../../list-flip.js__
 __INCLUDE:../git-panel-html.js__
 __INCLUDE:../git-panel-data.js__
 __INCLUDE:../git-panel-controller.js__

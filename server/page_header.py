@@ -4,7 +4,7 @@ from pathlib import Path
 
 from server import APP_DISPLAY_NAME
 
-_HUB_RESTART_NAV_JS = (Path(__file__).resolve().parents[1] / "web" / "hub" / "restart-nav.js").read_text()
+_HUB_RESTART_NAV_JS = (Path(__file__).resolve().parents[1] / "web" / "restart-nav.js").read_text()
 
 
 PAGE_HEADER_CSS = """
