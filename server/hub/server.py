@@ -10,7 +10,7 @@ from urllib.parse import parse_qs, urlparse
 
 from server.hub.state import HubState
 from server.appearance.colors import apply_color_tokens, resolve_theme_palette
-from server.appearance.theme import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
+from server.appearance.colors import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from server.pwa import PWA_FILES, pwa_icon_entries, serve_pwa_file
 from server.hub.proxy import format_timeline_url, proxy_timeline, split_timeline_proxy_path

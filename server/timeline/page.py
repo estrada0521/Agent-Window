@@ -5,17 +5,57 @@ import json
 from server.pwa import pwa_url
 from agents.registry import agent_names_js_set, agent_names_js_array
 from server.timeline.page_scripts import TIMELINE_HEADER_MENU_BUTTON_HTML, TIMELINE_SHEET_PANELS_HTML
-from server.timeline.page_render import apply_timeline_template_replacements, build_timeline_template_replacements
 from server.template import load_timeline_template
 from server.appearance.colors import apply_color_tokens
-from server.appearance.file_icon_theme import load_file_icon_theme_document, resolve_file_icon_theme
-from server.appearance.theme import MOBILE_THEME_DEFAULT
+from server.timeline.file_icon_theme import load_file_icon_theme_document, resolve_file_icon_theme
+from server.appearance.colors import MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, apply_font_tokens, timeline_font_style
 from server import APP_DISPLAY_NAME
 from server.page_header import PAGE_HEADER_CSS, render_page_header
 
 TIMELINE_DESKTOP_HTML = load_timeline_template("desktop")
 TIMELINE_MOBILE_HTML = load_timeline_template("mobile")
+
+
+def build_timeline_template_replacements(
+    *,
+    icon_data_uris: dict,
+    base_path: str,
+    timeline_manifest_url: str,
+    timeline_pwa_icon_192_url: str,
+    timeline_apple_touch_icon_url: str,
+    timeline_service_worker_html: str,
+    server_instance: str,
+    hub_port: int,
+    timeline_port: int,
+    text_size_default: int,
+    timeline_font_settings_inline_style: str,
+    hub_header_css: str,
+    timeline_document_title: str = APP_DISPLAY_NAME,
+) -> dict[str, str]:
+    return {
+        "__ICON_DATA_URIS__": json.dumps(icon_data_uris, ensure_ascii=True),
+        "__TIMELINE_BASE_PATH__": base_path,
+        "__TIMELINE_MANIFEST_URL__": timeline_manifest_url,
+        "__TIMELINE_PWA_ICON_192_URL__": timeline_pwa_icon_192_url,
+        "__TIMELINE_APPLE_TOUCH_ICON_URL__": timeline_apple_touch_icon_url,
+        "__TIMELINE_SERVICE_WORKER_HTML__": timeline_service_worker_html,
+        "__SERVER_INSTANCE__": server_instance,
+        "__HUB_PORT__": str(hub_port),
+        "__TIMELINE_PORT__": str(timeline_port),
+        "__TEXT_SIZE_DEFAULT__": str(text_size_default),
+        "__TIMELINE_FONT_SETTINGS_INLINE_STYLE__": timeline_font_settings_inline_style,
+        "__HUB_HEADER_CSS__": hub_header_css,
+        "__APP_DISPLAY_NAME__": APP_DISPLAY_NAME,
+        "__TIMELINE_DOCUMENT_TITLE__": timeline_document_title,
+    }
+
+
+def apply_timeline_template_replacements(template: str, replacements: dict[str, str]) -> str:
+    html = template
+    for placeholder, value in replacements.items():
+        html = html.replace(placeholder, value)
+    return html
 
 
 def render_timeline_service_worker_html() -> str:

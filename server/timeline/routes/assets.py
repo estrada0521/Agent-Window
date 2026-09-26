@@ -5,8 +5,8 @@ from urllib.parse import parse_qs
 
 from server.appearance.colors import resolve_theme_palette
 from server.pwa import pwa_icon_entries, pwa_url, serve_pwa_file
-from server.appearance.file_icon_theme import file_icon_bytes, load_file_icon_theme_document
-from server.appearance.theme import resolve_server_theme
+from server.timeline.file_icon_theme import file_icon_bytes, load_file_icon_theme_document
+from server.appearance.colors import resolve_server_theme
 from server.appearance.typography import DESKTOP_TEXT_SIZE, MOBILE_TEXT_SIZE, clamp_text_size
 from server import APP_DISPLAY_NAME
 from server.request import request_base_path

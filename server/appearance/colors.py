@@ -1,6 +1,21 @@
 from __future__ import annotations
 
 
+THEME_CHOICES = frozenset({"system", "light", "dark"})
+DESKTOP_THEME_DEFAULT = "system"
+MOBILE_THEME_DEFAULT = "dark"
+SERVER_THEME_FALLBACK = "dark"
+
+
+def resolve_server_theme(value: object) -> str:
+    theme = str(value or "").strip().lower()
+    if not theme or theme == "system":
+        return SERVER_THEME_FALLBACK
+    if theme not in THEME_CHOICES:
+        raise ValueError(f"invalid theme: {value!r}")
+    return theme
+
+
 TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS = "9, 9, 9"
 TEXT_PRIMARY_DESKTOP_DARK_CHANNELS = "200, 200, 200"
 TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS = "19, 19, 19"
