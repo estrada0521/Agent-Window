@@ -232,7 +232,8 @@
         }
         if (event.code === "KeyE") {
           event.preventDefault();
-          toggleDeskSideBarOutward();
+          if (event.shiftKey) sendDeskSideBarCommand("swap-git-repo");
+          else toggleDeskSideBarOutward();
           return;
         }
         if (event.code === "KeyT") {
@@ -389,6 +390,7 @@
           { value: "toggleHub", label: "Toggle Hub" },
           { value: "toggleSideBar", label: "Toggle Side Bar", disabled: !deskSideBarAvailable() },
           { value: "swapSideBarPosition", label: "Swap Side Bar Side", disabled: !deskSideBarAvailable() },
+          { value: "swapGitRepoPosition", label: "Swap Git and Repo", disabled: !deskSideBarAvailable() },
         ],
         messages: [
           { value: "messagePrevious", label: "Previous Message" },

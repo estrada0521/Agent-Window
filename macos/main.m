@@ -158,6 +158,8 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     sideBarOutward.enabled = sideBarAvailable;
     NSMenuItem *swapSideBarPosition = [self action:@"swapSideBarPosition" title:@"Swap Side Bar Side" key:@"e" mods:cmd | shift];
     swapSideBarPosition.enabled = sideBarAvailable;
+    NSMenuItem *swapGitRepoPosition = [self action:@"swapGitRepoPosition" title:@"Swap Git and Repo" key:@"e" mods:cmd | opt | shift];
+    swapGitRepoPosition.enabled = sideBarAvailable;
     NSMenuItem *alwaysOnTop = [self action:@"toggleAlwaysOnTop" title:@"Always on Top" key:@"p" mods:cmd | opt];
     alwaysOnTop.state = [p[@"alwaysOnTop"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
     BOOL fit = [p[@"autoWindowHeight"] boolValue];
@@ -191,6 +193,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
             [self action:@"toggleHubOutward" title:@"Toggle Hub Outward" key:@"b" mods:cmd | opt],
             sideBarOutward,
             swapSideBarPosition,
+            swapGitRepoPosition,
         ]],
         [self submenu:@"Messages" items:@[
             [self action:@"messagePrevious" title:@"Previous Message" key:ArrowKey(NSUpArrowFunctionKey) mods:opt],

@@ -226,6 +226,10 @@
         sendDeskSideBarCommand("swap");
         return;
       }
+      if (detail.action === "swapGitRepoPosition") {
+        sendDeskSideBarCommand("swap-git-repo");
+        return;
+      }
       if (detail.action === "toggleAlwaysOnTop") {
         toggleDeskAlwaysOnTop();
         return;

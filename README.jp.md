@@ -178,6 +178,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | size 既定 / コンパクト / ミニ | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` | |
 | Hub / side barの開閉 | `⌘B` / `⌘E` | `⌥` 併用で外側に広がる |
 | side barの左右入れ替え | `⇧⌘E` | |
+| Git / Repoの上下入れ替え | `⇧⌥⌘E` | |
 | 画面端へ移動 | `⌥⌘↑` `←` `→` `↓` | `↓` は中央 |
 | 最前面に固定 | `⌥⌘P` | |
 | Fit Height | `⌥⌘H` | |

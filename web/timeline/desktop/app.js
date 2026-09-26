@@ -357,6 +357,8 @@ __INCLUDE:../pointer-capability.js__
     const SIDE_BAR_WIDTH_KEY = "agent_window_desktop_side_bar_width_at_default_text_size";
     const SIDE_BAR_POSITION_KEY = "agent_window_desktop_side_bar_position";
     if (localStorage.getItem(SIDE_BAR_POSITION_KEY) === "left") document.documentElement.dataset.sideBarPosition = "left";
+    const GIT_REPO_POSITION_KEY = "agent_window_desktop_git_repo_position";
+    if (localStorage.getItem(GIT_REPO_POSITION_KEY) === "repo-top") document.documentElement.dataset.gitRepoPosition = "repo-top";
     const SIDE_BAR_GAP = 0;
     let sideBarOpen = false;
     let activeSideBarView = "repo";
@@ -593,7 +595,9 @@ __INCLUDE:git-panel/events.js__
     splitDivider?.addEventListener("pointermove", (e) => {
       if (!_splitDragging || !gitContent || !splitPanel) return;
       const rect = splitPanel.getBoundingClientRect();
-      let newH = e.clientY - rect.top;
+      let newH = document.documentElement.dataset.gitRepoPosition === "repo-top"
+        ? rect.bottom - e.clientY
+        : e.clientY - rect.top;
       setSplitGitHeight(Math.max(0, Math.min(rect.height, newH)));
     });
     splitDivider?.addEventListener("pointerup", () => {
@@ -604,6 +608,17 @@ __INCLUDE:git-panel/events.js__
       _splitDragging = false;
       document.body.classList.remove("split-resizing");
     });
+    const swapGitRepoPosition = () => {
+      if (document.documentElement.dataset.gitRepoPosition === "repo-top") {
+        delete document.documentElement.dataset.gitRepoPosition;
+        localStorage.removeItem(GIT_REPO_POSITION_KEY);
+      } else {
+        document.documentElement.dataset.gitRepoPosition = "repo-top";
+        localStorage.setItem(GIT_REPO_POSITION_KEY, "repo-top");
+      }
+    };
+    document.getElementById("gitRepoSwapBtn")?.addEventListener("pointerdown", (event) => event.stopPropagation());
+    document.getElementById("gitRepoSwapBtn")?.addEventListener("click", swapGitRepoPosition);
     sideBarResizer?.addEventListener("pointerdown", (event) => {
       if (!sideBarOpen) return;
       event.preventDefault();
@@ -1135,6 +1150,8 @@ __INCLUDE:git-panel/events.js__
         openSideBar({ view: "repo" });
       } else if (mode === "swap") {
         swapSideBarPosition();
+      } else if (mode === "swap-git-repo") {
+        swapGitRepoPosition();
       } else {
         toggleSideBar();
       }
@@ -1150,7 +1167,8 @@ __INCLUDE:git-panel/events.js__
           }
           if (event.code === "KeyE") {
             event.preventDefault();
-            window.parent?.postMessage({ type: "toggle-side-bar-outward" }, "*");
+            if (event.shiftKey) swapGitRepoPosition();
+            else window.parent?.postMessage({ type: "toggle-side-bar-outward" }, "*");
             return;
           }
           if (event.code === "KeyT") {

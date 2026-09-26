@@ -163,6 +163,9 @@
       min-height: 0;
       overflow: hidden;
     }
+    html[data-git-repo-position="repo-top"] .split-panel {
+      flex-direction: column-reverse;
+    }
     .split-pane {
       display: flex;
       flex-direction: column;
@@ -178,6 +181,11 @@
     .split-pane-repo {
       flex: 1 1 auto;
       min-height: 0;
+    }
+    html:not([data-git-repo-position="repo-top"]) .split-pane-git,
+    html[data-git-repo-position="repo-top"] .split-pane-repo {
+      mask-image: linear-gradient(to bottom, #000 calc(100% - 1.7em), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.7em), transparent 100%);
     }
     .split-divider {
       flex-shrink: 0;
@@ -209,6 +217,45 @@
     .has-hover .split-divider:hover::after,
     body.split-resizing .split-divider::after {
       background: linear-gradient(to right, var(--resizer) 10%, var(--resizer-active), var(--resizer) 90%);
+    }
+    .git-repo-swap-btn {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border: 0.5px solid var(--line-strong);
+      border-radius: 999px;
+      background: var(--floating-bg);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+      color: var(--icon-fg);
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .git-repo-swap-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 1.7;
+    }
+    .has-hover .split-divider:hover .git-repo-swap-btn,
+    .git-repo-swap-btn:focus-visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .git-repo-swap-btn:active {
+      transform: translate(-50%, -50%) scale(0.94);
+    }
+    body.split-resizing .git-repo-swap-btn {
+      opacity: 0;
+      pointer-events: none;
     }
     body.split-resizing, body.split-resizing * { cursor: ns-resize; user-select: none; }
     .empty-state {
