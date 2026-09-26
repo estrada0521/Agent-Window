@@ -317,15 +317,11 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
 </body>
 </html>"""
 
-_HUB_SHARED_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "shared" / "hub" / "templates"
-_HUB_SHARED_CHAT_DIR = Path(__file__).resolve().parents[1] / "apps" / "shared" / "chat"
-_HUB_DESKTOP_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "desktop" / "hub"
-_HUB_MOBILE_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "apps" / "mobile" / "hub"
+_HUB_DESKTOP_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "web" / "hub" / "desktop"
+_HUB_MOBILE_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "web" / "hub" / "mobile"
 _hub_pages = _build_hub_html_pages_impl(
     desktop_template_dir=_HUB_DESKTOP_TEMPLATE_DIR,
     mobile_template_dir=_HUB_MOBILE_TEMPLATE_DIR,
-    shared_template_dir=_HUB_SHARED_TEMPLATE_DIR,
-    shared_chat_dir=_HUB_SHARED_CHAT_DIR,
     pwa_hub_manifest_url=f"/hub.webmanifest?v={Path(__file__).stat().st_mtime_ns}",
     pwa_icon_192_url="/pwa-icon-192.png",
     pwa_apple_touch_icon_url="/apple-touch-icon.png",

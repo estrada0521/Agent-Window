@@ -4,8 +4,7 @@ from pathlib import Path
 
 from hub_backend.branding import APP_DISPLAY_NAME
 
-_HUB_TEMPLATE_DIR = Path(__file__).resolve().parents[3] / "apps" / "shared" / "hub" / "templates"
-_HUB_RESTART_NAV_JS = (_HUB_TEMPLATE_DIR / "_hub_restart_nav.js").read_text()
+_HUB_RESTART_NAV_JS = (Path(__file__).resolve().parents[3] / "web" / "hub" / "restart-nav.js").read_text()
 
 
 PAGE_HEADER_CSS = """

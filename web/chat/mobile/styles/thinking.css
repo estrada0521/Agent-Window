@@ -1,0 +1,46 @@
+__INCLUDE:../../thinking.css__
+
+    @media (prefers-reduced-motion: reduce) {
+      .mobile-sheet-list[data-transition="forward"],
+      .mobile-sheet-list[data-transition="back"],
+      .mobile-sheet-list[data-transition="from-top"],
+      .git-commit-file-row.git-file-reveal-in {
+        animation: none;
+      }
+    }
+
+    .arrow {
+      color: var(--muted);
+    }
+
+    .targets {
+      color: var(--muted);
+    }
+
+    .target-name {
+      font-weight: normal;
+      text-transform: capitalize;
+      color: var(--muted);
+    }
+
+    .message-meta-below .meta-agent .sender-label,
+    .message-meta-below .meta-agent .target-name {
+      color: inherit;
+    }
+
+    .message:not(.user) .message-meta-below .meta-agent,
+    .message:not(.user) .message-meta-below .meta-agent-sep {
+      color: var(--muted);
+    }
+
+    .message:not(.user) .message-meta-below .meta-agent-icon {
+      background-color: var(--icon-muted);
+    }
+
+    time {
+      opacity: 1;
+      color: var(--muted);
+    }
+
+__INCLUDE:../../markdown-body.css__
+__INCLUDE:../../markdown-body-mobile.css__

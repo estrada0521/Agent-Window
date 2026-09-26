@@ -1,0 +1,136 @@
+    let lastMessagesSig = "";
+    let initialLoadDone = false;
+    const copyIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    const checkIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+    const formatMessageTime = (timestamp) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(String(timestamp || ""));
+      return m ? `${Number(m[4])}:${m[5]}, ${m[1]}/${Number(m[2])}/${Number(m[3])}` : "";
+    };
+    const syncMessageTimeWidth = (scope) => {
+      scope?.querySelectorAll?.(".message-time").forEach((time) => {
+        const em = time.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(time).fontSize);
+        if (em > 0) time.closest(".message-body-row").style.setProperty("--message-time-em", em.toFixed(2));
+      });
+    };
+    const postRenderScope = (scope) => {
+      decorateLocalFileLinks(scope);
+      linkifyInlineCodeFileRefs(scope);
+      void ensureFileIconTheme().then(() => decorateInlineFileLinkIcons(scope));
+      renderMathInScope(scope);
+      syncWideBlockRows(scope);
+      syncMessageCollapse(scope);
+      syncMessageTimeWidth(scope);
+    };
+__INCLUDE:messages-data.js__
+    const buildMsgHTML = (entry, options = {}) => {
+        const safeEntry = (entry && typeof entry === "object") ? entry : {};
+        if (safeEntry.sender === "system") {
+          const systemMessage = formatSystemMessageHtml(safeEntry.message || "");
+          const systemTitle = systemMessage.replaceAll('"', "&quot;").replace(/<[^>]+>/g, "");
+          const contextHash = escapeHtml(safeEntry.context_hash);
+          return `<div class="sysmsg-row" data-context-hash="${contextHash}" data-sender="system"><span class="sysmsg-text" title="${systemTitle}">${systemMessage}</span></div>`;
+        }
+        const cls = roleClass(safeEntry.sender);
+        const entryTargets = Array.isArray(safeEntry.targets) ? safeEntry.targets : [];
+        const targetIconOnly = (t) => agentBaseName(t) !== "user";
+        const targetSpans = (entryTargets.length > 0
+          ? entryTargets.map(t => metaAgentLabel(t, "target-name", "right", { iconOnly: targetIconOnly(t) }))
+          : [metaAgentLabel("no target", "target-name", "right", { iconOnly: true })]).join(`<span class="meta-agent-sep">,</span>`);
+        const body = stripSenderPrefix(safeEntry.message || "");
+        const rawAttr = escapeHtml(body).replaceAll('"', "&quot;");
+        const previewAttr = escapeHtml(body.slice(0, 80)).replaceAll('"', "&quot;");
+        const contextHash = escapeHtml(safeEntry.context_hash);
+        const targetMeta = `<span class="targets">${targetSpans}</span>`;
+        const sender = escapeHtml(safeEntry.sender || "unknown");
+        const isUser = cls === "user";
+        const isCollapsibleMessage = isCollapsibleMessageSender(safeEntry.sender);
+        const hideMetaRow = !!options.hideMetaRow;
+        const metaHiddenClass = hideMetaRow ? " meta-hidden" : "";
+        const copyButtonHtml = (extraClass = "") => `<button class="copy-btn${extraClass}" type="button" title="Copy" aria-label="Copy" data-copy-icon="${escapeHtml(copyIcon).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkIcon).replaceAll('"', "&quot;")}">${copyIcon}</button>`;
+        const messageBodyHtml = `<div class="md-body">${renderMarkdown(body)}</div>`;
+        const senderHtml = metaAgentLabel(safeEntry.sender || "unknown", "sender-label", "right", { iconOnly: true });
+        const metaRowHtml = hideMetaRow
+          ? ""
+          : (isUser
+            ? `<div class="message-meta-below user-message-meta"><span class="arrow">to</span>${targetMeta}</div>`
+            : `<div class="message-meta-below">${senderHtml}<span class="arrow">to</span>${targetMeta}</div>`);
+        const messageTime = formatMessageTime(safeEntry.timestamp);
+        const timeHtml = messageTime ? `<span class="message-time">${escapeHtml(messageTime)}</span>` : "";
+        const copyZoneHtml = `<div class="message-hover-copy-zone">${timeHtml}${copyButtonHtml(" message-hover-copy")}</div>`;
+
+        return `<article class="message-row ${cls}${metaHiddenClass}" data-context-hash="${contextHash}" data-sender="${sender}">
+        <div class="message ${cls}" data-raw="${rawAttr}" data-preview="${previewAttr}">
+        ${metaRowHtml}
+        <div class="message-body-row">
+          ${messageBodyHtml}
+          ${isCollapsibleMessage ? `<button class="message-collapse-toggle" type="button" hidden>More</button>` : ""}
+          ${copyZoneHtml}
+        </div>
+        ${isUser ? `<div class="user-message-divider" aria-hidden="true"></div>` : ``}
+        </div>
+      </article>`;
+    };
+    const updateMessageProjectionUI = (displayEntries) => {
+      if (document.documentElement.dataset.mobile === "1") {
+        updateRepoPanel(displayEntries);
+      } else {
+        dpOnSessionSummaryPinReload();
+      }
+    };
+    const scheduleAnimateInCleanup = (row, opts = {}) => {
+      const streamBody = !!opts.streamBody;
+      if (!row) return;
+      const isUserRow = row.classList.contains("user");
+      if (row._animateInCleanupTimer) {
+        clearTimeout(row._animateInCleanupTimer);
+        row._animateInCleanupTimer = 0;
+      }
+      let animateInDone = false;
+      const finishAnimateIn = () => {
+        if (animateInDone) return;
+        animateInDone = true;
+        row.classList.remove("animate-in");
+        if (!streamBody) {
+          document.dispatchEvent(new CustomEvent("chat-transcript-settled"));
+        }
+      };
+      const messageEl = row.querySelector(".message");
+      if (messageEl) {
+        messageEl.addEventListener("animationend", (event) => {
+          if (event.target !== messageEl) return;
+          if (!isUserRow || event.animationName !== "userMsgReveal") return;
+          const divider = row.querySelector(".user-message-divider");
+          if (!divider) finishAnimateIn();
+        }, { once: true });
+      }
+      if (isUserRow) {
+        const dividerEl = row.querySelector(".user-message-divider");
+        dividerEl?.addEventListener("animationend", (event) => {
+          if (event.target !== dividerEl) return;
+          if (event.animationName !== "userDividerReveal") return;
+          finishAnimateIn();
+        }, { once: true });
+      }
+      row.addEventListener("animationend", (event) => {
+        if (event.target !== row || event.animationName !== "msgReveal") return;
+        finishAnimateIn();
+      }, { once: true });
+      row._animateInCleanupTimer = setTimeout(finishAnimateIn, 850);
+      if (!streamBody) return;
+      let streamDone = false;
+      const finishStream = () => {
+        if (streamDone) return;
+        streamDone = true;
+        row.classList.remove("streaming-body-reveal");
+        delete row._streamRevealTotalMs;
+        unwrapStreamRevealSpans(row);
+        if (row.isConnected) linkifyInlineCodeFileRefsImmediate(row);
+        document.dispatchEvent(new CustomEvent("chat-transcript-settled"));
+      };
+      const ms = typeof row._streamRevealTotalMs === "number" ? row._streamRevealTotalMs : 1700;
+      if (ms <= 0) {
+        queueMicrotask(finishStream);
+      } else {
+        setTimeout(finishStream, ms);
+      }
+    };

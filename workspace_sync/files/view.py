@@ -51,16 +51,15 @@ from .view_scripts import (
 )
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_FONT_FACES_CSS = (_REPO_ROOT / "apps" / "shared" / "chat" / "font-faces.css").read_text()
+_FONT_FACES_CSS = (_REPO_ROOT / "web" / "chat" / "font-faces.css").read_text()
 
 
 def _chat_markdown_preview_css() -> str:
     repo_root = Path(__file__).resolve().parents[2]
-    theme_vars_css = (repo_root / "apps/shared/chat/markdown-theme-vars.css").read_text(encoding="utf-8")
-    inline_code_css = (repo_root / "apps/shared/chat/markdown-inline-code.css").read_text(encoding="utf-8")
-    code_block_css = (repo_root / "apps/shared/chat/markdown-code-block.css").read_text(encoding="utf-8")
-    shared_body_css = (repo_root / "apps/shared/chat/markdown-body.css").read_text(encoding="utf-8")
-    variant_body_css = (repo_root / "apps/shared/chat/markdown-body-mobile.css").read_text(encoding="utf-8")
+    theme_vars_css = (repo_root / "web/chat/markdown-theme-vars.css").read_text(encoding="utf-8")
+    code_css = (repo_root / "web/chat/markdown-code.css").read_text(encoding="utf-8")
+    shared_body_css = (repo_root / "web/chat/markdown-body.css").read_text(encoding="utf-8")
+    variant_body_css = (repo_root / "web/chat/markdown-body-mobile.css").read_text(encoding="utf-8")
     markdown_css = f"{shared_body_css}\n{variant_body_css}"
     replacements = {
         "__AGENT_SEL_MD_BODY__": ".md-body",
@@ -68,22 +67,22 @@ def _chat_markdown_preview_css() -> str:
     }
     for placeholder, value in replacements.items():
         markdown_css = markdown_css.replace(placeholder, value)
-    return apply_color_tokens(f"{theme_vars_css}\n{inline_code_css}\n{code_block_css}\n{markdown_css}")
+    return apply_color_tokens(f"{theme_vars_css}\n{code_css}\n{markdown_css}")
 
 
 def _chat_markdown_frontmatter_js() -> str:
     repo_root = Path(__file__).resolve().parents[2]
-    return (repo_root / "apps/shared/chat/markdown-frontmatter.js").read_text(encoding="utf-8")
+    return (repo_root / "web/chat/markdown-frontmatter.js").read_text(encoding="utf-8")
 
 
 def _chat_file_link_parse_js() -> str:
     repo_root = Path(__file__).resolve().parents[2]
-    return (repo_root / "apps/shared/chat/file-link-parse.js").read_text(encoding="utf-8")
+    return (repo_root / "web/chat/file-link-parse.js").read_text(encoding="utf-8")
 
 
 def _chat_markdown_render_js() -> str:
     repo_root = Path(__file__).resolve().parents[2]
-    return (repo_root / "apps/shared/chat/markdown-render.js").read_text(encoding="utf-8")
+    return (repo_root / "web/chat/markdown-render.js").read_text(encoding="utf-8")
 
 
 def render_file_view(

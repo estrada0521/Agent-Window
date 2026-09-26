@@ -5,9 +5,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SHEETS = (ROOT / "apps/mobile/chat/panes/sheets.js").read_text()
-RENDER = (ROOT / "apps/shared/chat/transcript/render.js").read_text()
-SHELL = (ROOT / "apps/mobile/chat/shell.html").read_text()
+SHEETS = (ROOT / "web/chat/mobile/sheets.js").read_text()
+RENDER = (ROOT / "web/chat/transcript-render.js").read_text()
+SHELL = (ROOT / "web/chat/mobile/shell.html").read_text()
 
 
 def _between(text: str, start: str, end: str) -> str:

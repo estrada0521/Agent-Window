@@ -11,12 +11,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class MobileHubReadyTimeoutTests(unittest.TestCase):
     def test_cross_origin_iframe_detection_does_not_use_frame_element(self) -> None:
-        app = (ROOT / "apps/mobile/chat/app.js").read_text()
+        app = (ROOT / "web/chat/mobile/app.js").read_text()
         self.assertIn("const isEmbeddedHubChat = window.parent !== window;", app)
         self.assertNotIn("window.frameElement", app)
 
     def test_one_deadline_controls_success_timeout_and_explicit_error(self) -> None:
-        home = (ROOT / "apps/mobile/hub/home.js").read_text()
+        home = (ROOT / "web/hub/mobile/home.js").read_text()
         start = home.index("    function showLaunchShell()")
         end = home.index("    const _launchShellParams", start)
         functions = home[start:end]

@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en" data-theme="__THEME__" data-theme-desktop="__THEME_DESKTOP__">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script>
+    (() => {
+      const appearance = window.__agentWindowAppearance = {
+        themeKey: "agent_window_theme_desktop",
+        textSizeKey: "agent_window_text_size",
+        themeDefault: "__THEME_DESKTOP__",
+        textSizeDefault: __TEXT_SIZE_DEFAULT__,
+        textSizeMin: __TEXT_SIZE_MIN__,
+        textSizeMax: __TEXT_SIZE_MAX__,
+      };
+      const storedTheme = String(localStorage.getItem(appearance.themeKey) || "").trim().toLowerCase();
+      const theme = ["system", "light", "dark"].includes(storedTheme) ? storedTheme : appearance.themeDefault;
+      const resolved = theme === "system"
+        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : theme;
+      document.documentElement.dataset.themeDesktop = theme;
+      document.documentElement.dataset.theme = resolved;
+
+      const storedSize = localStorage.getItem(appearance.textSizeKey);
+      const size = storedSize === null
+        ? appearance.textSizeDefault
+        : Math.max(appearance.textSizeMin, Math.min(appearance.textSizeMax, Math.round(Number(storedSize))));
+      document.documentElement.style.setProperty("--text-size", `${size}px`);
+    })();
+  </script>
+  <meta name="theme-color" content="__DARK_BG__">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="__APP_DISPLAY_NAME__">
+  <link rel="manifest" href="__HUB_MANIFEST_URL__">
+  <link rel="icon" type="image/png" sizes="192x192" href="__PWA_ICON_192_URL__">
+  <link rel="apple-touch-icon" href="__APPLE_TOUCH_ICON_URL__">
+  <script>
+    (() => {
+      try {
+        if (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || "")) {
+          const url = new URL(window.location.href);
+          if (url.searchParams.get("view") !== "mobile") {
+            url.searchParams.set("view", "mobile");
+            window.location.replace(url.toString());
+          }
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    (() => {
+      if (!("serviceWorker" in navigator)) return;
+      const isLocalHost = location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.hostname === "[::1]";
+      if (!(window.isSecureContext || isLocalHost)) return;
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/hub-service-worker.js", { scope: "/" }).catch((err) => {
+          console.warn("hub service worker registration failed", err);
+        });
+      }, { once: true });
+    })();
+  </script>
+  <title>__PAGE_TITLE__</title>
+  <style>:root { --font-main: __MESSAGE_FONT_CSS__; --font-code: __CODE_FONT_CSS__; }</style>
+  <style>
+__INCLUDE:styles/theme.css__
+__INCLUDE:styles/window-chrome.css__
+__INCLUDE:styles/workbench.css__
+__INCLUDE:styles/session-list.css__
+__INCLUDE:styles/chat-frame.css__
+__INCLUDE:styles/shell-overrides.css__
+__INCLUDE:styles/sidebar-popover.css__
+__INCLUDE:../../chat/chat-controls.css__
+__INCLUDE:../../chat/hud.css__
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="desk-window-traffic" aria-label="Window controls">
+      <button type="button" class="desk-window-traffic-btn is-close" data-window-action="close" aria-label="Close" tabindex="-1">
+        <svg viewBox="0 0 14 14" aria-hidden="true"><defs><linearGradient id="desk-traffic-side-close" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="currentColor"></stop><stop offset="0.12" stop-color="currentColor"></stop><stop offset="0.32" stop-color="currentColor" stop-opacity="0.28"></stop><stop offset="0.68" stop-color="currentColor" stop-opacity="0.28"></stop><stop offset="0.88" stop-color="currentColor"></stop><stop offset="1" stop-color="currentColor"></stop></linearGradient></defs><circle class="desk-window-traffic-fill" cx="7" cy="7" r="6.65"></circle><circle class="desk-window-traffic-inset" cx="7" cy="7" r="6.45" stroke="url(#desk-traffic-side-close)" stroke-width="0.4"></circle><path d="M4.45 4.45L9.55 9.55M9.55 4.45L4.45 9.55"></path></svg>
+      </button>
+      <button type="button" class="desk-window-traffic-btn is-minimize" data-window-action="minimize" aria-label="Minimize" tabindex="-1">
+        <svg viewBox="0 0 14 14" aria-hidden="true"><defs><linearGradient id="desk-traffic-side-min" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="currentColor"></stop><stop offset="0.12" stop-color="currentColor"></stop><stop offset="0.32" stop-color="currentColor" stop-opacity="0.28"></stop><stop offset="0.68" stop-color="currentColor" stop-opacity="0.28"></stop><stop offset="0.88" stop-color="currentColor"></stop><stop offset="1" stop-color="currentColor"></stop></linearGradient></defs><circle class="desk-window-traffic-fill" cx="7" cy="7" r="6.65"></circle><circle class="desk-window-traffic-inset" cx="7" cy="7" r="6.45" stroke="url(#desk-traffic-side-min)" stroke-width="0.4"></circle><path d="M4.35 7H9.65"></path></svg>
+      </button>
+      <button type="button" class="desk-window-traffic-btn is-zoom" data-window-action="zoom" aria-label="Zoom" tabindex="-1">
+        <svg viewBox="0 0 14 14" aria-hidden="true"><defs><linearGradient id="desk-traffic-side-zoom" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="currentColor"></stop><stop offset="0.12" stop-color="currentColor"></stop><stop offset="0.32" stop-color="currentColor" stop-opacity="0.28"></stop><stop offset="0.68" stop-color="currentColor" stop-opacity="0.28"></stop><stop offset="0.88" stop-color="currentColor"></stop><stop offset="1" stop-color="currentColor"></stop></linearGradient></defs><circle class="desk-window-traffic-fill" cx="7" cy="7" r="6.65"></circle><circle class="desk-window-traffic-inset" cx="7" cy="7" r="6.45" stroke="url(#desk-traffic-side-zoom)" stroke-width="0.4"></circle><path d="M5.2 4.1L7.4 4.1Q8.5 4.1 7.72 4.88L4.88 7.72Q4.1 8.5 4.1 7.4L4.1 5.2Q4.1 4.1 5.2 4.1ZM8.8 9.9L6.6 9.9Q5.5 9.9 6.28 9.12L9.12 6.28Q9.9 5.5 9.9 6.6L9.9 8.8Q9.9 9.9 8.8 9.9Z"></path></svg>
+      </button>
+    </div>
+    <div class="fit-window-dots">
+      <i><svg viewBox="0 0 108 38" aria-hidden="true"><defs><linearGradient id="fit-window-side-close" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="currentColor"></stop><stop offset="0.12" stop-color="currentColor"></stop><stop offset="0.32" stop-color="currentColor" stop-opacity="0.28"></stop><stop offset="0.68" stop-color="currentColor" stop-opacity="0.28"></stop><stop offset="0.88" stop-color="currentColor"></stop><stop offset="1" stop-color="currentColor"></stop></linearGradient></defs><rect class="desk-window-traffic-fill" width="108" height="38" rx="15"></rect><rect class="desk-window-traffic-inset" x="0.55" y="0.55" width="106.9" height="36.9" rx="14.45" stroke="url(#fit-window-side-close)" stroke-width="1.1"></rect></svg></i>
+      <i><svg viewBox="0 0 108 38" aria-hidden="true"><defs><linearGradient id="fit-window-side-min" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="currentColor"></stop><stop offset="0.12" stop-color="currentColor"></stop><stop offset="0.32" stop-color="currentColor" stop-opacity="0.28"></stop><stop offset="0.68" stop-color="currentColor" stop-opacity="0.28"></stop><stop offset="0.88" stop-color="currentColor"></stop><stop offset="1" stop-color="currentColor"></stop></linearGradient></defs><rect class="desk-window-traffic-fill" width="108" height="38" rx="15"></rect><rect class="desk-window-traffic-inset" x="0.55" y="0.55" width="106.9" height="36.9" rx="14.45" stroke="url(#fit-window-side-min)" stroke-width="1.1"></rect></svg></i>
+      <i><svg viewBox="0 0 108 38" aria-hidden="true"><defs><linearGradient id="fit-window-side-zoom" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="currentColor"></stop><stop offset="0.12" stop-color="currentColor"></stop><stop offset="0.32" stop-color="currentColor" stop-opacity="0.28"></stop><stop offset="0.68" stop-color="currentColor" stop-opacity="0.28"></stop><stop offset="0.88" stop-color="currentColor"></stop><stop offset="1" stop-color="currentColor"></stop></linearGradient></defs><rect class="desk-window-traffic-fill" width="108" height="38" rx="15"></rect><rect class="desk-window-traffic-inset" x="0.55" y="0.55" width="106.9" height="36.9" rx="14.45" stroke="url(#fit-window-side-zoom)" stroke-width="1.1"></rect></svg></i>
+    </div>
+    <div class="desk-fit-standby" aria-hidden="true"><span class="desk-fit-standby-text">Agent Window</span></div>
+    <div class="desk-top-right-controls" id="deskTopRightControls" aria-label="Window controls">
+__INCLUDE:../../chat/chat-controls.html__
+    </div>
+    <div class="desk-workbench" id="deskWorkbench">
+      <aside class="desk-sidebar" id="deskSidebar">
+        <div class="desk-sidebar-shell">
+          <div class="desk-sidebar-content">
+            <div class="desk-sidebar-sessions" id="deskSidebarSessions">
+              <p class="desk-hub-tagline">Agent Window</p>
+              <div class="desk-session-list" id="deskSessionList">
+                <div class="desk-new-session-section">
+                  <div class="desk-session-row desk-new-session-toggle" id="deskNewSessionToggle" tabindex="0" role="button" aria-label="New Session">
+                    <div class="desk-row-head">
+                      <div class="desk-row-main">
+                        <span class="desk-row-leading-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"></path>
+                          </svg>
+                        </span>
+                        <div class="desk-row-stack">
+                          <div class="desk-row-name">New Session</div>
+                        </div>
+                        <span class="desk-row-kbd" aria-hidden="true">⌘ N</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="desk-session-list-loading"><span class="desk-reload-shell-spinner" aria-hidden="true"></span></div>
+              </div>
+              <p class="desk-hub-footer-credit">Made by H. Okada</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <div class="desk-floating-controls" aria-label="Hub controls">
+        <button type="button" class="desk-app-sidebar-toggle" id="deskAppSidebarToggle" aria-label="Toggle Hub" title="Hub [⌘B]">
+          <svg class="pane-outline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4" y="5" width="16" height="14" rx="2.5"></rect>
+            <path d="M9 5v14"></path>
+          </svg>
+          <svg class="pane-active-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect class="pane-active-fill" x="4.75" y="5.75" width="8.25" height="12.5" rx="1.4"></rect>
+            <rect x="4" y="5" width="16" height="14" rx="2.5"></rect>
+            <path d="M13 5v14"></path>
+          </svg>
+        </button>
+        <button type="button" class="desk-settings-icon-btn" id="deskReloadBtn" aria-label="Reload Hub" title="Reload Hub [⇧⌘R]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(0.623 1.491) scale(0.8751)"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"></path></g></svg>
+        </button>
+        <button type="button" class="desk-settings-icon-btn" id="deskSettingsBtn" data-desk-action="open-appearance" aria-label="Settings" title="Settings [⌘,]">
+          <svg class="desk-settings-outline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          <svg class="desk-settings-filled-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>
+        </button>
+        <span id="deskSessionTitleText" class="desk-session-title-text" aria-hidden="true"></span>
+      </div>
+      <div class="desk-sidebar-resizer" id="deskSidebarResizer" aria-hidden="true"></div>
+      <section class="desk-main">
+        <div class="desk-chat-shell">
+          <iframe
+            class="desk-chat-frame"
+            id="deskChatFrame"
+            src="about:blank"
+            allow="clipboard-write"
+          ></iframe>
+          <div id="hubHud" class="hud" role="status" aria-live="polite"></div>
+          <div id="deskReloadShell" class="desk-reload-shell" hidden>
+            <div class="desk-reload-shell-card">
+              <span class="desk-reload-shell-spinner" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <div class="desk-workbench-outline" aria-hidden="true"></div>
+    </div>
+  </div>
+  <script>
+__INCLUDE:../restart-nav.js__
+__INCLUDE:../chat-url.js__
+__INCLUDE:../session-messages-events.js__
+__INCLUDE:../../chat/list-flip.js__
+__INCLUDE:../../chat/hud.js__
+__INCLUDE:../../chat/chat-menu.js__
+__INCLUDE:scripts/runtime.js__
+__INCLUDE:scripts/window-controls.js__
+__INCLUDE:scripts/native-menus.js__
+__INCLUDE:scripts/shell.js__
+__INCLUDE:scripts/session-navigation.js__
+__INCLUDE:scripts/session-list.js__
+__INCLUDE:scripts/events.js__
+  </script>
+</body>
+</html>

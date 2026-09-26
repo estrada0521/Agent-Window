@@ -23,7 +23,7 @@ class AgentDef:
 
 
 AGENTS: dict[str, AgentDef] = {}
-AGENT_ICONS_DIR = "assets/icons/agents"
+AGENT_ICONS_DIR = "assets/agent-icons"
 
 _AGENT_TMUX_COLOR_SUFFIX = "-u NO_COLOR -u CI FORCE_COLOR=1"
 

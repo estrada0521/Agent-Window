@@ -2,31 +2,12 @@ from __future__ import annotations
 
 import html
 import json
-import re
 import subprocess
 from pathlib import Path
 
 from hub_backend.branding import APP_DISPLAY_NAME
+from hub_backend.presentation.chat.template_loader import expand_includes
 from appearance.colors import DARK_BG
-
-_HUB_INCLUDE_RE = re.compile(r"__HUB_INCLUDE:([A-Za-z0-9_./-]+)__")
-
-
-def _expand_hub_template_includes(text: str, template_dirs: Path | list[Path]) -> str:
-    dirs = [template_dirs] if isinstance(template_dirs, Path) else list(template_dirs)
-    roots = [d.resolve() for d in dirs]
-
-    def _replace(match: re.Match[str]) -> str:
-        rel = match.group(1)
-        for root in roots:
-            path = (root / rel).resolve()
-            if root not in path.parents and path != root:
-                continue
-            if path.is_file():
-                return path.read_text()
-        raise FileNotFoundError(f"Hub template include not found in {roots}: {rel}")
-
-    return _HUB_INCLUDE_RE.sub(_replace, text)
 
 
 def apply_hub_page_branding(html: str, *, page_title: str) -> str:
@@ -74,8 +55,6 @@ def build_hub_html_pages(
     *,
     desktop_template_dir: Path,
     mobile_template_dir: Path,
-    shared_template_dir: Path,
-    shared_chat_dir: Path,
     pwa_hub_manifest_url: str,
     pwa_icon_192_url: str,
     pwa_apple_touch_icon_url: str,
@@ -88,10 +67,7 @@ def build_hub_html_pages(
         template_path = own_dir / "home.html"
         if not template_path.is_file():
             raise FileNotFoundError(f"Hub home template not found: {template_path}")
-        html = _expand_hub_template_includes(
-            template_path.read_text(),
-            [own_dir, shared_template_dir, shared_chat_dir],
-        )
+        html = expand_includes(template_path)
         html = (
             html
             .replace("__HUB_MANIFEST_URL__", pwa_hub_manifest_url)

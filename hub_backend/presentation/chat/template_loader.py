@@ -3,18 +3,14 @@ from __future__ import annotations
 from pathlib import Path
 import re
 
-_APPS_ROOT = Path(__file__).resolve().parents[3] / "apps"
-_CHAT_TEMPLATE_DIRS = {
-    "desktop": _APPS_ROOT / "desktop" / "chat",
-    "mobile": _APPS_ROOT / "mobile" / "chat",
-}
+_WEB_ROOT = Path(__file__).resolve().parents[3] / "web"
+_CHAT_DIR = _WEB_ROOT / "chat"
 
 _STYLE_MARKER = "__CHAT_MAIN_STYLE_BLOCK__"
-_SHELL_STYLE_MARKER = "__CHAT_SHELL_STYLE_BLOCK__"
 _COMPOSER_MARKER = "__CHAT_COMPOSER_HTML__"
 _COMPOSER_DROPDOWNS_MARKER = "__CHAT_COMPOSER_DROPDOWNS__"
 _SCRIPT_MARKER = "__CHAT_APP_SCRIPT_BLOCK__"
-_INCLUDE_RE = re.compile(r"__CHAT_INCLUDE:([A-Za-z0-9_./-]+)__")
+_INCLUDE_RE = re.compile(r"__INCLUDE:([A-Za-z0-9_./-]+)__")
 
 _COMPOSER_DROPDOWNS_HTML = (
     '<div id="fileDropdown"></div>\n'
@@ -24,7 +20,7 @@ _COMPOSER_DROPDOWNS_HTML = (
 
 def _read_text(path: Path) -> str:
     if not path.is_file():
-        raise FileNotFoundError(f"Chat template fragment not found: {path}")
+        raise FileNotFoundError(f"Template fragment not found: {path}")
     return path.read_text()
 
 
@@ -36,28 +32,24 @@ def _script_block(js: str) -> str:
     return f"  <script>\n{js}  </script>\n"
 
 
-def _expand_includes(text: str, base_dir: Path, stack: tuple[Path, ...] = ()) -> str:
-    def _replace(match: re.Match[str]) -> str:
-        rel = match.group(1)
-        path = (base_dir / rel).resolve()
-        apps_root = _APPS_ROOT.resolve()
-        allowed = apps_root in path.parents or path == apps_root
-        if not allowed:
-            raise ValueError(f"Chat template include escapes allowed directories: {rel}")
-        if path in stack:
-            chain = " -> ".join(str(item) for item in (*stack, path))
-            raise ValueError(f"Chat template include cycle detected: {chain}")
-        return _expand_includes(_read_text(path), path.parent, (*stack, path))
-
-    return _INCLUDE_RE.sub(_replace, text)
+def expand_includes(path: Path, stack: tuple[Path, ...] = ()) -> str:
+    path = path.resolve()
+    if _WEB_ROOT.resolve() not in path.parents:
+        raise ValueError(f"Template include escapes web/: {path}")
+    if path in stack:
+        chain = " -> ".join(str(item) for item in (*stack, path))
+        raise ValueError(f"Template include cycle detected: {chain}")
+    return _INCLUDE_RE.sub(
+        lambda match: expand_includes(path.parent / match.group(1), (*stack, path)),
+        _read_text(path),
+    )
 
 
 def load_chat_template(variant: str) -> str:
     normalized = "mobile" if str(variant or "").strip().lower() == "mobile" else "desktop"
-    template_dir = _CHAT_TEMPLATE_DIRS[normalized]
-    shell = _expand_includes(_read_text(template_dir / "shell.html"), template_dir)
-    shared_chat_dir = _APPS_ROOT / "shared" / "chat"
-    composer = _expand_includes(_read_text(shared_chat_dir / "composer.html"), shared_chat_dir)
+    template_dir = _CHAT_DIR / normalized
+    shell = expand_includes(template_dir / "shell.html")
+    composer = expand_includes(_CHAT_DIR / "composer.html")
     if _COMPOSER_DROPDOWNS_MARKER not in composer:
         raise ValueError(f"Chat composer missing {_COMPOSER_DROPDOWNS_MARKER}")
     composer = composer.replace(
@@ -65,13 +57,10 @@ def load_chat_template(variant: str) -> str:
         _COMPOSER_DROPDOWNS_HTML if normalized == "desktop" else "",
         1,
     )
-    css = _expand_includes(_read_text(template_dir / "main.css"), template_dir)
-    shell_css = _read_text(template_dir / "shell.css")
-    js = _expand_includes(_read_text(template_dir / "app.js"), template_dir)
+    css = expand_includes(template_dir / "main.css")
+    js = expand_includes(template_dir / "app.js")
     if _STYLE_MARKER not in shell:
         raise ValueError(f"Chat template shell missing {_STYLE_MARKER}: {template_dir / 'shell.html'}")
-    if _SHELL_STYLE_MARKER not in shell:
-        raise ValueError(f"Chat template shell missing {_SHELL_STYLE_MARKER}: {template_dir / 'shell.html'}")
     if _COMPOSER_MARKER not in shell:
         raise ValueError(f"Chat template shell missing {_COMPOSER_MARKER}: {template_dir / 'shell.html'}")
     if _SCRIPT_MARKER not in shell:
@@ -80,6 +69,5 @@ def load_chat_template(variant: str) -> str:
         shell
         .replace(_COMPOSER_MARKER, composer, 1)
         .replace(_STYLE_MARKER, _style_block(css), 1)
-        .replace(_SHELL_STYLE_MARKER, _style_block(shell_css), 1)
         .replace(_SCRIPT_MARKER, _script_block(js), 1)
     )

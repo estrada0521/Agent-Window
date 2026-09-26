@@ -16,8 +16,8 @@ def _between(text: str, start: str, end: str) -> str:
 
 class ChatRendererCoreTests(unittest.TestCase):
     def test_renderer_falls_back_to_plain_text_on_marked_failure(self) -> None:
-        render_src = (ROOT / "apps/shared/chat/markdown-render.js").read_text()
-        messages = (ROOT / "apps/shared/chat/runtime/messages.js").read_text()
+        render_src = (ROOT / "web/chat/markdown-render.js").read_text()
+        messages = (ROOT / "web/chat/messages.js").read_text()
         render_markdown = _between(
             render_src,
             "    const renderMarkdownFallback =",

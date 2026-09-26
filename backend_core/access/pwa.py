@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-PWA_DIR = Path(__file__).resolve().parents[2] / "apps" / "shared" / "pwa"
+PWA_DIR = Path(__file__).resolve().parents[2] / "assets" / "pwa"
 PWA_FILES: dict[str, tuple[str, str]] = {
     "/pwa-icon-192.png": ("icon-192.png", "image/png"),
     "/pwa-icon-512.png": ("icon-512.png", "image/png"),

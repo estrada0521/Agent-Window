@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en" data-theme="__THEME__" data-theme-mobile-default="__THEME_MOBILE_DEFAULT__" data-mobile="1">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="__DARK_BG__">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="__APP_DISPLAY_NAME__">
+  <link rel="manifest" href="__HUB_MANIFEST_URL__">
+  <link rel="icon" type="image/png" sizes="192x192" href="__PWA_ICON_192_URL__">
+  <link rel="apple-touch-icon" href="__APPLE_TOUCH_ICON_URL__">
+  <script>
+    (() => {
+      const root = document.documentElement;
+      let setting = root.dataset.themeMobileDefault;
+      const stored = String(localStorage.getItem("agent_window_theme_mobile") || "").trim().toLowerCase();
+      if (["system", "light", "dark"].includes(stored)) setting = stored;
+      root.dataset.themeMobile = setting;
+      document.documentElement.dataset.theme = setting === "system"
+        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : setting;
+    })();
+  </script>
+  <script>
+    (() => {
+      if (!("serviceWorker" in navigator)) return;
+      const isLocalHost = location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.hostname === "[::1]";
+      if (!(window.isSecureContext || isLocalHost)) return;
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/hub-service-worker.js", { scope: "/" }).catch((err) => {
+          console.warn("hub service worker registration failed", err);
+        });
+      }, { once: true });
+    })();
+  </script>
+  <title>__PAGE_TITLE__</title>
+  <style>:root { --font-main: __MESSAGE_FONT_CSS__; --font-code: __CODE_FONT_CSS__; }</style>
+  <style>
+__INCLUDE:../../mobile-liquid-glass.css__
+__INCLUDE:home.css__
+__INCLUDE:../../chat/hud.css__
+__HUB_HEADER_CSS__
+  </style>
+</head>
+
+<body>
+  <div id="launchShell" class="launch-shell" hidden>
+    <div class="launch-shell-card" aria-hidden="true">
+      <span class="launch-shell-title">Agent Window</span>
+    </div>
+  </div>
+  <div id="chatOverlay" hidden><svg class="chat-overlay-shape" aria-hidden="true" preserveAspectRatio="none"><path></path></svg><div class="chat-frame-clip"><iframe id="chatFrame" src="about:blank"
+      allow="clipboard-write"></iframe></div></div>
+  <div id="hubHud" class="hud" role="status" aria-live="polite"></div>
+  <div class="shell">
+    __HUB_HEADER_HTML__
+    <p class="hub-mobile-tagline"><b>Agent Window</b></p>
+    <div class="mob-list-top-spacer" aria-hidden="true"></div>
+    <div class="mob-list-wrap" id="mobListWrap">
+      <div class="mob-empty loading" id="mobLoading"><span class="mob-inline-loading"><span class="mob-inline-loading-spinner" aria-hidden="true"></span></span></div>
+    </div>
+    <p class="hub-footer-credit">Made by H. Okada</p>
+  </div>
+  <script>
+__INCLUDE:../chat-url.js__
+__INCLUDE:../session-messages-events.js__
+__INCLUDE:../../chat/list-flip.js__
+__INCLUDE:../../chat/hud.js__
+__INCLUDE:home.js__
+  </script>
+</body>
+
+</html>
