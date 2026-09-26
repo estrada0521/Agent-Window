@@ -22,6 +22,13 @@
       });
     });
     gitContent?.addEventListener("mouseover", async (event) => {
+      const summaryRow = event.target.closest(".git-summary-row");
+      if (summaryRow) {
+        if (summaryRow.contains(event.relatedTarget)) return;
+        const { stat } = await fetchGitJson("/git-worktree-stat");
+        summaryRow.title = stat || "No changes";
+        return;
+      }
       const head = event.target.closest(".git-commit-detail-head");
       const target = head || event.target.closest(".git-commit-row");
       const hash = String((head ? gitPanel.detailContext?.hash : target?.dataset.hash) || "");

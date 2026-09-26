@@ -245,6 +245,16 @@ def _get_git_commit_info(handler, parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
+def _get_git_worktree_stat(handler, _parsed, ctx) -> None:
+    try:
+        body = json.dumps({"stat": workspace_git.git_worktree_stat(ctx["workspace"])}, ensure_ascii=True).encode("utf-8")
+    except Exception as exc:
+        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
+        _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
+        return
+    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
+
+
 def _get_shortcut_commands(handler, _parsed, ctx) -> None:
     del ctx
     body = json.dumps({"commands": public_slash_command_dicts()}, ensure_ascii=True).encode("utf-8")
@@ -263,6 +273,7 @@ _GET_ROUTES = {
     "/git-overview": _get_git_overview,
     "/git-diff-files": _get_git_diff_files,
     "/git-commit-info": _get_git_commit_info,
+    "/git-worktree-stat": _get_git_worktree_stat,
     "/shortcut-commands": _get_shortcut_commands,
 }
 

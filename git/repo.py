@@ -270,6 +270,13 @@ def git_commit_info(workspace: str, *, commit_hash: str) -> dict:
     return {"hash": full_hash, "author": author, "date": date, "message": message.strip(), "stat": stat.strip()}
 
 
+def git_worktree_stat(workspace: str) -> str:
+    res = _run_git(_git_root(workspace), "diff", "--shortstat", "HEAD", "--")
+    if res.returncode != 0:
+        raise RuntimeError((res.stderr or res.stdout or "git diff failed").strip())
+    return (res.stdout or "").strip()
+
+
 def git_diff_files(workspace: str, *, commit_hash: str = "", scope: str = ""):
     root = _git_root(workspace)
     commit_hash = str(commit_hash or "").strip()
