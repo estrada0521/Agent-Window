@@ -1054,6 +1054,7 @@ __INCLUDE:git-panel/events.js__
         } else {
           _stickyToBottom = true;
           requestAnimationFrame(() => scrollConversationToBottom("auto"));
+          if (pinnedStripActive()) void refreshGitOverview();
         }
         return;
       }
