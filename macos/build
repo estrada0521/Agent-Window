@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+_HERE="${BASH_SOURCE[0]:-$0}"
+while [[ -L "$_HERE" ]]; do
+  _D="$(cd "$(dirname "$_HERE")" && pwd)"
+  _T="$(readlink "$_HERE")"
+  [[ "$_T" == /* ]] || _T="$_D/$_T"
+  _HERE="$_T"
+done
+APP_DIR="$(cd "$(dirname "$_HERE")" && pwd)"
+ROOT="$(cd "$APP_DIR/.." && pwd)"
+
+usage() {
+  cat <<'EOF'
+Usage: macos/build [--no-open]
+
+Desktop app entry:
+  - builds and installs /Applications/Agent Window.app, then opens it
+  - the app starts the local Hub over HTTP on 127.0.0.1
+
+Requires python3, tmux, and Xcode Command Line Tools; install them yourself before running.
+
+Options:
+  --no-open     build and install the app without opening it
+  --help        show this help
+EOF
+}
+
+OPEN_APP=1
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --no-open)
+      OPEN_APP=0
+      shift
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "build: unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+build_dir="$HOME/.agent-window/cache/macos-app"
+app_path="$build_dir/Agent Window.app"
+rm -rf "$app_path"
+mkdir -p "$app_path/Contents/MacOS" "$app_path/Contents/Resources"
+
+clang -fobjc-arc -O2 -Wall -Werror -mmacosx-version-min=26.0 \
+  -framework Cocoa -framework WebKit \
+  -DAW_REPO_ROOT="\"$ROOT\"" \
+  "$APP_DIR/main.m" -o "$app_path/Contents/MacOS/agent-window"
+cp "$APP_DIR/Info.plist" "$app_path/Contents/Info.plist"
+cp "$APP_DIR/icon.icns" "$APP_DIR/inject.js" "$app_path/Contents/Resources/"
+codesign --force --sign - "$app_path"
+
+installed_app="/Applications/Agent Window.app"
+rm -rf "$installed_app"
+mv "$app_path" "$installed_app"
+
+printf 'build: installed app at %s\n' "$installed_app"
+if [[ "$OPEN_APP" == "1" ]]; then
+  open "$installed_app"
+fi

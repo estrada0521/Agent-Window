@@ -5,7 +5,7 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-import server.runtime as runtime_module
+import server.chat.runtime as runtime_module
 
 
 class _FakeClock:

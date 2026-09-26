@@ -15,7 +15,7 @@ import json
 import sys
 import time
 
-from hub_backend.branding import APP_DISPLAY_NAME
+from server.branding import APP_DISPLAY_NAME
 
 port = int(sys.argv[1])
 deadline = time.monotonic() + float(sys.argv[2])

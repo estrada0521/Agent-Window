@@ -32,7 +32,7 @@ A UNIX-philosophy Agent application for macOS.
 Requires `python3`, `tmux`, Xcode Command Line Tools. Install and authenticate the Agent CLIs you'll use yourself.
 
 ```bash
-./macos_app/start
+./macos/build
 ```
 
 Builds the app, saves it to `/Applications/Agent Window.app`, and launches it.
@@ -87,7 +87,7 @@ An Agent can send to another Agent with `agent-send`. It's typed into the target
 printf '%s' '<message>' | agent-send <target>
 ```
 
-To use it, add `message_delivery/agent-send` to PATH and place the repo root's `SKILL.md` yourself.
+To use it, add `tmux/agent_send/agent-send` to PATH and place `tmux/agent_send/SKILL.md` yourself.
 
 ## workspace
 
@@ -198,7 +198,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 
 Connect to the Hub via Tailscale or similar, and use it as a PWA. Swipe left to open the menu that leads to git and the file tree.
 
-`Pane Trace` shows the CLI itself. A minimal set of key macros is provided as buttons. Register frequently used CLI commands in `PANE_TEXT_MACROS` in `shortcut_command/catalog.py`.
+`Pane Trace` shows the CLI itself. A minimal set of key macros is provided as buttons. Register frequently used CLI commands in `PANE_TEXT_MACROS` in `tmux/shortcut_command/catalog.py`.
 
 <p align="center">
   <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">

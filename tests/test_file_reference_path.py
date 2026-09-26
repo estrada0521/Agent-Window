@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from workspace_sync.files.runtime import FileRuntime
+from fs.files.runtime import FileRuntime
 
 
 class ReferencePathBypassIsIntentionalTests(unittest.TestCase):

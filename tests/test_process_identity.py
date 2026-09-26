@@ -5,13 +5,13 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from backend_core.tmux.control import SessionControlError, _create_tmux_session, _own_chat_listener_pids
+from tmux.control import SessionControlError, _create_tmux_session, _own_chat_listener_pids
 
 
 class TmuxIdentityTests(unittest.TestCase):
     def test_tmux_allocates_its_own_opaque_session_name(self) -> None:
         created = SimpleNamespace(returncode=0, stdout="7\n", stderr="")
-        with patch("backend_core.tmux.control._run", return_value=created) as run:
+        with patch("tmux.control._run", return_value=created) as run:
             tmux_name = _create_tmux_session(Path("/workspace/project"))
 
         self.assertEqual(tmux_name, "7")
@@ -25,9 +25,9 @@ class ChatServerIdentityTests(unittest.TestCase):
     def test_listener_is_owned_by_its_reported_workspace_and_pid(self) -> None:
         workspace = "/work/project with spaces"
         with (
-            patch("backend_core.tmux.control._chat_listener_pids", return_value=[4123]),
+            patch("tmux.control._chat_listener_pids", return_value=[4123]),
             patch(
-                "backend_core.tmux.control.read_chat_server_state",
+                "tmux.control.read_chat_server_state",
                 return_value={"pid": 4123, "workspace": workspace},
             ),
         ):
@@ -35,9 +35,9 @@ class ChatServerIdentityTests(unittest.TestCase):
 
     def test_listener_from_another_workspace_is_never_signaled(self) -> None:
         with (
-            patch("backend_core.tmux.control._chat_listener_pids", return_value=[4123]),
+            patch("tmux.control._chat_listener_pids", return_value=[4123]),
             patch(
-                "backend_core.tmux.control.read_chat_server_state",
+                "tmux.control.read_chat_server_state",
                 return_value={"pid": 4123, "workspace": "/work/other"},
             ),
         ):

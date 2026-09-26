@@ -8,15 +8,15 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from hub_backend.chat_supervisor import chat_server_state_matches, ensure_chat_server
-from hub_backend.session_api import resolve_session_chat_target
-from hub_backend.session_query import LiveSessions, archived_session_records
-from workspace_sync import git as workspace_git
+from server.hub.chat_supervisor import chat_server_state_matches, ensure_chat_server
+from server.hub.session_api import resolve_session_chat_target
+from server.hub.session_query import LiveSessions, archived_session_records
+from git import repo as workspace_git
 
 
 class ArchivedWorkspaceTests(unittest.TestCase):
     def test_hub_reload_stops_archived_chat_servers_before_restart(self) -> None:
-        from hub_backend import hub_server
+        from server.hub import server as hub_server
 
         fake_hub = object()
         with (
@@ -34,7 +34,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         launch.assert_called_once()
 
     def test_hub_reload_does_not_restart_when_archived_cleanup_fails(self) -> None:
-        from hub_backend import hub_server
+        from server.hub import server as hub_server
 
         fake_hub = object()
         with (
@@ -70,7 +70,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 encoding="utf-8",
             )
             hub_repo = "/Users/okadaharuto/workspace/Agent-Window"
-            with patch("backend_core.access.settings.agent_window_root", return_value=Path(tmp)):
+            with patch("fs.session.paths.agent_window_root", return_value=Path(tmp)):
                 sessions = archived_session_records(LiveSessions({}, "ok"))
             self.assertEqual(len(sessions), 1)
             self.assertEqual(sessions[0]["name"], "Lab")
@@ -90,12 +90,12 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             workspace = Path(tmp) / "Even-Parity"
             workspace.mkdir()
             with (
-                patch("hub_backend.session_api.live_sessions_query", return_value=LiveSessions({}, "ok")),
+                patch("server.hub.session_api.live_sessions_query", return_value=LiveSessions({}, "ok")),
                 patch(
-                    "hub_backend.session_api.read_session_meta",
+                    "server.hub.session_api.read_session_meta",
                     return_value={"workspace": str(workspace), "agents": []},
                 ),
-                patch("hub_backend.session_api.ensure_chat_server", side_effect=ensure_chat_server),
+                patch("server.hub.session_api.ensure_chat_server", side_effect=ensure_chat_server),
             ):
                 resolved = resolve_session_chat_target(object(), "Even-Parity")
         self.assertEqual(resolved["status"], "ok")
@@ -139,13 +139,13 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 _get_launch_lock=lambda _name: threading.Lock(),
             )
             with (
-                patch("hub_backend.chat_supervisor.workspace_chat_port", return_value=8206),
-                patch("hub_backend.chat_supervisor.port_is_bindable", return_value=True),
-                patch("hub_backend.chat_supervisor.read_chat_server_state", return_value=None),
-                patch("hub_backend.chat_supervisor.stop_inactive_chat_servers", return_value=""),
-                patch("hub_backend.chat_supervisor.chat_launch_env", return_value={}),
-                patch("hub_backend.chat_supervisor.launch_chat_server", return_value=object()) as launch,
-                patch("hub_backend.chat_supervisor.wait_for_chat_server", return_value=""),
+                patch("server.hub.chat_supervisor.workspace_chat_port", return_value=8206),
+                patch("server.hub.chat_supervisor.port_is_bindable", return_value=True),
+                patch("server.hub.chat_supervisor.read_chat_server_state", return_value=None),
+                patch("server.hub.chat_supervisor.stop_inactive_chat_servers", return_value=""),
+                patch("server.hub.chat_supervisor.chat_launch_env", return_value={}),
+                patch("server.hub.chat_supervisor.launch_chat_server", return_value=object()) as launch,
+                patch("server.hub.chat_supervisor.wait_for_chat_server", return_value=""),
             ):
                 ok, port, detail = ensure_chat_server(
                     hub,
@@ -158,13 +158,13 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertEqual(launch.call_args.args, (str(workspace.resolve()),))
 
     def test_chat_launch_cwd_is_not_a_workspace_that_contains_server_py(self) -> None:
-        from server.chat_process import launch_chat_server
+        from server.chat.chat_process import launch_chat_server
 
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "xray-structure-factor"
             workspace.mkdir()
             (workspace / "server.py").write_text("raise SystemExit('shadow')\n", encoding="utf-8")
-            with patch("server.chat_process.subprocess.Popen") as popen:
+            with patch("server.chat.chat_process.subprocess.Popen") as popen:
                 launch_chat_server(workspace, env={})
         launch_cwd = popen.call_args.kwargs["cwd"]
         self.assertEqual(launch_cwd, "/Users/okadaharuto/workspace/Agent-Window")
@@ -184,7 +184,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         workspace_git.configure(workspace="")
 
     def test_mirrors_link_inside_an_existing_workspace(self) -> None:
-        from backend_core.access.settings import (
+        from fs.session.paths import (
             SESSION_LOG_FILENAME,
             ensure_session_workspace_mirrors,
         )
@@ -196,7 +196,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             canonical.mkdir()
             log_target = canonical / SESSION_LOG_FILENAME
             log_target.write_text("", encoding="utf-8")
-            with patch("backend_core.access.settings.session_log_path", return_value=log_target):
+            with patch("fs.session.paths.session_log_path", return_value=log_target):
                 ensure_session_workspace_mirrors("Lab", str(workspace))
             link = workspace / ".agent-window" / SESSION_LOG_FILENAME
             self.assertTrue(link.is_symlink())

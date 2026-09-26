@@ -5,8 +5,8 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-import server.runtime as runtime_module
-from server import server as chat_server
+import server.chat.runtime as runtime_module
+from server.chat import server as chat_server
 
 
 class ReloadRunningAgentsHandoffTests(unittest.TestCase):

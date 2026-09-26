@@ -6,8 +6,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from workspace_sync.files.runtime import FileRuntime
-from workspace_sync.watch import _DebouncedWorkspaceRefresh, _is_git_head_metadata_path
+from fs.files.runtime import FileRuntime
+from fs.watch import _DebouncedWorkspaceRefresh, _is_git_head_metadata_path
 
 
 class _FakeRuntime:
@@ -52,14 +52,14 @@ def _refresh(api: _FakeApi) -> _DebouncedWorkspaceRefresh:
 class WorkspaceSyncWatchTests(unittest.TestCase):
     def setUp(self) -> None:
         patcher = mock.patch(
-            "workspace_sync.watch.ensure_commit_announcements",
+            "fs.watch.ensure_commit_announcements",
             side_effect=lambda runtime: runtime.ensure_commit_announcements(),
         )
         patcher.start()
         self.addCleanup(patcher.stop)
         self.git_invalidations: list[bool] = []
         git_patcher = mock.patch(
-            "workspace_sync.watch.invalidate_git_cache",
+            "fs.watch.invalidate_git_cache",
             side_effect=lambda *, include_commits: self.git_invalidations.append(include_commits),
         )
         git_patcher.start()
@@ -100,7 +100,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
             api = _FakeApi(workspace)
             refresh = _refresh(api)
 
-            with mock.patch("workspace_sync.watch.threading.Timer") as timer_class:
+            with mock.patch("fs.watch.threading.Timer") as timer_class:
                 refresh.add_path(str(workspace / ".git" / "refs" / "heads" / "main"))
                 self.assertEqual(timer_class.call_count, 1)
             refresh._flush_locked()
@@ -120,7 +120,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
             api = _FakeApi(workspace)
             refresh = _refresh(api)
 
-            with mock.patch("workspace_sync.watch.threading.Timer"):
+            with mock.patch("fs.watch.threading.Timer"):
                 refresh.add_path(str(src / "app.py"))
             refresh._flush_locked()
 
@@ -135,7 +135,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
             api = _FakeApi(workspace)
             refresh = _refresh(api)
 
-            with mock.patch("workspace_sync.watch.threading.Timer") as timer_class:
+            with mock.patch("fs.watch.threading.Timer") as timer_class:
                 refresh.add_path(str(workspace / ".git" / "objects" / "pack" / "large.pack"))
                 self.assertEqual(timer_class.call_count, 0)
             refresh._flush_locked()
@@ -159,7 +159,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
             api = _FakeApi(workspace)
             refresh = _refresh(api)
 
-            with mock.patch("workspace_sync.watch.threading.Timer"):
+            with mock.patch("fs.watch.threading.Timer"):
                 refresh.add_path(str(ignored))
             refresh._flush_locked()
 
@@ -167,7 +167,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
             self.assertEqual(len(self.git_invalidations), 0)
             self.assertEqual(api.runtime.events, ["files"])
 
-            with mock.patch("workspace_sync.watch.threading.Timer"):
+            with mock.patch("fs.watch.threading.Timer"):
                 refresh.add_path(str(tracked))
             refresh._flush_locked()
 

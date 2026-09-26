@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from workspace_sync.commit import adopt_commit_baseline, ensure_commit_announcements
+from git.commit import adopt_commit_baseline, ensure_commit_announcements
 
 
 def _git(workspace: Path, *args: str) -> None:

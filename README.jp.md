@@ -32,7 +32,7 @@ UNIX哲学で作られた、macOS向けのAgentアプリケーション。
 `python3`、`tmux`、Xcode Command Line Toolsが必要。使うAgent CLIは各自installして認証しておく。
 
 ```bash
-./macos_app/start
+./macos/build
 ```
 
 Appをbuildし、`/Applications/Agent Window.app` に保存して起動する。
@@ -87,7 +87,7 @@ AgentはAgentに `agent-send` で送れる。宛先のpaneに `[From: Claude]` �
 printf '%s' '<message>' | agent-send <target>
 ```
 
-使う場合は、`message_delivery/agent-send` へのPATHと、repo rootの `SKILL.md` を、自分で置く。
+使う場合は、`tmux/agent_send/agent-send` へのPATHと、`tmux/agent_send/SKILL.md` を、自分で置く。
 
 ## workspace
 
@@ -198,7 +198,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 Tailscale等でHubに接続し、PWAとして使う。gitやfile treeへ繋がるmenuは左スワイプで開く。
 
-`Pane Trace` でCLI本体を確認できる。最低限のキーマクロはボタンにしてある。`shortcut_command/catalog.py` の `PANE_TEXT_MACROS` でよく使うCLIコマンドを登録できる。
+`Pane Trace` でCLI本体を確認できる。最低限のキーマクロはボタンにしてある。`tmux/shortcut_command/catalog.py` の `PANE_TEXT_MACROS` でよく使うCLIコマンドを登録できる。
 
 <p align="center">
   <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">

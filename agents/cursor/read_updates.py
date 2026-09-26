@@ -1,0 +1,147 @@
+from __future__ import annotations
+
+import os
+import re
+import time
+
+from agents.path_state import (
+    advance_read_offset,
+    read_offset_start,
+)
+from agents.runtime_push import push_runtime_display
+from agents.cursor.read_runtime import iter_tool_calls, runtime_tool_events
+from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
+from fs.session.log import append_jsonl_entry
+
+
+_CURSOR_INTERNAL_NOTE_RE = re.compile(
+    r"(?:^|\n{2,})(?:\*\*)?[A-Z][A-Za-z]+ing[^\n]*(?:\*\*)?\s*\n{2,}",
+)
+
+
+def _cursor_assistant_message_has_no_tool_use(entry: dict) -> bool:
+    if entry.get("role") != "assistant":
+        return False
+    msg = entry.get("message")
+    if not isinstance(msg, dict):
+        return False
+    content = msg.get("content")
+    if isinstance(content, list):
+        return not any(isinstance(c, dict) and c.get("type") == "tool_use" for c in content)
+    if isinstance(content, str):
+        return True
+    return False
+
+
+def _cursor_turn_done_from_batch(batch: list[tuple[int, dict]]) -> bool:
+    return any(_cursor_assistant_message_has_no_tool_use(entry) for _ls, entry in batch)
+
+
+def _strip_cursor_internal_notes(text: str) -> str:
+    body = str(text or "").strip()
+    if not body:
+        return ""
+    match = _CURSOR_INTERNAL_NOTE_RE.search(body)
+    if not match:
+        return body
+    return body[: match.start()].rstrip()
+
+
+def _extract_cursor_sync_display_text(entry: dict) -> str:
+    role = entry.get("role", "")
+    if role == "assistant":
+        if not _cursor_assistant_message_has_no_tool_use(entry):
+            return ""
+        msg_obj = entry.get("message") if isinstance(entry, dict) else {}
+        if not isinstance(msg_obj, dict):
+            return ""
+        content = msg_obj.get("content", [])
+        if isinstance(content, str) and content.strip():
+            return _strip_cursor_internal_notes(content)
+        if isinstance(content, list):
+            texts: list[str] = []
+            for c in content:
+                if isinstance(c, dict) and c.get("type") == "text":
+                    text = _strip_cursor_internal_notes(str(c.get("text") or ""))
+                    if text:
+                        texts.append(text)
+            if not texts:
+                return ""
+            return "\n".join(texts)
+        return ""
+    if role == "system":
+        msg_obj = entry.get("message") if isinstance(entry, dict) else {}
+        if isinstance(msg_obj, dict):
+            content = msg_obj.get("content", "")
+            if isinstance(content, str) and content.strip():
+                return content.strip()
+        elif isinstance(msg_obj, str) and msg_obj.strip():
+            return msg_obj.strip()
+        return ""
+    return ""
+
+
+def _cursor_display_for_sync(entry: dict) -> str:
+    display = (_extract_cursor_sync_display_text(entry) or "").strip()
+    if not display or display == "[REDACTED]":
+        return ""
+    if display.endswith("[REDACTED]"):
+        display = display[: -len("[REDACTED]")].rstrip()
+    return display
+
+
+def sync_cursor_native_log(
+    self,
+    agent: str,
+    native_log_path: str | None = None,
+    *,
+    start_at_end: bool = False,
+) -> None:
+    transcript_path = str(native_log_path or "").strip()
+    if not transcript_path or not os.path.exists(transcript_path):
+        return
+
+    file_size = os.path.getsize(transcript_path)
+    if start_at_end:
+        advance_read_offset(self._native_log_read_offsets, transcript_path, file_size)
+        return
+    start = read_offset_start(
+        self._native_log_read_offsets,
+        transcript_path,
+        file_size,
+        on_shrink="wait",
+    )
+    if start >= file_size:
+        return
+
+    scan = CompleteJsonlScan(transcript_path, start)
+    batch = list(scan)
+    turn_done_seen = _cursor_turn_done_from_batch(batch)
+
+    for line_start, entry in batch:
+        display = _cursor_display_for_sync(entry)
+        if not display:
+            continue
+
+        jsonl_entry = {
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "session": self.session_name,
+            "sender": agent,
+            "targets": ["user"],
+            "message": display,
+            "native_log_path": transcript_path,
+            "native_log_offset": line_start,
+        }
+        append_jsonl_entry(self.log_path, jsonl_entry)
+
+    for _ls, entry in batch:
+        tool_evs = []
+        for name, inp in iter_tool_calls(entry):
+            tool_evs.extend(runtime_tool_events(name, inp, workspace=str(self.workspace or "")))
+        if tool_evs:
+            push_runtime_display(self, agent, tool_evs)
+
+    advance_read_offset(self._native_log_read_offsets, transcript_path, scan.consumed)
+    report_skipped_lines(self, agent, scan)
+    if turn_done_seen:
+        self._mark_idle(agent)

@@ -30,7 +30,7 @@ if ! hub_is_up; then
     echo "Hub port $HUB_PORT is occupied by a listener that does not serve the expected Hub." >&2
     exit 1
   fi
-  PYTHONPATH="$HUB_PYTHONPATH" nohup python3 -m hub_backend.hub_server "$REPO_ROOT" "$SCRIPT_DIR/agent-index" >/dev/null 2>&1 </dev/null &
+  PYTHONPATH="$HUB_PYTHONPATH" nohup python3 -m server.hub.server "$REPO_ROOT" "$SCRIPT_DIR/agent-index" >/dev/null 2>&1 </dev/null &
   HUB_SERVER_PID=$!
   disown "$HUB_SERVER_PID" || true
   if ! hub_is_up "$READY_TIMEOUT_SEC"; then

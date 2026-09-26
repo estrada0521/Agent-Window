@@ -1,0 +1,79 @@
+from __future__ import annotations
+
+import os
+import shutil
+from pathlib import Path
+
+from agents.names import agent_base_name
+from agents.registry import AGENTS
+
+
+def resolve_agent_executable(agent_name: str) -> str | None:
+    base = agent_base_name(agent_name)
+    adef = AGENTS.get(base)
+    exe_name = adef.exe if adef else agent_name
+
+    def fallback_path() -> str | None:
+        if not adef:
+            return None
+        for p in adef.fallback_paths:
+            candidate = Path(p).expanduser()
+            if candidate.is_file():
+                return str(candidate)
+        return None
+
+    if adef and adef.prefer_fallback_paths:
+        found = fallback_path()
+        if found:
+            return found
+    found = shutil.which(exe_name)
+    if found:
+        return found
+    if adef:
+        found = fallback_path()
+        if found:
+            return found
+    if adef and adef.fallback_nvm:
+        home = Path.home()
+        nvm_bin = Path(os.environ.get("NVM_BIN", "")).expanduser()
+        candidates: list[Path] = []
+        if nvm_bin.is_dir():
+            candidates.append(nvm_bin / exe_name)
+        candidates.extend(
+            sorted(
+                (home / ".nvm" / "versions" / "node").glob(f"*/bin/{exe_name}"),
+                reverse=True,
+            )
+        )
+        for candidate in candidates:
+            if candidate.is_file():
+                return str(candidate)
+    return None
+
+
+def resolve_agent_executable_for_runtime(agent_name: str) -> str:
+    found = resolve_agent_executable(agent_name)
+    if found:
+        return found
+    base = agent_base_name(agent_name)
+    adef = AGENTS.get(base)
+    return adef.exe if adef else agent_name
+
+
+def _build_agent_exec(agent_name: str) -> tuple[str, object]:
+    import shlex as _shlex
+    agent_exec_path = Path(resolve_agent_executable_for_runtime(agent_name))
+    agent_exec = _shlex.quote(str(agent_exec_path))
+    base = agent_base_name(agent_name)
+    adef = AGENTS.get(base)
+    return agent_exec, adef
+
+
+def agent_launch_cmd(agent_name: str) -> str:
+    agent_exec, adef = _build_agent_exec(agent_name)
+    launch_extra = adef.launch_extra if adef else ""
+    launch_flags = adef.launch_flags if adef else ""
+    extra = f" {launch_extra}" if launch_extra else ""
+    flags = f" {launch_flags}" if launch_flags else ""
+    env_prefix = f"{adef.launch_env} " if adef and adef.launch_env else ""
+    return f"{env_prefix}exec{extra} {agent_exec}{flags}"

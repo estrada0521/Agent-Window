@@ -8,8 +8,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from backend_core.access.session_meta import find_session_for_workspace
-from hub_backend.new_session.handlers import post_start_session_draft
+from fs.session.meta import find_session_for_workspace
+from server.hub.new_session import post_start_session_draft
 
 
 class FindSessionForWorkspaceTests(unittest.TestCase):
@@ -29,7 +29,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             self._write_meta(root, "my-session", str(workspace.resolve()))
 
             with mock.patch(
-                "backend_core.access.settings.agent_window_root", return_value=Path(tmp)
+                "fs.session.paths.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(workspace)
 
@@ -43,7 +43,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             self._write_meta(root, "archived-session", str(workspace.resolve()))
 
             with mock.patch(
-                "backend_core.access.settings.agent_window_root", return_value=Path(tmp)
+                "fs.session.paths.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(workspace)
 
@@ -57,7 +57,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             self._write_meta(root, "my-session", str(workspace.resolve()))
 
             with mock.patch(
-                "backend_core.access.settings.agent_window_root", return_value=Path(tmp)
+                "fs.session.paths.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(workspace, exclude_session="my-session")
 
@@ -73,7 +73,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             self._write_meta(root, "my-session", str(workspace.resolve()))
 
             with mock.patch(
-                "backend_core.access.settings.agent_window_root", return_value=Path(tmp)
+                "fs.session.paths.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(other_workspace)
 
@@ -86,7 +86,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             workspace.mkdir()
 
             with mock.patch(
-                "backend_core.access.settings.agent_window_root", return_value=Path(tmp)
+                "fs.session.paths.agent_window_root", return_value=Path(tmp)
             ):
                 found = find_session_for_workspace(workspace)
 
@@ -109,10 +109,10 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
 
             with (
                 mock.patch(
-                    "hub_backend.new_session.handlers.find_session_for_workspace",
+                    "server.hub.new_session.find_session_for_workspace",
                     return_value="existing-session",
                 ),
-                mock.patch("hub_backend.new_session.handlers.session_artifact_dir") as session_dir,
+                mock.patch("server.hub.new_session.session_artifact_dir") as session_dir,
             ):
                 post_start_session_draft(handler, None, {"session_api": session_api})
 
@@ -136,18 +136,18 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
 
             with (
                 mock.patch(
-                    "hub_backend.new_session.handlers.find_session_for_workspace",
+                    "server.hub.new_session.find_session_for_workspace",
                     return_value=None,
                 ),
                 mock.patch(
-                    "hub_backend.new_session.handlers.session_artifact_dir",
+                    "server.hub.new_session.session_artifact_dir",
                     side_effect=lambda name: session_root / name,
                 ),
-                mock.patch("hub_backend.new_session.handlers.create_session") as create_session,
-                mock.patch("hub_backend.new_session.handlers.workspace_chat_port", return_value=41000),
-                mock.patch("hub_backend.new_session.handlers.port_is_bindable", return_value=True),
+                mock.patch("server.hub.new_session.create_session") as create_session,
+                mock.patch("server.hub.new_session.workspace_chat_port", return_value=41000),
+                mock.patch("server.hub.new_session.port_is_bindable", return_value=True),
                 mock.patch(
-                    "hub_backend.new_session.handlers.ensure_chat_server",
+                    "server.hub.new_session.ensure_chat_server",
                     return_value=(True, 41000, ""),
                 ),
             ):

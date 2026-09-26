@@ -6,5 +6,5 @@ fi
 AGENT_WINDOW_LIB_TMUX_SESSION_SH=1
 
 session_control() {
-  PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -m backend_core.cli.session_control "$@"
+  PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -m tmux.context "$@"
 }

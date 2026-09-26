@@ -8,11 +8,11 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from backend_core.tmux.session import find_session_for_workspace
-from backend_core.access.settings import workspace_chat_port
-from server import server as chat_server
-from server.routes.write import _post_open_terminal
-from server.session_binding import WorkspaceSessionBinding
+from tmux.session import find_session_for_workspace
+from fs.session.paths import workspace_chat_port
+from server.chat import server as chat_server
+from server.chat.routes.write import _post_open_terminal
+from server.chat.session_binding import WorkspaceSessionBinding
 
 
 class _JsonHandler:
@@ -64,9 +64,9 @@ class RenamedSessionRouteTests(unittest.TestCase):
             )
 
             with (
-                mock.patch("server.session_binding.agent_window_session_root", return_value=root),
-                mock.patch("backend_core.access.session_meta.agent_window_session_root", return_value=root),
-                mock.patch("backend_core.access.settings.agent_window_session_root", return_value=root),
+                mock.patch("server.chat.session_binding.agent_window_session_root", return_value=root),
+                mock.patch("fs.session.meta.agent_window_session_root", return_value=root),
+                mock.patch("fs.session.paths.agent_window_session_root", return_value=root),
             ):
                 binding = WorkspaceSessionBinding(workspace)
                 port_before = workspace_chat_port(workspace)
@@ -90,8 +90,8 @@ class RenamedSessionRouteTests(unittest.TestCase):
         }
 
         with (
-            mock.patch("server.routes.write.subprocess.run", return_value=size_result) as run,
-            mock.patch("server.routes.write.subprocess.Popen") as popen,
+            mock.patch("server.chat.routes.write.subprocess.run", return_value=size_result) as run,
+            mock.patch("server.chat.routes.write.subprocess.Popen") as popen,
         ):
             _post_open_terminal(handler, None, ctx)
 
@@ -106,7 +106,7 @@ class RenamedSessionRouteTests(unittest.TestCase):
 
         with self.assertRaisesRegex(RuntimeError, "tmux list-sessions failed"):
             with mock.patch(
-                "backend_core.tmux.session.subprocess.run",
+                "tmux.session.subprocess.run",
                 return_value=failed,
             ):
                 find_session_for_workspace("/work/project")
