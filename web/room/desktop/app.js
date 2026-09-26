@@ -854,7 +854,7 @@ __INCLUDE:git-panel/events.js__
       pathRow.setAttribute("role", "button");
       pathRow.setAttribute("aria-disabled", path ? "false" : "true");
       pathRow.tabIndex = path ? 0 : -1;
-      pathRow.title = path ? "親ディレクトリへ" : "Root";
+      pathRow.title = path ? "Parent folder" : "Root";
       pathRow.addEventListener("click", (e) => {
         e.preventDefault(); e.stopPropagation();
         if (!path) return;
