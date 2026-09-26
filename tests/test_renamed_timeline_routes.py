@@ -12,7 +12,7 @@ from tmux.session import find_session_for_workspace
 from fs.log.paths import workspace_room_port
 from server.room import server as room_server
 from server.room.routes.write import _post_open_terminal
-from server.room.session_binding import WorkspaceSessionBinding
+from server.room.timeline_binding import WorkspaceTimelineBinding
 
 
 class _JsonHandler:
@@ -25,7 +25,7 @@ class _JsonHandler:
         self.response = (status, body)
 
 
-class RenamedSessionRouteTests(unittest.TestCase):
+class RenamedTimelineRouteTests(unittest.TestCase):
     def test_reload_room_restarts_the_current_workspace_without_an_aw_name(self) -> None:
         old_pending = room_server.room_restart_pending
         try:
@@ -51,7 +51,7 @@ class RenamedSessionRouteTests(unittest.TestCase):
 
     def test_running_server_binding_follows_a_folder_rename_without_changing_port(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp) / "sessions"
+            root = Path(tmp) / "timelines"
             workspace = Path(tmp) / "workspace"
             root.mkdir()
             workspace.mkdir()
@@ -64,29 +64,29 @@ class RenamedSessionRouteTests(unittest.TestCase):
             )
 
             with (
-                mock.patch("server.room.session_binding.agent_window_log_root", return_value=root),
+                mock.patch("server.room.timeline_binding.agent_window_log_root", return_value=root),
                 mock.patch("fs.log.meta.agent_window_log_root", return_value=root),
                 mock.patch("fs.log.paths.agent_window_log_root", return_value=root),
             ):
-                binding = WorkspaceSessionBinding(workspace)
+                binding = WorkspaceTimelineBinding(workspace)
                 port_before = workspace_room_port(workspace)
                 old_dir.rename(root / "new-label")
-                session_name, log_path = binding.snapshot()
+                timeline_label, log_path = binding.snapshot()
 
-            self.assertEqual(session_name, "new-label")
+            self.assertEqual(timeline_label, "new-label")
             self.assertEqual(log_path, root / "new-label" / ".log.jsonl")
             self.assertEqual(workspace_room_port(workspace), port_before)
 
     def test_terminal_attaches_to_real_tmux_name_after_aw_rename(self) -> None:
         handler = _JsonHandler()
         state = SimpleNamespace(
-            session_is_active=True,
+            room_is_active=True,
             tmux_session_name="opaque-tmux-7",
         )
         size_result = SimpleNamespace(returncode=0, stdout="160 48")
         ctx = {
             "state": state,
-            "session_name": "renamed-aw-session",
+            "timeline_label": "renamed-aw-timeline",
         }
 
         with (
@@ -99,7 +99,7 @@ class RenamedSessionRouteTests(unittest.TestCase):
         self.assertIn("=opaque-tmux-7:0", run.call_args.args[0])
         apple_script = popen.call_args.args[0][-1]
         self.assertIn("attach-session -t opaque-tmux-7", apple_script)
-        self.assertNotIn("renamed-aw-session", apple_script)
+        self.assertNotIn("renamed-aw-timeline", apple_script)
 
     def test_tmux_resolution_does_not_hide_query_failure_as_inactive(self) -> None:
         failed = SimpleNamespace(returncode=1, stdout="", stderr="tmux unavailable")

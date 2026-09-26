@@ -11,11 +11,11 @@ from pathlib import Path
 from fs.log.jsonl import append_jsonl_entry
 from server.room.probe import read_room_server_state
 from fs.log.meta import (
-    SessionMetaError,
-    create_session_folder,
-    read_session_meta,
-    session_workspace,
-    write_session_meta_file,
+    LogMetaError,
+    create_log_dir,
+    read_log_meta,
+    log_workspace,
+    write_log_meta_file,
 )
 from fs.log.paths import (
     ensure_workspace_log_link,
@@ -46,7 +46,7 @@ SESSION_WIDTH = 66
 SESSION_HEIGHT = 40
 
 
-class SessionControlError(RuntimeError):
+class RoomControlError(RuntimeError):
     pass
 
 
@@ -64,20 +64,20 @@ def _run(args: list[str], *, timeout: float | None = None) -> subprocess.Complet
     )
 
 
-def _resolve_tmux_name(session_name: str) -> str | None:
+def _resolve_tmux_name(timeline_label: str) -> str | None:
     try:
-        workspace = session_workspace(session_name)
-    except SessionMetaError as exc:
-        raise SessionControlError(str(exc)) from exc
+        workspace = log_workspace(timeline_label)
+    except LogMetaError as exc:
+        raise RoomControlError(str(exc)) from exc
     return find_live_session_for_workspace(workspace)
 
 
-def _set_env(session_name: str, key: str, value: str) -> None:
-    _run(["set-environment", "-t", session_name, key, value])
+def _set_env(tmux_name: str, key: str, value: str) -> None:
+    _run(["set-environment", "-t", tmux_name, key, value])
 
 
-def _unset_env(session_name: str, key: str) -> None:
-    _run(["set-environment", "-t", session_name, "-u", key])
+def _unset_env(tmux_name: str, key: str) -> None:
+    _run(["set-environment", "-t", tmux_name, "-u", key])
 
 
 def _instance_names(bases: list[str]) -> list[str]:
@@ -96,12 +96,12 @@ def _instance_names(bases: list[str]) -> list[str]:
 def _write_meta(tmux_name: str, aw_name: str) -> None:
     workspace = tmux_session_workspace(tmux_name)
     agents = [pane.name for pane in agent_topology(tmux_name)]
-    write_session_meta_file(aw_name, workspace, agents)
+    write_log_meta_file(aw_name, workspace, agents)
 
 
-def _append_log(session_name: str, message: str) -> None:
+def _append_log(timeline_label: str, message: str) -> None:
     append_jsonl_entry(
-        log_jsonl_path(session_name),
+        log_jsonl_path(timeline_label),
         {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "sender": "system",
@@ -121,12 +121,12 @@ def _room_listener_pids(room_port: int) -> list[int]:
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise SessionControlError(f"lsof timed out for port {room_port}") from exc
+        raise RoomControlError(f"lsof timed out for port {room_port}") from exc
     except OSError as exc:
-        raise SessionControlError(f"lsof failed for port {room_port}: {exc}") from exc
+        raise RoomControlError(f"lsof failed for port {room_port}: {exc}") from exc
     if result.returncode not in (0, 1):
         detail = (result.stderr or result.stdout or "").strip() or f"lsof exited {result.returncode}"
-        raise SessionControlError(f"lsof failed for port {room_port}: {detail}")
+        raise RoomControlError(f"lsof failed for port {room_port}: {detail}")
     return sorted({int(line.strip()) for line in (result.stdout or "").splitlines() if line.strip().isdigit()})
 
 
@@ -139,7 +139,7 @@ def _own_room_listener_pids(room_port: int, workspace: str) -> list[int]:
     reported_workspace = str((state or {}).get("workspace") or "").strip()
     if not reported_workspace or str(Path(reported_workspace).expanduser().resolve()) != expected_workspace:
         shown = ", ".join(str(pid) for pid in listeners)
-        raise SessionControlError(
+        raise RoomControlError(
             f"room port {room_port} is occupied by pid {shown}, not this workspace's room server"
         )
     try:
@@ -148,7 +148,7 @@ def _own_room_listener_pids(room_port: int, workspace: str) -> list[int]:
         reported_pid = 0
     if reported_pid <= 0 or listeners != [reported_pid]:
         shown = ", ".join(str(pid) for pid in listeners)
-        raise SessionControlError(f"room server pid mismatch on port {room_port}: {shown}")
+        raise RoomControlError(f"room server pid mismatch on port {room_port}: {shown}")
     return listeners
 
 
@@ -179,7 +179,7 @@ def stop_room_server(workspace: str) -> tuple[bool, str]:
     room_port = workspace_room_port(resolved_workspace)
     try:
         pids = _own_room_listener_pids(room_port, resolved_workspace)
-    except SessionControlError as exc:
+    except RoomControlError as exc:
         return False, str(exc)
     if not pids:
         return True, ""
@@ -216,7 +216,7 @@ def _start_agent(
     )
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip() or f"failed to start {instance_name}"
-        raise SessionControlError(detail)
+        raise RoomControlError(detail)
 
 
 def _prepare_instances(requested: list[str]) -> list[str]:
@@ -224,9 +224,9 @@ def _prepare_instances(requested: list[str]) -> list[str]:
     for raw in requested:
         base = agent_base_name(raw)
         if base not in AGENTS:
-            raise SessionControlError(f"Unknown agent: {raw}")
+            raise RoomControlError(f"Unknown agent: {raw}")
         if not resolve_agent_executable(base):
-            raise SessionControlError(f"Required command not found for {base}")
+            raise RoomControlError(f"Required command not found for {base}")
         bases.append(base)
     return _instance_names(bases)
 
@@ -249,7 +249,7 @@ def _create_tmux_session(workspace: Path) -> str:
     )
     if created.returncode != 0:
         detail = (created.stderr or created.stdout or "").strip() or "tmux new-session failed"
-        raise SessionControlError(detail)
+        raise RoomControlError(detail)
     return (created.stdout or "").strip()
 
 
@@ -260,14 +260,14 @@ def _pane_status(pane_id: str) -> dict:
     return {"pane_id": pane_id, "title": title, "command": command, "dead": dead}
 
 
-def describe_session(session_name: str) -> dict:
+def describe_timeline(timeline_label: str) -> dict:
     try:
-        meta = read_session_meta(session_name)
+        meta = read_log_meta(timeline_label)
     except FileNotFoundError as exc:
-        raise SessionControlError(f"Session does not exist: {session_name}") from exc
+        raise RoomControlError(f"Timeline does not exist: {timeline_label}") from exc
     workspace = meta["workspace"]
     info: dict = {
-        "timeline": session_name,
+        "timeline": timeline_label,
         "workspace": workspace,
         "agents": meta["agents"],
         "active": False,
@@ -310,9 +310,9 @@ def describe_session(session_name: str) -> dict:
     return info
 
 
-def create_session(
+def open_room(
     *,
-    session_name: str,
+    timeline_label: str,
     workspace: str,
     agents: list[str],
     repo_root: Path | str | None = None,
@@ -320,12 +320,12 @@ def create_session(
 ) -> None:
     workspace_path = Path(workspace).expanduser().resolve()
     if not workspace_path.is_dir():
-        raise SessionControlError(f"Invalid workspace: {workspace_path}")
+        raise RoomControlError(f"Invalid workspace: {workspace_path}")
     root = Path(repo_root).resolve() if repo_root is not None else _repo_root()
     instances = _prepare_instances(agents)
     if not revive:
-        create_session_folder(session_name, str(workspace_path), instances)
-    ensure_workspace_log_link(session_name, str(workspace_path))
+        create_log_dir(timeline_label, str(workspace_path), instances)
+    ensure_workspace_log_link(timeline_label, str(workspace_path))
 
     tmux_name = _create_tmux_session(workspace_path)
 
@@ -351,14 +351,14 @@ def create_session(
             width=SESSION_WIDTH,
         )
         if not pane_id:
-            raise SessionControlError(f"Failed to create agent window for {instance}")
+            raise RoomControlError(f"Failed to create agent window for {instance}")
         panes.append(pane_id)
 
     bin_dir = str(root / "bin")
     path_value = f"{bin_dir}:{os.environ.get('PATH', '')}"
     _set_env(tmux_name, "PATH", path_value)
     _unset_env(tmux_name, "CLAUDECODE")
-    _write_meta(tmux_name, session_name)
+    _write_meta(tmux_name, timeline_label)
 
     if panes:
         for instance, pane_id in zip(instances, panes):
@@ -370,47 +370,47 @@ def create_session(
         _run(["select-pane", "-t", panes[0]])
 
     if revive:
-        _append_log(session_name, f"Room revived: {workspace_path}")
+        _append_log(timeline_label, f"Room revived: {workspace_path}")
 
 
-def kill_session(
+def archive_room(
     *,
-    session_name: str,
+    timeline_label: str,
 ) -> None:
-    tmux_name = _resolve_tmux_name(session_name)
+    tmux_name = _resolve_tmux_name(timeline_label)
     if not tmux_name:
-        raise SessionControlError(f"Session does not exist: {session_name}")
+        raise RoomControlError(f"Timeline does not exist: {timeline_label}")
     workspace = tmux_session_workspace(tmux_name)
     stop_ok, stop_detail = stop_room_server(workspace)
     if not stop_ok:
-        raise SessionControlError(f"failed to stop room server for {session_name}: {stop_detail}")
+        raise RoomControlError(f"failed to stop room server for {timeline_label}: {stop_detail}")
     cleanup_target_process_groups(target=tmux_name)
     result = _run(["kill-session", "-t", tmux_name], timeout=4)
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip() or "tmux kill-session failed"
-        raise SessionControlError(detail)
-    _append_log(session_name, f"Room archived: {workspace}")
+        raise RoomControlError(detail)
+    _append_log(timeline_label, f"Room archived: {workspace}")
 
 
 def add_agent(
     *,
-    session_name: str,
+    timeline_label: str,
     agent: str,
 ) -> str:
     base = agent_base_name(agent)
     if not base or base not in AGENTS:
-        raise SessionControlError(f"Unknown agent: {agent}")
+        raise RoomControlError(f"Unknown agent: {agent}")
     if not resolve_agent_executable(base):
-        raise SessionControlError(f"Required command not found for {base}")
-    tmux_name = _resolve_tmux_name(session_name)
+        raise RoomControlError(f"Required command not found for {base}")
+    tmux_name = _resolve_tmux_name(timeline_label)
     if not tmux_name:
-        raise SessionControlError(f"Session does not exist: {session_name}")
+        raise RoomControlError(f"Timeline does not exist: {timeline_label}")
     workspace = tmux_session_workspace(tmux_name)
     topology = agent_topology(tmux_name)
     current = [pane.name for pane in topology]
     instance = next_instance_name(current, base)
     if any(pane.name == instance for pane in topology):
-        raise SessionControlError(f"Agent instance already exists: {instance}")
+        raise RoomControlError(f"Agent instance already exists: {instance}")
     pane_id = create_agent_window(
         session=tmux_name,
         instance_name=instance,
@@ -418,33 +418,33 @@ def add_agent(
         width=SESSION_WIDTH,
     )
     if not pane_id:
-        raise SessionControlError("Failed to create agent window")
-    _write_meta(tmux_name, session_name)
+        raise RoomControlError("Failed to create agent window")
+    _write_meta(tmux_name, timeline_label)
     _start_agent(
         workspace=workspace,
         pane_id=pane_id,
         instance_name=instance,
     )
-    _append_log(session_name, f"Add Agent: {instance}")
+    _append_log(timeline_label, f"Add Agent: {instance}")
     return instance
 
 
 def remove_agent(
     *,
-    session_name: str,
+    timeline_label: str,
     agent: str,
 ) -> str:
-    tmux_name = _resolve_tmux_name(session_name)
+    tmux_name = _resolve_tmux_name(timeline_label)
     if not tmux_name:
-        raise SessionControlError(f"Session does not exist: {session_name}")
+        raise RoomControlError(f"Timeline does not exist: {timeline_label}")
     pane_id = next((pane.pane_id for pane in agent_topology(tmux_name) if pane.name == agent), None)
     if pane_id is None:
-        raise SessionControlError(f"Agent instance not in this room: {agent}")
+        raise RoomControlError(f"Agent instance not in this room: {agent}")
     window_target = window_target_for_pane(pane_id=pane_id)
     if not window_target:
-        raise SessionControlError(f"No tmux window recorded for instance: {agent}")
+        raise RoomControlError(f"No tmux window recorded for instance: {agent}")
     if not kill_window_target(window_target=window_target):
-        raise SessionControlError(f"tmux kill-window failed for {window_target}")
-    _write_meta(tmux_name, session_name)
-    _append_log(session_name, f"Remove Agent: {agent}")
+        raise RoomControlError(f"tmux kill-window failed for {window_target}")
+    _write_meta(tmux_name, timeline_label)
+    _append_log(timeline_label, f"Remove Agent: {agent}")
     return agent

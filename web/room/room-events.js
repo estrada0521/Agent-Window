@@ -1,7 +1,7 @@
     let roomEventsOpened = false;
     const roomEvents = new EventSource(withRoomBase("/events"));
     roomEvents.addEventListener("messages", () => { void refresh(); });
-    roomEvents.addEventListener("state", () => { void refreshSessionState(); });
+    roomEvents.addEventListener("state", () => { void refreshRoomState(); });
     roomEvents.addEventListener("files", handleWorkspaceFilesChanged);
     roomEvents.addEventListener("git", handleWorkspaceGitChanged);
     roomEvents.addEventListener("failure", (event) => { setStatus(JSON.parse(event.data)); });
@@ -12,7 +12,7 @@
         return;
       }
       void refresh();
-      void refreshSessionState();
+      void refreshRoomState();
       handleWorkspaceFilesChanged();
       handleWorkspaceGitChanged();
     };

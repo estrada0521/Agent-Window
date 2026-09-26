@@ -8,58 +8,58 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from fs.log.meta import find_session_for_workspace
-from server.hub.new_session import post_start_session_draft
+from fs.log.meta import find_label_for_workspace
+from server.hub.new_timeline import post_start_timeline_draft
 
 
-class FindSessionForWorkspaceTests(unittest.TestCase):
+class FindTimelineForWorkspaceTests(unittest.TestCase):
     @staticmethod
-    def _write_meta(root: Path, session: str, workspace: str) -> None:
-        session_dir = root / session
-        session_dir.mkdir(parents=True, exist_ok=True)
-        (session_dir / ".meta").write_text(
-            json.dumps({"session": session, "workspace": workspace}), encoding="utf-8"
+    def _write_meta(root: Path, timeline: str, workspace: str) -> None:
+        log_dir = root / timeline
+        log_dir.mkdir(parents=True, exist_ok=True)
+        (log_dir / ".meta").write_text(
+            json.dumps({"timeline": timeline, "workspace": workspace}), encoding="utf-8"
         )
 
-    def test_finds_the_session_recorded_for_a_workspace(self) -> None:
+    def test_finds_the_timeline_recorded_for_a_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "log"
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
-            self._write_meta(root, "my-session", str(workspace.resolve()))
+            self._write_meta(root, "my-timeline", str(workspace.resolve()))
 
             with mock.patch(
                 "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
-                found = find_session_for_workspace(workspace)
+                found = find_label_for_workspace(workspace)
 
-            self.assertEqual(found, "my-session")
+            self.assertEqual(found, "my-timeline")
 
-    def test_finds_an_archived_session_with_no_active_tmux_state(self) -> None:
+    def test_finds_an_archived_timeline_with_no_active_tmux_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "log"
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
-            self._write_meta(root, "archived-session", str(workspace.resolve()))
+            self._write_meta(root, "archived-timeline", str(workspace.resolve()))
 
             with mock.patch(
                 "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
-                found = find_session_for_workspace(workspace)
+                found = find_label_for_workspace(workspace)
 
-            self.assertEqual(found, "archived-session")
+            self.assertEqual(found, "archived-timeline")
 
-    def test_excludes_the_named_session_for_the_revive_flow(self) -> None:
+    def test_excludes_the_named_timeline_for_the_revive_flow(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "log"
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
-            self._write_meta(root, "my-session", str(workspace.resolve()))
+            self._write_meta(root, "my-timeline", str(workspace.resolve()))
 
             with mock.patch(
                 "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
-                found = find_session_for_workspace(workspace, exclude_session="my-session")
+                found = find_label_for_workspace(workspace, exclude_label="my-timeline")
 
             self.assertIsNone(found)
 
@@ -70,16 +70,16 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             other_workspace = Path(tmp) / "other-workspace"
             workspace.mkdir()
             other_workspace.mkdir()
-            self._write_meta(root, "my-session", str(workspace.resolve()))
+            self._write_meta(root, "my-timeline", str(workspace.resolve()))
 
             with mock.patch(
                 "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
-                found = find_session_for_workspace(other_workspace)
+                found = find_label_for_workspace(other_workspace)
 
             self.assertIsNone(found)
 
-    def test_no_match_when_the_session_root_does_not_exist_yet(self) -> None:
+    def test_no_match_when_the_timeline_root_does_not_exist_yet(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "log"
             workspace = Path(tmp) / "workspace"
@@ -88,7 +88,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
             with mock.patch(
                 "fs.log.paths.agent_window_root", return_value=Path(tmp)
             ):
-                found = find_session_for_workspace(workspace)
+                found = find_label_for_workspace(workspace)
 
             self.assertIsNone(found)
 
@@ -100,58 +100,58 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
         handler.rfile = io.BytesIO(body)
         return handler
 
-    def test_workspace_claim_is_rejected_before_session_name_allocation(self) -> None:
+    def test_workspace_claim_is_rejected_before_timeline_label_allocation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Agent-Window"
             workspace.mkdir()
             handler = self._draft_handler(workspace)
-            session_api = mock.Mock()
+            timeline_api = mock.Mock()
 
             with (
                 mock.patch(
-                    "server.hub.new_session.find_session_for_workspace",
-                    return_value="existing-session",
+                    "server.hub.new_timeline.find_label_for_workspace",
+                    return_value="existing-timeline",
                 ),
-                mock.patch("server.hub.new_session.log_dir") as session_dir,
+                mock.patch("server.hub.new_timeline.log_dir") as log_dir,
             ):
-                post_start_session_draft(handler, None, {"session_api": session_api})
+                post_start_timeline_draft(handler, None, {"timeline_api": timeline_api})
 
             handler._send_json.assert_called_once_with(
                 409,
-                {"ok": False, "error": "A session already exists for this workspace: existing-session"},
+                {"ok": False, "error": "A timeline already exists for this workspace: existing-timeline"},
             )
-            session_dir.assert_not_called()
+            log_dir.assert_not_called()
 
-    def test_duplicate_workspace_basename_gets_an_opaque_session_name(self) -> None:
+    def test_duplicate_workspace_basename_gets_an_opaque_timeline_label(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "new-parent" / "Agent-Window"
             workspace.mkdir(parents=True)
-            session_root = Path(tmp) / "log"
-            (session_root / "Agent-Window").mkdir(parents=True)
+            log_root = Path(tmp) / "log"
+            (log_root / "Agent-Window").mkdir(parents=True)
             digest = hashlib.sha256(str(workspace.resolve()).encode("utf-8")).hexdigest()
-            (session_root / f"aw-{digest[:8]}").mkdir()
+            (log_root / f"aw-{digest[:8]}").mkdir()
             expected_name = f"aw-{digest[:12]}"
             handler = self._draft_handler(workspace)
             hub = mock.Mock(repo_root=Path(tmp))
 
             with (
                 mock.patch(
-                    "server.hub.new_session.find_session_for_workspace",
+                    "server.hub.new_timeline.find_label_for_workspace",
                     return_value=None,
                 ),
                 mock.patch(
-                    "server.hub.new_session.log_dir",
-                    side_effect=lambda name: session_root / name,
+                    "server.hub.new_timeline.log_dir",
+                    side_effect=lambda name: log_root / name,
                 ),
-                mock.patch("server.hub.new_session.create_session") as create_session,
-                mock.patch("server.hub.new_session.workspace_room_port", return_value=41000),
-                mock.patch("server.hub.new_session.port_is_bindable", return_value=True),
+                mock.patch("server.hub.new_timeline.open_room") as open_room,
+                mock.patch("server.hub.new_timeline.workspace_room_port", return_value=41000),
+                mock.patch("server.hub.new_timeline.port_is_bindable", return_value=True),
                 mock.patch(
-                    "server.hub.new_session.ensure_room_server",
+                    "server.hub.new_timeline.ensure_room_server",
                     return_value=(True, 41000, ""),
                 ),
             ):
-                post_start_session_draft(
+                post_start_timeline_draft(
                     handler,
                     None,
                     {
@@ -169,13 +169,13 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                 {k: v for k, v in payload.items() if k != "notice"},
                 {
                     "ok": True,
-                    "session": expected_name,
+                    "timeline": expected_name,
                     "room_url": "/41000/",
                 },
             )
             self.assertIn(expected_name, payload["notice"])
-            create_session.assert_called_once_with(
-                session_name=expected_name,
+            open_room.assert_called_once_with(
+                timeline_label=expected_name,
                 workspace=str(workspace.resolve()),
                 agents=[],
                 repo_root=Path(tmp),

@@ -31,7 +31,7 @@ usage() {
 Usage: agent-window context [--timeline LABEL] [--workspace PATH] [--json]
 
 Print timeline/workspace/agent-pane summary for the current pane (or --timeline).
-Session creation and management are done through Hub.
+Timeline creation and management are done through Hub.
 EOF
 }
 

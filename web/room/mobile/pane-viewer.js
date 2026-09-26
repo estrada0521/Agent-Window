@@ -173,7 +173,7 @@
     };
     const buildPaneViewer = () => {
       paneViewerAgents = [...availableTargets];
-      if (sessionActive) paneViewerAgents = ["terminal", ...paneViewerAgents];
+      if (roomActive) paneViewerAgents = ["terminal", ...paneViewerAgents];
       const restoreAgent = paneViewerLastAgent && paneViewerAgents.includes(paneViewerLastAgent)
         ? paneViewerLastAgent
         : paneViewerAgents[0];
@@ -247,4 +247,4 @@
       if (!paneViewerEl?.classList?.contains("visible")) return;
       fetchVisiblePaneViewerSlide(false);
     });
-    refreshSessionState();
+    refreshRoomState();

@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 from fs.log.jsonl import append_jsonl_entry
-from fs.log.meta import session_meta_agents
+from fs.log.meta import log_meta_agents
 from tmux import TMUX
 from tmux.send_keys import deliver_text_to_pane
 from fs.log.jsonl import newest_entries
@@ -29,7 +29,7 @@ from tmux.session import (
     terminal_window_pane_id,
 )
 from tmux.capture_pane import trace_content
-from server.room.session_binding import WorkspaceSessionBinding
+from server.room.timeline_binding import WorkspaceTimelineBinding
 
 
 ENTRY_WINDOW_LIMIT = 2000
@@ -48,14 +48,14 @@ class RoomState:
         repo_root: Path | str,
         initial_running_agents: list[str] | None = None,
     ):
-        self._session_binding = WorkspaceSessionBinding(workspace)
+        self._timeline_binding = WorkspaceTimelineBinding(workspace)
         self.port = int(port)
-        self.workspace = self._session_binding.workspace
+        self.workspace = self._timeline_binding.workspace
         self.hub_port = int(hub_port)
         self.repo_root = Path(repo_root).resolve()
         self.server_instance = uuid.uuid4().hex
         self.tmux_session_name = find_session_for_workspace(self.workspace) or ""
-        self.session_is_active = bool(self.tmux_session_name)
+        self.room_is_active = bool(self.tmux_session_name)
         self._agent_running = set(initial_running_agents or [])
         self._last_announced_commit_hash: str | None = None
         self._events = threading.Condition()
@@ -75,19 +75,19 @@ class RoomState:
         self._native_log_bind_workers: set[str] = set()
 
     @property
-    def session_name(self) -> str:
-        return self._session_binding.session_name
+    def timeline_label(self) -> str:
+        return self._timeline_binding.timeline_label
 
     @property
     def log_path(self) -> Path:
-        return self._session_binding.log_path
+        return self._timeline_binding.log_path
 
     @property
-    def session_dir(self) -> Path:
-        return self._session_binding.session_dir
+    def log_dir(self) -> Path:
+        return self._timeline_binding.log_dir
 
-    def session_binding_snapshot(self) -> tuple[str, Path]:
-        return self._session_binding.snapshot()
+    def timeline_binding_snapshot(self) -> tuple[str, Path]:
+        return self._timeline_binding.snapshot()
 
     def refresh_native_log_bindings(
         self,
@@ -124,7 +124,7 @@ class RoomState:
             self.remove_native_log_binding(agent)
 
     def start_native_log_sync(self) -> None:
-        if not self.session_is_active:
+        if not self.room_is_active:
             return
         self.refresh_native_log_bindings(start_at_end=True)
         start_native_log_vnode_watcher(self)
@@ -176,16 +176,16 @@ class RoomState:
             seen.update(self._event_counts)
             return changed
 
-    def session_state_payload(self) -> dict:
-        session_name = self.session_name
+    def room_state_payload(self) -> dict:
+        timeline_label = self.timeline_label
         return {
             "server_instance": self.server_instance,
             "pid": os.getpid(),
-            "session": session_name,
-            "active": self.session_is_active,
+            "timeline": timeline_label,
+            "active": self.room_is_active,
             "workspace": self.workspace,
             "repo_root": str(self.repo_root),
-            "targets": self.active_agents() if self.session_is_active else session_meta_agents(session_name),
+            "targets": self.active_agents() if self.room_is_active else log_meta_agents(timeline_label),
             "statuses": self.agent_statuses(),
             "running_display": self.running_display_state(),
         }
@@ -204,7 +204,7 @@ class RoomState:
         return list(self.agent_panes())
 
     def agent_panes(self) -> dict[str, str]:
-        if not self.session_is_active:
+        if not self.room_is_active:
             return {}
         return {
             pane.name: pane.pane_id
@@ -215,7 +215,7 @@ class RoomState:
         return self.agent_panes().get(agent_name, "")
 
     def pane_id_for_terminal(self) -> str:
-        if not self.session_is_active:
+        if not self.room_is_active:
             return ""
         return terminal_window_pane_id(self.tmux_session_name)
 

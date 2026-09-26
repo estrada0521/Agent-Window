@@ -68,7 +68,7 @@ def _log_watcher() -> None:
                     if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
                         state.publish_event("messages")
                         try:
-                            notify_hub_session_messages_changed(hub_port)
+                            notify_hub_timeline_messages_changed(hub_port)
                         except (OSError, RuntimeError):
                             pass
                     if event.fflags & (select.KQ_NOTE_RENAME | select.KQ_NOTE_DELETE):
@@ -227,9 +227,9 @@ def release_room_restart() -> None:
 
 
 def _route_context() -> dict:
-    current_session_name, _current_log_path = state.session_binding_snapshot()
+    current_timeline_label, _current_log_path = state.timeline_binding_snapshot()
     return {
-        "session_name": current_session_name,
+        "timeline_label": current_timeline_label,
         "server_instance": server_instance,
         "state": state,
         "workspace": workspace,
@@ -305,10 +305,10 @@ def main(argv: list[str] | None = None) -> None:
 HUB_NOTIFICATION_TIMEOUT_SEC = 1.0
 
 
-def notify_hub_session_messages_changed(hub_port: int) -> None:
+def notify_hub_timeline_messages_changed(hub_port: int) -> None:
     response = read_upstream(
         "POST",
-        f"http://127.0.0.1:{int(hub_port)}/session-messages-changed",
+        f"http://127.0.0.1:{int(hub_port)}/timeline-messages-changed",
         body=b"",
         timeout=HUB_NOTIFICATION_TIMEOUT_SEC,
     )

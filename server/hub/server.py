@@ -12,8 +12,8 @@ from server.appearance.colors import apply_color_tokens, resolve_theme_palette
 from server.appearance.theme import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from server.pwa import PWA_FILES, pwa_icon_entries, serve_pwa_file
-from server.hub.session_proxy import proxy_room_session
-from server.hub.session_api import split_room_proxy_path
+from server.hub.room_proxy import proxy_room
+from server.hub.timeline_api import split_room_proxy_path
 from server.hub.room_supervisor import stop_inactive_room_servers
 from server.page_header import (
     PAGE_HEADER_CSS,
@@ -21,26 +21,26 @@ from server.page_header import (
     MOBILE_HUB_HEADER_ACTIONS,
     render_page_header,
 )
-from server.hub.session_query import (
-    active_session_records,
-    archived_session_records,
-    live_sessions_query,
+from server.hub.timeline_query import (
+    active_timeline_records,
+    archived_timeline_records,
+    live_timelines_query,
 )
 
 from server import APP_DISPLAY_NAME
-from server.hub.new_session import (
+from server.hub.new_timeline import (
     post_pick_workspace as _post_pick_workspace_action,
-    post_start_session_draft as _post_start_session_draft_action,
+    post_start_timeline_draft as _post_start_timeline_draft_action,
 )
 from server.hub.actions import (
-    get_delete_archived_session as _get_delete_archived_session_action,
-    get_kill_session as _get_kill_session_action,
-    get_open_session as _get_open_session_action,
-    get_revive_session as _get_revive_session_action,
-    get_session_workspace as _get_session_workspace_action,
-    post_change_session_workspace as _post_change_session_workspace_action,
-    post_rename_session as _post_rename_session_action,
-    post_reset_session_agents as _post_reset_session_agents_action,
+    get_delete_archived_timeline as _get_delete_archived_timeline_action,
+    get_archive_room as _get_archive_room_action,
+    get_open_timeline as _get_open_timeline_action,
+    get_revive_room as _get_revive_room_action,
+    get_timeline_workspace as _get_timeline_workspace_action,
+    post_change_timeline_workspace as _post_change_timeline_workspace_action,
+    post_rename_timeline as _post_rename_timeline_action,
+    post_reset_timeline_agents as _post_reset_timeline_agents_action,
     post_restart_hub as _post_restart_hub_action,
 )
 from server.hub.server_helpers import (
@@ -207,14 +207,14 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       animation: titleFadeIn 800ms ease-out forwards;
     }}
     html[data-view="mobile"] .launch-shell-title {{
-      color: rgb(__TEXT_SESSION_MOBILE_DARK_CHANNELS__);
+      color: rgb(__TEXT_TIMELINE_MOBILE_DARK_CHANNELS__);
       font-size: 26px;
       font-weight: 900;
       padding: 0 12px;
     }}
-    html[data-view="mobile"][data-theme-mobile="light"] .launch-shell-title {{ color: rgb(__TEXT_SESSION_MOBILE_LIGHT_CHANNELS__); }}
+    html[data-view="mobile"][data-theme-mobile="light"] .launch-shell-title {{ color: rgb(__TEXT_TIMELINE_MOBILE_LIGHT_CHANNELS__); }}
     @media (prefers-color-scheme: light) {{
-      html[data-view="mobile"][data-theme-mobile="system"] .launch-shell-title {{ color: rgb(__TEXT_SESSION_MOBILE_LIGHT_CHANNELS__); }}
+      html[data-view="mobile"][data-theme-mobile="system"] .launch-shell-title {{ color: rgb(__TEXT_TIMELINE_MOBILE_LIGHT_CHANNELS__); }}
     }}
     .launch-shell-card.is-error {{
       width: auto;
@@ -347,25 +347,25 @@ def _hub_action_context() -> dict[str, object]:
 _GET_ROUTE_HANDLERS = {
     "/hub.webmanifest": "_get_hub_manifest",
     "/hub-launch-shell.html": "_get_hub_launch_shell",
-    "/sessions": "_get_sessions",
-    "/session-messages-events": "_get_session_messages_events",
-    "/open-session": _get_open_session_action,
-    "/revive-session": _get_revive_session_action,
-    "/kill-session": _get_kill_session_action,
-    "/delete-archived-session": _get_delete_archived_session_action,
-    "/session-workspace": _get_session_workspace_action,
+    "/timelines": "_get_timelines",
+    "/timeline-messages-events": "_get_timeline_messages_events",
+    "/open-timeline": _get_open_timeline_action,
+    "/revive-room": _get_revive_room_action,
+    "/archive-room": _get_archive_room_action,
+    "/delete-archived-timeline": _get_delete_archived_timeline_action,
+    "/timeline-workspace": _get_timeline_workspace_action,
     "/": "_get_home",
     "/index.html": "_get_home",
 }
 
 _POST_ROUTE_HANDLERS = {
     "/restart-hub": _post_restart_hub_action,
-    "/rename-session": _post_rename_session_action,
-    "/change-session-workspace": _post_change_session_workspace_action,
-    "/reset-session-agents": _post_reset_session_agents_action,
+    "/rename-timeline": _post_rename_timeline_action,
+    "/change-timeline-workspace": _post_change_timeline_workspace_action,
+    "/reset-timeline-agents": _post_reset_timeline_agents_action,
     "/pick-workspace": _post_pick_workspace_action,
-    "/start-session-draft": _post_start_session_draft_action,
-    "/session-messages-changed": "_post_session_messages_changed",
+    "/start-timeline-draft": _post_start_timeline_draft_action,
+    "/timeline-messages-changed": "_post_timeline_messages_changed",
 }
 
 class Handler(BaseHTTPRequestHandler):
@@ -455,8 +455,8 @@ class Handler(BaseHTTPRequestHandler):
         page = apply_font_tokens(page)
         self._send_html(200, apply_color_tokens(page))
 
-    def _get_sessions(self, _parsed):
-        live = live_sessions_query(hub)
+    def _get_timelines(self, _parsed):
+        live = live_timelines_query(hub)
         active = [
             {
                 "name": record["name"],
@@ -464,7 +464,7 @@ class Handler(BaseHTTPRequestHandler):
                 "latest_message_preview": record["latest_message_preview"],
                 "latest_message_revision": record["latest_message_revision"],
             }
-            for record in active_session_records(live)
+            for record in active_timeline_records(live)
         ]
         archived = [
             {
@@ -474,17 +474,17 @@ class Handler(BaseHTTPRequestHandler):
                 "latest_message_revision": record["latest_message_revision"],
                 "has_agents": bool(record["agents"]),
             }
-            for record in archived_session_records(live)
+            for record in archived_timeline_records(live)
         ]
         self._send_json(200, {
             "hub_instance": hub.instance,
-            "active_sessions": active,
-            "archived_sessions": archived,
+            "active_timelines": active,
+            "archived_timelines": archived,
             "tmux_state": live.state,
             "tmux_detail": live.detail,
         })
 
-    def _get_session_messages_events(self, _parsed):
+    def _get_timeline_messages_events(self, _parsed):
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
@@ -493,7 +493,7 @@ class Handler(BaseHTTPRequestHandler):
         after_seq = 0
         try:
             while True:
-                seq = hub.wait_for_session_messages_changed(after_seq, timeout=15.0)
+                seq = hub.wait_for_timeline_messages_changed(after_seq, timeout=15.0)
                 if seq is None:
                     self.wfile.write(b": keepalive\n\n")
                 else:
@@ -503,8 +503,8 @@ class Handler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             return
 
-    def _post_session_messages_changed(self, _parsed):
-        hub.publish_session_messages_changed()
+    def _post_timeline_messages_changed(self, _parsed):
+        hub.publish_timeline_messages_changed()
         self.send_response(204)
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", "0")
@@ -535,7 +535,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         if split_room_proxy_path(parsed.path) is not None:
-            proxy_room_session(self, "GET")
+            proxy_room(self, "GET")
             return
         if serve_pwa_file(self, parsed.path, _HUB_PWA_FILES):
             return
@@ -547,7 +547,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         if split_room_proxy_path(parsed.path) is not None:
-            proxy_room_session(self, "POST")
+            proxy_room(self, "POST")
             return
         if self._dispatch_route(parsed, self._POST_ROUTE_HANDLERS):
             return

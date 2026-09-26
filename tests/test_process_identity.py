@@ -5,11 +5,11 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from tmux.control import SessionControlError, _create_tmux_session, _own_room_listener_pids
+from tmux.control import RoomControlError, _create_tmux_session, _own_room_listener_pids
 
 
 class TmuxIdentityTests(unittest.TestCase):
-    def test_tmux_allocates_its_own_opaque_session_name(self) -> None:
+    def test_tmux_allocates_its_own_opaque_timeline_label(self) -> None:
         created = SimpleNamespace(returncode=0, stdout="7\n", stderr="")
         with patch("tmux.control._run", return_value=created) as run:
             tmux_name = _create_tmux_session(Path("/workspace/project"))
@@ -41,7 +41,7 @@ class RoomServerIdentityTests(unittest.TestCase):
                 return_value={"pid": 4123, "workspace": "/work/other"},
             ),
         ):
-            with self.assertRaisesRegex(SessionControlError, "not this workspace"):
+            with self.assertRaisesRegex(RoomControlError, "not this workspace"):
                 _own_room_listener_pids(38000, "/work/project")
 
 

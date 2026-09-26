@@ -20,8 +20,8 @@ def _get_app_manifest(handler, _parsed, ctx) -> None:
     bg = str(palette["dark_bg"])
     body = json.dumps(
         {
-            "name": f"{ctx['session_name']} · {APP_DISPLAY_NAME}" if ctx.get("session_name") else APP_DISPLAY_NAME,
-            "short_name": ctx["session_name"],
+            "name": f"{ctx['timeline_label']} · {APP_DISPLAY_NAME}" if ctx.get("timeline_label") else APP_DISPLAY_NAME,
+            "short_name": ctx["timeline_label"],
             "display": "standalone",
             "background_color": bg,
             "theme_color": bg,
@@ -121,7 +121,7 @@ def _get_room_index(handler, parsed, ctx) -> None:
         room_port=ctx["room_port"],
         room_base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
         variant=variant,
-        session_name=ctx["session_name"],
+        timeline_label=ctx["timeline_label"],
         theme=theme,
         text_size=text_size,
     ).encode("utf-8")

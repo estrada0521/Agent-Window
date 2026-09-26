@@ -107,17 +107,17 @@
         toggleDeskRightPanelOutward();
         return;
       }
-      if (event.data && event.data.type === "hub-open-room-session") {
+      if (event.data && event.data.type === "hub-open-room-timeline") {
         const roomUrl = typeof event.data.roomUrl === "string" ? event.data.roomUrl : "";
-        const sessionName = typeof event.data.sessionName === "string" ? event.data.sessionName : "";
-        if (roomUrl && sessionName) {
-          openRoomInDesk(roomUrl, sessionName);
+        const timelineLabel = typeof event.data.timelineLabel === "string" ? event.data.timelineLabel : "";
+        if (roomUrl && timelineLabel) {
+          openRoomInDesk(roomUrl, timelineLabel);
           if (isPhoneViewport()) {
             setDeskSidebarOpen(false);
           } else {
             showDeskSidebarList({ open: true });
           }
-          void refreshHubSessions(true, { skipRestore: true });
+          void refreshHubTimelines(true, { skipRestore: true });
         }
         return;
       }
@@ -145,12 +145,12 @@
         else sendDeskRoomAction("reloadRoom");
         return;
       }
-      if (event.data && event.data.type === "new-session-shortcut") {
-        void startDeskNewSessionFlow();
+      if (event.data && event.data.type === "new-timeline-shortcut") {
+        void startDeskNewTimelineFlow();
         return;
       }
-      if (event.data && event.data.type === "switch-session-shortcut") {
-        switchToDeskActiveSession(Number(event.data.index));
+      if (event.data && event.data.type === "switch-timeline-shortcut") {
+        switchToDeskActiveTimeline(Number(event.data.index));
         return;
       }
       if (event.data && event.data.type === "reset-window-shortcut") {
@@ -251,7 +251,7 @@
         return;
       }
       if (_deskAutoWindowHeight) {
-        void openDeskNativeSessionSwitcher();
+        void openDeskNativeTimelineSwitcher();
         return;
       }
       showDeskSidebarList({ open: true });
@@ -322,20 +322,20 @@
     syncDeskSidebarResizerVisibility();
     sessionStorage.removeItem("hub_room_frame");
 
-    _deskNewSessionToggle && _deskNewSessionToggle.addEventListener("click", (event) => {
+    _deskNewTimelineToggle && _deskNewTimelineToggle.addEventListener("click", (event) => {
       event.preventDefault();
-      startDeskNewSessionFlow();
+      startDeskNewTimelineFlow();
     });
-    _deskNewSessionToggle && _deskNewSessionToggle.addEventListener("keydown", (event) => {
+    _deskNewTimelineToggle && _deskNewTimelineToggle.addEventListener("keydown", (event) => {
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
         event.stopPropagation();
-        moveDeskSessionSelection(event.key === "ArrowDown" ? 1 : -1, event.currentTarget, event.key === "ArrowDown" ? "before" : "after");
+        moveDeskTimelineSelection(event.key === "ArrowDown" ? 1 : -1, event.currentTarget, event.key === "ArrowDown" ? "before" : "after");
         return;
       }
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
-      startDeskNewSessionFlow();
+      startDeskNewTimelineFlow();
     });
     _deskRoomMenuBtn && _deskRoomMenuBtn.addEventListener("click", (event) => {
       event.preventDefault();
@@ -396,24 +396,24 @@
     _deskReloadBtn && _deskReloadBtn.addEventListener("click", triggerDeskHubReload);
     window.addEventListener("resize", updateDeskChromeOverflow, { passive: true });
     updateDeskChromeOverflow();
-    if (_deskSessionList) {
-      _deskSessionList.addEventListener("scroll", updateDeskSessionListFade, { passive: true });
-      window.addEventListener("resize", updateDeskSessionListFade, { passive: true });
-      _deskSessionList.addEventListener("contextmenu", (event) => {
-        const row = event.target.closest(".desk-action-session-row");
+    if (_deskTimelineList) {
+      _deskTimelineList.addEventListener("scroll", updateDeskTimelineListFade, { passive: true });
+      window.addEventListener("resize", updateDeskTimelineListFade, { passive: true });
+      _deskTimelineList.addEventListener("contextmenu", (event) => {
+        const row = event.target.closest(".desk-action-timeline-row");
         const invoke = getNativeInvoke();
-        const sessionName = row?.dataset.sessionName || "";
-        if (!sessionName || typeof invoke !== "function") return;
+        const timelineLabel = row?.dataset.timelineLabel || "";
+        if (!timelineLabel || typeof invoke !== "function") return;
         event.preventDefault();
-        _deskContextSessionName = sessionName;
-        const rec = findSessionRecord(sessionName);
+        _deskContextTimelineLabel = timelineLabel;
+        const rec = findTimelineRecord(timelineLabel);
         const archived = !!(rec && rec.archived);
-        const selected = sessionName === _deskSelectedSessionName;
-        invoke("show_session_context_menu", {
+        const selected = timelineLabel === _deskSelectedTimelineLabel;
+        invoke("show_timeline_context_menu", {
           payload: {
             x: Math.round(event.clientX),
             y: Math.round(event.clientY),
-            resetAgentsEnabled: archived && rec.session.has_agents,
+            resetAgentsEnabled: archived && rec.timeline.has_agents,
             changeWorkspaceEnabled: archived && !selected,
             archiveEnabled: !archived,
             deleteEnabled: archived,
@@ -423,27 +423,27 @@
           setStatus(String(err || "Failed to open timeline menu."));
         });
       });
-      _deskSessionList.addEventListener("click", (event) => {
+      _deskTimelineList.addEventListener("click", (event) => {
         const hoverAction = event.target.closest("[data-desk-hover-action]");
         if (hoverAction) {
           event.preventDefault();
           event.stopPropagation();
-          const row = hoverAction.closest(".desk-session-row");
-          const sessionName = row?.dataset.sessionName || "";
+          const row = hoverAction.closest(".desk-timeline-row");
+          const timelineLabel = row?.dataset.timelineLabel || "";
           const kind = hoverAction.dataset.deskHoverAction || "";
-          if (sessionName && kind) {
+          if (timelineLabel && kind) {
             if (kind === "revive") {
-              const href = `/revive-session?session=${encodeURIComponent(sessionName)}`;
-              openSessionFrame(href, sessionName);
+              const href = `/revive-room?timeline=${encodeURIComponent(timelineLabel)}`;
+              openTimelineFrame(href, timelineLabel);
             } else {
-              void runDeskContextAction(sessionName, kind);
+              void runDeskContextAction(timelineLabel, kind);
             }
           }
           return;
         }
         const swipeAction = event.target.closest("[data-desk-swipe-action]");
         if (swipeAction) return;
-        const row = event.target.closest(".desk-session-row");
+        const row = event.target.closest(".desk-timeline-row");
         if (!row) return;
         const swipeRow = row.closest(".desk-swipe-row");
         if (swipeRow && swipeRow._swipeConsumedUntil && swipeRow._swipeConsumedUntil > Date.now()) {
@@ -455,32 +455,32 @@
           closeDeskSwipeRow(swipeRow, true);
           return;
         }
-        const href = deskSessionOpenHref(row);
-        const name = row.dataset.sessionName || "";
-        if (href) openSessionFrame(href, name);
+        const href = deskTimelineOpenHref(row);
+        const name = row.dataset.timelineLabel || "";
+        if (href) openTimelineFrame(href, name);
       });
-      _deskSessionList.addEventListener("keydown", (event) => {
-        const row = event.target.closest(".desk-session-row");
+      _deskTimelineList.addEventListener("keydown", (event) => {
+        const row = event.target.closest(".desk-timeline-row");
         if (!row) return;
         if (event.key === "ArrowDown" || event.key === "ArrowUp") {
           event.preventDefault();
           event.stopPropagation();
-          moveDeskSessionSelection(event.key === "ArrowDown" ? 1 : -1, row);
+          moveDeskTimelineSelection(event.key === "ArrowDown" ? 1 : -1, row);
           return;
         }
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
-        openDeskSessionRow(row);
+        openDeskTimelineRow(row);
       });
     }
 
-    window.refreshHubSessionLists = refreshHubSessions;
-    startHubSessionMessagesEvents(() => refreshHubSessions(true, { skipRestore: true }));
+    window.refreshHubTimelineLists = refreshHubTimelines;
+    startHubTimelineMessagesEvents(() => refreshHubTimelines(true, { skipRestore: true }));
     consumeHubPendingError();
     if (isNativeApp() && !isPhoneViewport()) {
       if (sessionStorage.getItem(DESK_SIDEBAR_OPEN_KEY) !== "0") showDeskSidebarList({ open: true });
       else setDeskSidebarOpen(false);
       if (sessionStorage.getItem(DESK_AUTO_HEIGHT_KEY) === "1") setDeskAutoWindowHeight(true);
     }
-    refreshHubSessions(true);
+    refreshHubTimelines(true);
   __HUB_HEADER_JS__

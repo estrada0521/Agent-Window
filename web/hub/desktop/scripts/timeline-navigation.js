@@ -1,5 +1,5 @@
 
-    async function pickWorkspaceForNewSession() {
+    async function pickWorkspaceForNewTimeline() {
       const nativePickerSupported =
         /mac/i.test(String(navigator.platform || "")) &&
         !/iphone|ipad|ipod|android/i.test(String(navigator.userAgent || ""));
@@ -18,34 +18,34 @@
       throw new Error(data.error || "Workspace picker failed.");
     }
 
-    async function startDeskNewSessionFlow() {
-      if (_deskNewSessionStarting) return;
-      _deskNewSessionStarting = true;
-      _deskNewSessionToggle?.classList.add("archived");
+    async function startDeskNewTimelineFlow() {
+      if (_deskNewTimelineStarting) return;
+      _deskNewTimelineStarting = true;
+      _deskNewTimelineToggle?.classList.add("archived");
       setStatus("");
       try {
-        const workspace = await pickWorkspaceForNewSession();
+        const workspace = await pickWorkspaceForNewTimeline();
         if (!workspace) return;
-        const res = await fetch("/start-session-draft", {
+        const res = await fetch("/start-timeline-draft", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ workspace }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok || !data.room_url) {
-          throw new Error(data.error || "Failed to open draft session.");
+          throw new Error(data.error || "Failed to open draft timeline.");
         }
-        openRoomInDesk(data.room_url, data.session || "");
+        openRoomInDesk(data.room_url, data.timeline || "");
         setStatus(data.notice || "");
         if (isPhoneViewport()) {
           setDeskSidebarOpen(false);
         }
-        void refreshHubSessions(true, { skipRestore: true });
+        void refreshHubTimelines(true, { skipRestore: true });
       } catch (err) {
-        setStatus(err?.message || "Failed to open draft session.");
+        setStatus(err?.message || "Failed to open draft timeline.");
       } finally {
-        _deskNewSessionStarting = false;
-        _deskNewSessionToggle?.classList.remove("archived");
+        _deskNewTimelineStarting = false;
+        _deskNewTimelineToggle?.classList.remove("archived");
       }
     }
 
@@ -70,23 +70,23 @@
 
     function clearDeskSelection() {
       _deskOpenToken += 1;
-      _deskSelectedSessionName = "";
+      _deskSelectedTimelineLabel = "";
       updateDeskWindowTitle("");
       persistDeskSelection("");
       clearDeskRoomFrame();
-      applyDeskSessionSelection();
+      applyDeskTimelineSelection();
     }
 
     function openRoomInDesk(url, name) {
       if (!_deskRoomFrame) return;
-      _deskSelectedSessionName = name || "";
-      _deskUnreadSessions.delete(_deskSelectedSessionName);
-      updateDeskWindowTitle(_deskSelectedSessionName);
-      persistDeskSelection(_deskSelectedSessionName);
-      if (isDeskSessionSidebarOpen()) _deskRoomFrame.dataset.hubSidebarOpen = "1";
+      _deskSelectedTimelineLabel = name || "";
+      _deskUnreadTimelines.delete(_deskSelectedTimelineLabel);
+      updateDeskWindowTitle(_deskSelectedTimelineLabel);
+      persistDeskSelection(_deskSelectedTimelineLabel);
+      if (isDeskTimelineSidebarOpen()) _deskRoomFrame.dataset.hubSidebarOpen = "1";
       else delete _deskRoomFrame.dataset.hubSidebarOpen;
-      if (_deskSelectedSessionName) {
-        cacheDeskRoomUrl(buildSessionOpenHref(_deskSelectedSessionName, false), url);
+      if (_deskSelectedTimelineLabel) {
+        cacheDeskRoomUrl(buildTimelineOpenHref(_deskSelectedTimelineLabel, false), url);
       }
       const frameUrl = buildDeskRoomFrameUrl(url);
       if (frameUrl) {
@@ -101,50 +101,50 @@
       } else {
         setDeskRoomLoading(false);
       }
-      applyDeskSessionSelection();
+      applyDeskTimelineSelection();
     }
 
-    function resolveSessionRoomUrl(openHref, { force = false } = {}) {
+    function resolveTimelineRoomUrl(openHref, { force = false } = {}) {
       return hubRoomUrls.resolve(openHref, "", { force });
     }
 
-    async function openSessionFrame(openHref, name) {
+    async function openTimelineFrame(openHref, name) {
       if (!name) {
         failDeskOpen("Timeline not found");
         return;
       }
-      const needsReviveTransition = /^\/revive-session(?:[/?]|$)/.test(String(openHref || ""));
-      if (!needsReviveTransition && name === _deskSelectedSessionName && _deskRoomFrameLoadedUrl) return;
-      const archived = !!findSessionRecord(name)?.archived;
+      const needsReviveTransition = /^\/revive-room(?:[/?]|$)/.test(String(openHref || ""));
+      if (!needsReviveTransition && name === _deskSelectedTimelineLabel && _deskRoomFrameLoadedUrl) return;
+      const archived = !!findTimelineRecord(name)?.archived;
       const closeOnOpen = isPhoneViewport();
-      _deskSelectedSessionName = name;
+      _deskSelectedTimelineLabel = name;
       updateDeskWindowTitle(name);
       persistDeskSelection(name);
-      applyDeskSessionSelection();
+      applyDeskTimelineSelection();
       setDeskRoomLoading(true);
       const openToken = ++_deskOpenToken;
       try {
-        const roomUrl = await resolveSessionRoomUrl(openHref, { force: archived || needsReviveTransition });
+        const roomUrl = await resolveTimelineRoomUrl(openHref, { force: archived || needsReviveTransition });
         if (openToken !== _deskOpenToken) return;
         if (needsReviveTransition) {
-          await refreshHubSessions(true, { skipRestore: true });
+          await refreshHubTimelines(true, { skipRestore: true });
           if (openToken !== _deskOpenToken) return;
         }
         openRoomInDesk(roomUrl, name);
         if (closeOnOpen) setDeskSidebarOpen(false);
       } catch (err) {
         if (openToken !== _deskOpenToken) return;
-        failDeskOpen(err?.message || "open session failed");
+        failDeskOpen(err?.message || "open timeline failed");
       }
     }
 
-    function getDeskSessionRows() {
-      if (!_deskSessionList) return [];
-      return Array.from(_deskSessionList.querySelectorAll(".desk-session-row[data-open-href][data-session-name]"))
+    function getDeskTimelineRows() {
+      if (!_deskTimelineList) return [];
+      return Array.from(_deskTimelineList.querySelectorAll(".desk-timeline-row[data-open-href][data-timeline-label]"))
         .filter((row) => row && row.getClientRects().length > 0);
     }
 
-    function focusDeskSessionRow(row) {
+    function focusDeskTimelineRow(row) {
       if (!row) return;
       try {
         row.focus({ preventScroll: true });
@@ -156,30 +156,30 @@
       } catch (_) {}
     }
 
-    function focusDeskSessionByName(name) {
-      if (!_deskSessionList || !name) return;
-      const row = _deskSessionList.querySelector(`.desk-session-row[data-session-name="${cssEsc(name)}"]`);
-      focusDeskSessionRow(row);
+    function focusDeskTimelineByName(name) {
+      if (!_deskTimelineList || !name) return;
+      const row = _deskTimelineList.querySelector(`.desk-timeline-row[data-timeline-label="${cssEsc(name)}"]`);
+      focusDeskTimelineRow(row);
     }
 
-    function deskSessionOpenHref(row) {
-      const name = row?.dataset.sessionName || "";
+    function deskTimelineOpenHref(row) {
+      const name = row?.dataset.timelineLabel || "";
 
       return row?.dataset.openHref || "";
     }
 
-    function openDeskSessionRow(row) {
+    function openDeskTimelineRow(row) {
       if (!row) return false;
-      const href = deskSessionOpenHref(row);
-      const name = row.dataset.sessionName || "";
+      const href = deskTimelineOpenHref(row);
+      const name = row.dataset.timelineLabel || "";
       if (!href || !name) return false;
-      openSessionFrame(href, name);
-      requestAnimationFrame(() => focusDeskSessionByName(name));
+      openTimelineFrame(href, name);
+      requestAnimationFrame(() => focusDeskTimelineByName(name));
       return true;
     }
 
-    function moveDeskSessionSelection(direction, fromRow = null, fromEdge = "") {
-      const rows = getDeskSessionRows();
+    function moveDeskTimelineSelection(direction, fromRow = null, fromEdge = "") {
+      const rows = getDeskTimelineRows();
       if (!rows.length) return false;
       let index = -1;
       if (fromEdge === "after") {
@@ -189,31 +189,31 @@
       } else if (fromRow && rows.includes(fromRow)) {
         index = rows.indexOf(fromRow);
       } else {
-        const activeRow = document.activeElement?.closest?.(".desk-session-row");
+        const activeRow = document.activeElement?.closest?.(".desk-timeline-row");
         if (activeRow && rows.includes(activeRow)) {
           index = rows.indexOf(activeRow);
-        } else if (_deskSelectedSessionName) {
-          index = rows.findIndex((row) => row.dataset.sessionName === _deskSelectedSessionName);
+        } else if (_deskSelectedTimelineLabel) {
+          index = rows.findIndex((row) => row.dataset.timelineLabel === _deskSelectedTimelineLabel);
         }
       }
       const nextIndex = index < 0 || index >= rows.length
         ? (direction > 0 ? 0 : rows.length - 1)
         : (index + direction + rows.length) % rows.length;
-      return openDeskSessionRow(rows[nextIndex]);
+      return openDeskTimelineRow(rows[nextIndex]);
     }
 
     function maybeRestoreDeskSelection() {
-      if (_deskSelectedSessionName) {
-        if (findSessionRecord(_deskSelectedSessionName)) return;
+      if (_deskSelectedTimelineLabel) {
+        if (findTimelineRecord(_deskSelectedTimelineLabel)) return;
         clearDeskSelection();
         showDeskSidebarList({ open: true });
         return;
       }
       const requested = getPersistedDeskSelection();
       if (requested) {
-        const match = findSessionRecord(requested);
+        const match = findTimelineRecord(requested);
         if (match && !match.archived) {
-          openSessionFrame(buildSessionOpenHref(requested, false), requested);
+          openTimelineFrame(buildTimelineOpenHref(requested, false), requested);
           return;
         }
         persistDeskSelection("");
@@ -221,9 +221,9 @@
         showDeskSidebarList({ open: true });
         return;
       }
-      const active = _hubSessionsCache.active || [];
+      const active = _hubTimelinesCache.active || [];
       if (active.length) {
-        openSessionFrame(buildSessionOpenHref(active[0].name, false), active[0].name);
+        openTimelineFrame(buildTimelineOpenHref(active[0].name, false), active[0].name);
         return;
       }
       showDeskSidebarList({ open: true });

@@ -18,7 +18,7 @@ def read_room_server_state(room_port: int) -> dict | None:
         )
         connection.request(
             "GET",
-            f"/session-state?ts={int(time.time() * 1000)}",
+            f"/room-state?ts={int(time.time() * 1000)}",
             headers={"Host": f"127.0.0.1:{int(room_port)}"},
         )
         response = connection.getresponse()

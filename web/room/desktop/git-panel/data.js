@@ -14,7 +14,7 @@
       dpGitHeaderSummaryState = dpBuildSummaryState(data);
       dpApplyGitOverviewHeader();
     };
-    const dpOnSessionSummaryPinReload = ({ force = false } = {}) => {
+    const dpOnTimelineSummaryPinReload = ({ force = false } = {}) => {
       const storageKey = dpGitSummaryPinnedStorageKey();
       if (!force && _dpGitSummaryPinnedLoadedForKey === storageKey) return;
       _dpGitSummaryPinnedLoadedForKey = storageKey;

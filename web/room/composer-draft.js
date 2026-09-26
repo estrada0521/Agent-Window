@@ -1,36 +1,36 @@
-    const composerDraftStorageKey = (session) => `agent_window_composer_draft:${session}`;
+    const composerDraftStorageKey = (label) => `agent_window_composer_draft:${label}`;
     let composerDraftRestoredFor = "";
     const saveComposerDraft = () => {
-      const session = currentSessionName;
+      const label = currentTimelineLabel;
       const input = document.getElementById("message");
-      if (!session || !input) return;
+      if (!label || !input) return;
       const text = input.value;
       if (!text) {
-        localStorage.removeItem(composerDraftStorageKey(session));
+        localStorage.removeItem(composerDraftStorageKey(label));
         return;
       }
       try {
-        localStorage.setItem(composerDraftStorageKey(session), text);
+        localStorage.setItem(composerDraftStorageKey(label), text);
       } catch (err) {
         setStatus(`draft not saved: ${err.message}`);
       }
     };
     const clearStoredComposerDraft = () => {
-      if (!currentSessionName) return;
-      localStorage.removeItem(composerDraftStorageKey(currentSessionName));
+      if (!currentTimelineLabel) return;
+      localStorage.removeItem(composerDraftStorageKey(currentTimelineLabel));
     };
     const restoreComposerDraft = () => {
-      const session = currentSessionName;
+      const label = currentTimelineLabel;
       const input = document.getElementById("message");
-      if (!session || !input) return;
-      if (composerDraftRestoredFor === session) return;
+      if (!label || !input) return;
+      if (composerDraftRestoredFor === label) return;
       if (input.value) {
-        composerDraftRestoredFor = session;
+        composerDraftRestoredFor = label;
         saveComposerDraft();
         return;
       }
-      const saved = localStorage.getItem(composerDraftStorageKey(session));
-      composerDraftRestoredFor = session;
+      const saved = localStorage.getItem(composerDraftStorageKey(label));
+      composerDraftRestoredFor = label;
       if (!saved) return;
       input.value = saved;
       if (typeof updateSendBtnVisibility === "function") updateSendBtnVisibility();

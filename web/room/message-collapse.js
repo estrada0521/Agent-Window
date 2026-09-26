@@ -1,11 +1,11 @@
     let selectedTargets = [];
     let sendLocked = false;
-    let sessionActive = null;
-    const canComposeInSession = () => sessionActive === true;
+    let roomActive = null;
+    const canComposeInRoom = () => roomActive === true;
     let pendingAttachments = [];
     let attachUploadsInFlight = 0;
     let availableTargets = [];
-    let currentSessionName = "";
+    let currentTimelineLabel = "";
     let _renderedIds = new Set();
     const MESSAGE_COLLAPSE_LINES = 40;
     const expandedMessageBodies = new Set();
@@ -73,7 +73,7 @@
       return `<div class="conversation-empty" aria-hidden="true"></div>`;
     };
     const stripSenderPrefix = (value) => value.replace(/^\[From:\s*[^\]]+\]\s*/i, "");
-    const normalizedSessionTargets = (rawTargets) => {
+    const normalizedTimelineTargets = (rawTargets) => {
       return Array.isArray(rawTargets)
         ? rawTargets.filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim())
         : [];

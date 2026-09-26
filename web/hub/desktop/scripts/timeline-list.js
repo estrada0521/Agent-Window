@@ -1,46 +1,46 @@
 
     const DESK_KILL_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`;
     const DESK_REVIVE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`;
-    const DESK_SESSION_ACTION_TITLE = {
+    const DESK_TIMELINE_ACTION_TITLE = {
       kill: "Archive — Kill tmux session; keep log",
       revive: "Revive — Restart tmux session with saved agent topology",
       "delete-archived": "Delete — Delete ~/.agent-window/log/{label}",
     };
 
-    function renderDeskSessionRow(session, archived) {
-      const sessionName = String(session.name);
+    function renderDeskTimelineRow(timeline, archived) {
+      const timelineLabel = String(timeline.name);
       const archivedClass = archived ? " archived" : "";
-      const selectedClass = _deskSelectedSessionName === sessionName ? " is-selected" : "";
-      const isSelected = _deskSelectedSessionName === sessionName;
-      const unreadClass = !isSelected && _deskUnreadSessions.has(sessionName) ? " is-unread" : "";
+      const selectedClass = _deskSelectedTimelineLabel === timelineLabel ? " is-selected" : "";
+      const isSelected = _deskSelectedTimelineLabel === timelineLabel;
+      const unreadClass = !isSelected && _deskUnreadTimelines.has(timelineLabel) ? " is-unread" : "";
       const swipeActionLabel = archived ? "Revive" : "Archive";
       const swipeActionRoute = archived ? "revive" : "kill";
-      const swipeActionTitle = DESK_SESSION_ACTION_TITLE[swipeActionRoute];
+      const swipeActionTitle = DESK_TIMELINE_ACTION_TITLE[swipeActionRoute];
       const actionSvg = archived ? DESK_REVIVE_SVG : DESK_KILL_SVG;
-      const previewText = String(session.latest_message_preview || "").trim();
-      const previewSender = String(session.latest_message_sender || "").trim();
+      const previewText = String(timeline.latest_message_preview || "").trim();
+      const previewSender = String(timeline.latest_message_sender || "").trim();
       const previewDisplay = previewSender ? `${previewSender} ${previewText}` : previewText;
       const previewHtml = previewText
         ? `<div class="desk-row-preview">${esc(previewDisplay)}</div>`
         : "";
-      return `<div class="desk-swipe-row" data-session-name="${esc(sessionName)}">` +
+      return `<div class="desk-swipe-row" data-timeline-label="${esc(timelineLabel)}">` +
         `<div class="desk-swipe-action-rail">` +
-          `<button type="button" class="desk-swipe-action-btn" data-desk-swipe-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + sessionName)}" title="${esc(swipeActionTitle)}">` +
+          `<button type="button" class="desk-swipe-action-btn" data-desk-swipe-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + timelineLabel)}" title="${esc(swipeActionTitle)}">` +
             actionSvg +
             `<span>${esc(swipeActionLabel)}</span>` +
           `</button>` +
         `</div>` +
         `<div class="desk-swipe-track">` +
-          `<div class="desk-session-row desk-action-session-row${archivedClass}${selectedClass}${unreadClass}" data-session-name="${esc(sessionName)}" data-open-href="${buildSessionOpenHref(sessionName, archived)}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
+          `<div class="desk-timeline-row desk-action-timeline-row${archivedClass}${selectedClass}${unreadClass}" data-timeline-label="${esc(timelineLabel)}" data-open-href="${buildTimelineOpenHref(timelineLabel, archived)}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
             `<div class="desk-row-head">` +
                 `<div class="desk-row-main">` +
                   `<span class="desk-row-bullet" aria-hidden="true"><i></i></span>` +
                   `<div class="desk-row-stack">` +
-                    `<div class="desk-row-name">${esc(sessionName)}</div>` +
+                    `<div class="desk-row-name">${esc(timelineLabel)}</div>` +
                     previewHtml +
                   `</div>` +
                 `</div>` +
-                `<button type="button" class="desk-row-hover-action" data-desk-hover-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + sessionName)}" title="${esc(swipeActionTitle)}">` +
+                `<button type="button" class="desk-row-hover-action" data-desk-hover-action="${esc(swipeActionRoute)}" aria-label="${esc(swipeActionLabel + " " + timelineLabel)}" title="${esc(swipeActionTitle)}">` +
                   actionSvg +
                 `</button>` +
               `</div>` +
@@ -49,15 +49,15 @@
         `</div>`;
     }
 
-    function applyDeskSessionSelection() {
-      if (!_deskSessionList) return;
-      for (const wrap of _deskSessionList.querySelectorAll(".desk-swipe-row")) {
-        const row = wrap.querySelector(".desk-session-row");
+    function applyDeskTimelineSelection() {
+      if (!_deskTimelineList) return;
+      for (const wrap of _deskTimelineList.querySelectorAll(".desk-swipe-row")) {
+        const row = wrap.querySelector(".desk-timeline-row");
         if (!row) continue;
-        const name = row.dataset.sessionName || "";
-        const isSelected = name === _deskSelectedSessionName;
+        const name = row.dataset.timelineLabel || "";
+        const isSelected = name === _deskSelectedTimelineLabel;
         row.classList.toggle("is-selected", isSelected);
-        row.classList.toggle("is-unread", !isSelected && _deskUnreadSessions.has(name));
+        row.classList.toggle("is-unread", !isSelected && _deskUnreadTimelines.has(name));
         row.setAttribute("aria-current", isSelected ? "page" : "false");
       }
     }
@@ -72,53 +72,53 @@
       if (_deskOpenSwipeRow === wrapper) _deskOpenSwipeRow = null;
     }
 
-    async function runDeskContextAction(sessionName, kind) {
-      if (!sessionName || !kind) return;
+    async function runDeskContextAction(timelineLabel, kind) {
+      if (!timelineLabel || !kind) return;
       setStatus("");
       const isDelete = kind === "delete-archived";
       const confirmed = isNativeApp()
         ? true
         : (isDelete
-          ? confirm("Delete archived logs for " + sessionName + "? This cannot be undone.")
-          : confirm("Archive " + sessionName + "?"));
+          ? confirm("Delete archived logs for " + timelineLabel + "? This cannot be undone.")
+          : confirm("Archive " + timelineLabel + "?"));
       if (!confirmed) return;
-      const route = isDelete ? "/delete-archived-session" : "/kill-session";
-      const isSelected = _deskSelectedSessionName === sessionName;
+      const route = isDelete ? "/delete-archived-timeline" : "/archive-room";
+      const isSelected = _deskSelectedTimelineLabel === timelineLabel;
       try {
         const response = await fetch(
-          `${route}?session=${encodeURIComponent(sessionName)}&format=json&ts=${Date.now()}`,
+          `${route}?timeline=${encodeURIComponent(timelineLabel)}&format=json&ts=${Date.now()}`,
           { cache: "no-store" }
         );
         const data = await response.json();
         if (!response.ok || !data.ok) {
-          throw new Error(data.error || (isDelete ? "Failed to delete session." : "Failed to archive session."));
+          throw new Error(data.error || (isDelete ? "Failed to delete timeline." : "Failed to archive timeline."));
         }
-        const activeHref = buildSessionOpenHref(sessionName, false);
-        const archivedHref = buildSessionOpenHref(sessionName, true);
+        const activeHref = buildTimelineOpenHref(timelineLabel, false);
+        const archivedHref = buildTimelineOpenHref(timelineLabel, true);
         hubRoomUrls.forget(activeHref);
         hubRoomUrls.forget(archivedHref);
         if (isSelected) {
           _deskOpenToken += 1;
-          _deskSelectedSessionName = "";
+          _deskSelectedTimelineLabel = "";
           updateDeskWindowTitle("");
           persistDeskSelection("");
         }
-        await refreshHubSessions(true, { skipRestore: true });
+        await refreshHubTimelines(true, { skipRestore: true });
         if (!isSelected) return;
         clearDeskSelection();
         showDeskSidebarList({ open: true });
       } catch (err) {
-        setStatus(err?.message || (isDelete ? "Failed to delete session." : "Failed to archive session."));
+        setStatus(err?.message || (isDelete ? "Failed to delete timeline." : "Failed to archive timeline."));
       }
     }
 
-    async function renameDeskSession(oldName, requestedName) {
+    async function renameDeskTimeline(oldName, requestedName) {
       const newName = String(requestedName || "").trim();
       if (!oldName) return false;
       if (oldName === newName) return true;
       setStatus("");
       try {
-        const response = await fetch("/rename-session", {
+        const response = await fetch("/rename-timeline", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
           body: new URLSearchParams({ old_name: oldName, new_name: newName }).toString(),
@@ -126,26 +126,26 @@
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.ok) {
-          throw new Error(data.error || "Failed to rename session.");
+          throw new Error(data.error || "Failed to rename timeline.");
         }
         const renamed = String(data.new_name || newName);
-        hubRoomUrls.forget(buildSessionOpenHref(oldName, false));
-        hubRoomUrls.forget(buildSessionOpenHref(oldName, true));
-        if (_deskUnreadSessions.delete(oldName)) _deskUnreadSessions.add(renamed);
-        if (_deskSelectedSessionName === oldName) {
-          _deskSelectedSessionName = renamed;
+        hubRoomUrls.forget(buildTimelineOpenHref(oldName, false));
+        hubRoomUrls.forget(buildTimelineOpenHref(oldName, true));
+        if (_deskUnreadTimelines.delete(oldName)) _deskUnreadTimelines.add(renamed);
+        if (_deskSelectedTimelineLabel === oldName) {
+          _deskSelectedTimelineLabel = renamed;
           updateDeskWindowTitle(renamed);
           persistDeskSelection(renamed);
         }
         return true;
       } catch (err) {
-        setStatus(err?.message || "Failed to rename session.");
+        setStatus(err?.message || "Failed to rename timeline.");
         return false;
       }
     }
 
-    async function changeDeskSessionWorkspace(sessionName) {
-      if (!sessionName) return;
+    async function changeDeskTimelineWorkspace(timelineLabel) {
+      if (!timelineLabel) return;
       setStatus("");
       let picked;
       try {
@@ -163,10 +163,10 @@
       }
       if (picked.canceled || !picked.path) return;
       try {
-        const res = await fetch("/change-session-workspace", {
+        const res = await fetch("/change-timeline-workspace", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-          body: new URLSearchParams({ session: sessionName, workspace: picked.path }).toString(),
+          body: new URLSearchParams({ timeline: timelineLabel, workspace: picked.path }).toString(),
           cache: "no-store",
         });
         const data = await res.json().catch(() => ({}));
@@ -175,15 +175,15 @@
         setStatus(err?.message || "Failed to change workspace.");
         return;
       }
-      hubRoomUrls.forget(buildSessionOpenHref(sessionName, true));
+      hubRoomUrls.forget(buildTimelineOpenHref(timelineLabel, true));
       setStatus("Workspace updated");
     }
 
-    async function copyDeskSessionWorkspace(sessionName) {
-      if (!sessionName) return;
+    async function copyDeskTimelineWorkspace(timelineLabel) {
+      if (!timelineLabel) return;
       setStatus("");
       try {
-        const res = await fetch(`/session-workspace?session=${encodeURIComponent(sessionName)}`, { cache: "no-store" });
+        const res = await fetch(`/timeline-workspace?timeline=${encodeURIComponent(timelineLabel)}`, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
         const workspace = String(data.workspace || "").trim();
         if (!res.ok || !data.ok || !workspace) {
@@ -197,14 +197,14 @@
       setStatus("Copied path");
     }
 
-    async function resetDeskSessionAgents(sessionName) {
-      if (!sessionName) return;
+    async function resetDeskTimelineAgents(timelineLabel) {
+      if (!timelineLabel) return;
       setStatus("");
       try {
-        const res = await fetch("/reset-session-agents", {
+        const res = await fetch("/reset-timeline-agents", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-          body: new URLSearchParams({ session: sessionName }).toString(),
+          body: new URLSearchParams({ timeline: timelineLabel }).toString(),
           cache: "no-store",
         });
         const data = await res.json().catch(() => ({}));
@@ -213,43 +213,43 @@
         setStatus(err?.message || "Failed to reset agents.");
         return;
       }
-      if (_deskSelectedSessionName === sessionName) {
-        postDeskRoomFrameMessage({ type: "refresh-session-state" });
+      if (_deskSelectedTimelineLabel === timelineLabel) {
+        postDeskRoomFrameMessage({ type: "refresh-room-state" });
       }
-      await refreshHubSessions(true, { skipRestore: true });
+      await refreshHubTimelines(true, { skipRestore: true });
       setStatus("Agents reset");
     }
 
-    function beginDeskSessionRename(sessionName) {
-      if (_deskSessionRename) _deskSessionRename.cancel();
-      const row = Array.from(_deskSessionList?.querySelectorAll(".desk-action-session-row") || [])
-        .find((candidate) => candidate.dataset.sessionName === sessionName);
+    function beginDeskTimelineRename(timelineLabel) {
+      if (_deskTimelineRename) _deskTimelineRename.cancel();
+      const row = Array.from(_deskTimelineList?.querySelectorAll(".desk-action-timeline-row") || [])
+        .find((candidate) => candidate.dataset.timelineLabel === timelineLabel);
       const nameEl = row?.querySelector(".desk-row-name");
       if (!row || !nameEl) return;
 
       const input = document.createElement("input");
       input.type = "text";
       input.className = "desk-row-rename-input";
-      input.value = sessionName;
-      input.setAttribute("aria-label", `Rename ${sessionName}`);
+      input.value = timelineLabel;
+      input.setAttribute("aria-label", `Rename ${timelineLabel}`);
       nameEl.replaceWith(input);
       row.classList.add("is-renaming");
 
       let settling = false;
       const cancel = () => {
-        if (_deskSessionRename?.input !== input) return;
-        _deskSessionRename = null;
+        if (_deskTimelineRename?.input !== input) return;
+        _deskTimelineRename = null;
         row.classList.remove("is-renaming");
         if (input.isConnected) input.replaceWith(nameEl);
       };
       const commit = async () => {
-        if (_deskSessionRename?.input !== input || settling) return;
+        if (_deskTimelineRename?.input !== input || settling) return;
         settling = true;
         input.disabled = true;
-        const renamed = await renameDeskSession(sessionName, input.value);
+        const renamed = await renameDeskTimeline(timelineLabel, input.value);
         if (renamed) {
-          _deskSessionRename = null;
-          await refreshHubSessions(true, { skipRestore: true });
+          _deskTimelineRename = null;
+          await refreshHubTimelines(true, { skipRestore: true });
           return;
         }
         settling = false;
@@ -259,7 +259,7 @@
           input.select();
         });
       };
-      _deskSessionRename = { input, cancel };
+      _deskTimelineRename = { input, cancel };
       input.addEventListener("keydown", (event) => {
         event.stopPropagation();
         if (event.key === "Enter") {
@@ -280,7 +280,7 @@
     function initDeskSwipeRow(wrapper) {
       if (!wrapper || wrapper.dataset.swipeBound === "1") return;
       const track = wrapper.querySelector(".desk-swipe-track");
-      const row = wrapper.querySelector(".desk-session-row");
+      const row = wrapper.querySelector(".desk-timeline-row");
       const actionBtn = wrapper.querySelector("[data-desk-swipe-action]");
       if (!track || !row || !actionBtn) return;
       wrapper.dataset.swipeBound = "1";
@@ -375,34 +375,34 @@
       actionBtn.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        const sessionName = wrapper.dataset.sessionName || "";
+        const timelineLabel = wrapper.dataset.timelineLabel || "";
         const kind = actionBtn.dataset.deskSwipeAction || "";
-        runDeskContextAction(sessionName, kind);
+        runDeskContextAction(timelineLabel, kind);
       });
     }
 
-    function renderDesktopSessions(active, archived) {
-      if (!_deskSessionList) return;
-      const rowKey = (wrap) => wrap.dataset.sessionName || "";
-      const firstRects = captureListRowRects(_deskSessionList, ".desk-swipe-row", rowKey);
-      const newSessionSection = _deskNewSessionToggle?.closest(".desk-new-session-section") || null;
+    function renderDesktopTimelines(active, archived) {
+      if (!_deskTimelineList) return;
+      const rowKey = (wrap) => wrap.dataset.timelineLabel || "";
+      const firstRects = captureListRowRects(_deskTimelineList, ".desk-swipe-row", rowKey);
+      const newTimelineSection = _deskNewTimelineToggle?.closest(".desk-new-timeline-section") || null;
       let html = "";
       if (active.length) {
         html += `<div class="desk-section-label">Active</div>`;
-        html += active.map((session) => renderDeskSessionRow(session, false)).join("");
+        html += active.map((timeline) => renderDeskTimelineRow(timeline, false)).join("");
       }
       if (archived.length) {
         html += `<div class="desk-section-label">Archived</div>`;
-        html += archived.map((session) => renderDeskSessionRow(session, true)).join("");
+        html += archived.map((timeline) => renderDeskTimelineRow(timeline, true)).join("");
       }
       if (!active.length && !archived.length) {
-        html = `<div class="desk-empty-list">No sessions found</div>`;
+        html = `<div class="desk-empty-list">No timelines found</div>`;
       }
-      _deskSessionList.innerHTML = html;
-      if (newSessionSection) _deskSessionList.prepend(newSessionSection);
-      _deskSessionList.querySelectorAll(".desk-swipe-row").forEach(initDeskSwipeRow);
-      updateDeskSessionListFade();
-      flipListRows(_deskSessionList, ".desk-swipe-row", rowKey, firstRects);
+      _deskTimelineList.innerHTML = html;
+      if (newTimelineSection) _deskTimelineList.prepend(newTimelineSection);
+      _deskTimelineList.querySelectorAll(".desk-swipe-row").forEach(initDeskSwipeRow);
+      updateDeskTimelineListFade();
+      flipListRows(_deskTimelineList, ".desk-swipe-row", rowKey, firstRects);
     }
 
     function computeScrollFadeState(el) {
@@ -433,73 +433,73 @@
       _deskTopRightControls.classList.add("is-buttons-hidden");
     }
 
-    function updateDeskSessionListFade() {
-      if (!_deskSessionList) return;
-      _deskSessionList.dataset.scrollFade = computeScrollFadeState(_deskSessionList);
+    function updateDeskTimelineListFade() {
+      if (!_deskTimelineList) return;
+      _deskTimelineList.dataset.scrollFade = computeScrollFadeState(_deskTimelineList);
     }
 
-    function updateDeskUnreadSessions(active) {
+    function updateDeskUnreadTimelines(active) {
       const nextRevisions = new Map();
       const activeNames = new Set();
-      active.forEach((session) => {
-        const name = String(session.name || "").trim();
+      active.forEach((timeline) => {
+        const name = String(timeline.name || "").trim();
         if (!name) return;
         activeNames.add(name);
-        const revision = String(session.latest_message_revision || "").trim();
+        const revision = String(timeline.latest_message_revision || "").trim();
         const previousRevision = _deskPreviewRevisions.get(name);
         if (
           previousRevision &&
           revision &&
           revision !== previousRevision &&
-          name !== _deskSelectedSessionName &&
-          String(session.latest_message_sender || "").trim() !== "user"
+          name !== _deskSelectedTimelineLabel &&
+          String(timeline.latest_message_sender || "").trim() !== "user"
         ) {
-          _deskUnreadSessions.add(name);
+          _deskUnreadTimelines.add(name);
         }
         nextRevisions.set(name, revision);
       });
-      Array.from(_deskUnreadSessions).forEach((name) => {
-        if (!activeNames.has(name)) _deskUnreadSessions.delete(name);
+      Array.from(_deskUnreadTimelines).forEach((name) => {
+        if (!activeNames.has(name)) _deskUnreadTimelines.delete(name);
       });
       _deskPreviewRevisions = nextRevisions;
     }
 
-    async function refreshHubSessions(force = false, options = {}) {
+    async function refreshHubTimelines(force = false, options = {}) {
       const skipRestore = !!(options && options.skipRestore);
-      const requestSeq = ++_deskSessionsRequestSeq;
+      const requestSeq = ++_deskTimelinesRequestSeq;
       try {
-        const response = await fetch(`/sessions?ts=${Date.now()}`, { cache: "no-store" });
+        const response = await fetch(`/timelines?ts=${Date.now()}`, { cache: "no-store" });
         if (!response.ok) throw new Error("failed");
         const data = await response.json();
         if (data.hub_instance !== HUB_INSTANCE) {
           setResidentStatus("hub-restarted", "Hub restarted; reload");
         }
-        const active = data.active_sessions;
-        const archived = data.archived_sessions;
-        _hubSessionsCache = { active, archived };
-        if (requestSeq === _deskSessionsRequestSeq) {
-          updateDeskUnreadSessions(active);
-          if (_deskSelectedSessionName) updateDeskWindowTitle(_deskSelectedSessionName);
+        const active = data.active_timelines;
+        const archived = data.archived_timelines;
+        _hubTimelinesCache = { active, archived };
+        if (requestSeq === _deskTimelinesRequestSeq) {
+          updateDeskUnreadTimelines(active);
+          if (_deskSelectedTimelineLabel) updateDeskWindowTitle(_deskSelectedTimelineLabel);
 
           const signature = JSON.stringify({
             active,
             archived,
-            selected: _deskSelectedSessionName,
+            selected: _deskSelectedTimelineLabel,
           });
-          if (!_deskSessionRename && (force || window._lastHubRenderSig !== signature)) {
+          if (!_deskTimelineRename && (force || window._lastHubRenderSig !== signature)) {
             window._lastHubRenderSig = signature;
-            renderDesktopSessions(active, archived);
+            renderDesktopTimelines(active, archived);
           }
-          _deskSessionsRenderedOnce = true;
+          _deskTimelinesRenderedOnce = true;
         }
         if (!skipRestore) maybeRestoreDeskSelection();
       } catch (_) {
-        if (requestSeq !== _deskSessionsRequestSeq) return;
-        if (_deskSessionsRenderedOnce || _hubSessionsCache.active.length || _hubSessionsCache.archived.length) return;
-        if (_deskSessionList) {
-          const newSessionSection = _deskNewSessionToggle?.closest(".desk-new-session-section") || null;
-          _deskSessionList.innerHTML = `<div class="desk-empty-list">Failed to load sessions</div>`;
-          if (newSessionSection) _deskSessionList.prepend(newSessionSection);
+        if (requestSeq !== _deskTimelinesRequestSeq) return;
+        if (_deskTimelinesRenderedOnce || _hubTimelinesCache.active.length || _hubTimelinesCache.archived.length) return;
+        if (_deskTimelineList) {
+          const newTimelineSection = _deskNewTimelineToggle?.closest(".desk-new-timeline-section") || null;
+          _deskTimelineList.innerHTML = `<div class="desk-empty-list">Failed to load timelines</div>`;
+          if (newTimelineSection) _deskTimelineList.prepend(newTimelineSection);
         }
       }
     }

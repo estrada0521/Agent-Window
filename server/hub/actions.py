@@ -5,27 +5,27 @@ import time
 from urllib.parse import parse_qs
 
 from fs.log.meta import (
-    SessionMetaError,
-    rename_session,
-    reset_session_agents,
-    session_workspace,
-    set_session_workspace,
+    LogMetaError,
+    rename_log,
+    reset_log_agents,
+    log_workspace,
+    set_log_workspace,
 )
 from fs.log.jsonl import append_jsonl_entry
 from fs.log.paths import agent_window_log_root, log_jsonl_path
 from server.hub.room_supervisor import (
     TmuxUnhealthy,
-    delete_archived_session,
+    delete_archived_timeline,
     ensure_room_server,
-    kill_repo_session,
-    revive_archived_session,
+    request_room_archive,
+    request_room_revive,
 )
-from server.hub.session_api import resolve_session_room_target
+from server.hub.timeline_api import resolve_timeline_room_target
 
 
-def _session_query(parsed) -> tuple[str, str]:
+def _timeline_query(parsed) -> tuple[str, str]:
     qs = parse_qs(parsed.query)
-    return (qs.get("session", [""])[0] or "").strip(), qs.get("format", [""])[0]
+    return (qs.get("timeline", [""])[0] or "").strip(), qs.get("format", [""])[0]
 
 
 def _fail(handler, ctx, fmt: str, status: int, message: str) -> None:
@@ -43,19 +43,19 @@ def _open_room(handler, ctx, fmt: str, room_port: int) -> None:
         handler._redirect(location)
 
 
-def _back_to_hub(handler, fmt: str, session_name: str, action: str) -> None:
+def _back_to_hub(handler, fmt: str, timeline_label: str, action: str) -> None:
     if fmt == "json":
-        handler._send_json(200, {"ok": True, "session": session_name, "action": action})
+        handler._send_json(200, {"ok": True, "timeline": timeline_label, "action": action})
     else:
         handler._redirect("/")
 
 
-def get_open_session(handler, parsed, ctx) -> None:
-    session_name, fmt = _session_query(parsed)
-    if not session_name:
+def get_open_timeline(handler, parsed, ctx) -> None:
+    timeline_label, fmt = _timeline_query(parsed)
+    if not timeline_label:
         _fail(handler, ctx, fmt, 404, "That timeline is not available in this repo.")
         return
-    resolved = resolve_session_room_target(ctx["hub"], session_name)
+    resolved = resolve_timeline_room_target(ctx["hub"], timeline_label)
     if resolved["status"] == "unhealthy":
         handler._send_unhealthy(fmt, resolved["detail"])
         return
@@ -63,79 +63,79 @@ def get_open_session(handler, parsed, ctx) -> None:
         _fail(handler, ctx, fmt, 404, "That timeline is not available in this repo.")
         return
     if resolved["status"] != "ok":
-        _fail(handler, ctx, fmt, 500, f"Failed to start room for {session_name}: {resolved['detail']}")
+        _fail(handler, ctx, fmt, 500, f"Failed to start room for {timeline_label}: {resolved['detail']}")
         return
     _open_room(handler, ctx, fmt, resolved["room_port"])
 
 
-def get_revive_session(handler, parsed, ctx) -> None:
-    session_name, fmt = _session_query(parsed)
-    if not session_name:
+def get_revive_room(handler, parsed, ctx) -> None:
+    timeline_label, fmt = _timeline_query(parsed)
+    if not timeline_label:
         _fail(handler, ctx, fmt, 404, "That archived timeline is not available in this repo.")
         return
     try:
-        ok, detail = revive_archived_session(ctx["hub"], session_name)
+        ok, detail = request_room_revive(ctx["hub"], timeline_label)
     except TmuxUnhealthy as exc:
         handler._send_unhealthy(fmt, str(exc))
         return
     if not ok:
-        _fail(handler, ctx, fmt, 500, f"Failed to revive {session_name}: {detail}")
+        _fail(handler, ctx, fmt, 500, f"Failed to revive {timeline_label}: {detail}")
         return
-    ctx["hub"].publish_session_messages_changed()
-    workspace = session_workspace(session_name)
+    ctx["hub"].publish_timeline_messages_changed()
+    workspace = log_workspace(timeline_label)
     ok, room_port, detail = ensure_room_server(ctx["hub"], expected_active=True, workspace=workspace)
     if not ok:
-        _fail(handler, ctx, fmt, 500, f"Failed to start room for {session_name}: {detail}")
+        _fail(handler, ctx, fmt, 500, f"Failed to start room for {timeline_label}: {detail}")
         return
     _open_room(handler, ctx, fmt, room_port)
 
 
-def get_kill_session(handler, parsed, ctx) -> None:
-    session_name, fmt = _session_query(parsed)
-    if not session_name:
+def get_archive_room(handler, parsed, ctx) -> None:
+    timeline_label, fmt = _timeline_query(parsed)
+    if not timeline_label:
         _fail(handler, ctx, fmt, 404, "That active timeline is not available in this repo.")
         return
     try:
-        ok, detail = kill_repo_session(ctx["hub"], session_name)
+        ok, detail = request_room_archive(ctx["hub"], timeline_label)
     except TmuxUnhealthy as exc:
         handler._send_unhealthy(fmt, str(exc))
         return
     if not ok:
-        _fail(handler, ctx, fmt, 500, f"Failed to kill {session_name}: {detail}")
+        _fail(handler, ctx, fmt, 500, f"Failed to kill {timeline_label}: {detail}")
         return
-    ctx["hub"].publish_session_messages_changed()
-    _back_to_hub(handler, fmt, session_name, "killed")
+    ctx["hub"].publish_timeline_messages_changed()
+    _back_to_hub(handler, fmt, timeline_label, "killed")
 
 
-def get_delete_archived_session(handler, parsed, ctx) -> None:
-    session_name, fmt = _session_query(parsed)
-    if not session_name:
+def get_delete_archived_timeline(handler, parsed, ctx) -> None:
+    timeline_label, fmt = _timeline_query(parsed)
+    if not timeline_label:
         _fail(handler, ctx, fmt, 404, "That archived timeline is not available in this repo.")
         return
     try:
-        ok, detail = delete_archived_session(ctx["hub"], session_name)
+        ok, detail = delete_archived_timeline(ctx["hub"], timeline_label)
     except TmuxUnhealthy as exc:
         handler._send_unhealthy(fmt, str(exc))
         return
     if not ok:
-        _fail(handler, ctx, fmt, 500, f"Failed to delete archived session {session_name}: {detail}")
+        _fail(handler, ctx, fmt, 500, f"Failed to delete archived timeline {timeline_label}: {detail}")
         return
-    ctx["hub"].publish_session_messages_changed()
-    _back_to_hub(handler, fmt, session_name, "deleted")
+    ctx["hub"].publish_timeline_messages_changed()
+    _back_to_hub(handler, fmt, timeline_label, "deleted")
 
 
-def get_session_workspace(handler, parsed, _ctx) -> None:
+def get_timeline_workspace(handler, parsed, _ctx) -> None:
     qs = parse_qs(parsed.query)
-    session_name = (qs.get("session", [""])[0] or "").strip()
-    if not session_name:
+    timeline_label = (qs.get("timeline", [""])[0] or "").strip()
+    if not timeline_label:
         handler._send_json(404, {"ok": False, "error": "Timeline not found"})
         return
     try:
-        workspace = session_workspace(session_name)
-    except SessionMetaError:
+        workspace = log_workspace(timeline_label)
+    except LogMetaError:
         handler._send_json(404, {"ok": False, "error": "Timeline not found"})
         return
-    handler._send_json(200, {"ok": True, "session": session_name, "workspace": workspace})
+    handler._send_json(200, {"ok": True, "timeline": timeline_label, "workspace": workspace})
 
 
 def post_restart_hub(handler, _parsed, ctx) -> None:
@@ -156,7 +156,7 @@ def post_restart_hub(handler, _parsed, ctx) -> None:
             ctx["release_restart_hold_fn"]()
 
 
-def post_rename_session(handler, _parsed, ctx) -> None:
+def post_rename_timeline(handler, _parsed, ctx) -> None:
     data = handler._read_form()
     old_name = str(data.get("old_name") or "").strip()
     new_name = str(data.get("new_name") or "").strip()
@@ -173,7 +173,7 @@ def post_rename_session(handler, _parsed, ctx) -> None:
         return
     try:
         if old_name != new_name:
-            rename_session(old_name, new_name)
+            rename_log(old_name, new_name)
             append_jsonl_entry(
                 log_jsonl_path(new_name),
                 {
@@ -186,30 +186,30 @@ def post_rename_session(handler, _parsed, ctx) -> None:
     except OSError as exc:
         handler._send_json(409, {"ok": False, "error": str(exc)})
         return
-    ctx["hub"].publish_session_messages_changed()
+    ctx["hub"].publish_timeline_messages_changed()
     handler._send_json(200, {"ok": True, "old_name": old_name, "new_name": new_name})
 
 
-def post_change_session_workspace(handler, _parsed, ctx) -> None:
+def post_change_timeline_workspace(handler, _parsed, ctx) -> None:
     data = handler._read_form()
-    session_name = str(data.get("session") or "").strip()
+    timeline_label = str(data.get("timeline") or "").strip()
     workspace = str(data.get("workspace") or "").strip()
     try:
-        set_session_workspace(session_name, workspace)
-    except SessionMetaError as exc:
+        set_log_workspace(timeline_label, workspace)
+    except LogMetaError as exc:
         handler._send_json(409, {"ok": False, "error": str(exc)})
         return
-    ctx["hub"].publish_session_messages_changed()
-    handler._send_json(200, {"ok": True, "session": session_name, "workspace": workspace})
+    ctx["hub"].publish_timeline_messages_changed()
+    handler._send_json(200, {"ok": True, "timeline": timeline_label, "workspace": workspace})
 
 
-def post_reset_session_agents(handler, _parsed, ctx) -> None:
+def post_reset_timeline_agents(handler, _parsed, ctx) -> None:
     data = handler._read_form()
-    session_name = str(data.get("session") or "").strip()
+    timeline_label = str(data.get("timeline") or "").strip()
     try:
-        reset_session_agents(session_name)
-    except SessionMetaError as exc:
+        reset_log_agents(timeline_label)
+    except LogMetaError as exc:
         handler._send_json(409, {"ok": False, "error": str(exc)})
         return
-    ctx["hub"].publish_session_messages_changed()
-    handler._send_json(200, {"ok": True, "session": session_name})
+    ctx["hub"].publish_timeline_messages_changed()
+    handler._send_json(200, {"ok": True, "timeline": timeline_label})

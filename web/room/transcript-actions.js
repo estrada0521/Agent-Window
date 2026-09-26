@@ -66,13 +66,13 @@ __INCLUDE:transcript-refresh.js__
     const blurComposerOnMobile = (message) => {
       if (document.documentElement.dataset.mobile === "1") message.blur();
     };
-    const applySessionActivation = (data) => {
+    const applyTimelineActivation = (data) => {
       if (!data?.activated) return;
-      sessionActive = true;
+      roomActive = true;
       if (Array.isArray(data.targets) && data.targets.length) {
-        availableTargets = normalizedSessionTargets(data.targets);
+        availableTargets = normalizedTimelineTargets(data.targets);
         selectedTargets = data.targets.filter((t) => availableTargets.includes(t));
-        saveTargetSelection(currentSessionName, selectedTargets);
+        saveTargetSelection(currentTimelineLabel, selectedTargets);
         renderTargetPicker(availableTargets);
       }
       syncAgentMenuOptions();
@@ -107,10 +107,10 @@ __INCLUDE:transcript-refresh.js__
         if (!res.ok || !data.ok) {
           throw new Error(data.error || "shortcut failed");
         }
-        applySessionActivation(data);
+        applyTimelineActivation(data);
         void refresh();
         if (data.activated) {
-          void refreshSessionState();
+          void refreshRoomState();
         }
         return true;
       } catch (error) {
@@ -178,7 +178,7 @@ __INCLUDE:transcript-refresh.js__
             if (!res.ok || !data.ok) {
               throw new Error(data.error || "shortcut failed");
             }
-            applySessionActivation(data);
+            applyTimelineActivation(data);
             clearComposerDraft();
             blurComposerOnMobile(message);
             if (pendingAttachments.length) {
@@ -190,7 +190,7 @@ __INCLUDE:transcript-refresh.js__
             closeComposerOverlay();
             void refresh();
             if (data.activated) {
-              void refreshSessionState();
+              void refreshRoomState();
             }
             return true;
           } catch (error) {
@@ -237,7 +237,7 @@ __INCLUDE:transcript-refresh.js__
         if (!res.ok || !data.ok) {
           throw new Error(data.error || "send failed");
         }
-        applySessionActivation(data);
+        applyTimelineActivation(data);
         clearComposerDraft();
         blurComposerOnMobile(message);
         if (pendingAttachments.length) {
@@ -254,7 +254,7 @@ __INCLUDE:transcript-refresh.js__
         }
         applyLocalEntry(data.entry);
         if (data.activated) {
-          void refreshSessionState();
+          void refreshRoomState();
         }
         return true;
       } catch (error) {
@@ -268,7 +268,7 @@ __INCLUDE:transcript-refresh.js__
     };
     document.getElementById("composer").addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (!canComposeInSession()) return;
+      if (!canComposeInRoom()) return;
       const submitter = event.submitter;
       const closeOverlayOnStart = !!(submitter && submitter.classList && submitter.classList.contains("send-btn"));
       await submitMessage({ closeOverlayOnStart });

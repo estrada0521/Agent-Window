@@ -1,32 +1,32 @@
 
-    let _deskSessionSwitcherItems = [];
-    let _deskSessionSwitcherOpen = false;
-    async function openDeskNativeSessionSwitcher() {
+    let _deskTimelineSwitcherItems = [];
+    let _deskTimelineSwitcherOpen = false;
+    async function openDeskNativeTimelineSwitcher() {
       const invoke = getNativeInvoke();
-      if (typeof invoke !== "function" || !_deskSessionList || !_deskAppSidebarToggle) return;
-      if (_deskSessionSwitcherOpen) return;
+      if (typeof invoke !== "function" || !_deskTimelineList || !_deskAppSidebarToggle) return;
+      if (_deskTimelineSwitcherOpen) return;
       const items = [];
-      for (const child of Array.from(_deskSessionList.children)) {
+      for (const child of Array.from(_deskTimelineList.children)) {
         if (child.classList.contains("desk-section-label")) {
           items.push({ label: child.textContent.trim(), section: true });
         } else if (child.classList.contains("desk-swipe-row")) {
-          const row = child.querySelector(".desk-session-row");
+          const row = child.querySelector(".desk-timeline-row");
           const href = row?.dataset.openHref || "";
           if (!row || !href) continue;
           items.push({
-            label: (row.querySelector(".desk-row-name")?.textContent || row.dataset.sessionName || "").trim(),
+            label: (row.querySelector(".desk-row-name")?.textContent || row.dataset.timelineLabel || "").trim(),
             current: row.classList.contains("is-selected"),
             href,
-            name: row.dataset.sessionName || "",
+            name: row.dataset.timelineLabel || "",
           });
         }
       }
       if (!items.some((it) => !it.section)) return;
-      _deskSessionSwitcherItems = items;
+      _deskTimelineSwitcherItems = items;
       const rect = _deskAppSidebarToggle.getBoundingClientRect();
-      _deskSessionSwitcherOpen = true;
+      _deskTimelineSwitcherOpen = true;
       try {
-        await invoke("show_session_switcher_menu", {
+        await invoke("show_timeline_switcher_menu", {
           payload: {
             x: Math.round(rect.right || 0),
             y: Math.round(rect.top || 0),
@@ -35,7 +35,7 @@
         });
       } catch (_) {
       } finally {
-        _deskSessionSwitcherOpen = false;
+        _deskTimelineSwitcherOpen = false;
       }
     }
 
@@ -116,9 +116,9 @@
 
     window.addEventListener("native-menu-action", (event) => {
       const detail = event.detail || {};
-      if (detail.action === "switchSession") {
-        const item = _deskSessionSwitcherItems[Number(detail.mode)];
-        if (item && item.href) openSessionFrame(item.href, item.name);
+      if (detail.action === "switchTimeline") {
+        const item = _deskTimelineSwitcherItems[Number(detail.mode)];
+        if (item && item.href) openTimelineFrame(item.href, item.name);
         return;
       }
       if (detail.action === "gitChange") {
@@ -130,35 +130,35 @@
         }
         return;
       }
-      if (detail.action === "renameSession") {
-        if (_deskContextSessionName) beginDeskSessionRename(_deskContextSessionName);
+      if (detail.action === "renameTimeline") {
+        if (_deskContextTimelineLabel) beginDeskTimelineRename(_deskContextTimelineLabel);
         return;
       }
       if (detail.action === "copyWorkspacePath") {
-        if (_deskContextSessionName) void copyDeskSessionWorkspace(_deskContextSessionName);
+        if (_deskContextTimelineLabel) void copyDeskTimelineWorkspace(_deskContextTimelineLabel);
         return;
       }
       if (detail.action === "changeWorkspace") {
-        if (_deskContextSessionName) void changeDeskSessionWorkspace(_deskContextSessionName);
+        if (_deskContextTimelineLabel) void changeDeskTimelineWorkspace(_deskContextTimelineLabel);
         return;
       }
       if (detail.action === "resetAgents") {
-        if (_deskContextSessionName) void resetDeskSessionAgents(_deskContextSessionName);
+        if (_deskContextTimelineLabel) void resetDeskTimelineAgents(_deskContextTimelineLabel);
         return;
       }
-      if (detail.action === "archiveSession") {
-        if (_deskContextSessionName) void runDeskContextAction(_deskContextSessionName, "kill");
+      if (detail.action === "archiveTimeline") {
+        if (_deskContextTimelineLabel) void runDeskContextAction(_deskContextTimelineLabel, "kill");
         return;
       }
-      if (detail.action === "deleteSession") {
-        if (_deskContextSessionName) void runDeskContextAction(_deskContextSessionName, "delete-archived");
+      if (detail.action === "deleteTimeline") {
+        if (_deskContextTimelineLabel) void runDeskContextAction(_deskContextTimelineLabel, "delete-archived");
         return;
       }
-      if (detail.action === "reviveSession") {
-        if (_deskContextSessionName) {
-          openSessionFrame(
-            `/revive-session?session=${encodeURIComponent(_deskContextSessionName)}`,
-            _deskContextSessionName,
+      if (detail.action === "reviveTimeline") {
+        if (_deskContextTimelineLabel) {
+          openTimelineFrame(
+            `/revive-room?timeline=${encodeURIComponent(_deskContextTimelineLabel)}`,
+            _deskContextTimelineLabel,
           );
         }
         return;

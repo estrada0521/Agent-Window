@@ -10,7 +10,7 @@
     const _deskSidebar = document.getElementById("deskSidebar");
     const _deskSidebarResizer = document.getElementById("deskSidebarResizer");
     const _deskAppSidebarToggle = document.getElementById("deskAppSidebarToggle");
-    const _deskSessionList = document.getElementById("deskSessionList");
+    const _deskTimelineList = document.getElementById("deskTimelineList");
     const _deskRoomFrame = document.getElementById("deskRoomFrame");
     const _deskRoomMenuBtn = document.getElementById("roomMenuBtn");
     const _deskRoomReloadBtn = document.getElementById("roomReloadBtn");
@@ -20,12 +20,12 @@
     const _deskMain = document.querySelector(".desk-main");
     const _deskSettingsBtn = document.getElementById("deskSettingsBtn");
     const _deskReloadBtn = document.getElementById("deskReloadBtn");
-    const _deskNewSessionToggle = document.getElementById("deskNewSessionToggle");
+    const _deskNewTimelineToggle = document.getElementById("deskNewTimelineToggle");
     const _deskFloatingControls = document.querySelector(".desk-floating-controls");
     const _deskTopRightControls = document.querySelector(".desk-top-right-controls");
     const _deskWindowTraffic = document.querySelector(".desk-window-traffic");
-    const _deskSessionTitleTextEl = document.getElementById("deskSessionTitleText");
-    const DESK_SELECTED_KEY = "agent_window_hub_selected_session";
+    const _deskTimelineTitleTextEl = document.getElementById("deskTimelineTitleText");
+    const DESK_SELECTED_KEY = "agent_window_hub_selected_timeline";
     const DESK_SIDEBAR_WIDTH_KEY = "agent_window_hub_sidebar_width_at_default_text_size";
     const DESK_SIDEBAR_OPEN_KEY = "agent_window_hub_sidebar_open";
     const DESK_AUTO_HEIGHT_KEY = "agent_window_hub_auto_window_height";

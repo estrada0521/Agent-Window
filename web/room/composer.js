@@ -252,7 +252,7 @@ __INCLUDE:upload-attached-files.js__
 
     const updateSendBtnVisibility = () => {
       if (!sendBtn || isMobileComposer) return;
-      if (!sessionActive) {
+      if (!roomActive) {
         sendBtn.classList.remove("visible");
         return;
       }

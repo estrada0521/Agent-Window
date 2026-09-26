@@ -13,7 +13,7 @@
           "/hub-launch-shell.html?" + (restart ? "restart=1&" : "") + (view ? "view=mobile&" : "") + "target=" + encodeURIComponent(target)
         );
       };
-      fetch("/sessions", { cache: "no-store" })
+      fetch("/timelines", { cache: "no-store" })
         .then(function (res) { return res.json(); })
         .then(function (data) { open(data.hub_instance === HUB_INSTANCE); });
     }

@@ -29,8 +29,8 @@
     const openRoomMenu = (anchor, payload, onAction) => {
       const agents = { add: payload.addAgents || [], remove: payload.removeAgents || [] };
       openMenuSelect(anchor, "Menu", [
-        { value: "add", label: "Add Agent", disabled: !payload.sessionActive || !agents.add.length },
-        { value: "remove", label: "Remove Agent", disabled: !payload.sessionActive || !agents.remove.length },
+        { value: "add", label: "Add Agent", disabled: !payload.roomActive || !agents.add.length },
+        { value: "remove", label: "Remove Agent", disabled: !payload.roomActive || !agents.remove.length },
         { value: "openShell", label: "Terminal" },
         { value: "openFinder", label: "Finder" },
         { value: "openTerminal", label: "tmux window" },

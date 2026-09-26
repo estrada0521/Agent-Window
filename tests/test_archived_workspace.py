@@ -9,8 +9,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from server.hub.room_supervisor import room_server_state_matches, ensure_room_server
-from server.hub.session_api import resolve_session_room_target
-from server.hub.session_query import LiveSessions, archived_session_records
+from server.hub.timeline_api import resolve_timeline_room_target
+from server.hub.timeline_query import LiveTimelines, archived_timeline_records
 from git import repo as workspace_git
 
 
@@ -51,15 +51,15 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertFalse(owns_restart)
         launch.assert_not_called()
 
-    def test_archived_sessions_keep_a_non_git_workspace(self) -> None:
+    def test_archived_timelines_keep_a_non_git_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Lab-workspace"
             workspace.mkdir()
             root = Path(tmp) / "log"
-            session_dir = root / "Lab"
-            session_dir.mkdir(parents=True)
-            (session_dir / ".log.jsonl").write_text("", encoding="utf-8")
-            (session_dir / ".meta").write_text(
+            log_dir = root / "Lab"
+            log_dir.mkdir(parents=True)
+            (log_dir / ".log.jsonl").write_text("", encoding="utf-8")
+            (log_dir / ".meta").write_text(
                 json.dumps(
                     {
                         "workspace": str(workspace),
@@ -71,11 +71,11 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             )
             hub_repo = "/Users/okadaharuto/workspace/Agent-Window"
             with patch("fs.log.paths.agent_window_root", return_value=Path(tmp)):
-                sessions = archived_session_records(LiveSessions({}, "ok"))
-            self.assertEqual(len(sessions), 1)
-            self.assertEqual(sessions[0]["name"], "Lab")
-            self.assertEqual(sessions[0]["workspace"], str(workspace))
-            self.assertNotEqual(sessions[0]["workspace"], hub_repo)
+                timelines = archived_timeline_records(LiveTimelines({}, "ok"))
+            self.assertEqual(len(timelines), 1)
+            self.assertEqual(timelines[0]["name"], "Lab")
+            self.assertEqual(timelines[0]["workspace"], str(workspace))
+            self.assertNotEqual(timelines[0]["workspace"], hub_repo)
             self.assertFalse((workspace / ".git").exists())
 
     def test_archived_open_passes_saved_workspace_not_hub_root(self) -> None:
@@ -90,14 +90,14 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             workspace = Path(tmp) / "Even-Parity"
             workspace.mkdir()
             with (
-                patch("server.hub.session_api.live_sessions_query", return_value=LiveSessions({}, "ok")),
+                patch("server.hub.timeline_api.live_timelines_query", return_value=LiveTimelines({}, "ok")),
                 patch(
-                    "server.hub.session_api.read_session_meta",
+                    "server.hub.timeline_api.read_log_meta",
                     return_value={"workspace": str(workspace), "agents": []},
                 ),
-                patch("server.hub.session_api.ensure_room_server", side_effect=ensure_room_server),
+                patch("server.hub.timeline_api.ensure_room_server", side_effect=ensure_room_server),
             ):
-                resolved = resolve_session_room_target(object(), "Even-Parity")
+                resolved = resolve_timeline_room_target(object(), "Even-Parity")
         self.assertEqual(resolved["status"], "ok")
         self.assertFalse(captured["expected_active"])
         self.assertEqual(captured["workspace"], str(workspace))
@@ -106,7 +106,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
     def test_room_server_state_rejects_wrong_workspace(self) -> None:
         repo_root = "/Users/okadaharuto/workspace/Agent-Window"
         state = {
-            "session": "Even-Parity",
+            "timeline": "Even-Parity",
             "repo_root": repo_root,
             "workspace": repo_root,
             "targets": [],

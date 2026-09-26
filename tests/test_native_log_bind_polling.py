@@ -24,7 +24,7 @@ class _FakeClock:
 def _state(has_log_binding):
     fake_binding = SimpleNamespace(workspace="/work/project")
     with (
-        mock.patch.object(state_module, "WorkspaceSessionBinding", return_value=fake_binding),
+        mock.patch.object(state_module, "WorkspaceTimelineBinding", return_value=fake_binding),
         mock.patch.object(state_module, "find_session_for_workspace", return_value=None),
     ):
         state = state_module.RoomState(

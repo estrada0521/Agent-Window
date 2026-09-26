@@ -7,7 +7,7 @@
       box-sizing: border-box;
       padding-top: 0;
     }
-    .desk-sidebar-sessions {
+    .desk-sidebar-timelines {
       grid-area: 1 / 1;
       min-height: 0;
       min-width: 0;
@@ -18,10 +18,10 @@
       position: relative;
       font-size: var(--text-size, 13px);
     }
-    .desk-sidebar-sessions::-webkit-scrollbar {
+    .desk-sidebar-timelines::-webkit-scrollbar {
       display: none;
     }
-    .desk-sidebar-sessions[hidden] {
+    .desk-sidebar-timelines[hidden] {
       display: none;
       visibility: hidden;
       pointer-events: none;
@@ -39,13 +39,13 @@
       white-space: nowrap;
       pointer-events: none;
     }
-    .desk-new-session-section {
+    .desk-new-timeline-section {
       padding: 1.23em 0 0;
       border-bottom: none;
       display: block;
       background: transparent;
     }
-    .desk-session-list {
+    .desk-timeline-list {
       grid-row: 2;
       min-height: 0;
       overflow-y: auto;
@@ -54,16 +54,16 @@
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
-    .desk-session-list::-webkit-scrollbar { display: none; }
-    .desk-session-list[data-scroll-fade="top"] {
+    .desk-timeline-list::-webkit-scrollbar { display: none; }
+    .desk-timeline-list[data-scroll-fade="top"] {
       mask-image: linear-gradient(to bottom, transparent 0, black 48px);
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 48px);
     }
-    .desk-session-list[data-scroll-fade="bottom"] {
+    .desk-timeline-list[data-scroll-fade="bottom"] {
       mask-image: linear-gradient(to bottom, black calc(100% - 48px), transparent 100%);
       -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 48px), transparent 100%);
     }
-    .desk-session-list[data-scroll-fade="both"] {
+    .desk-timeline-list[data-scroll-fade="both"] {
       mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
     }
@@ -79,14 +79,14 @@
       pointer-events: none;
       white-space: nowrap;
     }
-    .desk-new-session-toggle {
+    .desk-new-timeline-toggle {
       width: 100%;
       margin: 0;
       opacity: 1;
     }
-    .desk-sidebar-sessions,
-    .desk-session-list,
-    .desk-new-session-section,
+    .desk-sidebar-timelines,
+    .desk-timeline-list,
+    .desk-new-timeline-section,
     .desk-swipe-row,
     .desk-swipe-track,
     .desk-swipe-action-rail {
@@ -100,10 +100,10 @@
       color: var(--muted);
       opacity: 1;
     }
-    .desk-new-session-section + .desk-section-label {
+    .desk-new-timeline-section + .desk-section-label {
       padding-top: 1.1em;
     }
-    .desk-session-row {
+    .desk-timeline-row {
       display: block;
       padding: 0.65em 0.92em;
       font-size: var(--text-size, 13px);
@@ -114,49 +114,49 @@
       background: transparent;
       position: relative;
     }
-    .desk-session-row::before {
+    .desk-timeline-row::before {
       content: "";
       position: absolute;
       inset: 50% 0.62em auto;
       height: calc(var(--text-size, 13px) * 30 / 13);
       transform: translateY(-50%);
       border-radius: var(--pill-inner-radius);
-      background: var(--session-hover-bg);
+      background: var(--timeline-hover-bg);
       opacity: 0;
       z-index: 0;
       pointer-events: none;
       transition: opacity 150ms ease;
     }
-    .desk-session-row:hover::before {
+    .desk-timeline-row:hover::before {
       opacity: 1;
     }
-    .desk-session-row:hover .desk-row-name {
+    .desk-timeline-row:hover .desk-row-name {
       color: var(--fg);
       opacity: 1;
     }
-    .desk-session-row.is-selected::before {
+    .desk-timeline-row.is-selected::before {
       opacity: 1;
-      background: var(--session-selected-bg);
+      background: var(--timeline-selected-bg);
     }
-    .desk-session-row.is-selected .desk-row-name,
-    .desk-session-row.is-selected .desk-row-preview {
+    .desk-timeline-row.is-selected .desk-row-name,
+    .desk-timeline-row.is-selected .desk-row-preview {
       opacity: 1;
     }
-    .desk-session-row.is-selected .desk-row-bullet i,
-    .desk-session-row.is-unread .desk-row-bullet i {
+    .desk-timeline-row.is-selected .desk-row-bullet i,
+    .desk-timeline-row.is-unread .desk-row-bullet i {
       width: 0.46em;
       height: 0.46em;
       background: var(--icon-fg);
       box-shadow: 0 0 0.38em color-mix(in srgb, var(--icon-fg) 68%, transparent);
     }
-    .desk-session-row.archived {
+    .desk-timeline-row.archived {
       opacity: 1;
     }
-    .desk-session-row.archived .desk-row-name {
-      color: var(--session-dim-fg);
+    .desk-timeline-row.archived .desk-row-name {
+      color: var(--timeline-dim-fg);
     }
-    .desk-session-row.archived:hover .desk-row-name,
-    .desk-session-row.archived.is-selected .desk-row-name {
+    .desk-timeline-row.archived:hover .desk-row-name,
+    .desk-timeline-row.archived.is-selected .desk-row-name {
       color: var(--fg);
     }
     .desk-swipe-row {
@@ -186,7 +186,7 @@
     .desk-swipe-action-btn {
       min-width: 92px;
       border: none;
-      background: var(--session-danger-fg);
+      background: var(--timeline-danger-fg);
       color: var(--fg);
       font: inherit;
       font-size: 12px;
@@ -261,21 +261,21 @@
       stroke-linejoin: round;
       flex: 0 0 auto;
     }
-    .desk-session-row:hover .desk-row-hover-action,
-    .desk-session-row:focus-visible .desk-row-hover-action,
+    .desk-timeline-row:hover .desk-row-hover-action,
+    .desk-timeline-row:focus-visible .desk-row-hover-action,
     .desk-row-hover-action:focus-visible {
       opacity: 1;
       pointer-events: auto;
       transform: translateY(-50%) scale(1);
     }
-    .desk-action-session-row:hover .desk-row-stack,
-    .desk-action-session-row:focus-visible .desk-row-stack,
-    .desk-action-session-row:has(.desk-row-hover-action:focus-visible) .desk-row-stack {
+    .desk-action-timeline-row:hover .desk-row-stack,
+    .desk-action-timeline-row:focus-visible .desk-row-stack,
+    .desk-action-timeline-row:has(.desk-row-hover-action:focus-visible) .desk-row-stack {
       padding-right: 24px;
     }
     .desk-row-hover-action:hover,
     .desk-row-hover-action:focus-visible {
-      color: var(--session-danger-fg);
+      color: var(--timeline-danger-fg);
       outline: none;
     }
     .desk-row-hover-action:hover svg,
@@ -286,8 +286,8 @@
     .desk-row-hover-action:focus-visible polyline,
     .desk-row-hover-action:focus-visible path,
     .desk-row-hover-action:focus-visible line {
-      color: var(--session-danger-fg);
-      stroke: var(--session-danger-fg);
+      color: var(--timeline-danger-fg);
+      stroke: var(--timeline-danger-fg);
     }
     .desk-row-hover-action:hover svg,
     .desk-row-hover-action:hover svg *,
@@ -296,7 +296,7 @@
       stroke: currentColor;
     }
     .desk-row-hover-action:active {
-      color: var(--session-danger-fg);
+      color: var(--timeline-danger-fg);
       transform: translateY(-50%) scale(0.96);
     }
     .desk-row-bullet {
@@ -339,7 +339,7 @@
       align-items: baseline;
       gap: 0.46em;
     }
-    .desk-action-session-row .desk-row-stack {
+    .desk-action-timeline-row .desk-row-stack {
       position: relative;
       top: 0.08em;
     }
@@ -373,38 +373,38 @@
       line-height: 1.2;
       letter-spacing: -0.01em;
     }
-    .desk-action-session-row.is-renaming .desk-row-stack {
+    .desk-action-timeline-row.is-renaming .desk-row-stack {
       padding-right: 0;
       gap: 0;
     }
-    .desk-action-session-row.is-renaming .desk-row-preview {
+    .desk-action-timeline-row.is-renaming .desk-row-preview {
       display: none;
     }
-    .desk-action-session-row.is-renaming .desk-row-hover-action {
+    .desk-action-timeline-row.is-renaming .desk-row-hover-action {
       opacity: 0;
       pointer-events: none;
     }
-    .desk-new-session-toggle .desk-row-stack {
+    .desk-new-timeline-toggle .desk-row-stack {
       flex: 1;
       min-width: 0;
       position: relative;
       top: round(nearest, calc(var(--text-size, 13px) / 13), 1px);
     }
-    .desk-new-session-toggle .desk-row-main {
+    .desk-new-timeline-toggle .desk-row-main {
       gap: round(nearest, calc(var(--text-size, 13px) * 8 / 13), 1px);
     }
-    .desk-new-session-toggle .desk-row-name {
+    .desk-new-timeline-toggle .desk-row-name {
       text-align: left;
       font-size: var(--text-size, 13px);
       font-weight: inherit;
       opacity: 1;
     }
-    .desk-new-session-toggle .desk-row-leading-icon {
+    .desk-new-timeline-toggle .desk-row-leading-icon {
       width: 1em;
       height: 1em;
       opacity: 1;
     }
-    .desk-new-session-toggle .desk-row-kbd {
+    .desk-new-timeline-toggle .desk-row-kbd {
       margin-left: auto;
       margin-right: 0.54em;
       flex: none;
@@ -414,20 +414,20 @@
       visibility: hidden;
       pointer-events: none;
     }
-    .desk-new-session-toggle::before {
+    .desk-new-timeline-toggle::before {
       background: transparent;
       opacity: 1;
       transition: none;
     }
-    .desk-new-session-toggle:hover .desk-row-kbd,
-    .desk-new-session-toggle:focus-visible .desk-row-kbd {
+    .desk-new-timeline-toggle:hover .desk-row-kbd,
+    .desk-new-timeline-toggle:focus-visible .desk-row-kbd {
       visibility: visible;
     }
-    .desk-new-session-toggle:hover::before,
-    .desk-new-session-toggle:focus-visible::before {
-      background: var(--session-hover-bg);
+    .desk-new-timeline-toggle:hover::before,
+    .desk-new-timeline-toggle:focus-visible::before {
+      background: var(--timeline-hover-bg);
     }
-    .desk-new-session-toggle .desk-row-leading-icon svg {
+    .desk-new-timeline-toggle .desk-row-leading-icon svg {
       stroke-width: 2;
     }
     .desk-row-preview {
@@ -453,7 +453,7 @@
       font-size: var(--text-size, 13px);
       line-height: 1.55;
     }
-    .desk-session-list-loading {
+    .desk-timeline-list-loading {
       display: flex;
       align-items: center;
       justify-content: center;

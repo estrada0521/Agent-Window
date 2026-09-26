@@ -106,7 +106,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
 }
 
 - (void)showRoomHeaderMenu:(NSDictionary *)p {
-    BOOL active = [p[@"sessionActive"] boolValue];
+    BOOL active = [p[@"roomActive"] boolValue];
     NSDictionary *icons = p[@"agentIcons"] ?: @{};
     NSMenuItem *(^agentItem)(NSString *, NSString *) = ^NSMenuItem *(NSString *mode, NSString *agent) {
         NSMenuItem *item = [self item:agent payload:@{ @"action": @"agent", @"mode": mode, @"agent": agent } key:nil mods:0];
@@ -239,23 +239,23 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     ] at:p];
 }
 
-- (void)showSessionContextMenu:(NSDictionary *)p {
+- (void)showTimelineContextMenu:(NSDictionary *)p {
     NSMenuItem *(^gated)(NSString *, NSString *, NSString *) = ^NSMenuItem *(NSString *action, NSString *title, NSString *flag) {
         NSMenuItem *item = [self action:action title:title key:nil mods:0];
         item.enabled = [p[flag] boolValue];
         return item;
     };
     [self popUp:@[
-        [self action:@"renameSession" title:@"Rename" key:nil mods:0],
+        [self action:@"renameTimeline" title:@"Rename" key:nil mods:0],
         NSMenuItem.separatorItem,
         [self action:@"copyWorkspacePath" title:@"Copy Workspace Path" key:nil mods:0],
         NSMenuItem.separatorItem,
         gated(@"changeWorkspace", @"Change Workspace", @"changeWorkspaceEnabled"),
         gated(@"resetAgents", @"Reset Agents", @"resetAgentsEnabled"),
         NSMenuItem.separatorItem,
-        gated(@"archiveSession", @"Archive", @"archiveEnabled"),
-        gated(@"reviveSession", @"Revive", @"reviveEnabled"),
-        gated(@"deleteSession", @"Delete", @"deleteEnabled"),
+        gated(@"archiveTimeline", @"Archive", @"archiveEnabled"),
+        gated(@"reviveTimeline", @"Revive", @"reviveEnabled"),
+        gated(@"deleteTimeline", @"Delete", @"deleteEnabled"),
     ] at:p];
 }
 
@@ -373,11 +373,11 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     if ([cmd isEqualToString:@"copy_files_to_clipboard"]) return [self copyFiles:a[@"paths"]];
     if ([cmd isEqualToString:@"show_room_header_menu"]) { [self showRoomHeaderMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_appearance_menu"]) { [self showAppearanceMenu:p]; return nil; }
-    if ([cmd isEqualToString:@"show_session_switcher_menu"]) { [self showListMenu:p action:@"switchSession" checks:YES]; return nil; }
+    if ([cmd isEqualToString:@"show_timeline_switcher_menu"]) { [self showListMenu:p action:@"switchTimeline" checks:YES]; return nil; }
     if ([cmd isEqualToString:@"show_git_changes_menu"]) { [self showListMenu:p action:@"gitChange" checks:NO]; return nil; }
     if ([cmd isEqualToString:@"show_file_context_menu"]) { [self showFileContextMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_commit_context_menu"]) { [self showCommitContextMenu:p]; return nil; }
-    if ([cmd isEqualToString:@"show_session_context_menu"]) { [self showSessionContextMenu:p]; return nil; }
+    if ([cmd isEqualToString:@"show_timeline_context_menu"]) { [self showTimelineContextMenu:p]; return nil; }
     if ([cmd isEqualToString:@"reset_window_geometry"]) return [self placeCentered:kDefaultWindowSize height:kDefaultWindowSize scale:[a[@"scale"] doubleValue]];
     if ([cmd isEqualToString:@"compact_window_geometry"]) return [self placeCentered:kCompactWindowWidth height:kDefaultWindowSize scale:[a[@"scale"] doubleValue]];
     if ([cmd isEqualToString:@"mini_window_geometry"]) return [self placeCentered:kMiniWindowWidth height:kMiniWindowHeight scale:[a[@"scale"] doubleValue]];

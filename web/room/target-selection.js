@@ -1,11 +1,11 @@
-    const targetSelectionStorageKey = (session) => `targetSelection:${session || "default"}`;
-    const saveTargetSelection = (session, targets) => {
-      if (!session) return;
-      localStorage.setItem(targetSelectionStorageKey(session), JSON.stringify(targets));
+    const targetSelectionStorageKey = (label) => `targetSelection:${label || "default"}`;
+    const saveTargetSelection = (label, targets) => {
+      if (!label) return;
+      localStorage.setItem(targetSelectionStorageKey(label), JSON.stringify(targets));
     };
-    const loadTargetSelection = (session, availableTargets = []) => {
-      if (!session) return [];
+    const loadTargetSelection = (label, availableTargets = []) => {
+      if (!label) return [];
       const allowed = new Set(availableTargets);
-      return JSON.parse(localStorage.getItem(targetSelectionStorageKey(session)) || "[]")
+      return JSON.parse(localStorage.getItem(targetSelectionStorageKey(label)) || "[]")
         .filter((item) => allowed.has(item));
     };

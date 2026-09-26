@@ -11,7 +11,7 @@ from pathlib import Path
 from agents import agent_base_name
 from agents.registry import ALL_AGENT_NAMES
 from fs.log.jsonl import append_jsonl_entry
-from fs.log.meta import find_session_for_workspace
+from fs.log.meta import find_label_for_workspace
 from tmux.session import AgentPane, parse_agent_topology
 from tmux import TMUX_SOCKET_NAME
 from tmux.send_keys import deliver_text_to_pane
@@ -75,7 +75,7 @@ class AgentSender:
         self._tmux_session_name = resolved
         return resolved
 
-    def session_workspace(self) -> str:
+    def tmux_session_workspace(self) -> str:
         result = self.tmux.run(
             ["display-message", "-p", "-t", self.resolve_tmux_session_name(), "#{session_path}"]
         )
@@ -103,9 +103,9 @@ class AgentSender:
         except RuntimeError as exc:
             raise AgentSendError(str(exc)) from exc
 
-    def resolve_session_name(self, workspace: str | None = None) -> str:
-        workspace = (workspace or self.session_workspace()).strip()
-        resolved = find_session_for_workspace(workspace)
+    def resolve_timeline_label(self, workspace: str | None = None) -> str:
+        workspace = (workspace or self.tmux_session_workspace()).strip()
+        resolved = find_label_for_workspace(workspace)
         if resolved:
             return resolved
         raise AgentSendError("No active Agent Window timeline found for this workspace.")
@@ -233,12 +233,12 @@ class AgentSender:
     def append_log_entry(
         self,
         *,
-        session_name: str,
+        timeline_label: str,
         sender: str,
         targets: list[str],
         payload: str,
     ) -> None:
-        name = str(session_name or "").strip()
+        name = str(timeline_label or "").strip()
         if not name:
             raise AgentSendError("label is required")
         log_path = log_jsonl_path(name)
@@ -258,8 +258,8 @@ class AgentSender:
         target_spec: str,
         payload: str,
     ) -> bool:
-        workspace = self.session_workspace()
-        session_name = self.resolve_session_name(workspace)
+        workspace = self.tmux_session_workspace()
+        timeline_label = self.resolve_timeline_label(workspace)
         topology = self.agent_topology()
         sender_role = self.resolve_self_agent(topology)
         if not sender_role:
@@ -286,7 +286,7 @@ class AgentSender:
             raise AgentSendError("Message delivery failed for all targets.")
 
         self.append_log_entry(
-            session_name=session_name,
+            timeline_label=timeline_label,
             sender=sender_role,
             targets=successful_targets,
             payload=delivery_payload,

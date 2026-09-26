@@ -7,7 +7,7 @@ import subprocess
 import time
 from pathlib import Path
 
-from fs.log.meta import find_session_for_workspace
+from fs.log.meta import find_label_for_workspace
 from fs.log.paths import (
     LABEL_MAX_LENGTH,
     port_is_bindable,
@@ -15,37 +15,37 @@ from fs.log.paths import (
     log_dir,
     workspace_room_port,
 )
-from tmux.control import create_session
+from tmux.control import open_room
 from server.hub.room_supervisor import ensure_room_server
 
 
-_GENERATED_SESSION_PREFIX = "aw-"
+_GENERATED_TIMELINE_PREFIX = "aw-"
 
 
-def _session_name_for_workspace(workspace: str) -> tuple[str, str]:
+def _timeline_label_for_workspace(workspace: str) -> tuple[str, str]:
     basename_name = sanitize_label(Path(workspace).name)
     if basename_name and not log_dir(basename_name).exists():
         return basename_name, ""
 
     digest = hashlib.sha256(workspace.encode("utf-8")).hexdigest()
-    max_digest_length = LABEL_MAX_LENGTH - len(_GENERATED_SESSION_PREFIX)
+    max_digest_length = LABEL_MAX_LENGTH - len(_GENERATED_TIMELINE_PREFIX)
     digest_length = 8
     while True:
-        candidate = f"{_GENERATED_SESSION_PREFIX}{digest[:digest_length]}"
+        candidate = f"{_GENERATED_TIMELINE_PREFIX}{digest[:digest_length]}"
         if not log_dir(candidate).exists():
             if basename_name:
                 notice = (
-                    f"'{basename_name}' is already in use. Created this session as '{candidate}'. "
-                    "Rename the session folder if desired."
+                    f"'{basename_name}' is already in use. Created this timeline as '{candidate}'. "
+                    "Rename the timeline if desired."
                 )
             else:
                 notice = (
-                    f"Created this session as '{candidate}' because its workspace folder name cannot be used "
-                    "as a session name. Rename the session folder if desired."
+                    f"Created this timeline as '{candidate}' because its workspace folder name cannot be used "
+                    "as a label. Rename the timeline if desired."
                 )
             return candidate, notice
         if digest_length >= max_digest_length:
-            raise RuntimeError("No generated session name is available for this workspace")
+            raise RuntimeError("No generated timeline name is available for this workspace")
         digest_length = min(digest_length + 4, max_digest_length)
 
 
@@ -112,7 +112,7 @@ def post_pick_workspace(handler, _parsed, _ctx) -> None:
     handler._send_json(200, {"ok": True, "path": str(resolved)})
 
 
-def post_start_session_draft(handler, _parsed, ctx) -> None:
+def post_start_timeline_draft(handler, _parsed, ctx) -> None:
     try:
         length = int(handler.headers.get("Content-Length", "0"))
     except ValueError:
@@ -135,12 +135,12 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     if not Path(resolved_workspace).is_dir():
         handler._send_json(400, {"ok": False, "error": f"Invalid workspace: {resolved_workspace}"})
         return
-    owner = find_session_for_workspace(resolved_workspace)
+    owner = find_label_for_workspace(resolved_workspace)
     if owner:
-        handler._send_json(409, {"ok": False, "error": f"A session already exists for this workspace: {owner}"})
+        handler._send_json(409, {"ok": False, "error": f"A timeline already exists for this workspace: {owner}"})
         return
     try:
-        session_name, notice = _session_name_for_workspace(resolved_workspace)
+        timeline_label, notice = _timeline_label_for_workspace(resolved_workspace)
     except RuntimeError as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
@@ -149,8 +149,8 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         handler._send_json(409, {"ok": False, "error": f"room port {room_port} is occupied"})
         return
     try:
-        create_session(
-            session_name=session_name,
+        open_room(
+            timeline_label=timeline_label,
             workspace=resolved_workspace,
             agents=[],
             repo_root=ctx["hub"].repo_root,
@@ -166,7 +166,7 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    ctx["hub"].publish_session_messages_changed()
+    ctx["hub"].publish_timeline_messages_changed()
     room_url = ctx["format_room_url_fn"](
         room_port,
         f"/?ts={int(time.time() * 1000)}",
@@ -175,7 +175,7 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         200,
         {
             "ok": True,
-            "session": session_name,
+            "timeline": timeline_label,
             "room_url": room_url,
             **({"notice": notice} if notice else {}),
         },

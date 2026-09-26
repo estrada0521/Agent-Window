@@ -74,7 +74,7 @@
     };
     const openComposerOverlay = ({ immediateFocus = false } = {}) => {
       if (!composerOverlay) return;
-      const canFocus = immediateFocus && canComposeInSession();
+      const canFocus = immediateFocus && canComposeInRoom();
       if (isComposerOverlayOpen()) {
         if (canFocus) focusComposerTextarea();
         return;
@@ -216,7 +216,7 @@
       stepConversationByMessage(event.key === "ArrowDown");
     });
     composerFabBtn?.addEventListener("click", () => {
-      openComposerOverlay({ immediateFocus: canComposeInSession() });
+      openComposerOverlay({ immediateFocus: canComposeInRoom() });
     });
     composerOverlay?.addEventListener("click", (event) => {
       if (event.target === composerOverlay) {
@@ -239,7 +239,7 @@
         if (event.button !== 1) return;
         if (shouldIgnoreComposerMouseShortcut(event.target)) return;
         event.preventDefault();
-        openComposerOverlay({ immediateFocus: canComposeInSession() });
+        openComposerOverlay({ immediateFocus: canComposeInRoom() });
       }, { capture: true });
       document.addEventListener("auxclick", (event) => {
         if (event.button !== 1) return;
@@ -250,7 +250,7 @@
         if (event.key !== "Enter") return;
         if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
         if (event.isComposing || event.keyCode === 229) return;
-        if (isComposerOverlayOpen() || !canComposeInSession()) return;
+        if (isComposerOverlayOpen() || !canComposeInRoom()) return;
         const active = document.activeElement;
         if (active && active.matches && active.matches("input, textarea, select, button, a, summary, [contenteditable='true']")) return;
         event.preventDefault();

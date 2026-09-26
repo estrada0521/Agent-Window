@@ -1,6 +1,6 @@
-    const HUB_SESSION_SCROLL_ORIGIN = document.querySelector(".mob-list-top-spacer").offsetHeight;
-    const resetHubSessionScroll = () => window.scrollTo(0, HUB_SESSION_SCROLL_ORIGIN);
-    resetHubSessionScroll();
+    const HUB_TIMELINE_SCROLL_ORIGIN = document.querySelector(".mob-list-top-spacer").offsetHeight;
+    const resetHubTimelineScroll = () => window.scrollTo(0, HUB_TIMELINE_SCROLL_ORIGIN);
+    resetHubTimelineScroll();
     const _roomOverlay = document.getElementById("roomOverlay");
     const _roomOverlaySvg = _roomOverlay.querySelector(".room-overlay-shape");
     const _roomOverlayShape = _roomOverlaySvg.querySelector("path");
@@ -13,7 +13,7 @@
     let _hubLayoutRefW = 0;
     let _hubLayoutRefH = 0;
     let _hubVVBridgeHandler = null;
-    let _currentRoomSessionName = "";
+    let _currentRoomTimelineLabel = "";
     let _currentRoomUrl = "";
     let _roomFrameRenderReady = false;
     let _hubLaunchShellPending = false;
@@ -26,9 +26,9 @@
       const width = window.innerWidth || 0;
       if (touch.clientX < 24 || touch.clientX > width - 24) event.preventDefault();
     }, { capture: true, passive: false });
-    let refreshMobSessions = null;
+    let refreshMobTimelines = null;
     const HUB_ROOM_FRAME_KEY = "hub_room_frame";
-    const HUB_LAST_SESSION_KEY = "agent_window_hub_last_session_name";
+    const HUB_LAST_TIMELINE_KEY = "agent_window_hub_last_timeline_label";
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
     const HUB_ROOM_URL_CACHE_TTL_MS = 180000;
     const HUB_ROOM_URL_CACHE_LIMIT = 3;
@@ -127,7 +127,7 @@
         if (_roomOverlay.classList.contains("overlay-visible")) {
           _roomOverlay.classList.add("overlay-settled");
           applyHubRoomSquircle();
-          resetHubSessionScroll();
+          resetHubTimelineScroll();
         }
       };
       _overlaySettleHandler = (event) => {
@@ -214,23 +214,23 @@
     }
     const _launchShellParams = new URLSearchParams(window.location.search || "");
     _hubLaunchShellPending = _launchShellParams.get(HUB_LAUNCH_SHELL_PARAM) === "1";
-    const _restoreLatestSessionOnLaunch = _hubLaunchShellPending;
+    const _restoreLatestTimelineOnLaunch = _hubLaunchShellPending;
     if (_hubLaunchShellPending) {
       showLaunchShell();
       startHubReadyTimeout();
     }
-    function rememberLastSession(name) {
+    function rememberLastTimeline(name) {
       const normalized = String(name || "").trim();
       if (!normalized) return;
-      localStorage.setItem(HUB_LAST_SESSION_KEY, normalized);
+      localStorage.setItem(HUB_LAST_TIMELINE_KEY, normalized);
     }
-    function lastRememberedSession() {
-      return localStorage.getItem(HUB_LAST_SESSION_KEY) || "";
+    function lastRememberedTimeline() {
+      return localStorage.getItem(HUB_LAST_TIMELINE_KEY) || "";
     }
-    function syncMobileSelectedSessionRows() {
-      const selectedName = String(_currentRoomSessionName || lastRememberedSession() || "").trim();
-      document.querySelectorAll("#mobListWrap .mob-session-row[data-session-name]").forEach((row) => {
-        const isSelected = !!selectedName && row.dataset.sessionName === selectedName;
+    function syncMobileSelectedTimelineRows() {
+      const selectedName = String(_currentRoomTimelineLabel || lastRememberedTimeline() || "").trim();
+      document.querySelectorAll("#mobListWrap .mob-timeline-row[data-timeline-label]").forEach((row) => {
+        const isSelected = !!selectedName && row.dataset.timelineLabel === selectedName;
         row.classList.toggle("is-selected", isSelected);
         if (isSelected) row.setAttribute("aria-current", "page");
         else row.removeAttribute("aria-current");
@@ -465,7 +465,7 @@
       if (isRoom) {
         bridge.innerHTML = `
           <option value="" disabled selected>Menu</option>
-          <option value="close-session">Close Timeline</option>
+          <option value="close-timeline">Close Timeline</option>
           <option value="theme">Theme</option>
           <option value="restart-hub">Reload</option>
         `;
@@ -483,7 +483,7 @@
         clearTimeout(_roomOverlayCloseTimer);
         _roomOverlayCloseTimer = 0;
       }
-      rememberLastSession(name);
+      rememberLastTimeline(name);
       if (_hubLaunchShellPending) showLaunchShell();
       startRoomRenderWait();
       const normalizedName = String(name || "").trim();
@@ -543,8 +543,8 @@
           });
         });
       }
-      _currentRoomSessionName = normalizedName;
-      syncMobileSelectedSessionRows();
+      _currentRoomTimelineLabel = normalizedName;
+      syncMobileSelectedTimelineRows();
       if (reuseLoadedFrame) {
         requestAnimationFrame(onRoomReady);
       } else {
@@ -605,26 +605,26 @@
       document.body.classList.remove("hub-room-overlay-active");
       updateMenuContext(false);
       _currentRoomUrl = "";
-      _currentRoomSessionName = "";
-      syncMobileSelectedSessionRows();
+      _currentRoomTimelineLabel = "";
+      syncMobileSelectedTimelineRows();
       clearPersistedRoomFrameState();
     }
     _roomOverlay.addEventListener("click", () => {
       if (!_roomOverlay.classList.contains("overlay-peeking")) return;
       const roomUrl = _roomFrame.src;
       if (!roomUrl || roomUrl === "about:blank") return;
-      openRoomInFrame(roomUrl, _currentRoomSessionName);
+      openRoomInFrame(roomUrl, _currentRoomTimelineLabel);
     });
-    function openSessionFrame(openHref, name) {
-      rememberLastSession(name);
+    function openTimelineFrame(openHref, name) {
+      rememberLastTimeline(name);
       resetLaunchShellCard();
-      const needsReviveTransition = /^\/revive-session(?:[/?]|$)/.test(String(openHref || ""));
+      const needsReviveTransition = /^\/revive-room(?:[/?]|$)/.test(String(openHref || ""));
       if (needsReviveTransition) showLaunchShell();
       return hubRoomUrls.resolve(openHref, name, { force: needsReviveTransition })
         .then((roomUrl) => {
           openRoomInFrame(roomUrl, name);
           if (needsReviveTransition) {
-            if (refreshMobSessions) void refreshMobSessions(true);
+            if (refreshMobTimelines) void refreshMobTimelines(true);
           }
         })
         .catch((err) => {
@@ -646,7 +646,7 @@
           _roomFrame.style.transition = "opacity 140ms ease";
           _roomFrame.style.opacity = "1";
           if (_currentRoomUrl) {
-            persistRoomFrameState(_currentRoomUrl, _currentRoomSessionName || "");
+            persistRoomFrameState(_currentRoomUrl, _currentRoomTimelineLabel || "");
           }
           finishRoomRenderWait();
         }
@@ -715,9 +715,9 @@
     (function () {
       const wrap = document.getElementById("mobListWrap");
       if (!wrap) return;
-      let _mobSessionsCache = { active: [], archived: [] };
-      let _mobSessionsRequestSeq = 0;
-      let _mobSessionsRenderedOnce = false;
+      let _mobTimelinesCache = { active: [], archived: [] };
+      let _mobTimelinesRequestSeq = 0;
+      let _mobTimelinesRenderedOnce = false;
 
       const esc = (v) => String(v || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -757,7 +757,7 @@
         sr.style.removeProperty("--swipe-p");
       };
       const closeRow = (sr, animate) => {
-        const el = sr && sr.querySelector(".mob-session-row");
+        const el = sr && sr.querySelector(".mob-timeline-row");
         if (!el) return;
         el.style.transition = animate ? SNAP_EASE : "none";
         el.style.transform = "";
@@ -772,7 +772,7 @@
         }
       };
       const initSwipeRow = (sr) => {
-        const inner = sr.querySelector(".mob-session-row");
+        const inner = sr.querySelector(".mob-timeline-row");
         if (!inner) return;
         const acts = (sr.dataset.swipeRight || "").split(",")
           .map((name) => name.trim())
@@ -787,18 +787,18 @@
         const onActClick = (e) => {
           e.stopPropagation();
           const action = e.currentTarget.dataset.action;
-          const n = sr.dataset.sessionName;
+          const n = sr.dataset.timelineLabel;
           if (action === "revive") {
-            if (n) openSessionFrame(`/revive-session?session=${encodeURIComponent(n)}`, n);
+            if (n) openTimelineFrame(`/revive-room?timeline=${encodeURIComponent(n)}`, n);
             return;
           }
           if (action === "delete-archived") {
             if (confirm("Delete archived logs for " + n + "? This cannot be undone.")) {
-              window.location.href = `/delete-archived-session?session=${encodeURIComponent(n)}`;
+              window.location.href = `/delete-archived-timeline?timeline=${encodeURIComponent(n)}`;
             }
             return;
           }
-          if (confirm("Archive " + n + "?")) window.location.href = `/kill-session?session=${encodeURIComponent(n)}`;
+          if (confirm("Archive " + n + "?")) window.location.href = `/archive-room?timeline=${encodeURIComponent(n)}`;
         };
         const ensureActs = () => {
           if (!acts.length || sr.querySelector(".swipe-act-tray")) return;
@@ -887,20 +887,20 @@
           if (sr._snap !== 0) { closeRow(sr, true); anyOpen = null; e.stopPropagation(); return; }
           if (e.target.closest(".swipe-act")) return;
           const href = inner.dataset.openHref;
-          if (href) openSessionFrame(href, sr.dataset.sessionName || "");
+          if (href) openTimelineFrame(href, sr.dataset.timelineLabel || "");
         });
       };
 
       const renderRows = (active, archived) => {
-        const rowKey = (row) => row.dataset.sessionName || "";
+        const rowKey = (row) => row.dataset.timelineLabel || "";
         const firstRects = captureListRowRects(wrap, ".swipe-row", rowKey);
         let html = "";
         if (active.length) {
           html += `<div class="mob-section-label">Active</div>`;
           html += active.map((s) => {
             const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
-            return `<div class="swipe-row" data-session-name="${esc(s.name)}" data-swipe-right="kill">` +
-              `<div class="mob-session-row" data-session-name="${esc(s.name)}" data-open-href="/open-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
+            return `<div class="swipe-row" data-timeline-label="${esc(s.name)}" data-swipe-right="kill">` +
+              `<div class="mob-timeline-row" data-timeline-label="${esc(s.name)}" data-open-href="/open-timeline?timeline=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +
               `</div>` +
@@ -912,8 +912,8 @@
           html += `<div class="mob-section-label">Archived</div>`;
           html += archived.map((s) => {
             const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
-            return `<div class="swipe-row" data-session-name="${esc(s.name)}" data-swipe-right="revive,delete-archived">` +
-              `<div class="mob-session-row archived-row" data-session-name="${esc(s.name)}" data-open-href="/open-session?session=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
+            return `<div class="swipe-row" data-timeline-label="${esc(s.name)}" data-swipe-right="revive,delete-archived">` +
+              `<div class="mob-timeline-row archived-row" data-timeline-label="${esc(s.name)}" data-open-href="/open-timeline?timeline=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +
               `</div>` +
@@ -925,58 +925,58 @@
           html += `<div class="mob-empty">No timelines found</div>`;
         }
         wrap.innerHTML = html;
-        syncMobileSelectedSessionRows();
+        syncMobileSelectedTimelineRows();
         wrap.querySelectorAll(".swipe-row").forEach(initSwipeRow);
         flipListRows(wrap, ".swipe-row", rowKey, firstRects);
       };
       const refresh = async (force) => {
-        const requestSeq = ++_mobSessionsRequestSeq;
+        const requestSeq = ++_mobTimelinesRequestSeq;
         try {
-          const res = await fetch(`/sessions?ts=${Date.now()}`, { cache: "no-store" });
+          const res = await fetch(`/timelines?ts=${Date.now()}`, { cache: "no-store" });
           if (!res.ok) throw new Error("failed");
           const data = await res.json();
-          if (requestSeq !== _mobSessionsRequestSeq) return;
+          if (requestSeq !== _mobTimelinesRequestSeq) return;
           if (data.hub_instance !== HUB_INSTANCE) {
             setResidentStatus("hub-restarted", "Hub restarted; reload");
           }
-          const activeSessions = data.active_sessions;
-          const archivedSessions = data.archived_sessions;
-          _mobSessionsCache = { active: activeSessions, archived: archivedSessions };
+          const activeTimelines = data.active_timelines;
+          const archivedTimelines = data.archived_timelines;
+          _mobTimelinesCache = { active: activeTimelines, archived: archivedTimelines };
 
           const sig = JSON.stringify({
-            active: activeSessions,
-            archived: archivedSessions,
+            active: activeTimelines,
+            archived: archivedTimelines,
           });
           if (!force && window._lastMobRenderSig === sig) {
-            _mobSessionsRenderedOnce = true;
+            _mobTimelinesRenderedOnce = true;
             releaseHubLaunchShellAfterRender();
             return;
           }
           window._lastMobRenderSig = sig;
 
-          const rememberedName = lastRememberedSession();
-          const launchSession = !_mobSessionsRenderedOnce && _restoreLatestSessionOnLaunch && !_currentRoomSessionName
-            ? activeSessions.find((session) => session.name === rememberedName) || activeSessions[0]
+          const rememberedName = lastRememberedTimeline();
+          const launchTimeline = !_mobTimelinesRenderedOnce && _restoreLatestTimelineOnLaunch && !_currentRoomTimelineLabel
+            ? activeTimelines.find((timeline) => timeline.name === rememberedName) || activeTimelines[0]
             : null;
-          renderRows(activeSessions, archivedSessions);
-          _mobSessionsRenderedOnce = true;
-          if (launchSession?.name) {
-            void openSessionFrame(
-              `/open-session?session=${encodeURIComponent(launchSession.name)}`,
-              launchSession.name,
+          renderRows(activeTimelines, archivedTimelines);
+          _mobTimelinesRenderedOnce = true;
+          if (launchTimeline?.name) {
+            void openTimelineFrame(
+              `/open-timeline?timeline=${encodeURIComponent(launchTimeline.name)}`,
+              launchTimeline.name,
             ).finally(releaseHubLaunchShellAfterRender);
           } else {
             releaseHubLaunchShellAfterRender();
           }
         } catch (_) {
-          if (requestSeq !== _mobSessionsRequestSeq) return;
-          if (_mobSessionsRenderedOnce || _mobSessionsCache.active.length || _mobSessionsCache.archived.length) return;
+          if (requestSeq !== _mobTimelinesRequestSeq) return;
+          if (_mobTimelinesRenderedOnce || _mobTimelinesCache.active.length || _mobTimelinesCache.archived.length) return;
           wrap.innerHTML = `<div class="mob-empty">Failed to load timelines</div>`;
           if (_hubLaunchShellPending) failHubReadyWait("Failed to load timelines");
         }
       };
-      refreshMobSessions = refresh;
-      startHubSessionMessagesEvents(() => refresh(true));
+      refreshMobTimelines = refresh;
+      startHubTimelineMessagesEvents(() => refresh(true));
       refresh();
     })();
 
@@ -994,7 +994,7 @@
         bridge.addEventListener("change", function (e) {
           var val = bridge.value;
           if (!val) return;
-          if (val === "close-session" || val === "hub") {
+          if (val === "close-timeline" || val === "hub") {
             e.stopImmediatePropagation();
             bridge.value = "";
             closeRoomFrame();

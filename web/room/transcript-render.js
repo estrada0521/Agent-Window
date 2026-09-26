@@ -207,7 +207,7 @@
           const input = document.getElementById("message");
           const sendBtnEl = document.querySelector(".send-btn");
           const hasText = !!(input && input.value.trim().length > 0);
-          if (!sessionActive) {
+          if (!roomActive) {
             if (sendBtnEl) sendBtnEl.classList.remove("visible");
           } else {
             if (sendBtnEl) sendBtnEl.classList.toggle("visible", hasText);
@@ -240,10 +240,10 @@ __INCLUDE:hud.js__
     };
     const syncAgentMenuOptions = () => {
       document.querySelectorAll('option[value="addAgent"]').forEach((option) => {
-        option.disabled = !sessionActive;
+        option.disabled = !roomActive;
       });
       document.querySelectorAll('option[value="removeAgent"]').forEach((option) => {
-        option.disabled = !sessionActive || !availableTargets.length;
+        option.disabled = !roomActive || !availableTargets.length;
       });
     };
     const performAgentAction = async (mode, selected) => {
@@ -424,7 +424,7 @@ __INCLUDE:hud.js__
       if (document.body.classList.contains("right-panel-open")) closeDesktopRightPanel();
       document.documentElement.dataset.launchShell = "1";
       let error = "";
-      const current = await (await fetch("/session-state", { cache: "no-store" })).json();
+      const current = await (await fetch("/room-state", { cache: "no-store" })).json();
       if (current.server_instance === SERVER_INSTANCE_SEED) {
         try {
           const response = await fetch("/reload-room", { method: "POST", cache: "no-store" });

@@ -14,15 +14,15 @@ TEXT_INLINE_CODE_MOBILE_DARK_CHANNELS = "165, 165, 165"
 TEXT_MUTED_LIGHT_CHANNELS = "120, 120, 120"
 TEXT_MUTED_DARK_CHANNELS = "150, 150, 150"
 
-TEXT_SESSION_DESKTOP_LIGHT_CHANNELS = TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS
-TEXT_SESSION_DESKTOP_DARK_CHANNELS = "216, 216, 216"
-TEXT_SESSION_MOBILE_LIGHT_CHANNELS = TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS
-TEXT_SESSION_MOBILE_DARK_CHANNELS = TEXT_PRIMARY_MOBILE_DARK_CHANNELS
+TEXT_TIMELINE_DESKTOP_LIGHT_CHANNELS = TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS
+TEXT_TIMELINE_DESKTOP_DARK_CHANNELS = "216, 216, 216"
+TEXT_TIMELINE_MOBILE_LIGHT_CHANNELS = TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS
+TEXT_TIMELINE_MOBILE_DARK_CHANNELS = TEXT_PRIMARY_MOBILE_DARK_CHANNELS
 
-TEXT_SESSION_DIM_DESKTOP_LIGHT_CHANNELS = TEXT_SESSION_DESKTOP_LIGHT_CHANNELS
-TEXT_SESSION_DIM_DESKTOP_DARK_CHANNELS = "180, 180, 180"
-TEXT_SESSION_DIM_MOBILE_LIGHT_CHANNELS = "100, 100, 100"
-TEXT_SESSION_DIM_MOBILE_DARK_CHANNELS = "180, 180, 180"
+TEXT_TIMELINE_DIM_DESKTOP_LIGHT_CHANNELS = TEXT_TIMELINE_DESKTOP_LIGHT_CHANNELS
+TEXT_TIMELINE_DIM_DESKTOP_DARK_CHANNELS = "180, 180, 180"
+TEXT_TIMELINE_DIM_MOBILE_LIGHT_CHANNELS = "100, 100, 100"
+TEXT_TIMELINE_DIM_MOBILE_DARK_CHANNELS = "180, 180, 180"
 
 TEXT_STRONG_MOBILE_LIGHT_CHANNELS = TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS
 TEXT_STRONG_MOBILE_DARK_CHANNELS = TEXT_PRIMARY_MOBILE_DARK_CHANNELS
@@ -110,8 +110,8 @@ def resolve_theme_palette(theme: str = "dark") -> dict[str, object]:
         line = "rgba(0, 0, 0, 0.10)"
         line_strong = "rgba(0, 0, 0, 0.18)"
         code_copy_hover_bg = "rgba(0, 0, 0, 0.08)"
-        session_hover_bg = "rgba(0, 0, 0, 0.04)"
-        session_selected_bg = "rgba(0, 0, 0, 0.07)"
+        timeline_hover_bg = "rgba(0, 0, 0, 0.04)"
+        timeline_selected_bg = "rgba(0, 0, 0, 0.07)"
         panel_row_bg = "rgba(0, 0, 0, 0.06)"
         panel_row_border = "rgba(0, 0, 0, 0.08)"
         panel_row_hover_bg = "rgba(0, 0, 0, 0.08)"
@@ -128,8 +128,8 @@ def resolve_theme_palette(theme: str = "dark") -> dict[str, object]:
         line = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.07)"
         line_strong = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.12)"
         code_copy_hover_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.09)"
-        session_hover_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.05)"
-        session_selected_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.08)"
+        timeline_hover_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.05)"
+        timeline_selected_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.08)"
         panel_row_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.10)"
         panel_row_border = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.14)"
         panel_row_hover_bg = f"rgba({fg_level}, {fg_level}, {fg_level}, 0.13)"
@@ -169,8 +169,8 @@ def resolve_theme_palette(theme: str = "dark") -> dict[str, object]:
         "line": line,
         "line_strong": line_strong,
         "code_copy_hover_bg": code_copy_hover_bg,
-        "session_hover_bg": session_hover_bg,
-        "session_selected_bg": session_selected_bg,
+        "timeline_hover_bg": timeline_hover_bg,
+        "timeline_selected_bg": timeline_selected_bg,
         "panel_row_bg": panel_row_bg,
         "panel_row_border": panel_row_border,
         "panel_row_hover_bg": panel_row_hover_bg,
@@ -254,8 +254,8 @@ def apply_color_tokens(
         ("__LINE__", str(palette["line"])),
         ("__LINE_STRONG__", str(palette["line_strong"])),
         ("__CODE_COPY_HOVER_BG__", str(palette["code_copy_hover_bg"])),
-        ("__SESSION_HOVER_BG__", str(palette["session_hover_bg"])),
-        ("__SESSION_SELECTED_BG__", str(palette["session_selected_bg"])),
+        ("__TIMELINE_HOVER_BG__", str(palette["timeline_hover_bg"])),
+        ("__TIMELINE_SELECTED_BG__", str(palette["timeline_selected_bg"])),
         ("__PANEL_ROW_BG__", str(palette["panel_row_bg"])),
         ("__PANEL_ROW_BORDER__", str(palette["panel_row_border"])),
         ("__PANEL_ROW_HOVER_BG__", str(palette["panel_row_hover_bg"])),

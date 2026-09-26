@@ -4,9 +4,9 @@ from urllib.parse import urlparse
 
 from server import http_proxy
 from server.hub.server_helpers import format_room_url
-from fs.log.meta import session_workspace_claims
+from fs.log.meta import log_workspace_claims
 from fs.log.paths import workspace_room_port
-from server.hub.session_api import split_room_proxy_path
+from server.hub.timeline_api import split_room_proxy_path
 
 UPSTREAM_TIMEOUT = 30.0
 STREAM_CHUNK_SIZE = 64 * 1024
@@ -34,10 +34,10 @@ def _send_text(handler, status: int, detail: str) -> None:
         return
 
 
-def proxy_room_session(handler, method: str) -> None:
+def proxy_room(handler, method: str) -> None:
     parsed = urlparse(handler.path)
     room_port, suffix = split_room_proxy_path(parsed.path)
-    if not any(workspace_room_port(workspace) == room_port for _name, workspace in session_workspace_claims().values()):
+    if not any(workspace_room_port(workspace) == room_port for _name, workspace in log_workspace_claims().values()):
         _send_text(handler, 404, "404 Not Found")
         return
     body = _read_body(handler, method)

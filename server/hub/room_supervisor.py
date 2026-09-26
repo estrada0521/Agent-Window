@@ -5,11 +5,11 @@ import shutil
 from pathlib import Path
 
 from server.room.probe import read_room_server_state
-from fs.log.meta import read_session_meta, session_workspace_claims
+from fs.log.meta import read_log_meta, log_workspace_claims
 from tmux.control import (
-    SessionControlError,
-    create_session,
-    kill_session,
+    RoomControlError,
+    open_room,
+    archive_room,
     stop_room_server,
 )
 from fs.log.paths import (
@@ -19,7 +19,7 @@ from fs.log.paths import (
     workspace_log_link_path,
 )
 from server.room.room_process import launch_room_server, wait_for_room_server
-from server.hub.session_query import live_sessions_query
+from server.hub.timeline_query import live_timelines_query
 
 
 class TmuxUnhealthy(RuntimeError):
@@ -50,7 +50,7 @@ def room_launch_env(hub) -> dict[str, str]:
 
 
 def stop_inactive_room_servers(*, keep_workspace: str = "") -> str:
-    for _name, workspace in session_workspace_claims().values():
+    for _name, workspace in log_workspace_claims().values():
         if workspace == keep_workspace:
             continue
         port = workspace_room_port(workspace)
@@ -107,14 +107,14 @@ def ensure_room_server(
         return not detail, room_port, detail
 
 
-def revive_archived_session(hub, session_name: str) -> tuple[bool, str]:
-    live = live_sessions_query(hub)
+def request_room_revive(hub, timeline_label: str) -> tuple[bool, str]:
+    live = live_timelines_query(hub)
     if live.state == "unhealthy":
         raise TmuxUnhealthy(live.detail)
-    if session_name in live.workspaces:
+    if timeline_label in live.workspaces:
         return True, ""
     try:
-        meta = read_session_meta(session_name)
+        meta = read_log_meta(timeline_label)
     except FileNotFoundError:
         return False, "That archived timeline is not available in this repo."
     workspace = meta["workspace"]
@@ -127,39 +127,39 @@ def revive_archived_session(hub, session_name: str) -> tuple[bool, str]:
     if not port_is_bindable(room_port):
         return False, f"room port {room_port} is occupied"
     try:
-        create_session(
-            session_name=session_name,
+        open_room(
+            timeline_label=timeline_label,
             workspace=workspace,
             agents=meta["agents"],
             repo_root=hub.repo_root,
             revive=True,
         )
-    except SessionControlError as exc:
+    except RoomControlError as exc:
         return False, str(exc)
     return True, ""
 
 
-def kill_repo_session(hub, session_name: str) -> tuple[bool, str]:
-    live = live_sessions_query(hub)
+def request_room_archive(hub, timeline_label: str) -> tuple[bool, str]:
+    live = live_timelines_query(hub)
     if live.state == "unhealthy":
         raise TmuxUnhealthy(live.detail)
-    if session_name not in live.workspaces:
+    if timeline_label not in live.workspaces:
         return False, "That active timeline is not available in this repo."
     try:
-        kill_session(session_name=session_name)
-    except SessionControlError as exc:
+        archive_room(timeline_label=timeline_label)
+    except RoomControlError as exc:
         return False, str(exc)
     return True, ""
 
 
-def delete_archived_session(hub, session_name: str) -> tuple[bool, str]:
-    live = live_sessions_query(hub)
+def delete_archived_timeline(hub, timeline_label: str) -> tuple[bool, str]:
+    live = live_timelines_query(hub)
     if live.state == "unhealthy":
         raise TmuxUnhealthy(live.detail)
-    if session_name in live.workspaces:
+    if timeline_label in live.workspaces:
         return False, "That archived timeline is not available in this repo."
     try:
-        workspace = read_session_meta(session_name)["workspace"]
+        workspace = read_log_meta(timeline_label)["workspace"]
     except FileNotFoundError:
         return False, "That archived timeline is not available in this repo."
     stop_ok, stop_detail = stop_room_server(workspace)
@@ -172,7 +172,7 @@ def delete_archived_session(hub, session_name: str) -> tuple[bool, str]:
         except OSError as exc:
             return False, str(exc)
     try:
-        shutil.rmtree(log_dir(session_name))
+        shutil.rmtree(log_dir(timeline_label))
     except OSError as exc:
         return False, str(exc)
     return True, ""

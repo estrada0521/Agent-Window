@@ -1,7 +1,7 @@
       const LARGE_PASTE_TEXT_CHARS = 32_768;
 
       const uploadAttachedFiles = async (fileList) => {
-        if (!canComposeInSession()) return false;
+        if (!canComposeInRoom()) return false;
         const files = Array.from(fileList || []).filter((f) => f && typeof f.name === "string");
         if (!files.length) return false;
         try {

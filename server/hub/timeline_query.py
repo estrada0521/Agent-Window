@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from fs.log.meta import (
-    read_session_meta_file,
-    session_workspace_claims,
+    read_log_meta_file,
+    log_workspace_claims,
 )
 from fs.log.paths import (
     LOG_FILENAME,
@@ -20,7 +20,7 @@ from fs.log.jsonl import iter_log_entries_reversed
 
 
 @dataclass(frozen=True)
-class LiveSessions:
+class LiveTimelines:
     workspaces: dict[str, str]
     state: str
     detail: str = ""
@@ -52,7 +52,7 @@ def latest_message_preview(log_path: Path) -> dict[str, str]:
     return {"sender": "", "text": "", "revision": ""}
 
 
-def build_session_record(*, name: str, workspace: str) -> dict:
+def build_timeline_record(*, name: str, workspace: str) -> dict:
     preview = latest_message_preview(log_jsonl_path(name))
     return {
         "name": name,
@@ -92,11 +92,11 @@ def live_tmux_sessions_query(hub: Any) -> tuple[dict[str, tuple[str, int]], str,
     return workspace_to_tmux, "ok", ""
 
 
-def live_sessions_query(hub: Any) -> LiveSessions:
-    claims = session_workspace_claims()
+def live_timelines_query(hub: Any) -> LiveTimelines:
+    claims = log_workspace_claims()
     workspace_to_tmux, state, detail = live_tmux_sessions_query(hub)
     if state != "ok":
-        return LiveSessions({}, state, detail)
+        return LiveTimelines({}, state, detail)
     live = sorted(
         (
             (workspace_to_tmux[normalized][1], name, workspace)
@@ -105,24 +105,24 @@ def live_sessions_query(hub: Any) -> LiveSessions:
         ),
         reverse=True,
     )
-    return LiveSessions({name: workspace for _created, name, workspace in live}, "ok")
+    return LiveTimelines({name: workspace for _created, name, workspace in live}, "ok")
 
 
-def active_session_records(live: LiveSessions) -> list[dict]:
-    return [build_session_record(name=name, workspace=workspace) for name, workspace in live.workspaces.items()]
+def active_timeline_records(live: LiveTimelines) -> list[dict]:
+    return [build_timeline_record(name=name, workspace=workspace) for name, workspace in live.workspaces.items()]
 
 
-def archived_session_records(live: LiveSessions) -> list[dict]:
+def archived_timeline_records(live: LiveTimelines) -> list[dict]:
     root = agent_window_log_root()
     if not root.is_dir():
         return []
-    sessions: list[tuple[float, dict]] = []
+    timelines: list[tuple[float, dict]] = []
     for entry in root.iterdir():
         if not entry.is_dir() or entry.name in live.workspaces:
             continue
-        meta = read_session_meta_file(entry / META_FILENAME)
-        record = build_session_record(name=entry.name, workspace=meta["workspace"])
+        meta = read_log_meta_file(entry / META_FILENAME)
+        record = build_timeline_record(name=entry.name, workspace=meta["workspace"])
         record["agents"] = meta["agents"]
-        sessions.append(((entry / LOG_FILENAME).stat().st_mtime, record))
-    sessions.sort(key=lambda item: item[0], reverse=True)
-    return [record for _mtime, record in sessions]
+        timelines.append(((entry / LOG_FILENAME).stat().st_mtime, record))
+    timelines.sort(key=lambda item: item[0], reverse=True)
+    return [record for _mtime, record in timelines]

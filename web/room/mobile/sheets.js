@@ -353,7 +353,7 @@
       }
       syncHeaderMenuFocus();
     }
-    let repoSession = "";
+    let repoTimeline = "";
     let repoPanelRenderSig = "";
     let repoPanelUpdateSeq = 0;
     let repoPanelEntries = [];
@@ -690,9 +690,9 @@ __INCLUDE:git-panel.js__
       const normalizeRepoPath = (value) => String(value || "")
         .replace(/\\/g, "/")
         .replace(/^\/+|\/+$/g, "");
-      const sessionKey = repoSession || currentSessionName || "";
-      if (mobileSheet._repoSessionKey !== sessionKey) {
-        mobileSheet._repoSessionKey = sessionKey;
+      const timelineKey = repoTimeline || currentTimelineLabel || "";
+      if (mobileSheet._repoTimelineKey !== timelineKey) {
+        mobileSheet._repoTimelineKey = timelineKey;
         _repoBrowserPath = "";
         repoScrollByPath.clear();
         repoPanelRenderSig = "";
@@ -732,7 +732,7 @@ __INCLUDE:git-panel.js__
         const path = normalizeRepoPath(rawPath);
         const allEntries = Array.isArray(entriesForPath) ? entriesForPath : [];
         const nextRenderSig = JSON.stringify({
-          session: sessionKey,
+          timeline: timelineKey,
           path,
           loading: loading ? 1 : 0,
           error: String(error || ""),
@@ -872,14 +872,14 @@ __INCLUDE:git-panel.js__
 
       const openRepoPath = async (rawPath, { transition = "none", preserveCurrent = false } = {}) => {
         const path = normalizeRepoPath(rawPath);
-        if (mobileSheet._repoSessionKey !== sessionKey) return;
+        if (mobileSheet._repoTimelineKey !== timelineKey) return;
         const updateSeq = ++repoPanelUpdateSeq;
         const canPreserveCurrent = !!(
           preserveCurrent
           && path === _repoBrowserPath
           && repoBrowserMountEl()?.childElementCount
         );
-        const repoLoadCancelled = () => updateSeq !== repoPanelUpdateSeq || mobileSheet._repoSessionKey !== sessionKey;
+        const repoLoadCancelled = () => updateSeq !== repoPanelUpdateSeq || mobileSheet._repoTimelineKey !== timelineKey;
         cancelRepoLoading();
         if (!canPreserveCurrent) {
           cancelRepoLoading = startDelayedLoading(
@@ -907,7 +907,7 @@ __INCLUDE:git-panel.js__
                 fetchRepoDir(""),
                 ensureFileIconTheme(),
               ]);
-              if (updateSeq !== repoPanelUpdateSeq || mobileSheet._repoSessionKey !== sessionKey) return;
+              if (updateSeq !== repoPanelUpdateSeq || mobileSheet._repoTimelineKey !== timelineKey) return;
               renderPanel("", rootEntries, { transition: "back" });
               return;
             } catch (_) { }

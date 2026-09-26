@@ -5,8 +5,8 @@ import json
 import os
 import sys
 
-from fs.log.meta import find_session_for_workspace
-from tmux.control import SessionControlError, describe_session
+from fs.log.meta import find_label_for_workspace
+from tmux.control import RoomControlError, describe_timeline
 
 
 def _format_panes(panes: dict) -> list[str]:
@@ -71,13 +71,13 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.cmd == "context":
             workspace_hint = (args.workspace or "").strip() or os.getcwd()
-            session_name = (args.timeline or "").strip() or find_session_for_workspace(workspace_hint)
-            if not session_name:
+            timeline_label = (args.timeline or "").strip() or find_label_for_workspace(workspace_hint)
+            if not timeline_label:
                 print("No Agent Window timeline found for this workspace; specify --timeline.", file=sys.stderr)
                 return 1
-            info = describe_session(session_name)
+            info = describe_timeline(timeline_label)
             print(json.dumps(info, ensure_ascii=False) if args.json else format_context_text(info))
-    except SessionControlError as exc:
+    except RoomControlError as exc:
         print(str(exc), file=sys.stderr)
         return 1
     return 0

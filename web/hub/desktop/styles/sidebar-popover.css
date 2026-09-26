@@ -37,13 +37,13 @@
       padding: 1.4em 1.2em 0.3em;
       font-size: 0.77em;
     }
-    .desk-sidebar-hover-list .desk-session-row {
+    .desk-sidebar-hover-list .desk-timeline-row {
       border-radius: 8px;
       margin: 0;
       padding: 0.62em 0.77em;
     }
-    .desk-sidebar-hover-list .desk-session-row:hover .desk-row-stack,
-    .desk-sidebar-hover-list .desk-session-row:focus-within .desk-row-stack {
+    .desk-sidebar-hover-list .desk-timeline-row:hover .desk-row-stack,
+    .desk-sidebar-hover-list .desk-timeline-row:focus-within .desk-row-stack {
       padding-right: 0;
     }
     .desk-sidebar-hover-list .desk-row-name {
@@ -56,7 +56,7 @@
 
     .desk-row-hover-action[data-desk-hover-action="revive"]:hover,
     .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible {
-      color: var(--session-revive-fg);
+      color: var(--timeline-revive-fg);
     }
     .desk-row-hover-action[data-desk-hover-action="revive"]:hover svg,
     .desk-row-hover-action[data-desk-hover-action="revive"]:hover polyline,
@@ -66,12 +66,12 @@
     .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible polyline,
     .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible path,
     .desk-row-hover-action[data-desk-hover-action="revive"]:focus-visible line {
-      color: var(--session-revive-fg);
-      stroke: var(--session-revive-fg);
+      color: var(--timeline-revive-fg);
+      stroke: var(--timeline-revive-fg);
     }
     .desk-row-hover-action[data-desk-hover-action="revive"]:active {
-      color: var(--session-revive-fg);
+      color: var(--timeline-revive-fg);
     }
     .desk-swipe-action-btn[data-desk-swipe-action="revive"] {
-      background: var(--session-revive-fg);
+      background: var(--timeline-revive-fg);
     }

@@ -1,20 +1,20 @@
 
-    let _hubSessionsCache = { active: [], archived: [] };
+    let _hubTimelinesCache = { active: [], archived: [] };
     let _deskPreviewRevisions = new Map();
-    const _deskUnreadSessions = new Set();
-    let _deskSessionsRequestSeq = 0;
-    let _deskSessionsRenderedOnce = false;
-    let _deskSelectedSessionName = "";
+    const _deskUnreadTimelines = new Set();
+    let _deskTimelinesRequestSeq = 0;
+    let _deskTimelinesRenderedOnce = false;
+    let _deskSelectedTimelineLabel = "";
     let _deskRoomFrameLoadedUrl = "";
     let _deskOpenToken = 0;
     let _deskSidebarWidthAtDefaultTextSize = DESK_DEFAULT_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE;
     let _deskOpenSwipeRow = null;
-    let _deskContextSessionName = "";
-    let _deskSessionRename = null;
-    let _deskNewSessionStarting = false;
+    let _deskContextTimelineLabel = "";
+    let _deskTimelineRename = null;
+    let _deskNewTimelineStarting = false;
 
     function updateDeskWindowTitle(name) {
-      const textEl = _deskSessionTitleTextEl;
+      const textEl = _deskTimelineTitleTextEl;
       if (!textEl) return;
       textEl.textContent = "";
       if (name) {
@@ -193,7 +193,7 @@
       _deskSidebarWidthAtDefaultTextSize = clampDeskSidebarWidthAtDefaultTextSize(nextWidth);
       applyDeskSidebarWidth();
       if (_deskAppSidebarToggle) {
-        _deskAppSidebarToggle.classList.toggle("is-active", isDeskSessionSidebarOpen());
+        _deskAppSidebarToggle.classList.toggle("is-active", isDeskTimelineSidebarOpen());
       }
       if (persist) {
         localStorage.setItem(DESK_SIDEBAR_WIDTH_KEY, String(_deskSidebarWidthAtDefaultTextSize));
@@ -255,22 +255,22 @@
       return localStorage.getItem(DESK_SELECTED_KEY) || "";
     }
 
-    function findSessionRecord(name) {
-      const active = (_hubSessionsCache.active || []).find((session) => session.name === name);
-      if (active) return { session: active, archived: false };
-      const archived = (_hubSessionsCache.archived || []).find((session) => session.name === name);
-      if (archived) return { session: archived, archived: true };
+    function findTimelineRecord(name) {
+      const active = (_hubTimelinesCache.active || []).find((timeline) => timeline.name === name);
+      if (active) return { timeline: active, archived: false };
+      const archived = (_hubTimelinesCache.archived || []).find((timeline) => timeline.name === name);
+      if (archived) return { timeline: archived, archived: true };
       return null;
     }
 
-    function buildSessionOpenHref(sessionName, _archived) {
-      return `/open-session?session=${encodeURIComponent(sessionName)}`;
+    function buildTimelineOpenHref(timelineLabel, _archived) {
+      return `/open-timeline?timeline=${encodeURIComponent(timelineLabel)}`;
     }
 
-    function switchToDeskActiveSession(index) {
-      const target = (_hubSessionsCache.active || [])[index];
-      if (!target || !target.name || target.name === _deskSelectedSessionName) return;
-      openSessionFrame(buildSessionOpenHref(target.name, false), target.name);
+    function switchToDeskActiveTimeline(index) {
+      const target = (_hubTimelinesCache.active || [])[index];
+      if (!target || !target.name || target.name === _deskSelectedTimelineLabel) return;
+      openTimelineFrame(buildTimelineOpenHref(target.name, false), target.name);
     }
 
     function systemPrefersDark() {
@@ -344,7 +344,7 @@
 
     function syncDeskRoomShellState() {
       if (_deskRoomFrame) {
-        if (isDeskSessionSidebarOpen()) _deskRoomFrame.dataset.hubSidebarOpen = "1";
+        if (isDeskTimelineSidebarOpen()) _deskRoomFrame.dataset.hubSidebarOpen = "1";
         else delete _deskRoomFrame.dataset.hubSidebarOpen;
       }
     }
@@ -367,7 +367,7 @@
       _deskWorkbench.classList.toggle("sidebar-open", !!isOpen);
       sessionStorage.setItem(DESK_SIDEBAR_OPEN_KEY, isOpen ? "1" : "0");
       if (_deskAppSidebarToggle) {
-        _deskAppSidebarToggle.classList.toggle("is-active", isDeskSessionSidebarOpen());
+        _deskAppSidebarToggle.classList.toggle("is-active", isDeskTimelineSidebarOpen());
       }
       syncDeskSidebarResizerVisibility();
       syncDeskRoomShellState();
@@ -377,7 +377,7 @@
       return !!(_deskWorkbench && _deskWorkbench.classList.contains("sidebar-open"));
     }
 
-    function isDeskSessionSidebarOpen() {
+    function isDeskTimelineSidebarOpen() {
       return isDeskSidebarOpen();
     }
 
@@ -445,15 +445,15 @@
         if (isDeskSidebarOpen()) return;
         if (_deskAutoWindowHeight) return;
         if (hoverPopover) return;
-        if (!_deskSessionList) return;
+        if (!_deskTimelineList) return;
 
         const listEl = document.createElement("div");
         listEl.className = "desk-sidebar-hover-list";
-        for (const child of Array.from(_deskSessionList.children)) {
+        for (const child of Array.from(_deskTimelineList.children)) {
           if (child.classList.contains("desk-section-label")) {
             listEl.appendChild(child.cloneNode(true));
           } else if (child.classList.contains("desk-swipe-row")) {
-            const row = child.querySelector(".desk-session-row");
+            const row = child.querySelector(".desk-timeline-row");
             if (row) {
               const clone = row.cloneNode(true);
               clone.querySelectorAll(".desk-row-hover-action").forEach(b => b.remove());
@@ -468,11 +468,11 @@
         hoverPopover.addEventListener("mouseenter", cancelDismiss);
         hoverPopover.addEventListener("mouseleave", scheduleDismiss);
         hoverPopover.addEventListener("click", (event) => {
-          const row = event.target.closest(".desk-session-row");
+          const row = event.target.closest(".desk-timeline-row");
           if (!row) return;
           const href = row.dataset.openHref;
-          const name = row.dataset.sessionName || "";
-          if (href) { dismiss(); openSessionFrame(href, name); }
+          const name = row.dataset.timelineLabel || "";
+          if (href) { dismiss(); openTimelineFrame(href, name); }
         });
         hoverPopover.appendChild(listEl);
         document.body.appendChild(hoverPopover);

@@ -3,53 +3,53 @@ from __future__ import annotations
 import threading
 from pathlib import Path
 
-from fs.log.meta import find_session_for_workspace
+from fs.log.meta import find_label_for_workspace
 from fs.log.paths import (
     agent_window_log_root,
     log_jsonl_path,
 )
 
 
-class WorkspaceSessionBinding:
+class WorkspaceTimelineBinding:
 
     def __init__(self, workspace: Path | str) -> None:
         self.workspace = str(Path(workspace).expanduser().resolve())
-        self._session_root = agent_window_log_root()
+        self._log_root = agent_window_log_root()
         self._lock = threading.RLock()
         self._root_signature: tuple[int, int] | None = None
-        self._session_name = ""
+        self._timeline_label = ""
         self._log_path = Path()
         self.refresh(force=True)
 
     def _current_root_signature(self) -> tuple[int, int]:
         try:
-            stat = self._session_root.stat()
+            stat = self._log_root.stat()
         except OSError as exc:
-            raise RuntimeError(f"session root is unavailable: {self._session_root}") from exc
-        if not self._session_root.is_dir():
-            raise RuntimeError(f"session root is not a directory: {self._session_root}")
+            raise RuntimeError(f"log root is unavailable: {self._log_root}") from exc
+        if not self._log_root.is_dir():
+            raise RuntimeError(f"log root is not a directory: {self._log_root}")
         return stat.st_mtime_ns, stat.st_ctime_ns
 
     def refresh(self, *, force: bool = False) -> tuple[str, Path]:
         with self._lock:
             signature = self._current_root_signature()
             if not force and signature == self._root_signature:
-                return self._session_name, self._log_path
+                return self._timeline_label, self._log_path
 
-            session_name = find_session_for_workspace(self.workspace)
-            if not session_name:
-                raise RuntimeError(f"No agent-window session claims workspace {self.workspace}")
-            log_path = log_jsonl_path(session_name)
-            self._session_name = session_name
+            timeline_label = find_label_for_workspace(self.workspace)
+            if not timeline_label:
+                raise RuntimeError(f"No agent-window timeline claims workspace {self.workspace}")
+            log_path = log_jsonl_path(timeline_label)
+            self._timeline_label = timeline_label
             self._log_path = log_path
             self._root_signature = self._current_root_signature()
-            return self._session_name, self._log_path
+            return self._timeline_label, self._log_path
 
     def snapshot(self) -> tuple[str, Path]:
         return self.refresh()
 
     @property
-    def session_name(self) -> str:
+    def timeline_label(self) -> str:
         return self.refresh()[0]
 
     @property
@@ -57,5 +57,5 @@ class WorkspaceSessionBinding:
         return self.refresh()[1]
 
     @property
-    def session_dir(self) -> Path:
+    def log_dir(self) -> Path:
         return self.log_path.parent

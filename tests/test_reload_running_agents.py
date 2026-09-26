@@ -23,7 +23,7 @@ class ReloadRunningAgentsHandoffTests(unittest.TestCase):
     def test_room_runtime_seeds_agent_running_from_the_handoff(self) -> None:
         fake_binding = SimpleNamespace(workspace="/work/project")
         with (
-            mock.patch.object(state_module, "WorkspaceSessionBinding", return_value=fake_binding),
+            mock.patch.object(state_module, "WorkspaceTimelineBinding", return_value=fake_binding),
             mock.patch.object(state_module, "find_session_for_workspace", return_value=None),
         ):
             state = state_module.RoomState(
@@ -39,7 +39,7 @@ class ReloadRunningAgentsHandoffTests(unittest.TestCase):
     def test_room_runtime_defaults_to_no_running_agents(self) -> None:
         fake_binding = SimpleNamespace(workspace="/work/project")
         with (
-            mock.patch.object(state_module, "WorkspaceSessionBinding", return_value=fake_binding),
+            mock.patch.object(state_module, "WorkspaceTimelineBinding", return_value=fake_binding),
             mock.patch.object(state_module, "find_session_for_workspace", return_value=None),
         ):
             state = state_module.RoomState(

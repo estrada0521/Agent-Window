@@ -6,7 +6,7 @@
       renderAgentStatus(_serverAgentStatuses);
       const settle = () => {
         if (!_optimisticRunning.has(agent)) return;
-        void refreshSessionState();
+        void refreshRoomState();
       };
       setTimeout(settle, 600);
       setTimeout(settle, 4000);
@@ -32,36 +32,36 @@
       currentAgentStatuses = { ...merged };
       renderThinkingIndicator();
     };
-    const applySessionState = (data) => {
+    const applyRoomState = (data) => {
       if (!data || typeof data !== "object") return;
-      if (typeof data.session === "string" && data.session) {
-        currentSessionName = data.session;
+      if (typeof data.timeline === "string" && data.timeline) {
+        currentTimelineLabel = data.timeline;
         if (document.documentElement.dataset.mobile === "1") {
-          repoSession = currentSessionName;
+          repoTimeline = currentTimelineLabel;
           if (latestPayloadData) updateRepoPanel(displayEntriesForData(latestPayloadData));
         }
       }
       if (typeof data.active === "boolean") {
-        sessionActive = data.active;
+        roomActive = data.active;
       }
-      document.getElementById("message").disabled = !sessionActive;
+      document.getElementById("message").disabled = !roomActive;
       const _attachBtn = document.getElementById("attachBtn");
-      if (_attachBtn) _attachBtn.disabled = !sessionActive;
-      if (typeof data.session === "string" && data.session) {
+      if (_attachBtn) _attachBtn.disabled = !roomActive;
+      if (typeof data.timeline === "string" && data.timeline) {
         restoreComposerDraft();
       }
-      const resolvedTargets = normalizedSessionTargets(data.targets);
+      const resolvedTargets = normalizedTimelineTargets(data.targets);
       const picker = document.getElementById("targetPicker");
       if (!picker.dataset.loaded) {
-        selectedTargets = loadTargetSelection(currentSessionName, resolvedTargets);
-        saveTargetSelection(currentSessionName, selectedTargets);
+        selectedTargets = loadTargetSelection(currentTimelineLabel, resolvedTargets);
+        saveTargetSelection(currentTimelineLabel, selectedTargets);
         picker.dataset.loaded = "1";
       }
       const nextTargetsSig = JSON.stringify(resolvedTargets);
       if (nextTargetsSig !== JSON.stringify(availableTargets)) {
         availableTargets = resolvedTargets;
         selectedTargets = selectedTargets.filter((target) => availableTargets.includes(target));
-        saveTargetSelection(currentSessionName, selectedTargets);
+        saveTargetSelection(currentTimelineLabel, selectedTargets);
         renderTargetPicker(availableTargets);
       }
       currentRunningDisplay = { ...data.running_display };
@@ -73,31 +73,31 @@
       syncThinkingRunningItems(data.statuses, { suppressRender: true });
       renderAgentStatus(data.statuses);
       syncAgentMenuOptions();
-      if (document.documentElement.dataset.mobile !== "1" && typeof data.session === "string" && data.session) {
-        dpOnSessionSummaryPinReload();
+      if (document.documentElement.dataset.mobile !== "1" && typeof data.timeline === "string" && data.timeline) {
+        dpOnTimelineSummaryPinReload();
       }
     };
-    const refreshSessionState = async () => {
-      if (refreshSessionState.inFlight) {
-        refreshSessionState.pending = true;
+    const refreshRoomState = async () => {
+      if (refreshRoomState.inFlight) {
+        refreshRoomState.pending = true;
         return;
       }
-      refreshSessionState.inFlight = true;
+      refreshRoomState.inFlight = true;
       try {
-        const res = await fetchWithTimeout(`/session-state?ts=${Date.now()}`, {}, 4000);
-        if (!res.ok) throw new Error("session state unavailable");
-        applySessionState(await res.json());
+        const res = await fetchWithTimeout(`/room-state?ts=${Date.now()}`, {}, 4000);
+        if (!res.ok) throw new Error("timeline state unavailable");
+        applyRoomState(await res.json());
         setResidentStatus("state-failed", "");
       } catch (err) {
         setResidentStatus("state-failed", err?.message || String(err));
       } finally {
-        refreshSessionState.inFlight = false;
-        if (refreshSessionState.pending) {
-          refreshSessionState.pending = false;
-          queueMicrotask(() => { void refreshSessionState(); });
+        refreshRoomState.inFlight = false;
+        if (refreshRoomState.pending) {
+          refreshRoomState.pending = false;
+          queueMicrotask(() => { void refreshRoomState(); });
         }
       }
     };
-    refreshSessionState.inFlight = false;
-    refreshSessionState.pending = false;
-    void refreshSessionState();
+    refreshRoomState.inFlight = false;
+    refreshRoomState.pending = false;
+    void refreshRoomState();

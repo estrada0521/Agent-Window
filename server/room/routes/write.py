@@ -67,7 +67,7 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         return
     state = ctx["state"]
     try:
-        instance = add_agent(session_name=ctx["session_name"], agent=agent)
+        instance = add_agent(timeline_label=ctx["timeline_label"], agent=agent)
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
@@ -89,7 +89,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         return
     state = ctx["state"]
     try:
-        instance = remove_agent(session_name=ctx["session_name"], agent=agent)
+        instance = remove_agent(timeline_label=ctx["timeline_label"], agent=agent)
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
@@ -213,7 +213,7 @@ def _open_terminal(handler, ctx, *, agent: str = "", pane_required: bool = False
         handler._send_json(200, {"ok": True})
 
     state = ctx["state"]
-    if not state.session_is_active:
+    if not state.room_is_active:
         handler._send_json(409, {"ok": False, "error": "tmux session is not active"})
         return
     tmux_name = state.tmux_session_name
@@ -468,7 +468,7 @@ def _post_reveal_file(handler, _parsed, ctx) -> None:
 
 
 def _post_reveal_log(handler, _parsed, ctx) -> None:
-    _session, log_path = ctx["state"].session_binding_snapshot()
+    _timeline, log_path = ctx["state"].timeline_binding_snapshot()
     _send_workspace_result(handler, lambda: ctx["files"].reveal_in_finder(str(log_path)))
 
 

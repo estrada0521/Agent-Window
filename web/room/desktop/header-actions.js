@@ -43,7 +43,7 @@
 
       if (window.parent === window) {
         openRoomMenu(rightMenuBtn, {
-          sessionActive: !!sessionActive,
+          roomActive: !!roomActive,
           addAgents: ALL_BASE_AGENTS.filter(Boolean),
           removeAgents: agentActionCandidates("remove"),
         }, (action) => void handleRoomMenuAction(action));
@@ -67,7 +67,7 @@
       const payload = {
         x: Math.round(rect.left || 0),
         y: Math.round((rect.bottom || ((rect.top || 0) + (rect.height || 28))) + 2),
-        sessionActive: !!sessionActive,
+        roomActive: !!roomActive,
         addAgents: ALL_BASE_AGENTS.filter(Boolean),
         removeAgents: agentActionCandidates("remove"),
         agentIcons,

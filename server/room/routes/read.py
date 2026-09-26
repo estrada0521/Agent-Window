@@ -162,9 +162,9 @@ def _get_files_search(handler, parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
-def _get_session_state(handler, _parsed, ctx) -> None:
+def _get_room_state(handler, _parsed, ctx) -> None:
     try:
-        body = json.dumps(ctx["state"].session_state_payload(), ensure_ascii=True).encode("utf-8")
+        body = json.dumps(ctx["state"].room_state_payload(), ensure_ascii=True).encode("utf-8")
     except Exception as exc:
         body = json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=True).encode("utf-8")
         _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
@@ -256,7 +256,7 @@ _GET_ROUTES = {
     "/file-view": _get_file_view,
     "/files-search": _get_files_search,
     "/files-dir": _get_files_dir,
-    "/session-state": _get_session_state,
+    "/room-state": _get_room_state,
     "/events": _get_events,
     "/git-overview": _get_git_overview,
     "/git-diff-files": _get_git_diff_files,

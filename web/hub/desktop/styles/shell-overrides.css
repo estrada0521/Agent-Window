@@ -38,7 +38,7 @@
       html:not([data-native-app="1"]) .desk-swipe-action-rail {
         display: flex;
       }
-      html:not([data-native-app="1"]) .desk-session-row {
+      html:not([data-native-app="1"]) .desk-timeline-row {
         padding: 15px 16px 14px;
       }
       html:not([data-native-app="1"]) .desk-section-label {
@@ -70,7 +70,7 @@
     .shell {
       background: transparent;
     }
-    .desk-session-title-text {
+    .desk-timeline-title-text {
       text-box-trim: trim-both;
       text-box-edge: cap alphabetic;
       color: var(--fg);
@@ -86,8 +86,8 @@
       pointer-events: none;
       padding-left: 0.31em;
     }
-    .desk-session-title-text:empty { display: none; }
-    .desk-floating-controls.is-title-hidden .desk-session-title-text {
+    .desk-timeline-title-text:empty { display: none; }
+    .desk-floating-controls.is-title-hidden .desk-timeline-title-text {
       display: none;
     }
     .desk-floating-controls.is-buttons-hidden,

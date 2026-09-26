@@ -74,7 +74,7 @@ __INCLUDE:messages-data.js__
       if (document.documentElement.dataset.mobile === "1") {
         updateRepoPanel(displayEntries);
       } else {
-        dpOnSessionSummaryPinReload();
+        dpOnTimelineSummaryPinReload();
       }
     };
     const scheduleAnimateInCleanup = (row, opts = {}) => {

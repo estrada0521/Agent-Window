@@ -1,4 +1,4 @@
-    const dpGitSummaryPinnedStorageKey = () => `agent_window_git_summary_pinned:${String(currentSessionName || "").trim() || "__none"}`;
+    const dpGitSummaryPinnedStorageKey = () => `agent_window_git_summary_pinned:${String(currentTimelineLabel || "").trim() || "__none"}`;
     let dpGitSummaryPinned = true;
     const dpPinnedStripActive = () =>
       dpGitSummaryPinned && document.documentElement.dataset.autoWindowHeight !== "1";

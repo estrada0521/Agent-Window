@@ -177,7 +177,7 @@
     }
 
     function toggleDeskSidebar() {
-      if (_deskAutoWindowHeight) { void openDeskNativeSessionSwitcher(); return; }
+      if (_deskAutoWindowHeight) { void openDeskNativeTimelineSwitcher(); return; }
       setDeskSidebarOpen(!isDeskSidebarOpen());
     }
 
@@ -340,12 +340,12 @@
       }
       if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyN") {
         event.preventDefault();
-        void startDeskNewSessionFlow();
+        void startDeskNewTimelineFlow();
         return;
       }
       if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && /^Digit[1-9]$/.test(event.code || "")) {
         event.preventDefault();
-        switchToDeskActiveSession(Number(event.code.slice(5)) - 1);
+        switchToDeskActiveTimeline(Number(event.code.slice(5)) - 1);
         return;
       }
       if (event.metaKey && event.shiftKey && !event.altKey && !event.ctrlKey && event.code === "KeyP") {

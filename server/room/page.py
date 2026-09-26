@@ -73,14 +73,14 @@ def render_room_html(
     room_port,
     room_base_path="",
     variant="desktop",
-    session_name="",
+    timeline_label="",
     theme="dark",
     text_size=DESKTOP_TEXT_SIZE,
 ):
     normalized_variant = _normalized_room_variant(variant)
     base_path = room_base_path.rstrip("/")
-    normalized_session_name = str(session_name or "").strip()
-    room_document_title = f"{normalized_session_name} · {APP_DISPLAY_NAME}" if normalized_session_name else APP_DISPLAY_NAME
+    normalized_timeline_label = str(timeline_label or "").strip()
+    room_document_title = f"{normalized_timeline_label} · {APP_DISPLAY_NAME}" if normalized_timeline_label else APP_DISPLAY_NAME
     html = _room_html(normalized_variant)
     for placeholder, value in _agent_css_selectors().items():
         html = html.replace(placeholder, value)

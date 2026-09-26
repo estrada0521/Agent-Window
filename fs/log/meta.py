@@ -14,32 +14,32 @@ import os
 import tempfile
 
 
-class SessionMetaError(ValueError):
+class LogMetaError(ValueError):
     pass
 
 
-def read_session_meta_file(path: Path) -> dict:
+def read_log_meta_file(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def read_session_meta(session_name: str) -> dict:
-    return read_session_meta_file(log_meta_path(session_name))
+def read_log_meta(label: str) -> dict:
+    return read_log_meta_file(log_meta_path(label))
 
 
-def _existing_session_meta(session_name: str) -> tuple[Path, dict]:
-    name = str(session_name or "").strip()
+def _existing_log_meta(label: str) -> tuple[Path, dict]:
+    name = str(label or "").strip()
     path = log_meta_path(name)
     try:
-        return path, read_session_meta_file(path)
+        return path, read_log_meta_file(path)
     except FileNotFoundError:
-        raise SessionMetaError(f"log not found: {name}") from None
+        raise LogMetaError(f"log not found: {name}") from None
 
 
-def session_workspace_claims(
+def log_workspace_claims(
     *,
-    exclude_session: str = "",
+    exclude_label: str = "",
 ) -> dict[str, tuple[str, str]]:
-    exclude = str(exclude_session or "").strip()
+    exclude = str(exclude_label or "").strip()
     root = agent_window_log_root()
     claims: dict[str, tuple[str, str]] = {}
     if not root.is_dir():
@@ -47,34 +47,34 @@ def session_workspace_claims(
     for entry in root.iterdir():
         if not entry.is_dir() or entry.name == exclude:
             continue
-        workspace = session_workspace(entry.name)
+        workspace = log_workspace(entry.name)
         claims[str(Path(workspace).expanduser().resolve())] = (entry.name, workspace)
     return claims
 
 
-def find_session_for_workspace(workspace: Path | str, *, exclude_session: str = "") -> str | None:
+def find_label_for_workspace(workspace: Path | str, *, exclude_label: str = "") -> str | None:
     target = str(Path(workspace).expanduser().resolve())
-    claim = session_workspace_claims(exclude_session=exclude_session).get(target)
+    claim = log_workspace_claims(exclude_label=exclude_label).get(target)
     return claim[0] if claim else None
 
 
-def session_workspace(session_name: str) -> str:
-    return _existing_session_meta(session_name)[1]["workspace"]
+def log_workspace(label: str) -> str:
+    return _existing_log_meta(label)[1]["workspace"]
 
 
-def session_meta_agents(session_name: str) -> list[str]:
-    return _existing_session_meta(session_name)[1]["agents"]
+def log_meta_agents(label: str) -> list[str]:
+    return _existing_log_meta(label)[1]["agents"]
 
 
-def set_session_workspace(session_name: str, workspace: str) -> None:
-    name = str(session_name or "").strip()
+def set_log_workspace(label: str, workspace: str) -> None:
+    name = str(label or "").strip()
     ws = str(workspace or "").strip()
     if not name or not ws:
-        raise SessionMetaError("label and workspace are required")
-    path, raw = _existing_session_meta(name)
-    owner = find_session_for_workspace(ws, exclude_session=name)
+        raise LogMetaError("label and workspace are required")
+    path, raw = _existing_log_meta(name)
+    owner = find_label_for_workspace(ws, exclude_label=name)
     if owner:
-        raise SessionMetaError(f"A timeline already exists for this workspace: {owner}")
+        raise LogMetaError(f"A timeline already exists for this workspace: {owner}")
     old_workspace = Path(raw["workspace"]).expanduser().resolve()
     raw["workspace"] = ws
     write_json_atomically(path, raw, indent=2)
@@ -84,39 +84,39 @@ def set_session_workspace(session_name: str, workspace: str) -> None:
     ensure_workspace_log_link(name, ws)
 
 
-def rename_session(old_name: str, new_name: str) -> None:
+def rename_log(old_name: str, new_name: str) -> None:
     log_dir(old_name).rename(log_dir(new_name))
-    link = workspace_log_link_path(session_workspace(new_name))
+    link = workspace_log_link_path(log_workspace(new_name))
     if link.is_symlink():
         link.unlink()
         link.symlink_to(log_jsonl_path(new_name))
 
 
-def reset_session_agents(session_name: str) -> None:
-    name = str(session_name or "").strip()
+def reset_log_agents(label: str) -> None:
+    name = str(label or "").strip()
     if not name:
-        raise SessionMetaError("label is required")
-    path, raw = _existing_session_meta(name)
+        raise LogMetaError("label is required")
+    path, raw = _existing_log_meta(name)
     raw["agents"] = []
     write_json_atomically(path, raw, indent=2)
 
 
-def write_session_meta_file(
-    session_name: str,
+def write_log_meta_file(
+    label: str,
     workspace: str,
     agents: list[str],
 ) -> None:
     write_json_atomically(
-        log_meta_path(session_name),
+        log_meta_path(label),
         {"workspace": workspace, "agents": agents},
         indent=2,
     )
 
 
-def create_session_folder(session_name: str, workspace: str, agents: list[str]) -> None:
-    log_dir(session_name).mkdir(parents=True)
-    write_session_meta_file(session_name, workspace, agents)
-    log_jsonl_path(session_name).touch()
+def create_log_dir(label: str, workspace: str, agents: list[str]) -> None:
+    log_dir(label).mkdir(parents=True)
+    write_log_meta_file(label, workspace, agents)
+    log_jsonl_path(label).touch()
 
 
 def write_json_atomically(path: Path, data: dict, *, indent: int | None = None) -> None:

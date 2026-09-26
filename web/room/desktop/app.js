@@ -339,8 +339,8 @@ __INCLUDE:../composer-commands.js__
 __INCLUDE:../thinking.js__
 __INCLUDE:../agent-status.js__
     window.addEventListener("message", (event) => {
-      if (event.source !== window.parent || event.data?.type !== "refresh-session-state") return;
-      void refreshSessionState();
+      if (event.source !== window.parent || event.data?.type !== "refresh-room-state") return;
+      void refreshRoomState();
     });
 __INCLUDE:../pointer-capability.js__
     const desktopRightPanel = document.getElementById("desktopRightPanel");
@@ -661,7 +661,7 @@ __INCLUDE:git-panel/events.js__
     };
     const dpLoadWorkspaceRoot = async () => {
       if (!dpWorkspaceRoot) {
-        const response = await fetchWithTimeout("/session-state", {}, 4000);
+        const response = await fetchWithTimeout("/room-state", {}, 4000);
         if (!response.ok) throw new Error("Failed to read workspace path.");
         const state = await response.json();
         dpWorkspaceRoot = String(state?.workspace || "").replace(/\/+$/, "");
@@ -1249,12 +1249,12 @@ __INCLUDE:git-panel/events.js__
         }
         if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyN") {
           event.preventDefault();
-          window.parent?.postMessage({ type: "new-session-shortcut" }, "*");
+          window.parent?.postMessage({ type: "new-timeline-shortcut" }, "*");
           return;
         }
         if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && /^Digit[1-9]$/.test(event.code || "")) {
           event.preventDefault();
-          window.parent?.postMessage({ type: "switch-session-shortcut", index: Number(event.code.slice(5)) - 1 }, "*");
+          window.parent?.postMessage({ type: "switch-timeline-shortcut", index: Number(event.code.slice(5)) - 1 }, "*");
           return;
         }
         if (event.metaKey && event.shiftKey && !event.altKey && !event.ctrlKey && event.code === "KeyP") {
@@ -1338,7 +1338,7 @@ __INCLUDE:git-panel/events.js__
       }
     };
     __INCLUDE:../room-events.js__
-    dpOnSessionSummaryPinReload({ force: true });
+    dpOnTimelineSummaryPinReload({ force: true });
     dpApplyPanelWidth();
     refresh({ forceScroll: true });
     document.addEventListener("visibilitychange", () => {
