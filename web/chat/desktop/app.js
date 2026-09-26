@@ -333,8 +333,8 @@ __INCLUDE:../transcript-render.js__
 __INCLUDE:../transcript-actions.js__
 __INCLUDE:../chat-menu.js__
 __INCLUDE:header-actions.js__
-__INCLUDE:../composer-runtime.js__
-__INCLUDE:../file-runtime.js__
+__INCLUDE:../composer.js__
+__INCLUDE:../file-links.js__
 __INCLUDE:../composer-commands.js__
 __INCLUDE:../thinking.js__
 __INCLUDE:../agent-status.js__

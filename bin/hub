@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+_HERE="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "${BASH_SOURCE[0]:-$0}")"
+REPO_ROOT="$(cd "$(dirname "$_HERE")/.." && pwd)"
+HUB_PYTHONPATH="${REPO_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+HUB_PORT="$(cat "$REPO_ROOT/hub-port")"
+READY_TIMEOUT_SEC=6
+
+usage() {
+  cat <<'USAGE'
+Usage: bin/hub
+
+Start Hub.
+USAGE
+}
+
+case "${1:-}" in
+  "") ;;
+  -h|--help) usage; exit 0 ;;
+  *) echo "Unknown argument: $1" >&2; usage >&2; exit 1 ;;
+esac
+
+for _cmd in python3 tmux lsof; do
+  if ! command -v "$_cmd" >/dev/null 2>&1; then
+    echo "hub: $_cmd is required on PATH. Install it, then re-run this command." >&2
+    exit 1
+  fi
+done
+
+hub_is_up() {
+  PYTHONPATH="$HUB_PYTHONPATH" python3 - "$HUB_PORT" "${1:-0}" <<'PYEOF'
+import http.client
+import json
+import sys
+import time
+
+from server import APP_DISPLAY_NAME
+
+port = int(sys.argv[1])
+deadline = time.monotonic() + float(sys.argv[2])
+while True:
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=1.0)
+        conn.request("GET", "/hub.webmanifest")
+        resp = conn.getresponse()
+        if resp.status == 200 and json.loads(resp.read())["name"] == APP_DISPLAY_NAME:
+            sys.exit(0)
+    except (OSError, ValueError, KeyError, http.client.HTTPException):
+        pass
+    if time.monotonic() >= deadline:
+        sys.exit(1)
+    time.sleep(0.1)
+PYEOF
+}
+
+if ! hub_is_up; then
+  if lsof -nP -iTCP:"$HUB_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "Hub port $HUB_PORT is occupied by a listener that does not serve the expected Hub." >&2
+    exit 1
+  fi
+  PYTHONPATH="$HUB_PYTHONPATH" nohup python3 -m server.hub.server "$REPO_ROOT" "$_HERE" >/dev/null 2>&1 </dev/null &
+  HUB_SERVER_PID=$!
+  disown "$HUB_SERVER_PID" || true
+  if ! hub_is_up "$READY_TIMEOUT_SEC"; then
+    echo "Hub server failed to start on http://127.0.0.1:${HUB_PORT}/." >&2
+    exit 1
+  fi
+fi
+
+echo "Hub:                http://127.0.0.1:${HUB_PORT}/"

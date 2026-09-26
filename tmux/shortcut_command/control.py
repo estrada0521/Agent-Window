@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import subprocess
 from typing import Any, Protocol
-
 from tmux import TMUX
 from tmux.lifecycle import restart_agent_pane
 from tmux.send_keys import deliver_text_to_pane
 from tmux.shortcut_command.catalog import PANE_SINGLE_CONTROL_MESSAGES, PANE_TEXT_MACROS
-from tmux.shortcut_command.parsing import parse_pane_direct_command
+import re
 
 
 class ShortcutControlRuntime(Protocol):
@@ -78,3 +77,12 @@ def try_deliver_shortcut_control(
             targets=control_targets,
         )
     return 200, {"ok": True}
+
+
+def parse_pane_direct_command(message: str) -> dict | None:
+    normalized = (message or "").strip().lower()
+    match = re.fullmatch(r"(up|down|left|right)(?:\s+(\d+))?", normalized)
+    if not match:
+        return None
+    repeat = max(1, min(int(match.group(2) or "1"), 100))
+    return {"name": match.group(1), "repeat": repeat}

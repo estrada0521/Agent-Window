@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-def clear_agent_runtime_display(runtime, agent: str) -> bool:
+def clear_agent_running_display(runtime, agent: str) -> bool:
     with runtime._idle_running_display_lock:
         queue = runtime._idle_running_display_queues
         timer_by_agent = runtime._idle_running_display_timers
@@ -31,5 +31,5 @@ def refresh_idle_statuses(runtime, running_agents: set) -> dict[str, str]:
     for agent in runtime.active_agents():
         result[agent] = "running" if agent in running_agents else "idle"
         if result[agent] != "running":
-            clear_agent_runtime_display(runtime, agent)
+            clear_agent_running_display(runtime, agent)
     return result

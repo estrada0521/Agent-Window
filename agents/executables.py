@@ -4,7 +4,7 @@ import os
 import shutil
 from pathlib import Path
 
-from agents.names import agent_base_name
+from agents import agent_base_name
 from agents.registry import AGENTS
 
 

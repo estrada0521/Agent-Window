@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from server.branding import APP_DISPLAY_NAME
+from server import APP_DISPLAY_NAME
 
 _HUB_RESTART_NAV_JS = (Path(__file__).resolve().parents[1] / "web" / "hub" / "restart-nav.js").read_text()
 

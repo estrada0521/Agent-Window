@@ -5,6 +5,7 @@ import re
 import socket
 from pathlib import Path
 
+
 SESSION_LOG_FILENAME = ".log.jsonl"
 SESSION_META_FILENAME = ".meta"
 SESSION_NAME_MAX_LENGTH = 64
@@ -83,3 +84,7 @@ def port_is_bindable(port: int) -> bool:
         return False
     finally:
         sock.close()
+
+
+def normalize_workspace(value: str) -> str:
+    return str(Path(value).expanduser().resolve())

@@ -5,11 +5,11 @@ from pathlib import Path
 from urllib.parse import unquote
 
 from server.appearance.typography import FONT_ASSET_FILES
-from agents.names import agent_base_name
+from agents import agent_base_name
 from agents.registry import icon_file_map
 
 
-class ChatAssetRuntime:
+class ChatAssets:
     def __init__(self, *, repo_root: Path | str):
         repo_root = Path(repo_root).resolve()
         self.icon_files = icon_file_map(repo_root)

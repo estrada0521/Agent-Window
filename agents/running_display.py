@@ -5,6 +5,21 @@ import re
 from urllib.parse import unquote, urlparse
 
 
+def short_line(value: object, limit: int = 120) -> str:
+    line = str(value or "").split("\n", 1)[0].strip()
+    return line[: limit - 3] + "..." if len(line) > limit else line
+
+
+def unknown_tool_label(raw_name: object) -> tuple[str, str]:
+    return "Tool", str(raw_name or "").strip()
+
+
+def running_event(main: str, sub: str = "", *, source_id: str) -> dict:
+    m = str(main or "").strip()
+    s = str(sub or "").strip()
+    return {"keyword": m, "detail": s, "source_id": source_id}
+
+
 def display_path(value: object, *, workspace: str = "") -> str:
     text = str(value or "").strip()
     if not text:

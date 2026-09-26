@@ -9,10 +9,10 @@ from agents.path_state import (
     advance_read_offset,
     read_offset_start,
 )
-from agents.runtime_push import push_runtime_display
-from agents.grok.read_runtime import (
+from agents.running_push import push_running_display
+from agents.grok.read_running import (
     iter_tool_calls_from_update,
-    runtime_tool_events,
+    running_tool_events,
 )
 from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
 from fs.session.log import append_jsonl_entry
@@ -120,9 +120,9 @@ def sync_grok_native_log(
             turn_completed = _turn_completed(entry) or turn_completed
             tool_evs: list[dict] = []
             for name, inp in iter_tool_calls_from_update(entry):
-                tool_evs.extend(runtime_tool_events(name, inp, workspace=workspace))
+                tool_evs.extend(running_tool_events(name, inp, workspace=workspace))
             if tool_evs:
-                push_runtime_display(runtime, agent, tool_evs)
+                push_running_display(runtime, agent, tool_evs)
         advance_read_offset(runtime._native_log_read_offsets, updates_path, scan.consumed)
         report_skipped_lines(runtime, agent, scan)
     else:

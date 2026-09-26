@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from tmux import TMUX
-from tmux.resolve import normalize_workspace
+from fs.session.paths import normalize_workspace
 
 
 @dataclass(frozen=True)
@@ -20,7 +20,7 @@ class TmuxRunResult:
     timed_out: bool = False
 
 
-class HubRuntime:
+class Hub:
     def __init__(self, repo_root: Path | str, hub_port: int):
         self.repo_root = Path(repo_root).resolve()
         self.hub_port = hub_port

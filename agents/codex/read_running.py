@@ -6,8 +6,8 @@ import os
 import re
 import shlex
 
-from agents.runtime_display import runtime_event, short_line, unknown_tool_label
-from agents.runtime_paths import display_path
+from agents.running_display import running_event, short_line, unknown_tool_label
+from agents.running_display import display_path
 
 QUIET: frozenset[str] = frozenset({"wait", "write_stdin"})
 MAIN_LABEL: dict[str, str] = {
@@ -403,7 +403,7 @@ def iter_tool_calls(entry: dict) -> list[tuple[str, object]]:
     return []
 
 
-def runtime_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
+def running_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
     lower = str(name or "").strip().lower()
     if lower in QUIET or not lower:
         return []
@@ -411,21 +411,21 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
     if lower == "exec_command":
         event = _exec_command_event(a, workspace=str(workspace or ""))
         if event is None:
-            return [runtime_event("Shell", "exec_command", source_id="tool:exec_command:fallback")]
+            return [running_event("Shell", "exec_command", source_id="tool:exec_command:fallback")]
         main, sub = event
-        return [runtime_event(main, sub, source_id=_sid(f"tool:{lower}", f"{main}:{sub}"))]
+        return [running_event(main, sub, source_id=_sid(f"tool:{lower}", f"{main}:{sub}"))]
     if lower == "web_search":
         action = _pick(a, "type") or "web"
         sub = _pick(a, "query", "url") or action
         main = "Search" if action == "search" else "Web"
         sub = short_line(sub)
-        return [runtime_event(main, sub, source_id=_sid("tool:web_search", f"{action}:{sub}"))]
+        return [running_event(main, sub, source_id=_sid("tool:web_search", f"{action}:{sub}"))]
     if lower == "tool_search":
         sub = short_line(_pick(a, "query") or "tools")
-        return [runtime_event("Tool", f"Search {sub}".strip(), source_id=_sid("tool:tool_search", sub))]
+        return [running_event("Tool", f"Search {sub}".strip(), source_id=_sid("tool:tool_search", sub))]
     main = MAIN_LABEL.get(lower)
     if main is None:
         main, sub = unknown_tool_label(lower)
     else:
         sub = _codex_subline(lower, a, workspace=str(workspace or "")).strip() or lower
-    return [runtime_event(main, sub, source_id=_sid(f"tool:{lower}", sub))]
+    return [running_event(main, sub, source_id=_sid(f"tool:{lower}", sub))]

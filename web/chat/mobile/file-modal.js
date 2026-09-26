@@ -59,7 +59,7 @@
       if (!frame || !isHtmlPreviewExt(ext)) return;
       applyPreviewHtmlModeToFrame(frame, ext, mode);
       frame.contentWindow?.postMessage(
-        { type: "agent-index-file-preview-mode", mode },
+        { type: "file-preview-mode", mode },
         window.location.origin,
       );
       requestAnimationFrame(() => {
@@ -142,10 +142,10 @@
         const lnFg = `rgb(${isLight ? lightMutedRgb : darkMutedRgb})`;
         const scheme = isLight ? "light" : "dark";
         frameDoc.documentElement.setAttribute("data-preview-base-theme", scheme);
-        let style = frameDoc.getElementById("agent-index-base-theme-style");
+        let style = frameDoc.getElementById("base-theme-style");
         if (!style) {
           style = frameDoc.createElement("style");
-          style.id = "agent-index-base-theme-style";
+          style.id = "base-theme-style";
           frameDoc.head?.appendChild(style);
         }
         style.textContent = `:root{--body-weight:${bodyWeight};--file-preview-code-weight:${codeWeight};--preview-gutter-bg:rgba(${fgRgb},0.06);--preview-gutter-divider:rgba(${fgRgb},0.16)}html,body{color-scheme:${scheme};background:${bg};color:${fg}}.view-container,.html-preview-shell,.wrap{background:${bg}}.fn{color:${fg}}.code-gutter-table .ln,.html-preview-gutter-table .ln{color:${lnFg}}.code-table,.html-preview-text-table,pre{color:${fg}}`;
@@ -156,7 +156,7 @@
     const postPreviewThemeToFrame = (frame, ext, baseTheme) => {
       applyPreviewThemeToFrame(frame, ext, baseTheme);
       frame.contentWindow?.postMessage(
-        { type: "agent-index-file-preview-theme", theme: baseTheme, baseTheme },
+        { type: "file-preview-theme", theme: baseTheme, baseTheme },
         window.location.origin,
       );
       requestAnimationFrame(() => {

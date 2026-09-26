@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from server.hub.runtime import HubRuntime
+from server.hub.hub import Hub
 from server.appearance.colors import apply_color_tokens, resolve_theme_palette
 from server.appearance.theme import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
@@ -27,7 +27,7 @@ from server.hub.session_query import (
     live_sessions_query,
 )
 
-from server.branding import APP_DISPLAY_NAME
+from server import APP_DISPLAY_NAME
 from server.hub.new_session import (
     post_pick_workspace as _post_pick_workspace_action,
     post_start_session_draft as _post_start_session_draft_action,
@@ -49,7 +49,7 @@ from server.hub.server_helpers import (
     format_chat_url,
     launch_hub_restart,
 )
-from server.request_view import request_view_variant
+from server.request import request_view_variant
 
 _initialized = False
 repo_root = Path()
@@ -78,7 +78,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     repo_root = Path(root_arg).resolve()
     script_path = Path(script_arg).resolve()
     port = int((repo_root / "hub-port").read_text().strip())
-    hub = HubRuntime(repo_root, hub_port=port)
+    hub = Hub(repo_root, hub_port=port)
     restart_pending, hub_server = False, None
 
     _initialized = True

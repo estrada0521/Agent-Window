@@ -15,8 +15,8 @@ from fs.session.paths import (
     agent_window_session_root,
     session_log_path,
 )
-from tmux.resolve import normalize_workspace
-from fs.session.log_reader import iter_log_entries_reversed
+from fs.session.paths import normalize_workspace
+from fs.session.log import iter_log_entries_reversed
 
 
 @dataclass(frozen=True)

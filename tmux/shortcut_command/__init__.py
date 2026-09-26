@@ -5,7 +5,7 @@ from tmux.shortcut_command.catalog import (
 )
 from tmux.shortcut_command.control import try_deliver_shortcut_control
 from tmux.shortcut_command.execute import run_shortcut_command
-from tmux.shortcut_command.parsing import parse_pane_direct_command
+from tmux.shortcut_command.control import parse_pane_direct_command
 
 __all__ = [
     "PANE_SINGLE_CONTROL_MESSAGES",

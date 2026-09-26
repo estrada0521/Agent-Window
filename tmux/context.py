@@ -59,7 +59,7 @@ def format_context_text(info: dict) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="session_control")
+    parser = argparse.ArgumentParser(prog="agent-window context")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     context_cmd = sub.add_parser("context")

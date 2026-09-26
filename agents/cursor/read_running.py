@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from agents.runtime_display import runtime_event, short_line
-from agents.runtime_paths import display_path
+from agents.running_display import running_event, short_line
+from agents.running_display import display_path
 
 _QUIET: frozenset[str] = frozenset({"todowrite"})
 
@@ -58,7 +58,7 @@ def _pick(d: object, *keys: str) -> str:
     return ""
 
 
-def runtime_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
+def running_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
     raw = str(name or "").strip() or "tool"
     lower = raw.lower()
     if lower in _QUIET:
@@ -79,7 +79,7 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
         sub = (path or "") + suffix
         if not sub.strip():
             return []
-        return [runtime_event("Read", sub.strip(), source_id=_source_id("tool:read", sub))]
+        return [running_event("Read", sub.strip(), source_id=_source_id("tool:read", sub))]
 
     if lower == "glob":
         pat = str(args_obj.get("glob_pattern") or "").strip()
@@ -91,7 +91,7 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
             sub = pat
         else:
             sub = td_disp or "."
-        return [runtime_event("Explore", sub, source_id=_source_id("tool:glob", sub))]
+        return [running_event("Explore", sub, source_id=_source_id("tool:glob", sub))]
 
     if lower == "semanticsearch":
         q = str(args_obj.get("query") or "").strip()
@@ -108,7 +108,7 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
             sub = extra
         else:
             sub = "(semantic search)"
-        return [runtime_event("Search", sub.strip(), source_id=_source_id("tool:semanticsearch", sub))]
+        return [running_event("Search", sub.strip(), source_id=_source_id("tool:semanticsearch", sub))]
 
     if lower == "readlints":
         paths_list = args_obj.get("paths")
@@ -121,14 +121,14 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
                 sub = ", ".join(parts) if parts else f"{len(paths_list)} files"
         else:
             sub = "lint"
-        return [runtime_event("Lint", sub, source_id=_source_id("tool:readlints", sub))]
+        return [running_event("Lint", sub, source_id=_source_id("tool:readlints", sub))]
 
     if lower == "shell":
         cmd = str(args_obj.get("command") or args_obj.get("cmd") or "").strip()
         if not cmd:
             return []
         first = short_line(cmd)
-        return [runtime_event("Shell", first, source_id=_source_id("tool:shell", first))]
+        return [running_event("Shell", first, source_id=_source_id("tool:shell", first))]
 
     if lower == "grep":
         pat = _pick(args_obj, "pattern", "q", "query")
@@ -140,42 +140,42 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
             sub = pat or tgt
         if not sub:
             return []
-        return [runtime_event("Search", sub, source_id=_source_id("tool:grep", sub))]
+        return [running_event("Search", sub, source_id=_source_id("tool:grep", sub))]
 
     if lower == "strreplace":
         path = display_path(_pick(args_obj, "path", "file_path"), workspace=ws)
         if not path:
             return []
-        return [runtime_event("Edit", path, source_id=_source_id("tool:strreplace", path))]
+        return [running_event("Edit", path, source_id=_source_id("tool:strreplace", path))]
 
     if lower == "write":
         path = display_path(_pick(args_obj, "path", "file_path"), workspace=ws)
         if not path:
             return []
-        return [runtime_event("Write", path, source_id=_source_id("tool:write", path))]
+        return [running_event("Write", path, source_id=_source_id("tool:write", path))]
 
     if lower == "delete":
         path = display_path(_pick(args_obj, "path", "file_path"), workspace=ws)
         if not path:
             return []
-        return [runtime_event("Delete", path, source_id=_source_id("tool:delete", path))]
+        return [running_event("Delete", path, source_id=_source_id("tool:delete", path))]
 
     if lower == "websearch":
         q = _pick(args_obj, "search_term", "query", "q")
         if not q:
             return []
-        return [runtime_event("Search", q, source_id=_source_id("tool:websearch", q))]
+        return [running_event("Search", q, source_id=_source_id("tool:websearch", q))]
 
     if lower == "webfetch":
         url = _pick(args_obj, "url", "uri")
         if not url:
             return []
-        return [runtime_event("Fetch", url, source_id=_source_id("tool:webfetch", url))]
+        return [running_event("Fetch", url, source_id=_source_id("tool:webfetch", url))]
 
     if lower == "task":
         sub = _pick(args_obj, "description") or _pick(args_obj, "subagent_type") or "agent"
         first = short_line(sub)
-        return [runtime_event("Agent", first, source_id=_source_id("tool:task", first))]
+        return [running_event("Agent", first, source_id=_source_id("tool:task", first))]
 
     if lower == "awaitshell":
         sub = _pick(args_obj, "pattern")
@@ -183,11 +183,11 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
             sid = _pick(args_obj, "shell_id")
             sub = f"shell {sid}" if sid else "shell"
         first = short_line(sub)
-        return [runtime_event("Wait", first, source_id=_source_id("tool:awaitshell", first))]
+        return [running_event("Wait", first, source_id=_source_id("tool:awaitshell", first))]
 
     if lower == "getmcptools":
         sub = _pick(args_obj, "toolName", "pattern", "server") or "tools"
         first = short_line(sub)
-        return [runtime_event("MCP", first, source_id=_source_id("tool:getmcptools", first))]
+        return [running_event("MCP", first, source_id=_source_id("tool:getmcptools", first))]
 
     return []

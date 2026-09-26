@@ -5,7 +5,7 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-import server.chat.runtime as runtime_module
+import server.chat.session as runtime_module
 from server.chat import server as chat_server
 
 
@@ -26,7 +26,7 @@ class ReloadRunningAgentsHandoffTests(unittest.TestCase):
             mock.patch.object(runtime_module, "WorkspaceSessionBinding", return_value=fake_binding),
             mock.patch.object(runtime_module, "find_session_for_workspace", return_value=None),
         ):
-            rt = runtime_module.ChatRuntime(
+            rt = runtime_module.ChatSession(
                 port=1,
                 workspace="/work/project",
                     hub_port=1,
@@ -42,7 +42,7 @@ class ReloadRunningAgentsHandoffTests(unittest.TestCase):
             mock.patch.object(runtime_module, "WorkspaceSessionBinding", return_value=fake_binding),
             mock.patch.object(runtime_module, "find_session_for_workspace", return_value=None),
         ):
-            rt = runtime_module.ChatRuntime(
+            rt = runtime_module.ChatSession(
                 port=1,
                 workspace="/work/project",
                     hub_port=1,

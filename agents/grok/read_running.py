@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from agents.runtime_display import runtime_event, short_line
-from agents.runtime_paths import display_path
+from agents.running_display import running_event, short_line
+from agents.running_display import display_path
 
 _QUIET: frozenset[str] = frozenset(
     {
@@ -154,7 +154,7 @@ def _subline(lower: str, args: dict, *, workspace: str) -> str:
     return ""
 
 
-def runtime_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
+def running_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
     raw_name = str(name or "").strip() or "tool"
     lower = raw_name.lower().replace("-", "_")
     if lower in _QUIET:
@@ -169,4 +169,4 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
     if not sub:
         sub = raw_name
     sid_tail = tool_call_id or sub
-    return [runtime_event(main, sub, source_id=_source_id(f"tool:{lower}", sid_tail))]
+    return [running_event(main, sub, source_id=_source_id(f"tool:{lower}", sid_tail))]

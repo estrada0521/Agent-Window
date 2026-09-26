@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from agents.names import agent_base_name
+from agents import agent_base_name
 from agents.claude.read_updates import sync_claude_native_log
 from agents.codex.read_updates import sync_codex_native_log
 from agents.cursor.read_updates import sync_cursor_native_log

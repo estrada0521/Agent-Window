@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from fs.files.runtime import FileRuntime
+from fs.files.workspace import WorkspaceFiles
 
 
 class FileOpeningTests(unittest.TestCase):
@@ -14,12 +14,12 @@ class FileOpeningTests(unittest.TestCase):
             workspace = Path(tmp)
             archive = workspace / "example.zip"
             archive.write_bytes(b"not a real archive")
-            runtime = FileRuntime(workspace=workspace)
+            runtime = WorkspaceFiles(workspace=workspace)
             completed = mock.Mock(returncode=0)
 
             with (
-                mock.patch("fs.files.runtime.subprocess.run", return_value=completed) as run,
-                mock.patch("fs.files.runtime.subprocess.Popen") as popen,
+                mock.patch("fs.files.workspace.subprocess.run", return_value=completed) as run,
+                mock.patch("fs.files.workspace.subprocess.Popen") as popen,
             ):
                 result = runtime.open_with_default_app("example.zip")
 
@@ -38,12 +38,12 @@ class FileOpeningTests(unittest.TestCase):
             workspace = Path(tmp)
             target = workspace / "unknown.data"
             target.write_bytes(b"\x00\x01")
-            runtime = FileRuntime(workspace=workspace)
+            runtime = WorkspaceFiles(workspace=workspace)
             completed = mock.Mock(returncode=1)
 
             with (
-                mock.patch("fs.files.runtime.subprocess.run", return_value=completed),
-                mock.patch("fs.files.runtime.subprocess.Popen") as popen,
+                mock.patch("fs.files.workspace.subprocess.run", return_value=completed),
+                mock.patch("fs.files.workspace.subprocess.Popen") as popen,
             ):
                 result = runtime.open_with_default_app("unknown.data")
 

@@ -265,7 +265,7 @@ def render_file_view(
             'window.__agentIndexApplyHtmlPreviewMode=setMode;'
             'window.addEventListener("message",(event)=>{'
             'const data=event.data||{};'
-            'if(data.type==="agent-index-file-preview-mode"){setMode(data.mode);return;}'
+            'if(data.type==="file-preview-mode"){setMode(data.mode);return;}'
             f'if(data.type==="agent-preview-text-size"){{const sz=Number(data.size);if(Number.isFinite(sz)&&sz>=8){{document.documentElement.style.setProperty("--text-size",sz+"px");document.documentElement.style.setProperty("--text-line-height",(sz*{TEXT_LINE_HEIGHT_RATIO})+"px");}}}}'
             '});'
             'const bindButtons=()=>{'
@@ -737,7 +737,7 @@ setTimeout(() => {{
 }});
 window.addEventListener("message", (event) => {{
   const data = event?.data;
-  if (!data || data.type !== "agent-index-file-preview-theme") return;
+  if (!data || data.type !== "file-preview-theme") return;
   applyPreviewTheme(data.theme);
 }});
 window.addEventListener("message", (event) => {{

@@ -12,12 +12,12 @@ from fs.session.log import append_jsonl_entry
 from fs.session.meta import session_meta_agents
 from tmux import TMUX
 from tmux.send_keys import deliver_text_to_pane
-from fs.session.log_reader import newest_entries
+from fs.session.log import newest_entries
 from agents.dispatch import sync_agent
 from agents.binding_models import PaneBindingRequest
 from agents.refresh_bindings import refresh_native_log_bindings, remove_native_log_binding
 from agents.emit_events import (
-    clear_agent_runtime_display,
+    clear_agent_running_display,
     idle_running_display_for_api,
     refresh_idle_statuses,
 )
@@ -38,7 +38,7 @@ NATIVE_LOG_BIND_INTERVAL_SECONDS = 0.5
 NATIVE_LOG_BIND_TIMEOUT_SECONDS = 3.0
 
 
-class ChatRuntime:
+class ChatSession:
     def __init__(
         self,
         *,
@@ -229,7 +229,7 @@ class ChatRuntime:
     def mark_agents_idle(self, agents: list[str]) -> None:
         for agent in agents:
             self._agent_running.discard(agent)
-            clear_agent_runtime_display(self, agent)
+            clear_agent_running_display(self, agent)
         self.publish_event("state")
 
     def running_agents_for_reload(self) -> list[str]:
@@ -238,7 +238,7 @@ class ChatRuntime:
     def _mark_running(self, agent: str) -> None:
         already_running = agent in self._agent_running
         if not already_running:
-            clear_agent_runtime_display(self, agent)
+            clear_agent_running_display(self, agent)
         self._agent_running.add(agent)
         if not already_running:
             self.publish_event("state")
@@ -287,7 +287,7 @@ class ChatRuntime:
     def _mark_idle(self, agent: str) -> None:
         was_running = agent in self._agent_running
         self._agent_running.discard(agent)
-        cleared = clear_agent_runtime_display(self, agent)
+        cleared = clear_agent_running_display(self, agent)
         if was_running or cleared:
             self.publish_event("state")
 

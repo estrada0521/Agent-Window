@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-
-from fs.session.atomic_json import write_json_atomically
 from fs.session.paths import (
     agent_window_session_root,
     ensure_session_workspace_mirrors,
@@ -12,6 +10,8 @@ from fs.session.paths import (
     session_meta_path,
     workspace_log_link_path,
 )
+import os
+import tempfile
 
 
 class SessionMetaError(ValueError):
@@ -117,3 +117,17 @@ def create_session_folder(session_name: str, workspace: str, agents: list[str]) 
     session_artifact_dir(session_name).mkdir(parents=True)
     write_session_meta_file(session_name, workspace, agents)
     session_log_path(session_name).touch()
+
+
+def write_json_atomically(path: Path, data: dict, *, indent: int | None = None) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    tmp_path = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(data, handle, ensure_ascii=False, indent=indent)
+            handle.write("\n")
+        os.replace(tmp_path, path)
+    except BaseException:
+        tmp_path.unlink(missing_ok=True)
+        raise

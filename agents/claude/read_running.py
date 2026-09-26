@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from agents.runtime_display import runtime_event, short_line, unknown_tool_label
-from agents.runtime_paths import display_path
+from agents.running_display import running_event, short_line, unknown_tool_label
+from agents.running_display import display_path
 
 _QUIET: frozenset[str] = frozenset({"write_stdin", "todoread"})
 _MAIN_LABEL: dict[str, str] = {
@@ -205,7 +205,7 @@ def _claude_tool_subline(tool_lower: str, args: dict, *, workspace: str) -> str:
     return ""
 
 
-def runtime_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
+def running_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
     raw_name = str(name or "").strip() or "tool"
     lower = raw_name.lower()
     if lower in _QUIET:
@@ -240,6 +240,6 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
         main = _MAIN_LABEL.get(lower)
         if main is None:
             fallback_main, fallback_sub = unknown_tool_label(raw_name)
-            return [runtime_event(fallback_main, fallback_sub, source_id=_source_id("tool:unknown", raw_name))]
+            return [running_event(fallback_main, fallback_sub, source_id=_source_id("tool:unknown", raw_name))]
         sub = _claude_tool_subline(lower, a, workspace=ws).strip()
-    return [runtime_event(main, sub, source_id=_source_id(f"tool:{lower}", sub))]
+    return [running_event(main, sub, source_id=_source_id(f"tool:{lower}", sub))]

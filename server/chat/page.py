@@ -11,7 +11,7 @@ from server.appearance.colors import apply_color_tokens
 from server.appearance.file_icon_theme import load_file_icon_theme_document, resolve_file_icon_theme
 from server.appearance.theme import MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, apply_font_tokens, chat_font_style
-from server.branding import APP_DISPLAY_NAME
+from server import APP_DISPLAY_NAME
 from server.page_header import PAGE_HEADER_CSS, render_page_header
 
 CHAT_DESKTOP_HTML = load_chat_template("desktop")

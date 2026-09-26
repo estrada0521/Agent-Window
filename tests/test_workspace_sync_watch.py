@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from fs.files.runtime import FileRuntime
+from fs.files.workspace import WorkspaceFiles
 from fs.watch import _DebouncedWorkspaceRefresh, _is_git_head_metadata_path
 
 
@@ -67,8 +67,8 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
 
     def test_file_runtime_startup_does_not_eagerly_scan_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            with mock.patch.object(FileRuntime, "refresh_file_list_cache") as refresh:
-                FileRuntime(workspace=Path(tmp))
+            with mock.patch.object(WorkspaceFiles, "refresh_file_list_cache") as refresh:
+                WorkspaceFiles(workspace=Path(tmp))
             refresh.assert_not_called()
 
     def test_git_head_metadata_filter_excludes_large_git_payloads(self) -> None:

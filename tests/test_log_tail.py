@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from fs.session.log_reader import newest_entries
+from fs.session.log import newest_entries
 
 
 def _write_log(path: Path, count: int) -> None:

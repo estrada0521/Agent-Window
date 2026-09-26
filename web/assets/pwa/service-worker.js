@@ -6,7 +6,7 @@ const scopePath = scopeUrl.pathname.replace(/\/$/, "");
 const scriptPath = new URL(self.location.href).pathname;
 const isHubScope = scriptPath.endsWith("/hub-service-worker.js");
 const prefix = scopePath || "";
-const cacheNamespace = `agent-index-${isHubScope ? "hub" : "chat"}`;
+const cacheNamespace = `agent-window-${isHubScope ? "hub" : "chat"}`;
 const cacheName = `${cacheNamespace}-${SW_VERSION}`;
 
 const staticPaths = isHubScope

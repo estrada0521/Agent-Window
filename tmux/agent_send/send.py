@@ -8,17 +8,13 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-
-from tmux.agent_send.interaction import normalize_sender_payload
-from agents.names import agent_base_name
+from agents import agent_base_name
 from agents.registry import ALL_AGENT_NAMES
 from fs.session.log import append_jsonl_entry
 from fs.session.meta import find_session_for_workspace
 from tmux.session import AgentPane, parse_agent_topology
 from tmux import TMUX_SOCKET_NAME
 from tmux.send_keys import deliver_text_to_pane
-
-
 from fs.session.paths import session_log_path, workspace_chat_port
 
 
@@ -306,3 +302,12 @@ class AgentSendRuntime:
         print(f"The following was sent to {target_names}:\n{display}")
 
         return not failed_any
+
+
+def normalize_sender_payload(sender: str, payload: str) -> str:
+    rest = str(payload or "")
+    if not rest:
+        return f"[From: {sender}]\n"
+    if rest.startswith("\n"):
+        rest = rest[1:]
+    return f"[From: {sender}]\n{rest}\n"

@@ -5,8 +5,8 @@ from urllib.parse import parse_qs
 
 from server.appearance.typography import MOBILE_TEXT_SIZE
 from git import repo as workspace_git
-from server.request_base_path import request_base_path
-from server.chat.runtime import ENTRY_WINDOW_LIMIT
+from server.request import request_base_path
+from server.chat.session import ENTRY_WINDOW_LIMIT
 from tmux.shortcut_command.catalog import public_slash_command_dicts
 
 

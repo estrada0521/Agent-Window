@@ -4,8 +4,8 @@ import json
 import os
 import shlex
 
-from agents.runtime_display import runtime_event, short_line, unknown_tool_label
-from agents.runtime_paths import display_path
+from agents.running_display import running_event, short_line, unknown_tool_label
+from agents.running_display import display_path
 
 
 def iter_tool_calls(entry: dict) -> list[tuple[str, dict]]:
@@ -90,7 +90,7 @@ def _source_id(name: str, sub: str) -> str:
     return f"tool:{name[:60]}:{sub[:120]}"
 
 
-def runtime_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
+def running_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
     raw_name = str(name or "").strip() or "tool"
     lower = raw_name.lower()
     args = arguments if isinstance(arguments, dict) else {}
@@ -141,4 +141,4 @@ def runtime_tool_events(name: object, arguments: object, *, workspace: str = "")
     sub = short_line(sub)
     if not main:
         return []
-    return [runtime_event(main, sub, source_id=_source_id(lower, f"{main}:{sub}"))]
+    return [running_event(main, sub, source_id=_source_id(lower, f"{main}:{sub}"))]

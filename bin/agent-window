@@ -6,8 +6,6 @@ _REAL_SCRIPT="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))
 OPS_DIR="$(cd "$(dirname "$_REAL_SCRIPT")" && pwd)"
 REPO_ROOT="$(cd "$OPS_DIR/.." && pwd)"
 
-# shellcheck source=/dev/null
-source "$REPO_ROOT/bin/lib/tmux_session.sh"
 
 for _hp in /opt/homebrew/bin /usr/local/bin; do
   case ":${PATH:-}:" in *:"${_hp}":*) ;; *)
@@ -58,4 +56,4 @@ WORKSPACE="$(cd "$WORKSPACE" && pwd)"
 _context_args=(context --workspace "$WORKSPACE")
 [[ -n "$SESSION_NAME" ]] && _context_args+=(--session "$SESSION_NAME")
 [[ "$CONTEXT_JSON" -eq 1 ]] && _context_args+=(--json)
-session_control "${_context_args[@]}"
+PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -m tmux.context "${_context_args[@]}"

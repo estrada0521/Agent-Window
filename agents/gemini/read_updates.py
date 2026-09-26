@@ -8,10 +8,10 @@ from agents.path_state import (
     advance_read_offset,
     read_offset_start,
 )
-from agents.runtime_push import push_runtime_display
-from agents.gemini.read_runtime import (
+from agents.running_push import push_running_display
+from agents.gemini.read_running import (
     parse_antigravity_transcript_step,
-    runtime_tool_events,
+    running_tool_events,
 )
 from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
 from fs.session.log import append_jsonl_entry
@@ -43,13 +43,13 @@ def sync_gemini_native_log(
     for line_start, entry in scan:
         text, tool_calls = parse_antigravity_transcript_step(entry)
         if tool_calls:
-            runtime_events: list[dict] = []
+            running_events: list[dict] = []
             for tool_name, arguments in tool_calls:
-                runtime_events.extend(
-                    runtime_tool_events(tool_name, arguments, workspace=str(self.workspace or ""))
+                running_events.extend(
+                    running_tool_events(tool_name, arguments, workspace=str(self.workspace or ""))
                 )
-            if runtime_events:
-                push_runtime_display(self, agent, runtime_events)
+            if running_events:
+                push_running_display(self, agent, running_events)
         if not text:
             continue
         append_jsonl_entry(

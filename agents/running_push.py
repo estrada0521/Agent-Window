@@ -8,7 +8,7 @@ MIN_RUNTIME_DISPLAY_SECONDS = 0.5
 MAX_RUNTIME_DISPLAY_QUEUE = 20
 
 
-def _runtime_event_payload(runtime, agent: str, keyword: str, detail: str, source_id: str) -> dict:
+def _running_event_payload(runtime, agent: str, keyword: str, detail: str, source_id: str) -> dict:
     runtime._idle_running_event_seq += 1
     return {
         "current_event": {
@@ -29,7 +29,7 @@ def _publish_next_runtime_display(runtime, agent: str) -> None:
             timers.pop(agent, None)
             return
         keyword, detail, source_id = queue.popleft()
-        runtime._idle_running_display_by_agent[agent] = _runtime_event_payload(
+        runtime._idle_running_display_by_agent[agent] = _running_event_payload(
             runtime, agent, keyword, detail, source_id
         )
         timer = threading.Timer(MIN_RUNTIME_DISPLAY_SECONDS, _publish_next_runtime_display, args=(runtime, agent))
@@ -39,7 +39,7 @@ def _publish_next_runtime_display(runtime, agent: str) -> None:
     runtime.publish_event("state")
 
 
-def push_runtime_display(runtime, agent: str, events: list[dict]) -> None:
+def push_running_display(runtime, agent: str, events: list[dict]) -> None:
     normalized: list[tuple[str, str, str]] = []
     for ev in events:
         item = (ev["keyword"], ev["detail"], ev["source_id"])

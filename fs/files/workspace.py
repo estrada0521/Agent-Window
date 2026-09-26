@@ -13,7 +13,7 @@ class _WorkspaceNotAGitRepo(Exception):
     pass
 
 
-class FileRuntime:
+class WorkspaceFiles:
     INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES = 512 * 1024
     RAW_STREAM_CHUNK_BYTES = 64 * 1024
     PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES = 32 * 1024

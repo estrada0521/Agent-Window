@@ -5,7 +5,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from server.branding import APP_DISPLAY_NAME
+from server import APP_DISPLAY_NAME
 from server.template import expand_includes
 from server.appearance.colors import DARK_BG
 
@@ -40,8 +40,8 @@ def launch_hub_restart(*, script_path, repo_root, hub_server) -> str:
             timeout=PROCESS_HANDOFF_TIMEOUT_SEC,
         )
     except subprocess.TimeoutExpired:
-        return f"agent-index did not finish within {PROCESS_HANDOFF_TIMEOUT_SEC:g}s"
-    return "" if completed.returncode == 0 else completed.stderr.strip() or f"agent-index exited {completed.returncode}"
+        return f"bin/hub did not finish within {PROCESS_HANDOFF_TIMEOUT_SEC:g}s"
+    return "" if completed.returncode == 0 else completed.stderr.strip() or f"bin/hub exited {completed.returncode}"
 
 
 def error_page(message) -> str:

@@ -23,8 +23,8 @@ from fs.session.paths import (
     workspace_chat_port,
 )
 from agents.executables import agent_launch_cmd, resolve_agent_executable
-from agents.names import agent_base_name
-from agents.instances import next_instance_name
+from agents import agent_base_name
+from agents import next_instance_name
 from agents.registry import AGENTS
 from tmux.process_cleanup import cleanup_target_process_groups
 from tmux.session import (

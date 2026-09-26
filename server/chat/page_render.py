@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from server.branding import APP_DISPLAY_NAME
+from server import APP_DISPLAY_NAME
 
 
 def build_chat_template_replacements(

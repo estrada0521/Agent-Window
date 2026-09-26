@@ -9,23 +9,23 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
-
 from server.chat.page import render_chat_html
-from server.chat.runtime import ChatRuntime
+from server.chat.session import ChatSession
 from server.chat.chat_process import launch_chat_server, wait_for_chat_server
-from server.chat.hub_session_events import notify_hub_session_messages_changed
 from server.chat.routes.assets import dispatch_get_assets_route
 from server.chat.routes.read import dispatch_get_read_route
 from server.chat.routes.write import dispatch_post_write_route
-from server.chat.asset_runtime import ChatAssetRuntime
+from server.chat.assets import ChatAssets
 from server.chat.probe import read_chat_server_state
 from fs.session.paths import (
     workspace_chat_port,
 )
 from git import repo as workspace_git
-from fs.files.runtime import FileRuntime
+from fs.files.workspace import WorkspaceFiles
 from fs.watch import start_workspace_fsevents_watcher
 from git.commit import adopt_commit_baseline
+from server.http_proxy import read_upstream
+
 
 RELOAD_RUNNING_AGENTS_ENV = "AGENT_WINDOW_RELOAD_RUNNING_AGENTS"
 
@@ -154,7 +154,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     port = workspace_chat_port(workspace)
     hub_port = int((_repo_root / "hub-port").read_text().strip())
     reload_running_agents = json.loads(os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, "[]"))
-    runtime = ChatRuntime(
+    runtime = ChatSession(
         port=port,
         workspace=workspace,
         hub_port=hub_port,
@@ -165,13 +165,13 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     server_instance = runtime.server_instance
     payload = runtime.payload
     send_message = _send_or_enqueue_message
-    file_runtime = FileRuntime(
+    file_runtime = WorkspaceFiles(
         workspace=workspace,
         repo_root=_repo_root,
     )
     workspace_git.configure(workspace=workspace)
     start_workspace_fsevents_watcher(runtime, file_runtime)
-    asset_runtime = ChatAssetRuntime(
+    asset_runtime = ChatAssets(
         repo_root=_repo_root,
     )
     runtime.start_native_log_sync()
@@ -302,6 +302,20 @@ def main(argv: list[str] | None = None) -> None:
     server.serve_forever()
     if chat_restart_pending:
         chat_restart_release_event.wait()
+
+
+HUB_NOTIFICATION_TIMEOUT_SEC = 1.0
+
+
+def notify_hub_session_messages_changed(hub_port: int) -> None:
+    response = read_upstream(
+        "POST",
+        f"http://127.0.0.1:{int(hub_port)}/session-messages-changed",
+        body=b"",
+        timeout=HUB_NOTIFICATION_TIMEOUT_SEC,
+    )
+    if response["status"] != 204:
+        raise RuntimeError(f"Hub message notification returned HTTP {response['status']}")
 
 
 if __name__ == "__main__":
