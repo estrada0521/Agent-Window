@@ -504,6 +504,7 @@ __INCLUDE:git-panel/events.js__
           mode: dpPanelOpen ? "open" : "",
           view: dpActivePanelView,
           width: dpOutwardPanelWidthPx(),
+          side: document.documentElement.dataset.sideBar === "left" ? "left" : "right",
         }, "*");
       }
     };
@@ -637,6 +638,7 @@ __INCLUDE:git-panel/events.js__
         document.documentElement.dataset.sideBar = "left";
         localStorage.setItem(SIDE_BAR_SIDE_KEY, "left");
       }
+      syncPanelState();
     };
     document.getElementById("sideBarSwapBtn")?.addEventListener("click", swapSideBarSide);
     desktopRightPanelResizer?.addEventListener("pointermove", (event) => {

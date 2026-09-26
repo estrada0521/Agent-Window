@@ -5,6 +5,8 @@
           String(event.data.mode || ""),
           Number(event.data.width || 0),
         );
+        if (event.data.side === "left") document.documentElement.dataset.sideBar = "left";
+        else delete document.documentElement.dataset.sideBar;
         return;
       }
       if (event.data && event.data.type === "open-external-url" && event.source === _deskTimelineFrame?.contentWindow) {
