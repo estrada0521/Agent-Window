@@ -2,10 +2,8 @@
       const state = {
         commits: [],
         nextOffset: 0,
-        totalCommits: 0,
         hasMore: false,
         pageLoading: false,
-        showLoadingUi: false,
         cancelLoading: () => {},
         loadError: "",
         loadSeq: 0,
@@ -60,47 +58,14 @@
       const updateLoadMoreUi = () => {
         const btn = loadMoreEl();
         if (!btn) return;
-        if (!state.hasMore && !state.loadError) {
-          btn.hidden = true;
-          btn.disabled = true;
-          btn.classList.remove("inline-loading-row");
-          btn.textContent = "";
-          return;
-        }
-        btn.hidden = false;
+        btn.hidden = !state.loadError;
         btn.disabled = state.pageLoading;
-        if (state.loadError) {
-          btn.classList.remove("inline-loading-row");
-          btn.textContent = host.loadMoreRetryText || "Retry loading commits";
-        } else if (state.pageLoading && state.showLoadingUi) {
-          if (host.loadMoreLoadingHtml) {
-            btn.classList.add("inline-loading-row");
-            btn.innerHTML = host.loadMoreLoadingHtml;
-          } else {
-            btn.classList.remove("inline-loading-row");
-            btn.textContent = "";
-          }
-        } else if (state.pageLoading) {
-          btn.classList.remove("inline-loading-row");
-          if (state.totalCommits > 0 && host.loadMoreCountText) {
-            btn.textContent = host.loadMoreCountText(state.commits.length, state.totalCommits);
-          } else {
-            btn.textContent = host.loadMoreText || "Load more commits";
-          }
-        } else if (state.totalCommits > 0) {
-          btn.classList.remove("inline-loading-row");
-          btn.textContent = host.loadMoreCountText
-            ? host.loadMoreCountText(state.commits.length, state.totalCommits)
-            : `Load more commits (${state.commits.length}/${state.totalCommits})`;
-        } else {
-          btn.classList.remove("inline-loading-row");
-          btn.textContent = host.loadMoreText || "Load more commits";
-        }
+        btn.textContent = state.loadError ? (host.loadMoreRetryText || "Retry loading commits") : "";
       };
       const ensureObserver = () => {
         disconnectObserver();
-        const btn = loadMoreEl();
-        if (!btn || !state.hasMore || state.pageLoading || state.loadError || typeof IntersectionObserver !== "function") return;
+        const lastRow = commitListEl()?.lastElementChild;
+        if (!lastRow?.matches(".git-commit-row") || !state.hasMore || state.pageLoading || state.loadError || typeof IntersectionObserver !== "function") return;
         state.observer = new IntersectionObserver((entries) => {
           entries.forEach((entry) => {
             if (!entry.isIntersecting) return;
@@ -111,11 +76,10 @@
           rootMargin: "220px 0px 220px 0px",
           threshold: 0.01,
         });
-        state.observer.observe(btn);
+        state.observer.observe(lastRow);
       };
       const applyPaging = (page, { reset = false, newHashes = null } = {}) => {
         state.commits = page.commits;
-        state.totalCommits = page.totalCommits;
         state.nextOffset = page.nextOffset;
         state.hasMore = page.hasMore;
         if (reset) state.overviewSig = page.fingerprint;
@@ -322,7 +286,6 @@
         if (!reset && !state.hasMore && !state.loadError) return;
         const loadSeq = ++state.loadSeq;
         state.pageLoading = true;
-        state.showLoadingUi = false;
         state.loadError = "";
         disconnectObserver();
         state.cancelLoading();
@@ -332,19 +295,12 @@
           host.onLoadReset?.();
           state.hasMore = false;
           state.nextOffset = 0;
-          state.totalCommits = 0;
           state.commits = [];
           state.cancelLoading = startDelayedLoading(() => {
             if (loadSeq !== state.loadSeq) return;
-            state.showLoadingUi = true;
             host.setBodyHtml(host.loadingHtml);
           });
         } else {
-          state.cancelLoading = startDelayedLoading(() => {
-            if (loadSeq !== state.loadSeq) return;
-            state.showLoadingUi = true;
-            updateLoadMoreUi();
-          });
           updateLoadMoreUi();
         }
         try {
@@ -366,7 +322,6 @@
           state.cancelLoading();
           state.cancelLoading = () => {};
           state.pageLoading = false;
-          state.showLoadingUi = false;
           updateLoadMoreUi();
           ensureObserver();
           if (state.refreshQueued) {

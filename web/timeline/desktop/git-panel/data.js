@@ -41,7 +41,6 @@
       errorHtml: (message) => `<div class="empty-state error">${escapeHtml(message)}</div>`,
       emptyCommitsHtml: '<div class="empty-state" data-git-empty="1">No commits</div>',
       loadMoreRetryText: "Retry loading commits",
-      loadMoreCountText: (loaded, total) => `Load more (${loaded}/${total})`,
       worktreeDetailClass: true,
       detailHeadHtml: ({ isWorktree, rowHtml }) => {
         if (isWorktree) return "";

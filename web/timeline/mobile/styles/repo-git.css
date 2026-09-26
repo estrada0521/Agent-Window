@@ -452,6 +452,7 @@
       color: var(--muted);
       padding: 10px 0;
     }
+    .git-load-more[hidden] { display: none; }
 
     .git-load-more:disabled {
       cursor: default;

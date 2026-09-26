@@ -198,9 +198,7 @@ __INCLUDE:../git-panel-controller.js__
       loadingHtml: mobileSheetStatusListHtml("", { loading: true }),
       errorHtml: (message) => mobileSheetStatusListHtml(message, { error: true }),
       emptyCommitsHtml: '<div class="sheet-list-empty" data-git-empty="1">No commits</div>',
-      loadMoreLoadingHtml: loadingIndicatorHtml(),
       loadMoreRetryText: "Retry loading commits",
-      loadMoreCountText: (loaded, total) => `Load more commits (${loaded}/${total})`,
       onLoadReset: () => {
         setGitSheetTitle();
         hideGitWorktreeButton();

@@ -54,7 +54,6 @@
       return {
         pageCommits,
         commits,
-        totalCommits: Math.max(0, parseInt(data?.total_commits) || 0),
         nextOffset: Math.max(0, parseInt(data?.next_offset) || commits.length),
         hasMore: !!data?.has_more,
         fingerprint: gitOverviewFingerprint(data),

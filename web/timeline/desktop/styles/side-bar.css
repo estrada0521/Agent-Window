@@ -1141,6 +1141,7 @@
       border: none;
       background: transparent;
     }
+    .git-load-more[hidden] { display: none; }
     .git-load-more:disabled {
       cursor: default;
       color: var(--muted);
