@@ -160,6 +160,9 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         repo_root=_repo_root,
         initial_running_agents=reload_running_agents,
     )
+    threading.excepthook = lambda args: state.report_thread_stopped(
+        args.thread.name, f"{args.exc_type.__name__}: {args.exc_value}"
+    )
 
     server_instance = state.server_instance
     payload = state.payload

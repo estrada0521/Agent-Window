@@ -61,6 +61,7 @@ class RoomState:
         self._events = threading.Condition()
         self._event_counts = dict.fromkeys(EVENT_KINDS, 0)
         self._latest_failure = ""
+        self._stopped_threads: dict[str, str] = {}
         self._native_log_read_offsets: dict[str, int] = {}
         self._native_log_bindings_by_agent: dict = {}
         self._native_log_bindings_lock = threading.Lock()
@@ -165,6 +166,12 @@ class RoomState:
             self._event_counts["failure"] += 1
             self._events.notify_all()
 
+    def report_thread_stopped(self, name: str, detail: str) -> None:
+        with self._events:
+            self._stopped_threads[name] = detail
+            self._event_counts["state"] += 1
+            self._events.notify_all()
+
     def wait_for_events(self, seen: dict[str, int], timeout: float) -> list[tuple[str, str]]:
         with self._events:
             self._events.wait_for(lambda: self._event_counts != seen, timeout=timeout)
@@ -178,6 +185,8 @@ class RoomState:
 
     def room_state_payload(self) -> dict:
         timeline_label = self.timeline_label
+        with self._events:
+            stopped_threads = [f"{name} stopped: {detail}" for name, detail in self._stopped_threads.items()]
         return {
             "server_instance": self.server_instance,
             "pid": os.getpid(),
@@ -188,6 +197,7 @@ class RoomState:
             "targets": self.active_agents() if self.room_is_active else log_meta_agents(timeline_label),
             "statuses": self.agent_statuses(),
             "running_display": self.running_display_state(),
+            "stopped_threads": stopped_threads,
         }
 
     def payload(self, limit: int, offset: int) -> bytes:

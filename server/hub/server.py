@@ -414,10 +414,13 @@ class Handler(BaseHTTPRequestHandler):
         handler_name = route_map.get(parsed.path)
         if not handler_name:
             return False
-        if callable(handler_name):
-            handler_name(self, parsed, _hub_action_context())
-            return True
-        getattr(self, handler_name)(parsed)
+        try:
+            if callable(handler_name):
+                handler_name(self, parsed, _hub_action_context())
+            else:
+                getattr(self, handler_name)(parsed)
+        except Exception as exc:
+            self._send_json(500, {"ok": False, "error": f"{type(exc).__name__}: {exc}"})
         return True
 
     def _get_hub_manifest(self, _parsed):

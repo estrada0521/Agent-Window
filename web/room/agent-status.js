@@ -73,6 +73,7 @@
       syncThinkingRunningItems(data.statuses, { suppressRender: true });
       renderAgentStatus(data.statuses);
       syncAgentMenuOptions();
+      setResidentStatus("thread-stopped", data.stopped_threads.join(" · "));
       if (document.documentElement.dataset.mobile !== "1" && typeof data.timeline === "string" && data.timeline) {
         dpOnTimelineSummaryPinReload();
       }
@@ -85,7 +86,7 @@
       refreshRoomState.inFlight = true;
       try {
         const res = await fetchWithTimeout(`/room-state?ts=${Date.now()}`, {}, 4000);
-        if (!res.ok) throw new Error("timeline state unavailable");
+        if (!res.ok) throw new Error("room state unavailable");
         applyRoomState(await res.json());
         setResidentStatus("state-failed", "");
       } catch (err) {
