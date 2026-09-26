@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 from server.room.page import render_room_html
-from server.room.session import RoomSession
+from server.room.state import RoomState
 from server.room.room_process import launch_room_server, wait_for_room_server
 from server.room.routes.assets import dispatch_get_assets_route
 from server.room.routes.read import dispatch_get_read_route
@@ -153,7 +153,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     port = workspace_room_port(workspace)
     hub_port = int((_repo_root / "hub-port").read_text().strip())
     reload_running_agents = json.loads(os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, "[]"))
-    state = RoomSession(
+    state = RoomState(
         port=port,
         workspace=workspace,
         hub_port=hub_port,

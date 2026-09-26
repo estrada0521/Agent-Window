@@ -5,7 +5,7 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-import server.room.session as state_module
+import server.room.state as state_module
 
 
 class _FakeClock:
@@ -27,7 +27,7 @@ def _state(has_log_binding):
         mock.patch.object(state_module, "WorkspaceSessionBinding", return_value=fake_binding),
         mock.patch.object(state_module, "find_session_for_workspace", return_value=None),
     ):
-        state = state_module.RoomSession(
+        state = state_module.RoomState(
             port=1,
             workspace="/work/project",
             hub_port=1,

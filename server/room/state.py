@@ -38,7 +38,7 @@ NATIVE_LOG_BIND_INTERVAL_SECONDS = 0.5
 NATIVE_LOG_BIND_TIMEOUT_SECONDS = 3.0
 
 
-class RoomSession:
+class RoomState:
     def __init__(
         self,
         *,
