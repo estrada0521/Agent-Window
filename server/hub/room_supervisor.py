@@ -131,7 +131,6 @@ def request_room_revive(hub, timeline_label: str) -> tuple[bool, str]:
             timeline_label=timeline_label,
             workspace=workspace,
             agents=meta["agents"],
-            repo_root=hub.repo_root,
             revive=True,
         )
     except RoomControlError as exc:

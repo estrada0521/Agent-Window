@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -12,8 +13,7 @@ from server.appearance.colors import apply_color_tokens, resolve_theme_palette
 from server.appearance.theme import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from server.pwa import PWA_FILES, pwa_icon_entries, serve_pwa_file
-from server.hub.room_proxy import proxy_room
-from server.hub.timeline_api import split_room_proxy_path
+from server.hub.room_proxy import format_room_url, proxy_room, split_room_proxy_path
 from server.hub.room_supervisor import stop_inactive_room_servers
 from server.page_header import (
     PAGE_HEADER_CSS,
@@ -43,12 +43,7 @@ from server.hub.actions import (
     post_reset_timeline_agents as _post_reset_timeline_agents_action,
     post_restart_hub as _post_restart_hub_action,
 )
-from server.hub.server_helpers import (
-    build_hub_html_pages as _build_hub_html_pages_impl,
-    error_page,
-    format_room_url,
-    launch_hub_restart,
-)
+from server.hub.pages import build_hub_html_pages, error_page
 from server.request import request_view_variant
 
 _initialized = False
@@ -77,11 +72,32 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     root_arg, script_arg = args
     repo_root = Path(root_arg).resolve()
     script_path = Path(script_arg).resolve()
-    port = int((repo_root / "hub-port").read_text().strip())
+    port = int((repo_root / "server" / "hub" / "port").read_text().strip())
     hub = Hub(repo_root, hub_port=port)
     restart_pending, hub_server = False, None
 
     _initialized = True
+
+
+PROCESS_HANDOFF_TIMEOUT_SEC = 8.0
+
+
+def launch_hub_restart(*, script_path, repo_root, hub_server) -> str:
+    hub_server.shutdown()
+    hub_server.server_close()
+    try:
+        completed = subprocess.run(
+            ["bash", str(script_path)],
+            cwd=repo_root,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=PROCESS_HANDOFF_TIMEOUT_SEC,
+        )
+    except subprocess.TimeoutExpired:
+        return f"server/hub/start did not finish within {PROCESS_HANDOFF_TIMEOUT_SEC:g}s"
+    return "" if completed.returncode == 0 else completed.stderr.strip() or f"server/hub/start exited {completed.returncode}"
 
 
 def queue_hub_restart():
@@ -319,7 +335,7 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
 
 _HUB_DESKTOP_TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "web" / "hub" / "desktop"
 _HUB_MOBILE_TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "web" / "hub" / "mobile"
-_hub_pages = _build_hub_html_pages_impl(
+_hub_pages = build_hub_html_pages(
     desktop_template_dir=_HUB_DESKTOP_TEMPLATE_DIR,
     mobile_template_dir=_HUB_MOBILE_TEMPLATE_DIR,
     pwa_hub_manifest_url=f"/hub.webmanifest?v={Path(__file__).stat().st_mtime_ns}",

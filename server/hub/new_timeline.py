@@ -153,7 +153,6 @@ def post_start_timeline_draft(handler, _parsed, ctx) -> None:
             timeline_label=timeline_label,
             workspace=resolved_workspace,
             agents=[],
-            repo_root=ctx["hub"].repo_root,
         )
         ok, room_port, detail = ensure_room_server(
             ctx["hub"],

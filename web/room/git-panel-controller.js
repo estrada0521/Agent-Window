@@ -1,4 +1,4 @@
-    const createGitPanelSession = (host) => {
+    const createGitPanelController = (host) => {
       const state = {
         commits: [],
         nextOffset: 0,

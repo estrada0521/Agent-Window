@@ -150,7 +150,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
 
     _repo_root = Path(__file__).resolve().parents[2]
     port = workspace_room_port(workspace)
-    hub_port = int((_repo_root / "hub-port").read_text().strip())
+    hub_port = int((_repo_root / "server" / "hub" / "port").read_text().strip())
     reload_running_agents = json.loads(os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, "[]"))
     state = RoomState(
         port=port,
@@ -176,9 +176,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         report_failure=state.report_failure,
         on_head_changed=state.commits.observe,
     )
-    assets = RoomAssets(
-        repo_root=_repo_root,
-    )
+    assets = RoomAssets()
     state.start_native_log_sync()
     try:
         state.commits.adopt_baseline()

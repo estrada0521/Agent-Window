@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from server.hub.room_supervisor import room_server_state_matches, ensure_room_server
-from server.hub.timeline_api import resolve_timeline_room_target
+from server.hub.actions import resolve_timeline_room_target
 from server.hub.timeline_query import LiveTimelines, archived_timeline_records
 from git import repo as workspace_git
 
@@ -90,12 +90,12 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             workspace = Path(tmp) / "Even-Parity"
             workspace.mkdir()
             with (
-                patch("server.hub.timeline_api.live_timelines_query", return_value=LiveTimelines({}, "ok")),
+                patch("server.hub.actions.live_timelines_query", return_value=LiveTimelines({}, "ok")),
                 patch(
-                    "server.hub.timeline_api.read_log_meta",
+                    "server.hub.actions.read_log_meta",
                     return_value={"workspace": str(workspace), "agents": []},
                 ),
-                patch("server.hub.timeline_api.ensure_room_server", side_effect=ensure_room_server),
+                patch("server.hub.actions.ensure_room_server", side_effect=ensure_room_server),
             ):
                 resolved = resolve_timeline_room_target(object(), "Even-Parity")
         self.assertEqual(resolved["status"], "ok")

@@ -10,9 +10,8 @@ from agents.registry import icon_file_map
 
 
 class RoomAssets:
-    def __init__(self, *, repo_root: Path | str):
-        repo_root = Path(repo_root).resolve()
-        self.icon_files = icon_file_map(repo_root)
+    def __init__(self):
+        self.icon_files = icon_file_map()
         self.fonts_dir = Path.home() / "Library/Fonts"
         self.icon_data_uris = {name: self._icon_data_uri(name) for name in self.icon_files}
 

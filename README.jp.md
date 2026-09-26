@@ -227,7 +227,7 @@ HTML/CSS/vanilla JavaScript、Python標準libraryと、app用のObjective-Cが1 
 
 telemetryなし。Agent CLI以外のネットワーク依存は `cdn.jsdelivr.net` の `marked` と `katex` のみ。local完結させたいなら、自分でvendorする。
 
-Hubの port は `hub-port` fileの値(既定 `8788`)を専有する。fileを書き換えれば変わる。roomごとのport はworkspaceのpathから決まる固定値を専有する。
+Hubの port は `server/hub/port` fileの値(既定 `8788`)を専有する。fileを書き換えれば変わる。roomごとのport はworkspaceのpathから決まる固定値を専有する。
 
 Agent Window自身がfilesystemへ保存するdataは `~/.agent-window/` と、workspace内の `.agent-window/` だけ。
 

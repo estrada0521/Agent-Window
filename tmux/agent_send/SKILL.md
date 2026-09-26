@@ -51,7 +51,7 @@ printf '%s' 'Please review this together.' | agent-send codex-1,codex-2
 Use the exact instance names shown in the current room's topology:
 
 ```bash
-agent-window context
+agent-send --context
 ```
 
 When only one instance of an agent is active, its name may be unsuffixed, such as `codex`. Do not assume that `codex-1` exists.

@@ -227,7 +227,7 @@ The stack is HTML/CSS/vanilla JavaScript, the Python standard library, and one O
 
 No telemetry. The only network dependencies besides the Agent CLIs are `marked` and `katex` from `cdn.jsdelivr.net`. Vendor them yourself if you want it fully local.
 
-The Hub occupies the port in the `hub-port` file (default `8788`); edit the file to change it. Each room occupies a fixed port derived from its workspace's path.
+The Hub occupies the port in the `server/hub/port` file (default `8788`); edit the file to change it. Each room occupies a fixed port derived from its workspace's path.
 
 Agent Window itself writes filesystem data only under `~/.agent-window/` and `<workspace>/.agent-window/`.
 

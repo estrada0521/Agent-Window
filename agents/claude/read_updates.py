@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import time
 
-from agents.path_state import (
+from agents.read_offset import (
     advance_read_offset,
     read_offset_start,
 )

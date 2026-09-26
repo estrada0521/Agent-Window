@@ -19,7 +19,7 @@
       if (!force && _dpGitSummaryPinnedLoadedForKey === storageKey) return;
       _dpGitSummaryPinnedLoadedForKey = storageKey;
       dpReadGitSummaryPinnedFromStorage();
-      gitSession.invalidateFingerprint();
+      gitPanel.invalidateFingerprint();
       if (dpGitSummaryPinned) {
         void dpBootstrapPinnedGitSummary();
       }
@@ -46,7 +46,7 @@
         setStatus(err?.message || errMsg);
       }
     };
-    const gitSession = createGitPanelSession({
+    const gitPanel = createGitPanelController({
       root: () => dpGitContent,
       modeEl: () => dpGitContent?.querySelector(".git-stack") || dpGitContent,
       observerRoot: () => dpGitContent?.querySelector(".git-commit-scroll") ?? dpGitContent,
@@ -80,10 +80,10 @@
         dpSyncSummaryWrap();
       },
     });
-    const dpLoadGitPage = (opts) => gitSession.loadPage(opts);
-    const dpOpenGitDetail = (opts) => gitSession.openDetail(opts);
-    const dpCloseGitDetail = (opts) => gitSession.closeDetail(opts);
-    const dpDisconnectGitObserver = () => gitSession.disconnectObserver();
+    const dpLoadGitPage = (opts) => gitPanel.loadPage(opts);
+    const dpOpenGitDetail = (opts) => gitPanel.openDetail(opts);
+    const dpCloseGitDetail = (opts) => gitPanel.closeDetail(opts);
+    const dpDisconnectGitObserver = () => gitPanel.disconnectObserver();
     const dpRefreshGitOverview = async () => {
-      await gitSession.refresh();
+      await gitPanel.refresh();
     };

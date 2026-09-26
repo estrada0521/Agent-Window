@@ -79,7 +79,7 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
 
             self.assertIsNone(found)
 
-    def test_no_match_when_the_timeline_root_does_not_exist_yet(self) -> None:
+    def test_no_match_when_the_log_root_does_not_exist_yet(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "log"
             workspace = Path(tmp) / "workspace"
@@ -178,7 +178,6 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
                 timeline_label=expected_name,
                 workspace=str(workspace.resolve()),
                 agents=[],
-                repo_root=Path(tmp),
             )
 
 

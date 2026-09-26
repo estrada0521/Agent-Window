@@ -271,7 +271,7 @@
     const workspaceSheet = createMobileSheetController(mobileSheet, MOBILE_SHEET_ACTIVE_CLASS, {
       onClosed: () => {
         clearSheetPreview({ restoreChrome: false });
-        gitSession.closeDetail();
+        gitPanel.closeDetail();
         _repoBrowserPath = "";
         repoScrollByPath.clear();
         repoPanelRenderSig = "";
@@ -530,11 +530,11 @@
           wireMobileSheetSwipeBack(
             contentEl,
             () => sheetPreviewOpen()
-              || (sheetKind() === "git" && !!gitSession.detailContext)
+              || (sheetKind() === "git" && !!gitPanel.detailContext)
               || (sheetKind() === "repo" && !!normalizeRepoPath(_repoBrowserPath)),
             () => {
               if (sheetPreviewOpen()) popSheetPreview();
-              else if (sheetKind() === "git") gitSession.closeDetail({ refreshList: gitSession.detailNeedsRefresh });
+              else if (sheetKind() === "git") gitPanel.closeDetail({ refreshList: gitPanel.detailNeedsRefresh });
               else _repoGoToParentPath();
             },
           );
@@ -929,7 +929,7 @@ __INCLUDE:git-panel.js__
     };
     const closeHeaderMenus = () => {
       resetAgentActionNativeMenu({ clearOptions: true });
-      gitSession.closeDetail();
+      gitPanel.closeDetail();
       exitPaneTraceMode();
       closeSheet();
       syncHeaderMenuFocus();

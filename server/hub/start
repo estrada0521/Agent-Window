@@ -2,14 +2,14 @@
 set -euo pipefail
 
 _HERE="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "${BASH_SOURCE[0]:-$0}")"
-REPO_ROOT="$(cd "$(dirname "$_HERE")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$_HERE")/../.." && pwd)"
 HUB_PYTHONPATH="${REPO_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
-HUB_PORT="$(cat "$REPO_ROOT/hub-port")"
+HUB_PORT="$(cat "$REPO_ROOT/server/hub/port")"
 READY_TIMEOUT_SEC=6
 
 usage() {
   cat <<'USAGE'
-Usage: bin/hub
+Usage: server/hub/start
 
 Start Hub.
 USAGE

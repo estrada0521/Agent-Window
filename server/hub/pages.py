@@ -2,46 +2,11 @@ from __future__ import annotations
 
 import html
 import json
-import subprocess
 from pathlib import Path
 
 from server import APP_DISPLAY_NAME
 from server.template import expand_includes
 from server.appearance.colors import DARK_BG
-
-
-def apply_hub_page_branding(html: str, *, page_title: str) -> str:
-    return (
-        html
-        .replace("__APP_DISPLAY_NAME__", APP_DISPLAY_NAME)
-        .replace("__PAGE_TITLE__", page_title)
-    )
-
-
-def format_room_url(room_port: int, path: str) -> str:
-    suffix = path if path.startswith("/") else f"/{path}"
-    return f"/{int(room_port)}{suffix}"
-
-
-PROCESS_HANDOFF_TIMEOUT_SEC = 8.0
-
-
-def launch_hub_restart(*, script_path, repo_root, hub_server) -> str:
-    hub_server.shutdown()
-    hub_server.server_close()
-    try:
-        completed = subprocess.run(
-            ["bash", str(script_path)],
-            cwd=repo_root,
-            stdin=subprocess.DEVNULL,
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=PROCESS_HANDOFF_TIMEOUT_SEC,
-        )
-    except subprocess.TimeoutExpired:
-        return f"bin/hub did not finish within {PROCESS_HANDOFF_TIMEOUT_SEC:g}s"
-    return "" if completed.returncode == 0 else completed.stderr.strip() or f"bin/hub exited {completed.returncode}"
 
 
 def error_page(message) -> str:
@@ -77,7 +42,7 @@ def build_hub_html_pages(
             .replace("__HUB_HEADER_HTML__", header_html)
             .replace("__HUB_HEADER_JS__", hub_header_js)
         )
-        return apply_hub_page_branding(html, page_title=APP_DISPLAY_NAME)
+        return html.replace("__APP_DISPLAY_NAME__", APP_DISPLAY_NAME).replace("__PAGE_TITLE__", APP_DISPLAY_NAME)
 
     hub_home_desktop_html = _render_hub_home_html(desktop_template_dir, header_html=hub_header_html)
     hub_home_mobile_html = _render_hub_home_html(mobile_template_dir, header_html=hub_header_html_mobile)

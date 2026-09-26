@@ -4,7 +4,7 @@ import os
 import time
 from pathlib import Path
 
-from agents.path_state import (
+from agents.read_offset import (
     advance_read_offset,
     read_offset_start,
 )

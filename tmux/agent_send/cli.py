@@ -4,6 +4,7 @@ import os
 import sys
 
 from agents.registry import ALL_AGENT_NAMES
+from tmux.agent_send.context import describe_timeline, format_context_text
 from tmux.agent_send.send import AgentSendError, AgentSender
 
 
@@ -11,6 +12,7 @@ def _usage_text() -> str:
     return "\n".join(
         [
             "Usage: agent-send <target>",
+            "       agent-send --context",
             "",
             "Message body is read from stdin.",
             "",
@@ -22,6 +24,8 @@ def _usage_text() -> str:
             "  claude-1       (specific instance when duplicates exist)",
             "  claude,codex   (comma-separated targets)",
             "  claude         (ambiguous when duplicates exist; use claude-1)",
+            "",
+            "--context prints this room's timeline, workspace and agent panes.",
         ]
     )
 
@@ -40,6 +44,15 @@ def run(argv: list[str] | None = None) -> int:
     except AgentSendError as exc:
         print(str(exc), file=sys.stderr)
         return 1
+
+    if args[0] == "--context":
+        try:
+            label = sender.resolve_timeline_label()
+        except AgentSendError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        print(format_context_text(describe_timeline(label)))
+        return 0
 
     if sys.stdin.isatty():
         print(

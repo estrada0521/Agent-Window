@@ -504,11 +504,11 @@ static BOOL HubReady(NSInteger port) {
         dispatch_async(dispatch_get_main_queue(), ^{ [self showHubError:message]; });
     };
     NSString *root = @AW_REPO_ROOT;
-    if (![NSFileManager.defaultManager fileExistsAtPath:[root stringByAppendingPathComponent:@"bin/hub"]]) {
+    if (![NSFileManager.defaultManager fileExistsAtPath:[root stringByAppendingPathComponent:@"server/hub/start"]]) {
         fail(@"Could not find the Agent Window repo.");
         return;
     }
-    NSString *portFile = [root stringByAppendingPathComponent:@"hub-port"];
+    NSString *portFile = [root stringByAppendingPathComponent:@"server/hub/port"];
     NSError *readError = nil;
     NSString *raw = [NSString stringWithContentsOfFile:portFile encoding:NSUTF8StringEncoding error:&readError];
     if (!raw) {
@@ -529,7 +529,7 @@ static BOOL HubReady(NSInteger port) {
             return;
         }
         NSTask *hub = [NSTask new];
-        hub.executableURL = [NSURL fileURLWithPath:[root stringByAppendingPathComponent:@"bin/hub"]];
+        hub.executableURL = [NSURL fileURLWithPath:[root stringByAppendingPathComponent:@"server/hub/start"]];
         hub.currentDirectoryURL = [NSURL fileURLWithPath:root];
         NSMutableDictionary *env = [NSProcessInfo.processInfo.environment mutableCopy];
         env[@"PATH"] = path;

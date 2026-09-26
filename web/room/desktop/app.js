@@ -484,7 +484,7 @@ __INCLUDE:../pointer-capability.js__
 __INCLUDE:../list-flip.js__
 __INCLUDE:../git-panel-html.js__
 __INCLUDE:../git-panel-data.js__
-__INCLUDE:../git-panel-session.js__
+__INCLUDE:../git-panel-controller.js__
 __INCLUDE:git-panel/state.js__
 __INCLUDE:git-panel/render.js__
 __INCLUDE:git-panel/data.js__
@@ -511,7 +511,7 @@ __INCLUDE:git-panel/events.js__
     };
     const loadDesktopRightPanelView = ({ reset = false, animateRepo = true } = {}) => {
       if (!dpPanelOpen) return Promise.resolve();
-      const hasGitShell = gitSession.hasShell();
+      const hasGitShell = gitPanel.hasShell();
       if (reset && hasGitShell) dpCloseGitDetail();
       const gitP = hasGitShell ? dpRefreshGitOverview() : dpLoadGitPage({ reset: true });
       dpLoadRepoDir(dpRepoBrowserPath || "", { animate: animateRepo });
@@ -550,7 +550,7 @@ __INCLUDE:git-panel/events.js__
       const wasAtBottom = _atBottomAtAnchorWidth || timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight <= 2;
       dpStopPanelResize();
       dpPanelOpen = false;
-      if (gitSession.hasShell()) dpCloseGitDetail();
+      if (gitPanel.hasShell()) dpCloseGitDetail();
       desktopRightPanel.classList.remove("open");
       desktopRightPanel.hidden = true;
       document.body.classList.remove("right-panel-open");
@@ -1329,9 +1329,9 @@ __INCLUDE:git-panel/events.js__
       }
     };
     const handleWorkspaceGitChanged = () => {
-      gitSession.invalidateFingerprint();
+      gitPanel.invalidateFingerprint();
       if (!dpPanelOpen && !dpPinnedStripActive()) return;
-      if (dpPanelOpen && !gitSession.hasShell()) {
+      if (dpPanelOpen && !gitPanel.hasShell()) {
         void dpLoadGitPage({ reset: true });
       } else {
         void dpRefreshGitOverview();

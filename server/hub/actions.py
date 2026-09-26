@@ -6,6 +6,7 @@ from urllib.parse import parse_qs
 
 from fs.log.meta import (
     LogMetaError,
+    read_log_meta,
     rename_log,
     reset_log_agents,
     log_workspace,
@@ -20,7 +21,31 @@ from server.hub.room_supervisor import (
     request_room_archive,
     request_room_revive,
 )
-from server.hub.timeline_api import resolve_timeline_room_target
+from server.hub.timeline_query import live_timelines_query
+
+
+def _room_target(hub, workspace: str, *, room_is_active: bool) -> dict:
+    ok, room_port, detail = ensure_room_server(
+        hub,
+        expected_active=room_is_active,
+        workspace=workspace,
+    )
+    if not ok:
+        return {"status": "error", "detail": detail}
+    return {"status": "ok", "room_port": room_port}
+
+
+def resolve_timeline_room_target(hub, timeline_label: str) -> dict:
+    live = live_timelines_query(hub)
+    if timeline_label in live.workspaces:
+        return _room_target(hub, live.workspaces[timeline_label], room_is_active=True)
+    if live.state == "unhealthy":
+        return {"status": "unhealthy", "detail": live.detail}
+    try:
+        workspace = read_log_meta(timeline_label)["workspace"]
+    except FileNotFoundError:
+        return {"status": "missing"}
+    return _room_target(hub, workspace, room_is_active=False)
 
 
 def _timeline_query(parsed) -> tuple[str, str]:

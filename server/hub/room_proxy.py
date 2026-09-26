@@ -3,13 +3,37 @@ from __future__ import annotations
 from urllib.parse import urlparse
 
 from server import http_proxy
-from server.hub.server_helpers import format_room_url
 from fs.log.meta import log_workspace_claims
 from fs.log.paths import workspace_room_port
-from server.hub.timeline_api import split_room_proxy_path
 
 UPSTREAM_TIMEOUT = 30.0
 STREAM_CHUNK_SIZE = 64 * 1024
+
+
+def parse_room_port(segment: str) -> int | None:
+    try:
+        port = int(segment)
+    except (TypeError, ValueError):
+        return None
+    if port <= 0 or port > 65535:
+        return None
+    return port
+
+
+def split_room_proxy_path(path: str) -> tuple[int, str] | None:
+    parts = str(path or "").split("/", 2)
+    if len(parts) < 2:
+        return None
+    room_port = parse_room_port(parts[1])
+    if room_port is None:
+        return None
+    suffix = "/" if len(parts) < 3 or not parts[2] else f"/{parts[2]}"
+    return room_port, suffix
+
+
+def format_room_url(room_port: int, path: str) -> str:
+    suffix = path if path.startswith("/") else f"/{path}"
+    return f"/{int(room_port)}{suffix}"
 
 
 def _read_body(handler, method: str) -> bytes | None:

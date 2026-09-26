@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import argparse
-import json
 import os
 import subprocess
-import sys
 
-from fs.log.meta import find_label_for_workspace, read_log_meta
+from fs.log.meta import read_log_meta
 from tmux import TMUX
 from tmux.session import agent_topology, find_session_for_workspace
 
@@ -85,7 +82,7 @@ def _format_panes(panes: dict) -> list[str]:
 
 
 def format_context_text(info: dict) -> str:
-    lines = ["## agent-window context", ""]
+    lines = ["## agent-send --context", ""]
     lines.append(f"- **timeline**: {info['timeline']}")
     lines.append(f"- **status**: {'active' if info['active'] else 'archived'}")
     if info.get("workspace"):
@@ -116,32 +113,3 @@ def format_context_text(info: dict) -> str:
         f"workspace mirror is `{workspace}/.agent-window/.log.jsonl`."
     )
     return "\n".join(lines)
-
-
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="agent-window context")
-    sub = parser.add_subparsers(dest="cmd", required=True)
-
-    context_cmd = sub.add_parser("context")
-    context_cmd.add_argument("--timeline", default="")
-    context_cmd.add_argument("--workspace", default="")
-    context_cmd.add_argument("--json", action="store_true")
-
-    args = parser.parse_args(argv)
-    try:
-        if args.cmd == "context":
-            workspace_hint = (args.workspace or "").strip() or os.getcwd()
-            timeline_label = (args.timeline or "").strip() or find_label_for_workspace(workspace_hint)
-            if not timeline_label:
-                print("No Agent Window timeline found for this workspace; specify --timeline.", file=sys.stderr)
-                return 1
-            info = describe_timeline(timeline_label)
-            print(json.dumps(info, ensure_ascii=False) if args.json else format_context_text(info))
-    except FileNotFoundError:
-        print(f"Timeline does not exist: {timeline_label}", file=sys.stderr)
-        return 1
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

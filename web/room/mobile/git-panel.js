@@ -1,7 +1,7 @@
 __INCLUDE:../list-flip.js__
 __INCLUDE:../git-panel-html.js__
 __INCLUDE:../git-panel-data.js__
-__INCLUDE:../git-panel-session.js__
+__INCLUDE:../git-panel-controller.js__
     const gitSheetTitleEl = () => sharedSheetTitleEl;
     const setGitSheetTitle = () => {
       const titleEl = gitSheetTitleEl();
@@ -13,7 +13,7 @@ __INCLUDE:../git-panel-session.js__
     const gitWorktreeButton = () => mobileSheet?.querySelector(".git-worktree-button");
     const showGitWorktreeButton = () => {
       const btn = gitWorktreeButton();
-      if (btn) btn.hidden = !!gitSession.detailContext;
+      if (btn) btn.hidden = !!gitPanel.detailContext;
     };
     const hideGitWorktreeButton = () => {
       const btn = gitWorktreeButton();
@@ -71,7 +71,7 @@ __INCLUDE:../git-panel-session.js__
       }
       hideGitWorktreeButton();
       setSharedSheetLeading(
-        () => gitSession.closeDetail({ refreshList: gitSession.detailNeedsRefresh }),
+        () => gitPanel.closeDetail({ refreshList: gitPanel.detailNeedsRefresh }),
         "Back to commits",
         mobileSheetBackIcon,
       );
@@ -79,7 +79,7 @@ __INCLUDE:../git-panel-session.js__
     const renderGitCommitInfo = async (hash) => {
       const info = await gitCommitInfo(hash);
       const bodyEl = gitHostEl()?.querySelector(".git-commit-detail-body");
-      if (!bodyEl || gitSession.detailContext?.hash !== hash) return;
+      if (!bodyEl || gitPanel.detailContext?.hash !== hash) return;
       const trailers = [];
       const body = info.message.split("\n").slice(1).filter((line) => {
         const isTrailer = /^co-authored-by:/i.test(line);
@@ -121,7 +121,7 @@ __INCLUDE:../git-panel-session.js__
       void renderGitCommitInfo(hash);
     };
     const refreshGitDetailTitleFromOverview = (data) => {
-      if (!_gitDetailChrome || gitSession.detailContext?.kind === "commit") return;
+      if (!_gitDetailChrome || gitPanel.detailContext?.kind === "commit") return;
       const titleEl = gitSheetTitleEl();
       if (!titleEl?.classList.contains("git-sheet-detail-title")) return;
       const previous = gitCountSnapshot(titleEl);
@@ -168,9 +168,9 @@ __INCLUDE:../git-panel-session.js__
       requestAnimationFrame(pin);
     };
     const gitSheetListEl = () => gitHostEl()?.querySelector(
-      gitSession.detailContext ? ".git-detail-view" : ".git-list-view"
+      gitPanel.detailContext ? ".git-detail-view" : ".git-list-view"
     ) || gitHostEl();
-    const gitSession = createGitPanelSession({
+    const gitPanel = createGitPanelController({
       root: () => gitHostEl(),
       modeEl: () => gitHostEl()?.querySelector(".git-stack") || gitHostEl(),
       observerRoot: gitSheetListEl,
@@ -220,16 +220,16 @@ __INCLUDE:../git-panel-session.js__
     });
     const updateGitPanel = async () => {
       if (!mobileSheet) return;
-      if (gitSession.hasShell()) {
+      if (gitPanel.hasShell()) {
         try {
-          await gitSession.refresh();
+          await gitPanel.refresh();
         } catch (_) { }
         return;
       }
-      await gitSession.loadPage({ reset: true });
+      await gitPanel.loadPage({ reset: true });
     };
     mobileSheet?.addEventListener("click", (event) => {
-      void gitSession.handleClick(event, {
+      void gitPanel.handleClick(event, {
         onFileRow: async (fileRow) => {
           const path = String(fileRow.dataset.path || "").trim();
           if (!path) return;

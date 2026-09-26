@@ -253,13 +253,11 @@ def open_room(
     timeline_label: str,
     workspace: str,
     agents: list[str],
-    repo_root: Path | str,
     revive: bool = False,
 ) -> None:
     workspace_path = Path(workspace).expanduser().resolve()
     if not workspace_path.is_dir():
         raise RoomControlError(f"Invalid workspace: {workspace_path}")
-    root = Path(repo_root).resolve()
     instances = _prepare_instances(agents)
     if not revive:
         create_log_dir(timeline_label, str(workspace_path), instances)
@@ -292,9 +290,7 @@ def open_room(
             raise RoomControlError(f"Failed to create agent window for {instance}")
         panes.append(pane_id)
 
-    bin_dir = str(root / "bin")
-    path_value = f"{bin_dir}:{os.environ.get('PATH', '')}"
-    _set_env(tmux_name, "PATH", path_value)
+    _set_env(tmux_name, "PATH", os.environ["PATH"])
     _unset_env(tmux_name, "CLAUDECODE")
     _write_meta(tmux_name, timeline_label)
 

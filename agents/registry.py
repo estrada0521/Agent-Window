@@ -8,7 +8,6 @@ from pathlib import Path
 class AgentDef:
     name: str
     display_name: str
-    icon_file: str
     executable: str = ""
     launch_extra: str = ""
     launch_flags: str = ""
@@ -23,7 +22,6 @@ class AgentDef:
 
 
 AGENTS: dict[str, AgentDef] = {}
-AGENT_ICONS_DIR = "web/assets/agent-icons"
 
 _AGENT_TMUX_COLOR_SUFFIX = "-u NO_COLOR -u CI FORCE_COLOR=1"
 
@@ -37,7 +35,6 @@ _register(
     AgentDef(
         name="claude",
         display_name="Claude",
-        icon_file="claude.svg",
         executable="claude",
         launch_extra=f"env -u CLAUDECODE {_AGENT_TMUX_COLOR_SUFFIX}",
         fallback_paths=("~/.local/bin/claude",),
@@ -45,7 +42,6 @@ _register(
     AgentDef(
         name="codex",
         display_name="Codex",
-        icon_file="codex.svg",
         executable="codex",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         fallback_nvm=True,
@@ -53,7 +49,6 @@ _register(
     AgentDef(
         name="gemini",
         display_name="Antigravity",
-        icon_file="antigravity.svg",
         executable="agy",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         fallback_paths=("~/.local/bin/agy",),
@@ -62,7 +57,6 @@ _register(
     AgentDef(
         name="cursor",
         display_name="Cursor",
-        icon_file="cursor.svg",
         executable="cursor-agent",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         fallback_paths=("~/.local/bin/cursor-agent",),
@@ -70,7 +64,6 @@ _register(
     AgentDef(
         name="grok",
         display_name="Grok",
-        icon_file="grok.svg",
         executable="grok",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
         fallback_paths=("~/.local/bin/grok",),
@@ -82,9 +75,8 @@ _register(
 ALL_AGENT_NAMES: list[str] = list(AGENTS.keys())
 
 
-def icon_file_map(repo_root: Path) -> dict[str, Path]:
-    base = Path(repo_root).resolve() / AGENT_ICONS_DIR
-    return {name: base / Path(a.icon_file).name for name, a in AGENTS.items()}
+def icon_file_map() -> dict[str, Path]:
+    return {name: Path(__file__).resolve().parent / name / "icon.svg" for name in AGENTS}
 
 
 def agent_names_js_set() -> str:

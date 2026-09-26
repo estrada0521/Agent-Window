@@ -1,5 +1,5 @@
     dpGitContent?.addEventListener("click", async (event) => {
-      await gitSession.handleClick(event, {
+      await gitPanel.handleClick(event, {
         onPin: () => dpToggleGitSummaryPinned(),
         requireOpen: () => dpPanelOpen,
         onFileRow: async (fileRow) => {
@@ -11,7 +11,7 @@
             await dpQuickLookPaths(resolved.targets);
             return;
           }
-          const hash = gitSession.detailContext?.hash || "";
+          const hash = gitPanel.detailContext?.hash || "";
           for (const path of resolved.targets) {
             const row = dpGitContent?.querySelector(`.git-commit-file-row[data-path="${gitCssEscape(path)}"]`);
             if (hash || row?.dataset.untracked !== "1") await dpPostOpenDiff(path, hash, row?.dataset.oldPath || "");
@@ -24,7 +24,7 @@
     dpGitContent?.addEventListener("mouseover", async (event) => {
       const head = event.target.closest(".git-commit-detail-head");
       const target = head || event.target.closest(".git-commit-row");
-      const hash = String((head ? gitSession.detailContext?.hash : target?.dataset.hash) || "");
+      const hash = String((head ? gitPanel.detailContext?.hash : target?.dataset.hash) || "");
       if (!hash) return;
       const info = await gitCommitInfo(hash);
       const text = [`${info.author}, ${new Date(info.date).toLocaleString()}`, info.message, info.stat, info.hash].filter(Boolean).join("\n\n");
@@ -32,7 +32,7 @@
     });
     dpGitContent?.addEventListener("contextmenu", (event) => {
       const hash = String(event.target.closest(".git-commit-row")?.dataset.hash
-        || (event.target.closest(".git-commit-detail-head") ? gitSession.detailContext?.hash : "")
+        || (event.target.closest(".git-commit-detail-head") ? gitPanel.detailContext?.hash : "")
         || "");
       if (hash) {
         dpOpenCommitContextMenu(hash, event);
@@ -59,7 +59,7 @@
       const useSeed = !!(aside?.classList.contains("is-expanded") && seedSections?.length);
       if (!dpGitContent.querySelector(".git-stack")) {
         dpRenderGitShell();
-        gitSession.invalidateFingerprint();
+        gitPanel.invalidateFingerprint();
         dpApplyGitOverviewHeader();
       }
       await dpOpenGitDetail({
