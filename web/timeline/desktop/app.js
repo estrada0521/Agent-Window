@@ -355,6 +355,8 @@ __INCLUDE:../pointer-capability.js__
     const DP_PANEL_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE = 560;
     const DP_TIMELINE_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE = 360;
     const DP_PANEL_WIDTH_KEY = "agent_window_desktop_right_panel_width_at_default_text_size";
+    const SIDE_BAR_SIDE_KEY = "agent_window_desktop_side_bar_side";
+    if (localStorage.getItem(SIDE_BAR_SIDE_KEY) === "left") document.documentElement.dataset.sideBar = "left";
     const DP_PANEL_GAP = 0;
     let dpPanelOpen = false;
     let dpActivePanelView = "repo";
@@ -575,7 +577,8 @@ __INCLUDE:git-panel/events.js__
     };
     const dpHandlePanelResizeMove = (event) => {
       if (!_desktopRightPanelResizeState || !dpPanelOpen) return;
-      const nextWidth = _desktopRightPanelResizeState.startWidth + (_desktopRightPanelResizeState.startX - event.clientX);
+      const direction = document.documentElement.dataset.sideBar === "left" ? -1 : 1;
+      const nextWidth = _desktopRightPanelResizeState.startWidth + direction * (_desktopRightPanelResizeState.startX - event.clientX);
       dpPanelWidthAtDefaultTextSize = dpClampPanelWidthAtDefaultTextSize(dpUnscalePanelWidth(nextWidth));
       dpApplyPanelWidth();
       syncPanelState();
@@ -615,6 +618,15 @@ __INCLUDE:git-panel/events.js__
       try {
         desktopRightPanelResizer.setPointerCapture(event.pointerId);
       } catch (_) {}
+    });
+    document.getElementById("sideBarSwapBtn")?.addEventListener("click", () => {
+      if (document.documentElement.dataset.sideBar === "left") {
+        delete document.documentElement.dataset.sideBar;
+        localStorage.removeItem(SIDE_BAR_SIDE_KEY);
+      } else {
+        document.documentElement.dataset.sideBar = "left";
+        localStorage.setItem(SIDE_BAR_SIDE_KEY, "left");
+      }
     });
     desktopRightPanelResizer?.addEventListener("pointermove", (event) => {
       if (!_desktopRightPanelResizeState || _desktopRightPanelResizeState.pointerId !== event.pointerId) return;

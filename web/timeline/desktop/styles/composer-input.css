@@ -296,9 +296,9 @@
       --fab-size: calc(var(--fab-icon-size) + round(nearest, calc(var(--text-size, 13px) * 16 / 13), 2px));
       position: fixed;
       bottom: var(--floating-btn-bottom, 18%);
-      left: var(--message-side-padding);
+      left: calc(var(--side-reserve-left) + var(--message-side-padding));
       right: calc(
-        var(--desktop-right-panel-reserved-width, 0px)
+        var(--side-reserve-right)
         + var(--message-side-padding) - var(--timeline-scrollbar-layout-width)
       );
       margin-inline: auto;

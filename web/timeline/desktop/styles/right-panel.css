@@ -36,6 +36,14 @@
     .desktop-right-panel[hidden] {
       display: none;
     }
+    html[data-side-bar="left"] {
+      --side-reserve-left: var(--desktop-right-panel-reserved-width);
+      --side-reserve-right: 0px;
+    }
+    html[data-side-bar="left"] .desktop-right-panel {
+      left: 0;
+      right: auto;
+    }
     .desktop-right-panel.open {
       opacity: 1;
       transform: translateX(0);
@@ -84,6 +92,54 @@
       left: 6px;
       width: 1px;
       background: var(--resizer);
+    }
+    html[data-side-bar="left"] .desktop-right-panel-resizer {
+      left: auto;
+      right: -7px;
+    }
+    html[data-side-bar="left"] .desktop-right-panel-resizer::before {
+      left: 7px;
+    }
+    .side-bar-swap-btn {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      z-index: 9;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.7em;
+      height: 1.7em;
+      padding: 0;
+      border: 0.5px solid var(--line-strong);
+      border-radius: 0.46em;
+      background: var(--bg);
+      color: var(--icon-muted);
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    html[data-side-bar="left"] .side-bar-swap-btn {
+      left: auto;
+      right: 0;
+      transform: translate(50%, -50%);
+    }
+    .side-bar-swap-btn svg {
+      width: 1.08em;
+      height: 1.08em;
+    }
+    .has-hover .desktop-right-panel-resizer:hover ~ .side-bar-swap-btn,
+    .has-hover .side-bar-swap-btn:hover {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .has-hover .side-bar-swap-btn:hover {
+      color: var(--icon-hover);
+    }
+    body.desktop-right-panel-resizing .side-bar-swap-btn {
+      opacity: 0;
+      pointer-events: none;
     }
     .has-hover .desktop-right-panel-resizer:hover::before,
     body.desktop-right-panel-resizing .desktop-right-panel-resizer::before {
@@ -1084,11 +1140,11 @@
       color: var(--muted);
     }
     html[data-desktop-timeline="1"] body.right-panel-open {
-      padding-right: var(--desktop-right-panel-reserved-width, 0px);
+      padding-left: var(--side-reserve-left);
+      padding-right: var(--side-reserve-right);
       box-sizing: border-box;
     }
     html[data-desktop-timeline="1"] body.right-panel-open .composer-overlay {
-      --desktop-overlay-exclude-right: var(--desktop-right-panel-reserved-width, 0px);
       padding-right: calc(var(--text-size, 13px) * 12 / 13);
     }
     .git-pinned-expand {
