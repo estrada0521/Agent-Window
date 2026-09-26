@@ -54,7 +54,7 @@ def _get_trace(handler, parsed, ctx) -> None:
         except ValueError:
             pass
     try:
-        content_str = ctx["runtime"].trace_content(agent, tail_lines=tail_lines)
+        content_str = ctx["state"].trace_content(agent, tail_lines=tail_lines)
     except Exception as exc:
         body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
         _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
@@ -67,7 +67,7 @@ def _get_file_raw(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     rel = qs.get("path", [""])[0]
     try:
-        metadata = ctx["file_runtime"].raw_response_metadata(rel, handler.headers.get("Range", ""))
+        metadata = ctx["files"].raw_response_metadata(rel, handler.headers.get("Range", ""))
     except PermissionError:
         handler.send_error(403)
         return
@@ -89,7 +89,7 @@ def _get_file_raw(handler, parsed, ctx) -> None:
         handler.send_header("Content-Range", content_range)
     handler.send_header("Content-Length", str(int(metadata.get("length", 0) or 0)))
     handler.end_headers()
-    ctx["file_runtime"].stream_raw_response(metadata, handler.wfile.write)
+    ctx["files"].stream_raw_response(metadata, handler.wfile.write)
 
 
 def _get_file_view(handler, parsed, ctx) -> None:
@@ -105,7 +105,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
                 preview_text_size = int(requested_text_size)
             except ValueError:
                 pass
-        page = ctx["file_runtime"].file_view(
+        page = ctx["files"].file_view(
             rel,
             embed=embed,
             base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
@@ -127,7 +127,7 @@ def _get_files_dir(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     rel = (qs.get("path", [""])[0] or "").strip()
     try:
-        entries = ctx["file_runtime"].list_dir(rel)
+        entries = ctx["files"].list_dir(rel)
     except PermissionError:
         handler.send_error(403)
         return
@@ -153,7 +153,7 @@ def _get_files_search(handler, parsed, ctx) -> None:
         except ValueError:
             limit = 60
     try:
-        files = ctx["file_runtime"].search_files(query, limit=limit)
+        files = ctx["files"].search_files(query, limit=limit)
         body = json.dumps(files, ensure_ascii=True).encode("utf-8")
     except Exception as exc:
         body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
@@ -164,7 +164,7 @@ def _get_files_search(handler, parsed, ctx) -> None:
 
 def _get_session_state(handler, _parsed, ctx) -> None:
     try:
-        body = json.dumps(ctx["runtime"].session_state_payload(), ensure_ascii=True).encode("utf-8")
+        body = json.dumps(ctx["state"].session_state_payload(), ensure_ascii=True).encode("utf-8")
     except Exception as exc:
         body = json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=True).encode("utf-8")
         _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
@@ -178,11 +178,11 @@ def _get_events(handler, _parsed, ctx) -> None:
     handler.send_header("Cache-Control", "no-store")
     handler.send_header("Connection", "keep-alive")
     handler.end_headers()
-    runtime = ctx["runtime"]
-    seen = runtime.event_counts()
+    state = ctx["state"]
+    seen = state.event_counts()
     try:
         while True:
-            events = runtime.wait_for_events(seen, timeout=15.0)
+            events = state.wait_for_events(seen, timeout=15.0)
             body = "".join(
                 f"event: {kind}\ndata: {json.dumps(data)}\n\n" for kind, data in events
             ) or ": keepalive\n\n"

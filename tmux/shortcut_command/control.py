@@ -9,14 +9,14 @@ from tmux.shortcut_command.catalog import PANE_SINGLE_CONTROL_MESSAGES, PANE_TEX
 import re
 
 
-class ShortcutControlRuntime(Protocol):
+class ShortcutControlState(Protocol):
     def pane_id_for_control_target(self, target: str) -> str | None: ...
 
     def append_system_entry(self, message: str, *, agent: str = "", **extra: Any) -> dict: ...
 
 
 def try_deliver_shortcut_control(
-    rt: ShortcutControlRuntime,
+    state: ShortcutControlState,
     target: str,
     command_id: str,
     message: str,
@@ -37,11 +37,11 @@ def try_deliver_shortcut_control(
     try:
         for target_item in control_targets:
             if message == "restart":
-                ok, detail = restart_agent_pane(rt, target_item)
+                ok, detail = restart_agent_pane(state, target_item)
                 if not ok:
                     return 400, {"ok": False, "error": detail}
                 continue
-            pane_id = rt.pane_id_for_control_target(target_item)
+            pane_id = state.pane_id_for_control_target(target_item)
             if not pane_id:
                 return 400, {"ok": False, "error": f"pane not found for {target_item}"}
             if is_text_delivery:
@@ -72,7 +72,7 @@ def try_deliver_shortcut_control(
     except Exception as exc:
         return 500, {"ok": False, "error": str(exc)}
     if message == "restart" and control_targets:
-        rt.append_system_entry(
+        state.append_system_entry(
             f"Restarted: {', '.join(control_targets)}",
             targets=control_targets,
         )

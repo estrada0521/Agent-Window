@@ -9,11 +9,11 @@ def _agent_module(agent: str):
     return import_module(f"agents.{base}")
 
 
-def resolve_binding(runtime, request):
+def resolve_binding(state, request):
     resolver = getattr(_agent_module(request.agent), "resolve_native_log_binding", None)
     if resolver is None:
         raise RuntimeError(f"no native log resolver for {request.agent}")
-    return resolver(runtime, request)
+    return resolver(state, request)
 
 
 def agent_base_name(raw_name: str) -> str:

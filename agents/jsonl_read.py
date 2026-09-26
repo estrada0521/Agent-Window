@@ -51,9 +51,9 @@ class CompleteJsonlScan:
         self.last_skip_reason = reason
 
 
-def report_skipped_lines(runtime, agent: str, scan: CompleteJsonlScan) -> None:
+def report_skipped_lines(state, agent: str, scan: CompleteJsonlScan) -> None:
     if not scan.skipped:
         return
-    runtime.report_failure(
+    state.report_failure(
         f"{agent}: skipped {scan.skipped} log line(s) ({scan.last_skip_reason})"
     )

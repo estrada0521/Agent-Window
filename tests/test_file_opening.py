@@ -14,14 +14,14 @@ class FileOpeningTests(unittest.TestCase):
             workspace = Path(tmp)
             archive = workspace / "example.zip"
             archive.write_bytes(b"not a real archive")
-            runtime = WorkspaceFiles(workspace=workspace)
+            state = WorkspaceFiles(workspace=workspace)
             completed = mock.Mock(returncode=0)
 
             with (
                 mock.patch("fs.files.workspace.subprocess.run", return_value=completed) as run,
                 mock.patch("fs.files.workspace.subprocess.Popen") as popen,
             ):
-                result = runtime.open_with_default_app("example.zip")
+                result = state.open_with_default_app("example.zip")
 
             run.assert_called_once_with(
                 ["open", str(archive.resolve())],
@@ -38,14 +38,14 @@ class FileOpeningTests(unittest.TestCase):
             workspace = Path(tmp)
             target = workspace / "unknown.data"
             target.write_bytes(b"\x00\x01")
-            runtime = WorkspaceFiles(workspace=workspace)
+            state = WorkspaceFiles(workspace=workspace)
             completed = mock.Mock(returncode=1)
 
             with (
                 mock.patch("fs.files.workspace.subprocess.run", return_value=completed),
                 mock.patch("fs.files.workspace.subprocess.Popen") as popen,
             ):
-                result = runtime.open_with_default_app("unknown.data")
+                result = state.open_with_default_app("unknown.data")
 
             popen.assert_called_once_with(
                 ["open", "-R", str(target.resolve())],

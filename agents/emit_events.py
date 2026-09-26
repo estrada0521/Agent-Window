@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 
-def clear_agent_running_display(runtime, agent: str) -> bool:
-    with runtime._idle_running_display_lock:
-        queue = runtime._idle_running_display_queues
-        timer_by_agent = runtime._idle_running_display_timers
+def clear_agent_running_display(state, agent: str) -> bool:
+    with state._idle_running_display_lock:
+        queue = state._idle_running_display_queues
+        timer_by_agent = state._idle_running_display_timers
         queue.pop(agent, None)
         timer = timer_by_agent.pop(agent, None)
         if timer:
             timer.cancel()
-    removed = runtime._idle_running_display_by_agent.pop(agent, None)
+    removed = state._idle_running_display_by_agent.pop(agent, None)
     return removed is not None
 
 
@@ -26,10 +26,10 @@ def idle_running_display_for_api(display_by_agent: dict[str, dict]) -> dict[str,
     }
 
 
-def refresh_idle_statuses(runtime, running_agents: set) -> dict[str, str]:
+def refresh_idle_statuses(state, running_agents: set) -> dict[str, str]:
     result: dict[str, str] = {}
-    for agent in runtime.active_agents():
+    for agent in state.active_agents():
         result[agent] = "running" if agent in running_agents else "idle"
         if result[agent] != "running":
-            clear_agent_running_display(runtime, agent)
+            clear_agent_running_display(state, agent)
     return result

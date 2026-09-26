@@ -38,19 +38,19 @@ port = 0
 workspace = ""
 hub_port = 0
 _repo_root = Path()
-runtime = None
+state = None
 server_instance = ""
 payload = _not_initialized
 send_message = _not_initialized
-file_runtime = None
-asset_runtime = None
+files = None
+assets = None
 send_queue = None
 send_queue_thread = None
 
 
 def _log_watcher() -> None:
     while True:
-        current_log_path = runtime.log_path
+        current_log_path = state.log_path
         fd = os.open(str(current_log_path), os.O_RDONLY)
         kq = select.kqueue()
         try:
@@ -66,7 +66,7 @@ def _log_watcher() -> None:
                 events = kq.control(None, 4, None)
                 for event in events:
                     if event.fflags & (select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND):
-                        runtime.publish_event("messages")
+                        state.publish_event("messages")
                         try:
                             notify_hub_session_messages_changed(hub_port)
                         except (OSError, RuntimeError):
@@ -85,15 +85,15 @@ def _queued_send_worker() -> None:
     while True:
         job = send_queue.get()
         try:
-            failed = runtime.deliver_message(job["targets"], job["message"])
+            failed = state.deliver_message(job["targets"], job["message"])
             if failed:
-                runtime.mark_agents_idle(failed)
-                runtime.append_system_entry(
+                state.mark_agents_idle(failed)
+                state.append_system_entry(
                     f"Send failed: Failed to deliver to: {', '.join(failed)}",
                 )
         except Exception as exc:
-            runtime.mark_agents_idle(job["targets"])
-            runtime.append_system_entry(
+            state.mark_agents_idle(job["targets"])
+            state.append_system_entry(
                 f"Send failed: {exc}",
             )
         finally:
@@ -110,9 +110,9 @@ def _send_or_enqueue_message(
         return 400, {"ok": False, "error": "message is required"}
     resolved_targets = [item.strip() for item in str(target or "").split(",") if item.strip()]
     if not resolved_targets:
-        entry = runtime.append_user_entry(normalized_message, targets=["user"], client=client)
+        entry = state.append_user_entry(normalized_message, targets=["user"], client=client)
         return 200, {"ok": True, "mode": "note", "entry": entry}
-    entry = runtime.append_user_entry(normalized_message, targets=resolved_targets, client=client)
+    entry = state.append_user_entry(normalized_message, targets=resolved_targets, client=client)
     send_queue.put(
         {
             "target": ",".join(resolved_targets),
@@ -125,18 +125,18 @@ def _send_or_enqueue_message(
 
 def _restart_env():
     env = os.environ.copy()
-    env[RELOAD_RUNNING_AGENTS_ENV] = json.dumps(runtime.running_agents_for_reload())
+    env[RELOAD_RUNNING_AGENTS_ENV] = json.dumps(state.running_agents_for_reload())
     return env
 
 
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
     global port, workspace, hub_port
-    global _repo_root, runtime
+    global _repo_root, state
     global server_instance
     global payload
-    global send_message, asset_runtime
-    global send_queue, send_queue_thread, file_runtime
+    global send_message, assets
+    global send_queue, send_queue_thread, files
 
     if _initialized:
         return
@@ -153,7 +153,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     port = workspace_chat_port(workspace)
     hub_port = int((_repo_root / "hub-port").read_text().strip())
     reload_running_agents = json.loads(os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, "[]"))
-    runtime = ChatSession(
+    state = ChatSession(
         port=port,
         workspace=workspace,
         hub_port=hub_port,
@@ -161,22 +161,22 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         initial_running_agents=reload_running_agents,
     )
 
-    server_instance = runtime.server_instance
-    payload = runtime.payload
+    server_instance = state.server_instance
+    payload = state.payload
     send_message = _send_or_enqueue_message
-    file_runtime = WorkspaceFiles(
+    files = WorkspaceFiles(
         workspace=workspace,
         repo_root=_repo_root,
     )
-    start_workspace_fsevents_watcher(runtime, file_runtime)
-    asset_runtime = ChatAssets(
+    start_workspace_fsevents_watcher(state, files)
+    assets = ChatAssets(
         repo_root=_repo_root,
     )
-    runtime.start_native_log_sync()
+    state.start_native_log_sync()
     try:
-        adopt_commit_baseline(runtime)
+        adopt_commit_baseline(state)
     except Exception as exc:
-        runtime.report_failure(f"commit tracking failed: {exc}")
+        state.report_failure(f"commit tracking failed: {exc}")
     threading.Thread(
         target=_log_watcher,
         daemon=True,
@@ -211,8 +211,8 @@ def queue_chat_restart():
     expected_workspace = str(Path(workspace).expanduser().resolve())
 
     def _ready() -> bool:
-        state = read_chat_server_state(port)
-        reported_workspace = str((state or {}).get("workspace") or "").strip()
+        reported = read_chat_server_state(port)
+        reported_workspace = str((reported or {}).get("workspace") or "").strip()
         return bool(
             reported_workspace
             and str(Path(reported_workspace).expanduser().resolve()) == expected_workspace
@@ -227,18 +227,18 @@ def release_chat_restart() -> None:
 
 
 def _route_context() -> dict:
-    current_session_name, _current_log_path = runtime.session_binding_snapshot()
+    current_session_name, _current_log_path = state.session_binding_snapshot()
     return {
         "session_name": current_session_name,
         "server_instance": server_instance,
-        "runtime": runtime,
+        "state": state,
         "workspace": workspace,
         "hub_port": hub_port,
         "chat_port": port,
         "payload_fn": payload,
         "send_message_fn": send_message,
-        "file_runtime": file_runtime,
-        "asset_runtime": asset_runtime,
+        "files": files,
+        "assets": assets,
         "render_chat_html_fn": render_chat_html,
         "queue_chat_restart_fn": queue_chat_restart,
         "release_chat_restart_fn": release_chat_restart,

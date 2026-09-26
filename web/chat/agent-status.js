@@ -64,13 +64,13 @@
         saveTargetSelection(currentSessionName, selectedTargets);
         renderTargetPicker(availableTargets);
       }
-      currentAgentRuntime = { ...data.agent_runtime };
-      Object.keys(currentAgentRuntime).forEach((agent) => {
+      currentRunningDisplay = { ...data.running_display };
+      Object.keys(currentRunningDisplay).forEach((agent) => {
         if (data.statuses[agent] !== "running") {
-          delete currentAgentRuntime[agent];
+          delete currentRunningDisplay[agent];
         }
       });
-      syncThinkingRuntimeItems(data.statuses, { suppressRender: true });
+      syncThinkingRunningItems(data.statuses, { suppressRender: true });
       renderAgentStatus(data.statuses);
       syncAgentMenuOptions();
       if (document.documentElement.dataset.mobile !== "1" && typeof data.session === "string" && data.session) {

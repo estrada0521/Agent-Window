@@ -65,16 +65,16 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
     if not agent:
         handler._send_json(400, {"ok": False, "error": "agent required"})
         return
-    runtime = ctx["runtime"]
+    state = ctx["state"]
     try:
         instance = add_agent(session_name=ctx["session_name"], agent=agent)
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    runtime.publish_event("state")
+    state.publish_event("state")
     handler._send_json(
         200,
-        {"ok": True, "agent": instance, "message": f"Added agent {instance}", "targets": runtime.active_agents()},
+        {"ok": True, "agent": instance, "message": f"Added agent {instance}", "targets": state.active_agents()},
     )
 
 
@@ -87,17 +87,17 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
     if not agent:
         handler._send_json(400, {"ok": False, "error": "agent required"})
         return
-    runtime = ctx["runtime"]
+    state = ctx["state"]
     try:
         instance = remove_agent(session_name=ctx["session_name"], agent=agent)
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    runtime.remove_native_log_binding(instance)
-    runtime.publish_event("state")
+    state.remove_native_log_binding(instance)
+    state.publish_event("state")
     handler._send_json(
         200,
-        {"ok": True, "agent": instance, "message": f"Removed agent {instance}", "targets": runtime.active_agents()},
+        {"ok": True, "agent": instance, "message": f"Removed agent {instance}", "targets": state.active_agents()},
     )
 
 
@@ -212,14 +212,14 @@ def _open_terminal(handler, ctx, *, agent: str = "", pane_required: bool = False
     def _ok() -> None:
         handler._send_json(200, {"ok": True})
 
-    runtime = ctx["runtime"]
-    if not runtime.session_is_active:
+    state = ctx["state"]
+    if not state.session_is_active:
         handler._send_json(409, {"ok": False, "error": "tmux session is not active"})
         return
-    tmux_name = runtime.tmux_session_name
+    tmux_name = state.tmux_session_name
     if agent:
         try:
-            pane_id = runtime.pane_id_for_control_target(agent)
+            pane_id = state.pane_id_for_control_target(agent)
         except Exception as exc:
             handler._send_json(500, {"ok": False, "error": str(exc)})
             return
@@ -391,7 +391,7 @@ def _post_files_exist(handler, _parsed, ctx) -> None:
     if not isinstance(paths, list):
         handler._send_json(400, {"ok": False, "error": "paths must be a list"})
         return
-    result = ctx["file_runtime"].files_exist(paths)
+    result = ctx["files"].files_exist(paths)
     handler._send_json(200, result)
 
 
@@ -404,7 +404,7 @@ def _post_file_image_dimensions(handler, _parsed, ctx) -> None:
     if not isinstance(paths, list):
         handler._send_json(400, {"ok": False, "error": "paths must be a list"})
         return
-    dimensions = ctx["file_runtime"].image_dimensions([str(path or "") for path in paths])
+    dimensions = ctx["files"].image_dimensions([str(path or "") for path in paths])
     handler._send_json(200, dimensions)
 
 
@@ -418,7 +418,7 @@ def _post_files_resolve(handler, _parsed, ctx) -> None:
         handler._send_json(400, {"ok": False, "error": "queries must be a list"})
         return
     try:
-        resolved = ctx["file_runtime"].resolve_file_references([str(item or "") for item in queries])
+        resolved = ctx["files"].resolve_file_references([str(item or "") for item in queries])
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
@@ -452,7 +452,7 @@ def _post_open_file(handler, _parsed, ctx) -> None:
     if not rel:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
-    _send_workspace_result(handler, lambda: ctx["file_runtime"].open_with_default_app(rel))
+    _send_workspace_result(handler, lambda: ctx["files"].open_with_default_app(rel))
 
 
 def _post_reveal_file(handler, _parsed, ctx) -> None:
@@ -464,12 +464,12 @@ def _post_reveal_file(handler, _parsed, ctx) -> None:
     if not rel:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
-    _send_workspace_result(handler, lambda: ctx["file_runtime"].reveal_in_finder(rel))
+    _send_workspace_result(handler, lambda: ctx["files"].reveal_in_finder(rel))
 
 
 def _post_reveal_log(handler, _parsed, ctx) -> None:
-    _session, log_path = ctx["runtime"].session_binding_snapshot()
-    _send_workspace_result(handler, lambda: ctx["file_runtime"].reveal_in_finder(str(log_path)))
+    _session, log_path = ctx["state"].session_binding_snapshot()
+    _send_workspace_result(handler, lambda: ctx["files"].reveal_in_finder(str(log_path)))
 
 
 def _post_quick_look(handler, _parsed, ctx) -> None:
@@ -481,7 +481,7 @@ def _post_quick_look(handler, _parsed, ctx) -> None:
     if not isinstance(paths, list) or not paths:
         handler._send_json(400, {"ok": False, "error": "paths required"})
         return
-    _send_workspace_result(handler, lambda: ctx["file_runtime"].quick_look([str(p or "").strip() for p in paths]))
+    _send_workspace_result(handler, lambda: ctx["files"].quick_look([str(p or "").strip() for p in paths]))
 
 
 def _post_open_diff(handler, _parsed, ctx) -> None:
@@ -503,20 +503,20 @@ def _post_open_diff(handler, _parsed, ctx) -> None:
 
 
 def _run_nativelog_command(ctx, *, target: str) -> tuple[int, dict]:
-    rt = ctx["runtime"]
-    file_runtime = ctx["file_runtime"]
+    state = ctx["state"]
+    files = ctx["files"]
     raw_targets = [t.strip() for t in target.split(",") if t.strip()]
     if not raw_targets:
         msg = "target is required"
         return 400, {"ok": False, "error": msg}
     agent = raw_targets[0]
-    watched = rt.native_log_watched_paths()
+    watched = state.native_log_watched_paths()
     path = (watched.get(agent) or "").strip()
     if not path:
         msg = f"native log path not found for {agent}"
         return 404, {"ok": False, "error": msg}
     try:
-        file_runtime.reveal_in_finder(path)
+        files.reveal_in_finder(path)
     except FileNotFoundError:
         msg = f"native log file not found: {path}"
         return 404, {"ok": False, "error": msg}
@@ -541,7 +541,7 @@ def _post_shortcut_command(handler, _parsed, ctx) -> None:
         handler._send_json(400, {"ok": False, "error": err})
         return
     status, body = run_shortcut_command(
-        ctx["runtime"],
+        ctx["state"],
         command_id=str(data.get("command_id") or ""),
         arg=str(data.get("arg") or ""),
         target=str(data.get("target") or ""),
@@ -571,12 +571,12 @@ def _post_agent_running(handler, _parsed, ctx) -> None:
     if not isinstance(requested, list):
         handler._send_json(400, {"ok": False, "error": "targets must be an array"})
         return
-    active = set(ctx["runtime"].active_agents())
+    active = set(ctx["state"].active_agents())
     targets = [str(item or "").strip() for item in requested]
     if not targets or any(not target or target not in active for target in targets):
         handler._send_json(400, {"ok": False, "error": "targets must name active agents"})
         return
-    ctx["runtime"].mark_agents_running(list(dict.fromkeys(targets)))
+    ctx["state"].mark_agents_running(list(dict.fromkeys(targets)))
     handler._send_json(200, {"ok": True})
 
 

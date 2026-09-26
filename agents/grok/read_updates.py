@@ -25,15 +25,15 @@ def extract_grok_assistant_text(entry: object) -> str:
     return content.strip() if isinstance(content, str) else ""
 
 
-def _append_grok_reply(runtime, agent: str, history_path: str, line_start: int, entry: dict) -> bool:
+def _append_grok_reply(state, agent: str, history_path: str, line_start: int, entry: dict) -> bool:
     display = extract_grok_assistant_text(entry)
     if not display:
         return False
     append_jsonl_entry(
-        runtime.log_path,
+        state.log_path,
         {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "session": runtime.session_name,
+            "session": state.session_name,
             "sender": agent,
             "targets": ["user"],
             "message": display,
@@ -44,11 +44,11 @@ def _append_grok_reply(runtime, agent: str, history_path: str, line_start: int, 
     return True
 
 
-def _sync_grok_chat_history(runtime, agent: str, history_path: str) -> bool:
+def _sync_grok_chat_history(state, agent: str, history_path: str) -> bool:
     normalized = _normalized_native_log_path(history_path)
-    is_first_encounter = normalized not in runtime._native_log_read_offsets
+    is_first_encounter = normalized not in state._native_log_read_offsets
     file_size = os.path.getsize(history_path)
-    start = read_offset_start(runtime._native_log_read_offsets, history_path, file_size)
+    start = read_offset_start(state._native_log_read_offsets, history_path, file_size)
     if start >= file_size:
         return False
 
@@ -60,14 +60,14 @@ def _sync_grok_chat_history(runtime, agent: str, history_path: str) -> bool:
             if extract_grok_assistant_text(entry):
                 latest = (line_start, entry)
         if latest is not None:
-            appended = _append_grok_reply(runtime, agent, history_path, *latest)
+            appended = _append_grok_reply(state, agent, history_path, *latest)
     else:
         for line_start, entry in scan:
-            if _append_grok_reply(runtime, agent, history_path, line_start, entry):
+            if _append_grok_reply(state, agent, history_path, line_start, entry):
                 appended = True
 
-    advance_read_offset(runtime._native_log_read_offsets, history_path, scan.consumed)
-    report_skipped_lines(runtime, agent, scan)
+    advance_read_offset(state._native_log_read_offsets, history_path, scan.consumed)
+    report_skipped_lines(state, agent, scan)
     return appended
 
 
@@ -91,7 +91,7 @@ def _chat_history_path(updates_path: str) -> str:
 
 
 def sync_grok_native_log(
-    runtime,
+    state,
     agent: str,
     native_log_path: str | None = None,
     *,
@@ -107,14 +107,14 @@ def sync_grok_native_log(
     file_size = os.path.getsize(updates_path)
     history_size = os.path.getsize(history_path)
     if start_at_end:
-        advance_read_offset(runtime._native_log_read_offsets, updates_path, file_size)
-        advance_read_offset(runtime._native_log_read_offsets, history_path, history_size)
+        advance_read_offset(state._native_log_read_offsets, updates_path, file_size)
+        advance_read_offset(state._native_log_read_offsets, history_path, history_size)
         return
-    start = read_offset_start(runtime._native_log_read_offsets, updates_path, file_size)
+    start = read_offset_start(state._native_log_read_offsets, updates_path, file_size)
 
     turn_completed = False
     if start < file_size:
-        workspace = str(getattr(runtime, "workspace", "") or "")
+        workspace = str(getattr(state, "workspace", "") or "")
         scan = CompleteJsonlScan(updates_path, start)
         for _line_start, entry in scan:
             turn_completed = _turn_completed(entry) or turn_completed
@@ -122,12 +122,12 @@ def sync_grok_native_log(
             for name, inp in iter_tool_calls_from_update(entry):
                 tool_evs.extend(running_tool_events(name, inp, workspace=workspace))
             if tool_evs:
-                push_running_display(runtime, agent, tool_evs)
-        advance_read_offset(runtime._native_log_read_offsets, updates_path, scan.consumed)
-        report_skipped_lines(runtime, agent, scan)
+                push_running_display(state, agent, tool_evs)
+        advance_read_offset(state._native_log_read_offsets, updates_path, scan.consumed)
+        report_skipped_lines(state, agent, scan)
     else:
-        advance_read_offset(runtime._native_log_read_offsets, updates_path, file_size)
+        advance_read_offset(state._native_log_read_offsets, updates_path, file_size)
 
-    _sync_grok_chat_history(runtime, agent, history_path)
+    _sync_grok_chat_history(state, agent, history_path)
     if turn_completed:
-        runtime._mark_idle(agent)
+        state._mark_idle(agent)

@@ -187,7 +187,7 @@ class ChatSession:
             "repo_root": str(self.repo_root),
             "targets": self.active_agents() if self.session_is_active else session_meta_agents(session_name),
             "statuses": self.agent_statuses(),
-            "agent_runtime": self.agent_runtime_state(),
+            "running_display": self.running_display_state(),
         }
 
     def payload(self, limit: int, offset: int) -> bytes:
@@ -310,7 +310,7 @@ class ChatSession:
     def agent_statuses(self) -> dict[str, str]:
         return refresh_idle_statuses(self, self._agent_running)
 
-    def agent_runtime_state(self) -> dict[str, dict]:
+    def running_display_state(self) -> dict[str, dict]:
         return idle_running_display_for_api(self._idle_running_display_by_agent)
 
     def native_log_watched_paths(self) -> dict[str, str]:

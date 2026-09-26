@@ -19,17 +19,17 @@ class ReferencePathBypassIsIntentionalTests(unittest.TestCase):
             target = outside / "secret.txt"
             target.write_text("outside content\n", encoding="utf-8")
 
-            runtime = WorkspaceFiles(workspace=workspace)
-            resolved = runtime._resolve_path(str(target))
+            state = WorkspaceFiles(workspace=workspace)
+            resolved = state._resolve_path(str(target))
             self.assertEqual(resolved, str(target.resolve()))
 
     def test_home_relative_reference_outside_workspace_resolves(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
-            runtime = WorkspaceFiles(workspace=workspace)
+            state = WorkspaceFiles(workspace=workspace)
 
-            resolved = runtime._resolve_path("~/.bashrc")
+            resolved = state._resolve_path("~/.bashrc")
             self.assertEqual(resolved, str(Path("~/.bashrc").expanduser().resolve()))
 
     def test_workspace_relative_reference_resolves_inside_the_workspace(self) -> None:
@@ -37,9 +37,9 @@ class ReferencePathBypassIsIntentionalTests(unittest.TestCase):
             workspace = Path(tmp) / "workspace"
             workspace.mkdir()
             (workspace / "in-workspace.txt").write_text("hi\n", encoding="utf-8")
-            runtime = WorkspaceFiles(workspace=workspace)
+            state = WorkspaceFiles(workspace=workspace)
 
-            resolved = runtime._resolve_path("in-workspace.txt")
+            resolved = state._resolve_path("in-workspace.txt")
             self.assertEqual(resolved, str((workspace / "in-workspace.txt").resolve()))
 
 

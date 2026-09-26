@@ -1,4 +1,4 @@
-    .message-thinking-runtime-slot {
+    .message-thinking-running-slot {
       display: inline-grid;
       grid-template-columns: 1fr;
       align-items: center;
@@ -8,7 +8,7 @@
       position: relative;
     }
 
-    .message-thinking-runtime-line {
+    .message-thinking-running-line {
       color: var(--muted);
       font-weight: 600;
       font-size: 1.03em;
@@ -24,13 +24,13 @@
       transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
     }
 
-    .message-thinking-runtime-body {
+    .message-thinking-running-body {
       flex: 0 1 auto;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .message-thinking-runtime-keyword {
+    .message-thinking-running-keyword {
       font-weight: 600;
       display: inline;
       white-space: normal;
@@ -53,24 +53,24 @@
       animation: thinking-keyword-flow 1s linear infinite;
     }
 
-    .message-thinking-runtime-detail {
+    .message-thinking-running-detail {
       font-weight: var(--body-weight);
       color: var(--muted);
     }
 
-    .message-thinking-runtime-line[data-state="enter"] {
+    .message-thinking-running-line[data-state="enter"] {
       opacity: 0;
       transform: translateY(100%);
       z-index: 1;
     }
 
-    .message-thinking-runtime-line[data-state="live"] {
+    .message-thinking-running-line[data-state="live"] {
       opacity: 1;
       transform: translateY(0);
       z-index: 2;
     }
 
-    .message-thinking-runtime-line[data-state="leave"] {
+    .message-thinking-running-line[data-state="leave"] {
       opacity: 0;
       transform: translateY(-100%);
       z-index: 1;
@@ -98,20 +98,20 @@
       .message-thinking-row.is-appearing,
       .message-thinking-icon-wrap,
       .message-thinking-icon,
-      .message-thinking-runtime-keyword {
+      .message-thinking-running-keyword {
         animation: none;
       }
 
-      .message-thinking-runtime-keyword {
+      .message-thinking-running-keyword {
         color: var(--muted);
         -webkit-text-fill-color: var(--muted);
         background: none;
       }
 
-      .message-thinking-runtime-line,
-      .message-thinking-runtime-line[data-state="enter"],
-      .message-thinking-runtime-line[data-state="leave"],
-      .message-thinking-runtime-line[data-state="live"] {
+      .message-thinking-running-line,
+      .message-thinking-running-line[data-state="enter"],
+      .message-thinking-running-line[data-state="leave"],
+      .message-thinking-running-line[data-state="live"] {
         opacity: 1;
         transform: none;
         transition: none;

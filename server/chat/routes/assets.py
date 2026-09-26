@@ -60,7 +60,7 @@ def _send_asset_bytes(handler, reader, name: str, *, content_type: str) -> None:
 def _get_icon_asset(handler, parsed, ctx) -> None:
     _send_asset_bytes(
         handler,
-        ctx["asset_runtime"].icon_bytes,
+        ctx["assets"].icon_bytes,
         parsed.path[6:],
         content_type="image/svg+xml",
     )
@@ -69,7 +69,7 @@ def _get_icon_asset(handler, parsed, ctx) -> None:
 def _get_font_asset(handler, parsed, ctx) -> None:
     _send_asset_bytes(
         handler,
-        ctx["asset_runtime"].font_bytes,
+        ctx["assets"].font_bytes,
         parsed.path[6:],
         content_type="font/ttf",
     )
@@ -115,7 +115,7 @@ def _get_chat_index(handler, parsed, ctx) -> None:
         handler.send_error(400, str(exc))
         return
     body = ctx["render_chat_html_fn"](
-        icon_data_uris=ctx["asset_runtime"].icon_data_uris,
+        icon_data_uris=ctx["assets"].icon_data_uris,
         server_instance=ctx["server_instance"],
         hub_port=ctx["hub_port"],
         chat_port=ctx["chat_port"],

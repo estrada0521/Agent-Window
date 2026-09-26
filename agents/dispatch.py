@@ -17,15 +17,15 @@ _SYNC_BY_BASE = {
 
 
 def sync_agent(
-    runtime,
+    state,
     agent: str,
     path: str | None = None,
     *,
     start_at_end: bool = False,
 ) -> None:
-    with runtime._native_log_sync_lock:
+    with state._native_log_sync_lock:
         base = agent_base_name(agent)
         sync_fn = _SYNC_BY_BASE.get(base)
         if sync_fn is None:
             raise ValueError(f"unknown agent type: {agent}")
-        sync_fn(runtime, agent, path, start_at_end=start_at_end)
+        sync_fn(state, agent, path, start_at_end=start_at_end)

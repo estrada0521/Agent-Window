@@ -1,21 +1,21 @@
     let currentAgentStatuses = {};
-    let currentAgentRuntime = {};
-    let thinkingRuntimeItems = {};
-    const clearThinkingRuntimeItemTimers = (item) => {
+    let currentRunningDisplay = {};
+    let thinkingRunningItems = {};
+    const clearThinkingRunningItemTimers = (item) => {
       if (!item) return;
       clearTimeout(item.enterTimer);
       item.enterTimer = 0;
     };
-    const currentThinkingRuntimeItem = (agent) => thinkingRuntimeItems[agent] || null;
-    const clearThinkingRuntimeAgent = (agent, { suppressRender = false } = {}) => {
-      const item = thinkingRuntimeItems[agent];
+    const currentThinkingRunningItem = (agent) => thinkingRunningItems[agent] || null;
+    const clearThinkingRunningAgent = (agent, { suppressRender = false } = {}) => {
+      const item = thinkingRunningItems[agent];
       if (!item) return false;
-      clearThinkingRuntimeItemTimers(item);
-      delete thinkingRuntimeItems[agent];
+      clearThinkingRunningItemTimers(item);
+      delete thinkingRunningItems[agent];
       if (!suppressRender) renderThinkingIndicator();
       return true;
     };
-    const setThinkingRuntimeItem = (agent, event, { suppressRender = false } = {}) => {
+    const setThinkingRunningItem = (agent, event, { suppressRender = false } = {}) => {
       const entry = {
         id: String(event?.id || "").trim(),
         keyword: String(event?.keyword || "").trim(),
@@ -27,61 +27,61 @@
           : Date.now(),
       };
       if (!entry.id || !entry.keyword) return false;
-      const current = currentThinkingRuntimeItem(agent);
+      const current = currentThinkingRunningItem(agent);
       if (current && current.id === entry.id && current.keyword === entry.keyword && current.detail === entry.detail) return false;
-      clearThinkingRuntimeItemTimers(current);
-      thinkingRuntimeItems[agent] = entry;
+      clearThinkingRunningItemTimers(current);
+      thinkingRunningItems[agent] = entry;
       if (!suppressRender) renderThinkingIndicator();
       return true;
     };
-    const syncThinkingRuntimeItems = (statuses, { suppressRender = false } = {}) => {
+    const syncThinkingRunningItems = (statuses, { suppressRender = false } = {}) => {
       const runningAgents = new Set(
         Object.entries(statuses || {})
           .filter(([, status]) => status === "running")
           .map(([agent]) => agent)
       );
       let changed = false;
-      Object.keys(thinkingRuntimeItems).forEach((agent) => {
+      Object.keys(thinkingRunningItems).forEach((agent) => {
         if (runningAgents.has(agent)) return;
-        changed = clearThinkingRuntimeAgent(agent, { suppressRender: true }) || changed;
+        changed = clearThinkingRunningAgent(agent, { suppressRender: true }) || changed;
       });
       runningAgents.forEach((agent) => {
-        const payload = currentAgentRuntime?.[agent];
+        const payload = currentRunningDisplay?.[agent];
         const raw = payload?.current_event;
         const id = String(raw?.id || "").trim();
         const keyword = String(raw?.keyword || "").trim();
         const detail = String(raw?.detail || "").trim();
         if (!id || !keyword) {
-          changed = clearThinkingRuntimeAgent(agent, { suppressRender: true }) || changed;
+          changed = clearThinkingRunningAgent(agent, { suppressRender: true }) || changed;
         } else {
-          changed = setThinkingRuntimeItem(agent, { id, keyword, detail }, { suppressRender: true }) || changed;
+          changed = setThinkingRunningItem(agent, { id, keyword, detail }, { suppressRender: true }) || changed;
         }
       });
       if (changed && !suppressRender) {
         renderThinkingIndicator();
       }
     };
-    const buildThinkingRuntimeHtml = (keyword, detail = "") => {
+    const buildThinkingRunningHtml = (keyword, detail = "") => {
       const detailHtml = detail
-        ? `<span class="message-thinking-runtime-detail"> ${escapeHtml(detail)}</span>`
+        ? `<span class="message-thinking-running-detail"> ${escapeHtml(detail)}</span>`
         : "";
-      return `<span class="message-thinking-runtime-keyword">${escapeHtml(keyword)}</span>${detailHtml}`;
+      return `<span class="message-thinking-running-keyword">${escapeHtml(keyword)}</span>${detailHtml}`;
     };
-    const buildThinkingRuntimeLineInnerHtml = (contentHtml) => {
-      return `<span class="message-thinking-runtime-body">${contentHtml}</span>`;
+    const buildThinkingRunningLineInnerHtml = (contentHtml) => {
+      return `<span class="message-thinking-running-body">${contentHtml}</span>`;
     };
-    const syncThinkingRuntimeSlot = (label, { contentHtml, eventId = "" }) => {
+    const syncThinkingRunningSlot = (label, { contentHtml, eventId = "" }) => {
       if (!label) return;
-      let slot = label.querySelector(".message-thinking-runtime-slot");
+      let slot = label.querySelector(".message-thinking-running-slot");
       if (!slot) {
         slot = document.createElement("span");
-        slot.className = "message-thinking-runtime-slot";
+        slot.className = "message-thinking-running-slot";
         label.appendChild(slot);
       }
       const stableId = String(eventId || "");
-      const lines = Array.from(slot.querySelectorAll(".message-thinking-runtime-line"));
+      const lines = Array.from(slot.querySelectorAll(".message-thinking-running-line"));
       const lineMatches = (line) => {
-        const body = line?.querySelector(".message-thinking-runtime-body");
+        const body = line?.querySelector(".message-thinking-running-body");
         return !!line
           && (body ? body.innerHTML : "") === contentHtml
           && String(line.dataset.eventId || "") === stableId;
@@ -90,7 +90,7 @@
       if (pendingLine) return;
 
       const activeLine = [...lines].reverse().find((line) => line.dataset.state === "live") || null;
-      const activeBody = activeLine?.querySelector(".message-thinking-runtime-body");
+      const activeBody = activeLine?.querySelector(".message-thinking-running-body");
       const activeHtml = activeBody ? activeBody.innerHTML : "";
       const sameText = !!activeLine && activeHtml === contentHtml;
       const sameId = !!activeLine && String(activeLine.dataset.eventId || "") === stableId;
@@ -102,19 +102,19 @@
 
       lines.forEach((line) => {
         if (line === activeLine) return;
-        if (line._runtimeRemoveTimer) {
-          clearTimeout(line._runtimeRemoveTimer);
-          line._runtimeRemoveTimer = 0;
+        if (line._runningRemoveTimer) {
+          clearTimeout(line._runningRemoveTimer);
+          line._runningRemoveTimer = 0;
         }
         line.dataset.state = "superseded";
         line.remove();
       });
 
       const nextLine = document.createElement("span");
-      nextLine.className = "message-thinking-runtime-line";
+      nextLine.className = "message-thinking-running-line";
       nextLine.dataset.state = lines.length ? "enter" : "live";
       nextLine.dataset.eventId = stableId;
-      nextLine.innerHTML = buildThinkingRuntimeLineInnerHtml(contentHtml);
+      nextLine.innerHTML = buildThinkingRunningLineInnerHtml(contentHtml);
       slot.appendChild(nextLine);
       if (nextLine.dataset.state === "live") return;
 
@@ -124,7 +124,7 @@
           if (activeLine?.isConnected) {
             activeLine.dataset.state = "leave";
             const lineToRemove = activeLine;
-            lineToRemove._runtimeRemoveTimer = setTimeout(() => {
+            lineToRemove._runningRemoveTimer = setTimeout(() => {
               lineToRemove.remove();
             }, 300);
           }
@@ -169,7 +169,7 @@
       thinkingFloatingIconFrame = 0;
       const root = document.getElementById("messages");
       const container = root?.querySelector(".message-thinking-container");
-      if (!root || !timeline || !container || !document.body?.classList.contains("agent-runtime-running")) {
+      if (!root || !timeline || !container || !document.body?.classList.contains("agent-running")) {
         removeThinkingFloatingIcons();
         return;
       }
@@ -240,16 +240,16 @@
     const renderThinkingIndicator = () => {
       const root = document.getElementById("messages");
       if (!root) {
-        document.body?.classList.remove("agent-runtime-running");
+        document.body?.classList.remove("agent-running");
         removeThinkingFloatingIcons();
         return;
       }
       const runningAgents = Object.keys(currentAgentStatuses).filter((agent) => currentAgentStatuses[agent] === "running");
-      const hasRuntimeRunning = runningAgents.length > 0;
-      document.body?.classList.toggle("agent-runtime-running", hasRuntimeRunning);
+      const hasRunningRunning = runningAgents.length > 0;
+      document.body?.classList.toggle("agent-running", hasRunningRunning);
       const existingContainer = root.querySelector(".message-thinking-container");
 
-      if (!root.querySelector("article.message-row") || !hasRuntimeRunning) {
+      if (!root.querySelector("article.message-row") || !hasRunningRunning) {
         if (existingContainer) {
           existingContainer.remove();
           document.dispatchEvent(new CustomEvent("chat-thinking-updated"));
@@ -260,15 +260,15 @@
         return;
       }
 
-      const agentRuntimeSig = JSON.stringify(
+      const agentRunningSig = JSON.stringify(
         runningAgents.map((agent) => [
           agent,
-          currentThinkingRuntimeItem(agent)
-            ? [currentThinkingRuntimeItem(agent).id, currentThinkingRuntimeItem(agent).keyword, currentThinkingRuntimeItem(agent).detail, currentThinkingRuntimeItem(agent).phase]
+          currentThinkingRunningItem(agent)
+            ? [currentThinkingRunningItem(agent).id, currentThinkingRunningItem(agent).keyword, currentThinkingRunningItem(agent).detail, currentThinkingRunningItem(agent).phase]
             : null,
         ])
       );
-      const nextThinkingSig = `${runningAgents.join(",")}|${agentRuntimeSig}`;
+      const nextThinkingSig = `${runningAgents.join(",")}|${agentRunningSig}`;
       if (root.dataset.thinkingSig === nextThinkingSig && existingContainer) {
         if (root.lastElementChild !== existingContainer) {
           root.appendChild(existingContainer);
@@ -312,15 +312,15 @@
         if (row.style.getPropertyValue("--agent-pulse-delay") !== pulseDelay) {
           row.style.setProperty("--agent-pulse-delay", pulseDelay);
         }
-        const runtimeItem = currentThinkingRuntimeItem(agent);
+        const runningItem = currentThinkingRunningItem(agent);
         const label = row.querySelector(".message-thinking-label-agent");
 
-        const nextText = runtimeItem
-          ? buildThinkingRuntimeHtml(runtimeItem.keyword, runtimeItem.detail)
-          : '<span class="message-thinking-runtime-keyword">Running...</span>';
-        const nextId = runtimeItem ? (String(runtimeItem.id || "")) : "generic";
+        const nextText = runningItem
+          ? buildThinkingRunningHtml(runningItem.keyword, runningItem.detail)
+          : '<span class="message-thinking-running-keyword">Running...</span>';
+        const nextId = runningItem ? (String(runningItem.id || "")) : "generic";
         if (label) {
-          syncThinkingRuntimeSlot(label, {
+          syncThinkingRunningSlot(label, {
             contentHtml: nextText,
             eventId: nextId,
           });

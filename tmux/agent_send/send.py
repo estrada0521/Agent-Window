@@ -47,7 +47,7 @@ class TmuxClient:
             return subprocess.CompletedProcess(cmd, 127, "", str(exc))
 
 
-class AgentSendRuntime:
+class AgentSender:
     def __init__(
         self,
         *,

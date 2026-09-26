@@ -50,50 +50,50 @@ class CommitTimelineSemanticsTests(unittest.TestCase):
 
     def test_startup_absorbs_head_without_announcing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            workspace, runtime = self._repo(tmp)
+            workspace, state = self._repo(tmp)
             _commit(workspace, "base.txt", "base")
             _commit(workspace, "more.txt", "more")
 
-            adopt_commit_baseline(runtime)
-            self.assertEqual(runtime.announced, [])
+            adopt_commit_baseline(state)
+            self.assertEqual(state.announced, [])
 
-            ensure_commit_announcements(runtime)
-            self.assertEqual(runtime.announced, [])
+            ensure_commit_announcements(state)
+            self.assertEqual(state.announced, [])
 
     def test_observed_advance_announces_only_the_new_head(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            workspace, runtime = self._repo(tmp)
+            workspace, state = self._repo(tmp)
             _commit(workspace, "base.txt", "base")
-            adopt_commit_baseline(runtime)
+            adopt_commit_baseline(state)
 
             _commit(workspace, "a.txt", "a")
             _commit(workspace, "b.txt", "b")
             head = _head(workspace)
 
-            ensure_commit_announcements(runtime)
-            self.assertEqual(len(runtime.announced), 1)
-            self.assertEqual(runtime.announced[0]["commit_hash"], head)
+            ensure_commit_announcements(state)
+            self.assertEqual(len(state.announced), 1)
+            self.assertEqual(state.announced[0]["commit_hash"], head)
 
     def test_diverged_branch_switch_is_announced_like_any_advance(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            workspace, runtime = self._repo(tmp)
+            workspace, state = self._repo(tmp)
             _commit(workspace, "base.txt", "base")
             base_hash = _head(workspace)
             _commit(workspace, "main-only.txt", "on-main")
             main_hash = _head(workspace)
 
-            adopt_commit_baseline(runtime)
-            ensure_commit_announcements(runtime)
-            self.assertEqual(runtime.announced, [])
+            adopt_commit_baseline(state)
+            ensure_commit_announcements(state)
+            self.assertEqual(state.announced, [])
 
             _git(workspace, "checkout", "-q", "-b", "other", base_hash)
             _commit(workspace, "other-only.txt", "on-other")
             other_hash = _head(workspace)
             self.assertNotEqual(other_hash, main_hash)
 
-            ensure_commit_announcements(runtime)
-            self.assertEqual(len(runtime.announced), 1)
-            self.assertEqual(runtime.announced[0]["commit_hash"], other_hash)
+            ensure_commit_announcements(state)
+            self.assertEqual(len(state.announced), 1)
+            self.assertEqual(state.announced[0]["commit_hash"], other_hash)
 
 
 if __name__ == "__main__":

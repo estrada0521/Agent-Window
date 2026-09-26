@@ -14,13 +14,13 @@ class _FakeQueueRuntime:
 
 class QueuedSendImmediateAckTest(unittest.TestCase):
     def setUp(self) -> None:
-        self._orig_runtime = server_module.runtime
+        self._orig_runtime = server_module.state
         self._orig_queue = server_module.send_queue
-        server_module.runtime = _FakeQueueRuntime()
+        server_module.state = _FakeQueueRuntime()
         server_module.send_queue = queue.Queue()
 
     def tearDown(self) -> None:
-        server_module.runtime = self._orig_runtime
+        server_module.state = self._orig_runtime
         server_module.send_queue = self._orig_queue
 
     def test_queued_send_acks_before_any_target_validation(self) -> None:

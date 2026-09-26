@@ -730,32 +730,32 @@
 
 __INCLUDE:../../thinking.css__
 
-    .message-thinking-runtime-slot {
+    .message-thinking-running-slot {
       min-width: 0;
       max-width: min(72vw, 560px);
       width: auto;
       min-height: 1.6em;
     }
 
-    .message-thinking-runtime-slot:has(> .message-thinking-runtime-line[data-state="leave"]) {
-      --thinking-runtime-edge-fade: 0.18em;
+    .message-thinking-running-slot:has(> .message-thinking-running-line[data-state="leave"]) {
+      --thinking-running-edge-fade: 0.18em;
       mask-image: linear-gradient(
         to bottom,
         transparent 0,
-        black var(--thinking-runtime-edge-fade),
-        black calc(100% - var(--thinking-runtime-edge-fade)),
+        black var(--thinking-running-edge-fade),
+        black calc(100% - var(--thinking-running-edge-fade)),
         transparent 100%
       );
       -webkit-mask-image: linear-gradient(
         to bottom,
         transparent 0,
-        black var(--thinking-runtime-edge-fade),
-        black calc(100% - var(--thinking-runtime-edge-fade)),
+        black var(--thinking-running-edge-fade),
+        black calc(100% - var(--thinking-running-edge-fade)),
         transparent 100%
       );
     }
 
-    .message-thinking-runtime-line {
+    .message-thinking-running-line {
       vertical-align: middle;
       position: relative;
       inset: auto;
@@ -764,7 +764,7 @@ __INCLUDE:../../thinking.css__
       transform: translateY(0);
     }
 
-    .message-thinking-runtime-body {
+    .message-thinking-running-body {
       min-width: 0;
       max-width: 100%;
       white-space: nowrap;

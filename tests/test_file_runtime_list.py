@@ -16,27 +16,27 @@ class FileRuntimeListTests(unittest.TestCase):
             (workspace / "apps" / "test.md").write_text("hi\n", encoding="utf-8")
             (workspace / "scratch").mkdir()
             (workspace / "scratch" / "blob.bin").write_bytes(b"x" * 1024)
-            runtime = WorkspaceFiles(workspace=workspace)
+            state = WorkspaceFiles(workspace=workspace)
 
-            root_entries = runtime.list_dir("")
+            root_entries = state.list_dir("")
             names = {entry["name"] for entry in root_entries}
             self.assertIn("apps", names)
             self.assertNotIn("test.md", names)
 
-            app_entries = runtime.list_dir("apps")
+            app_entries = state.list_dir("apps")
             self.assertEqual([entry["name"] for entry in app_entries], ["test.md"])
             self.assertEqual(app_entries[0]["kind"], "file")
 
     def test_list_dir_fails_when_workspace_is_missing(self) -> None:
-        runtime = WorkspaceFiles(workspace="")
-        self.assertEqual(runtime.workspace, "")
+        state = WorkspaceFiles(workspace="")
+        self.assertEqual(state.workspace, "")
         with self.assertRaisesRegex(RuntimeError, "workspace is not configured"):
-            runtime.list_dir("")
+            state.list_dir("")
 
     def test_list_dir_fails_when_workspace_folder_is_gone(self) -> None:
-        runtime = WorkspaceFiles(workspace="/no/such/even-parity")
+        state = WorkspaceFiles(workspace="/no/such/even-parity")
         with self.assertRaisesRegex(RuntimeError, "workspace is not available"):
-            runtime.list_dir("")
+            state.list_dir("")
 
     def test_search_files_uses_git_visible_paths_not_ignored_dumps(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -47,9 +47,9 @@ class FileRuntimeListTests(unittest.TestCase):
             (workspace / "apps" / "test.md").write_text("hi\n", encoding="utf-8")
             (workspace / "scratch").mkdir()
             (workspace / "scratch" / "blob.bin").write_bytes(b"x" * 1024)
-            runtime = WorkspaceFiles(workspace=workspace)
+            state = WorkspaceFiles(workspace=workspace)
 
-            hits = runtime.search_files("test.md", limit=20)
+            hits = state.search_files("test.md", limit=20)
             paths = [entry["path"] for entry in hits]
             self.assertIn("apps/test.md", paths)
             self.assertNotIn("scratch/blob.bin", paths)

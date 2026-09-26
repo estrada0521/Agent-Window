@@ -4,7 +4,7 @@ import os
 import sys
 
 from agents.registry import ALL_AGENT_NAMES
-from tmux.agent_send.send import AgentSendError, AgentSendRuntime
+from tmux.agent_send.send import AgentSendError, AgentSender
 
 
 def _usage_text() -> str:
@@ -36,7 +36,7 @@ def run(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        runtime = AgentSendRuntime(env=dict(os.environ))
+        sender = AgentSender(env=dict(os.environ))
     except AgentSendError as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -56,7 +56,7 @@ def run(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        success = runtime.send_message(
+        success = sender.send_message(
             target_spec=args[0],
             payload=payload,
         )

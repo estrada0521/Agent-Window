@@ -3,9 +3,9 @@ from __future__ import annotations
 import subprocess
 
 
-def current_git_commit(runtime) -> dict | None:
+def current_git_commit(state) -> dict | None:
     result = subprocess.run(
-        ["git", "-C", runtime.workspace, "log", "-1", "--format=%H%x1f%h%x1f%s"],
+        ["git", "-C", state.workspace, "log", "-1", "--format=%H%x1f%h%x1f%s"],
         capture_output=True,
         text=True,
         timeout=2,
@@ -22,20 +22,20 @@ def current_git_commit(runtime) -> dict | None:
     return {"hash": parts[0], "short": parts[1], "subject": parts[2]}
 
 
-def adopt_commit_baseline(runtime) -> None:
-    commit = current_git_commit(runtime)
-    runtime._last_announced_commit_hash = commit["hash"] if commit else None
+def adopt_commit_baseline(state) -> None:
+    commit = current_git_commit(state)
+    state._last_announced_commit_hash = commit["hash"] if commit else None
 
 
-def ensure_commit_announcements(runtime) -> None:
-    commit = current_git_commit(runtime)
+def ensure_commit_announcements(state) -> None:
+    commit = current_git_commit(state)
     if not commit:
         return
-    last = runtime._last_announced_commit_hash
-    runtime._last_announced_commit_hash = commit["hash"]
+    last = state._last_announced_commit_hash
+    state._last_announced_commit_hash = commit["hash"]
     if last is None or last == commit["hash"]:
         return
-    runtime.append_system_entry(
+    state.append_system_entry(
         f"Commit: {commit['short']} {commit['subject']}",
         commit_hash=commit["hash"],
         commit_short=commit["short"],

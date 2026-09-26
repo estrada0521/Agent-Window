@@ -43,9 +43,9 @@ def _is_git_head_metadata_path(rel: str) -> bool:
 
 
 class _DebouncedWorkspaceRefresh:
-    def __init__(self, runtime, file_runtime) -> None:
-        self._runtime = runtime
-        self._file_runtime = file_runtime
+    def __init__(self, state, files) -> None:
+        self._state = state
+        self._files = files
         self._lock = threading.Lock()
         self._flush_lock = threading.Lock()
         self._pending: set[str] = set()
@@ -61,7 +61,7 @@ class _DebouncedWorkspaceRefresh:
 
     def add_path(self, path: str) -> None:
         normalized = os.path.realpath(path)
-        workspace = self._file_runtime.workspace
+        workspace = self._files.workspace
         if not normalized.startswith(workspace):
             return
         rel = os.path.relpath(normalized, workspace)
@@ -106,42 +106,42 @@ class _DebouncedWorkspaceRefresh:
             self._timer = None
         if not paths and not git_head_changed and not full_rescan:
             return
-        workspace = self._file_runtime.workspace
+        workspace = self._files.workspace
         rels = [os.path.relpath(path, workspace) for path in paths]
-        file_rels = [rel for rel in rels if not self._file_runtime.file_index_path_is_ignored(rel)]
+        file_rels = [rel for rel in rels if not self._files.file_index_path_is_ignored(rel)]
         if file_rels or full_rescan:
-            self._file_runtime.invalidate_file_list_cache()
+            self._files.invalidate_file_list_cache()
         git_relevant = git_head_changed or full_rescan
         if rels and not git_relevant:
             try:
                 ignored = git_ignored_rel_paths(workspace, rels)
             except RuntimeError as exc:
-                self._runtime.report_failure(f"git check-ignore failed: {exc}")
+                self._state.report_failure(f"git check-ignore failed: {exc}")
                 ignored = set()
             git_relevant = any(rel not in ignored for rel in rels)
         if git_head_changed:
             try:
-                ensure_commit_announcements(self._runtime)
+                ensure_commit_announcements(self._state)
             except Exception as exc:
-                self._runtime.report_failure(f"commit tracking failed: {exc}")
+                self._state.report_failure(f"commit tracking failed: {exc}")
         if git_relevant:
             invalidate_git_cache(include_commits=git_head_changed or full_rescan)
         if file_rels or full_rescan:
-            self._runtime.publish_event("files")
+            self._state.publish_event("files")
         if git_relevant:
-            self._runtime.publish_event("git")
+            self._state.publish_event("git")
         with self._lock:
             has_more = bool(self._pending) or self._git_head_pending
         if has_more:
             self._schedule_flush()
 
 
-def start_workspace_fsevents_watcher(runtime, file_runtime) -> None:
-    workspace_root = file_runtime.workspace
+def start_workspace_fsevents_watcher(state, files) -> None:
+    workspace_root = files.workspace
     if not workspace_root or not os.path.isdir(workspace_root):
         return
 
-    debouncer = _DebouncedWorkspaceRefresh(runtime, file_runtime)
+    debouncer = _DebouncedWorkspaceRefresh(state, files)
 
     def run_loop():
         cf, cs = load_cf_cs()
@@ -190,11 +190,11 @@ def start_workspace_fsevents_watcher(runtime, file_runtime) -> None:
         )
         CFRelease(cfarr)
         if not stream:
-            runtime.report_failure("workspace watch failed: FSEventStreamCreate returned null")
+            state.report_failure("workspace watch failed: FSEventStreamCreate returned null")
             return
         FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode)
         if not FSEventStreamStart(stream):
-            runtime.report_failure("workspace watch failed: FSEventStreamStart returned false")
+            state.report_failure("workspace watch failed: FSEventStreamStart returned false")
             return
         CFRunLoopRun()
 

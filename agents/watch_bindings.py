@@ -8,8 +8,8 @@ from agents.dispatch import sync_agent
 
 
 class _VnodeNativeSync:
-    def __init__(self, runtime) -> None:
-        self._runtime = runtime
+    def __init__(self, state) -> None:
+        self._state = state
         self._lock = threading.Lock()
         self._kq = select.kqueue()
         self._fd_by_agent: dict[str, int] = {}
@@ -47,7 +47,7 @@ class _VnodeNativeSync:
                 return
 
     def _sync_bindings(self) -> None:
-        bindings: dict = dict(self._runtime._native_log_bindings_by_agent)
+        bindings: dict = dict(self._state._native_log_bindings_by_agent)
         failed_opens: list[tuple[str, OSError]] = []
         with self._lock:
             for agent in list(self._fd_by_agent):
@@ -62,7 +62,7 @@ class _VnodeNativeSync:
                     except OSError as exc:
                         failed_opens.append((agent, exc))
         for agent, exc in failed_opens:
-            self._runtime.native_log_failed(agent, f"watch failed: {exc}")
+            self._state.native_log_failed(agent, f"watch failed: {exc}")
 
     def _close_locked(self, agent: str) -> None:
         fd = self._fd_by_agent.pop(agent, None)
@@ -102,7 +102,7 @@ class _VnodeNativeSync:
                 pending.append(event)
             if woke:
                 self._sync_bindings()
-            if not self._runtime.session_is_active:
+            if not self._state.session_is_active:
                 continue
             rebind_agents: list[str] = []
             for event in pending:
@@ -121,9 +121,9 @@ class _VnodeNativeSync:
                         path = self._path_by_agent.get(agent) if agent else None
                     if agent and path:
                         try:
-                            sync_agent(self._runtime, agent, path)
+                            sync_agent(self._state, agent, path)
                         except Exception as exc:
-                            self._runtime.native_log_failed(agent, f"sync failed: {exc}")
+                            self._state.native_log_failed(agent, f"sync failed: {exc}")
             if rebind_agents:
                 seen: set[str] = set()
                 for agent in rebind_agents:
@@ -131,13 +131,13 @@ class _VnodeNativeSync:
                         continue
                     seen.add(agent)
                     try:
-                        self._runtime.rebind(agent)
+                        self._state.rebind(agent)
                     except Exception as exc:
-                        self._runtime.native_log_failed(agent, f"rebind failed: {exc}")
+                        self._state.native_log_failed(agent, f"rebind failed: {exc}")
                 self._sync_bindings()
 
 
-def start_native_log_vnode_watcher(runtime) -> None:
-    watcher = _VnodeNativeSync(runtime)
-    runtime._native_log_vnode_watcher = watcher
+def start_native_log_vnode_watcher(state) -> None:
+    watcher = _VnodeNativeSync(state)
+    state._native_log_vnode_watcher = watcher
     threading.Thread(target=watcher.run, daemon=True, name="native-vnode").start()

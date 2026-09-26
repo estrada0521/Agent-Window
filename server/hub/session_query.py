@@ -63,8 +63,8 @@ def build_session_record(*, name: str, workspace: str) -> dict:
     }
 
 
-def live_tmux_sessions_query(runtime: Any) -> tuple[dict[str, tuple[str, int]], str, str]:
-    result = runtime.tmux_run(
+def live_tmux_sessions_query(hub: Any) -> tuple[dict[str, tuple[str, int]], str, str]:
+    result = hub.tmux_run(
         ["list-sessions", "-F", "#{session_name}\t#{session_created}\t#{session_path}"]
     )
     if result.timed_out:
@@ -92,9 +92,9 @@ def live_tmux_sessions_query(runtime: Any) -> tuple[dict[str, tuple[str, int]], 
     return workspace_to_tmux, "ok", ""
 
 
-def live_sessions_query(runtime: Any) -> LiveSessions:
+def live_sessions_query(hub: Any) -> LiveSessions:
     claims = session_workspace_claims()
-    workspace_to_tmux, state, detail = live_tmux_sessions_query(runtime)
+    workspace_to_tmux, state, detail = live_tmux_sessions_query(hub)
     if state != "ok":
         return LiveSessions({}, state, detail)
     live = sorted(

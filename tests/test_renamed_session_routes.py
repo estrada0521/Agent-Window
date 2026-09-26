@@ -79,13 +79,13 @@ class RenamedSessionRouteTests(unittest.TestCase):
 
     def test_terminal_attaches_to_real_tmux_name_after_aw_rename(self) -> None:
         handler = _JsonHandler()
-        runtime = SimpleNamespace(
+        state = SimpleNamespace(
             session_is_active=True,
             tmux_session_name="opaque-tmux-7",
         )
         size_result = SimpleNamespace(returncode=0, stdout="160 48")
         ctx = {
-            "runtime": runtime,
+            "state": state,
             "session_name": "renamed-aw-session",
         }
 
