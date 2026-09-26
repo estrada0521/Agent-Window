@@ -5,7 +5,7 @@
     let _deskSessionsRequestSeq = 0;
     let _deskSessionsRenderedOnce = false;
     let _deskSelectedSessionName = "";
-    let _deskChatFrameLoadedUrl = "";
+    let _deskRoomFrameLoadedUrl = "";
     let _deskOpenToken = 0;
     let _deskSidebarWidthAtDefaultTextSize = DESK_DEFAULT_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE;
     let _deskOpenSwipeRow = null;
@@ -31,9 +31,9 @@
         _deskPanelToggle.setAttribute("aria-pressed", _deskPanelActiveMode ? "true" : "false");
       }
     }
-    function setDeskChatLoading(active) {
-      if (!_deskChatShell) return;
-      _deskChatShell.classList.toggle("loading", !!active);
+    function setDeskRoomLoading(active) {
+      if (!_deskRoomShell) return;
+      _deskRoomShell.classList.toggle("loading", !!active);
     }
     function triggerDeskHubReload() {
       if (!_deskReloadBtn || _deskReloadBtn.classList.contains("restarting")) return;
@@ -42,8 +42,8 @@
       beginHubRestart(_deskReloadBtn);
     }
     function failDeskOpen(message) {
-      clearDeskChatFrame();
-      setResidentStatus("chat-open", message);
+      clearDeskRoomFrame();
+      setResidentStatus("room-open", message);
       showDeskSidebarList({ open: true });
     }
 
@@ -67,11 +67,11 @@
       if (!copied) throw new Error("Clipboard is unavailable.");
     }
 
-    function openDeskChatHeaderMenu() {
-      const frameWin = _deskChatFrame?.contentWindow;
+    function openDeskRoomHeaderMenu() {
+      const frameWin = _deskRoomFrame?.contentWindow;
       if (!frameWin) return;
-      const frameRect = _deskChatFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
-      const btnRect = _deskChatMenuBtn?.getBoundingClientRect?.() || null;
+      const frameRect = _deskRoomFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
+      const btnRect = _deskRoomMenuBtn?.getBoundingClientRect?.() || null;
       const anchor = btnRect
         ? {
             left: Number(btnRect.left || 0) - Number(frameRect.left || 0),
@@ -82,15 +82,15 @@
             height: Number(btnRect.height || 24),
           }
         : null;
-      frameWin.postMessage({ type: "open-chat-header-menu", anchor }, "*");
+      frameWin.postMessage({ type: "open-room-header-menu", anchor }, "*");
     }
     function sendDeskPanelCommand(mode) {
-      const frameWin = _deskChatFrame?.contentWindow;
+      const frameWin = _deskRoomFrame?.contentWindow;
       if (!frameWin) return;
       frameWin.postMessage({ type: "desktop-panel", mode: String(mode || "") }, "*");
     }
-    function sendDeskChatAction(action) {
-      const frameWin = _deskChatFrame?.contentWindow;
+    function sendDeskRoomAction(action) {
+      const frameWin = _deskRoomFrame?.contentWindow;
       if (!frameWin) return;
       frameWin.postMessage({
         type: "native-menu-action",
@@ -207,17 +207,17 @@
     }
 
     const deskDtHasFiles = (dt) => !!(dt && Array.from(dt.types || []).includes("Files"));
-    const isDeskChatFrameDropTarget = (target) => target === _deskChatFrame;
-    const postDeskChatFrameMessage = (payload) => {
+    const isDeskRoomFrameDropTarget = (target) => target === _deskRoomFrame;
+    const postDeskRoomFrameMessage = (payload) => {
       try {
-        _deskChatFrame?.contentWindow?.postMessage(payload, "*");
+        _deskRoomFrame?.contentWindow?.postMessage(payload, "*");
         return true;
       } catch (_) {
         return false;
       }
     };
     const setDeskAttachDragActive = (active) => {
-      postDeskChatFrameMessage({ type: "parent-attach-drag", active: !!active });
+      postDeskRoomFrameMessage({ type: "parent-attach-drag", active: !!active });
     };
     let deskAttachDragClearTimer = 0;
     const showDeskAttachDrag = () => {
@@ -244,7 +244,7 @@
     const forwardDeskDroppedFiles = (files) => {
       const dropped = Array.from(files || []).filter((file) => file && typeof file.name === "string");
       if (!dropped.length) return false;
-      return postDeskChatFrameMessage({ type: "parent-drop-files", files: dropped });
+      return postDeskRoomFrameMessage({ type: "parent-drop-files", files: dropped });
     };
     function persistDeskSelection(name) {
       if (name) localStorage.setItem(DESK_SELECTED_KEY, name);
@@ -277,7 +277,7 @@
       try { return window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (_) { return true; }
     }
 
-    function deskChatThemeFromDesktop(themeDesktop) {
+    function deskRoomThemeFromDesktop(themeDesktop) {
       const value = String(
         themeDesktop || document.documentElement.dataset.themeDesktop || document.documentElement.dataset.theme || "dark"
       ).trim().toLowerCase();
@@ -285,11 +285,11 @@
       return value === "light" ? "light" : "dark";
     }
 
-    function applyDeskChatTheme(themeDesktop) {
+    function applyDeskRoomTheme(themeDesktop) {
       const resolvedThemeDesktop = themeDesktop || document.documentElement.dataset.themeDesktop || document.documentElement.dataset.theme || "dark";
-      const chatTheme = deskChatThemeFromDesktop(resolvedThemeDesktop);
-      _deskChatFrame?.contentWindow?.postMessage(
-        { type: "hub-theme-changed", theme: chatTheme, chatTheme, themeDesktop: resolvedThemeDesktop },
+      const roomTheme = deskRoomThemeFromDesktop(resolvedThemeDesktop);
+      _deskRoomFrame?.contentWindow?.postMessage(
+        { type: "hub-theme-changed", theme: roomTheme, roomTheme, themeDesktop: resolvedThemeDesktop },
         "*"
       );
     }
@@ -303,7 +303,7 @@
         : (themeDesktop === "light" ? "light" : "dark");
       document.documentElement.dataset.theme = hubTheme;
       document.documentElement.dataset.themeDesktop = themeDesktop;
-      applyDeskChatTheme(themeDesktop);
+      applyDeskRoomTheme(themeDesktop);
     }
 
     if ((document.documentElement.dataset.themeDesktop || "").trim().toLowerCase() === "system") {
@@ -317,14 +317,14 @@
       });
     } catch (_) {}
 
-    function buildDeskChatFrameUrl(chatUrl) {
-      const raw = String(chatUrl || "").trim();
+    function buildDeskRoomFrameUrl(roomUrl) {
+      const raw = String(roomUrl || "").trim();
       if (!raw) return "";
       try {
         const parsed = new URL(raw, window.location.href);
         parsed.searchParams.set("hub_shell", "1");
         const themeDesktop = document.documentElement.dataset.themeDesktop || _deskAppearance.themeDefault;
-        parsed.searchParams.set("theme", deskChatThemeFromDesktop(themeDesktop));
+        parsed.searchParams.set("theme", deskRoomThemeFromDesktop(themeDesktop));
         parsed.searchParams.set("theme_desktop", themeDesktop);
         parsed.searchParams.set("text_size", String(currentDeskTextSizePx()));
         if (parsed.origin === window.location.origin) {
@@ -338,14 +338,14 @@
       }
     }
 
-    function cacheDeskChatUrl(cacheKey, chatUrl) {
-      hubChatUrls.write(cacheKey, chatUrl);
+    function cacheDeskRoomUrl(cacheKey, roomUrl) {
+      hubRoomUrls.write(cacheKey, roomUrl);
     }
 
-    function syncDeskChatShellState() {
-      if (_deskChatFrame) {
-        if (isDeskSessionSidebarOpen()) _deskChatFrame.dataset.hubSidebarOpen = "1";
-        else delete _deskChatFrame.dataset.hubSidebarOpen;
+    function syncDeskRoomShellState() {
+      if (_deskRoomFrame) {
+        if (isDeskSessionSidebarOpen()) _deskRoomFrame.dataset.hubSidebarOpen = "1";
+        else delete _deskRoomFrame.dataset.hubSidebarOpen;
       }
     }
 
@@ -370,7 +370,7 @@
         _deskAppSidebarToggle.classList.toggle("is-active", isDeskSessionSidebarOpen());
       }
       syncDeskSidebarResizerVisibility();
-      syncDeskChatShellState();
+      syncDeskRoomShellState();
     }
 
     function isDeskSidebarOpen() {

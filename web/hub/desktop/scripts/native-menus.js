@@ -43,7 +43,7 @@
     let _deskGitChangesOpen = false;
     function requestDeskGitChanges(timeoutMs = 4000) {
       return new Promise((resolve) => {
-        const frameWin = _deskChatFrame?.contentWindow;
+        const frameWin = _deskRoomFrame?.contentWindow;
         if (!frameWin) { resolve(null); return; }
         let settled = false;
         const done = (value) => {
@@ -124,7 +124,7 @@
       if (detail.action === "gitChange") {
         const item = _deskGitChangesItems[Number(detail.mode)];
         if (item && item.path) {
-          _deskChatFrame?.contentWindow?.postMessage(
+          _deskRoomFrame?.contentWindow?.postMessage(
             { type: "desk-open-git-file", path: item.path, oldPath: item.oldPath, untracked: !!item.untracked }, "*",
           );
         }

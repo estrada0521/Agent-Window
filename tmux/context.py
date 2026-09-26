@@ -52,7 +52,7 @@ def format_context_text(info: dict) -> str:
     )
     workspace = info["workspace"]
     lines.append(
-        f"- Chat jsonl lives at `~/.agent-window/session/{info['session']}/.log.jsonl`; "
+        f"- Room jsonl lives at `~/.agent-window/session/{info['session']}/.log.jsonl`; "
         f"workspace mirror is `{workspace}/.agent-window/.log.jsonl`."
     )
     return "\n".join(lines)

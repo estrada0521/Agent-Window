@@ -95,8 +95,8 @@
         }
         const activeHref = buildSessionOpenHref(sessionName, false);
         const archivedHref = buildSessionOpenHref(sessionName, true);
-        hubChatUrls.forget(activeHref);
-        hubChatUrls.forget(archivedHref);
+        hubRoomUrls.forget(activeHref);
+        hubRoomUrls.forget(archivedHref);
         if (isSelected) {
           _deskOpenToken += 1;
           _deskSelectedSessionName = "";
@@ -129,8 +129,8 @@
           throw new Error(data.error || "Failed to rename session.");
         }
         const renamed = String(data.new_name || newName);
-        hubChatUrls.forget(buildSessionOpenHref(oldName, false));
-        hubChatUrls.forget(buildSessionOpenHref(oldName, true));
+        hubRoomUrls.forget(buildSessionOpenHref(oldName, false));
+        hubRoomUrls.forget(buildSessionOpenHref(oldName, true));
         if (_deskUnreadSessions.delete(oldName)) _deskUnreadSessions.add(renamed);
         if (_deskSelectedSessionName === oldName) {
           _deskSelectedSessionName = renamed;
@@ -175,7 +175,7 @@
         setStatus(err?.message || "Failed to change workspace.");
         return;
       }
-      hubChatUrls.forget(buildSessionOpenHref(sessionName, true));
+      hubRoomUrls.forget(buildSessionOpenHref(sessionName, true));
       setStatus("Workspace updated");
     }
 
@@ -214,7 +214,7 @@
         return;
       }
       if (_deskSelectedSessionName === sessionName) {
-        postDeskChatFrameMessage({ type: "refresh-session-state" });
+        postDeskRoomFrameMessage({ type: "refresh-session-state" });
       }
       await refreshHubSessions(true, { skipRestore: true });
       setStatus("Agents reset");

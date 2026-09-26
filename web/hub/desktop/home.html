@@ -68,11 +68,11 @@ __INCLUDE:styles/theme.css__
 __INCLUDE:styles/window-chrome.css__
 __INCLUDE:styles/workbench.css__
 __INCLUDE:styles/session-list.css__
-__INCLUDE:styles/chat-frame.css__
+__INCLUDE:styles/room-frame.css__
 __INCLUDE:styles/shell-overrides.css__
 __INCLUDE:styles/sidebar-popover.css__
-__INCLUDE:../../chat/chat-controls.css__
-__INCLUDE:../../chat/hud.css__
+__INCLUDE:../../room/room-controls.css__
+__INCLUDE:../../room/hud.css__
   </style>
 </head>
 <body>
@@ -95,7 +95,7 @@ __INCLUDE:../../chat/hud.css__
     </div>
     <div class="desk-fit-standby" aria-hidden="true"><span class="desk-fit-standby-text">Agent Window</span></div>
     <div class="desk-top-right-controls" id="deskTopRightControls" aria-label="Window controls">
-__INCLUDE:../../chat/chat-controls.html__
+__INCLUDE:../../room/room-controls.html__
     </div>
     <div class="desk-workbench" id="deskWorkbench">
       <aside class="desk-sidebar" id="deskSidebar">
@@ -152,10 +152,10 @@ __INCLUDE:../../chat/chat-controls.html__
       </div>
       <div class="desk-sidebar-resizer" id="deskSidebarResizer" aria-hidden="true"></div>
       <section class="desk-main">
-        <div class="desk-chat-shell">
+        <div class="desk-room-shell">
           <iframe
-            class="desk-chat-frame"
-            id="deskChatFrame"
+            class="desk-room-frame"
+            id="deskRoomFrame"
             src="about:blank"
             allow="clipboard-write"
           ></iframe>
@@ -172,11 +172,11 @@ __INCLUDE:../../chat/chat-controls.html__
   </div>
   <script>
 __INCLUDE:../restart-nav.js__
-__INCLUDE:../chat-url.js__
+__INCLUDE:../room-url.js__
 __INCLUDE:../session-messages-events.js__
-__INCLUDE:../../chat/list-flip.js__
-__INCLUDE:../../chat/hud.js__
-__INCLUDE:../../chat/chat-menu.js__
+__INCLUDE:../../room/list-flip.js__
+__INCLUDE:../../room/hud.js__
+__INCLUDE:../../room/room-menu.js__
 __INCLUDE:scripts/state.js__
 __INCLUDE:scripts/window-controls.js__
 __INCLUDE:scripts/native-menus.js__

@@ -41,7 +41,7 @@
   <style>
 __INCLUDE:../../mobile-liquid-glass.css__
 __INCLUDE:home.css__
-__INCLUDE:../../chat/hud.css__
+__INCLUDE:../../room/hud.css__
 __HUB_HEADER_CSS__
   </style>
 </head>
@@ -52,7 +52,7 @@ __HUB_HEADER_CSS__
       <span class="launch-shell-title">Agent Window</span>
     </div>
   </div>
-  <div id="chatOverlay" hidden><svg class="chat-overlay-shape" aria-hidden="true" preserveAspectRatio="none"><path></path></svg><div class="chat-frame-clip"><iframe id="chatFrame" src="about:blank"
+  <div id="roomOverlay" hidden><svg class="room-overlay-shape" aria-hidden="true" preserveAspectRatio="none"><path></path></svg><div class="room-frame-clip"><iframe id="roomFrame" src="about:blank"
       allow="clipboard-write"></iframe></div></div>
   <div id="hubHud" class="hud" role="status" aria-live="polite"></div>
   <div class="shell">
@@ -65,10 +65,10 @@ __HUB_HEADER_CSS__
     <p class="hub-footer-credit">Made by H. Okada</p>
   </div>
   <script>
-__INCLUDE:../chat-url.js__
+__INCLUDE:../room-url.js__
 __INCLUDE:../session-messages-events.js__
-__INCLUDE:../../chat/list-flip.js__
-__INCLUDE:../../chat/hud.js__
+__INCLUDE:../../room/list-flip.js__
+__INCLUDE:../../room/hud.js__
 __INCLUDE:home.js__
   </script>
 </body>

@@ -12,14 +12,14 @@ from fs.session.meta import (
     set_session_workspace,
 )
 from fs.session.paths import agent_window_session_root
-from server.hub.chat_supervisor import (
+from server.hub.room_supervisor import (
     TmuxUnhealthy,
     delete_archived_session,
-    ensure_chat_server,
+    ensure_room_server,
     kill_repo_session,
     revive_archived_session,
 )
-from server.hub.session_api import resolve_session_chat_target
+from server.hub.session_api import resolve_session_room_target
 
 
 def _session_query(parsed) -> tuple[str, str]:
@@ -34,10 +34,10 @@ def _fail(handler, ctx, fmt: str, status: int, message: str) -> None:
         handler._send_html(status, ctx["error_page_fn"](message))
 
 
-def _open_chat(handler, ctx, fmt: str, chat_port: int) -> None:
-    location = ctx["format_chat_url_fn"](chat_port, f"/?ts={int(time.time() * 1000)}")
+def _open_room(handler, ctx, fmt: str, room_port: int) -> None:
+    location = ctx["format_room_url_fn"](room_port, f"/?ts={int(time.time() * 1000)}")
     if fmt == "json":
-        handler._send_json(200, {"ok": True, "chat_url": location})
+        handler._send_json(200, {"ok": True, "room_url": location})
     else:
         handler._redirect(location)
 
@@ -54,7 +54,7 @@ def get_open_session(handler, parsed, ctx) -> None:
     if not session_name:
         _fail(handler, ctx, fmt, 404, "That session is not available in this repo.")
         return
-    resolved = resolve_session_chat_target(ctx["hub"], session_name)
+    resolved = resolve_session_room_target(ctx["hub"], session_name)
     if resolved["status"] == "unhealthy":
         handler._send_unhealthy(fmt, resolved["detail"])
         return
@@ -62,9 +62,9 @@ def get_open_session(handler, parsed, ctx) -> None:
         _fail(handler, ctx, fmt, 404, "That session is not available in this repo.")
         return
     if resolved["status"] != "ok":
-        _fail(handler, ctx, fmt, 500, f"Failed to start chat for {session_name}: {resolved['detail']}")
+        _fail(handler, ctx, fmt, 500, f"Failed to start room for {session_name}: {resolved['detail']}")
         return
-    _open_chat(handler, ctx, fmt, resolved["chat_port"])
+    _open_room(handler, ctx, fmt, resolved["room_port"])
 
 
 def get_revive_session(handler, parsed, ctx) -> None:
@@ -82,11 +82,11 @@ def get_revive_session(handler, parsed, ctx) -> None:
         return
     ctx["hub"].publish_session_messages_changed()
     workspace = session_workspace(session_name)
-    ok, chat_port, detail = ensure_chat_server(ctx["hub"], expected_active=True, workspace=workspace)
+    ok, room_port, detail = ensure_room_server(ctx["hub"], expected_active=True, workspace=workspace)
     if not ok:
-        _fail(handler, ctx, fmt, 500, f"Failed to start chat for {session_name}: {detail}")
+        _fail(handler, ctx, fmt, 500, f"Failed to start room for {session_name}: {detail}")
         return
-    _open_chat(handler, ctx, fmt, chat_port)
+    _open_room(handler, ctx, fmt, room_port)
 
 
 def get_kill_session(handler, parsed, ctx) -> None:

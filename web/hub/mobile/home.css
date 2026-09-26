@@ -12,11 +12,11 @@
       --icon-hover: __ICON_HOVER__;
       --session-hover-bg: __SESSION_HOVER_BG__;
       --session-selected-bg: __SESSION_SELECTED_BG__;
-      --chat-overlay-glow: drop-shadow(0 0 5px rgba(0, 0, 0, 0.34)) drop-shadow(0 0 16px rgba(0, 0, 0, 0.2));
+      --room-overlay-glow: drop-shadow(0 0 5px rgba(0, 0, 0, 0.34)) drop-shadow(0 0 16px rgba(0, 0, 0, 0.2));
       --session-danger-fg: rgb(204, 47, 38);
       --session-success-fg: rgb(41, 178, 75);
       --hub-tagline-top: calc(env(safe-area-inset-top, 0px) + 22px);
-      --hub-chat-peek-width: 25vw;
+      --hub-room-peek-width: 25vw;
       --hub-tagline-fade-height: 64px;
       --mob-top-gradient-rgb: var(--bg-rgb);
       --code-bg: rgba(255, 255, 255, 0.05);
@@ -37,7 +37,7 @@
       --line-strong: rgba(0, 0, 0, 0.18);
       --session-hover-bg: rgb(233, 233, 231);
       --session-selected-bg: rgb(226, 226, 224);
-      --chat-overlay-glow: drop-shadow(-1px 0 4px rgba(0, 0, 0, 0.14)) drop-shadow(-7px 0 16px rgba(0, 0, 0, 0.07));
+      --room-overlay-glow: drop-shadow(-1px 0 4px rgba(0, 0, 0, 0.14)) drop-shadow(-7px 0 16px rgba(0, 0, 0, 0.07));
       --session-danger-fg: rgb(207, 34, 46);
       --session-success-fg: rgb(36, 157, 66);
       --mob-top-gradient-rgb: var(--bg-rgb);
@@ -60,8 +60,8 @@
       --line-strong: rgba(255, 255, 255, 0.12);
       --session-hover-bg: rgb(24, 24, 24);
       --session-selected-bg: rgb(28, 28, 28);
-      --chat-overlay-glow: none;
-      --chat-overlay-stroke: rgba(255, 255, 255, 0.50);
+      --room-overlay-glow: none;
+      --room-overlay-stroke: rgba(255, 255, 255, 0.50);
       --session-danger-fg: rgb(204, 47, 38);
       --session-success-fg: rgb(41, 178, 75);
       --mob-top-gradient-rgb: var(--bg-rgb);
@@ -110,10 +110,10 @@
       margin: 0 auto;
     }
 
-    html.hub-chat-peeking .shell {
+    html.hub-room-peeking .shell {
       max-width: none;
       margin: 0;
-      padding-right: var(--hub-chat-peek-width);
+      padding-right: var(--hub-room-peek-width);
     }
 
     @media (min-width: 600px) {
@@ -121,7 +121,7 @@
         --hub-sidebar-width: min(400px, 75vw);
       }
 
-      html.hub-chat-peeking .shell {
+      html.hub-room-peeking .shell {
         max-width: var(--hub-sidebar-width);
         margin: 0;
         padding-right: 0;
@@ -262,16 +262,16 @@
       z-index: -1;
     }
 
-    html.hub-chat-ui-active .hub-mobile-tagline::after {
+    html.hub-room-ui-active .hub-mobile-tagline::after {
       opacity: 1;
     }
 
-    html.hub-chat-peeking .hub-mobile-tagline::after {
+    html.hub-room-peeking .hub-mobile-tagline::after {
       transition-duration: 280ms;
     }
 
     @media (min-width: 600px) {
-      html.hub-chat-ui-active .hub-mobile-tagline::after {
+      html.hub-room-ui-active .hub-mobile-tagline::after {
         opacity: 0;
       }
     }
@@ -300,16 +300,16 @@
       transition: opacity 440ms cubic-bezier(0.32, 0.72, 0, 1);
     }
 
-    html.hub-chat-ui-active .mob-list-wrap::after {
+    html.hub-room-ui-active .mob-list-wrap::after {
       opacity: 1;
     }
 
-    html.hub-chat-peeking .mob-list-wrap::after {
+    html.hub-room-peeking .mob-list-wrap::after {
       transition-duration: 280ms;
     }
 
     @media (min-width: 600px) {
-      html.hub-chat-ui-active .mob-list-wrap::after {
+      html.hub-room-ui-active .mob-list-wrap::after {
         opacity: 0;
       }
     }
@@ -621,7 +621,7 @@
       white-space: nowrap;
     }
 
-    #chatOverlay {
+    #roomOverlay {
       position: fixed;
       inset: 0;
       z-index: 9999;
@@ -634,42 +634,42 @@
       -webkit-backface-visibility: hidden;
     }
 
-    #chatOverlay.overlay-settled {
+    #roomOverlay.overlay-settled {
       background: var(--bg);
     }
 
-    .chat-overlay-shape {
+    .room-overlay-shape {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       overflow: visible;
       pointer-events: none;
-      filter: var(--chat-overlay-glow);
+      filter: var(--room-overlay-glow);
     }
 
-    .chat-overlay-shape path {
+    .room-overlay-shape path {
       fill: var(--bg);
     }
 
-    html[data-theme="dark"] .chat-overlay-shape path {
-      stroke: var(--chat-overlay-stroke);
+    html[data-theme="dark"] .room-overlay-shape path {
+      stroke: var(--room-overlay-stroke);
       stroke-width: 0.5px;
       vector-effect: non-scaling-stroke;
     }
 
-    #chatOverlay.overlay-settled .chat-overlay-shape {
+    #roomOverlay.overlay-settled .room-overlay-shape {
       visibility: hidden;
     }
 
-    .chat-frame-clip {
+    .room-frame-clip {
       position: absolute;
       inset: 0;
       overflow: hidden;
       background: var(--bg);
     }
 
-    .chat-frame-clip::after {
+    .room-frame-clip::after {
       content: "";
       position: absolute;
       inset: 0;
@@ -679,67 +679,67 @@
       transition: opacity 440ms cubic-bezier(0.32, 0.72, 0, 1);
     }
 
-    #chatOverlay.overlay-closing .chat-frame-clip::after,
-    #chatOverlay.overlay-peeking .chat-frame-clip::after {
+    #roomOverlay.overlay-closing .room-frame-clip::after,
+    #roomOverlay.overlay-peeking .room-frame-clip::after {
       opacity: 1;
     }
 
-    #chatOverlay.overlay-closing .chat-frame-clip::after {
+    #roomOverlay.overlay-closing .room-frame-clip::after {
       transition-duration: 280ms;
     }
 
-    #chatOverlay[hidden] {
+    #roomOverlay[hidden] {
       display: none;
     }
 
-    #chatOverlay.overlay-visible {
+    #roomOverlay.overlay-visible {
       opacity: 1;
       transform: translate3d(0, 0, 0);
     }
 
-    #chatOverlay.overlay-closing {
+    #roomOverlay.overlay-closing {
       opacity: 1;
-      transform: translate3d(calc(100% - var(--hub-chat-peek-width)), 0, 0);
+      transform: translate3d(calc(100% - var(--hub-room-peek-width)), 0, 0);
       transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
     }
 
-    #chatOverlay.overlay-peeking {
+    #roomOverlay.overlay-peeking {
       opacity: 1;
-      transform: translate3d(calc(100% - var(--hub-chat-peek-width)), 0, 0);
+      transform: translate3d(calc(100% - var(--hub-room-peek-width)), 0, 0);
       transition: none;
     }
 
-    #chatOverlay.overlay-peeking iframe {
+    #roomOverlay.overlay-peeking iframe {
       pointer-events: none;
     }
 
     @media (min-width: 600px) {
-      #chatOverlay {
+      #roomOverlay {
         background: var(--bg);
       }
 
-      .chat-overlay-shape {
+      .room-overlay-shape {
         display: none;
       }
 
-      #chatOverlay.overlay-closing,
-      #chatOverlay.overlay-peeking {
+      #roomOverlay.overlay-closing,
+      #roomOverlay.overlay-peeking {
         transform: translate3d(var(--hub-sidebar-width), 0, 0);
       }
     }
 
 
     @media (prefers-reduced-motion: reduce) {
-      #chatOverlay {
+      #roomOverlay {
         transition: opacity 120ms ease;
       }
 
-      #chatOverlay.overlay-closing {
+      #roomOverlay.overlay-closing {
         transition: opacity 120ms ease;
       }
     }
 
-    #chatFrame {
+    #roomFrame {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -749,13 +749,13 @@
       background: var(--bg);
     }
 
-    html.hub-chat-overlay-active {
+    html.hub-room-overlay-active {
       overflow-y: auto;
       height: 100%;
       height: -webkit-fill-available;
     }
 
-    body.hub-chat-overlay-active {
+    body.hub-room-overlay-active {
       overscroll-behavior-y: none;
       min-height: 100vh;
       min-height: 100svh;
@@ -766,11 +766,11 @@
       z-index: 9998;
       --hud-fg: var(--fg);
     }
-    html:has(#chatOverlay:not([hidden])) #hubHud {
-      left: calc((100vw - var(--hub-chat-peek-width)) / 2);
+    html:has(#roomOverlay:not([hidden])) #hubHud {
+      left: calc((100vw - var(--hub-room-peek-width)) / 2);
     }
     @media (min-width: 600px) {
-      html:has(#chatOverlay:not([hidden])) #hubHud {
+      html:has(#roomOverlay:not([hidden])) #hubHud {
         left: calc(var(--hub-sidebar-width) / 2);
       }
     }

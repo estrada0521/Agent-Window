@@ -40,11 +40,11 @@
       --session-selected-bg: rgba(0, 0, 0, 0.07);
       --session-danger-fg: rgb(207, 34, 46);
       --session-revive-fg: rgb(__TEXT_DIFF_INSERT_LIGHT_CHANNELS__);
-      --chat-pane-bg: __DESKTOP_CHAT_LIGHT_BG_FILL__;
-      --chat-pane-filter: blur(20px);
+      --room-pane-bg: __DESKTOP_ROOM_LIGHT_BG_FILL__;
+      --room-pane-filter: blur(20px);
       --hub-body-weight: 400;
       --hud-fg: rgb(__TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS__);
-      --pill-bg-rgb: __DESKTOP_CHAT_LIGHT_BG_CHANNELS__;
+      --pill-bg-rgb: __DESKTOP_ROOM_LIGHT_BG_CHANNELS__;
     }
     html[data-theme="dark"] {
       color-scheme: dark;
@@ -62,8 +62,8 @@
       --session-selected-bg: rgba(255, 255, 255, 0.08);
       --session-danger-fg: rgb(255, 108, 102);
       --session-revive-fg: rgb(__TEXT_DIFF_INSERT_DARK_CHANNELS__);
-      --chat-pane-bg: __DESKTOP_CHAT_DARK_BG_FILL__;
-      --chat-pane-filter: var(--glass-filter-20);
+      --room-pane-bg: __DESKTOP_ROOM_DARK_BG_FILL__;
+      --room-pane-filter: var(--glass-filter-20);
       --hub-body-weight: 300;
       --hud-fg: rgb(__TEXT_PRIMARY_DESKTOP_DARK_CHANNELS__);
     }

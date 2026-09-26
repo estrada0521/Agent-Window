@@ -15,7 +15,7 @@ from fs.session.meta import find_session_for_workspace
 from tmux.session import AgentPane, parse_agent_topology
 from tmux import TMUX_SOCKET_NAME
 from tmux.send_keys import deliver_text_to_pane
-from fs.session.paths import session_log_path, workspace_chat_port
+from fs.session.paths import session_log_path, workspace_room_port
 
 
 class AgentSendError(RuntimeError):
@@ -200,7 +200,7 @@ class AgentSender:
         return targets
 
     def _notify_running_agents(self, agents: list[str], workspace: str) -> None:
-        port = workspace_chat_port(workspace)
+        port = workspace_room_port(workspace)
         body = json.dumps({"targets": agents}).encode("utf-8")
         connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
         try:
@@ -217,9 +217,9 @@ class AgentSender:
             response = connection.getresponse()
             detail = response.read().decode("utf-8", errors="replace").strip()
             if not 200 <= response.status < 300:
-                raise AgentSendError(detail or f"chat server returned {response.status}")
+                raise AgentSendError(detail or f"room server returned {response.status}")
         except (OSError, http.client.HTTPException, TimeoutError) as exc:
-            raise AgentSendError(f"could not notify chat server: {exc}") from exc
+            raise AgentSendError(f"could not notify room server: {exc}") from exc
         finally:
             connection.close()
 

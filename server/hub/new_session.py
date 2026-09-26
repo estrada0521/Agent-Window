@@ -13,10 +13,10 @@ from fs.session.paths import (
     port_is_bindable,
     sanitize_session_name,
     session_artifact_dir,
-    workspace_chat_port,
+    workspace_room_port,
 )
 from tmux.control import create_session
-from server.hub.chat_supervisor import ensure_chat_server
+from server.hub.room_supervisor import ensure_room_server
 
 
 _GENERATED_SESSION_PREFIX = "aw-"
@@ -144,9 +144,9 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
     except RuntimeError as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    chat_port = workspace_chat_port(resolved_workspace)
-    if not port_is_bindable(chat_port):
-        handler._send_json(409, {"ok": False, "error": f"chat port {chat_port} is occupied"})
+    room_port = workspace_room_port(resolved_workspace)
+    if not port_is_bindable(room_port):
+        handler._send_json(409, {"ok": False, "error": f"room port {room_port} is occupied"})
         return
     try:
         create_session(
@@ -155,7 +155,7 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
             agents=[],
             repo_root=ctx["hub"].repo_root,
         )
-        ok, chat_port, detail = ensure_chat_server(
+        ok, room_port, detail = ensure_room_server(
             ctx["hub"],
             expected_active=True,
             workspace=resolved_workspace,
@@ -167,8 +167,8 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
     ctx["hub"].publish_session_messages_changed()
-    chat_url = ctx["format_chat_url_fn"](
-        chat_port,
+    room_url = ctx["format_room_url_fn"](
+        room_port,
         f"/?ts={int(time.time() * 1000)}",
     )
     handler._send_json(
@@ -176,7 +176,7 @@ def post_start_session_draft(handler, _parsed, ctx) -> None:
         {
             "ok": True,
             "session": session_name,
-            "chat_url": chat_url,
+            "room_url": room_url,
             **({"notice": notice} if notice else {}),
         },
     )

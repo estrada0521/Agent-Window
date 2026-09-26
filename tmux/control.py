@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 
 from fs.session.log import append_jsonl_entry
-from server.chat.probe import read_chat_server_state
+from server.room.probe import read_room_server_state
 from fs.session.meta import (
     SessionMetaError,
     create_session_folder,
@@ -20,7 +20,7 @@ from fs.session.meta import (
 from fs.session.paths import (
     ensure_session_workspace_mirrors,
     session_log_path,
-    workspace_chat_port,
+    workspace_room_port,
 )
 from agents.executables import agent_launch_cmd, resolve_agent_executable
 from agents import agent_base_name
@@ -112,36 +112,36 @@ def _append_log(session_name: str, message: str) -> None:
     )
 
 
-def _chat_listener_pids(chat_port: int) -> list[int]:
+def _room_listener_pids(room_port: int) -> list[int]:
     try:
         result = subprocess.run(
-            ["lsof", "-nP", f"-tiTCP:{int(chat_port)}", "-sTCP:LISTEN"],
+            ["lsof", "-nP", f"-tiTCP:{int(room_port)}", "-sTCP:LISTEN"],
             capture_output=True,
             text=True,
             timeout=1,
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise SessionControlError(f"lsof timed out for port {chat_port}") from exc
+        raise SessionControlError(f"lsof timed out for port {room_port}") from exc
     except OSError as exc:
-        raise SessionControlError(f"lsof failed for port {chat_port}: {exc}") from exc
+        raise SessionControlError(f"lsof failed for port {room_port}: {exc}") from exc
     if result.returncode not in (0, 1):
         detail = (result.stderr or result.stdout or "").strip() or f"lsof exited {result.returncode}"
-        raise SessionControlError(f"lsof failed for port {chat_port}: {detail}")
+        raise SessionControlError(f"lsof failed for port {room_port}: {detail}")
     return sorted({int(line.strip()) for line in (result.stdout or "").splitlines() if line.strip().isdigit()})
 
 
-def _own_chat_listener_pids(chat_port: int, workspace: str) -> list[int]:
-    listeners = _chat_listener_pids(chat_port)
+def _own_room_listener_pids(room_port: int, workspace: str) -> list[int]:
+    listeners = _room_listener_pids(room_port)
     if not listeners:
         return []
-    state = read_chat_server_state(chat_port)
+    state = read_room_server_state(room_port)
     expected_workspace = str(Path(workspace).expanduser().resolve())
     reported_workspace = str((state or {}).get("workspace") or "").strip()
     if not reported_workspace or str(Path(reported_workspace).expanduser().resolve()) != expected_workspace:
         shown = ", ".join(str(pid) for pid in listeners)
         raise SessionControlError(
-            f"chat port {chat_port} is occupied by pid {shown}, not this workspace's chat server"
+            f"room port {room_port} is occupied by pid {shown}, not this workspace's room server"
         )
     try:
         reported_pid = int(state.get("pid") or 0)
@@ -149,57 +149,57 @@ def _own_chat_listener_pids(chat_port: int, workspace: str) -> list[int]:
         reported_pid = 0
     if reported_pid <= 0 or listeners != [reported_pid]:
         shown = ", ".join(str(pid) for pid in listeners)
-        raise SessionControlError(f"chat server pid mismatch on port {chat_port}: {shown}")
+        raise SessionControlError(f"room server pid mismatch on port {room_port}: {shown}")
     return listeners
 
 
-def _chat_port_open(chat_port: int) -> bool:
+def _room_port_open(room_port: int) -> bool:
     try:
-        with socket.create_connection(("127.0.0.1", int(chat_port)), timeout=0.35):
+        with socket.create_connection(("127.0.0.1", int(room_port)), timeout=0.35):
             return True
     except OSError:
         return False
 
 
-_CHAT_STOP_WAIT_SEC = 2.0
+_ROOM_STOP_WAIT_SEC = 2.0
 
 
-def _signal_chat_pids(pids: list[int], sig: int) -> str:
+def _signal_room_pids(pids: list[int], sig: int) -> str:
     for pid in pids:
         try:
             os.kill(pid, sig)
         except ProcessLookupError:
             continue
         except OSError as exc:
-            return f"failed to signal chat server pid {pid}: {exc}"
+            return f"failed to signal room server pid {pid}: {exc}"
     return ""
 
 
-def stop_chat_server(workspace: str) -> tuple[bool, str]:
+def stop_room_server(workspace: str) -> tuple[bool, str]:
     resolved_workspace = str(Path(workspace).expanduser().resolve())
-    chat_port = workspace_chat_port(resolved_workspace)
+    room_port = workspace_room_port(resolved_workspace)
     try:
-        pids = _own_chat_listener_pids(chat_port, resolved_workspace)
+        pids = _own_room_listener_pids(room_port, resolved_workspace)
     except SessionControlError as exc:
         return False, str(exc)
     if not pids:
         return True, ""
-    detail = _signal_chat_pids(pids, signal.SIGTERM)
+    detail = _signal_room_pids(pids, signal.SIGTERM)
     if detail:
         return False, detail
-    deadline = time.monotonic() + _CHAT_STOP_WAIT_SEC
+    deadline = time.monotonic() + _ROOM_STOP_WAIT_SEC
     while time.monotonic() < deadline:
-        if not _chat_port_open(chat_port):
+        if not _room_port_open(room_port):
             return True, ""
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             break
         time.sleep(min(0.1, remaining))
-    detail = _signal_chat_pids(pids, signal.SIGKILL)
+    detail = _signal_room_pids(pids, signal.SIGKILL)
     if detail:
         return False, detail
-    if _chat_port_open(chat_port):
-        return False, f"chat server on port {chat_port} still running after SIGKILL"
+    if _room_port_open(room_port):
+        return False, f"room server on port {room_port} still running after SIGKILL"
     return True, ""
 
 
@@ -382,9 +382,9 @@ def kill_session(
     if not tmux_name:
         raise SessionControlError(f"Session does not exist: {session_name}")
     workspace = tmux_session_workspace(tmux_name)
-    stop_ok, stop_detail = stop_chat_server(workspace)
+    stop_ok, stop_detail = stop_room_server(workspace)
     if not stop_ok:
-        raise SessionControlError(f"failed to stop chat server for {session_name}: {stop_detail}")
+        raise SessionControlError(f"failed to stop room server for {session_name}: {stop_detail}")
     cleanup_target_process_groups(target=tmux_name)
     result = _run(["kill-session", "-t", tmux_name], timeout=4)
     if result.returncode != 0:

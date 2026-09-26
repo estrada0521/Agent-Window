@@ -105,7 +105,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     [self.webView evaluateJavaScript:script completionHandler:nil];
 }
 
-- (void)showChatHeaderMenu:(NSDictionary *)p {
+- (void)showRoomHeaderMenu:(NSDictionary *)p {
     BOOL active = [p[@"sessionActive"] boolValue];
     NSDictionary *icons = p[@"agentIcons"] ?: @{};
     NSMenuItem *(^agentItem)(NSString *, NSString *) = ^NSMenuItem *(NSString *mode, NSString *agent) {
@@ -371,7 +371,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSDictionary *p = a[@"payload"];
     if ([cmd isEqualToString:@"open_external_url"]) return [self openExternalURL:a[@"url"]];
     if ([cmd isEqualToString:@"copy_files_to_clipboard"]) return [self copyFiles:a[@"paths"]];
-    if ([cmd isEqualToString:@"show_chat_header_menu"]) { [self showChatHeaderMenu:p]; return nil; }
+    if ([cmd isEqualToString:@"show_room_header_menu"]) { [self showRoomHeaderMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_appearance_menu"]) { [self showAppearanceMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_session_switcher_menu"]) { [self showListMenu:p action:@"switchSession" checks:YES]; return nil; }
     if ([cmd isEqualToString:@"show_git_changes_menu"]) { [self showListMenu:p action:@"gitChange" checks:NO]; return nil; }

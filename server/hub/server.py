@@ -12,9 +12,9 @@ from server.appearance.colors import apply_color_tokens, resolve_theme_palette
 from server.appearance.theme import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from server.pwa import PWA_FILES, pwa_icon_entries, serve_pwa_file
-from server.hub.session_proxy import proxy_chat_session
-from server.hub.session_api import split_chat_proxy_path
-from server.hub.chat_supervisor import stop_inactive_chat_servers
+from server.hub.session_proxy import proxy_room_session
+from server.hub.session_api import split_room_proxy_path
+from server.hub.room_supervisor import stop_inactive_room_servers
 from server.page_header import (
     PAGE_HEADER_CSS,
     PAGE_HEADER_JS,
@@ -46,7 +46,7 @@ from server.hub.actions import (
 from server.hub.server_helpers import (
     build_hub_html_pages as _build_hub_html_pages_impl,
     error_page,
-    format_chat_url,
+    format_room_url,
     launch_hub_restart,
 )
 from server.request import request_view_variant
@@ -89,7 +89,7 @@ def queue_hub_restart():
     with restart_lock:
         if restart_pending:
             return False, "restart already pending", False
-        cleanup_detail = stop_inactive_chat_servers()
+        cleanup_detail = stop_inactive_room_servers()
         if cleanup_detail:
             return False, cleanup_detail, False
         restart_pending = True
@@ -338,7 +338,7 @@ def _hub_action_context() -> dict[str, object]:
     return {
         "hub": hub,
         "error_page_fn": error_page,
-        "format_chat_url_fn": format_chat_url,
+        "format_room_url_fn": format_room_url,
         "queue_hub_restart_fn": queue_hub_restart,
         "release_restart_hold_fn": release_restart_hold,
     }
@@ -534,8 +534,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
-        if split_chat_proxy_path(parsed.path) is not None:
-            proxy_chat_session(self, "GET")
+        if split_room_proxy_path(parsed.path) is not None:
+            proxy_room_session(self, "GET")
             return
         if serve_pwa_file(self, parsed.path, _HUB_PWA_FILES):
             return
@@ -546,8 +546,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
-        if split_chat_proxy_path(parsed.path) is not None:
-            proxy_chat_session(self, "POST")
+        if split_room_proxy_path(parsed.path) is not None:
+            proxy_room_session(self, "POST")
             return
         if self._dispatch_route(parsed, self._POST_ROUTE_HANDLERS):
             return

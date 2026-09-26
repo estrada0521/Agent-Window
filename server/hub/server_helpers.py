@@ -18,9 +18,9 @@ def apply_hub_page_branding(html: str, *, page_title: str) -> str:
     )
 
 
-def format_chat_url(chat_port: int, path: str) -> str:
+def format_room_url(room_port: int, path: str) -> str:
     suffix = path if path.startswith("/") else f"/{path}"
-    return f"/{int(chat_port)}{suffix}"
+    return f"/{int(room_port)}{suffix}"
 
 
 PROCESS_HANDOFF_TIMEOUT_SEC = 8.0

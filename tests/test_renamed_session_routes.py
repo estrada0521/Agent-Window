@@ -9,10 +9,10 @@ from types import SimpleNamespace
 from unittest import mock
 
 from tmux.session import find_session_for_workspace
-from fs.session.paths import workspace_chat_port
-from server.chat import server as chat_server
-from server.chat.routes.write import _post_open_terminal
-from server.chat.session_binding import WorkspaceSessionBinding
+from fs.session.paths import workspace_room_port
+from server.room import server as room_server
+from server.room.routes.write import _post_open_terminal
+from server.room.session_binding import WorkspaceSessionBinding
 
 
 class _JsonHandler:
@@ -26,19 +26,19 @@ class _JsonHandler:
 
 
 class RenamedSessionRouteTests(unittest.TestCase):
-    def test_reload_chat_restarts_the_current_workspace_without_an_aw_name(self) -> None:
-        old_pending = chat_server.chat_restart_pending
+    def test_reload_room_restarts_the_current_workspace_without_an_aw_name(self) -> None:
+        old_pending = room_server.room_restart_pending
         try:
-            chat_server.chat_restart_pending = False
+            room_server.room_restart_pending = False
             fake_server = mock.Mock()
             with (
-                mock.patch.object(chat_server, "workspace", "/work/project"),
-                mock.patch.object(chat_server, "server", fake_server),
-                mock.patch.object(chat_server, "_restart_env", return_value={}),
-                mock.patch.object(chat_server, "launch_chat_server", return_value=object()) as launch,
-                mock.patch.object(chat_server, "wait_for_chat_server", return_value=""),
+                mock.patch.object(room_server, "workspace", "/work/project"),
+                mock.patch.object(room_server, "server", fake_server),
+                mock.patch.object(room_server, "_restart_env", return_value={}),
+                mock.patch.object(room_server, "launch_room_server", return_value=object()) as launch,
+                mock.patch.object(room_server, "wait_for_room_server", return_value=""),
             ):
-                ok, detail, owns_restart = chat_server.queue_chat_restart()
+                ok, detail, owns_restart = room_server.queue_room_restart()
 
             self.assertTrue(ok)
             self.assertEqual(detail, "")
@@ -47,7 +47,7 @@ class RenamedSessionRouteTests(unittest.TestCase):
             fake_server.server_close.assert_called_once_with()
             launch.assert_called_once_with("/work/project", env={})
         finally:
-            chat_server.chat_restart_pending = old_pending
+            room_server.room_restart_pending = old_pending
 
     def test_running_server_binding_follows_a_folder_rename_without_changing_port(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -64,18 +64,18 @@ class RenamedSessionRouteTests(unittest.TestCase):
             )
 
             with (
-                mock.patch("server.chat.session_binding.agent_window_session_root", return_value=root),
+                mock.patch("server.room.session_binding.agent_window_session_root", return_value=root),
                 mock.patch("fs.session.meta.agent_window_session_root", return_value=root),
                 mock.patch("fs.session.paths.agent_window_session_root", return_value=root),
             ):
                 binding = WorkspaceSessionBinding(workspace)
-                port_before = workspace_chat_port(workspace)
+                port_before = workspace_room_port(workspace)
                 old_dir.rename(root / "new-label")
                 session_name, log_path = binding.snapshot()
 
             self.assertEqual(session_name, "new-label")
             self.assertEqual(log_path, root / "new-label" / ".log.jsonl")
-            self.assertEqual(workspace_chat_port(workspace), port_before)
+            self.assertEqual(workspace_room_port(workspace), port_before)
 
     def test_terminal_attaches_to_real_tmux_name_after_aw_rename(self) -> None:
         handler = _JsonHandler()
@@ -90,8 +90,8 @@ class RenamedSessionRouteTests(unittest.TestCase):
         }
 
         with (
-            mock.patch("server.chat.routes.write.subprocess.run", return_value=size_result) as run,
-            mock.patch("server.chat.routes.write.subprocess.Popen") as popen,
+            mock.patch("server.room.routes.write.subprocess.run", return_value=size_result) as run,
+            mock.patch("server.room.routes.write.subprocess.Popen") as popen,
         ):
             _post_open_terminal(handler, None, ctx)
 

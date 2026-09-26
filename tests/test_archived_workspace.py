@@ -8,20 +8,20 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from server.hub.chat_supervisor import chat_server_state_matches, ensure_chat_server
-from server.hub.session_api import resolve_session_chat_target
+from server.hub.room_supervisor import room_server_state_matches, ensure_room_server
+from server.hub.session_api import resolve_session_room_target
 from server.hub.session_query import LiveSessions, archived_session_records
 from git import repo as workspace_git
 
 
 class ArchivedWorkspaceTests(unittest.TestCase):
-    def test_hub_reload_stops_archived_chat_servers_before_restart(self) -> None:
+    def test_hub_reload_stops_archived_room_servers_before_restart(self) -> None:
         from server.hub import server as hub_server
 
         fake_hub = object()
         with (
             patch.object(hub_server, "hub", fake_hub),
-            patch.object(hub_server, "stop_inactive_chat_servers", return_value=""),
+            patch.object(hub_server, "stop_inactive_room_servers", return_value=""),
             patch.object(hub_server, "restart_pending", False),
             patch.object(hub_server, "launch_hub_restart", return_value="") as launch,
         ):
@@ -39,7 +39,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         fake_hub = object()
         with (
             patch.object(hub_server, "hub", fake_hub),
-            patch.object(hub_server, "stop_inactive_chat_servers", return_value="cleanup failed"),
+            patch.object(hub_server, "stop_inactive_room_servers", return_value="cleanup failed"),
             patch.object(hub_server, "restart_pending", False),
             patch.object(hub_server, "launch_hub_restart") as launch,
         ):
@@ -81,7 +81,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
     def test_archived_open_passes_saved_workspace_not_hub_root(self) -> None:
         captured = {}
 
-        def ensure_chat_server(_hub, *, expected_active=True, workspace=""):
+        def ensure_room_server(_hub, *, expected_active=True, workspace=""):
             captured["expected_active"] = expected_active
             captured["workspace"] = workspace
             return True, 8206, ""
@@ -95,15 +95,15 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                     "server.hub.session_api.read_session_meta",
                     return_value={"workspace": str(workspace), "agents": []},
                 ),
-                patch("server.hub.session_api.ensure_chat_server", side_effect=ensure_chat_server),
+                patch("server.hub.session_api.ensure_room_server", side_effect=ensure_room_server),
             ):
-                resolved = resolve_session_chat_target(object(), "Even-Parity")
+                resolved = resolve_session_room_target(object(), "Even-Parity")
         self.assertEqual(resolved["status"], "ok")
         self.assertFalse(captured["expected_active"])
         self.assertEqual(captured["workspace"], str(workspace))
         self.assertNotEqual(captured["workspace"], "/Users/okadaharuto/workspace/Agent-Window")
 
-    def test_chat_server_state_rejects_wrong_workspace(self) -> None:
+    def test_room_server_state_rejects_wrong_workspace(self) -> None:
         repo_root = "/Users/okadaharuto/workspace/Agent-Window"
         state = {
             "session": "Even-Parity",
@@ -116,14 +116,14 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             repo_root=Path(repo_root),
         )
         self.assertFalse(
-            chat_server_state_matches(
+            room_server_state_matches(
                 hub,
                 state,
                 workspace="/Users/okadaharuto/workspace/Even-Parity",
             )
         )
         self.assertTrue(
-            chat_server_state_matches(
+            room_server_state_matches(
                 hub,
                 state,
                 workspace=repo_root,
@@ -139,15 +139,15 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 _get_launch_lock=lambda _name: threading.Lock(),
             )
             with (
-                patch("server.hub.chat_supervisor.workspace_chat_port", return_value=8206),
-                patch("server.hub.chat_supervisor.port_is_bindable", return_value=True),
-                patch("server.hub.chat_supervisor.read_chat_server_state", return_value=None),
-                patch("server.hub.chat_supervisor.stop_inactive_chat_servers", return_value=""),
-                patch("server.hub.chat_supervisor.chat_launch_env", return_value={}),
-                patch("server.hub.chat_supervisor.launch_chat_server", return_value=object()) as launch,
-                patch("server.hub.chat_supervisor.wait_for_chat_server", return_value=""),
+                patch("server.hub.room_supervisor.workspace_room_port", return_value=8206),
+                patch("server.hub.room_supervisor.port_is_bindable", return_value=True),
+                patch("server.hub.room_supervisor.read_room_server_state", return_value=None),
+                patch("server.hub.room_supervisor.stop_inactive_room_servers", return_value=""),
+                patch("server.hub.room_supervisor.room_launch_env", return_value={}),
+                patch("server.hub.room_supervisor.launch_room_server", return_value=object()) as launch,
+                patch("server.hub.room_supervisor.wait_for_room_server", return_value=""),
             ):
-                ok, port, detail = ensure_chat_server(
+                ok, port, detail = ensure_room_server(
                     hub,
                     expected_active=False,
                     workspace=str(workspace),
@@ -157,15 +157,15 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertEqual(detail, "")
         self.assertEqual(launch.call_args.args, (str(workspace.resolve()),))
 
-    def test_chat_launch_cwd_is_not_a_workspace_that_contains_server_py(self) -> None:
-        from server.chat.chat_process import launch_chat_server
+    def test_room_launch_cwd_is_not_a_workspace_that_contains_server_py(self) -> None:
+        from server.room.room_process import launch_room_server
 
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "xray-structure-factor"
             workspace.mkdir()
             (workspace / "server.py").write_text("raise SystemExit('shadow')\n", encoding="utf-8")
-            with patch("server.chat.chat_process.subprocess.Popen") as popen:
-                launch_chat_server(workspace, env={})
+            with patch("server.room.room_process.subprocess.Popen") as popen:
+                launch_room_server(workspace, env={})
         launch_cwd = popen.call_args.kwargs["cwd"]
         self.assertEqual(launch_cwd, "/Users/okadaharuto/workspace/Agent-Window")
         self.assertNotEqual(launch_cwd, str(workspace))

@@ -73,7 +73,7 @@
     }
     .page-menu-btn,
     .desk-settings-icon-btn,
-    .chat-control-btn,
+    .room-control-btn,
     .desk-app-sidebar-toggle {
       font-size: inherit;
     }
@@ -157,7 +157,7 @@
     }
     html[data-native-app="1"][data-auto-window-height="1"] .page-menu-btn,
     html[data-native-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn,
-    html[data-native-app="1"][data-auto-window-height="1"] .chat-control-btn,
+    html[data-native-app="1"][data-auto-window-height="1"] .room-control-btn,
     html[data-native-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle {
       height: var(--native-chrome-band-h);
       min-height: 0;
@@ -169,13 +169,13 @@
     }
     html[data-native-app="1"][data-auto-window-height="1"] .page-menu-btn svg,
     html[data-native-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn svg,
-    html[data-native-app="1"][data-auto-window-height="1"] .chat-control-btn svg,
+    html[data-native-app="1"][data-auto-window-height="1"] .room-control-btn svg,
     html[data-native-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle svg {
       display: none !important;
     }
     html[data-native-app="1"][data-auto-window-height="1"] .page-menu-btn::after,
     html[data-native-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn::after,
-    html[data-native-app="1"][data-auto-window-height="1"] .chat-control-btn::after,
+    html[data-native-app="1"][data-auto-window-height="1"] .room-control-btn::after,
     html[data-native-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle::after {
       content: "";
       display: block;

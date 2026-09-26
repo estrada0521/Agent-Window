@@ -32,10 +32,10 @@
           body: JSON.stringify({ workspace }),
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.ok || !data.chat_url) {
+        if (!res.ok || !data.ok || !data.room_url) {
           throw new Error(data.error || "Failed to open draft session.");
         }
-        openChatInDesk(data.chat_url, data.session || "");
+        openRoomInDesk(data.room_url, data.session || "");
         setStatus(data.notice || "");
         if (isPhoneViewport()) {
           setDeskSidebarOpen(false);
@@ -49,10 +49,10 @@
       }
     }
 
-    function navigateDeskChatFrame(url) {
+    function navigateDeskRoomFrame(url) {
       const target = String(url || "") || "about:blank";
-      _deskChatFrameLoadedUrl = target === "about:blank" ? "" : target;
-      const win = _deskChatFrame && _deskChatFrame.contentWindow;
+      _deskRoomFrameLoadedUrl = target === "about:blank" ? "" : target;
+      const win = _deskRoomFrame && _deskRoomFrame.contentWindow;
       if (win) {
         try {
           win.location.replace(target);
@@ -60,12 +60,12 @@
         } catch (_) {
         }
       }
-      if (_deskChatFrame) _deskChatFrame.src = target;
+      if (_deskRoomFrame) _deskRoomFrame.src = target;
     }
 
-    function clearDeskChatFrame() {
-      navigateDeskChatFrame("about:blank");
-      setDeskChatLoading(false);
+    function clearDeskRoomFrame() {
+      navigateDeskRoomFrame("about:blank");
+      setDeskRoomLoading(false);
     }
 
     function clearDeskSelection() {
@@ -73,39 +73,39 @@
       _deskSelectedSessionName = "";
       updateDeskWindowTitle("");
       persistDeskSelection("");
-      clearDeskChatFrame();
+      clearDeskRoomFrame();
       applyDeskSessionSelection();
     }
 
-    function openChatInDesk(url, name) {
-      if (!_deskChatFrame) return;
+    function openRoomInDesk(url, name) {
+      if (!_deskRoomFrame) return;
       _deskSelectedSessionName = name || "";
       _deskUnreadSessions.delete(_deskSelectedSessionName);
       updateDeskWindowTitle(_deskSelectedSessionName);
       persistDeskSelection(_deskSelectedSessionName);
-      if (isDeskSessionSidebarOpen()) _deskChatFrame.dataset.hubSidebarOpen = "1";
-      else delete _deskChatFrame.dataset.hubSidebarOpen;
+      if (isDeskSessionSidebarOpen()) _deskRoomFrame.dataset.hubSidebarOpen = "1";
+      else delete _deskRoomFrame.dataset.hubSidebarOpen;
       if (_deskSelectedSessionName) {
-        cacheDeskChatUrl(buildSessionOpenHref(_deskSelectedSessionName, false), url);
+        cacheDeskRoomUrl(buildSessionOpenHref(_deskSelectedSessionName, false), url);
       }
-      const frameUrl = buildDeskChatFrameUrl(url);
+      const frameUrl = buildDeskRoomFrameUrl(url);
       if (frameUrl) {
-        const currentUrl = normalizeComparableUrl(_deskChatFrameLoadedUrl);
+        const currentUrl = normalizeComparableUrl(_deskRoomFrameLoadedUrl);
         const nextUrl = normalizeComparableUrl(frameUrl);
         if (!currentUrl || currentUrl !== nextUrl) {
-          setDeskChatLoading(true);
-          navigateDeskChatFrame(frameUrl);
+          setDeskRoomLoading(true);
+          navigateDeskRoomFrame(frameUrl);
         } else {
-          setDeskChatLoading(false);
+          setDeskRoomLoading(false);
         }
       } else {
-        setDeskChatLoading(false);
+        setDeskRoomLoading(false);
       }
       applyDeskSessionSelection();
     }
 
-    function resolveSessionChatUrl(openHref, { force = false } = {}) {
-      return hubChatUrls.resolve(openHref, "", { force });
+    function resolveSessionRoomUrl(openHref, { force = false } = {}) {
+      return hubRoomUrls.resolve(openHref, "", { force });
     }
 
     async function openSessionFrame(openHref, name) {
@@ -114,23 +114,23 @@
         return;
       }
       const needsReviveTransition = /^\/revive-session(?:[/?]|$)/.test(String(openHref || ""));
-      if (!needsReviveTransition && name === _deskSelectedSessionName && _deskChatFrameLoadedUrl) return;
+      if (!needsReviveTransition && name === _deskSelectedSessionName && _deskRoomFrameLoadedUrl) return;
       const archived = !!findSessionRecord(name)?.archived;
       const closeOnOpen = isPhoneViewport();
       _deskSelectedSessionName = name;
       updateDeskWindowTitle(name);
       persistDeskSelection(name);
       applyDeskSessionSelection();
-      setDeskChatLoading(true);
+      setDeskRoomLoading(true);
       const openToken = ++_deskOpenToken;
       try {
-        const chatUrl = await resolveSessionChatUrl(openHref, { force: archived || needsReviveTransition });
+        const roomUrl = await resolveSessionRoomUrl(openHref, { force: archived || needsReviveTransition });
         if (openToken !== _deskOpenToken) return;
         if (needsReviveTransition) {
           await refreshHubSessions(true, { skipRestore: true });
           if (openToken !== _deskOpenToken) return;
         }
-        openChatInDesk(chatUrl, name);
+        openRoomInDesk(roomUrl, name);
         if (closeOnOpen) setDeskSidebarOpen(false);
       } catch (err) {
         if (openToken !== _deskOpenToken) return;
@@ -227,5 +227,5 @@
         return;
       }
       showDeskSidebarList({ open: true });
-      clearDeskChatFrame();
+      clearDeskRoomFrame();
     }

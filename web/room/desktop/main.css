@@ -1,0 +1,46 @@
+__INCLUDE:styles/base.css__
+__INCLUDE:../room-controls.css__
+__INCLUDE:styles/right-panel.css__
+__INCLUDE:styles/file-menu.css__
+__INCLUDE:styles/composer-overlay.css__
+__INCLUDE:styles/composer-input.css__
+__INCLUDE:../hud.css__
+__INCLUDE:styles/transcript.css__
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      -webkit-appearance: none;
+      appearance: none;
+      flex-shrink: 0;
+      align-self: center;
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 1;
+      border-radius: 4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .has-hover .copy-btn:hover {
+      color: var(--fg);
+      background: transparent;
+    }
+    .copy-btn:active {
+      background: transparent;
+    }
+    .copy-btn.copied { color: var(--fg); }
+    .message.user .md-body {
+      background: transparent;
+      background-image: none;
+      border: none;
+      color: var(--fg);
+    }
+__INCLUDE:../markdown-code.css__
+    .composer-attach-btn:active {
+      background: transparent;
+    }
+    html, body { font-family: var(--font-main); }

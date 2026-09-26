@@ -136,7 +136,7 @@ def body_typography_css() -> str:
     return body_weight_tokens + typography_override
 
 
-def chat_font_style(*, text_size: object = DESKTOP_TEXT_SIZE) -> str:
+def room_font_style(*, text_size: object = DESKTOP_TEXT_SIZE) -> str:
     size = clamp_text_size(text_size)
     return f"""
     :root {{

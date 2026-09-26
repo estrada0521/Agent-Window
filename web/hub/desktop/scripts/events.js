@@ -1,13 +1,13 @@
 
     window.addEventListener("message", (event) => {
-      if (event.data && event.data.type === "desktop-panel-state" && event.source === _deskChatFrame?.contentWindow) {
+      if (event.data && event.data.type === "desktop-panel-state" && event.source === _deskRoomFrame?.contentWindow) {
         updateDeskPanelButtonState(
           String(event.data.mode || ""),
           Number(event.data.width || 0),
         );
         return;
       }
-      if (event.data && event.data.type === "open-external-url" && event.source === _deskChatFrame?.contentWindow) {
+      if (event.data && event.data.type === "open-external-url" && event.source === _deskRoomFrame?.contentWindow) {
         const invoke = getNativeInvoke();
         if (typeof invoke !== "function") {
           event.source?.postMessage({ type: "external-url-open-failed" }, "*");
@@ -18,29 +18,29 @@
         });
         return;
       }
-      if (event.data && event.data.type === "show-chat-header-menu") {
+      if (event.data && event.data.type === "show-room-header-menu") {
         const invoke = getNativeInvoke();
         const childPayload = event.data.payload || {};
         if (typeof invoke !== "function") {
-          openChatMenu(_deskChatMenuBtn, childPayload, (payload) => {
-            _deskChatFrame?.contentWindow?.postMessage({ type: "native-menu-action", payload }, "*");
+          openRoomMenu(_deskRoomMenuBtn, childPayload, (payload) => {
+            _deskRoomFrame?.contentWindow?.postMessage({ type: "native-menu-action", payload }, "*");
           });
           return;
         }
-        const frameRect = _deskChatFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
-        invoke("show_chat_header_menu", {
+        const frameRect = _deskRoomFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
+        invoke("show_room_header_menu", {
           payload: {
             ...childPayload,
             x: Math.round(Number(childPayload.x || 0) + Number(frameRect.left || 0)),
             y: Math.round(Number(childPayload.y || 0) + Number(frameRect.top || 0)),
           },
-        }).catch((err) => setStatus(`show_chat_header_menu failed: ${err}`));
+        }).catch((err) => setStatus(`show_room_header_menu failed: ${err}`));
         return;
       }
-      if (event.data && event.data.type === "show-file-context-menu" && event.source === _deskChatFrame?.contentWindow) {
+      if (event.data && event.data.type === "show-file-context-menu" && event.source === _deskRoomFrame?.contentWindow) {
         const invoke = getNativeInvoke();
         const childPayload = event.data.payload || {};
-        const frameRect = _deskChatFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
+        const frameRect = _deskRoomFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
         if (typeof invoke !== "function") {
           event.source?.postMessage({ type: "file-context-menu-error", message: "Native file menu is unavailable." }, "*");
           return;
@@ -56,7 +56,7 @@
         });
         return;
       }
-      if (event.data && event.data.type === "copy-files-to-clipboard" && event.source === _deskChatFrame?.contentWindow) {
+      if (event.data && event.data.type === "copy-files-to-clipboard" && event.source === _deskRoomFrame?.contentWindow) {
         const invoke = getNativeInvoke();
         if (typeof invoke !== "function") {
           event.source?.postMessage({ type: "file-copy-result", error: "Native file copy is unavailable." }, "*");
@@ -69,10 +69,10 @@
         });
         return;
       }
-      if (event.data && event.data.type === "show-commit-context-menu" && event.source === _deskChatFrame?.contentWindow) {
+      if (event.data && event.data.type === "show-commit-context-menu" && event.source === _deskRoomFrame?.contentWindow) {
         const invoke = getNativeInvoke();
         const childPayload = event.data.payload || {};
-        const frameRect = _deskChatFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
+        const frameRect = _deskRoomFrame?.getBoundingClientRect?.() || { left: 0, top: 0 };
         if (typeof invoke !== "function") {
           event.source?.postMessage({ type: "file-context-menu-error", message: "Native commit menu is unavailable." }, "*");
           return;
@@ -87,7 +87,7 @@
         });
         return;
       }
-      if (event.data === "hub_close_chat") {
+      if (event.data === "hub_close_room") {
         showDeskSidebarList({ open: true });
         return;
       }
@@ -99,19 +99,19 @@
         toggleDeskRightPanel();
         return;
       }
-      if (event.data && event.data.type === "toggle-hub-sidebar-outward" && event.source === _deskChatFrame?.contentWindow) {
+      if (event.data && event.data.type === "toggle-hub-sidebar-outward" && event.source === _deskRoomFrame?.contentWindow) {
         toggleDeskSidebarOutward();
         return;
       }
-      if (event.data && event.data.type === "toggle-desktop-panel-outward" && event.source === _deskChatFrame?.contentWindow) {
+      if (event.data && event.data.type === "toggle-desktop-panel-outward" && event.source === _deskRoomFrame?.contentWindow) {
         toggleDeskRightPanelOutward();
         return;
       }
-      if (event.data && event.data.type === "hub-open-chat-session") {
-        const chatUrl = typeof event.data.chatUrl === "string" ? event.data.chatUrl : "";
+      if (event.data && event.data.type === "hub-open-room-session") {
+        const roomUrl = typeof event.data.roomUrl === "string" ? event.data.roomUrl : "";
         const sessionName = typeof event.data.sessionName === "string" ? event.data.sessionName : "";
-        if (chatUrl && sessionName) {
-          openChatInDesk(chatUrl, sessionName);
+        if (roomUrl && sessionName) {
+          openRoomInDesk(roomUrl, sessionName);
           if (isPhoneViewport()) {
             setDeskSidebarOpen(false);
           } else {
@@ -136,13 +136,13 @@
       }
       if (event.data && event.data.type === "desktop-menu-shortcut") {
         if (event.data.action === "openAppearanceMenu") void openAppearanceMenu();
-        else if (event.data.action === "openChatHeaderMenu") openDeskChatHeaderMenu();
+        else if (event.data.action === "openRoomHeaderMenu") openDeskRoomHeaderMenu();
         else window.dispatchEvent(new CustomEvent("native-menu-action", { detail: { action: String(event.data.action || "") } }));
         return;
       }
       if (event.data && event.data.type === "reload-shortcut") {
         if (event.data.scope === "hub") triggerDeskHubReload();
-        else sendDeskChatAction("reloadChat");
+        else sendDeskRoomAction("reloadRoom");
         return;
       }
       if (event.data && event.data.type === "new-session-shortcut") {
@@ -181,7 +181,7 @@
         void moveDeskWindowToSpot(String(event.data.command || ""));
         return;
       }
-      if (event.data && event.data.type === "fit-window-height" && event.source === _deskChatFrame?.contentWindow) {
+      if (event.data && event.data.type === "fit-window-height" && event.source === _deskRoomFrame?.contentWindow) {
         fitDeskWindowHeight(event.data.contentHeight, { restore: !!event.data.restore });
         return;
       }
@@ -192,17 +192,17 @@
       }
     });
     document.addEventListener("dragenter", (event) => {
-      if (!deskDtHasFiles(event.dataTransfer) || isDeskChatFrameDropTarget(event.target)) return;
+      if (!deskDtHasFiles(event.dataTransfer) || isDeskRoomFrameDropTarget(event.target)) return;
       showDeskAttachDrag();
     }, true);
     document.addEventListener("dragover", (event) => {
-      if (!deskDtHasFiles(event.dataTransfer) || isDeskChatFrameDropTarget(event.target)) return;
+      if (!deskDtHasFiles(event.dataTransfer) || isDeskRoomFrameDropTarget(event.target)) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = "copy";
       showDeskAttachDrag();
     }, true);
     document.addEventListener("dragleave", (event) => {
-      if (!deskDtHasFiles(event.dataTransfer) || isDeskChatFrameDropTarget(event.target)) return;
+      if (!deskDtHasFiles(event.dataTransfer) || isDeskRoomFrameDropTarget(event.target)) return;
       const related = event.relatedTarget;
       if (!related || !document.documentElement.contains(related)) {
         hideDeskAttachDrag();
@@ -212,31 +212,31 @@
       hideDeskAttachDrag({ immediate: true });
     }, true);
     document.addEventListener("drop", (event) => {
-      if (!deskDtHasFiles(event.dataTransfer) || isDeskChatFrameDropTarget(event.target)) return;
+      if (!deskDtHasFiles(event.dataTransfer) || isDeskRoomFrameDropTarget(event.target)) return;
       event.preventDefault();
       event.stopPropagation();
       hideDeskAttachDrag({ immediate: true });
       forwardDeskDroppedFiles(event.dataTransfer.files);
     }, true);
 
-    _deskChatFrame && _deskChatFrame.addEventListener("load", () => {
-      setDeskChatLoading(false);
-      if (_deskChatFrameLoadedUrl) {
-        const frameDoc = _deskChatFrame.contentDocument;
-        if (!frameDoc?.getElementById("chatHud")) {
+    _deskRoomFrame && _deskRoomFrame.addEventListener("load", () => {
+      setDeskRoomLoading(false);
+      if (_deskRoomFrameLoadedUrl) {
+        const frameDoc = _deskRoomFrame.contentDocument;
+        if (!frameDoc?.getElementById("roomHud")) {
           failDeskOpen((frameDoc?.body?.innerText || "").trim().split("\n")[0] || "Empty response");
           return;
         }
-        setResidentStatus("chat-open", "");
+        setResidentStatus("room-open", "");
       }
-      syncDeskChatShellState();
-      applyDeskChatTheme();
-      _deskChatFrame.contentWindow?.postMessage(
+      syncDeskRoomShellState();
+      applyDeskRoomTheme();
+      _deskRoomFrame.contentWindow?.postMessage(
         { type: "hub-text-size-changed", textSize: currentDeskTextSizePx() },
         "*",
       );
       pushDeskAutoWindowHeight();
-      _deskChatFrame.contentWindow?.postMessage({ type: "desktop-panel-sync-request" }, "*");
+      _deskRoomFrame.contentWindow?.postMessage({ type: "desktop-panel-sync-request" }, "*");
     });
 
     _deskMain && _deskMain.addEventListener("click", () => {
@@ -320,7 +320,7 @@
 
     setDeskSidebarWidthAtDefaultTextSize(readDeskSidebarWidthAtDefaultTextSize(), { persist: false });
     syncDeskSidebarResizerVisibility();
-    sessionStorage.removeItem("hub_chat_frame");
+    sessionStorage.removeItem("hub_room_frame");
 
     _deskNewSessionToggle && _deskNewSessionToggle.addEventListener("click", (event) => {
       event.preventDefault();
@@ -337,15 +337,15 @@
       event.preventDefault();
       startDeskNewSessionFlow();
     });
-    _deskChatMenuBtn && _deskChatMenuBtn.addEventListener("click", (event) => {
+    _deskRoomMenuBtn && _deskRoomMenuBtn.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      openDeskChatHeaderMenu();
+      openDeskRoomHeaderMenu();
     });
-    _deskChatReloadBtn && _deskChatReloadBtn.addEventListener("click", (event) => {
+    _deskRoomReloadBtn && _deskRoomReloadBtn.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      sendDeskChatAction("reloadChat");
+      sendDeskRoomAction("reloadRoom");
     });
     _deskPanelToggle && _deskPanelToggle.addEventListener("click", (event) => {
       event.preventDefault();

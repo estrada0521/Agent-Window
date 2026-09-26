@@ -4,12 +4,12 @@ from pathlib import Path
 import re
 
 _WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
-_CHAT_DIR = _WEB_ROOT / "chat"
+_ROOM_DIR = _WEB_ROOT / "room"
 
-_STYLE_MARKER = "__CHAT_MAIN_STYLE_BLOCK__"
-_COMPOSER_MARKER = "__CHAT_COMPOSER_HTML__"
-_COMPOSER_DROPDOWNS_MARKER = "__CHAT_COMPOSER_DROPDOWNS__"
-_SCRIPT_MARKER = "__CHAT_APP_SCRIPT_BLOCK__"
+_STYLE_MARKER = "__ROOM_MAIN_STYLE_BLOCK__"
+_COMPOSER_MARKER = "__ROOM_COMPOSER_HTML__"
+_COMPOSER_DROPDOWNS_MARKER = "__ROOM_COMPOSER_DROPDOWNS__"
+_SCRIPT_MARKER = "__ROOM_APP_SCRIPT_BLOCK__"
 _INCLUDE_RE = re.compile(r"__INCLUDE:([A-Za-z0-9_./-]+)__")
 
 _COMPOSER_DROPDOWNS_HTML = (
@@ -45,13 +45,13 @@ def expand_includes(path: Path, stack: tuple[Path, ...] = ()) -> str:
     )
 
 
-def load_chat_template(variant: str) -> str:
+def load_room_template(variant: str) -> str:
     normalized = "mobile" if str(variant or "").strip().lower() == "mobile" else "desktop"
-    template_dir = _CHAT_DIR / normalized
+    template_dir = _ROOM_DIR / normalized
     shell = expand_includes(template_dir / "shell.html")
-    composer = expand_includes(_CHAT_DIR / "composer.html")
+    composer = expand_includes(_ROOM_DIR / "composer.html")
     if _COMPOSER_DROPDOWNS_MARKER not in composer:
-        raise ValueError(f"Chat composer missing {_COMPOSER_DROPDOWNS_MARKER}")
+        raise ValueError(f"Room composer missing {_COMPOSER_DROPDOWNS_MARKER}")
     composer = composer.replace(
         _COMPOSER_DROPDOWNS_MARKER,
         _COMPOSER_DROPDOWNS_HTML if normalized == "desktop" else "",
@@ -60,11 +60,11 @@ def load_chat_template(variant: str) -> str:
     css = expand_includes(template_dir / "main.css")
     js = expand_includes(template_dir / "app.js")
     if _STYLE_MARKER not in shell:
-        raise ValueError(f"Chat template shell missing {_STYLE_MARKER}: {template_dir / 'shell.html'}")
+        raise ValueError(f"Room template shell missing {_STYLE_MARKER}: {template_dir / 'shell.html'}")
     if _COMPOSER_MARKER not in shell:
-        raise ValueError(f"Chat template shell missing {_COMPOSER_MARKER}: {template_dir / 'shell.html'}")
+        raise ValueError(f"Room template shell missing {_COMPOSER_MARKER}: {template_dir / 'shell.html'}")
     if _SCRIPT_MARKER not in shell:
-        raise ValueError(f"Chat template shell missing {_SCRIPT_MARKER}: {template_dir / 'shell.html'}")
+        raise ValueError(f"Room template shell missing {_SCRIPT_MARKER}: {template_dir / 'shell.html'}")
     return (
         shell
         .replace(_COMPOSER_MARKER, composer, 1)

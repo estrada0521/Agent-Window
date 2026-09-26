@@ -68,7 +68,7 @@ def workspace_upload_dir(workspace: Path | str) -> Path:
     return workspace_agent_window_dir(workspace) / "uploads"
 
 
-def workspace_chat_port(workspace: Path | str) -> int:
+def workspace_room_port(workspace: Path | str) -> int:
     canonical_workspace = str(Path(workspace).expanduser().resolve())
     digest = int(hashlib.md5(canonical_workspace.encode()).hexdigest(), 16)
     return 30000 + (digest % 19000)

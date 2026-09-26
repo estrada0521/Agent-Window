@@ -3,7 +3,7 @@ from __future__ import annotations
 import queue
 import unittest
 
-import server.chat.server as server_module
+import server.room.server as server_module
 
 
 class _FakeQueueRuntime:

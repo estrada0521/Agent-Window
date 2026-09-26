@@ -26,7 +26,7 @@ from server.appearance.colors import (
     TEXT_STRONG_MOBILE_LIGHT_CHANNELS,
     resolve_theme_palette,
 )
-from server.chat.page_scripts import (
+from server.room.page_scripts import (
     KATEX_CDN_AUTO_RENDER_SRC,
     KATEX_CDN_CSS_HREF,
     KATEX_CDN_JS_SRC,
@@ -51,15 +51,15 @@ from fs.files.view_scripts import (
 )
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_FONT_FACES_CSS = (_REPO_ROOT / "web" / "chat" / "font-faces.css").read_text()
+_FONT_FACES_CSS = (_REPO_ROOT / "web" / "room" / "font-faces.css").read_text()
 
 
-def _chat_markdown_preview_css() -> str:
+def _room_markdown_preview_css() -> str:
     repo_root = Path(__file__).resolve().parents[2]
-    theme_vars_css = (repo_root / "web/chat/markdown-theme-vars.css").read_text(encoding="utf-8")
-    code_css = (repo_root / "web/chat/markdown-code.css").read_text(encoding="utf-8")
-    shared_body_css = (repo_root / "web/chat/markdown-body.css").read_text(encoding="utf-8")
-    variant_body_css = (repo_root / "web/chat/markdown-body-mobile.css").read_text(encoding="utf-8")
+    theme_vars_css = (repo_root / "web/room/markdown-theme-vars.css").read_text(encoding="utf-8")
+    code_css = (repo_root / "web/room/markdown-code.css").read_text(encoding="utf-8")
+    shared_body_css = (repo_root / "web/room/markdown-body.css").read_text(encoding="utf-8")
+    variant_body_css = (repo_root / "web/room/markdown-body-mobile.css").read_text(encoding="utf-8")
     markdown_css = f"{shared_body_css}\n{variant_body_css}"
     replacements = {
         "__AGENT_SEL_MD_BODY__": ".md-body",
@@ -70,19 +70,19 @@ def _chat_markdown_preview_css() -> str:
     return apply_color_tokens(f"{theme_vars_css}\n{code_css}\n{markdown_css}")
 
 
-def _chat_markdown_frontmatter_js() -> str:
+def _room_markdown_frontmatter_js() -> str:
     repo_root = Path(__file__).resolve().parents[2]
-    return (repo_root / "web/chat/markdown-frontmatter.js").read_text(encoding="utf-8")
+    return (repo_root / "web/room/markdown-frontmatter.js").read_text(encoding="utf-8")
 
 
-def _chat_file_link_parse_js() -> str:
+def _room_file_link_parse_js() -> str:
     repo_root = Path(__file__).resolve().parents[2]
-    return (repo_root / "web/chat/file-link-parse.js").read_text(encoding="utf-8")
+    return (repo_root / "web/room/file-link-parse.js").read_text(encoding="utf-8")
 
 
-def _chat_markdown_render_js() -> str:
+def _room_markdown_render_js() -> str:
     repo_root = Path(__file__).resolve().parents[2]
-    return (repo_root / "web/chat/markdown-render.js").read_text(encoding="utf-8")
+    return (repo_root / "web/room/markdown-render.js").read_text(encoding="utf-8")
 
 
 def render_file_view(
@@ -140,7 +140,7 @@ def render_file_view(
         '});'
     )
     font_base = prefix or ""
-    font_face_css = apply_font_tokens(_FONT_FACES_CSS.replace("__CHAT_BASE_PATH__", font_base))
+    font_face_css = apply_font_tokens(_FONT_FACES_CSS.replace("__ROOM_BASE_PATH__", font_base))
     preview_top_offset = "max(32px, calc(10px + env(safe-area-inset-top)))" if embed else "0px"
     preview_top_gap = "14px"
     code_top_offset = f"calc({preview_top_gap} + {preview_top_offset})" if embed else "0px"
@@ -393,11 +393,11 @@ def render_file_view(
             f'<script src="{KATEX_CDN_AUTO_RENDER_SRC}"></script>',
         ]
         markdown_head_libs = "".join(markdown_head_tags)
-        markdown_preview_css = _chat_markdown_preview_css()
+        markdown_preview_css = _room_markdown_preview_css()
         markdown_typography_css = body_typography_css()
-        markdown_frontmatter_js = _chat_markdown_frontmatter_js()
-        file_link_parse_js = _chat_file_link_parse_js()
-        markdown_render_js = _chat_markdown_render_js()
+        markdown_frontmatter_js = _room_markdown_frontmatter_js()
+        file_link_parse_js = _room_file_link_parse_js()
+        markdown_render_js = _room_markdown_render_js()
         initial_preview_theme = "light" if str((theme_palette or {}).get("theme") or "").lower() == "light" else "dark"
         dark_preview_fg_channels = TEXT_PRIMARY_MOBILE_DARK_CHANNELS.replace(" ", "")
         dark_preview_fg = f"rgb({dark_preview_fg_channels})"
@@ -427,7 +427,7 @@ def render_file_view(
             f'.md-preview-shell>.md-body{{padding:{markdown_top_padding} 16px {markdown_bottom_padding}}}'
         )
         return (
-            f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-mobile-chat="1" data-mobile="1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
+            f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-mobile-room="1" data-mobile="1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
             f'{markdown_head_libs}'
             f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}'
             '</style></head>'
@@ -499,7 +499,7 @@ const ensureKatexReady = async () => {{
   }})().catch(() => false);
   return katexLoadPromise;
 }};
-const CHAT_BASE_PATH = __previewBasePath || "";
+const ROOM_BASE_PATH = __previewBasePath || "";
 {file_link_parse_js}
 const buildPreviewHref = (relPath) => {{
   const params = new URLSearchParams();

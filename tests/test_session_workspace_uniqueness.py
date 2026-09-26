@@ -144,10 +144,10 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                     side_effect=lambda name: session_root / name,
                 ),
                 mock.patch("server.hub.new_session.create_session") as create_session,
-                mock.patch("server.hub.new_session.workspace_chat_port", return_value=41000),
+                mock.patch("server.hub.new_session.workspace_room_port", return_value=41000),
                 mock.patch("server.hub.new_session.port_is_bindable", return_value=True),
                 mock.patch(
-                    "server.hub.new_session.ensure_chat_server",
+                    "server.hub.new_session.ensure_room_server",
                     return_value=(True, 41000, ""),
                 ),
             ):
@@ -156,7 +156,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                     None,
                     {
                         "hub": hub,
-                        "format_chat_url_fn": (
+                        "format_room_url_fn": (
                             lambda port, _path: f"/{port}/"
                         ),
                     },
@@ -170,7 +170,7 @@ class FindSessionForWorkspaceTests(unittest.TestCase):
                 {
                     "ok": True,
                     "session": expected_name,
-                    "chat_url": "/41000/",
+                    "room_url": "/41000/",
                 },
             )
             self.assertIn(expected_name, payload["notice"])
