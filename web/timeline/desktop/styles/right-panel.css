@@ -44,12 +44,16 @@
       left: 0;
       right: auto;
     }
+    .desktop-right-panel.is-closing .desktop-right-panel-card {
+      opacity: 0;
+    }
     .desktop-right-panel.open {
       opacity: 1;
       transform: translateX(0);
       pointer-events: auto;
     }
     .desktop-right-panel-card {
+      transition: opacity 180ms ease;
       position: relative;
       display: flex;
       flex-direction: column;

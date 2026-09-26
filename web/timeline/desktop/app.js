@@ -351,7 +351,7 @@ __INCLUDE:../pointer-capability.js__
     const dpGitContent = document.getElementById("dpGitContent");
     const DP_TEXT_SIZE_DEFAULT = __TEXT_SIZE_DEFAULT__;
     const DP_PANEL_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE = 220;
-    const DP_PANEL_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE = 220;
+    const DP_PANEL_CLOSE_WIDTH_AT_DEFAULT_TEXT_SIZE = 28;
     const DP_PANEL_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE = 560;
     const DP_TIMELINE_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE = 360;
     const DP_PANEL_WIDTH_KEY = "agent_window_desktop_right_panel_width_at_default_text_size";
@@ -457,11 +457,11 @@ __INCLUDE:../pointer-capability.js__
       if (constrainToViewport) {
         const viewportWidthAtDefaultTextSize = Math.max(0, window.innerWidth || 0) * DP_TEXT_SIZE_DEFAULT / dpCurrentTextSizePx();
         maxWidth = Math.max(
-          DP_PANEL_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE,
+          DP_PANEL_CLOSE_WIDTH_AT_DEFAULT_TEXT_SIZE,
           Math.min(DP_PANEL_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE, viewportWidthAtDefaultTextSize - DP_TIMELINE_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE),
         );
       }
-      return dpRoundPanelWidth(Math.max(DP_PANEL_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE, Math.min(maxWidth, width)));
+      return dpRoundPanelWidth(Math.max(DP_PANEL_CLOSE_WIDTH_AT_DEFAULT_TEXT_SIZE, Math.min(maxWidth, width)));
     };
     const storedPanelWidth = Number.parseFloat(localStorage.getItem(DP_PANEL_WIDTH_KEY) || "");
     if (Number.isFinite(storedPanelWidth) && storedPanelWidth > 0) {
@@ -571,15 +571,26 @@ __INCLUDE:git-panel/events.js__
     };
     const dpStopPanelResize = ({ persist = false } = {}) => {
       if (!_desktopRightPanelResizeState) return;
+      const { startWidthAtDefaultTextSize, closing } = _desktopRightPanelResizeState;
       _desktopRightPanelResizeState = null;
       document.body.classList.remove("desktop-right-panel-resizing");
+      desktopRightPanel.classList.remove("is-closing");
+      if (closing) {
+        dpPanelWidthAtDefaultTextSize = startWidthAtDefaultTextSize;
+        closeDesktopRightPanel();
+      }
       if (persist) dpPersistPanelWidthAtDefaultTextSize();
     };
     const dpHandlePanelResizeMove = (event) => {
       if (!_desktopRightPanelResizeState || !dpPanelOpen) return;
       const direction = document.documentElement.dataset.sideBar === "left" ? -1 : 1;
       const nextWidth = _desktopRightPanelResizeState.startWidth + direction * (_desktopRightPanelResizeState.startX - event.clientX);
-      dpPanelWidthAtDefaultTextSize = dpClampPanelWidthAtDefaultTextSize(dpUnscalePanelWidth(nextWidth));
+      const nextWidthAtDefaultTextSize = dpUnscalePanelWidth(nextWidth);
+      const closing = nextWidthAtDefaultTextSize < DP_PANEL_CLOSE_WIDTH_AT_DEFAULT_TEXT_SIZE;
+      _desktopRightPanelResizeState.closing = closing;
+      desktopRightPanel.classList.toggle("is-closing", closing);
+      if (closing) return;
+      dpPanelWidthAtDefaultTextSize = dpClampPanelWidthAtDefaultTextSize(nextWidthAtDefaultTextSize);
       dpApplyPanelWidth();
       syncPanelState();
     };
@@ -611,6 +622,7 @@ __INCLUDE:git-panel/events.js__
         pointerId: event.pointerId,
         startX: event.clientX,
         startWidth: dpCurrentPanelWidthPx(),
+        startWidthAtDefaultTextSize: dpPanelWidthAtDefaultTextSize,
       };
       document.body.classList.add("desktop-right-panel-resizing");
       try {

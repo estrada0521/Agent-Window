@@ -1,4 +1,5 @@
     .desk-sidebar-content {
+      transition: opacity 180ms ease;
       min-height: 0;
       min-width: 0;
       display: grid;
@@ -14,6 +15,8 @@
       overflow: hidden;
       scrollbar-width: none;
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      --hub-text-fade-width: calc(var(--text-size, 13px) * 1.5);
       grid-template-rows: auto minmax(0, 1fr) auto;
       position: relative;
       font-size: var(--text-size, 13px);
@@ -37,6 +40,7 @@
       color: var(--fg);
       font-family: "Snell Roundhand", "Apple Chancery", cursive;
       white-space: nowrap;
+      overflow: hidden;
       pointer-events: none;
     }
     .desk-new-timeline-section {
@@ -78,6 +82,13 @@
       color: var(--muted);
       pointer-events: none;
       white-space: nowrap;
+      overflow: hidden;
+    }
+    .desk-hub-tagline,
+    .desk-row-stack,
+    .desk-hub-footer-credit {
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--row-fade-end, 0px) - var(--hub-text-fade-width)), transparent calc(100% - var(--row-fade-end, 0px)));
+      mask-image: linear-gradient(to right, #000 calc(100% - var(--row-fade-end, 0px) - var(--hub-text-fade-width)), transparent calc(100% - var(--row-fade-end, 0px)));
     }
     .desk-new-timeline-toggle {
       width: 100%;
@@ -333,15 +344,11 @@
       stroke-linejoin: round;
     }
     .desk-row-stack {
-      --row-fade-end: 0px;
       flex: 1;
       min-width: 0;
-      display: flex;
-      flex-direction: row;
-      align-items: baseline;
-      gap: 0.46em;
-      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--row-fade-end) - 1.5em), transparent calc(100% - var(--row-fade-end)));
-      mask-image: linear-gradient(to right, #000 calc(100% - var(--row-fade-end) - 1.5em), transparent calc(100% - var(--row-fade-end)));
+      overflow: hidden;
+      white-space: nowrap;
+      line-height: 1.2;
     }
     .desk-action-timeline-row .desk-row-stack {
       position: relative;
@@ -353,10 +360,7 @@
       font-weight: var(--hub-body-weight);
       letter-spacing: -0.01em;
       color: var(--fg);
-      overflow: hidden;
-      white-space: nowrap;
-      flex: 0 0 auto;
-      max-width: 100%;
+      display: inline;
     }
     .desk-row-rename-input {
       flex: 1 1 0;
@@ -378,7 +382,8 @@
     }
     .desk-action-timeline-row.is-renaming .desk-row-stack {
       padding-right: 0;
-      gap: 0;
+      -webkit-mask-image: none;
+      mask-image: none;
     }
     .desk-action-timeline-row.is-renaming .desk-row-preview {
       display: none;
@@ -407,14 +412,18 @@
       height: 1em;
       opacity: 1;
     }
+    .desk-new-timeline-toggle {
+      --kbd-slot: 2.8em;
+    }
     .desk-new-timeline-toggle .desk-row-kbd {
-      margin-left: auto;
-      margin-right: 0.54em;
-      flex: none;
+      position: absolute;
+      top: 50%;
+      right: 0.625em;
+      transform: translateY(-50%);
       font-size: var(--text-size, 13px);
       line-height: 1.2;
       color: var(--muted);
-      visibility: hidden;
+      opacity: 0;
       pointer-events: none;
     }
     .desk-new-timeline-toggle::before {
@@ -424,7 +433,12 @@
     }
     .desk-new-timeline-toggle:hover .desk-row-kbd,
     .desk-new-timeline-toggle:focus-visible .desk-row-kbd {
-      visibility: visible;
+      opacity: 1;
+    }
+    .desk-new-timeline-toggle:hover .desk-row-stack,
+    .desk-new-timeline-toggle:focus-visible .desk-row-stack {
+      padding-right: var(--kbd-slot);
+      --row-fade-end: var(--kbd-slot);
     }
     .desk-new-timeline-toggle:hover::before,
     .desk-new-timeline-toggle:focus-visible::before {
@@ -439,10 +453,8 @@
       font-size: var(--text-size, 13px);
       line-height: 1.2;
       font-weight: var(--hub-body-weight);
-      white-space: nowrap;
-      overflow: hidden;
-      min-width: 0;
-      flex: 1;
+      display: inline;
+      margin-left: 0.46em;
     }
     .desk-row-preview.is-empty {
       opacity: 1;

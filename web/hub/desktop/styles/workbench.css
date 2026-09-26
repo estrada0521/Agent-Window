@@ -63,6 +63,9 @@
       cursor: col-resize;
       user-select: none;
     }
+    .desk-sidebar-closing .desk-sidebar-content {
+      opacity: 0;
+    }
     .desk-workbench-resizing .desk-workbench,
     .desk-workbench-resizing .desk-sidebar {
       transition: none;

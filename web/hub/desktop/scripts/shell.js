@@ -168,9 +168,13 @@
       const numeric = Number(value);
       const width = Number.isFinite(numeric) ? numeric : DESK_DEFAULT_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE;
       return roundDeskSidebarWidth(Math.max(
-        DESK_MIN_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE,
+        DESK_SIDEBAR_CLOSE_WIDTH_AT_DEFAULT_TEXT_SIZE,
         Math.min(DESK_MAX_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE, width),
       ));
+    }
+
+    function deskSidebarWidthAtDefaultTextSize(renderedPx) {
+      return Number(renderedPx) * DESK_TEXT_SIZE_DEFAULT / currentDeskTextSizePx();
     }
 
     function currentDeskSidebarWidthPx() {
@@ -200,10 +204,8 @@
       }
     }
 
-    function setDeskSidebarWidthFromRenderedPx(nextWidth) {
-      const textSize = currentDeskTextSizePx();
-      const widthAtDefaultTextSize = Number(nextWidth) * DESK_TEXT_SIZE_DEFAULT / textSize;
-      setDeskSidebarWidthAtDefaultTextSize(widthAtDefaultTextSize);
+    function setDeskSidebarWidthFromRenderedPx(nextWidth, options) {
+      setDeskSidebarWidthAtDefaultTextSize(deskSidebarWidthAtDefaultTextSize(nextWidth), options);
     }
 
     const deskDtHasFiles = (dt) => !!(dt && Array.from(dt.types || []).includes("Files"));

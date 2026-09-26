@@ -45,6 +45,7 @@
     .desk-sidebar-hover-list .desk-timeline-row:hover .desk-row-stack,
     .desk-sidebar-hover-list .desk-timeline-row:focus-within .desk-row-stack {
       padding-right: 0;
+      --row-fade-end: 0px;
     }
     .desk-sidebar-hover-list .desk-row-name {
       line-height: 1.3;

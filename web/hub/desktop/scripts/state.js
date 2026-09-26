@@ -31,7 +31,7 @@
     const DESK_AUTO_HEIGHT_KEY = "agent_window_hub_auto_window_height";
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
     const DESK_DEFAULT_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE = 262;
-    const DESK_MIN_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE = 160;
+    const DESK_SIDEBAR_CLOSE_WIDTH_AT_DEFAULT_TEXT_SIZE = 28;
     const DESK_MAX_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE = 420;
     const DESK_SWIPE_ACTION_WIDTH = 92;
     const DESK_SWIPE_OPEN_THRESHOLD = 40;
