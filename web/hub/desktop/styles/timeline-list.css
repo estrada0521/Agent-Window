@@ -272,6 +272,7 @@
     .desk-action-timeline-row:focus-visible .desk-row-stack,
     .desk-action-timeline-row:has(.desk-row-hover-action:focus-visible) .desk-row-stack {
       padding-right: 24px;
+      --row-fade-end: 24px;
     }
     .desk-row-hover-action:hover,
     .desk-row-hover-action:focus-visible {
@@ -332,12 +333,15 @@
       stroke-linejoin: round;
     }
     .desk-row-stack {
+      --row-fade-end: 0px;
       flex: 1;
       min-width: 0;
       display: flex;
       flex-direction: row;
       align-items: baseline;
       gap: 0.46em;
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--row-fade-end) - 1.5em), transparent calc(100% - var(--row-fade-end)));
+      mask-image: linear-gradient(to right, #000 calc(100% - var(--row-fade-end) - 1.5em), transparent calc(100% - var(--row-fade-end)));
     }
     .desk-action-timeline-row .desk-row-stack {
       position: relative;
@@ -350,7 +354,6 @@
       letter-spacing: -0.01em;
       color: var(--fg);
       overflow: hidden;
-      text-overflow: ellipsis;
       white-space: nowrap;
       flex: 0 0 auto;
       max-width: 100%;
@@ -438,7 +441,6 @@
       font-weight: var(--hub-body-weight);
       white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
       min-width: 0;
       flex: 1;
     }
