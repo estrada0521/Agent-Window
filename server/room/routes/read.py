@@ -6,6 +6,7 @@ from urllib.parse import parse_qs
 from server.appearance.typography import MOBILE_TEXT_SIZE
 from git import repo as workspace_git
 from server.request import request_base_path
+from server.room.file_view import render_file_view
 from server.room.state import ENTRY_WINDOW_LIMIT
 from tmux.shortcut_command.catalog import public_slash_command_dicts
 
@@ -105,7 +106,8 @@ def _get_file_view(handler, parsed, ctx) -> None:
                 preview_text_size = int(requested_text_size)
             except ValueError:
                 pass
-        page = ctx["files"].file_view(
+        page = render_file_view(
+            ctx["files"],
             rel,
             embed=embed,
             base_path=request_base_path(headers=handler.headers, query_string=parsed.query),

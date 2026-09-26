@@ -6,7 +6,7 @@ from pathlib import Path
 
 from server.room.probe import read_room_server_state
 from fs.log.meta import read_log_meta, log_workspace_claims
-from tmux.control import (
+from server.room.control import (
     RoomControlError,
     open_room,
     archive_room,

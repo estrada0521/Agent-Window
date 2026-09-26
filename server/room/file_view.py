@@ -44,7 +44,7 @@ from server.appearance.typography import (
     body_typography_css,
     text_line_height_px,
 )
-from fs.files.view_scripts import (
+from server.room.file_view_scripts import (
     build_gutter_scroll_sync_js,
     build_progressive_loader_js,
     build_vertical_bias_wheel_js,
@@ -52,14 +52,15 @@ from fs.files.view_scripts import (
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _FONT_FACES_CSS = (_REPO_ROOT / "web" / "room" / "font-faces.css").read_text()
+INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES = 512 * 1024
+PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES = 32 * 1024
 
 
 def _room_markdown_preview_css() -> str:
-    repo_root = Path(__file__).resolve().parents[2]
-    theme_vars_css = (repo_root / "web/room/markdown-theme-vars.css").read_text(encoding="utf-8")
-    code_css = (repo_root / "web/room/markdown-code.css").read_text(encoding="utf-8")
-    shared_body_css = (repo_root / "web/room/markdown-body.css").read_text(encoding="utf-8")
-    variant_body_css = (repo_root / "web/room/markdown-body-mobile.css").read_text(encoding="utf-8")
+    theme_vars_css = (_REPO_ROOT / "web/room/markdown-theme-vars.css").read_text(encoding="utf-8")
+    code_css = (_REPO_ROOT / "web/room/markdown-code.css").read_text(encoding="utf-8")
+    shared_body_css = (_REPO_ROOT / "web/room/markdown-body.css").read_text(encoding="utf-8")
+    variant_body_css = (_REPO_ROOT / "web/room/markdown-body-mobile.css").read_text(encoding="utf-8")
     markdown_css = f"{shared_body_css}\n{variant_body_css}"
     replacements = {
         "__AGENT_SEL_MD_BODY__": ".md-body",
@@ -71,18 +72,15 @@ def _room_markdown_preview_css() -> str:
 
 
 def _room_markdown_frontmatter_js() -> str:
-    repo_root = Path(__file__).resolve().parents[2]
-    return (repo_root / "web/room/markdown-frontmatter.js").read_text(encoding="utf-8")
+    return (_REPO_ROOT / "web/room/markdown-frontmatter.js").read_text(encoding="utf-8")
 
 
 def _room_file_link_parse_js() -> str:
-    repo_root = Path(__file__).resolve().parents[2]
-    return (repo_root / "web/room/file-link-parse.js").read_text(encoding="utf-8")
+    return (_REPO_ROOT / "web/room/file-link-parse.js").read_text(encoding="utf-8")
 
 
 def _room_markdown_render_js() -> str:
-    repo_root = Path(__file__).resolve().parents[2]
-    return (repo_root / "web/room/markdown-render.js").read_text(encoding="utf-8")
+    return (_REPO_ROOT / "web/room/markdown-render.js").read_text(encoding="utf-8")
 
 
 def render_file_view(
@@ -95,7 +93,7 @@ def render_file_view(
     agent_text_size: int | None = None,
     force_progressive_text: bool = False,
 ) -> str:
-    full = files._resolve_path(rel)
+    full = files.resolve_path(rel)
     if not os.path.exists(full):
         raise FileNotFoundError(full)
 
@@ -219,9 +217,9 @@ def render_file_view(
             f'audio{{width:100%;max-width:500px}}</style></head>'
             f'<body><div class="wrap"><audio controls src="{raw_url}"></audio></div></body></html>'
         )
-    is_text_like = ext in files.EDITABLE_TEXT_EXTS or files._is_probably_text_file(full)
+    is_text_like = ext in files.EDITABLE_TEXT_EXTS or files.is_probably_text_file(full)
     if ext in {".html", ".htm"}:
-        progressive_html = bool(force_progressive_text) or size > files.INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES
+        progressive_html = bool(force_progressive_text) or size > INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES
         if progressive_html:
             gutter_width, title_offset = build_gutter_metrics(
                 max(1, int(size / 32)),
@@ -231,7 +229,7 @@ def render_file_view(
             html_progressive_loader_js = build_progressive_loader_js(
                 raw_url_value=raw_url,
                 total_bytes=size,
-                chunk_bytes=files.PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES,
+                chunk_bytes=PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES,
                 view_container_id="htmlTextViewContainer",
                 code_scroll_id="htmlTextCodeScroll",
                 gutter_body_id="htmlTextGutterBody",
@@ -317,8 +315,8 @@ def render_file_view(
             f'<div class="html-preview-panel html-preview-panel-text active" data-preview-panel="text"><div class="html-preview-text-wrap" id="htmlTextViewContainer"><div class="html-preview-gutter" id="htmlTextGutter"><div class="html-preview-gutter-inner" id="htmlTextGutterInner"><table class="html-preview-gutter-table" role="presentation"><tbody id="htmlTextGutterBody">{gutter_rows}</tbody></table></div></div><div class="html-preview-text-scroll" id="htmlTextCodeScroll"><table class="html-preview-text-table" role="presentation"><tbody id="htmlTextCodeBody">{code_rows}</tbody></table></div></div></div>'
             f'</div><script>{toggle_js}</script></div></body></html>'
         )
-    if is_text_like and ext != ".md" and (bool(force_progressive_text) or size > files.INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES):
-        chunk_bytes = files.PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES
+    if is_text_like and ext != ".md" and (bool(force_progressive_text) or size > INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES):
+        chunk_bytes = PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES
         gutter_width, title_offset = build_gutter_metrics(
             max(1, int(size / 32)),
         )

@@ -14,9 +14,7 @@ class _WorkspaceNotAGitRepo(Exception):
 
 
 class WorkspaceFiles:
-    INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES = 512 * 1024
     RAW_STREAM_CHUNK_BYTES = 64 * 1024
-    PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES = 32 * 1024
     FILE_LIST_CACHE_TTL_SECONDS = 45
     FILE_SEARCH_MAX_LIMIT = 200
     MIME_TYPES = {
@@ -100,7 +98,7 @@ class WorkspaceFiles:
             raise RuntimeError("workspace is not available")
         return root
 
-    def _resolve_path(self, rel: str) -> str:
+    def resolve_path(self, rel: str) -> str:
         if rel.startswith("~") or os.path.isabs(rel):
             return os.path.realpath(os.path.expanduser(rel))
         return os.path.realpath(os.path.join(self._require_workspace(), rel))
@@ -109,7 +107,7 @@ class WorkspaceFiles:
         result = {}
         for rel in paths:
             try:
-                result[rel] = os.path.exists(self._resolve_path(rel))
+                result[rel] = os.path.exists(self.resolve_path(rel))
             except RuntimeError:
                 result[rel] = False
         return result
@@ -119,7 +117,7 @@ class WorkspaceFiles:
         for rel in dict.fromkeys(paths):
             if os.path.splitext(rel)[1].lower() not in self.IMAGE_EXTS:
                 continue
-            full = self._resolve_path(rel)
+            full = self.resolve_path(rel)
             if not os.path.isfile(full):
                 continue
             try:
@@ -178,7 +176,7 @@ class WorkspaceFiles:
         return start, end, True
 
     def raw_response_metadata(self, rel: str, range_header: str = "") -> dict:
-        full = self._resolve_path(rel)
+        full = self.resolve_path(rel)
         size = os.path.getsize(full)
         try:
             start, end, is_partial = self._parse_single_range(range_header, size)
@@ -225,7 +223,7 @@ class WorkspaceFiles:
                     break
 
     @staticmethod
-    def _is_probably_text_file(full: str) -> bool:
+    def is_probably_text_file(full: str) -> bool:
         try:
             with open(full, "rb") as f:
                 sample = f.read(4096)
@@ -265,7 +263,7 @@ class WorkspaceFiles:
     def _resolve_open_target(self, rel: str) -> str:
         if not str(rel or "").strip():
             raise ValueError("path required")
-        full = self._resolve_path(rel)
+        full = self.resolve_path(rel)
         if not os.path.exists(full):
             raise FileNotFoundError(full)
         return full
@@ -413,7 +411,7 @@ class WorkspaceFiles:
         if not raw_query:
             return ""
         if raw_query.startswith("~") or os.path.isabs(raw_query):
-            full = self._resolve_path(raw_query)
+            full = self.resolve_path(raw_query)
             return full if os.path.isfile(full) else ""
         rel = os.path.normpath(raw_query)
         if rel == ".." or rel.startswith("../"):
@@ -448,7 +446,7 @@ class WorkspaceFiles:
             if not rel:
                 result["size"] = None
                 return result
-            full = self._resolve_path(rel)
+            full = self.resolve_path(rel)
             try:
                 result["size"] = os.path.getsize(full) if os.path.isfile(full) else None
             except OSError:
@@ -533,7 +531,7 @@ class WorkspaceFiles:
 
     def list_dir(self, rel: str = ""):
         normalized_rel = str(rel or "").strip("/")
-        full = self._resolve_path(normalized_rel)
+        full = self.resolve_path(normalized_rel)
         if not os.path.isdir(full):
             raise NotADirectoryError(full)
         entries: list[dict] = []
@@ -564,25 +562,3 @@ class WorkspaceFiles:
                 entries.append(item)
         entries.sort(key=lambda item: (item.get("kind") != "dir", str(item.get("name") or "").casefold()))
         return entries
-
-    def file_view(
-        self,
-        rel: str,
-        *,
-        embed: bool = False,
-        base_path: str = "",
-        preview_base_theme: str = "",
-        agent_text_size: int | None = None,
-        force_progressive_text: bool = False,
-    ) -> str:
-        from fs.files.view import render_file_view
-
-        return render_file_view(
-            self,
-            rel,
-            embed=embed,
-            base_path=base_path,
-            preview_base_theme=preview_base_theme,
-            agent_text_size=agent_text_size,
-            force_progressive_text=force_progressive_text,
-        )

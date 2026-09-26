@@ -15,7 +15,7 @@ from fs.log.paths import (
     log_dir,
     workspace_room_port,
 )
-from tmux.control import open_room
+from server.room.control import open_room
 from server.hub.room_supervisor import ensure_room_server
 
 

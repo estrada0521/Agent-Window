@@ -3,10 +3,70 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
 
-from fs.log.meta import find_label_for_workspace
-from tmux.control import RoomControlError, describe_timeline
+from fs.log.meta import find_label_for_workspace, read_log_meta
+from tmux import TMUX
+from tmux.session import agent_topology, find_session_for_workspace
+
+
+def _run(args: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run([*TMUX, *args], capture_output=True, text=True, check=False)
+
+
+def _pane_status(pane_id: str) -> dict:
+    title = _run(["display-message", "-p", "-t", pane_id, "#{pane_title}"]).stdout.strip()
+    command = _run(["display-message", "-p", "-t", pane_id, "#{pane_current_command}"]).stdout.strip()
+    dead = _run(["display-message", "-p", "-t", pane_id, "#{pane_dead}"]).stdout.strip() == "1"
+    return {"pane_id": pane_id, "title": title, "command": command, "dead": dead}
+
+
+def describe_timeline(timeline_label: str) -> dict:
+    meta = read_log_meta(timeline_label)
+    workspace = meta["workspace"]
+    info: dict = {
+        "timeline": timeline_label,
+        "workspace": workspace,
+        "agents": meta["agents"],
+        "active": False,
+    }
+    tmux_name = find_session_for_workspace(workspace)
+    if not tmux_name:
+        return info
+
+    attached = _run(["display-message", "-p", "-t", tmux_name, "#{session_attached}"]).stdout.strip()
+    created_epoch = _run(["display-message", "-p", "-t", tmux_name, "#{session_created}"]).stdout.strip()
+    window_count = len(_run(["list-windows", "-t", tmux_name, "-F", "#{window_id}"]).stdout.splitlines())
+    dead_panes = sum(
+        1
+        for line in _run(["list-panes", "-s", "-t", tmux_name, "-F", "#{pane_dead}"]).stdout.splitlines()
+        if line.strip() == "1"
+    )
+    topology = agent_topology(tmux_name)
+    agents = [pane.name for pane in topology]
+    current_pane = os.environ.get("TMUX_PANE") or ""
+    this_pane_role = None
+    panes: dict[str, dict | None] = {}
+    for pane in topology:
+        panes[pane.name] = _pane_status(pane.pane_id)
+        if current_pane and pane.pane_id == current_pane:
+            this_pane_role = pane.name
+
+    info.update(
+        {
+            "active": True,
+            "tmux_name": tmux_name,
+            "attached": int(attached) if attached.isdigit() else 0,
+            "created_epoch": int(created_epoch) if created_epoch.isdigit() else 0,
+            "window_count": window_count,
+            "dead_panes": dead_panes,
+            "agents": agents,
+            "panes": panes,
+            "this_pane_role": this_pane_role,
+        }
+    )
+    return info
 
 
 def _format_panes(panes: dict) -> list[str]:
@@ -77,8 +137,8 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             info = describe_timeline(timeline_label)
             print(json.dumps(info, ensure_ascii=False) if args.json else format_context_text(info))
-    except RoomControlError as exc:
-        print(str(exc), file=sys.stderr)
+    except FileNotFoundError:
+        print(f"Timeline does not exist: {timeline_label}", file=sys.stderr)
         return 1
     return 0
 

@@ -13,7 +13,6 @@ from server.room.probe import read_room_server_state
 from fs.log.meta import (
     LogMetaError,
     create_log_dir,
-    read_log_meta,
     log_workspace,
     write_log_meta_file,
 )
@@ -251,63 +250,6 @@ def _create_tmux_session(workspace: Path) -> str:
         detail = (created.stderr or created.stdout or "").strip() or "tmux new-session failed"
         raise RoomControlError(detail)
     return (created.stdout or "").strip()
-
-
-def _pane_status(pane_id: str) -> dict:
-    title = _run(["display-message", "-p", "-t", pane_id, "#{pane_title}"]).stdout.strip()
-    command = _run(["display-message", "-p", "-t", pane_id, "#{pane_current_command}"]).stdout.strip()
-    dead = _run(["display-message", "-p", "-t", pane_id, "#{pane_dead}"]).stdout.strip() == "1"
-    return {"pane_id": pane_id, "title": title, "command": command, "dead": dead}
-
-
-def describe_timeline(timeline_label: str) -> dict:
-    try:
-        meta = read_log_meta(timeline_label)
-    except FileNotFoundError as exc:
-        raise RoomControlError(f"Timeline does not exist: {timeline_label}") from exc
-    workspace = meta["workspace"]
-    info: dict = {
-        "timeline": timeline_label,
-        "workspace": workspace,
-        "agents": meta["agents"],
-        "active": False,
-    }
-    tmux_name = find_live_session_for_workspace(workspace)
-    if not tmux_name:
-        return info
-
-    attached = _run(["display-message", "-p", "-t", tmux_name, "#{session_attached}"]).stdout.strip()
-    created_epoch = _run(["display-message", "-p", "-t", tmux_name, "#{session_created}"]).stdout.strip()
-    window_count = len(_run(["list-windows", "-t", tmux_name, "-F", "#{window_id}"]).stdout.splitlines())
-    dead_panes = sum(
-        1
-        for line in _run(["list-panes", "-s", "-t", tmux_name, "-F", "#{pane_dead}"]).stdout.splitlines()
-        if line.strip() == "1"
-    )
-    topology = agent_topology(tmux_name)
-    agents = [pane.name for pane in topology]
-    current_pane = os.environ.get("TMUX_PANE") or ""
-    this_pane_role = None
-    panes: dict[str, dict | None] = {}
-    for pane in topology:
-        panes[pane.name] = _pane_status(pane.pane_id)
-        if current_pane and pane.pane_id == current_pane:
-            this_pane_role = pane.name
-
-    info.update(
-        {
-            "active": True,
-            "tmux_name": tmux_name,
-            "attached": int(attached) if attached.isdigit() else 0,
-            "created_epoch": int(created_epoch) if created_epoch.isdigit() else 0,
-            "window_count": window_count,
-            "dead_panes": dead_panes,
-            "agents": agents,
-            "panes": panes,
-            "this_pane_role": this_pane_role,
-        }
-    )
-    return info
 
 
 def open_room(
