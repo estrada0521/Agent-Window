@@ -192,7 +192,7 @@ __INCLUDE:../conversation-state.js__
         window.parent.postMessage({ type: "fit-window-height", contentHeight, restore }, "*");
       }
     };
-    const fitMessageRows = () => [...timeline.querySelectorAll(":scope > article.message-row")];
+    const fitMessageRows = () => [...messagesEl.querySelectorAll(":scope > article.message-row")];
     const fitStepToLatest = () => {
       _fitTargetRow = null;
       _pollScrollLockTop = null;
