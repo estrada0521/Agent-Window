@@ -54,6 +54,8 @@ __INCLUDE:../../markdown-theme-vars.css__
       --icon-fg: rgb(__TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS__);
       --icon-muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
       --icon-hover: __DESKTOP_LIGHT_ICON_HOVER__;
+      --resizer: __DESKTOP_RESIZER_LIGHT__;
+      --resizer-active: __DESKTOP_RESIZER_ACTIVE_LIGHT__;
       --chip-color: rgb(180, 180, 180);
       --panel-row-bg: rgba(0, 0, 0, 0.06);
       --panel-head-bg: rgba(0, 0, 0, 0.04);
@@ -89,6 +91,8 @@ __INCLUDE:../../markdown-theme-vars.css__
       --icon-fg: rgb(__TEXT_PRIMARY_DESKTOP_DARK_CHANNELS__);
       --icon-muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
       --icon-hover: __DESKTOP_DARK_ICON_HOVER__;
+      --resizer: var(--line);
+      --resizer-active: __DESKTOP_RESIZER_ACTIVE_DARK__;
       --chip-color: rgb(70, 70, 70);
       --panel-row-bg: rgba(180, 180, 180, 0.10);
       --panel-row-border: rgba(180, 180, 180, 0.14);

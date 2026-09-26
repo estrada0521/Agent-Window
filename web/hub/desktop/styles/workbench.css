@@ -75,7 +75,6 @@
       width: 14px;
       z-index: 10;
       cursor: col-resize;
-      opacity: 0;
       touch-action: none;
     }
     .desk-sidebar-resizer::before {
@@ -83,21 +82,14 @@
       position: absolute;
       top: 0;
       bottom: 0;
-      left: 50%;
-      width: 2px;
-      transform: translateX(-50%);
-      background: var(--icon-muted);
+      left: 5px;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent 10%, var(--resizer-active), transparent 90%);
       opacity: 0;
-      transition: opacity 120ms ease, background 120ms ease, box-shadow 120ms ease;
     }
-    .has-hover .desk-sidebar-resizer:hover::before {
-      opacity: 1;
-      background: var(--icon-hover);
-    }
+    .desk-sidebar-resizer:hover::before,
     .desk-workbench-resizing .desk-sidebar-resizer::before {
       opacity: 1;
-      background: rgba(208, 208, 212, 0.94);
-      box-shadow: none;
     }
     .desk-sidebar-shell {
       height: 100%;
@@ -126,7 +118,7 @@
       bottom: 0;
       right: 0;
       width: 1px;
-      background: var(--line);
+      background: var(--resizer);
       pointer-events: none;
       z-index: 2;
     }
