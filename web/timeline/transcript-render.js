@@ -421,7 +421,7 @@ __INCLUDE:../hud.js__
     const reloadTimeline = async () => {
       if (reloadInFlight) return;
       reloadInFlight = true;
-      if (document.body.classList.contains("right-panel-open")) closeDesktopRightPanel();
+      if (document.body.classList.contains("side-bar-open")) closeSideBar();
       document.documentElement.dataset.launchShell = "1";
       let error = "";
       const current = await (await fetch("/timeline-state", { cache: "no-store" })).json();

@@ -309,7 +309,7 @@
           e.preventDefault();
           e.stopPropagation();
           if (document.documentElement.dataset.mobile !== "1" && e.altKey) {
-            void dpQuickLookPaths([path]);
+            void quickLookPaths([path]);
             return;
           }
           if (document.documentElement.dataset.mobile !== "1" && anyLink.dataset.fileLinkOpen === "editor") {
@@ -383,7 +383,7 @@
         if (!anyLink.classList.contains("inline-file-link") && !anyLink.classList.contains("local-file-link")) return;
         window.getSelection()?.removeAllRanges();
         const path = filePathFromLinkAnchor(anyLink);
-        if (path) void dpOpenFileContextMenu(path, e);
+        if (path) void openFileContextMenu(path, e);
       }, true);
       messagesEl.addEventListener("auxclick", (e) => {
         if (e.button !== 1) return;

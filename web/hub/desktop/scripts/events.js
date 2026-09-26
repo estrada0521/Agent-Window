@@ -1,12 +1,12 @@
 
     window.addEventListener("message", (event) => {
-      if (event.data && event.data.type === "desktop-panel-state" && event.source === _deskTimelineFrame?.contentWindow) {
-        updateDeskPanelButtonState(
+      if (event.data && event.data.type === "side-bar-state" && event.source === _deskTimelineFrame?.contentWindow) {
+        updateDeskSideBarButtonState(
           String(event.data.mode || ""),
           Number(event.data.width || 0),
         );
-        if (event.data.side === "left") document.documentElement.dataset.sideBar = "left";
-        else delete document.documentElement.dataset.sideBar;
+        if (event.data.side === "left") document.documentElement.dataset.sideBarPosition = "left";
+        else delete document.documentElement.dataset.sideBarPosition;
         return;
       }
       if (event.data && event.data.type === "open-external-url" && event.source === _deskTimelineFrame?.contentWindow) {
@@ -90,23 +90,23 @@
         return;
       }
       if (event.data === "hub_close_timeline") {
-        showDeskSidebarList({ open: true });
+        showDeskHubList({ open: true });
         return;
       }
-      if (event.data && event.data.type === "toggle-hub-sidebar") {
-        toggleDeskSidebar();
+      if (event.data && event.data.type === "toggle-hub") {
+        toggleDeskHub();
         return;
       }
-      if (event.data && event.data.type === "toggle-desktop-right-panel") {
-        toggleDeskRightPanel();
+      if (event.data && event.data.type === "toggle-side-bar") {
+        toggleDeskSideBar();
         return;
       }
-      if (event.data && event.data.type === "toggle-hub-sidebar-outward" && event.source === _deskTimelineFrame?.contentWindow) {
-        toggleDeskSidebarOutward();
+      if (event.data && event.data.type === "toggle-hub-outward" && event.source === _deskTimelineFrame?.contentWindow) {
+        toggleDeskHubOutward();
         return;
       }
-      if (event.data && event.data.type === "toggle-desktop-panel-outward" && event.source === _deskTimelineFrame?.contentWindow) {
-        toggleDeskRightPanelOutward();
+      if (event.data && event.data.type === "toggle-side-bar-outward" && event.source === _deskTimelineFrame?.contentWindow) {
+        toggleDeskSideBarOutward();
         return;
       }
       if (event.data && event.data.type === "hub-open-timeline") {
@@ -115,9 +115,9 @@
         if (timelineUrl && timelineName) {
           openTimelineInDesk(timelineUrl, timelineName);
           if (isPhoneViewport()) {
-            setDeskSidebarOpen(false);
+            setDeskHubOpen(false);
           } else {
-            showDeskSidebarList({ open: true });
+            showDeskHubList({ open: true });
           }
           void refreshHubTimelines(true, { skipRestore: true });
         }
@@ -238,76 +238,76 @@
         "*",
       );
       pushDeskAutoWindowHeight();
-      _deskTimelineFrame.contentWindow?.postMessage({ type: "desktop-panel-sync-request" }, "*");
+      _deskTimelineFrame.contentWindow?.postMessage({ type: "side-bar-sync-request" }, "*");
     });
 
     _deskMain && _deskMain.addEventListener("click", () => {
-      if (isPhoneViewport() && isDeskSidebarOpen()) {
-        setDeskSidebarOpen(false);
+      if (isPhoneViewport() && isDeskHubOpen()) {
+        setDeskHubOpen(false);
       }
     });
     _deskAppSidebarToggle && _deskAppSidebarToggle.addEventListener("click", (event) => {
       event.preventDefault();
-      if (isDeskSidebarOpen()) {
-        setDeskSidebarOpen(false);
+      if (isDeskHubOpen()) {
+        setDeskHubOpen(false);
         return;
       }
       if (_deskAutoWindowHeight) {
         void openDeskNativeTimelineSwitcher();
         return;
       }
-      showDeskSidebarList({ open: true });
+      showDeskHubList({ open: true });
     });
-    initDeskSidebarHoverPopover();
-    _deskSidebar && _deskSidebar.addEventListener("touchstart", (event) => {
-      if (!isPhoneViewport() || !isDeskSidebarOpen()) return;
+    initDeskHubHoverPopover();
+    _deskHub && _deskHub.addEventListener("touchstart", (event) => {
+      if (!isPhoneViewport() || !isDeskHubOpen()) return;
       const touch = event.touches[0];
       if (!touch) return;
-      const rect = _deskSidebar.getBoundingClientRect();
+      const rect = _deskHub.getBoundingClientRect();
       const fromRightEdge = rect.right - touch.clientX;
-      if (fromRightEdge > DESK_SIDEBAR_CLOSE_SWIPE_EDGE_PX) return;
-      _deskSidebar._closeSwipeStartX = touch.clientX;
-      _deskSidebar._closeSwipeStartY = touch.clientY;
-      _deskSidebar._closeSwipeTracking = true;
-      _deskSidebar._closeSwipeAxis = "";
+      if (fromRightEdge > DESK_HUB_CLOSE_SWIPE_EDGE_PX) return;
+      _deskHub._closeSwipeStartX = touch.clientX;
+      _deskHub._closeSwipeStartY = touch.clientY;
+      _deskHub._closeSwipeTracking = true;
+      _deskHub._closeSwipeAxis = "";
     }, { passive: true });
-    _deskSidebar && _deskSidebar.addEventListener("touchmove", (event) => {
-      if (!_deskSidebar._closeSwipeTracking) return;
+    _deskHub && _deskHub.addEventListener("touchmove", (event) => {
+      if (!_deskHub._closeSwipeTracking) return;
       const touch = event.touches[0];
       if (!touch) return;
-      const moveX = touch.clientX - (_deskSidebar._closeSwipeStartX || 0);
-      const moveY = touch.clientY - (_deskSidebar._closeSwipeStartY || 0);
-      if (!_deskSidebar._closeSwipeAxis) {
+      const moveX = touch.clientX - (_deskHub._closeSwipeStartX || 0);
+      const moveY = touch.clientY - (_deskHub._closeSwipeStartY || 0);
+      if (!_deskHub._closeSwipeAxis) {
         if (Math.abs(moveY) > Math.abs(moveX) + 6) {
-          _deskSidebar._closeSwipeAxis = "y";
+          _deskHub._closeSwipeAxis = "y";
           return;
         }
-        if (Math.abs(moveX) > 8) _deskSidebar._closeSwipeAxis = "x";
+        if (Math.abs(moveX) > 8) _deskHub._closeSwipeAxis = "x";
       }
-      if (_deskSidebar._closeSwipeAxis !== "x") return;
-      _deskSidebar._closeSwipeDeltaX = moveX;
+      if (_deskHub._closeSwipeAxis !== "x") return;
+      _deskHub._closeSwipeDeltaX = moveX;
     }, { passive: true });
-    const finishDeskSidebarSwipeClose = () => {
-      if (!_deskSidebar || !_deskSidebar._closeSwipeTracking) return;
-      const moveX = Number(_deskSidebar._closeSwipeDeltaX || 0);
-      const shouldClose = _deskSidebar._closeSwipeAxis === "x" && moveX < -DESK_SIDEBAR_CLOSE_SWIPE_THRESHOLD;
-      _deskSidebar._closeSwipeTracking = false;
-      _deskSidebar._closeSwipeAxis = "";
-      _deskSidebar._closeSwipeDeltaX = 0;
-      if (shouldClose) setDeskSidebarOpen(false);
+    const finishDeskHubSwipeClose = () => {
+      if (!_deskHub || !_deskHub._closeSwipeTracking) return;
+      const moveX = Number(_deskHub._closeSwipeDeltaX || 0);
+      const shouldClose = _deskHub._closeSwipeAxis === "x" && moveX < -DESK_HUB_CLOSE_SWIPE_THRESHOLD;
+      _deskHub._closeSwipeTracking = false;
+      _deskHub._closeSwipeAxis = "";
+      _deskHub._closeSwipeDeltaX = 0;
+      if (shouldClose) setDeskHubOpen(false);
     };
-    _deskSidebar && _deskSidebar.addEventListener("touchend", finishDeskSidebarSwipeClose, { passive: true });
-    _deskSidebar && _deskSidebar.addEventListener("touchcancel", finishDeskSidebarSwipeClose, { passive: true });
-    _deskSidebarResizer && _deskSidebarResizer.addEventListener("pointerdown", (event) => {
+    _deskHub && _deskHub.addEventListener("touchend", finishDeskHubSwipeClose, { passive: true });
+    _deskHub && _deskHub.addEventListener("touchcancel", finishDeskHubSwipeClose, { passive: true });
+    _deskHubResizer && _deskHubResizer.addEventListener("pointerdown", (event) => {
       if (isPhoneViewport()) return;
       event.preventDefault();
-      const startWidth = currentDeskSidebarWidthPx();
+      const startWidth = currentDeskHubWidthPx();
       const startX = event.clientX;
-      _deskSidebarResizer.setPointerCapture?.(event.pointerId);
+      _deskHubResizer.setPointerCapture?.(event.pointerId);
       document.body.classList.add("desk-workbench-resizing");
       const onMove = (moveEvent) => {
         const nextWidth = startWidth + (moveEvent.clientX - startX);
-        setDeskSidebarWidthFromRenderedPx(nextWidth);
+        setDeskHubWidthFromRenderedPx(nextWidth);
       };
       const onUp = () => {
         document.body.classList.remove("desk-workbench-resizing");
@@ -320,8 +320,8 @@
       window.addEventListener("pointercancel", onUp);
     });
 
-    setDeskSidebarWidthAtDefaultTextSize(readDeskSidebarWidthAtDefaultTextSize(), { persist: false });
-    syncDeskSidebarResizerVisibility();
+    setDeskHubWidthAtDefaultTextSize(readDeskHubWidthAtDefaultTextSize(), { persist: false });
+    syncDeskHubResizerVisibility();
     sessionStorage.removeItem("hub_timeline_frame");
 
     _deskNewTimelineToggle && _deskNewTimelineToggle.addEventListener("click", (event) => {
@@ -349,20 +349,20 @@
       event.stopPropagation();
       sendDeskTimelineAction("reloadTimeline");
     });
-    _deskPanelToggle && _deskPanelToggle.addEventListener("click", (event) => {
+    _deskSideBarToggle && _deskSideBarToggle.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
       if (_deskAutoWindowHeight) {
         void openDeskNativeGitChanges();
         return;
       }
-      if (_deskPanelActiveMode) {
-        updateDeskPanelButtonState("", 0);
-        sendDeskPanelCommand("close");
+      if (_deskSideBarActiveMode) {
+        updateDeskSideBarButtonState("", 0);
+        sendDeskSideBarCommand("close");
         return;
       }
-      updateDeskPanelButtonState("open", _deskPanelWidth);
-      sendDeskPanelCommand("repo");
+      updateDeskSideBarButtonState("open", _deskSideBarWidth);
+      sendDeskSideBarCommand("repo");
     });
     (function armDeskWindowTraffic() {
       const invoke = getNativeInvoke();
@@ -480,8 +480,8 @@
     startHubTimelineMessagesEvents(() => refreshHubTimelines(true, { skipRestore: true }));
     consumeHubPendingError();
     if (isNativeApp() && !isPhoneViewport()) {
-      if (sessionStorage.getItem(DESK_SIDEBAR_OPEN_KEY) !== "0") showDeskSidebarList({ open: true });
-      else setDeskSidebarOpen(false);
+      if (sessionStorage.getItem(DESK_HUB_OPEN_KEY) !== "0") showDeskHubList({ open: true });
+      else setDeskHubOpen(false);
       if (sessionStorage.getItem(DESK_AUTO_HEIGHT_KEY) === "1") setDeskAutoWindowHeight(true);
     }
     refreshHubTimelines(true);

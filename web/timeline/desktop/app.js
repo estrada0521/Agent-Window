@@ -343,25 +343,25 @@ __INCLUDE:../agent-status.js__
       void refreshTimelineState();
     });
 __INCLUDE:../pointer-capability.js__
-    const desktopRightPanel = document.getElementById("desktopRightPanel");
-    const desktopRightPanelResizer = document.getElementById("desktopRightPanelResizer");
-    const dpSplitPanel = document.getElementById("dpSplitPanel");
-    const dpSplitDivider = document.getElementById("dpSplitDivider");
-    const dpRepoContent = document.getElementById("dpRepoContent");
-    const dpGitContent = document.getElementById("dpGitContent");
-    const DP_TEXT_SIZE_DEFAULT = __TEXT_SIZE_DEFAULT__;
-    const DP_PANEL_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE = 220;
-    const DP_PANEL_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE = 144;
-    const DP_PANEL_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE = 560;
-    const DP_TIMELINE_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE = 360;
-    const DP_PANEL_WIDTH_KEY = "agent_window_desktop_right_panel_width_at_default_text_size";
-    const SIDE_BAR_SIDE_KEY = "agent_window_desktop_side_bar_side";
-    if (localStorage.getItem(SIDE_BAR_SIDE_KEY) === "left") document.documentElement.dataset.sideBar = "left";
-    const DP_PANEL_GAP = 0;
-    let dpPanelOpen = false;
-    let dpActivePanelView = "repo";
-    let dpRepoBrowserPath = "";
-    let dpRepoLoadSeq = 0;
+    const sideBar = document.getElementById("sideBar");
+    const sideBarResizer = document.getElementById("sideBarResizer");
+    const splitPanel = document.getElementById("splitPanel");
+    const splitDivider = document.getElementById("splitDivider");
+    const repoContent = document.getElementById("repoContent");
+    const gitContent = document.getElementById("gitContent");
+    const TEXT_SIZE_DEFAULT = __TEXT_SIZE_DEFAULT__;
+    const SIDE_BAR_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE = 220;
+    const SIDE_BAR_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE = 144;
+    const SIDE_BAR_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE = 560;
+    const TIMELINE_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE = 360;
+    const SIDE_BAR_WIDTH_KEY = "agent_window_desktop_side_bar_width_at_default_text_size";
+    const SIDE_BAR_POSITION_KEY = "agent_window_desktop_side_bar_position";
+    if (localStorage.getItem(SIDE_BAR_POSITION_KEY) === "left") document.documentElement.dataset.sideBarPosition = "left";
+    const SIDE_BAR_GAP = 0;
+    let sideBarOpen = false;
+    let activeSideBarView = "repo";
+    let repoBrowserPath = "";
+    let repoLoadSeq = 0;
     let cancelDpRepoLoading = () => {};
     // A row-list multi-select: a Set of selected paths plus a shift-range anchor,
     // read fresh from the DOM each time (order, membership) instead of a
@@ -398,7 +398,7 @@ __INCLUDE:../pointer-capability.js__
     // mutate the selection (returns null); otherwise resolves what to act on --
     // the rest of the current selection if the click landed on it, else just
     // this row -- and whether it was an option-click (Quick Look) or plain.
-    const dpResolveRowClick = (sel, path, event) => {
+    const resolveRowClick = (sel, path, event) => {
       if (event.shiftKey) { sel.selectRangeTo(path); return null; }
       if (event.metaKey) { sel.toggle(path); return null; }
       const isMulti = sel.selected.size > 1 && sel.selected.has(path);
@@ -406,86 +406,86 @@ __INCLUDE:../pointer-capability.js__
       if (!isMulti) sel.set([path]);
       return { targets, quickLook: event.altKey };
     };
-    const dpResolveContextMenuTargets = (sel, path) => {
+    const resolveContextMenuTargets = (sel, path) => {
       if (!(sel.selected.size > 1 && sel.selected.has(path))) sel.set([path]);
       return sel.orderedSelected();
     };
-    const dpRepoSel = createRowSelection({ container: dpRepoContent, rowSelector: ".repo-browser-item" });
-    const dpRepoFilePathSet = () => new Set(Array.from(dpRepoContent?.querySelectorAll(".repo-browser-file") || []).map((el) => el.dataset.path || ""));
-    const dpRepoOrderedSelectedFiles = () => dpRepoSel.orderedSelected().filter((p) => dpRepoFilePathSet().has(p));
-    const dpRepoOrderedSelectedEntries = () => dpRepoSel.orderedSelected();
-    const dpGitSel = createRowSelection({ container: dpGitContent, rowSelector: ".git-commit-file-row" });
-    const dpGitOrderedSelectedFiles = () => dpGitSel.orderedSelected();
-    const dpActivePanelTargets = (repoOrdered, repoHoverSel, gitHoverSel) => {
-      if (!dpPanelOpen) return [];
+    const repoSel = createRowSelection({ container: repoContent, rowSelector: ".repo-browser-item" });
+    const repoFilePathSet = () => new Set(Array.from(repoContent?.querySelectorAll(".repo-browser-file") || []).map((el) => el.dataset.path || ""));
+    const repoOrderedSelectedFiles = () => repoSel.orderedSelected().filter((p) => repoFilePathSet().has(p));
+    const repoOrderedSelectedEntries = () => repoSel.orderedSelected();
+    const gitSel = createRowSelection({ container: gitContent, rowSelector: ".git-commit-file-row" });
+    const gitOrderedSelectedFiles = () => gitSel.orderedSelected();
+    const activeSideBarTargets = (repoOrdered, repoHoverSel, gitHoverSel) => {
+      if (!sideBarOpen) return [];
       let repoTargets = repoOrdered();
       if (!repoTargets.length) {
-        const hovered = dpRepoContent?.querySelector(repoHoverSel);
+        const hovered = repoContent?.querySelector(repoHoverSel);
         if (hovered?.dataset.path) repoTargets = [hovered.dataset.path];
       }
       if (repoTargets.length) return repoTargets;
-      let gitTargets = dpGitOrderedSelectedFiles();
+      let gitTargets = gitOrderedSelectedFiles();
       if (!gitTargets.length) {
-        const hovered = dpGitContent?.querySelector(gitHoverSel);
+        const hovered = gitContent?.querySelector(gitHoverSel);
         if (hovered?.dataset.path) gitTargets = [hovered.dataset.path];
       }
       return gitTargets;
     };
-    let dpPanelWidthAtDefaultTextSize = DP_PANEL_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE;
-    let _desktopRightPanelResizeState = null;
-    let _dpSplitDragging = false;
-    let _dpSplitGitHeightInTextSize = null;
-    const dpRoundPanelWidth = (value) => Math.round(value * 100) / 100;
-    const dpCurrentTextSizePx = () => {
+    let sideBarWidthAtDefaultTextSize = SIDE_BAR_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE;
+    let _sideBarResizeState = null;
+    let _splitDragging = false;
+    let _splitGitHeightInTextSize = null;
+    const roundSideBarWidth = (value) => Math.round(value * 100) / 100;
+    const currentTextSizePx = () => {
       const raw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
-      return Number.isFinite(raw) && raw > 0 ? raw : DP_TEXT_SIZE_DEFAULT;
+      return Number.isFinite(raw) && raw > 0 ? raw : TEXT_SIZE_DEFAULT;
     };
-    const dpSetSplitGitHeight = (px) => {
-      _dpSplitGitHeightInTextSize = px / dpCurrentTextSizePx();
-      dpGitContent.style.height = `calc(var(--text-size) * ${_dpSplitGitHeightInTextSize})`;
+    const setSplitGitHeight = (px) => {
+      _splitGitHeightInTextSize = px / currentTextSizePx();
+      gitContent.style.height = `calc(var(--text-size) * ${_splitGitHeightInTextSize})`;
     };
-    const dpScalePanelWidth = (value) => (
-      dpRoundPanelWidth(Number(value) * dpCurrentTextSizePx() / DP_TEXT_SIZE_DEFAULT)
+    const scaleSideBarWidth = (value) => (
+      roundSideBarWidth(Number(value) * currentTextSizePx() / TEXT_SIZE_DEFAULT)
     );
-    const dpUnscalePanelWidth = (value) => (
-      dpRoundPanelWidth(Number(value) * DP_TEXT_SIZE_DEFAULT / dpCurrentTextSizePx())
+    const unscaleSideBarWidth = (value) => (
+      roundSideBarWidth(Number(value) * TEXT_SIZE_DEFAULT / currentTextSizePx())
     );
-    const dpClampPanelWidthAtDefaultTextSize = (value, { constrainToViewport = true } = {}) => {
+    const clampSideBarWidthAtDefaultTextSize = (value, { constrainToViewport = true } = {}) => {
       const numeric = Number(value);
-      const width = Number.isFinite(numeric) ? numeric : DP_PANEL_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE;
-      let maxWidth = DP_PANEL_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE;
+      const width = Number.isFinite(numeric) ? numeric : SIDE_BAR_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE;
+      let maxWidth = SIDE_BAR_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE;
       if (constrainToViewport) {
-        const viewportWidthAtDefaultTextSize = Math.max(0, window.innerWidth || 0) * DP_TEXT_SIZE_DEFAULT / dpCurrentTextSizePx();
+        const viewportWidthAtDefaultTextSize = Math.max(0, window.innerWidth || 0) * TEXT_SIZE_DEFAULT / currentTextSizePx();
         maxWidth = Math.max(
-          DP_PANEL_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE,
-          Math.min(DP_PANEL_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE, viewportWidthAtDefaultTextSize - DP_TIMELINE_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE),
+          SIDE_BAR_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE,
+          Math.min(SIDE_BAR_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE, viewportWidthAtDefaultTextSize - TIMELINE_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE),
         );
       }
-      return dpRoundPanelWidth(Math.max(DP_PANEL_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE, Math.min(maxWidth, width)));
+      return roundSideBarWidth(Math.max(SIDE_BAR_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE, Math.min(maxWidth, width)));
     };
-    const storedPanelWidth = Number.parseFloat(localStorage.getItem(DP_PANEL_WIDTH_KEY) || "");
+    const storedPanelWidth = Number.parseFloat(localStorage.getItem(SIDE_BAR_WIDTH_KEY) || "");
     if (Number.isFinite(storedPanelWidth) && storedPanelWidth > 0) {
-      dpPanelWidthAtDefaultTextSize = storedPanelWidth;
+      sideBarWidthAtDefaultTextSize = storedPanelWidth;
     }
-    const dpOutwardPanelWidthPx = () => {
-      if (dpPanelOpen) return dpCurrentPanelWidthPx();
-      return dpScalePanelWidth(dpClampPanelWidthAtDefaultTextSize(
-        dpPanelWidthAtDefaultTextSize,
+    const outwardSideBarWidthPx = () => {
+      if (sideBarOpen) return currentSideBarWidthPx();
+      return scaleSideBarWidth(clampSideBarWidthAtDefaultTextSize(
+        sideBarWidthAtDefaultTextSize,
         { constrainToViewport: false },
       ));
     };
-    const dpPersistPanelWidthAtDefaultTextSize = () => {
-      if (dpPanelWidthAtDefaultTextSize > 0) {
-        localStorage.setItem(DP_PANEL_WIDTH_KEY, String(dpPanelWidthAtDefaultTextSize));
+    const persistSideBarWidthAtDefaultTextSize = () => {
+      if (sideBarWidthAtDefaultTextSize > 0) {
+        localStorage.setItem(SIDE_BAR_WIDTH_KEY, String(sideBarWidthAtDefaultTextSize));
       }
     };
-    const dpCurrentPanelWidthPx = () => dpScalePanelWidth(
-      dpClampPanelWidthAtDefaultTextSize(dpPanelWidthAtDefaultTextSize),
+    const currentSideBarWidthPx = () => scaleSideBarWidth(
+      clampSideBarWidthAtDefaultTextSize(sideBarWidthAtDefaultTextSize),
     );
-    const dpApplyPanelWidth = () => {
-      const panelWidth = dpPanelOpen ? dpCurrentPanelWidthPx() : 0;
-      document.documentElement.style.setProperty("--desktop-right-panel-width", `${panelWidth}px`);
-      document.documentElement.style.setProperty("--desktop-right-panel-reserved-width", `${panelWidth > 0 ? panelWidth + DP_PANEL_GAP : 0}px`);
+    const applySideBarWidth = () => {
+      const panelWidth = sideBarOpen ? currentSideBarWidthPx() : 0;
+      document.documentElement.style.setProperty("--side-bar-width", `${panelWidth}px`);
+      document.documentElement.style.setProperty("--side-bar-reserved-width", `${panelWidth > 0 ? panelWidth + SIDE_BAR_GAP : 0}px`);
     };
 __INCLUDE:../../list-flip.js__
 __INCLUDE:../git-panel-html.js__
@@ -497,162 +497,162 @@ __INCLUDE:git-panel/data.js__
 __INCLUDE:git-panel/events.js__
 
     const syncPanelState = () => {
-      document.getElementById("timelinePanelToggle").setAttribute("aria-pressed", dpPanelOpen ? "true" : "false");
+      document.getElementById("sideBarToggle").setAttribute("aria-pressed", sideBarOpen ? "true" : "false");
       if (window.parent !== window) {
         window.parent.postMessage({
-          type: "desktop-panel-state",
-          mode: dpPanelOpen ? "open" : "",
-          view: dpActivePanelView,
-          width: dpOutwardPanelWidthPx(),
-          side: document.documentElement.dataset.sideBar === "left" ? "left" : "right",
+          type: "side-bar-state",
+          mode: sideBarOpen ? "open" : "",
+          view: activeSideBarView,
+          width: outwardSideBarWidthPx(),
+          side: document.documentElement.dataset.sideBarPosition === "left" ? "left" : "right",
         }, "*");
       }
     };
     window.addEventListener("resize", () => {
-      dpApplyPanelWidth();
+      applySideBarWidth();
       syncPanelState();
     });
-    const setDesktopRightPanelView = (view) => {
-      dpActivePanelView = view === "git" ? "git" : "repo";
-      return dpActivePanelView;
+    const setSideBarView = (view) => {
+      activeSideBarView = view === "git" ? "git" : "repo";
+      return activeSideBarView;
     };
-    const loadDesktopRightPanelView = ({ reset = false, animateRepo = true } = {}) => {
-      if (!dpPanelOpen) return Promise.resolve();
+    const loadSideBarView = ({ reset = false, animateRepo = true } = {}) => {
+      if (!sideBarOpen) return Promise.resolve();
       const hasGitShell = gitPanel.hasShell();
-      if (reset && hasGitShell) dpCloseGitDetail();
-      const gitP = hasGitShell ? dpRefreshGitOverview() : dpLoadGitPage({ reset: true });
-      dpLoadRepoDir(dpRepoBrowserPath || "", { animate: animateRepo });
+      if (reset && hasGitShell) closeGitDetail();
+      const gitP = hasGitShell ? refreshGitOverview() : loadGitPage({ reset: true });
+      loadRepoDir(repoBrowserPath || "", { animate: animateRepo });
       return Promise.resolve(gitP);
     };
-    const openDesktopRightPanel = ({ view = null, reset = false } = {}) => {
-      if (!desktopRightPanel) return Promise.resolve();
-      if (view) setDesktopRightPanelView(view);
-      dpPanelOpen = true;
-      dpApplyPanelWidth();
-      dpSyncPinnedSummaryStrip();
-      const existingStack = dpRepoContent?.querySelector(".repo-browser-stack");
+    const openSideBar = ({ view = null, reset = false } = {}) => {
+      if (!sideBar) return Promise.resolve();
+      if (view) setSideBarView(view);
+      sideBarOpen = true;
+      applySideBarWidth();
+      syncPinnedSummaryStrip();
+      const existingStack = repoContent?.querySelector(".repo-browser-stack");
       if (existingStack) {
         existingStack.classList.remove("repo-browser-nav-forward", "repo-browser-nav-back");
         existingStack.classList.add("repo-browser-nav-none");
       }
-      desktopRightPanel.hidden = false;
-      desktopRightPanel.classList.add("open");
-      document.body.classList.add("right-panel-open");
-      if (dpGitContent && dpSplitPanel && !_dpSplitGitHeightInTextSize) {
+      sideBar.hidden = false;
+      sideBar.classList.add("open");
+      document.body.classList.add("side-bar-open");
+      if (gitContent && splitPanel && !_splitGitHeightInTextSize) {
         requestAnimationFrame(() => {
-          const panelH = dpSplitPanel.getBoundingClientRect().height;
-          if (panelH > 0 && !_dpSplitGitHeightInTextSize) dpSetSplitGitHeight(Math.floor(panelH * 0.5));
+          const panelH = splitPanel.getBoundingClientRect().height;
+          if (panelH > 0 && !_splitGitHeightInTextSize) setSplitGitHeight(Math.floor(panelH * 0.5));
         });
       }
-      const loadP = loadDesktopRightPanelView({ reset, animateRepo: false });
+      const loadP = loadSideBarView({ reset, animateRepo: false });
       syncPanelState();
       return loadP;
     };
-    const closeDesktopRightPanel = () => {
-      if (!desktopRightPanel) return;
+    const closeSideBar = () => {
+      if (!sideBar) return;
       const wasAtBottom = _atBottomAtAnchorWidth || messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight <= 2;
-      dpStopPanelResize();
-      dpPanelOpen = false;
-      if (gitPanel.hasShell()) dpCloseGitDetail();
-      desktopRightPanel.classList.remove("open");
-      desktopRightPanel.hidden = true;
-      document.body.classList.remove("right-panel-open");
+      stopSideBarResize();
+      sideBarOpen = false;
+      if (gitPanel.hasShell()) closeGitDetail();
+      sideBar.classList.remove("open");
+      sideBar.hidden = true;
+      document.body.classList.remove("side-bar-open");
       if (wasAtBottom) {
         messagesEl.scrollTop = messagesEl.scrollHeight;
         _stickyToBottom = true;
         updateScrollBtn();
       }
-      dpDisconnectGitObserver();
-      dpSyncPinnedSummaryStrip();
+      disconnectGitObserver();
+      syncPinnedSummaryStrip();
       syncPanelState();
     };
-    const toggleDesktopRightPanel = () => {
-      if (dpPanelOpen) closeDesktopRightPanel();
-      else openDesktopRightPanel();
+    const toggleSideBar = () => {
+      if (sideBarOpen) closeSideBar();
+      else openSideBar();
     };
-    const dpStopPanelResize = ({ persist = false } = {}) => {
-      if (!_desktopRightPanelResizeState) return;
-      _desktopRightPanelResizeState = null;
-      document.body.classList.remove("desktop-right-panel-resizing");
-      if (persist) dpPersistPanelWidthAtDefaultTextSize();
+    const stopSideBarResize = ({ persist = false } = {}) => {
+      if (!_sideBarResizeState) return;
+      _sideBarResizeState = null;
+      document.body.classList.remove("side-bar-resizing");
+      if (persist) persistSideBarWidthAtDefaultTextSize();
     };
-    const dpHandlePanelResizeMove = (event) => {
-      if (!_desktopRightPanelResizeState || !dpPanelOpen) return;
-      const direction = document.documentElement.dataset.sideBar === "left" ? -1 : 1;
-      const nextWidth = _desktopRightPanelResizeState.startWidth + direction * (_desktopRightPanelResizeState.startX - event.clientX);
-      dpPanelWidthAtDefaultTextSize = dpClampPanelWidthAtDefaultTextSize(dpUnscalePanelWidth(nextWidth));
-      dpApplyPanelWidth();
+    const handleSideBarResizeMove = (event) => {
+      if (!_sideBarResizeState || !sideBarOpen) return;
+      const direction = document.documentElement.dataset.sideBarPosition === "left" ? -1 : 1;
+      const nextWidth = _sideBarResizeState.startWidth + direction * (_sideBarResizeState.startX - event.clientX);
+      sideBarWidthAtDefaultTextSize = clampSideBarWidthAtDefaultTextSize(unscaleSideBarWidth(nextWidth));
+      applySideBarWidth();
       syncPanelState();
     };
-    dpSplitDivider?.addEventListener("pointerdown", (e) => {
+    splitDivider?.addEventListener("pointerdown", (e) => {
       e.preventDefault();
-      _dpSplitDragging = true;
-      dpSplitDivider.setPointerCapture(e.pointerId);
-      document.body.classList.add("dp-split-resizing");
+      _splitDragging = true;
+      splitDivider.setPointerCapture(e.pointerId);
+      document.body.classList.add("split-resizing");
     });
-    dpSplitDivider?.addEventListener("pointermove", (e) => {
-      if (!_dpSplitDragging || !dpGitContent || !dpSplitPanel) return;
-      const rect = dpSplitPanel.getBoundingClientRect();
+    splitDivider?.addEventListener("pointermove", (e) => {
+      if (!_splitDragging || !gitContent || !splitPanel) return;
+      const rect = splitPanel.getBoundingClientRect();
       let newH = e.clientY - rect.top;
-      dpSetSplitGitHeight(Math.max(0, Math.min(rect.height, newH)));
+      setSplitGitHeight(Math.max(0, Math.min(rect.height, newH)));
     });
-    dpSplitDivider?.addEventListener("pointerup", () => {
-      _dpSplitDragging = false;
-      document.body.classList.remove("dp-split-resizing");
+    splitDivider?.addEventListener("pointerup", () => {
+      _splitDragging = false;
+      document.body.classList.remove("split-resizing");
     });
-    dpSplitDivider?.addEventListener("pointercancel", () => {
-      _dpSplitDragging = false;
-      document.body.classList.remove("dp-split-resizing");
+    splitDivider?.addEventListener("pointercancel", () => {
+      _splitDragging = false;
+      document.body.classList.remove("split-resizing");
     });
-    desktopRightPanelResizer?.addEventListener("pointerdown", (event) => {
-      if (!dpPanelOpen) return;
+    sideBarResizer?.addEventListener("pointerdown", (event) => {
+      if (!sideBarOpen) return;
       event.preventDefault();
       event.stopPropagation();
-      _desktopRightPanelResizeState = {
+      _sideBarResizeState = {
         pointerId: event.pointerId,
         startX: event.clientX,
-        startWidth: dpCurrentPanelWidthPx(),
+        startWidth: currentSideBarWidthPx(),
       };
-      document.body.classList.add("desktop-right-panel-resizing");
+      document.body.classList.add("side-bar-resizing");
       try {
-        desktopRightPanelResizer.setPointerCapture(event.pointerId);
+        sideBarResizer.setPointerCapture(event.pointerId);
       } catch (_) {}
     });
-    const swapSideBarSide = () => {
-      if (document.documentElement.dataset.sideBar === "left") {
-        delete document.documentElement.dataset.sideBar;
-        localStorage.removeItem(SIDE_BAR_SIDE_KEY);
+    const swapSideBarPosition = () => {
+      if (document.documentElement.dataset.sideBarPosition === "left") {
+        delete document.documentElement.dataset.sideBarPosition;
+        localStorage.removeItem(SIDE_BAR_POSITION_KEY);
       } else {
-        document.documentElement.dataset.sideBar = "left";
-        localStorage.setItem(SIDE_BAR_SIDE_KEY, "left");
+        document.documentElement.dataset.sideBarPosition = "left";
+        localStorage.setItem(SIDE_BAR_POSITION_KEY, "left");
       }
       syncPanelState();
     };
-    document.getElementById("sideBarSwapBtn")?.addEventListener("click", swapSideBarSide);
-    desktopRightPanelResizer?.addEventListener("pointermove", (event) => {
-      if (!_desktopRightPanelResizeState || _desktopRightPanelResizeState.pointerId !== event.pointerId) return;
-      dpHandlePanelResizeMove(event);
+    document.getElementById("sideBarSwapBtn")?.addEventListener("click", swapSideBarPosition);
+    sideBarResizer?.addEventListener("pointermove", (event) => {
+      if (!_sideBarResizeState || _sideBarResizeState.pointerId !== event.pointerId) return;
+      handleSideBarResizeMove(event);
     });
-    desktopRightPanelResizer?.addEventListener("pointerup", (event) => {
-      if (!_desktopRightPanelResizeState || _desktopRightPanelResizeState.pointerId !== event.pointerId) return;
-      dpStopPanelResize({ persist: true });
+    sideBarResizer?.addEventListener("pointerup", (event) => {
+      if (!_sideBarResizeState || _sideBarResizeState.pointerId !== event.pointerId) return;
+      stopSideBarResize({ persist: true });
     });
-    desktopRightPanelResizer?.addEventListener("pointercancel", () => {
-      dpStopPanelResize({ persist: true });
+    sideBarResizer?.addEventListener("pointercancel", () => {
+      stopSideBarResize({ persist: true });
     });
-    const dpNormalizePath = (value) => String(value || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    let dpFileContextPaths = [];
-    let dpFileContextTriggerPath = "";
-    let dpWorkspaceRoot = "";
-    const dpOpenFileContextMenu = (rawPathOrPaths, event, { openFile = false, triggerPath = "" } = {}) => {
+    const normalizePath = (value) => String(value || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    let fileContextPaths = [];
+    let fileContextTriggerPath = "";
+    let workspaceRoot = "";
+    const openFileContextMenu = (rawPathOrPaths, event, { openFile = false, triggerPath = "" } = {}) => {
       const paths = (Array.isArray(rawPathOrPaths) ? rawPathOrPaths : [rawPathOrPaths])
         .map(normalizeWorkspaceFilePath)
         .filter(Boolean);
       if (!paths.length) return;
       event.preventDefault();
       event.stopPropagation();
-      dpFileContextPaths = paths;
-      dpFileContextTriggerPath = normalizeWorkspaceFilePath(triggerPath) || paths[0];
+      fileContextPaths = paths;
+      fileContextTriggerPath = normalizeWorkspaceFilePath(triggerPath) || paths[0];
       window.parent?.postMessage({
         type: "show-file-context-menu",
         payload: {
@@ -662,45 +662,45 @@ __INCLUDE:git-panel/events.js__
         },
       }, "*");
     };
-    let dpCommitContextHash = "";
-    const dpOpenCommitContextMenu = (hash, event) => {
+    let commitContextHash = "";
+    const openCommitContextMenu = (hash, event) => {
       event.preventDefault();
       event.stopPropagation();
-      dpCommitContextHash = hash;
+      commitContextHash = hash;
       window.parent?.postMessage({
         type: "show-commit-context-menu",
         payload: { x: Math.round(Number(event.clientX) || 0), y: Math.round(Number(event.clientY) || 0) },
       }, "*");
     };
-    const dpLoadWorkspaceRoot = async () => {
-      if (!dpWorkspaceRoot) {
+    const loadWorkspaceRoot = async () => {
+      if (!workspaceRoot) {
         const response = await fetchWithTimeout("/timeline-state", {}, 4000);
         if (!response.ok) throw new Error("Failed to read workspace path.");
         const state = await response.json();
-        dpWorkspaceRoot = String(state?.workspace || "").replace(/\/+$/, "");
-        if (!dpWorkspaceRoot) throw new Error("Workspace path is unavailable.");
+        workspaceRoot = String(state?.workspace || "").replace(/\/+$/, "");
+        if (!workspaceRoot) throw new Error("Workspace path is unavailable.");
       }
-      return dpWorkspaceRoot;
+      return workspaceRoot;
     };
-    const dpCopyFilePath = async (paths, absolute) => {
-      if (absolute || paths.some((path) => String(path).startsWith("/"))) await dpLoadWorkspaceRoot();
+    const copyFilePath = async (paths, absolute) => {
+      if (absolute || paths.some((path) => String(path).startsWith("/"))) await loadWorkspaceRoot();
       const text = paths.map((p) => {
         const path = normalizeWorkspaceFilePath(p);
-        if (absolute) return path.startsWith("/") ? path : `${dpWorkspaceRoot}/${path}`;
-        return path.startsWith(`${dpWorkspaceRoot}/`) ? path.slice(dpWorkspaceRoot.length + 1) : path;
+        if (absolute) return path.startsWith("/") ? path : `${workspaceRoot}/${path}`;
+        return path.startsWith(`${workspaceRoot}/`) ? path.slice(workspaceRoot.length + 1) : path;
       }).join("\n");
       await doCopyText(text);
       setStatus("Copied path");
     };
-    const dpCopyFiles = async (paths) => {
+    const copyFiles = async (paths) => {
       const normalized = paths.map(normalizeWorkspaceFilePath).filter(Boolean);
-      const root = normalized.some((path) => !path.startsWith("/")) ? await dpLoadWorkspaceRoot() : "";
+      const root = normalized.some((path) => !path.startsWith("/")) ? await loadWorkspaceRoot() : "";
       const absolutePaths = normalized.map((path) => {
         return path.startsWith("/") ? path : `${root}/${path}`;
       });
       window.parent?.postMessage({ type: "copy-files-to-clipboard", paths: absolutePaths }, "*");
     };
-    const dpRevealFileInFinder = async (path) => {
+    const revealFileInFinder = async (path) => {
       const response = await fetchWithTimeout("/reveal-file", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -711,7 +711,7 @@ __INCLUDE:git-panel/events.js__
         throw new Error(data?.error || "Reveal failed");
       }
     };
-    const dpQuickLookPaths = async (paths) => {
+    const quickLookPaths = async (paths) => {
       try {
         const response = await fetchWithTimeout("/quick-look", {
           method: "POST",
@@ -729,7 +729,7 @@ __INCLUDE:git-panel/events.js__
     function handleDesktopCommitContextMenuAction(payload) {
       const action = String(payload?.action || "");
       if (!["copyCommitHash", "copyCommitMessage"].includes(action)) return false;
-      const hash = dpCommitContextHash;
+      const hash = commitContextHash;
       if (!hash) return true;
       void (async () => {
         const info = await gitCommitInfo(hash);
@@ -743,27 +743,27 @@ __INCLUDE:git-panel/events.js__
     function handleDesktopFileContextMenuAction(payload) {
       const action = String(payload?.action || "");
       if (!["openFile", "quickLook", "revealFileInFinder", "copyFiles", "copyAbsoluteFilePath", "copyRelativeFilePath"].includes(action)) return false;
-      const paths = dpFileContextPaths;
+      const paths = fileContextPaths;
       if (!paths.length) return true;
       const operation = action === "openFile"
-        ? dpPostOpenFile(dpFileContextTriggerPath || paths[0])
+        ? openFile(fileContextTriggerPath || paths[0])
         : action === "quickLook"
-          ? dpQuickLookPaths(paths)
+          ? quickLookPaths(paths)
           : action === "revealFileInFinder"
-            ? dpRevealFileInFinder(dpFileContextTriggerPath || paths[0])
+            ? revealFileInFinder(fileContextTriggerPath || paths[0])
             : action === "copyFiles"
-              ? dpCopyFiles(paths)
-              : dpCopyFilePath(paths, action === "copyAbsoluteFilePath");
+              ? copyFiles(paths)
+              : copyFilePath(paths, action === "copyAbsoluteFilePath");
       void operation.catch((err) => {
         setStatus(err?.message || "File action failed");
       });
       return true;
     }
-    const dpChevronIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
-    const dpBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
-    const dpRootIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 6 6 12 12 18"/><polyline points="19 6 13 12 19 18"/></svg>';
-    const dpFetchRepoDir = async (rawPath) => {
-      const path = dpNormalizePath(rawPath);
+    const chevronIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
+    const BACK_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
+    const rootIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 6 6 12 12 18"/><polyline points="19 6 13 12 19 18"/></svg>';
+    const fetchRepoDir = async (rawPath) => {
+      const path = normalizePath(rawPath);
       const res = await fetchWithTimeout(`/files-dir?path=${encodeURIComponent(path)}`, {}, 12000);
       if (!res.ok) throw new Error(res.status === 404 ? "Directory not found" : "Failed to load directory");
       const payload = await res.json().catch(() => ({}));
@@ -771,7 +771,7 @@ __INCLUDE:git-panel/events.js__
       return rawEntries
         .filter((item) => item && typeof item.path === "string")
         .map((item) => {
-          const entryPath = dpNormalizePath(item.path);
+          const entryPath = normalizePath(item.path);
           const rawSize = Number(item.size);
           return {
             name: String(item.name || entryPath.split("/").pop() || entryPath),
@@ -785,7 +785,7 @@ __INCLUDE:git-panel/events.js__
           return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
         });
     };
-    const dpBuildRepoEntryItem = (entry) => {
+    const buildRepoEntryItem = (entry) => {
       const isDir = entry.kind === "dir";
       const btn = document.createElement("button");
       btn.type = "button";
@@ -801,14 +801,14 @@ __INCLUDE:git-panel/events.js__
       if (isDir) {
         const chevronEl = document.createElement("span");
         chevronEl.className = "repo-browser-item-chevron";
-        chevronEl.innerHTML = dpChevronIcon;
+        chevronEl.innerHTML = chevronIcon;
         btn.appendChild(chevronEl);
         btn.addEventListener("click", (e) => {
           e.preventDefault(); e.stopPropagation();
           const path = entry.path;
-          if (e.shiftKey) { dpRepoSel.selectRangeTo(path); return; }
-          if (e.metaKey) { dpRepoSel.toggle(path); return; }
-          void dpLoadRepoDir(path);
+          if (e.shiftKey) { repoSel.selectRangeTo(path); return; }
+          if (e.metaKey) { repoSel.toggle(path); return; }
+          void loadRepoDir(path);
         });
       } else {
         const sizeLabel = formatFileSize(entry.size);
@@ -820,13 +820,13 @@ __INCLUDE:git-panel/events.js__
         }
         btn.addEventListener("click", async (e) => {
           e.preventDefault(); e.stopPropagation();
-          const resolved = dpResolveRowClick(dpRepoSel, entry.path, e);
+          const resolved = resolveRowClick(repoSel, entry.path, e);
           if (!resolved) return;
-          const fileSet = dpRepoFilePathSet();
+          const fileSet = repoFilePathSet();
           const targets = resolved.targets.filter((p) => fileSet.has(p));
           if (!targets.length) return;
           if (resolved.quickLook) {
-            await dpQuickLookPaths(targets);
+            await quickLookPaths(targets);
             return;
           }
           for (const p of targets) {
@@ -835,29 +835,29 @@ __INCLUDE:git-panel/events.js__
         });
       }
       btn.addEventListener("contextmenu", (e) => {
-        void dpOpenFileContextMenu(dpResolveContextMenuTargets(dpRepoSel, entry.path), e, { triggerPath: entry.path });
+        void openFileContextMenu(resolveContextMenuTargets(repoSel, entry.path), e, { triggerPath: entry.path });
       });
       return btn;
     };
-    const dpRepoEntriesStructureSignature = (entries) =>
+    const repoEntriesStructureSignature = (entries) =>
       (entries || []).map((entry) => `${entry.kind}:${entry.path}`).join("\n");
-    const dpRenderRepoPanel = (rawPath, entries, { loading = false, error = "", direction = "none" } = {}) => {
-      if (!dpRepoContent) return;
-      const path = dpNormalizePath(rawPath);
+    const renderRepoPanel = (rawPath, entries, { loading = false, error = "", direction = "none" } = {}) => {
+      if (!repoContent) return;
+      const path = normalizePath(rawPath);
       const pathParts = path.split("/").filter(Boolean);
       const parentPath = pathParts.slice(0, -1).join("/");
       const pathBasename = pathParts[pathParts.length - 1] || "/";
-      const isSamePath = path === dpRepoBrowserPath;
+      const isSamePath = path === repoBrowserPath;
       const previousScrollTop = isSamePath
-        ? dpRepoContent.querySelector(".repo-browser-scroll")?.scrollTop || 0
+        ? repoContent.querySelector(".repo-browser-scroll")?.scrollTop || 0
         : 0;
       const rowKey = (el) => el.title || "";
       const firstRects = direction === "none" && !loading && !error
-        ? captureListRowRects(dpRepoContent, ".repo-browser-item", rowKey)
+        ? captureListRowRects(repoContent, ".repo-browser-item", rowKey)
         : null;
-      dpRepoBrowserPath = path;
-      if (!isSamePath) dpRepoSel.clear();
-      dpRepoContent.innerHTML = "";
+      repoBrowserPath = path;
+      if (!isSamePath) repoSel.clear();
+      repoContent.innerHTML = "";
       const stack = document.createElement("div");
       stack.className = `repo-browser-stack repo-browser-nav-${direction}`;
       const pathWrap = document.createElement("div");
@@ -871,16 +871,16 @@ __INCLUDE:git-panel/events.js__
       pathRow.addEventListener("click", (e) => {
         e.preventDefault(); e.stopPropagation();
         if (!path) return;
-        void dpLoadRepoDir(parentPath);
+        void loadRepoDir(parentPath);
       });
       pathRow.addEventListener("keydown", (e) => {
         if (!path || (e.key !== "Enter" && e.key !== " ")) return;
         e.preventDefault(); e.stopPropagation();
-        void dpLoadRepoDir(parentPath);
+        void loadRepoDir(parentPath);
       });
       const backIcon = document.createElement("span");
       backIcon.className = "repo-path-back-icon-slot";
-      backIcon.innerHTML = dpBackIcon;
+      backIcon.innerHTML = BACK_ICON_SVG;
       const pathText = document.createElement("span");
       pathText.className = "repo-path-label";
       pathText.textContent = pathBasename;
@@ -890,16 +890,16 @@ __INCLUDE:git-panel/events.js__
         rootBtn.className = "repo-path-root-btn";
         rootBtn.setAttribute("role", "button");
         rootBtn.title = "Root";
-        rootBtn.innerHTML = dpRootIcon;
+        rootBtn.innerHTML = rootIcon;
         rootBtn.addEventListener("click", (e) => {
           e.preventDefault(); e.stopPropagation();
-          void dpLoadRepoDir("");
+          void loadRepoDir("");
         });
         pathRow.append(rootBtn);
       }
       pathWrap.appendChild(pathRow);
       pathWrap.addEventListener("contextmenu", (e) => {
-        void dpOpenFileContextMenu(path, e);
+        void openFileContextMenu(path, e);
       });
       stack.appendChild(pathWrap);
       const scroll = document.createElement("div");
@@ -919,7 +919,7 @@ __INCLUDE:git-panel/events.js__
         node.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
-          void dpLoadRepoDir(path);
+          void loadRepoDir(path);
         });
         list.appendChild(node);
       } else {
@@ -931,25 +931,25 @@ __INCLUDE:git-panel/events.js__
           node.textContent = "Empty directory";
           list.appendChild(node);
         } else {
-          dirs.forEach(e => list.appendChild(dpBuildRepoEntryItem(e)));
-          files.forEach(e => list.appendChild(dpBuildRepoEntryItem(e)));
+          dirs.forEach(e => list.appendChild(buildRepoEntryItem(e)));
+          files.forEach(e => list.appendChild(buildRepoEntryItem(e)));
         }
       }
       scroll.appendChild(list);
       stack.appendChild(scroll);
-      dpRepoContent.appendChild(stack);
+      repoContent.appendChild(stack);
       scroll.scrollTop = previousScrollTop;
-      flipListRows(dpRepoContent, ".repo-browser-item", rowKey, firstRects);
-      dpRepoSel.prune();
-      dpRepoSel.applyClasses();
+      flipListRows(repoContent, ".repo-browser-item", rowKey, firstRects);
+      repoSel.prune();
+      repoSel.applyClasses();
       scroll.addEventListener("mousedown", (e) => {
-        if (e.target === scroll || e.target === list) dpRepoSel.clear();
+        if (e.target === scroll || e.target === list) repoSel.clear();
       });
     };
-    const dpLoadRepoDir = async (rawPath, { animate = true } = {}) => {
-      if (!dpPanelOpen) return;
-      const path = dpNormalizePath(rawPath);
-      const currentDepth = dpRepoBrowserPath.split("/").filter(Boolean).length;
+    const loadRepoDir = async (rawPath, { animate = true } = {}) => {
+      if (!sideBarOpen) return;
+      const path = normalizePath(rawPath);
+      const currentDepth = repoBrowserPath.split("/").filter(Boolean).length;
       const newDepth = path.split("/").filter(Boolean).length;
       const direction = !animate
         ? "none"
@@ -958,42 +958,42 @@ __INCLUDE:git-panel/events.js__
           : newDepth < currentDepth
             ? "back"
             : "none";
-      const loadSeq = ++dpRepoLoadSeq;
-      const repoLoadCancelled = () => loadSeq !== dpRepoLoadSeq || !dpPanelOpen;
+      const loadSeq = ++repoLoadSeq;
+      const repoLoadCancelled = () => loadSeq !== repoLoadSeq || !sideBarOpen;
       cancelDpRepoLoading();
       cancelDpRepoLoading = startDelayedLoading(
-        () => dpRenderRepoPanel(path, [], { loading: true, direction }),
+        () => renderRepoPanel(path, [], { loading: true, direction }),
         repoLoadCancelled,
       );
       try {
         const [entries] = await Promise.all([
-          dpFetchRepoDir(path),
+          fetchRepoDir(path),
           ensureFileIconTheme(),
         ]);
         cancelDpRepoLoading();
         if (repoLoadCancelled()) return;
-        dpRenderRepoPanel(path, entries, { direction });
+        renderRepoPanel(path, entries, { direction });
       } catch (err) {
         cancelDpRepoLoading();
         if (repoLoadCancelled()) return;
-        dpRenderRepoPanel(path, [], { error: err?.message || "Failed to load directory", direction });
+        renderRepoPanel(path, [], { error: err?.message || "Failed to load directory", direction });
       }
     };
-    const dpRefreshRepoDir = async (rawPath) => {
-      if (!dpPanelOpen || !dpRepoContent?.querySelector(".repo-browser-stack")) return;
-      const path = dpNormalizePath(rawPath);
+    const refreshRepoDir = async (rawPath) => {
+      if (!sideBarOpen || !repoContent?.querySelector(".repo-browser-stack")) return;
+      const path = normalizePath(rawPath);
       try {
         const [entries] = await Promise.all([
-          dpFetchRepoDir(path),
+          fetchRepoDir(path),
           ensureFileIconTheme(),
         ]);
-        if (!dpPanelOpen || dpActivePanelView !== "repo" || dpNormalizePath(dpRepoBrowserPath) !== path) return;
-        const currentEntries = Array.from(dpRepoContent.querySelectorAll(".repo-browser-item")).map((item) => ({
+        if (!sideBarOpen || activeSideBarView !== "repo" || normalizePath(repoBrowserPath) !== path) return;
+        const currentEntries = Array.from(repoContent.querySelectorAll(".repo-browser-item")).map((item) => ({
           kind: item.classList.contains("repo-browser-dir") ? "dir" : "file",
-          path: dpNormalizePath(item.title || ""),
+          path: normalizePath(item.title || ""),
         }));
-        if (dpRepoEntriesStructureSignature(currentEntries) === dpRepoEntriesStructureSignature(entries)) return;
-        dpRenderRepoPanel(path, entries, { direction: "none" });
+        if (repoEntriesStructureSignature(currentEntries) === repoEntriesStructureSignature(entries)) return;
+        renderRepoPanel(path, entries, { direction: "none" });
       } catch (_) {}
     };
     window.addEventListener("message", (event) => {
@@ -1023,7 +1023,7 @@ __INCLUDE:git-panel/events.js__
               requestAnimationFrame(() => reportFitHeight({ fromComposer: true }));
             }
           }
-          dpApplyPanelWidth();
+          applySideBarWidth();
           syncPanelState();
           const url = new URL(window.location.href);
           url.searchParams.set("text_size", String(px));
@@ -1048,7 +1048,7 @@ __INCLUDE:git-panel/events.js__
         _fitTargetRow = null;
         document.documentElement.dataset.autoWindowHeight = event.data.on ? "1" : "0";
         syncMainAfterHeight();
-        dpSyncPinnedSummaryStrip();
+        syncPinnedSummaryStrip();
         if (event.data.on) {
           requestAnimationFrame(reportFitHeight);
         } else {
@@ -1057,7 +1057,7 @@ __INCLUDE:git-panel/events.js__
         }
         return;
       }
-      if (event.data.type === "desktop-panel-sync-request") {
+      if (event.data.type === "side-bar-sync-request") {
         syncPanelState();
         return;
       }
@@ -1094,17 +1094,17 @@ __INCLUDE:git-panel/events.js__
       if (event.data.type === "desk-open-git-file") {
         const p = String(event.data.path || "").trim();
         if (p) {
-          if (event.data.untracked) void dpPostOpenFile(p);
-          else void dpPostOpenDiff(p, "", String(event.data.oldPath || ""));
+          if (event.data.untracked) void openFile(p);
+          else void openDiff(p, "", String(event.data.oldPath || ""));
         }
         return;
       }
       if (event.data.type === "toggle-git-pin") {
-        dpToggleGitSummaryPinned();
+        toggleGitSummaryPinned();
         return;
       }
       if (event.data.type === "desktop-timeline-reset") {
-        closeDesktopRightPanel();
+        closeSideBar();
         _pollScrollLockTop = null;
         _pollScrollAnchor = null;
         _stickyToBottom = true;
@@ -1117,25 +1117,25 @@ __INCLUDE:git-panel/events.js__
         settleToBottom();
         return;
       }
-      if (event.data.type === "hub-sidebar-state") {
-        if (event.data.open) document.documentElement.dataset.hubSidebarOpen = "1";
-        else delete document.documentElement.dataset.hubSidebarOpen;
+      if (event.data.type === "hub-open-state") {
+        if (event.data.open) document.documentElement.dataset.hubOpen = "1";
+        else delete document.documentElement.dataset.hubOpen;
         return;
       }
-      if (event.data.type !== "desktop-panel") return;
+      if (event.data.type !== "side-bar") return;
       const mode = String(event.data.mode || "");
       if (mode === "close") {
-        closeDesktopRightPanel();
+        closeSideBar();
       } else if (mode === "open") {
-        toggleDesktopRightPanel();
+        toggleSideBar();
       } else if (mode === "git") {
-        openDesktopRightPanel({ view: "git", reset: true });
+        openSideBar({ view: "git", reset: true });
       } else if (mode === "repo") {
-        openDesktopRightPanel({ view: "repo" });
+        openSideBar({ view: "repo" });
       } else if (mode === "swap") {
-        swapSideBarSide();
+        swapSideBarPosition();
       } else {
-        toggleDesktopRightPanel();
+        toggleSideBar();
       }
       window.focus();
     });
@@ -1144,12 +1144,12 @@ __INCLUDE:git-panel/events.js__
         if (event.metaKey && event.altKey) {
           if (event.code === "KeyB") {
             event.preventDefault();
-            window.parent?.postMessage({ type: "toggle-hub-sidebar-outward" }, "*");
+            window.parent?.postMessage({ type: "toggle-hub-outward" }, "*");
             return;
           }
           if (event.code === "KeyE") {
             event.preventDefault();
-            window.parent?.postMessage({ type: "toggle-desktop-panel-outward" }, "*");
+            window.parent?.postMessage({ type: "toggle-side-bar-outward" }, "*");
             return;
           }
           if (event.code === "KeyT") {
@@ -1170,11 +1170,11 @@ __INCLUDE:git-panel/events.js__
           }
           if (event.code === "KeyR") {
             event.preventDefault();
-            const revealTarget = dpActivePanelTargets(
-              dpRepoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
+            const revealTarget = activeSideBarTargets(
+              repoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
             ).slice(-1)[0] || "";
             if (revealTarget) {
-              void dpRevealFileInFinder(revealTarget).catch((err) => {
+              void revealFileInFinder(revealTarget).catch((err) => {
                 setStatus(err?.message || "Reveal failed");
               });
             } else {
@@ -1245,20 +1245,20 @@ __INCLUDE:git-panel/events.js__
         }
         if (event.metaKey && !event.altKey && event.code === "KeyB") {
           event.preventDefault();
-          window.parent?.postMessage({ type: "toggle-hub-sidebar" }, "*");
+          window.parent?.postMessage({ type: "toggle-hub" }, "*");
           return;
         }
         if (event.metaKey && event.shiftKey && !event.altKey && event.code === "KeyE") {
           event.preventDefault();
-          swapSideBarSide();
+          swapSideBarPosition();
           return;
         }
         if (event.metaKey && !event.altKey && !event.shiftKey && event.code === "KeyE") {
           event.preventDefault();
           if (document.documentElement.dataset.autoWindowHeight === "1") {
-            window.parent?.postMessage({ type: "toggle-desktop-right-panel" }, "*");
+            window.parent?.postMessage({ type: "toggle-side-bar" }, "*");
           } else {
-            toggleDesktopRightPanel();
+            toggleSideBar();
           }
           return;
         }
@@ -1284,36 +1284,36 @@ __INCLUDE:git-panel/events.js__
         }
         if (event.metaKey && event.shiftKey && !event.altKey && !event.ctrlKey && event.code === "KeyP") {
           event.preventDefault();
-          dpToggleGitSummaryPinned();
+          toggleGitSummaryPinned();
           return;
         }
         if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyO") {
-          const targets = dpActivePanelTargets(
-            dpRepoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
+          const targets = activeSideBarTargets(
+            repoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
           );
           if (targets.length) {
             event.preventDefault();
-            for (const p of targets) void dpPostOpenFile(p);
+            for (const p of targets) void openFile(p);
           }
           return;
         }
         if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyY") {
-          const targets = dpActivePanelTargets(
-            dpRepoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
+          const targets = activeSideBarTargets(
+            repoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
           );
           if (targets.length) {
             event.preventDefault();
-            void dpQuickLookPaths(targets);
+            void quickLookPaths(targets);
           }
           return;
         }
         if (event.metaKey && event.altKey && !event.ctrlKey && event.code === "KeyC") {
-          const targets = dpActivePanelTargets(
-            dpRepoOrderedSelectedEntries, ".repo-browser-item:hover", ".git-commit-file-row:hover",
+          const targets = activeSideBarTargets(
+            repoOrderedSelectedEntries, ".repo-browser-item:hover", ".git-commit-file-row:hover",
           );
           if (targets.length) {
             event.preventDefault();
-            void dpCopyFilePath(targets, !event.shiftKey).catch((err) => {
+            void copyFilePath(targets, !event.shiftKey).catch((err) => {
               setStatus(err?.message || "Copy failed");
             });
           }
@@ -1324,12 +1324,12 @@ __INCLUDE:git-panel/events.js__
           if (target instanceof Element && (target.closest("input, textarea") || target.isContentEditable)) return;
           if (window.getSelection()?.toString()) return;
           if (document.documentElement.dataset.nativeApp !== "1") return;
-          const targets = dpActivePanelTargets(
-            dpRepoOrderedSelectedEntries, ".repo-browser-item:hover", ".git-commit-file-row:hover",
+          const targets = activeSideBarTargets(
+            repoOrderedSelectedEntries, ".repo-browser-item:hover", ".git-commit-file-row:hover",
           );
           if (targets.length) {
             event.preventDefault();
-            void dpCopyFiles(targets).catch((err) => {
+            void copyFiles(targets).catch((err) => {
               setStatus(err?.message || "Copy failed");
             });
           }
@@ -1349,22 +1349,22 @@ __INCLUDE:git-panel/events.js__
       }, true);
     })();
     const handleWorkspaceFilesChanged = () => {
-      if (dpPanelOpen && dpActivePanelView === "repo") {
-        void dpRefreshRepoDir(dpRepoBrowserPath || "");
+      if (sideBarOpen && activeSideBarView === "repo") {
+        void refreshRepoDir(repoBrowserPath || "");
       }
     };
     const handleWorkspaceGitChanged = () => {
       gitPanel.invalidateFingerprint();
-      if (!dpPanelOpen && !dpPinnedStripActive()) return;
-      if (dpPanelOpen && !gitPanel.hasShell()) {
-        void dpLoadGitPage({ reset: true });
+      if (!sideBarOpen && !pinnedStripActive()) return;
+      if (sideBarOpen && !gitPanel.hasShell()) {
+        void loadGitPage({ reset: true });
       } else {
-        void dpRefreshGitOverview();
+        void refreshGitOverview();
       }
     };
     __INCLUDE:../events.js__
-    dpOnTimelineSummaryPinReload({ force: true });
-    dpApplyPanelWidth();
+    onTimelineSummaryPinReload({ force: true });
+    applySideBarWidth();
     refresh({ forceScroll: true });
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {

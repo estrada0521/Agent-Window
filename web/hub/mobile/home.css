@@ -118,11 +118,11 @@
 
     @media (min-width: 600px) {
       :root {
-        --hub-sidebar-width: min(400px, 75vw);
+        --hub-width: min(400px, 75vw);
       }
 
       html.hub-timeline-peeking .shell {
-        max-width: var(--hub-sidebar-width);
+        max-width: var(--hub-width);
         margin: 0;
         padding-right: 0;
       }
@@ -724,7 +724,7 @@
 
       #timelineOverlay.overlay-closing,
       #timelineOverlay.overlay-peeking {
-        transform: translate3d(var(--hub-sidebar-width), 0, 0);
+        transform: translate3d(var(--hub-width), 0, 0);
       }
     }
 
@@ -771,6 +771,6 @@
     }
     @media (min-width: 600px) {
       html:has(#timelineOverlay:not([hidden])) #hubHud {
-        left: calc(var(--hub-sidebar-width) / 2);
+        left: calc(var(--hub-width) / 2);
       }
     }

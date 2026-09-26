@@ -653,7 +653,7 @@
         return;
       }
       if (e.data === "hub_close_timeline") closeTimelineFrame();
-      if (e.data && e.data.type === "toggle-hub-sidebar") {
+      if (e.data && e.data.type === "toggle-hub") {
         closeTimelineFrame();
         return;
       }

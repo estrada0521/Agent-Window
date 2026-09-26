@@ -69,7 +69,7 @@
       if (next) document.documentElement.dataset.autoWindowHeight = "1";
       else delete document.documentElement.dataset.autoWindowHeight;
       sessionStorage.setItem(DESK_AUTO_HEIGHT_KEY, next ? "1" : "0");
-      if (_deskAutoWindowHeight) setDeskSidebarOpen(false);
+      if (_deskAutoWindowHeight) setDeskHubOpen(false);
       applyDeskFitHeightMin();
       pushDeskAutoWindowHeight();
     }
@@ -116,8 +116,8 @@
     }
 
     async function resetDeskWindowState() {
-      showDeskSidebarList({ open: true });
-      setDeskSidebarWidthAtDefaultTextSize(DESK_DEFAULT_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE);
+      showDeskHubList({ open: true });
+      setDeskHubWidthAtDefaultTextSize(DESK_DEFAULT_HUB_WIDTH_AT_DEFAULT_TEXT_SIZE);
       setDeskAutoWindowHeight(false);
       applyDeskAlwaysOnTop(false);
       const invoke = getNativeInvoke();
@@ -132,7 +132,7 @@
     }
 
     async function compactDeskWindowState(command = "compact_window_geometry", label = "compact window") {
-      setDeskSidebarOpen(false);
+      setDeskHubOpen(false);
       setDeskAutoWindowHeight(false);
       applyDeskAlwaysOnTop(false);
       const invoke = getNativeInvoke();
@@ -176,50 +176,50 @@
       }
     }
 
-    function toggleDeskSidebar() {
+    function toggleDeskHub() {
       if (_deskAutoWindowHeight) { void openDeskNativeTimelineSwitcher(); return; }
-      setDeskSidebarOpen(!isDeskSidebarOpen());
+      setDeskHubOpen(!isDeskHubOpen());
     }
 
-    function toggleDeskRightPanel() {
+    function toggleDeskSideBar() {
       if (_deskAutoWindowHeight) { void openDeskNativeGitChanges(); return; }
-      sendDeskPanelCommand("");
+      sendDeskSideBarCommand("");
     }
 
-    function toggleDeskSidebarOutward() {
+    function toggleDeskHubOutward() {
       if (_deskAutoWindowHeight) return;
-      const opening = !isDeskSidebarOpen();
-      const width = currentDeskSidebarWidthPx();
+      const opening = !isDeskHubOpen();
+      const width = currentDeskHubWidthPx();
       void resizeDeskWindowAroundPane({
         edge: "left",
         delta: opening ? width : -width,
-        apply: () => setDeskSidebarOpen(opening),
-        rollback: () => setDeskSidebarOpen(!opening),
-        label: "toggle Hub sidebar outward",
+        apply: () => setDeskHubOpen(opening),
+        rollback: () => setDeskHubOpen(!opening),
+        label: "toggle Hub outward",
       });
     }
 
-    function deskRightPaneAvailable() {
-      return !!_deskTimelineFrameLoadedUrl && _deskPanelWidth > 0;
+    function deskSideBarAvailable() {
+      return !!_deskTimelineFrameLoadedUrl && _deskSideBarWidth > 0;
     }
 
-    function toggleDeskRightPanelOutward() {
-      if (_deskAutoWindowHeight || !deskRightPaneAvailable()) return;
-      const width = _deskPanelWidth;
-      const opening = !_deskPanelActiveMode;
+    function toggleDeskSideBarOutward() {
+      if (_deskAutoWindowHeight || !deskSideBarAvailable()) return;
+      const width = _deskSideBarWidth;
+      const opening = !_deskSideBarActiveMode;
       void resizeDeskWindowAroundPane({
         edge: "right",
         delta: opening ? width : -width,
         applyAfterResize: !opening,
         apply: () => {
-          updateDeskPanelButtonState(opening ? "open" : "", width);
-          sendDeskPanelCommand("");
+          updateDeskSideBarButtonState(opening ? "open" : "", width);
+          sendDeskSideBarCommand("");
         },
         rollback: () => {
-          updateDeskPanelButtonState(opening ? "" : "open", width);
-          sendDeskPanelCommand("");
+          updateDeskSideBarButtonState(opening ? "" : "open", width);
+          sendDeskSideBarCommand("");
         },
-        label: "toggle right pane outward",
+        label: "toggle side bar outward",
       });
     }
 
@@ -227,12 +227,12 @@
       if (event.metaKey && event.altKey) {
         if (event.code === "KeyB") {
           event.preventDefault();
-          toggleDeskSidebarOutward();
+          toggleDeskHubOutward();
           return;
         }
         if (event.code === "KeyE") {
           event.preventDefault();
-          toggleDeskRightPanelOutward();
+          toggleDeskSideBarOutward();
           return;
         }
         if (event.code === "KeyT") {
@@ -319,17 +319,17 @@
       }
       if (event.metaKey && !event.altKey && event.code === "KeyB") {
         event.preventDefault();
-        toggleDeskSidebar();
+        toggleDeskHub();
         return;
       }
       if (event.metaKey && event.shiftKey && !event.altKey && event.code === "KeyE") {
         event.preventDefault();
-        sendDeskPanelCommand("swap");
+        sendDeskSideBarCommand("swap");
         return;
       }
       if (event.metaKey && !event.altKey && !event.shiftKey && event.code === "KeyE") {
         event.preventDefault();
-        toggleDeskRightPanel();
+        toggleDeskSideBar();
         return;
       }
       if (event.metaKey && !event.altKey && !event.shiftKey && !event.ctrlKey && event.code === "KeyT") {
@@ -386,9 +386,9 @@
           detail: { action: "theme", theme },
         })),
         sidePanels: [
-          { value: "toggleHubSidebar", label: "Toggle Hub Sidebar" },
-          { value: "toggleRightPane", label: "Toggle Right Pane", disabled: !deskRightPaneAvailable() },
-          { value: "swapRightPaneSide", label: "Swap Right Pane Side", disabled: !deskRightPaneAvailable() },
+          { value: "toggleHub", label: "Toggle Hub" },
+          { value: "toggleSideBar", label: "Toggle Side Bar", disabled: !deskSideBarAvailable() },
+          { value: "swapSideBarPosition", label: "Swap Side Bar Side", disabled: !deskSideBarAvailable() },
         ],
         messages: [
           { value: "messagePrevious", label: "Previous Message" },
@@ -436,7 +436,7 @@
             alwaysOnTop: _deskAlwaysOnTop,
             autoWindowHeight: _deskAutoWindowHeight,
             fitCollapsed: _deskFitCollapsed,
-            rightPaneAvailable: deskRightPaneAvailable(),
+            sideBarAvailable: deskSideBarAvailable(),
           },
         });
       } catch (_) {

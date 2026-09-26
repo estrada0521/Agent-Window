@@ -1,9 +1,9 @@
     @media (max-width: 480px) {
       html:not([data-native-app="1"]) .desk-workbench,
-      html:not([data-native-app="1"]) .desk-workbench.sidebar-open {
+      html:not([data-native-app="1"]) .desk-workbench.hub-open {
         display: block;
       }
-      html:not([data-native-app="1"]) .desk-sidebar {
+      html:not([data-native-app="1"]) .desk-hub {
         position: absolute;
         inset: 0 auto 0 0;
         width: 100vw;
@@ -13,7 +13,7 @@
         box-shadow: none;
         border-right: none;
       }
-      html:not([data-native-app="1"]) .desk-sidebar-shell {
+      html:not([data-native-app="1"]) .desk-hub-shell {
         width: 100%;
         background: var(--bg);
         box-shadow: none;
@@ -21,17 +21,17 @@
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
       }
-      html:not([data-native-app="1"]) .desk-sidebar-shell::before {
+      html:not([data-native-app="1"]) .desk-hub-shell::before {
         display: none;
       }
-      html:not([data-native-app="1"]) .desk-workbench.sidebar-open .desk-sidebar {
+      html:not([data-native-app="1"]) .desk-workbench.hub-open .desk-hub {
         width: 100vw;
         transform: translateX(0);
       }
       html:not([data-native-app="1"]) .desk-main {
         transition: none;
       }
-      html:not([data-native-app="1"]) .desk-workbench.sidebar-open .desk-main {
+      html:not([data-native-app="1"]) .desk-workbench.hub-open .desk-main {
         display: none;
         pointer-events: none;
       }
@@ -54,7 +54,7 @@
         font-size: 14px;
         line-height: 1.32;
       }
-      html:not([data-native-app="1"]) .desk-sidebar-resizer {
+      html:not([data-native-app="1"]) .desk-hub-resizer {
         display: none;
       }
     }

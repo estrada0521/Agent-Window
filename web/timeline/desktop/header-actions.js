@@ -124,10 +124,10 @@
       openNativeHeaderMenu().catch((err) => setStatus(`header menu failed: ${err}`));
     });
     document.getElementById("timelineReloadBtn").addEventListener("click", () => void reloadTimeline());
-    document.getElementById("timelinePanelToggle").addEventListener("click", () => toggleDesktopRightPanel());
+    document.getElementById("sideBarToggle").addEventListener("click", () => toggleSideBar());
     window.addEventListener("resize", () => {
-      if (dpPanelOpen) {
-        dpApplyPanelWidth();
+      if (sideBarOpen) {
+        applySideBarWidth();
       }
       syncPanelState();
     });

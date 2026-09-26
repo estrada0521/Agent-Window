@@ -1,27 +1,27 @@
-    dpGitContent?.addEventListener("click", async (event) => {
+    gitContent?.addEventListener("click", async (event) => {
       await gitPanel.handleClick(event, {
-        onPin: () => dpToggleGitSummaryPinned(),
-        requireOpen: () => dpPanelOpen,
+        onPin: () => toggleGitSummaryPinned(),
+        requireOpen: () => sideBarOpen,
         onFileRow: async (fileRow) => {
           const p = String(fileRow.dataset.path || "").trim();
           if (!p) return;
-          const resolved = dpResolveRowClick(dpGitSel, p, event);
+          const resolved = resolveRowClick(gitSel, p, event);
           if (!resolved) return;
           if (resolved.quickLook) {
-            await dpQuickLookPaths(resolved.targets);
+            await quickLookPaths(resolved.targets);
             return;
           }
           const hash = gitPanel.detailContext?.hash || "";
           for (const path of resolved.targets) {
-            const row = dpGitContent?.querySelector(`.git-commit-file-row[data-path="${gitCssEscape(path)}"]`);
-            if (hash || row?.dataset.untracked !== "1") await dpPostOpenDiff(path, hash, row?.dataset.oldPath || "");
-            else await dpPostOpenFile(path);
+            const row = gitContent?.querySelector(`.git-commit-file-row[data-path="${gitCssEscape(path)}"]`);
+            if (hash || row?.dataset.untracked !== "1") await openDiff(path, hash, row?.dataset.oldPath || "");
+            else await openFile(path);
           }
         },
         closeWorktreeSummaryClick: true,
       });
     });
-    dpGitContent?.addEventListener("mouseover", async (event) => {
+    gitContent?.addEventListener("mouseover", async (event) => {
       const head = event.target.closest(".git-commit-detail-head");
       const target = head || event.target.closest(".git-commit-row");
       const hash = String((head ? gitPanel.detailContext?.hash : target?.dataset.hash) || "");
@@ -30,39 +30,39 @@
       const text = [`${info.author}, ${new Date(info.date).toLocaleString()}`, info.message, info.stat, info.hash].filter(Boolean).join("\n\n");
       if (target.title !== text) target.title = text;
     });
-    dpGitContent?.addEventListener("contextmenu", (event) => {
+    gitContent?.addEventListener("contextmenu", (event) => {
       const hash = String(event.target.closest(".git-commit-row")?.dataset.hash
         || (event.target.closest(".git-commit-detail-head") ? gitPanel.detailContext?.hash : "")
         || "");
       if (hash) {
-        dpOpenCommitContextMenu(hash, event);
+        openCommitContextMenu(hash, event);
         return;
       }
       const fileRow = event.target.closest(".git-commit-file-row");
       const path = String(fileRow?.dataset.path || "").trim();
       if (!path) return;
-      void dpOpenFileContextMenu(dpResolveContextMenuTargets(dpGitSel, path), event, { openFile: fileRow.dataset.untracked !== "1", triggerPath: path });
+      void openFileContextMenu(resolveContextMenuTargets(gitSel, path), event, { openFile: fileRow.dataset.untracked !== "1", triggerPath: path });
     });
     document.getElementById("gitPinnedSummaryAside")?.addEventListener("click", async (event) => {
       if (event.target.closest(".git-summary-pin")) {
         event.preventDefault();
         event.stopPropagation();
-        dpToggleGitSummaryPinned();
+        toggleGitSummaryPinned();
         return;
       }
       const row = event.target.closest('.git-summary-row[data-diff-kind="worktree"]');
-      if (!row || !dpGitContent) return;
+      if (!row || !gitContent) return;
       event.preventDefault();
       event.stopPropagation();
       const aside = document.getElementById("gitPinnedSummaryAside");
-      const seedSections = Array.isArray(dpPinnedExpandSections) ? dpPinnedExpandSections : null;
+      const seedSections = Array.isArray(pinnedExpandSections) ? pinnedExpandSections : null;
       const useSeed = !!(aside?.classList.contains("is-expanded") && seedSections?.length);
-      if (!dpGitContent.querySelector(".git-stack")) {
-        dpRenderGitShell();
+      if (!gitContent.querySelector(".git-stack")) {
+        renderGitShell();
         gitPanel.invalidateFingerprint();
-        dpApplyGitOverviewHeader();
+        applyGitOverviewHeader();
       }
-      await dpOpenGitDetail({
+      await openGitDetail({
         diffKind: "worktree",
         hash: "",
         rowHtml: row.outerHTML,
@@ -70,7 +70,7 @@
         instant: true,
         seed: useSeed ? { mode: "sections", sections: seedSections } : null,
       });
-      void openDesktopRightPanel({ view: "git", reset: false });
+      void openSideBar({ view: "git", reset: false });
     });
 
     (function initPinnedSummaryExpand() {
@@ -143,13 +143,13 @@
         if (!clear) return;
         fetchSeq++;
         refreshPromise = null;
-        dpPinnedExpandSections = null;
+        pinnedExpandSections = null;
         expand.innerHTML = "";
       }
 
       function refreshContent() {
         if (refreshPromise) return refreshPromise;
-        if (!dpGitHeaderSummaryState?.clickable) {
+        if (!gitHeaderSummaryState?.clickable) {
           close({ clear: true });
           return Promise.resolve();
         }
@@ -165,7 +165,7 @@
               return;
             }
 
-            dpPinnedExpandSections = sections;
+            pinnedExpandSections = sections;
             replaceExpandContent(sections.map(s =>
               `<div class="git-pinned-expand-section">` +
               gitCommitFileListHtml(s.files) +
@@ -173,7 +173,7 @@
             ).join(""));
           } catch (_) {
             if (seq !== fetchSeq) return;
-            dpPinnedExpandSections = null;
+            pinnedExpandSections = null;
             replaceExpandContent(`<div class="git-pinned-expand-empty">Failed to load</div>`);
           }
           requestAnimationFrame(updateExpandFade);
@@ -188,7 +188,7 @@
       function open() {
         cancelTimers();
         if (aside.hidden) return;
-        if (!dpGitHeaderSummaryState?.clickable) {
+        if (!gitHeaderSummaryState?.clickable) {
           close({ clear: true });
           return;
         }
@@ -201,7 +201,7 @@
         void refreshContent();
       }
 
-      dpPinnedExpandRefresh = () => {
+      pinnedExpandRefresh = () => {
         if (!aside.hidden) void refreshContent();
       };
 
@@ -211,16 +211,16 @@
         const path = file.dataset.path || "";
         if (!path) return;
         if (file.dataset.untracked !== "1") {
-          void dpPostOpenDiff(path, "", file.dataset.oldPath || "");
+          void openDiff(path, "", file.dataset.oldPath || "");
           return;
         }
-        void dpPostOpenFile(path);
+        void openFile(path);
       });
 
       expand.addEventListener("contextmenu", (event) => {
         const file = event.target.closest(".git-commit-file-row");
         const path = String(file?.dataset.path || "").trim();
-        if (path) void dpOpenFileContextMenu(path, event, { openFile: file.dataset.untracked !== "1" });
+        if (path) void openFileContextMenu(path, event, { openFile: file.dataset.untracked !== "1" });
       });
 
       summary.addEventListener("mouseover", (event) => {

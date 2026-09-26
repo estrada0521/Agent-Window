@@ -48,7 +48,7 @@
       from { opacity: 0; }
     }
     #timelineHud {
-      left: calc(var(--side-reserve-left, 0px) + (100vw - var(--desktop-right-panel-reserved-width, 0px)) / 2);
+      left: calc(var(--side-reserve-left, 0px) + (100vw - var(--side-bar-reserved-width, 0px)) / 2);
       --hud-fg: var(--fg);
       --hud-weight: var(--body-weight);
     }

@@ -1,9 +1,9 @@
-    const DP_GIT_SUMMARY_PIN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M12 14v8"/></svg>';
-    const dpBuildSummaryHtml = (data) => {
-      const pinBtn = `<button type="button" class="git-summary-pin" aria-pressed="false" aria-label="Pin Git Summary" title="Pin to Timeline [⇧⌘P]">${DP_GIT_SUMMARY_PIN_SVG}</button>`;
+    const GIT_SUMMARY_PIN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M12 14v8"/></svg>';
+    const buildSummaryHtml = (data) => {
+      const pinBtn = `<button type="button" class="git-summary-pin" aria-pressed="false" aria-label="Pin Git Summary" title="Pin to Timeline [⇧⌘P]">${GIT_SUMMARY_PIN_SVG}</button>`;
       return gitSummaryRowHtml(data, { leadingHtml: pinBtn });
     };
-    const dpBuildSummaryState = (data) => {
+    const buildSummaryState = (data) => {
       const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
       const worktreeAdded = Math.max(0, parseInt(data?.worktree_added) || 0);
       const worktreeDeleted = Math.max(0, parseInt(data?.worktree_deleted) || 0);
@@ -15,12 +15,12 @@
         subject: changedPaths ? "Uncommitted changes" : "Working tree clean",
         clickable: !!data?.worktree_has_diff,
         counts: [worktreeAdded, worktreeDeleted],
-        rowHtml: dpBuildSummaryHtml(data),
+        rowHtml: buildSummaryHtml(data),
       };
     };
-    const dpRenderGitShell = () => {
-      if (!dpGitContent) return;
-      dpGitContent.innerHTML = `
+    const renderGitShell = () => {
+      if (!gitContent) return;
+      gitContent.innerHTML = `
         <div class="git-stack">
           <div class="git-list-view">
             <div class="git-summary-wrap"></div>
@@ -35,6 +35,6 @@
           </div>
         </div>`;
     };
-    const dpSyncSummaryWrap = () => {
-      dpApplyGitOverviewHeader();
+    const syncSummaryWrap = () => {
+      applyGitOverviewHeader();
     };

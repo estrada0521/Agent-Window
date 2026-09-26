@@ -1,16 +1,16 @@
     html[data-desktop-timeline="1"] {
-      --right-panel-row-height: var(--pill-row-height);
-      --right-panel-row-pad-x: 0.46em;
-      --right-panel-item-gap: 0.46em;
-      --right-panel-path-gap: 0.62em;
-      --right-panel-list-inset: 0.15em;
-      --right-panel-icon-slot-size: calc(18em / 13);
-      --right-panel-small-icon-size: 1.23em;
-      --right-panel-chevron-size: 1.08em;
-      --right-panel-floating-inset: calc(var(--text-size, 13px) * 10 / 13);
+      --side-bar-row-height: var(--pill-row-height);
+      --side-bar-row-pad-x: 0.46em;
+      --side-bar-item-gap: 0.46em;
+      --side-bar-path-gap: 0.62em;
+      --side-bar-list-inset: 0.15em;
+      --side-bar-icon-slot-size: calc(18em / 13);
+      --side-bar-small-icon-size: 1.23em;
+      --side-bar-chevron-size: 1.08em;
+      --side-bar-floating-inset: calc(var(--text-size, 13px) * 10 / 13);
       --side-bar-edge-inset: calc(var(--text-size, 13px) * 5 / 13);
     }
-    .desktop-right-panel {
+    .side-bar {
       font-family: var(--font-main);
       font-size: var(--text-size, 13px);
       font-weight: var(--body-weight);
@@ -23,7 +23,7 @@
       top: var(--timeline-band-h);
       right: 0;
       bottom: 0;
-      width: var(--desktop-right-panel-width, 0px);
+      width: var(--side-bar-width, 0px);
       z-index: 1305;
       opacity: 0;
       transform: translateX(0);
@@ -31,32 +31,32 @@
       user-select: none;
       -webkit-user-select: none;
     }
-    .desktop-right-panel::before {
+    .side-bar::before {
       content: none;
     }
-    .desktop-right-panel[hidden] {
+    .side-bar[hidden] {
       display: none;
     }
-    html[data-side-bar="left"] {
-      --side-reserve-left: var(--desktop-right-panel-reserved-width);
+    html[data-side-bar-position="left"] {
+      --side-reserve-left: var(--side-bar-reserved-width);
       --side-reserve-right: 0px;
     }
-    html[data-side-bar="left"] .desktop-right-panel {
+    html[data-side-bar-position="left"] .side-bar {
       left: 0;
       right: auto;
     }
-    html:not([data-side-bar="left"]) .desktop-right-panel-card {
+    html:not([data-side-bar-position="left"]) .side-bar-card {
       padding-right: var(--side-bar-edge-inset);
     }
-    html[data-side-bar="left"]:not([data-hub-sidebar-open]) .desktop-right-panel-card {
+    html[data-side-bar-position="left"]:not([data-hub-open]) .side-bar-card {
       padding-left: var(--side-bar-edge-inset);
     }
-    .desktop-right-panel.open {
+    .side-bar.open {
       opacity: 1;
       transform: translateX(0);
       pointer-events: auto;
     }
-    .desktop-right-panel-card {
+    .side-bar-card {
       position: relative;
       display: flex;
       flex-direction: column;
@@ -73,15 +73,15 @@
       isolation: isolate;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
     }
-    .desktop-right-panel-card::before,
-    .desktop-right-panel-card::after {
+    .side-bar-card::before,
+    .side-bar-card::after {
       content: none;
     }
-    .desktop-right-panel-card > * {
+    .side-bar-card > * {
       position: relative;
       z-index: 1;
     }
-    .desktop-right-panel-resizer {
+    .side-bar-resizer {
       position: absolute;
       top: 0;
       left: -7px;
@@ -91,7 +91,7 @@
       cursor: col-resize;
       touch-action: none;
     }
-    .desktop-right-panel-resizer::before {
+    .side-bar-resizer::before {
       content: "";
       position: absolute;
       top: 0;
@@ -100,11 +100,11 @@
       width: 1px;
       background: var(--resizer);
     }
-    html[data-side-bar="left"] .desktop-right-panel-resizer {
+    html[data-side-bar-position="left"] .side-bar-resizer {
       left: auto;
       right: -7px;
     }
-    html[data-side-bar="left"] .desktop-right-panel-resizer::before {
+    html[data-side-bar-position="left"] .side-bar-resizer::before {
       left: 7px;
     }
     .side-bar-swap-btn {
@@ -123,7 +123,7 @@
       opacity: 0;
       pointer-events: none;
     }
-    html[data-side-bar="left"] .side-bar-swap-btn {
+    html[data-side-bar-position="left"] .side-bar-swap-btn {
       left: auto;
       right: 0;
       transform: translate(50%, -50%);
@@ -132,7 +132,7 @@
       width: var(--swap-icon-size);
       height: var(--swap-icon-size);
     }
-    .has-hover .desktop-right-panel-resizer:hover ~ .side-bar-swap-btn,
+    .has-hover .side-bar-resizer:hover ~ .side-bar-swap-btn,
     .has-hover .side-bar-swap-btn:hover {
       opacity: 1;
       pointer-events: auto;
@@ -140,30 +140,30 @@
     .side-bar-swap-btn:active {
       transform: translate(-50%, -50%) scale(0.94);
     }
-    html[data-side-bar="left"] .side-bar-swap-btn:active {
+    html[data-side-bar-position="left"] .side-bar-swap-btn:active {
       transform: translate(50%, -50%) scale(0.94);
     }
-    body.desktop-right-panel-resizing .side-bar-swap-btn {
+    body.side-bar-resizing .side-bar-swap-btn {
       opacity: 0;
       pointer-events: none;
     }
-    .has-hover .desktop-right-panel-resizer:hover::before,
-    body.desktop-right-panel-resizing .desktop-right-panel-resizer::before {
+    .has-hover .side-bar-resizer:hover::before,
+    body.side-bar-resizing .side-bar-resizer::before {
       background: linear-gradient(to bottom, var(--resizer) 10%, var(--resizer-active), var(--resizer) 90%);
     }
-    body.desktop-right-panel-resizing,
-    body.desktop-right-panel-resizing * {
+    body.side-bar-resizing,
+    body.side-bar-resizing * {
       cursor: col-resize;
       user-select: none;
     }
-    .dp-split-panel {
+    .split-panel {
       display: flex;
       flex-direction: column;
       flex: 1 1 auto;
       min-height: 0;
       overflow: hidden;
     }
-    .dp-split-pane {
+    .split-pane {
       display: flex;
       flex-direction: column;
       min-height: 0;
@@ -171,15 +171,15 @@
       padding-top: 0;
       box-sizing: border-box;
     }
-    .dp-split-pane-git {
+    .split-pane-git {
       flex: 0 0 auto;
       min-height: 0;
     }
-    .dp-split-pane-repo {
+    .split-pane-repo {
       flex: 1 1 auto;
       min-height: 0;
     }
-    .dp-split-divider {
+    .split-divider {
       flex-shrink: 0;
       height: 0;
       position: relative;
@@ -188,7 +188,7 @@
       user-select: none;
       touch-action: none;
     }
-    .dp-split-divider::before {
+    .split-divider::before {
       content: "";
       position: absolute;
       left: 0;
@@ -196,7 +196,7 @@
       top: -7px;
       height: 14px;
     }
-    .dp-split-divider::after {
+    .split-divider::after {
       content: "";
       position: absolute;
       left: 0;
@@ -206,24 +206,24 @@
       background: var(--resizer);
       pointer-events: none;
     }
-    .has-hover .dp-split-divider:hover::after,
-    body.dp-split-resizing .dp-split-divider::after {
+    .has-hover .split-divider:hover::after,
+    body.split-resizing .split-divider::after {
       background: linear-gradient(to right, var(--resizer) 10%, var(--resizer-active), var(--resizer) 90%);
     }
-    body.dp-split-resizing, body.dp-split-resizing * { cursor: ns-resize; user-select: none; }
-    .dp-empty-state {
+    body.split-resizing, body.split-resizing * { cursor: ns-resize; user-select: none; }
+    .empty-state {
       padding: 1.85em 0.62em;
       text-align: center;
       color: var(--muted);
       font-size: var(--text-size, 13px);
       line-height: 1.45;
     }
-    .dp-empty-state.error,
+    .empty-state.error,
     .repo-browser-empty.error,
     .git-commit-file-empty.error {
       color: var(--error);
     }
-    .dp-split-pane:has(.repo-browser-stack) {
+    .split-pane:has(.repo-browser-stack) {
       overflow: hidden;
     }
     @keyframes repo-browser-slide-in-from-right {
@@ -254,16 +254,16 @@
     }
     .repo-path-wrap {
       display: block;
-      padding: calc(0.38em + 3px) var(--right-panel-list-inset) 0.31em;
+      padding: calc(0.38em + 3px) var(--side-bar-list-inset) 0.31em;
       flex-shrink: 0;
     }
     .repo-path-back-btn {
       display: flex;
       align-items: center;
-      gap: var(--right-panel-path-gap);
+      gap: var(--side-bar-path-gap);
       width: 100%;
-      height: var(--right-panel-row-height);
-      padding: 0 var(--right-panel-row-pad-x);
+      height: var(--side-bar-row-height);
+      padding: 0 var(--side-bar-row-pad-x);
       background: var(--panel-head-bg);
       border: 0.5px solid var(--panel-row-border);
       border-radius: var(--pill-inner-radius);
@@ -277,8 +277,8 @@
     .has-hover .repo-path-back-btn.clickable:hover { background: var(--panel-row-hover-bg); }
     .repo-path-back-btn.clickable:active { background: var(--panel-row-active-bg); }
     .repo-path-back-icon-slot {
-      width: var(--right-panel-icon-slot-size);
-      height: var(--right-panel-icon-slot-size);
+      width: var(--side-bar-icon-slot-size);
+      height: var(--side-bar-icon-slot-size);
       color: var(--icon-fg);
       display: inline-flex;
       align-items: center;
@@ -287,13 +287,13 @@
       pointer-events: none;
     }
     .repo-path-back-icon-slot svg {
-      width: var(--right-panel-small-icon-size);
-      height: var(--right-panel-small-icon-size);
+      width: var(--side-bar-small-icon-size);
+      height: var(--side-bar-small-icon-size);
       display: block;
     }
     .repo-path-root-btn {
-      width: var(--right-panel-icon-slot-size);
-      height: var(--right-panel-icon-slot-size);
+      width: var(--side-bar-icon-slot-size);
+      height: var(--side-bar-icon-slot-size);
       color: var(--icon-muted);
       display: inline-flex;
       align-items: center;
@@ -306,8 +306,8 @@
       color: var(--icon-fg);
     }
     .repo-path-root-btn svg {
-      width: var(--right-panel-small-icon-size);
-      height: var(--right-panel-small-icon-size);
+      width: var(--side-bar-small-icon-size);
+      height: var(--side-bar-small-icon-size);
       display: block;
     }
     .repo-path-label {
@@ -340,8 +340,8 @@
     .git-commit-file-list {
       display: flex;
       flex-direction: column;
-      gap: var(--right-panel-list-inset);
-      padding: 0 var(--right-panel-list-inset) 0.31em;
+      gap: var(--side-bar-list-inset);
+      padding: 0 var(--side-bar-list-inset) 0.31em;
       min-height: 0;
     }
     .repo-browser-item,
@@ -350,9 +350,9 @@
       min-width: 0;
       display: flex;
       align-items: center;
-      gap: var(--right-panel-item-gap);
-      height: var(--right-panel-row-height);
-      padding: var(--right-panel-row-pad-x);
+      gap: var(--side-bar-item-gap);
+      height: var(--side-bar-row-height);
+      padding: var(--side-bar-row-pad-x);
       border-radius: var(--pill-inner-radius);
       box-sizing: border-box;
       color: var(--fg);
@@ -377,8 +377,8 @@
       background: var(--panel-row-bg);
     }
     .repo-browser-item-icon {
-      width: var(--right-panel-icon-slot-size);
-      height: var(--right-panel-icon-slot-size);
+      width: var(--side-bar-icon-slot-size);
+      height: var(--side-bar-icon-slot-size);
       flex: 0 0 auto;
       display: inline-flex;
       align-items: center;
@@ -418,8 +418,8 @@
       white-space: nowrap;
     }
     .repo-browser-item-chevron {
-      width: var(--right-panel-chevron-size);
-      height: var(--right-panel-chevron-size);
+      width: var(--side-bar-chevron-size);
+      height: var(--side-bar-chevron-size);
       color: var(--icon-muted);
       flex: 0 0 auto;
       display: inline-flex;
@@ -465,7 +465,7 @@
         transform: translateY(0);
       }
     }
-    .dp-split-pane:has(.git-stack) {
+    .split-pane:has(.git-stack) {
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -512,8 +512,8 @@
     .git-summary-wrap {
       display: flex;
       flex-direction: column;
-      gap: var(--right-panel-item-gap);
-      padding: 0.62em var(--right-panel-list-inset) 0.31em;
+      gap: var(--side-bar-item-gap);
+      padding: 0.62em var(--side-bar-list-inset) 0.31em;
       flex-shrink: 0;
       font-weight: 400;
     }
@@ -526,8 +526,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: var(--right-panel-icon-slot-size);
-      height: var(--right-panel-icon-slot-size);
+      width: var(--side-bar-icon-slot-size);
+      height: var(--side-bar-icon-slot-size);
       margin: 0;
       padding: 0;
       border: none;
@@ -539,8 +539,8 @@
       cursor: pointer;
     }
     .git-summary-pin svg {
-      width: var(--right-panel-small-icon-size);
-      height: var(--right-panel-small-icon-size);
+      width: var(--side-bar-small-icon-size);
+      height: var(--side-bar-small-icon-size);
       display: block;
     }
     .git-summary-pin.is-pinned svg circle {
@@ -548,8 +548,8 @@
     }
     html[data-desktop-timeline="1"] .git-pinned-summary-aside {
       position: fixed;
-      top: calc(var(--timeline-band-h) + var(--right-panel-floating-inset) + env(safe-area-inset-top, 0px));
-      right: var(--right-panel-floating-inset);
+      top: calc(var(--timeline-band-h) + var(--side-bar-floating-inset) + env(safe-area-inset-top, 0px));
+      right: var(--side-bar-floating-inset);
       left: auto;
       width: max-content;
       max-width: calc(100vw - 16px);
@@ -664,7 +664,7 @@
       z-index: 4;
       flex-shrink: 0;
       width: 100%;
-      padding: 0.62em var(--right-panel-list-inset) 0.31em;
+      padding: 0.62em var(--side-bar-list-inset) 0.31em;
       border: none;
       border-bottom: none;
       background: transparent;
@@ -686,7 +686,7 @@
       border-bottom: none;
       border-radius: var(--pill-inner-radius);
       pointer-events: none;
-      padding: 0 var(--right-panel-row-pad-x);
+      padding: 0 var(--side-bar-row-pad-x);
       background: var(--panel-row-bg);
       border: 0.5px solid var(--panel-row-border);
       transition: background 120ms ease;
@@ -767,7 +767,7 @@
       left: 50%;
       transform: translateX(-50%);
       top: 1.08em;
-      height: calc(var(--right-panel-row-height) + var(--right-panel-list-inset) - 0.77em);
+      height: calc(var(--side-bar-row-height) + var(--side-bar-list-inset) - 0.77em);
       width: 0.5px;
       background: var(--icon-muted);
       z-index: 0;
@@ -776,8 +776,8 @@
     .git-commit-icon-wrap {
       position: relative;
       flex-shrink: 0;
-      width: var(--right-panel-icon-slot-size);
-      height: var(--right-panel-icon-slot-size);
+      width: var(--side-bar-icon-slot-size);
+      height: var(--side-bar-icon-slot-size);
       z-index: 1;
     }
     .git-commit-dot {
@@ -902,9 +902,9 @@
     .git-summary-row {
       display: flex;
       align-items: center;
-      gap: var(--right-panel-item-gap);
-      height: var(--right-panel-row-height);
-      padding: 0 var(--right-panel-row-pad-x);
+      gap: var(--side-bar-item-gap);
+      height: var(--side-bar-row-height);
+      padding: 0 var(--side-bar-row-pad-x);
       border-radius: var(--pill-inner-radius);
       font-size: var(--text-size, 13px);
       font-family: var(--font-main);
@@ -983,8 +983,8 @@
       line-height: 1.2;
     }
     .git-commit-chevron {
-      width: var(--right-panel-chevron-size);
-      height: var(--right-panel-chevron-size);
+      width: var(--side-bar-chevron-size);
+      height: var(--side-bar-chevron-size);
       flex-shrink: 0;
       color: var(--icon-muted);
       transform: translateZ(0);
@@ -1035,9 +1035,9 @@
     .git-commit-file-header {
       display: flex;
       align-items: center;
-      gap: var(--right-panel-item-gap);
-      height: var(--right-panel-row-height);
-      padding: var(--right-panel-list-inset) var(--right-panel-row-pad-x) var(--right-panel-list-inset) calc(var(--right-panel-row-pad-x) + var(--right-panel-icon-slot-size) + var(--right-panel-item-gap));
+      gap: var(--side-bar-item-gap);
+      height: var(--side-bar-row-height);
+      padding: var(--side-bar-list-inset) var(--side-bar-row-pad-x) var(--side-bar-list-inset) calc(var(--side-bar-row-pad-x) + var(--side-bar-icon-slot-size) + var(--side-bar-item-gap));
       position: relative;
       box-sizing: border-box;
     }
@@ -1052,7 +1052,7 @@
       line-height: 1.3;
       display: flex;
       align-items: baseline;
-      gap: var(--right-panel-item-gap);
+      gap: var(--side-bar-item-gap);
       box-sizing: border-box;
     }
     .git-commit-file-name {
@@ -1102,11 +1102,11 @@
     }
     .git-commit-file-icon {
       position: absolute;
-      left: var(--right-panel-row-pad-x);
+      left: var(--side-bar-row-pad-x);
       top: 50%;
       transform: translateY(-50%);
-      width: var(--right-panel-icon-slot-size);
-      height: var(--right-panel-icon-slot-size);
+      width: var(--side-bar-icon-slot-size);
+      height: var(--side-bar-icon-slot-size);
       flex-shrink: 0;
       color: var(--icon-fg);
       display: flex;
@@ -1145,12 +1145,12 @@
       cursor: default;
       color: var(--muted);
     }
-    html[data-desktop-timeline="1"] body.right-panel-open {
+    html[data-desktop-timeline="1"] body.side-bar-open {
       padding-left: var(--side-reserve-left);
       padding-right: var(--side-reserve-right);
       box-sizing: border-box;
     }
-    html[data-desktop-timeline="1"] body.right-panel-open .composer-overlay {
+    html[data-desktop-timeline="1"] body.side-bar-open .composer-overlay {
       padding-right: calc(var(--text-size, 13px) * 12 / 13);
     }
     .git-pinned-expand {

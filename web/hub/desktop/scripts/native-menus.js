@@ -91,7 +91,7 @@
     }
     async function openDeskNativeGitChanges() {
       const invoke = getNativeInvoke();
-      if (typeof invoke !== "function" || !_deskPanelToggle || _deskGitChangesOpen) return;
+      if (typeof invoke !== "function" || !_deskSideBarToggle || _deskGitChangesOpen) return;
       _deskGitChangesOpen = true;
       try {
         const data = await requestDeskGitChanges();
@@ -100,7 +100,7 @@
           ? [{ label: "Git unavailable", section: true }]
           : buildDeskGitChangesItems(files);
         _deskGitChangesItems = items;
-        const rect = _deskPanelToggle.getBoundingClientRect();
+        const rect = _deskSideBarToggle.getBoundingClientRect();
         await invoke("show_git_changes_menu", {
           payload: {
             x: Math.round(rect.right || 0),
@@ -206,24 +206,24 @@
         openDeskHubInBrowser();
         return;
       }
-      if (detail.action === "toggleHubSidebar") {
-        toggleDeskSidebar();
+      if (detail.action === "toggleHub") {
+        toggleDeskHub();
         return;
       }
-      if (detail.action === "toggleRightPane") {
-        toggleDeskRightPanel();
+      if (detail.action === "toggleSideBar") {
+        toggleDeskSideBar();
         return;
       }
-      if (detail.action === "toggleHubSidebarOutward") {
-        toggleDeskSidebarOutward();
+      if (detail.action === "toggleHubOutward") {
+        toggleDeskHubOutward();
         return;
       }
-      if (detail.action === "toggleRightPaneOutward") {
-        toggleDeskRightPanelOutward();
+      if (detail.action === "toggleSideBarOutward") {
+        toggleDeskSideBarOutward();
         return;
       }
-      if (detail.action === "swapRightPaneSide") {
-        sendDeskPanelCommand("swap");
+      if (detail.action === "swapSideBarPosition") {
+        sendDeskSideBarCommand("swap");
         return;
       }
       if (detail.action === "toggleAlwaysOnTop") {

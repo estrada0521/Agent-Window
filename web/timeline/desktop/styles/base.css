@@ -11,9 +11,9 @@ __INCLUDE:../../markdown-theme-vars.css__
       --chrome-icon-gap: 2px;
       --bg-rgb: __DARK_BG_CHANNELS__;
       --bg: rgb(var(--bg-rgb));
-      --desktop-right-panel-reserved-width: 0px;
+      --side-bar-reserved-width: 0px;
       --side-reserve-left: 0px;
-      --side-reserve-right: var(--desktop-right-panel-reserved-width);
+      --side-reserve-right: var(--side-bar-reserved-width);
       --line: __LINE__;
       --line-strong: __LINE_STRONG__;
       --fg: __LIGHT_FG__;

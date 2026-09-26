@@ -38,7 +38,7 @@
         openTimelineInDesk(data.timeline_url, data.timeline || "");
         setStatus(data.notice || "");
         if (isPhoneViewport()) {
-          setDeskSidebarOpen(false);
+          setDeskHubOpen(false);
         }
         void refreshHubTimelines(true, { skipRestore: true });
       } catch (err) {
@@ -129,7 +129,7 @@
           if (openToken !== _deskOpenToken) return;
         }
         openTimelineInDesk(timelineUrl, name);
-        if (closeOnOpen) setDeskSidebarOpen(false);
+        if (closeOnOpen) setDeskHubOpen(false);
       } catch (err) {
         if (openToken !== _deskOpenToken) return;
         failDeskOpen(err?.message || "open timeline failed");
@@ -204,7 +204,7 @@
       if (_deskSelectedTimelineName) {
         if (findTimelineRecord(_deskSelectedTimelineName)) return;
         clearDeskSelection();
-        showDeskSidebarList({ open: true });
+        showDeskHubList({ open: true });
         return;
       }
       const requested = getPersistedDeskSelection();
@@ -216,7 +216,7 @@
         }
         persistDeskSelection("");
         failDeskOpen("Timeline not found");
-        showDeskSidebarList({ open: true });
+        showDeskHubList({ open: true });
         return;
       }
       const active = _hubTimelinesCache.active || [];
@@ -224,6 +224,6 @@
         openTimelineFrame(buildTimelineOpenHref(active[0].name, false), active[0].name);
         return;
       }
-      showDeskSidebarList({ open: true });
+      showDeskHubList({ open: true });
       clearDeskTimelineFrame();
     }

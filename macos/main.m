@@ -151,13 +151,13 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     }
     NSMenuItem *actualSize = [self item:@"Actual Size" payload:@{ @"action": @"textSize", @"mode": @"actual" } key:@"0" mods:cmd];
     actualSize.enabled = [p[@"textSize"] integerValue] != [p[@"textSizeDefault"] integerValue];
-    BOOL rightPane = [p[@"rightPaneAvailable"] boolValue];
-    NSMenuItem *rightPaneItem = [self action:@"toggleRightPane" title:@"Toggle Right Pane" key:@"e" mods:cmd];
-    rightPaneItem.enabled = rightPane;
-    NSMenuItem *rightPaneOutward = [self action:@"toggleRightPaneOutward" title:@"Toggle Right Pane Outward" key:@"e" mods:cmd | opt];
-    rightPaneOutward.enabled = rightPane;
-    NSMenuItem *swapRightPane = [self action:@"swapRightPaneSide" title:@"Swap Right Pane Side" key:@"e" mods:cmd | shift];
-    swapRightPane.enabled = rightPane;
+    BOOL sideBarAvailable = [p[@"sideBarAvailable"] boolValue];
+    NSMenuItem *sideBarItem = [self action:@"toggleSideBar" title:@"Toggle Side Bar" key:@"e" mods:cmd];
+    sideBarItem.enabled = sideBarAvailable;
+    NSMenuItem *sideBarOutward = [self action:@"toggleSideBarOutward" title:@"Toggle Side Bar Outward" key:@"e" mods:cmd | opt];
+    sideBarOutward.enabled = sideBarAvailable;
+    NSMenuItem *swapSideBarPosition = [self action:@"swapSideBarPosition" title:@"Swap Side Bar Side" key:@"e" mods:cmd | shift];
+    swapSideBarPosition.enabled = sideBarAvailable;
     NSMenuItem *alwaysOnTop = [self action:@"toggleAlwaysOnTop" title:@"Always on Top" key:@"p" mods:cmd | opt];
     alwaysOnTop.state = [p[@"alwaysOnTop"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
     BOOL fit = [p[@"autoWindowHeight"] boolValue];
@@ -186,11 +186,11 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
             [self action:@"moveWindowCenter" title:@"Move to Center" key:ArrowKey(NSDownArrowFunctionKey) mods:cmd | opt],
         ]],
         [self submenu:@"Side Panels" items:@[
-            [self action:@"toggleHubSidebar" title:@"Toggle Hub Sidebar" key:@"b" mods:cmd],
-            rightPaneItem,
-            [self action:@"toggleHubSidebarOutward" title:@"Toggle Hub Sidebar Outward" key:@"b" mods:cmd | opt],
-            rightPaneOutward,
-            swapRightPane,
+            [self action:@"toggleHub" title:@"Toggle Hub" key:@"b" mods:cmd],
+            sideBarItem,
+            [self action:@"toggleHubOutward" title:@"Toggle Hub Outward" key:@"b" mods:cmd | opt],
+            sideBarOutward,
+            swapSideBarPosition,
         ]],
         [self submenu:@"Messages" items:@[
             [self action:@"messagePrevious" title:@"Previous Message" key:ArrowKey(NSUpArrowFunctionKey) mods:opt],

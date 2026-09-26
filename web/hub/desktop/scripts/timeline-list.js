@@ -106,7 +106,7 @@
         await refreshHubTimelines(true, { skipRestore: true });
         if (!isSelected) return;
         clearDeskSelection();
-        showDeskSidebarList({ open: true });
+        showDeskHubList({ open: true });
       } catch (err) {
         setStatus(err?.message || (isDelete ? "Failed to delete timeline." : "Failed to archive timeline."));
       }

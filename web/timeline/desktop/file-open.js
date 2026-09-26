@@ -58,6 +58,16 @@
         return false;
       }
     };
+    const openDiff = async (rawPath, hash = "", oldPath = "") => {
+      const normalizedPath = normalizeWorkspaceFilePath(rawPath);
+      if (!normalizedPath) return;
+      const errMsg = "Diff failed";
+      try {
+        await postOpenDiff(normalizedPath, hash, oldPath);
+      } catch (err) {
+        setStatus(err?.message || errMsg);
+      }
+    };
     let _openSurfaceChain = Promise.resolve();
     const runOpenSurfaceSerialized = (fn) => {
       const next = _openSurfaceChain.then(fn).catch(() => {});

@@ -91,7 +91,7 @@ To use it, add `tmux/agent_send/agent-send` to PATH and place `tmux/agent_send/S
 
 ## workspace
 
-The right pane shows git status and a file tree. Diffs open in `git difftool`. Files open in the default app; on mobile, a built-in viewer.
+The side bar shows git status and a file tree. Diffs open in `git difftool`. Files open in the default app; on mobile, a built-in viewer.
 
 File icons: put a symlink to a file icon theme's definition JSON (VS Code and similar) at `~/.agent-window/file-icon-theme.json`.
 
@@ -176,8 +176,8 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Action | Key | Note |
 |---|---|---|
 | Default / compact / mini size | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` | |
-| Toggle Hub / right pane | `⌘B` / `⌘E` | Add `⌥` to grow the window outward |
-| Swap the right pane to the other side | `⇧⌘E` | |
+| Toggle Hub / side bar | `⌘B` / `⌘E` | Add `⌥` to grow the window outward |
+| Swap the side bar to the other side | `⇧⌘E` | |
 | Move to screen edge | `⌥⌘↑` `←` `→` `↓` | `↓` centers |
 | Keep above other windows | `⌥⌘P` | |
 | Fit Height | `⌥⌘H` | |

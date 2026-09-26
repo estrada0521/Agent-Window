@@ -7,7 +7,7 @@
     let _deskSelectedTimelineName = "";
     let _deskTimelineFrameLoadedUrl = "";
     let _deskOpenToken = 0;
-    let _deskSidebarWidthAtDefaultTextSize = DESK_DEFAULT_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE;
+    let _deskHubWidthAtDefaultTextSize = DESK_DEFAULT_HUB_WIDTH_AT_DEFAULT_TEXT_SIZE;
     let _deskOpenSwipeRow = null;
     let _deskContextTimelineName = "";
     let _deskTimelineRename = null;
@@ -22,13 +22,13 @@
       }
       updateDeskChromeOverflow();
     }
-    function updateDeskPanelButtonState(mode = "", width = _deskPanelWidth) {
-      _deskPanelActiveMode = mode ? "open" : "";
+    function updateDeskSideBarButtonState(mode = "", width = _deskSideBarWidth) {
+      _deskSideBarActiveMode = mode ? "open" : "";
       const nextWidth = Math.max(0, Number(width) || 0);
-      if (nextWidth > 0) _deskPanelWidth = nextWidth;
-      if (_deskPanelToggle) {
-        _deskPanelToggle.classList.toggle("active", !!_deskPanelActiveMode);
-        _deskPanelToggle.setAttribute("aria-pressed", _deskPanelActiveMode ? "true" : "false");
+      if (nextWidth > 0) _deskSideBarWidth = nextWidth;
+      if (_deskSideBarToggle) {
+        _deskSideBarToggle.classList.toggle("active", !!_deskSideBarActiveMode);
+        _deskSideBarToggle.setAttribute("aria-pressed", _deskSideBarActiveMode ? "true" : "false");
       }
     }
     function setDeskTimelineLoading(active) {
@@ -44,7 +44,7 @@
     function failDeskOpen(message) {
       clearDeskTimelineFrame();
       setResidentStatus("timeline-open", message);
-      showDeskSidebarList({ open: true });
+      showDeskHubList({ open: true });
     }
 
     const { setStatus, setResidentStatus } = createHud(document.getElementById("hubHud"));
@@ -84,10 +84,10 @@
         : null;
       frameWin.postMessage({ type: "open-timeline-header-menu", anchor }, "*");
     }
-    function sendDeskPanelCommand(mode) {
+    function sendDeskSideBarCommand(mode) {
       const frameWin = _deskTimelineFrame?.contentWindow;
       if (!frameWin) return;
-      frameWin.postMessage({ type: "desktop-panel", mode: String(mode || "") }, "*");
+      frameWin.postMessage({ type: "side-bar", mode: String(mode || "") }, "*");
     }
     function sendDeskTimelineAction(action) {
       const frameWin = _deskTimelineFrame?.contentWindow;
@@ -145,12 +145,12 @@
     if (typeof _phoneViewportQuery.addEventListener === "function") {
       _phoneViewportQuery.addEventListener("change", () => {
         syncAppShellHeight({ force: true });
-        syncDeskSidebarResizerVisibility();
+        syncDeskHubResizerVisibility();
       });
     } else if (typeof _phoneViewportQuery.addListener === "function") {
       _phoneViewportQuery.addListener(() => {
         syncAppShellHeight({ force: true });
-        syncDeskSidebarResizerVisibility();
+        syncDeskHubResizerVisibility();
       });
     }
     window.addEventListener("pageshow", () => syncAppShellHeight({ force: true }));
@@ -160,50 +160,50 @@
       window.visualViewport.addEventListener("scroll", () => syncAppShellHeight());
     }
 
-    function roundDeskSidebarWidth(value) {
+    function roundDeskHubWidth(value) {
       return Math.round(value * 100) / 100;
     }
 
-    function clampDeskSidebarWidthAtDefaultTextSize(value) {
+    function clampDeskHubWidthAtDefaultTextSize(value) {
       const numeric = Number(value);
-      const width = Number.isFinite(numeric) ? numeric : DESK_DEFAULT_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE;
-      return roundDeskSidebarWidth(Math.max(
-        DESK_MIN_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE,
-        Math.min(DESK_MAX_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE, width),
+      const width = Number.isFinite(numeric) ? numeric : DESK_DEFAULT_HUB_WIDTH_AT_DEFAULT_TEXT_SIZE;
+      return roundDeskHubWidth(Math.max(
+        DESK_MIN_HUB_WIDTH_AT_DEFAULT_TEXT_SIZE,
+        Math.min(DESK_MAX_HUB_WIDTH_AT_DEFAULT_TEXT_SIZE, width),
       ));
     }
 
-    function currentDeskSidebarWidthPx() {
-      return roundDeskSidebarWidth(
-        _deskSidebarWidthAtDefaultTextSize * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT,
+    function currentDeskHubWidthPx() {
+      return roundDeskHubWidth(
+        _deskHubWidthAtDefaultTextSize * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT,
       );
     }
 
-    function readDeskSidebarWidthAtDefaultTextSize() {
-      return clampDeskSidebarWidthAtDefaultTextSize(localStorage.getItem(DESK_SIDEBAR_WIDTH_KEY));
+    function readDeskHubWidthAtDefaultTextSize() {
+      return clampDeskHubWidthAtDefaultTextSize(localStorage.getItem(DESK_HUB_WIDTH_KEY));
     }
 
-    function applyDeskSidebarWidth() {
+    function applyDeskHubWidth() {
       if (_deskWorkbench) {
-        _deskWorkbench.style.setProperty("--desk-sidebar-width", `${currentDeskSidebarWidthPx()}px`);
+        _deskWorkbench.style.setProperty("--desk-hub-width", `${currentDeskHubWidthPx()}px`);
       }
     }
 
-    function setDeskSidebarWidthAtDefaultTextSize(nextWidth, { persist = true } = {}) {
-      _deskSidebarWidthAtDefaultTextSize = clampDeskSidebarWidthAtDefaultTextSize(nextWidth);
-      applyDeskSidebarWidth();
+    function setDeskHubWidthAtDefaultTextSize(nextWidth, { persist = true } = {}) {
+      _deskHubWidthAtDefaultTextSize = clampDeskHubWidthAtDefaultTextSize(nextWidth);
+      applyDeskHubWidth();
       if (_deskAppSidebarToggle) {
-        _deskAppSidebarToggle.classList.toggle("is-active", isDeskTimelineSidebarOpen());
+        _deskAppSidebarToggle.classList.toggle("is-active", isDeskHubOpen());
       }
       if (persist) {
-        localStorage.setItem(DESK_SIDEBAR_WIDTH_KEY, String(_deskSidebarWidthAtDefaultTextSize));
+        localStorage.setItem(DESK_HUB_WIDTH_KEY, String(_deskHubWidthAtDefaultTextSize));
       }
     }
 
-    function setDeskSidebarWidthFromRenderedPx(nextWidth) {
+    function setDeskHubWidthFromRenderedPx(nextWidth) {
       const textSize = currentDeskTextSizePx();
       const widthAtDefaultTextSize = Number(nextWidth) * DESK_TEXT_SIZE_DEFAULT / textSize;
-      setDeskSidebarWidthAtDefaultTextSize(widthAtDefaultTextSize);
+      setDeskHubWidthAtDefaultTextSize(widthAtDefaultTextSize);
     }
 
     const deskDtHasFiles = (dt) => !!(dt && Array.from(dt.types || []).includes("Files"));
@@ -343,46 +343,42 @@
     }
 
     function syncDeskTimelineShellState() {
-      _deskTimelineFrame?.contentWindow?.postMessage({ type: "hub-sidebar-state", open: isDeskTimelineSidebarOpen() }, "*");
+      _deskTimelineFrame?.contentWindow?.postMessage({ type: "hub-open-state", open: isDeskHubOpen() }, "*");
     }
 
-    function syncDeskSidebarResizerVisibility() {
-      if (!_deskSidebarResizer) return;
+    function syncDeskHubResizerVisibility() {
+      if (!_deskHubResizer) return;
       if (isNativeApp()) {
-        _deskSidebarResizer.hidden = !isDeskSidebarOpen();
+        _deskHubResizer.hidden = !isDeskHubOpen();
         return;
       }
       if (isPhoneViewport()) {
-        _deskSidebarResizer.hidden = true;
+        _deskHubResizer.hidden = true;
         return;
       }
-      _deskSidebarResizer.hidden = !isDeskSidebarOpen();
+      _deskHubResizer.hidden = !isDeskHubOpen();
     }
 
-    function setDeskSidebarOpen(isOpen) {
+    function setDeskHubOpen(isOpen) {
       if (!_deskWorkbench) return;
-      _deskWorkbench.classList.toggle("sidebar-open", !!isOpen);
-      sessionStorage.setItem(DESK_SIDEBAR_OPEN_KEY, isOpen ? "1" : "0");
+      _deskWorkbench.classList.toggle("hub-open", !!isOpen);
+      sessionStorage.setItem(DESK_HUB_OPEN_KEY, isOpen ? "1" : "0");
       if (_deskAppSidebarToggle) {
-        _deskAppSidebarToggle.classList.toggle("is-active", isDeskTimelineSidebarOpen());
+        _deskAppSidebarToggle.classList.toggle("is-active", isDeskHubOpen());
       }
-      syncDeskSidebarResizerVisibility();
+      syncDeskHubResizerVisibility();
       syncDeskTimelineShellState();
     }
 
-    function isDeskSidebarOpen() {
-      return !!(_deskWorkbench && _deskWorkbench.classList.contains("sidebar-open"));
+    function isDeskHubOpen() {
+      return !!(_deskWorkbench && _deskWorkbench.classList.contains("hub-open"));
     }
 
-    function isDeskTimelineSidebarOpen() {
-      return isDeskSidebarOpen();
+    function showDeskHubList({ open = true } = {}) {
+      if (open) setDeskHubOpen(true);
     }
 
-    function showDeskSidebarList({ open = true } = {}) {
-      if (open) setDeskSidebarOpen(true);
-    }
-
-    function initDeskSidebarHoverPopover() {
+    function initDeskHubHoverPopover() {
       if (!_deskAppSidebarToggle) return;
 
       let hoverPopover = null;
@@ -439,13 +435,13 @@
 
       function open() {
         cancelDismiss();
-        if (isDeskSidebarOpen()) return;
+        if (isDeskHubOpen()) return;
         if (_deskAutoWindowHeight) return;
         if (hoverPopover) return;
         if (!_deskTimelineList) return;
 
         const listEl = document.createElement("div");
-        listEl.className = "desk-sidebar-hover-list";
+        listEl.className = "desk-hub-hover-list";
         for (const child of Array.from(_deskTimelineList.children)) {
           if (child.classList.contains("desk-section-label")) {
             listEl.appendChild(child.cloneNode(true));
@@ -461,7 +457,7 @@
         if (!listEl.children.length) return;
 
         hoverPopover = document.createElement("div");
-        hoverPopover.className = "desk-sidebar-hover-popover";
+        hoverPopover.className = "desk-hub-hover-popover";
         hoverPopover.addEventListener("mouseenter", cancelDismiss);
         hoverPopover.addEventListener("mouseleave", scheduleDismiss);
         hoverPopover.addEventListener("click", (event) => {
@@ -492,7 +488,7 @@
 
       if (_deskWorkbench) {
         new MutationObserver(() => {
-          if (isDeskSidebarOpen()) dismiss();
+          if (isDeskHubOpen()) dismiss();
         }).observe(_deskWorkbench, { attributes: true, attributeFilter: ["class"] });
       }
     }

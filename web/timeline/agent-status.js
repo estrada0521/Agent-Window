@@ -75,7 +75,7 @@
       syncAgentMenuOptions();
       setResidentStatus("thread-stopped", data.stopped_threads.join(" · "));
       if (document.documentElement.dataset.mobile !== "1" && typeof data.timeline === "string" && data.timeline) {
-        dpOnTimelineSummaryPinReload();
+        onTimelineSummaryPinReload();
       }
     };
     const refreshTimelineState = async () => {

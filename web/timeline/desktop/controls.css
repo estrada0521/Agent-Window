@@ -57,7 +57,7 @@
       fill: var(--fg);
       stroke: none;
     }
-    html[data-side-bar="left"] #timelinePanelToggle svg {
+    html[data-side-bar-position="left"] #sideBarToggle svg {
       transform: scaleX(-1);
     }
     .timeline-control-btn[aria-pressed="true"] .pane-active-icon {

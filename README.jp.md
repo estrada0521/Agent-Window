@@ -91,7 +91,7 @@ printf '%s' '<message>' | agent-send <target>
 
 ## workspace
 
-右paneにgitの状態とfile treeが出る。差分は `git difftool`。fileは既定のアプリ、mobileは内蔵viewer。
+side barにgitの状態とfile treeが出る。差分は `git difftool`。fileは既定のアプリ、mobileは内蔵viewer。
 
 file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.agent-window/file-icon-theme.json` に置くと使える。
 
@@ -176,8 +176,8 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | 操作 | キー | 備考 |
 |---|---|---|
 | size 既定 / コンパクト / ミニ | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` | |
-| Hub / 右paneの開閉 | `⌘B` / `⌘E` | `⌥` 併用で外側に広がる |
-| 右paneの左右入れ替え | `⇧⌘E` | |
+| Hub / side barの開閉 | `⌘B` / `⌘E` | `⌥` 併用で外側に広がる |
+| side barの左右入れ替え | `⇧⌘E` | |
 | 画面端へ移動 | `⌥⌘↑` `←` `→` `↓` | `↓` は中央 |
 | 最前面に固定 | `⌥⌘P` | |
 | Fit Height | `⌥⌘H` | |

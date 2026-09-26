@@ -1,4 +1,4 @@
-    .desk-sidebar-content {
+    .desk-hub-content {
       min-height: 0;
       min-width: 0;
       display: grid;
@@ -7,7 +7,7 @@
       box-sizing: border-box;
       padding-top: 0;
     }
-    .desk-sidebar-timelines {
+    .desk-hub-timelines {
       grid-area: 1 / 1;
       min-height: 0;
       min-width: 0;
@@ -19,10 +19,10 @@
       position: relative;
       font-size: var(--text-size, 13px);
     }
-    .desk-sidebar-timelines::-webkit-scrollbar {
+    .desk-hub-timelines::-webkit-scrollbar {
       display: none;
     }
-    .desk-sidebar-timelines[hidden] {
+    .desk-hub-timelines[hidden] {
       display: none;
       visibility: hidden;
       pointer-events: none;
@@ -85,7 +85,7 @@
       margin: 0;
       opacity: 1;
     }
-    .desk-sidebar-timelines,
+    .desk-hub-timelines,
     .desk-timeline-list,
     .desk-new-timeline-section,
     .desk-swipe-row,

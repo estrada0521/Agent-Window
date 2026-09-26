@@ -1,23 +1,23 @@
-    const dpGitSummaryPinnedStorageKey = () => `agent_window_git_summary_pinned:${String(currentTimelineName || "").trim() || "__none"}`;
-    let dpGitSummaryPinned = true;
-    const dpPinnedStripActive = () =>
-      dpGitSummaryPinned && document.documentElement.dataset.autoWindowHeight !== "1";
-    let dpPinnedExpandRefresh = null;
-    let dpPinnedExpandSections = null;
-    let _dpGitSummaryPinnedLoadedForKey = "";
-    const dpReadGitSummaryPinnedFromStorage = () => {
-      const stored = localStorage.getItem(dpGitSummaryPinnedStorageKey());
-      dpGitSummaryPinned = stored === null ? true : stored === "1";
+    const gitSummaryPinnedStorageKey = () => `agent_window_git_summary_pinned:${String(currentTimelineName || "").trim() || "__none"}`;
+    let gitSummaryPinned = true;
+    const pinnedStripActive = () =>
+      gitSummaryPinned && document.documentElement.dataset.autoWindowHeight !== "1";
+    let pinnedExpandRefresh = null;
+    let pinnedExpandSections = null;
+    let _gitSummaryPinnedLoadedForKey = "";
+    const readGitSummaryPinnedFromStorage = () => {
+      const stored = localStorage.getItem(gitSummaryPinnedStorageKey());
+      gitSummaryPinned = stored === null ? true : stored === "1";
     };
-    const dpApplySummaryPinButtonPressed = (root) => {
+    const applySummaryPinButtonPressed = (root) => {
       if (!root) return;
       root.querySelectorAll(".git-summary-pin").forEach((btn) => {
-        btn.setAttribute("aria-pressed", dpGitSummaryPinned ? "true" : "false");
-        btn.classList.toggle("is-pinned", dpGitSummaryPinned);
-        btn.title = dpGitSummaryPinned ? "Unpin from Timeline [⇧⌘P]" : "Pin to Timeline [⇧⌘P]";
+        btn.setAttribute("aria-pressed", gitSummaryPinned ? "true" : "false");
+        btn.classList.toggle("is-pinned", gitSummaryPinned);
+        btn.title = gitSummaryPinned ? "Unpin from Timeline [⇧⌘P]" : "Pin to Timeline [⇧⌘P]";
       });
     };
-    const dpRenderGitSummaryRoot = (root, rowHtml, { animateCounts = true } = {}) => {
+    const renderGitSummaryRoot = (root, rowHtml, { animateCounts = true } = {}) => {
       if (!root) return;
       const existingRow = root.querySelector(".git-summary-row");
       if (existingRow && rowHtml) {
@@ -47,28 +47,28 @@
           const nextChevron = nextRow.querySelector(".git-commit-chevron");
           if (existingChevron && !nextChevron) existingChevron.remove();
           else if (!existingChevron && nextChevron) existingRow.appendChild(nextChevron.cloneNode(true));
-          dpApplySummaryPinButtonPressed(root);
+          applySummaryPinButtonPressed(root);
           return;
         }
       }
       const previous = gitCountSnapshot(root);
       root.innerHTML = rowHtml;
-      dpApplySummaryPinButtonPressed(root);
+      applySummaryPinButtonPressed(root);
       if (animateCounts) animateGitCountsFromSnapshot(root, previous);
     };
-    let dpGitHeaderSummaryState = null;
-    const dpApplyGitOverviewHeader = () => {
-      const rowHtml = dpGitHeaderSummaryState?.rowHtml || "";
-      const panelWrap = dpGitContent?.querySelector(".git-summary-wrap");
+    let gitHeaderSummaryState = null;
+    const applyGitOverviewHeader = () => {
+      const rowHtml = gitHeaderSummaryState?.rowHtml || "";
+      const panelWrap = gitContent?.querySelector(".git-summary-wrap");
       const aside = document.getElementById("gitPinnedSummaryAside");
       const inner = document.getElementById("gitPinnedSummaryInner");
-      const stripShown = dpPinnedStripActive() && !dpPanelOpen;
+      const stripShown = pinnedStripActive() && !sideBarOpen;
       aside.hidden = !stripShown;
-      dpRenderGitSummaryRoot(inner, rowHtml, { animateCounts: stripShown });
-      if (stripShown) dpPinnedExpandRefresh?.();
-      if (panelWrap) dpRenderGitSummaryRoot(panelWrap, rowHtml, { animateCounts: dpPanelOpen });
-      dpApplyPanelWidth();
+      renderGitSummaryRoot(inner, rowHtml, { animateCounts: stripShown });
+      if (stripShown) pinnedExpandRefresh?.();
+      if (panelWrap) renderGitSummaryRoot(panelWrap, rowHtml, { animateCounts: sideBarOpen });
+      applySideBarWidth();
     };
-    const dpSyncPinnedSummaryStrip = () => {
-      dpApplyGitOverviewHeader();
+    const syncPinnedSummaryStrip = () => {
+      applyGitOverviewHeader();
     };

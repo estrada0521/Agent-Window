@@ -7,14 +7,14 @@
     }
     const PHONE_VIEWPORT_MAX_PX = 480;
     const _deskWorkbench = document.getElementById("deskWorkbench");
-    const _deskSidebar = document.getElementById("deskSidebar");
-    const _deskSidebarResizer = document.getElementById("deskSidebarResizer");
+    const _deskHub = document.getElementById("deskHub");
+    const _deskHubResizer = document.getElementById("deskHubResizer");
     const _deskAppSidebarToggle = document.getElementById("deskAppSidebarToggle");
     const _deskTimelineList = document.getElementById("deskTimelineList");
     const _deskTimelineFrame = document.getElementById("deskTimelineFrame");
     const _deskTimelineMenuBtn = document.getElementById("timelineMenuBtn");
     const _deskTimelineReloadBtn = document.getElementById("timelineReloadBtn");
-    const _deskPanelToggle = document.getElementById("timelinePanelToggle");
+    const _deskSideBarToggle = document.getElementById("sideBarToggle");
     const _deskTimelineShell = document.querySelector(".desk-timeline-shell");
     const _deskReloadShell = document.getElementById("deskReloadShell");
     const _deskMain = document.querySelector(".desk-main");
@@ -26,17 +26,17 @@
     const _deskWindowTraffic = document.querySelector(".desk-window-traffic");
     const _deskTimelineTitleTextEl = document.getElementById("deskTimelineTitleText");
     const DESK_SELECTED_KEY = "agent_window_hub_selected_timeline";
-    const DESK_SIDEBAR_WIDTH_KEY = "agent_window_hub_sidebar_width_at_default_text_size";
-    const DESK_SIDEBAR_OPEN_KEY = "agent_window_hub_sidebar_open";
+    const DESK_HUB_WIDTH_KEY = "agent_window_hub_width_at_default_text_size";
+    const DESK_HUB_OPEN_KEY = "agent_window_hub_open";
     const DESK_AUTO_HEIGHT_KEY = "agent_window_hub_auto_window_height";
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
-    const DESK_DEFAULT_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE = 262;
-    const DESK_MIN_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE = 144;
-    const DESK_MAX_SIDEBAR_WIDTH_AT_DEFAULT_TEXT_SIZE = 420;
+    const DESK_DEFAULT_HUB_WIDTH_AT_DEFAULT_TEXT_SIZE = 262;
+    const DESK_MIN_HUB_WIDTH_AT_DEFAULT_TEXT_SIZE = 144;
+    const DESK_MAX_HUB_WIDTH_AT_DEFAULT_TEXT_SIZE = 420;
     const DESK_SWIPE_ACTION_WIDTH = 92;
     const DESK_SWIPE_OPEN_THRESHOLD = 40;
-    const DESK_SIDEBAR_CLOSE_SWIPE_EDGE_PX = 36;
-    const DESK_SIDEBAR_CLOSE_SWIPE_THRESHOLD = 54;
+    const DESK_HUB_CLOSE_SWIPE_EDGE_PX = 36;
+    const DESK_HUB_CLOSE_SWIPE_THRESHOLD = 54;
     const DESK_TIMELINE_URL_CACHE_LIMIT = 3;
     const hubTimelineUrls = createHubTimelineUrlResolver({
       cacheLimit: DESK_TIMELINE_URL_CACHE_LIMIT,
@@ -44,8 +44,8 @@
       wrapUrl: (url) => String(url || "").trim(),
       errorMessage: "timeline url unavailable",
     });
-    let _deskPanelActiveMode = "";
-    let _deskPanelWidth = 0;
+    let _deskSideBarActiveMode = "";
+    let _deskSideBarWidth = 0;
     let _deskOutwardResizeInFlight = false;
     const _phoneViewportQuery = window.matchMedia(`(max-width: ${PHONE_VIEWPORT_MAX_PX}px)`);
     const esc = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
@@ -84,7 +84,7 @@
       const invoke = getNativeInvoke();
       const scalesWindow = clamped !== previous && typeof invoke === "function";
       applyDeskTextSizeLocal(clamped);
-      applyDeskSidebarWidth();
+      applyDeskHubWidth();
       updateDeskChromeOverflow();
       localStorage.setItem(DESK_TEXT_SIZE_KEY, String(clamped));
       _deskTimelineFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
