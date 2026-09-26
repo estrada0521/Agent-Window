@@ -49,10 +49,6 @@ class RoomControlError(RuntimeError):
     pass
 
 
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
-
-
 def _run(args: list[str], *, timeout: float | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [*TMUX, *args],
@@ -257,13 +253,13 @@ def open_room(
     timeline_label: str,
     workspace: str,
     agents: list[str],
-    repo_root: Path | str | None = None,
+    repo_root: Path | str,
     revive: bool = False,
 ) -> None:
     workspace_path = Path(workspace).expanduser().resolve()
     if not workspace_path.is_dir():
         raise RoomControlError(f"Invalid workspace: {workspace_path}")
-    root = Path(repo_root).resolve() if repo_root is not None else _repo_root()
+    root = Path(repo_root).resolve()
     instances = _prepare_instances(agents)
     if not revive:
         create_log_dir(timeline_label, str(workspace_path), instances)
