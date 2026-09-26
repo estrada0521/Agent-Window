@@ -125,7 +125,6 @@ def sync_cursor_native_log(
 
         jsonl_entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "session": self.session_name,
             "sender": agent,
             "targets": ["user"],
             "message": display,

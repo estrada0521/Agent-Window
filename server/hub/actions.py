@@ -11,7 +11,8 @@ from fs.log.meta import (
     session_workspace,
     set_session_workspace,
 )
-from fs.log.paths import agent_window_log_root
+from fs.log.jsonl import append_jsonl_entry
+from fs.log.paths import agent_window_log_root, log_jsonl_path
 from server.hub.room_supervisor import (
     TmuxUnhealthy,
     delete_archived_session,
@@ -173,6 +174,15 @@ def post_rename_session(handler, _parsed, ctx) -> None:
     try:
         if old_name != new_name:
             rename_session(old_name, new_name)
+            append_jsonl_entry(
+                log_jsonl_path(new_name),
+                {
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "sender": "system",
+                    "targets": [],
+                    "message": f"Timeline renamed: {old_name} → {new_name}",
+                },
+            )
     except OSError as exc:
         handler._send_json(409, {"ok": False, "error": str(exc)})
         return

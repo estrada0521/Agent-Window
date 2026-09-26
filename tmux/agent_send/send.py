@@ -246,7 +246,6 @@ class AgentSender:
             raise AgentSendError(f"session log is unavailable: {log_path}")
         entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "session": session_name,
             "sender": sender,
             "targets": targets,
             "message": payload,

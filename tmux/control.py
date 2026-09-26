@@ -104,7 +104,6 @@ def _append_log(session_name: str, message: str) -> None:
         log_jsonl_path(session_name),
         {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "session": session_name,
             "sender": "system",
             "targets": [],
             "message": message,
@@ -371,7 +370,7 @@ def create_session(
         _run(["select-pane", "-t", panes[0]])
 
     if revive:
-        _append_log(session_name, "Session revived:")
+        _append_log(session_name, f"Room revived: {workspace_path}")
 
 
 def kill_session(
@@ -390,7 +389,7 @@ def kill_session(
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip() or "tmux kill-session failed"
         raise SessionControlError(detail)
-    _append_log(session_name, "Session archived:")
+    _append_log(session_name, f"Room archived: {workspace}")
 
 
 def add_agent(

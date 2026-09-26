@@ -33,7 +33,6 @@ def _append_grok_reply(state, agent: str, history_path: str, line_start: int, en
         state.log_path,
         {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "session": state.session_name,
             "sender": agent,
             "targets": ["user"],
             "message": display,

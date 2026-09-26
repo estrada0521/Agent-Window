@@ -82,7 +82,6 @@ def sync_claude_native_log(
         display = "\n".join(texts)
         jsonl_entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "session": self.session_name,
             "sender": agent,
             "targets": ["user"],
             "message": display,

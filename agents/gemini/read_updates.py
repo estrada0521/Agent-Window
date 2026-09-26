@@ -56,7 +56,6 @@ def sync_gemini_native_log(
             self.log_path,
             {
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "session": self.session_name,
                 "sender": agent,
                 "targets": ["user"],
                 "message": text,

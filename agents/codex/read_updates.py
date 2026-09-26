@@ -137,7 +137,6 @@ def sync_codex_native_log(
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         jsonl_entry = {
             "timestamp": timestamp,
-            "session": self.session_name,
             "sender": agent,
             "targets": ["user"],
             "message": display,

@@ -135,7 +135,7 @@ class RoomState:
     def _append_entry(self, entry: dict) -> dict:
         return append_jsonl_entry(
             self.log_path,
-            {"timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "session": self.session_name, **entry},
+            {"timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), **entry},
         )
 
     def append_user_entry(self, message: str, *, targets: list[str], client: str | None = None) -> dict:

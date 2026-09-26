@@ -18,7 +18,6 @@ def append_jsonl_entry(path: Path | str, entry: dict) -> dict:
         **entry,
         "context_hash": _context_hash(
             entry.get("timestamp"),
-            entry.get("session"),
             entry.get("sender"),
             entry.get("message"),
         ),
