@@ -401,36 +401,14 @@
       function animatePopoverIn(popover) {
         if (!popover || typeof popover.animate !== "function") return;
         if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
-
-        const frames = [];
-        const steps = 48;
-        const frequency = Math.PI * 2.55;
-        const damping = 3.8;
-        for (let i = 0; i <= steps; i += 1) {
-          const progress = i / steps;
-          const decay = Math.exp(-damping * progress);
-          const wave = Math.sin((frequency * progress) - (Math.PI / 2));
-          const opacity = Math.sin((Math.PI / 2) * Math.min(1, progress / 0.42));
-          let scaleX = 1 + (0.14 * decay * wave);
-          let scaleY = 1 + (0.20 * decay * wave);
-          if (i === steps) {
-            scaleX = 1;
-            scaleY = 1;
-          }
-          frames.push({
-            opacity: String(opacity),
-            transform: `scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)})`,
-          });
-        }
-        const animation = popover.animate(frames, {
-          duration: 360,
-          easing: "linear",
-          fill: "both",
+        popover.animate([
+          { transform: "translateX(-100%)" },
+          { transform: "translateX(0)" },
+        ], {
+          duration: 280,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          fill: "backwards",
         });
-        animation.addEventListener("finish", () => {
-          popover.style.opacity = "";
-          popover.style.transform = "";
-        }, { once: true });
       }
 
       function open() {
@@ -457,7 +435,9 @@
         if (!listEl.children.length) return;
 
         hoverPopover = document.createElement("div");
-        hoverPopover.className = "desk-hub-hover-popover";
+        hoverPopover.className = "desk-hub-hover-popover-clip";
+        const popover = document.createElement("div");
+        popover.className = "desk-hub-hover-popover";
         hoverPopover.addEventListener("mouseenter", cancelDismiss);
         hoverPopover.addEventListener("mouseleave", scheduleDismiss);
         hoverPopover.addEventListener("click", (event) => {
@@ -467,14 +447,16 @@
           const name = row.dataset.timelineName || "";
           if (href) { dismiss(); openTimelineFrame(href, name); }
         });
-        hoverPopover.appendChild(listEl);
+        popover.appendChild(listEl);
+        hoverPopover.appendChild(popover);
         document.body.appendChild(hoverPopover);
 
         const wbRect = _deskWorkbench ? _deskWorkbench.getBoundingClientRect() : null;
-        const gap = Math.round(10 * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT);
+        const corner = _deskWorkbench ? parseFloat(getComputedStyle(_deskWorkbench).borderTopLeftRadius) || 0 : 0;
+        const gap = Math.max(Math.round(10 * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT), corner + 2);
         hoverPopover.style.top = `${Math.round((wbRect ? wbRect.top : _deskAppSidebarToggle.getBoundingClientRect().bottom) + gap)}px`;
-        hoverPopover.style.left = `${Math.round((wbRect ? wbRect.left : 0) + gap)}px`;
-        animatePopoverIn(hoverPopover);
+        hoverPopover.style.left = `${Math.round(wbRect ? wbRect.left : 0)}px`;
+        animatePopoverIn(popover);
 
         const updatePopoverFade = () => {
           listEl.dataset.scrollFade = computeScrollFadeState(listEl);

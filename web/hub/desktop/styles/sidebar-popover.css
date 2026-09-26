@@ -1,14 +1,18 @@
-    .desk-hub-hover-popover {
+    .desk-hub-hover-popover-clip {
       position: fixed;
       z-index: 2000;
+      width: max-content;
+      overflow: hidden;
+    }
+    .desk-hub-hover-popover {
       background: var(--hub-glass);
       border: 0.5px solid var(--pill-border);
+      border-left: 0;
       box-shadow: var(--pill-shadow);
-      border-radius: calc(var(--text-size, 13px) * 17 / 13);
+      border-radius: 0 calc(var(--text-size, 13px) * 17 / 13) calc(var(--text-size, 13px) * 17 / 13) 0;
       padding: 6px 0;
       min-width: round(nearest, calc(var(--text-size, 13px) * 160 / 13), 1px);
       max-width: round(nearest, calc(var(--text-size, 13px) * 220 / 13), 1px);
-      transform-origin: top left;
       user-select: none;
       -webkit-user-select: none;
     }
