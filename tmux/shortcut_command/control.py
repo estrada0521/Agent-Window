@@ -1,22 +1,15 @@
 from __future__ import annotations
 
 import subprocess
-from typing import Any, Protocol
 from tmux import TMUX
-from tmux.lifecycle import restart_agent_pane
 from tmux.send_keys import deliver_text_to_pane
 from tmux.shortcut_command.catalog import PANE_SINGLE_CONTROL_MESSAGES, PANE_TEXT_MACROS
 import re
 
 
-class ShortcutControlState(Protocol):
-    def pane_id_for_control_target(self, target: str) -> str | None: ...
-
-    def append_system_entry(self, message: str, *, agent: str = "", **extra: Any) -> dict: ...
-
-
 def try_deliver_shortcut_control(
-    state: ShortcutControlState,
+    agent_panes: dict[str, str],
+    terminal_pane: str,
     target: str,
     command_id: str,
     message: str,
@@ -36,12 +29,7 @@ def try_deliver_shortcut_control(
         )
     try:
         for target_item in control_targets:
-            if message == "restart":
-                ok, detail = restart_agent_pane(state, target_item)
-                if not ok:
-                    return 400, {"ok": False, "error": detail}
-                continue
-            pane_id = state.pane_id_for_control_target(target_item)
+            pane_id = terminal_pane if target_item == "terminal" else agent_panes.get(target_item, "")
             if not pane_id:
                 return 400, {"ok": False, "error": f"pane not found for {target_item}"}
             if is_text_delivery:
@@ -71,11 +59,6 @@ def try_deliver_shortcut_control(
                 return 400, {"ok": False, "error": detail or f"send-keys failed for {target_item}"}
     except Exception as exc:
         return 500, {"ok": False, "error": str(exc)}
-    if message == "restart" and control_targets:
-        state.append_system_entry(
-            f"Restarted: {', '.join(control_targets)}",
-            targets=control_targets,
-        )
     return 200, {"ok": True}
 
 

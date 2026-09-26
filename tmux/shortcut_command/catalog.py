@@ -72,6 +72,4 @@ def public_slash_command_dicts() -> list[dict[str, str | bool]]:
     ]
 
 
-PANE_SINGLE_CONTROL_MESSAGES = frozenset({"esc", "ctrlc", "enter"}) | frozenset(
-    command.id for command in PANE_CONTROL_COMMANDS
-)
+PANE_SINGLE_CONTROL_MESSAGES = frozenset({"esc", "ctrlc", "enter"})

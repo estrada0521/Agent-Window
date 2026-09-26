@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import subprocess
+from typing import Callable
 
 
-def current_git_commit(state) -> dict | None:
+def current_git_commit(workspace: str) -> dict | None:
     result = subprocess.run(
-        ["git", "-C", state.workspace, "log", "-1", "--format=%H%x1f%h%x1f%s"],
+        ["git", "-C", workspace, "log", "-1", "--format=%H%x1f%h%x1f%s"],
         capture_output=True,
         text=True,
         timeout=2,
@@ -22,21 +23,22 @@ def current_git_commit(state) -> dict | None:
     return {"hash": parts[0], "short": parts[1], "subject": parts[2]}
 
 
-def adopt_commit_baseline(state) -> None:
-    commit = current_git_commit(state)
-    state._last_announced_commit_hash = commit["hash"] if commit else None
+class CommitAnnouncer:
+    def __init__(self, workspace: str, announce: Callable[[dict], None]) -> None:
+        self.workspace = workspace
+        self._announce = announce
+        self._last_hash: str | None = None
 
+    def adopt_baseline(self) -> None:
+        commit = current_git_commit(self.workspace)
+        self._last_hash = commit["hash"] if commit else None
 
-def ensure_commit_announcements(state) -> None:
-    commit = current_git_commit(state)
-    if not commit:
-        return
-    last = state._last_announced_commit_hash
-    state._last_announced_commit_hash = commit["hash"]
-    if last is None or last == commit["hash"]:
-        return
-    state.append_system_entry(
-        f"Commit: {commit['short']} {commit['subject']}",
-        commit_hash=commit["hash"],
-        commit_short=commit["short"],
-    )
+    def observe(self) -> None:
+        commit = current_git_commit(self.workspace)
+        if not commit:
+            return
+        last = self._last_hash
+        self._last_hash = commit["hash"]
+        if last is None or last == commit["hash"]:
+            return
+        self._announce(commit)

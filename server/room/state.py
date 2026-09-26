@@ -3,7 +3,6 @@ import json
 import os
 import subprocess
 import threading
-import time
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -13,19 +12,11 @@ from fs.log.meta import log_meta_agents
 from tmux import TMUX
 from tmux.send_keys import deliver_text_to_pane
 from fs.log.jsonl import newest_entries
-from agents.dispatch import sync_agent
-from agents.binding_models import PaneBindingRequest
-from agents.refresh_bindings import refresh_native_log_bindings, remove_native_log_binding
-from agents.emit_events import (
-    clear_agent_running_display,
-    idle_running_display_for_api,
-    refresh_idle_statuses,
-)
-from agents.watch_bindings import start_native_log_vnode_watcher
+from agents.native_log_sync import NativeLogSync
+from git.commit import CommitAnnouncer
 from tmux.session import (
     agent_topology,
     find_session_for_workspace,
-    pane_field,
     terminal_window_pane_id,
 )
 from tmux.capture_pane import trace_content
@@ -34,8 +25,6 @@ from server.room.timeline_binding import WorkspaceTimelineBinding
 
 ENTRY_WINDOW_LIMIT = 2000
 EVENT_KINDS = ("messages", "state", "files", "git", "failure")
-NATIVE_LOG_BIND_INTERVAL_SECONDS = 0.5
-NATIVE_LOG_BIND_TIMEOUT_SECONDS = 3.0
 
 
 class RoomState:
@@ -57,23 +46,20 @@ class RoomState:
         self.tmux_session_name = find_session_for_workspace(self.workspace) or ""
         self.room_is_active = bool(self.tmux_session_name)
         self._agent_running = set(initial_running_agents or [])
-        self._last_announced_commit_hash: str | None = None
         self._events = threading.Condition()
         self._event_counts = dict.fromkeys(EVENT_KINDS, 0)
         self._latest_failure = ""
         self._stopped_threads: dict[str, str] = {}
-        self._native_log_read_offsets: dict[str, int] = {}
-        self._native_log_bindings_by_agent: dict = {}
-        self._native_log_bindings_lock = threading.Lock()
-        self._native_log_sync_lock = threading.Lock()
-        self._native_log_vnode_watcher = None
-        self._idle_running_display_by_agent: dict[str, dict] = {}
-        self._idle_running_event_seq = 0
-        self._idle_running_display_lock = threading.Lock()
-        self._idle_running_display_queues: dict = {}
-        self._idle_running_display_timers: dict = {}
-        self._native_log_bind_workers_lock = threading.Lock()
-        self._native_log_bind_workers: set[str] = set()
+        self.native_log = NativeLogSync(
+            workspace=self.workspace,
+            log_path=lambda: self.log_path,
+            agent_panes=self.agent_panes,
+            publish_state=lambda: self.publish_event("state"),
+            report_failure=self.report_failure,
+            mark_idle=self._mark_idle,
+            mark_running=self._mark_running_from_native_activity,
+        )
+        self.commits = CommitAnnouncer(self.workspace, self._announce_commit)
 
     @property
     def timeline_label(self) -> str:
@@ -90,48 +76,9 @@ class RoomState:
     def timeline_binding_snapshot(self) -> tuple[str, Path]:
         return self._timeline_binding.snapshot()
 
-    def refresh_native_log_bindings(
-        self,
-        agents: list[str] | None = None,
-        *,
-        start_at_end: bool = False,
-    ) -> None:
-        replace_all = agents is None
-        panes_by_agent = self.agent_panes()
-        target_agents = list(agents) if agents is not None else list(panes_by_agent)
-        pane_requests: list[PaneBindingRequest] = []
-        for agent in target_agents:
-            pane_id = panes_by_agent.get(agent, "")
-            if not pane_id:
-                continue
-            pane_requests.append(
-                PaneBindingRequest(agent=agent, pane_id=pane_id, pane_pid=pane_field(pane_id, "#{pane_pid}"))
-            )
-        for binding in refresh_native_log_bindings(self, pane_requests, replace_all=replace_all):
-            try:
-                sync_agent(self, binding.agent, binding.path, start_at_end=start_at_end)
-            except Exception as exc:
-                self.native_log_failed(binding.agent, f"sync failed: {exc}")
-
-    def native_log_failed(self, agent: str, detail: str) -> None:
-        self.remove_native_log_binding(agent)
-        self._mark_idle(agent)
-        self.report_failure(f"native log failed: {agent}: {detail}")
-
-    def rebind(self, agent: str) -> None:
-        if self.pane_id_for_agent(agent):
-            self.refresh_native_log_bindings([agent], start_at_end=True)
-        else:
-            self.remove_native_log_binding(agent)
-
     def start_native_log_sync(self) -> None:
-        if not self.room_is_active:
-            return
-        self.refresh_native_log_bindings(start_at_end=True)
-        start_native_log_vnode_watcher(self)
-
-    def remove_native_log_binding(self, agent: str) -> None:
-        remove_native_log_binding(self, agent)
+        if self.room_is_active:
+            self.native_log.start()
 
     def _append_entry(self, entry: dict) -> dict:
         return append_jsonl_entry(
@@ -150,6 +97,13 @@ class RoomState:
         if agent:
             entry["agent"] = agent
         return self._append_entry({**entry, **extra})
+
+    def _announce_commit(self, commit: dict) -> None:
+        self.append_system_entry(
+            f"Commit: {commit['short']} {commit['subject']}",
+            commit_hash=commit["hash"],
+            commit_short=commit["short"],
+        )
 
     def publish_event(self, kind: str) -> None:
         with self._events:
@@ -196,7 +150,7 @@ class RoomState:
             "repo_root": str(self.repo_root),
             "targets": self.active_agents() if self.room_is_active else log_meta_agents(timeline_label),
             "statuses": self.agent_statuses(),
-            "running_display": self.running_display_state(),
+            "running_display": self.native_log.running_display_for_api(),
             "stopped_threads": stopped_threads,
         }
 
@@ -239,7 +193,7 @@ class RoomState:
     def mark_agents_idle(self, agents: list[str]) -> None:
         for agent in agents:
             self._agent_running.discard(agent)
-            clear_agent_running_display(self, agent)
+            self.native_log.clear_running_display(agent)
         self.publish_event("state")
 
     def running_agents_for_reload(self) -> list[str]:
@@ -248,45 +202,10 @@ class RoomState:
     def _mark_running(self, agent: str) -> None:
         already_running = agent in self._agent_running
         if not already_running:
-            clear_agent_running_display(self, agent)
+            self.native_log.clear_running_display(agent)
         self._agent_running.add(agent)
         if not already_running:
             self.publish_event("state")
-
-    def _bind_native_log_after_send(self, agent: str) -> None:
-        with self._native_log_bind_workers_lock:
-            if agent in self._native_log_bind_workers:
-                return
-            self._native_log_bind_workers.add(agent)
-
-        def bind() -> None:
-            deadline = time.monotonic() + NATIVE_LOG_BIND_TIMEOUT_SECONDS
-            try:
-                while agent in self.active_agents():
-                    try:
-                        self.refresh_native_log_bindings([agent], start_at_end=True)
-                    except Exception as exc:
-                        self.native_log_failed(agent, f"bind failed: {exc}")
-                        return
-                    if agent in self._native_log_bindings_by_agent:
-                        return
-                    remaining = deadline - time.monotonic()
-                    if remaining <= 0:
-                        self.native_log_failed(
-                            agent,
-                            f"no native log appeared within {NATIVE_LOG_BIND_TIMEOUT_SECONDS:g}s of sending",
-                        )
-                        return
-                    time.sleep(min(NATIVE_LOG_BIND_INTERVAL_SECONDS, remaining))
-            finally:
-                with self._native_log_bind_workers_lock:
-                    self._native_log_bind_workers.discard(agent)
-
-        threading.Thread(
-            target=bind,
-            daemon=True,
-            name=f"native-bind-{agent}",
-        ).start()
 
     def _mark_running_from_native_activity(self, agent: str) -> None:
         if agent in self._agent_running:
@@ -297,7 +216,7 @@ class RoomState:
     def _mark_idle(self, agent: str) -> None:
         was_running = agent in self._agent_running
         self._agent_running.discard(agent)
-        cleared = clear_agent_running_display(self, agent)
+        cleared = self.native_log.clear_running_display(agent)
         if was_running or cleared:
             self.publish_event("state")
 
@@ -314,18 +233,17 @@ class RoomState:
                 failed.append(agent)
                 continue
             self._mark_running(agent)
-            self._bind_native_log_after_send(agent)
+            self.native_log.bind_after_send(agent)
         return failed
 
     def agent_statuses(self) -> dict[str, str]:
-        return refresh_idle_statuses(self, self._agent_running)
-
-    def running_display_state(self) -> dict[str, dict]:
-        return idle_running_display_for_api(self._idle_running_display_by_agent)
-
-    def native_log_watched_paths(self) -> dict[str, str]:
-        watcher = self._native_log_vnode_watcher
-        return watcher.get_watched_paths() if watcher else {}
+        statuses: dict[str, str] = {}
+        for agent in self.active_agents():
+            running = agent in self._agent_running
+            statuses[agent] = "running" if running else "idle"
+            if not running:
+                self.native_log.clear_running_display(agent)
+        return statuses
 
     def trace_content(self, agent: str, *, tail_lines: int) -> str:
         pane_id = self.pane_id_for_control_target(agent)

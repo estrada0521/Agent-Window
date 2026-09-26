@@ -7,8 +7,9 @@ from tmux.shortcut_command.control import try_deliver_shortcut_control
 
 
 def run_shortcut_command(
-    state: Any,
     *,
+    agent_panes: dict[str, str],
+    terminal_pane: str,
     command_id: str,
     arg: str,
     target: str,
@@ -18,10 +19,6 @@ def run_shortcut_command(
     if not resolved:
         msg = "target is required"
         return 400, {"ok": False, "error": msg}
-    if normalized_command_id == "idle":
-        agents = [item.strip() for item in resolved.split(",") if item.strip()]
-        state.mark_agents_idle(agents)
-        return 200, {"ok": True}
     if normalized_command_id not in PANE_CONTROL_COMMAND_IDS:
         msg = "unknown shortcut command"
         return 400, {"ok": False, "error": msg}
@@ -31,7 +28,7 @@ def run_shortcut_command(
         return 400, {"ok": False, "error": msg}
 
     wire = _wire_payload(normalized_command_id, arg)
-    out = try_deliver_shortcut_control(state, resolved, normalized_command_id, wire)
+    out = try_deliver_shortcut_control(agent_panes, terminal_pane, resolved, normalized_command_id, wire)
     if out is None:
         msg = "shortcut dispatch failed"
         return 500, {"ok": False, "error": msg}

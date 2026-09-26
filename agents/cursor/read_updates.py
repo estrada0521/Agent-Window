@@ -8,7 +8,6 @@ from agents.path_state import (
     advance_read_offset,
     read_offset_start,
 )
-from agents.running_push import push_running_display
 from agents.cursor.read_running import iter_tool_calls, running_tool_events
 from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
 from fs.log.jsonl import append_jsonl_entry
@@ -91,7 +90,7 @@ def _cursor_display_for_sync(entry: dict) -> str:
 
 
 def sync_cursor_native_log(
-    self,
+    sync,
     agent: str,
     native_log_path: str | None = None,
     *,
@@ -103,10 +102,10 @@ def sync_cursor_native_log(
 
     file_size = os.path.getsize(transcript_path)
     if start_at_end:
-        advance_read_offset(self._native_log_read_offsets, transcript_path, file_size)
+        advance_read_offset(sync.offsets, transcript_path, file_size)
         return
     start = read_offset_start(
-        self._native_log_read_offsets,
+        sync.offsets,
         transcript_path,
         file_size,
         on_shrink="wait",
@@ -131,16 +130,16 @@ def sync_cursor_native_log(
             "native_log_path": transcript_path,
             "native_log_offset": line_start,
         }
-        append_jsonl_entry(self.log_path, jsonl_entry)
+        append_jsonl_entry(sync.log_path, jsonl_entry)
 
     for _ls, entry in batch:
         tool_evs = []
         for name, inp in iter_tool_calls(entry):
-            tool_evs.extend(running_tool_events(name, inp, workspace=str(self.workspace or "")))
+            tool_evs.extend(running_tool_events(name, inp, workspace=sync.workspace))
         if tool_evs:
-            push_running_display(self, agent, tool_evs)
+            sync.push_running_display(agent, tool_evs)
 
-    advance_read_offset(self._native_log_read_offsets, transcript_path, scan.consumed)
-    report_skipped_lines(self, agent, scan)
+    advance_read_offset(sync.offsets, transcript_path, scan.consumed)
+    report_skipped_lines(sync, agent, scan)
     if turn_done_seen:
-        self._mark_idle(agent)
+        sync.mark_idle(agent)

@@ -9,7 +9,9 @@ from urllib.parse import unquote as url_unquote
 from fs.log.paths import workspace_upload_dir
 from tmux.control import add_agent, remove_agent
 from tmux import TMUX, TMUX_SOCKET_NAME
+from tmux.lifecycle import respawn_pane
 from tmux.shortcut_command.execute import run_shortcut_command
+from agents.executables import agent_launch_cmd
 from git import repo as workspace_git
 
 _MAX_UPLOAD_BYTES = 100 * 1024 * 1024
@@ -93,7 +95,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
-    state.remove_native_log_binding(instance)
+    state.native_log.remove_binding(instance)
     state.publish_event("state")
     handler._send_json(
         200,
@@ -510,7 +512,7 @@ def _run_nativelog_command(ctx, *, target: str) -> tuple[int, dict]:
         msg = "target is required"
         return 400, {"ok": False, "error": msg}
     agent = raw_targets[0]
-    watched = state.native_log_watched_paths()
+    watched = state.native_log.watched_paths()
     path = (watched.get(agent) or "").strip()
     if not path:
         msg = f"native log path not found for {agent}"
@@ -540,13 +542,49 @@ def _post_shortcut_command(handler, _parsed, ctx) -> None:
     if err:
         handler._send_json(400, {"ok": False, "error": err})
         return
-    status, body = run_shortcut_command(
-        ctx["state"],
-        command_id=str(data.get("command_id") or ""),
-        arg=str(data.get("arg") or ""),
-        target=str(data.get("target") or ""),
-    )
+    state = ctx["state"]
+    command_id = str(data.get("command_id") or "").strip().lower()
+    target = str(data.get("target") or "")
+    if command_id == "idle":
+        status, body = _run_idle_command(state, target)
+    elif command_id == "restart":
+        status, body = _run_restart_command(state, target)
+    else:
+        status, body = run_shortcut_command(
+            agent_panes=state.agent_panes(),
+            terminal_pane=state.pane_id_for_terminal(),
+            command_id=command_id,
+            arg=str(data.get("arg") or ""),
+            target=target,
+        )
     handler._send_json(status, body)
+
+
+def _run_idle_command(state, target: str) -> tuple[int, dict]:
+    agents = [item.strip() for item in target.split(",") if item.strip()]
+    if not agents:
+        return 400, {"ok": False, "error": "target is required"}
+    state.mark_agents_idle(agents)
+    return 200, {"ok": True}
+
+
+def _run_restart_command(state, target: str) -> tuple[int, dict]:
+    agents = [item.strip() for item in target.split(",") if item.strip()]
+    if not agents:
+        return 400, {"ok": False, "error": "target is required"}
+    try:
+        for agent in agents:
+            pane_id = state.pane_id_for_agent(agent)
+            if not pane_id:
+                return 400, {"ok": False, "error": f"pane not found for {agent}"}
+            ok, detail = respawn_pane(pane_id, workspace=state.workspace, command=agent_launch_cmd(agent), title=agent)
+            if not ok:
+                return 400, {"ok": False, "error": detail or f"failed to restart {agent}"}
+            state.native_log.remove_binding(agent)
+    except Exception as exc:
+        return 500, {"ok": False, "error": str(exc)}
+    state.append_system_entry(f"Restarted: {', '.join(agents)}", targets=agents)
+    return 200, {"ok": True}
 
 
 def _post_send(handler, _parsed, ctx) -> None:

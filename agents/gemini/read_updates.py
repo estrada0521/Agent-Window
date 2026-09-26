@@ -8,7 +8,6 @@ from agents.path_state import (
     advance_read_offset,
     read_offset_start,
 )
-from agents.running_push import push_running_display
 from agents.gemini.read_running import (
     parse_antigravity_transcript_step,
     running_tool_events,
@@ -18,7 +17,7 @@ from fs.log.jsonl import append_jsonl_entry
 
 
 def sync_gemini_native_log(
-    self,
+    sync,
     agent: str,
     native_log_path: str | None = None,
     *,
@@ -32,9 +31,9 @@ def sync_gemini_native_log(
 
     file_size = os.path.getsize(session_path_str)
     if start_at_end:
-        advance_read_offset(self._native_log_read_offsets, session_path_str, file_size)
+        advance_read_offset(sync.offsets, session_path_str, file_size)
         return
-    start = read_offset_start(self._native_log_read_offsets, session_path_str, file_size)
+    start = read_offset_start(sync.offsets, session_path_str, file_size)
     if start >= file_size:
         return
 
@@ -46,14 +45,14 @@ def sync_gemini_native_log(
             running_events: list[dict] = []
             for tool_name, arguments in tool_calls:
                 running_events.extend(
-                    running_tool_events(tool_name, arguments, workspace=str(self.workspace or ""))
+                    running_tool_events(tool_name, arguments, workspace=sync.workspace)
                 )
             if running_events:
-                push_running_display(self, agent, running_events)
+                sync.push_running_display(agent, running_events)
         if not text:
             continue
         append_jsonl_entry(
-            self.log_path,
+            sync.log_path,
             {
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "sender": agent,
@@ -66,7 +65,7 @@ def sync_gemini_native_log(
         )
         appended = True
 
-    advance_read_offset(self._native_log_read_offsets, session_path_str, scan.consumed)
-    report_skipped_lines(self, agent, scan)
+    advance_read_offset(sync.offsets, session_path_str, scan.consumed)
+    report_skipped_lines(sync, agent, scan)
     if appended:
-        self._mark_idle(agent)
+        sync.mark_idle(agent)

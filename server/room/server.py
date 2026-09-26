@@ -22,7 +22,6 @@ from fs.log.paths import (
 )
 from fs.files.workspace import WorkspaceFiles
 from fs.watch import start_workspace_fsevents_watcher
-from git.commit import adopt_commit_baseline
 from server.http_proxy import read_upstream
 
 
@@ -171,13 +170,18 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         workspace=workspace,
         repo_root=_repo_root,
     )
-    start_workspace_fsevents_watcher(state, files)
+    start_workspace_fsevents_watcher(
+        files,
+        publish_event=state.publish_event,
+        report_failure=state.report_failure,
+        on_head_changed=state.commits.observe,
+    )
     assets = RoomAssets(
         repo_root=_repo_root,
     )
     state.start_native_log_sync()
     try:
-        adopt_commit_baseline(state)
+        state.commits.adopt_baseline()
     except Exception as exc:
         state.report_failure(f"commit tracking failed: {exc}")
     threading.Thread(

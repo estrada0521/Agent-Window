@@ -9,7 +9,6 @@ from agents.path_state import (
     advance_read_offset,
     read_offset_start,
 )
-from agents.running_push import push_running_display
 from agents.codex.read_running import iter_tool_calls, running_tool_events
 from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
 from fs.log.jsonl import append_jsonl_entry
@@ -72,7 +71,7 @@ def _codex_task_error_message(payload: dict) -> str:
 
 
 def sync_codex_native_log(
-    self,
+    sync,
     agent: str,
     native_log_path: str | None = None,
     *,
@@ -84,9 +83,9 @@ def sync_codex_native_log(
 
     file_size = os.path.getsize(resolved_path)
     if start_at_end:
-        advance_read_offset(self._native_log_read_offsets, resolved_path, file_size)
+        advance_read_offset(sync.offsets, resolved_path, file_size)
         return
-    start = read_offset_start(self._native_log_read_offsets, resolved_path, file_size)
+    start = read_offset_start(sync.offsets, resolved_path, file_size)
     if start >= file_size:
         return
 
@@ -143,9 +142,9 @@ def sync_codex_native_log(
             "native_log_path": resolved_path,
             "native_log_offset": line_start,
         }
-        append_jsonl_entry(self.log_path, jsonl_entry)
+        append_jsonl_entry(sync.log_path, jsonl_entry)
         if idle_after:
-            self._mark_idle(agent)
+            sync.mark_idle(agent)
         return True
 
     last_runtime_state_event = ""
@@ -157,13 +156,13 @@ def sync_codex_native_log(
             last_runtime_state_event = runtime_state_event
         tool_evs = []
         for name, inp in iter_tool_calls(entry):
-            tool_evs.extend(running_tool_events(name, inp, workspace=str(self.workspace or "")))
+            tool_evs.extend(running_tool_events(name, inp, workspace=sync.workspace))
         if tool_evs:
-            push_running_display(self, agent, tool_evs)
+            sync.push_running_display(agent, tool_evs)
 
-    advance_read_offset(self._native_log_read_offsets, resolved_path, scan.consumed)
-    report_skipped_lines(self, agent, scan)
+    advance_read_offset(sync.offsets, resolved_path, scan.consumed)
+    report_skipped_lines(sync, agent, scan)
     if last_runtime_state_event == "completed":
-        self._mark_idle(agent)
-    elif last_runtime_state_event == "active" and agent not in self._agent_running:
-        self._mark_running_from_native_activity(agent)
+        sync.mark_idle(agent)
+    elif last_runtime_state_event == "active":
+        sync.mark_running(agent)

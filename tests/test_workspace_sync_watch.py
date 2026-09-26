@@ -18,7 +18,10 @@ class _FakeRuntime:
     def publish_event(self, kind: str) -> None:
         self.events.append(kind)
 
-    def ensure_commit_announcements(self) -> None:
+    def report_failure(self, text: str) -> None:
+        raise AssertionError(text)
+
+    def observe_commits(self) -> None:
         self.commit_refreshes += 1
 
 
@@ -46,17 +49,16 @@ class _FakeApi:
 
 
 def _refresh(api: _FakeApi) -> _DebouncedWorkspaceRefresh:
-    return _DebouncedWorkspaceRefresh(api.state, api.files)
+    return _DebouncedWorkspaceRefresh(
+        api.files,
+        publish_event=api.state.publish_event,
+        report_failure=api.state.report_failure,
+        on_head_changed=api.state.observe_commits,
+    )
 
 
 class WorkspaceSyncWatchTests(unittest.TestCase):
     def setUp(self) -> None:
-        patcher = mock.patch(
-            "fs.watch.ensure_commit_announcements",
-            side_effect=lambda state: state.ensure_commit_announcements(),
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
         self.git_invalidations: list[bool] = []
         git_patcher = mock.patch(
             "fs.watch.invalidate_git_cache",

@@ -13,7 +13,6 @@ from fs.fsevents import (
     cf_path_array,
     load_cf_cs,
 )
-from git.commit import ensure_commit_announcements
 from git.repo import git_ignored_rel_paths, invalidate_git_cache
 
 _DEBOUNCE_SEC = 0.25
@@ -43,9 +42,11 @@ def _is_git_head_metadata_path(rel: str) -> bool:
 
 
 class _DebouncedWorkspaceRefresh:
-    def __init__(self, state, files) -> None:
-        self._state = state
+    def __init__(self, files, *, publish_event, report_failure, on_head_changed) -> None:
         self._files = files
+        self._publish_event = publish_event
+        self._report_failure = report_failure
+        self._on_head_changed = on_head_changed
         self._lock = threading.Lock()
         self._flush_lock = threading.Lock()
         self._pending: set[str] = set()
@@ -116,32 +117,37 @@ class _DebouncedWorkspaceRefresh:
             try:
                 ignored = git_ignored_rel_paths(workspace, rels)
             except RuntimeError as exc:
-                self._state.report_failure(f"git check-ignore failed: {exc}")
+                self._report_failure(f"git check-ignore failed: {exc}")
                 ignored = set()
             git_relevant = any(rel not in ignored for rel in rels)
         if git_head_changed:
             try:
-                ensure_commit_announcements(self._state)
+                self._on_head_changed()
             except Exception as exc:
-                self._state.report_failure(f"commit tracking failed: {exc}")
+                self._report_failure(f"commit tracking failed: {exc}")
         if git_relevant:
             invalidate_git_cache(include_commits=git_head_changed or full_rescan)
         if file_rels or full_rescan:
-            self._state.publish_event("files")
+            self._publish_event("files")
         if git_relevant:
-            self._state.publish_event("git")
+            self._publish_event("git")
         with self._lock:
             has_more = bool(self._pending) or self._git_head_pending
         if has_more:
             self._schedule_flush()
 
 
-def start_workspace_fsevents_watcher(state, files) -> None:
+def start_workspace_fsevents_watcher(files, *, publish_event, report_failure, on_head_changed) -> None:
     workspace_root = files.workspace
     if not workspace_root or not os.path.isdir(workspace_root):
         return
 
-    debouncer = _DebouncedWorkspaceRefresh(state, files)
+    debouncer = _DebouncedWorkspaceRefresh(
+        files,
+        publish_event=publish_event,
+        report_failure=report_failure,
+        on_head_changed=on_head_changed,
+    )
 
     def run_loop():
         cf, cs = load_cf_cs()
@@ -190,11 +196,11 @@ def start_workspace_fsevents_watcher(state, files) -> None:
         )
         CFRelease(cfarr)
         if not stream:
-            state.report_failure("workspace watch failed: FSEventStreamCreate returned null")
+            report_failure("workspace watch failed: FSEventStreamCreate returned null")
             return
         FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode)
         if not FSEventStreamStart(stream):
-            state.report_failure("workspace watch failed: FSEventStreamStart returned false")
+            report_failure("workspace watch failed: FSEventStreamStart returned false")
             return
         CFRunLoopRun()
 

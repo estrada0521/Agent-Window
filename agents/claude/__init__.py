@@ -4,7 +4,7 @@ from agents.binding_models import binding_for_path
 from agents.claude.resolve_path import resolve_claude_session_jsonl_path
 
 
-def resolve_native_log_binding(state, request):
+def resolve_native_log_binding(request):
     return binding_for_path(
         agent=request.agent,
         path=resolve_claude_session_jsonl_path(request.pane_id, request.pane_pid),

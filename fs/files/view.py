@@ -86,7 +86,7 @@ def _room_markdown_render_js() -> str:
 
 
 def render_file_view(
-    state,
+    files,
     rel: str,
     *,
     embed: bool = False,
@@ -95,7 +95,7 @@ def render_file_view(
     agent_text_size: int | None = None,
     force_progressive_text: bool = False,
 ) -> str:
-    full = state._resolve_path(rel)
+    full = files._resolve_path(rel)
     if not os.path.exists(full):
         raise FileNotFoundError(full)
 
@@ -188,7 +188,7 @@ def render_file_view(
         )
         return gutter_rows, code_rows, gutter_width, title_offset
 
-    if ext in state.IMAGE_EXTS:
+    if ext in files.IMAGE_EXTS:
         return (
             f'<!DOCTYPE html><html><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
@@ -199,29 +199,29 @@ def render_file_view(
             f'img{{max-width:100%;max-height:100%;object-fit:contain}}</style></head>'
             f'<body><div class="wrap"><img src="{raw_url}" alt="{html_escape(filename)}"></div></body></html>'
         )
-    if ext in state.PDF_EXTS:
+    if ext in files.PDF_EXTS:
         return (
             f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}.wrap{{flex:1;min-height:0;background:{embed_bg};padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}}iframe{{width:100%;height:100%;border:0;background:{embed_bg}}}</style></head>'
             f'<body><div class="wrap"><iframe src="{raw_url}" title="{html_escape(filename)}"></iframe></div></body></html>'
         )
-    if ext in state.VIDEO_EXTS:
+    if ext in files.VIDEO_EXTS:
         return (
             f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;background:{embed_bg};padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}}'
             f'video{{max-width:100%;max-height:100%}}</style></head>'
             f'<body><div class="wrap"><video controls src="{raw_url}"></video></div></body></html>'
         )
-    if ext in state.AUDIO_EXTS:
+    if ext in files.AUDIO_EXTS:
         return (
             f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}.wrap{{flex:1;display:flex;align-items:center;justify-content:center;background:{embed_bg};padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}}'
             f'audio{{width:100%;max-width:500px}}</style></head>'
             f'<body><div class="wrap"><audio controls src="{raw_url}"></audio></div></body></html>'
         )
-    is_text_like = ext in state.EDITABLE_TEXT_EXTS or state._is_probably_text_file(full)
+    is_text_like = ext in files.EDITABLE_TEXT_EXTS or files._is_probably_text_file(full)
     if ext in {".html", ".htm"}:
-        progressive_html = bool(force_progressive_text) or size > state.INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES
+        progressive_html = bool(force_progressive_text) or size > files.INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES
         if progressive_html:
             gutter_width, title_offset = build_gutter_metrics(
                 max(1, int(size / 32)),
@@ -231,7 +231,7 @@ def render_file_view(
             html_progressive_loader_js = build_progressive_loader_js(
                 raw_url_value=raw_url,
                 total_bytes=size,
-                chunk_bytes=state.PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES,
+                chunk_bytes=files.PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES,
                 view_container_id="htmlTextViewContainer",
                 code_scroll_id="htmlTextCodeScroll",
                 gutter_body_id="htmlTextGutterBody",
@@ -317,8 +317,8 @@ def render_file_view(
             f'<div class="html-preview-panel html-preview-panel-text active" data-preview-panel="text"><div class="html-preview-text-wrap" id="htmlTextViewContainer"><div class="html-preview-gutter" id="htmlTextGutter"><div class="html-preview-gutter-inner" id="htmlTextGutterInner"><table class="html-preview-gutter-table" role="presentation"><tbody id="htmlTextGutterBody">{gutter_rows}</tbody></table></div></div><div class="html-preview-text-scroll" id="htmlTextCodeScroll"><table class="html-preview-text-table" role="presentation"><tbody id="htmlTextCodeBody">{code_rows}</tbody></table></div></div></div>'
             f'</div><script>{toggle_js}</script></div></body></html>'
         )
-    if is_text_like and ext != ".md" and (bool(force_progressive_text) or size > state.INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES):
-        chunk_bytes = state.PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES
+    if is_text_like and ext != ".md" and (bool(force_progressive_text) or size > files.INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES):
+        chunk_bytes = files.PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES
         gutter_width, title_offset = build_gutter_metrics(
             max(1, int(size / 32)),
         )
