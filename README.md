@@ -177,6 +177,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 |---|---|---|
 | Default / compact / mini size | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` | |
 | Toggle Hub / right pane | `⌘B` / `⌘E` | Add `⌥` to grow the window outward |
+| Swap the right pane to the other side | `⇧⌘E` | |
 | Move to screen edge | `⌥⌘↑` `←` `→` `↓` | `↓` centers |
 | Keep above other windows | `⌥⌘P` | |
 | Fit Height | `⌥⌘H` | |

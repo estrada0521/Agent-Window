@@ -156,6 +156,8 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     rightPaneItem.enabled = rightPane;
     NSMenuItem *rightPaneOutward = [self action:@"toggleRightPaneOutward" title:@"Toggle Right Pane Outward" key:@"e" mods:cmd | opt];
     rightPaneOutward.enabled = rightPane;
+    NSMenuItem *swapRightPane = [self action:@"swapRightPaneSide" title:@"Swap Right Pane Side" key:@"e" mods:cmd | shift];
+    swapRightPane.enabled = rightPane;
     NSMenuItem *alwaysOnTop = [self action:@"toggleAlwaysOnTop" title:@"Always on Top" key:@"p" mods:cmd | opt];
     alwaysOnTop.state = [p[@"alwaysOnTop"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
     BOOL fit = [p[@"autoWindowHeight"] boolValue];
@@ -188,6 +190,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
             rightPaneItem,
             [self action:@"toggleHubSidebarOutward" title:@"Toggle Hub Sidebar Outward" key:@"b" mods:cmd | opt],
             rightPaneOutward,
+            swapRightPane,
         ]],
         [self submenu:@"Messages" items:@[
             [self action:@"messagePrevious" title:@"Previous Message" key:ArrowKey(NSUpArrowFunctionKey) mods:opt],

@@ -222,6 +222,10 @@
         toggleDeskRightPanelOutward();
         return;
       }
+      if (detail.action === "swapRightPaneSide") {
+        sendDeskPanelCommand("swap");
+        return;
+      }
       if (detail.action === "toggleAlwaysOnTop") {
         toggleDeskAlwaysOnTop();
         return;

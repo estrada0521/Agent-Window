@@ -322,7 +322,12 @@
         toggleDeskSidebar();
         return;
       }
-      if (event.metaKey && !event.altKey && event.code === "KeyE") {
+      if (event.metaKey && event.shiftKey && !event.altKey && event.code === "KeyE") {
+        event.preventDefault();
+        sendDeskPanelCommand("swap");
+        return;
+      }
+      if (event.metaKey && !event.altKey && !event.shiftKey && event.code === "KeyE") {
         event.preventDefault();
         toggleDeskRightPanel();
         return;
@@ -383,6 +388,7 @@
         sidePanels: [
           { value: "toggleHubSidebar", label: "Toggle Hub Sidebar" },
           { value: "toggleRightPane", label: "Toggle Right Pane", disabled: !deskRightPaneAvailable() },
+          { value: "swapRightPaneSide", label: "Swap Right Pane Side", disabled: !deskRightPaneAvailable() },
         ],
         messages: [
           { value: "messagePrevious", label: "Previous Message" },

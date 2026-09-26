@@ -617,7 +617,7 @@ __INCLUDE:git-panel/events.js__
         desktopRightPanelResizer.setPointerCapture(event.pointerId);
       } catch (_) {}
     });
-    document.getElementById("sideBarSwapBtn")?.addEventListener("click", () => {
+    const swapSideBarSide = () => {
       if (document.documentElement.dataset.sideBar === "left") {
         delete document.documentElement.dataset.sideBar;
         localStorage.removeItem(SIDE_BAR_SIDE_KEY);
@@ -625,7 +625,8 @@ __INCLUDE:git-panel/events.js__
         document.documentElement.dataset.sideBar = "left";
         localStorage.setItem(SIDE_BAR_SIDE_KEY, "left");
       }
-    });
+    };
+    document.getElementById("sideBarSwapBtn")?.addEventListener("click", swapSideBarSide);
     desktopRightPanelResizer?.addEventListener("pointermove", (event) => {
       if (!_desktopRightPanelResizeState || _desktopRightPanelResizeState.pointerId !== event.pointerId) return;
       dpHandlePanelResizeMove(event);
@@ -1124,6 +1125,8 @@ __INCLUDE:git-panel/events.js__
         openDesktopRightPanel({ view: "git", reset: true });
       } else if (mode === "repo") {
         openDesktopRightPanel({ view: "repo" });
+      } else if (mode === "swap") {
+        swapSideBarSide();
       } else {
         toggleDesktopRightPanel();
       }
@@ -1238,7 +1241,12 @@ __INCLUDE:git-panel/events.js__
           window.parent?.postMessage({ type: "toggle-hub-sidebar" }, "*");
           return;
         }
-        if (event.metaKey && !event.altKey && event.code === "KeyE") {
+        if (event.metaKey && event.shiftKey && !event.altKey && event.code === "KeyE") {
+          event.preventDefault();
+          swapSideBarSide();
+          return;
+        }
+        if (event.metaKey && !event.altKey && !event.shiftKey && event.code === "KeyE") {
           event.preventDefault();
           if (document.documentElement.dataset.autoWindowHeight === "1") {
             window.parent?.postMessage({ type: "toggle-desktop-right-panel" }, "*");
