@@ -434,11 +434,15 @@ __INCLUDE:../pointer-capability.js__
     let dpPanelWidthAtDefaultTextSize = DP_PANEL_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE;
     let _desktopRightPanelResizeState = null;
     let _dpSplitDragging = false;
-    let _dpSplitGitHeightPx = null;
+    let _dpSplitGitHeightInTextSize = null;
     const dpRoundPanelWidth = (value) => Math.round(value * 100) / 100;
     const dpCurrentTextSizePx = () => {
       const raw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
       return Number.isFinite(raw) && raw > 0 ? raw : DP_TEXT_SIZE_DEFAULT;
+    };
+    const dpSetSplitGitHeight = (px) => {
+      _dpSplitGitHeightInTextSize = px / dpCurrentTextSizePx();
+      dpGitContent.style.height = `calc(var(--text-size) * ${_dpSplitGitHeightInTextSize})`;
     };
     const dpScalePanelWidth = (value) => (
       dpRoundPanelWidth(Number(value) * dpCurrentTextSizePx() / DP_TEXT_SIZE_DEFAULT)
@@ -533,14 +537,10 @@ __INCLUDE:git-panel/events.js__
       desktopRightPanel.hidden = false;
       desktopRightPanel.classList.add("open");
       document.body.classList.add("right-panel-open");
-      if (dpGitContent && dpSplitPanel && !_dpSplitGitHeightPx) {
+      if (dpGitContent && dpSplitPanel && !_dpSplitGitHeightInTextSize) {
         requestAnimationFrame(() => {
           const panelH = dpSplitPanel.getBoundingClientRect().height;
-          if (panelH > 0 && !_dpSplitGitHeightPx) {
-            const initH = Math.floor(panelH * 0.5);
-            dpGitContent.style.height = `${initH}px`;
-            _dpSplitGitHeightPx = initH;
-          }
+          if (panelH > 0 && !_dpSplitGitHeightInTextSize) dpSetSplitGitHeight(Math.floor(panelH * 0.5));
         });
       }
       const loadP = loadDesktopRightPanelView({ reset, animateRepo: false });
@@ -593,9 +593,7 @@ __INCLUDE:git-panel/events.js__
       if (!_dpSplitDragging || !dpGitContent || !dpSplitPanel) return;
       const rect = dpSplitPanel.getBoundingClientRect();
       let newH = e.clientY - rect.top;
-      newH = Math.max(0, Math.min(rect.height, newH));
-      dpGitContent.style.height = `${newH}px`;
-      _dpSplitGitHeightPx = newH;
+      dpSetSplitGitHeight(Math.max(0, Math.min(rect.height, newH)));
     });
     dpSplitDivider?.addEventListener("pointerup", () => {
       _dpSplitDragging = false;

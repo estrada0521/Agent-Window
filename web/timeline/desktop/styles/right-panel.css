@@ -108,13 +108,9 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 1.7em;
-      height: 1.7em;
-      padding: 0;
-      border: 0.5px solid var(--line-strong);
-      border-radius: 0.46em;
-      background: var(--bg);
-      color: var(--icon-muted);
+      --swap-icon-size: round(nearest, calc(var(--text-size, 13px) * 14 / 13), 1px);
+      width: calc(var(--swap-icon-size) + round(nearest, calc(var(--text-size, 13px) * 12 / 13), 2px));
+      height: calc(var(--swap-icon-size) + round(nearest, calc(var(--text-size, 13px) * 12 / 13), 2px));
       cursor: pointer;
       transform: translate(-50%, -50%);
       opacity: 0;
@@ -126,16 +122,19 @@
       transform: translate(50%, -50%);
     }
     .side-bar-swap-btn svg {
-      width: 1.08em;
-      height: 1.08em;
+      width: var(--swap-icon-size);
+      height: var(--swap-icon-size);
     }
     .has-hover .desktop-right-panel-resizer:hover ~ .side-bar-swap-btn,
     .has-hover .side-bar-swap-btn:hover {
       opacity: 1;
       pointer-events: auto;
     }
-    .has-hover .side-bar-swap-btn:hover {
-      color: var(--icon-hover);
+    .side-bar-swap-btn:active {
+      transform: translate(-50%, -50%) scale(0.94);
+    }
+    html[data-side-bar="left"] .side-bar-swap-btn:active {
+      transform: translate(50%, -50%) scale(0.94);
     }
     body.desktop-right-panel-resizing .side-bar-swap-btn {
       opacity: 0;
