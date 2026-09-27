@@ -5,7 +5,7 @@ from pathlib import Path
 from agents.process_tree import iter_open_paths_in_process_tree
 
 
-def resolve_gemini_native_log(pane_pid: str) -> str:
+def resolve_antigravity_native_log(pane_pid: str) -> str:
     base = Path.home() / ".gemini" / "antigravity-cli"
     presence_root = str((base / "presence").resolve()).rstrip("/") + "/"
     conversation_ids: set[str] = set()

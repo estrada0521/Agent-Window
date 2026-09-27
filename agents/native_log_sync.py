@@ -11,7 +11,7 @@ from agents.binding_models import NativeLogBinding, PaneBindingRequest
 from agents.claude.read_updates import sync_claude_native_log
 from agents.codex.read_updates import sync_codex_native_log
 from agents.cursor.read_updates import sync_cursor_native_log
-from agents.gemini.read_updates import sync_gemini_native_log
+from agents.antigravity.read_updates import sync_antigravity_native_log
 from agents.grok.read_updates import sync_grok_native_log
 from agents.native_log_watcher import NativeLogWatcher
 from tmux.session import pane_field
@@ -25,7 +25,7 @@ _SYNC_BY_BASE = {
     "claude": sync_claude_native_log,
     "codex": sync_codex_native_log,
     "cursor": sync_cursor_native_log,
-    "gemini": sync_gemini_native_log,
+    "antigravity": sync_antigravity_native_log,
     "grok": sync_grok_native_log,
 }
 

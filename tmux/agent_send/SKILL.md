@@ -42,7 +42,7 @@ printf '%s' 'Please inspect the parser.' | agent-send codex-1
 printf '%s' 'Please inspect the UI.' | agent-send codex-2
 ```
 
-This applies to every agent type, such as `claude-1`, `claude-2`, `gemini-1`, or `cursor-2`. To reach more than one instance, list them explicitly:
+This applies to every agent type, such as `claude-1`, `claude-2`, `antigravity-1`, or `cursor-2`. To reach more than one instance, list them explicitly:
 
 ```bash
 printf '%s' 'Please review this together.' | agent-send codex-1,codex-2
@@ -56,25 +56,16 @@ agent-send --context
 
 When only one instance of an agent is active, its name may be unsuffixed, such as `codex`. Do not assume that `codex-1` exists.
 
-## Current Base Targets
+## Base Targets
 
-| Target | Agent |
-|---|---|
-| `claude` | Claude |
-| `codex` | Codex |
-| `gemini` | Antigravity |
-| `cursor` | Cursor |
-| `grok` | Grok |
-| `others` | Every active agent instance except yourself |
+`claude`, `codex`, `antigravity`, `cursor`, `grok`, and `others`.
 
-Use `gemini` when sending to Antigravity. Do not use `agy` or `antigravity` as an `agent-send` target.
-
-`others` excludes only the sender's own instance. For example, when `codex-1` sends to `others`, `codex-2` is still included.
+`others` is every active agent instance except yourself. It excludes only the sender's own instance: when `codex-1` sends to `others`, `codex-2` is still included.
 
 Multiple base and instance targets can be mixed:
 
 ```bash
-printf '%s' 'Please check this change.' | agent-send claude,codex-2,gemini
+printf '%s' 'Please check this change.' | agent-send claude,codex-2,antigravity
 ```
 
 Duplicate resolved targets are delivered only once.

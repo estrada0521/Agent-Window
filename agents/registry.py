@@ -36,7 +36,7 @@ _register(
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
     ),
     AgentDef(
-        name="gemini",
+        name="antigravity",
         display_name="Antigravity",
         executable="agy",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",

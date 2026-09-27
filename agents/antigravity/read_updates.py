@@ -8,7 +8,7 @@ from agents.read_offset import (
     advance_read_offset,
     read_offset_start,
 )
-from agents.gemini.read_running import (
+from agents.antigravity.read_running import (
     parse_antigravity_transcript_step,
     running_tool_events,
 )
@@ -16,7 +16,7 @@ from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
 from fs.log.jsonl import append_jsonl_entry
 
 
-def sync_gemini_native_log(
+def sync_antigravity_native_log(
     sync,
     agent: str,
     native_log_path: str | None = None,
