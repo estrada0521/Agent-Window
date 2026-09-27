@@ -148,6 +148,7 @@
       pointer-events: none;
     }
     .has-hover .side-bar-resizer:hover::before,
+    .has-hover .side-bar-resizer:has(~ .side-bar-swap-btn:hover)::before,
     body.side-bar-resizing .side-bar-resizer::before {
       background: linear-gradient(to bottom, var(--resizer) 10%, var(--resizer-active), var(--resizer) 90%);
     }
