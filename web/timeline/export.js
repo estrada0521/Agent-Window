@@ -87,6 +87,10 @@
       if (/^data:/i.test(url)) return false;
       return new URL(url, location.href).origin === location.origin;
     };
+    const exportRootAttrs = () => ["desktopTimeline", "mobile", "mobileTimeline"]
+      .filter((key) => document.documentElement.dataset[key])
+      .map((key) => ` data-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}="${document.documentElement.dataset[key]}"`)
+      .join("");
     const buildExportHtml = async (rows) => {
       const host = document.createElement("main");
       host.id = "messages";
@@ -130,7 +134,7 @@
       const katex = host.querySelector(".katex") ? `<link rel="stylesheet" href="${KATEX_CSS_HREF}">` : "";
       const title = escapeHtml(document.title);
       return `<!DOCTYPE html>
-<html lang="en" data-desktop-timeline="1">
+<html lang="en"${exportRootAttrs()}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -150,22 +154,28 @@ ${katex}<style>${css}</style>
       if (!rows.length) return;
       const name = document.title.split(" · ")[0] || "timeline";
       try {
-        const link = document.createElement("a");
+        let file;
         if (exportRange.format === "jsonl") {
           const params = new URLSearchParams({ from: rows[0].dataset.contextHash || "", to: rows[rows.length - 1].dataset.contextHash || "" });
           const res = await fetch(`/log-slice?${params.toString()}`);
           if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
-          link.href = URL.createObjectURL(new Blob([await res.blob()], { type: "application/x-ndjson" }));
-          link.download = `${name}.jsonl`;
+          file = new File([await res.blob()], `${name}.jsonl`, { type: "application/x-ndjson" });
         } else {
-          link.href = URL.createObjectURL(new Blob([await buildExportHtml(rows)], { type: "text/html" }));
-          link.download = `${name}.html`;
+          file = new File([await buildExportHtml(rows)], `${name}.html`, { type: "text/html" });
         }
+        if (document.documentElement.dataset.mobile === "1") {
+          await navigator.share({ files: [file] });
+          endExportRange();
+          return;
+        }
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(file);
+        link.download = file.name;
         link.click();
         endExportRange();
         setStatus(document.documentElement.dataset.nativeApp === "1" ? "Exported to ~/Downloads" : "Exported");
       } catch (err) {
-        setStatus(`Export failed: ${err?.message || err}`);
+        if (err?.name !== "AbortError") setStatus(`Export failed: ${err?.message || err}`);
       }
     };
     exportHudExportBtn.addEventListener("click", () => void runExport());

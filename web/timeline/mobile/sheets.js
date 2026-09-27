@@ -32,13 +32,13 @@
       syncNativeHeaderMenuSelectAnchor();
     }
     nativeHeaderMenuSelect?.addEventListener("pointerdown", (event) => {
-      if (agentActionSelectIsArmed()) {
+      if (subMenuIsArmed()) {
         event.preventDefault();
         event.stopPropagation();
-        showArmedAgentActionPicker();
+        showArmedSubMenu();
         return;
       }
-      resetAgentActionNativeMenu({ clearOptions: true });
+      resetSubMenu({ clearOptions: true });
     });
     nativeHeaderMenuSelect?.addEventListener("change", () => {
       const target = String(nativeHeaderMenuSelect.value || "");
@@ -929,7 +929,7 @@ __INCLUDE:git-panel.js__
       await openRepoPath(_repoBrowserPath, { transition: "none", preserveCurrent: true });
     };
     const closeHeaderMenus = () => {
-      resetAgentActionNativeMenu({ clearOptions: true });
+      resetSubMenu({ clearOptions: true });
       gitPanel.closeDetail();
       exitPaneTraceMode();
       closeSheet();
@@ -960,11 +960,11 @@ __INCLUDE:git-panel.js__
     rightMenuBtn?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      if (agentActionSelectIsArmed()) {
-        showArmedAgentActionPicker();
+      if (subMenuIsArmed()) {
+        showArmedSubMenu();
         return;
       }
-      resetAgentActionNativeMenu({ clearOptions: true });
+      resetSubMenu({ clearOptions: true });
       if (useNativeHeaderMenuPicker) {
         if (openNativeHeaderMenuPicker()) return;
       }
@@ -998,7 +998,7 @@ __INCLUDE:git-panel.js__
     document.addEventListener("click", (event) => {
       if (_ignoreGlobalClick) {
         _ignoreGlobalClick = false;
-        setTimeout(() => { skipAgentMenuBlur = false; }, 0);
+        setTimeout(() => { skipSubMenuBlur = false; }, 0);
         return;
       }
 
@@ -1027,6 +1027,10 @@ __INCLUDE:git-panel.js__
       }
       if (action === "openRepoMenu") {
         openRepoSheet();
+        return;
+      }
+      if (action === "shareTimeline") {
+        openSubMenu("Share", [["html", "As HTML"], ["jsonl", "As JSONL"]], (format) => beginExportRange(format));
         return;
       }
       if (action === "openPaneTraceWindow") {

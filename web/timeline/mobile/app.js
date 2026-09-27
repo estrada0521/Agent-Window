@@ -292,6 +292,7 @@ __INCLUDE:hub-navigation.js__
     const rightMenuBtn = document.getElementById("pageMenuBtn");
 
 __INCLUDE:sheets.js__
+__INCLUDE:../export.js__
 __INCLUDE:../composer.js__
 __INCLUDE:../file-links.js__
 __INCLUDE:../composer-commands.js__

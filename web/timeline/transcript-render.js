@@ -266,38 +266,34 @@ __INCLUDE:../hud.js__
         setStatus(err?.message || `${adding ? "Add" : "Remove"} agent failed`);
       }
     };
-    let nativeBridgeAgentActionMode = "";
-    const resetAgentActionNativeMenu = ({ clearOptions = false } = {}) => {
-      const select = document.getElementById("agentActionNativeMenuSelect");
+    let subMenuPick = null;
+    let skipSubMenuBlur = false;
+    const resetSubMenu = ({ clearOptions = false } = {}) => {
+      const select = document.getElementById("subMenuNativeSelect");
       if (!select) return;
       select.value = "";
       if (clearOptions) {
-        select.innerHTML = '<option value="" disabled selected>Agent</option>';
+        select.innerHTML = '<option value="" disabled selected>Menu</option>';
       }
       select.style.top = "-9999px";
       select.style.left = "-9999px";
     };
-    const resetAgentActionMenus = () => {
-      resetAgentActionNativeMenu({ clearOptions: true });
-      nativeBridgeAgentActionMode = "";
-    };
-    const agentActionSelectIsArmed = () => {
-      const select = document.getElementById("agentActionNativeMenuSelect");
+    const subMenuIsArmed = () => {
+      const select = document.getElementById("subMenuNativeSelect");
       if (!select) return false;
       return select.options.length > 1 && select.style.top !== "-9999px";
     };
-    const showArmedAgentActionPicker = () => {
-      const select = document.getElementById("agentActionNativeMenuSelect");
-      if (!select || !agentActionSelectIsArmed()) return false;
+    const showArmedSubMenu = () => {
+      const select = document.getElementById("subMenuNativeSelect");
+      if (!select || !subMenuIsArmed()) return false;
       openNativeSelect(select);
       return true;
     };
-    let skipAgentMenuBlur = false;
-    const ensureAgentActionNativeMenu = () => {
-      let select = document.getElementById("agentActionNativeMenuSelect");
+    const ensureSubMenu = () => {
+      let select = document.getElementById("subMenuNativeSelect");
       if (select) return select;
       select = document.createElement("select");
-      select.id = "agentActionNativeMenuSelect";
+      select.id = "subMenuNativeSelect";
       select.setAttribute("aria-hidden", "true");
       select.tabIndex = -1;
       select.style.position = "fixed";
@@ -317,22 +313,20 @@ __INCLUDE:../hud.js__
       select.style.zIndex = "1000";
       select.addEventListener("change", () => {
         const value = String(select.value || "");
-        resetAgentActionNativeMenu({ clearOptions: true });
-        if (!value) return;
-        const sep = value.indexOf(":");
-        if (sep <= 0) return;
-        void performAgentAction(value.slice(0, sep), value.slice(sep + 1));
+        const pick = subMenuPick;
+        resetSubMenu({ clearOptions: true });
+        if (value && pick) pick(value);
       });
       select.addEventListener("blur", () => {
         setTimeout(() => {
-          if (skipAgentMenuBlur) return;
-          resetAgentActionNativeMenu({ clearOptions: true });
+          if (skipSubMenuBlur) return;
+          resetSubMenu({ clearOptions: true });
         }, 0);
       });
       document.body.appendChild(select);
       return select;
     };
-    const anchorAgentActionNativeMenu = (select) => {
+    const anchorSubMenu = (select) => {
       const anchor = rightMenuBtn || document.activeElement || document.body;
       if (document.documentElement.dataset.mobile === "1") {
         const rect = anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : { left: 0, top: 0, width: 1, height: 1 };
@@ -357,18 +351,23 @@ __INCLUDE:../hud.js__
       select.style.width = `${width}px`;
       select.style.height = `${height}px`;
     };
-    const openAgentActionMenu = (mode) => {
-      const candidates = agentActionCandidates(mode);
-      const select = ensureAgentActionNativeMenu();
-      const title = mode === "add" ? "Add Agent" : "Remove Agent";
-      resetAgentActionNativeMenu({ clearOptions: true });
-      select.innerHTML = `<option value="" disabled selected>${title}</option>` + candidates
-        .map((agent) => `<option value="${mode}:${escapeHtml(agent)}">${escapeHtml(agent)}</option>`)
+    const openSubMenu = (title, choices, onPick) => {
+      const select = ensureSubMenu();
+      resetSubMenu({ clearOptions: true });
+      subMenuPick = onPick;
+      select.innerHTML = `<option value="" disabled selected>${escapeHtml(title)}</option>` + choices
+        .map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`)
         .join("");
-      anchorAgentActionNativeMenu(select);
-      skipAgentMenuBlur = document.documentElement.dataset.mobile === "1";
+      anchorSubMenu(select);
+      skipSubMenuBlur = document.documentElement.dataset.mobile === "1";
       openNativeSelect(select);
-      return true;
+    };
+    const openAgentActionMenu = (mode) => {
+      openSubMenu(
+        mode === "add" ? "Add Agent" : "Remove Agent",
+        agentActionCandidates(mode).map((agent) => [agent, agent]),
+        (agent) => void performAgentAction(mode, agent),
+      );
     };
     const showAddAgentModal = () => {
       openAgentActionMenu("add");

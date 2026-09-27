@@ -23,7 +23,7 @@ class MobileAgentPickerTests(unittest.TestCase):
         self.assertIn('value="addAgent"', SHELL)
         self.assertIn('value="removeAgent"', SHELL)
         self.assertNotIn("nativeHeaderMenuSelect.innerHTML", SHEETS)
-        self.assertIn('id = "agentActionNativeMenuSelect"', RENDER)
+        self.assertIn('id = "subMenuNativeSelect"', RENDER)
 
     def test_leftover_hamburger_tap_opens_the_second_picker(self) -> None:
         pointerdown = _between(
@@ -31,10 +31,10 @@ class MobileAgentPickerTests(unittest.TestCase):
             'nativeHeaderMenuSelect?.addEventListener("pointerdown"',
             'nativeHeaderMenuSelect?.addEventListener("change"',
         )
-        self.assertIn("agentActionSelectIsArmed()", pointerdown)
+        self.assertIn("subMenuIsArmed()", pointerdown)
         self.assertIn("event.preventDefault()", pointerdown)
         self.assertIn("event.stopPropagation()", pointerdown)
-        self.assertIn("showArmedAgentActionPicker()", pointerdown)
+        self.assertIn("showArmedSubMenu()", pointerdown)
         self.assertNotIn("passive: true", pointerdown)
 
         button = _between(
@@ -43,15 +43,15 @@ class MobileAgentPickerTests(unittest.TestCase):
             'mobileSheet?.addEventListener("click"',
         )
         self.assertLess(
-            button.index("agentActionSelectIsArmed()"),
-            button.index("resetAgentActionNativeMenu"),
+            button.index("subMenuIsArmed()"),
+            button.index("resetSubMenu"),
         )
-        self.assertIn("showArmedAgentActionPicker()", button)
+        self.assertIn("showArmedSubMenu()", button)
 
     def test_failed_first_showpicker_leaves_the_select_armed(self) -> None:
-        opener = _between(RENDER, "const openAgentActionMenu =", "const showAddAgentModal =")
-        after_open = _between(opener, "openNativeSelect(select);", "return true;")
-        self.assertNotIn("resetAgentActionNativeMenu", after_open)
+        opener = _between(RENDER, "const openSubMenu =", "const openAgentActionMenu =")
+        after_open = _between(opener, "openNativeSelect(select);", "};")
+        self.assertNotIn("resetSubMenu", after_open)
         self.assertNotIn("agent menu unavailable", opener)
 
     def test_add_remove_do_not_reset_before_the_leftover_tap(self) -> None:
@@ -63,16 +63,16 @@ class MobileAgentPickerTests(unittest.TestCase):
         self.assertNotIn("closeQuickMore", remove_agent)
 
     def test_blur_after_leftover_returns_the_first_menu(self) -> None:
-        opener = _between(RENDER, "const openAgentActionMenu =", "const showAddAgentModal =")
-        self.assertIn('skipAgentMenuBlur = document.documentElement.dataset.mobile === "1"', opener)
+        opener = _between(RENDER, "const openSubMenu =", "const openAgentActionMenu =")
+        self.assertIn('skipSubMenuBlur = document.documentElement.dataset.mobile === "1"', opener)
         blur = _between(RENDER, 'select.addEventListener("blur"', "document.body.appendChild(select)")
-        self.assertIn("if (skipAgentMenuBlur) return;", blur)
+        self.assertIn("if (skipSubMenuBlur) return;", blur)
         leftover_click = _between(
             SHEETS,
             'document.addEventListener("click"',
             "async function runForwardAction",
         )
-        self.assertIn("skipAgentMenuBlur = false", leftover_click)
+        self.assertIn("skipSubMenuBlur = false", leftover_click)
 
 
 if __name__ == "__main__":

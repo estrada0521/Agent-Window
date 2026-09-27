@@ -1,6 +1,6 @@
     const rightMenuBtn = document.getElementById("timelineMenuBtn");
     const closeHeaderMenus = () => {
-      resetAgentActionMenus();
+      resetSubMenu({ clearOptions: true });
     };
     const renderAgentIconRgba = (src) => new Promise((resolve) => {
       if (!src) return resolve(null);
@@ -134,9 +134,8 @@
     document.addEventListener("click", (event) => {
 
       const inRightMenu = rightMenuBtn.contains(event.target);
-      const agentActionNativeMenu = document.getElementById("agentActionNativeMenuSelect");
-      const inAgentActionMenu = agentActionNativeMenu?.contains(event.target);
-      if (!inRightMenu && !inAgentActionMenu) {
+      const inSubMenu = document.getElementById("subMenuNativeSelect")?.contains(event.target);
+      if (!inRightMenu && !inSubMenu) {
         closeHeaderMenus();
       }
     });
