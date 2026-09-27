@@ -138,10 +138,10 @@
 <title>${title}</title>
 <script>const m=matchMedia("(prefers-color-scheme: dark)");const t=()=>{document.documentElement.dataset.theme=m.matches?"dark":"light"};t();m.addEventListener("change",t);<\/script>
 ${katex}<style>${css}</style>
-<style>main#messages{position:static;overflow:visible;padding-block:3em}main#messages::before,main#messages::after{display:none}</style>
+<style>.shell{height:auto;overflow:visible}main#messages{position:static;overflow:visible;padding-block:3em}main#messages::before,main#messages::after{display:none}</style>
 </head>
 <body>
-${host.outerHTML}
+<section class="shell">${host.outerHTML}</section>
 </body>
 </html>
 `;
