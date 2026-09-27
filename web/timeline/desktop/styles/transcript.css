@@ -530,6 +530,10 @@
       opacity: 1;
     }
 
+    html[data-auto-window-height="1"] .message-row:not(.user) .message::before {
+      content: none;
+    }
+
     __AGENT_MESSAGE_SELECTORS__ {
       background: rgba(var(--bg-rgb), 0.68);
       border: none;
