@@ -1,54 +1,54 @@
     const _fileExistenceCache = new Map();
-    const FILE_PREVIEW_HTML_MODE_ICONS = {
+    const FILE_PREVIEW_MODE_ICONS = {
       web: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 9.5h17"></path><circle cx="7.5" cy="7" r="0.8" fill="currentColor" stroke="none"></circle><circle cx="10.5" cy="7" r="0.8" fill="currentColor" stroke="none"></circle><path d="M9.5 13.5h6"></path><path d="M9.5 16.5h4"></path>',
       text: '<path d="M14 3.5H7.5A2.5 2.5 0 0 0 5 6v12a2.5 2.5 0 0 0 2.5 2.5h9A2.5 2.5 0 0 0 19 18V8.5z"></path><path d="M14 3.5V8.5H19"></path><path d="M9 12.5h6"></path><path d="M9 16h6"></path>',
     };
     let repoPreviewBaseTheme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
-    let repoHtmlPreviewMode = "text";
+    let repoPreviewMode = "text";
     let repoPreviewControlsWired = false;
     let filePreviewLoadSeq = 0;
     let cancelFilePreviewLoading = () => {};
     const currentFileModalBaseTheme = () => document.documentElement.dataset.theme === "light" ? "light" : "dark";
-    const isHtmlPreviewExt = (ext) => ext === "html" || ext === "htm";
+    const hasPreviewModes = (ext) => ext === "html" || ext === "htm" || ext === "md";
+    const defaultPreviewMode = (ext) => ext === "md" ? "web" : "text";
     const sheetPreviewFrameEl = () => mobileSheet?.querySelector(".sheet-preview-frame");
-    const repoPreviewHtmlModeBtn = () => document.querySelector(".repo-preview-html-mode");
-    const repoPreviewHtmlModeIcon = () => document.querySelector(".repo-preview-html-mode-icon");
+    const repoPreviewModeBtn = () => document.querySelector(".repo-preview-mode");
+    const repoPreviewModeIcon = () => document.querySelector(".repo-preview-mode-icon");
     const repoPreviewShareBtn = () => document.querySelector(".repo-preview-share");
     const sheetPreviewOpen = () => !!mobileSheet?.classList.contains("sheet-mode-preview");
     const repoPreviewExt = () => String(mobileSheet?._previewExt || "").toLowerCase();
     const syncRepoPreviewControls = () => {
       const shareBtn = repoPreviewShareBtn();
       if (shareBtn) shareBtn.hidden = !sheetPreviewOpen();
-      const btn = repoPreviewHtmlModeBtn();
-      const icon = repoPreviewHtmlModeIcon();
+      const btn = repoPreviewModeBtn();
+      const icon = repoPreviewModeIcon();
       if (!btn || !icon) return;
-      const isHtml = isHtmlPreviewExt(repoPreviewExt());
-      btn.hidden = !sheetPreviewOpen() || !isHtml;
+      btn.hidden = !sheetPreviewOpen() || !hasPreviewModes(repoPreviewExt());
       if (btn.hidden) return;
-      const nextMode = repoHtmlPreviewMode === "text" ? "web" : "text";
-      const title = nextMode === "text" ? "Switch HTML preview to text" : "Switch HTML preview to web";
+      const nextMode = repoPreviewMode === "text" ? "web" : "text";
+      const title = nextMode === "text" ? "Show source" : "Show rendered";
       btn.title = title;
       btn.setAttribute("aria-label", title);
-      icon.innerHTML = FILE_PREVIEW_HTML_MODE_ICONS[nextMode] || FILE_PREVIEW_HTML_MODE_ICONS.text;
+      icon.innerHTML = FILE_PREVIEW_MODE_ICONS[nextMode] || FILE_PREVIEW_MODE_ICONS.text;
     };
     const resetRepoPreviewControls = () => {
       repoPreviewBaseTheme = currentFileModalBaseTheme();
-      repoHtmlPreviewMode = "text";
+      repoPreviewMode = defaultPreviewMode(repoPreviewExt());
       syncRepoPreviewControls();
     };
     const initRepoPreviewControls = () => {
       repoPreviewBaseTheme = currentFileModalBaseTheme();
-      repoHtmlPreviewMode = "text";
+      repoPreviewMode = defaultPreviewMode(repoPreviewExt());
       syncRepoPreviewControls();
     };
-    const applyPreviewHtmlModeToFrame = (frame, ext, mode) => {
-      if (!isHtmlPreviewExt(ext)) return false;
+    const applyPreviewModeToFrame = (frame, ext, mode) => {
+      if (!hasPreviewModes(ext)) return false;
       const nextMode = mode === "text" ? "text" : "web";
       try {
         const frameWindow = frame.contentWindow;
         const frameDoc = frame.contentDocument || frameWindow?.document || null;
-        if (typeof frameWindow?.__agentIndexApplyHtmlPreviewMode === "function") {
-          frameWindow.__agentIndexApplyHtmlPreviewMode(nextMode);
+        if (typeof frameWindow?.__agentIndexApplyPreviewMode === "function") {
+          frameWindow.__agentIndexApplyPreviewMode(nextMode);
           return true;
         }
         if (frameDoc?.documentElement) {
@@ -58,18 +58,18 @@
       } catch (_) { }
       return false;
     };
-    const postPreviewHtmlModeToFrame = (frame, ext, mode) => {
-      if (!frame || !isHtmlPreviewExt(ext)) return;
-      applyPreviewHtmlModeToFrame(frame, ext, mode);
+    const postPreviewModeToFrame = (frame, ext, mode) => {
+      if (!frame || !hasPreviewModes(ext)) return;
+      applyPreviewModeToFrame(frame, ext, mode);
       frame.contentWindow?.postMessage(
         { type: "file-preview-mode", mode },
         window.location.origin,
       );
       requestAnimationFrame(() => {
-        applyPreviewHtmlModeToFrame(frame, ext, mode);
+        applyPreviewModeToFrame(frame, ext, mode);
       });
       setTimeout(() => {
-        applyPreviewHtmlModeToFrame(frame, ext, mode);
+        applyPreviewModeToFrame(frame, ext, mode);
       }, 60);
     };
     const postRepoPreviewTheme = () => {
@@ -77,22 +77,22 @@
       if (!frame?.src) return;
       postPreviewThemeToFrame(frame, repoPreviewExt(), repoPreviewBaseTheme);
     };
-    const postRepoPreviewHtmlMode = () => {
+    const postRepoPreviewMode = () => {
       const frame = sheetPreviewFrameEl();
       if (!frame?.src) return;
-      postPreviewHtmlModeToFrame(frame, repoPreviewExt(), repoHtmlPreviewMode);
+      postPreviewModeToFrame(frame, repoPreviewExt(), repoPreviewMode);
     };
     const wireRepoPreviewControls = (sheetFooter) => {
       if (repoPreviewControlsWired || !sheetFooter) return;
       const closeBtn = sheetFooter.querySelector(".mobile-bottom-sheet-close");
       if (!closeBtn) return;
       repoPreviewControlsWired = true;
-      const htmlBtn = document.createElement("button");
-      htmlBtn.type = "button";
-      htmlBtn.className = "repo-preview-html-mode mobile-bottom-sheet-button";
-      htmlBtn.hidden = true;
-      htmlBtn.innerHTML = '<svg class="repo-preview-html-mode-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>';
-      sheetFooter.insertBefore(htmlBtn, closeBtn);
+      const modeBtn = document.createElement("button");
+      modeBtn.type = "button";
+      modeBtn.className = "repo-preview-mode mobile-bottom-sheet-button";
+      modeBtn.hidden = true;
+      modeBtn.innerHTML = '<svg class="repo-preview-mode-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>';
+      sheetFooter.insertBefore(modeBtn, closeBtn);
       const shareBtn = document.createElement("button");
       shareBtn.type = "button";
       shareBtn.className = "repo-preview-share mobile-bottom-sheet-button";
@@ -100,13 +100,13 @@
       shareBtn.setAttribute("aria-label", "Share");
       shareBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12v4.5a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3V12"></path><path d="M12 3.5v11"></path><path d="m8 7.5 4-4 4 4"></path></svg>';
       sheetFooter.appendChild(shareBtn);
-      htmlBtn.addEventListener("click", (event) => {
+      modeBtn.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        if (!isHtmlPreviewExt(repoPreviewExt())) return;
-        repoHtmlPreviewMode = repoHtmlPreviewMode === "text" ? "web" : "text";
+        if (!hasPreviewModes(repoPreviewExt())) return;
+        repoPreviewMode = repoPreviewMode === "text" ? "web" : "text";
         syncRepoPreviewControls();
-        postRepoPreviewHtmlMode();
+        postRepoPreviewMode();
       });
       shareBtn.addEventListener("click", async (event) => {
         event.preventDefault();
@@ -172,7 +172,7 @@
           style.id = "base-theme-style";
           frameDoc.head?.appendChild(style);
         }
-        style.textContent = `:root{--body-weight:${bodyWeight};--file-preview-code-weight:${codeWeight};--preview-gutter-bg:rgba(${fgRgb},0.06);--preview-gutter-divider:rgba(${fgRgb},0.16)}html,body{color-scheme:${scheme};background:${bg};color:${fg}}.view-container,.html-preview-shell,.wrap{background:${bg}}.fn{color:${fg}}.code-gutter-table .ln,.html-preview-gutter-table .ln{color:${lnFg}}.code-table,.html-preview-text-table,pre{color:${fg}}`;
+        style.textContent = `:root{--body-weight:${bodyWeight};--file-preview-code-weight:${codeWeight};--preview-gutter-bg:rgba(${fgRgb},0.06);--preview-gutter-divider:rgba(${fgRgb},0.16)}html,body{color-scheme:${scheme};background:${bg};color:${fg}}.view-container,.html-preview-shell,.wrap{background:${bg}}.fn{color:${fg}}.code-gutter-table .ln,.preview-text-gutter-table .ln{color:${lnFg}}.code-table,.preview-text-table,pre{color:${fg}}`;
         return true;
       } catch (_) { }
       return false;
@@ -244,11 +244,11 @@
           frame.contentDocument,
           () => sheetPreviewOpen(),
           () => popSheetPreview(),
-          { ignore: ".table-scroll, .katex-display, pre, .code-scroll, .html-preview-text-scroll" },
+          { ignore: ".table-scroll, .katex-display, pre, .code-scroll, .preview-text-scroll" },
         );
         repoPreviewBaseTheme = currentFileModalBaseTheme();
         postPreviewThemeToFrame(frame, normalizedExt, repoPreviewBaseTheme);
-        postPreviewHtmlModeToFrame(frame, normalizedExt, repoHtmlPreviewMode);
+        postPreviewModeToFrame(frame, normalizedExt, repoPreviewMode);
       };
       frame.src = fileViewHrefForPath(normalizedPath, { embed: true });
     };

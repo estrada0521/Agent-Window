@@ -72,7 +72,7 @@
       pointer-events: none;
     }
 
-    .repo-preview-html-mode {
+    .repo-preview-mode {
       position: absolute;
       right: calc(50% + 30px);
       top: 0;
@@ -80,7 +80,7 @@
       margin-block: auto;
     }
 
-    html[data-hand="right"] .repo-preview-html-mode {
+    html[data-hand="right"] .repo-preview-mode {
       right: auto;
       left: calc(50% + 30px);
     }
@@ -98,12 +98,12 @@
       left: calc(14px + env(safe-area-inset-left, 0px));
     }
 
-    .repo-preview-html-mode[hidden],
+    .repo-preview-mode[hidden],
     .repo-preview-share[hidden] {
       display: none;
     }
 
-    .repo-preview-html-mode svg {
+    .repo-preview-mode svg {
       width: 18px;
       height: 18px;
       stroke-width: 1.5;

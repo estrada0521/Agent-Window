@@ -148,7 +148,7 @@ def render_file_view(
         f':root{{color-scheme: {"light" if is_light_theme else "dark"};--font-main:{MESSAGE_FONT};--font-code:{CODE_FONT};--file-preview-code-font:{FILE_PREVIEW_CODE_FONT};--file-preview-code-weight:{FILE_PREVIEW_LIGHT_CODE_WEIGHT if is_light_theme else FILE_PREVIEW_DARK_CODE_WEIGHT};--text-size:{resolved_text_size}px;--text-line-height:{resolved_line_height}px;--file-preview-code-size:{FILE_PREVIEW_CODE_TEXT_SIZE}px;--file-preview-code-line-height:{text_line_height_px(FILE_PREVIEW_CODE_TEXT_SIZE)}px;--body-weight:{"430" if is_light_theme else "300"};--tpad:{preview_top_offset};--code-tpad:{code_top_offset};--bpad:{preview_bottom_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
         f"{font_face_css}"
         f"*{{box-sizing:border-box}}"
-        f".view-container,.html-preview-text-wrap{{--text-size:var(--file-preview-code-size);--text-line-height:var(--file-preview-code-line-height)}}"
+        f".view-container,.preview-text-wrap{{--text-size:var(--file-preview-code-size);--text-line-height:var(--file-preview-code-line-height)}}"
         f"html,body{{margin:0;background:{embed_bg};color:{pane_fg};font-family:sans-serif;display:flex;flex-direction:column;height:100vh;font-size:var(--text-size);line-height:var(--text-line-height);font-weight:var(--body-weight);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-synthesis:none}}"
     )
 
@@ -186,6 +186,40 @@ def render_file_view(
             for idx, line in enumerate(lines, start=1)
         )
         return gutter_rows, code_rows, gutter_width, title_offset
+
+    def text_panel_css(gutter_width: int) -> str:
+        return (
+            f'.preview-text-wrap{{--preview-gutter-width:{scaled_px(gutter_width)};flex:1;min-height:0;display:flex;min-width:0;position:relative;overflow:hidden;background:transparent}}'
+            '.preview-text-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--code-tpad);padding-bottom:var(--bpad,0px)}'
+            '.preview-text-gutter-inner{min-width:0;will-change:transform}'
+            '.preview-text-gutter-table{border-collapse:collapse;width:100%;table-layout:fixed;font-family:var(--file-preview-code-font);font-size:var(--text-size);line-height:var(--text-line-height);font-weight:var(--file-preview-code-weight)}'
+            '.preview-text-gutter-table td{padding:0;vertical-align:top}'
+            f'.preview-text-gutter-table .ln{{padding:{ln_padding_css};width:var(--preview-gutter-width);min-width:var(--preview-gutter-width);box-sizing:border-box;text-align:right;color:{pane_ln_color};user-select:none;font-variant-numeric:tabular-nums;line-height:var(--text-line-height);font-family:var(--file-preview-code-font);font-size:var(--text-size);font-weight:var(--file-preview-code-weight);background:transparent}}'
+            '.preview-text-scroll{position:relative;z-index:1;flex:1;min-height:0;min-width:0;width:auto;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:auto;padding-top:var(--code-tpad);padding-bottom:var(--bpad,0px)}'
+            '.preview-text-table{border-collapse:collapse;min-width:100%;width:max-content;table-layout:auto;font-family:var(--file-preview-code-font);font-size:var(--text-size);line-height:var(--text-line-height);font-weight:var(--file-preview-code-weight)}'
+            '.preview-text-table td{padding:0;vertical-align:top}'
+            f'.preview-text-table .lc{{padding-left:{lc_padding_left_css};padding-right:min(7vw,52px)}}'
+            '.preview-text-table .lc pre{margin:0;min-height:var(--text-line-height);line-height:var(--text-line-height);font-family:var(--file-preview-code-font);font-weight:var(--file-preview-code-weight);white-space:pre}'
+            '.preview-text-gutter-table tbody tr:last-child .ln,.preview-text-table tbody tr:last-child .lc pre{padding-bottom:24px}'
+        )
+
+    def text_panel_markup(gutter_rows: str, code_rows: str) -> str:
+        return (
+            '<div class="preview-text-wrap" id="previewTextViewContainer">'
+            '<div class="preview-text-gutter" id="previewTextGutter"><div class="preview-text-gutter-inner" id="previewTextGutterInner"><table class="preview-text-gutter-table" role="presentation"><tbody id="previewTextGutterBody">'
+            f'{gutter_rows}</tbody></table></div></div>'
+            '<div class="preview-text-scroll" id="previewTextCodeScroll"><table class="preview-text-table" role="presentation"><tbody id="previewTextCodeBody">'
+            f'{code_rows}</tbody></table></div></div>'
+        )
+
+    text_panel_js = build_vertical_bias_wheel_js(
+        view_container_id="previewTextViewContainer",
+        code_scroll_id="previewTextCodeScroll",
+    ) + build_gutter_scroll_sync_js(
+        code_scroll_id="previewTextCodeScroll",
+        gutter_id="previewTextGutter",
+        gutter_inner_id="previewTextGutterInner",
+    )
 
     if ext in files.IMAGE_EXTS:
         return (
@@ -231,10 +265,10 @@ def render_file_view(
                 raw_url_value=raw_url,
                 total_bytes=size,
                 chunk_bytes=PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES,
-                view_container_id="htmlTextViewContainer",
-                code_scroll_id="htmlTextCodeScroll",
-                gutter_body_id="htmlTextGutterBody",
-                code_body_id="htmlTextCodeBody",
+                view_container_id="previewTextViewContainer",
+                code_scroll_id="previewTextCodeScroll",
+                gutter_body_id="previewTextGutterBody",
+                code_body_id="previewTextCodeBody",
             )
         else:
             with open(full, "r", encoding="utf-8", errors="replace") as f:
@@ -257,11 +291,10 @@ def render_file_view(
             'const setMode=(mode)=>{'
             'const nextMode=mode==="text"?"text":"web";'
             'root.dataset.previewMode=nextMode;'
-            'window.__agentIndexHtmlPreviewMode=nextMode;'
             'buttons.forEach((button)=>{const active=button.dataset.previewMode===nextMode;button.classList.toggle("active",active);button.setAttribute("aria-selected",active?"true":"false");});'
             'panels.forEach((panel)=>panel.classList.toggle("active",panel.dataset.previewPanel===nextMode));'
             '};'
-            'window.__agentIndexApplyHtmlPreviewMode=setMode;'
+            'window.__agentIndexApplyPreviewMode=setMode;'
             'window.addEventListener("message",(event)=>{'
             'const data=event.data||{};'
             'if(data.type==="file-preview-mode"){setMode(data.mode);return;}'
@@ -271,15 +304,7 @@ def render_file_view(
             'buttons.forEach((button)=>button.addEventListener("click",()=>setMode(button.dataset.previewMode||"text")));'
             '};'
             'bindButtons();'
-            + build_vertical_bias_wheel_js(
-                view_container_id="htmlTextViewContainer",
-                code_scroll_id="htmlTextCodeScroll",
-            )
-            + build_gutter_scroll_sync_js(
-                code_scroll_id="htmlTextCodeScroll",
-                gutter_id="htmlTextGutter",
-                gutter_inner_id="htmlTextGutterInner",
-            )
+            + text_panel_js
             + html_progressive_loader_js
             + 'setMode("text");'
         )
@@ -297,23 +322,12 @@ def render_file_view(
             '.html-preview-panel-web{min-height:0;flex-direction:column}'
             '.html-preview-panel-web iframe{flex:1;min-height:0;width:100%;border:0;background:white}'
             '.html-preview-panel-text{min-height:0;flex-direction:column}'
-            f'.html-preview-text-wrap{{--preview-gutter-width:{scaled_px(gutter_width)};flex:1;min-height:0;display:flex;min-width:0;position:relative;overflow:hidden;background:transparent}}'
-            '.html-preview-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--code-tpad);padding-bottom:var(--bpad,0px)}'
-            '.html-preview-gutter-inner{min-width:0;will-change:transform}'
-            '.html-preview-gutter-table{border-collapse:collapse;width:100%;table-layout:fixed;font-family:var(--file-preview-code-font);font-size:var(--text-size);line-height:var(--text-line-height);font-weight:var(--file-preview-code-weight)}'
-            '.html-preview-gutter-table td{padding:0;vertical-align:top}'
-            f'.html-preview-gutter-table .ln{{padding:{ln_padding_css};width:var(--preview-gutter-width);min-width:var(--preview-gutter-width);box-sizing:border-box;text-align:right;color:{pane_ln_color};user-select:none;font-variant-numeric:tabular-nums;line-height:var(--text-line-height);font-family:var(--file-preview-code-font);font-size:var(--text-size);font-weight:var(--file-preview-code-weight);background:transparent}}'
-            '.html-preview-text-scroll{position:relative;z-index:1;flex:1;min-height:0;min-width:0;width:auto;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:auto;padding-top:var(--code-tpad);padding-bottom:var(--bpad,0px)}'
-            '.html-preview-text-table{border-collapse:collapse;min-width:100%;width:max-content;table-layout:auto;font-family:var(--file-preview-code-font);font-size:var(--text-size);line-height:var(--text-line-height);font-weight:var(--file-preview-code-weight)}'
-            '.html-preview-text-table td{padding:0;vertical-align:top}'
-            f'.html-preview-text-table .lc{{padding-left:{lc_padding_left_css};padding-right:min(7vw,52px)}}'
-            '.html-preview-text-table .lc pre{margin:0;min-height:var(--text-line-height);line-height:var(--text-line-height);font-family:var(--file-preview-code-font);font-weight:var(--file-preview-code-weight);white-space:pre}'
-            '.html-preview-gutter-table tbody tr:last-child .ln,.html-preview-text-table tbody tr:last-child .lc pre{padding-bottom:24px}'
+            f'{text_panel_css(gutter_width)}'
             '</style></head>'
             f'<body><div class="html-preview-shell">{tabs_markup}'
             '<div class="html-preview-panels">'
             f'<div class="html-preview-panel html-preview-panel-web" data-preview-panel="web"><iframe src="{raw_url}" title="{html_escape(filename)}"></iframe></div>'
-            f'<div class="html-preview-panel html-preview-panel-text active" data-preview-panel="text"><div class="html-preview-text-wrap" id="htmlTextViewContainer"><div class="html-preview-gutter" id="htmlTextGutter"><div class="html-preview-gutter-inner" id="htmlTextGutterInner"><table class="html-preview-gutter-table" role="presentation"><tbody id="htmlTextGutterBody">{gutter_rows}</tbody></table></div></div><div class="html-preview-text-scroll" id="htmlTextCodeScroll"><table class="html-preview-text-table" role="presentation"><tbody id="htmlTextCodeBody">{code_rows}</tbody></table></div></div></div>'
+            f'<div class="html-preview-panel html-preview-panel-text active" data-preview-panel="text">{text_panel_markup(gutter_rows, code_rows)}</div>'
             f'</div><script>{toggle_js}</script></div></body></html>'
         )
     if is_text_like and ext != ".md" and (bool(force_progressive_text) or size > INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES):
@@ -425,12 +439,25 @@ def render_file_view(
         markdown_layout_css = (
             f'.md-preview-shell>.md-body{{padding:{markdown_top_padding} 16px {markdown_bottom_padding}}}'
         )
+        text_gutter_rows, text_code_rows, text_gutter_width, text_title_offset = build_text_table_markup(content)
+        markdown_mode_css = (
+            f'{text_panel_css(text_gutter_width)}'
+            'html:not([data-preview-mode="text"]) .preview-text-wrap{display:none}'
+            'html[data-preview-mode="text"] .md-preview-shell{display:none}'
+        )
+        markdown_mode_js = (
+            'const setMode=(mode)=>{document.documentElement.dataset.previewMode=mode==="text"?"text":"web";};'
+            'window.__agentIndexApplyPreviewMode=setMode;'
+            'window.addEventListener("message",(event)=>{const data=event.data||{};if(data.type==="file-preview-mode")setMode(data.mode);});'
+            + text_panel_js
+        )
         return (
-            f'<!DOCTYPE html><html data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-mobile-timeline="1" data-mobile="1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
+            f'<!DOCTYPE html><html data-preview-mode="web"{preview_shell_attrs(gutter_width=text_gutter_width, title_offset=text_title_offset)} data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-mobile-timeline="1" data-mobile="1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
             f'{markdown_head_libs}'
-            f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}'
+            f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}{markdown_mode_css}'
             '</style></head>'
-            f'<body><div class="md-preview-shell"><div class="md-body" id="out"></div></div>'
+            f'<body><div class="md-preview-shell"><div class="md-body" id="out"></div></div>{text_panel_markup(text_gutter_rows, text_code_rows)}'
+            f'<script>{markdown_mode_js}</script>'
             f'''<script>
 const __mdText = {content_json};
 const __mdRel = {rel_json};
