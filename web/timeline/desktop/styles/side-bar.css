@@ -616,6 +616,10 @@
       font-family: var(--font-main);
       font-size: var(--text-size, 13px);
     }
+    html[data-desktop-timeline="1"][data-side-bar-position="left"] .git-pinned-summary-aside {
+      right: auto;
+      left: var(--side-bar-floating-inset);
+    }
     html[data-desktop-timeline="1"] .git-pinned-summary-aside[hidden] {
       display: none;
     }
