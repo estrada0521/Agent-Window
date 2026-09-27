@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-import threading
 import time
 from pathlib import Path
 
@@ -15,7 +14,6 @@ class _WorkspaceNotAGitRepo(Exception):
 
 class WorkspaceFiles:
     RAW_STREAM_CHUNK_BYTES = 64 * 1024
-    FILE_LIST_CACHE_TTL_SECONDS = 45
     FILE_SEARCH_MAX_LIMIT = 200
     MIME_TYPES = {
         ".png": "image/png",
@@ -68,10 +66,6 @@ class WorkspaceFiles:
         raw = str(workspace or "").strip()
         self.workspace = os.path.realpath(os.path.normpath(raw)) if raw else ""
         self.repo_root = os.path.realpath(os.path.normpath(str(repo_root))) if repo_root else None
-        self._file_list_cache: list[dict] | None = None
-        self._file_list_cache_at = 0.0
-        self._file_list_cache_lock = threading.Lock()
-        self._file_list_refresh_lock = threading.Lock()
         self._file_index_ignore = FileIndexIgnoreRules(self.workspace)
 
     @staticmethod
@@ -318,25 +312,6 @@ class WorkspaceFiles:
         )
         return {"ok": True, "count": len(fulls)}
 
-    def invalidate_file_list_cache(self) -> None:
-        with self._file_list_cache_lock:
-            self._file_list_cache = None
-            self._file_list_cache_at = 0.0
-
-    def refresh_file_list_cache(self) -> list[dict]:
-        self._require_workspace()
-        if not self._file_list_refresh_lock.acquire(blocking=False):
-            with self._file_list_cache_lock:
-                return [dict(item) for item in (self._file_list_cache or [])]
-        try:
-            files = self._search_paths()
-            with self._file_list_cache_lock:
-                self._file_list_cache = files
-                self._file_list_cache_at = time.time()
-                return [dict(item) for item in files]
-        finally:
-            self._file_list_refresh_lock.release()
-
     def _search_paths(self) -> list[dict]:
         try:
             return self._git_search_paths()
@@ -401,14 +376,8 @@ class WorkspaceFiles:
         return s if i == -1 else s[i + 1 :]
 
     def list_files(self):
-        now = time.time()
-        with self._file_list_cache_lock:
-            if (
-                self._file_list_cache is not None
-                and (now - self._file_list_cache_at) <= self.FILE_LIST_CACHE_TTL_SECONDS
-            ):
-                return [dict(item) for item in self._file_list_cache]
-        return self.refresh_file_list_cache()
+        self._require_workspace()
+        return self._search_paths()
 
     def resolve_file_reference(self, query: str) -> str:
         raw_query = str(query or "").strip()

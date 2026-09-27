@@ -10,7 +10,7 @@
     };
     const bootstrapPinnedGitSummary = async () => {
       if (!pinnedStripActive()) return;
-      const data = await fetchGitOverview({ offset: 0, refresh: true, summary: true });
+      const data = await fetchGitOverview({ offset: 0, summary: true });
       gitHeaderSummaryState = buildSummaryState(data);
       applyGitOverviewHeader();
     };

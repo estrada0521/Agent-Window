@@ -2,13 +2,10 @@ from __future__ import annotations
 
 import subprocess
 import threading
-import time
 from pathlib import Path
 
-_GIT_OVERVIEW_CACHE_TTL_SECONDS = 5.0
-_git_overview_cache_lock = threading.Lock()
-_git_overview_cache: dict[tuple[str, int, int, bool], tuple[float, dict]] = {}
-_commit_list_cache: dict[tuple[str, str, int, int], dict] = {}
+_commit_list_cache_lock = threading.Lock()
+_commit_list_cache: dict[tuple[str, str, str, int, int], dict] = {}
 
 
 def _git_root(workspace: str) -> Path:
@@ -23,7 +20,7 @@ def _git_root(workspace: str) -> Path:
 
 def _run_git(root: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["git", "-C", str(root), *args],
+        ["git", "--no-optional-locks", "-C", str(root), *args],
         check=False,
         capture_output=True,
         text=True,
@@ -32,11 +29,9 @@ def _run_git(root: Path, *args: str) -> subprocess.CompletedProcess:
     )
 
 
-def invalidate_git_cache(*, include_commits: bool = False) -> None:
-    with _git_overview_cache_lock:
-        _git_overview_cache.clear()
-        if include_commits:
-            _commit_list_cache.clear()
+def clear_commit_list_cache() -> None:
+    with _commit_list_cache_lock:
+        _commit_list_cache.clear()
 
 
 def git_ignored_rel_paths(workspace: str, rel_paths: list[str]) -> set[str]:
@@ -128,7 +123,7 @@ def _read_commit_list(root: Path, *, offset: int, limit: int) -> dict:
     }
 
 
-def git_overview(workspace: str, *, offset=0, limit=50, force_refresh: bool = False, include_commits: bool = True):
+def git_overview(workspace: str, *, offset=0, limit=50, include_commits: bool = True):
     root = _git_root(workspace)
     offset = int(offset)
     limit = int(limit)
@@ -137,13 +132,6 @@ def git_overview(workspace: str, *, offset=0, limit=50, force_refresh: bool = Fa
     if limit < 1:
         raise ValueError(f"limit must be >= 1, got {limit}")
     limit = min(limit, 200)
-    cache_key = (str(root.resolve()), offset, limit, include_commits)
-    now = time.monotonic()
-    if not force_refresh:
-        with _git_overview_cache_lock:
-            cached = _git_overview_cache.get(cache_key)
-            if cached and now - cached[0] < _GIT_OVERVIEW_CACHE_TTL_SECONDS:
-                return cached[1]
 
     def _run(*args):
         return _run_git(root, *args)
@@ -195,7 +183,7 @@ def git_overview(workspace: str, *, offset=0, limit=50, force_refresh: bool = Fa
     cached_commits = None
     if include_commits:
         commit_key = (str(root.resolve()), head, origin_main, offset, limit)
-        with _git_overview_cache_lock:
+        with _commit_list_cache_lock:
             cached_commits = _commit_list_cache.get(commit_key)
     status_res = _run("status", "--short", "--branch", "--untracked-files=all")
     if status_res.returncode != 0:
@@ -208,14 +196,14 @@ def git_overview(workspace: str, *, offset=0, limit=50, force_refresh: bool = Fa
         status_lines.append(line)
     staged_paths, unstaged_paths, untracked_paths = _status_bucket_paths(status_lines)
     staged_diff_res = _run("diff", "--numstat", "--cached", "--")
-    unstaged_diff_res = _run("diff", "--numstat", "--")
+    unstaged_diff_res = _run("diff-files", "--numstat")
     worktree_staged_added, worktree_staged_deleted = _parse_numstat(staged_diff_res)
     worktree_unstaged_added, worktree_unstaged_deleted = _parse_numstat(unstaged_diff_res)
     worktree_has_untracked_diff = bool(untracked_paths)
     worktree_has_staged_diff = bool((staged_diff_res.stdout or "").strip())
     worktree_has_unstaged_diff = bool((unstaged_diff_res.stdout or "").strip())
     if has_head:
-        diff_head_res = _run("diff", "--numstat", "HEAD", "--")
+        diff_head_res = _run("diff-index", "-M", "--numstat", "HEAD")
         worktree_added, worktree_deleted = _parse_numstat(diff_head_res)
         worktree_has_diff = bool((diff_head_res.stdout or "").strip()) or worktree_has_untracked_diff
     else:
@@ -230,13 +218,13 @@ def git_overview(workspace: str, *, offset=0, limit=50, force_refresh: bool = Fa
             }
         else:
             cached_commits = _read_commit_list(root, offset=offset, limit=limit)
-            with _git_overview_cache_lock:
+            with _commit_list_cache_lock:
                 _commit_list_cache[commit_key] = cached_commits
     recent_commits = list(cached_commits["recent_commits"]) if cached_commits is not None else []
     total_commits = int(cached_commits["total_commits"]) if cached_commits is not None else 0
     next_offset = offset + len(recent_commits)
     has_more = next_offset < total_commits if total_commits else len(recent_commits) >= limit
-    result = {
+    return {
         "offset": offset,
         "limit": limit,
         "next_offset": next_offset,
@@ -255,9 +243,6 @@ def git_overview(workspace: str, *, offset=0, limit=50, force_refresh: bool = Fa
         "status_lines": status_lines[:8],
         "recent_commits": recent_commits,
     }
-    with _git_overview_cache_lock:
-        _git_overview_cache[cache_key] = (time.monotonic(), result)
-    return result
 
 
 def git_commit_info(workspace: str, *, commit_hash: str) -> dict:

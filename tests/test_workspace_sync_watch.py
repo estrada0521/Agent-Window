@@ -6,7 +6,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from fs.files.workspace import WorkspaceFiles
 from fs.watch import _DebouncedWorkspaceRefresh, _is_git_head_metadata_path
 
 
@@ -28,24 +27,16 @@ class _FakeRuntime:
 class _FakeWorkspaceFiles:
     def __init__(self, workspace: Path) -> None:
         self.workspace = str(workspace.resolve())
-        self.invalidations = 0
 
     @staticmethod
     def file_index_path_is_ignored(_rel: str) -> bool:
         return False
-
-    def invalidate_file_list_cache(self) -> None:
-        self.invalidations += 1
 
 
 class _FakeApi:
     def __init__(self, workspace: Path) -> None:
         self.files = _FakeWorkspaceFiles(workspace)
         self.state = _FakeRuntime()
-
-    @property
-    def file_invalidations(self) -> int:
-        return self.files.invalidations
 
 
 def _refresh(api: _FakeApi) -> _DebouncedWorkspaceRefresh:
@@ -59,19 +50,14 @@ def _refresh(api: _FakeApi) -> _DebouncedWorkspaceRefresh:
 
 class WorkspaceSyncWatchTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.git_invalidations: list[bool] = []
-        git_patcher = mock.patch(
-            "fs.watch.invalidate_git_cache",
-            side_effect=lambda *, include_commits: self.git_invalidations.append(include_commits),
-        )
+        self.commit_cache_clears = 0
+
+        def clear() -> None:
+            self.commit_cache_clears += 1
+
+        git_patcher = mock.patch("fs.watch.clear_commit_list_cache", side_effect=clear)
         git_patcher.start()
         self.addCleanup(git_patcher.stop)
-
-    def test_file_runtime_startup_does_not_eagerly_scan_files(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            with mock.patch.object(WorkspaceFiles, "refresh_file_list_cache") as refresh:
-                WorkspaceFiles(workspace=Path(tmp))
-            refresh.assert_not_called()
 
     def test_git_head_metadata_filter_excludes_large_git_payloads(self) -> None:
         for rel in (
@@ -96,7 +82,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
             with self.subTest(rel=rel):
                 self.assertFalse(_is_git_head_metadata_path(rel))
 
-    def test_git_ref_event_refreshes_commits_without_file_index_scan(self) -> None:
+    def test_git_ref_event_refreshes_commits(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
             api = _FakeApi(workspace)
@@ -108,11 +94,10 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
             refresh._flush_locked()
 
             self.assertEqual(api.state.commit_refreshes, 1)
-            self.assertEqual(api.file_invalidations, 0)
-            self.assertEqual(len(self.git_invalidations), 1)
+            self.assertEqual(self.commit_cache_clears, 1)
             self.assertEqual(api.state.events, ["git"])
 
-    def test_regular_file_event_only_invalidates_lazy_file_index(self) -> None:
+    def test_regular_file_event_publishes_files_and_git(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
             subprocess.run(["git", "init"], cwd=workspace, check=True, capture_output=True)
@@ -127,8 +112,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
             refresh._flush_locked()
 
             self.assertEqual(api.state.commit_refreshes, 0)
-            self.assertEqual(api.file_invalidations, 1)
-            self.assertEqual(len(self.git_invalidations), 1)
+            self.assertEqual(self.commit_cache_clears, 0)
             self.assertEqual(api.state.events, ["files", "git"])
 
     def test_git_object_event_is_ignored_entirely(self) -> None:
@@ -143,11 +127,10 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
             refresh._flush_locked()
 
             self.assertEqual(api.state.commit_refreshes, 0)
-            self.assertEqual(api.file_invalidations, 0)
-            self.assertEqual(len(self.git_invalidations), 0)
+            self.assertEqual(self.commit_cache_clears, 0)
             self.assertEqual(api.state.events, [])
 
-    def test_gitignored_file_does_not_invalidate_git_cache(self) -> None:
+    def test_gitignored_file_publishes_only_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
             subprocess.run(["git", "init"], cwd=workspace, check=True, capture_output=True)
@@ -165,16 +148,12 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
                 refresh.add_path(str(ignored))
             refresh._flush_locked()
 
-            self.assertEqual(api.file_invalidations, 1)
-            self.assertEqual(len(self.git_invalidations), 0)
             self.assertEqual(api.state.events, ["files"])
 
             with mock.patch("fs.watch.threading.Timer"):
                 refresh.add_path(str(tracked))
             refresh._flush_locked()
 
-            self.assertEqual(api.file_invalidations, 2)
-            self.assertEqual(len(self.git_invalidations), 1)
             self.assertEqual(api.state.events, ["files", "files", "git"])
 
 

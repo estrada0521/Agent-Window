@@ -27,23 +27,21 @@
       ).join(","),
       gitStatusLinesDigest(data),
     ].join("|");
-    const gitOverviewQuery = ({ offset = 0, limit = GIT_PANEL_BATCH, refresh = false, summary = false } = {}) => {
+    const gitOverviewQuery = ({ offset = 0, limit = GIT_PANEL_BATCH, summary = false } = {}) => {
       const params = new URLSearchParams({
         offset: String(offset),
         limit: String(limit),
       });
-      if (refresh) params.set("refresh", "1");
       if (summary) params.set("summary", "1");
       return params;
     };
-    const fetchGitOverview = async ({ offset = 0, limit = GIT_PANEL_BATCH, refresh = false, summary = false } = {}) => {
+    const fetchGitOverview = async ({ offset = 0, limit = GIT_PANEL_BATCH, summary = false } = {}) => {
       const res = await fetchWithTimeout(
-        `/git-overview?${gitOverviewQuery({ offset, limit, refresh, summary })}`,
+        `/git-overview?${gitOverviewQuery({ offset, limit, summary })}`,
         {},
         GIT_PANEL_FETCH_MS,
       );
       if (!res.ok) {
-        if (refresh && !offset) throw new Error("Failed to refresh git overview");
         throw new Error(offset > 0 ? "Failed to load more commits" : "Failed to load git overview");
       }
       return res.json();

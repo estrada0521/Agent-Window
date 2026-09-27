@@ -304,10 +304,7 @@
           updateLoadMoreUi();
         }
         try {
-          const data = await fetchGitOverview({
-            offset: reset ? 0 : state.nextOffset,
-            refresh: reset,
-          });
+          const data = await fetchGitOverview({ offset: reset ? 0 : state.nextOffset });
           if (loadSeq !== state.loadSeq) return;
           applyPage(data, { reset });
         } catch (err) {
@@ -332,7 +329,7 @@
       };
       const runRefresh = async () => {
         const refreshSeq = ++state.refreshSeq;
-        const data = await fetchGitOverview({ offset: 0, refresh: true });
+        const data = await fetchGitOverview({ offset: 0 });
         if (refreshSeq !== state.refreshSeq) return;
         host.onOverview?.(data);
         const nextSig = gitOverviewFingerprint(data);
