@@ -139,9 +139,7 @@
       }
     };
     const messageStepTopGap = () => {
-      const style = getComputedStyle(messagesEl);
-      const value = parseFloat(document.documentElement.dataset.mobile !== "1" && document.documentElement.dataset.autoWindowHeight === "1"
-        ? style.scrollPaddingTop : style.getPropertyValue("--message-step-top-gap"));
+      const value = parseFloat(getComputedStyle(messagesEl).scrollPaddingTop);
       return Number.isFinite(value) ? Math.max(0, value) : 0;
     };
     const positionConversationRowAtStepTop = (row, behavior) => {
