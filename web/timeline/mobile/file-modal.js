@@ -16,7 +16,7 @@
       const shareBtn = repoPreviewShareBtn();
       if (shareBtn) shareBtn.hidden = !sheetPreviewOpen();
       const menuBtn = repoPreviewMenuBtn();
-      if (menuBtn) menuBtn.hidden = !sheetPreviewOpen();
+      if (menuBtn) menuBtn.hidden = !sheetPreviewOpen() || !repoPreviewMenuItems().length;
       const ext = repoPreviewExt();
       mobileSheet?.classList.toggle("sheet-preview-glass", sheetPreviewOpen() && (ext === "html" || ext === "htm") && repoPreviewMode === "web");
     };
@@ -25,23 +25,11 @@
       if (hasPreviewModes(repoPreviewExt())) {
         items.push(["mode", repoPreviewMode === "text" ? "Show Rendered" : "Show Source"]);
       }
-      if (sheetPreviewFrameEl()?.contentDocument?.querySelector(".code-table, .preview-text-table")) {
-        items.push(["select", "Select All"]);
-      }
       return items;
     };
-    const selectRepoPreviewText = () => {
-      if (hasPreviewModes(repoPreviewExt()) && repoPreviewMode !== "text") {
-        repoPreviewMode = "text";
-        syncRepoPreviewControls();
-        postRepoPreviewMode();
-      }
-      const frame = sheetPreviewFrameEl();
-      const body = frame?.contentDocument?.querySelector(".code-table tbody, .preview-text-table tbody");
-      if (!body) throw new Error("No text to select");
-      frame.contentWindow.focus();
-      frame.contentWindow.getSelection().selectAllChildren(body);
-    };
+    const repoPreviewSharesText = () => hasPreviewModes(repoPreviewExt())
+      ? repoPreviewMode === "text"
+      : !!sheetPreviewFrameEl()?.contentDocument?.querySelector(".code-table");
     const resetRepoPreviewControls = () => {
       repoPreviewBaseTheme = currentFileModalBaseTheme();
       repoPreviewMode = defaultPreviewMode(repoPreviewExt());
@@ -137,13 +125,6 @@
           repoPreviewMode = repoPreviewMode === "text" ? "web" : "text";
           syncRepoPreviewControls();
           postRepoPreviewMode();
-          return;
-        }
-        if (action !== "select") return;
-        try {
-          selectRepoPreviewText();
-        } catch (err) {
-          setStatus(`Select failed: ${err?.message || err}`);
         }
       });
       shareBtn.addEventListener("click", async (event) => {
@@ -154,8 +135,12 @@
         try {
           const res = await fetch(`/file-raw?path=${encodeURIComponent(path)}`);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const blob = await res.blob();
-          await navigator.share({ files: [new File([blob], displayAttachmentFilename(path), { type: blob.type })] });
+          if (repoPreviewSharesText()) {
+            await navigator.share({ text: await res.text() });
+          } else {
+            const blob = await res.blob();
+            await navigator.share({ files: [new File([blob], displayAttachmentFilename(path), { type: blob.type })] });
+          }
         } catch (err) {
           if (err?.name !== "AbortError") setStatus(`Share failed: ${err?.message || err}`);
         }
