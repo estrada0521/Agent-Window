@@ -537,6 +537,7 @@
               else if (sheetKind() === "git") gitPanel.closeDetail({ refreshList: gitPanel.detailNeedsRefresh });
               else _repoGoToParentPath();
             },
+            { ignore: ".git-diff-scroll" },
           );
         },
       });
