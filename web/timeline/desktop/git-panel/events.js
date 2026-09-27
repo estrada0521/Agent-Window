@@ -57,10 +57,14 @@
         toggleGitSummaryPinned();
         return;
       }
-      const row = event.target.closest('.git-summary-row[data-diff-kind="worktree"]');
+      const row = event.target.closest(".git-summary-row");
       if (!row || !gitContent) return;
       event.preventDefault();
       event.stopPropagation();
+      if (row.dataset.diffKind !== "worktree") {
+        void openSideBar({ view: "git", reset: false });
+        return;
+      }
       const aside = document.getElementById("gitPinnedSummaryAside");
       const seedSections = Array.isArray(pinnedExpandSections) ? pinnedExpandSections : null;
       const useSeed = !!(aside?.classList.contains("is-expanded") && seedSections?.length);

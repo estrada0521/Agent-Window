@@ -647,11 +647,12 @@
       margin: var(--pill-row-margin);
       padding-top: 0;
       padding-bottom: 0;
+      cursor: pointer;
     }
-    html[data-desktop-timeline="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row.clickable:hover {
+    html[data-desktop-timeline="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row:hover {
       background: var(--list-row-hover-bg);
     }
-    html[data-desktop-timeline="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row.clickable:active {
+    html[data-desktop-timeline="1"] .git-pinned-summary-aside .git-summary-wrap .git-summary-row:active {
       background: rgba(255, 255, 255, 0.12);
     }
     .git-summary-wrap .git-summary-row {
