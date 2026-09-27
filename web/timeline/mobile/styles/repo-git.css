@@ -41,6 +41,70 @@
       display: none;
     }
 
+    #mobileSheet[data-kind="repo"] .git-diff-toggle,
+    #mobileSheet.sheet-mode-preview .git-diff-toggle,
+    .git-diff-toggle[hidden] {
+      display: none;
+    }
+
+    .git-diff-toggle {
+      position: absolute;
+      right: calc(14px + env(safe-area-inset-right, 0px));
+      top: 0;
+      bottom: 0;
+      margin-block: auto;
+    }
+
+    html[data-hand="right"] .git-diff-toggle {
+      right: auto;
+      left: calc(14px + env(safe-area-inset-left, 0px));
+    }
+
+    .git-diff-toggle.is-active {
+      color: var(--fg);
+      background: color-mix(in srgb, var(--fg) 14%, transparent);
+    }
+
+    .git-file-diff {
+      display: none;
+      margin: 2px 0 10px;
+    }
+
+    #mobileSheet.git-diffs-expanded .git-file-diff {
+      display: block;
+    }
+
+    .git-diff-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--fg) 3%, transparent);
+    }
+
+    .git-diff-line {
+      min-width: max-content;
+      padding: 0 10px;
+      white-space: pre;
+      font-family: var(--font-code);
+      font-size: calc(var(--text-size, 13px) * 11 / 13);
+      line-height: 1.55;
+      color: var(--fg);
+    }
+
+    .git-diff-line.is-add {
+      background: rgba(var(--git-ins-green-channels), 0.16);
+    }
+
+    .git-diff-line.is-del {
+      background: rgba(var(--git-del-red-channels), 0.16);
+    }
+
+    .git-diff-line.is-hunk {
+      color: var(--muted);
+      padding-top: 6px;
+      padding-bottom: 2px;
+    }
+
     .sheet-preview-view {
       display: none;
       z-index: 2;

@@ -230,6 +230,26 @@ def _get_git_diff_files(handler, parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
+def _get_git_file_diff(handler, parsed, ctx) -> None:
+    qs = parse_qs(parsed.query)
+    try:
+        body = json.dumps(
+            workspace_git.git_file_diff(
+                ctx["workspace"],
+                path=(qs.get("path", [""])[0] or "").strip(),
+                old_path=(qs.get("old_path", [""])[0] or "").strip(),
+                commit_hash=(qs.get("hash", [""])[0] or "").strip(),
+                untracked=(qs.get("untracked", [""])[0] or "") == "1",
+            ),
+            ensure_ascii=True,
+        ).encode("utf-8")
+    except Exception as exc:
+        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
+        _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
+        return
+    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
+
+
 def _get_git_commit_info(handler, parsed, ctx) -> None:
     commit_hash = (parse_qs(parsed.query).get("hash", [""])[0] or "").strip()
     try:
@@ -271,6 +291,7 @@ _GET_ROUTES = {
     "/events": _get_events,
     "/git-overview": _get_git_overview,
     "/git-diff-files": _get_git_diff_files,
+    "/git-file-diff": _get_git_file_diff,
     "/git-commit-info": _get_git_commit_info,
     "/git-worktree-stat": _get_git_worktree_stat,
     "/shortcut-commands": _get_shortcut_commands,

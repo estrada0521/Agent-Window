@@ -118,9 +118,70 @@ __INCLUDE:../git-panel-controller.js__
       titleEl.textContent = "Changed";
       wrapEl.prepend(titleEl);
     };
+    let gitDiffsExpanded = false;
+    const gitDiffToggle = document.createElement("button");
+    gitDiffToggle.type = "button";
+    gitDiffToggle.className = "git-diff-toggle mobile-bottom-sheet-button";
+    gitDiffToggle.hidden = true;
+    gitDiffToggle.setAttribute("aria-label", "Show diffs");
+    gitDiffToggle.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v8M8 8h8"></path><path d="M8 19h8"></path></svg>';
+    sharedSheetFooter.appendChild(gitDiffToggle);
+    const gitDiffLinesHtml = (text) => {
+      const out = [];
+      let inHunk = false;
+      for (const line of String(text || "").replace(/\n$/, "").split("\n")) {
+        if (line.startsWith("diff --git ")) {
+          inHunk = false;
+          continue;
+        }
+        if (line.startsWith("@@")) {
+          inHunk = true;
+          out.push(`<div class="git-diff-line is-hunk">${escapeHtml(line)}</div>`);
+          continue;
+        }
+        if (!inHunk) {
+          if (line.startsWith("Binary files")) out.push(`<div class="git-diff-line is-hunk">${escapeHtml(line)}</div>`);
+          continue;
+        }
+        if (line.startsWith("\\")) continue;
+        const kind = line.startsWith("+") ? " is-add" : line.startsWith("-") ? " is-del" : "";
+        out.push(`<div class="git-diff-line${kind}">${escapeHtml(line) || "<br>"}</div>`);
+      }
+      return out.length ? `<div class="git-diff-scroll">${out.join("")}</div>` : '<div class="git-diff-line is-hunk">No textual changes</div>';
+    };
+    const renderGitFileDiffs = () => {
+      const context = gitPanel.detailContext;
+      if (!gitDiffsExpanded || !context?.wrapEl) return;
+      context.wrapEl.querySelectorAll(".git-commit-file-row").forEach((row) => {
+        if (row.nextElementSibling?.classList.contains("git-file-diff")) return;
+        const block = document.createElement("div");
+        block.className = "git-file-diff";
+        row.after(block);
+        const params = new URLSearchParams({ path: row.dataset.path || "", hash: context.hash || "" });
+        if (row.dataset.oldPath) params.set("old_path", row.dataset.oldPath);
+        if (row.dataset.untracked === "1") params.set("untracked", "1");
+        fetchGitJson(`/git-file-diff?${params.toString()}`)
+          .then((data) => { block.innerHTML = gitDiffLinesHtml(data?.diff); })
+          .catch((err) => { block.innerHTML = `<div class="git-diff-line is-hunk">${escapeHtml(err?.message || String(err))}</div>`; });
+      });
+    };
+    const syncGitDiffToggle = () => {
+      gitDiffToggle.hidden = !gitPanel.detailContext;
+      gitDiffToggle.classList.toggle("is-active", gitDiffsExpanded);
+      gitDiffToggle.setAttribute("aria-pressed", gitDiffsExpanded ? "true" : "false");
+      mobileSheet?.classList.toggle("git-diffs-expanded", gitDiffsExpanded);
+    };
+    gitDiffToggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      gitDiffsExpanded = !gitDiffsExpanded;
+      syncGitDiffToggle();
+      renderGitFileDiffs();
+    });
     const setGitDetailChrome = ({ rowHtml = "", subject = "Git", hash = "", isWorktree = false } = {}) => {
       _gitDetailChrome = { rowHtml, subject };
       applyGitDetailChrome(_gitDetailChrome);
+      syncGitDiffToggle();
       if (isWorktree || !hash) return;
       void renderGitCommitInfo(hash);
     };
@@ -137,6 +198,7 @@ __INCLUDE:../git-panel-controller.js__
     };
     const resetGitDetailChrome = ({ hadDetail = false } = {}) => {
       _gitDetailChrome = null;
+      syncGitDiffToggle();
       setGitSheetTitle();
       setSharedSheetLeading(null);
       showGitWorktreeButton();
@@ -212,6 +274,7 @@ __INCLUDE:../git-panel-controller.js__
       onDetailFilesReady: ({ wrapEl, isWorktree }) => {
         if (!isWorktree) ensureGitDetailChangedTitle(wrapEl);
         revealFilesFromTop(wrapEl);
+        renderGitFileDiffs();
       },
       onOverview: refreshGitDetailTitleFromOverview,
       onFingerprintChanged: (data) => {

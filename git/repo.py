@@ -362,6 +362,27 @@ def git_diff_files(workspace: str, *, commit_hash: str = "", scope: str = ""):
     }
 
 
+def git_file_diff(workspace: str, *, path: str, old_path: str = "", commit_hash: str = "", untracked: bool = False) -> dict:
+    root = _git_root(workspace)
+    pathspecs = [str(item).strip().lstrip("/") for item in (old_path, path) if str(item or "").strip()]
+    if not pathspecs:
+        raise ValueError("path required")
+    for spec in pathspecs:
+        (root / spec).resolve().relative_to(root.resolve())
+    if untracked:
+        res = _run_git(root, "diff", "--no-index", "--no-color", "--", "/dev/null", pathspecs[-1])
+        ok = res.returncode in (0, 1)
+    elif commit_hash:
+        res = _run_git(root, "show", "--format=", "--no-color", "-M", str(commit_hash).strip(), "--", *pathspecs)
+        ok = res.returncode == 0
+    else:
+        res = _run_git(root, "diff-index", "-p", "--no-color", "-M", "HEAD", "--", *pathspecs)
+        ok = res.returncode == 0
+    if not ok:
+        raise RuntimeError((res.stderr or res.stdout or "git diff failed").strip())
+    return {"diff": res.stdout or ""}
+
+
 def open_diff_tool(workspace: str, rel_path: str, commit_hash: str = "", old_path: str = "") -> dict:
     root = _git_root(workspace)
     rel = str(rel_path or "").strip().lstrip("/")
